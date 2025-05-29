@@ -4379,47 +4379,26 @@ create_xml_handle_columns(void)
     ColumnDef *nsDataCol;
     
     /* Create column definitions */
-    docIdCol = makeNode(ColumnDef);
-    docIdCol->colname = "document_id";
-    docIdCol->typeName = makeTypeNameFromOid(INT4OID, -1);
-    docIdCol->is_local = true;
+    docIdCol = makeColumnDef("document_id", INT4OID, -1, InvalidOid);
     docIdCol->is_not_null = true;
     columns = lappend(columns, docIdCol);
     
-    nsIdCol = makeNode(ColumnDef);
-    nsIdCol->colname = "namespace_id";
-    nsIdCol->typeName = makeTypeNameFromOid(INT4OID, -1);
-    nsIdCol->is_local = true;
+    nsIdCol = makeColumnDef("namespace_id", INT4OID, -1, InvalidOid);
     columns = lappend(columns, nsIdCol);
     
-    docSizeCol = makeNode(ColumnDef);
-    docSizeCol->colname = "doc_size";
-    docSizeCol->typeName = makeTypeNameFromOid(INT8OID, -1);
-    docSizeCol->is_local = true;
+    docSizeCol = makeColumnDef("doc_size", INT8OID, -1, InvalidOid);
     columns = lappend(columns, docSizeCol);
     
-    nsSizeCol = makeNode(ColumnDef);
-    nsSizeCol->colname = "ns_size";
-    nsSizeCol->typeName = makeTypeNameFromOid(INT8OID, -1);
-    nsSizeCol->is_local = true;
+    nsSizeCol = makeColumnDef("ns_size", INT8OID, -1, InvalidOid);
     columns = lappend(columns, nsSizeCol);
     
-    isNsNullCol = makeNode(ColumnDef);
-    isNsNullCol->colname = "is_namespace_null";
-    isNsNullCol->typeName = makeTypeNameFromOid(BOOLOID, -1);
-    isNsNullCol->is_local = true;
+    isNsNullCol = makeColumnDef("is_namespace_null", BOOLOID, -1, InvalidOid);
     columns = lappend(columns, isNsNullCol);
     
-    xmlDataCol = makeNode(ColumnDef);
-    xmlDataCol->colname = "xml_data";
-    xmlDataCol->typeName = makeTypeNameFromOid(XMLOID, -1);
-    xmlDataCol->is_local = true;
+    xmlDataCol = makeColumnDef("xml_data", XMLOID, -1, InvalidOid);
     columns = lappend(columns, xmlDataCol);
     
-    nsDataCol = makeNode(ColumnDef);
-    nsDataCol->colname = "ns_data";
-    nsDataCol->typeName = makeTypeNameFromOid(XMLOID, -1);
-    nsDataCol->is_local = true;
+    nsDataCol = makeColumnDef("ns_data", XMLOID, -1, InvalidOid);
     columns = lappend(columns, nsDataCol);
     
     return columns;
@@ -4448,7 +4427,6 @@ create_xml_handle_columns(void)
      int          save_sec_context;
      int          saved_dialect = sql_dialect;
      ObjectAddress address;
-     MemoryContext oldContext;
      
      /* This makes it temporary table */
      relation->relpersistence = RELPERSISTENCE_TEMP;
@@ -4472,14 +4450,8 @@ create_xml_handle_columns(void)
      {
 		/* Set current user to bbf_role_admin for create permissions.*/
 		sql_dialect = SQL_DIALECT_TSQL;
-		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		address = DefineRelation(stmt, RELKIND_RELATION, InvalidOid, NULL, NULL);
-
-		/* Store the OID in TopMemoryContext to persist across transactions */
-		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		address = DefineRelation(stmt, RELKIND_RELATION, get_bbf_role_admin_oid(), NULL, NULL);
 		xml_handle_temp_table_relid = address.objectId;
-		MemoryContextSwitchTo(oldContext);
-
      }
      PG_FINALLY();
      {
@@ -4502,7 +4474,7 @@ create_xml_handle_columns(void)
  * dialect to TSQL to ensure proper insertion semantics.
  * 
  * Returns:
- *   The document_id (odd number) that can be used to reference this XML document
+ *   The document_id that can be used to reference this XML document
  *
  * Errors:
  *   Throws error if the temporary table cannot be created or accessed
@@ -4524,7 +4496,7 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     bool                  table_exists = false;
 
    /* Check if the table exists using ENR lookup */
-   if(get_ENR_withoid(currentQueryEnv, xml_handle_temp_table_relid, ENR_TSQL_TEMP) != NULL)
+   if(GetENRTempTableWithOid(xml_handle_temp_table_relid))
    {
       relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
       table_exists = true;
@@ -4566,16 +4538,27 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     values[2] = Int32GetDatum(xml_data_length);
     values[3] = Int32GetDatum(ns_data_length);
     values[4] = BoolGetDatum(is_namespace_null);
+    nulls[4] = false;
     
     if (xml_data == NULL)
-        nulls[5] = true;
+	{
+		nulls[5] = true;
+		values[5] = (Datum)0;
+	}
     else
-        values[5] = PointerGetDatum(xml_data);
+	{
+		values[5] = PointerGetDatum(xml_data);
+	}
     
     /* For namespace data */
     if (!nulls[6])
-        values[6] = PointerGetDatum(ns_data);
-    
+	{
+		values[6] = PointerGetDatum(ns_data);
+	}
+    else
+	{
+		values[6] = (Datum)0;
+	}
     tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
 
     GetUserIdAndSecContext(&save_userid, &save_sec_context);
@@ -4585,7 +4568,9 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
         /* Set current user to bbf_role_admin for insert permissions */
         sql_dialect = SQL_DIALECT_TSQL;
         SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-        CatalogTupleInsert(relation, tuple);
+
+	/* Insert the entries into the table */
+	simple_heap_insert(relation, tuple);
     }
     PG_FINALLY();
     {
@@ -4619,7 +4604,7 @@ delete_xml_handle_entry(int document_id)
 {
     Relation              relation;
     ScanKeyData           skey[1];
-    TableScanDesc         scan;
+    SysScanDesc           scan;
     HeapTuple             tuple;
     bool                  found = false;
     int                   curr_handle_counter;
@@ -4649,7 +4634,7 @@ delete_xml_handle_entry(int document_id)
     }
     
     /* Check if the table exists using ENR lookup */
-    if(get_ENR_withoid(currentQueryEnv, xml_handle_temp_table_relid, ENR_TSQL_TEMP) != NULL)
+    if(GetENRTempTableWithOid(xml_handle_temp_table_relid))
     {
     	relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
     	table_exists = true;
@@ -4668,8 +4653,9 @@ delete_xml_handle_entry(int document_id)
                 BTEqualStrategyNumber, F_INT4EQ,
                 Int32GetDatum(document_id));
     
-    scan = table_beginscan_catalog(relation, 1, skey);
-    tuple = heap_getnext(scan, ForwardScanDirection);
+
+    scan = systable_beginscan(relation, InvalidOid, false, NULL, 1, skey);
+    tuple = systable_getnext(scan);
     
     /* Find and delete the tuple */
     if (HeapTupleIsValid(tuple))
@@ -4681,7 +4667,10 @@ delete_xml_handle_entry(int document_id)
             /* Set current user to bbf_role_admin for delete permissions */
             sql_dialect = SQL_DIALECT_TSQL;
             SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-            CatalogTupleDelete(relation, &tuple->t_self);
+            simple_heap_delete(relation, &tuple->t_self);
+	    oldContext = MemoryContextSwitchTo(TopMemoryContext);
+	    active_xml_handles_counter = bms_del_member(active_xml_handles_counter, curr_handle_counter);
+	    MemoryContextSwitchTo(oldContext);
         }
         PG_FINALLY();
         {
@@ -4690,14 +4679,10 @@ delete_xml_handle_entry(int document_id)
         }
         PG_END_TRY();
         
-        oldContext = MemoryContextSwitchTo(TopMemoryContext);
-        active_xml_handles_counter = bms_del_member(active_xml_handles_counter, curr_handle_counter);
-        MemoryContextSwitchTo(oldContext);
-        
         found = true;
     }
     
-    table_endscan(scan);
+    systable_endscan(scan);
     relation_close(relation, NoLock);
     
     /* If we didn't find the handle or couldn't delete it, throw an error */
@@ -4758,7 +4743,7 @@ sp_xml_preparedocument(PG_FUNCTION_ARGS)
     
         if (is_xml_text_well_formed)
         {
-            xml_data = (xmltype *) cstring_to_text(xml_text);
+            xml_data = (xmltype *) PG_GETARG_DATUM(1);
         }
         else
         {
@@ -4779,7 +4764,7 @@ sp_xml_preparedocument(PG_FUNCTION_ARGS)
     
         if (is_xpath_namespaces_well_formed)
         {
-            ns_data = (xmltype *) cstring_to_text(xpath_namespaces);
+            ns_data = (xmltype *) PG_GETARG_DATUM(2);
         }
         else
         {

@@ -103,9 +103,6 @@ SELECT @hdoc as handle;
 GO
 
 --When database is changed in the session
-CREATE TABLE sp_xml_preparedocument_HandleStore (handle_value int);
-GO
-
 SELECT db_name() as current_database;
 GO
 
@@ -113,9 +110,6 @@ DECLARE @handle1 int;
 EXEC sp_xml_preparedocument @handle1 OUTPUT, '<root><test>data</test></root>';
 SELECT @handle1 as 'Current Handle';
 INSERT INTO sp_xml_preparedocument_HandleStore (handle_value) VALUES (@handle1);
-GO
-
-CREATE DATABASE sp_xml_preparedocument_temp_db;
 GO
 
 USE sp_xml_preparedocument_temp_db;
@@ -136,11 +130,6 @@ GO
 USE master
 GO
 
-DROP DATABASE sp_xml_preparedocument_temp_db;
-GO
-
-DROP TABLE sp_xml_preparedocument_HandleStore;
-GO
 
 -- Variable declaration and initialisation
 DECLARE @hdoc INT;
@@ -223,7 +212,7 @@ GO
 -- When namespace length is too large (above max limit)
 DECLARE @hdoc int;
 DECLARE @namespace_text varchar(max) = '<root ' + repeat('xmlns:ns1="http://example.com/namespace/1" ', 200000000) + '><element/></root>';
- EXEC sp_xml_preparedocument @hdoc output, NULL, @namespace_text;
+EXEC sp_xml_preparedocument @hdoc output, NULL, @namespace_text;
 SELECT @hdoc as handle;
 EXEC sp_xml_removedocument @hdoc;
 GO
@@ -252,3 +241,72 @@ SELECT @hdoc as handle;
 EXEC sp_xml_removedocument @hdoc;
 GO
 
+-- Impact of rollback on prepared handle
+BEGIN TRANSACTION;
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>rollback_test</child></root>';
+SELECT @hdoc AS handle_before_rollback;
+ROLLBACK TRANSACTION;
+-- Handle will be invalid after rollback
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Impact of statement terminating/transaction abort errors
+BEGIN TRANSACTION;
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>txn_value</child></root>';
+SELECT @hdoc AS handle_before_error;
+GO
+-- This will cause an error and abort the transaction
+SELECT FROM;
+GO
+
+-- Verify handle still works or not
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>txn_value</child></root>';
+SELECT @hdoc AS handle_after_error;
+-- calculating handle_before_error and that should not exist
+DECLARE @stored_hdoc INT = @hdoc - 2;
+EXEC sp_xml_removedocument @stored_hdoc;
+GO
+
+-- Test with large XML documents
+DECLARE @hdoc int;
+DECLARE @xml_text varchar(max) = '<root>' + repeat('<child></child>', 20000) + '</root>';
+EXEC sp_xml_preparedocument @hdoc output, @xml_text;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test with very large XML documents
+DECLARE @hdoc int;
+DECLARE @xml_text varchar(max) = '<root>' + repeat('<child></child>', 200000) + '</root>';
+EXEC sp_xml_preparedocument @hdoc output, @xml_text;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- impact of reset connection
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>value</child></root>';
+SELECT @hdoc as handle;
+INSERT INTO handle_store VALUES (@hdoc);
+-- This resets the connection
+EXEC sys.sp_reset_connection;
+GO
+-- Handle will be invalid after reset
+DECLARE @stored_hdoc INT;
+SELECT @stored_hdoc = handle_id FROM handle_store;
+EXEC sp_xml_removedocument @stored_hdoc;
+GO
+
+-- Now handles will start from 1
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>value</child></root>';
+SELECT @hdoc as handle;
+GO
+
+-- Prepare/drop XML inside procedure
+-- Execute procedure and verify handle
+EXEC test_xml_proc;
+GO

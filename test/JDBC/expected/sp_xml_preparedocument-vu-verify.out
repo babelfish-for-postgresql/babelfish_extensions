@@ -168,9 +168,6 @@ int
 
 
 --When database is changed in the session
-CREATE TABLE sp_xml_preparedocument_HandleStore (handle_value int);
-GO
-
 SELECT db_name() as current_database;
 GO
 ~~START~~
@@ -191,9 +188,6 @@ int
 
 ~~ROW COUNT: 1~~
 
-
-CREATE DATABASE sp_xml_preparedocument_temp_db;
-GO
 
 USE sp_xml_preparedocument_temp_db;
 GO
@@ -218,11 +212,6 @@ int
 USE master
 GO
 
-DROP DATABASE sp_xml_preparedocument_temp_db;
-GO
-
-DROP TABLE sp_xml_preparedocument_HandleStore;
-GO
 
 -- Variable declaration and initialisation
 DECLARE @hdoc INT;
@@ -329,7 +318,7 @@ GO
 -- When namespace length is too large (above max limit)
 DECLARE @hdoc int;
 DECLARE @namespace_text varchar(max) = '<root ' + repeat('xmlns:ns1="http://example.com/namespace/1" ', 200000000) + '><element/></root>';
- EXEC sp_xml_preparedocument @hdoc output, NULL, @namespace_text;
+EXEC sp_xml_preparedocument @hdoc output, NULL, @namespace_text;
 SELECT @hdoc as handle;
 EXEC sp_xml_removedocument @hdoc;
 GO
@@ -376,4 +365,130 @@ int
 4031
 ~~END~~
 
+
+-- Impact of rollback on prepared handle
+BEGIN TRANSACTION;
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>rollback_test</child></root>';
+SELECT @hdoc AS handle_before_rollback;
+ROLLBACK TRANSACTION;
+-- Handle will be invalid after rollback
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+4033
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find prepared statement with handle 4033)~~
+
+
+-- Impact of statement terminating/transaction abort errors
+BEGIN TRANSACTION;
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>txn_value</child></root>';
+SELECT @hdoc AS handle_before_error;
+GO
+~~START~~
+int
+4035
+~~END~~
+
+-- This will cause an error and abort the transaction
+SELECT FROM;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'FROM' at line 2 and character position 7)~~
+
+
+-- Verify handle still works or not
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>txn_value</child></root>';
+SELECT @hdoc AS handle_after_error;
+-- calculating handle_before_error and that should not exist
+DECLARE @stored_hdoc INT = @hdoc - 2;
+EXEC sp_xml_removedocument @stored_hdoc;
+GO
+~~START~~
+int
+4037
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find prepared statement with handle 4035)~~
+
+
+-- Test with large XML documents
+DECLARE @hdoc int;
+DECLARE @xml_text varchar(max) = '<root>' + repeat('<child></child>', 20000) + '</root>';
+EXEC sp_xml_preparedocument @hdoc output, @xml_text;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+4039
+~~END~~
+
+
+-- Test with very large XML documents
+DECLARE @hdoc int;
+DECLARE @xml_text varchar(max) = '<root>' + repeat('<child></child>', 200000) + '</root>';
+EXEC sp_xml_preparedocument @hdoc output, @xml_text;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: row is too big: size 34424, maximum size 8160)~~
+
+
+-- impact of reset connection
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>value</child></root>';
+SELECT @hdoc as handle;
+INSERT INTO handle_store VALUES (@hdoc);
+-- This resets the connection
+EXEC sys.sp_reset_connection;
+GO
+~~START~~
+int
+4043
+~~END~~
+
+~~ROW COUNT: 1~~
+
+-- Handle will be invalid after reset
+DECLARE @stored_hdoc INT;
+SELECT @stored_hdoc = handle_id FROM handle_store;
+EXEC sp_xml_removedocument @stored_hdoc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find prepared statement with handle 4043)~~
+
+
+-- Now handles will start from 1
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>value</child></root>';
+SELECT @hdoc as handle;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Prepare/drop XML inside procedure
+-- Execute procedure and verify handle
+EXEC test_xml_proc;
+GO
+~~START~~
+int
+3
+~~END~~
 
