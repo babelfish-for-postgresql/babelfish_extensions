@@ -50,6 +50,11 @@ CREATE VIEW fts_contains_pgconfig_v1 AS
 )
 GO
 
+CREATE VIEW fts_contains_v1 AS 
+    SELECT *
+    FROM fts_contains_vu_t WHERE CONTAINS(txt, '("stress*" or depression) AND NOT botox') 
+GO
+
 -- initialize table: txt column has 1000 sentences from NOW corpus
 INSERT INTO fts_contains_vu_t VALUES (1, '<p> Sol Yurick , the writer whose 1965 novel " The Warriors " was adapted into a film 14 years later -- which then became one of the best adapted works ever in video gaming -- died this weekend ')
 GO
@@ -5046,7 +5051,76 @@ GO
 ~~ROW COUNT: 1~~
 
 
+
 INSERT INTO fts_contains_vu_t VALUES (1000, 'Last month , scientists from the Hebrew University of Jerusalem reported that washing down red meat with a glass of red can actually prevent the build-up of cholesterol in the body ')
+DECLARE @a VARCHAR(100)
+SET @a = 'beer '+char(9)+'drinkers'+char(10)+'wine'
+INSERT INTO fts_contains_vu_t VALUES (1001, @a)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'clinical '+char(10)+'trials and'+char(10)+char(9)+'treatments'
+INSERT INTO fts_contains_vu_t VALUES (1002, @a)
+GO
+~~ROW COUNT: 1~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'French'+char(9)+'tarts and croissants'
+INSERT INTO fts_contains_vu_t VALUES (1003, @a)
+GO
+~~ROW COUNT: 1~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'resveratrol '+char(9)+'drugs'+char(10)+'cause'+char(9)+'loud'+char(9)+'noises'
+INSERT INTO fts_contains_vu_t VALUES (1004, @a)
+GO
+~~ROW COUNT: 1~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'chocolate pastry'+char(9)+'and'+char(10)+'eclair'
+INSERT INTO fts_contains_vu_t VALUES (1005, @a)
+GO
+~~ROW COUNT: 1~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = char(9)+'depression'+char(10)+'from botox pain'
+INSERT INTO fts_contains_vu_t VALUES (1006, @a)
+GO
+~~ROW COUNT: 1~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = ' ' + char(10)+'farm'+char(10)+'FCC loan'+char(10)+'board'
+INSERT INTO fts_contains_vu_t VALUES (1007, @a)
+GO
+~~ROW COUNT: 1~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'grape '+char(9)+'wine'+char(10)+'drinkers'
+INSERT INTO fts_contains_vu_t VALUES (1008, @a)
+GO
+~~ROW COUNT: 1~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'red '+char(9) + char(10) +'grapes'+char(10)+'wine'
+INSERT INTO fts_contains_vu_t VALUES (1009, @a)
+GO
+~~ROW COUNT: 1~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'hospital '+char(9)+'doctor'+char(10)+'treatments'
+INSERT INTO fts_contains_vu_t VALUES (1010, @a)
 GO
 ~~ROW COUNT: 1~~
 
