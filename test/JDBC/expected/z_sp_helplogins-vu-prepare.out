@@ -11,25 +11,8 @@ create login sp_helplogins_testlogin with password = '12345678'
 create user userof_sp_helplogins_testlogin for login sp_helplogins_testlogin
 GO
 
-create login testloginwithsecurityadmin with password = '12345678'
-create user userof_testloginwithsecurityadmin for login testloginwithsecurityadmin
-GO
-
--- create another user for login testloginwithsecurityadmin in sp_helplogins_db1
-use sp_helplogins_db1
-GO
-create user userof_testloginwithsecurityadmin_indb1 for login testloginwithsecurityadmin
-GO
-use master
-GO
-
 -- create a login which does not have any users
 create login testloginwithoutusers with password = '12345678'
-GO
-
--- create a login which is a member of securityadmin server role
--- and has a user with db_securityadmin role in sp_helplogins_db1
-create login testloginwithsecurityadmin2 with password = '12345678'
 GO
 
 -- create a login and a user in sp_helplogins_db1
@@ -40,9 +23,6 @@ use sp_helplogins_db1
 GO
 
 create user userof_testloginindb1 for login testloginindb1
-GO
-
-create user userof_testloginwithsecurityadmin2 for login testloginwithsecurityadmin2
 GO
 
 create login testloginwithotherdefdb with password = '12345678', default_database = sp_helplogins_db1
