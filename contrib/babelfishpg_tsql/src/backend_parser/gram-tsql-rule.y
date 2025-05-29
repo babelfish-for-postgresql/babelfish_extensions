@@ -887,7 +887,7 @@ ConstraintElem:
 					n->indexspace = $10;
 					processCASbits($11, @11, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
-								   NULL, yyscanner);
+								   NULL, NULL, yyscanner);
 					$$ = (Node *)n;
 				}
 			| UNIQUE opt_unique_null_treatment tsql_cluster '(' columnListWithOptAscDesc opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
@@ -905,7 +905,7 @@ ConstraintElem:
 					n->indexspace = $10;
 					processCASbits($11, @11, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
-								   NULL, yyscanner);
+								   NULL, NULL, yyscanner);
 					$$ = (Node *)n;
 				}
 			| UNIQUE opt_unique_null_treatment '(' columnListWithOptAscDesc opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
@@ -923,7 +923,7 @@ ConstraintElem:
 					n->indexspace = $9;
 					processCASbits($10, @10, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
-								   NULL, yyscanner);
+								   NULL, NULL, yyscanner);
 					$$ = (Node *)n;
 				}
 			| UNIQUE opt_unique_null_treatment '(' columnList opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
@@ -941,7 +941,7 @@ ConstraintElem:
 					n->indexspace = $9;
 					processCASbits($10, @10, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
-								   NULL, yyscanner);
+								   NULL, NULL, yyscanner);
 					$$ = (Node *)n;
 				}
 			| UNIQUE opt_unique_null_treatment tsql_cluster ExistingIndex ConstraintAttributeSpec
@@ -957,7 +957,7 @@ ConstraintElem:
 					n->indexspace = NULL;
 					processCASbits($5, @5, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
-								   NULL, yyscanner);
+								   NULL, NULL, yyscanner);
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY tsql_cluster '(' columnList opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
@@ -974,7 +974,7 @@ ConstraintElem:
 					n->indexspace = $10;
 					processCASbits($11, @11, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
-								   NULL, yyscanner);
+								   NULL, NULL, yyscanner);
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY tsql_cluster '(' columnListWithOptAscDesc opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
@@ -991,7 +991,7 @@ ConstraintElem:
 					n->indexspace = $10;
 					processCASbits($11, @11, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
-								   NULL, yyscanner);
+								   NULL, NULL, yyscanner);
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY '(' columnListWithOptAscDesc opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
@@ -1008,7 +1008,7 @@ ConstraintElem:
 					n->indexspace = $9;
 					processCASbits($10, @10, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
-								   NULL, yyscanner);
+								   NULL, NULL, yyscanner);
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY '(' columnList opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
@@ -1025,7 +1025,7 @@ ConstraintElem:
 					n->indexspace = $9;
 					processCASbits($10, @10, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
-								   NULL, yyscanner);
+								   NULL, NULL, yyscanner);
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY tsql_cluster ExistingIndex ConstraintAttributeSpec
@@ -1040,7 +1040,7 @@ ConstraintElem:
 					n->indexspace = NULL;
 					processCASbits($5, @5, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
-								   NULL, yyscanner);
+								   NULL, NULL, yyscanner);
 					$$ = (Node *)n;
 				}
 		;
