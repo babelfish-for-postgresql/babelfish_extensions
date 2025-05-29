@@ -2179,20 +2179,16 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 void
 assign_psql_logical_babelfish_db_name(const char *newval, void *extra)
 {
-	/* Free old value if exists */
-	if (pltsql_psql_logical_babelfish_db_name)
+	/* 
+	 * No need to tell babelfishpg_common that logical db name has been set if dialect is TSQL
+	 * because the psql_logical_babelfish_db_name is to be used for PG dialect only
+	 */
+	if (sql_dialect == SQL_DIALECT_PG)
 	{
-		guc_free(pltsql_psql_logical_babelfish_db_name);
-		pltsql_psql_logical_babelfish_db_name = NULL;
+		/* Initialise collation callbacks */
+		init_and_check_collation_callbacks();
+
+		/* let babelfishpg_common know that psql_logical_babelfish_db_name has been updated */
+		(*collation_callbacks_ptr->set_logical_db_name_cache) (newval);
 	}
-
-	/* Set new value if not NULL */
-	if (newval)
-		pltsql_psql_logical_babelfish_db_name = guc_strdup(ERROR, newval);
-
-	/* Initialise collation callbacks */
-	init_and_check_collation_callbacks();
-
-	/* let babelfishpg_common know that psql_logical_babelfish_db_name has been updated */
-	(*collation_callbacks_ptr->set_logical_db_name_cache) (pltsql_psql_logical_babelfish_db_name);
 }
