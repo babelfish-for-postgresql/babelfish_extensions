@@ -1,4 +1,120 @@
+-- This file tests support for POINT with ZM flags
+-- It also includes test for HasM , HasZ, Z , M functions
+
+-- HasM, HasZ, Z, M tests
+SELECT location.HasM from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+go
+
+SELECT location.HasM from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+go
+
+SELECT location.HasZ from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+go
+
+SELECT location.HasZ from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+go
+
+SELECT location.M from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+go
+
+SELECT location.M from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+go
+
+SELECT location.Z from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+go
+
+SELECT location.Z from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+go
+
+SELECT geom.STAsText(), geog.STAsText() FROM GEOSPATIALPOINTEMPTYdt;
+go
+
+SELECT geom.STAsBinary(), geog.STAsBinary() FROM GEOSPATIALPOINTEMPTYdt;
+go
+
+SELECT geom.STDimension(), geog.STDimension() FROM GEOSPATIALPOINTEMPTYdt;
+go
+
+SELECT geom.STIsClosed(), geog.STIsClosed() FROM GEOSPATIALPOINTEMPTYdt;
+go
+
+DECLARE @point geometry;
+SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100 3.0 4.0)', 4326);
+SELECT HasM(@point);
+SELECT HasZ(@point);
+SELECT M(@point);
+SELECT Z(@point);
+SELECT @point.HasM;
+SELECT @point.HasZ;
+SELECT @point.M;
+SELECT @point.Z;
+Go
+
+DECLARE @point1 geometry;
+SET @point1 = geometry::STPointFromText(null, 4326);
+SELECT @point1.HasM;
+SELECT @point1.HasZ;
+SELECT @point1.M;
+SELECT @point1.Z;
+go
+
+SELECT [GEOSPATIALPOINTGEOM_dt].[location].[HasM] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasM;
+GO
+
+SELECT [location].[HasM] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasM;
+GO
+
+SELECT [GEOSPATIALPOINTGEOM_dt].[location].[HasZ] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasZ;
+GO
+
+SELECT [location].[HasZ] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasZ;
+GO
+
+SELECT [GEOSPATIALPOINTGEOM_dt].[location].[M] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.M;
+GO
+
+SELECT [location].[M] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.M;
+GO
+
+SELECT [GEOSPATIALPOINTGEOM_dt].[location].[Z] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.Z;
+GO
+
+SELECT [location].[Z] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.Z;
+GO
+
+-- TEST with QUOTED_IDENTIFIER ON
+SET QUOTED_IDENTIFIER ON
+GO
+SELECT [location]."HasM" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasM;
+GO
+
+SELECT [location]."HasZ" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasZ;
+GO
+
+SELECT [location]."M" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.M;
+GO
+
+SELECT [location]."Z" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.Z;
+GO
+
+SET QUOTED_IDENTIFIER OFF
+GO
+
+-- TEST with QUOTED_IDENTIFIER OFF
+SELECT [location]."HasM" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasM;
+GO
+
+SELECT [location]."HasZ" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasZ;
+GO
+
+SELECT [location]."M" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.M;
+GO
+
+SELECT [location]."Z" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.Z;
+GO
+
 -- STGeomFromText tests with different SRIDs
+
 SELECT geography::STGeomFromText('POINT(45 90)', 4326);
 GO
 

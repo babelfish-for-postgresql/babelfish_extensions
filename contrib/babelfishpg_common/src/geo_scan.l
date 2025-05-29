@@ -62,10 +62,22 @@ ZM         { return ZM_TOK; }
 
 %%
 
-void yyerror(char **result, const char *message) {
-    ereport(ERROR,
-            (errcode(ERRCODE_SYNTAX_ERROR),
-            errmsg("%s", message)));
+void yyerror(char **result, const char *message) 
+{
+    if (strstr(message, "unexpected") == NULL && 
+        strstr(message, "syntax error") == NULL) 
+    {
+
+        ereport(ERROR,
+                (errcode(ERRCODE_SYNTAX_ERROR),
+                 errmsg("%s", message)));
+    }
+    else
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_SYNTAX_ERROR),
+                 errmsg("Invalid geometry")));
+    }
 }
 
 void geo_scanner_init(const char *str)

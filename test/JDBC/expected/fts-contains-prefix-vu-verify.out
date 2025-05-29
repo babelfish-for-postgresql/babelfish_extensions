@@ -341,7 +341,7 @@ EXEC prefix_rewrite_prepare_p23
 GO
 ~~START~~
 text
-o<->ne | ('o specialCharscat1e09616b53f5138735a7d0a79e78e804e ne specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
+(o<->ne | ('o specialCharscat1e09616b53f5138735a7d0a79e78e804e ne specialCharscat1e09616b53f5138735a7d0a79e78e804e '))
 ~~END~~
 
 
