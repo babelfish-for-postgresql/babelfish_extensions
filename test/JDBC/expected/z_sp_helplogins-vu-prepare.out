@@ -11,5 +11,65 @@ create login sp_helplogins_testlogin with password = '12345678'
 create user userof_sp_helplogins_testlogin for login sp_helplogins_testlogin
 GO
 
-alter role db_securityadmin add member userof_sp_helplogins_testlogin
+create login testloginwithsecurityadmin with password = '12345678'
+create user userof_testloginwithsecurityadmin for login testloginwithsecurityadmin
+GO
+
+-- create another user for login testloginwithsecurityadmin in sp_helplogins_db1
+use sp_helplogins_db1
+GO
+create user userof_testloginwithsecurityadmin_indb1 for login testloginwithsecurityadmin
+GO
+use master
+GO
+
+-- create a login which does not have any users
+create login testloginwithoutusers with password = '12345678'
+GO
+
+-- create a login which is a member of securityadmin server role
+-- and has a user with db_securityadmin role in sp_helplogins_db1
+create login testloginwithsecurityadmin2 with password = '12345678'
+GO
+
+-- create a login and a user in sp_helplogins_db1
+create login testloginindb1 with password = '12345678'
+GO
+
+use sp_helplogins_db1
+GO
+
+create user userof_testloginindb1 for login testloginindb1
+GO
+
+create user userof_testloginwithsecurityadmin2 for login testloginwithsecurityadmin2
+GO
+
+create login testloginwithotherdefdb with password = '12345678', default_database = sp_helplogins_db1
+GO
+
+create user u_testloginwithotherdefdb for login testloginwithotherdefdb
+GO
+
+use master;
+GO
+
+-- create login and user with special chars
+create login [sp_help@logins$with%sp*chars] with password = '12345678';
+create user [userof@sp$chars*logins] for login [sp_help@logins$with%sp*chars]
+GO
+
+-- creating login and user of longer lengths
+declare @loginname sys.sysname = cast(repeat('a', 63) as sysname);
+declare @username sys.sysname = cast(repeat('b', 63) as sysname);
+declare @pass varchar(10) = '12345678';
+declare @createloginstmt varchar(max) = 'CREATE LOGIN [' + @loginName + '] WITH PASSWORD = ''' + @pass + '''';
+declare @createuserstmt varchar(max) = 'CREATE USER [' + @username + '] FOR LOGIN [' + @loginname + ']'
+exec (@createloginstmt)
+exec (@createuserstmt)
+GO
+
+-- create a windows login and user
+create login [helplogins\win] from windows;
+create user sp_helplogins_vu_windows_user for login [helplogins\win]
 GO

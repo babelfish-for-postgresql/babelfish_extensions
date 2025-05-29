@@ -1,54 +1,40 @@
 -- tsql
+-------- alter all logins password for dnr and upgrade
+alter login sp_helplogins_testlogin with password = '12345678'
+GO
 
--- creating logins in verify because instance level dump/restore does not migrate logins
-create login testloginwithsecurityadmin with password = '12345678'
-create user userof_testloginwithsecurityadmin for login testloginwithsecurityadmin
+alter login testloginwithsecurityadmin with password = '12345678'
+GO
+
+alter login testloginwithsecurityadmin2 with password = '12345678'
+GO
+
+alter login testloginwithotherdefdb with password = '12345678'
+GO
+
+alter login testloginwithoutusers with password = '12345678'
+GO
+
+alter login [sp_help@logins$with%sp*chars] with password = '12345678'
+GO
+
+alter login testloginindb1 with password = '12345678'
+GO
+
+-------- alter roles and add users and logins 
+alter role db_securityadmin add member userof_sp_helplogins_testlogin
 GO
 
 alter server role securityadmin add member testloginwithsecurityadmin
 GO
 
--- create another user for login testloginwithsecurityadmin in sp_helplogins_db1
-use sp_helplogins_db1
-GO
-create user userof_testloginwithsecurityadmin_indb1 for login testloginwithsecurityadmin
-GO
-
-use master
-GO
-
--- create a login which does not have any users
-create login testloginwithoutusers with password = '12345678'
-GO
-
--- create a login which is a member of securityadmin server role
--- and has a user with db_securityadmin role in sp_helplogins_db1
-create login testloginwithsecurityadmin2 with password = '12345678'
-GO
-
 alter server role securityadmin add member testloginwithsecurityadmin2
 GO
 
--- create a login and a user in sp_helplogins_db1
-create login testloginindb1 with password = '12345678'
-GO
-
 use sp_helplogins_db1
 GO
 
-create user userof_testloginindb1 for login testloginindb1
-GO
-
-create user userof_testloginwithsecurityadmin2 for login testloginwithsecurityadmin2
-GO
-
 alter role db_securityadmin add member userof_testloginwithsecurityadmin2
-GO
-
-create login testloginwithotherdefdb with password = '12345678', default_database = sp_helplogins_db1
-GO
-
-create user u_testloginwithotherdefdb for login testloginwithotherdefdb
 GO
 
 -- create database role
@@ -58,29 +44,6 @@ GO
 
 -- add user to a fixed db role
 alter role db_datareader add member u_testloginwithotherdefdb
-GO
-
-use master;
-GO
-
--- create login and user with special chars
-create login [sp_help@logins$with%sp*chars] with password = '12345678';
-create user [userof@sp$chars*logins] for login [sp_help@logins$with%sp*chars]
-GO
-
--- creating login and user of longer lengths
-declare @loginname sys.sysname = cast(repeat('a', 63) as sysname);
-declare @username sys.sysname = cast(repeat('b', 63) as sysname);
-declare @pass varchar(10) = '12345678';
-declare @createloginstmt varchar(max) = 'CREATE LOGIN [' + @loginName + '] WITH PASSWORD = ''' + @pass + '''';
-declare @createuserstmt varchar(max) = 'CREATE USER [' + @username + '] FOR LOGIN [' + @loginname + ']'
-exec (@createloginstmt)
-exec (@createuserstmt)
-GO
-
--- create a windows login and user
-create login [helplogins\win] from windows;
-create user sp_helplogins_vu_windows_user for login [helplogins\win]
 GO
 
 -- change owner of sp_helplogins_db2 to sp_help@logins$with%sp*chars
