@@ -1,6 +1,7 @@
 -- tsql
 
--- creating logins because instance level dump/restore does not migrate logins
+
+-- creating logins in verify because instance level dump/restore does not migrate logins
 -- create a login with user in master with securityadmin server role
 -- create login with user in master with db_securityadmin role
 create login sp_helplogins_testlogin with password = '12345678'
@@ -61,13 +62,56 @@ GO
 create user u_testloginwithotherdefdb for login testloginwithotherdefdb
 GO
 
+-- create database role
+create role sp_helplogins_role;
+alter role sp_helplogins_role add member userof_testloginwithsecurityadmin2
+GO
+
+-- add user to a fixed db role
+alter role db_datareader add member u_testloginwithotherdefdb
+GO
+
+use master;
+GO
+
+-- create login and user with special chars
+create login [sp_help@logins$with%sp*chars] with password = '12345678';
+create user [userof@sp$chars*logins] for login [sp_help@logins$with%sp*chars]
+GO
+
+-- creating login and user of longer lengths
+declare @loginname sys.sysname = cast(repeat('a', 63) as sysname);
+declare @username sys.sysname = cast(repeat('b', 63) as sysname);
+declare @pass varchar(10) = '12345678';
+declare @createloginstmt varchar(max) = 'CREATE LOGIN [' + @loginName + '] WITH PASSWORD = ''' + @pass + '''';
+declare @createuserstmt varchar(max) = 'CREATE USER [' + @username + '] FOR LOGIN [' + @loginname + ']'
+exec (@createloginstmt)
+exec (@createuserstmt)
+GO
+
+-- create a windows login and user
+create login [helplogins\win] from windows;
+create user sp_helplogins_vu_windows_user for login [helplogins\win]
+GO
+
+-- change owner of sp_helplogins_db2 to sp_help@logins$with%sp*chars
+use sp_helplogins_db2
+GO
+EXEC sp_changedbowner 'sp_help@logins$with%sp*chars'
+GO
+use master
+GO
+
 -- tsql user=jdbc_user password=12345678
 -- ignore_columns 2
 EXEC sp_helplogins
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#English#!#YES#!#NO
+helplogins\win#!#master#!#English#!#YES#!#NO
 jdbc_user#!#master#!#English#!#YES#!#NO
+sp_help@logins$with%sp*chars#!#master#!#English#!#YES#!#NO
 sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
 testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES#!#NO
@@ -78,6 +122,7 @@ testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb#!#User
 jdbc_user#!#master#!#db_owner#!#Member of
 jdbc_user#!#master#!#dbo#!#User
 jdbc_user#!#msdb#!#db_owner#!#Member of
@@ -86,14 +131,20 @@ jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
 jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
 jdbc_user#!#tempdb#!#db_owner#!#Member of
 jdbc_user#!#tempdb#!#dbo#!#User
+sp_help@logins$with%sp*chars#!#master#!#userof@sp$chars*logins#!#User
+sp_help@logins$with%sp*chars#!#sp_helplogins_db2#!#db_owner#!#Member of
+sp_help@logins$with%sp*chars#!#sp_helplogins_db2#!#dbo#!#User
 sp_helplogins_testlogin#!#master#!#db_securityadmin#!#Member of
 sp_helplogins_testlogin#!#master#!#userof_sp_helplogins_testlogin#!#User
 testloginindb1#!#sp_helplogins_db1#!#userof_testloginindb1#!#User
+testloginwithotherdefdb#!#sp_helplogins_db1#!#db_datareader#!#Member of
 testloginwithotherdefdb#!#sp_helplogins_db1#!#u_testloginwithotherdefdb#!#User
 testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
 testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#sp_helplogins_role#!#Member of
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
+win@HELPLOGINS#!#master#!#sp_helplogins_vu_windows_user#!#User
 ~~END~~
 
 
@@ -112,7 +163,10 @@ EXEC sp_helplogins
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#English#!#YES#!#NO
+helplogins\win#!#master#!#English#!#YES#!#NO
 jdbc_user#!#master#!#English#!#YES#!#NO
+sp_help@logins$with%sp*chars#!#master#!#English#!#YES#!#NO
 sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
 testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES#!#NO
@@ -142,7 +196,10 @@ EXEC sp_helplogins
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#English#!#YES#!#NO
+helplogins\win#!#master#!#English#!#YES#!#NO
 jdbc_user#!#master#!#English#!#YES#!#NO
+sp_help@logins$with%sp*chars#!#master#!#English#!#YES#!#NO
 sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
 testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES#!#NO
@@ -165,6 +222,7 @@ testloginindb1#!#sp_helplogins_db1#!#userof_testloginindb1#!#User
 testloginwithotherdefdb#!#sp_helplogins_db1#!#u_testloginwithotherdefdb#!#User
 testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#sp_helplogins_role#!#Member of
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
 ~~END~~
 
@@ -232,6 +290,7 @@ testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#sp_helplogins_role#!#Member of
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
 ~~END~~
 
@@ -247,6 +306,7 @@ testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#sp_helplogins_role#!#Member of
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
 ~~END~~
 
@@ -260,6 +320,22 @@ varchar#!#varchar#!#varchar#!#varchar#!#varchar
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+-- ignore_columns 2
+EXEC sp_helplogins 'sp_help@logins$with%sp*chars'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+sp_help@logins$with%sp*chars#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+sp_help@logins$with%sp*chars#!#master#!#userof@sp$chars*logins#!#User
+sp_help@logins$with%sp*chars#!#sp_helplogins_db2#!#db_owner#!#Member of
+sp_help@logins$with%sp*chars#!#sp_helplogins_db2#!#dbo#!#User
 ~~END~~
 
 

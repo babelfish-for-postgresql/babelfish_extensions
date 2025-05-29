@@ -1,3 +1,6 @@
 -- create a dummy db
 create database sp_helplogins_db1
 GO
+
+create database sp_helplogins_db2
+GO

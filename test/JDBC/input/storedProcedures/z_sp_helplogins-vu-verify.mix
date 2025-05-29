@@ -1,7 +1,8 @@
 -- tsql
--- creating logins because instance level dump/restore does not migrate logins
--- create a login with user in master with securityadmin server role
+-- creating logins in verify because instance level dump/restore does not migrate logins
 
+
+-- create a login with user in master with securityadmin server role
 -- create login with user in master with db_securityadmin role
 create login sp_helplogins_testlogin with password = '12345678'
 create user userof_sp_helplogins_testlogin for login sp_helplogins_testlogin
@@ -61,6 +62,46 @@ GO
 create user u_testloginwithotherdefdb for login testloginwithotherdefdb
 GO
 
+-- create database role
+create role sp_helplogins_role;
+alter role sp_helplogins_role add member userof_testloginwithsecurityadmin2
+GO
+
+-- add user to a fixed db role
+alter role db_datareader add member u_testloginwithotherdefdb
+GO
+
+use master;
+GO
+
+-- create login and user with special chars
+create login [sp_help@logins$with%sp*chars] with password = '12345678';
+create user [userof@sp$chars*logins] for login [sp_help@logins$with%sp*chars]
+GO
+
+-- creating login and user of longer lengths
+declare @loginname sys.sysname = cast(repeat('a', 63) as sysname);
+declare @username sys.sysname = cast(repeat('b', 63) as sysname);
+declare @pass varchar(10) = '12345678';
+declare @createloginstmt varchar(max) = 'CREATE LOGIN [' + @loginName + '] WITH PASSWORD = ''' + @pass + '''';
+declare @createuserstmt varchar(max) = 'CREATE USER [' + @username + '] FOR LOGIN [' + @loginname + ']'
+exec (@createloginstmt)
+exec (@createuserstmt)
+GO
+
+-- create a windows login and user
+create login [helplogins\win] from windows;
+create user sp_helplogins_vu_windows_user for login [helplogins\win]
+GO
+
+-- change owner of sp_helplogins_db2 to sp_help@logins$with%sp*chars
+use sp_helplogins_db2
+GO
+EXEC sp_changedbowner 'sp_help@logins$with%sp*chars'
+GO
+use master
+GO
+
 -- tsql user=jdbc_user password=12345678
 -- ignore_columns 2
 EXEC sp_helplogins
@@ -104,6 +145,10 @@ GO
 
 -- ignore_columns 2
 EXEC sp_helplogins ' testloginwithsecurityadmin2 '
+GO
+
+-- ignore_columns 2
+EXEC sp_helplogins 'sp_help@logins$with%sp*chars'
 GO
 
 -- ignore_columns 2
