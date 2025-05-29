@@ -308,5 +308,3 @@ float#!#real#!#money#!#smallmoney
 cursor#!#close
 ~~SUCCESS~~
 DROP TABLE test_cursor_prep_exec_fetch_next
-
-

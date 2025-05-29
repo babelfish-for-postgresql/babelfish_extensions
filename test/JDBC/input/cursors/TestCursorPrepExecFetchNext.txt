@@ -100,5 +100,3 @@ cursor#!#fetch#!#next
 #cursor#!#fetch#!#next
 cursor#!#close
 DROP TABLE test_cursor_prep_exec_fetch_next
-
-

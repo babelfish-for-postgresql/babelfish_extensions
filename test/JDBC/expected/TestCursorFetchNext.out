@@ -94,7 +94,6 @@ int#!#smallint#!#bigint
 
 cursor#!#close
 ~~SUCCESS~~
-
 DROP TABLE test_cursors_fetch_next
 
 CREATE TABLE test_cursors_fetch_next(a CHAR(30), b VARCHAR(30), c NCHAR(30), d NVARCHAR(30));
