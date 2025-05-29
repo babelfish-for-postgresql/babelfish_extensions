@@ -4,3 +4,12 @@ GO
 
 create database sp_helplogins_db2
 GO
+
+-- create a login with user in master with securityadmin server role
+-- create login with user in master with db_securityadmin role
+create login sp_helplogins_testlogin with password = '12345678'
+create user userof_sp_helplogins_testlogin for login sp_helplogins_testlogin
+GO
+
+alter role db_securityadmin add member userof_sp_helplogins_testlogin
+GO
