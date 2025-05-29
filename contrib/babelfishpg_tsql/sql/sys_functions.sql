@@ -109,7 +109,7 @@ $BODY$
 LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
 
 -- helper functions for XML VALUE(xpath)
-CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(TEXT, ANYELEMENT)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(TEXT, ANYELEMENT, TEXT)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
@@ -129,6 +129,10 @@ BEGIN
 
     IF (arg_datatype != 'xml') THEN
         RAISE EXCEPTION 'Cannot call methods on %.', arg_datatype;
+    END IF;
+
+    IF ($3 IN ('xml', 'image', 'text', 'ntext', 'sql_variant')) THEN
+        RAISE EXCEPTION 'The data type ''%'' used in the VALUE method is invalid.', $3;
     END IF;
 
     pltsql_quoted_identifier := current_setting('babelfishpg_tsql.quoted_identifier');

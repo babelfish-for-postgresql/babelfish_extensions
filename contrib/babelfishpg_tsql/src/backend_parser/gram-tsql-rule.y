@@ -2122,8 +2122,11 @@ func_expr_common_subexpr:
 			| TSQL_XML_VALUE '(' c_expr ',' Typename ',' c_expr ')'
 				{
 					Node       *helperFuncCall;
+					List       *args;
+
+					args = list_make3($3, $7, makeStringConst(TypeNameToString($5), @5));
 					helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("bbf_xmlvalue"), 
-														    list_make2($3, $7),
+														    args, 
 														    COERCE_EXPLICIT_CALL,
 														    @1);
 
