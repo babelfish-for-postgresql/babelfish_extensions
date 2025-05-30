@@ -290,6 +290,10 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 				(context != DATE_TIME && (str[i] == '.' || str[i] == '/' 
 				|| str[i] == '+' || str[i] == '-')))
 		{
+			/* For datetimeoffset, preserve space before timezone indicator (+/-) */
+			if (context == DATE_TIME_OFFSET && (str[i] == '+' || str[i] == '-') && num_colons > 0)
+				result[j++] = ' ';
+
 			result[j] = str[i];
 			j++;
 		}
