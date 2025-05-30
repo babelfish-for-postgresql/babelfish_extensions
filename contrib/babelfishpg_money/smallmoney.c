@@ -33,30 +33,161 @@ PG_FUNCTION_INFO_V1(smallmoneyint2mi);
 PG_FUNCTION_INFO_V1(smallmoneyint2mul);
 PG_FUNCTION_INFO_V1(smallmoneyint2div);
 
+PG_FUNCTION_INFO_V1(smallmoneypl);
+PG_FUNCTION_INFO_V1(smallmoneymi);
+PG_FUNCTION_INFO_V1(smallmoneymul);
+PG_FUNCTION_INFO_V1(smallmoneydiv);
+
 PG_FUNCTION_INFO_V1(int8smallmoneypl);
 PG_FUNCTION_INFO_V1(int8smallmoneymi);
 PG_FUNCTION_INFO_V1(int8smallmoneymul);
-PG_FUNCTION_INFO_V1(int8smallmoneydiv);
 PG_FUNCTION_INFO_V1(int4smallmoneypl);
 PG_FUNCTION_INFO_V1(int4smallmoneymi);
 PG_FUNCTION_INFO_V1(int4smallmoneymul);
-PG_FUNCTION_INFO_V1(int4smallmoneydiv);
 PG_FUNCTION_INFO_V1(int2smallmoneypl);
 PG_FUNCTION_INFO_V1(int2smallmoneymi);
 PG_FUNCTION_INFO_V1(int2smallmoneymul);
-PG_FUNCTION_INFO_V1(int2smallmoneydiv);
+
+PG_FUNCTION_INFO_V1(smallmoney_ceiling);
+PG_FUNCTION_INFO_V1(smallmoney_floor);
 
 /*----------------------------------------------------------
  *	Arithmetic operators on smallmoney.
  *---------------------------------------------------------*/
 
 Datum
+smallmoneypl(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	int64		result;
+
+#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
+	if (__builtin_add_overflow(arg1, arg2, &result))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+#else
+
+    result = arg1 + arg2;
+
+	/*
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
+	 */
+	if (result != (int32) result)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+#endif							
+	PG_RETURN_INT32(result);
+}
+
+Datum
+smallmoneymi(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	int64		result;
+
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_sub_overflow(arg1, arg2, &result))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+#else
+
+    result = arg1 - arg2;
+
+	/*
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
+	 */
+	if (result != (int32) result)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+#endif							
+	PG_RETURN_INT32(result);
+}
+
+Datum
+smallmoneymul(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	int64		result;
+
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_mul_overflow(arg1, arg2, &result))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+#else
+
+    /*
+	 * We need to promote this to 64bit as we may overflow int32 here.
+	 * Remember that arg2 is the number multiplied by FIXEDDECIMAL_MULTIPLIER,
+	 * we must divide the result by this to get the correct result.
+	 */
+	result = (int64) arg1 * arg2 / FIXEDDECIMAL_MULTIPLIER;
+
+	/*
+	 * Overflow check.  If the 64 bit int result of the multiplication
+     * cannot be converted back to a 32 bit int, then we know that the 
+     * value overflows
+	 */
+	if (result != (int32) result)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("smallmoney out of range")));
+#endif							
+	PG_RETURN_INT32(result);
+}
+
+Datum
+smallmoneydiv(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	int64		result;
+
+    if (arg2 == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
+    /*
+	 * this can't overflow, but we can end up with a number that's too big for
+	 * int32
+	 */
+    result = (int64) arg1 * FIXEDDECIMAL_MULTIPLIER / arg2;
+
+    /*
+	 * Overflow check.  If the 64 bit int result of the multiplication
+     * cannot be converted back to a 32 bit int, then we know that the 
+     * value overflows
+	 */
+	if (result != (int32) result)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+
+	PG_RETURN_INT32(result);
+}
+
+Datum
 smallmoneyint8pl(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
-    int64       arg2 = PG_GETARG_INT64(1);
-	int64		adder = arg2 * FIXEDDECIMAL_MULTIPLIER;
-	int32		result;
+	int128		adder = (int128) PG_GETARG_INT64(1) * FIXEDDECIMAL_MULTIPLIER;
+	int128		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
 	if (__builtin_add_overflow(arg1, adder, &result))
@@ -66,23 +197,22 @@ smallmoneyint8pl(PG_FUNCTION_ARGS)
 #else
 
     /*
-	 * Overflow check. If the adder argument (before adjusting place by multiplier)
-     * is not the same as after adjustment means that the adder itself has 
-     * overflown. Hence, we should report overflow.
+	 * Overflow check. If the adder cannot be fit into 
+     * 64 bit, then the result will definitely overflow
 	 */
-	if (!SAMESIGN(arg2, adder))
-		ereport(ERROR,
+    if (adder != (int64) adder)
+        ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 
 	result = arg1 + adder;
 
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum had
-	 * better be that sign too.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (SAMESIGN(arg1, adder) && !SAMESIGN(result, arg1))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
@@ -94,9 +224,8 @@ Datum
 smallmoneyint8mi(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
-    int64       arg2 = PG_GETARG_INT64(1);
-	int64		subtractor = arg2 * FIXEDDECIMAL_MULTIPLIER;
-	int32		result;
+	int128		subtractor = (int128) PG_GETARG_INT64(1) * FIXEDDECIMAL_MULTIPLIER;
+	int128		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
 	if (__builtin_add_overflow(arg1, adder, &result))
@@ -106,23 +235,22 @@ smallmoneyint8mi(PG_FUNCTION_ARGS)
 #else
 
     /*
-	 * Overflow check. If the subtractor argument (before adjusting place by multiplier)
-     * is not the same as after adjustment means that the subtractor itself has 
-     * overflown. Hence, we should report overflow.
+	 * Overflow check. If the subtractor cannot be fit into 
+     * 64 bit, then the result will definitely overflow
 	 */
-	if (!SAMESIGN(arg2, subtractor))
-		ereport(ERROR,
+    if (subtractor != (int64) subtractor)
+        ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 
 	result = arg1 - subtractor;
 
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then the
-	 * result should be of the same sign as the first input.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (!SAMESIGN(arg1, subtractor) && !SAMESIGN(result, arg1))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
@@ -137,23 +265,23 @@ smallmoneyint8mul(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 	int128		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_mul_overflow(arg1, arg2, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
-	result = arg1 * arg2;
+	result = (int128) arg1 * arg2;
 
 	/*
 	 * Overflow check.  If the 128 bit int result of the multiplication
      * cannot be converted back to a 32 bit int, then we know that the 
      * value overflows
 	 */
-	if (result != (int32)result)
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				errmsg("smallmoney out of range")));
 #endif							
 	PG_RETURN_INT32(result);
 }
@@ -188,14 +316,14 @@ smallmoneyint8div(PG_FUNCTION_ARGS)
 		if (__builtin_sub_overflow(zero, arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("fixeddecimal out of range")));
+					 errmsg("smallmoney out of range")));
 #else
 		result = -arg1;
 		/* overflow check (needed for INT64_MIN) */
 		if (arg1 != 0 && SAMESIGN(result, arg1))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("fixeddecimal out of range")));
+					errmsg("smallmoney out of range")));
 #endif							/* HAVE_BUILTIN_OVERFLOW */
 
 		PG_RETURN_INT32(result);
@@ -211,8 +339,8 @@ Datum
 smallmoneyint4pl(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
-	int64		adder = PG_GETARG_INT32(1) * FIXEDDECIMAL_MULTIPLIER;
-	int32		result;
+	int64		adder = (int64) PG_GETARG_INT32(1) * FIXEDDECIMAL_MULTIPLIER;
+	int64		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
 	if (__builtin_add_overflow(arg1, adder, &result))
@@ -220,17 +348,27 @@ smallmoneyint4pl(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
-	result = arg1 + adder;
 
-	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum had
-	 * better be that sign too.
+    /*
+	 * Overflow check. If the adder cannot be fit into 
+     * 32 bit, then the result will definitely overflow
 	 */
-	if (SAMESIGN(arg1, adder) && !SAMESIGN(result, arg1))
-		ereport(ERROR,
+    if (adder != (int32) adder)
+        ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
+
+    result = arg1 + adder;
+
+	/*
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
+	 */
+	if (result != (int32) result)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("smallmoney out of range")));
 #endif							
 	PG_RETURN_INT32(result);
 }
@@ -239,26 +377,36 @@ Datum
 smallmoneyint4mi(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
-	int64		subtractor = PG_GETARG_INT32(1) * FIXEDDECIMAL_MULTIPLIER;
-	int32		result;
+	int64		subtractor = (int64) PG_GETARG_INT32(1) * FIXEDDECIMAL_MULTIPLIER;
+	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_sub_overflow(arg1, subtractor, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
+
+    /*
+	 * Overflow check. If the subtractor cannot be fit into 
+     * 32 bit, then the result will definitely overflow
+	 */
+    if (subtractor != (int32) subtractor)
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+
 	result = arg1 - subtractor;
 
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then the
-	 * result should be of the same sign as the first input.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (!SAMESIGN(arg1, subtractor) && !SAMESIGN(result, arg1))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				errmsg("smallmoney out of range")));
 #endif							
 	PG_RETURN_INT32(result);
 }
@@ -270,23 +418,23 @@ smallmoneyint4mul(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_mul_overflow(arg1, arg2, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
-	result = arg1 * arg2;
+	result = (int64) arg1 * arg2;
 
 	/*
 	 * Overflow check.  If the 64 bit int result of the multiplication
      * cannot be converted back to a 32 bit int, then we know that the 
      * value overflows
 	 */
-	if (result != (int32)result)
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				errmsg("smallmoney out of range")));
 #endif							
 	PG_RETURN_INT32(result);
 }
@@ -302,7 +450,7 @@ smallmoneyint4div(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
+				errmsg("division by zero")));
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
@@ -321,14 +469,14 @@ smallmoneyint4div(PG_FUNCTION_ARGS)
 		if (__builtin_sub_overflow(zero, arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("fixeddecimal out of range")));
+					 errmsg("smallmoney out of range")));
 #else
 		result = -arg1;
 		/* overflow check (needed for INT64_MIN) */
 		if (arg1 != 0 && SAMESIGN(result, arg1))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("fixeddecimal out of range")));
+					errmsg("smallmoney out of range")));
 #endif							/* HAVE_BUILTIN_OVERFLOW */
 
 		PG_RETURN_INT32(result);
@@ -344,8 +492,8 @@ Datum
 smallmoneyint2pl(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
-	int64		adder = PG_GETARG_INT16(1) * FIXEDDECIMAL_MULTIPLIER;
-	int32		result;
+	int32		adder = (int32) PG_GETARG_INT16(1) * FIXEDDECIMAL_MULTIPLIER;
+	int64		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
 	if (__builtin_add_overflow(arg1, adder, &result))
@@ -353,17 +501,18 @@ smallmoneyint2pl(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
+
 	result = arg1 + adder;
 
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum had
-	 * better be that sign too.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (SAMESIGN(arg1, adder) && !SAMESIGN(result, arg1))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				errmsg("smallmoney out of range")));
 #endif							
 	PG_RETURN_INT32(result);
 }
@@ -372,11 +521,11 @@ Datum
 smallmoneyint2mi(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
-	int32		subtractor = PG_GETARG_INT16(1) * FIXEDDECIMAL_MULTIPLIER;
-	int32		result;
+	int32		subtractor = (int32) PG_GETARG_INT16(1) * FIXEDDECIMAL_MULTIPLIER;
+	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_sub_overflow(arg1, subtractor, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
@@ -384,14 +533,14 @@ smallmoneyint2mi(PG_FUNCTION_ARGS)
 	result = arg1 - subtractor;
 
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then the
-	 * result should be of the same sign as the first input.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (!SAMESIGN(arg1, subtractor) && !SAMESIGN(result, arg1))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				errmsg("smallmoney out of range")));
 #endif							
 	PG_RETURN_INT32(result);
 }
@@ -403,23 +552,23 @@ smallmoneyint2mul(PG_FUNCTION_ARGS)
 	int16		arg2 = PG_GETARG_INT16(1);
 	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_mul_overflow(arg1, arg2, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
-	result = arg1 * arg2;
+	result = (int64) arg1 * arg2;
 
 	/*
 	 * Overflow check.  If the 64 bit int result of the multiplication
      * cannot be converted back to a 32 bit int, then we know that the 
      * value overflows
 	 */
-	if (result != (int32)result)
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				errmsg("smallmoney out of range")));
 #endif							
 	PG_RETURN_INT32(result);
 }
@@ -435,7 +584,7 @@ smallmoneyint2div(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
+				errmsg("division by zero")));
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
@@ -454,14 +603,14 @@ smallmoneyint2div(PG_FUNCTION_ARGS)
 		if (__builtin_sub_overflow(zero, arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("fixeddecimal out of range")));
+					 errmsg("smallmoney out of range")));
 #else
 		result = -arg1;
 		/* overflow check (needed for INT64_MIN) */
 		if (arg1 != 0 && SAMESIGN(result, arg1))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("fixeddecimal out of range")));
+					errmsg("smallmoney out of range")));
 #endif							/* HAVE_BUILTIN_OVERFLOW */
 
 		PG_RETURN_INT32(result);
@@ -476,9 +625,9 @@ smallmoneyint2div(PG_FUNCTION_ARGS)
 Datum
 int2smallmoneypl(PG_FUNCTION_ARGS)
 {
-	int32		adder = PG_GETARG_INT16(0) * FIXEDDECIMAL_MULTIPLIER;
+	int32		adder = (int32) PG_GETARG_INT16(0) * FIXEDDECIMAL_MULTIPLIER;
     int32		arg2 = PG_GETARG_INT32(1);
-	int32		result;
+	int64		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
 	if (__builtin_add_overflow(arg1, adder, &result))
@@ -489,14 +638,14 @@ int2smallmoneypl(PG_FUNCTION_ARGS)
 	result = adder + arg2;
 
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum had
-	 * better be that sign too.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (SAMESIGN(adder, arg2) && !SAMESIGN(result, adder))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				errmsg("smallmoney out of range")));
 #endif							
 	PG_RETURN_INT32(result);
 }
@@ -504,12 +653,12 @@ int2smallmoneypl(PG_FUNCTION_ARGS)
 Datum
 int2smallmoneymi(PG_FUNCTION_ARGS)
 {
-	int32		subtractor = PG_GETARG_INT16(0) * FIXEDDECIMAL_MULTIPLIER;
+	int32		subtractor = (int32) PG_GETARG_INT16(0) * FIXEDDECIMAL_MULTIPLIER;
     int32		arg2 = PG_GETARG_INT32(1);
-	int32		result;
+	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_sub_overflow(arg2, subtractor, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
@@ -517,14 +666,14 @@ int2smallmoneymi(PG_FUNCTION_ARGS)
 	result = subtractor - arg2;
 
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then the
-	 * result should be of the same sign as the first input.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (!SAMESIGN(subtractor, arg2) && !SAMESIGN(result, subtractor))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				errmsg("smallmoney out of range")));
 #endif							
 	PG_RETURN_INT32(result);
 }
@@ -536,20 +685,20 @@ int2smallmoneymul(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_mul_overflow(arg1, arg2, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
-	result = arg1 * arg2;
+	result = (int64) arg1 * arg2;
 
 	/*
 	 * Overflow check.  If the 64 bit int result of the multiplication
      * cannot be converted back to a 32 bit int, then we know that the 
      * value overflows
 	 */
-	if (result != (int32)result)
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
@@ -558,33 +707,11 @@ int2smallmoneymul(PG_FUNCTION_ARGS)
 }
 
 Datum
-int2smallmoneydiv(PG_FUNCTION_ARGS)
-{
-	int32		arg1 = PG_GETARG_INT16(0) * FIXEDDECIMAL_MULTIPLIER;
-	int32		arg2 = PG_GETARG_INT32(1);
-	float4		result;
-
-    if (arg2 == 0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
-    /* No overflow is possible */
-    result = (float4) (arg1 / arg2);
-
-	PG_RETURN_FLOAT4(result);
-}
-
-Datum
 int4smallmoneypl(PG_FUNCTION_ARGS)
 {
-	int64		adder = PG_GETARG_INT32(0) * FIXEDDECIMAL_MULTIPLIER;
+	int64		adder = (int64) PG_GETARG_INT32(0) * FIXEDDECIMAL_MULTIPLIER;
     int32		arg2 = PG_GETARG_INT32(1);
-	int32		result;
+	int64		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
 	if (__builtin_add_overflow(arg1, adder, &result))
@@ -592,17 +719,27 @@ int4smallmoneypl(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
+
+    /*
+	 * Overflow check. If the adder cannot be fit into 
+     * 32 bit, then the result will definitely overflow
+	 */
+    if (adder != (int32) adder)
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+
 	result = adder + arg2;
 
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum had
-	 * better be that sign too.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (SAMESIGN(adder, arg2) && !SAMESIGN(result, adder))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				errmsg("smallmoney out of range")));
 #endif							
 	PG_RETURN_INT32(result);
 }
@@ -610,24 +747,34 @@ int4smallmoneypl(PG_FUNCTION_ARGS)
 Datum
 int4smallmoneymi(PG_FUNCTION_ARGS)
 {
-	int64		subtractor = PG_GETARG_INT32(0) * FIXEDDECIMAL_MULTIPLIER;
+	int64		subtractor = (int64) PG_GETARG_INT32(0) * FIXEDDECIMAL_MULTIPLIER;
     int32		arg2 = PG_GETARG_INT32(1);
-	int32		result;
+	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_sub_overflow(arg2, subtractor, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
+
+    /*
+	 * Overflow check. If the subtractor cannot be fit into 
+     * 32 bit, then the result will definitely overflow
+	 */
+    if (subtractor != (int32) subtractor)
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+
 	result = subtractor - arg2;
 
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then the
-	 * result should be of the same sign as the first input.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (!SAMESIGN(subtractor, arg2) && !SAMESIGN(result, subtractor))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
@@ -642,20 +789,20 @@ int4smallmoneymul(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_mul_overflow(arg1, arg2, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
-	result = arg1 * arg2;
+	result = (int64) arg1 * arg2;
 
 	/*
 	 * Overflow check.  If the 64 bit int result of the multiplication
      * cannot be converted back to a 32 bit int, then we know that the 
      * value overflows
 	 */
-	if (result != (int32)result)
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
@@ -664,34 +811,11 @@ int4smallmoneymul(PG_FUNCTION_ARGS)
 }
 
 Datum
-int4smallmoneydiv(PG_FUNCTION_ARGS)
-{
-	int64		arg1 = PG_GETARG_INT32(0) * FIXEDDECIMAL_MULTIPLIER;
-	int32		arg2 = PG_GETARG_INT32(1);
-	float4		result;
-
-    if (arg2 == 0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
-    /* No overflow is possible */
-    result = (float4) (arg1 / arg2);
-
-	PG_RETURN_FLOAT4(result);
-}
-
-Datum
 int8smallmoneypl(PG_FUNCTION_ARGS)
 {
-    int64       arg1 = PG_GETARG_INT64(0);
-	int64		adder = arg1 * FIXEDDECIMAL_MULTIPLIER;
+	int128		adder = (int128) PG_GETARG_INT64(0) * FIXEDDECIMAL_MULTIPLIER;
     int32		arg2 = PG_GETARG_INT32(1);
-	int32		result;
+	int128		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
 	if (__builtin_add_overflow(arg1, adder, &result))
@@ -701,23 +825,22 @@ int8smallmoneypl(PG_FUNCTION_ARGS)
 #else
 
     /*
-	 * Overflow check. If the adder argument (before adjusting place by multiplier)
-     * is not the same as after adjustment means that the adder itself has 
-     * overflown. Hence, we should report overflow.
+	 * Overflow check. If the adder cannot be fit into 
+     * 64 bit, then the result will definitely overflow
 	 */
-	if (!SAMESIGN(arg1, adder))
-		ereport(ERROR,
+    if (adder != (int64) adder)
+        ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 
-	result = adder + arg2;
+    result = adder + arg2;
 
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum had
-	 * better be that sign too.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (SAMESIGN(adder, arg2) && !SAMESIGN(result, adder))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
@@ -728,36 +851,34 @@ int8smallmoneypl(PG_FUNCTION_ARGS)
 Datum
 int8smallmoneymi(PG_FUNCTION_ARGS)
 {
-    int64		arg1 = PG_GETARG_INT64(0);
-	int64		subtractor = arg1 * FIXEDDECIMAL_MULTIPLIER;
+	int128		subtractor = (int128) PG_GETARG_INT64(0) * FIXEDDECIMAL_MULTIPLIER;
     int32		arg2 = PG_GETARG_INT32(1);
-	int32		result;
+	int128		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_sub_overflow(arg2, subtractor, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
 
     /*
-	 * Overflow check. If the subtractor argument (before adjusting place by multiplier)
-     * is not the same as after adjustment means that the subtractor itself has 
-     * overflown. Hence, we should report overflow.
+	 * Overflow check. If the subtractor cannot be fit into 
+     * 64 bit, then the result will definitely overflow
 	 */
-	if (!SAMESIGN(arg1, subtractor))
-		ereport(ERROR,
+    if (subtractor != (int64) subtractor)
+        ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 
 	result = subtractor - arg2;
 
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then the
-	 * result should be of the same sign as the first input.
+	 * Overflow check. If the result cannot be converted back
+     * to a 32 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (!SAMESIGN(subtractor, arg2) && !SAMESIGN(result, subtractor))
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
@@ -772,20 +893,20 @@ int8smallmoneymul(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 	int128		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-	if (__builtin_add_overflow(arg1, adder, &result))
+#ifdef HAVE_BUILTIN_OVERFLOW
+	if (__builtin_mul_overflow(arg1, arg2, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
-	result = arg1 * arg2;
+	result = (int128) arg1 * arg2;
 
 	/*
 	 * Overflow check.  If the 64 bit int result of the multiplication
      * cannot be converted back to a 32 bit int, then we know that the 
      * value overflows
 	 */
-	if (result != (int32)result)
+	if (result != (int32) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
@@ -794,23 +915,35 @@ int8smallmoneymul(PG_FUNCTION_ARGS)
 }
 
 Datum
-int8smallmoneydiv(PG_FUNCTION_ARGS)
+smallmoney_ceiling(PG_FUNCTION_ARGS)
 {
-	int128		arg1 = PG_GETARG_INT64(0) * FIXEDDECIMAL_MULTIPLIER;
-	int32		arg2 = PG_GETARG_INT32(1);
-	float4		result;
+    int32		arg1 = PG_GETARG_INT32(0);
+    int32       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
 
-    if (arg2 == 0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
+    if (arg1 > 0)
+        result += FIXEDDECIMAL_MULTIPLIER;
+    
+    if (result != 0 && !SAMESIGN(arg1, result))
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+    
+    PG_RETURN_INT32(result);
+}
 
-    /* No overflow is possible */
-    result = (float4) (arg1 / arg2);
+Datum
+smallmoney_floor(PG_FUNCTION_ARGS)
+{
+    int32		arg1 = PG_GETARG_INT32(0);
+    int32       result = arg1 + (arg1 % FIXEDDECIMAL_MULTIPLIER);
 
-	PG_RETURN_FLOAT4(result);
+    if (arg1 < 0)
+        result -= FIXEDDECIMAL_MULTIPLIER;
+    
+    if (result != 0 && !SAMESIGN(arg1, result))
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+    
+    PG_RETURN_INT32(result);
 }

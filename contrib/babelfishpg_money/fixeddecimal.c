@@ -203,6 +203,9 @@ PG_FUNCTION_INFO_V1(char_to_fixeddecimal);
 PG_FUNCTION_INFO_V1(int8_to_money);
 PG_FUNCTION_INFO_V1(int8_to_smallmoney);
 
+PG_FUNCTION_INFO_V1(fixeddecimal_ceiling);
+PG_FUNCTION_INFO_V1(fixeddecimal_floor);
+
 
 /* Aggregate Internal State */
 typedef struct FixedDecimalAggState
@@ -3126,4 +3129,41 @@ char_to_fixeddecimal(PG_FUNCTION_ARGS)
 	int64		result = scanfixeddecimal(str, &precision, &scale, &fcinfo);
 
 	PG_RETURN_INT64(result);
+}
+
+/*
+ * Mathematic functions 
+ */
+Datum
+fixeddecimal_ceiling(PG_FUNCTION_ARGS)
+{
+    int64		arg1 = PG_GETARG_INT64(0);
+    int64       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
+
+    if (arg1 > 0)
+        result += FIXEDDECIMAL_MULTIPLIER;
+    
+    if (result != 0 && !SAMESIGN(arg1, result))
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+    
+    PG_RETURN_INT64(result);
+}
+
+Datum
+fixeddecimal_floor(PG_FUNCTION_ARGS)
+{
+    int64		arg1 = PG_GETARG_INT64(0);
+    int64       result = arg1 + (arg1 % FIXEDDECIMAL_MULTIPLIER);
+
+    if (arg1 < 0)
+        result -= FIXEDDECIMAL_MULTIPLIER;
+    
+    if (result != 0 && !SAMESIGN(arg1, result))
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+    
+    PG_RETURN_INT64(result);
 }
