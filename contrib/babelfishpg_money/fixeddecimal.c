@@ -1847,8 +1847,8 @@ Datum
 fixeddecimalint8pl(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
-	int64		adder = PG_GETARG_INT64(1) * FIXEDDECIMAL_MULTIPLIER;
-	int64		result;
+	int128		adder = (int128) PG_GETARG_INT64(1) * FIXEDDECIMAL_MULTIPLIER;
+	int128		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
 	if (__builtin_add_overflow(arg1, adder, &result))
@@ -1856,14 +1856,24 @@ fixeddecimalint8pl(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 #else
-	result = arg1 + adder;
+
+    /*
+	 * Overflow check. If the adder cannot be fit into 
+     * 64 bit, then the result will definitely overflow
+	 */
+    if (adder != (int64) adder)
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("fixeddecimal out of range")));
+
+	result = (int128) arg1 + adder;
 
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum had
-	 * better be that sign too.
+	 * Overflow check. If the result cannot be converted back
+     * to a 64 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (SAMESIGN(arg1, adder) && !SAMESIGN(result, arg1))
+	if (result != (int64) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
@@ -1876,8 +1886,8 @@ Datum
 fixeddecimalint8mi(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
-	int64		subtractor = PG_GETARG_INT64(1) * FIXEDDECIMAL_MULTIPLIER;
-	int64		result;
+	int128		subtractor = (int128) PG_GETARG_INT64(1) * FIXEDDECIMAL_MULTIPLIER;
+	int128		result;
 
 
 #ifdef HAVE_BUILTIN_OVERFLOW
@@ -1886,14 +1896,24 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 #else
-	result = arg1 - subtractor;
+
+    /*
+	 * Overflow check. If the subtractor cannot be fit into 
+     * 64 bit, then the result will definitely overflow
+	 */
+    if (subtractor != (int64) subtractor)
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("fixeddecimal out of range")));
+
+	result = (int128) arg1 - subtractor;
 
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then the
-	 * result should be of the same sign as the first input.
+	 * Overflow check. If the result cannot be converted back
+     * to a 64 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (!SAMESIGN(arg1, subtractor) && !SAMESIGN(result, arg1))
+	if (result != (int64) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
@@ -1984,9 +2004,9 @@ fixeddecimalint8div(PG_FUNCTION_ARGS)
 Datum
 int8fixeddecimalpl(PG_FUNCTION_ARGS)
 {
-	int64		adder = PG_GETARG_INT64(0) * FIXEDDECIMAL_MULTIPLIER;
+	int128		adder = (int128) PG_GETARG_INT64(0) * FIXEDDECIMAL_MULTIPLIER;
 	int64		arg2 = PG_GETARG_INT64(1);
-	int64		result;
+	int128		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
 	if (__builtin_add_overflow(adder, arg2, &result))
@@ -1994,14 +2014,24 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 #else
+
+    /*
+	 * Overflow check. If the adder cannot be fit into 
+     * 64 bit, then the result will definitely overflow
+	 */
+    if (adder != (int64) adder)
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("fixeddecimal out of range")));
+
 	result = adder + arg2;
 
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum had
-	 * better be that sign too.
+	 * Overflow check. If the result cannot be converted back
+     * to a 64 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (SAMESIGN(adder, arg2) && !SAMESIGN(result, adder))
+	if (result != (int64) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
@@ -2013,9 +2043,9 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
 Datum
 int8fixeddecimalmi(PG_FUNCTION_ARGS)
 {
-	int64		subtractor = PG_GETARG_INT64(0) * FIXEDDECIMAL_MULTIPLIER;
+	int128		subtractor = (int128) PG_GETARG_INT64(0) * FIXEDDECIMAL_MULTIPLIER;
 	int64		arg2 = PG_GETARG_INT64(1);
-	int64		result;
+	int128		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
 	if (__builtin_sub_overflow(subtractor, arg2, &result))
@@ -2023,14 +2053,24 @@ int8fixeddecimalmi(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 #else
+
+    /*
+	 * Overflow check. If the subtractor cannot be fit into 
+     * 64 bit, then the result will definitely overflow
+	 */
+    if (subtractor != (int64) subtractor)
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("fixeddecimal out of range")));
+
 	result = subtractor - arg2;
 
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then the
-	 * result should be of the same sign as the first input.
+	 * Overflow check. If the result cannot be converted back
+     * to a 64 bit result, then we can say that there is a 
+     * overflow
 	 */
-	if (!SAMESIGN(subtractor, arg2) && !SAMESIGN(result, subtractor))
+	if (result != (int64) result)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
@@ -3155,7 +3195,7 @@ Datum
 fixeddecimal_floor(PG_FUNCTION_ARGS)
 {
     int64		arg1 = PG_GETARG_INT64(0);
-    int64       result = arg1 + (arg1 % FIXEDDECIMAL_MULTIPLIER);
+    int64       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
 
     if (arg1 < 0)
         result -= FIXEDDECIMAL_MULTIPLIER;

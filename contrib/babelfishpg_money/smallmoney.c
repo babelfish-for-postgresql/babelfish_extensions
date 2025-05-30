@@ -935,7 +935,7 @@ Datum
 smallmoney_floor(PG_FUNCTION_ARGS)
 {
     int32		arg1 = PG_GETARG_INT32(0);
-    int32       result = arg1 + (arg1 % FIXEDDECIMAL_MULTIPLIER);
+    int32       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
 
     if (arg1 < 0)
         result -= FIXEDDECIMAL_MULTIPLIER;
