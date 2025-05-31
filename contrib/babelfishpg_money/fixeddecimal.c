@@ -1862,9 +1862,13 @@ fixeddecimalint8pl(PG_FUNCTION_ARGS)
      * 64 bit, then the result will definitely overflow
 	 */
     if (adder != (int64) adder)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+        PG_RETURN_NULL();
+    }
 
 	result = (int128) arg1 + adder;
 
@@ -1902,9 +1906,13 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
      * 64 bit, then the result will definitely overflow
 	 */
     if (subtractor != (int64) subtractor)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+        PG_RETURN_NULL();
+    }
 
 	result = (int128) arg1 - subtractor;
 
@@ -2032,9 +2040,14 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
      * 64 bit, then the result will definitely overflow
 	 */
     if (adder != (int64) adder)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+        PG_RETURN_NULL();
+    }
+        
 
 	result = adder + arg2;
 
@@ -2071,9 +2084,14 @@ int8fixeddecimalmi(PG_FUNCTION_ARGS)
      * 64 bit, then the result will definitely overflow
 	 */
     if (subtractor != (int64) subtractor)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+        PG_RETURN_NULL();
+    }
+        
 
 	result = subtractor - arg2;
 
