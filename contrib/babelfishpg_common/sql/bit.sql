@@ -504,3 +504,151 @@ WITH FUNCTION sys.varchar2bit(sys.VARCHAR) AS IMPLICIT;
 
 CREATE CAST (bool AS sys.BIT)
 WITHOUT FUNCTION AS IMPLICIT;
+
+CREATE FUNCTION sys.bitsmallmoneypl(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN $2;
+        ELSE 
+            RETURN (SELECT sys.int4smallmoneypl(1, $2));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitsmallmoneymi(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN (SELECT sys.int4smallmoneymi(0, $2));
+        ELSE 
+            RETURN (SELECT sys.int4smallmoneymi(1, $2));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitsmallmoneymul(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN (SELECT sys.int4smallmoneymul(0, $2));
+        ELSE 
+            RETURN (SELECT sys.int4smallmoneymul(1, $2));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitsmallmoneydiv(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN (SELECT sys.int4smallmoneydiv(0, $2));
+        ELSE 
+            RETURN (SELECT sys.int4smallmoneydiv(1, $2));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = bitsmallmoneypl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = bitsmallmoneymi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = bitsmallmoneymul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = bitsmallmoneydiv
+);
+
+CREATE FUNCTION sys.smallmoneybitpl(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN (SELECT sys.smallmoneyint4pl($1, 0));
+        ELSE 
+            RETURN (SELECT sys.smallmoneyint4pl($1, 1));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneybitmi(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN (SELECT sys.smallmoneyint4mi($1, 0));
+        ELSE 
+            RETURN (SELECT sys.smallmoneyint4mi($1, 1));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneybitmul(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN (SELECT sys.smallmoneyint4mul($1, 0));
+        ELSE 
+            RETURN (SELECT sys.smallmoneyint4mul($1, 1));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneybitdiv(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN (SELECT sys.smallmoneyint4div($1, 0));
+        ELSE 
+            RETURN (SELECT sys.smallmoneyint4div($1, 1));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = +,
+    PROCEDURE  = smallmoneybitpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = smallmoneybitmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = *,
+    PROCEDURE  = smallmoneybitmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = smallmoneybitdiv
+);

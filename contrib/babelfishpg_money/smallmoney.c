@@ -41,15 +41,15 @@ PG_FUNCTION_INFO_V1(smallmoneydiv);
 PG_FUNCTION_INFO_V1(int8smallmoneypl);
 PG_FUNCTION_INFO_V1(int8smallmoneymi);
 PG_FUNCTION_INFO_V1(int8smallmoneymul);
+PG_FUNCTION_INFO_V1(int8smallmoneydiv);
 PG_FUNCTION_INFO_V1(int4smallmoneypl);
 PG_FUNCTION_INFO_V1(int4smallmoneymi);
 PG_FUNCTION_INFO_V1(int4smallmoneymul);
+PG_FUNCTION_INFO_V1(int4smallmoneydiv);
 PG_FUNCTION_INFO_V1(int2smallmoneypl);
 PG_FUNCTION_INFO_V1(int2smallmoneymi);
 PG_FUNCTION_INFO_V1(int2smallmoneymul);
 
-PG_FUNCTION_INFO_V1(smallmoney_ceiling);
-PG_FUNCTION_INFO_V1(smallmoney_floor);
 
 /*----------------------------------------------------------
  *	Arithmetic operators on smallmoney.
@@ -69,7 +69,7 @@ smallmoneypl(PG_FUNCTION_ARGS)
 				 errmsg("smallmoney out of range")));
 #else
 
-    result = arg1 + arg2;
+    result = (int64) arg1 + arg2;
 
 	/*
 	 * Overflow check. If the result cannot be converted back
@@ -98,7 +98,7 @@ smallmoneymi(PG_FUNCTION_ARGS)
 				 errmsg("smallmoney out of range")));
 #else
 
-    result = arg1 - arg2;
+    result = (int64) arg1 - arg2;
 
 	/*
 	 * Overflow check. If the result cannot be converted back
@@ -200,10 +200,14 @@ smallmoneyint8pl(PG_FUNCTION_ARGS)
 	 * Overflow check. If the adder cannot be fit into 
      * 64 bit, then the result will definitely overflow
 	 */
-    if (adder != (int64) adder)
+    if (adder != (int64) adder) 
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
 
 	result = arg1 + adder;
 
@@ -239,9 +243,14 @@ smallmoneyint8mi(PG_FUNCTION_ARGS)
      * 64 bit, then the result will definitely overflow
 	 */
     if (subtractor != (int64) subtractor)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
+        
 
 	result = arg1 - subtractor;
 
@@ -329,7 +338,19 @@ smallmoneyint8div(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(result);
 	}
 
-    /* No overflow is possible */
+    /*
+     division with values > SMALLMONEY_MAX lead to overflow
+     in T-SQL
+    */
+    if (arg2 > SMALLMONEY_MAX)
+    {
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
+
     result = arg1 / arg2;
 
 	PG_RETURN_INT32(result);
@@ -354,9 +375,13 @@ smallmoneyint4pl(PG_FUNCTION_ARGS)
      * 32 bit, then the result will definitely overflow
 	 */
     if (adder != (int32) adder)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
 
     result = arg1 + adder;
 
@@ -392,9 +417,13 @@ smallmoneyint4mi(PG_FUNCTION_ARGS)
      * 32 bit, then the result will definitely overflow
 	 */
     if (subtractor != (int32) subtractor)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
 
 	result = arg1 - subtractor;
 
@@ -482,7 +511,19 @@ smallmoneyint4div(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(result);
 	}
 
-    /* No overflow is possible */
+    /*
+     division with values > SMALLMONEY_MAX lead to overflow
+     in T-SQL
+    */
+    if (arg2 > SMALLMONEY_MAX)
+    {
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
+
     result = arg1 / arg2;
 
 	PG_RETURN_INT32(result);
@@ -502,7 +543,7 @@ smallmoneyint2pl(PG_FUNCTION_ARGS)
 				 errmsg("smallmoney out of range")));
 #else
 
-	result = arg1 + adder;
+	result = (int64) arg1 + adder;
 
 	/*
 	 * Overflow check. If the result cannot be converted back
@@ -530,7 +571,7 @@ smallmoneyint2mi(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
-	result = arg1 - subtractor;
+	result = (int64) arg1 - subtractor;
 
 	/*
 	 * Overflow check. If the result cannot be converted back
@@ -635,7 +676,7 @@ int2smallmoneypl(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
-	result = adder + arg2;
+	result = (int64) adder + arg2;
 
 	/*
 	 * Overflow check. If the result cannot be converted back
@@ -663,7 +704,7 @@ int2smallmoneymi(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
 #else
-	result = subtractor - arg2;
+	result = (int64) subtractor - arg2;
 
 	/*
 	 * Overflow check. If the result cannot be converted back
@@ -725,9 +766,13 @@ int4smallmoneypl(PG_FUNCTION_ARGS)
      * 32 bit, then the result will definitely overflow
 	 */
     if (adder != (int32) adder)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
 
 	result = adder + arg2;
 
@@ -763,9 +808,13 @@ int4smallmoneymi(PG_FUNCTION_ARGS)
      * 32 bit, then the result will definitely overflow
 	 */
     if (subtractor != (int32) subtractor)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
 
 	result = subtractor - arg2;
 
@@ -811,6 +860,51 @@ int4smallmoneymul(PG_FUNCTION_ARGS)
 }
 
 Datum
+int4smallmoneydiv(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	float8		arg2 = (float8) PG_GETARG_INT32(1) / FIXEDDECIMAL_MULTIPLIER;
+    float8      t;    
+    int64       result;
+
+	if (arg2 == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
+    /*
+     division with values > SMALLMONEY_MAX lead to overflow
+     in T-SQL
+    */
+    if (arg1 > SMALLMONEY_MAX)
+    {
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
+
+    t = (float8) arg1 / arg2;
+    t *= FIXEDDECIMAL_MULTIPLIER;
+    t = rint(t);
+
+    result = (int64) t;
+
+    if (result != (int32) result)
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+
+	PG_RETURN_INT32(result);
+}
+
+
+Datum
 int8smallmoneypl(PG_FUNCTION_ARGS)
 {
 	int128		adder = (int128) PG_GETARG_INT64(0) * FIXEDDECIMAL_MULTIPLIER;
@@ -829,9 +923,13 @@ int8smallmoneypl(PG_FUNCTION_ARGS)
      * 64 bit, then the result will definitely overflow
 	 */
     if (adder != (int64) adder)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
 
     result = adder + arg2;
 
@@ -867,9 +965,13 @@ int8smallmoneymi(PG_FUNCTION_ARGS)
      * 64 bit, then the result will definitely overflow
 	 */
     if (subtractor != (int64) subtractor)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
 
 	result = subtractor - arg2;
 
@@ -915,35 +1017,45 @@ int8smallmoneymul(PG_FUNCTION_ARGS)
 }
 
 Datum
-smallmoney_ceiling(PG_FUNCTION_ARGS)
+int8smallmoneydiv(PG_FUNCTION_ARGS)
 {
-    int32		arg1 = PG_GETARG_INT32(0);
-    int32       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
+	int64		arg1 = PG_GETARG_INT64(0);
+	float8		arg2 = (float8) PG_GETARG_INT32(1) / FIXEDDECIMAL_MULTIPLIER;
+    float8      t;    
+    int64       result;
 
-    if (arg1 > 0)
-        result += FIXEDDECIMAL_MULTIPLIER;
-    
-    if (result != 0 && !SAMESIGN(arg1, result))
+	if (arg2 == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
+    /*
+     division with values > SMALLMONEY_MAX lead to overflow
+     in T-SQL
+    */
+    if (arg1 > SMALLMONEY_MAX)
+    {
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
-    
-    PG_RETURN_INT32(result);
-}
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
 
-Datum
-smallmoney_floor(PG_FUNCTION_ARGS)
-{
-    int32		arg1 = PG_GETARG_INT32(0);
-    int32       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
+    t = (float8) arg1 / arg2;
+    t *= FIXEDDECIMAL_MULTIPLIER;
+    t = rint(t);
 
-    if (arg1 < 0)
-        result -= FIXEDDECIMAL_MULTIPLIER;
-    
-    if (result != 0 && !SAMESIGN(arg1, result))
+    result = (int64) t;
+
+    if (result != (int32) result)
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
-    
-    PG_RETURN_INT32(result);
+
+	PG_RETURN_INT32(result);
 }

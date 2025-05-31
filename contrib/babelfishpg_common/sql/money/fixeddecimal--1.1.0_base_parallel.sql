@@ -1961,6 +1961,11 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int8smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.int8smallmoneydiv(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OPERATOR sys.+ (
     LEFTARG    = INT8,
     RIGHTARG   = sys.SMALLMONEY,
@@ -1984,7 +1989,7 @@ CREATE OPERATOR sys.* (
 CREATE OPERATOR sys./ (
     LEFTARG    = INT8,
     RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = int8fixeddecimaldiv_smallmoney
+    PROCEDURE  = int8smallmoneydiv
 );
 
 CREATE FUNCTION sys.int4fixeddecimalpl(INT4, sys.SMALLMONEY)
@@ -2028,6 +2033,11 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int4smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.int4smallmoneydiv(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OPERATOR sys.+ (
     LEFTARG    = INT4,
     RIGHTARG   = sys.SMALLMONEY,
@@ -2051,7 +2061,7 @@ CREATE OPERATOR sys.* (
 CREATE OPERATOR sys./ (
     LEFTARG    = INT4,
     RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = int4fixeddecimaldiv_smallmoney
+    PROCEDURE  = int4smallmoneydiv
 );
 
 CREATE FUNCTION sys.int2fixeddecimalpl(INT2, sys.SMALLMONEY)

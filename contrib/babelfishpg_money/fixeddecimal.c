@@ -1994,8 +1994,20 @@ fixeddecimalint8div(PG_FUNCTION_ARGS)
 		PG_RETURN_INT64(result);
 	}
 
-	/* No overflow is possible */
+    /*
+     division with values > FIXEDDECIMAL_MAX lead to overflow
+     in T-SQL
+    */
+    if (arg2 > FIXEDDECIMAL_MAX)
+    {
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("fixeddecimal out of range")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
 
+	/* No overflow is possible */
 	result = arg1 / arg2;
 
 	PG_RETURN_INT64(result);
@@ -2122,6 +2134,19 @@ int8fixeddecimaldiv(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
+
+    /*
+     division with values > FIXEDDECIMAL_MAX lead to overflow
+     in T-SQL
+    */
+    if (arg1 > FIXEDDECIMAL_MAX)
+    {
+        ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("fixeddecimal out of range")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
 
 	/* No overflow is possible */
 	PG_RETURN_FLOAT8((float8) arg1 / arg2);
@@ -3180,13 +3205,13 @@ fixeddecimal_ceiling(PG_FUNCTION_ARGS)
     int64		arg1 = PG_GETARG_INT64(0);
     int64       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
 
-    if (arg1 > 0)
+    if (arg1 > 0 && arg1 % FIXEDDECIMAL_MULTIPLIER)
         result += FIXEDDECIMAL_MULTIPLIER;
     
     if (result != 0 && !SAMESIGN(arg1, result))
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				 errmsg("fixeddecimal out of range")));
     
     PG_RETURN_INT64(result);
 }
@@ -3197,13 +3222,13 @@ fixeddecimal_floor(PG_FUNCTION_ARGS)
     int64		arg1 = PG_GETARG_INT64(0);
     int64       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
 
-    if (arg1 < 0)
+    if (arg1 < 0 && arg1 % FIXEDDECIMAL_MULTIPLIER)
         result -= FIXEDDECIMAL_MULTIPLIER;
     
     if (result != 0 && !SAMESIGN(arg1, result))
         ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
+				 errmsg("fixeddecimal out of range")));
     
     PG_RETURN_INT64(result);
 }

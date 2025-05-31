@@ -133,6 +133,248 @@ BEGIN
     END IF;
 END $$;
 
+CREATE OR REPLACE FUNCTION sys.int2smallmoneypl(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int2smallmoneypl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int2smallmoneymi(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int2smallmoneymi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int2smallmoneymul(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int2smallmoneymul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4smallmoneypl(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4smallmoneypl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4smallmoneymi(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4smallmoneymi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4smallmoneymul(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4smallmoneymul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4smallmoneydiv(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int8smallmoneypl(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8smallmoneypl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int8smallmoneymi(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8smallmoneymi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int8smallmoneymul(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8smallmoneymul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int8smallmoneydiv(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint2pl(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint2pl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint2mi(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint2mi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint2mul(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint2mul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint2div(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint2div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint4pl(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint4pl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint4mi(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint4mi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint4mul(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint4mul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint4div(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint4div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint8pl(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint8pl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint8mi(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint8mi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint8mul(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint8mul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneyint8div(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint8div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneypl(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneypl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneymi(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneymi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneymul(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneymul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneydiv(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.floor(sys.smallmoney) RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimal_floor' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.floor(sys.money) RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimal_floor' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ceiling(sys.smallmoney) RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimal_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ceiling(sys.money) RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimal_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneybitpl(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN (SELECT sys.smallmoneyint4pl($1, 0));
+        ELSE 
+            RETURN (SELECT sys.smallmoneyint4pl($1, 1));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneybitmi(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN (SELECT sys.smallmoneyint4mi($1, 0));
+        ELSE 
+            RETURN (SELECT sys.smallmoneyint4mi($1, 1));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneybitmul(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN (SELECT sys.smallmoneyint4mul($1, 0));
+        ELSE 
+            RETURN (SELECT sys.smallmoneyint4mul($1, 1));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smallmoneybitdiv(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN (SELECT sys.smallmoneyint4div($1, 0));
+        ELSE 
+            RETURN (SELECT sys.smallmoneyint4div($1, 1));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bitsmallmoneypl(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN $2;
+        ELSE 
+            RETURN (SELECT sys.int4smallmoneypl(1, $2));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bitsmallmoneymi(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN (SELECT sys.int4smallmoneymi(0, $2));
+        ELSE 
+            RETURN (SELECT sys.int4smallmoneymi(1, $2));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bitsmallmoneymul(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN (SELECT sys.int4smallmoneymul(0, $2));
+        ELSE 
+            RETURN (SELECT sys.int4smallmoneymul(1, $2));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bitsmallmoneydiv(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN (SELECT sys.int4smallmoneydiv(0, $2));
+        ELSE 
+            RETURN (SELECT sys.int4smallmoneydiv(1, $2));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
