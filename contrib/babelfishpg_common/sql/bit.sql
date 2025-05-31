@@ -652,3 +652,49 @@ CREATE OPERATOR sys./ (
     RIGHTARG   = sys.BIT,
     PROCEDURE  = smallmoneybitdiv
 );
+
+CREATE FUNCTION sys.bitpl(sys.BIT, sys.BIT)
+RETURNS bool
+AS 'babelfishpg_common', 'bitpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitmi(sys.BIT, sys.BIT)
+RETURNS bool
+AS 'babelfishpg_common', 'bitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitmul(sys.BIT, sys.BIT)
+RETURNS bool
+AS 'babelfishpg_common', 'bitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitdiv(sys.BIT, sys.BIT)
+RETURNS bool
+AS 'babelfishpg_common', 'bitdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = +,
+    PROCEDURE  = bitpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = bitmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = *,
+    PROCEDURE  = bitmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = bitdiv
+);

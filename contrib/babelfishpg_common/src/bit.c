@@ -62,6 +62,11 @@ PG_FUNCTION_INFO_V1(bitint4le);
 PG_FUNCTION_INFO_V1(bitint4gt);
 PG_FUNCTION_INFO_V1(bitint4ge);
 
+PG_FUNCTION_INFO_V1(bitpl);
+PG_FUNCTION_INFO_V1(bitmi);
+PG_FUNCTION_INFO_V1(bitmul);
+PG_FUNCTION_INFO_V1(bitdiv);
+
 /*
  * Try to interpret value as boolean value.  Valid values are: true,
  * false, TRUE, FALSE, digital string as well as unique prefixes thereof.
@@ -567,4 +572,44 @@ varchar2bit(PG_FUNCTION_ARGS)
 	result = DatumGetBool(DirectFunctionCall1(bitin, CStringGetDatum(str)));
 	pfree(str);
 	PG_RETURN_BOOL(result);
+}
+
+Datum
+bitpl(PG_FUNCTION_ARGS)
+{
+    bool        arg1 = PG_GETARG_BOOL(0);
+    bool        arg2 = PG_GETARG_BOOL(1);
+    PG_RETURN_BOOL(arg1 + arg2 != 0 ? 1 : 0);
+}
+
+Datum
+bitmi(PG_FUNCTION_ARGS)
+{
+    bool        arg1 = PG_GETARG_BOOL(0);
+    bool        arg2 = PG_GETARG_BOOL(1);
+    PG_RETURN_BOOL(arg1 - arg2 != 0 ? 1 : 0);
+}
+
+Datum
+bitmul(PG_FUNCTION_ARGS)
+{
+    bool        arg1 = PG_GETARG_BOOL(0);
+    bool        arg2 = PG_GETARG_BOOL(1);
+    PG_RETURN_BOOL(arg1 * arg2 != 0 ? 1 : 0);
+}
+
+Datum
+bitdiv(PG_FUNCTION_ARGS)
+{
+    bool        arg1 = PG_GETARG_BOOL(0);
+    bool        arg2 = PG_GETARG_BOOL(1);
+    if (arg2 == 0)
+    {
+        ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+    }
+    PG_RETURN_BOOL(arg1 / arg2 != 0 ? 1 : 0);
 }

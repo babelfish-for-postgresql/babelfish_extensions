@@ -376,5 +376,83 @@ AS $$
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = +,
+    PROCEDURE  = bitpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = bitmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = *,
+    PROCEDURE  = bitmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = bitdiv
+);
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = +,
+    PROCEDURE  = smallmoneybitpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = smallmoneybitmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = *,
+    PROCEDURE  = smallmoneybitmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = smallmoneybitdiv
+);
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = bitsmallmoneypl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = bitsmallmoneymi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = bitsmallmoneymul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = bitsmallmoneydiv
+);
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
