@@ -376,6 +376,26 @@ AS $$
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.bitpl(sys.BIT, sys.BIT)
+RETURNS bool
+AS 'babelfishpg_common', 'bitpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bitmi(sys.BIT, sys.BIT)
+RETURNS bool
+AS 'babelfishpg_common', 'bitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bitmul(sys.BIT, sys.BIT)
+RETURNS bool
+AS 'babelfishpg_common', 'bitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bitdiv(sys.BIT, sys.BIT)
+RETURNS bool
+AS 'babelfishpg_common', 'bitdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.BIT,
