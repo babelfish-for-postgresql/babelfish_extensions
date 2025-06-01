@@ -338,43 +338,80 @@ RETURNS bool
 AS 'babelfishpg_common', 'bitmi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BIT'::pg_catalog.regtype and oprright = 'sys.BIT'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.BIT,
     COMMUTATOR = +,
     PROCEDURE  = bitpl
 );
+END IF;
+END $$;
 
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BIT'::pg_catalog.regtype and oprright = 'sys.BIT'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
 CREATE OPERATOR sys.- (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.BIT,
     PROCEDURE  = bitmi
 );
+END IF;
+END $$;
 
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.SMALLMONEY'::pg_catalog.regtype and oprright = 'sys.BIT'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
     COMMUTATOR = +,
     PROCEDURE  = smallmoneybitpl
 );
+END IF;
+END $$;
 
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.SMALLMONEY'::pg_catalog.regtype and oprright = 'sys.BIT'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
 CREATE OPERATOR sys.- (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
     PROCEDURE  = smallmoneybitmi
 );
+END IF;
+END $$;
 
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BIT'::pg_catalog.regtype and oprright = 'sys.SMALLMONEY'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = +,
-    PROCEDURE  = bitsmallmoneypl
+    PROCEDURE  = bitsmallmoneymi
 );
+END IF;
+END $$;
 
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BIT'::pg_catalog.regtype and oprright = 'sys.SMALLMONEY'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
 CREATE OPERATOR sys.- (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.SMALLMONEY,
     PROCEDURE  = bitsmallmoneymi
+);
+END IF;
+END $$;
+
+DROP OPERATOR sys.+ (sys.SMALLMONEY, sys.SMALLMONEY);
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = smallmoneypl
 );
 
 -- Reset search_path to not affect any subsequent scripts
