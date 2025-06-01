@@ -442,9 +442,10 @@ EXEC sp_xml_preparedocument @hdoc output, @xml_text;
 SELECT @hdoc as handle;
 EXEC sp_xml_removedocument @hdoc;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: row is too big: size 34424, maximum size 8160)~~
+~~START~~
+int
+4041
+~~END~~
 
 
 -- impact of reset connection
@@ -489,6 +490,6 @@ EXEC test_xml_proc;
 GO
 ~~START~~
 int
-3
+1
 ~~END~~
 
