@@ -296,6 +296,11 @@ GO
 ~~ROW COUNT: 3~~
 
 
+CREATE VIEW sales.quarterly_view AS
+SELECT customer_id, q1 AS q1_sales, q2, q3, q4 
+FROM customer_turnover;
+GO
+
 CREATE TABLE customer_history (
     customer_id INT, 
     q1 INT,  
