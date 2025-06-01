@@ -707,15 +707,13 @@ GO
 ~~START~~
 text
 Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(100)) + cast(0x123 as varbinary(100))
-Gather
-  Workers Planned: 4
-  ->  Parallel Seq Scan on babel_varbinary_test_table2
-        Filter: ((varbinary_col)::bbf_varbinary < '0x01230123'::bbf_varbinary)
+Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
+  Index Cond: (varbinary_col < '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.781 ms
+Babelfish T-SQL Batch Parsing Time: 3.989 ms
 ~~END~~
 
 
@@ -724,15 +722,13 @@ GO
 ~~START~~
 text
 Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Gather
-  Workers Planned: 4
-  ->  Parallel Seq Scan on babel_varbinary_test_table2
-        Filter: ((varbinary_col)::bbf_varbinary < '0x01230123'::bbf_varbinary)
+Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
+  Index Cond: (varbinary_col < '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.217 ms
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
 ~~END~~
 
 
@@ -741,15 +737,13 @@ GO
 ~~START~~
 text
 Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Gather
-  Workers Planned: 4
-  ->  Parallel Seq Scan on babel_varbinary_test_table2
-        Filter: ((varbinary_col)::bbf_varbinary > '0x01230123'::bbf_varbinary)
+Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
+  Index Cond: (varbinary_col > '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.684 ms
+Babelfish T-SQL Batch Parsing Time: 3.744 ms
 ~~END~~
 
 
@@ -760,7 +754,7 @@ text
 Query Text: select count(*) from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
 Finalize Aggregate
   ->  Gather
-        Workers Planned: 4
+        Workers Planned: 2
         ->  Partial Aggregate
               ->  Parallel Seq Scan on babel_varbinary_test_table2
                     Filter: ((varbinary_col)::bbf_varbinary > '0x01230123'::bbf_varbinary)
@@ -768,7 +762,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 33.697 ms
+Babelfish T-SQL Batch Parsing Time: 17.049 ms
 ~~END~~
 
 
@@ -779,7 +773,7 @@ text
 Query Text: select count(*) from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
 Finalize Aggregate
   ->  Gather
-        Workers Planned: 4
+        Workers Planned: 2
         ->  Partial Aggregate
               ->  Parallel Seq Scan on babel_varbinary_test_table2
                     Filter: ((varbinary_col)::bbf_varbinary < '0x01230123'::bbf_varbinary)
@@ -787,7 +781,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.216 ms
+Babelfish T-SQL Batch Parsing Time: 0.152 ms
 ~~END~~
 
 
@@ -958,8 +952,8 @@ ORDER BY
     real_binary_add;
 GO
 ~~START~~
-real#!#float#!#real#!#real#!#real#!#real#!#real#!#datetime#!#real#!#varchar#!#datetime#!#bigint
-201.0#!#201.0#!#1100.5#!#200.5#!#110.5#!#101.5#!#201.0#!#1900-04-11 12:00:00.0#!#201.0#!#100.5A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100
+real#!#float#!#real#!#real#!#real#!#real#!#real#!#smallmoney#!#real#!#varchar#!#datetime#!#bigint
+201.0#!#201.0#!#1100.5#!#200.5#!#110.5#!#101.5#!#201.0#!#100.5000#!#201.0#!#100.5A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100
 ~~END~~
 
 
@@ -1168,8 +1162,8 @@ ORDER BY
     bit_binary_add;
 GO
 ~~START~~
-numeric#!#datetime#!#datetime#!#bigint#!#int#!#smallint#!#smallint#!#money#!#datetime#!#varchar#!#datetime#!#bigint
-100.50#!#1900-04-11 12:00:00.0#!#1900-04-11 12:00:00.0#!#1000#!#100#!#10#!#1#!#100.5000#!#1900-01-01 00:00:00.0#!#0A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#0
+numeric#!#datetime#!#smallmoney#!#bigint#!#int#!#smallint#!#smallint#!#money#!#bit#!#varchar#!#datetime#!#bigint
+100.50#!#1900-04-11 12:00:00.0#!#100.5000#!#1000#!#100#!#10#!#1#!#100.5000#!#0#!#0A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#0
 ~~END~~
 
 

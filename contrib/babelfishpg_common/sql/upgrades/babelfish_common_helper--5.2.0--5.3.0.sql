@@ -338,80 +338,252 @@ RETURNS bool
 AS 'babelfishpg_common', 'bitmi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-DO $$
-BEGIN
-IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BIT'::pg_catalog.regtype and oprright = 'sys.BIT'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
+DROP OPERATOR IF EXISTS sys.+ (sys.SMALLMONEY, sys.SMALLMONEY);
 CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.BIT,
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
     COMMUTATOR = +,
-    PROCEDURE  = bitpl
+    PROCEDURE  = smallmoneypl
 );
-END IF;
-END $$;
 
-DO $$
-BEGIN
-IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BIT'::pg_catalog.regtype and oprright = 'sys.BIT'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
+DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, sys.SMALLMONEY);
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = -,
+    PROCEDURE  = smallmoneymi
+);
+
+DROP OPERATOR IF EXISTS sys.* (sys.SMALLMONEY, sys.SMALLMONEY);
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = smallmoneymul
+);
+
+DROP OPERATOR IF EXISTS sys./ (sys.SMALLMONEY, sys.SMALLMONEY);
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = smallmoneydiv
+);
+
+DROP OPERATOR IF EXISTS sys.+ (sys.SMALLMONEY, INT8);
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT8,
+    COMMUTATOR = +,
+    PROCEDURE  = smallmoneyint8pl
+);
+
+DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, INT8);
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT8,
+    PROCEDURE  = smallmoneyint8mi
+);
+
+DROP OPERATOR IF EXISTS sys.* (sys.SMALLMONEY, INT8);
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT8,
+    COMMUTATOR = *,
+    PROCEDURE  = smallmoneyint8mul
+);
+
+DROP OPERATOR IF EXISTS sys./ (sys.SMALLMONEY, INT8);
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT8,
+    PROCEDURE  = smallmoneyint8div
+);
+
+DROP OPERATOR IF EXISTS sys.+ (sys.SMALLMONEY, INT4);
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT4,
+    COMMUTATOR = +,
+    PROCEDURE  = smallmoneyint4pl
+);
+
+DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, INT4);
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT4,
+    PROCEDURE  = smallmoneyint4mi
+);
+
+DROP OPERATOR IF EXISTS sys.* (sys.SMALLMONEY, INT4);
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT4,
+    COMMUTATOR = *,
+    PROCEDURE  = smallmoneyint4mul
+);
+
+DROP OPERATOR IF EXISTS sys./ (sys.SMALLMONEY, INT4);
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT4,
+    PROCEDURE  = smallmoneyint4div
+);
+
+DROP OPERATOR IF EXISTS sys.+ (sys.SMALLMONEY, INT2);
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT2,
+    COMMUTATOR = +,
+    PROCEDURE  = smallmoneyint2pl
+);
+
+DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, INT2);
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT2,
+    PROCEDURE  = smallmoneyint2mi
+);
+
+DROP OPERATOR IF EXISTS sys.* (sys.SMALLMONEY, INT2);
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT2,
+    COMMUTATOR = *,
+    PROCEDURE  = smallmoneyint2mul
+);
+
+DROP OPERATOR IF EXISTS sys./ (sys.SMALLMONEY, INT2);
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT2,
+    PROCEDURE  = smallmoneyint2div
+);
+
+DROP OPERATOR IF EXISTS sys.+ (INT8, sys.SMALLMONEY);
+CREATE OPERATOR sys.+ (
+    LEFTARG    = INT8,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = int8smallmoneypl
+);
+
+DROP OPERATOR IF EXISTS sys.- (INT8, sys.SMALLMONEY);
+CREATE OPERATOR sys.- (
+    LEFTARG    = INT8,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int8smallmoneymi
+);
+
+DROP OPERATOR IF EXISTS sys.* (INT8, sys.SMALLMONEY);
+CREATE OPERATOR sys.* (
+    LEFTARG    = INT8,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = int8smallmoneymul
+);
+
+DROP OPERATOR IF EXISTS sys./ (INT8, sys.SMALLMONEY);
+CREATE OPERATOR sys./ (
+    LEFTARG    = INT8,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int8smallmoneydiv
+);
+
+DROP OPERATOR IF EXISTS sys.+ (INT4, sys.SMALLMONEY);
+CREATE OPERATOR sys.+ (
+    LEFTARG    = INT4,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = int4smallmoneypl
+);
+
+DROP OPERATOR IF EXISTS sys.- (INT4, sys.SMALLMONEY);
+CREATE OPERATOR sys.- (
+    LEFTARG    = INT4,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int4smallmoneymi
+);
+
+DROP OPERATOR IF EXISTS sys.* (INT4, sys.SMALLMONEY);
+CREATE OPERATOR sys.* (
+    LEFTARG    = INT4,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = int4smallmoneymul
+);
+
+DROP OPERATOR IF EXISTS sys./ (INT4, sys.SMALLMONEY);
+CREATE OPERATOR sys./ (
+    LEFTARG    = INT4,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int4smallmoneydiv
+);
+
+DROP OPERATOR IF EXISTS sys.+ (INT2, sys.SMALLMONEY);
+CREATE OPERATOR sys.+ (
+    LEFTARG    = INT2,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = int2smallmoneypl
+);
+
+DROP OPERATOR IF EXISTS sys.- (INT2, sys.SMALLMONEY);
+CREATE OPERATOR sys.- (
+    LEFTARG    = INT2,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int2smallmoneymi
+);
+
+DROP OPERATOR IF EXISTS sys.* (INT2, sys.SMALLMONEY);
+CREATE OPERATOR sys.* (
+    LEFTARG    = INT2,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = int2smallmoneymul
+);
+
+DROP OPERATOR IF EXISTS sys.- (sys.BIT, sys.SMALLMONEY);
 CREATE OPERATOR sys.- (
     LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.BIT,
-    PROCEDURE  = bitmi
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = bitsmallmoneymi
 );
-END IF;
-END $$;
 
-DO $$
-BEGIN
-IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.SMALLMONEY'::pg_catalog.regtype and oprright = 'sys.BIT'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
+DROP OPERATOR IF EXISTS sys.+ (sys.BIT, sys.SMALLMONEY);
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = bitsmallmoneymi
+);
+
+DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, sys.BIT);
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = smallmoneybitmi
+);
+
+DROP OPERATOR IF EXISTS sys.+ (sys.SMALLMONEY, sys.BIT);
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
     COMMUTATOR = +,
     PROCEDURE  = smallmoneybitpl
 );
-END IF;
-END $$;
 
-DO $$
-BEGIN
-IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.SMALLMONEY'::pg_catalog.regtype and oprright = 'sys.BIT'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
+DROP OPERATOR IF EXISTS sys.- (sys.BIT, sys.BIT);
 CREATE OPERATOR sys.- (
-    LEFTARG    = sys.SMALLMONEY,
+    LEFTARG    = sys.BIT,
     RIGHTARG   = sys.BIT,
-    PROCEDURE  = smallmoneybitmi
+    PROCEDURE  = bitmi
 );
-END IF;
-END $$;
 
-DO $$
-BEGIN
-IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BIT'::pg_catalog.regtype and oprright = 'sys.SMALLMONEY'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
+DROP OPERATOR IF EXISTS sys.+ (sys.BIT, sys.BIT);
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = bitsmallmoneymi
-);
-END IF;
-END $$;
-
-DO $$
-BEGIN
-IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BIT'::pg_catalog.regtype and oprright = 'sys.SMALLMONEY'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
-CREATE OPERATOR sys.- (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = bitsmallmoneymi
-);
-END IF;
-END $$;
-
-DROP OPERATOR sys.+ (sys.SMALLMONEY, sys.SMALLMONEY);
-CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
     COMMUTATOR = +,
-    PROCEDURE  = smallmoneypl
+    PROCEDURE  = bitpl
 );
 
 -- Reset search_path to not affect any subsequent scripts
