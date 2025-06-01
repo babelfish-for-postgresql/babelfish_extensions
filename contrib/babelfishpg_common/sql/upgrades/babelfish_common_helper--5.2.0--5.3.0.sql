@@ -474,5 +474,23 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = bitsmallmoneydiv
 );
 
+CREATE OR REPLACE FUNCTION sys.round(arg ANYELEMENT, length INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(arg::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(arg ANYELEMENT, length INTEGER, function INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(arg::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

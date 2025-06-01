@@ -529,6 +529,30 @@ AS $$
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.bitsmallmoneymul(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN (SELECT sys.int4smallmoneymul(0, $2));
+        ELSE 
+            RETURN (SELECT sys.int4smallmoneymul(1, $2));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitsmallmoneydiv(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN (SELECT sys.int4smallmoneydiv(0, $2));
+        ELSE 
+            RETURN (SELECT sys.int4smallmoneydiv(1, $2));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.SMALLMONEY,
@@ -540,6 +564,19 @@ CREATE OPERATOR sys.- (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.SMALLMONEY,
     PROCEDURE  = bitsmallmoneymi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = bitsmallmoneymul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = bitsmallmoneydiv
 );
 
 CREATE FUNCTION sys.smallmoneybitpl(sys.SMALLMONEY, sys.BIT)
@@ -566,6 +603,30 @@ AS $$
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.smallmoneybitmul(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN (SELECT sys.smallmoneyint4mul($1, 0));
+        ELSE 
+            RETURN (SELECT sys.smallmoneyint4mul($1, 1));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneybitdiv(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN (SELECT sys.smallmoneyint4div($1, 0));
+        ELSE 
+            RETURN (SELECT sys.smallmoneyint4div($1, 1));
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
@@ -579,6 +640,19 @@ CREATE OPERATOR sys.- (
     PROCEDURE  = smallmoneybitmi
 );
 
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = *,
+    PROCEDURE  = smallmoneybitmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = smallmoneybitdiv
+);
+
 CREATE FUNCTION sys.bitpl(sys.BIT, sys.BIT)
 RETURNS bool
 AS 'babelfishpg_common', 'bitpl'
@@ -587,6 +661,16 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE FUNCTION sys.bitmi(sys.BIT, sys.BIT)
 RETURNS bool
 AS 'babelfishpg_common', 'bitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitmul(sys.BIT, sys.BIT)
+RETURNS bool
+AS 'babelfishpg_common', 'bitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitdiv(sys.BIT, sys.BIT)
+RETURNS bool
+AS 'babelfishpg_common', 'bitdiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
@@ -600,4 +684,17 @@ CREATE OPERATOR sys.- (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.BIT,
     PROCEDURE  = bitmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = *,
+    PROCEDURE  = bitmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = bitdiv
 );
