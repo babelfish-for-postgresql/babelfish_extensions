@@ -707,13 +707,15 @@ GO
 ~~START~~
 text
 Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(100)) + cast(0x123 as varbinary(100))
-Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
-  Index Cond: (varbinary_col < '0x01230123'::bbf_varbinary)
+Gather
+  Workers Planned: 4
+  ->  Parallel Seq Scan on babel_varbinary_test_table2
+        Filter: ((varbinary_col)::bbf_varbinary < '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.989 ms
+Babelfish T-SQL Batch Parsing Time: 7.781 ms
 ~~END~~
 
 
@@ -722,13 +724,15 @@ GO
 ~~START~~
 text
 Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
-  Index Cond: (varbinary_col < '0x01230123'::bbf_varbinary)
+Gather
+  Workers Planned: 4
+  ->  Parallel Seq Scan on babel_varbinary_test_table2
+        Filter: ((varbinary_col)::bbf_varbinary < '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.177 ms
+Babelfish T-SQL Batch Parsing Time: 0.217 ms
 ~~END~~
 
 
@@ -737,13 +741,15 @@ GO
 ~~START~~
 text
 Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
-  Index Cond: (varbinary_col > '0x01230123'::bbf_varbinary)
+Gather
+  Workers Planned: 4
+  ->  Parallel Seq Scan on babel_varbinary_test_table2
+        Filter: ((varbinary_col)::bbf_varbinary > '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.744 ms
+Babelfish T-SQL Batch Parsing Time: 7.684 ms
 ~~END~~
 
 
@@ -754,7 +760,7 @@ text
 Query Text: select count(*) from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
 Finalize Aggregate
   ->  Gather
-        Workers Planned: 2
+        Workers Planned: 4
         ->  Partial Aggregate
               ->  Parallel Seq Scan on babel_varbinary_test_table2
                     Filter: ((varbinary_col)::bbf_varbinary > '0x01230123'::bbf_varbinary)
@@ -762,7 +768,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 17.049 ms
+Babelfish T-SQL Batch Parsing Time: 33.697 ms
 ~~END~~
 
 
@@ -773,7 +779,7 @@ text
 Query Text: select count(*) from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
 Finalize Aggregate
   ->  Gather
-        Workers Planned: 2
+        Workers Planned: 4
         ->  Partial Aggregate
               ->  Parallel Seq Scan on babel_varbinary_test_table2
                     Filter: ((varbinary_col)::bbf_varbinary < '0x01230123'::bbf_varbinary)
@@ -781,7 +787,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.152 ms
+Babelfish T-SQL Batch Parsing Time: 0.216 ms
 ~~END~~
 
 

@@ -553,7 +553,7 @@ DROP OPERATOR IF EXISTS sys.+ (sys.BIT, sys.SMALLMONEY);
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = bitsmallmoneymi
+    PROCEDURE  = bitsmallmoneypl
 );
 
 DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, sys.BIT);
