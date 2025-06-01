@@ -6598,12 +6598,13 @@ FROM MoneyComparisonTest
 GROUP BY CASE 
     WHEN MoneyVal >= 0 THEN 'Positive'
     ELSE 'Negative'
-END;
+END
+ORDER BY ValueType;
 GO
 ~~START~~
 varchar#!#int#!#money#!#money#!#float
-Positive#!#5#!#0.0000#!#922337203685477.5807#!#1.8446744073718022E14
 Negative#!#2#!#-922337203685477.5808#!#-100.0000#!#-4.611686018427888E14
+Positive#!#5#!#0.0000#!#922337203685477.5807#!#1.8446744073718022E14
 ~~END~~
 
 

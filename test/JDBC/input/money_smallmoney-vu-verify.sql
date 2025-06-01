@@ -2452,7 +2452,8 @@ FROM MoneyComparisonTest
 GROUP BY CASE 
     WHEN MoneyVal >= 0 THEN 'Positive'
     ELSE 'Negative'
-END;
+END
+ORDER BY ValueType;
 GO
 
 -- HAVING clause tests
