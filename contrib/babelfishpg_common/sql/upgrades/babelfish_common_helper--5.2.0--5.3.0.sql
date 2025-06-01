@@ -304,30 +304,6 @@ AS $$
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.smallmoneybitmul(sys.SMALLMONEY, sys.BIT)
-RETURNS sys.SMALLMONEY
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN (SELECT sys.smallmoneyint4mul($1, 0));
-        ELSE 
-            RETURN (SELECT sys.smallmoneyint4mul($1, 1));
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneybitdiv(sys.SMALLMONEY, sys.BIT)
-RETURNS sys.SMALLMONEY
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN (SELECT sys.smallmoneyint4div($1, 0));
-        ELSE 
-            RETURN (SELECT sys.smallmoneyint4div($1, 1));
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.bitsmallmoneypl(sys.BIT, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS $$
@@ -352,30 +328,6 @@ AS $$
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bitsmallmoneymul(sys.BIT, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS $$
-    BEGIN
-        IF $1 = 0 THEN
-            RETURN (SELECT sys.int4smallmoneymul(0, $2));
-        ELSE 
-            RETURN (SELECT sys.int4smallmoneymul(1, $2));
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.bitsmallmoneydiv(sys.BIT, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS $$
-    BEGIN
-        IF $1 = 0 THEN
-            RETURN (SELECT sys.int4smallmoneydiv(0, $2));
-        ELSE 
-            RETURN (SELECT sys.int4smallmoneydiv(1, $2));
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.bitpl(sys.BIT, sys.BIT)
 RETURNS bool
 AS 'babelfishpg_common', 'bitpl'
@@ -384,16 +336,6 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.bitmi(sys.BIT, sys.BIT)
 RETURNS bool
 AS 'babelfishpg_common', 'bitmi'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.bitmul(sys.BIT, sys.BIT)
-RETURNS bool
-AS 'babelfishpg_common', 'bitmul'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.bitdiv(sys.BIT, sys.BIT)
-RETURNS bool
-AS 'babelfishpg_common', 'bitdiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
@@ -409,19 +351,6 @@ CREATE OPERATOR sys.- (
     PROCEDURE  = bitmi
 );
 
-CREATE OPERATOR sys.* (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.BIT,
-    COMMUTATOR = *,
-    PROCEDURE  = bitmul
-);
-
-CREATE OPERATOR sys./ (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.BIT,
-    PROCEDURE  = bitdiv
-);
-
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
@@ -433,19 +362,6 @@ CREATE OPERATOR sys.- (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
     PROCEDURE  = smallmoneybitmi
-);
-
-CREATE OPERATOR sys.* (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.BIT,
-    COMMUTATOR = *,
-    PROCEDURE  = smallmoneybitmul
-);
-
-CREATE OPERATOR sys./ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.BIT,
-    PROCEDURE  = smallmoneybitdiv
 );
 
 CREATE OPERATOR sys.+ (
@@ -460,37 +376,6 @@ CREATE OPERATOR sys.- (
     RIGHTARG   = sys.SMALLMONEY,
     PROCEDURE  = bitsmallmoneymi
 );
-
-CREATE OPERATOR sys.* (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = *,
-    PROCEDURE  = bitsmallmoneymul
-);
-
-CREATE OPERATOR sys./ (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = bitsmallmoneydiv
-);
-
-CREATE OR REPLACE FUNCTION sys.round(arg ANYELEMENT, length INTEGER)
-RETURNS sys.float
-AS $$
-BEGIN
-    RETURN sys.round(arg::PG_CATALOG.NUMERIC, length);
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.round(arg ANYELEMENT, length INTEGER, function INTEGER)
-RETURNS sys.float
-AS $$
-BEGIN
-    RETURN sys.round(arg::PG_CATALOG.NUMERIC, length, function);
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

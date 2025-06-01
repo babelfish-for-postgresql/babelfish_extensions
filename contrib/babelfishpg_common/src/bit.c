@@ -589,27 +589,3 @@ bitmi(PG_FUNCTION_ARGS)
     bool        arg2 = PG_GETARG_BOOL(1);
     PG_RETURN_BOOL(arg1 - arg2 != 0 ? 1 : 0);
 }
-
-Datum
-bitmul(PG_FUNCTION_ARGS)
-{
-    bool        arg1 = PG_GETARG_BOOL(0);
-    bool        arg2 = PG_GETARG_BOOL(1);
-    PG_RETURN_BOOL(arg1 * arg2 != 0 ? 1 : 0);
-}
-
-Datum
-bitdiv(PG_FUNCTION_ARGS)
-{
-    bool        arg1 = PG_GETARG_BOOL(0);
-    bool        arg2 = PG_GETARG_BOOL(1);
-    if (arg2 == 0)
-    {
-        ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-    }
-    PG_RETURN_BOOL(arg1 / arg2 != 0 ? 1 : 0);
-}
