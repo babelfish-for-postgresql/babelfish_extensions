@@ -1,5 +1,7 @@
 --DATE standard formatting
 CREATE TABLE date_testing(d DATE);
+INSERT INTO date_testing VALUES('');
+go
 INSERT INTO date_testing VALUES('1753-1-1');
 go
 INSERT INTO date_testing VALUES('9999-12-31');
@@ -175,6 +177,7 @@ GO
 
 --TIME standard formatting
 create table time_testing ( ti TIME );
+INSERT INTO time_testing VALUES('');
 INSERT INTO time_testing VALUES('00:00:00.12345');
 INSERT INTO time_testing VALUES('3:53:59');
 INSERT INTO time_testing VALUES('15:5:45.0000');
