@@ -1228,7 +1228,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Param:
 			{
 				Param *param = (Param *) expr;
-
 				if (param->paramtypmod == -1)
 				{
 					/* UDT handling in T_Param */
@@ -1248,11 +1247,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
 					else if (param->paramtype == INT2OID)
 						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					else if (plan && (*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (param->paramtype))
+						return ((TINYINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
 				}
 
-				if (!is_numeric_datatype(param->paramtype) &&
-					!(*common_utility_plugin_ptr->is_tsql_money_datatype)(param->paramtype) &&
-					!(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(param->paramtype))
+				if (!is_numeric_datatype(param->paramtype))
 				{
 					/* typmod is undefined */
 					if (found != NULL) *found = false;
@@ -1832,8 +1831,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 * tinyint, smallint, int will have aggtype type as int
 					 * bigint will have aggtype type as bigint.
 					 */
-					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype) ||
-						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(aggref->aggtype))
+					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype))
 					{
 						return TSQL_MONEY_TYPMOD;
 					}
