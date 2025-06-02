@@ -40,6 +40,7 @@
 #include "utils/uuid.h"
 #include "utils/timestamp.h"
 #include "utils/numeric.h"
+#include "datetime.h"
 #include "typecode.h"
 #include "varchar.h"
 
@@ -1062,7 +1063,14 @@ varchar2date(PG_FUNCTION_ARGS)
 	DateADT		date;
 
 	str = varchar2cstring(source);
-	date = DatumGetDateADT(DirectFunctionCall1(date_in, CStringGetDatum(str)));
+
+	/*
+	 * Set input to default '1900-01-01' if empty string encountered
+	 */
+	if (isEmptyOrWhitespace(str))
+		date = initializeToDefaultDate();
+	else
+		date = DatumGetDateADT(DirectFunctionCall1(date_in, CStringGetDatum(str)));
 	pfree(str);
 	PG_RETURN_DATEADT(date);
 }
@@ -1079,7 +1087,14 @@ varchar2time(PG_FUNCTION_ARGS)
 		typmod = PG_GETARG_INT32(1);
 
 	str = varchar2cstring(source);
-	time = DatumGetTimeADT(DirectFunctionCall3(time_in, CStringGetDatum(str), InvalidOid, typmod));
+
+	/*
+	 * Set input to default '00:00:00.0000000' if empty string encountered
+	 */
+	if (isEmptyOrWhitespace(str))
+		time = initializeToDefaultTime(typmod);
+	else
+		time = DatumGetTimeADT(DirectFunctionCall3(time_in, CStringGetDatum(str), InvalidOid, typmod));
 	pfree(str);
 	PG_RETURN_TIMEADT(time);
 }

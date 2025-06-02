@@ -1201,6 +1201,58 @@ initializeToDefaultDatetime(void)
 	return result;
 }
 
+/*
+ * Set input to default '1900-01-01' if empty string encountered
+ */
+DateADT
+initializeToDefaultDate(void)
+{
+	DateADT date;
+	struct pg_tm tt,
+				 *tm = &tt;
+	tm->tm_year = 1900;
+	tm->tm_mon = 1;
+	tm->tm_mday = 1;
+	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+
+	return date;
+}
+
+/*
+ * Set input to default '00:00:00.0000000' if empty string encountered
+ */
+TimeADT
+initializeToDefaultTime(int32 typmod)
+{
+	TimeADT	time;
+	struct pg_tm tt,
+				 *tm = &tt;
+	tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
+	tm2time(tm, 0, &time);
+	AdjustTimeForTypmod(&time, typmod);
+
+	return time;
+}
+
+/*
+ * Check if string is empty or contains only whitespace
+ * Returns true if string is empty or contains only whitespace characters
+ */
+bool
+isEmptyOrWhitespace(const char *str)
+{
+	if (!str)
+		return true;
+
+	while (*str)
+	{
+		if (!isspace((unsigned char)*str))
+			return false;
+		str++;
+	}
+	return true;
+}
+
 Datum
 datetime_pl_datetime(PG_FUNCTION_ARGS)
 {

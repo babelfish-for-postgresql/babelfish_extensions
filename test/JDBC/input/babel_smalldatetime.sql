@@ -31,8 +31,10 @@ go
 
 -- Test type cast to/from other time formats
 -- Cast to smalldatetime
+select CAST(CAST('' AS time) AS smalldatetime);
 select CAST(CAST('00:00:00.234' AS time) AS smalldatetime);
 select CAST(CAST('01:02:03.456' AS time) AS smalldatetime);
+select CAST(CAST('' AS date) AS smalldatetime);
 select CAST(CAST('2020-03-15' AS date) AS smalldatetime);
 select CAST(CAST('2020-03-15' AS datetime) AS smalldatetime);
 select CAST(CAST('2010-07-08 23:59:29.998' AS datetime) AS smalldatetime);
