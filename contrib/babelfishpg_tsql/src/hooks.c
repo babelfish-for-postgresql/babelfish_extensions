@@ -6496,7 +6496,7 @@ pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan)
 /*
  * get_domain_typmodin()
  *
- * Returns the oid of typmodin function for a given domain tuple which is essentially
+ * Returns the oid of typmodin function for a given domain which is essentially
  * same as the oid of it's basetype's typmodin function. This is only used during
  * restore to handle domains like smallmoney/money and UDTs created on them.
  */

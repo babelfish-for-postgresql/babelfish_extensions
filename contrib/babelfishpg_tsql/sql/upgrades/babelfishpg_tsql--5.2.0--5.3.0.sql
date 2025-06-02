@@ -425,7 +425,7 @@ WHERE sch.nspname = p.pronamespace::regnamespace::name
  * Updates typmod values in pg_attribute for smallmoney/money columns
  * in r = ordinary table, i = index, v = view, p = partitioned table, I = partitioned index.
  * For other relkinds, we either don't create from TDS side or they don't support money/smallmoney.
- * Sets money typmod to 1245192 and smallmoney to 655368 where. typmod is -1
+ * Sets money typmod to 1245192(19,4) and smallmoney to 655368(10,4) where typmod is -1.
  */
 UPDATE pg_attribute a
 SET atttypmod =

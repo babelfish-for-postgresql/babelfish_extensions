@@ -1817,7 +1817,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 * tinyint, smallint, int will have aggtype type as int
 					 * bigint will have aggtype type as bigint.
 					 */
-					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype))
+					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype) ||
+						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(aggref->aggtype))
 					{
 						return TSQL_MONEY_TYPMOD;
 					}

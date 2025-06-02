@@ -357,7 +357,7 @@ GO
 SELECT CAST(2.8571 AS MONEY) * CAST(2.4999 AS MONEY)
 GO
 
--- Varous INT ranges
+-- Various INT ranges
 -- treated as int8 by us, and numeric by sqlserver
 select 7378697629483820646 * cast(99999.9999 as money)
 GO
@@ -404,10 +404,6 @@ GO
 -- fixeddecimal multiplication
 select cast(922337203685477.5807 as money) * cast(922337203685477.5807 as money)
 GO
-
--- crashing
--- select cast(214748.3647 as smallmoney) * cast(214748.3647 as smallmoney)
--- GO
 
 select cast(922337203685477.5807 as money) * cast(214748.3647 as smallmoney)
 GO
