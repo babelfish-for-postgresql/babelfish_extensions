@@ -85,6 +85,11 @@ static bool is_tsql_int4_bit(Oid oid);
 #define SMALLINT_PRECISION_RADIX 5
 #define INT_PRECISION_RADIX 10
 #define BIGINT_PRECISION_RADIX 19
+#define TINYINT_PRECISION_RADIX 10
+
+#define DEFAULT_SMALLINT_TYPMOD		((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_INT_TYPMOD		((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_BIGINT_TYPMOD		((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 
 /* Numeirc operator OID from pg_proc.dat */
 #define NUMERIC_ADD_OID 1724
@@ -1223,7 +1228,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Param:
 			{
 				Param *param = (Param *) expr;
-
 				if (param->paramtypmod == -1)
 				{
 					/* UDT handling in T_Param */
@@ -1243,11 +1247,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
 					else if (param->paramtype == INT2OID)
 						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					else if (plan && (*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (param->paramtype))
+						return ((TINYINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
 				}
 
-				if (!is_numeric_datatype(param->paramtype) &&
-					!(*common_utility_plugin_ptr->is_tsql_money_datatype)(param->paramtype) &&
-					!(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(param->paramtype))
+				if (!is_numeric_datatype(param->paramtype))
 				{
 					/* typmod is undefined */
 					if (found != NULL) *found = false;
@@ -1416,6 +1420,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
 					else if (plan && var->vartype == INT2OID)
 						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					else if (plan && (*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (var->vartype))
+						return ((TINYINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
 
 					if (found != NULL) *found = false;
 				}
@@ -1774,8 +1780,16 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (aggref->aggstar)
 				{
-					if (found != NULL) *found = false;
-					typmod = -1;
+					/* handling for COUNT(*) and COUNT_BIG(*) */
+					if (aggref->aggtype == INT4OID)
+						return DEFAULT_INT_TYPMOD;
+					else if (aggref->aggtype == INT8OID)
+						return DEFAULT_BIGINT_TYPMOD;
+					else
+					{
+						if (found != NULL) *found = false;
+						typmod = -1;
+					}
 				}
 				else
 				{
@@ -1817,8 +1831,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 * tinyint, smallint, int will have aggtype type as int
 					 * bigint will have aggtype type as bigint.
 					 */
-					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype) ||
-						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(aggref->aggtype))
+					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype))
 					{
 						return TSQL_MONEY_TYPMOD;
 					}
@@ -1852,6 +1865,39 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				{
 					precision = tds_default_numeric_precision;
 					scale = Max(scale, 6);
+				}
+
+				/*
+				 * For aggregate function count(); resultant precision should
+				 * be INT_PRECISION_RADIX and scale should be 0.
+				 */
+				if (aggFuncName && strlen(aggFuncName) == 5 &&
+					(strncmp(aggFuncName, "count", 5) == 0))
+				{
+					precision = INT_PRECISION_RADIX;
+					scale = 0;
+				}
+
+				/*
+				 * For aggregate function count_big(); resultant precision
+				 * should be BIGINT_PRECISION_RADIX and scale should be 0.
+				 */
+				if (aggFuncName && strlen(aggFuncName) == 9 &&
+					(strncmp(aggFuncName, "count_big", 9) == 0))
+				{
+					precision = BIGINT_PRECISION_RADIX;
+					scale = 0;
+				}
+
+				/*
+				 * For aggregate function string_agg(); we should not return
+				 * typmod, so return -1.
+				 */
+				if (aggFuncName && strlen(aggFuncName) == 10 &&
+					(strncmp(aggFuncName, "string_agg", 10) == 0))
+				{
+					pfree(aggFuncName);
+					return -1;
 				}
 
 				pfree(aggFuncName);
