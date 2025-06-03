@@ -209,7 +209,7 @@ BEGIN
     IF is_srvrolemember('securityadmin') = 0 
     BEGIN
         RAISERROR('User does not have permission to perform this action.', 16, 1);
-		RETURN 0;
+		RETURN 0; 
     END
 
     SET @current_username = LOWER(sys.suser_name());
