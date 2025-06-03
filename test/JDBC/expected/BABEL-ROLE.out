@@ -783,6 +783,29 @@ GO
 DROP DATABASE db1
 GO
 
+--Drop user when user has some permissions
+create database mydb
+go
+use mydb
+go
+create login u1 with password = '123'
+go
+create user u1
+go
+create table t(a int)
+go
+grant select on t to u1
+go
+drop user u1
+go
+drop login u1
+go
+drop table t
+go
+use master
+GO
+drop database mydb
+GO
 -- Check if catalog is cleaned up
 SELECT rolname, type, orig_username, database_name
 FROM sys.babelfish_authid_user_ext

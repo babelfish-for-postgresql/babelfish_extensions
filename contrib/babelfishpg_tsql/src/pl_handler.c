@@ -2401,9 +2401,9 @@ validateUserAndRole(char *name)
 void
 shdepDropOwned_utility(List *roleids, DropBehavior behavior)
 {
-	Relation	sdepRel;
-	ListCell   *cell;
-	ObjectAddresses *deleteobjs;
+	Relation			sdepRel;
+	ListCell			*cell;
+	ObjectAddresses		*deleteobjs;
 
 	deleteobjs = new_object_addresses();
 
@@ -2415,8 +2415,7 @@ shdepDropOwned_utility(List *roleids, DropBehavior behavior)
 	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 
 	/*
-	 * For each role, find the dependent objects and drop them using the
-	 * regular (non-shared) dependency management.
+	 * For each role, find the dependent objects and drop them only if 
 	 */
 	foreach(cell, roleids)
 	{
@@ -3945,15 +3944,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									char		*user_name;
 									const char	*db_principal_type = drop_user ? "user" : "role";
 									int			role_oid;
-									Oid			roleoid;
 
 									if (rolspec->roletype == ROLESPEC_PUBLIC)
 										rolspec->rolename = PUBLIC_ROLE_NAME;
 									
 									user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
 									role_oid = get_role_oid(user_name, true);
-									roleoid = get_role_oid(user_name, true);
-									role_oids = list_append_unique_oid(role_oids, roleoid);
+									role_oids = list_append_unique_oid(role_oids, role_oid);
 
 									if (!OidIsValid(role_oid) ||                        /* Not found */
 									    (drop_user && get_db_principal_kind(role_oid, db_name) != BBF_USER) ||      /* Found but not a user in current logical db */
