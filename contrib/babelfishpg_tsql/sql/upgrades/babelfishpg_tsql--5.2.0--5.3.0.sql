@@ -326,7 +326,7 @@ BEGIN
         WHERE UExt.type != 'R' AND  
             UExt.orig_username != 'guest' AND 
             has_dbaccess(UExt.database_name) = 1 AND
-            COALESCE(NULLIF(UExt.login_name, ''), Db.owner) = @input_loginname
+            LExt.orig_loginname = @input_loginname
         UNION
         SELECT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
@@ -342,7 +342,7 @@ BEGIN
         LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt2.login_name, ''), Db.owner)
         WHERE 
             has_dbaccess(UExt2.database_name) = 1 AND
-            COALESCE(NULLIF(UExt2.login_name, ''), Db.owner) = @input_loginname
+            LExt.orig_loginname = @input_loginname
     END;
 
     RETURN 0;
