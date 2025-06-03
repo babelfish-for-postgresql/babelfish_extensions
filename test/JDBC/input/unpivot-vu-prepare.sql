@@ -274,6 +274,11 @@ INSERT INTO sales.quarterly_data VALUES
 (3, 'Product C', 175.25, 225.75, NULL, 250.00);
 GO
 
+CREATE VIEW sales.quarterly_view AS
+SELECT customer_id, q1 AS q1_sales, q2, q3, q4 
+FROM customer_turnover;
+GO
+
 CREATE TABLE customer_history (
     customer_id INT, 
     q1 INT,  
