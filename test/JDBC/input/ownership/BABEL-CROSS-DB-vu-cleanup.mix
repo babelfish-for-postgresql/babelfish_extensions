@@ -48,6 +48,9 @@ GO
 DROP FUNCTION babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_f1;
 GO
 
+DROP FUNCTION babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_tvf1;
+GO
+
 DROP PROCEDURE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested;
 GO
 
@@ -84,10 +87,16 @@ GO
 DROP FUNCTION dbo.babel_cross_db_vu_prepare_f2;
 GO
 
+DROP FUNCTION dbo.babel_cross_db_vu_prepare_tvf2;
+GO
+
 DROP VIEW babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2;
 GO
 
 DROP FUNCTION babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2;
+GO
+
+DROP FUNCTION babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_tvf2;
 GO
 
 DROP TABLE babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
