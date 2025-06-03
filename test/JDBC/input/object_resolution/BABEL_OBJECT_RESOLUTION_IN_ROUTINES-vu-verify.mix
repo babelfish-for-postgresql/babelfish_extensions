@@ -25,7 +25,7 @@ GO
 
 ALTER PROCEDURE dbo.babel_5448_p1
 AS
-    SELECT babel_5448_user_default_schema.babel_5448_f(), * FROM babel_5448_user_default_schema.babel_5448_t;
+    SELECT babel_5448_user_default_schema.babel_5448_f(), babel_5448_user_default_schema.babel_5792_tvf(), * FROM babel_5448_user_default_schema.babel_5448_t;
     EXEC babel_5448_user_default_schema.babel_5448_p;
     INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
     DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE length(id) > 50;
@@ -35,7 +35,7 @@ GO
 
 ALTER PROCEDURE babel_5448_s1.babel_5448_p1
 AS
-    SELECT dbo.babel_5448_f(), * FROM dbo.babel_5448_t;
+    SELECT dbo.babel_5448_f(), dbo.babel_5792_tvf(), * FROM dbo.babel_5448_t;
     EXEC dbo.babel_5448_p;
     INSERT INTO dbo.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
     DELETE FROM dbo.babel_5448_t WHERE length(id) > 50;
@@ -58,6 +58,7 @@ GO
 ALTER PROCEDURE dbo.babel_5448_p1
 AS
     INSERT INTO babel_5448_user_default_schema.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
+    INSERT INTO babel_5448_user_default_schema.babel_5448_t SELECT babel_5792_tvf() FROM generate_series(1,3);
     -- trigger execution will tells use what the function resolved to
     -- and what the objects inside triggers resolved to
     DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE id != 'babel_5448_db.babel_5448_user_default_schema'
@@ -66,6 +67,7 @@ GO
 ALTER PROCEDURE babel_5448_s1.babel_5448_p1
 AS
     INSERT INTO dbo.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
+    INSERT INTO dbo.babel_5448_t SELECT babel_5792_tvf() FROM generate_series(1,3);
     -- trigger execution will tells use what the function resolved to
     -- and what the objects inside triggers resolved to
     DELETE FROM dbo.babel_5448_t WHERE id != 'babel_5448_db.dbo'
@@ -79,7 +81,7 @@ EXEC babel_5448_s1.babel_5448_p1
 GO
 
 -- Test INSERT EXEC
-CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX))
+CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX), col5 NVARCHAR(MAX), col6 NVARCHAR(MAX))
 GO
 
 INSERT INTO #temp EXEC dbo.babel_5448_p2
@@ -97,9 +99,11 @@ GO
 
 -- Test declare statement inside function
 SELECT babel_5448_s1.babel_5448_f2();
+SELECT babel_5448_s1.babel_5792_f2_tvf();
 
 -- Test declare statement inside function
 SELECT babel_5448_s1.babel_5448_f3();
+SELECT babel_5448_s1.babel_5792_f3_tvf();
 GO
 
 /*********************************/
@@ -126,7 +130,7 @@ GO
 
 ALTER PROCEDURE dbo.babel_5448_p1
 AS
-    SELECT babel_5448_user_default_schema.babel_5448_f(), * FROM babel_5448_user_default_schema.babel_5448_t;
+    SELECT babel_5448_user_default_schema.babel_5448_f(), babel_5448_user_default_schema.babel_5792_tvf(), * FROM babel_5448_user_default_schema.babel_5448_t;
     EXEC babel_5448_user_default_schema.babel_5448_p;
     INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
     DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE length(id) > 50;
@@ -136,7 +140,7 @@ GO
 
 ALTER PROCEDURE babel_5448_s1.babel_5448_p1
 AS
-    SELECT dbo.babel_5448_f(), * FROM dbo.babel_5448_t;
+    SELECT dbo.babel_5448_f(), dbo.babel_5792_tvf(), * FROM dbo.babel_5448_t;
     EXEC dbo.babel_5448_p;
     INSERT INTO dbo.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
     DELETE FROM dbo.babel_5448_t WHERE length(id) > 50;
@@ -157,7 +161,7 @@ EXEC master.babel_5448_s1.babel_5448_p1
 GO
 
 -- Test INSERT EXEC
-CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX))
+CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX), col5 NVARCHAR(MAX), col6 NVARCHAR(MAX))
 GO
 
 INSERT INTO #temp EXEC master.dbo.babel_5448_p2
@@ -173,9 +177,11 @@ GO
 
 -- Test declare statement inside function
 SELECT master.babel_5448_s1.babel_5448_f2();
+SELECT master.babel_5448_s1.babel_5792_f2_tvf();
 
 -- Test declare statement inside function
 SELECT master.babel_5448_s1.babel_5448_f3();
+SELECT master.babel_5448_s1.babel_5792_f3_tvf();
 GO
 
 DROP TABLE #temp
@@ -205,6 +211,8 @@ GO
 
 SELECT babel_5448_s1.babel_5448_f4();
 GO
+SELECT babel_5448_s1.babel_5792_f4_tvf();
+GO
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
@@ -238,6 +246,8 @@ BEGIN TRAN
 GO
 SELECT babel_5448_s1.babel_5448_f4();
 GO
+SELECT babel_5448_s1.babel_5792_f4_tvf();
+GO
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 COMMIT
@@ -259,7 +269,7 @@ GO
 SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
 GO
 
-SELECT master.babel_5448_s1.babel_5448_f4() FROM generate_series(1,3);
+SELECT master.babel_5448_s1.babel_5448_f4(), master.babel_5448_s1.babel_5792_f4_tvf() FROM generate_series(1,3);
 GO
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
@@ -292,7 +302,7 @@ GO
 
 BEGIN TRAN
 GO
-SELECT master.babel_5448_s1.babel_5448_f4() FROM generate_series(1,3);
+SELECT master.babel_5448_s1.babel_5448_f4(), master.babel_5448_s1.babel_5792_f4_tvf() FROM generate_series(1,3);
 GO
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
@@ -468,6 +478,7 @@ EXEC master.babel_5448_s1.babel_5448_p15
 GO
 
 SELECT master.babel_5448_s1.babel_5448_f5();
+SELECT master.babel_5448_s1.babel_5792_f5_tvf();
 
 CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
@@ -478,4 +489,5 @@ DROP TABLE #temp_babel_5448;
 GO
 
 SELECT babel_5448_s1.babel_5448_f5();
+SELECT babel_5448_s1.babel_5792_f5_tvf();
 GO
