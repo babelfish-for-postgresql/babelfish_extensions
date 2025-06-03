@@ -235,12 +235,13 @@ BEGIN
         WHERE LExt.type NOT IN ('R', 'Z')
     
         SELECT
-            CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
+            CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
             CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
             CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
             CAST('User' AS sys.varchar(8)) AS UserOrAlias 
         FROM sys.babelfish_authid_user_ext UExt
-        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt.database_name 
+        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt.database_name
+        LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt.login_name, ''), Db.owner)
         WHERE UExt.type != 'R' AND  
             UExt.orig_username != 'guest' AND 
             has_dbaccess(UExt.database_name) = 1 AND
@@ -262,7 +263,7 @@ BEGIN
             )
         UNION
         SELECT
-            CAST(COALESCE(NULLIF(UExt2.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
+            CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
             CAST(UExt2.database_name AS sys.SYSNAME) AS DBName,
             CAST(UExt1.orig_username AS sys.SYSNAME) AS UserName,
             CAST('Member of' AS sys.varchar(10)) AS UserOrAlias 
@@ -272,12 +273,24 @@ BEGIN
         INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname AND UExt1.type = 'R'
         INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname AND UExt2.orig_username != 'db_owner'
         LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt1.database_name
+        LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt2.login_name, ''), Db.owner)
         WHERE 
             has_dbaccess(UExt2.database_name) = 1 AND
             (
                 @is_sysadmin = 1 OR
                 UExt2.login_name = @current_username OR
-                ISNULL(UExt2.login_name, '') = ''
+                ISNULL(UExt2.login_name, '') = '' OR
+                EXISTS (
+                    SELECT 1
+                    FROM pg_catalog.pg_auth_members AS Authmbr
+                    INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+                    INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+                    INNER JOIN sys.babelfish_authid_user_ext AS UExt3 ON PGR1.rolname = UExt3.rolname
+                    INNER JOIN sys.babelfish_authid_user_ext AS UExt4 ON PGR2.rolname = UExt4.rolname
+                    WHERE UExt3.orig_username IN ('db_securityadmin', 'db_accessadmin') 
+                    AND UExt4.database_name = UExt2.database_name 
+                    AND UExt4.login_name = @current_username
+                )
             )
     END
     ELSE
@@ -303,19 +316,20 @@ BEGIN
         WHERE LExt.type NOT IN ('R', 'Z') AND LExt.orig_loginname = @input_loginname
         
         SELECT
-            CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
+            CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
             CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
             CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
             CAST('User' AS sys.varchar(8)) AS UserOrAlias 
         FROM sys.babelfish_authid_user_ext UExt
         LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt.database_name
+        LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt.login_name, ''), Db.owner)
         WHERE UExt.type != 'R' AND  
             UExt.orig_username != 'guest' AND 
             has_dbaccess(UExt.database_name) = 1 AND
             COALESCE(NULLIF(UExt.login_name, ''), Db.owner) = @input_loginname
         UNION
         SELECT
-            CAST(COALESCE(NULLIF(UExt2.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
+            CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
             CAST(UExt2.database_name AS sys.SYSNAME) AS DBName,
             CAST(UExt1.orig_username AS SYS.SYSNAME) AS UserName,
             CAST('Member of' AS sys.varchar(10)) AS UserOrAlias 
@@ -325,6 +339,7 @@ BEGIN
         INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname AND UExt1.type = 'R'
         INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname AND UExt2.orig_username != 'db_owner'
         LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt1.database_name
+        LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt2.login_name, ''), Db.owner)
         WHERE 
             has_dbaccess(UExt2.database_name) = 1 AND
             COALESCE(NULLIF(UExt2.login_name, ''), Db.owner) = @input_loginname

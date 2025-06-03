@@ -17,6 +17,13 @@ GO
 drop login testloginwithsecurityadmin2
 GO
 
+drop user if exists u_testloginwithsecadminanddbsec
+drop login testloginwithsecadminanddbsec
+GO
+
+drop login testloginwithsysadmin
+GO
+
 drop login testloginindb1
 GO
 
@@ -57,7 +64,7 @@ exec (@dropuserstmt)
 exec (@droploginstmt)
 GO
 
-drop user sp_helplogins_vu_windows_user;
+drop user if exists sp_helplogins_vu_windows_user;
 drop login [helplogins\win]
 GO
 
