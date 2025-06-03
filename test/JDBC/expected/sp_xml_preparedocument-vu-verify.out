@@ -490,6 +490,6 @@ EXEC test_xml_proc;
 GO
 ~~START~~
 int
-1
+3
 ~~END~~
 

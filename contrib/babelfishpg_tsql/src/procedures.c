@@ -118,7 +118,7 @@ const  int           XML_HANDLE_COUNTER_START = 0;
 const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
 static int           current_xml_handle_counter;
 Bitmapset           *active_xml_handles_counter = NULL;
-static int           xml_handle_temp_table_relid = InvalidOid;
+static char         *xml_handle_temp_table_name = NULL;
 int                  get_next_xml_handle_counter(void);
 void                 create_xml_handle_temp_table(void);
 void                 delete_xml_handle_entry(int  handle);
@@ -4326,7 +4326,6 @@ int
 get_next_xml_handle_counter()
 {
 	int           old_handle_counter = current_xml_handle_counter;
-	MemoryContext oldContext = NULL;
 	bool          handle_valid = false;
 
 	while (!handle_valid)
@@ -4349,39 +4348,42 @@ get_next_xml_handle_counter()
 		if (bms_is_member(current_xml_handle_counter, active_xml_handles_counter))
 		{
 			/* Handle is in active set, check if it actually exists in the table */
-			int         document_id = 2 * current_xml_handle_counter - 1;
-			Relation    relation = NULL;
-			ScanKeyData skey[1];
-			SysScanDesc scan;
-			HeapTuple   tuple;
-			bool        entry_exists = false;
+			int                    document_id = 2 * current_xml_handle_counter - 1;
+			Relation               relation = NULL;
+			ScanKeyData            skey[1];
+			SysScanDesc            scan;
+			HeapTuple              tuple;
+			bool                   entry_exists = false;
+			EphemeralNamedRelation enr = NULL;
 			
-			/* Only check the table if it exists */
-			if (OidIsValid(xml_handle_temp_table_relid) && 
-				GetENRTempTableWithOid(xml_handle_temp_table_relid))
+			/* Only check the table if it exists using ENR lookup */
+			if (xml_handle_temp_table_name != NULL)
 			{
-				relation = relation_open(xml_handle_temp_table_relid, AccessShareLock);
-				
-				/* Set up scan key to look for this document_id */
-				ScanKeyInit(&skey[0],
-							1,
-							BTEqualStrategyNumber, F_INT4EQ,
-							Int32GetDatum(document_id));
-				
-				/* Scan the table for this document_id */
-				scan = systable_beginscan(relation, InvalidOid, false, NULL, 1, skey);
-				tuple = systable_getnext(scan);
-				
-				/* If we find a tuple, the entry exists */
-				if (HeapTupleIsValid(tuple))
+				enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+				if (enr)
 				{
-					entry_exists = true;
-				}
+					relation = relation_open(enr->md.reliddesc, AccessShareLock);
 				
-				systable_endscan(scan);
-				relation_close(relation, AccessShareLock);
+					/* Set up scan key to look for this document_id */
+					ScanKeyInit(&skey[0],
+								1,
+								BTEqualStrategyNumber, F_INT4EQ,
+								Int32GetDatum(document_id));
+					
+					/* Scan the table for this document_id */
+					scan = systable_beginscan(relation, InvalidOid, false, NULL, 1, skey);
+					tuple = systable_getnext(scan);
+					
+					/* If we find a tuple, the entry exists */
+					if (HeapTupleIsValid(tuple))
+					{
+						entry_exists = true;
+					}
+
+					systable_endscan(scan);
+					relation_close(relation, AccessShareLock);
+				}
 			}
-			
 			/* If no entry exists in the table, we can use this handle */
 			if (!entry_exists)
 			{
@@ -4395,15 +4397,6 @@ get_next_xml_handle_counter()
 			handle_valid = true;
 		}
 	}
-
-	/*
-	 * Switch to TopMemoryContext to ensure the bitmap set persists across transactions.
-	 * This prevents the bitmap set from being freed when the current memory context
-	 * is reset, which would cause the handles to be lost and potentially reused.
-	 */
-	oldContext = MemoryContextSwitchTo(TopMemoryContext);
-	active_xml_handles_counter = bms_add_member(active_xml_handles_counter, current_xml_handle_counter);
-	MemoryContextSwitchTo(oldContext);
 
 	return current_xml_handle_counter;
 }
@@ -4496,12 +4489,22 @@ generate_unique_table_name(const char *base_name)
 void 
 create_xml_handle_temp_table()  
 {
-	CreateStmt   *stmt = makeNode(CreateStmt);
-	RangeVar     *relation = makeRangeVar(NULL,generate_unique_table_name("#xml_handle_temp_table"), -1);
-	Oid          save_userid;
-	int          save_sec_context;
-	int          saved_dialect = sql_dialect;
-	ObjectAddress address;
+	CreateStmt         *stmt = makeNode(CreateStmt);
+	RangeVar           *relation;
+	Oid                 save_userid;
+	int                 save_sec_context;
+	int                 saved_dialect = sql_dialect;
+	ObjectAddress       address;
+	QueryEnvironment   *saved_queryEnv = currentQueryEnv;
+	MemoryContext       oldContext;
+	char               *table_name;
+
+	/* Generate a unique table name */
+	table_name = generate_unique_table_name("#xml_handle_temp_table");
+	relation = makeRangeVar(NULL, table_name, -1);
+
+	/* Switch to the top-level query environment */
+	currentQueryEnv = topLevelQueryEnv;
 
 	/* This makes it temporary table */
 	relation->relpersistence = RELPERSISTENCE_TEMP;
@@ -4535,13 +4538,19 @@ create_xml_handle_temp_table()
 		* This is important for XML data which can be large.
 		* The second parameter (0) means no special options for the TOAST table.
 		*/
-		NewRelationCreateToastTable(address.objectId, (Datum)0);	
-		xml_handle_temp_table_relid = address.objectId;
+		NewRelationCreateToastTable(address.objectId, (Datum)0);
+		
+		/* Store the table name in TopMemoryContext so it persists across transactions */
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		xml_handle_temp_table_name = pstrdup(table_name);
+		MemoryContextSwitchTo(oldContext);
 	}
 	PG_FINALLY();
 	{
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		sql_dialect = saved_dialect;
+		/* Restore the original query environment */
+		currentQueryEnv = saved_queryEnv;
 	}
 	PG_END_TRY();
 
@@ -4566,37 +4575,52 @@ create_xml_handle_temp_table()
 int 
 insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length, int ns_data_length)
 {
-	int                   handle_counter;
-	int                   document_id;
-	int                   namespace_id = 0;
-	bool                  is_namespace_null = true;
-	Relation              relation;
-	Datum                 values[7];
-	Oid                   save_userid;
-	int                   save_sec_context;
-	int                   saved_dialect = sql_dialect;
-	HeapTuple             tuple;
-	bool                  nulls[7] = {false, true, false, true, true, false, true};
-	bool                  table_exists = false;
+	int                     handle_counter;
+	int                     document_id;
+	int                     namespace_id = 0;
+	bool                    is_namespace_null = true;
+	Relation                relation;
+	Datum                   values[7];
+	Oid                     save_userid;
+	int                     save_sec_context;
+	int                     saved_dialect = sql_dialect;
+	HeapTuple               tuple;
+	bool                    nulls[7] = {false, true, false, true, true, false, true};
+	bool                    table_exists = false;
+	EphemeralNamedRelation  enr = NULL;
+	MemoryContext           oldContext = NULL;
 
 	/* Check if the table exists using ENR lookup */
-	if(GetENRTempTableWithOid(xml_handle_temp_table_relid))
+	if (xml_handle_temp_table_name != NULL)
 	{
-		relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
-		table_exists = true;
+		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+		if (enr)
+		{
+			relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+			table_exists = true;
+		}
 	}
 
 	if (!table_exists)
 	{
 		/* Table doesn't exist or was dropped, create it */
 		create_xml_handle_temp_table();
+
+		/* Look up the newly created table */
+		if (xml_handle_temp_table_name != NULL)
+		{
+			enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+			if (enr)
+			{
+				relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+				table_exists = true;
+			}
+		}
 		
-		if (!OidIsValid(xml_handle_temp_table_relid))
+		if (!table_exists)
 			ereport(ERROR,
 				   (errcode(ERRCODE_UNDEFINED_TABLE),
 					errmsg("Failed to create XML handle temporary table")));
-					
-		relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
 	}
 	
 	/* get the next handle */
@@ -4655,6 +4679,15 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 
 		/* Insert the entries into the table */
 		simple_heap_insert(relation, tuple);
+
+		/*
+		* Switch to TopMemoryContext to ensure the bitmap set persists across transactions.
+		* This prevents the bitmap set from being freed when the current memory context
+		* is reset, which would cause the handles to be lost and potentially reused.
+		*/
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		active_xml_handles_counter = bms_add_member(active_xml_handles_counter, current_xml_handle_counter);
+		MemoryContextSwitchTo(oldContext);
 	}
 	PG_FINALLY();
 	{
@@ -4686,17 +4719,18 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 void 
 delete_xml_handle_entry(int document_id)
 {
-	Relation              relation;
-	ScanKeyData           skey[1];
-	SysScanDesc           scan;
-	HeapTuple             tuple;
-	bool                  found = false;
-	int                   curr_handle_counter;
-	int                   save_sec_context;
-	Oid                   save_userid;
-	int                   saved_dialect = sql_dialect;
-	MemoryContext         oldContext = NULL;
-	bool                  table_exists = false;
+	Relation               relation;
+	ScanKeyData            skey[1];
+	SysScanDesc            scan;
+	HeapTuple              tuple;
+	bool                   found = false;
+	int                    curr_handle_counter;
+	int                    save_sec_context;
+	Oid                    save_userid;
+	int                    saved_dialect = sql_dialect;
+	MemoryContext          oldContext = NULL;
+	bool                   table_exists = false;
+	EphemeralNamedRelation enr = NULL;
 	
 	/* Check for negative document ID */
 	if (document_id <= 0)
@@ -4716,12 +4750,16 @@ delete_xml_handle_entry(int document_id)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("Could not find prepared statement with handle %d", document_id)));
 	}
-	
-	/* Check if the table exists using ENR lookup */
-	if(GetENRTempTableWithOid(xml_handle_temp_table_relid))
+
+	/* Check if the table exists using ENR lookup by name */
+	if (xml_handle_temp_table_name != NULL)
 	{
-		relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
-		table_exists = true;
+		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+		if (enr)
+		{
+			relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+			table_exists = true;
+		}
 	}
 
 	if (!table_exists)
@@ -4791,10 +4829,10 @@ reset_cached_xml_handle()
 	active_xml_handles_counter = NULL;
 
 	/* Reset xml handles */
-	current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID; 
+	current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID;
 
-	/* Invalidate the Oid */
-	xml_handle_temp_table_relid = InvalidOid;
+	/* Reset the table name */
+	xml_handle_temp_table_name = NULL;
 }
 
 Datum
