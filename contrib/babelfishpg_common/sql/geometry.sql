@@ -454,20 +454,6 @@ CREATE OR REPLACE FUNCTION sys.HasM(geom sys.GEOMETRY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
--- Z
--- Returns the Z coordinate value for a point geometry instance
-CREATE OR REPLACE FUNCTION sys.Z(sys.GEOMETRY)
-	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_z_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
--- M
--- Returns the M coordinate value (measure) for a point geometry instance 
-CREATE OR REPLACE FUNCTION sys.M(sys.GEOMETRY)
-	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_m_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STContains_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS sys.BIT

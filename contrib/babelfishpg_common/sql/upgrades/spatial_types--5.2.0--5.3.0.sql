@@ -655,34 +655,6 @@ CREATE OR REPLACE FUNCTION sys.HasM(geog sys.GEOGRAPHY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
--- Z
--- Returns the Z coordinate value for a point geometry instance
-CREATE OR REPLACE FUNCTION sys.Z(sys.GEOMETRY)
-	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_z_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
--- Z
--- Returns the Z coordinate value for a point geography instance
-CREATE OR REPLACE FUNCTION sys.Z(sys.GEOGRAPHY)
-	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_z_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
--- M
--- Returns the M coordinate value (measure) for a point geometry instance 
-CREATE OR REPLACE FUNCTION sys.M(sys.GEOMETRY)
-	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_m_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-  
--- M
--- Returns the M coordinate value (measure) for a point geography instance
-CREATE OR REPLACE FUNCTION sys.M(sys.GEOGRAPHY)
-	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_m_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

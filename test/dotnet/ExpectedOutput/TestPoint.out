@@ -39,34 +39,34 @@
 #Q#INSERT INTO POINTGEOG_dt(location) values(geography::Point(47.65100, -22.34900, 4326))
 #Q#INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 3.0)', 4326))
 #Q#INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point EMPTY', 4326))
-#Q#SELECT location, location.STX, location.STY, location.Z, location.M FROM POINTGEOM_dt;
-#D#master.sys.geometry#!#float#!#float#!#float#!#float
-POINT (47.651 -22.349)#!#47.651#!#-22.349#!##!#
-POINT (1 2)#!#1#!#2#!##!#
-POINT (47.651 -22.349)#!#47.651#!#-22.349#!##!#
-POINT (1 2 3)#!#1#!#2#!#3#!#
-POINT EMPTY#!##!##!##!#
-POINT (1 2 3 4)#!#1#!#2#!#3#!#4
-POINT (1 2 NULL 3)#!#1#!#2#!##!#3
-POINT (47.651 -22.349)#!#47.651#!#-22.349#!##!#
-POINT (47.651 -22.349)#!#47.651#!#-22.349#!##!#
-POINT (47.651 -22.349)#!#47.651#!#-22.349#!##!#
-POINT (47.651 -22.349)#!#47.651#!#-22.349#!##!#
-POINT (47.651 -22.349 3)#!#47.651#!#-22.349#!#3#!#
-POINT EMPTY#!##!##!##!#
-#Q#SELECT location, location.Lat, location.Long, location.Z, location.M FROM POINTGEOG_dt;
-#D#master.sys.geography#!#float#!#float#!#float#!#float
-POINT (47.651 -22.349)#!#-22.349#!#47.651#!##!#
-POINT (1 2)#!#2#!#1#!##!#
-POINT (1 2 3)#!#2#!#1#!#3#!#
-POINT EMPTY#!##!##!##!#
-POINT (1 2 3 4)#!#2#!#1#!#3#!#4
-POINT (1 2 NULL 3)#!#2#!#1#!##!#3
-POINT (47.651 -22.349)#!#-22.349#!#47.651#!##!#
-POINT (47.651 -22.349)#!#-22.349#!#47.651#!##!#
-POINT (-22.349 47.651)#!#47.651#!#-22.349#!##!#
-POINT (47.651 -22.349 3)#!#-22.349#!#47.651#!#3#!#
-POINT EMPTY#!##!##!##!#
+#Q#SELECT location, location.STX, location.STY FROM POINTGEOM_dt;
+#D#master.sys.geometry#!#float#!#float
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (1 2)#!#1#!#2
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (1 2 3)#!#1#!#2
+POINT EMPTY#!##!#
+POINT (1 2 3 4)#!#1#!#2
+POINT (1 2 NULL 3)#!#1#!#2
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (47.651 -22.349 3)#!#47.651#!#-22.349
+POINT EMPTY#!##!#
+#Q#SELECT location, location.Lat, location.Long FROM POINTGEOG_dt;
+#D#master.sys.geography#!#float#!#float
+POINT (47.651 -22.349)#!#-22.349#!#47.651
+POINT (1 2)#!#2#!#1
+POINT (1 2 3)#!#2#!#1
+POINT EMPTY#!##!#
+POINT (1 2 3 4)#!#2#!#1
+POINT (1 2 NULL 3)#!#2#!#1
+POINT (47.651 -22.349)#!#-22.349#!#47.651
+POINT (47.651 -22.349)#!#-22.349#!#47.651
+POINT (-22.349 47.651)#!#47.651#!#-22.349
+POINT (47.651 -22.349 3)#!#-22.349#!#47.651
+POINT EMPTY#!##!#
 #Q#SELECT * FROM  POINT_dt;
 #D#master.sys.geometry#!#master.sys.geography
 POINT (47.651 -22.349 3)#!#
@@ -177,18 +177,18 @@ True#!#
 #!#0
 0#!#
 #!#0
-#Q#SELECT geom.STX ,geom.STY, geom.M, geom.Z FROM POINTEMP_dt;
-#D#float#!#float#!#float#!#float
-#!##!##!#
-#!##!##!#
-#!##!##!#
-#!##!##!#
-#Q#SELECT geog.Long ,geog.Long, geog.M, geog.Z FROM POINTEMP_dt;
-#D#float#!#float#!#float#!#float
-#!##!##!#
-#!##!##!#
-#!##!##!#
-#!##!##!#
+#Q#SELECT geom.STX ,geom.STY FROM POINTEMP_dt;
+#D#float#!#float
+#!#
+#!#
+#!#
+#!#
+#Q#SELECT geog.Long ,geog.Long FROM POINTEMP_dt;
+#D#float#!#float
+#!#
+#!#
+#!#
+#!#
 #Q#DROP TABLE IF EXISTS POINTGEOM_dt;
 #Q#DROP TABLE IF EXISTS POINTGEOG_dt;
 #Q#DROP TABLE IF EXISTS POINT_dt;

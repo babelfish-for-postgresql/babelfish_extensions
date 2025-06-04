@@ -58,8 +58,8 @@ INSERT INTO POINTGEOG_dt(location) values(geography::Point(47.65100, -22.34900, 
 INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 3.0)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point EMPTY', 4326))
 
-SELECT location, location.STX, location.STY, location.Z, location.M FROM POINTGEOM_dt;
-SELECT location, location.Lat, location.Long, location.Z, location.M FROM POINTGEOG_dt;
+SELECT location, location.STX, location.STY FROM POINTGEOM_dt;
+SELECT location, location.Lat, location.Long FROM POINTGEOG_dt;
 SELECT * FROM  POINT_dt;
 select geometry::Point(10,500,4326);
 select geography::Point(10,500,4326);
@@ -81,8 +81,8 @@ SELECT geom.STIsClosed(), geog.STIsClosed() FROM POINTEMP_dt;
 SELECT geom.STIsValid(), geog.STIsValid() FROM POINTEMP_dt;
 SELECT geom.STAsBinary(), geog.STAsBinary() FROM POINTEMP_dt;
 SELECT geom.STArea(), geog.STArea() FROM POINTEMP_dt;
-SELECT geom.STX ,geom.STY, geom.M, geom.Z FROM POINTEMP_dt;
-SELECT geog.Long ,geog.Long, geog.M, geog.Z FROM POINTEMP_dt;
+SELECT geom.STX ,geom.STY FROM POINTEMP_dt;
+SELECT geog.Long ,geog.Long FROM POINTEMP_dt;
 
 DROP TABLE IF EXISTS POINTGEOM_dt;
 DROP TABLE IF EXISTS POINTGEOG_dt;

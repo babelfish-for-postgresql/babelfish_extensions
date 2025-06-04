@@ -1,5 +1,5 @@
 # This file tests support for POINT with ZM flags
-# It also includes test for HasM , HasZ, Z , M functions
+# It also includes test for HasM , HasZ functions
 
 # Geometry Test Cases
 
@@ -532,13 +532,6 @@ CREATE VIEW GeometryHasZ AS SELECT location.HasZ FROM GEOSPATIALPOINTGEOMRCV_dt 
 
 CREATE VIEW GeographyHasZ AS SELECT location.HasZ FROM GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
 
-CREATE VIEW GeometryM AS SELECT location.M FROM GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
-
-CREATE VIEW GeographyM AS SELECT location.M FROM GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
-
-CREATE VIEW GeometryZ AS SELECT location.Z FROM GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
-
-CREATE VIEW GeographyZ AS SELECT location.Z FROM GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
 
 #Tests for Geometry type Prepared Statements
 

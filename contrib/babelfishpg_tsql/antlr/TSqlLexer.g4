@@ -551,9 +551,6 @@ LONG_DOUBLE_QUOTE:                               ["] LONG ["] {pltsql_quoted_ide
 LONG_SQBRACKET:                                  '[' LONG ']';
 LOOP:                                            L O O P;
 LOW:                                             L O W;
-M:                                               [Mm];
-M_DOUBLE_QUOTE:                                  ["] M ["] {pltsql_quoted_identifier == true}?;
-M_SQBRACKET:                                     '[' M ']';
 MANUAL:                                          M A N U A L;
 MARK:                                            M A R K;
 MASK:                                            M A S K;
@@ -1149,9 +1146,6 @@ YEAR:                                            Y E A R;
 YEARS:                                           Y E A R S;
 YMAX:                                            Y M A X;
 YMIN:                                            Y M I N;
-Z:                                               [Zz];
-Z_DOUBLE_QUOTE:                                  ["] Z ["] {pltsql_quoted_identifier == true}?;
-Z_SQBRACKET:                                     '[' Z ']';
 ZONE:                                            Z O N E;
 
 //Build-ins:
@@ -1264,7 +1258,7 @@ fragment I: ('I'|'i');
 fragment J: ('J'|'j');
 fragment K: ('K'|'k');
 fragment L: ('L'|'l');
-// fragment M: ('M'|'m');  // redundant, since already defined as token above
+fragment M: ('M'|'m');
 fragment N: ('N'|'n');
 fragment O: ('O'|'o');
 fragment P: ('P'|'p');
@@ -1277,7 +1271,7 @@ fragment V: ('V'|'v');
 fragment W: ('W'|'w');
 fragment X: ('X'|'x');
 fragment Y: ('Y'|'y');
-// fragment Z: ('Z'|'z');  // redundant, since already defined as token above
+fragment Z: ('Z'|'z');
 
 fragment CURRENCY_SYMBOL
     : '$'       // Dollar
