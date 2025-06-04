@@ -9282,7 +9282,7 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 }
 
 static void
-validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::Expression_listContext *expr_list)
+validateAndRewriteXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::Expression_listContext *expr_list)
 {
 	/* XML EXIST function requires only 1 argument */
 	if (xml_func->EXIST() && (expr_list == NULL || expr_list->expression().size() != 1))
@@ -9307,6 +9307,21 @@ validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::E
 						getLineAndPos(expr));
 		}
 	}
+
+	/*
+	 * Rewrite second argument of VALUE method by removing the quotes around it as follows
+	 * 'typename(typmod)'  -> typename(typmod)
+	 */
+	if (xml_func->VALUE())
+	{
+		TSqlParser::ExpressionContext *expr = expr_list->expression()[1];
+		std::string arg_str = ::getFullText(expr);
+		size_t startPosition = expr->start->getStartIndex();
+		size_t stopPosition = expr->stop->getStopIndex();
+
+		std::string rewritten_arg_str = arg_str.substr(1, stopPosition - startPosition - 1);
+		rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(arg_str, rewritten_arg_str)));
+	}
 }
 
 static void
@@ -9316,18 +9331,8 @@ handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	if (ctx->xml_proc_name_table_column())
 	{
 		/* validate the xml method arguments before rewriting */
-		validateXMLFunctionArgs(ctx->xml_proc_name_table_column()->xml_func_arg(), ctx->expression_list());
+		validateAndRewriteXMLFunctionArgs(ctx->xml_proc_name_table_column()->xml_func_arg(), ctx->expression_list());
 
-		if (ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
-		{
-			TSqlParser::ExpressionContext *expr = ctx->expression_list()->expression()[1];
-			std::string arg_str = ::getFullText(expr);
-			size_t startPosition = expr->start->getStartIndex();
-			size_t stopPosition = expr->stop->getStopIndex();
-
-			std::string rewritten_arg_str = arg_str.substr(1, stopPosition - startPosition - 1);
-			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(arg_str, rewritten_arg_str)));
-		}
 		rewrite_function_call_dot_func_ref_args(ctx);
 	}
 }
@@ -9362,18 +9367,8 @@ handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx)
 			if (method->xml_methods())
 			{
 				/* validate the xml method arguments before rewriting */
-				validateXMLFunctionArgs(method->xml_methods()->xml_func_arg(), method->xml_methods()->expression_list());
+				validateAndRewriteXMLFunctionArgs(method->xml_methods()->xml_func_arg(), method->xml_methods()->expression_list());
 
-				if (method->xml_methods()->xml_func_arg()->VALUE())
-				{
-					TSqlParser::ExpressionContext *expr = method->xml_methods()->expression_list()->expression()[1];
-					std::string arg_str = ::getFullText(expr);
-					size_t startPosition = expr->start->getStartIndex();
-					size_t stopPosition = expr->stop->getStopIndex();
-		
-					std::string rewritten_arg_str = arg_str.substr(1, stopPosition - startPosition - 1);
-					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(arg_str, rewritten_arg_str)));
-				}
 				size_t expr_list_start_index = method->xml_methods()->expression_list()->start->getStartIndex();
 				size_t expr_list_stop_index = method->xml_methods()->expression_list()->stop->getStopIndex();
 				rewrite_dot_func_ref_args_query_helper(ctx, method, ind, expr_list_start_index, expr_list_stop_index);

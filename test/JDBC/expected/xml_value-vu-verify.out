@@ -66,6 +66,16 @@ Value1#!#Value2#!#Value3
 ~~END~~
 
 
+-- pattern matches single child
+DECLARE @xml XML = '<Root><Child>Value1</Child></Root>';
+SELECT @xml.value('/Root/Child', 'varchar(100)') as child
+GO
+~~START~~
+varchar
+Value1
+~~END~~
+
+
 -- pattern matches multiple childs
 DECLARE @xml XML = '<Root><Child>Value1</Child><Child>Value2</Child><Child>Value3</Child></Root>';
 SELECT @xml.value('/Root/Child', 'varchar(100)') as child
@@ -174,7 +184,7 @@ SELECT @xml.value('(//child)[1]', 'varchar(100)'), @xml.value('(//child)[1]', 'i
 GO
 ~~START~~
 varchar#!#int#!#varbinary
-123#!#123#!#310032003300
+123#!#123#!#313233
 ~~END~~
 
 
@@ -609,6 +619,322 @@ varchar
 ~~END~~
 
 
+-- Tests on different return types
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'varchar(10)');
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'nvarchar(10)');
+GO
+~~START~~
+nvarchar
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'char(10)');
+GO
+~~START~~
+char
+1         
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'nchar(10)');
+GO
+~~START~~
+nchar
+1         
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'text');
+GO
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The data type 'text' used in the VALUE method is invalid.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'ntext');
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The data type 'ntext' used in the VALUE method is invalid.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'sql_variant');
+GO
+~~START~~
+sql_variant
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The data type 'sql_variant' used in the VALUE method is invalid.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'datetimeoffset');
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'datetime2');
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'datetime');
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'smalldatetime');
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'date');
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'time');
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'float');
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'real');
+GO
+~~START~~
+real
+1.0
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'numeric');
+GO
+~~START~~
+numeric
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'money');
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'smallmoney');
+GO
+~~START~~
+smallmoney
+1.0000
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'bigint');
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'int');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'smallint');
+GO
+~~START~~
+smallint
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'tinyint');
+GO
+~~START~~
+tinyint
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'varbinary(10)');
+GO
+~~START~~
+varbinary
+31
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'binary(10)');
+GO
+~~START~~
+binary
+31000000000000000000
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'bit');
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'uniqueidentifier');
+GO
+~~START~~
+uniqueidentifier
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type uuid: "1")~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'image');
+GO
+~~START~~
+image
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The data type 'image' used in the VALUE method is invalid.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'xml');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The data type 'xml' used in the VALUE method is invalid.)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'decimal');
+GO
+~~START~~
+numeric
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'sysname');
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'vector');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "vector" does not exist)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'sparsevec');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "sparsevec" does not exist)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'halfvec');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "halfvec" does not exist)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'timestamp');
+GO
+~~START~~
+binary
+3100000000000000
+~~END~~
+
+
 -- NULL values
 DECLARE @xml XML = NULL
 SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')
@@ -627,8 +953,16 @@ GO
 ~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
 
 
-DECLARE @xml XML = NULL
-SELECT @xml.value(NULL, 'varchar(100)');
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.value('(/artists/artist/@name)[1]', NULL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 2 of the XML data type method "value" must be a string literal.)~~
+
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.value(NULL, NULL);
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -822,6 +1156,112 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The argument 2 of the XML data type method "value" must be a string literal.)~~
+
+
+-- second argument with different quotes
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', 'varchar(100)')
+GO
+~~START~~
+varchar
+Value1
+~~END~~
+
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', "varchar(100)")
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 2 of the XML data type method "value" must be a string literal.)~~
+
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', `varchar(100)`)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '`' at line 2 and character position 39)~~
+
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', '''varchar(100)''')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "''")~~
+
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', [varchar(100)])
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 2 of the XML data type method "value" must be a string literal.)~~
+
+
+SET QUOTED_IDENTIFIER OFF
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', 'varchar(100)')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', "varchar(100)")
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "'varchar(100)'")~~
+
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', `varchar(100)`)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '`' at line 2 and character position 39)~~
+
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', '''varchar(100)''')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "''")~~
+
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', [varchar(100)])
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 2 of the XML data type method "value" must be a string literal.)~~
+
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
 
 
 -- EVENTDATA().value -- eventdata() is currently not supported

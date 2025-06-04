@@ -2130,7 +2130,7 @@ func_expr_common_subexpr:
 														    COERCE_EXPLICIT_CALL,
 														    @1);
 
-					$$ = makeTypeCast(helperFuncCall, $5, @1);
+					$$ = TsqlFunctionConvert($5, helperFuncCall, NULL, false, @1);
 				}
 		;
 

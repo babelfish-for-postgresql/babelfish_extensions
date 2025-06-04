@@ -31,6 +31,11 @@ DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2><Child3>
 SELECT @xml.value('(/Root/Child1)[1]', 'varchar(100)') as child1, @xml.value('(/Root/Child2)[1]', 'varchar(100)') as child2, @xml.value('(/Root/Child3)[1]', 'varchar(100)') as child3
 GO
 
+-- pattern matches single child
+DECLARE @xml XML = '<Root><Child>Value1</Child></Root>';
+SELECT @xml.value('/Root/Child', 'varchar(100)') as child
+GO
+
 -- pattern matches multiple childs
 DECLARE @xml XML = '<Root><Child>Value1</Child><Child>Value2</Child><Child>Value3</Child></Root>';
 SELECT @xml.value('/Root/Child', 'varchar(100)') as child
@@ -292,6 +297,143 @@ GO
 SELECT XmlUDTColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_udt
 GO
 
+-- Tests on different return types
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'varchar(10)');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'nvarchar(10)');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'char(10)');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'nchar(10)');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'text');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'ntext');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'sql_variant');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'datetimeoffset');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'datetime2');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'datetime');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'smalldatetime');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'date');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'time');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'float');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'real');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'numeric');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'money');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'smallmoney');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'bigint');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'int');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'smallint');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'tinyint');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'varbinary(10)');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'binary(10)');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'bit');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'uniqueidentifier');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'image');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'xml');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'decimal');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'sysname');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'vector');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'sparsevec');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'halfvec');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'timestamp');
+GO
+
 -- NULL values
 DECLARE @xml XML = NULL
 SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')
@@ -301,8 +443,12 @@ DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe
 SELECT @xml.value(NULL, 'varchar(100)');
 GO
 
-DECLARE @xml XML = NULL
-SELECT @xml.value(NULL, 'varchar(100)');
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.value('(/artists/artist/@name)[1]', NULL);
+GO
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.value(NULL, NULL);
 GO
 
 -- column as input argument
@@ -387,6 +533,59 @@ GO
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.value('(/artists/artist/@name)[1]', 1)
+GO
+
+-- second argument with different quotes
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', 'varchar(100)')
+GO
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', "varchar(100)")
+GO
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', `varchar(100)`)
+GO
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', '''varchar(100)''')
+GO
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', [varchar(100)])
+GO
+
+SET QUOTED_IDENTIFIER OFF
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', 'varchar(100)')
+GO
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', "varchar(100)")
+GO
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', `varchar(100)`)
+GO
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', '''varchar(100)''')
+GO
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SELECT @xml.value('(/Root/Child1)[1]', [varchar(100)])
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
 GO
 
 -- EVENTDATA().value -- eventdata() is currently not supported
