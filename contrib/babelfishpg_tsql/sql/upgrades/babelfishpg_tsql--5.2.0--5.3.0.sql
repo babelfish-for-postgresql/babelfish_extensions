@@ -208,26 +208,26 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'isnumeric'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(TEXT, ANYELEMENT)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, xml_element ANYELEMENT, datatype TEXT)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
 DECLARE
-    arg_datatype text;
-    arg_basetype oid;
+    temp_datatype text;
+    temp_basetype oid;
     result_set xml[];
     result sys.NVARCHAR;
     pltsql_quoted_identifier text;
 BEGIN
-    arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof($2)::oid);
-    IF arg_datatype IS NULL THEN
-        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
-        arg_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof($2)::oid);
-        arg_datatype := sys.translate_pg_type_to_tsql(arg_basetype);
+    temp_datatype := sys.translate_pg_type_to_tsql(pg_typeof(xml_element)::oid);
+    IF temp_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for xml_element datatype validation
+        temp_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(xml_element)::oid);
+        temp_datatype := sys.translate_pg_type_to_tsql(temp_basetype);
     END IF;
 
-    IF (arg_datatype != 'xml') THEN
-        RAISE EXCEPTION 'Cannot call methods on %.', arg_datatype;
+    IF (temp_datatype != 'xml') THEN
+        RAISE EXCEPTION 'Cannot call methods on %.', temp_datatype;
     END IF;
 
     pltsql_quoted_identifier := current_setting('babelfishpg_tsql.quoted_identifier');
@@ -236,13 +236,24 @@ BEGIN
         RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
     END IF;
 
-    result_set := xpath($1, $2);
+    temp_datatype := sys.translate_pg_type_to_tsql(datatype::regtype::oid);
+    IF temp_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for datatype validation
+        temp_basetype := sys.bbf_get_immediate_base_type_of_UDT(datatype::regtype::oid);
+        temp_datatype := sys.translate_pg_type_to_tsql(temp_basetype);
+    END IF;
+
+    IF (temp_datatype IN ('xml', 'image', 'text', 'ntext', 'sql_variant', 'geometry', 'geography', 'vector', 'sparsevec', 'halfvec')) THEN
+        RAISE EXCEPTION 'The data type ''%'' used in the VALUE method is invalid.', datatype;
+    END IF;
+
+    result_set := xpath(xpath_pattern, xml_element);
     IF (cardinality(result_set) > 1) THEN
         RAISE EXCEPTION 'XML Value result is not a single value.';
     ELSIF (cardinality(result_set) = 0) THEN
         RETURN NULL;
     ELSE
-        result := (xpath('string(' + $1 + ')', $2))[1];
+        result := (xpath('string(' + xpath_pattern + ')', xml_element))[1];
         result := pg_catalog.replace(result, '&lt;', '<');
         result := pg_catalog.replace(result, '&gt;', '>');
         result := pg_catalog.replace(result, '&apos;', '''');
