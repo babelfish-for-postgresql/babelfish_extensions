@@ -13,6 +13,15 @@ AS
 SELECT a FROM dbo.master_t1;
 GO
 
+-- TVF
+CREATE FUNCTION myschema.cross_db_babel_5792_tvf()
+RETURNS TABLE
+AS
+RETURN
+    SELECT 'Accessible' as status;
+GO
+
+
 CREATE TABLE myschema.tab1( a int);
 GO
  
@@ -41,6 +50,14 @@ CREATE DATABASE db1;
 GO
 
 USE db1;
+GO
+
+-- TVF
+CREATE FUNCTION dbo.nested_babel_5792_tvf()
+RETURNS TABLE 
+AS
+RETURN
+    SELECT master.myschema.cross_db_babel_5792_tvf()
 GO
 
 SELECT current_user;
@@ -93,6 +110,16 @@ GO
 ~~START~~
 int
 1
+~~END~~
+
+
+-- access on TVF as current user is dbo.
+-- should work
+SELECT master.myschema.cross_db_babel_5792_tvf();
+go
+~~START~~
+varchar
+Accessible
 ~~END~~
 
 
@@ -268,6 +295,28 @@ int#!#int
 USE MASTER;
 GO
 
+CREATE database db2;
+GO
+
+USE db2
+GO
+
+-- access on outer and inner TVFs as current user is dbo.
+-- should work
+SELECT db1.dbo.nested_babel_5792_tvf()
+GO
+~~START~~
+varchar
+Accessible
+~~END~~
+
+
+USE master
+GO
+
+DROP database db2
+GO
+
 SELECT * FROM db1.dbo.db1_t1 ORDER BY a;
 GO
 ~~START~~
@@ -318,8 +367,25 @@ GO
 ~~ERROR (Message: permission denied for table db1_t1)~~
 
 
+-- user has no access on TVF.
+-- should give permission denied
+SELECT db1.dbo.nested_babel_5792_tvf()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function nested_babel_5792_tvf)~~
+
+
 USE db1;
 GO
+
+-- should give permission denied
+SELECT master.myschema.cross_db_babel_5792_tvf();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function cross_db_babel_5792_tvf)~~
+
 
 EXEC master.dbo.master_p2
 GO
@@ -354,6 +420,9 @@ GO
 GRANT EXECUTE ON dbo.master_p2 TO master_janedoe;
 GO
 
+GRANT EXECUTE ON myschema.cross_db_babel_5792_tvf TO master_janedoe;
+GO
+
 USE db1;
 GO
 
@@ -361,11 +430,30 @@ GRANT SELECT ON dbo.db1_t1 TO db1_janedoe;
 GO
 
 -- tsql user=johndoe password=12345678
+USE db1;
+GO
+
+-- user has access on base TVF
+-- should work
+SELECT master.myschema.cross_db_babel_5792_tvf();
+go
+~~START~~
+varchar
+Accessible
+~~END~~
+
+
 USE MASTER;
 GO
 
-USE db1;
+-- user doesn't have access on outer TVF
+-- should give permission denied
+SELECT db1.dbo.nested_babel_5792_tvf()
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function nested_babel_5792_tvf)~~
+
 
 EXEC master.dbo.master_p2
 GO
@@ -392,13 +480,104 @@ GO
 -- terminate-tsql-conn user=johndoe password=12345678
 
 -- tsql
+USE master;
+GO
+
+REVOKE EXECUTE ON myschema.cross_db_babel_5792_tvf FROM master_janedoe;
+GO
+
+use db1
+GO
+
+GRANT EXECUTE ON nested_babel_5792_tvf TO db1_janedoe;
+GO
+
+-- tsql user=johndoe password=12345678
+USE MASTER;
+GO
+
+-- user doesn't have access on inner TVF but has on outer.
+-- should give permission denied
+SELECT db1.dbo.nested_babel_5792_tvf()
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function cross_db_babel_5792_tvf)~~
+
+
+-- terminate-tsql-conn user=johndoe password=12345678
+
+-- tsql
+USE master;
+GO
+
+CREATE DATABASE db2
+GO
+
+USE db2
+GO
+
+CREATE USER db2_janedoe FOR LOGIN johndoe;
+GO
+
+USE MASTER;
+GO
+
+GRANT EXECUTE ON myschema.cross_db_babel_5792_tvf TO master_janedoe;
+GO
+
+-- tsql user=johndoe password=12345678
+USE db2
+GO
+
+select current_user;
+GO
+~~START~~
+varchar
+db2_janedoe
+~~END~~
+
+
+-- user has access on outer and inner both TVF
+-- should work
+SELECT db1.dbo.nested_babel_5792_tvf()
+GO
+~~START~~
+varchar
+Accessible
+~~END~~
+
+
+-- terminate-tsql-conn user=johndoe password=12345678
+
+-- tsql
+USE db2;
+GO
+
+DROP USER db2_janedoe;
+GO
+
 USE db1;
+GO
+
+DROP database db2;
+GO
+
+REVOKE EXECUTE ON nested_babel_5792_tvf FROM db1_janedoe;
 GO
 
 REVOKE SELECT ON dbo.db1_t1 FROM db1_janedoe;
 GO
 
+DROP FUNCTION dbo.nested_babel_5792_tvf
+GO
+
 USE MASTER;
+GO
+
+REVOKE EXECUTE ON myschema.cross_db_babel_5792_tvf FROM master_janedoe;
 GO
 
 DROP DATABASE db1;
@@ -774,6 +953,9 @@ DROP DATABASE db1;
 GO
 
 DROP TABLE dbo.master_t1;
+GO
+
+DROP FUNCTION myschema.cross_db_babel_5792_tvf;
 GO
 
 DROP PROC dbo.master_p1;
