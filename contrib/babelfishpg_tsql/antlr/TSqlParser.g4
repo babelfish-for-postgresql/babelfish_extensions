@@ -3930,12 +3930,6 @@ geospatial_col
     | HASZ
     | HASZ_DOUBLE_QUOTE
     | HASZ_SQBRACKET
-    | M
-    | M_DOUBLE_QUOTE
-    | M_SQBRACKET
-    | Z
-    | Z_DOUBLE_QUOTE
-    | Z_SQBRACKET
     ;
 
 geospatial_func_no_arg
@@ -4702,9 +4696,6 @@ keyword
     | LONG_SQBRACKET
     | LOOP
     | LOW
-    | M
-    | M_DOUBLE_QUOTE
-    | M_SQBRACKET
     | MANUAL
     | MARK
     | MASK
@@ -5194,9 +5185,6 @@ keyword
     | YEARS
     | YMAX
     | YMIN    
-    | Z
-    | Z_DOUBLE_QUOTE 
-    | Z_SQBRACKET 
     | ZONE
     //Built-ins:
     | VARCHAR
