@@ -1,0 +1,180 @@
+
+-- tsql
+
+/*
+ * BABEL - 5627  - [DMS] cast type "binary" to bytea
+ * DMS team needs binary to bytea converison for their replication and CDC logic
+ *
+ * Test case Scenerio -
+ * 1. check All chars
+ * 2. Check boundary case
+ * 3. Check edge case
+ * 4. Check views
+ * 5. check large dataset
+ */
+/* ------------------------------------------------------ Create source table here ------------------------------------------------ */
+-- check all character
+create table source_table_all_chars(id int, description varchar(50), binary_data binary(50) );
+go
+INSERT INTO source_table_all_chars VALUES
+(1, 'Simple text', 0x48656C6C6F),                          -- 'Hello'
+(2, 'NULL value', NULL),                                    -- NULL test
+(3, 'Empty binary', 0x),                                    -- Empty
+(4, 'Special chars', 0x00FF),                              -- Special characters
+(5, 'Mixed data', 0x48656C6C6F00FF);                       -- Mixed content
+go
+~~ROW COUNT: 5~~
+
+
+-- check boundary case, max binary limit - 8000 bytes
+create table source_table_boundary(id int, description varchar(50), binary_data binary(8000) );
+go
+INSERT INTO source_table_boundary VALUES
+(1, 'Simple text', 0x48656C6C6F),                          -- 'Hello'
+(2, 'NULL value', NULL),                                    -- NULL test
+(3, 'Empty binary', 0x),                                    -- Empty
+(4, 'Special chars', 0x00FF),                              -- Special characters
+(6, 'Mixed data', 0x48656C6C6F00FF);                       -- Mixed content
+go
+~~ROW COUNT: 5~~
+
+
+--check edge case 
+create table source_table_edge_case(id int, description varchar(50), binary_data binary(100) );
+go
+INSERT INTO source_table_edge_case VALUES
+(9, 'All zeros', CAST(REPLICATE(0x00, 50) AS binary(100))),
+(10, 'All ones', CAST(REPLICATE(0x20, 50) AS binary(100))),
+(11, 'Simple text', 0x48656C6C6F);
+go
+~~ROW COUNT: 3~~
+
+
+--check views
+CREATE VIEW source_vw_binary AS
+SELECT 
+    id,
+    description,
+    binary_data,
+    DATALENGTH(binary_data) as data_length
+FROM source_table_all_chars;
+GO
+
+--check large dataset
+create table source_table_large_dataset(id int, description varchar(50), binary_data binary(100) );
+go
+CREATE PROCEDURE sp_generate_large_data
+AS
+BEGIN
+    DECLARE @i int = 1;
+    WHILE @i <= 10000
+    BEGIN
+        INSERT INTO source_table_large_dataset 
+        VALUES (@i, 'Large data test', CAST(REPLICATE(CHAR(@i % 26 + 65), 50) AS binary(100)));
+        SET @i = @i + 1;
+    END;
+END;
+EXEC sp_generate_large_data
+go
+
+
+
+/*------------------------------------------------------- Create destination table here ------------------------------------------------ */
+CREATE TABLE dest_table_chars1 ( id int, description varchar(50), binary_data binary(50) );
+go
+
+CREATE TABLE dest_table_chars2 ( id int, description varchar(50), binary_data binary(100) );
+go
+
+CREATE TABLE dest_table_chars3 ( id int, description varchar(50), binary_data binary(30) );
+go
+
+CREATE TABLE dest_table_boundary_case ( id int, description varchar(50), binary_data binary(8000) );
+go
+
+CREATE TABLE dest_table_edge_case(id int, description varchar(50), binary_data binary(100) );
+go
+
+CREATE TABLE dest_vw_binary ( id int PRIMARY KEY, description varchar(50), binary_data binary(100), data_length int );
+go
+
+CREATE TABLE dest_table_large_dataset ( id int, description varchar(50), binary_data binary(8000) );
+go
+
+-- Procedure to check count of both tables
+CREATE PROCEDURE sp_compare_table_counts
+(
+    @source_table NVARCHAR(128),
+    @dest_table NVARCHAR(128)
+)
+AS
+BEGIN
+    DECLARE @source_count INT, @dest_count INT;
+    DECLARE @sql NVARCHAR(MAX);
+    DECLARE @result VARCHAR(20);
+    
+    -- Get source count
+    SET @sql = N'SELECT @count = COUNT(*) FROM ' + QUOTENAME(@source_table);
+    EXEC sp_executesql @sql, N'@count INT OUTPUT', @count = @source_count OUTPUT;
+    
+    -- Get destination count
+    SET @sql = N'SELECT @count = COUNT(*) FROM ' + QUOTENAME(@dest_table);
+    EXEC sp_executesql @sql, N'@count INT OUTPUT', @count = @dest_count OUTPUT;
+    
+    -- Compare and return result
+    SET @result = CASE 
+        WHEN @source_count = @dest_count THEN 'Matching'
+        ELSE 'Not matching'
+    END;
+    
+    -- Output the result
+    SELECT @result AS is_matching;
+END;
+GO
+
+
+-- psql
+
+/* -------------------------------------------use psql to insert data into destination database to replicate DMS logic ------------------------------------------------ */
+SET search_path to master_dbo;
+Insert into dest_table_chars1 select id, description, cast(binary_data as bytea) from source_table_all_chars;
+go
+~~ROW COUNT: 5~~
+
+
+Insert into dest_table_chars2 select id, description, cast(binary_data as bytea) from source_table_all_chars;
+go
+~~ROW COUNT: 5~~
+
+
+Insert into dest_table_chars3 select id, description, cast(binary_data as bytea) from source_table_all_chars;
+go
+~~ROW COUNT: 5~~
+
+
+INSERT INTO dest_vw_binary 
+SELECT 
+    id,
+    description,
+    binary_data::bytea,
+    data_length
+FROM source_vw_binary;
+go
+~~ROW COUNT: 5~~
+
+
+-- check boundary case
+Insert into dest_table_boundary_case select id, description, cast(binary_data as bytea) from source_table_boundary;
+go
+~~ROW COUNT: 5~~
+
+
+-- check edge case
+Insert into dest_table_edge_case select id, description, cast(binary_data as bytea) from source_table_edge_case;
+go
+~~ROW COUNT: 3~~
+
+
+-- check large dataset case
+Insert into dest_table_large_dataset select id, description, cast(binary_data as bytea) from source_table_large_dataset;
+go

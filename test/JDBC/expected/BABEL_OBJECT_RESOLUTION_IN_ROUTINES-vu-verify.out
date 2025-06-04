@@ -14,8 +14,8 @@ GO
 EXEC dbo.babel_5448_p1
 GO
 ~~START~~
-nvarchar#!#nvarchar
-babel_5448_db.dbo#!#babel_5448_db.dbo
+nvarchar#!#varchar#!#nvarchar
+babel_5448_db.dbo#!#babel_5448_db.dbo#!#babel_5448_db.dbo
 ~~END~~
 
 ~~START~~
@@ -59,8 +59,8 @@ babel_5448_db.dbo
 EXEC babel_5448_s1.babel_5448_p1
 GO
 ~~START~~
-nvarchar#!#nvarchar
-babel_5448_db.babel_5448_s1#!#babel_5448_db.babel_5448_s1
+nvarchar#!#varchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!#babel_5448_db.babel_5448_s1#!#babel_5448_db.babel_5448_s1
 ~~END~~
 
 ~~START~~
@@ -105,7 +105,7 @@ babel_5448_db.babel_5448_s1
 -- proc in babel_5448_s1 will reference objects from dbo schema
 ALTER PROCEDURE dbo.babel_5448_p1
 AS
-    SELECT babel_5448_user_default_schema.babel_5448_f(), * FROM babel_5448_user_default_schema.babel_5448_t;
+    SELECT babel_5448_user_default_schema.babel_5448_f(), babel_5448_user_default_schema.babel_5792_tvf(), * FROM babel_5448_user_default_schema.babel_5448_t;
     EXEC babel_5448_user_default_schema.babel_5448_p;
     INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
     DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE length(id) > 50;
@@ -115,7 +115,7 @@ GO
 
 ALTER PROCEDURE babel_5448_s1.babel_5448_p1
 AS
-    SELECT dbo.babel_5448_f(), * FROM dbo.babel_5448_t;
+    SELECT dbo.babel_5448_f(), dbo.babel_5792_tvf(), * FROM dbo.babel_5448_t;
     EXEC dbo.babel_5448_p;
     INSERT INTO dbo.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
     DELETE FROM dbo.babel_5448_t WHERE length(id) > 50;
@@ -127,8 +127,8 @@ GO
 EXEC dbo.babel_5448_p1
 GO
 ~~START~~
-nvarchar#!#nvarchar
-babel_5448_db.babel_5448_user_default_schema#!#babel_5448_db.babel_5448_user_default_schema
+nvarchar#!#varchar#!#nvarchar
+babel_5448_db.babel_5448_user_default_schema#!#babel_5448_db.babel_5448_user_default_schema#!#babel_5448_db.babel_5448_user_default_schema
 ~~END~~
 
 ~~START~~
@@ -171,8 +171,8 @@ babel_5448_db.babel_5448_user_default_schema
 EXEC babel_5448_s1.babel_5448_p1
 GO
 ~~START~~
-nvarchar#!#nvarchar
-babel_5448_db.dbo#!#babel_5448_db.dbo
+nvarchar#!#varchar#!#nvarchar
+babel_5448_db.dbo#!#babel_5448_db.dbo#!#babel_5448_db.dbo
 ~~END~~
 
 ~~START~~
@@ -218,6 +218,7 @@ babel_5448_db.dbo
 ALTER PROCEDURE dbo.babel_5448_p1
 AS
     INSERT INTO babel_5448_user_default_schema.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
+    INSERT INTO babel_5448_user_default_schema.babel_5448_t SELECT babel_5792_tvf() FROM generate_series(1,3);
     -- trigger execution will tells use what the function resolved to
     -- and what the objects inside triggers resolved to
     DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE id != 'babel_5448_db.babel_5448_user_default_schema'
@@ -226,6 +227,7 @@ GO
 ALTER PROCEDURE babel_5448_s1.babel_5448_p1
 AS
     INSERT INTO dbo.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
+    INSERT INTO dbo.babel_5448_t SELECT babel_5792_tvf() FROM generate_series(1,3);
     -- trigger execution will tells use what the function resolved to
     -- and what the objects inside triggers resolved to
     DELETE FROM dbo.babel_5448_t WHERE id != 'babel_5448_db.dbo'
@@ -259,7 +261,35 @@ varchar
 
 ~~ROW COUNT: 3~~
 
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+babel_5448_db.dbo
+babel_5448_db.dbo
+babel_5448_db.dbo
+babel_5448_db.dbo
+babel_5448_db.dbo
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
 ~~ROW COUNT: 3~~
+
+~~ROW COUNT: 6~~
 
 
 EXEC babel_5448_s1.babel_5448_p1
@@ -289,11 +319,39 @@ varchar
 
 ~~ROW COUNT: 3~~
 
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+babel_5448_db.babel_5448_s1
+babel_5448_db.babel_5448_s1
+babel_5448_db.babel_5448_s1
+babel_5448_db.babel_5448_s1
+babel_5448_db.babel_5448_s1
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
 ~~ROW COUNT: 3~~
+
+~~ROW COUNT: 6~~
 
 
 -- Test INSERT EXEC
-CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX))
+CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX), col5 NVARCHAR(MAX), col6 NVARCHAR(MAX))
 GO
 
 INSERT INTO #temp EXEC dbo.babel_5448_p2
@@ -303,8 +361,8 @@ GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-babel_5448_db.dbo#!# |-- function in -- babel_5448_db.babel_5448_s2 --| #!#babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+babel_5448_db.dbo#!#babel_5448_db.dbo#!# |-- function in -- babel_5448_db.babel_5448_s2 --| #!# |-- TVF in -- babel_5448_db.babel_5448_s2 --| #!#babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -315,8 +373,8 @@ GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-babel_5448_db.babel_5448_s1#!# |-- function in -- babel_5448_db.babel_5448_s2 --| #!#babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!# |-- function in -- babel_5448_db.babel_5448_s2 --| #!#babel_5448_db.babel_5448_s1#!# |-- TVF in -- babel_5448_db.babel_5448_s2 --| #!#babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -326,9 +384,21 @@ GO
 
 -- Test declare statement inside function
 SELECT babel_5448_s1.babel_5448_f2();
+SELECT babel_5448_s1.babel_5792_f2_tvf();
 -- Test declare statement inside function
 SELECT babel_5448_s1.babel_5448_f3();
+SELECT babel_5448_s1.babel_5792_f3_tvf();
 GO
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
 ~~START~~
 nvarchar
 babel_5448_db.babel_5448_s1
@@ -351,8 +421,8 @@ GO
 EXEC master.dbo.babel_5448_p1
 GO
 ~~START~~
-nvarchar#!#nvarchar
-master.dbo#!#master.dbo
+nvarchar#!#varchar#!#nvarchar
+master.dbo#!#master.dbo#!#master.dbo
 ~~END~~
 
 ~~START~~
@@ -367,6 +437,11 @@ varchar
 
 ~~START~~
 nvarchar
+master.dbo
+~~END~~
+
+~~START~~
+varchar
 master.dbo
 ~~END~~
 
@@ -396,8 +471,8 @@ master.dbo
 EXEC master.babel_5448_s1.babel_5448_p1
 GO
 ~~START~~
-nvarchar#!#nvarchar
-master.babel_5448_s1#!#master.babel_5448_s1
+nvarchar#!#varchar#!#nvarchar
+master.babel_5448_s1#!#master.babel_5448_s1#!#master.babel_5448_s1
 ~~END~~
 
 ~~START~~
@@ -412,6 +487,11 @@ varchar
 
 ~~START~~
 nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
 master.babel_5448_s1
 ~~END~~
 
@@ -444,7 +524,7 @@ GO
 
 ALTER PROCEDURE dbo.babel_5448_p1
 AS
-    SELECT babel_5448_user_default_schema.babel_5448_f(), * FROM babel_5448_user_default_schema.babel_5448_t;
+    SELECT babel_5448_user_default_schema.babel_5448_f(), babel_5448_user_default_schema.babel_5792_tvf(), * FROM babel_5448_user_default_schema.babel_5448_t;
     EXEC babel_5448_user_default_schema.babel_5448_p;
     INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
     DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE length(id) > 50;
@@ -454,7 +534,7 @@ GO
 
 ALTER PROCEDURE babel_5448_s1.babel_5448_p1
 AS
-    SELECT dbo.babel_5448_f(), * FROM dbo.babel_5448_t;
+    SELECT dbo.babel_5448_f(), dbo.babel_5792_tvf(), * FROM dbo.babel_5448_t;
     EXEC dbo.babel_5448_p;
     INSERT INTO dbo.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
     DELETE FROM dbo.babel_5448_t WHERE length(id) > 50;
@@ -470,8 +550,8 @@ GO
 EXEC master.dbo.babel_5448_p1
 GO
 ~~START~~
-nvarchar#!#nvarchar
-master.babel_5448_user_default_schema#!#master.babel_5448_user_default_schema
+nvarchar#!#varchar#!#nvarchar
+master.babel_5448_user_default_schema#!#master.babel_5448_user_default_schema#!#master.babel_5448_user_default_schema
 ~~END~~
 
 ~~START~~
@@ -486,6 +566,11 @@ varchar
 
 ~~START~~
 nvarchar
+master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
 master.babel_5448_user_default_schema
 ~~END~~
 
@@ -514,8 +599,8 @@ master.babel_5448_user_default_schema
 EXEC master.babel_5448_s1.babel_5448_p1
 GO
 ~~START~~
-nvarchar#!#nvarchar
-master.dbo#!#master.dbo
+nvarchar#!#varchar#!#nvarchar
+master.dbo#!#master.dbo#!#master.dbo
 ~~END~~
 
 ~~START~~
@@ -530,6 +615,11 @@ varchar
 
 ~~START~~
 nvarchar
+master.dbo
+~~END~~
+
+~~START~~
+varchar
 master.dbo
 ~~END~~
 
@@ -555,7 +645,7 @@ master.dbo
 
 
 -- Test INSERT EXEC
-CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX))
+CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX), col5 NVARCHAR(MAX), col6 NVARCHAR(MAX))
 GO
 
 INSERT INTO #temp EXEC master.dbo.babel_5448_p2
@@ -565,15 +655,15 @@ GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master.dbo#!# |-- function in -- master.babel_5448_s2 --| #!#master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master.dbo#!#master.dbo#!# |-- function in -- master.babel_5448_s2 --| #!# |-- TVF in -- master.babel_5448_s2 --| #!#master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 EXEC master.babel_5448_s1.babel_5448_p2
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#varchar
-master.babel_5448_s1#!# |-- function in -- master.babel_5448_s2 --| #!#master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+nvarchar#!#nvarchar#!#varchar#!#varchar#!#nvarchar#!#varchar
+master.babel_5448_s1#!# |-- function in -- master.babel_5448_s2 --| #!#master.babel_5448_s1#!# |-- TVF in -- master.babel_5448_s2 --| #!#master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 INSERT INTO #temp EXEC master.babel_5448_s1.babel_5448_p2
@@ -583,17 +673,29 @@ GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master.babel_5448_s1#!# |-- function in -- master.babel_5448_s2 --| #!#master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master.babel_5448_s1#!# |-- function in -- master.babel_5448_s2 --| #!#master.babel_5448_s1#!# |-- TVF in -- master.babel_5448_s2 --| #!#master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 
 
 -- Test declare statement inside function
 SELECT master.babel_5448_s1.babel_5448_f2();
+SELECT master.babel_5448_s1.babel_5792_f2_tvf();
 -- Test declare statement inside function
 SELECT master.babel_5448_s1.babel_5448_f3();
+SELECT master.babel_5448_s1.babel_5792_f3_tvf();
 GO
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
 ~~START~~
 nvarchar
 master.babel_5448_s1
@@ -710,6 +812,13 @@ int
 
 ~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
+SELECT babel_5448_s1.babel_5792_f4_tvf();
+GO
+~~START~~
+int
+255
+~~END~~
+
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 ~~START~~
@@ -826,6 +935,13 @@ int
 
 ~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
+SELECT babel_5448_s1.babel_5792_f4_tvf();
+GO
+~~START~~
+int
+255
+~~END~~
+
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 ~~START~~
@@ -924,10 +1040,10 @@ varchar
 ~~END~~
 
 
-SELECT master.babel_5448_s1.babel_5448_f4() FROM generate_series(1,3);
+SELECT master.babel_5448_s1.babel_5448_f4(), master.babel_5448_s1.babel_5792_f4_tvf() FROM generate_series(1,3);
 GO
 ~~START~~
-int
+int#!#int
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
@@ -1040,10 +1156,10 @@ varchar
 
 BEGIN TRAN
 GO
-SELECT master.babel_5448_s1.babel_5448_f4() FROM generate_series(1,3);
+SELECT master.babel_5448_s1.babel_5448_f4(), master.babel_5448_s1.babel_5792_f4_tvf() FROM generate_series(1,3);
 GO
 ~~START~~
-int
+int#!#int
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
@@ -1295,6 +1411,11 @@ babel_5448_db.babel_5448_s1
 ~~END~~
 
 ~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
 nvarchar#!#varchar
 babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
@@ -1310,6 +1431,11 @@ master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --|
 ~~START~~
 nvarchar#!#varchar
 master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
 ~~END~~
 
 ~~START~~
@@ -1345,6 +1471,11 @@ babel_5448_db.babel_5448_s1
 ~~END~~
 
 ~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
 nvarchar#!#varchar
 babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
@@ -1360,6 +1491,11 @@ master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --|
 ~~START~~
 nvarchar#!#varchar
 master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
 ~~END~~
 
 ~~START~~
@@ -1594,11 +1730,17 @@ master.babel_5448_s1#!#<-------- temp table --------->
 
 
 SELECT master.babel_5448_s1.babel_5448_f5();
+SELECT master.babel_5448_s1.babel_5792_f5_tvf();
 CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 ~~START~~
 nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+text
 master.babel_5448_s1
 ~~END~~
 
@@ -1645,9 +1787,15 @@ DROP TABLE #temp_babel_5448;
 GO
 
 SELECT babel_5448_s1.babel_5448_f5();
+SELECT babel_5448_s1.babel_5792_f5_tvf();
 GO
 ~~START~~
 nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+text
 babel_5448_db.babel_5448_s1
 ~~END~~
 
