@@ -5266,8 +5266,13 @@ collation
     ;
     
 full_column_name
-    : ((schema=id? DOT)? table=id? DOT)? column=id DOT geospatial_col
-    | (((server=id? DOT)? schema=id? DOT)? tablename=id? DOT)? column_name=id
+    : column_name=id                                     // column
+    | tablename=id DOT column_name=id                      // table.column_name
+    | schema=id DOT tablename=id DOT column_name=id                      // schema.tablename.column_name
+    | server=id DOT schema=id DOT tablename=id DOT column_name=id               // server.schema.tablename.column_name
+    | schema=id DOT table=id DOT column=id DOT geospatial_col   // schema.table.column.geospatial
+    | table=id DOT column=id DOT geospatial_col          // table.column.geospatial
+    | column=id DOT geospatial_col          // table.column.geospatial
     ;
 
 column_name_list_with_order
