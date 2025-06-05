@@ -636,3 +636,4 @@ money_smallmoney
 money_smallmoney_bit_dep_obj
 user_token-dep
 len
+weak-binding
