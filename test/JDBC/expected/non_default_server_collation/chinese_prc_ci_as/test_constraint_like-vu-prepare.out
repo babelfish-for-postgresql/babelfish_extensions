@@ -236,7 +236,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK ((('abc'::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* (('A%'::text COLLATE sys.bbf_unicode_cp1_ci_as) COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((('abc'::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('A%'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 
@@ -245,7 +245,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK (((('abc'::text COLLATE sys.bbf_unicode_cp1_ci_as) COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('A%'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((('abc'::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('A%'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 
@@ -254,7 +254,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK (((('abc'::text COLLATE sys.bbf_unicode_cp1_ci_as) COLLATE sys.bbf_unicode_cp1_cs_as) ~~* (('A%'::text COLLATE sys.bbf_unicode_cp1_ci_as) COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((('abc'::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('A%'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 
@@ -280,7 +280,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK ((((sys.remove_accents_internal((babel_5608_vu_prepare_t5_1_col1)::text))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ((sys.remove_accents_internal(('ABC'::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((((sys.remove_accents_internal((babel_5608_vu_prepare_t5_1_col1)::text))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('ABC'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 
@@ -288,7 +288,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK ((((sys.remove_accents_internal((babel_5608_vu_prepare_t5_2_col1)::text))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ((sys.remove_accents_internal(('a%'::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((((sys.remove_accents_internal((babel_5608_vu_prepare_t5_2_col1)::text))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('a%'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 
@@ -323,7 +323,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK ((((sys.remove_accents_internal(((babel_5608_vu_prepare_t8_1_col1)::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ((sys.remove_accents_internal(('abc'::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((((sys.remove_accents_internal(((babel_5608_vu_prepare_t8_1_col1)::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('abc'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 
@@ -331,7 +331,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK ((((sys.remove_accents_internal(((babel_5608_vu_prepare_t8_2_col1)::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ((sys.remove_accents_internal(('a%'::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((((sys.remove_accents_internal(((babel_5608_vu_prepare_t8_2_col1)::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('a%'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 
@@ -388,7 +388,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK ((((sys.remove_accents_internal((sys.lower((babel_5608_vu_prepare_t9_7_col1 COLLATE sys.bbf_unicode_cp1_ci_ai)))::text))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ((sys.remove_accents_internal(('abc'::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((((sys.remove_accents_internal((sys.lower((babel_5608_vu_prepare_t9_7_col1 COLLATE sys.bbf_unicode_cp1_ci_ai)))::text))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('abc'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 
@@ -396,7 +396,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK ((((sys.remove_accents_internal(((sys.lower(babel_5608_vu_prepare_t9_8_col1))::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ((sys.remove_accents_internal(('a%'::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((((sys.remove_accents_internal(((sys.lower(babel_5608_vu_prepare_t9_8_col1))::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('a%'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 
@@ -405,7 +405,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK (((((babel_5608_vu_prepare_t10_col1)::text COLLATE sys.bbf_unicode_cp1_ci_as) COLLATE sys.bbf_unicode_cp1_cs_as) ~~* (like_escape('15/% %'::text, '/'::text) COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((((babel_5608_vu_prepare_t10_col1)::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* (like_escape('15/% %'::text, '/'::text) COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 

@@ -90,6 +90,16 @@
 #include "bbf_parallel_query.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
+
+/* Constants for UNPIVOT info list structure */
+#define UNPIVOT_TAG_INDEX           0  /* "UNPIVOT" string tag */
+#define UNPIVOT_ALIAS_INDEX         1  /* Alias name for the unpivot operation */
+#define UNPIVOT_DIMENSION_COL_INDEX 2  /* Dimension column name */
+#define UNPIVOT_MEASURE_COL_INDEX   3  /* Measure column name */
+#define UNPIVOT_SOURCE_ALIAS_INDEX  4  /* Source table alias */
+#define UNPIVOT_SOURCE_COLS_INDEX   5  /* List of source columns */
+#define UNPIVOT_NODE_INDEX          6  /* Transformed node (JoinExpr) */
+
 extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
@@ -5565,8 +5575,10 @@ transform_unpivot_clause_recursive(Node **node_ptr, List **measure_cols, List **
     JoinExpr *join;
     List *unpivot_info;
     char *measure_col;
+    char *unpivot_alias;
     Node *transformed_node;
     List *cols;
+    List *alias_cols_pair;
     bool found_unpivot;
 
     found_unpivot = false;
@@ -5588,18 +5600,22 @@ transform_unpivot_clause_recursive(Node **node_ptr, List **measure_cols, List **
             IsA(linitial(unpivot_info), String) &&
             strcmp(strVal(linitial(unpivot_info)), "UNPIVOT") == 0)
         {
-            measure_col = strVal(list_nth(unpivot_info,3));
-            transformed_node = list_nth(unpivot_info, 6);
+            measure_col = strVal(list_nth(unpivot_info, UNPIVOT_MEASURE_COL_INDEX));
+            unpivot_alias = strVal(list_nth(unpivot_info, UNPIVOT_ALIAS_INDEX));
+            transformed_node = list_nth(unpivot_info, UNPIVOT_NODE_INDEX);
 
             /* Add this measure column to the list */
             *measure_cols = lappend(*measure_cols, makeString(measure_col));
 
             /* Get source columns */
             cols = (List *)list_nth(unpivot_info, 5);
+            /* Create pair of (unpivot_alias, source_cols) */
+            alias_cols_pair = list_make2(makeString(unpivot_alias), 
+                                         copyObject(cols));
             if (*unpivot_src_cols == NIL)
-                *unpivot_src_cols = copyObject(cols);
+                *unpivot_src_cols = list_make1(alias_cols_pair);
             else
-                *unpivot_src_cols = list_concat(*unpivot_src_cols, copyObject(cols));
+                *unpivot_src_cols = lappend(*unpivot_src_cols, alias_cols_pair);
 
             /* Replace UNPIVOT info with transformed node */
             *node_ptr = transformed_node;
@@ -5627,23 +5643,92 @@ filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **
 {
     Query *temp_query;
     List *result_targetlist;
+    List *columns_to_filter;
     ListCell *lc;
-    
-    /* 
-     * Return if not 'SELECT *'
-     *
-     * TODO [BABEL-5677]: Handle aliased unpivot source columns syntax
-     * Does not check: `SELECT unpivot_alias.* ...`
-     * Validate against more variations of targetlist
-     */
-    if (stmt->targetList == NIL || 
-        !IsA(((ResTarget *)linitial(stmt->targetList))->val, ColumnRef) ||
-        !IsA(linitial(((ColumnRef *)((ResTarget *)linitial(stmt->targetList))->val)->fields), A_Star))
-    {
+    bool has_star;
+
+    /* Return if no * in target list */
+    if (stmt->targetList == NIL)
         return stmt->targetList;
-    }
 
     result_targetlist = NIL;
+    columns_to_filter = NIL;
+    has_star = false;
+
+    /* Check for * patterns */
+    foreach(lc, stmt->targetList)
+    {
+        Node *last;
+        ColumnRef *cref;
+        ResTarget *rt = (ResTarget *)lfirst(lc);
+
+        if (!IsA(rt->val, ColumnRef))
+            continue;
+
+        cref = (ColumnRef *)rt->val;
+        last = llast(cref->fields);
+
+        /* 
+         * Only process star expressions (table.* or *) for filtering out 
+         * unpivot source columns from result targetlist.
+         * Other targetlist items are left unmodified and processed normally
+         */
+        if (IsA(last, A_Star))
+        {
+            has_star = true;
+
+            /* Build list of columns to filter based on star type */
+            if (list_length(cref->fields) == 1)
+            {
+                /* For plain SELECT *, collect columns from all unpivots */
+                ListCell *info_lc;
+                foreach(info_lc, *source_cols)
+                {
+                    ListCell *col_lc;
+                    List *info = (List *) lfirst(info_lc);
+                    List *unpivot_col_list = (List *) lsecond(info);
+
+                    /* Add each column to filter list */
+                    foreach(col_lc, unpivot_col_list)
+                        columns_to_filter = lappend(columns_to_filter, lfirst(col_lc));
+                }
+            }
+            else if (list_length(cref->fields) == 2)
+            {
+                /* For alias.*, only filter if it's an unpivot alias */
+                ListCell *info_lc;
+                char *alias = strVal(linitial(cref->fields));
+                bool found_match = false;
+
+                /* Find matching unpivot alias */
+                foreach(info_lc, *source_cols)
+                {
+                    List *info = (List *) lfirst(info_lc);
+
+                    if (strcmp(alias, strVal(linitial(info))) == 0)
+                    {
+                        /* Found matching unpivot - collect its columns */
+                        ListCell *col_lc;
+                        List *unpivot_col_list = (List *) lsecond(info);
+
+                        foreach(col_lc, unpivot_col_list)
+                            columns_to_filter = lappend(columns_to_filter, lfirst(col_lc));
+
+                        found_match = true;
+                        break;
+                    }
+                }
+
+                /* If not an unpivot alias, skip filtering */
+                if (!found_match)
+                    continue;
+            }
+        }
+    }
+
+    /* If no star or no columns to filter, return original target list */
+    if (!has_star || columns_to_filter == NIL)
+        return stmt->targetList;
 
     /* Analyze to expand * */
     temp_query = parse_sub_analyze((Node *)copyObject(stmt), 
@@ -5663,13 +5748,12 @@ filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **
         te = (TargetEntry *)lfirst(lc);
         skip_column = false;
 
-        /* Check if this column is in source_cols */
-        foreach(source_lc, *source_cols) {
+        /* Check if column should be excluded */
+        foreach(source_lc, columns_to_filter)
+        {
             source_col = (String *)lfirst(source_lc);
             if (strcmp(te->resname, strVal(source_col)) == 0) {
                 skip_column = true;
-                /* Remove the matched source column to avoid duplicate removal */
-                *source_cols = foreach_delete_current(*source_cols, source_lc);
                 break;
             }
         }
@@ -5681,7 +5765,10 @@ filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **
             result_targetlist = lappend(result_targetlist, rt);
         }
     }
-    
+
+    /* Free the temporary filter list */
+    list_free(columns_to_filter);
+
     return result_targetlist;
 }
 

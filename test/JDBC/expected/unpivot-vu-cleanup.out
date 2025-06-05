@@ -2,6 +2,9 @@
 DROP VIEW sales.sales_analysis_view;
 GO
 
+DROP VIEW sales.quarterly_view;
+GO
+
 -- Drop tables
 DROP TABLE customer_quarterly_sales;
 GO

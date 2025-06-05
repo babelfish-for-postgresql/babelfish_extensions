@@ -330,6 +330,43 @@ datetimeoffset
 ~~END~~
 
 
+-- Test AM/PM notation
+select CAST('2025-05-20 02:30:20.123456 PM -07:00' as DATETIMEOFFSET);
+go
+~~START~~
+datetimeoffset
+2025-05-20 14:30:20.1234560 -07:00
+~~END~~
+
+select CAST('2025-05-20 02:30:20.123456 PM-07:0' as DATETIMEOFFSET);
+go
+~~START~~
+datetimeoffset
+2025-05-20 14:30:20.1234560 -07:00
+~~END~~
+
+select CAST('2025-05- 20    02:30:20.123456     PM    -07:00' as DATETIMEOFFSET(4));
+go
+~~START~~
+datetimeoffset
+2025-05-20 14:30:20.1235 -07:00
+~~END~~
+
+select CAST('2025-05-20 02:30:20.123456 AM +07:59' as DATETIMEOFFSET);
+go
+~~START~~
+datetimeoffset
+2025-05-20 02:30:20.1234560 +07:59
+~~END~~
+
+    -- out of range
+select CAST('2025-05-20 02:30:20.123456 AM +07:79' as DATETIMEOFFSET);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: time zone displacement out of range: "2025-05-20 02:30:20.123456 AM +07:79")~~
+
+
 -- Test type cast to/from other time formats
 -- Test datetime/dateime2
 select CAST(CAST('2020-03-15 23:59:29.99' AS datetime) AS datetimeoffset);
