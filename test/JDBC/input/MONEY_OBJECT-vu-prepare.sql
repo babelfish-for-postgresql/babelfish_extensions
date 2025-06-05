@@ -1,0 +1,254 @@
+----------------------------------------
+-- UDT
+----------------------------------------
+CREATE TYPE babel_5512_upgrade_type1 FROM SMALLMONEY;
+GO
+CREATE TYPE babel_5512_upgrade_type2 FROM MONEY;
+GO
+
+----------------------------------------
+-- FUNCTION
+----------------------------------------
+
+-- no input function only return
+CREATE FUNCTION babel_5512_upgrade_f1() RETURNS money AS BEGIN RETURN (select 123); END;
+go
+-- input money, output varchar
+CREATE FUNCTION babel_5512_upgrade_f2(@p1 money) RETURNS varchar AS BEGIN RETURN @p1 END;
+go
+-- one input and output money
+CREATE FUNCTION babel_5512_upgrade_f3(@p1 money) RETURNS money AS BEGIN RETURN @p1 END;
+go
+-- money input and smallmoney output
+CREATE FUNCTION babel_5512_upgrade_f4(@p1 money) RETURNS smallmoney AS BEGIN RETURN @p1 END;
+go
+-- smallmoney input and money output
+CREATE FUNCTION babel_5512_upgrade_f5(@p1 smallmoney) RETURNS money AS BEGIN RETURN @p1 END;
+go
+-- assigned input and output
+CREATE FUNCTION babel_5512_upgrade_f6(@p1 money = 123) RETURNS money AS BEGIN RETURN @p1 END;
+go
+-- input money with other combinations
+CREATE FUNCTION babel_5512_upgrade_f7(@a int, @b varchar(10) = 'abc', @c money, @d float = 1.2)
+RETURNS varchar(100) AS BEGIN RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10)); END;
+go
+-- UDT input
+CREATE FUNCTION babel_5512_upgrade_f8(@a int, @c babel_5512_upgrade_type2, @d float = 1.2)
+RETURNS babel_5512_upgrade_type1 AS BEGIN RETURN @a + @c + @d END;
+go
+
+-- Creating a Function
+CREATE FUNCTION babel_5512_upgrade_f9()
+RETURNS MONEY
+AS
+BEGIN
+    RETURN (SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS MONEY));
+END;
+GO
+
+CREATE FUNCTION babel_5512_upgrade_f10()
+RETURNS MONEY
+AS
+BEGIN
+    RETURN (select case 1 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(6.43 as smallmoney) end);
+END;
+GO
+
+
+----------------------------------------
+-- PROCEDURE
+----------------------------------------
+
+-- no input procedure only OUTPUT
+CREATE PROCEDURE babel_5512_upgrade_p1 @Statement money OUTPUT AS BEGIN SET @Statement = '123' END;
+go
+-- all input
+CREATE PROCEDURE babel_5512_upgrade_p2 @a money, @b money, @c money, @d money, @e smallmoney AS SELECT @e;
+go
+CREATE PROCEDURE babel_5512_upgrade_p3(@a money, @b money) AS SELECT @a;
+go
+-- input and output
+CREATE PROCEDURE babel_5512_upgrade_p4(@a money, @b money OUTPUT) AS SELECT @a;
+go
+CREATE PROCEDURE babel_5512_upgrade_p5(@a money, @c money output, @b money) AS SELECT @a;
+go
+-- all input and assignment
+CREATE PROCEDURE babel_5512_upgrade_p6 @p1 money=1, @p2 money=2, @p3 money=3 AS SELECT @p1, @p2, @p3;
+go
+-- [] typmod_array -> should not change
+CREATE PROCEDURE babel_5512_upgrade_p7 AS (SELECT cast(1234 as money));
+go
+
+-- input money with other datatypes
+CREATE PROCEDURE babel_5512_upgrade_p8(@a int, @b varchar(10), @c smallmoney, @d float) AS BEGIN SELECT @a, @b, @c, @d; END;
+go
+-- UDT input
+CREATE PROCEDURE babel_5512_upgrade_p9(@a int, @b varchar(10), @c babel_5512_upgrade_type2, @d float) 
+AS BEGIN SELECT @a, @b, @c, @d; END;
+go
+
+-- to see p&s in table.
+CREATE PROCEDURE babel_5512_get_column_info_p10 @table_name text AS BEGIN SELECT c.[name] AS column_name, t.[name] AS [type_name], c.[max_length], c.[precision],c.[scale] FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE object_id = object_id(@table_name) ORDER BY c.[name];
+END
+GO
+
+-- Creating a Procedure
+CREATE PROCEDURE babel_5512_upgrade_p10
+AS
+BEGIN
+    SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS MONEY) as bsc;
+END;
+GO
+
+CREATE PROCEDURE babel_5512_upgrade_p11
+AS
+BEGIN
+    select case 1 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(6.43 as smallmoney) end
+END;
+GO
+
+----------------------------------------
+-- ITVF (Inline Table-Valued Functions)
+----------------------------------------
+
+-- User defined inline table valued function - should not update for function but update for tables returned as a part of func.
+-- First, create the table
+CREATE TABLE babel_5512_upgrade_t9(
+    col_money money,
+    group_id int,
+    col_smallmoney smallmoney
+);
+GO
+
+-- ITVF with single column
+CREATE FUNCTION babel_5512_upgrade_itvf1()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT col_smallmoney
+    FROM babel_5512_upgrade_t9
+    GROUP BY col_smallmoney
+    ORDER BY col_smallmoney
+);
+GO
+
+-- ITVF with multiple columns
+CREATE FUNCTION babel_5512_upgrade_itvf2()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT col_money, col_smallmoney
+    FROM babel_5512_upgrade_t9
+    GROUP BY col_smallmoney, col_money
+    ORDER BY col_smallmoney
+);
+GO
+
+-------------------------------------------------
+-- MSTVF (Multi-Statement Table-Valued Functions)
+-------------------------------------------------
+
+-- Multi-statement table valued function - should not update for function but update for tables returned as a part of func.
+CREATE TABLE babel_5512_upgrade_t10(customer_id int primary key, money_col money not null, small_col smallmoney);
+GO
+
+CREATE TABLE babel_5512_upgrade_t11(order_id int primary key, customer_id int, order_amt money, country varchar(50));
+GO
+
+-- MSTVF with JOIN
+CREATE FUNCTION babel_5512_upgrade_mstvf1()
+RETURNS @customerswithorders TABLE
+    (CustomerID int,
+     money_col money,
+     Orderid int,
+     orderamt money,
+     small_col smallmoney)
+AS
+BEGIN
+    INSERT INTO @CustomersWithOrders
+    SELECT c.customer_id, c.money_col, order_id, order_amt, small_col
+    FROM babel_5512_upgrade_t10 c
+    JOIN babel_5512_upgrade_t11 o ON c.customer_id = o.customer_id
+    RETURN
+END;
+GO
+
+-- function with input and return type as table
+CREATE FUNCTION babel_5512_upgrade_mstvf2(@i int)
+RETURNS @tableVar TABLE
+    (a nvarchar(10),
+     b money,
+     c smallmoney)
+AS
+BEGIN
+    INSERT INTO @tableVar values('hello1', 1, 100);
+    INSERT INTO @tableVar values('hello2', 2, 200);
+    RETURN
+END;
+GO
+
+----------------------------------------
+-- TABLES/VIEWS
+----------------------------------------
+create table babel_5512_upgrade_t1 (a10 decimal,a11 money, a12 smallmoney)
+go
+
+insert into babel_5512_upgrade_t1 values (1.0, -922337203685477.5808, -214748.3648)
+GO
+insert into babel_5512_upgrade_t1 values (2.0, 922337203685477.5807, 214748.3647)
+GO
+insert into babel_5512_upgrade_t1 values (3.0, 1234.234563, 123.234567)
+GO
+
+Select * from babel_5512_upgrade_t1
+GO
+
+-- UDT column
+create table babel_5512_upgrade_t2 ( a15 decimal,a16 babel_5512_upgrade_type1,a17 babel_5512_upgrade_type2)
+go
+insert into babel_5512_upgrade_t2 values (678.90, 678.90, 678.90)
+GO
+
+create view babel_5512_upgrade_v1 as select cast(2 as smallmoney) * cast(6.43 as smallmoney) as babel_5512_result1
+go
+
+create view babel_5512_upgrade_v2 as select 2 * cast(6.43 as smallmoney) as babel_5512_result2
+go
+
+create view babel_5512_upgrade_v3 as select cast(6.43 as smallmoney) as babel_5512_result3
+GO
+
+create view babel_5512_upgrade_v6 AS SELECT a15, a16, a17 FROM babel_5512_upgrade_t2;
+GO
+-- view direct query level UDT
+create view babel_5512_upgrade_v7 as select 2 * cast(6.43 as babel_5512_upgrade_type1) as babel_5512_result4
+go
+-- view using table column UDT
+create view babel_5512_upgrade_v8 as select 2 * a17 as babel_5512_result5 from babel_5512_upgrade_t2
+GO
+
+-- round vs truncation.
+create view babel_5512_upgrade_v9 as select cast(2.5 as smallmoney) * cast(2.4999 as smallmoney) as babel_5512_result6
+GO
+
+-- r = ordinary table
+CREATE TABLE babel_5512_upgrade_t3 (id int, babel_5512_mon1 money, babel_5512_small1 smallmoney);
+GO
+-- i = index
+CREATE INDEX babel_5512_upgrade_idx1 ON babel_5512_upgrade_t3(babel_5512_mon1);
+GO
+-- v = view using table column
+CREATE VIEW babel_5512_upgrade_v10 AS SELECT id, babel_5512_mon1, babel_5512_small1 FROM babel_5512_upgrade_t3;
+GO
+
+-- p = partitioned table
+CREATE PARTITION FUNCTION babel_5512_upgrade_f11 (int) AS RANGE RIGHT FOR VALUES (100, 200, 300, 400);
+GO
+CREATE PARTITION SCHEME babel_5512_upgrade_s1 AS PARTITION babel_5512_upgrade_f11 ALL TO ([PRIMARY]);
+GO
+CREATE TABLE babel_5512_upgrade_t4 (id int, babel_5512_mon3 money, babel_5512_small3 smallmoney, dept_id int) ON babel_5512_upgrade_s1(dept_id);
+GO
+
+-- I = partitioned index
+CREATE INDEX babel_5512_upgrade_idx2 ON babel_5512_upgrade_t4(babel_5512_mon3);
+GO
