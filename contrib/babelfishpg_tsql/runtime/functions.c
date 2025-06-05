@@ -4481,8 +4481,14 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		 */
 		if (pg_strcasecmp(property, "isschemabound") == 0)
 		{
+			bool is_weak_view = false;
+			bool is_view = (type == OBJECT_TYPE_VIEW);
+
+			if (is_view)
+				check_is_tsql_view(object_id, &is_weak_view);
+
 			pfree(property);
-			PG_RETURN_INT32(0);
+			PG_RETURN_INT32(is_view ? ((int) !is_weak_view) : 0);
 		}
 		/*
 		 * For ExecIsQuotedIdentOn and ExecIsAnsiNullsOn, we hardcoded it to 1
