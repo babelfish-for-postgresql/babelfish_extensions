@@ -569,4 +569,5 @@ babel_varbinary
 babel_test_numeric_int2_oper
 babel_test_numeric_int4_oper
 babel_test_numeric_int8_oper
+MONEY_OBJECT-before-16_4
 

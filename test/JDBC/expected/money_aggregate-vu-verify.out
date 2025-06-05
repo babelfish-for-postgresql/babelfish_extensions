@@ -209,6 +209,6 @@ varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
 avgamount#!#money#!#8#!#19#!#4
 maxamount#!#money#!#8#!#19#!#4
 minamount#!#money#!#8#!#19#!#4
-totalwithmarkup#!#numeric#!#17#!#38#!#6
+totalwithmarkup#!#numeric#!#13#!#22#!#5
 ~~END~~
 
