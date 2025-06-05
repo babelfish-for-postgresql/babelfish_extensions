@@ -1,0 +1,240 @@
+USE master;
+GO
+
+-- Drop views in view_test schema
+DROP VIEW IF EXISTS view_test.strong_view2;
+GO
+
+DROP VIEW IF EXISTS view_test.strong_view1;
+GO
+
+DROP VIEW IF EXISTS view_test.weak_view1;
+GO
+
+DROP VIEW IF EXISTS view_test.weak_view2;
+GO
+
+DROP VIEW IF EXISTS view_test.weak_view3;
+GO
+
+DROP VIEW IF EXISTS view_test.weak_view_complex1;
+GO
+
+DROP VIEW IF EXISTS view_test.weak_view_complex2;
+GO
+
+DROP VIEW IF EXISTS view_test.weak_view_function;
+GO
+
+DROP VIEW IF EXISTS view_test.weak_view_function1;
+GO
+
+DROP VIEW IF EXISTS view_test.weak_type_view;
+GO
+
+DROP TRIGGER IF EXISTS view_test.trg_view_insert;
+GO
+
+DROP VIEW IF EXISTS view_test.trigger_view;
+GO
+
+DROP TABLE IF EXISTS view_test.trigger_base_table;
+GO
+
+DROP TABLE IF EXISTS view_test.trigger_audit_table;
+GO
+
+DROP VIEW IF EXISTS view_test.weak_binary_view;
+GO
+
+DROP VIEW IF EXISTS view_test.computed_view;
+GO
+
+DROP TABLE IF EXISTS view_test.computed_table;
+GO
+
+DROP VIEW IF EXISTS view_test.datetime_view1;
+GO
+
+DROP VIEW IF EXISTS view_test.datetime_view;
+GO
+
+DROP VIEW IF EXISTS view_test.numeric_view;
+GO
+
+DROP VIEW IF EXISTS view_test.doc_view;
+GO
+
+DROP VIEW IF EXISTS view_test.string_view;
+GO
+
+DROP VIEW IF EXISTS view_test.complex_view;
+GO
+
+DROP VIEW IF EXISTS view_test.compute_view;
+GO
+
+DROP TABLE IF EXISTS view_test.datetime_test;
+GO
+
+DROP TABLE IF EXISTS view_test.numeric_test;
+GO
+
+DROP TABLE IF EXISTS view_test.doc_test;
+GO
+
+DROP TABLE IF EXISTS view_test.string_test;
+GO
+
+DROP TABLE IF EXISTS view_test.complex_test;
+GO
+
+DROP TABLE IF EXISTS view_test.compute_test;
+GO
+
+-- Drop views in master database
+DROP VIEW IF EXISTS test_view;
+GO
+
+DROP VIEW IF EXISTS test_view2;
+GO
+
+DROP VIEW IF EXISTS master_v1;
+GO
+
+DROP VIEW IF EXISTS master_v2;
+GO
+
+DROP VIEW IF EXISTS master_v3;
+GO
+
+DROP VIEW IF EXISTS master_v4;
+GO
+
+DROP VIEW IF EXISTS v2_strong;
+GO
+
+DROP VIEW IF EXISTS v1_strong;
+GO
+
+
+-- USE test_db;
+-- GO
+DROP VIEW IF EXISTS test_db_v3;
+GO
+
+DROP VIEW IF EXISTS test_db_v2;
+GO
+
+DROP VIEW IF EXISTS test_db_v1;
+GO
+
+DROP VIEW IF EXISTS test_db_v4;
+GO
+
+DROP VIEW IF EXISTS self_ref_v2;
+GO
+
+DROP VIEW IF EXISTS self_ref_v1;
+GO
+
+DROP VIEW IF EXISTS dependent_view;
+GO
+
+DROP VIEW IF EXISTS test_view;
+GO
+
+DROP VIEW IF EXISTS vw_fnc_check;
+GO
+
+DROP VIEW IF EXISTS dml_test_view;
+GO
+
+DROP VIEW IF EXISTS multi_table_complex_view;
+GO
+
+DROP VIEW IF EXISTS avg_d_per_c;
+GO
+
+DROP VIEW IF EXISTS above_avg_d;
+GO
+
+DROP VIEW IF EXISTS complex_nested_view;
+GO
+
+DROP VIEW IF EXISTS no_top_level;
+GO
+
+USE master;
+GO
+
+-- Drop tables in view_test schema
+DROP TABLE IF EXISTS view_test.base_table1;
+GO
+
+DROP TABLE IF EXISTS view_test.base_table2;
+GO
+
+DROP TABLE IF EXISTS view_test.base_table3;
+GO
+
+DROP TABLE IF EXISTS view_test.type_test_table;
+GO
+
+DROP TABLE IF EXISTS test_table_for_strong_view;
+GO
+
+DROP TABLE IF EXISTS view_test.binary_test_table
+GO
+
+DROP TABLE IF EXISTS self_ref_t1;
+GO
+
+DROP TABLE IF EXISTS test_ord;
+GO
+
+DROP TABLE IF EXISTS customer;
+GO
+
+DROP TABLE IF EXISTS test_table;
+GO
+
+DROP TABLE IF EXISTS t;
+GO
+
+DROP TABLE IF EXISTS dml_test_table;
+GO
+
+DROP TABLE IF EXISTS cmp_t;
+GO
+
+DROP TABLE IF EXISTS cmp_t2;
+GO
+
+DROP TABLE IF EXISTS cmp_t3;
+GO
+
+-- Drop functions
+DROP FUNCTION IF EXISTS view_test.sample_function;
+GO
+
+DROP FUNCTION IF EXISTS view_test.sample_function1;
+GO
+
+DROP FUNCTION IF EXISTS fnc_dependancy_check;
+GO
+
+DROP SCHEMA IF EXISTS view_test;
+GO
+
+DROP DATABASE IF EXISTS test_db;
+GO
+
+-- Reset the GUC setting to default
+SELECT set_config('babelfishpg_tsql.weak_view_binding', 'false', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
