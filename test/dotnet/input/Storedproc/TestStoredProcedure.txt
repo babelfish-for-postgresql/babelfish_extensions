@@ -272,3 +272,26 @@ storedproc#!#prep#!#sp_test25#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|inputoutpu
 
 DROP PROCEDURE sp_test25
 # Test (24): End
+
+# money
+CREATE PROCEDURE sp_test_money (@a money OUTPUT) AS BEGIN  SET @a=12345.6789; Select @a as a; END;
+exec sp_test_money 1234.56
+Declare @a money; Set @a=9876.54; exec sp_test_money @a;select @a as a;
+storedproc#!#prep#!#sp_test_money#!#money|-|a|-|1234.56|-|output
+storedproc#!#prep#!#sp_test_money#!#money|-|a|-|1234.56|-|inputoutput
+DROP PROCEDURE sp_test_money
+
+# smallmoney
+CREATE PROCEDURE sp_test_smallmoney (@a smallmoney OUTPUT) AS BEGIN  SET @a=214.3256;Select @a as a; END;
+exec sp_test_smallmoney 123.45
+Declare @a smallmoney;Set @a=98.76; exec sp_test_smallmoney @a;select @a as a;
+storedproc#!#prep#!#sp_test_smallmoney#!#smallmoney|-|a|-|123.45|-|output
+storedproc#!#prep#!#sp_test_smallmoney#!#smallmoney|-|a|-|123.45|-|inputoutput
+DROP PROCEDURE sp_test_smallmoney
+
+# Test both money and smallmoney parameters together
+CREATE PROCEDURE sp_test_both_money (@m money OUTPUT, @sm smallmoney OUTPUT) AS BEGIN SET @m = 12345.6789; SET @sm = 214.3256; SELECT @m as money_val, @sm as smallmoney_val;END;
+Declare @m money, @sm smallmoney; Set @m = 9876.54; Set @sm = 98.76; exec sp_test_both_money @m OUTPUT, @sm OUTPUT; select @m as money_val, @sm as smallmoney_val;
+storedproc#!#prep#!#sp_test_both_money#!#money|-|m|-|9876.54|-|output#!#smallmoney|-|sm|-|98.76|-|output
+storedproc#!#prep#!#sp_test_both_money#!#money|-|m|-|9876.54|-|inputoutput#!#smallmoney|-|sm|-|98.76|-|inputoutput
+DROP PROCEDURE sp_test_both_money
