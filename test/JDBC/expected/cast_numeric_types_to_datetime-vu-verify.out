@@ -657,20 +657,16 @@ datetime
 
 SELECT CAST(CAST (999999999 as SMALLMONEY) as DATETIME)
 GO
-~~START~~
-datetime
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
 
 
 SELECT CAST(CAST (-999999999 as SMALLMONEY) as DATETIME)
 GO
-~~START~~
-datetime
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
 
 
 --=== Version upgrade tests ===--
