@@ -133,139 +133,149 @@ BEGIN
     END IF;
 END $$;
 
-CREATE OR REPLACE FUNCTION sys.int2smallmoneypl(INT2, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int2smallmoneypl'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.int2smallmoneymi(INT2, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int2smallmoneymi'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.int2smallmoneymul(INT2, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int2smallmoneymul'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.int4smallmoneypl(INT4, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int4smallmoneypl'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.int4smallmoneymi(INT4, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int4smallmoneymi'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.int4smallmoneymul(INT4, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int4smallmoneymul'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.int4smallmoneydiv(INT4, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int4smallmoneydiv'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.int8smallmoneypl(INT8, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int8smallmoneypl'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.int8smallmoneymi(INT8, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int8smallmoneymi'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.int8smallmoneymul(INT8, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int8smallmoneymul'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.int8smallmoneydiv(INT8, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int8smallmoneydiv'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint2pl(sys.SMALLMONEY, INT2)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint2pl'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint2mi(sys.SMALLMONEY, INT2)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint2mi'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint2mul(sys.SMALLMONEY, INT2)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint2mul'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint2div(sys.SMALLMONEY, INT2)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint2div'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint4pl(sys.SMALLMONEY, INT4)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint4pl'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint4mi(sys.SMALLMONEY, INT4)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint4mi'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint4mul(sys.SMALLMONEY, INT4)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint4mul'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint4div(sys.SMALLMONEY, INT4)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint4div'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint8pl(sys.SMALLMONEY, INT8)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint8pl'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint8mi(sys.SMALLMONEY, INT8)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint8mi'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint8mul(sys.SMALLMONEY, INT8)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint8mul'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneyint8div(sys.SMALLMONEY, INT8)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'smallmoneyint8div'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.smallmoneypl(sys.SMALLMONEY, sys.SMALLMONEY)
+CREATE OR REPLACE FUNCTION sys.fixeddecimalpl(sys.SMALLMONEY, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneypl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.smallmoneymi(sys.SMALLMONEY, sys.SMALLMONEY)
+CREATE OR REPLACE FUNCTION sys.fixeddecimalmi(sys.SMALLMONEY, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneymi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.smallmoneymul(sys.SMALLMONEY, sys.SMALLMONEY)
+CREATE OR REPLACE FUNCTION sys.fixeddecimalmul(sys.SMALLMONEY, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.smallmoneydiv(sys.SMALLMONEY, sys.SMALLMONEY)
+CREATE OR REPLACE FUNCTION sys.fixeddecimaldiv(sys.SMALLMONEY, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint8pl(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint8pl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint8mi(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint8mi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint8mul(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint8mul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint8div(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint8div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint4pl(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint4pl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint4mi(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint4mi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint4mul(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint4mul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint4div(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint4div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint2pl(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint2pl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint2mi(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint2mi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint2mul(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint2mul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalint2div(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'smallmoneyint2div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int8fixeddecimalpl(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8smallmoneypl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int8fixeddecimalmi(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8smallmoneymi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int8fixeddecimalmul(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8smallmoneymul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int8fixeddecimaldiv(INT8, sys.SMALLMONEY)
+RETURNS DOUBLE PRECISION
+AS 'babelfishpg_money', 'int8smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int8fixeddecimaldiv_smallmoney(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4fixeddecimalpl(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4smallmoneypl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4fixeddecimalmi(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4smallmoneymi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4fixeddecimalmul(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4smallmoneymul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4fixeddecimaldiv(INT4, sys.SMALLMONEY)
+RETURNS DOUBLE PRECISION
+AS 'babelfishpg_money', 'int4smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4fixeddecimaldiv_smallmoney(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int2fixeddecimalpl(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int2smallmoneypl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int2fixeddecimalmi(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int2smallmoneymi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int2fixeddecimalmul(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int2smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.floor(sys.smallmoney) RETURNS sys.MONEY
@@ -285,9 +295,9 @@ RETURNS sys.SMALLMONEY
 AS $$
     BEGIN
         IF $2 = 0 THEN
-            RETURN (SELECT sys.smallmoneyint4pl($1, 0));
+            RETURN (SELECT sys.fixeddecimalint4pl($1, 0));
         ELSE 
-            RETURN (SELECT sys.smallmoneyint4pl($1, 1));
+            RETURN (SELECT sys.fixeddecimalint4pl($1, 1));
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -297,9 +307,9 @@ RETURNS sys.SMALLMONEY
 AS $$
     BEGIN
         IF $2 = 0 THEN
-            RETURN (SELECT sys.smallmoneyint4mi($1, 0));
+            RETURN (SELECT sys.fixeddecimalint4mi($1, 0));
         ELSE 
-            RETURN (SELECT sys.smallmoneyint4mi($1, 1));
+            RETURN (SELECT sys.fixeddecimalint4mi($1, 1));
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -309,9 +319,9 @@ RETURNS sys.SMALLMONEY
 AS $$
     BEGIN
         IF $1 = 0 THEN
-            RETURN $2;
+            RETURN (SELECT sys.int4fixeddecimalpl(0, $2));
         ELSE 
-            RETURN (SELECT sys.int4smallmoneypl(1, $2));
+            RETURN (SELECT sys.int4fixeddecimalpl(1, $2));
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -321,9 +331,9 @@ RETURNS sys.SMALLMONEY
 AS $$
     BEGIN
         IF $1 = 0 THEN
-            RETURN (SELECT sys.int4smallmoneymi(0, $2));
+            RETURN (SELECT sys.int4fixeddecimalmi(0, $2));
         ELSE 
-            RETURN (SELECT sys.int4smallmoneymi(1, $2));
+            RETURN (SELECT sys.int4fixeddecimalmi(1, $2));
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -338,253 +348,74 @@ RETURNS bool
 AS 'babelfishpg_common', 'bitmi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-DROP OPERATOR IF EXISTS sys.+ (sys.SMALLMONEY, sys.SMALLMONEY);
-CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = +,
-    PROCEDURE  = smallmoneypl
-);
-
-DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, sys.SMALLMONEY);
-CREATE OPERATOR sys.- (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = -,
-    PROCEDURE  = smallmoneymi
-);
-
-DROP OPERATOR IF EXISTS sys.* (sys.SMALLMONEY, sys.SMALLMONEY);
-CREATE OPERATOR sys.* (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = *,
-    PROCEDURE  = smallmoneymul
-);
-
-DROP OPERATOR IF EXISTS sys./ (sys.SMALLMONEY, sys.SMALLMONEY);
-CREATE OPERATOR sys./ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = smallmoneydiv
-);
-
-DROP OPERATOR IF EXISTS sys.+ (sys.SMALLMONEY, INT8);
-CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT8,
-    COMMUTATOR = +,
-    PROCEDURE  = smallmoneyint8pl
-);
-
-DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, INT8);
-CREATE OPERATOR sys.- (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT8,
-    PROCEDURE  = smallmoneyint8mi
-);
-
-DROP OPERATOR IF EXISTS sys.* (sys.SMALLMONEY, INT8);
-CREATE OPERATOR sys.* (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT8,
-    COMMUTATOR = *,
-    PROCEDURE  = smallmoneyint8mul
-);
-
-DROP OPERATOR IF EXISTS sys./ (sys.SMALLMONEY, INT8);
-CREATE OPERATOR sys./ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT8,
-    PROCEDURE  = smallmoneyint8div
-);
-
-DROP OPERATOR IF EXISTS sys.+ (sys.SMALLMONEY, INT4);
-CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT4,
-    COMMUTATOR = +,
-    PROCEDURE  = smallmoneyint4pl
-);
-
-DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, INT4);
-CREATE OPERATOR sys.- (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT4,
-    PROCEDURE  = smallmoneyint4mi
-);
-
-DROP OPERATOR IF EXISTS sys.* (sys.SMALLMONEY, INT4);
-CREATE OPERATOR sys.* (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT4,
-    COMMUTATOR = *,
-    PROCEDURE  = smallmoneyint4mul
-);
-
-DROP OPERATOR IF EXISTS sys./ (sys.SMALLMONEY, INT4);
-CREATE OPERATOR sys./ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT4,
-    PROCEDURE  = smallmoneyint4div
-);
-
-DROP OPERATOR IF EXISTS sys.+ (sys.SMALLMONEY, INT2);
-CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT2,
-    COMMUTATOR = +,
-    PROCEDURE  = smallmoneyint2pl
-);
-
-DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, INT2);
-CREATE OPERATOR sys.- (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT2,
-    PROCEDURE  = smallmoneyint2mi
-);
-
-DROP OPERATOR IF EXISTS sys.* (sys.SMALLMONEY, INT2);
-CREATE OPERATOR sys.* (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT2,
-    COMMUTATOR = *,
-    PROCEDURE  = smallmoneyint2mul
-);
-
-DROP OPERATOR IF EXISTS sys./ (sys.SMALLMONEY, INT2);
-CREATE OPERATOR sys./ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = INT2,
-    PROCEDURE  = smallmoneyint2div
-);
-
-DROP OPERATOR IF EXISTS sys.+ (INT8, sys.SMALLMONEY);
-CREATE OPERATOR sys.+ (
-    LEFTARG    = INT8,
-    RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = +,
-    PROCEDURE  = int8smallmoneypl
-);
-
-DROP OPERATOR IF EXISTS sys.- (INT8, sys.SMALLMONEY);
-CREATE OPERATOR sys.- (
-    LEFTARG    = INT8,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = int8smallmoneymi
-);
-
-DROP OPERATOR IF EXISTS sys.* (INT8, sys.SMALLMONEY);
-CREATE OPERATOR sys.* (
-    LEFTARG    = INT8,
-    RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = *,
-    PROCEDURE  = int8smallmoneymul
-);
-
-DROP OPERATOR IF EXISTS sys./ (INT8, sys.SMALLMONEY);
-CREATE OPERATOR sys./ (
-    LEFTARG    = INT8,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = int8smallmoneydiv
-);
-
-DROP OPERATOR IF EXISTS sys.+ (INT4, sys.SMALLMONEY);
-CREATE OPERATOR sys.+ (
-    LEFTARG    = INT4,
-    RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = +,
-    PROCEDURE  = int4smallmoneypl
-);
-
-DROP OPERATOR IF EXISTS sys.- (INT4, sys.SMALLMONEY);
-CREATE OPERATOR sys.- (
-    LEFTARG    = INT4,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = int4smallmoneymi
-);
-
-DROP OPERATOR IF EXISTS sys.* (INT4, sys.SMALLMONEY);
-CREATE OPERATOR sys.* (
-    LEFTARG    = INT4,
-    RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = *,
-    PROCEDURE  = int4smallmoneymul
-);
-
-DROP OPERATOR IF EXISTS sys./ (INT4, sys.SMALLMONEY);
-CREATE OPERATOR sys./ (
-    LEFTARG    = INT4,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = int4smallmoneydiv
-);
-
-DROP OPERATOR IF EXISTS sys.+ (INT2, sys.SMALLMONEY);
-CREATE OPERATOR sys.+ (
-    LEFTARG    = INT2,
-    RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = +,
-    PROCEDURE  = int2smallmoneypl
-);
-
-DROP OPERATOR IF EXISTS sys.- (INT2, sys.SMALLMONEY);
-CREATE OPERATOR sys.- (
-    LEFTARG    = INT2,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = int2smallmoneymi
-);
-
-DROP OPERATOR IF EXISTS sys.* (INT2, sys.SMALLMONEY);
-CREATE OPERATOR sys.* (
-    LEFTARG    = INT2,
-    RIGHTARG   = sys.SMALLMONEY,
-    COMMUTATOR = *,
-    PROCEDURE  = int2smallmoneymul
-);
-
-DROP OPERATOR IF EXISTS sys.- (sys.BIT, sys.SMALLMONEY);
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
 CREATE OPERATOR sys.- (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.SMALLMONEY,
     PROCEDURE  = bitsmallmoneymi
 );
+END IF;
+END $$;
 
-DROP OPERATOR IF EXISTS sys.+ (sys.BIT, sys.SMALLMONEY);
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.SMALLMONEY,
     PROCEDURE  = bitsmallmoneypl
 );
+END IF;
+END $$;
 
-DROP OPERATOR IF EXISTS sys.- (sys.SMALLMONEY, sys.BIT);
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
 CREATE OPERATOR sys.- (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
     PROCEDURE  = smallmoneybitmi
 );
+END IF;
+END $$;
 
-DROP OPERATOR IF EXISTS sys.+ (sys.SMALLMONEY, sys.BIT);
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
     COMMUTATOR = +,
     PROCEDURE  = smallmoneybitpl
 );
+END IF;
+END $$;
 
-DROP OPERATOR IF EXISTS sys.- (sys.BIT, sys.BIT);
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
 CREATE OPERATOR sys.- (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.BIT,
     PROCEDURE  = bitmi
 );
+END IF;
+END $$;
 
-DROP OPERATOR IF EXISTS sys.+ (sys.BIT, sys.BIT);
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.BIT,
     COMMUTATOR = +,
     PROCEDURE  = bitpl
 );
+END IF;
+END $$;
+
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

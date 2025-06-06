@@ -134,6 +134,12 @@ smallmoneymul(PG_FUNCTION_ARGS)
 	 */
 	result = (int64) arg1 * arg2 / FIXEDDECIMAL_MULTIPLIER;
 
+    /* Round off the result to FIXEDDECIMAL_SCALE. */
+	if (((int64) arg1 * arg2) % FIXEDDECIMAL_MULTIPLIER >= FIXEDDECIMAL_ROUNDUP)
+    {
+        result++;
+    }
+
 	/*
 	 * Overflow check.  If the 64 bit int result of the multiplication
      * cannot be converted back to a 32 bit int, then we know that the 

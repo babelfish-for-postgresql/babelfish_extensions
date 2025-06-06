@@ -510,9 +510,9 @@ RETURNS sys.SMALLMONEY
 AS $$
     BEGIN
         IF $1 = 0 THEN
-            RETURN $2;
+            RETURN (SELECT sys.int4fixeddecimalpl(0, $2));
         ELSE 
-            RETURN (SELECT sys.int4smallmoneypl(1, $2));
+            RETURN (SELECT sys.int4fixeddecimalpl(1, $2));
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -522,9 +522,9 @@ RETURNS sys.SMALLMONEY
 AS $$
     BEGIN
         IF $1 = 0 THEN
-            RETURN (SELECT sys.int4smallmoneymi(0, $2));
+            RETURN (SELECT sys.int4fixeddecimalmi(0, $2));
         ELSE 
-            RETURN (SELECT sys.int4smallmoneymi(1, $2));
+            RETURN (SELECT sys.int4fixeddecimalmi(1, $2));
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -547,9 +547,9 @@ RETURNS sys.SMALLMONEY
 AS $$
     BEGIN
         IF $2 = 0 THEN
-            RETURN (SELECT sys.smallmoneyint4pl($1, 0));
+            RETURN (SELECT sys.fixeddecimalint4pl($1, 0));
         ELSE 
-            RETURN (SELECT sys.smallmoneyint4pl($1, 1));
+            RETURN (SELECT sys.fixeddecimalint4pl($1, 1));
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -559,9 +559,9 @@ RETURNS sys.SMALLMONEY
 AS $$
     BEGIN
         IF $2 = 0 THEN
-            RETURN (SELECT sys.smallmoneyint4mi($1, 0));
+            RETURN (SELECT sys.fixeddecimalint4mi($1, 0));
         ELSE 
-            RETURN (SELECT sys.smallmoneyint4mi($1, 1));
+            RETURN (SELECT sys.fixeddecimalint4mi($1, 1));
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

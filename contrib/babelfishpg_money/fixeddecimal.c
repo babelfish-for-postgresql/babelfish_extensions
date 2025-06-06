@@ -1709,7 +1709,9 @@ fixeddecimalmul(PG_FUNCTION_ARGS)
 	result = (int128) arg1 * arg2 / FIXEDDECIMAL_MULTIPLIER;
 	/* Round off the result to FIXEDDECIMAL_SCALE. */
 	if ((((int128) arg1 * arg2 % FIXEDDECIMAL_MULTIPLIER)) >= FIXEDDECIMAL_ROUNDUP)
-	result++;
+    {
+        result++;
+    }
 
 
 	if (result != ((int64) result))
