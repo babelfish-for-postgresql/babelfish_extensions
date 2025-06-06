@@ -38,25 +38,6 @@
 #error "FIXEDDECIMAL_SCALE cannot be greater than 19"
 #endif
 
-/*
- * This is bounded by the maximum and minimum values of int64.
- * 9223372036854775807 is 19 decimal digits long.
- */
-#define FIXEDDECIMAL_MAX_PRECISION 19
-
-/* Define this if your compiler has _builtin_add_overflow() */
-/* #define HAVE_BUILTIN_OVERFLOW */
-
-#ifndef HAVE_BUILTIN_OVERFLOW
-#define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
-#endif							/* HAVE_BUILTIN_OVERFLOW */
-
-#define FIXEDDECIMAL_MAX (INT64_MAX/FIXEDDECIMAL_MULTIPLIER)
-#define FIXEDDECIMAL_MIN (INT64_MIN/FIXEDDECIMAL_MULTIPLIER)
-
-/* Compiler must have a working 128 int type */
-typedef __int128 int128;
-
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
 #endif

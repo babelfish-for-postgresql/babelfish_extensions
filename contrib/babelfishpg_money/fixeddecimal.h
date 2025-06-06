@@ -11,12 +11,15 @@
  */
 #define FIXEDDECIMAL_SCALE 4
 /*
- * This is bounded by the maximum and minimum values of int64.
- * 9223372036854775807 is 19 decimal digits long, but we we can only represent
- * this number / FIXEDDECIMAL_MULTIPLIER, so we must subtract
- * FIXEDDECIMAL_SCALE
+ * This ensures that we round up the result in case the 5th decimal place >= 5
+ * in case of fixeddecimal multiplication.
  */
-#define FIXEDDECIMAL_MAX_PRECISION 19 - FIXEDDECIMAL_SCALE
+#define FIXEDDECIMAL_ROUNDUP 5000
+/*
+ * This is bounded by the maximum and minimum values of int64.
+ * 9223372036854775807 is 19 decimal digits long.
+ */
+#define FIXEDDECIMAL_MAX_PRECISION 19
 
 #define FIXEDDECIMAL_MAX (INT64_MAX/FIXEDDECIMAL_MULTIPLIER)
 #define FIXEDDECIMAL_MIN (INT64_MIN/FIXEDDECIMAL_MULTIPLIER)

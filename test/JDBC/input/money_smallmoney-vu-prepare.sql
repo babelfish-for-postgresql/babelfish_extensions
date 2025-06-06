@@ -1,0 +1,55 @@
+CREATE VIEW int2smallmoneyadd_vu AS SELECT cast(100 AS INT2) + cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW int4smallmoneyadd_vu AS SELECT cast(100 AS INT) + cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW int8smallmoneyadd_vu AS SELECT cast(100 AS BIGINT) + cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW smallmoneyint2add_vu AS SELECT cast(123.45 AS SMALLMONEY) + cast(100 AS INT2) AS result;
+GO
+
+CREATE VIEW smallmoneyint4add_vu AS SELECT cast(123.45 AS SMALLMONEY) + cast(100 as INT) AS result;
+GO
+
+CREATE VIEW smallmoneyint8add_vu AS SELECT cast(123.45 AS SMALLMONEY) + cast(100 as BIGINT) AS result;
+GO
+
+CREATE VIEW int2smallmoneymul_vu AS SELECT cast(100 AS INT2) * cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW int4smallmoneymul_vu AS SELECT cast(100 AS INT) * cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE FUNCTION int2smallmoney_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT cast(100 AS INT2) + cast(123.45 AS SMALLMONEY));
+END;
+GO
+
+CREATE FUNCTION int8smallmoney_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT cast(100 AS BIGINT) * cast(123.45 AS SMALLMONEY));
+END;
+GO
+
+CREATE FUNCTION bitsmallmoney_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT cast(100 AS BIT) + cast(123.45 AS SMALLMONEY));
+END;
+GO
+
+CREATE FUNCTION int4smallmoney_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT cast(10000 AS INT) / cast(123.45 AS SMALLMONEY));
+END;
+GO
