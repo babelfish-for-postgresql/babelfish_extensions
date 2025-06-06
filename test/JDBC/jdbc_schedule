@@ -8,7 +8,9 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+float_exponent-vu-prepare
+float_exponent-vu-verify
+float_exponent-vu-cleanup
 
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations

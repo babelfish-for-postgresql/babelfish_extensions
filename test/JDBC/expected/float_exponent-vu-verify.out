@@ -215,7 +215,7 @@ select .e
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near ".")~~
+~~ERROR (Message: syntax error near '<EOF>' at line 3 and character position 0)~~
 
 
 -- not a number
