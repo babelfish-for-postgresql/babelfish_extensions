@@ -239,6 +239,7 @@ static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
+static Oid get_domain_typmodin(Type typ);
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -570,6 +571,8 @@ InstallExtendedHooks(void)
 	ExecInitParallelPlan_hook = bbf_ExecInitParallelPlan;
 
 	ExecCheckOneRelPerms_hook = bbf_ExecCheckOneRelPerms;
+
+	get_domain_typmodin_hook = get_domain_typmodin;
 }
 
 void
@@ -654,6 +657,7 @@ UninstallExtendedHooks(void)
 	ParallelQueryMain_hook = prev_ParallelQueryMain_hook;
 	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
 	ExecCheckOneRelPerms_hook = NULL;
+	get_domain_typmodin_hook = NULL;
 }
 
 /*****************************************
@@ -6368,9 +6372,11 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 {
 	int32       result_typmod = -1;
 	Oid         expr_type;
-	
-	if (sql_dialect != SQL_DIALECT_TSQL || expr == NULL)
+
+	if (expr == NULL || (sql_dialect != SQL_DIALECT_TSQL && !babelfish_dump_restore))
+	{
 		return -1;
+	}
 
 	expr_type = exprType(expr);
 
@@ -6388,6 +6394,14 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 		result_typmod = resolve_numeric_typmod_from_exp(plan, expr, &found_typmod);
 		if (!plan && !found_typmod)
 			return -1;
+	}
+	else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(expr_type))
+	{
+		result_typmod = TSQL_SMALLMONEY_TYPMOD;
+	}
+	else if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(expr_type))
+	{
+		result_typmod = TSQL_MONEY_TYPMOD;
 	}
 	return result_typmod;
 }
@@ -6452,4 +6466,36 @@ static bool
 is_bbf_tds_connection(void)
 {
 	return IS_TDS_CONN();
+}
+
+/*
+ * get_domain_typmodin()
+ *
+ * Returns the oid of typmodin function for a given domain which is essentially
+ * same as the oid of it's basetype's typmodin function. This is only used during
+ * restore to handle domains like smallmoney/money and UDTs created on them.
+ */
+static Oid
+get_domain_typmodin(Type typ)
+{
+	Oid 		typbasetype;
+	Oid 		basetypeid;
+	Oid 		typeoid;
+	Oid			typmodin;
+	HeapTuple	tup;
+
+	typmodin = ((Form_pg_type) GETSTRUCT(typ))->typmodin;
+	typeoid = ((Form_pg_type) GETSTRUCT(typ))->oid;
+	typbasetype = ((Form_pg_type) GETSTRUCT(typ))->typbasetype;
+
+	if (babelfish_dump_restore && !OidIsValid(typmodin) && OidIsValid(typbasetype))
+	{
+		basetypeid = getBaseType(typeoid);
+		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(basetypeid));
+		if (!HeapTupleIsValid(tup)) /* should not happen */
+			elog(ERROR, "cache lookup failed for type %u", basetypeid);
+		typmodin = ((Form_pg_type) GETSTRUCT((Type)tup))->typmodin;
+		ReleaseSysCache(tup);
+	}
+	return typmodin;
 }

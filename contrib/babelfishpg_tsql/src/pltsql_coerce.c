@@ -53,6 +53,7 @@
 #define BPCHAR_MAX_TYPMOD 8000
 
 #define TDS_MAX_NUM_PRECISION 38
+
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
@@ -1222,7 +1223,31 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Param:
 			{
 				Param *param = (Param *) expr;
-				if (!is_numeric_datatype(param->paramtype))
+
+				if (param->paramtypmod == -1)
+				{
+					/* UDT handling in T_Param */
+					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(param->paramtype);
+					if (OidIsValid(immediate_base_type))
+					{
+						int32 typmod = -1;
+						getBaseTypeAndTypmod(param->paramtype, &typmod);
+						if (typmod != -1)
+							return typmod;
+					}
+
+					/* handling for fixed length datatypes */
+					if (param->paramtype == INT4OID)
+						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					else if (param->paramtype == INT8OID)
+						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					else if (param->paramtype == INT2OID)
+						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+				}
+
+				if (!is_numeric_datatype(param->paramtype) &&
+					!(*common_utility_plugin_ptr->is_tsql_money_datatype)(param->paramtype) &&
+					!(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(param->paramtype))
 				{
 					/* typmod is undefined */
 					if (found != NULL) *found = false;
@@ -1781,6 +1806,32 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					precision = tds_default_numeric_precision;
 				}
 
+				if (aggFuncName && strlen(aggFuncName) == 3 &&
+					((strncmp(aggFuncName, "sum", 3) == 0) ||
+					(strncmp(aggFuncName, "avg", 3) == 0)))
+				{
+					/* Handling for fixed length datatype. */
+
+					/*
+					 * Money and smallmoney will have aggtype type as money
+					 * tinyint, smallint, int will have aggtype type as int
+					 * bigint will have aggtype type as bigint.
+					 */
+					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype) ||
+						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(aggref->aggtype))
+					{
+						return TSQL_MONEY_TYPMOD;
+					}
+					else if (aggref->aggtype == INT4OID)
+					{
+						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					}
+					else if (aggref->aggtype == INT8OID)
+					{
+						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					}
+				}
+
 				/*
 				 * [BABEL-3074] NUMERIC overflow causes TDS error for
 				 * aggregate function sum(); resultant precision should be
@@ -1789,6 +1840,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (aggFuncName && strlen(aggFuncName) == 3 &&
 					(strncmp(aggFuncName, "sum", 3) == 0))
 					precision = tds_default_numeric_precision;
+
 
 				/*
 				 * For aggregate function avg(); resultant precision should be
@@ -2973,15 +3025,28 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			/* If UDT then calculate typmod.*/
 			if (OidIsValid(immediate_base_type))
 				type = getBaseTypeAndTypmod(type, &typmod);
-			
-			if (typmod == -1)
-				typmod = resolve_numeric_typmod_from_exp(NULL, expr, NULL);
-			
-			if (typmod == -1 || !is_tsql_exact_numeric_type(type))
-				continue;
-			
-			scale = (typmod - VARHDRSZ) & 0xffff;
-			precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+
+			/* Handling for money/smallmoney. */
+			if (typmod == -1 && (*common_utility_plugin_ptr->is_tsql_money_datatype)(type))
+			{
+				precision = MONEY_PRECISION;
+				scale = FIXEDDECIMAL_SCALE;
+			}
+			else if (typmod == -1 && (*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(type))
+			{
+				precision = SMALLMONEY_PRECISION;
+				scale = FIXEDDECIMAL_SCALE;
+			}
+			else
+			{
+				if (typmod == -1)
+					typmod = resolve_numeric_typmod_from_exp(NULL, expr, NULL);
+				if (typmod == -1 || !is_tsql_exact_numeric_type(type))
+					continue;
+
+				scale = (typmod - VARHDRSZ) & 0xffff;
+				precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+			}
 			integralDigitCount = Max(precision - scale, max_precision - max_scale);
 			max_scale = Max(max_scale, scale);
 			max_precision = integralDigitCount + max_scale;
