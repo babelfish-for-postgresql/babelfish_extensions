@@ -85,11 +85,12 @@ static bool is_tsql_int4_bit(Oid oid);
 #define SMALLINT_PRECISION_RADIX 5
 #define INT_PRECISION_RADIX 10
 #define BIGINT_PRECISION_RADIX 19
-#define TINYINT_PRECISION_RADIX 10
+#define TINYINT_PRECISION_RADIX 3
 
 #define DEFAULT_SMALLINT_TYPMOD		((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 #define DEFAULT_INT_TYPMOD		((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 #define DEFAULT_BIGINT_TYPMOD		((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_TINYINT_TYPMOD		((TINYINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 
 /* Numeirc operator OID from pg_proc.dat */
 #define NUMERIC_ADD_OID 1724
@@ -1242,13 +1243,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 					/* handling for fixed length datatypes */
 					if (param->paramtype == INT4OID)
-						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_INT_TYPMOD;
 					else if (param->paramtype == INT8OID)
-						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_BIGINT_TYPMOD;
 					else if (param->paramtype == INT2OID)
-						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_SMALLINT_TYPMOD;
 					else if (plan && (*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (param->paramtype))
-						return ((TINYINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_TINYINT_TYPMOD;
 				}
 
 				if (!is_numeric_datatype(param->paramtype))
@@ -1415,13 +1416,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 					/* handling for fixed length datatypes */
 					if (plan && var->vartype == INT4OID)
-						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_INT_TYPMOD;
 					else if (plan && var->vartype == INT8OID)
-						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_BIGINT_TYPMOD;
 					else if (plan && var->vartype == INT2OID)
-						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_SMALLINT_TYPMOD;
 					else if (plan && (*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (var->vartype))
-						return ((TINYINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_TINYINT_TYPMOD;
 
 					if (found != NULL) *found = false;
 				}
@@ -1833,15 +1834,18 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 */
 					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype))
 					{
+						pfree(aggFuncName);
 						return TSQL_MONEY_TYPMOD;
 					}
 					else if (aggref->aggtype == INT4OID)
 					{
-						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						pfree(aggFuncName);
+						return DEFAULT_INT_TYPMOD;
 					}
 					else if (aggref->aggtype == INT8OID)
 					{
-						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						pfree(aggFuncName);
+						return DEFAULT_BIGINT_TYPMOD
 					}
 				}
 
