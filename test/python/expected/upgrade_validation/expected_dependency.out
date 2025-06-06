@@ -44,8 +44,6 @@ Collation sys.french_ci_as
 Collation sys.greek_ci_ai
 Collation sys.hebrew_ci_ai
 Collation sys.hebrew_ci_as
-Collation sys.japanese_ci_ai
-Collation sys.japanese_cs_as
 Collation sys.korean_wansung_ci_ai
 Collation sys.korean_wansung_ci_as
 Collation sys.modern_spanish_ci_as
@@ -281,6 +279,9 @@ Function sys.char_to_fixeddecimal(character varying)
 Function sys.char_to_fixeddecimal(character)
 Function sys.char_to_fixeddecimal(sys.bpchar)
 Function sys.char_to_fixeddecimal(text)
+Function sys.charindex_helper(sys.bbf_binary,sys.bbf_binary,integer)
+Function sys.charindex_helper(sys.bbf_varbinary,sys.bbf_varbinary,integer)
+Function sys.charindex_helper(text,text,integer)
 Function sys.chartogeoghelper(sys.bpchar)
 Function sys.chartogeomhelper(sys.bpchar)
 Function sys.check_for_inconsistent_metadata()

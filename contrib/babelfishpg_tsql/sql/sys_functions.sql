@@ -962,28 +962,91 @@ $BODY$
 STRICT
 LANGUAGE SQL IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind PG_CATALOG.TEXT,
-										 expressionToSearch PG_CATALOG.TEXT,
-										 start_location INTEGER DEFAULT 0)
-RETURNS INTEGER AS
-$BODY$
-SELECT
-CASE
-WHEN expressionToFind = '' THEN
-    0
-WHEN start_location <= 0 THEN
-	strpos(expressionToSearch, expressionToFind)
-ELSE
-	CASE
-	WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
-		0
-	ELSE
-		strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
-	END
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.BBF_VARBINARY,
+                                        expressionToSearch ANYELEMENT,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN sys.charindex_helper(expressionToFind, expressionToSearch::sys.VARBINARY, start_location);
 END;
-$BODY$
-STRICT
-LANGUAGE SQL IMMUTABLE;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.BBF_BINARY,
+                                        expressionToSearch ANYELEMENT,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN sys.charindex_helper(expressionToFind, expressionToSearch::sys.BINARY, start_location);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.VARCHAR,
+                                        expressionToSearch ANYELEMENT,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN sys.charindex_helper(expressionToFind, expressionToSearch::VARCHAR, start_location);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.BBF_VARBINARY,
+                                        expressionToSearch sys.VARCHAR,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+   RAISE EXCEPTION 'Implicit Casting from varchar to varbinary is not allowed'; 
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.BBF_BINARY,
+                                        expressionToSearch sys.VARCHAR,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RAISE EXCEPTION 'Implicit Casting from varchar to binary is not allowed'; 
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.VARCHAR,
+                                        expressionToSearch sys.VARCHAR,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN sys.charindex_helper(expressionToFind, expressionToSearch::VARCHAR, start_location);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex_helper(expressionToFind sys.BBF_VARBINARY,
+                                        expressionToSearch sys.BBF_VARBINARY,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER AS 'babelfishpg_tsql', 'tsql_charindex_binary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex_helper(expressionToFind sys.BBF_BINARY,
+                                        expressionToSearch sys.BBF_BINARY,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER AS 'babelfishpg_tsql', 'tsql_charindex_binary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex_helper(expressionToFind TEXT,
+                                        expressionToSearch TEXT,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER AS 'babelfishpg_tsql', 'tsql_charindex_char'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 
 CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
                                                                IN p_month INTEGER,
