@@ -199,7 +199,8 @@ SELECT
     CHARINDEX(Pattern, SourceText) AS FirstOccurrence,
     CHARINDEX(Pattern, SourceText, 
     CHARINDEX(Pattern, SourceText) + 1) AS SecondOccurrence
-FROM TestStrings;
+FROM TestStrings
+order by 1;
 GO
 
 -- 11. Nested CHARINDEX Tests

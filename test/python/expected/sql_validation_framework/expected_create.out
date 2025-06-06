@@ -14,6 +14,7 @@ Could not find tests for function sys.babelfish_try_cast_to_any
 Could not find tests for function sys.bbf_is_role_member
 Could not find tests for function sys.bbf_pivot
 Could not find tests for function sys.bbf_xmlexist
+Could not find tests for function sys.charindex_helper
 Could not find tests for function sys.columns_internal
 Could not find tests for function sys.date_bucket_internal_helper
 Could not find tests for function sys.dateadd_internal
@@ -113,6 +114,7 @@ Could not find upgrade tests for function sys.babelfish_try_cast_to_any
 Could not find upgrade tests for function sys.bbf_is_role_member
 Could not find upgrade tests for function sys.bbf_pivot
 Could not find upgrade tests for function sys.bbf_xmlexist
+Could not find upgrade tests for function sys.charindex_helper
 Could not find upgrade tests for function sys.columns_internal
 Could not find upgrade tests for function sys.cursor_rows
 Could not find upgrade tests for function sys.cursor_status

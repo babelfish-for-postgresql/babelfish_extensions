@@ -180,7 +180,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int
-1#!#0#!#0#!#0
+1#!#3#!#3#!#0
 ~~END~~
 
 
@@ -193,7 +193,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int
-<NULL>#!#<NULL>#!#0#!#1
+<NULL>#!#<NULL>#!#0#!#0
 ~~END~~
 
 
@@ -205,7 +205,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int
-1#!#0#!#0
+1#!#3#!#5
 ~~END~~
 
 
@@ -256,7 +256,8 @@ SELECT
     CHARINDEX(Pattern, SourceText) AS FirstOccurrence,
     CHARINDEX(Pattern, SourceText, 
     CHARINDEX(Pattern, SourceText) + 1) AS SecondOccurrence
-FROM TestStrings;
+FROM TestStrings
+order by 1;
 GO
 ~~START~~
 varchar#!#varchar#!#int#!#int
@@ -359,7 +360,7 @@ SELECT
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -460,12 +461,12 @@ int#!#nvarchar#!#nvarchar#!#int#!#nvarchar
 ~~START~~
 int#!#varbinary#!#varbinary#!#int#!#int#!#varchar
 1#!#4142#!#41424344#!#1#!#1#!#Pass
-2#!#43#!#41424344#!#0#!#3#!#Fail
-3#!#4344#!#41424344#!#0#!#3#!#Fail
+2#!#43#!#41424344#!#3#!#3#!#Pass
+3#!#4344#!#41424344#!#3#!#3#!#Pass
 4#!#45#!#41424344#!#0#!#0#!#Pass
 5#!#<NULL>#!#41424344#!#<NULL>#!#<NULL>#!#Fail
 6#!#41#!#<NULL>#!#<NULL>#!#<NULL>#!#Fail
-7#!#00#!#41420043#!#0#!#3#!#Fail
+7#!#00#!#41420043#!#3#!#3#!#Pass
 8#!#4142#!#414241424142#!#1#!#3#!#Fail
 ~~END~~
 

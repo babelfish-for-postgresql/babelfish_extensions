@@ -197,6 +197,8 @@ PG_FUNCTION_INFO_V1(datepart_internal_money);
 PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 PG_FUNCTION_INFO_V1(replace_special_chars_fts);
 PG_FUNCTION_INFO_V1(isnumeric);
+PG_FUNCTION_INFO_V1(tsql_charindex_char);
+PG_FUNCTION_INFO_V1(tsql_charindex_binary);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -5106,4 +5108,153 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_finish() failed");
 
 	return tupstore;
+}
+
+
+/*
+ * tsql_charindex_char()
+ * Implementation of T-SQL CHARINDEX function to find a substring within a string.
+ */
+Datum
+tsql_charindex_char(PG_FUNCTION_ARGS)
+{
+    /* Get func Args */
+    text *expressionToFind = PG_GETARG_TEXT_PP(0);
+    int32 start_location = PG_GETARG_INT32(2);
+    text *expressionToSearch = PG_GETARG_TEXT_PP(1);
+    
+    /* final result */
+    int result = 0;  
+    Oid collation;
+
+    /* Handle empty search pattern case */
+    if (VARSIZE_ANY_EXHDR(expressionToFind) == 0)
+        PG_RETURN_INT32(0);
+
+    /* Get collation from function call */
+    collation = PG_GET_COLLATION();
+
+    /* If no collation specified, use default */
+    if (!OidIsValid(collation))
+    {
+        /*
+         * This typically means that the parser could not resolve a conflict
+         * of implicit collations, so report it that way.
+        */
+        ereport(ERROR,
+            (errcode(ERRCODE_INDETERMINATE_COLLATION),
+            errmsg("could not determine which collation to use for string comparison"),
+            errhint("Use the COLLATE clause to set the collation explicitly.")));
+    }
+    
+    if (start_location <= 0)
+    {
+        /* Search from the beginning of the string using textpos with collation */
+        result = DatumGetInt32(DirectFunctionCall2Coll(textpos,
+                                                    collation,    
+                                                    PointerGetDatum(expressionToSearch),
+                                                    PointerGetDatum(expressionToFind)));
+    }
+    else
+    {
+        /* Get substring starting from start_location */
+        text *substr = DatumGetTextPP(DirectFunctionCall2(text_substr_no_len,
+                                                        PointerGetDatum(expressionToSearch),
+                                                        Int32GetDatum(start_location)));
+        int pos;
+        
+        /* Check if substring extraction failed */
+        if (substr == NULL)
+        {
+            pfree(expressionToSearch);
+            ereport(ERROR,
+                    (errcode(ERRCODE_INTERNAL_ERROR),
+                    errmsg("Failed to extract substring from binary data")));
+        }
+        
+        /* Find position in substring with collation */
+        pos = DatumGetInt32(DirectFunctionCall2Coll(textpos,
+                                                collation,
+                                                PointerGetDatum(substr),
+                                                PointerGetDatum(expressionToFind)));
+        
+        /* Calculate final position if found */
+        if (pos > 0)
+            result = pos + start_location - 1;
+        
+        pfree(substr);
+    }
+    
+    PG_RETURN_INT32(result);
+}
+
+
+/*
+ * tsql_charindex_binary()
+ * Implementation of T-SQL CHARINDEX function for binary data types
+ */
+Datum
+tsql_charindex_binary(PG_FUNCTION_ARGS)
+{
+    /* Get function Args*/
+    bytea *expressionToFind =  PG_GETARG_BYTEA_PP(0);
+    int32 start_location = PG_GETARG_INT32(2);
+    bytea *expressionToSearch =  PG_GETARG_BYTEA_PP(1);
+
+
+    /* final result */
+    int result = 0;
+
+    /* Check if conversion failed - Should never happen */
+    if (expressionToSearch == NULL)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INTERNAL_ERROR),
+                errmsg("Failed to convert input to binary type")));
+    }
+
+    /* Handle empty pattern */
+    if (VARSIZE_ANY_EXHDR(expressionToFind) == 0)
+    {
+        PG_RETURN_INT32(0);
+    }
+        
+    if (start_location <= 0)
+    {
+        /* Use byteapos directly */
+        result = DatumGetInt32(DirectFunctionCall2(byteapos,
+                                                PointerGetDatum(expressionToSearch),
+                                                PointerGetDatum(expressionToFind)));
+    }
+    else
+    {
+        /* Get substring starting from start_location */
+        bytea *substr = DatumGetByteaPP(DirectFunctionCall2(bytea_substr_no_len,
+                                                        PointerGetDatum(expressionToSearch),
+                                                        Int32GetDatum(start_location)));
+        int pos;
+
+        /* Check if substring extraction failed */
+        if (substr == NULL)
+        {
+            pfree(expressionToSearch);
+            ereport(ERROR,
+                    (errcode(ERRCODE_INTERNAL_ERROR),
+                    errmsg("Failed to extract substring from binary data")));
+        }
+        
+        /* Find position in substring */
+        pos = DatumGetInt32(DirectFunctionCall2(byteapos,
+                                            PointerGetDatum(substr),
+                                            PointerGetDatum(expressionToFind)));
+        
+        /* Adjust position if found */
+        if (pos > 0)
+            result = pos + start_location - 1;
+        
+        pfree(substr);
+
+    }
+    
+    PG_RETURN_INT32(result);
 }
