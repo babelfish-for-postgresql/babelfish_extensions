@@ -628,3 +628,4 @@ numeric_money
 MONEY_OBJECT
 user_token-dep
 Test_cast_binary_bytea
+len
