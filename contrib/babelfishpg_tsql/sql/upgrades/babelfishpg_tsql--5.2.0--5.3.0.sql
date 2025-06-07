@@ -812,6 +812,11 @@ end;
 $body$
 language plpgsql immutable returns null on null input;
 
+CREATE OR REPLACE FUNCTION sys.len(expr sys.BBF_BINARY) RETURNS INTEGER AS
+'babelfishpg_common', 'varbinary_length'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

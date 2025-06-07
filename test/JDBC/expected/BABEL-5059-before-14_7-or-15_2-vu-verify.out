@@ -296,7 +296,7 @@ Declare @a binary; Declare @b binary; SET @a = 0x01 ; EXEC babel_5059_proc_test_
 GO
 ~~START~~
 int
-4
+1
 ~~END~~
 
 
@@ -320,7 +320,7 @@ Declare @a binary(8000); Declare @b binary(8000); SET @a = 0x5465737442696E ; EX
 GO
 ~~START~~
 int
-16002
+8000
 ~~END~~
 
 
