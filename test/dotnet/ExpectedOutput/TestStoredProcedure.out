@@ -582,3 +582,83 @@ Int32
 
 
 #Q#DROP PROCEDURE sp_test25
+#Q#CREATE PROCEDURE sp_test_money (@a money OUTPUT) AS BEGIN  SET @a=12345.6789; Select @a as a; END;
+#Q#exec sp_test_money 1234.56
+#D#money
+12345.6789
+#Q#Declare @a money; Set @a=9876.54; exec sp_test_money @a;select @a as a;
+#D#money
+12345.6789
+9876.5400
+#Q#sp_test_money
+#D#money
+12345.6789
+--OUT PARAMETERS--
+a
+Currency
+12345.6789
+
+#Q#sp_test_money
+#D#money
+12345.6789
+--OUT PARAMETERS--
+a
+Currency
+12345.6789
+
+#Q#DROP PROCEDURE sp_test_money
+#Q#CREATE PROCEDURE sp_test_smallmoney (@a smallmoney OUTPUT) AS BEGIN  SET @a=214.3256;Select @a as a; END;
+#Q#exec sp_test_smallmoney 123.45
+#D#smallmoney
+214.3256
+#Q#Declare @a smallmoney;Set @a=98.76; exec sp_test_smallmoney @a;select @a as a;
+#D#smallmoney
+214.3256
+98.7600
+#Q#sp_test_smallmoney
+#D#smallmoney
+214.3256
+--OUT PARAMETERS--
+a
+Currency
+214.3256
+
+#Q#sp_test_smallmoney
+#D#smallmoney
+214.3256
+--OUT PARAMETERS--
+a
+Currency
+214.3256
+
+#Q#DROP PROCEDURE sp_test_smallmoney
+#Q#CREATE PROCEDURE sp_test_both_money (@m money OUTPUT, @sm smallmoney OUTPUT) AS BEGIN SET @m = 12345.6789; SET @sm = 214.3256; SELECT @m as money_val, @sm as smallmoney_val;END;
+#Q#Declare @m money, @sm smallmoney; Set @m = 9876.54; Set @sm = 98.76; exec sp_test_both_money @m OUTPUT, @sm OUTPUT; select @m as money_val, @sm as smallmoney_val;
+#D#money#!#smallmoney
+12345.6789#!#214.3256
+12345.6789#!#214.3256
+#Q#sp_test_both_money
+#D#money#!#smallmoney
+12345.6789#!#214.3256
+--OUT PARAMETERS--
+m
+Currency
+12345.6789
+
+sm
+Currency
+214.3256
+
+#Q#sp_test_both_money
+#D#money#!#smallmoney
+12345.6789#!#214.3256
+--OUT PARAMETERS--
+m
+Currency
+12345.6789
+
+sm
+Currency
+214.3256
+
+#Q#DROP PROCEDURE sp_test_both_money
