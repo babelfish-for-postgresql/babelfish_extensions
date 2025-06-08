@@ -4391,10 +4391,10 @@ RETURNS sys.SYSNAME AS
 LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION OBJECT_DEFINITION(IN object_id INT)
-RETURNS sys.NVARCHAR(4000)
+RETURNS sys.NVARCHAR
 AS $$
 DECLARE
-    definition sys.nvarchar(4000);
+    definition sys.NVARCHAR;
 BEGIN
 
     definition = (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
