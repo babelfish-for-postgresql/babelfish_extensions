@@ -133,3 +133,24 @@ ALTER function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DEC
 go
 SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
 go
+
+-- Test OBJECT_DEFINITION on the large stored procedure
+SELECT LEN(OBJECT_DEFINITION(OBJECT_ID('dbo.LargeProc'))) AS DefinitionLength
+GO
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('dbo.LargeProc'))
+GO
+
+-- Test OBJECT_DEFINITION on the large view
+SELECT LEN(OBJECT_DEFINITION(OBJECT_ID('dbo.LargeView'))) AS DefinitionLength
+GO
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('dbo.LargeView'))
+GO
+
+-- Test OBJECT_DEFINITION on the large function
+SELECT LEN(OBJECT_DEFINITION(OBJECT_ID('dbo.LargeFunction'))) AS DefinitionLength
+GO
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('dbo.LargeFunction'))
+GO
