@@ -3780,22 +3780,24 @@ BEGIN
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
-                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('YES' AS sys.varchar(5))
-                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('YES' AS sys.varchar(5))
-                ELSE CAST('NO' AS sys.varchar(5))
+                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('YES' AS sys.char(5))
+                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('YES' AS sys.char(5))
+                ELSE CAST('NO' AS sys.char(5))
             END AS AUser,
-            CAST('NO' AS sys.varchar(8)) AS ARemote -- Currently we do not support linking local logins to remote logins
+            CAST('NO' AS sys.char(7)) AS ARemote -- Currently we do not support linking local logins to remote logins
         FROM pg_catalog.pg_roles AS Base 
         INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
         LEFT JOIN sys.babelfish_authid_user_ext AS Ext ON Ext.login_name = Base.rolname AND Ext.type != 'R'
         LEFT JOIN sys.babelfish_sysdatabases AS Db ON Db.name COLLATE database_default = LExt.default_database_name
         WHERE LExt.type NOT IN ('R', 'Z')
-    
+
+        -- first selector in the union is to get all the mapped users
+        -- second selector in the union is to get all the mapped database/user-defined roles
         SELECT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
             CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
             CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
-            CAST('User' AS sys.varchar(8)) AS UserOrAlias 
+            CAST('User' AS sys.char(8)) AS UserOrAlias
         FROM sys.babelfish_authid_user_ext UExt
         LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt.database_name
         LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt.login_name, ''), Db.owner)
@@ -3806,15 +3808,16 @@ BEGIN
                 @is_sysadmin = 1 OR
                 UExt.login_name = @current_username OR
                 ISNULL(UExt.login_name, '') = '' OR
+                -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
                 EXISTS (
-                    SELECT 1
+                    SELECT 1 
                     FROM pg_catalog.pg_auth_members AS Authmbr
                     INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
                     INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
                     WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin') 
-                    AND UExt2.database_name = UExt.database_name 
+                    AND UExt2.database_name = UExt.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
                     AND UExt2.login_name = @current_username
                 )
             )
@@ -3837,6 +3840,7 @@ BEGIN
                 @is_sysadmin = 1 OR
                 UExt2.login_name = @current_username OR
                 ISNULL(UExt2.login_name, '') = '' OR
+                -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
                 EXISTS (
                     SELECT 1
                     FROM pg_catalog.pg_auth_members AS Authmbr
@@ -3845,7 +3849,7 @@ BEGIN
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt3 ON PGR1.rolname = UExt3.rolname
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt4 ON PGR2.rolname = UExt4.rolname
                     WHERE UExt3.orig_username IN ('db_securityadmin', 'db_accessadmin') 
-                    AND UExt4.database_name = UExt2.database_name 
+                    AND UExt4.database_name = UExt2.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
                     AND UExt4.login_name = @current_username
                 )
             )
@@ -3872,6 +3876,8 @@ BEGIN
         LEFT JOIN sys.babelfish_sysdatabases AS Db ON Db.name COLLATE database_default = LExt.default_database_name
         WHERE LExt.type NOT IN ('R', 'Z') AND LExt.orig_loginname = @input_loginname
         
+        -- first selector in the union is to get all the mapped users
+        -- second selector in the union is to get all the mapped database/user-defined roles
         SELECT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
             CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
