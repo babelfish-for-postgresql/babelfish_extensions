@@ -57,3 +57,6 @@ GO
 
 DROP FUNCTION BABEL_3953_vu_prepare_f3
 GO
+
+DROP TABLE dtrunc
+GO
