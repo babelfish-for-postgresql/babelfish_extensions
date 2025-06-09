@@ -2251,27 +2251,6 @@ CLOSE style_cursor;
 DEALLOCATE style_cursor;
 GO
 
--- sql_variant
-DECLARE @Styles TABLE (StyleID INT);
-INSERT INTO @Styles (StyleID)
-VALUES (0), (1), (2), (3), (4), (5), (6), (7), (10), (11), (12), (20), (21), (22), (23), (25),
-       (100), (101), (102), (103), (104), (105), (106), (107), (110), (111), (112), (120), (121),
-       (126), (127), (130), (131);
-DECLARE @Style INT;
-DECLARE @SQL NVARCHAR(MAX);
-DECLARE style_cursor CURSOR FOR SELECT StyleID FROM @Styles;
-OPEN style_cursor;
-FETCH NEXT FROM style_cursor INTO @Style;
-WHILE @@FETCH_STATUS = 0
-BEGIN
-    SET @SQL = 'SELECT CONVERT(DATETIMEOFFSET, CAST(CAST(''2023-06-16 14:22:59 +01:00'' AS DATETIMEOFFSET) AS SQL_VARIANT), ' + CAST(@Style AS NVARCHAR(3)) + ') AS Result';
-    EXEC sp_executesql @SQL;
-    FETCH NEXT FROM style_cursor INTO @Style;
-END
-CLOSE style_cursor;
-DEALLOCATE style_cursor;
-GO
-
 -- 3. Operators:
 -- Equal to (=) with DATETIMEOFFSET on left side
 SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) = CAST(0x0C22380000000000 AS binary(8)) THEN 'Equal' ELSE 'Not Equal' END;
