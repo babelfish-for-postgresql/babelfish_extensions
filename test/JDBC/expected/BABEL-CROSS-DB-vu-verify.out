@@ -436,8 +436,8 @@ int#!#varchar
 SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2;
 GO
 ~~START~~
-int#!#int#!#varchar
-1#!#1#!#abc
+int#!#int#!#varchar#!#varchar
+1#!#1#!#IT IS TVF#!#abc
 ~~END~~
 
 
@@ -447,6 +447,14 @@ GO
 ~~START~~
 int
 1
+~~END~~
+
+
+SELECT my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_tvf2();
+GO
+~~START~~
+varchar
+IT IS TVF
 ~~END~~
 
 
@@ -466,28 +474,35 @@ GO
 ~~ERROR (Message: permission denied for function babel_cross_db_vu_prepare_f2)~~
 
 
+SELECT my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_tvf2();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_cross_db_vu_prepare_tvf2)~~
+
+
 -- SELECT from a view in db1 which references objects in db1, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1;
 GO
 ~~START~~
-int#!#int#!#varchar#!#varchar
-1#!#1#!#def#!#abc
+int#!#int#!#varchar#!#varchar#!#varchar
+1#!#1#!#IT IS TVF#!#def#!#abc
 ~~END~~
 
 
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1_nested;
 GO
 ~~START~~
-int#!#int#!#varchar#!#varchar
-1#!#1#!#def#!#abc
+int#!#int#!#varchar#!#varchar#!#varchar
+1#!#1#!#IT IS TVF#!#def#!#abc
 ~~END~~
 
 
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v5_nested;
 GO
 ~~START~~
-int
-1
+int#!#varchar
+1#!#IT IS TVF
 ~~END~~
 
 
@@ -545,8 +560,8 @@ int#!#varchar
 ~~END~~
 
 ~~START~~
-int#!#int#!#varchar
-1#!#1#!#abc
+int#!#int#!#varchar#!#varchar
+1#!#1#!#IT IS TVF#!#abc
 ~~END~~
 
 
@@ -564,8 +579,8 @@ int#!#varchar
 ~~END~~
 
 ~~START~~
-int#!#int#!#varchar#!#varchar
-1#!#1#!#def#!#abc
+int#!#int#!#varchar#!#varchar#!#varchar
+1#!#1#!#IT IS TVF#!#def#!#abc
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~
@@ -586,8 +601,8 @@ int#!#varchar
 ~~END~~
 
 ~~START~~
-int#!#int#!#varchar#!#varchar
-1#!#1#!#def#!#abc
+int#!#int#!#varchar#!#varchar#!#varchar
+1#!#1#!#IT IS TVF#!#def#!#abc
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~
@@ -612,8 +627,8 @@ int#!#varchar
 ~~END~~
 
 ~~START~~
-int#!#int#!#varchar#!#varchar
-1#!#1#!#def#!#abc
+int#!#int#!#varchar#!#varchar#!#varchar
+1#!#1#!#IT IS TVF#!#def#!#abc
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~
@@ -638,8 +653,8 @@ int#!#varchar
 ~~END~~
 
 ~~START~~
-int#!#int#!#varchar#!#varchar
-1#!#1#!#def#!#abc
+int#!#int#!#varchar#!#varchar#!#varchar
+1#!#1#!#IT IS TVF#!#def#!#abc
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~

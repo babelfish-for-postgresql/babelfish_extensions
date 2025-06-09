@@ -633,3 +633,5 @@ Datetimeoffset
 smalldatetime
 Datetime_system_functions
 Test_cast_binary_bytea
+numeric_money
+MONEY_OBJECT

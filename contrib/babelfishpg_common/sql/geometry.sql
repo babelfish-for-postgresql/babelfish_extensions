@@ -412,6 +412,62 @@ CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOMETRY)
         AS '$libdir/postgis-3','isvalid'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+-- HasZ
+-- Checks if a geometry instance has Z coordinates
+-- Returns 1 if the geometry has Z values, 0 otherwise
+CREATE OR REPLACE FUNCTION sys.HasZ(geom sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	DECLARE
+		Zmflag smallint;
+	BEGIN
+		Zmflag = (SELECT sys.ST_Zmflag(geom));
+		-- If Zmflag = 1, then the geometry has M values
+		-- If Zmflag = 2, then the geometry has Z values
+		-- If Zmflag = 3, then the geometry has Z and M values
+		IF Zmflag = 2 OR Zmflag = 3 THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- HasM
+-- Checks if a geometry instance has M coordinates (measure values)
+-- Returns 1 if the geometry has M values, 0 otherwise
+CREATE OR REPLACE FUNCTION sys.HasM(geom sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	DECLARE
+		Zmflag smallint;
+	BEGIN
+		Zmflag = (SELECT sys.ST_Zmflag(geom));
+		-- If Zmflag = 1, then the geometry has M values
+		-- If Zmflag = 2, then the geometry has Z values
+		-- If Zmflag = 3, then the geometry has Z and M values
+		IF Zmflag = 1 OR Zmflag = 3 THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Z
+-- Returns the Z coordinate value for a point geometry instance
+CREATE OR REPLACE FUNCTION sys.Z(sys.GEOMETRY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_z_point'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+-- M
+-- Returns the M coordinate value (measure) for a point geometry instance 
+CREATE OR REPLACE FUNCTION sys.M(sys.GEOMETRY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_m_point'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STContains_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS sys.BIT

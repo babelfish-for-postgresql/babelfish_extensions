@@ -32,6 +32,17 @@ GO
 DROP FUNCTION babel_5448_s2.babel_5448_f
 GO
 
+DROP FUNCTION dbo.babel_5792_tvf
+GO
+DROP FUNCTION babel_5448_user_default_schema.babel_5792_tvf
+GO
+DROP FUNCTION babel_5448_s1.babel_5792_tvf, babel_5448_s1.babel_5792_f2_tvf,
+              babel_5448_s1.babel_5792_f3_tvf, babel_5448_s1.babel_5792_f4_tvf,
+              babel_5448_s1.babel_5792_f5_tvf;
+GO
+DROP FUNCTION babel_5448_s2.babel_5792_tvf
+GO
+
 DROP TABLE dbo.babel_5448_t
 GO
 DROP TABLE babel_5448_user_default_schema.babel_5448_t
