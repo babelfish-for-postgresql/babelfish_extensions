@@ -37,6 +37,12 @@ GO
 DROP FUNCTION int4smallmoney_func()
 GO
 
+DROP FUNCTION smallintsmallmoney_func()
+GO
+
+DROP FUNCTION principalsquared_func(sys.MONEY)
+GO
+
 DROP TABLE money_smallmoney_vu_test;
 GO
 

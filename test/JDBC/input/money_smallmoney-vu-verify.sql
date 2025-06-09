@@ -41,6 +41,9 @@ GO
 SELECT * FROM dbo.int2smallmoney_func();
 GO
 
+SELECT * FROM dbo.smallintsmallmoney_func();
+GO
+
 -- ===============================================================
 -- 2.Check if index is picked up for all arithmetic operations
 -- ===============================================================

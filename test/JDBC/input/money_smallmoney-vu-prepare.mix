@@ -23,6 +23,14 @@ GO
 CREATE VIEW int4smallmoneymul_vu AS SELECT cast(100 AS INT) * cast(123.45 AS SMALLMONEY) AS result;
 GO
 
+CREATE FUNCTION principalsquared_func(@amount sys.MONEY)
+RETURNS sys.MONEY
+AS
+BEGIN
+    RETURN (SELECT POWER(@amount, 2));
+END;
+GO
+
 CREATE FUNCTION int2smallmoney_func()
 RETURNS @test TABLE(a smallmoney, b smallmoney, c smallmoney, d smallmoney, e smallmoney, f smallmoney, g smallmoney, h smallmoney)
 AS
@@ -39,6 +47,24 @@ BEGIN
     RETURN 0;
 END;
 GO
+
+CREATE FUNCTION smallintsmallmoney_func()
+RETURNS @test TABLE(a smallmoney, b smallmoney, c smallmoney, d smallmoney, e smallmoney, f smallmoney, g smallmoney, h smallmoney)
+AS
+BEGIN
+    INSERT INTO @test
+    SELECT cast(100 AS SMALLINT) * cast(123.45 AS SMALLMONEY)
+    , cast(100 AS SMALLINT) / cast(123.45 AS SMALLMONEY)
+    , cast(100 AS SMALLINT) + cast(123.45 AS SMALLMONEY)
+    , cast(100 AS SMALLINT) - cast(123.45 AS SMALLMONEY)
+    , cast(123.45 AS SMALLMONEY) * cast(100 AS SMALLINT)
+    , cast(123.45 AS SMALLMONEY) / cast(100 AS SMALLINT)
+    , cast(123.45 AS SMALLMONEY) + cast(100 AS SMALLINT)
+    , cast(123.45 AS SMALLMONEY) - cast(100 AS SMALLINT);
+    RETURN 0;
+END;
+GO
+
 
 CREATE FUNCTION int8smallmoney_func()
 RETURNS @test TABLE(a smallmoney, b smallmoney, c smallmoney, d smallmoney, e smallmoney, f smallmoney, g smallmoney, h smallmoney)
