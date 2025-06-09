@@ -65,6 +65,11 @@
 
 #define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
 
+#define MONEY_PRECISION 19
+#define SMALLMONEY_PRECISION 10
+#define FIXEDDECIMAL_SCALE 4
+#define TSQL_MONEY_TYPMOD ((MONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
+#define TSQL_SMALLMONEY_TYPMOD ((SMALLMONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
 
 /*
  * Compiler's namespace item types
