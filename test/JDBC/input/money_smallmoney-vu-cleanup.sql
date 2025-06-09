@@ -31,5 +31,14 @@ GO
 DROP FUNCTION bitsmallmoney_func()
 GO
 
+DROP FUNCTION bitmoney_func()
+GO
+
 DROP FUNCTION int4smallmoney_func()
+GO
+
+DROP TABLE money_smallmoney_vu_test;
+GO
+
+DROP TABLE MoneyTestTable1
 GO

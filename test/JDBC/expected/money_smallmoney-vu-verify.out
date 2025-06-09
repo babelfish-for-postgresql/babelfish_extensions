@@ -1,50 +1,354 @@
-
-
--- Create test tables
-CREATE TABLE MoneyTestTable1 (
-    ID INT IDENTITY(1,1),
-    MoneyVal MONEY,
-    SmallMoneyVal SMALLMONEY,
-    Description VARCHAR(100)
-);
--- =============================================
--- 1. Data Type Range Tests
--- =============================================
--- Test default values
-INSERT INTO MoneyTestTable1 DEFAULT VALUES;
-GO
-~~ROW COUNT: 1~~
-
-
-
-INSERT INTO MoneyTestTable1 (MoneyVal, SmallMoneyVal, Description)
-VALUES 
-    (-922337203685477.5808, -214748.3648, 'MIN values'),
-    (922337203685477.5807, 214748.3647, 'MAX values'),
-    (NULL, NULL, 'NULL values'),
-    (CAST(RAND() * 1000000 AS MONEY), 
-     CAST(RAND() * 10000 AS SMALLMONEY), 'Random values'),
-    (0.0001, 0.0001, 'Small positive values'),
-    (-0.0001, -0.0001, 'Small negative values'),
-    (0,0, 'Zero Values');
 -- Display results
 SELECT 'Range Test Results' AS TestName, * FROM MoneyTestTable1 where Description NOT LIKE 'Random values';
 GO
-~~ROW COUNT: 7~~
-
 ~~START~~
 varchar#!#int#!#money#!#smallmoney#!#varchar
-Range Test Results#!#2#!#-922337203685477.5808#!#-214748.3648#!#MIN values
-Range Test Results#!#3#!#922337203685477.5807#!#214748.3647#!#MAX values
-Range Test Results#!#4#!#<NULL>#!#<NULL>#!#NULL values
-Range Test Results#!#6#!#0.0001#!#0.0001#!#Small positive values
-Range Test Results#!#7#!#-0.0001#!#-0.0001#!#Small negative values
-Range Test Results#!#8#!#0.0000#!#0.0000#!#Zero Values
 ~~END~~
 
 
 -- =============================================
--- 2.Overflow Tests
+-- 1.Select from dependent objects
+-- =============================================
+SELECT * FROM dbo.int2smallmoneyadd_vu;
+GO
+~~START~~
+smallmoney
+223.4500
+~~END~~
+
+
+SELECT * FROM dbo.int4smallmoneyadd_vu;
+GO
+~~START~~
+smallmoney
+223.4500
+~~END~~
+
+
+SELECT * FROM dbo.int8smallmoneyadd_vu;
+GO
+~~START~~
+smallmoney
+223.4500
+~~END~~
+
+
+SELECT * FROM dbo.smallmoneyint2add_vu;
+GO
+~~START~~
+smallmoney
+223.4500
+~~END~~
+
+
+SELECT * FROM dbo.smallmoneyint4add_vu;
+GO
+~~START~~
+smallmoney
+223.4500
+~~END~~
+
+
+SELECT * FROM dbo.smallmoneyint8add_vu;
+GO
+~~START~~
+smallmoney
+223.4500
+~~END~~
+
+
+SELECT * FROM dbo.int2smallmoneymul_vu;
+GO
+~~START~~
+smallmoney
+12345.0000
+~~END~~
+
+
+SELECT * FROM dbo.int4smallmoneymul_vu;
+GO
+~~START~~
+smallmoney
+12345.0000
+~~END~~
+
+
+SELECT * FROM dbo.int4smallmoney_func();
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
+123450.0000#!#81.0045#!#10123.4500#!#9876.5500#!#12345.0000#!#1.2345#!#223.4500#!#23.4500
+~~END~~
+
+
+SELECT * FROM dbo.bitsmallmoney_func();
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
+123.4500#!#0.0081#!#124.4500#!#-122.4500#!#123.4500#!#123.4500#!#124.4500#!#122.4500
+~~END~~
+
+
+SELECT * FROM dbo.int8smallmoney_func();
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
+12345.0000#!#0.8100#!#223.4500#!#-23.4500#!#12345.0000#!#1.2345#!#223.4500#!#23.4500
+~~END~~
+
+
+SELECT * FROM dbo.int2smallmoney_func();
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
+12345.0000#!#0.8100#!#223.4500#!#-23.4500#!#12345.0000#!#1.2345#!#223.4500#!#23.4500
+~~END~~
+
+
+-- ===============================================================
+-- 2.Check if index is picked up for all arithmetic operations
+-- ===============================================================
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET babelfish_showplan_all ON;
+GO
+
+SELECT * FROM money_smallmoney_vu_test WHERE cost_sm BETWEEN 100 and 200;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_sm BETWEEN 100 and 200
+Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test  (cost=0.14..8.21 rows=4 width=20)
+  Index Cond: (((cost_sm)::fixeddecimal >= 100) AND ((cost_sm)::fixeddecimal <= 200))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.518 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm > 100;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm > 100
+Aggregate  (cost=8.26..8.27 rows=1 width=4)
+  ->  Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test  (cost=0.14..8.24 rows=6 width=0)
+        Index Cond: (cost_sm > 100)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 21.985 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm <= CAST(50 AS SMALLMONEY) + CAST(50 AS SMALLMONEY);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm <= CAST(50 AS SMALLMONEY) + CAST(50 AS SMALLMONEY)
+Aggregate  (cost=12.33..12.34 rows=1 width=4)
+  ->  Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test  (cost=0.14..12.30 rows=9 width=0)
+        Index Cond: (cost_sm <= ((('50.0000'::fixeddecimal(10,4))::smallmoney(655368) + ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.789 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm = CAST(2 AS INT) * CAST(50 AS SMALLMONEY);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm = CAST(2 AS INT) * CAST(50 AS SMALLMONEY)
+Aggregate  (cost=8.20..8.21 rows=1 width=4)
+  ->  Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test  (cost=0.14..8.19 rows=3 width=0)
+        Index Cond: (cost_sm = ((2 * ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.188 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm > CAST(200 AS INT) / CAST(2 AS SMALLMONEY);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm > CAST(200 AS INT) / CAST(2 AS SMALLMONEY)
+Aggregate  (cost=8.26..8.27 rows=1 width=4)
+  ->  Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test  (cost=0.14..8.25 rows=6 width=0)
+        Index Cond: (cost_sm > ((200 / ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.734 ms
+~~END~~
+
+
+SELECT cost_sm FROM money_smallmoney_vu_test WHERE cost_sm <= CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY);
+GO
+~~START~~
+text
+Query Text: SELECT cost_sm FROM money_smallmoney_vu_test WHERE cost_sm <= CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY)
+Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test  (cost=0.14..12.40 rows=15 width=8)
+  Index Cond: (cost_sm <= (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.155 ms
+~~END~~
+
+
+SELECT * FROM money_smallmoney_vu_test WHERE cost_sm < CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY);
+GO
+~~START~~
+text
+Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_sm < CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY)
+Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test  (cost=0.14..12.39 rows=14 width=20)
+  Index Cond: ((cost_sm)::fixeddecimal < (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.717 ms
+~~END~~
+
+
+SELECT * FROM money_smallmoney_vu_test WHERE cost_m BETWEEN 100 and 200;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_m BETWEEN 100 and 200
+Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test  (cost=0.14..8.15 rows=1 width=20)
+  Index Cond: (((cost_m)::fixeddecimal >= 100) AND ((cost_m)::fixeddecimal <= 200))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m > 100;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m > 100
+Aggregate  (cost=12.32..12.33 rows=1 width=4)
+  ->  Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test  (cost=0.14..12.29 rows=9 width=0)
+        Index Cond: (cost_m > 100)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m >= CAST(50 AS SMALLMONEY) + CAST(50 AS SMALLMONEY);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m >= CAST(50 AS SMALLMONEY) + CAST(50 AS SMALLMONEY)
+Aggregate  (cost=12.36..12.37 rows=1 width=4)
+  ->  Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test  (cost=0.14..12.33 rows=11 width=0)
+        Index Cond: (cost_m >= ((('50.0000'::fixeddecimal(10,4))::smallmoney(655368) + ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.609 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m = CAST(2 AS INT) * CAST(50 AS SMALLMONEY);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m = CAST(2 AS INT) * CAST(50 AS SMALLMONEY)
+Aggregate  (cost=8.18..8.19 rows=1 width=4)
+  ->  Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test  (cost=0.14..8.18 rows=2 width=0)
+        Index Cond: (cost_m = ((2 * ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m < CAST(200 AS INT) / CAST(2 AS SMALLMONEY);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m < CAST(200 AS INT) / CAST(2 AS SMALLMONEY)
+Aggregate  (cost=8.20..8.21 rows=1 width=4)
+  ->  Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test  (cost=0.14..8.19 rows=3 width=0)
+        Index Cond: (cost_m < ((200 / ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
+~~END~~
+
+
+SELECT cost_m FROM money_smallmoney_vu_test WHERE cost_m < CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY);
+GO
+~~START~~
+text
+Query Text: SELECT cost_m FROM money_smallmoney_vu_test WHERE cost_m < CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY)
+Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test  (cost=0.14..8.23 rows=5 width=8)
+  Index Cond: (cost_m < (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
+~~END~~
+
+
+SELECT * FROM money_smallmoney_vu_test WHERE cost_m > CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY);
+GO
+~~START~~
+text
+Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_m > CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY)
+Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test  (cost=0.14..12.30 rows=9 width=20)
+  Index Cond: ((cost_m)::fixeddecimal > (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.128 ms
+~~END~~
+
+
+SET babelfish_showplan_all OFF;
+GO
+
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+-- =============================================
+-- 3.Overflow Tests
 -- =============================================
 INSERT INTO MoneyTestTable1 (MoneyVal, Description) VALUES (922337203685477.5808, 'Overflow MONEY test'); -- Exceeds maximum
 GO
@@ -73,9 +377,6 @@ GO
 
 ~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
 
-
-DROP TABLE MoneyTestTable1
-GO
 
 -- Try Overflow with Arithematic Operators
 -- =============================================
@@ -4013,6 +4314,435 @@ GO
 ~~START~~
 money
 500.0000
+~~END~~
+
+
+-- SIGN tests for MONEY
+SELECT SIGN(CAST(123.45 AS MONEY)) AS result;     -- Positive MONEY
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+SELECT SIGN(CAST(-123.45 AS MONEY)) AS result;    -- Negative MONEY
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+SELECT SIGN(CAST(0 AS MONEY)) AS result;          -- Zero MONEY
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+SELECT SIGN(CAST(NULL AS MONEY)) AS result;       -- NULL MONEY value
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+SELECT SIGN(CAST(922337203685477.5807 AS MONEY)) AS result;  -- Maximum MONEY value
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+SELECT SIGN(CAST(-922337203685477.5808 AS MONEY)) AS result; -- Minimum MONEY value
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+SELECT SIGN(CAST(0.0001 AS MONEY)) AS result;     -- Small positive value
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+SELECT SIGN(CAST(-0.0001 AS MONEY)) AS result;    -- Small negative value
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+-- SIGN tests for SMALLMONEY
+SELECT SIGN(CAST(123.45 AS SMALLMONEY)) AS result;     -- Positive SMALLMONEY
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+SELECT SIGN(CAST(-123.45 AS SMALLMONEY)) AS result;    -- Negative SMALLMONEY
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+SELECT SIGN(CAST(0 AS SMALLMONEY)) AS result;          -- Zero SMALLMONEY
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+SELECT SIGN(CAST(NULL AS SMALLMONEY)) AS result;       -- NULL SMALLMONEY value
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+SELECT SIGN(CAST(214748.3647 AS SMALLMONEY)) AS result;  -- Maximum SMALLMONEY value
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+SELECT SIGN(CAST(-214748.3648 AS SMALLMONEY)) AS result; -- Minimum SMALLMONEY value
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+SELECT SIGN(CAST(0.0001 AS SMALLMONEY)) AS result;     -- Small positive value
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 14) AS result;         -- power which overflows
+GO
+~~START~~
+money
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 14) AS result;        -- Negative base,power which overflows
+GO
+~~START~~
+money
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 9) AS result;         -- big power which does not overflows
+GO
+~~START~~
+money
+6634931404.8357
+~~END~~
+
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 9) AS result;        -- Negative base, big power which does not overflows
+GO
+~~START~~
+money
+-6634931404.8357
+~~END~~
+
+
+SELECT SIGN(CAST(-0.0001 AS SMALLMONEY)) AS result;    -- Small negative value
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+-- POWER tests for MONEY
+SELECT POWER(CAST(12.34 AS MONEY), 2) AS result;          -- Positive MONEY, Integer Power
+GO
+~~START~~
+money
+152.2756
+~~END~~
+
+
+SELECT POWER(CAST(12.34 AS MONEY), 0.5) AS result;        -- Positive MONEY, Decimal Power
+GO
+~~START~~
+money
+3.5128
+~~END~~
+
+
+SELECT POWER(CAST(-12.34 AS MONEY), 2) AS result;         -- Negative MONEY, Even Integer Power
+GO
+~~START~~
+money
+152.2756
+~~END~~
+
+
+SELECT POWER(CAST(-12.34 AS MONEY), 3) AS result;         -- Negative MONEY, Odd Integer Power
+GO
+~~START~~
+money
+-1879.0809
+~~END~~
+
+
+SELECT POWER(CAST(0 AS MONEY), 2) AS result;              -- Zero MONEY, Positive Power
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+SELECT POWER(CAST(12.34 AS MONEY), 0) AS result;          -- MONEY, Zero Power
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+SELECT POWER(CAST(12.34 AS MONEY), -2) AS result;         -- MONEY, Negative Power
+GO
+~~START~~
+money
+0.0066
+~~END~~
+
+
+SELECT POWER(CAST(NULL AS MONEY), 2) AS result;           -- NULL MONEY base
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+SELECT POWER(CAST(12.34 AS MONEY), NULL) AS result;       -- NULL exponent
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+SELECT POWER(CAST(0 AS MONEY), 0) AS result;              -- Zero raised to zero power
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+SELECT POWER(CAST(0 AS MONEY), -1) AS result;             -- Zero raised to negative power
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero raised to a negative power is undefined)~~
+
+
+SELECT POWER(CAST(-12.34 AS MONEY), 0.5) AS result;       -- Negative base, fractional power
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+SELECT POWER(CAST(12.34 AS MONEY), 14) AS result;         -- power which overflows
+GO
+~~START~~
+money
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+SELECT POWER(CAST(-12.34 AS MONEY), 14) AS result;        -- Negative base,power which overflows
+GO
+~~START~~
+money
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+SELECT POWER(CAST(12.34 AS MONEY), 9) AS result;         -- big power which does not overflows
+GO
+~~START~~
+money
+6634931404.8357
+~~END~~
+
+
+SELECT POWER(CAST(-12.34 AS MONEY), 9) AS result;        -- Negative base, big power which does not overflows
+GO
+~~START~~
+money
+-6634931404.8357
+~~END~~
+
+
+-- POWER tests for SMALLMONEY
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 2) AS result;          -- Positive SMALLMONEY, Integer Power
+GO
+~~START~~
+money
+152.2756
+~~END~~
+
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 2) AS result;         -- Negative SMALLMONEY, Even Integer Power
+GO
+~~START~~
+money
+152.2756
+~~END~~
+
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 0.5) AS result;        -- Positive SMALLMONEY, Decimal Power
+GO
+~~START~~
+money
+3.5128
+~~END~~
+
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 3) AS result;         -- Negative SMALLMONEY, Odd Integer Power
+GO
+~~START~~
+money
+-1879.0809
+~~END~~
+
+
+SELECT POWER(CAST(0 AS SMALLMONEY), 2) AS result;              -- Zero SMALLMONEY, Positive Power
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 0) AS result;          -- SMALLMONEY, Zero Power
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), -2) AS result;         -- SMALLMONEY, Negative Power
+GO
+~~START~~
+money
+0.0066
+~~END~~
+
+
+SELECT POWER(CAST(NULL AS SMALLMONEY), 2) AS result;           -- NULL SMALLMONEY base
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), NULL) AS result;       -- NULL exponent
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+SELECT POWER(CAST(0 AS SMALLMONEY), 0) AS result;              -- Zero raised to zero power
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+SELECT POWER(CAST(0 AS SMALLMONEY), -1) AS result;             -- Zero raised to negative power
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero raised to a negative power is undefined)~~
+
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 0.5) AS result;       -- Negative base, fractional power
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 14) AS result;         -- power which overflows
+GO
+~~START~~
+money
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 14) AS result;        -- Negative base,power which overflows
+GO
+~~START~~
+money
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 9) AS result;         -- big power which does not overflows
+GO
+~~START~~
+money
+6634931404.8357
+~~END~~
+
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 9) AS result;        -- Negative base, big power which does not overflows
+GO
+~~START~~
+money
+-6634931404.8357
 ~~END~~
 
 

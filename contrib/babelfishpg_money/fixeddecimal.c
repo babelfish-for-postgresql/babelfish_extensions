@@ -186,6 +186,7 @@ PG_FUNCTION_INFO_V1(int8_to_smallmoney);
 
 PG_FUNCTION_INFO_V1(fixeddecimal_ceiling);
 PG_FUNCTION_INFO_V1(fixeddecimal_floor);
+PG_FUNCTION_INFO_V1(fixeddecimal_power);
 
 
 /* Aggregate Internal State */
@@ -3232,4 +3233,24 @@ fixeddecimal_floor(PG_FUNCTION_ARGS)
 				 errmsg("fixeddecimal out of range")));
     
     PG_RETURN_INT64(result);
+}
+
+Datum
+fixeddecimal_power(PG_FUNCTION_ARGS)
+{
+    int64		arg1 = PG_GETARG_INT64(0);
+    float8      arg1_float = (float8) arg1 / FIXEDDECIMAL_MULTIPLIER;
+	Numeric		arg2 = PG_GETARG_NUMERIC(1);
+	int64 result;
+	Numeric		arg1_numeric,
+				result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1_float)));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
+    result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
+											   NumericGetDatum(result_numeric),
+											   DirectFunctionCall1(int8_numeric, FIXEDDECIMAL_MULTIPLIER)));
+    result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_INT64(result);
 }

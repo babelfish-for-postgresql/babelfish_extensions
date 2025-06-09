@@ -122,15 +122,12 @@ INSERT INTO money_smallmoney_vu_test(cost_sm, cost_m) VALUES
 (10,100), (10,40000), (125,20), (50, 590), (300, 900),
 (100,100), (10,40000), (125,20), (50, 590), (300, 900);
 GO
-~~ROW COUNT: 15~~
-
 
 -- psql
 ANALYZE master_dbo.money_smallmoney_vu_test;
 GO
 
 -- tsql
-
 -- Create test tables
 CREATE TABLE MoneyTestTable1 (
     ID INT IDENTITY(1,1),
@@ -138,11 +135,20 @@ CREATE TABLE MoneyTestTable1 (
     SmallMoneyVal SMALLMONEY,
     Description VARCHAR(100)
 );
+
 -- Test default values
 INSERT INTO MoneyTestTable1 DEFAULT VALUES;
 GO
-~~ROW COUNT: 1~~
 
-
+INSERT INTO MoneyTestTable1 (MoneyVal, SmallMoneyVal, Description)
+VALUES 
+    (-922337203685477.5808, -214748.3648, 'MIN values'),
+    (922337203685477.5807, 214748.3647, 'MAX values'),
+    (NULL, NULL, 'NULL values'),
+    (CAST(RAND() * 1000000 AS MONEY), 
+     CAST(RAND() * 10000 AS SMALLMONEY), 'Random values'),
+    (0.0001, 0.0001, 'Small positive values'),
+    (-0.0001, -0.0001, 'Small negative values'),
+    (0,0, 'Zero Values');
 
 

@@ -1,36 +1,104 @@
--- Create test tables
-CREATE TABLE MoneyTestTable1 (
-    ID INT IDENTITY(1,1),
-    MoneyVal MONEY,
-    SmallMoneyVal SMALLMONEY,
-    Description VARCHAR(100)
-);
-
--- =============================================
--- 1. Data Type Range Tests
--- =============================================
-
--- Test default values
-INSERT INTO MoneyTestTable1 DEFAULT VALUES;
-GO
-
-INSERT INTO MoneyTestTable1 (MoneyVal, SmallMoneyVal, Description)
-VALUES 
-    (-922337203685477.5808, -214748.3648, 'MIN values'),
-    (922337203685477.5807, 214748.3647, 'MAX values'),
-    (NULL, NULL, 'NULL values'),
-    (CAST(RAND() * 1000000 AS MONEY), 
-     CAST(RAND() * 10000 AS SMALLMONEY), 'Random values'),
-    (0.0001, 0.0001, 'Small positive values'),
-    (-0.0001, -0.0001, 'Small negative values'),
-    (0,0, 'Zero Values');
-
 -- Display results
 SELECT 'Range Test Results' AS TestName, * FROM MoneyTestTable1 where Description NOT LIKE 'Random values';
 GO
 
 -- =============================================
--- 2.Overflow Tests
+-- 1.Select from dependent objects
+-- =============================================
+SELECT * FROM dbo.int2smallmoneyadd_vu;
+GO
+
+SELECT * FROM dbo.int4smallmoneyadd_vu;
+GO
+
+SELECT * FROM dbo.int8smallmoneyadd_vu;
+GO
+
+SELECT * FROM dbo.smallmoneyint2add_vu;
+GO
+
+SELECT * FROM dbo.smallmoneyint4add_vu;
+GO
+
+SELECT * FROM dbo.smallmoneyint8add_vu;
+GO
+
+SELECT * FROM dbo.int2smallmoneymul_vu;
+GO
+
+SELECT * FROM dbo.int4smallmoneymul_vu;
+GO
+
+SELECT * FROM dbo.int4smallmoney_func();
+GO
+
+SELECT * FROM dbo.bitsmallmoney_func();
+GO
+
+SELECT * FROM dbo.int8smallmoney_func();
+GO
+
+SELECT * FROM dbo.int2smallmoney_func();
+GO
+
+-- ===============================================================
+-- 2.Check if index is picked up for all arithmetic operations
+-- ===============================================================
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+
+SET babelfish_showplan_all ON;
+GO
+
+SELECT * FROM money_smallmoney_vu_test WHERE cost_sm BETWEEN 100 and 200;
+GO
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm > 100;
+GO
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm <= CAST(50 AS SMALLMONEY) + CAST(50 AS SMALLMONEY);
+GO
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm = CAST(2 AS INT) * CAST(50 AS SMALLMONEY);
+GO
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm > CAST(200 AS INT) / CAST(2 AS SMALLMONEY);
+GO
+
+SELECT cost_sm FROM money_smallmoney_vu_test WHERE cost_sm <= CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY);
+GO
+
+SELECT * FROM money_smallmoney_vu_test WHERE cost_sm < CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY);
+GO
+
+SELECT * FROM money_smallmoney_vu_test WHERE cost_m BETWEEN 100 and 200;
+GO
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m > 100;
+GO
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m >= CAST(50 AS SMALLMONEY) + CAST(50 AS SMALLMONEY);
+GO
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m = CAST(2 AS INT) * CAST(50 AS SMALLMONEY);
+GO
+
+SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m < CAST(200 AS INT) / CAST(2 AS SMALLMONEY);
+GO
+
+SELECT cost_m FROM money_smallmoney_vu_test WHERE cost_m < CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY);
+GO
+
+SELECT * FROM money_smallmoney_vu_test WHERE cost_m > CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY);
+GO
+
+SET babelfish_showplan_all OFF;
+GO
+
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+-- =============================================
+-- 3.Overflow Tests
 -- =============================================
 INSERT INTO MoneyTestTable1 (MoneyVal, Description) VALUES (922337203685477.5808, 'Overflow MONEY test'); -- Exceeds maximum
 GO
@@ -42,9 +110,6 @@ INSERT INTO MoneyTestTable1 (MoneyVal, Description) VALUES (-922337203685477.580
 GO
 
 INSERT INTO MoneyTestTable1 (SmallMoneyVal, Description) VALUES (-214748.3649, 'Underflow SMALLMONEY test'); -- Below minimum
-GO
-
-DROP TABLE MoneyTestTable1
 GO
 
 -- Try Overflow with Arithematic Operators
@@ -1564,6 +1629,165 @@ SELECT ROUND(CAST(123.45 AS SMALLMONEY), 2, 1) AS result;  -- Explicit truncate
 GO
 
 SELECT ROUND(CAST(555.55 AS SMALLMONEY), -2, 1) AS result; -- Truncate to hundreds
+GO
+
+-- SIGN tests for MONEY
+SELECT SIGN(CAST(123.45 AS MONEY)) AS result;     -- Positive MONEY
+GO
+
+SELECT SIGN(CAST(-123.45 AS MONEY)) AS result;    -- Negative MONEY
+GO
+
+SELECT SIGN(CAST(0 AS MONEY)) AS result;          -- Zero MONEY
+GO
+
+SELECT SIGN(CAST(NULL AS MONEY)) AS result;       -- NULL MONEY value
+GO
+
+SELECT SIGN(CAST(922337203685477.5807 AS MONEY)) AS result;  -- Maximum MONEY value
+GO
+
+SELECT SIGN(CAST(-922337203685477.5808 AS MONEY)) AS result; -- Minimum MONEY value
+GO
+
+SELECT SIGN(CAST(0.0001 AS MONEY)) AS result;     -- Small positive value
+GO
+
+SELECT SIGN(CAST(-0.0001 AS MONEY)) AS result;    -- Small negative value
+GO
+
+-- SIGN tests for SMALLMONEY
+SELECT SIGN(CAST(123.45 AS SMALLMONEY)) AS result;     -- Positive SMALLMONEY
+GO
+
+SELECT SIGN(CAST(-123.45 AS SMALLMONEY)) AS result;    -- Negative SMALLMONEY
+GO
+
+SELECT SIGN(CAST(0 AS SMALLMONEY)) AS result;          -- Zero SMALLMONEY
+GO
+
+SELECT SIGN(CAST(NULL AS SMALLMONEY)) AS result;       -- NULL SMALLMONEY value
+GO
+
+SELECT SIGN(CAST(214748.3647 AS SMALLMONEY)) AS result;  -- Maximum SMALLMONEY value
+GO
+
+SELECT SIGN(CAST(-214748.3648 AS SMALLMONEY)) AS result; -- Minimum SMALLMONEY value
+GO
+
+SELECT SIGN(CAST(0.0001 AS SMALLMONEY)) AS result;     -- Small positive value
+GO
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 14) AS result;         -- power which overflows
+GO
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 14) AS result;        -- Negative base,power which overflows
+GO
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 9) AS result;         -- big power which does not overflows
+GO
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 9) AS result;        -- Negative base, big power which does not overflows
+GO
+
+SELECT SIGN(CAST(-0.0001 AS SMALLMONEY)) AS result;    -- Small negative value
+GO
+
+-- POWER tests for MONEY
+SELECT POWER(CAST(12.34 AS MONEY), 2) AS result;          -- Positive MONEY, Integer Power
+GO
+
+SELECT POWER(CAST(12.34 AS MONEY), 0.5) AS result;        -- Positive MONEY, Decimal Power
+GO
+
+SELECT POWER(CAST(-12.34 AS MONEY), 2) AS result;         -- Negative MONEY, Even Integer Power
+GO
+
+SELECT POWER(CAST(-12.34 AS MONEY), 3) AS result;         -- Negative MONEY, Odd Integer Power
+GO
+
+SELECT POWER(CAST(0 AS MONEY), 2) AS result;              -- Zero MONEY, Positive Power
+GO
+
+SELECT POWER(CAST(12.34 AS MONEY), 0) AS result;          -- MONEY, Zero Power
+GO
+
+SELECT POWER(CAST(12.34 AS MONEY), -2) AS result;         -- MONEY, Negative Power
+GO
+
+SELECT POWER(CAST(NULL AS MONEY), 2) AS result;           -- NULL MONEY base
+GO
+
+SELECT POWER(CAST(12.34 AS MONEY), NULL) AS result;       -- NULL exponent
+GO
+
+SELECT POWER(CAST(0 AS MONEY), 0) AS result;              -- Zero raised to zero power
+GO
+
+SELECT POWER(CAST(0 AS MONEY), -1) AS result;             -- Zero raised to negative power
+GO
+
+SELECT POWER(CAST(-12.34 AS MONEY), 0.5) AS result;       -- Negative base, fractional power
+GO
+
+SELECT POWER(CAST(12.34 AS MONEY), 14) AS result;         -- power which overflows
+GO
+
+SELECT POWER(CAST(-12.34 AS MONEY), 14) AS result;        -- Negative base,power which overflows
+GO
+
+SELECT POWER(CAST(12.34 AS MONEY), 9) AS result;         -- big power which does not overflows
+GO
+
+SELECT POWER(CAST(-12.34 AS MONEY), 9) AS result;        -- Negative base, big power which does not overflows
+GO
+
+-- POWER tests for SMALLMONEY
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 2) AS result;          -- Positive SMALLMONEY, Integer Power
+GO
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 2) AS result;         -- Negative SMALLMONEY, Even Integer Power
+GO
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 0.5) AS result;        -- Positive SMALLMONEY, Decimal Power
+GO
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 3) AS result;         -- Negative SMALLMONEY, Odd Integer Power
+GO
+
+SELECT POWER(CAST(0 AS SMALLMONEY), 2) AS result;              -- Zero SMALLMONEY, Positive Power
+GO
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 0) AS result;          -- SMALLMONEY, Zero Power
+GO
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), -2) AS result;         -- SMALLMONEY, Negative Power
+GO
+
+SELECT POWER(CAST(NULL AS SMALLMONEY), 2) AS result;           -- NULL SMALLMONEY base
+GO
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), NULL) AS result;       -- NULL exponent
+GO
+
+SELECT POWER(CAST(0 AS SMALLMONEY), 0) AS result;              -- Zero raised to zero power
+GO
+
+SELECT POWER(CAST(0 AS SMALLMONEY), -1) AS result;             -- Zero raised to negative power
+GO
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 0.5) AS result;       -- Negative base, fractional power
+GO
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 14) AS result;         -- power which overflows
+GO
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 14) AS result;        -- Negative base,power which overflows
+GO
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 9) AS result;         -- big power which does not overflows
+GO
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 9) AS result;        -- Negative base, big power which does not overflows
 GO
 
 -- SQRT tests for MONEY
