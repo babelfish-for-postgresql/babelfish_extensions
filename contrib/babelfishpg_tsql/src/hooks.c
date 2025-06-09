@@ -1627,7 +1627,7 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 	else
 		qual = pre_transform_qual;
 
-	handle_returning_qualifiers(query, stmt->returningList, pstate);
+	handle_returning_qualifiers(query, stmt->returningClause->exprs, pstate);
 	return qual;
 }
 

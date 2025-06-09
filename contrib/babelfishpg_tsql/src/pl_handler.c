@@ -1171,7 +1171,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 			{
 				ColumnRef  *n;
 				ResTarget  *rt;
-				List	   *returningList;
+				ReturningClause	*returningClause = NULL;
 
 				if (!has_ident)
 					ereport(ERROR,
@@ -1190,12 +1190,13 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				rt->val = (Node *) n;
 				rt->location = query->stmt_location;
 
-				returningList = list_make1(rt);
+				returningClause->exprs = list_make1(rt);
+				returningClause->options = NIL;
 
 				pstate->p_namespace = NIL;
 				addNSItemToQuery(pstate, pstate->p_target_nsitem, false, true, true);
-				query->returningList = transformReturningList(pstate,
-															  returningList,
+				transformReturningClause(pstate, query,
+															  returningClause,
 															  EXPR_KIND_RETURNING);
 			}
 			else

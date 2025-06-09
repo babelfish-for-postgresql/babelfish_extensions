@@ -1310,7 +1310,8 @@ DeleteStmt: opt_with_clause DELETE_P FROM relation_expr_opt_alias
 					n->relation = $4;
 					n->usingClause = $6;
 					n->whereClause = $7;
-					n->returningList = $8;
+					n->returningClause->exprs = ($8)->exprs;
+					n->returningClause->options = NIL;
 					n->withClause = $1;
 					$$ = (Node *)n;
 				}
@@ -1333,7 +1334,8 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 					n->targetList = $7;
 					n->fromClause = $8;
 					n->whereClause = $9;
-					n->returningList = $10;
+					n->returningClause->exprs = ($10)->exprs;
+					n->returningClause->options = NIL;
 					$$ = (Node *)n;
 				}
 			/* OUTPUT syntax */
@@ -1364,7 +1366,8 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 							n->whereClause = $10;
 						}
 						tsql_check_update_output_transformation($8);
-						n->returningList = $8;
+						n->returningClause->exprs = $8;
+						n->returningClause->options = NIL;
 						n->withClause = $1;
 						$$ = (Node *)n;
 					}
@@ -2842,7 +2845,7 @@ tsql_InsertStmt:
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$10->relation = $5;
 					$10->onConflictClause = NULL;
-					$10->returningList = NULL;
+					$10->returningClause = NULL;
 					$10->withClause = $1;
 					$10->cols = $8;
 					$$ = (Node *) $10;
@@ -2854,7 +2857,7 @@ tsql_InsertStmt:
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$7->relation = $5;
 					$7->onConflictClause = NULL;
-					$7->returningList = NULL;
+					$7->returningClause = NULL;
 					$7->withClause = $1;
 					$7->cols = NIL;
 					$$ = (Node *) $7;
@@ -2867,7 +2870,7 @@ tsql_InsertStmt:
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					i->relation = $5;
 					i->onConflictClause = NULL;
-					i->returningList = NULL;
+					i->returningClause = NULL;
 					i->withClause = $1;
 					i->cols = NIL;
 					i->selectStmt = NULL;
@@ -2888,7 +2891,8 @@ tsql_InsertStmt:
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$11->relation = $5;
 					$11->onConflictClause = NULL;
-					$11->returningList = $10;
+					$11->returningClause->exprs = $10;
+					$11->returningClause->options = NIL;
 					$11->withClause = $1;
 					$11->cols = $8;
 					$$ = (Node *) $11;
@@ -2906,7 +2910,8 @@ tsql_InsertStmt:
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$8->relation = $5;
 					$8->onConflictClause = NULL;
-					$8->returningList = $7;
+					$8->returningClause->exprs = $7;
+					$8->returningClause->options = NIL;
 					$8->withClause = $1;
 					$8->cols = NIL;
 					$$ = (Node *) $8;
@@ -2920,7 +2925,8 @@ tsql_InsertStmt:
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					i->relation = $5;
 					i->onConflictClause = NULL;
-					i->returningList = $7;
+					i->returningClause->exprs = $7;
+					i->returningClause->options = NIL;
 					i->withClause = $1;
 					i->cols = NIL;
 					i->selectStmt = NULL;
@@ -2955,7 +2961,7 @@ tsql_InsertStmt:
 					InsertStmt *i = makeNode(InsertStmt);
 					i->relation = NULL;
 					i->onConflictClause = NULL;
-					i->returningList = NULL;
+					i->returningClause = NULL;
 					i->withClause = NULL;
 					i->cols = NIL;
 					i->selectStmt = NULL;
@@ -2990,7 +2996,7 @@ tsql_InsertStmt:
 					InsertStmt *i = makeNode(InsertStmt);
 					i->relation = NULL;
 					i->onConflictClause = NULL;
-					i->returningList = NULL;
+					i->returningClause = NULL;
 					i->withClause = NULL;
 					i->cols = NIL;
 					i->selectStmt = NULL;
@@ -3681,7 +3687,7 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 					n->relation = $5;
 					n->usingClause = $7;
 					n->whereClause = $8;
-					n->returningList = NULL;
+					n->returningClause = NULL;
 					n->withClause = $1;
 					$$ = (Node *)n;
 				}
@@ -3697,7 +3703,8 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 					tsql_check_top_percent_support(top_stmt, "DELETE", @3, yyscanner);
 					n->usingClause = $8;
 					n->whereClause = $9;
-					n->returningList = $7;
+					n->returningClause->exprs = $7;
+					n->returningClause->options = NIL;
 					n->withClause = $1;
 					$$ = (Node *)n;
 				}

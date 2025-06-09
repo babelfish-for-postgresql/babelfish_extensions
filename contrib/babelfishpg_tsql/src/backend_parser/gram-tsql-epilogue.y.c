@@ -1204,7 +1204,8 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	tsql_check_top_percent_support(top_stmt, "INSERT", -1, yyscanner);
 	i->relation = insert_target;
 	i->onConflictClause = NULL;
-	i->returningList = get_transformed_output_list(tsql_output_clause);
+	i->returningClause->exprs = get_transformed_output_list(tsql_output_clause);
+	i->returningClause->options = NULL;
 	i->withClause = NULL;
 	i->override = false;
 
@@ -1279,7 +1280,7 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	tsql_output_insert_rest->selectStmt = (Node *) n;
 	tsql_output_insert_rest->relation = output_target;
 	tsql_output_insert_rest->onConflictClause = NULL;
-	tsql_output_insert_rest->returningList = NULL;
+	tsql_output_insert_rest->returningClause = NULL;
 	if (tsql_output_into_target_columns == NIL)
 		tsql_output_insert_rest->cols = NIL;
 	else
@@ -1354,7 +1355,8 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		d->limitCount = top_stmt->limitCount;
 		tsql_check_top_percent_support(top_stmt, "DELETE", -1, yyscanner);
 	}
-	d->returningList = get_transformed_output_list(tsql_output_clause);
+	d->returningClause->exprs = get_transformed_output_list(tsql_output_clause);
+	d->returningClause->options = NULL;
 	d->withClause = opt_with_clause;
 
 	/*
@@ -1426,7 +1428,7 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	i->selectStmt = (Node *) n;
 	i->relation = insert_target;
 	i->onConflictClause = NULL;
-	i->returningList = NULL;
+	i->returningClause = NULL;
 	i->cols = tsql_output_into_target_columns;
 
 	/* CTE */
@@ -1526,7 +1528,8 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		u->limitCount = top_stmt->limitCount;
 		tsql_check_top_percent_support(top_stmt, "UPDATE", -1, yyscanner);
 	}
-	u->returningList = get_transformed_output_list(tsql_output_clause);
+	u->returningClause->exprs = get_transformed_output_list(tsql_output_clause);
+	u->returningClause->options = NULL;
 	u->withClause = opt_with_clause;
 
 	tsql_check_update_output_transformation(tsql_output_clause);
@@ -1610,7 +1613,7 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	i->selectStmt = (Node *) n;
 	i->relation = insert_target;
 	i->onConflictClause = NULL;
-	i->returningList = NULL;
+	i->returningClause = NULL;
 	i->cols = tsql_output_into_target_columns;
 
 	/* CTE */
