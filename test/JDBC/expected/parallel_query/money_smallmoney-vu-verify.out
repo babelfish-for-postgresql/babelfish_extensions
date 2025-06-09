@@ -1,3 +1,9 @@
+-- psql
+-- analyze the money_smallmoney_vu_test created
+ANALYZE master_dbo.money_smallmoney_vu_test;
+GO
+
+-- tsql
 -- Display results
 SELECT 'Range Test Results' AS TestName, * FROM MoneyTestTable1 where Description NOT LIKE 'Random values';
 GO
@@ -6,6 +12,7 @@ varchar#!#int#!#money#!#smallmoney#!#varchar
 ~~END~~
 
 
+-- tsql
 -- =============================================
 -- 1.Select from dependent objects
 -- =============================================
@@ -140,7 +147,7 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_sm BETWEEN 100 and 200
-Gather 
+Gather
   Workers Planned: 1
   Single Copy: true
   ->  Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
@@ -149,7 +156,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.662 ms
+Babelfish T-SQL Batch Parsing Time: 8.871 ms
 ~~END~~
 
 
@@ -158,7 +165,7 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm > 100
-Gather 
+Gather
   Workers Planned: 1
   Single Copy: true
   ->  Aggregate
@@ -168,7 +175,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 19.500 ms
+Babelfish T-SQL Batch Parsing Time: 19.239 ms
 ~~END~~
 
 
@@ -184,7 +191,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.745 ms
+Babelfish T-SQL Batch Parsing Time: 3.802 ms
 ~~END~~
 
 
@@ -200,7 +207,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.062 ms
+Babelfish T-SQL Batch Parsing Time: 0.696 ms
 ~~END~~
 
 
@@ -216,7 +223,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.081 ms
+Babelfish T-SQL Batch Parsing Time: 3.080 ms
 ~~END~~
 
 
@@ -231,7 +238,7 @@ Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c467019972
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.544 ms
+Babelfish T-SQL Batch Parsing Time: 0.272 ms
 ~~END~~
 
 
@@ -246,7 +253,7 @@ Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.234 ms
+Babelfish T-SQL Batch Parsing Time: 2.621 ms
 ~~END~~
 
 
@@ -255,16 +262,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_m BETWEEN 100 and 200
-Gather  
+Gather
   Workers Planned: 1
   Single Copy: true
-  ->  Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test 
+  ->  Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
         Index Cond: (((cost_m)::fixeddecimal >= 100) AND ((cost_m)::fixeddecimal <= 200))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.211 ms
+Babelfish T-SQL Batch Parsing Time: 0.204 ms
 ~~END~~
 
 
@@ -276,14 +283,14 @@ Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m > 100
 Gather
   Workers Planned: 1
   Single Copy: true
-  ->  Aggregate 
+  ->  Aggregate
         ->  Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
               Index Cond: (cost_m > 100)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.227 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -299,7 +306,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.189 ms
+Babelfish T-SQL Batch Parsing Time: 0.577 ms
 ~~END~~
 
 
@@ -315,7 +322,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.138 ms
+Babelfish T-SQL Batch Parsing Time: 0.145 ms
 ~~END~~
 
 
@@ -331,7 +338,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.322 ms
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 
@@ -346,7 +353,7 @@ Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.339 ms
+Babelfish T-SQL Batch Parsing Time: 0.132 ms
 ~~END~~
 
 
@@ -361,7 +368,7 @@ Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.125 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 

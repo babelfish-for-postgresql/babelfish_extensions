@@ -1,10 +1,18 @@
+-- parallel_query_expected
+-- psql
+-- analyze the money_smallmoney_vu_test created
+ANALYZE master_dbo.money_smallmoney_vu_test;
+GO
+
 -- Display results
+-- tsql
 SELECT 'Range Test Results' AS TestName, * FROM MoneyTestTable1 where Description NOT LIKE 'Random values';
 GO
 
 -- =============================================
 -- 1.Select from dependent objects
 -- =============================================
+-- tsql
 SELECT * FROM dbo.int2smallmoneyadd_vu;
 GO
 

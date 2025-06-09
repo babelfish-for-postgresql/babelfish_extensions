@@ -149,10 +149,6 @@ INSERT INTO money_smallmoney_vu_test(cost_sm, cost_m) VALUES
 (100,100), (10,40000), (125,20), (50, 590), (300, 900);
 GO
 
--- psql
-ANALYZE master_dbo.money_smallmoney_vu_test;
-GO
-
 -- tsql
 -- Create test tables
 CREATE TABLE MoneyTestTable1 (
