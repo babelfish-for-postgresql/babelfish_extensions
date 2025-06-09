@@ -50,6 +50,9 @@ GO
 SELECT set_config('enable_seqscan', 'off', false);
 GO
 
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+
 SET babelfish_showplan_all ON;
 GO
 

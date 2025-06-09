@@ -140,8 +140,11 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_sm BETWEEN 100 and 200
-Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
-  Index Cond: (((cost_sm)::fixeddecimal >= 100) AND ((cost_sm)::fixeddecimal <= 200))
+Gather 
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
+        Index Cond: (((cost_sm)::fixeddecimal >= 100) AND ((cost_sm)::fixeddecimal <= 200))
 ~~END~~
 
 ~~START~~
@@ -155,9 +158,12 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm > 100
-Aggregate
-  ->  Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
-        Index Cond: (cost_sm > 100)
+Gather 
+  Workers Planned: 1
+  Single Copy: true
+  ->  Aggregate
+        ->  Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
+              Index Cond: (cost_sm > 100)
 ~~END~~
 
 ~~START~~
@@ -249,8 +255,11 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_m BETWEEN 100 and 200
-Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
-  Index Cond: (((cost_m)::fixeddecimal >= 100) AND ((cost_m)::fixeddecimal <= 200))
+Gather  
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test 
+        Index Cond: (((cost_m)::fixeddecimal >= 100) AND ((cost_m)::fixeddecimal <= 200))
 ~~END~~
 
 ~~START~~
@@ -264,9 +273,12 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m > 100
-Aggregate
-  ->  Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
-        Index Cond: (cost_m > 100)
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Aggregate 
+        ->  Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
+              Index Cond: (cost_m > 100)
 ~~END~~
 
 ~~START~~
