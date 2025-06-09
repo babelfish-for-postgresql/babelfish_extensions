@@ -187,7 +187,7 @@ SELECT quotename('gershwin', '<')
 GO
 ~~START~~
 nvarchar
->gershwin<
+<gershwin>
 ~~END~~
 
 
@@ -195,7 +195,7 @@ SELECT quotename('faulkner', '>')
 GO
 ~~START~~
 nvarchar
->faulkner<
+<faulkner>
 ~~END~~
 
 
@@ -261,7 +261,7 @@ quotename('"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 GO
 ~~START~~
 nvarchar
-[""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""]
+[""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""]
 ~~END~~
 
 
@@ -269,7 +269,7 @@ SELECT quotename('''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 GO
 ~~START~~
 nvarchar
-['''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''']
+['''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''']
 ~~END~~
 
 
@@ -378,6 +378,209 @@ nvarchar
 
 
 SELECT quotename(NULL, '[')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT QUOTENAME('Hello ) there', ')')
+GO
+~~START~~
+nvarchar
+(Hello )) there)
+~~END~~
+
+
+SELECT QUOTENAME('Hello )" there', ')')
+GO
+~~START~~
+nvarchar
+(Hello ))" there)
+~~END~~
+
+
+SELECT QUOTENAME('Hello < there', '<')
+GO
+~~START~~
+nvarchar
+<Hello < there>
+~~END~~
+
+
+SELECT QUOTENAME('Hello > there', '>')
+GO
+~~START~~
+nvarchar
+<Hello >> there>
+~~END~~
+
+
+SELECT QUOTENAME('Hello } there', '}')
+GO
+~~START~~
+nvarchar
+{Hello }} there}
+~~END~~
+
+
+SELECT QUOTENAME('Hello ` there', '`')
+GO
+~~START~~
+nvarchar
+`Hello `` there`
+~~END~~
+
+
+SELECT QUOTENAME('[KEY]', '"')
+GO
+~~START~~
+nvarchar
+"[KEY]"
+~~END~~
+
+
+SELECT QUOTENAME('"KEY"', '[')
+GO
+~~START~~
+nvarchar
+["KEY"]
+~~END~~
+
+
+SELECT QUOTENAME('"KEY"', '')
+GO
+~~START~~
+nvarchar
+["KEY"]
+~~END~~
+
+
+-- test quotename with multibyte characters
+SELECT quotename('こんにちは')
+GO
+~~START~~
+nvarchar
+[こんにちは]
+~~END~~
+
+
+SELECT quotename('测试中文', '"')
+GO
+~~START~~
+nvarchar
+"测试中文"
+~~END~~
+
+
+SELECT quotename('café')
+GO
+~~START~~
+nvarchar
+[café]
+~~END~~
+
+
+SELECT quotename('Москва', '}{')
+GO
+~~START~~
+nvarchar
+{Москва}
+~~END~~
+
+
+SELECT quotename('Émojis🚀🌟')
+GO
+~~START~~
+nvarchar
+[Émojis🚀🌟]
+~~END~~
+
+
+SELECT quotename('Mixed英文中文')
+GO
+~~START~~
+nvarchar
+[Mixed英文中文]
+~~END~~
+
+
+-- test quotename with multibyte characters and different quote chars
+SELECT quotename('こんにちは', '"')
+GO
+~~START~~
+nvarchar
+"こんにちは"
+~~END~~
+
+
+SELECT quotename('测试中文', '''')
+GO
+~~START~~
+nvarchar
+'测试中文'
+~~END~~
+
+
+SELECT quotename('café', '>')
+GO
+~~START~~
+nvarchar
+<café>
+~~END~~
+
+
+SELECT quotename('Москва', '}')
+GO
+~~START~~
+nvarchar
+{Москва}
+~~END~~
+
+
+SELECT quotename('العربية', '`')
+GO
+~~START~~
+nvarchar
+`العربية`
+~~END~~
+
+
+-- test different size delimeter
+SELECT quotename('こん"にちは', '["')
+GO
+~~START~~
+nvarchar
+[こん"にちは]
+~~END~~
+
+
+SELECT quotename('test''中文', '[%&69]')
+GO
+~~START~~
+nvarchar
+[test'中文]
+~~END~~
+
+
+SELECT quotename('café]test', '''')
+GO
+~~START~~
+nvarchar
+'café]test'
+~~END~~
+
+
+SELECT quotename('Москва}test', '}{^$[]}')
+GO
+~~START~~
+nvarchar
+{Москва}}test}
+~~END~~
+
+
+SELECT quotename('Москва}test', 'Ğ🚀🌟')
 GO
 ~~START~~
 nvarchar
