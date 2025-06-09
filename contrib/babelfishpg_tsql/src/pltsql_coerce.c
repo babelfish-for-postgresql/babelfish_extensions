@@ -1845,7 +1845,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					else if (aggref->aggtype == INT8OID)
 					{
 						pfree(aggFuncName);
-						return DEFAULT_BIGINT_TYPMOD
+						return DEFAULT_BIGINT_TYPMOD;
 					}
 				}
 
