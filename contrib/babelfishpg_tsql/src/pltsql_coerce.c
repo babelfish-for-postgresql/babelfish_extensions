@@ -1252,7 +1252,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						return DEFAULT_TINYINT_TYPMOD;
 				}
 
-				if (!is_numeric_datatype(param->paramtype))
+				if (!is_numeric_datatype(param->paramtype) &&
+					!(*common_utility_plugin_ptr->is_tsql_money_datatype)(param->paramtype) &&
+					!(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(param->paramtype))
 				{
 					/* typmod is undefined */
 					if (found != NULL) *found = false;
