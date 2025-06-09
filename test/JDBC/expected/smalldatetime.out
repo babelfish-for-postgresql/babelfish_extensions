@@ -3819,7 +3819,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type varbinary to smalldatetime is not allowed.)~~
+~~ERROR (Message: cannot cast type varbinary to smalldatetime)~~
 
 
 -- varbinary
@@ -3846,7 +3846,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type varbinary to smalldatetime is not allowed.)~~
+~~ERROR (Message: cannot cast type varbinary to smalldatetime)~~
 
 
 -- char
@@ -3876,9 +3876,165 @@ smalldatetime
 2023-06-16 14:22:00.0
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
 
 -- varchar
@@ -3908,9 +4064,165 @@ smalldatetime
 2023-06-16 14:22:00.0
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
 
 -- nchar
@@ -3940,9 +4252,165 @@ smalldatetime
 2023-06-16 14:22:00.0
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
 
 -- nvarchar
@@ -3972,9 +4440,165 @@ smalldatetime
 2023-06-16 14:22:00.0
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
 
 -- date
@@ -4941,7 +5565,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
+~~ERROR (Message: data out of range for smalldatetime)~~
 
 
 -- numeric
@@ -4968,7 +5592,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
+~~ERROR (Message: data out of range for smalldatetime)~~
 
 
 -- float
@@ -4995,7 +5619,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
+~~ERROR (Message: data out of range for smalldatetime)~~
 
 
 -- real
@@ -5022,7 +5646,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
+~~ERROR (Message: data out of range for smalldatetime)~~
 
 
 -- bigint
@@ -5204,7 +5828,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
+~~ERROR (Message: data out of range for smalldatetime)~~
 
 
 -- smallint
@@ -5609,7 +6233,7 @@ GO
 smalldatetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
+~~ERROR (Message: data out of range for smalldatetime)~~
 
 
 -- smallmoney
@@ -5827,9 +6451,165 @@ smalldatetime
 2023-06-16 14:22:00.0
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
 
 -- ntext
@@ -5859,9 +6639,165 @@ smalldatetime
 2023-06-16 14:22:00.0
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2023-06-16 14:22:00.0
+~~END~~
 
 
 -- sql_variant
@@ -11454,10 +12390,9 @@ SELECT
     CONVERT(SMALLDATETIME, '15 Jun 2023 14:30', 106) AS Style106,
     CONVERT(SMALLDATETIME, '2023-06-15 14:30', 120) AS Style120;
 GO
-~~START~~
-smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
-2023-06-15 14:30:00.0#!#2023-06-15 14:30:00.0#!#2023-06-15 14:30:00.0#!#2023-06-15 14:30:00.0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "15.06.2023 14:30")~~
 
 
 -- Test with DATEFORMAT setting

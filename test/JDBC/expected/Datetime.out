@@ -3621,6 +3621,8 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -3648,6 +3650,8 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -3680,9 +3684,11 @@ datetime
 2023-06-16 14:22:59.0
 ~~END~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
 
 
 -- varchar
@@ -3712,9 +3718,11 @@ datetime
 2023-06-16 14:22:59.0
 ~~END~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
 
 
 -- nchar
@@ -3744,9 +3752,165 @@ datetime
 2023-06-16 14:22:59.0
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
 
 
 -- nvarchar
@@ -3776,9 +3940,165 @@ datetime
 2023-06-16 14:22:59.0
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
+
+~~START~~
+datetime
+2023-06-16 14:22:59.0
+~~END~~
 
 
 -- date
@@ -4743,6 +5063,8 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -4770,6 +5092,8 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -4797,6 +5121,8 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -4824,6 +5150,8 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -4851,134 +5179,200 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
@@ -5006,6 +5400,8 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -5631,9 +6027,11 @@ datetime
 2023-06-16 14:22:59.0
 ~~END~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
 
 
 -- ntext
@@ -5663,9 +6061,11 @@ datetime
 2023-06-16 14:22:59.0
 ~~END~~
 
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
 
 
 -- sql_variant

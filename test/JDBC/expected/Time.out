@@ -2800,9 +2800,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type varbinary to time is not allowed.)~~
+~~ERROR (Message: cannot cast type varbinary to time without time zone)~~
 
 
 -- varbinary
@@ -2827,9 +2829,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type varbinary to time is not allowed.)~~
+~~ERROR (Message: cannot cast type varbinary to time without time zone)~~
 
 
 -- char
@@ -3606,9 +3610,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type date to time is not allowed.)~~
+~~ERROR (Message: cannot cast type date to time without time zone)~~
 
 
 -- datetime
@@ -4385,9 +4391,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type "decimal" to time is not allowed.)~~
+~~ERROR (Message: cannot cast type "decimal" to time without time zone)~~
 
 
 -- numeric
@@ -4412,9 +4420,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type numeric to time is not allowed.)~~
+~~ERROR (Message: cannot cast type numeric to time without time zone)~~
 
 
 -- float
@@ -4439,9 +4449,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type double precision to time is not allowed.)~~
+~~ERROR (Message: cannot cast type double precision to time without time zone)~~
 
 
 -- real
@@ -4466,9 +4478,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type real to time is not allowed.)~~
+~~ERROR (Message: cannot cast type real to time without time zone)~~
 
 
 -- bigint
@@ -4493,9 +4507,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type bigint to time is not allowed.)~~
+~~ERROR (Message: cannot cast type bigint to time without time zone)~~
 
 
 -- int
@@ -4520,9 +4536,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
+~~ERROR (Message: cannot cast type integer to time without time zone)~~
 
 
 -- smallint
@@ -4547,9 +4565,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type smallint to time is not allowed.)~~
+~~ERROR (Message: cannot cast type smallint to time without time zone)~~
 
 
 -- tinyint
@@ -4578,7 +4598,7 @@ GO
 time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type tinyint to time is not allowed.)~~
+~~ERROR (Message: cannot cast type tinyint to time without time zone)~~
 
 
 -- money
@@ -4607,7 +4627,7 @@ GO
 time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type money to time is not allowed.)~~
+~~ERROR (Message: cannot cast type money to time without time zone)~~
 
 
 -- smallmoney
@@ -4636,7 +4656,7 @@ GO
 time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type smallmoney to time is not allowed.)~~
+~~ERROR (Message: cannot cast type smallmoney to time without time zone)~~
 
 
 -- text
@@ -10301,9 +10321,11 @@ SELECT
     CONVERT(TIME, '14.30.20', 104),     -- hh.mm.ss
     CONVERT(TIME, '14:30:20.1234567', 114);  -- hh:mm:ss.nnnnnnn
 GO
+~~START~~
+time#!#time#!#time#!#time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting time from character string.)~~
 
 
 -- Test AM/PM formats

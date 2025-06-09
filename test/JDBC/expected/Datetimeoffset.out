@@ -3253,7 +3253,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type varbinary to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type varbinary to datetimeoffset)~~
 
 
 -- varbinary
@@ -3280,7 +3280,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type varbinary to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type varbinary to datetimeoffset)~~
 
 
 -- char
@@ -3310,9 +3310,165 @@ datetimeoffset
 2023-06-16 14:22:59.0000000 +01:00
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
 
 -- varchar
@@ -3342,9 +3498,165 @@ datetimeoffset
 2023-06-16 14:22:59.0000000 +01:00
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
 
 -- nchar
@@ -3374,9 +3686,165 @@ datetimeoffset
 2023-06-16 14:22:59.0000000 +01:00
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
 
 -- nvarchar
@@ -3406,9 +3874,165 @@ datetimeoffset
 2023-06-16 14:22:59.0000000 +01:00
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
 
 -- date
@@ -4375,7 +4999,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type "decimal" to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type "decimal" to datetimeoffset)~~
 
 
 -- numeric
@@ -4402,7 +5026,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type numeric to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type numeric to datetimeoffset)~~
 
 
 -- float
@@ -4429,7 +5053,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type double precision to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type double precision to datetimeoffset)~~
 
 
 -- real
@@ -4456,7 +5080,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type real to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type real to datetimeoffset)~~
 
 
 -- bigint
@@ -4483,7 +5107,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type bigint to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type bigint to datetimeoffset)~~
 
 
 -- int
@@ -4510,7 +5134,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type integer to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type integer to datetimeoffset)~~
 
 
 -- smallint
@@ -4537,7 +5161,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type smallint to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type smallint to datetimeoffset)~~
 
 
 -- tinyint
@@ -4562,11 +5186,9 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
-~~START~~
-datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type tinyint to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type tinyint to datetimeoffset)~~
 
 
 -- money
@@ -4591,11 +5213,9 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
-~~START~~
-datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type money to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type money to datetimeoffset)~~
 
 
 -- smallmoney
@@ -4620,11 +5240,9 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
-~~START~~
-datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type smallmoney to datetimeoffset is not allowed.)~~
+~~ERROR (Message: cannot cast type smallmoney to datetimeoffset)~~
 
 
 -- text
@@ -4654,9 +5272,165 @@ datetimeoffset
 2023-06-16 14:22:59.0000000 +01:00
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
 
 -- ntext
@@ -4686,9 +5460,165 @@ datetimeoffset
 2023-06-16 14:22:59.0000000 +01:00
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2023-06-16 14:22:59.0000000 +01:00
+~~END~~
 
 
 -- sql_variant
@@ -10359,7 +11289,7 @@ SELECT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The input character string does not follow style 100, either change the input character string or use a different style.)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2023-06-16 14.30.20 +01:00")~~
 
 
 -- Test AM/PM formats

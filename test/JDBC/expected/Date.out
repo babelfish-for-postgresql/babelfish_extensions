@@ -3283,9 +3283,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type varbinary to date is not allowed.)~~
+~~ERROR (Message: cannot cast type varbinary to date)~~
 
 
 -- varbinary
@@ -3310,9 +3312,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type varbinary to date is not allowed.)~~
+~~ERROR (Message: cannot cast type varbinary to date)~~
 
 
 -- char
@@ -3342,9 +3346,11 @@ date
 2023-06-16
 ~~END~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting date from character string.)~~
 
 
 -- varchar
@@ -3374,9 +3380,11 @@ date
 2023-06-16
 ~~END~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting date from character string.)~~
 
 
 -- nchar
@@ -3406,9 +3414,165 @@ date
 2023-06-16
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+date
+2023-06-16
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
 
 
 -- nvarchar
@@ -3438,9 +3602,165 @@ date
 2023-06-16
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+date
+2023-06-16
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
+
+~~START~~
+date
+2023-06-16
+~~END~~
 
 
 -- date
@@ -4405,9 +4725,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type "decimal" to date is not allowed.)~~
+~~ERROR (Message: cannot cast type "decimal" to date)~~
 
 
 -- numeric
@@ -4432,9 +4754,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type numeric to date is not allowed.)~~
+~~ERROR (Message: cannot cast type numeric to date)~~
 
 
 -- float
@@ -4459,9 +4783,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type double precision to date is not allowed.)~~
+~~ERROR (Message: cannot cast type double precision to date)~~
 
 
 -- real
@@ -4486,9 +4812,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type real to date is not allowed.)~~
+~~ERROR (Message: cannot cast type real to date)~~
 
 
 -- bigint
@@ -4513,9 +4841,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type bigint to date is not allowed.)~~
+~~ERROR (Message: cannot cast type bigint to date)~~
 
 
 -- int
@@ -4540,9 +4870,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type integer to date is not allowed.)~~
+~~ERROR (Message: cannot cast type integer to date)~~
 
 
 -- smallint
@@ -4567,9 +4899,11 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type smallint to date is not allowed.)~~
+~~ERROR (Message: cannot cast type smallint to date)~~
 
 
 -- tinyint
@@ -4598,7 +4932,7 @@ GO
 date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type tinyint to date is not allowed.)~~
+~~ERROR (Message: cannot cast type tinyint to date)~~
 
 
 -- money
@@ -4627,7 +4961,7 @@ GO
 date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type money to date is not allowed.)~~
+~~ERROR (Message: cannot cast type money to date)~~
 
 
 -- smallmoney
@@ -4656,7 +4990,7 @@ GO
 date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type smallmoney to date is not allowed.)~~
+~~ERROR (Message: cannot cast type smallmoney to date)~~
 
 
 -- text
@@ -4686,9 +5020,11 @@ date
 2023-06-16
 ~~END~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting date from character string.)~~
 
 
 -- ntext
@@ -4718,9 +5054,11 @@ date
 2023-06-16
 ~~END~~
 
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting date from character string.)~~
 
 
 -- sql_variant

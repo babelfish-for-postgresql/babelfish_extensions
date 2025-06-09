@@ -3241,7 +3241,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type varbinary to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type varbinary to datetime2)~~
 
 
 -- varbinary
@@ -3268,7 +3268,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type varbinary to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type varbinary to datetime2)~~
 
 
 -- char
@@ -3298,9 +3298,165 @@ datetime2
 2023-06-16 14:22:59.1234570
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
 
 
@@ -3331,9 +3487,165 @@ datetime2
 2023-06-16 14:22:59.1234570
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
 
 -- nchar
@@ -3363,9 +3675,165 @@ datetime2
 2023-06-16 14:22:59.1234570
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
 
 -- nvarchar
@@ -3395,9 +3863,165 @@ datetime2
 2023-06-16 14:22:59.1234570
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
 
 -- date
@@ -4364,7 +4988,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type "decimal" to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type "decimal" to datetime2)~~
 
 
 -- text
@@ -4394,9 +5018,165 @@ datetime2
 2023-06-16 14:22:59.1234570
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
 
 -- numeric
@@ -4423,7 +5203,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type numeric to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type numeric to datetime2)~~
 
 
 -- float
@@ -4450,7 +5230,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type double precision to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type double precision to datetime2)~~
 
 
 -- real
@@ -4477,7 +5257,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type real to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type real to datetime2)~~
 
 
 -- bigint
@@ -4504,7 +5284,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type bigint to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type bigint to datetime2)~~
 
 
 -- int
@@ -4531,7 +5311,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type integer to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type integer to datetime2)~~
 
 
 -- smallint
@@ -4558,7 +5338,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type smallint to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type smallint to datetime2)~~
 
 
 -- tinyint
@@ -4583,11 +5363,9 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
-~~START~~
-datetime2
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type tinyint to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type tinyint to datetime2)~~
 
 
 -- money
@@ -4612,11 +5390,9 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
-~~START~~
-datetime2
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type money to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type money to datetime2)~~
 
 
 -- smallmoney
@@ -4641,11 +5417,9 @@ DEALLOCATE style_cursor;
 GO
 ~~ROW COUNT: 33~~
 
-~~START~~
-datetime2
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type smallmoney to datetime2 is not allowed.)~~
+~~ERROR (Message: cannot cast type smallmoney to datetime2)~~
 
 
 -- ntext
@@ -4675,9 +5449,165 @@ datetime2
 2023-06-16 14:22:59.1234570
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
 
 
 -- sql_variant
@@ -10117,7 +11047,7 @@ SELECT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The input character string does not follow style 108, either change the input character string or use a different style.)~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2023-06-16 14.30.20")~~
 
 
 -- Test AM/PM formats
