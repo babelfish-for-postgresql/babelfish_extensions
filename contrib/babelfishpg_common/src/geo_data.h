@@ -19,6 +19,29 @@ typedef struct
     double m;
 } POINT;
 
+/* Dynamic array to store geometric points */
+typedef struct {
+    POINT *points;
+    int count; 
+    int capacity;       
+} PointArray;
+
+/* Enum for different LineString dimension types */
+typedef enum 
+{ 
+    XY, ZM, Z, M
+} 
+LineStringType;
+
+void init_point_array(PointArray *pa);
+void resize_point_array(PointArray *pa);
+void add_point(PointArray *pa, POINT p);
+void free_point_array(PointArray *pa);
+LineStringType determine_linestring_type(PointArray *pa);
+void transform_points(PointArray *pa, LineStringType type);
+char* rewrite_linestring_query(PointArray *pa);
+char* rewrite_dim_linestring_query(PointArray *pa);
+
 /* Function declarations for lexer and parser */
 extern void geo_yyerror(char **result, const char *message) pg_attribute_noreturn();
 extern int geo_yylex(void);

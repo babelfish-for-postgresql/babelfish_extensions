@@ -103,13 +103,11 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):<NULL>
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
-prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
 
 create table geominTable (a geometry);
 Insert into geominTable values('POINT(1 2)');
 Insert into geominTable values('POINT(1 2 3)');
 Insert into geominTable values('POINT(1 2 3 4)');
-Insert into geominTable values('LINESTRING(1 2,3 4)');
 Insert into geominTable values('POINT(1000 2000)');
 Insert into geominTable values('POINT(123 34)');
 
@@ -231,7 +229,6 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):<NULL>
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
-prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 
 CREATE VIEW TextFromGeog AS SELECT Lat(location) AS Latitude, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
@@ -248,7 +245,6 @@ create table geoginTable (a geography);
 Insert into geoginTable values('POINT(1 2)');
 Insert into geoginTable values('POINT(1 2 3)');
 Insert into geoginTable values('POINT(1 2 3 4)');
-Insert into geoginTable values('LINESTRING(1 2,3 4)');
 Insert into geoginTable values('POINT(1000 2000)');
 Insert into geoginTable values('POINT(123 34)');
 

@@ -189,3 +189,309 @@ rewrite_point_dim_query(POINT coord)
 
     return output.data; 
 }
+
+/**
+ * Initialize a PointArray structure with default capacity
+ * Allocates memory for points array with initial capacity of 1024 points.
+ * Sets count to 0 and reports error if memory allocation fails.
+ */
+void 
+init_point_array(PointArray *pa) 
+{
+    pa->capacity = 1024;
+    pa->points = palloc(pa->capacity * sizeof(POINT));
+    pa->count = 0;
+
+    if (!pa->points)
+    {
+        ereport(ERROR,
+            (errcode(ERRCODE_OUT_OF_MEMORY),
+             errmsg("out of memory")));
+
+    }
+}
+
+/**
+ * Resize a PointArray when it reaches capacity
+ * Doubles the capacity of the points array when count reaches current capacity.
+ * Reports error if memory reallocation fails.
+ */
+void 
+resize_point_array(PointArray *pa) 
+{
+    if (pa->count >= pa->capacity) 
+    {
+        pa->capacity *= 2;
+        pa->points = repalloc(pa->points, pa->capacity * sizeof(POINT));
+
+        if (!pa->points)
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_OUT_OF_MEMORY),
+                 errmsg("out of memory")));
+    
+        }
+    }
+}
+
+/*
+ * Add a point to the PointArray
+ * Resizes array if needed and adds the point at the end.
+ */
+void 
+add_point(PointArray *pa, POINT p) 
+{
+    resize_point_array(pa);
+    pa->points[pa->count++] = p;
+}
+
+/*
+ * Free resources used by a PointArray
+ * Releases memory allocated for points and resets all fields.
+ */
+void 
+free_point_array(PointArray *pa) 
+{
+    pfree(pa->points);
+    pa->points = NULL;
+    pa->capacity = 0;
+    pa->count = 0;
+}
+
+/*
+ * Determine the appropriate LineString type based on point dimensions
+ * Examines all points to determine the most appropriate LineString type:
+ * - ZM: Points with both Z and M coordinates (4D)
+ * - M: Points with M coordinate but no Z coordinate
+ * - Z: Points with Z coordinate but no M coordinate
+ * - XY: Points with only X and Y coordinates (2D)
+ */
+LineStringType 
+determine_linestring_type(PointArray *pa) 
+{
+    int has_zm = 0, 
+        has_z = 0, 
+        has_m = 0;
+
+    for (int i = 0; i < pa->count; i++) 
+    {
+        POINT p = pa->points[i];
+
+        /* Check for NaN values in Z nd M coordinate if present */
+        if ((FLAGS_GET_Z(p.flags) && isnan(p.z)) ||
+        (FLAGS_GET_M(p.flags) && isnan(p.m)))
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("Invalid coordinate value (NaN)")));
+        }
+
+        if (FLAGS_GET_Z(p.flags) && FLAGS_GET_M(p.flags)) 
+            has_zm = 1;
+        else if (FLAGS_GET_Z(p.flags)) 
+            has_z = 1;
+        else if (FLAGS_GET_M(p.flags)) 
+            has_m = 1;
+    }
+    /* If in a linestring, any point has M and any other has Z then linestring dimension will be both ZM */
+    if (has_zm || (has_z && has_m)) 
+        return ZM;
+    if (has_m) 
+        return M;
+    if (has_z) 
+        return Z;
+
+    return XY;
+}
+
+/*
+ * Modifies point flags and coordinates to ensure all points conform to the
+ * specified LineString type. Like if any point has M or Z then all other points must have M or Z
+ * to conform to PostGIS's expectations. If a point doesn't have Z or M and other point has,
+ * then we sets Z/M to NAN and set the respective flag.
+ */
+void 
+transform_points(PointArray *pa, LineStringType type) 
+{
+    for (int i = 0; i < pa->count; i++) 
+    {
+        POINT *p = &pa->points[i];
+
+        switch (type) 
+        {
+            case ZM:
+                if (!FLAGS_GET_Z(p->flags)) p->z = NAN;
+                if (!FLAGS_GET_M(p->flags)) p->m = NAN;
+                FLAGS_SET_Z(p->flags, 1);
+                FLAGS_SET_M(p->flags, 1);
+                break;
+            case Z:
+                if (!FLAGS_GET_Z(p->flags)) p->z = NAN;
+                FLAGS_SET_Z(p->flags, 1);
+                FLAGS_SET_M(p->flags, 0);
+                break;
+            case M:
+                if (!FLAGS_GET_M(p->flags)) p->m = NAN;
+                FLAGS_SET_Z(p->flags, 0);
+                FLAGS_SET_M(p->flags, 1);
+                break;
+            case XY:
+                break;
+        }
+    }
+}
+/*
+ * Converts a PointArray to a PostGIS-compatible LINESTRING WKT representation
+ * Determines the appropriate LineString type (Z, M, ZM, etc.) based on the points,
+ * transforms points to conform to that type, and generates a properly formatted
+ * WKT string. Returns NULL if input is NULL.
+ */
+char* 
+rewrite_linestring_query(PointArray *pa) 
+{
+    char* res;
+    LineStringType type;
+    StringInfoData output;
+
+    if (!pa) 
+    {
+        return NULL;
+    }
+    initStringInfo(&output);
+    
+    /* Determine the appropriate type based on point dimensions */
+    type = determine_linestring_type(pa);
+    
+    /* Start with LINESTRING keyword and appropriate dimension indicator */
+    appendStringInfoString(&output, "LINESTRING ");
+
+    /* 
+     * Add 'M' if the LINESTRING is M type  since PostGIS can't interpret it without M value
+     * We don't need to  add Z or ZM for their respective conditions because PostGIS also understands TSQL format for these cases
+     */
+    if (type == M) 
+        appendStringInfoChar(&output, 'M');
+
+    /* Open parenthesis for coordinate values */
+    appendStringInfoChar(&output, '(');
+    
+    /* Transform points to conform to the determined type */
+    transform_points(pa, type);
+
+    /* Add each point's coordinates to the WKT string */
+    for (int i = 0; i < pa->count; i++) 
+    {
+        POINT p = pa->points[i];
+        /* X and Y coordinates are always included */
+        appendStringInfo(&output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
+
+        /* For ZM types, always include Z and M values */
+        if (type == ZM)
+        {
+             appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
+             appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
+        }
+        else
+        {
+            /* For other types, include Z and M based on flags */
+            if (FLAGS_GET_Z(p.flags)) 
+                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
+            if (FLAGS_GET_M(p.flags)) 
+                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
+        }
+
+        /* Add comma between points, except after the last point */
+        if (i < pa->count - 1) 
+            appendStringInfoString(&output, ", ");
+    }
+
+    /* Close parenthesis */
+    appendStringInfoChar(&output, ')');
+    
+    /* Create a copy of the string that will survive after we free output */
+    res = pstrdup(output.data);
+    
+    /* Clean up the StringInfoData */
+    pfree(output.data);
+    
+    return res;
+}
+
+/*
+ * Converts a PointArray back to a T-SQL compatible LINESTRING WKT representation
+ * Creates a T-SQL compatible WKT string based on the point flags.
+ * Frees the PointArray before returning.
+ */
+char* 
+rewrite_dim_linestring_query(PointArray *pa) 
+{
+    char *result;
+    StringInfoData output;
+    initStringInfo(&output);
+
+    /* Start with LINESTRING keyword */
+    appendStringInfoString(&output, "LINESTRING ");
+    
+    /* Open parenthesis for coordinate values */
+    appendStringInfoChar(&output, '(');
+
+    /* Add each point's coordinates to the WKT string */
+    for (int i = 0; i < pa->count; i++) 
+    {
+        POINT p = pa->points[i];
+        /* X and Y coordinates are always included */
+        appendStringInfo(&output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
+        
+        /* Format Z and M values based on flags and NaN status */
+        if (FLAGS_GET_Z(p.flags) && FLAGS_GET_M(p.flags)) 
+        {
+            /* Point has both Z and M flags */
+            if (!isnan(p.z) && !isnan(p.m)) 
+            {
+                /* Both Z and M are not NaN */
+                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
+                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
+            }
+            else if (!isnan(p.z) && isnan(p.m)) 
+            {
+                /* Only Z is not NaN */
+                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
+            }
+            else if (isnan(p.z) && !isnan(p.m)) 
+            {
+                /* Only M is not NaN */
+                appendStringInfoString(&output, " NULL");
+                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
+            }
+            /* If both are NaN, print nothing */
+        }
+        else if (FLAGS_GET_Z(p.flags) && !isnan(p.z)) 
+        {
+            /* Point has only Z flag and Z is not NaN */
+            appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
+        }
+        else if (FLAGS_GET_M(p.flags) && !isnan(p.m)) 
+        {
+            /* Point has only M flag and M is not NaN */
+            appendStringInfoString(&output, " NULL");
+            appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
+        }
+
+        /* Add comma between points, except after the last point */
+        if (i < pa->count - 1) 
+            appendStringInfoString(&output, ", ");
+    }
+    
+    /* Close parenthesis */
+    appendStringInfoChar(&output, ')');
+
+    /* Create a copy of the string that will survive after we free output */
+    result = pstrdup(output.data);
+    
+    /* Clean up resources */
+    pfree(output.data);
+    free_point_array(pa);
+    pfree(pa);
+    
+    return result;
+}
