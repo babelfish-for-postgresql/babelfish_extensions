@@ -1,0 +1,55 @@
+use master;
+go
+
+create table t5548(a int);
+insert into t5548 values (1);
+go
+~~ROW COUNT: 1~~
+
+
+select .a from t5548
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'from' at line 1 and character position 10)~~
+
+
+select dbo..a from t5548
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'from' at line 1 and character position 14)~~
+
+
+select ...a from .t5548
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'from' at line 1 and character position 12)~~
+
+
+select .t5548.a from t5548;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select ..t5548.a from t5548;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select .dbo.t5548.a from t5548;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 1 and character position 17)~~
+
+
+drop table t5548;
+go
