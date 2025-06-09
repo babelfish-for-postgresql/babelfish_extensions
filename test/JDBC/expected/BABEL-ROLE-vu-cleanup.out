@@ -11,6 +11,14 @@ GO
 DROP PROC babel_role_vu_prepare_role_members
 GO
 
+USE babel_5890_db
+GO
+
+DROP PROC babel_role_vu_prepare_role_mapping
+GO
+
+DROP USER babel_5890_role_vu_prepare_r2;
+GO
 
 USE master
 GO
@@ -22,6 +30,12 @@ DROP LOGIN babel_role_vu_prepare_login2
 GO
 
 DROP LOGIN babel_role_vu_prepare_login3
+GO
+
+DROP LOGIN babel_5890_role_vu_prepare_r1;
+GO
+
+DROP LOGIN babel_5890_role_vu_prepare_r2;
 GO
 
 -- Check if catalog is cleaned up
@@ -46,4 +60,7 @@ DROP PROC babel_role_vu_prepare_db_principal_master
 GO
 
 DROP DATABASE babel_role_vu_prepare_db
+GO
+
+DROP DATABASE babel_5890_db
 GO
