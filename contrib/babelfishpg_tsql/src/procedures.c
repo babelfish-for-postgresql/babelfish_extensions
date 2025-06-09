@@ -4513,12 +4513,12 @@ create_xml_handle_temp_table()
 	stmt->relation = relation;
 	stmt->tableElts = create_xml_handle_columns();
 	stmt->constraints = NIL;
-	stmt->inhRelations = NIL;  
+	stmt->inhRelations = NIL; 
 	stmt->partspec = NULL;
-	stmt->ofTypename = NULL; 
-	stmt->oncommit = ONCOMMIT_PRESERVE_ROWS; 
+	stmt->ofTypename = NULL;
+	stmt->oncommit = ONCOMMIT_PRESERVE_ROWS;
 	stmt->tablespacename = NULL;
-	stmt->if_not_exists = false;  
+	stmt->if_not_exists = false; 
 	stmt->options = NIL;
 	stmt->accessMethod = NULL;
 
@@ -4670,15 +4670,16 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 	tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	sql_dialect = SQL_DIALECT_TSQL;
 	
 	PG_TRY();
 	{
 		/* Set current user to bbf_role_admin for insert permissions */
-		sql_dialect = SQL_DIALECT_TSQL;
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 		/* Insert the entries into the table */
 		simple_heap_insert(relation, tuple);
+		CommandCounterIncrement();
 
 		/*
 		* Switch to TopMemoryContext to ensure the bitmap set persists across transactions.
@@ -4783,13 +4784,14 @@ delete_xml_handle_entry(int document_id)
 	if (HeapTupleIsValid(tuple))
 	{
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		sql_dialect = SQL_DIALECT_TSQL;
 		 
 		PG_TRY();
 		{
 			/* Set current user to bbf_role_admin for delete permissions */
-			sql_dialect = SQL_DIALECT_TSQL;
 			SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 			simple_heap_delete(relation, &tuple->t_self);
+			CommandCounterIncrement();
 			oldContext = MemoryContextSwitchTo(TopMemoryContext);
 			active_xml_handles_counter = bms_del_member(active_xml_handles_counter, curr_handle_counter);
 			MemoryContextSwitchTo(oldContext);
