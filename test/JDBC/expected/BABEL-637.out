@@ -923,11 +923,9 @@ smallmoney
 
 SELECT babel_637_add_one_smallmoney(cast(123456789012.1 as double precision));
 GO
-~~START~~
-smallmoney
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
 
 
 SELECT babel_637_add_one_smallmoney(cast(41.9 as float));
@@ -940,11 +938,9 @@ smallmoney
 
 SELECT babel_637_add_one_smallmoney(cast(123456789012.1 as float));
 GO
-~~START~~
-smallmoney
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
 
 
 SELECT babel_637_add_one_smallmoney(cast(41.9 as fixeddecimal));
@@ -957,11 +953,9 @@ smallmoney
 
 SELECT babel_637_add_one_smallmoney(cast(123456789012.1 as fixeddecimal));
 GO
-~~START~~
-smallmoney
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
 
 
 SELECT babel_637_add_one_smallmoney(cast(41.9 as numeric(8,4)));
@@ -974,11 +968,9 @@ smallmoney
 
 SELECT babel_637_add_one_smallmoney(cast(123456789012.1 as numeric(18,4)));
 GO
-~~START~~
-smallmoney
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
 
 
 SELECT babel_637_add_one_smallmoney(cast(41.9 as money));
@@ -993,9 +985,9 @@ SELECT babel_637_add_one_smallmoney(cast(922337203685475.5807 as money));
 GO
 ~~START~~
 smallmoney
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
 
 
 SELECT babel_637_add_one_smallmoney(cast(41.9 as smallmoney));
@@ -1039,11 +1031,9 @@ smallmoney
 
 SELECT babel_637_add_one_smallmoney(cast(2147483646 as int));
 GO
-~~START~~
-smallmoney
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
 
 
 SELECT babel_637_add_one_smallmoney(cast(41 as smallint));

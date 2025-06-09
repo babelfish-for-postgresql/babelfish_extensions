@@ -192,9 +192,9 @@ numeric#!#numeric
 
 select a * b from t2;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric
+~~END~~
 
 
 -- clean up

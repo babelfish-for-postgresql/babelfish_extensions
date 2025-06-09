@@ -1,0 +1,435 @@
+-- testing UDT
+SELECT CAST(678.90 AS babel_5512_upgrade_type1) + CAST(123.45 AS NUMERIC(5,2))AS result;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+create table babel_5512_upgrade_t5 (smallmoney_udt_col babel_5512_upgrade_type1)
+GO
+
+Insert into babel_5512_upgrade_t5 values (678.90)
+GO
+~~ROW COUNT: 1~~
+
+
+select smallmoney_udt_col + CAST(123.45 AS NUMERIC(5,2))AS result from babel_5512_upgrade_t5;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+select a16 + CAST(123.45 AS NUMERIC(5,2))AS result from babel_5512_upgrade_t2;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+--------------------
+-- procedure/function
+--------------------
+-- Functions
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_f1';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_f1#!#{"version_num": "1", "typmod_array": ["1245192"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_f2';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_f2#!#{"version_num": "1", "typmod_array": ["1245192", "1"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_f3';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_f3#!#{"version_num": "1", "typmod_array": ["1245192", "1245192"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_f4';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_f4#!#{"version_num": "1", "typmod_array": ["1245192", "655368"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_f5';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_f5#!#{"version_num": "1", "typmod_array": ["655368", "1245192"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_f6';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_f6#!#{"version_num": "1", "typmod_array": ["1245192", "1245192"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_f7';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_f7#!#{"version_num": "1", "typmod_array": ["-1", "10", "1245192", "-1", "100"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_f8';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_f8#!#{"version_num": "1", "typmod_array": ["-1", "-1", "-1", "-1"], "original_probin": ""}
+~~END~~
+
+-- ITVF, MSTVF
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_itvf1';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_itvf1#!#{"version_num": "1", "typmod_array": ["-1"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_itvf2';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_itvf2#!#{"version_num": "1", "typmod_array": ["-1"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_mstvf1';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_mstvf1#!#{"version_num": "1", "typmod_array": ["-1", "-1"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_mstvf2';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_mstvf2#!#{"version_num": "1", "typmod_array": ["-1", "-1", "-1"], "original_probin": ""}
+~~END~~
+
+
+-- Procedures
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_p1';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_p1#!#{"version_num": "1", "typmod_array": ["1245192"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_p2';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_p2#!#{"version_num": "1", "typmod_array": ["1245192", "1245192", "1245192", "1245192", "655368"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_p3';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_p3#!#{"version_num": "1", "typmod_array": ["1245192", "1245192"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_p4';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_p4#!#{"version_num": "1", "typmod_array": ["1245192", "1245192"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_p5';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_p5#!#{"version_num": "1", "typmod_array": ["1245192", "1245192", "1245192"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_p6';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_p6#!#{"version_num": "1", "typmod_array": ["1245192", "1245192", "1245192"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_p7';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_p7#!#{"version_num": "1", "typmod_array": [], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_p8';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_p8#!#{"version_num": "1", "typmod_array": ["-1", "10", "655368", "-1"], "original_probin": ""}
+~~END~~
+
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_p9';
+GO
+~~START~~
+varchar#!#text
+babel_5512_upgrade_p9#!#{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}
+~~END~~
+
+
+-- To execute the procedure
+EXEC babel_5512_upgrade_p10;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+EXEC babel_5512_upgrade_p11;
+GO
+~~START~~
+numeric
+5.5000
+~~END~~
+
+
+-- To execute the function
+SELECT babel_5512_upgrade_f9();
+GO
+~~START~~
+money
+802.3500
+~~END~~
+
+SELECT babel_5512_upgrade_f10();
+GO
+~~START~~
+money
+5.5000
+~~END~~
+
+
+
+-----------------------
+-- table/views etc.
+------------------------
+-- see p&s
+EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t1'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+a10#!#decimal#!#9#!#18#!#0
+a11#!#money#!#8#!#19#!#4
+a12#!#smallmoney#!#4#!#10#!#4
+~~END~~
+
+EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t2'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+a15#!#decimal#!#9#!#18#!#0
+a16#!#babel_5512_upgrade_type1#!#4#!#10#!#4
+a17#!#babel_5512_upgrade_type2#!#8#!#19#!#4
+~~END~~
+
+EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t3'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+babel_5512_mon1#!#money#!#8#!#19#!#4
+babel_5512_small1#!#smallmoney#!#4#!#10#!#4
+id#!#int#!#4#!#10#!#0
+~~END~~
+
+EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t4'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+babel_5512_mon3#!#money#!#8#!#19#!#4
+babel_5512_small3#!#smallmoney#!#4#!#10#!#4
+dept_id#!#int#!#4#!#10#!#0
+id#!#int#!#4#!#10#!#0
+~~END~~
+
+EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t9'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+col_money#!#money#!#8#!#19#!#4
+col_smallmoney#!#smallmoney#!#4#!#10#!#4
+group_id#!#int#!#4#!#10#!#0
+~~END~~
+
+EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t10'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+customer_id#!#int#!#4#!#10#!#0
+money_col#!#money#!#8#!#19#!#4
+small_col#!#smallmoney#!#4#!#10#!#4
+~~END~~
+
+EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t11'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+country#!#varchar#!#50#!#0#!#0
+customer_id#!#int#!#4#!#10#!#0
+order_amt#!#money#!#8#!#19#!#4
+order_id#!#int#!#4#!#10#!#0
+~~END~~
+
+EXEC babel_5512_get_column_info_p10 '@customerswithorders_babel_5512_upgrade_mstvf1'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+customerid#!#int#!#4#!#10#!#0
+money_col#!#money#!#8#!#19#!#4
+orderamt#!#money#!#8#!#19#!#4
+orderid#!#int#!#4#!#10#!#0
+small_col#!#smallmoney#!#4#!#10#!#4
+~~END~~
+
+EXEC babel_5512_get_column_info_p10 '@tablevar_babel_5512_upgrade_mstvf2'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+a#!#nvarchar#!#20#!#0#!#0
+b#!#money#!#8#!#19#!#4
+c#!#smallmoney#!#4#!#10#!#4
+~~END~~
+
+
+select * from babel_5512_upgrade_t1
+GO
+~~START~~
+numeric#!#money#!#smallmoney
+1#!#-922337203685477.5808#!#-214748.3648
+2#!#922337203685477.5807#!#214748.3647
+3#!#1234.2346#!#123.2346
+~~END~~
+
+
+select coalesce(a10, a11) from babel_5512_upgrade_t1
+GO
+~~START~~
+numeric
+1.0000
+2.0000
+3.0000
+~~END~~
+
+
+select coalesce(a15, a16) from babel_5512_upgrade_t2
+GO
+~~START~~
+numeric
+679.0000
+~~END~~
+
+
+SELECT * FROM babel_5512_upgrade_v1;
+GO
+~~START~~
+smallmoney
+12.8600
+~~END~~
+
+
+SELECT * FROM babel_5512_upgrade_v2;
+GO
+~~START~~
+smallmoney
+12.8600
+~~END~~
+
+
+SELECT * FROM babel_5512_upgrade_v3;
+GO
+~~START~~
+smallmoney
+6.4300
+~~END~~
+
+SELECT * FROM babel_5512_upgrade_v6;
+GO
+~~START~~
+numeric#!#smallmoney#!#money
+679#!#678.9000#!#678.9000
+~~END~~
+
+SELECT * FROM babel_5512_upgrade_v7;
+GO
+~~START~~
+money
+12.8600
+~~END~~
+
+SELECT * FROM babel_5512_upgrade_v8;
+GO
+~~START~~
+money
+1357.8000
+~~END~~
+
+SELECT * FROM babel_5512_upgrade_v9;
+GO
+~~START~~
+smallmoney
+6.2498
+~~END~~
+
+
+-- for r,i,v,p,I
+SELECT c.relkind as object_type, a.attname as column_name, a.atttypid::regtype::text as data_type, a.atttypmod as type_modifier 
+FROM pg_class c 
+JOIN pg_attribute a ON c.oid = a.attrelid 
+WHERE a.atttypid::regtype::text IN ('money', 'smallmoney') 
+AND a.attname IN ('babel_5512_mon3','babel_5512_mon1','babel_5512_small3','babel_5512_result1',
+            'babel_5512_result2','babel_5512_result3','babel_5512_result4','babel_5512_result5','babel_5512_result6','babel_5512_small1') 
+AND c.relkind IN ('r', 'i', 'v', 'p', 'I') 
+ORDER BY c.relkind, c.relname, a.attname;
+GO
+~~START~~
+varchar#!#varchar#!#text#!#int
+I#!#babel_5512_mon3#!#money#!#1245192
+i#!#babel_5512_mon3#!#money#!#1245192
+i#!#babel_5512_mon3#!#money#!#1245192
+i#!#babel_5512_mon3#!#money#!#1245192
+i#!#babel_5512_mon3#!#money#!#1245192
+i#!#babel_5512_mon3#!#money#!#1245192
+i#!#babel_5512_mon1#!#money#!#1245192
+p#!#babel_5512_mon3#!#money#!#1245192
+p#!#babel_5512_small3#!#smallmoney#!#655368
+r#!#babel_5512_mon3#!#money#!#1245192
+r#!#babel_5512_small3#!#smallmoney#!#655368
+r#!#babel_5512_mon3#!#money#!#1245192
+r#!#babel_5512_small3#!#smallmoney#!#655368
+r#!#babel_5512_mon3#!#money#!#1245192
+r#!#babel_5512_small3#!#smallmoney#!#655368
+r#!#babel_5512_mon3#!#money#!#1245192
+r#!#babel_5512_small3#!#smallmoney#!#655368
+r#!#babel_5512_mon3#!#money#!#1245192
+r#!#babel_5512_small3#!#smallmoney#!#655368
+r#!#babel_5512_mon1#!#money#!#1245192
+r#!#babel_5512_small1#!#smallmoney#!#655368
+v#!#babel_5512_result1#!#smallmoney#!#655368
+v#!#babel_5512_mon1#!#money#!#1245192
+v#!#babel_5512_small1#!#smallmoney#!#655368
+v#!#babel_5512_result2#!#smallmoney#!#655368
+v#!#babel_5512_result3#!#smallmoney#!#655368
+v#!#babel_5512_result4#!#money#!#1245192
+v#!#babel_5512_result5#!#money#!#1245192
+v#!#babel_5512_result6#!#smallmoney#!#655368
+~~END~~
+
+

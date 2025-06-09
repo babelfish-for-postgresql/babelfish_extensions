@@ -431,7 +431,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
-TestSpatialPoint
+TestSpatialPoint_before_17_6-or-16_10
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -574,3 +574,4 @@ test_conv_float_to_varchar_char_before_17_4
 round_return_type_test-before-16_9-or-17_5
 alter-view
 test_conv_int_to_varbinary_binary_before_16_6_or_15_10
+MONEY_OBJECT-before-16_4
