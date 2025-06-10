@@ -1458,6 +1458,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					return DEFAULT_BIGINT_TYPMOD;
 				else if (op->opresulttype == INT2OID)
 					return DEFAULT_SMALLINT_TYPMOD;
+				else if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(op->opresulttype))
+					return DEFAULT_TINYINT_TYPMOD;
 
 				if (list_length(op->args) == 2)
 				{
