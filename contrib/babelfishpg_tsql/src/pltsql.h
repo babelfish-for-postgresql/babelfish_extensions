@@ -1812,7 +1812,6 @@ typedef struct PLtsql_protocol_plugin
 
 	
 												
-	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr);
 	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr, bool *found);
 	/* Session level GUCs */
 	bool		quoted_identifier;
