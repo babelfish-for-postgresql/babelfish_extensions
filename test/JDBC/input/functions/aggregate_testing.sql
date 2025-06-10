@@ -1,10 +1,10 @@
 DROP TABLE IF EXISTS Sales;
 GO
 
-DROP TABLE IF EXISTS T1;
+DROP TABLE IF EXISTS agg_testing_table;
 GO
 
-CREATE TABLE T1(
+CREATE TABLE agg_testing_table(
         numeric_col NUMERIC(15,5),
         money_col MONEY,
         smallmoney_col SMALLMONEY,
@@ -12,239 +12,373 @@ CREATE TABLE T1(
         int_col INT,
         smallint_col SMALLINT,
         tinyint_col TINYINT,
-        bit_col BIT,
-        char_col CHAR(10),
-        varchar_col VARCHAR(50),
-        nvarchar_col NVARCHAR(50),
-        text_col TEXT,
-        ntext_col NTEXT,
-        binary_col BINARY(10),
-        varbinary_col VARBINARY(50)
+        bit_col BIT
 )
 GO
 
-INSERT INTO T1 VALUES 
-(123.45678, 1234.56, 214.35, 9223372036854775807, 2147483647, 32767, 255, 1, 'CHAR10', 'Variable text', N'Unicode text', 'Large text field', N'Large unicode text', 0x0123456789, 0x0123456789AB);
-GO
-INSERT INTO T1 VALUES 
-(987.65432, 9876.54, 1234.56, 1234567890123456789, 1234567890, 12345, 128, 0, 'CHAR20', 'Another variable text', N'Another unicode text', 'Another large text field', N'Another large unicode text', 0xABCDEF1234, 0xABCDEF1234567890);
+INSERT INTO agg_testing_table VALUES 
+(987.65432, 9876.54, 1234.56, 1234567890123456789, 1234567890, 12345, 128, 0);
 GO
 
-INSERT INTO T1 VALUES 
-(0.00001, 0.01, 0.01, 1, 1, 1, 1, 0, 'CHAR30', 'Short text', N'Short unicode text', 'Short large text field', N'Short large unicode text', 0x0000000000, 0x000000);
+INSERT INTO agg_testing_table VALUES 
+(0.00001, 0.01, 0.01, 1, 1, 1, 1, 0);
 GO
 
-INSERT INTO T1 VALUES 
-(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO agg_testing_table VALUES 
+(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 GO
 
 -- *** T_Aggref ***
 -- AVG() testing
-SELECT AVG(tinyint_col) * 1.00 FROM T1;
+SELECT AVG(tinyint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT AVG(smallint_col) * 1.00 FROM T1;
+SELECT AVG(smallint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT AVG(int_col) * 1.00 FROM T1;
+SELECT AVG(int_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT AVG(bigint_col) * 1.00 FROM T1;
+SELECT AVG(bigint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT AVG(numeric_col) * 1.00 FROM T1;
+SELECT AVG(numeric_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT AVG(money_col) * 1.00 FROM T1;
+SELECT AVG(money_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT AVG(smallmoney_col) * 1.00 FROM T1;
+SELECT AVG(smallmoney_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT AVG(bit_col) * 1.00 FROM T1;
+SELECT
+    AVG(tinyint_col) * 1.00 AS COL_TINYINT,
+    AVG(smallint_col) * 1.00 AS COL_SMALLINT,
+    AVG(int_col) * 1.00 AS COL_INT,
+    AVG(bigint_col) * 1.00 AS COL_BIGINT,
+    AVG(numeric_col) * 1.00 AS COL_NUMERIC,
+    AVG(money_col) * 1.00 AS COL_MONEY,
+    AVG(smallmoney_col) * 1.00 AS COL_SMALLMONEY
+INTO agg_testing_table_avg
+FROM agg_testing_table;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'agg_testing_table_avg';
+GO
+
+DROP TABLE IF EXISTS agg_testing_table_avg;
 GO
 
 -- COUNT() testing
-SELECT COUNT(tinyint_col) * 1.00 FROM T1;
+SELECT COUNT(tinyint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT(smallint_col) * 1.00 FROM T1;
+SELECT COUNT(smallint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT(int_col) * 1.00 FROM T1;
+SELECT COUNT(int_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT(bigint_col) * 1.00 FROM T1;
+SELECT COUNT(bigint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT(numeric_col) * 1.00 FROM T1;
+SELECT COUNT(numeric_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT(money_col) * 1.00 FROM T1;
+SELECT COUNT(money_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT(smallmoney_col) * 1.00 FROM T1;
+SELECT COUNT(smallmoney_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT(bit_col) * 1.00 FROM T1;
+SELECT
+    COUNT(tinyint_col) * 1.00 AS COL_TINYINT,
+    COUNT(smallint_col) * 1.00 AS COL_SMALLINT,
+    COUNT(int_col) * 1.00 AS COL_INT,
+    COUNT(bigint_col) * 1.00 AS COL_BIGINT,
+    COUNT(numeric_col) * 1.00 AS COL_NUMERIC,
+    COUNT(money_col) * 1.00 AS COL_MONEY,
+    COUNT(smallmoney_col) * 1.00 AS COL_SMALLMONEY
+INTO agg_testing_table_count
+FROM agg_testing_table;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'agg_testing_table_count';
+GO
+
+DROP TABLE IF EXISTS agg_testing_table_count;
 GO
 
 -- COUNT(*) testing
-SELECT COUNT(*) * 1.00 FROM T1;
+SELECT COUNT(*) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT(1) * 1.00 FROM T1;
+SELECT COUNT(1) * 1.00 FROM agg_testing_table;
+GO
+
+SELECT
+    COUNT(*) * 1.00 AS COL_STAR,
+    COUNT(1) * 1.00 AS COL_ONE
+INTO agg_testing_table_count_star
+FROM agg_testing_table;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'agg_testing_table_count_star';
+GO
+
+DROP TABLE IF EXISTS agg_testing_table_count_star;
 GO
 
 -- COUNT_BIG() testing
-SELECT COUNT_BIG(tinyint_col) * 1.00 FROM T1;
+SELECT COUNT_BIG(tinyint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT_BIG(smallint_col) * 1.00 FROM T1;
+SELECT COUNT_BIG(smallint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT_BIG(int_col) * 1.00 FROM T1;
+SELECT COUNT_BIG(int_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT_BIG(bigint_col) * 1.00 FROM T1;
+SELECT COUNT_BIG(bigint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT_BIG(numeric_col) * 1.00 FROM T1;
+SELECT COUNT_BIG(numeric_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT_BIG(money_col) * 1.00 FROM T1;
+SELECT COUNT_BIG(money_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT_BIG(smallmoney_col) * 1.00 FROM T1;
+SELECT COUNT_BIG(smallmoney_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT_BIG(bit_col) * 1.00 FROM T1;
+SELECT
+    COUNT_BIG(tinyint_col) * 1.00 AS COL_TINYINT,
+    COUNT_BIG(smallint_col) * 1.00 AS COL_SMALLINT,
+    COUNT_BIG(int_col) * 1.00 AS COL_INT,
+    COUNT_BIG(bigint_col) * 1.00 AS COL_BIGINT,
+    COUNT_BIG(numeric_col) * 1.00 AS COL_NUMERIC,
+    COUNT_BIG(money_col) * 1.00 AS COL_MONEY,
+    COUNT_BIG(smallmoney_col) * 1.00 AS COL_SMALLMONEY
+INTO agg_testing_table_count_big
+FROM agg_testing_table;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'agg_testing_table_count_big';
+GO
+
+DROP TABLE IF EXISTS agg_testing_table_count_big;
 GO
 
 -- COUNT_BIG(*) testing
-SELECT COUNT_BIG(*) * 1.00 FROM T1;
+SELECT COUNT_BIG(*) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT_BIG(1) * 1.00 FROM T1;
+SELECT COUNT_BIG(1) * 1.00 FROM agg_testing_table;
+GO
+
+SELECT
+    COUNT_BIG(*) * 1.00 AS COL_STAR,
+    COUNT_BIG(1) * 1.00 AS COL_ONE
+INTO agg_testing_table_count_big_star
+FROM agg_testing_table;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'agg_testing_table_count_big_star';
+GO
+
+DROP TABLE IF EXISTS agg_testing_table_count_big_star;
 GO
 
 -- SUM() testing
-SELECT SUM(tinyint_col) * 1.00 FROM T1;
+SELECT SUM(tinyint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT SUM(smallint_col) * 1.00 FROM T1;
+SELECT SUM(smallint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT SUM(int_col) * 1.00 FROM T1;
+SELECT SUM(int_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT SUM(bigint_col) * 1.00 FROM T1;
+SELECT SUM(bigint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT SUM(numeric_col) * 1.00 FROM T1;
+SELECT SUM(numeric_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT SUM(money_col) * 1.00 FROM T1;
+SELECT SUM(money_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT SUM(smallmoney_col) * 1.00 FROM T1;
+SELECT SUM(smallmoney_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT SUM(bit_col) * 1.00 FROM T1;
+SELECT SUM(bit_col) * 1.00 FROM agg_testing_table;
+GO
+
+SELECT
+    SUM(tinyint_col) * 1.00 AS COL_TINYINT,
+    SUM(smallint_col) * 1.00 AS COL_SMALLINT,
+    SUM(int_col) * 1.00 AS COL_INT,
+    SUM(bigint_col) * 1.00 AS COL_BIGINT,
+    SUM(numeric_col) * 1.00 AS COL_NUMERIC,
+    SUM(money_col) * 1.00 AS COL_MONEY,
+    SUM(smallmoney_col) * 1.00 AS COL_SMALLMONEY
+INTO agg_testing_table_sum
+FROM agg_testing_table;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'agg_testing_table_sum';
+GO
+
+DROP TABLE IF EXISTS agg_testing_table_sum;
 GO
 
 -- MAX() testing
-SELECT MAX(tinyint_col) * 1.00 FROM T1;
+SELECT MAX(tinyint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MAX(smallint_col) * 1.00 FROM T1;
+SELECT MAX(smallint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MAX(int_col) * 1.00 FROM T1;
+SELECT MAX(int_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MAX(bigint_col) * 1.00 FROM T1;
+SELECT MAX(bigint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MAX(numeric_col) * 1.00 FROM T1;
+SELECT MAX(numeric_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MAX(money_col) * 1.00 FROM T1;
+SELECT MAX(money_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MAX(smallmoney_col) * 1.00 FROM T1;
+SELECT MAX(smallmoney_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MAX(bit_col) * 1.00 FROM T1;
+SELECT MAX(bit_col) * 1.00 FROM agg_testing_table;
+GO
+
+SELECT
+    MAX(tinyint_col) * 1.00 AS COL_TINYINT,
+    MAX(smallint_col) * 1.00 AS COL_SMALLINT,
+    MAX(int_col) * 1.00 AS COL_INT,
+    MAX(bigint_col) * 1.00 AS COL_BIGINT,
+    MAX(numeric_col) * 1.00 AS COL_NUMERIC,
+    MAX(money_col) * 1.00 AS COL_MONEY,
+    MAX(smallmoney_col) * 1.00 AS COL_SMALLMONEY
+INTO agg_testing_table_max
+FROM agg_testing_table;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'agg_testing_table_max';
+GO
+
+DROP TABLE IF EXISTS agg_testing_table_max;
 GO
 
 -- MIN() testing
-SELECT MIN(tinyint_col) * 1.00 FROM T1;
+SELECT MIN(tinyint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MIN(smallint_col) * 1.00 FROM T1;
+SELECT MIN(smallint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MIN(int_col) * 1.00 FROM T1;
+SELECT MIN(int_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MIN(bigint_col) * 1.00 FROM T1;
+SELECT MIN(bigint_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MIN(numeric_col) * 1.00 FROM T1;
+SELECT MIN(numeric_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MIN(money_col) * 1.00 FROM T1;
+SELECT MIN(money_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MIN(smallmoney_col) * 1.00 FROM T1;
+SELECT MIN(smallmoney_col) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT MIN(bit_col) * 1.00 FROM T1;
+SELECT MIN(bit_col) * 1.00 FROM agg_testing_table;
+GO
+
+SELECT
+    MIN(tinyint_col) * 1.00 AS COL_TINYINT,
+    MIN(smallint_col) * 1.00 AS COL_SMALLINT,
+    MIN(int_col) * 1.00 AS COL_INT,
+    MIN(bigint_col) * 1.00 AS COL_BIGINT,
+    MIN(numeric_col) * 1.00 AS COL_NUMERIC,
+    MIN(money_col) * 1.00 AS COL_MONEY,
+    MIN(smallmoney_col) * 1.00 AS COL_SMALLMONEY
+INTO agg_testing_table_min
+FROM agg_testing_table;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'agg_testing_table_min';
+GO
+
+DROP TABLE IF EXISTS agg_testing_table_min;
 GO
 
 -- STRING_AGG() testing
-SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM T1;
+SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
 GO
 
-SELECT STRING_AGG(CAST(money_col AS VARCHAR(20)), ', ') * 1.00 FROM T1;
+SELECT STRING_AGG(CAST(money_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
 GO
 
-SELECT STRING_AGG(CAST(smallmoney_col AS VARCHAR(20)), ', ') * 1.00 FROM T1;
+SELECT STRING_AGG(CAST(smallmoney_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
 GO
 
-SELECT STRING_AGG(CAST(bigint_col AS VARCHAR(20)), ', ') * 1.00 FROM T1;
+SELECT STRING_AGG(CAST(bigint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
 GO
 
-SELECT STRING_AGG(CAST(int_col AS VARCHAR(20)), ', ') * 1.00 FROM T1;
+SELECT STRING_AGG(CAST(int_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
 GO
 
-SELECT STRING_AGG(CAST(smallint_col AS VARCHAR(20)), ', ') * 1.00 FROM T1;
+SELECT STRING_AGG(CAST(smallint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
 GO
 
-SELECT STRING_AGG(CAST(tinyint_col AS VARCHAR(20)), ', ') * 1.00 FROM T1;
+SELECT STRING_AGG(CAST(tinyint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
 GO
 
-SELECT STRING_AGG(CAST(bit_col AS VARCHAR(20)), ', ') * 1.00 FROM T1;
+SELECT STRING_AGG(CAST(bit_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
 GO
 
-SELECT STRING_AGG(CAST(NULL AS VARCHAR(20)), ', ') * 1.00 FROM T1;
+SELECT STRING_AGG(CAST(NULL AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+GO
+
+SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
 GO
 
 -- NULL as an input
-SELECT STRING_AGG(NULL, ',') * 1.00 FROM T1 WHERE numeric_col IS NULL;
+SELECT STRING_AGG(NULL, ',') * 1.00 FROM agg_testing_table WHERE numeric_col IS NULL;
 GO
 
-SELECT COUNT(NULL) * 1.00 FROM T1;
+SELECT COUNT(NULL) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT COUNT_BIG(NULL) * 1.00 FROM T1;
+SELECT COUNT_BIG(NULL) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT AVG(NULL) * 1.00 FROM T1;
+SELECT AVG(NULL) * 1.00 FROM agg_testing_table;
 GO
 
-SELECT SUM(NULL) * 1.00 FROM T1;
+SELECT SUM(NULL) * 1.00 FROM agg_testing_table;
 GO
 
 -- Additional test cases
@@ -429,7 +563,7 @@ GO
 DECLARE @temp NUMERIC(12,2) = 10.75;
 SELECT 
     ProductID,
-    COUNT(*) * (@temp + 1.00) as ComplexCount1,
+    COUNT(*) * (@temp + 1.00) as ComplexCounagg_testing_table,
     COUNT(1) * (@temp * 2.00) as ComplexCount2
 FROM Sales
 GROUP BY ProductID
@@ -572,5 +706,5 @@ GO
 DROP TABLE IF EXISTS Sales;
 GO
 
-DROP TABLE IF EXISTS T1;
+DROP TABLE IF EXISTS agg_testing_table;
 GO
