@@ -88,8 +88,8 @@ BEGIN
 		r.rolname AS role_name,
 		m.rolname AS member_name,
 		CASE
-      		WHEN (g.rolname IN ('bbf_role_admin') OR g.oid IN (10)) then true else false
-    	END AS grantor,
+			WHEN (g.rolname IN ('bbf_role_admin') OR g.oid IN (10)) then true else false
+		END AS grantor,
 		am.admin_option, 
 		am.inherit_option, 
 		am.set_option
