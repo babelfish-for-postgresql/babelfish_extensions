@@ -177,3 +177,12 @@ GO
 
 EXEC babel_user_vu_prepare_db_principal_proc
 GO
+
+USE babel_5890_db
+GO
+
+ALTER USER babel_5890_role_vu_prepare_r2 WITH LOGIN = babel_5890_role_vu_prepare_r2;
+GO
+
+EXEC babel_role_vu_prepare_role_mapping
+GO
