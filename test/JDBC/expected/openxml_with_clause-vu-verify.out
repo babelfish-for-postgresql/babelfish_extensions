@@ -1,0 +1,282 @@
+
+-- Test plan 
+-- When Colpattern is given for mapping
+DECLARE @docHandle int; 
+DECLARE @xmlDocument nvarchar(1000); 
+SET @xmlDocument =N'<ROOT>
+<Customer CustomerID="VINET" ContactName="Paul Henriot">
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5" OrderDate=
+           "1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3" OrderDate=
+           "1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>'; 
+EXEC sp_xml_preparedocument @docHandle OUTPUT, @xmlDocument; 
+SELECT * 
+FROM OPENXML (@docHandle, '/ROOT/Customer/Order/OrderDetail/@ProductID') 
+       WITH ( ProdID  int '.',
+              Qty     int '../@Quantity',
+              OID     int '../../@OrderID');
+EXEC sp_xml_removedocument @docHandle;
+GO
+~~START~~
+int#!#int#!#int
+11#!#12#!#10248
+42#!#10#!#10248
+72#!#3#!#10283
+~~END~~
+
+
+
+
+-- flag = 0 (default attribute centric)
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer CustomerID="VINET" ContactName="Paul Henriot">
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5"
+          OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3"
+          OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+SELECT * 
+FROM OPENXML (@DocHandle, '/ROOT/Customer',0)
+      WITH (CustomerID  varchar(10) ,
+            ContactName varchar(20));
+EXEC sp_xml_removedocument @DocHandle;
+GO
+~~START~~
+varchar#!#varchar
+VINET#!#Paul Henriot
+LILAS#!#Carlos Gonzalez
+~~END~~
+
+
+
+
+-- flag = 1 (attribute centric)
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer CustomerID="VINET" ContactName="Paul Henriot">
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5"
+          OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3"
+          OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+SELECT * 
+FROM OPENXML (@DocHandle, '/ROOT/Customer',1)
+      WITH (CustomerID  varchar(10) ,
+            ContactName varchar(20));
+EXEC sp_xml_removedocument @DocHandle;
+GO
+~~START~~
+varchar#!#varchar
+VINET#!#Paul Henriot
+LILAS#!#Carlos Gonzalez
+~~END~~
+
+
+
+
+-- flag = 2 (element centric)
+DECLARE @XmlDocumentHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer>
+   <CustomerID>VINET</CustomerID>
+   <ContactName>Paul Henriot</ContactName>
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5" OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer>
+   <CustomerID>LILAS</CustomerID>
+   <ContactName>Carlos Gonzalez</ContactName>
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3" OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+EXEC sp_xml_preparedocument @XmlDocumentHandle OUTPUT, @XmlDocument;
+SELECT * 
+FROM      OPENXML (@XmlDocumentHandle, '/ROOT/Customer', 2)
+           WITH (CustomerID  varchar(10),
+                 ContactName varchar(20));
+EXEC sp_xml_removedocument @XmlDocumentHandle;
+GO
+~~START~~
+varchar#!#varchar
+VINET#!#Paul Henriot
+LILAS#!#Carlos Gonzalez
+~~END~~
+
+
+
+
+-- flag = 3 (combines both)
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer customerid="VINET" contactname="Paul Henriot">
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5"
+          OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer>
+   <customerid>LILAS</customerid>
+   <contactname>Carlos Gonzalez</contactname>
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3" OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+SELECT * 
+FROM OPENXML (@DocHandle, '/ROOT/Customer',3)
+      WITH (customerid  varchar(10),
+            contactname varchar(20));
+EXEC sp_xml_removedocument @DocHandle;
+GO
+~~START~~
+varchar#!#varchar
+VINET#!#Paul Henriot
+LILAS#!#Carlos Gonzalez
+~~END~~
+
+
+
+
+-- flag = 8
+DECLARE @XmlDocumentHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer>
+   <CustomerID>VINET</CustomerID>
+   <ContactName>Paul Henriot</ContactName>
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5" OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3"
+          OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+EXEC sp_xml_preparedocument @XmlDocumentHandle OUTPUT, @XmlDocument;
+SELECT *
+FROM      OPENXML (@XmlDocumentHandle, '/ROOT/Customer',8)
+           WITH (CustomerID  varchar(10),
+                 ContactName varchar(20));
+EXEC sp_xml_removedocument @XmlDocumentHandle;
+GO
+~~START~~
+varchar#!#varchar
+<NULL>#!#<NULL>
+LILAS#!#Carlos Gonzalez
+~~END~~
+
+
+
+
+-- default flag is 0
+DECLARE @idoc INT, @doc VARCHAR(1000);
+SET @doc = N'<ROOT>
+<Customer>
+   <CustomerID>VINET</CustomerID>
+   <ContactName>Paul Henriot</ContactName>
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5" OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3"
+          OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+EXEC sp_xml_preparedocument @idoc OUTPUT, @doc;
+SELECT *
+FROM      OPENXML (@idoc, '/ROOT/Customer')
+           WITH (CustomerID  varchar(10),
+                 ContactName varchar(20));
+EXEC sp_xml_removedocument @idoc;
+GO
+~~START~~
+varchar#!#varchar
+<NULL>#!#<NULL>
+LILAS#!#Carlos Gonzalez
+~~END~~
+
+
+
+
+
+
+-- If tablename is given 
+CREATE TABLE T1(oid char(5), date datetime, amount float);
+DECLARE @docHandle int;
+DECLARE @XmlDocument varchar(1000);
+SET @xmlDocument = N'<root>
+  <Customer cid= "C1" name="Janine" city="Issaquah">
+      <Order oid="O1" date="1/20/1996" amount="3.5" />
+      <Order oid="O2" date="4/30/1997" amount="13.4">Customer was very
+             satisfied</Order>
+   </Customer>
+   <Customer cid="C2" name="Ursula" city="Oelde" >
+      <Order oid="O3" date="7/14/1999" amount="100" note="Wrap it blue
+             white red">
+          <Urgency>Important</Urgency>
+      </Order>
+      <Order oid="O4" date="1/20/1996" amount="10000"/>
+   </Customer>
+</root>'; 
+EXEC sp_xml_preparedocument @docHandle OUTPUT, @xmlDocument; 
+SELECT * 
+FROM OPENXML (@docHandle, '/root/Customer/Order', 1) 
+     WITH T1;
+EXEC sp_xml_removedocument @docHandle;
+GO
+~~START~~
+char#!#datetime#!#float
+O1   #!#1996-01-20 00:00:00.0#!#3.5
+O2   #!#1997-04-30 00:00:00.0#!#13.4
+O3   #!#1999-07-14 00:00:00.0#!#100.0
+O4   #!#1996-01-20 00:00:00.0#!#10000.0
+~~END~~
+
+DROP TABLE T1;
+GO

@@ -50,6 +50,7 @@
 #include "tsearch/ts_locale.h"
 #include "utils/xml.h"
 #include "common/md5.h"
+#include "utils/datum.h"
 
 #include "catalog.h"
 #include "catalog/toasting.h"
@@ -4937,4 +4938,122 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
 	delete_xml_handle_entry(doc_handle);
 
 	PG_RETURN_VOID();
+}
+
+PG_FUNCTION_INFO_V1(tsql_openxml_get_xmldoc);
+
+/*
+ * Function to retrieve XML document from temporary table using document ID
+ */
+Datum
+tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
+{
+    int32 document_id = PG_GETARG_INT32(0);
+    Relation relation;
+    ScanKeyData skey[1];
+    TableScanDesc scan;
+    HeapTuple tuple;
+    bool found = false;
+    Datum result = (Datum) 0;
+    bool isnull = true;
+    EphemeralNamedRelation enr = NULL;
+    
+    
+    /* Check if the temporary table exists */
+    if (xml_handle_temp_table_name != NULL)
+	{
+		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+		if (enr)
+		{
+			relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+		}
+	}
+
+
+    if (!OidIsValid(enr->md.reliddesc))
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_UNDEFINED_OBJECT),
+                 errmsg("XML document with ID %d not found", document_id)));
+    }
+
+    /* Open the relation */
+    relation = relation_open(enr->md.reliddesc, AccessShareLock);
+    
+    /* Set up the scan key */
+    ScanKeyInit(&skey[0],
+                1,  /* Column number */
+                BTEqualStrategyNumber, F_INT4EQ,
+                Int32GetDatum(document_id));
+    
+    /* Start the scan */
+    scan = table_beginscan_catalog(relation, 1, skey);
+    tuple = heap_getnext(scan, ForwardScanDirection);
+    
+    /* Find the document */
+    if (HeapTupleIsValid(tuple))
+    {
+        /* Get the XML document from column 6 (doc) */
+        result = heap_getattr(tuple, 6, RelationGetDescr(relation), &isnull);
+        
+        if (!isnull)
+        {
+            /* Make a copy of the value */
+            result = datumCopy(result, false, -1);
+            found = true;
+        }
+    }
+    
+    /* Clean up */
+    table_endscan(scan);
+    relation_close(relation, AccessShareLock);
+    
+    /* If we found the document, return it */
+    if (found)
+        PG_RETURN_DATUM(result);
+    
+    /* Otherwise, throw an error */
+    ereport(ERROR,
+            (errcode(ERRCODE_UNDEFINED_OBJECT),
+             errmsg("XML document with ID %d not found", document_id)));
+    
+    PG_RETURN_NULL(); /* Never reached */
+}
+
+/*
+ * Generate XPath expression for a column based on the flag value
+ * Flag 0/1: Use @colname (attribute)
+ * Flag 2: Use colname (element)
+ * Flag 3: Use colname|@colname (either)
+ */
+PG_FUNCTION_INFO_V1(tsql_openxml_get_colpattern);
+Datum
+tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
+{
+    char *xpath_expr;
+	int flag = PG_GETARG_INT32(1);
+	char *colname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+    
+    switch (flag)
+    {
+        case 0:
+        case 1:
+            /* For flags 0 and 1, use @colname */
+            xpath_expr = psprintf("@%s", colname);
+            break;
+        case 2:
+            /* For flag 2, use colname */
+            xpath_expr = pstrdup(colname);
+            break;
+        case 3:
+            /* For flag 3, use colname|@colname */
+            xpath_expr = psprintf("%s|@%s", colname, colname);
+            break;
+        default:
+            /* Default to @colname for unknown flags */
+            xpath_expr = psprintf("@%s", colname);
+            break;
+    }
+    
+    PG_RETURN_TEXT_P(cstring_to_text(xpath_expr));
 }

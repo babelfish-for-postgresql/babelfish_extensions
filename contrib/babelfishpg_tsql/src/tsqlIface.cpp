@@ -1253,6 +1253,16 @@ public:
 		}
 	}
 
+	void exitOpen_xml(TSqlParser::Open_xmlContext *ctx) override
+	{
+		if(ctx->table_name())
+		{
+			rewritten_query_fragment.emplace(std::make_pair(ctx->table_name()->start->getStartIndex(),
+											 std::make_pair("", "TABLE ")));
+
+		}
+	}
+
 	void exitOpen_query(TSqlParser::Open_queryContext *ctx) override
 	{
 		TSqlParser::IdContext *linked_srv = ctx->linked_server;
