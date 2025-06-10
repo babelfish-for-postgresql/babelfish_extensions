@@ -1542,115 +1542,351 @@ TdsTypeUIDToDatum(StringInfo buf)
 Datum
 TdsTypeSpatialToDatum(StringInfo buf)
 {
-	bytea   *result;         /* Result bytea to be returned */
-	int32   geomType = 0;    /* PostGIS geometry type */
-	int     nbytes,          /* Total bytes needed for result */
-	        pointSize = 0,   /* Size of each point in bytes */
-	        npoints = 0;     /* Number of points in geometry */
-	bool    isempty = false; /* Flag indicating if geometry is empty */
-	uint8_t lastByte = buf->data[buf->len - 1]; /* Last byte in buffer, used for empty detection */
-	uint16_t geomTypeId;     /* Combined geometry type identifier */
-	StringInfo  destBuf = makeStringInfo(); /* Destination buffer for building result */
+    bytea   *result;         /* Result bytea to be returned */
+    int32   geomType = 0;    /* PostGIS geometry type */
+    int     nbytes;          /* Total bytes needed for result */
+    int     npoints = 0;     /* Number of points in geometry */
+    bool    isempty = false; /* Flag indicating if geometry is empty */
+    uint8_t lastByte = buf->data[buf->len - 1]; /* Last byte in buffer, used for empty detection */
+    uint16_t geomTypeId;     /* Combined geometry type identifier */
+    StringInfo destBuf = makeStringInfo(); /* Destination buffer for building result */
+    bool    has_z = false;   /* Has Z dimension */
+    bool    has_m = false;   /* Has M dimension */
+    bool    has_bbox = false; /* Has bounding box */
+    int     npoints_data = 0; /* Points count from data */
+    char    *tempBuf = NULL; /* Temporary buffer for coordinate reordering */
+    int     stride;          /* Stride for coordinate data */
+    int     pointSize;       /* Total size of point data */
+    char    *src;            /* Source pointer for coordinate data */
+    float   *bbox = NULL;    /* Bounding box data */
+    int     bboxSize = 16;   /* Size of bounding box data */
 
-	/*
-	 * Input buffer format: 4 bytes SRID + 2 bytes Geometry Type + coordinate data
-	 * But Driver expects: 3 bytes SRID + 1 byte flags + 4 bytes Type + 4 bytes point count + coordinate data
-	 */
+    /* Copy SRID (first 4 bytes) from input buffer */
+    appendBinaryStringInfo(destBuf, buf->data + buf->cursor, SRID_SIZE);
+    /* Swap first 3 bytes of SRID for little endian order */
+    SwapData(destBuf, destBuf->cursor + 0, destBuf->cursor + 2);
 
-	/* We are copying first 4 Byte SRID from buf */
-	appendBinaryStringInfo(destBuf, buf->data + buf->cursor, SRID_SIZE);
-	/* 
-	 * Swapping first 3 bytes of SRID as the driver expects SRID to be in little endian order
-	 * 4th byte is always 0
-	 */
-	SwapData(destBuf, destBuf->cursor + 0, destBuf->cursor + 2);
+    /* Extract the combined geometry type identifier (2 bytes) */
+    geomTypeId = (buf->data[buf->cursor + GEOM_TYPE_OFFSET] << 8) | 
+                  buf->data[buf->cursor + GEOM_TYPE_OFFSET + 1];
 
-	/* 
-	 * Extract the combined geometry type identifier (2 bytes)
-	 * This combines the geometry type (1st byte) and (2nd byte)
-	 */
-	geomTypeId = (buf->data[buf->cursor + GEOM_TYPE_OFFSET] << 8) | 
-	                buf->data[buf->cursor + GEOM_TYPE_OFFSET + 1];
+    /* Get point count from data if available */
+    npoints_data = (buf->data[buf->cursor + 9] << 24) | 
+                   (buf->data[buf->cursor + 8] << 16)| 
+                   (buf->data[buf->cursor + 7] << 8) | 
+                    buf->data[buf->cursor + 6];
 
-	/* Process based on combined geometry type identifier */
-	switch (geomTypeId)
+    /* Determine geometry type and dimension flags */
+    switch (geomTypeId) 
 	{
-		case POINT_XY:  /* XY point (0x010C) */ 
-			geomType = (int32)POINTTYPE;
-			pointSize = POINT_SIZE_XY;  /* 16 bytes for XY point */
-			break;
-			
-		case POINT_XYZ:  /* XYZ point (0x010D) */ 
-			geomType = (int32)POINTTYPE;
-			destBuf->data[3] = DIM_FLAG_Z;  /* Set Z dimension flag in SRID 4th byte */
-			pointSize = POINT_SIZE_XYZ;     /* 24 bytes for XYZ point */
-			break;
-			
-		case POINT_XYM:  /* XYM point (0x010E) */ 
-			geomType = (int32)POINTTYPE;
-			destBuf->data[3] = DIM_FLAG_M;  /* Set M dimension flag in SRID 4th byte */
-			pointSize = POINT_SIZE_XYM;     /* 24 bytes for XYM point */
-			break;
-			
-		case POINT_XYZM:  /* XYZM point (0x010F) */ 
-			geomType = (int32)POINTTYPE;
-			destBuf->data[3] = DIM_FLAG_ZM;  /* Set ZM dimension flag in SRID 4th byte */
-			pointSize = POINT_SIZE_XYZM;     /* 32 bytes for XYZM point */
-			break;
-			
-		case EMPTY_GEOM:  /* Empty geometry (0x0104) */ 
-			/* 
-			 * Check if the geometry has EMPTY_COORD required for an empty geometry
-			 * and if the last byte is the point empty flag (1)
-			 */
-			if ((memcmp(buf->data + buf->cursor + COORD_DATA_OFFSET, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0) && 
-				(lastByte == POINT_EMPTY_FLAG))
+        /* POINT types */
+        case POINT_XY:
+            geomType = POINTTYPE;
+            npoints = 1;
+            break;
+        case POINT_XYZ:
+            geomType = POINTTYPE;
+            has_z = true;
+            npoints = 1;
+            break;
+        case POINT_XYM:
+            geomType = POINTTYPE;
+            has_m = true;
+            npoints = 1;
+            break;
+        case POINT_XYZM:
+            geomType = POINTTYPE;
+            has_z = has_m = true;
+            npoints = 1;
+            break;
+
+        /* LINESTRING types with more than 2 points (with bbox) */
+        case 0x0100: case 0x0200:
+            geomType = LINETYPE;
+            has_bbox = true;
+            npoints = npoints_data;
+            break;
+        case 0x0101: case 0x0201: case 0x0105:
+            geomType = LINETYPE;
+            has_z = true;
+            has_bbox = true;
+            npoints = npoints_data;
+            break;
+        case 0x0102: case 0x0202: case 0x0106:
+            geomType = LINETYPE;
+            has_m = true;
+            has_bbox = true;
+            npoints = npoints_data;
+            break;
+        case 0x0103: case 0x0203: case 0x0107:
+            geomType = LINETYPE;
+            has_z = has_m = true;
+            has_bbox = true;
+            npoints = npoints_data;
+            break;
+            
+        /* LINESTRING types with exactly 2 points (no bbox) */
+        case 0x0110: case 0x0210: case 0x0114:
+            geomType = LINETYPE;
+            npoints = 2;
+            break;
+        case 0x0111: case 0x0211: case 0x0115:
+            geomType = LINETYPE;
+            has_z = true;
+            npoints = 2;
+            break;
+        case 0x0112: case 0x0212: case 0x0116:
+            geomType = LINETYPE;
+            has_m = true;
+            npoints = 2;
+            break;
+        case 0x0113: case 0x0213: case 0x0117:
+            geomType = LINETYPE;
+            has_z = has_m = true;
+            npoints = 2;
+            break;
+            
+        /* EMPTY geometry */
+        case EMPTY_GEOM:
+            /* Check if the geometry has EMPTY_COORD required for an empty geometry */
+            if (memcmp(buf->data + buf->cursor + COORD_DATA_OFFSET, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0) 
 			{
-				geomType = (int32)POINTTYPE;
-				npoints = 0;
-				isempty = true;
-			}
-			else
+                isempty = true;
+                npoints = 0;
+                
+                if (lastByte == POINTTYPE)
+                    geomType = POINTTYPE;
+                else if (lastByte == LINETYPE)
+                    geomType = LINETYPE;
+                else 
+                    ereport(ERROR,
+                            (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                             errmsg("Unsupported empty geometry type")));
+            } 
+			else 
 			{
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("Unsupported geometry type")));
-			}
-			break;
-			
-		default:
-			/* Unsupported geometry type */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported geometry type")));
-			break;
-	}
+                /* Not actually empty, treat as linestring with bbox */
+                geomType = LINETYPE;
+                has_bbox = true;
+                npoints = npoints_data;
+            }
+            break;
+            
+        default:
+            ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Unsupported geometry type")));
+            break;
+    }
 
-	/* Calculate number of points if not empty geometry */
-    if (!isempty)
-		npoints = (buf->len - buf->cursor - COORD_DATA_OFFSET)/pointSize;
+    /* Set dimension flags in SRID 4th byte */
+    if (has_z && has_m)
+        destBuf->data[3] = DIM_FLAG_ZM;
+    else if (has_z)
+        destBuf->data[3] = DIM_FLAG_Z;
+    else if (has_m)
+        destBuf->data[3] = DIM_FLAG_M;
+        
+    /* Add bbox flag if needed */
+    if (has_bbox)
+        destBuf->data[3] |= FLAG_BBOX;
 
-	/*  Calculate total bytes needed */
-	nbytes = buf->len - buf->cursor + COORD_DATA_OFFSET;
-
-	/* Allocate memory for result */
-	result = (bytea *) palloc0(nbytes + VARHDRSZ);
-	SET_VARSIZE(result, nbytes + VARHDRSZ);
-
-	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for the geometry */
-	appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
-	appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
-
-	if (!isempty)
+    /* Calculate stride based on dimensions */
+    stride = 16 + (has_z ? 8 : 0) + (has_m ? 8 : 0); /* XY(16) + Z?(8) + M?(8) */
+    
+    /* Process geometry based on type and emptiness */
+    if (isempty) 
 	{
-		/* We are copying the remaining bytes (pointsize)*npoints from buf */
-		appendBinaryStringInfo(destBuf, buf->data + buf->cursor + COORD_DATA_OFFSET, buf->len - buf->cursor - COORD_DATA_OFFSET);
-	}
-
-	memcpy(VARDATA(result), &destBuf->data[0], nbytes);
-	buf->cursor += nbytes - COORD_DATA_OFFSET;
-
-	PG_RETURN_BYTEA_P(result);
+        /* Handle empty geometry */
+        nbytes = destBuf->len + 8; /* SRID + type + npoints */
+        result = (bytea *) palloc0(nbytes + VARHDRSZ);
+        SET_VARSIZE(result, nbytes + VARHDRSZ);
+        
+        /* Add geometry type and zero points count */
+        appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
+        appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
+    } 
+    else if (npoints == 1 && geomType == POINTTYPE) 
+	{
+        /* Handle point geometry */
+        nbytes = buf->len - buf->cursor + COORD_DATA_OFFSET;
+        result = (bytea *) palloc0(nbytes + VARHDRSZ);
+        SET_VARSIZE(result, nbytes + VARHDRSZ);
+        
+        /* Add geometry type and point count */
+        appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
+        appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
+        
+        /* Copy coordinate data */
+        appendBinaryStringInfo(destBuf, buf->data + buf->cursor + COORD_DATA_OFFSET, 
+                              buf->len - buf->cursor - COORD_DATA_OFFSET);
+    }
+    else if (npoints == 2 && geomType == LINETYPE) 
+	{
+        /* Handle linestring with 2 points */
+        pointSize = stride * npoints;
+        nbytes = destBuf->len + 8 + pointSize; /* header + type + npoints + point data */
+        
+        /* Allocate memory for result */
+        result = (bytea *) palloc0(nbytes + VARHDRSZ);
+        SET_VARSIZE(result, nbytes + VARHDRSZ);
+        
+        /* Add geometry type and point count */
+        appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
+        appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
+        
+        src = buf->data + buf->cursor + COORD_DATA_OFFSET;
+        
+        /* Handle XY case with direct copy */
+        if (!has_z && !has_m) 
+		{
+            appendBinaryStringInfo(destBuf, src, npoints * 16);
+        } 
+		else 
+		{
+			int i;
+            /* Need to reorder coordinates for Z and M dimensions */
+            tempBuf = palloc0(pointSize);
+            
+            for (i = 0; i < npoints; i++) {
+                /* Copy XY coordinates */
+                memcpy(tempBuf + (i * stride), src + (i * 16), 16);
+                
+                /* Copy Z coordinates if present */
+                if (has_z) {
+                    memcpy(tempBuf + (i * stride) + 16, 
+                           src + (npoints * 16) + (i * 8), 8);
+                }
+                
+                /* Copy M coordinates if present */
+                if (has_m) {
+                    memcpy(tempBuf + (i * stride) + 16 + (has_z ? 8 : 0),
+                           src + (npoints * 16) + (has_z ? npoints * 8 : 0) + (i * 8), 8);
+                }
+            }
+            
+            appendBinaryStringInfo(destBuf, tempBuf, pointSize);
+            pfree(tempBuf);
+        }
+    }
+    else if (npoints > 2 && geomType == LINETYPE) 
+	{
+        /* Handle linestring with more than 2 points (with bbox) */
+        double x, y, z, m;
+        float minX, maxX, minY, maxY, minZ, maxZ, minM, maxM;
+        int i;
+        
+        pointSize = stride * npoints;
+        
+        /* Calculate bbox size */
+        if (has_z)
+            bboxSize += 8; /* minZ, maxZ (4 bytes each) */
+        if (has_m)
+            bboxSize += 8; /* minM, maxM (4 bytes each) */
+        
+        /* Allocate temporary buffers */
+        tempBuf = palloc0(pointSize);
+        bbox = (float *) palloc0(bboxSize);
+        
+        /* Initialize min/max values with first point */
+        src = buf->data + buf->cursor + COORD_DATA_OFFSET + 4;
+        
+        memcpy(&x, src, 8);
+        memcpy(&y, src + 8, 8);
+        minX = maxX = (float)x;
+        minY = maxY = (float)y;
+        
+        if (has_z) 
+		{
+            memcpy(&z, src + (npoints * 16), 8);
+            minZ = maxZ = (float)z;
+        }
+        
+        if (has_m) 
+		{
+            int mOffset = npoints * 16 + (has_z ? npoints * 8 : 0);
+            memcpy(&m, src + mOffset, 8);
+            minM = maxM = (float)m;
+        }
+        
+        /* Process all points to find min/max and reorder coordinates */
+        for (i = 0; i < npoints; i++) 
+		{
+            /* Copy XY coordinates and update min/max */
+            memcpy(&x, src + (i * 16), 8);
+            memcpy(&y, src + (i * 16) + 8, 8);
+            
+            if ((float)x < minX) minX = (float)x;
+            if ((float)x > maxX) maxX = (float)x;
+            if ((float)y < minY) minY = (float)y;
+            if ((float)y > maxY) maxY = (float)y;
+            
+            memcpy(tempBuf + (i * stride), src + (i * 16), 16);
+            
+            /* Copy Z coordinates if present and update min/max */
+            if (has_z) 
+			{
+                memcpy(&z, src + (npoints * 16) + (i * 8), 8);
+                if ((float)z < minZ) minZ = (float)z;
+                if ((float)z > maxZ) maxZ = (float)z;
+                
+                memcpy(tempBuf + (i * stride) + 16, 
+                       src + (npoints * 16) + (i * 8), 8);
+            }
+            
+            /* Copy M coordinates if present and update min/max */
+            if (has_m) 
+			{
+                int mOffset = npoints * 16 + (has_z ? npoints * 8 : 0);
+                memcpy(&m, src + mOffset + (i * 8), 8);
+                if ((float)m < minM) minM = (float)m;
+                if ((float)m > maxM) maxM = (float)m;
+                
+                memcpy(tempBuf + (i * stride) + 16 + (has_z ? 8 : 0),
+                       src + mOffset + (i * 8), 8);
+            }
+        }
+        
+        /* Fill bbox buffer with min/max values */
+        bbox[0] = minX;
+        bbox[1] = maxX;
+        bbox[2] = minY;
+        bbox[3] = maxY;
+        
+        if (has_z) 
+		{
+            bbox[4] = minZ;
+            bbox[5] = maxZ;
+        }
+        
+        if (has_m) 
+		{
+            int offset = 4 + (has_z ? 2 : 0);
+            bbox[offset] = minM;
+            bbox[offset + 1] = maxM;
+        }
+        
+        /* Calculate total size and allocate result */
+        nbytes = destBuf->len + bboxSize + 8 + pointSize; /* header + bbox + type + npoints + point data */
+        result = (bytea *) palloc0(nbytes + VARHDRSZ);
+        SET_VARSIZE(result, nbytes + VARHDRSZ);
+        
+        /* Add bbox, geometry type, point count, and coordinate data */
+        appendBinaryStringInfo(destBuf, (char *)bbox, bboxSize);
+        appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
+        appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
+        appendBinaryStringInfo(destBuf, tempBuf, pointSize);
+        
+        /* Free temporary buffers */
+        pfree(tempBuf);
+        pfree(bbox);
+    }
+    
+    /* Copy final buffer to result */
+    memcpy(VARDATA(result), &destBuf->data[0], nbytes);
+    buf->cursor += buf->len - buf->cursor - COORD_DATA_OFFSET;
+    
+    return PointerGetDatum(result);
 }
 
 StringInfo

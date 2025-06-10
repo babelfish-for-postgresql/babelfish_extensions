@@ -1,0 +1,121 @@
+DROP TABLE  geometryAsVarbinaryline
+
+DROP TABLE  GeographyAsVarbinaryline
+
+DROP TABLE  geometryAsVarcharline
+
+DROP TABLE  geographyAsVarcharline
+
+DROP TABLE  CharAsVarbinaryGeomline
+
+DROP TABLE  CharAsVarbinaryGeogline
+
+DROP TABLE  VarbinaryAsgeometryline
+
+DROP TABLE  VarbinaryAsgeographyline
+
+DROP TABLE  CharAsgeometryline
+
+DROP TABLE  CharAsgeographyline
+
+DROP TABLE  VarcharAsgeometryline
+
+DROP TABLE  VarcharAsgeographyline
+
+DROP TABLE  ByteaTogeometryline
+
+DROP TABLE  ByteaTogeographyline
+
+DROP TABLE  geometryToBytealine
+
+DROP TABLE  geographyToBytealine
+
+DROP TABLE  GeoVarcharAsgeometryline
+
+DROP TABLE  GeoVarcharAsgeographyline
+
+DROP VIEW DimOfGeometryline
+
+DROP VIEW AreaOfGeometryline
+
+DROP VIEW TextFromGeometryline
+
+DROP VIEW BinaryFromGeometryline
+
+
+DROP VIEW SridFromGeometryline
+
+DROP VIEW EmptyGeometryline
+
+DROP VIEW ValidGeometryline
+
+DROP VIEW ClosedGeometryline
+
+DROP VIEW DisjointTempGeomline
+
+DROP VIEW DistanceTempGeomline
+
+DROP VIEW IntersectsTempGeomline
+
+
+DROP VIEW ContainTempGeomline
+
+DROP VIEW EqualsTempGeomline
+
+DROP VIEW equals_opgeomline
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "equals_opgeomline" does not exist)~~
+
+
+
+DROP VIEW notequal_opgeomline
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "notequal_opgeomline" does not exist)~~
+
+
+DROP TABLE GEOSPATIALLINEGEOM_dt
+
+DROP VIEW DimOfgeographyline
+
+DROP VIEW AreaOfgeographyline
+
+DROP VIEW TextFromgeographyline
+
+DROP VIEW BinaryFromgeographyline
+
+
+DROP VIEW SridFromgeographyline
+
+DROP VIEW Emptygeographyline
+
+DROP VIEW Validgeographyline
+
+DROP VIEW Closedgeographyline
+
+DROP VIEW DisjointTempGeogline
+
+DROP VIEW DistanceTempGeogline
+
+DROP VIEW IntersectsTempGeogline
+
+
+DROP VIEW ContainTempGeogline
+
+DROP VIEW EqualsTempGeogline
+
+DROP VIEW equals_opgeogline
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "equals_opgeogline" does not exist)~~
+
+
+
+DROP VIEW notequal_opgeogline
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "notequal_opgeogline" does not exist)~~
+
+
+DROP TABLE GEOSPATIALLINEGEOG_dt
