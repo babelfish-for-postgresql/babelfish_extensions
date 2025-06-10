@@ -1,0 +1,34 @@
+CREATE TABLE LINEGEOM_dt(location GEOMETRY);
+prepst#!#INSERT INTO LINEGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|LINESTRING(1 2, 1 2):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING EMPTY:4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4 3):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING ZM (1 2 3 4, 3 4 4 5):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING M (1 2 4, 3 4 4):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 3, 5 7, 4 5):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(2 -3, 4 -1, 3 -2 , 4 6 , 3 6):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING (1 3 2, 5 7 6 , 4 5):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(2 -3  -5, 4 -1, 3 -2 , 4 6 , 3 6  )':4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING ZM (1 3 4 7, 5 7 6 2 , 4 5 2 6):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING M (3 5 5, 2 4  2):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 3  7, 5 7 6  , 4 5 2 ):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(4 5 2, 1 1 3, 2 2 5, 3 3 2  , 4 4  4, 5 5, 6 6  5 , 7 7   , 8 8, 9 9 4 , 10 10 4):4326
+
+CREATE TABLE LINEGEOG_dt(location GEOGRAPHY);
+prepst#!#INSERT INTO LINEGEOG_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 1 2):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4 3):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING ZM (1 2 3 4, 3 4 4 5):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING M (1 2 4, 3 4 4):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 3, 5 7, 4 5  ):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(2 -3, 4 -1, 3 -2 , 4 6 , 3 6):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING (1 3 2, 5 7 6 , 4 5):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(2 -3  -5, 4 -1, 3 -2  , 4 6 , 3 6  )':4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING ZM (1 3 4 7, 5 7 6 2 , 4 5 2 6):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING M (3 5 5, 2 4  2):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 3  7, 5 7 6  , 4 5 2 ):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(4 5 2, 1 1 3, 2 2 5, 3 3 2  , 4 4  4, 5 5, 6 6  5 , 7 7   , 8 8, 9 9 4 , 10 10 4):4326
+
+
+DROP TABLE IF EXISTS LINEGEOM_dt;
+DROP TABLE IF EXISTS LINEGEOG_dt;

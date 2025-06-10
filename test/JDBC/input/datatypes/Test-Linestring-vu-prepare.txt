@@ -82,7 +82,7 @@ CREATE VIEW ClosedGeometryline AS SELECT location.STAsText() AS geometry, locati
 
 CREATE VIEW DisjointTempGeomline AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALLINEGEOM_dt p1 CROSS JOIN GEOSPATIALLINEGEOM_dt p2 ;
 
-CREATE VIEW DistanceTempGeomline AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STDistance(p2.location) AS distance FROM GEOSPATIALLINEGEOM_dt p1 CROSS JOIN GEOSPATIALLINEGEOM_dt p2 ;
+CREATE VIEW DistanceTempGeomline AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2,  CAST(STDistance( p1.location, p2.location ) AS numeric(20, 6)) AS distance FROM GEOSPATIALLINEGEOM_dt p1 CROSS JOIN GEOSPATIALLINEGEOM_dt p2 ;
 
 CREATE VIEW IntersectsTempGeomline AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STIntersects(p2.location) AS interesecting FROM GEOSPATIALLINEGEOM_dt p1 CROSS JOIN GEOSPATIALLINEGEOM_dt p2 ;
 
@@ -452,7 +452,7 @@ CREATE VIEW Closedgeographyline AS SELECT location.STAsText() AS geometry, locat
 
 CREATE VIEW DisjointTempGeogline AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALLINEGEOG_dt p1 CROSS JOIN GEOSPATIALLINEGEOG_dt p2 ;
 
-CREATE VIEW DistanceTempGeogline AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STDistance(p2.location) AS distance FROM GEOSPATIALLINEGEOG_dt p1 CROSS JOIN GEOSPATIALLINEGEOG_dt p2 ;
+CREATE VIEW DistanceTempGeogline AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, CAST(STDistance( p1.location, p2.location ) AS numeric(20, 6)) AS distance FROM GEOSPATIALLINEGEOG_dt p1 CROSS JOIN GEOSPATIALLINEGEOG_dt p2 ;
 
 CREATE VIEW IntersectsTempGeogline AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STIntersects(p2.location) AS interesecting FROM GEOSPATIALLINEGEOG_dt p1 CROSS JOIN GEOSPATIALLINEGEOG_dt p2 ;
 
