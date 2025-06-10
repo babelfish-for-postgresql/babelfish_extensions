@@ -1806,7 +1806,7 @@ openxml_expr: OPENXML '(' a_expr ',' a_expr ')' opt_alias_clause
                   n->tsql_docid = $3;
                   n->rowexpr = $5;
                   n->alias = $7;
-                  n->columns = TsqlMakeOpenxmlColList();
+                  n->columns = NIL;
                   n->location = @1;
                   $$ = (Node *) n;
                }
@@ -1816,7 +1816,7 @@ openxml_expr: OPENXML '(' a_expr ',' a_expr ')' opt_alias_clause
                   n->tsql_docid = $3;
                   n->rowexpr = $5;
                   n->tsql_flag = $7;
-                  n->columns = TsqlMakeOpenxmlColList();
+                  n->columns = NIL;
                   n->alias = $9;
                   n->location = @1;
                   $$ = (Node *) n;
