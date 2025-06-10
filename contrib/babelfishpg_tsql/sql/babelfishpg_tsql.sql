@@ -3856,7 +3856,6 @@ BEGIN
     END
     ELSE
     BEGIN
-
         SET @input_loginname = sys.RTRIM(@loginname);
 
         SELECT DISTINCT
