@@ -82,9 +82,13 @@ static bool is_tsql_numeric_fixeddecimal(Oid oid);
 static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
 
-#define SMALLINT_PRECISION_RADIX 5
-#define INT_PRECISION_RADIX 10
-#define BIGINT_PRECISION_RADIX 19
+#define SMALLINT_PRECISION_RADIX	5
+#define INT_PRECISION_RADIX		10
+#define BIGINT_PRECISION_RADIX		19
+
+#define DEFAULT_SMALLINT_TYPMOD		((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_INT_TYPMOD		((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_BIGINT_TYPMOD		((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 
 /* Numeirc operator OID from pg_proc.dat */
 #define NUMERIC_ADD_OID 1724
@@ -1411,11 +1415,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 					/* handling for fixed length datatypes */
 					if (plan && var->vartype == INT4OID)
-						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_INT_TYPMOD;
 					else if (plan && var->vartype == INT8OID)
-						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_BIGINT_TYPMOD;
 					else if (plan && var->vartype == INT2OID)
-						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_SMALLINT_TYPMOD;
 
 					if (found != NULL) *found = false;
 				}
@@ -1774,8 +1778,16 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (aggref->aggstar)
 				{
-					if (found != NULL) *found = false;
-					typmod = -1;
+					/* handling for COUNT(*) and COUNT_BIG(*) */
+					if (aggref->aggtype == INT4OID)
+						return DEFAULT_INT_TYPMOD;
+					else if (aggref->aggtype == INT8OID)
+						return DEFAULT_BIGINT_TYPMOD;
+					else
+					{
+						if (found != NULL) *found = false;
+						typmod = -1;
+					}
 				}
 				else
 				{
