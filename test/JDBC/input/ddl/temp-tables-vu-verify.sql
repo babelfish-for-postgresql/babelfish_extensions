@@ -14,19 +14,19 @@ GO
 CREATE TABLE #temp_table_create(a int, b nvarchar(200))
 GO
 
-select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
+select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
 GO
 
-select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
+select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
 GO
 
 DROP TABLE #temp_table_create
 GO
 
-select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
+select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
 GO
 
-select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
+select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
 GO
 
 -- Test temp table alter with toast
@@ -35,10 +35,10 @@ GO
 ALTER TABLE #temp_table_alter1 ADD col2 varchar(20)
 GO
 
-select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
+select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
 GO
 
-select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
+select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
 GO
 
 DROP TABLE #temp_table_alter1
@@ -49,8 +49,8 @@ GO
 ALTER TABLE #temp_table_alter2 ADD col3 int IDENTITY(1, 1)
 GO
 
-select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
+select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
 GO
 
-select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
+select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
 GO
