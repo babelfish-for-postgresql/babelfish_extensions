@@ -1248,7 +1248,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						return DEFAULT_BIGINT_TYPMOD;
 					else if (param->paramtype == INT2OID)
 						return DEFAULT_SMALLINT_TYPMOD;
-					else if (plan && (*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (param->paramtype))
+					else if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (param->paramtype))
 						return DEFAULT_TINYINT_TYPMOD;
 				}
 
@@ -1834,7 +1834,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 * tinyint, smallint, int will have aggtype type as int
 					 * bigint will have aggtype type as bigint.
 					 */
-					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype))
+					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype) ||
+						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(aggref->aggtype))
 					{
 						pfree(aggFuncName);
 						return TSQL_MONEY_TYPMOD;
