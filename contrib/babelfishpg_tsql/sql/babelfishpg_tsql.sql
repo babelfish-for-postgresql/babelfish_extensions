@@ -3780,8 +3780,8 @@ BEGIN
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
-                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('YES' AS sys.char(5))
-                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('YES' AS sys.char(5))
+                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('YES' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
+                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('YES' AS sys.char(5)) -- this is the case for superuser
                 ELSE CAST('NO' AS sys.char(5))
             END AS AUser,
             CAST('NO' AS sys.char(7)) AS ARemote -- Currently we do not support linking local logins to remote logins
@@ -3826,7 +3826,7 @@ BEGIN
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
             CAST(UExt2.database_name AS sys.SYSNAME) AS DBName,
             CAST(UExt1.orig_username AS sys.SYSNAME) AS UserName,
-            CAST('Member of' AS sys.varchar(10)) AS UserOrAlias 
+            CAST('MemberOf' AS sys.char(8)) AS UserOrAlias 
         FROM pg_catalog.pg_auth_members AS Authmbr
         INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
         INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
@@ -3865,11 +3865,11 @@ BEGIN
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
-                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('YES' AS sys.varchar(5))
-                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('YES' AS sys.varchar(5))
-                ELSE CAST('NO' AS sys.varchar(5))
+                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('YES' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
+                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('YES' AS sys.char(5)) -- this is the case for superuser
+                ELSE CAST('NO' AS sys.char(5))
             END AS AUser,
-            CAST('NO' AS sys.varchar(8)) AS ARemote -- Currently we do not support linking local logins to remote logins
+            CAST('NO' AS sys.char(7)) AS ARemote -- Currently we do not support linking local logins to remote logins
         FROM pg_catalog.pg_roles AS Base 
         INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
         LEFT JOIN sys.babelfish_authid_user_ext AS Ext ON Ext.login_name = Base.rolname AND Ext.type != 'R'
@@ -3882,7 +3882,7 @@ BEGIN
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
             CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
             CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
-            CAST('User' AS sys.varchar(8)) AS UserOrAlias 
+            CAST('User' AS sys.char(8)) AS UserOrAlias 
         FROM sys.babelfish_authid_user_ext UExt
         LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt.database_name
         LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt.login_name, ''), Db.owner)
@@ -3895,7 +3895,7 @@ BEGIN
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
             CAST(UExt2.database_name AS sys.SYSNAME) AS DBName,
             CAST(UExt1.orig_username AS SYS.SYSNAME) AS UserName,
-            CAST('Member of' AS sys.varchar(10)) AS UserOrAlias 
+            CAST('MemberOf' AS sys.char(8)) AS UserOrAlias
         FROM pg_catalog.pg_auth_members AS Authmbr
         INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
         INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
