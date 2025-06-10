@@ -82,10 +82,10 @@ static bool is_tsql_numeric_fixeddecimal(Oid oid);
 static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
 
-#define TINYINT_PRECISION_RADIX 3
-#define SMALLINT_PRECISION_RADIX 5
-#define INT_PRECISION_RADIX 10
-#define BIGINT_PRECISION_RADIX 19
+#define TINYINT_PRECISION_RADIX 	3
+#define SMALLINT_PRECISION_RADIX 	5
+#define INT_PRECISION_RADIX 		10
+#define BIGINT_PRECISION_RADIX 		19
 
 #define DEFAULT_TINYINT_TYPMOD		((TINYINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 #define DEFAULT_SMALLINT_TYPMOD		((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
@@ -1431,17 +1431,17 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 			{
 				OpExpr		*op = (OpExpr *) expr;
 				Node		*arg1 = NULL,
-						*arg2 = NULL;
-				Oid		arg1type = InvalidOid,
-						arg2type = InvalidOid;
+							*arg2 = NULL;
+				Oid			arg1type = InvalidOid,
+							arg2type = InvalidOid;
 				int32		typmod1 = -1,
-						typmod2 = -1;
+							typmod2 = -1;
 				uint8_t		scale1,
-						scale2,
-						precision1,
-						precision2;
+							scale2,
+							precision1,
+							precision2;
 				uint8_t		scale,
-						precision;
+							precision;
 				uint8_t		integralDigitCount = 0;
 				bool		found_typmod;
 
