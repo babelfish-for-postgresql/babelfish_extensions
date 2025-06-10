@@ -1417,11 +1417,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 					/* handling for fixed length datatypes */
 					if (plan && var->vartype == INT4OID)
-						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_INT_TYPMOD;
 					else if (plan && var->vartype == INT8OID)
-						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_BIGINT_TYPMOD;
 					else if (plan && var->vartype == INT2OID)
-						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_SMALLINT_TYPMOD;
 
 					if (found != NULL) *found = false;
 				}
@@ -1795,8 +1795,16 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (aggref->aggstar)
 				{
-					if (found != NULL) *found = false;
-					typmod = -1;
+					/* handling for COUNT(*) and COUNT_BIG(*) */
+					if (aggref->aggtype == INT4OID)
+						return DEFAULT_INT_TYPMOD;
+					else if (aggref->aggtype == INT8OID)
+						return DEFAULT_BIGINT_TYPMOD;
+					else
+					{
+						if (found != NULL) *found = false;
+						typmod = -1;
+					}
 				}
 				else
 				{
