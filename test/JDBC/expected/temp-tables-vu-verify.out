@@ -20,38 +20,37 @@ GO
 CREATE TABLE #temp_table_create(a int, b nvarchar(200))
 GO
 
-select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
+select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
 GO
 ~~START~~
-int
-2
+int#!#text
+20849#!##pg_toast_20846
+20850#!##pg_toast_20846_index
 ~~END~~
 
 
-select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
+select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
 GO
 ~~START~~
-int
-1
+int#!#text
+20850#!##pg_toast_20846_index
 ~~END~~
 
 
 DROP TABLE #temp_table_create
 GO
 
-select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
+select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
 GO
 ~~START~~
-int
-0
+int#!#text
 ~~END~~
 
 
-select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
+select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
 GO
 ~~START~~
-int
-0
+int#!#text
 ~~END~~
 
 
@@ -61,19 +60,20 @@ GO
 ALTER TABLE #temp_table_alter1 ADD col2 varchar(20)
 GO
 
-select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
+select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
 GO
 ~~START~~
-int
-2
+int#!#text
+20854#!##pg_toast_20851
+20855#!##pg_toast_20851_index
 ~~END~~
 
 
-select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
+select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
 GO
 ~~START~~
-int
-1
+int#!#text
+20855#!##pg_toast_20851_index
 ~~END~~
 
 
@@ -85,18 +85,19 @@ GO
 ALTER TABLE #temp_table_alter2 ADD col3 int IDENTITY(1, 1)
 GO
 
-select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
+select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%'
 GO
 ~~START~~
-int
-2
+int#!#text
+20865#!##pg_toast_20862
+20866#!##pg_toast_20862_index
 ~~END~~
 
 
-select count(*) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
+select * FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#pg_toast_%_index'
 GO
 ~~START~~
-int
-1
+int#!#text
+20866#!##pg_toast_20862_index
 ~~END~~
 
