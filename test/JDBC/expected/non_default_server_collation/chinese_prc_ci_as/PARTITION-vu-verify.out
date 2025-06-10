@@ -780,6 +780,7 @@ IntPartitionFunction#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 MoneyPartitionFunction#!#money#!#1#!#8#!#19#!#4#!#<NULL>
 NCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
 NumericPartitionFunction#!#numeric#!#1#!#17#!#38#!#38#!#<NULL>
+NVarCharPartitionFunction#!#nvarchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
 partition_float_real_range_partition_func#!#float#!#1#!#8#!#53#!#0#!#<NULL>
 PARTITION_FUNCTION  유니코드스키마👻  #!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PARTITION_FUNCTION 😎$@ #123 🌍rder  #!#int#!#1#!#4#!#10#!#0#!#<NULL>
