@@ -1810,6 +1810,10 @@ typedef struct PLtsql_protocol_plugin
 													char **tvp_type_name, char **tvp_type_schema_name);
 	int32_t 	(*get_tds_numeric_get_typmod) (Numeric num);
 
+	
+												
+	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr);
+	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr, bool *found);
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2308,6 +2312,7 @@ int			execute_sp_cursoroption(int cursor_handle, int code, int value);
 int			execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
 int			execute_sp_cursorclose(int cursor_handle);
 void		reset_cached_cursor(void);
+void		reset_cached_xml_handle(void);
 
 /*
  * Functions in string.c
