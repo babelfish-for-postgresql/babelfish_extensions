@@ -82,9 +82,15 @@ static bool is_tsql_numeric_fixeddecimal(Oid oid);
 static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
 
+#define TINYINT_PRECISION_RADIX 3
 #define SMALLINT_PRECISION_RADIX 5
 #define INT_PRECISION_RADIX 10
 #define BIGINT_PRECISION_RADIX 19
+
+#define DEFAULT_TINYINT_TYPMOD		((TINYINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_SMALLINT_TYPMOD		((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_INT_TYPMOD			((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_BIGINT_TYPMOD		((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 
 /* Numeirc operator OID from pg_proc.dat */
 #define NUMERIC_ADD_OID 1724
@@ -1440,6 +1446,19 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				bool		found_typmod;
 
 				Assert(list_length(op->args) == 2 || list_length(op->args) == 1);
+
+				/* Handling for fixed length dataypes. */
+				if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(op->opresulttype))
+					return TSQL_MONEY_TYPMOD;
+				else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(op->opresulttype))
+					return TSQL_SMALLMONEY_TYPMOD;
+				else if (op->opresulttype == INT4OID)
+					return DEFAULT_INT_TYPMOD;
+				else if (op->opresulttype == INT8OID)
+					return DEFAULT_BIGINT_TYPMOD;
+				else if (op->opresulttype == INT2OID)
+					return DEFAULT_SMALLINT_TYPMOD;
+
 				if (list_length(op->args) == 2)
 				{
 					arg1 = linitial(op->args);
