@@ -2768,17 +2768,17 @@ GO
 ~~START~~
 int#!#varchar#!#varchar#!#varchar#!#varbinary#!#varbinary#!#varbinary#!#varchar#!#int
 1#!#BINARY(4) + BINARY(4)#!#BINARY(4)#!#BINARY(4)#!#12340000#!#56780000#!#0000000068AC0000#!#BINARY(8)#!#8
-2#!#VARBINARY(4) + VARBINARY(4)#!#VARBINARY(4)#!#VARBINARY(4)#!#1234#!#5678#!#00000000000068AC#!#VARBINARY(8)#!#8
-3#!#BINARY(4) + VARBINARY(4)#!#BINARY(4)#!#VARBINARY(4)#!#12340000#!#5678#!#0000000012345678#!#VARBINARY(8)#!#8
-4#!#VARBINARY(4) + BINARY(4)#!#VARBINARY(4)#!#BINARY(4)#!#1234#!#56780000#!#0000000056781234#!#VARBINARY(8)#!#8
+2#!#VARBINARY(4) + VARBINARY(4)#!#VARBINARY(4)#!#VARBINARY(4)#!#1234#!#5678#!#12345678#!#VARBINARY(8)#!#4
+3#!#BINARY(4) + VARBINARY(4)#!#BINARY(4)#!#VARBINARY(4)#!#12340000#!#5678#!#123400005678#!#VARBINARY(8)#!#6
+4#!#VARBINARY(4) + BINARY(4)#!#VARBINARY(4)#!#BINARY(4)#!#1234#!#56780000#!#123456780000#!#VARBINARY(8)#!#6
 5#!#NULL + BINARY(4)#!#NULL#!#BINARY(4)#!#<NULL>#!#56780000#!#<NULL>#!#VARBINARY#!#<NULL>
 6#!#BINARY(4) + NULL#!#BINARY(4)#!#NULL#!#12340000#!#<NULL>#!#<NULL>#!#VARBINARY#!#<NULL>
 7#!#NULL + NULL#!#NULL#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#VARBINARY#!#<NULL>
-8#!#Empty VARBINARY + BINARY(4)#!#VARBINARY(4)#!#BINARY(4)#!##!#56780000#!#0000000056780000#!#VARBINARY#!#8
-9#!#BINARY(4) + Empty VARBINARY#!#BINARY(4)#!#VARBINARY(4)#!#12340000#!##!#0000000012340000#!#VARBINARY#!#8
-10#!#Empty VARBINARY + Empty VARBINARY#!#VARBINARY(4)#!#VARBINARY(4)#!##!##!#0000000000000000#!#VARBINARY#!#8
+8#!#Empty VARBINARY + BINARY(4)#!#VARBINARY(4)#!#BINARY(4)#!##!#56780000#!#56780000#!#VARBINARY#!#4
+9#!#BINARY(4) + Empty VARBINARY#!#BINARY(4)#!#VARBINARY(4)#!#12340000#!##!#12340000#!#VARBINARY#!#4
+10#!#Empty VARBINARY + Empty VARBINARY#!#VARBINARY(4)#!#VARBINARY(4)#!##!##!##!#VARBINARY#!#0
 11#!#BINARY(2) + BINARY(4)#!#BINARY(2)#!#BINARY(4)#!#1200#!#56780000#!#0000000056781200#!#BINARY(6)#!#8
-12#!#VARBINARY(2) + VARBINARY(4)#!#VARBINARY(2)#!#VARBINARY(4)#!#12#!#5678#!#000000000000568A#!#VARBINARY(6)#!#8
+12#!#VARBINARY(2) + VARBINARY(4)#!#VARBINARY(2)#!#VARBINARY(4)#!#12#!#5678#!#125678#!#VARBINARY(6)#!#3
 ~~END~~
 
 
@@ -2804,7 +2804,7 @@ SELECT
 GO
 ~~START~~
 varchar
-BINARY + VARBINARY Results in: Other
+BINARY + VARBINARY Results in: VARBINARY (Higher Precedence)
 ~~END~~
 
 
@@ -2860,7 +2860,9 @@ INSERT INTO BinaryFunctionTests VALUES
  CAST((SELECT MIN(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARBINARY(100)),
  'MIN');
 GO
-~~ROW COUNT: 2~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to varbinary)~~
 
 
 -- 2. String/Binary Functions
@@ -2946,15 +2948,13 @@ ORDER BY TestID;
 GO
 ~~START~~
 int#!#varchar#!#varbinary#!#varbinary#!#varchar
-1#!#MAX Function#!#1234#!#0000000000001234#!#MAX
-2#!#MIN Function#!#1234#!#0000000000001234#!#MIN
-3#!#DATALENGTH#!#1234#!#00000002#!#DATALENGTH
-4#!#LEN#!#1234#!#00000002#!#LEN
-5#!#SUBSTRING#!#123456#!#3456#!#SUBSTRING
-6#!#LEFT#!#123456#!#1234#!#LEFT
-7#!#RIGHT#!#123456#!#3456#!#RIGHT
-8#!#HASHBYTES SHA2_256#!#54657374#!#532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25#!#HASHBYTES
-9#!#AVG Function#!#1234#!#00000012#!#AVG
+1#!#DATALENGTH#!#1234#!#00000002#!#DATALENGTH
+2#!#LEN#!#1234#!#00000002#!#LEN
+3#!#SUBSTRING#!#123456#!#3456#!#SUBSTRING
+4#!#LEFT#!#123456#!#1234#!#LEFT
+5#!#RIGHT#!#123456#!#3456#!#RIGHT
+6#!#HASHBYTES SHA2_256#!#54657374#!#532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25#!#HASHBYTES
+7#!#AVG Function#!#1234#!#00000012#!#AVG
 ~~END~~
 
 
@@ -3242,24 +3242,19 @@ SELECT 'VARBINARY and DATETIME',
     DATALENGTH(CAST('2024-01-16' AS DATETIME)) AS Length2
 ) t order by value;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type datetime to varbinary)~~
-
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
 ~~START~~
 varchar#!#varchar#!#smallint
+test#!#varchar#!#22
+value#!#datetime#!#8
+length1#!#int#!#4
 ~~END~~
 
 
 drop table temp_tbl
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "temp_tbl" does not exist)~~
-
 
 -- Test 4: VARBINARY and DECIMAL
 SELECT t.* INTO temp_tbl FROM
@@ -3617,13 +3612,13 @@ SELECT 'MAX Results' AS ResultType,
 FROM #MaxResults;
 GO
 ~~START~~
-varchar#!#varchar#!#int#!#bigint#!#int
-MAX Results#!#MAX with ISNULL#!#1#!#15#!#8
-MAX Results#!#Regular MAX#!#1#!#15#!#8
-MAX Results#!#MAX with ISNULL#!#2#!#18#!#8
-MAX Results#!#Regular MAX#!#2#!#18#!#8
-MAX Results#!#MAX with ISNULL#!#3#!#10#!#8
-MAX Results#!#Regular MAX#!#3#!#10#!#8
+varchar#!#varchar#!#int#!#datetime#!#int
+MAX Results#!#MAX with ISNULL#!#1#!#1900-01-01 00:00:00.05#!#8
+MAX Results#!#Regular MAX#!#1#!#1900-01-01 00:00:00.05#!#8
+MAX Results#!#MAX with ISNULL#!#2#!#1900-01-01 00:00:00.06#!#8
+MAX Results#!#Regular MAX#!#2#!#1900-01-01 00:00:00.06#!#8
+MAX Results#!#MAX with ISNULL#!#3#!#1900-01-01 00:00:00.033#!#8
+MAX Results#!#Regular MAX#!#3#!#1900-01-01 00:00:00.033#!#8
 ~~END~~
 
 
@@ -3636,13 +3631,13 @@ SELECT 'MIN Results' AS ResultType,
 FROM #MinResults;
 GO
 ~~START~~
-varchar#!#varchar#!#int#!#bigint#!#int
-MIN Results#!#MIN with ISNULL#!#1#!#10#!#8
-MIN Results#!#Regular MIN#!#1#!#10#!#8
-MIN Results#!#MIN with ISNULL#!#2#!#18#!#8
-MIN Results#!#Regular MIN#!#2#!#18#!#8
-MIN Results#!#MIN with ISNULL#!#3#!#10#!#8
-MIN Results#!#Regular MIN#!#3#!#10#!#8
+varchar#!#varchar#!#int#!#datetime#!#int
+MIN Results#!#MIN with ISNULL#!#1#!#1900-01-01 00:00:00.033#!#8
+MIN Results#!#Regular MIN#!#1#!#1900-01-01 00:00:00.033#!#8
+MIN Results#!#MIN with ISNULL#!#2#!#1900-01-01 00:00:00.06#!#8
+MIN Results#!#Regular MIN#!#2#!#1900-01-01 00:00:00.06#!#8
+MIN Results#!#MIN with ISNULL#!#3#!#1900-01-01 00:00:00.033#!#8
+MIN Results#!#Regular MIN#!#3#!#1900-01-01 00:00:00.033#!#8
 ~~END~~
 
 
