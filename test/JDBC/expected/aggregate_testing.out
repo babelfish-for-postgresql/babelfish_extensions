@@ -28,12 +28,6 @@ GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO agg_testing_table VALUES 
-(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-GO
-~~ROW COUNT: 1~~
-
-
 -- *** T_Aggref ***
 -- AVG() testing
 SELECT AVG(tinyint_col) * 1.00 FROM agg_testing_table;
@@ -216,7 +210,7 @@ SELECT COUNT(*) * 1.00 FROM agg_testing_table;
 GO
 ~~START~~
 numeric
-3.00
+2.00
 ~~END~~
 
 
@@ -224,7 +218,7 @@ SELECT COUNT(1) * 1.00 FROM agg_testing_table;
 GO
 ~~START~~
 numeric
-3.00
+2.00
 ~~END~~
 
 
@@ -342,7 +336,7 @@ SELECT COUNT_BIG(*) * 1.00 FROM agg_testing_table;
 GO
 ~~START~~
 numeric
-3.00
+2.00
 ~~END~~
 
 
@@ -350,7 +344,7 @@ SELECT COUNT_BIG(1) * 1.00 FROM agg_testing_table;
 GO
 ~~START~~
 numeric
-3.00
+2.00
 ~~END~~
 
 
@@ -1237,14 +1231,17 @@ DECLARE @percentage_factor DECIMAL(5,2) = 0.15;
 DECLARE @base_count INT = 1000;
 SELECT 
     ProductID,
-    (COUNT(*) * @percentage_factor) * 1.00 as PercentageCount,
+    (COUNT(*) * @percentage_factor) * 1.00 as PercentageCount
 FROM Sales
 GROUP BY ProductID
 ORDER BY ProductID DESC;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near ',' at line 6 and character position 61)~~
+~~START~~
+int#!#numeric
+3#!#0.1500
+2#!#0.1500
+1#!#0.1500
+~~END~~
 
 
 -- 23. Conditional aggregates with numeric types

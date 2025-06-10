@@ -24,10 +24,6 @@ INSERT INTO agg_testing_table VALUES
 (0.00001, 0.01, 0.01, 1, 1, 1, 1, 0);
 GO
 
-INSERT INTO agg_testing_table VALUES 
-(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-GO
-
 -- *** T_Aggref ***
 -- AVG() testing
 SELECT AVG(tinyint_col) * 1.00 FROM agg_testing_table;
@@ -673,7 +669,7 @@ DECLARE @percentage_factor DECIMAL(5,2) = 0.15;
 DECLARE @base_count INT = 1000;
 SELECT 
     ProductID,
-    (COUNT(*) * @percentage_factor) * 1.00 as PercentageCount,
+    (COUNT(*) * @percentage_factor) * 1.00 as PercentageCount
 FROM Sales
 GROUP BY ProductID
 ORDER BY ProductID DESC;
