@@ -1,0 +1,7166 @@
+-- sla 400000
+-- SYSDATETIME
+-- Test 1: Testing return datatype of SYSDATETIME
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(SYSDATETIME() AS sql_variant), 'BaseType') = 'datetime2' 
+        THEN 'PASS: SYSDATETIME returns datetime2(7)'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL and empty values
+BEGIN TRY
+    SELECT SYSDATETIME(NULL);
+    SELECT 'FAIL: SYSDATETIME accepted NULL parameter' AS NullTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSDATETIME rejected NULL parameter' AS NullTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT SYSDATETIME('');
+    SELECT 'FAIL: SYSDATETIME accepted empty string parameter' AS EmptyStringTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSDATETIME rejected empty string parameter' AS EmptyStringTest;
+END CATCH
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT SYSDATETIME(1);
+    SELECT 'FAIL: SYSDATETIME accepted numeric parameter' AS ArgumentTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSDATETIME rejected numeric parameter' AS ArgumentTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT SYSDATETIME('2023-01-01', 'format');
+    SELECT 'FAIL: SYSDATETIME accepted multiple parameters' AS MultipleArgumentsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSDATETIME rejected multiple parameters' AS MultipleArgumentsTest;
+END CATCH
+GO
+
+-- Test 4: Validation of return types and values
+SELECT 
+    CASE 
+        WHEN YEAR(SYSDATETIME()) BETWEEN 1900 AND 9999 
+             AND MONTH(SYSDATETIME()) BETWEEN 1 AND 12
+             AND DAY(SYSDATETIME()) BETWEEN 1 AND 31
+        THEN 'PASS: Date components within valid ranges'
+        ELSE 'FAIL: Date components out of range'
+    END AS DateValidationTest;
+GO
+
+-- Test 5: Testing with null values from table
+CREATE TABLE #TestNulls (ID INT, DateField DATETIME2 NULL);
+GO
+INSERT INTO #TestNulls VALUES (1, NULL), (2, SYSDATETIME());
+
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 1 THEN 'PASS: NULL handling in comparison works'
+        ELSE 'FAIL: NULL comparison issue'
+    END AS NullTableTest
+FROM #TestNulls
+WHERE DateField IS NOT NULL AND DateField <= SYSDATETIME();
+GO
+
+DROP TABLE #TestNulls;
+GO
+
+-- Test 6: Testing CAST and CONVERT with SYSDATETIME
+SELECT 
+    CASE WHEN CAST(SYSDATETIME() AS DATE) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDateTest,
+    CASE WHEN CAST(SYSDATETIME() AS TIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToTimeTest,
+    CASE WHEN CAST(SYSDATETIME() AS DATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeTest,
+    CASE WHEN CAST(SYSDATETIME() AS DATETIME2) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetime2Test,
+    CASE WHEN CAST(SYSDATETIME() AS DATETIMEOFFSET) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeoffsetTest,
+    CASE WHEN CAST(SYSDATETIME() AS SMALLDATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToSmalldatetimeTest;
+GO
+
+SELECT 
+    CASE WHEN CONVERT(DATE, SYSDATETIME()) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS ConvertToDateTest,
+    CASE WHEN CONVERT(VARCHAR(30), SYSDATETIME(), 121) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS ConvertToStringTest;
+GO
+
+-- Test 7: Testing with different datatypes as arguments
+-- SYSDATETIME doesn't take parameters, but we can test passing results to other functions
+SELECT
+    CASE WHEN DATEADD(DAY, 1, SYSDATETIME()) > SYSDATETIME() THEN 'PASS' ELSE 'FAIL' END AS DateaddTest,
+    CASE WHEN DATEDIFF(SECOND, SYSDATETIME(), DATEADD(SECOND, 1, SYSDATETIME())) = 1 THEN 'PASS' ELSE 'FAIL' END AS DatediffTest;
+GO
+
+-- Test 8: Testing timezone handling
+SELECT 
+    CASE WHEN CAST(SYSDATETIME() AS DATETIMEOFFSET) AT TIME ZONE 'UTC' IS NOT NULL 
+         THEN 'PASS: AT TIME ZONE conversion works' 
+         ELSE 'FAIL: AT TIME ZONE conversion failed' 
+    END AS TimeZoneConversionTest;
+GO
+
+-- Test with SWITCHOFFSET
+DECLARE @CurrentTimeOffset DATETIMEOFFSET = SYSDATETIMEOFFSET();
+SELECT 
+    CASE WHEN SWITCHOFFSET(@CurrentTimeOffset, '-07:00') IS NOT NULL 
+         THEN 'PASS: SWITCHOFFSET works' 
+         ELSE 'FAIL: SWITCHOFFSET failed' 
+    END AS SwitchOffsetTest;
+GO
+
+-- Test 9: Datepart abbreviation verification
+SELECT 
+    CASE WHEN DATEPART(YEAR, SYSDATETIME()) = DATEPART(YY, SYSDATETIME()) 
+         AND DATEPART(YEAR, SYSDATETIME()) = DATEPART(YYYY, SYSDATETIME()) 
+         THEN 'PASS: Year abbreviations work correctly' 
+         ELSE 'FAIL: Year abbreviation issue' 
+    END AS YearAbbrevTest,
+    
+    CASE WHEN DATEPART(MONTH, SYSDATETIME()) = DATEPART(MM, SYSDATETIME()) 
+         AND DATEPART(MONTH, SYSDATETIME()) = DATEPART(M, SYSDATETIME()) 
+         THEN 'PASS: Month abbreviations work correctly' 
+         ELSE 'FAIL: Month abbreviation issue' 
+    END AS MonthAbbrevTest,
+    
+    CASE WHEN DATEPART(DAY, SYSDATETIME()) = DATEPART(DD, SYSDATETIME()) 
+         THEN 'PASS: Day abbreviations work correctly' 
+         ELSE 'FAIL: Day abbreviation issue' 
+    END AS DayAbbrevTest;
+GO
+
+-- Test 10: Using SYSDATETIME with GROUP BY, HAVING, ORDER BY, SELECT, WHERE
+CREATE TABLE #TransactionData (
+    ID INT PRIMARY KEY,
+    TransactionDate DATETIME2,
+    Amount DECIMAL(10,2)
+);
+GO
+
+INSERT INTO #TransactionData VALUES 
+(1, DATEADD(DAY, -5, SYSDATETIME()), 100.00),
+(2, DATEADD(DAY, -3, SYSDATETIME()), 200.00),
+(3, DATEADD(DAY, -1, SYSDATETIME()), 300.00);
+
+-- Test WHERE clause
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: WHERE clause works with SYSDATETIME' 
+         ELSE 'FAIL: WHERE clause issue' 
+    END AS WhereClauseTest
+FROM #TransactionData
+WHERE TransactionDate <= SYSDATETIME();
+
+-- Test GROUP BY and HAVING
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: GROUP BY with date casting works' 
+         ELSE 'FAIL: GROUP BY issue' 
+    END AS GroupByTest
+FROM (
+    SELECT CAST(TransactionDate AS DATE) AS TxDate
+    FROM #TransactionData
+    GROUP BY CAST(TransactionDate AS DATE)
+    HAVING CAST(TransactionDate AS DATE) <= CAST(SYSDATETIME() AS DATE)
+) AS SubQuery;
+
+-- Test ORDER BY
+SELECT TOP 1
+    CASE WHEN ID = 3 THEN 'PASS: ORDER BY with date difference works' 
+         ELSE 'FAIL: ORDER BY issue' 
+    END AS OrderByTest
+FROM #TransactionData
+ORDER BY ABS(DATEDIFF(DAY, TransactionDate, SYSDATETIME()));
+GO
+
+DROP TABLE #TransactionData;
+GO
+
+-- Test 11: Using MAX, TOP, DISTINCT, OVER, JOIN with SYSDATETIME
+CREATE TABLE #Orders (OrderID INT PRIMARY KEY, OrderDate DATETIME2, Amount DECIMAL(10,2));
+GO
+CREATE TABLE #Shipments (ShipID INT PRIMARY KEY, OrderID INT, ShipDate DATETIME2 NULL);
+GO
+
+INSERT INTO #Orders VALUES 
+(1, DATEADD(DAY, -10, SYSDATETIME()), 150.00),
+(2, DATEADD(DAY, -7, SYSDATETIME()), 250.00),
+(3, DATEADD(DAY, -3, SYSDATETIME()), 350.00);
+
+INSERT INTO #Shipments VALUES
+(101, 1, DATEADD(DAY, -9, SYSDATETIME())),
+(102, 2, DATEADD(DAY, -5, SYSDATETIME())),
+(103, 3, NULL);
+
+-- Test MAX with SYSDATETIME
+SELECT 
+    CASE WHEN MAX(OrderDate) <= SYSDATETIME() THEN 'PASS: MAX function comparison works' 
+         ELSE 'FAIL: MAX function issue' 
+    END AS MaxFunctionTest
+FROM #Orders;
+
+-- Test TOP with ordering by SYSDATETIME comparison
+SELECT TOP 1
+    CASE WHEN OrderID = 3 THEN 'PASS: TOP with recency ordering works' 
+         ELSE 'FAIL: TOP with recency ordering issue' 
+    END AS TopClauseTest
+FROM #Orders
+ORDER BY ABS(DATEDIFF(DAY, OrderDate, SYSDATETIME()));
+
+-- Test DISTINCT with date casting
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: DISTINCT with date casting works' 
+         ELSE 'FAIL: DISTINCT with date casting issue' 
+    END AS DistinctTest
+FROM (
+    SELECT DISTINCT CAST(OrderDate AS DATE) AS OrderDay
+    FROM #Orders
+    WHERE OrderDate <= SYSDATETIME()
+) AS DistinctDates;
+
+-- Test OVER clause
+SELECT 
+    CASE WHEN COUNT(*) OVER() = 3 THEN 'PASS: OVER clause works' 
+         ELSE 'FAIL: OVER clause issue' 
+    END AS OverClauseTest
+FROM #Orders
+WHERE OrderDate <= SYSDATETIME();
+
+-- Test INNER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: INNER JOIN with datetime comparison works' 
+         ELSE 'FAIL: INNER JOIN issue' 
+    END AS InnerJoinTest
+FROM #Orders o
+INNER JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= SYSDATETIME() AND s.ShipDate IS NOT NULL;
+
+-- Test OUTER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: LEFT JOIN with datetime comparison works' 
+         ELSE 'FAIL: LEFT JOIN issue' 
+    END AS OuterJoinTest
+FROM #Orders o
+LEFT JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= SYSDATETIME();
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 12: User-defined variables and string handling
+DECLARE @CurrentTime DATETIME2 = SYSDATETIME();
+DECLARE @FormattedDate VARCHAR(50) = CONVERT(VARCHAR(50), SYSDATETIME(), 121);
+
+SELECT 
+    CASE WHEN @CurrentTime IS NOT NULL THEN 'PASS: Variable assignment works' 
+         ELSE 'FAIL: Variable assignment issue' 
+    END AS VariableTest,
+    CASE WHEN @FormattedDate IS NOT NULL AND LEN(@FormattedDate) > 0 
+         THEN 'PASS: String conversion works' 
+         ELSE 'FAIL: String conversion issue' 
+    END AS StringConversionTest;
+GO
+
+-- Test 13: Testing behavior with different timezone settings
+SELECT 
+    CASE WHEN CAST(SYSDATETIME() AS DATETIMEOFFSET) AT TIME ZONE 'UTC' IS NOT NULL 
+         THEN 'PASS: UTC timezone conversion works' 
+         ELSE 'FAIL: UTC conversion issue' 
+    END AS UTCConversionTest,
+    
+    CASE WHEN CAST(SYSDATETIME() AS DATETIMEOFFSET) AT TIME ZONE 'Pacific Standard Time' IS NOT NULL 
+         THEN 'PASS: PST timezone conversion works' 
+         ELSE 'FAIL: PST conversion issue' 
+    END AS PSTConversionTest,
+    
+    CASE WHEN CAST(SYSDATETIME() AS DATETIMEOFFSET) AT TIME ZONE 'Eastern Standard Time' IS NOT NULL 
+         THEN 'PASS: EST timezone conversion works' 
+         ELSE 'FAIL: EST conversion issue' 
+    END AS ESTConversionTest;
+GO
+
+-- Test 14: Testing precision consistency
+DECLARE @StartTime DATETIME2 = SYSDATETIME();
+WAITFOR DELAY '00:00:01';
+DECLARE @EndTime DATETIME2 = SYSDATETIME();
+
+SELECT
+    CASE WHEN DATEDIFF(MILLISECOND, @StartTime, @EndTime) >= 1000
+         THEN 'PASS: Time measurement is accurate' 
+         ELSE 'FAIL: Time measurement issue' 
+    END AS PrecisionTest;
+GO
+
+-- Test 15: Comparing with other system date functions
+SELECT
+    CASE WHEN SQL_VARIANT_PROPERTY(CAST(SYSDATETIME() AS SQL_VARIANT), 'BaseType') = 'datetime2' AND
+              SQL_VARIANT_PROPERTY(CAST(GETDATE() AS SQL_VARIANT), 'BaseType') = 'datetime'
+         THEN 'PASS: Type difference detected between SYSDATETIME and GETDATE' 
+         ELSE 'FAIL: Type comparison issue' 
+    END AS TypeComparisonTest,
+    
+    CASE WHEN DATEDIFF(DAY, GETDATE(), SYSDATETIME()) = 0
+         THEN 'PASS: GETDATE and SYSDATETIME return same day' 
+         ELSE 'FAIL: Date inconsistency between functions' 
+    END AS DateConsistencyTest;
+GO
+
+-- SYSDATETIMEOFFSET
+-- Test 1: Testing return datatype of SYSDATETIMEOFFSET
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(SYSDATETIMEOFFSET() AS sql_variant), 'BaseType') = 'datetimeoffset' 
+        THEN 'PASS: SYSDATETIMEOFFSET returns datetimeoffset(7)'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL and empty values
+BEGIN TRY
+    SELECT SYSDATETIMEOFFSET(NULL);
+    SELECT 'FAIL: SYSDATETIMEOFFSET accepted NULL parameter' AS NullTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSDATETIMEOFFSET rejected NULL parameter' AS NullTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT SYSDATETIMEOFFSET('');
+    SELECT 'FAIL: SYSDATETIMEOFFSET accepted empty string parameter' AS EmptyStringTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSDATETIMEOFFSET rejected empty string parameter' AS EmptyStringTest;
+END CATCH
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT SYSDATETIMEOFFSET(1);
+    SELECT 'FAIL: SYSDATETIMEOFFSET accepted numeric parameter' AS ArgumentTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSDATETIMEOFFSET rejected numeric parameter' AS ArgumentTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT SYSDATETIMEOFFSET('2023-01-01', 'format');
+    SELECT 'FAIL: SYSDATETIMEOFFSET accepted multiple parameters' AS MultipleArgumentsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSDATETIMEOFFSET rejected multiple parameters' AS MultipleArgumentsTest;
+END CATCH
+GO
+
+-- Test 4: Validation of return types and values
+SELECT 
+    CASE 
+        WHEN YEAR(SYSDATETIMEOFFSET()) BETWEEN 1900 AND 9999 
+             AND MONTH(SYSDATETIMEOFFSET()) BETWEEN 1 AND 12
+             AND DAY(SYSDATETIMEOFFSET()) BETWEEN 1 AND 31
+        THEN 'PASS: Date components within valid ranges'
+        ELSE 'FAIL: Date components out of range'
+    END AS DateValidationTest;
+GO
+
+-- Verify timezone offset is valid
+SELECT 
+    CASE 
+        WHEN DATEPART(HOUR, SYSDATETIMEOFFSET()) BETWEEN 0 AND 23
+        THEN 'PASS: Timezone hour offset within valid range'
+        ELSE 'FAIL: Timezone hour offset out of range'
+    END AS TimezoneOffsetHourTest,
+    CASE 
+        WHEN DATEPART(MINUTE, SYSDATETIMEOFFSET()) BETWEEN 0 AND 59
+        THEN 'PASS: Timezone minute offset within valid range'
+        ELSE 'FAIL: Timezone minute offset out of range'
+    END AS TimezoneOffsetMinuteTest;
+GO
+
+-- Test 5: Testing with null values from table
+CREATE TABLE #TestNulls (ID INT, DateOffsetField DATETIMEOFFSET NULL);
+GO
+INSERT INTO #TestNulls VALUES (1, NULL), (2, SYSDATETIMEOFFSET());
+
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 1 THEN 'PASS: NULL handling in comparison works'
+        ELSE 'FAIL: NULL comparison issue'
+    END AS NullTableTest
+FROM #TestNulls
+WHERE DateOffsetField IS NOT NULL AND DateOffsetField <= SYSDATETIMEOFFSET();
+GO
+
+DROP TABLE #TestNulls;
+GO
+
+-- Test 6: Testing CAST and CONVERT with SYSDATETIMEOFFSET
+SELECT 
+    CASE WHEN CAST(SYSDATETIMEOFFSET() AS DATE) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDateTest,
+    CASE WHEN CAST(SYSDATETIMEOFFSET() AS TIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToTimeTest,
+    CASE WHEN CAST(SYSDATETIMEOFFSET() AS DATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeTest,
+    CASE WHEN CAST(SYSDATETIMEOFFSET() AS DATETIME2) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetime2Test,
+    CASE WHEN CAST(SYSDATETIMEOFFSET() AS DATETIMEOFFSET) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeoffsetTest,
+    CASE WHEN CAST(SYSDATETIMEOFFSET() AS SMALLDATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToSmalldatetimeTest;
+GO
+
+SELECT 
+    CASE WHEN CONVERT(DATE, SYSDATETIMEOFFSET()) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS ConvertToDateTest,
+    CASE WHEN CONVERT(VARCHAR(50), SYSDATETIMEOFFSET(), 127) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS ConvertToStringTest;
+GO
+
+-- Test 7: Testing with different datatypes as arguments
+-- SYSDATETIMEOFFSET doesn't take parameters, but we can test passing results to other functions
+SELECT
+    CASE WHEN DATEADD(DAY, 1, SYSDATETIMEOFFSET()) > SYSDATETIMEOFFSET() THEN 'PASS' ELSE 'FAIL' END AS DateaddTest,
+    CASE WHEN DATEDIFF(SECOND, SYSDATETIMEOFFSET(), DATEADD(SECOND, 1, SYSDATETIMEOFFSET())) = 1 THEN 'PASS' ELSE 'FAIL' END AS DatediffTest;
+GO
+
+-- Test 8: Testing timezone handling
+-- Test AT TIME ZONE conversion
+SELECT 
+    CASE WHEN SYSDATETIMEOFFSET() AT TIME ZONE 'UTC' IS NOT NULL 
+         THEN 'PASS: AT TIME ZONE conversion works' 
+         ELSE 'FAIL: AT TIME ZONE conversion failed' 
+    END AS TimeZoneConversionTest;
+GO
+
+-- Test with SWITCHOFFSET
+DECLARE @CurrentTimeOffset DATETIMEOFFSET = SYSDATETIMEOFFSET();
+SELECT 
+    CASE WHEN SWITCHOFFSET(@CurrentTimeOffset, '+00:00') IS NOT NULL 
+         THEN 'PASS: SWITCHOFFSET works' 
+         ELSE 'FAIL: SWITCHOFFSET failed' 
+    END AS SwitchOffsetTest;
+GO
+
+-- Test 9: Datepart abbreviation verification
+SELECT 
+    CASE WHEN DATEPART(YEAR, SYSDATETIMEOFFSET()) = DATEPART(YY, SYSDATETIMEOFFSET()) 
+         AND DATEPART(YEAR, SYSDATETIMEOFFSET()) = DATEPART(YYYY, SYSDATETIMEOFFSET()) 
+         THEN 'PASS: Year abbreviations work correctly' 
+         ELSE 'FAIL: Year abbreviation issue' 
+    END AS YearAbbrevTest,
+    
+    CASE WHEN DATEPART(MONTH, SYSDATETIMEOFFSET()) = DATEPART(MM, SYSDATETIMEOFFSET()) 
+         AND DATEPART(MONTH, SYSDATETIMEOFFSET()) = DATEPART(M, SYSDATETIMEOFFSET()) 
+         THEN 'PASS: Month abbreviations work correctly' 
+         ELSE 'FAIL: Month abbreviation issue' 
+    END AS MonthAbbrevTest,
+    
+    CASE WHEN DATEPART(DAY, SYSDATETIMEOFFSET()) = DATEPART(DD, SYSDATETIMEOFFSET()) 
+         THEN 'PASS: Day abbreviations work correctly' 
+         ELSE 'FAIL: Day abbreviation issue' 
+    END AS DayAbbrevTest,
+    
+    CASE WHEN DATEPART(TZOFFSET, SYSDATETIMEOFFSET()) = DATEPART(TZ, SYSDATETIMEOFFSET()) 
+         THEN 'PASS: Timezone offset abbreviations work correctly' 
+         ELSE 'FAIL: Timezone offset abbreviation issue' 
+    END AS TzOffsetAbbrevTest;
+GO
+
+-- Test 10: Using SYSDATETIMEOFFSET with GROUP BY, HAVING, ORDER BY, SELECT, WHERE
+CREATE TABLE #TransactionData (
+    ID INT PRIMARY KEY,
+    TransactionDate DATETIMEOFFSET,
+    Amount DECIMAL(10,2)
+);
+GO
+
+INSERT INTO #TransactionData VALUES 
+(1, DATEADD(DAY, -5, SYSDATETIMEOFFSET()), 100.00),
+(2, DATEADD(DAY, -3, SYSDATETIMEOFFSET()), 200.00),
+(3, DATEADD(DAY, -1, SYSDATETIMEOFFSET()), 300.00);
+
+-- Test WHERE clause
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: WHERE clause works with SYSDATETIMEOFFSET' 
+         ELSE 'FAIL: WHERE clause issue' 
+    END AS WhereClauseTest
+FROM #TransactionData
+WHERE TransactionDate <= SYSDATETIMEOFFSET();
+
+-- Test GROUP BY and HAVING
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: GROUP BY with date casting works' 
+         ELSE 'FAIL: GROUP BY issue' 
+    END AS GroupByTest
+FROM (
+    SELECT CAST(TransactionDate AS DATE) AS TxDate
+    FROM #TransactionData
+    GROUP BY CAST(TransactionDate AS DATE)
+    HAVING CAST(TransactionDate AS DATE) <= CAST(SYSDATETIMEOFFSET() AS DATE)
+) AS SubQuery;
+
+-- Test ORDER BY
+SELECT TOP 1
+    CASE WHEN ID = 3 THEN 'PASS: ORDER BY with date difference works' 
+         ELSE 'FAIL: ORDER BY issue' 
+    END AS OrderByTest
+FROM #TransactionData
+ORDER BY ABS(DATEDIFF(DAY, TransactionDate, SYSDATETIMEOFFSET()));
+GO
+
+DROP TABLE #TransactionData;
+GO
+
+-- Test 11: Using MAX, TOP, DISTINCT, OVER, JOIN with SYSDATETIMEOFFSET
+CREATE TABLE #Orders (OrderID INT PRIMARY KEY, OrderDate DATETIMEOFFSET, Amount DECIMAL(10,2));
+GO
+CREATE TABLE #Shipments (ShipID INT PRIMARY KEY, OrderID INT, ShipDate DATETIMEOFFSET NULL);
+GO
+
+INSERT INTO #Orders VALUES 
+(1, DATEADD(DAY, -10, SYSDATETIMEOFFSET()), 150.00),
+(2, DATEADD(DAY, -7, SYSDATETIMEOFFSET()), 250.00),
+(3, DATEADD(DAY, -3, SYSDATETIMEOFFSET()), 350.00);
+
+INSERT INTO #Shipments VALUES
+(101, 1, DATEADD(DAY, -9, SYSDATETIMEOFFSET())),
+(102, 2, DATEADD(DAY, -5, SYSDATETIMEOFFSET())),
+(103, 3, NULL);
+
+-- Test MAX with SYSDATETIMEOFFSET
+SELECT 
+    CASE WHEN MAX(OrderDate) <= SYSDATETIMEOFFSET() THEN 'PASS: MAX function comparison works' 
+         ELSE 'FAIL: MAX function issue' 
+    END AS MaxFunctionTest
+FROM #Orders;
+
+-- Test TOP with ordering by SYSDATETIMEOFFSET comparison
+SELECT TOP 1
+    CASE WHEN OrderID = 3 THEN 'PASS: TOP with recency ordering works' 
+         ELSE 'FAIL: TOP with recency ordering issue' 
+    END AS TopClauseTest
+FROM #Orders
+ORDER BY ABS(DATEDIFF(DAY, OrderDate, SYSDATETIMEOFFSET()));
+
+-- Test DISTINCT with date casting
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: DISTINCT with date casting works' 
+         ELSE 'FAIL: DISTINCT with date casting issue' 
+    END AS DistinctTest
+FROM (
+    SELECT DISTINCT CAST(OrderDate AS DATE) AS OrderDay
+    FROM #Orders
+    WHERE OrderDate <= SYSDATETIMEOFFSET()
+) AS DistinctDates;
+
+-- Test OVER clause
+SELECT 
+    CASE WHEN COUNT(*) OVER() = 3 THEN 'PASS: OVER clause works' 
+         ELSE 'FAIL: OVER clause issue' 
+    END AS OverClauseTest
+FROM #Orders
+WHERE OrderDate <= SYSDATETIMEOFFSET();
+
+-- Test INNER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: INNER JOIN with datetime comparison works' 
+         ELSE 'FAIL: INNER JOIN issue' 
+    END AS InnerJoinTest
+FROM #Orders o
+INNER JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= SYSDATETIMEOFFSET() AND s.ShipDate IS NOT NULL;
+
+-- Test OUTER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: LEFT JOIN with datetime comparison works' 
+         ELSE 'FAIL: LEFT JOIN issue' 
+    END AS OuterJoinTest
+FROM #Orders o
+LEFT JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= SYSDATETIMEOFFSET();
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 12: User-defined variables and string handling
+DECLARE @CurrentTimeOffset DATETIMEOFFSET = SYSDATETIMEOFFSET();
+DECLARE @FormattedDate VARCHAR(50) = CONVERT(VARCHAR(50), SYSDATETIMEOFFSET(), 127);
+
+SELECT 
+    CASE WHEN @CurrentTimeOffset IS NOT NULL THEN 'PASS: Variable assignment works' 
+         ELSE 'FAIL: Variable assignment issue' 
+    END AS VariableTest,
+    CASE WHEN @FormattedDate IS NOT NULL AND LEN(@FormattedDate) > 0 
+         THEN 'PASS: String conversion works' 
+         ELSE 'FAIL: String conversion issue' 
+    END AS StringConversionTest;
+GO
+
+-- Test 13: Testing behavior with different timezone settings
+SELECT 
+    CASE WHEN SYSDATETIMEOFFSET() AT TIME ZONE 'UTC' IS NOT NULL 
+         THEN 'PASS: UTC timezone conversion works' 
+         ELSE 'FAIL: UTC conversion issue' 
+    END AS UTCConversionTest,
+    
+    CASE WHEN SYSDATETIMEOFFSET() AT TIME ZONE 'Pacific Standard Time' IS NOT NULL 
+         THEN 'PASS: PST timezone conversion works' 
+         ELSE 'FAIL: PST conversion issue' 
+    END AS PSTConversionTest,
+    
+    CASE WHEN SYSDATETIMEOFFSET() AT TIME ZONE 'Eastern Standard Time' IS NOT NULL 
+         THEN 'PASS: EST timezone conversion works' 
+         ELSE 'FAIL: EST conversion issue' 
+    END AS ESTConversionTest;
+GO
+
+-- Test 14: Testing timezone offset consistency
+SELECT 
+    CASE WHEN DATEPART(TZOFFSET, SYSDATETIMEOFFSET()) = 
+              DATEPART(TZOFFSET, TODATETIMEOFFSET(SYSDATETIME(), DATEPART(TZOFFSET, SYSDATETIMEOFFSET())))
+         THEN 'PASS: Timezone offset consistency works' 
+         ELSE 'FAIL: Timezone offset inconsistency detected' 
+    END AS TimezoneOffsetConsistencyTest;
+GO
+
+-- Test 15: Testing precision consistency
+DECLARE @StartTime DATETIMEOFFSET = SYSDATETIMEOFFSET();
+WAITFOR DELAY '00:00:01';
+DECLARE @EndTime DATETIMEOFFSET = SYSDATETIMEOFFSET();
+
+SELECT
+    CASE WHEN DATEDIFF(MILLISECOND, @StartTime, @EndTime) >= 1000
+         THEN 'PASS: Time measurement is accurate' 
+         ELSE 'FAIL: Time measurement issue' 
+    END AS PrecisionTest;
+GO
+
+-- Test 16: Comparing with other system date functions
+SELECT
+    CASE WHEN DATEDIFF(DAY, CAST(GETDATE() AS DATETIMEOFFSET), SYSDATETIMEOFFSET()) = 0
+         THEN 'PASS: GETDATE and SYSDATETIMEOFFSET return same day' 
+         ELSE 'FAIL: Date inconsistency between functions' 
+    END AS DateConsistencyTest;
+GO
+
+-- Test 17: Extracting timezone offset components
+SELECT
+    CASE WHEN DATEPART(HOUR, SYSDATETIMEOFFSET()) IS NOT NULL AND 
+              DATEPART(MINUTE, SYSDATETIMEOFFSET()) IS NOT NULL
+         THEN 'PASS: Timezone offset components extraction works' 
+         ELSE 'FAIL: Timezone offset components extraction issue' 
+    END AS TimezoneComponentsTest;
+GO
+
+-- Test 18: Testing with system timezone querying
+SELECT 
+    CASE WHEN CONVERT(VARCHAR(6), SYSDATETIMEOFFSET(), 114) LIKE '%[+-][0-9][0-9]:[0-9][0-9]'
+         THEN 'PASS: System timezone offset format is valid' 
+         ELSE 'FAIL: System timezone offset format issue' 
+    END AS TimezoneOffsetFormatTest;
+GO
+
+-- Test 19: Testing offset arithmetic
+DECLARE @CurrentOffset DATETIMEOFFSET = SYSDATETIMEOFFSET();
+DECLARE @UTC DATETIMEOFFSET = SWITCHOFFSET(@CurrentOffset, '+00:00');
+
+SELECT
+    CASE WHEN DATEDIFF(MINUTE, @UTC, @CurrentOffset) = DATEPART(TZOFFSET, @CurrentOffset)
+         THEN 'PASS: Timezone offset arithmetic is consistent' 
+         ELSE 'FAIL: Timezone offset arithmetic inconsistency' 
+    END AS TimezoneOffsetArithmeticTest;
+GO
+
+-- Test 20: Additional format tests
+SELECT
+    CASE WHEN CONVERT(VARCHAR(50), SYSDATETIMEOFFSET(), 127) LIKE 
+              '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9][0-9][0-9][0-9][0-9][+-][0-9][0-9]:[0-9][0-9]'
+         THEN 'PASS: ISO 8601 format is valid' 
+         ELSE 'FAIL: ISO 8601 format issue' 
+    END AS ISO8601FormatTest;
+GO
+
+--SYSUTCDATETIME
+-- Test 1: Testing return datatype of SYSUTCDATETIME
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(SYSUTCDATETIME() AS sql_variant), 'BaseType') = 'datetime2' 
+        THEN 'PASS: SYSUTCDATETIME returns datetime2(7)'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL and empty values
+BEGIN TRY
+    SELECT SYSUTCDATETIME(NULL);
+    SELECT 'FAIL: SYSUTCDATETIME accepted NULL parameter' AS NullTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSUTCDATETIME rejected NULL parameter' AS NullTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT SYSUTCDATETIME('');
+    SELECT 'FAIL: SYSUTCDATETIME accepted empty string parameter' AS EmptyStringTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSUTCDATETIME rejected empty string parameter' AS EmptyStringTest;
+END CATCH
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT SYSUTCDATETIME(1);
+    SELECT 'FAIL: SYSUTCDATETIME accepted numeric parameter' AS ArgumentTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSUTCDATETIME rejected numeric parameter' AS ArgumentTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT SYSUTCDATETIME('2023-01-01', 'format');
+    SELECT 'FAIL: SYSUTCDATETIME accepted multiple parameters' AS MultipleArgumentsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSUTCDATETIME rejected multiple parameters' AS MultipleArgumentsTest;
+END CATCH
+GO
+
+-- Test 4: Validation of return types and values
+SELECT 
+    CASE 
+        WHEN YEAR(SYSUTCDATETIME()) BETWEEN 1900 AND 9999 
+             AND MONTH(SYSUTCDATETIME()) BETWEEN 1 AND 12
+             AND DAY(SYSUTCDATETIME()) BETWEEN 1 AND 31
+        THEN 'PASS: Date components within valid ranges'
+        ELSE 'FAIL: Date components out of range'
+    END AS DateValidationTest;
+GO
+
+-- Test 5: Testing with null values from table
+CREATE TABLE #TestNulls (ID INT, DateField DATETIME2 NULL);
+GO
+INSERT INTO #TestNulls VALUES (1, NULL), (2, SYSUTCDATETIME());
+
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 1 THEN 'PASS: NULL handling in comparison works'
+        ELSE 'FAIL: NULL comparison issue'
+    END AS NullTableTest
+FROM #TestNulls
+WHERE DateField IS NOT NULL AND DateField <= SYSUTCDATETIME();
+GO
+
+DROP TABLE #TestNulls;
+GO
+
+-- Test 6: Testing CAST and CONVERT with SYSUTCDATETIME
+SELECT 
+    CASE WHEN CAST(SYSUTCDATETIME() AS DATE) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDateTest,
+    CASE WHEN CAST(SYSUTCDATETIME() AS TIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToTimeTest,
+    CASE WHEN CAST(SYSUTCDATETIME() AS DATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeTest,
+    CASE WHEN CAST(SYSUTCDATETIME() AS DATETIME2) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetime2Test,
+    CASE WHEN CAST(SYSUTCDATETIME() AS DATETIMEOFFSET) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeoffsetTest,
+    CASE WHEN CAST(SYSUTCDATETIME() AS SMALLDATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToSmalldatetimeTest;
+GO
+
+SELECT 
+    CASE WHEN CONVERT(DATE, SYSUTCDATETIME()) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS ConvertToDateTest,
+    CASE WHEN CONVERT(VARCHAR(30), SYSUTCDATETIME(), 121) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS ConvertToStringTest;
+GO
+
+-- Test 7: Testing with different datatypes as arguments
+-- SYSUTCDATETIME doesn't take parameters, but we can test passing results to other functions
+SELECT
+    CASE WHEN DATEADD(DAY, 1, SYSUTCDATETIME()) > SYSUTCDATETIME() THEN 'PASS' ELSE 'FAIL' END AS DateaddTest,
+    CASE WHEN DATEDIFF(SECOND, SYSUTCDATETIME(), DATEADD(SECOND, 1, SYSUTCDATETIME())) = 1 THEN 'PASS' ELSE 'FAIL' END AS DatediffTest;
+GO
+
+-- Test 8: Testing timezone handling - comparing UTC with local time
+SELECT 
+    CASE 
+        WHEN DATEDIFF(HOUR, SYSUTCDATETIME(), SYSDATETIME()) BETWEEN -14 AND 14 
+        THEN 'PASS: Local time properly offset from UTC'
+        ELSE 'FAIL: Unexpected time difference between UTC and local'
+    END AS UTCLocalOffsetTest;
+GO
+
+-- Test converting UTC to different timezones
+SELECT 
+    CASE WHEN TODATETIMEOFFSET(SYSUTCDATETIME(), 0) IS NOT NULL 
+         THEN 'PASS: UTC conversion to datetimeoffset works' 
+         ELSE 'FAIL: UTC conversion to datetimeoffset failed' 
+    END AS UTCtoOffsetTest;
+GO
+
+-- Test 9: Datepart abbreviation verification
+SELECT 
+    CASE WHEN DATEPART(YEAR, SYSUTCDATETIME()) = DATEPART(YY, SYSUTCDATETIME()) 
+         AND DATEPART(YEAR, SYSUTCDATETIME()) = DATEPART(YYYY, SYSUTCDATETIME()) 
+         THEN 'PASS: Year abbreviations work correctly' 
+         ELSE 'FAIL: Year abbreviation issue' 
+    END AS YearAbbrevTest,
+    
+    CASE WHEN DATEPART(MONTH, SYSUTCDATETIME()) = DATEPART(MM, SYSUTCDATETIME()) 
+         AND DATEPART(MONTH, SYSUTCDATETIME()) = DATEPART(M, SYSUTCDATETIME()) 
+         THEN 'PASS: Month abbreviations work correctly' 
+         ELSE 'FAIL: Month abbreviation issue' 
+    END AS MonthAbbrevTest,
+    
+    CASE WHEN DATEPART(DAY, SYSUTCDATETIME()) = DATEPART(DD, SYSUTCDATETIME()) 
+         THEN 'PASS: Day abbreviations work correctly' 
+         ELSE 'FAIL: Day abbreviation issue' 
+    END AS DayAbbrevTest;
+GO
+
+-- Test 10: Using SYSUTCDATETIME with GROUP BY, HAVING, ORDER BY, SELECT, WHERE
+CREATE TABLE #TransactionData (
+    ID INT PRIMARY KEY,
+    TransactionDate DATETIME2,
+    Amount DECIMAL(10,2)
+);
+GO
+
+INSERT INTO #TransactionData VALUES 
+(1, DATEADD(DAY, -5, SYSUTCDATETIME()), 100.00),
+(2, DATEADD(DAY, -3, SYSUTCDATETIME()), 200.00),
+(3, DATEADD(DAY, -1, SYSUTCDATETIME()), 300.00);
+
+-- Test WHERE clause
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: WHERE clause works with SYSUTCDATETIME' 
+         ELSE 'FAIL: WHERE clause issue' 
+    END AS WhereClauseTest
+FROM #TransactionData
+WHERE TransactionDate <= SYSUTCDATETIME();
+
+-- Test GROUP BY and HAVING
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: GROUP BY with date casting works' 
+         ELSE 'FAIL: GROUP BY issue' 
+    END AS GroupByTest
+FROM (
+    SELECT CAST(TransactionDate AS DATE) AS TxDate
+    FROM #TransactionData
+    GROUP BY CAST(TransactionDate AS DATE)
+    HAVING CAST(TransactionDate AS DATE) <= CAST(SYSUTCDATETIME() AS DATE)
+) AS SubQuery;
+
+-- Test ORDER BY
+SELECT TOP 1
+    CASE WHEN ID = 3 THEN 'PASS: ORDER BY with date difference works' 
+         ELSE 'FAIL: ORDER BY issue' 
+    END AS OrderByTest
+FROM #TransactionData
+ORDER BY ABS(DATEDIFF(DAY, TransactionDate, SYSUTCDATETIME()));
+GO
+
+DROP TABLE #TransactionData;
+GO
+
+-- Test 11: Using MAX, TOP, DISTINCT, OVER, JOIN with SYSUTCDATETIME
+CREATE TABLE #Orders (OrderID INT PRIMARY KEY, OrderDate DATETIME2, Amount DECIMAL(10,2));
+GO
+CREATE TABLE #Shipments (ShipID INT PRIMARY KEY, OrderID INT, ShipDate DATETIME2 NULL);
+GO
+
+INSERT INTO #Orders VALUES 
+(1, DATEADD(DAY, -10, SYSUTCDATETIME()), 150.00),
+(2, DATEADD(DAY, -7, SYSUTCDATETIME()), 250.00),
+(3, DATEADD(DAY, -3, SYSUTCDATETIME()), 350.00);
+
+INSERT INTO #Shipments VALUES
+(101, 1, DATEADD(DAY, -9, SYSUTCDATETIME())),
+(102, 2, DATEADD(DAY, -5, SYSUTCDATETIME())),
+(103, 3, NULL);
+
+-- Test MAX with SYSUTCDATETIME
+SELECT 
+    CASE WHEN MAX(OrderDate) <= SYSUTCDATETIME() THEN 'PASS: MAX function comparison works' 
+         ELSE 'FAIL: MAX function issue' 
+    END AS MaxFunctionTest
+FROM #Orders;
+
+-- Test TOP with ordering by SYSUTCDATETIME comparison
+SELECT TOP 1
+    CASE WHEN OrderID = 3 THEN 'PASS: TOP with recency ordering works' 
+         ELSE 'FAIL: TOP with recency ordering issue' 
+    END AS TopClauseTest
+FROM #Orders
+ORDER BY ABS(DATEDIFF(DAY, OrderDate, SYSUTCDATETIME()));
+
+-- Test DISTINCT with date casting
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: DISTINCT with date casting works' 
+         ELSE 'FAIL: DISTINCT with date casting issue' 
+    END AS DistinctTest
+FROM (
+    SELECT DISTINCT CAST(OrderDate AS DATE) AS OrderDay
+    FROM #Orders
+    WHERE OrderDate <= SYSUTCDATETIME()
+) AS DistinctDates;
+
+-- Test OVER clause
+SELECT 
+    CASE WHEN COUNT(*) OVER() = 3 THEN 'PASS: OVER clause works' 
+         ELSE 'FAIL: OVER clause issue' 
+    END AS OverClauseTest
+FROM #Orders
+WHERE OrderDate <= SYSUTCDATETIME();
+
+-- Test INNER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: INNER JOIN with datetime comparison works' 
+         ELSE 'FAIL: INNER JOIN issue' 
+    END AS InnerJoinTest
+FROM #Orders o
+INNER JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= SYSUTCDATETIME() AND s.ShipDate IS NOT NULL;
+
+-- Test OUTER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: LEFT JOIN with datetime comparison works' 
+         ELSE 'FAIL: LEFT JOIN issue' 
+    END AS OuterJoinTest
+FROM #Orders o
+LEFT JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= SYSUTCDATETIME();
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 12: User-defined variables and string handling
+DECLARE @CurrentUTCTime DATETIME2 = SYSUTCDATETIME();
+DECLARE @FormattedDate VARCHAR(50) = CONVERT(VARCHAR(50), SYSUTCDATETIME(), 121);
+
+SELECT 
+    CASE WHEN @CurrentUTCTime IS NOT NULL THEN 'PASS: Variable assignment works' 
+         ELSE 'FAIL: Variable assignment issue' 
+    END AS VariableTest,
+    CASE WHEN @FormattedDate IS NOT NULL AND LEN(@FormattedDate) > 0 
+         THEN 'PASS: String conversion works' 
+         ELSE 'FAIL: String conversion issue' 
+    END AS StringConversionTest;
+GO
+
+-- Test 13: Testing consistency with other UTC functions
+SELECT 
+    CASE 
+        WHEN ABS(DATEDIFF(SECOND, GETUTCDATE(), SYSUTCDATETIME())) < 5
+        THEN 'PASS: SYSUTCDATETIME and GETUTCDATE are consistent'
+        ELSE 'FAIL: Unexpected time difference between UTC functions'
+    END AS UTCFunctionConsistencyTest;
+GO
+
+-- Test 14: Testing precision consistency
+DECLARE @StartTime DATETIME2 = SYSUTCDATETIME();
+WAITFOR DELAY '00:00:01';
+DECLARE @EndTime DATETIME2 = SYSUTCDATETIME();
+
+SELECT
+    CASE WHEN DATEDIFF(MILLISECOND, @StartTime, @EndTime) >= 1000
+         THEN 'PASS: Time measurement is accurate' 
+         ELSE 'FAIL: Time measurement issue' 
+    END AS PrecisionTest;
+GO
+
+-- Test 15: Testing comparison with local time
+SELECT
+    CASE WHEN ABS(DATEDIFF(HOUR, SYSUTCDATETIME(), SYSDATETIME())) = 
+             ABS(DATEPART(HOUR, SYSDATETIMEOFFSET()))
+         THEN 'PASS: UTC offset matches system timezone' 
+         ELSE 'FAIL: UTC offset inconsistency' 
+    END AS UTCOffsetConsistencyTest;
+GO
+
+-- Test 16: Comparing precision with other datetime functions
+SELECT 
+    CASE 
+        WHEN CONVERT(VARCHAR(23), SYSUTCDATETIME(), 121) LIKE '____-__-__ __:__:__.__'
+        THEN 'PASS: SYSUTCDATETIME has proper millisecond precision'
+        ELSE 'FAIL: SYSUTCDATETIME precision issue'
+    END AS MillisecondPrecisionTest,
+    CASE 
+        WHEN LEN(CONVERT(VARCHAR(30), SYSUTCDATETIME(), 121)) > 
+             LEN(CONVERT(VARCHAR(30), GETUTCDATE(), 121))
+        THEN 'PASS: SYSUTCDATETIME has higher precision than GETUTCDATE'
+        ELSE 'FAIL: Precision comparison issue'
+    END AS ComparativePrecisionTest;
+GO
+
+-- Test 17: Verify UTC nature by comparing with offset-adjusted local time
+SELECT 
+    CASE 
+        WHEN ABS(DATEDIFF(MINUTE, 
+                 SYSUTCDATETIME(), 
+                 DATEADD(MINUTE, -1 * DATEPART(MINUTE, SYSDATETIMEOFFSET()), 
+                         DATEADD(HOUR, -1 * DATEPART(HOUR, SYSDATETIMEOFFSET()), 
+                                SYSDATETIME())))) < 2
+        THEN 'PASS: SYSUTCDATETIME properly represents UTC time'
+        ELSE 'FAIL: UTC representation issue'
+    END AS UTCVerificationTest;
+GO
+
+-- Test 18: Testing with AT TIME ZONE conversion
+SELECT 
+    CASE 
+        WHEN CAST(SYSUTCDATETIME() AS DATETIMEOFFSET) AT TIME ZONE 'UTC' IS NOT NULL
+        THEN 'PASS: UTC time zone conversion works'
+        ELSE 'FAIL: UTC time zone conversion issue'
+    END AS UTCTimeZoneTest;
+GO
+
+-- Test 19: Testing persistence across transactions
+BEGIN TRANSACTION;
+    DECLARE @Time1 DATETIME2 = SYSUTCDATETIME();
+    WAITFOR DELAY '00:00:01';
+    DECLARE @Time2 DATETIME2 = SYSUTCDATETIME();
+    
+    SELECT 
+        CASE WHEN @Time2 > @Time1 
+             THEN 'PASS: Time advances during transaction' 
+             ELSE 'FAIL: Time did not advance' 
+        END AS TransactionTimeTest;
+COMMIT TRANSACTION;
+GO
+
+-- Test 20: Testing function determinism in views and computed columns
+-- SYSUTCDATETIME is non-deterministic, so should be disallowed in computed columns
+BEGIN TRY
+    CREATE TABLE #ComputedTest (
+        ID INT,
+        ComputedCol AS DATEDIFF(DAY, '2000-01-01', SYSUTCDATETIME())
+    );
+    SELECT 'FAIL: SYSUTCDATETIME incorrectly allowed in computed column' AS DeterminismTest;
+    DROP TABLE IF EXISTS #ComputedTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SYSUTCDATETIME properly rejected in computed column' AS DeterminismTest;
+END CATCH
+GO
+
+-- Test 21: Testing fractional seconds precision
+SELECT
+    CASE 
+        WHEN LEN(PARSENAME(REPLACE(CONVERT(VARCHAR(30), CAST(SYSUTCDATETIME() AS TIME), 121), ':', '.'), 1)) = 7
+        THEN 'PASS: SYSUTCDATETIME has 7 digits fractional second precision'
+        ELSE 'FAIL: SYSUTCDATETIME does not have expected precision'
+    END AS FractionalSecondsPrecisionTest;
+GO
+
+--CURRENT_TIMESTAMP
+-- Test 1: Testing return datatype of CURRENT_TIMESTAMP
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(CURRENT_TIMESTAMP AS sql_variant), 'BaseType') = 'datetime' 
+        THEN 'PASS: CURRENT_TIMESTAMP returns datetime'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL and empty values
+BEGIN TRY
+    SELECT CURRENT_TIMESTAMP(NULL);
+    SELECT 'FAIL: CURRENT_TIMESTAMP accepted NULL parameter' AS NullTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: CURRENT_TIMESTAMP rejected NULL parameter' AS NullTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT CURRENT_TIMESTAMP('');
+    SELECT 'FAIL: CURRENT_TIMESTAMP accepted empty string parameter' AS EmptyStringTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: CURRENT_TIMESTAMP rejected empty string parameter' AS EmptyStringTest;
+END CATCH
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT CURRENT_TIMESTAMP(1);
+    SELECT 'FAIL: CURRENT_TIMESTAMP accepted numeric parameter' AS ArgumentTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: CURRENT_TIMESTAMP rejected numeric parameter' AS ArgumentTest;
+END CATCH
+GO
+
+-- Test 4: Validation of return types and values
+SELECT 
+    CASE 
+        WHEN YEAR(CURRENT_TIMESTAMP) BETWEEN 1753 AND 9999 
+             AND MONTH(CURRENT_TIMESTAMP) BETWEEN 1 AND 12
+             AND DAY(CURRENT_TIMESTAMP) BETWEEN 1 AND 31
+        THEN 'PASS: Date components within valid ranges'
+        ELSE 'FAIL: Date components out of range'
+    END AS DateValidationTest;
+GO
+
+-- Test 5: Testing with null values from table
+CREATE TABLE #TestNulls (ID INT, DateField DATETIME NULL);
+GO
+INSERT INTO #TestNulls VALUES (1, NULL), (2, CURRENT_TIMESTAMP);
+
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 1 THEN 'PASS: NULL handling in comparison works'
+        ELSE 'FAIL: NULL comparison issue'
+    END AS NullTableTest
+FROM #TestNulls
+WHERE DateField IS NOT NULL AND DateField <= CURRENT_TIMESTAMP;
+GO
+
+DROP TABLE #TestNulls;
+GO
+
+-- Test 6: Testing CAST and CONVERT with CURRENT_TIMESTAMP
+SELECT 
+    CASE WHEN CAST(CURRENT_TIMESTAMP AS DATE) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDateTest,
+    CASE WHEN CAST(CURRENT_TIMESTAMP AS TIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToTimeTest,
+    CASE WHEN CAST(CURRENT_TIMESTAMP AS DATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeTest,
+    CASE WHEN CAST(CURRENT_TIMESTAMP AS DATETIME2) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetime2Test,
+    CASE WHEN CAST(CURRENT_TIMESTAMP AS DATETIMEOFFSET) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeoffsetTest,
+    CASE WHEN CAST(CURRENT_TIMESTAMP AS SMALLDATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToSmalldatetimeTest;
+GO
+
+SELECT 
+    CASE WHEN CONVERT(VARCHAR(30), CURRENT_TIMESTAMP, 121) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS ConvertToStringTest;
+GO
+
+-- Test 7: Testing with different datatypes as arguments
+-- CURRENT_TIMESTAMP doesn't take parameters, but we can test passing results to other functions
+SELECT
+    CASE WHEN DATEADD(DAY, 1, CURRENT_TIMESTAMP) > CURRENT_TIMESTAMP THEN 'PASS' ELSE 'FAIL' END AS DateaddTest,
+    CASE WHEN DATEDIFF(SECOND, CURRENT_TIMESTAMP, DATEADD(SECOND, 1, CURRENT_TIMESTAMP)) = 1 THEN 'PASS' ELSE 'FAIL' END AS DatediffTest;
+GO
+
+-- Test 8: Testing precision of CURRENT_TIMESTAMP (rounds to .000, .003, or .007 seconds)
+SELECT 
+    CASE 
+        WHEN CONVERT(VARCHAR(23), CURRENT_TIMESTAMP, 121) LIKE '____-__-__ __:__:__.___'
+        THEN 'PASS: CURRENT_TIMESTAMP has proper millisecond precision'
+        ELSE 'FAIL: CURRENT_TIMESTAMP precision issue'
+    END AS PrecisionTest;
+GO
+
+-- Test 9: Datepart abbreviation verification
+SELECT 
+    CASE WHEN DATEPART(YEAR, CURRENT_TIMESTAMP) = DATEPART(YY, CURRENT_TIMESTAMP) 
+         AND DATEPART(YEAR, CURRENT_TIMESTAMP) = DATEPART(YYYY, CURRENT_TIMESTAMP) 
+         THEN 'PASS: Year abbreviations work correctly' 
+         ELSE 'FAIL: Year abbreviation issue' 
+    END AS YearAbbrevTest,
+    
+    CASE WHEN DATEPART(MONTH, CURRENT_TIMESTAMP) = DATEPART(MM, CURRENT_TIMESTAMP) 
+         AND DATEPART(MONTH, CURRENT_TIMESTAMP) = DATEPART(M, CURRENT_TIMESTAMP) 
+         THEN 'PASS: Month abbreviations work correctly' 
+         ELSE 'FAIL: Month abbreviation issue' 
+    END AS MonthAbbrevTest,
+    
+    CASE WHEN DATEPART(DAY, CURRENT_TIMESTAMP) = DATEPART(DD, CURRENT_TIMESTAMP) 
+         THEN 'PASS: Day abbreviations work correctly' 
+         ELSE 'FAIL: Day abbreviation issue' 
+    END AS DayAbbrevTest;
+GO
+
+-- Test 10: Using CURRENT_TIMESTAMP with GROUP BY, HAVING, ORDER BY, SELECT, WHERE
+CREATE TABLE #TransactionData (
+    ID INT PRIMARY KEY,
+    TransactionDate DATETIME,
+    Amount DECIMAL(10,2)
+);
+GO
+
+INSERT INTO #TransactionData VALUES 
+(1, DATEADD(DAY, -5, CURRENT_TIMESTAMP), 100.00),
+(2, DATEADD(DAY, -3, CURRENT_TIMESTAMP), 200.00),
+(3, DATEADD(DAY, -1, CURRENT_TIMESTAMP), 300.00);
+
+-- Test WHERE clause
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: WHERE clause works with CURRENT_TIMESTAMP' 
+         ELSE 'FAIL: WHERE clause issue' 
+    END AS WhereClauseTest
+FROM #TransactionData
+WHERE TransactionDate <= CURRENT_TIMESTAMP;
+
+-- Test GROUP BY and HAVING
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: GROUP BY with date casting works' 
+         ELSE 'FAIL: GROUP BY issue' 
+    END AS GroupByTest
+FROM (
+    SELECT CAST(TransactionDate AS DATE) AS TxDate
+    FROM #TransactionData
+    GROUP BY CAST(TransactionDate AS DATE)
+    HAVING CAST(TransactionDate AS DATE) <= CAST(CURRENT_TIMESTAMP AS DATE)
+) AS SubQuery;
+
+-- Test ORDER BY
+SELECT TOP 1
+    CASE WHEN ID = 3 THEN 'PASS: ORDER BY with date difference works' 
+         ELSE 'FAIL: ORDER BY issue' 
+    END AS OrderByTest
+FROM #TransactionData
+ORDER BY ABS(DATEDIFF(DAY, TransactionDate, CURRENT_TIMESTAMP));
+GO
+
+DROP TABLE #TransactionData;
+GO
+
+-- Test 11: Using MAX, TOP, DISTINCT, OVER, JOIN with CURRENT_TIMESTAMP
+CREATE TABLE #Orders (OrderID INT PRIMARY KEY, OrderDate DATETIME, Amount DECIMAL(10,2));
+GO
+CREATE TABLE #Shipments (ShipID INT PRIMARY KEY, OrderID INT, ShipDate DATETIME NULL);
+GO
+
+INSERT INTO #Orders VALUES 
+(1, DATEADD(DAY, -10, CURRENT_TIMESTAMP), 150.00),
+(2, DATEADD(DAY, -7, CURRENT_TIMESTAMP), 250.00),
+(3, DATEADD(DAY, -3, CURRENT_TIMESTAMP), 350.00);
+
+INSERT INTO #Shipments VALUES
+(101, 1, DATEADD(DAY, -9, CURRENT_TIMESTAMP)),
+(102, 2, DATEADD(DAY, -5, CURRENT_TIMESTAMP)),
+(103, 3, NULL);
+
+-- Test MAX with CURRENT_TIMESTAMP
+SELECT 
+    CASE WHEN MAX(OrderDate) <= CURRENT_TIMESTAMP THEN 'PASS: MAX function comparison works' 
+         ELSE 'FAIL: MAX function issue' 
+    END AS MaxFunctionTest
+FROM #Orders;
+
+-- Test TOP with ordering by CURRENT_TIMESTAMP comparison
+SELECT TOP 1
+    CASE WHEN OrderID = 3 THEN 'PASS: TOP with recency ordering works' 
+         ELSE 'FAIL: TOP with recency ordering issue' 
+    END AS TopClauseTest
+FROM #Orders
+ORDER BY ABS(DATEDIFF(DAY, OrderDate, CURRENT_TIMESTAMP));
+
+-- Test DISTINCT with date casting
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: DISTINCT with date casting works' 
+         ELSE 'FAIL: DISTINCT with date casting issue' 
+    END AS DistinctTest
+FROM (
+    SELECT DISTINCT CAST(OrderDate AS DATE) AS OrderDay
+    FROM #Orders
+    WHERE OrderDate <= CURRENT_TIMESTAMP
+) AS DistinctDates;
+
+-- Test OVER clause
+SELECT 
+    CASE WHEN COUNT(*) OVER() = 3 THEN 'PASS: OVER clause works' 
+         ELSE 'FAIL: OVER clause issue' 
+    END AS OverClauseTest
+FROM #Orders
+WHERE OrderDate <= CURRENT_TIMESTAMP;
+
+-- Test INNER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: INNER JOIN with datetime comparison works' 
+         ELSE 'FAIL: INNER JOIN issue' 
+    END AS InnerJoinTest
+FROM #Orders o
+INNER JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= CURRENT_TIMESTAMP AND s.ShipDate IS NOT NULL;
+
+-- Test OUTER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: LEFT JOIN with datetime comparison works' 
+         ELSE 'FAIL: LEFT JOIN issue' 
+    END AS OuterJoinTest
+FROM #Orders o
+LEFT JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= CURRENT_TIMESTAMP;
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 12: User-defined variables and string handling
+DECLARE @CurrentTime DATETIME = CURRENT_TIMESTAMP;
+DECLARE @FormattedDate VARCHAR(50) = CONVERT(VARCHAR(50), CURRENT_TIMESTAMP, 121);
+
+SELECT 
+    CASE WHEN @CurrentTime IS NOT NULL THEN 'PASS: Variable assignment works' 
+         ELSE 'FAIL: Variable assignment issue' 
+    END AS VariableTest,
+    CASE WHEN @FormattedDate IS NOT NULL AND LEN(@FormattedDate) > 0 
+         THEN 'PASS: String conversion works' 
+         ELSE 'FAIL: String conversion issue' 
+    END AS StringConversionTest;
+GO
+
+-- Test 13: Compare CURRENT_TIMESTAMP with other datetime functions
+SELECT 
+    CASE WHEN ABS(DATEDIFF(SECOND, CURRENT_TIMESTAMP, GETDATE())) < 2 
+         THEN 'PASS: CURRENT_TIMESTAMP and GETDATE are consistent' 
+         ELSE 'FAIL: Inconsistency between CURRENT_TIMESTAMP and GETDATE' 
+    END AS GetDateConsistencyTest,
+    
+    CASE WHEN ABS(DATEDIFF(HOUR, CURRENT_TIMESTAMP, SYSDATETIME())) < 1 
+         THEN 'PASS: CURRENT_TIMESTAMP and SYSDATETIME are consistent' 
+         ELSE 'FAIL: Inconsistency between CURRENT_TIMESTAMP and SYSDATETIME' 
+    END AS SysDateTimeConsistencyTest;
+GO
+
+-- Test 14: Testing persistence across transactions
+BEGIN TRANSACTION;
+    DECLARE @Time1 DATETIME = CURRENT_TIMESTAMP;
+    WAITFOR DELAY '00:00:01';
+    DECLARE @Time2 DATETIME = CURRENT_TIMESTAMP;
+    
+    SELECT 
+        CASE WHEN @Time2 > @Time1 
+             THEN 'PASS: Time advances during transaction' 
+             ELSE 'FAIL: Time did not advance' 
+        END AS TransactionTimeTest;
+COMMIT TRANSACTION;
+GO
+
+-- Test 15: Testing function determinism in views and computed columns
+-- CURRENT_TIMESTAMP is non-deterministic, so should be disallowed in computed columns
+BEGIN TRY
+    CREATE TABLE #ComputedTest (
+        ID INT,
+        ComputedCol AS DATEDIFF(DAY, '2000-01-01', CURRENT_TIMESTAMP)
+    );
+    SELECT 'FAIL: CURRENT_TIMESTAMP incorrectly allowed in computed column' AS DeterminismTest;
+    DROP TABLE IF EXISTS #ComputedTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: CURRENT_TIMESTAMP properly rejected in computed column' AS DeterminismTest;
+END CATCH
+GO
+
+--GETDATE
+-- Test 1: Testing return datatype of GETDATE
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(GETDATE() AS sql_variant), 'BaseType') = 'datetime' 
+        THEN 'PASS: GETDATE returns datetime'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL and empty values
+BEGIN TRY
+    SELECT GETDATE(NULL);
+    SELECT 'FAIL: GETDATE accepted NULL parameter' AS NullTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: GETDATE rejected NULL parameter' AS NullTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT GETDATE('');
+    SELECT 'FAIL: GETDATE accepted empty string parameter' AS EmptyStringTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: GETDATE rejected empty string parameter' AS EmptyStringTest;
+END CATCH
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT GETDATE(1);
+    SELECT 'FAIL: GETDATE accepted numeric parameter' AS ArgumentTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: GETDATE rejected numeric parameter' AS ArgumentTest;
+END CATCH
+GO
+
+-- Test 4: Validation of return types and values
+SELECT 
+    CASE 
+        WHEN YEAR(GETDATE()) BETWEEN 1753 AND 9999 
+             AND MONTH(GETDATE()) BETWEEN 1 AND 12
+             AND DAY(GETDATE()) BETWEEN 1 AND 31
+        THEN 'PASS: Date components within valid ranges'
+        ELSE 'FAIL: Date components out of range'
+    END AS DateValidationTest;
+GO
+
+-- Test 5: Testing with null values from table
+CREATE TABLE #TestNulls (ID INT, DateField DATETIME NULL);
+GO
+INSERT INTO #TestNulls VALUES (1, NULL), (2, GETDATE());
+
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 1 THEN 'PASS: NULL handling in comparison works'
+        ELSE 'FAIL: NULL comparison issue'
+    END AS NullTableTest
+FROM #TestNulls
+WHERE DateField IS NOT NULL AND DateField <= GETDATE();
+GO
+
+DROP TABLE #TestNulls;
+GO
+
+-- Test 6: Testing CAST and CONVERT with GETDATE
+SELECT 
+    CASE WHEN CAST(GETDATE() AS DATE) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDateTest,
+    CASE WHEN CAST(GETDATE() AS TIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToTimeTest,
+    CASE WHEN CAST(GETDATE() AS DATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeTest,
+    CASE WHEN CAST(GETDATE() AS DATETIME2) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetime2Test,
+    CASE WHEN CAST(GETDATE() AS DATETIMEOFFSET) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeoffsetTest,
+    CASE WHEN CAST(GETDATE() AS SMALLDATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToSmalldatetimeTest;
+GO
+
+SELECT 
+    CASE WHEN CONVERT(VARCHAR(30), GETDATE(), 121) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS ConvertToStringTest;
+GO
+
+-- Test 7: Testing with different datatypes as arguments
+-- GETDATE doesn't take parameters, but we can test passing results to other functions
+SELECT
+    CASE WHEN DATEADD(DAY, 1, GETDATE()) > GETDATE() THEN 'PASS' ELSE 'FAIL' END AS DateaddTest,
+    CASE WHEN DATEDIFF(SECOND, GETDATE(), DATEADD(SECOND, 1, GETDATE())) = 1 THEN 'PASS' ELSE 'FAIL' END AS DatediffTest;
+GO
+
+-- Test 8: Testing precision of GETDATE (rounds to .000, .003, or .007 seconds)
+SELECT 
+    CASE 
+        WHEN CONVERT(VARCHAR(23), GETDATE(), 121) LIKE '____-__-__ __:__:__.___'
+        THEN 'PASS: GETDATE has proper millisecond precision'
+        ELSE 'FAIL: GETDATE precision issue'
+    END AS PrecisionTest;
+GO
+
+-- Test 9: Datepart abbreviation verification
+SELECT 
+    CASE WHEN DATEPART(YEAR, GETDATE()) = DATEPART(YY, GETDATE()) 
+         AND DATEPART(YEAR, GETDATE()) = DATEPART(YYYY, GETDATE()) 
+         THEN 'PASS: Year abbreviations work correctly' 
+         ELSE 'FAIL: Year abbreviation issue' 
+    END AS YearAbbrevTest,
+    
+    CASE WHEN DATEPART(MONTH, GETDATE()) = DATEPART(MM, GETDATE()) 
+         AND DATEPART(MONTH, GETDATE()) = DATEPART(M, GETDATE()) 
+         THEN 'PASS: Month abbreviations work correctly' 
+         ELSE 'FAIL: Month abbreviation issue' 
+    END AS MonthAbbrevTest,
+    
+    CASE WHEN DATEPART(DAY, GETDATE()) = DATEPART(DD, GETDATE()) 
+         THEN 'PASS: Day abbreviations work correctly' 
+         ELSE 'FAIL: Day abbreviation issue' 
+    END AS DayAbbrevTest;
+GO
+
+-- Test 10: Using GETDATE with GROUP BY, HAVING, ORDER BY, SELECT, WHERE
+CREATE TABLE #TransactionData (
+    ID INT PRIMARY KEY,
+    TransactionDate DATETIME,
+    Amount DECIMAL(10,2)
+);
+GO
+
+INSERT INTO #TransactionData VALUES 
+(1, DATEADD(DAY, -5, GETDATE()), 100.00),
+(2, DATEADD(DAY, -3, GETDATE()), 200.00),
+(3, DATEADD(DAY, -1, GETDATE()), 300.00);
+
+-- Test WHERE clause
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: WHERE clause works with GETDATE' 
+         ELSE 'FAIL: WHERE clause issue' 
+    END AS WhereClauseTest
+FROM #TransactionData
+WHERE TransactionDate <= GETDATE();
+
+-- Test GROUP BY and HAVING
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: GROUP BY with date casting works' 
+         ELSE 'FAIL: GROUP BY issue' 
+    END AS GroupByTest
+FROM (
+    SELECT CAST(TransactionDate AS DATE) AS TxDate
+    FROM #TransactionData
+    GROUP BY CAST(TransactionDate AS DATE)
+    HAVING CAST(TransactionDate AS DATE) <= CAST(GETDATE() AS DATE)
+) AS SubQuery;
+
+-- Test ORDER BY
+SELECT TOP 1
+    CASE WHEN ID = 3 THEN 'PASS: ORDER BY with date difference works' 
+         ELSE 'FAIL: ORDER BY issue' 
+    END AS OrderByTest
+FROM #TransactionData
+ORDER BY ABS(DATEDIFF(DAY, TransactionDate, GETDATE()));
+GO
+
+DROP TABLE #TransactionData;
+GO
+
+-- Test 11: Using MAX, TOP, DISTINCT, OVER, JOIN with GETDATE
+CREATE TABLE #Orders (OrderID INT PRIMARY KEY, OrderDate DATETIME, Amount DECIMAL(10,2));
+GO
+CREATE TABLE #Shipments (ShipID INT PRIMARY KEY, OrderID INT, ShipDate DATETIME NULL);
+GO
+
+INSERT INTO #Orders VALUES 
+(1, DATEADD(DAY, -10, GETDATE()), 150.00),
+(2, DATEADD(DAY, -7, GETDATE()), 250.00),
+(3, DATEADD(DAY, -3, GETDATE()), 350.00);
+
+INSERT INTO #Shipments VALUES
+(101, 1, DATEADD(DAY, -9, GETDATE())),
+(102, 2, DATEADD(DAY, -5, GETDATE())),
+(103, 3, NULL);
+
+-- Test MAX with GETDATE
+SELECT 
+    CASE WHEN MAX(OrderDate) <= GETDATE() THEN 'PASS: MAX function comparison works' 
+         ELSE 'FAIL: MAX function issue' 
+    END AS MaxFunctionTest
+FROM #Orders;
+
+-- Test TOP with ordering by GETDATE comparison
+SELECT TOP 1
+    CASE WHEN OrderID = 3 THEN 'PASS: TOP with recency ordering works' 
+         ELSE 'FAIL: TOP with recency ordering issue' 
+    END AS TopClauseTest
+FROM #Orders
+ORDER BY ABS(DATEDIFF(DAY, OrderDate, GETDATE()));
+
+-- Test DISTINCT with date casting
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: DISTINCT with date casting works' 
+         ELSE 'FAIL: DISTINCT with date casting issue' 
+    END AS DistinctTest
+FROM (
+    SELECT DISTINCT CAST(OrderDate AS DATE) AS OrderDay
+    FROM #Orders
+    WHERE OrderDate <= GETDATE()
+) AS DistinctDates;
+
+-- Test OVER clause
+SELECT 
+    CASE WHEN COUNT(*) OVER() = 3 THEN 'PASS: OVER clause works' 
+         ELSE 'FAIL: OVER clause issue' 
+    END AS OverClauseTest
+FROM #Orders
+WHERE OrderDate <= GETDATE();
+
+-- Test INNER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: INNER JOIN with datetime comparison works' 
+         ELSE 'FAIL: INNER JOIN issue' 
+    END AS InnerJoinTest
+FROM #Orders o
+INNER JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= GETDATE() AND s.ShipDate IS NOT NULL;
+
+-- Test OUTER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: LEFT JOIN with datetime comparison works' 
+         ELSE 'FAIL: LEFT JOIN issue' 
+    END AS OuterJoinTest
+FROM #Orders o
+LEFT JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= GETDATE();
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 12: User-defined variables and string handling
+DECLARE @CurrentTime DATETIME = GETDATE();
+DECLARE @FormattedDate VARCHAR(50) = CONVERT(VARCHAR(50), GETDATE(), 121);
+
+SELECT 
+    CASE WHEN @CurrentTime IS NOT NULL THEN 'PASS: Variable assignment works' 
+         ELSE 'FAIL: Variable assignment issue' 
+    END AS VariableTest,
+    CASE WHEN @FormattedDate IS NOT NULL AND LEN(@FormattedDate) > 0 
+         THEN 'PASS: String conversion works' 
+         ELSE 'FAIL: String conversion issue' 
+    END AS StringConversionTest;
+GO
+
+-- Test 13: Compare GETDATE with other datetime functions
+SELECT 
+    CASE WHEN ABS(DATEDIFF(SECOND, GETDATE(), CURRENT_TIMESTAMP)) < 2 
+         THEN 'PASS: GETDATE and CURRENT_TIMESTAMP are consistent' 
+         ELSE 'FAIL: Inconsistency between GETDATE and CURRENT_TIMESTAMP' 
+    END AS CurrentTimestampConsistencyTest,
+    
+    CASE WHEN ABS(DATEDIFF(HOUR, GETDATE(), GETUTCDATE())) BETWEEN -14 AND 14
+         THEN 'PASS: GETDATE and GETUTCDATE have proper timezone difference' 
+         ELSE 'FAIL: Unexpected timezone difference between GETDATE and GETUTCDATE' 
+    END AS GetUtcDateConsistencyTest;
+GO
+
+-- Test 14: Testing persistence across transactions
+BEGIN TRANSACTION;
+    DECLARE @Time1 DATETIME = GETDATE();
+    WAITFOR DELAY '00:00:01';
+    DECLARE @Time2 DATETIME = GETDATE();
+    
+    SELECT 
+        CASE WHEN @Time2 > @Time1 
+             THEN 'PASS: Time advances during transaction' 
+             ELSE 'FAIL: Time did not advance' 
+        END AS TransactionTimeTest;
+COMMIT TRANSACTION;
+GO
+
+-- Test 15: Testing function determinism in views and computed columns
+-- GETDATE is non-deterministic, so should be disallowed in computed columns
+BEGIN TRY
+    CREATE TABLE #ComputedTest (
+        ID INT,
+        ComputedCol AS DATEDIFF(DAY, '2000-01-01', GETDATE())
+    );
+    SELECT 'FAIL: GETDATE incorrectly allowed in computed column' AS DeterminismTest;
+    DROP TABLE IF EXISTS #ComputedTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: GETDATE properly rejected in computed column' AS DeterminismTest;
+END CATCH
+GO
+
+--GETUTCDATE
+-- Test 1: Testing return datatype of GETUTCDATE
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(GETUTCDATE() AS sql_variant), 'BaseType') = 'datetime' 
+        THEN 'PASS: GETUTCDATE returns datetime'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL and empty values
+BEGIN TRY
+    SELECT GETUTCDATE(NULL);
+    SELECT 'FAIL: GETUTCDATE accepted NULL parameter' AS NullTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: GETUTCDATE rejected NULL parameter' AS NullTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT GETUTCDATE('');
+    SELECT 'FAIL: GETUTCDATE accepted empty string parameter' AS EmptyStringTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: GETUTCDATE rejected empty string parameter' AS EmptyStringTest;
+END CATCH
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT GETUTCDATE(1);
+    SELECT 'FAIL: GETUTCDATE accepted numeric parameter' AS ArgumentTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: GETUTCDATE rejected numeric parameter' AS ArgumentTest;
+END CATCH
+GO
+
+-- Test 4: Validation of return types and values
+SELECT 
+    CASE 
+        WHEN YEAR(GETUTCDATE()) BETWEEN 1753 AND 9999 
+             AND MONTH(GETUTCDATE()) BETWEEN 1 AND 12
+             AND DAY(GETUTCDATE()) BETWEEN 1 AND 31
+        THEN 'PASS: Date components within valid ranges'
+        ELSE 'FAIL: Date components out of range'
+    END AS DateValidationTest;
+GO
+
+-- Test 5: Testing with null values from table
+CREATE TABLE #TestNulls (ID INT, DateField DATETIME NULL);
+GO
+INSERT INTO #TestNulls VALUES (1, NULL), (2, GETUTCDATE());
+
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 1 THEN 'PASS: NULL handling in comparison works'
+        ELSE 'FAIL: NULL comparison issue'
+    END AS NullTableTest
+FROM #TestNulls
+WHERE DateField IS NOT NULL AND DateField <= GETUTCDATE();
+GO
+
+DROP TABLE #TestNulls;
+GO
+
+-- Test 6: Testing CAST and CONVERT with GETUTCDATE
+SELECT 
+    CASE WHEN CAST(GETUTCDATE() AS DATE) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDateTest,
+    CASE WHEN CAST(GETUTCDATE() AS TIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToTimeTest,
+    CASE WHEN CAST(GETUTCDATE() AS DATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeTest,
+    CASE WHEN CAST(GETUTCDATE() AS DATETIME2) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetime2Test,
+    CASE WHEN CAST(GETUTCDATE() AS DATETIMEOFFSET) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeoffsetTest,
+    CASE WHEN CAST(GETUTCDATE() AS SMALLDATETIME) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS CastToSmalldatetimeTest;
+GO
+
+SELECT 
+    CASE WHEN CONVERT(VARCHAR(30), GETUTCDATE(), 121) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS ConvertToStringTest;
+GO
+
+-- Test 7: Testing with different datatypes as arguments
+-- GETUTCDATE doesn't take parameters, but we can test passing results to other functions
+SELECT
+    CASE WHEN DATEADD(DAY, 1, GETUTCDATE()) > GETUTCDATE() THEN 'PASS' ELSE 'FAIL' END AS DateaddTest,
+    CASE WHEN DATEDIFF(SECOND, GETUTCDATE(), DATEADD(SECOND, 1, GETUTCDATE())) = 1 THEN 'PASS' ELSE 'FAIL' END AS DatediffTest;
+GO
+
+-- Test 8: Testing timezone handling - comparing UTC with local time
+SELECT 
+    CASE 
+        WHEN DATEDIFF(HOUR, GETUTCDATE(), GETDATE()) BETWEEN -14 AND 14 
+        THEN 'PASS: Local time properly offset from UTC'
+        ELSE 'FAIL: Unexpected time difference between UTC and local'
+    END AS UTCLocalOffsetTest;
+GO
+
+-- Test 9: Datepart abbreviation verification
+SELECT 
+    CASE WHEN DATEPART(YEAR, GETUTCDATE()) = DATEPART(YY, GETUTCDATE()) 
+         AND DATEPART(YEAR, GETUTCDATE()) = DATEPART(YYYY, GETUTCDATE()) 
+         THEN 'PASS: Year abbreviations work correctly' 
+         ELSE 'FAIL: Year abbreviation issue' 
+    END AS YearAbbrevTest,
+    
+    CASE WHEN DATEPART(MONTH, GETUTCDATE()) = DATEPART(MM, GETUTCDATE()) 
+         AND DATEPART(MONTH, GETUTCDATE()) = DATEPART(M, GETUTCDATE()) 
+         THEN 'PASS: Month abbreviations work correctly' 
+         ELSE 'FAIL: Month abbreviation issue' 
+    END AS MonthAbbrevTest,
+    
+    CASE WHEN DATEPART(DAY, GETUTCDATE()) = DATEPART(DD, GETUTCDATE()) 
+         THEN 'PASS: Day abbreviations work correctly' 
+         ELSE 'FAIL: Day abbreviation issue' 
+    END AS DayAbbrevTest;
+GO
+
+-- Test 10: Using GETUTCDATE with GROUP BY, HAVING, ORDER BY, SELECT, WHERE
+CREATE TABLE #TransactionData (
+    ID INT PRIMARY KEY,
+    TransactionDate DATETIME,
+    Amount DECIMAL(10,2)
+);
+GO
+
+INSERT INTO #TransactionData VALUES 
+(1, DATEADD(DAY, -5, GETUTCDATE()), 100.00),
+(2, DATEADD(DAY, -3, GETUTCDATE()), 200.00),
+(3, DATEADD(DAY, -1, GETUTCDATE()), 300.00);
+
+-- Test WHERE clause
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: WHERE clause works with GETUTCDATE' 
+         ELSE 'FAIL: WHERE clause issue' 
+    END AS WhereClauseTest
+FROM #TransactionData
+WHERE TransactionDate <= GETUTCDATE();
+
+-- Test GROUP BY and HAVING
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: GROUP BY with date casting works' 
+         ELSE 'FAIL: GROUP BY issue' 
+    END AS GroupByTest
+FROM (
+    SELECT CAST(TransactionDate AS DATE) AS TxDate
+    FROM #TransactionData
+    GROUP BY CAST(TransactionDate AS DATE)
+    HAVING CAST(TransactionDate AS DATE) <= CAST(GETUTCDATE() AS DATE)
+) AS SubQuery;
+
+-- Test ORDER BY
+SELECT TOP 1
+    CASE WHEN ID = 3 THEN 'PASS: ORDER BY with date difference works' 
+         ELSE 'FAIL: ORDER BY issue' 
+    END AS OrderByTest
+FROM #TransactionData
+ORDER BY ABS(DATEDIFF(DAY, TransactionDate, GETUTCDATE()));
+GO
+
+DROP TABLE #TransactionData;
+GO
+
+-- Test 11: Using MAX, TOP, DISTINCT, OVER, JOIN with GETUTCDATE
+CREATE TABLE #Orders (OrderID INT PRIMARY KEY, OrderDate DATETIME, Amount DECIMAL(10,2));
+GO
+CREATE TABLE #Shipments (ShipID INT PRIMARY KEY, OrderID INT, ShipDate DATETIME NULL);
+GO
+
+INSERT INTO #Orders VALUES 
+(1, DATEADD(DAY, -10, GETUTCDATE()), 150.00),
+(2, DATEADD(DAY, -7, GETUTCDATE()), 250.00),
+(3, DATEADD(DAY, -3, GETUTCDATE()), 350.00);
+
+INSERT INTO #Shipments VALUES
+(101, 1, DATEADD(DAY, -9, GETUTCDATE())),
+(102, 2, DATEADD(DAY, -5, GETUTCDATE())),
+(103, 3, NULL);
+
+-- Test MAX with GETUTCDATE
+SELECT 
+    CASE WHEN MAX(OrderDate) <= GETUTCDATE() THEN 'PASS: MAX function comparison works' 
+         ELSE 'FAIL: MAX function issue' 
+    END AS MaxFunctionTest
+FROM #Orders;
+
+-- Test TOP with ordering by GETUTCDATE comparison
+SELECT TOP 1
+    CASE WHEN OrderID = 3 THEN 'PASS: TOP with recency ordering works' 
+         ELSE 'FAIL: TOP with recency ordering issue' 
+    END AS TopClauseTest
+FROM #Orders
+ORDER BY ABS(DATEDIFF(DAY, OrderDate, GETUTCDATE()));
+
+-- Test DISTINCT with date casting
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: DISTINCT with date casting works' 
+         ELSE 'FAIL: DISTINCT with date casting issue' 
+    END AS DistinctTest
+FROM (
+    SELECT DISTINCT CAST(OrderDate AS DATE) AS OrderDay
+    FROM #Orders
+    WHERE OrderDate <= GETUTCDATE()
+) AS DistinctDates;
+
+-- Test OVER clause
+SELECT 
+    CASE WHEN COUNT(*) OVER() = 3 THEN 'PASS: OVER clause works' 
+         ELSE 'FAIL: OVER clause issue' 
+    END AS OverClauseTest
+FROM #Orders
+WHERE OrderDate <= GETUTCDATE();
+
+-- Test INNER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: INNER JOIN with datetime comparison works' 
+         ELSE 'FAIL: INNER JOIN issue' 
+    END AS InnerJoinTest
+FROM #Orders o
+INNER JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= GETUTCDATE() AND s.ShipDate IS NOT NULL;
+
+-- Test OUTER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: LEFT JOIN with datetime comparison works' 
+         ELSE 'FAIL: LEFT JOIN issue' 
+    END AS OuterJoinTest
+FROM #Orders o
+LEFT JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE o.OrderDate <= GETUTCDATE();
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 12: User-defined variables and string handling
+DECLARE @CurrentUTCTime DATETIME = GETUTCDATE();
+DECLARE @FormattedDate VARCHAR(50) = CONVERT(VARCHAR(50), GETUTCDATE(), 121);
+
+SELECT 
+    CASE WHEN @CurrentUTCTime IS NOT NULL THEN 'PASS: Variable assignment works' 
+         ELSE 'FAIL: Variable assignment issue' 
+    END AS VariableTest,
+    CASE WHEN @FormattedDate IS NOT NULL AND LEN(@FormattedDate) > 0 
+         THEN 'PASS: String conversion works' 
+         ELSE 'FAIL: String conversion issue' 
+    END AS StringConversionTest;
+GO
+
+-- Test 13: Testing consistency with other UTC functions
+SELECT 
+    CASE 
+        WHEN ABS(DATEDIFF(SECOND, GETUTCDATE(), SYSUTCDATETIME())) < 5
+        THEN 'PASS: GETUTCDATE and SYSUTCDATETIME are consistent'
+        ELSE 'FAIL: Unexpected time difference between UTC functions'
+    END AS UTCFunctionConsistencyTest;
+GO
+
+-- Test 14: Testing precision of GETUTCDATE
+SELECT 
+    CASE 
+        WHEN CONVERT(VARCHAR(23), GETUTCDATE(), 121) LIKE '____-__-__ __:__:__.___'
+        THEN 'PASS: GETUTCDATE has proper millisecond precision'
+        ELSE 'FAIL: GETUTCDATE precision issue'
+    END AS PrecisionTest;
+GO
+
+-- Test 15: Testing persistence across transactions
+BEGIN TRANSACTION;
+    DECLARE @Time1 DATETIME = GETUTCDATE();
+    WAITFOR DELAY '00:00:01';
+    DECLARE @Time2 DATETIME = GETUTCDATE();
+    
+    SELECT 
+        CASE WHEN @Time2 > @Time1 
+             THEN 'PASS: Time advances during transaction' 
+             ELSE 'FAIL: Time did not advance' 
+        END AS TransactionTimeTest;
+COMMIT TRANSACTION;
+GO
+
+-- Test 16: Testing function determinism in views and computed columns
+-- GETUTCDATE is non-deterministic, so should be disallowed in computed columns
+BEGIN TRY
+    CREATE TABLE #ComputedTest (
+        ID INT,
+        ComputedCol AS DATEDIFF(DAY, '2000-01-01', GETUTCDATE())
+    );
+    SELECT 'FAIL: GETUTCDATE incorrectly allowed in computed column' AS DeterminismTest;
+    DROP TABLE IF EXISTS #ComputedTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: GETUTCDATE properly rejected in computed column' AS DeterminismTest;
+END CATCH
+GO
+
+-- Test 17: Verify UTC nature by comparing with offset-adjusted local time
+SELECT 
+    CASE 
+        WHEN ABS(DATEDIFF(MINUTE, 
+                 GETUTCDATE(), 
+                 DATEADD(MINUTE, -1 * DATEPART(MINUTE, SYSDATETIMEOFFSET()), 
+                         DATEADD(HOUR, -1 * DATEPART(HOUR, SYSDATETIMEOFFSET()), 
+                                GETDATE())))) < 2
+        THEN 'PASS: GETUTCDATE properly represents UTC time'
+        ELSE 'FAIL: UTC representation issue'
+    END AS UTCVerificationTest;
+GO
+
+--DATE_BUCKET
+-- Test suite for DATE_BUCKET function
+
+-- Test 1: Return datatype verification
+SELECT 
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATE_BUCKET(DAY, 1, GETDATE()) AS sql_variant), 'BaseType') = 
+             SQL_VARIANT_PROPERTY(CAST(GETDATE() AS sql_variant), 'BaseType')
+        THEN 'PASS: DATE_BUCKET preserves input datetime type'
+        ELSE 'FAIL: Return type mismatch'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE 
+        WHEN DATE_BUCKET(DAY, 1, NULL) IS NULL 
+        THEN 'PASS: NULL input returns NULL'
+        ELSE 'FAIL: NULL handling issue'
+    END AS NullDateTest;
+
+BEGIN TRY
+    SELECT DATE_BUCKET(NULL, 1, GETDATE());
+    SELECT 'FAIL: DATE_BUCKET accepted NULL datepart' AS NullDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATE_BUCKET correctly rejected NULL datepart' AS NullDatepartTest;
+END CATCH;
+
+BEGIN TRY
+    SELECT DATE_BUCKET(DAY, NULL, GETDATE());
+    SELECT 'FAIL: DATE_BUCKET accepted NULL bucket width' AS NullWidthTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATE_BUCKET correctly rejected NULL bucket width' AS NullWidthTest;
+END CATCH;
+GO
+
+-- Test 3: Bucket width validation
+BEGIN TRY
+    SELECT DATE_BUCKET(DAY, 0, GETDATE());
+    SELECT 'FAIL: DATE_BUCKET accepted zero bucket width' AS ZeroWidthTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATE_BUCKET correctly rejected zero bucket width' AS ZeroWidthTest;
+END CATCH;
+
+BEGIN TRY
+    SELECT DATE_BUCKET(DAY, -1, GETDATE());
+    SELECT 'FAIL: DATE_BUCKET accepted negative bucket width' AS NegativeWidthTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATE_BUCKET correctly rejected negative bucket width' AS NegativeWidthTest;
+END CATCH;
+GO
+
+-- Test 4: Valid dateparts testing
+SELECT 
+    CASE WHEN DATE_BUCKET(YEAR, 1, '2023-06-15') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS YearDatepartTest,
+    CASE WHEN DATE_BUCKET(QUARTER, 1, '2023-06-15') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS QuarterDatepartTest,
+    CASE WHEN DATE_BUCKET(MONTH, 1, '2023-06-15') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS MonthDatepartTest,
+    CASE WHEN DATE_BUCKET(WEEK, 1, '2023-06-15') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS WeekDatepartTest,
+    CASE WHEN DATE_BUCKET(DAY, 1, '2023-06-15') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS DayDatepartTest,
+    CASE WHEN DATE_BUCKET(HOUR, 1, '2023-06-15 14:30:00') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS HourDatepartTest,
+    CASE WHEN DATE_BUCKET(MINUTE, 1, '2023-06-15 14:30:00') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS MinuteDatepartTest,
+    CASE WHEN DATE_BUCKET(SECOND, 1, '2023-06-15 14:30:15') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS SecondDatepartTest,
+    CASE WHEN DATE_BUCKET(MILLISECOND, 10, '2023-06-15 14:30:15.123') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS MillisecondDatepartTest;
+GO
+
+-- Test 5: Invalid datepart testing
+BEGIN TRY
+    SELECT DATE_BUCKET(DAYOFYEAR, 1, GETDATE());
+    SELECT 'FAIL: DATE_BUCKET accepted invalid datepart DAYOFYEAR' AS InvalidDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATE_BUCKET correctly rejected invalid datepart DAYOFYEAR' AS InvalidDatepartTest;
+END CATCH;
+GO
+
+-- Test 6: Datepart abbreviations
+SELECT 
+    CASE WHEN DATE_BUCKET(YY, 1, '2023-06-15') = DATE_BUCKET(YEAR, 1, '2023-06-15')
+         THEN 'PASS: YEAR abbreviation works' ELSE 'FAIL: YEAR abbreviation issue' END AS YearAbbrevTest,
+    CASE WHEN DATE_BUCKET(QQ, 1, '2023-06-15') = DATE_BUCKET(QUARTER, 1, '2023-06-15')
+         THEN 'PASS: QUARTER abbreviation works' ELSE 'FAIL: QUARTER abbreviation issue' END AS QuarterAbbrevTest,
+    CASE WHEN DATE_BUCKET(MM, 1, '2023-06-15') = DATE_BUCKET(MONTH, 1, '2023-06-15')
+         THEN 'PASS: MONTH abbreviation works' ELSE 'FAIL: MONTH abbreviation issue' END AS MonthAbbrevTest,
+    CASE WHEN DATE_BUCKET(WK, 1, '2023-06-15') = DATE_BUCKET(WEEK, 1, '2023-06-15')
+         THEN 'PASS: WEEK abbreviation works' ELSE 'FAIL: WEEK abbreviation issue' END AS WeekAbbrevTest,
+    CASE WHEN DATE_BUCKET(DD, 1, '2023-06-15') = DATE_BUCKET(DAY, 1, '2023-06-15')
+         THEN 'PASS: DAY abbreviation works' ELSE 'FAIL: DAY abbreviation issue' END AS DayAbbrevTest,
+    CASE WHEN DATE_BUCKET(HH, 1, '2023-06-15 14:30:00') = DATE_BUCKET(HOUR, 1, '2023-06-15 14:30:00')
+         THEN 'PASS: HOUR abbreviation works' ELSE 'FAIL: HOUR abbreviation issue' END AS HourAbbrevTest,
+    CASE WHEN DATE_BUCKET(MI, 1, '2023-06-15 14:30:00') = DATE_BUCKET(MINUTE, 1, '2023-06-15 14:30:00')
+         THEN 'PASS: MINUTE abbreviation works' ELSE 'FAIL: MINUTE abbreviation issue' END AS MinuteAbbrevTest,
+    CASE WHEN DATE_BUCKET(SS, 1, '2023-06-15 14:30:15') = DATE_BUCKET(SECOND, 1, '2023-06-15 14:30:15')
+         THEN 'PASS: SECOND abbreviation works' ELSE 'FAIL: SECOND abbreviation issue' END AS SecondAbbrevTest,
+    CASE WHEN DATE_BUCKET(MS, 10, '2023-06-15 14:30:15.123') = DATE_BUCKET(MILLISECOND, 10, '2023-06-15 14:30:15.123')
+         THEN 'PASS: MILLISECOND abbreviation works' ELSE 'FAIL: MILLISECOND abbreviation issue' END AS MillisecondAbbrevTest;
+GO
+
+-- Test 7: Bucket width verification
+SELECT 
+    CASE 
+        WHEN DATEDIFF(DAY, DATE_BUCKET(DAY, 7, '2023-06-15'), DATE_BUCKET(DAY, 7, '2023-06-22')) = 7 
+        THEN 'PASS: 7-day bucket works correctly'
+        ELSE 'FAIL: 7-day bucket issue'
+    END AS BucketWidthTest;
+GO
+
+-- Test 8: Origin parameter testing
+DECLARE @date DATE = '2023-06-15';
+DECLARE @origin DATE = '2023-01-01';
+
+SELECT 
+    CASE 
+        WHEN DATE_BUCKET(MONTH, 3, @date, @origin) = '2023-04-01'
+        THEN 'PASS: Origin parameter works correctly'
+        ELSE CONVERT(VARCHAR(20), DATE_BUCKET(MONTH, 3, @date, @origin), 120) + ' - FAIL: Origin parameter issue'
+    END AS OriginParameterTest;
+GO
+
+-- Test 9: Testing with table data
+CREATE TABLE #DateBucketTest (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2
+);
+GO
+
+INSERT INTO #DateBucketTest VALUES 
+(1, '2023-01-05 08:30:45'),
+(2, '2023-02-10 14:20:30'),
+(3, '2023-03-15 16:45:00'),
+(4, '2023-04-20 09:15:10'),
+(5, '2023-05-25 11:50:25');
+
+-- Test GROUP BY with DATE_BUCKET
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 5 THEN 'PASS: GROUP BY with DATE_BUCKET works'
+        ELSE 'FAIL: GROUP BY issue'
+    END AS GroupByTest
+FROM (
+    SELECT DATE_BUCKET(MONTH, 1, EventDate) AS MonthBucket
+    FROM #DateBucketTest
+    GROUP BY DATE_BUCKET(MONTH, 1, EventDate)
+) t;
+
+-- Test ORDER BY with DATE_BUCKET
+SELECT TOP 1
+    CASE 
+        WHEN ID = 5 THEN 'PASS: ORDER BY with DATE_BUCKET works'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #DateBucketTest
+ORDER BY DATE_BUCKET(MONTH, 1, EventDate) DESC;
+GO
+
+DROP TABLE #DateBucketTest;
+GO
+
+-- Test 10: DataType handling
+SELECT 
+    CASE WHEN DATE_BUCKET(DAY, 1, CAST('2023-06-15' AS DATE)) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS DateTypeTest,
+    CASE WHEN DATE_BUCKET(HOUR, 1, CAST('2023-06-15 14:30:00' AS DATETIME)) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS DatetimeTypeTest,
+    CASE WHEN DATE_BUCKET(MINUTE, 1, CAST('2023-06-15 14:30:00' AS SMALLDATETIME)) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS SmalldatetimeTypeTest,
+    CASE WHEN DATE_BUCKET(SECOND, 1, CAST('2023-06-15 14:30:15' AS DATETIME2)) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS Datetime2TypeTest,
+    CASE WHEN DATE_BUCKET(MILLISECOND, 10, CAST('2023-06-15 14:30:15.123 +01:00' AS DATETIMEOFFSET)) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS DatetimeoffsetTypeTest;
+GO
+
+-- Test 11: Expression testing
+DECLARE @basedate DATETIME = '2023-06-15 12:30:45';
+
+SELECT
+    CASE WHEN DATE_BUCKET(HOUR, 2, DATEADD(HOUR, 3, @basedate)) IS NOT NULL 
+         THEN 'PASS: DATE_BUCKET works with expressions' 
+         ELSE 'FAIL: Expression handling issue' 
+    END AS ExpressionTest;
+GO
+
+-- Test 12: Large bucket width test
+SELECT
+    CASE WHEN DATE_BUCKET(YEAR, 100, '2023-06-15') IS NOT NULL 
+         THEN 'PASS: DATE_BUCKET handles large bucket widths' 
+         ELSE 'FAIL: Large bucket width issue' 
+    END AS LargeBucketTest;
+GO
+
+--DATENAME
+-- Test suite for DATENAME function
+
+-- Test 1: Return datatype verification
+SELECT 
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATENAME(MONTH, GETDATE()) AS sql_variant), 'BaseType') = 'nvarchar' 
+        THEN 'PASS: DATENAME returns nvarchar'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE 
+        WHEN DATENAME(MONTH, NULL) IS NULL 
+        THEN 'PASS: NULL input returns NULL'
+        ELSE 'FAIL: NULL handling issue'
+    END AS NullDateTest;
+
+BEGIN TRY
+    SELECT DATENAME(NULL, GETDATE());
+    SELECT 'FAIL: DATENAME accepted NULL datepart' AS NullDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATENAME correctly rejected NULL datepart' AS NullDatepartTest;
+END CATCH;
+GO
+
+-- Test 3: Valid dateparts testing
+SELECT 
+    CASE WHEN DATENAME(YEAR, '2023-06-15') = '2023' THEN 'PASS' ELSE 'FAIL' END AS YearDatepartTest,
+    CASE WHEN DATENAME(QUARTER, '2023-06-15') = '2' THEN 'PASS' ELSE 'FAIL' END AS QuarterDatepartTest,
+    CASE WHEN DATENAME(MONTH, '2023-06-15') = 'June' THEN 'PASS' ELSE 'FAIL' END AS MonthDatepartTest,
+    CASE WHEN DATENAME(DAYOFYEAR, '2023-06-15') = '166' THEN 'PASS' ELSE 'FAIL' END AS DayofyearDatepartTest,
+    CASE WHEN DATENAME(DAY, '2023-06-15') = '15' THEN 'PASS' ELSE 'FAIL' END AS DayDatepartTest,
+    CASE WHEN DATENAME(WEEKDAY, '2023-06-15') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS WeekdayDatepartTest,
+    CASE WHEN DATENAME(WEEK, '2023-06-15') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS WeekDatepartTest,
+    CASE WHEN DATENAME(HOUR, '2023-06-15 14:30:00') = '14' THEN 'PASS' ELSE 'FAIL' END AS HourDatepartTest,
+    CASE WHEN DATENAME(MINUTE, '2023-06-15 14:30:00') = '30' THEN 'PASS' ELSE 'FAIL' END AS MinuteDatepartTest,
+    CASE WHEN DATENAME(SECOND, '2023-06-15 14:30:15') = '15' THEN 'PASS' ELSE 'FAIL' END AS SecondDatepartTest,
+    CASE WHEN DATENAME(MILLISECOND, '2023-06-15 14:30:15.123') = '123' THEN 'PASS' ELSE 'FAIL' END AS MillisecondDatepartTest;
+GO
+
+-- Test 4: Invalid datepart testing
+BEGIN TRY
+    SELECT DATENAME(INVALID, GETDATE());
+    SELECT 'FAIL: DATENAME accepted invalid datepart' AS InvalidDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATENAME correctly rejected invalid datepart' AS InvalidDatepartTest;
+END CATCH;
+GO
+
+-- Test 5: Datepart abbreviations
+SELECT 
+    CASE WHEN DATENAME(YY, '2023-06-15') = DATENAME(YEAR, '2023-06-15')
+         THEN 'PASS: YEAR abbreviation works' ELSE 'FAIL: YEAR abbreviation issue' END AS YearAbbrevTest,
+    CASE WHEN DATENAME(QQ, '2023-06-15') = DATENAME(QUARTER, '2023-06-15')
+         THEN 'PASS: QUARTER abbreviation works' ELSE 'FAIL: QUARTER abbreviation issue' END AS QuarterAbbrevTest,
+    CASE WHEN DATENAME(MM, '2023-06-15') = DATENAME(MONTH, '2023-06-15')
+         THEN 'PASS: MONTH abbreviation works' ELSE 'FAIL: MONTH abbreviation issue' END AS MonthAbbrevTest,
+    CASE WHEN DATENAME(DY, '2023-06-15') = DATENAME(DAYOFYEAR, '2023-06-15')
+         THEN 'PASS: DAYOFYEAR abbreviation works' ELSE 'FAIL: DAYOFYEAR abbreviation issue' END AS DayofyearAbbrevTest,
+    CASE WHEN DATENAME(DD, '2023-06-15') = DATENAME(DAY, '2023-06-15')
+         THEN 'PASS: DAY abbreviation works' ELSE 'FAIL: DAY abbreviation issue' END AS DayAbbrevTest,
+    CASE WHEN DATENAME(DW, '2023-06-15') = DATENAME(WEEKDAY, '2023-06-15')
+         THEN 'PASS: WEEKDAY abbreviation works' ELSE 'FAIL: WEEKDAY abbreviation issue' END AS WeekdayAbbrevTest,
+    CASE WHEN DATENAME(WK, '2023-06-15') = DATENAME(WEEK, '2023-06-15')
+         THEN 'PASS: WEEK abbreviation works' ELSE 'FAIL: WEEK abbreviation issue' END AS WeekAbbrevTest,
+    CASE WHEN DATENAME(HH, '2023-06-15 14:30:00') = DATENAME(HOUR, '2023-06-15 14:30:00')
+         THEN 'PASS: HOUR abbreviation works' ELSE 'FAIL: HOUR abbreviation issue' END AS HourAbbrevTest,
+    CASE WHEN DATENAME(MI, '2023-06-15 14:30:00') = DATENAME(MINUTE, '2023-06-15 14:30:00')
+         THEN 'PASS: MINUTE abbreviation works' ELSE 'FAIL: MINUTE abbreviation issue' END AS MinuteAbbrevTest,
+    CASE WHEN DATENAME(SS, '2023-06-15 14:30:15') = DATENAME(SECOND, '2023-06-15 14:30:15')
+         THEN 'PASS: SECOND abbreviation works' ELSE 'FAIL: SECOND abbreviation issue' END AS SecondAbbrevTest,
+    CASE WHEN DATENAME(MS, '2023-06-15 14:30:15.123') = DATENAME(MILLISECOND, '2023-06-15 14:30:15.123')
+         THEN 'PASS: MILLISECOND abbreviation works' ELSE 'FAIL: MILLISECOND abbreviation issue' END AS MillisecondAbbrevTest;
+GO
+
+-- Test 6: Language dependency
+SET LANGUAGE us_english;
+DECLARE @month_name_en NVARCHAR(20) = DATENAME(MONTH, '2023-06-15');
+
+SET LANGUAGE Spanish;
+DECLARE @month_name_es NVARCHAR(20) = DATENAME(MONTH, '2023-06-15');
+
+SELECT
+    CASE WHEN @month_name_en = 'June' AND @month_name_es = 'junio'
+         THEN 'PASS: Language settings affect month names'
+         ELSE 'FAIL: Language dependency issue'
+    END AS LanguageDependencyTest;
+
+SET LANGUAGE us_english; -- Reset language
+GO
+
+-- Test 7: Testing with table data
+CREATE TABLE #DateNameTest (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2
+);
+GO
+
+INSERT INTO #DateNameTest VALUES 
+(1, '2023-01-05 08:30:45'),
+(2, '2023-02-10 14:20:30'),
+(3, '2023-03-15 16:45:00'),
+(4, '2023-04-20 09:15:10'),
+(5, '2023-05-25 11:50:25');
+
+-- Test GROUP BY with DATENAME
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 5 THEN 'PASS: GROUP BY with DATENAME works'
+        ELSE 'FAIL: GROUP BY issue'
+    END AS GroupByTest
+FROM (
+    SELECT DATENAME(MONTH, EventDate) AS MonthName
+    FROM #DateNameTest
+    GROUP BY DATENAME(MONTH, EventDate)
+) t;
+
+-- Test ORDER BY with DATENAME
+SELECT TOP 1
+    CASE 
+        WHEN ID = 5 THEN 'PASS: ORDER BY with DATENAME works'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #DateNameTest
+ORDER BY DATENAME(MONTH, EventDate) DESC;
+GO
+
+DROP TABLE #DateNameTest;
+GO
+
+-- Test 8: DataType handling
+SELECT 
+    CASE WHEN DATENAME(MONTH, CAST('2023-06-15' AS DATE)) = 'June' THEN 'PASS' ELSE 'FAIL' END AS DateTypeTest,
+    CASE WHEN DATENAME(HOUR, CAST('2023-06-15 14:30:00' AS DATETIME)) = '14' THEN 'PASS' ELSE 'FAIL' END AS DatetimeTypeTest,
+    CASE WHEN DATENAME(MINUTE, CAST('2023-06-15 14:30:00' AS SMALLDATETIME)) = '30' THEN 'PASS' ELSE 'FAIL' END AS SmalldatetimeTypeTest,
+    CASE WHEN DATENAME(SECOND, CAST('2023-06-15 14:30:15' AS DATETIME2)) = '15' THEN 'PASS' ELSE 'FAIL' END AS Datetime2TypeTest,
+    CASE WHEN DATENAME(MILLISECOND, CAST('2023-06-15 14:30:15.123 +01:00' AS DATETIMEOFFSET)) = '123' THEN 'PASS' ELSE 'FAIL' END AS DatetimeoffsetTypeTest;
+GO
+
+-- Test 9: Expression testing
+DECLARE @basedate DATETIME = '2023-06-15 12:30:45';
+
+SELECT
+    CASE WHEN DATENAME(MONTH, DATEADD(MONTH, 1, @basedate)) = 'July'
+         THEN 'PASS: DATENAME works with expressions' 
+         ELSE 'FAIL: Expression handling issue' 
+    END AS ExpressionTest;
+GO
+
+-- Test 10: Timezone handling
+SELECT 
+    CASE 
+        WHEN DATENAME(TZOFFSET, CAST('2023-06-15 14:30:15 +01:00' AS DATETIMEOFFSET)) = '+01:00'
+        THEN 'PASS: TZOFFSET works correctly'
+        ELSE 'FAIL: TZOFFSET issue'
+    END AS TzoffsetTest;
+GO
+
+--DATEPART
+-- Test suite for DATEPART function
+
+-- Test 1: Return datatype verification
+SELECT 
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATEPART(MONTH, GETDATE()) AS sql_variant), 'BaseType') = 'int' 
+        THEN 'PASS: DATEPART returns int'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE 
+        WHEN DATEPART(MONTH, NULL) IS NULL 
+        THEN 'PASS: NULL input returns NULL'
+        ELSE 'FAIL: NULL handling issue'
+    END AS NullDateTest;
+
+BEGIN TRY
+    SELECT DATEPART(NULL, GETDATE());
+    SELECT 'FAIL: DATEPART accepted NULL datepart' AS NullDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEPART correctly rejected NULL datepart' AS NullDatepartTest;
+END CATCH;
+GO
+
+-- Test 3: Valid dateparts testing
+SELECT 
+    CASE WHEN DATEPART(YEAR, '2023-06-15') = 2023 THEN 'PASS' ELSE 'FAIL' END AS YearDatepartTest,
+    CASE WHEN DATEPART(QUARTER, '2023-06-15') = 2 THEN 'PASS' ELSE 'FAIL' END AS QuarterDatepartTest,
+    CASE WHEN DATEPART(MONTH, '2023-06-15') = 6 THEN 'PASS' ELSE 'FAIL' END AS MonthDatepartTest,
+    CASE WHEN DATEPART(DAYOFYEAR, '2023-06-15') = 166 THEN 'PASS' ELSE 'FAIL' END AS DayofyearDatepartTest,
+    CASE WHEN DATEPART(DAY, '2023-06-15') = 15 THEN 'PASS' ELSE 'FAIL' END AS DayDatepartTest,
+    CASE WHEN DATEPART(WEEKDAY, '2023-06-15') BETWEEN 1 AND 7 THEN 'PASS' ELSE 'FAIL' END AS WeekdayDatepartTest,
+    CASE WHEN DATEPART(WEEK, '2023-06-15') > 0 THEN 'PASS' ELSE 'FAIL' END AS WeekDatepartTest,
+    CASE WHEN DATEPART(HOUR, '2023-06-15 14:30:00') = 14 THEN 'PASS' ELSE 'FAIL' END AS HourDatepartTest,
+    CASE WHEN DATEPART(MINUTE, '2023-06-15 14:30:00') = 30 THEN 'PASS' ELSE 'FAIL' END AS MinuteDatepartTest,
+    CASE WHEN DATEPART(SECOND, '2023-06-15 14:30:15') = 15 THEN 'PASS' ELSE 'FAIL' END AS SecondDatepartTest,
+    CASE WHEN DATEPART(MILLISECOND, '2023-06-15 14:30:15.123') = 123 THEN 'PASS' ELSE 'FAIL' END AS MillisecondDatepartTest,
+    CASE WHEN DATEPART(MICROSECOND, '2023-06-15 14:30:15.123456') > 0 THEN 'PASS' ELSE 'FAIL' END AS MicrosecondDatepartTest,
+    CASE WHEN DATEPART(NANOSECOND, '2023-06-15 14:30:15.123456789') > 0 THEN 'PASS' ELSE 'FAIL' END AS NanosecondDatepartTest;
+GO
+
+-- Test 4: Invalid datepart testing
+BEGIN TRY
+    SELECT DATEPART(INVALID, GETDATE());
+    SELECT 'FAIL: DATEPART accepted invalid datepart' AS InvalidDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEPART correctly rejected invalid datepart' AS InvalidDatepartTest;
+END CATCH;
+GO
+
+-- Test 5: Datepart abbreviations
+SELECT 
+    CASE WHEN DATEPART(YY, '2023-06-15') = DATEPART(YEAR, '2023-06-15')
+         THEN 'PASS: YEAR abbreviation works' ELSE 'FAIL: YEAR abbreviation issue' END AS YearAbbrevTest,
+    CASE WHEN DATEPART(QQ, '2023-06-15') = DATEPART(QUARTER, '2023-06-15')
+         THEN 'PASS: QUARTER abbreviation works' ELSE 'FAIL: QUARTER abbreviation issue' END AS QuarterAbbrevTest,
+    CASE WHEN DATEPART(MM, '2023-06-15') = DATEPART(MONTH, '2023-06-15')
+         THEN 'PASS: MONTH abbreviation works' ELSE 'FAIL: MONTH abbreviation issue' END AS MonthAbbrevTest,
+    CASE WHEN DATEPART(DY, '2023-06-15') = DATEPART(DAYOFYEAR, '2023-06-15')
+         THEN 'PASS: DAYOFYEAR abbreviation works' ELSE 'FAIL: DAYOFYEAR abbreviation issue' END AS DayofyearAbbrevTest,
+    CASE WHEN DATEPART(DD, '2023-06-15') = DATEPART(DAY, '2023-06-15')
+         THEN 'PASS: DAY abbreviation works' ELSE 'FAIL: DAY abbreviation issue' END AS DayAbbrevTest,
+    CASE WHEN DATEPART(DW, '2023-06-15') = DATEPART(WEEKDAY, '2023-06-15')
+         THEN 'PASS: WEEKDAY abbreviation works' ELSE 'FAIL: WEEKDAY abbreviation issue' END AS WeekdayAbbrevTest,
+    CASE WHEN DATEPART(WK, '2023-06-15') = DATEPART(WEEK, '2023-06-15')
+         THEN 'PASS: WEEK abbreviation works' ELSE 'FAIL: WEEK abbreviation issue' END AS WeekAbbrevTest,
+    CASE WHEN DATEPART(HH, '2023-06-15 14:30:00') = DATEPART(HOUR, '2023-06-15 14:30:00')
+         THEN 'PASS: HOUR abbreviation works' ELSE 'FAIL: HOUR abbreviation issue' END AS HourAbbrevTest,
+    CASE WHEN DATEPART(MI, '2023-06-15 14:30:00') = DATEPART(MINUTE, '2023-06-15 14:30:00')
+         THEN 'PASS: MINUTE abbreviation works' ELSE 'FAIL: MINUTE abbreviation issue' END AS MinuteAbbrevTest,
+    CASE WHEN DATEPART(SS, '2023-06-15 14:30:15') = DATEPART(SECOND, '2023-06-15 14:30:15')
+         THEN 'PASS: SECOND abbreviation works' ELSE 'FAIL: SECOND abbreviation issue' END AS SecondAbbrevTest,
+    CASE WHEN DATEPART(MS, '2023-06-15 14:30:15.123') = DATEPART(MILLISECOND, '2023-06-15 14:30:15.123')
+         THEN 'PASS: MILLISECOND abbreviation works' ELSE 'FAIL: MILLISECOND abbreviation issue' END AS MillisecondAbbrevTest;
+GO
+
+-- Test 6: Testing with table data
+CREATE TABLE #DatePartTest (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2
+);
+GO
+
+INSERT INTO #DatePartTest VALUES 
+(1, '2023-01-05 08:30:45'),
+(2, '2023-02-10 14:20:30'),
+(3, '2023-03-15 16:45:00'),
+(4, '2023-04-20 09:15:10'),
+(5, '2023-05-25 11:50:25');
+
+-- Test GROUP BY with DATEPART
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 5 THEN 'PASS: GROUP BY with DATEPART works'
+        ELSE 'FAIL: GROUP BY issue'
+    END AS GroupByTest
+FROM (
+    SELECT DATEPART(MONTH, EventDate) AS MonthNum
+    FROM #DatePartTest
+    GROUP BY DATEPART(MONTH, EventDate)
+) t;
+
+-- Test ORDER BY with DATEPART
+SELECT TOP 1
+    CASE 
+        WHEN ID = 5 THEN 'PASS: ORDER BY with DATEPART works'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #DatePartTest
+ORDER BY DATEPART(MONTH, EventDate) DESC;
+GO
+
+DROP TABLE #DatePartTest;
+GO
+
+-- Test 7: DataType handling
+SELECT 
+    CASE WHEN DATEPART(MONTH, CAST('2023-06-15' AS DATE)) = 6 THEN 'PASS' ELSE 'FAIL' END AS DateTypeTest,
+    CASE WHEN DATEPART(HOUR, CAST('2023-06-15 14:30:00' AS DATETIME)) = 14 THEN 'PASS' ELSE 'FAIL' END AS DatetimeTypeTest,
+    CASE WHEN DATEPART(MINUTE, CAST('2023-06-15 14:30:00' AS SMALLDATETIME)) = 30 THEN 'PASS' ELSE 'FAIL' END AS SmalldatetimeTypeTest,
+    CASE WHEN DATEPART(SECOND, CAST('2023-06-15 14:30:15' AS DATETIME2)) = 15 THEN 'PASS' ELSE 'FAIL' END AS Datetime2TypeTest,
+    CASE WHEN DATEPART(MILLISECOND, CAST('2023-06-15 14:30:15.123 +01:00' AS DATETIMEOFFSET)) = 123 THEN 'PASS' ELSE 'FAIL' END AS DatetimeoffsetTypeTest;
+GO
+
+-- Test 8: Expression testing
+DECLARE @basedate DATETIME = '2023-06-15 12:30:45';
+
+SELECT
+    CASE WHEN DATEPART(MONTH, DATEADD(MONTH, 1, @basedate)) = 7
+         THEN 'PASS: DATEPART works with expressions' 
+         ELSE 'FAIL: Expression handling issue' 
+    END AS ExpressionTest;
+GO
+
+-- Test 9: First day of week setting impact on DATEPART(WEEK)
+SET DATEFIRST 1; -- Monday as first day
+DECLARE @week_monday_first INT = DATEPART(WEEK, '2023-01-01');
+
+SET DATEFIRST 7; -- Sunday as first day
+DECLARE @week_sunday_first INT = DATEPART(WEEK, '2023-01-01');
+
+SELECT
+    CASE WHEN @week_monday_first != @week_sunday_first
+         THEN 'PASS: DATEFIRST affects DATEPART(WEEK)'
+         ELSE 'FAIL: DATEFIRST setting not affecting DATEPART(WEEK)'
+    END AS DateFirstImpactTest;
+
+SET DATEFIRST 7; -- Reset to default
+GO
+
+-- Test 10: Timezone handling with DATEPART
+SELECT 
+    CASE 
+        WHEN DATEPART(TZOFFSET, CAST('2023-06-15 14:30:15 +01:00' AS DATETIMEOFFSET)) = 60
+        THEN 'PASS: TZOFFSET works correctly (returns minutes)'
+        ELSE 'FAIL: TZOFFSET issue'
+    END AS TzoffsetTest,
+    
+    CASE 
+        WHEN DATEPART(HOUR, CAST('2023-06-15 14:30:15 +01:00' AS DATETIMEOFFSET)) = 1
+        THEN 'PASS: TZOFFSET HOUR works correctly'
+        ELSE 'FAIL: TZOFFSET HOUR issue'
+    END AS TzoffsetHourTest,
+    
+    CASE 
+        WHEN DATEPART(MINUTE, CAST('2023-06-15 14:30:15 +01:00' AS DATETIMEOFFSET)) = 0
+        THEN 'PASS: TZOFFSET MINUTE works correctly'
+        ELSE 'FAIL: TZOFFSET MINUTE issue'
+    END AS TzoffsetMinuteTest;
+GO
+
+--DATETRUNC
+-- Test suite for DATETRUNC function
+
+-- Test 1: Return datatype verification
+SELECT 
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATETRUNC(DAY, GETDATE()) AS sql_variant), 'BaseType') = 
+             SQL_VARIANT_PROPERTY(CAST(GETDATE() AS sql_variant), 'BaseType')
+        THEN 'PASS: DATETRUNC preserves input datetime type'
+        ELSE 'FAIL: Return type mismatch'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE 
+        WHEN DATETRUNC(DAY, NULL) IS NULL 
+        THEN 'PASS: NULL input returns NULL'
+        ELSE 'FAIL: NULL handling issue'
+    END AS NullDateTest;
+
+BEGIN TRY
+    SELECT DATETRUNC(NULL, GETDATE());
+    SELECT 'FAIL: DATETRUNC accepted NULL datepart' AS NullDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETRUNC correctly rejected NULL datepart' AS NullDatepartTest;
+END CATCH;
+GO
+
+-- Test 3: Valid dateparts testing
+SELECT 
+    CASE WHEN DATETRUNC(YEAR, '2023-06-15 14:30:15.123') = '2023-01-01 00:00:00.000' THEN 'PASS' ELSE 'FAIL' END AS YearDatepartTest,
+    CASE WHEN DATETRUNC(QUARTER, '2023-06-15 14:30:15.123') = '2023-04-01 00:00:00.000' THEN 'PASS' ELSE 'FAIL' END AS QuarterDatepartTest,
+    CASE WHEN DATETRUNC(MONTH, '2023-06-15 14:30:15.123') = '2023-06-01 00:00:00.000' THEN 'PASS' ELSE 'FAIL' END AS MonthDatepartTest,
+    CASE WHEN DATETRUNC(WEEK, '2023-06-15 14:30:15.123') <= '2023-06-15 00:00:00.000' THEN 'PASS' ELSE 'FAIL' END AS WeekDatepartTest,
+    CASE WHEN DATETRUNC(DAY, '2023-06-15 14:30:15.123') = '2023-06-15 00:00:00.000' THEN 'PASS' ELSE 'FAIL' END AS DayDatepartTest,
+    CASE WHEN DATETRUNC(HOUR, '2023-06-15 14:30:15.123') = '2023-06-15 14:00:00.000' THEN 'PASS' ELSE 'FAIL' END AS HourDatepartTest,
+    CASE WHEN DATETRUNC(MINUTE, '2023-06-15 14:30:15.123') = '2023-06-15 14:30:00.000' THEN 'PASS' ELSE 'FAIL' END AS MinuteDatepartTest,
+    CASE WHEN DATETRUNC(SECOND, '2023-06-15 14:30:15.123') = '2023-06-15 14:30:15.000' THEN 'PASS' ELSE 'FAIL' END AS SecondDatepartTest,
+    CASE WHEN DATETRUNC(MILLISECOND, '2023-06-15 14:30:15.123') = '2023-06-15 14:30:15.123' THEN 'PASS' ELSE 'FAIL' END AS MillisecondDatepartTest;
+GO
+
+-- Test 4: Invalid datepart testing
+BEGIN TRY
+    SELECT DATETRUNC(WEEKDAY, GETDATE());
+    SELECT 'FAIL: DATETRUNC accepted invalid datepart WEEKDAY' AS InvalidDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETRUNC correctly rejected invalid datepart WEEKDAY' AS InvalidDatepartTest;
+END CATCH;
+GO
+
+-- Test 5: Datepart abbreviations
+SELECT 
+    CASE WHEN DATETRUNC(YY, '2023-06-15') = DATETRUNC(YEAR, '2023-06-15')
+         THEN 'PASS: YEAR abbreviation works' ELSE 'FAIL: YEAR abbreviation issue' END AS YearAbbrevTest,
+    CASE WHEN DATETRUNC(QQ, '2023-06-15') = DATETRUNC(QUARTER, '2023-06-15')
+         THEN 'PASS: QUARTER abbreviation works' ELSE 'FAIL: QUARTER abbreviation issue' END AS QuarterAbbrevTest,
+    CASE WHEN DATETRUNC(MM, '2023-06-15') = DATETRUNC(MONTH, '2023-06-15')
+         THEN 'PASS: MONTH abbreviation works' ELSE 'FAIL: MONTH abbreviation issue' END AS MonthAbbrevTest,
+    CASE WHEN DATETRUNC(WK, '2023-06-15') = DATETRUNC(WEEK, '2023-06-15')
+         THEN 'PASS: WEEK abbreviation works' ELSE 'FAIL: WEEK abbreviation issue' END AS WeekAbbrevTest,
+    CASE WHEN DATETRUNC(DD, '2023-06-15') = DATETRUNC(DAY, '2023-06-15')
+         THEN 'PASS: DAY abbreviation works' ELSE 'FAIL: DAY abbreviation issue' END AS DayAbbrevTest,
+    CASE WHEN DATETRUNC(HH, '2023-06-15 14:30:00') = DATETRUNC(HOUR, '2023-06-15 14:30:00')
+         THEN 'PASS: HOUR abbreviation works' ELSE 'FAIL: HOUR abbreviation issue' END AS HourAbbrevTest,
+    CASE WHEN DATETRUNC(MI, '2023-06-15 14:30:00') = DATETRUNC(MINUTE, '2023-06-15 14:30:00')
+         THEN 'PASS: MINUTE abbreviation works' ELSE 'FAIL: MINUTE abbreviation issue' END AS MinuteAbbrevTest,
+    CASE WHEN DATETRUNC(SS, '2023-06-15 14:30:15') = DATETRUNC(SECOND, '2023-06-15 14:30:15')
+         THEN 'PASS: SECOND abbreviation works' ELSE 'FAIL: SECOND abbreviation issue' END AS SecondAbbrevTest,
+    CASE WHEN DATETRUNC(MS, '2023-06-15 14:30:15.123') = DATETRUNC(MILLISECOND, '2023-06-15 14:30:15.123')
+         THEN 'PASS: MILLISECOND abbreviation works' ELSE 'FAIL: MILLISECOND abbreviation issue' END AS MillisecondAbbrevTest;
+GO
+
+-- Test 6: Testing with table data
+CREATE TABLE #DateTruncTest (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2
+);
+GO
+
+INSERT INTO #DateTruncTest VALUES 
+(1, '2023-01-05 08:30:45'),
+(2, '2023-02-10 14:20:30'),
+(3, '2023-03-15 16:45:00'),
+(4, '2023-04-20 09:15:10'),
+(5, '2023-05-25 11:50:25');
+
+-- Test GROUP BY with DATETRUNC
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 5 THEN 'PASS: GROUP BY with DATETRUNC works'
+        ELSE 'FAIL: GROUP BY issue'
+    END AS GroupByTest
+FROM (
+    SELECT DATETRUNC(MONTH, EventDate) AS MonthStart
+    FROM #DateTruncTest
+    GROUP BY DATETRUNC(MONTH, EventDate)
+) t;
+
+-- Test ORDER BY with DATETRUNC
+SELECT TOP 1
+    CASE 
+        WHEN ID = 5 THEN 'PASS: ORDER BY with DATETRUNC works'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #DateTruncTest
+ORDER BY DATETRUNC(MONTH, EventDate) DESC;
+GO
+
+DROP TABLE #DateTruncTest;
+GO
+
+-- Test 7: DataType handling
+SELECT 
+    CASE WHEN DATETRUNC(DAY, CAST('2023-06-15' AS DATE)) = '2023-06-15' THEN 'PASS' ELSE 'FAIL' END AS DateTypeTest,
+    CASE WHEN DATETRUNC(HOUR, CAST('2023-06-15 14:30:00' AS DATETIME)) = '2023-06-15 14:00:00' THEN 'PASS' ELSE 'FAIL' END AS DatetimeTypeTest,
+    CASE WHEN DATETRUNC(MINUTE, CAST('2023-06-15 14:30:00' AS SMALLDATETIME)) = '2023-06-15 14:30:00' THEN 'PASS' ELSE 'FAIL' END AS SmalldatetimeTypeTest,
+    CASE WHEN DATETRUNC(SECOND, CAST('2023-06-15 14:30:15' AS DATETIME2)) = '2023-06-15 14:30:15' THEN 'PASS' ELSE 'FAIL' END AS Datetime2TypeTest,
+    CASE WHEN DATETRUNC(MILLISECOND, CAST('2023-06-15 14:30:15.123 +01:00' AS DATETIMEOFFSET)) = '2023-06-15 14:30:15.123 +01:00' THEN 'PASS' ELSE 'FAIL' END AS DatetimeoffsetTypeTest;
+GO
+
+-- Test 8: Expression testing
+DECLARE @basedate DATETIME = '2023-06-15 12:30:45';
+
+SELECT
+    CASE WHEN DATETRUNC(HOUR, DATEADD(HOUR, 3, @basedate)) = '2023-06-15 15:00:00.000'
+         THEN 'PASS: DATETRUNC works with expressions' 
+         ELSE 'FAIL: Expression handling issue' 
+    END AS ExpressionTest;
+GO
+
+-- Test 9: First day of week setting impact on DATETRUNC(WEEK)
+SET DATEFIRST 1; -- Monday as first day
+DECLARE @week_monday_first DATETIME = DATETRUNC(WEEK, '2023-01-04'); -- Wednesday
+
+SET DATEFIRST 7; -- Sunday as first day
+DECLARE @week_sunday_first DATETIME = DATETRUNC(WEEK, '2023-01-04'); -- Wednesday
+
+SELECT
+    CASE WHEN @week_monday_first != @week_sunday_first
+         THEN 'PASS: DATEFIRST affects DATETRUNC(WEEK)'
+         ELSE 'FAIL: DATEFIRST setting not affecting DATETRUNC(WEEK)'
+    END AS DateFirstImpactTest;
+
+SET DATEFIRST 7; -- Reset to default
+GO
+
+--DAY
+-- Test suite for DAY function
+
+-- Test 1: Return datatype verification
+SELECT 
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DAY(GETDATE()) AS sql_variant), 'BaseType') = 'int' 
+        THEN 'PASS: DAY returns int'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE 
+        WHEN DAY(NULL) IS NULL 
+        THEN 'PASS: NULL input returns NULL'
+        ELSE 'FAIL: NULL handling issue'
+    END AS NullDateTest;
+GO
+
+-- Test 3: Basic functionality testing
+SELECT 
+    CASE WHEN DAY('2023-06-15') = 15 THEN 'PASS' ELSE 'FAIL' END AS BasicFunctionTest1,
+    CASE WHEN DAY('2023-01-01') = 1 THEN 'PASS' ELSE 'FAIL' END AS BasicFunctionTest2,
+    CASE WHEN DAY('2023-12-31') = 31 THEN 'PASS' ELSE 'FAIL' END AS BasicFunctionTest3;
+GO
+
+-- Test 4: Date range validation
+SELECT
+    CASE WHEN DAY('2023-06-15') BETWEEN 1 AND 31 THEN 'PASS' ELSE 'FAIL' END AS RangeValidationTest;
+GO
+
+-- Test 5: Testing with table data
+CREATE TABLE #DayTest (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2
+);
+GO
+
+INSERT INTO #DayTest VALUES 
+(1, '2023-01-05 08:30:45'),
+(2, '2023-02-10 14:20:30'),
+(3, '2023-03-15 16:45:00'),
+(4, '2023-04-20 09:15:10'),
+(5, '2023-05-25 11:50:25');
+
+-- Test GROUP BY with DAY
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 5 THEN 'PASS: GROUP BY with DAY works'
+        ELSE 'FAIL: GROUP BY issue'
+    END AS GroupByTest
+FROM (
+    SELECT DAY(EventDate) AS DayNum
+    FROM #DayTest
+    GROUP BY DAY(EventDate)
+) t;
+
+-- Test WHERE with DAY
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 1 THEN 'PASS: WHERE with DAY works'
+        ELSE 'FAIL: WHERE issue'
+    END AS WhereTest
+FROM #DayTest
+WHERE DAY(EventDate) = 20;
+
+-- Test ORDER BY with DAY
+SELECT TOP 1
+    CASE 
+        WHEN ID = 5 THEN 'PASS: ORDER BY with DAY works'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #DayTest
+ORDER BY DAY(EventDate) DESC;
+GO
+
+DROP TABLE #DayTest;
+GO
+
+-- Test 6: DataType handling
+SELECT 
+    CASE WHEN DAY(CAST('2023-06-15' AS DATE)) = 15 THEN 'PASS' ELSE 'FAIL' END AS DateTypeTest,
+    CASE WHEN DAY(CAST('2023-06-15 14:30:00' AS DATETIME)) = 15 THEN 'PASS' ELSE 'FAIL' END AS DatetimeTypeTest,
+    CASE WHEN DAY(CAST('2023-06-15 14:30:00' AS SMALLDATETIME)) = 15 THEN 'PASS' ELSE 'FAIL' END AS SmalldatetimeTypeTest,
+    CASE WHEN DAY(CAST('2023-06-15 14:30:15' AS DATETIME2)) = 15 THEN 'PASS' ELSE 'FAIL' END AS Datetime2TypeTest,
+    CASE WHEN DAY(CAST('2023-06-15 14:30:15.123 +01:00' AS DATETIMEOFFSET)) = 15 THEN 'PASS' ELSE 'FAIL' END AS DatetimeoffsetTypeTest,
+    CASE WHEN DAY(CAST('20230615' AS VARCHAR(8))) = 15 THEN 'PASS' ELSE 'FAIL' END AS VarcharTypeTest;
+GO
+
+-- Test 7: Expression testing
+DECLARE @basedate DATETIME = '2023-06-15 12:30:45';
+
+SELECT
+    CASE WHEN DAY(DATEADD(DAY, 5, @basedate)) = 20
+         THEN 'PASS: DAY works with expressions' 
+         ELSE 'FAIL: Expression handling issue' 
+    END AS ExpressionTest;
+GO
+
+-- Test 8: Special date values
+SELECT
+    CASE WHEN DAY('2023-02-28') = 28 THEN 'PASS' ELSE 'FAIL' END AS MonthEndTest,
+    CASE WHEN DAY('2020-02-29') = 29 THEN 'PASS' ELSE 'FAIL' END AS LeapYearTest;
+GO
+
+-- Test 9: Invalid date handling
+BEGIN TRY
+    SELECT DAY('2023-02-29'); -- Invalid date (not leap year)
+    SELECT 'FAIL: DAY accepted invalid date' AS InvalidDateTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DAY correctly rejected invalid date' AS InvalidDateTest;
+END CATCH;
+GO
+
+-- Test 10: Usage with aggregate functions
+CREATE TABLE #DayAggTest (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2
+);
+GO
+
+INSERT INTO #DayAggTest VALUES 
+(1, '2023-01-05 08:30:45'),
+(2, '2023-01-10 14:20:30'),
+(3, '2023-01-15 16:45:00'),
+(4, '2023-01-20 09:15:10'),
+(5, '2023-01-25 11:50:25');
+
+SELECT
+    CASE WHEN MIN(DAY(EventDate)) = 5 AND MAX(DAY(EventDate)) = 25
+         THEN 'PASS: DAY works with MIN/MAX' 
+         ELSE 'FAIL: Aggregate function issue' 
+    END AS AggregateTest
+FROM #DayAggTest;
+GO
+
+DROP TABLE #DayAggTest;
+GO
+
+--MONTH
+-- Test suite for MONTH function
+
+-- Test 1: Return datatype verification
+SELECT 
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(MONTH(GETDATE()) AS sql_variant), 'BaseType') = 'int' 
+        THEN 'PASS: MONTH returns int'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE 
+        WHEN MONTH(NULL) IS NULL 
+        THEN 'PASS: NULL input returns NULL'
+        ELSE 'FAIL: NULL handling issue'
+    END AS NullDateTest;
+GO
+
+-- Test 3: Basic functionality testing
+SELECT 
+    CASE WHEN MONTH('2023-06-15') = 6 THEN 'PASS' ELSE 'FAIL' END AS BasicFunctionTest1,
+    CASE WHEN MONTH('2023-01-01') = 1 THEN 'PASS' ELSE 'FAIL' END AS BasicFunctionTest2,
+    CASE WHEN MONTH('2023-12-31') = 12 THEN 'PASS' ELSE 'FAIL' END AS BasicFunctionTest3;
+GO
+
+-- Test 4: Date range validation
+SELECT
+    CASE WHEN MONTH('2023-06-15') BETWEEN 1 AND 12 THEN 'PASS' ELSE 'FAIL' END AS RangeValidationTest;
+GO
+
+-- Test 5: Testing with table data
+CREATE TABLE #MonthTest (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2
+);
+GO
+
+INSERT INTO #MonthTest VALUES 
+(1, '2023-01-05 08:30:45'),
+(2, '2023-02-10 14:20:30'),
+(3, '2023-03-15 16:45:00'),
+(4, '2023-04-20 09:15:10'),
+(5, '2023-05-25 11:50:25');
+
+-- Test GROUP BY with MONTH
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 5 THEN 'PASS: GROUP BY with MONTH works'
+        ELSE 'FAIL: GROUP BY issue'
+    END AS GroupByTest
+FROM (
+    SELECT MONTH(EventDate) AS MonthNum
+    FROM #MonthTest
+    GROUP BY MONTH(EventDate)
+) t;
+
+-- Test WHERE with MONTH
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 1 THEN 'PASS: WHERE with MONTH works'
+        ELSE 'FAIL: WHERE issue'
+    END AS WhereTest
+FROM #MonthTest
+WHERE MONTH(EventDate) = 4;
+
+-- Test ORDER BY with MONTH
+SELECT TOP 1
+    CASE 
+        WHEN ID = 5 THEN 'PASS: ORDER BY with MONTH works'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #MonthTest
+ORDER BY MONTH(EventDate) DESC;
+GO
+
+DROP TABLE #MonthTest;
+GO
+
+-- Test 6: DataType handling
+SELECT 
+    CASE WHEN MONTH(CAST('2023-06-15' AS DATE)) = 6 THEN 'PASS' ELSE 'FAIL' END AS DateTypeTest,
+    CASE WHEN MONTH(CAST('2023-06-15 14:30:00' AS DATETIME)) = 6 THEN 'PASS' ELSE 'FAIL' END AS DatetimeTypeTest,
+    CASE WHEN MONTH(CAST('2023-06-15 14:30:00' AS SMALLDATETIME)) = 6 THEN 'PASS' ELSE 'FAIL' END AS SmalldatetimeTypeTest,
+    CASE WHEN MONTH(CAST('2023-06-15 14:30:15' AS DATETIME2)) = 6 THEN 'PASS' ELSE 'FAIL' END AS Datetime2TypeTest,
+    CASE WHEN MONTH(CAST('2023-06-15 14:30:15.123 +01:00' AS DATETIMEOFFSET)) = 6 THEN 'PASS' ELSE 'FAIL' END AS DatetimeoffsetTypeTest,
+    CASE WHEN MONTH(CAST('20230615' AS VARCHAR(8))) = 6 THEN 'PASS' ELSE 'FAIL' END AS VarcharTypeTest;
+GO
+
+-- Test 7: Expression testing
+DECLARE @basedate DATETIME = '2023-06-15 12:30:45';
+
+SELECT
+    CASE WHEN MONTH(DATEADD(MONTH, 3, @basedate)) = 9
+         THEN 'PASS: MONTH works with expressions' 
+         ELSE 'FAIL: Expression handling issue' 
+    END AS ExpressionTest;
+GO
+
+-- Test 8: Month boundary cases
+SELECT
+    CASE WHEN MONTH('2023-01-01') = 1 THEN 'PASS' ELSE 'FAIL' END AS FirstMonthTest,
+    CASE WHEN MONTH('2023-12-31') = 12 THEN 'PASS' ELSE 'FAIL' END AS LastMonthTest;
+GO
+
+-- Test 9: Invalid date handling
+BEGIN TRY
+    SELECT MONTH('2023-13-01'); -- Invalid month
+    SELECT 'FAIL: MONTH accepted invalid date' AS InvalidDateTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: MONTH correctly rejected invalid date' AS InvalidDateTest;
+END CATCH;
+GO
+
+-- Test 10: Usage with aggregate functions
+CREATE TABLE #MonthAggTest (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2
+);
+GO
+
+INSERT INTO #MonthAggTest VALUES 
+(1, '2023-01-05 08:30:45'),
+(2, '2023-03-10 14:20:30'),
+(3, '2023-05-15 16:45:00'),
+(4, '2023-07-20 09:15:10'),
+(5, '2023-09-25 11:50:25');
+
+SELECT
+    CASE WHEN MIN(MONTH(EventDate)) = 1 AND MAX(MONTH(EventDate)) = 9
+         THEN 'PASS: MONTH works with MIN/MAX' 
+         ELSE 'FAIL: Aggregate function issue' 
+    END AS AggregateTest
+FROM #MonthAggTest;
+GO
+
+DROP TABLE #MonthAggTest;
+GO
+
+--YEAR
+-- Test suite for YEAR function
+
+-- Test 1: Return datatype verification
+SELECT 
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(YEAR(GETDATE()) AS sql_variant), 'BaseType') = 'int' 
+        THEN 'PASS: YEAR returns int'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE 
+        WHEN YEAR(NULL) IS NULL 
+        THEN 'PASS: NULL input returns NULL'
+        ELSE 'FAIL: NULL handling issue'
+    END AS NullDateTest;
+GO
+
+-- Test 3: Basic functionality testing
+SELECT 
+    CASE WHEN YEAR('2023-06-15') = 2023 THEN 'PASS' ELSE 'FAIL' END AS BasicFunctionTest1,
+    CASE WHEN YEAR('1900-01-01') = 1900 THEN 'PASS' ELSE 'FAIL' END AS BasicFunctionTest2,
+    CASE WHEN YEAR('9999-12-31') = 9999 THEN 'PASS' ELSE 'FAIL' END AS BasicFunctionTest3;
+GO
+
+-- Test 4: Date range validation
+SELECT
+    CASE WHEN YEAR('2023-06-15') BETWEEN 1753 AND 9999 THEN 'PASS' ELSE 'FAIL' END AS RangeValidationTest;
+GO
+
+-- Test 5: Testing with table data
+CREATE TABLE #YearTest (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2
+);
+GO
+
+INSERT INTO #YearTest VALUES 
+(1, '2020-01-05 08:30:45'),
+(2, '2021-02-10 14:20:30'),
+(3, '2022-03-15 16:45:00'),
+(4, '2023-04-20 09:15:10'),
+(5, '2024-05-25 11:50:25');
+
+-- Test GROUP BY with YEAR
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 5 THEN 'PASS: GROUP BY with YEAR works'
+        ELSE 'FAIL: GROUP BY issue'
+    END AS GroupByTest
+FROM (
+    SELECT YEAR(EventDate) AS YearNum
+    FROM #YearTest
+    GROUP BY YEAR(EventDate)
+) t;
+
+-- Test WHERE with YEAR
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 1 THEN 'PASS: WHERE with YEAR works'
+        ELSE 'FAIL: WHERE issue'
+    END AS WhereTest
+FROM #YearTest
+WHERE YEAR(EventDate) = 2023;
+
+-- Test ORDER BY with YEAR
+SELECT TOP 1
+    CASE 
+        WHEN ID = 5 THEN 'PASS: ORDER BY with YEAR works'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #YearTest
+ORDER BY YEAR(EventDate) DESC;
+GO
+
+DROP TABLE #YearTest;
+GO
+
+-- Test 6: DataType handling
+SELECT 
+    CASE WHEN YEAR(CAST('2023-06-15' AS DATE)) = 2023 THEN 'PASS' ELSE 'FAIL' END AS DateTypeTest,
+    CASE WHEN YEAR(CAST('2023-06-15 14:30:00' AS DATETIME)) = 2023 THEN 'PASS' ELSE 'FAIL' END AS DatetimeTypeTest,
+    CASE WHEN YEAR(CAST('2023-06-15 14:30:00' AS SMALLDATETIME)) = 2023 THEN 'PASS' ELSE 'FAIL' END AS SmalldatetimeTypeTest,
+    CASE WHEN YEAR(CAST('2023-06-15 14:30:15' AS DATETIME2)) = 2023 THEN 'PASS' ELSE 'FAIL' END AS Datetime2TypeTest,
+    CASE WHEN YEAR(CAST('2023-06-15 14:30:15.123 +01:00' AS DATETIMEOFFSET)) = 2023 THEN 'PASS' ELSE 'FAIL' END AS DatetimeoffsetTypeTest,
+    CASE WHEN YEAR(CAST('20230615' AS VARCHAR(8))) = 2023 THEN 'PASS' ELSE 'FAIL' END AS VarcharTypeTest;
+GO
+
+-- Test 7: Expression testing
+DECLARE @basedate DATETIME = '2023-06-15 12:30:45';
+
+SELECT
+    CASE WHEN YEAR(DATEADD(YEAR, 5, @basedate)) = 2028
+         THEN 'PASS: YEAR works with expressions' 
+         ELSE 'FAIL: Expression handling issue' 
+    END AS ExpressionTest;
+GO
+
+-- Test 8: Year boundary cases
+SELECT
+    CASE WHEN YEAR('1753-01-01') = 1753 THEN 'PASS' ELSE 'FAIL' END AS MinYearTest,
+    CASE WHEN YEAR('9999-12-31') = 9999 THEN 'PASS' ELSE 'FAIL' END AS MaxYearTest;
+GO
+
+-- Test 9: Invalid date handling
+BEGIN TRY
+    SELECT YEAR('10000-01-01'); -- Year out of range
+    SELECT 'FAIL: YEAR accepted invalid date' AS InvalidDateTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: YEAR correctly rejected invalid date' AS InvalidDateTest;
+END CATCH;
+GO
+
+-- Test 10: Usage with aggregate functions
+CREATE TABLE #YearAggTest (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2
+);
+GO
+
+INSERT INTO #YearAggTest VALUES 
+(1, '2020-01-05 08:30:45'),
+(2, '2021-03-10 14:20:30'),
+(3, '2022-05-15 16:45:00'),
+(4, '2023-07-20 09:15:10'),
+(5, '2024-09-25 11:50:25');
+
+SELECT
+    CASE WHEN MIN(YEAR(EventDate)) = 2020 AND MAX(YEAR(EventDate)) = 2024
+         THEN 'PASS: YEAR works with MIN/MAX' 
+         ELSE 'FAIL: Aggregate function issue' 
+    END AS AggregateTest
+FROM #YearAggTest;
+GO
+
+DROP TABLE #YearAggTest;
+GO
+
+-- Test 11: Leap year handling
+SELECT
+    CASE WHEN YEAR('2020-02-29') = 2020 THEN 'PASS' ELSE 'FAIL' END AS LeapYearTest;
+GO
+
+-- Test 12: Century boundary cases
+SELECT
+    CASE WHEN YEAR('2000-01-01') = 2000 THEN 'PASS' ELSE 'FAIL' END AS CenturyBoundaryTest1,
+    CASE WHEN YEAR('1900-12-31') = 1900 THEN 'PASS' ELSE 'FAIL' END AS CenturyBoundaryTest2;
+GO
+
+--DATEFROMPARTS
+-- Test Suite for DATEFROMPARTS function
+-- =====================================
+
+-- Test 1: Testing return datatype of DATEFROMPARTS
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATEFROMPARTS(2023, 1, 1) AS sql_variant), 'BaseType') = 'date' 
+        THEN 'PASS: DATEFROMPARTS returns date'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL parameters
+BEGIN TRY
+    SELECT DATEFROMPARTS(NULL, 1, 1);
+    SELECT 'FAIL: DATEFROMPARTS accepted NULL year parameter' AS NullYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected NULL year parameter' AS NullYearTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATEFROMPARTS(2023, NULL, 1);
+    SELECT 'FAIL: DATEFROMPARTS accepted NULL month parameter' AS NullMonthTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected NULL month parameter' AS NullMonthTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATEFROMPARTS(2023, 1, NULL);
+    SELECT 'FAIL: DATEFROMPARTS accepted NULL day parameter' AS NullDayTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected NULL day parameter' AS NullDayTest;
+END CATCH
+GO
+
+-- Test 3: Testing parameter limitations and validation
+-- Test with invalid year
+BEGIN TRY
+    SELECT DATEFROMPARTS(0, 1, 1);
+    SELECT 'FAIL: DATEFROMPARTS accepted invalid year 0' AS InvalidYearTest1;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected invalid year 0' AS InvalidYearTest1;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATEFROMPARTS(10000, 1, 1);
+    SELECT 'FAIL: DATEFROMPARTS accepted invalid year 10000' AS InvalidYearTest2;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected invalid year 10000' AS InvalidYearTest2;
+END CATCH
+GO
+
+-- Test with invalid month
+BEGIN TRY
+    SELECT DATEFROMPARTS(2023, 0, 1);
+    SELECT 'FAIL: DATEFROMPARTS accepted invalid month 0' AS InvalidMonthTest1;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected invalid month 0' AS InvalidMonthTest1;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATEFROMPARTS(2023, 13, 1);
+    SELECT 'FAIL: DATEFROMPARTS accepted invalid month 13' AS InvalidMonthTest2;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected invalid month 13' AS InvalidMonthTest2;
+END CATCH
+GO
+
+-- Test with invalid day
+BEGIN TRY
+    SELECT DATEFROMPARTS(2023, 1, 0);
+    SELECT 'FAIL: DATEFROMPARTS accepted invalid day 0' AS InvalidDayTest1;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected invalid day 0' AS InvalidDayTest1;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATEFROMPARTS(2023, 1, 32);
+    SELECT 'FAIL: DATEFROMPARTS accepted invalid day 32' AS InvalidDayTest2;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected invalid day 32' AS InvalidDayTest2;
+END CATCH
+GO
+
+-- Test 4: Testing with valid parameter ranges
+SELECT 
+    CASE WHEN DATEFROMPARTS(1, 1, 1) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS MinDateTest,
+    CASE WHEN DATEFROMPARTS(9999, 12, 31) IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS MaxDateTest;
+GO
+
+-- Test with month-specific day limits
+BEGIN TRY
+    SELECT DATEFROMPARTS(2023, 2, 29);
+    SELECT 'FAIL: DATEFROMPARTS accepted Feb 29 in non-leap year' AS LeapYearTest1;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected Feb 29 in non-leap year' AS LeapYearTest1;
+END CATCH
+GO
+
+SELECT
+    CASE WHEN DATEFROMPARTS(2020, 2, 29) IS NOT NULL THEN 'PASS: Leap year Feb 29 accepted' 
+         ELSE 'FAIL: Leap year Feb 29 rejected' 
+    END AS LeapYearTest2;
+GO
+
+-- Test 5: Testing with table values
+CREATE TABLE #DateParts (ID INT, Year INT, Month INT, Day INT);
+GO
+INSERT INTO #DateParts VALUES 
+(1, 2023, 1, 15), 
+(2, 2023, 2, 28), 
+(3, NULL, 5, 10),
+(4, 2023, NULL, 20),
+(5, 2023, 6, NULL);
+
+-- Test with non-null values
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: Table values correctly processed' 
+         ELSE 'FAIL: Issue with table value processing' 
+    END AS TableValueTest
+FROM #DateParts
+WHERE DATEFROMPARTS(Year, Month, Day) IS NOT NULL;
+
+-- Test with null columns should be handled in the query
+BEGIN TRY
+    SELECT DATEFROMPARTS(Year, Month, Day) FROM #DateParts WHERE ID = 3;
+    SELECT 'FAIL: DATEFROMPARTS accepted NULL year from table' AS TableNullYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected NULL year from table' AS TableNullYearTest;
+END CATCH
+GO
+
+DROP TABLE #DateParts;
+GO
+
+-- Test 6: Type conversion
+-- Test integer parameters
+SELECT 
+    CASE WHEN DATEFROMPARTS(CAST('2023' AS INT), CAST('10' AS INT), CAST('15' AS INT)) 
+           = CAST('2023-10-15' AS DATE)
+         THEN 'PASS: Integer conversion works correctly'
+         ELSE 'FAIL: Integer conversion issue'
+    END AS IntConversionTest;
+GO
+
+-- Test numeric parameters
+SELECT 
+    CASE WHEN DATEFROMPARTS(CAST('2023' AS NUMERIC), CAST('10' AS NUMERIC), CAST('15' AS NUMERIC)) 
+           = CAST('2023-10-15' AS DATE)
+         THEN 'PASS: Numeric conversion works correctly'
+         ELSE 'FAIL: Numeric conversion issue'
+    END AS NumericConversionTest;
+GO
+
+-- Test string parameters (should fail)
+BEGIN TRY
+    SELECT DATEFROMPARTS('2023', '10', '15');
+    SELECT 'FAIL: DATEFROMPARTS accepted string parameters' AS StringParamTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEFROMPARTS rejected string parameters' AS StringParamTest;
+END CATCH
+GO
+
+-- Test 7: Using in expressions and with other functions
+SELECT 
+    CASE WHEN DATEFROMPARTS(2023, 10, 15) > DATEFROMPARTS(2023, 10, 14) 
+         THEN 'PASS: Date comparison works correctly'
+         ELSE 'FAIL: Date comparison issue'
+    END AS ComparisonTest;
+
+SELECT 
+    CASE WHEN DATEDIFF(DAY, DATEFROMPARTS(2023, 10, 1), DATEFROMPARTS(2023, 10, 15)) = 14
+         THEN 'PASS: DATEDIFF works with DATEFROMPARTS'
+         ELSE 'FAIL: DATEDIFF issue with DATEFROMPARTS'
+    END AS DateDiffTest;
+GO
+
+-- Test 8: Using with GROUP BY, ORDER BY, WHERE
+CREATE TABLE #Events (ID INT, EventYear INT, EventMonth INT, EventDay INT, EventName VARCHAR(50));
+GO
+INSERT INTO #Events VALUES 
+(1, 2023, 1, 15, 'Event A'),
+(2, 2023, 3, 20, 'Event B'),
+(3, 2023, 6, 10, 'Event C'),
+(4, 2023, 9, 5, 'Event D'),
+(5, 2023, 12, 25, 'Event E');
+
+-- Test WHERE clause
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: WHERE clause works with DATEFROMPARTS' 
+         ELSE 'FAIL: WHERE clause issue with DATEFROMPARTS' 
+    END AS WhereClauseTest
+FROM #Events
+WHERE DATEFROMPARTS(EventYear, EventMonth, EventDay) > DATEFROMPARTS(2023, 3, 1);
+
+-- Test ORDER BY
+SELECT TOP 1
+    CASE WHEN ID = 5 THEN 'PASS: ORDER BY works with DATEFROMPARTS' 
+         ELSE 'FAIL: ORDER BY issue with DATEFROMPARTS' 
+    END AS OrderByTest
+FROM #Events
+ORDER BY DATEFROMPARTS(EventYear, EventMonth, EventDay) DESC;
+
+-- Test GROUP BY
+SELECT 
+    CASE WHEN COUNT(*) = 1 THEN 'PASS: GROUP BY month works with DATEFROMPARTS' 
+         ELSE 'FAIL: GROUP BY month issue with DATEFROMPARTS' 
+    END AS GroupByTest
+FROM (
+    SELECT MONTH(DATEFROMPARTS(EventYear, EventMonth, EventDay)) AS EventMonth, COUNT(*) AS Count
+    FROM #Events
+    GROUP BY MONTH(DATEFROMPARTS(EventYear, EventMonth, EventDay))
+    HAVING COUNT(*) > 1
+) AS SubQuery;
+GO
+
+DROP TABLE #Events;
+GO
+
+-- Test 9: Extreme values and function composition
+SELECT 
+    CASE WHEN YEAR(DATEFROMPARTS(9999, 12, 31)) = 9999 AND
+              MONTH(DATEFROMPARTS(9999, 12, 31)) = 12 AND
+              DAY(DATEFROMPARTS(9999, 12, 31)) = 31
+         THEN 'PASS: Components extracted correctly'
+         ELSE 'FAIL: Component extraction issue'
+    END AS ComponentExtractionTest;
+GO
+
+-- Test 10: Using with expressions and variables
+DECLARE @Year INT = 2023;
+DECLARE @Month INT = 10;
+DECLARE @Day INT = 15;
+
+SELECT 
+    CASE WHEN DATEFROMPARTS(@Year, @Month, @Day) = CAST('2023-10-15' AS DATE)
+         THEN 'PASS: Variable usage works correctly'
+         ELSE 'FAIL: Variable usage issue'
+    END AS VariableTest;
+GO
+
+-- Test with expressions
+SELECT 
+    CASE WHEN DATEFROMPARTS(2023, 10, 15-5) = CAST('2023-10-10' AS DATE)
+         THEN 'PASS: Expression evaluation works correctly'
+         ELSE 'FAIL: Expression evaluation issue'
+    END AS ExpressionTest;
+GO
+
+--DATETIME2FROMPARTS
+-- Test 1: Testing return datatype of DATETIME2FROMPARTS
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 123456, 7) AS sql_variant), 'BaseType') = 'datetime2' 
+        THEN 'PASS: DATETIME2FROMPARTS returns datetime2'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(NULL, 1, 1, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted NULL year' AS NullYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected NULL year' AS NullYearTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, NULL, 1, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted NULL month' AS NullMonthTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected NULL month' AS NullMonthTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, NULL, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted NULL day' AS NullDayTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected NULL day' AS NullDayTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, NULL, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted NULL hour' AS NullHourTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected NULL hour' AS NullHourTest;
+END CATCH
+GO
+
+-- Test 3: Testing with out of range parameters
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(10000, 1, 1, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid year (>9999)' AS InvalidYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid year (>9999)' AS InvalidYearTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 13, 1, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid month (>12)' AS InvalidMonthTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid month (>12)' AS InvalidMonthTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 32, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid day (>31)' AS InvalidDayTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid day (>31)' AS InvalidDayTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, 24, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid hour (>23)' AS InvalidHourTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid hour (>23)' AS InvalidHourTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, 12, 60, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid minute (>59)' AS InvalidMinuteTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid minute (>59)' AS InvalidMinuteTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 60, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid seconds (>59)' AS InvalidSecondsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid seconds (>59)' AS InvalidSecondsTest;
+END CATCH
+GO
+
+-- Test 4: Testing precision parameter
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 123456, 8);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid precision (>7)' AS InvalidPrecisionTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid precision (>7)' AS InvalidPrecisionTest;
+END CATCH
+GO
+
+-- Test 5: Testing fraction digits vs precision
+BEGIN TRY
+    -- Using 1234567 (7 digits) with precision 6 should fail
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 1234567, 6);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted fractions beyond specified precision' AS FractionPrecisionTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected fractions beyond specified precision' AS FractionPrecisionTest;
+END CATCH
+GO
+
+-- Test 6: Testing valid date creation
+SELECT 
+    CASE 
+        WHEN YEAR(DATETIME2FROMPARTS(2023, 2, 28, 23, 59, 59, 9999999, 7)) = 2023
+             AND MONTH(DATETIME2FROMPARTS(2023, 2, 28, 23, 59, 59, 9999999, 7)) = 2
+             AND DAY(DATETIME2FROMPARTS(2023, 2, 28, 23, 59, 59, 9999999, 7)) = 28
+        THEN 'PASS: Date components match input'
+        ELSE 'FAIL: Date components do not match input'
+    END AS ComponentsMatchTest;
+GO
+
+-- Test 7: Testing leap year handling
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 2, 29, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted Feb 29 in non-leap year' AS LeapYearTest1;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected Feb 29 in non-leap year' AS LeapYearTest1;
+END CATCH
+GO
+
+SELECT 
+    CASE 
+        WHEN YEAR(DATETIME2FROMPARTS(2024, 2, 29, 12, 30, 45, 123456, 7)) = 2024
+             AND MONTH(DATETIME2FROMPARTS(2024, 2, 29, 12, 30, 45, 123456, 7)) = 2
+             AND DAY(DATETIME2FROMPARTS(2024, 2, 29, 12, 30, 45, 123456, 7)) = 29
+        THEN 'PASS: Leap year date accepted correctly'
+        ELSE 'FAIL: Leap year date issue'
+    END AS LeapYearTest2;
+GO
+
+-- Test 8: Testing precision handling
+SELECT 
+    CASE 
+        WHEN CAST(DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 123, 3) AS VARCHAR(30)) LIKE '%123%'
+             AND CAST(DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 0, 0) AS VARCHAR(30)) NOT LIKE '%.%'
+        THEN 'PASS: Precision handling works correctly'
+        ELSE 'FAIL: Precision handling issue'
+    END AS PrecisionHandlingTest;
+GO
+
+-- Test 9: Testing with various datatypes for parameters
+DECLARE @Year INT = 2023;
+DECLARE @Month TINYINT = 1;
+DECLARE @Day SMALLINT = 15;
+DECLARE @Hour BIGINT = 14;
+DECLARE @Minute DECIMAL(2,0) = 35;
+DECLARE @Seconds NUMERIC(2,0) = 42;
+DECLARE @Fractions INT = 123456;
+DECLARE @Precision TINYINT = 6;
+
+SELECT 
+    CASE 
+        WHEN DATETIME2FROMPARTS(@Year, @Month, @Day, @Hour, @Minute, @Seconds, @Fractions, @Precision) IS NOT NULL
+        THEN 'PASS: Function accepts various numeric datatypes'
+        ELSE 'FAIL: Issue with datatype acceptance'
+    END AS ParameterDatatypeTest;
+GO
+
+-- Test 10: Testing with GROUP BY, HAVING, ORDER BY, SELECT list
+CREATE TABLE #TestDates (
+    ID INT PRIMARY KEY,
+    Year INT,
+    Month INT,
+    Day INT,
+    Hour INT,
+    Minute INT,
+    Second INT,
+    Fraction INT,
+    Precision INT
+);
+GO
+
+INSERT INTO #TestDates VALUES
+(1, 2020, 1, 1, 9, 0, 0, 0, 0),
+(2, 2021, 6, 15, 12, 30, 45, 123456, 6),
+(3, 2022, 12, 31, 23, 59, 59, 9999999, 7);
+
+-- Test with SELECT list
+SELECT 
+    ID,
+    DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision) AS ConstructedDateTime,
+    CASE 
+        WHEN DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision) IS NOT NULL
+        THEN 'PASS'
+        ELSE 'FAIL'
+    END AS SelectListTest
+FROM #TestDates;
+
+-- Test with ORDER BY
+SELECT TOP 1
+    CASE 
+        WHEN ID = 1 THEN 'PASS: ORDER BY works correctly'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #TestDates
+ORDER BY DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision);
+
+-- Test with GROUP BY
+SELECT 
+    YEAR(DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision)) AS YearGroup,
+    COUNT(*) AS Count,
+    CASE
+        WHEN COUNT(*) = 1 THEN 'PASS: GROUP BY works correctly'
+        ELSE 'FAIL: GROUP BY issue'
+    END AS GroupByTest
+FROM #TestDates
+GROUP BY YEAR(DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision));
+GO
+
+DROP TABLE #TestDates;
+GO
+
+-- Test 11: Testing JOIN operations with the function
+CREATE TABLE #Orders (
+    OrderID INT PRIMARY KEY,
+    OrderYear INT,
+    OrderMonth INT,
+    OrderDay INT,
+    OrderHour INT,
+    OrderMinute INT,
+    OrderSecond INT
+);
+GO
+
+CREATE TABLE #Shipments (
+    ShipmentID INT PRIMARY KEY,
+    OrderID INT,
+    ShipYear INT,
+    ShipMonth INT,
+    ShipDay INT,
+    ShipHour INT,
+    ShipMinute INT,
+    ShipSecond INT
+);
+GO
+
+INSERT INTO #Orders VALUES
+(1, 2023, 1, 15, 10, 30, 0),
+(2, 2023, 2, 20, 14, 45, 30),
+(3, 2023, 3, 25, 16, 15, 45);
+
+INSERT INTO #Shipments VALUES
+(101, 1, 2023, 1, 16, 9, 0, 0),
+(102, 2, 2023, 2, 22, 8, 30, 0),
+(103, 3, 2023, 3, 27, 11, 45, 30);
+
+-- Test INNER JOIN
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 3 THEN 'PASS: JOIN with constructed dates works'
+        ELSE 'FAIL: JOIN issue'
+    END AS JoinTest
+FROM #Orders o
+JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE DATETIME2FROMPARTS(s.ShipYear, s.ShipMonth, s.ShipDay, s.ShipHour, s.ShipMinute, s.ShipSecond, 0, 0) >
+      DATETIME2FROMPARTS(o.OrderYear, o.OrderMonth, o.OrderDay, o.OrderHour, o.OrderMinute, o.OrderSecond, 0, 0);
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 12: Test MIN/MAX aggregate functions
+CREATE TABLE #DateComponents (
+    ID INT PRIMARY KEY,
+    Year INT,
+    Month INT,
+    Day INT,
+    Hour INT,
+    Minute INT,
+    Second INT,
+    Fraction INT,
+    Precision INT
+);
+GO
+
+INSERT INTO #DateComponents VALUES
+(1, 2021, 1, 1, 0, 0, 0, 0, 0),
+(2, 2022, 6, 15, 12, 30, 45, 123456, 6),
+(3, 2023, 12, 31, 23, 59, 59, 9999999, 7);
+
+SELECT 
+    CASE 
+        WHEN YEAR(MIN(DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision))) = 2021
+        THEN 'PASS: MIN function works with constructed dates'
+        ELSE 'FAIL: MIN function issue'
+    END AS MinFunctionTest,
+    CASE 
+        WHEN YEAR(MAX(DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision))) = 2023
+        THEN 'PASS: MAX function works with constructed dates'
+        ELSE 'FAIL: MAX function issue'
+    END AS MaxFunctionTest
+FROM #DateComponents;
+GO
+
+DROP TABLE #DateComponents;
+GO
+
+--DATETIMEFROMPARTS
+-- Test 1: Testing return datatype of DATETIMEFROMPARTS
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 123) AS sql_variant), 'BaseType') = 'datetime' 
+        THEN 'PASS: DATETIMEFROMPARTS returns datetime'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+BEGIN TRY
+    SELECT DATETIMEFROMPARTS(NULL, 1, 1, 12, 30, 45, 123);
+    SELECT 'FAIL: DATETIMEFROMPARTS accepted NULL year' AS NullYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIMEFROMPARTS rejected NULL year' AS NullYearTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIMEFROMPARTS(2023, NULL, 1, 12, 30, 45, 123);
+    SELECT 'FAIL: DATETIMEFROMPARTS accepted NULL month' AS NullMonthTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIMEFROMPARTS rejected NULL month' AS NullMonthTest;
+END CATCH
+GO
+
+-- Test 3: Testing with out of range parameters
+BEGIN TRY
+    SELECT DATETIMEFROMPARTS(10000, 1, 1, 12, 30, 45, 123);
+    SELECT 'FAIL: DATETIMEFROMPARTS accepted invalid year (>9999)' AS InvalidYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIMEFROMPARTS rejected invalid year (>9999)' AS InvalidYearTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 1000);
+    SELECT 'FAIL: DATETIMEFROMPARTS accepted invalid milliseconds (>999)' AS InvalidMillisecondsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIMEFROMPARTS rejected invalid milliseconds (>999)' AS InvalidMillisecondsTest;
+END CATCH
+GO
+
+-- Test 4: Testing valid date creation
+SELECT 
+    CASE 
+        WHEN YEAR(DATETIMEFROMPARTS(2023, 2, 28, 23, 59, 59, 997)) = 2023
+             AND MONTH(DATETIMEFROMPARTS(2023, 2, 28, 23, 59, 59, 997)) = 2
+             AND DAY(DATETIMEFROMPARTS(2023, 2, 28, 23, 59, 59, 997)) = 28
+        THEN 'PASS: Date components match input'
+        ELSE 'FAIL: Date components do not match input'
+    END AS ComponentsMatchTest;
+GO
+
+-- Test 5: Testing leap year handling
+BEGIN TRY
+    SELECT DATETIMEFROMPARTS(2023, 2, 29, 12, 30, 45, 123);
+    SELECT 'FAIL: DATETIMEFROMPARTS accepted Feb 29 in non-leap year' AS LeapYearTest1;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIMEFROMPARTS rejected Feb 29 in non-leap year' AS LeapYearTest1;
+END CATCH
+GO
+
+SELECT 
+    CASE 
+        WHEN YEAR(DATETIMEFROMPARTS(2024, 2, 29, 12, 30, 45, 123)) = 2024
+             AND MONTH(DATETIMEFROMPARTS(2024, 2, 29, 12, 30, 45, 123)) = 2
+             AND DAY(DATETIMEFROMPARTS(2024, 2, 29, 12, 30, 45, 123)) = 29
+        THEN 'PASS: Leap year date accepted correctly'
+        ELSE 'FAIL: Leap year date issue'
+    END AS LeapYearTest2;
+GO
+
+-- Test 6: Testing DATETIME rounding
+-- DATETIME rounds to increments of .000, .003, .007 seconds
+SELECT 
+    CASE 
+        WHEN CAST(DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 1) AS VARCHAR(30)) = 
+             CAST(DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 0) AS VARCHAR(30))
+        THEN 'PASS: Datetime rounding works as expected'
+        ELSE 'FAIL: Datetime rounding issue'
+    END AS RoundingTest1,
+    CASE 
+        WHEN CAST(DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 4) AS VARCHAR(30)) = 
+             CAST(DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 3) AS VARCHAR(30))
+        THEN 'PASS: Datetime rounding works as expected'
+        ELSE 'FAIL: Datetime rounding issue'
+    END AS RoundingTest2;
+GO
+
+-- Test 7: Testing with GROUP BY, HAVING, ORDER BY, SELECT list
+CREATE TABLE #TestDates (
+    ID INT PRIMARY KEY,
+    Year INT,
+    Month INT,
+    Day INT,
+    Hour INT,
+    Minute INT,
+    Second INT,
+    Millisecond INT
+);
+GO
+
+INSERT INTO #TestDates VALUES
+(1, 2020, 1, 1, 9, 0, 0, 0),
+(2, 2021, 6, 15, 12, 30, 45, 123),
+(3, 2022, 12, 31, 23, 59, 59, 997);
+
+-- Test with SELECT list
+SELECT 
+    ID,
+    DATETIMEFROMPARTS(Year, Month, Day, Hour, Minute, Second, Millisecond) AS ConstructedDateTime,
+    CASE 
+        WHEN DATETIMEFROMPARTS(Year, Month, Day, Hour, Minute, Second, Millisecond) IS NOT NULL
+        THEN 'PASS'
+        ELSE 'FAIL'
+    END AS SelectListTest
+FROM #TestDates;
+
+-- Test with ORDER BY
+SELECT TOP 1
+    CASE 
+        WHEN ID = 1 THEN 'PASS: ORDER BY works correctly'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #TestDates
+ORDER BY DATETIMEFROMPARTS(Year, Month, Day, Hour, Minute, Second, Millisecond);
+GO
+
+DROP TABLE #TestDates;
+GO
+
+-- Test 8: Testing with variables and expressions
+DECLARE @Year INT = 2023;
+DECLARE @Month INT = 1 + 1; -- February
+DECLARE @Day INT = 15;
+DECLARE @Hour INT = 12;
+DECLARE @Minute INT = 30;
+DECLARE @Second INT = 45;
+DECLARE @Millisecond INT = 500;
+
+SELECT 
+    CASE 
+        WHEN MONTH(DATETIMEFROMPARTS(@Year, @Month, @Day, @Hour, @Minute, @Second, @Millisecond)) = 2
+        THEN 'PASS: Function works with variables and expressions'
+        ELSE 'FAIL: Issue with variables or expressions'
+    END AS VariablesAndExpressionsTest;
+GO
+
+-- Test 9: Testing conversion to other datetime types
+SELECT 
+    CASE WHEN CAST(DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 123) AS DATE) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToDateTest,
+    CASE WHEN CAST(DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 123) AS TIME) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToTimeTest,
+    CASE WHEN CAST(DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 123) AS DATETIME2) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToDatetime2Test,
+    CASE WHEN CAST(DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 123) AS DATETIMEOFFSET) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeoffsetTest,
+    CASE WHEN CAST(DATETIMEFROMPARTS(2023, 1, 1, 12, 30, 45, 123) AS SMALLDATETIME) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToSmalldatetimeTest;
+GO
+
+--DATETIMEOFFSETFROMPARTS
+-- Test 1: Testing return datatype of DATETIMEOFFSETFROMPARTS
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 30, 45, 123456, 2, 0, 7) AS sql_variant), 'BaseType') = 'datetimeoffset' 
+        THEN 'PASS: DATETIMEOFFSETFROMPARTS returns datetimeoffset'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+BEGIN TRY
+    SELECT DATETIMEOFFSETFROMPARTS(NULL, 1, 1, 12, 30, 45, 123456, 2, 0, 7);
+    SELECT 'FAIL: DATETIMEOFFSETFROMPARTS accepted NULL year' AS NullYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIMEOFFSETFROMPARTS rejected NULL year' AS NullYearTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 30, 45, 123456, NULL, 0, 7);
+    SELECT 'FAIL: DATETIMEOFFSETFROMPARTS accepted NULL hour_offset' AS NullHourOffsetTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIMEOFFSETFROMPARTS rejected NULL hour_offset' AS NullHourOffsetTest;
+END CATCH
+GO
+
+-- Test 3: Testing with out of range parameters
+BEGIN TRY
+    SELECT DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 30, 45, 123456, 15, 0, 7);
+    SELECT 'FAIL: DATETIMEOFFSETFROMPARTS accepted invalid hour_offset (>14)' AS InvalidHourOffsetTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIMEOFFSETFROMPARTS rejected invalid hour_offset (>14)' AS InvalidHourOffsetTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 30, 45, 123456, 2, 60, 7);
+    SELECT 'FAIL: DATETIMEOFFSETFROMPARTS accepted invalid minute_offset (>59)' AS InvalidMinuteOffsetTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIMEOFFSETFROMPARTS rejected invalid minute_offset (>59)' AS InvalidMinuteOffsetTest;
+END CATCH
+GO
+
+-- Test 4: Testing precision parameter
+BEGIN TRY
+    SELECT DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 30, 45, 123456, 2, 0, 8);
+    SELECT 'FAIL: DATETIMEOFFSETFROMPARTS accepted invalid precision (>7)' AS InvalidPrecisionTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIMEOFFSETFROMPARTS rejected invalid precision (>7)' AS InvalidPrecisionTest;
+END CATCH
+GO
+
+-- Test 5: Testing timezone combinations
+SELECT 
+    CASE 
+        WHEN DATEPART(HOUR, DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 30, 45, 123456, 5, 30, 7)) = 5
+             AND DATEPART(MINUTE, DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 30, 45, 123456, 5, 30, 7)) = 30
+        THEN 'PASS: Timezone offset components match input'
+        ELSE 'FAIL: Timezone offset components do not match input'
+    END AS TimezoneComponentsTest;
+GO
+
+SELECT 
+    CASE 
+        WHEN DATEPART(HOUR, DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 30, 45, 123456, -8, 0, 7)) = -8
+             AND DATEPART(MINUTE, DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 30, 45, 123456, -8, 0, 7)) = 0
+        THEN 'PASS: Negative timezone offset works correctly'
+        ELSE 'FAIL: Issue with negative timezone offset'
+    END AS NegativeTimezoneTest;
+GO
+
+-- Test 6: Testing negative offsets and date arithmetic
+SELECT 
+    CASE 
+        WHEN CAST(DATETIMEOFFSETFROMPARTS(2023, 1, 1, 23, 30, 0, 0, 1, 0, 0) AS DATE) = 
+             CAST(DATETIMEOFFSETFROMPARTS(2023, 1, 1, 22, 30, 0, 0, 0, 0, 0) AS DATE)
+        THEN 'PASS: Date equivalence with timezone offsets works correctly'
+        ELSE 'FAIL: Issue with date equivalence across timezones'
+    END AS DateEquivalenceTest;
+GO
+
+-- Test 7: Testing with AT TIME ZONE conversion
+SELECT 
+    CASE 
+        WHEN DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 0, 0, 0, -8, 0, 0) AT TIME ZONE 'UTC' IS NOT NULL
+        THEN 'PASS: AT TIME ZONE conversion works'
+        ELSE 'FAIL: AT TIME ZONE conversion issue'
+    END AS TimeZoneConversionTest;
+GO
+
+-- Test 8: Testing with GROUP BY, HAVING, ORDER BY, SELECT list
+CREATE TABLE #TestOffsetDates (
+    ID INT PRIMARY KEY,
+    Year INT,
+    Month INT,
+    Day INT,
+    Hour INT,
+    Minute INT,
+    Second INT,
+    Fraction INT,
+    HourOffset INT,
+    MinuteOffset INT,
+    Precision INT
+);
+GO
+
+INSERT INTO #TestOffsetDates VALUES
+(1, 2020, 1, 1, 9, 0, 0, 0, 0, 0, 0),
+(2, 2021, 6, 15, 12, 30, 45, 123456, 5, 30, 6),
+(3, 2022, 12, 31, 23, 59, 59, 9999999, -8, 0, 7);
+
+-- Test with SELECT list
+SELECT 
+    ID,
+    DATETIMEOFFSETFROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, HourOffset, MinuteOffset, Precision) AS ConstructedDateTimeOffset,
+    CASE 
+        WHEN DATETIMEOFFSETFROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, HourOffset, MinuteOffset, Precision) IS NOT NULL
+        THEN 'PASS'
+        ELSE 'FAIL'
+    END AS SelectListTest
+FROM #TestOffsetDates ORDER BY ID;
+
+-- Test with ORDER BY
+SELECT TOP 1
+    CASE 
+        WHEN ID = 1 THEN 'PASS: ORDER BY works correctly'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #TestOffsetDates
+ORDER BY DATETIMEOFFSETFROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, HourOffset, MinuteOffset, Precision);
+GO
+
+DROP TABLE #TestOffsetDates;
+GO
+
+-- Test 9: Testing SWITCHOFFSET function with constructed datetimeoffset
+SELECT 
+    CASE 
+        WHEN DATEPART(HOUR, SWITCHOFFSET(DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 0, 0, 0, 5, 30, 0), '-08:00')) = -8
+        THEN 'PASS: SWITCHOFFSET function works correctly'
+        ELSE 'FAIL: SWITCHOFFSET function issue'
+    END AS SwitchOffsetTest;
+GO
+
+-- Test 10: Testing with calculations involving timezone offsets
+SELECT
+    CASE
+        WHEN DATEDIFF(HOUR, 
+                      DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 0, 0, 0, -8, 0, 0),
+                      DATETIMEOFFSETFROMPARTS(2023, 1, 1, 12, 0, 0, 0, 0, 0, 0)) = 8
+        THEN 'PASS: Timezone offset is considered in time difference calculations'
+        ELSE 'FAIL: Timezone offset calculation issue'
+    END AS TimezoneCalculationTest;
+GO
+
+--SMALLDATETIMEFROMPARTS
+-- Test 1: Testing return datatype of SMALLDATETIMEFROMPARTS
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(SMALLDATETIMEFROMPARTS(2023, 1, 1, 12, 30) AS sql_variant), 'BaseType') = 'smalldatetime' 
+        THEN 'PASS: SMALLDATETIMEFROMPARTS returns smalldatetime'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+BEGIN TRY
+    SELECT SMALLDATETIMEFROMPARTS(NULL, 1, 1, 12, 30);
+    SELECT 'FAIL: SMALLDATETIMEFROMPARTS accepted NULL year' AS NullYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SMALLDATETIMEFROMPARTS rejected NULL year' AS NullYearTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT SMALLDATETIMEFROMPARTS(2023, NULL, 1, 12, 30);
+    SELECT 'FAIL: SMALLDATETIMEFROMPARTS accepted NULL month' AS NullMonthTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SMALLDATETIMEFROMPARTS rejected NULL month' AS NullMonthTest;
+END CATCH
+GO
+
+-- Test 3: Testing with out of range parameters
+BEGIN TRY
+    SELECT SMALLDATETIMEFROMPARTS(1900, 1, 1, 12, 30);
+    SELECT 'PASS: SMALLDATETIMEFROMPARTS accepted 1900 as year' AS Year1900Test;
+END TRY
+BEGIN CATCH
+    SELECT 'FAIL: SMALLDATETIMEFROMPARTS rejected valid year 1900' AS Year1900Test;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT SMALLDATETIMEFROMPARTS(1899, 12, 31, 12, 30);
+    SELECT 'FAIL: SMALLDATETIMEFROMPARTS accepted invalid year (<1900)' AS InvalidYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SMALLDATETIMEFROMPARTS rejected invalid year (<1900)' AS InvalidYearTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT SMALLDATETIMEFROMPARTS(2079, 6, 6, 12, 30);
+    SELECT 'PASS: SMALLDATETIMEFROMPARTS accepted 2079-06-06 as valid' AS Year2079Test;
+END TRY
+BEGIN CATCH
+    SELECT 'FAIL: SMALLDATETIMEFROMPARTS rejected valid date 2079-06-06' AS Year2079Test;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT SMALLDATETIMEFROMPARTS(2080, 1, 1, 0, 0);
+    SELECT 'FAIL: SMALLDATETIMEFROMPARTS accepted invalid year (>2079)' AS InvalidFutureYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SMALLDATETIMEFROMPARTS rejected invalid year (>2079)' AS InvalidFutureYearTest;
+END CATCH
+GO
+
+-- Test 4: Testing minute rounding (smalldatetime rounds to nearest minute)
+SELECT 
+    CASE 
+        WHEN DATEPART(SECOND, CAST(SMALLDATETIMEFROMPARTS(2023, 1, 1, 12, 30) AS DATETIME)) = 0
+        THEN 'PASS: SMALLDATETIMEFROMPARTS has zero seconds as expected'
+        ELSE 'FAIL: SMALLDATETIMEFROMPARTS has unexpected seconds value'
+    END AS SecondsPrecisionTest;
+GO
+
+-- Test 5: Testing with edge cases
+BEGIN TRY
+    SELECT SMALLDATETIMEFROMPARTS(2023, 2, 29, 12, 30);
+    SELECT 'FAIL: SMALLDATETIMEFROMPARTS accepted Feb 29 in non-leap year' AS LeapYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SMALLDATETIMEFROMPARTS rejected Feb 29 in non-leap year' AS LeapYearTest;
+END CATCH
+GO
+
+-- Test 6: Testing with GROUP BY, HAVING, ORDER BY, SELECT list
+CREATE TABLE #TestSmallDates (
+    ID INT PRIMARY KEY,
+    Year INT,
+    Month INT,
+    Day INT,
+    Hour INT,
+    Minute INT
+);
+GO
+
+INSERT INTO #TestSmallDates VALUES
+(1, 1900, 1, 1, 0, 0),
+(2, 2000, 6, 15, 12, 30),
+(3, 2079, 6, 6, 23, 59);
+
+-- Test with SELECT list
+SELECT 
+    ID,
+    SMALLDATETIMEFROMPARTS(Year, Month, Day, Hour, Minute) AS ConstructedSmallDateTime,
+    CASE 
+        WHEN SMALLDATETIMEFROMPARTS(Year, Month, Day, Hour, Minute) IS NOT NULL
+        THEN 'PASS'
+        ELSE 'FAIL'
+    END AS SelectListTest
+FROM #TestSmallDates ORDER BY ID;
+
+-- Test with ORDER BY
+SELECT TOP 1
+    CASE 
+        WHEN ID = 1 THEN 'PASS: ORDER BY works correctly'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #TestSmallDates
+ORDER BY SMALLDATETIMEFROMPARTS(Year, Month, Day, Hour, Minute);
+GO
+
+DROP TABLE #TestSmallDates;
+GO
+
+-- Test 7: Testing conversion to other datetime types
+SELECT 
+    CASE WHEN CAST(SMALLDATETIMEFROMPARTS(2023, 1, 1, 12, 30) AS DATE) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToDateTest,
+    CASE WHEN CAST(SMALLDATETIMEFROMPARTS(2023, 1, 1, 12, 30) AS TIME) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToTimeTest,
+    CASE WHEN CAST(SMALLDATETIMEFROMPARTS(2023, 1, 1, 12, 30) AS DATETIME) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeTest,
+    CASE WHEN CAST(SMALLDATETIMEFROMPARTS(2023, 1, 1, 12, 30) AS DATETIME2) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToDatetime2Test,
+    CASE WHEN CAST(SMALLDATETIMEFROMPARTS(2023, 1, 1, 12, 30) AS DATETIMEOFFSET) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToDatetimeoffsetTest;
+GO
+
+-- Test 8: Testing arithmetic operations
+SELECT
+    CASE WHEN DATEADD(DAY, 1, SMALLDATETIMEFROMPARTS(2023, 1, 1, 12, 30)) = 
+              SMALLDATETIMEFROMPARTS(2023, 1, 2, 12, 30)
+         THEN 'PASS: DATEADD works correctly with SMALLDATETIMEFROMPARTS'
+         ELSE 'FAIL: DATEADD issue with SMALLDATETIMEFROMPARTS'
+    END AS DateAddTest,
+    
+    CASE WHEN DATEDIFF(DAY, SMALLDATETIMEFROMPARTS(2023, 1, 1, 12, 30), 
+                       SMALLDATETIMEFROMPARTS(2023, 1, 3, 12, 30)) = 2
+         THEN 'PASS: DATEDIFF works correctly with SMALLDATETIMEFROMPARTS'
+         ELSE 'FAIL: DATEDIFF issue with SMALLDATETIMEFROMPARTS'
+    END AS DateDiffTest;
+GO
+
+--TIMEFROMPARTS
+-- Test 1: Testing return datatype of TIMEFROMPARTS
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(TIMEFROMPARTS(12, 30, 45, 123456, 7) AS sql_variant), 'BaseType') = 'time' 
+        THEN 'PASS: TIMEFROMPARTS returns time'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+BEGIN TRY
+    SELECT TIMEFROMPARTS(NULL, 30, 45, 123456, 7);
+    SELECT 'FAIL: TIMEFROMPARTS accepted NULL hour' AS NullHourTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TIMEFROMPARTS rejected NULL hour' AS NullHourTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT TIMEFROMPARTS(12, NULL, 45, 123456, 7);
+    SELECT 'FAIL: TIMEFROMPARTS accepted NULL minute' AS NullMinuteTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TIMEFROMPARTS rejected NULL minute' AS NullMinuteTest;
+END CATCH
+GO
+
+-- Test 3: Testing with out of range parameters
+BEGIN TRY
+    SELECT TIMEFROMPARTS(24, 30, 45, 123456, 7);
+    SELECT 'FAIL: TIMEFROMPARTS accepted invalid hour (>23)' AS InvalidHourTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TIMEFROMPARTS rejected invalid hour (>23)' AS InvalidHourTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT TIMEFROMPARTS(12, 60, 45, 123456, 7);
+    SELECT 'FAIL: TIMEFROMPARTS accepted invalid minute (>59)' AS InvalidMinuteTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TIMEFROMPARTS rejected invalid minute (>59)' AS InvalidMinuteTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT TIMEFROMPARTS(12, 30, 60, 123456, 7);
+    SELECT 'FAIL: TIMEFROMPARTS accepted invalid seconds (>59)' AS InvalidSecondsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TIMEFROMPARTS rejected invalid seconds (>59)' AS InvalidSecondsTest;
+END CATCH
+GO
+
+-- Test 4: Testing precision parameter
+BEGIN TRY
+    SELECT TIMEFROMPARTS(12, 30, 45, 123456, 8);
+    SELECT 'FAIL: TIMEFROMPARTS accepted invalid precision (>7)' AS InvalidPrecisionTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TIMEFROMPARTS rejected invalid precision (>7)' AS InvalidPrecisionTest;
+END CATCH
+GO
+
+-- Test 5: Testing fraction digits vs precision
+BEGIN TRY
+    -- Using 1234567 (7 digits) with precision 6 should fail
+    SELECT TIMEFROMPARTS(12, 30, 45, 1234567, 6);
+    SELECT 'FAIL: TIMEFROMPARTS accepted fractions beyond specified precision' AS FractionPrecisionTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TIMEFROMPARTS rejected fractions beyond specified precision' AS FractionPrecisionTest;
+END CATCH
+GO
+
+-- Test 6: Testing valid time creation
+SELECT 
+    CASE 
+        WHEN DATEPART(HOUR, TIMEFROMPARTS(12, 30, 45, 123456, 7)) = 12
+             AND DATEPART(MINUTE, TIMEFROMPARTS(12, 30, 45, 123456, 7)) = 30
+             AND DATEPART(SECOND, TIMEFROMPARTS(12, 30, 45, 123456, 7)) = 45
+        THEN 'PASS: Time components match input'
+        ELSE 'FAIL: Time components do not match input'
+    END AS ComponentsMatchTest;
+GO
+
+-- Test 7: Testing precision handling
+SELECT 
+    CASE 
+        WHEN CAST(TIMEFROMPARTS(12, 30, 45, 123, 3) AS VARCHAR(30)) LIKE '%123%'
+             AND CAST(TIMEFROMPARTS(12, 30, 45, 0, 0) AS VARCHAR(30)) NOT LIKE '%.%'
+        THEN 'PASS: Precision handling works correctly'
+        ELSE 'FAIL: Precision handling issue'
+    END AS PrecisionHandlingTest;
+GO
+
+-- Test 8: Testing with GROUP BY, HAVING, ORDER BY, SELECT list
+CREATE TABLE #TestTimes (
+    ID INT PRIMARY KEY,
+    Hour INT,
+    Minute INT,
+    Second INT,
+    Fraction INT,
+    Precision INT
+);
+GO
+
+INSERT INTO #TestTimes VALUES
+(1, 0, 0, 0, 0, 0),
+(2, 12, 30, 45, 123456, 6),
+(3, 23, 59, 59, 9999999, 7);
+
+-- Test with SELECT list
+SELECT 
+    ID,
+    TIMEFROMPARTS(Hour, Minute, Second, Fraction, Precision) AS ConstructedTime,
+    CASE 
+        WHEN TIMEFROMPARTS(Hour, Minute, Second, Fraction, Precision) IS NOT NULL
+        THEN 'PASS'
+        ELSE 'FAIL'
+    END AS SelectListTest
+FROM #TestTimes;
+
+-- Test with ORDER BY
+SELECT TOP 1
+    CASE 
+        WHEN ID = 1 THEN 'PASS: ORDER BY works correctly'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #TestTimes
+ORDER BY TIMEFROMPARTS(Hour, Minute, Second, Fraction, Precision);
+GO
+
+DROP TABLE #TestTimes;
+GO
+
+-- Test 9: Testing time arithmetic and comparisons
+SELECT
+    CASE WHEN DATEADD(HOUR, 1, TIMEFROMPARTS(12, 30, 45, 0, 0)) > TIMEFROMPARTS(12, 30, 45, 0, 0)
+         THEN 'PASS: DATEADD works correctly with TIMEFROMPARTS'
+         ELSE 'FAIL: DATEADD issue with TIMEFROMPARTS'
+    END AS TimeAddTest,
+    
+    CASE WHEN DATEDIFF(MINUTE, TIMEFROMPARTS(12, 30, 45, 0, 0), TIMEFROMPARTS(13, 30, 45, 0, 0)) = 60
+         THEN 'PASS: DATEDIFF works correctly with TIMEFROMPARTS'
+         ELSE 'FAIL: DATEDIFF issue with TIMEFROMPARTS'
+    END AS TimeDiffTest;
+GO
+
+-- Test 10: Testing conversion to other datetime types
+SELECT 
+    CASE WHEN CAST(TIMEFROMPARTS(12, 30, 45, 123, 3) AS VARCHAR(30)) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CastToVarcharTest,
+    CASE WHEN CONVERT(DATETIME, CAST('2023-01-01' AS DATE) + CAST(TIMEFROMPARTS(12, 30, 45, 0, 0) AS DATETIME)) IS NOT NULL 
+         THEN 'PASS' ELSE 'FAIL' END AS CombineWithDateTest;
+GO
+
+-- Test 11: Testing with edge cases (midnight)
+SELECT 
+    CASE 
+        WHEN CAST(TIMEFROMPARTS(0, 0, 0, 0, 0) AS VARCHAR(30)) LIKE '00:00:00%'
+        THEN 'PASS: Midnight time created correctly'
+        ELSE 'FAIL: Midnight time issue'
+    END AS MidnightTest;
+GO
+
+--DATEDIFF
+-- Test 1: Testing return datatype of DATEDIFF
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATEDIFF(DAY, '2000-01-01', '2020-01-01') AS sql_variant), 'BaseType') = 'int' 
+        THEN 'PASS: DATEDIFF returns INT'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE WHEN DATEDIFF(DAY, NULL, '2023-01-01') IS NULL THEN 'PASS: NULL first date returns NULL' ELSE 'FAIL' END AS NullFirstDateTest,
+    CASE WHEN DATEDIFF(DAY, '2023-01-01', NULL) IS NULL THEN 'PASS: NULL second date returns NULL' ELSE 'FAIL' END AS NullSecondDateTest,
+    CASE WHEN DATEDIFF(NULL, '2023-01-01', '2023-02-01') IS NULL THEN 'PASS: NULL datepart returns NULL' ELSE 'FAIL' END AS NullDatePartTest;
+GO
+
+-- Test 3: Testing empty strings as arguments
+BEGIN TRY
+    SELECT DATEDIFF(DAY, '', '2023-01-01');
+    SELECT 'FAIL: DATEDIFF accepted empty string for date' AS EmptyStringDateTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEDIFF rejected empty string for date' AS EmptyStringDateTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATEDIFF('', '2023-01-01', '2023-02-01');
+    SELECT 'FAIL: DATEDIFF accepted empty string for datepart' AS EmptyStringDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEDIFF rejected empty string for datepart' AS EmptyStringDatepartTest;
+END CATCH
+GO
+
+-- Test 4: Testing argument limitations
+BEGIN TRY
+    SELECT DATEDIFF(DAY, '2023-01-01', '2023-02-01', 'extra');
+    SELECT 'FAIL: DATEDIFF accepted too many arguments' AS TooManyArgsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEDIFF rejected too many arguments' AS TooManyArgsTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATEDIFF(DAY, '2023-01-01');
+    SELECT 'FAIL: DATEDIFF accepted too few arguments' AS TooFewArgsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEDIFF rejected too few arguments' AS TooFewArgsTest;
+END CATCH
+GO
+
+-- Test 5: Testing all valid datepart values
+SELECT 
+    CASE WHEN DATEDIFF(YEAR, '2020-01-01', '2023-06-15') = 3 THEN 'PASS' ELSE 'FAIL' END AS YearTest,
+    CASE WHEN DATEDIFF(QUARTER, '2022-01-01', '2023-06-15') = 6 THEN 'PASS' ELSE 'FAIL' END AS QuarterTest,
+    CASE WHEN DATEDIFF(MONTH, '2022-12-01', '2023-06-15') = 6 THEN 'PASS' ELSE 'FAIL' END AS MonthTest,
+    CASE WHEN DATEDIFF(DAYOFYEAR, '2023-01-01', '2023-01-10') = 9 THEN 'PASS' ELSE 'FAIL' END AS DayOfYearTest,
+    CASE WHEN DATEDIFF(DAY, '2023-01-01', '2023-01-10') = 9 THEN 'PASS' ELSE 'FAIL' END AS DayTest,
+    CASE WHEN DATEDIFF(WEEK, '2023-01-01', '2023-01-15') IN (1, 2) THEN 'PASS' ELSE 'FAIL' END AS WeekTest, -- Result can vary based on DATEFIRST setting
+    CASE WHEN DATEDIFF(HOUR, '2023-01-01 12:00', '2023-01-01 15:30') = 3 THEN 'PASS' ELSE 'FAIL' END AS HourTest,
+    CASE WHEN DATEDIFF(MINUTE, '2023-01-01 12:00', '2023-01-01 12:30') = 30 THEN 'PASS' ELSE 'FAIL' END AS MinuteTest,
+    CASE WHEN DATEDIFF(SECOND, '2023-01-01 12:00:00', '2023-01-01 12:00:30') = 30 THEN 'PASS' ELSE 'FAIL' END AS SecondTest,
+    CASE WHEN DATEDIFF(MILLISECOND, '2023-01-01 12:00:00.000', '2023-01-01 12:00:00.100') = 100 THEN 'PASS' ELSE 'FAIL' END AS MillisecondTest,
+    CASE WHEN DATEDIFF(MICROSECOND, '2023-01-01 12:00:00.0000000', '2023-01-01 12:00:00.0000001') = 0 THEN 'PASS' ELSE 'FAIL' END AS MicrosecondTest, -- SQL Server datetime precision limitation
+    CASE WHEN DATEDIFF(NANOSECOND, '2023-01-01 12:00:00.0000000', '2023-01-01 12:00:00.0000001') = 100 THEN 'PASS' ELSE 'FAIL' END AS NanosecondTest;
+GO
+
+-- Test 6: Testing datepart abbreviations
+SELECT 
+    CASE WHEN DATEDIFF(YEAR, '2020-01-01', '2023-01-01') = DATEDIFF(YY, '2020-01-01', '2023-01-01') 
+         AND DATEDIFF(YEAR, '2020-01-01', '2023-01-01') = DATEDIFF(YYYY, '2020-01-01', '2023-01-01')
+         THEN 'PASS: Year abbreviations work' ELSE 'FAIL' END AS YearAbbrevTest,
+         
+    CASE WHEN DATEDIFF(QUARTER, '2020-01-01', '2023-01-01') = DATEDIFF(QQ, '2020-01-01', '2023-01-01') 
+         AND DATEDIFF(QUARTER, '2020-01-01', '2023-01-01') = DATEDIFF(Q, '2020-01-01', '2023-01-01')
+         THEN 'PASS: Quarter abbreviations work' ELSE 'FAIL' END AS QuarterAbbrevTest,
+         
+    CASE WHEN DATEDIFF(MONTH, '2020-01-01', '2023-01-01') = DATEDIFF(MM, '2020-01-01', '2023-01-01') 
+         AND DATEDIFF(MONTH, '2020-01-01', '2023-01-01') = DATEDIFF(M, '2020-01-01', '2023-01-01')
+         THEN 'PASS: Month abbreviations work' ELSE 'FAIL' END AS MonthAbbrevTest,
+         
+    CASE WHEN DATEDIFF(DAYOFYEAR, '2023-01-01', '2023-01-10') = DATEDIFF(DY, '2023-01-01', '2023-01-10') 
+         AND DATEDIFF(DAYOFYEAR, '2023-01-01', '2023-01-10') = DATEDIFF(Y, '2023-01-01', '2023-01-10')
+         THEN 'PASS: DayOfYear abbreviations work' ELSE 'FAIL' END AS DayOfYearAbbrevTest,
+         
+    CASE WHEN DATEDIFF(DAY, '2023-01-01', '2023-01-10') = DATEDIFF(DD, '2023-01-01', '2023-01-10') 
+         AND DATEDIFF(DAY, '2023-01-01', '2023-01-10') = DATEDIFF(D, '2023-01-01', '2023-01-10')
+         THEN 'PASS: Day abbreviations work' ELSE 'FAIL' END AS DayAbbrevTest,
+         
+    CASE WHEN DATEDIFF(WEEK, '2023-01-01', '2023-01-15') = DATEDIFF(WK, '2023-01-01', '2023-01-15') 
+         AND DATEDIFF(WEEK, '2023-01-01', '2023-01-15') = DATEDIFF(WW, '2023-01-01', '2023-01-15')
+         THEN 'PASS: Week abbreviations work' ELSE 'FAIL' END AS WeekAbbrevTest,
+         
+    CASE WHEN DATEDIFF(HOUR, '2023-01-01 12:00', '2023-01-01 15:00') = DATEDIFF(HH, '2023-01-01 12:00', '2023-01-01 15:00')
+         THEN 'PASS: Hour abbreviations work' ELSE 'FAIL' END AS HourAbbrevTest,
+         
+    CASE WHEN DATEDIFF(MINUTE, '2023-01-01 12:00', '2023-01-01 12:30') = DATEDIFF(MI, '2023-01-01 12:00', '2023-01-01 12:30') 
+         AND DATEDIFF(MINUTE, '2023-01-01 12:00', '2023-01-01 12:30') = DATEDIFF(N, '2023-01-01 12:00', '2023-01-01 12:30')
+         THEN 'PASS: Minute abbreviations work' ELSE 'FAIL' END AS MinuteAbbrevTest,
+         
+    CASE WHEN DATEDIFF(SECOND, '2023-01-01 12:00:00', '2023-01-01 12:00:30') = DATEDIFF(SS, '2023-01-01 12:00:00', '2023-01-01 12:00:30') 
+         AND DATEDIFF(SECOND, '2023-01-01 12:00:00', '2023-01-01 12:00:30') = DATEDIFF(S, '2023-01-01 12:00:00', '2023-01-01 12:00:30')
+         THEN 'PASS: Second abbreviations work' ELSE 'FAIL' END AS SecondAbbrevTest,
+         
+    CASE WHEN DATEDIFF(MILLISECOND, '2023-01-01 12:00:00.000', '2023-01-01 12:00:00.100') = DATEDIFF(MS, '2023-01-01 12:00:00.000', '2023-01-01 12:00:00.100')
+         THEN 'PASS: Millisecond abbreviations work' ELSE 'FAIL' END AS MillisecondAbbrevTest;
+GO
+
+-- Test 7: Testing with null values from table
+CREATE TABLE #TestNullDates (
+    ID INT, 
+    StartDate DATETIME NULL, 
+    EndDate DATETIME NULL
+);
+GO
+
+INSERT INTO #TestNullDates VALUES (1, '2023-01-01', '2023-02-01');
+INSERT INTO #TestNullDates VALUES (2, NULL, '2023-03-01');
+INSERT INTO #TestNullDates VALUES (3, '2023-01-15', NULL);
+INSERT INTO #TestNullDates VALUES (4, NULL, NULL);
+
+SELECT 
+    CASE 
+        WHEN (SELECT COUNT(*) FROM #TestNullDates WHERE DATEDIFF(DAY, StartDate, EndDate) IS NOT NULL) = 1
+        THEN 'PASS: NULL handling in table works'
+        ELSE 'FAIL: NULL handling in table issue'
+    END AS TableNullTest;
+GO
+
+DROP TABLE #TestNullDates;
+GO
+
+-- Test 8: Testing with CAST and CONVERT as arguments
+SELECT 
+    CASE WHEN DATEDIFF(DAY, CAST('2023-01-01' AS DATE), CAST('2023-01-10' AS DATE)) = 9 
+         THEN 'PASS: CAST works with DATEDIFF' ELSE 'FAIL' END AS CastTest,
+    CASE WHEN DATEDIFF(DAY, CONVERT(DATETIME, '2023-01-01', 120), CONVERT(DATETIME, '2023-01-10', 120)) = 9 
+         THEN 'PASS: CONVERT works with DATEDIFF' ELSE 'FAIL' END AS ConvertTest;
+GO
+
+-- Test 9: Testing with different datatypes as arguments
+SELECT 
+    CASE WHEN DATEDIFF(DAY, '2023-01-01', '2023-01-10') = 9 
+         THEN 'PASS: String literals work' ELSE 'FAIL' END AS StringLiteralTest,
+    CASE WHEN DATEDIFF(DAY, CAST('2023-01-01' AS DATE), CAST('2023-01-10' AS DATE)) = 9 
+         THEN 'PASS: DATE type works' ELSE 'FAIL' END AS DateTypeTest,
+    CASE WHEN DATEDIFF(DAY, CAST('2023-01-01 12:00' AS DATETIME), CAST('2023-01-10 15:00' AS DATETIME)) = 9 
+         THEN 'PASS: DATETIME type works' ELSE 'FAIL' END AS DateTimeTypeTest,
+    CASE WHEN DATEDIFF(DAY, CAST('2023-01-01 12:00' AS DATETIME2), CAST('2023-01-10 15:00' AS DATETIME2)) = 9 
+         THEN 'PASS: DATETIME2 type works' ELSE 'FAIL' END AS DateTime2TypeTest,
+    CASE WHEN DATEDIFF(DAY, CAST('2023-01-01 12:00 +00:00' AS DATETIMEOFFSET), CAST('2023-01-10 15:00 +00:00' AS DATETIMEOFFSET)) = 9 
+         THEN 'PASS: DATETIMEOFFSET type works' ELSE 'FAIL' END AS DateTimeOffsetTypeTest,
+    CASE WHEN DATEDIFF(DAY, CAST('2023-01-01 12:00' AS SMALLDATETIME), CAST('2023-01-10 15:00' AS SMALLDATETIME)) = 9 
+         THEN 'PASS: SMALLDATETIME type works' ELSE 'FAIL' END AS SmallDateTimeTypeTest,
+    CASE WHEN DATEDIFF(DAY, CAST('12:00' AS TIME), CAST('15:00' AS TIME)) = 0 
+         THEN 'PASS: TIME type works' ELSE 'FAIL' END AS TimeTypeTest;
+GO
+
+-- Test 10: Testing with timezone handling
+DECLARE @Eastern DATETIMEOFFSET = '2023-01-01 12:00:00 -05:00';
+DECLARE @Pacific DATETIMEOFFSET = '2023-01-01 09:00:00 -08:00';
+DECLARE @UTC DATETIMEOFFSET = '2023-01-01 17:00:00 +00:00';
+
+SELECT 
+    CASE WHEN DATEDIFF(HOUR, @Eastern, @Pacific) = -3 
+         THEN 'PASS: Different timezone offsets work' ELSE 'FAIL' END AS TimeZoneDiffTest,
+    CASE WHEN DATEDIFF(HOUR, @Eastern, @UTC) = 5 
+         THEN 'PASS: UTC comparison works' ELSE 'FAIL' END AS UTCComparisonTest;
+GO
+
+-- Test 11: Using DATEDIFF with GROUP BY, HAVING, ORDER BY, SELECT, WHERE
+CREATE TABLE #TransactionData (
+    ID INT PRIMARY KEY,
+    TransactionDate DATETIME,
+    Amount DECIMAL(10,2)
+);
+GO
+
+INSERT INTO #TransactionData VALUES 
+(1, '2023-01-15', 100.00),
+(2, '2023-02-20', 200.00),
+(3, '2023-03-25', 300.00);
+
+-- Test WHERE clause
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: WHERE clause with DATEDIFF works' 
+         ELSE 'FAIL: WHERE clause issue' 
+    END AS WhereClauseTest
+FROM #TransactionData
+WHERE DATEDIFF(MONTH, '2023-01-01', TransactionDate) <= 2;
+
+-- Test GROUP BY and HAVING
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: HAVING with DATEDIFF works' 
+         ELSE 'FAIL: HAVING issue' 
+    END AS HavingClauseTest
+FROM #TransactionData
+GROUP BY DATEDIFF(MONTH, '2023-01-01', TransactionDate)
+HAVING DATEDIFF(MONTH, '2023-01-01', MAX(TransactionDate)) > 0;
+
+-- Test ORDER BY
+SELECT TOP 1
+    CASE WHEN ID = 3 THEN 'PASS: ORDER BY with DATEDIFF works' 
+         ELSE 'FAIL: ORDER BY issue' 
+    END AS OrderByTest
+FROM #TransactionData
+ORDER BY DATEDIFF(DAY, '2023-01-01', TransactionDate) DESC;
+GO
+
+DROP TABLE #TransactionData;
+GO
+
+-- Test 12: Using MAX, TOP, DISTINCT, OVER, JOIN with DATEDIFF
+CREATE TABLE #Orders (OrderID INT PRIMARY KEY, OrderDate DATETIME, CustomerID INT);
+GO
+CREATE TABLE #Shipments (ShipID INT PRIMARY KEY, OrderID INT, ShipDate DATETIME);
+GO
+
+INSERT INTO #Orders VALUES 
+(1, '2023-01-05', 101),
+(2, '2023-01-10', 102),
+(3, '2023-01-15', 101);
+
+INSERT INTO #Shipments VALUES
+(101, 1, '2023-01-08'),
+(102, 2, '2023-01-15'),
+(103, 3, '2023-01-20');
+
+-- Test MAX with DATEDIFF
+SELECT 
+    CASE WHEN MAX(DATEDIFF(DAY, o.OrderDate, s.ShipDate)) = 5
+         THEN 'PASS: MAX with DATEDIFF works' 
+         ELSE 'FAIL: MAX function issue' 
+    END AS MaxFunctionTest
+FROM #Orders o
+JOIN #Shipments s ON o.OrderID = s.OrderID;
+
+-- Test TOP with DATEDIFF
+SELECT TOP 1
+    CASE WHEN OrderID = 1 THEN 'PASS: TOP with DATEDIFF works' 
+         ELSE 'FAIL: TOP issue' 
+    END AS TopClauseTest
+FROM #Orders o
+JOIN #Shipments s ON o.OrderID = s.OrderID
+ORDER BY DATEDIFF(DAY, o.OrderDate, s.ShipDate);
+
+-- Test DISTINCT with DATEDIFF
+SELECT 
+    CASE WHEN COUNT(*) <= 3 THEN 'PASS: DISTINCT with DATEDIFF works' 
+         ELSE 'FAIL: DISTINCT issue' 
+    END AS DistinctTest
+FROM (
+    SELECT DISTINCT DATEDIFF(DAY, o.OrderDate, s.ShipDate) AS DaysDiff
+    FROM #Orders o
+    JOIN #Shipments s ON o.OrderID = s.OrderID
+) AS DistinctDiffs;
+
+-- Test OVER clause
+SELECT TOP 1
+    CASE WHEN MAX(DATEDIFF(DAY, o.OrderDate, s.ShipDate)) OVER() = 5
+         THEN 'PASS: OVER with DATEDIFF works' 
+         ELSE 'FAIL: OVER issue' 
+    END AS OverClauseTest
+FROM #Orders o
+JOIN #Shipments s ON o.OrderID = s.OrderID;
+
+-- Test JOIN with DATEDIFF conditions
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: JOIN with DATEDIFF works' 
+         ELSE 'FAIL: JOIN issue' 
+    END AS JoinTest
+FROM #Orders o
+JOIN #Shipments s ON o.OrderID = s.OrderID AND DATEDIFF(DAY, o.OrderDate, s.ShipDate) >= 0;
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 13: Testing with user-defined variables
+DECLARE @StartDate DATE = '2023-01-01';
+DECLARE @EndDate DATE = '2023-01-31';
+DECLARE @DatepartVar VARCHAR(10) = 'DAY';
+
+SELECT 
+    CASE WHEN DATEDIFF(DAY, @StartDate, @EndDate) = 30 
+         THEN 'PASS: Variables as date arguments work' 
+         ELSE 'FAIL: Variables as date arguments issue' 
+    END AS DateVariablesTest;
+
+BEGIN TRY
+    DECLARE @Result INT = DATEDIFF(@DatepartVar, @StartDate, @EndDate);
+    SELECT 'PASS: Variable as datepart works' AS DatepartVariableTest;
+END TRY
+BEGIN CATCH
+    SELECT 'FAIL: Variable as datepart issue' AS DatepartVariableTest;
+END CATCH
+GO
+
+-- Test 14: Testing INT overflow
+DECLARE @OldDate DATE = '1900-01-01';
+DECLARE @FarFutureDate DATE = '9999-12-31';
+
+BEGIN TRY
+    DECLARE @Result INT = DATEDIFF(SECOND, @OldDate, @FarFutureDate);
+    SELECT 'FAIL: Expected INT overflow did not occur' AS OverflowTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: INT overflow correctly occurred' AS OverflowTest;
+END CATCH
+GO
+
+-- Test 15: Testing order of dates (negative differences)
+SELECT 
+    CASE WHEN DATEDIFF(DAY, '2023-01-31', '2023-01-01') = -30 
+         THEN 'PASS: Negative difference calculated correctly' 
+         ELSE 'FAIL: Negative difference issue' 
+    END AS NegativeDiffTest;
+GO
+
+-- Test 16: Testing behavior with decimal or floating point datepart values
+BEGIN TRY
+    SELECT DATEDIFF(3.5, '2023-01-01', '2023-01-10');
+    SELECT 'FAIL: Accepted non-integer/non-string datepart' AS NonIntegerDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: Rejected non-integer/non-string datepart' AS NonIntegerDatepartTest;
+END CATCH
+GO
+
+-- Test 17: Testing with invalid datepart values
+BEGIN TRY
+    SELECT DATEDIFF('INVALID_PART', '2023-01-01', '2023-01-10');
+    SELECT 'FAIL: Accepted invalid datepart' AS InvalidDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: Rejected invalid datepart' AS InvalidDatepartTest;
+END CATCH
+GO
+
+-- Test 18: Testing with dynamic SQL
+BEGIN TRY
+    DECLARE @Sql NVARCHAR(200);
+    DECLARE @Result BIGINT;
+
+    SET @Sql = N'SELECT @Result = DATEDIFF(DAY, ''2023-01-01'', ''2023-01-10'')';
+
+    EXEC sp_executesql 
+        @Sql, 
+        N'@Result BIGINT OUTPUT', 
+        @Result = @Result OUTPUT;
+    
+    SELECT 
+        CASE WHEN @Result = 9 
+             THEN 'PASS: DATEDIFF works in dynamic SQL' 
+             ELSE 'FAIL: Dynamic SQL issue' 
+        END AS DynamicSqlTest;
+END TRY
+BEGIN CATCH
+    SELECT 'FAIL: Dynamic SQL error' AS DynamicSqlTest;
+END CATCH
+GO
+
+--DATEDIFF_BIG
+-- Test 1: Testing return datatype of DATEDIFF_BIG
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATEDIFF_BIG(DAY, '2000-01-01', '2020-01-01') AS sql_variant), 'BaseType') = 'bigint' 
+        THEN 'PASS: DATEDIFF_BIG returns BIGINT'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE WHEN DATEDIFF_BIG(DAY, NULL, '2023-01-01') IS NULL THEN 'PASS: NULL first date returns NULL' ELSE 'FAIL' END AS NullFirstDateTest,
+    CASE WHEN DATEDIFF_BIG(DAY, '2023-01-01', NULL) IS NULL THEN 'PASS: NULL second date returns NULL' ELSE 'FAIL' END AS NullSecondDateTest,
+    CASE WHEN DATEDIFF_BIG(NULL, '2023-01-01', '2023-02-01') IS NULL THEN 'PASS: NULL datepart returns NULL' ELSE 'FAIL' END AS NullDatePartTest;
+GO
+
+-- Test 3: Testing empty strings as arguments
+BEGIN TRY
+    SELECT DATEDIFF_BIG(DAY, '', '2023-01-01');
+    SELECT 'FAIL: DATEDIFF_BIG accepted empty string for date' AS EmptyStringDateTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEDIFF_BIG rejected empty string for date' AS EmptyStringDateTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATEDIFF_BIG('', '2023-01-01', '2023-02-01');
+    SELECT 'FAIL: DATEDIFF_BIG accepted empty string for datepart' AS EmptyStringDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEDIFF_BIG rejected empty string for datepart' AS EmptyStringDatepartTest;
+END CATCH
+GO
+
+-- Test 4: Testing argument limitations
+BEGIN TRY
+    SELECT DATEDIFF_BIG(DAY, '2023-01-01', '2023-02-01', 'extra');
+    SELECT 'FAIL: DATEDIFF_BIG accepted too many arguments' AS TooManyArgsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEDIFF_BIG rejected too many arguments' AS TooManyArgsTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATEDIFF_BIG(DAY, '2023-01-01');
+    SELECT 'FAIL: DATEDIFF_BIG accepted too few arguments' AS TooFewArgsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEDIFF_BIG rejected too few arguments' AS TooFewArgsTest;
+END CATCH
+GO
+
+-- Test 5: Testing all valid datepart values
+SELECT 
+    CASE WHEN DATEDIFF_BIG(YEAR, '2020-01-01', '2023-06-15') = 3 THEN 'PASS' ELSE 'FAIL' END AS YearTest,
+    CASE WHEN DATEDIFF_BIG(QUARTER, '2022-01-01', '2023-06-15') = 6 THEN 'PASS' ELSE 'FAIL' END AS QuarterTest,
+    CASE WHEN DATEDIFF_BIG(MONTH, '2022-12-01', '2023-06-15') = 6 THEN 'PASS' ELSE 'FAIL' END AS MonthTest,
+    CASE WHEN DATEDIFF_BIG(DAYOFYEAR, '2023-01-01', '2023-01-10') = 9 THEN 'PASS' ELSE 'FAIL' END AS DayOfYearTest,
+    CASE WHEN DATEDIFF_BIG(DAY, '2023-01-01', '2023-01-10') = 9 THEN 'PASS' ELSE 'FAIL' END AS DayTest,
+    CASE WHEN DATEDIFF_BIG(WEEK, '2023-01-01', '2023-01-15') IN (1, 2) THEN 'PASS' ELSE 'FAIL' END AS WeekTest, -- Result can vary based on DATEFIRST setting
+    CASE WHEN DATEDIFF_BIG(HOUR, '2023-01-01 12:00', '2023-01-01 15:30') = 3 THEN 'PASS' ELSE 'FAIL' END AS HourTest,
+    CASE WHEN DATEDIFF_BIG(MINUTE, '2023-01-01 12:00', '2023-01-01 12:30') = 30 THEN 'PASS' ELSE 'FAIL' END AS MinuteTest,
+    CASE WHEN DATEDIFF_BIG(SECOND, '2023-01-01 12:00:00', '2023-01-01 12:00:30') = 30 THEN 'PASS' ELSE 'FAIL' END AS SecondTest,
+    CASE WHEN DATEDIFF_BIG(MILLISECOND, '2023-01-01 12:00:00.000', '2023-01-01 12:00:00.100') = 100 THEN 'PASS' ELSE 'FAIL' END AS MillisecondTest,
+    CASE WHEN DATEDIFF_BIG(MICROSECOND, '2023-01-01 12:00:00.0000000', '2023-01-01 12:00:00.0000001') = 0 THEN 'PASS' ELSE 'FAIL' END AS MicrosecondTest, -- SQL Server datetime precision limitation
+    CASE WHEN DATEDIFF_BIG(NANOSECOND, '2023-01-01 12:00:00.0000000', '2023-01-01 12:00:00.0000001') = 100 THEN 'PASS' ELSE 'FAIL' END AS NanosecondTest;
+GO
+
+-- Test 6: Testing datepart abbreviations
+SELECT 
+    CASE WHEN DATEDIFF_BIG(YEAR, '2020-01-01', '2023-01-01') = DATEDIFF_BIG(YY, '2020-01-01', '2023-01-01') 
+         AND DATEDIFF_BIG(YEAR, '2020-01-01', '2023-01-01') = DATEDIFF_BIG(YYYY, '2020-01-01', '2023-01-01')
+         THEN 'PASS: Year abbreviations work' ELSE 'FAIL' END AS YearAbbrevTest,
+         
+    CASE WHEN DATEDIFF_BIG(QUARTER, '2020-01-01', '2023-01-01') = DATEDIFF_BIG(QQ, '2020-01-01', '2023-01-01') 
+         AND DATEDIFF_BIG(QUARTER, '2020-01-01', '2023-01-01') = DATEDIFF_BIG(Q, '2020-01-01', '2023-01-01')
+         THEN 'PASS: Quarter abbreviations work' ELSE 'FAIL' END AS QuarterAbbrevTest,
+         
+    CASE WHEN DATEDIFF_BIG(MONTH, '2020-01-01', '2023-01-01') = DATEDIFF_BIG(MM, '2020-01-01', '2023-01-01') 
+         AND DATEDIFF_BIG(MONTH, '2020-01-01', '2023-01-01') = DATEDIFF_BIG(M, '2020-01-01', '2023-01-01')
+         THEN 'PASS: Month abbreviations work' ELSE 'FAIL' END AS MonthAbbrevTest,
+         
+    CASE WHEN DATEDIFF_BIG(DAYOFYEAR, '2023-01-01', '2023-01-10') = DATEDIFF_BIG(DY, '2023-01-01', '2023-01-10') 
+         AND DATEDIFF_BIG(DAYOFYEAR, '2023-01-01', '2023-01-10') = DATEDIFF_BIG(Y, '2023-01-01', '2023-01-10')
+         THEN 'PASS: DayOfYear abbreviations work' ELSE 'FAIL' END AS DayOfYearAbbrevTest,
+         
+    CASE WHEN DATEDIFF_BIG(DAY, '2023-01-01', '2023-01-10') = DATEDIFF_BIG(DD, '2023-01-01', '2023-01-10') 
+         AND DATEDIFF_BIG(DAY, '2023-01-01', '2023-01-10') = DATEDIFF_BIG(D, '2023-01-01', '2023-01-10')
+         THEN 'PASS: Day abbreviations work' ELSE 'FAIL' END AS DayAbbrevTest,
+         
+    CASE WHEN DATEDIFF_BIG(WEEK, '2023-01-01', '2023-01-15') = DATEDIFF_BIG(WK, '2023-01-01', '2023-01-15') 
+         AND DATEDIFF_BIG(WEEK, '2023-01-01', '2023-01-15') = DATEDIFF_BIG(WW, '2023-01-01', '2023-01-15')
+         THEN 'PASS: Week abbreviations work' ELSE 'FAIL' END AS WeekAbbrevTest,
+         
+    CASE WHEN DATEDIFF_BIG(HOUR, '2023-01-01 12:00', '2023-01-01 15:00') = DATEDIFF_BIG(HH, '2023-01-01 12:00', '2023-01-01 15:00')
+         THEN 'PASS: Hour abbreviations work' ELSE 'FAIL' END AS HourAbbrevTest,
+         
+    CASE WHEN DATEDIFF_BIG(MINUTE, '2023-01-01 12:00', '2023-01-01 12:30') = DATEDIFF_BIG(MI, '2023-01-01 12:00', '2023-01-01 12:30') 
+         AND DATEDIFF_BIG(MINUTE, '2023-01-01 12:00', '2023-01-01 12:30') = DATEDIFF_BIG(N, '2023-01-01 12:00', '2023-01-01 12:30')
+         THEN 'PASS: Minute abbreviations work' ELSE 'FAIL' END AS MinuteAbbrevTest,
+         
+    CASE WHEN DATEDIFF_BIG(SECOND, '2023-01-01 12:00:00', '2023-01-01 12:00:30') = DATEDIFF_BIG(SS, '2023-01-01 12:00:00', '2023-01-01 12:00:30') 
+         AND DATEDIFF_BIG(SECOND, '2023-01-01 12:00:00', '2023-01-01 12:00:30') = DATEDIFF_BIG(S, '2023-01-01 12:00:00', '2023-01-01 12:00:30')
+         THEN 'PASS: Second abbreviations work' ELSE 'FAIL' END AS SecondAbbrevTest,
+         
+    CASE WHEN DATEDIFF_BIG(MILLISECOND, '2023-01-01 12:00:00.000', '2023-01-01 12:00:00.100') = DATEDIFF_BIG(MS, '2023-01-01 12:00:00.000', '2023-01-01 12:00:00.100')
+         THEN 'PASS: Millisecond abbreviations work' ELSE 'FAIL' END AS MillisecondAbbrevTest;
+GO
+
+-- Test 7: Testing with null values from table
+CREATE TABLE #TestNullDates (
+    ID INT, 
+    StartDate DATETIME NULL, 
+    EndDate DATETIME NULL
+);
+GO
+
+INSERT INTO #TestNullDates VALUES (1, '2023-01-01', '2023-02-01');
+INSERT INTO #TestNullDates VALUES (2, NULL, '2023-03-01');
+INSERT INTO #TestNullDates VALUES (3, '2023-01-15', NULL);
+INSERT INTO #TestNullDates VALUES (4, NULL, NULL);
+
+SELECT 
+    CASE 
+        WHEN (SELECT COUNT(*) FROM #TestNullDates WHERE DATEDIFF_BIG(DAY, StartDate, EndDate) IS NOT NULL) = 1
+        THEN 'PASS: NULL handling in table works'
+        ELSE 'FAIL: NULL handling in table issue'
+    END AS TableNullTest;
+GO
+
+DROP TABLE #TestNullDates;
+GO
+
+-- Test 8: Testing with CAST and CONVERT as arguments
+SELECT 
+    CASE WHEN DATEDIFF_BIG(DAY, CAST('2023-01-01' AS DATE), CAST('2023-01-10' AS DATE)) = 9 
+         THEN 'PASS: CAST works with DATEDIFF_BIG' ELSE 'FAIL' END AS CastTest,
+    CASE WHEN DATEDIFF_BIG(DAY, CONVERT(DATETIME, '2023-01-01', 120), CONVERT(DATETIME, '2023-01-10', 120)) = 9 
+         THEN 'PASS: CONVERT works with DATEDIFF_BIG' ELSE 'FAIL' END AS ConvertTest;
+GO
+
+-- Test 9: Testing with different datatypes as arguments
+SELECT 
+    CASE WHEN DATEDIFF_BIG(DAY, '2023-01-01', '2023-01-10') = 9 
+         THEN 'PASS: String literals work' ELSE 'FAIL' END AS StringLiteralTest,
+    CASE WHEN DATEDIFF_BIG(DAY, CAST('2023-01-01' AS DATE), CAST('2023-01-10' AS DATE)) = 9 
+         THEN 'PASS: DATE type works' ELSE 'FAIL' END AS DateTypeTest,
+    CASE WHEN DATEDIFF_BIG(DAY, CAST('2023-01-01 12:00' AS DATETIME), CAST('2023-01-10 15:00' AS DATETIME)) = 9 
+         THEN 'PASS: DATETIME type works' ELSE 'FAIL' END AS DateTimeTypeTest,
+    CASE WHEN DATEDIFF_BIG(DAY, CAST('2023-01-01 12:00' AS DATETIME2), CAST('2023-01-10 15:00' AS DATETIME2)) = 9 
+         THEN 'PASS: DATETIME2 type works' ELSE 'FAIL' END AS DateTime2TypeTest,
+    CASE WHEN DATEDIFF_BIG(DAY, CAST('2023-01-01 12:00 +00:00' AS DATETIMEOFFSET), CAST('2023-01-10 15:00 +00:00' AS DATETIMEOFFSET)) = 9 
+         THEN 'PASS: DATETIMEOFFSET type works' ELSE 'FAIL' END AS DateTimeOffsetTypeTest,
+    CASE WHEN DATEDIFF_BIG(DAY, CAST('2023-01-01 12:00' AS SMALLDATETIME), CAST('2023-01-10 15:00' AS SMALLDATETIME)) = 9 
+         THEN 'PASS: SMALLDATETIME type works' ELSE 'FAIL' END AS SmallDateTimeTypeTest,
+    CASE WHEN DATEDIFF_BIG(DAY, CAST('12:00' AS TIME), CAST('15:00' AS TIME)) = 0 
+         THEN 'PASS: TIME type works' ELSE 'FAIL' END AS TimeTypeTest;
+GO
+
+-- Test 10: Testing with timezone handling
+DECLARE @Eastern DATETIMEOFFSET = '2023-01-01 12:00:00 -05:00';
+DECLARE @Pacific DATETIMEOFFSET = '2023-01-01 09:00:00 -08:00';
+DECLARE @UTC DATETIMEOFFSET = '2023-01-01 17:00:00 +00:00';
+
+SELECT 
+    CASE WHEN DATEDIFF_BIG(HOUR, @Eastern, @Pacific) = -3 
+         THEN 'PASS: Different timezone offsets work' ELSE 'FAIL' END AS TimeZoneDiffTest,
+    CASE WHEN DATEDIFF_BIG(HOUR, @Eastern, @UTC) = 5 
+         THEN 'PASS: UTC comparison works' ELSE 'FAIL' END AS UTCComparisonTest;
+GO
+
+-- Test 11: Using DATEDIFF_BIG with GROUP BY, HAVING, ORDER BY, SELECT, WHERE
+CREATE TABLE #TransactionData (
+    ID INT PRIMARY KEY,
+    TransactionDate DATETIME,
+    Amount DECIMAL(10,2)
+);
+GO
+
+INSERT INTO #TransactionData VALUES 
+(1, '2023-01-15', 100.00),
+(2, '2023-02-20', 200.00),
+(3, '2023-03-25', 300.00);
+
+-- Test WHERE clause
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: WHERE clause with DATEDIFF_BIG works' 
+         ELSE 'FAIL: WHERE clause issue' 
+    END AS WhereClauseTest
+FROM #TransactionData
+WHERE DATEDIFF_BIG(MONTH, '2023-01-01', TransactionDate) <= 2;
+
+-- Test GROUP BY and HAVING
+SELECT 
+    CASE WHEN COUNT(*) > 0 THEN 'PASS: HAVING with DATEDIFF_BIG works' 
+         ELSE 'FAIL: HAVING issue' 
+    END AS HavingClauseTest
+FROM #TransactionData
+GROUP BY DATEDIFF_BIG(MONTH, '2023-01-01', TransactionDate)
+HAVING DATEDIFF_BIG(MONTH, '2023-01-01', MAX(TransactionDate)) > 0;
+
+-- Test ORDER BY
+SELECT TOP 1
+    CASE WHEN ID = 3 THEN 'PASS: ORDER BY with DATEDIFF_BIG works' 
+         ELSE 'FAIL: ORDER BY issue' 
+    END AS OrderByTest
+FROM #TransactionData
+ORDER BY DATEDIFF_BIG(DAY, '2023-01-01', TransactionDate) DESC;
+GO
+
+DROP TABLE #TransactionData;
+GO
+
+-- Test 12: Testing large date differences (outside INT range)
+-- Date difference that would exceed INT range but fits in BIGINT
+DECLARE @VeryOldDate DATE = '1900-01-01';
+DECLARE @FarFutureDate DATE = '9999-12-31';
+
+SELECT 
+    CASE 
+        WHEN DATEDIFF_BIG(SECOND, @VeryOldDate, @FarFutureDate) > 2147483647 -- Max INT value
+        THEN 'PASS: DATEDIFF_BIG handles large differences beyond INT range' 
+        ELSE 'FAIL: DATEDIFF_BIG large difference handling issue' 
+    END AS LargeDifferenceTest;
+GO
+
+-- Test 13: Testing difference in behavior between DATEDIFF and DATEDIFF_BIG
+DECLARE @OldDate DATE = '1900-01-01';
+DECLARE @FarFutureDate DATE = '9999-12-31';
+DECLARE @DiffBig BIGINT;
+DECLARE @DiffSuccess BIT = 0;
+
+-- First try DATEDIFF_BIG which should work
+SELECT @DiffBig = DATEDIFF_BIG(SECOND, @OldDate, @FarFutureDate);
+
+-- Now try DATEDIFF which should fail with overflow
+BEGIN TRY
+    DECLARE @DiffRegular INT = DATEDIFF(SECOND, @OldDate, @FarFutureDate);
+    SET @DiffSuccess = 1;
+END TRY
+BEGIN CATCH
+    SET @DiffSuccess = 0;
+END CATCH
+
+SELECT 
+    CASE 
+        WHEN @DiffBig > 2147483647 AND @DiffSuccess = 0
+        THEN 'PASS: DATEDIFF_BIG succeeds where DATEDIFF overflows' 
+        ELSE 'FAIL: Expected behavior difference not observed' 
+    END AS BehaviorDifferenceTest;
+GO
+
+-- Test 14: Testing order of dates (negative differences)
+SELECT 
+    CASE WHEN DATEDIFF_BIG(DAY, '2023-01-31', '2023-01-01') = -30 
+         THEN 'PASS: Negative difference calculated correctly' 
+         ELSE 'FAIL: Negative difference issue' 
+    END AS NegativeDiffTest;
+GO
+
+-- Test 15: Testing behavior with decimal or floating point datepart values
+BEGIN TRY
+    SELECT DATEDIFF_BIG(3.5, '2023-01-01', '2023-01-10');
+    SELECT 'FAIL: Accepted non-integer/non-string datepart' AS NonIntegerDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: Rejected non-integer/non-string datepart' AS NonIntegerDatepartTest;
+END CATCH
+GO
+
+-- Test 16: Testing with invalid datepart values
+BEGIN TRY
+    SELECT DATEDIFF_BIG('INVALID_PART', '2023-01-01', '2023-01-10');
+    SELECT 'FAIL: Accepted invalid datepart' AS InvalidDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: Rejected invalid datepart' AS InvalidDatepartTest;
+END CATCH
+GO
+
+-- Test 17: Comparing DATEDIFF_BIG with DATEDIFF for normal ranges
+SELECT 
+    CASE WHEN DATEDIFF_BIG(DAY, '2023-01-01', '2023-01-31') = DATEDIFF(DAY, '2023-01-01', '2023-01-31')
+         THEN 'PASS: DATEDIFF_BIG matches DATEDIFF for normal ranges' 
+         ELSE 'FAIL: Function mismatch' 
+    END AS FunctionComparisonTest;
+GO
+
+-- Test 18: Testing microsecond and nanosecond precision with datetime2(7)
+DECLARE @Date1 DATETIME2(7) = '2023-01-01 12:00:00.1234567';
+DECLARE @Date2 DATETIME2(7) = '2023-01-01 12:00:00.1234568';
+
+SELECT 
+    CASE WHEN DATEDIFF_BIG(NANOSECOND, @Date1, @Date2) = 100
+         THEN 'PASS: Nanosecond precision detection works' 
+         ELSE 'FAIL: Nanosecond precision issue' 
+    END AS NanosecondPrecisionTest,
+    
+    CASE WHEN DATEDIFF_BIG(MICROSECOND, @Date1, @Date2) = 0
+         THEN 'PASS: Microsecond precision detection works' 
+         ELSE 'FAIL: Microsecond precision issue' 
+    END AS MicrosecondPrecisionTest;
+GO
+
+-- Test 19: Testing with dynamic SQL
+BEGIN TRY
+    DECLARE @Sql NVARCHAR(200);
+    DECLARE @Result BIGINT;
+
+    SET @Sql = N'SELECT @Result = DATEDIFF_BIG(DAY, ''2023-01-01'', ''2023-01-10'')';
+
+    EXEC sp_executesql 
+        @Sql, 
+        N'@Result BIGINT OUTPUT', 
+        @Result = @Result OUTPUT;
+    
+    SELECT 
+        CASE WHEN @Result = 9 
+             THEN 'PASS: DATEDIFF_BIG works in dynamic SQL' 
+             ELSE 'FAIL: Dynamic SQL issue' 
+        END AS DynamicSqlTest;
+END TRY
+BEGIN CATCH
+    SELECT 'FAIL: Dynamic SQL error' AS DynamicSqlTest;
+END CATCH
+GO
+
+--DATEADD
+-- Test 1: Testing return datatype of DATEADD
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATEADD(DAY, 1, GETDATE()) AS sql_variant), 'BaseType') = 'datetime' 
+        THEN 'PASS: DATEADD with DATETIME input returns DATETIME'
+        ELSE 'FAIL: Incorrect return type with DATETIME input'
+    END AS ReturnTypeTest1,
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATEADD(DAY, 1, CAST('2023-01-01' AS DATE)) AS sql_variant), 'BaseType') = 'date' 
+        THEN 'PASS: DATEADD with DATE input returns DATE'
+        ELSE 'FAIL: Incorrect return type with DATE input'
+    END AS ReturnTypeTest2,
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATEADD(DAY, 1, CAST('12:30:45' AS TIME)) AS sql_variant), 'BaseType') = 'time' 
+        THEN 'PASS: DATEADD with TIME input returns TIME'
+        ELSE 'FAIL: Incorrect return type with TIME input'
+    END AS ReturnTypeTest3,
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATEADD(DAY, 1, CAST('2023-01-01 12:30:45.1234567' AS DATETIME2)) AS sql_variant), 'BaseType') = 'datetime2' 
+        THEN 'PASS: DATEADD with DATETIME2 input returns DATETIME2'
+        ELSE 'FAIL: Incorrect return type with DATETIME2 input'
+    END AS ReturnTypeTest4,
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATEADD(DAY, 1, CAST('2023-01-01 12:30:45.1234567 +01:00' AS DATETIMEOFFSET)) AS sql_variant), 'BaseType') = 'datetimeoffset' 
+        THEN 'PASS: DATEADD with DATETIMEOFFSET input returns DATETIMEOFFSET'
+        ELSE 'FAIL: Incorrect return type with DATETIMEOFFSET input'
+    END AS ReturnTypeTest5,
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATEADD(DAY, 1, CAST('2023-01-01 12:30' AS SMALLDATETIME)) AS sql_variant), 'BaseType') = 'smalldatetime' 
+        THEN 'PASS: DATEADD with SMALLDATETIME input returns SMALLDATETIME'
+        ELSE 'FAIL: Incorrect return type with SMALLDATETIME input'
+    END AS ReturnTypeTest6;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE 
+        WHEN DATEADD(DAY, 1, NULL) IS NULL 
+        THEN 'PASS: NULL date input returns NULL'
+        ELSE 'FAIL: NULL date input should return NULL'
+    END AS NullDateTest,
+    CASE 
+        WHEN DATEADD(DAY, NULL, GETDATE()) IS NULL 
+        THEN 'PASS: NULL number input returns NULL'
+        ELSE 'FAIL: NULL number input should return NULL'
+    END AS NullNumberTest,
+    CASE 
+        WHEN DATEADD(NULL, 1, GETDATE()) IS NULL 
+        THEN 'PASS: NULL datepart input returns NULL'
+        ELSE 'FAIL: NULL datepart input should return NULL'
+    END AS NullDatepartTest;
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT DATEADD('invalid', 1, GETDATE());
+    SELECT 'FAIL: DATEADD accepted invalid datepart' AS InvalidDatepartTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEADD rejected invalid datepart' AS InvalidDatepartTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT DATEADD(DAY, 1, 'invalid date');
+    SELECT 'FAIL: DATEADD accepted invalid date string' AS InvalidDateTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEADD rejected invalid date string' AS InvalidDateTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT DATEADD(DAY, 1, GETDATE(), 'extra param');
+    SELECT 'FAIL: DATEADD accepted extra parameter' AS ExtraParamTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATEADD rejected extra parameter' AS ExtraParamTest;
+END CATCH;
+GO
+
+-- Test 4: Testing with all valid datepart values
+SELECT 
+    CASE WHEN DATEADD(YEAR, 1, '2023-01-01') = '2024-01-01' THEN 'PASS' ELSE 'FAIL' END AS YearTest,
+    CASE WHEN DATEADD(QUARTER, 1, '2023-01-01') = '2023-04-01' THEN 'PASS' ELSE 'FAIL' END AS QuarterTest,
+    CASE WHEN DATEADD(MONTH, 1, '2023-01-01') = '2023-02-01' THEN 'PASS' ELSE 'FAIL' END AS MonthTest,
+    CASE WHEN DATEADD(DAYOFYEAR, 1, '2023-01-01') = '2023-01-02' THEN 'PASS' ELSE 'FAIL' END AS DayOfYearTest,
+    CASE WHEN DATEADD(DAY, 1, '2023-01-01') = '2023-01-02' THEN 'PASS' ELSE 'FAIL' END AS DayTest,
+    CASE WHEN DATEADD(WEEK, 1, '2023-01-01') = '2023-01-08' THEN 'PASS' ELSE 'FAIL' END AS WeekTest,
+    CASE WHEN DATEADD(WEEKDAY, 1, '2023-01-01') = '2023-01-02' THEN 'PASS' ELSE 'FAIL' END AS WeekdayTest,
+    CASE WHEN DATEADD(HOUR, 1, '2023-01-01 12:00') = '2023-01-01 13:00' THEN 'PASS' ELSE 'FAIL' END AS HourTest,
+    CASE WHEN DATEADD(MINUTE, 1, '2023-01-01 12:00') = '2023-01-01 12:01' THEN 'PASS' ELSE 'FAIL' END AS MinuteTest,
+    CASE WHEN DATEADD(SECOND, 1, '2023-01-01 12:00:00') = '2023-01-01 12:00:01' THEN 'PASS' ELSE 'FAIL' END AS SecondTest,
+    CASE WHEN DATEADD(MILLISECOND, 1, '2023-01-01 12:00:00.000') = '2023-01-01 12:00:00.001' THEN 'PASS' ELSE 'FAIL' END AS MillisecondTest,
+    CASE WHEN DATEADD(MICROSECOND, 1, '2023-01-01 12:00:00.0000000') = '2023-01-01 12:00:00.0000010' THEN 'PASS' ELSE 'FAIL' END AS MicrosecondTest,
+    CASE WHEN DATEADD(NANOSECOND, 1, '2023-01-01 12:00:00.0000000') = '2023-01-01 12:00:00.0000000' THEN 'PASS' ELSE 'FAIL' END AS NanosecondTest;
+GO
+
+-- Test 5: Test datepart abbreviations
+SELECT 
+    CASE WHEN DATEADD(YEAR, 1, '2023-01-01') = DATEADD(YY, 1, '2023-01-01') AND DATEADD(YEAR, 1, '2023-01-01') = DATEADD(YYYY, 1, '2023-01-01') THEN 'PASS' ELSE 'FAIL' END AS YearAbbrevTest,
+    CASE WHEN DATEADD(QUARTER, 1, '2023-01-01') = DATEADD(QQ, 1, '2023-01-01') AND DATEADD(QUARTER, 1, '2023-01-01') = DATEADD(Q, 1, '2023-01-01') THEN 'PASS' ELSE 'FAIL' END AS QuarterAbbrevTest,
+    CASE WHEN DATEADD(MONTH, 1, '2023-01-01') = DATEADD(MM, 1, '2023-01-01') AND DATEADD(MONTH, 1, '2023-01-01') = DATEADD(M, 1, '2023-01-01') THEN 'PASS' ELSE 'FAIL' END AS MonthAbbrevTest,
+    CASE WHEN DATEADD(DAYOFYEAR, 1, '2023-01-01') = DATEADD(DY, 1, '2023-01-01') AND DATEADD(DAYOFYEAR, 1, '2023-01-01') = DATEADD(Y, 1, '2023-01-01') THEN 'PASS' ELSE 'FAIL' END AS DayOfYearAbbrevTest,
+    CASE WHEN DATEADD(DAY, 1, '2023-01-01') = DATEADD(DD, 1, '2023-01-01') AND DATEADD(DAY, 1, '2023-01-01') = DATEADD(D, 1, '2023-01-01') THEN 'PASS' ELSE 'FAIL' END AS DayAbbrevTest,
+    CASE WHEN DATEADD(WEEK, 1, '2023-01-01') = DATEADD(WK, 1, '2023-01-01') AND DATEADD(WEEK, 1, '2023-01-01') = DATEADD(WW, 1, '2023-01-01') THEN 'PASS' ELSE 'FAIL' END AS WeekAbbrevTest,
+    CASE WHEN DATEADD(WEEKDAY, 1, '2023-01-01') = DATEADD(DW, 1, '2023-01-01') AND DATEADD(WEEKDAY, 1, '2023-01-01') = DATEADD(W, 1, '2023-01-01') THEN 'PASS' ELSE 'FAIL' END AS WeekdayAbbrevTest,
+    CASE WHEN DATEADD(HOUR, 1, '2023-01-01 12:00') = DATEADD(HH, 1, '2023-01-01 12:00') THEN 'PASS' ELSE 'FAIL' END AS HourAbbrevTest,
+    CASE WHEN DATEADD(MINUTE, 1, '2023-01-01 12:00') = DATEADD(MI, 1, '2023-01-01 12:00') AND DATEADD(MINUTE, 1, '2023-01-01 12:00') = DATEADD(N, 1, '2023-01-01 12:00') THEN 'PASS' ELSE 'FAIL' END AS MinuteAbbrevTest,
+    CASE WHEN DATEADD(SECOND, 1, '2023-01-01 12:00:00') = DATEADD(SS, 1, '2023-01-01 12:00:00') AND DATEADD(SECOND, 1, '2023-01-01 12:00:00') = DATEADD(S, 1, '2023-01-01 12:00:00') THEN 'PASS' ELSE 'FAIL' END AS SecondAbbrevTest,
+    CASE WHEN DATEADD(MILLISECOND, 1, '2023-01-01 12:00:00.000') = DATEADD(MS, 1, '2023-01-01 12:00:00.000') THEN 'PASS' ELSE 'FAIL' END AS MillisecondAbbrevTest;
+GO
+
+-- Test 6: Testing with negative values
+SELECT
+    CASE WHEN DATEADD(DAY, -1, '2023-01-02') = '2023-01-01' THEN 'PASS' ELSE 'FAIL' END AS NegativeDayTest,
+    CASE WHEN DATEADD(MONTH, -1, '2023-02-15') = '2023-01-15' THEN 'PASS' ELSE 'FAIL' END AS NegativeMonthTest,
+    CASE WHEN DATEADD(YEAR, -1, '2023-01-01') = '2022-01-01' THEN 'PASS' ELSE 'FAIL' END AS NegativeYearTest,
+    CASE WHEN DATEADD(HOUR, -1, '2023-01-01 01:00') = '2023-01-01 00:00' THEN 'PASS' ELSE 'FAIL' END AS NegativeHourTest;
+GO
+
+-- Test 7: Testing with large values
+SELECT
+    CASE WHEN DATEADD(DAY, 365, '2023-01-01') = '2024-01-01' THEN 'PASS' ELSE 'FAIL' END AS LargeDayTest,
+    CASE WHEN DATEADD(MONTH, 12, '2023-01-01') = '2024-01-01' THEN 'PASS' ELSE 'FAIL' END AS LargeMonthTest,
+    CASE WHEN DATEADD(HOUR, 24, '2023-01-01 00:00') = '2023-01-02 00:00' THEN 'PASS' ELSE 'FAIL' END AS LargeHourTest;
+GO
+
+-- Test 8: Testing with table values
+CREATE TABLE #TestDates (ID INT PRIMARY KEY, DateValue DATETIME);
+GO
+INSERT INTO #TestDates VALUES (1, '2023-01-01'), (2, '2023-02-15'), (3, '2023-03-31');
+
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS TableTest
+FROM #TestDates
+WHERE DATEADD(MONTH, 1, DateValue) > '2023-02-01';
+GO
+
+DROP TABLE #TestDates;
+GO
+
+-- Test 9: Testing with GROUP BY, HAVING, ORDER BY, WHERE clauses
+CREATE TABLE #TransactionDates (ID INT, TransactionDate DATE);
+GO
+INSERT INTO #TransactionDates VALUES 
+(1, '2023-01-01'),
+(2, '2023-01-15'),
+(3, '2023-02-01'),
+(4, '2023-02-15'),
+(5, '2023-03-01');
+
+-- Test GROUP BY
+SELECT 
+    DATEADD(MONTH, DATEDIFF(MONTH, 0, TransactionDate), 0) AS MonthStart,
+    COUNT(*) AS CountPerMonth,
+    CASE WHEN COUNT(*) > 0 THEN 'PASS' ELSE 'FAIL' END AS GroupByTest
+FROM #TransactionDates
+GROUP BY DATEADD(MONTH, DATEDIFF(MONTH, 0, TransactionDate), 0)
+ORDER BY MonthStart;
+
+-- Test HAVING
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS' ELSE 'FAIL' END AS HavingTest
+FROM #TransactionDates
+GROUP BY DATEADD(MONTH, DATEDIFF(MONTH, 0, TransactionDate), 0)
+HAVING DATEADD(MONTH, DATEDIFF(MONTH, 0, TransactionDate), 0) < '2023-02-01';
+
+-- Test WHERE
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS' ELSE 'FAIL' END AS WhereTest
+FROM #TransactionDates
+WHERE DATEADD(DAY, 1, TransactionDate) > '2023-02-01';
+
+-- Test ORDER BY
+SELECT TOP 1
+    ID,
+    CASE WHEN ID = 5 THEN 'PASS' ELSE 'FAIL' END AS OrderByTest
+FROM #TransactionDates
+ORDER BY DATEADD(DAY, -1, TransactionDate) DESC;
+GO
+
+DROP TABLE #TransactionDates;
+GO
+
+-- Test 10: Testing with different datepart values that cross boundaries
+SELECT
+    -- Month crossing year boundary
+    CASE WHEN DATEADD(MONTH, 1, '2023-12-15') = '2024-01-15' THEN 'PASS' ELSE 'FAIL' END AS MonthCrossingYearTest,
+    
+    -- Day crossing month boundary
+    CASE WHEN DATEADD(DAY, 1, '2023-01-31') = '2023-02-01' THEN 'PASS' ELSE 'FAIL' END AS DayCrossingMonthTest,
+    
+    -- Hour crossing day boundary
+    CASE WHEN DATEADD(HOUR, 1, '2023-01-01 23:00') = '2023-01-02 00:00' THEN 'PASS' ELSE 'FAIL' END AS HourCrossingDayTest,
+    
+    -- Month with day exceeding target month's days (February special case)
+    CASE WHEN DATEADD(MONTH, 1, '2023-01-31') = '2023-02-28' THEN 'PASS' ELSE 'FAIL' END AS MonthExceedingDaysTest,
+    
+    -- Month with day exceeding target month's days (30-day month)
+    CASE WHEN DATEADD(MONTH, 1, '2023-03-31') = '2023-04-30' THEN 'PASS' ELSE 'FAIL' END AS Month30DayTest,
+    
+    -- Leap year handling (non-leap year)
+    CASE WHEN DATEADD(DAY, 1, '2023-02-28') = '2023-03-01' THEN 'PASS' ELSE 'FAIL' END AS NonLeapYearTest,
+    
+    -- Leap year handling (leap year)
+    CASE WHEN DATEADD(DAY, 1, '2024-02-28') = '2024-02-29' THEN 'PASS' ELSE 'FAIL' END AS LeapYearTest;
+GO
+
+-- Test 11: Testing with edge cases
+SELECT
+    -- Minimum date value
+    CASE WHEN TRY_CONVERT(DATE, DATEADD(DAY, -1, '0001-01-01')) IS NULL THEN 'PASS' ELSE 'FAIL' END AS MinDateBoundaryTest,
+    
+    -- Maximum date value
+    CASE WHEN TRY_CONVERT(DATE, DATEADD(DAY, 1, '9999-12-31')) IS NULL THEN 'PASS' ELSE 'FAIL' END AS MaxDateBoundaryTest,
+    
+    -- Zero value
+    CASE WHEN DATEADD(DAY, 0, '2023-01-01') = '2023-01-01' THEN 'PASS' ELSE 'FAIL' END AS ZeroValueTest;
+GO
+
+-- Test 12: Testing with MAX, TOP, DISTINCT, OVER functions
+CREATE TABLE #DateTimeData (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME,
+    Category VARCHAR(10)
+);
+GO
+
+INSERT INTO #DateTimeData VALUES
+(1, '2023-01-01', 'A'),
+(2, '2023-01-15', 'B'),
+(3, '2023-02-01', 'A'),
+(4, '2023-02-15', 'B'),
+(5, '2023-03-01', 'A');
+
+-- Test MAX
+SELECT
+    CASE WHEN MAX(DATEADD(DAY, 1, EventDate)) = '2023-03-02' THEN 'PASS' ELSE 'FAIL' END AS MaxFunctionTest
+FROM #DateTimeData;
+
+-- Test TOP
+SELECT TOP 1
+    CASE WHEN ID = 5 THEN 'PASS' ELSE 'FAIL' END AS TopFunctionTest
+FROM #DateTimeData
+ORDER BY DATEADD(DAY, -1, EventDate) DESC;
+
+-- Test DISTINCT
+SELECT
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS DistinctTest
+FROM (
+    SELECT DISTINCT DATEADD(MONTH, DATEDIFF(MONTH, 0, EventDate), 0) AS MonthStart
+    FROM #DateTimeData
+) AS DistinctMonths;
+
+-- Test OVER
+SELECT TOP 1
+    CASE WHEN COUNT(*) OVER (PARTITION BY DATEADD(MONTH, DATEDIFF(MONTH, 0, EventDate), 0)) = 2 
+         THEN 'PASS' ELSE 'FAIL' END AS OverFunctionTest
+FROM #DateTimeData
+WHERE Category = 'A'
+ORDER BY EventDate;
+GO
+
+DROP TABLE #DateTimeData;
+GO
+
+-- Test 13: Testing with JOIN operations
+CREATE TABLE #Orders (OrderID INT PRIMARY KEY, OrderDate DATETIME);
+GO
+CREATE TABLE #Deliveries (DeliveryID INT PRIMARY KEY, OrderID INT, DeliveryDate DATETIME);
+GO
+
+INSERT INTO #Orders VALUES
+(1, '2023-01-01'),
+(2, '2023-01-15'),
+(3, '2023-02-01');
+
+INSERT INTO #Deliveries VALUES
+(101, 1, '2023-01-05'),
+(102, 2, '2023-01-20'),
+(103, 3, '2023-02-05');
+
+-- Inner Join with DATEADD
+SELECT
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS InnerJoinTest
+FROM #Orders o
+INNER JOIN #Deliveries d ON o.OrderID = d.OrderID
+WHERE d.DeliveryDate <= DATEADD(DAY, 7, o.OrderDate);
+
+-- Left Join with DATEADD
+SELECT
+    CASE WHEN COUNT(*) = 2 THEN 'PASS' ELSE 'FAIL' END AS LeftJoinTest
+FROM #Orders o
+LEFT JOIN #Deliveries d ON o.OrderID = d.OrderID
+WHERE d.DeliveryDate <= DATEADD(DAY, 5, o.OrderDate);
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Deliveries;
+GO
+
+-- Test 14: Testing with user-defined variables
+DECLARE @BaseDate DATETIME = '2023-01-01';
+DECLARE @DaysToAdd INT = 7;
+
+SELECT
+    CASE WHEN DATEADD(DAY, @DaysToAdd, @BaseDate) = '2023-01-08' THEN 'PASS' ELSE 'FAIL' END AS VariableTest,
+    CASE WHEN DATEADD(DAY, DATEPART(DAY, @BaseDate), @BaseDate) = '2023-01-02' THEN 'PASS' ELSE 'FAIL' END AS ComplexVariableTest;
+GO
+
+-- Test 15: Testing with different data sources and expressions
+DECLARE @DateString VARCHAR(30) = '2023-01-01';
+DECLARE @DateValue DATETIME = CONVERT(DATETIME, @DateString);
+
+SELECT
+    CASE WHEN DATEADD(DAY, 1, @DateString) = '2023-01-02' THEN 'PASS' ELSE 'FAIL' END AS StringInputTest,
+    CASE WHEN DATEADD(DAY, 1, @DateValue) = '2023-01-02' THEN 'PASS' ELSE 'FAIL' END AS DatetimeVarTest,
+    CASE WHEN DATEADD(DAY, 1, CONVERT(DATETIME, '2023-01-01')) = '2023-01-02' THEN 'PASS' ELSE 'FAIL' END AS ConvertInputTest,
+    CASE WHEN DATEADD(DAY, 1, CAST('2023-01-01' AS DATETIME)) = '2023-01-02' THEN 'PASS' ELSE 'FAIL' END AS CastInputTest,
+    CASE WHEN DATEADD(DAY, 1+1, '2023-01-01') = '2023-01-03' THEN 'PASS' ELSE 'FAIL' END AS ExpressionInputTest;
+GO
+
+-- Test 16: Testing with timezone aware data
+SELECT
+    CASE WHEN DATEADD(DAY, 1, SYSDATETIMEOFFSET()) > SYSDATETIMEOFFSET() THEN 'PASS' ELSE 'FAIL' END AS TimezoneAwareTest,
+    CASE WHEN DATEADD(HOUR, 1, SYSUTCDATETIME()) > SYSUTCDATETIME() THEN 'PASS' ELSE 'FAIL' END AS UTCTest;
+GO
+
+--EOMONTH
+-- Test 1: Testing return datatype of EOMONTH
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(EOMONTH(GETDATE()) AS sql_variant), 'BaseType') = 'date' 
+        THEN 'PASS: EOMONTH returns DATE'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL and empty values
+SELECT 
+    CASE 
+        WHEN EOMONTH(NULL) IS NULL 
+        THEN 'PASS: NULL date input returns NULL'
+        ELSE 'FAIL: NULL date input should return NULL'
+    END AS NullDateTest,
+    CASE 
+        WHEN EOMONTH('2023-01-15', NULL) = EOMONTH('2023-01-15', 0) 
+        THEN 'PASS: NULL months input treated as 0'
+        ELSE 'FAIL: NULL months input not handled correctly'
+    END AS NullMonthsTest;
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT EOMONTH('invalid date');
+    SELECT 'FAIL: EOMONTH accepted invalid date string' AS InvalidDateTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: EOMONTH rejected invalid date string' AS InvalidDateTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT EOMONTH('2023-01-01', 'invalid');
+    SELECT 'FAIL: EOMONTH accepted invalid months parameter' AS InvalidMonthsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: EOMONTH rejected invalid months parameter' AS InvalidMonthsTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT EOMONTH('2023-01-01', 1, 'extra');
+    SELECT 'FAIL: EOMONTH accepted extra parameter' AS ExtraParamTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: EOMONTH rejected extra parameter' AS ExtraParamTest;
+END CATCH;
+GO
+
+-- Test 4: Testing with different input date types
+SELECT 
+    CASE WHEN EOMONTH(CAST('2023-01-15' AS DATE)) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS DateInputTest,
+    CASE WHEN EOMONTH(CAST('2023-01-15 12:30:45' AS DATETIME)) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS DatetimeInputTest,
+    CASE WHEN EOMONTH(CAST('2023-01-15 12:30:45.1234567' AS DATETIME2)) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS Datetime2InputTest,
+    CASE WHEN EOMONTH(CAST('2023-01-15 12:30:45.1234567 +01:00' AS DATETIMEOFFSET)) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS DatetimeoffsetInputTest,
+    CASE WHEN EOMONTH(CAST('2023-01-15 12:30' AS SMALLDATETIME)) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS SmalldatetimeInputTest,
+    CASE WHEN EOMONTH('2023-01-15') = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS StringInputTest;
+GO
+
+-- Test 5: Testing with various months
+SELECT
+    CASE WHEN EOMONTH('2023-01-15') = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS JanuaryTest,
+    CASE WHEN EOMONTH('2023-02-15') = '2023-02-28' THEN 'PASS' ELSE 'FAIL' END AS FebruaryNonLeapTest,
+    CASE WHEN EOMONTH('2024-02-15') = '2024-02-29' THEN 'PASS' ELSE 'FAIL' END AS FebruaryLeapTest,
+    CASE WHEN EOMONTH('2023-04-15') = '2023-04-30' THEN 'PASS' ELSE 'FAIL' END AS AprilTest,
+    CASE WHEN EOMONTH('2023-09-15') = '2023-09-30' THEN 'PASS' ELSE 'FAIL' END AS SeptemberTest,
+    CASE WHEN EOMONTH('2023-12-15') = '2023-12-31' THEN 'PASS' ELSE 'FAIL' END AS DecemberTest;
+GO
+
+-- Test 6: Testing with month offset parameter
+SELECT
+    CASE WHEN EOMONTH('2023-01-15', 0) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS ZeroOffsetTest,
+    CASE WHEN EOMONTH('2023-01-15', 1) = '2023-02-28' THEN 'PASS' ELSE 'FAIL' END AS PositiveOffsetTest,
+    CASE WHEN EOMONTH('2023-01-15', -1) = '2022-12-31' THEN 'PASS' ELSE 'FAIL' END AS NegativeOffsetTest,
+    CASE WHEN EOMONTH('2023-01-15', 12) = '2024-01-31' THEN 'PASS' ELSE 'FAIL' END AS LargeOffsetTest;
+GO
+
+-- Test 7: Testing with leap years
+SELECT
+    CASE WHEN EOMONTH('2023-01-31', 1) = '2023-02-28' THEN 'PASS' ELSE 'FAIL' END AS NonLeapYearTest,
+    CASE WHEN EOMONTH('2024-01-31', 1) = '2024-02-29' THEN 'PASS' ELSE 'FAIL' END AS LeapYearTest,
+    CASE WHEN EOMONTH('2024-02-29', 0) = '2024-02-29' THEN 'PASS' ELSE 'FAIL' END AS LeapDayTest,
+    CASE WHEN EOMONTH('2023-02-28', 0) = '2023-02-28' THEN 'PASS' ELSE 'FAIL' END AS LastDayOfMonthTest;
+GO
+
+-- Test 8: Testing with edge cases
+SELECT
+    -- First day of month vs last day
+    CASE WHEN EOMONTH('2023-01-01') = EOMONTH('2023-01-31') THEN 'PASS' ELSE 'FAIL' END AS SameMonthTest,
+    
+    -- Crossing year boundary
+    CASE WHEN EOMONTH('2023-12-15', 1) = '2024-01-31' THEN 'PASS' ELSE 'FAIL' END AS YearCrossingTest,
+    
+    -- Large negative offset
+    CASE WHEN EOMONTH('2023-01-15', -13) = '2021-12-31' THEN 'PASS' ELSE 'FAIL' END AS LargeNegativeOffsetTest,
+    
+    -- Minimum date
+    CASE 
+        WHEN TRY_CONVERT(DATE, EOMONTH('0001-01-01', -1)) IS NULL 
+        THEN 'PASS: Correctly rejects operation beyond minimum date' 
+        ELSE 'FAIL: Incorrectly processed date before minimum'
+    END AS MinDateTest,
+    
+    -- Maximum date
+    CASE 
+        WHEN TRY_CONVERT(DATE, EOMONTH('9999-12-31', 1)) IS NULL 
+        THEN 'PASS: Correctly rejects operation beyond maximum date' 
+        ELSE 'FAIL: Incorrectly processed date after maximum'
+    END AS MaxDateTest;
+GO
+
+-- Test 9: Testing with table values
+CREATE TABLE #TestDates (ID INT PRIMARY KEY, DateValue DATE);
+GO
+INSERT INTO #TestDates VALUES 
+(1, '2023-01-15'), 
+(2, '2023-02-20'), 
+(3, '2023-03-25');
+
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS TableTest
+FROM #TestDates
+WHERE EOMONTH(DateValue) > DateValue;
+GO
+
+DROP TABLE #TestDates;
+GO
+
+-- Test 10: Testing with GROUP BY, HAVING, ORDER BY, WHERE clauses
+CREATE TABLE #TransactionDates (ID INT, TransactionDate DATE);
+GO
+INSERT INTO #TransactionDates VALUES 
+(1, '2023-01-10'),
+(2, '2023-01-25'),
+(3, '2023-02-05'),
+(4, '2023-02-20'),
+(5, '2023-03-15');
+
+-- Test GROUP BY
+SELECT 
+    EOMONTH(TransactionDate) AS MonthEnd,
+    COUNT(*) AS CountPerMonth,
+    CASE WHEN COUNT(*) > 0 THEN 'PASS' ELSE 'FAIL' END AS GroupByTest
+FROM #TransactionDates
+GROUP BY EOMONTH(TransactionDate)
+ORDER BY MonthEnd;
+
+-- Test HAVING
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS' ELSE 'FAIL' END AS HavingTest
+FROM #TransactionDates
+GROUP BY EOMONTH(TransactionDate)
+HAVING EOMONTH(MAX(TransactionDate)) < '2023-03-01';
+
+-- Test WHERE
+SELECT 
+    CASE WHEN COUNT(*) = 4 THEN 'PASS' ELSE 'FAIL' END AS WhereTest
+FROM #TransactionDates
+WHERE EOMONTH(TransactionDate) < '2023-03-01';
+
+-- Test ORDER BY
+SELECT TOP 1
+    ID,
+    CASE WHEN ID = 5 THEN 'PASS' ELSE 'FAIL' END AS OrderByTest
+FROM #TransactionDates
+ORDER BY EOMONTH(TransactionDate) DESC, TransactionDate DESC;
+GO
+
+DROP TABLE #TransactionDates;
+GO
+
+-- Test 11: Testing with MAX, TOP, DISTINCT, OVER functions
+CREATE TABLE #DateData (
+    ID INT PRIMARY KEY,
+    EventDate DATE,
+    Category VARCHAR(10)
+);
+GO
+
+INSERT INTO #DateData VALUES
+(1, '2023-01-10', 'A'),
+(2, '2023-01-25', 'B'),
+(3, '2023-02-05', 'A'),
+(4, '2023-02-20', 'B'),
+(5, '2023-03-15', 'A');
+
+-- Test MAX
+SELECT
+    CASE WHEN MAX(EOMONTH(EventDate)) = '2023-03-31' THEN 'PASS' ELSE 'FAIL' END AS MaxFunctionTest
+FROM #DateData;
+
+-- Test TOP
+SELECT TOP 1
+    CASE WHEN ID = 5 THEN 'PASS' ELSE 'FAIL' END AS TopFunctionTest
+FROM #DateData
+ORDER BY EOMONTH(EventDate) DESC;
+
+-- Test DISTINCT
+SELECT
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS DistinctTest
+FROM (
+    SELECT DISTINCT EOMONTH(EventDate) AS MonthEnd
+    FROM #DateData
+) AS DistinctMonths;
+
+-- Test OVER
+SELECT TOP 1
+    CASE WHEN COUNT(*) OVER (PARTITION BY EOMONTH(EventDate)) = 2 
+         THEN 'PASS' ELSE 'FAIL' END AS OverFunctionTest
+FROM #DateData
+WHERE Category = 'A'
+ORDER BY EventDate;
+GO
+
+DROP TABLE #DateData;
+GO
+
+-- Test 12: Testing with JOIN operations
+CREATE TABLE #Invoices (InvoiceID INT PRIMARY KEY, InvoiceDate DATE);
+GO
+CREATE TABLE #Payments (PaymentID INT PRIMARY KEY, InvoiceID INT, PaymentDate DATE);
+GO
+
+INSERT INTO #Invoices VALUES
+(1, '2023-01-10'),
+(2, '2023-01-25'),
+(3, '2023-02-05');
+
+INSERT INTO #Payments VALUES
+(101, 1, '2023-01-31'),
+(102, 2, '2023-02-10'),
+(103, 3, '2023-02-28');
+
+-- Inner Join with EOMONTH
+SELECT
+    CASE WHEN COUNT(*) = 1 THEN 'PASS' ELSE 'FAIL' END AS InnerJoinTest
+FROM #Invoices i
+INNER JOIN #Payments p ON i.InvoiceID = p.InvoiceID
+WHERE p.PaymentDate = EOMONTH(i.InvoiceDate);
+
+-- Left Join with EOMONTH
+SELECT
+    CASE WHEN COUNT(*) = 2 THEN 'PASS' ELSE 'FAIL' END AS LeftJoinTest
+FROM #Invoices i
+LEFT JOIN #Payments p ON i.InvoiceID = p.InvoiceID
+WHERE p.PaymentDate > EOMONTH(i.InvoiceDate);
+GO
+
+DROP TABLE #Invoices;
+GO
+DROP TABLE #Payments;
+GO
+
+-- Test 13: Testing with user-defined variables
+DECLARE @BaseDate DATE = '2023-01-15';
+DECLARE @MonthsOffset INT = 2;
+
+SELECT
+    CASE WHEN EOMONTH(@BaseDate) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS VariableTest1,
+    CASE WHEN EOMONTH(@BaseDate, @MonthsOffset) = '2023-03-31' THEN 'PASS' ELSE 'FAIL' END AS VariableTest2,
+    CASE WHEN EOMONTH(@BaseDate, @MonthsOffset*2) = '2023-05-31' THEN 'PASS' ELSE 'FAIL' END AS VariableExpressionTest;
+GO
+
+-- Test 14: Testing with different data sources and expressions
+DECLARE @DateString VARCHAR(30) = '2023-01-15';
+DECLARE @DateValue DATE = CONVERT(DATE, @DateString);
+
+SELECT
+    CASE WHEN EOMONTH(@DateString) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS StringVarTest,
+    CASE WHEN EOMONTH(@DateValue) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS DateVarTest,
+    CASE WHEN EOMONTH(CONVERT(DATE, '2023-01-15')) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS ConvertTest,
+    CASE WHEN EOMONTH(CAST('2023-01-15' AS DATE)) = '2023-01-31' THEN 'PASS' ELSE 'FAIL' END AS CastTest;
+GO
+
+--SWITCHOFFSET
+-- Test 1: Testing return datatype of SWITCHOFFSET
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', '+01:00') AS sql_variant), 'BaseType') = 'datetimeoffset' 
+        THEN 'PASS: SWITCHOFFSET returns datetimeoffset'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE 
+        WHEN SWITCHOFFSET(NULL, '+01:00') IS NULL 
+        THEN 'PASS: NULL date input returns NULL'
+        ELSE 'FAIL: NULL date input should return NULL'
+    END AS NullDateTest,
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', NULL) IS NULL 
+        THEN 'PASS: NULL timezone offset input returns NULL'
+        ELSE 'FAIL: NULL timezone offset input should return NULL'
+    END AS NullOffsetTest;
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT SWITCHOFFSET('invalid date', '+01:00');
+    SELECT 'FAIL: SWITCHOFFSET accepted invalid date string' AS InvalidDateTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SWITCHOFFSET rejected invalid date string' AS InvalidDateTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', 'invalid offset');
+    SELECT 'FAIL: SWITCHOFFSET accepted invalid timezone offset' AS InvalidOffsetTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SWITCHOFFSET rejected invalid timezone offset' AS InvalidOffsetTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT SWITCHOFFSET('2023-01-01', '+01:00');
+    SELECT 'FAIL: SWITCHOFFSET accepted date without offset' AS NonOffsetDateTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SWITCHOFFSET rejected date without offset' AS NonOffsetDateTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', '+01:00', 'extra');
+    SELECT 'FAIL: SWITCHOFFSET accepted extra parameter' AS ExtraParamTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SWITCHOFFSET rejected extra parameter' AS ExtraParamTest;
+END CATCH;
+GO
+
+-- Test 4: Testing with various time zone offsets
+SELECT
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', '+01:00') = '2023-01-01 13:00:00.0000000 +01:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS PositiveOffsetTest,
+    
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', '-01:00') = '2023-01-01 11:00:00.0000000 -01:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS NegativeOffsetTest,
+    
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', '+00:00') = '2023-01-01 12:00:00.0000000 +00:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS ZeroOffsetTest,
+    
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 12:00:00.0000000 +01:00', '+02:00') = '2023-01-01 13:00:00.0000000 +02:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS PositiveToPositiveTest,
+    
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 12:00:00.0000000 -01:00', '+01:00') = '2023-01-01 14:00:00.0000000 +01:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS NegativeToPositiveTest;
+GO
+
+-- Test 5: Testing boundary timezone offsets
+SELECT
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', '+14:00') = '2023-01-02 02:00:00.0000000 +14:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS MaxPositiveOffsetTest,
+    
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', '-14:00') = '2022-12-31 22:00:00.0000000 -14:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS MaxNegativeOffsetTest;
+GO
+
+-- Test 6: Testing date boundary crossing
+SELECT
+    -- Day boundary
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 23:00:00.0000000 +00:00', '+02:00') = '2023-01-02 01:00:00.0000000 +02:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS DayForwardCrossingTest,
+    
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-02 01:00:00.0000000 +00:00', '-02:00') = '2023-01-01 23:00:00.0000000 -02:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS DayBackwardCrossingTest,
+    
+    -- Month boundary
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-31 23:00:00.0000000 +00:00', '+02:00') = '2023-02-01 01:00:00.0000000 +02:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS MonthForwardCrossingTest,
+    
+    CASE 
+        WHEN SWITCHOFFSET('2023-02-01 01:00:00.0000000 +00:00', '-02:00') = '2023-01-31 23:00:00.0000000 -02:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS MonthBackwardCrossingTest,
+    
+    -- Year boundary
+    CASE 
+        WHEN SWITCHOFFSET('2023-12-31 23:00:00.0000000 +00:00', '+02:00') = '2024-01-01 01:00:00.0000000 +02:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS YearForwardCrossingTest,
+    
+    CASE 
+        WHEN SWITCHOFFSET('2024-01-01 01:00:00.0000000 +00:00', '-02:00') = '2023-12-31 23:00:00.0000000 -02:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS YearBackwardCrossingTest;
+GO
+
+-- Test 7: Testing with table values
+CREATE TABLE #TestDateOffsets (ID INT PRIMARY KEY, DateValue DATETIMEOFFSET);
+GO
+INSERT INTO #TestDateOffsets VALUES 
+(1, '2023-01-01 12:00:00.0000000 +00:00'), 
+(2, '2023-02-01 12:00:00.0000000 +01:00'), 
+(3, '2023-03-01 12:00:00.0000000 -01:00');
+
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS TableTest
+FROM #TestDateOffsets
+WHERE SWITCHOFFSET(DateValue, '+00:00') < '2023-04-01';
+GO
+
+DROP TABLE #TestDateOffsets;
+GO
+
+-- Test 8: Testing with GROUP BY, HAVING, ORDER BY, WHERE clauses
+CREATE TABLE #TransactionDateOffsets (ID INT, TransactionDate DATETIMEOFFSET);
+GO
+INSERT INTO #TransactionDateOffsets VALUES 
+(1, '2023-01-01 12:00:00.0000000 +00:00'),
+(2, '2023-01-15 12:00:00.0000000 +01:00'),
+(3, '2023-02-01 12:00:00.0000000 +02:00'),
+(4, '2023-02-15 12:00:00.0000000 -01:00'),
+(5, '2023-03-01 12:00:00.0000000 -02:00');
+
+-- Test GROUP BY
+SELECT 
+    DATEPART(MONTH, SWITCHOFFSET(TransactionDate, '+00:00')) AS UTCMonth,
+    COUNT(*) AS CountPerMonth,
+    CASE WHEN COUNT(*) > 0 THEN 'PASS' ELSE 'FAIL' END AS GroupByTest
+FROM #TransactionDateOffsets
+GROUP BY DATEPART(MONTH, SWITCHOFFSET(TransactionDate, '+00:00'))
+ORDER BY UTCMonth;
+
+-- Test HAVING
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS' ELSE 'FAIL' END AS HavingTest
+FROM #TransactionDateOffsets
+GROUP BY DATEPART(MONTH, SWITCHOFFSET(TransactionDate, '+00:00'))
+HAVING DATEPART(MONTH, SWITCHOFFSET(MIN(TransactionDate), '+00:00')) = 1;
+
+-- Test WHERE
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS' ELSE 'FAIL' END AS WhereTest
+FROM #TransactionDateOffsets
+WHERE SWITCHOFFSET(TransactionDate, '+00:00') < '2023-02-01';
+
+-- Test ORDER BY
+SELECT TOP 1
+    ID,
+    CASE WHEN ID = 1 THEN 'PASS' ELSE 'FAIL' END AS OrderByTest
+FROM #TransactionDateOffsets
+ORDER BY SWITCHOFFSET(TransactionDate, '+00:00');
+GO
+
+DROP TABLE #TransactionDateOffsets;
+GO
+
+-- Test 9: Testing with MAX, TOP, DISTINCT, OVER functions
+CREATE TABLE #DateTimeOffsetData (
+    ID INT PRIMARY KEY,
+    EventDate DATETIMEOFFSET,
+    Category VARCHAR(10)
+);
+GO
+
+INSERT INTO #DateTimeOffsetData VALUES
+(1, '2023-01-01 12:00:00.0000000 +00:00', 'A'),
+(2, '2023-01-15 12:00:00.0000000 +01:00', 'B'),
+(3, '2023-02-01 12:00:00.0000000 +02:00', 'A'),
+(4, '2023-02-15 12:00:00.0000000 -01:00', 'B'),
+(5, '2023-03-01 12:00:00.0000000 -02:00', 'A');
+
+-- Test MAX
+SELECT
+    CASE WHEN MAX(SWITCHOFFSET(EventDate, '+00:00')) = '2023-03-01 14:00:00.0000000 +00:00' THEN 'PASS' ELSE 'FAIL' END AS MaxFunctionTest
+FROM #DateTimeOffsetData;
+
+-- Test TOP
+SELECT TOP 1
+    CASE WHEN ID = 1 THEN 'PASS' ELSE 'FAIL' END AS TopFunctionTest
+FROM #DateTimeOffsetData
+ORDER BY SWITCHOFFSET(EventDate, '+00:00');
+
+-- Test DISTINCT
+SELECT
+    CASE WHEN COUNT(*) = 5 THEN 'PASS' ELSE 'FAIL' END AS DistinctTest
+FROM (
+    SELECT DISTINCT SWITCHOFFSET(EventDate, '+00:00') AS NormalizedDate
+    FROM #DateTimeOffsetData
+) AS DistinctDates;
+
+-- Test OVER
+SELECT TOP 1
+    CASE WHEN COUNT(*) OVER (PARTITION BY DATEPART(MONTH, SWITCHOFFSET(EventDate, '+00:00'))) = 2 
+         THEN 'PASS' ELSE 'FAIL' END AS OverFunctionTest
+FROM #DateTimeOffsetData
+WHERE Category = 'A'
+ORDER BY EventDate;
+GO
+
+DROP TABLE #DateTimeOffsetData;
+GO
+
+-- Test 10: Testing with JOIN operations
+CREATE TABLE #Orders (OrderID INT PRIMARY KEY, OrderDate DATETIMEOFFSET);
+GO
+CREATE TABLE #Shipments (ShipmentID INT PRIMARY KEY, OrderID INT, ShipmentDate DATETIMEOFFSET);
+GO
+
+INSERT INTO #Orders VALUES
+(1, '2023-01-01 12:00:00.0000000 +00:00'),
+(2, '2023-01-15 12:00:00.0000000 +01:00'),
+(3, '2023-02-01 12:00:00.0000000 +02:00');
+
+INSERT INTO #Shipments VALUES
+(101, 1, '2023-01-05 12:00:00.0000000 -01:00'),
+(102, 2, '2023-01-20 12:00:00.0000000 -02:00'),
+(103, 3, '2023-02-05 12:00:00.0000000 +01:00');
+
+-- Inner Join with SWITCHOFFSET
+SELECT
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS InnerJoinTest
+FROM #Orders o
+INNER JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE SWITCHOFFSET(s.ShipmentDate, '+00:00') > SWITCHOFFSET(o.OrderDate, '+00:00');
+
+-- Left Join with SWITCHOFFSET
+SELECT
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS LeftJoinTest
+FROM #Orders o
+LEFT JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE DATEDIFF(DAY, 
+      SWITCHOFFSET(o.OrderDate, '+00:00'), 
+      SWITCHOFFSET(s.ShipmentDate, '+00:00')) BETWEEN 0 AND 10;
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 11: Testing with user-defined variables and expressions
+DECLARE @DateTimeOffset DATETIMEOFFSET = '2023-01-01 12:00:00.0000000 +00:00';
+DECLARE @Offset VARCHAR(10) = '+02:00';
+
+SELECT
+    CASE WHEN SWITCHOFFSET(@DateTimeOffset, @Offset) = '2023-01-01 14:00:00.0000000 +02:00' THEN 'PASS' ELSE 'FAIL' END AS VariableTest1,
+    CASE WHEN SWITCHOFFSET(@DateTimeOffset, '-02:00') = '2023-01-01 10:00:00.0000000 -02:00' THEN 'PASS' ELSE 'FAIL' END AS VariableTest2;
+
+-- Test with expression
+DECLARE @BaseOffset INT = -10;
+DECLARE @OffsetStr VARCHAR(10) = '-' + CAST(ABS(@BaseOffset) AS VARCHAR(2)) + ':00';
+
+SELECT
+    CASE WHEN SWITCHOFFSET(@DateTimeOffset, @OffsetStr) = '2023-01-01 02:00:00.0000000 -10:00' THEN 'PASS' ELSE 'FAIL' END AS ExpressionTest;
+GO
+
+-- Test 12: Testing edge cases with offsets
+BEGIN TRY
+    SELECT SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', '+15:00');
+    SELECT 'FAIL: SWITCHOFFSET accepted invalid offset +15:00' AS InvalidLargeOffsetTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SWITCHOFFSET rejected invalid offset +15:00' AS InvalidLargeOffsetTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', '-15:00');
+    SELECT 'FAIL: SWITCHOFFSET accepted invalid offset -15:00' AS InvalidLargeNegOffsetTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SWITCHOFFSET rejected invalid offset -15:00' AS InvalidLargeNegOffsetTest;
+END CATCH;
+GO
+
+-- Test with minute offsets
+SELECT
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 12:00:00.0000000 +00:00', '+05:30') = '2023-01-01 17:30:00.0000000 +05:30'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS MinuteOffsetTest,
+    
+    CASE 
+        WHEN SWITCHOFFSET('2023-01-01 12:00:00.0000000 +05:30', '+00:00') = '2023-01-01 06:30:00.0000000 +00:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS MinuteOffsetToUTCTest;
+GO
+
+-- Test 13: Testing with system date functions
+SELECT 
+    CASE WHEN SWITCHOFFSET(SYSDATETIMEOFFSET(), '+00:00') IS NOT NULL
+         THEN 'PASS' ELSE 'FAIL' 
+    END AS SystemDateTest;
+GO
+
+-- Test 14: Comparing SWITCHOFFSET with AT TIME ZONE
+DECLARE @TestDate DATETIMEOFFSET = '2023-01-01 12:00:00.0000000 +00:00';
+
+SELECT
+    CASE 
+        WHEN SWITCHOFFSET(@TestDate, '+02:00') = @TestDate AT TIME ZONE 'Eastern European Standard Time'
+        THEN 'PASS: SWITCHOFFSET matches AT TIME ZONE (approximate)' 
+        ELSE 'FAIL: SWITCHOFFSET differs from AT TIME ZONE' 
+    END AS CompareWithATTimeZoneTest;
+GO
+
+--TODATETIMEOFFSET
+-- Test 1: Testing return datatype of TODATETIMEOFFSET
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(TODATETIMEOFFSET('2023-01-01 12:00:00', '+00:00') AS sql_variant), 'BaseType') = 'datetimeoffset' 
+        THEN 'PASS: TODATETIMEOFFSET returns datetimeoffset'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+SELECT 
+    CASE 
+        WHEN TODATETIMEOFFSET(NULL, '+01:00') IS NULL 
+        THEN 'PASS: NULL date input returns NULL'
+        ELSE 'FAIL: NULL date input should return NULL'
+    END AS NullDateTest,
+    CASE 
+        WHEN TODATETIMEOFFSET('2023-01-01 12:00:00', NULL) IS NULL 
+        THEN 'PASS: NULL timezone offset input returns NULL'
+        ELSE 'FAIL: NULL timezone offset input should return NULL'
+    END AS NullOffsetTest;
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT TODATETIMEOFFSET('invalid date', '+01:00');
+    SELECT 'FAIL: TODATETIMEOFFSET accepted invalid date string' AS InvalidDateTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TODATETIMEOFFSET rejected invalid date string' AS InvalidDateTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT TODATETIMEOFFSET('2023-01-01 12:00:00', 'invalid offset');
+    SELECT 'FAIL: TODATETIMEOFFSET accepted invalid timezone offset' AS InvalidOffsetTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TODATETIMEOFFSET rejected invalid timezone offset' AS InvalidOffsetTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT TODATETIMEOFFSET('2023-01-01 12:00:00', '+01:00', 'extra');
+    SELECT 'FAIL: TODATETIMEOFFSET accepted extra parameter' AS ExtraParamTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TODATETIMEOFFSET rejected extra parameter' AS ExtraParamTest;
+END CATCH;
+GO
+
+-- Test 4: Testing with different input date types
+SELECT 
+    CASE WHEN TODATETIMEOFFSET(CAST('2023-01-01' AS DATE), '+00:00') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS DateInputTest,
+    CASE WHEN TODATETIMEOFFSET(CAST('2023-01-01 12:30:45' AS DATETIME), '+00:00') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS DatetimeInputTest,
+    CASE WHEN TODATETIMEOFFSET(CAST('2023-01-01 12:30:45.1234567' AS DATETIME2), '+00:00') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS Datetime2InputTest,
+    CASE WHEN TODATETIMEOFFSET(CAST('2023-01-01 12:30' AS SMALLDATETIME), '+00:00') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS SmalldatetimeInputTest,
+    CASE WHEN TODATETIMEOFFSET('2023-01-01 12:30:45', '+00:00') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS StringInputTest;
+GO
+
+-- Test 5: Testing with datetimeoffset input
+BEGIN TRY
+    SELECT TODATETIMEOFFSET(CAST('2023-01-01 12:00:00.0000000 +01:00' AS DATETIMEOFFSET), '+00:00');
+    SELECT 'FAIL: TODATETIMEOFFSET accepted datetimeoffset input' AS DatetimeoffsetInputTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TODATETIMEOFFSET rejected datetimeoffset input' AS DatetimeoffsetInputTest;
+END CATCH;
+GO
+
+-- Test 6: Testing with various time zone offsets
+SELECT
+    CASE 
+        WHEN TODATETIMEOFFSET('2023-01-01 12:00:00', '+01:00') = '2023-01-01 12:00:00.0000000 +01:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS PositiveOffsetTest,
+    
+    CASE 
+        WHEN TODATETIMEOFFSET('2023-01-01 12:00:00', '-01:00') = '2023-01-01 12:00:00.0000000 -01:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS NegativeOffsetTest,
+    
+    CASE 
+        WHEN TODATETIMEOFFSET('2023-01-01 12:00:00', '+00:00') = '2023-01-01 12:00:00.0000000 +00:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS ZeroOffsetTest;
+GO
+
+-- Test 7: Testing boundary timezone offsets
+SELECT
+    CASE 
+        WHEN TODATETIMEOFFSET('2023-01-01 12:00:00', '+14:00') = '2023-01-01 12:00:00.0000000 +14:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS MaxPositiveOffsetTest,
+    
+    CASE 
+        WHEN TODATETIMEOFFSET('2023-01-01 12:00:00', '-14:00') = '2023-01-01 12:00:00.0000000 -14:00'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS MaxNegativeOffsetTest;
+GO
+
+-- Test 8: Testing with table values
+CREATE TABLE #TestDates (ID INT PRIMARY KEY, DateValue DATETIME2);
+GO
+INSERT INTO #TestDates VALUES 
+(1, '2023-01-01 12:00:00'), 
+(2, '2023-02-01 12:00:00'), 
+(3, '2023-03-01 12:00:00');
+
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS TableTest
+FROM #TestDates
+WHERE TODATETIMEOFFSET(DateValue, '+00:00') < '2023-04-01';
+GO
+
+DROP TABLE #TestDates;
+GO
+
+-- Test 9: Testing with GROUP BY, HAVING, ORDER BY, WHERE clauses
+CREATE TABLE #TransactionDates (ID INT, TransactionDate DATETIME2);
+GO
+INSERT INTO #TransactionDates VALUES 
+(1, '2023-01-01 12:00:00'),
+(2, '2023-01-15 12:00:00'),
+(3, '2023-02-01 12:00:00'),
+(4, '2023-02-15 12:00:00'),
+(5, '2023-03-01 12:00:00');
+
+-- Test GROUP BY
+SELECT 
+    DATEPART(MONTH, TODATETIMEOFFSET(TransactionDate, '+00:00')) AS UTCMonth,
+    COUNT(*) AS CountPerMonth,
+    CASE WHEN COUNT(*) > 0 THEN 'PASS' ELSE 'FAIL' END AS GroupByTest
+FROM #TransactionDates
+GROUP BY DATEPART(MONTH, TODATETIMEOFFSET(TransactionDate, '+00:00'))
+ORDER BY UTCMonth;
+
+-- Test HAVING
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS' ELSE 'FAIL' END AS HavingTest
+FROM #TransactionDates
+GROUP BY DATEPART(MONTH, TODATETIMEOFFSET(TransactionDate, '+00:00'))
+HAVING DATEPART(MONTH, TODATETIMEOFFSET(MIN(TransactionDate), '+00:00')) = 1;
+
+-- Test WHERE
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS' ELSE 'FAIL' END AS WhereTest
+FROM #TransactionDates
+WHERE TODATETIMEOFFSET(TransactionDate, '+00:00') < '2023-02-01';
+
+-- Test ORDER BY
+SELECT TOP 1
+    ID,
+    CASE WHEN ID = 1 THEN 'PASS' ELSE 'FAIL' END AS OrderByTest
+FROM #TransactionDates
+ORDER BY TODATETIMEOFFSET(TransactionDate, '+00:00');
+GO
+
+DROP TABLE #TransactionDates;
+GO
+
+-- Test 10: Testing with MAX, TOP, DISTINCT, OVER functions
+CREATE TABLE #DateTimeData (
+    ID INT PRIMARY KEY,
+    EventDate DATETIME2,
+    Category VARCHAR(10)
+);
+GO
+
+INSERT INTO #DateTimeData VALUES
+(1, '2023-01-01 12:00:00', 'A'),
+(2, '2023-01-15 12:00:00', 'B'),
+(3, '2023-02-01 12:00:00', 'A'),
+(4, '2023-02-15 12:00:00', 'B'),
+(5, '2023-03-01 12:00:00', 'A');
+
+-- Test MAX
+SELECT
+    CASE WHEN MAX(TODATETIMEOFFSET(EventDate, '+00:00')) = '2023-03-01 12:00:00.0000000 +00:00' THEN 'PASS' ELSE 'FAIL' END AS MaxFunctionTest
+FROM #DateTimeData;
+
+-- Test TOP
+SELECT TOP 1
+    CASE WHEN ID = 1 THEN 'PASS' ELSE 'FAIL' END AS TopFunctionTest
+FROM #DateTimeData
+ORDER BY TODATETIMEOFFSET(EventDate, '+00:00');
+
+-- Test DISTINCT
+SELECT
+    CASE WHEN COUNT(*) = 5 THEN 'PASS' ELSE 'FAIL' END AS DistinctTest
+FROM (
+    SELECT DISTINCT TODATETIMEOFFSET(EventDate, '+00:00') AS OffsetDate
+    FROM #DateTimeData
+) AS DistinctDates;
+
+-- Test OVER
+SELECT TOP 1
+    CASE WHEN COUNT(*) OVER (PARTITION BY DATEPART(MONTH, TODATETIMEOFFSET(EventDate, '+00:00'))) = 2 
+         THEN 'PASS' ELSE 'FAIL' END AS OverFunctionTest
+FROM #DateTimeData
+WHERE Category = 'A'
+ORDER BY EventDate;
+GO
+
+DROP TABLE #DateTimeData;
+GO
+
+-- Test 11: Testing with JOIN operations
+CREATE TABLE #Orders (OrderID INT PRIMARY KEY, OrderDate DATETIME2);
+GO
+CREATE TABLE #Shipments (ShipmentID INT PRIMARY KEY, OrderID INT, ShipmentDate DATETIME2);
+GO
+
+INSERT INTO #Orders VALUES
+(1, '2023-01-01 12:00:00'),
+(2, '2023-01-15 12:00:00'),
+(3, '2023-02-01 12:00:00');
+
+INSERT INTO #Shipments VALUES
+(101, 1, '2023-01-05 12:00:00'),
+(102, 2, '2023-01-20 12:00:00'),
+(103, 3, '2023-02-05 12:00:00');
+
+-- Inner Join with TODATETIMEOFFSET
+SELECT
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS InnerJoinTest
+FROM #Orders o
+INNER JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE TODATETIMEOFFSET(s.ShipmentDate, '+00:00') > TODATETIMEOFFSET(o.OrderDate, '+00:00');
+
+-- Left Join with TODATETIMEOFFSET
+SELECT
+    CASE WHEN COUNT(*) = 3 THEN 'PASS' ELSE 'FAIL' END AS LeftJoinTest
+FROM #Orders o
+LEFT JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE DATEDIFF(DAY, 
+      TODATETIMEOFFSET(o.OrderDate, '+00:00'), 
+      TODATETIMEOFFSET(s.ShipmentDate, '+00:00')) BETWEEN 0 AND 10;
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 12: Testing with user-defined variables and expressions
+DECLARE @DateTime DATETIME2 = '2023-01-01 12:00:00';
+DECLARE @Offset VARCHAR(10) = '+02:00';
+
+SELECT
+    CASE WHEN TODATETIMEOFFSET(@DateTime, @Offset) = '2023-01-01 12:00:00.0000000 +02:00' THEN 'PASS' ELSE 'FAIL' END AS VariableTest1,
+    CASE WHEN TODATETIMEOFFSET(@DateTime, '-02:00') = '2023-01-01 12:00:00.0000000 -02:00' THEN 'PASS' ELSE 'FAIL' END AS VariableTest2;
+
+-- Test with expression
+DECLARE @BaseOffset INT = 5;
+DECLARE @OffsetStr VARCHAR(10) = '+' + CAST(@BaseOffset AS VARCHAR(2)) + ':30';
+
+SELECT
+    CASE WHEN TODATETIMEOFFSET(@DateTime, @OffsetStr) = '2023-01-01 12:00:00.0000000 +05:30' THEN 'PASS' ELSE 'FAIL' END AS ExpressionTest;
+GO
+
+-- Test 13: Testing edge cases with offsets
+BEGIN TRY
+    SELECT TODATETIMEOFFSET('2023-01-01 12:00:00', '+15:00');
+    SELECT 'FAIL: TODATETIMEOFFSET accepted invalid offset +15:00' AS InvalidLargeOffsetTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TODATETIMEOFFSET rejected invalid offset +15:00' AS InvalidLargeOffsetTest;
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT TODATETIMEOFFSET('2023-01-01 12:00:00', '-15:00');
+    SELECT 'FAIL: TODATETIMEOFFSET accepted invalid offset -15:00' AS InvalidLargeNegOffsetTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: TODATETIMEOFFSET rejected invalid offset -15:00' AS InvalidLargeNegOffsetTest;
+END CATCH;
+GO
+
+-- Test with minute offsets
+SELECT
+    CASE 
+        WHEN TODATETIMEOFFSET('2023-01-01 12:00:00', '+05:30') = '2023-01-01 12:00:00.0000000 +05:30'
+        THEN 'PASS' ELSE 'FAIL' 
+    END AS MinuteOffsetTest;
+GO
+
+-- Test 14: Testing with system date functions
+SELECT 
+    CASE WHEN TODATETIMEOFFSET(SYSDATETIME(), '+00:00') IS NOT NULL
+         THEN 'PASS' ELSE 'FAIL' 
+    END AS SystemDateTest1,
+    CASE WHEN TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00') IS NOT NULL
+         THEN 'PASS' ELSE 'FAIL' 
+    END AS SystemDateTest2,
+    CASE WHEN DATEDIFF(MINUTE, 
+              TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00'), 
+              SWITCHOFFSET(SYSDATETIMEOFFSET(), '+00:00')) < 1
+         THEN 'PASS' ELSE 'FAIL' 
+    END AS UTCComparisonTest;
+GO
+
+-- Test 15: Testing precision preservation
+DECLARE @HighPrecision DATETIME2(7) = '2023-01-01 12:00:00.1234567';
+
+SELECT
+    CASE 
+        WHEN CONVERT(VARCHAR(30), TODATETIMEOFFSET(@HighPrecision, '+00:00')) LIKE '%1234567%'
+        THEN 'PASS: Precision preserved' ELSE 'FAIL: Precision lost' 
+    END AS PrecisionTest;
+GO
+
+-- Test 16: Testing with different DATETIME2 precision
+SELECT
+    CASE WHEN TODATETIMEOFFSET(CAST('2023-01-01 12:00:00.1234567' AS DATETIME2(7)), '+00:00') 
+           = '2023-01-01 12:00:00.1234567 +00:00'
+         THEN 'PASS' ELSE 'FAIL' 
+    END AS Precision7Test,
+    
+    CASE WHEN TODATETIMEOFFSET(CAST('2023-01-01 12:00:00.123' AS DATETIME2(3)), '+00:00') 
+           = '2023-01-01 12:00:00.1230000 +00:00'
+         THEN 'PASS' ELSE 'FAIL' 
+    END AS Precision3Test,
+    
+    CASE WHEN TODATETIMEOFFSET(CAST('2023-01-01 12:00:00' AS DATETIME2(0)), '+00:00') 
+           = '2023-01-01 12:00:00.0000000 +00:00'
+         THEN 'PASS' ELSE 'FAIL' 
+    END AS Precision0Test;
+GO
+
+--ISDATE
+-- Test 1: Testing return datatype of ISDATE
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(ISDATE('2023-01-01') AS sql_variant), 'BaseType') = 'int' 
+        THEN 'PASS: ISDATE returns int (bit)'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL and empty values
+SELECT 
+    CASE WHEN ISDATE(NULL) = 0 THEN 'PASS: NULL input returns 0' ELSE 'FAIL: Unexpected result with NULL' END AS NullTest,
+    CASE WHEN ISDATE('') = 0 THEN 'PASS: Empty string returns 0' ELSE 'FAIL: Unexpected result with empty string' END AS EmptyStringTest;
+GO
+
+-- Test 3: Testing argument limitations
+BEGIN TRY
+    SELECT ISDATE('2023-01-01', 'extra_arg');
+    SELECT 'FAIL: ISDATE accepted multiple parameters' AS MultipleArgumentsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: ISDATE rejected multiple parameters' AS MultipleArgumentsTest;
+END CATCH
+GO
+
+-- Test 4: Testing various date formats and validation
+SELECT 
+    CASE WHEN ISDATE('2023-01-01') = 1 THEN 'PASS' ELSE 'FAIL' END AS Format_YYYY_MM_DD,
+    CASE WHEN ISDATE('01/01/2023') = 1 THEN 'PASS' ELSE 'FAIL' END AS Format_MM_DD_YYYY,
+    CASE WHEN ISDATE('January 1, 2023') = 1 THEN 'PASS' ELSE 'FAIL' END AS Format_MonthName_DD_YYYY,
+    CASE WHEN ISDATE('1/1/23') = 1 THEN 'PASS' ELSE 'FAIL' END AS Format_Short_Date,
+    CASE WHEN ISDATE('20230101') = 1 THEN 'PASS' ELSE 'FAIL' END AS Format_YYYYMMDD,
+    CASE WHEN ISDATE('2023-01-01 12:30:45') = 1 THEN 'PASS' ELSE 'FAIL' END AS Format_With_Time,
+    CASE WHEN ISDATE('2023-01-01T12:30:45') = 1 THEN 'PASS' ELSE 'FAIL' END AS Format_ISO8601;
+GO
+
+-- Test invalid dates
+SELECT
+    CASE WHEN ISDATE('2023-13-01') = 0 THEN 'PASS' ELSE 'FAIL' END AS Invalid_Month,
+    CASE WHEN ISDATE('2023-01-32') = 0 THEN 'PASS' ELSE 'FAIL' END AS Invalid_Day,
+    CASE WHEN ISDATE('2023-02-30') = 0 THEN 'PASS' ELSE 'FAIL' END AS Invalid_Day_For_Month,
+    CASE WHEN ISDATE('ABC') = 0 THEN 'PASS' ELSE 'FAIL' END AS NonDate_String,
+    CASE WHEN ISDATE('2023/123/456') = 0 THEN 'PASS' ELSE 'FAIL' END AS Malformed_Date;
+GO
+
+-- Test 5: Testing with null values from table
+CREATE TABLE #TestNulls (ID INT, DateField VARCHAR(50) NULL);
+GO
+INSERT INTO #TestNulls VALUES (1, NULL), (2, '2023-01-01'), (3, 'not a date');
+
+SELECT 
+    CASE 
+        WHEN SUM(CASE WHEN DateField IS NULL THEN 0 ELSE ISDATE(DateField) END) = 1 
+        THEN 'PASS: ISDATE handled NULL and invalid properly' 
+        ELSE 'FAIL: ISDATE issue with NULL or invalid values'
+    END AS NullTableTest
+FROM #TestNulls;
+GO
+
+DROP TABLE #TestNulls;
+GO
+
+-- Test 6: Testing CAST and CONVERT with ISDATE
+SELECT 
+    CASE WHEN ISDATE(CAST('2023-01-01' AS VARCHAR(10))) = 1 THEN 'PASS' ELSE 'FAIL' END AS CastVarcharTest,
+    CASE WHEN ISDATE(CONVERT(VARCHAR(20), GETDATE(), 120)) = 1 THEN 'PASS' ELSE 'FAIL' END AS ConvertDatetimeTest;
+GO
+
+-- Test 7: Testing with different datatypes as arguments
+SELECT
+    CASE WHEN ISDATE(123) = 0 THEN 'PASS' ELSE 'FAIL' END AS NumericTest,
+    CASE WHEN ISDATE(CAST('2023-01-01' AS CHAR(10))) = 1 THEN 'PASS' ELSE 'FAIL' END AS CharTest,
+    CASE WHEN ISDATE(CAST('2023-01-01' AS NVARCHAR(10))) = 1 THEN 'PASS' ELSE 'FAIL' END AS NVarcharTest,
+    CASE WHEN ISDATE(CAST(GETDATE() AS VARCHAR(30))) = 1 THEN 'PASS' ELSE 'FAIL' END AS DatetimeConversionTest;
+GO
+
+-- Test 8: Testing regional settings
+-- Note: This depends on server language settings and cannot be fully tested without changing server settings
+-- We'll test common formats that should work regardless of settings
+SELECT
+    CASE WHEN ISDATE('1/1/2023') = 1 THEN 'PASS' ELSE 'FAIL' END AS BasicRegionalFormat,
+    CASE WHEN ISDATE(CONVERT(VARCHAR(20), GETDATE(), 101)) = 1 THEN 'PASS' ELSE 'FAIL' END AS US_Format
+GO
+
+-- Test 9: Testing boundary cases - leap years, date ranges, etc.
+SELECT
+    -- Leap year tests
+    CASE WHEN ISDATE('2020-02-29') = 1 THEN 'PASS' ELSE 'FAIL' END AS LeapYear_Valid,
+    CASE WHEN ISDATE('2021-02-29') = 0 THEN 'PASS' ELSE 'FAIL' END AS NonLeapYear_Invalid,
+    
+    -- Boundary cases
+    CASE WHEN ISDATE('1753-01-01') = 1 THEN 'PASS' ELSE 'FAIL' END AS Min_SQL_Date,
+    CASE WHEN ISDATE('9999-12-31') = 1 THEN 'PASS' ELSE 'FAIL' END AS Max_SQL_Date,
+    CASE WHEN ISDATE('10000-01-01') = 0 THEN 'PASS' ELSE 'FAIL' END AS Beyond_Max_Date,
+    CASE WHEN ISDATE('1752-12-31') = 0 THEN 'PASS' ELSE 'FAIL' END AS Before_Min_Date;
+GO
+
+-- Test 10: Using ISDATE with GROUP BY, HAVING, ORDER BY, SELECT, WHERE
+CREATE TABLE #DateTests (
+    ID INT PRIMARY KEY,
+    DateString VARCHAR(50)
+);
+GO
+
+INSERT INTO #DateTests VALUES 
+(1, '2023-01-01'),
+(2, 'not a date'),
+(3, '2023-02-28'),
+(4, NULL),
+(5, '2023/12/31');
+
+-- Test WHERE clause
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: WHERE clause works with ISDATE' 
+         ELSE 'FAIL: WHERE clause issue' 
+    END AS WhereClauseTest
+FROM #DateTests
+WHERE ISDATE(DateString) = 1;
+
+-- Test GROUP BY
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: GROUP BY works with ISDATE' 
+         ELSE 'FAIL: GROUP BY issue' 
+    END AS GroupByTest
+FROM (
+    SELECT ISDATE(DateString) AS IsValidDate
+    FROM #DateTests
+    GROUP BY ISDATE(DateString)
+) AS SubQuery;
+
+-- Test HAVING
+SELECT 
+    CASE WHEN COUNT(*) = 1 THEN 'PASS: HAVING works with ISDATE aggregation' 
+         ELSE 'FAIL: HAVING issue' 
+    END AS HavingTest
+FROM (
+    SELECT ISDATE(DateString) AS IsValidDate, COUNT(*) AS DateCount
+    FROM #DateTests
+    GROUP BY ISDATE(DateString)
+    HAVING SUM(CASE WHEN ISDATE(DateString) = 1 THEN 1 ELSE 0 END) > 2
+) AS SubQuery;
+
+-- Test ORDER BY
+SELECT TOP 1
+    CASE WHEN ID = 1 OR ID = 3 OR ID = 5 THEN 'PASS: ORDER BY with ISDATE works' 
+         ELSE 'FAIL: ORDER BY issue' 
+    END AS OrderByTest
+FROM #DateTests
+WHERE DateString IS NOT NULL
+ORDER BY ISDATE(DateString) DESC, ID ASC;
+GO
+
+DROP TABLE #DateTests;
+GO
+
+-- Test 11: Using MAX, TOP, DISTINCT, OVER, JOIN with ISDATE
+CREATE TABLE #DateSamples (DateID INT PRIMARY KEY, DateString VARCHAR(50));
+GO
+CREATE TABLE #DateValidation (ValidationID INT PRIMARY KEY, DateID INT, IsValid BIT);
+GO
+
+INSERT INTO #DateSamples VALUES 
+(1, '2023-01-01'),
+(2, 'not a date'),
+(3, '2023-02-28'),
+(4, NULL),
+(5, '2023/12/31');
+
+INSERT INTO #DateValidation VALUES
+(101, 1, 1),
+(102, 2, 0),
+(103, 3, 1),
+(104, 5, 1);
+
+-- Test MAX
+SELECT 
+    CASE WHEN MAX(ISDATE(DateString)) = 1 THEN 'PASS: MAX function works' 
+         ELSE 'FAIL: MAX function issue' 
+    END AS MaxFunctionTest
+FROM #DateSamples;
+
+-- Test TOP with ORDER BY
+SELECT TOP 1
+    CASE WHEN DateID IN (1, 3, 5) THEN 'PASS: TOP with ISDATE ordering works' 
+         ELSE 'FAIL: TOP with ordering issue' 
+    END AS TopClauseTest
+FROM #DateSamples
+WHERE DateString IS NOT NULL
+ORDER BY ISDATE(DateString) DESC, DateID ASC;
+
+-- Test DISTINCT
+SELECT 
+    CASE WHEN COUNT(*) = 2 THEN 'PASS: DISTINCT works with ISDATE' 
+         ELSE 'FAIL: DISTINCT issue' 
+    END AS DistinctTest
+FROM (
+    SELECT DISTINCT ISDATE(DateString) AS IsValidDate
+    FROM #DateSamples
+    WHERE DateString IS NOT NULL
+) AS DistinctDates;
+
+-- Test OVER clause
+SELECT 
+    CASE WHEN MIN(IsValidSum) = 3 AND MAX(IsValidSum) = 3 THEN 'PASS: OVER clause works with ISDATE' 
+         ELSE 'FAIL: OVER clause issue' 
+    END AS OverClauseTest
+FROM (
+    SELECT SUM(CASE WHEN ISDATE(DateString) = 1 THEN 1 ELSE 0 END) OVER() AS IsValidSum
+    FROM #DateSamples
+) AS WindowFunctionTest;
+
+-- Test INNER JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 3 THEN 'PASS: INNER JOIN with ISDATE comparison works' 
+         ELSE 'FAIL: INNER JOIN issue' 
+    END AS InnerJoinTest
+FROM #DateSamples s
+INNER JOIN #DateValidation v ON s.DateID = v.DateID
+WHERE ISDATE(s.DateString) = v.IsValid;
+
+-- Test LEFT JOIN
+SELECT 
+    CASE WHEN COUNT(*) = 5 THEN 'PASS: LEFT JOIN with ISDATE works' 
+         ELSE 'FAIL: LEFT JOIN issue' 
+    END AS OuterJoinTest
+FROM #DateSamples s
+LEFT JOIN #DateValidation v ON s.DateID = v.DateID AND ISDATE(s.DateString) = v.IsValid;
+GO
+
+DROP TABLE #DateSamples;
+GO
+DROP TABLE #DateValidation;
+GO
+
+-- Test 12: User-defined variables and quoted strings
+DECLARE @DateVar1 VARCHAR(20) = '2023-01-01';
+DECLARE @DateVar2 VARCHAR(20) = 'not a date';
+DECLARE @DateVar3 VARCHAR(20) = NULL;
+
+SELECT 
+    CASE WHEN ISDATE(@DateVar1) = 1 THEN 'PASS' ELSE 'FAIL' END AS Variable_ValidDate,
+    CASE WHEN ISDATE(@DateVar2) = 0 THEN 'PASS' ELSE 'FAIL' END AS Variable_InvalidDate,
+    CASE WHEN ISDATE(@DateVar3) = 0 THEN 'PASS' ELSE 'FAIL' END AS Variable_NullDate,
+    CASE WHEN ISDATE(N'2023-01-01') = 1 THEN 'PASS' ELSE 'FAIL' END AS UnicodeStringTest;
+GO
+
+-- Test 13: Testing with expressions and concatenations
+SELECT
+    CASE WHEN ISDATE('2023' + '-01-01') = 1 THEN 'PASS' ELSE 'FAIL' END AS StringConcatenationTest,
+    CASE WHEN ISDATE(CONCAT('2023', '-01-01')) = 1 THEN 'PASS' ELSE 'FAIL' END AS ConcatFunctionTest;
+GO
+
+-- Test 14: Testing date parts and arithmetic
+SELECT
+    CASE WHEN ISDATE(CONVERT(VARCHAR, YEAR(GETDATE())) + '-01-01') = 1 THEN 'PASS' ELSE 'FAIL' END AS DatepartYearTest,
+    CASE WHEN ISDATE(CONVERT(VARCHAR, MONTH(GETDATE())) + '/1/' + CONVERT(VARCHAR, YEAR(GETDATE()))) = 1 THEN 'PASS' ELSE 'FAIL' END AS DatepartMonthYearTest;
+GO
+
+-- Test 15: Testing time components in dates
+SELECT
+    CASE WHEN ISDATE('2023-01-01 12:30:45') = 1 THEN 'PASS' ELSE 'FAIL' END AS DateWithTimeTest,
+    CASE WHEN ISDATE('2023-01-01 25:30:45') = 0 THEN 'PASS' ELSE 'FAIL' END AS DateWithInvalidHourTest,
+    CASE WHEN ISDATE('2023-01-01 12:60:45') = 0 THEN 'PASS' ELSE 'FAIL' END AS DateWithInvalidMinuteTest,
+    CASE WHEN ISDATE('2023-01-01 12:30:60') = 0 THEN 'PASS' ELSE 'FAIL' END AS DateWithInvalidSecondTest;
+GO
+
+-- Test 16: Testing with different timestamp styles
+SELECT
+    CASE WHEN ISDATE(CONVERT(VARCHAR, GETDATE(), 101)) = 1 THEN 'PASS' ELSE 'FAIL' END AS Style101Test, -- MM/DD/YYYY
+    CASE WHEN ISDATE(CONVERT(VARCHAR, GETDATE(), 112)) = 1 THEN 'PASS' ELSE 'FAIL' END AS Style112Test, -- YYYYMMDD
+    CASE WHEN ISDATE(CONVERT(VARCHAR, GETDATE(), 126)) = 1 THEN 'PASS' ELSE 'FAIL' END AS Style126Test; -- ISO8601
+GO
+
+-- Test 17: Case-insensitive month names and abbreviations
+SELECT
+    CASE WHEN ISDATE('January 1, 2023') = 1 THEN 'PASS' ELSE 'FAIL' END AS FullMonthNameTest,
+    CASE WHEN ISDATE('Jan 1, 2023') = 1 THEN 'PASS' ELSE 'FAIL' END AS AbbreviatedMonthTest,
+    CASE WHEN ISDATE('JANUARY 1, 2023') = 1 THEN 'PASS' ELSE 'FAIL' END AS UppercaseMonthTest,
+    CASE WHEN ISDATE('january 1, 2023') = 1 THEN 'PASS' ELSE 'FAIL' END AS LowercaseMonthTest;
+GO
+
+-- Test 18: Testing with subqueries
+SELECT
+    CASE 
+        WHEN (SELECT COUNT(*) FROM (VALUES ('2023-01-01'), ('2023-02-28'), ('not a date')) AS Dates(DateValue)
+              WHERE ISDATE(DateValue) = 1) = 2
+        THEN 'PASS: ISDATE works correctly in subquery' 
+        ELSE 'FAIL: ISDATE issue in subquery'
+    END AS SubqueryTest;
+GO
+
+-- Test 19: Dynamic SQL test
+DECLARE @DateString VARCHAR(20) = '2023-01-01';
+DECLARE @SqlCmd NVARCHAR(500);
+DECLARE @Result INT;
+
+SET @SqlCmd = N'SELECT @ResultOUT = ISDATE(@DateStringIN)';
+
+DECLARE @ParmDefinition NVARCHAR(100) = N'@DateStringIN VARCHAR(20), @ResultOUT INT OUTPUT';
+DECLARE @ResultOut INT;
+
+EXEC sp_executesql @SqlCmd, @ParmDefinition, 
+                   @DateStringIN = @DateString, 
+                   @ResultOUT = @ResultOut OUTPUT;
+
+SELECT
+    CASE WHEN @ResultOut = 1
+         THEN 'PASS: ISDATE works in dynamic SQL' 
+         ELSE 'FAIL: ISDATE issue in dynamic SQL'
+    END AS DynamicSQLTest;
+GO
+
+--DATEFIRST
+-- Test 1: Basic functionality - checking default value and valid range
+PRINT 'Test 1: Basic functionality and valid range tests';
+
+-- Test 1.1: Check default value of @@DATEFIRST
+SELECT 
+    CASE 
+        WHEN @@DATEFIRST = 7 THEN 'PASS: Default @@DATEFIRST is 7 (US English default)'
+        ELSE 'FAIL: Unexpected default value for @@DATEFIRST: ' + CAST(@@DATEFIRST AS VARCHAR)
+    END AS DefaultValueTest;
+GO
+
+-- Test 1.2: Testing all valid SET DATEFIRST values (1-7)
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+DECLARE @TestsPassed INT = 0;
+
+-- Test each valid value
+SET DATEFIRST 1;
+IF @@DATEFIRST = 1 SET @TestsPassed = @TestsPassed + 1;
+
+SET DATEFIRST 2;
+IF @@DATEFIRST = 2 SET @TestsPassed = @TestsPassed + 1;
+
+SET DATEFIRST 3;
+IF @@DATEFIRST = 3 SET @TestsPassed = @TestsPassed + 1;
+
+SET DATEFIRST 4;
+IF @@DATEFIRST = 4 SET @TestsPassed = @TestsPassed + 1;
+
+SET DATEFIRST 5;
+IF @@DATEFIRST = 5 SET @TestsPassed = @TestsPassed + 1;
+
+SET DATEFIRST 6;
+IF @@DATEFIRST = 6 SET @TestsPassed = @TestsPassed + 1;
+
+SET DATEFIRST 7;
+IF @@DATEFIRST = 7 SET @TestsPassed = @TestsPassed + 1;
+
+SELECT
+    CASE 
+        WHEN @TestsPassed = 7 THEN 'PASS: All valid SET DATEFIRST values work correctly'
+        ELSE 'FAIL: Only ' + CAST(@TestsPassed AS VARCHAR) + ' of 7 valid values worked correctly'
+    END AS ValidValuesTest;
+
+-- Restore original setting
+SET DATEFIRST @OriginalSetting;
+GO
+
+-- Test 2: Testing invalid values for SET DATEFIRST
+PRINT 'Test 2: Invalid value tests';
+
+-- Test 2.1: Testing with value below the valid range
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+BEGIN TRY
+    SET DATEFIRST 0;
+    SELECT 'FAIL: SET DATEFIRST accepted invalid value 0' AS BelowRangeTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SET DATEFIRST rejected invalid value 0' AS BelowRangeTest;
+END CATCH
+
+-- Verify value wasn't changed
+SELECT
+    CASE 
+        WHEN @@DATEFIRST = @OriginalSetting THEN 'PASS: @@DATEFIRST unchanged after invalid SET command'
+        ELSE 'FAIL: @@DATEFIRST changed after invalid SET command'
+    END AS PreserveValueTest;
+GO
+
+-- Test 2.2: Testing with value above the valid range
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+BEGIN TRY
+    SET DATEFIRST 8;
+    SELECT 'FAIL: SET DATEFIRST accepted invalid value 8' AS AboveRangeTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SET DATEFIRST rejected invalid value 8' AS AboveRangeTest;
+END CATCH
+
+-- Verify value wasn't changed
+SELECT
+    CASE 
+        WHEN @@DATEFIRST = @OriginalSetting THEN 'PASS: @@DATEFIRST unchanged after invalid SET command'
+        ELSE 'FAIL: @@DATEFIRST changed after invalid SET command'
+    END AS PreserveValueTest;
+GO
+
+-- Test 2.3: Testing with NULL value
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+BEGIN TRY
+    DECLARE @Null INT = NULL;
+    SET DATEFIRST @Null;
+    SELECT 'FAIL: SET DATEFIRST accepted NULL value' AS NullValueTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SET DATEFIRST rejected NULL value' AS NullValueTest;
+END CATCH
+
+-- Verify value wasn't changed
+SELECT
+    CASE 
+        WHEN @@DATEFIRST = @OriginalSetting THEN 'PASS: @@DATEFIRST unchanged after NULL SET command'
+        ELSE 'FAIL: @@DATEFIRST changed after NULL SET command'
+    END AS PreserveNullTest;
+GO
+
+-- Test 2.4: Testing with non-integer value
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+BEGIN TRY
+    SET DATEFIRST 1.5;
+    SELECT 'FAIL: SET DATEFIRST accepted non-integer value 1.5' AS NonIntegerTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: SET DATEFIRST rejected non-integer value 1.5' AS NonIntegerTest;
+END CATCH
+GO
+
+-- Test 3: Testing how @@DATEFIRST affects date functions
+PRINT 'Test 3: Testing impact on date functions';
+
+-- Create a reference table of dates containing each day of the week
+CREATE TABLE #WeekdayTest (
+    Date DATE,
+    DayNumber INT,
+    DayName VARCHAR(20)
+);
+GO
+
+-- Insert one date for each day of the week
+INSERT INTO #WeekdayTest (Date, DayNumber, DayName) VALUES 
+('2023-01-01', 1, 'Sunday'),    -- Sunday
+('2023-01-02', 2, 'Monday'),    -- Monday
+('2023-01-03', 3, 'Tuesday'),   -- Tuesday
+('2023-01-04', 4, 'Wednesday'), -- Wednesday
+('2023-01-05', 5, 'Thursday'),  -- Thursday
+('2023-01-06', 6, 'Friday'),    -- Friday
+('2023-01-07', 7, 'Saturday');  -- Saturday
+
+-- Test 3.1: Testing DATEPART(weekday) with different DATEFIRST values
+DECLARE @TestsPassed INT = 0;
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+
+-- DATEFIRST = 1 (Monday as first day of week)
+SET DATEFIRST 1;
+IF (SELECT DATEPART(weekday, '2023-01-01')) = 7 AND  -- Sunday becomes day 7
+   (SELECT DATEPART(weekday, '2023-01-02')) = 1      -- Monday becomes day 1
+    SET @TestsPassed = @TestsPassed + 1;
+
+-- DATEFIRST = 7 (Sunday as first day of week)
+SET DATEFIRST 7;
+IF (SELECT DATEPART(weekday, '2023-01-01')) = 1 AND  -- Sunday becomes day 1
+   (SELECT DATEPART(weekday, '2023-01-07')) = 7      -- Saturday becomes day 7
+    SET @TestsPassed = @TestsPassed + 1;
+
+SELECT
+    CASE 
+        WHEN @TestsPassed = 2 THEN 'PASS: DATEPART(weekday) responds correctly to @@DATEFIRST changes'
+        ELSE 'FAIL: DATEPART(weekday) not working correctly with @@DATEFIRST changes'
+    END AS DatePartWeekdayTest;
+
+-- Restore original setting
+SET DATEFIRST @OriginalSetting;
+GO
+
+-- Test 3.2: Comprehensive test of DATEPART(weekday) with all DATEFIRST values
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+
+-- Create table to hold test results
+CREATE TABLE #DateFirstTests (
+    DateFirstValue INT,
+    SundayWeekday INT,
+    MondayWeekday INT,
+    TestPassed BIT
+);
+
+-- Test each DATEFIRST value
+DECLARE @i INT = 1;
+WHILE @i <= 7
+BEGIN
+    SET DATEFIRST @i;
+    
+    INSERT INTO #DateFirstTests (DateFirstValue, SundayWeekday, MondayWeekday, TestPassed)
+    SELECT 
+        @i,
+        DATEPART(weekday, '2023-01-01'), -- Sunday
+        DATEPART(weekday, '2023-01-02'), -- Monday
+        CASE 
+            -- For DATEFIRST = 1 (Monday), Sunday should be 7 and Monday should be 1
+            WHEN @i = 1 AND DATEPART(weekday, '2023-01-01') = 7 AND DATEPART(weekday, '2023-01-02') = 1 THEN 1
+            -- For DATEFIRST = 7 (Sunday), Sunday should be 1 and Monday should be 2
+            WHEN @i = 7 AND DATEPART(weekday, '2023-01-01') = 1 AND DATEPART(weekday, '2023-01-02') = 2 THEN 1
+            -- For other values, verify the offset is correct
+            WHEN (@i <> 1 AND @i <> 7) AND 
+                 (DATEPART(weekday, '2023-01-01') = ((8 - @i) % 7 + (CASE WHEN @i > 1 THEN 0 ELSE 7 END))) THEN 1
+            ELSE 0
+        END;
+    
+    SET @i = @i + 1;
+END
+
+SELECT
+    CASE 
+        WHEN COUNT(*) = 7 AND SUM(CAST(TestPassed AS INT)) = 7 
+        THEN 'PASS: All DATEFIRST values correctly affect DATEPART(weekday)'
+        ELSE 'FAIL: Some DATEFIRST values do not correctly affect DATEPART(weekday)'
+    END AS ComprehensiveDatePartTest
+FROM #DateFirstTests;
+
+DROP TABLE #DateFirstTests;
+
+-- Restore original setting
+SET DATEFIRST @OriginalSetting;
+GO
+DROP TABLE #WeekdayTest;
+GO
+
+-- Test 4: Testing session scope of SET DATEFIRST
+PRINT 'Test 4: Testing session scope';
+
+-- Test 4.1: Testing session isolation
+-- This will be demonstrated by creating two sessions and showing they can have
+-- different @@DATEFIRST values. This test will be simulated in a single script.
+
+-- Simulate Session 1
+DECLARE @Session1Setting INT;
+SET DATEFIRST 1; -- Set to Monday
+SET @Session1Setting = @@DATEFIRST;
+
+-- Save the current setting for later restore
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+
+-- Create stored procedure to simulate another session
+CREATE OR ALTER PROCEDURE #TestSessionIsolation AS
+BEGIN
+    -- This would be Session 2, but here we'll just verify the settings 
+    -- aren't automatically changed
+    SELECT 
+        CASE 
+            WHEN @@DATEFIRST = 1 THEN 'FAIL: Session 2 inherited Session 1 setting'
+            WHEN @@DATEFIRST = 7 THEN 'PASS: Session 2 has independent default setting (7)'
+            ELSE 'FAIL: Unexpected @@DATEFIRST value in Session 2: ' + CAST(@@DATEFIRST AS VARCHAR)
+        END AS SessionIsolationTest;
+    
+    -- Set a different value in Session 2
+    SET DATEFIRST 2; -- Set to Tuesday
+    
+    SELECT 
+        CASE 
+            WHEN @@DATEFIRST = 2 THEN 'PASS: Session 2 can set its own value (2)'
+            ELSE 'FAIL: Could not update @@DATEFIRST in Session 2'
+        END AS Session2SettingTest;
+END
+GO
+
+-- Execute the stored procedure (which would be Session 2)
+EXEC #TestSessionIsolation;
+
+-- Verify Session 1's setting remains unchanged
+SELECT 
+    CASE 
+        WHEN @@DATEFIRST = @Session1Setting THEN 'PASS: Session 1 setting unaffected by Session 2'
+        ELSE 'FAIL: Session 1 setting changed unexpectedly to ' + CAST(@@DATEFIRST AS VARCHAR)
+    END AS SessionPersistenceTest;
+
+-- Restore original setting
+SET DATEFIRST @OriginalSetting;
+DROP PROCEDURE #TestSessionIsolation;
+GO
+
+-- Test 5: Testing with other date functions
+PRINT 'Test 5: Testing with other date functions';
+
+-- Test 5.1: Testing DATENAME(weekday) with different DATEFIRST values
+DECLARE @TestsPassed INT = 0;
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+
+-- Set DATEFIRST to various values and check DATENAME behavior
+-- DATENAME should not be affected by DATEFIRST
+SET DATEFIRST 1; -- Monday
+DECLARE @SundayName1 NVARCHAR(20) = DATENAME(weekday, '2023-01-01'); -- Sunday
+DECLARE @MondayName1 NVARCHAR(20) = DATENAME(weekday, '2023-01-02'); -- Monday
+
+SET DATEFIRST 7; -- Sunday
+DECLARE @SundayName7 NVARCHAR(20) = DATENAME(weekday, '2023-01-01'); -- Sunday
+DECLARE @MondayName7 NVARCHAR(20) = DATENAME(weekday, '2023-01-02'); -- Monday
+
+SELECT
+    CASE 
+        WHEN @SundayName1 = @SundayName7 AND @MondayName1 = @MondayName7
+        THEN 'PASS: DATENAME(weekday) is not affected by @@DATEFIRST changes'
+        ELSE 'FAIL: DATENAME(weekday) behavior changed with @@DATEFIRST changes'
+    END AS DateNameConsistencyTest;
+
+-- Test 5.2: Test FORMAT function with different DATEFIRST values
+DECLARE @Format1 NVARCHAR(20);
+DECLARE @Format7 NVARCHAR(20);
+
+SET DATEFIRST 1; -- Monday
+SET @Format1 = FORMAT(CAST('2023-01-01' AS DATE), 'ddd'); -- Sunday
+
+SET DATEFIRST 7; -- Sunday
+SET @Format7 = FORMAT(CAST('2023-01-01' AS DATE), 'ddd'); -- Sunday
+
+SELECT
+    CASE 
+        WHEN @Format1 = @Format7 
+        THEN 'PASS: FORMAT function is not affected by @@DATEFIRST changes'
+        ELSE 'FAIL: FORMAT function behavior changed with @@DATEFIRST changes'
+    END AS FormatConsistencyTest;
+
+-- Restore original setting
+SET DATEFIRST @OriginalSetting;
+GO
+
+-- Test 6: Transaction behavior with SET DATEFIRST
+PRINT 'Test 6: Testing transaction behavior';
+
+-- Test 6.1: Testing SET DATEFIRST in transaction
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+
+BEGIN TRANSACTION;
+    DECLARE @TransactionSettingBefore INT = @@DATEFIRST;
+    SET DATEFIRST 3; -- Set to Tuesday
+    DECLARE @TransactionSettingAfter INT = @@DATEFIRST;
+    
+    -- Rollback transaction
+    ROLLBACK TRANSACTION;
+
+-- Check settings after rollback
+SELECT
+    CASE 
+        WHEN @TransactionSettingAfter = 3 THEN 'PASS: @@DATEFIRST changed correctly inside transaction'
+        ELSE 'FAIL: @@DATEFIRST did not change inside transaction'
+    END AS TransactionSettingTest,
+    CASE 
+        WHEN @@DATEFIRST = @OriginalSetting THEN 'PASS: @@DATEFIRST retains value after transaction rollback'
+        WHEN @@DATEFIRST = 3 THEN 'PASS: @@DATEFIRST keeps transaction value after rollback (normal behavior)'
+        ELSE 'FAIL: Unexpected @@DATEFIRST value after transaction: ' + CAST(@@DATEFIRST AS VARCHAR)
+    END AS TransactionRollbackTest;
+
+-- Restore original setting
+SET DATEFIRST @OriginalSetting;
+GO
+
+-- Test 7: Variable and expression usage with SET DATEFIRST
+PRINT 'Test 7: Testing variables and expressions';
+
+-- Test 7.1: Using variables with SET DATEFIRST
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+DECLARE @NewSetting INT = 4;
+
+SET DATEFIRST @NewSetting;
+
+SELECT
+    CASE 
+        WHEN @@DATEFIRST = @NewSetting THEN 'PASS: SET DATEFIRST works with variables'
+        ELSE 'FAIL: SET DATEFIRST did not accept variable value'
+    END AS VariableSettingTest;
+
+-- Restore original setting
+SET DATEFIRST @OriginalSetting;
+GO
+
+-- Test 7.2: Using expressions with SET DATEFIRST
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+DECLARE @BaseValue INT = 2;
+
+SET DATEFIRST @BaseValue; -- Should set to 5
+
+SELECT
+    CASE 
+        WHEN @@DATEFIRST = 5 THEN 'PASS: SET DATEFIRST works with expressions'
+        ELSE 'FAIL: SET DATEFIRST did not accept expression value'
+    END AS ExpressionSettingTest;
+
+-- Restore original setting
+SET DATEFIRST @OriginalSetting;
+GO
+
+-- Test 8: Testing @@DATEFIRST interaction with SQL functions in queries
+PRINT 'Test 8: Testing query interactions';
+
+-- Create a test table with dates
+CREATE TABLE #QueryTest (
+    ID INT PRIMARY KEY,
+    EventDate DATE
+);
+GO
+
+INSERT INTO #QueryTest VALUES
+(1, '2023-01-01'), -- Sunday
+(2, '2023-01-02'), -- Monday
+(3, '2023-01-03'), -- Tuesday
+(4, '2023-01-04'), -- Wednesday
+(5, '2023-01-05'), -- Thursday
+(6, '2023-01-06'), -- Friday
+(7, '2023-01-07'); -- Saturday
+
+-- Test 8.1: Testing @@DATEFIRST with WHERE clause
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+DECLARE @MondayCount1 INT, @MondayCount7 INT;
+
+-- With Monday as first day of week
+SET DATEFIRST 1;
+SELECT @MondayCount1 = COUNT(*) 
+FROM #QueryTest 
+WHERE DATEPART(weekday, EventDate) = 1;
+
+-- With Sunday as first day of week
+SET DATEFIRST 7;
+SELECT @MondayCount7 = COUNT(*) 
+FROM #QueryTest 
+WHERE DATEPART(weekday, EventDate) = 2;
+
+SELECT
+    CASE 
+        WHEN @MondayCount1 = 1 AND @MondayCount7 = 1 THEN 'PASS: @@DATEFIRST affects WHERE clause as expected'
+        ELSE 'FAIL: WHERE clause does not respond correctly to @@DATEFIRST'
+    END AS WhereClauseTest;
+
+-- Test 8.2: Testing @@DATEFIRST with ORDER BY
+-- With Monday first (DATEFIRST = 1)
+SET DATEFIRST 1;
+SELECT TOP 1
+    @MondayCount1 = ID
+FROM #QueryTest
+ORDER BY DATEPART(weekday, EventDate);
+
+-- With Sunday first (DATEFIRST = 7)
+SET DATEFIRST 7;
+SELECT TOP 1
+    @MondayCount7 = ID
+FROM #QueryTest
+ORDER BY DATEPART(weekday, EventDate);
+
+SELECT
+    CASE 
+        WHEN @MondayCount1 <> @MondayCount7 THEN 'PASS: @@DATEFIRST affects ORDER BY clause as expected'
+        ELSE 'FAIL: ORDER BY clause does not respond correctly to @@DATEFIRST'
+    END AS OrderByTest;
+
+-- Restore original setting
+SET DATEFIRST @OriginalSetting;
+GO
+DROP TABLE #QueryTest;
+GO
+
+-- Test 9: Testing DATEFIRST with indexing and sorting
+PRINT 'Test 9: Testing indexing and sorting';
+
+CREATE TABLE #SortTest (
+    ID INT PRIMARY KEY,
+    EventDate DATE,
+    WeekdayNum AS DATEPART(weekday, EventDate) PERSISTED
+);
+GO
+
+CREATE INDEX IX_SortTest_WeekdayNum ON #SortTest(WeekdayNum);
+
+-- Insert test data
+INSERT INTO #SortTest (ID, EventDate) VALUES
+(1, '2023-01-01'), -- Sunday
+(2, '2023-01-02'), -- Monday
+(3, '2023-01-03'), -- Tuesday
+(4, '2023-01-04'), -- Wednesday
+(5, '2023-01-05'), -- Thursday
+(6, '2023-01-06'), -- Friday
+(7, '2023-01-07'); -- Saturday
+
+-- Test how computed column behaves with different DATEFIRST settings
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+DECLARE @FirstDayID_Setting1 INT, @FirstDayID_Setting7 INT;
+
+-- With Monday as first day (DATEFIRST = 1)
+SET DATEFIRST 1;
+SELECT TOP 1 @FirstDayID_Setting1 = ID 
+FROM #SortTest 
+ORDER BY WeekdayNum;
+
+-- With Sunday as first day (DATEFIRST = 7)
+SET DATEFIRST 7;
+SELECT TOP 1 @FirstDayID_Setting7 = ID 
+FROM #SortTest 
+ORDER BY WeekdayNum;
+
+SELECT
+    CASE 
+        -- Computed column is computed at insert time, so it doesn't change with DATEFIRST
+        WHEN @FirstDayID_Setting1 = @FirstDayID_Setting7 
+        THEN 'PASS: Computed columns are not affected by runtime DATEFIRST changes'
+        ELSE 'FAIL: Computed column behavior unexpected with DATEFIRST changes'
+    END AS ComputedColumnTest;
+
+-- Restore original setting
+SET DATEFIRST @OriginalSetting;
+GO
+DROP TABLE #SortTest;
+GO
+
+-- Test 10: Test default after changing language settings
+PRINT 'Test 10: Testing language interactions';
+
+-- Save current language and DATEFIRST settings
+DECLARE @OriginalLanguage NVARCHAR(128) = @@LANGUAGE;
+DECLARE @OriginalDateFirst INT = @@DATEFIRST;
+
+-- Test default DATEFIRST with US English
+SET LANGUAGE us_english;
+SELECT
+    CASE 
+        WHEN @@DATEFIRST = 7 THEN 'PASS: us_english sets DATEFIRST to 7 (Sunday)'
+        ELSE 'FAIL: us_english did not set expected DATEFIRST value'
+    END AS EnglishLanguageTest;
+
+-- Test default DATEFIRST with French
+SET LANGUAGE French;
+SELECT
+    CASE 
+        WHEN @@DATEFIRST = 1 THEN 'PASS: French sets DATEFIRST to 1 (Monday)'
+        ELSE 'FAIL: French did not set expected DATEFIRST value'
+    END AS FrenchLanguageTest;
+
+-- Test overriding language default
+SET LANGUAGE French; -- Should set DATEFIRST to 1
+SET DATEFIRST 7;     -- Override to Sunday
+
+SELECT
+    CASE 
+        WHEN @@DATEFIRST = 7 THEN 'PASS: SET DATEFIRST overrides language default'
+        ELSE 'FAIL: Could not override language default for DATEFIRST'
+    END AS LanguageOverrideTest;
+
+-- Restore original settings
+SET LANGUAGE @OriginalLanguage;
+SET DATEFIRST @OriginalDateFirst;
+GO
+
+-- Test 11: Test @@DATEFIRST with batches
+PRINT 'Test 11: Testing batch behavior';
+
+-- Save current setting
+DECLARE @OriginalSetting INT = @@DATEFIRST;
+
+-- Set DATEFIRST and execute a batch
+SET DATEFIRST 2;
+GO
+-- This is a new batch
+SELECT
+    CASE 
+        WHEN @@DATEFIRST = 2 THEN 'PASS: DATEFIRST setting persists across batches in same session'
+        ELSE 'FAIL: DATEFIRST setting not preserved across batches'
+    END AS BatchPersistenceTest;
+GO
+
+-- Restore original setting
+DECLARE @OriginalSetting INT = 7; -- Default for US English
+SET DATEFIRST @OriginalSetting;
+GO

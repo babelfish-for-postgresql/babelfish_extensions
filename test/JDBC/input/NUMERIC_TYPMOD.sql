@@ -1059,9 +1059,6 @@ SELECT CASE
 END AS result;
 GO
 
--- TODO FIX: While calculating for money and smallmoney
--- babelfish is calculating it same as numeric logic
--- which is different from TSQL.
 -- Money datatypes testing
 SELECT CASE 
     WHEN 1 = 1 THEN 

@@ -98,6 +98,87 @@ int#!#varchar#!#char#!#int#!#nvarchar
 ~~END~~
 
 
+SELECT unpvt.* FROM customer_turnover 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+GO
+~~START~~
+int#!#varchar#!#char#!#int#!#nvarchar
+3#!#Cust C#!#R#!#0#!#q2
+3#!#Cust C#!#R#!#400#!#q3
+3#!#Cust C#!#R#!#150#!#q4
+1#!#Cust A#!#R#!#100#!#q1
+1#!#Cust A#!#R#!#200#!#q2
+1#!#Cust A#!#R#!#100#!#q3
+1#!#Cust A#!#R#!#400#!#q4
+2#!#Cust B#!#P#!#150#!#q1
+2#!#Cust B#!#P#!#250#!#q2
+2#!#Cust B#!#P#!#200#!#q3
+~~END~~
+
+
+SELECT unpvt.* 
+FROM (customer_turnover c JOIN product_sales p ON p.product_id = c.customer_id) 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+GO
+~~START~~
+int#!#varchar#!#char#!#int#!#varchar#!#int#!#numeric#!#int#!#numeric#!#int#!#nvarchar
+3#!#Cust C#!#R#!#3#!#XYZ#!#0#!#0.00#!#<NULL>#!#<NULL>#!#0#!#q2
+3#!#Cust C#!#R#!#3#!#XYZ#!#0#!#0.00#!#<NULL>#!#<NULL>#!#400#!#q3
+3#!#Cust C#!#R#!#3#!#XYZ#!#0#!#0.00#!#<NULL>#!#<NULL>#!#150#!#q4
+1#!#Cust A#!#R#!#1#!#ABC#!#100#!#1000.00#!#150#!#1500.00#!#100#!#q1
+1#!#Cust A#!#R#!#1#!#ABC#!#100#!#1000.00#!#150#!#1500.00#!#200#!#q2
+1#!#Cust A#!#R#!#1#!#ABC#!#100#!#1000.00#!#150#!#1500.00#!#100#!#q3
+1#!#Cust A#!#R#!#1#!#ABC#!#100#!#1000.00#!#150#!#1500.00#!#400#!#q4
+2#!#Cust B#!#P#!#2#!#PQR#!#80#!#1600.00#!#90#!#1800.00#!#150#!#q1
+2#!#Cust B#!#P#!#2#!#PQR#!#80#!#1600.00#!#90#!#1800.00#!#250#!#q2
+2#!#Cust B#!#P#!#2#!#PQR#!#80#!#1600.00#!#90#!#1800.00#!#200#!#q3
+~~END~~
+
+
+SELECT 
+    p.*, 
+    unpvt.* 
+FROM customer_turnover 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+JOIN product_sales p ON p.product_id = unpvt.customer_id;
+GO
+~~START~~
+int#!#varchar#!#int#!#numeric#!#int#!#numeric#!#int#!#varchar#!#char#!#int#!#nvarchar
+3#!#XYZ#!#0#!#0.00#!#<NULL>#!#<NULL>#!#3#!#Cust C#!#R#!#0#!#q2
+3#!#XYZ#!#0#!#0.00#!#<NULL>#!#<NULL>#!#3#!#Cust C#!#R#!#400#!#q3
+3#!#XYZ#!#0#!#0.00#!#<NULL>#!#<NULL>#!#3#!#Cust C#!#R#!#150#!#q4
+1#!#ABC#!#100#!#1000.00#!#150#!#1500.00#!#1#!#Cust A#!#R#!#100#!#q1
+1#!#ABC#!#100#!#1000.00#!#150#!#1500.00#!#1#!#Cust A#!#R#!#200#!#q2
+1#!#ABC#!#100#!#1000.00#!#150#!#1500.00#!#1#!#Cust A#!#R#!#100#!#q3
+1#!#ABC#!#100#!#1000.00#!#150#!#1500.00#!#1#!#Cust A#!#R#!#400#!#q4
+2#!#PQR#!#80#!#1600.00#!#90#!#1800.00#!#2#!#Cust B#!#P#!#150#!#q1
+2#!#PQR#!#80#!#1600.00#!#90#!#1800.00#!#2#!#Cust B#!#P#!#250#!#q2
+2#!#PQR#!#80#!#1600.00#!#90#!#1800.00#!#2#!#Cust B#!#P#!#200#!#q3
+~~END~~
+
+
+SELECT 
+    p.*, 
+    u1.*, 
+    u2.* 
+FROM customer_turnover t1 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS u1 
+JOIN product_sales p 
+    ON p.product_id = u1.customer_id 
+    AND p.revenue_q1 > 1000.00 
+JOIN revenue_data t2 
+UNPIVOT (revenue FOR quarter2 IN (q1_sales, q2_sales)) AS u2 
+    ON u1.customer_id = u2.id
+    AND u1.quarter = SUBSTRING(u2.quarter2, 1, 2)
+    AND turnover > 100;
+GO
+~~START~~
+int#!#varchar#!#int#!#numeric#!#int#!#numeric#!#int#!#varchar#!#char#!#int#!#nvarchar#!#int#!#int#!#nvarchar
+2#!#PQR#!#80#!#1600.00#!#90#!#1800.00#!#2#!#Cust B#!#P#!#150#!#q1#!#2#!#200#!#q1_sales
+2#!#PQR#!#80#!#1600.00#!#90#!#1800.00#!#2#!#Cust B#!#P#!#250#!#q2#!#2#!#250#!#q2_sales
+~~END~~
+
+
     -- Mixed join and unpivoted columns
 SELECT c.customer_name, u.turnover, u.quarter 
 FROM customer_info c 
@@ -989,6 +1070,23 @@ int#!#varchar#!#numeric#!#nvarchar#!#varchar
 ~~END~~
 
 
+SELECT * FROM sales.quarterly_view 
+UNPIVOT (turnover FOR quarter IN (q1_sales, q2, q3, q4)) AS unpvt;
+GO
+~~START~~
+int#!#int#!#nvarchar
+3#!#0#!#q2
+3#!#400#!#q3
+3#!#150#!#q4
+1#!#100#!#q1_sales
+1#!#200#!#q2
+1#!#100#!#q3
+1#!#400#!#q4
+2#!#150#!#q1_sales
+2#!#250#!#q2
+2#!#200#!#q3
+~~END~~
+
 
 -- SUBQURIES
     -- 1. IN/EXISTS
@@ -1068,16 +1166,16 @@ AS
 RETURN ( SELECT product_id, q1_sales, q2_sales  FROM sales_data );
 GO
 
-SELECT product_id, quarter, sales FROM dbo.GetSalesData()
+SELECT * FROM dbo.GetSalesData()
 UNPIVOT ( sales FOR quarter IN (q1_sales, q2_sales)) AS unpvt;
 GO
 ~~START~~
-int#!#nvarchar#!#int
-1#!#q1_sales#!#100
-1#!#q2_sales#!#150
-2#!#q1_sales#!#200
-2#!#q2_sales#!#250
-3#!#q2_sales#!#350
+int#!#int#!#nvarchar
+1#!#100#!#q1_sales
+1#!#150#!#q2_sales
+2#!#200#!#q1_sales
+2#!#250#!#q2_sales
+3#!#350#!#q2_sales
 ~~END~~
 
 
@@ -1688,24 +1786,6 @@ GO
 
 -- KNOWN ISSUES
     -- BABEL-5677 - Support more variations of UNPIVOT Syntax
-        -- Extra columns in result set when `SELECT alias.*`
-SELECT unpvt.* FROM customer_turnover c 
-UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
-GO
-~~START~~
-int#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#nvarchar
-3#!#Cust C#!#R#!#<NULL>#!#0#!#400#!#150#!#0#!#q2
-3#!#Cust C#!#R#!#<NULL>#!#0#!#400#!#150#!#400#!#q3
-3#!#Cust C#!#R#!#<NULL>#!#0#!#400#!#150#!#150#!#q4
-1#!#Cust A#!#R#!#100#!#200#!#100#!#400#!#100#!#q1
-1#!#Cust A#!#R#!#100#!#200#!#100#!#400#!#200#!#q2
-1#!#Cust A#!#R#!#100#!#200#!#100#!#400#!#100#!#q3
-1#!#Cust A#!#R#!#100#!#200#!#100#!#400#!#400#!#q4
-2#!#Cust B#!#P#!#150#!#250#!#200#!#<NULL>#!#150#!#q1
-2#!#Cust B#!#P#!#150#!#250#!#200#!#<NULL>#!#250#!#q2
-2#!#Cust B#!#P#!#150#!#250#!#200#!#<NULL>#!#200#!#q3
-~~END~~
-
         -- Uppercase column names in unpivot source list
 SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
 FROM [Global_データ_Sales]

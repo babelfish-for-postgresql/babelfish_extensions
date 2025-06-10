@@ -571,6 +571,119 @@ CREATE OR REPLACE FUNCTION sys.GeographyAsTextvar_helper(sys.GEOGRAPHY)
 	AS 'babelfishpg_common', 'geometry_astext'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+-- HasZ
+-- Checks if a geometry instance has Z coordinates
+-- Returns 1 if the geometry has Z values, 0 otherwise
+CREATE OR REPLACE FUNCTION sys.HasZ(geom sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	DECLARE
+		Zmflag smallint;
+	BEGIN
+		Zmflag = (SELECT sys.ST_Zmflag(geom));
+		-- If Zmflag = 1, then the geometry has M values
+		-- If Zmflag = 2, then the geometry has Z values
+		-- If Zmflag = 3, then the geometry has Z and M values
+		IF Zmflag = 2 OR Zmflag = 3 THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- HasZ
+-- Checks if a geography instance has Z coordinates
+-- Returns 1 if the geography has Z values, 0 otherwise
+CREATE OR REPLACE FUNCTION sys.HasZ(geog sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS $$
+	DECLARE
+		Zmflag smallint;
+	BEGIN
+		Zmflag = (SELECT sys.ST_Zmflag(geog));
+		-- If Zmflag = 1, then the geography has M values
+		-- If Zmflag = 2, then the geography has Z values
+		-- If Zmflag = 3, then the geography has Z and M values
+		IF Zmflag = 2 OR Zmflag = 3 THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- HasM
+-- Checks if a geometry instance has M coordinates (measure values)
+-- Returns 1 if the geometry has M values, 0 otherwise
+CREATE OR REPLACE FUNCTION sys.HasM(geom sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	DECLARE
+		Zmflag smallint;
+	BEGIN
+		Zmflag = (SELECT sys.ST_Zmflag(geom));
+		-- If Zmflag = 1, then the geometry has M values
+		-- If Zmflag = 2, then the geometry has Z values
+		-- If Zmflag = 3, then the geometry has Z and M values
+		IF Zmflag = 1 OR Zmflag = 3 THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- HasM
+-- Checks if a geography instance has M coordinates (measure values)
+-- Returns 1 if the geography has M values, 0 otherwise
+CREATE OR REPLACE FUNCTION sys.HasM(geog sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS $$
+	DECLARE
+		Zmflag smallint;
+	BEGIN
+		Zmflag = (SELECT sys.ST_Zmflag(geog));
+		-- If Zmflag = 1, then the geography has M values
+		-- If Zmflag = 2, then the geography has Z values
+		-- If Zmflag = 3, then the geography has Z and M values
+		IF Zmflag = 1 OR Zmflag = 3 THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Z
+-- Returns the Z coordinate value for a point geometry instance
+CREATE OR REPLACE FUNCTION sys.Z(sys.GEOMETRY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_z_point'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Z
+-- Returns the Z coordinate value for a point geography instance
+CREATE OR REPLACE FUNCTION sys.Z(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_z_point'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+-- M
+-- Returns the M coordinate value (measure) for a point geometry instance 
+CREATE OR REPLACE FUNCTION sys.M(sys.GEOMETRY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_m_point'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+  
+-- M
+-- Returns the M coordinate value (measure) for a point geography instance
+CREATE OR REPLACE FUNCTION sys.M(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_m_point'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
