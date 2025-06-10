@@ -289,6 +289,7 @@ DeclareVariables(TDSRequestSP req, FunctionCallInfo *fcinfo, unsigned long optio
 		tempFuncInfo = TdsLookupTypeFunctionsByTdsId(token->type, token->maxLen);
 		isNull = token->isNull;
 
+		/* For NULL TVP we will create empty table. */
 		if ((!isNull || token->type == TDS_TYPE_TABLE) && fcinfo)
 			pval = tempFuncInfo->recvFuncPtr(req->messageData, token);
 		else
@@ -374,6 +375,7 @@ SetVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 			tempFuncInfo = TdsLookupTypeFunctionsByTdsId(token->type, token->maxLen);
 			isNull = token->isNull;
 
+			/* For NULL TVP we will create empty table. */
 			if (!isNull || token->type == TDS_TYPE_TABLE)
 				pval = tempFuncInfo->recvFuncPtr(req->messageData, token);
 			else
@@ -977,6 +979,7 @@ DeclareSPVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 		tempFuncInfo = TdsLookupTypeFunctionsByTdsId(token->type, token->maxLen);
 		isNull = token->isNull;
 
+		/* For NULL TVP we will create empty table. */
 		if (!isNull || token->type == TDS_TYPE_TABLE)
 			pval = tempFuncInfo->recvFuncPtr(req->messageData, token);
 		else
