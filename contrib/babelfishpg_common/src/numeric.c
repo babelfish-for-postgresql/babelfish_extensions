@@ -804,7 +804,7 @@ tsql_round_var(NumericVar *var, int rscale)
 	di = (var->weight + 1) * DEC_DIGITS + rscale;
 
 	/* checking numeric overflow for TSQL */
-	if (rscale < 0)
+	if (rscale < 0 && var->ndigits > 0)
 	{
 		int			integral_digits = di - DEC_DIGITS;
 		int			leading_digits = digits[0];
