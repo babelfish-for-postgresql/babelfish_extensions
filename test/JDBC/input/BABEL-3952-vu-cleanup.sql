@@ -162,3 +162,6 @@ GO
 
 DROP FUNCTION BABEL_3952_vu_prepare_f3
 GO
+
+DROP TABLE dbucket
+GO
