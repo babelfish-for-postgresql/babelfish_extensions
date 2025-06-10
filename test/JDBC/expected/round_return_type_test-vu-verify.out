@@ -448,4 +448,11 @@ go
 ~~ERROR (Message: The function round is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
+select round(0.0, -1)
+go
+~~START~~
+numeric
+0
+~~END~~
+
 

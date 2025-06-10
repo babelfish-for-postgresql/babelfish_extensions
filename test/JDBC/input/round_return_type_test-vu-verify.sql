@@ -214,4 +214,6 @@ DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.
 select round(@inputString, 1)
 go
 
+select round(0.0, -1)
+go
 

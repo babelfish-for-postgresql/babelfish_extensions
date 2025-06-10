@@ -28,6 +28,39 @@ SELECT * FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
 GO
 
+SELECT unpvt.* FROM customer_turnover 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+GO
+
+SELECT unpvt.* 
+FROM (customer_turnover c JOIN product_sales p ON p.product_id = c.customer_id) 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+GO
+
+SELECT 
+    p.*, 
+    unpvt.* 
+FROM customer_turnover 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+JOIN product_sales p ON p.product_id = unpvt.customer_id;
+GO
+
+SELECT 
+    p.*, 
+    u1.*, 
+    u2.* 
+FROM customer_turnover t1 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS u1 
+JOIN product_sales p 
+    ON p.product_id = u1.customer_id 
+    AND p.revenue_q1 > 1000.00 
+JOIN revenue_data t2 
+UNPIVOT (revenue FOR quarter2 IN (q1_sales, q2_sales)) AS u2 
+    ON u1.customer_id = u2.id
+    AND u1.quarter = SUBSTRING(u2.quarter2, 1, 2)
+    AND turnover > 100;
+GO
+
     -- Mixed join and unpivoted columns
 SELECT c.customer_name, u.turnover, u.quarter 
 FROM customer_info c 
@@ -514,6 +547,9 @@ GO
 SELECT * FROM sales.sales_analysis_view;
 GO
 
+SELECT * FROM sales.quarterly_view 
+UNPIVOT (turnover FOR quarter IN (q1_sales, q2, q3, q4)) AS unpvt;
+GO
 
 -- SUBQURIES
     -- 1. IN/EXISTS
@@ -568,7 +604,7 @@ AS
 RETURN ( SELECT product_id, q1_sales, q2_sales  FROM sales_data );
 GO
 
-SELECT product_id, quarter, sales FROM dbo.GetSalesData()
+SELECT * FROM dbo.GetSalesData()
 UNPIVOT ( sales FOR quarter IN (q1_sales, q2_sales)) AS unpvt;
 GO
 
@@ -904,10 +940,6 @@ GO
 
 -- KNOWN ISSUES
     -- BABEL-5677 - Support more variations of UNPIVOT Syntax
-        -- Extra columns in result set when `SELECT alias.*`
-SELECT unpvt.* FROM customer_turnover c 
-UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
-GO
         -- Uppercase column names in unpivot source list
 SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
 FROM [Global_データ_Sales]

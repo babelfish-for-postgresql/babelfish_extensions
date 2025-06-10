@@ -102,6 +102,11 @@ CREATE FUNCTION dbo.babel_cross_db_vu_prepare_f2 (@a int)
     END;
 GO
 
+CREATE FUNCTION dbo.babel_cross_db_vu_prepare_tvf2()
+    RETURNS TABLE AS
+    RETURN select 'IT IS TVF' as col;
+GO
+
 -- tsql user=babel_cross_db_vu_prepare_l1 password=12345678
 USE my_babel_cross_db_vu_prepare_db1;
 GO
@@ -119,8 +124,14 @@ CREATE FUNCTION babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2 (@a in
     END;
 GO
 
+CREATE FUNCTION babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_tvf2()
+    RETURNS TABLE AS
+    RETURN select 'IT IS TVF' as col;
+GO
+
 CREATE VIEW babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 AS
-    SELECT id, babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(id), name
+    SELECT id, babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(id),
+    babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_tvf2(), name
     FROM babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2
     ORDER BY id;
 GO
@@ -144,6 +155,7 @@ GO
 CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1 AS
     SELECT x.id,
         my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(x.id),
+        my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_tvf2(),
         x.name AS t1_name,
         y.name AS t2_name
     FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1 x INNER JOIN
@@ -161,7 +173,8 @@ GO
 
 -- View containing cross-db function on which login babel_cross_db_vu_prepare_l1 does not have privilege
 CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3 AS
-    SELECT my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_f2(id) AS id, name
+    SELECT my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_f2(id) AS id,
+    my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_tvf2(), name
     FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1
     ORDER BY id;
 GO
@@ -196,6 +209,11 @@ CREATE FUNCTION babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_f1 (@a in
     END;
 GO
 
+CREATE FUNCTION babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_tvf1()
+    RETURNS TABLE AS
+    RETURN SELECT my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_tvf2();
+GO
+
 CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1_nested AS
     SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1;
 GO
@@ -213,7 +231,8 @@ CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4_nested AS
 GO
 
 CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v5_nested AS
-    SELECT babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_f1(1) AS id;
+    SELECT babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_f1(1) AS id,
+    babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_tvf1();
 GO
 
 CREATE PROCEDURE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested
