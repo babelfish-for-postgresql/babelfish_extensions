@@ -414,6 +414,11 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		topColTypes = lappend_oid(topColTypes, common_type);
 		topColTypmods = lappend_int(topColTypmods, common_typmod);
 		
+		if (common_type == FLOAT8OID)
+		{
+			topColCollations = lappend_oid(topColCollations, -1);
+			continue;
+		}
 		list_free(col_exprs);
 		col_exprs = NIL;
 
@@ -422,9 +427,18 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 			TargetEntry *tle = (TargetEntry*) lfirst(lc);
 			Node		*expr = (Node*) tle->expr;
 			Expr		*coerced_expr;
-			coerced_expr = (Expr*) coerce_to_target_type(pstate, expr, exprType(expr), 
+			Oid			expressionType = exprType(expr);
+
+			// if (!(common_type == FLOAT8OID &&  expressionType == FLOAT4OID))
+			coerced_expr = (Expr*) coerce_to_target_type(pstate, expr, expressionType,
 									common_type, common_typmod, COERCION_IMPLICIT, 
 									COERCE_IMPLICIT_CAST, -1);
+			// else
+			// 	coerced_expr = coerce_to_common_type(pstate,	/* no UNKNOWNs here */
+			// 							 expr,
+			// 							 common_type,
+			// 							 "UNION/INTERSECT/EXCEPT");//
+
 			if(coerced_expr)	/* Only coerce to target if implicit cast exists*/
 				tle->expr = coerced_expr;
 			col_exprs = lappend(col_exprs, (Node*)tle->expr);
