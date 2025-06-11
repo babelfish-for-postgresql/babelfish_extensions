@@ -68,9 +68,17 @@ drop user if exists sp_helplogins_vu_windows_user;
 drop login [helplogins\win]
 GO
 
+drop login sp_helplogin_loginwithdifferentdefaultdb;
+GO
+
+drop login sp_helplogin_loginownerofdb;
+GO
+
 drop database sp_helplogins_db1;
 GO
 
-
 drop database sp_helplogins_db2;
+GO
+
+drop database sp_helplogins_db3;
 GO

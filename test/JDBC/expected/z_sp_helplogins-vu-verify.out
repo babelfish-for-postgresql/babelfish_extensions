@@ -86,6 +86,14 @@ GO
 use master
 GO
 
+-- change owner of sp_helplogins_db3 to sp_helplogin_loginownerofdb
+use sp_helplogins_db3
+GO
+EXEC sp_changedbowner 'sp_helplogin_loginownerofdb'
+GO
+use master
+GO
+
 -- tsql user=jdbc_user password=12345678
 -- since this is sysadmin, it has all the permissions over all the databases
 -- this login will see every login and user across all databases
@@ -98,6 +106,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#Engli
 helplogins\win#!#master#!#English#!#YES  #!#NO     
 jdbc_user#!#master#!#English#!#YES  #!#NO     
 sp_help@logins$with%sp*chars#!#master#!#English#!#YES  #!#NO     
+sp_helplogin_loginownerofdb#!#master#!#English#!#YES  #!#NO     
+sp_helplogin_loginwithdifferentdefaultdb#!#sp_helplogins_db3#!#English#!#NO   #!#NO     
 sp_helplogins_testlogin#!#master#!#English#!#YES  #!#NO     
 testloginindb1#!#master#!#English#!#YES  #!#NO     
 testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES  #!#NO     
@@ -123,6 +133,8 @@ jdbc_user#!#tempdb#!#dbo#!#User
 sp_help@logins$with%sp*chars#!#master#!#userof@sp$chars*logins#!#User    
 sp_help@logins$with%sp*chars#!#sp_helplogins_db2#!#db_owner#!#MemberOf
 sp_help@logins$with%sp*chars#!#sp_helplogins_db2#!#dbo#!#User    
+sp_helplogin_loginownerofdb#!#sp_helplogins_db3#!#db_owner#!#MemberOf
+sp_helplogin_loginownerofdb#!#sp_helplogins_db3#!#dbo#!#User    
 sp_helplogins_testlogin#!#master#!#db_securityadmin#!#MemberOf
 sp_helplogins_testlogin#!#master#!#userof_sp_helplogins_testlogin#!#User    
 testloginindb1#!#sp_helplogins_db1#!#userof_testloginindb1#!#User    
@@ -160,6 +172,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#Engli
 helplogins\win#!#master#!#English#!#YES  #!#NO     
 jdbc_user#!#master#!#English#!#YES  #!#NO     
 sp_help@logins$with%sp*chars#!#master#!#English#!#YES  #!#NO     
+sp_helplogin_loginownerofdb#!#master#!#English#!#YES  #!#NO     
+sp_helplogin_loginwithdifferentdefaultdb#!#sp_helplogins_db3#!#English#!#NO   #!#NO     
 sp_helplogins_testlogin#!#master#!#English#!#YES  #!#NO     
 testloginindb1#!#master#!#English#!#YES  #!#NO     
 testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES  #!#NO     
@@ -198,6 +212,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#Engli
 helplogins\win#!#master#!#English#!#YES  #!#NO     
 jdbc_user#!#master#!#English#!#YES  #!#NO     
 sp_help@logins$with%sp*chars#!#master#!#English#!#YES  #!#NO     
+sp_helplogin_loginownerofdb#!#master#!#English#!#YES  #!#NO     
+sp_helplogin_loginwithdifferentdefaultdb#!#sp_helplogins_db3#!#English#!#NO   #!#NO     
 sp_helplogins_testlogin#!#master#!#English#!#YES  #!#NO     
 testloginindb1#!#master#!#English#!#YES  #!#NO     
 testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES  #!#NO     
@@ -240,6 +256,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#Engli
 helplogins\win#!#master#!#English#!#YES  #!#NO     
 jdbc_user#!#master#!#English#!#YES  #!#NO     
 sp_help@logins$with%sp*chars#!#master#!#English#!#YES  #!#NO     
+sp_helplogin_loginownerofdb#!#master#!#English#!#YES  #!#NO     
+sp_helplogin_loginwithdifferentdefaultdb#!#sp_helplogins_db3#!#English#!#NO   #!#NO     
 sp_helplogins_testlogin#!#master#!#English#!#YES  #!#NO     
 testloginindb1#!#master#!#English#!#YES  #!#NO     
 testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES  #!#NO     
@@ -265,6 +283,8 @@ jdbc_user#!#tempdb#!#dbo#!#User
 sp_help@logins$with%sp*chars#!#master#!#userof@sp$chars*logins#!#User    
 sp_help@logins$with%sp*chars#!#sp_helplogins_db2#!#db_owner#!#MemberOf
 sp_help@logins$with%sp*chars#!#sp_helplogins_db2#!#dbo#!#User    
+sp_helplogin_loginownerofdb#!#sp_helplogins_db3#!#db_owner#!#MemberOf
+sp_helplogin_loginownerofdb#!#sp_helplogins_db3#!#dbo#!#User    
 sp_helplogins_testlogin#!#master#!#db_securityadmin#!#MemberOf
 sp_helplogins_testlogin#!#master#!#userof_sp_helplogins_testlogin#!#User    
 testloginindb1#!#sp_helplogins_db1#!#userof_testloginindb1#!#User    
@@ -293,6 +313,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#Engli
 helplogins\win#!#master#!#English#!#YES  #!#NO     
 jdbc_user#!#master#!#English#!#YES  #!#NO     
 sp_help@logins$with%sp*chars#!#master#!#English#!#YES  #!#NO     
+sp_helplogin_loginownerofdb#!#master#!#English#!#YES  #!#NO     
+sp_helplogin_loginwithdifferentdefaultdb#!#sp_helplogins_db3#!#English#!#NO   #!#NO     
 sp_helplogins_testlogin#!#master#!#English#!#YES  #!#NO     
 testloginindb1#!#master#!#English#!#YES  #!#NO     
 testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES  #!#NO     

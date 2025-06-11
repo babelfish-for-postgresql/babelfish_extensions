@@ -86,6 +86,14 @@ GO
 use master
 GO
 
+-- change owner of sp_helplogins_db3 to sp_helplogin_loginownerofdb
+use sp_helplogins_db3
+GO
+EXEC sp_changedbowner 'sp_helplogin_loginownerofdb'
+GO
+use master
+GO
+
 -- tsql user=jdbc_user password=12345678
 -- since this is sysadmin, it has all the permissions over all the databases
 -- this login will see every login and user across all databases

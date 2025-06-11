@@ -231,7 +231,7 @@ BEGIN
         FROM pg_catalog.pg_roles AS Base 
         INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
         LEFT JOIN sys.babelfish_authid_user_ext AS Ext ON Ext.login_name = Base.rolname AND Ext.type != 'R'
-        LEFT JOIN sys.babelfish_sysdatabases AS Db ON Db.name COLLATE database_default = LExt.default_database_name
+        LEFT JOIN sys.babelfish_sysdatabases AS Db ON Db.owner COLLATE database_default = LExt.orig_loginname
         WHERE LExt.type NOT IN ('R', 'Z')
 
         -- first selector in the union is to get all the mapped users
@@ -299,7 +299,6 @@ BEGIN
     END
     ELSE
     BEGIN
-
         SET @input_loginname = sys.RTRIM(@loginname);
 
         SELECT DISTINCT
@@ -316,7 +315,7 @@ BEGIN
         FROM pg_catalog.pg_roles AS Base 
         INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
         LEFT JOIN sys.babelfish_authid_user_ext AS Ext ON Ext.login_name = Base.rolname AND Ext.type != 'R'
-        LEFT JOIN sys.babelfish_sysdatabases AS Db ON Db.name COLLATE database_default = LExt.default_database_name
+        LEFT JOIN sys.babelfish_sysdatabases AS Db ON Db.owner COLLATE database_default = LExt.orig_loginname
         WHERE LExt.type NOT IN ('R', 'Z') AND LExt.orig_loginname = @input_loginname
         
         -- first selector in the union is to get all the mapped users

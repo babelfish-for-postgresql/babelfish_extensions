@@ -5,6 +5,9 @@ GO
 create database sp_helplogins_db2
 GO
 
+create database sp_helplogins_db3
+GO
+
 -- create a login with user in master with securityadmin server role
 -- create login with user in master with db_securityadmin role
 create login sp_helplogins_testlogin with password = '12345678'
@@ -52,4 +55,12 @@ GO
 -- create a windows login and user
 create login [helplogins\win] from windows;
 create user sp_helplogins_vu_windows_user for login [helplogins\win]
+GO
+
+-- creating another login which does not have a user but is a owner of a database
+create login sp_helplogin_loginownerofdb with password = '12345678';
+GO
+
+-- creating a login which does not have a user but has a different default database
+create login sp_helplogin_loginwithdifferentdefaultdb with password = '12345678', default_database = sp_helplogins_db3;
 GO
