@@ -26,7 +26,7 @@
 #define DATABASE_DEFAULT "database_default"
 #define CATALOG_DEFAULT "catalog_default"
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int	server_collation_collidx = NOT_FOUND;
@@ -35,6 +35,8 @@ static bool db_collation_is_CI = true;
 
 static Oid database_collation_oid = InvalidOid;
 static int database_collation_collidx = NOT_FOUND;
+
+static bool is_logical_db_name_set = false;
 
 /*
  * Below two vars are defined to store the value of the babelfishpg_tsql.server_collation_name
@@ -1249,6 +1251,14 @@ BABELFISH_CLUSTER_COLLATION_OID()
 													 * database or server_collation_oid */
 		return db_coll;
 	}
+	
+	/* 
+	 * If logical db collation is required from PG, we can return the server level collation
+	 * this is decided by is_logical_db_name_set, which is set if psql_logical_babelfish_db_name is set
+	 */
+	if (is_logical_db_name_set)
+		return get_database_or_server_collation_oid_internal(false);
+
 	return DEFAULT_COLLATION_OID;
 }
 
@@ -1647,6 +1657,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.translate_bbf_collation_to_tsql_collation = &translate_bbf_collation_to_tsql_collation;
 		collation_callbacks_var.translate_tsql_collation_to_bbf_collation = &translate_tsql_collation_to_bbf_collation;
 		collation_callbacks_var.set_db_collation = &set_db_collation;
+		collation_callbacks_var.set_logical_db_name_cache = &set_logical_db_name_cache;
 	}
 	return &collation_callbacks_var;
 }
@@ -1749,4 +1760,17 @@ set_db_collation(Oid db_coll)
 	database_collation_oid = db_coll;
 	database_collation_collidx = find_any_collation((lookup_collation_table(database_collation_oid).collname), false);
 	db_collation_is_CI = collation_is_CI(database_collation_oid);
+}
+
+/* 
+ * Set the cache for logical database name
+ * this is decided by "psql_logical_babelfish_db_name" GUC
+ */
+void
+set_logical_db_name_cache(const char* dbname)
+{
+	if (dbname)
+		is_logical_db_name_set = true;
+	else
+		is_logical_db_name_set = false;
 }

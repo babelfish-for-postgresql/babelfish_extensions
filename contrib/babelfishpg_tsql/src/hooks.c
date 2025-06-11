@@ -6075,8 +6075,15 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 	 * Special handling for PG datatypes such as TEXT because Babelfish does not define sys.TEXT.
 	 * This is required as Babelfish currently does not handle collation of String Const node correctly.
 	 * TODO: Fix the handling of the collation for String Const node.
+	 * 
+	 * When pltsql_psql_logical_babelfish_db_name is set, 
+	 * return CLUSTER_COLLATION_OID() -- this API will handle whether to return babelfish server/database level
+	 * collation or DEFAULT_COLLTAION_OID based on dialect for TEXT (e.g: string literals) as well
+	 * Otherwise, during collation resolution in merge_collation_state, CLUSTER_COLLATION_OID() will return
+	 * babelfish server/db level collation as pltsql_psql_logical_babelfish_db_name is set but current collation would
+	 * be DEFAULT_COLLATION_OID which would throw collation conflict
 	 */
-	if (handle_pg_type && oid == DEFAULT_COLLATION_OID)
+	if ((handle_pg_type || pltsql_psql_logical_babelfish_db_name) && oid == DEFAULT_COLLATION_OID)
 	{
 		oid = CLUSTER_COLLATION_OID();
 	}
