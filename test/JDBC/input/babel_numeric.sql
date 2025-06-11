@@ -254,3 +254,437 @@ drop type decimal_7_2;
 drop type numeric_18_2;
 drop type numeric_7_2;
 go
+
+CREATE TABLE agg_test_table (a NUMERIC(38, 10), b NUMERIC(38, 37));
+GO
+
+INSERT INTO agg_test_table VALUES (1.1234567890, 1.1234567890);
+GO
+
+INSERT INTO agg_test_table VALUES (8.8765434567, 8.1234634);
+GO
+
+INSERT INTO agg_test_table VALUES (9.5678, 1);
+GO
+
+SELECT COUNT_BIG(*) * 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT_BIG(*) + 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT_BIG(*) FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(*) * 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(*) + 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(*) FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(*)
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(*)
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(*)
+    ELSE 2.00
+END * 1.00
+FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(*)
+    ELSE 2.00
+END * 1.00
+FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(*) * 1.00
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(*) * 1.00
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT COUNT(*) * 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT(*) / 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(*) * 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(*) / 1 FROM agg_test_table
+GO
+
+SELECT COUNT(*) FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(*) FROM agg_test_table
+GO
+
+-- FIX ME: Will be fixed by BABEL-5880.
+SELECT COUNT_BIG(NULL) * 1.00 FROM agg_test_table 
+UNION 
+SELECT 2.00 
+GO
+
+SELECT COUNT_BIG(NULL) + 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT_BIG(NULL) FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(NULL) * 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(NULL) + 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(NULL) FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(NULL)
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(NULL)
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(NULL)
+    ELSE 2.00
+END * 1.00
+FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(NULL)
+    ELSE 2.00
+END * 1.00
+FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(NULL) * 1.00
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(NULL) * 1.00
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT COUNT(NULL) * 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT(NULL) / 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(NULL) * 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(NULL) / 1 FROM agg_test_table
+GO
+
+SELECT COUNT(NULL) FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(NULL) FROM agg_test_table
+GO
+
+DROP TABLE agg_test_table;
+GO
+
+CREATE TABLE agg_test_table (a MONEY, b SMALLMONEY);
+GO
+
+INSERT INTO agg_test_table VALUES (1.1234567890, 1.1234567890);
+GO
+
+INSERT INTO agg_test_table VALUES (8.8765434567, 8.1234634);
+GO
+
+INSERT INTO agg_test_table VALUES (9.5678, 1);
+GO
+
+SELECT COUNT_BIG(*) * 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT_BIG(*) + 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT_BIG(*) FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(*) * 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(*) + 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(*) FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(*)
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(*)
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(*)
+    ELSE 2.00
+END * 1.00
+FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(*)
+    ELSE 2.00
+END * 1.00
+FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(*) * 1.00
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(*) * 1.00
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT COUNT(*) * 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT(*) / 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(*) * 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(*) / 1 FROM agg_test_table
+GO
+
+SELECT COUNT(*) FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(*) FROM agg_test_table
+GO
+
+DROP TABLE agg_test_table;
+GO
+
+create type numeric_18_2 from numeric(18,2);
+go
+
+create type numeric_7_2 from numeric(7,2);
+go
+
+CREATE TABLE agg_test_table (a numeric_18_2, b numeric_7_2);
+GO
+
+INSERT INTO agg_test_table VALUES (1.1234567890, 1.1234567890);
+GO
+
+INSERT INTO agg_test_table VALUES (8.8765434567, 8.1234634);
+GO
+
+INSERT INTO agg_test_table VALUES (9.5678, 1);
+GO
+
+SELECT COUNT_BIG(*) * 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT_BIG(*) + 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT_BIG(*) FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(*) * 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(*) + 1.00 FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT COUNT(*) FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(*)
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(*)
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(*)
+    ELSE 2.00
+END * 1.00
+FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(*)
+    ELSE 2.00
+END * 1.00
+FROM agg_test_table
+UNION
+SELECT 2.00
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT(*) * 1.00
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN COUNT_BIG(*) * 1.00
+    ELSE 2.00
+END
+FROM agg_test_table
+GO
+
+SELECT COUNT(*) * 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT(*) / 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(*) * 1.00 FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(*) / 1 FROM agg_test_table
+GO
+
+SELECT COUNT(*) FROM agg_test_table
+GO
+
+SELECT COUNT_BIG(*) FROM agg_test_table
+GO
+
+DROP TABLE agg_test_table;
+GO
+
+DROP TYPE numeric_18_2;
+GO
+
+drop TYPE numeric_7_2;
+GO
