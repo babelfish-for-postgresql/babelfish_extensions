@@ -4837,7 +4837,6 @@ unreserved_keyword:
 			| TSQL_WK
 			| TSQL_WW
 			| TSQL_XLOCK
-			| TSQL_XML_VALUE
 			| TSQL_Y
 			| TSQL_YY
 			| TSQL_YYYY
@@ -4869,6 +4868,7 @@ reserved_keyword:
 			| TSQL_TRY_CONVERT
 			| TSQL_TRY_PARSE
 			| TSQL_EXEC
+			| TSQL_XML_VALUE
 		;
 
 bare_label_keyword:
