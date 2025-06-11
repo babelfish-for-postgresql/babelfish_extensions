@@ -704,8 +704,8 @@ SELECT 2.00
 GO
 ~~START~~
 numeric
-0.000000
-2.000000
+0.00
+2.00
 ~~END~~
 
 
@@ -715,8 +715,8 @@ SELECT 2.00
 GO
 ~~START~~
 numeric
-1.00000000
-2.00000000
+1.00
+2.00
 ~~END~~
 
 
@@ -726,8 +726,8 @@ SELECT 2.00
 GO
 ~~START~~
 numeric
-0E-8
-2.00000000
+0.00
+2.00
 ~~END~~
 
 
@@ -737,8 +737,8 @@ SELECT 2.00
 GO
 ~~START~~
 numeric
-0.000000
-2.000000
+0.00
+2.00
 ~~END~~
 
 
@@ -748,8 +748,8 @@ SELECT 2.00
 GO
 ~~START~~
 numeric
-1.00000000
-2.00000000
+1.00
+2.00
 ~~END~~
 
 
@@ -759,8 +759,8 @@ SELECT 2.00
 GO
 ~~START~~
 numeric
-0E-8
-2.00000000
+0.00
+2.00
 ~~END~~
 
 
@@ -772,7 +772,7 @@ FROM agg_test_table
 GO
 ~~START~~
 numeric
-0E-8
+0.00
 ~~END~~
 
 
@@ -784,7 +784,7 @@ FROM agg_test_table
 GO
 ~~START~~
 numeric
-0E-8
+0.00
 ~~END~~
 
 
@@ -798,8 +798,8 @@ SELECT 2.00
 GO
 ~~START~~
 numeric
-0.000000
-2.000000
+0.0000
+2.0000
 ~~END~~
 
 
@@ -813,8 +813,8 @@ SELECT 2.00
 GO
 ~~START~~
 numeric
-0.000000
-2.000000
+0.0000
+2.0000
 ~~END~~
 
 
@@ -826,7 +826,7 @@ FROM agg_test_table
 GO
 ~~START~~
 numeric
-0.000000
+0.00
 ~~END~~
 
 
@@ -838,7 +838,7 @@ FROM agg_test_table
 GO
 ~~START~~
 numeric
-0.000000
+0.00
 ~~END~~
 
 
@@ -846,7 +846,7 @@ SELECT COUNT(NULL) * 1.00 FROM agg_test_table
 GO
 ~~START~~
 numeric
-0.000000
+0.00
 ~~END~~
 
 
@@ -862,7 +862,7 @@ SELECT COUNT_BIG(NULL) * 1.00 FROM agg_test_table
 GO
 ~~START~~
 numeric
-0.000000
+0.00
 ~~END~~
 
 
