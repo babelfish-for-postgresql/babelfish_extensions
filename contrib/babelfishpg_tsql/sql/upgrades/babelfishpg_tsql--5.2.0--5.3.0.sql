@@ -464,6 +464,44 @@ WHERE sch.nspname = t.typnamespace::regnamespace::name
 	AND t.typtypmod = -1
 	AND t.typtype = 'd';
 
+create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
+$body$
+declare
+  v_find_result VARCHAR;
+  v_pos bigint;
+  v_regexp_pattern VARCHAR;
+begin
+  if pattern is null or expression is null then
+    return null;
+  end if;
+  if pattern = '%' then
+    return 1;
+  end if;
+  if sys.is_collated_ai(expression) then
+    return sys.patindex_ai_collations(pattern, expression);
+  end if;
+  if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
+    v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i'::pg_catalog.TEXT);
+  else
+    v_regexp_pattern := '#"' || pattern;
+  end if;
+
+  if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
+    v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i'::pg_catalog.TEXT);
+  else
+   v_regexp_pattern := v_regexp_pattern || '#"';
+  end if;
+  v_find_result := substring(expression, v_regexp_pattern, '#');
+  if v_find_result <> '' collate sys.database_default then
+    v_pos := LENGTH(expression) - STRPOS(REVERSE(expression), REVERSE(v_find_result)) + 2 - LENGTH(v_find_result);
+  else
+    v_pos := 0;
+  end if;
+  return v_pos;
+end;
+$body$
+language plpgsql immutable returns null on null input;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

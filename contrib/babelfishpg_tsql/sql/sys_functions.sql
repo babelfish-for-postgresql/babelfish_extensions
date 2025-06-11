@@ -1674,6 +1674,9 @@ begin
   if pattern is null or expression is null then
     return null;
   end if;
+  if pattern = '%' then
+    return 1;
+  end if;
   if sys.is_collated_ai(expression) then
     return sys.patindex_ai_collations(pattern, expression);
   end if;
@@ -1690,7 +1693,7 @@ begin
   end if;
   v_find_result := substring(expression, v_regexp_pattern, '#');
   if v_find_result <> '' collate sys.database_default then
-    v_pos := strpos(expression, v_find_result);
+    v_pos := LENGTH(expression) - STRPOS(REVERSE(expression), REVERSE(v_find_result)) + 2 - LENGTH(v_find_result);
   else
     v_pos := 0;
   end if;
