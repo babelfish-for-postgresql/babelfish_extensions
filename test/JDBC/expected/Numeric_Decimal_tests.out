@@ -334,7 +334,7 @@ SELECT CAST(99999999999999999.99 AS NUMERIC(19,2)) * CAST(2 AS NUMERIC(19,2)) AS
 GO
 ~~START~~
 numeric
-199999999999999999.980
+199999999999999999.9800
 ~~END~~
 
 
@@ -575,11 +575,15 @@ GO
 ~~ERROR (Message: value out of range: overflow)~~
 
 
-
--- TODO: CREATE JIRA
 -- Testing mixed type arithmetic between MONEY and DECIMAL
--- SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS DECIMAL(2,1)) AS result;
--- GO
+SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS DECIMAL(2,1)) AS result;
+GO
+~~START~~
+numeric
+1014570924054025.33877
+~~END~~
+
+
 -- Cleanup test table
 DROP TABLE numeric_aggregate_test;
 GO
@@ -686,7 +690,7 @@ SELECT @num1 * @num2 AS result;
 GO
 ~~START~~
 numeric
-199999999999999999.980
+199999999999999999.9800
 ~~END~~
 
 
@@ -704,9 +708,10 @@ numeric
 DECLARE @num1 NUMERIC(19,0) = 9999999999999999999, @num2 NUMERIC(19,0) = 9999999999999999999;
 SELECT @num1 * @num2 AS result;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric
+99999999999999999980000000000000000001
+~~END~~
 
 
 -- Testing simple division with potential precision loss (1/3)
@@ -789,12 +794,17 @@ float
 ~~END~~
 
 
-
--- TODO: CREATE JIRA
 -- Testing overflow in complex expressions with multiple operations (multiplication, power, and division)
--- DECLARE @num1 NUMERIC(9,2) = 9999999.99, @num2 NUMERIC(2,0) = 10, @num3 NUMERIC(3,2) = 0.01;
--- SELECT @num1 * POWER(@num2, @num2) / @num3 AS result;
--- GO
+DECLARE @num1 NUMERIC(9,2) = 9999999.99, @num2 NUMERIC(2,0) = 10, @num3 NUMERIC(3,2) = 0.01;
+SELECT @num1 * POWER(@num2, @num2) / @num3 AS result;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
 -- Testing precision loss in addition with different scales (NUMERIC(5,2) + NUMERIC(5,3))
 DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,3) = 67.891;
 SELECT @num1 + @num2 AS result;
@@ -865,12 +875,16 @@ numeric
 ~~END~~
 
 
-
--- TODO: CREATE JIRA
 -- Testing mixed type arithmetic between INTEGER and DECIMAL
--- DECLARE @num1 INT = 2147483647, @num2 DECIMAL(2,1) = 1.1;
--- SELECT @num1 * @num2 AS result;
--- GO
+DECLARE @num1 INT = 2147483647, @num2 DECIMAL(2,1) = 1.1;
+SELECT @num1 * @num2 AS result;
+GO
+~~START~~
+numeric
+2362232011.7
+~~END~~
+
+
 -- Testing mixed type arithmetic between FLOAT and DECIMAL
 DECLARE @num1 FLOAT = 1.79E+308, @num2 DECIMAL(2,1) = 1.1;
 SELECT @num1 * @num2 AS result;
@@ -882,14 +896,18 @@ float
 ~~ERROR (Message: value out of range: overflow)~~
 
 
-
-
-
--- TODO: CREATE JIRA
 -- Testing mixed type arithmetic between MONEY and DECIMAL
--- DECLARE @num1 MONEY = 922337203685477.5807, @num2 DECIMAL(2,1) = 1.1;
--- SELECT @num1 * @num2 AS result;
--- GO
+DECLARE @num1 MONEY = 922337203685477.5807, @num2 DECIMAL(2,1) = 1.1;
+SELECT @num1 * @num2 AS result;
+GO
+~~START~~
+numeric
+1014570924054025.33877
+~~END~~
+
+
+
+
 ------------------------------------------------------------------------
 ---- 4. Arithmetic Operations Tests
 ------------------------------------------------------------------------
@@ -1025,7 +1043,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS MONEY) AS result;
 GO
 ~~START~~
 numeric
-802.35
+802.3500
 ~~END~~
 
 
@@ -1034,7 +1052,7 @@ SELECT CAST(123.45 AS DECIMAL(5,2)) + CAST(678.90 AS SMALLMONEY) AS result;
 GO
 ~~START~~
 numeric
-802.35
+802.3500
 ~~END~~
 
 
@@ -1106,7 +1124,7 @@ SELECT CAST(678.90 AS NUMERIC(5,2)) - CAST(123.45 AS MONEY) AS result;
 GO
 ~~START~~
 numeric
-555.45
+555.4500
 ~~END~~
 
 
@@ -1178,7 +1196,7 @@ SELECT CAST(12.34 AS NUMERIC(4,2)) * CAST(56.78 AS MONEY) AS result;
 GO
 ~~START~~
 numeric
-700.6652
+700.665200
 ~~END~~
 
 
@@ -1258,7 +1276,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(5.0 AS MONEY) AS result;
 GO
 ~~START~~
 numeric
-24.69000000
+24.6900000000000000000000
 ~~END~~
 
 
@@ -1329,7 +1347,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) % CAST(10.0 AS MONEY) AS result;
 GO
 ~~START~~
 numeric
-3.45
+3.4500
 ~~END~~
 
 
@@ -1598,18 +1616,26 @@ numeric
 ~~END~~
 
 
-
-
--- TODO: CREATE JIRA 
 -- DECIMAL + BIGINT
--- DECLARE @dec DECIMAL(5,2) = 123.45, @bigint BIGINT = 9223372036854775807;
--- SELECT @dec + @bigint AS result;
--- GO
--- TODO: CREATE JIRA 
+DECLARE @dec DECIMAL(5,2) = 123.45, @bigint BIGINT = 9223372036854775807;
+SELECT @dec + @bigint AS result;
+GO
+~~START~~
+numeric
+9223372036854775930.45
+~~END~~
+
+
 -- NUMERIC + SMALLINT
--- DECLARE @num NUMERIC(5,2) = 123.45, @smallint SMALLINT = 32767;
--- SELECT @num + @smallint AS result;
--- GO
+DECLARE @num NUMERIC(5,2) = 123.45, @smallint SMALLINT = 32767;
+SELECT @num + @smallint AS result;
+GO
+~~START~~
+numeric
+32890.45
+~~END~~
+
+
 -- DECIMAL + TINYINT
 DECLARE @dec DECIMAL(5,2) = 123.45, @tinyint TINYINT = 255;
 SELECT @dec + @tinyint AS result;
@@ -1646,7 +1672,7 @@ SELECT @num + @money AS result;
 GO
 ~~START~~
 numeric
-802.35
+802.3500
 ~~END~~
 
 
@@ -1656,7 +1682,7 @@ SELECT @dec + @smallmoney AS result;
 GO
 ~~START~~
 numeric
-802.35
+802.3500
 ~~END~~
 
 
@@ -1735,7 +1761,7 @@ SELECT @num - @money AS result;
 GO
 ~~START~~
 numeric
-555.45
+555.4500
 ~~END~~
 
 
@@ -1794,7 +1820,7 @@ SELECT @num * @int AS result;
 GO
 ~~START~~
 numeric
-691.0400
+691.04
 ~~END~~
 
 
@@ -1814,7 +1840,7 @@ SELECT @num * @money AS result;
 GO
 ~~START~~
 numeric
-700.6652
+700.665200
 ~~END~~
 
 
@@ -1884,7 +1910,7 @@ SELECT @num / @int AS result;
 GO
 ~~START~~
 numeric
-24.69000000
+24.6900000000000
 ~~END~~
 
 
@@ -1904,7 +1930,7 @@ SELECT @num / @money AS result;
 GO
 ~~START~~
 numeric
-24.69000000
+24.6900000000000000000000
 ~~END~~
 
 
@@ -1984,7 +2010,7 @@ SELECT @num % @money AS result;
 GO
 ~~START~~
 numeric
-3.45
+3.4500
 ~~END~~
 
 
@@ -2042,7 +2068,7 @@ SELECT @num1 + @num2 * @int AS result;
 GO
 ~~START~~
 numeric
-1481.2500
+1481.25
 ~~END~~
 
 
@@ -2052,7 +2078,7 @@ SELECT (@num1 + @num2) * @int AS result;
 GO
 ~~START~~
 numeric
-1604.7000
+1604.70
 ~~END~~
 
 
@@ -2062,7 +2088,7 @@ SELECT @num1 + @num2 / @int - @int2 AS result;
 GO
 ~~START~~
 numeric
-412.90000000
+412.9000000000000
 ~~END~~
 
 
@@ -2210,7 +2236,7 @@ SELECT ABS(CAST(0 AS NUMERIC(5,2))) AS result;           -- Zero NUMERIC
 GO
 ~~START~~
 numeric
-0
+0.00
 ~~END~~
 
 SELECT ABS(CAST(123.45 AS DECIMAL(5,2))) AS result;      -- Positive DECIMAL
@@ -2252,7 +2278,7 @@ SELECT ABS(CAST(-0.00 AS NUMERIC(3,2))) AS result;       -- Negative zero
 GO
 ~~START~~
 numeric
-0
+0.00
 ~~END~~
 
 
@@ -2717,7 +2743,7 @@ SELECT POWER(CAST(0 AS NUMERIC(4,2)), 2) AS result;              -- Zero NUMERIC
 GO
 ~~START~~
 numeric
-0
+0E-16
 ~~END~~
 
 SELECT POWER(CAST(12.34 AS NUMERIC(4,2)), 0) AS result;          -- NUMERIC, Zero Power
@@ -2807,7 +2833,7 @@ SELECT SQRT(CAST(0 AS NUMERIC(3,0))) AS result;                  -- Zero NUMERIC
 GO
 ~~START~~
 numeric
-0
+0E-15
 ~~END~~
 
 SELECT SQRT(CAST(12.25 AS NUMERIC(4,2))) AS result;              -- Decimal NUMERIC
@@ -3682,7 +3708,7 @@ SELECT DEGREES(CAST(0 AS NUMERIC(1,0))) AS result;               -- Convert radi
 GO
 ~~START~~
 numeric
-0
+0E-16
 ~~END~~
 
 SELECT DEGREES(CAST(NULL AS NUMERIC(5,4))) AS result;            -- NULL value
@@ -3725,7 +3751,7 @@ SELECT RADIANS(CAST(0 AS NUMERIC(1,0))) AS result;               -- Convert degr
 GO
 ~~START~~
 numeric
-0
+0E-16
 ~~END~~
 
 SELECT RADIANS(CAST(NULL AS NUMERIC(3,0))) AS result;            -- NULL value
@@ -3881,7 +3907,7 @@ SELECT CAST(CAST(-922337203685477.5808 AS MONEY) AS NUMERIC(19,4)), CAST(CAST(0 
 GO
 ~~START~~
 numeric#!#numeric#!#numeric
--922337203685477.58080000#!#0.0000#!#922337203685477.58070000
+-922337203685477.5808#!#0.0000#!#922337203685477.5807
 ~~END~~
 
 
@@ -3899,7 +3925,7 @@ SELECT CAST(CAST(-214748.3648 AS SMALLMONEY) AS NUMERIC(10,4)), CAST(CAST(0 AS S
 GO
 ~~START~~
 numeric#!#numeric#!#numeric
--214748.36480000#!#0.0000#!#214748.36470000
+-214748.3648#!#0.0000#!#214748.3647
 ~~END~~
 
 
@@ -5187,7 +5213,7 @@ SELECT CONVERT(NUMERIC(19,4), CAST(-922337203685477.5808 AS MONEY)), CONVERT(NUM
 GO
 ~~START~~
 numeric#!#numeric#!#numeric
--922337203685477.58080000#!#0.0000#!#922337203685477.58070000
+-922337203685477.5808#!#0.0000#!#922337203685477.5807
 ~~END~~
 
 
@@ -5205,7 +5231,7 @@ SELECT CONVERT(NUMERIC(10,4), CAST(-214748.3648 AS SMALLMONEY)), CONVERT(NUMERIC
 GO
 ~~START~~
 numeric#!#numeric#!#numeric
--214748.36480000#!#0.0000#!#214748.36470000
+-214748.3648#!#0.0000#!#214748.3647
 ~~END~~
 
 
@@ -8423,10 +8449,9 @@ varchar
 Very Large Values
 ~~END~~
 
-~~START~~
-numeric#!#numeric#!#numeric#!#numeric
-99999999999999999999999999999999999999#!#99999999999999999999999999999999999999#!#50000000000000000000000000000000000000#!#50000000000000000000000000000000000000
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
 -- Testing with precision boundaries
@@ -9751,9 +9776,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = 500
-Seq Scan on numeric_index_test (actual rows=1 loops=1)
-  Filter: (num_col = 500)
-  Rows Removed by Filter: 2
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = 500)
 ~~END~~
 
 
@@ -9808,7 +9832,7 @@ text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = CAST(500.00 AS MONEY)
 Seq Scan on numeric_index_test (actual rows=1 loops=1)
-  Filter: (num_col = (('500.0000'::fixeddecimal)::money)::fixeddecimal)
+  Filter: (num_col = (('500.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
   Rows Removed by Filter: 2
 ~~END~~
 
@@ -9826,9 +9850,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col BETWEEN 100 AND CAST(200 AS INT)
-Seq Scan on numeric_index_test (actual rows=1 loops=1)
-  Filter: ((num_col >= 100) AND (num_col <= 200))
-  Rows Removed by Filter: 2
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: ((num_col >= 100) AND (num_col <= 200))
 ~~END~~
 
 
@@ -9914,8 +9937,7 @@ Query Text: SELECT * FROM numeric_index_test
 WHERE num_col = CAST(500 AS INT)
   AND category = 'CAT-2'
 Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-  Index Cond: (category = 'CAT-2'::"varchar")
-  Filter: (num_col = 500)
+  Index Cond: ((num_col = 500) AND (category = 'CAT-2'::"varchar"))
 ~~END~~
 
 
@@ -10032,8 +10054,11 @@ text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col > 100
 ORDER BY decimal_col
-Index Scan using idx_decimalnumeric_index_test5d8e61a04a9662670ec1a2266602e173 on numeric_index_test (actual rows=3 loops=1)
-  Filter: (num_col > 100)
+Sort (actual rows=3 loops=1)
+  Sort Key: decimal_col NULLS FIRST
+  Sort Method: quicksort  Memory: 25kB
+  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=3 loops=1)
+        Index Cond: (num_col > 100)
 ~~END~~
 
 

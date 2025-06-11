@@ -374,10 +374,9 @@ GO
 SELECT CAST(1.79E+308 AS FLOAT) * CAST(1.1 AS DECIMAL(2,1)) AS result;
 GO
 
--- TODO: CREATE JIRA
 -- Testing mixed type arithmetic between MONEY and DECIMAL
--- SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS DECIMAL(2,1)) AS result;
--- GO
+SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS DECIMAL(2,1)) AS result;
+GO
 
 -- Cleanup test table
 DROP TABLE numeric_aggregate_test;
@@ -491,11 +490,10 @@ DECLARE @num NUMERIC(3,0) = 100;
 SELECT EXP(@num) AS result;
 GO
 
--- TODO: CREATE JIRA
 -- Testing overflow in complex expressions with multiple operations (multiplication, power, and division)
--- DECLARE @num1 NUMERIC(9,2) = 9999999.99, @num2 NUMERIC(2,0) = 10, @num3 NUMERIC(3,2) = 0.01;
--- SELECT @num1 * POWER(@num2, @num2) / @num3 AS result;
--- GO
+DECLARE @num1 NUMERIC(9,2) = 9999999.99, @num2 NUMERIC(2,0) = 10, @num3 NUMERIC(3,2) = 0.01;
+SELECT @num1 * POWER(@num2, @num2) / @num3 AS result;
+GO
 
 -- Testing precision loss in addition with different scales (NUMERIC(5,2) + NUMERIC(5,3))
 DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,3) = 67.891;
@@ -532,22 +530,20 @@ DECLARE @num1 DECIMAL(5,2) = 123.45, @num2 DECIMAL(4,2) = 67.89;
 SELECT @num1 / @num2 AS result;
 GO
 
--- TODO: CREATE JIRA
 -- Testing mixed type arithmetic between INTEGER and DECIMAL
--- DECLARE @num1 INT = 2147483647, @num2 DECIMAL(2,1) = 1.1;
--- SELECT @num1 * @num2 AS result;
--- GO
+DECLARE @num1 INT = 2147483647, @num2 DECIMAL(2,1) = 1.1;
+SELECT @num1 * @num2 AS result;
+GO
 
 -- Testing mixed type arithmetic between FLOAT and DECIMAL
 DECLARE @num1 FLOAT = 1.79E+308, @num2 DECIMAL(2,1) = 1.1;
 SELECT @num1 * @num2 AS result;
 GO
 
--- TODO: CREATE JIRA
 -- Testing mixed type arithmetic between MONEY and DECIMAL
--- DECLARE @num1 MONEY = 922337203685477.5807, @num2 DECIMAL(2,1) = 1.1;
--- SELECT @num1 * @num2 AS result;
--- GO
+DECLARE @num1 MONEY = 922337203685477.5807, @num2 DECIMAL(2,1) = 1.1;
+SELECT @num1 * @num2 AS result;
+GO
 
 
 ------------------------------------------------------------------------
@@ -880,17 +876,15 @@ DECLARE @num NUMERIC(5,2) = 123.45, @int INT = 678;
 SELECT @num + @int AS result;
 GO
 
--- TODO: CREATE JIRA 
 -- DECIMAL + BIGINT
--- DECLARE @dec DECIMAL(5,2) = 123.45, @bigint BIGINT = 9223372036854775807;
--- SELECT @dec + @bigint AS result;
--- GO
+DECLARE @dec DECIMAL(5,2) = 123.45, @bigint BIGINT = 9223372036854775807;
+SELECT @dec + @bigint AS result;
+GO
 
--- TODO: CREATE JIRA 
 -- NUMERIC + SMALLINT
--- DECLARE @num NUMERIC(5,2) = 123.45, @smallint SMALLINT = 32767;
--- SELECT @num + @smallint AS result;
--- GO
+DECLARE @num NUMERIC(5,2) = 123.45, @smallint SMALLINT = 32767;
+SELECT @num + @smallint AS result;
+GO
 
 -- DECIMAL + TINYINT
 DECLARE @dec DECIMAL(5,2) = 123.45, @tinyint TINYINT = 255;
