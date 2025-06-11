@@ -1244,11 +1244,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 					/* handling for fixed length datatypes */
 					if (param->paramtype == INT4OID)
-						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_INT_TYPMOD;
 					else if (param->paramtype == INT8OID)
-						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_BIGINT_TYPMOD;
 					else if (param->paramtype == INT2OID)
-						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						return DEFAULT_SMALLINT_TYPMOD;
+					else if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (param->paramtype))
+						return DEFAULT_TINYINT_TYPMOD;
 				}
 
 				if (!is_numeric_datatype(param->paramtype) &&
