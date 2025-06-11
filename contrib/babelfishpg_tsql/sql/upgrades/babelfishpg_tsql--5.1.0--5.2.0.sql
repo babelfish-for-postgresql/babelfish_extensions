@@ -612,26 +612,6 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE PROCEDURE sys.sp_xml_preparedocument(
-    INOUT "@hdoc"  INTEGER,                 
-    IN "@xmltext" sys.VARCHAR DEFAULT NULL,    
-    IN "@xpath_namespaces" sys.VARCHAR DEFAULT NULL 
-) 
-AS 'babelfishpg_tsql', 'sp_xml_preparedocument'
-LANGUAGE C;
-GRANT EXECUTE ON PROCEDURE sys.sp_xml_preparedocument(
-	INOUT INTEGER, IN sys.varchar, IN sys.varchar
-) TO PUBLIC;
-
-CREATE OR REPLACE PROCEDURE sys.sp_xml_removedocument(
-    IN "@hdoc" INTEGER
-) 
-AS 'babelfishpg_tsql', 'sp_xml_removedocument'
-LANGUAGE C;
-GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(
-	IN INTEGER
-) TO PUBLIC;
-
 -- This is a temporary procedure which is called during upgrade to alter
 -- default privileges on guest the schemas where the schema owner is guest
 CREATE OR REPLACE PROCEDURE sys.babelfish_revoke_create_privilege_from_guest_user()
