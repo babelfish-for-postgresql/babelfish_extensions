@@ -567,6 +567,9 @@ test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-17_4
 BABEL-5031
 test_conv_money_to_varchar
+sp_xml_preparedocument
+sp_xml_removedocument
+openxml_with_clause
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 BABEL-5467
