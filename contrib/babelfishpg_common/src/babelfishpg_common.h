@@ -1,6 +1,7 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "numeric.h"
 
 /*
  * Casting float < -1.0 to unsigned integer could cause issues on ARM.
@@ -93,4 +94,5 @@ typedef struct common_utility_plugin
 	int32_t		(*GetUTF8CodePoint) (const unsigned char *in, int len, int *consumed_p);
 	int			(*TsqlUTF8LengthInUTF16) (const void *vin, int len);
 	void		(*TsqlUTF8toUTF16StringInfo) (StringInfo utf16_data, const void *data, size_t len);
+	int32_t		(*tsql_numeric_get_typmod) (Numeric num);
 } common_utility_plugin;

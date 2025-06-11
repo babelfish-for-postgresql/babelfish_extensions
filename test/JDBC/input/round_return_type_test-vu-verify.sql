@@ -100,7 +100,6 @@ GO
 
 -- TEST CASE 14: Testing with computed columns
 SELECT 
-    id,
     numeric_data,
     decimal_data,
     float_data,
@@ -215,4 +214,6 @@ DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.
 select round(@inputString, 1)
 go
 
+select round(0.0, -1)
+go
 

@@ -13,7 +13,7 @@ atn2
 ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
-money_aggregate
+money_aggregate-before-17_5-or-16_9
 BABEL-1062
 BABEL-1189
 BABEL-1206
@@ -433,7 +433,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
-TestSpatialPoint
+TestSpatialPoint_before_17_6-or-16_10
 Test-spatial-functions
 Test-sp_addrole
 Test-sp_addrolemember
@@ -601,8 +601,13 @@ test_conv_money_to_varchar
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
-test_constraint_like-before-17-5-or-16-9
+test_constraint_like-17-4-or-16-8
 round_return_type_test-before-16_9-or-17_5
 alter-view
 object_ownership-before-16_8-or-17_4
 test_conv_int_to_varbinary_binary_before_17_5_or_16_9
+test_like_index
+babel_test_numeric_int2_oper
+babel_test_numeric_int4_oper
+babel_test_numeric_int8_oper
+MONEY_OBJECT

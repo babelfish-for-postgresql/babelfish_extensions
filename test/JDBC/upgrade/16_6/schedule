@@ -436,7 +436,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
-TestSpatialPoint
+TestSpatialPoint_before_17_6-or-16_10
 Test-spatial-functions
 Test-sp_addrole
 Test-sp_addrolemember
@@ -601,7 +601,12 @@ BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char_before_17_4
 BABEL-5467
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
-test_constraint_like-before-17-5-or-16-9
+test_constraint_like-16-6
 round_return_type_test-before-16_9-or-17_5
 alter-view
 test_conv_int_to_varbinary_binary_before_17_5_or_16_9
+test_like_index
+babel_test_numeric_int2_oper
+babel_test_numeric_int4_oper
+babel_test_numeric_int8_oper
+MONEY_OBJECT

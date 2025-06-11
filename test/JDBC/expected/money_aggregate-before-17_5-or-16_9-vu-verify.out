@@ -1,0 +1,214 @@
+-- MAX()
+EXEC get_column_info_p1 'ResultTable1';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- MIN()
+EXEC get_column_info_p1 'ResultTable2';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+minamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- AVG()
+EXEC get_column_info_p1 'ResultTable3';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+avgamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- SUM()
+EXEC get_column_info_p1 'ResultTable4';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+totalamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- COUNT()
+EXEC get_column_info_p1 'ResultTable5';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+countamount#!#int#!#4#!#10#!#0
+~~END~~
+
+
+-- Mix of different aggregates (MAX, MIN, AVG, SUM, COUNT)
+EXEC get_column_info_p1 'ResultTable6';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+avgamount#!#money#!#8#!#19#!#4
+countamount#!#int#!#4#!#10#!#0
+maxamount#!#money#!#8#!#19#!#4
+minamount#!#money#!#8#!#19#!#4
+totalamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- MAX() with GROUP BY clause
+EXEC get_column_info_p1 'ResultTable7';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+description#!#nvarchar#!#200#!#0#!#0
+maxamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Aggregation with subquery
+EXEC get_column_info_p1 'ResultTable8';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Aggregation with HAVING clause
+EXEC get_column_info_p1 'ResultTable9';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+description#!#nvarchar#!#200#!#0#!#0
+maxamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Aggregation with calculated MONEY column
+EXEC get_column_info_p1 'ResultTable10';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+doublemaxamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Negative Test Case: Empty table
+EXEC get_column_info_p1 'ResultTableEmpty';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Negative Test Case: Trying to aggregate non-MONEY column as MONEY
+EXEC get_column_info_p1 'ResultTableNonMoney';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+totalamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Edge Test Case: Extreme values
+EXEC get_column_info_p1 'ResultTableExtreme';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxamount#!#money#!#8#!#19#!#4
+minamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Arbitrary Test Case: Mixing NULL and non-NULL values
+EXEC get_column_info_p1 'ResultTableMixedNull';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+avgamount#!#money#!#8#!#19#!#4
+countall#!#int#!#4#!#10#!#0
+countnonnull#!#int#!#4#!#10#!#0
+totalamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Edge Test Case: Aggregating calculated values that exceed MONEY range
+EXEC get_column_info_p1 'ResultTableOverflow';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+~~END~~
+
+
+-- Verify Check Constraint Test
+EXEC get_column_info_p1 'ResultTableCheck';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxcheckamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Verify Complex Dependent Objects Tests
+EXEC get_column_info_p1 'ResultTableView';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxviewamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+EXEC get_column_info_p1 'ResultTableFunction';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+totalfunctionamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Verify Indexed View Test
+EXEC get_column_info_p1 'ResultTableIndexedView';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxindexedviewamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Verify currency symbol test results
+EXEC get_column_info_p1 'ResultTableCurrency1'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+EXEC get_column_info_p1 'ResultTableCurrency2'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+minamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+EXEC get_column_info_p1 'ResultTableCurrency3'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+totalamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+EXEC get_column_info_p1 'ResultTableCurrency4'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+avgamount#!#money#!#8#!#19#!#4
+maxamount#!#money#!#8#!#19#!#4
+minamount#!#money#!#8#!#19#!#4
+totalwithmarkup#!#numeric#!#17#!#38#!#38
+~~END~~
+

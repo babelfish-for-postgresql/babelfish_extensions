@@ -43,14 +43,14 @@ INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Po
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 )', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 #Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Pnt', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 #Test for STGeomFromText when null Point is Given -> Returns NBCRow
@@ -183,9 +183,7 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported geometry type)~~
+~~ROW COUNT: 1~~
 
 prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
 ~~ERROR (Code: 33557097)~~
@@ -198,19 +196,15 @@ Insert into geominTable values('POINT(1 2)');
 ~~ROW COUNT: 1~~
 
 Insert into geominTable values('POINT(1 2 3)');
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported flags)~~
+~~ROW COUNT: 1~~
 
 Insert into geominTable values('POINT(1 2 3 4)');
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported flags)~~
+~~ROW COUNT: 1~~
 
 Insert into geominTable values('LINESTRING(1 2,3 4)');
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ST_LineString is not supported)~~
+~~ERROR (Message: LINESTRING is not supported)~~
 
 Insert into geominTable values('POINT(1000 2000)');
 ~~ROW COUNT: 1~~
@@ -237,7 +231,7 @@ CREATE PROCEDURE dbo.p_getcoordinates AS BEGIN DECLARE @Coordinates TABLE ( XCoo
 
 CREATE VIEW equal_geom AS SELECT p1.location AS point FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location = p2.location ORDER BY p1.location.STX;
 
-CREATE VIEW point_distances_geom AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.STX;
+CREATE VIEW point_distances_geom AS SELECT p1.location AS point1, p2.location AS point2, CAST(STDistance( p1.location, p2.location ) AS numeric(20, 6)) AS distance FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.STX;
 
 CREATE TABLE SPATIALPOINTGEOG_dt (location geography)
 
@@ -298,7 +292,7 @@ INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('P
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 0) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 
 #Negative Test for STGeomFromText for Geography when lat > 90 or < -90
@@ -329,28 +323,28 @@ INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( STGeomFromText('Point(47.651
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 
 #Negative Test for STGeomFromText with SRID < 0
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', -1) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 
 #Negative Test for STGeomFromText when a coordinate is missing
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 )', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 #Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Pnt', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 #Test for STGeomFromText when null Point is Given -> Returns NBCRow
@@ -449,9 +443,7 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported geometry type)~~
+~~ROW COUNT: 1~~
 
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 ~~ERROR (Code: 33557097)~~
@@ -477,19 +469,15 @@ Insert into geoginTable values('POINT(1 2)');
 ~~ROW COUNT: 1~~
 
 Insert into geoginTable values('POINT(1 2 3)');
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported flags)~~
+~~ROW COUNT: 1~~
 
 Insert into geoginTable values('POINT(1 2 3 4)');
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported flags)~~
+~~ROW COUNT: 1~~
 
 Insert into geoginTable values('LINESTRING(1 2,3 4)');
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ST_LineString is not supported)~~
+~~ERROR (Message: LINESTRING is not supported)~~
 
 Insert into geoginTable values('POINT(1000 2000)');
 ~~ERROR (Code: 33557097)~~

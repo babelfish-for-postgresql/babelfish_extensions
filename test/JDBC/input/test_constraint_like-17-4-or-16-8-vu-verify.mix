@@ -1,0 +1,379 @@
+-- tsql
+-- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
+INSERT INTO BABEL_5608_vu_prepare_t1 VALUES('Abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t1_VIEW;
+GO
+
+-- CASE 2: T_CollateExpr(T_Const) LIKE T_Const
+INSERT INTO BABEL_5608_vu_prepare_t2 VALUES('Abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t2_VIEW;
+GO
+
+-- CASE 3: T_CollateExpr(T_Const) LIKE T_CollateExpr(T_Const)
+INSERT INTO BABEL_5608_vu_prepare_t3 VALUES('Abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t3_VIEW;
+GO
+
+-- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
+INSERT INTO BABEL_5608_vu_prepare_t4_1 VALUES ('Abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t4_1_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t4_2 VALUES ('Abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t4_2_VIEW;
+GO
+
+-- CASE 5: T_ReLabelType(T_Var) LIKE T_CollateExpr(T_Const)
+INSERT INTO BABEL_5608_vu_prepare_t5_1 VALUES ('Abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t5_1_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t5_2 VALUES ('Abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t5_2_VIEW;
+GO
+
+-- CASE 6: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Var)
+INSERT INTO BABEL_5608_vu_prepare_t6 VALUES('abc', 'ABC');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t6_VIEW;
+GO
+
+-- CASE 7: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_Const
+INSERT INTO BABEL_5608_vu_prepare_t7_1 VALUES('ABC');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t7_1_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t7_2 VALUES('ABC');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t7_2_VIEW;
+GO
+
+-- CASE 8: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_CollateExpr(T_Const)
+INSERT INTO BABEL_5608_vu_prepare_t8_1 VALUES('ABC');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t8_1_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t8_2 VALUES('ABC');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t8_2_VIEW;
+GO
+
+-- CASE 9: T_FuncExpr LIKE T_CollateExpr(T_Const) AND COMBINATIONS
+INSERT INTO BABEL_5608_vu_prepare_t9_1 VALUES('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t9_1_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t9_2 VALUES('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t9_2_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t9_3 VALUES('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t9_3_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t9_4 VALUES('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t9_4_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t9_5 VALUES('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t9_5_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t9_6 VALUES('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t9_6_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t9_7 VALUES('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t9_7_VIEW;
+GO
+
+INSERT INTO BABEL_5608_vu_prepare_t9_8 VALUES('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t9_8_VIEW;
+GO
+
+-- CASE 10: ESCAPE WITH LIKE
+INSERT INTO BABEL_5608_vu_prepare_t10 values('15% off');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t10_VIEW;
+GO
+
+-- CASE 11: T_CoerceViaIO
+INSERT INTO BABEL_5608_vu_prepare_t11 values('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t11_VIEW;
+GO
+
+-- CASE 12: CFL CONDITIONS AND MORE
+-- IF ELSE
+INSERT INTO BABEL_5608_vu_prepare_t12_1 VALUES ('active');
+INSERT INTO BABEL_5608_vu_prepare_t12_1 VALUES ('inactive');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t12_1_VIEW;
+GO
+
+-- CASE WHEN
+INSERT INTO BABEL_5608_vu_prepare_t12_2 VALUES ('active');
+INSERT INTO BABEL_5608_vu_prepare_t12_2 VALUES ('inactive');
+GO
+
+-- should fail
+INSERT INTO BABEL_5608_vu_prepare_t12_2 VALUES ('idle');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t12_2_VIEW;
+GO
+
+-- IF EXISTS
+IF (EXISTS (SELECT 1 FROM BABEL_5608_vu_prepare_t12_2 WHERE status LIKE 'act%'))
+BEGIN
+    SELECT 'Found matching records'
+END
+ELSE
+BEGIN
+    SELECT 'No matches found'
+END
+GO
+
+IF (EXISTS (SELECT 1 FROM BABEL_5608_vu_prepare_t12_2 WHERE status LIKE 'inactive'))
+BEGIN
+    SELECT 'Found matching records'
+END
+ELSE
+BEGIN
+    SELECT 'No matches found'
+END
+GO
+
+IF (EXISTS (SELECT 1 FROM BABEL_5608_vu_prepare_t12_2 WHERE status LIKE 'idle'))
+BEGIN
+    SELECT 'Found matching records'
+END
+ELSE
+BEGIN
+    SELECT 'No matches found'
+END
+GO
+
+-- COMPUTED COLUMNS (BABEL-5022)
+-- INSERT INTO BABEL_5608_vu_prepare_t12_3(name) VALUES('prd'),('drp');
+-- GO
+
+-- INSERT INTO BABEL_5608_vu_prepare_t12_3(name) VALUES('r');
+-- GO
+
+-- SELECT * FROM BABEL_5608_vu_prepare_t12_3_VIEW;
+-- GO
+
+-- FUNCTION
+SELECT * FROM BABEL_5608_vu_prepare_t12_fun1('act%');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t12_fun1('inactive');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t12_fun1('idle%');
+GO
+
+
+-- PROCEDURE
+EXEC BABEL_5608_vu_prepare_t12_proc1 'act%';
+GO
+
+EXEC BABEL_5608_vu_prepare_t12_proc1 'inactive';
+GO
+
+EXEC BABEL_5608_vu_prepare_t12_proc1 'idle';
+GO
+
+-- CASE 13: VIEW WITH LIKE
+SELECT * FROM BABEL_5608_13_1_VIEW;
+GO
+
+SELECT * FROM BABEL_5608_13_2_VIEW;
+GO
+
+SELECT * FROM BABEL_5608_13_3_VIEW;
+GO
+
+SELECT * FROM BABEL_5608_13_4_VIEW;
+GO
+
+SELECT * FROM BABEL_5608_13_5_VIEW;
+GO
+
+-- CASE 14: PostFix Pattern match
+INSERT INTO BABEL_5608_vu_prepare_t14 VALUES ('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t14_VIEW;
+GO
+
+-- CASE 15: T_Const LIKE T_Const
+INSERT INTO BABEL_5608_vu_prepare_t15 VALUES ('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t15_VIEW;
+GO
+
+-- psql
+-- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t1'::regclass;
+GO
+
+-- CASE 2: T_CollateExpr(T_Const) LIKE T_Const
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t2'::regclass;
+GO
+
+-- CASE 3: T_CollateExpr(T_Const) LIKE T_CollateExpr(T_Const)
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t3'::regclass;
+GO
+
+-- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t4_1'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t4_2'::regclass;
+GO
+
+-- CASE 5: T_ReLabelType(T_Var) LIKE T_CollateExpr(T_Const)
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t5_1'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t5_2'::regclass;
+GO
+
+-- CASE 6: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Var)
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t6'::regclass;
+GO
+
+-- CASE 7: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_Const
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t7_1'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t7_2'::regclass;
+GO
+
+-- CASE 8: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_CollateExpr(T_Const)
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t8_1'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t8_2'::regclass;
+GO
+
+-- CASE 9: T_FuncExpr LIKE T_CollateExpr(T_Const) AND COMBINTAIONS
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t9_1'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t9_2'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t9_3'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t9_4'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t9_5'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t9_6'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t9_7'::regclass;
+GO
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t9_8'::regclass;
+GO
+
+-- CASE 10: ESCAPE WITH LIKE
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t10'::regclass;
+GO
+
+-- CASE 11: T_CoerceViaIO
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t11'::regclass;
+GO
+
+-- CASE 12: CFL CONDITIONS AND MORE
+-- IF ELSE
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_1'::regclass;
+GO
+
+-- CASE WHEN
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_2'::regclass;
+GO
+
+-- COMPUTED COLUMNS (BABEL-5022)
+-- SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_3'::regclass;
+-- GO
+
+-- FUNCTION
+SELECT pg_get_functiondef(CAST('master_dbo.BABEL_5608_vu_prepare_t12_fun1' as regproc));
+GO
+
+-- PROCEDURE
+SELECT pg_get_functiondef(CAST('master_dbo.BABEL_5608_vu_prepare_t12_proc1' as regproc));
+GO
+
+-- CASE 13: VIEW WITH LIKE
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_1_VIEW', true);
+GO
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_2_VIEW', true);
+GO
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_3_VIEW', true);
+GO
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_4_VIEW', true);
+GO
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_5_VIEW', true);
+GO
+
+-- CASE 14: PostFix Pattern match
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t14'::regclass;
+GO
+
+-- CASE 15: T_Const LIKE T_Const
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t15'::regclass;
+GO

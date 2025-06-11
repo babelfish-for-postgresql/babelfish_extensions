@@ -10,7 +10,7 @@ from babel_5467_avgdata_1
 go
 ~~START~~
 numeric#!#numeric#!#numeric
-10.666666#!#18.000000#!#68.75
+10.666666#!#18.000000#!#68.750000
 ~~END~~
 
 
@@ -35,7 +35,7 @@ from babel_5467_avgdata_2
 go
 ~~START~~
 numeric#!#numeric#!#numeric
-10.666666#!#18.000000#!#68.75
+10.666666#!#18.000000#!#68.750000
 ~~END~~
 
 
@@ -67,7 +67,7 @@ from babel_5467_avgdata_3
 go
 ~~START~~
 numeric#!#numeric#!#numeric
-10.666666#!#18.000000#!#68.75
+10.666666#!#18.000000#!#68.750000
 ~~END~~
 
 
@@ -299,7 +299,7 @@ select * from babel_5467_t8
 go
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric
-10.6666666666666667#!#100.22376#!#35.3333#!#29.1111
+10.666666#!#100.22376#!#35.3333#!#29.1111
 ~~END~~
 
 
@@ -309,8 +309,8 @@ where TABLE_NAME = 'babel_5467_t8' order by COLUMN_NAME
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#smallint#!#int
-master#!#dbo#!#babel_5467_t8#!#a#!#18#!#10#!#16
-master#!#dbo#!#babel_5467_t8#!#b#!#8#!#10#!#5
+master#!#dbo#!#babel_5467_t8#!#a#!#38#!#10#!#6
+master#!#dbo#!#babel_5467_t8#!#b#!#38#!#10#!#5
 master#!#dbo#!#babel_5467_t8#!#c#!#38#!#10#!#4
 master#!#dbo#!#babel_5467_t8#!#d#!#38#!#10#!#4
 ~~END~~
@@ -334,7 +334,7 @@ from babel_5467_avgdata_udt_1
 go
 ~~START~~
 numeric#!#numeric#!#numeric
-10.666666#!#18.000000#!#68.75
+10.666666#!#18.000000#!#68.750000
 ~~END~~
 
 
@@ -359,7 +359,7 @@ from babel_5467_avgdata_udt_2
 go
 ~~START~~
 numeric#!#numeric#!#numeric
-10.666666#!#18.000000#!#68.75
+10.666666#!#18.000000#!#68.750000
 ~~END~~
 
 
@@ -385,7 +385,7 @@ from babel_5467_avgdata_udt_3
 go
 ~~START~~
 numeric#!#numeric#!#numeric
-11#!#18#!#68.75
+11#!#18#!#68.750000
 ~~END~~
 
 
@@ -581,7 +581,7 @@ SELECT count(*), avg(amount) * 100 FROM babel_5467_t5;
 GO
 ~~START~~
 int#!#numeric
-3#!#1066.67
+3#!#1066.666600
 ~~END~~
 
 
@@ -605,7 +605,7 @@ SELECT ((avg(cast(18 as decimal)) - avg(amount))/avg(amount))*100 FROM babel_546
 GO
 ~~START~~
 numeric
-68.75
+68.750000
 ~~END~~
 
 
@@ -918,7 +918,7 @@ SELECT cast(999999999999999.9999 as dbo.NUMERICUDT_38_4) * cast(1.23 as decimal(
 GO
 ~~START~~
 numeric
-1230000000000000.00
+1229999999999999.999877
 ~~END~~
 
 
@@ -926,7 +926,7 @@ SELECT cast(999999999999999.9999 as dbo.DECIMALUDT_38_4) * cast(1.23 as decimal(
 GO
 ~~START~~
 numeric
-1230000000000000.00
+1229999999999999.999877
 ~~END~~
 
 

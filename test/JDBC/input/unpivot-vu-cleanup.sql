@@ -2,6 +2,9 @@
 DROP VIEW sales.sales_analysis_view;
 GO
 
+DROP VIEW sales.quarterly_view;
+GO
+
 -- Drop tables
 DROP TABLE customer_quarterly_sales;
 GO
@@ -14,6 +17,8 @@ GO
 DROP TABLE product_info;
 GO
 DROP TABLE sales_data;
+GO
+DROP TABLE revenue_data;
 GO
 DROP TABLE product_sales;
 GO
@@ -43,8 +48,8 @@ DROP TABLE very_long_table_name_123456789012345678901234567890123456789012345678
 GO
 DROP TABLE [Sales$Data@2024];
 GO
--- DROP TABLE [Global_データ_Sales];
--- GO
+DROP TABLE [Global_データ_Sales];
+GO
 
 -- Drop temporary tables (if they still exist)
 IF OBJECT_ID('tempdb..#temp_sales') IS NOT NULL
