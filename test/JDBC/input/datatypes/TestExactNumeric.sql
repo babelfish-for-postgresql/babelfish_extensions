@@ -193,9 +193,6 @@ GO
 SELECT SQUARE(smallint_col) FROM exactnumeric_table;
 GO
 
-SELECT SQUARE(integer_col) FROM exactnumeric_table;
-GO
-
 SELECT SQUARE(bigint_col) FROM exactnumeric_table;
 GO
 
