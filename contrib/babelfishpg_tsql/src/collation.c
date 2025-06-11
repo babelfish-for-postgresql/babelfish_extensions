@@ -25,6 +25,7 @@
 #include <unicode/usearch.h>
 #endif
 
+#include "miscadmin.h"
 #include "pltsql.h"
 #include "src/collation.h"
 #include "catalog.h"
@@ -2180,10 +2181,10 @@ void
 assign_psql_logical_babelfish_db_name(const char *newval, void *extra)
 {
 	/* 
-	 * No need to tell babelfishpg_common that logical db name has been set if dialect is TSQL
+	 * No need to tell babelfishpg_common that logical db name has been set if it is TDS connection
 	 * because the psql_logical_babelfish_db_name is to be used for PG dialect only
 	 */
-	if (sql_dialect == SQL_DIALECT_PG)
+	if (!IS_TDS_CONN())
 	{
 		/* Initialise collation callbacks */
 		init_and_check_collation_callbacks();
