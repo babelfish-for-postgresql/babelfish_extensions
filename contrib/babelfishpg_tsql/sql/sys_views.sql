@@ -169,6 +169,8 @@ BEGIN
 	CASE v_type 
 	WHEN 'decimal' THEN scale = (typemod - 4) & 65535;
 	WHEN 'numeric' THEN scale = (typemod - 4) & 65535;
+	WHEN 'money' THEN scale = 4;
+	WHEN 'smallmoney' THEN scale = 4;
 	WHEN 'smalldatetime' THEN scale = 0;
 	WHEN 'datetime2' THEN
 		CASE typemod 
@@ -256,6 +258,8 @@ BEGIN
 	CASE v_type
 	WHEN 'numeric' THEN precision = ((typemod - 4) >> 16) & 65535;
 	WHEN 'decimal' THEN precision = ((typemod - 4) >> 16) & 65535;
+	WHEN 'money' THEN precision = 19;
+	WHEN 'smallmoney' THEN precision = 10;
 	WHEN 'smalldatetime' THEN precision = 16;
 	WHEN 'datetime2' THEN 
 		CASE typemod 
@@ -3371,15 +3375,9 @@ SELECT
     END
   AS sys.BIT) AS is_policy_checked,
   CAST(0 AS sys.BIT) AS is_expiration_checked,
-  CAST(
-    CASE
-      WHEN (sys.suser_name() = (SELECT super_user FROM super_user) OR pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')) THEN Auth.rolpassword
-      ELSE NULL
-    END
-  AS sys.varbinary(256)) AS password_hash 
+  CAST(NULL AS sys.varbinary(256)) AS password_hash 
 FROM pg_catalog.pg_roles AS Base 
 INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
-LEFT JOIN pg_authid Auth ON Auth.rolname = Base.rolname 
 WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
   OR Ext.orig_loginname = sys.suser_name()
@@ -3680,7 +3678,7 @@ GRANT SELECT ON sys.sequences TO PUBLIC;
 CREATE OR REPLACE VIEW sys.dm_os_sys_info 
 AS SELECT 
   CAST(0 AS BIGINT) AS cpu_ticks,
-  CAST(ROUND(EXTRACT(EPOCH FROM NOW()) * 1000.0, 0) AS BIGINT) AS ms_ticks, 
+  CAST(ROUND(CAST(EXTRACT(EPOCH FROM NOW()) AS NUMERIC(38,0)) * 1000.0, 0) AS BIGINT) AS ms_ticks, 
   CAST(0 AS INT) AS cpu_count,
   CAST(0 AS INT) AS hyperthread_ratio,
   CAST(0 AS BIGINT) AS physical_memory_kb,
@@ -3696,7 +3694,7 @@ AS SELECT
   CAST(0 AS INT) AS scheduler_count,
   CAST(0 AS INT) AS scheduler_total_count,
   CAST(0 AS INT) AS deadlock_monitor_serial_number,
-  CAST(ROUND(EXTRACT(EPOCH FROM pg_postmaster_start_time()) * 1000.0, 0) AS BIGINT) AS sqlserver_start_time_ms_ticks, 
+  CAST(ROUND(CAST(EXTRACT(EPOCH FROM pg_postmaster_start_time()) AS NUMERIC(38,0)) * 1000.0, 0) AS BIGINT) AS sqlserver_start_time_ms_ticks, 
   CAST(pg_postmaster_start_time() AS sys.DATETIME) AS sqlserver_start_time,
   CAST(0 AS INT) AS affinity_type,
   CAST(NULL AS sys.NVARCHAR(60)) AS affinity_type_desc,

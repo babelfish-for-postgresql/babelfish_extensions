@@ -65,6 +65,11 @@
 
 #define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
 
+#define MONEY_PRECISION 19
+#define SMALLMONEY_PRECISION 10
+#define FIXEDDECIMAL_SCALE 4
+#define TSQL_MONEY_TYPMOD ((MONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
+#define TSQL_SMALLMONEY_TYPMOD ((SMALLMONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
 
 /*
  * Compiler's namespace item types
@@ -1753,6 +1758,8 @@ typedef struct PLtsql_protocol_plugin
 
 	int			(*pltsql_read_numeric_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
+	int32		(*pltsql_resolve_numeric_typmod_from_exp) (Plan *plan, Node *expr, bool *found);
+
 	bool		(*pltsql_get_errdata) (int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state);
 
 	int16		(*pltsql_get_database_oid) (const char *dbname);
@@ -1801,7 +1808,8 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_reset_tds_connection_flag) ();
 	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
 													char **tvp_type_name, char **tvp_type_schema_name);
-	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr, bool *found);
+	int32_t 	(*get_tds_numeric_get_typmod) (Numeric num);
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2245,6 +2253,7 @@ extern Oid	tsql_get_trigger_rel_oid(Oid object_id);
 extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
+extern Oid get_sys_nvarcharoid(void);
 extern Oid get_sysadmin_oid(void);
 extern bool is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
 extern bool is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
@@ -2310,7 +2319,7 @@ void		prepare_format_string(StringInfo buf, char *msg_string, int nargs,
  * Functions in pltsql_function_probin_handler.c
  */
 void		probin_read_args_typmods(HeapTuple procTup, int nargs, Oid *argtypes, int **typmods);
-int			probin_read_ret_typmod(Oid funcid, int nargs, Oid declared_oid);
+int		probin_read_ret_typmod(Oid funcid, int nargs, Oid declared_oid);
 bool		pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p, char **probin_str_p);
 void		pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char **probin_str_p);
 void		pltsql_function_probin_reader(ParseState *pstate,
@@ -2348,6 +2357,7 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
  * Functions in pltsql_coerce.c
  */
 extern bool validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
+extern int32	resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
 
 /*
  * Function in pltsql_ruleutils.c

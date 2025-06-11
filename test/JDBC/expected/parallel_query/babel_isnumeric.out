@@ -1,0 +1,462 @@
+
+--
+-- Tests for ISNUMERIC function
+--
+DROP TABLE IF EXISTS test_isnumeric
+GO
+
+CREATE TABLE test_isnumeric (
+    bigint_type bigint,
+    int_type int,
+    smallint_type smallint,
+    tinyint_type tinyint,
+    bit_type bit,
+    decimal_type decimal(5,2),
+    numeric_type numeric(10,5),
+    float_type float,
+    real_type real,
+    money_type money,
+    smallmoney_type money
+)
+GO
+
+INSERT INTO test_isnumeric (
+    bigint_type,
+    int_type,
+    smallint_type,
+    tinyint_type,
+    bit_type,
+    decimal_type,
+    numeric_type,
+    float_type,
+    real_type,
+    money_type,
+    smallmoney_type
+)
+VALUES (
+    9223372036854775806,
+    45000,
+    -32767,
+    100,
+    1,
+    123,
+    12345.12,
+    1.79E+30,
+    -3.40E+38, 
+    237891.22,
+    77.58
+)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_isnumeric
+GO
+~~START~~
+bigint#!#int#!#smallint#!#tinyint#!#bit#!#numeric#!#numeric#!#float#!#real#!#money#!#money
+9223372036854775806#!#45000#!#-32767#!#100#!#1#!#123.00#!#12345.12000#!#1.79E30#!#-3.4E38#!#237891.2200#!#77.5800
+~~END~~
+
+-- Test bigint
+SELECT ISNUMERIC(bigint_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test int
+SELECT ISNUMERIC(int_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test smallint
+SELECT ISNUMERIC(smallint_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test tinyint
+SELECT ISNUMERIC(tinyint_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test bit
+SELECT ISNUMERIC(bit_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test decimal
+SELECT ISNUMERIC(decimal_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test numeric
+SELECT ISNUMERIC(numeric_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test float
+SELECT ISNUMERIC(float_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test real
+SELECT ISNUMERIC(real_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test money
+SELECT ISNUMERIC(money_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test smallmoney
+SELECT ISNUMERIC(smallmoney_type)
+FROM test_isnumeric
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+DROP TABLE test_isnumeric
+GO
+
+-- Test valid and invalid operators and literals
+select isnumeric(1234567890)
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('28903')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('+')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('+ ')
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Blocked due to BABEL-2853
+--select isnumeric($)
+--GO
+select isnumeric('$24,23.43')
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Blocked due to BABEL-2853
+--select isnumeric(€)
+--GO
+select isnumeric('+ 1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('$+1.1234')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('+$1.1234')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric(' $ + 1.1234')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric(' + $ 1.1234')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select isnumeric('abcdefghijklmnop')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('24.89.43')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('€24,2.3.43')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('+-')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('23$')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric(null)
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric(' ')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('1 .1234')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('+1 .1234')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('$1 .1234')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Create the table
+CREATE TABLE babel_isnumeric_test (
+    id int IDENTITY(1,1),
+    val varchar(100)
+);
+GO
+
+-- Insert decimal numbers
+INSERT INTO babel_isnumeric_test (val)
+SELECT CAST(RAND() as varchar(100))
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+-- Insert integers
+INSERT INTO babel_isnumeric_test (val)
+SELECT CAST(CAST((RAND() * 1000000) as int) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+-- Insert money format
+INSERT INTO babel_isnumeric_test (val)
+SELECT '$' + CAST(CAST((RAND() * 1000) as decimal(10,2)) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+-- Insert alphanumeric
+INSERT INTO babel_isnumeric_test (val)
+SELECT 'abc' + CAST(CAST((RAND() * 100) as int) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+-- Insert scientific notation
+INSERT INTO babel_isnumeric_test (val)
+SELECT '1E' + CAST(CAST((RAND() * 10) as int) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+-- Insert plain text
+INSERT INTO babel_isnumeric_test (val)
+SELECT 'not a number'
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('babelfishpg_tsql.memory', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+SET BABELFISH_STATISTICS PROFILE ON
+GO
+
+SELECT count(*)
+FROM babel_isnumeric_test
+WHERE isnumeric(val) = 1
+GO
+~~START~~
+int
+4000
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT count(*)
+FROM babel_isnumeric_test
+WHERE isnumeric(val) = 1
+Finalize Aggregate (actual rows=1 loops=1)
+  ->  Gather (actual rows=5 loops=1)
+        Workers Planned: 4
+        Workers Launched: 4
+        ->  Partial Aggregate (actual rows=1 loops=5)
+              ->  Parallel Seq Scan on babel_isnumeric_test (actual rows=800 loops=5)
+                    Filter: (isnumeric(val) = 1)
+                    Rows Removed by Filter: 400
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE OFF
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'on', false)
+SELECT set_config('babelfishpg_tsql.memory', 'on', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+DROP TABLE babel_isnumeric_test
+GO

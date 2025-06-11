@@ -185,6 +185,19 @@ INSERT INTO sales_data VALUES
     (3, NULL, 350, 'Central', 'East');
 GO
 
+CREATE TABLE revenue_data (
+    id INT,
+    q1_sales INT,
+    q2_sales INT
+);
+GO
+
+INSERT INTO revenue_data VALUES
+    (1, 100, 150),
+    (2, 200, 250),
+    (3, NULL, 350);
+GO
+
 CREATE TABLE product_sales (
     product_id INT,
     product_desc VARCHAR(25),
@@ -259,6 +272,11 @@ INSERT INTO sales.quarterly_data VALUES
 (1, 'Product A', 0.50, 150.75, 200.25, 175.50),
 (2, 'Product B', 200.00, 300.00, 0, NULL),
 (3, 'Product C', 175.25, 225.75, NULL, 250.00);
+GO
+
+CREATE VIEW sales.quarterly_view AS
+SELECT customer_id, q1 AS q1_sales, q2, q3, q4 
+FROM customer_turnover;
 GO
 
 CREATE TABLE customer_history (

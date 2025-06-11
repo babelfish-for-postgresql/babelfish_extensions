@@ -2374,6 +2374,16 @@ pltsql_build_variable(const char *refname, int lineno, PLtsql_type *dtype,
 				var->refname = pstrdup(refname);
 				var->lineno = lineno;
 				var->datatype = dtype;
+
+				if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(var->datatype->typoid))
+				{
+					var->datatype->atttypmod = TSQL_MONEY_TYPMOD;
+				}
+				else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(var->datatype->typoid))
+				{
+					var->datatype->atttypmod = TSQL_SMALLMONEY_TYPMOD;
+				}
+
 				/* other fields are left as 0, might be changed by caller */
 
 				/* preset to NULL */

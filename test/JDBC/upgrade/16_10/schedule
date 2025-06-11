@@ -611,3 +611,9 @@ test_constraint_like
 round_return_type_test
 alter-view
 test_conv_int_to_varbinary_binary
+test_like_index
+babel_varbinary
+babel_test_numeric_int2_oper
+babel_test_numeric_int4_oper
+babel_test_numeric_int8_oper
+MONEY_OBJECT

@@ -72,6 +72,9 @@ extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 Const **prefix,
 										 Selectivity *rest_selec);
 
+static Node *transform_likenode_for_AI(OpExpr *op);
+static Node *convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid);
+
 /* pattern prefix status for pattern_fixed_prefix_wrapper
  * Pattern_Prefix_None: no prefix found, this means the first character is a wildcard character
  * Pattern_Prefix_Exact: the pattern doesn't include any wildcard character
@@ -316,8 +319,12 @@ create_collate_expr(Node *arg, Oid collid)
 }
 
 /*
- * If the node is OpExpr and the colaltion is ci_as, then
- * transform the LIKE OpExpr to ILIKE OpExpr:
+ * If the node is OpExpr and the colaltion is ci_as/ci_ai , then
+ * transform the LIKE OpExpr to ILIKE OpExpr. For ci_ai, use remove_accents_internal*
+ * function to remove the accents and optimize.
+ * If the node is OpExpr and the collation is cs_ai , then use remove_accents_internal*
+ * function to remove the accents and optimize.
+ * If the node is OpExpr and the collation is cs_as, then simply use optimization:
  *
  * Case 1: if the pattern is a constant stirng
  *		 col LIKE PATTERN -> col = PATTERN
@@ -329,10 +336,10 @@ create_collate_expr(Node *arg, Oid collid)
  */
 
 static Node *
-transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
+optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid, bool is_constraint)
 {
 	Node	   *leftop = copyObject(linitial(op->args));
-	Node	   *rightop = (Node *) lsecond(op->args);
+	Node	   *rightop = copyObject(lsecond(op->args));
 	Oid			ltypeId = exprType(leftop);
 	Oid			rtypeId = exprType(rightop);
 	char	   *op_str;
@@ -372,11 +379,26 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		return node;
 	}
 
-	/* Change the opno and oprfuncid to ILIKE */
-	op->opno = like_entry.ilike_oid;
-	op->opfuncid = like_entry.ilike_opfuncid;
-
+	/* Change the opno and oprfuncid to ILIKE if CI collation */
+	if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000d) /* CI */
+	{
+		op->opno = like_entry.ilike_oid;
+		op->opfuncid = like_entry.ilike_opfuncid;
+	}
+	
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+
+
+	/* Remove CollateExpr as the op->inputcollid has already been set */
+	if (IsA(rightop, CollateExpr))
+	{
+		lsecond(op->args) = rightop = (Node*)((CollateExpr*) rightop)->arg;
+	}
+
+	if (IsA(leftop, CollateExpr))
+	{
+		linitial(op->args) = leftop = (Node*)((CollateExpr*) leftop)->arg;
+	}
 
 	/* 
 	 * This is needed to process CI_AI for Const nodes
@@ -394,21 +416,32 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		}
 	}
 
-	/* no constant prefix found in pattern, or pattern is not constant */
+	/* 
+	 * no constant prefix found in pattern, or pattern is not constant 
+	 * OR if it is for CHECK CONSTRAINT, we do NOT need any optimisation
+	 * for it. Rather it will add extra overhead, moreover vanilla Postgres
+	 * also handles check constraints this way
+	 */
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
-		((Const *) rightop)->constisnull)
+		((Const *) rightop)->constisnull || is_constraint)
 	{
 		/* update the collation of left and right node*/
 		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
-		lsecond(op->args) = (IsA(rightop, Const) && ((Const *) rightop)->constisnull) ? lsecond(op->args) : (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+		lsecond(op->args) = (IsA(rightop, Const) && ((Const *) rightop)->constisnull) ? lsecond(op->args) : 
+								(Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 		return node;
 	}
 
 	patt = (Const *) rightop;
 
 	/* extract pattern */
-	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
-											&prefix, NULL);
+	if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000d) /* CI */
+		pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
+												&prefix, NULL);
+	else
+		pstatus = pattern_fixed_prefix_wrapper(patt, 0, coll_info_of_inputcollid.oid, /* CS */
+												&prefix, NULL);
+
 
 	/* If there is no constant prefix then there's nothing more to do */
 	if (pstatus == Pattern_Prefix_None)
@@ -417,6 +450,22 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
 		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 		return node;
+	}
+
+	/* 
+	 * Obtain the original typeId of leftop so that we can find the compatible =, >= and <
+	 * operator for the original typeId. Else we will always obtain the operators compatible
+	 * with TEXT datatype as the operands get type coerced into TEXT as LIKE is defined for it
+	 * Make the typeId of rightop same as leftop so that we obtain expected operator
+	 * Similarly, update the type of prefix to have appropriate datatypes of operands
+	 * 
+	 * Optimiser will remove Relabel Node during Index scan, see match_index_to_operand
+	 */
+	if (IsA(leftop, RelabelType))
+	{
+		RelabelType	*relabel = (RelabelType *) leftop;
+		leftop = copyObject((Node*) relabel->arg);
+		prefix->consttype = rtypeId = ltypeId = exprType(leftop);
 	}
 
 	/* 
@@ -452,7 +501,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 									InvalidOid,
 									coll_info_of_inputcollid.oid,
 									oprfuncid(optup)));
-
+		
 		ReleaseSysCache(optup);
 	}
 	else
@@ -482,7 +531,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 											oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
-		highest_sort_key = makeConst(TEXTOID, -1, InvalidOid, -1,
+		highest_sort_key = makeConst(rtypeId, -1, InvalidOid, -1,
 										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
 
 		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
@@ -513,7 +562,6 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		}
 		else
 		{
-			constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
 			ret = make_and_qual(node, constant_suffix);
 		}
 		ReleaseSysCache(optup);
@@ -798,12 +846,18 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 }
 
 static Node *
-convert_node_to_funcexpr_for_like(Node *node)
+convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
 	Node *new_node;
 	newFuncExpr->funcid = remove_accents_internal_oid;
-	newFuncExpr->funcresulttype = get_sys_varcharoid();
+	newFuncExpr->funcresulttype = get_sys_nvarcharoid();
+	newFuncExpr->funccollid = inputcollid;
+	newFuncExpr->inputcollid = inputcollid;
+	newFuncExpr->funcretset = false;
+	newFuncExpr->funcvariadic = false;
+	newFuncExpr->location = -1;
+
 
 	if (node == NULL)
 		return node;
@@ -830,7 +884,9 @@ convert_node_to_funcexpr_for_like(Node *node)
 					con = (Const *) new_node;
 					if (con->constisnull)
 						return new_node;
-					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+
+					con->constvalue = OidFunctionCall1(remove_accents_internal_oid, con->constvalue);
+					con->constcollid = InvalidOid;
 					return (Node *) con;
 				}
 				else
@@ -847,7 +903,6 @@ convert_node_to_funcexpr_for_like(Node *node)
 		case T_CaseExpr:
 		case T_RelabelType:
 		case T_CoerceViaIO:
-		case T_CollateExpr:
 			{
 				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
 													TEXTOID, -1,
@@ -861,6 +916,60 @@ convert_node_to_funcexpr_for_like(Node *node)
 								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
 				}
 				newFuncExpr->args = list_make1(new_node);
+				break;
+			}
+		case T_CollateExpr:
+			{
+				CollateExpr *collateexpr = (CollateExpr*) node;
+				if (IsA(collateexpr->arg, Const))
+				{
+					Const *constnode = (Const*) (collateexpr->arg);
+					constnode->constcollid = collateexpr->collOid;
+					new_node = coerce_to_target_type(NULL, (Node *) constnode, exprType((Node *)constnode),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
+					if (unlikely(new_node == NULL))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+					}
+
+					if (IsA(new_node, Const))
+					{
+						constnode = (Const *) new_node;
+						if (constnode->constisnull)
+							return new_node;
+
+						constnode->constvalue = OidFunctionCall1(remove_accents_internal_oid, constnode->constvalue);
+						constnode->constcollid = InvalidOid;
+						return (Node *) constnode;
+					}
+					else
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("Could not convert Const node to desired node type")));
+					}
+				}
+				else
+				{
+					new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
+					if (unlikely(new_node == NULL))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+					}
+					newFuncExpr->args = list_make1(new_node);
+					break;
+				}
 				break;
 			}
 		case T_SubLink:
@@ -893,67 +1002,26 @@ convert_node_to_funcexpr_for_like(Node *node)
 
 
 static Node *
-transform_likenode_for_AI(Node *node, OpExpr *op)
+transform_likenode_for_AI(OpExpr *op)
 {
 	Node		*leftop = (Node *) linitial(op->args);
 	Node		*rightop = (Node *) lsecond(op->args);
 
 	linitial(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(leftop),
-												get_sys_varcharoid(),
+												convert_node_to_funcexpr_for_like(leftop, op->inputcollid),
+												get_sys_nvarcharoid(),
 												exprType(leftop), -1,
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
 												-1);
 	lsecond(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(rightop),
-												get_sys_varcharoid(),
+												convert_node_to_funcexpr_for_like(rightop, op->inputcollid),
+												get_sys_nvarcharoid(),
 												exprType(rightop), -1,
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
 												-1);
-	return node;
-}
-
-/*
- * To handle CS_AI collation for LIKE, we simply find the corresponding CS_AS collation
- * and modify the nodes by removing accents from them
- */
-
-static Node *
-transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
-{
-	int			collidx_of_cs_as;
-
-	tsql_get_database_or_server_collation_oid_internal(true);
-
-	if (!OidIsValid(database_or_server_collation_oid))
-		return node;
-
-	/*
-	 * Find the CS_AS collation corresponding to the CS_AI collation
-	 */
-	collidx_of_cs_as =
-		tsql_find_cs_as_collation_internal(
-											tsql_find_collation_internal(coll_info_of_inputcollid.collname));
-
-
-	/*
-	 * A CS_AS collation should always exist unless a Babelfish CS_AS
-	 * collation was dropped or the lookup tables were not defined in
-	 * lexicographic order.  Program defensively here and just do no
-	 * transformation in this case, which will generate a
-	 * 'nondeterministic collation not supported' error.
-	 */
-	if (NOT_FOUND == collidx_of_cs_as)
-	{
-		elog(DEBUG2, "No corresponding CS_AS collation found for collation \"%s\"", coll_info_of_inputcollid.collname);
-		return node;
-	}
-
-	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-
-	return transform_likenode_for_AI(node, op);	
+	return (Node*) op;
 }
 
 /*
@@ -970,7 +1038,7 @@ supported_collation_for_db_and_like(int32_t code_page)
 }
 
 static Node *
-transform_likenode(Node *node)
+transform_likenode(Node *node, bool is_constraint)
 {
 	if (node && IsA(node, OpExpr))
 	{
@@ -1026,50 +1094,34 @@ transform_likenode(Node *node)
 				return node;
 		}
 
-		if (OidIsValid(like_entry.like_oid) &&
-			OidIsValid(coll_info_of_inputcollid.oid) &&
-			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
+		if (OidIsValid(like_entry.like_oid) && OidIsValid(coll_info_of_inputcollid.oid))
 		{
-			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
-				return transform_from_cs_ai_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
-			else
-				ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("LIKE operator is not supported for \"%s\"", coll_info_of_inputcollid.collname)));
-		}
+			if (coll_info_of_inputcollid.collateflags == 0x000d || coll_info_of_inputcollid.collateflags == 0x000c)	/* AS */
+				return optimise_likenode(node, op, like_entry, coll_info_of_inputcollid, is_constraint);
 
-		if (OidIsValid(like_entry.like_oid) &&
-			OidIsValid(coll_info_of_inputcollid.oid) &&
-			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
-		{
-			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
-				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
-			else
-				ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("LIKE operator is not supported for \"%s\"", coll_info_of_inputcollid.collname)));
-		}
-
-		/* check if this is LIKE expr, and collation is CI_AS */
-		if (OidIsValid(like_entry.like_oid) &&
-			OidIsValid(coll_info_of_inputcollid.oid) &&
-			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
-		{
-			return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
+			else if (coll_info_of_inputcollid.collateflags == 0x000e || coll_info_of_inputcollid.collateflags == 0x000f)	/* AI */
+			{
+				if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
+					return optimise_likenode(node, (OpExpr*) transform_likenode_for_AI(op), like_entry, coll_info_of_inputcollid, is_constraint);
+				else
+					ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("LIKE operator is not supported for \"%s\"", coll_info_of_inputcollid.collname)));
+			}
 		}
 	}
 	return node;
 }
 
 Node *
-pltsql_predicate_transformer(Node *expr)
+pltsql_predicate_transformer(Node *expr, bool is_constraint)
 {
 	if (expr == NULL)
 		return expr;
 
 	if (IsA(expr, OpExpr))
 	{
-		Node *ret = transform_likenode(expr);
+		Node *ret = transform_likenode(expr, is_constraint);
 		if (expr == ret)
 			/* If it's not a like Opexpr, then walk through args */
 			return expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
@@ -1124,13 +1176,18 @@ pltsql_predicate_transformer(Node *expr)
 			if (IsA(qual, BoolExpr))
 			{
 				new_predicates = lappend(new_predicates,
-										 pltsql_predicate_transformer(qual));
+										 pltsql_predicate_transformer(qual, is_constraint));
 			}
 			else if (IsA(qual, OpExpr))
 			{
-				qual = transform_likenode(qual);
-				new_predicates = lappend(new_predicates,
-										 expression_tree_mutator(qual, pgtsql_expression_tree_mutator, NULL));
+				Node *ret = transform_likenode(qual, is_constraint);
+				if (qual == ret)
+					/* If it's not a like Opexpr, then walk through args */
+					new_predicates = lappend(new_predicates,
+						expression_tree_mutator(qual, pgtsql_expression_tree_mutator, NULL));
+				else 
+					/* Singleton predicate */
+					new_predicates = lappend(new_predicates, ret);
 			}
 			else
 				new_predicates = lappend(new_predicates, qual);
@@ -1160,7 +1217,7 @@ pgtsql_expression_tree_mutator(Node *node, void *context)
 		if (caseexpr->arg != NULL)
 			/* CASE expression WHEN... */
 		{
-			pltsql_predicate_transformer((Node *) caseexpr->arg);
+			pltsql_predicate_transformer((Node *) caseexpr->arg, false);
 		}
 	}
 	else if (IsA(node, CaseWhen))
@@ -1168,7 +1225,7 @@ pgtsql_expression_tree_mutator(Node *node, void *context)
 	{
 		CaseWhen   *casewhen = (CaseWhen *) node;
 
-		pltsql_predicate_transformer((Node *) casewhen->expr);
+		pltsql_predicate_transformer((Node *) casewhen->expr, false);
 	}
 
 	/* Recurse through the operands of node */
@@ -1189,7 +1246,7 @@ pgtsql_expression_tree_mutator(Node *node, void *context)
 		 * Possibly a singleton LIKE predicate:  SELECT 'abc' LIKE 'ABC'; This
 		 * is done even in the postgres dialect.
 		 */
-		node = transform_likenode(node);
+		node = transform_likenode(node, false);
 	}
 
 	return node;
@@ -1228,7 +1285,7 @@ pltsql_planner_node_transformer(PlannerInfo *root,
 									   pgtsql_expression_tree_mutator,
 									   NULL);
 	}
-	return pltsql_predicate_transformer(expr);
+	return pltsql_predicate_transformer(expr, false);
 }
 
 static void

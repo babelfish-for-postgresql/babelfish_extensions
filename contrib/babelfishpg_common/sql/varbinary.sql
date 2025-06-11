@@ -341,3 +341,13 @@ DEFAULT FOR TYPE sys.bbf_varbinary USING btree AS
     OPERATOR    5   >  (sys.bbf_varbinary, sys.bbf_varbinary),
     FUNCTION    1   sys.bbf_varbinary_cmp(sys.bbf_varbinary, sys.bbf_varbinary);
 
+CREATE OR REPLACE FUNCTION sys.varbinaryadd(leftarg sys.BBF_VARBINARY, rightarg sys.BBF_VARBINARY)
+RETURNS sys.BBF_VARBINARY
+AS 'byteacat'
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+	LEFTARG    = sys.BBF_VARBINARY,
+	RIGHTARG   = sys.BBF_VARBINARY,
+	PROCEDURE  = sys.varbinaryadd
+);

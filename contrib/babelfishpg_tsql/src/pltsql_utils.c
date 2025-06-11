@@ -57,6 +57,7 @@ PG_FUNCTION_INFO_V1(split_identifier_internal);
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
 static Oid sysadmin_oid = InvalidOid;
+static Oid sys_nvarcharoid = InvalidOid;
 
 /*
  * Following the rule for locktag fields of advisory locks:
@@ -494,6 +495,10 @@ pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, boo
 					*typmod = 0;
 				else if (strcmp(typname, "decimal") == 0)
 					*typmod = 1179652;	/* decimal(18,0) */
+				else if (strcmp(typname, "money") == 0)
+					*typmod = TSQL_MONEY_TYPMOD;
+				else if (strcmp(typname, "smallmoney") == 0)
+					*typmod = TSQL_SMALLMONEY_TYPMOD;
 			}
 			/* for sys.varchar/nvarchar/varbinary(MAX), set typmod back to -1 */
 			else if (*typmod == TSQLMaxTypmod)
@@ -1928,6 +1933,24 @@ Oid get_sys_varcharoid(void)
 	return sys_varcharoid;
 }
 
+Oid get_sys_nvarcharoid(void)
+{
+	Oid sys_oid;
+	if (OidIsValid(sys_nvarcharoid))
+	{
+		return sys_nvarcharoid;
+	}
+	sys_oid = get_namespace_oid("sys", false);
+	sys_nvarcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("nvarchar"), ObjectIdGetDatum(sys_oid));
+	if (!OidIsValid(sys_nvarcharoid))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Oid corresponding to sys.nvarchar datatype could not be found.")));
+	}
+	return sys_nvarcharoid;
+}
+
 Oid get_sysadmin_oid(void)
 {
 	if (!OidIsValid(sysadmin_oid))
@@ -2187,11 +2210,11 @@ char
 *replace_special_chars_fts_impl(char *input_str) {
 	size_t			input_len = strlen(input_str);
 	char			*replacement = NULL;
-	char            *unique_hashes[4];
-	const char		*special_chars[4] = {"~!&|@#$%^*+=\\;:<>?./", "`", "'", "_"};
-	StringInfoData	output_str;
+	char            	*unique_hashes[5];
+	const char		*special_chars[5] = {"~!&|@#$%^*+=\\;:<>?./", "`", "'", "_", "\n"};
+	StringInfoData		output_str;
 	
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 5; i++) {
 		unique_hashes[i] = construct_unique_index_name("specialChars", psprintf("cat%d", i + 1));
 	}
 	
@@ -2200,7 +2223,7 @@ char
 	for (size_t i = 0; i < input_len; i++) {
 		replacement = NULL;
 
-		for (int j = 0; j < 4; j++) {
+		for (int j = 0; j < 5; j++) {
 			if (strchr(special_chars[j], input_str[i]) != NULL) {
 				replacement = unique_hashes[j];
 				break;
@@ -2212,7 +2235,7 @@ char
 			size_t next_char_index = i + 1;
 
 			if (next_char_index < input_len) {
-				for (int k = 0; k < 4; k++) {
+				for (int k = 0; k < 5; k++) {
 					char *is_special_char = strchr(special_chars[k], input_str[next_char_index]);
 					while ((next_char_index < input_len && isspace((unsigned char)input_str[next_char_index])) || (next_char_index < input_len && is_special_char != NULL)) {
 						if (is_special_char != NULL) {
@@ -2263,7 +2286,7 @@ char
 	appendStringInfoChar(&output_str, '\0');
 
 	/* Free the allocated memory */
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 5; i++) {
 		pfree(unique_hashes[i]);
 	}
 

@@ -1,0 +1,31 @@
+-- tsql
+
+select * from source_table_all_chars;
+go
+
+select * from dest_table_chars1;
+go
+EXEC sp_compare_table_counts 'source_table_all_chars', 'dest_table_chars1';
+go
+
+select * from dest_table_chars2;
+go
+EXEC sp_compare_table_counts 'source_table_all_chars', 'dest_table_chars2';
+go
+
+select * from dest_table_chars3;
+go
+EXEC sp_compare_table_counts 'source_table_all_chars', 'dest_table_chars3';
+go
+
+EXEC sp_compare_table_counts 'source_vw_binary', 'dest_vw_binary';
+go
+
+EXEC sp_compare_table_counts 'source_table_boundary', 'dest_table_boundary_case';
+go
+
+EXEC sp_compare_table_counts 'source_table_edge_case', 'dest_table_edge_case';
+go
+
+EXEC sp_compare_table_counts 'source_table_large_dataset', 'dest_table_large_dataset';
+go
