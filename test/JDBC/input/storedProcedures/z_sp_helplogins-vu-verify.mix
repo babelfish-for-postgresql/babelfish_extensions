@@ -94,6 +94,10 @@ GO
 use master
 GO
 
+-- alter db_owner role add member
+alter role db_owner add member u_sp_helplogin_loginwithusermemberofdbowner
+GO
+
 -- tsql user=jdbc_user password=12345678
 -- since this is sysadmin, it has all the permissions over all the databases
 -- this login will see every login and user across all databases

@@ -68,6 +68,10 @@ drop user if exists sp_helplogins_vu_windows_user;
 drop login [helplogins\win]
 GO
 
+drop user if exists u_sp_helplogin_loginwithusermemberofdbowner
+drop login sp_helplogin_loginwithusermemberofdbowner
+GO
+
 drop login sp_helplogin_loginwithdifferentdefaultdb;
 GO
 

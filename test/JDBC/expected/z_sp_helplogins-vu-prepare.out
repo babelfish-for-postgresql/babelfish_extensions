@@ -64,3 +64,8 @@ GO
 -- creating a login which does not have a user but has a different default database
 create login sp_helplogin_loginwithdifferentdefaultdb with password = '12345678', default_database = sp_helplogins_db3;
 GO
+
+-- creating a login which has a user which is a member of the db_owner db role (this is not the same as the login being owner of the db)
+create login sp_helplogin_loginwithusermemberofdbowner with password = '12345678'
+create user u_sp_helplogin_loginwithusermemberofdbowner for login sp_helplogin_loginwithusermemberofdbowner
+GO

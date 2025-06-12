@@ -3776,15 +3776,15 @@ BEGIN
     BEGIN    
         SELECT DISTINCT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-            CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS sid,
+            CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
-                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('YES' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
-                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('YES' AS sys.char(5)) -- this is the case for superuser
-                ELSE CAST('NO' AS sys.char(5))
+                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('yes' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
+                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('yes' AS sys.char(5)) -- this is the case for superuser
+                ELSE CAST('no' AS sys.char(5))
             END AS AUser,
-            CAST('NO' AS sys.char(7)) AS ARemote -- Currently we do not support linking local logins to remote logins
+            CAST('no' AS sys.char(7)) AS ARemote -- Currently we do not support linking local logins to remote logins
         FROM pg_catalog.pg_roles AS Base 
         INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
         LEFT JOIN sys.babelfish_authid_user_ext AS Ext ON Ext.login_name = Base.rolname AND Ext.type != 'R'
@@ -3860,15 +3860,15 @@ BEGIN
 
         SELECT DISTINCT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-            CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS sid,
+            CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
-                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('YES' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
-                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('YES' AS sys.char(5)) -- this is the case for superuser
-                ELSE CAST('NO' AS sys.char(5))
+                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('yes' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
+                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('yes' AS sys.char(5)) -- this is the case for superuser
+                ELSE CAST('no' AS sys.char(5))
             END AS AUser,
-            CAST('NO' AS sys.char(7)) AS ARemote -- Currently we do not support linking local logins to remote logins
+            CAST('no' AS sys.char(7)) AS ARemote -- Currently we do not support linking local logins to remote logins
         FROM pg_catalog.pg_roles AS Base 
         INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
         LEFT JOIN sys.babelfish_authid_user_ext AS Ext ON Ext.login_name = Base.rolname AND Ext.type != 'R'
