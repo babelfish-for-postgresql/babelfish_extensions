@@ -3197,7 +3197,13 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Cannot disable access to the guest user in master or tempdb.")));
+		/*
+		 * Adding entries for user_can_connect might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
 		alter_user_can_connect(stmt->is_grant, grantee_name, dbname);
+		PopActiveSnapshot();
 	}
 	return PLTSQL_RC_OK;
 }
@@ -4036,8 +4042,14 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		/* Is the current login already DB owner? */
 		if (get_role_oid(get_owner_of_db(stmt->db_name), true) == GetSessionUserId())
 		{
+			/*
+			 * Update the owner of a database might involve TOAST table access, so ensure we
+			 * have a valid snapshot.
+			 */
+			PushActiveSnapshot(GetTransactionSnapshot());
 			/* Current login is DB owner, so perform the update */
-			update_db_owner(stmt->new_owner_name, stmt->db_name);	
+			update_db_owner(stmt->new_owner_name, stmt->db_name);
+			PopActiveSnapshot();
 			return PLTSQL_RC_OK;	
 		}			
 	}		
@@ -4083,7 +4095,14 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 
 		/* Grant dbo role to the new owner */
 		grant_revoke_role_to_login(stmt->new_owner_name, get_dbo_role_name(stmt->db_name), NULL, true);
-		update_db_owner(stmt->new_owner_name, stmt->db_name);	
+
+		/*
+		 * Update the owner of a database might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
+		update_db_owner(stmt->new_owner_name, stmt->db_name);
+		PopActiveSnapshot();
 	}
 	PG_FINALLY();
 	{
@@ -4334,8 +4353,14 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 
 	if (!stmt->is_create) /* drop command */
 	{
+		/*
+		 * DROP PARTITION FUNCTION might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
 		/* delete entry from the sys.babelfish_partition_scheme catalog */
 		remove_entry_from_bbf_partition_function(dbid, partition_function_name);
+		PopActiveSnapshot();
 		/* make sure later statements in batch can see the updated catalog entry */
 		CommandCounterIncrement();
 		return PLTSQL_RC_OK;
@@ -4585,8 +4610,14 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 
 	if (!stmt->is_create) /* drop command */
 	{
+		/*
+		 * DROP PARTITION SCHEME might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
 		/* delete entry from the sys.babelfish_partition_scheme catalog */
 		remove_entry_from_bbf_partition_scheme(dbid, partition_scheme_name);
+		PopActiveSnapshot();
 		/* make sure later statements in batch can see the updated catalog entry */
 		CommandCounterIncrement();
 		return PLTSQL_RC_OK;
