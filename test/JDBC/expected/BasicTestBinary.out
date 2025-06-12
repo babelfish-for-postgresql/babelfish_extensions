@@ -1,0 +1,98 @@
+CREATE TABLE BINARY_dt(a BINARY(5), b VARBINARY(10));
+#inserting random values
+INSERT INTO BINARY_dt(a, b) values (1234, 12345);
+~~ROW COUNT: 1~~
+
+INSERT INTO BINARY_dt(a, b) values (NULL, NULL);
+~~ROW COUNT: 1~~
+
+INSERT INTO BINARY_dt(a, b) values (0x31323334, 0x3132333435);
+~~ROW COUNT: 1~~
+
+INSERT INTO BINARY_dt(a, b) values (0x31323334, 0x00);
+~~ROW COUNT: 1~~
+
+INSERT INTO BINARY_dt(a, b) values (0x00, 0x3132333435);
+~~ROW COUNT: 1~~
+
+INSERT INTO BINARY_dt(a, b) values (0x31323334, 0x);
+~~ROW COUNT: 1~~
+
+INSERT INTO BINARY_dt(a, b) values (0x, 0x3132333435);
+~~ROW COUNT: 1~~
+
+
+#boundary conditions
+INSERT INTO BINARY_dt(a, b) values (0x3132333435, 0x31323334353637383940);
+~~ROW COUNT: 1~~
+
+INSERT INTO BINARY_dt(a, b) values (0x313233343536, 0x31323334353637383940);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: String or binary data would be truncated.
+The statement has been terminated.)~~
+
+INSERT INTO BINARY_dt(a, b) values (0x3132333435, 0x3132333435363738394041);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: String or binary data would be truncated.
+The statement has been terminated.)~~
+
+
+#string to binary insert / test left padding
+INSERT INTO BINARY_dt(a, b) values ('abc ', ' abc ');
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+
+
+SELECT * FROM BINARY_dt order by a;
+~~START~~
+binary#!#varbinary
+<NULL>#!#<NULL>
+0000000000#!#3132333435
+0000000000#!#3132333435
+00000004D2#!#00003039
+3132333400#!#00
+3132333400#!#
+3132333400#!#3132333435
+3132333435#!#31323334353637383940
+~~END~~
+
+
+prepst#!# INSERT INTO BINARY_dt(a, b) values(?, ?) #!#binary|-|a|-|1234#!#varbinary|-|b|-|12345
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#binary|-|a|-|12345678#!#varbinary|-|b|-|12345
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: String or binary data would be truncated.
+The statement has been terminated.)~~
+
+prepst#!#exec#!#binary|-|a|-|12345#!#varbinary|-|b|-|12345678999
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: String or binary data would be truncated.
+The statement has been terminated.)~~
+
+prepst#!#exec#!#binary|-|a|-|<NULL>#!#varbinary|-|b|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM BINARY_dt order by a;
+~~START~~
+binary#!#varbinary
+<NULL>#!#<NULL>
+<NULL>#!#<NULL>
+0000000000#!#3132333435
+0000000000#!#3132333435
+00000004D2#!#00003039
+3132333400#!#
+3132333400#!#00
+3132333400#!#3132333435
+3132333400#!#3132333435
+3132333435#!#31323334353637383940
+~~END~~
+
+DROP TABLE BINARY_dt;
+
