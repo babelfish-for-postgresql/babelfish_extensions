@@ -575,8 +575,12 @@ geography_in(PG_FUNCTION_ARGS)
      * Flip coordinates for geography storage
      * This converts from longitude/latitude to latitude/longitude order
      */
-    UpdateFunctionCallInfo(fcinfo_local, 1, geog_datum);
-    geog_datum = st_flip_coord_p(fcinfo_local);
+    if(!is_binary_format)
+    {
+        UpdateFunctionCallInfo(fcinfo_local, 1, geog_datum);
+        geog_datum = st_flip_coord_p(fcinfo_local);
+    }
+
     /* Return the PostGIS geography object */
     PG_RETURN_DATUM(geog_datum);
 }
