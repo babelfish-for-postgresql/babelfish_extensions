@@ -484,16 +484,18 @@ begin
   end if;
   if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i'::pg_catalog.TEXT);
-    start_offset = true;
+    start_offset := true;
   else
     v_regexp_pattern := '#"' || pattern;
+    start_offset := false;
   end if;
 
   if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i'::pg_catalog.TEXT);
-    end_offset = true;
+    end_offset := true;
   else
    v_regexp_pattern := v_regexp_pattern || '#"';
+   end_offset := false;
   end if;
   v_find_result := substring(expression, v_regexp_pattern, '#');
   if v_find_result <> '' collate sys.database_default then
