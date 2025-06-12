@@ -972,3 +972,133 @@ smallmoney
 4936.5600
 ~~END~~
 
+
+-- Try Cast from decimal to smallint/int/bigint
+SELECT TRY_CAST(CAST(789.89 AS DECIMAL(10,2)) AS INT);
+go
+~~START~~
+int
+789
+~~END~~
+
+SELECT TRY_CAST(CAST(789.89 AS DECIMAL(10,2)) AS SMALLINT);
+go
+~~START~~
+smallint
+789
+~~END~~
+
+SELECT TRY_CAST(CAST(789.89 AS DECIMAL(10,2)) AS BIGINT);
+go
+~~START~~
+bigint
+789
+~~END~~
+
+SELECT CAST(CAST(789.89 AS DECIMAL(10,2)) AS INT);
+go
+~~START~~
+int
+789
+~~END~~
+
+SELECT CAST(CAST(789.89 AS DECIMAL(10,2)) AS SMALLINT);
+go
+~~START~~
+smallint
+789
+~~END~~
+
+SELECT CAST(CAST(789.89 AS DECIMAL(10,2)) AS BIGINT);
+go
+~~START~~
+bigint
+789
+~~END~~
+
+SELECT TRY_CAST(CAST('789.89' AS DECIMAL(10,2)) AS SMALLINT);
+go
+~~START~~
+smallint
+789
+~~END~~
+
+SELECT TRY_CAST('789.89' AS INT);
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT TRY_CAST('789' AS BIGINT);
+go
+~~START~~
+bigint
+789
+~~END~~
+
+ 
+-- Try Convert from decimal to smallint/int/bigint
+SELECT TRY_CONVERT(INT, CAST(789.89 AS DECIMAL(10,2)));
+go
+~~START~~
+int
+789
+~~END~~
+
+SELECT TRY_CONVERT(SMALLINT, CAST(789.89 AS DECIMAL(10,2)));
+go
+~~START~~
+smallint
+789
+~~END~~
+
+SELECT TRY_CONVERT(BIGINT, CAST(789.89 AS DECIMAL(10,2)));
+go
+~~START~~
+bigint
+789
+~~END~~
+
+SELECT CONVERT(INT, CAST(789.89 AS DECIMAL(10,2)));
+go
+~~START~~
+int
+789
+~~END~~
+
+SELECT CONVERT(SMALLINT, CAST(789.89 AS DECIMAL(10,2)));
+go
+~~START~~
+smallint
+789
+~~END~~
+
+SELECT CONVERT(BIGINT, CAST(789.89 AS DECIMAL(10,2)));
+go
+~~START~~
+bigint
+789
+~~END~~
+
+SELECT TRY_CONVERT(INT, CAST('789.89' AS DECIMAL(10,2)));
+go
+~~START~~
+int
+789
+~~END~~
+
+SELECT TRY_CONVERT(SMALLINT, '789.89');
+go
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(BIGINT, '789');
+go
+~~START~~
+bigint
+789
+~~END~~
+
