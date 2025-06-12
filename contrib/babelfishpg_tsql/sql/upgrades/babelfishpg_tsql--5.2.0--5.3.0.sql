@@ -219,7 +219,7 @@ BEGIN
     BEGIN    
         SELECT DISTINCT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-            CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
+            CAST(CAST(Base.oid AS BIGINT) AS sys.varbinary(85)) AS SID,
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
@@ -303,7 +303,7 @@ BEGIN
 
         SELECT DISTINCT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-            CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
+            CAST(CAST(Base.oid AS BIGINT) AS sys.varbinary(85)) AS SID,
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
