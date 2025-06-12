@@ -2043,7 +2043,7 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 {
 	bool start_offset = false;
 	int  itr = 0;
-	bool end_offset;
+	bool end_offset = false;
 
 	if (pattern == NULL || strlen(pattern) == 0)
 		return 0;

@@ -1216,3 +1216,76 @@ bigint
 4
 ~~END~~
 
+
+--Without collation
+select PATINDEX('%ing', 'This is a patindex testing string') AS EndPattern
+GO
+~~START~~
+bigint
+31
+~~END~~
+
+select PATINDEX('%', 'This is a patindex test') AS AllWildcard
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select PATINDEX('ing%', 'This is a patindex testing string') AS SingleWildcard
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+select PATINDEX('%ing%', 'This is a patindex testing string') AS Pattern
+go
+~~START~~
+bigint
+24
+~~END~~
+
+select PATINDEX('i%g', 'This is a patindex testing string') AS Pattern
+go
+~~START~~
+bigint
+0
+~~END~~
+
+--With Collation
+select PATINDEX('%ing', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS EndPattern
+GO
+~~START~~
+bigint
+31
+~~END~~
+
+select PATINDEX('%', 'This is a patindex test' COLLATE Latin1_General_CI_AI) AS AllWildcard
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select PATINDEX('ing%', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS SingleWildcard
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+select PATINDEX('%ing%', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS Pattern
+go
+~~START~~
+bigint
+24
+~~END~~
+
+select PATINDEX('i%g', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS Pattern
+go
+~~START~~
+bigint
+0
+~~END~~
+

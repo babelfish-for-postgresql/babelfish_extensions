@@ -520,3 +520,26 @@ SELECT PATINDEX(N'%Z%', N'ABC😀ZABC' COLLATE Latin1_General_CS_AI)
 SELECT PATINDEX(N'😀%', N'😀A' COLLATE Latin1_General_CS_AI)
 SELECT PATINDEX(N'%D😀%', N'ABCD😀ABCD' COLLATE Latin1_General_CS_AI)
 GO
+
+--Without collation
+select PATINDEX('%ing', 'This is a patindex testing string') AS EndPattern
+GO
+select PATINDEX('%', 'This is a patindex test') AS AllWildcard
+GO
+select PATINDEX('ing%', 'This is a patindex testing string') AS SingleWildcard
+GO
+select PATINDEX('%ing%', 'This is a patindex testing string') AS Pattern
+go
+select PATINDEX('i%g', 'This is a patindex testing string') AS Pattern
+go
+--With Collation
+select PATINDEX('%ing', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS EndPattern
+GO
+select PATINDEX('%', 'This is a patindex test' COLLATE Latin1_General_CI_AI) AS AllWildcard
+GO
+select PATINDEX('ing%', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS SingleWildcard
+GO
+select PATINDEX('%ing%', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS Pattern
+go
+select PATINDEX('i%g', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS Pattern
+go
