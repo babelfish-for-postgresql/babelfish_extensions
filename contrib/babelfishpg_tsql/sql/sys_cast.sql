@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_smallint(IN arg ANYELEMENT)
 RETURNS SMALLINT
 AS $BODY$ BEGIN
     CASE pg_typeof(arg)
-        WHEN 'numeric'::regtype, 'double precision'::regtype, 'real'::regtype THEN
+        WHEN 'numeric'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.decimal'::regtype THEN
             RETURN CAST(TRUNC(arg) AS SMALLINT);
         WHEN 'sys.money'::regtype, 'sys.smallmoney'::regtype THEN
             RETURN CAST(ROUND(arg) AS BIGINT);
@@ -40,7 +40,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_int(IN arg ANYELEMENT)
 RETURNS INT
 AS $BODY$ BEGIN
     CASE pg_typeof(arg)
-        WHEN 'numeric'::regtype, 'double precision'::regtype, 'real'::regtype THEN
+        WHEN 'numeric'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.decimal'::regtype THEN
             RETURN CAST(TRUNC(arg) AS INT);
         WHEN 'sys.money'::regtype, 'sys.smallmoney'::regtype THEN
             RETURN CAST(ROUND(arg) AS BIGINT);
@@ -65,7 +65,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_bigint(IN arg ANYELEMENT)
 RETURNS BIGINT
 AS $BODY$ BEGIN
     CASE pg_typeof(arg)
-        WHEN 'numeric'::regtype, 'double precision'::regtype, 'real'::regtype THEN
+        WHEN 'numeric'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.decimal'::regtype THEN
             RETURN CAST(TRUNC(arg) AS BIGINT);
         WHEN 'sys.money'::regtype, 'sys.smallmoney'::regtype THEN
             RETURN CAST(ROUND(arg) AS BIGINT);
