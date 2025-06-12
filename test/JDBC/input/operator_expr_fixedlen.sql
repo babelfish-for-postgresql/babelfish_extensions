@@ -255,6 +255,11 @@ DECLARE @revenue MONEY = 10000.00; DECLARE @costs MONEY = 6000.00; DECLARE @targ
 select (@revenue - @costs) * 1.13
 go
 
+-- JIRA query
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,2) = 678.90, @int1 INT = 2, @int2 INT = 3;
+SELECT (@num1 * @num2) / (@int1 + @int2) AS result;
+GO
+
 -- edge cases
 -- Basic Money and SmallMoney Declarations
 DECLARE @m1 MONEY = 922337203685477.5807; -- Max
@@ -279,6 +284,7 @@ DECLARE @ti2 TINYINT = 0;                   -- Min
 
 -- Addition Operations
 SELECT (@bi1 + cast(-123 as int)) * 1.13;
+SELECT (@bi1 * 1.13);
 SELECT (@bi2 + cast(123 as smallint)) * 2.5;
 SELECT (@i1 + cast(-123 as bigint)) * 0.5;
 SELECT (@si1 + cast(123 as tinyint)) * 1.13;
@@ -288,6 +294,7 @@ SELECT (@bi1 - @i1) * 1.13;
 SELECT (@bi2 - @si1) * 2.5;
 SELECT (@i2 - @ti1) * 0.5;
 SELECT (@si2 - @ti2) * 1.13;
+SELECT (@si2 * 1.13);
 
 -- Multiplication Operations
 SELECT (@i1 * cast(1 as smallint)) * 2.5;
@@ -332,6 +339,12 @@ SELECT (@i2 * @ti1) * 0.5;    -- negative and positive
 SELECT ((@bi1 - @i1) * (@si1 - @ti1)) * 1.13;
 SELECT ((@bi2 - @i2) / (@si2 + @ti2)) * 2.5;
 SELECT ((@i1 * @si1) % (@ti1 + 1)) * 0.5;
+GO
+
+-- Misc declare statements
+DECLARE @bi1 BIGINT = 1234
+SELECT (@bi1 + cast(-123 as int)) * 1.13;
+SELECT (@bi1 * 1.13);
 GO
 
 -- UDT Combinations

@@ -653,6 +653,16 @@ numeric
 ~~END~~
 
 
+-- JIRA query
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,2) = 678.90, @int1 INT = 2, @int2 INT = 3;
+SELECT (@num1 * @num2) / (@int1 + @int2) AS result;
+GO
+~~START~~
+numeric
+16762.041000000000000
+~~END~~
+
+
 -- edge cases
 -- Basic Money and SmallMoney Declarations
 DECLARE @m1 MONEY = 922337203685477.5807; -- Max
@@ -701,6 +711,7 @@ DECLARE @ti1 TINYINT = 255;                 -- Max
 DECLARE @ti2 TINYINT = 0;                   -- Min
 -- Addition Operations
 SELECT (@bi1 + cast(-123 as int)) * 1.13;
+SELECT (@bi1 * 1.13);
 SELECT (@bi2 + cast(123 as smallint)) * 2.5;
 SELECT (@i1 + cast(-123 as bigint)) * 0.5;
 SELECT (@si1 + cast(123 as tinyint)) * 1.13;
@@ -709,6 +720,7 @@ SELECT (@bi1 - @i1) * 1.13;
 SELECT (@bi2 - @si1) * 2.5;
 SELECT (@i2 - @ti1) * 0.5;
 SELECT (@si2 - @ti2) * 1.13;
+SELECT (@si2 * 1.13);
 -- Multiplication Operations
 SELECT (@i1 * cast(1 as smallint)) * 2.5;
 SELECT (@si1 * cast(1 as tinyint)) * 0.5;
@@ -753,6 +765,11 @@ numeric
 
 ~~START~~
 numeric
+10422410401645896661.91
+~~END~~
+
+~~START~~
+numeric
 -23058430092136939212.5
 ~~END~~
 
@@ -783,6 +800,11 @@ numeric
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
+
+~~START~~
+numeric
+-37027.84
+~~END~~
 
 ~~START~~
 numeric
@@ -938,6 +960,22 @@ numeric
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
+
+
+-- Misc declare statements
+DECLARE @bi1 BIGINT = 1234
+SELECT (@bi1 + cast(-123 as int)) * 1.13;
+SELECT (@bi1 * 1.13);
+GO
+~~START~~
+numeric
+1255.43
+~~END~~
+
+~~START~~
+numeric
+1394.42
+~~END~~
 
 
 -- UDT Combinations

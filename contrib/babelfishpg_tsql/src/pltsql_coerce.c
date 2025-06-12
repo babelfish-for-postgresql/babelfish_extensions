@@ -1303,17 +1303,20 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					{
 						val = con->constvalue;
 						num = int64_to_numeric(val);
-						if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_tds_numeric_get_typmod)
-							return (*pltsql_protocol_plugin_ptr)->get_tds_numeric_get_typmod(num);
+					if ((*common_utility_plugin_ptr->tsql_numeric_get_typmod))
+					{
+						return ((*common_utility_plugin_ptr->tsql_numeric_get_typmod)(num));
+					}
 
 						if (found != NULL) *found = false;
 						return -1;
 					}
 
 					num = (Numeric) con->constvalue;
-					if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_tds_numeric_get_typmod)
-						return (*pltsql_protocol_plugin_ptr)->get_tds_numeric_get_typmod(num);
-					
+					if ((*common_utility_plugin_ptr->tsql_numeric_get_typmod))
+					{
+						return ((*common_utility_plugin_ptr->tsql_numeric_get_typmod)(num));
+					}
 					if (found != NULL) *found = false;
 					return -1;
 				}
