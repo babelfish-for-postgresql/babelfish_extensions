@@ -316,7 +316,7 @@ static st_pointn_t st_pointn_p;
 typedef Datum (*st_isvalid_t)(PG_FUNCTION_ARGS);
 static st_isvalid_t st_isvalid_p;
 
-static void validate_geography_latitude(Datum geom_datum);
+static void validate_geography_latitude(Datum geom_datum, bool is_flipped);
 
 PG_FUNCTION_INFO_V1(geometry_in);
 PG_FUNCTION_INFO_V1(geography_in);
@@ -375,7 +375,7 @@ GetGeometryTypeName(FunctionCallInfoBaseData *fcinfo, Datum geom_datum)
 }
 
 static void 
-validate_geography_latitude(Datum geom_datum) 
+validate_geography_latitude(Datum geom_datum, bool is_flipped)
 {
     LOCAL_FCINFO(fcinfo_local, 2);  /* Local function call info with max 2 args */
     char *geom_type;
@@ -390,8 +390,17 @@ validate_geography_latitude(Datum geom_datum)
     
     /* Get geometry type and flip coordinates */
     geom_type = GetGeometryTypeName(fcinfo_local, geom_datum);
-    UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
-    flipped_geom = st_flipcoordinates_p(fcinfo_local);
+    
+    if (!is_flipped) 
+    {
+        /* For text format, flip coordinates before validation */
+        UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
+        flipped_geom = st_flipcoordinates_p(fcinfo_local);
+    } 
+    else 
+    {
+        flipped_geom = geom_datum;
+    }
 
     if (strcmp(geom_type, "ST_Point") == 0) 
     {
@@ -399,7 +408,8 @@ validate_geography_latitude(Datum geom_datum)
         UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
         lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
         
-        if (lat < -90.0 || lat > 90.0) {
+        if (lat < -90.0 || lat > 90.0) 
+        {
             ereport(ERROR,
                 (errcode(ERRCODE_DATA_EXCEPTION),
                  errmsg("Latitude values must be between -90 and 90 degrees")));
@@ -419,7 +429,8 @@ validate_geography_latitude(Datum geom_datum)
             UpdateFunctionCallInfo(fcinfo_local, 1, point);
             lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
             
-            if (lat < -90.0 || lat > 90.0) {
+            if (lat < -90.0 || lat > 90.0)
+            {
                 ereport(ERROR,
                     (errcode(ERRCODE_DATA_EXCEPTION),
                      errmsg("Latitude values must be between -90 and 90 degrees (point %d in linestring)", i)));
@@ -557,6 +568,12 @@ geography_in(PG_FUNCTION_ARGS)
                              Int32GetDatum(DEFAULT_GEOGRAPHY_SRID));
         geog_datum = gserialized_set_srid_p(fcinfo_local);
 
+        /* 
+         * Flip coordinates for geography storage
+         * This converts from longitude/latitude to latitude/longitude order
+         */
+        UpdateFunctionCallInfo(fcinfo_local, 1, geog_datum);
+        geog_datum = st_flip_coord_p(fcinfo_local);
     }
 
     /* Get the type of the resulting geography */
@@ -569,17 +586,8 @@ geography_in(PG_FUNCTION_ARGS)
      * Validate latitude values
      * Geography objects require latitude values between -90 and 90 degrees
      */
-    validate_geography_latitude(geog_datum);
+    validate_geography_latitude(geog_datum, true);
 
-    /* 
-     * Flip coordinates for geography storage
-     * This converts from longitude/latitude to latitude/longitude order
-     */
-    if(!is_binary_format)
-    {
-        UpdateFunctionCallInfo(fcinfo_local, 1, geog_datum);
-        geog_datum = st_flip_coord_p(fcinfo_local);
-    }
 
     /* Return the PostGIS geography object */
     PG_RETURN_DATUM(geog_datum);
@@ -680,7 +688,7 @@ get_geography_from_text(PG_FUNCTION_ARGS)
     check_geom_type(geom_type);
 
     /* Validate latitude values using helper function */
-    validate_geography_latitude(geom_datum);
+    validate_geography_latitude(geom_datum, false);
 
     UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
     flipped_geom_datum = st_flipcoordinates_p(fcinfo_local);
@@ -789,7 +797,7 @@ char_to_geo_common(text *input_text, bool is_geography)
              * For non-empty geography points, validate latitude values
              * to ensure they are within the valid range (-90 to 90 degrees)
              */
-            validate_geography_latitude(geom_datum);
+            validate_geography_latitude(geom_datum, false);
         }
     }
 
@@ -1505,105 +1513,78 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
     return true;
 }
 
-
-
-/* Copies coordinate data based on geometry properties */
+/* Handle LINE type geometry data copying */
 static bytea*
-copy_coord_data_from_geom(GeoDataInfo *geom_data, uint8 *result_data, bytea *result, bool is_geography)
+handle_line_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *result, bool is_geography)
 {
-    if (geom_data->is_empty) 
+    uint8_t *src;
+    uint8_t *dst;
+    int i, stride, offset;
+    bool has_z, has_m;
+
+    offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+    src = geom_data->byte_data + offset + NPOINTS_SIZE;
+    
+    /* Set destination pointer based on number of points */
+    dst = (geom_data->npoints > 2) ? result_data + HEADER_SIZE + NPOINTS_SIZE : result_data + HEADER_SIZE;
+    
+    has_z = (geom_data->srid_flag & DIMENSION_MASK) == POSTGIS_DIM_XYZ || 
+            (geom_data->srid_flag & DIMENSION_MASK) == POSTGIS_DIM_XYZM;
+    has_m = (geom_data->srid_flag & DIMENSION_MASK) == POSTGIS_DIM_XYM || 
+            (geom_data->srid_flag & DIMENSION_MASK) == POSTGIS_DIM_XYZM;
+    
+    /* Handle XY case with direct memcpy */
+    if (!has_z && !has_m) 
     {
-        /* For empty geometries, copy the empty coordinate pattern */
-        memcpy(result_data + HEADER_SIZE, EMPTY_COORD, sizeof(EMPTY_COORD));
-        
-        /* 
-         * For point geometries, set the type at the end of the coordinates
-         * This identifies it as a point type in the empty geometry format
-         */
-        if (geom_data->byte_data[GEOM_TYPE_POS_POSTGIS] == POINT_TYPE)
-            result_data[HEADER_SIZE + sizeof(EMPTY_COORD)] = POINT_TYPE;
-        else if (geom_data->byte_data[GEOM_TYPE_POS_POSTGIS] == LINE_TYPE)
-            result_data[HEADER_SIZE + sizeof(EMPTY_COORD)] = LINE_TYPE;
-    } 
-    else 
+        memcpy(dst, src, geom_data->coord_size);
+        if (geom_data->npoints > 2) 
+        {
+            memcpy(dst + geom_data->coord_size, line_end_metada, sizeof(line_end_metada));
+        }
+        return result;
+    }
+    
+    /* Calculate stride for point-to-point movement */
+    stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
+    
+    /* Copy XY coordinates */
+    for (i = 0; i < geom_data->npoints; i++) 
     {
-        /* 
-         * For non-empty geometries, determine the source offset based on SRID presence
-         * and copy the coordinate data from the source
-         */
-        int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
-
-        if (geom_data->postgis_geom_type == LINE_TYPE)
+        memcpy(dst + (i * COORD_SIZE * 2), src + (i * stride), COORD_SIZE * 2);
+    }
+    
+    /* Copy Z coordinates if present */
+    if (has_z) 
+    {
+        for (i = 0; i < geom_data->npoints; i++) 
         {
-            uint8_t *src = geom_data->byte_data + offset + 4;
-            uint8_t *dst;
-            int i, stride;
-            bool has_z = (geom_data->srid_flag & DIMENSION_MASK) == POSTGIS_DIM_XYZ || 
-                         (geom_data->srid_flag & DIMENSION_MASK) == POSTGIS_DIM_XYZM;
-            bool has_m = (geom_data->srid_flag & DIMENSION_MASK) == POSTGIS_DIM_XYM || 
-                         (geom_data->srid_flag & DIMENSION_MASK) == POSTGIS_DIM_XYZM;
-            
-            /* Set destination pointer based on number of points */
-            dst = (geom_data->npoints > 2) ? result_data + HEADER_SIZE + NPOINTS_SIZE : result_data + HEADER_SIZE;
-            
-            /* Handle XY case with direct memcpy */
-            if (!has_z && !has_m) 
-            {
-                memcpy(dst, src, geom_data->coord_size);
+            double *z_coord = (double*)(src + (i * stride) + COORD_SIZE * 2);
 
-                if (geom_data->npoints > 2) 
-                {
-                    memcpy(dst + geom_data->coord_size, line_end_metada, sizeof(line_end_metada));
-                }
-                return result;
-            }
-            
-            /* Calculate stride for point-to-point movement */
-            stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
-            
-            /* Copy XY coordinates */
-            for (i = 0; i < geom_data->npoints; i++) 
-            {
-                memcpy(dst + (i * COORD_SIZE * 2), src + (i * stride), COORD_SIZE * 2);
-            }
-            
-            /* Copy Z coordinates if present */
-            if (has_z) 
-            {
-                for (i = 0; i < geom_data->npoints; i++) 
-                {
-                    double *z_coord = (double*)(src + (i * stride) + COORD_SIZE * 2);
-
-                    if (isnan(*z_coord))
-                        memcpy(dst + (geom_data->npoints * COORD_SIZE * 2) + (i * COORD_SIZE), SPECIFIC_NAN, COORD_SIZE);
-                    else
-                        memcpy(dst + (geom_data->npoints * COORD_SIZE * 2) + (i * COORD_SIZE), z_coord, COORD_SIZE);
-                }
-            }
-            
-            if (has_m) 
-            {
-                for (i = 0; i < geom_data->npoints; i++) 
-                {
-                    double *m_coord = (double*)(src + (i * stride) + COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0));
-
-                    if (isnan(*m_coord))
-                        memcpy(dst + (geom_data->npoints * COORD_SIZE * 2) + (has_z ? geom_data->npoints * COORD_SIZE : 0) + (i * COORD_SIZE), SPECIFIC_NAN, COORD_SIZE);
-                    else
-                        memcpy(dst + (geom_data->npoints * COORD_SIZE * 2) + (has_z ? geom_data->npoints * COORD_SIZE : 0) + (i * COORD_SIZE), m_coord, COORD_SIZE);
-                }
-            }
-            
-            /* Copy line_end_metada array for linestrings with more than 2 points */
-            if (geom_data->npoints > 2) 
-            {
-                memcpy(dst + geom_data->coord_size, line_end_metada, sizeof(line_end_metada));
-            }
+            if (isnan(*z_coord))
+                memcpy(dst + (geom_data->npoints * COORD_SIZE * 2) + (i * COORD_SIZE), SPECIFIC_NAN, COORD_SIZE);
+            else
+                memcpy(dst + (geom_data->npoints * COORD_SIZE * 2) + (i * COORD_SIZE), z_coord, COORD_SIZE);
         }
-        else if (geom_data->postgis_geom_type == POINT_TYPE)
+    }
+    
+    /* Copy M coordinates if present */
+    if (has_m) 
+    {
+        for (i = 0; i < geom_data->npoints; i++) 
         {
-            memcpy(result_data + HEADER_SIZE, geom_data->byte_data + offset, geom_data->coord_size);
+            double *m_coord = (double*)(src + (i * stride) + COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0));
+
+            if (isnan(*m_coord))
+                memcpy(dst + (geom_data->npoints * COORD_SIZE * 2) + (has_z ? geom_data->npoints * COORD_SIZE : 0) + (i * COORD_SIZE), SPECIFIC_NAN, COORD_SIZE);
+            else
+                memcpy(dst + (geom_data->npoints * COORD_SIZE * 2) + (has_z ? geom_data->npoints * COORD_SIZE : 0) + (i * COORD_SIZE), m_coord, COORD_SIZE);
         }
+    }
+    
+    /* Copy line_end_metada array for linestrings with more than 2 points */
+    if (geom_data->npoints > 2) 
+    {
+        memcpy(dst + geom_data->coord_size, line_end_metada, sizeof(line_end_metada));
     }
     
     return result;
@@ -1615,10 +1596,15 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
 {
     bytea *result;
     uint8 *result_data;
+    int total_size;
+    int offset;
     
-    /* Calculate total size needed for the result bytea: 4(SRID) + 2 ( GEOM TYPE) + coordinate size + line_end_metada size */
-    int total_size = SRID_SIZE + GEOM_TYPE_SIZE  + geom_data->coord_size 
-                     + (geom_data->npoints > 2 ? NPOINTS_SIZE + sizeof(line_end_metada) : 0);
+    /* Calculate total size needed for the result bytea */
+    total_size = SRID_SIZE + GEOM_TYPE_SIZE + geom_data->coord_size;
+    if (geom_data->npoints > 2 && geom_data->postgis_geom_type == LINE_TYPE) 
+    {
+        total_size += NPOINTS_SIZE + sizeof(line_end_metada);
+    }
     
     /* Allocate memory for the result bytea and set its size */
     result = (bytea *) palloc(VARHDRSZ + total_size);
@@ -1627,19 +1613,14 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     /* Get pointer to the data portion of the bytea */
     result_data = (uint8 *)VARDATA(result);
     
-    /* 
-     * Handle SRID data:
-     * - For geography objects or geometries with SRID flag set: copy SRID from source
-     * - Otherwise if SRID is not present : set SRID to zero
-     */
+    /* Handle SRID data */
     if (is_geography || geom_data->has_srid) 
     {
-        /* Copy SRID from source data (4 bytes starting at position 5) */
-        memcpy(result_data , geom_data->byte_data + SRID_POSTGIS_POS, geom_data->srid_size);
-    } else 
+        memcpy(result_data, geom_data->byte_data + SRID_POSTGIS_POS, geom_data->srid_size);
+    } 
+    else 
     {
-        /* Set SRID to zero */
-        memset(result_data , 0, geom_data->srid_size);
+        memset(result_data, 0, geom_data->srid_size);
     }
     
     /* Set geometry type in header */
@@ -1653,14 +1634,36 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     }
     result_data[GEOM_TYPE_POS_RESULT + 1] = geom_data->geom_type;
 
-    if ((geom_data->npoints > 2) && geom_data->postgis_geom_type == LINE_TYPE)
+    /* Handle empty geometry */
+    if (geom_data->is_empty) 
     {
-        /* Copy npoints to the next four bytes of results */
-        memcpy(result_data + HEADER_SIZE , &geom_data->npoints, NPOINTS_SIZE);
+        memcpy(result_data + HEADER_SIZE, EMPTY_COORD, sizeof(EMPTY_COORD));
+        
+        /* Set the type at the end of coordinates for empty geometries */
+        if (geom_data->byte_data[GEOM_TYPE_POS_POSTGIS] == POINT_TYPE)
+            result_data[HEADER_SIZE + sizeof(EMPTY_COORD)] = POINT_TYPE;
+        else if (geom_data->byte_data[GEOM_TYPE_POS_POSTGIS] == LINE_TYPE)
+            result_data[HEADER_SIZE + sizeof(EMPTY_COORD)] = LINE_TYPE;
     }
-    
-    /* Copy coordinate data using the helper function */
-    copy_coord_data_from_geom(geom_data, result_data, result, is_geography);
+    /* Handle non-empty geometries */
+    else 
+    {
+        offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+        
+        if (geom_data->postgis_geom_type == LINE_TYPE)
+        {
+            /* Copy npoints for linestrings with more than 2 points */
+            if (geom_data->npoints > 2)
+            {
+                memcpy(result_data + HEADER_SIZE, &geom_data->npoints, NPOINTS_SIZE);
+            }
+            return handle_line_type_data(geom_data, result_data, result, is_geography);
+        }
+        else if (geom_data->postgis_geom_type == POINT_TYPE)
+        {
+            memcpy(result_data + HEADER_SIZE, geom_data->byte_data + offset, geom_data->coord_size);
+        }
+    }
     
     return result;
 }

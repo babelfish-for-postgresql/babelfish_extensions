@@ -205,6 +205,7 @@ Datum		TdsTypeXMLToDatum(StringInfo buf);
 Datum		TdsTypeUIDToDatum(StringInfo buf);
 Datum		TdsTypeSqlVariantToDatum(StringInfo buf);
 Datum		TdsTypeSpatialToDatum(StringInfo buf);
+static Datum HandleLineType(StringInfo buf, StringInfo destBuf, int npoints, bool has_z, bool has_m, bool has_bbox);
 
 static void FetchTvpTypeOid(const ParameterToken token, char *tvpName);
 
@@ -1538,13 +1539,193 @@ TdsTypeUIDToDatum(StringInfo buf)
 	PG_RETURN_POINTER(uuid);
 }
 
+/* Helper function to handle LINETYPE geometries */
+static Datum
+HandleLineType(StringInfo buf, StringInfo destBuf, int npoints, bool has_z, bool has_m, bool has_bbox)
+{
+    bytea   *result;
+    int     nbytes;
+    int     stride;
+    int     pointSize;
+    char    *src = NULL;
+    char    *tempBuf = NULL;
+    float   *bbox = NULL;
+    int     bboxSize = 16;
+    const int geomType = LINETYPE;
+	double x, y, z, m;
+    float minX, maxX, minY, maxY, minZ, maxZ, minM, maxM;
+
+    /* Calculate stride based on dimensions */
+    stride = 16 + (has_z ? 8 : 0) + (has_m ? 8 : 0);
+
+    if (npoints == 2) 
+    {
+        /* Handle linestring with 2 points */
+        pointSize = stride * npoints;
+        nbytes = destBuf->len + 8 + pointSize;
+        
+        result = (bytea *) palloc0(nbytes + VARHDRSZ);
+        SET_VARSIZE(result, nbytes + VARHDRSZ);
+        
+        /* Add geometry type and point count */
+        appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
+        appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
+        
+        src = buf->data + buf->cursor + COORD_DATA_OFFSET;
+        
+        if (!has_z && !has_m) 
+        {
+            /* Simple XY case */
+            appendBinaryStringInfo(destBuf, src, npoints * 16);
+        } 
+        else 
+        {
+            tempBuf = palloc0(pointSize);
+            
+            for (int i = 0; i < npoints; i++) 
+            {
+                /* Copy XY coordinates */
+                memcpy(tempBuf + (i * stride), src + (i * 16), 16);
+                
+                /* Copy Z coordinates if present */
+                if (has_z) {
+                    memcpy(tempBuf + (i * stride) + 16, 
+                           src + (npoints * 16) + (i * 8), 8);
+                }
+                
+                /* Copy M coordinates if present */
+                if (has_m) {
+                    memcpy(tempBuf + (i * stride) + 16 + (has_z ? 8 : 0),
+                           src + (npoints * 16) + (has_z ? npoints * 8 : 0) + (i * 8), 8);
+                }
+            }
+            
+            appendBinaryStringInfo(destBuf, tempBuf, pointSize);
+        }
+    }
+    else if (npoints > 2) 
+    {
+        /* Handle linestring with more than 2 points (with bbox) */
+        
+        pointSize = stride * npoints;
+        
+        /* Calculate bbox size */
+        if (has_z)
+            bboxSize += 8;
+        if (has_m)
+            bboxSize += 8;
+        
+        tempBuf = palloc0(pointSize);
+        bbox = (float *) palloc0(bboxSize);
+        
+        /* Initialize min/max values with first point */
+        src = buf->data + buf->cursor + COORD_DATA_OFFSET + 4;
+        
+        memcpy(&x, src, 8);
+        memcpy(&y, src + 8, 8);
+        minX = maxX = (float)x;
+        minY = maxY = (float)y;
+        
+        if (has_z) 
+        {
+            memcpy(&z, src + (npoints * 16), 8);
+            minZ = maxZ = (float)z;
+        }
+        
+        if (has_m) 
+        {
+            int mOffset = npoints * 16 + (has_z ? npoints * 8 : 0);
+            memcpy(&m, src + mOffset, 8);
+            minM = maxM = (float)m;
+        }
+        
+        /* Process points and build bbox */
+        for (int i = 0; i < npoints; i++) 
+        {
+            /* Handle XY coordinates */
+            memcpy(&x, src + (i * 16), 8);
+            memcpy(&y, src + (i * 16) + 8, 8);
+            
+            minX = Min(minX, (float)x);
+            maxX = Max(maxX, (float)x);
+            minY = Min(minY, (float)y);
+            maxY = Max(maxY, (float)y);
+            
+            memcpy(tempBuf + (i * stride), src + (i * 16), 16);
+            
+            /* Handle Z coordinates */
+            if (has_z) 
+            {
+                memcpy(&z, src + (npoints * 16) + (i * 8), 8);
+                minZ = Min(minZ, (float)z);
+                maxZ = Max(maxZ, (float)z);
+                
+                memcpy(tempBuf + (i * stride) + 16, 
+                       src + (npoints * 16) + (i * 8), 8);
+            }
+            
+            /* Handle M coordinates */
+            if (has_m) 
+            {
+                int mOffset = npoints * 16 + (has_z ? npoints * 8 : 0);
+                memcpy(&m, src + mOffset + (i * 8), 8);
+                minM = Min(minM, (float)m);
+                maxM = Max(maxM, (float)m);
+                
+                memcpy(tempBuf + (i * stride) + 16 + (has_z ? 8 : 0),
+                       src + mOffset + (i * 8), 8);
+            }
+        }
+        
+        /* Fill bbox buffer */
+        bbox[0] = minX;
+        bbox[1] = maxX;
+        bbox[2] = minY;
+        bbox[3] = maxY;
+        
+        if (has_z) 
+        {
+            bbox[4] = minZ;
+            bbox[5] = maxZ;
+        }
+        
+        if (has_m) 
+        {
+            int offset = 4 + (has_z ? 2 : 0);
+            bbox[offset] = minM;
+            bbox[offset + 1] = maxM;
+        }
+        
+        nbytes = destBuf->len + bboxSize + 8 + pointSize;
+        result = (bytea *) palloc0(nbytes + VARHDRSZ);
+        SET_VARSIZE(result, nbytes + VARHDRSZ);
+        
+        /* Add all components to buffer */
+        appendBinaryStringInfo(destBuf, (char *)bbox, bboxSize);
+        appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
+        appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
+        appendBinaryStringInfo(destBuf, tempBuf, pointSize);
+    }
+    else 
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                 errmsg("Unsupported LINETYPE configuration")));
+    }
+
+    /* Copy final buffer to result */
+    memcpy(VARDATA(result), &destBuf->data[0], nbytes);
+
+    return PointerGetDatum(result);
+}
+
 /* Helper Function to convert Spatial Type values into Datum. */
 Datum
 TdsTypeSpatialToDatum(StringInfo buf)
 {
     bytea   *result;         /* Result bytea to be returned */
     int32   geomType = 0;    /* PostGIS geometry type */
-    int     nbytes;          /* Total bytes needed for result */
+    int     nbytes = 0;      /* Total bytes needed for result */
     int     npoints = 0;     /* Number of points in geometry */
     bool    isempty = false; /* Flag indicating if geometry is empty */
     uint8_t lastByte = buf->data[buf->len - 1]; /* Last byte in buffer, used for empty detection */
@@ -1554,12 +1735,6 @@ TdsTypeSpatialToDatum(StringInfo buf)
     bool    has_m = false;   /* Has M dimension */
     bool    has_bbox = false; /* Has bounding box */
     int     npoints_data = 0; /* Points count from data */
-    char    *tempBuf = NULL; /* Temporary buffer for coordinate reordering */
-    int     stride;          /* Stride for coordinate data */
-    int     pointSize;       /* Total size of point data */
-    char    *src;            /* Source pointer for coordinate data */
-    float   *bbox = NULL;    /* Bounding box data */
-    int     bboxSize = 16;   /* Size of bounding box data */
 
     /* Copy SRID (first 4 bytes) from input buffer */
     appendBinaryStringInfo(destBuf, buf->data + buf->cursor, SRID_SIZE);
@@ -1578,7 +1753,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
 
     /* Determine geometry type and dimension flags */
     switch (geomTypeId) 
-	{
+    {
         /* POINT types */
         case POINT_XY:
             geomType = POINTTYPE;
@@ -1646,11 +1821,11 @@ TdsTypeSpatialToDatum(StringInfo buf)
             npoints = 2;
             break;
             
-        /* EMPTY geometry */
-        case EMPTY_GEOM:
+        /* EMPTY geometry or 2D linestring with more than 2 points */
+        case 0x0104:
             /* Check if the geometry has EMPTY_COORD required for an empty geometry */
             if (memcmp(buf->data + buf->cursor + COORD_DATA_OFFSET, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0) 
-			{
+            {
                 isempty = true;
                 npoints = 0;
                 
@@ -1663,8 +1838,8 @@ TdsTypeSpatialToDatum(StringInfo buf)
                             (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
                              errmsg("Unsupported empty geometry type")));
             } 
-			else 
-			{
+            else 
+            {
                 /* Not actually empty, treat as linestring with bbox */
                 geomType = LINETYPE;
                 has_bbox = true;
@@ -1691,12 +1866,9 @@ TdsTypeSpatialToDatum(StringInfo buf)
     if (has_bbox)
         destBuf->data[3] |= FLAG_BBOX;
 
-    /* Calculate stride based on dimensions */
-    stride = 16 + (has_z ? 8 : 0) + (has_m ? 8 : 0); /* XY(16) + Z?(8) + M?(8) */
-    
     /* Process geometry based on type and emptiness */
     if (isempty) 
-	{
+    {
         /* Handle empty geometry */
         nbytes = destBuf->len + 8; /* SRID + type + npoints */
         result = (bytea *) palloc0(nbytes + VARHDRSZ);
@@ -1705,9 +1877,11 @@ TdsTypeSpatialToDatum(StringInfo buf)
         /* Add geometry type and zero points count */
         appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
         appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
+        
+        memcpy(VARDATA(result), &destBuf->data[0], nbytes);
     } 
-    else if (npoints == 1 && geomType == POINTTYPE) 
-	{
+    else if (geomType == POINTTYPE) 
+    {
         /* Handle point geometry */
         nbytes = buf->len - buf->cursor + COORD_DATA_OFFSET;
         result = (bytea *) palloc0(nbytes + VARHDRSZ);
@@ -1720,170 +1894,15 @@ TdsTypeSpatialToDatum(StringInfo buf)
         /* Copy coordinate data */
         appendBinaryStringInfo(destBuf, buf->data + buf->cursor + COORD_DATA_OFFSET, 
                               buf->len - buf->cursor - COORD_DATA_OFFSET);
+                              
+        memcpy(VARDATA(result), &destBuf->data[0], nbytes);
     }
-    else if (npoints == 2 && geomType == LINETYPE) 
-	{
-        /* Handle linestring with 2 points */
-        pointSize = stride * npoints;
-        nbytes = destBuf->len + 8 + pointSize; /* header + type + npoints + point data */
-        
-        /* Allocate memory for result */
-        result = (bytea *) palloc0(nbytes + VARHDRSZ);
-        SET_VARSIZE(result, nbytes + VARHDRSZ);
-        
-        /* Add geometry type and point count */
-        appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
-        appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
-        
-        src = buf->data + buf->cursor + COORD_DATA_OFFSET;
-        
-        /* Handle XY case with direct copy */
-        if (!has_z && !has_m) 
-		{
-            appendBinaryStringInfo(destBuf, src, npoints * 16);
-        } 
-		else 
-		{
-			int i;
-            /* Need to reorder coordinates for Z and M dimensions */
-            tempBuf = palloc0(pointSize);
-            
-            for (i = 0; i < npoints; i++) {
-                /* Copy XY coordinates */
-                memcpy(tempBuf + (i * stride), src + (i * 16), 16);
-                
-                /* Copy Z coordinates if present */
-                if (has_z) {
-                    memcpy(tempBuf + (i * stride) + 16, 
-                           src + (npoints * 16) + (i * 8), 8);
-                }
-                
-                /* Copy M coordinates if present */
-                if (has_m) {
-                    memcpy(tempBuf + (i * stride) + 16 + (has_z ? 8 : 0),
-                           src + (npoints * 16) + (has_z ? npoints * 8 : 0) + (i * 8), 8);
-                }
-            }
-            
-            appendBinaryStringInfo(destBuf, tempBuf, pointSize);
-            pfree(tempBuf);
-        }
-    }
-    else if (npoints > 2 && geomType == LINETYPE) 
-	{
-        /* Handle linestring with more than 2 points (with bbox) */
-        double x, y, z, m;
-        float minX, maxX, minY, maxY, minZ, maxZ, minM, maxM;
-        int i;
-        
-        pointSize = stride * npoints;
-        
-        /* Calculate bbox size */
-        if (has_z)
-            bboxSize += 8; /* minZ, maxZ (4 bytes each) */
-        if (has_m)
-            bboxSize += 8; /* minM, maxM (4 bytes each) */
-        
-        /* Allocate temporary buffers */
-        tempBuf = palloc0(pointSize);
-        bbox = (float *) palloc0(bboxSize);
-        
-        /* Initialize min/max values with first point */
-        src = buf->data + buf->cursor + COORD_DATA_OFFSET + 4;
-        
-        memcpy(&x, src, 8);
-        memcpy(&y, src + 8, 8);
-        minX = maxX = (float)x;
-        minY = maxY = (float)y;
-        
-        if (has_z) 
-		{
-            memcpy(&z, src + (npoints * 16), 8);
-            minZ = maxZ = (float)z;
-        }
-        
-        if (has_m) 
-		{
-            int mOffset = npoints * 16 + (has_z ? npoints * 8 : 0);
-            memcpy(&m, src + mOffset, 8);
-            minM = maxM = (float)m;
-        }
-        
-        /* Process all points to find min/max and reorder coordinates */
-        for (i = 0; i < npoints; i++) 
-		{
-            /* Copy XY coordinates and update min/max */
-            memcpy(&x, src + (i * 16), 8);
-            memcpy(&y, src + (i * 16) + 8, 8);
-            
-            if ((float)x < minX) minX = (float)x;
-            if ((float)x > maxX) maxX = (float)x;
-            if ((float)y < minY) minY = (float)y;
-            if ((float)y > maxY) maxY = (float)y;
-            
-            memcpy(tempBuf + (i * stride), src + (i * 16), 16);
-            
-            /* Copy Z coordinates if present and update min/max */
-            if (has_z) 
-			{
-                memcpy(&z, src + (npoints * 16) + (i * 8), 8);
-                if ((float)z < minZ) minZ = (float)z;
-                if ((float)z > maxZ) maxZ = (float)z;
-                
-                memcpy(tempBuf + (i * stride) + 16, 
-                       src + (npoints * 16) + (i * 8), 8);
-            }
-            
-            /* Copy M coordinates if present and update min/max */
-            if (has_m) 
-			{
-                int mOffset = npoints * 16 + (has_z ? npoints * 8 : 0);
-                memcpy(&m, src + mOffset + (i * 8), 8);
-                if ((float)m < minM) minM = (float)m;
-                if ((float)m > maxM) maxM = (float)m;
-                
-                memcpy(tempBuf + (i * stride) + 16 + (has_z ? 8 : 0),
-                       src + mOffset + (i * 8), 8);
-            }
-        }
-        
-        /* Fill bbox buffer with min/max values */
-        bbox[0] = minX;
-        bbox[1] = maxX;
-        bbox[2] = minY;
-        bbox[3] = maxY;
-        
-        if (has_z) 
-		{
-            bbox[4] = minZ;
-            bbox[5] = maxZ;
-        }
-        
-        if (has_m) 
-		{
-            int offset = 4 + (has_z ? 2 : 0);
-            bbox[offset] = minM;
-            bbox[offset + 1] = maxM;
-        }
-        
-        /* Calculate total size and allocate result */
-        nbytes = destBuf->len + bboxSize + 8 + pointSize; /* header + bbox + type + npoints + point data */
-        result = (bytea *) palloc0(nbytes + VARHDRSZ);
-        SET_VARSIZE(result, nbytes + VARHDRSZ);
-        
-        /* Add bbox, geometry type, point count, and coordinate data */
-        appendBinaryStringInfo(destBuf, (char *)bbox, bboxSize);
-        appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
-        appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
-        appendBinaryStringInfo(destBuf, tempBuf, pointSize);
-        
-        /* Free temporary buffers */
-        pfree(tempBuf);
-        pfree(bbox);
+    else if (geomType == LINETYPE)
+    {
+        /* Handle linestring geometry using the separate function */
+        return HandleLineType(buf, destBuf, npoints, has_z, has_m, has_bbox);
     }
     
-    /* Copy final buffer to result */
-    memcpy(VARDATA(result), &destBuf->data[0], nbytes);
     buf->cursor += buf->len - buf->cursor - COORD_DATA_OFFSET;
     
     return PointerGetDatum(result);
@@ -4665,7 +4684,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
     /* Currently only POINT and LINESTRING geometries are supported */
     if (geom_type != POINTTYPE && geom_type != LINETYPE)
     {
-        elog(ERROR, "Unsupported geometry type tds");
+        elog(ERROR, "Unsupported geometry type");
     }
 
     /* Handle EMPTY GEOMETRY case (no points) */
