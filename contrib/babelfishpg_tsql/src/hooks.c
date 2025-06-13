@@ -6526,84 +6526,95 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 }
 
 /*
- * fetch_table_schema - Get column definitions from an existing table
+ * fetch_table_schema - Extract column metadata from a table for OPENXML processing
  *
- * This function retrieves column information from a specified table and
- * creates RangeTableFuncCol nodes for each column. These are then used
- * in the OPENXML WITH table_name syntax to define the output columns.
+ * This function retrieves column definitions from an existing table and transforms
+ * them into RangeTableFuncCol nodes with appropriate XPath expressions. It handles
+ * column name, type information, and creates expressions using tsql_openxml_get_colpattern function.
+ * 
+ * Parameters:
+ *   relation - The table to extract schema information from
+ *   flag - The OPENXML flag parameter that controls XML mapping behavior
+ *
+ * Returns:
+ *   List of RangeTableFuncCol nodes representing the table's columns
  */
-
 static List *
 fetch_table_schema(RangeVar *relation, Node *flag)
 {
-    List *columns = NIL;
-    
-    if (relation != NULL)
-    {
-        Relation rel;
-        TupleDesc tupdesc;
-        int i;
-        
-        /* Open the relation to get its schema */
-        rel = relation_openrv(relation, AccessShareLock);
-        
-        if (rel == NULL)
-        {
-            ereport(ERROR,
-                    (errcode(ERRCODE_UNDEFINED_TABLE),
-                     errmsg("table \"%s\" does not exist", 
-                            relation->relname)));
-        }
-        
-        /* Get the tuple descriptor which contains column information */
-        tupdesc = RelationGetDescr(rel);
-        
-        /* Create RangeTableFuncCol nodes from the table's columns */
-        for (i = 0; i < tupdesc->natts; i++)
-        {
-            Form_pg_attribute att = TupleDescAttr(tupdesc, i);
-            RangeTableFuncCol *fc;
-            char *colname;
-            
-            /* Skip system columns and dropped columns */
-            if (att->attisdropped || att->attnum < 0)
-                continue;
-                
-            colname = NameStr(att->attname);
-            
-            /* Create a column definition */
-            fc = makeNode(RangeTableFuncCol);
-            fc->colname = pstrdup(colname);
-            
-            /* Create a TypeName node for the column type */
-            fc->typeName = makeTypeNameFromOid(att->atttypid, att->atttypmod);
-            
-            /* Set the column expression to the generated XPath */
-            fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), 
-                                                    list_make2(makeStringConst(colname, -1), flag),
-                                                    COERCE_EXPLICIT_CALL,
-                                                    -1);
-            fc->coldefexpr = NULL;
-            fc->location = -1;
-            
-            columns = lappend(columns, fc);
-        }
-        
-        /* Close the relation */
-        relation_close(rel, AccessShareLock);
-    }
+	List *columns = NIL;
+	
+	if (relation != NULL)
+	{
+		Relation rel;
+		TupleDesc tupdesc;
+		int i;
+		
+		/* Open the relation to get its schema */
+		rel = relation_openrv(relation, AccessShareLock);
+		
+		if (rel == NULL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("table \"%s\" does not exist", 
+							relation->relname)));
+		}
+		
+		/* Get the tuple descriptor which contains column information */
+		tupdesc = RelationGetDescr(rel);
+		
+		/* Create RangeTableFuncCol nodes from the table's columns */
+		for (i = 0; i < tupdesc->natts; i++)
+		{
+			Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+			RangeTableFuncCol *fc;
+			char *colname;
+			
+			/* Skip dropped and generated columns */
+			if (att->attisdropped || att->attgenerated)
+				continue;
+				
+			colname = NameStr(att->attname);
+			
+			/* Create a column definition */
+			fc = makeNode(RangeTableFuncCol);
+			fc->colname = pstrdup(colname);
+			
+			/* Create a TypeName node for the column type */
+			fc->typeName = makeTypeNameFromOid(att->atttypid, att->atttypmod);
+			
+			/* Set the column expression to the generated XPath */
+			fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), list_make2(makeStringConst(colname, -1), flag), COERCE_EXPLICIT_CALL, -1);
+			fc->coldefexpr = NULL;
+			fc->location = -1;
+			
+			columns = lappend(columns, fc);
+		}
+		
+		relation_close(rel, AccessShareLock);
+	}
 
 	return columns;
 }
 
+/*
+ * transformOpenxml_expr - Process OPENXML expressions for T-SQL compatibility
+ *
+ * This function handles the transformation of OPENXML expressions by either:
+ * 1. Using a referenced table's schema to generate appropriate column definitions, or
+ * 2. Processing explicitly provided columns by generating XPath expressions based on
+ *    column names and the specified flag parameter.
+ *
+ * The function ensures each column has a proper col expression using the tsql_openxml_get_colpattern function.
+ */
 static void
 transformOpenxml_expr(ParseState *pstate, Openxml_expr *expr)
 {
 
-	/* If a table reference was provided, get the columns from that table */
+	/* If a table reference is provided, get the columns from that table */
 	if (expr->table_ref != NULL)
 	{
-		/* Fetch the table schema and generate column definitions with appropriate XPath expressions */
 		expr->columns = fetch_table_schema(expr->table_ref, expr->tsql_flag);
 	}
 	else if (expr->columns != NIL)
@@ -6617,27 +6628,30 @@ transformOpenxml_expr(ParseState *pstate, Openxml_expr *expr)
 			/* If no column expression is provided, generate one based on the flag */
 			if (fc->colexpr == NULL)
 			{
-				/*
-				* To get original column name, utilize location of ColumnDef and query
-				* string.
-				*/
+				/* To get original column name, utilize location of ColumnDef and query string. For colexpr, we need orignal name of columns (no downcase or uppercase) */
 				const char *column_name_start = pstate->p_sourcetext + fc->location;
 				char	   *original_name = extract_identifier(column_name_start, NULL);
 
-				fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), 
-                                                    list_make2(makeStringConst(original_name, -1), expr->tsql_flag),
-                                                    COERCE_EXPLICIT_CALL,
-                                                    -1);
+				/* Create an XPath expression for the column using tsql_openxml_get_colpattern. This builds a function call to generate the appropriate XPath pattern
+				 * based on the column name and the OPENXML flag parameter
+				 */
+				fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), list_make2(makeStringConst(original_name, -1), expr->tsql_flag), COERCE_EXPLICIT_CALL, -1);
 			}
 		}
 	}
 
 }
 
+/*
+ * bbf_transformFromClauseItem - Transform T-SQL OPENXML expressions in FROM clauses
+ *
+ * This hook function handles the transformation of T-SQL specific OPENXML expressions
+ * in FROM clauses into PostgreSQL's RangeTableFunc structures. It converts the
+ * OPENXML syntax into appropriate function calls to extract and process XML data.
+ * The function only processes nodes when in T-SQL dialect mode.
+ */
 static Node *
-bbf_transformFromClauseItem(ParseState *pstate, Node *n,
-						    ParseNamespaceItem **top_nsitem,
-						    List **namespace)
+bbf_transformFromClauseItem(ParseState *pstate, Node *n, ParseNamespaceItem **top_nsitem, List **namespace)
 {
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return NULL;
@@ -6651,11 +6665,12 @@ bbf_transformFromClauseItem(ParseState *pstate, Node *n,
 		Openxml_expr *expr = (Openxml_expr *) n;
 
 		transformOpenxml_expr(pstate, expr);
-		rtf->docexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_xmldoc")), 
-                                                    list_make1(expr->tsql_docid),
-                                                    COERCE_EXPLICIT_CALL,
-                                                    -1);
-		// rtf->docexpr = (Node *) tsql_openxml_get_xmldoc(expr->tsql_docid);
+
+		/* Set the document expression to retrieve the XML document using the document handle. This creates a function call to tsql_openxml_get_xmldoc
+		 * which retrieves the  previously prepared XML document based on the document ID from sp_xml_preparedocument.
+		 */
+		rtf->docexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_xmldoc")), list_make1(expr->tsql_docid), COERCE_EXPLICIT_CALL, -1);
+
 		rtf->rowexpr = expr->rowexpr;
 		rtf->columns = expr->columns;
 		rtf->alias = expr->alias;

@@ -1877,31 +1877,30 @@ openxml_column_list: openxml_column_el                    { $$ = list_make1($1);
 
 openxml_column_el:
 			ColId Typename
-                {
-                    RangeTableFuncCol *fc = makeNode(RangeTableFuncCol);
+				{
+					RangeTableFuncCol *fc = makeNode(RangeTableFuncCol);
 
-                    fc->colname = $1;
-                    fc->typeName = $2;
-				    /* Set a default XPath expression based on column name */
+					fc->colname = $1;
+					fc->typeName = $2;
+					/* Set a default XPath expression based on column name */
 					/* fc->colexpr = (Node *) makeStringConst(psprintf("@%s", $1), @1); */
-                    /* fc->colexpr = makeStringConst($1, @1); */
+					/* fc->colexpr = makeStringConst($1, @1); */
 					fc->colexpr = NULL;
-                    fc->location = @1;
+					fc->location = @1;
 
-                    $$ = (Node *) fc;
-                }	
+					$$ = (Node *) fc;
+				}	
 			| ColId Typename Sconst
-                {
-                    RangeTableFuncCol *fc = makeNode(RangeTableFuncCol);
-                    fc->colname = $1;
-                    fc->typeName = $2;
-                    fc->colexpr = (Node *) makeStringConst($3, @1);
-                    fc->location = @1;
+				{
+					RangeTableFuncCol *fc = makeNode(RangeTableFuncCol);
+					fc->colname = $1;
+					fc->typeName = $2;
+					fc->colexpr = (Node *) makeStringConst($3, @1);
+					fc->location = @1;
 
-                    $$ = (Node *) fc;
-                }	
+					$$ = (Node *) fc;
+				}	
 		;
-
 
 openjson_expr: OPENJSON '(' a_expr  ')' opt_alias_clause
 				{

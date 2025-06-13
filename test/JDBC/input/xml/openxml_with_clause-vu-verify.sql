@@ -200,7 +200,7 @@ EXEC sp_xml_removedocument @idoc;
 GO
 
 -- If tablename is given 
-CREATE TABLE T1(oid char(5), date datetime, amount float);
+CREATE TABLE test_openxml_table(oid char(5), date datetime, amount float);
 DECLARE @docHandle int;
 DECLARE @XmlDocument varchar(1000);
 
@@ -223,9 +223,9 @@ EXEC sp_xml_preparedocument @docHandle OUTPUT, @xmlDocument;
 
 SELECT * 
 FROM OPENXML (@docHandle, '/root/Customer/Order', 1) 
-     WITH T1;
+     WITH test_openxml_table;
 
 EXEC sp_xml_removedocument @docHandle;
 GO
-DROP TABLE T1;
+DROP TABLE test_openxml_table;
 GO
