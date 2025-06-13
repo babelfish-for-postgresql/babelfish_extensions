@@ -237,7 +237,7 @@ CREATE PROCEDURE dbo.p_getcoordinates AS BEGIN DECLARE @Coordinates TABLE ( XCoo
 
 CREATE VIEW equal_geom AS SELECT p1.location AS point FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location = p2.location ORDER BY p1.location.STX;
 
-CREATE VIEW point_distances_geom AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.STX;
+CREATE VIEW point_distances_geom AS SELECT p1.location AS point1, p2.location AS point2, CAST(STDistance( p1.location, p2.location ) AS numeric(20, 6)) AS distance FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.STX;
 
 CREATE TABLE SPATIALPOINTGEOG_dt (location geography)
 

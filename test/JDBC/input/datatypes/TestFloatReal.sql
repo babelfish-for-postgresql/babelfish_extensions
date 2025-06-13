@@ -1,0 +1,3195 @@
+-- parallel_query_expected
+-- Basic Functionality Tests for REAL and FLOAT
+
+-- Valid Range Tests
+CREATE TABLE float_real_range_test (
+    id INT,
+    real_col REAL,
+    float_col FLOAT
+);
+GO
+
+-- Test minimum and maximum values
+INSERT INTO float_real_range_test VALUES
+    (1, CAST('3.4E-38' AS REAL), CAST('1.7E-308' AS FLOAT)),  -- Near minimum values
+    (2, CAST('3.4E+38' AS REAL), CAST('1.7E+308' AS FLOAT)),  -- Near maximum values
+    (3, 0.0, 0.0),                            -- Zero values
+    (4, -1.0, -1.0),                          -- Negative values
+    (5, 1.0, 1.0);                            -- Positive values
+GO
+
+-- Test overflow conditions (should fail)
+INSERT INTO float_real_range_test VALUES 
+    (6, CAST('3.5E+38' AS REAL), NULL);  -- Should fail for REAL
+GO
+
+INSERT INTO float_real_range_test VALUES 
+    (7, NULL, CAST('1.8E+308' AS FLOAT));  -- Should fail for FLOAT
+GO
+
+-- Default Value Tests
+CREATE TABLE float_real_default_test (
+    id INT,
+    real_col REAL DEFAULT 0.0,
+    float_col FLOAT DEFAULT 1.23456789
+);
+GO
+
+INSERT INTO float_real_default_test (id) VALUES (1);
+GO
+
+SELECT * FROM float_real_default_test ORDER BY id;
+GO
+
+-- NULL Tests
+CREATE TABLE float_real_null_test (
+    id INT,
+    real_col REAL NULL,
+    float_col FLOAT NULL,
+    real_not_null REAL NOT NULL DEFAULT 0.0,
+    float_not_null FLOAT NOT NULL DEFAULT 0.0
+);
+GO
+
+INSERT INTO float_real_null_test (id, real_col, float_col) VALUES
+    (1, NULL, NULL),
+    (2, 1.0, 1.0);
+GO
+
+-- Try to insert NULL into NOT NULL column (should fail)
+INSERT INTO float_real_null_test (id, real_not_null, float_not_null) VALUES
+    (3, NULL, 1.0);
+GO
+
+-- Precision Tests
+CREATE TABLE float_real_precision_test (
+    id INT,
+    real_col REAL,
+    float_col FLOAT
+);
+GO
+
+INSERT INTO float_real_precision_test VALUES
+    (1, 1.23456789, 1.23456789),
+    (2, 123456.789, 123456.789),
+    (3, 0.00000123456789, 0.00000123456789);
+GO
+
+-- Compare stored vs input values
+SELECT 
+    id,
+    real_col,
+    float_col,
+    CASE 
+        WHEN real_col = CAST(CAST(real_col AS VARCHAR(50)) AS REAL) THEN 'REAL Precision OK'
+        ELSE 'REAL Precision Loss'
+    END as real_precision_check,
+    CASE 
+        WHEN float_col = CAST(CAST(float_col AS VARCHAR(50)) AS FLOAT) THEN 'FLOAT Precision OK'
+        ELSE 'FLOAT Precision Loss'
+    END as float_precision_check
+FROM float_real_precision_test ORDER BY id;
+GO
+
+-- Mathematical Operations Tests
+CREATE TABLE float_real_math_test (
+    id INT,
+    real_col REAL,
+    float_col FLOAT
+);
+GO
+
+INSERT INTO float_real_math_test VALUES
+    (1, 1.5, 1.5);
+GO
+
+-- Test basic arithmetic
+SELECT 
+    id,
+    real_col + 1.5 as real_addition,
+    real_col * 2.0 as real_multiplication,
+    real_col / 3.0 as real_division,
+    float_col + 1.5 as float_addition,
+    float_col * 2.0 as float_multiplication,
+    float_col / 3.0 as float_division
+FROM float_real_math_test ORDER BY id;
+GO
+
+-- Comparison Tests
+-- Create test table for REAL and FLOAT comparisons
+CREATE TABLE float_real_comparison_test (
+    id INT,
+    real_col1 REAL,
+    real_col2 REAL,
+    float_col1 FLOAT,
+    float_col2 FLOAT
+);
+GO
+
+-- Insert test cases
+INSERT INTO float_real_comparison_test VALUES
+    -- Basic equality cases
+    (1, 1.0, 1.0, 1.0, 1.0),
+    (2, 1.0, 1.000001, 1.0, 1.000001),
+    (3, 1.5, 2.5, 1.5, 2.5),
+    
+    -- Precision testing cases
+    (4, 1.23456789, 1.23456789, 1.23456789, 1.23456789),
+    (5, 1.23456789, 1.23456788, 1.23456789, 1.23456788),
+    
+    -- Zero comparisons
+    (6, 0.0, 0.0, 0.0, 0.0),
+    (7, 0.0, -0.0, 0.0, -0.0),
+    
+    -- Very small number comparisons
+    (8, 1.0E-38, 1.1E-38, 1.0E-308, 1.1E-308),
+    (9, 1.0E-38, 0.0, 1.0E-308, 0.0),
+    
+    -- Very large number comparisons
+    (10, 1.0E+38, 3.0E+38, 1.0E+308, 1.1E+308),
+    
+    -- Negative number comparisons
+    (11, -1.23456789, -1.23456789, -1.23456789, -1.23456789),
+    (12, -1.23456789, -1.23456788, -1.23456789, -1.23456788),
+    
+    -- Numbers around 1
+    (13, 0.9999999, 1.0000001, 0.9999999, 1.0000001),
+    (14, 1.0000001, 0.9999999, 1.0000001, 0.9999999);
+GO
+
+SELECT * FROM float_real_comparison_test ORDER BY id
+GO
+
+-- Comprehensive comparison tests
+SELECT 
+    id,
+    real_col1,
+    real_col2,
+    float_col1,
+    float_col2,
+    
+    -- Basic comparisons
+    CASE WHEN real_col1 = real_col2 THEN 'Equal' ELSE 'Not Equal' END as real_equality,
+    CASE WHEN float_col1 = float_col2 THEN 'Equal' ELSE 'Not Equal' END as float_equality,
+    
+    -- Original comparison operators
+    CASE WHEN real_col1 <> real_col2 THEN 'Not Equal' ELSE 'Equal' END as real_inequality,
+    CASE WHEN float_col1 <> float_col2 THEN 'Not Equal' ELSE 'Equal' END as float_inequality,
+    
+    CASE WHEN real_col1 < real_col2 THEN 'Less' ELSE 'Not Less' END as real_less_than,
+    CASE WHEN float_col1 < float_col2 THEN 'Less' ELSE 'Not Less' END as float_less_than,
+    
+    CASE WHEN real_col1 > real_col2 THEN 'Greater' ELSE 'Not Greater' END as real_greater_than,
+    CASE WHEN float_col1 > float_col2 THEN 'Greater' ELSE 'Not Greater' END as float_greater_than,
+    
+    CASE WHEN real_col1 <= real_col2 THEN 'Less/Equal' ELSE 'Greater' END as real_less_equal,
+    CASE WHEN float_col1 <= float_col2 THEN 'Less/Equal' ELSE 'Greater' END as float_less_equal,
+    
+    CASE WHEN real_col1 >= real_col2 THEN 'Greater/Equal' ELSE 'Less' END as real_greater_equal,
+    CASE WHEN float_col1 >= float_col2 THEN 'Greater/Equal' ELSE 'Less' END as float_greater_equal
+FROM float_real_comparison_test
+ORDER BY id;
+GO
+
+-- Test DISTINCT behavior
+SELECT 'DISTINCT test for REAL' as test_type, COUNT(*) as total_count, COUNT(DISTINCT real_col1) as distinct_count
+FROM float_real_comparison_test
+UNION ALL
+SELECT 'DISTINCT test for FLOAT', COUNT(*) as total_count, COUNT(DISTINCT float_col1) as distinct_count
+FROM float_real_comparison_test
+GO
+
+-- Test GROUP BY behavior
+SELECT 'GROUP BY test for REAL' as test_type, real_col1 as num_val, COUNT(*) as count
+FROM float_real_comparison_test
+GROUP BY real_col1
+UNION ALL
+SELECT 'GROUP BY test for FLOAT' as test_type, float_col1 as num_val, COUNT(*) as count
+FROM float_real_comparison_test
+GROUP BY float_col1
+ORDER BY test_type, num_val, count DESC
+GO
+
+-- Test ORDER BY behavior
+SELECT 'ORDER BY test for REAL' as test_type, id, real_col1 as num_val
+FROM float_real_comparison_test
+UNION ALL
+SELECT 'ORDER BY test for FLOAT' as test_type, id, float_col1 as num_val
+FROM float_real_comparison_test
+ORDER BY num_val, id, test_type;
+GO
+
+-- Special Values Tests
+CREATE TABLE float_real_special_test (
+    id INT,
+    real_col REAL,
+    float_col FLOAT
+);
+GO
+
+-- Test special values
+INSERT INTO float_real_special_test VALUES
+    (1, 0.0, 0.0),                                          -- Zero
+    (2, CAST('1.0E-37' AS REAL), CAST('1.0E-307' AS FLOAT)), -- Small numbers
+    (3, CAST('-1.0E+38' AS REAL), CAST('-1.0E+308' AS FLOAT)); -- Large negative numbers
+GO
+
+INSERT INTO float_real_special_test VALUES (4, CAST(1.0/0.0 AS REAL), CAST(1.0/0.0 AS FLOAT)); -- Infinity
+GO
+INSERT INTO float_real_special_test VALUES (5, CAST(-1.0/0.0 AS REAL), CAST(-1.0/0.0 AS FLOAT)); -- Negative Infinity
+GO
+INSERT INTO float_real_special_test VALUES (6, CAST(0.0/0.0 AS REAL), CAST(0.0/0.0 AS FLOAT)); -- NaN
+GO
+
+
+SELECT * FROM float_real_special_test;
+GO
+
+-- Verification Queries
+-- Check data types of columns
+SELECT 
+    table_name,
+    column_name, 
+    data_type, 
+    character_maximum_length,
+    numeric_precision,
+    numeric_scale
+FROM information_schema.columns 
+WHERE table_name IN 
+    ('float_real_range_test', 
+     'float_real_default_test', 
+     'float_real_null_test', 
+     'float_real_precision_test', 
+     'float_real_math_test',
+     'float_real_comparison_test',
+     'float_real_special_test')
+ORDER BY table_name, column_name;
+GO
+
+-- Clean up
+DROP TABLE float_real_range_test;
+GO
+DROP TABLE float_real_default_test;
+GO
+DROP TABLE float_real_null_test;
+GO
+DROP TABLE float_real_precision_test;
+GO
+DROP TABLE float_real_math_test;
+GO
+DROP TABLE float_real_comparison_test;
+GO
+DROP TABLE float_real_special_test;
+GO
+
+-- Precision and Scale Limits Tests for REAL and FLOAT
+
+-- Combined Precision and Scale Tests for REAL and FLOAT
+CREATE TABLE float_real_limits_test (
+    id INT,
+    test_case VARCHAR(100),
+    real_col REAL,
+    float_col FLOAT,
+    real_total_precision INT,    -- Changed from real_precision
+    real_scale INT,             -- Added real_scale
+    float_total_precision INT,   -- Changed from float_precision
+    float_scale INT             -- Added float_scale
+);
+GO
+
+-- Insert test values
+INSERT INTO float_real_limits_test (id, test_case, real_col, float_col) VALUES
+    -- Test total precision (significant digits)
+    (1, 'Seven significant digits', 1.234567, 1.234567),
+    (2, 'Mixed precision before/after decimal', 123.4567, 123.4567),
+    (3, 'Large number significant digits', 1234567.8, 1234567.8),
+    (4, 'Small number significant digits', 0.0001234567, 0.0001234567),
+    
+    -- Test scale (digits after decimal)
+    (5, 'No decimal digits', 12345.0, 12345.0),
+    (6, 'Many decimal digits', 1.23456789012345, 1.23456789012345),
+    
+    -- Test scientific notation
+    (7, 'Positive exponent', 1.23E+5, 1.23E+5),
+    (8, 'Negative exponent', 1.23E-5, 1.23E-5),
+    
+    -- Test boundary cases
+    (9, 'REAL max precision', 3.402823E+38, 1.79E+308),
+    (10, 'REAL min precision', -3.402823E+38, -1.79E+308);
+GO
+
+-- Calculate precision and scale
+WITH number_analysis AS (
+    SELECT 
+        id,
+        test_case,
+        real_col,
+        float_col,
+        -- Total significant digits for REAL
+        LEN(REPLACE(TRIM('0' FROM CAST(ABS(real_col) AS VARCHAR(50))), '.', '')) 
+            as real_total_precision,
+        -- Scale for REAL (digits after decimal)
+        CASE 
+            WHEN CHARINDEX('.', CAST(real_col AS VARCHAR(50))) > 0 
+            THEN LEN(SUBSTRING(CAST(real_col AS VARCHAR(50)), 
+                 CHARINDEX('.', CAST(real_col AS VARCHAR(50))) + 1,
+                 LEN(CAST(real_col AS VARCHAR(50)))))
+            ELSE 0
+        END as real_scale,
+        -- Total significant digits for FLOAT
+        LEN(REPLACE(TRIM('0' FROM CAST(ABS(float_col) AS VARCHAR(50))), '.', '')) 
+            as float_total_precision,
+        -- Scale for FLOAT (digits after decimal)
+        CASE 
+            WHEN CHARINDEX('.', CAST(float_col AS VARCHAR(50))) > 0 
+            THEN LEN(SUBSTRING(CAST(float_col AS VARCHAR(50)), 
+                 CHARINDEX('.', CAST(float_col AS VARCHAR(50))) + 1,
+                 LEN(CAST(float_col AS VARCHAR(50)))))
+            ELSE 0
+        END as float_scale
+    FROM float_real_limits_test
+)
+UPDATE float_real_limits_test
+SET 
+    real_total_precision = na.real_total_precision,
+    real_scale = na.real_scale,
+    float_total_precision = na.float_total_precision,
+    float_scale = na.float_scale
+FROM float_real_limits_test t
+JOIN number_analysis na ON t.id = na.id;
+GO
+
+-- Display detailed results
+SELECT 
+    id,
+    test_case,
+    real_col,
+    CAST(real_col AS VARCHAR(50)) AS real_string_rep,
+    real_total_precision as real_significant_digits,
+    real_scale as real_decimal_places,
+    real_total_precision - real_scale as real_digits_before_decimal,
+    float_col,
+    CAST(float_col AS VARCHAR(50)) AS float_string_rep,
+    float_total_precision as float_significant_digits,
+    float_scale as float_decimal_places,
+    float_total_precision - float_scale as float_digits_before_decimal
+FROM float_real_limits_test
+ORDER BY id;
+GO
+
+-- Test precision maintenance
+SELECT 
+    id,
+    test_case,
+    real_col,
+    real_col + 0.0000001 as real_small_increment,
+    CASE 
+        WHEN real_col <> real_col + 0.0000001 
+        THEN 'Can distinguish 7th decimal'
+        ELSE 'Cannot distinguish 7th decimal'
+    END as real_precision_test,
+    float_col,
+    float_col + 0.000000000000001 as float_small_increment,
+    CASE 
+        WHEN float_col <> float_col + 0.000000000000001 
+        THEN 'Can distinguish 15th decimal'
+        ELSE 'Cannot distinguish 15th decimal'
+    END as float_precision_test
+FROM float_real_limits_test
+WHERE id <= 5
+ORDER BY id;  -- Test only first few rows
+GO
+
+DROP TABLE float_real_limits_test;
+GO
+
+-- Type conversions
+-- Create test tables for conversion results
+CREATE TABLE FLOAT_CONVERSIONS_FROM (
+    id INT IDENTITY(1,1),
+    source_type VARCHAR(50),
+    source_value SQL_VARIANT,
+    float_value FLOAT,
+    real_value REAL,
+    conversion_succeeded BIT,
+    error_message VARCHAR(1000)
+);
+
+CREATE TABLE FLOAT_CONVERSIONS_TO (
+    id INT IDENTITY(1,1),
+    target_type VARCHAR(50),
+    source_float FLOAT,
+    source_real REAL,
+    converted_value SQL_VARIANT,
+    conversion_succeeded BIT,
+    error_message VARCHAR(1000)
+);
+GO
+
+-- Helper procedure for conversions FROM other types
+CREATE PROCEDURE TestConversionFrom
+    @source_type VARCHAR(50),
+    @sql_value NVARCHAR(MAX)
+AS
+BEGIN
+    BEGIN TRY
+        DECLARE @sql NVARCHAR(MAX) = N'
+            INSERT INTO FLOAT_CONVERSIONS_FROM (
+                source_type, 
+                source_value, 
+                float_value, 
+                real_value, 
+                conversion_succeeded,
+                error_message
+            )
+            VALUES (
+                @type,
+                ' + @sql_value + ',
+                CAST(' + @sql_value + ' AS FLOAT),
+                CAST(' + @sql_value + ' AS REAL),
+                1,
+                NULL
+            )';
+
+        EXEC sp_executesql @sql, 
+            N'@type VARCHAR(50)', 
+            @source_type;
+    END TRY
+    BEGIN CATCH
+        INSERT INTO FLOAT_CONVERSIONS_FROM (
+            source_type, 
+            source_value, 
+            float_value, 
+            real_value, 
+            conversion_succeeded,
+            error_message
+        )
+        VALUES (
+            @source_type,
+            NULL,
+            NULL,
+            NULL,
+            0,
+            ERROR_MESSAGE()
+        );
+    END CATCH
+END;
+GO
+
+-- Helper procedure for conversions TO other types
+CREATE PROCEDURE TestConversionTo
+    @target_type VARCHAR(50),
+    @source_float FLOAT,
+    @source_real REAL,
+    @sql_float NVARCHAR(MAX),
+    @sql_real NVARCHAR(MAX)
+AS
+BEGIN
+    BEGIN TRY
+        DECLARE @sql NVARCHAR(MAX) = N'
+            INSERT INTO FLOAT_CONVERSIONS_TO (
+                target_type,
+                source_float,
+                source_real,
+                converted_value,
+                conversion_succeeded,
+                error_message
+            )
+            VALUES (
+                @type,
+                @float,
+                @real,
+                ' + @sql_float + ',
+                1,
+                NULL
+            )';
+
+        EXEC sp_executesql @sql, 
+            N'@type VARCHAR(50), @float FLOAT, @real REAL', 
+            @target_type, @source_float, @source_real;
+    END TRY
+    BEGIN CATCH
+        INSERT INTO FLOAT_CONVERSIONS_TO (
+            target_type,
+            source_float,
+            source_real,
+            converted_value,
+            conversion_succeeded,
+            error_message
+        )
+        VALUES (
+            @target_type,
+            @source_float,
+            @source_real,
+            NULL,
+            0,
+            ERROR_MESSAGE()
+        );
+    END CATCH
+
+    BEGIN TRY
+        SET @sql = N'
+            INSERT INTO FLOAT_CONVERSIONS_TO (
+                target_type,
+                source_float,
+                source_real,
+                converted_value,
+                conversion_succeeded,
+                error_message
+            )
+            VALUES (
+                @type + ''(from REAL)'',
+                @float,
+                @real,
+                ' + @sql_real + ',
+                1,
+                NULL
+            )';
+
+        EXEC sp_executesql @sql, 
+            N'@type VARCHAR(50), @float FLOAT, @real REAL', 
+            @target_type, @source_float, @source_real;
+    END TRY
+    BEGIN CATCH
+        INSERT INTO FLOAT_CONVERSIONS_TO (
+            target_type,
+            source_float,
+            source_real,
+            converted_value,
+            conversion_succeeded,
+            error_message
+        )
+        VALUES (
+            @target_type + '(from REAL)',
+            @source_float,
+            @source_real,
+            NULL,
+            0,
+            ERROR_MESSAGE()
+        );
+    END CATCH
+END;
+GO
+
+-- Test conversions FROM other types to FLOAT/REAL
+
+-- Exact Numerics
+-- bigint
+EXEC TestConversionFrom 'bigint', 'CAST(''9223372036854775807'' AS BIGINT)';
+GO
+EXEC TestConversionFrom 'bigint', 'CAST(''-9223372036854775808'' AS BIGINT)';
+GO
+EXEC TestConversionFrom 'bigint', 'CAST(''0'' AS BIGINT)';
+GO
+
+-- int
+EXEC TestConversionFrom 'int', 'CAST(''2147483647'' AS INT)';
+GO
+EXEC TestConversionFrom 'int', 'CAST(''-2147483648'' AS INT)';
+GO
+EXEC TestConversionFrom 'int', 'CAST(''0'' AS INT)';
+GO
+
+-- smallint
+EXEC TestConversionFrom 'smallint', 'CAST(''32767'' AS SMALLINT)';
+GO
+EXEC TestConversionFrom 'smallint', 'CAST(''-32768'' AS SMALLINT)';
+GO
+EXEC TestConversionFrom 'smallint', 'CAST(''0'' AS SMALLINT)';
+GO
+
+-- tinyint
+EXEC TestConversionFrom 'tinyint', 'CAST(''255'' AS TINYINT)';
+GO
+EXEC TestConversionFrom 'tinyint', 'CAST(''0'' AS TINYINT)';
+GO
+
+-- bit
+EXEC TestConversionFrom 'bit', 'CAST(''1'' AS BIT)';
+GO
+EXEC TestConversionFrom 'bit', 'CAST(''0'' AS BIT)';
+GO
+
+-- decimal
+EXEC TestConversionFrom 'decimal', 'CAST(''123456789.123456789'' AS DECIMAL(18,9))';
+GO
+EXEC TestConversionFrom 'decimal', 'CAST(''-123456789.123456789'' AS DECIMAL(18,9))';
+GO
+EXEC TestConversionFrom 'decimal', 'CAST(''0'' AS DECIMAL(18,9))';
+GO
+
+-- numeric
+EXEC TestConversionFrom 'numeric', 'CAST(''123456789.123456789'' AS NUMERIC(18,9))';
+GO
+EXEC TestConversionFrom 'numeric', 'CAST(''-123456789.123456789'' AS NUMERIC(18,9))';
+GO
+EXEC TestConversionFrom 'numeric', 'CAST(''0'' AS NUMERIC(18,9))';
+GO
+
+-- money
+EXEC TestConversionFrom 'money', 'CAST(''922337203685477.5807'' AS MONEY)';
+GO
+EXEC TestConversionFrom 'money', 'CAST(''-922337203685477.5808'' AS MONEY)';
+GO
+EXEC TestConversionFrom 'money', 'CAST(''0'' AS MONEY)';
+GO
+
+-- smallmoney
+EXEC TestConversionFrom 'smallmoney', 'CAST(''214748.3647'' AS SMALLMONEY)';
+GO
+EXEC TestConversionFrom 'smallmoney', 'CAST(''-214748.3648'' AS SMALLMONEY)';
+GO
+EXEC TestConversionFrom 'smallmoney', 'CAST(''0'' AS SMALLMONEY)';
+GO
+
+-- Approximate Numerics
+-- float
+EXEC TestConversionFrom 'float', 'CAST(''1.79E+308'' AS FLOAT)';
+GO
+EXEC TestConversionFrom 'float', 'CAST(''-1.79E+308'' AS FLOAT)';
+GO
+EXEC TestConversionFrom 'float', 'CAST(''0'' AS FLOAT)';
+GO
+
+-- real
+EXEC TestConversionFrom 'real', 'CAST(''3.40E+38'' AS REAL)';
+GO
+EXEC TestConversionFrom 'real', 'CAST(''-3.40E+38'' AS REAL)';
+GO
+EXEC TestConversionFrom 'real', 'CAST(''0'' AS REAL)';
+GO
+
+-- Date and Time
+-- datetime
+EXEC TestConversionFrom 'datetime', 'CAST(''2023-06-16 12:34:56.789'' AS DATETIME)';
+GO
+EXEC TestConversionFrom 'datetime', 'CAST(''1753-01-01'' AS DATETIME)';
+GO
+EXEC TestConversionFrom 'datetime', 'CAST(''9999-12-31'' AS DATETIME)';
+GO
+
+-- smalldatetime
+EXEC TestConversionFrom 'smalldatetime', 'CAST(''2023-06-16 12:34:00'' AS SMALLDATETIME)';
+GO
+EXEC TestConversionFrom 'smalldatetime', 'CAST(''1900-01-01'' AS SMALLDATETIME)';
+GO
+EXEC TestConversionFrom 'smalldatetime', 'CAST(''2079-06-06'' AS SMALLDATETIME)';
+GO
+
+-- date
+EXEC TestConversionFrom 'date', 'CAST(''2023-06-16'' AS DATE)';
+GO
+EXEC TestConversionFrom 'date', 'CAST(''0001-01-01'' AS DATE)';
+GO
+EXEC TestConversionFrom 'date', 'CAST(''9999-12-31'' AS DATE)';
+GO
+
+-- time
+EXEC TestConversionFrom 'time', 'CAST(''12:34:56.7891234'' AS TIME)';
+GO
+EXEC TestConversionFrom 'time', 'CAST(''00:00:00'' AS TIME)';
+GO
+EXEC TestConversionFrom 'time', 'CAST(''23:59:59.9999999'' AS TIME)';
+GO
+
+-- datetime2
+EXEC TestConversionFrom 'datetime2', 'CAST(''2023-06-16 12:34:56.7891234'' AS DATETIME2)';
+GO
+EXEC TestConversionFrom 'datetime2', 'CAST(''0001-01-01 00:00:00'' AS DATETIME2)';
+GO
+EXEC TestConversionFrom 'datetime2', 'CAST(''9999-12-31 23:59:59.9999999'' AS DATETIME2)';
+GO
+
+-- datetimeoffset
+EXEC TestConversionFrom 'datetimeoffset', 'CAST(''2023-06-16 12:34:56.7891234 +00:00'' AS DATETIMEOFFSET)';
+GO
+EXEC TestConversionFrom 'datetimeoffset', 'CAST(''0001-01-01 00:00:00 +00:00'' AS DATETIMEOFFSET)';
+GO
+EXEC TestConversionFrom 'datetimeoffset', 'CAST(''9999-12-31 23:59:59.9999999 +14:00'' AS DATETIMEOFFSET)';
+GO
+
+-- Character Strings
+-- char
+EXEC TestConversionFrom 'char', 'CAST(''123.456'' AS CHAR(10))';
+GO
+EXEC TestConversionFrom 'char', 'CAST(''-123.456'' AS CHAR(10))';
+GO
+EXEC TestConversionFrom 'char', 'CAST(''1.23E+10'' AS CHAR(10))';
+GO
+
+-- varchar
+EXEC TestConversionFrom 'varchar', 'CAST(''123.456'' AS VARCHAR(20))';
+GO
+EXEC TestConversionFrom 'varchar', 'CAST(''-123.456'' AS VARCHAR(20))';
+GO
+EXEC TestConversionFrom 'varchar', 'CAST(''1.23E+10'' AS VARCHAR(20))';
+GO
+
+-- text
+EXEC TestConversionFrom 'text', 'CAST(''123.456'' AS TEXT)';
+GO
+EXEC TestConversionFrom 'text', 'CAST(''-123.456'' AS TEXT)';
+GO
+EXEC TestConversionFrom 'text', 'CAST(''1.23E+10'' AS TEXT)';
+GO
+
+-- Unicode Character Strings
+-- nchar
+EXEC TestConversionFrom 'nchar', 'CAST(N''123.456'' AS NCHAR(10))';
+GO
+EXEC TestConversionFrom 'nchar', 'CAST(N''-123.456'' AS NCHAR(10))';
+GO
+EXEC TestConversionFrom 'nchar', 'CAST(N''1.23E+10'' AS NCHAR(10))';
+GO
+
+-- nvarchar
+EXEC TestConversionFrom 'nvarchar', 'CAST(N''123.456'' AS NVARCHAR(20))';
+GO
+EXEC TestConversionFrom 'nvarchar', 'CAST(N''-123.456'' AS NVARCHAR(20))';
+GO
+EXEC TestConversionFrom 'nvarchar', 'CAST(N''1.23E+10'' AS NVARCHAR(20))';
+GO
+
+-- ntext
+EXEC TestConversionFrom 'ntext', 'CAST(N''123.456'' AS NTEXT)';
+GO
+EXEC TestConversionFrom 'ntext', 'CAST(N''-123.456'' AS NTEXT)';
+GO
+EXEC TestConversionFrom 'ntext', 'CAST(N''1.23E+10'' AS NTEXT)';
+GO
+
+-- Binary Strings
+-- binary
+EXEC TestConversionFrom 'binary', 'CAST(0x0123456789 AS BINARY(5))';
+GO
+
+-- varbinary
+EXEC TestConversionFrom 'varbinary', 'CAST(0x0123456789 AS VARBINARY(5))';
+GO
+
+-- image
+EXEC TestConversionFrom 'image', 'CAST(0x0123456789 AS IMAGE)';
+GO
+
+-- Other Data Types
+-- uniqueidentifier
+EXEC TestConversionFrom 'uniqueidentifier', 'CAST(''A98E21B9-43F7-40CD-94E4-BF4A5C8C68B2'' AS UNIQUEIDENTIFIER)';
+GO
+
+-- sql_variant
+EXEC TestConversionFrom 'sql_variant', 'CAST(CAST(123.456 AS SQL_VARIANT) AS SQL_VARIANT)';
+GO
+
+-- xml
+EXEC TestConversionFrom 'xml', 'CAST(''<root>123.456</root>'' AS XML)';
+GO
+
+-- Test conversions TO other types from FLOAT/REAL
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+-- Exact Numerics
+EXEC TestConversionTo 'bigint', 
+    @test_float, @test_real,
+    'CAST(@float AS BIGINT)',
+    'CAST(@real AS BIGINT)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'int',
+    @test_float, @test_real,
+    'CAST(@float AS INT)',
+    'CAST(@real AS INT)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'smallint',
+    @test_float, @test_real,
+    'CAST(@float AS SMALLINT)',
+    'CAST(@real AS SMALLINT)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'tinyint',
+    @test_float, @test_real,
+    'CAST(@float AS TINYINT)',
+    'CAST(@real AS TINYINT)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'bit',
+    @test_float, @test_real,
+    'CAST(@float AS BIT)',
+    'CAST(@real AS BIT)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'decimal',
+    @test_float, @test_real,
+    'CAST(@float AS DECIMAL(18,9))',
+    'CAST(@real AS DECIMAL(18,9))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'numeric',
+    @test_float, @test_real,
+    'CAST(@float AS NUMERIC(18,9))',
+    'CAST(@real AS NUMERIC(18,9))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'money',
+    @test_float, @test_real,
+    'CAST(@float AS MONEY)',
+    'CAST(@real AS MONEY)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'smallmoney',
+    @test_float, @test_real,
+    'CAST(@float AS SMALLMONEY)',
+    'CAST(@real AS SMALLMONEY)';
+GO
+
+-- Approximate Numerics
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'float',
+    @test_float, @test_real,
+    'CAST(@float AS FLOAT)',
+    'CAST(@real AS FLOAT)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'real',
+    @test_float, @test_real,
+    'CAST(@float AS REAL)',
+    'CAST(@real AS REAL)';
+GO
+
+-- Date and Time
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'datetime',
+    @test_float, @test_real,
+    'CAST(@float AS DATETIME)',
+    'CAST(@real AS DATETIME)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'smalldatetime',
+    @test_float, @test_real,
+    'CAST(@float AS SMALLDATETIME)',
+    'CAST(@real AS SMALLDATETIME)';
+GO
+
+-- Character Strings
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'char(50)',
+    @test_float, @test_real,
+    'CAST(@float AS CHAR(50))',
+    'CAST(@real AS CHAR(50))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'varchar(50)',
+    @test_float, @test_real,
+    'CAST(@float AS VARCHAR(50))',
+    'CAST(@real AS VARCHAR(50))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'varchar(max)',
+    @test_float, @test_real,
+    'CAST(@float AS VARCHAR(MAX))',
+    'CAST(@real AS VARCHAR(MAX))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'text',
+    @test_float, @test_real,
+    'CAST(@float AS TEXT)',
+    'CAST(@real AS TEXT)';
+GO
+
+-- Unicode Character Strings
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'nchar(50)',
+    @test_float, @test_real,
+    'CAST(@float AS NCHAR(50))',
+    'CAST(@real AS NCHAR(50))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'nvarchar(50)',
+    @test_float, @test_real,
+    'CAST(@float AS NVARCHAR(50))',
+    'CAST(@real AS NVARCHAR(50))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'nvarchar(max)',
+    @test_float, @test_real,
+    'CAST(@float AS NVARCHAR(MAX))',
+    'CAST(@real AS NVARCHAR(MAX))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'ntext',
+    @test_float, @test_real,
+    'CAST(@float AS NTEXT)',
+    'CAST(@real AS NTEXT)';
+GO
+
+-- Binary Types
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'binary(8)',
+    @test_float, @test_real,
+    'CAST(@float AS BINARY(8))',
+    'CAST(@real AS BINARY(8))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'varbinary(8)',
+    @test_float, @test_real,
+    'CAST(@float AS VARBINARY(8))',
+    'CAST(@real AS VARBINARY(8))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'varbinary(max)',
+    @test_float, @test_real,
+    'CAST(@float AS VARBINARY(MAX))',
+    'CAST(@real AS VARBINARY(MAX))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'image',
+    @test_float, @test_real,
+    'CAST(@float AS IMAGE)',
+    'CAST(@real AS IMAGE)';
+GO
+
+-- Date and Time Types (continued)
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'date',
+    @test_float, @test_real,
+    'CAST(@float AS DATE)',
+    'CAST(@real AS DATE)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'time',
+    @test_float, @test_real,
+    'CAST(@float AS TIME)',
+    'CAST(@real AS TIME)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'datetime2',
+    @test_float, @test_real,
+    'CAST(@float AS DATETIME2)',
+    'CAST(@real AS DATETIME2)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'datetimeoffset',
+    @test_float, @test_real,
+    'CAST(@float AS DATETIMEOFFSET)',
+    'CAST(@real AS DATETIMEOFFSET)';
+GO
+
+-- Other Data Types
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'uniqueidentifier',
+    @test_float, @test_real,
+    'CAST(@float AS UNIQUEIDENTIFIER)',
+    'CAST(@real AS UNIQUEIDENTIFIER)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'sql_variant',
+    @test_float, @test_real,
+    'CAST(@float AS SQL_VARIANT)',
+    'CAST(@real AS SQL_VARIANT)';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'xml',
+    @test_float, @test_real,
+    'CAST(CAST(@float AS NVARCHAR(MAX)) AS XML)',
+    'CAST(CAST(@real AS NVARCHAR(MAX)) AS XML)';
+GO
+
+-- Additional Tests with Special Values
+
+-- Test Maximum/Minimum Values
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'varchar(50)',
+    1.79E+308, 3.40E+38,
+    'CAST(@float AS VARCHAR(50))',
+    'CAST(@real AS VARCHAR(50))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'varchar(50)',
+    -1.79E+308, -3.40E+38,
+    'CAST(@float AS VARCHAR(50))',
+    'CAST(@real AS VARCHAR(50))';
+GO
+
+-- Test Small Values (Close to Zero)
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'varchar(50)',
+    1.79E-308, 3.40E-38,
+    'CAST(@float AS VARCHAR(50))',
+    'CAST(@real AS VARCHAR(50))';
+GO
+
+DECLARE @test_float FLOAT = 123.456789;
+DECLARE @test_real REAL = 123.456789;
+
+EXEC TestConversionTo 'varchar(50)',
+    -1.79E-308, -3.40E-38,
+    'CAST(@float AS VARCHAR(50))',
+    'CAST(@real AS VARCHAR(50))';
+GO
+
+-- Display Results
+SELECT 'Conversions FROM other types to FLOAT/REAL' AS Test;
+GO
+SELECT * FROM FLOAT_CONVERSIONS_FROM ORDER BY id;
+GO
+
+SELECT 'Conversions TO other types FROM FLOAT/REAL' AS Test;
+GO
+-- FIXME: id 39-46 have binary casting issue which always gives a different result.
+SELECT * FROM FLOAT_CONVERSIONS_TO WHERE id < 39 OR id > 46 ORDER BY id;
+GO
+
+-- Additional Analysis Queries
+
+-- Summary of Failed Conversions FROM other types
+SELECT source_type, 
+       COUNT(*) as total_attempts,
+       SUM(CASE WHEN conversion_succeeded = 1 THEN 1 ELSE 0 END) as successful_conversions,
+       SUM(CASE WHEN conversion_succeeded = 0 THEN 1 ELSE 0 END) as failed_conversions
+FROM FLOAT_CONVERSIONS_FROM
+GROUP BY source_type
+ORDER BY source_type;
+GO
+
+-- Summary of Failed Conversions TO other types
+SELECT target_type, 
+       COUNT(*) as total_attempts,
+       SUM(CASE WHEN conversion_succeeded = 1 THEN 1 ELSE 0 END) as successful_conversions,
+       SUM(CASE WHEN conversion_succeeded = 0 THEN 1 ELSE 0 END) as failed_conversions
+FROM FLOAT_CONVERSIONS_TO
+GROUP BY target_type
+ORDER BY target_type;
+GO
+
+-- Cleanup
+DROP TABLE FLOAT_CONVERSIONS_FROM;
+GO
+DROP TABLE FLOAT_CONVERSIONS_TO;
+GO
+DROP PROCEDURE TestConversionFrom;
+GO
+DROP PROCEDURE TestConversionTo;
+GO
+
+-- Math Functions Testing
+
+CREATE TABLE FLOAT_REAL_FUNCTIONS_dt (
+    id INT IDENTITY(1,1),
+    function_name VARCHAR(50),
+    float_result FLOAT,
+    real_result REAL
+);
+GO
+
+-- Test mathematical functions
+INSERT INTO FLOAT_REAL_FUNCTIONS_dt(function_name, float_result, real_result)
+VALUES 
+    ('ABS', ABS(CAST(-1.23 AS FLOAT)), ABS(CAST(-1.23 AS REAL))),
+    ('POWER', POWER(CAST(2.0 AS FLOAT), 3), POWER(CAST(2.0 AS REAL), 3)),
+    ('SQRT', SQRT(CAST(16.0 AS FLOAT)), SQRT(CAST(16.0 AS REAL))),
+    ('LOG', LOG(CAST(100.0 AS FLOAT)), LOG(CAST(100.0 AS REAL))),
+    ('EXP', EXP(CAST(2.0 AS FLOAT)), EXP(CAST(2.0 AS REAL))),
+    ('CEILING', CEILING(CAST(1.23 AS FLOAT)), CEILING(CAST(1.23 AS REAL))),
+    ('FLOOR', FLOOR(CAST(1.23 AS FLOAT)), FLOOR(CAST(1.23 AS REAL))),
+    ('ROUND', ROUND(CAST(1.23 AS FLOAT), 1), ROUND(CAST(1.23 AS REAL), 1));
+GO
+
+SELECT * FROM FLOAT_REAL_FUNCTIONS_dt ORDER BY id;
+GO
+
+DROP TABLE FLOAT_REAL_FUNCTIONS_dt;
+GO
+
+-- Aggregate Functions Testing
+CREATE TABLE FLOAT_REAL_AGGREGATE_dt (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL
+);
+GO
+
+-- Insert test data
+INSERT INTO FLOAT_REAL_AGGREGATE_dt(float_val, real_val)
+VALUES 
+    (1.23, 1.23),
+    (4.56, 4.56),
+    (7.89, 7.89),
+    (NULL, NULL);
+GO
+
+-- Test aggregate functions
+SELECT 
+    COUNT(float_val) as float_count,
+    COUNT(real_val) as real_count,
+    SUM(float_val) as float_sum,
+    SUM(real_val) as real_sum,
+    AVG(float_val) as float_avg,
+    AVG(real_val) as real_avg,
+    MIN(float_val) as float_min,
+    MIN(real_val) as real_min,
+    MAX(float_val) as float_max,
+    MAX(real_val) as real_max
+FROM FLOAT_REAL_AGGREGATE_dt;
+GO
+
+DROP TABLE FLOAT_REAL_AGGREGATE_dt;
+GO
+
+-- Precision and Rounding Tests
+
+CREATE TABLE FLOAT_REAL_dt_precision (
+    id INT IDENTITY(1,1),
+    original_float FLOAT,
+    rounded_0 FLOAT,
+    rounded_2 FLOAT,
+    rounded_4 FLOAT,
+    rounded_8 FLOAT,
+    ceil_val FLOAT,
+    floor_val FLOAT
+);
+GO
+
+-- Test different precision scenarios
+INSERT INTO FLOAT_REAL_dt_precision 
+    (original_float, rounded_0, rounded_2, rounded_4, rounded_8, ceil_val, floor_val)
+VALUES
+    (1.23456789, 
+     ROUND(1.23456789, 0),
+     ROUND(1.23456789, 2),
+     ROUND(1.23456789, 4),
+     ROUND(1.23456789, 8),
+     CEILING(1.23456789),
+     FLOOR(1.23456789)),
+    (PI(), 
+     ROUND(PI(), 0),
+     ROUND(PI(), 2),
+     ROUND(PI(), 4),
+     ROUND(PI(), 8),
+     CEILING(PI()),
+     FLOOR(PI())),
+    (-1.23456789,
+     ROUND(-1.23456789, 0),
+     ROUND(-1.23456789, 2),
+     ROUND(-1.23456789, 4),
+     ROUND(-1.23456789, 8),
+     CEILING(-1.23456789),
+     FLOOR(-1.23456789));
+GO
+
+SELECT * FROM FLOAT_REAL_dt_precision ORDER BY id;
+GO
+
+DROP TABLE FLOAT_REAL_dt_precision;
+GO
+
+-- Test COMPUTED columns with FLOAT/REAL
+CREATE TABLE FLOAT_REAL_COMPUTED_TEST (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    float_computed AS (float_val * 2.5),
+    real_computed AS (real_val * 2.5),
+    float_computed_complex AS (POWER(float_val, 2) + SQRT(ABS(float_val))),
+    real_computed_complex AS (POWER(real_val, 2) + SQRT(ABS(real_val)))
+);
+GO
+
+-- Insert test data
+INSERT INTO FLOAT_REAL_COMPUTED_TEST (float_val, real_val) 
+VALUES 
+    (1.23, 1.23),
+    (4.56, 4.56),
+    (-7.89, -7.89),
+    (0.0, 0.0),
+    (100.123, 100.123),
+    (-50.456, -50.456),
+    (1.23E+10, 1.23E+10),
+    (1.23E-10, 1.23E-10);
+GO
+
+-- Test queries
+SELECT 'COMPUTED columns test results' AS Test;
+GO
+
+-- Check base and computed values
+SELECT id,
+       float_val,
+       float_computed,
+       float_computed_complex,
+       real_val,
+       real_computed,
+       real_computed_complex
+FROM FLOAT_REAL_COMPUTED_TEST
+ORDER BY id;
+GO
+
+-- Test arithmetic operations on computed columns
+SELECT id,
+       float_computed + float_computed_complex as float_computed_sum,
+       real_computed + real_computed_complex as real_computed_sum,
+       float_computed * float_computed_complex as float_computed_product,
+       real_computed * real_computed_complex as real_computed_product,
+       float_computed / NULLIF(float_computed_complex, 0) as float_computed_division,
+       real_computed / NULLIF(real_computed_complex, 0) as real_computed_division
+FROM FLOAT_REAL_COMPUTED_TEST
+ORDER BY id;
+GO
+
+-- Test PERSISTED computed columns
+CREATE TABLE FLOAT_REAL_PERSISTED_COMPUTED_TEST (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    float_computed AS (float_val * 2.5) PERSISTED,
+    real_computed AS (real_val * 2.5) PERSISTED,
+    float_computed_complex AS (POWER(float_val, 2) + SQRT(ABS(float_val))) PERSISTED,
+    real_computed_complex AS (POWER(real_val, 2) + SQRT(ABS(real_val))) PERSISTED
+);
+GO
+
+-- Insert test data
+INSERT INTO FLOAT_REAL_PERSISTED_COMPUTED_TEST (float_val, real_val)
+SELECT float_val, real_val
+FROM FLOAT_REAL_COMPUTED_TEST ORDER BY id;
+GO
+
+-- Compare non-persisted vs persisted results
+SELECT 'Comparison of PERSISTED vs non-PERSISTED computed columns' AS Test;
+GO
+
+SELECT 
+    t1.id,
+    t1.float_computed as float_computed_non_persisted,
+    t2.float_computed as float_computed_persisted,
+    CASE WHEN t1.float_computed = t2.float_computed THEN 'Equal' ELSE 'Different' END as float_comparison,
+    t1.real_computed as real_computed_non_persisted,
+    t2.real_computed as real_computed_persisted,
+    CASE WHEN t1.real_computed = t2.real_computed THEN 'Equal' ELSE 'Different' END as real_comparison
+FROM FLOAT_REAL_COMPUTED_TEST t1
+JOIN FLOAT_REAL_PERSISTED_COMPUTED_TEST t2 ON t1.id = t2.id
+ORDER BY t1.id;
+GO
+
+-- Test mathematical functions in computed columns
+CREATE TABLE FLOAT_REAL_MATH_COMPUTED_TEST (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    float_sin AS (SIN(float_val)),
+    real_sin AS (SIN(real_val)),
+    float_log AS (LOG(ABS(NULLIF(float_val, 0)))),
+    real_log AS (LOG(ABS(NULLIF(real_val, 0)))),
+    float_round AS (ROUND(float_val, 2)),
+    real_round AS (ROUND(real_val, 2))
+);
+GO
+
+-- Insert test data
+INSERT INTO FLOAT_REAL_MATH_COMPUTED_TEST (float_val, real_val)
+SELECT float_val, real_val
+FROM FLOAT_REAL_COMPUTED_TEST ORDER BY id;
+GO
+
+-- Test mathematical computed columns
+SELECT 'Mathematical function computed columns test results' AS Test;
+GO
+
+SELECT 
+    id,
+    float_val,
+    float_sin,
+    float_log,
+    float_round,
+    real_val,
+    real_sin,
+    real_log,
+    real_round
+FROM FLOAT_REAL_MATH_COMPUTED_TEST
+ORDER BY id;
+GO
+
+-- Test indexing on computed columns
+CREATE INDEX IX_FLOAT_REAL_PERSISTED_COMPUTED_TEST_float_computed 
+ON FLOAT_REAL_PERSISTED_COMPUTED_TEST(float_computed);
+GO
+
+CREATE INDEX IX_FLOAT_REAL_PERSISTED_COMPUTED_TEST_real_computed 
+ON FLOAT_REAL_PERSISTED_COMPUTED_TEST(real_computed);
+GO
+
+-- Test querying with indexes
+SELECT set_config('enable_seqscan', 'off', false)
+GO
+
+set babelfish_showplan_all on
+GO
+
+SELECT * FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST 
+WHERE float_computed BETWEEN 0 AND 100
+ORDER BY float_computed;
+GO
+
+SELECT * FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST 
+WHERE real_computed BETWEEN 0 AND 100
+ORDER BY real_computed;
+GO
+
+set babelfish_showplan_all OFF
+GO
+
+SELECT set_config('enable_seqscan', 'on', false)
+GO
+
+-- Test computed columns in predicates
+SELECT 'Using computed columns in WHERE clause' AS Test;
+GO
+
+SELECT *
+FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST
+WHERE float_computed > real_computed
+ORDER BY id;
+GO
+
+SELECT *
+FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST
+WHERE float_computed_complex < 1000
+ORDER BY float_computed_complex;
+GO
+
+-- Cleanup
+DROP TABLE FLOAT_REAL_COMPUTED_TEST;
+GO
+DROP TABLE FLOAT_REAL_PERSISTED_COMPUTED_TEST;
+GO
+DROP TABLE FLOAT_REAL_MATH_COMPUTED_TEST;
+GO
+
+-- Create UDTs based on FLOAT and REAL
+CREATE TYPE float_price FROM FLOAT;
+GO
+CREATE TYPE float_measurement FROM FLOAT;
+GO
+CREATE TYPE real_temperature FROM REAL;
+GO
+CREATE TYPE real_percentage FROM REAL;
+GO
+
+-- Test table with UDTs
+CREATE TABLE float_real_udt_test (
+    id INT IDENTITY(1,1),
+    product_price float_price,
+    length_mm float_measurement,
+    room_temp real_temperature,
+    humidity_pct real_percentage
+);
+GO
+
+-- Insert test data
+INSERT INTO float_real_udt_test (product_price, length_mm, room_temp, humidity_pct)
+VALUES 
+    (123.45, 256.78, 22.5, 45.6),
+    (0.99, 1000.00, 18.3, 60.0),
+    (9999.99, 0.001, -5.2, 90.5),
+    (1.23E+5, 1.23E+3, 35.8, 10.2),
+    (1.23E-3, 1.23E-3, -20.5, 0.5);
+GO
+
+-- Test arithmetic operations with UDTs
+SELECT 
+    id,
+    product_price * 2 as doubled_price,
+    length_mm / 1000 as length_meters,
+    room_temp + 273.15 as temp_kelvin,
+    humidity_pct / 100 as humidity_fraction
+FROM float_real_udt_test
+ORDER BY id;
+GO
+
+-- Test UDTs in functions
+CREATE FUNCTION calculate_total_price(
+    @unit_price float_price,
+    @quantity FLOAT
+)
+RETURNS float_price
+AS
+BEGIN
+    RETURN @unit_price * @quantity;
+END;
+GO
+
+CREATE FUNCTION convert_celsius_to_fahrenheit(
+    @celsius real_temperature
+)
+RETURNS real_temperature
+AS
+BEGIN
+    RETURN (@celsius * 1.8) + 32;
+END;
+GO
+
+-- Test UDT functions
+SELECT 
+    id,
+    product_price,
+    dbo.calculate_total_price(product_price, 3) as total_price_3_units,
+    room_temp,
+    dbo.convert_celsius_to_fahrenheit(room_temp) as temp_fahrenheit
+FROM float_real_udt_test
+ORDER BY id;
+GO
+
+-- Test UDTs with constraints
+CREATE TABLE float_real_udt_constraints (
+    id INT IDENTITY(1,1),
+    product_price float_price NOT NULL,
+    length_mm float_measurement NOT NULL,
+    room_temp real_temperature NOT NULL,
+    humidity_pct real_percentage NOT NULL,
+    CONSTRAINT chk_price CHECK (product_price >= 0),
+    CONSTRAINT chk_length CHECK (length_mm > 0),
+    CONSTRAINT chk_humidity CHECK (humidity_pct BETWEEN 0 AND 100)
+);
+GO
+
+-- Test constraints
+-- Should succeed
+INSERT INTO float_real_udt_constraints (product_price, length_mm, room_temp, humidity_pct)
+VALUES (123.45, 256.78, 22.5, 45.6);
+GO
+
+-- Should fail - negative price
+BEGIN TRY
+    INSERT INTO float_real_udt_constraints (product_price, length_mm, room_temp, humidity_pct)
+    VALUES (-123.45, 256.78, 22.5, 45.6);
+END TRY
+BEGIN CATCH
+    SELECT 'Negative price not allowed: ' + ERROR_MESSAGE() as error_message;
+END CATCH;
+GO
+
+-- Should fail - zero length
+BEGIN TRY
+    INSERT INTO float_real_udt_constraints (product_price, length_mm, room_temp, humidity_pct)
+    VALUES (123.45, 0, 22.5, 45.6);
+END TRY
+BEGIN CATCH
+    SELECT 'Zero length not allowed: ' + ERROR_MESSAGE() as error_message;
+END CATCH;
+GO
+
+-- Should fail - humidity > 100
+BEGIN TRY
+    INSERT INTO float_real_udt_constraints (product_price, length_mm, room_temp, humidity_pct)
+    VALUES (123.45, 256.78, 22.5, 101);
+END TRY
+BEGIN CATCH
+    SELECT 'Humidity > 100 not allowed: ' + ERROR_MESSAGE() as error_message;
+END CATCH;
+GO
+
+-- Test UDTs in stored procedures
+CREATE PROCEDURE update_price_and_length
+    @id INT,
+    @new_price float_price,
+    @new_length float_measurement
+AS
+BEGIN
+    UPDATE float_real_udt_test
+    SET product_price = @new_price,
+        length_mm = @new_length
+    WHERE id = @id;
+END;
+GO
+
+-- Execute procedure
+EXEC update_price_and_length @id = 1, @new_price = 999.99, @new_length = 500.0;
+GO
+
+-- Verify update
+SELECT * FROM float_real_udt_test WHERE id = 1;
+GO
+
+-- Test UDTs in indexes
+CREATE INDEX IX_float_real_udt_test_price ON float_real_udt_test(product_price);
+CREATE INDEX IX_float_real_udt_test_temp ON float_real_udt_test(room_temp);
+GO
+
+-- Test index usage
+SELECT set_config('enable_seqscan', 'off', false)
+GO
+
+set babelfish_showplan_all on
+GO
+
+SELECT *
+FROM float_real_udt_test
+WHERE product_price > 100
+ORDER BY product_price;
+GO
+
+SELECT *
+FROM float_real_udt_test
+WHERE room_temp BETWEEN 20 AND 30
+ORDER BY room_temp;
+GO
+
+set babelfish_showplan_all OFF
+GO
+
+SELECT set_config('enable_seqscan', 'on', false)
+GO
+
+-- Cleanup
+DROP FUNCTION calculate_total_price;
+GO
+DROP FUNCTION convert_celsius_to_fahrenheit;
+GO
+DROP PROCEDURE update_price_and_length;
+GO
+DROP TABLE float_real_udt_test;
+GO
+DROP TABLE float_real_udt_constraints;
+GO
+DROP TYPE float_price;
+GO
+DROP TYPE float_measurement;
+GO
+DROP TYPE real_temperature;
+GO
+DROP TYPE real_percentage;
+GO
+
+-- Base table for testing
+CREATE TABLE float_real_base_test (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    description VARCHAR(100)
+);
+GO
+
+-- Insert test data
+INSERT INTO float_real_base_test (float_val, real_val, description) VALUES
+    (1.23456789, 1.23456789, 'Regular number'),
+    (-987.654321, -987.654321, 'Negative number'),
+    (1.23E+38, 1.23E+38, 'Large number'),
+    (1.23E-38, 1.23E-38, 'Small number'),
+    (0.0, 0.0, 'Zero'),
+    (PI(), PI(), 'PI value');
+GO
+
+-- Functions
+
+-- Scalar function returning FLOAT
+CREATE FUNCTION float_real_calculate_power(
+    @base FLOAT,
+    @exponent FLOAT
+)
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN POWER(@base, @exponent);
+END;
+GO
+
+-- Scalar function returning REAL
+CREATE FUNCTION float_real_calculate_average(
+    @val1 REAL,
+    @val2 REAL
+)
+RETURNS REAL
+AS
+BEGIN
+    RETURN (@val1 + @val2) / 2.0;
+END;
+GO
+
+-- Table-valued function
+CREATE FUNCTION float_real_get_range(
+    @min_val FLOAT,
+    @max_val FLOAT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT *
+    FROM float_real_base_test
+    WHERE float_val BETWEEN @min_val AND @max_val;
+GO
+
+-- Test functions
+SELECT dbo.float_real_calculate_power(float_val, 2) as float_squared,
+       dbo.float_real_calculate_average(real_val, real_val * 2) as real_avg
+FROM float_real_base_test ORDER BY id;
+GO
+
+SELECT * FROM dbo.float_real_get_range(0, 10);
+GO
+
+-- Stored Procedures
+
+-- Procedure to insert data
+CREATE PROCEDURE float_real_insert_data
+    @float_val FLOAT,
+    @real_val REAL,
+    @description VARCHAR(100)
+AS
+BEGIN
+    INSERT INTO float_real_base_test (float_val, real_val, description)
+    VALUES (@float_val, @real_val, @description);
+    
+    SELECT SCOPE_IDENTITY() as new_id;
+END;
+GO
+
+-- Procedure with output parameters
+CREATE PROCEDURE float_real_calculate_stats
+    @operation VARCHAR(20),
+    @result FLOAT OUTPUT
+AS
+BEGIN
+    IF @operation = 'AVG'
+        SET @result = (SELECT AVG(float_val) FROM float_real_base_test);
+    ELSE IF @operation = 'SUM'
+        SET @result = (SELECT SUM(float_val) FROM float_real_base_test);
+    ELSE IF @operation = 'MIN'
+        SET @result = (SELECT MIN(float_val) FROM float_real_base_test);
+    ELSE IF @operation = 'MAX'
+        SET @result = (SELECT MAX(float_val) FROM float_real_base_test);
+END;
+GO
+
+-- Test procedures
+EXEC float_real_insert_data 123.456, 123.456, 'Inserted via procedure';
+GO
+
+DECLARE @stat_result FLOAT;
+EXEC float_real_calculate_stats 'AVG', @stat_result OUTPUT;
+SELECT @stat_result as average_value;
+GO
+
+-- Views
+
+-- Simple view
+CREATE VIEW float_real_simple_view
+AS
+SELECT id, float_val, real_val, description
+FROM float_real_base_test;
+GO
+
+-- View with calculations
+CREATE VIEW float_real_calculated_view
+AS
+SELECT 
+    id,
+    float_val,
+    real_val,
+    float_val * real_val as product,
+    POWER(float_val, 2) as float_squared,
+    SQRT(ABS(real_val)) as real_sqrt,
+    description
+FROM float_real_base_test;
+GO
+
+-- Test views
+SELECT * FROM float_real_simple_view ORDER BY id;
+GO
+
+SELECT * FROM float_real_calculated_view ORDER BY id;
+GO
+
+-- Triggers
+
+-- Audit table for triggers
+CREATE TABLE float_real_audit (
+    audit_id INT IDENTITY(1,1),
+    action_type VARCHAR(10),
+    action_date DATETIME,
+    old_float_val FLOAT,
+    new_float_val FLOAT,
+    old_real_val REAL,
+    new_real_val REAL,
+    modified_by VARCHAR(100)
+);
+GO
+
+-- After Insert trigger
+CREATE TRIGGER float_real_after_insert
+ON float_real_base_test
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO float_real_audit (
+        action_type,
+        action_date,
+        old_float_val,
+        new_float_val,
+        old_real_val,
+        new_real_val,
+        modified_by
+    )
+    SELECT 
+        'INSERT',
+        NULL,
+        NULL,
+        float_val,
+        NULL,
+        real_val,
+        SYSTEM_USER
+    FROM inserted;
+END;
+GO
+
+-- After Update trigger
+CREATE TRIGGER float_real_after_update
+ON float_real_base_test
+AFTER UPDATE
+AS
+BEGIN
+    INSERT INTO float_real_audit (
+        action_type,
+        action_date,
+        old_float_val,
+        new_float_val,
+        old_real_val,
+        new_real_val,
+        modified_by
+    )
+    SELECT 
+        'UPDATE',
+        NULL,
+        d.float_val,
+        i.float_val,
+        d.real_val,
+        i.real_val,
+        SYSTEM_USER
+    FROM deleted d
+    JOIN inserted i ON d.id = i.id;
+END;
+GO
+
+-- Instead Of trigger on view
+CREATE TRIGGER float_real_instead_of_insert
+ON float_real_simple_view
+INSTEAD OF INSERT
+AS
+BEGIN
+    INSERT INTO float_real_base_test (
+        float_val,
+        real_val,
+        description
+    )
+    SELECT 
+        float_val * 2,  -- Double the inserted float value
+        real_val * 2,   -- Double the inserted real value
+        description + ' (doubled)'
+    FROM inserted;
+END;
+GO
+
+-- Test triggers
+INSERT INTO float_real_base_test (float_val, real_val, description)
+VALUES (777.888, 777.888, 'Testing After Insert trigger');
+GO
+
+UPDATE float_real_base_test
+SET float_val = float_val * 1.1,
+    real_val = real_val * 1.1
+WHERE id = (SELECT MAX(id) FROM float_real_base_test);
+GO
+
+INSERT INTO float_real_simple_view (float_val, real_val, description)
+VALUES (999.999, 999.999, 'Testing Instead Of trigger');
+GO
+
+-- View audit results
+SELECT * FROM float_real_audit ORDER BY audit_id;
+GO
+
+-- Cleanup
+DROP TRIGGER float_real_after_insert;
+GO
+DROP TRIGGER float_real_after_update;
+GO
+DROP TRIGGER float_real_instead_of_insert;
+GO
+DROP VIEW float_real_simple_view;
+GO
+DROP VIEW float_real_calculated_view;
+GO
+DROP PROCEDURE float_real_insert_data;
+GO
+DROP PROCEDURE float_real_calculate_stats;
+GO
+DROP FUNCTION float_real_calculate_power;
+GO
+DROP FUNCTION float_real_calculate_average;
+GO
+DROP FUNCTION float_real_get_range;
+GO
+DROP TABLE float_real_audit;
+GO
+DROP TABLE float_real_base_test;
+GO
+
+-- Test table for FLOAT and REAL constraints
+CREATE TABLE float_real_constraint_test (
+    id INT IDENTITY(1,1),
+    
+    -- Basic constraints
+    float_not_null FLOAT NOT NULL,
+    float_with_default FLOAT DEFAULT 1.23,
+    real_not_null REAL NOT NULL,
+    real_with_default REAL DEFAULT 4.56,
+    
+    -- CHECK constraints
+    float_positive FLOAT CHECK (float_positive > 0),
+    float_range FLOAT CHECK (float_range BETWEEN -100 AND 100),
+    real_positive REAL CHECK (real_positive > 0),
+    real_range REAL CHECK (real_range BETWEEN -100 AND 100),
+    
+    -- Complex CHECK constraints
+    float_precision FLOAT CHECK (ABS(float_precision - ROUND(float_precision, 2)) < 0.001),
+    real_precision REAL CHECK (ABS(real_precision - ROUND(real_precision, 2)) < 0.001),
+    
+    -- Mathematical constraints
+    float_sqrt FLOAT CHECK (float_sqrt >= 0),
+    real_sqrt REAL CHECK (real_sqrt >= 0),
+    
+    -- Combined constraints
+    float_combined FLOAT CHECK (float_combined > 0 AND float_combined < 1000),
+    real_combined REAL CHECK (real_combined > 0 AND real_combined < 1000),
+    
+    -- Multiple column constraints
+    float_min FLOAT,
+    float_max FLOAT,
+    real_min REAL,
+    real_max REAL,
+    
+    CONSTRAINT chk_float_range_valid CHECK (float_min <= float_max),
+    CONSTRAINT chk_real_range_valid CHECK (real_min <= real_max)
+);
+GO
+
+-- Test successful insertions
+INSERT INTO float_real_constraint_test (
+    float_not_null, real_not_null,
+    float_positive, float_range, real_positive, real_range,
+    float_precision, real_precision,
+    float_sqrt, real_sqrt,
+    float_combined, real_combined,
+    float_min, float_max, real_min, real_max
+) VALUES
+(
+    1.0, 1.0,                    -- not null values
+    1.23, 50.0, 1.23, 50.0,     -- positive and range values
+    1.23, 1.23,                 -- precision values
+    4.0, 4.0,                   -- sqrt values
+    500.0, 500.0,               -- combined constraint values
+    1.0, 2.0, 1.0, 2.0         -- min-max values
+);
+GO
+
+-- Test DEFAULT constraints
+INSERT INTO float_real_constraint_test (
+    float_not_null, real_not_null,
+    float_positive, float_range, real_positive, real_range,
+    float_precision, real_precision,
+    float_sqrt, real_sqrt,
+    float_combined, real_combined,
+    float_min, float_max, real_min, real_max
+) VALUES
+(
+    1.0, 1.0,                    -- not null values (float_with_default and real_with_default use defaults)
+    1.23, 50.0, 1.23, 50.0,     -- positive and range values
+    1.23, 1.23,                 -- precision values
+    4.0, 4.0,                   -- sqrt values
+    500.0, 500.0,               -- combined constraint values
+    1.0, 2.0, 1.0, 2.0         -- min-max values
+);
+GO
+
+-- Test constraint violations
+
+-- Test NOT NULL constraint
+BEGIN TRY
+    INSERT INTO float_real_constraint_test (real_not_null) VALUES (1.0);
+END TRY
+BEGIN CATCH
+    SELECT 'NOT NULL constraint test' AS test_name, 
+           'SUCCESS: NOT NULL constraint worked for float_not_null - ' + ERROR_MESSAGE() AS result;
+END CATCH;
+GO
+
+-- Test positive value constraint
+BEGIN TRY
+    INSERT INTO float_real_constraint_test (
+        float_not_null, real_not_null,
+        float_positive, float_range, real_positive, real_range,
+        float_precision, real_precision,
+        float_sqrt, real_sqrt,
+        float_combined, real_combined,
+        float_min, float_max, real_min, real_max
+    ) VALUES (
+        1.0, 1.0,
+        -1.0, 50.0, 1.23, 50.0,  -- negative value for float_positive
+        1.23, 1.23,
+        4.0, 4.0,
+        500.0, 500.0,
+        1.0, 2.0, 1.0, 2.0
+    );
+END TRY
+BEGIN CATCH
+    SELECT 'Positive value constraint test' AS test_name, 
+           'SUCCESS: Positive value constraint worked - ' + ERROR_MESSAGE() AS result;
+END CATCH;
+GO
+
+-- Test range constraint
+BEGIN TRY
+    INSERT INTO float_real_constraint_test (
+        float_not_null, real_not_null,
+        float_positive, float_range, real_positive, real_range,
+        float_precision, real_precision,
+        float_sqrt, real_sqrt,
+        float_combined, real_combined,
+        float_min, float_max, real_min, real_max
+    ) VALUES (
+        1.0, 1.0,
+        1.23, 150.0, 1.23, 50.0,  -- value outside range for float_range
+        1.23, 1.23,
+        4.0, 4.0,
+        500.0, 500.0,
+        1.0, 2.0, 1.0, 2.0
+    );
+END TRY
+BEGIN CATCH
+    SELECT 'Range constraint test' AS test_name, 
+           'SUCCESS: Range constraint worked - ' + ERROR_MESSAGE() AS result;
+END CATCH;
+GO
+
+-- Test precision constraint
+BEGIN TRY
+    INSERT INTO float_real_constraint_test (
+        float_not_null, real_not_null,
+        float_positive, float_range, real_positive, real_range,
+        float_precision, real_precision,
+        float_sqrt, real_sqrt,
+        float_combined, real_combined,
+        float_min, float_max, real_min, real_max
+    ) VALUES (
+        1.0, 1.0,
+        1.23, 50.0, 1.23, 50.0,
+        1.23456789, 1.23,  -- too many decimal places
+        4.0, 4.0,
+        500.0, 500.0,
+        1.0, 2.0, 1.0, 2.0
+    );
+END TRY
+BEGIN CATCH
+    SELECT 'Precision constraint test' AS test_name, 
+           'SUCCESS: Precision constraint worked - ' + ERROR_MESSAGE() AS result;
+END CATCH;
+GO
+
+-- Test min-max constraint
+BEGIN TRY
+    INSERT INTO float_real_constraint_test (
+        float_not_null, real_not_null,
+        float_positive, float_range, real_positive, real_range,
+        float_precision, real_precision,
+        float_sqrt, real_sqrt,
+        float_combined, real_combined,
+        float_min, float_max, real_min, real_max
+    ) VALUES (
+        1.0, 1.0,
+        1.23, 50.0, 1.23, 50.0,
+        1.23, 1.23,
+        4.0, 4.0,
+        500.0, 500.0,
+        2.0, 1.0, 1.0, 2.0  -- min > max for float
+    );
+END TRY
+BEGIN CATCH
+    SELECT 'Min-max constraint test' AS test_name, 
+           'SUCCESS: Min-max constraint worked - ' + ERROR_MESSAGE() AS result;
+END CATCH;
+GO
+
+-- Query successful insertions
+SELECT 'Successful insertions' AS test_name, * FROM float_real_constraint_test ORDER BY id;
+GO
+
+-- Cleanup
+DROP TABLE IF EXISTS float_real_constraint_test;
+GO
+
+-- 1. Table Variables Tests
+DECLARE @float_real_table_var TABLE (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    calc_float AS (float_val * 2),
+    calc_real AS (real_val * 2)
+);
+GO
+
+-- Test INSERT into table variable
+DECLARE @float_real_table_var TABLE (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    calc_float AS (float_val * 2),
+    calc_real AS (real_val * 2)
+);
+
+INSERT INTO @float_real_table_var (float_val, real_val)
+VALUES 
+    (1.23456789, 1.23456789),
+    (2.34567891, 2.34567891),
+    (-3.45678912, -3.45678912),
+    (4.56789123E+10, 4.56789123E+10),
+    (5.67891234E-10, 5.67891234E-10);
+
+SELECT 'Table Variable - Basic Data' AS test_case, *
+FROM @float_real_table_var;
+GO
+
+-- Test table variable with constraints
+DECLARE @float_real_constrained_var TABLE (
+    id INT IDENTITY(1,1),
+    float_val FLOAT NOT NULL,
+    real_val REAL NOT NULL,
+    float_positive FLOAT CHECK (float_positive > 0),
+    real_positive REAL CHECK (real_positive > 0),
+    PRIMARY KEY (id)
+);
+
+INSERT INTO @float_real_constrained_var (float_val, real_val, float_positive, real_positive)
+VALUES (1.0, 1.0, 2.0, 2.0);
+
+SELECT 'Table Variable - With Constraints' AS test_case, *
+FROM @float_real_constrained_var;
+GO
+
+-- Temporary Tables Tests
+
+-- Local temp table (#)
+CREATE TABLE #float_real_temp (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    calc_float AS (float_val * 2),
+    calc_real AS (real_val * 2)
+);
+
+INSERT INTO #float_real_temp (float_val, real_val)
+VALUES 
+    (1.23456789, 1.23456789),
+    (2.34567891, 2.34567891),
+    (-3.45678912, -3.45678912),
+    (4.56789123E+10, 4.56789123E+10),
+    (5.67891234E-10, 5.67891234E-10);
+
+SELECT 'Local Temp Table - Basic Data' AS test_case, *
+FROM #float_real_temp ORDER BY id;
+
+-- Test temp table with constraints
+CREATE TABLE #float_real_constrained_temp (
+    id INT IDENTITY(1,1),
+    float_val FLOAT NOT NULL,
+    real_val REAL NOT NULL,
+    float_positive FLOAT CHECK (float_positive > 0),
+    real_positive REAL CHECK (real_positive > 0),
+    PRIMARY KEY (id)
+);
+
+INSERT INTO #float_real_constrained_temp (float_val, real_val, float_positive, real_positive)
+VALUES (1.0, 1.0, 2.0, 2.0);
+
+SELECT 'Temp Table - With Constraints' AS test_case, *
+FROM #float_real_constrained_temp ORDER BY id;
+
+-- Test indexes on temp table
+CREATE TABLE #float_real_indexed_temp (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL
+);
+
+CREATE INDEX IX_float_val ON #float_real_indexed_temp(float_val);
+CREATE INDEX IX_real_val ON #float_real_indexed_temp(real_val);
+
+INSERT INTO #float_real_indexed_temp (float_val, real_val)
+VALUES 
+    (1.23456789, 1.23456789),
+    (2.34567891, 2.34567891),
+    (-3.45678912, -3.45678912);
+
+-- Test joins between table variables and temp tables
+DECLARE @float_real_join_var TABLE (
+    id INT,
+    float_val FLOAT
+);
+
+CREATE TABLE #float_real_join_temp (
+    id INT,
+    real_val REAL
+);
+
+INSERT INTO @float_real_join_var VALUES (1, 1.23), (2, 2.34), (3, 3.45);
+INSERT INTO #float_real_join_temp VALUES (1, 1.23), (2, 2.34), (3, 3.45);
+
+SELECT 'Join Test' AS test_case,
+       v.id,
+       v.float_val,
+       t.real_val
+FROM @float_real_join_var v
+JOIN #float_real_join_temp t ON v.id = t.id ORDER BY v.id;
+
+-- Cleanup temp tables (table variables are automatically cleaned up)
+DROP TABLE IF EXISTS #float_real_temp;
+DROP TABLE IF EXISTS #float_real_constrained_temp;
+DROP TABLE IF EXISTS #float_real_indexed_temp;
+DROP TABLE IF EXISTS #float_real_join_temp;
+GO
+
+-- Create table types for parameters
+CREATE TYPE float_real_table_type AS TABLE (
+    id INT,
+    float_val FLOAT,
+    real_val REAL
+);
+GO
+
+-- Test stored procedure with table-valued parameter
+CREATE PROCEDURE process_float_real_table
+    @table_param float_real_table_type READONLY
+AS
+BEGIN
+    SELECT 'Input table parameter values' AS test_case, * FROM @table_param;
+    
+    DECLARE @result_table float_real_table_type;
+    INSERT INTO @result_table
+    SELECT id, float_val * 2, real_val * 2
+    FROM @table_param ORDER BY id;
+    
+    SELECT 'Processed table parameter values' AS test_case, * FROM @result_table;
+END;
+GO
+
+-- Test function returning table with float/real values
+CREATE FUNCTION get_float_real_table()
+RETURNS @result_table TABLE (
+    id INT,
+    float_val FLOAT,
+    real_val REAL,
+    calc_float AS (float_val * 2),
+    calc_real AS (real_val * 2)
+)
+AS
+BEGIN
+    INSERT INTO @result_table (id, float_val, real_val)
+    VALUES 
+        (1, 1.23456789, 1.23456789),
+        (2, 2.34567891, 2.34567891),
+        (3, -3.45678912, -3.45678912);
+    RETURN;
+END;
+GO
+
+-- Test procedure with multiple table parameters
+CREATE PROCEDURE merge_float_real_tables
+    @table1 float_real_table_type READONLY,
+    @table2 float_real_table_type READONLY
+AS
+BEGIN
+    SELECT 'Values from first table' AS test_case, * FROM @table1;
+    SELECT 'Values from second table' AS test_case, * FROM @table2;
+    
+    SELECT 'Merged values' AS test_case,
+           COALESCE(t1.id, t2.id) as id,
+           COALESCE(t1.float_val, t2.float_val) as float_val,
+           COALESCE(t1.real_val, t2.real_val) as real_val
+    FROM @table1 t1
+    FULL OUTER JOIN @table2 t2 ON t1.id = t2.id;
+END;
+GO
+
+-- Test the procedures and functions
+DECLARE @test_table float_real_table_type;
+INSERT INTO @test_table (id, float_val, real_val)
+VALUES 
+    (1, 1.23456789, 1.23456789),
+    (2, 2.34567891, 2.34567891),
+    (3, -3.45678912, -3.45678912);
+
+-- Test single table parameter
+EXEC process_float_real_table @test_table;
+GO
+
+-- Test table-valued function
+SELECT 'Table-valued function results' AS test_case, *
+FROM dbo.get_float_real_table() ORDER BY id;
+GO
+
+-- Test multiple table parameters
+DECLARE @table1 float_real_table_type;
+DECLARE @table2 float_real_table_type;
+
+INSERT INTO @table1 (id, float_val, real_val)
+VALUES 
+    (1, 1.23456789, 1.23456789),
+    (2, 2.34567891, 2.34567891);
+
+INSERT INTO @table2 (id, float_val, real_val)
+VALUES 
+    (2, 3.45678912, 3.45678912),
+    (3, 4.56789123, 4.56789123);
+
+EXEC merge_float_real_tables @table1, @table2;
+GO
+
+-- Test table variable as output parameter in procedure
+CREATE PROCEDURE get_processed_float_real_data
+    @min_value FLOAT,
+    @input_table float_real_table_type READONLY,
+    @output_msg VARCHAR(100) OUTPUT
+AS
+BEGIN
+    SELECT 'Filtered values' AS test_case, *
+    FROM @input_table
+    WHERE float_val > @min_value;
+    
+    SET @output_msg = 'Processing completed';
+END;
+GO
+
+-- Test procedure with output parameter
+DECLARE @test_table float_real_table_type;
+DECLARE @msg VARCHAR(100);
+
+INSERT INTO @test_table (id, float_val, real_val)
+VALUES 
+    (1, 1.23456789, 1.23456789),
+    (2, 2.34567891, 2.34567891),
+    (3, -3.45678912, -3.45678912);
+
+EXEC get_processed_float_real_data 0.0, @test_table, @msg OUTPUT;
+SELECT 'Output message' AS test_case, @msg AS message;
+GO
+
+-- Cleanup
+DROP PROCEDURE IF EXISTS process_float_real_table;
+DROP PROCEDURE IF EXISTS merge_float_real_tables;
+DROP PROCEDURE IF EXISTS get_processed_float_real_data;
+DROP FUNCTION IF EXISTS get_float_real_table;
+DROP TYPE IF EXISTS float_real_table_type;
+GO
+
+
+-- Create partition function for FLOAT values
+CREATE PARTITION FUNCTION float_real_range_partition_func (FLOAT)
+AS RANGE RIGHT FOR VALUES 
+(
+    -1000.0,    -- Very negative values
+    -1.0,       -- Small negative values
+    0.0,        -- Zero boundary
+    1.0,        -- Small positive values
+    1000.0      -- Very positive values
+);
+GO
+
+-- Create partition scheme
+CREATE PARTITION SCHEME float_real_range_partition_scheme
+AS PARTITION float_real_range_partition_func ALL TO ([PRIMARY]);
+GO
+
+-- Create partitioned table
+CREATE TABLE float_real_partitioned_test (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    description VARCHAR(100)
+) ON float_real_range_partition_scheme(float_val);
+GO
+
+-- Insert test data covering all partitions
+INSERT INTO float_real_partitioned_test (float_val, real_val, description)
+VALUES 
+    -- Partition 1: x <= -1000.0
+    (-5000.0, -5000.0, 'Very negative - P1'),
+    (-2000.0, -2000.0, 'Very negative - P1'),
+    (-1500.0, -1500.0, 'Very negative - P1'),
+
+    -- Partition 2: -1000.0 < x <= -1.0
+    (-750.0, -750.0, 'Medium negative - P2'),
+    (-500.0, -500.0, 'Medium negative - P2'),
+    (-2.5, -2.5, 'Medium negative - P2'),
+
+    -- Partition 3: -1.0 < x <= 0.0
+    (-0.75, -0.75, 'Small negative - P3'),
+    (-0.5, -0.5, 'Small negative - P3'),
+    (-0.25, -0.25, 'Small negative - P3'),
+
+    -- Partition 4: 0.0 < x <= 1.0
+    (0.25, 0.25, 'Small positive - P4'),
+    (0.5, 0.5, 'Small positive - P4'),
+    (0.75, 0.75, 'Small positive - P4'),
+
+    -- Partition 5: 1.0 < x <= 1000.0
+    (2.5, 2.5, 'Medium positive - P5'),
+    (500.0, 500.0, 'Medium positive - P5'),
+    (750.0, 750.0, 'Medium positive - P5'),
+
+    -- Partition 6: x > 1000.0
+    (1500.0, 1500.0, 'Very positive - P6'),
+    (2000.0, 2000.0, 'Very positive - P6'),
+    (5000.0, 5000.0, 'Very positive - P6');
+GO
+
+-- Test scientific notation values
+INSERT INTO float_real_partitioned_test (float_val, real_val, description)
+VALUES 
+    (-1.23E+4, -1.23E+4, 'Scientific notation large negative'),
+    (-1.23E-4, -1.23E-4, 'Scientific notation small negative'),
+    (1.23E-4, 1.23E-4, 'Scientific notation small positive'),
+    (1.23E+4, 1.23E+4, 'Scientific notation large positive');
+GO
+
+-- Query to show data in each partition
+SELECT 
+    p.partition_number,
+    p.rows,
+    CASE 
+        WHEN p.partition_number = 1 THEN 'x <= -1000.0'
+        WHEN p.partition_number = 2 THEN '-1000.0 < x <= -1.0'
+        WHEN p.partition_number = 3 THEN '-1.0 < x <= 0.0'
+        WHEN p.partition_number = 4 THEN '0.0 < x <= 1.0'
+        WHEN p.partition_number = 5 THEN '1.0 < x <= 1000.0'
+        WHEN p.partition_number = 6 THEN 'x > 1000.0'
+    END as partition_range,
+    MIN(t.float_val) as min_float_val,
+    MAX(t.float_val) as max_float_val,
+    COUNT(*) as row_count
+FROM float_real_partitioned_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('float_real_partitioned_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number, p.rows
+ORDER BY p.partition_number;
+GO
+
+-- Create partitioned index
+CREATE NONCLUSTERED INDEX IX_float_real_partitioned_test_float_val 
+ON float_real_partitioned_test(float_val)
+ON float_real_range_partition_scheme(float_val);
+GO
+
+-- Create another partitioned table with computed columns
+-- babelfish crash while creating
+-- CREATE TABLE float_real_partitioned_computed_test (
+--     id INT IDENTITY(1,1),
+--     float_val FLOAT,
+--     real_val REAL,
+--     computed_val AS (float_val * real_val),
+--     description VARCHAR(100)
+-- ) ON float_real_range_partition_scheme(float_val);
+-- GO
+
+-- -- Insert test data
+-- INSERT INTO float_real_partitioned_computed_test (float_val, real_val, description)
+-- SELECT float_val, real_val, description
+-- FROM float_real_partitioned_test;
+-- GO
+
+-- -- Query to compare partition distribution
+-- SELECT 
+--     'Base table' as table_name,
+--     p.partition_number,
+--     COUNT(*) as row_count
+-- FROM float_real_partitioned_test t
+-- JOIN sys.partitions p ON p.object_id = OBJECT_ID('float_real_partitioned_test')
+--     AND p.index_id <= 1
+-- WHERE p.partition_number = $PARTITION.float_real_range_partition_func(t.float_val)
+-- GROUP BY p.partition_number
+-- UNION ALL
+-- SELECT 
+--     'Computed table' as table_name,
+--     p.partition_number,
+--     COUNT(*) as row_count
+-- FROM float_real_partitioned_computed_test t
+-- JOIN sys.partitions p ON p.object_id = OBJECT_ID('float_real_partitioned_computed_test')
+--     AND p.index_id <= 1
+-- WHERE p.partition_number = $PARTITION.float_real_range_partition_func(t.float_val)
+-- GROUP BY p.partition_number
+-- ORDER BY table_name, partition_number;
+-- GO
+
+-- Cleanup
+DROP TABLE IF EXISTS float_real_partitioned_test;
+-- DROP TABLE IF EXISTS float_real_partitioned_computed_test;
+DROP PARTITION SCHEME float_real_range_partition_scheme;
+DROP PARTITION FUNCTION float_real_range_partition_func;
+GO
+
+-- foreign key testing
+-- Create parent tables with primary keys
+CREATE TABLE float_real_master_products (
+    product_id INT PRIMARY KEY,
+    list_price FLOAT NOT NULL,
+    weight_kg REAL NOT NULL,
+    CONSTRAINT chk_price_positive CHECK (list_price > 0),
+    CONSTRAINT chk_weight_positive CHECK (weight_kg > 0)
+);
+
+CREATE TABLE float_real_master_rates (
+    rate_id INT PRIMARY KEY,
+    exchange_rate FLOAT NOT NULL,
+    tax_rate REAL NOT NULL,
+    CONSTRAINT chk_exchange_positive CHECK (exchange_rate > 0),
+    CONSTRAINT chk_tax_valid CHECK (tax_rate BETWEEN 0 AND 1)
+);
+GO
+
+-- Create child tables with foreign keys
+CREATE TABLE float_real_order_details (
+    order_id INT,
+    product_id INT,
+    quantity INT,
+    unit_price FLOAT,
+    weight_kg REAL,
+    CONSTRAINT fk_product FOREIGN KEY (product_id) 
+        REFERENCES float_real_master_products(product_id)
+);
+
+CREATE TABLE float_real_price_history (
+    product_id INT,
+    rate_id INT,
+    calculated_price FLOAT,
+    effective_date DATE,
+    CONSTRAINT fk_product_history FOREIGN KEY (product_id) 
+        REFERENCES float_real_master_products(product_id),
+    CONSTRAINT fk_rate FOREIGN KEY (rate_id) 
+        REFERENCES float_real_master_rates(rate_id)
+);
+GO
+
+-- Insert test data into parent tables
+INSERT INTO float_real_master_products (product_id, list_price, weight_kg) VALUES
+    (1, 100.50, 0.5),
+    (2, 200.75, 1.2),
+    (3, 1500.25, 3.7);
+GO
+
+INSERT INTO float_real_master_rates (rate_id, exchange_rate, tax_rate) VALUES
+    (1, 1.0, 0.1),    -- USD, 10% tax
+    (2, 0.85, 0.2),   -- EUR, 20% tax
+    (3, 1.25, 0.15);  -- GBP, 15% tax
+GO
+
+-- Test successful foreign key inserts
+INSERT INTO float_real_order_details (order_id, product_id, quantity, unit_price, weight_kg) VALUES
+    (1, 1, 2, 100.50, 0.5),
+    (1, 2, 1, 200.75, 1.2),
+    (2, 3, 1, 1500.25, 3.7);
+GO
+
+INSERT INTO float_real_price_history (product_id, rate_id, calculated_price, effective_date) VALUES
+    (1, 1, 100.50 * 1.0 * 1.1, '2023-01-01'),
+    (1, 2, 100.50 * 0.85 * 1.2, '2023-01-01'),
+    (2, 3, 200.75 * 1.25 * 1.15, '2023-01-01');
+GO
+
+-- Test foreign key violations
+-- Test 1: Insert with non-existent product_id
+BEGIN TRY
+    INSERT INTO float_real_order_details (order_id, product_id, quantity, unit_price, weight_kg)
+    VALUES (3, 999, 1, 150.00, 1.0);
+END TRY
+BEGIN CATCH
+    SELECT 'Test 1 - Non-existent product_id' AS test_case,
+           ERROR_MESSAGE() AS error_message;
+END CATCH;
+GO
+
+-- Test 2: Insert with non-existent rate_id
+BEGIN TRY
+    INSERT INTO float_real_price_history (product_id, rate_id, calculated_price, effective_date)
+    VALUES (1, 999, 150.00, '2023-01-01');
+END TRY
+BEGIN CATCH
+    SELECT 'Test 2 - Non-existent rate_id' AS test_case,
+           ERROR_MESSAGE() AS error_message;
+END CATCH;
+GO
+
+-- Test 3: Delete from parent table with existing references
+BEGIN TRY
+    DELETE FROM float_real_master_products WHERE product_id = 1;
+END TRY
+BEGIN CATCH
+    SELECT 'Test 3 - Delete referenced product' AS test_case,
+           ERROR_MESSAGE() AS error_message;
+END CATCH;
+GO
+
+-- Test cascading updates (adding CASCADE option)
+CREATE TABLE float_real_order_details_cascade (
+    order_id INT,
+    product_id INT,
+    quantity INT,
+    unit_price FLOAT,
+    weight_kg REAL,
+    CONSTRAINT fk_product_cascade FOREIGN KEY (product_id) 
+        REFERENCES float_real_master_products(product_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+GO
+
+-- Insert test data for cascade test
+INSERT INTO float_real_order_details_cascade 
+SELECT order_id, product_id, quantity, unit_price, weight_kg
+FROM float_real_order_details
+WHERE product_id = 3;
+GO
+
+-- Update parent table to test cascade
+UPDATE float_real_master_products
+SET product_id = 300
+WHERE product_id = 3;
+GO
+
+-- Verify cascade update
+SELECT 'After cascade update - Parent table' AS test_case, *
+FROM float_real_master_products WHERE product_id = 300;
+
+SELECT 'After cascade update - Child table' AS test_case, *
+FROM float_real_order_details_cascade WHERE product_id = 300;
+GO
+
+-- Cleanup
+DROP TABLE IF EXISTS float_real_price_history;
+DROP TABLE IF EXISTS float_real_order_details;
+DROP TABLE IF EXISTS float_real_order_details_cascade;
+DROP TABLE IF EXISTS float_real_master_rates;
+DROP TABLE IF EXISTS float_real_master_products;
+GO
+
+CREATE TABLE FLOAT_dt_complex (
+    id INT IDENTITY(1,1),
+    operation_name VARCHAR(100),
+    float_val1 FLOAT,
+    float_val2 FLOAT,
+    result FLOAT
+);
+GO
+
+-- Test complex mathematical operations
+INSERT INTO FLOAT_dt_complex (operation_name, float_val1, float_val2, result)
+VALUES
+    ('Sine Wave', 1.0, NULL, SIN(1.0)),
+    ('Cosine Wave', 1.0, NULL, COS(1.0)),
+    ('Tangent', 1.0, NULL, TAN(1.0)),
+    ('Logarithm Base 10', 100.0, NULL, LOG10(100.0)),
+    ('Natural Logarithm', 2.718281828459045, NULL, LOG(2.718281828459045)),
+    ('Power', 2.0, 3.0, POWER(2.0, 3.0)),
+    ('Square Root', 16.0, NULL, SQRT(16.0)),
+    ('Absolute Value', -123.456, NULL, ABS(-123.456)),
+    ('PI Calculation', PI(), NULL, PI()),
+    ('Exponential', 1.0, NULL, EXP(1.0)),
+    ('Degrees to Radians', 180.0, NULL, RADIANS(180.0)),
+    ('Radians to Degrees', PI(), NULL, DEGREES(PI()));
+GO
+
+SELECT * FROM FLOAT_dt_complex ORDER BY id;
+GO
+
+DROP TABLE IF EXISTS FLOAT_dt_complex;
+GO
+
+CREATE TABLE FLOAT_dt_errors (
+    id INT IDENTITY(1,1),
+    error_description VARCHAR(100),
+    error_message VARCHAR(MAX)
+);
+GO
+
+-- Test various error scenarios
+CREATE PROCEDURE TestFloatErrors
+AS
+BEGIN
+    -- Division by zero
+    BEGIN TRY
+        DECLARE @result FLOAT = 1.0/0.0;
+        INSERT INTO FLOAT_dt_errors (error_description, error_message)
+        VALUES ('Division by zero', 'No error - returned ' + CAST(@result AS VARCHAR(50)));
+    END TRY
+    BEGIN CATCH
+        INSERT INTO FLOAT_dt_errors (error_description, error_message)
+        VALUES ('Division by zero', ERROR_MESSAGE());
+    END CATCH
+
+    -- Overflow
+    BEGIN TRY
+        DECLARE @overflow FLOAT = POWER(10.0, 308) * 2;
+        INSERT INTO FLOAT_dt_errors (error_description, error_message)
+        VALUES ('Overflow', 'No error - returned ' + CAST(@overflow AS VARCHAR(50)));
+    END TRY
+    BEGIN CATCH
+        INSERT INTO FLOAT_dt_errors (error_description, error_message)
+        VALUES ('Overflow', ERROR_MESSAGE());
+    END CATCH
+
+    -- Invalid conversion
+    BEGIN TRY
+        DECLARE @invalid FLOAT = CAST('not a number' AS FLOAT);
+        INSERT INTO FLOAT_dt_errors (error_description, error_message)
+        VALUES ('Invalid conversion', 'No error - returned ' + CAST(@invalid AS VARCHAR(50)));
+    END TRY
+    BEGIN CATCH
+        INSERT INTO FLOAT_dt_errors (error_description, error_message)
+        VALUES ('Invalid conversion', ERROR_MESSAGE());
+    END CATCH
+
+    -- Square root of negative number
+    BEGIN TRY
+        DECLARE @sqrt_neg FLOAT = SQRT(-1.0);
+        INSERT INTO FLOAT_dt_errors (error_description, error_message)
+        VALUES ('Square root of negative', 'No error - returned ' + CAST(@sqrt_neg AS VARCHAR(50)));
+    END TRY
+    BEGIN CATCH
+        INSERT INTO FLOAT_dt_errors (error_description, error_message)
+        VALUES ('Square root of negative', ERROR_MESSAGE());
+    END CATCH
+END;
+GO
+
+EXEC TestFloatErrors;
+GO
+
+SELECT * FROM FLOAT_dt_errors ORDER BY id;
+
+DROP PROCEDURE TestFloatErrors;
+DROP TABLE FLOAT_dt_errors;
+GO
+
+-- biteise operations
+-- Create test table for bitwise operations on FLOAT/REAL binary representations
+CREATE TABLE float_real_bitwise_test (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    float_bits BIGINT,  -- Store bit pattern as integer
+    real_bits INT,      -- Store bit pattern as integer
+    description VARCHAR(100)
+);
+GO
+
+-- Insert test data with bit patterns
+INSERT INTO float_real_bitwise_test (float_val, real_val, float_bits, real_bits, description)
+VALUES
+    -- Test cases with known bit patterns
+    (1.0, 1.0, 
+     CAST(144396667515305984 AS BIGINT), --  CAST(CAST(1.0 AS BINARY(8)) AS BIGINT), 
+     CAST(1065353216 AS INT), --  CAST(CAST(CAST(1.0 AS REAL) AS BINARY(4)) AS INT),
+     'Value 1.0'),
+    
+    (2.0, 2.0,
+     CAST(144396667683078144 AS BIGINT), --  CAST(CAST(2.0 AS BINARY(8)) AS BIGINT),
+     CAST(1073741824 AS INT), --  CAST(CAST(CAST(2.0 AS REAL) AS BINARY(4)) AS INT),
+     'Value 2.0'),
+    
+    (4.0, 4.0,
+     CAST(144396668018622464 AS BIGINT), --  CAST(CAST(4.0 AS BINARY(8)) AS BIGINT),
+     CAST(1082130432 AS INT), --  CAST(CAST(CAST(4.0 AS REAL) AS BINARY(4)) AS INT),
+     'Value 4.0');
+GO
+
+-- Test bitwise AND
+SELECT 
+    a.description + ' AND ' + b.description AS operation,
+    -- Integer representation of bitwise AND
+    a.float_bits & b.float_bits AS float_and_result,
+    a.real_bits & b.real_bits AS real_and_result
+FROM float_real_bitwise_test a
+CROSS JOIN float_real_bitwise_test b
+WHERE a.id <= b.id
+ORDER BY a.id;
+GO
+
+-- Test bitwise OR
+SELECT 
+    a.description + ' OR ' + b.description AS operation,
+    -- Integer representation of bitwise OR
+    a.float_bits | b.float_bits AS float_or_result,
+    a.real_bits | b.real_bits AS real_or_result
+FROM float_real_bitwise_test a
+CROSS JOIN float_real_bitwise_test b
+WHERE a.id <= b.id
+ORDER BY a.id;
+GO
+
+-- Test bitwise XOR
+SELECT 
+    a.description + ' XOR ' + b.description AS operation,
+    -- Integer representation of bitwise XOR
+    a.float_bits ^ b.float_bits AS float_xor_result,
+    a.real_bits ^ b.real_bits AS real_xor_result
+FROM float_real_bitwise_test a
+CROSS JOIN float_real_bitwise_test b
+WHERE a.id <= b.id
+ORDER BY a.id;
+GO
+
+-- Test bitwise NOT
+SELECT 
+    description + ' NOT' AS operation,
+    -- Integer representation of bitwise NOT
+    ~float_bits AS float_not_result,
+    ~real_bits AS real_not_result
+FROM float_real_bitwise_test
+ORDER BY id;
+GO
+
+-- Test setting/clearing specific bits
+SELECT 
+    description,
+    -- Set high bit
+    float_bits | CAST(0x8000000000000000 AS BIGINT) AS float_set_high_bit,
+    real_bits | CAST(0x80000000 AS INT) AS real_set_high_bit,
+    
+    -- Clear high bit
+    float_bits & ~CAST(0x8000000000000000 AS BIGINT) AS float_clear_high_bit,
+    real_bits & ~CAST(0x80000000 AS INT) AS real_clear_high_bit
+FROM float_real_bitwise_test
+ORDER BY id;
+GO
+
+-- Test masking specific portions (sign, exponent, mantissa)
+SELECT 
+    description,
+    -- FLOAT components (as BIGINT masks)
+    float_bits & CAST(0x8000000000000000 AS BIGINT) AS float_sign_mask,
+    float_bits & CAST(0x7FF0000000000000 AS BIGINT) AS float_exponent_mask,
+    float_bits & CAST(0x000FFFFFFFFFFFFF AS BIGINT) AS float_mantissa_mask,
+    
+    -- REAL components (as INT masks)
+    real_bits & CAST(0x80000000 AS INT) AS real_sign_mask,
+    real_bits & CAST(0x7F800000 AS INT) AS real_exponent_mask,
+    real_bits & CAST(0x007FFFFF AS INT) AS real_mantissa_mask
+FROM float_real_bitwise_test
+ORDER BY id;
+GO
+
+-- Show binary string representations
+SELECT 
+    description,
+    FORMAT(float_bits, 'X16') AS float_hex,
+    FORMAT(real_bits, 'X8') AS real_hex,
+    CAST(float_val AS VARCHAR(30)) AS float_val_string,
+    CAST(real_val AS VARCHAR(30)) AS real_val_string
+FROM float_real_bitwise_test
+ORDER BY id;
+GO
+
+-- Cleanup
+DROP TABLE IF EXISTS float_real_bitwise_test;
+GO
+
+-- case and cte tests
+-- Create test table with mixed numeric types
+-- Create test table with mixed numeric types
+CREATE TABLE float_real_case_test (
+    id INT IDENTITY(1,1),
+    int_val INT,
+    bigint_val BIGINT,
+    decimal_val DECIMAL(18,6),
+    numeric_val NUMERIC(18,6),
+    float_val FLOAT,
+    real_val REAL,
+    smallint_val SMALLINT,
+    tinyint_val TINYINT,
+    money_val MONEY,
+    smallmoney_val SMALLMONEY
+);
+GO
+
+-- Insert test data
+INSERT INTO float_real_case_test (
+    int_val, bigint_val, decimal_val, numeric_val, 
+    float_val, real_val, smallint_val, tinyint_val,
+    money_val, smallmoney_val
+) VALUES
+    (100, 100, 100.123456, 100.123456, 100.123456, 100.123456, 100, 100, 100.1234, 100.1234),
+    (-100, -100, -100.123456, -100.123456, -100.123456, -100.123456, -100, 0, -100.1234, -100.1234),
+    (0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    (1000000, 1000000, 1000000.123456, 1000000.123456, 1000000.123456, 1000000.123456, 32767, 255, 10000.1234, 10000.1234);
+GO
+
+-- Test CASE statements with type mixing
+WITH TypeMixingCTE AS (
+    SELECT 
+        id,
+        -- Simple CASE with different numeric types
+        CASE int_val
+            WHEN float_val THEN 'Equal to FLOAT'
+            WHEN real_val THEN 'Equal to REAL'
+            WHEN decimal_val THEN 'Equal to DECIMAL'
+            ELSE 'Not Equal'
+        END AS simple_case_result,
+
+        -- Searched CASE with mixed type comparisons
+        CASE 
+            WHEN float_val > int_val THEN float_val
+            WHEN real_val > decimal_val THEN real_val
+            WHEN numeric_val > bigint_val THEN numeric_val
+            ELSE smallint_val
+        END AS mixed_comparison_result,
+
+        -- CASE with arithmetic operations
+        CASE 
+            WHEN float_val = 0 THEN 0
+            ELSE (decimal_val + float_val) / real_val
+        END AS arithmetic_case_result,
+
+        -- CASE with multiple type conversions
+        CASE
+            WHEN float_val > 0 THEN float_val + decimal_val + int_val
+            WHEN real_val < 0 THEN real_val + numeric_val + bigint_val
+            ELSE smallmoney_val + money_val + tinyint_val
+        END AS complex_type_result
+    FROM float_real_case_test
+)
+-- Test nested CASE in CTE
+, NestedCaseCTE AS (
+    SELECT 
+        id,
+        mixed_comparison_result,
+        CASE
+            WHEN mixed_comparison_result > 0 THEN
+                CASE
+                    WHEN mixed_comparison_result < 100 THEN 'Small'
+                    WHEN mixed_comparison_result < 1000 THEN 'Medium'
+                    ELSE 'Large'
+                END
+            ELSE 'Negative or Zero'
+        END AS nested_case_result
+    FROM TypeMixingCTE
+)
+-- Test arithmetic operations in CTE
+, ArithmeticCTE AS (
+    SELECT 
+        t.*,
+        float_val + real_val AS float_real_sum,
+        float_val * decimal_val AS float_decimal_product,
+        real_val / NULLIF(numeric_val, 0) AS real_numeric_division,
+        POWER(float_val, 2) + SQRT(ABS(real_val)) AS complex_calculation
+    FROM float_real_case_test t
+)
+-- Test conditional aggregation in CTE
+, AggregationCTE AS (
+    SELECT
+        CASE 
+            WHEN float_val >= 0 THEN 'Positive'
+            ELSE 'Negative'
+        END AS value_group,
+        AVG(CAST(float_val AS DECIMAL(18,6))) AS avg_float,
+        AVG(CAST(real_val AS DECIMAL(18,6))) AS avg_real,
+        SUM(CASE 
+            WHEN float_val > real_val THEN float_val
+            ELSE real_val
+        END) AS conditional_sum
+    FROM float_real_case_test
+    GROUP BY CASE 
+        WHEN float_val >= 0 THEN 'Positive'
+        ELSE 'Negative'
+    END
+)
+-- Combine results from all CTEs
+SELECT 
+    t.id,
+    t.float_val,
+    t.real_val,
+    tm.simple_case_result,
+    tm.mixed_comparison_result,
+    tm.arithmetic_case_result,
+    tm.complex_type_result,
+    nc.nested_case_result,
+    ac.float_real_sum,
+    ac.float_decimal_product,
+    ac.real_numeric_division,
+    ac.complex_calculation,
+    ag.value_group,
+    ag.avg_float,
+    ag.avg_real,
+    ag.conditional_sum,
+    -- Additional CASE with type precedence testing
+    CASE
+        WHEN t.float_val BETWEEN t.decimal_val AND t.numeric_val THEN 'In decimal range'
+        WHEN t.real_val BETWEEN t.int_val AND t.bigint_val THEN 'In integer range'
+        WHEN t.float_val BETWEEN t.money_val AND t.smallmoney_val THEN 'In money range'
+        ELSE 'Outside ranges'
+    END AS range_test,
+    -- Test type precedence in mathematical expressions
+    t.float_val * t.decimal_val + t.real_val / NULLIF(t.numeric_val, 0) AS mixed_math_result
+FROM float_real_case_test t
+JOIN TypeMixingCTE tm ON t.id = tm.id
+JOIN NestedCaseCTE nc ON t.id = nc.id
+JOIN ArithmeticCTE ac ON t.id = ac.id
+CROSS APPLY (
+    SELECT ag.*
+    FROM AggregationCTE ag
+    WHERE ag.value_group = CASE 
+        WHEN t.float_val >= 0 THEN 'Positive'
+        ELSE 'Negative'
+    END
+) ag
+ORDER BY t.id;
+GO
+
+-- Test type precedence with NULL values
+WITH NullTestCTE AS (
+    SELECT 
+        id,
+        CASE 
+            WHEN NULL > float_val THEN 'Greater'
+            WHEN NULL < float_val THEN 'Less'
+            WHEN NULL = float_val THEN 'Equal'
+            ELSE 'Unknown'
+        END AS null_float_comparison,
+        CASE 
+            WHEN NULL > real_val THEN 'Greater'
+            WHEN NULL < real_val THEN 'Less'
+            WHEN NULL = real_val THEN 'Equal'
+            ELSE 'Unknown'
+        END AS null_real_comparison,
+        COALESCE(float_val, real_val, decimal_val, 0.0) AS coalesce_result,
+        NULLIF(float_val, real_val) AS nullif_result
+    FROM float_real_case_test
+)
+SELECT * FROM NullTestCTE ORDER BY id;
+GO
+
+-- Cleanup
+DROP TABLE IF EXISTS float_real_case_test;
+GO
+
+-- case testing
+-- Create test table with mixed numeric types
+CREATE TABLE float_real_case_test (
+    id INT IDENTITY(1,1),
+    int_val INT,
+    bigint_val BIGINT,
+    decimal_val DECIMAL(18,6),
+    numeric_val NUMERIC(18,6),
+    float_val FLOAT,
+    real_val REAL,
+    smallint_val SMALLINT,
+    tinyint_val TINYINT,
+    money_val MONEY,
+    smallmoney_val SMALLMONEY
+);
+GO
+
+-- Insert test data
+INSERT INTO float_real_case_test VALUES
+    (100, 100, 100.123456, 100.123456, 100.123456, 100.123456, 100, 100, 100.1234, 100.1234),
+    (-100, -100, -100.123456, -100.123456, -100.123456, -100.123456, -100, 0, -100.1234, -100.1234),
+    (1000000, 1000000, 1000000.123456, 1000000.123456, 1000000.123456, 1000000.123456, 32767, 255, 10000.1234, 10000.1234);
+GO
+
+-- Test simple CASE with different datatypes in WHEN conditions
+SELECT id,
+    CASE numeric_val     -- First type
+        WHEN float_val THEN 'float match'    -- Second type
+        WHEN real_val THEN 'real match'      -- Third type
+        WHEN decimal_val THEN 'decimal match' -- Fourth type
+        WHEN int_val THEN 'int match'        -- Fifth type
+        ELSE 'no match'
+    END AS case_test1,
+    
+    -- Test CASE with float expressions in WHEN
+    CASE float_val      -- Base type float
+        WHEN numeric_val + 1 THEN 'numeric sum'     -- Numeric expression
+        WHEN decimal_val * 2 THEN 'decimal product' -- Decimal expression
+        WHEN real_val / 2 THEN 'real division'      -- Real expression
+        WHEN int_val THEN 'int direct'             -- Integer value
+        ELSE 'no float match'
+    END AS case_test2,
+    
+    -- Test CASE with real value compared to different types
+    CASE real_val       -- Base type real
+        WHEN money_val THEN 'money match'          -- Money type
+        WHEN smallmoney_val THEN 'smallmoney match' -- Smallmoney type
+        WHEN bigint_val THEN 'bigint match'        -- Bigint type
+        WHEN smallint_val THEN 'smallint match'    -- Smallint type
+        ELSE 'no real match'
+    END AS case_test3,
+    
+    -- Test searched CASE with mixed type conditions
+    CASE
+        WHEN numeric_val > float_val THEN 'numeric > float'
+        WHEN decimal_val < real_val THEN 'decimal < real'
+        WHEN float_val = money_val THEN 'float = money'
+        WHEN real_val >= smallmoney_val THEN 'real >= smallmoney'
+        WHEN int_val <= bigint_val THEN 'int <= bigint'
+        ELSE 'no comparison match'
+    END AS case_test4,
+    
+    -- Test CASE with arithmetic operations mixing types
+    CASE
+        WHEN float_val + numeric_val > 200 THEN 'sum > 200'
+        WHEN real_val * decimal_val < 0 THEN 'product < 0'
+        WHEN float_val / int_val = 1 THEN 'division = 1'
+        WHEN real_val - money_val > 0 THEN 'difference > 0'
+        ELSE 'no arithmetic match'
+    END AS case_test5,
+
+    -- Test CASE with mixed types in result expressions
+    CASE int_val
+        WHEN 0 THEN float_val        -- Returns float
+        WHEN 100 THEN numeric_val    -- Returns numeric
+        WHEN -100 THEN real_val      -- Returns real
+        WHEN 1000000 THEN money_val  -- Returns money
+        ELSE decimal_val             -- Returns decimal
+    END AS case_test6,
+
+    -- Test CASE with type precedence in conditions
+    CASE
+        WHEN float_val BETWEEN numeric_val AND decimal_val THEN float_val    -- Float result
+        WHEN real_val BETWEEN int_val AND bigint_val THEN real_val          -- Real result
+        WHEN decimal_val BETWEEN money_val AND smallmoney_val THEN numeric_val -- Numeric result
+        ELSE 0
+    END AS case_test7,
+
+    -- Test CASE with NULL handling and type mixing
+    CASE
+        WHEN float_val IS NULL THEN numeric_val
+        WHEN real_val IS NULL THEN decimal_val
+        WHEN numeric_val IS NULL THEN float_val
+        WHEN decimal_val IS NULL THEN real_val
+        ELSE float_val
+    END AS case_test8,
+
+    -- Test CASE with constants of different types
+    CASE
+        WHEN float_val > 100.0E0 THEN 1           -- Float constant
+        WHEN real_val < 100.00 THEN 2.0           -- Real constant
+        WHEN numeric_val = 100.123456 THEN 3.0E0  -- Numeric constant
+        WHEN decimal_val >= 100.123456 THEN 4.0   -- Decimal constant
+        ELSE 0
+    END AS case_test9,
+
+    -- Test CASE with implicit conversions
+    CASE CAST(float_val AS VARCHAR(20))
+        WHEN '100.123456' THEN numeric_val    -- Numeric result
+        WHEN '-100.123456' THEN real_val      -- Real result
+        WHEN '0' THEN float_val               -- Float result
+        ELSE decimal_val                      -- Decimal result
+    END AS case_test10
+FROM float_real_case_test;
+GO
+
+-- Cleanup
+DROP TABLE IF EXISTS float_real_case_test;
+GO
+
+-- set costs off

@@ -70,11 +70,28 @@ BEGIN
 END
 GO
 
+-- TVF
+CREATE FUNCTION dbo.babel_5792_tvf()
+RETURNS TABLE
+AS
+RETURN
+    SELECT 'master.dbo' as SchemaName;
+GO
+
+
 CREATE FUNCTION babel_5448_user_default_schema.babel_5448_f() RETURNS NVARCHAR(MAX)
 AS
 BEGIN
     RETURN 'master.babel_5448_user_default_schema';
 END
+GO
+
+-- TVF
+CREATE FUNCTION babel_5448_user_default_schema.babel_5792_tvf()
+RETURNS TABLE 
+AS
+RETURN
+    SELECT 'master.babel_5448_user_default_schema' as SchemaName;
 GO
 
 CREATE FUNCTION babel_5448_s1.babel_5448_f() RETURNS NVARCHAR(MAX)
@@ -84,11 +101,27 @@ BEGIN
 END
 GO
 
+-- TVF
+CREATE FUNCTION babel_5448_s1.babel_5792_tvf()
+RETURNS TABLE
+AS
+RETURN
+    SELECT 'master.babel_5448_s1' as SchemaName;
+GO
+
 CREATE FUNCTION babel_5448_s2.babel_5448_f() RETURNS NVARCHAR(MAX)
 AS
 BEGIN
     RETURN ' |-- function in -- master.babel_5448_s2 --| ';
 END
+GO
+
+-- TVF
+CREATE FUNCTION babel_5448_s2.babel_5792_tvf()
+RETURNS TABLE
+AS
+RETURN
+    SELECT ' |-- TVF in -- master.babel_5448_s2 --| ' as SchemaName;
 GO
 
 -- Test declare statement inside function
@@ -100,6 +133,19 @@ BEGIN
 END
 GO
 
+CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |-- view in -- master.babel_5448_s2 --| ' AS col1
+GO
+
+-- TVF
+CREATE FUNCTION babel_5448_s1.babel_5792_f2_tvf()
+RETURNS TABLE
+AS
+RETURN
+    SELECT id FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+
+GO
+
+
 -- Test return statement inside function
 CREATE FUNCTION babel_5448_s1.babel_5448_f3() RETURNS NVARCHAR(MAX)
 AS
@@ -108,7 +154,13 @@ BEGIN
 END
 GO
 
-CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |-- view in -- master.babel_5448_s2 --| ' AS col1
+-- TVF
+CREATE FUNCTION babel_5448_s1.babel_5792_f3_tvf()
+RETURNS TABLE
+AS
+    RETURN (SELECT id
+    FROM babel_5448_t 
+    JOIN babel_5448_s2.babel_5448_v ON (1=1));
 GO
 
 CREATE TRIGGER dbo.babel_5448_trigger
@@ -116,6 +168,7 @@ ON dbo.babel_5448_t
 AFTER INSERT AS
     SELECT '=========== START OF TRIGGER EXECUTION ========== master.dbo'
     SELECT dbo.babel_5448_f();
+    SELECT dbo.babel_5792_tvf();
     SELECT * FROM babel_5448_t;
     SELECT '=========== END OF TRIGGER EXECUTION ========== master.dbo'
 GO
@@ -125,6 +178,7 @@ ON babel_5448_user_default_schema.babel_5448_t
 AFTER INSERT AS
     SELECT '=========== START OF TRIGGER EXECUTION ========== master.babel_5448_user_default_schema'
     SELECT babel_5448_user_default_schema.babel_5448_f();
+    SELECT babel_5448_user_default_schema.babel_5792_tvf();
     SELECT * FROM babel_5448_t;
     SELECT '=========== END OF TRIGGER EXECUTION ========== master.babel_5448_user_default_schema'
 GO
@@ -134,13 +188,14 @@ ON babel_5448_s1.babel_5448_t
 AFTER INSERT AS
     SELECT '=========== START OF TRIGGER EXECUTION ========== master.babel_5448_s1'
     SELECT babel_5448_s1.babel_5448_f();
+    SELECT babel_5448_s1.babel_5792_tvf();
     SELECT * FROM babel_5448_t;
     SELECT '=========== END OF TRIGGER EXECUTION ========== master.babel_5448_s1'
 GO
 
 CREATE PROCEDURE dbo.babel_5448_p1
 AS
-    SELECT babel_5448_f(), * FROM babel_5448_t;
+    SELECT babel_5448_f(), babel_5792_tvf(), * FROM babel_5448_t;
     -- EXEC call should still resolve to dbo.babel_5448_p
     EXEC babel_5448_p;
     INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
@@ -151,7 +206,7 @@ GO
 
 CREATE PROCEDURE babel_5448_user_default_schema.babel_5448_p1
 AS
-    SELECT babel_5448_f(), * FROM babel_5448_t;
+    SELECT babel_5448_f(), babel_5792_tvf(), * FROM babel_5448_t;
     -- EXEC call should still resolve to dbo.babel_5448_p
     EXEC babel_5448_p;
     INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
@@ -162,7 +217,7 @@ GO
 
 CREATE PROCEDURE babel_5448_s1.babel_5448_p1
 AS
-    SELECT babel_5448_f(), * FROM babel_5448_t;
+    SELECT babel_5448_f(), babel_5792_tvf(), * FROM babel_5448_t;
     -- EXEC call should still resolve to dbo.babel_5448_p
     EXEC babel_5448_p;
     INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
@@ -172,17 +227,17 @@ AS
 GO
 
 CREATE PROC dbo.babel_5448_p2 AS
-    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+    SELECT babel_5448_f(), babel_5792_tvf(), babel_5448_s2.babel_5448_f(), babel_5448_s2.babel_5792_tvf(), * FROM
         babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
 CREATE PROC babel_5448_user_default_schema.babel_5448_p2 AS
-    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), babel_5792_tvf(), babel_5448_s2.babel_5792_tvf(), * FROM
         babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
 CREATE PROC babel_5448_s1.babel_5448_p2 AS
-    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), babel_5792_tvf(), babel_5448_s2.babel_5792_tvf(), * FROM
         babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
@@ -228,11 +283,28 @@ BEGIN
 END
 GO
 
+-- TVF
+CREATE FUNCTION dbo.babel_5792_tvf()
+RETURNS TABLE
+AS
+RETURN
+    SELECT 'babel_5448_db.dbo' as SchemaName;
+GO
+
+
 CREATE FUNCTION babel_5448_user_default_schema.babel_5448_f() RETURNS NVARCHAR(MAX)
 AS
 BEGIN
     RETURN 'babel_5448_db.babel_5448_user_default_schema';
 END
+GO
+
+-- TVF
+CREATE FUNCTION babel_5448_user_default_schema.babel_5792_tvf()
+RETURNS TABLE 
+AS
+RETURN
+    SELECT 'babel_5448_db.babel_5448_user_default_schema' as SchemaName;
 GO
 
 CREATE FUNCTION babel_5448_s1.babel_5448_f() RETURNS NVARCHAR(MAX)
@@ -242,11 +314,28 @@ BEGIN
 END
 GO
 
+-- TVF
+CREATE FUNCTION babel_5448_s1.babel_5792_tvf()
+RETURNS TABLE
+AS
+RETURN
+    SELECT 'babel_5448_db.babel_5448_s1' as SchemaName;
+GO
+
 CREATE FUNCTION babel_5448_s2.babel_5448_f() RETURNS NVARCHAR(MAX)
 AS
 BEGIN
     RETURN ' |-- function in -- babel_5448_db.babel_5448_s2 --| ';
 END
+GO
+
+-- TVF
+CREATE FUNCTION babel_5448_s2.babel_5792_tvf()
+RETURNS TABLE
+AS
+RETURN
+    SELECT ' |-- TVF in -- babel_5448_db.babel_5448_s2 --| ' as SchemaName;
+    
 GO
 
 -- Test declare statement inside function
@@ -258,6 +347,19 @@ BEGIN
 END
 GO
 
+CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |-- view in -- babel_5448_db.babel_5448_s2 --| ' AS col1
+GO
+
+-- TVF
+CREATE FUNCTION babel_5448_s1.babel_5792_f2_tvf()
+RETURNS TABLE
+AS
+RETURN
+    SELECT id FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+
+GO
+
+
 -- Test return statement inside function
 CREATE FUNCTION babel_5448_s1.babel_5448_f3() RETURNS NVARCHAR(MAX)
 AS
@@ -266,8 +368,15 @@ BEGIN
 END
 GO
 
-CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |-- view in -- babel_5448_db.babel_5448_s2 --| ' AS col1
+-- TVF
+CREATE FUNCTION babel_5448_s1.babel_5792_f3_tvf()
+RETURNS TABLE
+AS
+    RETURN (SELECT id AS ID
+    FROM babel_5448_t 
+    JOIN babel_5448_s2.babel_5448_v ON (1=1));
 GO
+
 
 CREATE TRIGGER dbo.babel_5448_trigger
 ON dbo.babel_5448_t
@@ -298,7 +407,7 @@ GO
 
 CREATE PROCEDURE dbo.babel_5448_p1
 AS
-    SELECT babel_5448_f(), * FROM babel_5448_t;
+    SELECT babel_5448_f(), babel_5792_tvf(), * FROM babel_5448_t;
     -- EXEC call should still resolve to dbo.babel_5448_p
     EXEC babel_5448_p;
     INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
@@ -309,7 +418,7 @@ GO
 
 CREATE PROCEDURE babel_5448_user_default_schema.babel_5448_p1
 AS
-    SELECT babel_5448_f(), * FROM babel_5448_t;
+    SELECT babel_5448_f(), babel_5792_tvf(), * FROM babel_5448_t;
     -- EXEC call should still resolve to dbo.babel_5448_p
     EXEC babel_5448_p;
     INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
@@ -320,7 +429,7 @@ GO
 
 CREATE PROCEDURE babel_5448_s1.babel_5448_p1
 AS
-    SELECT babel_5448_f(), * FROM babel_5448_t;
+    SELECT babel_5448_f(), babel_5792_tvf(), * FROM babel_5448_t;
     -- EXEC call should still resolve to dbo.babel_5448_p
     EXEC babel_5448_p;
     INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
@@ -330,17 +439,18 @@ AS
 GO
 
 CREATE PROC dbo.babel_5448_p2 AS
-    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+    SELECT babel_5448_f(), babel_5792_tvf(), babel_5448_s2.babel_5448_f(), 
+         babel_5448_s2.babel_5792_tvf(), * FROM
         babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
 CREATE PROC babel_5448_user_default_schema.babel_5448_p2 AS
-    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), babel_5792_tvf(), babel_5448_s2.babel_5792_tvf(), * FROM
         babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
 CREATE PROC babel_5448_s1.babel_5448_p2 AS
-    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), babel_5792_tvf(), babel_5448_s2.babel_5792_tvf(), * FROM
         babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
@@ -389,6 +499,24 @@ AS
     END
 GO
 
+-- TVF
+CREATE FUNCTION babel_5448_s1.babel_5792_f4_tvf() 
+RETURNS TABLE 
+AS 
+RETURN 
+    WITH table_var(id) AS 
+    (
+        SELECT id 
+        FROM (VALUES (1), (255), (256)) AS t(id)
+    )
+    SELECT 
+        CASE 
+            WHEN MAX(id) > 255 THEN 255 
+            ELSE CAST(MAX(id) AS TINYINT) 
+        END AS MaxId 
+    FROM table_var;
+GO
+
 USE babel_5448_db
 GO
 
@@ -423,6 +551,24 @@ AS
         INSERT INTO @table_var VALUES (1), (255), (256)
         RETURN (SELECT CAST(max(id) AS TINYINT) FROM @table_var);
     END
+GO
+
+-- TVF
+CREATE FUNCTION babel_5448_s1.babel_5792_f4_tvf() 
+RETURNS TABLE 
+AS 
+RETURN 
+    WITH table_var(id) AS 
+    (
+        SELECT id 
+        FROM (VALUES (1), (255), (256)) AS t(id)
+    )
+    SELECT 
+        CASE 
+            WHEN MAX(id) > 255 THEN 255 
+            ELSE CAST(MAX(id) AS TINYINT) 
+        END AS MaxId 
+    FROM table_var;
 GO
 
 
@@ -528,7 +674,7 @@ GO
 CREATE PROCEDURE babel_5448_s1.babel_5448_p11
 AS
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
-    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2(); SELECT babel_5448_s1.babel_5792_f2_tvf();')
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
@@ -538,7 +684,7 @@ GO
 CREATE PROCEDURE babel_5448_s1.babel_5448_p11
 AS
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
-    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2(); SELECT babel_5448_s1.babel_5792_f2_tvf()')
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
@@ -553,7 +699,7 @@ GO
 CREATE PROCEDURE babel_5448_s1.babel_5448_p12
 AS
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
-    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2(); SELECT babel_5448_s1.babel_5792_f2_tvf()')
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
@@ -563,7 +709,7 @@ GO
 CREATE PROCEDURE babel_5448_s1.babel_5448_p12
 AS
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
-    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2(); SELECT babel_5448_s1.babel_5792_f2_tvf()')
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
@@ -626,6 +772,14 @@ BEGIN
 END;
 GO
 
+-- TVF
+CREATE FUNCTION babel_5448_s1.babel_5792_f5_tvf()
+RETURNS TABLE AS 
+RETURN 
+    SELECT babel_5448_plpgsql_func() AS Value;
+
+GO
+
 -- same as previous but temp table will be created in another database and used inside this proc
 USE babel_5448_db
 GO
@@ -644,4 +798,12 @@ CREATE FUNCTION babel_5448_s1.babel_5448_f5() RETURNS NVARCHAR(MAX) AS
 BEGIN
     return (SELECT master.dbo.babel_5448_plpgsql_func())
 END;
+GO
+
+-- TVF
+CREATE FUNCTION babel_5448_s1.babel_5792_f5_tvf()
+RETURNS TABLE AS 
+RETURN 
+    SELECT  master.dbo.babel_5448_plpgsql_func() AS Value;
+
 GO

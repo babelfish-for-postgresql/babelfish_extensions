@@ -181,7 +181,7 @@ EXEC fts_contains_vu_prepare_p1 '   "  daily news            " '
 COMMIT TRANSACTION;
 GO
 
--- Prefix Term not supported
+-- Prefix Term support
 EXEC fts_contains_vu_prepare_p1 '"conf*"', 20
 GO
 
@@ -192,11 +192,198 @@ GO
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
 GO
 
--- Boolean operators not supported
+-- Boolean operators support
+-- AND operator
 EXEC fts_contains_vu_prepare_p1 '"test" AND "love"';
 GO
 
 EXEC fts_contains_vu_prepare_p1 'test AND love';
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol AND "red grapes"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol and "red grapes"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol aNd "red grapes"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'beer anD wine'
+GO
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain & stress')
+GO
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'Dupal And "Croissant*"')
+GO
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'French And "Croissant*" & tart')
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'beer'+ char(10) +'And' + char(10) + ' wine'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+-- OR operator
+EXEC fts_contains_vu_prepare_p1 'wine OR beer'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" | "treatment*"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'pastry or "croissant*"'
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = '"french' + char(10) + 'tarts"' + char(9) + ' or ' + char(10) + 'pastry'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+
+-- AND NOT operator
+EXEC fts_contains_vu_prepare_p1 'wine AND NoT resveratrol'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'wine &! resveratrol'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'wine AND            NoT resveratrol'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'wine    &        !   resveratrol'
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'wine And'+ char(9) + char(10) + ' nOt resveratrol'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft anD '+ char(10) + char(10) + ' NoT "helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft & '+ char(10) + char(10) + ' ! "helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft anD '+ char(9) + 'Not' + char(9) + '"helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft' + char(9) + 'anD ' + char(10) + char(10) + ' NoT' + char(10) + '"helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+
+-- complex boolean expressions
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain or stress')
+GO
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain or stress and not "lone*"')
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol AND (Rats or ("hear*" | "loud noises"))'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol anD (Rats oR ("hear*" | "loud noises"))'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '(depression AND Botox) AND ("clinical" OR "treatment*")'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '("The Warriors" AND (film or "gam*")) & (Rockstar | video)'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '(farm AND credit) AND ("loan board" OR FCC)'
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'Resveratrol' + char(9) + 'AND (Rats or ("hear*" | "loud' + char(9) + 'noises"))'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+SELECT * FROM fts_contains_v1
+GO
+
+
+-- Not operator
+EXEC fts_contains_vu_prepare_p1 'NOT Resveratrol'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol & wine noT "loud noise*"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol or wine ! "loud noise*"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '! "hospital*"'
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'not' + char(10) + '"hospital*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = '"treatment*"' + char(9) + 'not' + char(9) + '"hospital*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+
+-- negative test cases
+-- consecutive occurences of same boolean operators
+EXEC fts_contains_vu_prepare_p1 '(diversity && leadership) AND ANd ("visible minorit*" OR | women)'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" OR or "treatment*"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" | | "treatment*"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" | or "treatment*"'
+GO
+
+-- invalid combinations of boolean operators
+EXEC fts_contains_vu_prepare_p1 'Resveratrol and Or "red grapes"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol and  not And "red grapes"'
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'Resveratrol oR' + char(10) + 'Not "red grapes"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'Resveratrol' + char(10) + 'OR' + char(9)+ '& "red grapes"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+
+-- Common Table Expression
+WITH fts_contains_vu_cte1 AS (
+    SELECT *
+    FROM fts_contains_vu_t
+    WHERE CONTAINS(txt, 'resveratrol or (grape and wine)')
+)
+SELECT * FROM fts_contains_vu_cte1
+GO
+
+WITH fts_contains_vu_cte2 AS (
+    SELECT *
+    FROM fts_contains_vu_t
+)
+SELECT *
+FROM fts_contains_vu_cte2
+WHERE CONTAINS(txt, 'resveratrol or (grape and wine)')
 GO
 
 -- Special Character cases
@@ -590,6 +777,65 @@ GO
 SELECT * FROM fts_contains_multicol_t WHERE contains((txt1, txt2), '')
 GO
 
+DROP FULLTEXT INDEX ON fts_contains_multicol_t
+GO
+
+CREATE FULLTEXT INDEX ON fts_contains_multicol_t(
+        txt1, 
+        txt2,
+        txt3,
+        txt4) KEY INDEX uid
+GO
+
+--Boolean operators support for multiple columns
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), 'genome AND DNA');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1,
+        txt2,
+        txt3,
+        txt4), 'Renaissance OR "Ancient Egyptian*"');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '("Artificial Intelligence" OR AI) AND (technology OR computing)');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '(art OR "artist*") AND NOT Picasso');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '(quantum OR physics) AND (computing OR "calculation*") AND NOT genome');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '(blockchain OR "cloud computing") AND technology AND NOT (genome OR DNA)');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '("Starry Night" OR symphony) AND (Mozart OR "van Gogh") AND NOT Shakespeare');
+GO
 
 -- Test cases for the relation new_schema_fts.multicol_tb
 
@@ -666,7 +912,6 @@ SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
         NULL, 
         chr), 'Order_789')
 GO
-
 
 -- Test cases for content_table
 CREATE UNIQUE INDEX ucid ON content_table(id)

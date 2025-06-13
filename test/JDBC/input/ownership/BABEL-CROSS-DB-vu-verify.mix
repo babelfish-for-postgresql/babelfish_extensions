@@ -272,12 +272,18 @@ GO
 SELECT my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(1);
 GO
 
+SELECT my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_tvf2();
+GO
+
 -- bare SELECT table from db1, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
 SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_t2 ORDER BY id;
 GO
 
 -- bare SELECT function from db1, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
 SELECT my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_f2(1);
+GO
+
+SELECT my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_tvf2();
 GO
 
 -- SELECT from a view in db1 which references objects in db1, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful

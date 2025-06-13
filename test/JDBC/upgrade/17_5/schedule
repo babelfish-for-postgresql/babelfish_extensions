@@ -13,7 +13,7 @@ atn2
 ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
-money_aggregate
+money_aggregate-before-17_6-or-16_10
 BABEL-1062
 BABEL-1189
 BABEL-1206
@@ -623,3 +623,4 @@ babel_varbinary
 babel_test_numeric_int2_oper
 babel_test_numeric_int4_oper
 babel_test_numeric_int8_oper
+MONEY_OBJECT
