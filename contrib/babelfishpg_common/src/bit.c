@@ -64,8 +64,6 @@ PG_FUNCTION_INFO_V1(bitint4ge);
 
 PG_FUNCTION_INFO_V1(bitpl);
 PG_FUNCTION_INFO_V1(bitmi);
-PG_FUNCTION_INFO_V1(bitmul);
-PG_FUNCTION_INFO_V1(bitdiv);
 
 /*
  * Try to interpret value as boolean value.  Valid values are: true,

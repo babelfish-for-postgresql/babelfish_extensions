@@ -1847,7 +1847,7 @@ fixeddecimalint8pl(PG_FUNCTION_ARGS)
 	 */
     if (adder != (int64) adder)
     {
-        ereport(ERROR,
+        ereport(ERROR, 
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
         /* ensure compiler realizes we mustn't reach the division (gcc bug) */
@@ -1858,8 +1858,8 @@ fixeddecimalint8pl(PG_FUNCTION_ARGS)
 
 	/*
 	 * Overflow check. If the result cannot be converted back
-     * to a 64 bit result, then we can say that there is a 
-     * overflow
+	 * to a 64 bit result, then we can say that there is a 
+	 * overflow
 	 */
 	if (result != (int64) result)
 		ereport(ERROR,
@@ -1887,7 +1887,7 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
 
     /*
 	 * Overflow check. If the subtractor cannot be fit into 
-     * 64 bit, then the result will definitely overflow
+	 * 64 bit, then the result will definitely overflow
 	 */
     if (subtractor != (int64) subtractor)
     {
@@ -1902,8 +1902,8 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
 
 	/*
 	 * Overflow check. If the result cannot be converted back
-     * to a 64 bit result, then we can say that there is a 
-     * overflow
+	 * to a 64 bit result, then we can say that there is a 
+	 * overflow
 	 */
 	if (result != (int64) result)
 		ereport(ERROR,
@@ -2026,8 +2026,8 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
     if (adder != (int64) adder)
     {
         ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
+			    (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+			     errmsg("fixeddecimal out of range")));
         /* ensure compiler realizes we mustn't reach the division (gcc bug) */
         PG_RETURN_NULL();
     }
@@ -2070,8 +2070,8 @@ int8fixeddecimalmi(PG_FUNCTION_ARGS)
     if (subtractor != (int64) subtractor)
     {
         ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
+		        (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+		         errmsg("fixeddecimal out of range")));
         /* ensure compiler realizes we mustn't reach the division (gcc bug) */
         PG_RETURN_NULL();
     }
@@ -2143,11 +2143,11 @@ int8fixeddecimaldiv(PG_FUNCTION_ARGS)
     */
     if (arg1 > FIXEDDECIMAL_MAX)
     {
-        ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
+        ereport(ERROR, 
+                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+                 errmsg("fixeddecimal out of range")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+        PG_RETURN_NULL();
     }
 
 	/* No overflow is possible */
@@ -3204,16 +3204,18 @@ char_to_fixeddecimal(PG_FUNCTION_ARGS)
 Datum
 fixeddecimal_ceiling(PG_FUNCTION_ARGS)
 {
-    int64		arg1 = PG_GETARG_INT64(0);
+    int64       arg1 = PG_GETARG_INT64(0);
     int64       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
 
     if (arg1 > 0 && arg1 % FIXEDDECIMAL_MULTIPLIER)
+    {
         result += FIXEDDECIMAL_MULTIPLIER;
+    }   
     
     if (result != 0 && !SAMESIGN(arg1, result))
-        ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
+        ereport(ERROR, 
+                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+                 errmsg("fixeddecimal out of range")));
     
     PG_RETURN_INT64(result);
 }
@@ -3221,16 +3223,18 @@ fixeddecimal_ceiling(PG_FUNCTION_ARGS)
 Datum
 fixeddecimal_floor(PG_FUNCTION_ARGS)
 {
-    int64		arg1 = PG_GETARG_INT64(0);
+    int64       arg1 = PG_GETARG_INT64(0);
     int64       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
 
     if (arg1 < 0 && arg1 % FIXEDDECIMAL_MULTIPLIER)
+    {
         result -= FIXEDDECIMAL_MULTIPLIER;
+    }
     
     if (result != 0 && !SAMESIGN(arg1, result))
         ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
+                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE), 
+                 errmsg("fixeddecimal out of range")));
     
     PG_RETURN_INT64(result);
 }
@@ -3238,19 +3242,17 @@ fixeddecimal_floor(PG_FUNCTION_ARGS)
 Datum
 fixeddecimal_power(PG_FUNCTION_ARGS)
 {
-    int64		arg1 = PG_GETARG_INT64(0);
+    int64       arg1 = PG_GETARG_INT64(0);
     float8      arg1_float = (float8) arg1 / FIXEDDECIMAL_MULTIPLIER;
-	Numeric		arg2 = PG_GETARG_NUMERIC(1);
-	int64 result;
-	Numeric		arg1_numeric,
-				result_numeric;
+    Numeric     arg2 = PG_GETARG_NUMERIC(1);
+    int64       result;
+    Numeric     arg1_numeric, 
+                result_numeric;
 
-	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1_float)));
-	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
-    result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
-											   NumericGetDatum(result_numeric),
-											   DirectFunctionCall1(int8_numeric, FIXEDDECIMAL_MULTIPLIER)));
+    arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1_float)));
+    result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
+    result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(result_numeric), DirectFunctionCall1(int8_numeric, FIXEDDECIMAL_MULTIPLIER)));
     result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_numeric)));
 
-	PG_RETURN_INT64(result);
+    PG_RETURN_INT64(result);
 }
