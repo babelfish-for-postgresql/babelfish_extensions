@@ -1779,3 +1779,95 @@ CREATE TABLE PT_DifferentCollation_NVarChar (
     Value NVARCHAR(100)
 ) ON PS_CollationTest_NVarChar(PartitionKey);
 Go
+
+USE master
+GO
+
+---------------------------------------------------------------
+--- Test Partition Tables with Computed columns
+---------------------------------------------------------------
+-- Query to show data in each partition for table created without computed column
+SELECT 
+    p.partition_number,
+    p.rows,
+    CASE 
+        WHEN p.partition_number = 1 THEN 'x <= -1000.0'
+        WHEN p.partition_number = 2 THEN '-1000.0 < x <= -1.0'
+        WHEN p.partition_number = 3 THEN '-1.0 < x <= 0.0'
+        WHEN p.partition_number = 4 THEN '0.0 < x <= 1.0'
+        WHEN p.partition_number = 5 THEN '1.0 < x <= 1000.0'
+        WHEN p.partition_number = 6 THEN 'x > 1000.0'
+    END as partition_range,
+    MIN(t.float_val) as min_float_val,
+    MAX(t.float_val) as max_float_val,
+    COUNT(*) as row_count
+FROM partition_float_real_partitioned_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('partition_float_real_partitioned_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.partition_float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number, p.rows
+ORDER BY p.partition_number;
+GO
+
+
+-- Create partitioned table with computed columns
+CREATE TABLE partition_float_real_partitioned_computed_test (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    computed_val AS (float_val * real_val),
+    description VARCHAR(100)
+) ON partition_float_real_range_partition_scheme(float_val);
+GO
+
+-- Insert test data
+INSERT INTO partition_float_real_partitioned_computed_test (float_val, real_val, description)
+SELECT float_val, real_val, description
+FROM partition_float_real_partitioned_test;
+GO
+
+-- Query to show data in each partition for table created with computed column
+SELECT 
+    p.partition_number,
+    p.rows,
+    CASE 
+        WHEN p.partition_number = 1 THEN 'x <= -1000.0'
+        WHEN p.partition_number = 2 THEN '-1000.0 < x <= -1.0'
+        WHEN p.partition_number = 3 THEN '-1.0 < x <= 0.0'
+        WHEN p.partition_number = 4 THEN '0.0 < x <= 1.0'
+        WHEN p.partition_number = 5 THEN '1.0 < x <= 1000.0'
+        WHEN p.partition_number = 6 THEN 'x > 1000.0'
+    END as partition_range,
+    MIN(t.float_val) as min_float_val,
+    MAX(t.float_val) as max_float_val,
+    COUNT(*) as row_count
+FROM partition_float_real_partitioned_computed_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('partition_float_real_partitioned_computed_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.partition_float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number, p.rows
+ORDER BY p.partition_number;
+GO
+
+-- Query to compare partition distribution in partition table with and without computed column
+SELECT 
+    'Base table' as table_name,
+    p.partition_number,
+    COUNT(*) as row_count
+FROM partition_float_real_partitioned_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('partition_float_real_partitioned_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.partition_float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number
+UNION ALL
+SELECT 
+    'Computed table' as table_name,
+    p.partition_number,
+    COUNT(*) as row_count
+FROM partition_float_real_partitioned_computed_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('partition_float_real_partitioned_computed_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.partition_float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number
+ORDER BY table_name, partition_number;
+GO
