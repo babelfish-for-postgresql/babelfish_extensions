@@ -58,6 +58,19 @@ static void SocketSetNonblocking(bool nonblocking);
 static int	InternalFlush(bool);
 static void TdsConsumedBytes(int bytes);
 
+size_t
+GetAvailableBufferSize()
+{
+	return TdsBufferSize - TdsSendCur;
+}
+
+void
+FlushBuffer()
+{
+	SocketSetNonblocking(false);
+	InternalFlush(false);
+}
+
 /* Inline functions */
 
 /* --------------------------------

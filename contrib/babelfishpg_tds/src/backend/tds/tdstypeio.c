@@ -2809,6 +2809,7 @@ TdsSendPlpDataHelper(char *data, int len)
 	uint32_t	plpTerminator = PLP_TERMINATOR;
 	uint64_t	tempOffset = 0;
 	uint32_t	plpChunckLen = PLP_CHUNCK_LEN;
+	size_t		amount = 0;
 
 	if ((rc = TdsPutInt64LE(len)) == 0)
 	{
@@ -2820,6 +2821,26 @@ TdsSendPlpDataHelper(char *data, int len)
 			/* Either data is "0" or no more data to send */
 			if (plpChunckLen == 0)
 				break;
+			
+			amount = GetAvailableBufferSize();
+			/*
+			 * If PLP CHUNK block cannot be stored in available buffer, 
+			 * then set PLP CHUNK LEN to size of available buffer.
+			 */
+			if ((plpChunckLen + sizeof(uint32_t)) > amount)
+			{
+				/*
+				 * If available buffer size cannot accomodate smallest chunk i.e. of size 1 byte
+				 * then flush the buffer and try again, else set PLP CHUNK LEN to size of available buffer.
+				 */
+				if (amount < (1 + sizeof(uint32_t)))
+				{
+					FlushBuffer();
+					continue;
+				}
+				else
+					plpChunckLen = amount - sizeof(uint32_t);
+			}
 
 			/* need testing for "0" len */
 			if ((rc = TdsPutUInt32LE(plpChunckLen)) == 0)
@@ -2830,6 +2851,7 @@ TdsSendPlpDataHelper(char *data, int len)
 				return rc;
 
 			tempOffset += plpChunckLen;
+			plpChunckLen = PLP_CHUNCK_LEN;
 			Assert(tempOffset <= len);
 		}
 		rc |= TdsPutInt32LE(plpTerminator);
