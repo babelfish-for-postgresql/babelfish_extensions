@@ -90,6 +90,8 @@ typedef struct collation_callbacks
 
 	void		(*set_db_collation) (Oid db_coll);
 
+	void		(*set_logical_db_name_cache) (const char *dbname);
+
 } collation_callbacks;
 
 extern collation_callbacks *collation_callbacks_ptr;
