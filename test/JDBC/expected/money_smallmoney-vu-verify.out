@@ -1846,7 +1846,7 @@ SELECT CAST(-214748.3647 AS SMALLMONEY) * CAST(1.1 AS MONEY);
 GO
 ~~START~~
 money
--236223.2011
+-236223.2012
 ~~END~~
 
 SELECT CAST(-214748.3647 AS SMALLMONEY) * CAST(1.1 AS REAL);
@@ -1867,7 +1867,7 @@ SELECT CAST(1.1 AS MONEY) * CAST(-214748.3647 AS SMALLMONEY);
 GO
 ~~START~~
 money
--236223.2011
+-236223.2012
 ~~END~~
 
 SELECT CAST(1.1 AS REAL) * CAST(-214748.3647 AS SMALLMONEY);
@@ -7949,7 +7949,6 @@ smallmoney#!#smallmoney#!#smallmoney
 ~~END~~
 
 
--- TODO: File JIRA, Strings with dollar/comma not parsed to money in BBF
 -- VARCHAR -> MONEY
 SELECT CAST(CAST('123.45' AS VARCHAR(40)) AS MONEY) AS [VARCHAR_POS_TO_MONEY],
        CAST(CAST('-123.45' AS VARCHAR(40)) AS MONEY) AS [VARCHAR_NEG_TO_MONEY],
@@ -7965,7 +7964,6 @@ money#!#money#!#money#!#money#!#money#!#money#!#money
 ~~END~~
 
 
--- TODO: File JIRA, Strings with dollar/comma not parsed to smallmoney in BBF
 -- VARCHAR -> SMALLMONEY
 SELECT CAST(CAST('214748.3647' AS VARCHAR(40)) AS SMALLMONEY) AS [VARCHAR_POS_TO_SMALLMONEY],
        CAST(CAST('-214748.3648' AS VARCHAR(40)) AS SMALLMONEY) AS [VARCHAR_NEG_TO_SMALLMONEY],
@@ -8007,7 +8005,6 @@ smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
 ~~END~~
 
 
--- TODO: File JIRA, Strings with dollar/comma not parsed to money in BBF
 -- NVARCHAR -> MONEY
 SELECT CAST(CAST(N'123.45' AS NVARCHAR(40)) AS MONEY) AS [NVARCHAR_POS_TO_MONEY],
        CAST(CAST(N'-123.45' AS NVARCHAR(40)) AS MONEY) AS [NVARCHAR_NEG_TO_MONEY],
@@ -8023,7 +8020,6 @@ money#!#money#!#money#!#money#!#money#!#money#!#money
 ~~END~~
 
 
--- TODO: File JIRA, Strings with dollar/comma not parsed to money in BBF
 -- NVARCHAR -> SMALLMONEY
 SELECT CAST(CAST(N'214748.3647' AS NVARCHAR(40)) AS SMALLMONEY) AS [NVARCHAR_POS_TO_SMALLMONEY],
        CAST(CAST(N'-214748.3648' AS NVARCHAR(40)) AS SMALLMONEY) AS [NVARCHAR_NEG_TO_SMALLMONEY],

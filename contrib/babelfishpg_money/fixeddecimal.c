@@ -1708,10 +1708,16 @@ fixeddecimalmul(PG_FUNCTION_ARGS)
 	 * we must divide the result by this to get the correct result.
 	 */
 	result = (int128) arg1 * arg2 / FIXEDDECIMAL_MULTIPLIER;
-	/* Round off the result to FIXEDDECIMAL_SCALE. */
-	if ((((int128) arg1 * arg2 % FIXEDDECIMAL_MULTIPLIER)) >= FIXEDDECIMAL_ROUNDUP)
+	/* Round off the result to FIXEDDECIMAL_SCALE.
+     * abs() in order to deal with -ve result as well 
+     * if the result is negative we subtract 1, else add 1
+     */
+	if (abs(((int128) arg1 * arg2) % FIXEDDECIMAL_MULTIPLIER) >= FIXEDDECIMAL_ROUNDUP)
     {
-        result++;
+        if (result < 0) 
+            result--;
+        else 
+            result++;
     }
 
 
