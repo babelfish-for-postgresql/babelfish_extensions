@@ -80,6 +80,54 @@ smallmoney
 ~~END~~
 
 
+SELECT * FROM dbo.bitsmallmoneypl_vu;
+GO
+~~START~~
+smallmoney
+124.4500
+~~END~~
+
+
+SELECT * FROM dbo.bitsmallmoneymi_vu;
+GO
+~~START~~
+smallmoney
+-122.4500
+~~END~~
+
+
+SELECT * FROM dbo.smallmoneybitpl_vu;
+GO
+~~START~~
+smallmoney
+124.4500
+~~END~~
+
+
+SELECT * FROM dbo.smallmoneybitmi_vu;
+GO
+~~START~~
+smallmoney
+122.4500
+~~END~~
+
+
+SELECT * FROM dbo.floormaxmoney_vu;
+GO
+~~START~~
+money
+922337203685477.0000
+~~END~~
+
+
+SELECT * FROM dbo.ceilingminmoney_vu;
+GO
+~~START~~
+money
+-922337203685477.0000
+~~END~~
+
+
 SELECT * FROM dbo.int4smallmoney_func();
 GO
 ~~START~~
@@ -156,7 +204,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.871 ms
+Babelfish T-SQL Batch Parsing Time: 9.479 ms
 ~~END~~
 
 
@@ -175,7 +223,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 19.239 ms
+Babelfish T-SQL Batch Parsing Time: 19.587 ms
 ~~END~~
 
 
@@ -191,7 +239,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.802 ms
+Babelfish T-SQL Batch Parsing Time: 3.749 ms
 ~~END~~
 
 
@@ -207,7 +255,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.696 ms
+Babelfish T-SQL Batch Parsing Time: 0.822 ms
 ~~END~~
 
 
@@ -223,7 +271,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.080 ms
+Babelfish T-SQL Batch Parsing Time: 2.640 ms
 ~~END~~
 
 
@@ -238,7 +286,7 @@ Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c467019972
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.272 ms
+Babelfish T-SQL Batch Parsing Time: 0.287 ms
 ~~END~~
 
 
@@ -253,7 +301,7 @@ Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.621 ms
+Babelfish T-SQL Batch Parsing Time: 2.591 ms
 ~~END~~
 
 
@@ -271,7 +319,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.204 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -290,7 +338,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -306,7 +354,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.577 ms
+Babelfish T-SQL Batch Parsing Time: 0.576 ms
 ~~END~~
 
 
@@ -322,7 +370,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.145 ms
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 
@@ -338,7 +386,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.133 ms
+Babelfish T-SQL Batch Parsing Time: 0.129 ms
 ~~END~~
 
 
@@ -353,7 +401,7 @@ Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.132 ms
+Babelfish T-SQL Batch Parsing Time: 0.127 ms
 ~~END~~
 
 
@@ -368,7 +416,7 @@ Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.123 ms
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
 ~~END~~
 
 

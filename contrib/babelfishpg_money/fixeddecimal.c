@@ -3251,7 +3251,8 @@ fixeddecimal_power(PG_FUNCTION_ARGS)
 
     arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1_float)));
     result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
-    result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(result_numeric), DirectFunctionCall1(int8_numeric, FIXEDDECIMAL_MULTIPLIER)));
+    result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(result_numeric), 
+														DirectFunctionCall1(int8_numeric, FIXEDDECIMAL_MULTIPLIER)));
     result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_numeric)));
 
     PG_RETURN_INT64(result);

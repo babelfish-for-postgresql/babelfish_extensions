@@ -902,13 +902,9 @@ int4smallmoneydiv(PG_FUNCTION_ARGS)
     result = (int64) t;
 
     if (result != (int32) result)
-    {
         ereport(ERROR,
                 (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
                  errmsg("smallmoney out of range")));
-        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
-        PG_RETURN_NULL();
-    }
 
     PG_RETURN_INT32(result);
 }
@@ -1063,13 +1059,9 @@ int8smallmoneydiv(PG_FUNCTION_ARGS)
     result = (int64) t;
 
     if (result != (int32) result)
-    {
         ereport(ERROR,
                 (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
                  errmsg("smallmoney out of range")));
-        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
-        PG_RETURN_NULL();
-    }      
 
     PG_RETURN_INT32(result);
 }

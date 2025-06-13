@@ -48,3 +48,21 @@ GO
 
 DROP TABLE MoneyTestTable1
 GO
+
+DROP VIEW bitsmallmoneypl_vu;
+GO
+
+DROP VIEW bitsmallmoneymi_vu;
+GO
+
+DROP VIEW smallmoneybitpl_vu;
+GO
+
+DROP VIEW smallmoneybitmi_vu;
+GO
+
+DROP VIEW floormaxmoney_vu;
+GO
+
+DROP VIEW ceilingminmoney_vu;
+GO

@@ -2297,10 +2297,7 @@ AS 'babelfishpg_tsql', 'int_floor' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.floor(tinyint) RETURNS TINYINT
 AS 'babelfishpg_tsql', 'int_floor' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.floor(sys.smallmoney) RETURNS sys.MONEY
-AS 'babelfishpg_money', 'fixeddecimal_floor' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.floor(sys.money) RETURNS sys.MONEY
+CREATE OR REPLACE FUNCTION sys.floor(sys.fixeddecimal) RETURNS sys.MONEY
 AS 'babelfishpg_money', 'fixeddecimal_floor' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Ceiling for bit
@@ -2320,10 +2317,7 @@ AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.ceiling(tinyint) RETURNS TINYINT
 AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.ceiling(sys.smallmoney) RETURNS sys.MONEY
-AS 'babelfishpg_money', 'fixeddecimal_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.ceiling(sys.money) RETURNS sys.MONEY
+CREATE OR REPLACE FUNCTION sys.ceiling(sys.fixeddecimal) RETURNS sys.MONEY
 AS 'babelfishpg_money', 'fixeddecimal_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE AGGREGATE sys.STDEV(float8) (
