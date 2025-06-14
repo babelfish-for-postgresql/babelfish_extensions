@@ -201,7 +201,7 @@ Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.586 ms
+Babelfish T-SQL Batch Parsing Time: 8.466 ms
 ~~END~~
 
 
@@ -217,7 +217,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 19.019 ms
+Babelfish T-SQL Batch Parsing Time: 18.672 ms
 ~~END~~
 
 
@@ -233,7 +233,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.804 ms
+Babelfish T-SQL Batch Parsing Time: 4.557 ms
 ~~END~~
 
 
@@ -249,7 +249,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.675 ms
+Babelfish T-SQL Batch Parsing Time: 0.682 ms
 ~~END~~
 
 
@@ -265,7 +265,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.754 ms
+Babelfish T-SQL Batch Parsing Time: 2.592 ms
 ~~END~~
 
 
@@ -280,7 +280,7 @@ Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c467019972
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.230 ms
+Babelfish T-SQL Batch Parsing Time: 0.227 ms
 ~~END~~
 
 
@@ -295,7 +295,7 @@ Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.699 ms
+Babelfish T-SQL Batch Parsing Time: 2.541 ms
 ~~END~~
 
 
@@ -310,7 +310,7 @@ Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -326,7 +326,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.113 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -342,7 +342,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.697 ms
+Babelfish T-SQL Batch Parsing Time: 0.563 ms
 ~~END~~
 
 
@@ -358,7 +358,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.174 ms
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 
@@ -374,7 +374,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.160 ms
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 
@@ -389,7 +389,7 @@ Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.169 ms
+Babelfish T-SQL Batch Parsing Time: 0.129 ms
 ~~END~~
 
 
@@ -404,7 +404,7 @@ Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.124 ms
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
 ~~END~~
 
 
@@ -1778,21 +1778,21 @@ smallmoney
 SELECT CAST(1 AS BIT) * CAST(214748.3647 AS SMALLMONEY);
 GO
 ~~START~~
-money
+smallmoney
 214748.3647
 ~~END~~
 
 SELECT CAST(0 AS BIT) * CAST(214748.3647 AS SMALLMONEY);
 GO
 ~~START~~
-money
+smallmoney
 0.0000
 ~~END~~
 
 SELECT CAST(500 AS BIT) * CAST(214748.3647 AS SMALLMONEY);
 GO
 ~~START~~
-money
+smallmoney
 214748.3647
 ~~END~~
 
@@ -2038,14 +2038,14 @@ smallmoney
 SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(1 AS BIT);
 GO
 ~~START~~
-money
+smallmoney
 -214748.3648
 ~~END~~
 
 SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(214748 AS BIT);
 GO
 ~~START~~
-money
+smallmoney
 -214748.3648
 ~~END~~
 
@@ -2172,7 +2172,7 @@ smallmoney
 SELECT CAST(214748.3648 AS SMALLMONEY) / CAST(1 AS BIT);
 GO
 ~~START~~
-money
+smallmoney
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
@@ -2180,7 +2180,7 @@ money
 SELECT CAST(214748.3648 AS SMALLMONEY) / CAST(214748 AS BIT);
 GO
 ~~START~~
-money
+smallmoney
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
@@ -3121,7 +3121,7 @@ float
 SELECT CAST(123.45 AS SMALLMONEY) * CAST(1 AS BIT) AS result;
 GO
 ~~START~~
-money
+smallmoney
 123.4500
 ~~END~~
 
@@ -3238,7 +3238,7 @@ numeric
 SELECT CAST(123.45 AS SMALLMONEY) / CAST(1 AS BIT) AS result;
 GO
 ~~START~~
-money
+smallmoney
 123.4500
 ~~END~~
 

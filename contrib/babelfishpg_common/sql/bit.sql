@@ -507,27 +507,30 @@ WITHOUT FUNCTION AS IMPLICIT;
 
 CREATE FUNCTION sys.bitsmallmoneypl(sys.BIT, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS $$
-    BEGIN
-        IF $1 = 0 THEN
-            RETURN (SELECT sys.int4fixeddecimalpl(0, $2));
-        ELSE 
-            RETURN (SELECT sys.int4fixeddecimalpl(1, $2));
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'bitsmallmoneypl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.bitsmallmoneymi(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'bitsmallmoneymi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitsmallmoneymul(sys.BIT, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS $$
     BEGIN
         IF $1 = 0 THEN
-            RETURN (SELECT sys.int4fixeddecimalmi(0, $2));
+            RETURN 0::sys.SMALLMONEY;
         ELSE 
-            RETURN (SELECT sys.int4fixeddecimalmi(1, $2));
+            RETURN $2::sys.SMALLMONEY;
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitsmallmoneydiv(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'bitsmallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.BIT,
@@ -542,29 +545,44 @@ CREATE OPERATOR sys.- (
     PROCEDURE  = bitsmallmoneymi
 );
 
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = bitsmallmoneymul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = bitsmallmoneydiv
+);
+
 CREATE FUNCTION sys.smallmoneybitpl(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'smallmoneybitpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneybitmi(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'smallmoneybitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneybitmul(sys.SMALLMONEY, sys.BIT)
 RETURNS sys.SMALLMONEY
 AS $$
     BEGIN
         IF $2 = 0 THEN
-            RETURN (SELECT sys.fixeddecimalint4pl($1, 0));
+            RETURN 0::sys.SMALLMONEY;
         ELSE 
-            RETURN (SELECT sys.fixeddecimalint4pl($1, 1));
+            RETURN $1::sys.SMALLMONEY;
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.smallmoneybitmi(sys.SMALLMONEY, sys.BIT)
+CREATE FUNCTION sys.smallmoneybitdiv(sys.SMALLMONEY, sys.BIT)
 RETURNS sys.SMALLMONEY
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN (SELECT sys.fixeddecimalint4mi($1, 0));
-        ELSE 
-            RETURN (SELECT sys.fixeddecimalint4mi($1, 1));
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'smallmoneybitdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.SMALLMONEY,
@@ -579,25 +597,14 @@ CREATE OPERATOR sys.- (
     PROCEDURE  = smallmoneybitmi
 );
 
-CREATE FUNCTION sys.bitpl(sys.BIT, sys.BIT)
-RETURNS bool
-AS 'babelfishpg_common', 'bitpl'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE FUNCTION sys.bitmi(sys.BIT, sys.BIT)
-RETURNS bool
-AS 'babelfishpg_common', 'bitmi'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.BIT,
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
-    COMMUTATOR = +,
-    PROCEDURE  = bitpl
+    PROCEDURE  = smallmoneybitmul
 );
 
-CREATE OPERATOR sys.- (
-    LEFTARG    = sys.BIT,
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
-    PROCEDURE  = bitmi
+    PROCEDURE  = smallmoneybitdiv
 );

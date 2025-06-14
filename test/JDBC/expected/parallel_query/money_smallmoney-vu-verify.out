@@ -1790,14 +1790,14 @@ smallmoney
 SELECT CAST(1 AS BIT) * CAST(214748.3647 AS SMALLMONEY);
 GO
 ~~START~~
-money
+smallmoney
 214748.3647
 ~~END~~
 
 SELECT CAST(0 AS BIT) * CAST(214748.3647 AS SMALLMONEY);
 GO
 ~~START~~
-money
+smallmoney
 0.0000
 ~~END~~
 
@@ -2050,7 +2050,7 @@ smallmoney
 SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(1 AS BIT);
 GO
 ~~START~~
-money
+smallmoney
 -214748.3648
 ~~END~~
 
@@ -3133,7 +3133,7 @@ float
 SELECT CAST(123.45 AS SMALLMONEY) * CAST(1 AS BIT) AS result;
 GO
 ~~START~~
-money
+smallmoney
 123.4500
 ~~END~~
 
@@ -3250,7 +3250,7 @@ numeric
 SELECT CAST(123.45 AS SMALLMONEY) / CAST(1 AS BIT) AS result;
 GO
 ~~START~~
-money
+smallmoney
 123.4500
 ~~END~~
 
