@@ -71,6 +71,9 @@ PG_FUNCTION_INFO_V1(bitsmallmoneypl);
 PG_FUNCTION_INFO_V1(bitsmallmoneymi);
 PG_FUNCTION_INFO_V1(bitsmallmoneydiv);
 
+/* Arithmetic operations bit */
+PG_FUNCTION_INFO_V1(bitdiv);
+
 /*
  * Try to interpret value as boolean value.  Valid values are: true,
  * false, TRUE, FALSE, digital string as well as unique prefixes thereof.
@@ -748,4 +751,22 @@ bitsmallmoneydiv(PG_FUNCTION_ARGS)
                  errmsg("smallmoney out of range")));
 
     PG_RETURN_INT32(result);
+}
+
+Datum
+bitdiv(PG_FUNCTION_ARGS)
+{
+    bool		arg1 = PG_GETARG_BOOL(0);
+    bool		arg2 = PG_GETARG_BOOL(1);
+    
+    if (!arg2)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_DIVISION_BY_ZERO),
+                errmsg("division by zero")));
+        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+        PG_RETURN_NULL();
+    }
+
+    PG_RETURN_BOOL(arg1);
 }
