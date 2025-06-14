@@ -428,7 +428,6 @@ IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmon
 CREATE OPERATOR sys./ (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.BIT,
-    COMMUTATOR = +,
     PROCEDURE  = smallmoneybitdiv
 );
 END IF;
