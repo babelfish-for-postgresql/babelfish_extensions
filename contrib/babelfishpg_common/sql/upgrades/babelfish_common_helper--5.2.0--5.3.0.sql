@@ -562,7 +562,7 @@ END $$;
 * Arithmetic operators for float, bit
 */
 
-CREATE OR REPLACE FUNCTION sys.floatbitmi(sys.FLOAT, sys.BIT)
+CREATE OR REPLACE FUNCTION sys.floatbitmi(float8, sys.BIT)
 RETURNS sys.FLOAT
 AS 'babelfishpg_common', 'floatbitmi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -581,7 +581,7 @@ END $$;
 
 
 
-CREATE OR REPLACE FUNCTION sys.floatbitpl(sys.FLOAT, sys.BIT)
+CREATE OR REPLACE FUNCTION sys.floatbitpl(float8, sys.BIT)
 RETURNS sys.FLOAT
 AS 'babelfishpg_common', 'floatbitpl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -601,7 +601,7 @@ END $$;
 
 
 
-CREATE OR REPLACE FUNCTION sys.floatbitmul(sys.FLOAT, sys.BIT)
+CREATE OR REPLACE FUNCTION sys.floatbitmul(float8, sys.BIT)
 RETURNS sys.FLOAT
 AS $$
     BEGIN
@@ -626,7 +626,7 @@ END $$;
 
 
 
-CREATE OR REPLACE FUNCTION sys.floatbitdiv(sys.FLOAT, sys.BIT)
+CREATE OR REPLACE FUNCTION sys.floatbitdiv(float8, sys.BIT)
 RETURNS sys.FLOAT
 AS 'babelfishpg_common', 'floatbitdiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -646,7 +646,7 @@ END $$;
 * Arithmetic operators for bit, float
 */
 
-CREATE OR REPLACE FUNCTION sys.bitfloatmi(sys.BIT, sys.FLOAT)
+CREATE OR REPLACE FUNCTION sys.bitfloatmi(sys.BIT, float8)
 RETURNS sys.FLOAT
 AS 'babelfishpg_common', 'bitfloatmi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -665,7 +665,7 @@ END $$;
 
 
 
-CREATE OR REPLACE FUNCTION sys.bitfloatpl(sys.BIT, sys.FLOAT)
+CREATE OR REPLACE FUNCTION sys.bitfloatpl(sys.BIT, float8)
 RETURNS sys.FLOAT
 AS 'babelfishpg_common', 'bitfloatpl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -684,7 +684,7 @@ END $$;
 
 
 
-CREATE OR REPLACE FUNCTION sys.bitfloatmul(sys.BIT, sys.FLOAT)
+CREATE OR REPLACE FUNCTION sys.bitfloatmul(sys.BIT, float8)
 RETURNS sys.FLOAT
 AS $$
     BEGIN
@@ -709,7 +709,7 @@ END $$;
 
 
 
-CREATE OR REPLACE FUNCTION sys.bitfloatdiv(sys.BIT, sys.FLOAT)
+CREATE OR REPLACE FUNCTION sys.bitfloatdiv(sys.BIT, float8)
 RETURNS sys.FLOAT
 AS 'babelfishpg_common', 'bitfloatdiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

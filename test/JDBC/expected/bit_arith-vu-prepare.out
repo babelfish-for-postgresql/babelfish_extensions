@@ -1,0 +1,71 @@
+CREATE VIEW bitfloatpl_vu AS SELECT CAST(1 AS sys.BIT) + CAST(1234.03456 as float) AS result;
+GO
+
+CREATE VIEW bitfloatmi_vu AS SELECT CAST(1 AS sys.BIT) - CAST(1234.03456 as float) AS result;
+GO
+
+CREATE VIEW bitfloatmul_vu AS SELECT CAST(1 AS sys.BIT) * CAST(1234.03456 as float) AS result;
+GO
+
+CREATE VIEW bitfloatdiv_vu AS SELECT CAST(1 AS sys.BIT) / CAST(1234.03456 as float) AS result;
+GO
+
+CREATE VIEW bitfloatdivfail_vu AS SELECT CAST(1 AS sys.BIT) / CAST(0 as float) AS result;
+GO
+
+CREATE VIEW floatbitpl_vu AS SELECT CAST(1234.03456 as float) + CAST(1 AS sys.BIT) AS result;
+GO
+
+CREATE VIEW floatbitmi_vu AS SELECT CAST(1234.03456 as float) - CAST(1 AS sys.BIT) AS result;
+GO
+
+CREATE VIEW floatbitmul_vu AS SELECT CAST(1234.03456 as float) * CAST(1 AS sys.BIT) AS result;
+GO
+
+CREATE VIEW floatbitdiv_vu AS SELECT CAST(1234.03456 as float) / CAST(1 AS sys.BIT) AS result;
+GO
+
+CREATE VIEW floatbitdivfail_vu AS SELECT CAST(1234.03456 as float) / CAST(0 AS sys.BIT) AS result;
+GO
+
+CREATE VIEW bitpl_vu AS SELECT CAST(1 AS sys.BIT) + CAST(1 as sys.BIT) AS A, CAST(0 AS sys.BIT) + CAST(1 AS sys.BIT) AS B, CAST(1 AS sys.BIT) + CAST(0 as sys.BIT) AS C, CAST(0 AS sys.BIT) + CAST(0 as sys.BIT) AS D;
+GO
+
+CREATE VIEW bitmi_vu AS SELECT CAST(1 AS sys.BIT) - CAST(1 as sys.BIT) AS A, CAST(0 AS sys.BIT) - CAST(1 as sys.BIT) AS B, CAST(1 AS sys.BIT) - CAST(0 as sys.BIT) AS C, CAST(0 AS sys.BIT) - CAST(0 as sys.BIT) AS D;
+GO
+
+CREATE VIEW bitmul_vu AS SELECT CAST(1 AS sys.BIT) * CAST(1 as sys.BIT) AS A, CAST(0 AS sys.BIT) * CAST(1 AS sys.BIT) AS B, CAST(1 AS sys.BIT) * CAST(0 as sys.BIT) AS C, CAST(0 AS sys.BIT) * CAST(0 as sys.BIT) AS D;
+GO
+
+CREATE VIEW bitdiv_vu AS SELECT CAST(1 AS sys.BIT) / CAST(1 as sys.BIT) AS A, CAST(0 AS sys.BIT) / CAST(1 AS sys.BIT) AS B;
+GO
+
+CREATE VIEW bitdivfail_vu AS SELECT CAST(1 AS sys.BIT) / CAST(0 as sys.BIT) AS A;
+GO
+
+CREATE VIEW bitbigintpl_vu AS SELECT CAST(1 AS sys.BIT) + CAST(1 as BIGINT) AS A, CAST(0 AS sys.BIT) + CAST(1 AS BIGINT) AS B, CAST(1 AS sys.BIT) + CAST(0 as BIGINT) AS C, CAST(0 AS sys.BIT) + CAST(0 as BIGINT) AS D;
+GO
+
+CREATE VIEW bitbigintmi_vu AS SELECT CAST(1 AS sys.BIT) - CAST(1 as BIGINT) AS A, CAST(0 AS sys.BIT) - CAST(1 as BIGINT) AS B, CAST(1 AS sys.BIT) - CAST(0 as BIGINT) AS C, CAST(0 AS sys.BIT) - CAST(0 as BIGINT) AS D;
+GO
+
+CREATE VIEW bitbigintmul_vu AS SELECT CAST(1 AS sys.BIT) * CAST(1 as BIGINT) AS A, CAST(0 AS sys.BIT) * CAST(1 AS BIGINT) AS B, CAST(1 AS sys.BIT) * CAST(0 as BIGINT) AS C, CAST(0 AS sys.BIT) * CAST(0 as BIGINT) AS D;
+GO
+
+CREATE VIEW bitbigintdiv_vu AS SELECT CAST(1 AS sys.BIT) / CAST(1 as BIGINT) AS A, CAST(0 AS sys.BIT) / CAST(1 AS BIGINT) AS B, CAST(0 AS sys.BIT) / CAST(0 as BIGINT) AS C;
+GO
+
+CREATE VIEW bitbigintdivfail_vu AS SELECT CAST(1 AS sys.BIT) / CAST(0 as BIGINT) AS A;
+GO
+
+CREATE VIEW bitnumericpl_vu AS SELECT CAST(1 AS sys.BIT) + CAST(1234.03456 as numeric) AS result;
+GO
+
+CREATE VIEW bitnumericmi_vu AS SELECT CAST(1 AS sys.BIT) - CAST(1234.03456 as numeric) AS result;
+GO
+
+CREATE VIEW bitnumericmul_vu AS SELECT CAST(1 AS sys.BIT) * CAST(1234.03456 as numeric) AS result;
+GO
+
+CREATE VIEW bitnumericdiv_vu AS SELECT CAST(1 AS sys.BIT) / CAST(1234.03456 as numeric) AS result;
+GO
