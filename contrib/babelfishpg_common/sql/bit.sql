@@ -676,3 +676,107 @@ CREATE OPERATOR sys./ (
     RIGHTARG   = sys.BIT,
     PROCEDURE  = sys.bitdiv
 );
+
+CREATE FUNCTION sys.floatbitpl(float8, sys.BIT)
+RETURNS float8
+AS 'babelfishpg_common', 'floatbitpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.floatbitmi(float8, sys.BIT)
+RETURNS float8
+AS 'babelfishpg_common', 'floatbitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.floatbitmul(float8, sys.BIT)
+RETURNS float8
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN 0::float8;
+        ELSE 
+            RETURN $1;
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.floatbitdiv(float8, sys.BIT)
+RETURNS float8
+AS 'babelfishpg_common', 'floatbitdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.floatbitpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.floatbitmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.floatbitmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.floatbitdiv
+);
+
+CREATE FUNCTION sys.bitfloatpl(sys.BIT, float8)
+RETURNS float8
+AS 'babelfishpg_common', 'bitfloatpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitfloatmi(sys.BIT, float8)
+RETURNS float8
+AS 'babelfishpg_common', 'bitfloatmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitfloatmul(sys.BIT, float8)
+RETURNS float8
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN 0::float8;
+        ELSE 
+            RETURN $2;
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitfloatdiv(sys.BIT, float8)
+RETURNS float8
+AS 'babelfishpg_common', 'bitfloatdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.bitfloatpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    PROCEDURE  = sys.bitfloatmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    PROCEDURE  = sys.bitfloatmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    PROCEDURE  = sys.bitfloatdiv
+);

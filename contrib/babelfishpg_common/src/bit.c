@@ -20,6 +20,7 @@
 #include "instr.h"
 #include "typecode.h"
 #include "numeric.h"
+#include "utils/float.h"
 
 
 PG_FUNCTION_INFO_V1(bitin);
@@ -73,6 +74,14 @@ PG_FUNCTION_INFO_V1(bitsmallmoneydiv);
 
 /* Arithmetic operations bit */
 PG_FUNCTION_INFO_V1(bitdiv);
+
+/* Arithmetic operations float, bit */
+PG_FUNCTION_INFO_V1(floatbitpl);
+PG_FUNCTION_INFO_V1(floatbitmi);
+PG_FUNCTION_INFO_V1(floatbitdiv);
+PG_FUNCTION_INFO_V1(bitfloatpl);
+PG_FUNCTION_INFO_V1(bitfloatmi);
+PG_FUNCTION_INFO_V1(bitfloatdiv);
 
 /*
  * Try to interpret value as boolean value.  Valid values are: true,
@@ -769,4 +778,78 @@ bitdiv(PG_FUNCTION_ARGS)
     }
 
     PG_RETURN_BOOL(arg1);
+}
+
+Datum
+floatbitpl(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	bool		arg2 = PG_GETARG_BOOL(1);
+    if (!arg2)
+    {
+        PG_RETURN_FLOAT8(arg1);
+    }
+    PG_RETURN_FLOAT8(float8_pl(arg1, (float8) 1));
+}
+
+Datum
+floatbitmi(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	bool		arg2 = PG_GETARG_BOOL(1);
+    if (!arg2)
+    {
+        PG_RETURN_FLOAT8(arg1);
+    }
+	PG_RETURN_FLOAT8(float8_mi(arg1, (float8) 1));
+}
+
+Datum
+floatbitdiv(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	bool		arg2 = PG_GETARG_BOOL(1);
+    if (!arg2)
+    {
+        ereport(ERROR,
+		    (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+		     errmsg("value out of range: overflow")));
+    }
+	PG_RETURN_FLOAT8(arg1);
+}
+
+Datum
+bitfloatpl(PG_FUNCTION_ARGS)
+{
+    bool		arg1 = PG_GETARG_BOOL(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+    if (!arg1)
+    {
+        PG_RETURN_FLOAT8(arg2);
+    }
+    PG_RETURN_FLOAT8(float8_pl((float8) 1, arg2));
+}
+
+Datum
+bitfloatmi(PG_FUNCTION_ARGS)
+{
+    bool		arg1 = PG_GETARG_BOOL(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+    if (!arg1)
+    {
+        PG_RETURN_FLOAT8(-arg2);
+    }
+	PG_RETURN_FLOAT8(float8_mi((float8) 1, arg2));
+}
+
+Datum
+bitfloatdiv(PG_FUNCTION_ARGS)
+{
+    bool		arg1 = PG_GETARG_BOOL(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+    if (!arg1)
+    {
+        PG_RETURN_FLOAT8(0);
+    }
+    PG_RETURN_FLOAT8(float8_div((float8) 1, arg2));
 }

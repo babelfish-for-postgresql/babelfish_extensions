@@ -290,15 +290,47 @@ AS 'babelfishpg_money', 'fixeddecimal_ceiling' LANGUAGE C IMMUTABLE STRICT PARAL
 CREATE OR REPLACE FUNCTION sys.ceiling(sys.money) RETURNS sys.MONEY
 AS 'babelfishpg_money', 'fixeddecimal_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bitsmallmoneypl(sys.BIT, sys.SMALLMONEY)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_common', 'bitsmallmoneypl'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+/**
+* Arithmetic operators for bit, smallmoney
+*/
+
 
 CREATE OR REPLACE FUNCTION sys.bitsmallmoneymi(sys.BIT, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_common', 'bitsmallmoneymi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = sys.bitsmallmoneymi
+);
+END IF;
+END $$;
+
+
+
+CREATE OR REPLACE FUNCTION sys.bitsmallmoneypl(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'bitsmallmoneypl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = sys.bitsmallmoneypl
+);
+END IF;
+END $$;
+
+
+
 
 CREATE OR REPLACE FUNCTION sys.bitsmallmoneymul(sys.BIT, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
@@ -312,20 +344,78 @@ AS $$
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '*' and oprresult != 0) THEN
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = sys.bitsmallmoneymul
+);
+END IF;
+END $$;
+
+
+
+
 CREATE OR REPLACE FUNCTION sys.bitsmallmoneydiv(sys.BIT, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_common', 'bitsmallmoneydiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '/' and oprresult != 0) THEN
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = sys.bitsmallmoneydiv
+);
+END IF;
+END $$;
+
+/**
+* Arithmetic operators for smallmoney, bit
+*/
+
+CREATE OR REPLACE FUNCTION sys.smallmoneybitmi(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'smallmoneybitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.smallmoneybitmi
+);
+END IF;
+END $$;
+
+
+
 
 CREATE OR REPLACE FUNCTION sys.smallmoneybitpl(sys.SMALLMONEY, sys.BIT)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_common', 'smallmoneybitpl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.smallmoneybitmi(sys.SMALLMONEY, sys.BIT)
-RETURNS sys.SMALLMONEY
-AS 'babelfishpg_common', 'smallmoneybitmi'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.smallmoneybitpl
+);
+END IF;
+END $$;
+
+
+
 
 CREATE OR REPLACE FUNCTION sys.smallmoneybitmul(sys.SMALLMONEY, sys.BIT)
 RETURNS sys.SMALLMONEY
@@ -339,22 +429,39 @@ AS $$
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '*' and oprresult != 0) THEN
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.smallmoneybitmul
+);
+END IF;
+END $$;
+
+
+
+
 CREATE OR REPLACE FUNCTION sys.smallmoneybitdiv(sys.SMALLMONEY, sys.BIT)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_common', 'smallmoneybitdiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bitpl(sys.BIT, sys.BIT)
-RETURNS sys.BIT
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN $1;
-        ELSE 
-            RETURN $2;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '/' and oprresult != 0) THEN
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.smallmoneybitdiv
+);
+END IF;
+END $$;
+
+/**
+* Arithmetic operators for bit, bit
+*/
 
 CREATE OR REPLACE FUNCTION sys.bitmi(sys.BIT, sys.BIT)
 RETURNS sys.BIT
@@ -370,112 +477,6 @@ AS $$
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bitmul(sys.BIT, sys.BIT)
-RETURNS sys.BIT
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN $2;
-        ELSE 
-            RETURN $1;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.bitdiv(sys.BIT, sys.BIT)
-RETURNS sys.BIT
-AS 'babelfishpg_common', 'bitdiv'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-DO $$
-BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
-CREATE OPERATOR sys.- (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = sys.bitsmallmoneymi
-);
-END IF;
-END $$;
-
-DO $$
-BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
-CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = sys.bitsmallmoneypl
-);
-END IF;
-END $$;
-
-DO $$
-BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '*' and oprresult != 0) THEN
-CREATE OPERATOR sys.* (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = sys.bitsmallmoneymul
-);
-END IF;
-END $$;
-
-DO $$
-BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '/' and oprresult != 0) THEN
-CREATE OPERATOR sys./ (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.SMALLMONEY,
-    PROCEDURE  = sys.bitsmallmoneydiv
-);
-END IF;
-END $$;
-
-DO $$
-BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
-CREATE OPERATOR sys.- (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.BIT,
-    PROCEDURE  = sys.smallmoneybitmi
-);
-END IF;
-END $$;
-
-DO $$
-BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
-CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.BIT,
-    COMMUTATOR = +,
-    PROCEDURE  = sys.smallmoneybitpl
-);
-END IF;
-END $$;
-
-DO $$
-BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '*' and oprresult != 0) THEN
-CREATE OPERATOR sys.* (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.BIT,
-    PROCEDURE  = sys.smallmoneybitmul
-);
-END IF;
-END $$;
-
-DO $$
-BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '/' and oprresult != 0) THEN
-CREATE OPERATOR sys./ (
-    LEFTARG    = sys.SMALLMONEY,
-    RIGHTARG   = sys.BIT,
-    PROCEDURE  = sys.smallmoneybitdiv
-);
-END IF;
-END $$;
-
 DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
@@ -486,6 +487,20 @@ CREATE OPERATOR sys.- (
 );
 END IF;
 END $$;
+
+
+
+CREATE OR REPLACE FUNCTION sys.bitpl(sys.BIT, sys.BIT)
+RETURNS sys.BIT
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN $1;
+        ELSE 
+            RETURN $2;
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 DO $$
 BEGIN
@@ -499,6 +514,21 @@ CREATE OPERATOR sys.+ (
 END IF;
 END $$;
 
+
+
+
+CREATE OR REPLACE FUNCTION sys.bitmul(sys.BIT, sys.BIT)
+RETURNS sys.BIT
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN $2;
+        ELSE 
+            RETURN $1;
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '*' and oprresult != 0) THEN
@@ -510,6 +540,13 @@ CREATE OPERATOR sys.* (
 END IF;
 END $$;
 
+
+
+CREATE OR REPLACE FUNCTION sys.bitdiv(sys.BIT, sys.BIT)
+RETURNS sys.BIT
+AS 'babelfishpg_common', 'bitdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '/' and oprresult != 0) THEN
@@ -517,6 +554,173 @@ CREATE OPERATOR sys./ (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.BIT,
     PROCEDURE  = sys.bitdiv
+);
+END IF;
+END $$;
+
+/**
+* Arithmetic operators for float, bit
+*/
+
+CREATE OR REPLACE FUNCTION sys.floatbitmi(sys.FLOAT, sys.BIT)
+RETURNS sys.FLOAT
+AS 'babelfishpg_common', 'floatbitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'float8'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
+CREATE OPERATOR sys.- (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.floatbitmi
+);
+END IF;
+END $$;
+
+
+
+
+CREATE OR REPLACE FUNCTION sys.floatbitpl(sys.FLOAT, sys.BIT)
+RETURNS sys.FLOAT
+AS 'babelfishpg_common', 'floatbitpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'float8'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
+CREATE OPERATOR sys.+ (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.floatbitpl
+);
+END IF;
+END $$;
+
+
+
+
+CREATE OR REPLACE FUNCTION sys.floatbitmul(sys.FLOAT, sys.BIT)
+RETURNS sys.FLOAT
+AS $$
+    BEGIN
+        IF $2 = 0 THEN
+            RETURN 0::sys.FLOAT;
+        ELSE 
+            RETURN $1;
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'float8'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '*' and oprresult != 0) THEN
+CREATE OPERATOR sys.* (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.floatbitmul
+);
+END IF;
+END $$;
+
+
+
+CREATE OR REPLACE FUNCTION sys.floatbitdiv(sys.FLOAT, sys.BIT)
+RETURNS sys.FLOAT
+AS 'babelfishpg_common', 'floatbitdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'float8'::pg_catalog.regtype and oprright = 'sys.bit'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '/' and oprresult != 0) THEN
+CREATE OPERATOR sys./ (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.floatbitdiv
+);
+END IF;
+END $$;
+
+/**
+* Arithmetic operators for bit, float
+*/
+
+CREATE OR REPLACE FUNCTION sys.bitfloatmi(sys.BIT, sys.FLOAT)
+RETURNS sys.FLOAT
+AS 'babelfishpg_common', 'bitfloatmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'float8'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    PROCEDURE  = sys.bitfloatmi
+);
+END IF;
+END $$;
+
+
+
+
+CREATE OR REPLACE FUNCTION sys.bitfloatpl(sys.BIT, sys.FLOAT)
+RETURNS sys.FLOAT
+AS 'babelfishpg_common', 'bitfloatpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'float8'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.bitfloatpl
+);
+END IF;
+END $$;
+
+
+
+CREATE OR REPLACE FUNCTION sys.bitfloatmul(sys.BIT, sys.FLOAT)
+RETURNS sys.FLOAT
+AS $$
+    BEGIN
+        IF $1 = 0 THEN
+            RETURN 0::sys.FLOAT;
+        ELSE 
+            RETURN $2;
+        END IF;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'float8'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '*' and oprresult != 0) THEN
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    PROCEDURE  = sys.bitfloatmul
+);
+END IF;
+END $$;
+
+
+
+CREATE OR REPLACE FUNCTION sys.bitfloatdiv(sys.BIT, sys.FLOAT)
+RETURNS sys.FLOAT
+AS 'babelfishpg_common', 'bitfloatdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.bit'::pg_catalog.regtype and oprright = 'float8'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '/' and oprresult != 0) THEN
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    PROCEDURE  = sys.bitfloatdiv
 );
 END IF;
 END $$;
