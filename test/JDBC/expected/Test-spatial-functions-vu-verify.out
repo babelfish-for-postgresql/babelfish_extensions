@@ -402,9 +402,9 @@ GROUP BY ROUND(PointColumn.STEquals(@referencePoint) / @equal, 0) * @equal
 ORDER BY Equalitygroup;
 GO
 ~~START~~
-numeric#!#int
+bigint#!#int
 <NULL>#!#1
-0E-8#!#2
+0#!#2
 ~~END~~
 
 
@@ -808,9 +808,9 @@ bit
 ~~END~~
 
 ~~START~~
-numeric#!#int
+bigint#!#int
 <NULL>#!#1
-0E-8#!#2
+0#!#2
 ~~END~~
 
 

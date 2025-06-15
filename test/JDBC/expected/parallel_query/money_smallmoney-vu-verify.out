@@ -1804,7 +1804,7 @@ smallmoney
 SELECT CAST(500 AS BIT) * CAST(214748.3647 AS SMALLMONEY);
 GO
 ~~START~~
-money
+smallmoney
 214748.3647
 ~~END~~
 
@@ -2057,7 +2057,7 @@ smallmoney
 SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(214748 AS BIT);
 GO
 ~~START~~
-money
+smallmoney
 -214748.3648
 ~~END~~
 
@@ -2184,7 +2184,7 @@ smallmoney
 SELECT CAST(214748.3648 AS SMALLMONEY) / CAST(1 AS BIT);
 GO
 ~~START~~
-money
+smallmoney
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
@@ -2192,7 +2192,7 @@ money
 SELECT CAST(214748.3648 AS SMALLMONEY) / CAST(214748 AS BIT);
 GO
 ~~START~~
-money
+smallmoney
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~

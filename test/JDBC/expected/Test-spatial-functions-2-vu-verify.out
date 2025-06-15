@@ -375,9 +375,9 @@ GROUP BY ROUND(PointColumn.STIntersects(@referencePoint) / @intersection_points,
 ORDER BY Intersectinggroup;
 go
 ~~START~~
-numeric#!#int
+bigint#!#int
 <NULL>#!#1
-0E-8#!#2
+0#!#2
 ~~END~~
 
 
@@ -869,9 +869,9 @@ bit
 ~~END~~
 
 ~~START~~
-numeric#!#int
+bigint#!#int
 <NULL>#!#1
-0E-8#!#2
+0#!#2
 ~~END~~
 
 
