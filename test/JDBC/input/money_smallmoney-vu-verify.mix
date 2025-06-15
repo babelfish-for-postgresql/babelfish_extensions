@@ -70,6 +70,9 @@ GO
 SELECT * FROM dbo.smallintsmallmoney_func();
 GO
 
+SELECT principalsquared_func(cast(1000.450 as money));
+GO
+
 -- ===============================================================
 -- 2.Check if index is picked up for all arithmetic operations
 -- ===============================================================

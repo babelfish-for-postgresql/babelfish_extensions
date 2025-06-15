@@ -772,7 +772,7 @@ bitdiv(PG_FUNCTION_ARGS)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_DIVISION_BY_ZERO),
-                errmsg("division by zero")));
+                 errmsg("division by zero")));
         /* ensure compiler realizes we mustn't reach the division (gcc bug) */
         PG_RETURN_NULL();
     }
@@ -801,7 +801,7 @@ floatbitmi(PG_FUNCTION_ARGS)
     {
         PG_RETURN_FLOAT8(arg1);
     }
-	PG_RETURN_FLOAT8(float8_mi(arg1, (float8) 1));
+    PG_RETURN_FLOAT8(float8_mi(arg1, (float8) 1));
 }
 
 Datum
@@ -813,9 +813,9 @@ floatbitdiv(PG_FUNCTION_ARGS)
     {
         ereport(ERROR,
 		    (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-		     errmsg("value out of range: overflow")));
+		     errmsg("division by zero")));
     }
-	PG_RETURN_FLOAT8(arg1);
+    PG_RETURN_FLOAT8(arg1);
 }
 
 Datum
@@ -839,7 +839,7 @@ bitfloatmi(PG_FUNCTION_ARGS)
     {
         PG_RETURN_FLOAT8(-arg2);
     }
-	PG_RETURN_FLOAT8(float8_mi((float8) 1, arg2));
+    PG_RETURN_FLOAT8(float8_mi((float8) 1, arg2));
 }
 
 Datum

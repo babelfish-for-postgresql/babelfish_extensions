@@ -168,6 +168,14 @@ smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#sm
 ~~END~~
 
 
+SELECT principalsquared_func(cast(1000.450 as money));
+GO
+~~START~~
+money
+1000900.2025
+~~END~~
+
+
 -- ===============================================================
 -- 2.Check if index is picked up for all arithmetic operations
 -- ===============================================================
@@ -204,7 +212,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.479 ms
+Babelfish T-SQL Batch Parsing Time: 8.770 ms
 ~~END~~
 
 
@@ -223,7 +231,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 19.587 ms
+Babelfish T-SQL Batch Parsing Time: 19.356 ms
 ~~END~~
 
 
@@ -239,7 +247,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.749 ms
+Babelfish T-SQL Batch Parsing Time: 3.821 ms
 ~~END~~
 
 
@@ -255,7 +263,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.822 ms
+Babelfish T-SQL Batch Parsing Time: 0.834 ms
 ~~END~~
 
 
@@ -271,7 +279,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.640 ms
+Babelfish T-SQL Batch Parsing Time: 3.107 ms
 ~~END~~
 
 
@@ -286,7 +294,7 @@ Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c467019972
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.287 ms
+Babelfish T-SQL Batch Parsing Time: 0.559 ms
 ~~END~~
 
 
@@ -301,7 +309,7 @@ Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.591 ms
+Babelfish T-SQL Batch Parsing Time: 3.160 ms
 ~~END~~
 
 
@@ -319,7 +327,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -338,7 +346,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.223 ms
 ~~END~~
 
 
@@ -354,7 +362,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.576 ms
+Babelfish T-SQL Batch Parsing Time: 1.112 ms
 ~~END~~
 
 
@@ -370,7 +378,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.133 ms
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
 ~~END~~
 
 
@@ -386,7 +394,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
+Babelfish T-SQL Batch Parsing Time: 0.309 ms
 ~~END~~
 
 
@@ -401,7 +409,7 @@ Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.127 ms
+Babelfish T-SQL Batch Parsing Time: 0.311 ms
 ~~END~~
 
 
@@ -416,7 +424,7 @@ Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.118 ms
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
 ~~END~~
 
 

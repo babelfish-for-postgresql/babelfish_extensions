@@ -69,3 +69,21 @@ GO
 
 DROP VIEW bitfloatdivfail_vu;
 GO
+
+DROP VIEW bitsmallmoneymul_vu
+GO
+
+DROP VIEW bitsmallmoneydiv_vu
+GO
+
+DROP VIEW smallmoneybitmul_vu
+GO
+
+DROP VIEW smallmoneybitdiv_vu
+GO
+
+DROP VIEW bitsmallmoneydivfail_vu
+GO
+
+DROP VIEW smallmoneybitdivfail_vu
+GO

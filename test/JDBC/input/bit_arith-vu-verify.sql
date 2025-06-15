@@ -69,3 +69,21 @@ GO
 
 SELECT * FROM floatbitdivfail_vu;
 GO
+
+SELECT * FROM bitsmallmoneydiv_vu;
+GO
+
+SELECT * FROM bitsmallmoneymul_vu;
+GO
+
+SELECT * FROM smallmoneybitdivfail_vu;
+GO
+
+SELECT * FROM smallmoneybitdiv_vu;
+GO
+
+SELECT * FROM smallmoneybitmul_vu;
+GO
+
+SELECT * FROM bitsmallmoneydivfail_vu;
+GO
