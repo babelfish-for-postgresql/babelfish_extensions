@@ -490,9 +490,13 @@ extern int
 static void
 pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, ErrorContextCallback *plerrcontext);
 
+static void
+setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
+
 static bool	called_for_tsql_itvf_function = false;
 bool  		called_for_tsql_itvf_func(void);
 
+// static int insert_exec_nesting_level = 0;
 
 bool
 called_for_tsql_itvf_func()
@@ -4594,6 +4598,241 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
 	return true;
 }
 
+static void
+setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate,
+											   PLtsql_stmt_execsql *stmt)
+{
+	PLtsql_expr *expr = stmt->sqlstmt;
+
+	PG_TRY();
+	{
+		Node	   *node;
+		FuncExpr   *funcexpr;
+		HeapTuple	func_tuple;
+		List	   *funcargs;
+		Oid		   *argtypes;
+		char	  **argnames;
+		char	   *argmodes;
+		// char	   *parammodes;
+		MemoryContext oldcontext;
+		PLtsql_row *row;
+		int			nfields;
+		int			i;
+		// int			relativeArgIndex;
+		ListCell		*lc;
+		SPIPlanPtr	plan = expr->plan;
+		// ParamListInfo paramLI;
+		// PLtsql_var *return_code;
+		Query	   *query;
+
+
+		if (plan == NULL)
+			plan = prepare_stmt_execsql(estate, estate->func, stmt, estate->atomic);
+
+		/*
+		 * If we will deal with scalar function, we need to know the correct
+		 * return-type.
+		 */
+		query = linitial_node(Query, ((CachedPlanSource *) linitial(plan->plancache_list))->query_list);
+
+		/*
+		 * Note: in exec_stmt_exec, it checks if it's CMD_SELECT for scalar function purpose,
+		 * but we don't need to check it here because this is for stored procedure.
+		 */
+
+
+		/*
+		 * We construct a DTYPE_ROW datum representing the pltsql variables
+		 * associated with the procedure's output arguments.  Then we can use
+		 * exec_move_row() to do the assignments.
+		 */
+		if (stmt->insert_exec && stmt->target == NULL)
+		{
+			/*
+			* Get the parsed CallStmt, and look up the called procedure.
+			* This is for stored procedure.
+			*/
+			node = query->utilityStmt;
+			if (node == NULL || !IsA(node, CallStmt))
+				elog(ERROR, "query for CALL statement is not a CallStmt");
+
+			funcexpr = ((CallStmt *) node)->funcexpr;
+
+			func_tuple = SearchSysCache1(PROCOID,
+											ObjectIdGetDatum(funcexpr->funcid));
+			if (!HeapTupleIsValid(func_tuple))
+				elog(ERROR, "cache lookup failed for function %u",
+						funcexpr->funcid);
+
+			/*
+			* Extract function arguments, and expand any named-arg notation
+			*/
+			funcargs = expand_function_arguments(funcexpr->args,
+													false,
+													funcexpr->funcresulttype,
+													func_tuple);
+
+			/*
+			* Get the argument names and modes, too
+			*/
+			get_func_arg_info(func_tuple, &argtypes, &argnames, &argmodes);
+
+			// Need to check if this is necessary for here
+			// get_param_mode(stmt->params, stmt->paramno, &parammodes);
+
+			ReleaseSysCache(func_tuple);
+
+
+			/*
+			 * Begin constructing row Datum
+			 */
+			oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
+
+			row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+			row->dtype = PLTSQL_DTYPE_ROW;
+			row->refname = "(unnamed row)";
+			row->lineno = -1;
+			row->varnos = (int *) palloc0(sizeof(int) * list_length(funcargs));
+
+			MemoryContextSwitchTo(oldcontext);
+
+			/*
+			 * Examine procedure's argument list.  Each output arg position
+			 * should be an unadorned pltsql variable (Datum), which we can
+			 * insert into the row Datum.
+			 */
+			nfields = 0;
+			i = 0;
+			foreach(lc, funcargs)
+			{
+				Node 	*n = lfirst(lc);
+
+				if (argmodes &&
+					(argmodes[i] == PROARGMODE_INOUT ||
+						argmodes[i] == PROARGMODE_OUT))
+				{
+					// ListCell *paramcell;
+					// relativeArgIndex = 0;
+
+					/*
+					 * The order of arguments in procedure call might be different from the order of
+					 * arguments in the funcargs.
+					 * For each argument in funcargs, find corresponding argument in stmt->params.
+					 */
+					// foreach(paramcell, stmt->params)
+					// {
+					// 	tsql_exec_param *p = (tsql_exec_param *) lfirst(paramcell);
+					// 	if (argnames[i] && p->name && pg_strcasecmp(argnames[i], p->name) == 0)
+					// 		break;
+					// 	relativeArgIndex++;
+					// }
+
+					/*
+						* If argnames[i] is not found in stmt->params, i th parameter is passed in 
+						* 'value' format instead of '@name = value'. In this case, argnames[i] should be mapped
+						* to i th element in stmt->params. 
+						*/
+					// if (relativeArgIndex >= stmt->paramno) 
+					// 	relativeArgIndex = i;
+
+					// if (parammodes &&
+					// 	parammodes[relativeArgIndex] != PROARGMODE_INOUT &&
+					// 	parammodes[relativeArgIndex] != PROARGMODE_OUT)
+					// {
+					// 	/*
+					// 		* If an INOUT arg is called without OUTPUT, it should
+					// 		* be treated like an IN param. Put -1 to param id. We
+					// 		* can skip assigning actual value.
+					// 		*/
+					// 	row->varnos[nfields++] = -1;
+					// }
+
+
+					// else if (IsA(n, Param))
+					if (IsA(n, Param))
+					{
+						Param	   *param = (Param *) n;
+
+						/* paramid is offset by 1 (see make_datum_param()) */
+						row->varnos[nfields++] = param->paramid - 1;
+					}
+					else if (get_underlying_node_from_implicit_casting(n, T_Param) != NULL)
+					{
+						/*
+							* Other than PL/pgsql, T-SQL allows implicit casting
+							* in INOUT and OUT params.
+							*
+							* In PG, if implcit casting is added (i.e.
+							* int->bigint), it throws an error "corresponding
+							* argument is not writable" (see the else-clause)
+							*
+							* In T-SQL, if arg node is an implicit casting, we
+							* will strip the casting. Actual casting will be done
+							* at value assignement with validity check.
+							*/
+
+						Param	   *param = (Param *) get_underlying_node_from_implicit_casting(n, T_Param);
+
+						/* paramid is offset by 1 (see make_datum_param()) */
+						row->varnos[nfields++] = param->paramid - 1;
+					}
+					else if (argmodes[i] == PROARGMODE_INOUT && IsA(n, Const))
+					{
+						/*
+							* T-SQL allows to pass constant value as an output
+							* parameter. Put -1 to param id. We can skip
+							* assigning actual value.
+							*/
+						row->varnos[nfields++] = -1;
+					}
+					else if (argmodes[i] == PROARGMODE_INOUT && get_underlying_node_from_implicit_casting(n, T_Const) != NULL)
+					{
+						/*
+							* mixture case of implicit casting + CONST. We can
+							* skip assigning actual value.
+							*/
+						row->varnos[nfields++] = -1;
+					}
+					else
+					{
+						/* report error using parameter name, if available */
+						if (argnames && argnames[i] && argnames[i][0])
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+										errmsg("procedure parameter \"%s\" is an output parameter but corresponding argument is not writable",
+											argnames[i])));
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+										errmsg("procedure parameter %d is an output parameter but corresponding argument is not writable",
+											i + 1)));
+					}
+				}
+				i++;
+			}
+
+			row->nfields = nfields;
+
+			stmt->target = (PLtsql_variable *) row;
+		}
+	}
+	PG_FINALLY();
+	{
+		/*
+		 * If we aren't saving the plan, unset the pointer.  Note that it
+		 * could have been unset already, in case of a recursive call.
+		 */
+		if (expr->plan && !expr->plan->saved)
+		{
+			SPIPlanPtr	plan = expr->plan;
+
+			expr->plan = NULL;
+			SPI_freeplan(plan);
+		}
+	}
+	PG_END_TRY();
+}
+
 /* ----------
  * exec_stmt_execsql			Execute an SQL statement (possibly with INTO).
  *
@@ -4642,6 +4881,32 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			set_cur_user_db_and_path(stmt->db_name, true);
 	}
 
+	// /*
+    //  * Add nesting level check right after the initial declarations,
+    //  * before any actual execution starts
+    //  */
+    // if (stmt->insert_exec)
+    // {
+    //     insert_exec_nesting_level++;
+
+    //     PG_TRY();
+    //     {
+    //         if (insert_exec_nesting_level >= 2)
+    //         {
+    //             ereport(ERROR,
+    //                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+    //                      errmsg("Nested INSERT EXECUTE statements are not allowed"),
+    //                      errhint("Remove nested INSERT EXECUTE statement")));
+    //         }
+
+    //     }
+    //     PG_FINALLY();
+    //     {
+    //         insert_exec_nesting_level--;
+    //     }
+    //     PG_END_TRY();
+    // }
+
 	PG_TRY();
 	{
 		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
@@ -4680,6 +4945,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			}
 			prepare_stmt_execsql(estate, estate->func, stmt, true);
 		}
+
+		/* Add before setup_param_list */
+		setup_procedure_output_target_for_insert_exec(estate, stmt);
 
 		/*
 		 * Set up ParamListInfo to pass to executor
@@ -4883,6 +5151,41 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				break;
 		}
 
+		/*
+		 * Special handling for INSERT EXEC with OUTPUT parameters
+		 * Only INSERT EXEC cases
+		 * Only when OUTPUT parameters exist
+		 * Only when original SPI call left SPI_tuptable NULL
+		 * Only when original execution succeeded
+		 */
+		if (stmt->insert_exec && stmt->target != NULL && SPI_tuptable == NULL && rc >= 0)
+		{
+			SPIExecuteOptions options;
+			int extended_rc;
+			
+			/* Setup options for SPI_execute_plan_extended */
+			memset(&options, 0, sizeof(options));
+			options.params = paramLI;
+			options.read_only = estate->readonly_func;
+			options.tcount = tcount;
+			options.dest = NULL;
+			options.owner = CurrentResourceOwner;
+
+			/* Execute using extended interface to populate SPI_tuptable */
+			extended_rc = SPI_execute_plan_extended(expr->plan, &options);
+
+			if (extended_rc < 0)
+			{
+				elog(ERROR, "SPI_execute_plan_extended failed executing query \"%s\": %s",
+					expr->query, SPI_result_code_string(extended_rc));
+			}
+
+			if (SPI_tuptable != NULL && stmt->target != NULL)
+			{
+				exec_move_row(estate, stmt->target, SPI_tuptable->vals[0], SPI_tuptable->tupdesc);
+			}
+		}
+
 		if (enable_txn_in_triggers)
 		{
 			if (!stmt->need_to_push_result)
@@ -4917,6 +5220,22 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			estate->eval_processed = SPI_processed;
 			exec_set_rowcount(SPI_processed);
 		}
+
+		// Rui: SPI tubtable still null, run exec stmt exec's spi function!
+		/*
+		 * Check result rowcount; if there's one row, assign procedure's output
+		 * values back to the appropriate variables.
+		 */
+		if (SPI_processed == 1)
+		{
+			if (!stmt->target)
+				elog(ERROR, "DO statement returned a row");
+
+			if (SPI_tuptable != NULL)
+				exec_move_row(estate, stmt->target, SPI_tuptable->vals[0], SPI_tuptable->tupdesc);
+		}
+		else if (SPI_processed > 1)
+			elog(ERROR, "procedure call returned more than one row");
 
 		/* Process INTO if present */
 		if (stmt->into || stmt->is_tsql_select_assign_stmt)
