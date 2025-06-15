@@ -522,7 +522,7 @@ AS $$
         IF $1 = 0 THEN
             RETURN 0::sys.SMALLMONEY;
         ELSE 
-            RETURN $2::sys.SMALLMONEY;
+            RETURN $2;
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -574,7 +574,7 @@ AS $$
         IF $2 = 0 THEN
             RETURN 0::sys.SMALLMONEY;
         ELSE 
-            RETURN $1::sys.SMALLMONEY;
+            RETURN $1;
         END IF;
     END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

@@ -593,10 +593,10 @@ varchar2bit(PG_FUNCTION_ARGS)
 Datum
 smallmoneybitpl(PG_FUNCTION_ARGS)
 {
-    int32		arg1 = PG_GETARG_INT32(0);
+    int32       arg1 = PG_GETARG_INT32(0);
     bool        arg2 = PG_GETARG_BOOL(1);
-    int32		adder = (int32) arg2 * FIXEDDECIMAL_MULTIPLIER;
-    int64		result;
+    int32       adder = (int32) arg2 * FIXEDDECIMAL_MULTIPLIER;
+    int64       result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
     if (__builtin_add_overflow(arg1, adder, &result))
@@ -623,10 +623,10 @@ smallmoneybitpl(PG_FUNCTION_ARGS)
 Datum
 smallmoneybitmi(PG_FUNCTION_ARGS)
 {
-    int32		arg1 = PG_GETARG_INT32(0);
+    int32       arg1 = PG_GETARG_INT32(0);
     bool        arg2 = PG_GETARG_BOOL(1);
-    int32		subtractor = (int32) arg2 * FIXEDDECIMAL_MULTIPLIER;
-    int64		result;
+    int32       subtractor = (int32) arg2 * FIXEDDECIMAL_MULTIPLIER;
+    int64       result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
     if (__builtin_sub_overflow(arg1, subtractor, &result))
@@ -652,8 +652,8 @@ smallmoneybitmi(PG_FUNCTION_ARGS)
 Datum
 smallmoneybitdiv(PG_FUNCTION_ARGS)
 {
-    int32		arg1 = PG_GETARG_INT32(0);
-    bool		arg2 = PG_GETARG_BOOL(1);
+    int32       arg1 = PG_GETARG_INT32(0);
+    bool        arg2 = PG_GETARG_BOOL(1);
 
     if (!arg2)
     {
@@ -671,9 +671,9 @@ Datum
 bitsmallmoneypl(PG_FUNCTION_ARGS)
 {
     bool        arg1 = PG_GETARG_BOOL(0);
-    int32		arg2 = PG_GETARG_INT32(1);
-    int32		adder = (int32) arg1 * FIXEDDECIMAL_MULTIPLIER;
-    int64		result;
+    int32       arg2 = PG_GETARG_INT32(1);
+    int32       adder = (int32) arg1 * FIXEDDECIMAL_MULTIPLIER;
+    int64       result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
     if (__builtin_add_overflow(arg1, adder, &result))
@@ -701,9 +701,9 @@ Datum
 bitsmallmoneymi(PG_FUNCTION_ARGS)
 {
     bool        arg1 = PG_GETARG_BOOL(0);
-    int32		arg2 = PG_GETARG_INT32(1);
-    int32		subtractor = (int32) arg1 * FIXEDDECIMAL_MULTIPLIER;
-    int64		result;
+    int32       arg2 = PG_GETARG_INT32(1);
+    int32       subtractor = (int32) arg1 * FIXEDDECIMAL_MULTIPLIER;
+    int64       result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
     if (__builtin_sub_overflow(arg1, subtractor, &result))
@@ -729,8 +729,8 @@ bitsmallmoneymi(PG_FUNCTION_ARGS)
 Datum
 bitsmallmoneydiv(PG_FUNCTION_ARGS)
 {
-    bool		arg1 = PG_GETARG_BOOL(0);
-    float8		arg2 = (float8) PG_GETARG_INT32(1) / FIXEDDECIMAL_MULTIPLIER;
+    bool        arg1 = PG_GETARG_BOOL(0);
+    float8      arg2 = (float8) PG_GETARG_INT32(1) / FIXEDDECIMAL_MULTIPLIER;
     float8      t;    
     int64       result;
 
@@ -765,8 +765,8 @@ bitsmallmoneydiv(PG_FUNCTION_ARGS)
 Datum
 bitdiv(PG_FUNCTION_ARGS)
 {
-    bool		arg1 = PG_GETARG_BOOL(0);
-    bool		arg2 = PG_GETARG_BOOL(1);
+    bool        arg1 = PG_GETARG_BOOL(0);
+    bool        arg2 = PG_GETARG_BOOL(1);
     
     if (!arg2)
     {
@@ -783,8 +783,8 @@ bitdiv(PG_FUNCTION_ARGS)
 Datum
 floatbitpl(PG_FUNCTION_ARGS)
 {
-	float8		arg1 = PG_GETARG_FLOAT8(0);
-	bool		arg2 = PG_GETARG_BOOL(1);
+    float8      arg1 = PG_GETARG_FLOAT8(0);
+    bool        arg2 = PG_GETARG_BOOL(1);
     if (!arg2)
     {
         PG_RETURN_FLOAT8(arg1);
@@ -795,8 +795,8 @@ floatbitpl(PG_FUNCTION_ARGS)
 Datum
 floatbitmi(PG_FUNCTION_ARGS)
 {
-	float8		arg1 = PG_GETARG_FLOAT8(0);
-	bool		arg2 = PG_GETARG_BOOL(1);
+    float8      arg1 = PG_GETARG_FLOAT8(0);
+    bool        arg2 = PG_GETARG_BOOL(1);
     if (!arg2)
     {
         PG_RETURN_FLOAT8(arg1);
@@ -807,8 +807,8 @@ floatbitmi(PG_FUNCTION_ARGS)
 Datum
 floatbitdiv(PG_FUNCTION_ARGS)
 {
-	float8		arg1 = PG_GETARG_FLOAT8(0);
-	bool		arg2 = PG_GETARG_BOOL(1);
+    float8      arg1 = PG_GETARG_FLOAT8(0);
+    bool        arg2 = PG_GETARG_BOOL(1);
     if (!arg2)
     {
         ereport(ERROR,
@@ -821,8 +821,8 @@ floatbitdiv(PG_FUNCTION_ARGS)
 Datum
 bitfloatpl(PG_FUNCTION_ARGS)
 {
-    bool		arg1 = PG_GETARG_BOOL(0);
-	float8		arg2 = PG_GETARG_FLOAT8(1);
+    bool        arg1 = PG_GETARG_BOOL(0);
+    float8      arg2 = PG_GETARG_FLOAT8(1);
     if (!arg1)
     {
         PG_RETURN_FLOAT8(arg2);
@@ -833,8 +833,8 @@ bitfloatpl(PG_FUNCTION_ARGS)
 Datum
 bitfloatmi(PG_FUNCTION_ARGS)
 {
-    bool		arg1 = PG_GETARG_BOOL(0);
-	float8		arg2 = PG_GETARG_FLOAT8(1);
+    bool        arg1 = PG_GETARG_BOOL(0);
+    float8      arg2 = PG_GETARG_FLOAT8(1);
     if (!arg1)
     {
         PG_RETURN_FLOAT8(-arg2);
@@ -845,8 +845,8 @@ bitfloatmi(PG_FUNCTION_ARGS)
 Datum
 bitfloatdiv(PG_FUNCTION_ARGS)
 {
-    bool		arg1 = PG_GETARG_BOOL(0);
-	float8		arg2 = PG_GETARG_FLOAT8(1);
+    bool        arg1 = PG_GETARG_BOOL(0);
+    float8      arg2 = PG_GETARG_FLOAT8(1);
     if (!arg1)
     {
         PG_RETURN_FLOAT8(0);
