@@ -1166,8 +1166,9 @@ SELECT CAST(9223372036854775807 AS BIGINT) * CAST(0.0001 AS MONEY)
 GO
 ~~START~~
 money
-922337203685477.5807
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
 
 
 -- Testing with CASE statements and edge cases
