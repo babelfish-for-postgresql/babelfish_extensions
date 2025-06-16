@@ -104,3 +104,6 @@ GO
 
 DROP LOGIN babel_5146_user_l1;
 GO
+
+GRANT CONNECT TO guest;
+GO
