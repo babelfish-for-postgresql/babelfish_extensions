@@ -460,7 +460,7 @@ drop_bbf_authid_user_ext(ObjectAccessType access,
 
 			/* Grant guest user to login if it's mapped user is being dropped. */
 			if (strlen(login) > 0)
-				grant_revoke_role_to_login(login, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", true);
+				grant_revoke_role_to_login(login, get_guest_role_name(get_cur_db_name()), NULL, true);
 		}
 		CatalogTupleDelete(bbf_authid_user_ext_rel,
 						   &tuple->t_self);
@@ -1753,7 +1753,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, NULL, false);
 			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, "bbf_role_admin", false);
 			/* Now grant guest user to old login as it's mapped user is being removed. */
-			grant_revoke_role_to_login(old_login_name, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", true);
+			grant_revoke_role_to_login(old_login_name, get_guest_role_name(get_cur_db_name()), NULL, true);
 		}
 
 		/* Revoke guest user from new login as login now has a mapped user in current database. */
