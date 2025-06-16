@@ -15,3 +15,9 @@ GO
 
 drop login sys_database_principals_vu_login
 GO
+
+drop view sys_database_principals_another_vu
+GO
+
+drop function sys_database_principals_another_func
+GO

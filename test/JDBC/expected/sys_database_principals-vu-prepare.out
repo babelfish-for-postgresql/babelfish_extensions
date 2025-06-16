@@ -19,3 +19,12 @@ GO
 
 create database sys_database_principals_db_different_owner
 GO
+
+create view sys_database_principals_another_vu as select * from database_principals;
+GO
+
+create function sys_database_principals_another_func()
+returns table
+as
+return (select * from database_principals)
+GO

@@ -200,45 +200,45 @@ GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
-CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
--- PG reserves these oid > 16383 AND oid < 16400 for PG specific internal roles.
--- Any change here in the oid should be reflected in sys.database_role_members view as well.
-CAST(
-  CASE Ext.orig_username
-    WHEN 'db_owner' THEN 16384
-    WHEN 'db_accessadmin' THEN 16385
-    WHEN 'db_securityadmin' THEN 16386
-    WHEN 'db_ddladmin' THEN 16387
-    WHEN 'db_datareader' THEN 16390
-    WHEN 'db_datawriter' THEN 16391
-    ELSE Base.oid
-  END AS INT) AS principal_id,
-CAST(Ext.type AS CHAR(1)) as type,
-CAST(
-  CASE
-    WHEN Ext.type = 'S' THEN 'SQL_USER'
-    WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
-    WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
-    ELSE NULL
-  END
-  AS SYS.NVARCHAR(60)) AS type_desc,
-CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
-CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
-CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
-CAST(
-  CASE 
-    WHEN Ext.orig_username = 'dbo' THEN CAST(Base3.oid AS INT)
-    WHEN Ext.orig_username = 'guest' THEN 0
-    ELSE CAST(Base2.oid AS INT)
-  END 
-AS SYS.VARBINARY(85)) AS SID,
-  CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
-  CAST(Ext.authentication_type AS INT) AS authentication_type,
-  CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
-  CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
-  CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
-  CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+    CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
+    -- PG reserves these oid > 16383 AND oid < 16400 for PG specific internal roles.
+    -- Any change here in the oid should be reflected in sys.database_role_members view as well.
+    CAST(
+    CASE Ext.orig_username
+        WHEN 'db_owner' THEN 16384
+        WHEN 'db_accessadmin' THEN 16385
+        WHEN 'db_securityadmin' THEN 16386
+        WHEN 'db_ddladmin' THEN 16387
+        WHEN 'db_datareader' THEN 16390
+        WHEN 'db_datawriter' THEN 16391
+        ELSE Base.oid
+    END AS INT) AS principal_id,
+    CAST(Ext.type AS CHAR(1)) as type,
+    CAST(
+    CASE
+        WHEN Ext.type = 'S' THEN 'SQL_USER'
+        WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+        WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
+        ELSE NULL
+    END
+    AS SYS.NVARCHAR(60)) AS type_desc,
+    CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+    CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+    CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+    CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+    CAST(
+    CASE 
+        WHEN Ext.orig_username = 'dbo' THEN CAST(Base3.oid AS INT)
+        WHEN Ext.orig_username = 'guest' THEN 0
+        ELSE CAST(Base2.oid AS INT)
+    END 
+    AS SYS.VARBINARY(85)) AS SID,
+    CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+    CAST(Ext.authentication_type AS INT) AS authentication_type,
+    CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+    CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+    CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
+    CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
 ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
@@ -252,33 +252,33 @@ WHERE Ext.database_name = DB_NAME()
   OR bbf_is_role_member(current_user, Ext.rolname)) -- Current user should be able to see users it has permission of
 UNION ALL
 SELECT
-CAST(name AS SYS.SYSNAME) AS name,
-CAST(
-  CASE name
-    WHEN 'public' THEN 1
-    WHEN 'INFORMATION_SCHEMA' THEN 3
-    WHEN 'sys' THEN 4
-  END AS INT) AS principal_id,
-CAST(type AS CHAR(1)) as type,
-CAST(
-  CASE
-    WHEN type = 'S' THEN 'SQL_USER'
-    WHEN type = 'R' THEN 'DATABASE_ROLE'
-    WHEN type = 'U' THEN 'WINDOWS_USER'
-    ELSE NULL
-  END
-  AS SYS.NVARCHAR(60)) AS type_desc,
-CAST(NULL AS SYS.SYSNAME) AS default_schema_name,
-CAST(NULL AS SYS.DATETIME) AS create_date,
-CAST(NULL AS SYS.DATETIME) AS modify_date,
-CAST(-1 AS INT) AS owning_principal_id,
-CAST(CAST(0 AS INT) AS SYS.VARBINARY(85)) AS SID,
-CAST(0 AS SYS.BIT) AS is_fixed_role,
-CAST(-1 AS INT) AS authentication_type,
-CAST(NULL AS SYS.NVARCHAR(60)) AS authentication_type_desc,
-CAST(NULL AS SYS.SYSNAME) AS default_language_name,
-CAST(-1 AS INT) AS default_language_lcid,
-CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
+    CAST(name AS SYS.SYSNAME) AS name,
+    CAST(
+    CASE name
+        WHEN 'public' THEN 1
+        WHEN 'INFORMATION_SCHEMA' THEN 3
+        WHEN 'sys' THEN 4
+    END AS INT) AS principal_id,
+    CAST(type AS CHAR(1)) as type,
+    CAST(
+    CASE
+        WHEN type = 'S' THEN 'SQL_USER'
+        WHEN type = 'R' THEN 'DATABASE_ROLE'
+        WHEN type = 'U' THEN 'WINDOWS_USER'
+        ELSE NULL
+    END
+    AS SYS.NVARCHAR(60)) AS type_desc,
+    CAST(NULL AS SYS.SYSNAME) AS default_schema_name,
+    CAST(NULL AS SYS.DATETIME) AS create_date,
+    CAST(NULL AS SYS.DATETIME) AS modify_date,
+    CAST(-1 AS INT) AS owning_principal_id,
+    CAST(CAST(0 AS INT) AS SYS.VARBINARY(85)) AS SID,
+    CAST(0 AS SYS.BIT) AS is_fixed_role,
+    CAST(-1 AS INT) AS authentication_type,
+    CAST(NULL AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+    CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+    CAST(-1 AS INT) AS default_language_lcid,
+    CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
 FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 

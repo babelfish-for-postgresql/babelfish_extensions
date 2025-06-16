@@ -67,3 +67,46 @@ nvarchar
 sys_database_principals_vu_login_with_sysadmin
 ~~END~~
 
+
+use master
+GO
+
+select suser_sname(sid), name, type, default_schema_name from sys_database_principals_another_vu;
+GO
+~~START~~
+nvarchar#!#varchar#!#char#!#varchar
+<NULL>#!#db_owner#!#R#!#
+jdbc_user#!#dbo#!#S#!#dbo
+<NULL>#!#db_datareader#!#R#!#
+<NULL>#!#db_datawriter#!#R#!#
+<NULL>#!#db_accessadmin#!#R#!#
+<NULL>#!#db_securityadmin#!#R#!#
+<NULL>#!#db_ddladmin#!#R#!#
+<NULL>#!#guest#!#S#!#guest
+sys_database_principals_vu_login#!#sys_database_principals_vu_user#!#S#!#dbo
+<NULL>#!#sys_database_principals_vu_orphaned_user#!#S#!#dbo
+<NULL>#!#public#!#R#!#<NULL>
+<NULL>#!#sys#!#S#!#<NULL>
+<NULL>#!#INFORMATION_SCHEMA#!#S#!#<NULL>
+~~END~~
+
+
+select suser_sname(sid), name, cast(type as char) from sys_database_principals_another_func();
+GO
+~~START~~
+nvarchar#!#varchar#!#char
+<NULL>#!#db_owner#!#R                             
+jdbc_user#!#dbo#!#S                             
+<NULL>#!#db_datareader#!#R                             
+<NULL>#!#db_datawriter#!#R                             
+<NULL>#!#db_accessadmin#!#R                             
+<NULL>#!#db_securityadmin#!#R                             
+<NULL>#!#db_ddladmin#!#R                             
+<NULL>#!#guest#!#S                             
+sys_database_principals_vu_login#!#sys_database_principals_vu_user#!#S                             
+<NULL>#!#sys_database_principals_vu_orphaned_user#!#S                             
+<NULL>#!#public#!#R                             
+<NULL>#!#sys#!#S                             
+<NULL>#!#INFORMATION_SCHEMA#!#S                             
+~~END~~
+

@@ -28,3 +28,12 @@ GO
 
 select suser_sname(sid) from database_principals where name = 'dbo';
 GO
+
+use master
+GO
+
+select suser_sname(sid), name, type, default_schema_name from sys_database_principals_another_vu;
+GO
+
+select suser_sname(sid), name, cast(type as char) from sys_database_principals_another_func();
+GO
