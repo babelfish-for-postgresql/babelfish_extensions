@@ -4,6 +4,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.sql.*;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
 
 import static com.sqlsamples.Config.*;
 import static com.sqlsamples.Statistics.exec_times;
@@ -52,6 +55,7 @@ public class batch_run {
             DataInputStream in;
             BufferedReader br;
             boolean bashMode = false;
+            FilterConditions filterConditions = null;
 
             fstream = new FileInputStream(testFilePath);
             // get the object of DataInputStream
@@ -301,6 +305,18 @@ public class batch_run {
                         checkSingleDbModeExpected = true;
                         continue;
                     }
+
+                    if (strLine.toLowerCase().startsWith("-- ignore_columns")) {
+                        String[] parts = strLine.split("-- ignore_columns\\s+");
+                        Set<Integer> colsToIgnore = new HashSet<>();
+                        if (parts.length > 1) {
+                            String[] numbers = parts[1].split(",");
+                            for (String num : numbers) {
+                                colsToIgnore.add(Integer.parseInt(num.trim()));
+                            }
+                            filterConditions = new FilterConditions(colsToIgnore);
+                        }
+                    }
                     // execute statement as a normal SQL statement
                     if (isSQLFile) {
                         if (!strLine.equalsIgnoreCase("GO")) {
@@ -343,7 +359,11 @@ public class batch_run {
 
                     jdbcStatement.closeStatements(bw, logger);
                     jdbcStatement.createStatements(con_bbl, bw, logger);
-                    jdbcStatement.testStatementWithFile(SQL, bw, strLine, logger);
+                    jdbcStatement.testStatementWithFile(SQL, bw, strLine, logger, filterConditions);
+                }
+                // reset certain objects after first sql batch
+                if (strLine.equalsIgnoreCase("GO")) {
+                    filterConditions = null;
                 }
                 long endTime = System.nanoTime();
                 long duration = (endTime - startTime);
