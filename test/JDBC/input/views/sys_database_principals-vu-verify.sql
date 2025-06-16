@@ -32,8 +32,14 @@ GO
 use master
 GO
 
-select suser_sname(sid), name, type, default_schema_name from sys_database_principals_another_vu;
+-- filtering only logins which are created within this test
+-- (sys_database_principals_vu_login, sys_database_principals_vu_login_tbd, jdbc_user <masteruser>)
+select suser_sname(sid), name, type, default_schema_name from sys_database_principals_another_vu
+where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user')
+order by name;
 GO
 
-select suser_sname(sid), name, cast(type as char) from sys_database_principals_another_func();
+select suser_sname(sid), name, cast(type as char) from sys_database_principals_another_func()
+where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user')
+order by name;
 GO
