@@ -1,0 +1,3320 @@
+create table exactnumeric_table (
+	id int,
+	tinyint_col tinyint,
+	smallint_col smallint,
+	integer_col integer,
+	bigint_col bigint
+);
+GO
+
+-- min value testing
+INSERT INTO exactnumeric_table (tinyint_col) VALUES (0);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (smallint_col) VALUES (-32768);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (integer_col) VALUES (-2147483648);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (bigint_col) VALUES (-9223372036854775808);
+GO
+~~ROW COUNT: 1~~
+
+
+-- max value testing
+INSERT INTO exactnumeric_table (tinyint_col) VALUES (127);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (smallint_col) VALUES (32767);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (integer_col) VALUES (2147483647);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (bigint_col) VALUES (9223372036854775807);
+GO
+~~ROW COUNT: 1~~
+
+
+-- insert null value
+INSERT INTO exactnumeric_table (tinyint_col) VALUES (null);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (smallint_col) VALUES (null);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (integer_col) VALUES (null);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (bigint_col) VALUES (null);
+GO
+~~ROW COUNT: 1~~
+
+
+-- inserting zero value
+INSERT INTO exactnumeric_table (tinyint_col) VALUES (0);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (smallint_col) VALUES (0);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (integer_col) VALUES (0);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (bigint_col) VALUES (0);
+GO
+~~ROW COUNT: 1~~
+
+
+-- inserting negative zero value
+INSERT INTO exactnumeric_table (tinyint_col) VALUES (-0);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (smallint_col) VALUES (-0);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (integer_col) VALUES (-0);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (bigint_col) VALUES (-0);
+GO
+~~ROW COUNT: 1~~
+
+
+-- overflow testing
+INSERT INTO exactnumeric_table (tinyint_col) VALUES (-1);
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+INSERT INTO exactnumeric_table (smallint_col) VALUES (-32769);
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+INSERT INTO exactnumeric_table (integer_col) VALUES (-2147483649);
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+INSERT INTO exactnumeric_table (bigint_col) VALUES (-9223372036854775809);
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+INSERT INTO exactnumeric_table (tinyint_col) VALUES (128);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO exactnumeric_table (smallint_col) VALUES (32768);
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+INSERT INTO exactnumeric_table (integer_col) VALUES (2147483648);
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+INSERT INTO exactnumeric_table (bigint_col) VALUES (9223372036854775808);
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+-- inserting data
+INSERT INTO exactnumeric_table (id, tinyint_col, smallint_col, integer_col, bigint_col) VALUES (1, 5, 100, 10000, 1000000000);
+GO
+~~ROW COUNT: 1~~
+
+
+-- ABS function testing
+SELECT
+	ABS(tinyint_col) AS abs_tinyint,
+	ABS(smallint_col) AS abs_smallint,
+	ABS(integer_col) AS abs_integer,
+	ABS(bigint_col) AS abs_bigint
+FROM exactnumeric_table
+WHERE
+	tinyint_col != 0 AND
+	smallint_col != -32768 AND
+	integer_col != -2147483648 AND
+	bigint_col != -9223372036854775808;
+GO
+~~START~~
+smallint#!#smallint#!#int#!#bigint
+5#!#100#!#10000#!#1000000000
+~~END~~
+
+
+SELECT
+	ABS(-tinyint_col) AS abs_tinyint
+FROM exactnumeric_table
+GO
+~~START~~
+smallint
+0
+<NULL>
+<NULL>
+<NULL>
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT
+	ABS(-smallint_col) AS abs_smallint,
+	ABS(-integer_col) AS abs_integer,
+	ABS(-bigint_col) AS abs_bigint
+FROM exactnumeric_table
+WHERE
+	smallint_col != -32768 AND
+	integer_col != -2147483648 AND
+	bigint_col != -9223372036854775808;
+GO
+~~START~~
+smallint#!#int#!#bigint
+100#!#10000#!#1000000000
+~~END~~
+
+
+-- CEILING and FLOOR
+SELECT
+	CEILING(tinyint_col + 0.5) AS ceil_tinyint,
+	CEILING(smallint_col + 0.5) AS ceil_smallint,
+	CEILING(integer_col + 0.5) AS ceil_int,
+	CEILING(bigint_col + 0.5) AS ceil_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric
+1.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32767.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-2147483647.00000000#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775807.00000000
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+SELECT
+	FLOOR(tinyint_col + 0.5) AS floor_tinyint,
+	FLOOR(smallint_col + 0.5) AS floor_smallint,
+	FLOOR(integer_col + 0.5) AS floor_int,
+	FLOOR(bigint_col + 0.5) AS floor_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric
+0E-8#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32768.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-2147483648.00000000#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775808.00000000
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+-- DEGREES and RADIANS
+SELECT DEGREES(cast(2 as tinyint)) AS degrees_tinyint
+GO
+~~START~~
+int
+114
+~~END~~
+
+
+SELECT DEGREES(cast(2 as smallint)) AS degrees_smallint
+GO
+~~START~~
+int
+114
+~~END~~
+
+
+SELECT DEGREES(cast(2 as int)) AS degrees_int
+GO
+~~START~~
+int
+114
+~~END~~
+
+
+SELECT DEGREES(cast(2 as bigint)) AS degrees_bigint
+GO
+~~START~~
+bigint
+114
+~~END~~
+
+
+SELECT
+	RADIANS(tinyint_col) AS radians_tinyint,
+	RADIANS(smallint_col) AS radians_smallint,
+	RADIANS(integer_col) AS radians_int,
+	RADIANS(bigint_col) AS radians_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+int#!#int#!#int#!#bigint
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-571#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-37480660#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-160978210179491616
+2#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#571#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#37480660#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#160978210179491616
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+2#!#<NULL>#!#<NULL>#!#<NULL>
+0#!#1#!#174#!#17453292
+~~END~~
+
+
+-- PI
+SELECT PI();
+GO
+~~START~~
+float
+3.141592653589793
+~~END~~
+
+
+-- POWER
+SELECT POWER(cast(2 as tinyint), 2);
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT POWER(cast(2 as smallint), 2);
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT POWER(cast(2 as int), 2);
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT POWER(cast(2 as bigint), 2);
+GO
+~~START~~
+bigint
+4
+~~END~~
+
+
+-- SQUARE
+SELECT SQUARE(tinyint_col) FROM exactnumeric_table;
+GO
+~~START~~
+float
+0.0
+<NULL>
+<NULL>
+<NULL>
+16129.0
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+0.0
+<NULL>
+<NULL>
+<NULL>
+0.0
+<NULL>
+<NULL>
+<NULL>
+16384.0
+25.0
+~~END~~
+
+
+SELECT SQUARE(smallint_col) FROM exactnumeric_table;
+GO
+~~START~~
+float
+<NULL>
+1.073741824E9
+<NULL>
+<NULL>
+<NULL>
+1.073676289E9
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+0.0
+<NULL>
+<NULL>
+<NULL>
+0.0
+<NULL>
+<NULL>
+<NULL>
+10000.0
+~~END~~
+
+
+SELECT SQUARE(bigint_col) FROM exactnumeric_table;
+GO
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+8.507059173023462E37
+<NULL>
+<NULL>
+<NULL>
+8.507059173023462E37
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+0.0
+<NULL>
+<NULL>
+<NULL>
+0.0
+<NULL>
+1.0E18
+~~END~~
+
+
+-- SQRT
+SELECT
+	SQRT(tinyint_col) AS sqrt_tinyint,
+	SQRT(smallint_col) AS sqrt_smallint,
+	SQRT(integer_col) AS sqrt_int,
+	SQRT(bigint_col) AS sqrt_bigint
+FROM exactnumeric_table
+WHERE
+	tinyint_col >= 0 AND
+	smallint_col >= 0 AND
+	integer_col >= 0 AND
+	bigint_col >= 0;
+GO
+~~START~~
+float#!#float#!#float#!#float
+2.23606797749979#!#10.0#!#100.0#!#31622.776601683792
+~~END~~
+
+
+-- SIGN
+SELECT
+	SIGN(tinyint_col) AS sign_tinyint,
+	SIGN(smallint_col) AS sign_smallint, 
+	SIGN(integer_col) AS sign_int,
+	SIGN(bigint_col) AS sign_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+int#!#int#!#int#!#bigint
+0#!#<NULL>#!#<NULL>#!#0
+<NULL>#!#-1#!#<NULL>#!#0
+<NULL>#!#<NULL>#!#-1#!#0
+<NULL>#!#<NULL>#!#<NULL>#!#-1
+1#!#<NULL>#!#<NULL>#!#0
+<NULL>#!#1#!#<NULL>#!#0
+<NULL>#!#<NULL>#!#1#!#0
+<NULL>#!#<NULL>#!#<NULL>#!#1
+<NULL>#!#<NULL>#!#<NULL>#!#0
+<NULL>#!#<NULL>#!#<NULL>#!#0
+<NULL>#!#<NULL>#!#<NULL>#!#0
+<NULL>#!#<NULL>#!#<NULL>#!#0
+0#!#<NULL>#!#<NULL>#!#0
+<NULL>#!#0#!#<NULL>#!#0
+<NULL>#!#<NULL>#!#0#!#0
+<NULL>#!#<NULL>#!#<NULL>#!#0
+0#!#<NULL>#!#<NULL>#!#0
+<NULL>#!#0#!#<NULL>#!#0
+<NULL>#!#<NULL>#!#0#!#0
+<NULL>#!#<NULL>#!#<NULL>#!#0
+1#!#<NULL>#!#<NULL>#!#0
+1#!#1#!#1#!#1
+~~END~~
+
+
+SELECT
+	SIGN(-tinyint_col) AS sign_tinyint
+FROM exactnumeric_table;
+GO
+~~START~~
+int
+0
+<NULL>
+<NULL>
+<NULL>
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT
+	SIGN(-smallint_col) AS sign_smallint, 
+	SIGN(-integer_col) AS sign_int,
+	SIGN(-bigint_col) AS sign_bigint
+FROM exactnumeric_table
+WHERE
+	smallint_col != 32767 AND
+	integer_col != 2147483647 AND
+	bigint_col != 9223372036854775807;
+GO
+~~START~~
+int#!#int#!#bigint
+-1#!#-1#!#-1
+~~END~~
+
+
+-- ROUND
+SELECT
+	ROUND(tinyint_col + 0.5) AS round_tinyint,
+	ROUND(smallint_col + 0.5) AS round_smallint,
+	ROUND(integer_col + 0.5) AS round_int,
+	ROUND(bigint_col + 0.5) AS round_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric
+1.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32768.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-2147483648.00000000#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775808.00000000
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+
+-- Division by zero
+SELECT 1 / tinyint_col FROM exactnumeric_table WHERE tinyint_col = 0;
+-- Log of zero or negative numbers
+SELECT LOG(tinyint_col) FROM exactnumeric_table WHERE tinyint_col <= 0;
+GO
+~~START~~
+int
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot take logarithm of zero)~~
+
+
+SELECT LOG(smallint_col) FROM exactnumeric_table WHERE smallint_col <= 0;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take logarithm of a negative number)~~
+
+
+SELECT LOG(integer_col) FROM exactnumeric_table WHERE integer_col <= 0;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take logarithm of a negative number)~~
+
+
+SELECT LOG(bigint_col) FROM exactnumeric_table WHERE bigint_col <= 0;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take logarithm of a negative number)~~
+
+
+-- SQRT of negative numbers
+SELECT SQRT(tinyint_col) FROM exactnumeric_table WHERE tinyint_col < 0;
+GO
+~~START~~
+float
+~~END~~
+
+
+SELECT SQRT(smallint_col) FROM exactnumeric_table WHERE smallint_col < 0;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(integer_col) FROM exactnumeric_table WHERE integer_col < 0;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(bigint_col) FROM exactnumeric_table WHERE bigint_col < 0;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+-- ACOS, ASIN, ATAN (Trigonometric functions)
+-- Note: Input should be between -1 and 1 for ACOS and ASIN
+SELECT
+	ACOS(tinyint_col/100) AS acos_tinyint
+FROM exactnumeric_table;
+GO
+~~START~~
+float
+1.5707963267948966
+<NULL>
+<NULL>
+<NULL>
+0.0
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+1.5707963267948966
+<NULL>
+<NULL>
+<NULL>
+1.5707963267948966
+<NULL>
+<NULL>
+<NULL>
+0.0
+1.5707963267948966
+~~END~~
+
+
+SELECT
+	ACOS(smallint_col/10000) AS acos_smallint
+FROM exactnumeric_table;
+GO
+~~START~~
+float
+<NULL>
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+
+SELECT
+	ACOS(integer_col/1000000) AS acos_int
+FROM exactnumeric_table;
+GO
+~~START~~
+float
+<NULL>
+<NULL>
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+
+SELECT
+	ACOS(bigint_col/100000000000) AS acos_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+
+SELECT
+	ASIN(tinyint_col/100) AS asin_tinyint,
+	ASIN(smallint_col/10000) AS asin_smallint,
+	ASIN(integer_col/1000000) AS asin_int,
+	ASIN(bigint_col/100000000000) AS asin_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+float#!#float#!#float#!#float
+0.0#!#<NULL>#!#<NULL>#!#<NULL>
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+
+SELECT
+	ATAN(tinyint_col) AS atan_tinyint,
+	ATAN(smallint_col) AS atan_smallint,
+	ATAN(integer_col) AS atan_int,
+	ATAN(bigint_col) AS atan_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+float#!#float#!#float#!#float
+0.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-1.570765809216781#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-1.5707963263292353#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-1.5707963267948966
+1.562922473770796#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#1.57076580828543#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#1.5707963263292353#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#1.5707963267948966
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+0.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0.0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0.0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0.0
+0.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0.0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0.0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0.0
+1.5629839857347956#!#<NULL>#!#<NULL>#!#<NULL>
+1.373400766945016#!#1.5607966601082315#!#1.5706963267952299#!#1.5707963257948967
+~~END~~
+
+
+-- COS, COT, SIN, TAN (Trigonometric functions)
+SELECT
+	COS(tinyint_col) AS cos_tinyint,
+	COS(smallint_col) AS cos_smallint,
+	COS(integer_col) AS cos_int,
+	COS(bigint_col) AS cos_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+float#!#float#!#float#!#float
+1.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0.37293782932771496#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0.23781619457280337#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0.011800076512800236
+0.23235910202965793#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0.9822633517692823#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-0.6888366918779438#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0.011800076512800236
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+1.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#1.0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#1.0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#1.0
+1.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#1.0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#1.0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#1.0
+-0.6928958219201651#!#<NULL>#!#<NULL>#!#<NULL>
+0.28366218546322625#!#0.8623188722876839#!#-0.9521553682590148#!#0.8378871813639024
+~~END~~
+
+
+SELECT
+	COT(tinyint_col) AS cot_tinyint,
+	COT(smallint_col) AS cot_smallint,
+	COT(integer_col) AS cot_int,
+	COT(bigint_col) AS cot_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+float#!#float#!#float#!#float
+Infinity#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-0.40193488571182084#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0.2448406291828042#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-0.011800898130584457
+0.2388977164652542#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#5.238554765804704#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0.9502289428892712#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0.011800898130584457
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+Infinity#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#Infinity#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#Infinity#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#Infinity
+Infinity#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#Infinity#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#Infinity#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#Infinity
+-0.9609702957672157#!#<NULL>#!#<NULL>#!#<NULL>
+-0.2958129155327455#!#-1.702956919426469#!#3.11554495756144#!#1.5350320356691394
+~~END~~
+
+
+SELECT
+	SIN(tinyint_col) AS sin_tinyint,
+	SIN(smallint_col) AS sin_smallint,
+	SIN(integer_col) AS sin_int,
+	SIN(bigint_col) AS sin_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+float#!#float#!#float#!#float
+0.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-0.9278563334139247#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0.9713101757929392#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-0.9999303766734422
+0.972630067242408#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0.18750655394138943#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-0.7249165551445564#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0.9999303766734422
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+0.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0.0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0.0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0.0
+0.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0.0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0.0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0.0
+0.7210377105017316#!#<NULL>#!#<NULL>#!#<NULL>
+-0.9589242746631385#!#-0.5063656411097588#!#-0.30561438888825215#!#0.5458434494486996
+~~END~~
+
+
+SELECT
+	TAN(tinyint_col) AS tan_tinyint,
+	TAN(smallint_col) AS tan_smallint,
+	TAN(integer_col) AS tan_int,
+	TAN(bigint_col) AS tan_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+float#!#float#!#float#!#float
+0.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-2.4879651793076247#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#4.084289455298593#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-84.73931296875567
+4.185891831851989#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0.19089234430221486#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#1.0523779637351338#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#84.73931296875567
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+0.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0.0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0.0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0.0
+0.0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0.0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0.0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0.0
+-1.0406148914328552#!#<NULL>#!#<NULL>#!#<NULL>
+-3.380515006246586#!#-0.5872139151569291#!#0.3209711346238147#!#0.6514522021451413
+~~END~~
+
+
+-- LOG and LOG10
+SELECT
+	LOG(tinyint_col) AS log_tinyint,
+	LOG(smallint_col) AS log_smallint,
+	LOG(integer_col) AS log_int,
+	LOG(bigint_col) AS log_bigint
+FROM exactnumeric_table
+WHERE
+	tinyint_col > 0 AND
+	smallint_col > 0 AND
+	integer_col > 0 AND
+	bigint_col > 0;
+GO
+~~START~~
+float#!#float#!#float#!#float
+1.6094379124341005#!#4.605170185988092#!#9.210340371976182#!#20.72326583694641
+~~END~~
+
+
+SELECT
+	LOG10(tinyint_col) AS log10_tinyint,
+	LOG10(smallint_col) AS log10_smallint,
+	LOG10(integer_col) AS log10_int,
+	LOG10(bigint_col) AS log10_bigint
+FROM exactnumeric_table
+WHERE
+	tinyint_col > 0 AND
+	smallint_col > 0 AND
+	integer_col > 0 AND
+	bigint_col > 0;
+GO
+~~START~~
+float#!#float#!#float#!#float
+0.6989700043360187#!#2.0#!#4.0#!#9.0
+~~END~~
+
+
+-- EXP (Exponential)
+SELECT EXP(LOG(10));
+GO
+~~START~~
+float
+10.000000000000002
+~~END~~
+
+
+SELECT EXP(cast(2 as tinyint));
+GO
+~~START~~
+float
+7.38905609893065
+~~END~~
+
+
+SELECT EXP(cast(2 as smallint));
+GO
+~~START~~
+float
+7.38905609893065
+~~END~~
+
+
+SELECT EXP(cast(2 as int));
+GO
+~~START~~
+float
+7.38905609893065
+~~END~~
+
+
+SELECT EXP(cast(2 as bigint));
+GO
+~~START~~
+float
+7.38905609893065
+~~END~~
+
+
+-- MOD
+SELECT tinyint_col % 2 FROM exactnumeric_table;
+GO
+~~START~~
+int
+0
+<NULL>
+<NULL>
+<NULL>
+1
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+0
+<NULL>
+<NULL>
+<NULL>
+0
+<NULL>
+<NULL>
+<NULL>
+0
+1
+~~END~~
+
+
+SELECT smallint_col % 2 FROM exactnumeric_table;
+GO
+~~START~~
+int
+<NULL>
+0
+<NULL>
+<NULL>
+<NULL>
+1
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+0
+<NULL>
+<NULL>
+<NULL>
+0
+<NULL>
+<NULL>
+<NULL>
+0
+~~END~~
+
+
+SELECT integer_col % 2 FROM exactnumeric_table;
+GO
+~~START~~
+int
+<NULL>
+<NULL>
+0
+<NULL>
+<NULL>
+<NULL>
+1
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+0
+<NULL>
+<NULL>
+<NULL>
+0
+<NULL>
+<NULL>
+0
+~~END~~
+
+
+SELECT bigint_col % 2 FROM exactnumeric_table;
+GO
+~~START~~
+bigint
+<NULL>
+<NULL>
+<NULL>
+0
+<NULL>
+<NULL>
+<NULL>
+1
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+0
+<NULL>
+<NULL>
+<NULL>
+0
+<NULL>
+0
+~~END~~
+
+
+-- TRUNCATE with integer types
+SELECT 
+	ROUND(tinyint_col, 0) AS trunc_tinyint,
+	ROUND(smallint_col, 0) AS trunc_smallint,
+	ROUND(integer_col, 0) AS trunc_int,
+	ROUND(bigint_col, 0) AS trunc_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+int#!#int#!#int#!#bigint
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32768#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-2147483648#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775808
+127#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#32767#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#2147483647#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775807
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+128#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#100#!#10000#!#1000000000
+~~END~~
+
+
+SELECT 
+	ROUND(tinyint_col, -2) AS trunc_tinyint,
+	ROUND(smallint_col, -2) AS trunc_smallint,
+	ROUND(integer_col, -2) AS trunc_int,
+	ROUND(bigint_col, -2) AS trunc_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+int#!#int#!#int#!#bigint
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32800#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-2147483600#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775800
+100#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#32800#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#2147483600#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775800
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+100#!#<NULL>#!#<NULL>#!#<NULL>
+0#!#100#!#10000#!#1000000000
+~~END~~
+
+
+SELECT 
+	ROUND(tinyint_col, 2) AS trunc_tinyint,
+	ROUND(smallint_col, 2) AS trunc_smallint,
+	ROUND(integer_col, 2) AS trunc_int,
+	ROUND(bigint_col, 2) AS trunc_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+int#!#int#!#int#!#bigint
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32768#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-2147483648#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775808
+127#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#32767#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#2147483647#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775807
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+128#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#100#!#10000#!#1000000000
+~~END~~
+
+
+-- AGGREGATE FUNCTIONS
+SELECT
+	SUM(tinyint_col) AS sum_tinyint,
+	SUM(smallint_col) AS sum_smallint,
+	SUM(integer_col) AS sum_int,
+	SUM(bigint_col) AS sum_bigint
+FROM exactnumeric_table
+WHERE
+	tinyint_col < 127 AND
+	smallint_col < 32767 AND
+	integer_col < 2147483647 AND
+	bigint_col < 9223372036854775807;
+GO
+~~START~~
+int#!#int#!#int#!#bigint
+5#!#100#!#10000#!#1000000000
+~~END~~
+
+
+-- Overflow error
+SELECT
+	SUM(tinyint_col) AS sum_tinyint,
+	SUM(smallint_col) AS sum_smallint,
+	SUM(integer_col) AS sum_int,
+	SUM(bigint_col) AS sum_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+int#!#int#!#int#!#bigint
+260#!#99#!#9999#!#999999999
+~~END~~
+
+
+SELECT
+	AVG(tinyint_col) AS avg_tinyint,
+	AVG(smallint_col) AS avg_smallint,
+	AVG(integer_col) AS avg_int,
+	AVG(bigint_col) AS avg_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+int#!#int#!#int#!#bigint
+43#!#19#!#1999#!#199999999
+~~END~~
+
+
+SELECT
+	MIN(tinyint_col) AS min_tinyint,
+	MIN(smallint_col) AS min_smallint,
+	MIN(integer_col) AS min_int,
+	MIN(bigint_col) AS min_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+tinyint#!#smallint#!#int#!#bigint
+0#!#-32768#!#-2147483648#!#-9223372036854775808
+~~END~~
+
+
+SELECT
+	MAX(tinyint_col) AS max_tinyint,
+	MAX(smallint_col) AS max_smallint,
+	MAX(integer_col) AS max_int,
+	MAX(bigint_col) AS max_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+tinyint#!#smallint#!#int#!#bigint
+128#!#32767#!#2147483647#!#9223372036854775807
+~~END~~
+
+
+SELECT
+	COUNT(tinyint_col) AS count_tinyint,
+	COUNT(smallint_col) AS count_smallint,
+	COUNT(integer_col) AS count_int,
+	COUNT(bigint_col) AS count_bigint
+FROM exactnumeric_table;
+GO
+~~START~~
+int#!#int#!#int#!#int
+6#!#5#!#5#!#5
+~~END~~
+
+
+-- Cast testing
+Create function exactnumeric_cast_test_tinyint(@input TINYINT)
+returns TINYINT
+as
+begin
+	return @input;
+end;
+GO
+
+Create function exactnumeric_cast_test_smallint(@input SMALLINT)
+returns SMALLINT
+as
+begin
+	return @input;
+end;
+GO
+
+Create function exactnumeric_cast_test_int(@input INT)
+returns INT
+as
+begin
+	return @input;
+end;
+GO
+
+Create function exactnumeric_cast_test_bigint(@input BIGINT)
+returns BIGINT
+as
+begin
+	return @input;
+end;
+GO
+
+-- Cast testing xyz to exact numeric
+create table exactnumeric_cast_table (
+	id int,
+	binary_col binary,
+	varbinary_col varbinary,
+	char_col char,
+	varchar_col varchar,
+	nchar_col nchar,
+	nvarchar_col nvarchar,
+	datetime_col datetime,
+	smalldatetime_col smalldatetime,
+	date_col date,
+	time_col time,
+	datetimeoffset_col datetimeoffset,
+	datetime2_col datetime2,
+	decimal_col decimal,
+	numeric_col numeric,
+	float_col float,
+	real_col real,
+	bigint_col bigint,
+	integer_col int,
+	smallint_col smallint,
+	tinyint_col tinyint,
+	money_col money,
+	smallmoney_col smallmoney,
+	bit_col bit,
+	uniqueidentifier_col uniqueidentifier,
+	image_col image,
+	ntext_col ntext,
+	text_col text,
+	sql_variant_col sql_variant,
+	xml_col xml
+);
+GO
+
+INSERT INTO exactnumeric_cast_table VALUES 
+(1, 0x02, 0x02, '1', '2', N'3', N'4', '2020-01-02 00:00:00', '2020-01-02 00:00:00', '2020-01-02', '00:00:00', '2020-01-02 00:00:00 +00:00', '2020-01-02 00:00:00', 2.0, 2.0, 2.0, 2.0, 2, 2, 2, 2, 2.0, 2.0, 2, 'B0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11', 0x02, '3', '4', '5', '<root><child>3</child></root>');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(binary_col) AS binary_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(binary_col) AS binary_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(binary_col) AS binary_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(binary_col) AS binary_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(varbinary_col) AS varbinary_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(varbinary_col) AS varbinary_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(varbinary_col) AS varbinary_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(varbinary_col) AS varbinary_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(char_col) AS char_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+1
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(char_col) AS char_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+1
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(char_col) AS char_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(char_col) AS char_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(varchar_col) AS varchar_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(varchar_col) AS varchar_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(varchar_col) AS varchar_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(varchar_col) AS varchar_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(nchar_col) AS nchar_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+3
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(nchar_col) AS nchar_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+3
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(nchar_col) AS nchar_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(nchar_col) AS nchar_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+3
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(nvarchar_col) AS nvarchar_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+4
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(nvarchar_col) AS nvarchar_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+4
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(nvarchar_col) AS nvarchar_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(nvarchar_col) AS nvarchar_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+4
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(datetime_col) AS datetime_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(datetime_col) AS datetime_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+-21706
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(datetime_col) AS datetime_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+43830
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(datetime_col) AS datetime_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+43830
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(smalldatetime_col) AS smalldatetime_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(smalldatetime_col) AS smalldatetime_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+-21706
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(smalldatetime_col) AS smalldatetime_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+43830
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(smalldatetime_col) AS smalldatetime_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+43830
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(date_col) AS date_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_tinyint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(date_col) AS date_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_smallint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_int(date_col) AS date_to_int
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_int is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(date_col) AS date_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_bigint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(time_col) AS time_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_tinyint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(time_col) AS time_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_smallint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_int(time_col) AS time_to_int
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_int is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(time_col) AS time_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_bigint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(datetimeoffset_col) AS datetimeoffset_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_tinyint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(datetimeoffset_col) AS datetimeoffset_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_smallint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_int(datetimeoffset_col) AS datetimeoffset_to_int
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_int is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(datetimeoffset_col) AS datetimeoffset_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_bigint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(datetime2_col) AS datetime2_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_tinyint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(datetime2_col) AS datetime2_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_smallint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_int(datetime2_col) AS datetime2_to_int
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_int is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(datetime2_col) AS datetime2_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_bigint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(decimal_col) AS decimal_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(decimal_col) AS decimal_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(decimal_col) AS decimal_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(decimal_col) AS decimal_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(numeric_col) AS numeric_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(numeric_col) AS numeric_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(numeric_col) AS numeric_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(numeric_col) AS numeric_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(float_col) AS float_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(float_col) AS float_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(float_col) AS float_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(float_col) AS float_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(real_col) AS real_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(real_col) AS real_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(real_col) AS real_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(real_col) AS real_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(bigint_col) AS bigint_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(bigint_col) AS bigint_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(bigint_col) AS bigint_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(bigint_col) AS bigint_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(integer_col) AS int_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(integer_col) AS int_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(integer_col) AS int_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(integer_col) AS int_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(smallint_col) AS smallint_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(smallint_col) AS smallint_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(smallint_col) AS smallint_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(smallint_col) AS smallint_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(tinyint_col) AS tinyint_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(tinyint_col) AS tinyint_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(tinyint_col) AS tinyint_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(tinyint_col) AS tinyint_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(money_col) AS money_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(money_col) AS money_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(money_col) AS money_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(money_col) AS money_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(smallmoney_col) AS smallmoney_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(smallmoney_col) AS smallmoney_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(smallmoney_col) AS smallmoney_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(smallmoney_col) AS smallmoney_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(bit_col) AS bit_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+1
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(bit_col) AS bit_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+1
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(bit_col) AS bit_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(bit_col) AS bit_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(uniqueidentifier_col) AS uniqueidentifier_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_tinyint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(uniqueidentifier_col) AS uniqueidentifier_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_smallint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_int(uniqueidentifier_col) AS uniqueidentifier_to_int
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_int is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(uniqueidentifier_col) AS uniqueidentifier_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_bigint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(image_col) AS image_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(image_col) AS image_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(image_col) AS image_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+
+SELECT
+	exactnumeric_cast_test_bigint(image_col) AS image_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(ntext_col) AS ntext_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+3
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(ntext_col) AS ntext_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+3
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(ntext_col) AS ntext_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(ntext_col) AS ntext_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+3
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(text_col) AS text_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+4
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(text_col) AS text_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+4
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_int(text_col) AS text_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(text_col) AS text_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+4
+~~END~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(sql_variant_col) AS sql_variant_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_tinyint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(sql_variant_col) AS sql_variant_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_smallint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_int(sql_variant_col) AS sql_variant_to_int
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_int is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(sql_variant_col) AS sql_variant_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_bigint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_tinyint(xml_col) AS xml_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_tinyint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_smallint(xml_col) AS xml_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_smallint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_int(xml_col) AS xml_to_int
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_int is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	exactnumeric_cast_test_bigint(xml_col) AS xml_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function exactnumeric_cast_test_bigint is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT
+	cast(sql_variant_col as tinyint) AS sql_variant_to_tinyint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+tinyint
+5
+~~END~~
+
+
+SELECT
+	cast(sql_variant_col as smallint) AS sql_variant_to_smallint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+smallint
+5
+~~END~~
+
+
+SELECT
+	cast(sql_variant_col as int) AS sql_variant_to_int
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT
+	cast(sql_variant_col as bigint) AS sql_variant_to_bigint
+FROM exactnumeric_cast_table;
+GO
+~~START~~
+bigint
+5
+~~END~~
+
+
+
+-- JSON testing
+DECLARE @json NVARCHAR(MAX) = N'{
+	"tinyint_value": "255",
+	"smallint_value": "32767",
+	"int_value": "2147483647",
+	"bigint_value": "9223372036854775807"
+}';
+SELECT 
+	CAST(JSON_VALUE(@json, '$.tinyint_value') AS TINYINT) AS tinyint_result,
+	CAST(JSON_VALUE(@json, '$.smallint_value') AS SMALLINT) AS smallint_result,
+	CAST(JSON_VALUE(@json, '$.int_value') AS INT) AS int_result,
+	CAST(JSON_VALUE(@json, '$.bigint_value') AS BIGINT) AS bigint_result;
+GO
+~~START~~
+tinyint#!#smallint#!#int#!#bigint
+255#!#32767#!#2147483647#!#9223372036854775807
+~~END~~
+
+
+
+DECLARE @json NVARCHAR(MAX) = N'{
+	"tinyint_value": "256",
+	"smallint_value": "32768",
+	"int_value": "2147483648",
+	"bigint_value": "9223372036854775808"
+}';
+SELECT 
+	TRY_CAST(JSON_VALUE(@json, '$.tinyint_value') AS TINYINT) AS tinyint_result,
+	TRY_CAST(JSON_VALUE(@json, '$.smallint_value') AS SMALLINT) AS smallint_result,
+	TRY_CAST(JSON_VALUE(@json, '$.int_value') AS INT) AS int_result,
+	TRY_CAST(JSON_VALUE(@json, '$.bigint_value') AS BIGINT) AS bigint_result;
+GO
+~~START~~
+tinyint#!#smallint#!#int#!#bigint
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+
+-- Converting Exact Numeric Types to JSON
+DECLARE @tinyint_val TINYINT = 255;
+DECLARE @smallint_val SMALLINT = 32767;
+DECLARE @int_val INT = 2147483647;
+DECLARE @bigint_val BIGINT = 9223372036854775807;
+SELECT (
+    SELECT 
+        @tinyint_val AS tinyint_value,
+        @smallint_val AS smallint_value,
+        @int_val AS int_value,
+        @bigint_val AS bigint_value
+    FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+) AS json_result;
+GO
+~~START~~
+nvarchar
+{"tinyint_value": 255, "smallint_value": 32767, "int_value": 2147483647, "bigint_value": 9223372036854775807}
+~~END~~
+
+
+
+-- Handling Arrays of Exact Numeric Types in JSON
+DECLARE @json NVARCHAR(MAX) = N'{
+	"tinyint_array": [0, 128, 255]
+}';
+SELECT
+	CAST(value AS TINYINT) AS tinyint_value
+FROM OPENJSON(@json, '$.tinyint_array');
+GO
+~~START~~
+tinyint
+0
+128
+255
+~~END~~
+
+
+
+DECLARE @json NVARCHAR(MAX) = N'{
+	"smallint_array": [-32768, 0, 32767]
+}';
+SELECT
+	CAST(value AS SMALLINT) AS smallint_value
+FROM OPENJSON(@json, '$.smallint_array');
+GO
+~~START~~
+smallint
+-32768
+0
+32767
+~~END~~
+
+
+
+DECLARE @json NVARCHAR(MAX) = N'{
+	"int_array": [-2147483648, 0, 2147483647]
+}';
+SELECT
+	CAST(value AS INT) AS int_value
+FROM OPENJSON(@json, '$.int_array');
+GO
+~~START~~
+int
+-2147483648
+0
+2147483647
+~~END~~
+
+
+
+DECLARE @json NVARCHAR(MAX) = N'{
+	"bigint_array": [-9223372036854775808, 0, 9223372036854775807]
+}';
+SELECT
+	CAST(value AS BIGINT) AS bigint_value
+FROM OPENJSON(@json, '$.bigint_array');
+GO
+~~START~~
+bigint
+-9223372036854775808
+0
+9223372036854775807
+~~END~~
+
+
+Drop table exactnumeric_table
+GO
+
+Drop table exactnumeric_cast_table
+GO
+
+Drop function exactnumeric_cast_test_tinyint
+GO
+
+Drop function exactnumeric_cast_test_smallint
+GO
+
+Drop function exactnumeric_cast_test_int
+GO
+
+Drop function exactnumeric_cast_test_bigint
+GO
+
+-- Create a UDT for each exact numeric type
+CREATE TYPE UDT_TinyInt FROM TINYINT;
+GO
+
+CREATE TYPE UDT_SmallInt FROM SMALLINT;
+GO
+
+CREATE TYPE UDT_Int FROM INT;
+GO
+
+CREATE TYPE UDT_BigInt FROM BIGINT;
+GO
+
+
+
+
+
+
+-- Test case function
+CREATE FUNCTION TestExactNumericUDT()
+RETURNS TABLE
+AS
+RETURN
+(
+    -- Basic Range Tests
+    SELECT 'TinyInt Min' AS Test, CAST(0 AS UDT_TinyInt) AS Result
+    UNION ALL
+    SELECT 'TinyInt Max', CAST(255 AS UDT_TinyInt)
+    UNION ALL
+    SELECT 'SmallInt Min', CAST(-32768 AS UDT_SmallInt)
+    UNION ALL
+    SELECT 'SmallInt Max', CAST(32767 AS UDT_SmallInt)
+    UNION ALL
+    SELECT 'Int Min', CAST(-2147483648 AS UDT_Int)
+    UNION ALL
+    SELECT 'Int Max', CAST(2147483647 AS UDT_Int)
+    UNION ALL
+    SELECT 'BigInt Min', CAST(-9223372036854775808 AS UDT_BigInt)
+    UNION ALL
+    SELECT 'BigInt Max', CAST(9223372036854775807 AS UDT_BigInt)
+    -- Overflow Tests
+    UNION ALL
+    SELECT 'TinyInt Overflow', TRY_CAST(256 AS UDT_TinyInt)
+    UNION ALL
+    SELECT 'SmallInt Overflow', TRY_CAST(32768 AS UDT_SmallInt)
+    -- Conversion Tests
+    UNION ALL
+    SELECT 'String to TinyInt', CAST('123' AS UDT_TinyInt)
+    UNION ALL
+    SELECT 'Int to SmallInt', CAST(CAST(12345 AS INT) AS UDT_SmallInt)
+    -- Mathematical Operation Tests
+    UNION ALL
+    SELECT 'TinyInt Addition', CAST(200 AS UDT_TinyInt) + CAST(55 AS UDT_TinyInt)
+    UNION ALL
+    SELECT 'SmallInt Multiplication', CAST(100 AS UDT_SmallInt) * CAST(100 AS UDT_SmallInt)
+    UNION ALL
+	SELECT 'SmallInt Subtraction', CAST(1000 AS UDT_SmallInt) - CAST(2000 AS UDT_SmallInt)
+    UNION ALL
+	SELECT 'Int Multiplication', CAST(10000 AS UDT_Int) * CAST(10000 AS UDT_Int)
+    UNION ALL
+	SELECT 'BigInt Division', CAST(9223372036854775807 AS UDT_BigInt) / CAST(2 AS UDT_BigInt)
+    -- NULL Value Tests
+    UNION ALL
+    SELECT 'NULL TinyInt', CAST(NULL AS UDT_TinyInt)
+    -- Precision Tests
+    UNION ALL
+    SELECT 'Decimal to Int', CAST(CAST(123.45 AS DECIMAL(5,2)) AS UDT_Int)
+)
+GO
+
+-- overflow tests: error
+SELECT CAST(256 AS UDT_TinyInt);
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain udt_tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT CAST(32768 AS UDT_SmallInt);
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT CAST(2147483648 AS UDT_Int);
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT CAST(9223372036854775808 AS UDT_BigInt);
+GO
+~~START~~
+bigint
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+
+-- Execute the test cases
+SELECT * FROM TestExactNumericUDT();
+GO
+~~START~~
+varchar#!#bigint
+TinyInt Min#!#0
+TinyInt Max#!#255
+SmallInt Min#!#-32768
+SmallInt Max#!#32767
+Int Min#!#-2147483648
+Int Max#!#2147483647
+BigInt Min#!#-9223372036854775808
+BigInt Max#!#9223372036854775807
+TinyInt Overflow#!#<NULL>
+SmallInt Overflow#!#<NULL>
+String to TinyInt#!#123
+Int to SmallInt#!#12345
+TinyInt Addition#!#255
+SmallInt Multiplication#!#10000
+SmallInt Subtraction#!#-1000
+Int Multiplication#!#100000000
+BigInt Division#!#4611686018427387903
+NULL TinyInt#!#<NULL>
+Decimal to Int#!#123
+~~END~~
+
+
+DROP FUNCTION TestExactNumericUDT;
+GO
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Assuming UDTs are already created as in the previous example
+CREATE FUNCTION ExtendedTestExactNumericUDT()
+RETURNS TABLE
+AS
+RETURN
+(
+	-- 1. Boundary Value Tests
+	SELECT 'TinyInt Boundary Low' AS Test, CAST(0 AS UDT_TinyInt) AS Result
+	UNION ALL SELECT 'TinyInt Boundary High', CAST(255 AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Boundary Low', CAST(-32768 AS UDT_SmallInt)
+	UNION ALL SELECT 'SmallInt Boundary High', CAST(32767 AS UDT_SmallInt)
+	UNION ALL SELECT 'Int Boundary Low', CAST(-2147483648 AS UDT_Int)
+	UNION ALL SELECT 'Int Boundary High', CAST(2147483647 AS UDT_Int)
+	UNION ALL SELECT 'BigInt Boundary Low', CAST(-9223372036854775808 AS UDT_BigInt)
+	UNION ALL SELECT 'BigInt Boundary High', CAST(9223372036854775807 AS UDT_BigInt)
+	-- 2. Just Inside Boundary Tests
+	UNION ALL SELECT 'TinyInt Just Inside Low', CAST(1 AS UDT_TinyInt)
+	UNION ALL SELECT 'TinyInt Just Inside High', CAST(254 AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Just Inside Low', CAST(-32767 AS UDT_SmallInt)
+	UNION ALL SELECT 'SmallInt Just Inside High', CAST(32766 AS UDT_SmallInt)
+	-- 3. Overflow Tests
+	UNION ALL SELECT 'TinyInt Overflow High', TRY_CAST(256 AS UDT_TinyInt)
+	UNION ALL SELECT 'TinyInt Overflow Low', TRY_CAST(-1 AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Overflow High', TRY_CAST(32768 AS UDT_SmallInt)
+	UNION ALL SELECT 'SmallInt Overflow Low', TRY_CAST(-32769 AS UDT_SmallInt)
+	-- 4. Type Conversion Tests
+	UNION ALL SELECT 'String to TinyInt', TRY_CAST('123' AS UDT_TinyInt)
+	UNION ALL SELECT 'String to SmallInt', TRY_CAST('-12345' AS UDT_SmallInt)
+	UNION ALL SELECT 'String to Int', TRY_CAST('2147483647' AS UDT_Int)
+	UNION ALL SELECT 'String to BigInt', TRY_CAST('-9223372036854775808' AS UDT_BigInt)
+	UNION ALL SELECT 'Decimal to TinyInt', TRY_CAST(123.45 AS UDT_TinyInt)
+	UNION ALL SELECT 'Float to SmallInt', TRY_CAST(12345.67 AS UDT_SmallInt)
+	-- 5. Invalid Conversion Tests
+	UNION ALL SELECT 'Invalid String to TinyInt', TRY_CAST('ABC' AS UDT_TinyInt)
+	UNION ALL SELECT 'Invalid String to SmallInt', TRY_CAST('12345.67' AS UDT_SmallInt)
+	-- 6. Mathematical Operations
+	UNION ALL SELECT 'TinyInt Addition', CAST(200 AS UDT_TinyInt) + CAST(55 AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Subtraction', CAST(1000 AS UDT_SmallInt) - CAST(2000 AS UDT_SmallInt)
+	UNION ALL SELECT 'Int Multiplication', CAST(10000 AS UDT_Int) * CAST(10000 AS UDT_Int)
+	UNION ALL SELECT 'BigInt Division', CAST(9223372036854775807 AS UDT_BigInt) / CAST(2 AS UDT_BigInt)
+	-- 7. Mathematical Operation Overflow Tests
+	UNION ALL SELECT 'TinyInt Addition Overflow', TRY_CAST((CAST(200 AS UDT_TinyInt) + CAST(100 AS UDT_TinyInt)) AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Multiplication Overflow', TRY_CAST((CAST(1000 AS UDT_Int) * CAST(1000 AS UDT_Int)) AS UDT_SmallInt)
+	-- 8. NULL Value Tests
+	UNION ALL SELECT 'NULL TinyInt', CAST(NULL AS UDT_TinyInt)
+	UNION ALL SELECT 'NULL SmallInt', CAST(NULL AS UDT_SmallInt)
+	UNION ALL SELECT 'NULL Int', CAST(NULL AS UDT_Int)
+	UNION ALL SELECT 'NULL BigInt', CAST(NULL AS UDT_BigInt)
+	-- 9. NULL in Mathematical Operations
+	UNION ALL SELECT 'TinyInt Plus NULL', CAST(100 AS UDT_TinyInt) + CAST(NULL AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Multiply NULL', CAST(100 AS UDT_SmallInt) * CAST(NULL AS UDT_SmallInt)
+	-- 10. Precision Tests
+	UNION ALL SELECT 'Decimal to Int Rounding', CAST(CAST(123.45 AS DECIMAL(5,2)) AS UDT_Int)
+	UNION ALL SELECT 'Decimal to SmallInt Rounding', CAST(CAST(123.55 AS DECIMAL(5,2)) AS UDT_SmallInt)
+	-- 11. Comparison Tests
+	UNION ALL SELECT 'SmallInt Comparison', CASE WHEN CAST(-1000 AS UDT_SmallInt) < CAST(1000 AS UDT_SmallInt) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'TinyInt Comparison', CASE WHEN CAST(100 AS UDT_TinyInt) > CAST(50 AS UDT_TinyInt) THEN 1 ELSE 0 END
+	-- 12. Bitwise Operation Tests
+	UNION ALL SELECT 'TinyInt Bitwise AND', CAST(240 AS UDT_TinyInt) & CAST(15 AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Bitwise OR', CAST(240 AS UDT_SmallInt) | CAST(15 AS UDT_SmallInt)
+	-- 13. Aggregate Function Tests
+	UNION ALL SELECT 'TinyInt SUM', (SELECT SUM(CAST(n AS UDT_TinyInt)) FROM (VALUES(1),(2),(3)) AS T(n))
+	UNION ALL SELECT 'SmallInt AVG', (SELECT AVG(CAST(n AS UDT_SmallInt)) FROM (VALUES(1000),(-1000),(0)) AS T(n))
+)
+GO
+
+-- Execute the extended test cases
+SELECT * FROM ExtendedTestExactNumericUDT();
+GO
+~~START~~
+varchar#!#bigint
+TinyInt Boundary Low#!#0
+TinyInt Boundary High#!#255
+SmallInt Boundary Low#!#-32768
+SmallInt Boundary High#!#32767
+Int Boundary Low#!#-2147483648
+Int Boundary High#!#2147483647
+BigInt Boundary Low#!#-9223372036854775808
+BigInt Boundary High#!#9223372036854775807
+TinyInt Just Inside Low#!#1
+TinyInt Just Inside High#!#254
+SmallInt Just Inside Low#!#-32767
+SmallInt Just Inside High#!#32766
+TinyInt Overflow High#!#<NULL>
+TinyInt Overflow Low#!#<NULL>
+SmallInt Overflow High#!#<NULL>
+SmallInt Overflow Low#!#<NULL>
+String to TinyInt#!#123
+String to SmallInt#!#-12345
+String to Int#!#2147483647
+String to BigInt#!#-9223372036854775808
+Decimal to TinyInt#!#123
+Float to SmallInt#!#12346
+Invalid String to TinyInt#!#<NULL>
+Invalid String to SmallInt#!#<NULL>
+TinyInt Addition#!#255
+SmallInt Subtraction#!#-1000
+Int Multiplication#!#100000000
+BigInt Division#!#4611686018427387903
+TinyInt Addition Overflow#!#<NULL>
+SmallInt Multiplication Overflow#!#<NULL>
+NULL TinyInt#!#<NULL>
+NULL SmallInt#!#<NULL>
+NULL Int#!#<NULL>
+NULL BigInt#!#<NULL>
+TinyInt Plus NULL#!#<NULL>
+SmallInt Multiply NULL#!#<NULL>
+Decimal to Int Rounding#!#123
+Decimal to SmallInt Rounding#!#123
+SmallInt Comparison#!#1
+TinyInt Comparison#!#1
+TinyInt Bitwise AND#!#0
+SmallInt Bitwise OR#!#255
+TinyInt SUM#!#6
+SmallInt AVG#!#0
+~~END~~
+
+
+drop function ExtendedTestExactNumericUDT;
+GO
+
+-- Drop the UDTs
+DROP TYPE UDT_TinyInt;
+GO
+
+DROP TYPE UDT_SmallInt;
+GO
+
+DROP TYPE UDT_Int;
+GO
+
+DROP TYPE UDT_BigInt;
+GO
+
+
+
+
+
+
+
+CREATE FUNCTION ExtendedOperationTestsExactNumeric()
+RETURNS TABLE
+AS
+RETURN
+(
+	-- 1. Arithmetic Operators
+	SELECT 'TinyInt + SmallInt' AS Test, CAST(254 AS TINYINT) -+CAST(1 AS SMALLINT) AS Result
+	UNION ALL SELECT 'SmallInt - Int', CAST(32767 AS SMALLINT) - CAST(1 AS INT)
+	UNION ALL SELECT 'Int * BigInt', CAST(2147483647 AS INT) * CAST(2 AS BIGINT)
+	UNION ALL SELECT 'BigInt / TinyInt', CAST(9223372036854775807 AS BIGINT) / CAST(255 AS TINYINT)
+	UNION ALL SELECT 'TinyInt % SmallInt', CAST(255 AS TINYINT) % CAST(100 AS SMALLINT)
+	-- 2. Bitwise Operators
+	UNION ALL SELECT 'TinyInt & SmallInt', CAST(255 AS TINYINT) & CAST(15 AS SMALLINT)
+	UNION ALL SELECT 'SmallInt | Int', CAST(32767 AS SMALLINT) | CAST(1 AS INT)
+	UNION ALL SELECT 'Int ^ BigInt', CAST(2147483647 AS INT) ^ CAST(1 AS BIGINT)
+	UNION ALL SELECT 'BigInt ~ (Bitwise NOT)', ~CAST(9223372036854775807 AS BIGINT)
+	-- 3. Comparison Operators
+	UNION ALL SELECT 'TinyInt = SmallInt', CASE WHEN CAST(255 AS TINYINT) = CAST(255 AS SMALLINT) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'SmallInt <> Int', CASE WHEN CAST(32767 AS SMALLINT) <> CAST(32767 AS INT) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'Int < BigInt', CASE WHEN CAST(2147483647 AS INT) < CAST(9223372036854775807 AS BIGINT) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'BigInt > TinyInt', CASE WHEN CAST(9223372036854775807 AS BIGINT) > CAST(255 AS TINYINT) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'TinyInt <= SmallInt', CASE WHEN CAST(255 AS TINYINT) <= CAST(32767 AS SMALLINT) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'SmallInt >= Int', CASE WHEN CAST(32767 AS SMALLINT) >= CAST(-2147483648 AS INT) THEN 1 ELSE 0 END
+	-- 4. Logical Operators
+	UNION ALL SELECT 'TinyInt AND SmallInt', CASE WHEN CAST(255 AS TINYINT) > 0 AND CAST(32767 AS SMALLINT) > 0 THEN 1 ELSE 0 END
+	UNION ALL SELECT 'SmallInt OR Int', CASE WHEN CAST(0 AS SMALLINT) > 0 OR CAST(2147483647 AS INT) > 0 THEN 1 ELSE 0 END
+	UNION ALL SELECT 'Int NOT', CASE WHEN NOT (CAST(0 AS INT) > 0) THEN 1 ELSE 0 END
+	-- 5. Unary Operators
+	UNION ALL SELECT 'TinyInt +', +CAST(255 AS TINYINT)
+	UNION ALL SELECT 'SmallInt -', -CAST(32767 AS SMALLINT)
+	UNION ALL SELECT 'Int ~', ~CAST(2147483647 AS INT)
+	UNION ALL SELECT 'BigInt Unary -', -CAST(9223372036854775807 AS BIGINT)
+	-- 6. Overflow Tests
+	UNION ALL SELECT 'Overflow TinyInt + SmallInt', TRY_CAST((CAST(255 AS TINYINT) + CAST(1 AS SMALLINT)) AS TINYINT)
+	UNION ALL SELECT 'Overflow SmallInt * Int', TRY_CAST((CAST(32767 AS SMALLINT) * CAST(2 AS INT)) AS SMALLINT)
+	UNION ALL SELECT 'Overflow Int + BigInt', TRY_CAST((CAST(2147483647 AS INT) + CAST(1 AS BIGINT)) AS INT)
+	-- 7. NULL Handling
+	UNION ALL SELECT 'NULL TinyInt + SmallInt', CAST(NULL AS TINYINT) + CAST(1 AS SMALLINT)
+	UNION ALL SELECT 'SmallInt * NULL Int', CAST(32767 AS SMALLINT) * CAST(NULL AS INT)
+	UNION ALL SELECT 'NULL BigInt / TinyInt', CAST(NULL AS BIGINT) / CAST(255 AS TINYINT)
+)
+GO
+
+-- Execute the extended operation tests
+SELECT * FROM ExtendedOperationTestsExactNumeric();
+GO
+~~START~~
+varchar#!#bigint
+TinyInt + SmallInt#!#253
+SmallInt - Int#!#32766
+Int * BigInt#!#4294967294
+BigInt / TinyInt#!#36170086419038336
+TinyInt % SmallInt#!#55
+TinyInt & SmallInt#!#15
+SmallInt | Int#!#32767
+Int ^ BigInt#!#2147483646
+BigInt ~ (Bitwise NOT)#!#-9223372036854775808
+TinyInt = SmallInt#!#1
+SmallInt <> Int#!#0
+Int < BigInt#!#1
+BigInt > TinyInt#!#1
+TinyInt <= SmallInt#!#1
+SmallInt >= Int#!#1
+TinyInt AND SmallInt#!#1
+SmallInt OR Int#!#1
+Int NOT#!#1
+TinyInt +#!#255
+SmallInt -#!#-32767
+Int ~#!#-2147483648
+BigInt Unary -#!#-9223372036854775807
+Overflow TinyInt + SmallInt#!#<NULL>
+Overflow SmallInt * Int#!#<NULL>
+Overflow Int + BigInt#!#<NULL>
+NULL TinyInt + SmallInt#!#<NULL>
+SmallInt * NULL Int#!#<NULL>
+NULL BigInt / TinyInt#!#<NULL>
+~~END~~
+
+
+DROP function ExtendedOperationTestsExactNumeric;
+GO
+
+
+-- Compound Operators
+-- TinyInt += SmallInt
+DECLARE @t TINYINT = 254;
+SET @t += CAST(1 AS SMALLINT);
+SELECT 'TinyInt += SmallInt' AS Test, @t AS Result;
+GO
+~~START~~
+varchar#!#tinyint
+TinyInt += SmallInt#!#255
+~~END~~
+
+
+-- SmallInt -= Int
+DECLARE @s SMALLINT = 32767;
+SET @s -= CAST(1 AS INT);
+SELECT 'SmallInt -= Int' AS Test, @s AS Result;
+GO
+~~START~~
+varchar#!#smallint
+SmallInt -= Int#!#32766
+~~END~~
+
+
+-- Int *= BigInt
+DECLARE @i INT = 1073741824;
+SET @i *= CAST(2 AS BIGINT);
+SELECT 'Int *= BigInt' AS Test, @i AS Result;
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+~~START~~
+varchar#!#int
+Int *= BigInt#!#1073741824
+~~END~~
+
+
+-- BigInt /= TinyInt
+DECLARE @b BIGINT = 9223372036854775807;
+SET @b /= CAST(2 AS TINYINT);
+SELECT 'BigInt /= TinyInt' AS Test, @b AS Result;
+GO
+~~START~~
+varchar#!#bigint
+BigInt /= TinyInt#!#4611686018427387903
+~~END~~
+
+
+-- TinyInt %= SmallInt
+DECLARE @t2 TINYINT = 255;
+SET @t2 %= CAST(100 AS SMALLINT);
+SELECT 'TinyInt %= SmallInt' AS Test, @t2 AS Result;
+GO
+~~START~~
+varchar#!#tinyint
+TinyInt %= SmallInt#!#55
+~~END~~
+
+
+-- Logical Operators
+SELECT 'BigInt XOR TinyInt' AS Test,
+	CASE 
+		WHEN ((CAST(1 AS BIGINT) > 0) AND NOT (CAST(0 AS TINYINT) > 0)) 
+			OR (NOT (CAST(1 AS BIGINT) > 0) AND (CAST(0 AS TINYINT) > 0))
+		THEN 1 
+		ELSE 0 
+	END AS Result;
+GO
+~~START~~
+varchar#!#int
+BigInt XOR TinyInt#!#1
+~~END~~
+
+
+SELECT (CAST(255 AS TINYINT) + CAST(32767 AS SMALLINT)) * CAST(2 AS INT);
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT (CAST(2147483647 AS INT) / CAST(255 AS TINYINT)) - CAST(32767 AS SMALLINT);
+GO
+~~START~~
+int
+8388737
+~~END~~
+
+
+SELECT CAST(9223372036854775807 AS BIGINT) % (CAST(32767 AS SMALLINT) * CAST(255 AS TINYINT))
+GO
+~~START~~
+bigint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+-- Complex queries
+CREATE TABLE testexactnumeric_emp_babel_5621 (
+	id INT PRIMARY KEY,
+	name VARCHAR(50),
+	department_id TINYINT,
+	salary SMALLINT
+);
+GO
+
+CREATE TABLE testexactnumeric_dept_babel_5621 (
+	id TINYINT PRIMARY KEY,
+	name VARCHAR(50),
+	budget INT
+);
+GO
+
+CREATE TABLE testexactnumeric_proj_babel_5621 (
+	id SMALLINT PRIMARY KEY,
+	name VARCHAR(50),
+	department_id TINYINT,
+	cost BIGINT
+);
+GO
+
+-- Insert sample data
+INSERT INTO testexactnumeric_emp_babel_5621 VALUES 
+(1, 'John Doe', 1, 5000),
+(2, 'Jane Smith', 2, 6000),
+(3, 'Bob Johnson', 1, 4500),
+(4, 'Alice Brown', 3, 5500);
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO testexactnumeric_dept_babel_5621 VALUES
+(1, 'IT', 1000000),
+(2, 'HR', 500000),
+(3, 'Finance', 750000);
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO testexactnumeric_proj_babel_5621 VALUES
+(1, 'Project A', 1, 500000),
+(2, 'Project B', 2, 250000),
+(3, 'Project C', 1, 750000),
+(4, 'Project D', 3, 1000000);
+GO
+~~ROW COUNT: 4~~
+
+
+-- Multiple join conditions
+SELECT e.name AS employee_name, d.name AS department_name, p.name AS project_name
+FROM testexactnumeric_emp_babel_5621 e
+JOIN testexactnumeric_dept_babel_5621 d ON e.department_id = d.id
+JOIN testexactnumeric_proj_babel_5621 p ON d.id = p.department_id AND e.salary < p.cost
+WHERE e.id > 0 AND d.budget > 100000 AND p.cost < 1000000;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+John Doe#!#IT#!#Project C
+John Doe#!#IT#!#Project A
+Jane Smith#!#HR#!#Project B
+Bob Johnson#!#IT#!#Project C
+Bob Johnson#!#IT#!#Project A
+~~END~~
+
+
+-- Subquery
+SELECT e.name, e.salary
+FROM testexactnumeric_emp_babel_5621 e
+WHERE e.department_id IN (
+    SELECT d.id
+    FROM testexactnumeric_dept_babel_5621 d
+    WHERE d.budget > (SELECT AVG(cost) FROM testexactnumeric_proj_babel_5621)
+);
+GO
+~~START~~
+varchar#!#smallint
+John Doe#!#5000
+Bob Johnson#!#4500
+Alice Brown#!#5500
+~~END~~
+
+
+-- CTE
+WITH dept_project_count AS (
+    SELECT d.id, d.name, COUNT(p.id) AS project_count
+    FROM testexactnumeric_dept_babel_5621 d
+    LEFT JOIN testexactnumeric_proj_babel_5621 p ON d.id = p.department_id
+    GROUP BY d.id, d.name
+)
+SELECT e.name AS employee_name, dpc.name AS department_name, dpc.project_count
+FROM testexactnumeric_emp_babel_5621 e
+JOIN dept_project_count dpc ON e.department_id = dpc.id
+WHERE e.salary > (SELECT AVG(salary) FROM testexactnumeric_emp_babel_5621);
+GO
+~~START~~
+varchar#!#varchar#!#int
+Jane Smith#!#HR#!#1
+Alice Brown#!#Finance#!#1
+~~END~~
+
+
+--views
+CREATE VIEW testexactnumeric_emp_babel_5621_proj_summary AS
+SELECT 
+    e.id AS employee_id,
+    e.name AS employee_name,
+    d.name AS department_name,
+    COUNT(p.id) AS project_count,
+    SUM(p.cost) AS total_project_cost
+FROM testexactnumeric_emp_babel_5621 e
+JOIN testexactnumeric_dept_babel_5621 d ON e.department_id = d.id
+LEFT JOIN testexactnumeric_proj_babel_5621 p ON d.id = p.department_id
+GROUP BY e.id, e.name, d.name;
+GO
+
+-- Query using the view
+SELECT *
+FROM testexactnumeric_emp_babel_5621_proj_summary
+WHERE total_project_cost > 500000 AND project_count > 0;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#int#!#bigint
+1#!#John Doe#!#IT#!#2#!#1250000
+3#!#Bob Johnson#!#IT#!#2#!#1250000
+4#!#Alice Brown#!#Finance#!#1#!#1000000
+~~END~~
+
+
+-- Complex query combining multiple techniques
+WITH high_budget_depts AS (
+    SELECT id, name, budget
+    FROM testexactnumeric_dept_babel_5621
+    WHERE budget > (SELECT AVG(budget) FROM testexactnumeric_dept_babel_5621)
+)
+SELECT 
+    e.name AS employee_name,
+    hbd.name AS department_name,
+    p.name AS project_name,
+    e.salary,
+    p.cost AS project_cost
+FROM testexactnumeric_emp_babel_5621 e
+JOIN high_budget_depts hbd ON e.department_id = hbd.id
+LEFT JOIN testexactnumeric_proj_babel_5621 p ON hbd.id = p.department_id
+WHERE e.salary > (
+    SELECT AVG(salary) 
+    FROM testexactnumeric_emp_babel_5621 
+    WHERE department_id = e.department_id
+)
+AND p.cost < hbd.budget
+ORDER BY hbd.budget DESC, e.salary DESC;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#bigint
+John Doe#!#IT#!#Project C#!#5000#!#750000
+John Doe#!#IT#!#Project A#!#5000#!#500000
+~~END~~
+
+
+DROP VIEW testexactnumeric_emp_babel_5621_proj_summary;
+GO
+
+DROP TABLE testexactnumeric_emp_babel_5621;
+GO
+
+DROP TABLE testexactnumeric_dept_babel_5621;
+GO
+
+DROP TABLE testexactnumeric_proj_babel_5621;
+GO
+
