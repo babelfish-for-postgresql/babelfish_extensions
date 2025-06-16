@@ -1205,3 +1205,78 @@ GO
 CREATE PARTITION SCHEME PS_CollationTest_NVarChar 
 AS PARTITION PF_CollationTest_NVarChar ALL TO ([PRIMARY]);
 GO
+
+USE master
+GO
+
+---------------------------------------------------------------
+--- Test Partition Tables with Computed columns
+---------------------------------------------------------------
+-- Create partition function for FLOAT values
+CREATE PARTITION FUNCTION partition_float_real_range_partition_func (FLOAT)
+AS RANGE RIGHT FOR VALUES 
+(
+    -1000.0,    -- Very negative values
+    -1.0,       -- Small negative values
+    0.0,        -- Zero boundary
+    1.0,        -- Small positive values
+    1000.0      -- Very positive values
+);
+GO
+
+-- Create partition scheme
+CREATE PARTITION SCHEME partition_float_real_range_partition_scheme
+AS PARTITION partition_float_real_range_partition_func ALL TO ([PRIMARY]);
+GO
+
+-- Create partitioned table without computed columns
+CREATE TABLE partition_float_real_partitioned_test (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    description VARCHAR(100)
+) ON partition_float_real_range_partition_scheme(float_val);
+GO
+
+-- Insert test data covering all partitions
+INSERT INTO partition_float_real_partitioned_test (float_val, real_val, description)
+VALUES 
+    -- Partition 1: x <= -1000.0
+    (-5000.0, -5000.0, 'Very negative - P1'),
+    (-2000.0, -2000.0, 'Very negative - P1'),
+    (-1500.0, -1500.0, 'Very negative - P1'),
+
+    -- Partition 2: -1000.0 < x <= -1.0
+    (-750.0, -750.0, 'Medium negative - P2'),
+    (-500.0, -500.0, 'Medium negative - P2'),
+    (-2.5, -2.5, 'Medium negative - P2'),
+
+    -- Partition 3: -1.0 < x <= 0.0
+    (-0.75, -0.75, 'Small negative - P3'),
+    (-0.5, -0.5, 'Small negative - P3'),
+    (-0.25, -0.25, 'Small negative - P3'),
+
+    -- Partition 4: 0.0 < x <= 1.0
+    (0.25, 0.25, 'Small positive - P4'),
+    (0.5, 0.5, 'Small positive - P4'),
+    (0.75, 0.75, 'Small positive - P4'),
+
+    -- Partition 5: 1.0 < x <= 1000.0
+    (2.5, 2.5, 'Medium positive - P5'),
+    (500.0, 500.0, 'Medium positive - P5'),
+    (750.0, 750.0, 'Medium positive - P5'),
+
+    -- Partition 6: x > 1000.0
+    (1500.0, 1500.0, 'Very positive - P6'),
+    (2000.0, 2000.0, 'Very positive - P6'),
+    (5000.0, 5000.0, 'Very positive - P6');
+GO
+
+-- Test scientific notation values
+INSERT INTO partition_float_real_partitioned_test (float_val, real_val, description)
+VALUES 
+    (-1.23E+4, -1.23E+4, 'Scientific notation large negative'),
+    (-1.23E-4, -1.23E-4, 'Scientific notation small negative'),
+    (1.23E-4, 1.23E-4, 'Scientific notation small positive'),
+    (1.23E+4, 1.23E+4, 'Scientific notation large positive');
+GO

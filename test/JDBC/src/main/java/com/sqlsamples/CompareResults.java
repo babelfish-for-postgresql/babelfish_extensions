@@ -23,7 +23,7 @@ import static java.util.Objects.isNull;
 public class CompareResults {
 
     // function to write result set into a file
-    public static void writeResultSetToFile(BufferedWriter bw, ResultSet rs, Logger logger) {
+    public static void writeResultSetToFile(BufferedWriter bw, ResultSet rs, Logger logger, FilterConditions filterConditions) {
         try {
             bw.write("~~START~~");
             bw.newLine();
@@ -32,30 +32,36 @@ public class CompareResults {
             int cols = rsmd.getColumnCount();
 
             if (outputColumnName) {
-	        for (int i = 1; i <= cols; i++) {
-                    bw.write(rsmd.getColumnName(i));
-                    if (i != cols) bw.write("#!#");
+	            for (int i = 1; i <= cols; i++) {
+                    if (shouldNotIgnoreColumn(filterConditions, i)) {
+                        bw.write(rsmd.getColumnName(i));
+                        if (i != cols) bw.write("#!#");
+                    }                    
                 }
                 bw.newLine();
-	    }
+	        }
 
             for (int i = 1; i <= cols; i++) {
-                bw.write(rsmd.getColumnTypeName(i));
-                if (i != cols) bw.write("#!#");
+                if (shouldNotIgnoreColumn(filterConditions, i)) {
+                    bw.write(rsmd.getColumnTypeName(i));
+                    if (i != cols) bw.write("#!#");
+                }
             }
             bw.newLine();
 
             while (rs.next()) {
                 for (int i = 1; i <= cols; i++) {
-                    if(isNull(rs.getObject(i))){
-                        bw.write("<NULL>");
-                    } else {
-                        String str = rs.getString(i);
-                        str = str.replaceAll("[\r\n]+", "<newline>");
-                        bw.write(str);
-                    }
+                    if (shouldNotIgnoreColumn(filterConditions, i)) {
+                        if(isNull(rs.getObject(i))){
+                            bw.write("<NULL>");
+                        } else {
+                            String str = rs.getString(i);
+                            str = str.replaceAll("[\r\n]+", "<newline>");
+                            bw.write(str);
+                        }
 
-                    if (i != cols) bw.write("#!#");
+                        if (i != cols) bw.write("#!#");
+                    }
                 }
                 bw.newLine();
             }
@@ -71,6 +77,10 @@ public class CompareResults {
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
         }
+    }
+
+    private static boolean shouldNotIgnoreColumn(FilterConditions filterConditions, int col) {
+        return isNull(filterConditions) || isNull(filterConditions.getColsToIgnore()) || !filterConditions.getColsToIgnore().contains(col);
     }
 
     // function to write the tuple, result set cursor is pointing to, into a file
@@ -135,9 +145,8 @@ public class CompareResults {
     }
 
     // processes all the results sequentially that we get from executing a JDBC Statement
-    static void processResults(Statement stmt, BufferedWriter bw, int resultsProcessed, boolean resultSetExist, boolean warningExist, Logger logger) {
+    static void processResults(Statement stmt, BufferedWriter bw, int resultsProcessed, boolean resultSetExist, boolean warningExist, Logger logger, FilterConditions filterConditions) {
         int updateCount = -9;  // initialize to impossible value
-
         while (true) {
             boolean exceptionOccurred = true;
             do {
@@ -152,7 +161,7 @@ public class CompareResults {
                 }
                 resultsProcessed++;
             } while (exceptionOccurred);
-
+            
             if ((!resultSetExist) && (updateCount == -1)) {
                 break;
             }
@@ -166,7 +175,10 @@ public class CompareResults {
             }
             if (resultSetExist) {
                 try (ResultSet rs = stmt.getResultSet()) {
-                    writeResultSetToFile(bw, rs, logger);
+                    if (resultsProcessed == 1)
+                        writeResultSetToFile(bw, rs, logger, filterConditions);
+                    else 
+                        writeResultSetToFile(bw, rs, logger, null);
                 } catch (SQLException e) {
                     handleSQLExceptionWithFile(e, bw, logger);
                 }

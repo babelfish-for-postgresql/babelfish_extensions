@@ -3684,10 +3684,11 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 									new_record_bbf_schema,
 									new_record_nulls_bbf_schema);
 
-	/* Insert new record in the bbf_authid_user_ext table */
+	/* Insert new record in the babelfish_schema_permissions table */
 	CatalogTupleInsert(bbf_schema_rel, tuple_bbf_schema);
+	heap_freetuple(tuple_bbf_schema);
 
-	/* Close bbf_authid_user_ext, but keep lock till commit */
+	/* Close babelfish_schema_permissions, but keep lock till commit */
 	table_close(bbf_schema_rel, RowExclusiveLock);
 
 	/* make sure later steps can see the entry added here */
