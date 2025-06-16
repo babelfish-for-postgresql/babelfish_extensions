@@ -53,8 +53,8 @@ Could not find tests for function sys.suser_name_internal
 Could not find tests for function sys.systypes_precision_helper
 Could not find tests for function sys.timezone
 Could not find tests for function sys.tsql_get_returntypmodvalue
-Could not find upgrade tests for function sys.tsql_openxml_get_colpattern
-Could not find upgrade tests for function sys.tsql_openxml_get_xmldoc
+Could not find tests for function sys.tsql_openxml_get_colpattern
+Could not find tests for function sys.tsql_openxml_get_xmldoc
 Could not find tests for function sys.tsql_query_to_json_ffunc
 Could not find tests for function sys.tsql_query_to_json_sfunc
 Could not find tests for function sys.tsql_query_to_xml_ffunc
