@@ -59,6 +59,10 @@ go
 ~~ERROR (Message: User 'guest' cannot be dropped, it can only be disabled. The user is already disabled in the current database.)~~
 
 
+-- re-enabling connect on guest user
+grant connect to guest;
+go
+
 -- reset the login password
 alter login grant_connect_abc with password = 'Babel123'
 go
