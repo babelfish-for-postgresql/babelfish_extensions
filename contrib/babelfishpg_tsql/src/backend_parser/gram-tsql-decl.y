@@ -99,7 +99,7 @@
 %type <target> tsql_output_target_el
 %type <node> tsql_alter_server_role
 
-%type <node> tsql_contains_search_condition
+%type <node> tsql_freetext_predicate_search_condition
 %type <node> tsql_pivot_expr
 %type <node> tsql_unpivot_clause
 

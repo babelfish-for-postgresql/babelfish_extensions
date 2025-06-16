@@ -1,0 +1,844 @@
+-- enable FULLTEXT
+-- tsql user=jdbc_user password=12345678
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+
+-- SELECT * FROM freetext_rewrite_prepare_v1
+-- GO
+
+-- EXEC freetext_rewrite_prepare_p1
+-- GO
+
+-- Full syntax of freetext: https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/queries/freetext-transact-sql.md
+
+-- Test basic freetext use: ... freetext({col_name | column_list}, <freetext_search_string>) ...
+
+
+-- sys.babelfish_freetext_rewrite()
+SELECT sys.babelfish_freetext_rewrite('"one two three four"');
+GO
+
+SELECT sys.babelfish_freetext_rewrite('"one   @ two    ^ three"');
+GO
+
+SELECT sys.babelfish_freetext_rewrite('"one @ two"');
+GO
+
+SELECT sys.babelfish_freetext_rewrite('one "two"')
+GO
+
+SELECT sys.babelfish_freetext_rewrite('one"')
+GO
+
+SELECT sys.babelfish_freetext_rewrite('one:  ')
+GO
+
+SELECT sys.babelfish_freetext_rewrite('  :one')
+GO
+
+SELECT sys.babelfish_freetext_rewrite('   "one    two"')
+GO
+
+SELECT sys.babelfish_freetext_rewrite('"one   two  "    ')
+GO
+
+SELECT sys.babelfish_freetext_rewrite('     "    one      two   "  three "    ')
+GO
+
+SELECT sys.babelfish_freetext_rewrite('"         one"')
+GO
+
+SELECT sys.babelfish_freetext_rewrite('"much of the"')
+GO
+
+
+-- tab character in search string
+DECLARE @query VARCHAR(100)
+SET @query = '"due' + char(9) + 'to"'
+SELECT sys.babelfish_freetext_rewrite(@query)
+GO
+
+DECLARE @query VARCHAR(100)
+SET @query = '"due' + char(9) + 'to"'
+EXEC fts_freetext_vu_prepare_p1 @query
+GO
+
+-- line break
+DECLARE @query VARCHAR(100)
+SET @query = '"due' + char(10) + 'to"'
+SELECT sys.babelfish_freetext_rewrite(@query)
+GO
+
+DECLARE @query VARCHAR(100)
+SET @query = '"due' + char(10) + 'to"'
+EXEC fts_freetext_vu_prepare_p1 @query
+GO
+
+
+-- no-break space character
+declare @my_str varchar(50) = '"due'+char(160)+'to"';
+EXEC fts_freetext_vu_prepare_p1 @my_str
+GO
+
+
+-- colons, semicolons, pipes, parenthesis, etc.
+EXEC fts_freetext_vu_prepare_p1 '"one : two"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'one;two'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'one|two'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"one (two)"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"one * two"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"one<two"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"one&two"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"one~two"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"one|two"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"one$two"'
+GO
+
+
+-- valid freetext search string
+EXEC fts_freetext_vu_prepare_p1 'love'
+GO
+
+
+EXEC fts_freetext_vu_prepare_p1 'arts'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'performing'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'performance'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'quick'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'grow'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'actually'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'helped'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'version'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"come       back"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"  come          back    "'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"due to"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"per cent"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'so called'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"every month"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'as "a" result'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"in "Australia"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"daily news"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '" daily"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"daily "'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 ' "daily news"'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"daily news" '
+GO
+
+-- Case sensitive tests
+EXEC fts_freetext_vu_prepare_p1 'LOVE'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'Love'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'Helped'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 'helPed'
+GO
+
+-- Test for empty string input, should throw error
+EXEC fts_freetext_vu_prepare_p1 ''
+GO
+
+-- Test for empty string input, should throw error
+EXEC fts_freetext_vu_prepare_p1 '            '
+GO
+
+
+-- Test for empty string input, should throw error
+EXEC fts_freetext_vu_prepare_p1 NULL
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '  "" '
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '  ""'
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '"" '
+GO
+
+EXEC fts_freetext_vu_prepare_p1 '" "'
+GO
+
+
+-- Transactionality test
+BEGIN TRANSACTION;
+EXEC fts_freetext_vu_prepare_p1 '   "  daily news            " '
+COMMIT TRANSACTION;
+GO
+
+
+
+-- combination of spaces, tabs and line break
+DECLARE @a VARCHAR(100)
+SET @a = 'beer'+ char(10) +'And' + char(10) + ' wine'
+EXEC fts_freetext_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = '"french' + char(10) + 'tarts"' + char(9) + ' or ' + char(10) + 'pastry'
+EXEC fts_freetext_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'wine And'+ char(9) + char(10) + ' nOt resveratrol'
+EXEC fts_freetext_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft anD '+ char(9) + 'Not' + char(9) + '"helicopter"'
+EXEC fts_freetext_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft' + char(9) + 'anD ' + char(10) + char(10) + ' NoT' + char(10) + '" helicopter"'
+EXEC fts_freetext_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'Resveratrol' + char(9) + 'AND Rats or "hear" "loud' + char(9) + 'noises"'
+EXEC fts_freetext_vu_prepare_p1 @a
+GO
+
+
+-- Common Table Expression
+WITH fts_freetext_vu_cte1 AS (
+    SELECT *
+    FROM fts_freetext_vu_t
+    WHERE freetext(txt, 'resveratrol grape and wine')
+)
+SELECT * FROM fts_freetext_vu_cte1
+GO
+
+WITH fts_freetext_vu_cte2 AS (
+    SELECT *
+    FROM fts_freetext_vu_t
+)
+SELECT *
+FROM fts_freetext_vu_cte2
+WHERE freetext(txt, 'resveratrol grape and wine')
+GO
+
+-- Special Character cases
+SELECT * FROM special_char_t WHERE freetext(name, '"one           two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one''two');
+SELECT * FROM special_char_t WHERE freetext(name, 'one`two');
+SELECT * FROM special_char_t WHERE freetext(name, 'one_two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one@two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one&two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one | two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one ! two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one#two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one$two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one%two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one*two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one-two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one+two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one=two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one\two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one;two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one<two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one>two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one.two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one?two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one/two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one:two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one: two"');
+GO
+
+-- syntax error test_special_char_ts
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one(two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one)two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one{two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one}two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one[two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one[two"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one]two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one(two)"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one{two}');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one[two]');
+GO
+
+
+-- double quotes special_char_t
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one two"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one two"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one two"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one}two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one[two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one]two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one(two)"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one{two}"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one[two]"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one(two)(}[]three"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one"two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one      `  two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one " two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one" two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one(two)"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one:');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, ':one');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, ':one:');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '":one"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '" :one"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one:"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one: "');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, 'one@#$two');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one $%#! two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one # $ % ^ two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one #        $ %    ^      two"');
+GO
+
+SELECT * FROM special_char_t WHERE freetext(name, '"one$two three %$@ four"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one@two@three');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one _?` two"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one `'' two __` three"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one``two');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one__two');
+GO
+
+-- Tests for 2 special characters combination strings
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one   @  two      @ three"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one   @  two * three"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one   ^  two ` three"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one   %  two _ three"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one   #  two '' three"');
+GO
+
+-- Tests for 3 special characters combination strings
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one@two@three@four');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one@two`three_four');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one''two`three_four');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one#two''three`four');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one @ two @ three @ four"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one   # two ` three _ four"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one * two '' three ` four"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one _ two % three # four"');
+GO
+
+-- Tests for 4 special characters combination strings
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one@two@three@four@five');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one`two-three_four''five');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, 'one_two`three*four%five');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one @ two ` three _ four '' five "');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one % two '' three - four ` five"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one * two < three > four : five"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"one < two _ three '' four `     five"');
+GO
+
+SELECT * FROM special_char_t WHERE FREETEXT(name, '"');
+GO
+
+SELECT t.name FROM special_char_t t WHERE FREETEXT(t.name, '"one "three"four" two"');
+GO
+
+SELECT * FROM special_char_t t WHERE FREETEXT(t.name, 'one');
+GO
+
+SELECT * FROM special_char_t t WHERE FREETEXT(t.name, 'two');
+GO
+
+SELECT t.* FROM special_char_t t WHERE FREETEXT(t.name, 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext(.t.name, 'one');
+GO
+
+SELECT * FROM special_char_t t WHERE freetext(t..name, 'one');
+GO
+
+SELECT t..name FROM special_char_t t WHERE freetext(t.name, 'one');
+GO
+
+SELECT t.name FROM special_char_t WHERE freetext(t.name, 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext(x.name, 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext(x.t.name, 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext(t,name, 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext(.name, 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext(t., 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext(t.., 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext(, 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext(t.txt, 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext(b, 'one');
+GO
+
+SELECT t.name FROM special_char_t t WHERE freetext('t.name', '"one two"');
+GO
+
+SELECT name as txt FROM special_char_t WHERE freetext(txt, 'hello');
+GO
+
+SELECT * FROM new_schema_freetext_t.test_t t WHERE freetext(t.name, 'one');
+GO
+
+SELECT * FROM new_schema_freetext_t.test_t t WHERE freetext(new_schema_freetext_t.t.name, 'one');
+GO
+
+SELECT * FROM new_schema_freetext_t.test_t t WHERE freetext(new_schema_freetext_t.test_t.name, 'one');
+GO
+
+SELECT * FROM new_schema_freetext_t.test_t WHERE freetext(name, 'one');
+GO
+
+use freetext_test_db;
+GO
+
+SELECT * FROM freetext_test_db.new_schema_freetext.test_t t WHERE freetext(t.name, 'one');
+GO
+
+SELECT * FROM freetext_test_db.new_schema_freetext.test_t t WHERE freetext(freetext_test_db.new_schema_freetext.t.name, 'one');
+GO
+
+SELECT * FROM freetext_test_db.new_schema_freetext.test_t WHERE freetext(name, 'one');
+GO
+
+SELECT * FROM freetext_test_db.new_schema_freetext.test_t WHERE freetext(freetext_test_db.new_schema_freetext.test_t.name, 'one');
+GO
+
+
+-- Multiple column test cases for the relation fts_freetext_multicol_t
+-- gives error as fulltext index is still not created
+SELECT * FROM fts_freetext_multicol_t WHERE freetext(txt1, '"human quantum')
+GO
+
+CREATE FULLTEXT INDEX ON fts_freetext_multicol_t(
+        txt1, 
+        txt2, 
+        txt3, 
+        txt4) KEY INDEX uid
+GO
+
+
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((txt1, txt2, txt4), '"Artificial Intelligence"' )
+GO
+
+DROP FULLTEXT INDEX ON fts_freetext_multicol_t
+GO
+
+CREATE FULLTEXT INDEX ON fts_freetext_multicol_t(
+        txt1, 
+        txt2) KEY INDEX uid
+GO
+
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((txt1, txt2), '"The human genome"' )
+GO
+
+-- negative test
+-- should throw an error as there exists no column with the name txt5
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((txt1, txt5), '"The Industrial Revolution"')
+GO
+
+-- NULL test
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((txt1, txt2), '')
+GO
+
+DROP FULLTEXT INDEX ON fts_freetext_multicol_t
+GO
+
+CREATE FULLTEXT INDEX ON fts_freetext_multicol_t(
+        txt1, 
+        txt2,
+        txt3,
+        txt4) KEY INDEX uid
+GO
+
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), 'genome DNA');
+GO
+
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((
+        txt1,
+        txt2,
+        txt3,
+        txt4), 'Renaissance "Ancient Egyptian"');
+GO
+
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '"Artificial Intelligence" AND technology OR computing');
+GO
+
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), 'art "artist" Picasso');
+GO
+
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), 'quantum physics computing "calculation" genome');
+GO
+
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), 'blockchain "cloud computing" technology genome DNA');
+GO
+
+SELECT * FROM fts_freetext_multicol_t WHERE freetext((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '"Starry Night" symphony Mozart "van Gogh" Shakespeare');
+GO
+
+
+-- Test cases for the relation new_schema_freetext.multicol_freetext_tb
+SELECT * FROM new_schema_freetext.multicol_freetext_tb WHERE freetext((txt, val), 'Product-A123')
+GO
+
+-- should throw an error as the previous full text index is not dropped
+CREATE FULLTEXT INDEX ON new_schema_freetext.multicol_freetext_tb(
+        val, 
+        chr) KEY INDEX usr
+GO
+
+DROP FULLTEXT INDEX ON new_schema_freetext.multicol_freetext_tb
+GO
+
+CREATE FULLTEXT INDEX ON new_schema_freetext.multicol_freetext_tb(
+        txt, 
+        val, 
+        chr) KEY INDEX usr
+GO
+
+SELECT * FROM new_schema_freetext.multicol_freetext_tb WHERE freetext((
+        multicol_freetext_tb.txt, 
+        val), '"brown fox"')
+GO
+
+SELECT * FROM new_schema_freetext.multicol_freetext_tb WHERE freetext((
+        multicol_freetext_tb.val, 
+        multicol_freetext_tb.chr), 'TEST-999')
+GO
+
+SELECT * FROM new_schema_freetext.multicol_freetext_tb WHERE freetext((
+        new_schema_freetext.multicol_freetext_tb.txt, 
+        multicol_freetext_tb.chr), 'three')
+GO
+
+SELECT * FROM new_schema_freetext.multicol_freetext_tb WHERE freetext((
+        new_schema_freetext.multicol_freetext_tb.txt, 
+        new_schema_freetext.multicol_freetext_tb.val, 
+        chr), 'Invoice/001')
+GO
+
+-- NULL test
+SELECT * FROM new_schema_freetext.multicol_freetext_tb WHERE freetext((
+        txt, 
+        val, 
+        chr), '')
+GO
+
+-- A stop word used as a predicate, should give warning that only a stop word is used in predicate, but does not give the warning
+SELECT * FROM new_schema_freetext.multicol_freetext_tb WHERE freetext((
+        txt, 
+        val, 
+        chr), 'The')
+GO
+
+-- Phrase made of only stop words is used as a predicate, should give warning and no result, but gives ambiguous result result
+SELECT * FROM new_schema_freetext.multicol_freetext_tb WHERE freetext((
+        txt,
+        val, 
+        chr), '"To be"')
+GO
+
+-- Throws error as the column name is not valid
+SELECT * FROM new_schema_freetext.multicol_freetext_tb WHERE freetext(( 
+        ,
+        val, 
+        chr), '"and no play"')
+GO
+
+-- Throws error as NULL is passed as a column
+SELECT * FROM new_schema_freetext.multicol_freetext_tb WHERE freetext((
+        txt, 
+        NULL, 
+        chr), 'Order_789')
+GO
+
+-- Test cases for content_tb
+CREATE UNIQUE INDEX ucid ON content_tb(id)
+GO
+
+CREATE FULLTEXT INDEX ON content_tb(
+        text_column,
+        char_column,
+        varchar_column,
+        ntext_column,
+        nchar_column) KEY INDEX ucid
+GO
+
+SELECT * FROM content_tb WHERE freetext((
+        text_column, 
+        char_column, 
+        varchar_column), '"Planning phase"')
+GO
+
+-- Case sensitivity of column names
+SELECT * FROM content_tb WHERE freetext((
+        TEXT_COLUMN, 
+        char_column, 
+        Varchar_Column), '"Planning phase"')
+GO
+
+-- should throw error as 'nvarchar_column' is not fulltext index
+SELECT * FROM content_tb WHERE freetext((
+        text_column,
+        char_column,
+        varchar_column,
+        nvarchar_column,
+        ntext_column,
+        nchar_column), 'documentation')
+GO
+
+-- disable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO

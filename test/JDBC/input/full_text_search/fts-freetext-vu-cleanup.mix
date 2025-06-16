@@ -1,0 +1,83 @@
+-- enable FULLTEXT
+-- tsql user=jdbc_user password=12345678
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+
+-- DROP VIEW freetext_rewrite_prepare_v1
+-- GO
+
+-- DROP PROCEDURE freetext_rewrite_prepare_p1
+-- GO
+
+DROP PROCEDURE fts_freetext_vu_prepare_p1;
+GO
+
+DROP FULLTEXT INDEX ON fts_freetext_vu_t;
+GO
+
+-- DROP VIEW fts_freetext_pgconfig_v1
+-- GO
+
+DROP VIEW fts_freetext_v1
+GO
+
+DROP TABLE IF EXISTS fts_freetext_vu_t
+GO
+
+drop fulltext index on special_char_t;
+go
+
+drop table special_char_t;
+go
+
+drop fulltext index on new_schema_freetext_t.test_t;
+go
+
+drop table new_schema_freetext_t.test_t;
+go
+
+drop schema new_schema_freetext_t;
+go
+
+use freetext_test_db;
+go
+
+drop fulltext index on new_schema_freetext.test_t;
+go
+
+drop table new_schema_freetext.test_t;
+go
+
+DROP TABLE IF EXISTS ft_index_limit_t
+GO
+
+DROP FULLTEXT INDEX ON fts_freetext_multicol_t
+GO
+
+DROP TABLE IF EXISTS fts_freetext_multicol_t
+GO
+
+DROP FULLTEXT INDEX ON content_tb
+GO
+
+DROP TABLE IF EXISTS content_tb
+GO
+
+DROP FULLTEXT INDEX ON new_schema_freetext.multicol_freetext_tb
+GO
+
+DROP TABLE IF EXISTS new_schema_freetext.multicol_freetext_tb
+GO
+
+DROP SCHEMA IF EXISTS fts_schema
+GO
+
+use master;
+go
+
+drop database freetext_test_db;
+go
+
+-- disable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO

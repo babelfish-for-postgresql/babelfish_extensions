@@ -73,11 +73,11 @@ static bool isNVarCharType(char *typenameStr);
 static Node *TsqlJsonModifyMakeFuncCall(Node *expr, Node *path, Node *newValue);
 static bool is_json_query(List *name);
 
-static Node *TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner);
+static Node *TsqlExpressionFreetextPredicate(List *colId, Node *search_expr, core_yyscan_t yyscanner, bool is_freetext);
 static A_Expr *createTSMatchExpr(Node *lexpr, Node *rexpr);
 static Node *createTSOrExpr(Node *lexpr, Node *rexpr);
 static Node *makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig);
-static Node *makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig);
+static Node *makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig, bool is_freetext);
 
 char	   *construct_unique_index_name(char *index_name, char *relation_name);
 

@@ -789,19 +789,19 @@ is_json_query(List *name)
 }
 
 /*
-* Parse T-SQL CONTAINS predicate. Currently supports 
-* ... CONTAINS(column_name | (column_list), '<contains_search_condition>') ...
+* Parse T-SQL FREETEXT predicate. Currently supports 
+* ... CONTAINS({column_name | (column_list)}, '<contains_search_condition>') ...
+* ... FREETEXT({column_name | (column_list)}, '<freetext_search_condition>') ...
 * This function transform it into a Postgres AST that stands for
-* to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>'))
+* to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, <translated_search_condition>)
 * for column_list
-* to_tsvector(pgconfig, col_1) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>') OR
-* to_tsvector(pgconfig, col_2) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>') OR
-* ...
-* to_tsvector(pgconfig, col_n) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')
-* where pgconfig = babelfish_fts_contains_pgconfig('<contains_search_condition>')
+* to_tsvector(pgconfig, col_1) @@ to_tsquery(pgconfig, <translated_search_condition>) OR
+* to_tsvector(pgconfig, col_2) @@ to_tsquery(pgconfig, <translated_search_condition>) OR
+* where pgconfig = babelfish_fts_contains_pgconfig('<search_condition>')
+* <translated_search_condition> is the modified <search_condition> in Postgres format
 */
 static Node *
-TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
+TsqlExpressionFreetextPredicate(List *colId, Node *search_expr, core_yyscan_t yyscanner, bool is_freetext)
 {
 	Node *fts = NULL;
 	A_Expr *column_clause;
@@ -813,7 +813,7 @@ TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 	result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
 	foreach(column, colId)
 	{
-		Node * query = makeToTSQueryFuncCall(search_expr, result_pgconfig);
+		Node * query = makeToTSQueryFuncCall(search_expr, result_pgconfig, is_freetext);
 		Node * vec = makeToTSVectorFuncCall((column)->ptr_value, yyscanner, result_pgconfig);
 		column_clause = createTSMatchExpr(vec, query);
 		
@@ -920,17 +920,32 @@ makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
 
 /* Transfrom '<contains_search_condition>' into to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')) */
 static Node *
-makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig)
-{
-    List		*args;
-    Node		*result_rewrite;
-    List		*args_rewrite;
+makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig, bool is_freetext){
+    	List	*args;
+	List	*args_rewrite;
+	Node	*result_rewrite;
 
-    args_rewrite = list_make1(search_expr);
-    result_rewrite = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_rewrite"), args_rewrite, COERCE_EXPLICIT_CALL, -1);
+	args_rewrite = list_make1(search_expr);
 
-    args = list_make2(pgconfig, result_rewrite);
-    return (Node *) makeFuncCall(list_make1(makeString("to_tsquery")), args, COERCE_EXPLICIT_CALL, -1);
+	/* 
+	 * If the search string is from the FREETEXT clause
+	 */
+	if(is_freetext)
+	{
+		result_rewrite = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_freetext_rewrite"), args_rewrite, COERCE_EXPLICIT_CALL, -1);
+	}
+
+	/* 
+	 * If the search string is from the CONTAINS clause
+	 */
+	else
+	{
+		result_rewrite = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_rewrite"), args_rewrite, COERCE_EXPLICIT_CALL, -1);
+	}
+	
+	args = list_make2(pgconfig, result_rewrite);
+
+    	return (Node *) makeFuncCall(list_make1(makeString("to_tsquery")), args, COERCE_EXPLICIT_CALL, -1);
 }
 
 

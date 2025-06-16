@@ -2094,9 +2094,13 @@ func_expr_common_subexpr:
 							parser_errposition(@1)));
 					}
 				}
-			| TSQL_CONTAINS '(' opt_var_name_list ',' tsql_contains_search_condition ')'
+			| TSQL_CONTAINS '(' opt_var_name_list ',' tsql_freetext_predicate_search_condition ')'
 				{
-					$$ = TsqlExpressionContains($3, $5, yyscanner);
+					$$ = TsqlExpressionFreetextPredicate($3, $5, yyscanner, false);
+				}
+			| TSQL_FREETEXT '(' opt_var_name_list ',' tsql_freetext_predicate_search_condition ')'
+				{
+					$$ = TsqlExpressionFreetextPredicate($3, $5, yyscanner, true);
 				}
 			| TSQL_LOG '(' a_expr ')'
 				{
@@ -2143,7 +2147,7 @@ opt_var_name_list:
  				}
  		;
 
-tsql_contains_search_condition:
+tsql_freetext_predicate_search_condition:
 			a_expr
 				{
 					$$ = $1;
@@ -4859,6 +4863,7 @@ reserved_keyword:
 
 bare_label_keyword:
 			  TSQL_CONTAINS
+			| TSQL_FREETEXT
 		;
 
 privilege:

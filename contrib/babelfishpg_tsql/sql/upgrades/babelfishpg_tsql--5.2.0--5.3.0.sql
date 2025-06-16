@@ -681,6 +681,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
+
+-- This function performs string rewriting for the full text search FREETEXT predicate
+-- in Babelfish
+-- For example, a T-SQL query 
+-- SELECT * FROM t WHERE FREETEXT(txt, '"good old days"')
+-- is rewritten into a Postgres query 
+-- SELECT * FROM t WHERE to_tsvector('fts_contains', txt) @@ to_tsquery('fts_contains', 'good | old | days')
+-- In particular, the string constant '"good old days"' gets rewritten into 'good | old | days'
+-- This function performs the string rewriting from '"good old days"' to 'good | old | days'
+CREATE OR REPLACE FUNCTION sys.babelfish_freetext_rewrite(IN phrase text) RETURNS TEXT AS
+'babelfishpg_tsql', 'babelfish_freetext_rewrite'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 /*
  * Updates typmod values in pg_proc for smallmoney/money data types in
  * PLTSQL procedures/functions, defined in babelfish_namespace_ext schemas.
