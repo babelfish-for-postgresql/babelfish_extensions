@@ -42,7 +42,6 @@ DROP VIEW TextFromGeometryline
 
 DROP VIEW BinaryFromGeometryline
 
-
 DROP VIEW SridFromGeometryline
 
 DROP VIEW EmptyGeometryline
@@ -57,25 +56,28 @@ DROP VIEW DistanceTempGeomline
 
 DROP VIEW IntersectsTempGeomline
 
-
 DROP VIEW ContainTempGeomline
 
 DROP VIEW EqualsTempGeomline
 
 DROP VIEW equals_opgeomline
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "equals_opgeomline" does not exist)~~
-
-
 
 DROP VIEW notequal_opgeomline
-~~ERROR (Code: 3701)~~
 
-~~ERROR (Message: view "notequal_opgeomline" does not exist)~~
+DROP VIEW DisjointTempGeomlinesr
 
+DROP VIEW DistanceTempGeomlinesr
 
-DROP TABLE GEOSPATIALLINEGEOM_dt
+DROP VIEW IntersectsTempGeomlinesr
+
+DROP VIEW EqualsTempGeomlinesr
+
+DROP VIEW ContainTempGeomlinesr
+
+DROP VIEW equals_opgeomlinesr
+
+DROP VIEW notequal_opgeomlinesr
+
 
 DROP VIEW DimOfgeographyline
 
@@ -84,7 +86,6 @@ DROP VIEW AreaOfgeographyline
 DROP VIEW TextFromgeographyline
 
 DROP VIEW BinaryFromgeographyline
-
 
 DROP VIEW SridFromgeographyline
 
@@ -100,22 +101,33 @@ DROP VIEW DistanceTempGeogline
 
 DROP VIEW IntersectsTempGeogline
 
-
 DROP VIEW ContainTempGeogline
 
 DROP VIEW EqualsTempGeogline
 
+DROP VIEW DisjointTempGeoglinesr
+
+DROP VIEW DistanceTempGeoglinesr
+
+DROP VIEW IntersectsTempGeoglinesr
+
+DROP VIEW EqualsTempGeoglinesr
+
+DROP VIEW ContainTempGeoglinesr
+
 DROP VIEW equals_opgeogline
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "equals_opgeogline" does not exist)~~
-
-
 
 DROP VIEW notequal_opgeogline
-~~ERROR (Code: 3701)~~
 
-~~ERROR (Message: view "notequal_opgeogline" does not exist)~~
+DROP VIEW equals_opgeoglinesr
 
+DROP VIEW notequal_opgeoglinesr
+
+
+DROP TABLE geospatialpointgeom_linesr
+
+DROP TABLE GEOSPATIALLINEGEOM_dt
+
+DROP TABLE geospatialpointgeog_linesr
 
 DROP TABLE GEOSPATIALLINEGEOG_dt

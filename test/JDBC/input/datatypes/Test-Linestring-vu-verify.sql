@@ -1,4 +1,152 @@
 
+
+-- STGeomFromText and STLineFromText tests with different SRIDs
+
+SELECT geography::STLineFromText('LINESTRING(1 2, 3 5, 6 4)', 4326);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(3 5 5, 2 4 NULL 2)', 104001);
+GO
+
+SELECT geography::STLineFromText('LINESTRING(1 3 NULL 7, 5 7 6 NULL , 4 5 2 NULL)', 4300);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(3 5 5, 2 4 NULL 2)', 4326);
+GO
+
+SELECT geometry::STLineFromText('LINESTRING(3 5 5, 2 4 NULL 2, 3 5)', 4279);
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 3 NULL 7, 5 7 6 NULL , 4 5 2 NULL)', 4733);
+GO
+
+SELECT geometry::STLineFromText('LINESTRING(3 5 5, 2 4 NULL 2, 3 5)', 7844);
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING  EMPTY', 4220);
+GO
+
+SELECT geometry::STLineFromText(NULL, 4120);
+GO
+
+
+-- Test invalid WKT (these should raise errors)
+SELECT geometry::STGeomFromText('LINESTRING(1 2, 1)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2, 2 3 4 4 1)', 4326);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2, 1)', 4326);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2, 2 3 4 4 1)', 4326);
+GO
+
+--  Negative Tests for STLineFromText
+SELECT geometry::STLineFromText('POINT(1 2 3)', 4326);
+GO
+
+SELECT geography::STLineFromText('POINT(1 2 3)', 4326);
+GO
+
+--  Negative Tests for Nan coordinates
+SELECT geometry::STGeomFromText('LINESTRING(1 2, 1 NaN, 3 4)', 0);
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2, 1 2 NaN, 3 4)', 0);
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2, 1 2, 3 4, NaN 1 2 4)', 0);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2, 1 NaN, 3 4)', 4326);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2, 1 2 NaN, 3 4)', 4326);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2, 1 2, 3 4, NaN 1 2 4)', 4326);
+GO
+
+--  Negative Tests for latitudte validation
+--  (latitude must be between -90 and 90)
+SELECT geography::STGeomFromText('LINESTRING(1 2, 1  100, 3 4)', 4326);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2, 1  3, 3 4, 10 -1000)', 4326);
+GO
+
+SELECT CAST('LINESTRING(1 2, 1  3, 3 4, 10 -1000)' AS geography);
+GO
+
+SELECT CAST('LINESTRING(1 2, 1  100, 3 4)' AS geography);
+GO
+
+SELECT CAST(CAST('LINESTRING(3 5, 2 200)' AS VARCHAR(500)) AS geography)
+GO
+
+SELECT CAST(CAST('LINESTRING(1 2, 1  3, 3 4, 10 -1000)' AS VARCHAR(500)) AS geography)
+GO
+
+SELECT CAST(0xE61000000105030000000000000000005940000000000000F03F00000000000014400000000000001C400000000000001040000000000000144000000000000000400000000000001840000000000000F8FF01000000010000000001000000FFFFFFFF0000000002 as geography);
+GO
+
+-- Input length is less than 80 bytes for x0104 type
+SELECT CAST(0xE6100000010403000000000000000000F03F000000000000084000000000000014400000000000001C40000000000000104000000000000001000000010000000001000000FFFFFFFF0000000002 as geometry)
+GO
+
+SELECT CAST(0xE6100000010403000000000000000000F03F000000000000084000000000000014400000000000001C40000000000000104000000000000001000000010000000001000000FFFFFFFF0000000002 as geography)
+GO
+
+-- Test with Invalid bytes
+SELECT CAST(0xE610000001180000000000000840000000000000144000000000000000400000000000001040 as geometry)
+GO
+
+SELECT CAST(0xE6100000010903000000000000000000F03F000000000000084000000000000014400000000000001C400000000000001040000000000000144001000000010000000001000000FFFFFFFF0000000002 as geometry)
+GO
+
+SELECT CAST(0xE610000001180000000000000840000000000000144000000000000000400000000000001040 as geography)
+GO
+
+SELECT CAST(0xE6100000010903000000000000000000F03F000000000000084000000000000014400000000000001C400000000000001040000000000000144001000000010000000001000000FFFFFFFF0000000002 as geography)
+GO
+
+-- When SRID is above 999999 for geometry 
+SELECT CAST(0x40420F0001140000000000000840000000000000144000000000000000400000000000001040 as geometry)
+GO
+
+-- When SRID is invalid for geography
+SELECT CAST(0x1027000001140000000000000840000000000000144000000000000000400000000000001040 as geography)
+GO
+
+--  Negative Tests for Nan X and Y coordinates in CASTS
+SELECT CAST(CAST(0xE61000000114000000000000F87F000000000000004000000000000008400000000000001C40 as geometry) As Varchar(MAX))
+GO
+
+SELECT CAST(CAST(0xE6100000010403000000000000000000F03F000000000000F8FF00000000000014400000000000001C400000000000001040000000000000144001000000010000000001000000FFFFFFFF0000000002 as geometry) As Varchar(MAX))
+GO
+
+SELECT CAST(CAST(0xE61000000104030000000000000000000000000000000000F03F00000000000000400000000000001440000000000000F8FF000000000000184001000000010000000001000000FFFFFFFF0000000002 as geometry) As Varchar(MAX))
+GO
+
+--  Negative Tests Empty Geometries in CASTS
+SELECT CAST(CAST(0x000000000104000000000000084000000000000069400000000000001040 as geometry) As varchar(MAX))
+GO
+
+SELECT CAST(CAST(0x000000000104000000000000000001000000fffffffffffffff04 as geometry) As varchar(MAX))
+GO
+
+SELECT CAST(CAST(0x000000000104000000000000000001000000ffffffffffffffc02 as geometry) As varchar(MAX))
+GO
+
+SELECT CAST(CAST(0x000000000104000000000000000003000000fffffffffffffff02 as geometry) As varchar(MAX))
+GO
+
+SELECT CAST(CAST(0x000000000104000000000000000002000000fffffffffffffff02 as geometry) As varchar(MAX))
+GO
+
+
 -- Test CAST ( Geometry/Geography As Varbinary )
 SELECT ID, geometryData FROM geometryAsVarbinaryline ORDER BY ID;
 GO
@@ -66,87 +214,153 @@ GO
 SELECT * FROM GEOSPATIALLINEGEOM_dt;
 go
 
-SELECT * FROM DimOfGeometryline;
-GO
-
-SELECT * FROM AreaOfGeometryline;
-GO
-
-SELECT * FROM TextFromGeometryline;
-GO
-
-SELECT * FROM BinaryFromGeometryline;
-GO
-
-SELECT * FROM SridFromGeometryline;
-GO
-
-SELECT * FROM EmptyGeometryline;
-GO
-
-SELECT * FROM ValidGeometryline;
-GO
-
-SELECT * FROM ClosedGeometryline;
-GO
-
-SELECT * FROM DisjointTempGeomline;
-GO
-
-SELECT * FROM DistanceTempGeomline;
-GO
-
-SELECT * FROM IntersectsTempGeomline;
-GO
-
-SELECT * FROM EqualsTempGeomline;
-GO
-
-SELECT * FROM ContainTempGeomline;
-GO
-
-
-
 SELECT * FROM GEOSPATIALLINEGEOG_dt;
 go
 
+-- STDimension
+SELECT * FROM DimOfGeometryline;
+GO
+
 SELECT * FROM DimOfgeographyline;
+GO
+
+-- STArea
+SELECT * FROM AreaOfGeometryline;
 GO
 
 SELECT * FROM AreaOfgeographyline;
 GO
 
+-- STAsText
+SELECT * FROM TextFromGeometryline;
+GO
+
 SELECT * FROM TextFromgeographyline;
+GO
+
+-- STAsBinary
+SELECT * FROM BinaryFromGeometryline;
 GO
 
 SELECT * FROM BinaryFromgeographyline;
 GO
 
+-- STSrid
+SELECT * FROM SridFromGeometryline;
+GO
+
 SELECT * FROM SridFromgeographyline;
+GO
+
+-- STIsEmpty
+SELECT * FROM EmptyGeometryline;
 GO
 
 SELECT * FROM Emptygeographyline;
 GO
 
+-- STIsValid
+SELECT * FROM ValidGeometryline;
+GO
+
 SELECT * FROM Validgeographyline;
+GO
+
+-- STIsClosed
+SELECT * FROM ClosedGeometryline;
 GO
 
 SELECT * FROM Closedgeographyline;
 GO
 
+-- STDisjoint
+SELECT * FROM DisjointTempGeomline;
+GO
+
 SELECT * FROM DisjointTempGeogline;
+GO
+
+SELECT * FROM DisjointTempGeoglinesr;
+GO
+
+SELECT * FROM DisjointTempGeomlinesr;
+GO
+
+-- STDistance
+SELECT * FROM DistanceTempGeomline;
+GO
+
+SELECT * FROM DistanceTempGeomlinesr;
 GO
 
 SELECT * FROM DistanceTempGeogline;
 GO
 
+SELECT * FROM DistanceTempGeoglinesr;
+GO
+
+-- STIntersects
+SELECT * FROM IntersectsTempGeomline;
+GO
+
+SELECT * FROM IntersectsTempGeomlinesr;
+GO
+
 SELECT * FROM IntersectsTempGeogline;
+GO
+
+SELECT * FROM IntersectsTempGeoglinesr;
+GO
+
+-- STEquals
+SELECT * FROM EqualsTempGeomline;
+GO
+
+SELECT * FROM EqualsTempGeomlinesr;
 GO
 
 SELECT * FROM EqualsTempGeogline;
 GO
 
+SELECT * FROM EqualsTempGeoglinesr;
+GO
+
+-- STContains
+SELECT * FROM ContainTempGeomline;
+GO
+
+SELECT * FROM ContainTempGeomlinesr;
+GO
+
 SELECT * FROM ContainTempGeogline;
 GO
 
+SELECT * FROM ContainTempGeoglinesr;
+GO
+
+-- Operator = ( Equals)
+SELECT * FROM equals_opgeomline;
+GO
+
+SELECT * FROM equals_opgeogline;
+GO
+
+SELECT * FROM equals_opgeomlinesr;
+GO
+
+SELECT * FROM equals_opgeoglinesr;
+GO
+
+-- Operator <> ( Not Equals )
+SELECT * FROM notequal_opgeomline;
+GO
+
+SELECT * FROM notequal_opgeogline;
+GO
+
+SELECT * FROM notequal_opgeomlinesr;
+GO
+
+SELECT * FROM notequal_opgeoglinesr;
+GO
 

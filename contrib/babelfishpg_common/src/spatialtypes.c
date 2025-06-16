@@ -374,6 +374,17 @@ GetGeometryTypeName(FunctionCallInfoBaseData *fcinfo, Datum geom_datum)
     return text_to_cstring(DatumGetTextP(geom_type));
 }
 
+/**
+ * Validates that all latitude values in a geometry are within valid range (-90 to 90 degrees).
+ * 
+ * @param geom_datum The PostGIS geometry object to validate
+ * @param is_flipped Flag indicating if coordinates are already flipped (lon/lat instead of lat/lon)
+ * 
+ * This function checks if all latitude values in the given geometry are within
+ * the valid range of -90 to 90 degrees. It handles both ST_Point and ST_LineString
+ * geometry types. For non-flipped coordinates, it first flips them to ensure
+ * proper validation.
+ */
 static void 
 validate_geography_latitude(Datum geom_datum, bool is_flipped)
 {
@@ -388,26 +399,28 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
     /* Initialize function call info */
     InitFunctionCallInfoData(*fcinfo_local, NULL, 2, InvalidOid, NULL, NULL);
     
-    /* Get geometry type and flip coordinates */
+    /* Get geometry type name using helper function */
     geom_type = GetGeometryTypeName(fcinfo_local, geom_datum);
     
     if (!is_flipped) 
     {
-        /* For text format, flip coordinates before validation */
+        /* For text format, flip coordinates before validation (x,y becomes y,x) */
         UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
         flipped_geom = st_flipcoordinates_p(fcinfo_local);
     } 
     else 
     {
+        /* Coordinates are already flipped, use as-is */
         flipped_geom = geom_datum;
     }
 
     if (strcmp(geom_type, "ST_Point") == 0) 
     {
-        /* Check single point latitude */
+        /* Check single point latitude - after flipping, x coordinate is latitude */
         UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
         lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
         
+        /* Validate latitude is within -90 to 90 degrees range */
         if (lat < -90.0 || lat > 90.0) 
         {
             ereport(ERROR,
@@ -417,26 +430,31 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
     } 
     else if (strcmp(geom_type, "ST_LineString") == 0) 
     {
-        /* Check all points in linestring */
+        /* Get total number of points in the linestring */
         UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
         npoints = DatumGetInt32(st_npoints_p(fcinfo_local));
         
+        /* Check each point in the linestring */
         for (i = 1; i <= npoints; i++) 
         {
+            /* Extract the i-th point from the linestring */
             UpdateFunctionCallInfo(fcinfo_local, 2, flipped_geom, Int32GetDatum(i));
             point = st_pointn_p(fcinfo_local);
             
+            /* Get latitude value (x coordinate after flipping) */
             UpdateFunctionCallInfo(fcinfo_local, 1, point);
             lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
             
+            /* Validate latitude is within -90 to 90 degrees range */
             if (lat < -90.0 || lat > 90.0)
             {
                 ereport(ERROR,
                     (errcode(ERRCODE_DATA_EXCEPTION),
-                     errmsg("Latitude values must be between -90 and 90 degrees (point %d in linestring)", i)));
+                     errmsg("Latitude values must be between -90 and 90 degrees")));
             }
         }
     }
+    /* Other geometry types are not validated in this function */
 }
 
 /* Input function for the geometry data type. */
@@ -585,6 +603,7 @@ geography_in(PG_FUNCTION_ARGS)
     /* 
      * Validate latitude values
      * Geography objects require latitude values between -90 and 90 degrees
+     * here,we don't flip coordinates as it's already done above
      */
     validate_geography_latitude(geog_datum, true);
 
@@ -1068,7 +1087,7 @@ handle_non_empty_geometry(GeometryData *geom_data)
     memcpy(result_data + POSTGIS_HEADER_SIZE, geom_data->input_data, SRID_SIZE);
     
     /* Handle coordinate data copying */
-    if (geom_data->geom_name == 0x02) 
+    if (geom_data->geom_name == LINE_TYPE) 
     {
         npoints = geom_data->has_npoints_data ? geom_data->npoints : 2;
         src = geom_data->input_data + HEADER_SIZE + (geom_data->has_npoints_data ? SRID_SIZE : 0);
@@ -1111,7 +1130,7 @@ handle_non_empty_geometry(GeometryData *geom_data)
             }
         }
     } 
-    else 
+    else /* POINT type */
     {
         /* For non-linestring geometries, simple copy of coordinate data */
         memcpy(result_data + POSTGIS_HEADER_SIZE + SRID_SIZE, 
