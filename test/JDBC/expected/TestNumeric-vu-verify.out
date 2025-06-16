@@ -227,22 +227,22 @@ numeric
 select a * b from babel_2048_t1;
 ~~START~~
 numeric
-2.3000000
-7.4000000
+2.3000
+7.4000
 ~~END~~
 
 select a / b from babel_2048_t1;
 ~~START~~
 numeric
-0.4347826086956521739
-0.5405405405405405405
+0.43478260869565217391
+0.54054054054054054054
 ~~END~~
 
 select b / a from babel_2048_t1;
 ~~START~~
 numeric
-2.3000000000000000000
-1.8500000000000000000
+2.300000000000000
+1.850000000000000
 ~~END~~
 
 select b * NULL from babel_2048_t1;
@@ -304,8 +304,8 @@ numeric
 select a+c, a-c, a*c, a/c, a%c, a%NULL from babel_2048_t1;
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#int
-4.123456789#!#-2.123456789#!#3.123456789000000#!#0.320158102881954100#!#1.000000000#!#<NULL>
-6.123456789#!#-2.123456789#!#8.246913578000000#!#0.485029940251909354#!#2.000000000#!#<NULL>
+4.123456789#!#-2.123456789#!#3.123456789#!#0.3201581028819541002#!#1.000000000#!#<NULL>
+6.123456789#!#-2.123456789#!#8.246913578#!#0.4850299402519093549#!#2.000000000#!#<NULL>
 ~~END~~
 
 # test operation between numeric and numeric
@@ -452,13 +452,14 @@ numeric
 select in4 * in5 from testnumeric_vu_prepare_tab2;
 ~~START~~
 numeric
-80367.256
+80367.25565
 ~~END~~
 
 
 #resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38; will cause arithmetic overflow
 select in3 * in4 from testnumeric_vu_prepare_tab2;
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric
+1047.555
+~~END~~
 

@@ -195,6 +195,21 @@ GO
 ~~ROW COUNT: 3~~
 
 
+CREATE TABLE revenue_data (
+    id INT,
+    q1_sales INT,
+    q2_sales INT
+);
+GO
+
+INSERT INTO revenue_data VALUES
+    (1, 100, 150),
+    (2, 200, 250),
+    (3, NULL, 350);
+GO
+~~ROW COUNT: 3~~
+
+
 CREATE TABLE product_sales (
     product_id INT,
     product_desc VARCHAR(25),
@@ -280,6 +295,11 @@ INSERT INTO sales.quarterly_data VALUES
 GO
 ~~ROW COUNT: 3~~
 
+
+CREATE VIEW sales.quarterly_view AS
+SELECT customer_id, q1 AS q1_sales, q2, q3, q4 
+FROM customer_turnover;
+GO
 
 CREATE TABLE customer_history (
     customer_id INT, 

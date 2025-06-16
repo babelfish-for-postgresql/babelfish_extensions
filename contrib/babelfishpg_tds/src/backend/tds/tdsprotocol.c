@@ -126,49 +126,76 @@ ResetTDSConnection(void)
 	Assert(TdsRequestCtrl->requestContext != NULL);
 	TdsErrorContext->err_text = "Resetting the TDS connection";
 
-	/* Make sure we've killed any active transaction */
-	pltsql_plugin_handler_ptr->pltsql_abort_any_transaction_callback();
-
-	/*
-	 * Save the transaction isolation level that should be restored after
-	 * connection reset.
-	 */
-	isolationOld = GetConfigOption("default_transaction_isolation", false, false);
-
-	/*
-	 * Start an implicit transaction block because the internal code may need
-	 * to access the catalog.
-	 */
-	StartTransactionCommand();
-	TdsDiscardAll();
-	pltsql_plugin_handler_ptr->reset_session_properties();
-	CommitTransactionCommand();
-
-	/*
-	 * Now reset the TDS top memory context and re-initialize everything.
-	 * Also, restore the transaction isolation level.
-	 */
-	MemoryContextReset(TdsMemoryContext);
-	TdsCommReset();
-	TdsProtocolInit();
-	TdsResetCache();
-	TdsResponseReset();
-	TdsResetBcpOffset();
-	TdsResetLoginFlags();
-
-	/* Retore previous isolation level when not called by sys.sp_reset_connection. */
-	if (!resetTdsConnectionFlag)
+	PG_TRY();
 	{
-		SetConfigOption("default_transaction_isolation", isolationOld,
-						PGC_BACKEND, PGC_S_CLIENT);
-	}
-	tvp_lookup_list = NIL;
+		/* Make sure we've killed any active transaction */
+		pltsql_plugin_handler_ptr->pltsql_abort_any_transaction_callback();
 
-	/* Send an environement change token is its not called via sys.sp_reset_connection procedure. */
-	if (!resetTdsConnectionFlag)
-	{
-		TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+		/*
+		 * Save the transaction isolation level that should be restored after
+		 * connection reset.
+		 */
+		isolationOld = GetConfigOption("default_transaction_isolation", false, false);
+
+		/*
+		 * Start an implicit transaction block because the internal code may need
+		 * to access the catalog.
+		 */
+		StartTransactionCommand();
+		TdsDiscardAll();
+		pltsql_plugin_handler_ptr->reset_session_properties();
+		CommitTransactionCommand();
+
+		/*
+		 * Now reset the TDS top memory context and re-initialize everything.
+		 * Also, restore the transaction isolation level.
+		 */
+		MemoryContextReset(TdsMemoryContext);
+		TdsCommReset();
+		TdsProtocolInit();
+		TdsResetCache();
+		TdsResponseReset();
+		TdsResetBcpOffset();
+		TdsResetLoginFlags();
+
+		/* Retore previous isolation level when not called by sys.sp_reset_connection. */
+		if (!resetTdsConnectionFlag)
+		{
+			SetConfigOption("default_transaction_isolation", isolationOld,
+							PGC_BACKEND, PGC_S_CLIENT);
+		}
+		tvp_lookup_list = NIL;
+
+		/* Send an environement change token is its not called via sys.sp_reset_connection procedure. */
+		if (!resetTdsConnectionFlag)
+		{
+			TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+		}
 	}
+	PG_CATCH();
+	{
+		/* Before terminating the connection, send the response to the client. */
+		EmitErrorReport();
+		FlushErrorState();
+
+		/*
+		 * Client driver terminates the connection with a
+		 * dual error token and with error 596. Otherwise
+		 * it sends the next requests before realising the
+		 * session was terminated.
+		 */
+		TdsSendError(596, 1, ERROR,
+				"Cannot continue the execution because the session is in the kill state.", 1);
+
+		TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ERROR, 0, 0);
+		TdsFlush();
+
+		/* Terminate the connection. */
+		ereport(FATAL,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Reset Connection Failed")));
+	}
+	PG_END_TRY();
 }
 
 /*
@@ -752,6 +779,30 @@ TdsSocketBackend(void)
 		}
 		PG_CATCH();
 		{
+			if (TdsRequestCtrl->phase == TDS_REQUEST_PHASE_INIT)
+			{
+				/* Before terminating the connection, send the response to the client. */
+				EmitErrorReport();
+				FlushErrorState();
+
+				/*
+				 * Client driver terminates the connection with a
+				 * dual error token and with error 596. Otherwise
+				 * it sends the next requests before realising the
+				 * session was terminated.
+				 */
+				TdsSendError(596, 1, ERROR,
+						"Cannot continue the execution because the session is in the kill state.", 1);
+
+				TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ERROR, 0, 0);
+				TdsFlush();
+
+				/* Terminate the connection. */
+				ereport(FATAL,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("Connection Initialization Failed")));
+			}
+
 			TdsRequestCtrl->phase = TDS_REQUEST_PHASE_ERROR;
 
 			/*

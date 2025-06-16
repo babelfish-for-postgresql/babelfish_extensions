@@ -13,7 +13,7 @@ atn2
 ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
-money_aggregate
+money_aggregate-before-17_6-or-16_10
 BABEL-1062
 BABEL-1189
 BABEL-1206
@@ -435,7 +435,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
-TestSpatialPoint
+TestSpatialPoint_before_17_6-or-16_10
 Test-spatial-functions
 Test-spatial-functions-2
 Test-sp_addrole
@@ -612,10 +612,15 @@ sys-login-property
 sys-fn-varbintohexsubstring-before-16_10-or-17_6
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
-test_constraint_like
+test_constraint_like-17-5-or-16-9
 unpivot
 forjson-escape
 round_return_type_test
 alter-view
 test_conv_int_to_varbinary_binary
+test_like_index
 babel_varbinary
+babel_test_numeric_int2_oper
+babel_test_numeric_int4_oper
+babel_test_numeric_int8_oper
+MONEY_OBJECT

@@ -1,0 +1,30 @@
+-- tsql
+
+-- Drop destination tables first (to avoid foreign key constraints)
+DROP TABLE IF EXISTS dest_table_chars1;
+DROP TABLE IF EXISTS dest_table_chars2;
+DROP TABLE IF EXISTS dest_table_chars3;
+DROP TABLE IF EXISTS dest_table_boundary_case;
+DROP TABLE IF EXISTS dest_table_edge_case;
+DROP TABLE IF EXISTS dest_vw_binary;
+DROP TABLE IF EXISTS dest_table_large_dataset;
+GO
+
+-- Drop views
+DROP VIEW IF EXISTS source_vw_binary;
+GO
+
+-- Drop stored procedures
+DROP PROCEDURE IF EXISTS sp_generate_large_data;
+GO
+
+-- Drop function from verify
+DROP PROCEDURE IF EXISTS sp_compare_table_counts;
+GO
+
+-- Drop source tables
+DROP TABLE IF EXISTS source_table_all_chars;
+DROP TABLE IF EXISTS source_table_boundary;
+DROP TABLE IF EXISTS source_table_edge_case;
+DROP TABLE IF EXISTS source_table_large_dataset;
+GO

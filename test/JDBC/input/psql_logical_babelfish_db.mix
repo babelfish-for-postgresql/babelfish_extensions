@@ -120,6 +120,600 @@ go
 drop database logical_database_db1
 go
 
+-- reset the GUC to default, else it may cause incorrect result/unexpected behaviour
+select set_config('psql_logical_babelfish_db_name', NULL, false);
+GO
+
+-- BABEL-5077
+CREATE DATABASE dms_db_babel_5077;
+GO
+
+USE dms_db_babel_5077;
+GO
+
+-- text, varchar
+CREATE TABLE dms_db_babel_5077_t1(dms_db_babel_5077_t1_col1 text COLLATE Chinese_PRC_CS_AS NULL, dms_db_babel_5077_t1_col2 [varchar](44) COLLATE Chinese_PRC_CS_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_t1(dms_db_babel_5077_t1_col2) VALUES ('chinese');
+GO
+
+-- text, varchar
+CREATE TABLE dms_db_babel_5077_t2(dms_db_babel_5077_t2_col1 text COLLATE Estonian_CS_AS NULL, dms_db_babel_5077_t2_col2 [varchar](44) COLLATE Estonian_CI_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_t2(dms_db_babel_5077_t2_col2) VALUES ('estonian');
+GO
+
+-- text, text
+CREATE TABLE dms_db_babel_5077_t3(dms_db_babel_5077_t3_col1 text COLLATE Chinese_PRC_CS_AS NULL, dms_db_babel_5077_t3_col2 text COLLATE Chinese_PRC_CS_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_t3(dms_db_babel_5077_t3_col2) VALUES ('chinese_text');
+GO
+
+-- varchar, varchar
+CREATE TABLE dms_db_babel_5077_t4(dms_db_babel_5077_t4_col1 [varchar](44) COLLATE Estonian_CS_AS NULL, dms_db_babel_5077_t4_col2 [varchar](44) COLLATE Estonian_CI_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_t4(dms_db_babel_5077_t4_col2) VALUES ('estonian_varchar');
+GO
+
+-- text, varchar : DATABASE_DEFAULT_COLLATION
+CREATE TABLE dms_db_babel_5077_t5(dms_db_babel_5077_t5_col1 text NULL, dms_db_babel_5077_t5_col2 [varchar](44) NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_t5(dms_db_babel_5077_t5_col2) VALUES ('default');
+GO
+
+-- FOREIGN_KEY_CONSTRAINT
+CREATE TABLE dms_db_babel_5077_t6(dms_db_babel_5077_t6_col1 text NULL, dms_db_babel_5077_t6_col2 [varchar](44) collate BBF_Unicode_General_CS_AS primary key);
+GO
+
+INSERT INTO dms_db_babel_5077_t6(dms_db_babel_5077_t6_col2) VALUES ('unicode_cs_as');
+GO
+
+CREATE TABLE dms_db_babel_5077_t7(dms_db_babel_5077_t7_col1 text NULL, dms_db_babel_5077_t7_col2 [varchar](44) collate BBF_Unicode_General_CS_AS references dms_db_babel_5077_t6(dms_db_babel_5077_t6_col2));
+GO
+
+INSERT INTO dms_db_babel_5077_t7(dms_db_babel_5077_t7_col2) VALUES ('unicode_cs_as');
+GO
+
+-- text, nvarchar
+CREATE TABLE dms_db_babel_5077_nv_t1(dms_db_babel_5077_nv_t1_col1 text COLLATE Chinese_PRC_CS_AS NULL, dms_db_babel_5077_nv_t1_col2 [nvarchar](44) COLLATE Chinese_PRC_CS_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t1(dms_db_babel_5077_nv_t1_col2) VALUES ('chinese');
+GO
+
+-- text, nvarchar
+CREATE TABLE dms_db_babel_5077_nv_t2(dms_db_babel_5077_nv_t2_col1 text COLLATE Estonian_CS_AS NULL, dms_db_babel_5077_nv_t2_col2 [nvarchar](44) COLLATE Estonian_CI_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t2(dms_db_babel_5077_nv_t2_col2) VALUES ('estonian');
+GO
+
+-- text, text
+CREATE TABLE dms_db_babel_5077_nv_t3(dms_db_babel_5077_nv_t3_col1 text COLLATE Chinese_PRC_CS_AS NULL, dms_db_babel_5077_nv_t3_col2 text COLLATE Chinese_PRC_CS_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t3(dms_db_babel_5077_nv_t3_col2) VALUES ('chinese_text');
+GO
+
+-- nvarchar, nvarchar
+CREATE TABLE dms_db_babel_5077_nv_t4(dms_db_babel_5077_nv_t4_col1 [nvarchar](44) COLLATE Estonian_CS_AS NULL, dms_db_babel_5077_nv_t4_col2 [nvarchar](44) COLLATE Estonian_CI_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t4(dms_db_babel_5077_nv_t4_col2) VALUES ('estonian_nvarchar');
+GO
+
+-- text, nvarchar : DATABASE_DEFAULT_COLLATION
+CREATE TABLE dms_db_babel_5077_nv_t5(dms_db_babel_5077_nv_t5_col1 text NULL, dms_db_babel_5077_nv_t5_col2 [nvarchar](44) NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t5(dms_db_babel_5077_nv_t5_col2) VALUES ('default');
+GO
+
+-- FOREIGN_KEY_CONSTRAINT
+CREATE TABLE dms_db_babel_5077_nv_t6(dms_db_babel_5077_nv_t6_col1 text NULL, dms_db_babel_5077_nv_t6_col2 [nvarchar](44) collate BBF_Unicode_General_CS_AS primary key);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t6(dms_db_babel_5077_nv_t6_col2) VALUES ('unicode_cs_as');
+GO
+
+CREATE TABLE dms_db_babel_5077_nv_t7(dms_db_babel_5077_nv_t7_col1 text NULL, dms_db_babel_5077_nv_t7_col2 [nvarchar](44) collate BBF_Unicode_General_CS_AS references dms_db_babel_5077_nv_t6(dms_db_babel_5077_nv_t6_col2));
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t7(dms_db_babel_5077_nv_t7_col2) VALUES ('unicode_cs_as');
+GO
+
+-- psql
+SET psql_logical_babelfish_db_name = 'dms_db_babel_5077';
+GO
+
+SHOW psql_logical_babelfish_db_name;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t1 SET dms_db_babel_5077_t1_col1 = 'collation' where dms_db_babel_5077_t1_col2 = 'chinese';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t1 SET dms_db_babel_5077_t1_col1 = 'NULL' where dms_db_babel_5077_t1_col2 = 'chinese';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t1 SET dms_db_babel_5077_t1_col2 = 'chinese' where dms_db_babel_5077_t1_col2 = 'chinese';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t1;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t2 SET dms_db_babel_5077_t2_col1 = 'collation' where dms_db_babel_5077_t2_col2 = 'estonian';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t2 SET dms_db_babel_5077_t2_col1 = 'NULL' where dms_db_babel_5077_t2_col2 = 'estonian';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t2 SET dms_db_babel_5077_t2_col2 = 'estonian' where dms_db_babel_5077_t2_col2 = 'estonian';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t2;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t3 SET dms_db_babel_5077_t3_col1 = 'collation' where dms_db_babel_5077_t3_col2 = 'chinese_text';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t3 SET dms_db_babel_5077_t3_col1 = 'NULL' where dms_db_babel_5077_t3_col2 = 'chinese_text';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t3 SET dms_db_babel_5077_t3_col2 = 'chinese_text' where dms_db_babel_5077_t3_col2 = 'chinese_text';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t3;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t4 SET dms_db_babel_5077_t4_col1 = 'collation' where dms_db_babel_5077_t4_col2 = 'estonian_varchar';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t4 SET dms_db_babel_5077_t4_col1 = 'NULL' where dms_db_babel_5077_t4_col2 = 'estonian_varchar';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t4 SET dms_db_babel_5077_t4_col2 = 'estonian_varchar' where dms_db_babel_5077_t4_col2 = 'estonian_varchar';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t4;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t5 SET dms_db_babel_5077_t5_col1 = 'collation' where dms_db_babel_5077_t5_col2 = 'default';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t5 SET dms_db_babel_5077_t5_col1 = 'NULL' where dms_db_babel_5077_t5_col2 = 'default';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t5 SET dms_db_babel_5077_t5_col2 = 'default' where dms_db_babel_5077_t5_col2 = 'default';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t5;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t6 SET dms_db_babel_5077_t6_col1 = 'collation' where dms_db_babel_5077_t6_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t6 SET dms_db_babel_5077_t6_col1 = 'NULL' where dms_db_babel_5077_t6_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t6 SET dms_db_babel_5077_t6_col2 = 'unicode_cs_as' where dms_db_babel_5077_t6_col2 = 'unicode_cs_as';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t6;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t7 SET dms_db_babel_5077_t7_col1 = 'collation' where dms_db_babel_5077_t7_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t7 SET dms_db_babel_5077_t7_col1 = 'NULL' where dms_db_babel_5077_t7_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t7 SET dms_db_babel_5077_t7_col2 = 'unicode_cs_as' where dms_db_babel_5077_t7_col2 = 'unicode_cs_as';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t7;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t1 SET dms_db_babel_5077_nv_t1_col1 = 'collation' where dms_db_babel_5077_nv_t1_col2 = 'chinese';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t1 SET dms_db_babel_5077_nv_t1_col1 = 'NULL' where dms_db_babel_5077_nv_t1_col2 = 'chinese';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t1 SET dms_db_babel_5077_nv_t1_col2 = 'chinese' where dms_db_babel_5077_nv_t1_col2 = 'chinese';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t1;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t2 SET dms_db_babel_5077_nv_t2_col1 = 'collation' where dms_db_babel_5077_nv_t2_col2 = 'estonian';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t2 SET dms_db_babel_5077_nv_t2_col1 = 'NULL' where dms_db_babel_5077_nv_t2_col2 = 'estonian';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t2 SET dms_db_babel_5077_nv_t2_col2 = 'estonian' where dms_db_babel_5077_nv_t2_col2 = 'estonian';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t2;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t3 SET dms_db_babel_5077_nv_t3_col1 = 'collation' where dms_db_babel_5077_nv_t3_col2 = 'chinese_text';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t3 SET dms_db_babel_5077_nv_t3_col1 = 'NULL' where dms_db_babel_5077_nv_t3_col2 = 'chinese_text';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t3 SET dms_db_babel_5077_nv_t3_col2 = 'chinese_text' where dms_db_babel_5077_nv_t3_col2 = 'chinese_text';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t3;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t4 SET dms_db_babel_5077_nv_t4_col1 = 'collation' where dms_db_babel_5077_nv_t4_col2 = 'estonian_nvarchar';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t4 SET dms_db_babel_5077_nv_t4_col1 = 'NULL' where dms_db_babel_5077_nv_t4_col2 = 'estonian_nvarchar';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t4 SET dms_db_babel_5077_nv_t4_col2 = 'estonian_nvarchar' where dms_db_babel_5077_nv_t4_col2 = 'estonian_nvarchar';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t4;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t5 SET dms_db_babel_5077_nv_t5_col1 = 'collation' where dms_db_babel_5077_nv_t5_col2 = 'default';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t5 SET dms_db_babel_5077_nv_t5_col1 = 'NULL' where dms_db_babel_5077_nv_t5_col2 = 'default';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t5 SET dms_db_babel_5077_nv_t5_col2 = 'default' where dms_db_babel_5077_nv_t5_col2 = 'default';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t5;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t6 SET dms_db_babel_5077_nv_t6_col1 = 'collation' where dms_db_babel_5077_nv_t6_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t6 SET dms_db_babel_5077_nv_t6_col1 = 'NULL' where dms_db_babel_5077_nv_t6_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t6 SET dms_db_babel_5077_nv_t6_col2 = 'unicode_cs_as' where dms_db_babel_5077_nv_t6_col2 = 'unicode_cs_as';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t6;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t7 SET dms_db_babel_5077_nv_t7_col1 = 'collation' where dms_db_babel_5077_nv_t7_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t7 SET dms_db_babel_5077_nv_t7_col1 = 'NULL' where dms_db_babel_5077_nv_t7_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t7 SET dms_db_babel_5077_nv_t7_col2 = 'unicode_cs_as' where dms_db_babel_5077_nv_t7_col2 = 'unicode_cs_as';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t7;
+GO
+
+RESET psql_logical_babelfish_db_name;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+USE MASTER;
+GO
+
+DROP DATABASE dms_db_babel_5077;
+GO
+
+-- create database with a non-default collation
+CREATE DATABASE dms_db_babel_5077 COLLATE latin1_general_ci_ai;
+GO
+
+USE dms_db_babel_5077;
+GO
+
+-- text, varchar
+CREATE TABLE dms_db_babel_5077_t1(dms_db_babel_5077_t1_col1 text COLLATE Chinese_PRC_CS_AS NULL, dms_db_babel_5077_t1_col2 [varchar](44) COLLATE Chinese_PRC_CS_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_t1(dms_db_babel_5077_t1_col2) VALUES ('chinese');
+GO
+
+-- text, varchar
+CREATE TABLE dms_db_babel_5077_t2(dms_db_babel_5077_t2_col1 text COLLATE Estonian_CS_AS NULL, dms_db_babel_5077_t2_col2 [varchar](44) COLLATE Estonian_CI_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_t2(dms_db_babel_5077_t2_col2) VALUES ('estonian');
+GO
+
+-- text, text
+CREATE TABLE dms_db_babel_5077_t3(dms_db_babel_5077_t3_col1 text COLLATE Chinese_PRC_CS_AS NULL, dms_db_babel_5077_t3_col2 text COLLATE Chinese_PRC_CS_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_t3(dms_db_babel_5077_t3_col2) VALUES ('chinese_text');
+GO
+
+-- varchar, varchar
+CREATE TABLE dms_db_babel_5077_t4(dms_db_babel_5077_t4_col1 [varchar](44) COLLATE Estonian_CS_AS NULL, dms_db_babel_5077_t4_col2 [varchar](44) COLLATE Estonian_CI_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_t4(dms_db_babel_5077_t4_col2) VALUES ('estonian_varchar');
+GO
+
+-- text, varchar : DATABASE_DEFAULT_COLLATION
+CREATE TABLE dms_db_babel_5077_t5(dms_db_babel_5077_t5_col1 text NULL, dms_db_babel_5077_t5_col2 [varchar](44) NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_t5(dms_db_babel_5077_t5_col2) VALUES ('default');
+GO
+
+-- FOREIGN_KEY_CONSTRAINT
+CREATE TABLE dms_db_babel_5077_t6(dms_db_babel_5077_t6_col1 text NULL, dms_db_babel_5077_t6_col2 [varchar](44) collate BBF_Unicode_General_CS_AS primary key);
+GO
+
+INSERT INTO dms_db_babel_5077_t6(dms_db_babel_5077_t6_col2) VALUES ('unicode_cs_as');
+GO
+
+CREATE TABLE dms_db_babel_5077_t7(dms_db_babel_5077_t7_col1 text NULL, dms_db_babel_5077_t7_col2 [varchar](44) collate BBF_Unicode_General_CS_AS references dms_db_babel_5077_t6(dms_db_babel_5077_t6_col2));
+GO
+
+INSERT INTO dms_db_babel_5077_t7(dms_db_babel_5077_t7_col2) VALUES ('unicode_cs_as');
+GO
+
+
+-- text, nvarchar
+CREATE TABLE dms_db_babel_5077_nv_t1(dms_db_babel_5077_nv_t1_col1 text COLLATE Chinese_PRC_CS_AS NULL, dms_db_babel_5077_nv_t1_col2 [nvarchar](44) COLLATE Chinese_PRC_CS_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t1(dms_db_babel_5077_nv_t1_col2) VALUES ('chinese');
+GO
+
+-- text, nvarchar
+CREATE TABLE dms_db_babel_5077_nv_t2(dms_db_babel_5077_nv_t2_col1 text COLLATE Estonian_CS_AS NULL, dms_db_babel_5077_nv_t2_col2 [nvarchar](44) COLLATE Estonian_CI_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t2(dms_db_babel_5077_nv_t2_col2) VALUES ('estonian');
+GO
+
+-- text, text
+CREATE TABLE dms_db_babel_5077_nv_t3(dms_db_babel_5077_nv_t3_col1 text COLLATE Chinese_PRC_CS_AS NULL, dms_db_babel_5077_nv_t3_col2 text COLLATE Chinese_PRC_CS_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t3(dms_db_babel_5077_nv_t3_col2) VALUES ('chinese_text');
+GO
+
+-- nvarchar, nvarchar
+CREATE TABLE dms_db_babel_5077_nv_t4(dms_db_babel_5077_nv_t4_col1 [nvarchar](44) COLLATE Estonian_CS_AS NULL, dms_db_babel_5077_nv_t4_col2 [nvarchar](44) COLLATE Estonian_CI_AS NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t4(dms_db_babel_5077_nv_t4_col2) VALUES ('estonian_nvarchar');
+GO
+
+-- text, nvarchar : DATABASE_DEFAULT_COLLATION
+CREATE TABLE dms_db_babel_5077_nv_t5(dms_db_babel_5077_nv_t5_col1 text NULL, dms_db_babel_5077_nv_t5_col2 [nvarchar](44) NOT NULL);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t5(dms_db_babel_5077_nv_t5_col2) VALUES ('default');
+GO
+
+-- FOREIGN_KEY_CONSTRAINT
+CREATE TABLE dms_db_babel_5077_nv_t6(dms_db_babel_5077_nv_t6_col1 text NULL, dms_db_babel_5077_nv_t6_col2 [nvarchar](44) collate BBF_Unicode_General_CS_AS primary key);
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t6(dms_db_babel_5077_nv_t6_col2) VALUES ('unicode_cs_as');
+GO
+
+CREATE TABLE dms_db_babel_5077_nv_t7(dms_db_babel_5077_nv_t7_col1 text NULL, dms_db_babel_5077_nv_t7_col2 [nvarchar](44) collate BBF_Unicode_General_CS_AS references dms_db_babel_5077_nv_t6(dms_db_babel_5077_nv_t6_col2));
+GO
+
+INSERT INTO dms_db_babel_5077_nv_t7(dms_db_babel_5077_nv_t7_col2) VALUES ('unicode_cs_as');
+GO
+
+
+-- psql
+SHOW psql_logical_babelfish_db_name;
+GO
+
+SET psql_logical_babelfish_db_name = 'dms_db_babel_5077';
+GO
+
+SHOW psql_logical_babelfish_db_name;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t1 SET dms_db_babel_5077_t1_col1 = 'collation' where dms_db_babel_5077_t1_col2 = 'chinese';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t1 SET dms_db_babel_5077_t1_col1 = 'NULL' where dms_db_babel_5077_t1_col2 = 'chinese';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t1 SET dms_db_babel_5077_t1_col2 = 'chinese' where dms_db_babel_5077_t1_col2 = 'chinese';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t1;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t2 SET dms_db_babel_5077_t2_col1 = 'collation' where dms_db_babel_5077_t2_col2 = 'estonian';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t2 SET dms_db_babel_5077_t2_col1 = 'NULL' where dms_db_babel_5077_t2_col2 = 'estonian';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t2 SET dms_db_babel_5077_t2_col2 = 'estonian' where dms_db_babel_5077_t2_col2 = 'estonian';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t2;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t3 SET dms_db_babel_5077_t3_col1 = 'collation' where dms_db_babel_5077_t3_col2 = 'chinese_text';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t3 SET dms_db_babel_5077_t3_col1 = 'NULL' where dms_db_babel_5077_t3_col2 = 'chinese_text';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t3 SET dms_db_babel_5077_t3_col2 = 'chinese_text' where dms_db_babel_5077_t3_col2 = 'chinese_text';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t3;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t4 SET dms_db_babel_5077_t4_col1 = 'collation' where dms_db_babel_5077_t4_col2 = 'estonian_varchar';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t4 SET dms_db_babel_5077_t4_col1 = 'NULL' where dms_db_babel_5077_t4_col2 = 'estonian_varchar';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t4 SET dms_db_babel_5077_t4_col2 = 'estonian_varchar' where dms_db_babel_5077_t4_col2 = 'estonian_varchar';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t4;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t5 SET dms_db_babel_5077_t5_col1 = 'collation' where dms_db_babel_5077_t5_col2 = 'default';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t5 SET dms_db_babel_5077_t5_col1 = 'NULL' where dms_db_babel_5077_t5_col2 = 'default';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t5 SET dms_db_babel_5077_t5_col2 = 'default' where dms_db_babel_5077_t5_col2 = 'default';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t5;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t6 SET dms_db_babel_5077_t6_col1 = 'collation' where dms_db_babel_5077_t6_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t6 SET dms_db_babel_5077_t6_col1 = 'NULL' where dms_db_babel_5077_t6_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t6 SET dms_db_babel_5077_t6_col2 = 'unicode_cs_as' where dms_db_babel_5077_t6_col2 = 'unicode_cs_as';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t6;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t7 SET dms_db_babel_5077_t7_col1 = 'collation' where dms_db_babel_5077_t7_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t7 SET dms_db_babel_5077_t7_col1 = 'NULL' where dms_db_babel_5077_t7_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t7 SET dms_db_babel_5077_t7_col2 = 'unicode_cs_as' where dms_db_babel_5077_t7_col2 = 'unicode_cs_as';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_t7;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t1 SET dms_db_babel_5077_nv_t1_col1 = 'collation' where dms_db_babel_5077_nv_t1_col2 = 'chinese';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t1 SET dms_db_babel_5077_nv_t1_col1 = 'NULL' where dms_db_babel_5077_nv_t1_col2 = 'chinese';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t1 SET dms_db_babel_5077_nv_t1_col2 = 'chinese' where dms_db_babel_5077_nv_t1_col2 = 'chinese';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t1;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t2 SET dms_db_babel_5077_nv_t2_col1 = 'collation' where dms_db_babel_5077_nv_t2_col2 = 'estonian';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t2 SET dms_db_babel_5077_nv_t2_col1 = 'NULL' where dms_db_babel_5077_nv_t2_col2 = 'estonian';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t2 SET dms_db_babel_5077_nv_t2_col2 = 'estonian' where dms_db_babel_5077_nv_t2_col2 = 'estonian';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t2;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t3 SET dms_db_babel_5077_nv_t3_col1 = 'collation' where dms_db_babel_5077_nv_t3_col2 = 'chinese_text';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t3 SET dms_db_babel_5077_nv_t3_col1 = 'NULL' where dms_db_babel_5077_nv_t3_col2 = 'chinese_text';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t3 SET dms_db_babel_5077_nv_t3_col2 = 'chinese_text' where dms_db_babel_5077_nv_t3_col2 = 'chinese_text';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t3;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t4 SET dms_db_babel_5077_nv_t4_col1 = 'collation' where dms_db_babel_5077_nv_t4_col2 = 'estonian_nvarchar';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t4 SET dms_db_babel_5077_nv_t4_col1 = 'NULL' where dms_db_babel_5077_nv_t4_col2 = 'estonian_nvarchar';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t4 SET dms_db_babel_5077_nv_t4_col2 = 'estonian_nvarchar' where dms_db_babel_5077_nv_t4_col2 = 'estonian_nvarchar';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t4;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t5 SET dms_db_babel_5077_nv_t5_col1 = 'collation' where dms_db_babel_5077_nv_t5_col2 = 'default';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t5 SET dms_db_babel_5077_nv_t5_col1 = 'NULL' where dms_db_babel_5077_nv_t5_col2 = 'default';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t5 SET dms_db_babel_5077_nv_t5_col2 = 'default' where dms_db_babel_5077_nv_t5_col2 = 'default';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t5;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t6 SET dms_db_babel_5077_nv_t6_col1 = 'collation' where dms_db_babel_5077_nv_t6_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t6 SET dms_db_babel_5077_nv_t6_col1 = 'NULL' where dms_db_babel_5077_nv_t6_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t6 SET dms_db_babel_5077_nv_t6_col2 = 'unicode_cs_as' where dms_db_babel_5077_nv_t6_col2 = 'unicode_cs_as';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t6;
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t7 SET dms_db_babel_5077_nv_t7_col1 = 'collation' where dms_db_babel_5077_nv_t7_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t7 SET dms_db_babel_5077_nv_t7_col1 = 'NULL' where dms_db_babel_5077_nv_t7_col2 = 'unicode_cs_as';
+GO
+
+UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t7 SET dms_db_babel_5077_nv_t7_col2 = 'unicode_cs_as' where dms_db_babel_5077_nv_t7_col2 = 'unicode_cs_as';
+GO
+
+SELECT * FROM dms_db_babel_5077_dbo.dms_db_babel_5077_nv_t7;
+GO
+
+RESET psql_logical_babelfish_db_name;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+USE master;
+GO
+
+DROP DATABASE dms_db_babel_5077;
+GO
+
+
 -- psql
 -- Cleanup
 -- Need to terminate active session before cleaning up the login
@@ -129,6 +723,9 @@ GO
 
 -- Wait to sync with another session
 SELECT pg_sleep(1);
+GO
+
+SHOW psql_logical_babelfish_db_name;
 GO
 
 -- tsql
