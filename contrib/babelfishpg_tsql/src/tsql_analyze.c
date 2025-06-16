@@ -413,7 +413,12 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		common_typmod = select_common_typmod(pstate, col_exprs, common_type);
 		topColTypes = lappend_oid(topColTypes, common_type);
 		topColTypmods = lappend_int(topColTypmods, common_typmod);
-		
+
+		if (common_type == FLOAT8OID || common_type == FLOAT4OID)
+		{
+				topColCollations = lappend_oid(topColCollations, -1);
+				continue;
+		}
 		list_free(col_exprs);
 		col_exprs = NIL;
 
