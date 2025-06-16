@@ -58,17 +58,29 @@ static void SocketSetNonblocking(bool nonblocking);
 static int	InternalFlush(bool);
 static void TdsConsumedBytes(int bytes);
 
+/* --------------------------------
+ *	GetAvailableBufferSize - returns the available buffer size
+ * --------------------------------
+ */
 size_t
 GetAvailableBufferSize()
 {
 	return TdsBufferSize - TdsSendCur;
 }
 
-void
+/* --------------------------------
+ *	FlushBuffer - Flushes existing buffer with socket set as non-blocking
+ *
+ *	returns 0 if OK, EOF if trouble
+ * --------------------------------
+ */
+int
 FlushBuffer()
 {
 	SocketSetNonblocking(false);
-	InternalFlush(false);
+	if (InternalFlush(false))
+		return EOF;
+	return 0;
 }
 
 /* Inline functions */

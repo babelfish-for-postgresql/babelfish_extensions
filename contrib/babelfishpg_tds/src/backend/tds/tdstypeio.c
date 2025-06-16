@@ -2809,12 +2809,14 @@ TdsSendPlpDataHelper(char *data, int len)
 	uint32_t	plpTerminator = PLP_TERMINATOR;
 	uint64_t	tempOffset = 0;
 	uint32_t	plpChunckLen = PLP_CHUNCK_LEN;
-	size_t		amount = 0;
+	size_t		availableBufferSpace = 0;
 
 	if ((rc = TdsPutInt64LE(len)) == 0)
 	{
 		while (true)
 		{
+			plpChunckLen = PLP_CHUNCK_LEN;         // default PLP_CHUNK_LEN
+
 			if (plpChunckLen > (len - tempOffset))
 				plpChunckLen = (len - tempOffset);
 
@@ -2822,24 +2824,31 @@ TdsSendPlpDataHelper(char *data, int len)
 			if (plpChunckLen == 0)
 				break;
 			
-			amount = GetAvailableBufferSize();
+			availableBufferSpace = GetAvailableBufferSize();
 			/*
 			 * If PLP CHUNK block cannot be stored in available buffer, 
 			 * then set PLP CHUNK LEN to size of available buffer.
+			 * 
+			 * Here plpChunckLen + sizeof(uint32_t) represents the size of chunk data 
+			 * and its length(i.e. size of uint32_t). This check will make sure that 
+			 * each PLP CHUNK and its length will remain in same packet.
 			 */
-			if ((plpChunckLen + sizeof(uint32_t)) > amount)
+			if ((plpChunckLen + sizeof(uint32_t)) > availableBufferSpace)
 			{
 				/*
 				 * If available buffer size cannot accomodate smallest chunk i.e. of size 1 byte
 				 * then flush the buffer and try again, else set PLP CHUNK LEN to size of available buffer.
 				 */
-				if (amount < (1 + sizeof(uint32_t)))
+				if (availableBufferSpace < (1 + sizeof(uint32_t)))
 				{
-					FlushBuffer();
+					rc = FlushBuffer();
+					if (rc != 0)
+						return rc;
+
 					continue;
 				}
 				else
-					plpChunckLen = amount - sizeof(uint32_t);
+					plpChunckLen = availableBufferSpace - sizeof(uint32_t);
 			}
 
 			/* need testing for "0" len */
@@ -2851,7 +2860,6 @@ TdsSendPlpDataHelper(char *data, int len)
 				return rc;
 
 			tempOffset += plpChunckLen;
-			plpChunckLen = PLP_CHUNCK_LEN;
 			Assert(tempOffset <= len);
 		}
 		rc |= TdsPutInt32LE(plpTerminator);
