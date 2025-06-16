@@ -1253,7 +1253,92 @@ bigint
 0
 ~~END~~
 
+select patindex('%abc%d','gefabcefed')
+GO
+~~START~~
+bigint
+4
+~~END~~
+
+select patindex('a%bc%','acrbcjfnr')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select patindex('a%bcd%e','arejfbcdjrjhe')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc', 'xabc')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc', 'xabc')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('abc_', 'abcx')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc_', 'xabcy')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('[abc]xyz', 'axyz')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('xyz[abc]', 'xyza')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('[abc]xyz[def]', 'axyzd')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('%%', 'testring the patindex')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('%', 'testring the patindex')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
 --With Collation
+-- Testing with different permutations of % in pattern string with different collation types
 select PATINDEX('%ing', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS EndPattern
 GO
 ~~START~~
@@ -1287,5 +1372,147 @@ go
 ~~START~~
 bigint
 0
+~~END~~
+
+select patindex('%abc%d','gefabcefed' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+4
+~~END~~
+
+select patindex('a%bc%','acrbcjfnr' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select patindex('a%bcd%e','arejfbcdjrjhe' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select patindex('a%bc%','acrbcjfnr' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select patindex('a%bcd%e','arejfbcdjrjhe' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select patindex('%abc%d','gefabcefed' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+4
+~~END~~
+
+-- Testing with different permutations of _ in pattern string with different collation types
+SELECT PATINDEX('_abc', 'xabc' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc', 'xabc' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('abc_', 'abcx' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc_', 'xabcy' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc', 'xabc' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc', 'xabc' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('abc_', 'abcx' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc_', 'xabcy' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+-- Testing with different permutations of [] in pattern string with different collation types
+SELECT PATINDEX('[abc]xyz', 'axyz' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('xyz[abc]', 'xyza' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('[abc]xyz[def]', 'axyzd' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('[abc]xyz', 'axyz' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('xyz[abc]', 'xyza' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('[abc]xyz[def]', 'axyzd' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
 ~~END~~
 

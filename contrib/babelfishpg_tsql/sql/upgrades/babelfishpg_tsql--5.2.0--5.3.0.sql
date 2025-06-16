@@ -633,7 +633,7 @@ begin
   if pattern is null or expression is null then
     return null;
   end if;
-  if pattern = '%' then
+  if pattern = '%' or pattern = '%%' then
     return 1;
   end if;
   if sys.is_collated_ai(expression) then
