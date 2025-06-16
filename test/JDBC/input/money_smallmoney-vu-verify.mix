@@ -55,6 +55,18 @@ GO
 SELECT * FROM dbo.ceilingminmoney_vu;
 GO
 
+SELECT * FROM dbo.powersmallmoney_vu;
+GO
+
+SELECT * FROM dbo.powermoney_vu;
+GO
+
+SELECT * FROM dbo.powersmallmoneyfail_vu;
+GO
+
+SELECT * FROM dbo.powermoneyfail_vu;
+GO
+
 SELECT * FROM dbo.int4smallmoney_func();
 GO
 

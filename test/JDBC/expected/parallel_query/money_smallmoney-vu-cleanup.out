@@ -66,3 +66,15 @@ GO
 
 DROP VIEW ceilingminmoney_vu;
 GO
+
+DROP VIEW powersmallmoneyfail_vu;
+GO
+
+DROP VIEW powermoneyfail_vu;
+GO
+
+DROP VIEW powermoney_vu;
+GO
+
+DROP VIEW powersmallmoney_vu;
+GO

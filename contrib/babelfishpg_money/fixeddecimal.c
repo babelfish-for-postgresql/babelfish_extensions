@@ -1837,8 +1837,9 @@ Datum
 fixeddecimalint8pl(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
-	int128		adder = (int128) PG_GETARG_INT64(1) * FIXEDDECIMAL_MULTIPLIER;
-	int128		result;
+	int64       arg2 = PG_GETARG_INT64(1);
+	int64		adder;
+	int64		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
 	if (__builtin_add_overflow(arg1, adder, &result))
@@ -1848,29 +1849,29 @@ fixeddecimalint8pl(PG_FUNCTION_ARGS)
 #else
 
 	/*
-	 * Overflow check. If the adder cannot be fit into 
-	 * 64 bit, then the result will definitely overflow
+	 * Overflow check. If the result of multiplication
+	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * returns true
 	 */
-	if (adder != (int64) adder)
+	if (pg_mul_s64_overflow(arg2, (int64) FIXEDDECIMAL_MULTIPLIER, &adder)) 
 	{
-		ereport(ERROR, 
+		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
 
-	result = (int128) arg1 + adder;
-
 	/*
-	 * Overflow check. If the result cannot be converted back
-	 * to a 64 bit result, then we can say that there is a 
-	 * overflow
+	 * Overflow check. If the result of addition
+	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * returns true
 	 */
-	if (result != (int64) result)
+	if (pg_add_s64_overflow(arg1, adder, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
+
 #endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
@@ -1880,8 +1881,9 @@ Datum
 fixeddecimalint8mi(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
-	int128		subtractor = (int128) PG_GETARG_INT64(1) * FIXEDDECIMAL_MULTIPLIER;
-	int128		result;
+	int64		arg2 = PG_GETARG_INT64(1);
+	int64		subtractor;
+	int64		result;
 
 
 #ifdef HAVE_BUILTIN_OVERFLOW
@@ -1892,10 +1894,11 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
 #else
 
 	/*
-	 * Overflow check. If the subtractor cannot be fit into 
-	 * 64 bit, then the result will definitely overflow
+	 * Overflow check. If the result of multiplication
+	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * returns true
 	 */
-	if (subtractor != (int64) subtractor)
+	if (pg_mul_s64_overflow(arg2, (int64) FIXEDDECIMAL_MULTIPLIER, &subtractor)) 
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -1904,17 +1907,16 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	result = (int128) arg1 - subtractor;
-
 	/*
-	 * Overflow check. If the result cannot be converted back
-	 * to a 64 bit result, then we can say that there is a 
-	 * overflow
+	 * Overflow check. If the result of addition
+	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * returns true
 	 */
-	if (result != (int64) result)
+	if (pg_sub_s64_overflow(arg1, subtractor, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
+	
 #endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
@@ -1934,6 +1936,19 @@ fixeddecimalint8mul(PG_FUNCTION_ARGS)
 				 errmsg("fixeddecimal out of range")));
 #else
 	result = (int128) arg1 * arg2;
+
+	/*
+	 multiplication with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
+	 in T-SQL
+	*/
+	if (arg2 > FIXEDDECIMAL_MAX || arg2 < FIXEDDECIMAL_MIN)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("fixeddecimal out of range")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
 
 	/*
 	 * Overflow check. We should not be testing based only on, if indiviudal arg (agr1)
@@ -1993,10 +2008,10 @@ fixeddecimalint8div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 division with values > FIXEDDECIMAL_MAX lead to overflow
+	 division with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
 	 in T-SQL
 	*/
-	if (arg2 > FIXEDDECIMAL_MAX)
+	if (arg2 > FIXEDDECIMAL_MAX || arg2 < FIXEDDECIMAL_MIN)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -2014,9 +2029,10 @@ fixeddecimalint8div(PG_FUNCTION_ARGS)
 Datum
 int8fixeddecimalpl(PG_FUNCTION_ARGS)
 {
-	int128		adder = (int128) PG_GETARG_INT64(0) * FIXEDDECIMAL_MULTIPLIER;
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		adder;
 	int64		arg2 = PG_GETARG_INT64(1);
-	int128		result;
+	int64		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
 	if (__builtin_add_overflow(adder, arg2, &result))
@@ -2026,10 +2042,11 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
 #else
 
 	/*
-	 * Overflow check. If the adder cannot be fit into 
-	 * 64 bit, then the result will definitely overflow
+	 * Overflow check. If the result of multiplication
+	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * returns true
 	 */
-	if (adder != (int64) adder)
+	if (pg_mul_s64_overflow(arg1, (int64) FIXEDDECIMAL_MULTIPLIER, &adder)) 
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -2037,19 +2054,17 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
-		
-
-	result = adder + arg2;
 
 	/*
-	 * Overflow check. If the result cannot be converted back
-	 * to a 64 bit result, then we can say that there is a 
-	 * overflow
+	 * Overflow check. If the result of addition
+	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * returns true
 	 */
-	if (result != (int64) result)
+	if (pg_add_s64_overflow(adder, arg2, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
+
 #endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
@@ -2058,9 +2073,10 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
 Datum
 int8fixeddecimalmi(PG_FUNCTION_ARGS)
 {
-	int128		subtractor = (int128) PG_GETARG_INT64(0) * FIXEDDECIMAL_MULTIPLIER;
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		subtractor;
 	int64		arg2 = PG_GETARG_INT64(1);
-	int128		result;
+	int64		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
 	if (__builtin_sub_overflow(subtractor, arg2, &result))
@@ -2070,10 +2086,11 @@ int8fixeddecimalmi(PG_FUNCTION_ARGS)
 #else
 
 	/*
-	 * Overflow check. If the subtractor cannot be fit into 
-	 * 64 bit, then the result will definitely overflow
+	 * Overflow check. If the result of multiplication
+	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * returns true
 	 */
-	if (subtractor != (int64) subtractor)
+	if (pg_mul_s64_overflow(arg1, (int64) FIXEDDECIMAL_MULTIPLIER, &subtractor)) 
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -2082,18 +2099,16 @@ int8fixeddecimalmi(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 		
-
-	result = subtractor - arg2;
-
 	/*
-	 * Overflow check. If the result cannot be converted back
-	 * to a 64 bit result, then we can say that there is a 
-	 * overflow
+	 * Overflow check. If the result of addition
+	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * returns true
 	 */
-	if (result != (int64) result)
+	if (pg_sub_s64_overflow(subtractor, arg2, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
+	
 #endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
@@ -2113,6 +2128,19 @@ int8fixeddecimalmul(PG_FUNCTION_ARGS)
 				 errmsg("fixeddecimal out of range")));
 #else
 	result = (int128) arg1 * arg2;
+
+	/*
+	 multiplication with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
+	 in T-SQL
+	*/
+	if (arg1 > FIXEDDECIMAL_MAX || arg1 < FIXEDDECIMAL_MIN)
+	{
+		ereport(ERROR, 
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("fixeddecimal out of range")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
 
 	/*
 	 * Overflow check. We should not be testing based only on, if indiviudal arg (agr2)
@@ -2144,10 +2172,10 @@ int8fixeddecimaldiv(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 division with values > FIXEDDECIMAL_MAX lead to overflow
+	 division with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
 	 in T-SQL
 	*/
-	if (arg1 > FIXEDDECIMAL_MAX)
+	if (arg1 > FIXEDDECIMAL_MAX || arg1 < FIXEDDECIMAL_MIN)
 	{
 		ereport(ERROR, 
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
