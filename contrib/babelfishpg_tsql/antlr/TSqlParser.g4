@@ -5274,8 +5274,6 @@ full_column_name
     | schema=id DOT table=id DOT column=id DOT geospatial_col   // schema.table.column.geospatial
     | server=id DOT schema=id DOT tablename=id DOT column_name=id               // server.schema.tablename.column_name
     | DOT tablename=id DOT column_name=id                                       // .tablename.column_name
-    | DOT table=id DOT column=id DOT geospatial_col                             // .tablename.column_name.geospatial
-    | DOT DOT column=id DOT geospatial_col                                      // ..column.geospatial
     | DOT DOT tablename=id DOT column_name=id                                   // ..tablename.column_name
     ;
 
