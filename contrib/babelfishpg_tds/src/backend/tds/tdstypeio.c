@@ -2811,11 +2811,12 @@ TdsSendPlpDataHelper(char *data, int len)
 	uint32_t	plpChunckLen = PLP_CHUNCK_LEN;
 	size_t		availableBufferSpace = 0;
 
+	TDS_DEBUG(TDS_DEBUG2, "TdsSendPlpDataHelper - write PLP Data of length %d to the buffer", len);
 	if ((rc = TdsPutInt64LE(len)) == 0)
 	{
 		while (true)
 		{
-			plpChunckLen = PLP_CHUNCK_LEN;         // default PLP_CHUNK_LEN
+			plpChunckLen = PLP_CHUNCK_LEN;
 
 			if (plpChunckLen > (len - tempOffset))
 				plpChunckLen = (len - tempOffset);
@@ -2851,6 +2852,7 @@ TdsSendPlpDataHelper(char *data, int len)
 					plpChunckLen = availableBufferSpace - sizeof(uint32_t);
 			}
 
+			TDS_DEBUG(TDS_DEBUG2, "Available Buffer Size = %d, PLP CHUNK length = %d", availableBufferSpace, plpChunckLen);
 			/* need testing for "0" len */
 			if ((rc = TdsPutUInt32LE(plpChunckLen)) == 0)
 			{
