@@ -708,21 +708,18 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("Column ordering token for TVP is not currently supported in Babelfish")));
-
-		if (messageData[*offset] != TVP_END_TOKEN)
-			ereport(ERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-							"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) "
-							"unexpected token encountered processing a table-valued parameter.",
-							temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
-		(*offset)++;
 	}
 	else
 	{
 		temp->isNull = true;	/* If TVP is NULL. */
 		(*offset) += 2;
 	}
+	if (messageData[*offset] != TVP_END_TOKEN)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
+						"Table-valued parameter encountered unexpected end token.")));
+	(*offset)++;
 	SetTvpRowData(temp, message, offset);
 }
 

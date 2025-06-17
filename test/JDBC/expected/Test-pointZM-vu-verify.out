@@ -1,3 +1,735 @@
+
+-- This file tests support for POINT with ZM flags
+-- It also includes test for HasM , HasZ, Z , M functions
+-- HasM, HasZ, Z, M tests
+SELECT location.HasM from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+go
+~~START~~
+bit
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+0
+0
+1
+1
+0
+0
+0
+0
+0
+1
+1
+0
+0
+1
+1
+1
+1
+0
+0
+~~END~~
+
+
+SELECT location.HasM from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+go
+~~START~~
+bit
+0
+0
+0
+0
+1
+1
+1
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+1
+1
+1
+0
+0
+0
+1
+0
+1
+0
+0
+~~END~~
+
+
+SELECT location.HasZ from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+go
+~~START~~
+bit
+0
+0
+0
+0
+0
+0
+1
+0
+0
+1
+1
+1
+0
+1
+0
+0
+0
+1
+1
+0
+1
+0
+1
+0
+1
+1
+0
+1
+0
+~~END~~
+
+
+SELECT location.HasZ from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+go
+~~START~~
+bit
+0
+0
+0
+0
+1
+0
+1
+0
+1
+0
+0
+0
+1
+1
+0
+0
+1
+0
+1
+0
+1
+1
+1
+0
+1
+1
+0
+0
+0
+~~END~~
+
+
+SELECT location.M from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+go
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+-20.25
+-10.5
+0.0
+0.0
+<NULL>
+<NULL>
+4.0
+4.0
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+54.563
+<NULL>
+<NULL>
+100.5
+200.75
+888.888
+999.999
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT location.M from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+go
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+-20.25
+-10.5
+54.563
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+100.5
+200.75
+0.0
+0.0
+4.0
+4.0
+<NULL>
+<NULL>
+<NULL>
+888.888
+<NULL>
+999.999
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT location.Z from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+go
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+-10.5
+<NULL>
+<NULL>
+0.0
+3.0
+5.0
+<NULL>
+3.0
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+<NULL>
+32.546
+<NULL>
+100.5
+<NULL>
+100.5
+999.999
+<NULL>
+999.999
+<NULL>
+~~END~~
+
+
+SELECT location.Z from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+go
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+-10.5
+<NULL>
+32.546
+<NULL>
+100.5
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+<NULL>
+<NULL>
+100.5
+<NULL>
+0.0
+<NULL>
+3.0
+3.0
+5.0
+<NULL>
+999.999
+999.999
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT geom.STAsText(), geog.STAsText() FROM GEOSPATIALPOINTEMPTYdt;
+go
+~~START~~
+text#!#text
+POINT EMPTY#!#<NULL>
+<NULL>#!#POINT EMPTY
+~~END~~
+
+
+SELECT geom.STAsBinary(), geog.STAsBinary() FROM GEOSPATIALPOINTEMPTYdt;
+go
+~~START~~
+varbinary#!#varbinary
+010400000000000000#!#<NULL>
+<NULL>#!#010400000000000000
+~~END~~
+
+
+SELECT geom.STDimension(), geog.STDimension() FROM GEOSPATIALPOINTEMPTYdt;
+go
+~~START~~
+int#!#int
+-1#!#<NULL>
+<NULL>#!#-1
+~~END~~
+
+
+SELECT geom.STIsClosed(), geog.STIsClosed() FROM GEOSPATIALPOINTEMPTYdt;
+go
+~~START~~
+bit#!#bit
+0#!#<NULL>
+<NULL>#!#0
+~~END~~
+
+
+DECLARE @point geometry;
+SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100 3.0 4.0)', 4326);
+SELECT HasM(@point);
+SELECT HasZ(@point);
+SELECT M(@point);
+SELECT Z(@point);
+SELECT @point.HasM;
+SELECT @point.HasZ;
+SELECT @point.M;
+SELECT @point.Z;
+Go
+~~START~~
+bit
+1
+~~END~~
+
+~~START~~
+bit
+1
+~~END~~
+
+~~START~~
+float
+4.0
+~~END~~
+
+~~START~~
+float
+3.0
+~~END~~
+
+~~START~~
+bit
+1
+~~END~~
+
+~~START~~
+bit
+1
+~~END~~
+
+~~START~~
+float
+4.0
+~~END~~
+
+~~START~~
+float
+3.0
+~~END~~
+
+
+DECLARE @point1 geometry;
+SET @point1 = geometry::STPointFromText(null, 4326);
+SELECT @point1.HasM;
+SELECT @point1.HasZ;
+SELECT @point1.M;
+SELECT @point1.Z;
+go
+~~START~~
+bit
+<NULL>
+~~END~~
+
+~~START~~
+bit
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT [GEOSPATIALPOINTGEOM_dt].[location].[HasM] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasM;
+GO
+~~START~~
+bit
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+~~END~~
+
+
+SELECT [location].[HasM] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasM;
+GO
+~~START~~
+bit
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+~~END~~
+
+
+SELECT [GEOSPATIALPOINTGEOM_dt].[location].[HasZ] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasZ;
+GO
+~~START~~
+bit
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+1
+1
+~~END~~
+
+
+SELECT [location].[HasZ] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasZ;
+GO
+~~START~~
+bit
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+1
+1
+~~END~~
+
+
+SELECT [GEOSPATIALPOINTGEOM_dt].[location].[M] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.M;
+GO
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+54.563
+54.563
+~~END~~
+
+
+SELECT [location].[M] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.M;
+GO
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+54.563
+54.563
+~~END~~
+
+
+SELECT [GEOSPATIALPOINTGEOM_dt].[location].[Z] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.Z;
+GO
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+32.546
+32.546
+32.546
+32.546
+~~END~~
+
+
+SELECT [location].[Z] from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.Z;
+GO
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+32.546
+32.546
+32.546
+32.546
+~~END~~
+
+
+-- TEST with QUOTED_IDENTIFIER ON
+SET QUOTED_IDENTIFIER ON
+GO
+SELECT [location]."HasM" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasM;
+GO
+~~START~~
+bit
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+~~END~~
+
+
+SELECT [location]."HasZ" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasZ;
+GO
+~~START~~
+bit
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+1
+1
+~~END~~
+
+
+SELECT [location]."M" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.M;
+GO
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+54.563
+54.563
+~~END~~
+
+
+SELECT [location]."Z" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.Z;
+GO
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+32.546
+32.546
+32.546
+32.546
+~~END~~
+
+
+SET QUOTED_IDENTIFIER OFF
+GO
+
+-- TEST with QUOTED_IDENTIFIER OFF
+SELECT [location]."HasM" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasM;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '"HasM"' at line 2 and character position 18)~~
+
+
+SELECT [location]."HasZ" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.HasZ;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '"HasZ"' at line 1 and character position 18)~~
+
+
+SELECT [location]."M" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.M;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '"M"' at line 1 and character position 18)~~
+
+
+SELECT [location]."Z" from [GEOSPATIALPOINTGEOM_dt] ORDER BY location.Z;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '"Z"' at line 1 and character position 18)~~
+
+
+
 -- STGeomFromText tests with different SRIDs
 SELECT geography::STGeomFromText('POINT(45 90)', 4326);
 GO
@@ -558,42 +1290,42 @@ SELECT geometry::STGeomFromText('POINT(1)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geometry::STGeomFromText('POINT(1 2 3 4 5)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geometry::STGeomFromText('POINT(1,2)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geography::STGeomFromText('POINT(1)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geography::STGeomFromText('POINT(1 2 3 4 5)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geography::STGeomFromText('POINT(1,2)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 -- TODO: This test will be updated later to match T-SQL output
@@ -1063,14 +1795,14 @@ SELECT geometry::STGeomFromText('BABEL(0 0)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geography::STGeomFromText('BABEL(0 0)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 

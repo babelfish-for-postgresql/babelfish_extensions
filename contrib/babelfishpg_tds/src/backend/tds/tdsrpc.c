@@ -289,7 +289,8 @@ DeclareVariables(TDSRequestSP req, FunctionCallInfo *fcinfo, unsigned long optio
 		tempFuncInfo = TdsLookupTypeFunctionsByTdsId(token->type, token->maxLen);
 		isNull = token->isNull;
 
-		if (!isNull && fcinfo)
+		/* For NULL TVP we will create empty table. */
+		if ((!isNull || token->type == TDS_TYPE_TABLE) && fcinfo)
 			pval = tempFuncInfo->recvFuncPtr(req->messageData, token);
 		else
 			pval = (Datum) 0;
@@ -299,7 +300,7 @@ DeclareVariables(TDSRequestSP req, FunctionCallInfo *fcinfo, unsigned long optio
 																   token->paramMeta.pgTypeOid,	/* oid */
 																   GetTypModForToken(token),	/* typmod */
 																   paramName,	/* name */
-																   (token->flags == 0) ?
+																   (token->flags == 0 || token->type == TDS_TYPE_TABLE) ? /* TVP being READONLY */
 																   PROARGMODE_IN : PROARGMODE_INOUT,	/* mode */
 																   pval,	/* datum */
 																   isNull,	/* null */
@@ -374,7 +375,8 @@ SetVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 			tempFuncInfo = TdsLookupTypeFunctionsByTdsId(token->type, token->maxLen);
 			isNull = token->isNull;
 
-			if (!isNull)
+			/* For NULL TVP we will create empty table. */
+			if (!isNull || token->type == TDS_TYPE_TABLE)
 				pval = tempFuncInfo->recvFuncPtr(req->messageData, token);
 			else
 				pval = (Datum) 0;
@@ -382,7 +384,7 @@ SetVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 			pltsql_plugin_handler_ptr->pltsql_declare_var_callback(token->paramMeta.pgTypeOid,	/* oid */
 																   GetTypModForToken(token),	/* typmod */
 																   NULL,	/* name */
-																   (token->flags == 0) ?
+																   (token->flags == 0 || token->type == TDS_TYPE_TABLE) ?  /* TVP being READONLY */
 																   PROARGMODE_IN : PROARGMODE_INOUT,	/* mode */
 																   pval,	/* datum */
 																   isNull,	/* null */
@@ -977,7 +979,8 @@ DeclareSPVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 		tempFuncInfo = TdsLookupTypeFunctionsByTdsId(token->type, token->maxLen);
 		isNull = token->isNull;
 
-		if (!isNull)
+		/* For NULL TVP we will create empty table. */
+		if (!isNull || token->type == TDS_TYPE_TABLE)
 			pval = tempFuncInfo->recvFuncPtr(req->messageData, token);
 		else
 			pval = (Datum) 0;
@@ -986,7 +989,7 @@ DeclareSPVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 															   token->paramMeta.pgTypeOid,	/* oid */
 															   GetTypModForToken(token),	/* typmod */
 															   paramName,	/* name */
-															   (token->flags == 0) ?
+															   (token->flags == 0 || token->type == TDS_TYPE_TABLE) ?  /* TVP being READONLY */
 															   PROARGMODE_IN : PROARGMODE_INOUT,	/* mode */
 															   pval,	/* datum */
 															   isNull,	/* null */

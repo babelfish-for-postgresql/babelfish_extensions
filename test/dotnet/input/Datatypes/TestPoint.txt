@@ -2,32 +2,46 @@ CREATE TABLE POINTGEOM_dt(location GEOMETRY);
 prepst#!#INSERT INTO POINTGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):0
-prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point EMPTY:4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point ZM(1.0 2.0 3.0 4.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point M(1.0 2.0 3.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING EMPTY:4326
 prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
-#next six lines are not allowed
+#next seven lines are not allowed
 #prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):1000000000
 #prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):-1
 #prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):<NULL>
+#prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 3.0):10000000003
 #prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 #prepst#!#exec#!#GEOMETRY|-|location|-|Pnt:4326
 #prepst#!#exec#!#GEOMETRY|-|location|-|<NULL>:4326
 CREATE TABLE POINTGEOG_dt(location GEOGRAPHY);
 prepst#!#INSERT INTO POINTGEOG_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0):4326
-prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point EMPTY:4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point ZM(1.0 2.0 3.0 4.0):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point M(1.0 2.0 3.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING EMPTY:4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
-#next eight lines are not allowed
+#next nine lines are not allowed
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):0
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -122.34900):4326
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):1000000000
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):-1
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):<NULL>
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900 3.0):10000000003
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Pnt:4326
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|<NULL>:4326
 CREATE TABLE POINT_dt(geom GEOMETRY, geog GEOGRAPHY);
-prepst#!#INSERT INTO POINT_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|Point(47.65100 -22.34900):4326
+
+prepst#!#INSERT INTO POINT_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|Point(47.65100 -22.34900 3.0):4326
+prepst#!#INSERT INTO POINT_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|Point EMPTY:4326
 prepst#!#INSERT INTO POINT_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|Point(47.65100 -22.34900):4326
+prepst#!#INSERT INTO POINT_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|Point(47.65100 -22.34900 3.0):4326
+prepst#!#INSERT INTO POINT_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|Point EMPTY:4326
 prepst#!#INSERT INTO POINT_dt(geom, geog) values(@geom, @geog) #!#GEOMETRY|-|geom|-|Point(1.0 2.0):4326#!#GEOGRAPHY|-|geog|-|Point(1.0 2.0):4326
 
 
@@ -35,20 +49,42 @@ INSERT INTO POINTGEOM_dt(location) values(geometry::STGeomFromText('Point(47.651
 INSERT INTO POINTGEOM_dt(location) values(geometry::STGeomFromText('Point(47.65100 -22.34900)', 0))
 INSERT INTO POINTGEOM_dt(location) values(geometry::STPointFromText('Point(47.65100 -22.34900)', 4326))
 INSERT INTO POINTGEOM_dt(location) values(geometry::Point(47.65100, -22.34900, 4326))
+INSERT INTO POINTGEOM_dt(location) values(geometry::STGeomFromText('Point(47.65100 -22.34900 3.0)', 4326))
+INSERT INTO POINTGEOM_dt(location) values(geometry::STGeomFromText('Point EMPTY', 4326))
 
 INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::STPointFromText('Point(47.65100 -22.34900)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::Point(47.65100, -22.34900, 4326))
+INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 3.0)', 4326))
+INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point EMPTY', 4326))
 
-SELECT location, location.STX, location.STY FROM POINTGEOM_dt;
-SELECT location, location.Lat, location.Long FROM POINTGEOG_dt;
+SELECT location, location.STX, location.STY, location.Z, location.M FROM POINTGEOM_dt;
+SELECT location, location.Lat, location.Long, location.Z, location.M FROM POINTGEOG_dt;
 SELECT * FROM  POINT_dt;
 select geometry::Point(10,500,4326);
 select geography::Point(10,500,4326);
+
 SELECT location.STAsText() FROM POINTGEOM_dt;
 SELECT location.STAsText() FROM POINTGEOG_dt;
 SELECT geom.STAsText(), geog.STAsText() FROM POINT_dt;
+SELECT geom.STDimension(), geog.STDimension() FROM POINT_dt;
+SELECT geom.STIsClosed(), geog.STIsClosed() FROM POINT_dt;
+
+CREATE TABLE POINTEMP_dt(geom GEOMETRY, geog GEOGRAPHY);
+prepst#!#INSERT INTO POINTEMP_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|Point EMPTY:4326
+prepst#!#INSERT INTO POINTEMP_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|Point EMPTY:4326
+prepst#!#INSERT INTO POINTEMP_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|Point EMPTY:0
+prepst#!#INSERT INTO POINTEMP_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|Point EMPTY:4121
+SELECT geom.STAsText(), geog.STAsText() FROM POINTEMP_dt;
+SELECT geom.STDimension(), geog.STDimension() FROM POINTEMP_dt;
+SELECT geom.STIsClosed(), geog.STIsClosed() FROM POINTEMP_dt;
+SELECT geom.STIsValid(), geog.STIsValid() FROM POINTEMP_dt;
+SELECT geom.STAsBinary(), geog.STAsBinary() FROM POINTEMP_dt;
+SELECT geom.STArea(), geog.STArea() FROM POINTEMP_dt;
+SELECT geom.STX ,geom.STY, geom.M, geom.Z FROM POINTEMP_dt;
+SELECT geog.Long ,geog.Long, geog.M, geog.Z FROM POINTEMP_dt;
 
 DROP TABLE IF EXISTS POINTGEOM_dt;
 DROP TABLE IF EXISTS POINTGEOG_dt;
 DROP TABLE IF EXISTS POINT_dt;
+DROP TABLE IF EXISTS POINTEMP_dt;

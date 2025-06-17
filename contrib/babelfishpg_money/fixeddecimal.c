@@ -36,6 +36,12 @@
 #define FIXEDDECIMAL_MULTIPLIER 10000LL
 
 /*
+ * This ensures that we round up the result in case the 5th decimal place >= 5
+ * in case of fixeddecimal multiplication.
+ */
+#define FIXEDDECIMAL_ROUNDUP 5000
+
+/*
  * Number of decimal places to store.
  * This number should be the number of decimal digits that it takes to
  * represent FIXEDDECIMAL_MULTIPLIER - 1
@@ -53,11 +59,9 @@
 
 /*
  * This is bounded by the maximum and minimum values of int64.
- * 9223372036854775807 is 19 decimal digits long, but we we can only represent
- * this number / FIXEDDECIMAL_MULTIPLIER, so we must subtract
- * FIXEDDECIMAL_SCALE
+ * 9223372036854775807 is 19 decimal digits long.
  */
-#define FIXEDDECIMAL_MAX_PRECISION 19 - FIXEDDECIMAL_SCALE
+#define FIXEDDECIMAL_MAX_PRECISION 19
 
 /* Define this if your compiler has _builtin_add_overflow() */
 /* #define HAVE_BUILTIN_OVERFLOW */
@@ -791,14 +795,21 @@ fixeddecimaltypmodin(PG_FUNCTION_ARGS)
 	}
 	else if (n == 1)
 	{
-		if (tl[0] < FIXEDDECIMAL_SCALE || tl[0] > FIXEDDECIMAL_MAX_PRECISION)
+		int val_precision = ((tl[0] - VARHDRSZ) >> 16) & 0xffff;
+		int val_scale = (tl[0] - VARHDRSZ) & 0xffff;
+		if (val_precision < FIXEDDECIMAL_SCALE || val_precision > FIXEDDECIMAL_MAX_PRECISION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("FIXEDDECIMAL precision %d must be between %d and %d",
-							tl[0], FIXEDDECIMAL_SCALE, FIXEDDECIMAL_MAX_PRECISION)));
+							val_precision, FIXEDDECIMAL_SCALE, FIXEDDECIMAL_MAX_PRECISION)));
 
-		/* scale defaults to FIXEDDECIMAL_SCALE */
-		typmod = ((tl[0] << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ;
+		if (val_scale != FIXEDDECIMAL_SCALE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("FIXEDDECIMAL scale must be %d",
+							FIXEDDECIMAL_SCALE)));
+
+		typmod = ((val_precision << 16) | val_scale) + VARHDRSZ;
 	}
 	else
 	{
@@ -1731,6 +1742,10 @@ fixeddecimalmul(PG_FUNCTION_ARGS)
 	 * we must divide the result by this to get the correct result.
 	 */
 	result = (int128) arg1 * arg2 / FIXEDDECIMAL_MULTIPLIER;
+	/* Round off the result to FIXEDDECIMAL_SCALE. */
+	if ((((int128) arg1 * arg2 % FIXEDDECIMAL_MULTIPLIER)) >= FIXEDDECIMAL_ROUNDUP)
+	result++;
+
 
 	if (result != ((int64) result))
 		ereport(ERROR,
@@ -1908,7 +1923,7 @@ fixeddecimalint8mul(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
 	int64		arg2 = PG_GETARG_INT64(1);
-	int64		result;
+	int128		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
 	if (__builtin_mul_overflow(arg1, arg2, &result))
@@ -1916,26 +1931,20 @@ fixeddecimalint8mul(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 #else
-	result = arg1 * arg2;
+	result = (int128) arg1 * arg2;
 
 	/*
-	 * Overflow check.  We basically check to see if result / arg1 gives arg2
-	 * again.  There is one case where this fails: arg1 = 0 (which cannot
-	 * overflow).
-	 *
-	 * Since the division is likely much more expensive than the actual
-	 * multiplication, we'd like to skip it where possible.  The best bang for
-	 * the buck seems to be to check whether both inputs are in the int32
-	 * range; if so, no overflow is possible.
+	 * Overflow check. We should not be testing based only on, if indiviudal arg (agr1)
+	 * is convertible to int32 as the result could still overflow. Hence we directly check
+	 * if result is in int64 range; if so, no overflow is possible.
 	 */
-	if (arg1 != (int64) ((int32) arg1) &&
-		result / arg1 != arg2)
+	if (result != (int128) ((int64) result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 #endif							/* HAVE_BUILTIN_OVERFLOW */
 
-	PG_RETURN_INT64(result);
+	PG_RETURN_INT64((int64) result);
 }
 
 Datum
@@ -2051,7 +2060,7 @@ int8fixeddecimalmul(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
 	int64		arg2 = PG_GETARG_INT64(1);
-	int64		result;
+	int128		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
 	if (__builtin_mul_overflow(arg1, arg2, &result))
@@ -2059,26 +2068,20 @@ int8fixeddecimalmul(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 #else
-	result = arg1 * arg2;
+	result = (int128) arg1 * arg2;
 
 	/*
-	 * Overflow check.  We basically check to see if result / arg2 gives arg1
-	 * again.  There is one case where this fails: arg2 = 0 (which cannot
-	 * overflow).
-	 *
-	 * Since the division is likely much more expensive than the actual
-	 * multiplication, we'd like to skip it where possible.  The best bang for
-	 * the buck seems to be to check whether both inputs are in the int32
-	 * range; if so, no overflow is possible.
+	 * Overflow check. We should not be testing based only on, if indiviudal arg (agr2)
+	 * is convertible to int32 as the result could still overflow. Hence we directly check
+	 * if result is in int64 range; if so, no overflow is possible.
 	 */
-	if (arg2 != (int64) ((int32) arg2) &&
-		result / arg2 != arg1)
+	if (result != (int128) ((int64) result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 #endif							/* HAVE_BUILTIN_OVERFLOW */
 
-	PG_RETURN_INT64(result);
+	PG_RETURN_INT64((int64) result);
 }
 
 Datum
