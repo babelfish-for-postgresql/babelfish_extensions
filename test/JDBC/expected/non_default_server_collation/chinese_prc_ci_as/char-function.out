@@ -1,0 +1,620 @@
+-- Create UDTs
+CREATE TYPE char_type_output FROM CHAR(10);
+CREATE TYPE char_type_varchar FROM VARCHAR(50);
+GO
+
+-- Create base tables
+CREATE TABLE char_t1 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    InputValue INT,
+    CharOutput AS CHAR(InputValue) PERSISTED,
+    ExpectedOutput CHAR(1),
+    Description VARCHAR(100)
+);
+GO
+
+CREATE TABLE char_t2 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    InputValue INT,
+    SingleChar AS CHAR(InputValue) PERSISTED,
+    CharacterDescription VARCHAR(100)
+);
+GO
+
+-- Insert test data
+INSERT INTO char_t1 (InputValue, ExpectedOutput, Description) VALUES
+(ASCII('A'), 'A', 'Capital A'),
+(ASCII('a'), 'a', 'Lowercase a'),
+(ASCII(' '), ' ', 'Space'),
+(ASCII(CHAR(9)), CHAR(9), 'Tab'),
+(ASCII(CHAR(13)), CHAR(13), 'Carriage Return'),
+(ASCII(CHAR(10)), CHAR(10), 'Line Feed');
+GO
+~~ROW COUNT: 6~~
+
+
+
+-- =============================================
+-- BASIC FUNCTIONAL TESTS
+-- =============================================
+-- 1. Basic Character Tests
+SELECT 
+    CHAR(ASCII('A')) AS CapitalA,
+    CHAR(ASCII('Z')) AS CapitalZ,
+    CHAR(ASCII('a')) AS LowercaseA,
+    CHAR(ASCII('z')) AS LowercaseZ,
+    CHAR(ASCII('0')) AS Number0,
+    CHAR(ASCII('9')) AS Number9,
+    CHAR(ASCII(' ')) AS Space;
+GO
+~~START~~
+text#!#text#!#text#!#text#!#text#!#text#!#text
+A#!#Z#!#a#!#z#!#0#!#9#!# 
+~~END~~
+
+
+-- 2. Control Characters Tests
+SELECT 
+    CHAR(ASCII(CHAR(9))) AS Tab,
+    CHAR(ASCII(CHAR(10))) AS LineFeed,
+    CHAR(ASCII(CHAR(13))) AS CarriageReturn,
+    CHAR(ASCII(CHAR(27))) AS EscapeChar;
+GO
+~~START~~
+text#!#text#!#text#!#text
+	#!#<newline>#!#<newline>#!#
+~~END~~
+
+
+SELECT CHAR(ASCII(CHAR(0))) AS NullChar
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: null character not permitted)~~
+
+
+-- 3. Special Characters Tests
+SELECT 
+    CHAR(ASCII('!')) AS ExclamationMark,
+    CHAR(ASCII('"')) AS DoubleQuote,
+    CHAR(ASCII('#')) AS HashSign,
+    CHAR(ASCII('$')) AS DollarSign,
+    CHAR(ASCII('%')) AS PercentSign;
+GO
+~~START~~
+text#!#text#!#text#!#text#!#text
+!#!#"#!###!#$#!#%
+~~END~~
+
+
+-- 4. Range Tests
+SELECT 
+    CHAR(1) AS StartRange,
+    CHAR(126) AS EndPrintableRange,
+    CHAR(255) AS MaxRange;
+GO
+~~START~~
+text#!#text#!#text
+#!#~#!#?
+~~END~~
+
+
+-- 5. String Building with CHAR
+SELECT 
+    CHAR(ASCII('H')) + 
+    CHAR(ASCII('E')) + 
+    CHAR(ASCII('L')) + 
+    CHAR(ASCII('L')) + 
+    CHAR(ASCII('O')) AS HelloString;
+GO
+~~START~~
+varchar
+HELLO
+~~END~~
+
+
+-- 6. NULL and Edge Cases
+SELECT 
+    CHAR(NULL) AS NullInput,
+    CHAR(255) AS MaxValidCode;
+GO
+~~START~~
+text#!#text
+<NULL>#!#?
+~~END~~
+
+
+SELECT CHAR(0) AS ZeroCode
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: null character not permitted)~~
+
+
+-- 7. Error Cases
+BEGIN TRY
+    SELECT CHAR(-1) AS ShouldFail;
+END TRY
+BEGIN CATCH
+    SELECT 
+        'CHAR() with negative value' AS TestCase,
+        ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: character number must be positive)~~
+
+
+BEGIN TRY
+    SELECT CHAR(256) AS ShouldFail;
+END TRY
+BEGIN CATCH
+    SELECT 
+        'CHAR() with value > 255' AS TestCase,
+        ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;
+GO
+~~START~~
+text
+?
+~~END~~
+
+
+-- 8. Verification Tests
+SELECT 
+    InputValue,
+    CharOutput,
+    ExpectedOutput,
+    CASE WHEN CharOutput = ExpectedOutput THEN 'Pass' ELSE 'Fail' END AS TestResult
+FROM char_t1;
+GO
+~~START~~
+int#!#text#!#char#!#varchar
+65#!#A#!#A#!#Pass
+97#!#a#!#a#!#Pass
+32#!# #!# #!#Pass
+9#!#	#!#	#!#Pass
+13#!#<newline>#!#<newline>#!#Pass
+10#!#<newline>#!#<newline>#!#Pass
+~~END~~
+
+
+-- 9. Printable Character Range Test
+WITH Numbers AS (
+    SELECT generate_series AS Num
+    FROM GENERATE_SERIES(32, 126)
+)
+SELECT 
+    Num AS ASCIIValue,
+    CHAR(Num) AS CharacterValue,
+    CASE 
+        WHEN Num BETWEEN ASCII('A') AND ASCII('Z') THEN 'Uppercase'
+        WHEN Num BETWEEN ASCII('a') AND ASCII('z') THEN 'Lowercase'
+        WHEN Num BETWEEN ASCII('0') AND ASCII('9') THEN 'Digit'
+        ELSE 'Special'
+    END AS CharacterType
+FROM Numbers;
+GO
+~~START~~
+int#!#text#!#varchar
+32#!# #!#Special
+33#!#!#!#Special
+34#!#"#!#Special
+35#!###!#Special
+36#!#$#!#Special
+37#!#%#!#Special
+38#!#&#!#Special
+39#!#'#!#Special
+40#!#(#!#Special
+41#!#)#!#Special
+42#!#*#!#Special
+43#!#+#!#Special
+44#!#,#!#Special
+45#!#-#!#Special
+46#!#.#!#Special
+47#!#/#!#Special
+48#!#0#!#Digit
+49#!#1#!#Digit
+50#!#2#!#Digit
+51#!#3#!#Digit
+52#!#4#!#Digit
+53#!#5#!#Digit
+54#!#6#!#Digit
+55#!#7#!#Digit
+56#!#8#!#Digit
+57#!#9#!#Digit
+58#!#:#!#Special
+59#!#;#!#Special
+60#!#<#!#Special
+61#!#=#!#Special
+62#!#>#!#Special
+63#!#?#!#Special
+64#!#@#!#Special
+65#!#A#!#Uppercase
+66#!#B#!#Uppercase
+67#!#C#!#Uppercase
+68#!#D#!#Uppercase
+69#!#E#!#Uppercase
+70#!#F#!#Uppercase
+71#!#G#!#Uppercase
+72#!#H#!#Uppercase
+73#!#I#!#Uppercase
+74#!#J#!#Uppercase
+75#!#K#!#Uppercase
+76#!#L#!#Uppercase
+77#!#M#!#Uppercase
+78#!#N#!#Uppercase
+79#!#O#!#Uppercase
+80#!#P#!#Uppercase
+81#!#Q#!#Uppercase
+82#!#R#!#Uppercase
+83#!#S#!#Uppercase
+84#!#T#!#Uppercase
+85#!#U#!#Uppercase
+86#!#V#!#Uppercase
+87#!#W#!#Uppercase
+88#!#X#!#Uppercase
+89#!#Y#!#Uppercase
+90#!#Z#!#Uppercase
+91#!#[#!#Special
+92#!#\#!#Special
+93#!#]#!#Special
+94#!#^#!#Special
+95#!#_#!#Special
+96#!#`#!#Special
+97#!#a#!#Lowercase
+98#!#b#!#Lowercase
+99#!#c#!#Lowercase
+100#!#d#!#Lowercase
+101#!#e#!#Lowercase
+102#!#f#!#Lowercase
+103#!#g#!#Lowercase
+104#!#h#!#Lowercase
+105#!#i#!#Lowercase
+106#!#j#!#Lowercase
+107#!#k#!#Lowercase
+108#!#l#!#Lowercase
+109#!#m#!#Lowercase
+110#!#n#!#Lowercase
+111#!#o#!#Lowercase
+112#!#p#!#Lowercase
+113#!#q#!#Lowercase
+114#!#r#!#Lowercase
+115#!#s#!#Lowercase
+116#!#t#!#Lowercase
+117#!#u#!#Lowercase
+118#!#v#!#Lowercase
+119#!#w#!#Lowercase
+120#!#x#!#Lowercase
+121#!#y#!#Lowercase
+122#!#z#!#Lowercase
+123#!#{#!#Special
+124#!#|#!#Special
+125#!#}#!#Special
+126#!#~#!#Special
+~~END~~
+
+
+-- 10. String Function Tests
+SELECT 
+    LEN(CHAR(ASCII('A'))) AS CharLength,
+    DATALENGTH(CHAR(ASCII('A'))) AS CharDataLength,
+    ASCII(CHAR(ASCII('A'))) AS CharToAsciiAndBack,
+    UPPER(CHAR(ASCII('a'))) AS UppercaseChar,
+    LOWER(CHAR(ASCII('A'))) AS LowercaseChar;
+GO
+~~START~~
+int#!#int#!#int#!#varchar#!#varchar
+1#!#1#!#65#!#A#!#a
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - VIEWS
+-- =============================================
+-- 11. Create Views
+CREATE VIEW char_v1 AS
+SELECT 
+    v.Num AS InputValue,
+    CHAR(v.Num) AS CharValue,
+    CASE 
+        WHEN v.Num BETWEEN 32 AND 126 
+        THEN 'Printable'
+        ELSE 'Control'
+    END AS CharacterType
+FROM (VALUES (65), (9), (32), (127)) AS v(Num);
+GO
+
+CREATE VIEW char_v2 AS
+WITH Numbers AS (
+    SELECT generate_series AS Num
+    FROM GENERATE_SERIES(65, 90)
+)
+SELECT 
+    Num AS InputValue,
+    CHAR(Num) AS CharacterValue,
+    CHAR(Num + 32) AS LowercaseEquivalent
+FROM Numbers;
+GO
+
+-- Test Views
+SELECT * FROM char_v1;
+GO
+~~START~~
+int#!#text#!#varchar
+65#!#A#!#Printable
+9#!#	#!#Control
+32#!# #!#Printable
+127#!##!#Control
+~~END~~
+
+SELECT * FROM char_v2;
+GO
+~~START~~
+int#!#text#!#text
+65#!#A#!#a
+66#!#B#!#b
+67#!#C#!#c
+68#!#D#!#d
+69#!#E#!#e
+70#!#F#!#f
+71#!#G#!#g
+72#!#H#!#h
+73#!#I#!#i
+74#!#J#!#j
+75#!#K#!#k
+76#!#L#!#l
+77#!#M#!#m
+78#!#N#!#n
+79#!#O#!#o
+80#!#P#!#p
+81#!#Q#!#q
+82#!#R#!#r
+83#!#S#!#s
+84#!#T#!#t
+85#!#U#!#u
+86#!#V#!#v
+87#!#W#!#w
+88#!#X#!#x
+89#!#Y#!#y
+90#!#Z#!#z
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - FUNCTIONS
+-- =============================================
+-- 12. Create Functions
+CREATE FUNCTION char_fn_isvalid
+(
+    @InputValue INT
+)
+RETURNS BIT
+AS
+BEGIN
+    RETURN CASE 
+        WHEN @InputValue BETWEEN 0 AND 255 
+        AND CHAR(@InputValue) IS NOT NULL 
+        THEN 1 
+        ELSE 0 
+    END;
+END;
+GO
+
+CREATE FUNCTION char_fn_buildstring
+(
+    @StartChar INT,
+    @Length INT
+)
+RETURNS VARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @Result VARCHAR(MAX) = '';
+    DECLARE @Counter INT = 0;
+    
+    WHILE @Counter < @Length AND @StartChar + @Counter <= 255
+    BEGIN
+        SET @Result = @Result + CHAR(@StartChar + @Counter);
+        SET @Counter = @Counter + 1;
+    END
+    
+    RETURN @Result;
+END;
+GO
+
+-- Test Functions
+SELECT dbo.char_fn_isvalid(65) AS IsValidA;
+SELECT dbo.char_fn_isvalid(256) AS IsValid256;
+SELECT dbo.char_fn_buildstring(65, 5) AS FiveCharsFromA;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+~~START~~
+bit
+0
+~~END~~
+
+~~START~~
+varchar
+ABCDE
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - STORED PROCEDURES
+-- =============================================
+-- 13. Create Stored Procedures
+CREATE PROCEDURE char_sp_generate
+    @StartValue INT,
+    @Count INT
+AS
+BEGIN
+    IF @StartValue < 0 OR @StartValue > 255
+        THROW 50000, 'Start value must be between 0 and 255', 1;
+        
+    WITH Numbers AS (
+        SELECT generate_series AS Num
+        FROM GENERATE_SERIES(@StartValue, @StartValue + @Count - 1)
+        WHERE generate_series <= 255
+    )
+    SELECT 
+        Num AS InputValue,
+        CHAR(Num) AS CharacterValue,
+        CASE 
+            WHEN Num < 32 THEN 'Control'
+            WHEN Num BETWEEN 32 AND 126 THEN 'Printable'
+            ELSE 'Extended'
+        END AS CharacterType
+    FROM Numbers;
+END;
+GO
+
+CREATE PROCEDURE char_sp_compare
+    @Value1 INT,
+    @Value2 INT
+AS
+BEGIN
+    SELECT 
+        @Value1 AS Input1,
+        @Value2 AS Input2,
+        CHAR(@Value1) AS Char1,
+        CHAR(@Value2) AS Char2,
+        CASE 
+            WHEN CHAR(@Value1) = CHAR(@Value2) THEN 'Equal'
+            WHEN CHAR(@Value1) > CHAR(@Value2) THEN 'First Greater'
+            ELSE 'Second Greater'
+        END AS Comparison;
+END;
+GO
+
+-- Test Procedures
+EXEC char_sp_generate @StartValue = 65, @Count = 5;
+EXEC char_sp_compare @Value1 = 65, @Value2 = 97;
+GO
+~~START~~
+int#!#text#!#varchar
+65#!#A#!#Printable
+66#!#B#!#Printable
+67#!#C#!#Printable
+68#!#D#!#Printable
+69#!#E#!#Printable
+~~END~~
+
+~~START~~
+int#!#int#!#text#!#text#!#varchar
+65#!#97#!#A#!#a#!#Equal
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - COMPUTED COLUMNS AND CONSTRAINTS
+-- =============================================
+-- 14. Create Table with Computed Columns
+CREATE TABLE char_t3 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    InputValue INT,
+    CharOutput AS CHAR(InputValue) PERSISTED,
+    IsPrintable AS CASE 
+                    WHEN CHAR(InputValue) BETWEEN CHAR(32) AND CHAR(126) 
+                    THEN 1 
+                    ELSE 0 
+                  END PERSISTED,
+    CharCategory AS CASE
+                    WHEN InputValue BETWEEN 65 AND 90 THEN 'Uppercase'
+                    WHEN InputValue BETWEEN 97 AND 122 THEN 'Lowercase'
+                    WHEN InputValue BETWEEN 48 AND 57 THEN 'Digit'
+                    ELSE 'Other'
+                  END PERSISTED
+);
+GO
+
+-- Test Computed Columns
+INSERT INTO char_t3 (InputValue) 
+VALUES (65), (97), (48), (32), (9);
+GO
+~~ROW COUNT: 5~~
+
+
+SELECT * FROM char_t3;
+GO
+~~START~~
+int#!#int#!#text#!#int#!#varchar
+1#!#65#!#A#!#0#!#Uppercase
+2#!#97#!#a#!#0#!#Lowercase
+3#!#48#!#0#!#0#!#Digit
+4#!#32#!# #!#1#!#Other
+5#!#9#!#	#!#0#!#Other
+~~END~~
+
+
+-- 15. Create Table with Constraints
+CREATE TABLE char_t4 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    InputValue INT,
+    CharOutput AS CHAR(InputValue) PERSISTED,
+    CONSTRAINT char_chk_valid CHECK (InputValue BETWEEN 0 AND 255),
+    CONSTRAINT char_chk_printable CHECK (CHAR(InputValue) BETWEEN CHAR(32) AND CHAR(126))
+);
+GO
+
+-- Test Constraints
+INSERT INTO char_t4 (InputValue) VALUES (65);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "char_t4" violates check constraint "char_chk_printable")~~
+
+
+BEGIN TRY
+    INSERT INTO char_t4 (InputValue) VALUES (31);
+END TRY
+BEGIN CATCH
+    SELECT 
+        'Control character insert' AS TestCase,
+        ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;
+GO
+~~START~~
+varchar#!#nvarchar
+Control character insert#!#new row for relation "char_t4" violates check constraint "char_chk_printable"
+~~END~~
+
+
+
+-- =============================================
+-- CLEANUP
+-- =============================================
+-- Drop Views
+DROP VIEW char_v1;
+DROP VIEW char_v2;
+GO
+
+-- Drop Functions
+DROP FUNCTION char_fn_isvalid;
+DROP FUNCTION char_fn_buildstring;
+GO
+
+-- Drop Procedures
+DROP PROCEDURE char_sp_generate;
+DROP PROCEDURE char_sp_compare;
+GO
+
+-- Drop Tables
+DROP TABLE char_t4;
+DROP TABLE char_t3;
+DROP TABLE char_t2;
+DROP TABLE char_t1;
+GO
+
+-- Drop Types
+DROP TYPE char_type_output;
+DROP TYPE char_type_varchar;
+GO
