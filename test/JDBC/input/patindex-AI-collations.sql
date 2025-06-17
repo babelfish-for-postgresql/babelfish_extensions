@@ -610,3 +610,16 @@ SELECT PATINDEX('xyz[abc]', 'xyza' COLLATE Latin1_General_CI_AS)
 GO
 SELECT PATINDEX('[abc]xyz[def]', 'axyzd' COLLATE Latin1_General_CI_AS)
 GO
+SELECT PATINDEX('%ing' collate Latin1_General_CI_AI, 'this is testing' collate Latin1_General_CI_AS)
+GO
+SELECT PATINDEX('%ing' collate DATABASE_DEFAULT, 'this is testing' collate Latin1_General_CI_AS)
+GO
+SELECT PATINDEX('%ing' collate DATABASE_DEFAULT, 'this is testing' collate Latin1_General_CI_AI)
+GO
+select PATINDEX('%ing', 'This is a patindex testing strING' COLLATE Latin1_General_CS_AS)
+GO
+select PATINDEX('%ING', 'This is a patindex testing strING' COLLATE Latin1_General_CS_AS)
+GO
+select PATINDEX('%ing', 'This is a patindex testing strING' COLLATE Latin1_General_CI_AI)
+GO
+

@@ -1516,3 +1516,44 @@ bigint
 1
 ~~END~~
 
+SELECT PATINDEX('%ing' collate Latin1_General_CI_AI, 'this is testing' collate Latin1_General_CI_AS)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: collation mismatch between explicit collations "bbf_unicode_cp1_ci_ai" and "bbf_unicode_cp1_ci_as")~~
+
+SELECT PATINDEX('%ing' collate DATABASE_DEFAULT, 'this is testing' collate Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+13
+~~END~~
+
+SELECT PATINDEX('%ing' collate DATABASE_DEFAULT, 'this is testing' collate Latin1_General_CI_AI)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: collation mismatch between explicit collations "bbf_unicode_cp1_ci_as" and "bbf_unicode_cp1_ci_ai")~~
+
+select PATINDEX('%ing', 'This is a patindex testing strING' COLLATE Latin1_General_CS_AS)
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+select PATINDEX('%ING', 'This is a patindex testing strING' COLLATE Latin1_General_CS_AS)
+GO
+~~START~~
+bigint
+31
+~~END~~
+
+select PATINDEX('%ing', 'This is a patindex testing strING' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+31
+~~END~~
+
+
