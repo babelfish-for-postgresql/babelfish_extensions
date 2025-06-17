@@ -612,9 +612,9 @@ SELECT PATINDEX('[abc]xyz[def]', 'axyzd' COLLATE Latin1_General_CI_AS)
 GO
 SELECT PATINDEX('%ing' collate Latin1_General_CI_AI, 'this is testing' collate Latin1_General_CI_AS)
 GO
-SELECT PATINDEX('%ing' collate DATABASE_DEFAULT, 'this is testing' collate Latin1_General_CI_AS)
+SELECT PATINDEX('%ing' collate DATABASE_DEFAULT, 'this is testing')
 GO
-SELECT PATINDEX('%ing' collate DATABASE_DEFAULT, 'this is testing' collate Latin1_General_CI_AI)
+SELECT PATINDEX('%ing', 'this is testing' collate DATABASE_DEFAULT)
 GO
 select PATINDEX('%ing', 'This is a patindex testing strING' COLLATE Latin1_General_CS_AS)
 GO
