@@ -708,9 +708,53 @@ GO
 SELECT (123.45 + CAST(123 AS INT)) * 1.1;
 GO
 
+-- scale/precision test for fixedlength operator expression
+CREATE PROCEDURE babel_5899_get_column_info_p1 @table_name text AS BEGIN SELECT c.[name] AS column_name, t.[name] AS [type_name], c.[max_length], c.[precision],c.[scale] FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE object_id = object_id(@table_name) ORDER BY c.[name];
+END
+GO
+
+CREATE TABLE babel_5899_t2(ID INT IDENTITY(1,1), a_int Int, a_tiny tinyint, b_smallint smallint, c_big bigint, d_fl float, e_real real, f_mon money, g_smallmoney smallmoney);
+GO
+
+SELECT 
+    (a_int + a_int) * 1.13 AS int_int,
+    (a_int + a_tiny) * 1.13 AS int_tiny,
+    (a_int + b_smallint) * 1.13 AS int_smallint,
+    (a_int + c_big) * 1.13 AS int_bigint,
+    (a_tiny + a_tiny) * 1.13 AS tiny_tiny,
+    (a_tiny + b_smallint) * 1.13 AS tiny_smallint,
+    (a_tiny + c_big) * 1.13 AS tiny_bigint,
+    (b_smallint + b_smallint) * 1.13 AS smallint_smallint,
+    (b_smallint + c_big) * 1.13 AS smallint_bigint,
+    (c_big + c_big) * 1.13 AS bigint_bigint,
+    (f_mon + f_mon) * 1.13 AS money_money,
+    (f_mon + g_smallmoney) * 1.13 AS money_smallmoney,
+    (g_smallmoney + g_smallmoney) * 1.13 AS smallmoney_smallmoney,
+    (f_mon + a_int) * 1.13 AS money_int,
+    (f_mon + a_tiny) * 1.13 AS money_tiny,
+    (f_mon + b_smallint) * 1.13 AS money_smallint,
+    (f_mon + c_big) * 1.13 AS money_bigint,
+    (g_smallmoney + a_int) * 1.13 AS smallmoney_int,
+    (g_smallmoney + a_tiny) * 1.13 AS smallmoney_tiny,
+    (g_smallmoney + b_smallint) * 1.13 AS smallmoney_smallint,
+    (g_smallmoney + c_big) * 1.13 AS smallmoney_bigint
+INTO babel_5899_result_table
+FROM babel_5899_t2;
+GO
+
+EXEC babel_5899_get_column_info_p1 'babel_5899_result_table'
+GO
+
 DROP TABLE babel_5899_t1
 go
 DROP TYPE babel_5899_MoneyUDT
 GO
 DROP TYPE babel_5899_SmallMoneyUDT
 GO
+DROP TABLE babel_5899_result_table
+GO
+DROP TABLE babel_5899_t2
+GO
+DROP PROCEDURE babel_5899_get_column_info_p1
+go
+
