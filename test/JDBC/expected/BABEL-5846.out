@@ -1,0 +1,216 @@
+
+-- Test datetime function `datename` with option `timezone offset`
+-- Test case for NULL input
+SELECT DATENAME(TZOFFSET, NULL);
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+-- Test case for empty string
+SELECT DATENAME(TZOFFSET, '');
+GO
+~~START~~
+text
++00:00
+~~END~~
+
+-- Test positive/negative offsets
+SELECT DATENAME(TZOFFSET, '2025-06-03 14:30:15 +01:59');
+GO
+~~START~~
+text
++01:59
+~~END~~
+
+select datename(TZoffset, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+text
++08:00
+~~END~~
+
+SELECT DATENAME(TZOFFSET, CAST('2025-06-03 14:30:15 +01:59' AS DATETIMEOFFSET));
+GO
+~~START~~
+text
++01:59
+~~END~~
+
+SELECT DATENAME(TZOFFSET, CAST('2025-06-03 14:30:15 -01:59' AS DATETIMEOFFSET));
+GO
+~~START~~
+text
+-01:59
+~~END~~
+
+
+-- Test with other functions
+SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15 +01:30' AS DATETIMEOFFSET) AT TIME ZONE 'Pacific Standard Time');
+GO
+~~START~~
+text
+-07:00
+~~END~~
+
+SELECT DATENAME(TZOFFSET, SWITCHOFFSET(CAST('2025-06-03 14:30:15 +01:30' AS DATETIMEOFFSET), '-08:00'));
+GO
+~~START~~
+text
+-08:00
+~~END~~
+
+SELECT DATENAME(TZOFFSET, TODATETIMEOFFSET(CAST('2025-06-03 14:30:15' AS DATETIME2), '-03:30'));
+GO
+~~START~~
+text
+-03:30
+~~END~~
+
+
+-- Test date inputs without offset specified
+SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15.1234567' AS DATETIMEOFFSET));
+GO
+~~START~~
+text
++00:00
+~~END~~
+
+SELECT datename(TZOFFSET, CAST('2025-06-03' AS DATETIMEOFFSET));
+GO
+~~START~~
+text
++00:00
+~~END~~
+
+SELECT datename(TZOFFSET, CAST('14:30:15.1234567' AS DATETIMEOFFSET));
+GO
+~~START~~
+text
++00:00
+~~END~~
+
+SELECT datename(TZOFFSET, CAST('' AS DATETIMEOFFSET));
+GO
+~~START~~
+text
++00:00
+~~END~~
+
+
+-- Boundary values
+SELECT DATENAME(TZOFFSET, CAST('2025-06-03 14:30:15 +14:00' AS DATETIMEOFFSET));
+GO
+~~START~~
+text
++14:00
+~~END~~
+
+SELECT DATENAME(TZOFFSET, CAST('2025-06-03 14:30:15 -14:00' AS DATETIMEOFFSET));
+GO
+~~START~~
+text
+-14:00
+~~END~~
+
+
+-- Supported date time datatype inputs
+SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15' AS DATETIME2)) AS datetime2_type;
+GO
+~~START~~
+text
++00:00
+~~END~~
+
+SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15' AS DATETIMEOFFSET)) AS datetimeoffset_type;
+GO
+~~START~~
+text
++00:00
+~~END~~
+
+
+
+-- Error Scenarios
+    -- Unsupported date time datatype inputs
+SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15 +01:30' AS DATE)) AS date_type;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type date.)~~
+
+
+SELECT datename(TZOFFSET, CAST('14:30:15' AS TIME)) AS time_type;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type time without time zone.)~~
+
+
+SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15' AS DATETIME)) AS datetime_type;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type datetime.)~~
+
+
+SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15' AS SMALLDATETIME)) AS smalldatetime_type;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type smalldatetime.)~~
+
+
+
+    -- Invalid date time inputs
+SELECT DATENAME(TZOFFSET, '2025-06-0314:30:15+01:59');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT datename(TZOFFSET, CAST('2025-06-0314:30:15+130' AS DATETIMEOFFSET));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2025-06-0314:30:15+130")~~
+
+
+SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15 -16:00' AS DATETIMEOFFSET));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: time zone displacement out of range: "2025-06-03 14:30:15 -16:00")~~
+
+
+SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15 +10:60' AS DATETIMEOFFSET));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: time zone displacement out of range: "2025-06-03 14:30:15 +10:60")~~
+
+
+SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15 +01:30' AS DATETIMEOFFSET) AT TIME ZONE 'Invalid Time Zone');
+GO
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type or the parameter Invalid Time Zone provided to AT TIME ZONE clause is invalid.)~~
+
+
+SELECT datename(TZOFFSET, SWITCHOFFSET(CAST('2025-06-03 14:30:15 +01:30' AS DATETIMEOFFSET), 'Invalid Offset'));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+SELECT datename(TZOFFSET, TODATETIMEOFFSET(CAST('2025-06-03 14:30:15' AS DATETIME2), 'Invalid Offset'));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
