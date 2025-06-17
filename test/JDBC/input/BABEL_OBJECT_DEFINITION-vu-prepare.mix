@@ -90,7 +90,7 @@ GO
 
 -- Test OBJECT_DEFINITION with objects having definitions larger than 4000 characters
 -- Create a stored procedure with a large definition
-CREATE PROCEDURE dbo.LargeProc
+CREATE PROCEDURE dbo.object_definition_Largeproc
 AS
 BEGIN
     -- Create a massive procedure with over 10,000 characters
@@ -122,7 +122,7 @@ END
 GO
 
 -- Create a view with a large definition
-CREATE VIEW dbo.LargeView
+CREATE VIEW dbo.object_definition_LargeView
 AS
 WITH 
     -- Create a much larger CTE structure to exceed 8000 characters
@@ -284,7 +284,7 @@ WHERE
 GO
 
 -- Create a function with a large definition
-CREATE FUNCTION dbo.LargeFunction(@input INT)
+CREATE FUNCTION dbo.object_definition_LargeFunction(@input INT)
 RETURNS TABLE
 AS
 RETURN
