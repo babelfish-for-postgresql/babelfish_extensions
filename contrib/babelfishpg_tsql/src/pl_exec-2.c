@@ -3012,7 +3012,13 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Cannot disable access to the guest user in master or tempdb.")));
+		/*
+		 * Adding entries for user_can_connect might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
 		alter_user_can_connect(stmt->is_grant, grantee_name, dbname);
+		PopActiveSnapshot();
 	}
 	return PLTSQL_RC_OK;
 }
@@ -3774,6 +3780,12 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
 
+		/*
+		 * Executing GRANT ON SCHEMA might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
+
 		/* Execute the GRANT SCHEMA subcommands. */
 		for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
 		{
@@ -3800,6 +3812,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				update_privileges_of_object(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, stmt->privileges, rolname, OBJ_SCHEMA, false);
 			}
 		}
+		PopActiveSnapshot();
 		pfree(rolname);
 	}
 	pfree(user);
@@ -3837,8 +3850,14 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		/* Is the current login already DB owner? */
 		if (get_role_oid(get_owner_of_db(stmt->db_name), true) == GetSessionUserId())
 		{
+			/*
+			 * Update the owner of a database might involve TOAST table access, so ensure we
+			 * have a valid snapshot.
+			 */
+			PushActiveSnapshot(GetTransactionSnapshot());
 			/* Current login is DB owner, so perform the update */
-			update_db_owner(stmt->new_owner_name, stmt->db_name);	
+			update_db_owner(stmt->new_owner_name, stmt->db_name);
+			PopActiveSnapshot();
 			return PLTSQL_RC_OK;	
 		}			
 	}		
@@ -3874,7 +3893,14 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 
 	/* Grant dbo role to the new owner */
 	grant_revoke_role_to_login(stmt->new_owner_name, get_dbo_role_name(stmt->db_name), true);
+
+	/*
+	 * Update the owner of a database might involve TOAST table access, so ensure we
+	 * have a valid snapshot.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
 	update_db_owner(stmt->new_owner_name, stmt->db_name);
+	PopActiveSnapshot();
 
 	return PLTSQL_RC_OK;
 }
