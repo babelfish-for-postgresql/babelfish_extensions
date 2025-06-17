@@ -1,8 +1,8 @@
+-- tsql
 use sys_database_principals_vu_db
 GO
 
--- create a login which is a member of sysadmin server role
-create login sys_database_principals_vu_login_with_sysadmin with password = '12345678'
+-- add sys_database_principals_vu_login_with_sysadmin to sysadmin
 alter server role sysadmin add member sys_database_principals_vu_login_with_sysadmin
 GO
 
@@ -42,3 +42,14 @@ select suser_sname(sid), name, cast(type as char) from sys_database_principals_a
 where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user')
 order by name;
 GO
+
+-- tsql user=login_without_any_permissions password=12345678
+select name, suser_sname(sid) from sys.database_principals where name = 'dbo'
+GO
+use sys_database_principals_vu_db_another
+GO
+select name, suser_sname(sid) from sys.database_principals where name = 'dbo'
+GO
+use master
+GO
+-- terminate-tsql-conn user=login_without_any_permissions password=12345678

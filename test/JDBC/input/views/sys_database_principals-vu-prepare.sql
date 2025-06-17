@@ -8,6 +8,10 @@ GO
 create user sys_database_principals_vu_user for login sys_database_principals_vu_login
 GO
 
+-- create a login which is a member of sysadmin server role
+create login sys_database_principals_vu_login_with_sysadmin with password = '12345678'
+GO
+
 create login sys_database_principals_vu_login_tbd with password = '12345678'
 GO
 
@@ -18,6 +22,18 @@ drop login sys_database_principals_vu_login_tbd
 GO
 
 create database sys_database_principals_db_different_owner
+GO
+
+-- creating a login without any permissions and making it the owner of a database
+create database sys_database_principals_vu_db_another
+GO
+create login login_without_any_permissions with password = '12345678'
+GO
+use sys_database_principals_vu_db_another;
+GO
+exec sp_changedbowner 'login_without_any_permissions'
+GO
+use master
 GO
 
 create view sys_database_principals_another_vu as select * from database_principals;
