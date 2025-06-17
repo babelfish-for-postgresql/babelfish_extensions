@@ -220,3 +220,16 @@ Select * from sourceTable
 Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
+
+
+# NVARCHAR(MAX) with large data
+Create table sourceTable(a nvarchar(max))
+Create table destinationTable(a nvarchar(max))
+
+Insert into sourceTable values(replicate('b', 500) + replicate('a', 16000))
+
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
