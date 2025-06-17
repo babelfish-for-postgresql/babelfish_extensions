@@ -105,7 +105,7 @@ runs:
           # Get the list of all the Babelfish logins in a file
           query="SELECT orig_loginname, default_database_name, default_language_name, type, \
                 pg_has_role(rolname, 'sysadmin', 'member') AS is_sysadmin_member, \
-                pg_has_role(rolname, 'securityadmin', 'member') AS is_securityadmin_member \
+                (case when exists (select 1 from pg_roles where rolname = 'securityadmin') then pg_has_role(rolname, 'securityadmin', 'member') else 'f' end) AS is_securityadmin_member  \
                 FROM sys.babelfish_authid_login_ext \
                 WHERE rolname NOT IN ('jdbc_user', 'sysadmin', 'bbf_role_admin', 'test@ABC');"
           ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "$query" > ~/upgrade/logins_file.txt
