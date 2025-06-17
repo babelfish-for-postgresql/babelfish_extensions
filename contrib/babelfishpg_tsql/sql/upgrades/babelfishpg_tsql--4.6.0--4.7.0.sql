@@ -268,6 +268,7 @@ BEGIN
                     AND UExt4.login_name = @current_username
                 )
             )
+        ORDER BY LoginName
     END
     ELSE
     BEGIN

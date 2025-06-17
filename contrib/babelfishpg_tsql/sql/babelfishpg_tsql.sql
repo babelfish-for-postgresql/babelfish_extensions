@@ -3822,7 +3822,6 @@ BEGIN
                     AND UExt2.login_name = @current_username
                 )
             )
-        ORDER BY LExt.orig_loginname
         UNION
         SELECT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
@@ -3855,7 +3854,7 @@ BEGIN
                     AND UExt4.login_name = @current_username
                 )
             )
-        ORDER BY LExt.orig_loginname
+        ORDER BY LoginName
     END
     ELSE
     BEGIN
