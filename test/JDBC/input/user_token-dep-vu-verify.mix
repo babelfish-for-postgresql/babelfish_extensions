@@ -1,4 +1,9 @@
 -- tsql
+-- resetting passwords for logins (dump-restore)
+alter login user_token_login_with_dbrole with password = '12345678';
+GO
+
+-- tsql
 -- create a db role and add the above user to the role
 create role testrole;
 GO
