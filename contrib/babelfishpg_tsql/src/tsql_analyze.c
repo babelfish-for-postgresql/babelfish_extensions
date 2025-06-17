@@ -414,6 +414,12 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		topColTypes = lappend_oid(topColTypes, common_type);
 		topColTypmods = lappend_int(topColTypmods, common_typmod);
 
+		/*
+		 * If there was an aggregate in one of the unions then the grouping is
+		 * required to happen before coercing to common type. For most of the common
+		 * types it is OK to coerce first since the type representation doesn't
+		 * change but for float types we need to avoid losing precision for aggregation.
+		 */
 		if (common_type == FLOAT8OID || common_type == FLOAT4OID)
 		{
 				topColCollations = lappend_oid(topColCollations, -1);
