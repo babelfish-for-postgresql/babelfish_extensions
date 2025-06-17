@@ -1,6 +1,6 @@
 -- sla 100000
 -- tsql
-select count(*) from sys.server_principals where type = 'S';
+select count(*) from sys.server_principals where type != 'R';
 GO
 
 -- create a dummy db
