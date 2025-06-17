@@ -1205,15 +1205,43 @@ is_numeric_datatype(Oid typid)
 	return false;
 }
 
+/*
+ * get_default_typmod_for_fixedsize_dataypes
+ *
+ * Assigns predefined typmod values for fixed-length datatypes
+ * (int, bigint, smallint, tinyint) and money/smallmoney.
+ * These typmods represent the maximum allowed precision for each type
+ * and are used during typmod resolution to ensure consistent handling
+ * in expressions involving fixed-size numeric types.
+ */
+static int32
+get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
+{
+	if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(resulttype))
+		return TSQL_MONEY_TYPMOD;
+	else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(resulttype))
+		return TSQL_SMALLMONEY_TYPMOD;
+	else if (resulttype == INT4OID)
+		return DEFAULT_INT_TYPMOD;
+	else if (resulttype == INT8OID)
+		return DEFAULT_BIGINT_TYPMOD;
+	else if (resulttype == INT2OID)
+		return DEFAULT_SMALLINT_TYPMOD;
+	else if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(resulttype))
+		return DEFAULT_TINYINT_TYPMOD;
+
+	return -1;
+}
+
 /* 
- * look for a typmod to return from a numeric expression,
- * Also for cases where we cannot compute the expression typmod return -1 and set found as false.
+ * Look for a typmod to return from a numeric expression,
+ * also for cases where we cannot compute the expression typmod return -1 and set found as false.
  */
 int32
 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 {
 	/*
-	 * set found value as true by default, if we are unable to 
+	 * Set found value as true by default, if we are unable to 
 	 * find the expression typmod found will be set to false.
 	 */
 	if (found != NULL)
@@ -1232,6 +1260,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (param->paramtypmod == -1)
 				{
+					int32 		fixlen_default_typmod;
 					/* UDT handling in T_Param */
 					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(param->paramtype);
 					if (OidIsValid(immediate_base_type))
@@ -1242,15 +1271,14 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							return typmod;
 					}
 
-					/* handling for fixed length datatypes */
-					if (param->paramtype == INT4OID)
-						return DEFAULT_INT_TYPMOD;
-					else if (param->paramtype == INT8OID)
-						return DEFAULT_BIGINT_TYPMOD;
-					else if (param->paramtype == INT2OID)
-						return DEFAULT_SMALLINT_TYPMOD;
-					else if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (param->paramtype))
-						return DEFAULT_TINYINT_TYPMOD;
+					/*
+					 * Handle default typmod for supported fixed-length datatypes
+					 * such as bigint, int, smallint, and tinyint.
+					 * These typmods represent the maximum allowed digits for each type.
+					 */
+					fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(param->paramtype);
+					if (fixlen_default_typmod != -1)
+						return fixlen_default_typmod;
 				}
 
 				if (!is_numeric_datatype(param->paramtype) &&
@@ -1282,7 +1310,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (con->constisnull || 
 					(!(con->consttype == INT8OID) &&
 					 !(con->consttype == INT4OID) &&
-					 !(con->consttype == INT2OID) &&
+					 unlikely(!(con->consttype == INT2OID)) &&
 					 !is_numeric_datatype(con->consttype)))
 				{
 					if (found != NULL) *found = false;
@@ -1299,7 +1327,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 */
 					if (con->consttype == INT4OID ||
 						con->consttype == INT8OID ||
-						con->consttype == INT2OID)
+						unlikely(con->consttype == INT2OID))
 					{
 						val = con->constvalue;
 						num = int64_to_numeric(val);
@@ -1410,6 +1438,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (var->vartypmod == -1)
 				{
+					int32 		fixlen_default_typmod;
 					/* UDT handling in T_var */
 					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
 					if (OidIsValid(immediate_base_type))
@@ -1420,13 +1449,17 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							return typmod;
 					}
 
-					/* handling for fixed length datatypes */
-					if (plan && var->vartype == INT4OID)
-						return DEFAULT_INT_TYPMOD;
-					else if (plan && var->vartype == INT8OID)
-						return DEFAULT_BIGINT_TYPMOD;
-					else if (plan && var->vartype == INT2OID)
-						return DEFAULT_SMALLINT_TYPMOD;
+					/*
+					 * Handle default typmod for supported fixed-length datatypes
+					 * such as bigint, int, smallint, and tinyint.
+					 * These typmods represent the maximum allowed digits for each type.
+					 */
+					if (plan)
+					{
+						fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(var->vartype);
+						if (fixlen_default_typmod != -1)
+							return fixlen_default_typmod;
+					}
 
 					if (found != NULL) *found = false;
 				}
@@ -1449,22 +1482,18 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						precision;
 				uint8_t		integralDigitCount = 0;
 				bool		found_typmod;
+				int32 		fixsize_default_typmod;
 
 				Assert(list_length(op->args) == 2 || list_length(op->args) == 1);
 
-				/* Handling for fixed length dataypes. */
-				if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(op->opresulttype))
-					return TSQL_MONEY_TYPMOD;
-				else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(op->opresulttype))
-					return TSQL_SMALLMONEY_TYPMOD;
-				else if (op->opresulttype == INT4OID)
-					return DEFAULT_INT_TYPMOD;
-				else if (op->opresulttype == INT8OID)
-					return DEFAULT_BIGINT_TYPMOD;
-				else if (op->opresulttype == INT2OID)
-					return DEFAULT_SMALLINT_TYPMOD;
-				else if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(op->opresulttype))
-					return DEFAULT_TINYINT_TYPMOD;
+				/*
+				 * Handle default typmod for supported fixed-size datatypes
+				 * such as money, smallmoney, bigint, int, smallint, and tinyint.
+				 * These typmods represent the maximum allowed digits for each type.
+				 */
+				fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(op->opresulttype);
+				if (fixsize_default_typmod != -1)
+					return fixsize_default_typmod;
 
 				if (list_length(op->args) == 2)
 				{
