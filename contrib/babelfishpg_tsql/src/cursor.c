@@ -1450,9 +1450,6 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	Portal		portal;
 	MemoryContext oldcontext;
 	MemoryContext savedPortalCxt;
-	PLtsql_stmt_execsql *parse_result;
-	PLtsql_function *function;
-	char *stmt_copy;
 	ANTLR_result result;
 	
 	/*
@@ -1496,21 +1493,6 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 
 	if (prepare)
 	{
-		/*
-		 * We need to parse the TSQL statements using antlr parser before passing it to SPI_prepare_cursor. 
-		 * Antlr parser will converts TSQL query into PSQL syntax and properly handles idenfier delimiters,
-		 * allowing PostgreSQL reserved words to be used as column aliases.
-		 */
-		if (stmt != NULL && sql_dialect == SQL_DIALECT_TSQL)
-		{
-			stmt_copy = strdup(stmt);
-			function = pltsql_compile_inline(stmt_copy, NULL);
-			parse_result = (PLtsql_stmt_execsql *) lsecond(function->action->body);
-			stmt = strdup(parse_result->sqlstmt->query);
-			pltsql_free_function_memory(function);
-			free(stmt_copy);
-		}
-		
 		/* prepare plan and insert a cursor entry */
 		plan = SPI_prepare_cursor(stmt, nBindParams, boundParamsOidList, cursor_options);
 		if (plan == NULL)
