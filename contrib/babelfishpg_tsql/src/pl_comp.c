@@ -1360,6 +1360,7 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 	}
 	PG_END_TRY();
 	destroy_compile_context(cmpl_ctx);
+	pltsql_curr_compile = NULL;
 
 	return function;
 }

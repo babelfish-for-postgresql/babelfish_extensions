@@ -94,6 +94,16 @@ int#!#smallint#!#bigint
 
 cursor#!#close
 ~~SUCCESS~~
+cursor#!#open#!#DECLARE @var INT; select @var = 5; select @var + 1;#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+cursor#!#fetch#!#next
+~~START~~
+int
+6
+~~END~~
+
+cursor#!#close
+~~SUCCESS~~
 DROP TABLE test_cursors_fetch_next
 
 CREATE TABLE test_cursors_fetch_next(a CHAR(30), b VARCHAR(30), c NCHAR(30), d NVARCHAR(30));

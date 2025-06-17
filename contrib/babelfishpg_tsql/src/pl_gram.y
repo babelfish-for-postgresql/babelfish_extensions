@@ -7192,6 +7192,7 @@ parse_datatype(const char *string, int location)
 {
 	TypeName  	*typeName;
 	Oid		type_id;
+	Oid 	collation = InvalidOid;
 	int32		typmod;
 	char	   *dataTypeName,
 			   *schemaName;
@@ -7264,10 +7265,14 @@ parse_datatype(const char *string, int location)
 
 	/* Restore former ereport callback */
 	error_context_stack = syntax_errcontext.previous;
+	
+	if (pltsql_curr_compile)
+		collation = pltsql_curr_compile->fn_input_collation;
+
 
 	/* Okay, build a PLtsql_type data structure for it */
 	return pltsql_build_datatype(type_id, typmod,
-								 pltsql_curr_compile->fn_input_collation,
+								 collation,
 								 typeName);
 }
 

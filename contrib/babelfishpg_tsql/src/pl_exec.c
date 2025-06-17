@@ -10313,6 +10313,7 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	PLtsql_datum *target;
 	MemoryContext oldcontext;
 
+	/* TODO: estate is not set for cursor queries */
 	PLtsql_execstate *estate = get_current_tsql_estate();
 	Assert(estate != NULL);
 	oldcontext = MemoryContextSwitchTo(estate->datum_context);

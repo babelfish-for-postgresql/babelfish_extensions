@@ -1443,6 +1443,7 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	int			ccopt;
 	int			cursor_options;
 	bool		found;
+	char	   *func_name = "cursor_code_block";
 	SPIPlanPtr	plan;
 	CursorPreparedHandleHashEnt *phentry;
 	CursorHashEnt *hentry;
@@ -1452,7 +1453,31 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	PLtsql_stmt_execsql *parse_result;
 	PLtsql_function *function;
 	char *stmt_copy;
-
+	ANTLR_result result;
+	
+	/*
+	 * We need to parse the TSQL statements using antlr parser before passing it to SPI_prepare_cursor. 
+	 * Antlr parser will converts TSQL query into PSQL syntax and properly handles idenfier delimiters,
+	 * allowing PostgreSQL reserved words to be used as column aliases.
+	 */
+	if (prepare && stmt != NULL && sql_dialect == SQL_DIALECT_TSQL)
+	{
+		pltsql_ns_init();
+		pltsql_ns_push(func_name, PLTSQL_LABEL_BLOCK);
+		result = antlr_parser_cpp(stmt);
+		
+		if (!result.success)
+			report_antlr_error(result);
+			
+		/* Skip if NULL query was passed. */
+		if (pltsql_parse_result->body)
+		{
+			PLtsql_expr *sqlstmt = ((PLtsql_stmt_execsql *) lsecond(pltsql_parse_result->body))->sqlstmt;
+			if (sqlstmt)
+				stmt = sqlstmt->query;
+		}				
+	}
+	
 	/*
 	 * Connect to SPI manager. should be handled in the same way with
 	 * pltsql_inline_handler()
