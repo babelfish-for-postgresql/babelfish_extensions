@@ -16,6 +16,7 @@
 #include "utils/numeric.h"
 #include "utils/varbit.h"
 #include "varatt.h"
+#include "common/int.h"
 
 #include "instr.h"
 #include "typecode.h"
@@ -593,263 +594,229 @@ varchar2bit(PG_FUNCTION_ARGS)
 Datum
 smallmoneybitpl(PG_FUNCTION_ARGS)
 {
-    int32       arg1 = PG_GETARG_INT32(0);
-    bool        arg2 = PG_GETARG_BOOL(1);
-    int32       adder = (int32) arg2 * FIXEDDECIMAL_MULTIPLIER;
-    int64       result;
+	int64       arg1 = PG_GETARG_INT64(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	int32       adder = (int32) arg2 * FIXEDDECIMAL_MULTIPLIER;
+	int32       result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-    if (__builtin_add_overflow(arg1, adder, &result))
-        ereport(ERROR,
-                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                 errmsg("smallmoney out of range")));
-#else
-
-    result = (int64) arg1 + adder;
-
-    /*
-     * Overflow check. If the result cannot be converted back
-     * to a 32 bit result, then we can say that there is a 
-     * overflow
-     */
-    if (result != (int32) result)
-        ereport(ERROR,
-                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                errmsg("smallmoney out of range")));
-#endif							
-    PG_RETURN_INT32(result);
+	/*
+	 * Overflow check. If the result of addition
+	 * does not fit in 32 bit, then pg_add_s32_overflow
+	 * returns true
+	 */
+	if (pg_add_s32_overflow(arg1, adder, &result)) 
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+							
+	PG_RETURN_INT64(result);
 }
 
 Datum
 smallmoneybitmi(PG_FUNCTION_ARGS)
 {
-    int32       arg1 = PG_GETARG_INT32(0);
-    bool        arg2 = PG_GETARG_BOOL(1);
-    int32       subtractor = (int32) arg2 * FIXEDDECIMAL_MULTIPLIER;
-    int64       result;
+	int64       arg1 = PG_GETARG_INT64(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	int32       subtractor = (int32) arg2 * FIXEDDECIMAL_MULTIPLIER;
+	int32       result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW
-    if (__builtin_sub_overflow(arg1, subtractor, &result))
-        ereport(ERROR,
-                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                 errmsg("smallmoney out of range")));
-#else
-    result = (int64) arg1 - subtractor;
-
-    /*
-     * Overflow check. If the result cannot be converted back
-     * to a 32 bit result, then we can say that there is a 
-     * overflow
-     */
-    if (result != (int32) result)
-        ereport(ERROR,
-                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                errmsg("smallmoney out of range")));
-#endif							
-    PG_RETURN_INT32(result);
+	/*
+	 * Overflow check. If the result of subtraction
+	 * does not fit in 32 bit, then pg_sub_s64_overflow
+	 * returns true
+	 */
+	if (pg_sub_s32_overflow(arg1, subtractor, &result)) 
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+						
+	PG_RETURN_INT64(result);
 }
 
 Datum
 smallmoneybitdiv(PG_FUNCTION_ARGS)
 {
-    int32       arg1 = PG_GETARG_INT32(0);
-    bool        arg2 = PG_GETARG_BOOL(1);
+	int32       arg1 = PG_GETARG_INT32(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
 
-    if (!arg2)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_DIVISION_BY_ZERO),
-                errmsg("division by zero")));
-        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
-        PG_RETURN_NULL();
-    }
+	if (!arg2)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
 
-    PG_RETURN_INT32(arg1);
+	PG_RETURN_INT64(arg1);
 }
 
 Datum
 bitsmallmoneypl(PG_FUNCTION_ARGS)
 {
-    bool        arg1 = PG_GETARG_BOOL(0);
-    int32       arg2 = PG_GETARG_INT32(1);
-    int32       adder = (int32) arg1 * FIXEDDECIMAL_MULTIPLIER;
-    int64       result;
+	bool        arg1 = PG_GETARG_BOOL(0);
+	int64       arg2 = PG_GETARG_INT64(1);
+	int32       adder = (int32) arg1 * FIXEDDECIMAL_MULTIPLIER;
+	int32       result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW /* HAVE_BUILTIN_OVERFLOW */
-    if (__builtin_add_overflow(arg1, adder, &result))
-        ereport(ERROR,
-                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                 errmsg("smallmoney out of range")));
-#else
-
-    result = (int64) adder + arg2;
-
-    /*
-     * Overflow check. If the result cannot be converted back
-     * to a 32 bit result, then we can say that there is a 
-     * overflow
-     */
-    if (result != (int32) result)
-        ereport(ERROR,
-                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                errmsg("smallmoney out of range")));
-#endif							
-    PG_RETURN_INT32(result);
+	/*
+	 * Overflow check. If the result of addition
+	 * does not fit in 32 bit, then pg_add_s32_overflow
+	 * returns true
+	 */
+	if (pg_add_s32_overflow(adder, arg2, &result)) 
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+						
+	PG_RETURN_INT64(result);
 }
 
 Datum
 bitsmallmoneymi(PG_FUNCTION_ARGS)
 {
-    bool        arg1 = PG_GETARG_BOOL(0);
-    int32       arg2 = PG_GETARG_INT32(1);
-    int32       subtractor = (int32) arg1 * FIXEDDECIMAL_MULTIPLIER;
-    int64       result;
+	bool        arg1 = PG_GETARG_BOOL(0);
+	int64       arg2 = PG_GETARG_INT64(1);
+	int32       subtractor = (int32) arg1 * FIXEDDECIMAL_MULTIPLIER;
+	int32       result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW
-    if (__builtin_sub_overflow(arg1, subtractor, &result))
-        ereport(ERROR,
-                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                 errmsg("smallmoney out of range")));
-#else
-    result = (int64) subtractor - arg2;
-
-    /*
-     * Overflow check. If the result cannot be converted back
-     * to a 32 bit result, then we can say that there is a 
-     * overflow
-     */
-    if (result != (int32) result)
-        ereport(ERROR,
-                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                errmsg("smallmoney out of range")));
-#endif							
-    PG_RETURN_INT32(result);
+	/*
+	 * Overflow check. If the result of subtraction
+	 * does not fit in 32 bit, then pg_sub_s64_overflow
+	 * returns true
+	 */
+	if (pg_sub_s32_overflow(subtractor, arg2, &result)) 
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+							
+	PG_RETURN_INT64(result);
 }
 
 Datum
 bitsmallmoneydiv(PG_FUNCTION_ARGS)
 {
-    bool        arg1 = PG_GETARG_BOOL(0);
-    float8      arg2 = (float8) PG_GETARG_INT32(1) / FIXEDDECIMAL_MULTIPLIER;
-    float8      t;    
-    int64       result;
+	bool        arg1 = PG_GETARG_BOOL(0);
+	float8      arg2 = (float8) PG_GETARG_INT32(1) / FIXEDDECIMAL_MULTIPLIER;
+	float8      t;    
+	int64       result;
 
-    if (arg2 == 0)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_DIVISION_BY_ZERO),
-                 errmsg("division by zero")));
-        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
-        PG_RETURN_NULL();
-    }
+	if (arg2 == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
 
-    if (!arg1)
-    {
-       PG_RETURN_INT32(0);
-    }
+	if (!arg1)
+	{
+	   PG_RETURN_INT64(0);
+	}
 
-    t = (float8) 1 / arg2;
-    t *= FIXEDDECIMAL_MULTIPLIER;
-    t = rint(t);
+	t = (float8) 1 / arg2;
+	t *= FIXEDDECIMAL_MULTIPLIER;
+	t = rint(t);
 
-    result = (int64) t;
+	result = (int64) t;
 
-    if (result != (int32) result)
-        ereport(ERROR,
-                (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                 errmsg("smallmoney out of range")));
+	if (result > INT32_MAX || result < INT32_MIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
 
-    PG_RETURN_INT32(result);
+	PG_RETURN_INT64(result);
 }
 
 Datum
 bitdiv(PG_FUNCTION_ARGS)
 {
-    bool        arg1 = PG_GETARG_BOOL(0);
-    bool        arg2 = PG_GETARG_BOOL(1);
-    
-    if (!arg2)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_DIVISION_BY_ZERO),
-                 errmsg("division by zero")));
-        /* ensure compiler realizes we mustn't reach the division (gcc bug) */
-        PG_RETURN_NULL();
-    }
+	bool        arg1 = PG_GETARG_BOOL(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	
+	if (!arg2)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
 
-    PG_RETURN_BOOL(arg1);
+	PG_RETURN_BOOL(arg1);
 }
 
 Datum
 floatbitpl(PG_FUNCTION_ARGS)
 {
-    float8      arg1 = PG_GETARG_FLOAT8(0);
-    bool        arg2 = PG_GETARG_BOOL(1);
-    if (!arg2)
-    {
-        PG_RETURN_FLOAT8(arg1);
-    }
-    PG_RETURN_FLOAT8(float8_pl(arg1, (float8) 1));
+	float8      arg1 = PG_GETARG_FLOAT8(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	if (!arg2)
+	{
+		PG_RETURN_FLOAT8(arg1);
+	}
+	PG_RETURN_FLOAT8(float8_pl(arg1, (float8) 1));
 }
 
 Datum
 floatbitmi(PG_FUNCTION_ARGS)
 {
-    float8      arg1 = PG_GETARG_FLOAT8(0);
-    bool        arg2 = PG_GETARG_BOOL(1);
-    if (!arg2)
-    {
-        PG_RETURN_FLOAT8(arg1);
-    }
-    PG_RETURN_FLOAT8(float8_mi(arg1, (float8) 1));
+	float8      arg1 = PG_GETARG_FLOAT8(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	if (!arg2)
+	{
+		PG_RETURN_FLOAT8(arg1);
+	}
+	PG_RETURN_FLOAT8(float8_mi(arg1, (float8) 1));
 }
 
 Datum
 floatbitdiv(PG_FUNCTION_ARGS)
 {
-    float8      arg1 = PG_GETARG_FLOAT8(0);
-    bool        arg2 = PG_GETARG_BOOL(1);
-    if (!arg2)
-    {
-        ereport(ERROR,
-		    (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-		     errmsg("division by zero")));
-    }
-    PG_RETURN_FLOAT8(arg1);
+	float8      arg1 = PG_GETARG_FLOAT8(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	if (!arg2)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+			 errmsg("division by zero")));
+	}
+	PG_RETURN_FLOAT8(arg1);
 }
 
 Datum
 bitfloatpl(PG_FUNCTION_ARGS)
 {
-    bool        arg1 = PG_GETARG_BOOL(0);
-    float8      arg2 = PG_GETARG_FLOAT8(1);
-    if (!arg1)
-    {
-        PG_RETURN_FLOAT8(arg2);
-    }
-    PG_RETURN_FLOAT8(float8_pl((float8) 1, arg2));
+	bool        arg1 = PG_GETARG_BOOL(0);
+	float8      arg2 = PG_GETARG_FLOAT8(1);
+	if (!arg1)
+	{
+		PG_RETURN_FLOAT8(arg2);
+	}
+	PG_RETURN_FLOAT8(float8_pl((float8) 1, arg2));
 }
 
 Datum
 bitfloatmi(PG_FUNCTION_ARGS)
 {
-    bool        arg1 = PG_GETARG_BOOL(0);
-    float8      arg2 = PG_GETARG_FLOAT8(1);
-    if (!arg1)
-    {
-        PG_RETURN_FLOAT8(-arg2);
-    }
-    PG_RETURN_FLOAT8(float8_mi((float8) 1, arg2));
+	bool        arg1 = PG_GETARG_BOOL(0);
+	float8      arg2 = PG_GETARG_FLOAT8(1);
+	if (!arg1)
+	{
+		PG_RETURN_FLOAT8(-arg2);
+	}
+	PG_RETURN_FLOAT8(float8_mi((float8) 1, arg2));
 }
 
 Datum
 bitfloatdiv(PG_FUNCTION_ARGS)
 {
-    bool        arg1 = PG_GETARG_BOOL(0);
-    float8      arg2 = PG_GETARG_FLOAT8(1);
-    if (!arg1)
-    {
-        PG_RETURN_FLOAT8(0);
-    }
-    PG_RETURN_FLOAT8(float8_div((float8) 1, arg2));
+	bool        arg1 = PG_GETARG_BOOL(0);
+	float8      arg2 = PG_GETARG_FLOAT8(1);
+	if (!arg1)
+	{
+		PG_RETURN_FLOAT8(0);
+	}
+	PG_RETURN_FLOAT8(float8_div((float8) 1, arg2));
 }

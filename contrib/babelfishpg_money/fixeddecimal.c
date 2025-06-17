@@ -1841,13 +1841,6 @@ fixeddecimalint8pl(PG_FUNCTION_ARGS)
 	int64		adder;
 	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW
-	if (__builtin_add_overflow(arg1, adder, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-#else
-
 	/*
 	 * Overflow check. If the result of multiplication
 	 * does not fit in 64 bit, then pg_mul_s64_overflow
@@ -1872,7 +1865,6 @@ fixeddecimalint8pl(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 
-#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -1884,14 +1876,6 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 	int64		subtractor;
 	int64		result;
-
-
-#ifdef HAVE_BUILTIN_OVERFLOW
-	if (__builtin_sub_overflow(arg1, subtractor, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-#else
 
 	/*
 	 * Overflow check. If the result of multiplication
@@ -1917,7 +1901,6 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 	
-#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2034,13 +2017,6 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW
-	if (__builtin_add_overflow(adder, arg2, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-#else
-
 	/*
 	 * Overflow check. If the result of multiplication
 	 * does not fit in 64 bit, then pg_mul_s64_overflow
@@ -2065,8 +2041,6 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
 
-#endif							/* HAVE_BUILTIN_OVERFLOW */
-
 	PG_RETURN_INT64(result);
 }
 
@@ -2077,13 +2051,6 @@ int8fixeddecimalmi(PG_FUNCTION_ARGS)
 	int64		subtractor;
 	int64		arg2 = PG_GETARG_INT64(1);
 	int64		result;
-
-#ifdef HAVE_BUILTIN_OVERFLOW
-	if (__builtin_sub_overflow(subtractor, arg2, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-#else
 
 	/*
 	 * Overflow check. If the result of multiplication
@@ -2108,8 +2075,6 @@ int8fixeddecimalmi(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-	
-#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
