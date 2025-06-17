@@ -2876,14 +2876,14 @@ select * from test_special_char_t t where contains(t..name, 'one');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near "..")~~
+~~ERROR (Message: syntax error near 'where' at line 1 and character position 36)~~
 
 
 select t..name from test_special_char_t t where contains(t.name, 'one');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near "..")~~
+~~ERROR (Message: syntax error near 'from' at line 1 and character position 15)~~
 
 
 select t.name from test_special_char_t where contains(t.name, 'one');
@@ -2918,7 +2918,7 @@ select t.name from test_special_char_t t where contains(.name, 'one');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near ".")~~
+~~ERROR (Message: syntax error near 'where' at line 1 and character position 41)~~
 
 
 select t.name from test_special_char_t t where contains(t., 'one');
