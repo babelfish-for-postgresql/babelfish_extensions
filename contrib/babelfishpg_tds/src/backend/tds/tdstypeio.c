@@ -2667,7 +2667,8 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		token->tvpInfo->rowData = token->tvpInfo->rowData->nextRow;
 		pfree(tempRow);
 	}
-	pfree(token->tvpInfo->colMetaData);
+	if (token->tvpInfo->colMetaData)
+		pfree(token->tvpInfo->colMetaData);
 
 	item = (TvpLookupItem *) palloc(sizeof(TvpLookupItem));
 	item->name = downcase_truncate_identifier(token->paramMeta.colName.data,
