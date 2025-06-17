@@ -263,7 +263,7 @@ SELECT LEN(OBJECT_DEFINITION(OBJECT_ID('dbo.object_definition_Largeproc'))) AS D
 GO
 ~~START~~
 int
-9665
+9683
 ~~END~~
 
 
@@ -280,7 +280,7 @@ SELECT LEN(OBJECT_DEFINITION(OBJECT_ID('dbo.object_definition_LargeView'))) AS D
 GO
 ~~START~~
 int
-7263
+7281
 ~~END~~
 
 
@@ -297,7 +297,7 @@ SELECT LEN(OBJECT_DEFINITION(OBJECT_ID('dbo.object_definition_LargeFunction'))) 
 GO
 ~~START~~
 int
-9898
+9916
 ~~END~~
 
 
