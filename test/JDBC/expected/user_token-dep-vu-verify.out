@@ -5,7 +5,7 @@ GO
 alter role testrole add member u_user_token_login_with_dbrole
 GO
 
-select * from user_token_vu;
+select * from user_token_vu order by name;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
@@ -14,13 +14,13 @@ dbo#!#jdbc_user#!#SQL USER#!#GRANT OR DENY
 
 
 -- tsql user=user_token_login_with_dbrole password=12345678
-select * from user_token_vu;
+select * from user_token_vu order by name;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-u_user_token_login_with_dbrole#!#user_token_login_with_dbrole#!#SQL USER#!#GRANT OR DENY
-testrole#!#<NULL>#!#ROLE#!#GRANT OR DENY
 public#!#<NULL>#!#ROLE#!#GRANT OR DENY
+testrole#!#<NULL>#!#ROLE#!#GRANT OR DENY
+u_user_token_login_with_dbrole#!#user_token_login_with_dbrole#!#SQL USER#!#GRANT OR DENY
 ~~END~~
 
 -- terminate-tsql-conn user=user_token_login_with_dbrole password=12345678

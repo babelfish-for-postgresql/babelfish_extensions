@@ -34,7 +34,8 @@ sys_database_principals_vu_login
 ~~END~~
 
 
-select suser_sname(sid) from database_principals where name in ('sys_database_principals_vu_orphaned_user', 'db_owner', 'db_securityadmin', 'db_datawriter', 'db_accessadmin', 'db_datareader', 'db_ddladmin')
+select suser_sname(sid) from database_principals 
+where name in ('sys_database_principals_vu_orphaned_user', 'db_owner', 'db_securityadmin', 'db_datawriter', 'db_accessadmin', 'db_datareader', 'db_ddladmin')
 GO
 ~~START~~
 nvarchar
@@ -48,7 +49,11 @@ nvarchar
 ~~END~~
 
 
-select name, suser_sname(sid) from database_principals order by name;
+-- filtering only logins which are created within this test
+-- (sys_database_principals_vu_login, sys_database_principals_vu_login_tbd, jdbc_user <masteruser>, 'login_without_any_permissions')
+select name, suser_sname(sid) from database_principals 
+where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user', 'login_without_any_permissions')
+order by name;
 GO
 ~~START~~
 varchar#!#nvarchar
@@ -85,7 +90,7 @@ GO
 -- filtering only logins which are created within this test
 -- (sys_database_principals_vu_login, sys_database_principals_vu_login_tbd, jdbc_user <masteruser>)
 select suser_sname(sid), name, type, default_schema_name from sys_database_principals_another_vu
-where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user')
+where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user', 'login_without_any_permissions')
 order by name;
 GO
 ~~START~~
@@ -107,7 +112,7 @@ sys_database_principals_vu_login#!#sys_database_principals_vu_user#!#S#!#dbo
 
 
 select suser_sname(sid), name, cast(type as char) from sys_database_principals_another_func()
-where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user')
+where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user', 'login_without_any_permissions')
 order by name;
 GO
 ~~START~~

@@ -5,11 +5,11 @@ GO
 alter role testrole add member u_user_token_login_with_dbrole
 GO
 
-select * from user_token_vu;
+select * from user_token_vu order by name;
 GO
 
 -- tsql user=user_token_login_with_dbrole password=12345678
-select * from user_token_vu;
+select * from user_token_vu order by name;
 GO
 -- terminate-tsql-conn user=user_token_login_with_dbrole password=12345678
 
