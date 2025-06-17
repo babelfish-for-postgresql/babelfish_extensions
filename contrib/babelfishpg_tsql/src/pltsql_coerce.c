@@ -82,10 +82,10 @@ static bool is_tsql_numeric_fixeddecimal(Oid oid);
 static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
 
-#define SMALLINT_PRECISION_RADIX 5
-#define INT_PRECISION_RADIX 10
-#define BIGINT_PRECISION_RADIX 19
-#define TINYINT_PRECISION_RADIX 3
+#define SMALLINT_PRECISION_RADIX	5
+#define INT_PRECISION_RADIX		10
+#define BIGINT_PRECISION_RADIX		19
+#define TINYINT_PRECISION_RADIX		3
 
 #define DEFAULT_SMALLINT_TYPMOD		((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 #define DEFAULT_INT_TYPMOD		((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ

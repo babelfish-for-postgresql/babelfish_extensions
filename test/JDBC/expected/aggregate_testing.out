@@ -660,80 +660,92 @@ agg_testing_table_min#!#col_smallmoney#!#numeric#!#14#!#6
 DROP TABLE IF EXISTS agg_testing_table_min;
 GO
 
+CREATE TABLE agg_testing_table1(
+        numeric_col NUMERIC(15,5),
+        money_col MONEY,
+        smallmoney_col SMALLMONEY,
+        bigint_col BIGINT,
+        int_col INT,
+        smallint_col SMALLINT,
+        tinyint_col TINYINT,
+        bit_col BIT
+)
+GO
+
+INSERT INTO agg_testing_table1 VALUES 
+(987.65432, 9876.54, 1234.56, 23, 12, 1, 1, 0);
+GO
+~~ROW COUNT: 1~~
+
+
 -- STRING_AGG() testing
-SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
+GO
+~~START~~
+numeric
+987.6543
+~~END~~
+
+
+SELECT STRING_AGG(CAST(money_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 ~~START~~
 numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "987.65432, 0.00001")~~
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
-SELECT STRING_AGG(CAST(money_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(smallmoney_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 ~~START~~
 numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "9876.54, 0.01")~~
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
-SELECT STRING_AGG(CAST(smallmoney_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(bigint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
+23.0000
+~~END~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "1234.56, 0.01")~~
 
-
-SELECT STRING_AGG(CAST(bigint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(int_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
+12.0000
+~~END~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "1234567890123456789, 1")~~
 
-
-SELECT STRING_AGG(CAST(int_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(smallint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
+1.0000
+~~END~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "1234567890, 1")~~
 
-
-SELECT STRING_AGG(CAST(smallint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(tinyint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
+1.0000
+~~END~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "12345, 1")~~
 
-
-SELECT STRING_AGG(CAST(tinyint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(bit_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type numeric: "128, 1")~~
-
-
-SELECT STRING_AGG(CAST(bit_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
-GO
-~~START~~
-numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type numeric: "0, 0")~~
+0.0000
+~~END~~
 
 
-SELECT STRING_AGG(CAST(NULL AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(NULL AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 ~~START~~
 numeric
@@ -741,17 +753,16 @@ numeric
 ~~END~~
 
 
-SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type numeric: "987.65432, 0.00001")~~
+987.6543
+~~END~~
 
 
 -- NULL as an input
-SELECT STRING_AGG(NULL, ',') * 1.00 FROM agg_testing_table WHERE numeric_col IS NULL;
+SELECT STRING_AGG(NULL, ',') * 1.00 FROM agg_testing_table1 WHERE numeric_col IS NULL;
 GO
 ~~START~~
 numeric
@@ -788,6 +799,9 @@ GO
 
 ~~ERROR (Message: function sum(unknown) is not unique)~~
 
+
+DROP TABLE IF EXISTS agg_testing_table1;
+GO
 
 -- Additional test cases
 CREATE TABLE Sales (

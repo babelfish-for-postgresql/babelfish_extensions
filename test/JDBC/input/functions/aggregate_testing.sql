@@ -330,39 +330,55 @@ GO
 DROP TABLE IF EXISTS agg_testing_table_min;
 GO
 
+CREATE TABLE agg_testing_table1(
+        numeric_col NUMERIC(15,5),
+        money_col MONEY,
+        smallmoney_col SMALLMONEY,
+        bigint_col BIGINT,
+        int_col INT,
+        smallint_col SMALLINT,
+        tinyint_col TINYINT,
+        bit_col BIT
+)
+GO
+
+INSERT INTO agg_testing_table1 VALUES 
+(987.65432, 9876.54, 1234.56, 23, 12, 1, 1, 0);
+GO
+
 -- STRING_AGG() testing
-SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 
-SELECT STRING_AGG(CAST(money_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(money_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 
-SELECT STRING_AGG(CAST(smallmoney_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(smallmoney_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 
-SELECT STRING_AGG(CAST(bigint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(bigint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 
-SELECT STRING_AGG(CAST(int_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(int_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 
-SELECT STRING_AGG(CAST(smallint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(smallint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 
-SELECT STRING_AGG(CAST(tinyint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(tinyint_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 
-SELECT STRING_AGG(CAST(bit_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(bit_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 
-SELECT STRING_AGG(CAST(NULL AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(NULL AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 
-SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table;
+SELECT STRING_AGG(CAST(numeric_col AS VARCHAR(20)), ', ') * 1.00 FROM agg_testing_table1;
 GO
 
 -- NULL as an input
-SELECT STRING_AGG(NULL, ',') * 1.00 FROM agg_testing_table WHERE numeric_col IS NULL;
+SELECT STRING_AGG(NULL, ',') * 1.00 FROM agg_testing_table1 WHERE numeric_col IS NULL;
 GO
 
 SELECT COUNT(NULL) * 1.00 FROM agg_testing_table;
@@ -375,6 +391,9 @@ SELECT AVG(NULL) * 1.00 FROM agg_testing_table;
 GO
 
 SELECT SUM(NULL) * 1.00 FROM agg_testing_table;
+GO
+
+DROP TABLE IF EXISTS agg_testing_table1;
 GO
 
 -- Additional test cases
