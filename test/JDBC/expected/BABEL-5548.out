@@ -121,7 +121,7 @@ select .TestSpatialFunction_YourTableTemp.PointColumn.STSrid from TestSpatialFun
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near ".")~~
+~~ERROR (Message: syntax error near '.' at line 1 and character position 53)~~
 
 
 select dbo.TestSpatialFunction_YourTableTemp.PointColumn.STSrid from TestSpatialFunction_YourTableTemp
