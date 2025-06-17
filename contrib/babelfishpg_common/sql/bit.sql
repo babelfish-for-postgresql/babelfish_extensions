@@ -517,15 +517,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.bitsmallmoneymul(sys.BIT, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS $$
-    BEGIN
-        IF $1 = 0 THEN
-            RETURN 0::sys.SMALLMONEY;
-        ELSE 
-            RETURN $2;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'bitsmallmoneymul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.bitsmallmoneydiv(sys.BIT, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
@@ -569,15 +562,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.smallmoneybitmul(sys.SMALLMONEY, sys.BIT)
 RETURNS sys.SMALLMONEY
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN 0::sys.SMALLMONEY;
-        ELSE 
-            RETURN $1;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'smallmoneybitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.smallmoneybitdiv(sys.SMALLMONEY, sys.BIT)
 RETURNS sys.SMALLMONEY
@@ -611,41 +597,18 @@ CREATE OPERATOR sys./ (
 
 CREATE FUNCTION sys.bitpl(sys.BIT, sys.BIT)
 RETURNS sys.BIT
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN $1;
-        ELSE 
-            RETURN $2;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'bitpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.bitmi(sys.BIT, sys.BIT)
 RETURNS sys.BIT
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN $1;
-        ELSIF $1 = 0 THEN
-            RETURN $2;
-        ELSE 
-            RETURN 0::sys.BIT;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'bitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.bitmul(sys.BIT, sys.BIT)
 RETURNS sys.BIT
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN $2;
-        ELSE 
-            RETURN $1;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'bitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.bitdiv(sys.BIT, sys.BIT)
 RETURNS sys.BIT
@@ -689,15 +652,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.floatbitmul(float8, sys.BIT)
 RETURNS float8
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN 0::float8;
-        ELSE 
-            RETURN $1;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'floatbitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.floatbitdiv(float8, sys.BIT)
 RETURNS float8
@@ -741,15 +697,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.bitfloatmul(sys.BIT, float8)
 RETURNS float8
-AS $$
-    BEGIN
-        IF $1 = 0 THEN
-            RETURN 0::float8;
-        ELSE 
-            RETURN $2;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'bitfloatmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.bitfloatdiv(sys.BIT, float8)
 RETURNS float8

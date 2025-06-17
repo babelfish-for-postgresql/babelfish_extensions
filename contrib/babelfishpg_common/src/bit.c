@@ -68,20 +68,27 @@ PG_FUNCTION_INFO_V1(bitint4ge);
 /* Arithmetic operations smallmoney, bit */
 PG_FUNCTION_INFO_V1(smallmoneybitpl);
 PG_FUNCTION_INFO_V1(smallmoneybitmi);
+PG_FUNCTION_INFO_V1(smallmoneybitmul);
 PG_FUNCTION_INFO_V1(smallmoneybitdiv);
 PG_FUNCTION_INFO_V1(bitsmallmoneypl);
 PG_FUNCTION_INFO_V1(bitsmallmoneymi);
+PG_FUNCTION_INFO_V1(bitsmallmoneymul);
 PG_FUNCTION_INFO_V1(bitsmallmoneydiv);
 
 /* Arithmetic operations bit */
+PG_FUNCTION_INFO_V1(bitpl);
+PG_FUNCTION_INFO_V1(bitmi);
+PG_FUNCTION_INFO_V1(bitmul);
 PG_FUNCTION_INFO_V1(bitdiv);
 
 /* Arithmetic operations float, bit */
 PG_FUNCTION_INFO_V1(floatbitpl);
 PG_FUNCTION_INFO_V1(floatbitmi);
+PG_FUNCTION_INFO_V1(floatbitmul);
 PG_FUNCTION_INFO_V1(floatbitdiv);
 PG_FUNCTION_INFO_V1(bitfloatpl);
 PG_FUNCTION_INFO_V1(bitfloatmi);
+PG_FUNCTION_INFO_V1(bitfloatmul);
 PG_FUNCTION_INFO_V1(bitfloatdiv);
 
 /*
@@ -634,6 +641,19 @@ smallmoneybitmi(PG_FUNCTION_ARGS)
 }
 
 Datum
+smallmoneybitmul(PG_FUNCTION_ARGS)
+{
+	int64       arg1 = PG_GETARG_INT64(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+
+	if (!arg2)
+	{
+		PG_RETURN_INT64(0);
+	}	
+	PG_RETURN_INT64(arg1);
+}
+
+Datum
 smallmoneybitdiv(PG_FUNCTION_ARGS)
 {
 	int32       arg1 = PG_GETARG_INT32(0);
@@ -694,6 +714,19 @@ bitsmallmoneymi(PG_FUNCTION_ARGS)
 }
 
 Datum
+bitsmallmoneymul(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	int64       arg2 = PG_GETARG_INT64(1);
+
+	if (!arg1)
+	{
+		PG_RETURN_INT64(0);
+	}	
+	PG_RETURN_INT64(arg2);
+}
+
+Datum
 bitsmallmoneydiv(PG_FUNCTION_ARGS)
 {
 	bool        arg1 = PG_GETARG_BOOL(0);
@@ -727,6 +760,33 @@ bitsmallmoneydiv(PG_FUNCTION_ARGS)
 				 errmsg("smallmoney out of range")));
 
 	PG_RETURN_INT64(result);
+}
+
+Datum
+bitpl(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+
+	PG_RETURN_BOOL(arg1 || arg2);
+}
+
+Datum
+bitmi(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+
+	PG_RETURN_BOOL(arg1 - arg2);
+}
+
+Datum
+bitmul(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+
+	PG_RETURN_BOOL(arg1 && arg2);
 }
 
 Datum
@@ -772,6 +832,18 @@ floatbitmi(PG_FUNCTION_ARGS)
 }
 
 Datum
+floatbitmul(PG_FUNCTION_ARGS)
+{
+	float8      arg1 = PG_GETARG_FLOAT8(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	if (!arg2)
+	{
+		PG_RETURN_FLOAT8((float8) 0);
+	}
+	PG_RETURN_FLOAT8(arg1);
+}
+
+Datum
 floatbitdiv(PG_FUNCTION_ARGS)
 {
 	float8      arg1 = PG_GETARG_FLOAT8(0);
@@ -807,6 +879,18 @@ bitfloatmi(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(-arg2);
 	}
 	PG_RETURN_FLOAT8(float8_mi((float8) 1, arg2));
+}
+
+Datum
+bitfloatmul(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	float8      arg2 = PG_GETARG_FLOAT8(1);
+	if (!arg1)
+	{
+		PG_RETURN_FLOAT8((float8) 0);
+	}
+	PG_RETURN_FLOAT8(arg2);
 }
 
 Datum

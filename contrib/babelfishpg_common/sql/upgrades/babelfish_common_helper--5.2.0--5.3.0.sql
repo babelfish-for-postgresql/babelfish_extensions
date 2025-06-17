@@ -322,15 +322,8 @@ END $$;
 
 CREATE OR REPLACE FUNCTION sys.bitsmallmoneymul(sys.BIT, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS $$
-    BEGIN
-        IF $1 = 0 THEN
-            RETURN 0::sys.SMALLMONEY;
-        ELSE 
-            RETURN $2;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'bitsmallmoneymul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 DO $$
 BEGIN
@@ -407,15 +400,8 @@ END $$;
 
 CREATE OR REPLACE FUNCTION sys.smallmoneybitmul(sys.SMALLMONEY, sys.BIT)
 RETURNS sys.SMALLMONEY
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN 0::sys.SMALLMONEY;
-        ELSE 
-            RETURN $1;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'smallmoneybitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 DO $$
 BEGIN
@@ -453,17 +439,8 @@ END $$;
 
 CREATE OR REPLACE FUNCTION sys.bitmi(sys.BIT, sys.BIT)
 RETURNS sys.BIT
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN $1;
-        ELSIF $1 = 0 THEN
-            RETURN $2;
-        ELSE 
-            RETURN 0::sys.BIT;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'bitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 DO $$
 BEGIN
@@ -477,18 +454,10 @@ END IF;
 END $$;
 
 
-
 CREATE OR REPLACE FUNCTION sys.bitpl(sys.BIT, sys.BIT)
 RETURNS sys.BIT
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN $1;
-        ELSE 
-            RETURN $2;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'bitpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 DO $$
 BEGIN
@@ -503,19 +472,10 @@ END IF;
 END $$;
 
 
-
-
 CREATE OR REPLACE FUNCTION sys.bitmul(sys.BIT, sys.BIT)
 RETURNS sys.BIT
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN $2;
-        ELSE 
-            RETURN $1;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_common', 'bitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 DO $$
 BEGIN
@@ -551,7 +511,7 @@ END $$;
 */
 
 CREATE OR REPLACE FUNCTION sys.floatbitmi(float8, sys.BIT)
-RETURNS sys.FLOAT
+RETURNS float8
 AS 'babelfishpg_common', 'floatbitmi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -570,7 +530,7 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION sys.floatbitpl(float8, sys.BIT)
-RETURNS sys.FLOAT
+RETURNS float8
 AS 'babelfishpg_common', 'floatbitpl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -590,16 +550,9 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION sys.floatbitmul(float8, sys.BIT)
-RETURNS sys.FLOAT
-AS $$
-    BEGIN
-        IF $2 = 0 THEN
-            RETURN 0::sys.FLOAT;
-        ELSE 
-            RETURN $1;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+RETURNS float8
+AS 'babelfishpg_common', 'floatbitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 DO $$
 BEGIN
@@ -615,7 +568,7 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION sys.floatbitdiv(float8, sys.BIT)
-RETURNS sys.FLOAT
+RETURNS float8
 AS 'babelfishpg_common', 'floatbitdiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -635,7 +588,7 @@ END $$;
 */
 
 CREATE OR REPLACE FUNCTION sys.bitfloatmi(sys.BIT, float8)
-RETURNS sys.FLOAT
+RETURNS float8
 AS 'babelfishpg_common', 'bitfloatmi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -651,10 +604,8 @@ END IF;
 END $$;
 
 
-
-
 CREATE OR REPLACE FUNCTION sys.bitfloatpl(sys.BIT, float8)
-RETURNS sys.FLOAT
+RETURNS float8
 AS 'babelfishpg_common', 'bitfloatpl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -673,16 +624,9 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION sys.bitfloatmul(sys.BIT, float8)
-RETURNS sys.FLOAT
-AS $$
-    BEGIN
-        IF $1 = 0 THEN
-            RETURN 0::sys.FLOAT;
-        ELSE 
-            RETURN $2;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+RETURNS float8
+AS 'babelfishpg_common', 'bitfloatmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 DO $$
 BEGIN
@@ -698,7 +642,7 @@ END $$;
 
 
 CREATE OR REPLACE FUNCTION sys.bitfloatdiv(sys.BIT, float8)
-RETURNS sys.FLOAT
+RETURNS float8
 AS 'babelfishpg_common', 'bitfloatdiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
