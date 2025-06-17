@@ -344,7 +344,7 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 	int32 		common_typmod;
 
 	/* Iterate through the SetOpTree. For each column, save each expression
-	 * in that column to a list. That is, for select a, b, c union select x, y, x,
+	 * in that column to a list. That is, for select a, b, c union select x, y, z,
 	 * give [a, x], [b, y], [c, z] 	*/
 	while (setOpTreeStack)
 	{
@@ -422,7 +422,7 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		 */
 		if (common_type == FLOAT8OID || common_type == FLOAT4OID)
 		{
-				topColCollations = lappend_oid(topColCollations, -1);
+				topColCollations = lappend_oid(topColCollations, InvalidOid);
 				continue;
 		}
 		list_free(col_exprs);
