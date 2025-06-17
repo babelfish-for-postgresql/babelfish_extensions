@@ -520,7 +520,13 @@ GRANT SELECT ON sys.login_token TO PUBLIC;
 CREATE OR REPLACE VIEW sys.user_token AS
 SELECT
 CAST(Base.oid AS INT) AS principal_id,
-CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(
+  CASE 
+    WHEN Ext.orig_username = 'dbo' THEN CAST(Base3.oid AS INT)
+    WHEN Ext.orig_username = 'guest' THEN 0
+    ELSE CAST(Base2.oid AS INT)
+  END 
+AS SYS.VARBINARY(85)) AS SID,
 CAST(Ext.orig_username AS SYS.NVARCHAR(128)) AS NAME,
 CAST(CASE
 WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
@@ -532,6 +538,10 @@ FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
 ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
+LEFT OUTER JOIN sys.babelfish_sysdatabases AS Db
+ON Ext.database_name COLLATE sys.database_default = Db.name
+LEFT OUTER JOIN pg_catalog.pg_roles AS Base3
+ON Db.owner = Base3.rolname
 WHERE Ext.database_name = sys.DB_NAME()
 AND ((Ext.rolname = CURRENT_USER AND Ext.type in ('S','U')) OR
 ((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo' AND Ext.type = 'R' AND pg_has_role(current_user, Ext.rolname, 'MEMBER')))

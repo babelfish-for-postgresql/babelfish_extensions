@@ -16,8 +16,7 @@ GO
 select suser_sname(sid) from database_principals where name = 'sys_database_principals_vu_user'
 GO
 
-select suser_sname(sid) from database_principals where name = 'sys_database_principals_vu_orphaned_user' 
-OR name in ('db_owner', 'db_securityadmin', 'db_datawriter', 'db_accessadmin', 'db_datareader', 'db_ddladmin')
+select suser_sname(sid) from database_principals where name in ('sys_database_principals_vu_orphaned_user', 'db_owner', 'db_securityadmin', 'db_datawriter', 'db_accessadmin', 'db_datareader', 'db_ddladmin')
 GO
 
 select name, suser_sname(sid) from database_principals order by name;

@@ -1,0 +1,31 @@
+-- tsql
+select * from user_token_vu;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+dbo#!#jdbc_user#!#SQL USER#!#GRANT OR DENY
+~~END~~
+
+
+-- tsql user=user_token_login_with_dbrole password=12345678
+select * from user_token_vu;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+u_user_token_login_with_dbrole#!#user_token_login_with_dbrole#!#SQL USER#!#GRANT OR DENY
+testrole#!#<NULL>#!#ROLE#!#GRANT OR DENY
+public#!#<NULL>#!#ROLE#!#GRANT OR DENY
+~~END~~
+
+-- terminate-tsql-conn user=user_token_login_with_dbrole password=12345678
+
+-- tsql
+drop view user_token_vu;
+GO
+
+drop user u_user_token_login_with_dbrole
+drop login user_token_login_with_dbrole
+GO
+
+drop role testrole;
+GO
