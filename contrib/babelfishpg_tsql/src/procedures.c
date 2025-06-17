@@ -4835,6 +4835,8 @@ reset_cached_xml_handle()
 
 	/* Reset the table name */
 	xml_handle_temp_table_name = NULL;
+
+	pltsql_remove_current_query_env();
 }
 
 Datum
