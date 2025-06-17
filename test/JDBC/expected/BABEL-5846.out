@@ -68,6 +68,14 @@ text
 -03:30
 ~~END~~
 
+DECLARE @datestring NVARCHAR(50) = N'2025-06-03 14:30:15.1234567 +05:30';
+SELECT DATENAME(TZOFFSET, @datestring);
+GO
+~~START~~
+text
++05:30
+~~END~~
+
 
 -- Test date inputs without offset specified
 SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15.1234567' AS DATETIMEOFFSET));
@@ -100,6 +108,7 @@ text
 
 
 -- Boundary values
+    -- min/max values
 SELECT DATENAME(TZOFFSET, CAST('2025-06-03 14:30:15 +14:00' AS DATETIMEOFFSET));
 GO
 ~~START~~
@@ -113,6 +122,19 @@ GO
 text
 -14:00
 ~~END~~
+
+    -- out of range
+SELECT DATENAME(TZOFFSET, CAST('2025-06-03 14:30:15 +14:01' AS DATETIMEOFFSET));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+
+SELECT DATENAME(TZOFFSET, '2025-06-03 14:30:15 -14:01');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
 
 
 -- Supported date time datatype inputs
