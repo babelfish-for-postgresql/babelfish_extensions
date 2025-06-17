@@ -1,0 +1,6224 @@
+
+
+
+
+
+-- =============================================
+-- Expicit Casting using Try_Convert Function
+-- =============================================
+-- Create table with all data types
+CREATE TABLE try_convert_source_t1 (
+    -- Integer Types
+    IntCol INT,
+    BigintCol BIGINT,
+    SmallintCol SMALLINT,
+    TinyintCol TINYINT,
+    BitCol BIT,
+    -- Decimal Types
+    DecimalCol DECIMAL(18,2),
+    NumericCol NUMERIC(18,2),
+    FloatCol FLOAT,
+    RealCol REAL,
+    MoneyCol MONEY,
+    SmallmoneyCol SMALLMONEY,
+    -- Date/Time Types
+    DatetimeCol DATETIME,
+    DateCol DATE,
+    TimeCol TIME,
+    Datetime2Col DATETIME2,
+    SmalldatetimeCol SMALLDATETIME,
+    DatetimeoffsetCol DATETIMEOFFSET,
+    -- String Types
+    CharCol CHAR(10),
+    VarcharCol VARCHAR(50),
+    NcharCol NCHAR(10),
+    NvarcharCol NVARCHAR(50),
+    TextCol TEXT,
+    NtextCol NTEXT,
+    -- Binary and Other Types
+    BinaryCol BINARY(10),
+    VarbinaryCol VARBINARY(50),
+    ImageCol IMAGE,
+    UniqueidCol UNIQUEIDENTIFIER,
+    XmlCol XML,
+    GeometryCol GEOMETRY,
+    GeographyCol GEOGRAPHY,
+    SqlvariantCol SQL_VARIANT
+);
+GO
+
+-- Integer Types
+CREATE TYPE udt_int FROM INT;
+CREATE TYPE udt_bigint FROM BIGINT;
+CREATE TYPE udt_smallint FROM SMALLINT;
+CREATE TYPE udt_tinyint FROM TINYINT;
+CREATE TYPE udt_bit FROM BIT;
+GO
+
+-- Decimal Types
+CREATE TYPE udt_decimal FROM DECIMAL(18,2);
+CREATE TYPE udt_numeric FROM NUMERIC(18,2);
+CREATE TYPE udt_float FROM FLOAT;
+CREATE TYPE udt_real FROM REAL;
+CREATE TYPE udt_money FROM MONEY;
+CREATE TYPE udt_smallmoney FROM SMALLMONEY;
+GO
+
+-- Date/Time Types
+CREATE TYPE udt_datetime FROM DATETIME;
+CREATE TYPE udt_date FROM DATE;
+CREATE TYPE udt_time FROM TIME;
+CREATE TYPE udt_datetime2 FROM DATETIME2;
+CREATE TYPE udt_smalldatetime FROM SMALLDATETIME;
+CREATE TYPE udt_datetimeoffset FROM DATETIMEOFFSET;
+GO
+
+-- String Types
+CREATE TYPE udt_char FROM CHAR(10);
+CREATE TYPE udt_varchar FROM VARCHAR(50);
+CREATE TYPE udt_nchar FROM NCHAR(10);
+CREATE TYPE udt_nvarchar FROM NVARCHAR(50);
+CREATE TYPE udt_text FROM TEXT;
+CREATE TYPE udt_ntext FROM NTEXT;
+GO
+
+-- Binary and Other Types
+CREATE TYPE udt_binary FROM BINARY(10);
+CREATE TYPE udt_varbinary FROM VARBINARY(50);
+CREATE TYPE udt_image FROM IMAGE;
+CREATE TYPE udt_uniqueidentifier FROM UNIQUEIDENTIFIER;
+CREATE TYPE udt_sqlvariant FROM SQL_VARIANT;
+GO
+
+
+
+
+
+-- Create table with UDT columns
+CREATE TABLE try_convert_source_udt_t1 (
+    -- Integer Types
+    IntCol udt_int,
+    BigintCol udt_bigint,
+    SmallintCol udt_smallint,
+    TinyintCol udt_tinyint,
+    BitCol udt_bit,
+    -- Decimal Types
+    DecimalCol udt_decimal,
+    NumericCol udt_numeric,
+    FloatCol udt_float,
+    RealCol udt_real,
+    MoneyCol udt_money,
+    SmallmoneyCol udt_smallmoney,
+    -- Date/Time Types
+    DatetimeCol udt_datetime,
+    DateCol udt_date,
+    TimeCol udt_time,
+    Datetime2Col udt_datetime2,
+    SmalldatetimeCol udt_smalldatetime,
+    DatetimeoffsetCol udt_datetimeoffset,
+    -- String Types
+    CharCol udt_char,
+    VarcharCol udt_varchar,
+    NcharCol udt_nchar,
+    NvarcharCol udt_nvarchar,
+    TextCol udt_text,
+    NtextCol udt_ntext,
+    -- Binary and Other Types
+    BinaryCol udt_binary,
+    VarbinaryCol udt_varbinary,
+    ImageCol udt_image,
+    UniqueidCol udt_uniqueidentifier,
+    SqlvariantCol udt_sqlvariant
+);
+GO
+
+-- Insert test data
+INSERT INTO try_convert_source_t1 VALUES (
+    -- Integer Types
+    123, 123456789, 12345, 255, 1,
+    
+    -- Decimal Types
+    123.45, 123.45, 123.45, 123.45, 123.45, 123.45,
+    
+    -- Date/Time Types
+    '2024-01-15 12:34:56', '2024-01-15', '12:34:56',
+    '2024-01-15 12:34:56.1234567', '2024-01-15 12:34:00',
+    '2024-01-15 12:34:56.1234567 +00:00',
+    
+    -- String Types
+    'Test', 'Test String', N'Test', N'Test String',
+    'Test Text', N'Test NText',
+    
+    -- Binary and Other Types
+    0x4142434445, 0x4142434445, 0x4142434445,
+    '9641D381-A27F-40A0-8FB9-42216F635D4A', '<note>
+                    <to>John   Doe</to>
+                    <from>Jane	Smith</from>
+                    <heading>
+                        Reminder
+                    </heading>
+                    <body>Meeting at    3 PM</body>
+                </note>',
+    geometry::STGeomFromText('POINT (3 4)', 0),
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
+    123
+);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Insert test data
+INSERT INTO try_convert_source_udt_t1 VALUES (
+    -- Integer Types
+    123, 123456789, 12345, 255, 1,
+    
+    -- Decimal Types
+    123.45, 123.45, 123.45, 123.45, 123.45, 123.45,
+    
+    -- Date/Time Types
+    '2024-01-15 12:34:56', '2024-01-15', '12:34:56',
+    '2024-01-15 12:34:56.1234567', '2024-01-15 12:34:00',
+    '2024-01-15 12:34:56.1234567 +00:00',
+    
+    -- String Types
+    'Test', 'Test String', N'Test', N'Test String',
+    'Test Text', N'Test NText',
+    
+    -- Binary and Other Types
+    0x4142434445, 0x4142434445, 0x4142434445,
+    '9641D381-A27F-40A0-8FB9-42216F635D4A',
+    123
+);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Integer Types
+SELECT TRY_CONVERT(CHAR(10), IntCol), TRY_CONVERT(VARCHAR(10), IntCol), TRY_CONVERT(NCHAR(10), IntCol), TRY_CONVERT(NVARCHAR(10), IntCol), TRY_CONVERT(TEXT, IntCol), TRY_CONVERT(NTEXT, IntCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123       #!#123#!#123       #!#123#!#123#!#123
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), BigintCol), TRY_CONVERT(VARCHAR(20), BigintCol), TRY_CONVERT(NCHAR(20), BigintCol), TRY_CONVERT(NVARCHAR(20), BigintCol), TRY_CONVERT(TEXT, BigintCol), TRY_CONVERT(NTEXT, BigintCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123456789           #!#123456789#!#123456789           #!#123456789#!#123456789#!#123456789
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(10), SmallintCol), TRY_CONVERT(VARCHAR(10), SmallintCol), TRY_CONVERT(NCHAR(10), SmallintCol), TRY_CONVERT(NVARCHAR(10), SmallintCol), TRY_CONVERT(TEXT, SmallintCol), TRY_CONVERT(NTEXT, SmallintCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+12345     #!#12345#!#12345     #!#12345#!#12345#!#12345
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(10), TinyintCol), TRY_CONVERT(VARCHAR(10), TinyintCol), TRY_CONVERT(NCHAR(10), TinyintCol), TRY_CONVERT(NVARCHAR(10), TinyintCol), TRY_CONVERT(TEXT, TinyintCol), TRY_CONVERT(NTEXT, TinyintCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+255       #!#255#!#255       #!#255#!#255#!#255
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(10), BitCol), TRY_CONVERT(VARCHAR(10), BitCol), TRY_CONVERT(NCHAR(10), BitCol), TRY_CONVERT(NVARCHAR(10), BitCol), TRY_CONVERT(TEXT, BitCol), TRY_CONVERT(NTEXT, BitCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+1         #!#1#!#1         #!#1#!#1#!#1
+~~END~~
+
+
+-- Integer Types UDT
+SELECT TRY_CONVERT(CHAR(10), IntCol), TRY_CONVERT(VARCHAR(10), IntCol), TRY_CONVERT(NCHAR(10), IntCol), TRY_CONVERT(NVARCHAR(10), IntCol), TRY_CONVERT(TEXT, IntCol), TRY_CONVERT(NTEXT, IntCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123       #!#123#!#123       #!#123#!#123#!#123
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), BigintCol), TRY_CONVERT(VARCHAR(20), BigintCol), TRY_CONVERT(NCHAR(20), BigintCol), TRY_CONVERT(NVARCHAR(20), BigintCol), TRY_CONVERT(TEXT, BigintCol), TRY_CONVERT(NTEXT, BigintCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123456789           #!#123456789#!#123456789           #!#123456789#!#123456789#!#123456789
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(10), SmallintCol), TRY_CONVERT(VARCHAR(10), SmallintCol), TRY_CONVERT(NCHAR(10), SmallintCol), TRY_CONVERT(NVARCHAR(10), SmallintCol), TRY_CONVERT(TEXT, SmallintCol), TRY_CONVERT(NTEXT, SmallintCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+12345     #!#12345#!#12345     #!#12345#!#12345#!#12345
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(10), TinyintCol), TRY_CONVERT(VARCHAR(10), TinyintCol), TRY_CONVERT(NCHAR(10), TinyintCol), TRY_CONVERT(NVARCHAR(10), TinyintCol), TRY_CONVERT(TEXT, TinyintCol), TRY_CONVERT(NTEXT, TinyintCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+255       #!#255#!#255       #!#255#!#255#!#255
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(10), BitCol), TRY_CONVERT(VARCHAR(10), BitCol), TRY_CONVERT(NCHAR(10), BitCol), TRY_CONVERT(NVARCHAR(10), BitCol), TRY_CONVERT(TEXT, BitCol), TRY_CONVERT(NTEXT, BitCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+1         #!#1#!#1         #!#1#!#1#!#1
+~~END~~
+
+
+-- Decimal Types
+SELECT TRY_CONVERT(CHAR(10), DecimalCol), TRY_CONVERT(VARCHAR(10), DecimalCol), TRY_CONVERT(NCHAR(10), DecimalCol), TRY_CONVERT(NVARCHAR(10), DecimalCol), TRY_CONVERT(TEXT, DecimalCol), TRY_CONVERT(NTEXT, DecimalCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45    #!#123.45#!#123.45    #!#123.45#!#123.45#!#123.45
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(10), NumericCol), TRY_CONVERT(VARCHAR(10), NumericCol), TRY_CONVERT(NCHAR(10), NumericCol), TRY_CONVERT(NVARCHAR(10), NumericCol), TRY_CONVERT(TEXT, NumericCol), TRY_CONVERT(NTEXT, NumericCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45    #!#123.45#!#123.45    #!#123.45#!#123.45#!#123.45
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), FloatCol), TRY_CONVERT(VARCHAR(20), FloatCol), TRY_CONVERT(NCHAR(20), FloatCol), TRY_CONVERT(NVARCHAR(20), FloatCol), TRY_CONVERT(TEXT, FloatCol), TRY_CONVERT(NTEXT, FloatCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45              #!#123.45              #!#123.45              #!#123.45              #!#123.45#!#123.45
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), RealCol), TRY_CONVERT(VARCHAR(20), RealCol), TRY_CONVERT(NCHAR(20), RealCol), TRY_CONVERT(NVARCHAR(20), RealCol), TRY_CONVERT(TEXT, RealCol), TRY_CONVERT(NTEXT, RealCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45              #!#123.45#!#123.45              #!#123.45#!#123.45#!#123.45
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), MoneyCol), TRY_CONVERT(VARCHAR(20), MoneyCol), TRY_CONVERT(NCHAR(20), MoneyCol), TRY_CONVERT(NVARCHAR(20), MoneyCol), TRY_CONVERT(TEXT, MoneyCol), TRY_CONVERT(NTEXT, MoneyCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45              #!#123.45#!#123.45              #!#123.45#!#123.4500#!#123.4500
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), SmallmoneyCol), TRY_CONVERT(VARCHAR(20), SmallmoneyCol), TRY_CONVERT(NCHAR(20), SmallmoneyCol), TRY_CONVERT(NVARCHAR(20), SmallmoneyCol), TRY_CONVERT(TEXT, SmallmoneyCol), TRY_CONVERT(NTEXT, SmallmoneyCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45              #!#123.45#!#123.45              #!#123.45#!#123.4500#!#123.4500
+~~END~~
+
+
+-- Decimal Types UDT
+SELECT TRY_CONVERT(CHAR(10), DecimalCol), TRY_CONVERT(VARCHAR(10), DecimalCol), TRY_CONVERT(NCHAR(10), DecimalCol), TRY_CONVERT(NVARCHAR(10), DecimalCol), TRY_CONVERT(TEXT, DecimalCol), TRY_CONVERT(NTEXT, DecimalCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45    #!#123.45#!#123.45    #!#123.45#!#123.45#!#123.45
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(10), NumericCol), TRY_CONVERT(VARCHAR(10), NumericCol), TRY_CONVERT(NCHAR(10), NumericCol), TRY_CONVERT(NVARCHAR(10), NumericCol), TRY_CONVERT(TEXT, NumericCol), TRY_CONVERT(NTEXT, NumericCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45    #!#123.45#!#123.45    #!#123.45#!#123.45#!#123.45
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), FloatCol), TRY_CONVERT(VARCHAR(20), FloatCol), TRY_CONVERT(NCHAR(20), FloatCol), TRY_CONVERT(NVARCHAR(20), FloatCol), TRY_CONVERT(TEXT, FloatCol), TRY_CONVERT(NTEXT, FloatCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45              #!#123.45#!#123.45              #!#123.45#!#123.45#!#123.45
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), RealCol), TRY_CONVERT(VARCHAR(20), RealCol), TRY_CONVERT(NCHAR(20), RealCol), TRY_CONVERT(NVARCHAR(20), RealCol), TRY_CONVERT(TEXT, RealCol), TRY_CONVERT(NTEXT, RealCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45              #!#123.45#!#123.45              #!#123.45#!#123.45#!#123.45
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), MoneyCol), TRY_CONVERT(VARCHAR(20), MoneyCol), TRY_CONVERT(NCHAR(20), MoneyCol), TRY_CONVERT(NVARCHAR(20), MoneyCol), TRY_CONVERT(TEXT, MoneyCol), TRY_CONVERT(NTEXT, MoneyCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45              #!#123.45#!#123.45              #!#123.45#!#123.4500#!#123.4500
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), SmallmoneyCol), TRY_CONVERT(VARCHAR(20), SmallmoneyCol), TRY_CONVERT(NCHAR(20), SmallmoneyCol), TRY_CONVERT(NVARCHAR(20), SmallmoneyCol), TRY_CONVERT(TEXT, SmallmoneyCol), TRY_CONVERT(NTEXT, SmallmoneyCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123.45              #!#123.45#!#123.45              #!#123.45#!#123.4500#!#123.4500
+~~END~~
+
+
+-- Date/Time Types
+SELECT TRY_CONVERT(CHAR(30), DatetimeCol), TRY_CONVERT(VARCHAR(30), DatetimeCol), TRY_CONVERT(NCHAR(30), DatetimeCol), TRY_CONVERT(NVARCHAR(30), DatetimeCol), TRY_CONVERT(TEXT, DatetimeCol), TRY_CONVERT(NTEXT, DatetimeCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(30), DateCol), TRY_CONVERT(VARCHAR(30), DateCol), TRY_CONVERT(NCHAR(30), DateCol), TRY_CONVERT(NVARCHAR(30), DateCol), TRY_CONVERT(TEXT, DateCol), TRY_CONVERT(NTEXT, DateCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+2024-01-15                    #!#2024-01-15#!#2024-01-15                    #!#2024-01-15#!#2024-01-15#!#2024-01-15
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(30), TimeCol), TRY_CONVERT(VARCHAR(30), TimeCol), TRY_CONVERT(NCHAR(30), TimeCol), TRY_CONVERT(NVARCHAR(30), TimeCol), TRY_CONVERT(TEXT, TimeCol), TRY_CONVERT(NTEXT, TimeCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+12:34:56.0000000              #!#12:34:56.0000000#!#12:34:56.0000000              #!#12:34:56.0000000#!#12:34:56#!#12:34:56
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(30), Datetime2Col), TRY_CONVERT(VARCHAR(30), Datetime2Col), TRY_CONVERT(NCHAR(30), Datetime2Col), TRY_CONVERT(NVARCHAR(30), Datetime2Col), TRY_CONVERT(TEXT, Datetime2Col), TRY_CONVERT(NTEXT, Datetime2Col) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+2024-01-15 12:34:56.123457    #!#2024-01-15 12:34:56.123457#!#2024-01-15 12:34:56.123457    #!#2024-01-15 12:34:56.123457#!#2024-01-15 12:34:56.123457#!#2024-01-15 12:34:56.123457
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(30), SmalldatetimeCol), TRY_CONVERT(VARCHAR(30), SmalldatetimeCol), TRY_CONVERT(NCHAR(30), SmalldatetimeCol), TRY_CONVERT(NVARCHAR(30), SmalldatetimeCol), TRY_CONVERT(TEXT, SmalldatetimeCol), TRY_CONVERT(NTEXT, SmalldatetimeCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), DatetimeoffsetCol), TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol), TRY_CONVERT(NCHAR(50), DatetimeoffsetCol), TRY_CONVERT(NVARCHAR(50), DatetimeoffsetCol), TRY_CONVERT(TEXT, DatetimeoffsetCol), TRY_CONVERT(NTEXT, DatetimeoffsetCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+2024-01-15 12:34:56.123457 +00:00                 #!#2024-01-15 12:34:56.123457 +00:00#!#2024-01-15 12:34:56.123457 +00:00                 #!#2024-01-15 12:34:56.123457 +00:00#!#2024-01-15 12:34:56.123457 +00:00#!#2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+
+-- Date/Time Types UDT
+SELECT TRY_CONVERT(CHAR(30), DatetimeCol), TRY_CONVERT(VARCHAR(30), DatetimeCol), TRY_CONVERT(NCHAR(30), DatetimeCol), TRY_CONVERT(NVARCHAR(30), DatetimeCol), TRY_CONVERT(TEXT, DatetimeCol), TRY_CONVERT(NTEXT, DatetimeCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+2024-01-15 12:34:56           #!#2024-01-15 12:34:56#!#2024-01-15 12:34:56           #!#2024-01-15 12:34:56#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(30), DateCol), TRY_CONVERT(VARCHAR(30), DateCol), TRY_CONVERT(NCHAR(30), DateCol), TRY_CONVERT(NVARCHAR(30), DateCol), TRY_CONVERT(TEXT, DateCol), TRY_CONVERT(NTEXT, DateCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+2024-01-15                    #!#2024-01-15#!#2024-01-15                    #!#2024-01-15#!#2024-01-15#!#2024-01-15
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(30), TimeCol), TRY_CONVERT(VARCHAR(30), TimeCol), TRY_CONVERT(NCHAR(30), TimeCol), TRY_CONVERT(NVARCHAR(30), TimeCol), TRY_CONVERT(TEXT, TimeCol), TRY_CONVERT(NTEXT, TimeCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+12:34:56                      #!#12:34:56#!#12:34:56                      #!#12:34:56#!#12:34:56#!#12:34:56
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(30), Datetime2Col), TRY_CONVERT(VARCHAR(30), Datetime2Col), TRY_CONVERT(NCHAR(30), Datetime2Col), TRY_CONVERT(NVARCHAR(30), Datetime2Col), TRY_CONVERT(TEXT, Datetime2Col), TRY_CONVERT(NTEXT, Datetime2Col) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+2024-01-15 12:34:56.123457    #!#2024-01-15 12:34:56.123457#!#2024-01-15 12:34:56.123457    #!#2024-01-15 12:34:56.123457#!#2024-01-15 12:34:56.123457#!#2024-01-15 12:34:56.123457
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(30), SmalldatetimeCol), TRY_CONVERT(VARCHAR(30), SmalldatetimeCol), TRY_CONVERT(NCHAR(30), SmalldatetimeCol), TRY_CONVERT(NVARCHAR(30), SmalldatetimeCol), TRY_CONVERT(TEXT, SmalldatetimeCol), TRY_CONVERT(NTEXT, SmalldatetimeCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), DatetimeoffsetCol), TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol), TRY_CONVERT(NCHAR(50), DatetimeoffsetCol), TRY_CONVERT(NVARCHAR(50), DatetimeoffsetCol), TRY_CONVERT(TEXT, DatetimeoffsetCol), TRY_CONVERT(NTEXT, DatetimeoffsetCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+2024-01-15 12:34:56.123457 +00:00                 #!#2024-01-15 12:34:56.123457 +00:00#!#2024-01-15 12:34:56.123457 +00:00                 #!#2024-01-15 12:34:56.123457 +00:00#!#2024-01-15 12:34:56.123457 +00:00#!#2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+
+-- String Types
+SELECT TRY_CONVERT(CHAR(20), CharCol), TRY_CONVERT(VARCHAR(20), CharCol), TRY_CONVERT(NCHAR(20), CharCol), TRY_CONVERT(NVARCHAR(20), CharCol), TRY_CONVERT(TEXT, CharCol), TRY_CONVERT(NTEXT, CharCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test                #!#Test      #!#Test                #!#Test      #!#Test      #!#Test      
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), VarcharCol), TRY_CONVERT(VARCHAR(50), VarcharCol), TRY_CONVERT(NCHAR(50), VarcharCol), TRY_CONVERT(NVARCHAR(50), VarcharCol), TRY_CONVERT(TEXT, VarcharCol), TRY_CONVERT(NTEXT, VarcharCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test String                                       #!#Test String#!#Test String                                       #!#Test String#!#Test String#!#Test String
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), NcharCol), TRY_CONVERT(VARCHAR(20), NcharCol), TRY_CONVERT(NCHAR(20), NcharCol), TRY_CONVERT(NVARCHAR(20), NcharCol), TRY_CONVERT(TEXT, NcharCol), TRY_CONVERT(NTEXT, NcharCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test                #!#Test      #!#Test                #!#Test      #!#Test      #!#Test      
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), NvarcharCol), TRY_CONVERT(VARCHAR(50), NvarcharCol), TRY_CONVERT(NCHAR(50), NvarcharCol), TRY_CONVERT(NVARCHAR(50), NvarcharCol), TRY_CONVERT(TEXT, NvarcharCol), TRY_CONVERT(NTEXT, NvarcharCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test String                                       #!#Test String#!#Test String                                       #!#Test String#!#Test String#!#Test String
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), TextCol), TRY_CONVERT(VARCHAR(50), TextCol), TRY_CONVERT(NCHAR(50), TextCol), TRY_CONVERT(NVARCHAR(50), TextCol), TRY_CONVERT(TEXT, TextCol), TRY_CONVERT(NTEXT, TextCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test Text                                         #!#Test Text#!#Test Text                                         #!#Test Text#!#Test Text#!#Test Text
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), NtextCol), TRY_CONVERT(VARCHAR(50), NtextCol), TRY_CONVERT(NCHAR(50), NtextCol), TRY_CONVERT(NVARCHAR(50), NtextCol), TRY_CONVERT(TEXT, NtextCol), TRY_CONVERT(NTEXT, NtextCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test NText                                        #!#Test NText#!#Test NText                                        #!#Test NText#!#Test NText#!#Test NText
+~~END~~
+
+
+-- String Types UDT
+SELECT TRY_CONVERT(CHAR(20), CharCol), TRY_CONVERT(VARCHAR(20), CharCol), TRY_CONVERT(NCHAR(20), CharCol), TRY_CONVERT(NVARCHAR(20), CharCol), TRY_CONVERT(TEXT, CharCol), TRY_CONVERT(NTEXT, CharCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test                #!#Test      #!#Test                #!#Test      #!#Test      #!#Test      
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), VarcharCol), TRY_CONVERT(VARCHAR(50), VarcharCol), TRY_CONVERT(NCHAR(50), VarcharCol), TRY_CONVERT(NVARCHAR(50), VarcharCol), TRY_CONVERT(TEXT, VarcharCol), TRY_CONVERT(NTEXT, VarcharCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test String                                       #!#Test String#!#Test String                                       #!#Test String#!#Test String#!#Test String
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), NcharCol), TRY_CONVERT(VARCHAR(20), NcharCol), TRY_CONVERT(NCHAR(20), NcharCol), TRY_CONVERT(NVARCHAR(20), NcharCol), TRY_CONVERT(TEXT, NcharCol), TRY_CONVERT(NTEXT, NcharCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test                #!#Test      #!#Test                #!#Test      #!#Test      #!#Test      
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), NvarcharCol), TRY_CONVERT(VARCHAR(50), NvarcharCol), TRY_CONVERT(NCHAR(50), NvarcharCol), TRY_CONVERT(NVARCHAR(50), NvarcharCol), TRY_CONVERT(TEXT, NvarcharCol), TRY_CONVERT(NTEXT, NvarcharCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test String                                       #!#Test String#!#Test String                                       #!#Test String#!#Test String#!#Test String
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), TextCol), TRY_CONVERT(VARCHAR(50), TextCol), TRY_CONVERT(NCHAR(50), TextCol), TRY_CONVERT(NVARCHAR(50), TextCol), TRY_CONVERT(TEXT, TextCol), TRY_CONVERT(NTEXT, TextCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test Text                                         #!#Test Text#!#Test Text                                         #!#Test Text#!#Test Text#!#Test Text
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), NtextCol), TRY_CONVERT(VARCHAR(50), NtextCol), TRY_CONVERT(NCHAR(50), NtextCol), TRY_CONVERT(NVARCHAR(50), NtextCol), TRY_CONVERT(TEXT, NtextCol), TRY_CONVERT(NTEXT, NtextCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+Test NText                                        #!#Test NText#!#Test NText                                        #!#Test NText#!#Test NText#!#Test NText
+~~END~~
+
+
+-- Binary and Other Types
+SELECT TRY_CONVERT(CHAR(20), BinaryCol), TRY_CONVERT(VARCHAR(20), BinaryCol), TRY_CONVERT(NCHAR(20), BinaryCol), TRY_CONVERT(NVARCHAR(20), BinaryCol), TRY_CONVERT(TEXT, BinaryCol), TRY_CONVERT(NTEXT, BinaryCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x41424344450000000000#!#0x41424344450000000000
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), VarbinaryCol), TRY_CONVERT(VARCHAR(20), VarbinaryCol), TRY_CONVERT(NCHAR(20), VarbinaryCol), TRY_CONVERT(NVARCHAR(20), VarbinaryCol), TRY_CONVERT(TEXT, VarbinaryCol), TRY_CONVERT(NTEXT, VarbinaryCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x4142434445#!#0x4142434445
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), ImageCol), TRY_CONVERT(VARCHAR(20), ImageCol), TRY_CONVERT(NCHAR(20), ImageCol), TRY_CONVERT(NVARCHAR(20), ImageCol), TRY_CONVERT(TEXT, ImageCol), TRY_CONVERT(NTEXT, ImageCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x4142434445#!#0x4142434445
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(36), UniqueidCol), TRY_CONVERT(VARCHAR(36), UniqueidCol), TRY_CONVERT(NCHAR(36), UniqueidCol), TRY_CONVERT(NVARCHAR(36), UniqueidCol), TRY_CONVERT(TEXT, UniqueidCol), TRY_CONVERT(NTEXT, UniqueidCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+9641D381-A27F-40A0-8FB9-42216F635D4A#!#9641D381-A27F-40A0-8FB9-42216F635D4A#!#9641D381-A27F-40A0-8FB9-42216F635D4A#!#9641D381-A27F-40A0-8FB9-42216F635D4A#!#9641D381-A27F-40A0-8FB9-42216F635D4A#!#9641D381-A27F-40A0-8FB9-42216F635D4A
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), XmlCol), TRY_CONVERT(VARCHAR(50), XmlCol), TRY_CONVERT(NCHAR(50), XmlCol), TRY_CONVERT(NVARCHAR(50), XmlCol), TRY_CONVERT(TEXT, XmlCol), TRY_CONVERT(NTEXT, XmlCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+<note><newline>                    <to>John   Doe</to><newline>   #!#<note><newline>                    <to>John   Doe</to><newline>   #!#<note><newline>                    <to>John   Doe</to><newline>   #!#<note><newline>                    <to>John   Doe</to><newline>   #!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>#!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(50), GeometryCol), TRY_CONVERT(VARCHAR(50), GeometryCol), TRY_CONVERT(NCHAR(50), GeometryCol), TRY_CONVERT(NVARCHAR(50), GeometryCol), TRY_CONVERT(TEXT, GeometryCol), TRY_CONVERT(NTEXT, GeometryCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit Conversion from data type sys.Geometry to Text is not allowed.)~~
+
+
+SELECT TRY_CONVERT(CHAR(50), GeographyCol), TRY_CONVERT(VARCHAR(50), GeographyCol), TRY_CONVERT(NCHAR(50), GeographyCol), TRY_CONVERT(NVARCHAR(50), GeographyCol), TRY_CONVERT(TEXT, GeographyCol), TRY_CONVERT(NTEXT, GeographyCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit Conversion from data type sys.Geography to Text is not allowed.)~~
+
+
+SELECT TRY_CONVERT(CHAR(20), SqlvariantCol), TRY_CONVERT(VARCHAR(20), SqlvariantCol), TRY_CONVERT(NCHAR(20), SqlvariantCol), TRY_CONVERT(NVARCHAR(20), SqlvariantCol), TRY_CONVERT(TEXT, SqlvariantCol), TRY_CONVERT(NTEXT, SqlvariantCol) FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123                 #!#123#!#123                 #!#123#!#123#!#123
+~~END~~
+
+
+-- Binary and Other Types UDT
+SELECT TRY_CONVERT(CHAR(20), BinaryCol), TRY_CONVERT(VARCHAR(20), BinaryCol), TRY_CONVERT(NCHAR(20), BinaryCol), TRY_CONVERT(NVARCHAR(20), BinaryCol), TRY_CONVERT(TEXT, BinaryCol), TRY_CONVERT(NTEXT, BinaryCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x41424344450000000000#!#0x41424344450000000000
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), VarbinaryCol), TRY_CONVERT(VARCHAR(20), VarbinaryCol), TRY_CONVERT(NCHAR(20), VarbinaryCol), TRY_CONVERT(NVARCHAR(20), VarbinaryCol), TRY_CONVERT(TEXT, VarbinaryCol), TRY_CONVERT(NTEXT, VarbinaryCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x4142434445#!#0x4142434445
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), ImageCol), TRY_CONVERT(VARCHAR(20), ImageCol), TRY_CONVERT(NCHAR(20), ImageCol), TRY_CONVERT(NVARCHAR(20), ImageCol), TRY_CONVERT(TEXT, ImageCol), TRY_CONVERT(NTEXT, ImageCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x4142434445#!#0x4142434445
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(36), UniqueidCol), TRY_CONVERT(VARCHAR(36), UniqueidCol), TRY_CONVERT(NCHAR(36), UniqueidCol), TRY_CONVERT(NVARCHAR(36), UniqueidCol), TRY_CONVERT(TEXT, UniqueidCol), TRY_CONVERT(NTEXT, UniqueidCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+9641D381-A27F-40A0-8FB9-42216F635D4A#!#9641D381-A27F-40A0-8FB9-42216F635D4A#!#9641D381-A27F-40A0-8FB9-42216F635D4A#!#9641D381-A27F-40A0-8FB9-42216F635D4A#!#9641D381-A27F-40A0-8FB9-42216F635D4A#!#9641D381-A27F-40A0-8FB9-42216F635D4A
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(20), SqlvariantCol), TRY_CONVERT(VARCHAR(20), SqlvariantCol), TRY_CONVERT(NCHAR(20), SqlvariantCol), TRY_CONVERT(NVARCHAR(20), SqlvariantCol), TRY_CONVERT(TEXT, SqlvariantCol), TRY_CONVERT(NTEXT, SqlvariantCol) FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
+123                 #!#123#!#123                 #!#123#!#123#!#123
+~~END~~
+
+
+
+
+-- =============================================
+-- Expicit Casting using Try_Convert Function with Style Parameter: Date and Time related Datatypes
+-- =============================================
+-- Datetime
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 0) AS Default_Style_0 FROM try_convert_source_t1;  -- Nov 15 2023  9:01AM
+GO
+~~START~~
+varchar
+Jan 15 2024 12:34PM
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 100) AS Default_Style_100 FROM try_convert_source_t1;  -- Nov 15 2023  9:01AM
+GO
+~~START~~
+varchar
+Jan 15 2024 12:34PM
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 0) AS Default_Style_0 FROM try_convert_source_udt_t1;  -- Nov 15 2023  9:01AM
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 100) AS Default_Style_100 FROM try_convert_source_udt_t1;  -- Nov 15 2023  9:01AM
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 1) AS US_Style_1 FROM try_convert_source_t1;   -- 11/15/2023
+GO
+~~START~~
+varchar
+01/15/24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 101) AS US_Style_101 FROM try_convert_source_t1;   -- 11/15/2023
+GO
+~~START~~
+varchar
+01/15/2024
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 1) AS US_Style_1 FROM try_convert_source_udt_t1;   -- 11/15/2023
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 101) AS US_Style_101 FROM try_convert_source_udt_t1;   -- 11/15/2023
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 2) AS ANSI_Style_2 FROM try_convert_source_t1;   -- 23.11.15
+GO
+~~START~~
+varchar
+24.01.15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 102) AS ANSI_Style_102 FROM try_convert_source_t1;   -- 2023.11.15
+GO
+~~START~~
+varchar
+2024.01.15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 2) AS ANSI_Style_2 FROM try_convert_source_udt_t1;   -- 23.11.15
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 102) AS ANSI_Style_102 FROM try_convert_source_udt_t1;   -- 2023.11.15
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 3) AS British_Style_3 FROM try_convert_source_t1;   -- 15/11/23
+GO
+~~START~~
+varchar
+15/01/24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 103) AS British_Style_103 FROM try_convert_source_t1;   -- 15/11/2023
+GO
+~~START~~
+varchar
+15/01/2024
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 3) AS British_Style_3 FROM try_convert_source_udt_t1;   -- 15/11/23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 103) AS British_Style_103 FROM try_convert_source_udt_t1;   -- 15/11/2023
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 4) AS German_Style_4 FROM try_convert_source_udt_t1;   -- 15.11.23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 104) AS German_Style_104 FROM try_convert_source_udt_t1;   -- 15.11.2023
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 4) AS German_Style_4 FROM try_convert_source_udt_t1;   -- 15.11.23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 104) AS German_Style_104 FROM try_convert_source_udt_t1;   -- 15.11.2023
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 5) AS Italian_Style_5 FROM try_convert_source_t1;   -- 15-11-23
+GO
+~~START~~
+varchar
+15-01-24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 105) AS Italian_Style_105 FROM try_convert_source_t1;   -- 15-11-2023
+GO
+~~START~~
+varchar
+15-01-2024
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 5) AS Italian_Style_5 FROM try_convert_source_udt_t1;   -- 15-11-23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 105) AS Italian_Style_105 FROM try_convert_source_udt_t1;   -- 15-11-2023
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 6) AS Style_6 FROM try_convert_source_t1;   -- 15 Nov 23
+GO
+~~START~~
+varchar
+15 Jan 24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 106) AS Style_106 FROM try_convert_source_t1;   -- 15 Nov 2023
+GO
+~~START~~
+varchar
+15 Jan 2024
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 6) AS Style_6 FROM try_convert_source_udt_t1;   -- 15 Nov 23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 106) AS Style_106 FROM try_convert_source_udt_t1;   -- 15 Nov 2023
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 7) AS Style_7 FROM try_convert_source_t1;   -- Nov 15, 23
+GO
+~~START~~
+varchar
+Jan 15, 24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 107) AS Style_107 FROM try_convert_source_t1;   -- Nov 15, 2023
+GO
+~~START~~
+varchar
+Jan 15, 2024
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 7) AS Style_7 FROM try_convert_source_udt_t1;   -- Nov 15, 23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 107) AS Style_107 FROM try_convert_source_udt_t1;   -- Nov 15, 2023
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 8) AS Time_Style_8 FROM try_convert_source_t1;   -- 09:01:23
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 108) AS Time_Style_108 FROM try_convert_source_t1;   -- 09:01:23
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 8) AS Time_Style_8 FROM try_convert_source_udt_t1;   -- 09:01:23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 108) AS Time_Style_108 FROM try_convert_source_udt_t1;   -- 09:01:23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 9) AS Style_9 FROM try_convert_source_t1;   -- Nov 15 23  9:01:23:123AM
+GO
+~~START~~
+varchar
+Jan 15 2024 12:34:56:000PM
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 109) AS Style_109 FROM try_convert_source_t1;   -- Nov 15 2023  9:01:23:123AM
+GO
+~~START~~
+varchar
+Jan 15 2024 12:34:56:000PM
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 9) AS Style_9 FROM try_convert_source_udt_t1;   -- Nov 15 23  9:01:23:123AM
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 109) AS Style_109 FROM try_convert_source_udt_t1;   -- Nov 15 2023  9:01:23:123AM
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 10) AS Style_10 FROM try_convert_source_t1;  -- 11-15-23
+GO
+~~START~~
+varchar
+01-15-24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 110) AS Style_110 FROM try_convert_source_t1;  -- 11-15-2023
+GO
+~~START~~
+varchar
+01-15-2024
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 10) AS Style_10 FROM try_convert_source_udt_t1;  -- 11-15-23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 110) AS Style_110 FROM try_convert_source_udt_t1;  -- 11-15-2023
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 11) AS Style_11 FROM try_convert_source_t1;  -- 23/11/15
+GO
+~~START~~
+varchar
+24/01/15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 111) AS Style_111 FROM try_convert_source_t1;  -- 2023/11/15
+GO
+~~START~~
+varchar
+2024/01/15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 11) AS Style_11 FROM try_convert_source_udt_t1;  -- 23/11/15
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 111) AS Style_111 FROM try_convert_source_udt_t1;  -- 2023/11/15
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 12) AS Style_12 FROM try_convert_source_t1;  -- 231115
+GO
+~~START~~
+varchar
+240115
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 112) AS Style_112 FROM try_convert_source_t1;  -- 20231115
+GO
+~~START~~
+varchar
+20240115
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 12) AS Style_12 FROM try_convert_source_udt_t1;  -- 231115
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 112) AS Style_112 FROM try_convert_source_udt_t1;  -- 20231115
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 13) AS Style_13 FROM try_convert_source_t1;  -- 15 Nov 23 09:01:23:123
+GO
+~~START~~
+varchar
+15 Jan 2024 12:34:56:000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 113) AS Style_113 FROM try_convert_source_t1;  -- 15 Nov 2023 09:01:23:123
+GO
+~~START~~
+varchar
+15 Jan 2024 12:34:56:000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 13) AS Style_13 FROM try_convert_source_udt_t1;  -- 15 Nov 23 09:01:23:123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 113) AS Style_113 FROM try_convert_source_udt_t1;  -- 15 Nov 2023 09:01:23:123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 14) AS Style_14 FROM try_convert_source_t1;  -- 09:01:23:123
+GO
+~~START~~
+varchar
+12:34:56:000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 114) AS Style_114 FROM try_convert_source_t1;  -- 09:01:23:123
+GO
+~~START~~
+varchar
+12:34:56:000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 14) AS Style_14 FROM try_convert_source_udt_t1;  -- 09:01:23:123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 114) AS Style_114 FROM try_convert_source_udt_t1;  -- 09:01:23:123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 20) AS Style_20 FROM try_convert_source_t1;  -- 2023-11-15 09:01:23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 120) AS Style_120 FROM try_convert_source_t1;  -- 2023-11-15 09:01:23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 20) AS Style_20 FROM try_convert_source_udt_t1;  -- 2023-11-15 09:01:23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 120) AS Style_120 FROM try_convert_source_udt_t1;  -- 2023-11-15 09:01:23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 21) AS Style_21 FROM try_convert_source_t1;    -- 2023-11-15 09:01:23.123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 25) AS Style_25 FROM try_convert_source_t1;    -- 2023-11-15 09:01:23.123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 121) AS Style_121 FROM try_convert_source_t1;  -- 2023-11-15 09:01:23.123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 21) AS Style_21 FROM try_convert_source_udt_t1;    -- 2023-11-15 09:01:23.123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 25) AS Style_25 FROM try_convert_source_udt_t1;    -- 2023-11-15 09:01:23.123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 121) AS Style_121 FROM try_convert_source_udt_t1;  -- 2023-11-15 09:01:23.123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 22) AS Style_22 FROM try_convert_source_t1;  -- 11/15/23 09:01:23
+GO
+~~START~~
+varchar
+01/15/24 12:34:56 PM
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 22) AS Style_22 FROM try_convert_source_udt_t1;  -- 11/15/23 09:01:23
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 23) AS Style_23 FROM try_convert_source_t1;  -- 2023-11-15
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 23) AS Style_23 FROM try_convert_source_udt_t1;  -- 2023-11-15
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 126) AS ISO8601_Style_126 FROM try_convert_source_t1; -- 2023-11-15T09:01:23.123
+GO
+~~START~~
+varchar
+2024-01-15T12:34:56.000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 126) AS ISO8601_Style_126 FROM try_convert_source_udt_t1; -- 2023-11-15T09:01:23.123
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_t1; -- 2023-11-15T09:01:23.123Z
+GO
+~~START~~
+varchar
+2024-01-15T12:34:56.000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_udt_t1; -- 2023-11-15T09:01:23.123Z
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 130) AS Hijri_Style_130 FROM try_convert_source_t1; -- 30 Rabi' al-Thani 1445
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 130) AS Hijri_Style_130 FROM try_convert_source_udt_t1; -- 30 Rabi' al-Thani 1445
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 131) AS HijriTime_Style_131 FROM try_convert_source_t1;  -- 30 Rabi' al-Thani 1445 09:01:23:123AM
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeCol, 131) AS HijriTime_Style_131 FROM try_convert_source_udt_t1;  -- 30 Rabi' al-Thani 1445 09:01:23:123AM
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56
+~~END~~
+
+
+-- SmallDatetime 
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 0) AS Default_Style_0 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 100) AS Default_Style_100 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 1) AS US_Style_1 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 101) AS US_Style_101 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 2) AS ANSI_Style_2 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 102) AS ANSI_Style_102 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 3) AS British_Style_3 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 103) AS British_Style_103 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 4) AS German_Style_4 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 104) AS German_Style_104 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 5) AS Italian_Style_5 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 105) AS Italian_Style_105 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 6) AS Style_6 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 106) AS Style_106 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 7) AS Style_7 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 107) AS Style_107 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 8) AS Time_Style_8 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 108) AS Time_Style_108 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 9) AS Style_9 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 109) AS Style_109 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 10) AS Style_10 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 110) AS Style_110 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 11) AS Style_11 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 111) AS Style_111 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 12) AS Style_12 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 112) AS Style_112 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 13) AS Style_13 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 113) AS Style_113 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 14) AS Style_14 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 114) AS Style_114 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 20) AS Style_20 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 120) AS Style_120 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 21) AS Style_21 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 25) AS Style_25 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 121) AS Style_121 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 22) AS Style_22 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 23) AS Style_23 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 126) AS ISO8601_Style_126 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 130) AS Hijri_Style_130 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 131) AS HijriTime_Style_131 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 0) AS Default_Style_0 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 100) AS Default_Style_100 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 1) AS US_Style_1 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 101) AS US_Style_101 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 2) AS ANSI_Style_2 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 102) AS ANSI_Style_102 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 3) AS British_Style_3 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 103) AS British_Style_103 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 4) AS German_Style_4 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 104) AS German_Style_104 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 5) AS Italian_Style_5 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 105) AS Italian_Style_105 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 6) AS Style_6 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 106) AS Style_106 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 7) AS Style_7 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 107) AS Style_107 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 8) AS Time_Style_8 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 108) AS Time_Style_108 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 9) AS Style_9 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 109) AS Style_109 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 10) AS Style_10 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 110) AS Style_110 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 11) AS Style_11 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 111) AS Style_111 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 12) AS Style_12 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 112) AS Style_112 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 13) AS Style_13 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 113) AS Style_113 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 14) AS Style_14 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 114) AS Style_114 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 20) AS Style_20 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 120) AS Style_120 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 21) AS Style_21 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 25) AS Style_25 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 121) AS Style_121 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 22) AS Style_22 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 23) AS Style_23 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 126) AS ISO8601_Style_126 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 130) AS Hijri_Style_130 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), SmallDatetimeCol, 131) AS HijriTime_Style_131 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:00
+~~END~~
+
+
+-- Date
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 0) AS Default_Style_0 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+Jan 15 2024
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 100) AS Default_Style_100 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+Jan 15 2024
+~~END~~
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 1) AS US_Style_1 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+01/15/24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 101) AS US_Style_101 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+01/15/2024
+~~END~~
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 2) AS ANSI_Style_2 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+24.01.15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 102) AS ANSI_Style_102 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024.01.15
+~~END~~
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 3) AS British_Style_3 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+15/01/24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 103) AS British_Style_103 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+15/01/2024
+~~END~~
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 4) AS German_Style_4 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+15.01.24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 104) AS German_Style_104 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+15.01.2024
+~~END~~
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 5) AS Italian_Style_5 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+15-01-24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 105) AS Italian_Style_105 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+15-01-2024
+~~END~~
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 6) AS Style_6 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+15 Jan 24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 106) AS Style_106 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+15 Jan 2024
+~~END~~
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 7) AS Style_7 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+Jan 15, 24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 107) AS Style_107 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+Jan 15, 2024
+~~END~~
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 8) AS Time_Style_8 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 108) AS Time_Style_108 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 9) AS Style_9 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+Jan 15 2024
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 109) AS Style_109 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+Jan 15 2024
+~~END~~
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 10) AS Style_10 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+01-15-24
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 110) AS Style_110 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+01-15-2024
+~~END~~
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 11) AS Style_11 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+24/01/15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 111) AS Style_111 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024/01/15
+~~END~~
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 12) AS Style_12 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+240115
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 112) AS Style_112 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+20240115
+~~END~~
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 13) AS Style_13 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+15 Jan 2024
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 113) AS Style_113 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+15 Jan 2024
+~~END~~
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 14) AS Style_14 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 114) AS Style_114 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 20) AS Style_20 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 120) AS Style_120 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 21) AS Style_21 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 25) AS Style_25 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 121) AS Style_121 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 22) AS Style_22 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+01/15/24
+~~END~~
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 23) AS Style_23 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 126) AS ISO8601_Style_126 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 130) AS Hijri_Style_130 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 131) AS HijriTime_Style_131 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 0) AS Default_Style_0 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 100) AS Default_Style_100 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 1) AS US_Style_1 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 101) AS US_Style_101 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 2) AS ANSI_Style_2 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 102) AS ANSI_Style_102 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 3) AS British_Style_3 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 103) AS British_Style_103 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 4) AS German_Style_4 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 104) AS German_Style_104 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 5) AS Italian_Style_5 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 105) AS Italian_Style_105 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 6) AS Style_6 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 106) AS Style_106 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 7) AS Style_7 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 107) AS Style_107 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 8) AS Time_Style_8 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 108) AS Time_Style_108 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 9) AS Style_9 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 109) AS Style_109 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 10) AS Style_10 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 110) AS Style_110 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 11) AS Style_11 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 111) AS Style_111 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 12) AS Style_12 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 112) AS Style_112 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 13) AS Style_13 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 113) AS Style_113 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 14) AS Style_14 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 114) AS Style_114 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 20) AS Style_20 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 120) AS Style_120 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 21) AS Style_21 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 25) AS Style_25 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 121) AS Style_121 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 22) AS Style_22 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 23) AS Style_23 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 126) AS ISO8601_Style_126 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 130) AS Hijri_Style_130 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), DateCol, 131) AS HijriTime_Style_131 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15
+~~END~~
+
+
+-- Time
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 0) AS Default_Style_0 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34PM
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 100) AS Default_Style_100 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34PM
+~~END~~
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 1) AS US_Style_1 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 101) AS US_Style_101 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 2) AS ANSI_Style_2 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 102) AS ANSI_Style_102 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 3) AS British_Style_3 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 103) AS British_Style_103 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 4) AS German_Style_4 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 104) AS German_Style_104 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 5) AS Italian_Style_5 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 105) AS Italian_Style_105 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 6) AS Style_6 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 106) AS Style_106 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 7) AS Style_7 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 107) AS Style_107 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 8) AS Time_Style_8 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 108) AS Time_Style_108 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 9) AS Style_9 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000PM
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 109) AS Style_109 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000PM
+~~END~~
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 10) AS Style_10 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 110) AS Style_110 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 11) AS Style_11 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 111) AS Style_111 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 12) AS Style_12 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 112) AS Style_112 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 13) AS Style_13 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 113) AS Style_113 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000
+~~END~~
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 14) AS Style_14 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 114) AS Style_114 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 20) AS Style_20 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 120) AS Style_120 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 21) AS Style_21 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 25) AS Style_25 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 121) AS Style_121 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000
+~~END~~
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 22) AS Style_22 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56 PM
+~~END~~
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 23) AS Style_23 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 126) AS ISO8601_Style_126 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000
+~~END~~
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000
+~~END~~
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 130) AS Hijri_Style_130 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000PM
+~~END~~
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 131) AS HijriTime_Style_131 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+12:34:56.0000000PM
+~~END~~
+
+
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 0) AS Default_Style_0 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 100) AS Default_Style_100 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 1) AS US_Style_1 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 101) AS US_Style_101 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 2) AS ANSI_Style_2 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 102) AS ANSI_Style_102 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 3) AS British_Style_3 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 103) AS British_Style_103 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 4) AS German_Style_4 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 104) AS German_Style_104 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 5) AS Italian_Style_5 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 105) AS Italian_Style_105 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 6) AS Style_6 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 106) AS Style_106 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 7) AS Style_7 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 107) AS Style_107 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 8) AS Time_Style_8 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 108) AS Time_Style_108 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 9) AS Style_9 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 109) AS Style_109 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 10) AS Style_10 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 110) AS Style_110 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 11) AS Style_11 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 111) AS Style_111 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 12) AS Style_12 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 112) AS Style_112 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 13) AS Style_13 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 113) AS Style_113 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 14) AS Style_14 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 114) AS Style_114 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 20) AS Style_20 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 120) AS Style_120 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 21) AS Style_21 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 25) AS Style_25 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 121) AS Style_121 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 22) AS Style_22 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 23) AS Style_23 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 126) AS ISO8601_Style_126 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 130) AS Hijri_Style_130 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), TimeCol, 131) AS HijriTime_Style_131 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+12:34:56
+~~END~~
+
+
+-- Datetime2
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 0) AS Default_Style_0 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 100) AS Default_Style_100 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 1) AS US_Style_1 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 101) AS US_Style_101 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 2) AS ANSI_Style_2 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 102) AS ANSI_Style_102 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 3) AS British_Style_3 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 103) AS British_Style_103 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 4) AS German_Style_4 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 104) AS German_Style_104 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 5) AS Italian_Style_5 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 105) AS Italian_Style_105 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 6) AS Style_6 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 106) AS Style_106 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 7) AS Style_7 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 107) AS Style_107 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 8) AS Time_Style_8 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 108) AS Time_Style_108 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 9) AS Style_9 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 109) AS Style_109 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 10) AS Style_10 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 110) AS Style_110 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 11) AS Style_11 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 111) AS Style_111 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 12) AS Style_12 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 112) AS Style_112 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 13) AS Style_13 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 113) AS Style_113 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 14) AS Style_14 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 114) AS Style_114 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 20) AS Style_20 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 120) AS Style_120 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 21) AS Style_21 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 25) AS Style_25 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 121) AS Style_121 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 22) AS Style_22 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 23) AS Style_23 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 126) AS ISO8601_Style_126 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 130) AS Hijri_Style_130 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 131) AS HijriTime_Style_131 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 0) AS Default_Style_0 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 100) AS Default_Style_100 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 1) AS US_Style_1 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 101) AS US_Style_101 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 2) AS ANSI_Style_2 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 102) AS ANSI_Style_102 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 3) AS British_Style_3 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 103) AS British_Style_103 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 4) AS German_Style_4 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 104) AS German_Style_104 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 5) AS Italian_Style_5 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 105) AS Italian_Style_105 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 6) AS Style_6 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 106) AS Style_106 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 7) AS Style_7 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 107) AS Style_107 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 8) AS Time_Style_8 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 108) AS Time_Style_108 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 9) AS Style_9 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 109) AS Style_109 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 10) AS Style_10 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 110) AS Style_110 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 11) AS Style_11 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 111) AS Style_111 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 12) AS Style_12 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 112) AS Style_112 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 13) AS Style_13 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 113) AS Style_113 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 14) AS Style_14 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 114) AS Style_114 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 20) AS Style_20 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 120) AS Style_120 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 21) AS Style_21 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 25) AS Style_25 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 121) AS Style_121 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 22) AS Style_22 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 23) AS Style_23 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 126) AS ISO8601_Style_126 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 130) AS Hijri_Style_130 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), Datetime2Col, 131) AS HijriTime_Style_131 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457
+~~END~~
+
+
+-- Datetimeoffset
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 0) AS Default_Style_0 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 100) AS Default_Style_100 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 1) AS US_Style_1 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 101) AS US_Style_101 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 2) AS ANSI_Style_2 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 102) AS ANSI_Style_102 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 3) AS British_Style_3 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 103) AS British_Style_103 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 4) AS German_Style_4 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 104) AS German_Style_104 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 5) AS Italian_Style_5 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 105) AS Italian_Style_105 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 6) AS Style_6 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 106) AS Style_106 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 7) AS Style_7 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 107) AS Style_107 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 8) AS Time_Style_8 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 108) AS Time_Style_108 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 9) AS Style_9 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 109) AS Style_109 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 10) AS Style_10 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 110) AS Style_110 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 11) AS Style_11 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 111) AS Style_111 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 12) AS Style_12 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 112) AS Style_112 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 13) AS Style_13 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 113) AS Style_113 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 14) AS Style_14 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 114) AS Style_114 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 20) AS Style_20 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 120) AS Style_120 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 21) AS Style_21 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 25) AS Style_25 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 121) AS Style_121 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 22) AS Style_22 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 23) AS Style_23 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 126) AS ISO8601_Style_126 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 130) AS Hijri_Style_130 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 131) AS HijriTime_Style_131 FROM try_convert_source_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+
+-- Default Style (0 or 100)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 0) AS Default_Style_0 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 100) AS Default_Style_100 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- US (1 or 101)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 1) AS US_Style_1 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 101) AS US_Style_101 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- ANSI (2 or 102)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 2) AS ANSI_Style_2 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 102) AS ANSI_Style_102 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- British/French (3 or 103)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 3) AS British_Style_3 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 103) AS British_Style_103 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- German (4 or 104)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 4) AS German_Style_4 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 104) AS German_Style_104 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- Italian (5 or 105)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 5) AS Italian_Style_5 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 105) AS Italian_Style_105 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- dd mon yyyy (6 or 106)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 6) AS Style_6 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 106) AS Style_106 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- mon dd, yyyy (7 or 107)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 7) AS Style_7 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 107) AS Style_107 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- HH:mm:ss (8 or 108)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 8) AS Time_Style_8 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 108) AS Time_Style_108 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 9) AS Style_9 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 109) AS Style_109 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- mm-dd-yy (10 or 110)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 10) AS Style_10 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 110) AS Style_110 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- yy/mm/dd (11 or 111)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 11) AS Style_11 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 111) AS Style_111 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- yyyymmdd (12 or 112)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 12) AS Style_12 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 112) AS Style_112 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- dd mon yyyy HH:mm:ss:mmm (13 or 113)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 13) AS Style_13 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 113) AS Style_113 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- HH:mm:ss:mmm (14 or 114)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 14) AS Style_14 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 114) AS Style_114 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss (20 or 120)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 20) AS Style_20 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 120) AS Style_120 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 21) AS Style_21 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 25) AS Style_25 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 121) AS Style_121 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- Style 22: MM/DD/YY HH:MM:SS
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 22) AS Style_22 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- Style 23: YYYY-MM-DD
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 23) AS Style_23 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- ISO8601 (126)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 126) AS ISO8601_Style_126 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- ISO8601 with timezone (127)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 127) AS ISO8601TZ_Style_127 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- Hijri (130)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 130) AS Hijri_Style_130 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+-- Hijri with time (131)
+SELECT TRY_CONVERT(VARCHAR(50), DatetimeoffsetCol, 131) AS HijriTime_Style_131 FROM try_convert_source_udt_t1;
+GO
+~~START~~
+varchar
+2024-01-15 12:34:56.123457 +00:00
+~~END~~
+
+
+
+-- =============================================
+-- Expicit Casting using Try_Convert Function with Style Parameter: Float and Real related Datatypes
+-- =============================================
+-- Style 0 (Default - no specific format)
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 0) AS FloatToChar_0,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 0) AS FloatToVarchar_0,
+    TRY_CONVERT(NCHAR(50), FloatCol, 0) AS FloatToNchar_0,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 0) AS FloatToNvarchar_0
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45                                            #!#123.45                                            #!#123.45                                            
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 0) AS RealToChar_0,
+    TRY_CONVERT(VARCHAR(50), RealCol, 0) AS RealToVarchar_0,
+    TRY_CONVERT(NCHAR(50), RealCol, 0) AS RealToNchar_0,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 0) AS RealToNvarchar_0
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 1 (No decimal point)
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 1) AS FloatToChar_1,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 1) AS FloatToVarchar_1,
+    TRY_CONVERT(NCHAR(50), FloatCol, 1) AS FloatToNchar_1,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 1) AS FloatToNvarchar_1
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+1.2345000e+02                                     #!#1.2345000e+02                                     #!#1.2345000e+02                                     #!#1.2345000e+02                                     
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 1) AS RealToChar_1,
+    TRY_CONVERT(VARCHAR(50), RealCol, 1) AS RealToVarchar_1,
+    TRY_CONVERT(NCHAR(50), RealCol, 1) AS RealToNchar_1,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 1) AS RealToNvarchar_1
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 2 (With decimal point and at least one decimal place)
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 2) AS FloatToChar_2,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 2) AS FloatToVarchar_2,
+    TRY_CONVERT(NCHAR(50), FloatCol, 2) AS FloatToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 2) AS FloatToNvarchar_2
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+1.234500000000000e+02                             #!#1.234500000000000e+02                             #!#1.234500000000000e+02                             #!#1.234500000000000e+02                             
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 2) AS RealToChar_2,
+    TRY_CONVERT(VARCHAR(50), RealCol, 2) AS RealToVarchar_2,
+    TRY_CONVERT(NCHAR(50), RealCol, 2) AS RealToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 2) AS RealToNvarchar_2
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 3 (With commas every three digits)
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 3) AS FloatToChar_3,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 3) AS FloatToVarchar_3,
+    TRY_CONVERT(NCHAR(50), FloatCol, 3) AS FloatToNchar_3,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 3) AS FloatToNvarchar_3
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+1.2345000000000000e+02                            #!#1.2345000000000000e+02                            #!#1.2345000000000000e+02                            #!#1.2345000000000000e+02                            
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 3) AS RealToChar_3,
+    TRY_CONVERT(VARCHAR(50), RealCol, 3) AS RealToVarchar_3,
+    TRY_CONVERT(NCHAR(50), RealCol, 3) AS RealToNchar_3,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 3) AS RealToNvarchar_3
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 126
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 126) AS FloatToChar_126,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 126) AS FloatToVarchar_126,
+    TRY_CONVERT(NCHAR(50), FloatCol, 126) AS FloatToNchar_126,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 126) AS FloatToNvarchar_126
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 126) AS RealToChar_126,
+    TRY_CONVERT(VARCHAR(50), RealCol, 126) AS RealToVarchar_126,
+    TRY_CONVERT(NCHAR(50), RealCol, 126) AS RealToNchar_126,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 126) AS RealToNvarchar_126
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 128
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 128) AS FloatToChar_128,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 128) AS FloatToVarchar_128,
+    TRY_CONVERT(NCHAR(50), FloatCol, 128) AS FloatToNchar_128,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 128) AS FloatToNvarchar_128
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 128) AS RealToChar_128,
+    TRY_CONVERT(VARCHAR(50), RealCol, 128) AS RealToVarchar_128,
+    TRY_CONVERT(NCHAR(50), RealCol, 128) AS RealToNchar_128,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 128) AS RealToNvarchar_128
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 129
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 129) AS FloatToChar_129,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 129) AS FloatToVarchar_129,
+    TRY_CONVERT(NCHAR(50), FloatCol, 129) AS FloatToNchar_129,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 129) AS FloatToNvarchar_129
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 129) AS RealToChar_129,
+    TRY_CONVERT(VARCHAR(50), RealCol, 129) AS RealToVarchar_129,
+    TRY_CONVERT(NCHAR(50), RealCol, 129) AS RealToNchar_129,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 129) AS RealToNvarchar_129
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+
+-- Style 0 (Default - no specific format)
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 0) AS FloatToChar_0,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 0) AS FloatToVarchar_0,
+    TRY_CONVERT(NCHAR(50), FloatCol, 0) AS FloatToNchar_0,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 0) AS FloatToNvarchar_0
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 0) AS RealToChar_0,
+    TRY_CONVERT(VARCHAR(50), RealCol, 0) AS RealToVarchar_0,
+    TRY_CONVERT(NCHAR(50), RealCol, 0) AS RealToNchar_0,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 0) AS RealToNvarchar_0
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 1 (No decimal point)
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 1) AS FloatToChar_1,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 1) AS FloatToVarchar_1,
+    TRY_CONVERT(NCHAR(50), FloatCol, 1) AS FloatToNchar_1,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 1) AS FloatToNvarchar_1
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 1) AS RealToChar_1,
+    TRY_CONVERT(VARCHAR(50), RealCol, 1) AS RealToVarchar_1,
+    TRY_CONVERT(NCHAR(50), RealCol, 1) AS RealToNchar_1,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 1) AS RealToNvarchar_1
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 2 (With decimal point and at least one decimal place)
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 2) AS FloatToChar_2,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 2) AS FloatToVarchar_2,
+    TRY_CONVERT(NCHAR(50), FloatCol, 2) AS FloatToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 2) AS FloatToNvarchar_2
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 2) AS RealToChar_2,
+    TRY_CONVERT(VARCHAR(50), RealCol, 2) AS RealToVarchar_2,
+    TRY_CONVERT(NCHAR(50), RealCol, 2) AS RealToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 2) AS RealToNvarchar_2
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 3 (With commas every three digits)
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 3) AS FloatToChar_3,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 3) AS FloatToVarchar_3,
+    TRY_CONVERT(NCHAR(50), FloatCol, 3) AS FloatToNchar_3,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 3) AS FloatToNvarchar_3
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 3) AS RealToChar_3,
+    TRY_CONVERT(VARCHAR(50), RealCol, 3) AS RealToVarchar_3,
+    TRY_CONVERT(NCHAR(50), RealCol, 3) AS RealToNchar_3,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 3) AS RealToNvarchar_3
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 126
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 126) AS FloatToChar_126,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 126) AS FloatToVarchar_126,
+    TRY_CONVERT(NCHAR(50), FloatCol, 126) AS FloatToNchar_126,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 126) AS FloatToNvarchar_126
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 126) AS RealToChar_126,
+    TRY_CONVERT(VARCHAR(50), RealCol, 126) AS RealToVarchar_126,
+    TRY_CONVERT(NCHAR(50), RealCol, 126) AS RealToNchar_126,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 126) AS RealToNvarchar_126
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 128
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 128) AS FloatToChar_128,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 128) AS FloatToVarchar_128,
+    TRY_CONVERT(NCHAR(50), FloatCol, 128) AS FloatToNchar_128,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 128) AS FloatToNvarchar_128
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 128) AS RealToChar_128,
+    TRY_CONVERT(VARCHAR(50), RealCol, 128) AS RealToVarchar_128,
+    TRY_CONVERT(NCHAR(50), RealCol, 128) AS RealToNchar_128,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 128) AS RealToNvarchar_128
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 129
+SELECT 
+    TRY_CONVERT(CHAR(50), FloatCol, 129) AS FloatToChar_129,
+    TRY_CONVERT(VARCHAR(50), FloatCol, 129) AS FloatToVarchar_129,
+    TRY_CONVERT(NCHAR(50), FloatCol, 129) AS FloatToNchar_129,
+    TRY_CONVERT(NVARCHAR(50), FloatCol, 129) AS FloatToNvarchar_129
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), RealCol, 129) AS RealToChar_129,
+    TRY_CONVERT(VARCHAR(50), RealCol, 129) AS RealToVarchar_129,
+    TRY_CONVERT(NCHAR(50), RealCol, 129) AS RealToNchar_129,
+    TRY_CONVERT(NVARCHAR(50), RealCol, 129) AS RealToNvarchar_129
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+
+
+-- =============================================
+-- Expicit Casting using Try_Convert Function with Style Parameter: Money and Smallmoney related Datatypes
+-- =============================================
+-- Style 0 (Default - no specific format)
+SELECT 
+    TRY_CONVERT(CHAR(50), MoneyCol, 0) AS MoneyToChar_0,
+    TRY_CONVERT(VARCHAR(50), MoneyCol, 0) AS MoneyToVarchar_0,
+    TRY_CONVERT(NCHAR(50), MoneyCol, 0) AS MoneyToNchar_0,
+    TRY_CONVERT(NVARCHAR(50), MoneyCol, 0) AS MoneyToNvarchar_0
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), SmallmoneyCol, 0) AS SmallmoneyToChar_0,
+    TRY_CONVERT(VARCHAR(50), SmallmoneyCol, 0) AS SmallmoneyToVarchar_0,
+    TRY_CONVERT(NCHAR(50), SmallmoneyCol, 0) AS SmallmoneyToNchar_0,
+    TRY_CONVERT(NVARCHAR(50), SmallmoneyCol, 0) AS SmallmoneyToNvarchar_0
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 1 (No commas)
+SELECT 
+    TRY_CONVERT(CHAR(50), MoneyCol, 1) AS MoneyToChar_1,
+    TRY_CONVERT(VARCHAR(50), MoneyCol, 1) AS MoneyToVarchar_1,
+    TRY_CONVERT(NCHAR(50), MoneyCol, 1) AS MoneyToNchar_1,
+    TRY_CONVERT(NVARCHAR(50), MoneyCol, 1) AS MoneyToNvarchar_1
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), SmallmoneyCol, 1) AS SmallmoneyToChar_1,
+    TRY_CONVERT(VARCHAR(50), SmallmoneyCol, 1) AS SmallmoneyToVarchar_1,
+    TRY_CONVERT(NCHAR(50), SmallmoneyCol, 1) AS SmallmoneyToNchar_1,
+    TRY_CONVERT(NVARCHAR(50), SmallmoneyCol, 1) AS SmallmoneyToNvarchar_1
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 2 (With commas)
+SELECT 
+    TRY_CONVERT(CHAR(50), MoneyCol, 2) AS MoneyToChar_2,
+    TRY_CONVERT(VARCHAR(50), MoneyCol, 2) AS MoneyToVarchar_2,
+    TRY_CONVERT(NCHAR(50), MoneyCol, 2) AS MoneyToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), MoneyCol, 2) AS MoneyToNvarchar_2
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), SmallmoneyCol, 2) AS SmallmoneyToChar_2,
+    TRY_CONVERT(VARCHAR(50), SmallmoneyCol, 2) AS SmallmoneyToVarchar_2,
+    TRY_CONVERT(NCHAR(50), SmallmoneyCol, 2) AS SmallmoneyToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), SmallmoneyCol, 2) AS SmallmoneyToNvarchar_2
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 126
+SELECT 
+    TRY_CONVERT(CHAR(50), MoneyCol, 126) AS MoneyToChar_2,
+    TRY_CONVERT(VARCHAR(50), MoneyCol, 126) AS MoneyToVarchar_2,
+    TRY_CONVERT(NCHAR(50), MoneyCol, 126) AS MoneyToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), MoneyCol, 126) AS MoneyToNvarchar_2
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), SmallmoneyCol, 126) AS SmallmoneyToChar_2,
+    TRY_CONVERT(VARCHAR(50), SmallmoneyCol, 126) AS SmallmoneyToVarchar_2,
+    TRY_CONVERT(NCHAR(50), SmallmoneyCol, 126) AS SmallmoneyToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), SmallmoneyCol, 126) AS SmallmoneyToNvarchar_2
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+
+-- Style 0 (Default - no specific format)
+SELECT 
+    TRY_CONVERT(CHAR(50), MoneyCol, 0) AS MoneyToChar_0,
+    TRY_CONVERT(VARCHAR(50), MoneyCol, 0) AS MoneyToVarchar_0,
+    TRY_CONVERT(NCHAR(50), MoneyCol, 0) AS MoneyToNchar_0,
+    TRY_CONVERT(NVARCHAR(50), MoneyCol, 0) AS MoneyToNvarchar_0
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), SmallmoneyCol, 0) AS SmallmoneyToChar_0,
+    TRY_CONVERT(VARCHAR(50), SmallmoneyCol, 0) AS SmallmoneyToVarchar_0,
+    TRY_CONVERT(NCHAR(50), SmallmoneyCol, 0) AS SmallmoneyToNchar_0,
+    TRY_CONVERT(NVARCHAR(50), SmallmoneyCol, 0) AS SmallmoneyToNvarchar_0
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 1 (No commas)
+SELECT 
+    TRY_CONVERT(CHAR(50), MoneyCol, 1) AS MoneyToChar_1,
+    TRY_CONVERT(VARCHAR(50), MoneyCol, 1) AS MoneyToVarchar_1,
+    TRY_CONVERT(NCHAR(50), MoneyCol, 1) AS MoneyToNchar_1,
+    TRY_CONVERT(NVARCHAR(50), MoneyCol, 1) AS MoneyToNvarchar_1
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), SmallmoneyCol, 1) AS SmallmoneyToChar_1,
+    TRY_CONVERT(VARCHAR(50), SmallmoneyCol, 1) AS SmallmoneyToVarchar_1,
+    TRY_CONVERT(NCHAR(50), SmallmoneyCol, 1) AS SmallmoneyToNchar_1,
+    TRY_CONVERT(NVARCHAR(50), SmallmoneyCol, 1) AS SmallmoneyToNvarchar_1
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 2 (With commas)
+SELECT 
+    TRY_CONVERT(CHAR(50), MoneyCol, 2) AS MoneyToChar_2,
+    TRY_CONVERT(VARCHAR(50), MoneyCol, 2) AS MoneyToVarchar_2,
+    TRY_CONVERT(NCHAR(50), MoneyCol, 2) AS MoneyToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), MoneyCol, 2) AS MoneyToNvarchar_2
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), SmallmoneyCol, 2) AS SmallmoneyToChar_2,
+    TRY_CONVERT(VARCHAR(50), SmallmoneyCol, 2) AS SmallmoneyToVarchar_2,
+    TRY_CONVERT(NCHAR(50), SmallmoneyCol, 2) AS SmallmoneyToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), SmallmoneyCol, 2) AS SmallmoneyToNvarchar_2
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+-- Style 126
+SELECT 
+    TRY_CONVERT(CHAR(50), MoneyCol, 126) AS MoneyToChar_2,
+    TRY_CONVERT(VARCHAR(50), MoneyCol, 126) AS MoneyToVarchar_2,
+    TRY_CONVERT(NCHAR(50), MoneyCol, 126) AS MoneyToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), MoneyCol, 126) AS MoneyToNvarchar_2
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+SELECT
+    TRY_CONVERT(CHAR(50), SmallmoneyCol, 126) AS SmallmoneyToChar_2,
+    TRY_CONVERT(VARCHAR(50), SmallmoneyCol, 126) AS SmallmoneyToVarchar_2,
+    TRY_CONVERT(NCHAR(50), SmallmoneyCol, 126) AS SmallmoneyToNchar_2,
+    TRY_CONVERT(NVARCHAR(50), SmallmoneyCol, 126) AS SmallmoneyToNvarchar_2
+FROM try_convert_source_udt_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+123.45                                            #!#123.45#!#123.45                                            #!#123.45
+~~END~~
+
+
+
+
+-- =============================================
+-- Expicit Casting using Try_Convert Function with Style Parameter: Xml related Datatypes
+-- =============================================
+-- Style 0 (Default - no specific format)
+SELECT
+    TRY_CONVERT(CHAR(1000), XmlCol, 0) AS XmlToChar_0,
+    TRY_CONVERT(VARCHAR(1000), XmlCol, 0) AS XmlToVarchar_0,
+    TRY_CONVERT(NCHAR(1000), XmlCol, 0) AS XmlToNchar_0,
+    TRY_CONVERT(NVARCHAR(1000), XmlCol, 0) AS XmlToNvarchar_0
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>#!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>
+~~END~~
+
+
+-- Style 1 (Strip whitespace)
+SELECT
+    TRY_CONVERT(CHAR(1000), XmlCol, 1) AS XmlToChar_1,
+    TRY_CONVERT(VARCHAR(1000), XmlCol, 1) AS XmlToVarchar_1,
+    TRY_CONVERT(NCHAR(1000), XmlCol, 1) AS XmlToNchar_1,
+    TRY_CONVERT(NVARCHAR(1000), XmlCol, 1) AS XmlToNvarchar_1
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>#!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>
+~~END~~
+
+
+-- Style 2
+SELECT
+    TRY_CONVERT(CHAR(1000), XmlCol, 2) AS XmlToChar_2,
+    TRY_CONVERT(VARCHAR(1000), XmlCol, 2) AS XmlToVarchar_2,
+    TRY_CONVERT(NCHAR(1000), XmlCol, 2) AS XmlToNchar_2,
+    TRY_CONVERT(NVARCHAR(1000), XmlCol, 2) AS XmlToNvarchar_2
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>#!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>
+~~END~~
+
+
+-- Style 3 
+SELECT
+    TRY_CONVERT(CHAR(1000), XmlCol, 3) AS XmlToChar_3,
+    TRY_CONVERT(VARCHAR(1000), XmlCol, 3) AS XmlToVarchar_3,
+    TRY_CONVERT(NCHAR(1000), XmlCol, 3) AS XmlToNchar_3,
+    TRY_CONVERT(NVARCHAR(1000), XmlCol, 3) AS XmlToNvarchar_3
+FROM try_convert_source_t1;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>#!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>
+~~END~~
+
+
+
+
+-- =============================================
+-- Expicit Casting using Try_Convert Function with Style Parameter: Binary, Varbinary and Image
+-- =============================================
+-- Create test table
+CREATE TABLE try_convert_binary_source (
+    ID INT PRIMARY KEY,
+    BinaryCol BINARY(10),
+    VarbinaryCol VARBINARY(50),
+    ImageCol IMAGE,
+    Description VARCHAR(100)
+);
+GO
+
+-- Create test table with UDT columns
+CREATE TABLE try_convert_binary_source_udt (
+    ID INT PRIMARY KEY,
+    BinaryCol udt_binary,
+    VarbinaryCol udt_varbinary,
+    ImageCol udt_image,
+    Description VARCHAR(100)
+);
+GO
+
+-- Insert test data
+INSERT INTO try_convert_binary_source VALUES
+-- Basic binary data
+(1, 0x41424344, 0x41424344, 0x41424344, 'Simple ABCD'),
+-- Zeros
+(2, 0x00000000, 0x00000000, 0x00000000, 'All zeros'),
+-- Mixed hex values
+(3, 0x41424300, 0x41424300, 0x41424300, 'ABC with trailing zero'),
+-- Max values
+(4, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 'All F values'),
+-- SQL Server string 'SQL'
+(5, 0x53514C00, 0x53514C00, 0x53514C00, 'SQL with trailing zero'),
+-- Mixed values
+(6, 0x4142FF00, 0x4142FF00, 0x4142FF00, 'AB with FF and trailing zero');
+GO
+~~ROW COUNT: 6~~
+
+
+-- Insert test data
+INSERT INTO try_convert_binary_source_udt VALUES
+-- Basic binary data
+(1, 0x41424344, 0x41424344, 0x41424344, 'Simple ABCD'),
+-- Zeros
+(2, 0x00000000, 0x00000000, 0x00000000, 'All zeros'),
+-- Mixed hex values
+(3, 0x41424300, 0x41424300, 0x41424300, 'ABC with trailing zero'),
+-- Max values
+(4, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 'All F values'),
+-- SQL Server string 'SQL'
+(5, 0x53514C00, 0x53514C00, 0x53514C00, 'SQL with trailing zero'),
+-- Mixed values
+(6, 0x4142FF00, 0x4142FF00, 0x4142FF00, 'AB with FF and trailing zero');
+GO
+~~ROW COUNT: 6~~
+
+
+-- Style 0 (Default style)
+SELECT 
+    -- BINARY to string types
+    TRY_CONVERT(CHAR(20), BinaryCol, 0) AS BinaryToChar_0,
+    TRY_CONVERT(VARCHAR(20), BinaryCol, 0) AS BinaryToVarchar_0,
+    TRY_CONVERT(NCHAR(20), BinaryCol, 0) AS BinaryToNchar_0,
+    TRY_CONVERT(NVARCHAR(20), BinaryCol, 0) AS BinaryToNvarchar_0
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- VARBINARY to string types
+    TRY_CONVERT(CHAR(20), VarbinaryCol, 0) AS VarbinaryToChar_0,
+    TRY_CONVERT(VARCHAR(20), VarbinaryCol, 0) AS VarbinaryToVarchar_0,
+    TRY_CONVERT(NCHAR(20), VarbinaryCol, 0) AS VarbinaryToNchar_0,
+    TRY_CONVERT(NVARCHAR(20), VarbinaryCol, 0) AS VarbinaryToNvarchar_0
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- IMAGE to string types
+    TRY_CONVERT(CHAR(20), ImageCol, 0) AS ImageToChar_0,
+    TRY_CONVERT(VARCHAR(20), ImageCol, 0) AS ImageToVarchar_0,
+    TRY_CONVERT(NCHAR(20), ImageCol, 0) AS ImageToNchar_0,
+    TRY_CONVERT(NVARCHAR(20), ImageCol, 0) AS ImageToNvarchar_0
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Style 1 (Shows 0x prefix)
+SELECT 
+    -- BINARY to string types
+    TRY_CONVERT(CHAR(20), BinaryCol, 1) AS BinaryToChar_1,
+    TRY_CONVERT(VARCHAR(20), BinaryCol, 1) AS BinaryToVarchar_1,
+    TRY_CONVERT(NCHAR(20), BinaryCol, 1) AS BinaryToNchar_1,
+    TRY_CONVERT(NVARCHAR(20), BinaryCol, 1) AS BinaryToNvarchar_1
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- VARBINARY to string types
+    TRY_CONVERT(CHAR(20), VarbinaryCol, 1) AS VarbinaryToChar_1,
+    TRY_CONVERT(VARCHAR(20), VarbinaryCol, 1) AS VarbinaryToVarchar_1,
+    TRY_CONVERT(NCHAR(20), VarbinaryCol, 1) AS VarbinaryToNchar_1,
+    TRY_CONVERT(NVARCHAR(20), VarbinaryCol, 1) AS VarbinaryToNvarchar_1
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- IMAGE to string types
+    TRY_CONVERT(CHAR(20), ImageCol, 1) AS ImageToChar_1,
+    TRY_CONVERT(VARCHAR(20), ImageCol, 1) AS ImageToVarchar_1,
+    TRY_CONVERT(NCHAR(20), ImageCol, 1) AS ImageToNchar_1,
+    TRY_CONVERT(NVARCHAR(20), ImageCol, 1) AS ImageToNvarchar_1
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Style 2 (Shows binary values)
+SELECT 
+    -- BINARY to string types
+    TRY_CONVERT(CHAR(20), BinaryCol, 2) AS BinaryToChar_2,
+    TRY_CONVERT(VARCHAR(20), BinaryCol, 2) AS BinaryToVarchar_2,
+    TRY_CONVERT(NCHAR(20), BinaryCol, 2) AS BinaryToNchar_2,
+    TRY_CONVERT(NVARCHAR(20), BinaryCol, 2) AS BinaryToNvarchar_2
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- VARBINARY to string types
+    TRY_CONVERT(CHAR(20), VarbinaryCol, 2) AS VarbinaryToChar_2,
+    TRY_CONVERT(VARCHAR(20), VarbinaryCol, 2) AS VarbinaryToVarchar_2,
+    TRY_CONVERT(NCHAR(20), VarbinaryCol, 2) AS VarbinaryToNchar_2,
+    TRY_CONVERT(NVARCHAR(20), VarbinaryCol, 2) AS VarbinaryToNvarchar_2
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- IMAGE to string types
+    TRY_CONVERT(CHAR(20), ImageCol, 2) AS ImageToChar_2,
+    TRY_CONVERT(VARCHAR(20), ImageCol, 2) AS ImageToVarchar_2,
+    TRY_CONVERT(NCHAR(20), ImageCol, 2) AS ImageToNchar_2,
+    TRY_CONVERT(NVARCHAR(20), ImageCol, 2) AS ImageToNvarchar_2
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- UDT
+-- Style 0 (Default style)
+SELECT 
+    -- BINARY to string types
+    TRY_CONVERT(CHAR(20), BinaryCol, 0) AS BinaryToChar_0,
+    TRY_CONVERT(VARCHAR(20), BinaryCol, 0) AS BinaryToVarchar_0,
+    TRY_CONVERT(NCHAR(20), BinaryCol, 0) AS BinaryToNchar_0,
+    TRY_CONVERT(NVARCHAR(20), BinaryCol, 0) AS BinaryToNvarchar_0
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- VARBINARY to string types
+    TRY_CONVERT(CHAR(20), VarbinaryCol, 0) AS VarbinaryToChar_0,
+    TRY_CONVERT(VARCHAR(20), VarbinaryCol, 0) AS VarbinaryToVarchar_0,
+    TRY_CONVERT(NCHAR(20), VarbinaryCol, 0) AS VarbinaryToNchar_0,
+    TRY_CONVERT(NVARCHAR(20), VarbinaryCol, 0) AS VarbinaryToNvarchar_0
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- IMAGE to string types
+    TRY_CONVERT(CHAR(20), ImageCol, 0) AS ImageToChar_0,
+    TRY_CONVERT(VARCHAR(20), ImageCol, 0) AS ImageToVarchar_0,
+    TRY_CONVERT(NCHAR(20), ImageCol, 0) AS ImageToNchar_0,
+    TRY_CONVERT(NVARCHAR(20), ImageCol, 0) AS ImageToNvarchar_0
+FROM try_convert_binary_source_udt;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Style 1 (Shows 0x prefix)
+SELECT 
+    -- BINARY to string types
+    TRY_CONVERT(CHAR(20), BinaryCol, 1) AS BinaryToChar_1,
+    TRY_CONVERT(VARCHAR(20), BinaryCol, 1) AS BinaryToVarchar_1,
+    TRY_CONVERT(NCHAR(20), BinaryCol, 1) AS BinaryToNchar_1,
+    TRY_CONVERT(NVARCHAR(20), BinaryCol, 1) AS BinaryToNvarchar_1
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- VARBINARY to string types
+    TRY_CONVERT(CHAR(20), VarbinaryCol, 1) AS VarbinaryToChar_1,
+    TRY_CONVERT(VARCHAR(20), VarbinaryCol, 1) AS VarbinaryToVarchar_1,
+    TRY_CONVERT(NCHAR(20), VarbinaryCol, 1) AS VarbinaryToNchar_1,
+    TRY_CONVERT(NVARCHAR(20), VarbinaryCol, 1) AS VarbinaryToNvarchar_1
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- IMAGE to string types
+    TRY_CONVERT(CHAR(20), ImageCol, 1) AS ImageToChar_1,
+    TRY_CONVERT(VARCHAR(20), ImageCol, 1) AS ImageToVarchar_1,
+    TRY_CONVERT(NCHAR(20), ImageCol, 1) AS ImageToNchar_1,
+    TRY_CONVERT(NVARCHAR(20), ImageCol, 1) AS ImageToNvarchar_1
+FROM try_convert_binary_source_udt;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Style 2 (Shows binary values)
+SELECT 
+    -- BINARY to string types
+    TRY_CONVERT(CHAR(20), BinaryCol, 2) AS BinaryToChar_2,
+    TRY_CONVERT(VARCHAR(20), BinaryCol, 2) AS BinaryToVarchar_2,
+    TRY_CONVERT(NCHAR(20), BinaryCol, 2) AS BinaryToNchar_2,
+    TRY_CONVERT(NVARCHAR(20), BinaryCol, 2) AS BinaryToNvarchar_2
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- VARBINARY to string types
+    TRY_CONVERT(CHAR(20), VarbinaryCol, 2) AS VarbinaryToChar_2,
+    TRY_CONVERT(VARCHAR(20), VarbinaryCol, 2) AS VarbinaryToVarchar_2,
+    TRY_CONVERT(NCHAR(20), VarbinaryCol, 2) AS VarbinaryToNchar_2,
+    TRY_CONVERT(NVARCHAR(20), VarbinaryCol, 2) AS VarbinaryToNvarchar_2
+FROM try_convert_binary_source;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT
+    -- IMAGE to string types
+    TRY_CONVERT(CHAR(20), ImageCol, 2) AS ImageToChar_2,
+    TRY_CONVERT(VARCHAR(20), ImageCol, 2) AS ImageToVarchar_2,
+    TRY_CONVERT(NCHAR(20), ImageCol, 2) AS ImageToNchar_2,
+    TRY_CONVERT(NVARCHAR(20), ImageCol, 2) AS ImageToNvarchar_2
+FROM try_convert_binary_source_udt;
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+ABCD                #!#ABCD#!#ABCD                #!#ABCD
+                    #!##!#                    #!#
+ABC                 #!#ABC#!#ABC                 #!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL                 #!#SQL#!#SQL                 #!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test with different string lengths
+SELECT 
+    -- Short length (potential truncation)
+    TRY_CONVERT(VARCHAR(5), BinaryCol, 0) AS BinaryToVarchar_Short_0,
+    TRY_CONVERT(VARCHAR(5), BinaryCol, 1) AS BinaryToVarchar_Short_1,
+    TRY_CONVERT(VARCHAR(5), BinaryCol, 2) AS BinaryToVarchar_Short_2,
+    -- Long length
+    TRY_CONVERT(VARCHAR(100), BinaryCol, 0) AS BinaryToVarchar_Long_0,
+    TRY_CONVERT(VARCHAR(100), BinaryCol, 1) AS BinaryToVarchar_Long_1,
+    TRY_CONVERT(VARCHAR(100), BinaryCol, 2) AS BinaryToVarchar_Long_2
+FROM try_convert_binary_source;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+ABCD#!#ABCD#!#ABCD#!#ABCD#!#ABCD#!#ABCD
+#!##!##!##!##!#
+ABC#!#ABC#!#ABC#!#ABC#!#ABC#!#ABC
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL#!#SQL#!#SQL#!#SQL#!#SQL#!#SQL
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Compare styles side by side for same input
+SELECT 
+    -- All styles for BINARY
+    TRY_CONVERT(VARCHAR(20), BinaryCol, 0) AS Binary_Style0,
+    TRY_CONVERT(VARCHAR(20), BinaryCol, 1) AS Binary_Style1,
+    TRY_CONVERT(VARCHAR(20), BinaryCol, 2) AS Binary_Style2,
+    -- Show lengths
+    LEN(TRY_CONVERT(VARCHAR(20), BinaryCol, 0)) AS Binary_Style0_Len,
+    LEN(TRY_CONVERT(VARCHAR(20), BinaryCol, 1)) AS Binary_Style1_Len,
+    LEN(TRY_CONVERT(VARCHAR(20), BinaryCol, 2)) AS Binary_Style2_Len
+FROM try_convert_binary_source;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#int#!#int#!#int
+ABCD#!#ABCD#!#ABCD#!#4#!#4#!#4
+#!##!##!#0#!#0#!#0
+ABC#!#ABC#!#ABC#!#3#!#3#!#3
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+SQL#!#SQL#!#SQL#!#3#!#3#!#3
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test NULL values
+SELECT
+    TRY_CONVERT(VARCHAR(20), CAST(NULL AS BINARY(10)), 0) AS NullBinary_Style0,
+    TRY_CONVERT(VARCHAR(20), CAST(NULL AS BINARY(10)), 1) AS NullBinary_Style1,
+    TRY_CONVERT(VARCHAR(20), CAST(NULL AS BINARY(10)), 2) AS NullBinary_Style2;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+
+
+-- =============================================
+-- Dependent objects
+-- =============================================
+-- Create View that tests conversion of Integer Types to String Types
+CREATE VIEW try_convert_view_integers AS
+SELECT 
+    IntCol,
+    -- CHAR conversions
+    TRY_CONVERT(CHAR(20), IntCol) AS IntToChar,
+    TRY_CONVERT(CHAR(20), BigintCol) AS BigintToChar,
+    TRY_CONVERT(CHAR(20), SmallintCol) AS SmallintToChar,
+    TRY_CONVERT(CHAR(20), TinyintCol) AS TinyintToChar,
+    TRY_CONVERT(CHAR(20), BitCol) AS BitToChar,
+    
+    -- VARCHAR conversions
+    TRY_CONVERT(VARCHAR(20), IntCol) AS IntToVarchar,
+    TRY_CONVERT(VARCHAR(20), BigintCol) AS BigintToVarchar,
+    TRY_CONVERT(VARCHAR(20), SmallintCol) AS SmallintToVarchar,
+    TRY_CONVERT(VARCHAR(20), TinyintCol) AS TinyintToVarchar,
+    TRY_CONVERT(VARCHAR(20), BitCol) AS BitToVarchar,
+    
+    -- NCHAR conversions
+    TRY_CONVERT(NCHAR(20), IntCol) AS IntToNChar,
+    TRY_CONVERT(NCHAR(20), BigintCol) AS BigintToNChar,
+    TRY_CONVERT(NCHAR(20), SmallintCol) AS SmallintToNChar,
+    TRY_CONVERT(NCHAR(20), TinyintCol) AS TinyintToNChar,
+    TRY_CONVERT(NCHAR(20), BitCol) AS BitToNChar,
+    
+    -- NVARCHAR conversions
+    TRY_CONVERT(NVARCHAR(20), IntCol) AS IntToNVarchar,
+    TRY_CONVERT(NVARCHAR(20), BigintCol) AS BigintToNVarchar,
+    TRY_CONVERT(NVARCHAR(20), SmallintCol) AS SmallintToNVarchar,
+    TRY_CONVERT(NVARCHAR(20), TinyintCol) AS TinyintToNVarchar,
+    TRY_CONVERT(NVARCHAR(20), BitCol) AS BitToNVarchar
+FROM try_convert_source_t1;
+GO
+
+-- Create View for Decimal Types conversions
+CREATE VIEW try_convert_view_decimals AS
+SELECT 
+    -- CHAR conversions
+    TRY_CONVERT(CHAR(30), DecimalCol) AS DecimalToChar,
+    TRY_CONVERT(CHAR(30), NumericCol) AS NumericToChar,
+    TRY_CONVERT(CHAR(30), FloatCol) AS FloatToChar,
+    TRY_CONVERT(CHAR(30), RealCol) AS RealToChar,
+    TRY_CONVERT(CHAR(30), MoneyCol) AS MoneyToChar,
+    TRY_CONVERT(CHAR(30), SmallmoneyCol) AS SmallmoneyToChar,
+    
+    -- VARCHAR conversions with different styles
+    TRY_CONVERT(VARCHAR(30), MoneyCol, 0) AS MoneyToVarchar_Style0,
+    TRY_CONVERT(VARCHAR(30), MoneyCol, 1) AS MoneyToVarchar_Style1,
+    TRY_CONVERT(VARCHAR(30), MoneyCol, 2) AS MoneyToVarchar_Style2,
+    
+    -- NVARCHAR conversions for floating point
+    TRY_CONVERT(NVARCHAR(30), FloatCol) AS FloatToNVarchar,
+    TRY_CONVERT(NVARCHAR(30), RealCol) AS RealToNVarchar
+FROM try_convert_source_t1;
+GO
+
+-- Create View for DateTime Types conversions
+CREATE VIEW try_convert_view_datetimes AS
+SELECT 
+    -- Default style conversions
+    TRY_CONVERT(CHAR(30), DatetimeCol) AS DatetimeToChar,
+    TRY_CONVERT(VARCHAR(30), DateCol) AS DateToVarchar,
+    TRY_CONVERT(NCHAR(30), TimeCol) AS TimeToNChar,
+    TRY_CONVERT(NVARCHAR(30), Datetime2Col) AS Datetime2ToNVarchar,
+    
+    -- Style 101 (mm/dd/yyyy) conversions
+    TRY_CONVERT(VARCHAR(30), DatetimeCol, 101) AS DatetimeToVarchar_101,
+    TRY_CONVERT(VARCHAR(30), DateCol, 101) AS DateToVarchar_101,
+    TRY_CONVERT(VARCHAR(30), Datetime2Col, 101) AS Datetime2ToVarchar_101,
+    
+    -- Style 120 (ODBC canonical) conversions
+    TRY_CONVERT(VARCHAR(30), DatetimeCol, 120) AS DatetimeToVarchar_120,
+    TRY_CONVERT(VARCHAR(30), Datetime2Col, 120) AS Datetime2ToVarchar_120,
+    
+    -- Time-specific formats
+    TRY_CONVERT(VARCHAR(30), TimeCol, 108) AS TimeToVarchar_108,
+    TRY_CONVERT(VARCHAR(30), TimeCol, 114) AS TimeToVarchar_114
+FROM try_convert_source_t1;
+GO
+
+-- Create View for Binary Types conversions
+CREATE VIEW try_convert_view_binary AS
+SELECT 
+    -- Style 0 conversions (default)
+    TRY_CONVERT(VARCHAR(50), BinaryCol, 0) AS BinaryToVarchar_0,
+    TRY_CONVERT(VARCHAR(50), VarbinaryCol, 0) AS VarbinaryToVarchar_0,
+    TRY_CONVERT(VARCHAR(50), ImageCol, 0) AS ImageToVarchar_0,
+    
+    -- Style 1 conversions (with 0x prefix)
+    TRY_CONVERT(VARCHAR(50), BinaryCol, 1) AS BinaryToVarchar_1,
+    TRY_CONVERT(VARCHAR(50), VarbinaryCol, 1) AS VarbinaryToVarchar_1,
+    TRY_CONVERT(VARCHAR(50), ImageCol, 1) AS ImageToVarchar_1,
+    
+    -- Style 2 conversions (binary format)
+    TRY_CONVERT(VARCHAR(50), BinaryCol, 2) AS BinaryToVarchar_2,
+    TRY_CONVERT(VARCHAR(50), VarbinaryCol, 2) AS VarbinaryToVarchar_2,
+    TRY_CONVERT(VARCHAR(50), ImageCol, 2) AS ImageToVarchar_2
+FROM try_convert_source_t1;
+GO
+
+-- Create View for Special Types conversions
+CREATE VIEW try_convert_view_special AS
+SELECT 
+    TRY_CONVERT(VARCHAR(40), UniqueidCol) AS GuidToVarchar,
+    TRY_CONVERT(NVARCHAR(MAX), XmlCol) AS XmlToNVarchar,
+    TRY_CONVERT(VARCHAR(MAX), GeometryCol) AS GeometryToVarchar,
+    TRY_CONVERT(VARCHAR(MAX), GeographyCol) AS GeographyToVarchar,
+    TRY_CONVERT(VARCHAR(50), SqlvariantCol) AS SqlvariantToVarchar
+FROM try_convert_source_t1;
+GO
+
+
+SELECT * FROM try_convert_view_integers
+GO
+~~START~~
+int#!#char#!#char#!#char#!#char#!#char#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#nchar#!#nchar#!#nchar#!#nchar#!#nchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+123#!#123                 #!#123456789           #!#12345               #!#255                 #!#1                   #!#123#!#123456789#!#12345#!#255#!#1#!#123                 #!#123456789           #!#12345               #!#255                 #!#1                   #!#123#!#123456789#!#12345#!#255#!#1
+~~END~~
+
+SELECT * FROM try_convert_view_decimals
+GO
+~~START~~
+char#!#char#!#char#!#char#!#char#!#char#!#varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
+123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45#!#123.45#!#123.4500#!#123.45                        #!#123.45
+~~END~~
+
+SELECT * FROM try_convert_view_datetimes
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Jan 15 2024 12:34PM           #!#2024-01-15#!#12:34:56.0000000              #!#2024-01-15 12:34:56.123457#!#01/15/2024#!#01/15/2024#!#2024-01-15 12:34:56.123457#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56.123457#!#12:34:56#!#12:34:56.0000000
+~~END~~
+
+SELECT * FROM try_convert_view_binary
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+ABCDE#!#ABCDE#!#ABCDE#!#ABCDE#!#ABCDE#!#ABCDE#!#ABCDE#!#ABCDE#!#ABCDE
+~~END~~
+
+SELECT * FROM try_convert_view_special
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#varchar#!#varchar
+9641D381-A27F-40A0-8FB9-42216F635D4A#!#<note><newline>                    <to>John   Doe</to><newline>                    <from>Jane	Smith</from><newline>                    <heading><newline>                        Reminder<newline>                    </heading><newline>                    <body>Meeting at    3 PM</body><newline>                </note>#!#POINT(3 4)#!#POINT(-122.349 47.651)#!#123
+~~END~~
+
+
+-- Table with Computed Columns for Integer Types
+CREATE TABLE try_convert_computed_integers (
+    ID INT IDENTITY(1,1),
+    IntValue INT,
+    BigintValue BIGINT,
+    SmallintValue SMALLINT,
+    TinyintValue TINYINT,
+    BitValue BIT,
+    
+    -- Computed columns with CHAR conversion
+    IntToChar AS TRY_CONVERT(CHAR(20), IntValue) PERSISTED,
+    BigintToChar AS TRY_CONVERT(CHAR(20), BigintValue) PERSISTED,
+    
+    -- Computed columns with VARCHAR conversion
+    IntToVarchar AS TRY_CONVERT(VARCHAR(20), IntValue) PERSISTED,
+    SmallintToVarchar AS TRY_CONVERT(VARCHAR(20), SmallintValue) PERSISTED,
+    
+    -- Computed columns with NVARCHAR conversion
+    TinyintToNVarchar AS TRY_CONVERT(NVARCHAR(20), TinyintValue) PERSISTED,
+    BitToNVarchar AS TRY_CONVERT(NVARCHAR(20), BitValue) PERSISTED
+);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- Table with Computed Columns for Decimal Types
+CREATE TABLE try_convert_computed_decimals (
+    ID INT IDENTITY(1,1),
+    DecimalValue DECIMAL(18,2),
+    NumericValue NUMERIC(18,2),
+    MoneyValue MONEY,
+    SmallMoneyValue SMALLMONEY,
+    
+    -- Computed columns with default style
+    DecimalToChar AS TRY_CONVERT(CHAR(20), DecimalValue) PERSISTED,
+    NumericToVarchar AS TRY_CONVERT(VARCHAR(20), NumericValue) PERSISTED,
+    
+    -- Computed columns with money formatting styles
+    MoneyStyle0 AS TRY_CONVERT(VARCHAR(20), MoneyValue, 0) PERSISTED,
+    MoneyStyle1 AS TRY_CONVERT(VARCHAR(20), MoneyValue, 1) PERSISTED,
+    MoneyStyle2 AS TRY_CONVERT(VARCHAR(20), MoneyValue, 2) PERSISTED
+);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- Table with Computed Columns for DateTime Types
+CREATE TABLE try_convert_computed_datetime (
+    ID INT IDENTITY(1,1),
+    DateTimeValue DATETIME,
+    DateValue DATE,
+    TimeValue TIME,
+    
+    -- Default style conversions
+    DateTimeToChar AS TRY_CONVERT(CHAR(30), DateTimeValue) PERSISTED,
+    DateToVarchar AS TRY_CONVERT(VARCHAR(30), DateValue) PERSISTED,
+    
+    -- Style 101 (mm/dd/yyyy)
+    DateTimeStyle101 AS TRY_CONVERT(VARCHAR(30), DateTimeValue, 101) PERSISTED,
+    DateStyle101 AS TRY_CONVERT(VARCHAR(30), DateValue, 101) PERSISTED,
+    
+    -- Style 108 (hh:mm:ss)
+    TimeStyle108 AS TRY_CONVERT(VARCHAR(30), TimeValue, 108) PERSISTED
+);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- Table with Computed Columns for Binary Types
+CREATE TABLE try_convert_computed_binary (
+    ID INT IDENTITY(1,1),
+    BinaryValue BINARY(10),
+    VarbinaryValue VARBINARY(50),
+    
+    -- Style 0 (default)
+    BinaryStyle0 AS TRY_CONVERT(VARCHAR(50), BinaryValue, 0) PERSISTED,
+    VarbinaryStyle0 AS TRY_CONVERT(VARCHAR(50), VarbinaryValue, 0) PERSISTED,
+    
+    -- Style 1 (with 0x prefix)
+    BinaryStyle1 AS TRY_CONVERT(VARCHAR(50), BinaryValue, 1) PERSISTED,
+    VarbinaryStyle1 AS TRY_CONVERT(VARCHAR(50), VarbinaryValue, 1) PERSISTED,
+    
+    -- Style 2 (binary format)
+    BinaryStyle2 AS TRY_CONVERT(VARCHAR(50), BinaryValue, 2) PERSISTED,
+    VarbinaryStyle2 AS TRY_CONVERT(VARCHAR(50), VarbinaryValue, 2) PERSISTED
+);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- Table with Computed Columns for Special Types
+CREATE TABLE try_convert_computed_special (
+    ID INT IDENTITY(1,1),
+    UniqueidValue UNIQUEIDENTIFIER,
+    XmlValue XML,
+    GeometryValue GEOMETRY,
+    GeographyValue GEOGRAPHY,
+    SqlVariantValue SQL_VARIANT,
+    
+    -- UNIQUEIDENTIFIER conversions
+    GuidToChar AS TRY_CONVERT(CHAR(36), UniqueidValue) PERSISTED,
+    GuidToVarchar AS TRY_CONVERT(VARCHAR(36), UniqueidValue) PERSISTED,
+    GuidToNchar AS TRY_CONVERT(NCHAR(36), UniqueidValue) PERSISTED,
+    GuidToNvarchar AS TRY_CONVERT(NVARCHAR(36), UniqueidValue) PERSISTED,
+    
+    -- XML conversions
+    XmlToVarcharMax AS TRY_CONVERT(VARCHAR(MAX), XmlValue) PERSISTED,
+    XmlToNvarcharMax AS TRY_CONVERT(NVARCHAR(MAX), XmlValue) PERSISTED,
+    -- With style 1 (strip whitespace)
+    XmlToVarcharStripped AS TRY_CONVERT(VARCHAR(MAX), XmlValue, 1) PERSISTED,
+    
+    -- GEOMETRY conversions
+    GeometryToVarchar AS TRY_CONVERT(VARCHAR(MAX), GeometryValue) PERSISTED,
+    GeometryToNvarchar AS TRY_CONVERT(NVARCHAR(MAX), GeometryValue) PERSISTED,
+    
+    -- GEOGRAPHY conversions
+    GeographyToVarchar AS TRY_CONVERT(VARCHAR(MAX), GeographyValue) PERSISTED,
+    GeographyToNvarchar AS TRY_CONVERT(NVARCHAR(MAX), GeographyValue) PERSISTED,
+    
+    -- SQL_VARIANT conversions
+    SqlVariantToVarchar AS TRY_CONVERT(VARCHAR(MAX), SqlVariantValue) PERSISTED,
+    SqlVariantToNvarchar AS TRY_CONVERT(NVARCHAR(MAX), SqlVariantValue) PERSISTED
+);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- Tables with Check Constraints for Integer Types
+CREATE TABLE try_convert_check_integers (
+    ID INT IDENTITY(1,1),
+    IntValue INT,
+    -- Ensure string representation is not longer than 5 characters
+    CONSTRAINT CHK_IntLength CHECK (LEN(TRY_CONVERT(VARCHAR(20), IntValue)) <= 5),
+    -- Ensure string representation starts with a digit
+    CONSTRAINT CHK_IntStartsWithDigit CHECK (LEFT(TRY_CONVERT(VARCHAR(20), IntValue), 1) LIKE '[0-9]'),
+    -- Ensure no negative numbers (checking string representation)
+    CONSTRAINT CHK_IntNotNegative CHECK (LEFT(TRY_CONVERT(VARCHAR(20), IntValue), 1) <> '-')
+);
+GO
+
+-- Tables with Check Constraints for Decimal Types
+CREATE TABLE try_convert_check_decimals (
+    ID INT IDENTITY(1,1),
+    DecimalValue DECIMAL(18,2),
+    MoneyValue MONEY,
+    
+    -- Ensure decimal has exactly 2 decimal places in string representation
+    CONSTRAINT CHK_DecimalFormat CHECK (
+        TRY_CONVERT(VARCHAR(20), DecimalValue) LIKE '%.%' AND
+        LEN(SUBSTRING(TRY_CONVERT(VARCHAR(20), DecimalValue), 
+            CHARINDEX('.', TRY_CONVERT(VARCHAR(20), DecimalValue)) + 1, 20)) = 2
+    ),
+    
+    -- Ensure money value formatted with style 1 is less than 10 characters
+    CONSTRAINT CHK_MoneyLength CHECK (LEN(TRY_CONVERT(VARCHAR(20), MoneyValue, 1)) < 10)
+);
+GO
+
+-- Tables with Check Constraints for DateTime Types
+CREATE TABLE try_convert_check_datetime (
+    ID INT IDENTITY(1,1),
+    DateTimeValue DATETIME,
+    
+    -- Ensure date is after 2000 using string comparison
+    CONSTRAINT CHK_DateTime2000 CHECK (
+        TRY_CONVERT(VARCHAR(10), DateTimeValue, 120) >= '2000-01-01'
+    ),
+    
+    -- Ensure time part is during business hours (09:00-17:00)
+    CONSTRAINT CHK_BusinessHours CHECK (
+        TRY_CONVERT(VARCHAR(8), DateTimeValue, 108) >= '09:00:00' AND
+        TRY_CONVERT(VARCHAR(8), DateTimeValue, 108) <= '17:00:00'
+    ),
+    
+    -- Ensure it's not a weekend using try_converted date
+    CONSTRAINT CHK_NotWeekend CHECK (
+        DATEPART(WEEKDAY, TRY_CONVERT(DATE, TRY_CONVERT(VARCHAR(10), DateTimeValue, 120))) NOT IN (1, 7)
+    )
+);
+GO
+
+-- Tables with Check Constraints for Binary Types
+CREATE TABLE try_convert_check_binary (
+    ID INT IDENTITY(1,1),
+    BinaryValue BINARY(4),
+    
+    -- Ensure hex representation starts with '41' (letter 'A')
+    CONSTRAINT CHK_BinaryStartsWithA CHECK (
+        LEFT(TRY_CONVERT(VARCHAR(20), BinaryValue, 1), 4) = '0x41'
+    ),
+    
+    -- Ensure binary representation is exactly 32 bits
+    CONSTRAINT CHK_BinaryLength CHECK (
+        LEN(TRY_CONVERT(VARCHAR(50), BinaryValue, 2)) = 32
+    )
+);
+GO
+
+-- Tables with Check Constraints for Special Types
+CREATE TABLE try_convert_check_special (
+    ID INT IDENTITY(1,1),
+    UniqueidValue UNIQUEIDENTIFIER,
+    XmlValue XML,
+    GeometryValue GEOMETRY,
+    GeographyValue GEOGRAPHY,
+    SqlVariantValue SQL_VARIANT,
+    
+    CONSTRAINT CHK_Uniqueid_Format CHECK (
+        TRY_CONVERT(VARCHAR(36), UniqueidValue) LIKE 
+        '[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]-' +
+        '[0-9A-F][0-9A-F][0-9A-F][0-9A-F]-' +
+        '[0-9A-F][0-9A-F][0-9A-F][0-9A-F]-' +
+        '[0-9A-F][0-9A-F][0-9A-F][0-9A-F]-' +
+        '[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]'
+    ),
+    
+    CONSTRAINT CHK_Xml_WellFormed CHECK (
+        TRY_CONVERT(NVARCHAR(MAX), XmlValue) LIKE '<%>%</%>' AND
+        DATALENGTH(TRY_CONVERT(NVARCHAR(MAX), XmlValue)) > 0
+    ),
+    
+    CONSTRAINT CHK_Geometry_Valid CHECK (
+        TRY_CONVERT(VARCHAR(MAX), GeometryValue) LIKE 'POINT%' OR
+        TRY_CONVERT(VARCHAR(MAX), GeometryValue) LIKE 'LINESTRING%' OR
+        TRY_CONVERT(VARCHAR(MAX), GeometryValue) LIKE 'POLYGON%'
+    ),
+    
+    CONSTRAINT CHK_Geography_Valid CHECK (
+        TRY_CONVERT(VARCHAR(MAX), GeographyValue) LIKE 'POINT%' OR
+        TRY_CONVERT(VARCHAR(MAX), GeographyValue) LIKE 'LINESTRING%' OR
+        TRY_CONVERT(VARCHAR(MAX), GeographyValue) LIKE 'POLYGON%'
+    ),
+    
+    CONSTRAINT CHK_SqlVariant_Valid CHECK (
+        DATALENGTH(TRY_CONVERT(VARCHAR(MAX), SqlVariantValue)) > 0 AND
+        LEN(TRY_CONVERT(VARCHAR(MAX), SqlVariantValue)) <= 8000
+    )
+);
+GO
+
+
+
+
+-- Test data for computed columns
+INSERT INTO try_convert_computed_integers (IntValue, BigintValue, SmallintValue, TinyintValue, BitValue)
+VALUES (12345, 123456789, 1234, 123, 1),
+       (-789, -987654321, -456, 255, 0);
+INSERT INTO try_convert_computed_decimals (DecimalValue, NumericValue, MoneyValue, SmallMoneyValue)
+VALUES (123.45, 678.90, 1234.56, 89.99),
+       (-123.45, -678.90, -1234.56, -89.99);
+INSERT INTO try_convert_computed_datetime (DateTimeValue, DateValue, TimeValue)
+VALUES ('2024-01-15 14:30:00', '2024-01-15', '14:30:00'),
+       ('2024-02-01 09:15:00', '2024-02-01', '09:15:00');
+INSERT INTO try_convert_computed_binary (BinaryValue, VarbinaryValue)
+VALUES (0x41424344, 0x414243444546),
+       (0x45464748, 0x474849504951);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "try_convert_computed_integers" does not exist)~~
+
+
+INSERT INTO try_convert_computed_special (UniqueidValue, XmlValue, GeometryValue, GeographyValue, SqlVariantValue)
+VALUES ('9641D381-A27F-40A0-8FB9-42216F635D4A', '<?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE note [
+                    <!ELEMENT note (to,from,heading,body)>
+                    <!ELEMENT to (#PCDATA)>
+                    <!ELEMENT from (#PCDATA)>
+                    <!ELEMENT heading (#PCDATA)>
+                    <!ELEMENT body (#PCDATA)>
+                ]>
+                <note>
+                    <to>John   Doe</to>
+                    <from>Jane	Smith</from>
+                    <heading>
+                        Reminder
+                    </heading>
+                    <body>Meeting at    3 PM</body>
+                </note>', geometry::STGeomFromText('POINT (3 4)', 0), geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), 123);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "try_convert_computed_special" does not exist)~~
+
+
+SELECT * FROM try_convert_computed_integers
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "try_convert_computed_integers" does not exist)~~
+
+SELECT * FROM try_convert_computed_decimals
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "try_convert_computed_decimals" does not exist)~~
+
+SELECT * FROM try_convert_computed_datetime
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "try_convert_computed_datetime" does not exist)~~
+
+SELECT * FROM try_convert_computed_binary
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "try_convert_computed_binary" does not exist)~~
+
+SELECT * FROM try_convert_computed_special
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "try_convert_computed_special" does not exist)~~
+
+
+
+
+
+-- Test data for check constraints (valid cases)
+INSERT INTO try_convert_check_integers (IntValue)
+VALUES (12345), (999), (1);
+INSERT INTO try_convert_check_decimals (DecimalValue, MoneyValue)
+VALUES (123.45, 123.45), (678.90, 999.99);
+INSERT INTO try_convert_check_datetime (DateTimeValue)
+VALUES ('2024-01-15 14:30:00'), ('2024-01-16 09:15:00');
+INSERT INTO try_convert_check_binary (BinaryValue)
+VALUES (0x41424344);
+GO
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "try_convert_check_binary" violates check constraint "chk_binarylength")~~
+
+
+INSERT INTO try_convert_check_binary (BinaryValue)
+VALUES (0x41424344);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "try_convert_check_binary" violates check constraint "chk_binarylength")~~
+
+
+
+INSERT INTO try_convert_check_special (
+    XmlValue,
+    GeometryValue,
+    GeographyValue,
+    SqlVariantValue
+)
+VALUES (
+    '<root><element>Test XML Data</element></root>',
+    geometry::STGeomFromText('POINT (3 4)', 0),
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
+    CAST('Test SQL_VARIANT' AS VARCHAR(50))
+);
+-- Test data for check constraints (invalid cases - should fail)
+BEGIN TRY
+    INSERT INTO try_convert_check_integers (IntValue) VALUES (123456); -- Too long
+END TRY
+BEGIN CATCH
+    SELECT 'Integer length constraint violation' AS Error_Type, ERROR_MESSAGE() AS Error_Details;
+END CATCH;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#nvarchar
+Integer length constraint violation#!#new row for relation "try_convert_check_integers" violates check constraint "chk_intlength"
+~~END~~
+
+
+BEGIN TRY
+    INSERT INTO try_convert_check_decimals (DecimalValue, MoneyValue) 
+    VALUES (123.456, 123.45); -- More than 2 decimal places
+END TRY
+BEGIN CATCH
+    SELECT 'Decimal format constraint violation' AS Error_Type, ERROR_MESSAGE() AS Error_Details;
+END CATCH;
+GO
+~~ROW COUNT: 1~~
+
+
+BEGIN TRY
+    INSERT INTO try_convert_check_datetime (DateTimeValue)
+    VALUES ('1999-12-31 14:30:00'); -- Before 2000
+END TRY
+BEGIN CATCH
+    SELECT 'DateTime constraint violation' AS Error_Type, ERROR_MESSAGE() AS Error_Details;
+END CATCH;
+GO
+~~START~~
+varchar#!#nvarchar
+DateTime constraint violation#!#new row for relation "try_convert_check_datetime" violates check constraint "chk_datetime2000"
+~~END~~
+
+
+-- Invalid XML
+BEGIN TRY
+    INSERT INTO try_convert_check_special (XmlValue)
+    VALUES ('<invalid>No closing tag');
+END TRY
+BEGIN CATCH
+    SELECT 'Invalid XML' AS TestCase, ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;
+GO
+~~START~~
+varchar#!#nvarchar
+Invalid XML#!#invalid XML content
+~~END~~
+
+
+-- Invalid Geometry
+BEGIN TRY
+    INSERT INTO try_convert_check_special (GeometryValue)
+    VALUES (geometry::STGeomFromText('INVALID (1 1)', 0));
+END TRY
+BEGIN CATCH
+    SELECT 'Invalid Geometry' AS TestCase, ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
+
+
+-- Invalid Geography
+BEGIN TRY
+    INSERT INTO try_convert_check_special (GeographyValue)
+    VALUES (geography::STGeomFromText('POINT(-200 100)', 4326));
+END TRY
+BEGIN CATCH
+    SELECT 'Invalid Geography' AS TestCase, ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
+
+
+-- Invalid SQL_VARIANT (exceeds max length)
+BEGIN TRY
+    INSERT INTO try_convert_check_special (SqlVariantValue)
+    VALUES (CAST(REPLICATE('A', 9000) AS VARCHAR(9000)));
+END TRY
+BEGIN CATCH
+    SELECT 'Invalid SQL_VARIANT' AS TestCase, ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '9000' exceeds the maximum allowed (8000) for 'varchar' datatype.)~~
+
+
+
+-- Cleanup
+DROP TABLE try_convert_check_binary;
+DROP TABLE try_convert_check_datetime;
+DROP TABLE try_convert_check_decimals;
+DROP TABLE try_convert_check_integers;
+DROP TABLE try_convert_check_special;
+DROP TABLE try_convert_computed_binary;
+DROP TABLE try_convert_computed_datetime;
+DROP TABLE try_convert_computed_decimals;
+DROP TABLE try_convert_computed_integers;
+DROP TABLE try_convert_computed_special;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "try_convert_computed_binary" does not exist)~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "try_convert_computed_datetime" does not exist)~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "try_convert_computed_decimals" does not exist)~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "try_convert_computed_integers" does not exist)~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "try_convert_computed_special" does not exist)~~
+
+
+DROP VIEW try_convert_view_integers
+DROP VIEW try_convert_view_decimals
+DROP VIEW try_convert_view_datetimes
+DROP VIEW try_convert_view_binary
+DROP VIEW try_convert_view_special
+GO
+
+DROP TABLE try_convert_binary_source_udt;
+GO
+
+DROP TABLE try_convert_binary_source;
+GO
+
+DROP TABLE try_convert_source_udt_t1;
+GO
+
+DROP TYPE udt_int;
+DROP TYPE udt_bigint;
+DROP TYPE udt_smallint;
+DROP TYPE udt_tinyint;
+DROP TYPE udt_bit;
+DROP TYPE udt_decimal;
+DROP TYPE udt_numeric;
+DROP TYPE udt_float;
+DROP TYPE udt_real;
+DROP TYPE udt_money;
+DROP TYPE udt_smallmoney;
+DROP TYPE udt_datetime;
+DROP TYPE udt_date;
+DROP TYPE udt_time;
+DROP TYPE udt_datetime2;
+DROP TYPE udt_smalldatetime;
+DROP TYPE udt_datetimeoffset;
+DROP TYPE udt_char;
+DROP TYPE udt_varchar;
+DROP TYPE udt_nchar;
+DROP TYPE udt_nvarchar;
+DROP TYPE udt_text;
+DROP TYPE udt_ntext;
+DROP TYPE udt_binary;
+DROP TYPE udt_varbinary;
+DROP TYPE udt_image;
+DROP TYPE udt_uniqueidentifier;
+DROP TYPE udt_sqlvariant;
+GO
+
+DROP TABLE try_convert_source_t1;
+GO
