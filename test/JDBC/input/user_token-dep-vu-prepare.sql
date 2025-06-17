@@ -8,9 +8,3 @@ GO
 
 create user u_user_token_login_with_dbrole for login user_token_login_with_dbrole;
 GO
-
--- create a db role and add the above user to the role
-create role testrole;
-GO
-alter role testrole add member u_user_token_login_with_dbrole
-GO

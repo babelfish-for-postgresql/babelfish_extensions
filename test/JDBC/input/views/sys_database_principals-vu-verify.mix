@@ -6,6 +6,14 @@ GO
 alter server role sysadmin add member sys_database_principals_vu_login_with_sysadmin
 GO
 
+-- making login_without_any_permissions the owner of a database
+use sys_database_principals_vu_db_another;
+GO
+exec sp_changedbowner 'login_without_any_permissions'
+GO
+use master
+GO
+
 -- change db owner to the new sysadmin login
 alter authorization on database::sys_database_principals_db_different_owner to sys_database_principals_vu_login_with_sysadmin
 GO
