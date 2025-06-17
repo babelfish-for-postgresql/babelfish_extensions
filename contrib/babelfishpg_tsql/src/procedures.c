@@ -4504,7 +4504,7 @@ create_xml_handle_temp_table()
 	relation = makeRangeVar(NULL, table_name, -1);
 
 	/* Switch to the top-level query environment */
-	currentQueryEnv = topLevelQueryEnv;
+	currentQueryEnv = create_queryEnv2(TopMemoryContext, true);
 
 	/* This makes it temporary table */
 	relation->relpersistence = RELPERSISTENCE_TEMP;
@@ -4835,8 +4835,6 @@ reset_cached_xml_handle()
 
 	/* Reset the table name */
 	xml_handle_temp_table_name = NULL;
-
-	ENRDropTempTables(currentQueryEnv);
 }
 
 Datum
