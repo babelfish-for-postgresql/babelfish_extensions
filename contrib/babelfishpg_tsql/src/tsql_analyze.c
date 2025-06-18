@@ -344,7 +344,7 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 	int32 		common_typmod;
 
 	/* Iterate through the SetOpTree. For each column, save each expression
-	 * in that column to a list. That is, for select a, b, c union select x, y, x,
+	 * in that column to a list. That is, for select a, b, c union select x, y, z,
 	 * give [a, x], [b, y], [c, z] 	*/
 	while (setOpTreeStack)
 	{
@@ -413,7 +413,18 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		common_typmod = select_common_typmod(pstate, col_exprs, common_type);
 		topColTypes = lappend_oid(topColTypes, common_type);
 		topColTypmods = lappend_int(topColTypmods, common_typmod);
-		
+
+		/*
+		 * If there was an aggregate in one of the unions then the grouping is
+		 * required to happen before coercing to common type. For most of the common
+		 * types it is OK to coerce first since the type representation doesn't
+		 * change but for float types we need to avoid losing precision for aggregation.
+		 */
+		if (common_type == FLOAT8OID || common_type == FLOAT4OID)
+		{
+				topColCollations = lappend_oid(topColCollations, InvalidOid);
+				continue;
+		}
 		list_free(col_exprs);
 		col_exprs = NIL;
 

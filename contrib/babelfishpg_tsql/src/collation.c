@@ -25,6 +25,7 @@
 #include <unicode/usearch.h>
 #endif
 
+#include "miscadmin.h"
 #include "pltsql.h"
 #include "src/collation.h"
 #include "catalog.h"
@@ -2043,6 +2044,7 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 {
 	bool start_offset = false;
 	int  itr = 0;
+	bool end_offset = false;
 
 	if (pattern == NULL || strlen(pattern) == 0)
 		return 0;
@@ -2195,8 +2197,11 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 		* pattern can match a zero-length string, ie, it's zero or more %'s.
 		*/
 		while (plen > 0 && *p == '%')
+		{
 			next_char(&p, &plen);
-		if (plen <= 0 && !match_failed)
+			end_offset = true;
+		}
+		if (plen <= 0 && !match_failed && (end_offset || tlen <=0))
 			return itr;
 
 		if (start_offset)
@@ -2247,4 +2252,22 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 	pfree(pattern);
 
 	PG_RETURN_INT32(result);
+}
+
+
+void
+assign_psql_logical_babelfish_db_name(const char *newval, void *extra)
+{
+	/* 
+	 * No need to tell babelfishpg_common that logical db name has been set if it is TDS connection
+	 * because the psql_logical_babelfish_db_name is to be used for PG dialect only
+	 */
+	if (!IS_TDS_CONN())
+	{
+		/* Initialise collation callbacks */
+		init_and_check_collation_callbacks();
+
+		/* let babelfishpg_common know that psql_logical_babelfish_db_name has been updated */
+		(*collation_callbacks_ptr->set_logical_db_name_cache) (newval);
+	}
 }
