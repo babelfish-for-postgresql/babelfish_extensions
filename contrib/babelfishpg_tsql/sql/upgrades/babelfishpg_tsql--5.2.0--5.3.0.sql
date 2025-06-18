@@ -1005,6 +1005,62 @@ END; $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg anyelement) RETURNS TEXT AS 
+$BODY$
+DECLARE
+    date_arg_datatype regtype;
+    result TEXT;
+    datetimeoffset_value sys.datetimeoffset;
+BEGIN
+    date_arg_datatype := pg_typeof(arg);
+
+    IF dp = 'month'::text THEN
+        result := to_char(arg::sys.DATETIME, 'TMMonth');
+    -- '1969-12-28' is a Sunday
+    ELSIF dp = 'dow'::text THEN
+        result := to_char(arg::sys.DATETIME, 'TMDay');
+    ELSIF dp = 'tzoffset'::text THEN
+        IF date_arg_datatype IN ('sys.datetimeoffset'::regtype, 'sys.datetime2'::regtype) THEN
+            -- Explicitly cast to datetimeoffset to validate
+            -- This will throw an error if the timezone offset is invalid
+            datetimeoffset_value := sys.babelfish_conv_string_to_datetimeoffset('DATETIMEOFFSET', arg::TEXT);
+            result := PG_CATALOG.RIGHT(datetimeoffset_value::PG_CATALOG.TEXT, 6);
+        ELSE
+            RAISE EXCEPTION 'The datepart tzoffset is not supported by date function datename for data type %.', date_arg_datatype;
+        END IF;
+    ELSE
+        result := sys.datepart(dp, arg)::TEXT;
+    END IF;
+    RETURN result;
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg TEXT) RETURNS TEXT AS
+$BODY$
+DECLARE
+    result TEXT;
+    datetimeoffset_value sys.datetimeoffset;
+BEGIN
+    IF dp = 'month'::text THEN
+        result := to_char(arg::date, 'TMMonth');
+    -- '1969-12-28' is a Sunday
+    ELSIF dp = 'dow'::text THEN
+        result := to_char(arg::date, 'TMDay');
+    ELSIF dp = 'tzoffset'::text THEN
+        -- Explicitly cast to datetimeoffset to validate
+        -- This will throw an error if the timezone offset is invalid
+        datetimeoffset_value := sys.babelfish_conv_string_to_datetimeoffset('DATETIMEOFFSET', arg);
+        result := PG_CATALOG.RIGHT(datetimeoffset_value::PG_CATALOG.TEXT, 6);
+    ELSE
+        result := sys.datepart(dp, arg)::TEXT;
+    END IF;
+    RETURN result;
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

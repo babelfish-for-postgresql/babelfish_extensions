@@ -148,7 +148,7 @@ collation_tests_mongolian
 collation_tests_polish
 column_domain_usage
 constraint_column_usage
-datepart
+datepart-before-16_10-or-17_6
 datetime2fromparts
 fulltextserviceproperty
 HAS_DBACCESS

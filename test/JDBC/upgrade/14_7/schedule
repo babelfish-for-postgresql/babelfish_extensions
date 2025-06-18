@@ -191,7 +191,7 @@ constraint_column_usage
 dateadd_internal_df
 datediff_big
 datediff_internal_date-before-14_10-or-15_5
-datepart
+datepart-before-16_10-or-17_6
 datetime2fromparts
 forjson
 forjson-datatypes

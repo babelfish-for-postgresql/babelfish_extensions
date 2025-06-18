@@ -213,6 +213,7 @@ dateadd_internal_df
 datediff_big
 datediff
 dateadd
+datename_tzoffset
 datepart
 datetime2fromparts-after-15-2
 fk_trigger_temp
