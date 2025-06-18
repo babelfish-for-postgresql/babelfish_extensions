@@ -94,45 +94,6 @@ bigint#!#bigint
 ~~END~~
 
 
-SELECT * FROM bitpl_vu;
-GO
-~~START~~
-bit#!#bit#!#bit#!#bit
-1#!#1#!#1#!#0
-~~END~~
-
-
-SELECT * FROM bitmul_vu;
-GO
-~~START~~
-bit#!#bit#!#bit#!#bit
-1#!#0#!#0#!#0
-~~END~~
-
-
-SELECT * FROM bitmi_vu;
-GO
-~~START~~
-bit#!#bit#!#bit#!#bit
-0#!#1#!#1#!#0
-~~END~~
-
-
-SELECT * FROM bitdiv_vu;
-GO
-~~START~~
-bit#!#bit
-1#!#0
-~~END~~
-
-
-SELECT * FROM bitdivfail_vu;
-GO
-~~ERROR (Code: 8134)~~
-
-~~ERROR (Message: division by zero)~~
-
-
 SELECT * FROM bitfloatdivfail_vu;
 GO
 ~~ERROR (Code: 8134)~~
@@ -234,4 +195,13 @@ smallmoney
 ~~ERROR (Code: 8134)~~
 
 ~~ERROR (Message: division by zero)~~
+
+
+-- bit arithmetic is not supported
+-- this fails
+SELECT CAST(1 AS sys.BIT) + CAST(1 as sys.BIT) AS A, CAST(0 AS sys.BIT) / CAST(1 AS sys.BIT) AS B, CAST(1 AS sys.BIT) * CAST(0 as sys.BIT) AS C, CAST(0 AS sys.BIT) - CAST(0 as sys.BIT) AS D;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: "bit" + "bit")~~
 

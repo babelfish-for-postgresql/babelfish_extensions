@@ -34,21 +34,6 @@ GO
 SELECT * FROM bitbigintdiv_vu;
 GO
 
-SELECT * FROM bitpl_vu;
-GO
-
-SELECT * FROM bitmul_vu;
-GO
-
-SELECT * FROM bitmi_vu;
-GO
-
-SELECT * FROM bitdiv_vu;
-GO
-
-SELECT * FROM bitdivfail_vu;
-GO
-
 SELECT * FROM bitfloatdivfail_vu;
 GO
 
@@ -86,4 +71,9 @@ SELECT * FROM smallmoneybitmul_vu;
 GO
 
 SELECT * FROM bitsmallmoneydivfail_vu;
+GO
+
+-- bit arithmetic is not supported
+-- this fails
+SELECT CAST(1 AS sys.BIT) + CAST(1 as sys.BIT) AS A, CAST(0 AS sys.BIT) / CAST(1 AS sys.BIT) AS B, CAST(1 AS sys.BIT) * CAST(0 as sys.BIT) AS C, CAST(0 AS sys.BIT) - CAST(0 as sys.BIT) AS D;
 GO

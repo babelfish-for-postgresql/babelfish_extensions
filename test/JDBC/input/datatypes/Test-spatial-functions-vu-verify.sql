@@ -201,7 +201,7 @@ select geometry::Point(@pnt.STY, @pnt.STX, 4326).STEquals(@pnt)
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @equal BIT = 1;
+DECLARE @equal INT = 1;
 SELECT ROUND(PointColumn.STEquals(@referencePoint) / @equal, 0) * @equal AS Equalitygroup,
 COUNT(*) AS PointCount
 FROM TestSpatialFunction_YourTableTemp
@@ -410,7 +410,7 @@ SET @pnt = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 select geometry::Point(@pnt.STY, @pnt.STX, 4326).STContains(@pnt)
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @contains BIT = 1;
+DECLARE @contains INT = 1;
 SELECT ROUND(PointColumn.STContains(@referencePoint) / @contains, 0) * @contains AS Grp,
 COUNT(*) AS PointCount
 FROM TestSpatialFunction_YourTableTemp

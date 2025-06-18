@@ -595,51 +595,6 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = sys.smallmoneybitdiv
 );
 
-CREATE FUNCTION sys.bitpl(sys.BIT, sys.BIT)
-RETURNS sys.BIT
-AS 'babelfishpg_common', 'bitpl'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE FUNCTION sys.bitmi(sys.BIT, sys.BIT)
-RETURNS sys.BIT
-AS 'babelfishpg_common', 'bitmi'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE FUNCTION sys.bitmul(sys.BIT, sys.BIT)
-RETURNS sys.BIT
-AS 'babelfishpg_common', 'bitmul'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE FUNCTION sys.bitdiv(sys.BIT, sys.BIT)
-RETURNS sys.BIT
-AS 'babelfishpg_common', 'bitdiv'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.BIT,
-    COMMUTATOR = +,
-    PROCEDURE  = sys.bitpl
-);
-
-CREATE OPERATOR sys.- (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.BIT,
-    PROCEDURE  = sys.bitmi
-);
-
-CREATE OPERATOR sys.* (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.BIT,
-    PROCEDURE  = sys.bitmul
-);
-
-CREATE OPERATOR sys./ (
-    LEFTARG    = sys.BIT,
-    RIGHTARG   = sys.BIT,
-    PROCEDURE  = sys.bitdiv
-);
-
 CREATE FUNCTION sys.floatbitpl(float8, sys.BIT)
 RETURNS sys.float
 AS 'babelfishpg_common', 'floatbitpl'

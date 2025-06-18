@@ -25,21 +25,6 @@ GO
 DROP VIEW floatbitdivfail_vu;
 GO
 
-DROP VIEW bitpl_vu;
-GO
-
-DROP VIEW bitmi_vu;
-GO
-
-DROP VIEW bitmul_vu;
-GO
-
-DROP VIEW bitdiv_vu;
-GO
-
-DROP VIEW bitdivfail_vu;
-GO
-
 DROP VIEW bitbigintpl_vu;
 GO
 
