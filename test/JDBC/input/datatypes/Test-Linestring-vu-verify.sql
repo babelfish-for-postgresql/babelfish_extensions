@@ -198,17 +198,17 @@ SELECT ID, GeographyData FROM GeoVarcharAsgeographyline ORDER BY ID;
 GO
 
 -- Test CAST ( Bytea As Geometry/Geography )
-SELECT ID, CAST(bytea_point AS geometry) AS geo_point FROM ByteaTogeometryline;
+SELECT ID, CAST(bytea_line AS geometry) AS geo_point FROM ByteaTogeometryline;
 GO
 
-SELECT ID, CAST(bytea_point AS geography) AS geo_point FROM ByteaTogeographyline;
+SELECT ID, CAST(bytea_line AS geography) AS geo_point FROM ByteaTogeographyline;
 GO
 
 -- Test CAST ( Geometry/Geography As  Bytea )
-SELECT ID, CAST(geo_point AS VARBINARY(500) ) AS bytea_point FROM geometryToBytealine;
+SELECT ID, CAST(geo_line AS VARBINARY(500) ) AS bytea_line FROM geometryToBytealine;
 GO
 
-SELECT ID,  CAST(geo_point AS VARBINARY(500)  ) AS bytea_point FROM geographyToBytealine;
+SELECT ID,  CAST(geo_line AS VARBINARY(500)  ) AS bytea_line FROM geographyToBytealine;
 GO
 
 SELECT * FROM GEOSPATIALLINEGEOM_dt;

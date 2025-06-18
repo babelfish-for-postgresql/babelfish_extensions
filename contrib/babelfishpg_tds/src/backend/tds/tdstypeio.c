@@ -1550,16 +1550,26 @@ static Datum
 HandleLineType(StringInfo buf, StringInfo destBuf, int npoints, bool has_z, bool has_m, bool has_bbox)
 {
     bytea   *result;         /* Final PostgreSQL bytea result */
-    int     nbytes;          /* Total bytes needed for result */
-    int     stride;          /* Bytes per point (depends on dimensions) */
-    int     pointSize;       /* Total size of all points */
+    int     nbytes = 0;       /* Total bytes needed for result */
+    int     stride = 0;      /* Bytes per point (depends on dimensions) */
+    int     pointSize = 0;   /* Total size of all points */
     char    *src = NULL;     /* Pointer to source data in input buffer */
     char    *tempBuf = NULL; /* Temporary buffer for point data reorganization */
     float   *bbox = NULL;    /* Bounding box buffer */
     int     bboxSize = 16;   /* Base size of bounding box (4 floats for XY min/max) */
     const int geomType = LINETYPE; /* PostGIS geometry type identifier */
-	double x, y, z, m;       /* Coordinate values */
-    float minX, maxX, minY, maxY, minZ, maxZ, minM, maxM; /* Bounding box values */
+    double  x = 0.0,
+            y = 0.0, 
+            z = 0.0, 
+            m = 0.0;       /* Coordinate values */
+    float   minX = 0.0f, 
+            maxX = 0.0f, 
+            minY = 0.0f, 
+            maxY = 0.0f, 
+            minZ = 0.0f,
+            maxZ = 0.0f, 
+            minM = 0.0f, 
+            maxM = 0.0f; /* Bounding box values */
 
     /* Calculate stride based on dimensions (XY=16 bytes, Z=8 bytes, M=8 bytes) */
     stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
@@ -1611,6 +1621,7 @@ HandleLineType(StringInfo buf, StringInfo destBuf, int npoints, bool has_z, bool
             
             /* Add reorganized point data to destination buffer */
             appendBinaryStringInfo(destBuf, tempBuf, pointSize);
+			pfree(tempBuf);  /* Free temporary buffer */
         }
     }
     else /* npoints > 2 */
@@ -1726,12 +1737,15 @@ HandleLineType(StringInfo buf, StringInfo destBuf, int npoints, bool has_z, bool
         appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t)); /* Geometry type */
         appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));  /* Point count */
         appendBinaryStringInfo(destBuf, tempBuf, pointSize);           /* Point data */
-    }
 
+        pfree(bbox);    // Free bbox after use
+        pfree(tempBuf); // Free tempBuf after use
+    }
     /* Copy final assembled buffer to PostgreSQL result */
     memcpy(VARDATA(result), &destBuf->data[0], nbytes);
+    buf->cursor += buf->len - buf->cursor - COORD_DATA_OFFSET;
 
-    return PointerGetDatum(result);
+    PG_RETURN_BYTEA_P(result);
 }
 
 /* Helper Function to convert Spatial Type values into Datum. */
@@ -1920,7 +1934,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
     
     buf->cursor += buf->len - buf->cursor - COORD_DATA_OFFSET;
     
-    return PointerGetDatum(result);
+    PG_RETURN_BYTEA_P(result);
 }
 
 StringInfo
