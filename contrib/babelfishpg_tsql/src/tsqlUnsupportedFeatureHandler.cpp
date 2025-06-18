@@ -1710,7 +1710,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_generate_database_ledger_digest",
 	"sp_grantdbaccess",
 	"sp_grantlogin",
-	"sp_helplogins",
 	"sp_helpntgroup",
 	"sp_helpremotelogin",
 	"sp_helprotect",

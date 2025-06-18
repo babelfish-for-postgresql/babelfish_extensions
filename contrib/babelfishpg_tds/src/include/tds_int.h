@@ -306,6 +306,8 @@ extern uint32_t GetClientTDSVersion(void);
 extern char *get_tds_login_domainname(void);
 extern void TdsSetDbContext(void);
 extern void TdsResetLoginFlags(void);
+extern size_t GetAvailableBufferSize(void);
+extern int FlushBuffer(void);
 
 /* Functions in backend/tds/tdsprotocol.c */
 extern int	TdsSocketBackend(void);

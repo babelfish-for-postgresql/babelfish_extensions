@@ -63,7 +63,7 @@ public class JDBCPreparedStatement {
                 handleSQLExceptionWithFile(e, bw, logger);
                 resultsProcessed++;
             }
-            CompareResults.processResults(pstmt_bbl, bw, resultsProcessed, resultSetExist, warningExist, logger);
+            CompareResults.processResults(pstmt_bbl, bw, resultsProcessed, resultSetExist, warningExist, logger, null);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
         }

@@ -32,7 +32,7 @@ public class JDBCStatement {
     }
 
     // function to write output of executed statement to a file
-    void testStatementWithFile(String SQL, BufferedWriter bw, String strLine, Logger logger){
+    void testStatementWithFile(String SQL, BufferedWriter bw, String strLine, Logger logger, FilterConditions filterConditions){
         try {
             bw.write(strLine);
             bw.newLine();
@@ -49,7 +49,7 @@ public class JDBCStatement {
                 handleSQLExceptionWithFile(e, bw, logger);
                 resultsProcessed++;
             }
-            CompareResults.processResults(stmt_bbl, bw, resultsProcessed, resultSetExist, warningExist,logger);
+            CompareResults.processResults(stmt_bbl, bw, resultsProcessed, resultSetExist, warningExist, logger, filterConditions);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
         }

@@ -2044,6 +2044,7 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 {
 	bool start_offset = false;
 	int  itr = 0;
+	bool end_offset = false;
 
 	if (pattern == NULL || strlen(pattern) == 0)
 		return 0;
@@ -2196,8 +2197,11 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 		* pattern can match a zero-length string, ie, it's zero or more %'s.
 		*/
 		while (plen > 0 && *p == '%')
+		{
 			next_char(&p, &plen);
-		if (plen <= 0 && !match_failed)
+			end_offset = true;
+		}
+		if (plen <= 0 && !match_failed && (end_offset || tlen <=0))
 			return itr;
 
 		if (start_offset)

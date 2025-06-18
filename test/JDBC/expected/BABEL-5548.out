@@ -1,0 +1,141 @@
+use master;
+go
+
+create table t5548(a int);
+insert into t5548 values (1);
+go
+~~ROW COUNT: 1~~
+
+
+select .a from t5548
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'from' at line 1 and character position 10)~~
+
+
+select dbo..a from t5548
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'from' at line 1 and character position 14)~~
+
+
+select ...a from t5548
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'from' at line 1 and character position 12)~~
+
+
+select ..a from t5548
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'from' at line 1 and character position 11)~~
+
+
+select .t5548.a from t5548;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select ..t5548.a from t5548;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select .dbo.t5548.a from t5548;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 1 and character position 17)~~
+
+
+CREATE TABLE GEOSPATIALPOINTEMPTYdt (geom geometry, geog geography);
+GO
+
+select .GEOSPATIALPOINTEMPTYdt.geom.STAsText() from GEOSPATIALPOINTEMPTYdt
+GO
+~~START~~
+text
+~~END~~
+
+
+select ..geom.STAsText() from GEOSPATIALPOINTEMPTYdt
+GO
+~~START~~
+text
+~~END~~
+
+
+select dbo.GEOSPATIALPOINTEMPTYdt.geom.STAsText() from GEOSPATIALPOINTEMPTYdt
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+
+
+CREATE TABLE TestSpatialFunction_YourTableTemp ( ID INT PRIMARY KEY, PointColumn geometry ); 
+GO
+
+INSERT INTO TestSpatialFunction_YourTableTemp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0));
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT TestSpatialFunction_YourTableTemp.PointColumn.STSrid from TestSpatialFunction_YourTableTemp
+GO
+~~START~~
+int
+4326
+4326
+0
+~~END~~
+
+
+select PointColumn.STSrid from TestSpatialFunction_YourTableTemp
+GO
+~~START~~
+int
+4326
+4326
+0
+~~END~~
+
+
+select .PointColumn.STSrid from TestSpatialFunction_YourTableTemp
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: missing FROM-clause entry for table "pointcolumn")~~
+
+
+select .TestSpatialFunction_YourTableTemp.PointColumn.STSrid from TestSpatialFunction_YourTableTemp
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 1 and character position 53)~~
+
+
+select dbo.TestSpatialFunction_YourTableTemp.PointColumn.STSrid from TestSpatialFunction_YourTableTemp
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The multi-part identifier "dbo.TestSpatialFunction_YourTableTemp.PointColumn.STSrid" could not be bound.)~~
+
+
+drop table TestSpatialFunction_YourTableTemp
+GO
+
+drop table GEOSPATIALPOINTEMPTYdt
+GO
+
+drop table t5548;
+go

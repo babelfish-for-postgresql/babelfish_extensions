@@ -49,7 +49,7 @@ public class JDBCMetadata {
 
     private static void testGetCatalogs(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta) throws SQLException {
         ResultSet rs = dbmeta.getCatalogs();
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetColumnPrivileges(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -63,7 +63,7 @@ public class JDBCMetadata {
         String table = parts[2];
         String column = parts[3];
         ResultSet rs = dbmeta.getColumnPrivileges(catalog, schema, table, column);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetTables(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -80,7 +80,7 @@ public class JDBCMetadata {
             types = Arrays.copyOfRange(parts, 3, parts.length);
         }
         ResultSet rs = dbmeta.getTables(catalog, schema, table, types);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetColumns(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -97,7 +97,7 @@ public class JDBCMetadata {
             column = parts[3];
         }
         ResultSet rs = dbmeta.getColumns(catalog, schema, table, column);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetFunctions(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -113,7 +113,7 @@ public class JDBCMetadata {
             function = parts[2];
         }
         ResultSet rs = dbmeta.getFunctions(catalog, schema, function);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetFunctionColumns(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -130,7 +130,7 @@ public class JDBCMetadata {
             column = parts[3];
         }
         ResultSet rs = dbmeta.getFunctionColumns(catalog, schema, function, column);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetBestRowIdentifier(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -145,7 +145,7 @@ public class JDBCMetadata {
         int scope = Integer.parseInt(parts[3]);
         boolean nullable = Boolean.parseBoolean(parts[4]);
         ResultSet rs = dbmeta.getBestRowIdentifier(catalog, schema, table, scope, nullable);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetCrossReference(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -161,7 +161,7 @@ public class JDBCMetadata {
         String schema2 = parts[4];
         String table2 = parts[5];
         ResultSet rs = dbmeta.getCrossReference(catalog1, schema1, table1, catalog2, schema2, table2);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetExportedKeys(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -174,7 +174,7 @@ public class JDBCMetadata {
         String schema = parts[1];
         String table = parts[2];
         ResultSet rs = dbmeta.getExportedKeys(catalog, schema, table);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetImportedKeys(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -187,7 +187,7 @@ public class JDBCMetadata {
         String schema = parts[1];
         String table = parts[2];
         ResultSet rs = dbmeta.getImportedKeys(catalog, schema, table);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetIndexInfo(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -202,7 +202,7 @@ public class JDBCMetadata {
         boolean unique = Boolean.parseBoolean(parts[3]);
         boolean approximate = Boolean.parseBoolean(parts[4]);
         ResultSet rs = dbmeta.getIndexInfo(catalog, schema, table, unique, approximate);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetMaxConnections(BufferedWriter bw, DatabaseMetaData dbmeta) throws SQLException, IOException {
@@ -229,7 +229,7 @@ public class JDBCMetadata {
         String schema = parts[1];
         String table = parts[2];
         ResultSet rs = dbmeta.getPrimaryKeys(catalog, schema, table);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetProcedureColumns(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -246,7 +246,7 @@ public class JDBCMetadata {
             column = parts[3];
         }
         ResultSet rs = dbmeta.getProcedureColumns(catalog, schema, procedure, column);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetProcedures(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -262,7 +262,7 @@ public class JDBCMetadata {
             procedure = parts[2];
         }
         ResultSet rs = dbmeta.getProcedures(catalog, schema, procedure);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetSchemas(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -277,7 +277,7 @@ public class JDBCMetadata {
             schema = parts[1];
         }
         ResultSet rs = dbmeta.getSchemas(catalog, schema);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetTablePrivileges(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta, String data) throws SQLException {
@@ -290,12 +290,12 @@ public class JDBCMetadata {
         String schema = parts[1];
         String table = parts[2];
         ResultSet rs = dbmeta.getTablePrivileges(catalog, schema, table);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetTypeInfo(BufferedWriter bw, Logger logger, DatabaseMetaData dbmeta) throws SQLException {
         ResultSet rs = dbmeta.getTypeInfo();
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 
     private static void testGetUserName(BufferedWriter bw, DatabaseMetaData dbmeta) throws SQLException, IOException {
@@ -322,6 +322,6 @@ public class JDBCMetadata {
         String schema = parts[1];
         String table = parts[2];
         ResultSet rs = dbmeta.getVersionColumns(catalog, schema, table);
-        CompareResults.writeResultSetToFile(bw, rs, logger);
+        CompareResults.writeResultSetToFile(bw, rs, logger, null);
     }
 }

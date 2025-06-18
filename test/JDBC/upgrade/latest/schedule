@@ -455,6 +455,7 @@ Test-sp_rename
 Test-sp_rename-dep
 Test-sp_set_session_context
 Test-sp_set_session_context-dep
+z_sp_helplogins
 Test-Role-Member
 TestSQLVariant
 TestTableType
