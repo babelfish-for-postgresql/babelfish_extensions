@@ -1,3 +1,7 @@
+-- psql
+CALL sys.analyze_babelfish_catalogs();
+GO
+
 -- tsql
 
 -- creating dependent logins in verify
