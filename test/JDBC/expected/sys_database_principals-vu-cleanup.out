@@ -19,6 +19,9 @@ GO
 drop view sys_database_principals_another_vu
 GO
 
+drop view sys_database_principals_fixed_roles
+GO
+
 drop function sys_database_principals_another_func
 GO
 

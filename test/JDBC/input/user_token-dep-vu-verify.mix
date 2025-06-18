@@ -29,13 +29,20 @@ GO
 select * from user_token_vu order by name;
 GO
 
+select * from dbo.user_token_fixed_roles;
+GO
+
 -- tsql user=user_token_login_with_dbrole password=12345678
 select * from user_token_vu order by name;
+GO
+select * from dbo.user_token_fixed_roles;
 GO
 -- terminate-tsql-conn user=user_token_login_with_dbrole password=12345678
 
 -- tsql user=user_token_login_with_db_owner password=12345678
 select * from user_token_vu order by name;
+GO
+select * from dbo.user_token_fixed_roles;
 GO
 -- terminate-tsql-conn user=user_token_login_with_db_owner password=12345678
 
@@ -47,7 +54,10 @@ GO
 -- terminate-tsql-conn user=user_token_login_is_dbo password=12345678
 
 -- tsql
-drop view user_token_vu;
+drop view dbo.user_token_vu;
+GO
+
+drop view dbo.user_token_fixed_roles;
 GO
 
 drop user u_user_token_login_with_dbrole

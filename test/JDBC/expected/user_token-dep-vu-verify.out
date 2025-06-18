@@ -34,6 +34,13 @@ dbo#!#jdbc_user#!#SQL USER#!#GRANT OR DENY
 ~~END~~
 
 
+select * from dbo.user_token_fixed_roles;
+GO
+~~START~~
+nvarchar#!#varbinary
+~~END~~
+
+
 -- tsql user=user_token_login_with_dbrole password=12345678
 select * from user_token_vu order by name;
 GO
@@ -42,6 +49,12 @@ nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 public#!#<NULL>#!#ROLE#!#GRANT OR DENY
 testrole#!#<NULL>#!#ROLE#!#GRANT OR DENY
 u_user_token_login_with_dbrole#!#user_token_login_with_dbrole#!#SQL USER#!#GRANT OR DENY
+~~END~~
+
+select * from dbo.user_token_fixed_roles;
+GO
+~~START~~
+nvarchar#!#varbinary
 ~~END~~
 
 -- terminate-tsql-conn user=user_token_login_with_dbrole password=12345678
@@ -62,6 +75,18 @@ testrole#!#<NULL>#!#ROLE#!#GRANT OR DENY
 u_user_token_login_with_db_owner#!#user_token_login_with_db_owner#!#SQL USER#!#GRANT OR DENY
 ~~END~~
 
+select * from dbo.user_token_fixed_roles;
+GO
+~~START~~
+nvarchar#!#varbinary
+db_accessadmin#!#0000000100000001
+db_datareader#!#0000000100000005
+db_datawriter#!#0000000100000006
+db_ddladmin#!#0000000100000003
+db_owner#!#0000000100000000
+db_securityadmin#!#0000000100000002
+~~END~~
+
 -- terminate-tsql-conn user=user_token_login_with_db_owner password=12345678
 
 -- tsql user=user_token_login_is_dbo password=12345678
@@ -77,7 +102,10 @@ dbo#!#user_token_login_is_dbo#!#SQL USER#!#GRANT OR DENY
 -- terminate-tsql-conn user=user_token_login_is_dbo password=12345678
 
 -- tsql
-drop view user_token_vu;
+drop view dbo.user_token_vu;
+GO
+
+drop view dbo.user_token_fixed_roles;
 GO
 
 drop user u_user_token_login_with_dbrole

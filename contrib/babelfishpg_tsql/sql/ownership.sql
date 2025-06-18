@@ -425,13 +425,20 @@ CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
 CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
-CAST(
-  CASE 
-    WHEN Ext.orig_username = 'dbo' THEN CAST(Base3.oid AS INT)
-    WHEN Ext.orig_username = 'guest' THEN 0
-    ELSE CAST(Base2.oid AS INT)
-  END 
-AS SYS.VARBINARY(85)) AS SID,
+CASE Ext.orig_username
+    WHEN 'dbo' THEN CAST(CAST(Base3.oid AS INT) AS SYS.VARBINARY(85))
+    WHEN 'guest' THEN CAST(0 AS SYS.VARBINARY(85))
+    WHEN 'db_owner' THEN CAST(4294967296 AS SYS.VARBINARY(85))          -- this value is uint32_max + 1, because we want to give these fixed_dbroles unique, non-overlapping SIDs and since pg oid is uint32, we decided the safest option is values > uint32
+    WHEN 'db_accessadmin' THEN CAST(4294967297 AS SYS.VARBINARY(85))    -- this value is uint32_max + 2
+    WHEN 'db_securityadmin' THEN CAST(4294967298 AS SYS.VARBINARY(85))  -- this value is uint32_max + 3
+    WHEN 'db_ddladmin' THEN CAST(4294967299 AS SYS.VARBINARY(85))       -- this value is uint32_max + 4
+    WHEN 'db_backupoperator' THEN CAST(4294967300 AS SYS.VARBINARY(85)) -- this value is uint32_max + 5
+    WHEN 'db_datareader' THEN CAST(4294967301 AS SYS.VARBINARY(85))     -- this value is uint32_max + 6
+    WHEN 'db_datawriter' THEN CAST(4294967302 AS SYS.VARBINARY(85))     -- this value is uint32_max + 7
+    WHEN 'db_denydatareader' THEN CAST(4294967303 AS SYS.VARBINARY(85)) -- this value is uint32_max + 8
+    WHEN 'db_denydatawriter' THEN CAST(4294967304 AS SYS.VARBINARY(85)) -- this value is uint32_max + 9
+    ELSE CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85))
+END AS SID,
 CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
 CAST(Ext.authentication_type AS INT) AS authentication_type,
 CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
@@ -520,13 +527,20 @@ GRANT SELECT ON sys.login_token TO PUBLIC;
 CREATE OR REPLACE VIEW sys.user_token AS
 SELECT
 CAST(Base.oid AS INT) AS principal_id,
-CAST(
-  CASE 
-    WHEN Ext.orig_username = 'dbo' THEN CAST(Base3.oid AS INT)
-    WHEN Ext.orig_username = 'guest' THEN 0
-    ELSE CAST(Base2.oid AS INT)
-  END 
-AS SYS.VARBINARY(85)) AS SID,
+CASE Ext.orig_username
+    WHEN 'dbo' THEN CAST(CAST(Base3.oid AS INT) AS SYS.VARBINARY(85))
+    WHEN 'guest' THEN CAST(0 AS SYS.VARBINARY(85))
+    WHEN 'db_owner' THEN CAST(4294967296 AS SYS.VARBINARY(85))          -- this value is uint32_max + 1, because we want to give these fixed_dbroles unique, non-overlapping SIDs and since pg oid is uint32, we decided the safest option is values > uint32
+    WHEN 'db_accessadmin' THEN CAST(4294967297 AS SYS.VARBINARY(85))    -- this value is uint32_max + 2
+    WHEN 'db_securityadmin' THEN CAST(4294967298 AS SYS.VARBINARY(85))  -- this value is uint32_max + 3
+    WHEN 'db_ddladmin' THEN CAST(4294967299 AS SYS.VARBINARY(85))       -- this value is uint32_max + 4
+    WHEN 'db_backupoperator' THEN CAST(4294967300 AS SYS.VARBINARY(85)) -- this value is uint32_max + 5
+    WHEN 'db_datareader' THEN CAST(4294967301 AS SYS.VARBINARY(85))     -- this value is uint32_max + 6
+    WHEN 'db_datawriter' THEN CAST(4294967302 AS SYS.VARBINARY(85))     -- this value is uint32_max + 7
+    WHEN 'db_denydatareader' THEN CAST(4294967303 AS SYS.VARBINARY(85)) -- this value is uint32_max + 8
+    WHEN 'db_denydatawriter' THEN CAST(4294967304 AS SYS.VARBINARY(85)) -- this value is uint32_max + 9
+    ELSE CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85))
+END AS SID,
 CAST(Ext.orig_username AS SYS.NVARCHAR(128)) AS NAME,
 CAST(CASE
 WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'

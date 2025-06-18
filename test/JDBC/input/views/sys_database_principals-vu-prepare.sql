@@ -33,6 +33,13 @@ GO
 create view sys_database_principals_another_vu as select * from database_principals;
 GO
 
+create view sys_database_principals_fixed_roles 
+as
+select name, sid from sys.database_principals 
+where name in ('db_owner', 'db_accessadmin', 'db_securityadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin', 'db_backupoperator', 'db_denydatawriter', 'db_denydatareader') 
+order by name
+GO
+
 create function sys_database_principals_another_func()
 returns table
 as

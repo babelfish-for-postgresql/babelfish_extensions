@@ -61,6 +61,9 @@ where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_
 order by name;
 GO
 
+select * from sys_database_principals_fixed_roles;
+GO
+
 -- tsql user=login_without_any_permissions password=12345678
 select name, suser_sname(sid) from sys.database_principals where name = 'dbo'
 GO

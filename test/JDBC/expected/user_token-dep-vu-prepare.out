@@ -20,3 +20,12 @@ GO
 
 create database user_token_test_db;
 GO
+
+create view dbo.user_token_fixed_roles 
+as
+select name, sid from sys.user_token 
+where name in ('db_owner', 'db_accessadmin', 'db_securityadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin', 'db_backupoperator', 'db_denydatawriter', 'db_denydatareader') 
+order by name
+GO
+grant select on dbo.user_token_fixed_roles to public;
+GO
