@@ -1882,6 +1882,15 @@ TdsClientAuthentication(Port *port)
 		case uaTrust:
 			status = STATUS_OK;
 			break;
+		case uaOAuth:
+			/* 
+			 * APG does not currently support the OAUTHBEARER SASL mechanism. If we decide to
+			 * implement it in the future, please update the following code chunk appropriately.
+			 * 
+			 * For now throw an error since, we never expect to hit this case
+			 */
+			status = STATUS_ERROR;
+			break;
 	}
 
 	/* If authentication failed, tell the user. */
