@@ -365,7 +365,7 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'isnumeric'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, xml_element ANYELEMENT, datatype TEXT)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
