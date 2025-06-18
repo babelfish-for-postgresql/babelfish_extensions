@@ -109,7 +109,7 @@ $BODY$
 LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
 
 -- helper functions for XML VALUE(xpath)
-CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, xml_element ANYELEMENT, datatype TEXT)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT)
 RETURNS sys.NVARCHAR
 AS
 $BODY$

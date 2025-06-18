@@ -1224,9 +1224,11 @@ varchar
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
 SELECT @xml.value('(/Root/Child1)[1]', "varchar(100)")
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near "'varchar(100)'")~~
+~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';

@@ -8941,6 +8941,9 @@ rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx)
 /*
  * In this helper function we Rewrite the Query for XML and Geospatial Handling
  * For Func_Ref Functions with args (such as EXIST(arg), STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
+ * 
+ * Exception: For XML Value function rewriting will happen as follows
+ *   ColRef.VALUE(xpath, 'typename')  -> convert(typename, bbf_xmlvalue(xpath, 'typename', ColRef))
  */
 template<class T>
 void
@@ -8957,7 +8960,27 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	int offset2 = 0;
 	std::vector<std::pair<int, int>> arg_offset_list;
 	int local_id_end_offset = 0;
-	
+	std::string typename_arg;
+
+	/*
+	 * Extract typename from second argument of VALUE function which is 'typename',
+	 * and also update the local_id_end_offset accordingly for VALUE function.
+	 */
+	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
+	{
+		TSqlParser::ExpressionContext *expr = method->xml_methods()->expression_list()->expression()[1];
+		std::string arg_str = ::getFullText(expr);
+		size_t startPosition = expr->start->getStartIndex();
+		size_t stopPosition = expr->stop->getStopIndex();
+
+		typename_arg = arg_str.substr(1, stopPosition - startPosition - 1);
+
+		/*
+		 * local_id_end_offset will going to increase by 8 (length of string 'convert(') + length of typename_arg + 1 (length of string ',')
+		 */
+		local_id_end_offset += 8 + typename_arg.length() + 1;
+	}
+
 	/* writing the previously rewritten XML and/or Geospatial context */
 	for (auto &entry : rewritten_query_fragment)
 	{
@@ -9013,6 +9036,11 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	for (const auto &key : keysToRemove) local_id_positions.erase(key);
 	keysToRemove.clear();
 	std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, func_call_len + offset1 + 1) + ")";
+
+	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
+	{
+		rewritten_exp = "convert(" + typename_arg + "," + rewritten_exp + ")";
+	}
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
 }
 
@@ -9153,6 +9181,9 @@ rewrite_function_call_geospatial_func_ref_no_arg(T ctx)
  * In this helper function we rewrite the Query for Dot Function Handling
  * This implementation is different for Function_Call Rule
  * For Func_Ref Functions with args (such as EXIST(arg), STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
+ *
+ * Exception: For XML Value function rewriting will happen as follows
+ *   ColRef.VALUE(xpath, 'typename')  -> convert(typename, bbf_xmlvalue(xpath, 'typename', ColRef))
  */
 template<class T>
 void
@@ -9190,7 +9221,27 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	int offset2 = 0;
 	std::vector<std::pair<int, int>> arg_offset_list;
 	int local_id_end_offset = 0;
-	
+	std::string typename_arg;
+
+	/*
+	 * Extract typename from second argument of VALUE function which is 'typename',
+	 * and also update the local_id_end_offset accordingly for VALUE function.
+	 */
+	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
+	{
+		TSqlParser::ExpressionContext *expr = ctx->expression_list()->expression()[1];
+		std::string arg_str = ::getFullText(expr);
+		size_t startPosition = expr->start->getStartIndex();
+		size_t stopPosition = expr->stop->getStopIndex();
+
+		typename_arg = arg_str.substr(1, stopPosition - startPosition - 1);
+
+		/*
+		 * local_id_end_offset will going to increase by 8 (length of string 'convert(') + length of typename_arg + 1 (length of string ',')
+		 */
+		local_id_end_offset += 8 + typename_arg.length() + 1;
+	}
+
 	/* writing the previously rewritten Dot Function context */
 	for (auto &entry : rewritten_query_fragment)
 	{
@@ -9239,6 +9290,11 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	 * Rewriting the query as: table.col.Func_name(arg) -> Func_name(arg, table.col)
 	 */
 	std::string rewritten_func = expr.substr((int)func_start_index - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, col_len + offset1 + 1) + ")";
+	
+	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
+	{
+		rewritten_func = "convert(" + typename_arg + "," + rewritten_func + ")";
+	}
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 }
 
@@ -9282,7 +9338,7 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 }
 
 static void
-validateAndRewriteXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::Expression_listContext *expr_list)
+validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::Expression_listContext *expr_list)
 {
 	/* XML EXIST function requires only 1 argument */
 	if (xml_func->EXIST() && (expr_list == NULL || expr_list->expression().size() != 1))
@@ -9307,21 +9363,6 @@ validateAndRewriteXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSq
 						getLineAndPos(expr));
 		}
 	}
-
-	/*
-	 * Rewrite second argument of VALUE method by removing the quotes around it as follows
-	 * 'typename(typmod)'  -> typename(typmod)
-	 */
-	if (xml_func->VALUE())
-	{
-		TSqlParser::ExpressionContext *expr = expr_list->expression()[1];
-		std::string arg_str = ::getFullText(expr);
-		size_t startPosition = expr->start->getStartIndex();
-		size_t stopPosition = expr->stop->getStopIndex();
-
-		std::string rewritten_arg_str = arg_str.substr(1, stopPosition - startPosition - 1);
-		rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(arg_str, rewritten_arg_str)));
-	}
 }
 
 static void
@@ -9331,7 +9372,7 @@ handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	if (ctx->xml_proc_name_table_column())
 	{
 		/* validate the xml method arguments before rewriting */
-		validateAndRewriteXMLFunctionArgs(ctx->xml_proc_name_table_column()->xml_func_arg(), ctx->expression_list());
+		validateXMLFunctionArgs(ctx->xml_proc_name_table_column()->xml_func_arg(), ctx->expression_list());
 
 		rewrite_function_call_dot_func_ref_args(ctx);
 	}
@@ -9367,7 +9408,7 @@ handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx)
 			if (method->xml_methods())
 			{
 				/* validate the xml method arguments before rewriting */
-				validateAndRewriteXMLFunctionArgs(method->xml_methods()->xml_func_arg(), method->xml_methods()->expression_list());
+				validateXMLFunctionArgs(method->xml_methods()->xml_func_arg(), method->xml_methods()->expression_list());
 
 				size_t expr_list_start_index = method->xml_methods()->expression_list()->start->getStartIndex();
 				size_t expr_list_stop_index = method->xml_methods()->expression_list()->stop->getStopIndex();

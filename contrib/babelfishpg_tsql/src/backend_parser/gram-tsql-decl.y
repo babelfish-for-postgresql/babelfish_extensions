@@ -128,7 +128,6 @@
 	TSQL_CONTAINS TSQL_FREETEXT
 	TSQL_RECOMPILE
 	TSQL_UNPIVOT
-	TSQL_XML_VALUE
 
 /*
  * WITH_paren is added to support table hints syntax WITH (<table_hint> [[,]...n]),

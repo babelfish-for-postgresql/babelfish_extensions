@@ -2119,19 +2119,6 @@ func_expr_common_subexpr:
 											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
-			| TSQL_XML_VALUE '(' c_expr ',' Typename ',' c_expr ')'
-				{
-					Node       *helperFuncCall;
-					List       *args;
-
-					args = list_make3($3, $7, makeStringConst(TypeNameToString($5), @5));
-					helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("bbf_xmlvalue"), 
-														    args, 
-														    COERCE_EXPLICIT_CALL,
-														    @1);
-
-					$$ = TsqlFunctionConvert($5, helperFuncCall, NULL, false, @1);
-				}
 		;
 
 opt_var_name_list:
@@ -4868,7 +4855,6 @@ reserved_keyword:
 			| TSQL_TRY_CONVERT
 			| TSQL_TRY_PARSE
 			| TSQL_EXEC
-			| TSQL_XML_VALUE
 		;
 
 bare_label_keyword:
