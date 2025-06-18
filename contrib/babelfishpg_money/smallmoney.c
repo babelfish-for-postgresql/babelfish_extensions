@@ -57,7 +57,9 @@ PG_FUNCTION_INFO_V1(int2smallmoneymul);
 /*
 	Even though the range of smallmoney is within INT32_MIN and INT32_MAX,
 	we have created it as a domain on top of FIXEDDECIMAL which is represented 
-	as a 64 bit INT. Hence, we will also use 64 bit to smallmoney manipulation
+	as a 64 bit INT. Hence, we will also use 64 bit to smallmoney manipulation.
+    But we can be guaranteed that the smallmoney arg will always fit in 32bits
+    In other words, INT32_MIN <= arg <= INT32_MAX
 */
 
 Datum
@@ -69,7 +71,7 @@ smallmoneypl(PG_FUNCTION_ARGS)
 
 	/*
 	 * Overflow check. If the result of addition
-	 * does not fit in 32 bit, then pg_mul_s64_overflow
+	 * does not fit in 32 bit, then pg_add_s32_overflow
 	 * returns true
 	 */
 	if (pg_add_s32_overflow(arg1, arg2, &result))
@@ -89,7 +91,7 @@ smallmoneymi(PG_FUNCTION_ARGS)
 
 	/*
 	 * Overflow check. If the result of subtraction
-	 * does not fit in 32 bit, then pg_mul_s64_overflow
+	 * does not fit in 32 bit, then pg_sub_s32_overflow
 	 * returns true
 	 */
 	if (pg_sub_s32_overflow(arg1, arg2, &result))
@@ -111,14 +113,16 @@ smallmoneymul(PG_FUNCTION_ARGS)
 	 * We need to promote this to 64bit as we may overflow int32 here.
 	 * Remember that arg2 is the number multiplied by FIXEDDECIMAL_MULTIPLIER,
 	 * we must divide the result by this to get the correct result.
+     * We are sure not to overflow int64 because even though arg1 and arg2 are of
+     * int64 type, they are always guaranteed to fit in int32 
 	 */
-	result = (int64) arg1 * arg2 / FIXEDDECIMAL_MULTIPLIER;
+	result = ((int64) arg1 * arg2) / FIXEDDECIMAL_MULTIPLIER;
 
 	/* Round off the result to FIXEDDECIMAL_SCALE.
 	 * abs() in order to deal with -ve result as well 
 	 * if the result is negative we subtract 1, else add 1
 	 */
-	if (abs(((int64) arg1 * arg2) % FIXEDDECIMAL_MULTIPLIER) >= FIXEDDECIMAL_ROUNDUP)
+	if (abs((arg1%FIXEDDECIMAL_MULTIPLIER * arg2%FIXEDDECIMAL_MULTIPLIER) % FIXEDDECIMAL_MULTIPLIER) >= FIXEDDECIMAL_ROUNDUP)
 	{
 		if (result < 0) 
 			result--;
@@ -253,7 +257,7 @@ smallmoneyint8mul(PG_FUNCTION_ARGS)
 
 
 	/*
-	 division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
+	 multiplication with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
 	 in T-SQL
 	*/
 	if (arg2 > SMALLMONEY_MAX || arg2 < SMALLMONEY_MIN)
@@ -338,11 +342,11 @@ smallmoneyint4pl(PG_FUNCTION_ARGS)
 	int64		arg1 = PG_GETARG_INT64(0);
 	int32		arg2 = PG_GETARG_INT32(1);
 	int32		adder;
-	int64		result;
+	int32		result;
 
 	/*
 	 * Overflow check. If the result of multiplication
-	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * does not fit in 32 bit, then pg_mul_s32_overflow
 	 * returns true
 	 */
 	if (pg_mul_s32_overflow(arg2, (int32) FIXEDDECIMAL_MULTIPLIER, &adder)) 
@@ -354,16 +358,15 @@ smallmoneyint4pl(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	result = arg1 + adder;
-
-	/*
-	 * Overflow check.  If the result is outside the 
-	 * INT32 range, then we know that the value oveflows
+    /*
+	 * Overflow check. If the result of addition
+	 * does not fit in 32 bit, then pg_add_s32_overflow
+	 * returns true
 	 */
-	if (result > INT32_MAX || result < INT32_MIN)
+	if (pg_add_s32_overflow(arg1, adder, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("smallmoney out of range")));
+				 errmsg("smallmoney out of range")));
 							
 	PG_RETURN_INT64(result);
 }
@@ -374,7 +377,7 @@ smallmoneyint4mi(PG_FUNCTION_ARGS)
 	int64		arg1 = PG_GETARG_INT64(0);
 	int32		arg2 = PG_GETARG_INT32(1);
 	int32		subtractor;
-	int64		result;
+	int32		result;
 
 	/*
 	 * Overflow check. If the result of multiplication
@@ -390,17 +393,16 @@ smallmoneyint4mi(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	result = arg1 - subtractor;
-
 	/*
-	 * Overflow check.  If the result is outside the 
-	 * INT32 range, then we know that the value oveflows
+	 * Overflow check. If the result of subtraction
+	 * does not fit in 32 bit, then pg_sub_s32_overflow
+	 * returns true
 	 */
-	if (result > INT32_MAX || result < INT32_MIN)
+	if (pg_sub_s32_overflow(arg1, subtractor, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("smallmoney out of range")));
-							
+				 errmsg("smallmoney out of range")));
+				
 	PG_RETURN_INT64(result);
 }
 
@@ -626,8 +628,8 @@ int2smallmoneymi(PG_FUNCTION_ARGS)
 
 
 	/*
-	 * Overflow check. If the result of addition
-	 * does not fit in 32 bit, then pg_add_s32_overflow
+	 * Overflow check. If the result of subtraction
+	 * does not fit in 32 bit, then pg_sub_s32_overflow
 	 * returns true
 	 */
 	if (pg_sub_s32_overflow(subtractor, arg2, &result)) 
@@ -648,7 +650,7 @@ int2smallmoneymul(PG_FUNCTION_ARGS)
 
 	/*
 	 * Overflow check. If the result of multiplication
-	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * does not fit in 32 bit, then pg_mul_s32_overflow
 	 * returns true
 	 */
 	if (pg_mul_s32_overflow(arg1, arg2, &result)) 
@@ -666,7 +668,7 @@ int4smallmoneypl(PG_FUNCTION_ARGS)
 	int32       arg1 = PG_GETARG_INT32(0);
 	int32		adder;
 	int64		arg2 = PG_GETARG_INT64(1);
-	int64		result;
+	int32		result;
 
 
 	/*
@@ -683,16 +685,15 @@ int4smallmoneypl(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	result = adder + arg2;
-
-	/*
-	 * Overflow check.  If the result is outside the 
-	 * INT32 range, then we know that the value oveflows
+    /*
+	 * Overflow check. If the result of addition
+	 * does not fit in 32 bit, then pg_add_s32_overflow
+	 * returns true
 	 */
-	if (result > INT32_MAX || result < INT32_MIN)
+	if (pg_add_s32_overflow(adder, arg2, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("smallmoney out of range")));
+				 errmsg("smallmoney out of range")));
 							
 	PG_RETURN_INT64(result);
 }
@@ -703,7 +704,7 @@ int4smallmoneymi(PG_FUNCTION_ARGS)
 	int32       arg1 = PG_GETARG_INT32(0);
 	int32		subtractor;
 	int64		arg2 = PG_GETARG_INT64(1);
-	int64		result;
+	int32		result;
 
 
 	/*
@@ -720,13 +721,12 @@ int4smallmoneymi(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	result = subtractor - arg2;
-
-	/*
-	 * Overflow check.  If the result is outside the 
-	 * INT32 range, then we know that the value oveflows
+    /*
+	 * Overflow check. If the result of subtraction
+	 * does not fit in 32 bit, then pg_sub_s32_overflow
+	 * returns true
 	 */
-	if (result > INT32_MAX || result < INT32_MIN)
+	if (pg_sub_s32_overflow(subtractor, arg2, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallmoney out of range")));
