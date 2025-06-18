@@ -1852,59 +1852,59 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					}
 				}
 
-				/*
-				 * [BABEL-3074] NUMERIC overflow causes TDS error for
-				 * aggregate function sum(); resultant precision should be
-				 * tds_default_numeric_precision
-				 */
-				if (aggFuncName && strlen(aggFuncName) == 3 &&
-					(strncmp(aggFuncName, "sum", 3) == 0))
-					precision = tds_default_numeric_precision;
-
-
-				/*
-				 * For aggregate function avg(); resultant precision should be
-				 * tds_default_numeric_precision and resultant scale =
-				 * max(input scale, 6)
-				 */
-				if (aggFuncName && strlen(aggFuncName) == 3 &&
-					(strncmp(aggFuncName, "avg", 3) == 0))
+				if (aggFuncName)
 				{
-					precision = tds_default_numeric_precision;
-					scale = Max(scale, 6);
-				}
-
-				/*
-				 * For aggregate function count(); resultant precision should
-				 * be INT_PRECISION_RADIX and scale should be 0.
-				 */
-				if (aggFuncName && strlen(aggFuncName) == 5 &&
-					(strncmp(aggFuncName, "count", 5) == 0))
-				{
-					precision = INT_PRECISION_RADIX;
-					scale = 0;
-				}
-
-				/*
-				 * For aggregate function count_big(); resultant precision
-				 * should be BIGINT_PRECISION_RADIX and scale should be 0.
-				 */
-				if (aggFuncName && strlen(aggFuncName) == 9 &&
-					(strncmp(aggFuncName, "count_big", 9) == 0))
-				{
-					precision = BIGINT_PRECISION_RADIX;
-					scale = 0;
-				}
-
-				/*
-				 * For aggregate function string_agg(); we should not return
-				 * typmod, so return -1.
-				 */
-				if (aggFuncName && strlen(aggFuncName) == 10 &&
-					(strncmp(aggFuncName, "string_agg", 10) == 0))
-				{
-					pfree(aggFuncName);
-					return -1;
+					if (strlen(aggFuncName) == 3 && 
+						(strncmp(aggFuncName, "sum", 3) == 0))
+					{
+						/*
+						 * [BABEL-3074] NUMERIC overflow causes TDS error for
+						 * aggregate function sum(); resultant precision should be
+						 * tds_default_numeric_precision
+						 */
+						precision = tds_default_numeric_precision;
+					}
+					else if (strlen(aggFuncName) == 3 &&
+						(strncmp(aggFuncName, "avg", 3) == 0))
+					{
+						/*
+						 * For aggregate function avg(); resultant precision
+						 * should be tds_default_numeric_precision and resultant
+						 * scale = max(input scale, 6)
+						 */
+						precision = tds_default_numeric_precision;
+						scale = Max(scale, 6);
+					}
+					else if (strlen(aggFuncName) == 5 &&
+						(strncmp(aggFuncName, "count", 5) == 0))
+					{
+						/*
+						 * For aggregate function count(); resultant precision
+						 * should be INT_PRECISION_RADIX and scale should be 0.
+						 */
+						precision = INT_PRECISION_RADIX;
+						scale = 0;
+					}
+					else if (strlen(aggFuncName) == 9 &&
+						(strncmp(aggFuncName, "count_big", 9) == 0))
+					{
+						/*
+						 * For aggregate function count_big(); resultant precision
+						 * should be BIGINT_PRECISION_RADIX and scale should be 0.
+						 */
+						precision = BIGINT_PRECISION_RADIX;
+						scale = 0;
+					}
+					else if (strlen(aggFuncName) == 10 &&
+						(strncmp(aggFuncName, "string_agg", 10) == 0))
+					{
+						/*
+						 * For aggregate function string_agg(); we should not return
+						 * typmod, so return -1.
+						 */
+						pfree(aggFuncName);
+						return -1;
+					}
 				}
 
 				pfree(aggFuncName);
