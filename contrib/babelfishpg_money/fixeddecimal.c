@@ -1857,7 +1857,7 @@ fixeddecimalint8pl(PG_FUNCTION_ARGS)
 
 	/*
 	 * Overflow check. If the result of addition
-	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * does not fit in 64 bit, then pg_add_s64_overflow
 	 * returns true
 	 */
 	if (pg_add_s64_overflow(arg1, adder, &result)) 
@@ -1893,7 +1893,7 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
 
 	/*
 	 * Overflow check. If the result of addition
-	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * does not fit in 64 bit, then pg_sub_s64_overflow
 	 * returns true
 	 */
 	if (pg_sub_s64_overflow(arg1, subtractor, &result)) 
@@ -2033,7 +2033,7 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
 
 	/*
 	 * Overflow check. If the result of addition
-	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * does not fit in 64 bit, then pg_add_s64_overflow
 	 * returns true
 	 */
 	if (pg_add_s64_overflow(adder, arg2, &result)) 
@@ -2068,7 +2068,7 @@ int8fixeddecimalmi(PG_FUNCTION_ARGS)
 		
 	/*
 	 * Overflow check. If the result of addition
-	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * does not fit in 64 bit, then pg_sub_s64_overflow
 	 * returns true
 	 */
 	if (pg_sub_s64_overflow(subtractor, arg2, &result)) 
@@ -3204,17 +3204,24 @@ Datum
 fixeddecimal_ceiling(PG_FUNCTION_ARGS)
 {
 	int64       arg1 = PG_GETARG_INT64(0);
-	int64       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
+	int64       truncvalue = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
+	int64       result = truncvalue;
 
 	if (arg1 > 0 && arg1 % FIXEDDECIMAL_MULTIPLIER)
 	{
-		result += FIXEDDECIMAL_MULTIPLIER;
-	}   
-	
-	if (result != 0 && !SAMESIGN(arg1, result))
-		ereport(ERROR, 
+		/*
+		* Overflow check. If the result of addition
+		* does not fit in 64 bit, then pg_add_s64_overflow
+		* returns true
+		*/
+		if (pg_add_s64_overflow(truncvalue, FIXEDDECIMAL_MULTIPLIER, &result))
+		{
+			ereport(ERROR, 
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
+			PG_RETURN_NULL();
+		}
+	}   
 	
 	PG_RETURN_INT64(result);
 }
@@ -3223,17 +3230,24 @@ Datum
 fixeddecimal_floor(PG_FUNCTION_ARGS)
 {
 	int64       arg1 = PG_GETARG_INT64(0);
-	int64       result = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
+	int64       truncvalue = arg1 - (arg1 % FIXEDDECIMAL_MULTIPLIER);
+	int64       result = truncvalue;
 
 	if (arg1 < 0 && arg1 % FIXEDDECIMAL_MULTIPLIER)
 	{
-		result -= FIXEDDECIMAL_MULTIPLIER;
-	}
-	
-	if (result != 0 && !SAMESIGN(arg1, result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE), 
+		/*
+		* Overflow check. If the result of subtraction
+		* does not fit in 64 bit, then pg_sub_s64_overflow
+		* returns true
+		*/
+		if (pg_sub_s64_overflow(truncvalue, FIXEDDECIMAL_MULTIPLIER, &result))
+		{
+			ereport(ERROR, 
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
+			PG_RETURN_NULL();
+		}
+	}
 	
 	PG_RETURN_INT64(result);
 }
