@@ -2853,7 +2853,7 @@ TdsSendPlpDataHelper(char *data, int len)
 					plpChunckLen = availableBufferSpace - sizeof(uint32_t);
 			}
 
-			TDS_DEBUG(TDS_DEBUG2, "PLP CHUNK length = %d, Available Buffer Size = %d", plpChunckLen, availableBufferSpace);
+			TDS_DEBUG(TDS_DEBUG2, "PLP CHUNK length = %u, Available Buffer Size = %zu", plpChunckLen, availableBufferSpace);
 			/* need testing for "0" len */
 			if ((rc = TdsPutUInt32LE(plpChunckLen)) == 0)
 			{
