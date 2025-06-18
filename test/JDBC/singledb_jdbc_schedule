@@ -24,3 +24,5 @@ ignore#!#sys_database_principals-vu-prepare
 ignore#!#sys_database_principals-vu-verify
 ignore#!#sys_database_principals-vu-cleanup
 ignore#!#psql_logical_babelfish_db
+ignore#!#user_token-dep-vu-prepare
+ignore#!#user_token-dep-vu-verify

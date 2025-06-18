@@ -2,12 +2,28 @@
 -- resetting passwords for logins (dump-restore)
 alter login user_token_login_with_dbrole with password = '12345678';
 GO
+alter login user_token_login_with_db_owner with password = '12345678';
+GO
+alter login user_token_login_is_dbo with password = '12345678';
+GO
 
 -- tsql
 -- create a db role and add the above user to the role
 create role testrole;
 GO
 alter role testrole add member u_user_token_login_with_dbrole
+GO
+
+-- adding user as a member to db_owner
+alter role db_owner add member u_user_token_login_with_db_owner
+GO
+
+-- change db owner to user_token_login_is_dbo
+use user_token_test_db;
+GO
+exec sp_changedbowner 'user_token_login_is_dbo'
+GO
+use master;
 GO
 
 select * from user_token_vu order by name;
@@ -18,6 +34,18 @@ select * from user_token_vu order by name;
 GO
 -- terminate-tsql-conn user=user_token_login_with_dbrole password=12345678
 
+-- tsql user=user_token_login_with_db_owner password=12345678
+select * from user_token_vu order by name;
+GO
+-- terminate-tsql-conn user=user_token_login_with_db_owner password=12345678
+
+-- tsql user=user_token_login_is_dbo password=12345678
+use user_token_test_db;
+GO
+select name, suser_sname(sid) as usid, type, usage from sys.user_token order by name;
+GO
+-- terminate-tsql-conn user=user_token_login_is_dbo password=12345678
+
 -- tsql
 drop view user_token_vu;
 GO
@@ -26,5 +54,15 @@ drop user u_user_token_login_with_dbrole
 drop login user_token_login_with_dbrole
 GO
 
+drop user u_user_token_login_with_db_owner
+drop login user_token_login_with_db_owner
+GO
+
+drop login user_token_login_is_dbo
+GO
+
 drop role testrole;
+GO
+
+drop database user_token_test_db;
 GO

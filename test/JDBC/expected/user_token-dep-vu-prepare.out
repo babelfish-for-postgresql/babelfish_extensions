@@ -8,3 +8,15 @@ GO
 
 create user u_user_token_login_with_dbrole for login user_token_login_with_dbrole;
 GO
+
+create login user_token_login_with_db_owner with password = '12345678';
+GO
+
+create user u_user_token_login_with_db_owner for login user_token_login_with_db_owner;
+GO
+
+create login user_token_login_is_dbo with password = '12345678';
+GO
+
+create database user_token_test_db;
+GO
