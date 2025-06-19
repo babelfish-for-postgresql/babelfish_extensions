@@ -2075,8 +2075,8 @@ select ROUND(col, -1) from t1;
 GO
 ~~START~~
 numeric
-60.00000000
-80.00000000
+60.00
+80.00
 <NULL>
 ~~END~~
 
