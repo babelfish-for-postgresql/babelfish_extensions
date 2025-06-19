@@ -1216,3 +1216,345 @@ bigint
 4
 ~~END~~
 
+
+--Without collation
+select PATINDEX('%ing', 'This is a patindex testing string') AS EndPattern
+GO
+~~START~~
+bigint
+31
+~~END~~
+
+select PATINDEX('%', 'This is a patindex test') AS AllWildcard
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select PATINDEX('ing%', 'This is a patindex testing string') AS SingleWildcard
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+select PATINDEX('%ing%', 'This is a patindex testing string') AS Pattern
+go
+~~START~~
+bigint
+24
+~~END~~
+
+select PATINDEX('i%g', 'This is a patindex testing string') AS Pattern
+go
+~~START~~
+bigint
+0
+~~END~~
+
+select patindex('%abc%d','gefabcefed')
+GO
+~~START~~
+bigint
+4
+~~END~~
+
+select patindex('a%bc%','acrbcjfnr')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select patindex('a%bcd%e','arejfbcdjrjhe')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc', 'xabc')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc', 'xabc')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('abc_', 'abcx')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc_', 'xabcy')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('[abc]xyz', 'axyz')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('xyz[abc]', 'xyza')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('[abc]xyz[def]', 'axyzd')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('%%', 'testring the patindex')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('%', 'testring the patindex')
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+--With Collation
+-- Testing with different permutations of % in pattern string with different collation types
+select PATINDEX('%ing', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS EndPattern
+GO
+~~START~~
+bigint
+31
+~~END~~
+
+select PATINDEX('%', 'This is a patindex test' COLLATE Latin1_General_CI_AI) AS AllWildcard
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select PATINDEX('ing%', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS SingleWildcard
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+select PATINDEX('%ing%', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS Pattern
+go
+~~START~~
+bigint
+24
+~~END~~
+
+select PATINDEX('i%g', 'This is a patindex testing string' COLLATE Latin1_General_CI_AI) AS Pattern
+go
+~~START~~
+bigint
+0
+~~END~~
+
+select patindex('%abc%d','gefabcefed' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+4
+~~END~~
+
+select patindex('a%bc%','acrbcjfnr' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select patindex('a%bcd%e','arejfbcdjrjhe' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select patindex('a%bc%','acrbcjfnr' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select patindex('a%bcd%e','arejfbcdjrjhe' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select patindex('%abc%d','gefabcefed' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+4
+~~END~~
+
+-- Testing with different permutations of _ in pattern string with different collation types
+SELECT PATINDEX('_abc', 'xabc' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc', 'xabc' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('abc_', 'abcx' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc_', 'xabcy' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc', 'xabc' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc', 'xabc' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('abc_', 'abcx' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('_abc_', 'xabcy' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+-- Testing with different permutations of [] in pattern string with different collation types
+SELECT PATINDEX('[abc]xyz', 'axyz' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('xyz[abc]', 'xyza' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('[abc]xyz[def]', 'axyzd' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('[abc]xyz', 'axyz' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('xyz[abc]', 'xyza' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('[abc]xyz[def]', 'axyzd' COLLATE Latin1_General_CI_AS)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+SELECT PATINDEX('%ing' collate Latin1_General_CI_AI, 'this is testing' collate Latin1_General_CI_AS)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: collation mismatch between explicit collations "bbf_unicode_cp1_ci_ai" and "bbf_unicode_cp1_ci_as")~~
+
+SELECT PATINDEX('%ing' collate DATABASE_DEFAULT, 'this is testing')
+GO
+~~START~~
+bigint
+13
+~~END~~
+
+SELECT PATINDEX('%ing', 'this is testing' collate DATABASE_DEFAULT)
+GO
+~~START~~
+bigint
+13
+~~END~~
+
+select PATINDEX('%ing', 'This is a patindex testing strING' COLLATE Latin1_General_CS_AS)
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+select PATINDEX('%ING', 'This is a patindex testing strING' COLLATE Latin1_General_CS_AS)
+GO
+~~START~~
+bigint
+31
+~~END~~
+
+select PATINDEX('%ing', 'This is a patindex testing strING' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+31
+~~END~~
+
+

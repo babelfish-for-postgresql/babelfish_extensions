@@ -621,6 +621,54 @@ WHERE sch.nspname = t.typnamespace::regnamespace::name
 	AND t.typtypmod = -1
 	AND t.typtype = 'd';
 
+create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
+$body$
+declare
+  v_find_result VARCHAR;
+  v_pos bigint;
+  v_regexp_pattern VARCHAR;
+  start_offset boolean;
+  end_offset boolean;
+begin
+  if pattern is null or expression is null then
+    return null;
+  end if;
+  if pattern = '%' or pattern = '%%' then
+    return 1;
+  end if;
+  if sys.is_collated_ai(expression) then
+    return sys.patindex_ai_collations(pattern, expression);
+  end if;
+  if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
+    v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i'::pg_catalog.TEXT);
+    start_offset := true;
+  else
+    v_regexp_pattern := '#"' || pattern;
+    start_offset := false;
+  end if;
+
+  if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
+    v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i'::pg_catalog.TEXT);
+    end_offset := true;
+  else
+   v_regexp_pattern := v_regexp_pattern || '#"';
+   end_offset := false;
+  end if;
+  v_find_result := substring(expression, v_regexp_pattern, '#');
+  if v_find_result <> '' collate sys.database_default then
+    if start_offset and not end_offset then
+      v_pos := LENGTH(expression) - STRPOS(REVERSE(expression), REVERSE(v_find_result)) + 2 - LENGTH(v_find_result);
+    else
+      v_pos := strpos(expression, v_find_result);
+    end if;
+  else
+    v_pos := 0;
+  end if;
+  return v_pos;
+end;
+$body$
+language plpgsql immutable returns null on null input;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

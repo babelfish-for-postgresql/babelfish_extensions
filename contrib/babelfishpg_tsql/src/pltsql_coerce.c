@@ -91,6 +91,7 @@ static bool is_tsql_int4_bit(Oid oid);
 #define DEFAULT_SMALLINT_TYPMOD		((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 #define DEFAULT_INT_TYPMOD		((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 #define DEFAULT_BIGINT_TYPMOD		((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_TINYINT_TYPMOD		((TINYINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 
 /* Numeirc operator OID from pg_proc.dat */
 #define NUMERIC_ADD_OID 1724
@@ -1257,7 +1258,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Param:
 			{
 				Param *param = (Param *) expr;
-
 				if (param->paramtypmod == -1)
 				{
 					int32 		fixlen_default_typmod;
@@ -1883,38 +1883,74 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype) ||
 						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(aggref->aggtype))
 					{
+						pfree(aggFuncName);
 						return TSQL_MONEY_TYPMOD;
 					}
 					else if (aggref->aggtype == INT4OID)
 					{
-						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						pfree(aggFuncName);
+						return DEFAULT_INT_TYPMOD;
 					}
 					else if (aggref->aggtype == INT8OID)
 					{
-						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+						pfree(aggFuncName);
+						return DEFAULT_BIGINT_TYPMOD;
 					}
 				}
 
-				/*
-				 * [BABEL-3074] NUMERIC overflow causes TDS error for
-				 * aggregate function sum(); resultant precision should be
-				 * tds_default_numeric_precision
-				 */
-				if (aggFuncName && strlen(aggFuncName) == 3 &&
-					(strncmp(aggFuncName, "sum", 3) == 0))
-					precision = tds_default_numeric_precision;
-
-
-				/*
-				 * For aggregate function avg(); resultant precision should be
-				 * tds_default_numeric_precision and resultant scale =
-				 * max(input scale, 6)
-				 */
-				if (aggFuncName && strlen(aggFuncName) == 3 &&
-					(strncmp(aggFuncName, "avg", 3) == 0))
+				if (aggFuncName)
 				{
-					precision = tds_default_numeric_precision;
-					scale = Max(scale, 6);
+					if (strlen(aggFuncName) == 3 && 
+						(strncmp(aggFuncName, "sum", 3) == 0))
+					{
+						/*
+						 * [BABEL-3074] NUMERIC overflow causes TDS error for
+						 * aggregate function sum(); resultant precision should be
+						 * tds_default_numeric_precision
+						 */
+						precision = tds_default_numeric_precision;
+					}
+					else if (strlen(aggFuncName) == 3 &&
+						(strncmp(aggFuncName, "avg", 3) == 0))
+					{
+						/*
+						 * For aggregate function avg(); resultant precision
+						 * should be tds_default_numeric_precision and resultant
+						 * scale = max(input scale, 6)
+						 */
+						precision = tds_default_numeric_precision;
+						scale = Max(scale, 6);
+					}
+					else if (strlen(aggFuncName) == 5 &&
+						(strncmp(aggFuncName, "count", 5) == 0))
+					{
+						/*
+						 * For aggregate function count(); resultant precision
+						 * should be INT_PRECISION_RADIX and scale should be 0.
+						 */
+						precision = INT_PRECISION_RADIX;
+						scale = 0;
+					}
+					else if (strlen(aggFuncName) == 9 &&
+						(strncmp(aggFuncName, "count_big", 9) == 0))
+					{
+						/*
+						 * For aggregate function count_big(); resultant precision
+						 * should be BIGINT_PRECISION_RADIX and scale should be 0.
+						 */
+						precision = BIGINT_PRECISION_RADIX;
+						scale = 0;
+					}
+					else if (strlen(aggFuncName) == 10 &&
+						(strncmp(aggFuncName, "string_agg", 10) == 0))
+					{
+						/*
+						 * For aggregate function string_agg(); we should not return
+						 * typmod, so return -1.
+						 */
+						pfree(aggFuncName);
+						return -1;
+					}
 				}
 
 				pfree(aggFuncName);
