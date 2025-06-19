@@ -373,6 +373,30 @@ Input file type: `.mix`
 
 ---
 
+### Ignoring non-deterministic columns in the diff
+In case there are columns like identifier which are non-deterministic and change across each run, you can ignore such columns without any SQL changes. Use the `-- ignore_columns` options and pass the column numbers to be ignored.
+```sql
+-- ignore_columns <comman separated column numbers to be ignored>
+<SQL statements>
+GO -- after this delimiter, the ignore_columns will be reset and not apply hereafter, unless specified again
+``` 
+
+**Note:** If there are multiple result sets, the specified columns will be ignored from the first result only.
+
+**Example:**
+```sql
+-- tsql
+-- ignore_columns 2
+SELECT name, id FROM mytable1;
+SELECT name FROM mytable2
+GO
+```
+
+In this case, the column number 2 i.e. the id will be ignored from the first result set and the second result set outputslike normal.
+
+
+---
+
 ### **IMPORTANT**
 - If you want to execute a SQL Batch in `.txt` input files, you will need to specify the batch in a single line without the `GO` batch separator. This is needed because for `.txt` files, the test framework treates every line as a standalone statement/command that can be executed against the server.
 - You CANNOT group functionalities from a different file type. For example, you cannot execute prep-exec statements (functionality of `.txt` input file) in a `.mix` file. 

@@ -18,8 +18,8 @@ test/JDBC/target/maven-status/*
 test/JDBC/target/surefire-reports/*
 test/JDBC/target/test-classes/*
 
-contrib/babelfishpg_common/sql/babelfishpg_common--[0-9].[0-9].[0-9]--[0-9].[0-9].[0-9].sql
-contrib/babelfishpg_common/sql/babelfishpg_common--[0-9].[0-9].[0-9].sql
+contrib/babelfishpg_common/sql/babelfishpg_common--[0-9]*.[0-9]*.[0-9]*--[0-9]*.[0-9]*.[0-9]*.sql
+contrib/babelfishpg_common/sql/babelfishpg_common--[0-9]*.[0-9]*.[0-9]*.sql
 contrib/babelfishpg_common/src/geo_parser.c
 contrib/babelfishpg_common/src/geo_scan.c
 contrib/babelfishpg_money/babelfishpg_money--[0-9].[0-9].[0-9].sql

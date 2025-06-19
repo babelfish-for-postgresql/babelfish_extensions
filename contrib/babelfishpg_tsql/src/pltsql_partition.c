@@ -300,7 +300,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 		/* Execute the CREATE PARTITION statment. */
 		standard_ProcessUtility(wrapper,
 					"(CREATE PARTITION)",
-					false,
+					true,
 					PROCESS_UTILITY_SUBCOMMAND,
 					NULL,
 					NULL,
@@ -826,7 +826,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt, Oid parentrelid)
 		/* Execute the rename statment. */
 		standard_ProcessUtility(wrapper,
 					"(RENAME PARTITION)",
-					false,
+					true,
 					PROCESS_UTILITY_SUBCOMMAND,
 					NULL,
 					NULL,
