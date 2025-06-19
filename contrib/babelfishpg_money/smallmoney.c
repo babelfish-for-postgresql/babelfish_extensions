@@ -255,20 +255,6 @@ smallmoneyint8mul(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 	int128		result;
 
-
-	/*
-	 multiplication with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 in T-SQL
-	*/
-	if (arg2 > SMALLMONEY_MAX || arg2 < SMALLMONEY_MIN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
 	result = (int128) arg1 * arg2;
 
 	/*
@@ -307,27 +293,15 @@ smallmoneyint8div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		result = -arg1;
-		/* overflow check (needed for INT64_MIN) */
-		if (arg1 != 0 && result != (int32) result)
+		if (unlikely(arg1 == INT32_MIN))
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("smallmoney out of range")));
-
+					 errmsg("smallmoney out of range")));
+			PG_RETURN_NULL();
+		}
+		result = -arg1;
 		PG_RETURN_INT64(result);
-	}
-
-	/*
-	 * division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 * in T-SQL
-	 */
-	if (arg2 > SMALLMONEY_MAX || arg2 < SMALLMONEY_MIN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
 	}
 
 	/* No overflow possible */
@@ -414,19 +388,6 @@ smallmoneyint4mul(PG_FUNCTION_ARGS)
 	int32		result;
 
 	/*
-	 * multiplication with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 * in T-SQL
-	 */
-	if (arg2 > SMALLMONEY_MAX || arg2 < SMALLMONEY_MIN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
-	/*
 	 * Overflow check. If the result of multiplication
 	 * does not fit in 32 bit, then pg_mul_s32_overflow
 	 * returns true
@@ -464,27 +425,15 @@ smallmoneyint4div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		result = -arg1;
-		/* overflow check (needed for INT64_MIN) */
-		if (arg1 != 0 && result != (int32) result)
+		if (unlikely(arg1 == INT32_MIN))
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("smallmoney out of range")));
-
+					 errmsg("smallmoney out of range")));
+			PG_RETURN_NULL();
+		}
+		result = -arg1;
 		PG_RETURN_INT64(result);
-	}
-
-	/*
-	 * division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 * in T-SQL
-	 */
-	if (arg2 > SMALLMONEY_MAX || arg2 < SMALLMONEY_MIN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
 	}
 
 	/* No overflow possible */
@@ -581,13 +530,14 @@ smallmoneyint2div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		result = -arg1;
-		/* overflow check (needed for INT64_MIN) */
-		if (arg1 != 0 && result != (int32) result)
+		if (unlikely(arg1 == INT32_MIN))
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("smallmoney out of range")));
-
+					 errmsg("smallmoney out of range")));
+			PG_RETURN_NULL();
+		}
+		result = -arg1;
 		PG_RETURN_INT64(result);
 	}
 
@@ -741,20 +691,6 @@ int4smallmoneymul(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 	int32		result;
 
-
-	/*
-	 * multiplication with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 * in T-SQL
-	 */
-	if (arg1 > SMALLMONEY_MAX || arg1 < SMALLMONEY_MIN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
 	/*
 	 * Overflow check. If the result of multiplication
 	 * does not fit in 32 bit, then pg_mul_s32_overflow
@@ -782,19 +718,6 @@ int4smallmoneydiv(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
-	/*
-	 * division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 * in T-SQL
-	 */
-	if (arg1 > SMALLMONEY_MAX || arg1 < SMALLMONEY_MIN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
@@ -862,7 +785,6 @@ int8smallmoneymi(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 	int128		result;
 
-
 	/*
 	 * Overflow check. If the result of multiplication
 	 * does not fit in 64 bit, then pg_mul_s64_overflow
@@ -898,19 +820,6 @@ int8smallmoneymul(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 	int128		result;
 
-	/*
-	 * multiplication with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 * in T-SQL
-	 */
-	if (arg1 > SMALLMONEY_MAX || arg1 < SMALLMONEY_MIN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
 	result = (int128) arg1 * arg2;
 
 	/*
@@ -938,19 +847,6 @@ int8smallmoneydiv(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
-	/*
-	 * division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 * in T-SQL
-	 */
-	if (arg1 > SMALLMONEY_MAX || arg1 < SMALLMONEY_MIN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallmoney out of range")));
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}

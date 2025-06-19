@@ -1644,24 +1644,15 @@ fixeddecimalpl(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW
-	if (__builtin_add_overflow(arg1, arg2, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-#else
-	result = arg1 + arg2;
-
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum had
-	 * better be that sign too.
+	 * Overflow check. If the result of addition
+	 * does not fit in 64 bit, then pg_add_s64_overflow
+	 * returns true
 	 */
-	if (SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
+	if (pg_add_s64_overflow(arg1, arg2, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -1673,24 +1664,15 @@ fixeddecimalmi(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW
-	if (__builtin_sub_overflow(arg1, arg2, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-#else
-	result = arg1 - arg2;
-
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then the
-	 * result should be of the same sign as the first input.
+	 * Overflow check. If the result of subtraction
+	 * does not fit in 64 bit, then pg_sub_s64_overflow
+	 * returns true
 	 */
-	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
+	if (pg_sub_s64_overflow(arg1, arg2, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-#endif							/* HAVE_BUILTIN_OVERFLOW */
+				 errmsg("fixeddecimal out of range")));						/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -1910,41 +1892,19 @@ fixeddecimalint8mul(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
 	int64		arg2 = PG_GETARG_INT64(1);
-	int128		result;
-
-#ifdef HAVE_BUILTIN_OVERFLOW
-	if (__builtin_mul_overflow(arg1, arg2, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-#else
-	result = (int128) arg1 * arg2;
+	int64		result;
 
 	/*
-	 * multiplication with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
-	 * in T-SQL
+	 * Overflow check. If the result of multiplication
+	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * returns true
 	 */
-	if (arg2 > FIXEDDECIMAL_MAX || arg2 < FIXEDDECIMAL_MIN)
-	{
+	if (pg_mul_s64_overflow(arg1, arg2, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
 
-	/*
-	 * Overflow check. We should not be testing based only on, if indiviudal arg (agr1)
-	 * is convertible to int32 as the result could still overflow. Hence we directly check
-	 * if result is in int64 range; if so, no overflow is possible.
-	 */
-	if (result != (int128) ((int64) result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-#endif							/* HAVE_BUILTIN_OVERFLOW */
-
-	PG_RETURN_INT64((int64) result);
+	PG_RETURN_INT64(result);
 }
 
 Datum
@@ -1979,28 +1939,17 @@ fixeddecimalint8div(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("fixeddecimal out of range")));
 #else
-		result = -arg1;
-		/* overflow check (needed for INT64_MIN) */
-		if (arg1 != 0 && SAMESIGN(result, arg1))
+		if (arg1 == INT64_MIN)
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("fixeddecimal out of range")));
+			PG_RETURN_NULL();
+		}
+		result = -arg1;
+			
 #endif							/* HAVE_BUILTIN_OVERFLOW */
-
 		PG_RETURN_INT64(result);
-	}
-
-	/*
-	 * division with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
-	 * in T-SQL
-	 */
-	if (arg2 > FIXEDDECIMAL_MAX || arg2 < FIXEDDECIMAL_MIN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
 	}
 
 	/* No overflow is possible */
@@ -2084,41 +2033,19 @@ int8fixeddecimalmul(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
 	int64		arg2 = PG_GETARG_INT64(1);
-	int128		result;
+	int64		result;
 
-#ifdef HAVE_BUILTIN_OVERFLOW
-	if (__builtin_mul_overflow(arg1, arg2, &result))
+	/*
+	 * Overflow check. If the result of multiplication
+	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * returns true
+	 */
+	if (pg_mul_s64_overflow(arg1, arg2, &result)) 
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#else
-	result = (int128) arg1 * arg2;
 
-	/*
-	 * multiplication with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
-	 * in T-SQL
-	 */
-	if (arg1 > FIXEDDECIMAL_MAX || arg1 < FIXEDDECIMAL_MIN)
-	{
-		ereport(ERROR, 
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
-	/*
-	 * Overflow check. We should not be testing based only on, if indiviudal arg (agr2)
-	 * is convertible to int32 as the result could still overflow. Hence we directly check
-	 * if result is in int64 range; if so, no overflow is possible.
-	 */
-	if (result != (int128) ((int64) result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
-#endif							/* HAVE_BUILTIN_OVERFLOW */
-
-	PG_RETURN_INT64((int64) result);
+	PG_RETURN_INT64(result);
 }
 
 Datum
@@ -2132,19 +2059,6 @@ int8fixeddecimaldiv(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
-	/*
-	 * division with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
-	 * in T-SQL
-	 */
-	if (arg1 > FIXEDDECIMAL_MAX || arg1 < FIXEDDECIMAL_MIN)
-	{
-		ereport(ERROR, 
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("fixeddecimal out of range")));
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}

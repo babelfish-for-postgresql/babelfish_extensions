@@ -505,6 +505,8 @@ WITH FUNCTION sys.varchar2bit(sys.VARCHAR) AS IMPLICIT;
 CREATE CAST (bool AS sys.BIT)
 WITHOUT FUNCTION AS IMPLICIT;
 
+
+-- bit <op> smallmoney
 CREATE FUNCTION sys.bitsmallmoneypl(sys.BIT, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_common', 'bitsmallmoneypl'
@@ -550,6 +552,8 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = sys.bitsmallmoneydiv
 );
 
+
+-- smallmoney <op> bit
 CREATE FUNCTION sys.smallmoneybitpl(sys.SMALLMONEY, sys.BIT)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_common', 'smallmoneybitpl'
@@ -595,6 +599,8 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = sys.smallmoneybitdiv
 );
 
+
+-- float <op> bit
 CREATE FUNCTION sys.floatbitpl(float8, sys.BIT)
 RETURNS sys.float
 AS 'babelfishpg_common', 'floatbitpl'
@@ -640,6 +646,8 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = sys.floatbitdiv
 );
 
+
+-- bit <op> float
 CREATE FUNCTION sys.bitfloatpl(sys.BIT, float8)
 RETURNS sys.float
 AS 'babelfishpg_common', 'bitfloatpl'
