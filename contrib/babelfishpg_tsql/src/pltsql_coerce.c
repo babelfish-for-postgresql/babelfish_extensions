@@ -85,10 +85,12 @@ static bool is_tsql_int4_bit(Oid oid);
 #define SMALLINT_PRECISION_RADIX	5
 #define INT_PRECISION_RADIX		10
 #define BIGINT_PRECISION_RADIX		19
+#define TINYINT_PRECISION_RADIX		3
 
 #define DEFAULT_SMALLINT_TYPMOD		((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 #define DEFAULT_INT_TYPMOD		((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 #define DEFAULT_BIGINT_TYPMOD		((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_TINYINT_TYPMOD		((TINYINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
 
 /* Numeirc operator OID from pg_proc.dat */
 #define NUMERIC_ADD_OID 1724
@@ -1203,6 +1205,34 @@ is_numeric_datatype(Oid typid)
 	return false;
 }
 
+/*
+ * is_mathematical_function - returns true if the function name is a mathematical function in T-SQL.
+ * This is used to identify functions that should be treated as mathematical operations.
+ */
+static bool
+is_mathematical_function(const char *funcName)
+{
+	if (funcName == NULL)
+		return false;
+
+	/* Check for common mathematical functions in T-SQL */
+	if ((strlen(funcName) == 5 && (strncmp(funcName, "power", 5) == 0)) ||
+		(strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)) ||
+		(strlen(funcName) == 7 && (strncmp(funcName, "ceiling", 7) == 0)) ||
+		(strlen(funcName) == 5 && (strncmp(funcName, "floor", 5) == 0)) ||
+		(strlen(funcName) == 4 && (strncmp(funcName, "sign", 4) == 0)) ||
+		(strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0)) ||
+		(strlen(funcName) == 7 && (strncmp(funcName, "degrees", 7) == 0)) ||
+		(strlen(funcName) == 7 && (strncmp(funcName, "radians", 7) == 0)) ||
+		(strlen(funcName) == 14 && (strncmp(funcName, "scope_identity", 14) == 0)) ||
+		(strlen(funcName) == 10 && (strncmp(funcName, "ident_seed", 10) == 0)) ||
+		(strlen(funcName) == 10 && (strncmp(funcName, "ident_incr", 10) == 0)) ||
+		(strlen(funcName) == 13 && (strncmp(funcName, "ident_current", 13) == 0)))
+		return true;
+
+	return false;
+}
+
 /* 
  * look for a typmod to return from a numeric expression,
  * Also for cases where we cannot compute the expression typmod return -1 and set found as false.
@@ -1603,6 +1633,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				int		rettypmod = -1;
 				bool		found_typmod;
 				Node		*arg = NULL;
+				uint8_t		precision,
+						scale;
+				char		*funcName;
+
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &rettypmod))
 				{
@@ -1625,14 +1659,15 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 																					  func->args == NIL ? 0 : func->args->length,
 																					  func->funcresulttype);
 
+				funcName = get_func_name(func_oid);
 				/*
 				 * If the following conditions are met then we will recursively find typmod from arg.
 				 * 1) rettypmod == -1 means unable to find typmod till now.
 				 * 2) check if only one args and then is that castable to numeric.
 				 */
 				if (rettypmod == -1 &&
-					list_length(func->args) == 1 &&
-					is_numeric_cast(func_oid))
+					((list_length(func->args) == 1 && is_numeric_cast(func_oid)) ||
+					 (list_length(func->args) >= 1 && funcName && is_mathematical_function(funcName))))
 				{
 					arg = linitial(func->args);
 					rettypmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
@@ -1640,9 +1675,81 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					{
 						if (found != NULL) *found = false;
 					}
-					return rettypmod;
+					scale = (rettypmod - VARHDRSZ) & 0xffff;
+					precision = ((rettypmod - VARHDRSZ) >> 16) & 0xffff;
 				}
 
+				if (funcName && is_mathematical_function(funcName))
+				{
+					if ((*common_utility_plugin_ptr->is_tsql_money_datatype) (func->funcresulttype) ||
+						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype) (func->funcresulttype))
+					{
+						pfree(funcName);
+						return TSQL_MONEY_TYPMOD;
+					}
+					else if (func->funcresulttype == INT4OID)
+					{
+						pfree(funcName);
+						return DEFAULT_INT_TYPMOD;
+					}
+					else if (func->funcresulttype == INT8OID)
+					{
+						pfree(funcName);
+						return DEFAULT_BIGINT_TYPMOD;
+					}
+					else if (func->funcresulttype == INT2OID)
+					{
+						pfree(funcName);
+						return DEFAULT_SMALLINT_TYPMOD;
+					}
+					else if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (func->funcresulttype))
+					{
+						pfree(funcName);
+						return DEFAULT_TINYINT_TYPMOD;
+					}
+					else
+					{
+						if ((strlen(funcName) == 7 && (strncmp(funcName, "ceiling", 7) == 0)) ||
+								(strlen(funcName) == 5 && (strncmp(funcName, "floor", 5) == 0)))
+						{
+							/* for ceiling and floor functions, we return 0 scale */
+							scale = 0;
+						}
+						else if ((strlen(funcName) == 7 && (strncmp(funcName, "radians", 7) == 0)) ||
+								(strlen(funcName) == 7 && (strncmp(funcName, "degrees", 7) == 0)))
+						{
+							/* 
+							 * for radians and degrees functions, we return 
+							 * scale as 18 and precision as max precision
+							 */
+							scale = 18;
+							precision = tds_default_numeric_precision;
+						}
+						else if ((strlen(funcName) == 14 && (strncmp(funcName, "scope_identity", 14) == 0)) ||
+								(strlen(funcName) == 10 && (strncmp(funcName, "ident_seed", 10) == 0)) ||
+								(strlen(funcName) == 10 && (strncmp(funcName, "ident_incr", 10) == 0)) ||
+								(strlen(funcName) == 13 && (strncmp(funcName, "ident_current", 13) == 0)))
+						{
+							/*
+							 * For scope_identity, ident_seed, ident_incr and ident_current
+							 * functions, we return 0 scale and precision as 38.
+							 */
+							scale = 0;
+							precision = tds_default_numeric_precision;
+						}
+						else if (((strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0))) ||
+								(strlen(funcName) == 5 && (strncmp(funcName, "power", 5) == 0)))
+						{
+							/*
+							 * For abs and power functions, precision as 38.
+							 */
+							precision = tds_default_numeric_precision;
+						}
+					}
+					rettypmod = ((precision << 16) | scale) + VARHDRSZ;
+				}
+
+				pfree(funcName);
 				if (rettypmod == -1)
 				{
 					if (found != NULL) *found = false;
