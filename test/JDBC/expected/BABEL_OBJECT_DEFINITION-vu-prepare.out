@@ -17,7 +17,7 @@ CREATE TABLE object_definition_t2(b char, check(b <> 'b'));
 GO
 
 -- Procedure
-CREATE PROC object_definition_proc
+CREATE PROCEDURE object_definition_proc
 AS
 SELECT 1;
 GO
@@ -427,8 +427,14 @@ RETURN
 )
 GO
 
+-- Procedure
+CREATE PROCEDURE dbo.object_definition_dependent_proc
+AS
+SELECT 1;
+GO
+
 -- View with OBJECT_DEFINITION dependency
-CREATE VIEW object_definition_dependency_view
+CREATE VIEW dbo.object_definition_dependency_view
 AS
 SELECT 
     name,
@@ -439,7 +445,7 @@ WHERE type IN ('P', 'FN', 'V')
 GO
 
 -- test cases for OBJECT_DEFINITION as dependency
-CREATE PROCEDURE object_definition_dependency_proc
+CREATE PROCEDURE dbo.object_definition_dependency_proc
     @object_name NVARCHAR(128)
 AS
 BEGIN
@@ -448,7 +454,7 @@ END
 GO
 
 -- Function with OBJECT_DEFINITION dependency
-CREATE FUNCTION object_definition_dependency_func(@obj_name NVARCHAR(128))
+CREATE FUNCTION dbo.object_definition_dependency_func(@obj_name NVARCHAR(128))
 RETURNS NVARCHAR(MAX)
 AS
 BEGIN

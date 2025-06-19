@@ -60,7 +60,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_proc'))
 GO
 ~~START~~
 nvarchar
--- Procedure<newline>CREATE PROC object_definition_proc<newline>AS<newline>SELECT 1;<newline>
+-- Procedure<newline>CREATE PROCEDURE object_definition_proc<newline>AS<newline>SELECT 1;<newline>
 ~~END~~
 
 
@@ -310,29 +310,28 @@ nvarchar
 
 
 -- Test the dependency view
-SELECT * FROM object_definition_dependency_view WHERE name = 'object_definition_proc'
+SELECT * FROM dbo.object_definition_dependency_view WHERE name = 'dbo.object_definition_dependent_proc'
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
-object_definition_proc#!#P #!#create proc object_definition_proc as select 1<newline>
 ~~END~~
 
 
 -- Test the new dependency procedure
-EXEC object_definition_dependency_proc 'object_definition_proc'
+EXEC dbo.object_definition_dependency_proc 'dbo.object_definition_dependent_proc'
 GO
 ~~START~~
 nvarchar
-create proc object_definition_proc as select 1<newline>
+-- Procedure<newline>CREATE PROCEDURE dbo.object_definition_dependent_proc<newline>AS<newline>SELECT 1;<newline>
 ~~END~~
 
 
 -- Test the dependency function
-SELECT dbo.object_definition_dependency_func('object_definition_proc') AS FunctionResult
+SELECT dbo.object_definition_dependency_func('dbo.object_definition_dependent_proc') AS FunctionResult
 GO
 ~~START~~
 nvarchar
-create proc object_definition_proc as select 1<newline>
+-- Procedure<newline>CREATE PROCEDURE dbo.object_definition_dependent_proc<newline>AS<newline>SELECT 1;<newline>
 ~~END~~
 
 

@@ -59,10 +59,11 @@ DROP VIEW dbo.object_definition_LargeView
 GO
 DROP PROCEDURE dbo.object_definition_Largeproc
 GO
-DROP VIEW object_definition_dependency_view
+DROP VIEW dbo.object_definition_dependency_view
 GO
-DROP PROCEDURE object_definition_dependency_proc
+DROP PROCEDURE dbo.object_definition_dependency_proc
 GO
-DROP FUNCTION object_definition_dependency_func
+DROP FUNCTION dbo.object_definition_dependency_func
 GO
-
+DROP PROCEDURE dbo.object_definition_dependent_proc
+GO
