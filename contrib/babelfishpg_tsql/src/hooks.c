@@ -6696,47 +6696,6 @@ fetch_table_schema(RangeVar *relation, Node *flag)
 // 	return NULL;
 // }
 
-/*
- * tsql_openxml_get_colpattern - Generate XPath expressions for OPENXML columns
- *
- * This function generates the appropriate XPath expression for a column based on
- * the OPENXML flag value. The flag determines whether to access XML data as
- * attributes, elements, or either.
- *   flag - Controls the XPath pattern generation:
- *   0,1: Use attribute access (@colname)
- *   2: Use element access (colname)
- *   3: Try both element and attribute (colname|@colname)
- */
-Datum
-tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
-{
-	char *xpath_expr;
-	int flag = PG_GETARG_INT32(1);
-	char *colname = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	
-	switch (flag)
-	{
-		case 0:
-		case 1:
-			/* For flags 0 and 1, use @colname */
-			xpath_expr = psprintf("@%s", colname);
-			break;
-		case 2:
-			/* For flag 2, use colname */
-			xpath_expr = pstrdup(colname);
-			break;
-		case 3:
-			/* For flag 3, use colname|@colname */
-			xpath_expr = psprintf("%s|@%s", colname, colname);
-			break;
-		default:
-			/* Default to @colname for unknown flags */
-			xpath_expr = psprintf("@%s", colname);
-			break;
-	}
-	
-	PG_RETURN_TEXT_P(cstring_to_text(xpath_expr));
-}
 
 static void
 pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
@@ -6750,6 +6709,8 @@ pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
 
 	tsql_docid_node = linitial(rtf->namespaces);
 	tsql_flag = lsecond(rtf->namespaces);
+
+	rtf->namespaces = NIL;
 
 	/* Set the document expression to retrieve the XML document using the document handle. This creates a function call to tsql_openxml_get_xmldoc
 	 * which retrieves the  previously prepared XML document based on the document ID from sp_xml_preparedocument.
