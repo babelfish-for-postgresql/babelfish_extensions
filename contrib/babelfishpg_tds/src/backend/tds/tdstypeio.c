@@ -1728,7 +1728,7 @@ HandleLineType(StringInfo buf, StringInfo destBuf, int npoints, bool has_z, bool
         }
         
         /* Calculate total bytes needed for result */
-        nbytes = buf->len - buf->cursor + COORD_DATA_OFFSET;
+        nbytes = buf->len - buf->cursor + COORD_DATA_OFFSET + bboxSize - 4;
         result = (bytea *) palloc0(nbytes + VARHDRSZ);
         SET_VARSIZE(result, nbytes + VARHDRSZ);
         
@@ -1743,7 +1743,7 @@ HandleLineType(StringInfo buf, StringInfo destBuf, int npoints, bool has_z, bool
     }
     /* Copy final assembled buffer to PostgreSQL result */
     memcpy(VARDATA(result), &destBuf->data[0], nbytes);
-    buf->cursor += buf->len - buf->cursor - COORD_DATA_OFFSET;
+    buf->cursor += nbytes - COORD_DATA_OFFSET;
 
     PG_RETURN_BYTEA_P(result);
 }
@@ -1940,7 +1940,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
         return HandleLineType(buf, destBuf, npoints, has_z, has_m, has_bbox);
     }
     
-    buf->cursor += buf->len - buf->cursor - COORD_DATA_OFFSET;
+    buf->cursor += nbytes - COORD_DATA_OFFSET;
     
     PG_RETURN_BYTEA_P(result);
 }
