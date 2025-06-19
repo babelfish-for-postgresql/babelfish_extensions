@@ -29,3 +29,8 @@ order by name
 GO
 grant select on dbo.user_token_fixed_roles to public;
 GO
+
+create login user_token_with_all_priv with password = '12345678'
+GO
+create user u_user_token_with_all_priv for login user_token_with_all_priv
+GO
