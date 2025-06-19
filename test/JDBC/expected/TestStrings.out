@@ -4262,7 +4262,7 @@ SELECT 'Prefix_' + BitCol AS BitConcat FROM ImplicitToStringTest;
 SELECT N'Prefix_' + BitCol AS BitConcatN FROM ImplicitToStringTest;
 GO
 ~~ERROR (Code: 33557097)~~
- 
+
 ~~ERROR (Message: invalid input syntax for type double precision: "Prefix_")~~
 
 
