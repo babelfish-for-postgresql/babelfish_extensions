@@ -1,0 +1,552 @@
+CREATE TYPE str_type_decimal FROM DECIMAL(18,6);
+CREATE TYPE str_type_float FROM FLOAT;
+GO
+
+-- Create base tables
+CREATE TABLE str_t1 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    NumberValue DECIMAL(18,6),
+    Length INT,
+    Decimal INT,
+    ExpectedOutput VARCHAR(100),
+    Description VARCHAR(200)
+);
+GO
+
+CREATE TABLE str_t2 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    NumberValue FLOAT,
+    Length INT,
+    Decimal INT,
+    ExpectedOutput VARCHAR(100),
+    Description VARCHAR(200)
+);
+GO
+
+-- Insert test data
+INSERT INTO str_t1 (NumberValue, Length, Decimal, ExpectedOutput, Description) VALUES
+(123.456789, 10, 2, '    123.46', 'Basic decimal with rounding'),
+(123.456789, 8, 2, ' 123.46', 'Minimal length for decimal'),
+(123.456789, 6, 2, '******', 'Length too small'),
+(123.456789, 10, 0, '       123', 'No decimal places'),
+(0.123456, 8, 3, '    0.123', 'Leading zero'),
+(-123.456, 10, 2, '   -123.46', 'Negative number'),
+(9999.9999, 8, 2, ' 10000.00', 'Rounding causing more digits'),
+(0.0, 5, 2, '  0.00', 'Zero value'),
+(0.001, 8, 4, '   0.0010', 'Small number with trailing zeros'),
+(123456.789, 10, 2, ' 123456.79', 'Large number with decimal');
+GO
+~~ROW COUNT: 10~~
+
+
+INSERT INTO str_t2 (NumberValue, Length, Decimal, ExpectedOutput, Description) VALUES
+(123.456789e0, 10, 2, '    123.46', 'Basic float'),
+(1.23456e2, 10, 2, '    123.46', 'Scientific notation positive'),
+(1.23456e-2, 10, 4, '    0.0123', 'Scientific notation negative'),
+(SQRT(2), 10, 4, '    1.4142', 'Square root'),
+(PI(), 10, 4, '    3.1416', 'PI value'),
+(POWER(10, 10), 15, 0, '  10000000000', 'Large power'),
+(1e-6, 10, 8, '  0.000001', 'Very small number'),
+(-1.23456e2, 10, 2, '   -123.46', 'Negative scientific notation'),
+(9.9999e0, 8, 2, '   10.00', 'Rounding to next integer'),
+(1.23456789e-10, 15, 12, ' 0.000000000123', 'Extreme precision');
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+
+-- =============================================
+-- BASIC FUNCTIONAL TESTS
+-- =============================================
+-- 1. Basic STR Tests
+SELECT 
+    STR(123.456) AS DefaultParams,
+    STR(123.456, 10, 2) AS SpecifiedParams,
+    STR(-123.456, 10, 2) AS NegativeNumber,
+    STR(0, 5, 2) AS ZeroValue;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+       123#!#    123.46#!#   -123.46#!# 0.00
+~~END~~
+
+
+-- 2. Length Parameter Tests
+SELECT
+    STR(123.456, 3, 0) AS TooShort,           -- Returns '***'
+    STR(123.456, 6, 0) AS ExactLength,        -- Returns ' 123'
+    STR(123.456, 10, 0) AS ExtraSpace,        -- Returns '       123'
+    STR(9999.99, 5, 0) AS LengthOverflow;     -- Returns '*****'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+123#!#   123#!#       123#!#10000
+~~END~~
+
+
+-- 3. Decimal Parameter Tests
+SELECT
+    STR(123.456789, 10, 0) AS NoDecimals,     -- Returns '       123'
+    STR(123.456789, 10, 2) AS TwoDecimals,    -- Returns '    123.46'
+    STR(123.456789, 10, 4) AS FourDecimals,   -- Returns '  123.4568'
+    STR(123.456789, 10, 6) AS SixDecimals;    -- Returns '123.456789'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+       123#!#    123.46#!#  123.4568#!#123.456789
+~~END~~
+
+
+-- 4. Rounding Tests
+SELECT
+    STR(123.454, 10, 2) AS RoundDown,         -- Returns '    123.45'
+    STR(123.455, 10, 2) AS RoundUp,           -- Returns '    123.46'
+    STR(123.45, 10, 2) AS NoRounding,         -- Returns '    123.45'
+    STR(9.999, 10, 2) AS RoundToNextInteger;  -- Returns '     10.00'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+    123.45#!#    123.46#!#    123.45#!#     10.00
+~~END~~
+
+
+-- 5. Scientific Notation Tests
+SELECT
+    STR(1.23456E2, 10, 2) AS PositiveExponent,    -- 123.46
+    STR(1.23456E-2, 10, 4) AS NegativeExponent,   -- 0.0123
+    STR(1E10, 15, 2) AS LargeExponent,
+    STR(1E-10, 15, 12) AS SmallExponent;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+    123.46#!#    0.0123#!# 10000000000.00#!# 0.000000000100
+~~END~~
+
+
+-- 6. NULL and Special Value Tests
+SELECT
+    STR(NULL) AS NullValue,
+    STR(CAST('Infinity' AS FLOAT), 10, 2) AS InfinityTest,
+    STR(CAST('-Infinity' AS FLOAT), 10, 2) AS NegativeInfinityTest,
+    STR(CAST('NaN' AS FLOAT), 10, 2) AS NaNTest;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- 7. Different Numeric Types Tests
+SELECT
+    -- Integer types
+    STR(CAST(123 AS TINYINT), 10, 2) AS TinyIntTest,
+    STR(CAST(123 AS SMALLINT), 10, 2) AS SmallIntTest,
+    STR(CAST(123 AS INT), 10, 2) AS IntTest,
+    STR(CAST(123 AS BIGINT), 10, 2) AS BigIntTest,
+    
+    -- Decimal types
+    STR(CAST(123.456 AS DECIMAL(10,3)), 10, 2) AS DecimalTest,
+    STR(CAST(123.456 AS NUMERIC(10,3)), 10, 2) AS NumericTest,
+    
+    -- Money types
+    STR(CAST(123.456 AS MONEY), 10, 2) AS MoneyTest,
+    STR(CAST(123.456 AS SMALLMONEY), 10, 2) AS SmallMoneyTest;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+    123.00#!#    123.00#!#    123.00#!#    123.00#!#    123.46#!#    123.46#!#    123.46#!#    123.46
+~~END~~
+
+
+-- 8. Edge Case Tests
+SELECT
+    -- Minimum and maximum values
+    STR(-1e308, 20, 2) AS MinFloatTest,
+    STR(1e308, 20, 2) AS MaxFloatTest,
+    
+    -- Precision tests
+    STR(0.00000000001, 15, 12) AS SmallPrecisionTest,
+    STR(123456789.987654321, 20, 9) AS LargePrecisionTest,
+    
+    -- Zero variants
+    STR(0.0, 10, 2) AS ZeroDecimalTest,
+    STR(-0.0, 10, 2) AS NegativeZeroTest,
+    STR(0.000000001, 15, 10) AS SmallZeroTest;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The number '-100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000' is out of the range for numeric representation (maximum precision 38).)~~
+
+
+-- 9. Mathematical Function Results
+SELECT
+    STR(PI(), 10, 8) AS PiValue,
+    STR(SQRT(2), 10, 8) AS SquareRoot2,
+    STR(EXP(1), 10, 8) AS EValue,
+    STR(LOG(10), 10, 8) AS Log10,
+    STR(SIN(PI()/2), 10, 8) AS SinPiDiv2;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+3.14159265#!#1.41421356#!#2.71828183#!#2.30258509#!#1.00000000
+~~END~~
+
+
+-- 10. Boundary Value Tests
+SELECT
+    STR(9.999999, 5, 2) AS BoundaryRounding,
+    STR(-9.999999, 5, 2) AS NegativeBoundary,
+    STR(999.99, 5, 1) AS OverflowTest,
+    STR(0.000001, 5, 5) AS UnderflowTest;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+10.00#!#*****#!#*****#!#0.000
+~~END~~
+
+
+
+-- =============================================
+-- ADVANCED TESTS
+-- =============================================
+-- 11. Format Pattern Tests
+CREATE TABLE str_t3 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    NumberValue DECIMAL(18,6),
+    FormatPattern VARCHAR(20),
+    ExpectedWidth INT
+);
+GO
+
+INSERT INTO str_t3 (NumberValue, FormatPattern, ExpectedWidth) VALUES
+(123.456789, 'Integer', 5),      -- Width for "123"
+(123.456789, '2 decimals', 7),   -- Width for "123.46"
+(123.456789, '4 decimals', 9),   -- Width for "123.4568"
+(-123.456789, 'Negative', 6),    -- Width for "-123"
+(0.123456789, 'Small', 8),       -- Width for "0.123457"
+(9999.99999, 'Rounding', 8);     -- Width for "10000.00"
+GO
+~~ROW COUNT: 6~~
+
+
+-- Test format patterns
+SELECT 
+    NumberValue,
+    STR(NumberValue, ExpectedWidth, 0) AS IntegerFormat,
+    STR(NumberValue, ExpectedWidth + 2, 2) AS TwoDecimalFormat,
+    STR(NumberValue, ExpectedWidth + 4, 4) AS FourDecimalFormat
+FROM str_t3;
+GO
+~~START~~
+numeric#!#varchar#!#varchar#!#varchar
+123.456789#!#  123#!# 123.46#!# 123.4568
+123.456789#!#    123#!#   123.46#!#   123.4568
+123.456789#!#      123#!#     123.46#!#     123.4568
+-123.456789#!#  -123#!# -123.46#!# -123.4568
+0.123457#!#       0#!#      0.12#!#      0.1235
+9999.999990#!#   10000#!#  10000.00#!#  10000.0000
+~~END~~
+
+
+-- 12. Calculation Result Tests
+CREATE TABLE str_t4 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    Value1 DECIMAL(10,2),
+    Value2 DECIMAL(10,2)
+);
+GO
+
+INSERT INTO str_t4 (Value1, Value2) VALUES
+(123.45, 67.89),
+(-123.45, 67.89),
+(0.01, 0.02),
+(999.99, 0.01);
+GO
+~~ROW COUNT: 4~~
+
+
+SELECT 
+    Value1,
+    Value2,
+    STR(Value1 + Value2, 15, 2) AS Addition,
+    STR(Value1 - Value2, 15, 2) AS Subtraction,
+    STR(Value1 * Value2, 15, 2) AS Multiplication,
+    STR(Value1 / NULLIF(Value2, 0), 15, 4) AS Division
+FROM str_t4;
+GO
+~~START~~
+numeric#!#numeric#!#varchar#!#varchar#!#varchar#!#varchar
+123.45#!#67.89#!#         191.34#!#          55.56#!#        8381.02#!#         1.8184
+-123.45#!#67.89#!#         -55.56#!#        -191.34#!#       -8381.02#!#        -1.8184
+0.01#!#0.02#!#           0.03#!#          -0.01#!#           0.00#!#         0.5000
+999.99#!#0.01#!#        1000.00#!#         999.98#!#          10.00#!#     99999.0000
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - VIEWS
+-- =============================================
+-- 13. Create Views
+CREATE VIEW str_v1 AS
+SELECT 
+    ID,
+    NumberValue,
+    Length,
+    Decimal,
+    STR(NumberValue, Length, Decimal) AS FormattedValue,
+    ExpectedOutput,
+    CASE 
+        WHEN STR(NumberValue, Length, Decimal) = ExpectedOutput THEN 'Pass'
+        ELSE 'Fail'
+    END AS TestResult
+FROM str_t1;
+GO
+
+CREATE VIEW str_v2 AS
+SELECT 
+    ID,
+    NumberValue,
+    Length,
+    Decimal,
+    STR(NumberValue, Length, Decimal) AS FormattedValue,
+    ExpectedOutput,
+    CASE 
+        WHEN STR(NumberValue, Length, Decimal) = ExpectedOutput THEN 'Pass'
+        ELSE 'Fail'
+    END AS TestResult
+FROM str_t2;
+GO
+
+-- Test Views
+SELECT * FROM str_v1 WHERE TestResult = 'Fail';
+SELECT * FROM str_v2 WHERE TestResult = 'Fail';
+GO
+~~START~~
+int#!#numeric#!#int#!#int#!#varchar#!#varchar#!#varchar
+2#!#123.456789#!#8#!#2#!#  123.46#!# 123.46#!#Fail
+3#!#123.456789#!#6#!#2#!#123.46#!#******#!#Fail
+5#!#0.123456#!#8#!#3#!#   0.123#!#    0.123#!#Fail
+7#!#9999.999900#!#8#!#2#!#10000.00#!# 10000.00#!#Fail
+8#!#0.000000#!#5#!#2#!# 0.00#!#  0.00#!#Fail
+9#!#0.001000#!#8#!#4#!#  0.0010#!#   0.0010#!#Fail
+~~END~~
+
+~~START~~
+int#!#float#!#int#!#int#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - FUNCTIONS
+-- =============================================
+-- 14. Create Functions
+CREATE FUNCTION str_fn_formatnumber
+(
+    @Number DECIMAL(18,6),
+    @MinWidth INT,
+    @MaxWidth INT,
+    @Decimals INT
+)
+RETURNS VARCHAR(100)
+AS
+BEGIN
+    DECLARE @Result VARCHAR(100);
+    DECLARE @CurrentWidth INT = @MinWidth;
+    
+    WHILE @CurrentWidth <= @MaxWidth
+    BEGIN
+        SET @Result = STR(@Number, @CurrentWidth, @Decimals);
+        IF @Result NOT LIKE '*%'
+            BREAK;
+        SET @CurrentWidth = @CurrentWidth + 1;
+    END
+    
+    RETURN @Result;
+END;
+GO
+
+CREATE FUNCTION str_fn_formatcalculation
+(
+    @Value1 DECIMAL(18,6),
+    @Value2 DECIMAL(18,6),
+    @Operation CHAR(1)
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT
+        CASE @Operation
+            WHEN '+' THEN STR(@Value1 + @Value2, 20, 2)
+            WHEN '-' THEN STR(@Value1 - @Value2, 20, 2)
+            WHEN '*' THEN STR(@Value1 * @Value2, 20, 2)
+            WHEN '/' THEN STR(@Value1 / NULLIF(@Value2, 0), 20, 4)
+            ELSE NULL
+        END AS Result
+);
+GO
+
+-- Test Functions
+SELECT dbo.str_fn_formatnumber(123.456789, 5, 15, 2);
+SELECT * FROM dbo.str_fn_formatcalculation(123.45, 67.89, '+');
+GO
+~~START~~
+varchar
+123.5
+~~END~~
+
+~~START~~
+varchar
+              191.34
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - STORED PROCEDURES
+-- =============================================
+-- 15. Create Procedures
+CREATE PROCEDURE str_sp_formatnumber
+    @Number DECIMAL(18,6),
+    @MinDecimals INT = 0,
+    @MaxDecimals INT = 6
+AS
+BEGIN
+    DECLARE @CurrentDecimals INT = @MinDecimals;
+    
+    WHILE @CurrentDecimals <= @MaxDecimals
+    BEGIN
+        SELECT 
+            @CurrentDecimals AS Decimals,
+            STR(@Number, 20, @CurrentDecimals) AS FormattedValue;
+        
+        SET @CurrentDecimals = @CurrentDecimals + 1;
+    END
+END;
+GO
+
+CREATE PROCEDURE str_sp_compareformats
+    @Number DECIMAL(18,6)
+AS
+BEGIN
+    SELECT 
+        'Default' AS Format,
+        STR(@Number) AS Result
+    UNION ALL
+    SELECT 
+        '10,2',
+        STR(@Number, 10, 2)
+    UNION ALL
+    SELECT
+        '15,4',
+        STR(@Number, 15, 4)
+    UNION ALL
+    SELECT
+        '20,6',
+        STR(@Number, 20, 6)
+    ORDER BY Format;
+END;
+GO
+
+-- Test Procedures
+EXEC str_sp_formatnumber 123.456789, 0, 4;
+EXEC str_sp_compareformats 123.456789;
+GO
+~~START~~
+int#!#varchar
+0#!#                 123
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#               123.5
+~~END~~
+
+~~START~~
+int#!#varchar
+2#!#              123.46
+~~END~~
+
+~~START~~
+int#!#varchar
+3#!#             123.457
+~~END~~
+
+~~START~~
+int#!#varchar
+4#!#            123.4568
+~~END~~
+
+~~START~~
+varchar#!#varchar
+10,2#!#    123.46
+15,4#!#       123.4568
+20,6#!#          123.456789
+Default#!#       123
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - COMPUTED COLUMNS
+-- =============================================
+-- 16. Create Table with Computed Columns
+CREATE TABLE str_computed_t1 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    NumberValue DECIMAL(18,6),
+    DefaultFormat AS STR(NumberValue) PERSISTED,
+    Format102 AS STR(NumberValue, 10, 2) PERSISTED,
+    Format154 AS STR(NumberValue, 15, 4) PERSISTED,
+    IsOverflow AS CASE WHEN STR(NumberValue, 5, 2) LIKE '*%' THEN 1 ELSE 0 END PERSISTED
+);
+GO
+
+
+-- Test Computed Columns
+INSERT INTO str_computed_t1 (NumberValue) VALUES
+(123.456789),
+(-123.456789),
+(0.123456),
+(9999.99999);
+SELECT * FROM str_computed_t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nondeterministic collations are not supported for LIKE)~~
+
+
+
+-- =============================================
+-- CLEANUP
+-- =============================================
+-- Drop Views
+DROP VIEW str_v1;
+DROP VIEW str_v2;
+GO
+
+-- Drop Functions
+DROP FUNCTION str_fn_formatnumber;
+DROP FUNCTION str_fn_formatcalculation;
+GO
+
+-- Drop Procedures
+DROP PROCEDURE str_sp_formatnumber;
+DROP PROCEDURE str_sp_compareformats;
+GO
+
+-- Drop Tables
+DROP TABLE str_computed_t1;
+DROP TABLE str_t4;
+DROP TABLE str_t3;
+DROP TABLE str_t2;
+DROP TABLE str_t1;
+GO
+
+-- Drop Types
+DROP TYPE str_type_decimal;
+DROP TYPE str_type_float;
+GO

@@ -1,0 +1,898 @@
+-- Create UDTs
+CREATE TYPE ascii_type_char FROM CHAR(10);
+CREATE TYPE ascii_type_varchar FROM VARCHAR(50);
+CREATE TYPE ascii_type_nchar FROM NCHAR(10);
+CREATE TYPE ascii_type_nvarchar FROM NVARCHAR(50);
+GO
+
+-- Create base tables
+CREATE TABLE ascii_t1 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    CharCol CHAR(10),
+    VarcharCol VARCHAR(50),
+    NCharCol NCHAR(10),
+    NVarcharCol NVARCHAR(50),
+    TextCol TEXT,
+    NTextCol NTEXT,
+    ExpectedValue INT,
+    Description VARCHAR(100)
+);
+GO
+
+
+
+
+
+-- Insert test data for basic ASCII values
+INSERT INTO ascii_t1 VALUES
+-- Basic ASCII characters
+('A', 'A', N'A', N'A', 'A', N'A', 65, 'Capital A'),
+('a', 'a', N'a', N'a', 'a', N'a', 97, 'Lowercase a'),
+('Z', 'Z', N'Z', N'Z', 'Z', N'Z', 90, 'Capital Z'),
+('z', 'z', N'z', N'z', 'z', N'z', 122, 'Lowercase z'),
+('0', '0', N'0', N'0', '0', N'0', 48, 'Zero digit'),
+('9', '9', N'9', N'9', '9', N'9', 57, 'Nine digit'),
+-- Special characters
+(' ', ' ', N' ', N' ', ' ', N' ', 32, 'Space'),
+('!', '!', N'!', N'!', '!', N'!', 33, 'Exclamation mark'),
+('@', '@', N'@', N'@', '@', N'@', 64, 'At symbol'),
+('#', '#', N'#', N'#', '#', N'#', 35, 'Hash symbol'),
+-- Control characters
+(CHAR(9), CHAR(9), NCHAR(9), NCHAR(9), CHAR(9), NCHAR(9), 9, 'Tab'),
+(CHAR(13), CHAR(13), NCHAR(13), NCHAR(13), CHAR(13), NCHAR(13), 13, 'Carriage return'),
+(CHAR(10), CHAR(10), NCHAR(10), NCHAR(10), CHAR(10), NCHAR(10), 10, 'Line feed'),
+-- Multiple characters (should take first character)
+('ABC', 'ABC', N'ABC', N'ABC', 'ABC', N'ABC', 65, 'Multiple chars - returns first'),
+('123', '123', N'123', N'123', '123', N'123', 49, 'Multiple numbers - returns first'),
+-- Empty and spaces
+('', '', N'', N'', '', N'', NULL, 'Empty string'),
+(' A', ' A', N' A', N' A', ' A', N' A', 32, 'Space then char');
+GO
+~~ROW COUNT: 17~~
+
+
+-- Create table for Unicode tests
+CREATE TABLE ascii_t2 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    UnicodeChar NCHAR(10),
+    UnicodeString NVARCHAR(50),
+    ExpectedValue INT,
+    Description NVARCHAR(100)
+);
+GO
+
+-- Insert Unicode test data
+INSERT INTO ascii_t2 VALUES
+(N'A', N'ASCII in Unicode', 65, N'ASCII character in Unicode string'),
+(N'あ', N'Japanese character', NULL, N'Japanese character'),
+(N'한', N'Korean character', NULL, N'Korean character'),
+(N'☺', N'Smiley face', NULL, N'Unicode symbol'),
+(N'é', N'Accented e', NULL, N'Accented character'),
+(N'★', N'Star symbol', NULL, N'Unicode star'),
+(N'⌘', N'Command symbol', NULL, N'Unicode command'),
+(N' ', N'Space in Unicode', 32, N'Space character'),
+(N'', N'Empty Unicode', NULL, N'Empty Unicode string'),
+(NCHAR(9), N'Tab in Unicode', 9, N'Unicode tab character');
+GO
+~~ROW COUNT: 10~~
+
+
+
+-- =============================================
+-- BASIC FUNCTIONAL TESTS
+-- =============================================
+-- 1. Basic ASCII Character Tests
+SELECT 
+    ASCII('A') AS CapitalA,
+    ASCII('a') AS LowercaseA,
+    ASCII('Z') AS CapitalZ,
+    ASCII('z') AS LowercaseZ,
+    ASCII('0') AS Zero,
+    ASCII('9') AS Nine;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+65#!#97#!#90#!#122#!#48#!#57
+~~END~~
+
+
+-- 2. Special Character Tests
+SELECT 
+    ASCII(' ') AS Space,
+    ASCII('!') AS ExclamationMark,
+    ASCII('@') AS AtSymbol,
+    ASCII('#') AS HashSymbol,
+    ASCII('$') AS DollarSign,
+    ASCII('%') AS PercentSign;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+32#!#33#!#64#!#35#!#36#!#37
+~~END~~
+
+
+-- 3. Control Character Tests
+SELECT 
+    ASCII(CHAR(9)) AS Tab,
+    ASCII(CHAR(10)) AS LineFeed,
+    ASCII(CHAR(13)) AS CarriageReturn,
+    ASCII(CHAR(27)) AS EscapeChar;
+GO
+~~START~~
+int#!#int#!#int#!#int
+9#!#10#!#13#!#27
+~~END~~
+
+
+-- following throws error in babelfish
+SELECT ASCII(CHAR(0)) AS NullChar
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: null character not permitted)~~
+
+
+-- 4. Tests with Different Data Types
+SELECT 
+    -- Fixed length character tests
+    ASCII(CharCol) AS CharValue,
+    -- Variable length character tests
+    ASCII(VarcharCol) AS VarcharValue,
+    -- Unicode fixed length tests
+    ASCII(NCharCol) AS NCharValue,
+    -- Unicode variable length tests
+    ASCII(NVarcharCol) AS NVarcharValue,
+    -- Text type tests
+    ASCII(TextCol) AS TextValue,
+    -- NText type tests
+    ASCII(NTextCol) AS NTextValue
+FROM ascii_t1
+WHERE ID <= 5;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+65#!#65#!#65#!#65#!#65#!#65
+97#!#97#!#97#!#97#!#97#!#97
+90#!#90#!#90#!#90#!#90#!#90
+122#!#122#!#122#!#122#!#122#!#122
+48#!#48#!#48#!#48#!#48#!#48
+~~END~~
+
+
+-- 5. NULL and Empty String Tests
+SELECT 
+    ASCII(NULL) AS NullInput,
+    ASCII('') AS EmptyString,
+    ASCII('  ') AS MultipleSpaces,
+    ASCII(CAST(NULL AS VARCHAR)) AS NullVarchar,
+    ASCII(CAST(NULL AS NVARCHAR)) AS NullNVarchar;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+<NULL>#!#0#!#32#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- 6. Multiple Character String Tests
+SELECT 
+    ASCII('ABC') AS FirstCharOfABC,
+    ASCII('123') AS FirstCharOf123,
+    ASCII('!@#') AS FirstCharOfSpecial,
+    ASCII('   ABC') AS FirstCharOfSpacedString,
+    ASCII(CHAR(13) + 'ABC') AS FirstCharOfCRString;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+65#!#49#!#33#!#32#!#13
+~~END~~
+
+
+-- 7. Unicode Character Tests
+SELECT 
+    UnicodeChar,
+    UnicodeString,
+    ASCII(UnicodeChar) AS CharASCII,
+    ASCII(UnicodeString) AS StringASCII,
+    ExpectedValue,
+    CASE 
+        WHEN ASCII(UnicodeChar) = ExpectedValue THEN 'Pass'
+        ELSE 'Fail'
+    END AS TestResult
+FROM ascii_t2;
+GO
+~~START~~
+nchar#!#nvarchar#!#int#!#int#!#int#!#varchar
+A         #!#ASCII in Unicode#!#65#!#65#!#65#!#Pass
+あ         #!#Japanese character#!#12354#!#74#!#<NULL>#!#Fail
+한         #!#Korean character#!#54620#!#75#!#<NULL>#!#Fail
+☺         #!#Smiley face#!#9786#!#83#!#<NULL>#!#Fail
+é         #!#Accented e#!#233#!#65#!#<NULL>#!#Fail
+★         #!#Star symbol#!#9733#!#83#!#<NULL>#!#Fail
+⌘         #!#Command symbol#!#8984#!#67#!#<NULL>#!#Fail
+          #!#Space in Unicode#!#32#!#83#!#32#!#Pass
+          #!#Empty Unicode#!#32#!#69#!#<NULL>#!#Fail
+	         #!#Tab in Unicode#!#9#!#84#!#9#!#Pass
+~~END~~
+
+
+-- 8. Edge Case Tests
+SELECT 
+    -- Extended ASCII characters (128-255)
+    ASCII(CHAR(128)) AS Char128,
+    ASCII(CHAR(255)) AS Char255,
+    
+    -- Control characters
+    ASCII(CHAR(1)) AS StartOfHeading,
+    ASCII(CHAR(31)) AS UnitSeparator
+GO
+~~START~~
+int#!#int#!#int#!#int
+128#!#255#!#1#!#31
+~~END~~
+
+
+SELECT
+    -- ASCII on out of input range (> 255)
+    ASCII(CHAR(256)) AS Char256,
+    ASCII(CHAR(12121)) AS Char12121
+GO
+~~START~~
+int#!#int
+256#!#12121
+~~END~~
+
+
+
+-- =============================================
+-- ADVANCED TEST CASES
+-- =============================================
+-- 9. Character Range Tests
+WITH Numbers AS (
+    SELECT generate_series AS Num
+    FROM GENERATE_SERIES(1, 255)
+)
+SELECT 
+    Num,
+    CHAR(Num) AS CharacterValue,
+    ASCII(CHAR(Num)) AS ASCIIValue,
+    CASE 
+        WHEN ASCII(CHAR(Num)) = Num THEN 'Pass'
+        ELSE 'Fail'
+    END AS TestResult
+FROM Numbers;
+GO
+~~START~~
+int#!#text#!#int#!#varchar
+1#!##!#1#!#Pass
+2#!##!#2#!#Pass
+3#!##!#3#!#Pass
+4#!##!#4#!#Pass
+5#!##!#5#!#Pass
+6#!##!#6#!#Pass
+7#!##!#7#!#Pass
+8#!##!#8#!#Pass
+9#!#	#!#9#!#Pass
+10#!#<newline>#!#10#!#Pass
+11#!##!#11#!#Pass
+12#!##!#12#!#Pass
+13#!#<newline>#!#13#!#Pass
+14#!##!#14#!#Pass
+15#!##!#15#!#Pass
+16#!##!#16#!#Pass
+17#!##!#17#!#Pass
+18#!##!#18#!#Pass
+19#!##!#19#!#Pass
+20#!##!#20#!#Pass
+21#!##!#21#!#Pass
+22#!##!#22#!#Pass
+23#!##!#23#!#Pass
+24#!##!#24#!#Pass
+25#!##!#25#!#Pass
+26#!##!#26#!#Pass
+27#!##!#27#!#Pass
+28#!##!#28#!#Pass
+29#!##!#29#!#Pass
+30#!##!#30#!#Pass
+31#!##!#31#!#Pass
+32#!# #!#32#!#Pass
+33#!#!#!#33#!#Pass
+34#!#"#!#34#!#Pass
+35#!###!#35#!#Pass
+36#!#$#!#36#!#Pass
+37#!#%#!#37#!#Pass
+38#!#&#!#38#!#Pass
+39#!#'#!#39#!#Pass
+40#!#(#!#40#!#Pass
+41#!#)#!#41#!#Pass
+42#!#*#!#42#!#Pass
+43#!#+#!#43#!#Pass
+44#!#,#!#44#!#Pass
+45#!#-#!#45#!#Pass
+46#!#.#!#46#!#Pass
+47#!#/#!#47#!#Pass
+48#!#0#!#48#!#Pass
+49#!#1#!#49#!#Pass
+50#!#2#!#50#!#Pass
+51#!#3#!#51#!#Pass
+52#!#4#!#52#!#Pass
+53#!#5#!#53#!#Pass
+54#!#6#!#54#!#Pass
+55#!#7#!#55#!#Pass
+56#!#8#!#56#!#Pass
+57#!#9#!#57#!#Pass
+58#!#:#!#58#!#Pass
+59#!#;#!#59#!#Pass
+60#!#<#!#60#!#Pass
+61#!#=#!#61#!#Pass
+62#!#>#!#62#!#Pass
+63#!#?#!#63#!#Pass
+64#!#@#!#64#!#Pass
+65#!#A#!#65#!#Pass
+66#!#B#!#66#!#Pass
+67#!#C#!#67#!#Pass
+68#!#D#!#68#!#Pass
+69#!#E#!#69#!#Pass
+70#!#F#!#70#!#Pass
+71#!#G#!#71#!#Pass
+72#!#H#!#72#!#Pass
+73#!#I#!#73#!#Pass
+74#!#J#!#74#!#Pass
+75#!#K#!#75#!#Pass
+76#!#L#!#76#!#Pass
+77#!#M#!#77#!#Pass
+78#!#N#!#78#!#Pass
+79#!#O#!#79#!#Pass
+80#!#P#!#80#!#Pass
+81#!#Q#!#81#!#Pass
+82#!#R#!#82#!#Pass
+83#!#S#!#83#!#Pass
+84#!#T#!#84#!#Pass
+85#!#U#!#85#!#Pass
+86#!#V#!#86#!#Pass
+87#!#W#!#87#!#Pass
+88#!#X#!#88#!#Pass
+89#!#Y#!#89#!#Pass
+90#!#Z#!#90#!#Pass
+91#!#[#!#91#!#Pass
+92#!#\#!#92#!#Pass
+93#!#]#!#93#!#Pass
+94#!#^#!#94#!#Pass
+95#!#_#!#95#!#Pass
+96#!#`#!#96#!#Pass
+97#!#a#!#97#!#Pass
+98#!#b#!#98#!#Pass
+99#!#c#!#99#!#Pass
+100#!#d#!#100#!#Pass
+101#!#e#!#101#!#Pass
+102#!#f#!#102#!#Pass
+103#!#g#!#103#!#Pass
+104#!#h#!#104#!#Pass
+105#!#i#!#105#!#Pass
+106#!#j#!#106#!#Pass
+107#!#k#!#107#!#Pass
+108#!#l#!#108#!#Pass
+109#!#m#!#109#!#Pass
+110#!#n#!#110#!#Pass
+111#!#o#!#111#!#Pass
+112#!#p#!#112#!#Pass
+113#!#q#!#113#!#Pass
+114#!#r#!#114#!#Pass
+115#!#s#!#115#!#Pass
+116#!#t#!#116#!#Pass
+117#!#u#!#117#!#Pass
+118#!#v#!#118#!#Pass
+119#!#w#!#119#!#Pass
+120#!#x#!#120#!#Pass
+121#!#y#!#121#!#Pass
+122#!#z#!#122#!#Pass
+123#!#{#!#123#!#Pass
+124#!#|#!#124#!#Pass
+125#!#}#!#125#!#Pass
+126#!#~#!#126#!#Pass
+127#!##!#127#!#Pass
+128#!#?#!#128#!#Pass
+129#!#?#!#129#!#Pass
+130#!#?#!#130#!#Pass
+131#!#?#!#131#!#Pass
+132#!#?#!#132#!#Pass
+133#!#?#!#133#!#Pass
+134#!#?#!#134#!#Pass
+135#!#?#!#135#!#Pass
+136#!#?#!#136#!#Pass
+137#!#?#!#137#!#Pass
+138#!#?#!#138#!#Pass
+139#!#?#!#139#!#Pass
+140#!#?#!#140#!#Pass
+141#!#?#!#141#!#Pass
+142#!#?#!#142#!#Pass
+143#!#?#!#143#!#Pass
+144#!#?#!#144#!#Pass
+145#!#?#!#145#!#Pass
+146#!#?#!#146#!#Pass
+147#!#?#!#147#!#Pass
+148#!#?#!#148#!#Pass
+149#!#?#!#149#!#Pass
+150#!#?#!#150#!#Pass
+151#!#?#!#151#!#Pass
+152#!#?#!#152#!#Pass
+153#!#?#!#153#!#Pass
+154#!#?#!#154#!#Pass
+155#!#?#!#155#!#Pass
+156#!#?#!#156#!#Pass
+157#!#?#!#157#!#Pass
+158#!#?#!#158#!#Pass
+159#!#?#!#159#!#Pass
+160#!#?#!#160#!#Pass
+161#!#?#!#161#!#Pass
+162#!#?#!#162#!#Pass
+163#!#?#!#163#!#Pass
+164#!#¤#!#164#!#Pass
+165#!#?#!#165#!#Pass
+166#!#?#!#166#!#Pass
+167#!#§#!#167#!#Pass
+168#!#¨#!#168#!#Pass
+169#!#?#!#169#!#Pass
+170#!#?#!#170#!#Pass
+171#!#?#!#171#!#Pass
+172#!#?#!#172#!#Pass
+173#!#?#!#173#!#Pass
+174#!#?#!#174#!#Pass
+175#!#?#!#175#!#Pass
+176#!#°#!#176#!#Pass
+177#!#±#!#177#!#Pass
+178#!#?#!#178#!#Pass
+179#!#?#!#179#!#Pass
+180#!#?#!#180#!#Pass
+181#!#?#!#181#!#Pass
+182#!#?#!#182#!#Pass
+183#!#·#!#183#!#Pass
+184#!#?#!#184#!#Pass
+185#!#?#!#185#!#Pass
+186#!#?#!#186#!#Pass
+187#!#?#!#187#!#Pass
+188#!#?#!#188#!#Pass
+189#!#?#!#189#!#Pass
+190#!#?#!#190#!#Pass
+191#!#?#!#191#!#Pass
+192#!#?#!#192#!#Pass
+193#!#?#!#193#!#Pass
+194#!#?#!#194#!#Pass
+195#!#?#!#195#!#Pass
+196#!#?#!#196#!#Pass
+197#!#?#!#197#!#Pass
+198#!#?#!#198#!#Pass
+199#!#?#!#199#!#Pass
+200#!#?#!#200#!#Pass
+201#!#?#!#201#!#Pass
+202#!#?#!#202#!#Pass
+203#!#?#!#203#!#Pass
+204#!#?#!#204#!#Pass
+205#!#?#!#205#!#Pass
+206#!#?#!#206#!#Pass
+207#!#?#!#207#!#Pass
+208#!#?#!#208#!#Pass
+209#!#?#!#209#!#Pass
+210#!#?#!#210#!#Pass
+211#!#?#!#211#!#Pass
+212#!#?#!#212#!#Pass
+213#!#?#!#213#!#Pass
+214#!#?#!#214#!#Pass
+215#!#×#!#215#!#Pass
+216#!#?#!#216#!#Pass
+217#!#?#!#217#!#Pass
+218#!#?#!#218#!#Pass
+219#!#?#!#219#!#Pass
+220#!#?#!#220#!#Pass
+221#!#?#!#221#!#Pass
+222#!#?#!#222#!#Pass
+223#!#?#!#223#!#Pass
+224#!#à#!#224#!#Pass
+225#!#á#!#225#!#Pass
+226#!#?#!#226#!#Pass
+227#!#?#!#227#!#Pass
+228#!#?#!#228#!#Pass
+229#!#?#!#229#!#Pass
+230#!#?#!#230#!#Pass
+231#!#?#!#231#!#Pass
+232#!#è#!#232#!#Pass
+233#!#é#!#233#!#Pass
+234#!#ê#!#234#!#Pass
+235#!#?#!#235#!#Pass
+236#!#ì#!#236#!#Pass
+237#!#í#!#237#!#Pass
+238#!#?#!#238#!#Pass
+239#!#?#!#239#!#Pass
+240#!#?#!#240#!#Pass
+241#!#?#!#241#!#Pass
+242#!#ò#!#242#!#Pass
+243#!#ó#!#243#!#Pass
+244#!#?#!#244#!#Pass
+245#!#?#!#245#!#Pass
+246#!#?#!#246#!#Pass
+247#!#÷#!#247#!#Pass
+248#!#?#!#248#!#Pass
+249#!#ù#!#249#!#Pass
+250#!#ú#!#250#!#Pass
+251#!#?#!#251#!#Pass
+252#!#ü#!#252#!#Pass
+253#!#?#!#253#!#Pass
+254#!#?#!#254#!#Pass
+255#!#?#!#255#!#Pass
+~~END~~
+
+
+-- 10. Data Type Conversion Tests
+CREATE TABLE ascii_conversion_t3 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    IntValue INT,
+    FloatValue FLOAT,
+    DateValue DATETIME,
+    BinaryValue BINARY(10)
+);
+GO
+
+INSERT INTO ascii_conversion_t3 VALUES
+(65, 65.0, '2023-01-01', 0x41),  -- 'A' in different forms
+(97, 97.0, '2023-02-01', 0x61),  -- 'a' in different forms
+(32, 32.0, '2023-03-01', 0x20);  -- Space in different forms
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT 
+    ASCII(IntValue) AS IntToASCII,
+    ASCII(FloatValue) AS FloatToASCII,
+    ASCII(DateValue) AS DateToASCII,
+    ASCII(BinaryValue) AS BinaryToASCII
+FROM ascii_conversion_t3;
+GO
+~~START~~
+int#!#int#!#int#!#int
+54#!#54#!#50#!#48
+57#!#57#!#50#!#48
+51#!#51#!#50#!#48
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - VIEWS
+-- =============================================
+-- 11. Create Views
+CREATE VIEW ascii_v1 AS
+SELECT 
+    ID,
+    CharCol,
+    ASCII(CharCol) AS CharASCII,
+    VarcharCol,
+    ASCII(VarcharCol) AS VarcharASCII,
+    TextCol,
+    ASCII(TextCol) AS TextASCII,
+    ExpectedValue,
+    CASE 
+        WHEN ASCII(CharCol) = ExpectedValue THEN 'Pass'
+        ELSE 'Fail'
+    END AS TestResult
+FROM ascii_t1;
+GO
+
+CREATE VIEW ascii_v2 AS
+SELECT 
+    ID,
+    NCharCol,
+    ASCII(NCharCol) AS NCharASCII,
+    NVarcharCol,
+    ASCII(NVarcharCol) AS NVarcharASCII,
+    NTextCol,
+    ASCII(NTextCol) AS NTextASCII,
+    ExpectedValue,
+    CASE 
+        WHEN ASCII(NCharCol) = ExpectedValue THEN 'Pass'
+        ELSE 'Fail'
+    END AS TestResult
+FROM ascii_t1;
+GO
+
+-- Test Views
+SELECT * FROM ascii_v1 WHERE TestResult = 'Fail';
+SELECT * FROM ascii_v2 WHERE TestResult = 'Fail';
+GO
+~~START~~
+int#!#char#!#int#!#varchar#!#int#!#text#!#int#!#int#!#varchar
+16#!#          #!#32#!##!#0#!##!#0#!#<NULL>#!#Fail
+~~END~~
+
+~~START~~
+int#!#nchar#!#int#!#nvarchar#!#int#!#ntext#!#int#!#int#!#varchar
+16#!#          #!#32#!##!#0#!##!#0#!#<NULL>#!#Fail
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - FUNCTIONS
+-- =============================================
+-- 12. Create Functions
+CREATE FUNCTION ascii_fn_validatechar
+(
+    @InputChar VARCHAR(1)
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        @InputChar AS InputChar,
+        ASCII(@InputChar) AS ASCIIValue,
+        CASE 
+            WHEN ASCII(@InputChar) BETWEEN 32 AND 126 THEN 'Printable'
+            WHEN ASCII(@InputChar) < 32 THEN 'Control'
+            ELSE 'Extended'
+        END AS CharacterType
+);
+GO
+
+CREATE FUNCTION ascii_fn_comparetypes
+(
+    @Input VARCHAR(10)
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        ASCII(CAST(@Input AS CHAR(10))) AS CharASCII,
+        ASCII(CAST(@Input AS VARCHAR(10))) AS VarcharASCII,
+        ASCII(CAST(@Input AS NCHAR(10))) AS NCharASCII,
+        ASCII(CAST(@Input AS NVARCHAR(10))) AS NVarcharASCII,
+        ASCII(CAST(@Input AS TEXT)) AS TextASCII,
+        ASCII(CAST(@Input AS NTEXT)) AS NTextASCII
+);
+GO
+
+-- Test Functions
+SELECT * FROM ascii_fn_validatechar('A');
+SELECT * FROM ascii_fn_comparetypes('Test');
+GO
+~~START~~
+varchar#!#int#!#varchar
+A#!#65#!#Printable
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+84#!#84#!#84#!#84#!#84#!#84
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - STORED PROCEDURES
+-- =============================================
+-- 13. Create Procedures
+CREATE PROCEDURE ascii_sp_analyzestring
+    @InputString VARCHAR(MAX)
+AS
+BEGIN
+    SELECT 
+        @InputString AS InputString,
+        ASCII(@InputString) AS FirstCharASCII,
+        CHAR(ASCII(@InputString)) AS ASCIIToChar,
+        CASE 
+            WHEN ASCII(@InputString) BETWEEN 65 AND 90 THEN 'Uppercase'
+            WHEN ASCII(@InputString) BETWEEN 97 AND 122 THEN 'Lowercase'
+            WHEN ASCII(@InputString) BETWEEN 48 AND 57 THEN 'Digit'
+            ELSE 'Other'
+        END AS CharacterType;
+END;
+GO
+
+CREATE PROCEDURE ascii_sp_validateascii
+    @InputChar CHAR(1),
+    @ExpectedValue INT
+AS
+BEGIN
+    DECLARE @ActualValue INT = ASCII(@InputChar);
+    
+    IF @ActualValue = @ExpectedValue
+        SELECT 'Pass' AS TestResult, 
+               @InputChar AS TestChar, 
+               @ActualValue AS ActualASCII, 
+               @ExpectedValue AS ExpectedASCII;
+    ELSE
+        SELECT 'Fail' AS TestResult, 
+               @InputChar AS TestChar, 
+               @ActualValue AS ActualASCII, 
+               @ExpectedValue AS ExpectedASCII;
+END;
+GO
+
+-- Test Procedures
+EXEC ascii_sp_analyzestring 'Test String';
+EXEC ascii_sp_validateascii 'A', 65;
+GO
+~~START~~
+varchar#!#int#!#text#!#varchar
+Test String#!#84#!#T#!#Uppercase
+~~END~~
+
+~~START~~
+varchar#!#char#!#int#!#int
+Pass#!#A#!#65#!#65
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - COMPUTED COLUMNS
+-- =============================================
+-- 14. Create Tables with Computed Columns
+CREATE TABLE ascii_computed_t4 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    InputChar CHAR(1),
+    InputVarchar VARCHAR(10),
+    InputNChar NCHAR(1),
+    
+    -- Computed columns
+    CharASCII AS ASCII(InputChar) PERSISTED,
+    VarcharASCII AS ASCII(InputVarchar) PERSISTED,
+    NCharASCII AS ASCII(InputNChar) PERSISTED,
+    
+    IsUpper AS CASE 
+                WHEN ASCII(InputChar) BETWEEN 65 AND 90 THEN 1 
+                ELSE 0 
+              END PERSISTED,
+    IsLower AS CASE 
+                WHEN ASCII(InputChar) BETWEEN 97 AND 122 THEN 1 
+                ELSE 0 
+              END PERSISTED,
+    IsDigit AS CASE 
+                WHEN ASCII(InputChar) BETWEEN 48 AND 57 THEN 1 
+                ELSE 0 
+              END PERSISTED
+);
+GO
+
+
+-- Test Computed Columns
+INSERT INTO ascii_computed_t4 (InputChar, InputVarchar, InputNChar)
+VALUES
+('A', 'ABC', N'A'),
+('a', 'abc', N'a'),
+('1', '123', N'1'),
+('@', '@#$', N'@');
+SELECT * FROM ascii_computed_t4;
+GO
+~~ROW COUNT: 4~~
+
+~~START~~
+int#!#char#!#varchar#!#nchar#!#int#!#int#!#int#!#int#!#int#!#int
+1#!#A#!#ABC#!#A#!#65#!#65#!#65#!#1#!#0#!#0
+2#!#a#!#abc#!#a#!#97#!#97#!#97#!#0#!#1#!#0
+3#!#1#!#123#!#1#!#49#!#49#!#49#!#0#!#0#!#1
+4#!#@#!#@#$#!#@#!#64#!#64#!#64#!#0#!#0#!#0
+~~END~~
+
+
+
+-- =============================================
+-- DEPENDENT OBJECTS - CONSTRAINTS
+-- =============================================
+-- 15. Create Tables with Constraints
+CREATE TABLE ascii_constrained_t5 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    InputChar CHAR(1),
+    
+    -- Only allow printable ASCII characters
+    CONSTRAINT CHK_PrintableASCII 
+        CHECK (ASCII(InputChar) BETWEEN 32 AND 126),
+    
+    -- No digits allowed
+    CONSTRAINT CHK_NoDigits 
+        CHECK (ASCII(InputChar) NOT BETWEEN 48 AND 57)
+);
+GO
+
+CREATE TABLE ascii_constrained_t6 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    InputString VARCHAR(10),
+    
+    -- First character must be uppercase
+    CONSTRAINT CHK_StartsWithUpper 
+        CHECK (ASCII(InputString) BETWEEN 65 AND 90),
+    
+    -- No control characters allowed
+    CONSTRAINT CHK_NoControl 
+        CHECK (ASCII(InputString) >= 32)
+);
+GO
+
+-- Test Constraints
+-- Valid inserts
+BEGIN TRY
+    INSERT INTO ascii_constrained_t5 (InputChar) VALUES ('A'), ('z'), ('#');
+    INSERT INTO ascii_constrained_t6 (InputString) VALUES ('Test'), ('ABC');
+    SELECT 'Valid inserts succeeded' AS Status;
+END TRY
+BEGIN CATCH
+    SELECT 
+        ERROR_NUMBER() AS ErrorNumber,
+        ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;
+GO
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar
+Valid inserts succeeded
+~~END~~
+
+
+-- Invalid inserts
+BEGIN TRY
+    -- Try to insert a digit
+    INSERT INTO ascii_constrained_t5 (InputChar) VALUES ('5');
+END TRY
+BEGIN CATCH
+    SELECT 'Digit constraint' AS TestCase,
+           ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;
+GO
+~~START~~
+varchar#!#nvarchar
+Digit constraint#!#new row for relation "ascii_constrained_t5" violates check constraint "chk_nodigits"
+~~END~~
+
+
+BEGIN TRY
+    -- Try to insert lowercase first character
+    INSERT INTO ascii_constrained_t6 (InputString) VALUES ('test');
+END TRY
+BEGIN CATCH
+    SELECT 'Uppercase constraint' AS TestCase,
+           ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;
+GO
+~~START~~
+varchar#!#nvarchar
+Uppercase constraint#!#new row for relation "ascii_constrained_t6" violates check constraint "chk_startswithupper"
+~~END~~
+
+
+
+-- =============================================
+-- CLEANUP
+-- =============================================
+-- Drop Views
+DROP VIEW ascii_v1;
+DROP VIEW ascii_v2;
+GO
+
+-- Drop Functions
+DROP FUNCTION ascii_fn_validatechar;
+DROP FUNCTION ascii_fn_comparetypes;
+GO
+
+-- Drop Procedures
+DROP PROCEDURE ascii_sp_analyzestring;
+DROP PROCEDURE ascii_sp_validateascii;
+GO
+
+-- Drop Tables
+DROP TABLE ascii_constrained_t6;
+DROP TABLE ascii_constrained_t5;
+DROP TABLE ascii_computed_t4;
+DROP TABLE ascii_conversion_t3;
+DROP TABLE ascii_t2;
+DROP TABLE ascii_t1;
+GO
+
+-- Drop Types
+DROP TYPE ascii_type_char;
+DROP TYPE ascii_type_varchar;
+DROP TYPE ascii_type_nchar;
+DROP TYPE ascii_type_nvarchar;
+GO
+
