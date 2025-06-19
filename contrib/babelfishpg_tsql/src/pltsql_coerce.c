@@ -1452,6 +1452,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 * Handle default typmod for supported fixed-length datatypes
 					 * such as bigint, int, smallint, and tinyint.
 					 * These typmods represent the maximum allowed digits for each type.
+					 *
+					 * Plan check ensures typmod consistency to preventing incorrect values,
+					 * ensuring plan is not changed if typmod is calculated in execution stage.
 					 */
 					if (plan)
 					{

@@ -1799,6 +1799,13 @@ numeric
 270.60000
 ~~END~~
 
+select cast(122 as tinyint) * 1.12
+GO
+~~START~~
+numeric
+136.64
+~~END~~
+
 -- Integer + Different Types
 SELECT (122 + CAST(123 AS SMALLINT)) * 1.1;
 GO

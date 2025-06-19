@@ -688,6 +688,8 @@ select (122 + cast(123 as smallint))* 1.1
 GO
 select (123 + cast(123 as money)) * 1.1
 GO
+select cast(122 as tinyint) * 1.12
+GO
 -- Integer + Different Types
 SELECT (122 + CAST(123 AS SMALLINT)) * 1.1;
 GO
