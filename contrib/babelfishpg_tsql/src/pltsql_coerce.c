@@ -1218,11 +1218,7 @@ is_numeric_datatype(Oid typid)
 static int32
 get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
 {
-	if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(resulttype))
-		return TSQL_MONEY_TYPMOD;
-	else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(resulttype))
-		return TSQL_SMALLMONEY_TYPMOD;
-	else if (resulttype == INT4OID)
+	if (resulttype == INT4OID)
 		return DEFAULT_INT_TYPMOD;
 	else if (resulttype == INT8OID)
 		return DEFAULT_BIGINT_TYPMOD;
@@ -1230,6 +1226,10 @@ get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
 		return DEFAULT_SMALLINT_TYPMOD;
 	else if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(resulttype))
 		return DEFAULT_TINYINT_TYPMOD;
+	else if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(resulttype))
+		return TSQL_MONEY_TYPMOD;
+	else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(resulttype))
+		return TSQL_SMALLMONEY_TYPMOD;
 
 	return -1;
 }
@@ -1310,7 +1310,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (con->constisnull || 
 					(!(con->consttype == INT8OID) &&
 					 !(con->consttype == INT4OID) &&
-					 unlikely(!(con->consttype == INT2OID)) &&
+					 !(con->consttype == INT2OID) &&
 					 !is_numeric_datatype(con->consttype)))
 				{
 					if (found != NULL) *found = false;
@@ -1327,7 +1327,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 */
 					if (con->consttype == INT4OID ||
 						con->consttype == INT8OID ||
-						unlikely(con->consttype == INT2OID))
+						con->consttype == INT2OID)
 					{
 						val = con->constvalue;
 						num = int64_to_numeric(val);
@@ -1438,7 +1438,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (var->vartypmod == -1)
 				{
-					int32 		fixlen_default_typmod;
 					/* UDT handling in T_var */
 					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
 					if (OidIsValid(immediate_base_type))
@@ -1456,6 +1455,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 */
 					if (plan)
 					{
+						int32 		fixlen_default_typmod;
 						fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(var->vartype);
 						if (fixlen_default_typmod != -1)
 							return fixlen_default_typmod;
