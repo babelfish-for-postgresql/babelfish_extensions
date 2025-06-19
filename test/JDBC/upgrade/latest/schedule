@@ -208,6 +208,7 @@ collation_tests_mongolian
 collation_tests_polish
 column_domain_usage
 constraint_column_usage
+date_time_empty_input_tests
 dateadd_internal_df
 datediff_big
 datediff
