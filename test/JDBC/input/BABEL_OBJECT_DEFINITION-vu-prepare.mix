@@ -427,15 +427,6 @@ RETURN
 )
 GO
 
--- New test cases for OBJECT_DEFINITION as dependency
-CREATE PROCEDURE object_definition_dependency_proc
-    @object_name NVARCHAR(128)
-AS
-BEGIN
-    SELECT OBJECT_DEFINITION(OBJECT_ID(@object_name)) AS ObjectDefinition
-END
-GO
-
 -- View with OBJECT_DEFINITION dependency
 CREATE VIEW object_definition_dependency_view
 AS
@@ -445,6 +436,15 @@ SELECT
     OBJECT_DEFINITION(object_id) AS definition
 FROM sys.objects
 WHERE type IN ('P', 'FN', 'V')
+GO
+
+-- test cases for OBJECT_DEFINITION as dependency
+CREATE PROCEDURE object_definition_dependency_proc
+    @object_name NVARCHAR(128)
+AS
+BEGIN
+    SELECT OBJECT_DEFINITION(OBJECT_ID(@object_name)) AS ObjectDefinition
+END
 GO
 
 -- Function with OBJECT_DEFINITION dependency

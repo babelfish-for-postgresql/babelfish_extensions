@@ -309,20 +309,21 @@ nvarchar
 ~~END~~
 
 
--- Test the new dependency procedure
-EXEC object_definition_dependency_proc 'object_definition_proc'
-GO
-~~START~~
-nvarchar
-<NULL>
-~~END~~
-
-
 -- Test the dependency view
 SELECT * FROM object_definition_dependency_view WHERE name = 'object_definition_proc'
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
+object_definition_proc#!#P #!#create proc object_definition_proc as select 1<newline>
+~~END~~
+
+
+-- Test the new dependency procedure
+EXEC object_definition_dependency_proc 'object_definition_proc'
+GO
+~~START~~
+nvarchar
+create proc object_definition_proc as select 1<newline>
 ~~END~~
 
 
@@ -331,7 +332,7 @@ SELECT dbo.object_definition_dependency_func('object_definition_proc') AS Functi
 GO
 ~~START~~
 nvarchar
-<NULL>
+create proc object_definition_proc as select 1<newline>
 ~~END~~
 
 
