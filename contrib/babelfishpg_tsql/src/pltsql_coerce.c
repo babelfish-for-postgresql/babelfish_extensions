@@ -1307,9 +1307,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (con->consttypmod != -1)
 					return con->consttypmod;
 
-				if (unlikely((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(con->consttype)))
-					elog(ERROR, "TINYINT data type is not expected in this context");
-
 				if (con->constisnull || 
 					(!(con->consttype == INT8OID) &&
 					 !(con->consttype == INT4OID) &&
