@@ -1549,8 +1549,8 @@ TdsTypeUIDToDatum(StringInfo buf)
 static Datum
 HandleLineType(StringInfo buf, StringInfo destBuf, int npoints, bool has_z, bool has_m, bool has_bbox)
 {
-    bytea   *result;         /* Final PostgreSQL bytea result */
-    int     nbytes = 0;       /* Total bytes needed for result */
+    bytea   *result = NULL;  /* Final PostgreSQL bytea result */
+    int     nbytes = 0;      /* Total bytes needed for result */
     int     stride = 0;      /* Bytes per point (depends on dimensions) */
     int     pointSize = 0;   /* Total size of all points */
     char    *src = NULL;     /* Pointer to source data in input buffer */
@@ -1728,7 +1728,7 @@ HandleLineType(StringInfo buf, StringInfo destBuf, int npoints, bool has_z, bool
         }
         
         /* Calculate total bytes needed for result */
-        nbytes = buf->len - buf->cursor + COORD_DATA_OFFSET + bboxSize;
+        nbytes = buf->len - buf->cursor + COORD_DATA_OFFSET;
         result = (bytea *) palloc0(nbytes + VARHDRSZ);
         SET_VARSIZE(result, nbytes + VARHDRSZ);
         
@@ -1752,7 +1752,7 @@ HandleLineType(StringInfo buf, StringInfo destBuf, int npoints, bool has_z, bool
 Datum
 TdsTypeSpatialToDatum(StringInfo buf)
 {
-    bytea   *result;         /* Result bytea to be returned */
+    bytea   *result = NULL;  /* Result bytea to be returned */
     int32   geomType = 0;    /* PostGIS geometry type */
     int     nbytes = 0;      /* Total bytes needed for result */
     int     npoints = 0;     /* Number of points in geometry */
