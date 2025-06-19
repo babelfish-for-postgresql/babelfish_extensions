@@ -377,7 +377,7 @@ go
 ~~START~~
 numeric#!#int
 <NULL>#!#1
-0E-8#!#2
+0.000000#!#2
 ~~END~~
 
 
@@ -871,7 +871,7 @@ bit
 ~~START~~
 numeric#!#int
 <NULL>#!#1
-0E-8#!#2
+0.000000#!#2
 ~~END~~
 
 
