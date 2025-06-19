@@ -154,3 +154,16 @@ GO
 
 SELECT OBJECT_DEFINITION(OBJECT_ID('dbo.object_definition_LargeFunction'))
 GO
+
+-- Test the new dependency procedure
+EXEC object_definition_dependency_proc 'object_definition_proc'
+GO
+
+-- Test the dependency view
+SELECT * FROM object_definition_dependency_view WHERE name = 'object_definition_proc'
+GO
+
+-- Test the dependency function
+SELECT dbo.object_definition_dependency_func('object_definition_proc') AS FunctionResult
+GO
+
