@@ -86,11 +86,11 @@
 #define EMPTY_INDICATOR         4       /* Indicator for empty geometry when npoints = 0 */
 #define INVALID_GEOGRAPHY_INDICATOR      2     /* Indicator for invalid geography instance */
 
-#define POINT_XY    0x010C  /* XY point geometry type (type 1 -> driver version constant, subtype 12 -> TSQL's flag) */
-#define POINT_XYZ   0x010D  /* XYZ point geometry type (type 1 -> driver version constant, subtype 13 -> TSQL's flag) */
-#define POINT_XYM   0x010E  /* XYM point geometry type (type 1 -> driver version constant, subtype 14 -> TSQL's flag) */
-#define POINT_XYZM  0x010F  /* XYZM point geometry type (type 1 -> driver version constant, subtype 15 -> TSQL's flag) */
-#define EMPTY_GEOM  0x0104  /* Empty geometry type (type 1 -> driver version constant, subtype 4 -> TSQL's flag) */
+#define POINT_XY    0x0C  /* XY point geometry type (type 1 -> driver version constant, subtype 12 -> TSQL's flag) */
+#define POINT_XYZ   0x0D  /* XYZ point geometry type (type 1 -> driver version constant, subtype 13 -> TSQL's flag) */
+#define POINT_XYM   0x0E  /* XYM point geometry type (type 1 -> driver version constant, subtype 14 -> TSQL's flag) */
+#define POINT_XYZM  0x0F  /* XYZM point geometry type (type 1 -> driver version constant, subtype 15 -> TSQL's flag) */
+#define EMPTY_GEOM  0x04  /* Empty geometry type (type 1 -> driver version constant, subtype 4 -> TSQL's flag) */
 
 #define DIM_FLAG_Z           0x01 /* Z dimension flag in SRID 4th byte */
 #define DIM_FLAG_M           0x02 /* M dimension flag in SRID 4th byte */
@@ -1758,7 +1758,8 @@ TdsTypeSpatialToDatum(StringInfo buf)
     int     npoints = 0;     /* Number of points in geometry */
     bool    isempty = false; /* Flag indicating if geometry is empty */
     uint8_t lastByte = buf->data[buf->len - 1]; /* Last byte in buffer, used for empty detection */
-    uint16_t geomTypeId;     /* Combined geometry type identifier */
+    uint8_t geomTypeId;     /* Combined geometry type identifier */
+	uint8_t geomclass;
     StringInfo destBuf = makeStringInfo(); /* Destination buffer for building result */
     bool    has_z = false;   /* Has Z dimension */
     bool    has_m = false;   /* Has M dimension */
@@ -1771,14 +1772,21 @@ TdsTypeSpatialToDatum(StringInfo buf)
     SwapData(destBuf, destBuf->cursor + 0, destBuf->cursor + 2);
 
     /* Extract the combined geometry type identifier (2 bytes) */
-    geomTypeId = (buf->data[buf->cursor + GEOM_TYPE_OFFSET] << 8) | 
-                  buf->data[buf->cursor + GEOM_TYPE_OFFSET + 1];
+    geomTypeId = buf->data[buf->cursor + GEOM_TYPE_OFFSET + 1];
+    geomclass = buf->data[buf->cursor + GEOM_TYPE_OFFSET];
 
     /* Get point count from data if available */
     npoints_data = (buf->data[buf->cursor + 9] << 24) | 
                    (buf->data[buf->cursor + 8] << 16)| 
                    (buf->data[buf->cursor + 7] << 8) | 
                     buf->data[buf->cursor + 6];
+
+    if(geomclass != 0x01 && geomclass != 0x02)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Unsupported geometry type")));
+    }
 
     /* Determine geometry type and dimension flags */
     switch (geomTypeId) 
@@ -1805,24 +1813,24 @@ TdsTypeSpatialToDatum(StringInfo buf)
             break;
 
         /* LINESTRING types with more than 2 points (with bbox) */
-        case 0x0100: case 0x0200:
+        case 0x00:
             geomType = LINETYPE;
             has_bbox = true;
             npoints = npoints_data;
             break;
-        case 0x0101: case 0x0201: case 0x0105:
+        case 0x01: case 0x05:
             geomType = LINETYPE;
             has_z = true;
             has_bbox = true;
             npoints = npoints_data;
             break;
-        case 0x0102: case 0x0202: case 0x0106:
+        case 0x02: case 0x06:
             geomType = LINETYPE;
             has_m = true;
             has_bbox = true;
             npoints = npoints_data;
             break;
-        case 0x0103: case 0x0203: case 0x0107:
+        case 0x03: case 0x07:
             geomType = LINETYPE;
             has_z = has_m = true;
             has_bbox = true;
@@ -1830,28 +1838,28 @@ TdsTypeSpatialToDatum(StringInfo buf)
             break;
             
         /* LINESTRING types with exactly 2 points (no bbox) */
-        case 0x0110: case 0x0210: case 0x0114:
+        case 0x10: case 0x14:
             geomType = LINETYPE;
             npoints = 2;
             break;
-        case 0x0111: case 0x0211: case 0x0115:
+        case 0x11: case 0x15:
             geomType = LINETYPE;
             has_z = true;
             npoints = 2;
             break;
-        case 0x0112: case 0x0212: case 0x0116:
+        case 0x12: case 0x16:
             geomType = LINETYPE;
             has_m = true;
             npoints = 2;
             break;
-        case 0x0113: case 0x0213: case 0x0117:
+        case 0x13: case 0x17:
             geomType = LINETYPE;
             has_z = has_m = true;
             npoints = 2;
             break;
             
         /* EMPTY geometry or 2D linestring with more than 2 points */
-        case 0x0104:
+        case 0x04:
             /* Check if the geometry has EMPTY_COORD required for an empty geometry */
             if (memcmp(buf->data + buf->cursor + COORD_DATA_OFFSET, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0) 
             {
@@ -4700,14 +4708,14 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
                                          * store given string in given encoding. */
 
     char        *destBuf,
-                *src,
+                *src = NULL,
                 *buf = NULL;
     uint32_t    geom_type;
     int32_t     srid;
     unsigned char *itr;
     bool        isValid = false;
-    double      firstX,
-                firstY;
+    double      firstX = 0.0,
+                firstY = 0.0;
 				
     TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
     GSERIALIZED *gser = (GSERIALIZED *)PG_DETOAST_DATUM(value);    /* Used to Store the bytes in the Format which is stored in PostGIS */

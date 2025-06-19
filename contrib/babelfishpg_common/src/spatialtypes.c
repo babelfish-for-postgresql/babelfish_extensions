@@ -109,7 +109,8 @@ typedef struct
     int      input_len;
     int32_t  srid;
     int32_t  npoints;
-    uint16_t geom_type;
+    uint8_t  geom_type;
+    uint8_t  geom_class;
     uint8    geom_name;
     uint8    dimension_flag;
     bool      isNaN;
@@ -880,8 +881,8 @@ initialize_geometry_data(bytea *input)
                        geom_data->input_data[0];
     
     /* Extract geometry type from next 2 bytes : 5th and 6th */
-    geom_data->geom_type = (geom_data->input_data[4] << 8) | 
-                            geom_data->input_data[5];
+    geom_data->geom_class = geom_data->input_data[4];
+    geom_data->geom_type = geom_data->input_data[5];
     
     /* Extract number of points data from next 4 bytes (little-endian) : 7th to 10th , we are using it only when  npoints > 2 */
     geom_data->npoints = (geom_data->input_data[9] << 24) | 
@@ -962,9 +963,17 @@ check_nan_coordinates(GeometryData *geom_data)
 static void 
 set_dimension_flag(GeometryData *geom_data) 
 {
+
+    if(geom_data->geom_class != 0x01 && geom_data->geom_class != 0x02)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Unsupported geometry type")));
+    }
+
     switch (geom_data->geom_type) 
     {
-        case 0x0104:
+        case 0x04:
             /* If EMPTY_COORD data is present then it represents Empty geometries */                               
             if ( memcmp(geom_data->input_data + HEADER_SIZE, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0)
             {
@@ -985,55 +994,55 @@ set_dimension_flag(GeometryData *geom_data)
             }
             break;
         /* Simple point cases - only set dimension flag */
-        case 0x010C: 
+        case 0x0C: 
             geom_data->dimension_flag = DIM_FLAG_2D; /* 2D Point (XY) */
             break;
-        case 0x010D: 
+        case 0x0D: 
             geom_data->dimension_flag = DIM_FLAG_3D; /* 3D Point (XYZ) */
             break;
-        case 0x010E: 
+        case 0x0E: 
             geom_data->dimension_flag = DIM_FLAG_2DM; /* 2D Point with M (XYM) */
             break;
-        case 0x010F: 
+        case 0x0F: 
             geom_data->dimension_flag = DIM_FLAG_3DM; /* 3D Point with M (XYZM) */
             break;
             
         /* Linestring Cases with more than 2 points */
-        case 0x0100: case 0x0200:
+        case 0x00:
             geom_data->dimension_flag = DIM_FLAG_2D; /* Has 2D Points (XY) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true;
             break;
-        case 0x0101: case 0x0201: case 0x0105:
+        case 0x01: case 0x05:
             geom_data->dimension_flag = DIM_FLAG_3D; /* Has 3D Points (XYZ) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true; 
             break;
-        case 0x0102: case 0x0202: case 0x0106:
+        case 0x02: case 0x06:
             geom_data->dimension_flag = DIM_FLAG_2DM; /* Has 2D Points with M (XYM) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true; 
             break;
-        case 0x0103: case 0x0203: case 0x0107:
+        case 0x03: case 0x07:
             geom_data->dimension_flag = DIM_FLAG_3DM; /* Has 3D Points with M (XYZM) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true; 
             break;
             
         /* Linestring Cases with 2 points */
-        case 0x0110: case 0x0210: case 0x0114:
+        case 0x10: case 0x14:
             geom_data->dimension_flag = DIM_FLAG_2D; /* Has 2D Points (XY) */
             geom_data->geom_name = LINE_TYPE;
             break;
-        case 0x0111: case 0x0211: case 0x0115:
+        case 0x11: case 0x15:
             geom_data->dimension_flag = DIM_FLAG_3D; /* Has 3D Points (XYZ) */
             geom_data->geom_name = LINE_TYPE;
             break;
-        case 0x0112: case 0x0212: case 0x0116:
+        case 0x12: case 0x16:
             geom_data->dimension_flag = DIM_FLAG_2DM; /* Has 2D Points with M (XYM) */
             geom_data->geom_name = LINE_TYPE;
             break;
-        case 0x0113: case 0x0213: case 0x0117:
+        case 0x13: case 0x17:
             geom_data->dimension_flag = DIM_FLAG_3DM; /* Has 3D Points with M (XYZM) */
             geom_data->geom_name = LINE_TYPE;
             break;
