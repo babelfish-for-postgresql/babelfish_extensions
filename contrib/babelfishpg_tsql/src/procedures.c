@@ -4451,9 +4451,9 @@ create_xml_handle_columns(void)
 static char *
 generate_unique_table_name(const char *base_name)
 {
-	char         md5[MD5_HASH_LEN + 1];
-	const char  *errstr = NULL;
-	bool         success;
+	char		md5[MD5_HASH_LEN + 1];
+	const char     *errstr = NULL;
+	bool		success;
 	
 	/* Generate a unique input string for the MD5 hash */
 	char *random_input = psprintf("%s%d", base_name, rand());
@@ -4463,9 +4463,10 @@ generate_unique_table_name(const char *base_name)
 	
 	if (unlikely(!success))
 		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("could not compute MD5 hash: %s", errstr)));
-	
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not compute MD5 hash for XML handle table name generation: %s", errstr ? errstr : "unknown error"),
+				 errdetail("Failed to generate unique table name for base name \"%s\"", base_name)));
+
 	/* Create and return table name with prefix and MD5 hash */
 	return psprintf("%s_%s", base_name, md5);
 }
@@ -4504,7 +4505,7 @@ create_xml_handle_temp_table()
 	relation = makeRangeVar(NULL, table_name, -1);
 
 	/* Switch to the top-level query environment */
-	currentQueryEnv = create_queryEnv2(TopMemoryContext, true);
+	currentQueryEnv = topLevelQueryEnv;
 
 	/* This makes it temporary table */
 	relation->relpersistence = RELPERSISTENCE_TEMP;
@@ -4562,9 +4563,6 @@ create_xml_handle_temp_table()
  *
  * This function inserts a new XML document and its optional namespace data into
  * the XML handle temporary table. 
- * The function temporarily elevates privileges to "bbf_role_admin" to ensure it has
- * the necessary permissions to insert data into the table. It also sets the SQL
- * dialect to TSQL to ensure proper insertion semantics.
  * 
  * Returns:
  *   The document_id that can be used to reference this XML document
@@ -4581,8 +4579,6 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 	bool                    is_namespace_null = true;
 	Relation                relation;
 	Datum                   values[7];
-	Oid                     save_userid;
-	int                     save_sec_context;
 	int                     saved_dialect = sql_dialect;
 	HeapTuple               tuple;
 	bool                    nulls[7] = {false, true, false, true, true, false, true};
@@ -4669,14 +4665,10 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 	}
 	tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
 
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	sql_dialect = SQL_DIALECT_TSQL;
 	
 	PG_TRY();
 	{
-		/* Set current user to bbf_role_admin for insert permissions */
-		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-
 		/* Insert the entries into the table */
 		simple_heap_insert(relation, tuple);
 		CommandCounterIncrement();
@@ -4692,7 +4684,6 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 	}
 	PG_FINALLY();
 	{
-		SetUserIdAndSecContext(save_userid, save_sec_context);
 		sql_dialect = saved_dialect;
 	}
 	PG_END_TRY();
@@ -4712,10 +4703,6 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
  * it from the active_xml_handles bitmap set, making the handle available for
  * reuse. This is typically called by sp_xml_removedocument to clean up XML
  * documents when they are no longer needed.
- *
- * The function temporarily elevates privileges to "bbf_role_admin" to ensure it has
- * the necessary permissions to delete data from the table. It also sets the SQL
- * dialect to TSQL to ensure proper deletion semantics.
  */
 void 
 delete_xml_handle_entry(int document_id)
@@ -4726,8 +4713,6 @@ delete_xml_handle_entry(int document_id)
 	HeapTuple              tuple;
 	bool                   found = false;
 	int                    curr_handle_counter;
-	int                    save_sec_context;
-	Oid                    save_userid;
 	int                    saved_dialect = sql_dialect;
 	MemoryContext          oldContext = NULL;
 	bool                   table_exists = false;
@@ -4783,13 +4768,10 @@ delete_xml_handle_entry(int document_id)
 	/* Find and delete the tuple */
 	if (HeapTupleIsValid(tuple))
 	{
-		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		sql_dialect = SQL_DIALECT_TSQL;
 		 
 		PG_TRY();
 		{
-			/* Set current user to bbf_role_admin for delete permissions */
-			SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 			simple_heap_delete(relation, &tuple->t_self);
 			CommandCounterIncrement();
 			oldContext = MemoryContextSwitchTo(TopMemoryContext);
@@ -4798,7 +4780,6 @@ delete_xml_handle_entry(int document_id)
 		}
 		PG_FINALLY();
 		{
-			SetUserIdAndSecContext(save_userid, save_sec_context);
 			sql_dialect = saved_dialect;
 		}
 		PG_END_TRY();
@@ -4836,6 +4817,7 @@ reset_cached_xml_handle()
 	/* Reset the table name */
 	xml_handle_temp_table_name = NULL;
 
+	/* Reset the query environment */
 	pltsql_remove_current_query_env();
 }
 
