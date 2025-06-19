@@ -6,6 +6,8 @@ alter login user_token_login_with_db_owner with password = '12345678';
 GO
 alter login user_token_login_is_dbo with password = '12345678';
 GO
+alter login user_token_with_all_priv with password = '12345678';
+GO
 
 -- tsql
 -- create a db role and add the above user to the role
