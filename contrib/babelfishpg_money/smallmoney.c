@@ -58,8 +58,8 @@ PG_FUNCTION_INFO_V1(int2smallmoneymul);
 	Even though the range of smallmoney is within INT32_MIN and INT32_MAX,
 	we have created it as a domain on top of FIXEDDECIMAL which is represented 
 	as a 64 bit INT. Hence, we will also use 64 bit to smallmoney manipulation.
-    But we can be guaranteed that the smallmoney arg will always fit in 32bits
-    In other words, INT32_MIN <= arg <= INT32_MAX
+	But we can be guaranteed that the smallmoney arg will always fit in 32bits
+	In other words, INT32_MIN <= arg <= INT32_MAX
 */
 
 Datum
@@ -113,8 +113,8 @@ smallmoneymul(PG_FUNCTION_ARGS)
 	 * We need to promote this to 64bit as we may overflow int32 here.
 	 * Remember that arg2 is the number multiplied by FIXEDDECIMAL_MULTIPLIER,
 	 * we must divide the result by this to get the correct result.
-     * We are sure not to overflow int64 because even though arg1 and arg2 are of
-     * int64 type, they are always guaranteed to fit in int32 
+	 * We are sure not to overflow int64 because even though arg1 and arg2 are of
+	 * int64 type, they are always guaranteed to fit in int32 
 	 */
 	result = ((int64) arg1 * arg2) / FIXEDDECIMAL_MULTIPLIER;
 
@@ -179,7 +179,7 @@ Datum
 smallmoneyint8pl(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
-	int64       arg2 = PG_GETARG_INT64(1);
+	int64		arg2 = PG_GETARG_INT64(1);
 	int64		adder;
 	int128		result;
 
@@ -214,7 +214,7 @@ Datum
 smallmoneyint8mi(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
-	int64       arg2 = PG_GETARG_INT64(1);
+	int64		arg2 = PG_GETARG_INT64(1);
 	int64		subtractor;
 	int128		result;
 
@@ -318,9 +318,9 @@ smallmoneyint8div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg2 > SMALLMONEY_MAX || arg2 < SMALLMONEY_MIN)
 	{
 		ereport(ERROR,
@@ -358,7 +358,7 @@ smallmoneyint4pl(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-    /*
+	/*
 	 * Overflow check. If the result of addition
 	 * does not fit in 32 bit, then pg_add_s32_overflow
 	 * returns true
@@ -381,7 +381,7 @@ smallmoneyint4mi(PG_FUNCTION_ARGS)
 
 	/*
 	 * Overflow check. If the result of multiplication
-	 * does not fit in 64 bit, then pg_mul_s64_overflow
+	 * does not fit in 32 bit, then pg_mul_s32_overflow
 	 * returns true
 	 */
 	if (pg_mul_s32_overflow(arg2, (int32) FIXEDDECIMAL_MULTIPLIER, &subtractor)) 
@@ -414,9 +414,9 @@ smallmoneyint4mul(PG_FUNCTION_ARGS)
 	int32		result;
 
 	/*
-	 division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * multiplication with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg2 > SMALLMONEY_MAX || arg2 < SMALLMONEY_MIN)
 	{
 		ereport(ERROR,
@@ -475,9 +475,9 @@ smallmoneyint4div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg2 > SMALLMONEY_MAX || arg2 < SMALLMONEY_MIN)
 	{
 		ereport(ERROR,
@@ -523,8 +523,8 @@ smallmoneyint2mi(PG_FUNCTION_ARGS)
 	int32		result;
 
 	/*
-	 * Overflow check. If the result of addition
-	 * does not fit in 32 bit, then pg_add_s32_overflow
+	 * Overflow check. If the result of subtraction
+	 * does not fit in 32 bit, then pg_sub_s32_overflow
 	 * returns true
 	 */
 	if (pg_sub_s32_overflow(arg1, subtractor, &result)) 
@@ -546,7 +546,7 @@ smallmoneyint2mul(PG_FUNCTION_ARGS)
 	/*
 	 * multiplying arg1 and arg2 and storing into result
 	 * pg_mul_s32_overflow does an additional check 
-	 * whether the result overflows 32 bit
+	 * whether the result overflows 32 bits
 	 */
 	if (pg_mul_s32_overflow(arg1, (int32) arg2, &result))
 		ereport(ERROR,
@@ -665,7 +665,7 @@ int2smallmoneymul(PG_FUNCTION_ARGS)
 Datum
 int4smallmoneypl(PG_FUNCTION_ARGS)
 {
-	int32       arg1 = PG_GETARG_INT32(0);
+	int32		arg1 = PG_GETARG_INT32(0);
 	int32		adder;
 	int64		arg2 = PG_GETARG_INT64(1);
 	int32		result;
@@ -685,7 +685,7 @@ int4smallmoneypl(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-    /*
+	/*
 	 * Overflow check. If the result of addition
 	 * does not fit in 32 bit, then pg_add_s32_overflow
 	 * returns true
@@ -701,7 +701,7 @@ int4smallmoneypl(PG_FUNCTION_ARGS)
 Datum
 int4smallmoneymi(PG_FUNCTION_ARGS)
 {
-	int32       arg1 = PG_GETARG_INT32(0);
+	int32		arg1 = PG_GETARG_INT32(0);
 	int32		subtractor;
 	int64		arg2 = PG_GETARG_INT64(1);
 	int32		result;
@@ -721,7 +721,7 @@ int4smallmoneymi(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-    /*
+	/*
 	 * Overflow check. If the result of subtraction
 	 * does not fit in 32 bit, then pg_sub_s32_overflow
 	 * returns true
@@ -743,9 +743,9 @@ int4smallmoneymul(PG_FUNCTION_ARGS)
 
 
 	/*
-	 division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * multiplication with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg1 > SMALLMONEY_MAX || arg1 < SMALLMONEY_MIN)
 	{
 		ereport(ERROR,
@@ -774,8 +774,8 @@ int4smallmoneydiv(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
 	float8		arg2 = (float8) PG_GETARG_INT64(1) / FIXEDDECIMAL_MULTIPLIER;
-	float8      t;    
-	int64       result;
+	float8		t;    
+	int64		result;
 
 	if (arg2 == 0)
 	{
@@ -787,9 +787,9 @@ int4smallmoneydiv(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg1 > SMALLMONEY_MAX || arg1 < SMALLMONEY_MIN)
 	{
 		ereport(ERROR,
@@ -821,7 +821,7 @@ int4smallmoneydiv(PG_FUNCTION_ARGS)
 Datum
 int8smallmoneypl(PG_FUNCTION_ARGS)
 {
-	int64       arg1 = PG_GETARG_INT64(0);
+	int64		arg1 = PG_GETARG_INT64(0);
 	int64		adder;
 	int64		arg2 = PG_GETARG_INT64(1);
 	int128		result;
@@ -857,7 +857,7 @@ int8smallmoneypl(PG_FUNCTION_ARGS)
 Datum
 int8smallmoneymi(PG_FUNCTION_ARGS)
 {
-	int64       arg1 = PG_GETARG_INT64(0);
+	int64		arg1 = PG_GETARG_INT64(0);
 	int64		subtractor;
 	int64		arg2 = PG_GETARG_INT64(1);
 	int128		result;
@@ -899,9 +899,9 @@ int8smallmoneymul(PG_FUNCTION_ARGS)
 	int128		result;
 
 	/*
-	 division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * multiplication with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg1 > SMALLMONEY_MAX || arg1 < SMALLMONEY_MIN)
 	{
 		ereport(ERROR,
@@ -930,8 +930,8 @@ int8smallmoneydiv(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
 	float8		arg2 = (float8) PG_GETARG_INT64(1) / FIXEDDECIMAL_MULTIPLIER;
-	float8      t;    
-	int64       result;
+	float8		t;    
+	int64		result;
 
 	if (arg2 == 0)
 	{
@@ -943,9 +943,9 @@ int8smallmoneydiv(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * division with values > SMALLMONEY_MAX or < SMALLMONEY_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg1 > SMALLMONEY_MAX || arg1 < SMALLMONEY_MIN)
 	{
 		ereport(ERROR,

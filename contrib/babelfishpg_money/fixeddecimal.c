@@ -1698,9 +1698,9 @@ fixeddecimalmi(PG_FUNCTION_ARGS)
 Datum
 fixeddecimalmul(PG_FUNCTION_ARGS)
 {
-	int64       arg1 = PG_GETARG_INT64(0);
-	int64       arg2 = PG_GETARG_INT64(1);
-	int128      result;
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+	int128		result;
 
 	/*
 	 * We need to promote this to 128bit as we may overflow int64 here.
@@ -1837,7 +1837,7 @@ Datum
 fixeddecimalint8pl(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
-	int64       arg2 = PG_GETARG_INT64(1);
+	int64		arg2 = PG_GETARG_INT64(1);
 	int64		adder;
 	int64		result;
 
@@ -1892,7 +1892,7 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Overflow check. If the result of addition
+	 * Overflow check. If the result of subtraction
 	 * does not fit in 64 bit, then pg_sub_s64_overflow
 	 * returns true
 	 */
@@ -1921,9 +1921,9 @@ fixeddecimalint8mul(PG_FUNCTION_ARGS)
 	result = (int128) arg1 * arg2;
 
 	/*
-	 multiplication with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * multiplication with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg2 > FIXEDDECIMAL_MAX || arg2 < FIXEDDECIMAL_MIN)
 	{
 		ereport(ERROR,
@@ -1991,9 +1991,9 @@ fixeddecimalint8div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 division with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * division with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg2 > FIXEDDECIMAL_MAX || arg2 < FIXEDDECIMAL_MIN)
 	{
 		ereport(ERROR,
@@ -2067,7 +2067,7 @@ int8fixeddecimalmi(PG_FUNCTION_ARGS)
 	}
 		
 	/*
-	 * Overflow check. If the result of addition
+	 * Overflow check. If the result of subtraction
 	 * does not fit in 64 bit, then pg_sub_s64_overflow
 	 * returns true
 	 */
@@ -2095,9 +2095,9 @@ int8fixeddecimalmul(PG_FUNCTION_ARGS)
 	result = (int128) arg1 * arg2;
 
 	/*
-	 multiplication with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * multiplication with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg1 > FIXEDDECIMAL_MAX || arg1 < FIXEDDECIMAL_MIN)
 	{
 		ereport(ERROR, 
@@ -2137,9 +2137,9 @@ int8fixeddecimaldiv(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 division with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
-	 in T-SQL
-	*/
+	 * division with values > FIXEDDECIMAL_MAX or < FIXEDDECIMAL_MIN lead to overflow
+	 * in T-SQL
+	 */
 	if (arg1 > FIXEDDECIMAL_MAX || arg1 < FIXEDDECIMAL_MIN)
 	{
 		ereport(ERROR, 
