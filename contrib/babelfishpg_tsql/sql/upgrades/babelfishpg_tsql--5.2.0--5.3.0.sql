@@ -205,15 +205,17 @@ CAST(Base.oid AS INT) AS principal_id,
 CASE Ext.orig_username
     WHEN 'dbo' THEN CAST(CAST(Base3.oid AS INT) AS SYS.VARBINARY(85))
     WHEN 'guest' THEN CAST(0 AS SYS.VARBINARY(85))
-    WHEN 'db_owner' THEN CAST(4294967296 AS SYS.VARBINARY(85))          -- this value is uint32_max + 1, because we want to give these fixed_dbroles unique, non-overlapping SIDs and since pg oid is uint32, we decided the safest option is values > uint32
-    WHEN 'db_accessadmin' THEN CAST(4294967297 AS SYS.VARBINARY(85))    -- this value is uint32_max + 2
-    WHEN 'db_securityadmin' THEN CAST(4294967298 AS SYS.VARBINARY(85))  -- this value is uint32_max + 3
-    WHEN 'db_ddladmin' THEN CAST(4294967299 AS SYS.VARBINARY(85))       -- this value is uint32_max + 4
-    WHEN 'db_backupoperator' THEN CAST(4294967300 AS SYS.VARBINARY(85)) -- this value is uint32_max + 5
-    WHEN 'db_datareader' THEN CAST(4294967301 AS SYS.VARBINARY(85))     -- this value is uint32_max + 6
-    WHEN 'db_datawriter' THEN CAST(4294967302 AS SYS.VARBINARY(85))     -- this value is uint32_max + 7
-    WHEN 'db_denydatareader' THEN CAST(4294967303 AS SYS.VARBINARY(85)) -- this value is uint32_max + 8
-    WHEN 'db_denydatawriter' THEN CAST(4294967304 AS SYS.VARBINARY(85)) -- this value is uint32_max + 9
+    -- these are SIDs which are constant for all the fixed roles used across databases 
+    -- hence we are hardcoding these SIDs
+    WHEN 'db_owner' THEN CAST('\x01050000000000090400000000000000000000000000000000400000'::bytea AS SYS.VARBINARY(85)) 
+    WHEN 'db_accessadmin' THEN CAST('\x01050000000000090400000000000000000000000000000001400000'::bytea AS SYS.VARBINARY(85))    
+    WHEN 'db_securityadmin' THEN CAST('\x01050000000000090400000000000000000000000000000002400000'::bytea AS SYS.VARBINARY(85))  
+    WHEN 'db_ddladmin' THEN CAST('\x01050000000000090400000000000000000000000000000003400000'::bytea AS SYS.VARBINARY(85))       
+    WHEN 'db_backupoperator' THEN CAST('\x01050000000000090400000000000000000000000000000005400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datareader' THEN CAST('\x01050000000000090400000000000000000000000000000006400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datawriter' THEN CAST('\x01050000000000090400000000000000000000000000000007400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatareader' THEN CAST('\x01050000000000090400000000000000000000000000000008400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatawriter' THEN CAST('\x01050000000000090400000000000000000000000000000009400000'::bytea AS SYS.VARBINARY(85))
     ELSE CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85))
 END AS SID,
 CAST(Ext.orig_username AS SYS.NVARCHAR(128)) AS NAME,
@@ -276,15 +278,17 @@ CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
 CASE Ext.orig_username
     WHEN 'dbo' THEN CAST(CAST(Base3.oid AS INT) AS SYS.VARBINARY(85))
     WHEN 'guest' THEN CAST(0 AS SYS.VARBINARY(85))
-    WHEN 'db_owner' THEN CAST(4294967296 AS SYS.VARBINARY(85))          -- this value is uint32_max + 1, because we want to give these fixed_dbroles unique, non-overlapping SIDs and since pg oid is uint32, we decided the safest option is values > uint32
-    WHEN 'db_accessadmin' THEN CAST(4294967297 AS SYS.VARBINARY(85))    -- this value is uint32_max + 2
-    WHEN 'db_securityadmin' THEN CAST(4294967298 AS SYS.VARBINARY(85))  -- this value is uint32_max + 3
-    WHEN 'db_ddladmin' THEN CAST(4294967299 AS SYS.VARBINARY(85))       -- this value is uint32_max + 4
-    WHEN 'db_backupoperator' THEN CAST(4294967300 AS SYS.VARBINARY(85)) -- this value is uint32_max + 5
-    WHEN 'db_datareader' THEN CAST(4294967301 AS SYS.VARBINARY(85))     -- this value is uint32_max + 6
-    WHEN 'db_datawriter' THEN CAST(4294967302 AS SYS.VARBINARY(85))     -- this value is uint32_max + 7
-    WHEN 'db_denydatareader' THEN CAST(4294967303 AS SYS.VARBINARY(85)) -- this value is uint32_max + 8
-    WHEN 'db_denydatawriter' THEN CAST(4294967304 AS SYS.VARBINARY(85)) -- this value is uint32_max + 9
+    -- these are SIDs which are constant for all the fixed roles used across databases 
+    -- hence we are hardcoding these SIDs
+    WHEN 'db_owner' THEN CAST('\x01050000000000090400000000000000000000000000000000400000'::bytea AS SYS.VARBINARY(85)) 
+    WHEN 'db_accessadmin' THEN CAST('\x01050000000000090400000000000000000000000000000001400000'::bytea AS SYS.VARBINARY(85))    
+    WHEN 'db_securityadmin' THEN CAST('\x01050000000000090400000000000000000000000000000002400000'::bytea AS SYS.VARBINARY(85))  
+    WHEN 'db_ddladmin' THEN CAST('\x01050000000000090400000000000000000000000000000003400000'::bytea AS SYS.VARBINARY(85))       
+    WHEN 'db_backupoperator' THEN CAST('\x01050000000000090400000000000000000000000000000005400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datareader' THEN CAST('\x01050000000000090400000000000000000000000000000006400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datawriter' THEN CAST('\x01050000000000090400000000000000000000000000000007400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatareader' THEN CAST('\x01050000000000090400000000000000000000000000000008400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatawriter' THEN CAST('\x01050000000000090400000000000000000000000000000009400000'::bytea AS SYS.VARBINARY(85))
     ELSE CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85))
 END AS SID,
 CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
