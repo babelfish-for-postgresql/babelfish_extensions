@@ -1633,8 +1633,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				int		rettypmod = -1;
 				bool		found_typmod;
 				Node		*arg = NULL;
-				uint8_t		precision,
-						scale;
+				uint8_t		precision = 0,
+						scale = 0;
 				char		*funcName;
 
 				/* Be smart about length-coercion functions... */
