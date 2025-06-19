@@ -2247,3 +2247,458 @@ GO
 
 DROP TYPE TestUDT;
 GO
+
+-- *** T_FuncExpr ***
+-- ASCII
+SELECT ASCII('A') * 1.00;
+GO
+~~START~~
+numeric
+65.00
+~~END~~
+
+
+-- LEN
+SELECT LEN('Hello World') * 1.00;
+GO
+~~START~~
+numeric
+11.00
+~~END~~
+
+
+-- UNICODE
+SELECT UNICODE('Á') * 1.00;
+GO
+~~START~~
+numeric
+193.00
+~~END~~
+
+
+-- DATALENGTH
+SELECT DATALENGTH('Hello') * 1.00;
+GO
+~~START~~
+numeric
+5.00
+~~END~~
+
+
+-- COUNT
+SELECT COUNT(*) * 1.00 FROM sys.objects;
+GO
+~~START~~
+numeric
+4.00
+~~END~~
+
+
+-- COUNT_BIG
+SELECT COUNT_BIG(*) * 1.00 FROM sys.objects;
+GO
+~~START~~
+numeric
+4.00
+~~END~~
+
+
+-- SCOPE_IDENTITY
+CREATE TABLE TestTable (ID INT IDENTITY(1,1), Value VARCHAR(50));
+INSERT INTO TestTable (Value) VALUES ('Test');
+SELECT SCOPE_IDENTITY() * 1.00;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+numeric
+1.00
+~~END~~
+
+
+DROP TABLE TestTable;
+GO
+
+-- ABS
+SELECT ABS(-123.45) * 1.00;
+GO
+~~START~~
+numeric
+123.4500
+~~END~~
+
+
+SELECT ABS(123.45) * 1.00;
+GO
+~~START~~
+numeric
+123.4500
+~~END~~
+
+
+SELECT ABS(1.2) * CAST(2 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+2.400
+~~END~~
+
+
+SELECT ABS(1.2) * CAST(2 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+2.40000
+~~END~~
+
+
+-- SIGN
+SELECT SIGN(-123.45) * 1.00;
+GO
+~~START~~
+numeric
+-1.0000
+~~END~~
+
+
+SELECT SIGN(0) * 1.00;
+GO
+~~START~~
+numeric
+0.00
+~~END~~
+
+
+SELECT SIGN(123.45) * 1.00;
+GO
+~~START~~
+numeric
+1.0000
+~~END~~
+
+
+SELECT SIGN(1.2) * CAST(2 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+2.000
+~~END~~
+
+
+SELECT SIGN(1.2) * CAST(2 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+2.00000
+~~END~~
+
+
+-- POWER
+SELECT POWER(2, 3) * 1.00;
+GO
+~~START~~
+numeric
+8.00
+~~END~~
+
+
+SELECT POWER(4.5, 2) * 1.00;
+GO
+~~START~~
+numeric
+20.300
+~~END~~
+
+
+SELECT POWER(1.2, 2) * CAST(1 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+1.400
+~~END~~
+
+
+SELECT POWER(1.2, 2) * CAST(1 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+1.40000
+~~END~~
+
+
+-- ROUND
+SELECT ROUND(123.456, 2) * 1.00;
+GO
+~~START~~
+numeric
+123.46000
+~~END~~
+
+
+SELECT ROUND(123.456, 0) * 1.00;
+GO
+~~START~~
+numeric
+123.00000
+~~END~~
+
+
+SELECT ROUND(123.456, -1) * 1.00;
+GO
+~~START~~
+numeric
+120.00000
+~~END~~
+
+
+SELECT ROUND(1.2, 2) * CAST(1 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+1.200
+~~END~~
+
+
+SELECT ROUND(1.2, 2) * CAST(1 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+1.20000
+~~END~~
+
+
+-- CEILING
+SELECT CEILING(123.45) * 1.00;
+GO
+~~START~~
+numeric
+124.00
+~~END~~
+
+
+SELECT CEILING(-123.45) * 1.00;
+GO
+~~START~~
+numeric
+-123.00
+~~END~~
+
+
+SELECT CEILING(-123.456789) * CAST(1.23 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+-151.29
+~~END~~
+
+
+SELECT CEILING(-123.456789) * CAST(1.2345 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+-151.8435
+~~END~~
+
+
+SELECT CEILING(1.2) * CAST(1 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+2.00
+~~END~~
+
+
+SELECT CEILING(1.2) * CAST(1 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+2.0000
+~~END~~
+
+
+-- FLOOR
+SELECT FLOOR(123.45) * 1.00;
+GO
+~~START~~
+numeric
+123.00
+~~END~~
+
+
+SELECT FLOOR(-123.45) * 1.00;
+GO
+~~START~~
+numeric
+-124.00
+~~END~~
+
+
+SELECT FLOOR(12.456789) * CAST(2 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+24.00
+~~END~~
+
+
+SELECT FLOOR(123.456789) * CAST(2 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+246.0000
+~~END~~
+
+
+SELECT FLOOR(1.2) * CAST(2 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+2.00
+~~END~~
+
+
+SELECT FLOOR(1.2) * CAST(2 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+2.0000
+~~END~~
+
+
+-- DEGREES
+SELECT DEGREES(1) * 1.00;
+GO
+~~START~~
+numeric
+57.00
+~~END~~
+
+
+SELECT DEGREES(1) * 1.00;
+GO
+~~START~~
+numeric
+57.00
+~~END~~
+
+
+SELECT DEGREES(1.2) * CAST(1.2 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+82.50592249883852
+~~END~~
+
+
+SELECT DEGREES(1.34) * CAST(1.2 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+92.13161345704
+~~END~~
+
+
+-- RADIANS
+SELECT RADIANS(180) * 1.00;
+GO
+~~START~~
+numeric
+3.00
+~~END~~
+
+
+SELECT RADIANS(360) * 1.00;
+GO
+~~START~~
+numeric
+6.00
+~~END~~
+
+
+SELECT RADIANS(1.2) * CAST(1.2 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+0.02513274122872
+~~END~~
+
+
+SELECT RADIANS(1.34) * CAST(1.2 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+0.02806489437
+~~END~~
+
+
+-- String Related
+SELECT (ASCII('A') + LEN('Hello')) * 1.00;
+GO
+~~START~~
+numeric
+70.00
+~~END~~
+
+
+CREATE TABLE TestIdentity (ID INT IDENTITY(1,1), Value VARCHAR(50));
+GO
+
+SELECT IDENT_SEED('TestIdentity') * 1.00;
+GO
+~~START~~
+numeric
+1.00
+~~END~~
+
+
+SELECT IDENT_INCR('TestIdentity') * 1.00;
+GO
+~~START~~
+numeric
+1.00
+~~END~~
+
+
+INSERT INTO TestIdentity (Value) VALUES ('Test');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT IDENT_CURRENT('TestIdentity') * 1.00;
+GO
+~~START~~
+numeric
+1.00
+~~END~~
+
+
+DROP TABLE TestIdentity;
+GO
+
+SELECT
+    POWER (cast(4.5 as numeric(10,5)),2) * 1.00 power_col,
+    ROUND (cast(4.5 as numeric(10,5)),2) * 1.00 round_col,
+    CEILING (cast(4.5 as numeric(10,5))) * 1.00 ceiling_col,
+    FLOOR (cast(4.5 as numeric(10,5))) * 1.00 floor_col,
+    DEGREES (cast(4.5 as numeric(10,5))) * 1.00 degrees_col,
+    RADIANS (cast(4.5 as numeric(10,5))) * 1.00 radians_col
+INTO TestMathFunctions;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'TestMathFunctions';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+testmathfunctions#!#power_col#!#numeric#!#38#!#6
+testmathfunctions#!#round_col#!#numeric#!#14#!#7
+testmathfunctions#!#ceiling_col#!#numeric#!#14#!#2
+testmathfunctions#!#floor_col#!#numeric#!#14#!#2
+testmathfunctions#!#degrees_col#!#numeric#!#38#!#16
+testmathfunctions#!#radians_col#!#numeric#!#38#!#16
+~~END~~
+
+
+DROP TABLE TestMathFunctions;
+GO
