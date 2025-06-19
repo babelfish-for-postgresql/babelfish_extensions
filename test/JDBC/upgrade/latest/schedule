@@ -296,6 +296,7 @@ sys-database_files
 sys-database_filestream_options
 sys-database_mirroring
 sys_database_principals_dep
+sys_database_principals
 sys_syslogins_dep
 sys-database_recovery_status
 sys-databases
@@ -629,3 +630,4 @@ babel_test_numeric_int8_oper
 Test_cast_binary_bytea
 numeric_money
 MONEY_OBJECT
+user_token-dep
