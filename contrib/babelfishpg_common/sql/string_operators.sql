@@ -97,7 +97,7 @@ CREATE OPERATOR sys.+ (
     FUNCTION = sys.babelfish_concat_wrapper
 );
 
-create or replace function sys.CHAR(x in int)returns char
+create or replace function sys.cht(x in int) returns sys.varchar
 AS
 $body$
 BEGIN
@@ -118,7 +118,7 @@ AS
 $body$
 BEGIN
     --- 1114111 is 0x10FFFF - max value permitted as specified by documentation
-    if x between 1 and 1114111 then
+    if x between 1 and 65535 then
         return(select chr(x))::sys.nvarchar;
     else
         return null;
@@ -132,7 +132,7 @@ AS
 $body$
 BEGIN
     --- 1114111 is 0x10FFFF - max value permitted as specified by documentation
-    if x::integer between 1 and 1114111 then
+    if x::integer between 1 and 65535 then
         return(select chr(x::integer))::sys.nvarchar;
     else
         return null;

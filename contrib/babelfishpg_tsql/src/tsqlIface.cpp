@@ -3037,12 +3037,14 @@ public:
 
 	if (pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
 	{
-	    if (proc->DOUBLE_QUOTE_ID())
-		stream.setText(ctx->start->getStartIndex(), "\"chr\" ");
-	    else if (proc->SQUARE_BRACKET_ID())
-		stream.setText(ctx->start->getStartIndex(), "[chr] ");		
-	    else
-		stream.setText(ctx->start->getStartIndex(), " chr");
+		int startIndex = proc->start->getStartIndex();
+
+		if (proc->DOUBLE_QUOTE_ID())
+			stream.setText(startIndex, "\"cht\" ");
+		else if (proc->SQUARE_BRACKET_ID())
+			stream.setText(startIndex, "[cht] ");		
+		else
+			stream.setText(startIndex, " cht");
 	}
     }	
     
@@ -3181,12 +3183,14 @@ public:
 
 	if (pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
 	{
-	    if (proc->DOUBLE_QUOTE_ID())
-		stream.setText(ctx->start->getStartIndex(), "\"chr\" ");
-	    else if (proc->SQUARE_BRACKET_ID())
-		stream.setText(ctx->start->getStartIndex(), "[chr] ");		
-	    else
-		stream.setText(ctx->start->getStartIndex(), " chr");
+		int startIndex = proc->start->getStartIndex();
+
+		if (proc->DOUBLE_QUOTE_ID())
+		stream.setText(startIndex, "\"cht\" ");
+		else if (proc->SQUARE_BRACKET_ID())
+		stream.setText(startIndex, "[cht] ");		
+		else
+		stream.setText(startIndex, " cht");
 	}
     }
 

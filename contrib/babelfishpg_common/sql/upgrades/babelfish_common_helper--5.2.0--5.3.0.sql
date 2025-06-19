@@ -133,6 +133,50 @@ BEGIN
     END IF;
 END $$;
 
+create or replace function sys.cht(x in int) returns sys.varchar
+AS
+$body$
+BEGIN
+/***************************************************************
+EXTENSION PACK function CHAR(x)
+***************************************************************/
+    if x between 1 and 255 then
+        return chr(x);
+    else
+        return null;
+    end if;
+END;
+$body$
+language plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.nchar(IN x INTEGER) RETURNS sys.nvarchar
+AS
+$body$
+BEGIN
+    --- 1114111 is 0x10FFFF - max value permitted as specified by documentation
+    if x between 1 and 65535 then
+        return(select chr(x))::sys.nvarchar;
+    else
+        return null;
+    end if;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.nchar(IN x varbinary) RETURNS sys.nvarchar
+AS
+$body$
+BEGIN
+    --- 1114111 is 0x10FFFF - max value permitted as specified by documentation
+    if x::integer between 1 and 65535 then
+        return(select chr(x::integer))::sys.nvarchar;
+    else
+        return null;
+    end if;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
