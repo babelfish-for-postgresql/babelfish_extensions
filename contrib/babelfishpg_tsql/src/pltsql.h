@@ -1541,6 +1541,11 @@ typedef struct PLtsql_execstate
 	 */
 	bool		insert_exec;
 
+	/* INSERT ... EXECUTE return value storage */
+	// Datum       insert_exec_retval;
+	// bool        insert_exec_retval_isnull;
+	// bool        insert_exec_retval_valid;
+
 	List	   *explain_infos;
 	instr_time	planning_start;
 	instr_time	planning_end;
