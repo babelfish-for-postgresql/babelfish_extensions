@@ -844,6 +844,32 @@ AS 'babelfishpg_money', 'fixeddecimal_floor' LANGUAGE C IMMUTABLE STRICT PARALLE
 CREATE OR REPLACE FUNCTION sys.ceiling(sys.fixeddecimal) RETURNS sys.MONEY
 AS 'babelfishpg_money', 'fixeddecimal_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.OBJECT_DEFINITION(IN object_id INT)
+RETURNS sys.NVARCHAR
+AS $$
+DECLARE
+    definition sys.NVARCHAR;
+BEGIN
+
+    definition = (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
+    IF (definition IS NULL)
+    THEN
+        definition = (SELECT dc.definition FROM sys.default_constraints dc WHERE dc.object_id = $1);
+        IF (definition IS NULL)
+        THEN
+            definition = (SELECT asm.definition FROM sys.all_sql_modules asm WHERE asm.object_id = $1);
+            IF (definition IS NULL)
+            THEN
+                RETURN NULL;
+            END IF;
+        END IF;
+    END IF;
+
+    RETURN definition;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
 create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
 $body$
 declare

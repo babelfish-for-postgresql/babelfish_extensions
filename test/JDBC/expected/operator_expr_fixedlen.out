@@ -1,0 +1,1943 @@
+
+-- bigint : Int 8(int64) : -9223372036854775808 to 9223372036854775807
+-- int : int 4(int32) : -2147483648 to 2147483647
+-- smallint : int 2(int16) : -32768 to 32767
+-- tinyint : int 1(int8) : 0 to 255
+-- money: -922337203685477.5808 to 922337203685477.5807
+-- Smallmoney: -214748.3648 to 214748.3647
+CREATE TYPE babel_5899_MoneyUDT FROM MONEY;
+GO
+CREATE TYPE babel_5899_SmallMoneyUDT FROM SMALLMONEY;
+GO
+
+CREATE TABLE babel_5899_t1(
+        numeric_col NUMERIC(15,5),
+        money_col MONEY,
+        smallmoney_col SMALLMONEY,
+        bigint_col BIGINT,
+        int_col INT,
+        smallint_col SMALLINT,
+        tinyint_col TINYINT,
+        bit_col BIT,
+        money_udt babel_5899_MoneyUDT,
+        smallmoney_udt babel_5899_SmallMoneyUDT
+)
+GO
+
+INSERT INTO babel_5899_t1 VALUES
+(123.45678, 922337203685477.5807, 214748.3647, 9223372036854775807,  2147483647, 32767, 255, 1, 922337203685477.5807, 214748.3647 );
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_5899_t1 VALUES
+(987.65432, -922337203685477.5808, -214748.3648, -9223372036854775808, -2147483648, -32768, 0, 0,  -922337203685477.5808, -214748.3648);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_5899_t1 VALUES
+(0.00001, 0.01, 0.01, 1, 1, 1, 1, 0, 0.01, 0.01);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_5899_t1 VALUES
+(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Basic Money Operations * numeric
+SELECT (CAST(1000.50 AS MONEY) + CAST(500.25 AS MONEY)) * 1.13;
+GO
+~~START~~
+numeric
+1695.847500
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) - CAST(500.25 AS MONEY)) * 2.5;
+GO
+~~START~~
+numeric
+1250.62500
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) * CAST(2.0 AS MONEY)) * 0.5;
+GO
+~~START~~
+numeric
+1000.50000
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) / CAST(2.0 AS MONEY)) * 3.14;
+GO
+~~START~~
+numeric
+1570.785000
+~~END~~
+
+
+-- Basic Smallmoney Operations * numeric
+SELECT (CAST(100.50 AS SMALLMONEY) + CAST(50.25 AS SMALLMONEY)) * 1.13;
+GO
+~~START~~
+numeric
+170.347500
+~~END~~
+
+SELECT (CAST(100.50 AS SMALLMONEY) - CAST(50.25 AS SMALLMONEY)) * 2.5;
+GO
+~~START~~
+numeric
+125.62500
+~~END~~
+
+SELECT (CAST(100.50 AS SMALLMONEY) * CAST(2.0 AS SMALLMONEY)) * 0.5;
+GO
+~~START~~
+numeric
+100.50000
+~~END~~
+
+SELECT (CAST(100.50 AS SMALLMONEY) / CAST(2.0 AS SMALLMONEY)) * 3.14;
+GO
+~~START~~
+numeric
+157.785000
+~~END~~
+
+
+-- Integer Operations * numeric
+SELECT (CAST(1000 AS INT) + CAST(500 AS INT)) * 1.13;
+GO
+~~START~~
+numeric
+1695.00
+~~END~~
+
+SELECT (CAST(1000 AS INT) - CAST(500 AS INT)) * 2.5;
+GO
+~~START~~
+numeric
+1250.0
+~~END~~
+
+SELECT (CAST(1000 AS INT) * CAST(2 AS INT)) * 0.5;
+GO
+~~START~~
+numeric
+1000.0
+~~END~~
+
+SELECT (CAST(1000 AS INT) / CAST(2 AS INT)) * 3.14;
+GO
+~~START~~
+numeric
+1570.00
+~~END~~
+
+
+-- Smallint Operations * numeric
+SELECT (CAST(1000 AS SMALLINT) + CAST(500 AS SMALLINT)) * 1.13;
+GO
+~~START~~
+numeric
+1695.00
+~~END~~
+
+SELECT (CAST(1000 AS SMALLINT) - CAST(500 AS SMALLINT)) * 2.5;
+GO
+~~START~~
+numeric
+1250.0
+~~END~~
+
+SELECT (CAST(1000 AS SMALLINT) * CAST(2 AS SMALLINT)) * 0.5;
+GO
+~~START~~
+numeric
+1000.0
+~~END~~
+
+SELECT (CAST(1000 AS SMALLINT) / CAST(2 AS SMALLINT)) * 3.14;
+GO
+~~START~~
+numeric
+1570.00
+~~END~~
+
+
+-- Tinyint Operations * numeric
+SELECT (CAST(100 AS TINYINT) + CAST(50 AS TINYINT)) * 1.13;
+GO
+~~START~~
+numeric
+169.50
+~~END~~
+
+SELECT (CAST(100 AS TINYINT) - CAST(50 AS TINYINT)) * 2.5;
+GO
+~~START~~
+numeric
+125.0
+~~END~~
+
+SELECT (CAST(100 AS TINYINT) * CAST(2 AS TINYINT)) * 0.5;
+GO
+~~START~~
+numeric
+100.0
+~~END~~
+
+SELECT (CAST(100 AS TINYINT) / CAST(2 AS TINYINT)) * 3.14;
+GO
+~~START~~
+numeric
+157.00
+~~END~~
+
+
+-- Bigint Operations * numeric
+SELECT (CAST(1000 AS BIGINT) + CAST(500 AS BIGINT)) * 1.13;
+GO
+~~START~~
+numeric
+1695.00
+~~END~~
+
+SELECT (CAST(1000 AS BIGINT) - CAST(500 AS BIGINT)) * 2.5;
+GO
+~~START~~
+numeric
+1250.0
+~~END~~
+
+SELECT (CAST(1000 AS BIGINT) * CAST(2 AS BIGINT)) * 0.5;
+GO
+~~START~~
+numeric
+1000.0
+~~END~~
+
+SELECT (CAST(1000 AS BIGINT) / CAST(2 AS BIGINT)) * 3.14;
+GO
+~~START~~
+numeric
+1570.00
+~~END~~
+
+
+-- Mixed Type Operations * numeric
+SELECT (CAST(1000.50 AS MONEY) + CAST(50 AS INT)) * 1.13;
+GO
+~~START~~
+numeric
+1187.065000
+~~END~~
+
+SELECT (CAST(100.50 AS SMALLMONEY) - CAST(50 AS SMALLINT)) * 2.5;
+GO
+~~START~~
+numeric
+126.25000
+~~END~~
+
+SELECT (CAST(1000 AS BIGINT) * CAST(100.50 AS MONEY)) * 0.5;
+GO
+~~START~~
+numeric
+50250.00000
+~~END~~
+
+SELECT (CAST(100 AS TINYINT) / CAST(2.0 AS SMALLMONEY)) * 3.14;
+GO
+~~START~~
+numeric
+157.000000
+~~END~~
+
+
+-- Money + Smallmoney
+SELECT (CAST(1000.50 AS MONEY) + CAST(100.25 AS SMALLMONEY)) * 1.13;
+GO
+~~START~~
+numeric
+1243.847500
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) - CAST(100.25 AS SMALLMONEY)) * 2.5;
+GO
+~~START~~
+numeric
+2250.62500
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) * CAST(100.25 AS SMALLMONEY)) * 0.5;
+GO
+~~START~~
+numeric
+50150.06250
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) / CAST(100.25 AS SMALLMONEY)) * 1.13;
+GO
+~~START~~
+numeric
+11.277400
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) % CAST(100.25 AS SMALLMONEY)) * 2.5;
+GO
+~~START~~
+numeric
+245.62500
+~~END~~
+
+
+-- Fixed length between themselves
+SELECT (CAST(1000 AS BIGINT) + CAST(500 AS INT)) * 1.13;
+GO
+~~START~~
+numeric
+1695.00
+~~END~~
+
+SELECT (CAST(500 AS INT) - CAST(100 AS SMALLINT)) * 2.5;
+GO
+~~START~~
+numeric
+1000.0
+~~END~~
+
+SELECT (CAST(100 AS SMALLINT) * CAST(50 AS TINYINT)) * 0.5;
+GO
+~~START~~
+numeric
+2500.0
+~~END~~
+
+SELECT (CAST(1000 AS BIGINT) / CAST(50 AS TINYINT)) * 1.13;
+GO
+~~START~~
+numeric
+22.60
+~~END~~
+
+SELECT (CAST(1000 AS INT) % CAST(100 AS SMALLINT)) * 2.5;
+GO
+~~START~~
+numeric
+0.0
+~~END~~
+
+
+-- Money + Fixed lengths
+SELECT (CAST(1000.50 AS MONEY) + CAST(1000 AS BIGINT)) * 1.13;
+GO
+~~START~~
+numeric
+2260.565000
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) - CAST(500 AS INT)) * 2.5;
+GO
+~~START~~
+numeric
+1251.25000
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) * CAST(100 AS SMALLINT)) * 0.5;
+GO
+~~START~~
+numeric
+50025.00000
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) / CAST(50 AS TINYINT)) * 1.13;
+GO
+~~START~~
+numeric
+22.611300
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) % CAST(3 AS INT)) * 2.5;
+GO
+~~START~~
+numeric
+3.75000
+~~END~~
+
+
+-- Smallmoney + Fixed lengths
+SELECT (CAST(100.25 AS SMALLMONEY) + CAST(1000 AS BIGINT)) * 1.13;
+GO
+~~START~~
+numeric
+1243.282500
+~~END~~
+
+SELECT (CAST(100.25 AS SMALLMONEY) - CAST(500 AS INT)) * 2.5;
+GO
+~~START~~
+numeric
+-999.37500
+~~END~~
+
+SELECT (CAST(100.25 AS SMALLMONEY) * CAST(100 AS SMALLINT)) * 0.5;
+GO
+~~START~~
+numeric
+5012.50000
+~~END~~
+
+SELECT (CAST(100.25 AS SMALLMONEY) / CAST(50 AS TINYINT)) * 1.13;
+GO
+~~START~~
+numeric
+2.265650
+~~END~~
+
+SELECT (CAST(100.25 AS SMALLMONEY) % CAST(3 AS INT)) * 2.5;
+GO
+~~START~~
+numeric
+3.12500
+~~END~~
+
+
+-- UDT Combinations
+-- UDT + Normal types
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) + CAST(500.25 AS MONEY)) * 1.13;
+GO
+~~START~~
+numeric
+1695.847500
+~~END~~
+
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) - CAST(100.25 AS SMALLMONEY)) * 2.5;
+GO
+~~START~~
+numeric
+2250.62500
+~~END~~
+
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) * CAST(1000 AS BIGINT)) * 0.5;
+GO
+~~START~~
+numeric
+500250.00000
+~~END~~
+
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) / CAST(500 AS INT)) * 1.13;
+GO
+~~START~~
+numeric
+2.261130
+~~END~~
+
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) % CAST(100 AS SMALLINT)) * 2.5;
+GO
+~~START~~
+numeric
+0.0
+~~END~~
+
+
+-- UDT + UDT
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) + CAST(500.25 AS babel_5899_MoneyUDT)) * 1.13;
+GO
+~~START~~
+numeric
+1695.847500
+~~END~~
+
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) - CAST(500.25 AS babel_5899_MoneyUDT)) * 2.5;
+GO
+~~START~~
+numeric
+1250.62500
+~~END~~
+
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) * CAST(2.0 AS babel_5899_MoneyUDT)) * 0.5;
+GO
+~~START~~
+numeric
+1000.50000
+~~END~~
+
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) / CAST(2.0 AS babel_5899_MoneyUDT)) * 1.13;
+GO
+~~START~~
+numeric
+565.282500
+~~END~~
+
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) % CAST(3.0 AS babel_5899_MoneyUDT)) * 2.5;
+GO
+~~START~~
+numeric
+3.75000
+~~END~~
+
+
+-- Different Numeric Multipliers
+SELECT (CAST(1000.50 AS MONEY) + CAST(500.25 AS MONEY)) * 0.001;
+GO
+~~START~~
+numeric
+1.5007500
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) + CAST(500.25 AS MONEY)) * 999.999;
+GO
+~~START~~
+numeric
+1500748.4992500
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) + CAST(500.25 AS MONEY)) * (-1.13);
+GO
+~~START~~
+numeric
+-1695.847500
+~~END~~
+
+SELECT (CAST(1000.50 AS MONEY) + CAST(500.25 AS MONEY)) * 0;
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+-- Edge Cases * numeric
+SELECT (CAST(922337203685477.5807 AS MONEY) - CAST(0.0001 AS MONEY)) * 1.13;
+GO
+~~START~~
+numeric
+1042241040164589.666078
+~~END~~
+
+SELECT (CAST(214748.3647 AS SMALLMONEY) - CAST(0.0001 AS SMALLMONEY)) * 2.5;
+GO
+~~START~~
+numeric
+536870.91150
+~~END~~
+
+SELECT (CAST(2147483647 AS INT) * CAST(1 AS INT)) * 0.5;
+GO
+~~START~~
+numeric
+1073741823.5
+~~END~~
+
+SELECT (CAST(32767 AS SMALLINT) / CAST(2 AS SMALLINT)) * 3.14;
+GO
+~~START~~
+numeric
+51442.62
+~~END~~
+
+SELECT (CAST(255 AS TINYINT) + CAST(0 AS TINYINT)) * 1.13;
+GO
+~~START~~
+numeric
+288.15
+~~END~~
+
+SELECT (CAST(9223372036854775807 AS BIGINT) - CAST(1 AS BIGINT)) * 0.5;
+GO
+~~START~~
+numeric
+4611686018427387903.0
+~~END~~
+
+
+-- Multiple Arithmetic Operations * numeric
+SELECT (
+    CAST(1000.50 AS MONEY) +
+    CAST(100.25 AS SMALLMONEY) -
+    CAST(50 AS INT) *
+    CAST(2 AS SMALLINT) /
+    CAST(4 AS TINYINT) +
+    CAST(1000 AS BIGINT)
+) * 1.13;
+GO
+~~START~~
+numeric
+2345.597500
+~~END~~
+
+
+-- Nested Operations * numeric
+SELECT (
+    (CAST(1000.50 AS MONEY) + CAST(500.25 AS MONEY)) /
+    (CAST(2.0 AS MONEY) * CAST(1.5 AS MONEY))
+) * 1.13;
+GO
+~~START~~
+numeric
+565.282500
+~~END~~
+
+
+
+
+
+-- Testing declare
+-- Declare Variables * numeric
+DECLARE @m1 MONEY = 1000.50;
+DECLARE @m2 SMALLMONEY = 100.25;
+DECLARE @bi BIGINT = 1000;
+DECLARE @i INT = 500;
+DECLARE @si SMALLINT = 100;
+DECLARE @ti TINYINT = 50;
+DECLARE @udt1 babel_5899_MoneyUDT = 1500.75;
+SELECT (@m1 + @m2) * 1.13;
+SELECT (@m1 - @bi) * 2.5;
+SELECT (@m2 * @i) * 0.5;
+SELECT (@m1 / @si) * 1.13;
+SELECT (@m1 % @ti) * 2.5;
+GO
+~~START~~
+numeric
+1243.847500
+~~END~~
+
+~~START~~
+numeric
+1.25000
+~~END~~
+
+~~START~~
+numeric
+25062.50000
+~~END~~
+
+~~START~~
+numeric
+11.305650
+~~END~~
+
+~~START~~
+numeric
+1.25000
+~~END~~
+
+
+-- declare with UDT
+DECLARE @udt1 babel_5899_MoneyUDT = 1000.50;
+DECLARE @udt2 babel_5899_MoneyUDT = 500.25;
+SELECT (@udt1 + @udt2) * 1.13;
+SELECT (CAST(1000.50 AS babel_5899_MoneyUDT) + CAST(500.25 AS babel_5899_MoneyUDT)) * 2.5;
+GO
+~~START~~
+numeric
+1695.847500
+~~END~~
+
+~~START~~
+numeric
+3751.87500
+~~END~~
+
+
+-- JIRA query
+DECLARE @revenue MONEY = 10000.00; DECLARE @costs MONEY = 6000.00; DECLARE @targetMargin money = 0.40;
+select (@revenue - @costs) * 1.13
+go
+~~START~~
+numeric
+4520.000000
+~~END~~
+
+
+-- JIRA query
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,2) = 678.90, @int1 INT = 2, @int2 INT = 3;
+SELECT (@num1 * @num2) / (@int1 + @int2) AS result;
+GO
+~~START~~
+numeric
+16762.041000000000000
+~~END~~
+
+
+-- edge cases
+-- Basic Money and SmallMoney Declarations
+DECLARE @m1 MONEY = 922337203685477.5807; -- Max
+DECLARE @m2 MONEY = -922337203685477.5808; -- Min
+DECLARE @sm1 SMALLMONEY = 214748.3647; -- Max
+DECLARE @sm2 SMALLMONEY = -214748.3648; -- Min
+SELECT (@m1 - @sm1) * 1.13;
+SELECT (@m2 - @sm2) * 2.5;
+SELECT (@m2 / @sm2) * 1.13;
+GO
+~~START~~
+numeric
+1042241039921924.014080
+~~END~~
+
+~~START~~
+numeric
+-2305843008676823.04000
+~~END~~
+
+~~START~~
+numeric
+4853313044.480000
+~~END~~
+
+
+
+
+
+
+
+
+
+
+
+
+-- Integer Type Edge Cases
+-- Basic Integer Operations
+DECLARE @bi1 BIGINT = 9223372036854775807;  -- Max
+DECLARE @bi2 BIGINT = -9223372036854775808; -- Min
+DECLARE @i1 INT = 2147483647;               -- Max
+DECLARE @i2 INT = -2147483648;              -- Min
+DECLARE @si1 SMALLINT = 32767;              -- Max
+DECLARE @si2 SMALLINT = -32768;             -- Min
+DECLARE @ti1 TINYINT = 255;                 -- Max
+DECLARE @ti2 TINYINT = 0;                   -- Min
+-- Addition Operations
+SELECT (@bi1 + cast(-123 as int)) * 1.13;
+SELECT (@bi1 * 1.13);
+SELECT (@bi2 + cast(123 as smallint)) * 2.5;
+SELECT (@i1 + cast(-123 as bigint)) * 0.5;
+SELECT (@si1 + cast(123 as tinyint)) * 1.13;
+-- Subtraction Operations
+SELECT (@bi1 - @i1) * 1.13;
+SELECT (@bi2 - @si1) * 2.5;
+SELECT (@i2 - @ti1) * 0.5;
+SELECT (@si2 - @ti2) * 1.13;
+SELECT (@si2 * 1.13);
+-- Multiplication Operations
+SELECT (@i1 * cast(1 as smallint)) * 2.5;
+SELECT (@si1 * cast(1 as tinyint)) * 0.5;
+SELECT (@ti1 * cast(1 as int)) * 1.13;
+-- Division Operations
+SELECT (@bi1 / @i1) * 1.13;
+SELECT (@bi2 / @si1) * 2.5;
+SELECT (@i1 / @ti1) * 0.5;
+SELECT (@si1 / @ti1) * 1.13;
+-- Modulus Operations
+SELECT (@bi1 % @i1) * 1.13;
+SELECT (@bi2 % @si1) * 2.5;
+SELECT (@i1 % @ti1) * 0.5;
+SELECT (@si1 % @ti1) * 1.13;
+-- Mixed Operations
+SELECT (@bi1 - @i1 - @si1) * 1.13;
+SELECT (@bi2 + @i2 + @ti1) * 2.5;
+SELECT (@i1 / @si1 / @ti1) * 0.5;
+SELECT (@si2 / @ti1 + @bi1) * 1.13;
+-- Complex Combinations
+SELECT (@bi1 - @i1 * @si1 / @ti1) * 1.13;
+SELECT (@bi2 - @i2 / @si2 * @ti1) * 2.5;
+SELECT (@i1 / @si1 - @ti1 + @bi1) * 0.5;
+SELECT (@si2 + @ti1 * @i1 / @bi2) * 1.13;
+-- Operations with Zero
+SELECT (@bi1 + @ti2) * 1.13;  -- with zero
+SELECT (@i1 - @ti2) * 2.5;    -- with zero
+SELECT (@si1 * @ti2) * 0.5;   -- with zero
+-- Operations with Negative Numbers
+SELECT (@bi2 + @i2) * 1.13;   -- both negative
+SELECT (@si2 - @i1) * 2.5;    -- mixed signs
+SELECT (@i2 * @ti1) * 0.5;    -- negative and positive
+-- Nested Operations
+SELECT ((@bi1 - @i1) * (@si1 - @ti1)) * 1.13;
+SELECT ((@bi2 - @i2) / (@si2 + @ti2)) * 2.5;
+SELECT ((@i1 * @si1) % (@ti1 + 1)) * 0.5;
+GO
+~~START~~
+numeric
+10422410401645896522.92
+~~END~~
+
+~~START~~
+numeric
+10422410401645896661.91
+~~END~~
+
+~~START~~
+numeric
+-23058430092136939212.5
+~~END~~
+
+~~START~~
+numeric
+1073741762.0
+~~END~~
+
+~~START~~
+numeric
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+~~START~~
+numeric
+10422410399219240140.80
+~~END~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+~~START~~
+numeric
+-37027.84
+~~END~~
+
+~~START~~
+numeric
+-37027.84
+~~END~~
+
+~~START~~
+numeric
+5368709117.5
+~~END~~
+
+~~START~~
+numeric
+16383.5
+~~END~~
+
+~~START~~
+numeric
+288.15
+~~END~~
+
+~~START~~
+numeric
+4853313046.74
+~~END~~
+
+~~START~~
+numeric
+-703708917268500.0
+~~END~~
+
+~~START~~
+numeric
+4210752.0
+~~END~~
+
+~~START~~
+numeric
+144.64
+~~END~~
+
+~~START~~
+numeric
+1.13
+~~END~~
+
+~~START~~
+numeric
+-20.0
+~~END~~
+
+~~START~~
+numeric
+63.5
+~~END~~
+
+~~START~~
+numeric
+143.51
+~~END~~
+
+~~START~~
+numeric
+10422410399219203114.09
+~~END~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+~~START~~
+numeric
+128.5
+~~END~~
+
+~~START~~
+numeric
+10422410401645896517.27
+~~END~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+~~START~~
+numeric
+10422410401645896661.91
+~~END~~
+
+~~START~~
+numeric
+5368709117.5
+~~END~~
+
+~~START~~
+numeric
+0.0
+~~END~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+~~START~~
+numeric
+703687441612800.0
+~~END~~
+
+~~START~~
+numeric
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- Misc declare statements
+DECLARE @bi1 BIGINT = 1234
+SELECT (@bi1 + cast(-123 as int)) * 1.13;
+SELECT (@bi1 * 1.13);
+GO
+~~START~~
+numeric
+1255.43
+~~END~~
+
+~~START~~
+numeric
+1394.42
+~~END~~
+
+
+-- UDT Combinations
+DECLARE @udt1 babel_5899_MoneyUDT = 922337203685477.5807; -- Max
+DECLARE @udt2 babel_5899_MoneyUDT = -922337203685477.5808; -- Min
+DECLARE @sudt1 babel_5899_SmallMoneyUDT = 214748.3647; -- Max
+DECLARE @sudt2 babel_5899_SmallMoneyUDT = -214748.3648; -- Min
+SELECT (@udt1 - @sudt1) * 1.13;
+SELECT (@udt2 - @sudt2) * 2.5;
+GO
+~~START~~
+numeric
+1042241039921924.014080
+~~END~~
+
+~~START~~
+numeric
+-2305843008676823.04000
+~~END~~
+
+
+-- Complex Calculations
+DECLARE @revenue MONEY = 100000.00;
+DECLARE @cost BIGINT = 7500012300;
+DECLARE @tax_rate INT = 20123;
+DECLARE @profit_margin SMALLMONEY = 0.15;
+SELECT (@revenue - @cost) * (1 + @tax_rate) * (1 + @profit_margin) * 1.13;
+GO
+~~START~~
+numeric
+-196131241545197.400000
+~~END~~
+
+
+-- Nested Calculations
+DECLARE @base_amount MONEY = 1000.00;
+DECLARE @multiplier1 SMALLMONEY = 1.5;
+DECLARE @multiplier2 INT = 20;
+DECLARE @divisor SMALLINT = 2;
+SELECT ((@base_amount * @multiplier1) / CAST(@divisor AS MONEY) * @multiplier2) * 1.13;
+GO
+~~START~~
+numeric
+16950.000000
+~~END~~
+
+
+-- Multiple Operations
+DECLARE @val1 MONEY = 1000.00;
+DECLARE @val2 SMALLMONEY = 500.00;
+DECLARE @val3 babel_5899_MoneyUDT = 250.00;
+SELECT (@val1 + @val2) * 1.13;
+SELECT (@val1 - @val2) * 2.5;
+SELECT (@val1 * @val3) * 0.5;
+SELECT (@val1 / @val2) * 1.13;
+SELECT (@val1 % @val2) * 2.5;
+GO
+~~START~~
+numeric
+1695.000000
+~~END~~
+
+~~START~~
+numeric
+1250.00000
+~~END~~
+
+~~START~~
+numeric
+125000.00000
+~~END~~
+
+~~START~~
+numeric
+2.260000
+~~END~~
+
+~~START~~
+numeric
+0.00000
+~~END~~
+
+
+
+-- NULL Handling
+DECLARE @null_money MONEY = NULL;
+DECLARE @null_smallmoney SMALLMONEY = NULL;
+DECLARE @null_udt babel_5899_MoneyUDT = NULL;
+SELECT ISNULL((@null_money + @null_smallmoney) * 1.13, 0);
+SELECT COALESCE((@null_money + @null_udt) * 2.5, 0);
+GO
+~~START~~
+numeric
+0.000000
+~~END~~
+
+~~START~~
+numeric
+0.00000
+~~END~~
+
+
+-- using table columns
+-- Basic Operations with Money Types
+SELECT (money_col - smallmoney_col) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+1042241039921924.014080
+-1042241039921924.014080
+0.000000
+<NULL>
+~~END~~
+
+SELECT (money_udt - smallmoney_udt) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+2305843008676823.04000
+-2305843008676823.04000
+0.00000
+<NULL>
+~~END~~
+
+SELECT (money_col + money_udt) * 0.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT (smallmoney_col / smallmoney_udt) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+1.130000
+1.130000
+1.130000
+<NULL>
+~~END~~
+
+SELECT (money_col % smallmoney_col) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0.00025
+0.00000
+0.00000
+<NULL>
+~~END~~
+
+
+-- Money Types with Fixed Length Types
+-- Money with Integer Types
+SELECT (money_col + bigint_col) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+1042241040164588.536191
+-1042241040164589.666304
+1.141300
+<NULL>
+~~END~~
+
+SELECT (money_col - int_col) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+2305837640504576.45175
+-2305837640504573.95200
+-2.47500
+<NULL>
+~~END~~
+
+SELECT (money_col + smallint_col) * 0.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT (money_col / tinyint_col) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+4087219765351.331968
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+SELECT (money_col % bigint_col) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "9223372036854775807" is out of range for type money)~~
+
+
+-- Smallmoney with Integer Types
+SELECT (smallmoney_col + bigint_col) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+242664.522111
+-242665.652224
+1.141300
+<NULL>
+~~END~~
+
+SELECT (smallmoney_col - int_col) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+SELECT (smallmoney_col * smallint_col) * 0.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+SELECT (smallmoney_col / tinyint_col) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+951.629952
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+SELECT (smallmoney_col % bigint_col) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "9223372036854775807" is out of range for type smallmoney)~~
+
+
+-- UDT Operations
+-- UDT with Money Types
+SELECT (money_udt + money_col) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT (money_udt - smallmoney_col) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+2305843008676823.04000
+-2305843008676823.04000
+0.00000
+<NULL>
+~~END~~
+
+SELECT (smallmoney_udt * money_col) * 0.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT (smallmoney_udt / smallmoney_col) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+1.130000
+1.130000
+1.130000
+<NULL>
+~~END~~
+
+
+-- UDT with Integer Types
+SELECT (money_udt + bigint_col) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+1042241040164588.536191
+-1042241040164589.666304
+1.141300
+<NULL>
+~~END~~
+
+SELECT (money_udt - int_col) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+2305837640504576.45175
+-2305837640504573.95200
+-2.47500
+<NULL>
+~~END~~
+
+SELECT (smallmoney_udt * smallint_col) * 0.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+3518329833.06245
+3518437208.88320
+0.00500
+<NULL>
+~~END~~
+
+SELECT (smallmoney_udt / tinyint_col) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+951.629952
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+-- Numeric Operations
+SELECT (numeric_col + money_col) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+1042241040164729.1723524
+-1042241040163473.6169224
+0.0113113
+<NULL>
+~~END~~
+
+SELECT (numeric_col - smallmoney_col) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+-536562.269800
+539340.047800
+-0.024975
+<NULL>
+~~END~~
+
+SELECT (numeric_col * money_udt) * 0.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+56934390620606597.4377060730
+-455475161858340926.9701345280
+5.00E-8
+<NULL>
+~~END~~
+
+SELECT (numeric_col / smallmoney_udt) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0.000649626187351259
+-0.005197009917348512
+0.001130000000000000
+<NULL>
+~~END~~
+
+
+-- Complex Combinations
+SELECT (
+    money_col + 
+    smallmoney_col * 
+    bigint_col /
+    int_col
+) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT (
+    money_udt + 
+    smallmoney_udt * 
+    CAST(smallint_col AS MONEY) / 
+    CAST(tinyint_col AS MONEY)
+) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+--  COLAESCE Handling
+SELECT COALESCE((money_udt - smallmoney_udt) * 2.5, 0) FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+2305843008676823.04000
+-2305843008676823.04000
+0.00000
+0.00000
+~~END~~
+
+
+-- Edge Cases
+-- Maximum Values
+SELECT (
+    CASE
+        WHEN money_col = 922337203685477.5807
+        THEN (money_col - cast(123.12 as money) * 1.0)
+        ELSE 0
+    END
+) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+1042241040164450.5405910
+0E-7
+0E-7
+0E-7
+~~END~~
+
+
+SELECT (
+    CASE
+        WHEN smallmoney_col = 214748.3647
+        THEN (smallmoney_col - cast(12.333 as money) * 1.0)
+        ELSE 0
+    END
+) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+536840.079250
+0.000000
+0.000000
+0.000000
+~~END~~
+
+
+-- Minimum Values
+SELECT (
+    CASE 
+        WHEN money_col = -922337203685477.5808
+        THEN (money_col + cast(123.12 as money) * 1.0)
+        ELSE 0
+    END
+) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0E-7
+-1042241040164450.5407040
+0E-7
+0E-7
+~~END~~
+
+
+SELECT (
+    CASE
+        WHEN smallmoney_col = -214748.3648
+        THEN (smallmoney_col + cast(12.333 as money) * 1.0)
+        ELSE 0
+    END
+) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0.000000
+-536840.079500
+0.000000
+0.000000
+~~END~~
+
+
+-- INT Edge Cases
+-- Maximum Value (2147483647)
+SELECT (
+    CASE
+        WHEN int_col = 2147483647
+        THEN (CAST(int_col AS MONEY) - CAST(123.12 AS MONEY) * 1.0)
+        ELSE 0
+    END
+) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+5368708809.700000
+0.000000
+0.000000
+0.000000
+~~END~~
+
+
+-- Minimum Value (-2147483648)
+SELECT (
+    CASE
+        WHEN int_col = -2147483648
+        THEN ((int_col + CAST(1233 AS smallint)) * 1.0)
+        ELSE 0
+    END
+) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0.00
+-5368706037.50
+0.00
+0.00
+~~END~~
+
+
+-- SMALLINT Edge Cases
+-- Maximum Value (32767)
+SELECT (
+    CASE
+        WHEN smallint_col = 32767
+        THEN ((smallint_col - CAST(1233 AS smallint)) * 1.0)
+        ELSE 0
+    END
+) * 0.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+15767.00
+0.00
+0.00
+0.00
+~~END~~
+
+
+-- Minimum Value (-32768)
+SELECT (
+    CASE
+        WHEN smallint_col = -32768
+        THEN ((smallint_col + CAST(1233 AS smallint)) * 1.0)
+        ELSE 0
+    END
+) * 0.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0.00
+-15767.50
+0.00
+0.00
+~~END~~
+
+
+-- TINYINT Edge Cases
+-- Maximum Value (255)
+SELECT (
+    CASE
+        WHEN tinyint_col = 255
+        THEN ((tinyint_col - CAST(123 AS tinyint)) * 1.0)
+        ELSE 0
+    END
+) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+149.160
+0.000
+0.000
+0.000
+~~END~~
+
+
+-- Combined Edge Cases
+-- Maximum Values Combined
+SELECT (
+    CASE
+        WHEN bigint_col = 9223372036854775807 AND int_col = 2147483647
+        THEN ((bigint_col - int_col - CAST(12.333 AS MONEY)) * 1.0)
+        ELSE 0
+    END
+) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+-2426656536.1762900
+0E-7
+0E-7
+0E-7
+~~END~~
+
+
+SELECT (
+    CASE
+        WHEN smallint_col = 32767 AND tinyint_col = 255
+        THEN ((smallint_col - tinyint_col - CAST(12.333 AS MONEY)) * 1.0)
+        ELSE 0
+    END
+) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+81249.167500
+0.000000
+0.000000
+0.000000
+~~END~~
+
+
+-- Minimum Values Combined
+SELECT (
+    CASE
+        WHEN bigint_col = -9223372036854775808 AND int_col = -2147483648
+        THEN ((bigint_col - int_col + CAST(12.333 AS MONEY)) * 1.0)
+        ELSE 0
+    END
+) * 0.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0.000000
+1073741830.166500
+0.000000
+0.000000
+~~END~~
+
+
+SELECT (
+    CASE
+        WHEN smallint_col = -32768 AND tinyint_col = 0
+        THEN ((smallint_col + tinyint_col + CAST(12.333 AS MONEY)) * 1.0)
+        ELSE 0
+    END
+) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0E-7
+-37013.9037100
+0E-7
+0E-7
+~~END~~
+
+
+-- Mixed Maximum and Minimum Values
+SELECT (
+    CASE
+        WHEN bigint_col = 9223372036854775807 AND int_col = -2147483648
+        THEN ((bigint_col + int_col + CAST(12.333 AS MONEY)) * 1.0)
+        ELSE 0
+    END
+) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0.000000
+0.000000
+0.000000
+0.000000
+~~END~~
+
+
+SELECT (
+    CASE
+        WHEN smallint_col = -32768 AND tinyint_col = 255
+        THEN ((smallint_col + tinyint_col) * 1.0)
+        ELSE 0
+    END
+) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0.000
+0.000
+0.000
+0.000
+~~END~~
+
+
+-- All Integer Types Combined
+SELECT (
+    CASE
+        WHEN int_col = 2147483647
+             AND smallint_col = 32767
+             AND tinyint_col = 255
+        THEN (bigint_col - int_col - smallint_col - tinyint_col)* 1.0
+        ELSE 0
+    END
+) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+10422410399219202825.940
+0.000
+0.000
+0.000
+~~END~~
+
+
+-- Aggregate Functions
+SELECT (SUM(money_col) + SUM(smallmoney_col)) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0.022374
+~~END~~
+
+SELECT (AVG(money_udt) - AVG(smallmoney_udt)) * 2.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+0.00000
+~~END~~
+
+SELECT (MAX(money_col) * MIN(smallmoney_col)) * 0.5 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- Conditional Operations
+SELECT (
+    CASE 
+        WHEN bit_col = 1 THEN (money_col + cast(123.12 as money) * 1.0) 
+        ELSE (smallmoney_col - cast(123 as money)) * 1.0
+    END
+) * 1.13 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+1042241040164728.7917910
+-242804.6422240
+-138.9787000
+<NULL>
+~~END~~
+
+
+-- Multiple Row Operations
+SELECT (t1.money_col - t2.smallmoney_col) * 1.13
+FROM babel_5899_t1 t1
+JOIN babel_5899_t1 t2 ON t1.bit_col = t2.bit_col;
+GO
+~~START~~
+numeric
+-1042241039921924.014080
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- Subqueries
+SELECT (money_col - (SELECT AVG(smallmoney_col) FROM babel_5899_t1)) * 1.13
+FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+1042241040164589.662462
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- Different Numeric Multipliers
+SELECT (money_col - smallmoney_col) * 0.001 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+922337203470.7292160
+-922337203470.7292160
+0E-7
+<NULL>
+~~END~~
+
+SELECT (money_col - smallmoney_col) * 999.999 FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+922336281133525745.2707840
+-922336281133525745.2707840
+0E-7
+<NULL>
+~~END~~
+
+SELECT (money_col - smallmoney_col) * (-1.13) FROM babel_5899_t1;
+GO
+~~START~~
+numeric
+-1042241039921924.014080
+1042241039921924.014080
+0.000000
+<NULL>
+~~END~~
+
+SELECT (money_col - smallmoney_col) * 0 FROM babel_5899_t1;
+GO
+~~START~~
+money
+0.0000
+0.0000
+0.0000
+<NULL>
+~~END~~
+
+
+
+-- Misc tests
+select (122 + cast(123 as smallint))* 1.1
+GO
+~~START~~
+numeric
+269.5
+~~END~~
+
+select (123 + cast(123 as money)) * 1.1
+GO
+~~START~~
+numeric
+270.60000
+~~END~~
+
+select cast(122 as tinyint) * 1.12
+GO
+~~START~~
+numeric
+136.64
+~~END~~
+
+-- Integer + Different Types
+SELECT (122 + CAST(123 AS SMALLINT)) * 1.1;
+GO
+~~START~~
+numeric
+269.5
+~~END~~
+
+SELECT (122 + CAST(123 AS INT)) * 1.1;
+GO
+~~START~~
+numeric
+269.5
+~~END~~
+
+SELECT (122 + CAST(123 AS BIGINT)) * 1.1;
+GO
+~~START~~
+numeric
+269.5
+~~END~~
+
+SELECT (122 + CAST(123 AS TINYINT)) * 1.1;
+GO
+~~START~~
+numeric
+269.5
+~~END~~
+
+-- money * numeric
+select cast(123 as money) * cast(123.23 as numeric(5,2))
+GO
+~~START~~
+numeric
+15157.290000
+~~END~~
+
+-- Constants with Different Types
+SELECT (123.45 + CAST(123 AS MONEY)) * 1.1;
+GO
+~~START~~
+numeric
+271.09500
+~~END~~
+
+SELECT (123.45 + CAST(123 AS SMALLMONEY)) * 1.1;
+GO
+~~START~~
+numeric
+271.09500
+~~END~~
+
+SELECT (123.45 + CAST(123 AS INT)) * 1.1;
+GO
+~~START~~
+numeric
+271.095
+~~END~~
+
+
+-- scale/precision test for fixedlength operator expression
+CREATE PROCEDURE babel_5899_get_column_info_p1 @table_name text AS BEGIN SELECT c.[name] AS column_name, t.[name] AS [type_name], c.[max_length], c.[precision],c.[scale] FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE object_id = object_id(@table_name) ORDER BY c.[name];
+END
+GO
+
+CREATE TABLE babel_5899_t2(ID INT IDENTITY(1,1), a_int Int, a_tiny tinyint, b_smallint smallint, c_big bigint, d_fl float, e_real real, f_mon money, g_smallmoney smallmoney);
+GO
+
+SELECT 
+    (a_int + a_int) * 1.13 AS int_int,
+    (a_int + a_tiny) * 1.13 AS int_tiny,
+    (a_int + b_smallint) * 1.13 AS int_smallint,
+    (a_int + c_big) * 1.13 AS int_bigint,
+    (a_tiny + a_tiny) * 1.13 AS tiny_tiny,
+    (a_tiny + b_smallint) * 1.13 AS tiny_smallint,
+    (a_tiny + c_big) * 1.13 AS tiny_bigint,
+    (b_smallint + b_smallint) * 1.13 AS smallint_smallint,
+    (b_smallint + c_big) * 1.13 AS smallint_bigint,
+    (c_big + c_big) * 1.13 AS bigint_bigint,
+    (f_mon + f_mon) * 1.13 AS money_money,
+    (f_mon + g_smallmoney) * 1.13 AS money_smallmoney,
+    (g_smallmoney + g_smallmoney) * 1.13 AS smallmoney_smallmoney,
+    (f_mon + a_int) * 1.13 AS money_int,
+    (f_mon + a_tiny) * 1.13 AS money_tiny,
+    (f_mon + b_smallint) * 1.13 AS money_smallint,
+    (f_mon + c_big) * 1.13 AS money_bigint,
+    (g_smallmoney + a_int) * 1.13 AS smallmoney_int,
+    (g_smallmoney + a_tiny) * 1.13 AS smallmoney_tiny,
+    (g_smallmoney + b_smallint) * 1.13 AS smallmoney_smallint,
+    (g_smallmoney + c_big) * 1.13 AS smallmoney_bigint
+INTO babel_5899_result_table
+FROM babel_5899_t2;
+GO
+
+EXEC babel_5899_get_column_info_p1 'babel_5899_result_table'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+bigint_bigint#!#numeric#!#13#!#23#!#2
+int_bigint#!#numeric#!#13#!#23#!#2
+int_int#!#numeric#!#9#!#14#!#2
+int_smallint#!#numeric#!#9#!#14#!#2
+int_tiny#!#numeric#!#9#!#14#!#2
+money_bigint#!#numeric#!#13#!#23#!#6
+money_int#!#numeric#!#13#!#23#!#6
+money_money#!#numeric#!#13#!#23#!#6
+money_smallint#!#numeric#!#13#!#23#!#6
+money_smallmoney#!#numeric#!#13#!#23#!#6
+money_tiny#!#numeric#!#13#!#23#!#6
+smallint_bigint#!#numeric#!#13#!#23#!#2
+smallint_smallint#!#numeric#!#5#!#9#!#2
+smallmoney_bigint#!#numeric#!#9#!#14#!#6
+smallmoney_int#!#numeric#!#9#!#14#!#6
+smallmoney_smallint#!#numeric#!#9#!#14#!#6
+smallmoney_smallmoney#!#numeric#!#9#!#14#!#6
+smallmoney_tiny#!#numeric#!#9#!#14#!#6
+tiny_bigint#!#numeric#!#13#!#23#!#2
+tiny_smallint#!#numeric#!#5#!#9#!#2
+tiny_tiny#!#numeric#!#5#!#7#!#2
+~~END~~
+
+
+DROP TABLE babel_5899_t1
+go
+DROP TYPE babel_5899_MoneyUDT
+GO
+DROP TYPE babel_5899_SmallMoneyUDT
+GO
+DROP TABLE babel_5899_result_table
+GO
+DROP TABLE babel_5899_t2
+GO
+DROP PROCEDURE babel_5899_get_column_info_p1
+go
+

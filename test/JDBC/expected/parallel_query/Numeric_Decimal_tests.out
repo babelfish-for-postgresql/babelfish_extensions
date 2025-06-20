@@ -1428,7 +1428,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) * CAST(678.90 AS NUMERIC(5,2)) / (CAST(2 AS 
 GO
 ~~START~~
 numeric
-16762.041000000000
+16762.041000000000000
 ~~END~~
 
 
@@ -2098,7 +2098,7 @@ SELECT (@num1 * @num2) / (@int1 + @int2) AS result;
 GO
 ~~START~~
 numeric
-16762.0410000000000000
+16762.041000000000000
 ~~END~~
 
 
@@ -9982,7 +9982,7 @@ WHERE num_col = int_col + 0.45;
 GO
 ~~START~~
 int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
-2#!#500.00#!#500.0000000000#!#500.00#!#500#!#500000#!#500#!#500.0#!#500.0000#!#CAT-2
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
 ~~END~~
 
 ~~START~~
