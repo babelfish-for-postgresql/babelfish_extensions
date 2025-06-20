@@ -2483,48 +2483,47 @@ ON float_real_range_partition_scheme(float_val);
 GO
 
 -- Create another partitioned table with computed columns
--- babelfish crash while creating
--- CREATE TABLE float_real_partitioned_computed_test (
---     id INT IDENTITY(1,1),
---     float_val FLOAT,
---     real_val REAL,
---     computed_val AS (float_val * real_val),
---     description VARCHAR(100)
--- ) ON float_real_range_partition_scheme(float_val);
--- GO
+CREATE TABLE float_real_partitioned_computed_test (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    computed_val AS (float_val * real_val),
+    description VARCHAR(100)
+) ON float_real_range_partition_scheme(float_val);
+GO
 
--- -- Insert test data
--- INSERT INTO float_real_partitioned_computed_test (float_val, real_val, description)
--- SELECT float_val, real_val, description
--- FROM float_real_partitioned_test;
--- GO
+-- Insert test data
+INSERT INTO float_real_partitioned_computed_test (float_val, real_val, description)
+SELECT float_val, real_val, description
+FROM float_real_partitioned_test;
+GO
 
--- -- Query to compare partition distribution
--- SELECT 
---     'Base table' as table_name,
---     p.partition_number,
---     COUNT(*) as row_count
--- FROM float_real_partitioned_test t
--- JOIN sys.partitions p ON p.object_id = OBJECT_ID('float_real_partitioned_test')
---     AND p.index_id <= 1
--- WHERE p.partition_number = $PARTITION.float_real_range_partition_func(t.float_val)
--- GROUP BY p.partition_number
--- UNION ALL
--- SELECT 
---     'Computed table' as table_name,
---     p.partition_number,
---     COUNT(*) as row_count
--- FROM float_real_partitioned_computed_test t
--- JOIN sys.partitions p ON p.object_id = OBJECT_ID('float_real_partitioned_computed_test')
---     AND p.index_id <= 1
--- WHERE p.partition_number = $PARTITION.float_real_range_partition_func(t.float_val)
--- GROUP BY p.partition_number
--- ORDER BY table_name, partition_number;
--- GO
+-- Query to compare partition distribution
+SELECT 
+    'Base table' as table_name,
+    p.partition_number,
+    COUNT(*) as row_count
+FROM float_real_partitioned_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('float_real_partitioned_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number
+UNION ALL
+SELECT 
+    'Computed table' as table_name,
+    p.partition_number,
+    COUNT(*) as row_count
+FROM float_real_partitioned_computed_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('float_real_partitioned_computed_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number
+ORDER BY table_name, partition_number;
+GO
 
 -- Cleanup
 DROP TABLE IF EXISTS float_real_partitioned_test;
--- DROP TABLE IF EXISTS float_real_partitioned_computed_test;
+DROP TABLE IF EXISTS float_real_partitioned_computed_test;
 DROP PARTITION SCHEME float_real_range_partition_scheme;
 DROP PARTITION FUNCTION float_real_range_partition_func;
 GO

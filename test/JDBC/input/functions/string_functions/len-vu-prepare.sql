@@ -1,0 +1,359 @@
+
+-- Basic test case
+CREATE TABLE binary_len_test( id int,bin_data BINARY(1000) )
+GO
+INSERT INTO binary_len_test (id, bin_data) VALUES 
+(1, 0x0102),
+(2, 0x010203),
+(3, 0x01020304),
+(4, NULL)
+GO
+
+-- Create a view that uses the len function with binary data
+CREATE VIEW binary_lengths AS
+SELECT len(CAST(0x0102030405 AS BINARY(10))) AS binary_len,
+       len(CAST(0x0102030405 AS VARBINARY(10))) AS varbinary_len
+GO
+
+-- Create a function that uses len with binary data
+CREATE FUNCTION get_binary_length(@bin BINARY(70))
+RETURNS INT
+AS
+BEGIN
+    RETURN len(@bin)
+END
+GO
+
+
+-- Create a stored procedure that uses len with binary data
+CREATE PROCEDURE check_binary_length
+    @bin BINARY(100)
+AS
+BEGIN
+    DECLARE @len INT = len(@bin)
+    SELECT @len AS binary_length
+END
+GO
+
+
+-- Create a computed column that uses len
+CREATE TABLE binary_computed (
+    id INT PRIMARY KEY,
+    bin_data BINARY(1000),
+    bin_length AS len(bin_data) persisted
+)
+GO
+-- Insert data and test the computed column
+INSERT INTO binary_computed (id, bin_data) VALUES 
+(1, 0x0102),
+(2, 0x010203),
+(3, 0x01020304),
+(4, NULL)
+GO
+
+
+-------- Trigger test case
+CREATE TABLE binary_trigger_source (
+    id INT PRIMARY KEY,
+    bin_data BINARY(20)
+)
+GO
+
+CREATE TABLE binary_trigger_dest (
+    id INT,
+    bin_data BINARY(20),
+    bin_length INT
+)
+GO
+
+-- Create a trigger that calculates and stores the length
+CREATE TRIGGER tr_binary_length
+ON binary_trigger_source
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO binary_trigger_dest (id, bin_data, bin_length)
+    SELECT id, bin_data, len(bin_data) FROM inserted
+END
+GO
+
+-- UDT test case
+CREATE TYPE BinaryUDT FROM BINARY(10)
+GO
+
+-- Create User-Defined Data Types
+CREATE TYPE EmailAddress FROM VARCHAR(255);
+GO
+CREATE TYPE PhoneNumber FROM CHAR(10);
+GO
+CREATE TYPE FullName FROM NVARCHAR(100);
+GO
+CREATE TYPE Description FROM TEXT;
+GO
+CREATE TYPE Unicode_Description FROM NTEXT;
+GO
+CREATE TYPE ShortCode FROM CHAR(5);
+GO
+CREATE TYPE LongText FROM VARCHAR(MAX);
+GO
+CREATE TYPE UnicodeCode FROM NCHAR(10);
+GO
+
+-- Create Base Tables
+CREATE TABLE len_t1 (
+    Col1 CHAR(10),
+    Col2 VARCHAR(10),
+    Col3 NCHAR(10),
+    Col4 NVARCHAR(10),
+    Col5 TEXT,
+    Col6 NTEXT
+);
+GO
+
+CREATE TABLE len_t2 (
+    IntCol INT,
+    DecimalCol DECIMAL(18,2),
+    MoneyCol MONEY,
+    DateCol DATE,
+    BitCol BIT,
+    GuidCol UNIQUEIDENTIFIER,
+    ComputedCol AS IntCol * 2
+);
+GO
+
+CREATE TABLE len_udt_t3 (
+    ID INT PRIMARY KEY,
+    Email EmailAddress,
+    Phone PhoneNumber,
+    Name FullName,
+    Desc1 Description,
+    Desc2 Unicode_Description,
+    Code ShortCode,
+    Details LongText,
+    UCode UnicodeCode
+);
+GO
+
+-- Populate Base Tables
+INSERT INTO len_t1 VALUES
+('Hello     ', 'Hello', N'Hello     ', N'Hello', 'Hello', N'Hello');
+GO
+
+INSERT INTO len_t2 (IntCol, DecimalCol, MoneyCol, DateCol, BitCol, GuidCol)
+VALUES 
+(123, 456.78, 789.01, '2024-01-01', 1, '9641D381-A27F-40A0-8FB9-42216F635D4A'),
+(-123, -456.78, -789.01, '2024-12-31', 0, '9641D381-A27F-40A0-8FB9-42216F635D4A');
+GO
+
+INSERT INTO len_udt_t3 VALUES
+(1, 'test@example.com', '1234567890', N'John Doe', 'Simple description', 
+N'Unicode description', 'ABC12', 'Long text details', N'UNICODE123');
+GO
+
+-- Create Tables for Dependent Objects Testing
+CREATE TABLE len_source_data (
+    ID INT PRIMARY KEY,
+    StringData VARCHAR(100),
+    UnicodeData NVARCHAR(100),
+    EmailData EmailAddress,
+    CodeData ShortCode
+);
+GO
+
+INSERT INTO len_source_data VALUES
+(1, 'Regular String', N'Unicode String', 'test@example.com', 'CODE1'),
+(2, 'Another String', N'Another Unicode', 'another@test.com', 'CODE2'),
+(3, '', N'', '', '');
+GO
+
+-- =============================================
+-- PART 2: CONTINUED TESTS AND DEPENDENT OBJECTS
+-- =============================================
+
+-- 26. Aggregate Functions with Numbers
+CREATE TABLE len_number_test (ID INT);
+INSERT INTO len_number_test VALUES (1), (22), (333), (4444);
+GO
+
+-- =============================================
+-- DEPENDENT OBJECT TESTS
+-- =============================================
+
+-- 35. Create Views
+CREATE VIEW len_basic_view AS
+SELECT 
+    ID,
+    StringData,
+    LEN(StringData) AS StringLength,
+    UnicodeData,
+    LEN(UnicodeData) AS UnicodeLength,
+    LEN(EmailData) AS EmailLength
+FROM len_source_data;
+GO
+
+CREATE VIEW len_udt_view AS
+SELECT
+    ID,
+    Email,
+    LEN(Email) AS EmailLength,
+    Name,
+    LEN(Name) AS NameLength,
+    CASE 
+        WHEN LEN(Email) > LEN(Name) THEN 'Email Longer'
+        ELSE 'Name Longer'
+    END AS Comparison
+FROM len_udt_t3;
+GO
+
+-- 36. Create Indexed View
+CREATE VIEW len_indexed_view WITH SCHEMABINDING AS
+SELECT 
+    ID,
+    LEN(StringData) AS StringLength,
+    LEN(UnicodeData) AS UnicodeLength
+FROM dbo.len_source_data;
+GO
+
+-- 37. Create Scalar Functions
+CREATE FUNCTION len_fn_GetTotalLength
+(
+    @String VARCHAR(100),
+    @Unicode NVARCHAR(100)
+)
+RETURNS INT
+AS
+BEGIN
+    RETURN ISNULL(LEN(@String), 0) + ISNULL(LEN(@Unicode), 0);
+END;
+GO
+
+CREATE FUNCTION len_fn_GetLengthCategory
+(
+    @Text NVARCHAR(MAX)
+)
+RETURNS VARCHAR(10)
+AS
+BEGIN
+    RETURN CASE 
+        WHEN @Text IS NULL THEN 'NULL'
+        WHEN LEN(@Text) = 0 THEN 'Empty'
+        WHEN LEN(@Text) <= 10 THEN 'Short'
+        WHEN LEN(@Text) <= 50 THEN 'Medium'
+        ELSE 'Long'
+    END;
+END;
+GO
+
+-- 38. Create Table-Valued Function
+CREATE FUNCTION len_fn_GetAnalysis()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        ID,
+        Email,
+        LEN(Email) AS EmailLength,
+        Name,
+        LEN(Name) AS NameLength,
+        LEN(Email) + LEN(Name) AS TotalLength
+    FROM len_udt_t3
+    WHERE LEN(Email) > 0 OR LEN(Name) > 0
+);
+GO
+
+-- 39. Create Stored Procedures
+CREATE PROCEDURE len_sp_AnalyzeLengths
+    @MinLength INT = 0
+AS
+BEGIN
+    SELECT 
+        ID,
+        Email,
+        LEN(Email) AS EmailLength,
+        Name,
+        LEN(Name) AS NameLength
+    FROM len_udt_t3
+    WHERE LEN(Email) > @MinLength 
+       OR LEN(Name) > @MinLength;
+END;
+GO
+
+CREATE PROCEDURE len_sp_ValidateAndInsert
+    @Email EmailAddress,
+    @Name FullName
+AS
+BEGIN
+    IF LEN(@Email) < 5 OR LEN(@Name) < 2
+    BEGIN
+        RAISERROR ('Invalid length for email or name', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO len_udt_t3 (
+        ID, 
+        Email, 
+        Name,
+        Phone,
+        Code,
+        Details,
+        UCode
+    )
+    VALUES (
+        ISNULL((SELECT MAX(ID) FROM len_udt_t3), 0) + 1,
+        @Email,
+        @Name,
+        '',
+        '',
+        '',
+        ''
+    );
+END;
+GO
+
+-- 40. Create Tables with Computed Columns
+CREATE TABLE len_computed_test (
+    ID INT PRIMARY KEY,
+    Email EmailAddress,
+    Name FullName,
+    EmailLength AS LEN(Email) PERSISTED,
+    NameLength AS LEN(Name) PERSISTED,
+    TotalLength AS LEN(Email) + LEN(Name) PERSISTED,
+    LengthCategory AS CASE 
+                        WHEN LEN(Email) + LEN(Name) = 0 THEN 'Empty'
+                        WHEN LEN(Email) + LEN(Name) <= 20 THEN 'Short'
+                        ELSE 'Long'
+                     END PERSISTED
+);
+GO
+
+-- 41. Create Table with Check Constraints
+CREATE TABLE len_constrained_test (
+    ID INT PRIMARY KEY,
+    Email EmailAddress
+        CONSTRAINT CHK_Email_Length CHECK (LEN(Email) BETWEEN 5 AND 255),
+    Name FullName
+        CONSTRAINT CHK_Name_Length CHECK (LEN(Name) > 0),
+    Code ShortCode
+        CONSTRAINT CHK_Code_Length CHECK (LEN(Code) = 5)
+);
+GO
+
+-- 42. Create Trigger
+CREATE TRIGGER len_tr_ValidateLength
+ON len_udt_t3
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM inserted 
+        WHERE LEN(Email) > 255 
+           OR LEN(Name) > 100
+           OR LEN(Code) > 5
+    )
+    BEGIN
+        RAISERROR ('Data length exceeds maximum allowed', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO

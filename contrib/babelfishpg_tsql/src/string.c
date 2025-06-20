@@ -172,24 +172,32 @@ Datum
 quotename(PG_FUNCTION_ARGS)
 {
 	const char *input_string = text_to_cstring(PG_GETARG_TEXT_P(0));
-	const char *delimiter = text_to_cstring(PG_GETARG_TEXT_P(1));
-
+	text *delimiter_text = PG_GETARG_TEXT_P(1);
+	const char *delimiter_str = text_to_cstring(delimiter_text);
+	
 	char		left_delim;
 	char		right_delim;
 	char	   *buf;
 	int			buf_i = 0;
+	char		first_char;
 
 	/* Validate input len */
 	if (strlen(input_string) > 128)
 	{
 		PG_RETURN_NULL();
 	}
-	if (strlen(delimiter) != 1)
+
+	if(VARSIZE_ANY_EXHDR(delimiter_text) == 0)
 	{
-		PG_RETURN_NULL();
+		first_char = ']';
+	}
+	else
+	{
+		/* Extract first character (byte) only */
+		first_char = delimiter_str[0];
 	}
 
-	switch (*delimiter)
+	switch (first_char)
 	{
 		case ']':
 		case '[':
@@ -199,8 +207,8 @@ quotename(PG_FUNCTION_ARGS)
 		case '`':
 		case '\'':
 		case '"':
-			left_delim = *delimiter;
-			right_delim = *delimiter;
+			left_delim = first_char;
+			right_delim = first_char;
 			break;
 		case '(':
 		case ')':
@@ -209,8 +217,8 @@ quotename(PG_FUNCTION_ARGS)
 			break;
 		case '<':
 		case '>':
-			left_delim = '>';
-			right_delim = '<';
+			left_delim = '<';
+			right_delim = '>';
 			break;
 		case '{':
 		case '}':
@@ -230,17 +238,16 @@ quotename(PG_FUNCTION_ARGS)
 	buf[buf_i++] = left_delim;
 	for (int i = 0; i < strlen(input_string); i++)
 	{
-		switch (input_string[i])
+		if (input_string[i] == right_delim)
 		{
-				/* Escape chars */
-			case '\'':
-			case ']':
-			case '"':
-				buf[buf_i++] = input_string[i];
-				buf[buf_i++] = input_string[i];
-				break;
-			default:
-				buf[buf_i++] = input_string[i];
+			/* Escape the delimiter character by doubling it */
+			buf[buf_i++] = input_string[i];
+			buf[buf_i++] = input_string[i];
+		}
+		else
+		{
+			/* Copy character as is */
+			buf[buf_i++] = input_string[i];
 		}
 	}
 	buf[buf_i++] = right_delim;

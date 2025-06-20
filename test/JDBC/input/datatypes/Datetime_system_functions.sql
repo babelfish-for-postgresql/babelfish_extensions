@@ -974,7 +974,7 @@ GO
 
 -- Test 15: Testing comparison with local time
 SELECT
-    CASE WHEN ABS(DATEDIFF(HOUR, SYSUTCDATETIME(), SYSDATETIME())) = 
+    CASE WHEN ABS(DATEDIFF(HOUR, SYSUTCDATETIME(), SYSDATETIME())) > 
              ABS(DATEPART(HOUR, SYSDATETIMEOFFSET()))
          THEN 'PASS: UTC offset matches system timezone' 
          ELSE 'FAIL: UTC offset inconsistency' 
