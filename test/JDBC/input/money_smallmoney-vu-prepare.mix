@@ -1,0 +1,206 @@
+-- tsql
+CREATE VIEW int2smallmoneyadd_vu AS SELECT cast(100 AS TINYINT) + cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW int4smallmoneyadd_vu AS SELECT cast(100 AS INT) + cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW int8smallmoneyadd_vu AS SELECT cast(100 AS BIGINT) + cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW smallmoneyint2add_vu AS SELECT cast(123.45 AS SMALLMONEY) + cast(100 AS TINYINT) AS result;
+GO
+
+CREATE VIEW smallmoneyint4add_vu AS SELECT cast(123.45 AS SMALLMONEY) + cast(100 as INT) AS result;
+GO
+
+CREATE VIEW smallmoneyint8add_vu AS SELECT cast(123.45 AS SMALLMONEY) + cast(100 as BIGINT) AS result;
+GO
+
+CREATE VIEW int2smallmoneymul_vu AS SELECT cast(100 AS TINYINT) * cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW int4smallmoneymul_vu AS SELECT cast(100 AS INT) * cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW bitsmallmoneypl_vu AS SELECT cast(100 AS BIT) + cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW bitsmallmoneymi_vu AS SELECT cast(100 AS BIT) - cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW smallmoneybitpl_vu AS SELECT cast(123.45 AS SMALLMONEY) + cast(100 AS BIT) AS result;
+GO
+
+CREATE VIEW smallmoneybitmi_vu AS SELECT cast(123.45 AS SMALLMONEY) - cast(100 AS BIT) AS result;
+GO
+
+CREATE VIEW floormaxmoney_vu AS SELECT floor(cast(922337203685477.5807 as MONEY)) AS result;
+GO
+
+CREATE VIEW ceilingminmoney_vu AS SELECT ceiling(cast(-922337203685477.5807 as MONEY)) AS result;
+GO
+
+CREATE VIEW powermoney_vu AS SELECT POWER(cast(-100.5807 as MONEY), 2) AS result;
+GO
+
+CREATE VIEW powermoneyfail_vu AS SELECT POWER(cast(-92233720368.5807 as MONEY), 2) AS result;
+GO
+
+CREATE VIEW powersmallmoney_vu AS SELECT POWER(cast(-100.5807 as SMALLMONEY), 2) AS result;
+GO
+
+CREATE VIEW powersmallmoneyfail_vu AS SELECT POWER(cast(-92233720368.5807 as SMALLMONEY), 2) AS result;
+GO
+
+CREATE FUNCTION principalsquared_func(@amount sys.MONEY)
+RETURNS sys.MONEY
+AS
+BEGIN
+    RETURN (SELECT POWER(@amount, 2));
+END;
+GO
+
+CREATE FUNCTION int2smallmoney_func()
+RETURNS @test TABLE(a smallmoney, b smallmoney, c smallmoney, d smallmoney, e smallmoney, f smallmoney, g smallmoney, h smallmoney)
+AS
+BEGIN
+    INSERT INTO @test
+    SELECT cast(100 AS TINYINT) * cast(123.45 AS SMALLMONEY)
+    , cast(100 AS TINYINT) / cast(123.45 AS SMALLMONEY)
+    , cast(100 AS TINYINT) + cast(123.45 AS SMALLMONEY)
+    , cast(100 AS TINYINT) - cast(123.45 AS SMALLMONEY)
+    , cast(123.45 AS SMALLMONEY) * cast(100 AS TINYINT)
+    , cast(123.45 AS SMALLMONEY) / cast(100 AS TINYINT)
+    , cast(123.45 AS SMALLMONEY) + cast(100 AS TINYINT)
+    , cast(123.45 AS SMALLMONEY) - cast(100 AS TINYINT);
+    RETURN 0;
+END;
+GO
+
+CREATE FUNCTION smallintsmallmoney_func()
+RETURNS @test TABLE(a smallmoney, b smallmoney, c smallmoney, d smallmoney, e smallmoney, f smallmoney, g smallmoney, h smallmoney)
+AS
+BEGIN
+    INSERT INTO @test
+    SELECT cast(100 AS SMALLINT) * cast(123.45 AS SMALLMONEY)
+    , cast(100 AS SMALLINT) / cast(123.45 AS SMALLMONEY)
+    , cast(100 AS SMALLINT) + cast(123.45 AS SMALLMONEY)
+    , cast(100 AS SMALLINT) - cast(123.45 AS SMALLMONEY)
+    , cast(123.45 AS SMALLMONEY) * cast(100 AS SMALLINT)
+    , cast(123.45 AS SMALLMONEY) / cast(100 AS SMALLINT)
+    , cast(123.45 AS SMALLMONEY) + cast(100 AS SMALLINT)
+    , cast(123.45 AS SMALLMONEY) - cast(100 AS SMALLINT);
+    RETURN 0;
+END;
+GO
+
+
+CREATE FUNCTION int8smallmoney_func()
+RETURNS @test TABLE(a smallmoney, b smallmoney, c smallmoney, d smallmoney, e smallmoney, f smallmoney, g smallmoney, h smallmoney)
+AS
+BEGIN
+    INSERT INTO @test
+    SELECT cast(100 AS BIGINT) * cast(123.45 AS SMALLMONEY)
+    , cast(100 AS BIGINT) / cast(123.45 AS SMALLMONEY)
+    , cast(100 AS BIGINT) + cast(123.45 AS SMALLMONEY)
+    , cast(100 AS BIGINT) - cast(123.45 AS SMALLMONEY)
+    , cast(123.45 AS SMALLMONEY) * cast(100 AS BIGINT)
+    , cast(123.45 AS SMALLMONEY) / cast(100 AS BIGINT)
+    , cast(123.45 AS SMALLMONEY) + cast(100 AS BIGINT)
+    , cast(123.45 AS SMALLMONEY) - cast(100 AS BIGINT);
+    RETURN 0;
+END;
+GO
+
+CREATE FUNCTION bitsmallmoney_func()
+RETURNS @test TABLE(a smallmoney, b smallmoney, c smallmoney, d smallmoney, e smallmoney, f smallmoney, g smallmoney, h smallmoney)
+AS
+BEGIN
+    INSERT INTO @test
+    SELECT cast(100 AS BIT) * cast(123.45 AS SMALLMONEY)
+    , cast(100 AS BIT) / cast(123.45 AS SMALLMONEY)
+    , cast(100 AS BIT) + cast(123.45 AS SMALLMONEY)
+    , cast(100 AS BIT) - cast(123.45 AS SMALLMONEY)
+    , cast(123.45 AS SMALLMONEY) * cast(100 AS BIT)
+    , cast(123.45 AS SMALLMONEY) / cast(100 AS BIT)
+    , cast(123.45 AS SMALLMONEY) + cast(100 AS BIT)
+    , cast(123.45 AS SMALLMONEY) - cast(100 AS BIT);
+    RETURN 0;
+END;
+GO
+
+CREATE FUNCTION bitmoney_func()
+RETURNS @test TABLE(a money, b money, c money, d money, e money, f money, g money, h money)
+AS
+BEGIN
+    INSERT INTO @test
+    SELECT cast(100 AS BIT) * cast(123.45 AS MONEY)
+    , cast(100 AS BIT) / cast(123.45 AS MONEY)
+    , cast(100 AS BIT) + cast(123.45 AS MONEY)
+    , cast(100 AS BIT) - cast(123.45 AS MONEY)
+    , cast(123.45 AS MONEY) * cast(100 AS BIT)
+    , cast(123.45 AS MONEY) / cast(100 AS BIT)
+    , cast(123.45 AS MONEY) + cast(100 AS BIT)
+    , cast(123.45 AS MONEY) - cast(100 AS BIT);
+    RETURN 0;
+END;
+GO
+
+CREATE FUNCTION int4smallmoney_func()
+RETURNS @test TABLE(a smallmoney, b smallmoney, c smallmoney, d smallmoney, e smallmoney, f smallmoney, g smallmoney, h smallmoney)
+AS
+BEGIN
+    INSERT INTO @test
+    SELECT cast(1000 AS INT) * cast(123.45 AS SMALLMONEY)
+    , cast(10000 AS INT) / cast(123.45 AS SMALLMONEY)
+    , cast(10000 AS INT) + cast(123.45 AS SMALLMONEY)
+    , cast(10000 AS INT) - cast(123.45 AS SMALLMONEY)
+    , cast(123.45 AS SMALLMONEY) * cast(100 AS INT)
+    , cast(123.45 AS SMALLMONEY) / cast(100 AS INT)
+    , cast(123.45 AS SMALLMONEY) + cast(100 AS INT)
+    , cast(123.45 AS SMALLMONEY) - cast(100 AS INT);
+    RETURN;
+END;
+GO
+
+CREATE TABLE money_smallmoney_vu_test(id SERIAL, cost_sm SMALLMONEY, cost_m sys.MONEY);
+GO
+
+CREATE INDEX idx_cost_smallmoney on money_smallmoney_vu_test(cost_sm);
+GO
+
+CREATE INDEX idx_cost_money on money_smallmoney_vu_test(cost_m);
+GO
+
+INSERT INTO money_smallmoney_vu_test(cost_sm, cost_m) VALUES 
+(100,2000), (200,40), (400,20), (300, 500), (100, 1000),
+(10,100), (10,40000), (125,20), (50, 590), (300, 900),
+(100,100), (10,40000), (125,20), (50, 590), (300, 900);
+GO
+
+-- tsql
+-- Create test tables
+CREATE TABLE MoneyTestTable1 (
+    ID INT IDENTITY(1,1),
+    MoneyVal MONEY,
+    SmallMoneyVal SMALLMONEY,
+    Description VARCHAR(100)
+);
+
+-- Test default values
+INSERT INTO MoneyTestTable1 DEFAULT VALUES;
+GO
+
+INSERT INTO MoneyTestTable1 (MoneyVal, SmallMoneyVal, Description)
+VALUES 
+    (-922337203685477.5808, -214748.3648, 'MIN values'),
+    (922337203685477.5807, 214748.3647, 'MAX values'),
+    (NULL, NULL, 'NULL values'),
+    (CAST(RAND() * 1000000 AS MONEY), 
+     CAST(RAND() * 10000 AS SMALLMONEY), 'Random values'),
+    (0.0001, 0.0001, 'Small positive values'),
+    (-0.0001, -0.0001, 'Small negative values'),
+    (0,0, 'Zero Values');
+
+
