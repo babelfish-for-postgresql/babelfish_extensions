@@ -13,8 +13,14 @@ RETURNS sys.BBF_BINARY
 AS 'babelfishpg_common', 'byteabinary'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (pg_catalog.BYTEA AS sys.BBF_BINARY)
-WITH FUNCTION sys.byteabinary(pg_catalog.BYTEA, integer, boolean) AS ASSIGNMENT;
+DO $$
+BEGIN
+    CREATE CAST (pg_catalog.BYTEA AS sys.BBF_BINARY)
+    WITH FUNCTION sys.byteabinary(pg_catalog.BYTEA, integer, boolean) AS ASSIGNMENT;
+EXCEPTION WHEN duplicate_object THEN
+    -- Silently ignore if cast already exists
+END;
+$$;
 
 -- casting from binary to bytea
 CREATE OR REPLACE FUNCTION sys.binarybytea(sys.BBF_BINARY, integer, boolean)
@@ -22,8 +28,14 @@ RETURNS pg_catalog.BYTEA
 AS 'babelfishpg_common', 'binarybytea'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (sys.BBF_BINARY AS pg_catalog.BYTEA)
-WITH FUNCTION sys.binarybytea(sys.BBF_BINARY, integer, boolean) AS ASSIGNMENT;
+DO $$
+BEGIN
+    CREATE CAST (sys.BBF_BINARY AS pg_catalog.BYTEA)
+    WITH FUNCTION sys.binarybytea(sys.BBF_BINARY, integer, boolean) AS ASSIGNMENT;
+EXCEPTION WHEN duplicate_object THEN
+    -- Silently ignore if cast already exists
+END;
+$$;
 
 -- Operator class for numeric_ops to incorporate various operator between numeric and int4 for Index scan
 DO $$
