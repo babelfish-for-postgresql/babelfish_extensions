@@ -68,7 +68,7 @@ SELECT
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-[SimpleString]#!#[SimpleString]#!#(SimpleString)#!#'SimpleString'#!#"SimpleString"#!#>SimpleString<
+[SimpleString]#!#[SimpleString]#!#(SimpleString)#!#'SimpleString'#!#"SimpleString"#!#<SimpleString>
 ~~END~~
 
 
@@ -83,7 +83,7 @@ SELECT
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-[Table.Name]#!#[Column[Name]]]#!#[[BracketedName]]]#!#[Name@#$%^]#!#[Name''WithQuote]#!#[Name""WithQuote]
+[Table.Name]#!#[Column[Name]]]#!#[[BracketedName]]]#!#[Name@#$%^]#!#[Name'WithQuote]#!#[Name"WithQuote]
 ~~END~~
 
 
@@ -124,7 +124,7 @@ SELECT
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-[TestString]#!#(TestString)#!#'TestString'#!#"TestString"#!#>TestString<
+[TestString]#!#(TestString)#!#'TestString'#!#"TestString"#!#<TestString>
 ~~END~~
 
 
@@ -138,7 +138,7 @@ SELECT
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-[Outer[Inner]]]#!#(Outer(Inner))#!#"Outer""Inner"""#!#'Outer''Inner'''#!#>Outer<Inner><
+[Outer[Inner]]]#!#(Outer(Inner)))#!#"Outer""Inner"""#!#'Outer''Inner'''#!#<Outer<Inner>>>
 ~~END~~
 
 
@@ -151,7 +151,7 @@ SELECT
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-[Schema.Table[Name]]]#!#[[Schema]].[Table]]]#!#[First.Second.Third]#!#[Mix[]]()""''<>]
+[Schema.Table[Name]]]#!#[[Schema]].[Table]]]#!#[First.Second.Third]#!#[Mix[]]()"'<>]
 ~~END~~
 
 
@@ -258,7 +258,7 @@ SELECT
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-SELECT * FROM [Table.Name]#!#SELECT [Column.Name] FROM Table#!#[Schema].[Table].[Column]#!#[""Inner""]
+SELECT * FROM [Table.Name]#!#SELECT [Column.Name] FROM Table#!#[Schema].[Table].[Column]#!#["Inner"]
 ~~END~~
 
 
@@ -306,6 +306,8 @@ int#!#varchar#!#char#!#nvarchar#!#varchar#!#varchar
 4#!#Schema.Table.Column#!#[#!#[Schema.Table.Column]#!#[Schema.Table.Column]#!#Pass
 6#!##!#[#!#[]#!#[]#!#Pass
 7#!#Special@#$%#!#[#!#[Special@#$%]#!#[Special@#$%]#!#Pass
+8#!#Quote'String#!#[#!#[Quote'String]#!#[Quote'String]#!#Pass
+9#!#Double""Quote#!#[#!#[Double""Quote]#!#[Double""Quote]#!#Pass
 10#!#Space String#!#[#!#[Space String]#!#[Space String]#!#Pass
 ~~END~~
 

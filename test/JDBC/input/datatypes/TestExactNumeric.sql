@@ -137,7 +137,7 @@ SELECT
 	CEILING(smallint_col + 0.5) AS ceil_smallint,
 	CEILING(integer_col + 0.5) AS ceil_int,
 	CEILING(bigint_col + 0.5) AS ceil_bigint
-FROM exactnumeric_table;
+FROM exactnumeric_table order by ceil_tinyint;
 GO
 
 SELECT
@@ -145,7 +145,7 @@ SELECT
 	FLOOR(smallint_col + 0.5) AS floor_smallint,
 	FLOOR(integer_col + 0.5) AS floor_int,
 	FLOOR(bigint_col + 0.5) AS floor_bigint
-FROM exactnumeric_table;
+FROM exactnumeric_table order by floor_tinyint;
 GO
 
 -- DEGREES and RADIANS
@@ -241,7 +241,7 @@ SELECT
 	ROUND(smallint_col + 0.5) AS round_smallint,
 	ROUND(integer_col + 0.5) AS round_int,
 	ROUND(bigint_col + 0.5) AS round_bigint
-FROM exactnumeric_table;
+FROM exactnumeric_table order by round_tinyint;
 GO
 
 -- Division by zero

@@ -133,3 +133,37 @@ ALTER function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DEC
 go
 SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
 go
+
+-- Test OBJECT_DEFINITION on the large stored procedure
+SELECT LEN(OBJECT_DEFINITION(OBJECT_ID('dbo.object_definition_Largeproc'))) AS DefinitionLength
+GO
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('dbo.object_definition_Largeproc'))
+GO
+
+-- Test OBJECT_DEFINITION on the large view
+SELECT LEN(OBJECT_DEFINITION(OBJECT_ID('dbo.object_definition_LargeView'))) AS DefinitionLength
+GO
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('dbo.object_definition_LargeView'))
+GO
+
+-- Test OBJECT_DEFINITION on the large function
+SELECT LEN(OBJECT_DEFINITION(OBJECT_ID('dbo.object_definition_LargeFunction'))) AS DefinitionLength
+GO
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('dbo.object_definition_LargeFunction'))
+GO
+
+-- Test the dependency view
+SELECT * FROM dbo.object_definition_dependency_view WHERE name = 'dbo.object_definition_dependent_proc'
+GO
+
+-- Test the new dependency procedure
+EXEC dbo.object_definition_dependency_proc 'dbo.object_definition_dependent_proc'
+GO
+
+-- Test the dependency function
+SELECT dbo.object_definition_dependency_func('dbo.object_definition_dependent_proc') AS FunctionResult
+GO
+

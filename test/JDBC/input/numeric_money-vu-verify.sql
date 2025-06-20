@@ -154,7 +154,6 @@ END
 GO
 
 -- Testing with multiple variables and nested CASE
--- FIXME : value mismatch
 DECLARE @cost MONEY = 1500.00
 DECLARE @margin SMALLMONEY = 0.25
 DECLARE @tax SMALLMONEY = 0.08
