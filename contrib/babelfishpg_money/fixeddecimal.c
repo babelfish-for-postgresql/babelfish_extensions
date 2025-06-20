@@ -1939,7 +1939,7 @@ fixeddecimalint8div(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("fixeddecimal out of range")));
 #else
-		if (arg1 == INT64_MIN)
+		if (unlikely(arg1 == INT64_MIN))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
