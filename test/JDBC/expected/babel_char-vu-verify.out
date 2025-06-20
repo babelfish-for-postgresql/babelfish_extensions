@@ -71,67 +71,6 @@ nvarchar
 <NULL>
 ~~END~~
 
-select sys.char(255)
-select sys.char(256)
-select sys.char(105)
-select sys.char(-1)
-select sys.char(0)
-select char(256)
-select .sys.char(256)
-select .sys.char(0)
-select .sys.char(-1)
-select .sys.char(255)
-GO
-~~START~~
-varchar
-ÿ
-~~END~~
-
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-~~START~~
-varchar
-i
-~~END~~
-
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-~~START~~
-varchar
-ÿ
-~~END~~
-
 select sys.nchar(65535)
 select sys.nchar(65536)
 select sys.nchar(-1)

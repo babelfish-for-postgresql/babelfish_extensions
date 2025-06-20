@@ -368,3 +368,15 @@ GO
 DROP TYPE char_type_output;
 DROP TYPE char_type_varchar;
 GO
+
+select sys.char(255)
+select sys.char(256)
+select sys.char(105)
+select sys.char(-1)
+select sys.char(0)
+select char(256)
+select .sys.char(256)
+select .sys.char(0)
+select .sys.char(-1)
+select .sys.char(255)
+GO
