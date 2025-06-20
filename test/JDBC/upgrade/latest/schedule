@@ -633,3 +633,4 @@ MONEY_OBJECT
 money_smallmoney
 bit_arith
 user_token-dep
+len
