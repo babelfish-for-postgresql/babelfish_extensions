@@ -1234,9 +1234,6 @@ get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
 	return -1;
 }
 
-/* 
- * Look for a typmod to return from a numeric expression,
- * also for cases where we cannot compute the expression typmod return -1 and set found as false.
 /*
  * is_mathematical_function - returns true if the function name is a mathematical function in T-SQL.
  * This is used to identify functions that should be treated as mathematical operations.
