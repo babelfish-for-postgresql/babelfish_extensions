@@ -2662,36 +2662,7 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 				break;
 		}
 
-		if (i == -1 && targetTypeId == DATEOID)
-		{
-			/*
-			 * Set input to default '1900-01-01' if empty string encountered
-			 */
-			DateADT date;
-			struct pg_tm tt,
-						 *tm = &tt;
-			tm->tm_year = 1900;
-			tm->tm_mon = 1;
-			tm->tm_mday = 1;
-			date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
-
-			newcon->constvalue = DateADTGetDatum(date);
-		}
-		else if (i == -1 && targetTypeId == TIMEOID)
-		{
-			/*
-			 * Set input to default '00:00:00.0000000' if empty string encountered
-			 */
-			TimeADT time;
-			struct pg_tm tt,
-						 *tm = &tt;
-			tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
-			tm2time(tm, 0, &time);
-			AdjustTimeForTypmod(&time, targetTypeMod);
-
-			newcon->constvalue = TimeADTGetDatum(time);
-		}
-		else if (i == -1)
+		if (i == -1)
 		{
 			/*
 			 * i == 1 means the value does not contain any characters but
@@ -2788,6 +2759,33 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 						 * happens inside stringTypeDatum().
 						 */
 						newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
+						break;
+					}
+				case DATEOID:
+					{
+						/* Set input to default '1900-01-01' for empty strings */
+						struct pg_tm tt, *tm = &tt;
+						DateADT date;
+
+						tm->tm_year = 1900;
+						tm->tm_mon = 1;
+						tm->tm_mday = 1;
+						date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+
+						newcon->constvalue = DateADTGetDatum(date);
+						break;
+					}
+				case TIMEOID:
+					{
+						/* Set input to default '00:00:00' for empty strings */
+						struct pg_tm tt, *tm = &tt;
+						TimeADT time;
+
+						tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
+						tm2time(tm, 0, &time);
+						AdjustTimeForTypmod(&time, targetTypeMod);
+
+						newcon->constvalue = TimeADTGetDatum(time);
 						break;
 					}
 				default:

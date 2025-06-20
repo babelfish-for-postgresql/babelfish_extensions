@@ -25,19 +25,12 @@ GO
 
 
 -- Test table insertions
-CREATE TABLE #test_empty_strings (
-    id int,
-    dt date,
-    tm time
-);
-GO
-
-INSERT INTO #test_empty_strings VALUES 
+INSERT INTO test_empty_strings VALUES 
 (1, '', ''),                            -- Empty strings
 (2, '   ', '   ');                      -- Spaces
 GO
 
-SELECT * FROM #test_empty_strings;
+SELECT * FROM test_empty_strings;
 GO
 
 
@@ -80,20 +73,41 @@ go
 select CAST(CAST(' ' AS date) AS datetimeoffset)
 go
 
+-- Test whitespace time casts to other datetime datatypes
+select CAST(CAST(' ' AS date) AS datetime)
+go
+
+select CAST(CAST(' ' AS date) AS datetime2)
+go
+
+select CAST(CAST(' ' AS date) AS smalldatetime)
+go
+
+select CAST(CAST(' ' AS date) AS datetimeoffset)
+go
+
+-- Test whitespace inputs for other datetime datatypes
+select CAST('  ' AS datetime);
+go
+
+select CAST('  ' AS datetime2);
+go
+
+select CAST('  ' AS smalldatetime);
+go
+
+select CAST('  ' AS datetimeoffset);
+go
+
 
 -- Test with views
-CREATE VIEW empty_dates_view AS
-SELECT 
-    CAST('' AS date) AS empty_date,
-    CAST('   ' AS date) AS space_date,
-    CAST('' AS time) AS empty_time,
-    CAST('   ' AS time) AS space_time;
+SELECT * FROM empty_string_date_time_view;
 GO
 
-SELECT * FROM empty_dates_view;
+SELECT * FROM string_vars_to_date_view;
 GO
 
-DROP VIEW empty_dates_view;
+SELECT * FROM string_vars_to_time_view;
 GO
 
 
@@ -126,25 +140,11 @@ SET @d3 = CHAR(9);                     -- Tab
 SELECT @d3 AS tab;
 GO
 
-INSERT INTO #test_empty_strings VALUES
+INSERT INTO test_empty_strings VALUES
 (3, CHAR(9), CHAR(9));
 GO
 
-SELECT * FROM #test_empty_strings WHERE id = 3;
-GO
-
-DROP TABLE #test_empty_strings;
-GO
-
-DECLARE @char_empty char(10) = '';
-DECLARE @char_spaces char(10) = '          ';
-DECLARE @nchar_empty nchar(10) = N'';
-DECLARE @nchar_spaces nchar(10) = N'          ';
-SELECT    
-    CAST(@char_empty AS date) AS char_to_date,
-    CAST(@char_spaces AS date) AS char_to_date,
-    CAST(@nchar_empty AS time) AS nchar_empty_to_time,
-    CAST(@nchar_spaces AS time) AS nchar_spaces_to_time;
+SELECT * FROM test_empty_strings WHERE id = 3;
 GO
 
 DECLARE @char_tab char(10) = CHAR(9);
@@ -179,15 +179,33 @@ GO
 DROP TABLE #test_computed;
 GO
 
-CREATE VIEW tab_space_dates_view AS
-SELECT
-    CAST(CHAR(9) AS date) AS tab_date,
-    CAST(CHAR(9) AS time) AS tab_time;
-GO
-
 SELECT * FROM tab_space_dates_view;
 GO
 
-DROP VIEW tab_space_dates_view;
+-- support for char/nchar casts to date/time
+DECLARE @char_empty char(10) = '';
+DECLARE @char_spaces char(10) = '          ';
+DECLARE @nchar_empty nchar(10) = N'';
+DECLARE @nchar_spaces nchar(10) = N'          ';
+SELECT    
+    CAST(@char_empty AS date) AS char_empty_to_date,
+    CAST(@char_spaces AS date) AS char_spaces_to_date,
+    CAST(@nchar_empty AS time) AS nchar_empty_to_time,
+    CAST(@nchar_spaces AS time) AS nchar_spaces_to_time;
 GO
 
+
+-- support for text/ntext casts to date/time
+SELECT    
+    CAST(CAST('' AS text) AS date) AS text_empty_to_date,
+    CAST(CAST('  ' AS text) AS date) AS text_spaces_to_date,
+    CAST(CAST('' AS ntext) AS date) AS ntext_empty_to_date,
+    CAST(CAST('  ' AS ntext) AS date) AS ntext_spaces_to_date;
+GO
+
+SELECT    
+    CAST(CAST('' AS text) AS time) AS text_empty_to_time,
+    CAST(CAST('  ' AS text) AS time) AS text_spaces_to_time,
+    CAST(CAST('' AS ntext) AS time) AS ntext_empty_to_time,
+    CAST(CAST('  ' AS ntext) AS time) AS ntext_spaces_to_time;
+GO

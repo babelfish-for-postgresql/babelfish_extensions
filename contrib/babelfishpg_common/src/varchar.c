@@ -1068,7 +1068,20 @@ varchar2date(PG_FUNCTION_ARGS)
 	 * Set input to default '1900-01-01' if empty string encountered
 	 */
 	if (isEmptyOrWhitespace(str))
-		date = initializeToDefaultDate();
+	{
+		/* Extract date from default timestamp (1900-01-01 00:00:00) */
+		struct pg_tm tt;
+		fsec_t fsec = 0;
+		Timestamp ts = initializeToDefaultDatetime();
+
+		if (timestamp2tm(ts, NULL, &tt, &fsec, NULL, NULL) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+
+		/* Convert pg_tm to DateADT */
+		date = date2j(tt.tm_year, tt.tm_mon, tt.tm_mday) - POSTGRES_EPOCH_JDATE;
+	}
 	else
 		date = DatumGetDateADT(DirectFunctionCall1(date_in, CStringGetDatum(str)));
 	pfree(str);
@@ -1092,7 +1105,25 @@ varchar2time(PG_FUNCTION_ARGS)
 	 * Set input to default '00:00:00.0000000' if empty string encountered
 	 */
 	if (isEmptyOrWhitespace(str))
-		time = initializeToDefaultTime(typmod);
+	{
+		/* Extract time from default timestamp (1900-01-01 00:00:00) */
+		struct pg_tm tt;
+		fsec_t fsec = 0;
+		Timestamp ts = initializeToDefaultDatetime();
+
+		if (timestamp2tm(ts, NULL, &tt, &fsec, NULL, NULL) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+
+		/* Use tm2time to convert to TimeADT */
+		if (tm2time(&tt, fsec, &time) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("time out of range")));
+
+		AdjustTimeForTypmod(&time, typmod);
+	}
 	else
 		time = DatumGetTimeADT(DirectFunctionCall3(time_in, CStringGetDatum(str), InvalidOid, typmod));
 	pfree(str);
