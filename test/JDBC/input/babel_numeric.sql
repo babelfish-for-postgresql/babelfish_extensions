@@ -688,3 +688,170 @@ GO
 
 drop TYPE numeric_7_2;
 GO
+
+-- cx query
+drop table if exists [testtable1];
+GO
+
+drop table if exists [testtable2];
+GO
+
+CREATE TABLE [dbo].[testtable1](
+	[businessdate] [datetime] NULL,
+	[transactionid] [bigint] NULL,
+	[accountid] [int] NULL,
+	[accountnumber] [varchar](50) NULL,
+	[transactionamount] [money] NULL,
+	[creditamount] [money] NULL,
+	[transactiondescription] [varchar](500) NULL
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[testtable2](
+	[accountid] [int] NULL,
+	[accountnumber] [varchar](50) NULL,
+	[dba] [varchar](255) NULL,
+	[isctrexempted] [bit] NULL,
+	[openeddate] [datetime] NULL,
+	[lastsareddate] [datetime] NULL,
+	[isclosed] [bit] NULL,
+	[closeddate] [datetime] NULL,
+	[homephone] [varchar](50) NULL,
+	[businessphone] [varchar](50) NULL,
+	[accountstatusid] [int] NULL,
+	[officerid] [int] NULL,
+	[producttypeid] [int] NULL,
+	[applicationid] [int] NULL,
+	[bsariskid] [int] NULL,
+	[bsaactivityid] [int] NULL,
+	[mailhandlingid] [int] NULL,
+	[branchid] [int] NULL,
+	[businesstypeid] [int] NULL,
+	[createddate] [datetime] NULL,
+	[createdby] [int] NULL,
+	[lastmodifieddate] [datetime] NULL,
+	[lastmodifiedby] [int] NULL,
+	[isentity] [bit] NULL,
+	[ownertypecode] [varchar](5) NULL,
+	[codemodifieddate] [datetime] NULL,
+	[codecreateddate] [datetime] NULL,
+	[analysisaccountcode] [varchar](50) NULL,
+	[collateralcodeid] [int] NULL,
+	[chargeoffdate] [datetime] NULL,
+	[nextrenewaldate] [datetime] NULL,
+	[cdloanterm] [varchar](100) NULL,
+	[renewaldate] [datetime] NULL,
+	[micraccountnumber] [varchar](50) NULL,
+	[micrroutingnumber] [varchar](10) NULL
+) ON [PRIMARY]
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-25T00:00:00.000' AS DateTime), 30000000001, 729, N'115', 1000.0000, 1000.0000, N'Recent Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-25T00:00:00.000' AS DateTime), 30000000002, 729, N'115', 1000.0000, 1000.0000, N'Recent Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-26T00:00:00.000' AS DateTime), 30000000003, 729, N'115', 1000.0000, 1000.0000, N'Recent Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-25T00:00:00.000' AS DateTime), 30000000004, 729, N'115', 1000.0000, 1000.0000, N'Recent Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-25T00:00:00.000' AS DateTime), 30000000005, 729, N'115', 1000.0000, 1000.0000, N'Recent Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000006, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000007, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000008, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000009, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000010, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000011, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000012, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000013, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000014, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000015, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000016, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000017, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000018, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000019, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000020, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000021, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000022, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000023, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000024, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000025, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000026, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000027, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000028, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000029, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000030, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000031, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable1] ([businessdate], [transactionid], [accountid], [accountnumber], [transactionamount], [creditamount], [transactiondescription]) VALUES (CAST(N'2016-01-11T00:00:00.000' AS DateTime), 30000000032, 729, N'115', 1000.0000, 1000.0000, N'History Week 1')
+GO
+INSERT [dbo].[testtable2] ([accountid], [accountnumber], [dba], [isctrexempted], [openeddate], [lastsareddate], [isclosed], [closeddate], [homephone], [businessphone], [accountstatusid], [officerid], [producttypeid], [applicationid], [bsariskid], [bsaactivityid], [mailhandlingid], [branchid], [businesstypeid], [createddate], [createdby], [lastmodifieddate], [lastmodifiedby], [isentity], [ownertypecode], [codemodifieddate], [codecreateddate], [analysisaccountcode], [collateralcodeid], [chargeoffdate], [nextrenewaldate], [cdloanterm], [renewaldate], [micraccountnumber], [micrroutingnumber]) VALUES (0, N'', N'', 0, CAST(N'1900-01-01T00:00:00.000' AS DateTime), CAST(N'1900-01-01T00:00:00.000' AS DateTime), 0, CAST(N'1900-01-01T00:00:00.000' AS DateTime), N'', N'', 0, 0, 0, 0, 0, 0, 0, 0, 0, CAST(N'2025-05-19T06:59:14.667' AS DateTime), 888, NULL, NULL, 0, N'', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+GO
+INSERT [dbo].[testtable2] ([accountid], [accountnumber], [dba], [isctrexempted], [openeddate], [lastsareddate], [isclosed], [closeddate], [homephone], [businessphone], [accountstatusid], [officerid], [producttypeid], [applicationid], [bsariskid], [bsaactivityid], [mailhandlingid], [branchid], [businesstypeid], [createddate], [createdby], [lastmodifieddate], [lastmodifiedby], [isentity], [ownertypecode], [codemodifieddate], [codecreateddate], [analysisaccountcode], [collateralcodeid], [chargeoffdate], [nextrenewaldate], [cdloanterm], [renewaldate], [micraccountnumber], [micrroutingnumber]) VALUES (729, N'115', N'', 0, CAST(N'2015-11-04T00:00:00.000' AS DateTime), NULL, 0, NULL, N'', N'', 0, 0, 2, 1376, 0, 0, 0, 231, 0, CAST(N'2025-05-19T16:51:41.483' AS DateTime), 0, NULL, NULL, 0, N'', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+GO
+INSERT [dbo].[testtable2] ([accountid], [accountnumber], [dba], [isctrexempted], [openeddate], [lastsareddate], [isclosed], [closeddate], [homephone], [businessphone], [accountstatusid], [officerid], [producttypeid], [applicationid], [bsariskid], [bsaactivityid], [mailhandlingid], [branchid], [businesstypeid], [createddate], [createdby], [lastmodifieddate], [lastmodifiedby], [isentity], [ownertypecode], [codemodifieddate], [codecreateddate], [analysisaccountcode], [collateralcodeid], [chargeoffdate], [nextrenewaldate], [cdloanterm], [renewaldate], [micraccountnumber], [micrroutingnumber]) VALUES (730, N'105', N'', 0, CAST(N'2015-11-05T00:00:00.000' AS DateTime), NULL, 0, NULL, N'', N'', 0, 0, 2, 1376, 0, 0, 0, 231, 0, CAST(N'2025-05-19T16:51:41.723' AS DateTime), 0, NULL, NULL, 0, N'', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+GO
+INSERT [dbo].[testtable2] ([accountid], [accountnumber], [dba], [isctrexempted], [openeddate], [lastsareddate], [isclosed], [closeddate], [homephone], [businessphone], [accountstatusid], [officerid], [producttypeid], [applicationid], [bsariskid], [bsaactivityid], [mailhandlingid], [branchid], [businesstypeid], [createddate], [createdby], [lastmodifieddate], [lastmodifiedby], [isentity], [ownertypecode], [codemodifieddate], [codecreateddate], [analysisaccountcode], [collateralcodeid], [chargeoffdate], [nextrenewaldate], [cdloanterm], [renewaldate], [micraccountnumber], [micrroutingnumber]) VALUES (731, N'106', N'', 0, CAST(N'2015-11-06T00:00:00.000' AS DateTime), NULL, 0, CAST(N'2016-02-03T00:00:00.000' AS DateTime), N'', N'', 0, 0, 2, 1376, 0, 0, 0, 231, 0, CAST(N'2025-05-19T16:51:41.960' AS DateTime), 0, NULL, NULL, 0, N'', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+GO
+DECLARE @runDate DATETIME;
+DECLARE @FirstDayOfWeekBeforeRunDate DATETIME; 
+DECLARE @LastDayOfHistoryRange DATETIME;
+DECLARE @LastDayOfReviewedRange DATETIME;
+
+DECLARE @PercentageActivityDecreased DECIMAL(15, 2);
+DECLARE @MinimumNumberOfTransactionsPerWeek MONEY;
+DECLARE @NumberOfWeeksToCheck INT;
+DECLARE @NumberOfWeeksOfHistory INT;
+
+SET @runDate = '2/3/2016';
+SET @PercentageActivityDecreased = 50*-1;
+SET @NumberOfWeeksToCheck = 2
+SET @NumberOfWeeksOfHistory = 3;
+SET @MinimumNumberOfTransactionsPerWeek = 2;
+SET @FirstDayOfWeekBeforeRunDate = 1
+SET @LastDayOfReviewedRange = DATEADD(Day,@NumberOfWeeksToCheck*-7,@FirstDayOfWeekBeforeRunDate)
+SET @LastDayOfHistoryRange = DATEADD(Day,(@NumberOfWeeksOfHistory+@NumberOfWeeksToCheck)*-7,@FirstDayOfWeekBeforeRunDate)
+ 
+
+ SELECT 
+    ct.AccountID, ct.AccountNumber, @NumberOfWeeksOfHistory ,COUNT(1),@NumberOfWeeksOfHistory,
+	(count(1)/(@NumberOfWeeksOfHistory * 1.0  )) as TransactionCountAvg --(COUNT(1) /( @NumberOfWeeksOfHistory * cast(1.0 as float) ))-- ,   (COUNT(1)/(@NumberOfWeeksOfHistory * 1.0 )) as TransactionCountAvg
+    FROM 
+    [testtable1] ct
+	INNER JOIN [testtable2] accounts
+	ON ct.AccountID = accounts.accountid
+	AND COALESCE(accounts.ClosedDate, @RunDate) >= @RunDate
+    GROUP BY 
+    ct.AccountID, ct.AccountNumber
+HAVING (COUNT(1)/(@NumberOfWeeksOfHistory * cast(1.0 as float))) >= @MinimumNumberOfTransactionsPerWeek
+GO
+
+drop table if exists [testtable1];
+GO
+
+drop table if exists [testtable2];
+GO
