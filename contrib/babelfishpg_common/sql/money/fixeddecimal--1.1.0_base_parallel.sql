@@ -689,6 +689,10 @@ RETURNS sys.MONEY
 AS 'babelfishpg_money', 'int8fixeddecimalmul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- this function is currently not used in any operator
+-- hence for now it is okay for it to return a float8
+-- func int8fixeddecimaldiv_money wraps this function
+-- and returns money
 CREATE FUNCTION sys.int8fixeddecimaldiv(INT8, FIXEDDECIMAL)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_money', 'int8fixeddecimaldiv'
@@ -1854,9 +1858,13 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int8smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- this function is currently not used in any operator
+-- hence for now it is okay for it to return a float8
+-- func int8fixeddecimaldiv_smallmoney implements div 
+-- and is used by the division operator
 CREATE FUNCTION sys.int8fixeddecimaldiv(INT8, sys.SMALLMONEY)
 RETURNS DOUBLE PRECISION
-AS 'babelfishpg_money', 'int8smallmoneydiv'
+AS 'babelfishpg_money', 'int8fixeddecimaldiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int8fixeddecimaldiv_smallmoney(INT8, sys.SMALLMONEY)
@@ -1905,9 +1913,13 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int4smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- this function is currently not used in any operator
+-- hence for now it is okay for it to return a float8
+-- func int4fixeddecimaldiv_smallmoney implements div 
+-- and is used by the division operator
 CREATE FUNCTION sys.int4fixeddecimaldiv(INT4, sys.SMALLMONEY)
 RETURNS DOUBLE PRECISION
-AS 'babelfishpg_money', 'int4smallmoneydiv'
+AS 'babelfishpg_money', 'int4fixeddecimaldiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int4fixeddecimaldiv_smallmoney(INT4, sys.SMALLMONEY)
@@ -1956,6 +1968,10 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int2smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- this function is currently not used in any operator
+-- hence for now it is okay for it to return a float8
+-- func int2fixeddecimaldiv_smallmoney implements div 
+-- and is used by the division operator
 CREATE FUNCTION sys.int2fixeddecimaldiv(INT2, sys.SMALLMONEY)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_money', 'int2fixeddecimaldiv'
@@ -1963,9 +1979,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int2fixeddecimaldiv_smallmoney(INT2, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS $$
-  SELECT sys.int2fixeddecimaldiv($1, $2)::sys.SMALLMONEY;
-$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_money', 'int2smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
     LEFTARG    = INT2,

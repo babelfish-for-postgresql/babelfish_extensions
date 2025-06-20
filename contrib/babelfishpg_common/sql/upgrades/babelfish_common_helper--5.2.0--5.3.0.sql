@@ -135,6 +135,8 @@ END $$;
 
 -- arithmetic functions where one of the 
 -- operand is smallmoney
+
+-- smallmoney <op> smallmoney
 CREATE OR REPLACE FUNCTION sys.fixeddecimalpl(sys.SMALLMONEY, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneypl'
@@ -155,6 +157,8 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneydiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+
+-- smallmoney <op> int8
 CREATE OR REPLACE FUNCTION sys.fixeddecimalint8pl(sys.SMALLMONEY, INT8)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneyint8pl'
@@ -175,6 +179,8 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneyint8div'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+
+-- smallmoney <op> int4
 CREATE OR REPLACE FUNCTION sys.fixeddecimalint4pl(sys.SMALLMONEY, INT4)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneyint4pl'
@@ -195,6 +201,8 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneyint4div'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+
+-- smallmoney <op> int2
 CREATE OR REPLACE FUNCTION sys.fixeddecimalint2pl(sys.SMALLMONEY, INT2)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneyint2pl'
@@ -215,6 +223,8 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'smallmoneyint2div'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+
+-- int8 <op> smallmoney
 CREATE OR REPLACE FUNCTION sys.int8fixeddecimalpl(INT8, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int8smallmoneypl'
@@ -230,16 +240,13 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int8smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.int8fixeddecimaldiv(INT8, sys.SMALLMONEY)
-RETURNS DOUBLE PRECISION
-AS 'babelfishpg_money', 'int8smallmoneydiv'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.int8fixeddecimaldiv_smallmoney(INT8, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int8smallmoneydiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+
+-- int4 <op> smallmoney
 CREATE OR REPLACE FUNCTION sys.int4fixeddecimalpl(INT4, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int4smallmoneypl'
@@ -255,16 +262,13 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int4smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.int4fixeddecimaldiv(INT4, sys.SMALLMONEY)
-RETURNS DOUBLE PRECISION
-AS 'babelfishpg_money', 'int4smallmoneydiv'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.int4fixeddecimaldiv_smallmoney(INT4, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int4smallmoneydiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+
+-- int2 <op> smallmoney
 CREATE OR REPLACE FUNCTION sys.int2fixeddecimalpl(INT2, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int2smallmoneypl'
@@ -278,6 +282,11 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.int2fixeddecimalmul(INT2, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int2smallmoneymul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int2fixeddecimaldiv_smallmoney(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int2smallmoneydiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 /**

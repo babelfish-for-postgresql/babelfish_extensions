@@ -48,6 +48,7 @@ PG_FUNCTION_INFO_V1(int4smallmoneydiv);
 PG_FUNCTION_INFO_V1(int2smallmoneypl);
 PG_FUNCTION_INFO_V1(int2smallmoneymi);
 PG_FUNCTION_INFO_V1(int2smallmoneymul);
+PG_FUNCTION_INFO_V1(int2smallmoneydiv);
 
 
 /*----------------------------------------------------------
@@ -609,6 +610,41 @@ int2smallmoneymul(PG_FUNCTION_ARGS)
 				 errmsg("smallmoney out of range")));
 
 						
+	PG_RETURN_INT64(result);
+}
+
+Datum
+int2smallmoneydiv(PG_FUNCTION_ARGS)
+{
+	int16		arg1 = PG_GETARG_INT16(0);
+	float8		arg2 = (float8) PG_GETARG_INT64(1) / FIXEDDECIMAL_MULTIPLIER;
+	float8		t;    
+	int64		result;
+
+	if (arg2 == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
+	t = (float8) arg1 / arg2;
+	t *= FIXEDDECIMAL_MULTIPLIER;
+	t = rint(t);
+
+	result = (int64) t;
+
+	/*
+	 * Overflow check.  If the result is outside the 
+	 * INT32 range, then we know that the value oveflows
+	 */
+	if (result > INT32_MAX || result < INT32_MIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+
 	PG_RETURN_INT64(result);
 }
 
