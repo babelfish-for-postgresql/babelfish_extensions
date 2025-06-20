@@ -1,0 +1,80 @@
+DROP VIEW int2smallmoneyadd_vu;
+GO
+
+DROP VIEW int4smallmoneyadd_vu;
+GO
+
+DROP VIEW int8smallmoneyadd_vu;
+GO
+
+DROP VIEW smallmoneyint2add_vu;
+GO
+
+DROP VIEW smallmoneyint4add_vu;
+GO
+
+DROP VIEW smallmoneyint8add_vu;
+GO
+
+DROP VIEW int2smallmoneymul_vu;
+GO
+
+DROP VIEW int4smallmoneymul_vu;
+GO
+
+DROP FUNCTION int2smallmoney_func()
+GO
+
+DROP FUNCTION int8smallmoney_func()
+GO
+
+DROP FUNCTION bitsmallmoney_func()
+GO
+
+DROP FUNCTION bitmoney_func()
+GO
+
+DROP FUNCTION int4smallmoney_func()
+GO
+
+DROP FUNCTION smallintsmallmoney_func()
+GO
+
+DROP FUNCTION principalsquared_func(sys.MONEY)
+GO
+
+DROP TABLE money_smallmoney_vu_test;
+GO
+
+DROP TABLE MoneyTestTable1
+GO
+
+DROP VIEW bitsmallmoneypl_vu;
+GO
+
+DROP VIEW bitsmallmoneymi_vu;
+GO
+
+DROP VIEW smallmoneybitpl_vu;
+GO
+
+DROP VIEW smallmoneybitmi_vu;
+GO
+
+DROP VIEW floormaxmoney_vu;
+GO
+
+DROP VIEW ceilingminmoney_vu;
+GO
+
+DROP VIEW powersmallmoneyfail_vu;
+GO
+
+DROP VIEW powermoneyfail_vu;
+GO
+
+DROP VIEW powermoney_vu;
+GO
+
+DROP VIEW powersmallmoney_vu;
+GO

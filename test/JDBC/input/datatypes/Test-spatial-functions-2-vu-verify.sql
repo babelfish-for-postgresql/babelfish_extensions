@@ -190,7 +190,7 @@ go
 
 --Use in a Group By Clause
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @intersection_points BIT = 1;
+DECLARE @intersection_points INT = 1;
 SELECT ROUND(PointColumn.STIntersects(@referencePoint) / @intersection_points, 0) * @intersection_points AS Intersectinggroup,
 COUNT(*) AS PointCount
 FROM  TestGeospatialMethods_YourTableTemp
@@ -443,7 +443,7 @@ select geometry::Point(@pnt.STY, @pnt.STX, 4326).STDisjoint(@pnt)
 
 --Use in a Group By Clause
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @disjoints BIT = 1;
+DECLARE @disjoints INT = 1;
 SELECT ROUND(PointColumn.STDisjoint(@referencePoint) / @disjoints, 0) * @disjoints AS Grp,
 COUNT(*) AS PointCount
 FROM  TestGeospatialMethods_YourTableTemp

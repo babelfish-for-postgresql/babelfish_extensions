@@ -1135,11 +1135,9 @@ SELECT (money_col + bigint_col) * 1.13 FROM babel_5899_t1;
 GO
 ~~START~~
 numeric
-1042241040164588.536191
--1042241040164589.666304
-1.141300
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
 
 SELECT (money_col - int_col) * 2.5 FROM babel_5899_t1;
 GO
@@ -1182,11 +1180,9 @@ SELECT (smallmoney_col + bigint_col) * 1.13 FROM babel_5899_t1;
 GO
 ~~START~~
 numeric
-242664.522111
--242665.652224
-1.141300
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
 
 SELECT (smallmoney_col - int_col) * 2.5 FROM babel_5899_t1;
 GO
@@ -1194,7 +1190,7 @@ GO
 numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~ERROR (Message: smallmoney out of range)~~
 
 SELECT (smallmoney_col * smallint_col) * 0.5 FROM babel_5899_t1;
 GO
@@ -1202,7 +1198,7 @@ GO
 numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~ERROR (Message: smallmoney out of range)~~
 
 SELECT (smallmoney_col / tinyint_col) * 1.13 FROM babel_5899_t1;
 GO
@@ -1266,11 +1262,9 @@ SELECT (money_udt + bigint_col) * 1.13 FROM babel_5899_t1;
 GO
 ~~START~~
 numeric
-1042241040164588.536191
--1042241040164589.666304
-1.141300
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
 
 SELECT (money_udt - int_col) * 2.5 FROM babel_5899_t1;
 GO
@@ -1356,7 +1350,7 @@ GO
 numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: fixeddecimal out of range)~~
+~~ERROR (Message: smallmoney out of range)~~
 
 
 SELECT (
@@ -1561,11 +1555,9 @@ SELECT (
 GO
 ~~START~~
 numeric
--2426656536.1762900
-0E-7
-0E-7
-0E-7
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
 
 
 SELECT (
@@ -1597,10 +1589,9 @@ GO
 ~~START~~
 numeric
 0.000000
-1073741830.166500
-0.000000
-0.000000
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
 
 
 SELECT (
