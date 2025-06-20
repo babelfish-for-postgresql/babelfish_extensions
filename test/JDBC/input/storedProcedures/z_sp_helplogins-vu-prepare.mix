@@ -1,4 +1,4 @@
--- sla 100000
+-- sla 120000
 -- create a dummy db
 create database sp_helplogins_db1
 GO
