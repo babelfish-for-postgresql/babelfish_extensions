@@ -1,0 +1,207 @@
+SELECT * FROM bitfloatpl_vu;
+GO
+~~START~~
+float
+1235.03456
+~~END~~
+
+
+SELECT * FROM bitfloatmi_vu;
+GO
+~~START~~
+float
+-1233.03456
+~~END~~
+
+
+SELECT * FROM bitfloatmul_vu;
+GO
+~~START~~
+float
+1234.03456
+~~END~~
+
+
+SELECT * FROM bitfloatdiv_vu;
+GO
+~~START~~
+float
+8.103500764192536E-4
+~~END~~
+
+
+SELECT * FROM floatbitpl_vu;
+GO
+~~START~~
+float
+1235.03456
+~~END~~
+
+
+SELECT * FROM floatbitmul_vu;
+GO
+~~START~~
+float
+1234.03456
+~~END~~
+
+
+SELECT * FROM floatbitmi_vu;
+GO
+~~START~~
+float
+1233.03456
+~~END~~
+
+
+SELECT * FROM floatbitdiv_vu;
+GO
+~~START~~
+float
+1234.03456
+~~END~~
+
+
+SELECT * FROM bitbigintpl_vu;
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint
+2#!#1#!#1#!#0
+~~END~~
+
+
+SELECT * FROM bitbigintmi_vu;
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint
+0#!#-1#!#1#!#0
+~~END~~
+
+
+SELECT * FROM bitbigintmul_vu;
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint
+1#!#0#!#0#!#0
+~~END~~
+
+
+SELECT * FROM bitbigintdiv_vu;
+GO
+~~START~~
+bigint#!#bigint
+1#!#0
+~~END~~
+
+
+SELECT * FROM bitfloatdivfail_vu;
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+SELECT * FROM bitnumericpl_vu;
+GO
+~~START~~
+numeric
+1235
+~~END~~
+
+
+SELECT * FROM bitnumericmi_vu;
+GO
+~~START~~
+numeric
+-1233
+~~END~~
+
+
+SELECT * FROM bitnumericmul_vu;
+GO
+~~START~~
+numeric
+1234
+~~END~~
+
+
+SELECT * FROM bitnumericdiv_vu;
+GO
+~~START~~
+numeric
+0.0008103727714748784
+~~END~~
+
+
+SELECT * FROM bitbigintdivfail_vu;
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+SELECT * FROM floatbitdivfail_vu;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+SELECT * FROM bitsmallmoneydiv_vu;
+GO
+~~START~~
+smallmoney#!#smallmoney
+0.0008#!#0.0000
+~~END~~
+
+
+SELECT * FROM bitsmallmoneymul_vu;
+GO
+~~START~~
+smallmoney#!#smallmoney
+1234.0356#!#0.0000
+~~END~~
+
+
+SELECT * FROM smallmoneybitdivfail_vu;
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+SELECT * FROM smallmoneybitdiv_vu;
+GO
+~~START~~
+smallmoney
+1234.0456
+~~END~~
+
+
+SELECT * FROM smallmoneybitmul_vu;
+GO
+~~START~~
+smallmoney#!#smallmoney
+1234.0346#!#0.0000
+~~END~~
+
+
+SELECT * FROM bitsmallmoneydivfail_vu;
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+-- bit arithmetic is not supported
+-- this fails
+SELECT CAST(1 AS sys.BIT) + CAST(1 as sys.BIT) AS A, CAST(0 AS sys.BIT) / CAST(1 AS sys.BIT) AS B, CAST(1 AS sys.BIT) * CAST(0 as sys.BIT) AS C, CAST(0 AS sys.BIT) - CAST(0 as sys.BIT) AS D;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: "bit" + "bit")~~
+
