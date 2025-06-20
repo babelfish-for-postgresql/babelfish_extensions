@@ -9,16 +9,19 @@
 #include "postgres.h"
 
 #include <ctype.h>
+#include <math.h>
 
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/numeric.h"
 #include "utils/varbit.h"
 #include "varatt.h"
+#include "common/int.h"
 
 #include "instr.h"
 #include "typecode.h"
 #include "numeric.h"
+#include "utils/float.h"
 
 
 PG_FUNCTION_INFO_V1(bitin);
@@ -61,6 +64,26 @@ PG_FUNCTION_INFO_V1(bitint4lt);
 PG_FUNCTION_INFO_V1(bitint4le);
 PG_FUNCTION_INFO_V1(bitint4gt);
 PG_FUNCTION_INFO_V1(bitint4ge);
+
+/* Arithmetic operations smallmoney, bit */
+PG_FUNCTION_INFO_V1(smallmoneybitpl);
+PG_FUNCTION_INFO_V1(smallmoneybitmi);
+PG_FUNCTION_INFO_V1(smallmoneybitmul);
+PG_FUNCTION_INFO_V1(smallmoneybitdiv);
+PG_FUNCTION_INFO_V1(bitsmallmoneypl);
+PG_FUNCTION_INFO_V1(bitsmallmoneymi);
+PG_FUNCTION_INFO_V1(bitsmallmoneymul);
+PG_FUNCTION_INFO_V1(bitsmallmoneydiv);
+
+/* Arithmetic operations float, bit */
+PG_FUNCTION_INFO_V1(floatbitpl);
+PG_FUNCTION_INFO_V1(floatbitmi);
+PG_FUNCTION_INFO_V1(floatbitmul);
+PG_FUNCTION_INFO_V1(floatbitdiv);
+PG_FUNCTION_INFO_V1(bitfloatpl);
+PG_FUNCTION_INFO_V1(bitfloatmi);
+PG_FUNCTION_INFO_V1(bitfloatmul);
+PG_FUNCTION_INFO_V1(bitfloatdiv);
 
 /*
  * Try to interpret value as boolean value.  Valid values are: true,
@@ -567,4 +590,262 @@ varchar2bit(PG_FUNCTION_ARGS)
 	result = DatumGetBool(DirectFunctionCall1(bitin, CStringGetDatum(str)));
 	pfree(str);
 	PG_RETURN_BOOL(result);
+}
+
+Datum
+smallmoneybitpl(PG_FUNCTION_ARGS)
+{
+	int64       arg1 = PG_GETARG_INT64(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	int32       adder = (int32) arg2 * FIXEDDECIMAL_MULTIPLIER;
+	int32       result;
+
+	/*
+	 * Overflow check. If the result of addition
+	 * does not fit in 32 bit, then pg_add_s32_overflow
+	 * returns true
+	 */
+	if (pg_add_s32_overflow(arg1, adder, &result)) 
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+							
+	PG_RETURN_INT64(result);
+}
+
+Datum
+smallmoneybitmi(PG_FUNCTION_ARGS)
+{
+	int64       arg1 = PG_GETARG_INT64(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	int32       subtractor = (int32) arg2 * FIXEDDECIMAL_MULTIPLIER;
+	int32       result;
+
+	/*
+	 * Overflow check. If the result of subtraction
+	 * does not fit in 32 bit, then pg_sub_s64_overflow
+	 * returns true
+	 */
+	if (pg_sub_s32_overflow(arg1, subtractor, &result)) 
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+						
+	PG_RETURN_INT64(result);
+}
+
+Datum
+smallmoneybitmul(PG_FUNCTION_ARGS)
+{
+	int64       arg1 = PG_GETARG_INT64(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+
+	if (!arg2)
+	{
+		PG_RETURN_INT64(0);
+	}	
+	PG_RETURN_INT64(arg1);
+}
+
+Datum
+smallmoneybitdiv(PG_FUNCTION_ARGS)
+{
+	int32       arg1 = PG_GETARG_INT32(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+
+	if (!arg2)
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				errmsg("division by zero")));
+
+	PG_RETURN_INT64(arg1);
+}
+
+Datum
+bitsmallmoneypl(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	int64       arg2 = PG_GETARG_INT64(1);
+	int32       adder = (int32) arg1 * FIXEDDECIMAL_MULTIPLIER;
+	int32       result;
+
+	/*
+	 * Overflow check. If the result of addition
+	 * does not fit in 32 bit, then pg_add_s32_overflow
+	 * returns true
+	 */
+	if (pg_add_s32_overflow(adder, arg2, &result)) 
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+						
+	PG_RETURN_INT64(result);
+}
+
+Datum
+bitsmallmoneymi(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	int64       arg2 = PG_GETARG_INT64(1);
+	int32       subtractor = (int32) arg1 * FIXEDDECIMAL_MULTIPLIER;
+	int32       result;
+
+	/*
+	 * Overflow check. If the result of subtraction
+	 * does not fit in 32 bit, then pg_sub_s64_overflow
+	 * returns true
+	 */
+	if (pg_sub_s32_overflow(subtractor, arg2, &result)) 
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+							
+	PG_RETURN_INT64(result);
+}
+
+Datum
+bitsmallmoneymul(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	int64       arg2 = PG_GETARG_INT64(1);
+
+	if (!arg1)
+	{
+		PG_RETURN_INT64(0);
+	}	
+	PG_RETURN_INT64(arg2);
+}
+
+Datum
+bitsmallmoneydiv(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	float8      arg2 = (float8) PG_GETARG_INT32(1) / FIXEDDECIMAL_MULTIPLIER;
+	float8      t;    
+	int64       result;
+
+	if (arg2 == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
+	if (!arg1)
+	{
+	   PG_RETURN_INT64(0);
+	}
+
+	t = (float8) 1 / arg2;
+	t *= FIXEDDECIMAL_MULTIPLIER;
+	t = rint(t);
+
+	result = (int64) t;
+
+	if (result > INT32_MAX || result < INT32_MIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallmoney out of range")));
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+floatbitpl(PG_FUNCTION_ARGS)
+{
+	float8      arg1 = PG_GETARG_FLOAT8(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	if (!arg2)
+	{
+		PG_RETURN_FLOAT8(arg1);
+	}
+	PG_RETURN_FLOAT8(float8_pl(arg1, (float8) 1));
+}
+
+Datum
+floatbitmi(PG_FUNCTION_ARGS)
+{
+	float8      arg1 = PG_GETARG_FLOAT8(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	if (!arg2)
+	{
+		PG_RETURN_FLOAT8(arg1);
+	}
+	PG_RETURN_FLOAT8(float8_mi(arg1, (float8) 1));
+}
+
+Datum
+floatbitmul(PG_FUNCTION_ARGS)
+{
+	float8      arg1 = PG_GETARG_FLOAT8(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	if (!arg2)
+	{
+		PG_RETURN_FLOAT8((float8) 0);
+	}
+	PG_RETURN_FLOAT8(arg1);
+}
+
+Datum
+floatbitdiv(PG_FUNCTION_ARGS)
+{
+	float8      arg1 = PG_GETARG_FLOAT8(0);
+	bool        arg2 = PG_GETARG_BOOL(1);
+	if (!arg2)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+			 errmsg("division by zero")));
+	}
+	PG_RETURN_FLOAT8(arg1);
+}
+
+Datum
+bitfloatpl(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	float8      arg2 = PG_GETARG_FLOAT8(1);
+	if (!arg1)
+	{
+		PG_RETURN_FLOAT8(arg2);
+	}
+	PG_RETURN_FLOAT8(float8_pl((float8) 1, arg2));
+}
+
+Datum
+bitfloatmi(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	float8      arg2 = PG_GETARG_FLOAT8(1);
+	if (!arg1)
+	{
+		PG_RETURN_FLOAT8(-arg2);
+	}
+	PG_RETURN_FLOAT8(float8_mi((float8) 1, arg2));
+}
+
+Datum
+bitfloatmul(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	float8      arg2 = PG_GETARG_FLOAT8(1);
+	if (!arg1)
+	{
+		PG_RETURN_FLOAT8((float8) 0);
+	}
+	PG_RETURN_FLOAT8(arg2);
+}
+
+Datum
+bitfloatdiv(PG_FUNCTION_ARGS)
+{
+	bool        arg1 = PG_GETARG_BOOL(0);
+	float8      arg2 = PG_GETARG_FLOAT8(1);
+	if (!arg1)
+	{
+		PG_RETURN_FLOAT8(0);
+	}
+	PG_RETURN_FLOAT8(float8_div((float8) 1, arg2));
 }

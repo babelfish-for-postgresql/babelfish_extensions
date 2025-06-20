@@ -630,5 +630,7 @@ babel_test_numeric_int8_oper
 Test_cast_binary_bytea
 numeric_money
 MONEY_OBJECT
+money_smallmoney
+bit_arith
 user_token-dep
 len
