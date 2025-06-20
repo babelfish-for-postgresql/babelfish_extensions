@@ -4261,15 +4261,9 @@ GO
 SELECT 'Prefix_' + BitCol AS BitConcat FROM ImplicitToStringTest;
 SELECT N'Prefix_' + BitCol AS BitConcatN FROM ImplicitToStringTest;
 GO
-~~START~~
-varchar
-Prefix_1
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~START~~
-nvarchar
-Prefix_1
-~~END~~
+~~ERROR (Message: invalid input syntax for type double precision: "Prefix_")~~
 
 
 -- DECIMAL

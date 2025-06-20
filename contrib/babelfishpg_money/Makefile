@@ -1,5 +1,6 @@
 MODULE_big = babelfishpg_money
 OBJS = fixeddecimal.o
+OBJS += smallmoney.o
 
 EXTENSION = babelfishpg_money
 

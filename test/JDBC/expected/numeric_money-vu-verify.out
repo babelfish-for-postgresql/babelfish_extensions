@@ -1058,7 +1058,7 @@ GO
 smallmoney
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: fixeddecimal out of range)~~
+~~ERROR (Message: smallmoney out of range)~~
 
 SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0001 AS MONEY)
 GO
@@ -1074,7 +1074,7 @@ GO
 smallmoney
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: fixeddecimal out of range)~~
+~~ERROR (Message: smallmoney out of range)~~
 
 SELECT CAST(-9223372036854775808 AS BIGINT) * CAST(1.0001 AS MONEY)
 GO
