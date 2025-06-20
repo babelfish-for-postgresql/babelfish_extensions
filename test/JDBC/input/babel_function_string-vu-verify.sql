@@ -148,6 +148,84 @@ GO
 SELECT quotename(NULL, '[')
 GO
 
+SELECT QUOTENAME('Hello ) there', ')')
+GO
+
+SELECT QUOTENAME('Hello )" there', ')')
+GO
+
+SELECT QUOTENAME('Hello < there', '<')
+GO
+
+SELECT QUOTENAME('Hello > there', '>')
+GO
+
+SELECT QUOTENAME('Hello } there', '}')
+GO
+
+SELECT QUOTENAME('Hello ` there', '`')
+GO
+
+SELECT QUOTENAME('[KEY]', '"')
+GO
+
+SELECT QUOTENAME('"KEY"', '[')
+GO
+
+SELECT QUOTENAME('"KEY"', '')
+GO
+
+-- test quotename with multibyte characters
+SELECT quotename('こんにちは')
+GO
+
+SELECT quotename('测试中文', '"')
+GO
+
+SELECT quotename('café')
+GO
+
+SELECT quotename('Москва', '}{')
+GO
+
+SELECT quotename('Émojis🚀🌟')
+GO
+
+SELECT quotename('Mixed英文中文')
+GO
+
+-- test quotename with multibyte characters and different quote chars
+SELECT quotename('こんにちは', '"')
+GO
+
+SELECT quotename('测试中文', '''')
+GO
+
+SELECT quotename('café', '>')
+GO
+
+SELECT quotename('Москва', '}')
+GO
+
+SELECT quotename('العربية', '`')
+GO
+
+-- test different size delimeter
+SELECT quotename('こん"にちは', '["')
+GO
+
+SELECT quotename('test''中文', '[%&69]')
+GO
+
+SELECT quotename('café]test', '''')
+GO
+
+SELECT quotename('Москва}test', '}{^$[]}')
+GO
+
+SELECT quotename('Москва}test', 'Ğ🚀🌟')
+GO
+
 -- test unicode function
 
 SELECT unicode(null)

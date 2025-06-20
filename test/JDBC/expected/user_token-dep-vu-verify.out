@@ -1,0 +1,182 @@
+-- tsql
+-- resetting passwords for logins (dump-restore)
+alter login user_token_login_with_dbrole with password = '12345678';
+GO
+alter login user_token_login_with_db_owner with password = '12345678';
+GO
+alter login user_token_login_is_dbo with password = '12345678';
+GO
+alter login user_token_with_all_priv with password = '12345678';
+GO
+
+-- tsql
+-- create a db role and add the above user to the role
+create role testrole;
+GO
+alter role testrole add member u_user_token_login_with_dbrole
+GO
+
+-- adding user as a member to db_owner
+alter role db_owner add member u_user_token_login_with_db_owner
+GO
+
+-- adding user as member of all the fixed db roles
+alter role db_owner add member u_user_token_with_all_priv
+alter role db_securityadmin add member u_user_token_with_all_priv
+alter role db_ddladmin add member u_user_token_with_all_priv
+alter role db_datareader add member u_user_token_with_all_priv
+alter role db_datawriter add member u_user_token_with_all_priv
+alter role db_accessadmin add member u_user_token_with_all_priv
+GO
+
+-- change db owner to user_token_login_is_dbo
+use user_token_test_db;
+GO
+exec sp_changedbowner 'user_token_login_is_dbo'
+GO
+use master;
+GO
+
+select * from user_token_vu order by name;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+dbo#!#jdbc_user#!#SQL USER#!#GRANT OR DENY
+~~END~~
+
+
+select * from dbo.user_token_fixed_roles;
+GO
+~~START~~
+nvarchar#!#varbinary
+~~END~~
+
+
+-- tsql user=user_token_login_with_dbrole password=12345678
+select * from user_token_vu order by name;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+public#!#<NULL>#!#ROLE#!#GRANT OR DENY
+testrole#!#<NULL>#!#ROLE#!#GRANT OR DENY
+u_user_token_login_with_dbrole#!#user_token_login_with_dbrole#!#SQL USER#!#GRANT OR DENY
+~~END~~
+
+select * from dbo.user_token_fixed_roles;
+GO
+~~START~~
+nvarchar#!#varbinary
+~~END~~
+
+-- terminate-tsql-conn user=user_token_login_with_dbrole password=12345678
+
+-- tsql user=user_token_login_with_db_owner password=12345678
+select * from user_token_vu order by name;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+db_accessadmin#!#<NULL>#!#ROLE#!#GRANT OR DENY
+db_datareader#!#<NULL>#!#ROLE#!#GRANT OR DENY
+db_datawriter#!#<NULL>#!#ROLE#!#GRANT OR DENY
+db_ddladmin#!#<NULL>#!#ROLE#!#GRANT OR DENY
+db_owner#!#<NULL>#!#ROLE#!#GRANT OR DENY
+db_securityadmin#!#<NULL>#!#ROLE#!#GRANT OR DENY
+public#!#<NULL>#!#ROLE#!#GRANT OR DENY
+testrole#!#<NULL>#!#ROLE#!#GRANT OR DENY
+u_user_token_login_with_db_owner#!#user_token_login_with_db_owner#!#SQL USER#!#GRANT OR DENY
+~~END~~
+
+-- this gives an incorrect result set right now
+-- it should only show roles which the user is level 1 member of 
+-- so this should ideally show just db_owner in the result set
+-- but currently shows all the fixed roles
+-- JIRA: BABEL-5927
+select * from dbo.user_token_fixed_roles;
+GO
+~~START~~
+nvarchar#!#varbinary
+db_accessadmin#!#01050000000000090400000000000000000000000000000001400000
+db_datareader#!#01050000000000090400000000000000000000000000000006400000
+db_datawriter#!#01050000000000090400000000000000000000000000000007400000
+db_ddladmin#!#01050000000000090400000000000000000000000000000003400000
+db_owner#!#01050000000000090400000000000000000000000000000000400000
+db_securityadmin#!#01050000000000090400000000000000000000000000000002400000
+~~END~~
+
+-- terminate-tsql-conn user=user_token_login_with_db_owner password=12345678
+
+-- tsql user=user_token_login_is_dbo password=12345678
+use user_token_test_db;
+GO
+select name, suser_sname(sid) as usid, type, usage from sys.user_token order by name;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+dbo#!#user_token_login_is_dbo#!#SQL USER#!#GRANT OR DENY
+~~END~~
+
+select * from master.dbo.user_token_fixed_roles;
+GO
+~~START~~
+nvarchar#!#varbinary
+~~END~~
+
+-- terminate-tsql-conn user=user_token_login_is_dbo password=12345678
+
+-- tsql user=user_token_with_all_priv password=12345678
+select name, suser_sname(sid) as usid, type, usage from sys.user_token order by name;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+db_accessadmin#!#<NULL>#!#ROLE#!#GRANT OR DENY
+db_datareader#!#<NULL>#!#ROLE#!#GRANT OR DENY
+db_datawriter#!#<NULL>#!#ROLE#!#GRANT OR DENY
+db_ddladmin#!#<NULL>#!#ROLE#!#GRANT OR DENY
+db_owner#!#<NULL>#!#ROLE#!#GRANT OR DENY
+db_securityadmin#!#<NULL>#!#ROLE#!#GRANT OR DENY
+public#!#<NULL>#!#ROLE#!#GRANT OR DENY
+testrole#!#<NULL>#!#ROLE#!#GRANT OR DENY
+u_user_token_with_all_priv#!#user_token_with_all_priv#!#SQL USER#!#GRANT OR DENY
+~~END~~
+
+select * from dbo.user_token_fixed_roles;
+GO
+~~START~~
+nvarchar#!#varbinary
+db_accessadmin#!#01050000000000090400000000000000000000000000000001400000
+db_datareader#!#01050000000000090400000000000000000000000000000006400000
+db_datawriter#!#01050000000000090400000000000000000000000000000007400000
+db_ddladmin#!#01050000000000090400000000000000000000000000000003400000
+db_owner#!#01050000000000090400000000000000000000000000000000400000
+db_securityadmin#!#01050000000000090400000000000000000000000000000002400000
+~~END~~
+
+-- terminate-tsql-conn user=user_token_with_all_priv password=12345678
+
+-- tsql
+drop view dbo.user_token_vu;
+GO
+
+drop view dbo.user_token_fixed_roles;
+GO
+
+drop user u_user_token_login_with_dbrole
+drop login user_token_login_with_dbrole
+GO
+
+drop user u_user_token_login_with_db_owner
+drop login user_token_login_with_db_owner
+GO
+
+drop user u_user_token_with_all_priv
+drop login user_token_with_all_priv
+GO
+
+drop login user_token_login_is_dbo
+GO
+
+drop role testrole;
+GO
+
+drop database user_token_test_db;
+GO

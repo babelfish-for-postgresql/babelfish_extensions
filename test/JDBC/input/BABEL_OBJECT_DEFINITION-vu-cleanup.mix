@@ -51,3 +51,19 @@ DROP PROCEDURE if exists object_definition_procedure;
 GO
 DROP FUNCTION if exists object_definition_function();
 GO
+
+-- Clean up
+DROP FUNCTION dbo.object_definition_LargeFunction
+GO
+DROP VIEW dbo.object_definition_LargeView
+GO
+DROP PROCEDURE dbo.object_definition_Largeproc
+GO
+DROP VIEW dbo.object_definition_dependency_view
+GO
+DROP PROCEDURE dbo.object_definition_dependency_proc
+GO
+DROP FUNCTION dbo.object_definition_dependency_func
+GO
+DROP PROCEDURE dbo.object_definition_dependent_proc
+GO

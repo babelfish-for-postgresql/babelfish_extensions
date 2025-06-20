@@ -425,7 +425,22 @@ CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
 CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
-CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CASE Ext.orig_username
+    WHEN 'dbo' THEN CAST(CAST(Base3.oid AS INT) AS SYS.VARBINARY(85))
+    WHEN 'guest' THEN CAST(0 AS SYS.VARBINARY(85))
+    -- these are SIDs which are constant for all the fixed roles used across databases 
+    -- hence we are hardcoding these SIDs
+    WHEN 'db_owner' THEN CAST('\x01050000000000090400000000000000000000000000000000400000'::bytea AS SYS.VARBINARY(85)) 
+    WHEN 'db_accessadmin' THEN CAST('\x01050000000000090400000000000000000000000000000001400000'::bytea AS SYS.VARBINARY(85))    
+    WHEN 'db_securityadmin' THEN CAST('\x01050000000000090400000000000000000000000000000002400000'::bytea AS SYS.VARBINARY(85))  
+    WHEN 'db_ddladmin' THEN CAST('\x01050000000000090400000000000000000000000000000003400000'::bytea AS SYS.VARBINARY(85))       
+    WHEN 'db_backupoperator' THEN CAST('\x01050000000000090400000000000000000000000000000005400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datareader' THEN CAST('\x01050000000000090400000000000000000000000000000006400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datawriter' THEN CAST('\x01050000000000090400000000000000000000000000000007400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatareader' THEN CAST('\x01050000000000090400000000000000000000000000000008400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatawriter' THEN CAST('\x01050000000000090400000000000000000000000000000009400000'::bytea AS SYS.VARBINARY(85))
+    ELSE CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85))
+END AS SID,
 CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
 CAST(Ext.authentication_type AS INT) AS authentication_type,
 CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
@@ -436,6 +451,10 @@ FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
 ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
+LEFT OUTER JOIN sys.babelfish_sysdatabases AS Db
+ON Ext.database_name COLLATE sys.database_default = Db.name
+LEFT OUTER JOIN pg_catalog.pg_roles AS Base3
+ON Db.owner = Base3.rolname
 WHERE Ext.database_name = DB_NAME()
   AND (Ext.orig_username IN ('dbo', 'db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin', 'guest') -- system users should always be visible
   OR bbf_is_role_member(current_user, Ext.rolname)) -- Current user should be able to see users it has permission of
@@ -510,7 +529,22 @@ GRANT SELECT ON sys.login_token TO PUBLIC;
 CREATE OR REPLACE VIEW sys.user_token AS
 SELECT
 CAST(Base.oid AS INT) AS principal_id,
-CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CASE Ext.orig_username
+    WHEN 'dbo' THEN CAST(CAST(Base3.oid AS INT) AS SYS.VARBINARY(85))
+    WHEN 'guest' THEN CAST(0 AS SYS.VARBINARY(85))
+    -- these are SIDs which are constant for all the fixed roles used across databases 
+    -- hence we are hardcoding these SIDs
+    WHEN 'db_owner' THEN CAST('\x01050000000000090400000000000000000000000000000000400000'::bytea AS SYS.VARBINARY(85)) 
+    WHEN 'db_accessadmin' THEN CAST('\x01050000000000090400000000000000000000000000000001400000'::bytea AS SYS.VARBINARY(85))    
+    WHEN 'db_securityadmin' THEN CAST('\x01050000000000090400000000000000000000000000000002400000'::bytea AS SYS.VARBINARY(85))  
+    WHEN 'db_ddladmin' THEN CAST('\x01050000000000090400000000000000000000000000000003400000'::bytea AS SYS.VARBINARY(85))       
+    WHEN 'db_backupoperator' THEN CAST('\x01050000000000090400000000000000000000000000000005400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datareader' THEN CAST('\x01050000000000090400000000000000000000000000000006400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datawriter' THEN CAST('\x01050000000000090400000000000000000000000000000007400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatareader' THEN CAST('\x01050000000000090400000000000000000000000000000008400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatawriter' THEN CAST('\x01050000000000090400000000000000000000000000000009400000'::bytea AS SYS.VARBINARY(85))
+    ELSE CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85))
+END AS SID,
 CAST(Ext.orig_username AS SYS.NVARCHAR(128)) AS NAME,
 CAST(CASE
 WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
@@ -522,6 +556,10 @@ FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
 ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
+LEFT OUTER JOIN sys.babelfish_sysdatabases AS Db
+ON Ext.database_name COLLATE sys.database_default = Db.name
+LEFT OUTER JOIN pg_catalog.pg_roles AS Base3
+ON Db.owner = Base3.rolname
 WHERE Ext.database_name = sys.DB_NAME()
 AND ((Ext.rolname = CURRENT_USER AND Ext.type in ('S','U')) OR
 ((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo' AND Ext.type = 'R' AND pg_has_role(current_user, Ext.rolname, 'MEMBER')))

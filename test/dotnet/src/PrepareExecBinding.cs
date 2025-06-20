@@ -112,8 +112,13 @@ namespace BabelfishDotnetFramework
 									break;	
 								}
 								((SqlParameter) sqlCmd.Parameters[param[1].Trim()]).TypeName = param[2].Trim();
-								var temp = testUtils.FetchTvpValueUsingSqlDataRecord(param[3].Trim());
-								((SqlParameter) sqlCmd.Parameters[param[1].Trim()]).SqlValue = temp;
+								if (param[3].ToLowerInvariant() == "<null>")
+									((SqlParameter) sqlCmd.Parameters[param[1].Trim()]).SqlValue = null;
+								else
+								{
+									var temp = testUtils.FetchTvpValueUsingSqlDataRecord(param[3].Trim());
+									((SqlParameter) sqlCmd.Parameters[param[1].Trim()]).SqlValue = temp;
+								}
 								sqlCmd.Parameters[param[1].Trim()].Size = 1000;
 							}
 								break;
@@ -288,8 +293,13 @@ namespace BabelfishDotnetFramework
 									break;	
 								}
 								((SqlParameter) parameter).TypeName = param[2].Trim();
-								var temp = testUtils.FetchTvpValueUsingSqlDataRecord(param[3].Trim());
-								((SqlParameter) parameter).SqlValue = temp;
+								if (param[3].ToLowerInvariant() == "<null>")
+									((SqlParameter) parameter).SqlValue = null;
+								else
+								{
+									var temp = testUtils.FetchTvpValueUsingSqlDataRecord(param[3].Trim());
+									((SqlParameter) parameter).SqlValue = temp;
+								}
 								parameter.Size = 1000;
 							}
 								break;

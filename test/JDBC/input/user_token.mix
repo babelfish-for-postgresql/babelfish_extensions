@@ -13,6 +13,12 @@ SELECT name, user_id(name) FROM sys.user_token WHERE name = 'public';
 GO
 SELECT sid FROM sys.user_token WHERE name = 'public';
 GO
+select name, suser_sname(sid) from sys.user_token order by name;
+GO
+
+-- tsql
+select name, suser_sname(sid) from sys.user_token order by name;
+GO
 
 -- Switch back to admin context to clean up
 -- tsql

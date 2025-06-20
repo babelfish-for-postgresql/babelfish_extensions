@@ -39,6 +39,10 @@ go
 drop user guest;
 go
 
+-- re-enabling connect on guest user
+grant connect to guest;
+go
+
 -- reset the login password
 alter login grant_connect_abc with password = 'Babel123'
 go

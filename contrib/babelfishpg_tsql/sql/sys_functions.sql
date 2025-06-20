@@ -1505,6 +1505,11 @@ CREATE OR REPLACE FUNCTION sys.len(expr sys.BBF_VARBINARY) RETURNS INTEGER AS
 STRICT
 LANGUAGE c IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.len(expr sys.BBF_BINARY) RETURNS INTEGER AS
+'babelfishpg_common', 'varbinary_length'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 -- DATALENGTH
 CREATE OR REPLACE FUNCTION sys.datalength(ANYELEMENT) RETURNS INTEGER
 AS 'babelfishpg_tsql', 'datalength' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -1670,27 +1675,40 @@ declare
   v_find_result VARCHAR;
   v_pos bigint;
   v_regexp_pattern VARCHAR;
+  start_offset boolean;
+  end_offset boolean;
 begin
   if pattern is null or expression is null then
     return null;
+  end if;
+  if pattern = '%' or pattern = '%%' then
+    return 1;
   end if;
   if sys.is_collated_ai(expression) then
     return sys.patindex_ai_collations(pattern, expression);
   end if;
   if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i'::pg_catalog.TEXT);
+    start_offset := true;
   else
     v_regexp_pattern := '#"' || pattern;
+    start_offset := false;
   end if;
 
   if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i'::pg_catalog.TEXT);
+    end_offset := true;
   else
    v_regexp_pattern := v_regexp_pattern || '#"';
+   end_offset := false;
   end if;
   v_find_result := substring(expression, v_regexp_pattern, '#');
   if v_find_result <> '' collate sys.database_default then
-    v_pos := strpos(expression, v_find_result);
+    if start_offset and not end_offset then
+      v_pos := LENGTH(expression) - STRPOS(REVERSE(expression), REVERSE(v_find_result)) + 2 - LENGTH(v_find_result);
+    else
+      v_pos := strpos(expression, v_find_result);
+    end if;
   else
     v_pos := 0;
   end if;
@@ -4400,11 +4418,11 @@ RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_schema_name'
 LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION OBJECT_DEFINITION(IN object_id INT)
-RETURNS sys.NVARCHAR(4000)
+CREATE OR REPLACE FUNCTION sys.OBJECT_DEFINITION(IN object_id INT)
+RETURNS sys.NVARCHAR
 AS $$
 DECLARE
-    definition sys.nvarchar(4000);
+    definition sys.NVARCHAR;
 BEGIN
 
     definition = (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
