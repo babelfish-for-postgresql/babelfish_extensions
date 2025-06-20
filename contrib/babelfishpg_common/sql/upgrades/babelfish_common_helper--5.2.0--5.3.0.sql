@@ -284,7 +284,7 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int2smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.int2fixeddecimaldiv_smallmoney(INT2, sys.SMALLMONEY)
+CREATE OR REPLACE FUNCTION sys.int2fixeddecimaldiv_smallmoney(INT2, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int2smallmoneydiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
