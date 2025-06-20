@@ -18,6 +18,7 @@ select nchar(-1);
 GO
 select sys.char(255)
 select sys.char(256)
+select sys.char(105)
 select sys.char(-1)
 select sys.char(0)
 select char(256)
@@ -29,3 +30,4 @@ GO
 select sys.nchar(65535)
 select sys.nchar(65536)
 select sys.nchar(-1)
+GO

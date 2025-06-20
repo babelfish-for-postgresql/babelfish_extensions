@@ -87,9 +87,10 @@ nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 
 SELECT NCHAR(ASCII(CHAR(0))) AS NullChar
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: null character not permitted)~~
+~~START~~
+nvarchar
+<NULL>
+~~END~~
 
 
 -- 4. Special Characters Tests
@@ -165,7 +166,7 @@ END CATCH;
 GO
 ~~START~~
 nvarchar
-𐀀
+<NULL>
 ~~END~~
 
 

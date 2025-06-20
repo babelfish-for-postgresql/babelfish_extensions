@@ -111,7 +111,7 @@ EXTENSION PACK function CHAR(x)
     end if;
 END;
 $body$
-language plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.nchar(IN x INTEGER) RETURNS sys.nvarchar
 AS
