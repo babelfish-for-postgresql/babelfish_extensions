@@ -1079,7 +1079,7 @@ handle_non_empty_geometry(GeometryData *geom_data)
         postgis_header[1] = 0x02;
         new_data_size = geom_data->has_npoints_data ? 
             geom_data->input_len - GEOM_TYPE_SIZE + POSTGIS_HEADER_SIZE - sizeof(line_end_metada) :
-            geom_data->input_len - GEOM_TYPE_SIZE + POSTGIS_HEADER_SIZE + SRID_SIZE;
+            geom_data->input_len - GEOM_TYPE_SIZE + POSTGIS_HEADER_SIZE + NPOINTS_SIZE;
     } 
     else 
     {
@@ -1099,7 +1099,7 @@ handle_non_empty_geometry(GeometryData *geom_data)
     if (geom_data->geom_name == LINE_TYPE) 
     {
         npoints = geom_data->has_npoints_data ? geom_data->npoints : 2;
-        src = geom_data->input_data + HEADER_SIZE + (geom_data->has_npoints_data ? SRID_SIZE : 0);
+        src = geom_data->input_data + HEADER_SIZE + (geom_data->has_npoints_data ? NPOINTS_SIZE : 0);
         dst = result_data + POSTGIS_HEADER_SIZE + SRID_SIZE + NPOINTS_SIZE;
         has_z = geom_data->dimension_flag == DIM_FLAG_3DM || 
                 geom_data->dimension_flag == DIM_FLAG_3D;
@@ -1114,7 +1114,7 @@ handle_non_empty_geometry(GeometryData *geom_data)
         if (!has_z && !has_m) 
         {
             memcpy(dst, src, geom_data->input_len - HEADER_SIZE - 
-                   (geom_data->has_npoints_data ? sizeof(line_end_metada) : 0));
+                   (geom_data->has_npoints_data ? (sizeof(line_end_metada) + NPOINTS_SIZE): 0));
             return result;
         }
         
