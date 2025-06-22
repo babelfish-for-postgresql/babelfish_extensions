@@ -1146,6 +1146,11 @@ TdsGetGenericTypmod(Node *expr)
 			break;
 	}
 
+	if (rettypmod == -1)
+		ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
+						errmsg("The string size for the given CHAR/NCHAR data is not defined. "
+							"Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n)")));
+
 	return rettypmod;
 }
 
