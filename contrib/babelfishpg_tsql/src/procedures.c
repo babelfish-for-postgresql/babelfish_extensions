@@ -5012,6 +5012,17 @@ tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
 	char *xpath_expr;
 	int flag = PG_GETARG_INT32(1);
 	char *colname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	/* Check for negative flag values */
+	if (flag < 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Invalid flag value %d for OPENXML", flag)));
+	}
+
+	/* Normalize the flag value to 0-3 */
+	flag = flag % 4;
 	
 	switch (flag)
 	{

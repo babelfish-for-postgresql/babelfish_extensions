@@ -229,3 +229,118 @@ EXEC sp_xml_removedocument @docHandle;
 GO
 DROP TABLE test_openxml_table;
 GO
+
+-- If flag value more than 3
+DECLARE @XmlDocumentHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer>
+   <CustomerID>VINET</CustomerID>
+   <ContactName>Paul Henriot</ContactName>
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5" OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3"
+          OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+
+EXEC sp_xml_preparedocument @XmlDocumentHandle OUTPUT, @XmlDocument;
+
+SELECT *
+FROM      OPENXML (@XmlDocumentHandle, '/ROOT/Customer', 4)
+           WITH (CustomerID  varchar(10),
+                 ContactName varchar(20));
+EXEC sp_xml_removedocument @XmlDocumentHandle;
+GO
+
+DECLARE @XmlDocumentHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer>
+   <CustomerID>VINET</CustomerID>
+   <ContactName>Paul Henriot</ContactName>
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5" OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3"
+          OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+
+EXEC sp_xml_preparedocument @XmlDocumentHandle OUTPUT, @XmlDocument;
+
+SELECT *
+FROM      OPENXML (@XmlDocumentHandle, '/ROOT/Customer', 7)
+           WITH (CustomerID  varchar(10),
+                 ContactName varchar(20));
+EXEC sp_xml_removedocument @XmlDocumentHandle;
+GO
+
+-- negative flag value gives error
+DECLARE @XmlDocumentHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer>
+   <CustomerID>VINET</CustomerID>
+   <ContactName>Paul Henriot</ContactName>
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5" OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3"
+          OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+
+EXEC sp_xml_preparedocument @XmlDocumentHandle OUTPUT, @XmlDocument;
+
+SELECT *
+FROM      OPENXML (@XmlDocumentHandle, '/ROOT/Customer', -1)
+           WITH (CustomerID  varchar(10),
+                 ContactName varchar(20));
+EXEC sp_xml_removedocument @XmlDocumentHandle;
+GO
+
+-- colpattern is case sensitive (this gives null)
+DECLARE @XmlDocumentHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer>
+   <CustomerID>VINET</CustomerID>
+   <ContactName>Paul Henriot</ContactName>
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5" OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3"
+          OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+
+EXEC sp_xml_preparedocument @XmlDocumentHandle OUTPUT, @XmlDocument;
+
+SELECT *
+FROM      OPENXML (@XmlDocumentHandle, '/root/customer', 4)
+           WITH (CustomerID  varchar(10),
+                 ContactName varchar(20));
+EXEC sp_xml_removedocument @XmlDocumentHandle;
+GO
