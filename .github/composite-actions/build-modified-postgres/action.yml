@@ -96,9 +96,9 @@ runs:
             ( [[ "${engine_version%%.*}" == "15" ]] && version_le "$engine_version" "15.12" ) || 
             ( [[ "${engine_version%%.*}" == "16" ]] && version_le "$engine_version" "16.8" ) || 
             ( [[ "${engine_version%%.*}" == "17" ]] && version_le "$engine_version" "17.4" ) ); then
-          export CC='ccache gcc-9'
+          export "CC=ccache gcc-9" >> $GITHUB_ENV
         else
-          export CC='ccache gcc'
+          export "CC=ccache gcc" >> $GITHUB_ENV
         fi
 
         echo "${{env.SAVE_CCACHE}}"
@@ -106,13 +106,13 @@ runs:
         cd ..
         cd postgresql_modified_for_babelfish
         if [[ ${{inputs.tap_tests}} == "yes" ]]; then
-          ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3 --without-readline --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --enable-tap-tests --with-gssapi
+          ./configure CC=${{env.CC}}  --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3 --without-readline --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --enable-tap-tests --with-gssapi
         elif [[ ${{inputs.code_coverage}} == "yes" ]]; then
-          ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3  --without-readline --enable-coverage --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+          ./configure CC=${{env.CC}} --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3  --without-readline --enable-coverage --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         elif [[ ${{inputs.release_mode}} == "yes" ]]; then
-            ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3 CFLAGS="-ggdb -O2" --without-readline --with-libxml --with-uuid=ossp --with-icu
+            ./configure CC=${{env.CC}} --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3 CFLAGS="-ggdb -O2" --without-readline --with-libxml --with-uuid=ossp --with-icu
         else
-            ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3 --without-readline --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+            ./configure CC=${{env.CC}} --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3 --without-readline --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         fi
         make -j 4
         make install
