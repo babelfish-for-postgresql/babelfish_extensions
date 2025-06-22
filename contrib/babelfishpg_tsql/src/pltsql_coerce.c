@@ -1263,8 +1263,8 @@ is_mathematical_function(const char *funcName)
 }
 
 /* 
- * look for a typmod to return from a numeric expression,
- * Also for cases where we cannot compute the expression typmod return -1 and set found as false.
+ * Look for a typmod to return from a numeric expression,
+ * also for cases where we cannot compute the expression typmod return -1 and set found as false.
  */
 int32
 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
@@ -1718,8 +1718,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				 * 2) check if only one args and then is that castable to numeric.
 				 */
 				if (rettypmod == -1 &&
-					((list_length(func->args) == 1 && is_numeric_cast(func_oid)) ||
-					 (list_length(func->args) >= 1 && funcName && is_mathematical_function(funcName))))
+					list_length(func->args) >= 1 &&
+					(is_numeric_cast(func_oid) || 
+					(funcName && is_mathematical_function(funcName))))
 				{
 					arg = linitial(func->args);
 					rettypmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
@@ -1733,31 +1734,14 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (funcName && is_mathematical_function(funcName))
 				{
-					if ((*common_utility_plugin_ptr->is_tsql_money_datatype) (func->funcresulttype) ||
-						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype) (func->funcresulttype))
+					int32	fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
+					if (fixlen_default_typmod != -1)
 					{
+						if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype) (func->funcresulttype))
+							fixlen_default_typmod = TSQL_MONEY_TYPMOD;
+
 						pfree(funcName);
-						return TSQL_MONEY_TYPMOD;
-					}
-					else if (func->funcresulttype == INT4OID)
-					{
-						pfree(funcName);
-						return DEFAULT_INT_TYPMOD;
-					}
-					else if (func->funcresulttype == INT8OID)
-					{
-						pfree(funcName);
-						return DEFAULT_BIGINT_TYPMOD;
-					}
-					else if (func->funcresulttype == INT2OID)
-					{
-						pfree(funcName);
-						return DEFAULT_SMALLINT_TYPMOD;
-					}
-					else if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (func->funcresulttype))
-					{
-						pfree(funcName);
-						return DEFAULT_TINYINT_TYPMOD;
+						return fixlen_default_typmod;
 					}
 					else
 					{
