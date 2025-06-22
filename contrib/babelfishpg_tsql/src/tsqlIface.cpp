@@ -3186,11 +3186,11 @@ public:
 		int startIndex = proc->start->getStartIndex();
 
 		if (proc->DOUBLE_QUOTE_ID())
-		stream.setText(startIndex, "\"cht\" ");
+		        stream.setText(startIndex, "\"cht\" ");
 		else if (proc->SQUARE_BRACKET_ID())
-		stream.setText(startIndex, "[cht] ");		
+		        stream.setText(startIndex, "[cht] ");		
 		else
-		stream.setText(startIndex, " cht");
+		        stream.setText(startIndex, " cht");
 	}
     }
 
