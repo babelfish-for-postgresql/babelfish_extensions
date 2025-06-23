@@ -631,6 +631,6 @@ Test_cast_binary_bytea
 numeric_money
 MONEY_OBJECT
 money_smallmoney
-bit_arith
+money_smallmoney_bit_dep_obj
 user_token-dep
 len
