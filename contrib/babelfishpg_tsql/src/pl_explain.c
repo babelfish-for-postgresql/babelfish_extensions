@@ -1,6 +1,7 @@
 #include "postgres.h"
 
 #include "commands/explain.h"
+#include "commands/explain_format.h"
 
 #include "pl_explain.h"
 #include "pltsql.h"

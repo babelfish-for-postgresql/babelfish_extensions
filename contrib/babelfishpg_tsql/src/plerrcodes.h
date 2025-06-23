@@ -73,6 +73,10 @@
 },
 
 {
+	"invalid_argument_for_xquery", ERRCODE_INVALID_ARGUMENT_FOR_XQUERY
+},
+
+{
 	"case_not_found", ERRCODE_CASE_NOT_FOUND
 },
 
@@ -846,6 +850,10 @@
 
 {
 	"duplicate_file", ERRCODE_DUPLICATE_FILE
+},
+
+{
+	"file_name_too_long", ERRCODE_FILE_NAME_TOO_LONG
 },
 
 {
