@@ -314,6 +314,23 @@ DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
 SELECT @xml.value('(/artists/artist/@id)[1]', 'nchar(10)');
 GO
 
+-- Check length of output using datalength
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT DATALENGTH(@xml.value('(/artists/artist/@id)[1]', 'varchar(10)'));
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT DATALENGTH(@xml.value('(/artists/artist/@id)[1]', 'nvarchar(10)'));
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT DATALENGTH(@xml.value('(/artists/artist/@id)[1]', 'char(10)'));
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT DATALENGTH(@xml.value('(/artists/artist/@id)[1]', 'nchar(10)'));
+GO
+
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
 SELECT @xml.value('(/artists/artist/@id)[1]', 'text');
 GO
@@ -432,6 +449,26 @@ GO
 
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
 SELECT @xml.value('(/artists/artist/@id)[1]', 'timestamp');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'babel_5223_xml_value_varcharUDT');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'dbo.babel_5223_xml_value_varcharUDT');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'babel_5223_xml_value_sch_varcharUDT');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'babel_5223_sch1.babel_5223_xml_value_sch_varcharUDT');
+GO
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'babel_5223_sch2.babel_5223_xml_value_sch_varcharUDT');
 GO
 
 -- NULL values
@@ -753,10 +790,30 @@ GO
 SELECT babel_5223_xml_value_t1.XmlColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_t1
 GO
 
+-- QUOTED_IDENFIER related error should be thrown in following query and not argument invalid error
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'sql_variant');
+GO
+
+-- error "cannot call method on int" should be thrown in following query and not QUOTED_IDENFIER related error
+DECLARE @xml INT = 1
+SELECT @xml.value('(/artists/artist/@name)[1]', 'sql_variant');
+GO
+
 SET QUOTED_IDENTIFIER ON
 GO
 
 SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+
+-- error "cannot call method on int" should be thrown in following query and not argument datatype invalid error
+DECLARE @xml INT = 1
+SELECT @xml.value('(/artists/artist/@name)[1]', 'sql_variant');
+GO
+
+-- argument datatype invalid error should be thrown
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.VALUE('(/artists/artist/@name)[1]', 'sql_variant');
 GO
 
 -- Currently, we only support XPATH 1.0 as input for XML value function. 

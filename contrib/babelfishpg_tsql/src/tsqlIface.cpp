@@ -8970,15 +8970,20 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	{
 		TSqlParser::ExpressionContext *expr = method->xml_methods()->expression_list()->expression()[1];
 		std::string arg_str = ::getFullText(expr);
-		size_t startPosition = expr->start->getStartIndex();
-		size_t stopPosition = expr->stop->getStopIndex();
+		PLtsql_type *type
 
-		typename_arg = arg_str.substr(1, stopPosition - startPosition - 1);
+		typename_arg = arg_str.substr(1, arg_str.size() - 2);
+		PLtsql_type *type = parse_datatype(typename_arg.c_str(), 0);
+
+		if (is_xml_value_typearg_valid(type->typoid))
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("The data type %s used in the VALUE method is invalid.", typename_arg.c_str()), getLineAndPos(expr));
+		}
 
 		/*
-		 * local_id_end_offset will going to increase by 8 (length of string 'convert(') + length of typename_arg + 1 (length of string ',')
+		 * local_id_end_offset will going to increase by 5 (length of string 'cast(')
 		 */
-		local_id_end_offset += 8 + typename_arg.length() + 1;
+		local_id_end_offset += 5;
 	}
 
 	/* writing the previously rewritten XML and/or Geospatial context */
@@ -9039,7 +9044,7 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 
 	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
 	{
-		rewritten_exp = "convert(" + typename_arg + "," + rewritten_exp + ")";
+		rewritten_exp = "cast(" + rewritten_exp + " as " + typename_arg + ")";
 	}
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
 }
@@ -9231,15 +9236,20 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	{
 		TSqlParser::ExpressionContext *expr = ctx->expression_list()->expression()[1];
 		std::string arg_str = ::getFullText(expr);
-		size_t startPosition = expr->start->getStartIndex();
-		size_t stopPosition = expr->stop->getStopIndex();
+		PLtsql_type *type
 
-		typename_arg = arg_str.substr(1, stopPosition - startPosition - 1);
+		typename_arg = arg_str.substr(1, arg_str.size() - 2);
+		PLtsql_type *type = parse_datatype(typename_arg.c_str(), 0);
+		
+		if (is_xml_value_typearg_valid(type->typoid))
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("The data type %s used in the VALUE method is invalid.", typename_arg.c_str()), getLineAndPos(expr));
+		}
 
 		/*
-		 * local_id_end_offset will going to increase by 8 (length of string 'convert(') + length of typename_arg + 1 (length of string ',')
+		 * local_id_end_offset will going to increase by 5 (length of string 'cast(')
 		 */
-		local_id_end_offset += 8 + typename_arg.length() + 1;
+		local_id_end_offset += 5;
 	}
 
 	/* writing the previously rewritten Dot Function context */
@@ -9293,7 +9303,7 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	
 	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
 	{
-		rewritten_func = "convert(" + typename_arg + "," + rewritten_func + ")";
+		rewritten_func = "cast(" + rewritten_func + " as " + typename_arg + ")";
 	}
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 }

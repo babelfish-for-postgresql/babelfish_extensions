@@ -74,7 +74,6 @@ PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
-static Oid get_immediate_base_type_of_UDT_internal(Oid typeid);
 static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
 static bool is_numeric_cast(Oid func_oid);
 static bool is_tsql_fixeddecimal_numeric(Oid oid);
@@ -1055,7 +1054,7 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
  * This function returns the Immediate base type for UDT.
  * Returns InvalidOid if given type is not an UDT
  */
-static Oid
+Oid
 get_immediate_base_type_of_UDT_internal(Oid typeid)
 {
 	HeapTuple					tuple;

@@ -10,6 +10,18 @@ GO
 DROP TYPE dbo.babel_5223_xml_value_imageUDT
 GO
 
+DROP TYPE babel_5223_sch1.babel_5223_xml_value_sch_varcharUDT
+GO
+
+DROP TYPE babel_5223_sch2.babel_5223_xml_value_sch_varcharUDT
+GO
+
+DROP SCHEMA babel_5223_sch1
+GO
+
+DROP SCHEMA babel_5223_sch2
+GO
+
 DROP VIEW babel_5223_xml_value_dep_view
 GO
 

@@ -21,6 +21,18 @@ INSERT INTO babel_5223_xml_value_text
 VALUES ('<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>')
 GO
 
+CREATE SCHEMA babel_5223_sch1
+GO
+
+CREATE SCHEMA babel_5223_sch2
+GO
+
+CREATE TYPE babel_5223_sch1.babel_5223_xml_value_sch_varcharUDT FROM VARCHAR(100);
+GO
+
+CREATE TYPE babel_5223_sch2.babel_5223_xml_value_sch_varcharUDT FROM VARCHAR(100);
+GO
+
 CREATE TYPE dbo.babel_5223_xml_value_varcharUDT FROM VARCHAR(100);
 GO
 

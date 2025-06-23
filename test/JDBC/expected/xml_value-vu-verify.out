@@ -184,7 +184,7 @@ SELECT @xml.value('(//child)[1]', 'varchar(100)'), @xml.value('(//child)[1]', 'i
 GO
 ~~START~~
 varchar#!#int#!#varbinary
-123#!#123#!#313233
+123#!#123#!#310032003300
 ~~END~~
 
 
@@ -656,11 +656,46 @@ nchar
 ~~END~~
 
 
+-- Check length of output using datalength
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT DATALENGTH(@xml.value('(/artists/artist/@id)[1]', 'varchar(10)'));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT DATALENGTH(@xml.value('(/artists/artist/@id)[1]', 'nvarchar(10)'));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT DATALENGTH(@xml.value('(/artists/artist/@id)[1]', 'char(10)'));
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT DATALENGTH(@xml.value('(/artists/artist/@id)[1]', 'nchar(10)'));
+GO
+~~START~~
+int
+10
+~~END~~
+
+
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
 SELECT @xml.value('(/artists/artist/@id)[1]', 'text');
 GO
-~~START~~
-text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The data type 'text' used in the VALUE method is invalid.)~~
@@ -669,8 +704,6 @@ text
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
 SELECT @xml.value('(/artists/artist/@id)[1]', 'ntext');
 GO
-~~START~~
-ntext
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The data type 'ntext' used in the VALUE method is invalid.)~~
@@ -679,8 +712,6 @@ ntext
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
 SELECT @xml.value('(/artists/artist/@id)[1]', 'sql_variant');
 GO
-~~START~~
-sql_variant
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The data type 'sql_variant' used in the VALUE method is invalid.)~~
@@ -693,7 +724,7 @@ GO
 datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
@@ -703,7 +734,7 @@ GO
 datetime2
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: invalid input syntax for type datetime2: "1")~~
 
 
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
@@ -713,7 +744,7 @@ GO
 datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: invalid input syntax for type datetime: "1")~~
 
 
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
@@ -723,7 +754,7 @@ GO
 smalldatetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
+~~ERROR (Message: invalid input syntax for type smalldatetime: "1")~~
 
 
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
@@ -733,7 +764,7 @@ GO
 date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: invalid input syntax for type date: "1")~~
 
 
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
@@ -743,7 +774,7 @@ GO
 time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: invalid input syntax for type time: "1")~~
 
 
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
@@ -832,7 +863,7 @@ SELECT @xml.value('(/artists/artist/@id)[1]', 'varbinary(10)');
 GO
 ~~START~~
 varbinary
-31
+3100
 ~~END~~
 
 
@@ -867,8 +898,6 @@ uniqueidentifier
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
 SELECT @xml.value('(/artists/artist/@id)[1]', 'image');
 GO
-~~START~~
-image
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The data type 'image' used in the VALUE method is invalid.)~~
@@ -877,8 +906,6 @@ image
 DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
 SELECT @xml.value('(/artists/artist/@id)[1]', 'xml');
 GO
-~~START~~
-xml
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The data type 'xml' used in the VALUE method is invalid.)~~
@@ -932,6 +959,50 @@ GO
 ~~START~~
 binary
 3100000000000000
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'babel_5223_xml_value_varcharUDT');
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'dbo.babel_5223_xml_value_varcharUDT');
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'babel_5223_xml_value_sch_varcharUDT');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "babel_5223_xml_value_sch_varcharudt" does not exist)~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'babel_5223_sch1.babel_5223_xml_value_sch_varcharUDT');
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'babel_5223_sch2.babel_5223_xml_value_sch_varcharUDT');
+GO
+~~START~~
+varchar
+1
 ~~END~~
 
 
@@ -1638,6 +1709,24 @@ varchar
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
+-- QUOTED_IDENFIER related error should be thrown in following query and not argument invalid error
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'sql_variant');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The data type 'sql_variant' used in the VALUE method is invalid.)~~
+
+
+-- error "cannot call method on int" should be thrown in following query and not QUOTED_IDENFIER related error
+DECLARE @xml INT = 1
+SELECT @xml.value('(/artists/artist/@name)[1]', 'sql_variant');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The data type 'sql_variant' used in the VALUE method is invalid.)~~
+
+
 SET QUOTED_IDENTIFIER ON
 GO
 
@@ -1647,6 +1736,24 @@ GO
 sql_variant
 1
 ~~END~~
+
+
+-- error "cannot call method on int" should be thrown in following query and not argument datatype invalid error
+DECLARE @xml INT = 1
+SELECT @xml.value('(/artists/artist/@name)[1]', 'sql_variant');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The data type 'sql_variant' used in the VALUE method is invalid.)~~
+
+
+-- argument datatype invalid error should be thrown
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.VALUE('(/artists/artist/@name)[1]', 'sql_variant');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The data type 'sql_variant' used in the VALUE method is invalid.)~~
 
 
 -- Currently, we only support XPATH 1.0 as input for XML value function. 
