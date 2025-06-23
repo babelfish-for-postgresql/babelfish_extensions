@@ -198,6 +198,149 @@ WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   AND Ext.type = 'S';
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
+-- user_token
+CREATE OR REPLACE VIEW sys.user_token AS
+SELECT
+CAST(Base.oid AS INT) AS principal_id,
+CASE Ext.orig_username
+    WHEN 'dbo' THEN CAST(CAST(Base3.oid AS INT) AS SYS.VARBINARY(85))
+    WHEN 'guest' THEN CAST(0 AS SYS.VARBINARY(85))
+    -- these are SIDs which are constant for all the fixed roles used across databases 
+    -- hence we are hardcoding these SIDs
+    WHEN 'db_owner' THEN CAST('\x01050000000000090400000000000000000000000000000000400000'::bytea AS SYS.VARBINARY(85)) 
+    WHEN 'db_accessadmin' THEN CAST('\x01050000000000090400000000000000000000000000000001400000'::bytea AS SYS.VARBINARY(85))    
+    WHEN 'db_securityadmin' THEN CAST('\x01050000000000090400000000000000000000000000000002400000'::bytea AS SYS.VARBINARY(85))  
+    WHEN 'db_ddladmin' THEN CAST('\x01050000000000090400000000000000000000000000000003400000'::bytea AS SYS.VARBINARY(85))       
+    WHEN 'db_backupoperator' THEN CAST('\x01050000000000090400000000000000000000000000000005400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datareader' THEN CAST('\x01050000000000090400000000000000000000000000000006400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datawriter' THEN CAST('\x01050000000000090400000000000000000000000000000007400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatareader' THEN CAST('\x01050000000000090400000000000000000000000000000008400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatawriter' THEN CAST('\x01050000000000090400000000000000000000000000000009400000'::bytea AS SYS.VARBINARY(85))
+    ELSE CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85))
+END AS SID,
+CAST(Ext.orig_username AS SYS.NVARCHAR(128)) AS NAME,
+CAST(CASE
+WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
+WHEN Ext.type = 'R' THEN 'ROLE'
+ELSE 'SQL USER' END
+AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+LEFT OUTER JOIN sys.babelfish_sysdatabases AS Db
+ON Ext.database_name COLLATE sys.database_default = Db.name
+LEFT OUTER JOIN pg_catalog.pg_roles AS Base3
+ON Db.owner = Base3.rolname
+WHERE Ext.database_name = sys.DB_NAME()
+AND ((Ext.rolname = CURRENT_USER AND Ext.type in ('S','U')) OR
+((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo' AND Ext.type = 'R' AND pg_has_role(current_user, Ext.rolname, 'MEMBER')))
+UNION ALL
+SELECT
+CAST(1 AS INT) AS principal_id,
+CAST(CAST(1 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
+CAST('ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
+WHERE (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo';
+GRANT SELECT ON sys.user_token TO PUBLIC;
+
+-- DATABASE_PRINCIPALS
+CREATE OR REPLACE VIEW sys.database_principals AS
+SELECT
+CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
+-- PG reserves these oid > 16383 AND oid < 16400 for PG specific internal roles.
+-- Any change here in the oid should be reflected in sys.database_role_members view as well.
+CAST(
+  CASE Ext.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Base.oid
+  END AS INT) AS principal_id,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_USER'
+    WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL
+  END
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+CASE Ext.orig_username
+    WHEN 'dbo' THEN CAST(CAST(Base3.oid AS INT) AS SYS.VARBINARY(85))
+    WHEN 'guest' THEN CAST(0 AS SYS.VARBINARY(85))
+    -- these are SIDs which are constant for all the fixed roles used across databases 
+    -- hence we are hardcoding these SIDs
+    WHEN 'db_owner' THEN CAST('\x01050000000000090400000000000000000000000000000000400000'::bytea AS SYS.VARBINARY(85)) 
+    WHEN 'db_accessadmin' THEN CAST('\x01050000000000090400000000000000000000000000000001400000'::bytea AS SYS.VARBINARY(85))    
+    WHEN 'db_securityadmin' THEN CAST('\x01050000000000090400000000000000000000000000000002400000'::bytea AS SYS.VARBINARY(85))  
+    WHEN 'db_ddladmin' THEN CAST('\x01050000000000090400000000000000000000000000000003400000'::bytea AS SYS.VARBINARY(85))       
+    WHEN 'db_backupoperator' THEN CAST('\x01050000000000090400000000000000000000000000000005400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datareader' THEN CAST('\x01050000000000090400000000000000000000000000000006400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_datawriter' THEN CAST('\x01050000000000090400000000000000000000000000000007400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatareader' THEN CAST('\x01050000000000090400000000000000000000000000000008400000'::bytea AS SYS.VARBINARY(85))
+    WHEN 'db_denydatawriter' THEN CAST('\x01050000000000090400000000000000000000000000000009400000'::bytea AS SYS.VARBINARY(85))
+    ELSE CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85))
+END AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+CAST(Ext.authentication_type AS INT) AS authentication_type,
+CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+LEFT OUTER JOIN sys.babelfish_sysdatabases AS Db
+ON Ext.database_name COLLATE sys.database_default = Db.name
+LEFT OUTER JOIN pg_catalog.pg_roles AS Base3
+ON Db.owner = Base3.rolname
+WHERE Ext.database_name = DB_NAME()
+  AND (Ext.orig_username IN ('dbo', 'db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin', 'guest') -- system users should always be visible
+  OR bbf_is_role_member(current_user, Ext.rolname)) -- Current user should be able to see users it has permission of
+UNION ALL
+SELECT
+CAST(name AS SYS.SYSNAME) AS name,
+CAST(
+  CASE name
+    WHEN 'public' THEN 1
+    WHEN 'INFORMATION_SCHEMA' THEN 3
+    WHEN 'sys' THEN 4
+  END AS INT) AS principal_id,
+CAST(type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN type = 'S' THEN 'SQL_USER'
+    WHEN type = 'R' THEN 'DATABASE_ROLE'
+    WHEN type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL
+  END
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(NULL AS SYS.SYSNAME) AS default_schema_name,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(-1 AS INT) AS owning_principal_id,
+CAST(CAST(0 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(0 AS SYS.BIT) AS is_fixed_role,
+CAST(-1 AS INT) AS authentication_type,
+CAST(NULL AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(-1 AS INT) AS default_language_lcid,
+CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
+GRANT SELECT ON sys.database_principals TO PUBLIC;
+
+-- Please add your SQLs here
 CREATE OR REPLACE PROCEDURE sys.sp_helplogins(IN "@loginname" sys.sysname DEFAULT NULL)
 LANGUAGE pltsql
 AS $$
@@ -679,6 +822,112 @@ WHERE sch.nspname = t.typnamespace::regnamespace::name
 	AND t.typtypmod = -1
 	AND t.typtype = 'd';
 
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 sys.FIXEDDECIMAL, IN arg2 NUMERIC)
+RETURNS sys.MONEY  AS 'babelfishpg_money','fixeddecimal_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(sys.FIXEDDECIMAL,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sign(IN arg SMALLINT) RETURNS INT AS
+$BODY$
+SELECT sys.sign(arg::INT);
+$BODY$
+STRICT
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sign(IN arg SYS.TINYINT) RETURNS INT AS
+$BODY$
+SELECT sys.sign(arg::INT);
+$BODY$
+STRICT
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(SYS.TINYINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sign(IN arg BIGINT) RETURNS BIGINT AS
+$BODY$
+SELECT
+	CASE
+		WHEN arg > 0::BIGINT THEN 1::BIGINT
+		WHEN arg < 0::BIGINT THEN -1::BIGINT
+		ELSE 0::BIGINT
+	END;
+$BODY$
+STRICT
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(BIGINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sign(IN arg SYS.MONEY) RETURNS SYS.MONEY AS
+$BODY$
+SELECT
+	CASE
+		WHEN arg > 0::SYS.MONEY THEN 1::SYS.MONEY
+		WHEN arg < 0::SYS.MONEY THEN -1::SYS.MONEY
+		ELSE 0::SYS.MONEY
+	END;
+$BODY$
+STRICT
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(SYS.MONEY) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sign(IN arg SYS.SMALLMONEY) RETURNS SYS.MONEY AS
+$BODY$
+SELECT sys.sign(arg::SYS.MONEY);
+$BODY$
+STRICT
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(SYS.SMALLMONEY) TO PUBLIC;
+
+-- To handle remaining input datatypes
+CREATE OR REPLACE FUNCTION sys.sign(IN arg ANYELEMENT) RETURNS SYS.FLOAT AS
+$BODY$
+SELECT
+	sign(arg::SYS.FLOAT);
+$BODY$
+STRICT
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(ANYELEMENT) TO PUBLIC;
+
+-- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.sign(IN arg TEXT) RETURNS SYS.FLOAT AS
+$BODY$
+SELECT
+	sign(arg::SYS.FLOAT);
+$BODY$
+STRICT
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(TEXT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.floor(sys.fixeddecimal) RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimal_floor' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ceiling(sys.fixeddecimal) RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimal_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.OBJECT_DEFINITION(IN object_id INT)
+RETURNS sys.NVARCHAR
+AS $$
+DECLARE
+    definition sys.NVARCHAR;
+BEGIN
+
+    definition = (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
+    IF (definition IS NULL)
+    THEN
+        definition = (SELECT dc.definition FROM sys.default_constraints dc WHERE dc.object_id = $1);
+        IF (definition IS NULL)
+        THEN
+            definition = (SELECT asm.definition FROM sys.all_sql_modules asm WHERE asm.object_id = $1);
+            IF (definition IS NULL)
+            THEN
+                RETURN NULL;
+            END IF;
+        END IF;
+    END IF;
+
+    RETURN definition;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
 create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
 $body$
 declare
@@ -726,6 +975,11 @@ begin
 end;
 $body$
 language plpgsql immutable returns null on null input;
+
+CREATE OR REPLACE FUNCTION sys.len(expr sys.BBF_BINARY) RETURNS INTEGER AS
+'babelfishpg_common', 'varbinary_length'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

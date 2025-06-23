@@ -1,0 +1,32 @@
+drop user if exists sys_database_principals_vu_user
+GO
+
+drop user if exists sys_database_principals_vu_orphaned_user 
+GO
+
+drop database if exists sys_database_principals_db_different_owner
+GO
+
+drop database if exists sys_database_principals_vu_db
+GO
+
+drop login sys_database_principals_vu_login_with_sysadmin
+GO
+
+drop login sys_database_principals_vu_login
+GO
+
+drop view sys_database_principals_another_vu
+GO
+
+drop view sys_database_principals_fixed_roles
+GO
+
+drop function sys_database_principals_another_func
+GO
+
+drop login login_without_any_permissions;
+GO
+
+drop database if exists sys_database_principals_vu_db_another
+GO

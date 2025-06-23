@@ -303,7 +303,6 @@ pe_tds_init(ClientSocket *client_sock)
 	pltsql_plugin_handler_ptr->get_datum_from_date_time_struct = &TdsDateTimeTypeToDatum;
 	pltsql_plugin_handler_ptr->set_reset_tds_connection_flag = &SetResetTDSConnectionFlag;
 	pltsql_plugin_handler_ptr->get_reset_tds_connection_flag = &GetResetTDSConnectionFlag;
-	pltsql_plugin_handler_ptr->get_tds_numeric_get_typmod = &tds_numeric_get_typmod;
 
 	invalidate_stat_table_hook = invalidate_stat_table;
 	guc_newval_hook = TdsSetGucStatVariable;
