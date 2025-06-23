@@ -18,7 +18,6 @@ DECLARE
     arg_datatype text;
     arg_datatype_oid oid;
     basetype oid;
-    pltsql_quoted_identifier text;
 BEGIN
     arg_datatype_oid := pg_typeof(arg)::oid;
     arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
@@ -56,7 +55,6 @@ DECLARE
     arg_datatype text;
     arg_datatype_oid oid;
     basetype oid;
-    pltsql_quoted_identifier text;
 BEGIN
     arg_datatype_oid := pg_typeof(arg)::oid;
     arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
@@ -94,7 +92,6 @@ DECLARE
     arg_datatype text;
     arg_datatype_oid oid;
     basetype oid;
-    pltsql_quoted_identifier text;
 BEGIN
     arg_datatype_oid := pg_typeof(arg)::oid;
     arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
