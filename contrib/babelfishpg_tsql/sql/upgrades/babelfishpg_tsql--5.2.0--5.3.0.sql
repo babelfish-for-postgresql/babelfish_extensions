@@ -922,6 +922,121 @@ CREATE OR REPLACE FUNCTION sys.len(expr sys.BBF_BINARY) RETURNS INTEGER AS
 'babelfishpg_common', 'varbinary_length'
 STRICT
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
+-- CAST and related functions.
+-- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_smallint(IN arg TEXT)
+RETURNS SMALLINT
+AS $BODY$ BEGIN
+    RETURN CAST(arg AS SMALLINT);
+END; $BODY$
+LANGUAGE plpgsql
+STABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_smallint(IN arg ANYELEMENT)
+RETURNS SMALLINT
+AS $BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+    pltsql_quoted_identifier text;
+BEGIN
+    arg_datatype_oid := pg_typeof(arg)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    CASE arg_datatype
+        WHEN 'numeric', 'double precision', 'real', 'decimal' THEN
+            RETURN CAST(TRUNC(arg) AS SMALLINT);
+        WHEN 'money', 'smallmoney' THEN
+            RETURN CAST(ROUND(arg) AS BIGINT);
+        ELSE
+            RETURN CAST(arg AS SMALLINT);
+    END CASE;
+END; $BODY$
+LANGUAGE plpgsql
+STABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_int(IN arg TEXT)
+RETURNS INT
+AS $BODY$ BEGIN
+    RETURN CAST(arg AS INT);
+END; $BODY$
+LANGUAGE plpgsql
+STABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_int(IN arg ANYELEMENT)
+RETURNS INT
+AS $BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+    pltsql_quoted_identifier text;
+BEGIN
+    arg_datatype_oid := pg_typeof(arg)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    CASE arg_datatype
+        WHEN 'numeric', 'double precision', 'real', 'decimal' THEN
+            RETURN CAST(TRUNC(arg) AS INT);
+        WHEN 'money', 'smallmoney' THEN
+            RETURN CAST(ROUND(arg) AS BIGINT);
+        ELSE
+            RETURN CAST(arg AS INT);
+    END CASE;
+END; $BODY$
+LANGUAGE plpgsql
+STABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_bigint(IN arg TEXT)
+RETURNS BIGINT
+AS $BODY$ BEGIN
+    RETURN CAST(arg AS BIGINT);
+END; $BODY$
+LANGUAGE plpgsql
+STABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_bigint(IN arg ANYELEMENT)
+RETURNS BIGINT
+AS $BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+    pltsql_quoted_identifier text;
+BEGIN
+    arg_datatype_oid := pg_typeof(arg)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    CASE arg_datatype
+        WHEN 'numeric', 'double precision', 'real', 'decimal' THEN
+            RETURN CAST(TRUNC(arg) AS BIGINT);
+        WHEN 'money', 'smallmoney' THEN
+            RETURN CAST(ROUND(arg) AS BIGINT);
+        ELSE
+            RETURN CAST(arg AS BIGINT);
+    END CASE;
+END; $BODY$
+LANGUAGE plpgsql
+STABLE;
+)
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
