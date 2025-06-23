@@ -8968,16 +8968,16 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	 */
 	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
 	{
-		TSqlParser::ExpressionContext *expr = method->xml_methods()->expression_list()->expression()[1];
-		std::string arg_str = ::getFullText(expr);
-		PLtsql_type *type
+		TSqlParser::ExpressionContext *expression = method->xml_methods()->expression_list()->expression()[1];
+		std::string arg_str = ::getFullText(expression);
+		PLtsql_type *type;
 
 		typename_arg = arg_str.substr(1, arg_str.size() - 2);
-		PLtsql_type *type = parse_datatype(typename_arg.c_str(), 0);
+		type = parse_datatype(typename_arg.c_str(), 0);
 
 		if (is_xml_value_typearg_valid(type->typoid))
 		{
-			throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("The data type %s used in the VALUE method is invalid.", typename_arg.c_str()), getLineAndPos(expr));
+			throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("The data type '%s' used in the VALUE method is invalid.", typename_arg.c_str()), getLineAndPos(expression));
 		}
 
 		/*
@@ -9226,7 +9226,7 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	int offset2 = 0;
 	std::vector<std::pair<int, int>> arg_offset_list;
 	int local_id_end_offset = 0;
-	std::string typename_arg;
+	std::string typename_arg = "";
 
 	/*
 	 * Extract typename from second argument of VALUE function which is 'typename',
@@ -9234,16 +9234,16 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	 */
 	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
 	{
-		TSqlParser::ExpressionContext *expr = ctx->expression_list()->expression()[1];
-		std::string arg_str = ::getFullText(expr);
-		PLtsql_type *type
+		TSqlParser::ExpressionContext *expression = ctx->expression_list()->expression()[1];
+		std::string arg_str = ::getFullText(expression);
+		PLtsql_type *type;
 
 		typename_arg = arg_str.substr(1, arg_str.size() - 2);
-		PLtsql_type *type = parse_datatype(typename_arg.c_str(), 0);
+		type = parse_datatype(typename_arg.c_str(), 0);
 		
 		if (is_xml_value_typearg_valid(type->typoid))
 		{
-			throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("The data type %s used in the VALUE method is invalid.", typename_arg.c_str()), getLineAndPos(expr));
+			throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("The data type '%s' used in the VALUE method is invalid.", typename_arg.c_str()), getLineAndPos(expression));
 		}
 
 		/*
