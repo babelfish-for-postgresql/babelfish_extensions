@@ -471,6 +471,10 @@ DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
 SELECT @xml.value('(/artists/artist/@id)[1]', 'babel_5223_sch2.babel_5223_xml_value_sch_varcharUDT');
 GO
 
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'nonexistent');
+GO
+
 -- NULL values
 DECLARE @xml XML = NULL
 SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')

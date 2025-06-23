@@ -1006,6 +1006,14 @@ varchar
 ~~END~~
 
 
+DECLARE @xml XML = '<artists> <artist id="1"/> </artists>'
+SELECT @xml.value('(/artists/artist/@id)[1]', 'nonexistent');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "nonexistent" does not exist)~~
+
+
 -- NULL values
 DECLARE @xml XML = NULL
 SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')

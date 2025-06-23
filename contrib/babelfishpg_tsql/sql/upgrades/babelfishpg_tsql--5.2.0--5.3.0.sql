@@ -536,17 +536,6 @@ BEGIN
         RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
     END IF;
 
-    temp_datatype := sys.translate_pg_type_to_tsql(datatype::regtype::oid);
-    IF temp_datatype IS NULL THEN
-        -- for User Defined Datatype, use immediate base type to check for datatype validation
-        temp_basetype := sys.bbf_get_immediate_base_type_of_UDT(datatype::regtype::oid);
-        temp_datatype := sys.translate_pg_type_to_tsql(temp_basetype);
-    END IF;
-
-    IF (temp_datatype IN ('xml', 'image', 'text', 'ntext', 'sql_variant', 'geometry', 'geography', 'vector', 'sparsevec', 'halfvec')) THEN
-        RAISE EXCEPTION 'The data type ''%'' used in the VALUE method is invalid.', datatype;
-    END IF;
-
     result_set := xpath(xpath_pattern, xml_element);
     IF (cardinality(result_set) > 1) THEN
         RAISE EXCEPTION 'XML Value result is not a single value.';
