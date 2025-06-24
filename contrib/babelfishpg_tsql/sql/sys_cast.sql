@@ -13,11 +13,23 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_smallint(IN arg ANYELEMENT)
 RETURNS SMALLINT
-AS $BODY$ BEGIN
-    CASE pg_typeof(arg)
-        WHEN 'numeric'::regtype, 'double precision'::regtype, 'real'::regtype THEN
+AS $BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+BEGIN
+    arg_datatype_oid := pg_typeof(arg)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    CASE arg_datatype
+        WHEN 'numeric', 'double precision', 'real', 'decimal', 'float' THEN
             RETURN CAST(TRUNC(arg) AS SMALLINT);
-        WHEN 'sys.money'::regtype, 'sys.smallmoney'::regtype THEN
+        WHEN 'money', 'smallmoney' THEN
             RETURN CAST(ROUND(arg) AS BIGINT);
         ELSE
             RETURN CAST(arg AS SMALLINT);
@@ -38,11 +50,23 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_int(IN arg ANYELEMENT)
 RETURNS INT
-AS $BODY$ BEGIN
-    CASE pg_typeof(arg)
-        WHEN 'numeric'::regtype, 'double precision'::regtype, 'real'::regtype THEN
+AS $BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+BEGIN
+    arg_datatype_oid := pg_typeof(arg)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    CASE arg_datatype
+        WHEN 'numeric', 'double precision', 'real', 'decimal', 'float' THEN
             RETURN CAST(TRUNC(arg) AS INT);
-        WHEN 'sys.money'::regtype, 'sys.smallmoney'::regtype THEN
+        WHEN 'money', 'smallmoney' THEN
             RETURN CAST(ROUND(arg) AS BIGINT);
         ELSE
             RETURN CAST(arg AS INT);
@@ -63,11 +87,23 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_bigint(IN arg ANYELEMENT)
 RETURNS BIGINT
-AS $BODY$ BEGIN
-    CASE pg_typeof(arg)
-        WHEN 'numeric'::regtype, 'double precision'::regtype, 'real'::regtype THEN
+AS $BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+BEGIN
+    arg_datatype_oid := pg_typeof(arg)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    CASE arg_datatype
+        WHEN 'numeric', 'double precision', 'real', 'decimal', 'float' THEN
             RETURN CAST(TRUNC(arg) AS BIGINT);
-        WHEN 'sys.money'::regtype, 'sys.smallmoney'::regtype THEN
+        WHEN 'money', 'smallmoney' THEN
             RETURN CAST(ROUND(arg) AS BIGINT);
         ELSE
             RETURN CAST(arg AS BIGINT);
