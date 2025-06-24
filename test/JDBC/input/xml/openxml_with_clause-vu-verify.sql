@@ -200,7 +200,6 @@ EXEC sp_xml_removedocument @idoc;
 GO
 
 -- If tablename is given 
-CREATE TABLE test_openxml_table(oid char(5), date datetime, amount float);
 DECLARE @docHandle int;
 DECLARE @XmlDocument varchar(1000);
 
@@ -226,8 +225,6 @@ FROM OPENXML (@docHandle, '/root/Customer/Order', 1)
      WITH test_openxml_table;
 
 EXEC sp_xml_removedocument @docHandle;
-GO
-DROP TABLE test_openxml_table;
 GO
 
 -- If flag value more than 3
@@ -287,7 +284,7 @@ FROM      OPENXML (@XmlDocumentHandle, '/ROOT/Customer', 7)
 EXEC sp_xml_removedocument @XmlDocumentHandle;
 GO
 
--- colpattern is case sensitive (this gives null)
+-- rowpattern is case sensitive (this gives null)
 DECLARE @XmlDocumentHandle int;
 DECLARE @XmlDocument nvarchar(1000);
 SET @XmlDocument = N'<ROOT>
@@ -314,4 +311,285 @@ FROM      OPENXML (@XmlDocumentHandle, '/root/customer', 4)
            WITH (CustomerID  varchar(10),
                  ContactName varchar(20));
 EXEC sp_xml_removedocument @XmlDocumentHandle;
+GO
+
+-- colpattern is case sensitive
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer CustomerID="VINET" ContactName="Paul Henriot">
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5"
+          OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3"
+          OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+
+SELECT * 
+FROM OPENXML (@DocHandle, '/ROOT/Customer',1)
+      WITH (customerid  varchar(10) ,
+            contactname varchar(20));
+EXEC sp_xml_removedocument @DocHandle;
+GO
+
+-- negative flag value
+DECLARE @XmlDocumentHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer>
+   <CustomerID>VINET</CustomerID>
+   <ContactName>Paul Henriot</ContactName>
+   <Order OrderID="10248" CustomerID="VINET" EmployeeID="5" OrderDate="1996-07-04T00:00:00">
+      <OrderDetail ProductID="11" Quantity="12"/>
+      <OrderDetail ProductID="42" Quantity="10"/>
+   </Order>
+</Customer>
+<Customer CustomerID="LILAS" ContactName="Carlos Gonzalez">
+   <Order OrderID="10283" CustomerID="LILAS" EmployeeID="3"
+          OrderDate="1996-08-16T00:00:00">
+      <OrderDetail ProductID="72" Quantity="3"/>
+   </Order>
+</Customer>
+</ROOT>';
+
+EXEC sp_xml_preparedocument @XmlDocumentHandle OUTPUT, @XmlDocument;
+
+SELECT *
+FROM      OPENXML (@XmlDocumentHandle, '/ROOT/Customer', -1)
+           WITH (CustomerID  varchar(10),
+                 ContactName varchar(20));
+EXEC sp_xml_removedocument @XmlDocumentHandle;
+GO
+
+-- Mixed attributes
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<Library>
+<Book ISBN="123456789" Category="Fiction">
+    <Title>The Great Novel</Title>
+    <Author>
+        <FirstName>John</FirstName>
+        <LastName>Author</LastName>
+        <Rating>4.5</Rating>
+    </Author>
+    <Publication>
+        <Publisher>Book House</Publisher>
+        <Year>2023</Year>
+        <Price currency="USD">29.99</Price>
+    </Publication>
+</Book>
+</Library>';
+
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+
+SELECT * 
+FROM OPENXML (@DocHandle, '/Library/Book', 2)
+WITH (
+    ISBN varchar(20),
+    Category varchar(50),
+    Title varchar(100) 'Title',
+    AuthorFirstName varchar(50) 'Author/FirstName',
+    AuthorLastName varchar(50) 'Author/LastName',
+    Rating decimal(3,1) 'Author/Rating',
+    Publisher varchar(50) 'Publication/Publisher',
+    PublishYear int 'Publication/Year',
+    Price decimal(10,2) 'Publication/Price',
+    Currency varchar(3) 'Publication/Price/@currency'
+);
+EXEC sp_xml_removedocument @DocHandle;
+GO
+
+-- Nested elements
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(2000);
+SET @XmlDocument = N'<Invoices>
+<Invoice InvoiceID="INV001" Date="2024-01-15">
+    <Customer ID="CUST001">
+        <Name>Acme Corp</Name>
+        <Address>123 Business St</Address>
+    </Customer>
+    <Items>
+        <Item SKU="SKU001">
+            <Description>Laptop</Description>
+            <Quantity>2</Quantity>
+            <UnitPrice>999.99</UnitPrice>
+            <Discount>0.10</Discount>
+        </Item>
+        <Item SKU="SKU002">
+            <Description>Mouse</Description>
+            <Quantity>5</Quantity>
+            <UnitPrice>24.99</UnitPrice>
+            <Discount>0.05</Discount>
+        </Item>
+    </Items>
+</Invoice>
+</Invoices>';
+
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+
+SELECT * 
+FROM OPENXML (@DocHandle, '/Invoices/Invoice', 2)
+WITH (
+    InvoiceID varchar(10),
+    InvoiceDate date '@Date',
+    CustomerID varchar(10) 'Customer/@ID',
+    CustomerName varchar(50) 'Customer/Name',
+    CustomerAddress varchar(100) 'Customer/Address'
+);
+
+SELECT * 
+FROM OPENXML (@DocHandle, '/Invoices/Invoice/Items/Item', 2)
+WITH (
+    InvoiceID varchar(10) '../../../@InvoiceID',
+    SKU varchar(10) '@SKU',
+    Description varchar(100) 'Description',
+    Quantity int 'Quantity',
+    UnitPrice decimal(10,2) 'UnitPrice',
+    Discount decimal(4,2) 'Discount'
+);
+
+EXEC sp_xml_removedocument @DocHandle;
+GO
+
+-- Basic example which gives customer, order, product details
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<ROOT>
+<Customer CustomerID="C001" ContactName="John Doe">
+   <Order OrderID="1001" OrderDate="2024-01-15">
+      <Product ProductID="P1" Quantity="5" Price="100"/>
+      <Product ProductID="P2" Quantity="3" Price="200"/>
+   </Order>
+</Customer>
+<Customer CustomerID="C002" ContactName="Jane Smith">
+   <Order OrderID="1002" OrderDate="2024-01-16">
+      <Product ProductID="P3" Quantity="2" Price="150"/>
+   </Order>
+</Customer>
+</ROOT>';
+
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+
+
+SELECT * 
+FROM OPENXML (@DocHandle, '/ROOT/Customer', 1)
+WITH (
+    CustomerID varchar(10),
+    ContactName varchar(50)
+);
+
+SELECT * 
+FROM OPENXML (@DocHandle, '/ROOT/Customer/Order', 1)
+WITH (
+    OrderID int,
+    OrderDate date,
+    CustomerID varchar(10) '../@CustomerID'
+);
+
+
+SELECT * 
+FROM OPENXML (@DocHandle, '/ROOT/Customer/Order/Product', 1)
+WITH (
+    OrderID int '../@OrderID',
+    ProductID varchar(10),
+    Quantity int,
+    Price decimal(10,2)
+);
+
+EXEC sp_xml_removedocument @DocHandle;
+GO
+
+-- When table name or colname > 64 bytes
+
+-- Test Case 1: Long table name (> 64 bytes)
+INSERT INTO very_long_table_name_that_exceeds_sixty_four_characters_limit_test 
+VALUES (1, 'Test', 100);
+
+DECLARE @xml_doc INT;
+EXEC sp_xml_preparedocument @xml_doc OUTPUT, 
+'<root><item id="1" name="John" value="200"/></root>';
+
+SELECT * FROM 
+OPENXML(@xml_doc, '/root/item') 
+WITH very_long_table_name_that_exceeds_sixty_four_characters_limit_test;
+
+EXEC sp_xml_removedocument @xml_doc;
+GO
+
+-- Test Case 2: Long column names (> 64 bytes)
+INSERT INTO test_long_columns VALUES (1, 'Test Value', 999);
+
+DECLARE @xml_doc2 INT;
+EXEC sp_xml_preparedocument @xml_doc2 OUTPUT, 
+'<data>
+    <record very_long_column_name_that_definitely_exceeds_sixty_four_characters_limit_test="123" 
+            another_extremely_long_column_name_exceeding_standard_limits_for_testing="Long Value" 
+            short_col="456"/>
+</data>';
+
+
+SELECT * FROM 
+OPENXML(@xml_doc2, '/data/record') 
+WITH test_long_columns;
+
+EXEC sp_xml_removedocument @xml_doc2;
+GO
+
+-- Test Case 3: Explicit column definitions with long names
+DECLARE @xml_doc3 INT;
+EXEC sp_xml_preparedocument @xml_doc3 OUTPUT, 
+'<items>
+    <item col1="value1" col2="value2"/>
+</items>';
+
+SELECT * FROM 
+OPENXML(@xml_doc3, '/items/item') WITH (
+    very_long_column_name_that_definitely_exceeds_sixty_four_characters_limit_one VARCHAR(100),
+    another_extremely_long_column_name_that_exceeds_standard_database_limits_two VARCHAR(100)
+);
+
+EXEC sp_xml_removedocument @xml_doc3;
+GO
+
+-- Test Case 4: Mixed long and short names
+DECLARE @xml_doc4 INT;
+EXEC sp_xml_preparedocument @xml_doc4 OUTPUT, 
+'<test>
+    <row id="1" 
+         extremely_long_column_name_that_exceeds_the_standard_sixty_four_character_limit_for_identifiers="Long Value Test" 
+         short="Short"/>
+</test>';
+
+SELECT * FROM 
+OPENXML(@xml_doc4, '/test/row') 
+WITH mixed_length_names;
+
+EXEC sp_xml_removedocument @xml_doc4;
+GO
+
+-- Openxml with table having default constraints
+INSERT INTO employee_defaults (name, department, salary) 
+VALUES ('Test Employee', 'IT', 50000);
+
+DECLARE @xml_doc INT;
+EXEC sp_xml_preparedocument @xml_doc OUTPUT, 
+'<employees>
+    <emp name="John Smith" department="HR"/>
+    <emp name="Jane Doe" salary="75000"/>
+    <emp name="Bob Wilson"/>
+</employees>';
+
+SELECT * FROM 
+OPENXML(@xml_doc, '/employees/emp') WITH employee_defaults;
+
+EXEC sp_xml_removedocument @xml_doc;
 GO

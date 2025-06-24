@@ -4929,6 +4929,7 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
 /*
  * Function to retrieve XML document from temporary table using document ID
  */
+#define XML_HANDLE_DOC_COLUMN_NUM 6
 Datum
 tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
 {
@@ -4941,6 +4942,7 @@ tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
 	Datum                  result = (Datum) 0;
 	bool                   isnull = true;
 	EphemeralNamedRelation enr = NULL;
+	bool                   table_exists = false;
 	
 	/* Check if the temporary table exists */
 	if (xml_handle_temp_table_name != NULL)
@@ -4949,14 +4951,15 @@ tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
 		if (enr)
 		{
 			relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+			table_exists = true;
 		}
 	}
 
-	if (!OidIsValid(enr->md.reliddesc))
+	if (!table_exists)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("XML document with ID %d not found", document_id)));
+				 errmsg("Could not find prepared statement with handle %d", document_id)));
 	}
 
 	ScanKeyInit(&skey[0],
@@ -4970,7 +4973,7 @@ tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
 	if (HeapTupleIsValid(tuple))
 	{
 		/* Get the XML document from column 6 (doc) */
-		result = heap_getattr(tuple, 6, RelationGetDescr(relation), &isnull);
+		result = heap_getattr(tuple, XML_HANDLE_DOC_COLUMN_NUM, RelationGetDescr(relation), &isnull);
 		
 		if (!isnull)
 		{
@@ -4987,10 +4990,10 @@ tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
 	if (found)
 		PG_RETURN_DATUM(result);
 	
-	/* If we get here , we did not find the document */
+	/* If we didn't find the handle , throw an error */
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			 errmsg("XML document with ID %d not found", document_id)));
+			 errmsg("Could not find prepared statement with handle %d", document_id)));
 	
 	PG_RETURN_NULL();
 }
@@ -5012,6 +5015,14 @@ tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
 	char *xpath_expr;
 	int flag = PG_GETARG_INT32(1);
 	char *colname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	/* Check if colname is NULL or empty */
+	if (colname == NULL || strlen(colname) == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Column name cannot be NULL or empty for OPENXML")));
+	}
 
 	/* Check for negative flag values */
 	if (flag < 0)

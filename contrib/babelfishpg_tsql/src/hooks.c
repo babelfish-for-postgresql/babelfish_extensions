@@ -6577,7 +6577,7 @@ fetch_table_schema(RangeVar *relation, Node *flag)
 			Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 			RangeTableFuncCol *fc;
 			char *colname;
-			
+
 			/* Skip dropped columns */
 			if (att->attisdropped)
 				continue;
@@ -6638,8 +6638,9 @@ pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
 	if (rtf->columns != NIL)
 	{
 		Node  *first_col = linitial(rtf->columns);
-
-		if (IsA(first_col, RangeVar))
+		
+		/* Check if we have exactly one column and it's a table reference */
+		if (list_length(rtf->columns) == 1 && IsA(first_col, RangeVar))
 		{
 			table_ref = (RangeVar *) first_col;
 			/* Fetch the table schema and generate column definitions with appropriate XPath expressions */

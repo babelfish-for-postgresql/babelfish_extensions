@@ -4032,12 +4032,12 @@ AS 'babelfishpg_tsql', 'tsql_openjson_with' LANGUAGE C STRICT IMMUTABLE PARALLEL
 CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_xmldoc(int)
 RETURNS xml
 AS 'babelfishpg_tsql', 'tsql_openxml_get_xmldoc'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_colpattern(text,int)
 RETURNS sys.nvarchar
 AS 'babelfishpg_tsql', 'tsql_openxml_get_colpattern'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
     IN odbcVer smallint,

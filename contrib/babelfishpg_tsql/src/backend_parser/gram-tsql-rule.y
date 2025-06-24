@@ -1800,30 +1800,7 @@ table_ref:	relation_expr tsql_table_hint_expr
 				}
 		;
 
-openxml_expr: OPENXML '(' a_expr ',' a_expr ')' opt_alias_clause
-				{
-					RangeTableFunc *n = makeNode(RangeTableFunc);
-					n->docexpr = NULL;
-					n->rowexpr = $5;
-					n->location = @1;
-					/* Default flag is 0 when not specified */
-					n->namespaces = list_make2((Node*)$3, makeIntConst(0, @1));
-					n->columns = NIL;
-					n->alias = $7;
-					$$ = (Node *) n;
-				}
-			| OPENXML '(' a_expr ',' a_expr ',' a_expr ')' opt_alias_clause
-				{
-					RangeTableFunc *n = makeNode(RangeTableFunc);
-					n->docexpr = NULL;
-					n->rowexpr = $5;
-					n->location = @1;
-					n->namespaces = list_make2((Node *)$3, (Node *)$7);
-					n->columns = NIL;
-					n->alias = $9;
-					$$ = (Node *) n;
-				}
-			| OPENXML '(' a_expr ',' a_expr ')' WITH_table TABLE qualified_name opt_alias_clause
+openxml_expr: OPENXML '(' a_expr ',' a_expr ')' WITH_table TABLE qualified_name opt_alias_clause
 				{
 					RangeTableFunc *n = makeNode(RangeTableFunc);
 					n->docexpr = NULL;

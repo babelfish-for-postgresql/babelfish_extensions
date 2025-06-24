@@ -182,7 +182,7 @@ protected:
 		antlrcpp::Any visitFunction_call(TSqlParser::Function_callContext *ctx) override;
 		antlrcpp::Any visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx) override;
 		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override {
-			if (!ctx->open_json() && (!pltsql_enable_linked_servers || !ctx->open_query()) && !ctx->open_xml()) {
+			if (!ctx->open_json() && (!pltsql_enable_linked_servers || !ctx->open_query()) && !ctx->open_xml()->WITH()) {
 				handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function", getLineAndPos(ctx));
 			}
 			return visitChildren(ctx);
