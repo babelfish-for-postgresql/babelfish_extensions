@@ -8981,7 +8981,7 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 		}
 
 		/*
-		 * local_id_end_offset will going to increase by 5 (length of string 'cast(')
+		 * local_id_end_offset is going to increase by 5 (length of string 'cast(')
 		 */
 		local_id_end_offset += 5;
 	}
@@ -9247,7 +9247,7 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 		}
 
 		/*
-		 * local_id_end_offset will going to increase by 5 (length of string 'cast(')
+		 * local_id_end_offset is going to increase by 5 (length of string 'cast(')
 		 */
 		local_id_end_offset += 5;
 	}
