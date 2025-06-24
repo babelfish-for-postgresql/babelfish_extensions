@@ -192,7 +192,6 @@ runs:
           export serverCollationName=${{ inputs.server_collation_name }}
         fi
         if [[ "$migr_mode" == "multi-db" ]];then
-          export isUpgradeTestMode=true
           base_dir=${{ matrix.upgrade-path.path[0] }}
           if [[ "$base_dir" == *"latest"* || ${{ inputs.dump_restore }} == 'true' ]]; then
             base_dir="latest"
@@ -216,7 +215,6 @@ runs:
             exit 1
           fi
         done
-        export isUpgradeTestMode=true
         export inputFilesPath=input
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           sed -i "s/\b$filename[ ]*\b$/$filename-vu-prepare/g" upgrade/$base_dir/schedule

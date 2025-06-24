@@ -32,11 +32,14 @@ public class Config {
     static boolean checkParallelQueryExpected = false;
     static boolean checkSingleDbModeExpected = false;
     static String testFileRoot = properties.getProperty("testFileRoot");
-    static boolean isUpgradeTestMode =  Boolean.parseBoolean(properties.getProperty("isUpgradeTestMode"));
     static long defaultSLA = Long.parseLong(properties.getProperty("defaultSLA"));
+    static boolean allowConnectionReset = Boolean.parseBoolean(properties.getProperty("allowConnectionReset"));
     static boolean isdbCollationMode = Boolean.parseBoolean(properties.getProperty("isdbCollationMode"));
     static String dbCollationIgnoreFileName = "./db_collation_jdbc_schedule";
     static String singleDBIgnoreFileName = "./singledb_jdbc_schedule";
+
+    static int majorVersion = 13;
+    static int minorVersion = 6;
 
     static String connectionString = constructConnectionString();
 

@@ -251,6 +251,9 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
+select set_config('babelfishpg_tsql.enable_pg_hint', 'off', false);
+go
+
 drop table babel_3293_schema.t1 
 go
 

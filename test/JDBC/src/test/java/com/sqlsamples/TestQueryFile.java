@@ -10,6 +10,7 @@ import java.io.*;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.*;
 import java.util.Date;
 import java.util.stream.Stream;
 
@@ -261,25 +262,93 @@ public class TestQueryFile {
 
         String logFile = testRunDir + timestamp;
         configureLogger(logFile, logger);
+
+        String URL = properties.getProperty("URL");
+        String tsql_port = properties.getProperty("tsql_port");
+        String databaseName = properties.getProperty("databaseName");
+        String user = properties.getProperty("user");
+        String password = properties.getProperty("password");
+
+        Connection getVersionCon = null;
+        Statement stmt = null;
+        ResultSet rs = null;
         
+        // Query against database to find test version
+        try {
+            getVersionCon = DriverManager.getConnection(createSQLServerConnectionString(URL, tsql_port, databaseName, user, password));
+            rs = getVersionCon.createStatement().executeQuery("SELECT @@VERSION;");
+
+            int columnCount = rs.getMetaData().getColumnCount();
+            StringBuilder queryOutputBuilder = new StringBuilder();
+
+            while (rs.next()) {
+                for (int i = 1; i <= columnCount; i++) {
+                    queryOutputBuilder.append(rs.getString(i) + " ");
+                }
+            }
+
+            String queryOutput = queryOutputBuilder.toString();
+            Pattern pattern = Pattern.compile("PostgreSQL (\\d+\\.\\d+)");
+            Matcher matcher = pattern.matcher(queryOutput);
+
+            if (matcher.find()) {
+                String versionString = matcher.group(1);
+                majorVersion = Integer.parseInt(versionString.split("\\.")[0]);
+                minorVersion = Integer.parseInt(versionString.split("\\.")[1]);
+            }
+            else {
+                majorVersion = 0;
+                minorVersion = 0;
+            }
+
+            try {
+                if (getVersionCon != null) {
+                    getVersionCon.close();
+                }
+                getVersionCon = null;
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        } 
+        catch (SQLException e) {
+            majorVersion = 0;
+            minorVersion = 0;
+            System.out.println("Error executing query: " + e.getMessage());
+        }
+
         summaryLogger.info("Started test suite. Now running tests...");
     }
     
     // close connections that are not null after every test
     @AfterEach
     public void closeConnections() throws SQLException, ClassNotFoundException, Throwable {
-        if (isUpgradeTestMode) {
-            if (connection_bbl != null) connection_bbl.close();
-            connection_bbl = null;
-            return;
+        if ((majorVersion > 16 || (majorVersion == 16 && minorVersion >= 6)) && allowConnectionReset) {
+            if (connection_bbl == null) {
+                return;
+            }
+            else {
+                try {
+                    connection_bbl.createStatement().execute("EXEC sys.sp_reset_connection");
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return;
+            }
         }
-        if (connection_bbl == null)
+        else {
+            try {
+                if (connection_bbl != null) {
+                    connection_bbl.close();
+                }
+                connection_bbl = null;
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
             return;
-        try{
-            connection_bbl.createStatement().execute("EXEC sys.sp_reset_connection");
-        }
-        catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

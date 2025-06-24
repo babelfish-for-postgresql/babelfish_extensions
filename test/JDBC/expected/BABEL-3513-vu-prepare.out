@@ -101,3 +101,9 @@ go
 
 exec sp_babelfish_configure 'enable_pg_hint', 'on', 'server'
 go
+
+exec sp_babelfish_configure 'enable_pg_hint', 'off', 'server'
+go
+
+exec sp_babelfish_configure 'enable_pg_hint', 'off'
+go

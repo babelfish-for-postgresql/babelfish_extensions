@@ -162,13 +162,12 @@ public class JDBCCrossDialect {
     }
 
     void closeConnectionsUtil (HashMap<String, Connection> connectionMap, BufferedWriter bw, Logger logger) {
-        boolean needSkipFirst = isUpgradeTestMode ? false : true;
+        boolean needSkipFirst = (majorVersion > 16) || (majorVersion == 16 && minorVersion >= 6) ? true : false;
         Iterator<Map.Entry<String, Connection>> iterator = connectionMap.entrySet().iterator();
 
         while (iterator.hasNext()) {
             Map.Entry<String, Connection> entry = iterator.next();
             Connection connection = entry.getValue();
-
             if (!needSkipFirst) {
                 try {
                     connection.close();
@@ -176,8 +175,9 @@ public class JDBCCrossDialect {
                     handleSQLExceptionWithFile(e, bw, logger);
                 }
             }
-            else
+            else {
                 needSkipFirst = false;
+            }
         }
     }
 
@@ -206,7 +206,6 @@ public class JDBCCrossDialect {
             resetConnectionAttributes();
         }
     }
-
 
     void terminatePsqlConnection (String strLine, BufferedWriter bw, Logger logger) {
         getConnectionAttributes(strLine);
