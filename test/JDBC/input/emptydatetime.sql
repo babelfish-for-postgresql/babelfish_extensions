@@ -47,3 +47,16 @@ go
 
 select cast('' as datetimeoffset(6));
 go
+
+-- Test whitespace inputs
+select CAST('  ' AS datetime);
+go
+
+select CAST('  ' AS smalldatetime);
+go
+
+select CAST('  ' AS datetime2);
+go
+
+select CAST('  ' AS datetimeoffset);
+go

@@ -74,29 +74,16 @@ select CAST(CAST(' ' AS date) AS datetimeoffset)
 go
 
 -- Test whitespace time casts to other datetime datatypes
-select CAST(CAST(' ' AS date) AS datetime)
+select CAST(CAST(' ' AS time) AS datetime)
 go
 
-select CAST(CAST(' ' AS date) AS datetime2)
+select CAST(CAST(' ' AS time) AS datetime2)
 go
 
-select CAST(CAST(' ' AS date) AS smalldatetime)
+select CAST(CAST(' ' AS time) AS smalldatetime)
 go
 
-select CAST(CAST(' ' AS date) AS datetimeoffset)
-go
-
--- Test whitespace inputs for other datetime datatypes
-select CAST('  ' AS datetime);
-go
-
-select CAST('  ' AS datetime2);
-go
-
-select CAST('  ' AS smalldatetime);
-go
-
-select CAST('  ' AS datetimeoffset);
+select CAST(CAST(' ' AS time) AS datetimeoffset)
 go
 
 

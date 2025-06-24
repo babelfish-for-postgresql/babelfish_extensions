@@ -157,7 +157,7 @@ datetimeoffset
 
 
 -- Test whitespace time casts to other datetime datatypes
-select CAST(CAST(' ' AS date) AS datetime)
+select CAST(CAST(' ' AS time) AS datetime)
 go
 ~~START~~
 datetime
@@ -165,7 +165,7 @@ datetime
 ~~END~~
 
 
-select CAST(CAST(' ' AS date) AS datetime2)
+select CAST(CAST(' ' AS time) AS datetime2)
 go
 ~~START~~
 datetime2
@@ -173,7 +173,7 @@ datetime2
 ~~END~~
 
 
-select CAST(CAST(' ' AS date) AS smalldatetime)
+select CAST(CAST(' ' AS time) AS smalldatetime)
 go
 ~~START~~
 smalldatetime
@@ -181,40 +181,7 @@ smalldatetime
 ~~END~~
 
 
-select CAST(CAST(' ' AS date) AS datetimeoffset)
-go
-~~START~~
-datetimeoffset
-1900-01-01 00:00:00.0000000 +00:00
-~~END~~
-
-
--- Test whitespace inputs for other datetime datatypes
-select CAST('  ' AS datetime);
-go
-~~START~~
-datetime
-1900-01-01 00:00:00.0
-~~END~~
-
-
-select CAST('  ' AS datetime2);
-go
-~~START~~
-datetime2
-1900-01-01 00:00:00.0000000
-~~END~~
-
-
-select CAST('  ' AS smalldatetime);
-go
-~~START~~
-smalldatetime
-1900-01-01 00:00:00.0
-~~END~~
-
-
-select CAST('  ' AS datetimeoffset);
+select CAST(CAST(' ' AS time) AS datetimeoffset)
 go
 ~~START~~
 datetimeoffset
