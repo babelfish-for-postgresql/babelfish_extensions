@@ -40,6 +40,8 @@
 #include "src/include/err_handler.h"
 #include "src/include/guc.h"
 
+#include "tcop/backend_startup.h"
+
 static listen_init_hook_type prev_listen_init;
 
 /* Where the Unix socket files are (list of palloc'd strings) */
@@ -439,7 +441,7 @@ pe_authenticate(Port *port, const char **username)
 	disable_timeout(STATEMENT_TIMEOUT, false);
 
 	/* Log only if Log_connections is set. */
-	if (Log_connections)
+	if (log_connections & LOG_CONNECTION_AUTHORIZATION)
 	{
 		StringInfoData logmsg;
 
