@@ -544,7 +544,7 @@ datetime_in_str(char *str, Node *escontext)
 	 * Set input to default '1900-01-01 00:00:00.000' if empty string
 	 * encountered
 	 */
-	if (*str == '\0')
+	if (isEmptyOrWhitespace(str))
 	{
 		result = initializeToDefaultDatetime();
 		PG_RETURN_TIMESTAMP(result);
@@ -1199,6 +1199,62 @@ initializeToDefaultDatetime(void)
 	tm2timestamp(tm, 0, NULL, &result);
 
 	return result;
+}
+
+/*
+ * Set input to default '1900-01-01' if empty string encountered
+ */
+DateADT
+initializeToDefaultDate(void)
+{
+	DateADT date;
+	struct pg_tm tt,
+				 *tm = &tt;
+	tm->tm_year = 1900;
+	tm->tm_mon = 1;
+	tm->tm_mday = 1;
+	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+
+	return date;
+}
+
+/*
+ * Set input to default '00:00:00.0000000' if empty string encountered
+ */
+TimeADT
+initializeToDefaultTime(int32 typmod)
+{
+	TimeADT	time;
+	struct pg_tm tt,
+				 *tm = &tt;
+	tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
+	tm2time(tm, 0, &time);
+	AdjustTimeForTypmod(&time, typmod);
+
+	return time;
+}
+
+
+/*
+ * Check if string is empty or contains only whitespace
+ * Returns true if string is empty or contains only whitespace characters
+ */
+bool
+isEmptyOrWhitespace(const char *str)
+{
+	size_t i;
+	size_t len;
+
+	if (!str)
+		return true;
+
+	len = strlen(str);
+	for (i = 0; i < len; i++)
+	{
+		if (!isspace((unsigned char)str[i]))
+			return false;
+	}
+	return true;
 }
 
 Datum

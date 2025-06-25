@@ -274,7 +274,7 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 	tm->tm_mday = 0;
 
 	/* Set input to default '1900-01-01 00:00:00.* if empty string encountered */
-	if (*str == '\0')
+	if (isEmptyOrWhitespace(str))
 	{
 		result = initializeToDefaultDatetime();
 		AdjustDatetime2ForTypmod(&result, typmod);

@@ -33,6 +33,8 @@
 #include "utils/fmgroids.h"
 #include "common/int.h"
 #include "utils/numeric.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -2656,7 +2658,7 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 		 */
 		for (i = strlen(value) - 1; i >= 0; i--)
 		{
-			if (value[i] != ' ')
+			if (!isspace((unsigned char)value[i]))
 				break;
 		}
 
@@ -2757,6 +2759,20 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 						 * happens inside stringTypeDatum().
 						 */
 						newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
+						break;
+					}
+				case DATEOID:
+					{
+						/* Set input to default '1900-01-01' for empty strings */
+						DateADT date = (*common_utility_plugin_ptr->initializeToDefaultDate) ();
+						newcon->constvalue = DateADTGetDatum(date);
+						break;
+					}
+				case TIMEOID:
+					{
+						/* Set input to default '00:00:00' for empty strings */
+						TimeADT time = (*common_utility_plugin_ptr->initializeToDefaultTime) (inputTypeMod);
+						newcon->constvalue = TimeADTGetDatum(time);
 						break;
 					}
 				default:
