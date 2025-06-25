@@ -202,13 +202,6 @@ init_point_array(PointArray *pa)
     pa->points = palloc(pa->capacity * sizeof(POINT));
     pa->count = 0;
 
-    if (!pa->points)
-    {
-        ereport(ERROR,
-            (errcode(ERRCODE_OUT_OF_MEMORY),
-             errmsg("out of memory")));
-
-    }
 }
 
 /**
@@ -223,14 +216,6 @@ resize_point_array(PointArray *pa)
     {
         pa->capacity *= 2;
         pa->points = repalloc(pa->points, pa->capacity * sizeof(POINT));
-
-        if (!pa->points)
-        {
-            ereport(ERROR,
-                (errcode(ERRCODE_OUT_OF_MEMORY),
-                 errmsg("out of memory")));
-    
-        }
     }
 }
 
@@ -279,7 +264,7 @@ determine_linestring_type(PointArray *pa)
 
         /* Check for NaN values in Z nd M coordinate if present */
         if ((FLAGS_GET_Z(p.flags) && isnan(p.z)) ||
-        (FLAGS_GET_M(p.flags) && isnan(p.m)))
+            (FLAGS_GET_M(p.flags) && isnan(p.m)))
         {
             ereport(ERROR,
                     (errcode(ERRCODE_INVALID_PARAMETER_VALUE),

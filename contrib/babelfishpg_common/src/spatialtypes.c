@@ -1110,14 +1110,6 @@ handle_non_empty_geometry(GeometryData *geom_data)
         /* Write number of points */
         memcpy(result_data + POSTGIS_HEADER_SIZE + SRID_SIZE, &npoints, NPOINTS_SIZE);
         
-        /* Handle XY case with direct memcpy */
-        if (!has_z && !has_m) 
-        {
-            memcpy(dst, src, geom_data->input_len - HEADER_SIZE - 
-                   (geom_data->has_npoints_data ? (sizeof(line_end_metada) + NPOINTS_SIZE): 0));
-            return result;
-        }
-        
         /* Copy coordinates with proper handling of Z and M dimensions */
         for (i = 0; i < npoints; i++) 
         {
