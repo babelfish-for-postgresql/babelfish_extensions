@@ -3045,7 +3045,7 @@ public:
 		else
 			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
 		
-		if(schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0))
+		if(!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
 			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
@@ -3065,7 +3065,7 @@ public:
 		else
 			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
 		
-		if(schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0))
+		if(!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
 			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
@@ -3221,7 +3221,7 @@ public:
 		else
 			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
 		
-		if(schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0))
+		if(!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
 			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
@@ -3242,7 +3242,7 @@ public:
 		else
 			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
 		
-		if(schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0))
+		if(!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
 			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
