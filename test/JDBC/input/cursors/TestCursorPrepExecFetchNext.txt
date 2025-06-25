@@ -102,4 +102,7 @@ cursor#!#fetch#!#next
 #cursor#!#fetch#!#afterlast
 #cursor#!#fetch#!#next
 cursor#!#close
+# Cursor with multiple selects should return error
+cursor#!#open#!#prepst#!#SELECT * FROM test_cursor_prep_exec_fetch_next;SELECT a FROM test_cursor_prep_exec_fetch_next#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+
 DROP TABLE test_cursor_prep_exec_fetch_next
