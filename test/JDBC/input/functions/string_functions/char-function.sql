@@ -380,3 +380,26 @@ select .sys.char(0)
 select .sys.char(-1)
 select .sys.char(255)
 GO
+-- Test with UDF named char in a schema other than sys
+CREATE SCHEMA test_schema;
+GO
+create function test_schema.char(@x int)
+returns integer as 
+BEGIN
+    return 1;
+END;
+GO
+select test_schema.char(255);
+GO
+select char(255);
+GO
+select sys.char(0);
+GO
+drop function test_schema.char;
+GO
+drop schema test_schema;
+go
+select char(200)
+go
+
+

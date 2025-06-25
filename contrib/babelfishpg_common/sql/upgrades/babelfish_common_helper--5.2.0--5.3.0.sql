@@ -145,7 +145,46 @@ BEGIN
     END IF;
 END $$;
 
-create or replace function sys.cht(x in int) returns sys.varchar
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.char(x in int) RENAME TO chr_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+   ALTER FUNCTION sys.nchar(In x INTEGER) RENAME TO nchar_int_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+   ALTER FUNCTION sys.nchar(In x varbinary) RENAME TO nchar_varbinary_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+create or replace function sys.cht_(x in int) returns sys.varchar
 AS
 $body$
 BEGIN
@@ -161,27 +200,13 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.nchar(IN x INTEGER) RETURNS sys.nvarchar
+CREATE OR REPLACE FUNCTION sys.ncht_(x in int) RETURNS sys.nvarchar
 AS
 $body$
 BEGIN
-    --- 1114111 is 0x10FFFF - max value permitted as specified by documentation
+    --- 65535 is 0x0000FFFF - max value permitted as specified by documentation without SC collation
     if x between 1 and 65535 then
         return(select chr(x))::sys.nvarchar;
-    else
-        return null;
-    end if;
-END;
-$body$
-LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.nchar(IN x varbinary) RETURNS sys.nvarchar
-AS
-$body$
-BEGIN
-    --- 1114111 is 0x10FFFF - max value permitted as specified by documentation
-    if x::integer between 1 and 65535 then
-        return(select chr(x::integer))::sys.nvarchar;
     else
         return null;
     end if;

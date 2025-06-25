@@ -680,3 +680,46 @@ varchar
 ÿ
 ~~END~~
 
+-- Test with UDF named char in a schema other than sys
+CREATE SCHEMA test_schema;
+GO
+create function test_schema.char(@x int)
+returns integer as 
+BEGIN
+    return 1;
+END;
+GO
+select test_schema.char(255);
+GO
+~~START~~
+int
+1
+~~END~~
+
+select char(255);
+GO
+~~START~~
+varchar
+ÿ
+~~END~~
+
+select sys.char(0);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+drop function test_schema.char;
+GO
+drop schema test_schema;
+go
+select char(200)
+go
+~~START~~
+varchar
+È
+~~END~~
+
+
+
