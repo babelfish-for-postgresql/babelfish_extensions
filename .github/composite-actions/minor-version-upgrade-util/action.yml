@@ -90,7 +90,6 @@ runs:
         tar_dir: ${{ matrix.upgrade-path.last_version }}
       run: |
         cd test/JDBC/
-        export isUpgradeTestMode=true
         if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
           export serverCollationName=${{ inputs.server_collation_name }}
         fi

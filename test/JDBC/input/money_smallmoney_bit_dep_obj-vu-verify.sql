@@ -73,6 +73,36 @@ GO
 SELECT * FROM bitsmallmoneydivfail_vu;
 GO
 
+SELECT * FROM bitsmallmoneypl_vu;
+GO
+
+SELECT * FROM bitsmallmoneymi_vu;
+GO
+
+SELECT * FROM smallmoneybitpl_vu;
+GO
+
+SELECT * FROM smallmoneybitmi_vu;
+GO
+
+SELECT * FROM floormaxmoney_vu;
+GO
+
+SELECT * FROM ceilingminmoney_vu;
+GO
+
+SELECT * FROM powersmallmoney_vu;
+GO
+
+SELECT * FROM powermoney_vu;
+GO
+
+SELECT * FROM powersmallmoneyfail_vu;
+GO
+
+SELECT * FROM powermoneyfail_vu;
+GO
+
 -- bit arithmetic is not supported
 -- this fails
 SELECT CAST(1 AS sys.BIT) + CAST(1 as sys.BIT) AS A, CAST(0 AS sys.BIT) / CAST(1 AS sys.BIT) AS B, CAST(1 AS sys.BIT) * CAST(0 as sys.BIT) AS C, CAST(0 AS sys.BIT) - CAST(0 as sys.BIT) AS D;

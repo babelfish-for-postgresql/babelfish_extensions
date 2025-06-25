@@ -197,6 +197,86 @@ smallmoney
 ~~ERROR (Message: division by zero)~~
 
 
+SELECT * FROM bitsmallmoneypl_vu;
+GO
+~~START~~
+smallmoney
+124.4500
+~~END~~
+
+
+SELECT * FROM bitsmallmoneymi_vu;
+GO
+~~START~~
+smallmoney
+-122.4500
+~~END~~
+
+
+SELECT * FROM smallmoneybitpl_vu;
+GO
+~~START~~
+smallmoney
+124.4500
+~~END~~
+
+
+SELECT * FROM smallmoneybitmi_vu;
+GO
+~~START~~
+smallmoney
+122.4500
+~~END~~
+
+
+SELECT * FROM floormaxmoney_vu;
+GO
+~~START~~
+money
+922337203685477.0000
+~~END~~
+
+
+SELECT * FROM ceilingminmoney_vu;
+GO
+~~START~~
+money
+-922337203685477.0000
+~~END~~
+
+
+SELECT * FROM powersmallmoney_vu;
+GO
+~~START~~
+money
+10116.4772
+~~END~~
+
+
+SELECT * FROM powermoney_vu;
+GO
+~~START~~
+money
+10116.4772
+~~END~~
+
+
+SELECT * FROM powersmallmoneyfail_vu;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
+
+
+SELECT * FROM powermoneyfail_vu;
+GO
+~~START~~
+money
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
 -- bit arithmetic is not supported
 -- this fails
 SELECT CAST(1 AS sys.BIT) + CAST(1 as sys.BIT) AS A, CAST(0 AS sys.BIT) / CAST(1 AS sys.BIT) AS B, CAST(1 AS sys.BIT) * CAST(0 as sys.BIT) AS C, CAST(0 AS sys.BIT) - CAST(0 as sys.BIT) AS D;
