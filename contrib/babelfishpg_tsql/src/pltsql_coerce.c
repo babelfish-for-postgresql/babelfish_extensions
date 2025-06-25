@@ -1685,8 +1685,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				int		rettypmod = -1;
 				bool		found_typmod;
 				Node		*arg = NULL;
-				uint8_t		precision = 0,
-						scale = 0;
 				char		*funcName;
 
 				/* Be smart about length-coercion functions... */
@@ -1711,16 +1709,14 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 																					  func->args == NIL ? 0 : func->args->length,
 																					  func->funcresulttype);
 
-				funcName = get_func_name(func_oid);
 				/*
 				 * If the following conditions are met then we will recursively find typmod from arg.
 				 * 1) rettypmod == -1 means unable to find typmod till now.
 				 * 2) check if only one args and then is that castable to numeric.
 				 */
 				if (rettypmod == -1 &&
-					list_length(func->args) >= 1 &&
-					(is_numeric_cast(func_oid) || 
-					(funcName && is_mathematical_function(funcName))))
+					list_length(func->args) == 1 &&
+					is_numeric_cast(func_oid))
 				{
 					arg = linitial(func->args);
 					rettypmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
@@ -1728,23 +1724,48 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					{
 						if (found != NULL) *found = false;
 					}
-					scale = (rettypmod - VARHDRSZ) & 0xffff;
-					precision = ((rettypmod - VARHDRSZ) >> 16) & 0xffff;
+					return rettypmod;
 				}
 
+				/* We will find typmod for mathematical functions. */
+				funcName = get_func_name(func_oid);
 				if (funcName && is_mathematical_function(funcName))
 				{
-					int32	fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
-					if (fixlen_default_typmod != -1)
+					if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype) (func->funcresulttype) ||
+						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype) (func->funcresulttype))
 					{
-						if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype) (func->funcresulttype))
-							fixlen_default_typmod = TSQL_MONEY_TYPMOD;
-
 						pfree(funcName);
-						return fixlen_default_typmod;
+						return TSQL_MONEY_TYPMOD;
+					}
+					else if (func->funcresulttype == INT2OID ||
+							 func->funcresulttype == INT4OID ||
+							 (*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (func->funcresulttype))
+					{
+						pfree(funcName);
+						return DEFAULT_INT_TYPMOD;
+					}
+					else if (func->funcresulttype == INT8OID)
+					{
+						pfree(funcName);
+						return DEFAULT_BIGINT_TYPMOD;
 					}
 					else
 					{
+						uint8_t		precision = 0,
+								scale = 0;
+
+						if (list_length(func->args) >= 1)
+						{
+							arg = linitial(func->args);
+							rettypmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
+							if (!found_typmod)
+							{
+								if (found != NULL) *found = false;
+							}
+							scale = (rettypmod - VARHDRSZ) & 0xffff;
+							precision = ((rettypmod - VARHDRSZ) >> 16) & 0xffff;
+						}
+						
 						if ((strlen(funcName) == 7 && (strncmp(funcName, "ceiling", 7) == 0)) ||
 								(strlen(funcName) == 5 && (strncmp(funcName, "floor", 5) == 0)))
 						{
@@ -1781,8 +1802,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							 */
 							precision = tds_default_numeric_precision;
 						}
+						rettypmod = ((precision << 16) | scale) + VARHDRSZ;
 					}
-					rettypmod = ((precision << 16) | scale) + VARHDRSZ;
 				}
 
 				pfree(funcName);
