@@ -3034,16 +3034,19 @@ public:
 	    return;
 	
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
-	std::string schNameStr;
 
-	if (schema == nullptr)
-		schNameStr = "sys";
-	else
-		schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
-
-	if ((schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0)) && pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
+	if (pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
 	{
 		int startIndex = proc->start->getStartIndex();
+		std::string schNameStr;
+
+		if (schema == nullptr)
+			schNameStr = "sys";
+		else
+			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
+		
+		if(schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0))
+			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
 			stream.setText(startIndex, "\"cht_\"");
@@ -3052,9 +3055,18 @@ public:
 		else
 			stream.setText(startIndex, "cht_");
 	}
-	if ((schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0)) && pg_strcasecmp(procNameStr.c_str(), "nchar") ==  0)
+	if (pg_strcasecmp(procNameStr.c_str(), "nchar") ==  0)
 	{
 		int startIndex = proc->start->getStartIndex();
+		std::string schNameStr;
+
+		if (schema == nullptr)
+			schNameStr = "sys";
+		else
+			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
+		
+		if(schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0))
+			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
 			stream.setText(startIndex, "\"ncht_\"");
@@ -3198,18 +3210,19 @@ public:
 	
 	// FIXME: handle the schema here too
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
-	std::string schNameStr;
 
-	if (schema == nullptr)
-	{
-		schNameStr = "sys";
-	}
-	else
-		schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
-
-	if ((schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0))  && pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
+	if (pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
 	{
 		int startIndex = proc->start->getStartIndex();
+		std::string schNameStr;
+
+		if (schema == nullptr)
+			schNameStr = "sys";
+		else
+			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
+		
+		if(schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0))
+			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
 			stream.setText(startIndex, "\"cht_\"");
@@ -3219,9 +3232,18 @@ public:
 			stream.setText(startIndex, "cht_");
 	}
 
-	if ((schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0))  && pg_strcasecmp(procNameStr.c_str(), "nchar") ==  0)
+	if (pg_strcasecmp(procNameStr.c_str(), "nchar") ==  0)
 	{
 		int startIndex = proc->start->getStartIndex();
+		std::string schNameStr;
+
+		if (schema == nullptr)
+			schNameStr = "sys";
+		else
+			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
+		
+		if(schNameStr.empty() || (!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") ==  0))
+			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
 			stream.setText(startIndex, "\"ncht_\"");
