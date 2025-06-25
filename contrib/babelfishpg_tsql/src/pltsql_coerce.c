@@ -1731,23 +1731,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				funcName = get_func_name(func_oid);
 				if (funcName && is_mathematical_function(funcName))
 				{
-					if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype) (func->funcresulttype) ||
-						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype) (func->funcresulttype))
+					int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
+					if (fixsize_default_typmod != -1)
 					{
 						pfree(funcName);
-						return TSQL_MONEY_TYPMOD;
-					}
-					else if (func->funcresulttype == INT2OID ||
-							 func->funcresulttype == INT4OID ||
-							 (*common_utility_plugin_ptr->is_tsql_tinyint_datatype) (func->funcresulttype))
-					{
-						pfree(funcName);
-						return DEFAULT_INT_TYPMOD;
-					}
-					else if (func->funcresulttype == INT8OID)
-					{
-						pfree(funcName);
-						return DEFAULT_BIGINT_TYPMOD;
+						return fixsize_default_typmod;
 					}
 					else
 					{
