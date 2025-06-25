@@ -60,6 +60,34 @@ static void load_functions();
 #define POSTGIS_DIM_XYZM          0xC0 /* XYZM dimensions (4D) */
 #define POSTGIS_DIM_XYM           0x40 /* XYM dimensions (2D with measure) */
 
+#define GEO_HEADER1   0x01  /* header byte used to denote geometry/geography datatypes type 1*/
+#define GEO_HEADER2   0x02  /* header byte used to denote geometry/geography datatypes type 1*/
+
+#define POINT_XY    0x0C  /* XY point geometry type ( subtype 12 -> TSQL's flag) */
+#define POINT_XYZ   0x0D  /* XYZ point geometry type ( subtype 13 -> TSQL's flag) */
+#define POINT_XYM   0x0E  /* XYM point geometry type (subtype 14 -> TSQL's flag) */
+#define POINT_XYZM  0x0F  /* XYZM point geometry type ( subtype 15 -> TSQL's flag) */
+
+/* Line geometry validation constants for multi-point (MP) linestrings */
+#define INVALID_2DLINE_MP   0x00  /* Invalid 2D linestring with multiple points */
+#define INVALID_3DLINE_MP   0x01  /* Invalid 3D linestring with multiple points */
+#define INVALID_2DMLINE_MP  0x02  /* Invalid 2D linestring with M dimension and multiple points */
+#define INVALID_3DMLINE_MP  0x03  /* Invalid 3D linestring with M dimension and multiple points */
+#define VALID_2DLINE_MP     0x04  /* Valid 2D linestring with multiple points */
+#define VALID_3DLINE_MP     0x05  /* Valid 3D linestring with multiple points */
+#define VALID_2DMLINE_MP    0x06  /* Valid 2D linestring with M dimension and multiple points */
+#define VALID_3DMLINE_MP    0x07  /* Valid 3D linestring with M dimension and multiple points */
+
+/* Line geometry validation constants for two-point (2P) linestrings */
+#define INVALID_2DLINE_2P  0x10   /* Invalid 2D linestring with exactly 2 points */
+#define INVALID_3DLINE_2P  0x11   /* Invalid 3D linestring with exactly 2 points */
+#define INVALID_2DMLINE_2P 0x12   /* Invalid 2D linestring with M dimension and exactly 2 points */
+#define INVALID_3DMLINE_2P 0x13   /* Invalid 3D linestring with M dimension and exactly 2 points */
+#define VALID_2DLINE_2P    0x14   /* Valid 2D linestring with exactly 2 points */
+#define VALID_3DLINE_2P    0x15   /* Valid 3D linestring with exactly 2 points */
+#define VALID_2DMLINE_2P   0x16   /* Valid 2D linestring with M dimension and exactly 2 points */
+#define VALID_3DMLINE_2P   0x17   /* Valid 3D linestring with M dimension and exactly 2 points */
+
 /* Coordinate sizes in bytes */
 #define COORD_SIZE_EMPTY   21  /* Size of empty point coordinates */
 #define COORD_SIZE_XY      16  /* Size of XY coordinates (2 doubles) */
@@ -964,7 +992,7 @@ static void
 set_dimension_flag(GeometryData *geom_data) 
 {
 
-    if(geom_data->geom_class != 0x01 && geom_data->geom_class != 0x02)
+    if(geom_data->geom_class != GEO_HEADER1 && geom_data->geom_class != GEO_HEADER2)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -973,7 +1001,7 @@ set_dimension_flag(GeometryData *geom_data)
 
     switch (geom_data->geom_type) 
     {
-        case 0x04:
+        case VALID_2DLINE_MP:
             /* If EMPTY_COORD data is present then it represents Empty geometries */                               
             if ( memcmp(geom_data->input_data + HEADER_SIZE, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0)
             {
@@ -994,55 +1022,55 @@ set_dimension_flag(GeometryData *geom_data)
             }
             break;
         /* Simple point cases - only set dimension flag */
-        case 0x0C: 
+        case POINT_XY: 
             geom_data->dimension_flag = DIM_FLAG_2D; /* 2D Point (XY) */
             break;
-        case 0x0D: 
+        case POINT_XYZ: 
             geom_data->dimension_flag = DIM_FLAG_3D; /* 3D Point (XYZ) */
             break;
-        case 0x0E: 
+        case POINT_XYM: 
             geom_data->dimension_flag = DIM_FLAG_2DM; /* 2D Point with M (XYM) */
             break;
-        case 0x0F: 
+        case POINT_XYZM: 
             geom_data->dimension_flag = DIM_FLAG_3DM; /* 3D Point with M (XYZM) */
             break;
             
         /* Linestring Cases with more than 2 points */
-        case 0x00:
+        case INVALID_2DLINE_MP:
             geom_data->dimension_flag = DIM_FLAG_2D; /* Has 2D Points (XY) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true;
             break;
-        case 0x01: case 0x05:
+        case INVALID_3DLINE_MP: case VALID_3DLINE_MP:
             geom_data->dimension_flag = DIM_FLAG_3D; /* Has 3D Points (XYZ) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true; 
             break;
-        case 0x02: case 0x06:
+        case INVALID_2DMLINE_MP: case VALID_2DMLINE_MP:
             geom_data->dimension_flag = DIM_FLAG_2DM; /* Has 2D Points with M (XYM) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true; 
             break;
-        case 0x03: case 0x07:
+        case INVALID_3DMLINE_MP: case VALID_3DMLINE_MP:
             geom_data->dimension_flag = DIM_FLAG_3DM; /* Has 3D Points with M (XYZM) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true; 
             break;
             
         /* Linestring Cases with 2 points */
-        case 0x10: case 0x14:
+        case INVALID_2DLINE_2P: case VALID_2DLINE_2P:
             geom_data->dimension_flag = DIM_FLAG_2D; /* Has 2D Points (XY) */
             geom_data->geom_name = LINE_TYPE;
             break;
-        case 0x11: case 0x15:
+        case INVALID_3DLINE_2P: case VALID_3DLINE_2P:
             geom_data->dimension_flag = DIM_FLAG_3D; /* Has 3D Points (XYZ) */
             geom_data->geom_name = LINE_TYPE;
             break;
-        case 0x12: case 0x16:
+        case INVALID_2DMLINE_2P: case VALID_2DMLINE_2P:
             geom_data->dimension_flag = DIM_FLAG_2DM; /* Has 2D Points with M (XYM) */
             geom_data->geom_name = LINE_TYPE;
             break;
-        case 0x13: case 0x17:
+        case INVALID_3DMLINE_2P: case VALID_3DMLINE_2P:
             geom_data->dimension_flag = DIM_FLAG_3DM; /* Has 3D Points with M (XYZM) */
             geom_data->geom_name = LINE_TYPE;
             break;

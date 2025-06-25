@@ -86,11 +86,33 @@
 #define EMPTY_INDICATOR         4       /* Indicator for empty geometry when npoints = 0 */
 #define INVALID_GEOGRAPHY_INDICATOR      2     /* Indicator for invalid geography instance */
 
-#define POINT_XY    0x0C  /* XY point geometry type (type 1 -> driver version constant, subtype 12 -> TSQL's flag) */
-#define POINT_XYZ   0x0D  /* XYZ point geometry type (type 1 -> driver version constant, subtype 13 -> TSQL's flag) */
-#define POINT_XYM   0x0E  /* XYM point geometry type (type 1 -> driver version constant, subtype 14 -> TSQL's flag) */
-#define POINT_XYZM  0x0F  /* XYZM point geometry type (type 1 -> driver version constant, subtype 15 -> TSQL's flag) */
-#define EMPTY_GEOM  0x04  /* Empty geometry type (type 1 -> driver version constant, subtype 4 -> TSQL's flag) */
+#define GEO_HEADER1   0x01  /* header byte used to denote geometry/geography datatypes type 1*/
+#define GEO_HEADER2   0x02  /* header byte used to denote geometry/geography datatypes type 1*/
+
+#define POINT_XY    0x0C  /* XY point geometry type ( subtype 12 -> TSQL's flag) */
+#define POINT_XYZ   0x0D  /* XYZ point geometry type ( subtype 13 -> TSQL's flag) */
+#define POINT_XYM   0x0E  /* XYM point geometry type (subtype 14 -> TSQL's flag) */
+#define POINT_XYZM  0x0F  /* XYZM point geometry type ( subtype 15 -> TSQL's flag) */
+
+/* Line geometry validation constants for multi-point (MP) linestrings */
+#define INVALID_2DLINE_MP   0x00  /* Invalid 2D linestring with multiple points */
+#define INVALID_3DLINE_MP   0x01  /* Invalid 3D linestring with multiple points */
+#define INVALID_2DMLINE_MP  0x02  /* Invalid 2D linestring with M dimension and multiple points */
+#define INVALID_3DMLINE_MP  0x03  /* Invalid 3D linestring with M dimension and multiple points */
+#define VALID_2DLINE_MP     0x04  /* Valid 2D linestring with multiple points */
+#define VALID_3DLINE_MP     0x05  /* Valid 3D linestring with multiple points */
+#define VALID_2DMLINE_MP    0x06  /* Valid 2D linestring with M dimension and multiple points */
+#define VALID_3DMLINE_MP    0x07  /* Valid 3D linestring with M dimension and multiple points */
+
+/* Line geometry validation constants for two-point (2P) linestrings */
+#define INVALID_2DLINE_2P  0x10   /* Invalid 2D linestring with exactly 2 points */
+#define INVALID_3DLINE_2P  0x11   /* Invalid 3D linestring with exactly 2 points */
+#define INVALID_2DMLINE_2P 0x12   /* Invalid 2D linestring with M dimension and exactly 2 points */
+#define INVALID_3DMLINE_2P 0x13   /* Invalid 3D linestring with M dimension and exactly 2 points */
+#define VALID_2DLINE_2P    0x14   /* Valid 2D linestring with exactly 2 points */
+#define VALID_3DLINE_2P    0x15   /* Valid 3D linestring with exactly 2 points */
+#define VALID_2DMLINE_2P   0x16   /* Valid 2D linestring with M dimension and exactly 2 points */
+#define VALID_3DMLINE_2P   0x17   /* Valid 3D linestring with M dimension and exactly 2 points */
 
 #define DIM_FLAG_Z           0x01 /* Z dimension flag in SRID 4th byte */
 #define DIM_FLAG_M           0x02 /* M dimension flag in SRID 4th byte */
@@ -1781,7 +1803,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
                    (buf->data[buf->cursor + 7] << 8) | 
                     buf->data[buf->cursor + 6];
 
-    if(geomclass != 0x01 && geomclass != 0x02)
+    if(geomclass != GEO_HEADER1 && geomclass != GEO_HEADER2)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1813,24 +1835,24 @@ TdsTypeSpatialToDatum(StringInfo buf)
             break;
 
         /* LINESTRING types with more than 2 points (with bbox) */
-        case 0x00:
+        case INVALID_2DLINE_MP:
             geomType = LINETYPE;
             has_bbox = true;
             npoints = npoints_data;
             break;
-        case 0x01: case 0x05:
+        case INVALID_3DLINE_MP: case VALID_3DLINE_MP:
             geomType = LINETYPE;
             has_z = true;
             has_bbox = true;
             npoints = npoints_data;
             break;
-        case 0x02: case 0x06:
+        case INVALID_2DMLINE_MP: case VALID_2DMLINE_MP:
             geomType = LINETYPE;
             has_m = true;
             has_bbox = true;
             npoints = npoints_data;
             break;
-        case 0x03: case 0x07:
+        case INVALID_3DMLINE_MP: case VALID_3DMLINE_MP:
             geomType = LINETYPE;
             has_z = has_m = true;
             has_bbox = true;
@@ -1838,28 +1860,28 @@ TdsTypeSpatialToDatum(StringInfo buf)
             break;
             
         /* LINESTRING types with exactly 2 points (no bbox) */
-        case 0x10: case 0x14:
+        case INVALID_2DLINE_2P: case VALID_2DLINE_2P:
             geomType = LINETYPE;
             npoints = 2;
             break;
-        case 0x11: case 0x15:
+        case INVALID_3DLINE_2P: case VALID_3DLINE_2P:
             geomType = LINETYPE;
             has_z = true;
             npoints = 2;
             break;
-        case 0x12: case 0x16:
+        case INVALID_2DMLINE_2P: case VALID_2DMLINE_2P:
             geomType = LINETYPE;
             has_m = true;
             npoints = 2;
             break;
-        case 0x13: case 0x17:
+        case INVALID_3DMLINE_2P: case VALID_3DMLINE_2P:
             geomType = LINETYPE;
             has_z = has_m = true;
             npoints = 2;
             break;
             
         /* EMPTY geometry or 2D linestring with more than 2 points */
-        case 0x04:
+        case VALID_2DLINE_MP:
             /* Check if the geometry has EMPTY_COORD required for an empty geometry */
             if (memcmp(buf->data + buf->cursor + COORD_DATA_OFFSET, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0) 
             {
