@@ -88,6 +88,7 @@
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
 #include "bbf_parallel_query.h"
+#include "extendedproperty.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 
@@ -6553,9 +6554,11 @@ fetch_table_schema(RangeVar *relation, Node *flag)
 	
 	if (relation != NULL)
 	{
-		Relation rel;
-		TupleDesc tupdesc;
-		int i;
+		Relation    rel;
+		ScanKeyData skey[1];
+		SysScanDesc scan;
+		HeapTuple   tuple;
+		Relation    attrel;
 		
 		/* Open the relation to get its schema */
 		rel = relation_openrv(relation, AccessShareLock);
@@ -6568,21 +6571,45 @@ fetch_table_schema(RangeVar *relation, Node *flag)
 							relation->relname)));
 		}
 		
-		/* Get the tuple descriptor which contains column information */
-		tupdesc = RelationGetDescr(rel);
+		/* Open pg_attribute catalog */
+		attrel = table_open(AttributeRelationId, AccessShareLock);
 		
-		/* Create RangeTableFuncCol nodes from the table's columns */
-		for (i = 0; i < tupdesc->natts; i++)
+		/* Set up scan key for this relation */
+		ScanKeyInit(&skey[0],
+					Anum_pg_attribute_attrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(RelationGetRelid(rel)));
+		
+		scan = systable_beginscan(attrel, AttributeRelidNumIndexId, true,
+								  NULL, 1, skey);
+		
+		/* Process each column */
+		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		{
-			Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
 			RangeTableFuncCol *fc;
 			char *colname;
-
-			/* Skip dropped columns */
-			if (att->attisdropped)
+			ArrayType *attoptions;
+			Datum datum;
+			bool isnull;
+			
+			/* Skip dropped columns, system columns and identity columns */
+			if (att->attisdropped || att->attnum <= 0 || att->attidentity)
 				continue;
-				
-			colname = NameStr(att->attname);
+			
+			/* Get original column name from attoptions */
+			datum = heap_getattr(tuple, Anum_pg_attribute_attoptions,
+								 RelationGetDescr(attrel), &isnull);
+			
+			if (!isnull)
+			{
+				attoptions = DatumGetArrayTypeP(datum);
+				colname = get_value_by_name_from_array(attoptions, ATTOPTION_BBF_ORIGINAL_NAME);
+			}
+			else
+			{
+				colname = NameStr(att->attname);
+			}
 			
 			/* Create a column definition */
 			fc = makeNode(RangeTableFuncCol);
@@ -6599,6 +6626,8 @@ fetch_table_schema(RangeVar *relation, Node *flag)
 			columns = lappend(columns, fc);
 		}
 		
+		systable_endscan(scan);
+		table_close(attrel, AccessShareLock);
 		relation_close(rel, AccessShareLock);
 	}
 

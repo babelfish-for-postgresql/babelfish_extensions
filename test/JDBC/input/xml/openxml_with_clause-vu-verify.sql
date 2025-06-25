@@ -593,3 +593,242 @@ OPENXML(@xml_doc, '/employees/emp') WITH employee_defaults;
 
 EXEC sp_xml_removedocument @xml_doc;
 GO
+
+-- Test with empty XML document
+DECLARE @DocHandle int;
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @DocHandle;
+SELECT * 
+FROM OPENXML (@DocHandle, '/', 1)
+WITH (
+    CustomerID varchar(10),
+    ContactName varchar(50)
+);
+EXEC sp_xml_removedocument @DocHandle;
+GO
+
+-- CROSS APPLY with openxml
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<Customers>
+    <Customer ID="1" Name="John">
+        <Order ID="1" Date="2024-01-01"/>
+        <Order ID="2" Date="2024-01-02"/>
+    </Customer>
+    <Customer ID="2" Name="Jane">
+        <Order ID="3" Date="2024-01-03"/>
+    </Customer>
+</Customers>';
+
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+
+SELECT 
+    c.CustomerID,
+    c.CustomerName,
+    o.OrderID,
+    o.OrderDate 
+FROM 
+    OPENXML(@DocHandle, '/Customers/Customer', 2) 
+    WITH (
+        CustomerID int '@ID',
+        CustomerName varchar(50) '@Name'
+    ) c 
+CROSS APPLY
+    OPENXML(@DocHandle, '/Customers/Customer', 2) 
+    WITH (
+        OrderID int '@ID',
+        OrderDate date '@Date'
+    ) o;
+
+EXEC sp_xml_removedocument @DocHandle;
+GO
+
+-- cross apply for different row patterns
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<Customers>
+    <Customer ID="1" Name="John">
+        <Order ID="1" Date="2024-01-01"/>
+        <Order ID="2" Date="2024-01-02"/>
+    </Customer>
+    <Customer ID="2" Name="Jane">
+        <Order ID="3" Date="2024-01-03"/>
+    </Customer>
+</Customers>';
+
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+
+SELECT 
+    c.CustomerID,
+    c.CustomerName,
+    o.OrderID,
+    o.OrderDate 
+FROM 
+    OPENXML(@DocHandle, '/Customers/Customer', 2) 
+    WITH (
+        CustomerID int '@ID',
+        CustomerName varchar(50) '@Name'
+    ) c 
+CROSS APPLY
+    OPENXML(@DocHandle, 
+        concat('/Customers/Customer[@ID=', c.CustomerID, ']/Order'),
+        2) 
+    WITH (
+        OrderID int '@ID',
+        OrderDate date '@Date'
+    ) o;
+
+EXEC sp_xml_removedocument @DocHandle;
+GO
+
+-- cross apply for different row patterns
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(1000);
+SET @XmlDocument = N'<Customers></Customers>';
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+SELECT 
+    c.CustomerID,
+    c.CustomerName,
+    o.OrderID,
+    o.OrderDate 
+FROM 
+    OPENXML(@DocHandle, '/Customers/Customer', 2)
+    WITH (
+        CustomerID int '@ID',
+        CustomerName varchar(50) '@Name'
+    ) c 
+CROSS APPLY 
+    OPENXML(@DocHandle, 
+        concat('/Customers/Customer[@ID=', c.CustomerID, ']/Order'),
+        2) 
+    WITH (
+        OrderID int '@ID',
+        OrderDate date '@Date'
+    ) o;
+EXEC sp_xml_removedocument @DocHandle;
+GO
+
+-- Basic CROSS APPLY with OPENXML using table reference
+INSERT INTO person_table VALUES (1, 'John', 25), (2, 'Jane', 30);
+
+DECLARE @xml_doc INT;
+EXEC sp_xml_preparedocument @xml_doc OUTPUT, '<root><person id="1" name="John"/><person id="2" name="Jane"/></root>';
+
+SELECT * FROM 
+(SELECT 1 as id) t 
+CROSS APPLY OPENXML(@xml_doc, '/root/person') WITH person_table;
+
+EXEC sp_xml_removedocument @xml_doc;
+GO
+
+-- OUTER APPLY
+DECLARE @xml_doc2 INT;
+EXEC sp_xml_preparedocument @xml_doc2 OUTPUT, 
+'<data>
+    <customer id="1" name="John"/>
+    <customer id="2" name="Jane"/>
+    <order cust_id="1" order_id="100" amount="500"/>
+    <order cust_id="1" order_id="101" amount="300"/>
+    <order cust_id="2" order_id="102" amount="200"/>
+</data>';
+
+SELECT 
+    c.customer_id,
+    c.customer_name,
+    o.order_id,
+    o.amount 
+FROM 
+    OPENXML(@xml_doc2, '/data/customer', 1) WITH (
+        customer_id INT,
+        customer_name VARCHAR(50)
+    ) c 
+OUTER APPLY 
+    OPENXML(@xml_doc2, '/data/order', 1) WITH (
+        cust_id INT,
+        order_id INT,
+        amount DECIMAL(10,2)
+    ) o;
+
+EXEC sp_xml_removedocument @xml_doc2;
+GO
+
+-- Base table with outer apply openxml
+INSERT INTO regions VALUES (1, 'North'), (2, 'South'), (3, 'East'), (4, 'West');
+
+DECLARE @xml_doc3 INT;
+EXEC sp_xml_preparedocument @xml_doc3 OUTPUT, 
+'<sales>
+    <region id="1">
+        <sale amount="1000" product="Laptop"/>
+        <sale amount="500" product="Mouse"/>
+    </region>
+    <region id="3">
+        <sale amount="750" product="Keyboard"/>
+    </region>
+</sales>';
+
+SELECT 
+    r.region_id,
+    r.region_name,
+    s.amount,
+    s.product 
+FROM 
+    regions r 
+OUTER APPLY 
+    OPENXML(@xml_doc3, '/sales/region/sale', 2) WITH (
+        region_id INT '../@id',
+        amount DECIMAL(10,2),
+        product VARCHAR(50)
+    ) s 
+WHERE s.region_id = r.region_id OR s.region_id IS NULL;
+
+EXEC sp_xml_removedocument @xml_doc3;
+
+-- table having default constraints
+DECLARE @DocHandle int;
+DECLARE @XmlDocument nvarchar(max);
+
+SET @XmlDocument = N'
+<Employees>
+    <Employee>
+        <EmployeeID>1001</EmployeeID>
+        <FirstName>John</FirstName>
+        <LastName>Doe</LastName>
+        <Email>john.doe@company.com</Email>
+        <Phone>123-456-7890</Phone>
+        <JoinDate>2024-01-15</JoinDate>
+        <Status>Active</Status>
+        <Salary>50000.00</Salary>
+        <Department>IT</Department>
+    </Employee>
+    <Employee>
+        <EmployeeID>1002</EmployeeID>
+        <FirstName>Jane</FirstName>
+        <LastName>Smith</LastName>
+        <Email>jane.smith@company.com</Email>
+        <Phone>234-567-8901</Phone>
+        <JoinDate>2024-01-16</JoinDate>
+        <Status>Active</Status>
+        <Salary>60000.00</Salary>
+        <Department>HR</Department>
+    </Employee>
+    <Employee>
+        <EmployeeID>1003</EmployeeID>
+        <FirstName>Mike</FirstName>
+        <LastName>Johnson</LastName>
+        <Email>mike.j@company.com</Email>
+        <Phone>345-678-9012</Phone>
+        <JoinDate>2024-01-17</JoinDate>
+        <Status>On Leave</Status>
+        <Salary>55000.00</Salary>
+        <Department>Finance</Department>
+    </Employee>
+</Employees>';
+
+EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
+
+SELECT * 
+FROM OPENXML(@DocHandle, '/Employees/Employee' , 2)
+WITH Employee_Details;
+
+EXEC sp_xml_removedocument @DocHandle;
+GO

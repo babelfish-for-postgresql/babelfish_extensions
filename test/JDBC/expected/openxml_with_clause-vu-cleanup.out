@@ -15,3 +15,12 @@ GO
 
 DROP TABLE employee_defaults;
 GO
+
+DROP TABLE person_table;
+GO
+
+DROP TABLE regions;
+GO
+
+DROP TABLE Employee_Details;
+GO
