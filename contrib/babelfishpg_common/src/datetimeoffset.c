@@ -526,8 +526,15 @@ Datum
 datetimeoffset_hash(PG_FUNCTION_ARGS)
 {
 	tsql_datetimeoffset *df = PG_GETARG_DATETIMEOFFSET(0);
+	tsql_datetimeoffset *df_copy = (tsql_datetimeoffset *) palloc0(DATETIMEOFFSET_LEN);
+	Datum result;
 
-	return hash_any((unsigned char *) df, DATETIMEOFFSET_LEN);
+	df_copy->tsql_ts = df->tsql_ts;
+	df_copy->tsql_tz = df->tsql_tz;
+
+	result = hash_any((unsigned char *) df_copy, DATETIMEOFFSET_LEN);
+	pfree(df_copy);
+	return result;
 }
 
 /* smalldatetime_datetimeoffset()
