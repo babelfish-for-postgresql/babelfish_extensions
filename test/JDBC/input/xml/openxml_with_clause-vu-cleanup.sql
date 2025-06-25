@@ -21,6 +21,3 @@ GO
 
 DROP TABLE regions;
 GO
-
-DROP TABLE Employee_Details;
-GO

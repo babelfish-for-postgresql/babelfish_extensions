@@ -45,17 +45,3 @@ GO
 
 CREATE TABLE regions (region_id INT, region_name VARCHAR(50));
 GO
-
--- table having default constraints
-CREATE TABLE Employee_Details (
-    EmployeeID INT IDENTITY(1000,1) PRIMARY KEY,
-    FirstName VARCHAR(50) NOT NULL,
-    LastName VARCHAR(50) NOT NULL,
-    Email VARCHAR(100) NOT NULL UNIQUE CHECK (Email LIKE '%@%.%'),
-    Phone VARCHAR(15) NOT NULL UNIQUE CHECK (Phone LIKE '[0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]'),
-    JoinDate DATE DEFAULT GETDATE(),
-    Status VARCHAR(20) DEFAULT 'Active' CHECK (Status IN ('Active', 'Inactive', 'On Leave')),
-    Salary DECIMAL(10,2) CHECK (Salary >= 0),
-    Department VARCHAR(50) CHECK (Department IN ('IT', 'HR', 'Finance', 'Marketing', 'Sales'))
-);
-GO

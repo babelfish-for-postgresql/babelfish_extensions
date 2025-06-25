@@ -782,53 +782,5 @@ OUTER APPLY
 WHERE s.region_id = r.region_id OR s.region_id IS NULL;
 
 EXEC sp_xml_removedocument @xml_doc3;
-
--- table having default constraints
-DECLARE @DocHandle int;
-DECLARE @XmlDocument nvarchar(max);
-
-SET @XmlDocument = N'
-<Employees>
-    <Employee>
-        <EmployeeID>1001</EmployeeID>
-        <FirstName>John</FirstName>
-        <LastName>Doe</LastName>
-        <Email>john.doe@company.com</Email>
-        <Phone>123-456-7890</Phone>
-        <JoinDate>2024-01-15</JoinDate>
-        <Status>Active</Status>
-        <Salary>50000.00</Salary>
-        <Department>IT</Department>
-    </Employee>
-    <Employee>
-        <EmployeeID>1002</EmployeeID>
-        <FirstName>Jane</FirstName>
-        <LastName>Smith</LastName>
-        <Email>jane.smith@company.com</Email>
-        <Phone>234-567-8901</Phone>
-        <JoinDate>2024-01-16</JoinDate>
-        <Status>Active</Status>
-        <Salary>60000.00</Salary>
-        <Department>HR</Department>
-    </Employee>
-    <Employee>
-        <EmployeeID>1003</EmployeeID>
-        <FirstName>Mike</FirstName>
-        <LastName>Johnson</LastName>
-        <Email>mike.j@company.com</Email>
-        <Phone>345-678-9012</Phone>
-        <JoinDate>2024-01-17</JoinDate>
-        <Status>On Leave</Status>
-        <Salary>55000.00</Salary>
-        <Department>Finance</Department>
-    </Employee>
-</Employees>';
-
-EXEC sp_xml_preparedocument @DocHandle OUTPUT, @XmlDocument;
-
-SELECT * 
-FROM OPENXML(@DocHandle, '/Employees/Employee' , 2)
-WITH Employee_Details;
-
-EXEC sp_xml_removedocument @DocHandle;
 GO
+
