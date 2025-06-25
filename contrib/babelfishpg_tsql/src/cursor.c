@@ -1480,12 +1480,10 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 		 */
 		if (stmt)
 		{
-			// Copy the original statement, because we don't want to use the resultant query in every case.
+			/* Copy the original statement, because we don't want to use the resultant query in every case. */
 			stmt_copy = pstrdup(stmt);
-			// Send to antlr parser
+			/* Send to antlr parser */
 			func = pltsql_compile_inline(stmt_copy, NULL);
-			// Increase function use count, so that we don't deallocate function memory accidently
-			func->use_count++;
 
 			/*
 			 * Check the node list of type PLtsql_stmt_type. Cursor only support single statement.
@@ -1498,19 +1496,16 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 			 * if the cmd_type is PLTSQL_STMT_EXECSQL. There might be other types of cmd_type like
 			 * PLTSQL_STMT_EXECSQL (for procedures), for them we will keep the old behavior.
 			 */
-			if((( (PLtsql_stmt *) lsecond(func->action->body))->cmd_type ==
-				PLTSQL_STMT_EXECSQL) && list_length(func->action->body) == 3)
+			if((( (PLtsql_stmt *) lsecond(func->action->body))->cmd_type == PLTSQL_STMT_EXECSQL)
+				&& list_length(func->action->body) == 3)
 			{
 				parse_result = (PLtsql_stmt_execsql *) lsecond(func->action->body);
 				stmt = pstrdup(parse_result->sqlstmt->query);
 			}
 
-			//Function is not need anymore, so decrease the usage count and free function memory.
-			func->use_count--;
-			Assert(func->use_count == 0);
+			/*Free up function memory as this is not needed anymore */
 			pltsql_free_function_memory(func);
 		}
-
 
 		/* prepare plan and insert a cursor entry */
 		plan = SPI_prepare_cursor(stmt, nBindParams, boundParamsOidList, cursor_options);
