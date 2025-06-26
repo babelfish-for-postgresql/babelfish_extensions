@@ -406,6 +406,13 @@ datetime2
 
 
 -- Test date
+select CAST(CAST('' AS date) AS datetimeoffset);
+go
+~~START~~
+datetimeoffset
+1900-01-01 00:00:00.0000000 +00:00
+~~END~~
+
 select CAST(CAST('1999-12-31' AS date) AS datetimeoffset);
 go
 ~~START~~
@@ -450,6 +457,13 @@ go
 
 
 -- Test time
+select CAST(CAST('' AS time) AS datetimeoffset);
+go
+~~START~~
+datetimeoffset
+1900-01-01 00:00:00.0000000 +00:00
+~~END~~
+
 select CAST(CAST('23:59:59.999' AS time) AS datetimeoffset);
 go
 ~~START~~

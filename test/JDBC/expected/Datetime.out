@@ -2267,9 +2267,8 @@ SELECT CAST(CAST('' AS char) AS DATETIME); -- Negative
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type datetime: "                              ")~~
+1900-01-01 00:00:00.0
+~~END~~
 
 
 -- varchar
@@ -2359,9 +2358,8 @@ SELECT CAST(CAST(N'' AS nchar) AS DATETIME); -- Negative
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type datetime: "                              ")~~
+1900-01-01 00:00:00.0
+~~END~~
 
 
 -- nvarchar
@@ -2853,9 +2851,8 @@ SELECT dbo.TestDateTimeFunction(CAST('' AS char));
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type datetime: "                              ")~~
+1900-01-01 00:00:00.0
+~~END~~
 
 
 -- varchar
@@ -2966,9 +2963,8 @@ SELECT dbo.TestDateTimeFunction(CAST(N'' AS nchar));
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type datetime: "                              ")~~
+1900-01-01 00:00:00.0
+~~END~~
 
 
 -- nvarchar
