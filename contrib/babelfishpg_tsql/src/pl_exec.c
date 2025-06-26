@@ -824,7 +824,7 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 				MemoryContextSwitchTo(oldcxt);
 			}
 
-			/* Capture the estate.retval to global variable in TopMemoryContext */
+			/* Capture the estate.retval to global variable in TopTransactionContext */
 			if (!estate.retisnull)
 			{
 				MemoryContext oldcontext;
@@ -4780,13 +4780,13 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate,
 		SPIPlanPtr	plan;
 
 		plan = expr->plan;
-		if (plan == NULL)
-			plan = prepare_stmt_execsql(estate, estate->func, stmt, estate->atomic);
+		// if (plan == NULL)
+		// 	plan = prepare_stmt_execsql(estate, estate->func, stmt, estate->atomic);
 
-		/*
-		 * If we will deal with scalar function, we need to know the correct
-		 * return-type.
-		 */
+		// /*
+		//  * If we will deal with scalar function, we need to know the correct
+		//  * return-type.
+		//  */
 		query = linitial_node(Query, ((CachedPlanSource *) linitial(plan->plancache_list))->query_list);
 
 		/*
@@ -4806,8 +4806,6 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate,
 			* This is for stored procedure.
 			*/
 			node = query->utilityStmt;
-			if (node == NULL || !IsA(node, CallStmt))
-				elog(ERROR, "query for CALL statement is not a CallStmt");
 
 			funcexpr = ((CallStmt *) node)->funcexpr;
 
@@ -4817,9 +4815,9 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate,
 				elog(ERROR, "cache lookup failed for function %u",
 						funcexpr->funcid);
 
-			/*
-			* Extract function arguments, and expand any named-arg notation
-			*/
+			// /*
+			// * Extract function arguments, and expand any named-arg notation
+			// */
 			funcargs = expand_function_arguments(funcexpr->args,
 													false,
 													funcexpr->funcresulttype,
@@ -5263,12 +5261,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				exec_move_row_from_datum(estate,
 									stmt->target,
 									execute_call_insert_exec_retval);
-			}
-			else
-			{
-				ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				errmsg("invalid retval from INSERT ... EXECUTE statements")));
 			}
 
 			/* ---------------      Global variable 	   -------------------*/

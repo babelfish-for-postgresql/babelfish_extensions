@@ -781,3 +781,42 @@ drop type user_defined_sch.test_tbl_type
 go
 drop schema user_defined_sch
 go
+
+
+-- nested insert execute
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'p8164a')
+    DROP PROCEDURE p8164a
+GO
+
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'p8164')
+    DROP PROCEDURE p8164
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 't8164')
+    DROP TABLE t8164
+GO
+
+-- Create objects
+CREATE TABLE t8164(id int)
+GO
+
+CREATE PROC p8164 AS 
+    DECLARE @test table(id int) 
+    insert into @test values (1) 
+    SELECT * FROM @test
+GO
+
+CREATE PROC p8164a AS 
+    insert into t8164 
+    exec p8164 
+    DECLARE @test table(id int) 
+    insert into @test values (2) 
+    SELECT * FROM @test
+GO
+
+INSERT INTO t8164 EXEC p8164a
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nested INSERT ... EXECUTE statements are not allowed)~~
+
