@@ -1452,7 +1452,7 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	PLtsql_stmt_execsql *parse_result;
 	PLtsql_function *func;
 	char *stmt_copy;
-	const char *tsql_stmt = stmt; /* Use this for potentially modified statement */
+	char *tsql_stmt = NULL; /* Use this for potentially modified statement */
 
 	/*
 	 * Connect to SPI manager. should be handled in the same way with
@@ -1493,7 +1493,7 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 			 * and PLTSQL_STMT_RETURN being last. In case of empty statement only PLTSQL_STMT_RETURN node will be present.
 			 * So total number of nodes should be 3 for valid cursor execution. Actual query statement will be at second 
 			 * position of type PLTSQL_STMT_EXECSQL.
-			 
+			 *
 			 * This is defensive code, where we only assign the tsql_stmt variable to parsed query,
 			 * if the cmd_type is PLTSQL_STMT_EXECSQL. There might be other types of cmd_type like
 			 * PLTSQL_STMT_EXECSQL (for procedures), for them we will keep the old behavior.
@@ -1513,14 +1513,12 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 		}
 
 		/* prepare plan and insert a cursor entry */
-		plan = SPI_prepare_cursor(tsql_stmt, nBindParams, boundParamsOidList, cursor_options);
+		plan = SPI_prepare_cursor(tsql_stmt?tsql_stmt:stmt, nBindParams, boundParamsOidList, cursor_options);
 		if (plan == NULL)
-		{
-			/* Free memory if tsql_stmt is different from stmt */
-			if (tsql_stmt != stmt)
-				pfree((void *)tsql_stmt);
 			return 1;			/* procedure failed */
-		}
+		/* Free memory if tsql_stmt is not null */
+		if (tsql_stmt)
+			pfree((void *)tsql_stmt);
 
 		if (save_plan)
 		{
@@ -1535,10 +1533,6 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 
 			SPI_keepplan(plan);
 		}
-
-		/* Free memory if tsql_stmt is different from stmt */
-		if (tsql_stmt != stmt)
-			pfree((void *)tsql_stmt);
 	}
 	else						/* !prepare */
 	{
