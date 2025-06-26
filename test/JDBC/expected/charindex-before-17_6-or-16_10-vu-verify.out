@@ -603,8 +603,8 @@ FROM charindex_tests.BinaryTypes;
 GO
 ~~START~~
 int#!#int#!#int#!#int
-1#!#0#!#0#!#0
-2#!#0#!#0#!#0
+1#!#0#!#2#!#2
+2#!#0#!#2#!#2
 ~~END~~
 
 SELECT CHARINDEX( CAST('TEST' AS BINARY(10)), CAST('TEST' AS BINARY(20)) ) as Binary_Search, 
@@ -650,8 +650,8 @@ GO
 ~~START~~
 int#!#int#!#int
 <NULL>#!#<NULL>#!#0
-1#!#1#!#0
-1#!#1#!#0
+0#!#0#!#0
+0#!#0#!#0
 ~~END~~
 
 
@@ -666,7 +666,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int
-0#!#0#!#0#!#1
+3#!#9#!#4#!#1
 ~~END~~
 
 
@@ -699,8 +699,8 @@ FROM charindex_tests.SpecialBinary;
 GO
 ~~START~~
 int
-0
-0
+4
+4
 0
 0
 ~~END~~
@@ -716,7 +716,7 @@ int
 0
 0
 0
-0
+8
 ~~END~~
 
 
@@ -729,7 +729,7 @@ select charindex(@a, @b)
 go
 ~~START~~
 int
-0
+4
 ~~END~~
 
 
@@ -752,8 +752,9 @@ select charindex(@b, @a)    -- throw error
 GO
 ~~START~~
 int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit Casting from varchar to varbinary is not allowed)~~
 
 
 declare @a varchar = 'abc'
@@ -762,8 +763,9 @@ select charindex(@b, @a)   -- throw error
 GO
 ~~START~~
 int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit Casting from varchar to binary is not allowed)~~
 
 
 
@@ -825,7 +827,7 @@ SELECT CHARINDEX('b', 0x616263) AS FindInBinary -- Binary
 GO
 ~~START~~
 int
-0
+2
 ~~END~~
 
 
@@ -837,7 +839,7 @@ SELECT CHARINDEX(0x31, 49) AS FindInInt;  -- int to varbinary
 GO
 ~~START~~
 int
-0
+4
 ~~END~~
 
 
@@ -847,31 +849,27 @@ int
 */
 SELECT CHARINDEX(0x020200012D000000, 0.45) AS FindInDecimal;  -- decimal to varbinary
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to varbinary)~~
 
 SELECT CHARINDEX(0x55, $100.50) AS FindInMoney;  -- money to varbinary
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to varbinary)~~
 
 SELECT CHARINDEX(0x01, CAST(1 AS BIT)) AS FindInBit;  -- bit to varbinary
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "bit" to varbinary)~~
 
 SELECT CHARINDEX(0x45, 1.23E+5) AS FindScientificNotation;  -- scientific notation to varbinary
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to varbinary)~~
 
 SELECT CHARINDEX(0x31, DATEPART(month, '2025-01-15')) AS FindInDatePart;  -- datepart result to varbinary
 GO
@@ -882,10 +880,9 @@ int
 
 SELECT CHARINDEX(0x62, 'abc') AS FindInString;  -- string to varbinary
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit Casting from varchar to varbinary is not allowed)~~
 
 
 
