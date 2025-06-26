@@ -560,3 +560,5 @@ round_return_type_test-before-16_9-or-17_5
 alter-view
 test_conv_int_to_varbinary_binary_before_16_6_or_15_10
 MONEY_OBJECT-before-16_4
+money_smallmoney
+money_smallmoney_bit_dep_obj_before_17_6

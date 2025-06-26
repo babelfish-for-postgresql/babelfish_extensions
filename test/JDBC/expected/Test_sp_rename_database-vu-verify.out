@@ -158,7 +158,7 @@ exec sp_rename_procedure @a = 'sp_rename_database1', @b = 'sp_rename_database1'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "sp_rename_database1_dbo" already exists)~~
+~~ERROR (Message: The database sp_rename_database1 already exists. Specify a unique database name.)~~
 
 
 -- Renaming system databases is prohibited

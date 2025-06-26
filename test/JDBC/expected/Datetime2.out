@@ -1954,9 +1954,8 @@ SELECT CAST(CAST('' AS char) AS DATETIME2);
 GO
 ~~START~~
 datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type datetime2: "                              ")~~
+1900-01-01 00:00:00.0000000
+~~END~~
 
 
 -- varchar
@@ -2044,9 +2043,8 @@ SELECT CAST(CAST(N'' AS nchar) AS DATETIME2);
 GO
 ~~START~~
 datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type datetime2: "                              ")~~
+1900-01-01 00:00:00.0000000
+~~END~~
 
 
 -- nvarchar

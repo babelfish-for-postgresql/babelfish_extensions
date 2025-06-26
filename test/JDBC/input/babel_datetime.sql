@@ -52,6 +52,8 @@ select CAST(CAST('2079-06-06 23:59:29.992343' AS datetime2) AS datetime)
 go
 
 -- Test date
+select CAST(CAST('' AS date) AS datetime)
+go
 select CAST(CAST('1999-12-31' AS date) AS datetime)
 go
 select CAST(CAST('2000-01-01 23:59:59.999' AS datetime) AS date)
@@ -61,6 +63,8 @@ select CAST(CAST('1752-12-31' AS date) AS datetime)
 go
 
 -- Test time
+select CAST(CAST('' AS time) AS datetime)
+go
 select CAST(CAST('00:00:00.000' AS time) AS datetime)
 go
 select CAST(CAST('23:59:59.999' AS time) AS datetime)

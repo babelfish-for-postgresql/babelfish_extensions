@@ -595,3 +595,6 @@ ignore#!#money_aggregate-before-17_5-or-16_9-vu-cleanup
 ignore#!#money_aggregate-before-17_6-or-16_10-vu-prepare
 ignore#!#money_aggregate-before-17_6-or-16_10-vu-verify
 ignore#!#money_aggregate-before-17_6-or-16_10-vu-cleanup
+ignore#!#money_smallmoney_bit_dep_obj_before_17_6-vu-prepare
+ignore#!#money_smallmoney_bit_dep_obj_before_17_6-vu-verify
+ignore#!#money_smallmoney_bit_dep_obj_before_17_6-vu-cleanup
