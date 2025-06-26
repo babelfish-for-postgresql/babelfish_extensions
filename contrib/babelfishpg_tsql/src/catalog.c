@@ -4933,6 +4933,7 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 	Oid save_userid = InvalidOid;
 	int save_sec_context = 0;
 	int dbid = get_db_id(old_db_name);
+	int new_dbid = get_db_id(new_db_name);
 	int tries;
 	Oid     	prev_current_user = InvalidOid;
 
@@ -4948,6 +4949,15 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("Cannot change the name of the system database %s.", old_db_name)));
+
+
+	/*
+	 * Check that the new_db_name does not exist.
+	 */
+	if (new_dbid)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The database %s already exists. Specify a unique database name.", new_db_name)));
 
 	/* 
 	 * Check permission on the given database.
