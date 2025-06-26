@@ -28,6 +28,23 @@ varbinary
 00000001
 ~~END~~
 
+select name, suser_sname(sid) from sys.user_token order by name;
+GO
+~~START~~
+nvarchar#!#nvarchar
+public#!#<NULL>
+test#!#test
+~~END~~
+
+
+-- tsql
+select name, suser_sname(sid) from sys.user_token order by name;
+GO
+~~START~~
+nvarchar#!#nvarchar
+dbo#!#jdbc_user
+~~END~~
+
 
 -- tsql
 

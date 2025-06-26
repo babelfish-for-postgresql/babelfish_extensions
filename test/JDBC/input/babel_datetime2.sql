@@ -82,6 +82,8 @@ go
 
 -- Test type cast to/from other time formats
 -- Test date
+select CAST(CAST('' AS date) AS datetime2);
+go
 select CAST(CAST('1999-12-31' AS date) AS datetime2);
 go
 select CAST(CAST('2000-01-01 23:59:59.99932' AS datetime2) AS date);
@@ -92,6 +94,8 @@ select CAST(CAST('2000-12-31' AS date) AS datetime2(2));
 go
 
 -- Test time
+select CAST(CAST('' AS time) AS datetime2);
+go
 select CAST(CAST('00:00:00.000' AS time) AS datetime2);
 go
 select CAST(CAST('23:59:59.999' AS time) AS datetime2);

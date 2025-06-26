@@ -504,3 +504,191 @@ WITH FUNCTION sys.varchar2bit(sys.VARCHAR) AS IMPLICIT;
 
 CREATE CAST (bool AS sys.BIT)
 WITHOUT FUNCTION AS IMPLICIT;
+
+
+-- bit <op> smallmoney
+CREATE FUNCTION sys.bitsmallmoneypl(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'bitsmallmoneypl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitsmallmoneymi(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'bitsmallmoneymi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitsmallmoneymul(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'bitsmallmoneymul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitsmallmoneydiv(sys.BIT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'bitsmallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.bitsmallmoneypl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = sys.bitsmallmoneymi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = sys.bitsmallmoneymul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = sys.bitsmallmoneydiv
+);
+
+
+-- smallmoney <op> bit
+CREATE FUNCTION sys.smallmoneybitpl(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'smallmoneybitpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneybitmi(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'smallmoneybitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneybitmul(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'smallmoneybitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneybitdiv(sys.SMALLMONEY, sys.BIT)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_common', 'smallmoneybitdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.smallmoneybitpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.smallmoneybitmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.smallmoneybitmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.smallmoneybitdiv
+);
+
+
+-- float <op> bit
+CREATE FUNCTION sys.floatbitpl(float8, sys.BIT)
+RETURNS sys.float
+AS 'babelfishpg_common', 'floatbitpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.floatbitmi(float8, sys.BIT)
+RETURNS sys.float
+AS 'babelfishpg_common', 'floatbitmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.floatbitmul(float8, sys.BIT)
+RETURNS sys.float
+AS 'babelfishpg_common', 'floatbitmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.floatbitdiv(float8, sys.BIT)
+RETURNS sys.float
+AS 'babelfishpg_common', 'floatbitdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.floatbitpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.floatbitmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.floatbitmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = float8,
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.floatbitdiv
+);
+
+
+-- bit <op> float
+CREATE FUNCTION sys.bitfloatpl(sys.BIT, float8)
+RETURNS sys.float
+AS 'babelfishpg_common', 'bitfloatpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitfloatmi(sys.BIT, float8)
+RETURNS sys.float
+AS 'babelfishpg_common', 'bitfloatmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitfloatmul(sys.BIT, float8)
+RETURNS sys.float
+AS 'babelfishpg_common', 'bitfloatmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.bitfloatdiv(sys.BIT, float8)
+RETURNS sys.float
+AS 'babelfishpg_common', 'bitfloatdiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.bitfloatpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    PROCEDURE  = sys.bitfloatmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    PROCEDURE  = sys.bitfloatmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.BIT,
+    RIGHTARG   = float8,
+    PROCEDURE  = sys.bitfloatdiv
+);

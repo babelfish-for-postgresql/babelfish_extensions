@@ -229,17 +229,33 @@ SELECT
 	CEILING(smallint_col + 0.5) AS ceil_smallint,
 	CEILING(integer_col + 0.5) AS ceil_int,
 	CEILING(bigint_col + 0.5) AS ceil_bigint
-FROM exactnumeric_table;
+FROM exactnumeric_table order by ceil_tinyint;
 GO
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric
-1.00000000#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#-32767.00000000#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#-2147483647.00000000#!#<NULL>
+<NULL>#!#1.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#1.00000000#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775807.00000000
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+<NULL>#!#<NULL>#!#<NULL>#!#1.00000000
+<NULL>#!#32768.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#2147483648.00000000#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775808.00000000
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32767.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#1.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#1.00000000#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#1.00000000
+1.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+1.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+1.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+6.00000000#!#101.00000000#!#10001.00000000#!#1000000001.00000000
+128.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+129.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 SELECT
@@ -247,17 +263,33 @@ SELECT
 	FLOOR(smallint_col + 0.5) AS floor_smallint,
 	FLOOR(integer_col + 0.5) AS floor_int,
 	FLOOR(bigint_col + 0.5) AS floor_bigint
-FROM exactnumeric_table;
+FROM exactnumeric_table order by floor_tinyint;
 GO
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric
-0E-8#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#-32768.00000000#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#-2147483648.00000000#!#<NULL>
+<NULL>#!#0E-8#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0E-8#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775808.00000000
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+<NULL>#!#<NULL>#!#<NULL>#!#0E-8
+<NULL>#!#32767.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#2147483647.00000000#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775807.00000000
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32768.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#0E-8#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0E-8#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0E-8
+0E-8#!#<NULL>#!#<NULL>#!#<NULL>
+0E-8#!#<NULL>#!#<NULL>#!#<NULL>
+0E-8#!#<NULL>#!#<NULL>#!#<NULL>
+5.00000000#!#100.00000000#!#10000.00000000#!#1000000000.00000000
+127.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+128.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 -- DEGREES and RADIANS
@@ -486,27 +518,27 @@ FROM exactnumeric_table;
 GO
 ~~START~~
 int#!#int#!#int#!#bigint
-0#!#<NULL>#!#<NULL>#!#0
-<NULL>#!#-1#!#<NULL>#!#0
-<NULL>#!#<NULL>#!#-1#!#0
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-1#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-1#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#-1
-1#!#<NULL>#!#<NULL>#!#0
-<NULL>#!#1#!#<NULL>#!#0
-<NULL>#!#<NULL>#!#1#!#0
+1#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#1#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#1#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#1
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#0
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#0
-<NULL>#!#<NULL>#!#<NULL>#!#0
-<NULL>#!#<NULL>#!#<NULL>#!#0
-0#!#<NULL>#!#<NULL>#!#0
-<NULL>#!#0#!#<NULL>#!#0
-<NULL>#!#<NULL>#!#0#!#0
-<NULL>#!#<NULL>#!#<NULL>#!#0
-0#!#<NULL>#!#<NULL>#!#0
-<NULL>#!#0#!#<NULL>#!#0
-<NULL>#!#<NULL>#!#0#!#0
-<NULL>#!#<NULL>#!#<NULL>#!#0
-1#!#<NULL>#!#<NULL>#!#0
+1#!#<NULL>#!#<NULL>#!#<NULL>
 1#!#1#!#1#!#1
 ~~END~~
 
@@ -548,17 +580,33 @@ SELECT
 	ROUND(smallint_col + 0.5) AS round_smallint,
 	ROUND(integer_col + 0.5) AS round_int,
 	ROUND(bigint_col + 0.5) AS round_bigint
-FROM exactnumeric_table;
+FROM exactnumeric_table order by round_tinyint;
 GO
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric
-1.00000000#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#-32768.00000000#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#-2147483648.00000000#!#<NULL>
+<NULL>#!#1.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#1.00000000#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775808.00000000
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+<NULL>#!#<NULL>#!#<NULL>#!#1.00000000
+<NULL>#!#32768.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#2147483648.00000000#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775808.00000000
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32768.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#1.00000000#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#1.00000000#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#1.00000000
+1.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+1.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+1.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+6.00000000#!#101.00000000#!#10001.00000000#!#1000000001.00000000
+128.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+129.00000000#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 

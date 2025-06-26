@@ -126,6 +126,13 @@ datetime
 
 
 -- Test date
+select CAST(CAST('' AS date) AS datetime)
+go
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
 select CAST(CAST('1999-12-31' AS date) AS datetime)
 go
 ~~START~~
@@ -151,6 +158,13 @@ datetime
 
 
 -- Test time
+select CAST(CAST('' AS time) AS datetime)
+go
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
 select CAST(CAST('00:00:00.000' AS time) AS datetime)
 go
 ~~START~~
