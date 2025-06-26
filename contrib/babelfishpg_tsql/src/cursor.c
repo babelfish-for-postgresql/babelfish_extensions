@@ -1452,6 +1452,7 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	PLtsql_stmt_execsql *parse_result;
 	PLtsql_function *func;
 	char *stmt_copy;
+	const char *tsql_stmt = stmt; /* Use this for potentially modified statement */
 
 	/*
 	 * Connect to SPI manager. should be handled in the same way with
@@ -1472,9 +1473,9 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	if (prepare)
 	{
 		/*
-		 * This entire block is to parse the statement by antlr and use the resultant
-		 * statement to sent to Postgres cursor execution. This is necessary in some use case,
-		 * for example when we have PostgreSQL reversed keywords in query which is valid in TSQL.
+		 * This entire block is to parse the statement by antlr and use the statement for
+		 * cursor execution. This is necessary in some use case, for example when we have
+		 * PostgreSQL reversed keywords in query which is valid in TSQL.
 		 * Antlr parser will add the quotes at necessary places in query so that Postgres engine
 		 * can resolve this query correctly.
 		 */
@@ -1488,19 +1489,23 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 			/*
 			 * Check the node list of type PLtsql_stmt_type. Cursor only support single statement.
 			 * If there are more than 1 statement we will through the error. func->action-body
-			 * returned by pltsql_compile_inline contains two default nodes, PLTSQL_STMT_INIT being first
-			 * and PLTSQL_STMT_RETURN being last. So total number of nodes should be 3 for cursor. Actual
-			 * query statement will be at second position of type PLTSQL_STMT_EXECSQL.
-
-			 * This is defensive code, where we only reassign the stmt variable to parsed query,
+			 * returned by pltsql_compile_inline generally contains two default nodes, PLTSQL_STMT_INIT being first
+			 * and PLTSQL_STMT_RETURN being last. In case of empty statement only PLTSQL_STMT_RETURN node will be present.
+			 * So total number of nodes should be 3 for valid cursor execution. Actual query statement will be at second 
+			 * position of type PLTSQL_STMT_EXECSQL.
+			 
+			 * This is defensive code, where we only assign the tsql_stmt variable to parsed query,
 			 * if the cmd_type is PLTSQL_STMT_EXECSQL. There might be other types of cmd_type like
 			 * PLTSQL_STMT_EXECSQL (for procedures), for them we will keep the old behavior.
+			 * list length should be checked first before trying to deference second node from the list.
+			 * FIXME:We are handling only PLtsql_stmt_execsql type statement, but TSQL support procedure with
+			 * single statement. We also need to explore all other statement types for completion. 
 			 */
-			if((( (PLtsql_stmt *) lsecond(func->action->body))->cmd_type == PLTSQL_STMT_EXECSQL)
-				&& list_length(func->action->body) == 3)
+			if(list_length(func->action->body) == 3 &&
+				((PLtsql_stmt *) lsecond(func->action->body))->cmd_type == PLTSQL_STMT_EXECSQL)
 			{
 				parse_result = (PLtsql_stmt_execsql *) lsecond(func->action->body);
-				stmt = pstrdup(parse_result->sqlstmt->query);
+				tsql_stmt = pstrdup(parse_result->sqlstmt->query);
 			}
 
 			/*Free up function memory as this is not needed anymore */
@@ -1508,9 +1513,14 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 		}
 
 		/* prepare plan and insert a cursor entry */
-		plan = SPI_prepare_cursor(stmt, nBindParams, boundParamsOidList, cursor_options);
+		plan = SPI_prepare_cursor(tsql_stmt, nBindParams, boundParamsOidList, cursor_options);
 		if (plan == NULL)
+		{
+			/* Free memory if tsql_stmt is different from stmt */
+			if (tsql_stmt != stmt)
+				pfree((void *)tsql_stmt);
 			return 1;			/* procedure failed */
+		}
 
 		if (save_plan)
 		{
@@ -1525,6 +1535,10 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 
 			SPI_keepplan(plan);
 		}
+
+		/* Free memory if tsql_stmt is different from stmt */
+		if (tsql_stmt != stmt)
+			pfree((void *)tsql_stmt);
 	}
 	else						/* !prepare */
 	{
