@@ -213,7 +213,8 @@ SELECT DATEPART(yy, '220101 14:30:00.97531086 +13:14')
 GO
 
 -- Analyze results
-SELECT * from date_part_vu_prepare_ResultsView;
+SELECT * from date_part_vu_prepare_TestResults
+ORDER BY DataType, InputDate, TimeZone, DatePart;
 GO
 
 -- Check for any discrepancies
@@ -223,7 +224,7 @@ SELECT
     DatePart,
     COUNT(DISTINCT DatePartValue) AS UniqueDatePartValues,
     COUNT(DISTINCT DateName) AS UniqueDateNames
-FROM date_part_vu_prepare_ResultsView
+FROM date_part_vu_prepare_TestResults
 GROUP BY DataType, InputDate, DatePart
 HAVING 
     COUNT(DISTINCT DatePartValue) > 1 OR 

@@ -2083,7 +2083,7 @@ BEGIN
     RETURN result;
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql STABLE;
 
 -- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg TEXT) RETURNS TEXT AS
@@ -2108,7 +2108,7 @@ BEGIN
     RETURN result;
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql STABLE;
 
 -- These come from the built-in pg_catalog.count in pg_aggregate.dat
 CREATE AGGREGATE sys.count(*)

@@ -126,12 +126,16 @@ text
     -- out of range
 SELECT DATENAME(TZOFFSET, CAST('2025-06-03 14:30:15 +14:01' AS DATETIMEOFFSET));
 GO
+~~START~~
+text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
 
 SELECT DATENAME(TZOFFSET, '2025-06-03 14:30:15 -14:01');
 GO
+~~START~~
+text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
@@ -154,10 +158,47 @@ text
 
 
 
+-- Checking stability of DATENAME for varying configs: 
+SELECT * FROM datename_stability_test 
+ORDER BY config_type, config_value;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#nvarchar
+DATEFIRST#!#1#!#2025-01-05#!#week#!#1
+DATEFIRST#!#7#!#2025-01-05#!#week#!#2
+DATEFORMAT#!#dmy#!#03-06-2025#!#month#!#March
+DATEFORMAT#!#mdy#!#03-06-2025#!#month#!#March
+DATEFORMAT#!#ydm#!#2025-03-06#!#month#!#March
+DATEFORMAT#!#ymd#!#2025-03-06#!#month#!#March
+Initial#!#default#!#2025-06-30#!#weekday#!#Monday
+LANGUAGE#!#French#!#2025-06-30#!#weekday#!#Monday
+LANGUAGE#!#us_english#!#2025-06-30#!#weekday#!#Monday
+TIMEZONE#!#Africa/Nairobi#!#2025-06-30 12:00:00#!#hour#!#12
+TIMEZONE#!#Africa/Nairobi#!#2025-01-01 05:30:45#!#hour#!#5
+TIMEZONE#!#UTC#!#2025-06-30 12:00:00#!#hour#!#12
+TIMEZONE#!#UTC#!#2025-01-01 05:30:45#!#hour#!#5
+~~END~~
+
+
+-- Check for any variations in results for same inputs under different settings
+-- Expected: DATENAME with DATEFIRST setting
+SELECT config_type, test_date, datepart, COUNT(DISTINCT result) as distinct_results
+FROM datename_stability_test
+GROUP BY config_type, test_date, datepart
+HAVING COUNT(DISTINCT result) > 1;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#int
+DATEFIRST#!#2025-01-05#!#week#!#2
+~~END~~
+
+
 -- Error Scenarios
     -- Unsupported date time datatype inputs
 SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15 +01:30' AS DATE)) AS date_type;
 GO
+~~START~~
+text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type date.)~~
@@ -165,6 +206,8 @@ GO
 
 SELECT datename(TZOFFSET, CAST('14:30:15' AS TIME)) AS time_type;
 GO
+~~START~~
+text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type time without time zone.)~~
@@ -172,6 +215,8 @@ GO
 
 SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15' AS DATETIME)) AS datetime_type;
 GO
+~~START~~
+text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type datetime.)~~
@@ -179,6 +224,8 @@ GO
 
 SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15' AS SMALLDATETIME)) AS smalldatetime_type;
 GO
+~~START~~
+text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type smalldatetime.)~~
@@ -188,6 +235,8 @@ GO
     -- Invalid date time inputs
 SELECT DATENAME(TZOFFSET, '2025-06-0314:30:15+01:59');
 GO
+~~START~~
+text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~

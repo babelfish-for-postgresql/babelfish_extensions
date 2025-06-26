@@ -165,11 +165,6 @@ CLOSE timezone_cursor;
 DEALLOCATE timezone_cursor;
 GO
 
--- Create view to store DATEPART results
-CREATE VIEW date_part_vu_prepare_ResultsView AS 
-SELECT * FROM date_part_vu_prepare_TestResults
-ORDER BY DataType, InputDate, TimeZone, DatePart;
-GO
 
 -- Reset Timezone
 SELECT set_config('timezone', 'UTC', false)

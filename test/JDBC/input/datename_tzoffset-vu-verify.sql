@@ -61,6 +61,19 @@ SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15' AS DATETIMEOFFSET)) AS date
 GO
 
 
+-- Checking stability of DATENAME for varying configs: 
+SELECT * FROM datename_stability_test 
+ORDER BY config_type, config_value;
+GO
+
+-- Check for any variations in results for same inputs under different settings
+-- Expected: DATENAME with DATEFIRST setting
+SELECT config_type, test_date, datepart, COUNT(DISTINCT result) as distinct_results
+FROM datename_stability_test
+GROUP BY config_type, test_date, datepart
+HAVING COUNT(DISTINCT result) > 1;
+GO
+
 -- Error Scenarios
     -- Unsupported date time datatype inputs
 SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15 +01:30' AS DATE)) AS date_type;

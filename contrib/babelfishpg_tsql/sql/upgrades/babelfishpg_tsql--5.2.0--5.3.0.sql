@@ -1034,7 +1034,7 @@ BEGIN
     RETURN result;
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql STABLE;
 
 -- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg TEXT) RETURNS TEXT AS
@@ -1059,7 +1059,7 @@ BEGIN
     RETURN result;
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql STABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
