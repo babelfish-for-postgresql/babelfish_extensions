@@ -71,6 +71,38 @@ int#!#smallint#!#bigint#!#tinyint#!#bit
 #cursor#!#fetch#!#next
 cursor#!#close
 ~~SUCCESS~~
+cursor#!#open#!#prepst#!#SELECT a year, b month, c quarter from test_cursor_prep_exec_fetch_next#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+cursor#!#fetch#!#next
+~~START~~
+int#!#smallint#!#bigint
+0#!#0#!#0
+~~END~~
+
+cursor#!#fetch#!#first
+~~START~~
+int#!#smallint#!#bigint
+0#!#0#!#0
+~~END~~
+
+cursor#!#fetch#!#next
+~~START~~
+int#!#smallint#!#bigint
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+cursor#!#close
+~~SUCCESS~~
+cursor#!#open#!#DECLARE @var INT; select @var = 5; select @var + 1;#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+cursor#!#fetch#!#next
+~~START~~
+int
+6
+~~END~~
+
+cursor#!#close
+~~SUCCESS~~
 DROP TABLE test_cursor_prep_exec_fetch_next
 
 CREATE TABLE test_cursor_prep_exec_fetch_next(a CHAR(30), b VARCHAR(30), c NCHAR(30), d NVARCHAR(30));
@@ -285,4 +317,11 @@ float#!#real#!#money#!#smallmoney
 #cursor#!#fetch#!#next
 cursor#!#close
 ~~SUCCESS~~
+# Cursor with multiple selects should return error
+cursor#!#open#!#prepst#!#SELECT * FROM test_cursor_prep_exec_fetch_next;SELECT a FROM test_cursor_prep_exec_fetch_next#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot open multi-query plan as cursor)~~
+
+
 DROP TABLE test_cursor_prep_exec_fetch_next
