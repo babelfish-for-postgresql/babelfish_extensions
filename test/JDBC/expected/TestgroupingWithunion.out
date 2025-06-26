@@ -1,0 +1,758 @@
+-- TINYINT to REAL
+CREATE TABLE t_tinyint_real(a tinyint);
+GO
+INSERT INTO t_tinyint_real VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_tinyint_real GROUP BY a 
+UNION 
+SELECT cast(3.0 as real) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+real#!#int#!#int
+1.0#!#2#!#1
+2.0#!#1#!#2
+3.0#!#1#!#1
+~~END~~
+
+
+-- TINYINT to FLOAT
+CREATE TABLE t_tinyint_float(a tinyint);
+GO
+INSERT INTO t_tinyint_float VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_tinyint_float GROUP BY a 
+UNION 
+SELECT cast(3.0 as float) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+float#!#int#!#int
+1.0#!#2#!#1
+2.0#!#1#!#2
+3.0#!#1#!#1
+~~END~~
+
+
+-- SMALLINT to REAL
+CREATE TABLE t_smallint_real(a smallint);
+GO
+INSERT INTO t_smallint_real VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_smallint_real GROUP BY a 
+UNION 
+SELECT cast(3.0 as real) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+real#!#int#!#int
+1.0#!#2#!#1
+2.0#!#1#!#2
+3.0#!#1#!#1
+~~END~~
+
+
+-- SMALLINT to FLOAT
+CREATE TABLE t_smallint_float(a smallint);
+GO
+INSERT INTO t_smallint_float VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_smallint_float GROUP BY a 
+UNION 
+SELECT cast(3.0 as float) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+float#!#int#!#int
+1.0#!#2#!#1
+2.0#!#1#!#2
+3.0#!#1#!#1
+~~END~~
+
+
+-- INT to REAL
+CREATE TABLE t_int_real(a int);
+GO
+INSERT INTO t_int_real VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_int_real GROUP BY a 
+UNION 
+SELECT cast(3.0 as real) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+real#!#int#!#int
+1.0#!#2#!#1
+2.0#!#1#!#2
+3.0#!#1#!#1
+~~END~~
+
+
+-- INT to FLOAT
+CREATE TABLE t_int_float(a int);
+GO
+INSERT INTO t_int_float VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_int_float GROUP BY a 
+UNION 
+SELECT cast(3.0 as float) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+float#!#int#!#int
+1.0#!#2#!#1
+2.0#!#1#!#2
+3.0#!#1#!#1
+~~END~~
+
+
+-- BIGINT to REAL
+CREATE TABLE t_bigint_real(a bigint);
+GO
+INSERT INTO t_bigint_real VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_bigint_real GROUP BY a 
+UNION 
+SELECT cast(3.0 as real) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+real#!#int#!#bigint
+1.0#!#2#!#1
+2.0#!#1#!#2
+3.0#!#1#!#1
+~~END~~
+
+
+-- BIGINT to FLOAT
+CREATE TABLE t_bigint_float(a bigint);
+GO
+INSERT INTO t_bigint_float VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_bigint_float GROUP BY a 
+UNION 
+SELECT cast(3.0 as float) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+float#!#int#!#bigint
+1.0#!#2#!#1
+2.0#!#1#!#2
+3.0#!#1#!#1
+~~END~~
+
+
+-- SMALLMONEY to REAL
+CREATE TABLE t_smallmoney_real(a smallmoney);
+GO
+INSERT INTO t_smallmoney_real VALUES (1.0), (1.0), (1.5);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_smallmoney_real GROUP BY a 
+UNION 
+SELECT cast(3.0 as real) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+real#!#int#!#money
+1.0#!#2#!#1.0000
+1.5#!#1#!#1.5000
+3.0#!#1#!#1.0000
+~~END~~
+
+
+-- SMALLMONEY to FLOAT
+CREATE TABLE t_smallmoney_float(a smallmoney);
+GO
+INSERT INTO t_smallmoney_float VALUES (1.0), (1.0), (1.5);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_smallmoney_float GROUP BY a 
+UNION 
+SELECT cast(3.0 as float) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+float#!#int#!#money
+1.0#!#2#!#1.0000
+1.5#!#1#!#1.5000
+3.0#!#1#!#1.0000
+~~END~~
+
+
+-- MONEY to REAL
+CREATE TABLE t_money_real(a money);
+GO
+INSERT INTO t_money_real VALUES (1.0), (1.0), (1.5);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_money_real GROUP BY a 
+UNION 
+SELECT cast(3.0 as real) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+real#!#int#!#money
+1.0#!#2#!#1.0000
+1.5#!#1#!#1.5000
+3.0#!#1#!#1.0000
+~~END~~
+
+
+-- MONEY to FLOAT
+CREATE TABLE t_money_float(a money);
+GO
+INSERT INTO t_money_float VALUES (1.0), (1.0), (1.5);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_money_float GROUP BY a 
+UNION 
+SELECT cast(3.0 as float) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+float#!#int#!#money
+1.0#!#2#!#1.0000
+1.5#!#1#!#1.5000
+3.0#!#1#!#1.0000
+~~END~~
+
+
+-- Cleanup
+DROP TABLE t_tinyint_real;
+GO
+DROP TABLE t_tinyint_float;
+GO
+DROP TABLE t_smallint_real;
+GO
+DROP TABLE t_smallint_float;
+GO
+DROP TABLE t_int_real;
+GO
+DROP TABLE t_int_float;
+GO
+DROP TABLE t_bigint_real;
+GO
+DROP TABLE t_bigint_float;
+GO
+DROP TABLE t_smallmoney_real;
+GO
+DROP TABLE t_smallmoney_float;
+GO
+DROP TABLE t_money_real;
+GO
+DROP TABLE t_money_float;
+GO
+
+-- NUMERIC to REAL
+CREATE TABLE t_numeric_real(a numeric(18,2));
+GO
+INSERT INTO t_numeric_real VALUES (1.0), (1.0), (1.5);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_numeric_real GROUP BY a 
+UNION 
+SELECT cast(3.0 as real) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+real#!#int#!#numeric
+1.0#!#2#!#1.000000
+1.5#!#1#!#1.500000
+3.0#!#1#!#1.000000
+~~END~~
+
+
+-- NUMERIC to FLOAT
+CREATE TABLE t_numeric_float(a numeric(18,2));
+GO
+INSERT INTO t_numeric_float VALUES (1.0), (1.0), (1.5);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_numeric_float GROUP BY a 
+UNION 
+SELECT cast(3.0 as float) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+float#!#int#!#numeric
+1.0#!#2#!#1.000000
+1.5#!#1#!#1.500000
+3.0#!#1#!#1.000000
+~~END~~
+
+
+-- REAL to FLOAT
+CREATE TABLE t_real_float(a real);
+GO
+INSERT INTO t_real_float VALUES (1.0), (1.0), (1.5);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_real_float GROUP BY a 
+UNION 
+SELECT cast(3.0 as float) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+float#!#int#!#float
+1.0#!#2#!#1.0
+1.5#!#1#!#1.5
+3.0#!#1#!#1.0
+~~END~~
+
+
+-- Cleanup
+DROP TABLE t_numeric_real;
+GO
+DROP TABLE t_numeric_float;
+GO
+DROP TABLE t_real_float;
+GO
+
+-- BIT to DECIMAL
+CREATE TABLE t_bit_decimal(a bit);
+GO
+INSERT INTO t_bit_decimal VALUES (1), (1), (0);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count 
+FROM t_bit_decimal GROUP BY a 
+UNION 
+SELECT cast(1 as decimal(18,2)) as num_cal, 1
+ORDER BY num_val;
+GO
+~~START~~
+bit#!#int
+0#!#1
+1#!#1
+1#!#2
+~~END~~
+
+
+-- BIT to MONEY
+CREATE TABLE t_bit_money(a bit);
+GO
+INSERT INTO t_bit_money VALUES (1), (1), (0);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count 
+FROM t_bit_money GROUP BY a 
+UNION 
+SELECT cast(1 as money) as num_cal, 1 
+ORDER BY num_val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: UNION could not convert type money to "bit")~~
+
+
+-- BIT to SMALLMONEY
+CREATE TABLE t_bit_smallmoney(a bit);
+GO
+INSERT INTO t_bit_smallmoney VALUES (1), (1), (0);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count 
+FROM t_bit_smallmoney GROUP BY a 
+UNION 
+SELECT cast(1 as smallmoney) as num_cal, 1
+ORDER BY num_val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: UNION could not convert type smallmoney to "bit")~~
+
+
+-- TINYINT to DECIMAL
+CREATE TABLE t_tinyint_decimal(a tinyint);
+GO
+INSERT INTO t_tinyint_decimal VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_tinyint_decimal GROUP BY a 
+UNION 
+SELECT cast(3 as decimal(18,2)) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+numeric#!#int#!#int
+1.00#!#1#!#1
+2.00#!#1#!#2
+3.00#!#1#!#1
+~~END~~
+
+
+-- TINYINT to MONEY
+CREATE TABLE t_tinyint_money(a tinyint);
+GO
+INSERT INTO t_tinyint_money VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_tinyint_money GROUP BY a 
+UNION 
+SELECT cast(3 as money) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+money#!#int#!#int
+1.0000#!#2#!#1
+2.0000#!#1#!#2
+3.0000#!#1#!#1
+~~END~~
+
+
+-- TINYINT to SMALLMONEY
+CREATE TABLE t_tinyint_smallmoney(a tinyint);
+GO
+INSERT INTO t_tinyint_smallmoney VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_tinyint_smallmoney GROUP BY a 
+UNION 
+SELECT cast(3 as smallmoney) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+smallmoney#!#int#!#int
+1.0000#!#2#!#1
+2.0000#!#1#!#2
+3.0000#!#1#!#1
+~~END~~
+
+
+-- SMALLINT to DECIMAL
+CREATE TABLE t_smallint_decimal(a smallint);
+GO
+INSERT INTO t_smallint_decimal VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_smallint_decimal GROUP BY a 
+UNION 
+SELECT cast(3 as decimal(18,2)) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+numeric#!#int#!#int
+1.00#!#1#!#1
+2.00#!#1#!#2
+3.00#!#1#!#1
+~~END~~
+
+
+-- SMALLINT to MONEY
+CREATE TABLE t_smallint_money(a smallint);
+GO
+INSERT INTO t_smallint_money VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_smallint_money GROUP BY a 
+UNION 
+SELECT cast(3 as money) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+money#!#int#!#int
+1.0000#!#2#!#1
+2.0000#!#1#!#2
+3.0000#!#1#!#1
+~~END~~
+
+
+-- SMALLINT to SMALLMONEY
+CREATE TABLE t_smallint_smallmoney(a smallint);
+GO
+INSERT INTO t_smallint_smallmoney VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_smallint_smallmoney GROUP BY a 
+UNION 
+SELECT cast(3 as smallmoney) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+smallmoney#!#int#!#int
+1.0000#!#2#!#1
+2.0000#!#1#!#2
+3.0000#!#1#!#1
+~~END~~
+
+
+-- INT to DECIMAL
+CREATE TABLE t_int_decimal(a int);
+GO
+INSERT INTO t_int_decimal VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_int_decimal GROUP BY a 
+UNION 
+SELECT cast(3 as decimal(18,2)) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+numeric#!#int#!#int
+1.00#!#1#!#1
+2.00#!#1#!#2
+3.00#!#1#!#1
+~~END~~
+
+
+-- INT to MONEY
+CREATE TABLE t_int_money(a int);
+GO
+INSERT INTO t_int_money VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_int_money GROUP BY a 
+UNION 
+SELECT cast(3 as money) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+money#!#int#!#int
+1.0000#!#2#!#1
+2.0000#!#1#!#2
+3.0000#!#1#!#1
+~~END~~
+
+
+-- INT to SMALLMONEY
+CREATE TABLE t_int_smallmoney(a int);
+GO
+INSERT INTO t_int_smallmoney VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_int_smallmoney GROUP BY a 
+UNION 
+SELECT cast(3 as smallmoney) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+smallmoney#!#int#!#int
+1.0000#!#2#!#1
+2.0000#!#1#!#2
+3.0000#!#1#!#1
+~~END~~
+
+
+-- BIGINT to DECIMAL
+CREATE TABLE t_bigint_decimal(a bigint);
+GO
+INSERT INTO t_bigint_decimal VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_bigint_decimal GROUP BY a 
+UNION 
+SELECT cast(3 as decimal(18,2)) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+numeric#!#int#!#bigint
+1.00#!#1#!#1
+2.00#!#1#!#2
+3.00#!#1#!#1
+~~END~~
+
+
+-- BIGINT to MONEY
+CREATE TABLE t_bigint_money(a bigint);
+GO
+INSERT INTO t_bigint_money VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_bigint_money GROUP BY a 
+UNION 
+SELECT cast(3 as money) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+money#!#int#!#bigint
+1.0000#!#2#!#1
+2.0000#!#1#!#2
+3.0000#!#1#!#1
+~~END~~
+
+
+-- BIGINT to SMALLMONEY
+CREATE TABLE t_bigint_smallmoney(a bigint);
+GO
+INSERT INTO t_bigint_smallmoney VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_bigint_smallmoney GROUP BY a 
+UNION 
+SELECT cast(3 as smallmoney) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+smallmoney#!#int#!#bigint
+1.0000#!#2#!#1
+2.0000#!#1#!#2
+3.0000#!#1#!#1
+~~END~~
+
+
+-- SMALLMONEY to MONEY
+CREATE TABLE t_smallmoney_money(a smallmoney);
+GO
+INSERT INTO t_smallmoney_money VALUES (1.0), (1.0), (1.5);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_smallmoney_money GROUP BY a 
+UNION 
+SELECT cast(3 as money) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+money#!#int#!#money
+1.0000#!#2#!#1.0000
+1.5000#!#1#!#1.5000
+3.0000#!#1#!#1.0000
+~~END~~
+
+
+-- SMALLMONEY to DECIMAL
+CREATE TABLE t_smallmoney_decimal(a smallmoney);
+GO
+INSERT INTO t_smallmoney_decimal VALUES (1.0), (1.0), (1.5);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_smallmoney_decimal GROUP BY a 
+UNION 
+SELECT cast(3 as decimal(18,2)) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+numeric#!#int#!#money
+1.0000#!#1#!#1.0000
+1.5000#!#1#!#1.5000
+3.0000#!#1#!#1.0000
+~~END~~
+
+
+-- MONEY to DECIMAL
+CREATE TABLE t_money_decimal(a money);
+GO
+INSERT INTO t_money_decimal VALUES (1.0), (1.0), (1.5);
+GO
+~~ROW COUNT: 3~~
+
+SELECT a as num_val, COUNT(a) as count, AVG(a) as avg 
+FROM t_money_decimal GROUP BY a 
+UNION 
+SELECT cast(3 as decimal(18,2)) as num_cal, 1, 1
+ORDER BY num_val;
+GO
+~~START~~
+numeric#!#int#!#money
+1.0000#!#1#!#1.0000
+1.5000#!#1#!#1.5000
+3.0000#!#1#!#1.0000
+~~END~~
+
+
+-- Cleanup
+DROP TABLE t_bit_decimal;
+GO
+DROP TABLE t_bit_money;
+GO
+DROP TABLE t_bit_smallmoney;
+GO
+DROP TABLE t_tinyint_decimal;
+GO
+DROP TABLE t_tinyint_money;
+GO
+DROP TABLE t_tinyint_smallmoney;
+GO
+DROP TABLE t_smallint_decimal;
+GO
+DROP TABLE t_smallint_money;
+GO
+DROP TABLE t_smallint_smallmoney;
+GO
+DROP TABLE t_int_decimal;
+GO
+DROP TABLE t_int_money;
+GO
+DROP TABLE t_int_smallmoney;
+GO
+DROP TABLE t_bigint_decimal;
+GO
+DROP TABLE t_bigint_money;
+GO
+DROP TABLE t_bigint_smallmoney;
+GO
+DROP TABLE t_smallmoney_money;
+GO
+DROP TABLE t_smallmoney_decimal;
+GO
+DROP TABLE t_money_decimal;
+GO

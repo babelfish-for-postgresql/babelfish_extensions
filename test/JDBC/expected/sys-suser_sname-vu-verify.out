@@ -18,7 +18,7 @@ SELECT SYS.SUSER_SNAME(0x0P)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '0x0' at line 1 and character position 23)~~
+~~ERROR (Message: syntax error near '.' at line 1 and character position 10)~~
 
 
 DECLARE @id SYS.VARBINARY(85)

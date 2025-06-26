@@ -1448,7 +1448,7 @@ go
 
 create table t(a vector(3), b varchar(max))
 go
-select * from information_schema.columns where table_name = 't'
+select * from information_schema.columns where table_name = 't' ORDER BY COLUMN_NAME
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
@@ -3020,7 +3020,7 @@ go
 
 create table t(a vector(3), b varchar(max))
 go
-select * from information_schema.columns where table_name = 't'
+select * from information_schema.columns where table_name = 't' ORDER BY COLUMN_NAME
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar

@@ -1,0 +1,288 @@
+-- Setup: Create a table with various numeric types
+CREATE TABLE format_numeric_test (
+    int_val INT,
+    bigint_val BIGINT,
+    smallint_val SMALLINT,
+    tinyint_val TINYINT,
+    decimal_val DECIMAL(18,9),
+    numeric_val NUMERIC(18,9),
+    money_val MONEY,
+    smallmoney_val SMALLMONEY,
+    float_val FLOAT,
+    real_val REAL
+);
+GO
+
+-- Insert test data
+INSERT INTO format_numeric_test VALUES
+(1234567, 1234567890123456, 12345, 123, 1234567.123456789, 9876543.987654321, 1234.56, 123.45, 1234567.89, 123456.7);
+GO
+~~ROW COUNT: 1~~
+
+
+-- 1. Basic integer formatting
+SELECT
+    FORMAT(int_val, '00000000') AS int_leading_zeros,
+    FORMAT(int_val, '########') AS int_no_leading_zeros,
+    FORMAT(int_val, '#,###') AS int_with_commas,
+    FORMAT(bigint_val, '#,###') AS bigint_with_commas,
+    FORMAT(smallint_val, '000000') AS smallint_leading_zeros,
+    FORMAT(tinyint_val, '000') AS tinyint_leading_zeros
+FROM format_numeric_test;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 00000000 is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 2. Decimal place formatting
+SELECT
+    FORMAT(decimal_val, '0.00') AS two_decimal_places,
+    FORMAT(decimal_val, '0.000000000') AS nine_decimal_places,
+    FORMAT(decimal_val, '#.##########') AS max_decimal_places,
+    FORMAT(numeric_val, '0.000') AS numeric_three_places,
+    FORMAT(float_val, '0.##') AS float_two_places,
+    FORMAT(real_val, '0.###') AS real_three_places
+FROM format_numeric_test;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 0.00 is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 3. Combination of integer and decimal formatting
+SELECT
+    FORMAT(decimal_val, '#,##0.00') AS comma_two_decimals,
+    FORMAT(numeric_val, '#,##0.000') AS comma_three_decimals,
+    FORMAT(money_val, '#,##0.00') AS money_standard_format,
+    FORMAT(smallmoney_val, '#,##0.00') AS smallmoney_standard_format
+FROM format_numeric_test;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: #,##0.00 is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 4. Percentage formatting
+SELECT
+    FORMAT(decimal_val / 100, '0.00%') AS decimal_percent,
+    FORMAT(float_val / 100, '0.00%') AS float_percent,
+    FORMAT(0.1234, '0.00%') AS small_value_percent,
+    FORMAT(1.2345, '0.00%') AS large_value_percent
+FROM format_numeric_test;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 0.00% is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+
+-- 5. Currency formatting
+-- SELECT
+--     FORMAT(money_val, 'C', 'en-US') AS us_currency,
+--     FORMAT(money_val, 'C', 'fr-FR') AS french_currency,
+--     FORMAT(money_val, 'C', 'ja-JP') AS japanese_currency,
+--     FORMAT(smallmoney_val, 'C', 'de-DE') AS german_currency
+-- FROM format_numeric_test;
+-- GO
+-- 6. Scientific notation
+SELECT
+    FORMAT(bigint_val, '0.00E+0') AS bigint_scientific,
+    FORMAT(decimal_val, '0.00E+0') AS decimal_scientific,
+    FORMAT(float_val, '0.00E+0') AS float_scientific,
+    FORMAT(0.00000123, '0.00E+0') AS small_value_scientific,
+    FORMAT(123000000, '0.00E+0') AS large_value_scientific
+FROM format_numeric_test;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 0.00E+0 is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 7. Custom thousand separators
+SELECT
+    FORMAT(int_val, '#,###', 'en-US') AS us_thousand_sep,
+    FORMAT(int_val, '#,###', 'de-DE') AS german_thousand_sep,
+    FORMAT(int_val, '#,###', 'fr-FR') AS french_thousand_sep
+FROM format_numeric_test;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: #,### is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 8. Padding with spaces
+SELECT
+    FORMAT(int_val, '00000000') AS zero_padded,
+    FORMAT(int_val, '        0') AS space_padded_right,
+    FORMAT(int_val, '0        ') AS space_padded_left
+FROM format_numeric_test;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 00000000 is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 9. Negative number formatting
+SELECT
+    FORMAT(-decimal_val, '#,##0.00;(#,##0.00)') AS negative_with_parentheses,
+    FORMAT(-decimal_val, '#,##0.00;-#,##0.00') AS negative_with_minus,
+    FORMAT(-money_val, 'C') AS negative_currency
+FROM format_numeric_test;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: #,##0.00;(#,##0.00) is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 10. Rounding behavior
+SELECT
+    FORMAT(1234.5678, '0.00') AS rounded_two_places,
+    FORMAT(1234.5678, '0.000') AS rounded_three_places,
+    FORMAT(1234.5678, '0') AS rounded_to_integer
+FROM format_numeric_test;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 0.00 is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 11. Truncation behavior
+SELECT
+    FORMAT(1234.5678, '#.##') AS truncated_two_places,
+    FORMAT(1234.5678, '#.###') AS truncated_three_places,
+    FORMAT(1234.5678, '#') AS truncated_to_integer
+FROM format_numeric_test;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: #.## is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 12. Zero value handling
+SELECT
+    FORMAT(0, '#.##') AS zero_with_hash,
+    FORMAT(0, '0.00') AS zero_with_zeros,
+    FORMAT(0, '#,##0.00') AS zero_with_group_separator
+FROM format_numeric_test;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: #.## is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+
+-- 13. Very large and very small numbers
+DECLARE @very_large DECIMAL(38,0) = 1234567890123456789012345678901234567;
+DECLARE @very_small DECIMAL(38,37) = 0.0000000000000000000000000000000000001;
+SELECT
+    FORMAT(@very_large, '#,###') AS large_number_formatted,
+    FORMAT(@very_small, '0.0000000000000000000000000000000000000') AS small_number_formatted;
+GO
+~~START~~
+nvarchar#!#nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: #,### is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 14. Custom format with text
+SELECT
+    FORMAT(int_val, '"Total: "$#,##0') AS custom_with_prefix,
+    FORMAT(decimal_val, '#,##0.00" units"') AS custom_with_suffix,
+    FORMAT(money_val, '$#,##0.00 "USD"') AS custom_currency_format
+FROM format_numeric_test;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "Total: "$#,##0 is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 15. Hexadecimal format (for integers)
+SELECT
+    FORMAT(int_val, 'X') AS hex_uppercase,
+    FORMAT(int_val, 'x') AS hex_lowercase,
+    FORMAT(bigint_val, 'X') AS bigint_hex
+FROM format_numeric_test;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+12D687#!#12d687#!#462D53C8ABAC0
+~~END~~
+
+
+
+-- 16. Format with different cultures
+-- SELECT
+--     FORMAT(decimal_val, 'N', 'en-US') AS us_number_format,
+--     FORMAT(decimal_val, 'N', 'de-DE') AS german_number_format,
+--     FORMAT(decimal_val, 'N', 'fr-FR') AS french_number_format,
+--     FORMAT(decimal_val, 'N', 'sv-SE') AS swedish_number_format
+-- FROM format_numeric_test;
+-- GO
+-- 17. Combinations of # and 0
+SELECT
+    FORMAT(1234.5678, '#,##0.0#') AS mixed_format1,
+    FORMAT(1234.5678, '#,###.#0#') AS mixed_format2,
+    FORMAT(0.1234, '#,##0.0#') AS mixed_format_small_number
+FROM format_numeric_test;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: #,##0.0# is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 18. Escaping special characters
+SELECT
+    FORMAT(1234.56, '\#\#\#\#,##0.00') AS escaped_hash,
+    FORMAT(1234.56, '"\#\#"#,##0.00') AS quoted_hash
+FROM format_numeric_test;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: \#\#\#\#,##0.00 is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 19. Edge cases
+SELECT
+    FORMAT(CAST(0 AS MONEY), 'C') AS zero_money,
+    FORMAT(CAST(-0 AS DECIMAL(18,2)), '#,##0.00;(#,##0.00)') AS negative_zero,
+    FORMAT(1 / 3, '0.############') AS repeating_decimal,
+    FORMAT(CAST('1E+40' AS FLOAT), '0.0000E+0') AS very_large_float
+FROM format_numeric_test;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: #,##0.00;(#,##0.00) is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- 20. Format with percentage and scaling
+SELECT
+    FORMAT(0.1234, 'P') AS default_percent,
+    FORMAT(0.1234, 'P1') AS one_decimal_percent,
+    FORMAT(0.1234, '#,##0.00%') AS custom_percent,
+    FORMAT(1234, '#,##0.00%') AS scaled_up_percent
+FROM format_numeric_test;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: #,##0.00% is not supported/invalid format when converting from NUMERIC to a character string.)~~
+
+
+-- Cleanup
+DROP TABLE format_numeric_test;
+GO

@@ -71,7 +71,6 @@ Could not find tests for procedure babel_datatype_precedence_initializer
 Could not find tests for procedure initialize_babel_extras
 Could not find tests for procedure initialize_babelfish
 Could not find tests for procedure remove_babelfish
-Could not find tests for procedure sys.analyze_babelfish_catalogs
 Could not find tests for procedure sys.babel_drop_all_dbs
 Could not find tests for procedure sys.babel_drop_all_logins
 Could not find tests for procedure sys.babel_initialize_logins
@@ -144,7 +143,6 @@ Could not find upgrade tests for function sys.patindex_ai_collations
 Could not find upgrade tests for function sys.pltsql_assign_var
 Could not find upgrade tests for function sys.remove_accents_internal_using_cache
 Could not find upgrade tests for function sys.role_id
-Could not find upgrade tests for function sys.servername
 Could not find upgrade tests for function sys.sp_column_privileges_internal
 Could not find upgrade tests for function sys.sp_columns_managed_internal
 Could not find upgrade tests for function sys.sp_datatype_info_helper
@@ -173,7 +171,6 @@ Could not find upgrade tests for function sys.tsql_type_max_length_helper
 Could not find upgrade tests for function sys.tsql_type_precision_helper
 Could not find upgrade tests for function sys.tsql_type_radix_for_sp_columns_helper
 Could not find upgrade tests for function sys.tsql_type_scale_helper
-Could not find upgrade tests for function sys.version
 Could not find upgrade tests for procedure babel_catalog_initializer
 Could not find upgrade tests for procedure babel_coercion_initializer
 Could not find upgrade tests for procedure babel_create_builtin_dbs
@@ -181,7 +178,6 @@ Could not find upgrade tests for procedure babel_datatype_precedence_initializer
 Could not find upgrade tests for procedure initialize_babel_extras
 Could not find upgrade tests for procedure initialize_babelfish
 Could not find upgrade tests for procedure remove_babelfish
-Could not find upgrade tests for procedure sys.analyze_babelfish_catalogs
 Could not find upgrade tests for procedure sys.babel_drop_all_dbs
 Could not find upgrade tests for procedure sys.babel_drop_all_logins
 Could not find upgrade tests for procedure sys.babel_initialize_logins

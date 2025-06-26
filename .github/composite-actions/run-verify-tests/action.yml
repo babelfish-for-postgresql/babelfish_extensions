@@ -42,7 +42,6 @@ runs:
         echo "all" > dummy_schedule
         export scheduleFile=dummy_schedule
         export physicalDatabaseName=babelfish_db
-        export isUpgradeTestMode=false
         if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
           export serverCollationName=${{ inputs.server_collation_name }}
         fi

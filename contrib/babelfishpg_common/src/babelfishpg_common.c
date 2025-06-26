@@ -216,6 +216,8 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.TsqlUTF8LengthInUTF16 = &TsqlUTF8LengthInUTF16;
 		common_utility_plugin_var.TsqlUTF8toUTF16StringInfo = &TsqlUTF8toUTF16StringInfo;
 		common_utility_plugin_var.tsql_numeric_get_typmod = &tsql_numeric_get_typmod;
+		common_utility_plugin_var.initializeToDefaultDate = &initializeToDefaultDate;
+		common_utility_plugin_var.initializeToDefaultTime = &initializeToDefaultTime;
 	}
 	return &common_utility_plugin_var;
 }

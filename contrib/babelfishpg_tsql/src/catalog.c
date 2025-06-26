@@ -3683,10 +3683,11 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 									new_record_bbf_schema,
 									new_record_nulls_bbf_schema);
 
-	/* Insert new record in the bbf_authid_user_ext table */
+	/* Insert new record in the babelfish_schema_permissions table */
 	CatalogTupleInsert(bbf_schema_rel, tuple_bbf_schema);
+	heap_freetuple(tuple_bbf_schema);
 
-	/* Close bbf_authid_user_ext, but keep lock till commit */
+	/* Close babelfish_schema_permissions, but keep lock till commit */
 	table_close(bbf_schema_rel, RowExclusiveLock);
 
 	/* make sure later steps can see the entry added here */
@@ -4932,6 +4933,7 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 	Oid save_userid = InvalidOid;
 	int save_sec_context = 0;
 	int dbid = get_db_id(old_db_name);
+	int new_dbid = get_db_id(new_db_name);
 	int tries;
 	Oid     	prev_current_user = InvalidOid;
 
@@ -4947,6 +4949,15 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("Cannot change the name of the system database %s.", old_db_name)));
+
+
+	/*
+	 * Check that the new_db_name does not exist.
+	 */
+	if (new_dbid)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The database %s already exists. Specify a unique database name.", new_db_name)));
 
 	/* 
 	 * Check permission on the given database.

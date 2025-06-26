@@ -3197,7 +3197,13 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Cannot disable access to the guest user in master or tempdb.")));
+		/*
+		 * Adding entries for user_can_connect might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
 		alter_user_can_connect(stmt->is_grant, grantee_name, dbname);
+		PopActiveSnapshot();
 	}
 	return PLTSQL_RC_OK;
 }
@@ -3964,6 +3970,12 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
 
+		/*
+		 * Executing GRANT ON SCHEMA might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
+
 		/* Execute the GRANT SCHEMA subcommands. */
 		for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
 		{
@@ -3990,6 +4002,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				update_privileges_of_object(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, stmt->privileges, rolname, OBJ_SCHEMA, false);
 			}
 		}
+		PopActiveSnapshot();
 		pfree(rolname);
 	}
 	pfree(user);
@@ -4029,8 +4042,14 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		/* Is the current login already DB owner? */
 		if (get_role_oid(get_owner_of_db(stmt->db_name), true) == GetSessionUserId())
 		{
+			/*
+			 * Update the owner of a database might involve TOAST table access, so ensure we
+			 * have a valid snapshot.
+			 */
+			PushActiveSnapshot(GetTransactionSnapshot());
 			/* Current login is DB owner, so perform the update */
-			update_db_owner(stmt->new_owner_name, stmt->db_name);	
+			update_db_owner(stmt->new_owner_name, stmt->db_name);
+			PopActiveSnapshot();
 			return PLTSQL_RC_OK;	
 		}			
 	}		
@@ -4076,7 +4095,14 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 
 		/* Grant dbo role to the new owner */
 		grant_revoke_role_to_login(stmt->new_owner_name, get_dbo_role_name(stmt->db_name), NULL, true);
-		update_db_owner(stmt->new_owner_name, stmt->db_name);	
+
+		/*
+		 * Update the owner of a database might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
+		update_db_owner(stmt->new_owner_name, stmt->db_name);
+		PopActiveSnapshot();
 	}
 	PG_FINALLY();
 	{
@@ -4091,6 +4117,11 @@ exec_stmt_alter_db(PLtsql_execstate *estate, PLtsql_stmt_alter_db *stmt)
 {
 	/* Alter database is not allowed inside a transaction. */
 	PreventInTransactionBlock(true, "ALTER DATABASE");
+	/*
+	 * Executing RENAME DATABASE might involve TOAST table access, so ensure we
+	 * have a valid snapshot.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
 
 	/*
 	 * Currently Babelfish only support rename, when we extend
@@ -4098,6 +4129,7 @@ exec_stmt_alter_db(PLtsql_execstate *estate, PLtsql_stmt_alter_db *stmt)
 	 * to identify for rename and conditionally call rename_tsql_db
 	 */
 	rename_tsql_db(stmt->old_db_name, stmt->new_db_name);
+	PopActiveSnapshot();
 	return PLTSQL_RC_OK;
 }
 
@@ -4321,8 +4353,14 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 
 	if (!stmt->is_create) /* drop command */
 	{
+		/*
+		 * DROP PARTITION FUNCTION might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
 		/* delete entry from the sys.babelfish_partition_scheme catalog */
 		remove_entry_from_bbf_partition_function(dbid, partition_function_name);
+		PopActiveSnapshot();
 		/* make sure later statements in batch can see the updated catalog entry */
 		CommandCounterIncrement();
 		return PLTSQL_RC_OK;
@@ -4572,8 +4610,14 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 
 	if (!stmt->is_create) /* drop command */
 	{
+		/*
+		 * DROP PARTITION SCHEME might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
 		/* delete entry from the sys.babelfish_partition_scheme catalog */
 		remove_entry_from_bbf_partition_scheme(dbid, partition_scheme_name);
+		PopActiveSnapshot();
 		/* make sure later statements in batch can see the updated catalog entry */
 		CommandCounterIncrement();
 		return PLTSQL_RC_OK;
@@ -4632,8 +4676,15 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("There is already an object named '%s' in the database.", partition_scheme_name)));
 	}
+	/*
+	 * Adding entries for Partition Scheme might involve TOAST table access, so ensure we
+	 * have a valid snapshot.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
 	/* add entry in the sys.babelfish_partition_scheme catalog */
 	add_entry_to_bbf_partition_scheme(dbid, partition_scheme_name, partition_func_name, next_used);
+
+	PopActiveSnapshot();
 
 	/* make sure later statements in batch can see the updated catalog entry */
 	CommandCounterIncrement();

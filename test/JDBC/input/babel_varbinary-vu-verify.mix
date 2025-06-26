@@ -605,7 +605,6 @@ SELECT
     bit_col + smallint_col as bit_smallint_add,
     bit_col + tinyint_col as bit_tinyint_add,
     bit_col + money_col as bit_money_add,
-    bit_col + bit_col as bit_bit_add,
     bit_col + guid_col as bit_guid_add,
     bit_col + image_col as bit_image_add,
     bit_col + binary_col as bit_binary_add
@@ -619,7 +618,6 @@ ORDER BY
     bit_smallint_add,
     bit_tinyint_add,
     bit_money_add,
-    bit_bit_add,
     bit_guid_add,
     bit_image_add,
     bit_binary_add;

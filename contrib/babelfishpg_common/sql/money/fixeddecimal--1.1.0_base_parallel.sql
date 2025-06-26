@@ -689,6 +689,10 @@ RETURNS sys.MONEY
 AS 'babelfishpg_money', 'int8fixeddecimalmul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- this function is currently not used in any operator
+-- hence for now it is okay for it to return a float8
+-- func int8fixeddecimaldiv_money wraps this function
+-- and returns money
 CREATE FUNCTION sys.int8fixeddecimaldiv(INT8, FIXEDDECIMAL)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_money', 'int8fixeddecimaldiv'
@@ -1641,22 +1645,22 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalpl(sys.SMALLMONEY, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalpl'
+AS 'babelfishpg_money', 'smallmoneypl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalmi(sys.SMALLMONEY, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalmi'
+AS 'babelfishpg_money', 'smallmoneymi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalmul(sys.SMALLMONEY, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalmul'
+AS 'babelfishpg_money', 'smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimaldiv(sys.SMALLMONEY, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimaldiv'
+AS 'babelfishpg_money', 'smallmoneydiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalmod(sys.SMALLMONEY, sys.SMALLMONEY)
@@ -1703,22 +1707,22 @@ CREATE OPERATOR sys.% (
 
 CREATE FUNCTION sys.fixeddecimalint8pl(sys.SMALLMONEY, INT8)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint8pl'
+AS 'babelfishpg_money', 'smallmoneyint8pl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalint8mi(sys.SMALLMONEY, INT8)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint8mi'
+AS 'babelfishpg_money', 'smallmoneyint8mi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalint8mul(sys.SMALLMONEY, INT8)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint8mul'
+AS 'babelfishpg_money', 'smallmoneyint8mul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalint8div(sys.SMALLMONEY, INT8)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint8div'
+AS 'babelfishpg_money', 'smallmoneyint8div'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
@@ -1749,22 +1753,22 @@ CREATE OPERATOR sys./ (
 
 CREATE FUNCTION sys.fixeddecimalint4pl(sys.SMALLMONEY, INT4)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint4pl'
+AS 'babelfishpg_money', 'smallmoneyint4pl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalint4mi(sys.SMALLMONEY, INT4)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint4mi'
+AS 'babelfishpg_money', 'smallmoneyint4mi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalint4mul(sys.SMALLMONEY, INT4)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint4mul'
+AS 'babelfishpg_money', 'smallmoneyint4mul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalint4div(sys.SMALLMONEY, INT4)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint4div'
+AS 'babelfishpg_money', 'smallmoneyint4div'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
@@ -1795,22 +1799,22 @@ CREATE OPERATOR sys./ (
 
 CREATE FUNCTION sys.fixeddecimalint2pl(sys.SMALLMONEY, INT2)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint2pl'
+AS 'babelfishpg_money', 'smallmoneyint2pl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalint2mi(sys.SMALLMONEY, INT2)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint2mi'
+AS 'babelfishpg_money', 'smallmoneyint2mi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalint2mul(sys.SMALLMONEY, INT2)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint2mul'
+AS 'babelfishpg_money', 'smallmoneyint2mul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.fixeddecimalint2div(sys.SMALLMONEY, INT2)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'fixeddecimalint2div'
+AS 'babelfishpg_money', 'smallmoneyint2div'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
@@ -1839,22 +1843,25 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = fixeddecimalint2div
 );
 
-
 CREATE FUNCTION sys.int8fixeddecimalpl(INT8, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int8fixeddecimalpl'
+AS 'babelfishpg_money', 'int8smallmoneypl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int8fixeddecimalmi(INT8, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int8fixeddecimalmi'
+AS 'babelfishpg_money', 'int8smallmoneymi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int8fixeddecimalmul(INT8, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int8fixeddecimalmul'
+AS 'babelfishpg_money', 'int8smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- this function is currently not used in any operator
+-- hence for now it is okay for it to return a float8
+-- func int8fixeddecimaldiv_smallmoney implements div 
+-- and is used by the division operator
 CREATE FUNCTION sys.int8fixeddecimaldiv(INT8, sys.SMALLMONEY)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_money', 'int8fixeddecimaldiv'
@@ -1862,9 +1869,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int8fixeddecimaldiv_smallmoney(INT8, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS $$
-  SELECT sys.int8fixeddecimaldiv($1, $2)::sys.SMALLMONEY;
-$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_money', 'int8smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
     LEFTARG    = INT8,
@@ -1894,19 +1900,23 @@ CREATE OPERATOR sys./ (
 
 CREATE FUNCTION sys.int4fixeddecimalpl(INT4, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int4fixeddecimalpl'
+AS 'babelfishpg_money', 'int4smallmoneypl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int4fixeddecimalmi(INT4, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int4fixeddecimalmi'
+AS 'babelfishpg_money', 'int4smallmoneymi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int4fixeddecimalmul(INT4, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int4fixeddecimalmul'
+AS 'babelfishpg_money', 'int4smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- this function is currently not used in any operator
+-- hence for now it is okay for it to return a float8
+-- func int4fixeddecimaldiv_smallmoney implements div 
+-- and is used by the division operator
 CREATE FUNCTION sys.int4fixeddecimaldiv(INT4, sys.SMALLMONEY)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_money', 'int4fixeddecimaldiv'
@@ -1914,9 +1924,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int4fixeddecimaldiv_smallmoney(INT4, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS $$
-  SELECT sys.int4fixeddecimaldiv($1, $2)::sys.SMALLMONEY;
-$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_money', 'int4smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
     LEFTARG    = INT4,
@@ -1946,19 +1955,23 @@ CREATE OPERATOR sys./ (
 
 CREATE FUNCTION sys.int2fixeddecimalpl(INT2, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int2fixeddecimalpl'
+AS 'babelfishpg_money', 'int2smallmoneypl'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int2fixeddecimalmi(INT2, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int2fixeddecimalmi'
+AS 'babelfishpg_money', 'int2smallmoneymi'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int2fixeddecimalmul(INT2, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS 'babelfishpg_money', 'int2fixeddecimalmul'
+AS 'babelfishpg_money', 'int2smallmoneymul'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- this function is currently not used in any operator
+-- hence for now it is okay for it to return a float8
+-- func int2fixeddecimaldiv_smallmoney implements div 
+-- and is used by the division operator
 CREATE FUNCTION sys.int2fixeddecimaldiv(INT2, sys.SMALLMONEY)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_money', 'int2fixeddecimaldiv'
@@ -1966,9 +1979,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.int2fixeddecimaldiv_smallmoney(INT2, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
-AS $$
-  SELECT sys.int2fixeddecimaldiv($1, $2)::sys.SMALLMONEY;
-$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_money', 'int2smallmoneydiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
     LEFTARG    = INT2,

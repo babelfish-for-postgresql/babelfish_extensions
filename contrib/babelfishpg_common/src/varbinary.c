@@ -56,6 +56,8 @@ PG_FUNCTION_INFO_V1(varbinarytypmodin);
 PG_FUNCTION_INFO_V1(varbinarytypmodout);
 PG_FUNCTION_INFO_V1(byteavarbinary);
 PG_FUNCTION_INFO_V1(varbinarybytea);
+PG_FUNCTION_INFO_V1(byteabinary);
+PG_FUNCTION_INFO_V1(binarybytea);
 PG_FUNCTION_INFO_V1(varbinaryrowversion);
 PG_FUNCTION_INFO_V1(rowversionbinary);
 PG_FUNCTION_INFO_V1(rowversionvarbinary);
@@ -579,6 +581,42 @@ Datum
 varbinarybytea(PG_FUNCTION_ARGS)
 {
 	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+
+	PG_RETURN_BYTEA_P(source);
+}
+
+Datum
+byteabinary(PG_FUNCTION_ARGS)
+{
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	int32       len = VARSIZE_ANY_EXHDR(source);
+    
+	/* Check if the binary data exceeds the maximum allowed size */
+	if (len > MAX_BINARY_SIZE)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				 errmsg("The size (%d) of the binary data exceeds the maximum allowed (%d)",
+						len, MAX_BINARY_SIZE)));
+	}
+
+	PG_RETURN_BYTEA_P(source);
+}
+
+Datum
+binarybytea(PG_FUNCTION_ARGS)
+{
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	int32       len = VARSIZE_ANY_EXHDR(source);
+    
+	/* Check if the binary data exceeds the maximum allowed size */
+	if (len > MAX_BINARY_SIZE)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				 errmsg("The size (%d) of the binary data exceeds the maximum allowed (%d)",
+						len, MAX_BINARY_SIZE)));
+	}
 
 	PG_RETURN_BYTEA_P(source);
 }
