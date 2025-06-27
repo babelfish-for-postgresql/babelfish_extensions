@@ -92,12 +92,13 @@ SELECT
 GO
 
 -- 3. Complex Pattern Tests
-SELECT 
-    PATINDEX('_[^aeiou][aeiou]%', 'This is a test') AS ComplexPattern1,
-    PATINDEX('%[0-9][A-Z]%', 'Test1A test') AS ComplexPattern2,
-    PATINDEX('%[[]%]%', 'Test [abc] test') AS EscapedBrackets,
-    PATINDEX('%[%]%', 'Test % test') AS EscapedPercent;
-GO
+-- Disable the test due to pg bug, filed JIRA: BABEL-5941
+-- SELECT 
+--     PATINDEX('_[^aeiou][aeiou]%', 'This is a test') AS ComplexPattern1,
+--     PATINDEX('%[0-9][A-Z]%', 'Test1A test') AS ComplexPattern2,
+--     PATINDEX('%[[]%]%', 'Test [abc] test') AS EscapedBrackets,
+--     PATINDEX('%[%]%', 'Test % test') AS EscapedPercent;
+-- GO
 
 -- 4. NULL and Empty String Tests
 SELECT 
@@ -124,12 +125,13 @@ SELECT
 GO
 
 -- 7. Special Character Tests
-SELECT 
-    PATINDEX('%[%]%', 'Test % string') AS PercentSign,
-    PATINDEX('%[_]%', 'Test _ string') AS Underscore,
-    PATINDEX('%[\[]%', 'Test [ string') AS OpenBracket,
-    PATINDEX('%[\]]%', 'Test ] string') AS CloseBracket;
-GO
+-- Disable the test due to pg bug, filed JIRA: BABEL-5941
+-- SELECT 
+--     PATINDEX('%[%]%', 'Test % string') AS PercentSign,
+--     PATINDEX('%[_]%', 'Test _ string') AS Underscore,
+--     PATINDEX('%[\[]%', 'Test [ string') AS OpenBracket,
+--     PATINDEX('%[\]]%', 'Test ] string') AS CloseBracket;
+-- GO
 
 -- 8. Boundary Tests
 SELECT 
