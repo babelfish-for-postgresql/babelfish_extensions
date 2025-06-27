@@ -4807,13 +4807,38 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate,
 			*/
 			node = query->utilityStmt;
 
+			/* Not a utility statement, nothing to do */
+			if (node == NULL)
+			{
+				goto cleanup;
+			}
+
+			/* Not a CallStmt, nothing to do */
+			if (!IsA(node, CallStmt))
+			{
+				goto cleanup;
+			}
+
 			funcexpr = ((CallStmt *) node)->funcexpr;
+
+			/* Validate funcexpr */
+			if (funcexpr == NULL)
+			{
+				goto cleanup;
+			}
+
+			if (!OidIsValid(funcexpr->funcid))
+			{
+				goto cleanup;
+			}
 
 			func_tuple = SearchSysCache1(PROCOID,
 											ObjectIdGetDatum(funcexpr->funcid));
 			if (!HeapTupleIsValid(func_tuple))
-				elog(ERROR, "cache lookup failed for function %u",
-						funcexpr->funcid);
+			{
+				elog(ERROR, "cache lookup failed for function %u", funcexpr->funcid);
+			}
+
 
 			// /*
 			// * Extract function arguments, and expand any named-arg notation
@@ -4924,6 +4949,10 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate,
 
 			stmt->target = (PLtsql_variable *) row;
 		}
+
+cleanup:
+		/* Normal completion - no additional cleanup needed here */
+		;
 	}
 	PG_FINALLY();
 	{
@@ -5237,23 +5266,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/* Actual assignment that moves retval to the right place */
 		if (stmt->insert_exec && stmt->target)
 		{
-			/* ---------------      Outermost estate		-------------------*/
-			/* setup for get_outermost_estate */
-			// PLtsql_execstate *pltsql_estate;
-			// int nestlevel;
-			// MemoryContext oldcxt;
-
-			// pltsql_estate = get_outermost_tsql_estate(&nestlevel);
-			// oldcxt = MemoryContextSwitchTo(pltsql_estate->stmt_mcontext_parent);
-			// /* Use the datum from the outermost estate */
-			// exec_move_row_from_datum(estate, stmt->target, pltsql_estate->insert_exec_retval);
-			// MemoryContextSwitchTo(oldcxt);
-
-			/* ---------------      Outermost estate		-------------------*/
-
-
-
-
 			/* ---------------      Global variable 	   -------------------*/
 
 			if (execute_call_insert_exec_retval)
@@ -5261,21 +5273,13 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				exec_move_row_from_datum(estate,
 									stmt->target,
 									execute_call_insert_exec_retval);
+
+				/* Clear the global variable after successful use */
+				execute_call_insert_exec_retval = (Datum) 0;
+
 			}
 
 			/* ---------------      Global variable 	   -------------------*/
-
-
-			// if (estate->insert_exec_retval_valid)
-			// {
-				// exec_move_row_from_datum(estate, stmt->target, estate->insert_exec_retval);
-			// }
-			// else
-			// {
-			// 	ereport(ERROR,
-			// 		(errcode(ERRCODE_DATA_EXCEPTION),
-			// 		errmsg("invalid retval from INSERT ... EXECUTE statements")));
-			// }
 		}
 
 		if (enable_txn_in_triggers)
