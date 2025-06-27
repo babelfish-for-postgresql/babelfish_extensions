@@ -149,7 +149,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.char(x in int) RENAME TO chr_deprecated_5_2_0;
+    ALTER FUNCTION sys.char(x in int) RENAME TO chr_deprecated_5_3_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -157,12 +157,14 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'chr_deprecated_5_3_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-   ALTER FUNCTION sys.nchar(In x INTEGER) RENAME TO nchar_int_deprecated_5_2_0;
+   ALTER FUNCTION sys.nchar(In x INTEGER) RENAME TO nchar_int_deprecated_5_3_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -170,12 +172,14 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'nchar_int_deprecated_5_3_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-   ALTER FUNCTION sys.nchar(In x varbinary) RENAME TO nchar_varbinary_deprecated_5_2_0;
+   ALTER FUNCTION sys.nchar(In x varbinary) RENAME TO nchar_varbinary_deprecated_5_3_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -183,6 +187,8 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'nchar_varbinary_deprecated_5_3_0');
 
 create or replace function sys.cht_(x in int) returns sys.varchar
 AS

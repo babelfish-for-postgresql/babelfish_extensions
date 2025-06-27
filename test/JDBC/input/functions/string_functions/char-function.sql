@@ -401,5 +401,10 @@ drop schema test_schema;
 go
 select char(200)
 go
+select [char](252)
+go
+select [sys].[char](243)
+go
+
 
 

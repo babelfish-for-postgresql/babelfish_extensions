@@ -721,5 +721,20 @@ varchar
 È
 ~~END~~
 
+select [char](252)
+go
+~~START~~
+varchar
+ü
+~~END~~
+
+select [sys].[char](243)
+go
+~~START~~
+varchar
+ó
+~~END~~
+
+
 
 
