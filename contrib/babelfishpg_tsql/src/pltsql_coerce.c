@@ -1218,9 +1218,9 @@ is_numeric_datatype(Oid typid)
 static int32
 get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
 {
-	if (resulttype == INT4OID)
+	if (resulttype == INT4OID || (*common_utility_plugin_ptr->is_tsql_int_datatype)(resulttype))
 		return DEFAULT_INT_TYPMOD;
-	else if (resulttype == INT8OID)
+	else if (resulttype == INT8OID || (*common_utility_plugin_ptr->is_tsql_bigint_datatype)(resulttype))
 		return DEFAULT_BIGINT_TYPMOD;
 	else if (resulttype == INT2OID)
 		return DEFAULT_SMALLINT_TYPMOD;
@@ -1235,31 +1235,25 @@ get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
 }
 
 /*
- * is_mathematical_function - returns true if the function name is a mathematical function in T-SQL.
- * This is used to identify functions that should be treated as mathematical operations.
+ * get_typmod_from_func_arg()
+ * This function retrieves the typmod from the first argument of a function.
+ * If the typmod cannot be determined, it returns -1.
  */
-static bool
-is_mathematical_function(const char *funcName)
+static int32
+get_typmod_from_func_arg(Plan *plan, bool *found_typmod, List *args)
 {
-	if (funcName == NULL)
-		return false;
+	int32		rettypmod = -1;
+	Node		*arg = NULL;
 
-	/* Check for common mathematical functions in T-SQL */
-	if ((strlen(funcName) == 5 && (strncmp(funcName, "power", 5) == 0)) ||
-		(strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)) ||
-		(strlen(funcName) == 7 && (strncmp(funcName, "ceiling", 7) == 0)) ||
-		(strlen(funcName) == 5 && (strncmp(funcName, "floor", 5) == 0)) ||
-		(strlen(funcName) == 4 && (strncmp(funcName, "sign", 4) == 0)) ||
-		(strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0)) ||
-		(strlen(funcName) == 7 && (strncmp(funcName, "degrees", 7) == 0)) ||
-		(strlen(funcName) == 7 && (strncmp(funcName, "radians", 7) == 0)) ||
-		(strlen(funcName) == 14 && (strncmp(funcName, "scope_identity", 14) == 0)) ||
-		(strlen(funcName) == 10 && (strncmp(funcName, "ident_seed", 10) == 0)) ||
-		(strlen(funcName) == 10 && (strncmp(funcName, "ident_incr", 10) == 0)) ||
-		(strlen(funcName) == 13 && (strncmp(funcName, "ident_current", 13) == 0)))
-		return true;
+	if (list_length(args) >= 1)
+	{
+		arg = linitial(args);
+		rettypmod = resolve_numeric_typmod_from_exp(plan, arg, found_typmod);
+	}
+	if (rettypmod != -1)
+		return rettypmod;
 
-	return false;
+	return -1;
 }
 
 /* 
@@ -1729,76 +1723,130 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				/* We will find typmod for mathematical functions. */
 				funcName = get_func_name(func_oid);
-				if (funcName && is_mathematical_function(funcName))
+				if (funcName)
 				{
-					int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
-					if (fixsize_default_typmod != -1)
+					if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)) ||
+						(strlen(funcName) == 4 && (strncmp(funcName, "sign", 4) == 0)))
 					{
-						pfree(funcName);
-						return fixsize_default_typmod;
-					}
-					else
-					{
-						uint8_t		precision = 0,
-								scale = 0;
-
-						if (list_length(func->args) >= 1)
+						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
+						if (fixsize_default_typmod != -1)
 						{
-							arg = linitial(func->args);
-							rettypmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
+							pfree(funcName);
+							return fixsize_default_typmod;
+						}
+						else
+						{
+							int32 argtypmod = get_typmod_from_func_arg(plan, &found_typmod, func->args);
 							if (!found_typmod)
 							{
 								if (found != NULL) *found = false;
 							}
-							scale = (rettypmod - VARHDRSZ) & 0xffff;
-							precision = ((rettypmod - VARHDRSZ) >> 16) & 0xffff;
+							if (argtypmod != -1)
+							{
+								pfree(funcName);
+								return argtypmod;
+							}
 						}
-						
-						if ((strlen(funcName) == 7 && (strncmp(funcName, "ceiling", 7) == 0)) ||
-								(strlen(funcName) == 5 && (strncmp(funcName, "floor", 5) == 0)))
+					}
+					else if ((strlen(funcName) == 7 && (strncmp(funcName, "ceiling", 7) == 0)) ||
+							(strlen(funcName) == 5 && (strncmp(funcName, "floor", 5) == 0)))
+					{
+						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
+						if (fixsize_default_typmod != -1)
 						{
-							/* for ceiling and floor functions, we return 0 scale */
-							scale = 0;
+							pfree(funcName);
+							return fixsize_default_typmod;
 						}
-						else if ((strlen(funcName) == 7 && (strncmp(funcName, "radians", 7) == 0)) ||
-								(strlen(funcName) == 7 && (strncmp(funcName, "degrees", 7) == 0)))
+						else
+						{
+							int32 argtypmod = get_typmod_from_func_arg(plan, &found_typmod, func->args);
+							if (!found_typmod)
+							{
+								if (found != NULL) *found = false;
+							}
+							if (argtypmod != -1)
+							{
+								/* for ceiling and floor functions, we return 0 scale */
+								uint8_t precision = ((argtypmod - VARHDRSZ) >> 16) & 0xffff;
+								pfree(funcName);
+								return ((precision << 16) | 0) + VARHDRSZ;
+							}
+						}
+					}
+					else if ((strlen(funcName) == 7 && (strncmp(funcName, "degrees", 7) == 0)) ||
+							(strlen(funcName) == 7 && (strncmp(funcName, "radians", 7) == 0)))
+					{
+						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
+						if (fixsize_default_typmod != -1)
+						{
+							pfree(funcName);
+							return fixsize_default_typmod;
+						}
+						else
 						{
 							/* 
 							 * for radians and degrees functions, we return 
 							 * scale as 18 and precision as max precision
 							 */
-							scale = 18;
-							precision = tds_default_numeric_precision;
+							pfree(funcName);
+							return ((tds_default_numeric_precision << 16) | 18) + VARHDRSZ;
 						}
-						else if ((strlen(funcName) == 14 && (strncmp(funcName, "scope_identity", 14) == 0)) ||
+					}
+					else if ((strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0)) ||
+								(strlen(funcName) == 5 && (strncmp(funcName, "power", 5) == 0)))
+					{
+						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
+						if (fixsize_default_typmod != -1)
+						{
+							pfree(funcName);
+							return fixsize_default_typmod;
+						}
+						else
+						{
+							int32 argtypmod = get_typmod_from_func_arg(plan, &found_typmod, func->args);
+							if (!found_typmod)
+							{
+								if (found != NULL) *found = false;
+							}
+							if (argtypmod != -1)
+							{
+								/* For abs and power functions, precision as 38. */
+								uint8_t scale = (argtypmod - VARHDRSZ) & 0xffff;
+								pfree(funcName);
+								return ((tds_default_numeric_precision << 16) | scale) + VARHDRSZ;
+							}
+						}
+					}
+					else if ((strlen(funcName) == 14 && (strncmp(funcName, "scope_identity", 14) == 0)) ||
 								(strlen(funcName) == 10 && (strncmp(funcName, "ident_seed", 10) == 0)) ||
 								(strlen(funcName) == 10 && (strncmp(funcName, "ident_incr", 10) == 0)) ||
 								(strlen(funcName) == 13 && (strncmp(funcName, "ident_current", 13) == 0)))
+					{
+						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
+						if (fixsize_default_typmod != -1)
+						{
+							pfree(funcName);
+							return fixsize_default_typmod;
+						}
+						else
 						{
 							/*
 							 * For scope_identity, ident_seed, ident_incr and ident_current
 							 * functions, we return 0 scale and precision as 38.
 							 */
-							scale = 0;
-							precision = tds_default_numeric_precision;
+							pfree(funcName);
+							return ((tds_default_numeric_precision << 16) | 0) + VARHDRSZ;
 						}
-						else if (((strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0))) ||
-								(strlen(funcName) == 5 && (strncmp(funcName, "power", 5) == 0)))
-						{
-							/*
-							 * For abs and power functions, precision as 38.
-							 */
-							precision = tds_default_numeric_precision;
-						}
-						rettypmod = ((precision << 16) | scale) + VARHDRSZ;
 					}
 				}
 
-				pfree(funcName);
 				if (rettypmod == -1)
 				{
 					if (found != NULL) *found = false;
 				}
+
+				if (funcName)
+					pfree(funcName);
 				return rettypmod;
 			}
 		case T_NullIfExpr:
@@ -2054,7 +2102,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					}
 				}
 
-				pfree(aggFuncName);
+				if (aggFuncName)
+					pfree(aggFuncName);
 				return ((precision << 16) | scale) + VARHDRSZ;
 			}
 		case T_PlaceHolderVar:

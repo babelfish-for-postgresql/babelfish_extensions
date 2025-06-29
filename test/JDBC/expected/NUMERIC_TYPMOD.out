@@ -2242,6 +2242,24 @@ numeric
 ~~END~~
 
 
+-- COUNT
+SELECT COUNT(*) * 1.00 FROM TestTypes;
+GO
+~~START~~
+numeric
+2.00
+~~END~~
+
+
+-- COUNT_BIG
+SELECT COUNT_BIG(*) * 1.00 FROM TestTypes;
+GO
+~~START~~
+numeric
+2.00
+~~END~~
+
+
 DROP TABLE TestTypes;
 GO
 
@@ -2282,24 +2300,6 @@ GO
 ~~START~~
 numeric
 5.00
-~~END~~
-
-
--- COUNT
-SELECT COUNT(*) * 1.00 FROM sys.objects;
-GO
-~~START~~
-numeric
-4.00
-~~END~~
-
-
--- COUNT_BIG
-SELECT COUNT_BIG(*) * 1.00 FROM sys.objects;
-GO
-~~START~~
-numeric
-4.00
 ~~END~~
 
 
@@ -2675,30 +2675,304 @@ numeric
 DROP TABLE TestIdentity;
 GO
 
+DROP TABLE IF EXISTS TestMathFunctionsnumeric;
+GO
+
+DROP TABLE IF EXISTS TestMathFunctionsint;
+GO
+
+DROP TABLE IF EXISTS TestMathFunctionstinyint;
+GO
+
+DROP TABLE IF EXISTS TestMathFunctionssmallint;
+GO
+
+DROP TABLE IF EXISTS TestMathFunctionsbigint;
+GO
+
+DROP TABLE IF EXISTS TestMathFunctionsmoney;
+GO
+
+DROP TABLE IF EXISTS TestMathFunctionssmallmoney;
+GO
+
 SELECT
-    POWER (cast(4.5 as numeric(10,5)),2) * 1.00 power_col,
-    ROUND (cast(4.5 as numeric(10,5)),2) * 1.00 round_col,
-    CEILING (cast(4.5 as numeric(10,5))) * 1.00 ceiling_col,
-    FLOOR (cast(4.5 as numeric(10,5))) * 1.00 floor_col,
-    DEGREES (cast(4.5 as numeric(10,5))) * 1.00 degrees_col,
-    RADIANS (cast(4.5 as numeric(10,5))) * 1.00 radians_col
-INTO TestMathFunctions;
+    POWER(cast(4.5 as numeric(10,5)),2) * 1.00 power_col,
+    ROUND(cast(4.5 as numeric(10,5)),2) * 1.00 round_col,
+    CEILING(cast(4.5 as numeric(10,5))) * 1.00 ceiling_col,
+    FLOOR(cast(4.5 as numeric(10,5))) * 1.00 floor_col,
+    DEGREES(cast(4.5 as numeric(10,5))) * 1.00 degrees_col,
+    RADIANS(cast(4.5 as numeric(10,5))) * 1.00 radians_col
+INTO TestMathFunctionsnumeric;
 GO
 
 SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'TestMathFunctions';
+WHERE TABLE_NAME = 'TestMathFunctionsnumeric'
+ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-testmathfunctions#!#power_col#!#numeric#!#38#!#6
-testmathfunctions#!#round_col#!#numeric#!#14#!#7
-testmathfunctions#!#ceiling_col#!#numeric#!#14#!#2
-testmathfunctions#!#floor_col#!#numeric#!#14#!#2
-testmathfunctions#!#degrees_col#!#numeric#!#38#!#16
-testmathfunctions#!#radians_col#!#numeric#!#38#!#16
+testmathfunctionsnumeric#!#ceiling_col#!#numeric#!#14#!#2
+testmathfunctionsnumeric#!#degrees_col#!#numeric#!#38#!#16
+testmathfunctionsnumeric#!#floor_col#!#numeric#!#14#!#2
+testmathfunctionsnumeric#!#power_col#!#numeric#!#38#!#6
+testmathfunctionsnumeric#!#radians_col#!#numeric#!#38#!#16
+testmathfunctionsnumeric#!#round_col#!#numeric#!#14#!#7
 ~~END~~
 
 
-DROP TABLE TestMathFunctions;
+DROP TABLE IF EXISTS TestMathFunctionsnumeric;
+GO
+
+SELECT
+    POWER(cast(4.5 as int),2) * 1.00 power_col,
+    ROUND(cast(4.5 as int),2) * 1.00 round_col,
+    CEILING(cast(4.5 as int)) * 1.00 ceiling_col,
+    FLOOR(cast(4.5 as int)) * 1.00 floor_col,
+    DEGREES(cast(4.5 as int)) * 1.00 degrees_col,
+    RADIANS(cast(4.5 as int)) * 1.00 radians_col
+INTO TestMathFunctionsint;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'TestMathFunctionsint'
+ORDER BY COLUMN_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+testmathfunctionsint#!#ceiling_col#!#numeric#!#14#!#2
+testmathfunctionsint#!#degrees_col#!#numeric#!#14#!#2
+testmathfunctionsint#!#floor_col#!#numeric#!#14#!#2
+testmathfunctionsint#!#power_col#!#numeric#!#14#!#2
+testmathfunctionsint#!#radians_col#!#numeric#!#14#!#2
+testmathfunctionsint#!#round_col#!#numeric#!#14#!#2
+~~END~~
+
+
+DROP TABLE IF EXISTS TestMathFunctionsint;
+GO
+
+SELECT
+    POWER(cast(4.5 as tinyint),2) * 1.00 power_col,
+    ROUND(cast(4.5 as tinyint),2) * 1.00 round_col,
+    CEILING(cast(4.5 as tinyint)) * 1.00 ceiling_col,
+    FLOOR(cast(4.5 as tinyint)) * 1.00 floor_col,
+    DEGREES(cast(4.5 as tinyint)) * 1.00 degrees_col,
+    RADIANS(cast(4.5 as tinyint)) * 1.00 radians_col
+INTO TestMathFunctionstinyint;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'TestMathFunctionstinyint'
+ORDER BY COLUMN_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+testmathfunctionstinyint#!#ceiling_col#!#numeric#!#7#!#2
+testmathfunctionstinyint#!#degrees_col#!#numeric#!#14#!#2
+testmathfunctionstinyint#!#floor_col#!#numeric#!#7#!#2
+testmathfunctionstinyint#!#power_col#!#numeric#!#14#!#2
+testmathfunctionstinyint#!#radians_col#!#numeric#!#14#!#2
+testmathfunctionstinyint#!#round_col#!#numeric#!#14#!#2
+~~END~~
+
+
+DROP TABLE IF EXISTS TestMathFunctionstinyint;
+GO
+
+SELECT
+    POWER(cast(4.5 as smallint),2) * 1.00 power_col,
+    ROUND(cast(4.5 as smallint),2) * 1.00 round_col,
+    CEILING(cast(4.5 as smallint)) * 1.00 ceiling_col,
+    FLOOR(cast(4.5 as smallint)) * 1.00 floor_col,
+    DEGREES(cast(4.5 as smallint)) * 1.00 degrees_col,
+    RADIANS(cast(4.5 as smallint)) * 1.00 radians_col
+INTO TestMathFunctionssmallint;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'TestMathFunctionssmallint'
+ORDER BY COLUMN_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+testmathfunctionssmallint#!#ceiling_col#!#numeric#!#9#!#2
+testmathfunctionssmallint#!#degrees_col#!#numeric#!#14#!#2
+testmathfunctionssmallint#!#floor_col#!#numeric#!#9#!#2
+testmathfunctionssmallint#!#power_col#!#numeric#!#14#!#2
+testmathfunctionssmallint#!#radians_col#!#numeric#!#14#!#2
+testmathfunctionssmallint#!#round_col#!#numeric#!#14#!#2
+~~END~~
+
+
+DROP TABLE IF EXISTS TestMathFunctionssmallint;
+GO
+
+SELECT
+    POWER(cast(4.5 as bigint),2) * 1.00 power_col,
+    ROUND(cast(4.5 as bigint),2) * 1.00 round_col,
+    CEILING(cast(4.5 as bigint)) * 1.00 ceiling_col,
+    FLOOR(cast(4.5 as bigint)) * 1.00 floor_col,
+    DEGREES(cast(4.5 as bigint)) * 1.00 degrees_col,
+    RADIANS(cast(4.5 as bigint)) * 1.00 radians_col
+INTO TestMathFunctionsbigint;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'TestMathFunctionsbigint'
+ORDER BY COLUMN_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+testmathfunctionsbigint#!#ceiling_col#!#numeric#!#23#!#2
+testmathfunctionsbigint#!#degrees_col#!#numeric#!#23#!#2
+testmathfunctionsbigint#!#floor_col#!#numeric#!#23#!#2
+testmathfunctionsbigint#!#power_col#!#numeric#!#23#!#2
+testmathfunctionsbigint#!#radians_col#!#numeric#!#23#!#2
+testmathfunctionsbigint#!#round_col#!#numeric#!#23#!#2
+~~END~~
+
+
+DROP TABLE IF EXISTS TestMathFunctionsbigint;
+GO
+
+SELECT
+    POWER(cast(4.5 as money),2) * 1.00 power_col,
+    ROUND(cast(4.5 as money),2) * 1.00 round_col,
+    CEILING(cast(4.5 as money)) * 1.00 ceiling_col,
+    FLOOR(cast(4.5 as money)) * 1.00 floor_col,
+    DEGREES(cast(4.5 as money)) * 1.00 degrees_col,
+    RADIANS(cast(4.5 as money)) * 1.00 radians_col
+INTO TestMathFunctionsmoney;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'TestMathFunctionsmoney'
+ORDER BY COLUMN_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+testmathfunctionsmoney#!#ceiling_col#!#numeric#!#23#!#6
+testmathfunctionsmoney#!#degrees_col#!#float#!#53#!#<NULL>
+testmathfunctionsmoney#!#floor_col#!#numeric#!#23#!#6
+testmathfunctionsmoney#!#power_col#!#numeric#!#23#!#6
+testmathfunctionsmoney#!#radians_col#!#float#!#53#!#<NULL>
+testmathfunctionsmoney#!#round_col#!#numeric#!#23#!#6
+~~END~~
+
+
+DROP TABLE IF EXISTS TestMathFunctionsmoney;
+GO
+
+SELECT
+    POWER(cast(4.5 as smallmoney),2) * 1.00 power_col,
+    ROUND(cast(4.5 as smallmoney),2) * 1.00 round_col,
+    CEILING(cast(4.5 as smallmoney)) * 1.00 ceiling_col,
+    FLOOR(cast(4.5 as smallmoney)) * 1.00 floor_col,
+    DEGREES(cast(4.5 as smallmoney)) * 1.00 degrees_col,
+    RADIANS(cast(4.5 as smallmoney)) * 1.00 radians_col
+INTO TestMathFunctionssmallmoney;
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'TestMathFunctionssmallmoney'
+ORDER BY COLUMN_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+testmathfunctionssmallmoney#!#ceiling_col#!#numeric#!#23#!#6
+testmathfunctionssmallmoney#!#degrees_col#!#float#!#53#!#<NULL>
+testmathfunctionssmallmoney#!#floor_col#!#numeric#!#23#!#6
+testmathfunctionssmallmoney#!#power_col#!#numeric#!#23#!#6
+testmathfunctionssmallmoney#!#radians_col#!#float#!#53#!#<NULL>
+testmathfunctionssmallmoney#!#round_col#!#numeric#!#23#!#6
+~~END~~
+
+
+DROP TABLE IF EXISTS TestMathFunctionssmallmoney;
+GO
+
+SELECT SIGN(CAST(NULL AS MONEY)) AS result
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+SELECT SIGN(CAST(NULL AS SMALLMONEY)) AS result; 
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+SELECT POWER(CAST(12.34 AS MONEY), 0.5) AS result; 
+GO
+~~START~~
+money
+3.5128
+~~END~~
+
+
+SELECT POWER(CAST(-12.34 AS MONEY), 2) AS result;  
+GO
+~~START~~
+money
+152.2756
+~~END~~
+
+
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 0.5) AS result;  
+GO
+~~START~~
+money
+3.5128
+~~END~~
+
+
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 2) AS result;
+GO
+~~START~~
+money
+152.2756
+~~END~~
+
+
+CREATE TABLE sksql_numeric_error( 
+ c_numeric_38_5 NUMERIC(38,5) NULL 
+) 
+GO
+
+INSERT INTO sksql_numeric_error VALUES 
+(23617890123.45678)
+ , (81417890123.45678)
+ , (67075890123.45678)
+ , (23497890123.45678)
+ , (234990123.45678)
+GO
+~~ROW COUNT: 5~~
+
+
+SELECT POWER(c_numeric_38_5, 3) FROM sksql_numeric_error
+GO
+~~START~~
+numeric
+13174170915208739931185450188094.74429
+539708839890786433008303380137815.30429
+301786170351145762150748570045446.92589
+12974379775863949430742658638026.12029
+12976238772471067795120597.84321
+~~END~~
+
+
+DROP TABLE sksql_numeric_error;
 GO
