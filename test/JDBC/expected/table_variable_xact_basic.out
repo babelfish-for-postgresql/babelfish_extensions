@@ -794,7 +794,7 @@ SELECT number, SUBSTRING(@FirstString,number,1) AS ch
 GO
 ~~START~~
 int#!#nvarchar
-0#!#<NULL>
+0#!#
 ~~END~~
 
 

@@ -469,7 +469,7 @@ SELECT DATALENGTH(CHAR(0)) AS NullChar_Length
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 

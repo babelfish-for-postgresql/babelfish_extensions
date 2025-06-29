@@ -329,7 +329,7 @@ int
 
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
