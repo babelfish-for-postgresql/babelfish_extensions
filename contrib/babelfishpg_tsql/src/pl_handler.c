@@ -4599,6 +4599,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				VariableSetStmt *variable_set = (VariableSetStmt *) parsetree;
 
+				if (!variable_set->name)
+					break;
+
 				if(strcmp(variable_set->name, "SESSION CHARACTERISTICS") == 0)
 				{
 					ListCell   		*head;
