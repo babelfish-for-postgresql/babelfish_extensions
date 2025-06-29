@@ -3040,12 +3040,10 @@ public:
 		int startIndex = proc->start->getStartIndex();
 		std::string schNameStr;
 
-		if (schema == nullptr)
-			schNameStr = "sys";
-		else
-			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
-		
-		if(!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
+		if (schema)
+			schNameStr = stripQuoteFromId(schema);
+
+		if(schema && !schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
 			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
@@ -3060,12 +3058,10 @@ public:
 		int startIndex = proc->start->getStartIndex();
 		std::string schNameStr;
 
-		if (schema == nullptr)
-			schNameStr = "sys";
-		else
-			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
-		
-		if(!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
+		if (schema)
+			schNameStr = stripQuoteFromId(schema);
+
+		if(schema && !schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
 			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
@@ -3208,7 +3204,6 @@ public:
 	if (proc->keyword() || proc->colon_colon())
 	    return;
 	
-	// FIXME: handle the schema here too
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
 
 	if (pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
@@ -3216,12 +3211,10 @@ public:
 		int startIndex = proc->start->getStartIndex();
 		std::string schNameStr;
 
-		if (schema == nullptr)
-			schNameStr = "sys";
-		else
-			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
-		
-		if(!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
+		if (schema)
+			schNameStr = stripQuoteFromId(schema);
+
+		if(schema && !schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
 			return;
 
 		if (proc->DOUBLE_QUOTE_ID())
@@ -3237,12 +3230,10 @@ public:
 		int startIndex = proc->start->getStartIndex();
 		std::string schNameStr;
 
-		if (schema == nullptr)
-			schNameStr = "sys";
-		else
-			schNameStr = getIDName(schema->DOUBLE_QUOTE_ID(), schema->SQUARE_BRACKET_ID(), schema->ID());
-		
-		if(!schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
+		if (schema)
+			schNameStr = stripQuoteFromId(schema);
+
+		if(schema && !schNameStr.empty() && pg_strcasecmp(schNameStr.c_str(), "sys") != 0)
 			return;
 
 		if (proc->DOUBLE_QUOTE_ID())

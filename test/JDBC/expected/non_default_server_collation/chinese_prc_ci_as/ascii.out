@@ -129,7 +129,7 @@ SELECT ASCII(CHAR(0)) AS NullChar
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 

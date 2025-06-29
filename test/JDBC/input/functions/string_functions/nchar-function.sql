@@ -439,3 +439,19 @@ drop function test_schema.nchar;
 GO
 drop schema test_schema;
 go
+select Nchar(255)
+go
+select NcHaR(252)
+go
+create type user_UDT_int from int
+go
+select nchar(cast(255 as user_UDT_int))
+go
+drop type user_UDT_int
+go
+SET QUOTED_IDENTIFIER ON
+go
+select "char"(255)
+go
+select "nchar"(255)
+go

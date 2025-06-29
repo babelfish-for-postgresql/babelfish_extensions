@@ -70,7 +70,7 @@ SELECT CHAR(ASCII(CHAR(0))) AS NullChar
 GO
 ~~START~~
 varchar
-<NULL>
+
 ~~END~~
 
 
@@ -129,7 +129,7 @@ SELECT CHAR(0) AS ZeroCode
 GO
 ~~START~~
 varchar
-<NULL>
+
 ~~END~~
 
 
@@ -652,7 +652,7 @@ varchar
 
 ~~START~~
 varchar
-<NULL>
+
 ~~END~~
 
 ~~START~~
@@ -667,7 +667,7 @@ varchar
 
 ~~START~~
 varchar
-<NULL>
+
 ~~END~~
 
 ~~START~~
@@ -707,7 +707,7 @@ select sys.char(0);
 GO
 ~~START~~
 varchar
-<NULL>
+
 ~~END~~
 
 drop function test_schema.char;
@@ -735,6 +735,19 @@ varchar
 ó
 ~~END~~
 
+select Char(255);
+go
+~~START~~
+varchar
+?
+~~END~~
+
+select ChAr(255)
+go
+~~START~~
+varchar
+?
+~~END~~
 
 
 

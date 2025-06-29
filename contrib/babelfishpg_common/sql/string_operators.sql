@@ -104,6 +104,9 @@ BEGIN
 /***************************************************************
 EXTENSION PACK function CHAR(x)
 ***************************************************************/
+    if x = 0 then 
+        return ('\x00'::bytea)::sys.varbinary;
+    end if;
     if x between 1 and 255 then
         return chr(x);
     else

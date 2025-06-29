@@ -405,6 +405,9 @@ select [char](252)
 go
 select [sys].[char](243)
 go
-
+select Char(255);
+go
+select ChAr(255)
+go
 
 
