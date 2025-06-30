@@ -31,6 +31,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -1665,6 +1666,42 @@ pltsql_param_ref(ParseState *pstate, ParamRef *pref)
 	return make_datum_param(expr, nse->itemno, pref->location);
 }
 
+static inline Node *
+make_const_from_param(PLtsql_execstate *estate, PLtsql_nsitem *nse)
+{
+	int16		typLen;
+	bool		typByVal;
+	Datum		pval;
+	Const		*con;
+	PLtsql_var *var;
+	PLtsql_datum *datum = estate->datums[nse->itemno];
+	/* This should only deal with PLTSQL_DTYPE_VAR */
+	Assert(datum->dtype == PLTSQL_DTYPE_VAR);
+	var = (PLtsql_var *) datum;
+	/*
+	 * Return a Const representing the param value.
+	 * Must copy pass-by-ref datatypes, since the
+	 * Param might be in a memory context
+	 * shorter-lived than our output plan should be.
+	 */
+
+	get_typlenbyval(var->datatype->typoid, &typLen, &typByVal);
+	if (var->isnull || typByVal)
+		pval = var->value;
+	else
+		pval = datumCopy(var->value, typByVal, typLen);
+	
+	con = makeConst(var->datatype->typoid,
+					var->datatype->atttypmod,
+					get_typcollation(var->datatype->typoid),
+					(int) typLen,
+					pval,
+					var->isnull,
+					typByVal);
+	con->location = -1; /* Unknown */
+	return (Node *) con;
+}
+
 /*
  * resolve_column_ref		attempt to resolve a ColumnRef as a pltsql var
  *
@@ -1784,7 +1821,14 @@ resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 	{
 		case PLTSQL_NSTYPE_VAR:
 			if (nnames == nnames_scalar)
-				return make_datum_param(expr, nse->itemno, cref->location);
+			{
+				if (pstate->p_expr_kind == EXPR_KIND_SELECT_TARGET)
+					return make_datum_param(expr, nse->itemno, cref->location);
+				else
+				{
+					return make_const_from_param(estate, nse);
+				}
+			}
 			break;
 		case PLTSQL_NSTYPE_REC:
 			if (nnames == nnames_wholerow)
