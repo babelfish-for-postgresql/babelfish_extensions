@@ -1822,21 +1822,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 								(strlen(funcName) == 10 && (strncmp(funcName, "ident_incr", 10) == 0)) ||
 								(strlen(funcName) == 13 && (strncmp(funcName, "ident_current", 13) == 0)))
 					{
-						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
-						if (fixsize_default_typmod != -1)
-						{
-							pfree(funcName);
-							return fixsize_default_typmod;
-						}
-						else
-						{
-							/*
-							 * For scope_identity, ident_seed, ident_incr and ident_current
-							 * functions, we return 0 scale and precision as 38.
-							 */
-							pfree(funcName);
-							return ((tds_default_numeric_precision << 16) | 0) + VARHDRSZ;
-						}
+						/*
+						 * For scope_identity, ident_seed, ident_incr and ident_current
+						 * functions, we return 0 scale and precision as 38.
+						 */
+						pfree(funcName);
+						return ((tds_default_numeric_precision << 16) | 0) + VARHDRSZ;
 					}
 				}
 
