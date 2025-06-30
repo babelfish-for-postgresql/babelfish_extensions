@@ -126,16 +126,12 @@ text
     -- out of range
 SELECT DATENAME(TZOFFSET, CAST('2025-06-03 14:30:15 +14:01' AS DATETIMEOFFSET));
 GO
-~~START~~
-text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
 
 SELECT DATENAME(TZOFFSET, '2025-06-03 14:30:15 -14:01');
 GO
-~~START~~
-text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
@@ -197,8 +193,6 @@ DATEFIRST#!#2025-01-05#!#week#!#2
     -- Unsupported date time datatype inputs
 SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15 +01:30' AS DATE)) AS date_type;
 GO
-~~START~~
-text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type date.)~~
@@ -206,8 +200,6 @@ text
 
 SELECT datename(TZOFFSET, CAST('14:30:15' AS TIME)) AS time_type;
 GO
-~~START~~
-text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type time without time zone.)~~
@@ -215,8 +207,6 @@ text
 
 SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15' AS DATETIME)) AS datetime_type;
 GO
-~~START~~
-text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type datetime.)~~
@@ -224,8 +214,6 @@ text
 
 SELECT datename(TZOFFSET, CAST('2025-06-03 14:30:15' AS SMALLDATETIME)) AS smalldatetime_type;
 GO
-~~START~~
-text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The datepart tzoffset is not supported by date function datename for data type smalldatetime.)~~
@@ -235,8 +223,6 @@ text
     -- Invalid date time inputs
 SELECT DATENAME(TZOFFSET, '2025-06-0314:30:15+01:59');
 GO
-~~START~~
-text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~

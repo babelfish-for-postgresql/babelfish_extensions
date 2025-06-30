@@ -1216,8 +1216,6 @@ text
 -- test invalid argument, expect error
 select datename(invalid_interval, cast('2016-12-26 23:30:05.523456' as date));
 GO
-~~START~~
-text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'invalid_interval' is not a recognized datepart option)~~
