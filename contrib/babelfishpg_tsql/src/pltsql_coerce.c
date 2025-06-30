@@ -1245,6 +1245,9 @@ get_typmod_from_func_arg(Plan *plan, bool *found_typmod, List *args)
 	int32		rettypmod = -1;
 	Node		*arg = NULL;
 
+	if (found_typmod != NULL)
+		*found_typmod = true;
+
 	if (list_length(args) >= 1)
 	{
 		arg = linitial(args);
