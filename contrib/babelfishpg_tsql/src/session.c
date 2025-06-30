@@ -76,7 +76,8 @@ get_current_pltsql_db_name(void)
 const char *
 get_current_db_search_path(void)
 {
-	Assert(IS_TDS_CONN() && current_db_search_path != NULL);
+	if (unlikely(IS_TDS_CONN() && current_db_search_path == NULL))
+		ereport(FATAL, errmsg("current database search path not set for tds session"));
 	return current_db_search_path;
 }
 
