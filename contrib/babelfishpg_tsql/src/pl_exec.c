@@ -69,7 +69,7 @@ List	   *columns_updated_list = NIL;
 static char *original_query_string = NULL;
 
 int			fetch_status_var = 0;
-int			saved_expr_kind = -1;
+// int			saved_expr_kind = -1;
 
 typedef struct
 {
@@ -4368,7 +4368,7 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	pltsql_init_exec_error_data(&(es_cs_entry->error_data));
 	es_cs_entry->next = exec_state_call_stack;
 	exec_state_call_stack = es_cs_entry;
-	saved_expr_kind = -1;
+	// saved_expr_kind = -1;
 }
 
 /* ----------
@@ -7884,16 +7884,17 @@ pltsql_param_fetch(ParamListInfo params,
 		}
 	}
 
-	if (saved_expr_kind == EXPRKIND_TARGET)
-	{
-		/* Let extension to set value of param dynamically during execution when variables appears in TargetList */
-		prm->pflags = 0;
-	}
-	else
-	{
-		/* For other cases, for example, Quals, we can always mark params as "const" for executor's purposes */
-		prm->pflags = PARAM_FLAG_CONST;
-	}
+	// if (saved_expr_kind == EXPRKIND_TARGET)
+	// {
+	// 	/* Let extension to set value of param dynamically during execution when variables appears in TargetList */
+	// 	prm->pflags = 0;
+	// }
+	// else
+	// {
+	// 	/* For other cases, for example, Quals, we can always mark params as "const" for executor's purposes */
+	// 	prm->pflags = PARAM_FLAG_CONST;
+	// }
+	prm->pflags = 0;
 
 	/* Return "no such parameter" if not ok */
 	if (!ok)
