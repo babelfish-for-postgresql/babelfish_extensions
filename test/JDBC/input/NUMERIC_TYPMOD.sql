@@ -1627,7 +1627,9 @@ SELECT
     CEILING(cast(4.5 as numeric(10,5))) * 1.00 ceiling_col,
     FLOOR(cast(4.5 as numeric(10,5))) * 1.00 floor_col,
     DEGREES(cast(4.5 as numeric(10,5))) * 1.00 degrees_col,
-    RADIANS(cast(4.5 as numeric(10,5))) * 1.00 radians_col
+    RADIANS(cast(4.5 as numeric(10,5))) * 1.00 radians_col,
+    SIGN(cast(4.5 as numeric(10,5))) * 1.00 sign_col,
+    ABS(cast(4.5 as numeric(10,5))) * 1.00 abs_col
 INTO TestMathFunctionsnumeric;
 GO
 
@@ -1646,7 +1648,9 @@ SELECT
     CEILING(cast(4.5 as int)) * 1.00 ceiling_col,
     FLOOR(cast(4.5 as int)) * 1.00 floor_col,
     DEGREES(cast(4.5 as int)) * 1.00 degrees_col,
-    RADIANS(cast(4.5 as int)) * 1.00 radians_col
+    RADIANS(cast(4.5 as int)) * 1.00 radians_col,
+    SIGN(cast(4.5 as int)) * 1.00 sign_col,
+    ABS(cast(4.5 as int)) * 1.00 abs_col
 INTO TestMathFunctionsint;
 GO
 
@@ -1665,7 +1669,9 @@ SELECT
     CEILING(cast(4.5 as tinyint)) * 1.00 ceiling_col,
     FLOOR(cast(4.5 as tinyint)) * 1.00 floor_col,
     DEGREES(cast(4.5 as tinyint)) * 1.00 degrees_col,
-    RADIANS(cast(4.5 as tinyint)) * 1.00 radians_col
+    RADIANS(cast(4.5 as tinyint)) * 1.00 radians_col,
+    SIGN(cast(4.5 as tinyint)) * 1.00 sign_col,
+    ABS(cast(4.5 as tinyint)) * 1.00 abs_col
 INTO TestMathFunctionstinyint;
 GO
 
@@ -1684,7 +1690,9 @@ SELECT
     CEILING(cast(4.5 as smallint)) * 1.00 ceiling_col,
     FLOOR(cast(4.5 as smallint)) * 1.00 floor_col,
     DEGREES(cast(4.5 as smallint)) * 1.00 degrees_col,
-    RADIANS(cast(4.5 as smallint)) * 1.00 radians_col
+    RADIANS(cast(4.5 as smallint)) * 1.00 radians_col,
+    SIGN(cast(4.5 as smallint)) * 1.00 sign_col,
+    ABS(cast(4.5 as smallint)) * 1.00 abs_col
 INTO TestMathFunctionssmallint;
 GO
 
@@ -1703,7 +1711,9 @@ SELECT
     CEILING(cast(4.5 as bigint)) * 1.00 ceiling_col,
     FLOOR(cast(4.5 as bigint)) * 1.00 floor_col,
     DEGREES(cast(4.5 as bigint)) * 1.00 degrees_col,
-    RADIANS(cast(4.5 as bigint)) * 1.00 radians_col
+    RADIANS(cast(4.5 as bigint)) * 1.00 radians_col,
+    SIGN(cast(4.5 as bigint)) * 1.00 sign_col,
+    ABS(cast(4.5 as bigint)) * 1.00 abs_col
 INTO TestMathFunctionsbigint;
 GO
 
@@ -1716,13 +1726,17 @@ GO
 DROP TABLE IF EXISTS TestMathFunctionsbigint;
 GO
 
+-- FIX ME: Fixed decimal type inputs for Radians
+-- and Degrees will be fixed in BABEL-5748
 SELECT
     POWER(cast(4.5 as money),2) * 1.00 power_col,
     ROUND(cast(4.5 as money),2) * 1.00 round_col,
     CEILING(cast(4.5 as money)) * 1.00 ceiling_col,
     FLOOR(cast(4.5 as money)) * 1.00 floor_col,
     DEGREES(cast(4.5 as money)) * 1.00 degrees_col,
-    RADIANS(cast(4.5 as money)) * 1.00 radians_col
+    RADIANS(cast(4.5 as money)) * 1.00 radians_col,
+    SIGN(cast(4.5 as money)) * 1.00 sign_col,
+    ABS(cast(4.5 as money)) * 1.00 abs_col
 INTO TestMathFunctionsmoney;
 GO
 
@@ -1741,7 +1755,9 @@ SELECT
     CEILING(cast(4.5 as smallmoney)) * 1.00 ceiling_col,
     FLOOR(cast(4.5 as smallmoney)) * 1.00 floor_col,
     DEGREES(cast(4.5 as smallmoney)) * 1.00 degrees_col,
-    RADIANS(cast(4.5 as smallmoney)) * 1.00 radians_col
+    RADIANS(cast(4.5 as smallmoney)) * 1.00 radians_col,
+    SIGN(cast(4.5 as smallmoney)) * 1.00 sign_col,
+    ABS(cast(4.5 as smallmoney)) * 1.00 abs_col
 INTO TestMathFunctionssmallmoney;
 GO
 

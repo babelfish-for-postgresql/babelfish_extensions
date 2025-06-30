@@ -1250,10 +1250,7 @@ get_typmod_from_func_arg(Plan *plan, bool *found_typmod, List *args)
 		arg = linitial(args);
 		rettypmod = resolve_numeric_typmod_from_exp(plan, arg, found_typmod);
 	}
-	if (rettypmod != -1)
-		return rettypmod;
-
-	return -1;
+	return rettypmod;
 }
 
 /* 
@@ -1726,7 +1723,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (funcName)
 				{
 					if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)) ||
-						(strlen(funcName) == 4 && (strncmp(funcName, "sign", 4) == 0)))
+						(strlen(funcName) == 4 && (strncmp(funcName, "sign", 4) == 0)) ||
+						(strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0)))
 					{
 						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
 						if (fixsize_default_typmod != -1)
@@ -1792,8 +1790,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							return ((tds_default_numeric_precision << 16) | 18) + VARHDRSZ;
 						}
 					}
-					else if ((strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0)) ||
-								(strlen(funcName) == 5 && (strncmp(funcName, "power", 5) == 0)))
+					else if ((strlen(funcName) == 5 && (strncmp(funcName, "power", 5) == 0)))
 					{
 						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
 						if (fixsize_default_typmod != -1)
