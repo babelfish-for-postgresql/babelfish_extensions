@@ -89,7 +89,7 @@ SELECT NCHAR(ASCII(CHAR(0))) AS NullChar
 GO
 ~~START~~
 nvarchar
-<NULL>
+
 ~~END~~
 
 
@@ -128,7 +128,7 @@ SELECT
 GO
 ~~START~~
 nvarchar#!#nvarchar
-<NULL>#!#￿
+#!#￿
 ~~END~~
 
 
@@ -824,7 +824,7 @@ select nchar(0)
 go
 ~~START~~
 nvarchar
-<NULL>
+
 ~~END~~
 
 select nchar(63535)
@@ -901,4 +901,14 @@ go
 nvarchar
 
 ~~END~~
+
+set QUOTED_IDENTIFIER OFF
+go
+select nchar(0);
+go
+~~START~~
+nvarchar
+
+~~END~~
+
 

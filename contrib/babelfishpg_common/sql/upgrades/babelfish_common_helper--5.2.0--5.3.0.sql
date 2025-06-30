@@ -243,6 +243,9 @@ CREATE OR REPLACE FUNCTION sys.ncht_(x in int) RETURNS sys.nvarchar
 AS
 $body$
 BEGIN
+    if x = 0 then 
+        return ('\x00'::bytea)::sys.varbinary;
+    end if;
     --- 65535 is 0x0000FFFF - max value permitted as specified by documentation without SC collation
     if x between 1 and 65535 then
         return(select chr(x))::sys.nvarchar;

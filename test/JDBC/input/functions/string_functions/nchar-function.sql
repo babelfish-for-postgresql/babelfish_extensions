@@ -455,3 +455,8 @@ select "char"(256)
 go
 select "nchar"(63535)
 go
+set QUOTED_IDENTIFIER OFF
+go
+select nchar(0);
+go
+
