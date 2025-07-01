@@ -249,34 +249,37 @@ BEGIN
 
         WHILE @@FETCH_STATUS = 0
         BEGIN
-            -- Cursor for test dates
-            DECLARE testdate_cursor CURSOR FOR SELECT TestDateTime FROM date_part_vu_prepare_TestDates;
-            OPEN testdate_cursor;
-            FETCH NEXT FROM testdate_cursor INTO @testdate;
-
-            WHILE @@FETCH_STATUS = 0
+            -- Skip tzoffset for unsupported data types
+            IF NOT (@datepart = 'tzoffset' AND @datatype NOT IN ('DATETIMEOFFSET', 'DATETIME2'))
             BEGIN
-                SET @sql = N'
-                INSERT INTO date_part_vu_prepare_TestResults (TestCase, TimeZone, DataType, InputDate, DatePart, DatePartValue, DateName)
-                SELECT 
-                    ''Test: '' + CONVERT(VARCHAR, ' + @datecol + ', 120) + '' in ' + @timezone + ''' AS TestCase,
-                    ''' + @timezone + ''' AS TimeZone,
-                    ''' + @datatype + ''' AS DataType,
-                    CONVERT(VARCHAR, ' + @datecol + ', 120) AS InputDate,
-                    ''' + @datepart + ''' AS DatePart,
-                    DATEPART(' + @datepart + ', ' + @datecol + ') AS DatePartValue,
-                    DATENAME(' + @datepart + ', ' + @datecol + ') AS DateName
-                FROM date_part_vu_prepare_TestDates
-                WHERE TestDateTime = ''' + CONVERT(VARCHAR, @testdate, 120) + '''';
-
-                EXEC sp_executesql @sql;
-
+                -- Cursor for test dates
+                DECLARE testdate_cursor CURSOR FOR SELECT TestDateTime FROM date_part_vu_prepare_TestDates;
+                OPEN testdate_cursor;
                 FETCH NEXT FROM testdate_cursor INTO @testdate;
+
+                WHILE @@FETCH_STATUS = 0
+                BEGIN
+                    SET @sql = N'
+                    INSERT INTO date_part_vu_prepare_TestResults (TestCase, TimeZone, DataType, InputDate, DatePart, DatePartValue, DateName)
+                    SELECT 
+                        ''Test: '' + CONVERT(VARCHAR, ' + @datecol + ', 120) + '' in ' + @timezone + ''' AS TestCase,
+                        ''' + @timezone + ''' AS TimeZone,
+                        ''' + @datatype + ''' AS DataType,
+                        CONVERT(VARCHAR, ' + @datecol + ', 120) AS InputDate,
+                        ''' + @datepart + ''' AS DatePart,
+                        DATEPART(' + @datepart + ', ' + @datecol + ') AS DatePartValue,
+                        DATENAME(' + @datepart + ', ' + @datecol + ') AS DateName
+                    FROM date_part_vu_prepare_TestDates
+                    WHERE TestDateTime = ''' + CONVERT(VARCHAR, @testdate, 120) + '''';
+
+                    EXEC sp_executesql @sql;
+
+                    FETCH NEXT FROM testdate_cursor INTO @testdate;
+                END
+
+                CLOSE testdate_cursor;
+                DEALLOCATE testdate_cursor;
             END
-
-            CLOSE testdate_cursor;
-            DEALLOCATE testdate_cursor;
-
             FETCH NEXT FROM datatype_cursor INTO @datatype, @datecol;
         END
 
