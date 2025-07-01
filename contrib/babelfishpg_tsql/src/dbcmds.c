@@ -474,7 +474,6 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	NameData    default_collation;
 	NameData    owner_namedata;
 	const char *prev_current_user;
-	int			stmt_number = 0;
 	int 			save_sec_context;
 	bool 			is_set_userid = false;
 	Oid 			save_userid;
