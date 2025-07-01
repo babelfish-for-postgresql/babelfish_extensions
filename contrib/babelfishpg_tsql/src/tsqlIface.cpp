@@ -3004,6 +3004,33 @@ public:
     {
     }
 
+private:
+    void handleCharNcharTypeRename(const std::string &procNameStr, TSqlParser::IdContext *proc, 
+				TSqlParser::IdContext *schema)
+    {
+
+	int startIndex = proc->start->getStartIndex();
+	std::string alias;
+	std::string formattedName;
+
+	if (pg_strcasecmp(procNameStr.c_str(), "char") == 0)
+		alias = "cht_";
+	else if (pg_strcasecmp(procNameStr.c_str(), "nchar") == 0)
+		alias = "ncht_";
+
+	if(schema && pg_strcasecmp(stripQuoteFromId(schema).c_str(), "sys") != 0)
+		return;
+
+	if (proc->DOUBLE_QUOTE_ID())
+		formattedName = "\"" + alias + "\"";
+	else if (proc->SQUARE_BRACKET_ID())
+		formattedName = "[" + alias + "]";
+	else
+		formattedName = alias;
+
+	stream.setText(startIndex, formattedName.c_str());
+    }
+
 public:
     void enterFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override
     {	
@@ -3014,6 +3041,7 @@ public:
 	// "char" is a data type name in PostgreSQL
 
 	TSqlParser::IdContext *proc = ctx->procedure;
+	TSqlParser::IdContext *schema = ctx->schema;
 
 	//  According to the grammar, an id can be any of the following:
 	//
@@ -3032,17 +3060,11 @@ public:
 	if (proc->keyword() || proc->colon_colon())
 	    return;
 	
-	// FIXME: handle the schema here too
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
 
-	if (pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
+	if (pg_strcasecmp(procNameStr.c_str(), "char") == 0 || pg_strcasecmp(procNameStr.c_str(), "nchar") == 0)
 	{
-	    if (proc->DOUBLE_QUOTE_ID())
-		stream.setText(ctx->start->getStartIndex(), "\"chr\" ");
-	    else if (proc->SQUARE_BRACKET_ID())
-		stream.setText(ctx->start->getStartIndex(), "[chr] ");		
-	    else
-		stream.setText(ctx->start->getStartIndex(), " chr");
+		handleCharNcharTypeRename(procNameStr, proc, schema);
 	}
     }	
     
@@ -3140,6 +3162,7 @@ public:
 	// "char" is a data type name in PostgreSQL
 
 	TSqlParser::IdContext *proc = ctx->procedure;
+	TSqlParser::IdContext *schema = ctx->schema;
 
 	#ifdef ENABLE_SPATIAL_TYPES
 	if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
@@ -3176,17 +3199,11 @@ public:
 	if (proc->keyword() || proc->colon_colon())
 	    return;
 	
-	// FIXME: handle the schema here too
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
 
-	if (pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
+	if (pg_strcasecmp(procNameStr.c_str(), "char") == 0 || pg_strcasecmp(procNameStr.c_str(), "nchar") == 0)
 	{
-	    if (proc->DOUBLE_QUOTE_ID())
-		stream.setText(ctx->start->getStartIndex(), "\"chr\" ");
-	    else if (proc->SQUARE_BRACKET_ID())
-		stream.setText(ctx->start->getStartIndex(), "[chr] ");		
-	    else
-		stream.setText(ctx->start->getStartIndex(), " chr");
+		handleCharNcharTypeRename(procNameStr, proc, schema);
 	}
     }
 
