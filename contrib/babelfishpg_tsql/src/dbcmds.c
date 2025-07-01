@@ -752,7 +752,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 18;
+			wrapper->stmt_len = 26;
 
 			/* do this step */
 			ProcessUtility(wrapper,
