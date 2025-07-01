@@ -214,7 +214,7 @@ dateadd_internal_df
 datediff_big
 datediff
 dateadd
-datepart-before-16_10-or-17_6
+datepart
 datetime2fromparts-after-15-2
 forjson
 forjson-datatypes

@@ -207,7 +207,7 @@ collation_tests_polish
 column_domain_usage
 constraint_column_usage
 dateadd_internal_df
-datepart-before-16_10-or-17_6
+datepart
 datetime2fromparts-after-15-2
 forjson
 forjson-datatypes

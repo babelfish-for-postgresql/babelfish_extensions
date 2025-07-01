@@ -65,7 +65,7 @@ indexproperty
 sys-all_parameters
 msdb-dbo-syspolicy_configuration
 sys-all_views
-datepart-before-16_10-or-17_6
+datepart
 sys-server_principals
 fulltextserviceproperty
 is_srvrolemember
