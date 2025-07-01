@@ -582,11 +582,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			stmt_number++;
-			if (list_length(parsetree_list) == stmt_number)
-				wrapper->stmt_len = 19;
-			else
-				wrapper->stmt_len = 18;
+			wrapper->stmt_len = 26;
 
 			/* do this step */
 			ProcessUtility(wrapper,

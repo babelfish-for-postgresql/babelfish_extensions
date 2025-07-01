@@ -3575,10 +3575,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
 						&& context == PROCESS_UTILITY_SUBCOMMAND)
 					{
-						if (pstmt->stmt_len == 19)
+						char	*dbname = get_cur_db_name();
+						char	*guest_schema = get_guest_schema_name(dbname);
+						/* Check if the schema is 'guest'. */
+						if (strcmp(guest_schema, create_schema->schemaname) == 0)
 							orig_schema = "guest";
 						else
 							orig_schema = "dbo";
+						pfree(guest_schema);
+						pfree(dbname);
 					}
 
 					if (prev_ProcessUtility)
