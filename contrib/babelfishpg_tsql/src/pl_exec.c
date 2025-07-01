@@ -737,16 +737,20 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 				MemoryContextSwitchTo(oldcxt);
 			}
 
-			get_typlenbyval(estate.rettype, &typLen, &typByVal);
+			if (estate.insert_exec)
+			{
+				/* Verify if the check for estate.rettype is required here */
+				get_typlenbyval(estate.rettype, &typLen, &typByVal);
 
-			oldcontext = MemoryContextSwitchTo(estate.func->fn_cxt);
+				oldcontext = MemoryContextSwitchTo(estate.func->fn_cxt);
 
-			/* Pass-by-reference, need to copy the data */
-			execute_call_insert_exec_retval = datumCopy(estate.retval,
-														typByVal,
-														typLen);
+				/* Pass-by-reference, need to copy the data */
+				execute_call_insert_exec_retval = datumCopy(estate.retval,
+															typByVal,
+															typLen);
 
-			MemoryContextSwitchTo(oldcontext);
+				MemoryContextSwitchTo(oldcontext);
+			}
 
 			estate.retval = (Datum) 0;
 			fcinfo->isnull = true;
