@@ -123,18 +123,20 @@ text
 -14:00
 ~~END~~
 
-    -- out of range
+    -- out of range (BABEL-5827: should throw error)
 SELECT DATENAME(TZOFFSET, CAST('2025-06-03 14:30:15 +14:01' AS DATETIMEOFFSET));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+~~START~~
+text
++14:01
+~~END~~
 
 SELECT DATENAME(TZOFFSET, '2025-06-03 14:30:15 -14:01');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+~~START~~
+text
+-14:01
+~~END~~
 
 
 -- Supported date time datatype inputs
@@ -225,7 +227,7 @@ SELECT DATENAME(TZOFFSET, '2025-06-0314:30:15+01:59');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2025-06-0314:30:15+01:59")~~
 
 
 SELECT datename(TZOFFSET, CAST('2025-06-0314:30:15+130' AS DATETIMEOFFSET));
