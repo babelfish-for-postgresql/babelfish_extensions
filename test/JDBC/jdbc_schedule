@@ -13,6 +13,10 @@ all
 ignore#!#BABEL-4279
 ignore#!#test_search_path
 
+#TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
+ignore#!#tds_faultinjection
+ignore#!#babel_tds_fault_injection
+
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
