@@ -48,7 +48,7 @@ SELECT
     CHAR(ASCII(' ')) AS Space;
 GO
 ~~START~~
-text#!#text#!#text#!#text#!#text#!#text#!#text
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 A#!#Z#!#a#!#z#!#0#!#9#!# 
 ~~END~~
 
@@ -61,16 +61,17 @@ SELECT
     CHAR(ASCII(CHAR(27))) AS EscapeChar;
 GO
 ~~START~~
-text#!#text#!#text#!#text
+varchar#!#varchar#!#varchar#!#varchar
 	#!#<newline>#!#<newline>#!#
 ~~END~~
 
 
 SELECT CHAR(ASCII(CHAR(0))) AS NullChar
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: null character not permitted)~~
+~~END~~
 
 
 -- 3. Special Characters Tests
@@ -82,7 +83,7 @@ SELECT
     CHAR(ASCII('%')) AS PercentSign;
 GO
 ~~START~~
-text#!#text#!#text#!#text#!#text
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
 !#!#"#!###!#$#!#%
 ~~END~~
 
@@ -94,7 +95,7 @@ SELECT
     CHAR(255) AS MaxRange;
 GO
 ~~START~~
-text#!#text#!#text
+varchar#!#varchar#!#varchar
 #!#~#!#ÿ
 ~~END~~
 
@@ -119,16 +120,17 @@ SELECT
     CHAR(255) AS MaxValidCode;
 GO
 ~~START~~
-text#!#text
+varchar#!#varchar
 <NULL>#!#ÿ
 ~~END~~
 
 
 SELECT CHAR(0) AS ZeroCode
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: null character not permitted)~~
+~~END~~
 
 
 -- 7. Error Cases
@@ -141,9 +143,10 @@ BEGIN CATCH
         ERROR_MESSAGE() AS ErrorMessage;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: character number must be positive)~~
+~~START~~
+varchar
+<NULL>
+~~END~~
 
 
 BEGIN TRY
@@ -156,8 +159,8 @@ BEGIN CATCH
 END CATCH;
 GO
 ~~START~~
-text
-?
+varchar
+<NULL>
 ~~END~~
 
 
@@ -170,7 +173,7 @@ SELECT
 FROM char_t1;
 GO
 ~~START~~
-int#!#text#!#char#!#varchar
+int#!#varchar#!#char#!#varchar
 65#!#A#!#A#!#Pass
 97#!#a#!#a#!#Pass
 32#!# #!# #!#Pass
@@ -197,7 +200,7 @@ SELECT
 FROM Numbers;
 GO
 ~~START~~
-int#!#text#!#varchar
+int#!#varchar#!#varchar
 32#!# #!#Special
 33#!#!#!#Special
 34#!#"#!#Special
@@ -343,7 +346,7 @@ GO
 SELECT * FROM char_v1;
 GO
 ~~START~~
-int#!#text#!#varchar
+int#!#varchar#!#varchar
 65#!#A#!#Printable
 9#!#	#!#Control
 32#!# #!#Printable
@@ -353,7 +356,7 @@ int#!#text#!#varchar
 SELECT * FROM char_v2;
 GO
 ~~START~~
-int#!#text#!#text
+int#!#varchar#!#varchar
 65#!#A#!#a
 66#!#B#!#b
 67#!#C#!#c
@@ -499,7 +502,7 @@ EXEC char_sp_generate @StartValue = 65, @Count = 5;
 EXEC char_sp_compare @Value1 = 65, @Value2 = 97;
 GO
 ~~START~~
-int#!#text#!#varchar
+int#!#varchar#!#varchar
 65#!#A#!#Printable
 66#!#B#!#Printable
 67#!#C#!#Printable
@@ -508,7 +511,7 @@ int#!#text#!#varchar
 ~~END~~
 
 ~~START~~
-int#!#int#!#text#!#text#!#varchar
+int#!#int#!#varchar#!#varchar#!#varchar
 65#!#97#!#A#!#a#!#Equal
 ~~END~~
 
@@ -546,12 +549,12 @@ GO
 SELECT * FROM char_t3;
 GO
 ~~START~~
-int#!#int#!#text#!#int#!#varchar
+int#!#int#!#varchar#!#int#!#varchar
 1#!#65#!#A#!#0#!#Uppercase
 2#!#97#!#a#!#0#!#Lowercase
 3#!#48#!#0#!#0#!#Digit
 4#!#32#!# #!#1#!#Other
-5#!#9#!#	#!#0#!#Other
+5#!#9#!#	#!#1#!#Other
 ~~END~~
 
 
@@ -582,10 +585,7 @@ BEGIN CATCH
         ERROR_MESSAGE() AS ErrorMessage;
 END CATCH;
 GO
-~~START~~
-varchar#!#nvarchar
-Control character insert#!#new row for relation "char_t4" violates check constraint "char_chk_printable"
-~~END~~
+~~ROW COUNT: 1~~
 
 
 
@@ -618,3 +618,136 @@ GO
 DROP TYPE char_type_output;
 DROP TYPE char_type_varchar;
 GO
+
+select sys.char(255)
+select sys.char(256)
+select sys.char(105)
+select sys.char(-1)
+select sys.char(0)
+select char(256)
+select .sys.char(256)
+select .sys.char(0)
+select .sys.char(-1)
+select .sys.char(255)
+GO
+~~START~~
+varchar
+ÿ
+~~END~~
+
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+~~START~~
+varchar
+i
+~~END~~
+
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+~~START~~
+varchar
+
+~~END~~
+
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+~~START~~
+varchar
+
+~~END~~
+
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+~~START~~
+varchar
+ÿ
+~~END~~
+
+-- Test with UDF named char in a schema other than sys
+CREATE SCHEMA test_schema;
+GO
+create function test_schema.char(@x int)
+returns integer as 
+BEGIN
+    return 1;
+END;
+GO
+select test_schema.char(255);
+GO
+~~START~~
+int
+1
+~~END~~
+
+select char(255);
+GO
+~~START~~
+varchar
+ÿ
+~~END~~
+
+select sys.char(0);
+GO
+~~START~~
+varchar
+
+~~END~~
+
+drop function test_schema.char;
+GO
+drop schema test_schema;
+go
+select char(200)
+go
+~~START~~
+varchar
+È
+~~END~~
+
+select [char](252)
+go
+~~START~~
+varchar
+ü
+~~END~~
+
+select [sys].[char](243)
+go
+~~START~~
+varchar
+ó
+~~END~~
+
+select Char(255);
+go
+~~START~~
+varchar
+ÿ
+~~END~~
+
+select ChAr(255)
+go
+~~START~~
+varchar
+ÿ
+~~END~~
+
+
+
