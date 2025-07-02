@@ -246,41 +246,39 @@ SELECT CAST(CHAR(9) AS date) AS tab_string_date;
 GO
 ~~START~~
 date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type date: "	")~~
+1900-01-01
+~~END~~
 
 
 SELECT CAST(CHAR(9) AS time) AS tab_string_time;
 GO
 ~~START~~
 time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type time: "	")~~
+00:00:00.0000000
+~~END~~
 
 
 DECLARE @d3 date;
 SET @d3 = CHAR(9);                     -- Tab
 SELECT @d3 AS tab;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type date: "	")~~
+~~START~~
+date
+1900-01-01
+~~END~~
 
 
 INSERT INTO test_empty_strings VALUES
 (3, CHAR(9), CHAR(9));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "dt" is of type date but expression is of type text)~~
+~~ROW COUNT: 1~~
 
 
 SELECT * FROM test_empty_strings WHERE id = 3;
 GO
 ~~START~~
 int#!#date#!#time
+3#!#1900-01-01#!#00:00:00.0000000
 ~~END~~
 
 
@@ -350,9 +348,8 @@ SELECT * FROM tab_space_dates_view;
 GO
 ~~START~~
 date#!#time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type date: "	")~~
+1900-01-01#!#00:00:00.0000000
+~~END~~
 
 
 -- support for char/nchar casts to date/time
