@@ -737,19 +737,46 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 				MemoryContextSwitchTo(oldcxt);
 			}
 
+			/* Handle the scalar value case for insert exec as well */
 			if (estate.insert_exec)
 			{
-				/* Verify if the check for estate.rettype is required here */
-				get_typlenbyval(estate.rettype, &typLen, &typByVal);
-
 				oldcontext = MemoryContextSwitchTo(estate.func->fn_cxt);
 
-				/* Pass-by-reference, need to copy the data */
-				execute_call_insert_exec_retval = datumCopy(estate.retval,
-															typByVal,
-															typLen);
-
+				if (OidIsValid(estate.rettype))
+				{
+					get_typlenbyval(estate.rettype, &typLen, &typByVal);
+					
+					if (typByVal)
+					{
+						execute_call_insert_exec_retval = estate.retval;
+					}
+					else
+					{
+						/* Pass-by-reference, need to copy the data */
+						execute_call_insert_exec_retval = datumCopy(estate.retval,
+																	typByVal,
+																	typLen);
+					}
+				}
+				else
+				{
+					/* For cases where rettype is not properly set, handle gracefully */
+					typLen = -1;    /* Variable length */
+					typByVal = false; /* Pass by reference */
+					
+					/* Only proceed if we have a valid return value */
+					if (estate.retval != (Datum) 0)
+					{
+						execute_call_insert_exec_retval = estate.retval;
+					}
+					else
+					{
+						/* Skip the exec_move_row_from_datum call entirely */
+						execute_call_insert_exec_retval = (Datum) 0;
+					}
+				}
 				MemoryContextSwitchTo(oldcontext);
+
 			}
 
 			estate.retval = (Datum) 0;
@@ -5049,7 +5076,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		}
 
 		/* Update the output parameter */
-		if (stmt->insert_exec && stmt->target)
+		if (stmt->insert_exec && stmt->target && execute_call_insert_exec_retval != (Datum) 0)
 		{
 			exec_move_row_from_datum(estate, stmt->target, execute_call_insert_exec_retval);
 		}
