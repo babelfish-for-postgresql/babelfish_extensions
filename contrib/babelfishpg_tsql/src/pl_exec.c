@@ -4416,6 +4416,25 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 			((*pltsql_plugin_ptr)->func_setup) (estate, func);
 	}
 
+	/* Check for nested INSERT EXECUTE before adding to call stack */
+	if (estate->insert_exec)
+	{
+		/* Walk existing stack for any parent insert exec */
+		PLExecStateCallStack *cur = exec_state_call_stack;
+		while (cur != NULL)
+		{
+			/* Found parent insert exec */
+			if (cur->estate->insert_exec)
+			{
+				ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+			}
+			/* Proceed with no parent insert exec found */
+			cur = cur->next;
+		}
+	}
+
 	es_cs_entry = palloc(sizeof(PLExecStateCallStack));
 	es_cs_entry->estate = estate;
 	pltsql_init_exec_error_data(&(es_cs_entry->error_data));
