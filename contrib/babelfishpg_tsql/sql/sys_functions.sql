@@ -2072,7 +2072,7 @@ BEGIN
         IF date_arg_datatype IN ('sys.datetimeoffset'::regtype, 'sys.datetime2'::regtype) THEN
             -- Explicitly cast to datetimeoffset to validate
             -- This will throw an error if the timezone offset is invalid
-            datetimeoffset_value := sys.babelfish_conv_string_to_datetimeoffset('DATETIMEOFFSET', arg::TEXT);
+            datetimeoffset_value := arg::DATETIMEOFFSET;
             result := PG_CATALOG.RIGHT(datetimeoffset_value::PG_CATALOG.TEXT, 6);
         ELSE
             RAISE EXCEPTION 'The datepart tzoffset is not supported by date function datename for data type %.', date_arg_datatype;
@@ -2100,7 +2100,7 @@ BEGIN
     ELSIF dp = 'tzoffset'::text THEN
         -- Explicitly cast to datetimeoffset to validate
         -- This will throw an error if the timezone offset is invalid
-        datetimeoffset_value := sys.babelfish_conv_string_to_datetimeoffset('DATETIMEOFFSET', arg);
+        datetimeoffset_value := arg::datetimeoffset;
         result := PG_CATALOG.RIGHT(datetimeoffset_value::PG_CATALOG.TEXT, 6);
     ELSE
         result := sys.datepart(dp, arg)::TEXT;
