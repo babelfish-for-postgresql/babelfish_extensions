@@ -1218,6 +1218,7 @@ is_numeric_datatype(Oid typid)
 static int32
 get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
 {
+	/* FIX ME: Remove is_tsql_int_datatype and is_tsql_bigint_datatype once BABEL-5955 is fixed */
 	if (resulttype == INT4OID || (*common_utility_plugin_ptr->is_tsql_int_datatype)(resulttype))
 		return DEFAULT_INT_TYPMOD;
 	else if (resulttype == INT8OID || (*common_utility_plugin_ptr->is_tsql_bigint_datatype)(resulttype))

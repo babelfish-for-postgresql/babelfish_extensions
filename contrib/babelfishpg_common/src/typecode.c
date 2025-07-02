@@ -294,6 +294,8 @@ Oid			tsql_money_oid = InvalidOid;
 Oid			tsql_smallmoney_oid = InvalidOid;
 Oid			tsql_fixeddecimal_oid = InvalidOid;
 Oid			tsql_bit_oid = InvalidOid;
+
+/* FIX ME: Remove tsql_int_oid and tsql_bigint_oid once BABEL-5955 is fixed */
 Oid			tsql_int_oid = InvalidOid;
 Oid			tsql_bigint_oid = InvalidOid;
 
@@ -523,6 +525,7 @@ is_tsql_tinyint_datatype(Oid oid)
 	return tsql_tinyint_oid == oid;
 }
 
+/* FIX ME: Remove is_tsql_int_datatype and is_tsql_bigint_datatype once BABEL-5955 is fixed */
 bool
 is_tsql_int_datatype(Oid oid)
 {

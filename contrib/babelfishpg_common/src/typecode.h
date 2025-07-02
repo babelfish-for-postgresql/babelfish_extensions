@@ -112,6 +112,8 @@ extern bool is_tsql_sqlvariant_datatype(Oid oid);
 extern bool is_tsql_tinyint_datatype(Oid oid);
 extern bool is_tsql_money_datatype(Oid oid);
 extern bool is_tsql_smallmoney_datatype(Oid oid);
+
+/* FIX ME: Remove is_tsql_int_datatype and is_tsql_bigint_datatype once BABEL-5955 is fixed */
 extern bool is_tsql_int_datatype(Oid oid);
 extern bool is_tsql_bigint_datatype(Oid oid);
 
