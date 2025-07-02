@@ -737,15 +737,17 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 				MemoryContextSwitchTo(oldcxt);
 			}
 
-			/* Handle the scalar value case for insert exec as well */
+			/* Obtain output parameters for Insert Execute */
 			if (estate.insert_exec)
 			{
+				/* Switch to function's memory context */
 				oldcontext = MemoryContextSwitchTo(estate.func->fn_cxt);
 
 				if (OidIsValid(estate.rettype))
 				{
+					/* Get return type properties */
 					get_typlenbyval(estate.rettype, &typLen, &typByVal);
-					
+
 					if (typByVal)
 					{
 						execute_call_insert_exec_retval = estate.retval;
@@ -4649,9 +4651,9 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
 
 /*
  * setup_procedure_output_target_for_insert_exec - Create output target for INSERT EXECUTE
- * 
- * Constructs a PLtsql_row to capture output parameters from a procedure call
- * within an INSERT EXECUTE context.
+ *
+ * This is a helper to adapt logic from exec_stmt_call. It constructs a PLtsql_row to capture
+ * output parameters from a procedure call within an INSERT EXECUTE context.
  */
 static void
 setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
@@ -4670,13 +4672,17 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_s
     int i;
     ListCell *lc;
 
+	/* Early NULL checks */
+	if (!stmt || !stmt->sqlstmt || !stmt->sqlstmt->plan || !stmt->sqlstmt->plan->plancache_list)
+		return; /* Not a procedure call */
+
     /* Extract the CallStmt from the cached plan */
     cachedPlanSource = (CachedPlanSource *) linitial(stmt->sqlstmt->plan->plancache_list);
     node = linitial_node(Query, cachedPlanSource->query_list)->utilityStmt;
-    
+
     if (node == NULL || !IsA(node, CallStmt))
         return; /* Not a procedure call */
-        
+
     funcexpr = ((CallStmt *) node)->funcexpr;
 
     /* Look up the procedure in pg_proc */
@@ -4872,6 +4878,24 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * Set up ParamListInfo to pass to executor
 		 */
 		paramLI = setup_param_list(estate, expr);
+
+		/* Check for nested INSERT EXECUTE statements */
+		if (stmt->insert_exec)
+		{
+			/* Walk existing stack for any parent insert exec */
+			PLExecStateCallStack *cur = exec_state_call_stack;
+			while (cur != NULL)
+			{
+				/* Found parent insert exec - this is a nested INSERT EXECUTE */
+				if (cur->estate->insert_exec)
+				{
+					ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+				}
+				cur = cur->next;
+			}
+		}
 
 		/* Setup output target for procedure parameters */
 		if (stmt->insert_exec && stmt->target == NULL)
