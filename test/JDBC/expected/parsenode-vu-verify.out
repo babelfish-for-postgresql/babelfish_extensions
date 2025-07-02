@@ -1,0 +1,39 @@
+-- tsql
+select * from pnode_v3;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select * from pnode_v4;
+go
+~~START~~
+int
+6
+4
+2
+~~END~~
+
+
+select * from pnode_v5;
+go
+~~START~~
+int
+1
+1
+1
+~~END~~
+
+
+-- psql
+select pg_get_viewdef(oid) from pg_class where relname like '%pnode_v%' order by relname;
+go
+~~START~~
+text
+ SELECT master_dbo.pnode_f1() AS pnode_f1;
+ SELECT n<newline>   FROM master_dbo.pnode_f2() pnode_f2(n);
+ SELECT master_dbo.pnode_f1() AS pnode_f1<newline>   FROM master_dbo.pnode_f2() pnode_f2(n);
+~~END~~
+

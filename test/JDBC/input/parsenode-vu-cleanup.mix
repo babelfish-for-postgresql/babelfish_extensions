@@ -1,0 +1,16 @@
+-- tsql
+drop view pnode_v3;
+go
+
+drop view pnode_v4;
+go
+
+drop view pnode_v5;
+go
+
+drop function pnode_f1;
+go
+
+drop function pnode_f2;
+go
+

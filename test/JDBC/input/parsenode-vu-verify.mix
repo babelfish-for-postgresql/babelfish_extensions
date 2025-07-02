@@ -1,0 +1,13 @@
+-- tsql
+select * from pnode_v3;
+go
+
+select * from pnode_v4;
+go
+
+select * from pnode_v5;
+go
+
+-- psql
+select pg_get_viewdef(oid) from pg_class where relname like '%pnode_v%' order by relname;
+go

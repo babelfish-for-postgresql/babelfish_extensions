@@ -1,0 +1,15 @@
+-- tsql
+create function pnode_f1() returns int as begin return 1 end;
+go
+
+CREATE FUNCTION pnode_f2() RETURNS @t TABLE (n INT) AS BEGIN INSERT INTO @t SELECT 2 UNION SELECT 4 UNION SELECT 6; RETURN; END;
+go
+
+create view pnode_v3 as select pnode_f1();
+go
+
+create view pnode_v4 as select * from pnode_f2();
+go
+
+create view pnode_v5 as select pnode_f1() from pnode_f2();
+go
