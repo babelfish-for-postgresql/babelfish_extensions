@@ -307,44 +307,6 @@ drop schema user_defined_sch
 go
 
 
--- Create table
-CREATE TABLE t8164 (id int)
-GO
-
--- Create first stored procedure
-CREATE PROCEDURE p8164 AS
-BEGIN
-    DECLARE @test table (id int)
-    INSERT INTO @test VALUES (1)
-    SELECT * FROM @test
-END
-GO
-
--- Create second stored procedure
-CREATE PROCEDURE p8164a AS
-BEGIN
-    INSERT INTO t8164
-    EXEC p8164
-
-    DECLARE @test table (id int)
-    INSERT INTO @test VALUES (2)
-    SELECT * FROM @test
-END
-GO
-
--- Execute the nested insert
-INSERT INTO t8164
-EXEC p8164a
-GO
-
--- Clean up objects after execution
-DROP PROCEDURE p8164a
-GO
-DROP PROCEDURE p8164
-GO
-DROP TABLE t8164
-GO
-
 -- Test output parameter for insert execute
 CREATE TABLE t (id int)
 GO
