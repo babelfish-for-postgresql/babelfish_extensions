@@ -305,3 +305,314 @@ drop type user_defined_sch.test_tbl_type
 go
 drop schema user_defined_sch
 go
+
+
+-- Test output parameter for insert execute
+CREATE TABLE t (id int)
+GO
+
+CREATE PROCEDURE p (@output INT OUTPUT) AS
+    SET @output = 17
+    SELECT 18
+GO
+
+DECLARE @i INT
+INSERT INTO t EXEC p @output = @i OUTPUT
+SELECT @i
+GO
+
+SELECT * FROM t
+GO
+
+DECLARE @i INT
+INSERT INTO t EXEC p @output = @i OUTPUT
+SELECT @i
+GO
+
+SELECT * FROM t
+GO
+
+ALTER PROCEDURE p (@output INT OUTPUT) AS
+    SET @output = 100
+    SELECT 200
+GO
+
+DECLARE @i INT
+INSERT INTO t EXEC p @output = @i OUTPUT
+SELECT @i
+GO
+
+SELECT * FROM t
+GO
+
+DROP PROCEDURE p
+DROP TABLE t
+GO
+
+-- Test multiple output parameters
+CREATE TABLE test_multi (val1 int, val2 int)
+GO
+
+CREATE PROCEDURE sp_multi_out (@out1 INT OUTPUT, @out2 INT OUTPUT) AS
+    SET @out1 = 10
+    SET @out2 = 20
+    SELECT 5, 15
+GO
+
+DECLARE @a INT, @b INT
+INSERT INTO test_multi EXEC sp_multi_out @out1 = @a OUTPUT, @out2 = @b OUTPUT
+SELECT @a, @b
+GO
+
+SELECT * FROM test_multi
+GO
+
+-- Test varchar output parameter
+CREATE TABLE test_varchar (msg varchar(20))
+GO
+
+CREATE PROCEDURE sp_varchar_out (@msg VARCHAR(20) OUTPUT) AS
+    SET @msg = 'Hello'
+    SELECT 'World'
+GO
+
+DECLARE @s VARCHAR(20)
+INSERT INTO test_varchar EXEC sp_varchar_out @msg = @s OUTPUT
+SELECT @s
+GO
+
+SELECT * FROM test_varchar
+GO
+
+-- Test uninitialized output parameter (should be NULL)
+CREATE TABLE test_uninit (id int)
+GO
+
+CREATE PROCEDURE sp_uninit_out (@out INT OUTPUT) AS
+    SELECT 42
+GO
+
+DECLARE @u INT
+INSERT INTO test_uninit EXEC sp_uninit_out @out = @u OUTPUT
+SELECT @u
+GO
+
+SELECT * FROM test_uninit
+GO
+
+-- Test input and output parameters together
+CREATE TABLE test_in_out (result int)
+GO
+
+CREATE PROCEDURE sp_in_out (@input INT, @output INT OUTPUT) AS
+    SET @output = @input * 2
+    SELECT @input + 10
+GO
+
+DECLARE @out_val INT
+INSERT INTO test_in_out EXEC sp_in_out 5, @output = @out_val OUTPUT
+SELECT @out_val
+GO
+
+SELECT * FROM test_in_out
+GO
+
+-- Test conditional setting of output parameter
+CREATE TABLE test_conditional (flag int)
+GO
+
+CREATE PROCEDURE sp_conditional_out (@flag INT, @result INT OUTPUT) AS
+    IF @flag = 1
+        SET @result = 100
+    ELSE
+        SET @result = 200
+    SELECT @flag
+GO
+
+DECLARE @cond_result INT
+INSERT INTO test_conditional EXEC sp_conditional_out 1, @result = @cond_result OUTPUT
+SELECT @cond_result
+GO
+
+DECLARE @cond_result2 INT
+INSERT INTO test_conditional EXEC sp_conditional_out 0, @result = @cond_result2 OUTPUT
+SELECT @cond_result2
+GO
+
+SELECT * FROM test_conditional
+GO
+
+-- Cleanup additional test objects
+DROP PROCEDURE sp_multi_out
+DROP TABLE test_multi
+GO
+
+DROP PROCEDURE sp_varchar_out
+DROP TABLE test_varchar
+GO
+
+DROP PROCEDURE sp_uninit_out
+DROP TABLE test_uninit
+GO
+
+DROP PROCEDURE sp_in_out
+DROP TABLE test_in_out
+GO
+
+DROP PROCEDURE sp_conditional_out
+DROP TABLE test_conditional
+GO
+
+
+-- Test case for nested INSERT ... EXECUTE statements
+CREATE TABLE t8164(id int);
+GO
+
+CREATE PROC p8164 AS 
+    DECLARE @test table(id int) 
+    INSERT INTO @test values (1) 
+    SELECT * FROM @test;
+GO
+
+CREATE PROC p8164a AS 
+    INSERT INTO t8164 EXEC p8164 
+    DECLARE @test table(id int) 
+    INSERT INTO @test values (2) 
+    SELECT * FROM @test;
+GO
+
+-- Should fail with nested INSERT ... EXECUTE error
+INSERT INTO t8164 EXEC p8164a;
+GO
+
+-- Cleanup
+DROP PROCEDURE p8164a;
+GO
+DROP PROCEDURE p8164;
+GO
+DROP TABLE t8164;
+GO
+
+
+-- Test Case 1: Simple 2-level nesting (basic scenario)
+CREATE TABLE t_nest1(id int);
+CREATE TABLE t_nest2(id int);
+GO
+
+CREATE PROC p_inner AS 
+    SELECT 1 as id;
+GO
+
+CREATE PROC p_outer AS 
+    INSERT INTO t_nest1 EXEC p_inner; -- Nested INSERT EXEC
+    SELECT 2 as id;
+GO
+
+-- Should fail with nested INSERT EXECUTE error
+INSERT INTO t_nest2 EXEC p_outer;
+GO
+
+-- Cleanup
+DROP PROCEDURE p_outer;
+DROP PROCEDURE p_inner;
+DROP TABLE t_nest2;
+DROP TABLE t_nest1;
+GO
+
+-- Test Case 2: Table variable nesting
+CREATE TABLE t_var_nest(val int);
+GO
+
+CREATE PROC p_var_inner AS 
+    SELECT 100 as val;
+GO
+
+CREATE PROC p_var_outer AS 
+    DECLARE @temp table(val int);
+    INSERT INTO @temp EXEC p_var_inner; -- Nested with table variable
+    SELECT * FROM @temp;
+GO
+
+-- Should fail with nested INSERT EXECUTE error
+INSERT INTO t_var_nest EXEC p_var_outer;
+GO
+
+-- Cleanup
+DROP PROCEDURE p_var_outer;
+DROP PROCEDURE p_var_inner;
+DROP TABLE t_var_nest;
+GO
+
+-- Test Case 3: Transaction with nesting
+CREATE TABLE t_tran_nest(data int);
+GO
+
+CREATE PROC p_tran_inner AS 
+    SELECT 50 as data;
+GO
+
+CREATE PROC p_tran_outer AS 
+    BEGIN TRAN;
+    DECLARE @temp table(data int);
+    INSERT INTO @temp EXEC p_tran_inner; -- Nested in transaction
+    COMMIT;
+    SELECT * FROM @temp;
+GO
+
+-- Should fail with nested INSERT EXECUTE error
+INSERT INTO t_tran_nest EXEC p_tran_outer;
+GO
+
+-- Cleanup
+DROP PROCEDURE p_tran_outer;
+DROP PROCEDURE p_tran_inner;
+DROP TABLE t_tran_nest;
+GO
+
+-- Test Case 4: Parameter passing in nested calls
+CREATE TABLE t_param_nest(result int);
+GO
+
+CREATE PROC p_param_inner(@input int) AS 
+    SELECT @input * 2 as result;
+GO
+
+CREATE PROC p_param_outer(@value int) AS 
+    DECLARE @temp table(result int);
+    INSERT INTO @temp EXEC p_param_inner @value; -- Nested with parameters
+    SELECT * FROM @temp;
+GO
+
+-- Should fail with nested INSERT EXECUTE error
+INSERT INTO t_param_nest EXEC p_param_outer 10;
+GO
+
+-- Cleanup
+DROP PROCEDURE p_param_outer;
+DROP PROCEDURE p_param_inner;
+DROP TABLE t_param_nest;
+GO
+
+-- Test Case 5: Error propagation in nested calls
+CREATE TABLE t_err_nest(num int NOT NULL);
+GO
+
+CREATE PROC p_err_inner AS 
+    SELECT NULL as num; -- Will cause constraint violation
+GO
+
+CREATE PROC p_err_outer AS 
+    INSERT INTO t_err_nest EXEC p_err_inner; -- Should fail here
+    SELECT 1 as num;
+GO
+
+-- Should fail with both constraint violation and nested INSERT EXECUTE error
+DECLARE @err_temp table(num int);
+INSERT INTO @err_temp EXEC p_err_outer;
+GO
+
+-- Cleanup
+DROP PROCEDURE p_err_outer;
+DROP PROCEDURE p_err_inner;
+DROP TABLE t_err_nest;
+GO
