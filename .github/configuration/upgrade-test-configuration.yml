@@ -113,7 +113,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '14.19',
+      version: '14.20',
       upgrade-type: null
     },
     { 
@@ -173,7 +173,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 16.9,
+      version: 16.10,
       upgrade-type: null
     },
     { 
