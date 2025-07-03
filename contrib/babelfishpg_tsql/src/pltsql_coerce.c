@@ -2042,6 +2042,21 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				/* otherwise, result is RECORD or BOOLEAN, typmod is -1 */
 				return -1;
 			}
+		case T_SubPlan:
+			{
+				const SubPlan *subplan = (const SubPlan *) expr;
+
+				if (subplan->subLinkType == EXPR_SUBLINK ||
+					subplan->subLinkType == ARRAY_SUBLINK)
+				{
+					/* get the typmod of the subselect's first target column */
+					/* note we don't need to care if it's an array */
+					return subplan->firstColTypmod;
+				}
+				/* otherwise, result is RECORD or BOOLEAN, typmod is -1 */
+				if (found != NULL) *found = false;
+				return -1;
+			}
 			/* TODO handle more Expr types if needed */
 		default:
 			if (found != NULL) *found = false;
