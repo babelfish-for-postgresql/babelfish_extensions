@@ -2397,9 +2397,8 @@ SELECT CAST(CAST('' AS char) AS SMALLDATETIME); -- Negative
 GO
 ~~START~~
 smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type smalldatetime: "                              ")~~
+1900-01-01 00:00:00.0
+~~END~~
 
 
 -- varchar
@@ -2489,9 +2488,8 @@ SELECT CAST(CAST(N'' AS nchar) AS SMALLDATETIME); -- Negative
 GO
 ~~START~~
 smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type smalldatetime: "                              ")~~
+1900-01-01 00:00:00.0
+~~END~~
 
 
 -- nvarchar
@@ -2981,9 +2979,8 @@ SELECT dbo.TestSmallDateTimeFunction(CAST('' AS char));
 GO
 ~~START~~
 smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type smalldatetime: "                              ")~~
+1900-01-01 00:00:00.0
+~~END~~
 
 
 -- varchar
@@ -3094,9 +3091,8 @@ SELECT dbo.TestSmallDateTimeFunction(CAST(N'' AS nchar));
 GO
 ~~START~~
 smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type smalldatetime: "                              ")~~
+1900-01-01 00:00:00.0
+~~END~~
 
 
 -- nvarchar

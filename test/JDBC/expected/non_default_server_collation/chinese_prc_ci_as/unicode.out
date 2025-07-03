@@ -210,7 +210,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-<NULL>#!#9#!#10#!#13#!#27
+0#!#9#!#10#!#13#!#27
 ~~END~~
 
 
@@ -309,7 +309,7 @@ SELECT * FROM BlockCharacters;
 GO
 ~~START~~
 nvarchar#!#int#!#nvarchar#!#int
-Basic Latin#!#0#!#<NULL>#!#<NULL>
+Basic Latin#!#0#!##!#0
 Latin-1 Supplement#!#128#!##!#128
 Latin Extended-A#!#256#!#Ā#!#256
 Latin Extended-B#!#384#!#ƀ#!#384
@@ -412,7 +412,6 @@ int#!#nchar#!#nvarchar#!#int#!#int#!#varchar#!#nvarchar#!#nvarchar
 
 ~~START~~
 int#!#nvarchar#!#int#!#int#!#int#!#nvarchar#!#varchar
-8#!##!#0#!#0#!#0#!#<NULL>#!#Fail
 ~~END~~
 
 

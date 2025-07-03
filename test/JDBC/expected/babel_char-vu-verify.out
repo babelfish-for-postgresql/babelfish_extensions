@@ -37,12 +37,12 @@ select nchar(0x10FFFF);
 GO
 ~~START~~
 nvarchar
-􏿿
+<NULL>
 ~~END~~
 
 ~~START~~
 nvarchar
-􏿿
+<NULL>
 ~~END~~
 
 
@@ -59,6 +59,25 @@ nvarchar
 ~~START~~
 nvarchar
 <NULL>
+~~END~~
+
+~~START~~
+nvarchar
+
+~~END~~
+
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+select sys.nchar(65535)
+select sys.nchar(65536)
+select sys.nchar(-1)
+GO
+~~START~~
+nvarchar
+￿
 ~~END~~
 
 ~~START~~

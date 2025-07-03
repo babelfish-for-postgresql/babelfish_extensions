@@ -208,10 +208,12 @@ collation_tests_mongolian
 collation_tests_polish
 column_domain_usage
 constraint_column_usage
+date_time_empty_input_tests
 dateadd_internal_df
 datediff_big
 datediff
 dateadd
+datename_tzoffset
 datepart
 datetime2fromparts-after-15-2
 fk_trigger_temp
@@ -631,6 +633,6 @@ Test_cast_binary_bytea
 numeric_money
 MONEY_OBJECT
 money_smallmoney
-bit_arith
+money_smallmoney_bit_dep_obj
 user_token-dep
 len

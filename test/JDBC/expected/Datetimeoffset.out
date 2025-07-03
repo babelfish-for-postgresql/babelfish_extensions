@@ -1975,9 +1975,10 @@ datetimeoffset
 
 SELECT CAST(CAST('' AS char) AS DATETIMEOFFSET);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type timestamp with time zone: "                              ")~~
+~~START~~
+datetimeoffset
+1900-01-01 00:00:00.0000000 +00:00
+~~END~~
 
 
 -- varchar
@@ -2068,9 +2069,10 @@ datetimeoffset
 
 SELECT CAST(CAST(N'' AS nchar) AS DATETIMEOFFSET);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type timestamp with time zone: "                              ")~~
+~~START~~
+datetimeoffset
+1900-01-01 00:00:00.0000000 +00:00
+~~END~~
 
 
 -- nvarchar

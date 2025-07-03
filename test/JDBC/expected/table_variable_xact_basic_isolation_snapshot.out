@@ -794,9 +794,10 @@ DECLARE @PseudoMatrix TABLE(location int identity primary key, c2 int)
 SELECT number, SUBSTRING(@FirstString,number,1) AS ch
     FROM numbers WHERE number <= LEN(@FirstString) union all Select 0, Char(0)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: null character not permitted)~~
+~~START~~
+int#!#nvarchar
+0#!#
+~~END~~
 
 
 DROP TABLE numbers
