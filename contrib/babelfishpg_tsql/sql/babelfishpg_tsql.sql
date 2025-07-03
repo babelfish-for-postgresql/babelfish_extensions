@@ -3766,8 +3766,8 @@ DECLARE @is_securityadmin BIT
 BEGIN
 
     SET @current_userid = suser_id();
-	SET @is_sysadmin = pg_has_role(@current_userid, cast('sysadmin' as text), 'MEMBER');
-	SET @is_securityadmin = pg_has_role(@current_userid, cast('securityadmin' as text), 'MEMBER');
+    SET @is_sysadmin = pg_has_role(@current_userid, cast('sysadmin' as text), 'MEMBER');
+    SET @is_securityadmin = pg_has_role(@current_userid, cast('securityadmin' as text), 'MEMBER');
 
     IF @is_securityadmin = 0 AND @is_sysadmin = 0 
     BEGIN
@@ -3897,7 +3897,7 @@ BEGIN
             LExt.orig_loginname = @input_loginname AND
 			(
                 @is_sysadmin = 1 OR
-				ISNULL(UExt.login_name, '') = '' OR
+                ISNULL(UExt.login_name, '') = '' OR
                 -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
                 EXISTS (
                     SELECT 1 
@@ -3927,9 +3927,9 @@ BEGIN
         WHERE 
             has_dbaccess(UExt2.database_name) = 1 AND
             LExt.orig_loginname = @input_loginname AND
-			(
+            (
                 @is_sysadmin = 1 OR
-				ISNULL(UExt2.login_name, '') = '' OR
+                ISNULL(UExt2.login_name, '') = '' OR
                 -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
                 EXISTS (
                     SELECT 1
