@@ -3760,23 +3760,28 @@ LANGUAGE pltsql
 AS $$
 DECLARE @input_loginname sys.sysname;
 DECLARE @current_username sys.nvarchar(128)
+DECLARE @current_userid Oid
 DECLARE @is_sysadmin BIT
+DECLARE @is_securityadmin BIT
 BEGIN
 
-    IF is_srvrolemember('securityadmin') = 0 
+    SET @current_userid = suser_id();
+	SET @is_sysadmin = pg_has_role(@current_userid, cast('sysadmin' as text), 'MEMBER');
+	SET @is_securityadmin = pg_has_role(@current_userid, cast('securityadmin' as text), 'MEMBER');
+
+    IF @is_securityadmin = 0 AND @is_sysadmin = 0 
     BEGIN
         RAISERROR('User does not have permission to perform this action.', 16, 1);
 		RETURN 0;
     END
 
     SET @current_username = LOWER(sys.suser_name());
-    SET @is_sysadmin = is_srvrolemember('sysadmin');
     
     IF @loginname IS NULL
     BEGIN    
         SELECT DISTINCT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-            CAST(CAST(Base.oid AS BIGINT) AS sys.varbinary(85)) AS SID,
+            CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
@@ -3806,7 +3811,7 @@ BEGIN
             has_dbaccess(UExt.database_name) = 1 AND
             (
                 @is_sysadmin = 1 OR
-                UExt.login_name = @current_username OR
+                LExt.orig_loginname = @current_username OR
                 ISNULL(UExt.login_name, '') = '' OR
                 -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
                 EXISTS (
@@ -3816,7 +3821,7 @@ BEGIN
                     INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
-                    WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin') 
+                    WHERE UExt1.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
                     AND UExt2.database_name = UExt.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
                     AND UExt2.login_name = @current_username
                 )
@@ -3838,7 +3843,7 @@ BEGIN
             has_dbaccess(UExt2.database_name) = 1 AND
             (
                 @is_sysadmin = 1 OR
-                UExt2.login_name = @current_username OR
+                LExt.orig_loginname = @current_username OR
                 ISNULL(UExt2.login_name, '') = '' OR
                 -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
                 EXISTS (
@@ -3848,11 +3853,12 @@ BEGIN
                     INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt3 ON PGR1.rolname = UExt3.rolname
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt4 ON PGR2.rolname = UExt4.rolname
-                    WHERE UExt3.orig_username IN ('db_securityadmin', 'db_accessadmin') 
+                    WHERE UExt3.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
                     AND UExt4.database_name = UExt2.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
                     AND UExt4.login_name = @current_username
                 )
             )
+		ORDER BY LoginName, DBName, UserName
     END
     ELSE
     BEGIN
@@ -3860,7 +3866,7 @@ BEGIN
 
         SELECT DISTINCT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-            CAST(CAST(Base.oid AS BIGINT) AS sys.varbinary(85)) AS SID,
+            CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
@@ -3888,7 +3894,23 @@ BEGIN
         WHERE UExt.type != 'R' AND  
             UExt.orig_username != 'guest' AND 
             has_dbaccess(UExt.database_name) = 1 AND
-            LExt.orig_loginname = @input_loginname
+            LExt.orig_loginname = @input_loginname AND
+			(
+                @is_sysadmin = 1 OR
+				ISNULL(UExt.login_name, '') = '' OR
+                -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
+                EXISTS (
+                    SELECT 1 
+                    FROM pg_catalog.pg_auth_members AS Authmbr
+                    INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+                    INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+                    INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
+                    INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
+                    WHERE UExt1.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
+                    AND UExt2.database_name = UExt.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
+                    AND UExt2.login_name = @current_username
+                )
+            )
         UNION
         SELECT
             CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
@@ -3904,7 +3926,24 @@ BEGIN
         LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt2.login_name, ''), Db.owner)
         WHERE 
             has_dbaccess(UExt2.database_name) = 1 AND
-            LExt.orig_loginname = @input_loginname
+            LExt.orig_loginname = @input_loginname AND
+			(
+                @is_sysadmin = 1 OR
+				ISNULL(UExt2.login_name, '') = '' OR
+                -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
+                EXISTS (
+                    SELECT 1
+                    FROM pg_catalog.pg_auth_members AS Authmbr
+                    INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+                    INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+                    INNER JOIN sys.babelfish_authid_user_ext AS UExt3 ON PGR1.rolname = UExt3.rolname
+                    INNER JOIN sys.babelfish_authid_user_ext AS UExt4 ON PGR2.rolname = UExt4.rolname
+                    WHERE UExt3.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
+                    AND UExt4.database_name = UExt2.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
+                    AND UExt4.login_name = @current_username
+                )
+            )
+		ORDER BY LoginName, DBName, UserName
     END;
 
     RETURN 0;
