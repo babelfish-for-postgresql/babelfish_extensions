@@ -1,4 +1,7 @@
 -- tsql
+set nocount on
+go
+-- tsql
 select is_srvrolemember('sysadmin', 'securityadmin')
 go
 ~~START~~

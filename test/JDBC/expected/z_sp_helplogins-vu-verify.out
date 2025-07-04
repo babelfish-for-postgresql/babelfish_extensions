@@ -53,6 +53,12 @@ GO
 alter login testloginindb1 with password = '12345678'
 GO
 
+alter login sp_helplogin_loginwithusermemberofdbowner with password = '12345678'
+GO
+
+alter login justanotherloginwithsecad with password = '12345678'
+GO
+
 -------- alter roles and add users and logins 
 alter role db_securityadmin add member userof_sp_helplogins_testlogin
 GO

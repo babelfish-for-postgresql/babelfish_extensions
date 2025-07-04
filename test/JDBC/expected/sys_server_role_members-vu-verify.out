@@ -1,5 +1,8 @@
 -- tsql
-SELECT * from sys_server_role_members_vu_prepare_view;
+SELECT * from sys_server_role_members_vu_prepare_view
+-- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+-- (justanotherloginwithsecad) created within z_sp_helplogins
+WHERE MemberPrincipalName NOT IN ('justanotherloginwithsecad');
 GO
 ~~START~~
 varchar#!#varchar
@@ -13,7 +16,10 @@ GO
 ALTER SERVER ROLE sysadmin ADD MEMBER sys_server_role_members_vu_prepare_login2;
 GO
 
-SELECT * from sys_server_role_members_vu_prepare_view;
+SELECT * from sys_server_role_members_vu_prepare_view
+-- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+-- (justanotherloginwithsecad) created within z_sp_helplogins
+WHERE MemberPrincipalName NOT IN ('justanotherloginwithsecad');
 GO
 ~~START~~
 varchar#!#varchar
@@ -26,7 +32,10 @@ sysadmin#!#sys_server_role_members_vu_prepare_login2
 ALTER SERVER ROLE sysadmin ADD MEMBER sys_server_role_members_vu_prepare_login3;
 GO
 
-SELECT * from sys_server_role_members_vu_prepare_view;
+SELECT * from sys_server_role_members_vu_prepare_view
+-- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+-- (justanotherloginwithsecad) created within z_sp_helplogins
+WHERE MemberPrincipalName NOT IN ('justanotherloginwithsecad');
 GO
 ~~START~~
 varchar#!#varchar
@@ -53,7 +62,10 @@ GO
 
 -- tsql user=sys_server_role_members_vu_prepare_without_sa  password=123
 
-SELECT * FROM sys_server_role_members_vu_prepare_view;
+SELECT * FROM sys_server_role_members_vu_prepare_view
+-- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+-- (justanotherloginwithsecad) created within z_sp_helplogins
+WHERE MemberPrincipalName NOT IN ('justanotherloginwithsecad');
 GO
 ~~START~~
 varchar#!#varchar
@@ -82,7 +94,10 @@ ALTER USER sys_server_role_members_vu_prepare_login1 PASSWORD '123';
 GO
 
 -- tsql user=sys_server_role_members_vu_prepare_login1 password=123
-SELECT * from sys_server_role_members_vu_prepare_view;
+SELECT * from sys_server_role_members_vu_prepare_view
+-- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+-- (justanotherloginwithsecad) created within z_sp_helplogins
+WHERE MemberPrincipalName NOT IN ('justanotherloginwithsecad');
 GO
 ~~START~~
 varchar#!#varchar
@@ -104,7 +119,10 @@ sysadmin#!#sys_server_role_members_vu_prepare_login3
 ~~END~~
 
 
-SELECT * FROM sys_server_role_members_vu_prepare_func();
+SELECT * FROM sys_server_role_members_vu_prepare_func()
+-- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+-- (justanotherloginwithsecad) created within z_sp_helplogins
+WHERE MemberPrincipalName NOT IN ('justanotherloginwithsecad');
 GO
 ~~START~~
 varchar#!#varchar
@@ -136,7 +154,10 @@ sysadmin#!#jdbc_user
 ~~END~~
 
 
-SELECT * FROM sys_server_role_members_vu_prepare_func();
+SELECT * FROM sys_server_role_members_vu_prepare_func()
+-- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+-- (justanotherloginwithsecad) created within z_sp_helplogins
+WHERE MemberPrincipalName NOT IN ('justanotherloginwithsecad');
 GO
 ~~START~~
 varchar#!#varchar
