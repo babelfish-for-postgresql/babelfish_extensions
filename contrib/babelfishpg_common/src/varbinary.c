@@ -68,6 +68,8 @@ PG_FUNCTION_INFO_V1(ncharvarbinary);
 PG_FUNCTION_INFO_V1(nvarcharbinary);
 PG_FUNCTION_INFO_V1(varbinaryvarchar);
 PG_FUNCTION_INFO_V1(varbinarynvarchar);
+PG_FUNCTION_INFO_V1(varbinarybpchar);
+PG_FUNCTION_INFO_V1(varbinarynchar);
 PG_FUNCTION_INFO_V1(varcharbinary);
 PG_FUNCTION_INFO_V1(bpcharbinary);
 PG_FUNCTION_INFO_V1(ncharbinary);
@@ -881,6 +883,165 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 	memcpy(rp, data, len);
 
 	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+varbinarynchar(PG_FUNCTION_ARGS)
+{
+	bytea *source = PG_GETARG_BYTEA_PP(0);
+	char *data = VARDATA_ANY(source);  // UTF-16LE input
+	BpChar *result;
+	char *encoded_result;
+	int encodedByteLen;
+	size_t len = VARSIZE_ANY_EXHDR(source);
+	int32 typmod = PG_GETARG_INT32(1);
+	int maxlen = typmod - VARHDRSZ;
+	StringInfoData buf;
+	char *paddedData = (char *) palloc0(len + 1);
+	MemoryContext ccxt = CurrentMemoryContext;
+ 
+	// Trim trailing null bytes
+	while (len > 0 && data[len - 1] == '\0')
+		len--;
+ 
+	// Copy and pad if length is odd (UTF-16LE must be even-length)
+	memcpy(paddedData, data, len);
+	if (len % 2 != 0)
+		len++;
+ 
+	// Enforce max UTF-16 code unit limit (in bytes)
+	if (!(maxlen < 0 || (len >> 1) <= maxlen))
+		len = maxlen << 1;
+ 
+	PG_TRY();
+	{
+		initStringInfo(&buf);
+		TsqlUTF16toUTF8StringInfo(&buf, paddedData, len);
+		encoded_result = buf.data;
+		encodedByteLen = buf.len;
+	}
+	PG_CATCH();
+	{
+		MemoryContext ectx = MemoryContextSwitchTo(ccxt);
+		ErrorData *errorData = CopyErrorData();
+		FlushErrorState();
+		MemoryContextSwitchTo(ectx);
+ 
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Failed to convert from data type varbinary to nchar, %s",
+						errorData->message)));
+	}
+	PG_END_TRY();
+ 
+	// Allocate and pad result as bpchar (fixed-length)
+	if (maxlen < 0 || encodedByteLen >= maxlen)
+	{
+		result = (BpChar *) palloc0(encodedByteLen + VARHDRSZ);
+		SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
+		memcpy(VARDATA(result), encoded_result, encodedByteLen);
+	}
+	else
+	{
+		result = (BpChar *) palloc0(maxlen + VARHDRSZ);
+		SET_VARSIZE(result, maxlen + VARHDRSZ);
+		memcpy(VARDATA(result), encoded_result, encodedByteLen);
+		memset(VARDATA(result) + encodedByteLen, ' ', maxlen - encodedByteLen);
+	}
+ 
+	pfree(buf.data);
+	pfree(paddedData);
+ 
+	PG_RETURN_BPCHAR_P(result);
+}
+ 
+ 
+Datum
+varbinarybpchar(PG_FUNCTION_ARGS)
+{
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source); // input is UTF-8 bytes
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	BpChar     *result;
+	char 	   *encoded_result;
+	int32		typmod = -1;
+	int32		maxlen = -1;
+	coll_info	collInfo;
+	int			encodedByteLen;
+	MemoryContext ccxt = CurrentMemoryContext;
+ 
+	/*
+	 * Check whether the typmod argument exists, so that we 
+	 * will not be reading any garbage values for typmod 
+	 * which might cause Invalid read such as BABEL-4475
+	 */
+	if (PG_NARGS() > 1)
+	{
+		typmod = PG_GETARG_INT32(1);
+		maxlen = typmod - VARHDRSZ;
+	}
+ 
+	/*
+	 * Allow trailing null bytes 
+	 * Its safe since multi byte UTF-8 does not contain 0x00 
+	 * This is needed since we implicity add trailing zeroes to 
+	 * binary type if input is less than binary(n)
+	 * ex: CAST(CAST('a' AS BINARY(10)) AS VARCHAR) should work
+	 * and not fail because of null byte
+	 */
+	while(len>0 && data[len-1] == '\0')
+		len -= 1;
+ 
+	/*
+	 * Cast the entire input binary data if maxlen is 
+	 * invalid or supplied data fits it
+	 * Else truncate it
+	 */
+	PG_TRY();
+	{
+		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+		if (maxlen < 0 || len <= maxlen)
+			encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
+		else
+			encoded_result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
+	}
+	PG_CATCH();
+	{
+		MemoryContext ectx;
+		ErrorData    *errorData;
+ 
+		ectx = MemoryContextSwitchTo(ccxt);
+		errorData = CopyErrorData();
+		FlushErrorState();
+		MemoryContextSwitchTo(ectx);
+ 
+		ereport(ERROR,
+			   (errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Failed to convert from data type varbinary to varchar, %s",
+				errorData->message)));
+	}
+	PG_END_TRY();
+ 
+	// Allocate and pad result as bpchar (fixed-length)
+	if (maxlen < 0 || encodedByteLen >= maxlen)
+	{
+		result = (BpChar *) palloc0(encodedByteLen + VARHDRSZ);
+		SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
+		memcpy(VARDATA(result), encoded_result, encodedByteLen);
+	}
+	else
+	{
+		result = (BpChar *) palloc0(maxlen + VARHDRSZ);
+		SET_VARSIZE(result, maxlen + VARHDRSZ);
+		memcpy(VARDATA(result), encoded_result, encodedByteLen);
+		memset(VARDATA(result) + encodedByteLen, ' ', maxlen - encodedByteLen);
+	}
+	if (encodedByteLen > 0)
+	{
+		pfree(encoded_result);
+	}
+ 
+	PG_RETURN_BPCHAR_P(result);
 }
 
 Datum

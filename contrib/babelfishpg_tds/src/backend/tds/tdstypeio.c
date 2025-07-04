@@ -2974,12 +2974,22 @@ TdsSendTypeChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 	maxLen = col->metaEntry.type2.maxSize;
 
-	if (unlikely(maxLen != actualLen))
-		elog(ERROR, "Number of bytes required for the field of char(n) does not match with max bytes specified of the field");
-
+	if (actualLen < maxLen)
+	{
+		char *paddedBuf = (char *) palloc(maxLen);
+		memcpy(paddedBuf, destBuf, actualLen);
+		memset(paddedBuf + actualLen, ' ', maxLen - actualLen);  // space-padding
+		pfree(destBuf);
+		destBuf = paddedBuf;
+		actualLen = maxLen;
+	}
+	else if (actualLen > maxLen)
+		elog(ERROR, "Number of bytes required for the field of char(n) exceeds max bytes specified");
+ 
 	if ((rc = TdsPutUInt16LE(actualLen)) == 0)
 		rc = TdsPutbytes(destBuf, actualLen);
-
+ 
+	pfree(destBuf);
 	pfree(buf);
 	return rc;
 }

@@ -10331,6 +10331,26 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
+-- ANYELEMENT
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN arg anyelement,
+                                                               IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+    IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype) THEN
+        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+    ELSE
+        RETURN CAST(arg AS sys.varbinary);
+    END IF;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
 -- sys.nchar
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(arg sys.nchar, try BOOLEAN, p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
@@ -10382,6 +10402,28 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
+
+-- ANYELEMENT
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg anyelement,
+                                                                IN try BOOL,
+                                                                IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_to_varbinary(arg, p_style);
+    ELSE
+        IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype) THEN
+            RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+        ELSE
+            RETURN CAST(arg AS sys.varbinary);
+        END IF;
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
 -------------------------------------------------------------------------------------------------------------
 
 -- conversion to datetime2

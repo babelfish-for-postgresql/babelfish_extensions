@@ -126,6 +126,16 @@ RETURNS sys.NVARCHAR
 AS 'babelfishpg_common', 'varbinarynvarchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.varbinarybpchar(sys.BBF_VARBINARY, integer, boolean)
+RETURNS sys.BPCHAR
+AS 'babelfishpg_common', 'varbinarybpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+ 
+CREATE OR REPLACE FUNCTION sys.varbinarynchar(sys.BBF_VARBINARY, integer, boolean)
+RETURNS sys.NCHAR
+AS 'babelfishpg_common', 'varbinarynchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.varbinaryvarchar(sys.BBF_VARBINARY, integer, boolean)
 RETURNS pg_catalog.VARCHAR
 AS 'babelfishpg_common', 'varbinaryvarchar'
