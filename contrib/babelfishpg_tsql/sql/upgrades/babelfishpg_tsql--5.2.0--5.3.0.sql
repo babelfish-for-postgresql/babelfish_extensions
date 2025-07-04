@@ -481,8 +481,9 @@ BEGIN
             UExt.orig_username != 'guest' AND 
             has_dbaccess(UExt.database_name) = 1 AND
             LExt.orig_loginname = @input_loginname AND
-			(
+            (
                 @is_sysadmin = 1 OR
+				LExt.orig_loginname = @current_username OR
                 ISNULL(UExt.login_name, '') = '' OR
                 -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
                 EXISTS (
@@ -515,6 +516,7 @@ BEGIN
             LExt.orig_loginname = @input_loginname AND
             (
                 @is_sysadmin = 1 OR
+				LExt.orig_loginname = @current_username OR
                 ISNULL(UExt2.login_name, '') = '' OR
                 -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
                 EXISTS (

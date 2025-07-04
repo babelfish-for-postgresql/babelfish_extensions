@@ -127,11 +127,15 @@ GO
 EXEC sp_helplogins
 GO
 
--- and even if we explicitly query for other logins with users, 
--- the corresponding users should not be visible
+-- we can query for the login which is currently connected 
+-- to the session and we WILL BE able to see the user for 
+-- that login
 -- ignore_columns 2
 EXEC sp_helplogins 'testloginwithsecurityadmin'
 GO
+
+-- HOWEVER if we explicitly query for other logins with users, 
+-- the corresponding users should not be visible
 -- ignore_columns 2
 EXEC sp_helplogins 'sp_helplogins_testlogin'
 GO
