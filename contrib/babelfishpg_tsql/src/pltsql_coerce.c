@@ -279,6 +279,8 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_varbinary", "nvarcharvarbinary", 'a', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_binary", "nvarcharbinary", 'a', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nchar", "sys", "bbf_varbinary", "ncharvarbinary", 'a', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nchar", "sys", "bbf_binary", "ncharbinary", 'a', 'f'},
 /*  fixeddecimal */
 	{PG_CAST_ENTRY, "sys", "fixeddecimal", "pg_catalog", "bpchar", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "fixeddecimal", "sys", "bpchar", NULL, 'i', 'f'},
@@ -525,6 +527,7 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	bool		isInt8ToMoney = false;
 	bool		isVarbinaryToNvarchar = false;
 	bool		isNvarchartoVarbinary = false;
+	bool		isNchartoVarbinary = false;
 
 	Oid			typeIds[2] = {sourceTypeId, targetTypeId};
 	Oid			UDT_sourceBaseType = InvalidOid;
@@ -597,6 +600,10 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[0]) && is_tsql_binary_family_datatype(typeIds[1]))
 		isNvarchartoVarbinary = true;
 
+	/* We've found NCHAR TO (bbf)(VAR)BINARY casting */
+	if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(typeIds[0]) && is_tsql_binary_family_datatype(typeIds[1]))
+	isNchartoVarbinary = true;
+
 	/* Perhaps the types are domains; if so, look at their base types */
 	if (!isSqlVariantCast)
 	{
@@ -605,7 +612,7 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 		 * source so that it can call the cast function which matches with the
 		 * exact types
 		 */
-		if (OidIsValid(sourceTypeId) && !isNvarchartoVarbinary)
+		if (OidIsValid(sourceTypeId) && !isNvarchartoVarbinary && !isNchartoVarbinary)
 			sourceTypeId = getBaseType(sourceTypeId);
 
 		/*

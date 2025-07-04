@@ -64,11 +64,13 @@ PG_FUNCTION_INFO_V1(rowversionvarbinary);
 PG_FUNCTION_INFO_V1(varcharvarbinary);
 PG_FUNCTION_INFO_V1(nvarcharvarbinary);
 PG_FUNCTION_INFO_V1(bpcharvarbinary);
+PG_FUNCTION_INFO_V1(ncharvarbinary);
 PG_FUNCTION_INFO_V1(nvarcharbinary);
 PG_FUNCTION_INFO_V1(varbinaryvarchar);
 PG_FUNCTION_INFO_V1(varbinarynvarchar);
 PG_FUNCTION_INFO_V1(varcharbinary);
 PG_FUNCTION_INFO_V1(bpcharbinary);
+PG_FUNCTION_INFO_V1(ncharbinary);
 PG_FUNCTION_INFO_V1(varcharrowversion);
 PG_FUNCTION_INFO_V1(bpcharrowversion);
 PG_FUNCTION_INFO_V1(int2varbinary);
@@ -881,6 +883,65 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(result);
 }
 
+Datum
+ncharvarbinary(PG_FUNCTION_ARGS)
+{
+    BpChar *source = PG_GETARG_BPCHAR_PP(0);
+    char *data = VARDATA_ANY(source);   // This holds UTF-8 encoded bytes
+    size_t len = VARSIZE_ANY_EXHDR(source);
+    int32 typmod = PG_GETARG_INT32(1);
+    bool isExplicit = PG_GETARG_BOOL(2);
+    int32 maxlen;
+    bytea *result;
+    StringInfoData buf;
+    MemoryContext ccxt = CurrentMemoryContext;
+ 
+    if (!isExplicit)
+        ereport(ERROR,
+                (errcode(ERRCODE_DATATYPE_MISMATCH),
+                 errmsg("Implicit conversion from data type nchar to varbinary is not allowed. Use the CONVERT function to run this query.")));
+ 
+    initStringInfo(&buf);
+ 
+    PG_TRY();
+    {
+        /*
+         * Convert the input UTF-8 bytes inside sys.nchar (BpChar) to UTF-16
+         * using the existing helper TsqlUTF8toUTF16StringInfo.
+         */
+        TsqlUTF8toUTF16StringInfo(&buf, data, len);
+    }
+    PG_CATCH();
+    {
+        MemoryContext ectx = MemoryContextSwitchTo(ccxt);
+        ErrorData *errorData = CopyErrorData();
+        FlushErrorState();
+        MemoryContextSwitchTo(ectx);
+ 
+        ereport(ERROR,
+                (errcode(ERRCODE_INTERNAL_ERROR),
+                 errmsg("Failed to convert from data type nchar to varbinary, %s",
+                        errorData->message)));
+    }
+    PG_END_TRY();
+ 
+    if (typmod < (int32) VARHDRSZ)
+        maxlen = buf.len;
+    else
+        maxlen = typmod - VARHDRSZ;
+ 
+    if (buf.len > maxlen)
+        buf.len = maxlen;
+ 
+    result = (bytea *) palloc0(buf.len + VARHDRSZ);
+    SET_VARSIZE(result, buf.len + VARHDRSZ);
+    memcpy(VARDATA(result), buf.data, buf.len);
+ 
+    pfree(buf.data);
+ 
+    PG_RETURN_BYTEA_P(result);
+}
+
 /*
  * This function is currently being called with 1 and 3 arguments,
  * Currently, the third argument is not being parsed in this function, 
@@ -1150,6 +1211,65 @@ bpcharbinary(PG_FUNCTION_ARGS)
 	/* NULL pad the rest of the space */
 	memset(rp + len, '\0', maxlen - len);
 	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+ncharbinary(PG_FUNCTION_ARGS)
+{
+    BpChar *source = PG_GETARG_BPCHAR_PP(0);
+    char *utf8_data = VARDATA_ANY(source);
+    int32 utf8_len = VARSIZE_ANY_EXHDR(source);
+    int32 typmod = PG_GETARG_INT32(1);
+    bool isExplicit = PG_GETARG_BOOL(2);
+    int32 max_bytes;      // target fixed length in bytes
+    bytea *result;
+    StringInfoData utf16_buf;
+    int32 copy_len;
+ 
+    if (!isExplicit)
+        ereport(ERROR,
+                (errcode(ERRCODE_DATATYPE_MISMATCH),
+                 errmsg("Implicit conversion from data type nchar to binary is not allowed. Use explicit CAST.")));
+ 
+    // Convert UTF-8 input to UTF-16LE bytes
+    initStringInfo(&utf16_buf);
+ 
+    PG_TRY();
+    {
+        TsqlUTF8toUTF16StringInfo(&utf16_buf, utf8_data, utf8_len);
+    }
+    PG_CATCH();
+    {
+        MemoryContext oldctx = MemoryContextSwitchTo(CurrentMemoryContext);
+        ErrorData *errdata = CopyErrorData();
+        FlushErrorState();
+        MemoryContextSwitchTo(oldctx);
+ 
+        ereport(ERROR,
+                (errcode(ERRCODE_INTERNAL_ERROR),
+                 errmsg("Failed to convert nchar to binary: %s", errdata->message)));
+    }
+    PG_END_TRY();
+ 
+    // Determine max bytes from typmod
+    if (typmod < (int32) VARHDRSZ)
+        max_bytes = utf16_buf.len;  // no fixed length specified, use actual length
+    else
+        max_bytes = typmod - VARHDRSZ;
+ 
+    // Truncate or pad
+    copy_len = (utf16_buf.len > max_bytes) ? max_bytes : utf16_buf.len;
+ 
+    // Allocate fixed-length binary result
+    result = (bytea *) palloc0(max_bytes + VARHDRSZ);  // palloc0 to zero-fill padding
+    SET_VARSIZE(result, max_bytes + VARHDRSZ);
+ 
+    // Copy converted bytes
+    memcpy(VARDATA(result), utf16_buf.data, copy_len);
+ 
+    pfree(utf16_buf.data);
+ 
+    PG_RETURN_BYTEA_P(result);
 }
 
 Datum
