@@ -407,9 +407,19 @@ BEGIN
                     INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
+                    LEFT JOIN sys.babelfish_authid_login_ext AS LExt ON LExt.rolname = UExt2.login_name
                     WHERE UExt1.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
                     AND UExt2.database_name = UExt.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
-                    AND UExt2.login_name = @current_username
+                    AND (
+                        (UExt2.type IN ('S', 'R') AND UExt2.login_name = @current_username) OR
+                        -- Babelfish stores login information differently depending on the type of login:
+                        -- - For SQL Server logins (type = 'S') and roles (type = 'R'), the `login_name` in UExt4
+                        --   directly matches the current username (`@current_username`).
+                        -- - For Windows logins (type = 'U'), Babelfish maps the Windows account to an internal role 
+                        --   and stores the original Windows login in `LExt.orig_loginname` instead of `UExt4.login_name`.
+                        --   eg. for login gad\user it is mapped to user@GAD.COM in bbf_user catalog
+                        (UExt2.type = 'U' AND LExt.orig_loginname = @current_username)
+                    )
                 )
             )
         UNION
@@ -439,9 +449,19 @@ BEGIN
                     INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt3 ON PGR1.rolname = UExt3.rolname
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt4 ON PGR2.rolname = UExt4.rolname
+                    LEFT JOIN sys.babelfish_authid_login_ext AS LExt ON LExt.rolname = UExt4.login_name
                     WHERE UExt3.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
                     AND UExt4.database_name = UExt2.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
-                    AND UExt4.login_name = @current_username
+                    AND (
+                        (UExt4.type IN ('S', 'R') AND UExt4.login_name = @current_username) OR
+                        -- Babelfish stores login information differently depending on the type of login:
+                        -- - For SQL Server logins (type = 'S') and roles (type = 'R'), the `login_name` in UExt4
+                        --   directly matches the current username (`@current_username`).
+                        -- - For Windows logins (type = 'U'), Babelfish maps the Windows account to an internal role 
+                        --   and stores the original Windows login in `LExt.orig_loginname` instead of `UExt4.login_name`.
+                        --   eg. for login gad\user it is mapped to user@GAD.COM in bbf_user catalog                        
+                        (UExt4.type = 'U' AND LExt.orig_loginname = @current_username)
+                    )
                 )
             )
 		ORDER BY LoginName, DBName, UserName
@@ -493,9 +513,19 @@ BEGIN
                     INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
+                    LEFT JOIN sys.babelfish_authid_login_ext AS LExt ON LExt.rolname = UExt2.login_name
                     WHERE UExt1.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
                     AND UExt2.database_name = UExt.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
-                    AND UExt2.login_name = @current_username
+                    AND (
+                        (UExt2.type IN ('S', 'R') AND UExt2.login_name = @current_username) OR
+                        -- Babelfish stores login information differently depending on the type of login:
+                        -- - For SQL Server logins (type = 'S') and roles (type = 'R'), the `login_name` in UExt4
+                        --   directly matches the current username (`@current_username`).
+                        -- - For Windows logins (type = 'U'), Babelfish maps the Windows account to an internal role 
+                        --   and stores the original Windows login in `LExt.orig_loginname` instead of `UExt4.login_name`.
+                        --   eg. for login gad\user it is mapped to user@GAD.COM in bbf_user catalog
+                        (UExt2.type = 'U' AND LExt.orig_loginname = @current_username)
+                    )
                 )
             )
         UNION
@@ -526,9 +556,19 @@ BEGIN
                     INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt3 ON PGR1.rolname = UExt3.rolname
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt4 ON PGR2.rolname = UExt4.rolname
+                    LEFT JOIN sys.babelfish_authid_login_ext AS LExt ON LExt.rolname = UExt4.login_name
                     WHERE UExt3.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
                     AND UExt4.database_name = UExt2.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
-                    AND UExt4.login_name = @current_username
+                    AND (
+                        (UExt4.type IN ('S', 'R') AND UExt4.login_name = @current_username) OR
+                        -- Babelfish stores login information differently depending on the type of login:
+                        -- - For SQL Server logins (type = 'S') and roles (type = 'R'), the `login_name` in UExt4
+                        --   directly matches the current username (`@current_username`).
+                        -- - For Windows logins (type = 'U'), Babelfish maps the Windows account to an internal role 
+                        --   and stores the original Windows login in `LExt.orig_loginname` instead of `UExt4.login_name`.
+                        --   eg. for login gad\user it is mapped to user@GAD.COM in bbf_user catalog
+                        (UExt4.type = 'U' AND LExt.orig_loginname = @current_username)
+                    )	
                 )
             )
 		ORDER BY LoginName, DBName, UserName
