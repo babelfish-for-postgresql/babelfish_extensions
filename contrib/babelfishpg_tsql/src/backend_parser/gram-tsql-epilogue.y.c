@@ -261,8 +261,7 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 		 */
 		result = makeTypeCast(helperFuncCall, typename, location);
 	}
-	else if ((strcmp(typename_string, "varchar") == 0) || (strcmp(typename_string, "nvarchar") == 0) ||
-				(strcmp(typename_string, "bpchar") == 0) || (strcmp(typename_string, "nchar") == 0))
+	else if ((strcmp(typename_string, "varchar") == 0) || (strcmp(typename_string, "bpchar") == 0))
 	{
 		Node	   *helperFuncCall;
 
@@ -270,6 +269,19 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 		args = lcons(makeStringConst(typename_string, typename->location), args);
 		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varchar"), args, COERCE_EXPLICIT_CALL, location);
 
+		/*
+		 * BABEL-1661, add a type cast on top of the CONVERT helper function
+		 * so typmod can be applied
+		 */
+		result = makeTypeCast(helperFuncCall, typename, location);
+	}
+	else if ((strcmp(typename_string, "nvarchar") == 0) || (strcmp(typename_string, "nchar") == 0))
+	{
+		Node	   *helperFuncCall;
+		typename_string = format_type_extended(typenameTypeId(NULL, makeTypeName("nvarchar")), typmod, FORMAT_TYPE_TYPEMOD_GIVEN);
+		args = lcons(makeStringConst(typename_string, typename->location), args);
+		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_nvarchar"), args, COERCE_EXPLICIT_CALL, location);
+ 
 		/*
 		 * BABEL-1661, add a type cast on top of the CONVERT helper function
 		 * so typmod can be applied
@@ -427,6 +439,42 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
 			typmod = 6;
 
 		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_datetime2"), list_make2(arg, makeIntConst(typmod, location)), COERCE_EXPLICIT_CALL, location);
+	}
+	else if ((strcmp(typename_string, "varchar") == 0) || (strcmp(typename_string, "bpchar") == 0))
+	{
+		List	   *args;
+		Node	   *helperFuncCall;
+		/* For handling try boolean logic on babelfishpg_tsql side */
+		Node	   *try_const = makeBoolAConst(true, location);
+		args = list_make2(arg, try_const);
+ 
+		typename_string = format_type_extended(VARCHAROID, typmod, FORMAT_TYPE_TYPEMOD_GIVEN);
+		args = lcons(makeStringConst(typename_string, typename->location), args);
+		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varchar"), args, COERCE_EXPLICIT_CALL, location);
+ 
+		/*
+		 * BABEL-1661, add a type cast on top of the CONVERT helper function
+		 * so typmod can be applied
+		 */
+		result = makeTypeCast(helperFuncCall, typename, location);
+	}
+	else if ((strcmp(typename_string, "nvarchar") == 0) || (strcmp(typename_string, "nchar") == 0))
+	{
+		List	   *args;
+		Node	   *helperFuncCall;
+		/* For handling try boolean logic on babelfishpg_tsql side */
+		Node	   *try_const = makeBoolAConst(true, location);
+		args = list_make2(arg, try_const);
+		
+		typename_string = format_type_extended(typenameTypeId(NULL, makeTypeName("nvarchar")), typmod, FORMAT_TYPE_TYPEMOD_GIVEN);
+		args = lcons(makeStringConst(typename_string, typename->location), args);
+		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_nvarchar"), args, COERCE_EXPLICIT_CALL, location);
+ 
+		/*
+		 * BABEL-1661, add a type cast on top of the CONVERT helper function
+		 * so typmod can be applied
+		 */
+		result = makeTypeCast(helperFuncCall, typename, location);
 	}
 	else
 	{
