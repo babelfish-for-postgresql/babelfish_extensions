@@ -97,13 +97,16 @@ CREATE OPERATOR sys.+ (
     FUNCTION = sys.babelfish_concat_wrapper
 );
 
-create or replace function sys.CHAR(x in int)returns char
+create or replace function sys.cht_(x in int) returns sys.varchar
 AS
 $body$
 BEGIN
 /***************************************************************
 EXTENSION PACK function CHAR(x)
 ***************************************************************/
+    if x = 0 then 
+        return ('\x00'::bytea)::sys.varbinary;
+    end if;
     if x between 1 and 255 then
         return chr(x);
     else
@@ -111,14 +114,17 @@ EXTENSION PACK function CHAR(x)
     end if;
 END;
 $body$
-language plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.nchar(IN x INTEGER) RETURNS sys.nvarchar
+CREATE OR REPLACE FUNCTION sys.ncht_(x in int) RETURNS sys.nvarchar
 AS
 $body$
 BEGIN
-    --- 1114111 is 0x10FFFF - max value permitted as specified by documentation
-    if x between 1 and 1114111 then
+    if x = 0 then 
+        return ('\x00'::bytea)::sys.varbinary;
+    end if;
+    --- 65535 is 0x0000FFFF - max value permitted as specified by documentation without SC collation
+    if x between 1 and 65535 then
         return(select chr(x))::sys.nvarchar;
     else
         return null;
@@ -127,16 +133,3 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.nchar(IN x varbinary) RETURNS sys.nvarchar
-AS
-$body$
-BEGIN
-    --- 1114111 is 0x10FFFF - max value permitted as specified by documentation
-    if x::integer between 1 and 1114111 then
-        return(select chr(x::integer))::sys.nvarchar;
-    else
-        return null;
-    end if;
-END;
-$body$
-LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

@@ -16,3 +16,7 @@ select nchar(0x110000);
 select nchar(0);
 select nchar(-1);
 GO
+select sys.nchar(65535)
+select sys.nchar(65536)
+select sys.nchar(-1)
+GO

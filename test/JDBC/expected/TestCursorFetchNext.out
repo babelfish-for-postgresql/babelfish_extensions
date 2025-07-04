@@ -66,6 +66,44 @@ int#!#smallint#!#bigint#!#tinyint#!#bit
 #cursor#!#fetch#!#next
 cursor#!#close
 ~~SUCCESS~~
+cursor#!#open#!#SELECT a year, b month, c quarter FROM test_cursors_fetch_next#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+cursor#!#fetch#!#next
+~~START~~
+int#!#smallint#!#bigint
+0#!#0#!#0
+~~END~~
+
+cursor#!#fetch#!#first
+~~START~~
+int#!#smallint#!#bigint
+0#!#0#!#0
+~~END~~
+
+cursor#!#fetch#!#next
+~~START~~
+int#!#smallint#!#bigint
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+cursor#!#fetch#!#last
+~~START~~
+int#!#smallint#!#bigint
+211234#!#9780#!#891372401
+~~END~~
+
+cursor#!#close
+~~SUCCESS~~
+cursor#!#open#!#DECLARE @var INT; select @var = 5; select @var + 1;#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+cursor#!#fetch#!#next
+~~START~~
+int
+6
+~~END~~
+
+cursor#!#close
+~~SUCCESS~~
 DROP TABLE test_cursors_fetch_next
 
 CREATE TABLE test_cursors_fetch_next(a CHAR(30), b VARCHAR(30), c NCHAR(30), d NVARCHAR(30));

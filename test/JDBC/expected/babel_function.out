@@ -89,6 +89,13 @@ varchar
 
 -- test CONVERT function
 -- Conversion between varchar and date/time/datetime
+select CONVERT(varchar(30), CAST('' AS date), 102);
+GO
+~~START~~
+varchar
+1900.01.01
+~~END~~
+
 select CONVERT(varchar(30), CAST('2017-08-25' AS date), 102);
 GO
 ~~START~~
@@ -265,6 +272,13 @@ int
 
 -- test TRY_CONVERT function
 -- Conversion between different types and varchar
+select TRY_CONVERT(varchar(30), CAST('' AS date), 102);
+GO
+~~START~~
+varchar
+1900.01.01
+~~END~~
+
 select TRY_CONVERT(varchar(30), CAST('2017-08-25' AS date), 102);
 GO
 ~~START~~
@@ -1032,6 +1046,13 @@ GO
 
 ~~ERROR (Message: The datepart iso_week is not supported by date function datepart for data type time.)~~
 
+select datepart(day, cast('' as date));
+GO
+~~START~~
+int
+1
+~~END~~
+
 select datepart(hour, cast('2016-12-26' as date));
 GO
 ~~START~~
@@ -1434,6 +1455,13 @@ GO
 ~~START~~
 int
 46
+~~END~~
+
+select datediff(year, CAST('1900-01-01'AS date), CAST(''AS date));
+GO
+~~START~~
+int
+0
 ~~END~~
 
 select datediff(year, CAST('2037-03-01'AS date), CAST('2036-02-28'AS date));
@@ -2146,6 +2174,13 @@ int
 1
 ~~END~~
 
+select DAY(CAST('' AS date));
+GO
+~~START~~
+int
+1
+~~END~~
+
 select DAY(CAST('2037-03-01 23:30:05.523' AS sys.datetime));
 GO
 ~~START~~
@@ -2222,6 +2257,13 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The datepart year is not supported by date function datepart for data type time.)~~
+
+select YEAR(CAST('' AS date));
+GO
+~~START~~
+int
+1900
+~~END~~
 
 select YEAR(CAST('2037-03-01' AS date));
 GO

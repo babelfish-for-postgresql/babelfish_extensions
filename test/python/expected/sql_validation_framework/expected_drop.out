@@ -47,6 +47,7 @@ Unexpected drop found for function sys.babelfish_update_server_collation_name in
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.9.0--4.0.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.10.0--4.0.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.11.0--4.0.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.12.0--4.0.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--4.0.0--4.1.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--4.1.0--4.2.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--4.2.0--4.3.0.sql
@@ -66,6 +67,7 @@ Unexpected drop found for procedure sys.babelfish_drop_deprecated_function in fi
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_function in file babelfishpg_tsql--2.1.0--2.2.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfish_common_helper--4.0.0--4.1.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfish_common_helper--4.3.0--4.4.0.sql
+Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfish_common_helper--4.6.0--4.7.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--2.0.0--2.1.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--2.2.0--2.3.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--2.3.0--2.4.0.sql

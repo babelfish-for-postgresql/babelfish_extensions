@@ -895,6 +895,144 @@ CREATE OR REPLACE FUNCTION sys.len(expr sys.BBF_BINARY) RETURNS INTEGER AS
 STRICT
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+-- CAST and related functions.
+CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_smallint(IN arg ANYELEMENT)
+RETURNS SMALLINT
+AS $BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+BEGIN
+    arg_datatype_oid := pg_typeof(arg)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    CASE arg_datatype
+        WHEN 'numeric', 'double precision', 'real', 'decimal', 'float' THEN
+            RETURN CAST(TRUNC(arg) AS SMALLINT);
+        WHEN 'money', 'smallmoney' THEN
+            RETURN CAST(ROUND(arg) AS BIGINT);
+        ELSE
+            RETURN CAST(arg AS SMALLINT);
+    END CASE;
+END; $BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_int(IN arg ANYELEMENT)
+RETURNS INT
+AS $BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+BEGIN
+    arg_datatype_oid := pg_typeof(arg)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    CASE arg_datatype
+        WHEN 'numeric', 'double precision', 'real', 'decimal', 'float' THEN
+            RETURN CAST(TRUNC(arg) AS INT);
+        WHEN 'money', 'smallmoney' THEN
+            RETURN CAST(ROUND(arg) AS BIGINT);
+        ELSE
+            RETURN CAST(arg AS INT);
+    END CASE;
+END; $BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_bigint(IN arg ANYELEMENT)
+RETURNS BIGINT
+AS $BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+BEGIN
+    arg_datatype_oid := pg_typeof(arg)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    CASE arg_datatype
+        WHEN 'numeric', 'double precision', 'real', 'decimal', 'float' THEN
+            RETURN CAST(TRUNC(arg) AS BIGINT);
+        WHEN 'money', 'smallmoney' THEN
+            RETURN CAST(ROUND(arg) AS BIGINT);
+        ELSE
+            RETURN CAST(arg AS BIGINT);
+    END CASE;
+END; $BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg anyelement) RETURNS TEXT AS 
+$BODY$
+DECLARE
+    date_arg_datatype regtype;
+    result TEXT;
+    datetimeoffset_value sys.datetimeoffset;
+BEGIN
+    date_arg_datatype := pg_typeof(arg);
+
+    IF dp = 'month'::text THEN
+        result := to_char(arg::sys.DATETIME, 'TMMonth');
+    -- '1969-12-28' is a Sunday
+    ELSIF dp = 'dow'::text THEN
+        result := to_char(arg::sys.DATETIME, 'TMDay');
+    ELSIF dp = 'tzoffset'::text THEN
+        IF date_arg_datatype IN ('sys.datetimeoffset'::regtype, 'sys.datetime2'::regtype) THEN
+            -- Explicitly cast to datetimeoffset to validate
+            -- This will throw an error if the timezone offset is invalid
+            datetimeoffset_value := arg::DATETIMEOFFSET;
+            result := PG_CATALOG.RIGHT(datetimeoffset_value::PG_CATALOG.TEXT, 6);
+        ELSE
+            RAISE EXCEPTION 'The datepart tzoffset is not supported by date function datename for data type %.', date_arg_datatype;
+        END IF;
+    ELSE
+        result := sys.datepart(dp, arg)::TEXT;
+    END IF;
+    RETURN result;
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg TEXT) RETURNS TEXT AS
+$BODY$
+DECLARE
+    result TEXT;
+    datetimeoffset_value sys.datetimeoffset;
+BEGIN
+    IF dp = 'month'::text THEN
+        result := to_char(arg::date, 'TMMonth');
+    -- '1969-12-28' is a Sunday
+    ELSIF dp = 'dow'::text THEN
+        result := to_char(arg::date, 'TMDay');
+    ELSIF dp = 'tzoffset'::text THEN
+        -- Explicitly cast to datetimeoffset to validate
+        -- This will throw an error if the timezone offset is invalid
+        datetimeoffset_value := arg::datetimeoffset;
+        result := PG_CATALOG.RIGHT(datetimeoffset_value::PG_CATALOG.TEXT, 6);
+    ELSE
+        result := sys.datepart(dp, arg)::TEXT;
+    END IF;
+    RETURN result;
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

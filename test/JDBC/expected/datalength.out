@@ -467,9 +467,10 @@ int#!#int#!#int
 
 SELECT DATALENGTH(CHAR(0)) AS NullChar_Length
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: null character not permitted)~~
+~~START~~
+int
+0
+~~END~~
 
 
 -- 13. Collation Impact

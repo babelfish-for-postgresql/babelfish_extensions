@@ -87,9 +87,10 @@ nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 
 SELECT NCHAR(ASCII(CHAR(0))) AS NullChar
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+nvarchar
 
-~~ERROR (Message: null character not permitted)~~
+~~END~~
 
 
 -- 4. Special Characters Tests
@@ -127,15 +128,16 @@ SELECT
 GO
 ~~START~~
 nvarchar#!#nvarchar
-<NULL>#!#￿
+#!#￿
 ~~END~~
 
 
 SELECT NCHAR(NULL) AS ZeroCode
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+nvarchar
+<NULL>
+~~END~~
 
 
 -- 7. Error Cases
@@ -165,7 +167,7 @@ END CATCH;
 GO
 ~~START~~
 nvarchar
-𐀀
+<NULL>
 ~~END~~
 
 
@@ -386,9 +388,41 @@ SELECT NCHAR(generate_series) AS CyrillicChar
 FROM GENERATE_SERIES(0x0410, 0x042F)
 WHERE generate_series BETWEEN 0x0410 AND 0x042F;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+nvarchar
+А
+Б
+В
+Г
+Д
+Е
+Ж
+З
+И
+Й
+К
+Л
+М
+Н
+О
+П
+Р
+С
+Т
+У
+Ф
+Х
+Ц
+Ч
+Ш
+Щ
+Ъ
+Ы
+Ь
+Э
+Ю
+Я
+~~END~~
 
 
 -- 9. String Building with NCHAR
@@ -495,9 +529,41 @@ int#!#nvarchar#!#varchar
 
 SELECT * FROM nchar_v2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+bigint#!#nvarchar#!#int
+1040#!#А#!#1040
+1041#!#Б#!#1041
+1042#!#В#!#1042
+1043#!#Г#!#1043
+1044#!#Д#!#1044
+1045#!#Е#!#1045
+1046#!#Ж#!#1046
+1047#!#З#!#1047
+1048#!#И#!#1048
+1049#!#Й#!#1049
+1050#!#К#!#1050
+1051#!#Л#!#1051
+1052#!#М#!#1052
+1053#!#Н#!#1053
+1054#!#О#!#1054
+1055#!#П#!#1055
+1056#!#Р#!#1056
+1057#!#С#!#1057
+1058#!#Т#!#1058
+1059#!#У#!#1059
+1060#!#Ф#!#1060
+1061#!#Х#!#1061
+1062#!#Ц#!#1062
+1063#!#Ч#!#1063
+1064#!#Ш#!#1064
+1065#!#Щ#!#1065
+1066#!#Ъ#!#1066
+1067#!#Ы#!#1067
+1068#!#Ь#!#1068
+1069#!#Э#!#1069
+1070#!#Ю#!#1070
+1071#!#Я#!#1071
+~~END~~
 
 
 
@@ -739,3 +805,110 @@ GO
 DROP TYPE nchar_type_output;
 DROP TYPE nchar_type_nvarchar;
 GO
+
+select nchar(cast(45 as binary))
+go
+~~START~~
+nvarchar
+-
+~~END~~
+
+select nchar(cast(45 as varbinary))
+go
+~~START~~
+nvarchar
+-
+~~END~~
+
+select nchar(0)
+go
+~~START~~
+nvarchar
+
+~~END~~
+
+select nchar(63535)
+go
+~~START~~
+nvarchar
+
+~~END~~
+
+select nchar(65536)
+go
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+-- Test with UDF named char in a schema other than sys
+CREATE SCHEMA test_schema;
+GO
+create function test_schema.nchar(@x int)
+returns integer as 
+BEGIN
+    return 1;
+END;
+GO
+select test_schema.nchar(255);
+GO
+~~START~~
+int
+1
+~~END~~
+
+drop function test_schema.nchar;
+GO
+drop schema test_schema;
+go
+select Nchar(63535)
+go
+~~START~~
+nvarchar
+
+~~END~~
+
+select NcHaR(63535)
+go
+~~START~~
+nvarchar
+
+~~END~~
+
+create type user_UDT_int from int
+go
+select nchar(cast(63535 as user_UDT_int))
+go
+~~START~~
+nvarchar
+
+~~END~~
+
+drop type user_UDT_int
+go
+SET QUOTED_IDENTIFIER ON
+go
+select "char"(256)
+go
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+select "nchar"(63535)
+go
+~~START~~
+nvarchar
+
+~~END~~
+
+set QUOTED_IDENTIFIER OFF
+go
+select nchar(0);
+go
+~~START~~
+nvarchar
+
+~~END~~
+
+
