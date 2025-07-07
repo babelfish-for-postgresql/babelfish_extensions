@@ -556,3 +556,10 @@ ignore#!#money_aggregate-before-17_6-or-16_10-vu-cleanup
 ignore#!#money_smallmoney_bit_dep_obj_before_17_6-vu-prepare
 ignore#!#money_smallmoney_bit_dep_obj_before_17_6-vu-verify
 ignore#!#money_smallmoney_bit_dep_obj_before_17_6-vu-cleanup
+ignore#!#round_return_type_test-before-16_10-or-17_6-vu-prepare
+ignore#!#round_return_type_test-before-16_10-or-17_6-vu-verify
+ignore#!#round_return_type_test-before-16_10-or-17_6-vu-cleanup
+ignore#!#round_return_type_test-after-15_12-vu-prepare
+ignore#!#round_return_type_test-after-15_12-vu-verify
+ignore#!#round_return_type_test-after-15_12-vu-cleanup
+
