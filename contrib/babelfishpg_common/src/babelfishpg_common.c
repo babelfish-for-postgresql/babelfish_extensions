@@ -196,6 +196,10 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_money_datatype = &is_tsql_money_datatype;
 		common_utility_plugin_var.is_tsql_smallmoney_datatype = &is_tsql_smallmoney_datatype;
 		
+		/* FIX ME: Remove is_tsql_int_datatype and is_tsql_bigint_datatype once BABEL-5955 is fixed */
+		common_utility_plugin_var.is_tsql_int_datatype = &is_tsql_int_datatype;
+		common_utility_plugin_var.is_tsql_bigint_datatype = &is_tsql_bigint_datatype;
+		
 		common_utility_plugin_var.datetime_in_str = &datetime_in_str;
 		common_utility_plugin_var.datetime2sqlvariant = &datetime2sqlvariant;
 		common_utility_plugin_var.timestamptz_datetimeoffset = &timestamptz_datetimeoffset;
