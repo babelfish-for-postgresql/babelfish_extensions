@@ -352,9 +352,9 @@ extern Datum get_tds_context_info(void);
 extern void set_tds_context_info(bytea *context_info);
 
 /* Functions in backend/tds/tdspostgres.c */
-extern void TDSPostgresMain(int argc, char *argv[],
+pg_noreturn extern void TDSPostgresMain(int argc, char *argv[],
 							const char *dbname, const Oid dboid,
-							const char *username) pg_attribute_noreturn();
+							const char *username);
 
 /* Functions in backend/tds/tdspostinit.c */
 extern void TDSInitPostgres(const char *in_dbname, Oid dboid, const char *username,

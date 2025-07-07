@@ -51,12 +51,12 @@ static ErrorContextCallback tdserrcontext;
 TdsErrorContextData *TdsErrorContext = NULL;
 
 static int	pe_accept(pgsocket server_fd, ClientSocket *client_sock);
-static void	pe_listen_init(void);
-static int	pe_close(pgsocket server_fd);
-static Port	*pe_tds_init(ClientSocket *client_sock);
-static int	pe_start(Port *port);
-static void pe_authenticate(Port *port, const char **username);
-static void pe_mainfunc(Port *port) pg_attribute_noreturn();
+static void pe_listen_init(void);
+static int pe_close(pgsocket server_fd);
+static Port* pe_tds_init(ClientSocket *client_sock);
+static int	pe_start(Port * port);
+static void pe_authenticate(Port * port, const char **username);
+pg_noreturn static void pe_mainfunc(Port * port);
 static void pe_send_message(ErrorData *edata);
 static void pe_send_ready_for_query(CommandDest dest);
 static int	pe_read_command(StringInfo inBuf);

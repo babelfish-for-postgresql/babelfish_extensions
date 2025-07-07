@@ -2,8 +2,8 @@
 #define FTS_PARSER_H
 
 /* in fts_scan.l */
-extern int  fts_yylex(void);
-extern void fts_yyerror(char **result, const char *message) pg_attribute_noreturn();
+extern int	fts_yylex(void);
+pg_noreturn extern void fts_yyerror(char **result, const char *message);
 extern void yyerror_with_code(int error_code, const char *message);
 extern void fts_scanner_init(const char *str);
 extern void fts_scanner_finish(void);
