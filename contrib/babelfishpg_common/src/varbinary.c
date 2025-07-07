@@ -999,7 +999,7 @@ varbinarybpchar(PG_FUNCTION_ARGS)
 	 */
 	PG_TRY();
 	{
-		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
 		if (maxlen < 0 || len <= maxlen)
 			encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
 		else

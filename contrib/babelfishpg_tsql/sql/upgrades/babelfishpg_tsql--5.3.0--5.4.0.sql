@@ -33,6 +33,180 @@ $$
     end;
 $$;
 
+----------------------------------------------------------------
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTEGER,
+                                                                  IN arg anyelement,
+                                                                  IN try BOOL,
+                                                                  IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.varbinary
+AS
+$BODY$
+DECLARE result sys.varbinary;
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_to_varbinary(typmod, arg, p_style);
+    ELSE
+        IF p_style != 0 AND pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.varchar'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+            RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+        ELSE
+            IF typmod = -1 THEN
+                CASE pg_typeof(arg)
+					WHEN 'sys.nvarchar'::regtype THEN
+						RETURN sys.nvarcharvarbinary(arg, typmod, true);
+					WHEN 'sys.nchar'::regtype THEN
+						RETURN sys.ncharvarbinary(arg, typmod, true);
+					WHEN 'sys.bpchar'::regtype THEN
+						RETURN sys.bpcharvarbinary(arg, typmod, true);
+					WHEN 'sys.varchar'::regtype THEN
+						RETURN sys.varcharvarbinary(arg, typmod, true);
+					ELSE
+						-- For other types, just cast to varbinary
+						RETURN CAST(arg as sys.varbinary);
+				END CASE;
+            ELSE
+				CASE pg_typeof(arg)
+					WHEN 'sys.nvarchar'::regtype THEN
+						RETURN sys.nvarcharvarbinary(arg, -1, true);
+					WHEN 'sys.nchar'::regtype THEN
+						RETURN sys.ncharvarbinary(arg, -1, true);
+					WHEN 'sys.bpchar'::regtype THEN
+						RETURN sys.bpcharvarbinary(arg, -1, true);
+					WHEN 'sys.varchar'::regtype THEN
+						RETURN sys.varcharvarbinary(arg, -1, true);
+					ELSE
+						-- For other types, execute the cast with the specified typmod
+                		EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+               			RETURN result;
+                END CASE;
+            END IF;
+        END IF;
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;  
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN typmod INTEGER,
+                                                               IN arg anyelement,
+                                                               IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.varbinary
+AS
+$BODY$
+DECLARE result sys.varbinary;
+BEGIN
+    IF p_style != 0 AND pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.varchar'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+    ELSE
+        IF typmod = -1 THEN
+            CASE pg_typeof(arg)
+				WHEN 'sys.nvarchar'::regtype THEN
+					RETURN sys.nvarcharvarbinary(arg, typmod, true);
+				WHEN 'sys.nchar'::regtype THEN
+					RETURN sys.ncharvarbinary(arg, typmod, true);
+				WHEN 'sys.bpchar'::regtype THEN
+					RETURN sys.bpcharvarbinary(arg, typmod, true);
+				WHEN 'sys.varchar'::regtype THEN
+					RETURN sys.varcharvarbinary(arg, typmod, true);
+				ELSE
+					-- For other types, just cast to varbinary
+					RETURN CAST(arg as sys.varbinary);
+			END CASE;
+        ELSE
+			CASE pg_typeof(arg)
+				WHEN 'sys.nvarchar'::regtype THEN
+					RETURN sys.nvarcharvarbinary(arg, -1, true);
+				WHEN 'sys.nchar'::regtype THEN
+					RETURN sys.ncharvarbinary(arg, -1, true);
+				WHEN 'sys.bpchar'::regtype THEN
+					RETURN sys.bpcharvarbinary(arg, -1, true);
+				WHEN 'sys.varchar'::regtype THEN
+					RETURN sys.varcharvarbinary(arg, -1, true);
+				ELSE
+					-- For other types, execute the cast with the specified typmod
+            		EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+           			RETURN result;
+            END CASE;
+        END IF;
+    END IF;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;  
+
+-- Helper function to convert to binary or varbinary
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(IN input_value sys.VARCHAR, IN style NUMERIC DEFAULT 0) 
+RETURNS sys.varbinary 
+AS 
+$BODY$
+DECLARE
+    result bytea; 
+BEGIN
+    IF style = 0 THEN
+        RETURN CAST(input_value AS sys.varbinary);
+    ELSIF style = 1 THEN
+        -- Handle hexadecimal conversion
+        IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
+            result := decode(substring(input_value from 3), 'hex');
+        ELSE
+            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+        END IF;
+    ELSIF style = 2 THEN
+        IF PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" THEN
+            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+        ELSE
+            result := decode(input_value, 'hex');
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
+    END IF;
+
+    RETURN CAST(result AS sys.varbinary);
+END;
+$BODY$ 
+LANGUAGE plpgsql
+IMMUTABLE
+STRICT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
+    IN typmod INTEGER,
+    IN arg TEXT,
+    IN try BOOL,
+    IN p_style NUMERIC DEFAULT 0
+)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_string_to_varbinary(arg::sys.varchar, p_style);
+    ELSE
+        RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_varbinary(
+    IN arg TEXT,
+    IN p_style NUMERIC DEFAULT 0
+)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+----------------------------------------------------------------
 -- Please add your SQLs here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.

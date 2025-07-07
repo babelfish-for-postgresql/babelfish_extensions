@@ -407,7 +407,9 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
 	Node	   *result;
 	int32		typmod;
 	Oid			type_oid;
+	char	   *typename_string;
 
+	typename_string = TypeNameToString(typename);
 	typenameTypeIdAndMod(NULL, typename, &type_oid, &typmod);
 
 	TSQLInstrumentation(INSTR_TSQL_FUNCTION_TRY_CAST);
@@ -474,6 +476,21 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
 		 * BABEL-1661, add a type cast on top of the CONVERT helper function
 		 * so typmod can be applied
 		 */
+		result = makeTypeCast(helperFuncCall, typename, location);
+	}
+	else if (strcmp(typename_string, "binary") == 0 || strcmp(typename_string, "varbinary") == 0)
+	{
+		List	   *args;
+		Node	   *helperFuncCall;
+		/* For handling try boolean logic on babelfishpg_tsql side */
+		Node	   *try_const = makeBoolAConst(true, location);
+		args = list_make2(arg, try_const);
+
+		if(typmod > VARHDRSZ)
+			helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), lcons(makeIntConst(typmod - VARHDRSZ, location), args), COERCE_EXPLICIT_CALL, location);
+		else
+			helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), lcons(makeIntConst(typmod, location), args), COERCE_EXPLICIT_CALL, location);
+		// add a type cast on top of the CONVERT helper function so typmod can be applied
 		result = makeTypeCast(helperFuncCall, typename, location);
 	}
 	else

@@ -10226,122 +10226,99 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
--------------------------------------------------------------------------------------------------------------
--- sys.nchar
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(input_value sys.nchar, style NUMERIC DEFAULT 0)
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTEGER,
+                                                                  IN arg anyelement,
+                                                                  IN try BOOL,
+                                                                  IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
-AS $$
+AS
+$BODY$
+DECLARE result sys.varbinary;
 BEGIN
-    RETURN sys.ncharvarbinary(input_value, -1, true); 
-END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT;
-
--- sys.nvarchar
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(input_value sys.nvarchar, style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
-BEGIN
-    RETURN sys.nvarcharvarbinary(input_value, -1, true);
-END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT;
-
--- sys.bpchar
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(input_value sys.bpchar, style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
-BEGIN
-    RETURN sys.bpcharvarbinary(input_value, -1, true);
-END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT;
-
--- sys.varchar (handles style logic explicitly)
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(input_value sys.varchar, style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
-DECLARE
-    result bytea;
-BEGIN
-    IF style = 0 THEN
-        RETURN CAST(input_value AS sys.varbinary);
-    ELSIF style = 1 THEN
-        IF left(input_value, 2) = '0x' AND length(input_value) % 2 = 0 THEN
-            result := decode(substring(input_value from 3), 'hex');
-        ELSE
-            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
-        END IF;
-    ELSIF style = 2 THEN
-        IF left(input_value, 2) = '0x' THEN
-            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
-        ELSE
-            result := decode(input_value, 'hex');
-        END IF;
+    IF try THEN
+        RETURN sys.babelfish_try_conv_to_varbinary(typmod, arg, p_style);
     ELSE
-        RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
+        IF p_style != 0 AND pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.varchar'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+            RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+        ELSE
+            IF typmod = -1 THEN
+                CASE pg_typeof(arg)
+					WHEN 'sys.nvarchar'::regtype THEN
+						RETURN sys.nvarcharvarbinary(arg, typmod, true);
+					WHEN 'sys.nchar'::regtype THEN
+						RETURN sys.ncharvarbinary(arg, typmod, true);
+					WHEN 'sys.bpchar'::regtype THEN
+						RETURN sys.bpcharvarbinary(arg, typmod, true);
+					WHEN 'sys.varchar'::regtype THEN
+						RETURN sys.varcharvarbinary(arg, typmod, true);
+					ELSE
+						-- For other types, just cast to varbinary
+						RETURN CAST(arg as sys.varbinary);
+				END CASE;
+            ELSE
+				CASE pg_typeof(arg)
+					WHEN 'sys.nvarchar'::regtype THEN
+						RETURN sys.nvarcharvarbinary(arg, -1, true);
+					WHEN 'sys.nchar'::regtype THEN
+						RETURN sys.ncharvarbinary(arg, -1, true);
+					WHEN 'sys.bpchar'::regtype THEN
+						RETURN sys.bpcharvarbinary(arg, -1, true);
+					WHEN 'sys.varchar'::regtype THEN
+						RETURN sys.varcharvarbinary(arg, -1, true);
+					ELSE
+						-- For other types, execute the cast with the specified typmod
+                		EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+               			RETURN result;
+                END CASE;
+            END IF;
+        END IF;
     END IF;
- 
-    RETURN CAST(result AS sys.varbinary);
 END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;  
 
--- sys.nchar
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(arg sys.nchar, p_style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
-BEGIN
-    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
-EXCEPTION
-    WHEN OTHERS THEN
-        RETURN NULL;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-
--- sys.nvarchar
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(arg sys.nvarchar, p_style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
-BEGIN
-    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
-EXCEPTION
-    WHEN OTHERS THEN
-        RETURN NULL;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-
--- sys.bpchar
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(arg sys.bpchar, p_style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
-BEGIN
-    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
-EXCEPTION
-    WHEN OTHERS THEN
-        RETURN NULL;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-
--- sys.varchar
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(arg sys.varchar, p_style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
-BEGIN
-    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
-EXCEPTION
-    WHEN OTHERS THEN
-        RETURN NULL;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-
--- ANYELEMENT
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN arg anyelement,
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN typmod INTEGER,
+                                                               IN arg anyelement,
                                                                IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
 AS
 $BODY$
+DECLARE result sys.varbinary;
 BEGIN
-    IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype) THEN
+    IF p_style != 0 AND pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.varchar'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
         RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
     ELSE
-        RETURN CAST(arg AS sys.varbinary);
+        IF typmod = -1 THEN
+            CASE pg_typeof(arg)
+				WHEN 'sys.nvarchar'::regtype THEN
+					RETURN sys.nvarcharvarbinary(arg, typmod, true);
+				WHEN 'sys.nchar'::regtype THEN
+					RETURN sys.ncharvarbinary(arg, typmod, true);
+				WHEN 'sys.bpchar'::regtype THEN
+					RETURN sys.bpcharvarbinary(arg, typmod, true);
+				WHEN 'sys.varchar'::regtype THEN
+					RETURN sys.varcharvarbinary(arg, typmod, true);
+				ELSE
+					-- For other types, just cast to varbinary
+					RETURN CAST(arg as sys.varbinary);
+			END CASE;
+        ELSE
+			CASE pg_typeof(arg)
+				WHEN 'sys.nvarchar'::regtype THEN
+					RETURN sys.nvarcharvarbinary(arg, -1, true);
+				WHEN 'sys.nchar'::regtype THEN
+					RETURN sys.ncharvarbinary(arg, -1, true);
+				WHEN 'sys.bpchar'::regtype THEN
+					RETURN sys.bpcharvarbinary(arg, -1, true);
+				WHEN 'sys.varchar'::regtype THEN
+					RETURN sys.varcharvarbinary(arg, -1, true);
+				ELSE
+					-- For other types, execute the cast with the specified typmod
+            		EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+           			RETURN result;
+            END CASE;
+        END IF;
     END IF;
     EXCEPTION
         WHEN OTHERS THEN
@@ -10349,82 +10326,78 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-IMMUTABLE;
+IMMUTABLE;  
 
--- sys.nchar
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(arg sys.nchar, try BOOLEAN, p_style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
+-- Helper function to convert to binary or varbinary
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(IN input_value sys.VARCHAR, IN style NUMERIC DEFAULT 0) 
+RETURNS sys.varbinary 
+AS 
+$BODY$
+DECLARE
+    result bytea; 
 BEGIN
-    IF try THEN
-        RETURN sys.babelfish_try_conv_to_varbinary(arg, p_style);
+    IF style = 0 THEN
+        RETURN CAST(input_value AS sys.varbinary);
+    ELSIF style = 1 THEN
+        -- Handle hexadecimal conversion
+        IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
+            result := decode(substring(input_value from 3), 'hex');
+        ELSE
+            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+        END IF;
+    ELSIF style = 2 THEN
+        IF PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" THEN
+            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+        ELSE
+            result := decode(input_value, 'hex');
+        END IF;
     ELSE
-        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+        RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
     END IF;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
 
--- sys.nvarchar
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(arg sys.nvarchar, try BOOLEAN, p_style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
-BEGIN
-    IF try THEN
-        RETURN sys.babelfish_try_conv_to_varbinary(arg, p_style);
-    ELSE
-        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
-    END IF;
+    RETURN CAST(result AS sys.varbinary);
 END;
-$$ LANGUAGE plpgsql IMMUTABLE;
+$BODY$ 
+LANGUAGE plpgsql
+IMMUTABLE
+STRICT;
 
--- sys.bpchar
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(arg sys.bpchar, try BOOLEAN, p_style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
-BEGIN
-    IF try THEN
-        RETURN sys.babelfish_try_conv_to_varbinary(arg, p_style);
-    ELSE
-        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
-    END IF;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-
--- sys.varchar
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(arg sys.varchar, try BOOLEAN, p_style NUMERIC DEFAULT 0)
-RETURNS sys.varbinary
-AS $$
-BEGIN
-    IF try THEN
-        RETURN sys.babelfish_try_conv_to_varbinary(arg, p_style);
-    ELSE
-        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
-    END IF;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-
--- ANYELEMENT
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg anyelement,
-                                                                IN try BOOL,
-                                                                IN p_style NUMERIC DEFAULT 0)
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
+    IN typmod INTEGER,
+    IN arg TEXT,
+    IN try BOOL,
+    IN p_style NUMERIC DEFAULT 0
+)
 RETURNS sys.varbinary
 AS
 $BODY$
 BEGIN
     IF try THEN
-        RETURN sys.babelfish_try_conv_to_varbinary(arg, p_style);
+        RETURN sys.babelfish_try_conv_string_to_varbinary(arg::sys.varchar, p_style);
     ELSE
-        IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype) THEN
-            RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
-        ELSE
-            RETURN CAST(arg AS sys.varbinary);
-        END IF;
+        RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
     END IF;
 END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
--------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_varbinary(
+    IN arg TEXT,
+    IN p_style NUMERIC DEFAULT 0
+)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
 
 -- conversion to datetime2
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
@@ -10942,25 +10915,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
--- convertion to nvarchar
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_nvarchar(IN typename TEXT,
-                                                        IN arg TEXT,
-                                                        IN try BOOL,
-                                                        IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
-AS
-$BODY$
-BEGIN
-	IF try THEN
-	    RETURN sys.babelfish_try_conv_to_nvarchar(typename, arg, p_style);
-    ELSE
-	    RETURN sys.babelfish_conv_to_nvarchar(typename, arg, p_style);
-    END IF;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
- 
+-- convertion to NVARCHAR
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_nvarchar(IN typename TEXT,
                                                         IN arg ANYELEMENT,
                                                         IN try BOOL,
@@ -10978,20 +10933,24 @@ END;
 $BODY$
 LANGUAGE plpgsql
 STABLE;
- 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_nvarchar(IN typename TEXT,
-														IN arg TEXT,
+
+-- ANYELEMENT
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_nvarchar(IN typename TEXT,
+														IN arg anyelement,
 														IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN CAST(arg AS sys.NVARCHAR);
+    RETURN sys.babelfish_conv_to_nvarchar(typename, arg, p_style);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
 END;
 $BODY$
 LANGUAGE plpgsql
 STABLE;
- 
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_nvarchar(IN typename TEXT,
 														IN arg anyelement,
 														IN p_style NUMERIC DEFAULT -1)
@@ -11002,7 +10961,7 @@ DECLARE
 	v_style SMALLINT;
 BEGIN
 	v_style := floor(p_style)::SMALLINT;
- 
+
 	CASE pg_typeof(arg)
 	WHEN 'date'::regtype THEN
 		IF v_style = -1 THEN
@@ -11030,14 +10989,14 @@ BEGIN
 		END IF;
 	WHEN 'sys.money'::regtype THEN
 		IF v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money);
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
 		ELSE
-			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money, p_style);
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
 		END IF;
-	WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
-		RETURN sys.varbinarysysnvarchar(arg, -1, true);
-	WHEN 'sys.binary'::regtype THEN
-		RETURN sys.binarysysnvarchar(arg, -1, true);
+    WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
+        RETURN sys.varbinarysysnvarchar(arg, -1, true);
+    WHEN 'sys.binary'::regtype THEN
+        RETURN sys.binarysysnvarchar(arg, -1, true);
 	ELSE
 		RETURN CAST(arg AS sys.NVARCHAR);
 	END CASE;
@@ -11045,34 +11004,34 @@ END;
 $BODY$
 LANGUAGE plpgsql
 STABLE;
- 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_nvarchar(IN typename TEXT,
+
+-- arg TEXT
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_nvarchar(IN typename TEXT,
+                                                        IN arg TEXT,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+	IF try THEN
+	    RETURN sys.babelfish_try_conv_to_nvarchar(typename, arg, p_style);
+    ELSE
+	    RETURN sys.babelfish_conv_to_nvarchar(typename, arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_nvarchar(IN typename TEXT,
 														IN arg TEXT,
 														IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_to_nvarchar(typename, arg, p_style);
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
- 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_nvarchar(IN typename TEXT,
-														IN arg anyelement,
-														IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
-AS
-$BODY$
-BEGIN
-    RETURN sys.babelfish_conv_to_nvarchar(typename, arg, p_style);
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
+    RETURN CAST(arg AS sys.NVARCHAR);
 END;
 $BODY$
 LANGUAGE plpgsql
