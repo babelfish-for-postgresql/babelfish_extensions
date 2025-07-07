@@ -24,7 +24,7 @@ runs:
       if: env.SAVE_CACHE_HERE == 1
       with:
         path: 
-          ~/.ccache
+          ~/.cache
         key: 
           ccache-${{ env.CCACHE_KEY }}
 
@@ -32,7 +32,7 @@ runs:
       if: always()
       shell: bash
       run: |
-        rm -rf ~/.ccache
+        rm -rf ~/.cache
         echo "CCACHE_KEY=" >> $GITHUB_ENV
         echo "SAVE_CCACHE=" >> $GITHUB_ENV
         echo "SAVE_CACHE_HERE=" >> $GITHUB_ENV
