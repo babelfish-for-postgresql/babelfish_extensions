@@ -613,7 +613,7 @@ alter-mvu-test
 test_constraint_like-17-5-or-16-9
 unpivot
 forjson-escape
-round_return_type_test
+round_return_type_test-before-16_10-or-17_6
 alter-view
 test_conv_int_to_varbinary_binary
 babel_varbinary
