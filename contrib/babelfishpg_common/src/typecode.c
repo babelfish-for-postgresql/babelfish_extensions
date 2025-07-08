@@ -295,10 +295,6 @@ Oid			tsql_smallmoney_oid = InvalidOid;
 Oid			tsql_fixeddecimal_oid = InvalidOid;
 Oid			tsql_bit_oid = InvalidOid;
 
-/* FIX ME: Remove tsql_int_oid and tsql_bigint_oid once BABEL-5955 is fixed */
-Oid			tsql_int_oid = InvalidOid;
-Oid			tsql_bigint_oid = InvalidOid;
-
 Oid
 lookup_tsql_datatype_oid(const char *typename)
 {
@@ -523,23 +519,6 @@ is_tsql_tinyint_datatype(Oid oid)
 	if (tsql_tinyint_oid == InvalidOid)
 		tsql_tinyint_oid = lookup_tsql_datatype_oid("tinyint");
 	return tsql_tinyint_oid == oid;
-}
-
-/* FIX ME: Remove is_tsql_int_datatype and is_tsql_bigint_datatype once BABEL-5955 is fixed */
-bool
-is_tsql_int_datatype(Oid oid)
-{
-	if (tsql_int_oid == InvalidOid)
-		tsql_int_oid = lookup_tsql_datatype_oid("int");
-	return tsql_int_oid == oid;
-}
-
-bool
-is_tsql_bigint_datatype(Oid oid)
-{
-	if (tsql_bigint_oid == InvalidOid)
-		tsql_bigint_oid = lookup_tsql_datatype_oid("bigint");
-	return tsql_bigint_oid == oid;
 }
 
 bool
