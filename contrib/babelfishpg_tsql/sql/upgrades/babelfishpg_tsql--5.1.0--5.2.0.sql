@@ -74,25 +74,8 @@ $$;
 DO $$
 DECLARE
     exception_message text;
-    v_exists boolean;
 BEGIN
-    -- Check if function exists with the same signature
-    SELECT EXISTS (
-        SELECT 1
-        FROM pg_proc p
-        JOIN pg_namespace n ON p.pronamespace = n.oid
-        WHERE n.nspname = 'sys'
-        AND p.proname = 'round'
-        AND p.prorettype = 'sys.decimal'::regtype::oid
-        AND p.pronargs = 2
-        AND p.proargtypes[0] = 'pg_catalog.numeric'::regtype::oid
-        AND p.proargtypes[1] = 'integer'::regtype::oid
-    ) INTO v_exists;
-
-    -- Only perform ALTER if function exists with same signature
-    IF v_exists = false THEN
-        ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) RENAME TO bbf_numeric_round_deprecated_5_2_0;
-    END IF;
+    ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) RENAME TO bbf_numeric_round_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -107,26 +90,8 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_round_
 DO $$
 DECLARE
     exception_message text;
-    v_exists boolean;
 BEGIN
-    -- Check if function exists with the same signature
-   SELECT EXISTS (
-        SELECT 1
-        FROM pg_proc p
-        JOIN pg_namespace n ON p.pronamespace = n.oid
-        WHERE n.nspname = 'sys'
-        AND p.proname = 'round'
-        AND p.prorettype = 'sys.decimal'::regtype::oid
-        AND p.pronargs = 3
-        AND p.proargtypes[0] = 'pg_catalog.numeric'::regtype::oid
-        AND p.proargtypes[1] = 'integer'::regtype::oid
-        AND p.proargtypes[2] = 'integer'::regtype::oid
-    ) INTO v_exists;
-
-    -- Only perform ALTER if function exists with same signature
-    IF v_exists = false THEN
-        ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) RENAME TO bbf_numeric_trunc_deprecated_5_2_0;
-    END IF;
+    ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) RENAME TO bbf_numeric_trunc_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
