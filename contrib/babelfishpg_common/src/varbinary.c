@@ -852,13 +852,17 @@ Datum
 bpcharvarbinary(PG_FUNCTION_ARGS)
 {
 	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
-	char	   *data = VARDATA_ANY(source);
+	char	   *data = VARDATA_ANY(source);  /* UTF-8 source */
+	char	   *encoded_data;
 	char	   *rp;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
 	int32		typmod = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	int32		maxlen;
+	int			encodedByteLen;
 	bytea	   *result;
+	coll_info	collInfo;
+	MemoryContext ccxt = CurrentMemoryContext;
 
 	if (!isExplicit)
 		ereport(ERROR,
@@ -867,20 +871,41 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 						"varbinary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
-	/* If typmod is -1 (or invalid), use the actual length */
+	PG_TRY();
+	{
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
+		encoded_data = encoding_conv_util(data, len, PG_UTF8, collInfo.enc, &encodedByteLen);
+	}
+	PG_CATCH();
+	{
+		MemoryContext ectx;
+		ErrorData    *errorData;
+
+		ectx = MemoryContextSwitchTo(ccxt);
+		errorData = CopyErrorData();
+		FlushErrorState();
+		MemoryContextSwitchTo(ectx);
+
+		ereport(ERROR,
+			   (errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Failed to convert from data type bpchar to varbinary, %s",
+					   errorData->message)));
+	}
+	PG_END_TRY();
+
 	if (typmod < (int32) VARHDRSZ)
-		maxlen = len;
+	    maxlen = encodedByteLen;
 	else
-		maxlen = typmod - VARHDRSZ;
+	    maxlen = typmod - VARHDRSZ;
 
-	if (len > maxlen)
-		len = maxlen;
+	if (encodedByteLen > maxlen)
+	    encodedByteLen = maxlen;
 
-	result = (bytea *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(result, len + VARHDRSZ);
+	result = (bytea *) palloc(encodedByteLen + VARHDRSZ);
+	SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
 
 	rp = VARDATA(result);
-	memcpy(rp, data, len);
+	memcpy(rp, encoded_data, encodedByteLen);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1257,38 +1282,62 @@ Datum
 varcharbinary(PG_FUNCTION_ARGS)
 {
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
-	char	   *data = VARDATA_ANY(source);
+	char	   *data = VARDATA_ANY(source);  /* UTF-8 source */
+	char	   *encoded_data;
 	char	   *rp;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
 	int32		typmod = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	int32		maxlen;
+	int			encodedByteLen;
 	bytea	   *result;
+	coll_info	collInfo;
+	MemoryContext ccxt = CurrentMemoryContext;
 
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("Implicit conversion from data type varchar to "
-						"binary is not allowed. Use the CONVERT function "
-						"to run this query.")));
+							"binary is not allowed. Use the CONVERT function "
+							"to run this query.")));
 
-	/* If typmod is -1 (or invalid), use the actual length */
+	PG_TRY();
+	{
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
+		encoded_data = encoding_conv_util(data, len, PG_UTF8, collInfo.enc, &encodedByteLen);
+	}
+	PG_CATCH();
+	{
+		MemoryContext ectx;
+		ErrorData    *errorData;
+
+		ectx = MemoryContextSwitchTo(ccxt);
+		errorData = CopyErrorData();
+		FlushErrorState();
+		MemoryContextSwitchTo(ectx);
+
+		ereport(ERROR,
+			   (errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Failed to convert from data type varchar to binary, %s",
+					   errorData->message)));
+	}
+	PG_END_TRY();
+
+	/* Determine max length after conversion */
 	if (typmod < (int32) VARHDRSZ)
-		maxlen = len;
+		maxlen = encodedByteLen;
 	else
 		maxlen = typmod - VARHDRSZ;
 
-	if (len > maxlen)
-		len = maxlen;
+	if (encodedByteLen > maxlen)
+		encodedByteLen = maxlen;
 
-	result = (bytea *) palloc(maxlen + VARHDRSZ);
+	result = (bytea *) palloc0(maxlen + VARHDRSZ);
 	SET_VARSIZE(result, maxlen + VARHDRSZ);
 
 	rp = VARDATA(result);
-	memcpy(rp, data, len);
+	memcpy(rp, encoded_data, encodedByteLen);
 
-	/* NULL pad the rest of the space */
-	memset(rp + len, '\0', maxlen - len);
 	PG_RETURN_BYTEA_P(result);
 }
 
@@ -1339,38 +1388,68 @@ Datum
 bpcharbinary(PG_FUNCTION_ARGS)
 {
 	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
-	char	   *data = VARDATA_ANY(source);
+	char	   *data = VARDATA_ANY(source);  /* UTF-8 input */
+	char	   *encoded_data;
 	char	   *rp;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
 	int32		typmod = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	int32		maxlen;
+	int			encodedByteLen;
 	bytea	   *result;
+	coll_info	collInfo;
+	MemoryContext ccxt = CurrentMemoryContext;
 
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("Implicit conversion from data type char to "
-						"binary is not allowed. Use the CONVERT function "
-						"to run this query.")));
+							"binary is not allowed. Use the CONVERT function "
+							"to run this query.")));
 
-	/* If typmod is -1 (or invalid), use the actual length */
+	PG_TRY();
+	{
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
+		encoded_data = encoding_conv_util(data, len, PG_UTF8, collInfo.enc, &encodedByteLen);
+	}
+	PG_CATCH();
+	{
+		MemoryContext ectx;
+		ErrorData    *errorData;
+
+		ectx = MemoryContextSwitchTo(ccxt);
+		errorData = CopyErrorData();
+		FlushErrorState();
+		MemoryContextSwitchTo(ectx);
+
+		ereport(ERROR,
+			   (errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Failed to convert from data type char to binary, %s",
+					   errorData->message)));
+	}
+	PG_END_TRY();
+
+	/* Determine fixed output length */
 	if (typmod < (int32) VARHDRSZ)
-		maxlen = len;
+		maxlen = encodedByteLen;
 	else
 		maxlen = typmod - VARHDRSZ;
 
-	if (len > maxlen)
-		len = maxlen;
+	/* Truncate encoded data if needed */
+	if (encodedByteLen > maxlen)
+		encodedByteLen = maxlen;
 
 	result = (bytea *) palloc(maxlen + VARHDRSZ);
 	SET_VARSIZE(result, maxlen + VARHDRSZ);
 
 	rp = VARDATA(result);
-	memcpy(rp, data, len);
 
-	/* NULL pad the rest of the space */
-	memset(rp + len, '\0', maxlen - len);
+	/* Copy encoded data */
+	memcpy(rp, encoded_data, encodedByteLen);
+
+	/* Pad the rest with null bytes (\0) */
+	memset(rp + encodedByteLen, '\0', maxlen - encodedByteLen);
+
 	PG_RETURN_BYTEA_P(result);
 }
 
