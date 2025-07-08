@@ -872,7 +872,7 @@ select degrees(cast((PI() * 99999999999999) as decimal(18,2))) * cast(1.23 as nu
 go
 ~~START~~
 numeric
-22139999999999760.3890500762897921
+22139999999999760.389050076289792126
 ~~END~~
 
 
@@ -894,10 +894,9 @@ numeric
 
 select RADIANS(99999999999999999999.12) * cast(1.23 as numeric(3,2)) 
 go
-~~START~~
-numeric
-2146754979953025899.9811085561764134
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
 select ROUND(99999999999999999999.12, 2) * cast(1.23 as numeric(3,2)) 

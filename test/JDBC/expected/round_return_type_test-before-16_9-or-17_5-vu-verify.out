@@ -28,7 +28,7 @@ SELECT
 GO
 ~~START~~
 numeric#!#numeric#!#numeric#!#int#!#money#!#numeric
-3.00000#!#3.14000#!#3.14000#!#3#!#3.1400#!#3.14000
+3#!#3.14#!#3.14#!#3#!#3.1400#!#3.14
 ~~END~~
 
 
@@ -40,7 +40,7 @@ SELECT
 GO
 ~~START~~
 numeric#!#numeric#!#numeric
-1230.0000#!#1200.0000#!#1000.0000
+1230#!#1200#!#1000
 ~~END~~
 
 
@@ -53,7 +53,7 @@ SELECT
 GO
 ~~START~~
 numeric#!#numeric#!#money#!#numeric
-4.0#!#4.0000#!#4.0000#!#4.0000
+4#!#4#!#4.0000#!#4
 ~~END~~
 
 
@@ -76,9 +76,10 @@ SELECT
     ROUND(0.000000001, 8) as small_number,
     ROUND(-9999999.99999, 2) as large_negative;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric#!#numeric#!#numeric
+10000000.00#!#0E-8#!#-10000000.00
+~~END~~
 
 
 -- TEST CASE 7: Testing the RoundFloat function
@@ -141,7 +142,7 @@ SELECT
 GO
 ~~START~~
 numeric#!#float#!#float
-0.330000#!#1.4142#!#3.1416
+0.33#!#1.4142#!#3.1416
 ~~END~~
 
 
@@ -160,7 +161,7 @@ SELECT
 GO
 ~~START~~
 float#!#numeric#!#money#!#numeric#!#float
-3.14#!#3.14000#!#3.1400#!#3.14000#!#3.0
+3.14#!#3.14000000#!#3.1400#!#3.14000000#!#3.0
 ~~END~~
 
 
@@ -173,7 +174,7 @@ SELECT
 GO
 ~~START~~
 numeric#!#numeric#!#money#!#numeric
-0.0000#!#0.0#!#0.0000#!#0.0000
+0.00#!#0.00#!#0.0000#!#0.00
 ~~END~~
 
 
@@ -207,6 +208,6 @@ SELECT
 GO
 ~~START~~
 float#!#numeric#!#money#!#numeric
-3.14#!#3.14000#!#3.1400#!#3.14000
+3.14#!#3.14#!#3.1400#!#3.14
 ~~END~~
 

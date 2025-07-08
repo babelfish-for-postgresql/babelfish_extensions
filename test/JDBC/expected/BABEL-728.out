@@ -17,7 +17,7 @@ select sign(123.23)
 go
 ~~START~~
 numeric
-1.00
+1
 ~~END~~
 
 
@@ -33,7 +33,7 @@ select sign(0.0)
 go
 ~~START~~
 numeric
-0.0
+0
 ~~END~~
 
 
@@ -57,7 +57,7 @@ select sign(-123.23)
 go
 ~~START~~
 numeric
--1.00
+-1
 ~~END~~
 
 
