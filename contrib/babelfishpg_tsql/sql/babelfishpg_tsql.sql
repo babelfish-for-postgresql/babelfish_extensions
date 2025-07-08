@@ -3853,6 +3853,7 @@ BEGIN
                     AND UExt4.login_name = @current_username
                 )
             )
+        ORDER BY LoginName, DBName, UserName
     END
     ELSE
     BEGIN
@@ -3905,6 +3906,7 @@ BEGIN
         WHERE 
             has_dbaccess(UExt2.database_name) = 1 AND
             LExt.orig_loginname = @input_loginname
+        ORDER BY LoginName, DBName, UserName
     END;
 
     RETURN 0;
