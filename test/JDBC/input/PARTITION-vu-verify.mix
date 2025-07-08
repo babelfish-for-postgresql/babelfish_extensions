@@ -660,6 +660,42 @@ go
 USE master
 GO
 
+SELECT 
+    'AAA' AS TestValue,
+    $PARTITION.NewCharPartitionFunction('AAA') AS PartitionNumber
+UNION ALL
+SELECT 
+    'FZzzz',
+    $PARTITION.NewCharPartitionFunction('FZzzz')
+UNION ALL
+SELECT 
+    'ZZZZZ',
+    $PARTITION.NewCharPartitionFunction('ZZZZZ')
+UNION ALL
+SELECT 
+    'CDEFG',
+    $PARTITION.NewCharPartitionFunction('CDEFG');
+GO
+
+
+
+SELECT 
+    N'AAA' AS TestValue,
+    $PARTITION.NewNCharPartitionFunction(N'AAA') AS PartitionNumber
+UNION ALL
+SELECT 
+    N'FZzzz',
+    $PARTITION.NewNCharPartitionFunction(N'FZzzz')
+UNION ALL
+SELECT 
+    N'ZZZZZ',
+    $PARTITION.NewNCharPartitionFunction(N'ZZZZZ')
+UNION ALL
+SELECT 
+    N'CDEFG',
+    $PARTITION.NewNCharPartitionFunction(N'CDEFG');
+GO
+
 ------------------------------------------------------------------------------------------------------------
 --- Test error during Implicit Conversion of range values in Partition Function for each datatypes
 ------------------------------------------------------------------------------------------------------------
@@ -701,14 +737,6 @@ GO
 
 CREATE PARTITION FUNCTION NewSmallDateTimePartitionFunction (smalldatetime)
 AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', cast(0x123 as binary(4)));
-GO
-
-CREATE PARTITION FUNCTION NewCharPartitionFunction (char(5))
-AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', cast(0x123 as binary(4)));
-GO
-
-CREATE PARTITION FUNCTION NewNCharPartitionFunction (nchar(5))
-AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', cast(0x123 as binary(4)));
 GO
 
 CREATE PARTITION FUNCTION NewBinaryPartitionFunction (binary(4))

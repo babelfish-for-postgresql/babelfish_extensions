@@ -357,8 +357,8 @@ GO
 ~~START~~
 varchar
 a
-?
-???
+??
+??????
 ???
 ~~END~~
 
@@ -390,8 +390,8 @@ GO
 ~~START~~
 varchar
 a    |
-?    |
-???  |
+??   |
+?????|
 ???  |
 ~~END~~
 
@@ -411,7 +411,7 @@ GO
 ~~START~~
 nvarchar
 a    |
-🙂    |
+🙂   |
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value too long for type character(5) as UTF16 output)~~
@@ -431,8 +431,8 @@ GO
 ~~START~~
 varchar
 a         |
-?         |
-???       |
+??        |
+??????    |
 ???       |
 ~~END~~
 
@@ -443,8 +443,8 @@ GO
 ~~START~~
 nvarchar
 a         |
-🙂         |
-🙂🙂🙂       |
+🙂        |
+🙂🙂🙂    |
 さささ       |
 ~~END~~
 

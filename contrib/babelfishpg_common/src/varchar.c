@@ -750,8 +750,11 @@ varchar(PG_FUNCTION_ARGS)
 	/*
 	 * Optimisation: Check if we can accommodate charLength number of chars
 	 * considering every char requires max number of bytes for given encoding.
+	 * Since we are dealing with UTF8 encoding, we can use
+	 * pg_encoding_max_length() to get the maximum number of bytes required
+	 * to store a single character in the expected encoding.
 	 */
-	if (charLength * pg_encoding_max_length(collInfo.enc) <= maxByteLen)
+	if (charLength * pg_encoding_max_length(PG_UTF8) <= maxByteLen)
 		PG_RETURN_VARCHAR_P(source);
 
 	/*
