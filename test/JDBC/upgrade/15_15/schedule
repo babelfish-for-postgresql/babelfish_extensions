@@ -562,7 +562,7 @@ BABEL-NUMERIC_EXPR
 BABEL-5467
 test_conv_float_to_varchar_char_before_17_4
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
-round_return_type_test-after-15_12
+round_return_type_test
 alter-view
 test_conv_int_to_varbinary_binary_before_17_5_or_16_9
 babel_varbinary
