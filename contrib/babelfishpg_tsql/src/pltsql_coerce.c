@@ -1260,6 +1260,19 @@ get_typmod_from_func_arg(Plan *plan, bool *found_typmod, List *args)
 	return rettypmod;
 }
 
+/*
+ * is_namespace_sys_or_pg_catalog
+ * Returns true if the given namespace Oid is either sys or pg_catalog.
+ */
+static bool
+is_namespace_sys_or_pg_catalog(Oid nspoid)
+{
+	if (nspoid == PG_CATALOG_NAMESPACE || get_namespace_oid("sys", false))
+		return true;
+
+	return false;
+}
+
 /* 
  * Look for a typmod to return from a numeric expression,
  * also for cases where we cannot compute the expression typmod return -1 and set found as false.
@@ -1684,6 +1697,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				bool		found_typmod;
 				Node		*arg = NULL;
 				char		*funcName;
+				Oid		func_namespace_oid = InvalidOid;
 
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &rettypmod))
@@ -1727,11 +1741,24 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				/* We will find typmod for mathematical functions. */
 				funcName = get_func_name(func_oid);
-				if (funcName)
+				func_namespace_oid = get_func_namespace(func_oid);
+
+				if (funcName &&
+					is_namespace_sys_or_pg_catalog(func_namespace_oid))
 				{
+					/* 
+					 * For round functions we have already deprecated the functions 
+					 * in previous versions so can't change that doing the exact match
+					 * and adding additional handling for prefix matching of all functions
+					 */
 					if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)) ||
 						(strlen(funcName) == 4 && (strncmp(funcName, "sign", 4) == 0)) ||
-						(strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0)))
+						(strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0)) ||
+						(strlen(funcName) == 34 && (strncmp(funcName, "bbf_numeric_round_deprecated_5_2_0", 34) == 0)) ||
+						(strlen(funcName) == 34 && (strncmp(funcName, "bbf_numeric_trunc_deprecated_5_2_0", 34) == 0)) ||
+						(strlen(funcName) >= 20 && (strncmp(funcName, "bbf_round_deprecated", 20) == 0)) ||
+						(strlen(funcName) >= 19 && (strncmp(funcName, "bbf_sign_deprecated", 19) == 0)) ||
+						(strlen(funcName) >= 18 && (strncmp(funcName, "bbf_abs_deprecated", 18) == 0)))
 					{
 						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
 						if (fixsize_default_typmod != -1)
@@ -1754,7 +1781,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						}
 					}
 					else if ((strlen(funcName) == 7 && (strncmp(funcName, "ceiling", 7) == 0)) ||
-							(strlen(funcName) == 5 && (strncmp(funcName, "floor", 5) == 0)))
+							(strlen(funcName) == 5 && (strncmp(funcName, "floor", 5) == 0)) ||
+							(strlen(funcName) >= 20 && (strncmp(funcName, "bbf_floor_deprecated", 20) == 0)) ||
+							(strlen(funcName) >= 22 && (strncmp(funcName, "bbf_ceiling_deprecated", 22) == 0)))
 					{
 						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
 						if (fixsize_default_typmod != -1)
@@ -1779,7 +1808,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						}
 					}
 					else if ((strlen(funcName) == 7 && (strncmp(funcName, "degrees", 7) == 0)) ||
-							(strlen(funcName) == 7 && (strncmp(funcName, "radians", 7) == 0)))
+							(strlen(funcName) == 7 && (strncmp(funcName, "radians", 7) == 0)) ||
+							(strlen(funcName) >= 22 && (strncmp(funcName, "bbf_degrees_deprecated", 22) == 0)) ||
+							(strlen(funcName) >= 22 && (strncmp(funcName, "bbf_radians_deprecated", 22) == 0)))
 					{
 						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
 						if (fixsize_default_typmod != -1)
@@ -1797,7 +1828,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							return ((tds_default_numeric_precision << 16) | 18) + VARHDRSZ;
 						}
 					}
-					else if ((strlen(funcName) == 5 && (strncmp(funcName, "power", 5) == 0)))
+					else if ((strlen(funcName) == 5 && (strncmp(funcName, "power", 5) == 0)) ||
+						(strlen(funcName) >= 20 && (strncmp(funcName, "bbf_power_deprecated", 20) == 0)))
 					{
 						int32 fixsize_default_typmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
 						if (fixsize_default_typmod != -1)
@@ -1824,7 +1856,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					else if ((strlen(funcName) == 14 && (strncmp(funcName, "scope_identity", 14) == 0)) ||
 								(strlen(funcName) == 10 && (strncmp(funcName, "ident_seed", 10) == 0)) ||
 								(strlen(funcName) == 10 && (strncmp(funcName, "ident_incr", 10) == 0)) ||
-								(strlen(funcName) == 13 && (strncmp(funcName, "ident_current", 13) == 0)))
+								(strlen(funcName) == 13 && (strncmp(funcName, "ident_current", 13) == 0)) ||
+								(strlen(funcName) >= 29 && (strncmp(funcName, "bbf_scope_identity_deprecated", 29) == 0)) ||
+								(strlen(funcName) >= 25 && (strncmp(funcName, "bbf_ident_seed_deprecated", 25) == 0)) ||
+								(strlen(funcName) >= 25 && (strncmp(funcName, "bbf_ident_incr_deprecated", 25) == 0)) ||
+								(strlen(funcName) >= 28 && (strncmp(funcName, "bbf_ident_current_deprecated", 28) == 0)))
 					{
 						/*
 						 * For scope_identity, ident_seed, ident_incr and ident_current
