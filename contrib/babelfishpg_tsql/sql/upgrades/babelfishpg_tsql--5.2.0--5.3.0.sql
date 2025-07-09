@@ -136,8 +136,8 @@ FROM pg_catalog.pg_roles AS Base
 INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
 WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
-  OR Base.rolname = sys.suser_name() COLLATE sys.database_default 
-  OR Base.rolname = (SELECT pg_get_userbyid(super_user) FROM super_user))
+  OR pg_has_role(sys.suser_id(), Ext.rolname, 'MEMBER')
+  OR Base.rolname = (SELECT pg_get_userbyid(super_user) FROM super_user) COLLATE sys.database_default)
   AND Ext.type IN ('S', 'U') 
 UNION ALL 
 SELECT 
@@ -464,7 +464,7 @@ BEGIN
                     )
                 )
             )
-		ORDER BY LoginName, DBName, UserName
+        ORDER BY LoginName, DBName, UserName
     END
     ELSE
     BEGIN
@@ -543,35 +543,8 @@ BEGIN
         LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt2.login_name, ''), Db.owner)
         WHERE 
             has_dbaccess(UExt2.database_name) = 1 AND
-            LExt.orig_loginname = @input_loginname AND
-            (
-                @is_sysadmin = 1 OR
-				LExt.orig_loginname = @current_username OR
-                ISNULL(UExt2.login_name, '') = '' OR
-                -- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
-                EXISTS (
-                    SELECT 1
-                    FROM pg_catalog.pg_auth_members AS Authmbr
-                    INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
-                    INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
-                    INNER JOIN sys.babelfish_authid_user_ext AS UExt3 ON PGR1.rolname = UExt3.rolname
-                    INNER JOIN sys.babelfish_authid_user_ext AS UExt4 ON PGR2.rolname = UExt4.rolname
-                    LEFT JOIN sys.babelfish_authid_login_ext AS LExt ON LExt.rolname = UExt4.login_name
-                    WHERE UExt3.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
-                    AND UExt4.database_name = UExt2.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
-                    AND (
-                        (UExt4.type IN ('S', 'R') AND UExt4.login_name = @current_username) OR
-                        -- Babelfish stores login information differently depending on the type of login:
-                        -- - For SQL Server logins (type = 'S') and roles (type = 'R'), the `login_name` in UExt4
-                        --   directly matches the current username (`@current_username`).
-                        -- - For Windows logins (type = 'U'), Babelfish maps the Windows account to an internal role 
-                        --   and stores the original Windows login in `LExt.orig_loginname` instead of `UExt4.login_name`.
-                        --   eg. for login gad\user it is mapped to user@GAD.COM in bbf_user catalog
-                        (UExt4.type = 'U' AND LExt.orig_loginname = @current_username)
-                    )	
-                )
-            )
-		ORDER BY LoginName, DBName, UserName
+            LExt.orig_loginname = @input_loginname
+        ORDER BY LoginName, DBName, UserName
     END;
 
     RETURN 0;
