@@ -136,8 +136,8 @@ FROM pg_catalog.pg_roles AS Base
 INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
 WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
-  OR Base.rolname = sys.suser_name() COLLATE sys.database_default 
-  OR Base.rolname = (SELECT pg_get_userbyid(super_user) FROM super_user))
+  OR pg_has_role(sys.suser_id(), Ext.rolname, 'MEMBER')
+  OR Base.rolname = (SELECT pg_get_userbyid(super_user) FROM super_user) COLLATE sys.database_default)
   AND Ext.type IN ('S', 'U') 
 UNION ALL 
 SELECT 
