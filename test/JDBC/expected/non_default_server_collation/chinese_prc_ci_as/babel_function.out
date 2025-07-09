@@ -1900,14 +1900,14 @@ select ROUND(748.58, -1);
 GO
 ~~START~~
 numeric
-750.00
+750
 ~~END~~
 
 select ROUND(748.58, -2);
 GO
 ~~START~~
 numeric
-700.00
+700
 ~~END~~
 
 select ROUND(748.58, -3);
@@ -1920,14 +1920,14 @@ select ROUND(748.58, -4);
 GO
 ~~START~~
 numeric
-0.00
+0
 ~~END~~
 
 select ROUND(-648.1234, -2);
 GO
 ~~START~~
 numeric
--600.0000
+-600
 ~~END~~
 
 select ROUND(-648.1234, -3);
@@ -1940,7 +1940,7 @@ select ROUND(-1548.1234, -3);
 GO
 ~~START~~
 numeric
--2000.0000
+-2000
 ~~END~~
 
 select ROUND(-1548.1234, -4);
@@ -1969,28 +1969,28 @@ SELECT ROUND(123.9994, 3);
 GO
 ~~START~~
 numeric
-123.9990
+123.999
 ~~END~~
 
 SELECT ROUND(123.9995, 3);
 GO
 ~~START~~
 numeric
-124.0000
+124.000
 ~~END~~
 
 SELECT ROUND(123.4545, 2);
 GO
 ~~START~~
 numeric
-123.4500
+123.45
 ~~END~~
 
 SELECT ROUND(123.45, -2);
 GO
 ~~START~~
 numeric
-100.00
+100
 ~~END~~
 
 -- test function parameter, i.e. truncation when not NULL or 0
@@ -1998,28 +1998,28 @@ SELECT ROUND(150.75, 0);
 GO
 ~~START~~
 numeric
-151.00
+151
 ~~END~~
 
 SELECT ROUND(150.75, 0, 0);
 GO
 ~~START~~
 numeric
-151.00
+151
 ~~END~~
 
 SELECT ROUND(150.75, 0, NULL);
 GO
 ~~START~~
 numeric
-151.00
+151
 ~~END~~
 
 SELECT ROUND(150.75, 0, 1);
 GO
 ~~START~~
 numeric
-150.00
+150
 ~~END~~
 
 -- test negative numbers
@@ -2027,28 +2027,28 @@ SELECT ROUND(-150.49, 0);
 GO
 ~~START~~
 numeric
--150.00
+-150
 ~~END~~
 
 SELECT ROUND(-150.75, 0);
 GO
 ~~START~~
 numeric
--151.00
+-151
 ~~END~~
 
 SELECT ROUND(-150.49, 0, 1);
 GO
 ~~START~~
 numeric
--150.00
+-150
 ~~END~~
 
 SELECT ROUND(-150.75, 0, 1);
 GO
 ~~START~~
 numeric
--150.00
+-150
 ~~END~~
 
 
@@ -2069,8 +2069,8 @@ select ROUND(col, 3) from t1;
 GO
 ~~START~~
 numeric
-64.24
-79.65
+64.24000000
+79.65000000
 <NULL>
 ~~END~~
 
@@ -2078,8 +2078,8 @@ select ROUND(col, 2) from t1;
 GO
 ~~START~~
 numeric
-64.24
-79.65
+64.24000000
+79.65000000
 <NULL>
 ~~END~~
 
@@ -2087,8 +2087,8 @@ select ROUND(col, 1) from t1;
 GO
 ~~START~~
 numeric
-64.20
-79.70
+64.20000000
+79.70000000
 <NULL>
 ~~END~~
 
@@ -2096,8 +2096,8 @@ select ROUND(col, 0) from t1;
 GO
 ~~START~~
 numeric
-64.00
-80.00
+64.00000000
+80.00000000
 <NULL>
 ~~END~~
 
@@ -2105,8 +2105,8 @@ select ROUND(col, -1) from t1;
 GO
 ~~START~~
 numeric
-60.00
-80.00
+60.00000000
+80.00000000
 <NULL>
 ~~END~~
 
@@ -2122,8 +2122,8 @@ select ROUND(col, -3) from t1;
 GO
 ~~START~~
 numeric
-0.00
-0.00
+0E-8
+0E-8
 <NULL>
 ~~END~~
 
@@ -2131,8 +2131,8 @@ select ROUND(col, 1, 1) from t1;
 GO
 ~~START~~
 numeric
-64.20
-79.60
+64.20000000
+79.60000000
 <NULL>
 ~~END~~
 
