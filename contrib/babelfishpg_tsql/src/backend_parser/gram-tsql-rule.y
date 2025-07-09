@@ -1310,8 +1310,7 @@ DeleteStmt: opt_with_clause DELETE_P FROM relation_expr_opt_alias
 					n->relation = $4;
 					n->usingClause = $6;
 					n->whereClause = $7;
-					n->returningClause->exprs = ($8)->exprs;
-					n->returningClause->options = NIL;
+					n->returningClause = $8;
 					n->withClause = $1;
 					$$ = (Node *)n;
 				}
@@ -1334,8 +1333,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 					n->targetList = $7;
 					n->fromClause = $8;
 					n->whereClause = $9;
-					n->returningClause->exprs = ($10)->exprs;
-					n->returningClause->options = NIL;
+					n->returningClause = $10;
 					$$ = (Node *)n;
 				}
 			/* OUTPUT syntax */

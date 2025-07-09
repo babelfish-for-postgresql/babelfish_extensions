@@ -161,7 +161,7 @@ static void set_output_clause_transformation_info(bool enabled);
 static bool get_output_clause_transformation_info(void);
 static Node *output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Query *query);
 static void post_transform_delete(ParseState *pstate, DeleteStmt *stmt, Query *query);
-static void handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstate);
+static void handle_returning_qualifiers(Query *query, ReturningClause *returningClause, ParseState *pstate);
 static void check_insert_row(List *icolumns, List *exprList, Oid relid);
 static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist);
 static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist);
@@ -1627,7 +1627,7 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 	else
 		qual = pre_transform_qual;
 
-	handle_returning_qualifiers(query, stmt->returningClause->exprs, pstate);
+	handle_returning_qualifiers(query, stmt->returningClause, pstate);
 	return qual;
 }
 
@@ -1658,7 +1658,7 @@ get_output_clause_transformation_info(void)
 }
 
 static void
-handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstate)
+handle_returning_qualifiers(Query *query, ReturningClause *returningClause, ParseState *pstate)
 {
 	ListCell   *o_target,
 			   *expr;
@@ -1672,7 +1672,7 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 	CmdType		command = query->commandType;
 
 	if (prev_pre_transform_returning_hook)
-		prev_pre_transform_returning_hook(query, returningList, pstate);
+		prev_pre_transform_returning_hook(query, returningClause, pstate);
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1687,12 +1687,12 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 	if (command == CMD_DELETE || command == CMD_UPDATE)
 		pltsql_update_query_result_relation(query, pstate->p_target_relation, pstate->p_rtable);
 
-	if (returningList == NIL)
+	if (returningClause == NULL)
 		return;
 
 	if (command == CMD_INSERT || command == CMD_DELETE)
 	{
-		foreach(o_target, returningList)
+		foreach(o_target, returningClause->exprs)
 		{
 			ResTarget  *res = (ResTarget *) lfirst(o_target);
 
@@ -1755,7 +1755,7 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 	}
 	else if (command == CMD_UPDATE)
 	{
-		foreach(o_target, returningList)
+		foreach(o_target, returningClause->exprs)
 		{
 			ResTarget  *res = (ResTarget *) lfirst(o_target);
 
@@ -1810,7 +1810,7 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 				}
 			}
 		}
-		foreach(o_target, returningList)
+		foreach(o_target, returningClause->exprs)
 		{
 			ResTarget  *res = (ResTarget *) lfirst(o_target);
 

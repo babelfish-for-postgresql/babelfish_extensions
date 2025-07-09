@@ -1190,6 +1190,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				rt->val = (Node *) n;
 				rt->location = query->stmt_location;
 
+				returningClause = makeNode(ReturningClause);
 				returningClause->exprs = list_make1(rt);
 				returningClause->options = NIL;
 
