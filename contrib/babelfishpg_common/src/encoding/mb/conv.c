@@ -365,15 +365,7 @@ TsqlUtfToLocal(const unsigned char *utf, int len,
 		 * TSQL puts question mark '?' if it can not recognize the UTF8 byte
 		 * or byte sequence
 		 */
-		if (l == 4)
-		{
-			uint32_t packed = ('?' << 8) | '?';  // 0x00003F3F
-			iso = store_coded_char(iso, packed, &encodedByteLen);
-		}
-		else
-		{
-			iso = store_coded_char(iso, '?', &encodedByteLen);
-		}
+		iso = store_coded_char(iso, '?', &encodedByteLen);
 	}
 
 	/* if we broke out of loop early, must be invalid input */
