@@ -156,7 +156,7 @@ GO
 text
 Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_sm BETWEEN 100 and 200
 Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
-  Index Cond: (((cost_sm)::fixeddecimal >= 100) AND ((cost_sm)::fixeddecimal <= 200))
+  Index Cond: (((cost_sm)::fixeddecimal(10,4) >= 100) AND ((cost_sm)::fixeddecimal(10,4) <= 200))
 ~~END~~
 
 ~~START~~
@@ -188,7 +188,7 @@ text
 Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm <= CAST(50 AS SMALLMONEY) + CAST(50 AS SMALLMONEY)
 Aggregate
   ->  Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
-        Index Cond: (cost_sm <= ((('50.0000'::fixeddecimal(10,4))::smallmoney(655368) + ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+        Index Cond: (cost_sm <= ((('50.0000'::fixeddecimal(10,4))::smallmoney(655368) + ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal(10,4))
 ~~END~~
 
 ~~START~~
@@ -204,7 +204,7 @@ text
 Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm = CAST(2 AS INT) * CAST(50 AS SMALLMONEY)
 Aggregate
   ->  Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
-        Index Cond: (cost_sm = ((2 * ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+        Index Cond: (cost_sm = ((2 * ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal(10,4))
 ~~END~~
 
 ~~START~~
@@ -220,7 +220,7 @@ text
 Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_sm > CAST(200 AS INT) / CAST(2 AS SMALLMONEY)
 Aggregate
   ->  Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
-        Index Cond: (cost_sm > ((200 / ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+        Index Cond: (cost_sm > ((200 / ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal(10,4))
 ~~END~~
 
 ~~START~~
@@ -235,7 +235,7 @@ GO
 text
 Query Text: SELECT cost_sm FROM money_smallmoney_vu_test WHERE cost_sm <= CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY)
 Index Only Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
-  Index Cond: (cost_sm <= (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+  Index Cond: (cost_sm <= (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal(10,4))
 ~~END~~
 
 ~~START~~
@@ -250,7 +250,7 @@ GO
 text
 Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_sm < CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY)
 Index Scan using idx_cost_smallmoneymoney_smallm763569c9206bb1e36c4670199725a26c on money_smallmoney_vu_test
-  Index Cond: ((cost_sm)::fixeddecimal < (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+  Index Cond: ((cost_sm)::fixeddecimal(10,4) < (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal(10,4))
 ~~END~~
 
 ~~START~~
@@ -265,7 +265,7 @@ GO
 text
 Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_m BETWEEN 100 and 200
 Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
-  Index Cond: (((cost_m)::fixeddecimal >= 100) AND ((cost_m)::fixeddecimal <= 200))
+  Index Cond: (((cost_m)::fixeddecimal(19,4) >= 100) AND ((cost_m)::fixeddecimal(19,4) <= 200))
 ~~END~~
 
 ~~START~~
@@ -297,7 +297,7 @@ text
 Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m >= CAST(50 AS SMALLMONEY) + CAST(50 AS SMALLMONEY)
 Aggregate
   ->  Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
-        Index Cond: (cost_m >= ((('50.0000'::fixeddecimal(10,4))::smallmoney(655368) + ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+        Index Cond: (cost_m >= ((('50.0000'::fixeddecimal(10,4))::smallmoney(655368) + ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal(10,4))
 ~~END~~
 
 ~~START~~
@@ -313,7 +313,7 @@ text
 Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m = CAST(2 AS INT) * CAST(50 AS SMALLMONEY)
 Aggregate
   ->  Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
-        Index Cond: (cost_m = ((2 * ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+        Index Cond: (cost_m = ((2 * ('50.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal(10,4))
 ~~END~~
 
 ~~START~~
@@ -329,7 +329,7 @@ text
 Query Text: SELECT COUNT(*) FROM money_smallmoney_vu_test WHERE cost_m < CAST(200 AS INT) / CAST(2 AS SMALLMONEY)
 Aggregate
   ->  Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
-        Index Cond: (cost_m < ((200 / ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+        Index Cond: (cost_m < ((200 / ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal(10,4))
 ~~END~~
 
 ~~START~~
@@ -344,7 +344,7 @@ GO
 text
 Query Text: SELECT cost_m FROM money_smallmoney_vu_test WHERE cost_m < CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY)
 Index Only Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
-  Index Cond: (cost_m < (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+  Index Cond: (cost_m < (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal(10,4))
 ~~END~~
 
 ~~START~~
@@ -359,7 +359,7 @@ GO
 text
 Query Text: SELECT * FROM money_smallmoney_vu_test WHERE cost_m > CAST(200 AS BIGINT) * CAST(2 AS SMALLMONEY)
 Index Scan using idx_cost_moneymoney_smallmoney_561673fc5dd7f27d48118a464f7209db on money_smallmoney_vu_test
-  Index Cond: ((cost_m)::fixeddecimal > (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal)
+  Index Cond: ((cost_m)::fixeddecimal(19,4) > (('200'::bigint * ('2.0000'::fixeddecimal(10,4))::smallmoney(655368)))::fixeddecimal(10,4))
 ~~END~~
 
 ~~START~~
