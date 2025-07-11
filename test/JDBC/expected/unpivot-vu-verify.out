@@ -1152,9 +1152,9 @@ UNPIVOT ( adjusted_turnover FOR quarter IN (q1_adj, [q3 adj])) AS u;
 GO
 ~~START~~
 int#!#char#!#numeric#!#numeric#!#nvarchar
-3#!#R#!#0.0#!#440.00000000#!#q3 adj
-1#!#R#!#220.0#!#110.00000000#!#q1_adj
-1#!#R#!#220.0#!#110.00000000#!#q3 adj
+3#!#R#!#0.0#!#440.0#!#q3 adj
+1#!#R#!#220.0#!#110.0#!#q1_adj
+1#!#R#!#220.0#!#110.0#!#q3 adj
 ~~END~~
 
 

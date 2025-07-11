@@ -614,7 +614,7 @@ select CAST(2 AS money) / CAST(0.5 AS decimal(4,2));
 GO
 ~~START~~
 numeric
-4.0000000
+4.000000000
 ~~END~~
 
 

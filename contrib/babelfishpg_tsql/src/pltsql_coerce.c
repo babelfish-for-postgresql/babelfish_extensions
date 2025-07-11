@@ -1442,6 +1442,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				{
 					/* UDT handling in T_var */
 					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
+					int32 		fixlen_default_typmod;
+
 					if (OidIsValid(immediate_base_type))
 					{
 						int32 typmod = -1;
@@ -1454,17 +1456,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 * Handle default typmod for supported fixed-length datatypes
 					 * such as bigint, int, smallint, and tinyint.
 					 * These typmods represent the maximum allowed digits for each type.
-					 *
-					 * Plan check ensures typmod consistency to preventing incorrect values,
-					 * ensuring plan is not changed if typmod is calculated in execution stage.
 					 */
-					if (plan)
-					{
-						int32 		fixlen_default_typmod;
-						fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(var->vartype);
-						if (fixlen_default_typmod != -1)
-							return fixlen_default_typmod;
-					}
+					fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(var->vartype);
+					if (fixlen_default_typmod != -1)
+						return fixlen_default_typmod;
 
 					if (found != NULL) *found = false;
 				}
