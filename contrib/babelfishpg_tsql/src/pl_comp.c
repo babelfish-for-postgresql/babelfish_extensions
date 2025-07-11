@@ -1693,7 +1693,8 @@ make_const_from_param(PLtsql_execstate *estate, PLtsql_nsitem *nse)
 	
 	con = makeConst(var->datatype->typoid,
 					var->datatype->atttypmod,
-					get_typcollation(var->datatype->typoid),
+					// get_typcollation(var->datatype->typoid),
+					DEFAULT_COLLATION_OID,
 					(int) typLen,
 					pval,
 					var->isnull,
