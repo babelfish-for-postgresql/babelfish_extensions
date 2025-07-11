@@ -5204,12 +5204,12 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5299,12 +5299,12 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT

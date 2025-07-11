@@ -56,3 +56,40 @@ BEGIN
       WITH FUNCTION sys.decimal2decimal(sys.DECIMAL, integer) AS IMPLICIT;
   END IF;
 END $$;
+-- complain if script is sourced in psql, rather than via ALTER EXTENSION
+\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '5.4.0'" to load this file. \quit
+
+SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+
+CREATE OR REPLACE FUNCTION sys.ncharbinary(sys.NCHAR, integer, boolean)
+RETURNS sys.BBF_BINARY
+AS 'babelfishpg_common', 'ncharbinary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.binarybpchar(sys.BBF_BINARY, integer, boolean)
+RETURNS sys.BPCHAR
+AS 'babelfishpg_common', 'varbinarybpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.binarynchar(sys.BBF_BINARY, integer, boolean)
+RETURNS sys.NCHAR
+AS 'babelfishpg_common', 'varbinarynchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ncharvarbinary(sys.NCHAR, integer, boolean)
+RETURNS sys.BBF_VARBINARY
+AS 'babelfishpg_common', 'ncharvarbinary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.varbinarybpchar(sys.BBF_VARBINARY, integer, boolean)
+RETURNS sys.BPCHAR
+AS 'babelfishpg_common', 'varbinarybpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.varbinarynchar(sys.BBF_VARBINARY, integer, boolean)
+RETURNS sys.NCHAR
+AS 'babelfishpg_common', 'varbinarynchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

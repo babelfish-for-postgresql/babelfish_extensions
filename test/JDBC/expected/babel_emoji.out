@@ -166,15 +166,14 @@ master#!#dbo#!#testing_1#!#col#!#1#!#<NULL>#!#YES#!#nchar#!#1#!#2#!#<NULL>#!#<NU
 create table testing_4(col sys.varchar);
 insert into testing_4 (col) select '😀'; -- not allowed TODO: fix BABEL-3543 
 GO
-~~ERROR (Code: 8152)~~
-
-~~ERROR (Message: value too long for type character varying(1))~~
+~~ROW COUNT: 1~~
 
 
 select * from testing_4;
 GO
 ~~START~~
 varchar
+?
 ~~END~~
 
 
