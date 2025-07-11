@@ -136,8 +136,8 @@ FROM pg_catalog.pg_roles AS Base
 INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
 WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
-  OR Base.rolname = sys.suser_name() COLLATE sys.database_default 
-  OR Base.rolname = (SELECT pg_get_userbyid(super_user) FROM super_user))
+  OR pg_has_role(sys.suser_id(), Ext.rolname, 'MEMBER')
+  OR Base.rolname = (SELECT pg_get_userbyid(super_user) FROM super_user) COLLATE sys.database_default)
   AND Ext.type IN ('S', 'U') 
 UNION ALL 
 SELECT 
@@ -439,6 +439,7 @@ BEGIN
                     AND UExt4.login_name = @current_username
                 )
             )
+        ORDER BY LoginName, DBName, UserName
     END
     ELSE
     BEGIN
@@ -491,6 +492,7 @@ BEGIN
         WHERE 
             has_dbaccess(UExt2.database_name) = 1 AND
             LExt.orig_loginname = @input_loginname
+        ORDER BY LoginName, DBName, UserName
     END;
 
     RETURN 0;
@@ -1004,6 +1006,62 @@ BEGIN
 END; $BODY$
 LANGUAGE plpgsql
 STABLE;
+
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg anyelement) RETURNS TEXT AS 
+$BODY$
+DECLARE
+    date_arg_datatype regtype;
+    result TEXT;
+    datetimeoffset_value sys.datetimeoffset;
+BEGIN
+    date_arg_datatype := pg_typeof(arg);
+
+    IF dp = 'month'::text THEN
+        result := to_char(arg::sys.DATETIME, 'TMMonth');
+    -- '1969-12-28' is a Sunday
+    ELSIF dp = 'dow'::text THEN
+        result := to_char(arg::sys.DATETIME, 'TMDay');
+    ELSIF dp = 'tzoffset'::text THEN
+        IF date_arg_datatype IN ('sys.datetimeoffset'::regtype, 'sys.datetime2'::regtype) THEN
+            -- Explicitly cast to datetimeoffset to validate
+            -- This will throw an error if the timezone offset is invalid
+            datetimeoffset_value := arg::DATETIMEOFFSET;
+            result := PG_CATALOG.RIGHT(datetimeoffset_value::PG_CATALOG.TEXT, 6);
+        ELSE
+            RAISE EXCEPTION 'The datepart tzoffset is not supported by date function datename for data type %.', date_arg_datatype;
+        END IF;
+    ELSE
+        result := sys.datepart(dp, arg)::TEXT;
+    END IF;
+    RETURN result;
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg TEXT) RETURNS TEXT AS
+$BODY$
+DECLARE
+    result TEXT;
+    datetimeoffset_value sys.datetimeoffset;
+BEGIN
+    IF dp = 'month'::text THEN
+        result := to_char(arg::date, 'TMMonth');
+    -- '1969-12-28' is a Sunday
+    ELSIF dp = 'dow'::text THEN
+        result := to_char(arg::date, 'TMDay');
+    ELSIF dp = 'tzoffset'::text THEN
+        -- Explicitly cast to datetimeoffset to validate
+        -- This will throw an error if the timezone offset is invalid
+        datetimeoffset_value := arg::datetimeoffset;
+        result := PG_CATALOG.RIGHT(datetimeoffset_value::PG_CATALOG.TEXT, 6);
+    ELSE
+        result := sys.datepart(dp, arg)::TEXT;
+    END IF;
+    RETURN result;
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

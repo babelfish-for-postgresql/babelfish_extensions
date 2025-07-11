@@ -225,7 +225,20 @@ exec sp_cursorclose @p2;
 exec sp_cursorunprepare @p1;
 go
 
+# cursor with procedure execution test
+CREATE PROCEDURE p1 AS BEGIN select * from babel_cursor_t1 end
+go
+DECLARE @cursor_handle int;
+	EXEC sp_cursoropen @cursor_handle OUTPUT, N'exec p1', 2, 8193;
+go
+
+# cursor with empty statement will result in error
+DECLARE @cursor_handle int;
+	EXEC sp_cursoropen @cursor_handle OUTPUT, N'', 2, 8193;
+go
+
 DROP TABLE babel_cursor_t1
 DROP TABLE t1812
+DROP PROCEDURE p1
 GO
 
