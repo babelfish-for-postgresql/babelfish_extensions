@@ -166,7 +166,7 @@ SELECT CAST(N'hello' AS VARBINARY(10)) AS nvarchar_to_varbinary,
 GO
 ~~START~~
 varbinary#!#varbinary#!#varbinary#!#varbinary
-680065006C006C006F00#!#68656C6C6F#!#68656C6C6F#!#68656C6C6F
+680065006C006C006F00#!#68656C6C6F#!#680065006C006C006F00#!#68656C6C6F
 ~~END~~
 
 
@@ -532,21 +532,22 @@ go
 varchar
 Hello, World!
 ~~END~~
- 
+
 ~~START~~
 nvarchar
 效汬Ɐ圠牯摬!
 ~~END~~
- 
+
  
 DECLARE @ABC VARBINARY(50) = 0x480065006C006C006F002C00200057006F0072006C0064002100;
 SELECT CAST(@ABC AS VARCHAR(50));
 go
 ~~START~~
 varchar
-H e l l o ,   W o r l d !
-~~END~~
- 
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "WIN1252": 0x00)~~
+
 DECLARE @ABC VARBINARY(50) = 0x480065006C006C006F002C00200057006F0072006C0064002100;
 SELECT CAST(@ABC AS NVARCHAR(50));
 go
@@ -554,7 +555,7 @@ go
 nvarchar
 Hello, World!
 ~~END~~
- 
+
  
 -- CONVERT
 DECLARE @ABC VARBINARY(50) = 0x48656C6C6F2C20576F726C6421;
@@ -565,21 +566,22 @@ go
 varchar
 Hello, World!
 ~~END~~
- 
+
 ~~START~~
 nvarchar
 效汬Ɐ圠牯摬!
 ~~END~~
- 
+
  
 DECLARE @ABC VARBINARY(50) = 0x480065006C006C006F002C00200057006F0072006C0064002100;
 SELECT CONVERT(VARCHAR(50), @ABC);
 go
 ~~START~~
 varchar
-H e l l o ,   W o r l d !
-~~END~~
- 
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "WIN1252": 0x00)~~
+
 DECLARE @ABC VARBINARY(50) = 0x480065006C006C006F002C00200057006F0072006C0064002100;
 SELECT CONVERT(NVARCHAR(50), @ABC);
 go
@@ -587,7 +589,7 @@ go
 nvarchar
 Hello, World!
 ~~END~~
- 
+
  
 -- TRY CAST
 DECLARE @ABC VARBINARY(50) = 0x48656C6C6F2C20576F726C6421;
@@ -598,12 +600,12 @@ go
 varchar
 Hello, World!
 ~~END~~
- 
+
 ~~START~~
 nvarchar
 效汬Ɐ圠牯摬!
 ~~END~~
- 
+
  
 DECLARE @ABC VARBINARY(50) = 0x480065006C006C006F002C00200057006F0072006C0064002100;
 SELECT TRY_CAST(@ABC AS VARCHAR(50));
@@ -611,14 +613,14 @@ SELECT TRY_CAST(@ABC AS NVARCHAR(50));
 go
 ~~START~~
 varchar
-H e l l o ,   W o r l d !
+<NULL>
 ~~END~~
- 
+
 ~~START~~
 nvarchar
 Hello, World!
 ~~END~~
- 
+
  
 -- TRY CONVERT
 DECLARE @ABC VARBINARY(50) = 0x48656C6C6F2C20576F726C6421;
@@ -629,12 +631,12 @@ go
 varchar
 Hello, World!
 ~~END~~
- 
+
 ~~START~~
 nvarchar
 效汬Ɐ圠牯摬!
 ~~END~~
- 
+
  
 DECLARE @ABC VARBINARY(50) = 0x480065006C006C006F002C00200057006F0072006C0064002100;
 SELECT TRY_CONVERT(VARCHAR(50), @ABC);
@@ -642,10 +644,11 @@ SELECT TRY_CONVERT(NVARCHAR(50), @ABC);
 go
 ~~START~~
 varchar
-H e l l o ,   W o r l d !
+<NULL>
 ~~END~~
- 
+
 ~~START~~
 nvarchar
 Hello, World!
 ~~END~~
+
