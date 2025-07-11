@@ -152,7 +152,7 @@ Query Text: SELECT * from babel4264 where dollars = 10
 Gather
   Workers Planned: 3
   ->  Parallel Seq Scan on babel4264
-        Filter: ((dollars)::fixeddecimal = 10)
+        Filter: ((dollars)::fixeddecimal(19,4) = 10)
 ~~END~~
 
 ~~START~~
@@ -169,7 +169,7 @@ Query Text: SELECT * from babel4264 where dollars = 10.0
 Gather
   Workers Planned: 3
   ->  Parallel Seq Scan on babel4264
-        Filter: ((dollars)::fixeddecimal = 10.0)
+        Filter: ((dollars)::fixeddecimal(19,4) = 10.0)
 ~~END~~
 
 ~~START~~
@@ -186,7 +186,7 @@ Query Text: SELECT * from babel4264 where dollars = 2147483650
 Gather
   Workers Planned: 3
   ->  Parallel Seq Scan on babel4264
-        Filter: ((dollars)::fixeddecimal = '2147483650'::bigint)
+        Filter: ((dollars)::fixeddecimal(19,4) = '2147483650'::bigint)
 ~~END~~
 
 ~~START~~
@@ -203,7 +203,7 @@ Query Text: SELECT * from babel4264 where dollars = '10.12'
 Gather
   Workers Planned: 3
   ->  Parallel Seq Scan on babel4264
-        Filter: ((dollars)::fixeddecimal = '10.1200'::fixeddecimal)
+        Filter: ((dollars)::fixeddecimal(19,4) = '10.1200'::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -220,7 +220,7 @@ Query Text: SELECT * from babel4264 where dollars = '10.123512341234'
 Gather
   Workers Planned: 3
   ->  Parallel Seq Scan on babel4264
-        Filter: ((dollars)::fixeddecimal = '10.1235'::fixeddecimal)
+        Filter: ((dollars)::fixeddecimal(19,4) = '10.1235'::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -237,7 +237,7 @@ Query Text: SELECT * from babel4264 where dollars = cast('10' as varchar(30))
 Gather
   Workers Planned: 3
   ->  Parallel Seq Scan on babel4264
-        Filter: ((dollars)::fixeddecimal = '10.0000'::fixeddecimal)
+        Filter: ((dollars)::fixeddecimal(19,4) = '10.0000'::fixeddecimal)
 ~~END~~
 
 ~~START~~

@@ -142,7 +142,7 @@ go
 text
 Query Text: SELECT * from babel4264 where dollars = 10
 Seq Scan on babel4264
-  Filter: ((dollars)::fixeddecimal = 10)
+  Filter: ((dollars)::fixeddecimal(19,4) = 10)
 ~~END~~
 
 ~~START~~
@@ -157,7 +157,7 @@ go
 text
 Query Text: SELECT * from babel4264 where dollars = 10.0
 Seq Scan on babel4264
-  Filter: ((dollars)::fixeddecimal = 10.0)
+  Filter: ((dollars)::fixeddecimal(19,4) = 10.0)
 ~~END~~
 
 ~~START~~
@@ -172,7 +172,7 @@ go
 text
 Query Text: SELECT * from babel4264 where dollars = 2147483650
 Seq Scan on babel4264
-  Filter: ((dollars)::fixeddecimal = '2147483650'::bigint)
+  Filter: ((dollars)::fixeddecimal(19,4) = '2147483650'::bigint)
 ~~END~~
 
 ~~START~~
@@ -187,7 +187,7 @@ go
 text
 Query Text: SELECT * from babel4264 where dollars = '10.12'
 Seq Scan on babel4264
-  Filter: ((dollars)::fixeddecimal = '10.1200'::fixeddecimal)
+  Filter: ((dollars)::fixeddecimal(19,4) = '10.1200'::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -202,7 +202,7 @@ go
 text
 Query Text: SELECT * from babel4264 where dollars = '10.123512341234'
 Seq Scan on babel4264
-  Filter: ((dollars)::fixeddecimal = '10.1235'::fixeddecimal)
+  Filter: ((dollars)::fixeddecimal(19,4) = '10.1235'::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -217,7 +217,7 @@ go
 text
 Query Text: SELECT * from babel4264 where dollars = cast('10' as varchar(30))
 Seq Scan on babel4264
-  Filter: ((dollars)::fixeddecimal = '10.0000'::fixeddecimal)
+  Filter: ((dollars)::fixeddecimal(19,4) = '10.0000'::fixeddecimal)
 ~~END~~
 
 ~~START~~

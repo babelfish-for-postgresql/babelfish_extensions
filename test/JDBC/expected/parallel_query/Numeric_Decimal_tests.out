@@ -9807,7 +9807,7 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: (num_col = 999.99)
+        Index Cond: (num_col = 999.99::numeric(18,2))
 ~~END~~
 
 
@@ -9848,7 +9848,7 @@ text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = CAST(500.00 AS MONEY)
 Seq Scan on numeric_index_test (actual rows=1 loops=1)
-  Filter: (num_col = (('500.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+  Filter: (num_col = (('500.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal(19,4))
   Rows Removed by Filter: 2
 ~~END~~
 
@@ -9892,7 +9892,7 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: ((num_col >= 400.00) AND (num_col <= 600.00))
+        Index Cond: ((num_col >= 400.00) AND (num_col <= 600.00::numeric(18,2)))
 ~~END~~
 
 
@@ -9916,11 +9916,10 @@ JOIN numeric_index_test b ON a.num_col = b.decimal_col
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
   Workers Launched: 1
-  ->  Merge Join (actual rows=2 loops=2)
-        Merge Cond: (a.num_col = (b.decimal_col)::numeric)
+  ->  Nested Loop (actual rows=2 loops=2)
         ->  Parallel Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test a (actual rows=2 loops=2)
-        ->  Materialize (actual rows=3 loops=1)
-              ->  Index Scan using idx_decimalnumeric_index_test5d8e61a04a9662670ec1a2266602e173 on numeric_index_test b (actual rows=3 loops=1)
+        ->  Index Scan using idx_decimalnumeric_index_test5d8e61a04a9662670ec1a2266602e173 on numeric_index_test b (actual rows=1 loops=3)
+              Index Cond: ((decimal_col)::numeric(18,2) = a.num_col)
 ~~END~~
 
 
@@ -10019,7 +10018,7 @@ Gather (actual rows=3 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Seq Scan on numeric_index_test (actual rows=3 loops=1)
-        Filter: ((num_col)::numeric = (decimal_col)::numeric)
+        Filter: (num_col = (decimal_col)::numeric(18,2))
 ~~END~~
 
 
@@ -10088,7 +10087,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
         Index Cond: (num_col = 123.45)
-        Filter: ((decimal_col)::numeric = 123.45)
+        Filter: ((decimal_col)::numeric(18,2) = 123.45)
 ~~END~~
 
 
@@ -10231,7 +10230,7 @@ Gather (actual rows=0 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Seq Scan on numeric_index_test (actual rows=0 loops=1)
-        Filter: ((num_col * '2'::numeric(1,0)) = (decimal_col)::numeric)
+        Filter: ((num_col * '2'::numeric(1,0)) = (decimal_col)::numeric(18,2))
         Rows Removed by Filter: 4
 ~~END~~
 

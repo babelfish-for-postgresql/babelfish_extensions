@@ -2298,7 +2298,7 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Index Scan using cda2902d769fd61eb60b1a461650212f_partition_1_id_idx on cda2902d769fd61eb60b1a461650212f_partition_1 partition_vu_prepare_decimal_table
-        Index Cond: (((id)::numeric >= 0.0) AND ((id)::numeric < 100.0))
+        Index Cond: (((id)::numeric(10,5) >= 0.0) AND ((id)::numeric(10,5) < 100.0))
 ~~END~~
 
 ~~START~~
@@ -2335,9 +2335,9 @@ Gather
   Single Copy: true
   ->  Append
         ->  Index Scan using "640187c54e2c2984d190957d245a5fa5_partition_1_id_idx" on "640187c54e2c2984d190957d245a5fa5_partition_1" partition_vu_prepare_money_table_1
-              Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+              Index Cond: (((id)::fixeddecimal(19,4) >= 2.56789) AND ((id)::fixeddecimal(19,4) < 3.56789))
         ->  Index Scan using "640187c54e2c2984d190957d245a5fa5_partition_0_id_idx" on "640187c54e2c2984d190957d245a5fa5_partition_0" partition_vu_prepare_money_table_2
-              Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+              Index Cond: (((id)::fixeddecimal(19,4) >= 2.56789) AND ((id)::fixeddecimal(19,4) < 3.56789))
 ~~END~~
 
 ~~START~~
@@ -2356,9 +2356,9 @@ Gather
   Single Copy: true
   ->  Append
         ->  Index Scan using "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1_id_idx" on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1" partition_vu_prepare_smallmoney_table_1
-              Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+              Index Cond: (((id)::fixeddecimal(10,4) >= 2.56789) AND ((id)::fixeddecimal(10,4) < 3.56789))
         ->  Index Scan using "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0_id_idx" on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0" partition_vu_prepare_smallmoney_table_2
-              Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+              Index Cond: (((id)::fixeddecimal(10,4) >= 2.56789) AND ((id)::fixeddecimal(10,4) < 3.56789))
 ~~END~~
 
 ~~START~~
