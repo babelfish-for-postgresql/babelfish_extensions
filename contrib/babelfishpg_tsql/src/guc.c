@@ -1,5 +1,6 @@
 #include "postgres.h"
 #include "commands/explain.h"
+#include "commands/explain_state.h"
 #include "parser/scansup.h"		/* downcase_identifier */
 #include "utils/guc.h"
 #include "miscadmin.h"

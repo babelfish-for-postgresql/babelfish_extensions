@@ -1,6 +1,7 @@
 #include "access/xact.h"
 #include "commands/explain.h"
 #include "commands/explain_format.h"
+#include "commands/explain_state.h"
 #include "tcop/utility.h"
 
 #include "pltsql.h"
