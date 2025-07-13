@@ -1,0 +1,413 @@
+-- tsql
+create table babel_test_numeric_smallmoney_vu_prepare(a numeric);
+GO
+
+-- insert data
+INSERT INTO babel_test_numeric_smallmoney_vu_prepare (a) SELECT cast(generate_series(1, 100000) as numeric);
+GO
+
+-- Insert boundary values for smallmoney type
+INSERT INTO babel_test_numeric_smallmoney_vu_prepare VALUES 
+(NULL), 
+(-214748.3648), -- smallmoney min
+(214748.3647);  -- smallmoney max
+GO
+
+CREATE INDEX babel_test_numeric_smallmoney_vu_prepare_idx on babel_test_numeric_smallmoney_vu_prepare(a);
+GO
+
+-- Basic equality tests
+create procedure babel_test_numeric_smallmoney_p0 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a = cast(1 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p00 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(1 as smallmoney) = a;
+GO
+
+create procedure babel_test_numeric_smallmoney_p1 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a IS NULL;
+GO
+
+-- seq scan
+create procedure babel_test_numeric_smallmoney_p2 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <> cast(5 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p3 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) <> a;
+GO
+
+-- index scan on < and >
+create procedure babel_test_numeric_smallmoney_p4 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(5 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p5 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) > a;
+GO
+
+create procedure babel_test_numeric_smallmoney_p6 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(-214748.3648 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p7 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(-214748.3648 as smallmoney) > a;
+GO
+
+create procedure babel_test_numeric_smallmoney_p8 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <= cast(5 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p9 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) >= a;
+GO
+
+create procedure babel_test_numeric_smallmoney_p10 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(99995 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p11 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(99995 as smallmoney) < a;
+GO
+
+create procedure babel_test_numeric_smallmoney_p12 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a >= cast(99995 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p13 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(99995 as smallmoney) <= a;
+GO
+
+create procedure babel_test_numeric_smallmoney_p14 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(214748.3647 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p15 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(214748.3647 as smallmoney) < a;
+GO
+
+-- seq scan on < and >
+create procedure babel_test_numeric_smallmoney_p16 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(5 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p17 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) < a;
+GO
+
+-- index scan for BETWEEN
+create procedure babel_test_numeric_smallmoney_p18 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a between cast(5 as smallmoney) and cast(10 as smallmoney);
+GO
+
+-- seq scan for BETWEEN
+create procedure babel_test_numeric_smallmoney_p19 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a between cast(5 as smallmoney) and cast(214748.3647 as smallmoney);
+GO
+
+-- mix of numeric op smallmoney and numeric op numeric
+create procedure babel_test_numeric_smallmoney_p20 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where (a between cast(5 as smallmoney) and cast(99995 as smallmoney)) and a = cast(10 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p21 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(5 as smallmoney) and a < cast(7 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p22 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) < a and cast(7 as smallmoney) > a;
+GO
+
+-- seq scan
+create procedure babel_test_numeric_smallmoney_p23 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <> cast(5 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p24 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(5 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p25 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(-214748.3648 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p26 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <= cast(5 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p27 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(99995 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p28 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a >= cast(99995 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p29 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(214748.3647 as smallmoney);
+GO
+
+create procedure babel_test_numeric_smallmoney_p30 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(5 as smallmoney);
+GO
+
+-- Views
+create view babel_test_numeric_smallmoney_v0 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a = cast(1 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v00 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(1 as smallmoney) = a;
+GO
+
+create view babel_test_numeric_smallmoney_v1 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a IS NULL;
+GO
+
+create view babel_test_numeric_smallmoney_v2 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <> cast(5 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v3 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) <> a;
+GO
+
+create view babel_test_numeric_smallmoney_v4 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(5 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v5 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) > a;
+GO
+
+create view babel_test_numeric_smallmoney_v6 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(-214748.3648 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v7 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(-214748.3648 as smallmoney) > a;
+GO
+
+create view babel_test_numeric_smallmoney_v8 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <= cast(5 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v9 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) >= a;
+GO
+
+create view babel_test_numeric_smallmoney_v10 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(99995 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v11 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(99995 as smallmoney) < a;
+GO
+
+create view babel_test_numeric_smallmoney_v12 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a >= cast(99995 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v13 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(99995 as smallmoney) <= a;
+GO
+
+create view babel_test_numeric_smallmoney_v14 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(214748.3647 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v15 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(214748.3647 as smallmoney) < a;
+GO
+
+create view babel_test_numeric_smallmoney_v16 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(5 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v17 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) < a;
+GO
+
+create view babel_test_numeric_smallmoney_v18 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a between cast(5 as smallmoney) and cast(10 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v19 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a between cast(5 as smallmoney) and cast(214748.3647 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v20 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where (a between cast(5 as smallmoney) and cast(99995 as smallmoney)) and a = cast(10 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v21 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(5 as smallmoney) and a < cast(7 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v22 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) < a and cast(7 as smallmoney) > a;
+GO
+
+create view babel_test_numeric_smallmoney_v23 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <> cast(5 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v24 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(5 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v25 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(-214748.3648 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v26 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <= cast(5 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v27 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(99995 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v28 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a >= cast(99995 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v29 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(214748.3647 as smallmoney);
+GO
+
+create view babel_test_numeric_smallmoney_v30 as
+select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(5 as smallmoney);
+GO
+
+
+-- Functions
+create function babel_test_numeric_smallmoney_f0() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a = cast(1 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f00() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(1 as smallmoney) = a) end;
+GO
+
+create function babel_test_numeric_smallmoney_f1() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a IS NULL) end;
+GO
+
+create function babel_test_numeric_smallmoney_f2() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <> cast(5 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f3() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) <> a) end;
+GO
+
+create function babel_test_numeric_smallmoney_f4() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(5 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f5() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) > a) end;
+GO
+
+create function babel_test_numeric_smallmoney_f6() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(-214748.3648 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f7() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(-214748.3648 as smallmoney) > a) end;
+GO
+
+create function babel_test_numeric_smallmoney_f8() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <= cast(5 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f9() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) >= a) end;
+GO
+
+create function babel_test_numeric_smallmoney_f10() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(99995 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f11() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(99995 as smallmoney) < a) end;
+GO
+
+create function babel_test_numeric_smallmoney_f12() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a >= cast(99995 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f13() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(99995 as smallmoney) <= a) end;
+GO
+
+create function babel_test_numeric_smallmoney_f14() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(214748.3647 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f15() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(214748.3647 as smallmoney) < a) end;
+GO
+
+create function babel_test_numeric_smallmoney_f16() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(5 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f17() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) < a) end;
+GO
+
+create function babel_test_numeric_smallmoney_f18() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a between cast(5 as smallmoney) and cast(10 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f19() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a between cast(5 as smallmoney) and cast(214748.3647 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f20() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where (a between cast(5 as smallmoney) and cast(99995 as smallmoney)) and a = cast(10 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f21() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(5 as smallmoney) and a < cast(7 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f22() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where cast(5 as smallmoney) < a and cast(7 as smallmoney) > a) end;
+GO
+
+create function babel_test_numeric_smallmoney_f23() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <> cast(5 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f24() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(5 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f25() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a < cast(-214748.3648 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f26() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a <= cast(5 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f27() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(99995 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f28() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a >= cast(99995 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f29() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(214748.3647 as smallmoney)) end;
+GO
+
+create function babel_test_numeric_smallmoney_f30() returns int as
+begin return (select count(*) from babel_test_numeric_smallmoney_vu_prepare where a > cast(5 as smallmoney)) end;
+GO
+
