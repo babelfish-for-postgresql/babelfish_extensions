@@ -429,3 +429,9 @@ ignore#!#trim-before-15_12-or-16_8-vu-cleanup
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-prepare
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-verify
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-cleanup
+ignore#!#babel_numeric_smallmoney_oper-before-16_10-or-17_6-vu-prepare
+ignore#!#babel_numeric_smallmoney_oper-before-16_10-or-17_6-vu-verify
+ignore#!#babel_numeric_smallmoney_oper-before-16_10-or-17_6-vu-cleanup
+ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-prepare
+ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-verify
+ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-cleanup

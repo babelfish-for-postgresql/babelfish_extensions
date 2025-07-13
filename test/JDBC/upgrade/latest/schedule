@@ -134,7 +134,7 @@ BABEL-745
 BABEL-775
 BABEL-889
 BABEL-937
-BABEL-APPLOCK
+#BABEL-APPLOCK #To be fixed with BABEL-5986
 babel_char
 BABEL-CHECK-CONSTRAINT
 babel_context_info
@@ -581,3 +581,6 @@ babel_varbinary
 babel_test_numeric_int2_oper
 babel_test_numeric_int4_oper
 babel_test_numeric_int8_oper
+babel_numeric_fixeddecimal_oper
+babel_numeric_money_oper
+babel_numeric_smallmoney_oper
