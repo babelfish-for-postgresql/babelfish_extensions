@@ -1354,89 +1354,89 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Var:
 			{
 				Var		*var = (Var *) expr;
-				// TargetEntry	*tle;
-				// int		rettypmod;
-				// bool		found_typmod;
+				TargetEntry	*tle;
+				int		rettypmod;
+				bool		found_typmod;
 
 				/* If the current node is a subqueryscan,
 				 * find the original target list entry from subplan.
 				 */
-				// if (plan && IsA(plan, SubqueryScan))
-				// {	Plan		*subplan;
-				// 	Assert(plan);
-				// 	subplan = ((SubqueryScan *)plan)->subplan;
-				// 	if (subplan)
-				// 	{
-				// 		tle = get_tle_by_resno(subplan->targetlist, var->varattno);
-				// 		if (!tle)
-				// 			elog(ERROR, "bogus varattno for SubqueryScan's subplan: %d", var->varattno);
-				// 		rettypmod = resolve_numeric_typmod_from_exp(subplan, (Node *)tle->expr, &found_typmod);
-				// 		if (!found_typmod)
-				// 		{
-				// 			if (found != NULL) *found = false;
-				// 		}
-				// 		return rettypmod;
-				// 	}
-				// 	else
-				// 	{
-				// 		elog(ERROR, "subplan is NULL for SubqueryScan");
-				// 	}
-				// }
-				// /* If the current node is a not UNION node and it has either
-				//  * Outer/Inner query,find the original target list entry from
-				//  * Outer/Inner plan.
-				//  */
-				// if (plan && (!IsA(plan, Append) && !IsA(plan, MergeAppend)))
-				// {
-				// 	Assert(plan);
-				// 	if (var->varno == OUTER_VAR)
-				// 	{	Plan		*outerplan;
-				// 		outerplan = outerPlan(plan);
-				// 		if (outerplan)
-				// 		{
-				// 			tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
-				// 			if (!tle)
-				// 				elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
-				// 			rettypmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr, &found_typmod);
-				// 			if (!found_typmod)
-				// 			{
-				// 				if (found != NULL) *found = false;
-				// 			}
-				// 			return rettypmod;
-				// 		}
-				// 		else
-				// 		{
-				// 			elog(ERROR, "outerplan is NULL for OUTER_VAR");
-				// 		}
-				// 	}
-				// 	else if (var->varno == INNER_VAR)
-				// 	{	Plan		*innerplan;
-				// 		innerplan = innerPlan(plan);
-				// 		if (innerplan)
-				// 		{
-				// 			tle = get_tle_by_resno(innerplan->targetlist, var->varattno);
-				// 			if (!tle)
-				// 				elog(ERROR, "bogus varattno for INNER_VAR var: %d", var->varattno);
-				// 			rettypmod = resolve_numeric_typmod_from_exp(innerplan, (Node *)tle->expr, &found_typmod);
-				// 			if (!found_typmod)
-				// 			{
-				// 				if (found != NULL) *found = false;
-				// 			}
-				// 			return rettypmod;
-				// 		}
-				// 		else
-				// 		{
-				// 			elog(ERROR, "innerplan is NULL for INNER_VAR");
-				// 		}
-				// 	}
-				// }
+				if (plan && IsA(plan, SubqueryScan))
+				{	Plan		*subplan;
+					Assert(plan);
+					subplan = ((SubqueryScan *)plan)->subplan;
+					if (subplan)
+					{
+						tle = get_tle_by_resno(subplan->targetlist, var->varattno);
+						if (!tle)
+							elog(ERROR, "bogus varattno for SubqueryScan's subplan: %d", var->varattno);
+						rettypmod = resolve_numeric_typmod_from_exp(subplan, (Node *)tle->expr, &found_typmod);
+						if (!found_typmod)
+						{
+							if (found != NULL) *found = false;
+						}
+						return rettypmod;
+					}
+					else
+					{
+						elog(ERROR, "subplan is NULL for SubqueryScan");
+					}
+				}
+				/* If the current node is a not UNION node and it has either
+				 * Outer/Inner query,find the original target list entry from
+				 * Outer/Inner plan.
+				 */
+				if (plan && (!IsA(plan, Append) && !IsA(plan, MergeAppend)))
+				{
+					Assert(plan);
+					if (var->varno == OUTER_VAR)
+					{	Plan		*outerplan;
+						outerplan = outerPlan(plan);
+						if (outerplan)
+						{
+							tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
+							if (!tle)
+								elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
+							rettypmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr, &found_typmod);
+							if (!found_typmod)
+							{
+								if (found != NULL) *found = false;
+							}
+							return rettypmod;
+						}
+						else
+						{
+							elog(ERROR, "outerplan is NULL for OUTER_VAR");
+						}
+					}
+					else if (var->varno == INNER_VAR)
+					{	Plan		*innerplan;
+						innerplan = innerPlan(plan);
+						if (innerplan)
+						{
+							tle = get_tle_by_resno(innerplan->targetlist, var->varattno);
+							if (!tle)
+								elog(ERROR, "bogus varattno for INNER_VAR var: %d", var->varattno);
+							rettypmod = resolve_numeric_typmod_from_exp(innerplan, (Node *)tle->expr, &found_typmod);
+							if (!found_typmod)
+							{
+								if (found != NULL) *found = false;
+							}
+							return rettypmod;
+						}
+						else
+						{
+							elog(ERROR, "innerplan is NULL for INNER_VAR");
+						}
+					}
+				}
 
-				// /* if varno is INNER_VAR or OUTER_VAR then we need plan, else we cannot find typmod, hence set found as false and return -1 */
-				// if (plan == NULL && (var->varno == INNER_VAR || var->varno == OUTER_VAR))
-				// {
-				// 	if (found != NULL) *found = false;
-				// 	return -1;
-				// }
+				/* if varno is INNER_VAR or OUTER_VAR then we need plan, else we cannot find typmod, hence set found as false and return -1 */
+				if (plan == NULL && (var->varno == INNER_VAR || var->varno == OUTER_VAR))
+				{
+					if (found != NULL) *found = false;
+					return -1;
+				}
 
 				if (var->vartypmod == -1)
 				{
