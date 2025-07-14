@@ -1590,7 +1590,11 @@ icu_compare_utf8_coll(UCollator  *coll, UChar *uchar1, int32_t ulen1,
 
 	if (is_cs_ai_range_cmp)
 	{
+#if U_ICU_VERSION_MAJOR_NUM < 71
 		collator = ucol_safeClone(coll, NULL, NULL, &status);
+#else
+		collator = ucol_clone(coll, &status);
+#endif
 
 		if (U_FAILURE(status))
 			ereport(ERROR,
