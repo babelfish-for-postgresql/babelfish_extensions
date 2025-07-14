@@ -779,7 +779,7 @@ text
 Query Text: select * from babel_test_numeric_money_v0
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a = (('1.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a = (('1.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -794,7 +794,7 @@ text
 Query Text: select * from babel_test_numeric_money_v00
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a = (('1.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a = (('1.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -824,7 +824,7 @@ text
 Query Text: select * from babel_test_numeric_money_v2
 Aggregate
   ->  Seq Scan on babel_test_numeric_money_vu_prepare
-        Filter: (a <> (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Filter: (a <> (('5.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -839,7 +839,7 @@ text
 Query Text: select * from babel_test_numeric_money_v3
 Aggregate
   ->  Seq Scan on babel_test_numeric_money_vu_prepare
-        Filter: ((('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal <> a)
+        Filter: ((('5.0000'::fixeddecimal)::money)::fixeddecimal <> a)
 ~~END~~
 
 ~~START~~
@@ -854,7 +854,7 @@ text
 Query Text: select * from babel_test_numeric_money_v4
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a < (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a < (('5.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -869,7 +869,7 @@ text
 Query Text: select * from babel_test_numeric_money_v5
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a < (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a < (('5.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -884,7 +884,7 @@ text
 Query Text: select * from babel_test_numeric_money_v6
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a < (('-922337203685477.5808'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a < (('-922337203685477.5808'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -899,7 +899,7 @@ text
 Query Text: select * from babel_test_numeric_money_v7
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a < (('-922337203685477.5808'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a < (('-922337203685477.5808'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -914,7 +914,7 @@ text
 Query Text: select * from babel_test_numeric_money_v8
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a <= (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a <= (('5.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -929,7 +929,7 @@ text
 Query Text: select * from babel_test_numeric_money_v9
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a <= (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a <= (('5.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -944,7 +944,7 @@ text
 Query Text: select * from babel_test_numeric_money_v10
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a > (('99995.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a > (('99995.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -959,7 +959,7 @@ text
 Query Text: select * from babel_test_numeric_money_v11
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a > (('99995.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a > (('99995.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -974,7 +974,7 @@ text
 Query Text: select * from babel_test_numeric_money_v12
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a >= (('99995.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a >= (('99995.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -989,7 +989,7 @@ text
 Query Text: select * from babel_test_numeric_money_v13
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a >= (('99995.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a >= (('99995.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1004,7 +1004,7 @@ text
 Query Text: select * from babel_test_numeric_money_v14
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a > (('922337203685477.5807'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a > (('922337203685477.5807'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1019,7 +1019,7 @@ text
 Query Text: select * from babel_test_numeric_money_v15
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a > (('922337203685477.5807'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a > (('922337203685477.5807'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1034,7 +1034,7 @@ text
 Query Text: select * from babel_test_numeric_money_v16
 Aggregate
   ->  Seq Scan on babel_test_numeric_money_vu_prepare
-        Filter: (a > (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Filter: (a > (('5.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1049,7 +1049,7 @@ text
 Query Text: select * from babel_test_numeric_money_v17
 Aggregate
   ->  Seq Scan on babel_test_numeric_money_vu_prepare
-        Filter: ((('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal < a)
+        Filter: ((('5.0000'::fixeddecimal)::money)::fixeddecimal < a)
 ~~END~~
 
 ~~START~~
@@ -1064,7 +1064,7 @@ text
 Query Text: select * from babel_test_numeric_money_v18
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: ((a >= (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal) AND (a <= (('10.0000'::fixeddecimal(19,4))::money)::fixeddecimal))
+        Index Cond: ((a >= (('5.0000'::fixeddecimal)::money)::fixeddecimal) AND (a <= (('10.0000'::fixeddecimal)::money)::fixeddecimal))
 ~~END~~
 
 ~~START~~
@@ -1079,7 +1079,7 @@ text
 Query Text: select * from babel_test_numeric_money_v19
 Aggregate
   ->  Seq Scan on babel_test_numeric_money_vu_prepare
-        Filter: ((a >= (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal) AND (a <= (('922337203685477.5807'::fixeddecimal(19,4))::money)::fixeddecimal))
+        Filter: ((a >= (('5.0000'::fixeddecimal)::money)::fixeddecimal) AND (a <= (('922337203685477.5807'::fixeddecimal)::money)::fixeddecimal))
 ~~END~~
 
 ~~START~~
@@ -1094,7 +1094,7 @@ text
 Query Text: select * from babel_test_numeric_money_v20
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: ((a >= (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal) AND (a <= (('99995.0000'::fixeddecimal(19,4))::money)::fixeddecimal) AND (a = (('10.0000'::fixeddecimal(19,4))::money)::fixeddecimal))
+        Index Cond: ((a >= (('5.0000'::fixeddecimal)::money)::fixeddecimal) AND (a <= (('99995.0000'::fixeddecimal)::money)::fixeddecimal) AND (a = (('10.0000'::fixeddecimal)::money)::fixeddecimal))
 ~~END~~
 
 ~~START~~
@@ -1109,7 +1109,7 @@ text
 Query Text: select * from babel_test_numeric_money_v21
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: ((a > (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal) AND (a < (('7.0000'::fixeddecimal(19,4))::money)::fixeddecimal))
+        Index Cond: ((a > (('5.0000'::fixeddecimal)::money)::fixeddecimal) AND (a < (('7.0000'::fixeddecimal)::money)::fixeddecimal))
 ~~END~~
 
 ~~START~~
@@ -1124,7 +1124,7 @@ text
 Query Text: select * from babel_test_numeric_money_v22
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: ((a > (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal) AND (a < (('7.0000'::fixeddecimal(19,4))::money)::fixeddecimal))
+        Index Cond: ((a > (('5.0000'::fixeddecimal)::money)::fixeddecimal) AND (a < (('7.0000'::fixeddecimal)::money)::fixeddecimal))
 ~~END~~
 
 ~~START~~
@@ -1139,7 +1139,7 @@ text
 Query Text: select * from babel_test_numeric_money_v23
 Aggregate
   ->  Seq Scan on babel_test_numeric_money_vu_prepare
-        Filter: (a <> (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Filter: (a <> (('5.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1154,7 +1154,7 @@ text
 Query Text: select * from babel_test_numeric_money_v24
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a < (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a < (('5.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1169,7 +1169,7 @@ text
 Query Text: select * from babel_test_numeric_money_v25
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a < (('-922337203685477.5808'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a < (('-922337203685477.5808'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1184,7 +1184,7 @@ text
 Query Text: select * from babel_test_numeric_money_v26
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a <= (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a <= (('5.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1199,7 +1199,7 @@ text
 Query Text: select * from babel_test_numeric_money_v27
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a > (('99995.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a > (('99995.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1214,7 +1214,7 @@ text
 Query Text: select * from babel_test_numeric_money_v28
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a >= (('99995.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a >= (('99995.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1229,7 +1229,7 @@ text
 Query Text: select * from babel_test_numeric_money_v29
 Aggregate
   ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
-        Index Cond: (a > (('922337203685477.5807'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Index Cond: (a > (('922337203685477.5807'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
@@ -1244,7 +1244,7 @@ text
 Query Text: select * from babel_test_numeric_money_v30
 Aggregate
   ->  Seq Scan on babel_test_numeric_money_vu_prepare
-        Filter: (a > (('5.0000'::fixeddecimal(19,4))::money)::fixeddecimal)
+        Filter: (a > (('5.0000'::fixeddecimal)::money)::fixeddecimal)
 ~~END~~
 
 ~~START~~
