@@ -84,6 +84,13 @@ jobs:
         with: 
           base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
 
+      - name: Setup upterm session
+        if: always()
+        uses: lhotari/action-upterm@v1
+        timeout-minutes: 120
+        with:
+          limit-access-to-actor: true
+          
       - name: Dump and restore till final version ${{ steps.read-base-and-final-version.outputs.final-version }} and run verify scripts
         id: dump-restore-and-test
         if: always() && steps.setup-dump-restore-ca.outcome == 'success' 
