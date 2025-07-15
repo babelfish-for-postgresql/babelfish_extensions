@@ -14,15 +14,14 @@ GO
 Declare @a date;
 INSERT INTO DateTest (DateCol) VALUES (@a), ('');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type date: "")~~
+~~ROW COUNT: 2~~
 
 SELECT * FROM DateTest WHERE DateCol IS NULL;
 GO
 ~~START~~
 int#!#date
 1#!#<NULL>
+2#!#<NULL>
 ~~END~~
 
 SELECT * FROM DateTest;
@@ -30,6 +29,8 @@ GO
 ~~START~~
 int#!#date
 1#!#<NULL>
+2#!#<NULL>
+3#!#1900-01-01
 ~~END~~
 
 
@@ -2049,9 +2050,10 @@ date
 
 SELECT CAST(CAST('' AS varchar) AS DATE);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type date: "")~~
+~~START~~
+date
+1900-01-01
+~~END~~
 
 
 -- nchar
@@ -2650,9 +2652,10 @@ date
 
 SELECT dbo.TestDateFunction(CAST('' AS varchar));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type date: "")~~
+~~START~~
+date
+1900-01-01
+~~END~~
 
 
 -- nchar

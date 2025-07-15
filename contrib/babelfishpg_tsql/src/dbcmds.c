@@ -612,7 +612,6 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	char        *dbo_role;
 	NameData    default_collation;
 	NameData    owner_namedata;
-	int         stmt_number = 0;
 	int         save_sec_context;
 	bool        is_set_userid = false;
 	Oid         save_userid;
@@ -753,11 +752,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			stmt_number++;
-			if (list_length(parsetree_list) - 1 == stmt_number)
-				wrapper->stmt_len = 19;
-			else
-				wrapper->stmt_len = 18;
+			wrapper->stmt_len = 26;
 
 			/* do this step */
 			ProcessUtility(wrapper,

@@ -2,6 +2,7 @@
 
 #include "fmgr.h"
 #include "numeric.h"
+#include "utils/date.h"
 
 /*
  * Casting float < -1.0 to unsigned integer could cause issues on ARM.
@@ -98,4 +99,6 @@ typedef struct common_utility_plugin
 	int			(*TsqlUTF8LengthInUTF16) (const void *vin, int len);
 	void		(*TsqlUTF8toUTF16StringInfo) (StringInfo utf16_data, const void *data, size_t len);
 	int32_t		(*tsql_numeric_get_typmod) (Numeric num);
+	DateADT		(*initializeToDefaultDate) (void);
+	TimeADT		(*initializeToDefaultTime) (int32 typmod);
 } common_utility_plugin;

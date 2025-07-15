@@ -72,3 +72,33 @@ GO
 
 CREATE VIEW smallmoneybitdivfail_vu AS SELECT CAST(123.456 as sys.SMALLMONEY) / CAST(0 as sys.BIT) AS result;
 GO
+
+CREATE VIEW bitsmallmoneypl_vu AS SELECT cast(100 AS BIT) + cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW bitsmallmoneymi_vu AS SELECT cast(100 AS BIT) - cast(123.45 AS SMALLMONEY) AS result;
+GO
+
+CREATE VIEW smallmoneybitpl_vu AS SELECT cast(123.45 AS SMALLMONEY) + cast(100 AS BIT) AS result;
+GO
+
+CREATE VIEW smallmoneybitmi_vu AS SELECT cast(123.45 AS SMALLMONEY) - cast(100 AS BIT) AS result;
+GO
+
+CREATE VIEW floormaxmoney_vu AS SELECT floor(cast(922337203685477.5807 as MONEY)) AS result;
+GO
+
+CREATE VIEW ceilingminmoney_vu AS SELECT ceiling(cast(-922337203685477.5807 as MONEY)) AS result;
+GO
+
+CREATE VIEW powermoney_vu AS SELECT POWER(cast(-100.5807 as MONEY), 2) AS result;
+GO
+
+CREATE VIEW powermoneyfail_vu AS SELECT POWER(cast(-92233720368.5807 as MONEY), 2) AS result;
+GO
+
+CREATE VIEW powersmallmoney_vu AS SELECT POWER(cast(-100.5807 as SMALLMONEY), 2) AS result;
+GO
+
+CREATE VIEW powersmallmoneyfail_vu AS SELECT POWER(cast(-92233720368.5807 as SMALLMONEY), 2) AS result;
+GO

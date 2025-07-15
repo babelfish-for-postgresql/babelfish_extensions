@@ -4067,10 +4067,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (strcmp(queryString, CREATE_LOGICAL_DATABASE) == 0
 						&& context == PROCESS_UTILITY_SUBCOMMAND)
 					{
-						if (pstmt->stmt_len == 19)
+						char	*dbname = get_cur_db_name();
+						char	*guest_schema = get_guest_schema_name(dbname);
+						/* Check if the schema is 'guest'. */
+						if (strcmp(guest_schema, create_schema->schemaname) == 0)
 							orig_schema = "guest";
 						else
 							orig_schema = "dbo";
+						pfree(guest_schema);
+						pfree(dbname);
 					}
 					else if (strcmp(queryString, CREATE_GUEST_SCHEMAS_DURING_UPGRADE) == 0)
 					{
@@ -4598,6 +4603,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 		case T_VariableSetStmt:
 			{
 				VariableSetStmt *variable_set = (VariableSetStmt *) parsetree;
+
+				if (!variable_set->name)
+					break;
 
 				if(strcmp(variable_set->name, "SESSION CHARACTERISTICS") == 0)
 				{

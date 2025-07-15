@@ -127,9 +127,10 @@ int#!#int#!#int#!#int
 -- following throws error in babelfish
 SELECT ASCII(CHAR(0)) AS NullChar
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: null character not permitted)~~
+~~START~~
+int
+0
+~~END~~
 
 
 -- 4. Tests with Different Data Types
@@ -238,7 +239,7 @@ SELECT
 GO
 ~~START~~
 int#!#int
-256#!#12121
+<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -262,7 +263,7 @@ SELECT
 FROM Numbers;
 GO
 ~~START~~
-int#!#text#!#int#!#varchar
+int#!#varchar#!#int#!#varchar
 1#!##!#1#!#Pass
 2#!##!#2#!#Pass
 3#!##!#3#!#Pass
@@ -712,7 +713,7 @@ EXEC ascii_sp_analyzestring 'Test String';
 EXEC ascii_sp_validateascii 'A', 65;
 GO
 ~~START~~
-varchar#!#int#!#text#!#varchar
+varchar#!#int#!#varchar#!#varchar
 Test String#!#84#!#T#!#Uppercase
 ~~END~~
 

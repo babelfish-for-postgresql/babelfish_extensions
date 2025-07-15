@@ -1534,9 +1534,10 @@ time
 
 SELECT CAST(CAST('' AS varchar) AS TIME);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type time: "")~~
+~~START~~
+time
+00:00:00.0000000
+~~END~~
 
 
 -- nchar
@@ -2121,9 +2122,10 @@ time
 
 SELECT dbo.TestTimeFunction(CAST('' AS varchar));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type time: "")~~
+~~START~~
+time
+00:00:00.0000000
+~~END~~
 
 
 -- nchar

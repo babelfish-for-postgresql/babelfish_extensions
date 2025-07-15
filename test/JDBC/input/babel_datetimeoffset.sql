@@ -137,6 +137,8 @@ select CAST(CAST('1900-05-06 13:59:29.998 -8:00' AS datetimeoffset) AS datetime2
 go
 
 -- Test date
+select CAST(CAST('' AS date) AS datetimeoffset);
+go
 select CAST(CAST('1999-12-31' AS date) AS datetimeoffset);
 go
 select CAST(CAST('0001-12-31' AS date) AS datetimeoffset);
@@ -152,6 +154,8 @@ select CAST(CAST('12000-01-01' AS date) AS datetimeoffset);
 go
 
 -- Test time
+select CAST(CAST('' AS time) AS datetimeoffset);
+go
 select CAST(CAST('23:59:59.999' AS time) AS datetimeoffset);
 go
 select CAST(CAST('00:30:31' AS time) AS datetimeoffset);

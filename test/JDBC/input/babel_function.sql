@@ -57,6 +57,8 @@ GO
 
 -- test CONVERT function
 -- Conversion between varchar and date/time/datetime
+select CONVERT(varchar(30), CAST('' AS date), 102);
+GO
 select CONVERT(varchar(30), CAST('2017-08-25' AS date), 102);
 GO
 select CONVERT(varchar(30), CAST('13:01:59' AS time), 8);
@@ -113,6 +115,8 @@ GO
 
 -- test TRY_CONVERT function
 -- Conversion between different types and varchar
+select TRY_CONVERT(varchar(30), CAST('' AS date), 102);
+GO
 select TRY_CONVERT(varchar(30), CAST('2017-08-25' AS date), 102);
 GO
 select TRY_CONVERT(varchar(30), CAST('13:01:59' AS time), 8);
@@ -361,6 +365,8 @@ select datepart(isowk, cast('12:10:30.123' as time));
 GO
 select datepart(isoww, cast('12:10:30.123' as time));
 GO
+select datepart(day, cast('' as date));
+GO
 select datepart(hour, cast('2016-12-26' as date));
 GO
 select datepart(hh, cast('2016-12-26' as date));
@@ -497,6 +503,8 @@ GO
 select datediff(quarter,CAST('2016-12-26 23:30:05.523456'AS datetime2), CAST('2018-08-31 23:30:05.523456'AS datetime2));
 GO
 select datediff(hour, CAST('2016-12-26 23:30:05'AS smalldatetime), CAST('2016-12-28 21:29:05'AS smalldatetime));
+GO
+select datediff(year, CAST('1900-01-01'AS date), CAST(''AS date));
 GO
 select datediff(year, CAST('2037-03-01'AS date), CAST('2036-02-28'AS date));
 GO
@@ -727,6 +735,8 @@ select DAY(CAST('04:12:34.876543' AS time));
 GO
 select DAY(CAST('2037-03-01' AS date));
 GO
+select DAY(CAST('' AS date));
+GO
 select DAY(CAST('2037-03-01 23:30:05.523' AS sys.datetime));
 GO
 -- test MONTH function
@@ -750,6 +760,8 @@ GO
 select YEAR(CAST('2016-12-26 23:30:05' AS smalldatetime));
 GO
 select YEAR(CAST('04:12:34.876543' AS time));
+GO
+select YEAR(CAST('' AS date));
 GO
 select YEAR(CAST('2037-03-01' AS date));
 GO

@@ -34,7 +34,7 @@ int
 select coalesce(NULL, CHAR(9))
 go
 ~~START~~
-text
+varchar
 	
 ~~END~~
 

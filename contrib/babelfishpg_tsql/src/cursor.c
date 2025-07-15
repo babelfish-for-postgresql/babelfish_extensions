@@ -1449,6 +1449,10 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	Portal		portal;
 	MemoryContext oldcontext;
 	MemoryContext savedPortalCxt;
+	PLtsql_stmt_execsql *parse_result;
+	PLtsql_function *func;
+	char *stmt_copy;
+	char *tsql_stmt = NULL; /* Use this for potentially modified statement */
 
 	/*
 	 * Connect to SPI manager. should be handled in the same way with
@@ -1468,10 +1472,53 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 
 	if (prepare)
 	{
+		/*
+		 * This entire block is to parse the statement by antlr and use the statement for
+		 * cursor execution. This is necessary in some use case, for example when we have
+		 * PostgreSQL reversed keywords in query which is valid in TSQL.
+		 * Antlr parser will add the quotes at necessary places in query so that Postgres engine
+		 * can resolve this query correctly.
+		 */
+		if (stmt)
+		{
+			/* Copy the original statement, because we don't want to use the resultant query in every case. */
+			stmt_copy = pstrdup(stmt);
+			/* Send to antlr parser */
+			func = pltsql_compile_inline(stmt_copy, NULL);
+
+			/*
+			 * Check the node list of type PLtsql_stmt_type. Cursor only support single statement.
+			 * If there are more than 1 statement we will through the error. func->action-body
+			 * returned by pltsql_compile_inline generally contains two default nodes, PLTSQL_STMT_INIT being first
+			 * and PLTSQL_STMT_RETURN being last. In case of empty statement only PLTSQL_STMT_RETURN node will be present.
+			 * So total number of nodes should be 3 for valid cursor execution. Actual query statement will be at second 
+			 * position of type PLTSQL_STMT_EXECSQL.
+			 *
+			 * This is defensive code, where we only assign the tsql_stmt variable to parsed query,
+			 * if the cmd_type is PLTSQL_STMT_EXECSQL. There might be other types of cmd_type like
+			 * PLTSQL_STMT_EXECSQL (for procedures), for them we will keep the old behavior.
+			 * list length should be checked first before trying to deference second node from the list.
+			 * FIXME:We are handling only PLtsql_stmt_execsql type statement, but TSQL support procedure with
+			 * single statement. We also need to explore all other statement types for completion. 
+			 */
+			if(list_length(func->action->body) == 3 &&
+				((PLtsql_stmt *) lsecond(func->action->body))->cmd_type == PLTSQL_STMT_EXECSQL)
+			{
+				parse_result = (PLtsql_stmt_execsql *) lsecond(func->action->body);
+				tsql_stmt = pstrdup(parse_result->sqlstmt->query);
+			}
+
+			/*Free up function memory as this is not needed anymore */
+			pltsql_free_function_memory(func);
+		}
+
 		/* prepare plan and insert a cursor entry */
-		plan = SPI_prepare_cursor(stmt, nBindParams, boundParamsOidList, cursor_options);
+		plan = SPI_prepare_cursor(tsql_stmt?tsql_stmt:stmt, nBindParams, boundParamsOidList, cursor_options);
 		if (plan == NULL)
 			return 1;			/* procedure failed */
+		/* Free memory if tsql_stmt is not null */
+		if (tsql_stmt)
+			pfree((void *)tsql_stmt);
 
 		if (save_plan)
 		{
