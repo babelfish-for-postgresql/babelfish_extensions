@@ -39,5 +39,7 @@ extern char** fetch_func_input_arg_names(HeapTuple func_tuple);
 
 extern char *update_delete_target_alias;
 extern bool sp_describe_first_result_set_inprogress;
+extern bool handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, Relation depRel, ViewStmt *viewstmt);
+extern bool check_view_binding_dependencies(Query *viewParse);
 #endif
 
