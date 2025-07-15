@@ -1,0 +1,125 @@
+-- Create test schemas and tables
+CREATE SCHEMA view_test;
+GO
+
+CREATE TABLE view_test.base_table1 (
+    id INT,
+    name VARCHAR(50)
+);
+GO
+
+CREATE TABLE view_test.base_table2 (
+    id INT,
+    name VARCHAR(50)
+);
+GO
+
+CREATE TABLE view_test.base_table3 (
+    id INT PRIMARY KEY,
+    category VARCHAR(50)
+);
+GO
+
+INSERT INTO view_test.base_table1 VALUES 
+    (1, 'Test1'),
+    (2, 'Test2'),
+    (3, 'Test3');
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO view_test.base_table2 VALUES 
+    (1, 'Test1'),
+    (2, 'Test2'),
+    (3, 'Test3');
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE VIEW view_test.strong_view1 AS 
+    SELECT id, name FROM view_test.base_table1;
+GO
+
+CREATE VIEW view_test.strong_view2 AS 
+    SELECT id, name FROM view_test.strong_view1;
+GO
+
+CREATE VIEW view_test.weak_view1 AS 
+    SELECT * FROM view_test.base_table2;
+GO
+
+CREATE VIEW view_test.weak_view2 AS 
+    SELECT * FROM view_test.weak_view1;
+GO
+
+CREATE FUNCTION view_test.sample_function1()
+RETURNS TABLE AS
+RETURN (
+    SELECT id, name FROM view_test.base_table2
+);
+GO
+
+CREATE VIEW view_test.weak_view_function1 AS
+SELECT * FROM view_test.sample_function1();
+GO
+
+CREATE TABLE test_table_for_strong_view (
+    id INT,
+    name VARCHAR(50)
+);
+GO
+
+
+/* Script from customer */
+CREATE TABLE customer (
+    customer_id INT IDENTITY(1,1) PRIMARY KEY,
+    customer_name TEXT NOT NULL
+);
+GO
+
+CREATE FUNCTION fnc_dependancy_check (@param1 NVARCHAR(100),
+                                        @param2 NVARCHAR(100),
+                                        @param3 NVARCHAR(100))
+    RETURNS NVARCHAR(300)
+    AS
+        BEGIN
+            RETURN @param1 + ' - ' + @param2 + ' - ' + @param3;
+    END;
+GO
+
+CREATE VIEW vw_fnc_check AS
+SELECT customer_id,
+       fnc_dependancy_check(customer_name, 'Code', 'Desc') AS code_desc
+FROM customer;
+GO
+
+DROP FUNCTION fnc_dependancy_check;
+GO
+~~ERROR (Code: 3729)~~
+
+~~ERROR (Message: cannot drop function fnc_dependancy_check(nvarchar,nvarchar,nvarchar) because other objects depend on it)~~
+
+
+CREATE TABLE test_ord (
+    order_id INT PRIMARY KEY,
+    customer_id INT REFERENCES customer(customer_id),
+    order_date DATE NOT NULL
+);
+GO
+
+CREATE VIEW test_view AS
+SELECT c.customer_id, c.customer_name, o.order_id, o.order_date
+FROM customer c
+JOIN test_ord o ON c.customer_id = o.customer_id
+GO
+
+CREATE VIEW dependent_view AS
+SELECT customer_id, customer_name FROM test_view;
+GO
+
+DROP VIEW test_view;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot drop view test_view because other objects depend on it)~~
+

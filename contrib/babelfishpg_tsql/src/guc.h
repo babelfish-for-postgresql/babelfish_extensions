@@ -20,6 +20,7 @@ extern bool pltsql_enable_create_alter_view_from_pg;
 extern bool pltsql_enable_linked_servers;
 extern bool pltsql_allow_windows_login;
 extern bool pltsql_allow_fulltext_parser;
+extern bool pltsql_weak_view_binding;
 extern char *pltsql_psql_logical_babelfish_db_name;
 extern int  pltsql_isolation_level_repeatable_read;
 extern int  pltsql_isolation_level_serializable;

@@ -18,6 +18,7 @@
 #define PLTSQL_DEFAULT_LANGUAGE "us_english"
 
 static int	migration_mode = SINGLE_DB;
+bool		pltsql_weak_view_binding = false;
 bool		enable_ownership_structure = false;
 
 bool		enable_metadata_inconsistency_check = true;
@@ -630,6 +631,16 @@ define_custom_variables(void)
 							 GUC_NO_RESET_ALL,
 							 NULL, NULL, NULL);
 
+	DefineCustomBoolVariable("babelfishpg_tsql.weak_view_binding",
+							 gettext_noop("Sets the default binding mode for views."),
+							 gettext_noop("When set to false (default), views will bind to the schema of its underlying tables or other objects" 
+										  "When set to true, views created will have weak binding and are no longer bound to schema of its underlying" 
+										  "objects unless explicitly declared in create/alter DDL"),
+							 &pltsql_weak_view_binding,
+							 false,  /* Default is strong binding (false) */
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
 
 	/* ANTLR parser */
 	DefineCustomBoolVariable("babelfishpg_tsql.dump_antlr_query_graph",
