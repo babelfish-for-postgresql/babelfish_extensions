@@ -6,10 +6,10 @@
 DO $$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM pg_opclass opc JOIN pg_opfamily opf ON opc.opcfamily = opf.oid 
-        WHERE opc.opcname = 'numeric_fixeddecimal_ops' AND opc.opcnamespace = 'sys'::regnamespace
+        WHERE opc.opcname = 'numeric_fixeddecimal_cmp_ops' AND opc.opcnamespace = 'sys'::regnamespace
         AND opf.opfname = 'numeric_ops') THEN
 
-        CREATE OPERATOR CLASS sys.numeric_fixeddecimal_ops FOR TYPE numeric
+        CREATE OPERATOR CLASS sys.numeric_fixeddecimal_cmp_ops FOR TYPE numeric
           USING btree FAMILY numeric_ops AS
             OPERATOR 1 sys.< (numeric, fixeddecimal),
             OPERATOR 2 sys.<= (numeric, fixeddecimal),
@@ -25,10 +25,10 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM pg_opclass opc JOIN pg_opfamily opf ON opc.opcfamily = opf.oid 
-        WHERE opc.opcname = 'fixeddecimal_numeric_ops' AND opc.opcnamespace = 'sys'::regnamespace
+        WHERE opc.opcname = 'fixeddecimal_numeric_cmp_ops' AND opc.opcnamespace = 'sys'::regnamespace
         AND opf.opfname = 'numeric_ops') THEN
 
-        CREATE OPERATOR CLASS sys.fixeddecimal_numeric_ops FOR TYPE numeric
+        CREATE OPERATOR CLASS sys.fixeddecimal_numeric_cmp_ops FOR TYPE numeric
           USING btree FAMILY numeric_ops AS
             OPERATOR 1 sys.< (fixeddecimal, numeric),
             OPERATOR 2 sys.<= (fixeddecimal, numeric),
