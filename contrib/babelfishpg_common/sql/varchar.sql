@@ -253,9 +253,170 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.VARCHAR)
   parallel = safe
 );
 
-SET enable_domain_typmod = TRUE;
-CREATE DOMAIN sys.NVARCHAR AS sys.VARCHAR;
-RESET enable_domain_typmod;
+-- SET enable_domain_typmod = TRUE;
+-- CREATE DOMAIN sys.NVARCHAR AS sys.VARCHAR;
+-- RESET enable_domain_typmod;
+CREATE TYPE sys.NVARCHAR;
+
+-- Basic functions
+CREATE OR REPLACE FUNCTION sys.nvarcharin(cstring)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_common', 'varcharin'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.nvarcharout(sys.NVARCHAR)
+RETURNS cstring
+AS 'varcharout'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.nvarcharrecv(internal)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_common', 'varcharrecv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.nvarcharsend(sys.NVARCHAR)
+RETURNS bytea
+AS 'varcharsend'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE TYPE sys.NVARCHAR (
+    INPUT       = sys.nvarcharin,
+    OUTPUT      = sys.nvarcharout,
+    RECEIVE     = sys.nvarcharrecv,
+    SEND        = sys.nvarcharsend,
+    TYPMOD_IN   = varchartypmodin,
+    TYPMOD_OUT  = varchartypmodout,
+    CATEGORY    = 'S',
+    COLLATABLE  = True,
+    LIKE        = pg_catalog.VARCHAR
+);
+
+CREATE CAST (varchar AS nvarchar) WITHOUT FUNCTION AS IMPLICIT;
+CREATE CAST (nvarchar AS varchar) WITHOUT FUNCTION AS IMPLICIT;
+CREATE CAST (text AS nvarchar) WITHOUT FUNCTION AS IMPLICIT;
+CREATE CAST (nvarchar AS text) WITHOUT FUNCTION AS IMPLICIT;
+CREATE CAST (bpchar AS nvarchar) WITHOUT FUNCTION AS IMPLICIT;
+CREATE CAST (nvarchar AS bpchar) WITHOUT FUNCTION AS IMPLICIT;
+
+-- Basic operator functions
+CREATE FUNCTION sys.nvarchareq(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS bool
+AS 'babelfishpg_common', 'varchareq'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.nvarcharne(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS bool
+AS 'babelfishpg_common', 'varcharne'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.nvarcharlt(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS bool
+AS 'babelfishpg_common', 'varcharlt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.nvarcharle(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS bool
+AS 'babelfishpg_common', 'varcharle'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.nvarchargt(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS bool
+AS 'babelfishpg_common', 'varchargt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.nvarcharge(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS bool
+AS 'babelfishpg_common', 'varcharge'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Basic operators
+-- Note that if those operators are not in pg_catalog, we will see different behaviors depending on sql_dialect
+CREATE OPERATOR pg_catalog.= (
+    LEFTARG    = sys.NVARCHAR,
+    RIGHTARG   = sys.NVARCHAR,
+    COMMUTATOR = OPERATOR(pg_catalog.=),
+    NEGATOR    = OPERATOR(pg_catalog.<>),
+    PROCEDURE  = sys.nvarchareq,
+    RESTRICT   = eqsel,
+    JOIN       = eqjoinsel,
+    MERGES,
+    HASHES
+);
+
+CREATE OPERATOR pg_catalog.<> (
+    LEFTARG    = sys.NVARCHAR,
+    RIGHTARG   = sys.NVARCHAR,
+    NEGATOR    = OPERATOR(pg_catalog.=),
+    COMMUTATOR = OPERATOR(pg_catalog.<>),
+    PROCEDURE  = sys.nvarcharne,
+    RESTRICT   = neqsel,
+    JOIN       = neqjoinsel
+);
+
+CREATE OPERATOR pg_catalog.< (
+    LEFTARG    = sys.NVARCHAR,
+    RIGHTARG   = sys.NVARCHAR,
+    NEGATOR    = OPERATOR(pg_catalog.>=),
+    COMMUTATOR = OPERATOR(pg_catalog.>),
+    PROCEDURE  = sys.nvarcharlt,
+    RESTRICT   = scalarltsel,
+    JOIN       = scalarltjoinsel
+);
+
+CREATE OPERATOR pg_catalog.<= (
+    LEFTARG    = sys.NVARCHAR,
+    RIGHTARG   = sys.NVARCHAR,
+    NEGATOR    = OPERATOR(pg_catalog.>),
+    COMMUTATOR = OPERATOR(pg_catalog.>=),
+    PROCEDURE  = sys.nvarcharle,
+    RESTRICT   = scalarlesel,
+    JOIN       = scalarlejoinsel
+);
+
+CREATE OPERATOR pg_catalog.> (
+    LEFTARG    = sys.NVARCHAR,
+    RIGHTARG   = sys.NVARCHAR,
+    NEGATOR    = OPERATOR(pg_catalog.<=),
+    COMMUTATOR = OPERATOR(pg_catalog.<),
+    PROCEDURE  = sys.nvarchargt,
+    RESTRICT   = scalargtsel,
+    JOIN       = scalargtjoinsel
+);
+
+CREATE OPERATOR pg_catalog.>= (
+    LEFTARG    = sys.NVARCHAR,
+    RIGHTARG   = sys.NVARCHAR,
+    NEGATOR    = OPERATOR(pg_catalog.<),
+    COMMUTATOR = OPERATOR(pg_catalog.<=),
+    PROCEDURE  = sys.nvarcharge,
+    RESTRICT   = scalargesel,
+    JOIN       = scalargejoinsel
+);
+
+-- Operator classes
+CREATE FUNCTION  sys.nvarcharcmp(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS INT4
+AS 'babelfishpg_common', 'varcharcmp'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.nhashvarchar(sys.NVARCHAR)
+RETURNS INT4
+AS 'babelfishpg_common', 'hashvarchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR CLASS nvarchar_ops
+    DEFAULT FOR TYPE sys.NVARCHAR USING btree AS
+    OPERATOR    1   pg_catalog.<  (sys.NVARCHAR, sys.NVARCHAR),
+    OPERATOR    2   pg_catalog.<= (sys.NVARCHAR, sys.NVARCHAR),
+    OPERATOR    3   pg_catalog.=  (sys.NVARCHAR, sys.NVARCHAR),
+    OPERATOR    4   pg_catalog.>= (sys.NVARCHAR, sys.NVARCHAR),
+    OPERATOR    5   pg_catalog.>  (sys.NVARCHAR, sys.NVARCHAR),
+    FUNCTION    1   sys.nvarcharcmp(sys.NVARCHAR, sys.NVARCHAR);
+
+CREATE OPERATOR CLASS nvarchar_ops
+    DEFAULT FOR TYPE sys.NVARCHAR USING hash AS
+    OPERATOR    1   pg_catalog.=  (sys.NVARCHAR, sys.NVARCHAR),
+    FUNCTION    1   sys.nhashvarchar(sys.NVARCHAR);
 
 CREATE OR REPLACE FUNCTION sys.nvarchar(sys.nvarchar, integer, boolean)
 RETURNS sys.nvarchar
