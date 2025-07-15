@@ -634,3 +634,4 @@ money_smallmoney_bit_dep_obj
 user_token-dep
 Test_cast_binary_bytea
 len
+weak-binding
