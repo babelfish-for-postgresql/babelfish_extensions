@@ -7044,6 +7044,7 @@ repair_broken_view_recursive(Oid viewOid, List *visitedViews)
 	Query 			*query = NULL;
 	Query 			*currentQuery = NULL;
 	bool 			repaired = false;
+	bool 			snapshot_registered = false;
 	char 			*schema_name = NULL; 
 	char 			*viewdef = NULL;
 	char 			*orig_db_name;
@@ -7065,6 +7066,11 @@ repair_broken_view_recursive(Oid viewOid, List *visitedViews)
 	/* Check if the view is a dummy view and do repair */
 	if (is_dummy_view(viewOid) && bbf_view_is_broken(viewOid))
 	{	
+		if (!ActiveSnapshotSet())
+		{
+			PushActiveSnapshot(GetTransactionSnapshot());
+			snapshot_registered = true;
+		}
 		viewdef = bbf_view_get_definition(viewOid);
 		
 		/* This should never happen */
@@ -7159,6 +7165,8 @@ repair_broken_view_recursive(Oid viewOid, List *visitedViews)
 		else
 			repaired = false; 
 		pfree(viewdef);
+		if (snapshot_registered)
+			PopActiveSnapshot();
 	}
 	viewRel = relation_open(viewOid, AccessShareLock);
 
