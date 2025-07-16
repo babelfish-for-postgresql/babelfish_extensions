@@ -602,6 +602,7 @@ db_owner
 smalldatetime_date_cmp
 BABEL-2961
 BABEL-5031
+BABEL-USER-GRANT
 test_conv_money_to_varchar
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
@@ -628,3 +629,4 @@ MONEY_OBJECT
 money_smallmoney
 money_smallmoney_bit_dep_obj_before_17_6
 z_sp_helplogins
+weak-binding

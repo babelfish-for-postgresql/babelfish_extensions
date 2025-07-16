@@ -4452,6 +4452,19 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	if (ctx->create_or_alter_view())
 	{
 		execsql->is_create_view = true;
+		// Check if the view has SCHEMABINDING
+		if (ctx->create_or_alter_view()->WITH().size() > 0)
+		{
+			auto options = ctx->create_or_alter_view()->view_attribute();
+			for (auto option : options)
+			{
+				if (option->SCHEMABINDING())
+				{
+					execsql->is_schemabinding = true;
+					break;
+				}
+			}
+		}
 		if (ctx->create_or_alter_view()->simple_name() && ctx->create_or_alter_view()->simple_name()->schema)
 		{
 			std::string schema_name = stripQuoteFromId(ctx->create_or_alter_view()->simple_name()->schema);
