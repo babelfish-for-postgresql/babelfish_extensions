@@ -780,36 +780,6 @@ BEGIN
 	END IF;
 END $$;
 
-CREATE OR REPLACE FUNCTION sys.ncharbinary(sys.NCHAR, integer, boolean)
-RETURNS sys.BBF_BINARY
-AS 'babelfishpg_common', 'ncharbinary'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.binarybpchar(sys.BBF_BINARY, integer, boolean)
-RETURNS sys.BPCHAR
-AS 'babelfishpg_common', 'varbinarybpchar'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.binarynchar(sys.BBF_BINARY, integer, boolean)
-RETURNS sys.NCHAR
-AS 'babelfishpg_common', 'varbinarynchar'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.ncharvarbinary(sys.NCHAR, integer, boolean)
-RETURNS sys.BBF_VARBINARY
-AS 'babelfishpg_common', 'ncharvarbinary'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.varbinarybpchar(sys.BBF_VARBINARY, integer, boolean)
-RETURNS sys.BPCHAR
-AS 'babelfishpg_common', 'varbinarybpchar'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.varbinarynchar(sys.BBF_VARBINARY, integer, boolean)
-RETURNS sys.NCHAR
-AS 'babelfishpg_common', 'varbinarynchar'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

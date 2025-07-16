@@ -59,8 +59,6 @@ END $$;
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
 \echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '5.4.0'" to load this file. \quit
 
-SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
-
 CREATE OR REPLACE FUNCTION sys.ncharbinary(sys.NCHAR, integer, boolean)
 RETURNS sys.BBF_BINARY
 AS 'babelfishpg_common', 'ncharbinary'
@@ -90,6 +88,3 @@ CREATE OR REPLACE FUNCTION sys.varbinarynchar(sys.BBF_VARBINARY, integer, boolea
 RETURNS sys.NCHAR
 AS 'babelfishpg_common', 'varbinarynchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
