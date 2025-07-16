@@ -3780,9 +3780,17 @@ BEGIN
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
-                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('yes' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
-                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('yes' AS sys.char(5)) -- this is the case for superuser
-                ELSE CAST('no' AS sys.char(5))
+                -- WHEN @is_sysadmin = 0 AND LExt.orig_loginname <> @current_username AND ISNULL(Ext.login_name, '') <> ''
+				--      AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_auth_members AS Authmbr INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname WHERE UExt1.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') AND UExt2.database_name = Ext.database_name AND UExt2.login_name = @current_username)
+				-- 	THEN CAST('no' AS sys.char(5))
+                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default 
+				     AND has_dbaccess(Ext.database_name) = 1 AND (@is_sysadmin = 1 OR LExt.orig_loginname = @current_username OR ISNULL(Ext.login_name, '') = ''
+					 OR EXISTS (SELECT 1 FROM pg_catalog.pg_auth_members AS Authmbr INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname WHERE UExt1.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') AND UExt2.database_name = Ext.database_name AND UExt2.login_name = @current_username))
+				    THEN CAST('yes' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
+                WHEN Db.owner COLLATE database_default = LExt.orig_loginname 
+				    THEN CAST('yes' AS sys.char(5)) -- this is the case for superuser
+                ELSE 
+				    CAST('no' AS sys.char(5))
             END AS AUser,
             CAST('no' AS sys.char(7)) AS ARemote -- Currently we do not support linking local logins to remote logins
         FROM pg_catalog.pg_roles AS Base 
@@ -3865,9 +3873,17 @@ BEGIN
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
-                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('yes' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
-                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('yes' AS sys.char(5)) -- this is the case for superuser
-                ELSE CAST('no' AS sys.char(5))
+                -- WHEN @is_sysadmin = 0 AND LExt.orig_loginname <> @current_username AND ISNULL(Ext.login_name, '') <> ''
+				--      AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_auth_members AS Authmbr INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname WHERE UExt1.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') AND UExt2.database_name = Ext.database_name AND UExt2.login_name = @current_username)
+				-- 	THEN CAST('no' AS sys.char(5))
+                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default 
+				     AND has_dbaccess(Ext.database_name) = 1 AND (@is_sysadmin = 1 OR LExt.orig_loginname = @current_username OR ISNULL(Ext.login_name, '') = ''
+					 OR EXISTS (SELECT 1 FROM pg_catalog.pg_auth_members AS Authmbr INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname WHERE UExt1.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') AND UExt2.database_name = Ext.database_name AND UExt2.login_name = @current_username))
+				    THEN CAST('yes' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
+                WHEN Db.owner COLLATE database_default = LExt.orig_loginname 
+				    THEN CAST('yes' AS sys.char(5)) -- this is the case for superuser
+                ELSE 
+				    CAST('no' AS sys.char(5))
             END AS AUser,
             CAST('no' AS sys.char(7)) AS ARemote -- Currently we do not support linking local logins to remote logins
         FROM pg_catalog.pg_roles AS Base 
