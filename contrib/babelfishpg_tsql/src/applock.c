@@ -406,6 +406,13 @@ AppLockSearchKeyGlobal(char *resource)
 	key = applock_simple_hash(resource);
 	while (try_search++ < APPLOCK_MAX_TRY_SEARCH_KEY)
 	{
+		if (!appLockCacheGlobal)
+		{
+		elog(ERROR, "appLockCacheGlobal is null %u", appLockCacheGlobal);
+			LWLockRelease(TsqlApplockSyncLock);
+			return -1;
+		}
+
 		entry = (AppLockCacheEnt *) hash_search(appLockCacheGlobal,
 												(void *) &key,
 												HASH_FIND, NULL);
