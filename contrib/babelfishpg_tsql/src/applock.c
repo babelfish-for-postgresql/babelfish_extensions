@@ -408,7 +408,7 @@ AppLockSearchKeyGlobal(char *resource)
 	{
 		if (!appLockCacheGlobal)
 		{
-		elog(ERROR, "appLockCacheGlobal is null %u", appLockCacheGlobal);
+		elog(ERROR, "appLockCacheGlobal is null");
 			LWLockRelease(TsqlApplockSyncLock);
 			return -1;
 		}
