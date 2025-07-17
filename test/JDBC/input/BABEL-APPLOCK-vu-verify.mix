@@ -1,0 +1,9 @@
+-- psql
+CREATE EXTENSION pg_buffercache;
+GO
+
+SELECT *
+FROM pg_buffercache
+WHERE isdirty = true 
+   OR pinning_backends > 0;
+GO
