@@ -400,12 +400,6 @@ GO
 DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 GO
 
-DROP PARTITION FUNCTION NewCharPartitionFunction 
-GO
-
-DROP PARTITION FUNCTION NewNCharPartitionFunction 
-GO
-
 ---------------------------
 --- DROP Procedures
 ---------------------------

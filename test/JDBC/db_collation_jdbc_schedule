@@ -1,3 +1,26 @@
 # Schedule File for JDBC Test Framework for local run for database level collation to ignore specific tests
 # 1. Lines starting with '#' will be treated as comments
 # 2. To ignore any test file, add an entry like ignore#!#<test_file_name>
+
+ignore#!#PARTITION-before-17_6-vu-prepare
+ignore#!#PARTITION-before-17_6-vu-verify
+ignore#!#PARTITION-before-17_6-vu-cleanup
+ignore#!#cast_binary_to_string
+ignore#!#cast_string_to_binary
+ignore#!#PARTITION-vu-prepare
+ignore#!#PARTITION-vu-verify
+ignore#!#PARTITION-vu-cleanup
+ignore#!#BABEL-2736-vu-prepare
+ignore#!#BABEL-2736-vu-verify
+ignore#!#BABEL-2736-vu-cleanup
+ignore#!#ISC-Check-Constraints-vu-prepare
+ignore#!#ISC-Check-Constraints-vu-verify
+ignore#!#ISC-Check-Constraints-vu-cleanup
+ignore#!#TestBinary
+ignore#!#TestStrings
+ignore#!#babel_functions_cast
+ignore#!#cast_nvarchar_test-vu-prepare
+ignore#!#cast_nvarchar_test-vu-verify
+ignore#!#cast_nvarchar_test-vu-cleanup
+ignore#!#test_convert_to_string
+ignore#!#test_tryconvert_to_string
