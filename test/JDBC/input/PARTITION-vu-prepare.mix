@@ -361,6 +361,18 @@ FOR VALUES (
 );
 GO
 
+------------------------------------------------------------------------------------------------------------
+--- Implicit Conversion of range values in Partition Function for each datatypes
+------------------------------------------------------------------------------------------------------------
+
+CREATE PARTITION FUNCTION NewCharPartitionFunction (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', cast(0x123 as binary(4)));
+GO
+
+CREATE PARTITION FUNCTION NewNCharPartitionFunction (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', cast(0x123 as binary(4)));
+GO
+
 --------------------------------------------------
 --- Partition Scheme
 --------------------------------------------------
