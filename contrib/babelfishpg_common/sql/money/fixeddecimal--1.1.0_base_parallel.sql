@@ -2028,22 +2028,22 @@ RETURNS sys.MONEY
 AS 'babelfishpg_money', 'fixeddecimalsmaller'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
--- -- Operator class for numeric_ops to incorporate various operator between numeric and fixeddecimal for Index scan
--- CREATE OPERATOR CLASS sys.numeric_fixeddecimal_cmp_ops FOR TYPE numeric
---   USING btree FAMILY numeric_ops AS
---    OPERATOR 1 sys.< (numeric, fixeddecimal),
---    OPERATOR 2 sys.<= (numeric, fixeddecimal),
---    OPERATOR 3 sys.= (numeric, fixeddecimal),
---    OPERATOR 4 sys.>= (numeric, fixeddecimal),
---    OPERATOR 5 sys.> (numeric, fixeddecimal),
---    FUNCTION 1 sys.numeric_fixeddecimal_cmp(numeric, fixeddecimal);
+-- Operator class for numeric_ops to incorporate various operator between numeric and fixeddecimal for Index scan
+CREATE OPERATOR CLASS sys.numeric_fixeddecimal_cmp_ops FOR TYPE numeric
+  USING btree FAMILY numeric_ops AS
+   OPERATOR 1 sys.< (numeric, fixeddecimal),
+   OPERATOR 2 sys.<= (numeric, fixeddecimal),
+   OPERATOR 3 sys.= (numeric, fixeddecimal),
+   OPERATOR 4 sys.>= (numeric, fixeddecimal),
+   OPERATOR 5 sys.> (numeric, fixeddecimal),
+   FUNCTION 1 sys.numeric_fixeddecimal_cmp(numeric, fixeddecimal);
 
--- -- Operator class for numeric_ops to incorporate various operator between fixeddecimal and numeric for Index scan
--- CREATE OPERATOR CLASS sys.fixeddecimal_numeric_cmp_ops FOR TYPE numeric
---   USING btree FAMILY numeric_ops AS
---    OPERATOR 1 sys.< (fixeddecimal, numeric),
---    OPERATOR 2 sys.<= (fixeddecimal, numeric),
---    OPERATOR 3 sys.= (fixeddecimal, numeric),
---    OPERATOR 4 sys.>= (fixeddecimal, numeric),
---    OPERATOR 5 sys.> (fixeddecimal, numeric),
---    FUNCTION 1 sys.fixeddecimal_numeric_cmp(fixeddecimal, numeric);
+-- Operator class for numeric_ops to incorporate various operator between fixeddecimal and numeric for Index scan
+CREATE OPERATOR CLASS sys.fixeddecimal_numeric_cmp_ops FOR TYPE numeric
+  USING btree FAMILY numeric_ops AS
+   OPERATOR 1 sys.< (fixeddecimal, numeric),
+   OPERATOR 2 sys.<= (fixeddecimal, numeric),
+   OPERATOR 3 sys.= (fixeddecimal, numeric),
+   OPERATOR 4 sys.>= (fixeddecimal, numeric),
+   OPERATOR 5 sys.> (fixeddecimal, numeric),
+   FUNCTION 1 sys.fixeddecimal_numeric_cmp(fixeddecimal, numeric);
