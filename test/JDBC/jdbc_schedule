@@ -250,6 +250,10 @@ ignore#!#sys-all_sql_modules-before-15_7-or-16_2-dep-vu-cleanup
 ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-prepare
 ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-verify
 ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-cleanup
+ignore#!#PARTITION-before-17_6-vu-prepare
+ignore#!#PARTITION-before-17_6-vu-verify
+ignore#!#PARTITION-before-17_6-vu-cleanup
+
 
 # These tests are meant for upgrade scenario prior to (potential) 14_8 or 15_3 release
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare
