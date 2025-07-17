@@ -950,6 +950,14 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	{
 		CHECK_FOR_INTERRUPTS();
 
+		/*
+		* We do not expect a lot of collision, so this log should be fine
+		*/
+		if (retries > 0)
+		{
+			elog(NOTICE, "there is a collision with oid %u when determing oid for a temp object.", newOid);
+		}
+
 		newOid = pltsql_GetNewTempObjectId();
 
 		ScanKeyInit(&key,
