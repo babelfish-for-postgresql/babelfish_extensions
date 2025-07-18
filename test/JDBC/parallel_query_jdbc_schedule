@@ -37,9 +37,6 @@ ignore#!#cast_string_to_binary
 ignore#!#PARTITION-vu-prepare
 ignore#!#PARTITION-vu-verify
 ignore#!#PARTITION-vu-cleanup
-ignore#!#BABEL-2736-vu-prepare
-ignore#!#BABEL-2736-vu-verify
-ignore#!#BABEL-2736-vu-cleanup
 ignore#!#ISC-Check-Constraints-vu-prepare
 ignore#!#ISC-Check-Constraints-vu-verify
 ignore#!#ISC-Check-Constraints-vu-cleanup
