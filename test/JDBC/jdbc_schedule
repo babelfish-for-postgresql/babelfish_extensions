@@ -10,8 +10,6 @@
 
 all
 
-ignore#!#TestBinary
-ignore#!#TestStrings
 ignore#!#babel_functions_cast
 ignore#!#cast_nvarchar_test-vu-prepare
 ignore#!#cast_nvarchar_test-vu-verify

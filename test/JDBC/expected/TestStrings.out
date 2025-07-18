@@ -2496,7 +2496,7 @@ SELECT CAST(BinaryCol AS CHAR(20)), CAST(BinaryCol AS VARCHAR(20)), CAST(BinaryC
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-0x414243444500000000#!#ABCDE#!#0x414243444500000000#!#䉁䑃E#!#0x41424344450000000000#!#0x41424344450000000000
+ABCDE               #!#ABCDE#!#䉁䑃E                 #!#䉁䑃E#!#0x41424344450000000000#!#0x41424344450000000000
 ~~END~~
 
 
@@ -2504,7 +2504,7 @@ SELECT CAST(VarbinaryCol AS CHAR(20)), CAST(VarbinaryCol AS VARCHAR(20)), CAST(V
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-0x4142434445        #!#ABCDE#!#0x4142434445        #!#䉁䑃E#!#0x4142434445#!#0x4142434445
+ABCDE               #!#ABCDE#!#䉁䑃E                 #!#䉁䑃E#!#0x4142434445#!#0x4142434445
 ~~END~~
 
 
@@ -2512,7 +2512,7 @@ SELECT CAST(ImageCol AS CHAR(20)), CAST(ImageCol AS VARCHAR(20)), CAST(ImageCol 
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-0x4142434445        #!#ABCDE#!#0x4142434445        #!#ABCDE#!#0x4142434445#!#0x4142434445
+ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x4142434445#!#0x4142434445
 ~~END~~
 
 
@@ -2701,7 +2701,7 @@ SELECT TRY_CAST(FloatCol AS VARCHAR(20)), TRY_CAST(FloatCol AS NVARCHAR(20)), TR
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-123.45#!#123.45#!#123.45#!#123.45
+123.45              #!#123.45#!#123.45#!#123.45
 ~~END~~
 
 
@@ -2717,7 +2717,7 @@ SELECT TRY_CAST(MoneyCol AS VARCHAR(20)), TRY_CAST(MoneyCol AS NVARCHAR(20)), TR
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-123.4500#!#123.4500#!#123.4500#!#123.4500
+123.45#!#123.45#!#123.4500#!#123.4500
 ~~END~~
 
 
@@ -2725,7 +2725,7 @@ SELECT TRY_CAST(SmallmoneyCol AS VARCHAR(20)), TRY_CAST(SmallmoneyCol AS NVARCHA
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-123.4500#!#123.4500#!#123.4500#!#123.4500
+123.45#!#123.45#!#123.4500#!#123.4500
 ~~END~~
 
 
@@ -2734,7 +2734,7 @@ SELECT TRY_CAST(DatetimeCol AS VARCHAR(30)), TRY_CAST(DatetimeCol AS NVARCHAR(30
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:56#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
+Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
 ~~END~~
 
 
@@ -2750,7 +2750,7 @@ SELECT TRY_CAST(TimeCol AS VARCHAR(30)), TRY_CAST(TimeCol AS NVARCHAR(30)), TRY_
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-12:34:56#!#12:34:56#!#12:34:56#!#12:34:56
+12:34:56.0000000#!#12:34:56.0000000#!#12:34:56#!#12:34:56
 ~~END~~
 
 
@@ -2832,7 +2832,7 @@ SELECT TRY_CAST(BinaryCol AS VARCHAR(20)), TRY_CAST(BinaryCol AS NVARCHAR(20)), 
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-0x414243444500000000#!#0x414243444500000000#!#0x41424344450000000000#!#0x41424344450000000000
+ABCDE#!#䉁䑃E#!#0x41424344450000000000#!#0x41424344450000000000
 ~~END~~
 
 
@@ -2840,7 +2840,7 @@ SELECT TRY_CAST(VarbinaryCol AS VARCHAR(20)), TRY_CAST(VarbinaryCol AS NVARCHAR(
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-0x4142434445#!#0x4142434445#!#0x4142434445#!#0x4142434445
+ABCDE#!#䉁䑃E#!#0x4142434445#!#0x4142434445
 ~~END~~
 
 
@@ -2848,7 +2848,7 @@ SELECT TRY_CAST(ImageCol AS VARCHAR(20)), TRY_CAST(ImageCol AS NVARCHAR(20)), TR
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-0x4142434445#!#0x4142434445#!#0x4142434445#!#0x4142434445
+ABCDE#!#ABCDE#!#0x4142434445#!#0x4142434445
 ~~END~~
 
 
