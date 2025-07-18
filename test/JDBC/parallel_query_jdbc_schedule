@@ -29,9 +29,6 @@ ignore#!#BABEL-SP_TABLE_PRIVILEGES
 ignore#!#ISC-Columns-vu-verify
 ignore#!#four-part-names-vu-verify
 
-ignore#!#PARTITION-vu-prepare
-ignore#!#PARTITION-vu-verify
-ignore#!#PARTITION-vu-cleanup
 ignore#!#ISC-Check-Constraints-vu-prepare
 ignore#!#ISC-Check-Constraints-vu-verify
 ignore#!#ISC-Check-Constraints-vu-cleanup

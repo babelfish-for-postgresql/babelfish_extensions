@@ -2,9 +2,6 @@
 # 1. Lines starting with '#' will be treated as comments
 # 2. To ignore any test file, add an entry like ignore#!#<test_file_name>
 
-ignore#!#PARTITION-vu-prepare
-ignore#!#PARTITION-vu-verify
-ignore#!#PARTITION-vu-cleanup
 ignore#!#ISC-Check-Constraints-vu-prepare
 ignore#!#ISC-Check-Constraints-vu-verify
 ignore#!#ISC-Check-Constraints-vu-cleanup
