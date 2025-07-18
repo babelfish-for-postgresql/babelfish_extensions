@@ -372,14 +372,14 @@ select TRY_CAST(TRY_CAST('13:01:59' AS time) AS varchar(30));
 GO
 ~~START~~
 varchar
-13:01:59
+13:01:59.0000000
 ~~END~~
 
 select TRY_CAST(TRY_CAST('2017-08-25 13:01:59' AS datetime) AS varchar(30));
 GO
 ~~START~~
 varchar
-2017-08-25 13:01:59
+Aug 25 2017  1:01PM
 ~~END~~
 
 
@@ -395,7 +395,7 @@ select TRY_CAST(CAST(11234561231231.234 AS float) AS varchar(30));
 GO
 ~~START~~
 varchar
-1.12346e+13
+1.12346e+13                   
 ~~END~~
 
 select TRY_CAST('123' AS int);
