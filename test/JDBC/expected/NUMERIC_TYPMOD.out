@@ -2836,3 +2836,272 @@ GO
 
 DROP TABLE BABEL_5890_T1;
 GO
+
+-- Test Case 1: Basic DECIMAL types with same precision, different scales
+SELECT 1.00 * CASE 1
+   WHEN 1 THEN CAST(123.45 AS DECIMAL(5,2))
+   WHEN 2 THEN CAST(123.4 AS DECIMAL(5,1))
+   WHEN 3 THEN CAST(123 AS DECIMAL(5,0))
+   ELSE CAST(0 AS DECIMAL(5,2))
+END AS RESULT
+INTO test_case_babel_5890_1;
+GO
+
+-- Test Case 2: Different precisions, same scale
+SELECT 1.00 * CASE 2
+   WHEN 1 THEN CAST(12.34 AS DECIMAL(4,2))
+   WHEN 2 THEN CAST(123.45 AS DECIMAL(5,2))
+   WHEN 3 THEN CAST(1234.56 AS DECIMAL(6,2))
+   WHEN 4 THEN CAST(12345.67 AS DECIMAL(7,2))
+   ELSE CAST(0.00 AS DECIMAL(4,2))
+END AS RESULT
+INTO test_case_babel_5890_2;
+GO
+
+-- Test Case 3: NUMERIC vs DECIMAL comparison
+SELECT 1.00 * CASE 1
+   WHEN 1 THEN CAST(123.456 AS NUMERIC(6,3))
+   WHEN 2 THEN CAST(123.456 AS DECIMAL(6,3))
+   WHEN 3 THEN CAST(123.45 AS NUMERIC(5,2))
+   WHEN 4 THEN CAST(123.45 AS DECIMAL(5,2))
+   ELSE CAST(0 AS NUMERIC(6,3))
+END AS RESULT
+INTO test_case_babel_5890_3;
+GO
+
+-- Test Case 4: Zero and NULL handling
+SELECT 1.00 / CASE 3
+   WHEN 1 THEN CAST(123.45 AS DECIMAL(8,2))
+   WHEN 2 THEN CAST(0.00 AS DECIMAL(8,2))
+   WHEN 3 THEN NULL
+   WHEN 4 THEN CAST(-123.45 AS DECIMAL(8,2))
+   ELSE CAST(999.99 AS DECIMAL(8,2))
+END AS RESULT
+INTO test_case_babel_5890_4;
+GO
+
+-- Test Case 5: Zero and NULL handling
+SELECT 1.00 * CASE 3
+   WHEN 1 THEN CAST(123.45 AS DECIMAL(8,2))
+   WHEN 2 THEN CAST(0.00 AS DECIMAL(8,2))
+   WHEN 3 THEN NULL
+   WHEN 4 THEN CAST(-123.45 AS DECIMAL(8,2))
+   ELSE CAST(999.99 AS DECIMAL(8,2))
+END AS RESULT
+INTO test_case_babel_5890_5;
+GO
+
+-- Test Case 6: High precision numbers
+SELECT 1.00 * CASE 1
+   WHEN 1 THEN CAST(123456789.123456789 AS DECIMAL(18,9))
+   WHEN 2 THEN CAST(987654321.987654321 AS NUMERIC(18,9))
+   WHEN 3 THEN CAST(555555555.555555555 AS DECIMAL(18,9))
+   ELSE CAST(0.000000001 AS DECIMAL(18,9))
+END AS RESULT
+INTO test_case_babel_5890_6;
+GO
+
+-- Test Case 7: Small scale variations
+SELECT 1.00 * CASE 2
+   WHEN 1 THEN CAST(12345.6 AS DECIMAL(6,1))
+   WHEN 2 THEN CAST(12345.67 AS DECIMAL(7,2))
+   WHEN 3 THEN CAST(12345.678 AS DECIMAL(8,3))
+   WHEN 4 THEN CAST(12345.6789 AS DECIMAL(9,4))
+   ELSE CAST(0.0 AS DECIMAL(6,1))
+END AS RESULT
+INTO test_case_babel_5890_7;
+GO
+
+-- Test Case 8: Edge case - Maximum SQL Server precision
+SELECT 1.00 / CASE 1
+   WHEN 1 THEN CAST(12345678901234567890123456789012345678.0 AS DECIMAL(38,1))
+   WHEN 2 THEN CAST(1234567890123456789012345678901234567.89 AS DECIMAL(38,2))
+   ELSE CAST(0.0 AS DECIMAL(38,1))
+END AS RESULT
+INTO test_case_babel_5890_8;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+-- Test Case 9: Negative numbers with different scales
+SELECT 1.00 / CASE 4
+   WHEN 1 THEN CAST(-123.4 AS DECIMAL(4,1))
+   WHEN 2 THEN CAST(-123.45 AS DECIMAL(5,2))
+   WHEN 3 THEN CAST(-123.456 AS DECIMAL(6,3))
+   WHEN 4 THEN CAST(-123.4567 AS DECIMAL(7,4))
+   ELSE CAST(-0.1 AS DECIMAL(4,1))
+END AS RESULT
+INTO test_case_babel_5890_9;
+GO
+
+-- Test Case 10: Different scales within the same precision
+SELECT 1.00 / CASE 2
+   WHEN 1 THEN CAST(12345.6789 AS DECIMAL(10,4))
+   WHEN 2 THEN CAST(98765.43 AS DECIMAL(10,2))
+   WHEN 3 THEN CAST(123456.7 AS DECIMAL(10,1))
+   WHEN 4 THEN CAST(1234567 AS DECIMAL(10,0))
+   ELSE CAST(0 AS DECIMAL(10,4))
+END AS RESULT
+INTO test_case_babel_5890_10;
+GO
+
+-- Query INFORMATION_SCHEMA for all test cases
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME LIKE 'test_case_babel_5890_%'
+ORDER BY TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+test_case_babel_5890_1#!#result#!#numeric#!#11#!#4
+test_case_babel_5890_10#!#result#!#numeric#!#22#!#17
+test_case_babel_5890_2#!#result#!#numeric#!#11#!#4
+test_case_babel_5890_3#!#result#!#numeric#!#10#!#5
+test_case_babel_5890_4#!#result#!#numeric#!#14#!#11
+test_case_babel_5890_5#!#result#!#numeric#!#12#!#4
+test_case_babel_5890_6#!#result#!#numeric#!#22#!#11
+test_case_babel_5890_7#!#result#!#numeric#!#13#!#6
+test_case_babel_5890_9#!#result#!#numeric#!#15#!#10
+~~END~~
+
+
+-- Clean up all test tables
+DROP TABLE IF EXISTS test_case_babel_5890_1;
+DROP TABLE IF EXISTS test_case_babel_5890_2;
+DROP TABLE IF EXISTS test_case_babel_5890_3;
+DROP TABLE IF EXISTS test_case_babel_5890_4;
+DROP TABLE IF EXISTS test_case_babel_5890_5;
+DROP TABLE IF EXISTS test_case_babel_5890_6;
+DROP TABLE IF EXISTS test_case_babel_5890_7;
+DROP TABLE IF EXISTS test_case_babel_5890_8;
+DROP TABLE IF EXISTS test_case_babel_5890_9;
+DROP TABLE IF EXISTS test_case_babel_5890_10;
+GO
+
+CREATE FUNCTION GetNumericValue_BABEL_5980()
+RETURNS NUMERIC(24,6)
+AS
+BEGIN
+    DECLARE @result NUMERIC(24,6)
+    SET @result = 123456.123456
+    RETURN @result
+END
+GO
+
+SELECT CAST(
+    GetNumericValue_BABEL_5980() 
+    /
+    (CASE WHEN 1<0
+       THEN 1
+       ELSE datediff(dd, '2000-01-01', '2023-12-31')
+    END)
+    AS DECIMAL(24,6)) AS datediff_col,
+    CAST(
+        GetNumericValue_BABEL_5980() 
+        /
+        (CASE WHEN 1<0
+            THEN 1
+            ELSE ISNUMERIC(356.87)
+        END)
+        AS NUMERIC(24,6)) AS isnumeric_col,
+    CAST(
+        GetNumericValue_BABEL_5980() 
+        /
+        (CASE WHEN 1<0
+            THEN 1
+            ELSE UNICODE(N'Test String 1')
+        END)
+        AS NUMERIC(24,6)) AS UNICODE_col,
+    CAST(
+        GetNumericValue_BABEL_5980() 
+        /
+        (CASE WHEN 1<0
+            THEN 1
+            ELSE FLOOR(4)
+        END)
+        AS NUMERIC(24,6)) AS floor_col,
+    CAST(
+        GetNumericValue_BABEL_5980() 
+        /
+        (CASE WHEN 1<0
+            THEN 1
+            ELSE CEILING(46)
+        END)
+        AS NUMERIC(24,6)) AS ceiling_col
+INTO test_case_babel_5980_function_1;
+GO
+
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME LIKE 'test_case_babel_5980_function_1'
+ORDER BY COLUMN_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+test_case_babel_5980_function_1#!#ceiling_col#!#numeric#!#24#!#6
+test_case_babel_5980_function_1#!#datediff_col#!#decimal#!#24#!#6
+test_case_babel_5980_function_1#!#floor_col#!#numeric#!#24#!#6
+test_case_babel_5980_function_1#!#isnumeric_col#!#numeric#!#24#!#6
+test_case_babel_5980_function_1#!#unicode_col#!#numeric#!#24#!#6
+~~END~~
+
+
+SELECT
+    1.00 * CEILING(46) AS ceiling_col_2,
+    1.00 * FLOOR(4) AS floor_col_2,
+    1.00 * UNICODE(N'Test String 1') AS UNICODE_col_2,
+    1.00 * ISNUMERIC(356.87) AS isnumeric_col_2,
+    1.00 * DATEDIFF(dd, '2000-01-01', '2023-12-31') AS datediff_col_2,
+    1.00 / CEILING(46) AS ceiling_col_3,
+    1.00 / FLOOR(4) AS floor_col_3,
+    1.00 / UNICODE(N'Test String 1') AS UNICODE_col_3,
+    1.00 / ISNUMERIC(356.87) AS isnumeric_col_3,
+    1.00 / DATEDIFF(dd, '2000-01-01', '2023-12-31') AS datediff_col_3
+INTO test_case_babel_5980_function_2;
+GO
+
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME LIKE 'test_case_babel_5980_function_2'
+ORDER BY COLUMN_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+test_case_babel_5980_function_2#!#ceiling_col_2#!#numeric#!#14#!#2
+test_case_babel_5980_function_2#!#ceiling_col_3#!#numeric#!#14#!#13
+test_case_babel_5980_function_2#!#datediff_col_2#!#numeric#!#14#!#2
+test_case_babel_5980_function_2#!#datediff_col_3#!#numeric#!#14#!#13
+test_case_babel_5980_function_2#!#floor_col_2#!#numeric#!#14#!#2
+test_case_babel_5980_function_2#!#floor_col_3#!#numeric#!#14#!#13
+test_case_babel_5980_function_2#!#isnumeric_col_2#!#numeric#!#14#!#2
+test_case_babel_5980_function_2#!#isnumeric_col_3#!#numeric#!#14#!#13
+test_case_babel_5980_function_2#!#unicode_col_2#!#numeric#!#14#!#2
+test_case_babel_5980_function_2#!#unicode_col_3#!#numeric#!#14#!#13
+~~END~~
+
+
+DROP FUNCTION GetNumericValue_BABEL_5980;
+GO
+
+DROP TABLE IF EXISTS test_case_babel_5980_function_1;
+GO
+
+DROP TABLE IF EXISTS test_case_babel_5980_function_2;
+GO
