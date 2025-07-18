@@ -89,12 +89,12 @@ jobs:
         if: always() && steps.setup-dump-restore-ca.outcome == 'success' 
         uses: ./.github/composite-actions/dump-restore
 
-      # - name: Setup upterm session
-      #   if: always()
-      #   uses: lhotari/action-upterm@v1
-      #   timeout-minutes: 120
-      #   with:
-      #     limit-access-to-actor: true
+      - name: Setup upterm session
+        if: always()
+        uses: lhotari/action-upterm@v1
+        timeout-minutes: 120
+        with:
+          limit-access-to-actor: true
 
       - uses: actions/checkout@v2
 
