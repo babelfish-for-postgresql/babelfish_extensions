@@ -2,9 +2,6 @@
 # 1. Lines starting with '#' will be treated as comments
 # 2. To ignore any test file, add an entry like ignore#!#<test_file_name>
 
-ignore#!#cast_nvarchar_test-vu-prepare
-ignore#!#cast_nvarchar_test-vu-verify
-ignore#!#cast_nvarchar_test-vu-cleanup
 ignore#!#test_convert_to_string
 ignore#!#test_tryconvert_to_string
 

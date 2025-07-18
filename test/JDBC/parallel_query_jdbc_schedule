@@ -29,9 +29,6 @@ ignore#!#BABEL-SP_TABLE_PRIVILEGES
 ignore#!#ISC-Columns-vu-verify
 ignore#!#four-part-names-vu-verify
 
-ignore#!#cast_nvarchar_test-vu-prepare
-ignore#!#cast_nvarchar_test-vu-verify
-ignore#!#cast_nvarchar_test-vu-cleanup
 ignore#!#test_convert_to_string
 ignore#!#test_tryconvert_to_string
 
