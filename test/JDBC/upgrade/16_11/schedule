@@ -584,7 +584,7 @@ BABEL-5129
 BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
-BABEL-2736
+BABEL-2736-before
 securityadmin_role
 db_accessadmin
 datareader_datawriter
@@ -592,7 +592,7 @@ dbcreator_role
 db_securityadmin
 db_ddladmin
 smalldatetime_date_cmp
-cast_nvarchar_test
+cast_nvarchar_test-before
 test_conv_string_to_date-before-17_4
 test_conv_string_to_datetime-before-17_4
 test_conv_string_to_datetime2-before-17_4
