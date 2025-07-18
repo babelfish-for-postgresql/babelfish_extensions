@@ -599,8 +599,8 @@ db_securityadmin
 BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
-BABEL-2736
-cast_nvarchar_test
+BABEL-2736-before
+cast_nvarchar_test-before
 datareader_datawriter
 db_owner
 smalldatetime_date_cmp
