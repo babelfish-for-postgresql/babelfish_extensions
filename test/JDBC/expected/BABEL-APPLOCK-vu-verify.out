@@ -1,4 +1,6 @@
 
+
+-- tsql
 -- Part #1: single-session tests
 -- default params
 BEGIN TRAN;
@@ -6,10 +8,12 @@ exec sp_getapplock @Resource = 'lock1', @LockMode = 'SHARED';
 COMMIT;
 GO
 
+-- tsql
 -- given params
 exec sp_getapplock @Resource = 'lock1', @LockMode = 'EXCLUSIVE', @LockOwner = 'SESSION', @LockTimeout = 10, @DbPrincipal = 'dbo';
 GO
 
+-- tsql
 exec sp_releaseapplock @Resource = 'lock1', @LockOwner = 'SESSION';
 GO
 

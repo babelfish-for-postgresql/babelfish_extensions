@@ -1,12 +1,3 @@
--- psql
-CREATE EXTENSION pg_buffercache;
-GO
-
-SELECT *
-FROM pg_buffercache
-WHERE isdirty = true 
-   OR pinning_backends > 0;
-GO
 
 -- Part #1: single-session tests
 
@@ -17,17 +8,9 @@ exec sp_getapplock @Resource = 'lock1', @LockMode = 'SHARED';
 COMMIT;
 GO
 
--- psql
-select * from pg_shmem_allocations order by allocated_size;
-GO
-
 -- given params
 -- tsql
 exec sp_getapplock @Resource = 'lock1', @LockMode = 'EXCLUSIVE', @LockOwner = 'SESSION', @LockTimeout = 10, @DbPrincipal = 'dbo';
-GO
-
--- psql
-select * from pg_shmem_allocations order by allocated_size;
 GO
 
 -- tsql
