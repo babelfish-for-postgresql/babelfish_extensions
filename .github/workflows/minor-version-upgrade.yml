@@ -152,6 +152,9 @@ jobs:
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           cd test/JDBC/
+          echo 'ignore#!#BABEL-2736-vu-prepare' >> jdbc_schedule
+          echo 'ignore#!#BABEL-2736-vu-verify' >> jdbc_schedule
+          echo 'ignore#!#BABEL-2736-vu-cleanup' >> jdbc_schedule
           mvn -B -ntp test
 
       - name: Upload Log

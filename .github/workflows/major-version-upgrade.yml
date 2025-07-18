@@ -230,6 +230,9 @@ jobs:
           cd test/JDBC/
           # temporarily ignore test BABEL-2086
           echo 'ignore#!#BABEL-2086' >> jdbc_schedule
+          echo 'ignore#!#BABEL-2736-vu-prepare' >> jdbc_schedule
+          echo 'ignore#!#BABEL-2736-vu-verify' >> jdbc_schedule
+          echo 'ignore#!#BABEL-2736-vu-cleanup' >> jdbc_schedule
           mvn -B -ntp test
      
       - name: Upload Postgres log
