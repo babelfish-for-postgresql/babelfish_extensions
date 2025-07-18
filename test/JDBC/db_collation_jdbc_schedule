@@ -2,9 +2,6 @@
 # 1. Lines starting with '#' will be treated as comments
 # 2. To ignore any test file, add an entry like ignore#!#<test_file_name>
 
-ignore#!#ISC-Check-Constraints-vu-prepare
-ignore#!#ISC-Check-Constraints-vu-verify
-ignore#!#ISC-Check-Constraints-vu-cleanup
 ignore#!#TestBinary
 ignore#!#TestStrings
 ignore#!#babel_functions_cast
