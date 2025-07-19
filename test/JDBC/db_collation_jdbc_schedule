@@ -2,8 +2,6 @@
 # 1. Lines starting with '#' will be treated as comments
 # 2. To ignore any test file, add an entry like ignore#!#<test_file_name>
 
-ignore#!#test_tryconvert_to_string
-
 ignore#!#BABEL-2736-before-vu-prepare
 ignore#!#BABEL-2736-before-vu-verify
 ignore#!#BABEL-2736-before-vu-cleanup
