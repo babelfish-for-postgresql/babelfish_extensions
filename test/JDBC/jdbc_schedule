@@ -10,7 +10,6 @@
 
 all
 
-ignore#!#test_convert_to_string
 ignore#!#test_tryconvert_to_string
 
 ignore#!#BABEL-2736-before-vu-prepare

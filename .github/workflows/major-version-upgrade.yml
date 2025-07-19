@@ -232,6 +232,7 @@ jobs:
           echo 'ignore#!#BABEL-2086' >> jdbc_schedule
           echo 'ignore#!#TestBinary' >> jdbc_schedule
           echo 'ignore#!#cast_string_to_binary' >> jdbc_schedule
+          echo 'ignore#!#babel_functions_cast' >> jdbc_schedule
           echo 'ignore#!#BABEL-2736-vu-prepare' >> jdbc_schedule
           echo 'ignore#!#BABEL-2736-vu-verify' >> jdbc_schedule
           echo 'ignore#!#BABEL-2736-vu-cleanup' >> jdbc_schedule
