@@ -35,7 +35,4 @@ ignore#!#BABEL-2736-before-vu-cleanup
 ignore#!#cast_nvarchar_test-before-vu-prepare
 ignore#!#cast_nvarchar_test-before-vu-verify
 ignore#!#cast_nvarchar_test-before-vu-cleanup
-ignore#!#PARTITION-before-17_6-vu-prepare
-ignore#!#PARTITION-before-17_6-vu-verify
-ignore#!#PARTITION-before-17_6-vu-cleanup
 
