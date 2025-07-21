@@ -848,11 +848,23 @@ pltsql_GetNewTempObjectId()
 			 * GetNewObjectId will return the right value on the next call.  
 			 */
 			if (tempOidStart < FirstNormalObjectId)
+			{
+				/* 
+				* This situation should not be reached in an ideal state since oid < FirstNormalObjectId is during bootstrapping
+				* However, if it does we simply start from FirstNormalObjectId 
+				*/
+				elog(NOTICE, "TransamVariables->nextOid is below FirstNormalObjectId");
 				tempOidStart = FirstNormalObjectId;
+			}
 
 			/* If the OID range would wraparound, start from beginning instead. */
 			if (tempOidStart + temp_oid_buffer_size < tempOidStart)
 			{
+				/* Raise a notice */
+				elog(NOTICE, "OID range wraparound reached while trying to allocate OIDs for tsql temp objects");
+				/* Dump essential values like oid start and temp oid buffer size */
+				elog(NOTICE, "tempOidStart: %u, buffer_size: %u", tempOidStart, temp_oid_buffer_size);
+
 				tempOidStart = FirstNormalObjectId;
 
 				/* As in GetNewObjectId - wraparound in standalone mode (unlikely but possible) */
@@ -955,7 +967,7 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 		*/
 		if (retries > 0)
 		{
-			elog(NOTICE, "there is a collision with oid %u when determing oid for a temp object.", newOid);
+			elog(NOTICE, "There is a collision with oid %u when determing oid for a temp object.", newOid);
 		}
 
 		newOid = pltsql_GetNewTempObjectId();
