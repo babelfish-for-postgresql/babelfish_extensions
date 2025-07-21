@@ -3763,16 +3763,16 @@ DECLARE @current_username sys.nvarchar(128)
 DECLARE @is_sysadmin BIT
 BEGIN
 
-    IF is_srvrolemember('securityadmin') = 0 
-    BEGIN
-        RAISERROR('User does not have permission to perform this action.', 16, 1);
+	IF is_srvrolemember('securityadmin') = 0 
+	BEGIN
+		RAISERROR('User does not have permission to perform this action.', 16, 1);
 		RETURN 0;
-    END
+	END
 
-    SET @current_username = LOWER(sys.suser_name());
-    SET @is_sysadmin = is_srvrolemember('sysadmin');
+	SET @current_username = LOWER(sys.suser_name());
+	SET @is_sysadmin = is_srvrolemember('sysadmin');
 
-    SET @input_loginname = sys.RTRIM(@loginname);
+	SET @input_loginname = sys.RTRIM(@loginname);
 
 	SELECT DISTINCT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
@@ -3858,7 +3858,7 @@ BEGIN
 		)
 	ORDER BY LoginName, DBName, UserName
     
-    RETURN 0;
+	RETURN 0;
 END;
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_helplogins TO PUBLIC;
