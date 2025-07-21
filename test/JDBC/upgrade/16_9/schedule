@@ -621,4 +621,5 @@ babel_test_numeric_int8_oper
 MONEY_OBJECT
 money_smallmoney
 money_smallmoney_bit_dep_obj_before_17_6
+z_sp_helplogins
 weak-binding
