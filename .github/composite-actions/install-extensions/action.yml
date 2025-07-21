@@ -52,7 +52,6 @@ runs:
         sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf
         sudo sed -i "s/#port = 5432/port = ${{inputs.psql_port}}/g" postgresql.conf
         sudo sed -i "s/#wal_level = replica/wal_level = ${{inputs.wal_level}}/g" postgresql.conf
-        sudo sed -i "s/shared_buffers = 128MB/shared_buffers = 256MB/g" postgresql.conf
         ipaddress=$(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}')
         # Allow only runner to have trust authentication, all other users must provide a password
         {
