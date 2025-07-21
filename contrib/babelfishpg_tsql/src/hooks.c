@@ -851,9 +851,10 @@ pltsql_GetNewTempObjectId()
 			{
 				/* 
 				* This situation should not be reached in an ideal state since oid < FirstNormalObjectId is during bootstrapping
+				* or when the regular oid has also gone into a wraparound.
 				* However, if it does we simply start from FirstNormalObjectId 
 				*/
-				elog(NOTICE, "TransamVariables->nextOid is below FirstNormalObjectId");
+				elog(LOG, "TransamVariables->nextOid is below FirstNormalObjectId");
 				tempOidStart = FirstNormalObjectId;
 			}
 
@@ -861,9 +862,10 @@ pltsql_GetNewTempObjectId()
 			if (tempOidStart + temp_oid_buffer_size < tempOidStart)
 			{
 				/* Raise a notice */
-				elog(NOTICE, "OID range wraparound reached while trying to allocate OIDs for tsql temp objects");
+				elog(LOG, "Temp OID range wraparound reached while trying to allocate OIDs for tsql temp objects. This will lead to nextOid being assigned < FirstNormalObjectId");
+
 				/* Dump essential values like oid start and temp oid buffer size */
-				elog(NOTICE, "tempOidStart: %u, buffer_size: %u", tempOidStart, temp_oid_buffer_size);
+				elog(LOG, "tempOidStart: %u, buffer_size: %u", tempOidStart, temp_oid_buffer_size);
 
 				tempOidStart = FirstNormalObjectId;
 
@@ -957,6 +959,11 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	 */
 	Assert(temp_oid_buffer_size > 0);
 
+	/*
+	* debug level logs when trying to generate a new temp object oid from the given catalog.
+	*/
+	elog(DEBUG1, "Generating new oid for tsql temp object from system catalog with oid: %u and column: %d", relation->rd_id, oidcolumn);
+
 	/* Generate new OIDs until we find one not in the table */
 	do
 	{
@@ -967,7 +974,7 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 		*/
 		if (retries > 0)
 		{
-			elog(NOTICE, "There is a collision with oid %u when determing oid for a temp object.", newOid);
+			elog(LOG, "There is a collision with oid %u when determing oid for a temp object from system catalog with oid: %u", newOid, relation->rd_id);
 		}
 
 		newOid = pltsql_GetNewTempObjectId();
