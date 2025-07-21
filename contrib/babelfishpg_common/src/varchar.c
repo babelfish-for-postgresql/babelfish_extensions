@@ -95,20 +95,6 @@ is_basetype_nchar_nvarchar(Oid typid)
 	return false;
 }
 
-int
-CountUTF16Units(const char *utf8, size_t len)
-{
-	int32_t code;
-	int consumed;
-	int units = 0;
- 
-	for (size_t i = 0; i < len; i += consumed)
-	{
-		code = GetUTF8CodePoint((const unsigned char *)&utf8[i], len - i, &consumed);
-		units += (code > 0xFFFF) ? 2 : 1;
-	}
-	return units;
-}
 
 /*
  * GetUTF8CodePoint - extract the next Unicode code point from 1..4
