@@ -25,7 +25,11 @@ FROM sys.server_role_members AS server_role_members
 INNER JOIN sys.server_principals AS roles
     ON server_role_members.role_principal_id = roles.principal_id
 INNER JOIN sys.server_principals AS members 
-    ON server_role_members.member_principal_id = members.principal_id order by MemberPrincipalName;
+    ON server_role_members.member_principal_id = members.principal_id
+-- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+-- (justanotherloginwithsecad) created within z_sp_helplogins
+WHERE members.name NOT IN ('justanotherloginwithsecad')
+ORDER BY MemberPrincipalName;
 GO
 
 CREATE FUNCTION sys_server_role_members_vu_prepare_func ()
@@ -39,7 +43,11 @@ RETURN (
         INNER JOIN sys.server_principals AS roles
             ON server_role_members.role_principal_id = roles.principal_id
         INNER JOIN sys.server_principals AS members
-            ON server_role_members.member_principal_id = members.principal_id order by MemberPrincipalName
+            ON server_role_members.member_principal_id = members.principal_id
+        -- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+        -- (justanotherloginwithsecad) created within z_sp_helplogins
+        WHERE members.name NOT IN ('justanotherloginwithsecad')
+		order by MemberPrincipalName
     );
 GO
 
@@ -53,6 +61,10 @@ BEGIN
     INNER JOIN sys.server_principals AS roles
         ON server_role_members.role_principal_id = roles.principal_id
     INNER JOIN sys.server_principals AS members
-        ON server_role_members.member_principal_id = members.principal_id order by MemberPrincipalName;
+        ON server_role_members.member_principal_id = members.principal_id
+    -- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+    -- (justanotherloginwithsecad) created within z_sp_helplogins
+    WHERE members.name NOT IN ('justanotherloginwithsecad')
+	order by MemberPrincipalName
 END;
 GO
