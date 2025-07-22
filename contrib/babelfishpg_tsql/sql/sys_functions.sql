@@ -5066,3 +5066,16 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
 CREATE OR REPLACE FUNCTION sys.pltsql_assign_var(dno INT, val ANYELEMENT)
 RETURNS ANYELEMENT
 AS 'babelfishpg_tsql', 'pltsql_assign_var' LANGUAGE C PARALLEL UNSAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_broken_view_function()
+RETURNS INT
+AS $$
+BEGIN
+    RAISE EXCEPTION 'Cannot reference a broken view in query';
+    RETURN 1;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+GRANT EXECUTE ON FUNCTION sys.babelfish_broken_view_function() TO PUBLIC;
+COMMENT ON FUNCTION sys.babelfish_broken_view_function() IS 'Internal function used by broken views to prevent silent failures';
