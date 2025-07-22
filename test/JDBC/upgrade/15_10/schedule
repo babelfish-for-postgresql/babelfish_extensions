@@ -579,4 +579,5 @@ test_conv_int_to_varbinary_binary_before_17_5_or_16_9
 MONEY_OBJECT-before-16_4
 money_smallmoney
 money_smallmoney_bit_dep_obj_before_17_6
+z_sp_helplogins
 weak-binding
