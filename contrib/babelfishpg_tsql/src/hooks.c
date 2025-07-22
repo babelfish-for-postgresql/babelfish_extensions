@@ -7421,15 +7421,27 @@ handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, Relat
 	HeapTuple 		tup;
 	List 			*processed_views = NIL;
 	Oid 			viewOid = InvalidOid;
-	bool 			is_alter_view = false;
 	bool 			is_weak_view = false;
 	bool 			processed = true;
 	bool 			updated;
-	int             nkeys = 2;
+	int 			nkeys = 2;
+	ListCell 		*option;
+	bool 			tsql_alter_view_op = false;
 
-	/* Check if this is an ALTER VIEW operation */
-	is_alter_view = (stmt != NULL && stmt->createOrAlter);
-	
+	if (stmt != NULL)
+	{
+		foreach(option, stmt->options)
+		{
+			DefElem *def = (DefElem *) lfirst(option);
+			
+			if (strcmp(def->defname, "tsql_alter_view_op") == 0)
+			{
+				tsql_alter_view_op = true;
+				break;
+			}
+		}
+	}
+
 	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
 		return false;
 	
@@ -7484,7 +7496,7 @@ handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, Relat
 				}
 				CommandCounterIncrement();
 			}
-			else if (is_alter_view && pltsql_weak_view_binding)
+			else if (tsql_alter_view_op && pltsql_weak_view_binding)
 			{
 				/* ALTER operation: mark weak & broken */
 				update_bbf_view_flags(viewOid, BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW, 0, true);

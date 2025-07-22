@@ -4154,9 +4154,8 @@ tsql_AlterViewStmt:
                     n->aliases = $4;
                     n->query = $7;
                     n->replace = true;
-                    n->options = $5;
+                    n->options = lappend($5, makeDefElem("tsql_alter_view_op", (Node *)makeInteger(1), -1));
                     n->withCheckOption = $8;
-                    n->createOrAlter = true;
                     $$ = (Node *) n;
                 }
             | CREATE OR TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
@@ -4167,9 +4166,8 @@ tsql_AlterViewStmt:
                     n->aliases = $6;
                     n->query = $9;
                     n->replace = false;
-                    n->options = $7;
+                    n->options = lappend($7, makeDefElem("tsql_alter_view_op", (Node *)makeInteger(1), -1));
                     n->withCheckOption = $10;
-                    n->createOrAlter = true;
                     $$ = (Node *) n;
                 }
         ;

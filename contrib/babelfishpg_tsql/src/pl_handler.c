@@ -2680,6 +2680,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if(!cfs->is_procedure)
 						{
+							if (!(handle_bbf_view_binding_on_object_drop(&originalFunc, NULL, NULL)))
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+											errmsg("Cannot drop function %s because it is bound to a view.", NameListToString(cfs->funcname))));
+							}
 							/*
 							 * Postgres does not allow us to create functions with different return types
 							 * so we need to delete and recreate them 
@@ -2690,6 +2696,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						else if (!isSameProc) /* i.e. different signature */
 						{
+							if (!(handle_bbf_view_binding_on_object_drop(&originalFunc, NULL, NULL)))
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+											errmsg("Cannot drop function %s because it is bound to a view.", NameListToString(cfs->funcname))));
+							}
 							performDeletion(&originalFunc, DROP_RESTRICT, 0);
 							CommandCounterIncrement();
 						}
@@ -2803,18 +2815,38 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			case T_ViewStmt:
 			{
 				ViewStmt *stmt = (ViewStmt *) parsetree;
+				bool tsql_alter_view_op = false;
 
 				/*
 				 * We are using PostgreSQL's existing ViewStmt node which is shared between PostgreSQL's
 				 * CREATE VIEW and T-SQL's ALTER VIEW/CREATE OR ALTER VIEW operations. To properly distinguish 
-				 * between these operations and not let CREATE VIEW inside this case we use createOrAlter flag
+				 * between these operations we use a special option named "tsql_view_op" in the options list, 
+				 * which is set in the grammar for T-SQL view operations (ALTER VIEW and CREATE OR ALTER VIEW).
 				 *
-				 * Since both CREATE VIEW and CREATE OR ALTER VIEW set replace = false initially,
-				 * we use the 'createOrAlter' flag to distinguish between them and implement the
-				 * correct behavior when a view already exists
+				 * For both operations, we set different values for the 'replace' flag:
+				 * - For ALTER VIEW: replace = true
+				 * - For CREATE OR ALTER VIEW: replace = false (initially)
+				 * 
+				 * This allows us to implement the correct behavior when a view already exists:
+				 * - ALTER VIEW will fail if the view doesn't exist
+				 * - CREATE OR ALTER VIEW will create the view if it doesn't exist
 				 */
 
-				if (sql_dialect == SQL_DIALECT_TSQL && (stmt->createOrAlter))    
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					ListCell *option;
+					foreach(option, stmt->options)
+					{
+						DefElem *def = (DefElem *) lfirst(option);
+						
+						if (strcmp(def->defname, "tsql_alter_view_op") == 0)
+						{
+							tsql_alter_view_op = true;
+							break;
+						}
+					}
+				}
+				if (sql_dialect == SQL_DIALECT_TSQL && tsql_alter_view_op)
 				{
 					/*
 					 * 1. Retrieve the OID of the old view using `RangeVarGetRelid()`.
