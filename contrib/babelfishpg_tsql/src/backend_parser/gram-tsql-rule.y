@@ -4146,31 +4146,31 @@ tsql_AlterFunctionStmt:
 		;
 
 tsql_AlterViewStmt: 
-            TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
-                AS SelectStmt opt_check_option
-                {
-                    ViewStmt *n = makeNode(ViewStmt);
-                    n->view = $3;
-                    n->aliases = $4;
-                    n->query = $7;
-                    n->replace = true;
-                    n->options = lappend($5, makeDefElem("tsql_alter_view_op", (Node *)makeInteger(1), -1));
-                    n->withCheckOption = $8;
-                    $$ = (Node *) n;
-                }
-            | CREATE OR TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
-                AS SelectStmt opt_check_option
-                {
-                    ViewStmt *n = makeNode(ViewStmt);
-                    n->view = $5;
-                    n->aliases = $6;
-                    n->query = $9;
-                    n->replace = false;
-                    n->options = lappend($7, makeDefElem("tsql_alter_view_op", (Node *)makeInteger(1), -1));
-                    n->withCheckOption = $10;
-                    $$ = (Node *) n;
-                }
-        ;
+			TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
+				AS SelectStmt opt_check_option
+				{
+					ViewStmt *n = makeNode(ViewStmt);
+					n->view = $3;
+					n->aliases = $4;
+					n->query = $7;
+					n->replace = true;
+					n->options = lappend($5, makeDefElem("tsql_alter_view_op", (Node *)makeInteger(1), -1));
+					n->withCheckOption = $8;
+					$$ = (Node *) n;
+				}
+			| CREATE OR TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
+				AS SelectStmt opt_check_option
+				{
+					ViewStmt *n = makeNode(ViewStmt);
+					n->view = $5;
+					n->aliases = $6;
+					n->query = $9;
+					n->replace = false;
+					n->options = lappend($7, makeDefElem("tsql_alter_view_op", (Node *)makeInteger(1), -1));
+					n->withCheckOption = $10;
+					$$ = (Node *) n;
+				}
+		;
 		
 /*
  * These rules define the WITH clause in a CREATE PROCEDURE
