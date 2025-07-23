@@ -25,6 +25,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -262,6 +263,7 @@ static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
 bool		current_query_is_create_tbl_check_constraint = false;
+static bool pltsql_current_query_is_view_definition = false;
 
 /* Configurations */
 bool		pltsql_trace_tree = false;
@@ -1127,6 +1129,17 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				if (!get_rel_name(tsql_identity_insert.rel_oid))
 					tsql_identity_insert.valid = false;
 			}
+		}
+	}
+	else if (query->commandType == CMD_SELECT)
+	{
+		if (pltsql_current_query_is_view_definition)
+		{
+			/* This is a SELECT query, which is part of a view definition.
+			 * Check if CREATE VIEW is allowed as per binding rules.
+			 * This check will happen when calling parse_analyze_fixed_params() present in DefineView()
+			 */
+			check_view_binding_dependencies(query);
 		}
 	}
 	else if (query->commandType == CMD_UTILITY)
@@ -2461,7 +2474,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					ViewStmt   *vstmt = (ViewStmt *) parsetree;
 					Oid			relid = RangeVarGetRelid(vstmt->view, NoLock, true);
 
-					if (vstmt->replace && check_is_tsql_view(relid))
+					if (vstmt->replace && check_is_tsql_view(relid, NULL))
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_INTERNAL_ERROR),
@@ -2477,7 +2490,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						Oid			relid = RangeVarGetRelid(atstmt->relation, NoLock, true);
 
-						if (check_is_tsql_view(relid))
+						if (check_is_tsql_view(relid, NULL))
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2496,7 +2509,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						Oid			relid = RangeVarGetRelid(rnstmt->relation, NoLock, true);
 
-						if (check_is_tsql_view(relid))
+						if (check_is_tsql_view(relid, NULL))
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2513,7 +2526,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						Oid			relid = RangeVarGetRelid(altschstmt->relation, NoLock, true);
 
-						if (check_is_tsql_view(relid))
+						if (check_is_tsql_view(relid, NULL))
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2818,6 +2831,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_TRY();
 					{
 						StartTransactionCommand();
+						pltsql_current_query_is_view_definition = true;
 						
 						/* Without this, DDL event triggers won't fire for ALTER VIEW operations
 						 * Currently T-SQL DDL triggers are not supported, but this code block is required for PostgreSQL DDL event triggers. 
@@ -2859,6 +2873,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							originalView.objectId = oldViewOid;
 							originalView.classId = RelationRelationId;
 							originalView.objectSubId = 0;
+
+							if (!(handle_bbf_view_binding_on_object_drop(&originalView, NULL, stmt)))
+							/* Strong view dependency found, abort the drop */
+								ereport(ERROR,
+										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+											errmsg("cannot alter view because other objects depend on it"),
+											errdetail("Object cannot be altered because it is referenced by a schema-bound view.")));
+
 							performDeletion(&originalView, DROP_RESTRICT, 0);
 							CommandCounterIncrement();
 			
@@ -2891,14 +2913,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					PG_FINALLY();
 					{
+						pltsql_current_query_is_view_definition = false;
 						if (needCleanup)
 							EventTriggerEndCompleteQuery();
 					}
 					PG_END_TRY();
 					return; 
 				}
-				/* check that no T-SQL ALTER VIEW operations reach this point because they should have been handled earlier in the code.*/
-				Assert(!(sql_dialect == SQL_DIALECT_TSQL && stmt->createOrAlter));
+				else if(sql_dialect == SQL_DIALECT_TSQL)
+				{
+					PG_TRY();
+					{
+						pltsql_current_query_is_view_definition = true;
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, 
+												context, params, queryEnv, dest, qc);
+					}
+					PG_FINALLY();
+					{
+						pltsql_current_query_is_view_definition = false;
+					}
+					PG_END_TRY();
+					return;
+				}
 				break;
 			}
 

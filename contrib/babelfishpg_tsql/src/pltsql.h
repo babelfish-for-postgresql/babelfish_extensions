@@ -1178,6 +1178,7 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_create_view; /* CREATE VIEW? */
 	bool		is_set_tran_isolation; /* SET TRANSACTION ISOLATION? */
 	char	   *original_query; /* Only for batch level statement. */
+	bool        is_schemabinding; /* Is schema binding? */
 } PLtsql_stmt_execsql;
 
 /*
@@ -2107,6 +2108,7 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 extern int	get_insert_bulk_rows_per_batch(void);
 extern int	get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
+extern bool get_is_schemabinding_view(void);
 extern AclMode string_to_privilege(const char *privname);
 extern const char *privilege_to_string(AclMode privilege);
 extern Oid get_owner_of_schema(const char *schema);
