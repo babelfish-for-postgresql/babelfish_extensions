@@ -6887,8 +6887,7 @@ is_dummy_view(Oid viewOid)
 
 	if (viewQuery->commandType == CMD_SELECT &&
 			viewQuery->jointree &&
-			list_length(viewQuery->jointree->fromlist) == 0 &&
-			viewQuery->jointree->quals == NULL)
+			list_length(viewQuery->jointree->fromlist) == 0)
 	{
 		is_dummy = true;	
 		foreach(lc, viewQuery->targetList)
@@ -7139,6 +7138,13 @@ create_dummy_view_query_for_broken_view(Oid viewOid)
 	Query 		*dummyQuery;
 	List 		*targetList = NIL;
 	int 		i;
+	FuncExpr	*funcExpr;
+	OpExpr 		*opExpr;
+	Oid 		funcoid;
+	Oid 		opoid;
+	Const 		*constExpr;
+	List 		*opname;
+	List 		*funcname;
 	
 	viewRel = relation_open(viewOid, AccessShareLock);
 	tupdesc = RelationGetDescr(viewRel);
@@ -7173,6 +7179,55 @@ create_dummy_view_query_for_broken_view(Oid viewOid)
 		targetList = lappend(targetList, te);
 	}
 	dummyQuery->targetList = targetList;
+
+	/* This WHERE clause serves as an additional safety mechanism to ensure
+	 * broken views fail explicitly even if user somehow bypass the primary
+	 * view repair mechanism. While the view repair process should typically
+	 * fail earlier, this acts as extra check against accessing broken views. 
+	 */
+
+	funcname = list_make2(makeString("sys"), makeString("babelfish_broken_view_function"));
+	funcoid = LookupFuncName(funcname, 0, NULL, false);
+	if (OidIsValid(funcoid))
+	{
+		/* Create a function expression */
+		funcExpr =	makeFuncExpr(funcoid,
+								 INT4OID,
+								 NIL,
+								 InvalidOid,
+								 InvalidOid,
+								 COERCE_EXPLICIT_CALL);
+		
+		/* Create a constant for "1" */
+		constExpr = makeConst(INT4OID,
+							  -1,
+							  InvalidOid,
+							  sizeof(int32),
+							  Int32GetDatum(1),
+							  false,
+							  true);
+							
+		opname = list_make1(makeString("="));
+		opoid = LookupOperName(NULL, opname, INT4OID, INT4OID, true, -1);
+		list_free_deep(opname);
+		opname = NIL;
+		
+		/* Create operator expression for func() = 1 */
+		if (OidIsValid(opoid))
+		{
+			opExpr = makeNode(OpExpr);
+			opExpr->opno = opoid;
+			opExpr->opfuncid = get_opcode(opoid);
+			opExpr->opresulttype = BOOLOID;
+			opExpr->opretset = false;
+			opExpr->opcollid = InvalidOid;
+			opExpr->inputcollid = InvalidOid;
+			opExpr->args = list_make2(funcExpr, constExpr);
+			
+			/* Adding WHERE clause to the dummy query */
+			dummyQuery->jointree->quals = (Node *) opExpr;
+		}
+	}
 	relation_close(viewRel, AccessShareLock);
 	
 	return dummyQuery;
