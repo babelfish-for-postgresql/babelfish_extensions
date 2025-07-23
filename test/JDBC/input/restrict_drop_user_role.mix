@@ -1,5 +1,11 @@
 -- single_db_mode_expected
 -- tsql
+create login l1 with password = '123'
+go
+create user u1 for login l1
+go
+create schema sch authorization u1
+go
 create login no_priv_login1 with password = '12345678'
 go
 
@@ -35,6 +41,19 @@ go
 
 use master
 go
+-- case-0 - user is owner of an object 
+-- tsql user=l1 password=123
+create table sch.t1(a int)
+go
+-- tsql
+drop user u1
+go
+-- tsql user=l1 password=123
+drop table sch.t1
+go
+drop schema sch
+go
+-- terminate-tsql-conn user=l1 password=123
 
 -- case-1 - when current user is guest
 -- permission denied
@@ -223,6 +242,12 @@ drop login no_priv_login3
 go
 
 drop database restrict_user_db1
+go
+
+drop user u1
+go
+
+drop login l1
 go
 
 -- 3.5 - Try dropping user created for another database

@@ -1,4 +1,10 @@
 -- tsql
+create login l1 with password = '123'
+go
+create user u1 for login l1
+go
+create schema sch authorization u1
+go
 create login no_priv_login1 with password = '12345678'
 go
 
@@ -34,6 +40,23 @@ go
 
 use master
 go
+-- tsql user=l1 password=123
+-- case-0 - user is owner of an object 
+create table sch.t1(a int)
+go
+-- tsql
+drop user u1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_u1" cannot be dropped because some objects depend on it)~~
+
+-- tsql user=l1 password=123
+drop table sch.t1
+go
+drop schema sch
+go
+-- terminate-tsql-conn user=l1 password=123
 
 -- tsql user=no_priv_login1 password=12345678
 -- case-1 - when current user is guest
@@ -338,6 +361,12 @@ drop login no_priv_login3
 go
 
 drop database restrict_user_db1
+go
+
+drop user u1
+go
+
+drop login l1
 go
 
 -- tsql
