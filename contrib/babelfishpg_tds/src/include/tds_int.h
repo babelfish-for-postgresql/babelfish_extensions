@@ -306,6 +306,8 @@ extern uint32_t GetClientTDSVersion(void);
 extern char *get_tds_login_domainname(void);
 extern void TdsSetDbContext(void);
 extern void TdsResetLoginFlags(void);
+extern size_t GetAvailableBufferSize(void);
+extern int FlushBuffer(void);
 
 /* Functions in backend/tds/tdsprotocol.c */
 extern int	TdsSocketBackend(void);
@@ -367,7 +369,6 @@ extern void pe_fin(void);
 
 /* Functions in backend/utils/adt/numeric.c */
 extern Numeric TdsSetVarFromStrWrapper(const char *str);
-extern int32_t tds_numeric_get_typmod(Numeric num);
 
 /* Functions in backend/utils/adt/varchar.c */
 extern void *tds_varchar_input(const char *s, size_t len, int32 atttypmod);

@@ -1199,17 +1199,40 @@ get_bbf_view_def_idx_oid()
 }
 
 HeapTuple
-search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_schema_name, const char *view_name)
+search_bbf_view_def(Relation bbf_view_def_rel, Oid viewOid)
 {
 
 	ScanKeyData scanKey[3];
 	SysScanDesc scan;
 	HeapTuple	scantup,
 				oldtup;
+	Oid 		schema_id;
+	char 		*schema_name = NULL;
+	char		*view_name = NULL;
+	const char  *logical_schema_name = NULL;
+	int16 		dbid = InvalidDbid;
 
-	if (!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
+	if (!OidIsValid(viewOid))
 		return NULL;
 
+	schema_id = get_rel_namespace(viewOid);
+	schema_name = get_namespace_name(schema_id);
+	view_name = get_rel_name(viewOid);
+	
+	if (!schema_name)
+		return NULL;
+	
+	logical_schema_name = get_logical_schema_name(schema_name, true);
+	dbid = get_dbid_from_physical_schema_name(schema_name, true);
+
+	if (!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
+	{
+		pfree(view_name);
+		pfree(schema_name);
+		if (logical_schema_name)
+			pfree((char *) logical_schema_name);
+		return NULL;
+	}
 
 	/* Search and drop the definition */
 	ScanKeyInit(&scanKey[0],
@@ -1239,7 +1262,7 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 
 /* Checks if it is view created during v2.2.0 or after that */
 bool
-check_is_tsql_view(Oid relid)
+check_is_tsql_view(Oid relid, bool *is_weak_view)
 {
 	Oid			schema_oid;
 	Relation	bbf_view_def_rel;
@@ -1249,10 +1272,17 @@ check_is_tsql_view(Oid relid)
 	int16		logical_dbid;
 	const char *logical_schema_name;
 	bool		is_tsql_view = false;
+	bool 		bisnull;
+	Datum 		flag_values_datum;
+	uint64 		flag_values;
 
 	view_name = get_rel_name(relid);
 	schema_oid = get_rel_namespace(relid);
 	schema_name = get_namespace_name(schema_oid);
+
+	if (is_weak_view != NULL)
+		*is_weak_view = false;
+
 	if (view_name == NULL || schema_name == NULL || is_shared_schema(schema_name))
 	{
 		if (view_name)
@@ -1273,12 +1303,27 @@ check_is_tsql_view(Oid relid)
 	}
 	/* Fetch the relation */
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), AccessShareLock);
-
-	scantup = search_bbf_view_def(bbf_view_def_rel, logical_dbid, logical_schema_name, view_name);
+	scantup = search_bbf_view_def(bbf_view_def_rel, relid);
 
 	if (HeapTupleIsValid(scantup))
 	{
 		is_tsql_view = true;
+
+		/* Check if the view is a weak bound view */
+		if (is_weak_view != NULL)
+		{
+			flag_values_datum = heap_getattr(scantup, 
+								Anum_bbf_view_def_flag_values,
+								RelationGetDescr(bbf_view_def_rel), 
+								&bisnull);
+			
+			if (!bisnull)
+			{
+				flag_values = DatumGetUInt64(flag_values_datum);
+				*is_weak_view = (flag_values & BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW) != 0;
+			}
+		}
+
 		heap_freetuple(scantup);
 	}
 	table_close(bbf_view_def_rel, AccessShareLock);
@@ -3684,10 +3729,11 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 									new_record_bbf_schema,
 									new_record_nulls_bbf_schema);
 
-	/* Insert new record in the bbf_authid_user_ext table */
+	/* Insert new record in the babelfish_schema_permissions table */
 	CatalogTupleInsert(bbf_schema_rel, tuple_bbf_schema);
+	heap_freetuple(tuple_bbf_schema);
 
-	/* Close bbf_authid_user_ext, but keep lock till commit */
+	/* Close babelfish_schema_permissions, but keep lock till commit */
 	table_close(bbf_schema_rel, RowExclusiveLock);
 
 	/* make sure later steps can see the entry added here */
@@ -4933,6 +4979,7 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 	Oid save_userid = InvalidOid;
 	int save_sec_context = 0;
 	int dbid = get_db_id(old_db_name);
+	int new_dbid = get_db_id(new_db_name);
 	int tries;
 	Oid     	prev_current_user = InvalidOid;
 
@@ -4948,6 +4995,15 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("Cannot change the name of the system database %s.", old_db_name)));
+
+
+	/*
+	 * Check that the new_db_name does not exist.
+	 */
+	if (new_dbid)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The database %s already exists. Specify a unique database name.", new_db_name)));
 
 	/* 
 	 * Check permission on the given database.

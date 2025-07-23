@@ -5264,10 +5264,17 @@ external_name
 collation
     : COLLATE id
     ;
-    
+
 full_column_name
-    : ((schema=id? DOT)? table=id? DOT)? column=id DOT geospatial_col
-    | (((server=id? DOT)? schema=id? DOT)? tablename=id? DOT)? column_name=id
+    : column_name=id                                    // column
+    | column=id DOT geospatial_col                      // column.geospatial
+    | tablename=id DOT column_name=id                   // table.column_name
+    | table=id DOT column=id DOT geospatial_col         // table.column.geospatial
+    | schema=id DOT tablename=id DOT column_name=id                      // schema.tablename.column_name
+    | schema=id DOT table=id DOT column=id DOT geospatial_col   // schema.table.column.geospatial
+    | server=id DOT schema=id DOT tablename=id DOT column_name=id               // server.schema.tablename.column_name
+    | DOT tablename=id DOT column_name=id                                       // .tablename.column_name
+    | DOT DOT tablename=id DOT column_name=id                                   // ..tablename.column_name
     ;
 
 column_name_list_with_order

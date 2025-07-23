@@ -20,6 +20,7 @@ extern bool pltsql_enable_create_alter_view_from_pg;
 extern bool pltsql_enable_linked_servers;
 extern bool pltsql_allow_windows_login;
 extern bool pltsql_allow_fulltext_parser;
+extern bool pltsql_weak_view_binding;
 extern char *pltsql_psql_logical_babelfish_db_name;
 extern int  pltsql_isolation_level_repeatable_read;
 extern int  pltsql_isolation_level_serializable;
@@ -45,4 +46,6 @@ void		pltsql_revert_guc(int nest_level);
 extern int	pltsql_new_scope_identity_nest_level(void);
 extern void pltsql_revert_last_scope_identity(int nest_level);
 extern void pltsql_remove_current_query_env(void);
+
+extern void assign_psql_logical_babelfish_db_name(const char *newval, void *extra);
 #endif

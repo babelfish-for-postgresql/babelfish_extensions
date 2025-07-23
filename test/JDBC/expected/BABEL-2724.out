@@ -36,7 +36,7 @@ select .a from t2724;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near ".")~~
+~~ERROR (Message: syntax error near 'from' at line 2 and character position 10)~~
 
 
 -- valid error
@@ -44,7 +44,7 @@ select ..a from t2724;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near "..")~~
+~~ERROR (Message: syntax error near 'from' at line 2 and character position 11)~~
 
 
 -- valid error
@@ -52,7 +52,7 @@ select dbo..a from t2724;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near "..")~~
+~~ERROR (Message: syntax error near 'from' at line 2 and character position 14)~~
 
 
 -- special case on insert-column. DOT and qualifier is totally ignored
