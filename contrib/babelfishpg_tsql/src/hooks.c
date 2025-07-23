@@ -844,13 +844,15 @@ pltsql_GetNewTempObjectId()
 				TransamVariables->oidCount -= temp_oid_buffer_size;
 
 			/*
-			 * If TransamVariables->nextOid is below FirstNormalObjectId then we can start at FirstNormalObjectId here and
+			 * If TransamVariables->nextOid is below FirstNormalObjectId then 
+			 * we can start at FirstNormalObjectId here and
 			 * GetNewObjectId will return the right value on the next call.  
 			 */
 			if (tempOidStart < FirstNormalObjectId)
 			{
 				/* 
-				* This situation should not be reached in an ideal state since oid < FirstNormalObjectId is during bootstrapping
+				* This situation should not be reached in an ideal state 
+				* since oid < FirstNormalObjectId is during bootstrapping
 				* or when the regular oid has also gone into a wraparound.
 				* However, if it does we simply start from FirstNormalObjectId 
 				*/
@@ -962,7 +964,7 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	/*
 	* debug level logs when trying to generate a new temp object oid from the given catalog.
 	*/
-	elog(DEBUG1, "Generating new oid for tsql temp object from system catalog with oid: %u and column: %d", relation->rd_id, oidcolumn);
+	elog(DEBUG1, "Generating new oid for tsql temp object from system catalog with oid: %u and relfilenode: %u", relation->rd_id, relation->rd_rel->relfilenode);
 
 	/* Generate new OIDs until we find one not in the table */
 	do
