@@ -40,6 +40,51 @@ $$;
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    temp_datatype text;
+    temp_basetype oid;
+    result_set xml[];
+    result sys.NVARCHAR;
+    pltsql_quoted_identifier text;
+BEGIN
+    temp_datatype := sys.translate_pg_type_to_tsql(pg_typeof(xml_element)::oid);
+    IF temp_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for xml_element datatype validation
+        temp_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(xml_element)::oid);
+        temp_datatype := sys.translate_pg_type_to_tsql(temp_basetype);
+    END IF;
+
+    IF (temp_datatype != 'xml') THEN
+        RAISE EXCEPTION 'Cannot call methods on %.', temp_datatype;
+    END IF;
+
+    pltsql_quoted_identifier := current_setting('babelfishpg_tsql.quoted_identifier');
+
+    IF (pltsql_quoted_identifier = 'off') THEN
+        RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
+    END IF;
+
+    result_set := xpath(xpath_pattern, xml_element);
+    IF (cardinality(result_set) > 1) THEN
+        RAISE EXCEPTION 'XML Value result is not a single value.';
+    ELSIF (cardinality(result_set) = 0) THEN
+        RETURN NULL;
+    ELSE
+        result := (xpath('string(' + xpath_pattern + ')', xml_element))[1];
+        result := pg_catalog.replace(result, '&lt;', '<');
+        result := pg_catalog.replace(result, '&gt;', '>');
+        result := pg_catalog.replace(result, '&apos;', '''');
+        result := pg_catalog.replace(result, '&quot;', '"');
+        result := pg_catalog.replace(result, '&amp;', '&');
+        return result;
+    END IF; 
+END
+$BODY$
+LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
