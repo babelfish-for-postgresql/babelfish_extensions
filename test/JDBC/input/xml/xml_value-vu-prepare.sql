@@ -42,6 +42,12 @@ GO
 CREATE TYPE dbo.babel_5223_xml_value_xmlUDT FROM XML;
 GO
 
+CREATE TYPE dbo.babel_5223_geometryUDT FROM geometry;
+GO
+
+CREATE TYPE dbo.babel_5223_geographyUDT FROM geography;
+GO
+
 CREATE TABLE babel_5223_xml_value_udt (VarUDTColumn dbo.babel_5223_xml_value_varcharUDT, ImageUDTColumn dbo.babel_5223_xml_value_imageUDT, XmlUDTColumn dbo.babel_5223_xml_value_xmlUDT)
 GO
 
@@ -179,4 +185,13 @@ BEGIN
     WHERE student.value('(/student/@studentname)[1]', 'varchar(100)') not like 'Student%'
     ORDER BY id;
 END;
+GO
+
+CREATE TABLE babel_5223_xml_value_t3 (XmlColumn XML, GeomColumn geometry, GeogColumn geography)
+GO
+
+INSERT INTO babel_5223_xml_value_t3
+VALUES ('<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>', 
+        geometry::STGeomFromText('POINT (1 2)', 0), 
+        geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326))
 GO
