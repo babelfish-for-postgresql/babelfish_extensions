@@ -1,7 +1,13 @@
+SET NOCOUNT ON
+GO
+
 INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember
 GO
 
 SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
+-- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+-- justanotherloginwithsecad created within z_sp_helplogins
+WHERE MemberName NOT IN ('justanotherloginwithsecad')
 GO
 
 TRUNCATE TABLE test_sp_helpsrvrolemember_tbl
@@ -73,6 +79,9 @@ INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EX
 GO
 
 SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
+-- a where clause which applies the NOT IN operator to remove all members added outside of this testcase
+-- justanotherloginwithsecad created within z_sp_helplogins
+WHERE MemberName NOT IN ('justanotherloginwithsecad')
 GO
 
 EXEC sp_helpsrvrolemember 'error'
