@@ -1661,8 +1661,8 @@ static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, 
 	ListCell* lc;
 	
 	// Add null check for input parameters
-    if (!targetList || !tableInfoArr || !colnameAlias)
-        return;
+	if (!targetList || !tableInfoArr || !colnameAlias)
+		return;
 	
 	foreach(lc, targetList) {
 		TargetEntry* te;
