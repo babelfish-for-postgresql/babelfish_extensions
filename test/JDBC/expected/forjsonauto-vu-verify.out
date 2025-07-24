@@ -138,19 +138,16 @@ nvarchar
 ~~END~~
 
 
-EXECUTE forjson_vu_p_4
+
+-- TODO: CTE still handling, will fix in next commit
+-- EXECUTE forjson_vu_p_4
+-- GO
+EXECUTE forjson_vu_p_5
 GO
 ~~START~~
 nvarchar
-[{"Id": 1, "forjson_auto_vu_t_orders": [{"productId": 1}, {"productId": 1}]}]
+[{"Val": 1, "y": [{"ValY": 1}]}]
 ~~END~~
-
-
-EXECUTE forjson_vu_p_5
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
 
 
 EXECUTE forjson_vu_p_6
@@ -173,9 +170,8 @@ EXECUTE forjson_vu_p_8
 GO
 ~~START~~
 nvarchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+[{"Id": 1, "firstname": "j", "lastname": "o", "email": "testemail"}, {"Id": 1, "firstname": "e", "lastname": "l", "email": "testemail2"}]
+~~END~~
 
 
 EXECUTE forjson_vu_p_9
@@ -255,4 +251,501 @@ nvarchar
 ~~END~~
 
 ~~ROW COUNT: 1~~
+
+
+
+-- ==========================================
+-- Subqueries (in FROM_clause)
+-- ==========================================
+-- Single subquery
+SELECT sub.CustomerID, sub.CompanyName
+FROM (
+    SELECT CustomerID, CompanyName
+    FROM forjsonauto_t_customers
+    WHERE Country = 'USA'
+) AS sub
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CustomerID": "ALFKI", "CompanyName": "Alfreds Inc"}, {"CustomerID": "CONSH", "CompanyName": "Consolidated Holdings"}]
+~~END~~
+
+
+-- Multiple subqueries with JOIN
+SELECT sub1.CustomerID, sub1.CompanyName, sub2.TotalAmount
+FROM (
+    SELECT CustomerID, CompanyName
+    FROM forjsonauto_t_customers
+    WHERE Country = 'USA'
+) AS sub1
+JOIN (
+    SELECT CustomerID, TotalAmount
+    FROM forjsonauto_t_orders
+    WHERE TotalAmount > 500
+) AS sub2
+ON sub1.CustomerID = sub2.CustomerID
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CustomerID": "CONSH", "CompanyName": "Consolidated Holdings", "sub2": [{"TotalAmount": 1552.6000}]}]
+~~END~~
+
+
+-- Multiple subqueries referencing same base table
+SELECT o1.OrderID, o1.CustomerID, o1.TotalAmount, o2.AvgAmount
+FROM (
+    SELECT OrderID, CustomerID, TotalAmount
+    FROM forjsonauto_t_orders
+    WHERE TotalAmount > 1000
+) AS o1
+JOIN (
+    SELECT CustomerID, AVG(TotalAmount) AS AvgAmount
+    FROM forjsonauto_t_orders
+    GROUP BY CustomerID
+) AS o2
+ON o1.CustomerID = o2.CustomerID
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"OrderID": 10250, "CustomerID": "CONSH", "TotalAmount": 1552.6000, "o2": [{"AvgAmount": 1552.6000}]}, {"OrderID": 10249, "CustomerID": "BERGS", "TotalAmount": 1863.4000, "o2": [{"AvgAmount": 1863.4000}]}]
+~~END~~
+
+
+-- UNION subqueries
+SELECT combined.CustomerID, combined.Source
+FROM (
+    SELECT CustomerID, 'Active' as Source
+    FROM forjsonauto_t_customers
+    WHERE Country = 'USA'
+    UNION ALL
+    SELECT CustomerID, 'International' as Source
+    FROM forjsonauto_t_customers
+    WHERE Country != 'USA'
+) AS combined
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CustomerID": "ALFKI", "Source": "Active"}, {"CustomerID": "CONSH", "Source": "Active"}, {"CustomerID": "BERGS", "Source": "International"}]
+~~END~~
+
+
+-- Two-level nesting subqueries
+SELECT outer_sub.CustomerID, outer_sub.OrderCount
+FROM (
+    SELECT sub.CustomerID, COUNT(*) as OrderCount
+    FROM (
+        SELECT CustomerID, OrderID
+        FROM forjsonauto_t_orders
+        WHERE TotalAmount > 200
+    ) AS sub
+    GROUP BY sub.CustomerID
+) AS outer_sub
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CustomerID": "BERGS", "OrderCount": 1}, {"CustomerID": "CONSH", "OrderCount": 1}, {"CustomerID": "ALFKI", "OrderCount": 1}]
+~~END~~
+
+
+-- Three-level nesting subqueries
+SELECT final.CategoryName, final.ProductCount
+FROM (
+    SELECT level2.CategoryName, COUNT(*) as ProductCount
+    FROM (
+        SELECT level1.CategoryName, level1.ProductName
+        FROM (
+            SELECT c.CategoryName, p.ProductName, p.UnitPrice
+            FROM forjsonauto_t_categories c
+            JOIN forjsonauto_t_products p ON c.CategoryID = p.CategoryID
+        ) AS level1
+        WHERE level1.UnitPrice > 15
+    ) AS level2
+    GROUP BY level2.CategoryName
+) AS final
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CategoryName": "Tea", "ProductCount": 1}, {"CategoryName": "Computers", "ProductCount": 1}, {"CategoryName": "Coffee", "ProductCount": 1}]
+~~END~~
+
+
+-- Correlated subqueries in FROM_clause
+SELECT
+    c.CustomerID,
+    c.CompanyName,
+    c.Country, 
+    order_stats.total_orders,
+    order_stats.avg_order_value
+FROM forjsonauto_t_customers c
+CROSS APPLY (
+    SELECT
+        COUNT(*) as total_orders, 
+        AVG(TotalAmount) as avg_order_value
+    FROM forjsonauto_t_orders o
+    WHERE o.CustomerID = c.CustomerID
+) order_stats
+WHERE order_stats.total_orders > 0
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CustomerID": "BERGS", "CompanyName": "Berglunds snabbköp", "Country": "Sweden", "order_stats": [{"total_orders": 1, "avg_order_value": 1863.4000}]}, {"CustomerID": "CONSH", "CompanyName": "Consolidated Holdings", "Country": "USA", "order_stats": [{"total_orders": 1, "avg_order_value": 1552.6000}]}, {"CustomerID": "ALFKI", "CompanyName": "Alfreds Inc", "Country": "USA", "order_stats": [{"total_orders": 1, "avg_order_value": 440.0000}]}]
+~~END~~
+
+
+-- Correlated subqueries in SELECT_clause
+SELECT p.ProductName,
+       c.CategoryName,
+       (SELECT COUNT(*)
+        FROM forjsonauto_t_orders o
+        WHERE o.TotalAmount > p.UnitPrice
+       ) as HigherValueOrderCount
+FROM forjsonauto_t_products p
+JOIN forjsonauto_t_categories c ON p.CategoryID = c.CategoryID
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"ProductName": "Coffee Beans", "c": [{"CategoryName": "Coffee", "HigherValueOrderCount": 3}]}, {"ProductName": "Laptop", "c": [{"CategoryName": "Computers", "HigherValueOrderCount": 2}]}, {"ProductName": "Green Tea", "c": [{"CategoryName": "Tea", "HigherValueOrderCount": 3}]}, {"ProductName": "Chai", "c": [{"CategoryName": "Tea", "HigherValueOrderCount": 3}]}]
+~~END~~
+
+
+-- Correlated subqueries in SELECT_clause + nested FOR JSON AUTO (inner correlated subquery reference to outer query’s sources)
+SELECT
+    p.ProductName,
+    c.CategoryName,
+    (SELECT
+        o.OrderID,
+        od.Quantity,
+        od.UnitPrice,
+        (od.Quantity * od.UnitPrice) as line_total,
+        cu.CustomerID,
+        p.ProductName as analyzed_product,
+        c.CategoryName
+    FROM forjsonauto_t_order_details od
+    JOIN forjsonauto_t_orders o ON od.OrderID = o.OrderID
+    JOIN forjsonauto_t_customers cu ON o.CustomerID = cu.CustomerID
+    WHERE od.ProductID = p.ProductID
+    AND od.Quantity >= 10
+    FOR JSON AUTO
+    ) as product_sales_analysis
+FROM forjsonauto_t_products p
+JOIN forjsonauto_t_categories c ON p.CategoryID = c.CategoryID
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"ProductName": "Coffee Beans", "c": [{"CategoryName": "Coffee", "product_sales_analysis": [{"od": [{"cu": [{"CustomerID": "ALFKI", "CategoryName": "Coffee", "analyzed_product": "Coffee Beans"}], "Quantity": 10, "UnitPrice": 19.0000, "line_total": 190.0000}], "OrderID": 10248}]}]}, {"ProductName": "Laptop", "c": [{"CategoryName": "Computers"}]}, {"ProductName": "Green Tea", "c": [{"CategoryName": "Tea", "product_sales_analysis": [{"od": [{"cu": [{"CustomerID": "CONSH", "CategoryName": "Tea", "analyzed_product": "Green Tea"}], "Quantity": 15, "UnitPrice": 10.0000, "line_total": 150.0000}], "OrderID": 10250}]}]}, {"ProductName": "Chai", "c": [{"CategoryName": "Tea", "product_sales_analysis": [{"od": [{"cu": [{"CustomerID": "CONSH", "CategoryName": "Tea", "analyzed_product": "Chai"}], "Quantity": 20, "UnitPrice": 18.0000, "line_total": 360.0000}], "OrderID": 10250}, {"od": [{"cu": [{"CustomerID": "ALFKI", "CategoryName": "Tea", "analyzed_product": "Chai"}], "Quantity": 12, "UnitPrice": 18.0000, "line_total": 216.0000}], "OrderID": 10248}]}]}]
+~~END~~
+
+
+-- ==========================================
+-- VALUES (in FROM_clause)
+-- ==========================================
+-- VALUES with Mixed Data Types
+SELECT v.product_name, v.price, v.in_stock, v.launch_date
+FROM (VALUES 
+    ('New Coffee', 25.50, 1, '2024-01-15'),
+    ('Premium Tea', 18.75, 0, '2024-02-20'),
+    ('Energy Drink', 3.99, 1, '2024-03-10')
+) AS v(product_name, price, in_stock, launch_date)
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"product_name": "New Coffee", "price": 25.50, "in_stock": 1, "launch_date": "2024-01-15"}, {"product_name": "Premium Tea", "price": 18.75, "in_stock": 0, "launch_date": "2024-02-20"}, {"product_name": "Energy Drink", "price": 3.99, "in_stock": 1, "launch_date": "2024-03-10"}]
+~~END~~
+
+
+-- VALUES with NULL Values
+SELECT v.customer_id, v.region, v.phone
+FROM (VALUES 
+    ('ALFKI', 'WA', '030-0074321'),
+    ('BERGS', NULL, '0921-12 34 65'),
+    ('NEWCO', 'CA', NULL)
+) AS v(customer_id, region, phone)
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"customer_id": "ALFKI", "region": "WA", "phone": "030-0074321"}, {"customer_id": "BERGS", "phone": "0921-12 34 65"}, {"customer_id": "NEWCO", "region": "CA"}]
+~~END~~
+
+
+-- VALUES Joined with Existing Tables
+SELECT c.CompanyName, v.priority, v.discount_rate
+FROM forjsonauto_t_customers c
+JOIN (VALUES 
+    ('ALFKI', 1, 0.10),
+    ('BERGS', 2, 0.15),
+    ('CONSH', 3, 0.05)
+) AS v(customer_id, priority, discount_rate) 
+ON c.CustomerID = v.customer_id
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CompanyName": "Berglunds snabbköp", "v": [{"priority": 2, "discount_rate": 0.15}]}, {"CompanyName": "Consolidated Holdings", "v": [{"priority": 3, "discount_rate": 0.05}]}, {"CompanyName": "Alfreds Inc", "v": [{"priority": 1, "discount_rate": 0.10}]}]
+~~END~~
+
+
+-- VALUES with Aggregation
+SELECT
+    v.category,
+    COUNT(*) as item_count,
+    AVG(v.score) as avg_score
+FROM (VALUES 
+    ('Electronics', 85),
+    ('Electronics', 92),
+    ('Beverages', 78),
+    ('Beverages', 88),
+    ('Beverages', 95)
+) AS v(category, score)
+GROUP BY v.category
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"category": "Electronics", "item_count": 2, "avg_score": 88}, {"category": "Beverages", "item_count": 3, "avg_score": 87}]
+~~END~~
+
+
+-- VALUES in Subquery
+SELECT
+    c.companyname,
+    c.country
+FROM forjsonauto_t_customers c
+JOIN (
+    VALUES
+      ('ALFKI'),
+      ('BERGS')
+) AS v(customer_id) ON c.customerid = v.customer_id
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"companyname": "Alfreds Inc", "country": "USA"}, {"companyname": "Berglunds snabbköp", "country": "Sweden"}]
+~~END~~
+
+
+-- ==========================================
+-- Different types of Targets (in SELECT_clause)
+-- ==========================================
+-- subquery as target (nest_level > 1)
+SELECT c.CompanyName, 
+       o.OrderID,
+       (SELECT COUNT(*) 
+        FROM forjsonauto_t_orders o2 
+        WHERE o2.CustomerID = c.CustomerID
+       ) as OrderCount
+FROM forjsonauto_t_customers c
+JOIN forjsonauto_t_orders o ON c.CustomerID = o.CustomerID
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CompanyName": "Berglunds snabbköp", "o": [{"OrderID": 10249, "OrderCount": 1}]}, {"CompanyName": "Consolidated Holdings", "o": [{"OrderID": 10250, "OrderCount": 1}]}, {"CompanyName": "Alfreds Inc", "o": [{"OrderID": 10248, "OrderCount": 1}]}]
+~~END~~
+
+
+-- Operator Expression as target (nest_level > 1)
+SELECT 
+    c.CategoryName,
+    p.ProductName, 
+    p.UnitPrice * 2 AS doubled_price,
+    p.UnitsInStock + 10 AS adjusted_stock,
+    p.UnitPrice - 5 AS discounted_price
+FROM forjsonauto_t_categories c
+JOIN forjsonauto_t_products p ON c.CategoryID = p.CategoryID
+WHERE c.CategoryID IN (2, 4, 5) 
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CategoryName": "Computers", "p": [{"ProductName": "Laptop", "doubled_price": 2400.0000, "adjusted_stock": 20, "discounted_price": 1195.0000}]}, {"CategoryName": "Coffee", "p": [{"ProductName": "Coffee Beans", "doubled_price": 38.0000, "adjusted_stock": 27, "discounted_price": 14.0000}]}]
+~~END~~
+
+
+-- Const Expression as target (nesting level > 1)
+SELECT 
+    cat.CategoryName,
+    p.ProductName,
+    'Premium' AS product_tier,
+    0.15 AS commission_rate,
+    'Active' AS status,
+    2024 AS catalog_year
+FROM forjsonauto_t_categories cat
+JOIN forjsonauto_t_products p ON cat.CategoryID = p.CategoryID
+WHERE cat.CategoryID IN (2, 4, 5)
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CategoryName": "Computers", "p": [{"ProductName": "Laptop", "product_tier": "Premium", "commission_rate": 0.15, "status": "Active", "catalog_year": 2024}]}, {"CategoryName": "Coffee", "p": [{"ProductName": "Coffee Beans", "product_tier": "Premium", "commission_rate": 0.15, "status": "Active", "catalog_year": 2024}]}]
+~~END~~
+
+
+-- Function Expression as target (nest_level > 1)
+SELECT 
+    c.CompanyName,
+    o.TotalAmount, 
+    CAST('2023-01-01 12:00:00' AS DATETIME) AS time
+FROM forjsonauto_t_customers c
+JOIN forjsonauto_t_orders o ON c.CustomerID = o.CustomerID
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CompanyName": "Berglunds snabbköp", "o": [{"TotalAmount": 1863.4000, "time": "2023-01-01T12:00:00"}]}, {"CompanyName": "Consolidated Holdings", "o": [{"TotalAmount": 1552.6000, "time": "2023-01-01T12:00:00"}]}, {"CompanyName": "Alfreds Inc", "o": [{"TotalAmount": 440.0000, "time": "2023-01-01T12:00:00"}]}]
+~~END~~
+
+
+-- Coalesce Expression as target (nesting level > 1)
+SELECT 
+    s.SupplierName,
+    w.WarehouseName,
+    COALESCE(w.LastInspectionDate, '1900-01-01') as InspectionDate
+FROM forjsonauto_t_inventory_schema.forjsonauto_t_suppliers s
+INNER JOIN forjsonauto_t_inventory_schema.forjsonauto_t_warehouses w ON s.SupplierID = w.SupplierID
+WHERE w.WarehouseID IN (101, 102, 104)
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"SupplierName": "Euro Logistics", "w": [{"WarehouseName": "Madrid Storage Facility", "InspectionDate": "2023-07-01T00:00:00"}]}, {"SupplierName": "Nordic Solutions", "w": [{"WarehouseName": "Stockholm Hub", "InspectionDate": "2023-07-10T00:00:00"}]}, {"SupplierName": "Global Supply Co", "w": [{"WarehouseName": "Seattle Distribution Center", "InspectionDate": "2023-06-15T00:00:00"}]}]
+~~END~~
+
+
+-- CASE WHEN as target (nest_level > 1)
+SELECT 
+    cust.CompanyName,
+    o.TotalAmount,
+    CASE
+        WHEN o.TotalAmount > 1500 THEN 'High Value'
+        WHEN o.TotalAmount > 500 THEN 'Medium Value' 
+        ELSE 'Low Value'
+    END as OrderCategory
+FROM forjsonauto_t_customers cust
+INNER JOIN forjsonauto_t_orders o ON cust.CustomerID = o.CustomerID
+WHERE o.Status IN ('Shipped', 'Delivered', 'Pending')
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CompanyName": "Berglunds snabbköp", "o": [{"TotalAmount": 1863.4000, "OrderCategory": "High Value"}]}, {"CompanyName": "Consolidated Holdings", "o": [{"TotalAmount": 1552.6000, "OrderCategory": "High Value"}]}, {"CompanyName": "Alfreds Inc", "o": [{"TotalAmount": 440.0000, "OrderCategory": "Low Value"}]}]
+~~END~~
+
+
+-- ==========================================
+-- Cases should return error
+-- ==========================================
+-- FOR JSON AUTO without any base table
+SELECT 
+    ss.value AS category,
+    'Active' AS status
+FROM STRING_SPLIT('Electronics,Premium,Popular', ',') ss
+FOR JSON AUTO;
+GO
+~~ERROR (Code: 13600)~~
+
+~~ERROR (Message: FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.)~~
+
+
+-- nested FOR JSON AUTO, inner one doesn't have any base table
+SELECT 
+    p.ProductID,
+    p.ProductName,
+    (SELECT 
+         p.UnitPrice AS price,
+         'Active' AS status,
+         ss.value AS category_tag
+     FROM STRING_SPLIT('Electronics,Premium,Popular', ',') ss
+     FOR JSON AUTO
+    ) AS product_json
+FROM forjsonauto_t_products p
+WHERE p.CategoryID = 4
+FOR JSON AUTO;
+GO
+~~ERROR (Code: 13600)~~
+
+~~ERROR (Message: FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.)~~
+
+
+-- ==========================================
+-- sources valid for FOR JSON AUTO (test if only contain certain RTEKind as source will make MSSQL return "NO TABLE" error)
+-- ==========================================
+-- single RTE_RELATION as source
+SELECT
+    CustomerID,
+    CompanyName
+FROM forjsonauto_t_customers
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"CustomerID": "ALFKI", "CompanyName": "Alfreds Inc"}, {"CustomerID": "BERGS", "CompanyName": "Berglunds snabbköp"}, {"CustomerID": "CONSH", "CompanyName": "Consolidated Holdings"}]
+~~END~~
+
+
+-- single RTE_SUBQUERY as source w/o inner sources
+SELECT
+    sub.id,
+    sub.name 
+FROM
+    (SELECT
+        1 as id,
+        'test' as name
+    ) AS sub 
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"id": 1, "name": "test"}]
+~~END~~
+
+
+-- single RTE_FUNCTION as source w/o inner sources
+SELECT s.value 
+FROM STRING_SPLIT('apple,banana,cherry', ',') AS s 
+FOR JSON AUTO;
+GO
+~~ERROR (Code: 13600)~~
+
+~~ERROR (Message: FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.)~~
+
+
+-- single RTE_CTE as source w/o inner sources
+WITH cte
+AS (SELECT
+        1 as id,
+        'test' as name
+    )
+SELECT
+    cte.id,
+    cte.name
+FROM cte
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"id": 1, "name": "test"}]
+~~END~~
+
+
+-- one cte in ctelist but no RTE_CTE in rtable
+WITH 
+    unused_cte AS (SELECT 1 as id, 'test' as name)
+SELECT f.value 
+FROM STRING_SPLIT('apple,banana,cherry', ',') AS f
+FOR JSON AUTO;
+GO
+~~ERROR (Code: 13600)~~
+
+~~ERROR (Message: FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.)~~
 

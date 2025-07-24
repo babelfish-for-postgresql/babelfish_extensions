@@ -111,3 +111,14 @@ GO
 
 DROP TABLE t50
 GO
+
+DROP TABLE IF EXISTS forjsonauto_t_categories;
+DROP TABLE IF EXISTS forjsonauto_t_customers;
+DROP TABLE IF EXISTS forjsonauto_t_orders;
+DROP TABLE IF EXISTS forjsonauto_t_products;
+DROP TABLE IF EXISTS forjsonauto_t_order_details;
+
+DROP TABLE IF EXISTS forjsonauto_t_inventory_schema.forjsonauto_t_warehouses;
+DROP TABLE IF EXISTS forjsonauto_t_inventory_schema.forjsonauto_t_suppliers;
+DROP SCHEMA IF EXISTS forjsonauto_t_inventory_schema;
+GO
