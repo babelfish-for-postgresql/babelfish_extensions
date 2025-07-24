@@ -205,7 +205,7 @@ GO
 CREATE PROCEDURE forjson_vu_p_8 AS
 BEGIN
     select * from forjson_auto_vu_t_users U where
-    U.id = (SELECT MAX(O.userid) from forjson_auto_vu_t_orders O for json auto)
+    U.id = (SELECT MAX(O.userid) from forjson_auto_vu_t_orders O)
     for json auto
 END
 GO
@@ -263,4 +263,136 @@ CREATE PROCEDURE forjson_vu_p_15 AS
         SET @json_string = (select P.price, O.productId from forjson_auto_vu_t_orders O JOIN forjson_auto_vu_t_products P ON (P.id = O.productid) for json auto) 
         select U.id, U.firstname, @json_string as details from forjson_auto_vu_t_users U for json auto
 END
+GO
+
+
+
+
+---- new testcases ----
+CREATE TABLE forjsonauto_t_categories (
+ CategoryID INT PRIMARY KEY,
+ CategoryName NVARCHAR(50),
+ Description NVARCHAR(200),
+ParentCategoryID INT,
+ CreatedDate DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE forjsonauto_t_customers (
+ CustomerID NCHAR(5) PRIMARY KEY,
+ CompanyName NVARCHAR(100),
+ ContactName NVARCHAR(100),
+ ContactTitle NVARCHAR(50),
+ Region NVARCHAR(50),
+ Country NVARCHAR(50),
+ Phone NVARCHAR(20),
+ IsActive BIT DEFAULT 1
+);
+
+CREATE TABLE forjsonauto_t_orders (
+ OrderID INT PRIMARY KEY,
+CustomerID NCHAR(5),
+ OrderDate DATETIME,
+ ShipAddress NVARCHAR(100),
+ ShipCity NVARCHAR(50),
+ ShipCountry NVARCHAR(50),
+ TotalAmount MONEY,
+ Status NVARCHAR(20)
+);
+
+CREATE TABLE forjsonauto_t_products (
+ ProductID INT PRIMARY KEY,
+ ProductName NVARCHAR(100),
+ UnitPrice MONEY,
+CategoryID INT,
+ UnitsInStock INT,
+ Discontinued BIT DEFAULT 0,
+ LastUpdated DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE forjsonauto_t_order_details (
+    OrderDetailID INT PRIMARY KEY,
+    OrderID INT,
+    ProductID INT,
+    Quantity INT,
+    UnitPrice MONEY,
+    Discount DECIMAL(3,2) DEFAULT 0.00
+);
+
+CREATE SCHEMA forjsonauto_t_inventory_schema;
+
+CREATE TABLE forjsonauto_t_inventory_schema.forjsonauto_t_suppliers (
+    SupplierID INT PRIMARY KEY,
+    SupplierName NVARCHAR(100),
+    ContactPerson NVARCHAR(50),
+    Phone NVARCHAR(20),
+    Country NVARCHAR(50),
+    Rating INT,
+    CreatedDate DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE forjsonauto_t_inventory_schema.forjsonauto_t_warehouses (
+    WarehouseID INT PRIMARY KEY,
+    WarehouseName NVARCHAR(100),
+    Location NVARCHAR(100),
+    Capacity INT,
+    SupplierID INT,
+    OperationalStatus NVARCHAR(20),
+    LastInspectionDate DATETIME
+);
+
+INSERT INTO forjsonauto_t_categories (CategoryID, CategoryName, Description, ParentCategoryID)
+VALUES 
+(1, 'Beverages', 'Soft drinks, coffees, teas', NULL),
+(2, 'Coffee', 'Various coffee brands', 1),
+(3, 'Tea', 'Various tea brands', 1),
+(4, 'Electronics', 'Electronic equipment', NULL),
+(5, 'Computers', 'Computer equipment', 4);
+
+
+INSERT INTO forjsonauto_t_customers (CustomerID, CompanyName, ContactName, ContactTitle, Region, Country, Phone)
+VALUES
+('ALFKI', 'Alfreds Inc', 'Maria Anders', 'Sales Rep', 'WA', 'USA', '030-0074321'),
+('BERGS', 'Berglunds snabbköp', 'Christina Berglund', 'Administrator', NULL, 'Sweden', '0921-12 34 65'),
+('CONSH', 'Consolidated Holdings', 'Elizabeth Brown', 'Sales Manager', 'LA', 'USA', '(171) 555-2282');
+
+
+INSERT INTO forjsonauto_t_orders (OrderID, CustomerID, OrderDate, ShipAddress, ShipCity, ShipCountry, TotalAmount, Status)
+VALUES
+(10248, 'ALFKI', '2023-07-04', '23 Tsawassen Blvd.', 'Seattle', 'USA', 440.00, 'Shipped'),
+(10249, 'BERGS', '2023-07-05', 'Luisenstr. 48', 'Mannheim', 'Germany', 1863.40, 'Pending'),
+(10250, 'CONSH', '2023-07-06', 'Berkeley Gardens', 'London', 'UK', 1552.60, 'Delivered');
+
+
+INSERT INTO forjsonauto_t_products (ProductID, ProductName, UnitPrice, CategoryID, UnitsInStock)
+VALUES
+(1, 'Chai', 18.00, 3, 39),
+(2, 'Coffee Beans', 19.00, 2, 17),
+(3, 'Laptop', 1200.00, 5, 10),
+(4, 'Green Tea', 10.00, 3, 25);
+
+
+INSERT INTO forjsonauto_t_order_details (OrderDetailID, OrderID, ProductID, Quantity, UnitPrice, Discount)
+VALUES
+(1, 10248, 1, 12, 18.00, 0.00),
+(2, 10248, 2, 10, 19.00, 0.05),
+(3, 10249, 3, 5, 1200.00, 0.00),
+(4, 10250, 1, 20, 18.00, 0.10),
+(5, 10250, 4, 15, 10.00, 0.00);
+
+
+INSERT INTO forjsonauto_t_inventory_schema.forjsonauto_t_suppliers (SupplierID, SupplierName, ContactPerson, Phone, Country, Rating)
+VALUES
+(1, 'Global Supply Co', 'John Smith', '+1-555-1234', 'USA', 5),
+(2, 'Euro Logistics', 'Maria Garcia', '+34-612-345678', 'Spain', 4),
+(3, 'Asia Trade Ltd', 'Chen Wei', '+86-138-12345678', 'China', 3),
+(4, 'Nordic Solutions', 'Erik Larsson', '+46-70-1234567', 'Sweden', 5);
+
+INSERT INTO forjsonauto_t_inventory_schema.forjsonauto_t_warehouses (WarehouseID, WarehouseName, Location, Capacity, SupplierID, OperationalStatus, LastInspectionDate)
+VALUES
+(101, 'Seattle Distribution Center', 'Seattle, WA', 50000, 1, 'Active', '2023-06-15'),
+(102, 'Madrid Storage Facility', 'Madrid, Spain', 35000, 2, 'Active', '2023-07-01'),
+(103, 'Shanghai Warehouse', 'Shanghai, China', 75000, 3, 'Maintenance', '2023-05-20'),
+(104, 'Stockholm Hub', 'Stockholm, Sweden', 40000, 4, 'Active', '2023-07-10'),
+(105, 'Backup Seattle Facility', 'Tacoma, WA', 25000, 1, 'Inactive', '2023-04-30');
+
 GO
