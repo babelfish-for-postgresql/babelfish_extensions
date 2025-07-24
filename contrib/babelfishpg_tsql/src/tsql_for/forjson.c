@@ -496,6 +496,12 @@ tsql_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_values)
 
 		colname = NameStr(att->attname);
 
+		// Before using colname, let's check colname is NULL or not
+		if (!colname)
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("column name is NULL")));
+
 		if (!strcmp(colname, "\?column\?")) /* When column name or alias is
 											 * not provided */
 		{
