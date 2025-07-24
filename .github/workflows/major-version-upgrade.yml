@@ -231,13 +231,6 @@ jobs:
           echo 'ignore#!#BABEL-2086' >> jdbc_schedule
           mvn -B -ntp test
 
-      - name: Setup upterm session
-        if: always()
-        uses: lhotari/action-upterm@v1
-        timeout-minutes: 120
-        with:
-          limit-access-to-actor: true
-     
       - name: Upload Postgres log
         if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v4
