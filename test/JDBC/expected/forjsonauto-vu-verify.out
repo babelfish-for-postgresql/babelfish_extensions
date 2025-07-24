@@ -398,7 +398,7 @@ nvarchar
 
 
 -- For Version Upgrade Test
-select * from forjson_vu_v_resjunk_orderby_groupby;
+EXECUTE forjson_vu_v_resjunk_orderby_groupby;
 GO
 ~~START~~
 nvarchar
@@ -406,7 +406,7 @@ nvarchar
 ~~END~~
 
 
-select * from forjson_vu_v_resjunk_window_functions;
+EXECUTE forjson_vu_v_resjunk_window_functions;
 GO
 ~~START~~
 nvarchar

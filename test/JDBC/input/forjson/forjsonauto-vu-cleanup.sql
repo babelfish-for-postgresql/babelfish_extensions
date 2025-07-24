@@ -40,10 +40,10 @@ GO
 DROP VIEW forjson_vu_v_14
 GO
 
-DROP VIEW forjson_vu_v_resjunk_orderby_groupby
+DROP PROCEDURE forjson_vu_v_resjunk_orderby_groupby
 GO
 
-DROP VIEW forjson_vu_v_resjunk_window_functions
+DROP PROCEDURE forjson_vu_v_resjunk_window_functions
 GO
 
 DROP PROCEDURE forjson_vu_p_resjunk_groupby_having_orderby

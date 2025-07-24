@@ -275,7 +275,8 @@ CREATE PROCEDURE forjson_vu_p_15 AS
 END
 GO
 
-CREATE VIEW forjson_vu_v_resjunk_orderby_groupby AS
+-- FOR JSON AUTO + orderby + groupby
+CREATE PROCEDURE forjson_vu_v_resjunk_orderby_groupby AS
 SELECT (
     SELECT P.price, 
            COUNT(*) as product_count, 
@@ -288,8 +289,8 @@ SELECT (
 ) AS json_data;
 GO
 
--- View with window functions (creates multiple resjunk columns)
-CREATE VIEW forjson_vu_v_resjunk_window_functions AS
+-- FOR JSON AUTO + window function
+CREATE PROCEDURE forjson_vu_v_resjunk_window_functions AS
 SELECT (
     SELECT U.Id, U.firstname, P.name, P.price,
            ROW_NUMBER() OVER(PARTITION BY P.price ORDER BY O.quantity DESC) as quantity_rank

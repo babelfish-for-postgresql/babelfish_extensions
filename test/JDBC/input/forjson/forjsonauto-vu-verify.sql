@@ -170,10 +170,10 @@ FOR JSON AUTO;
 GO
 
 -- For Version Upgrade Test
-select * from forjson_vu_v_resjunk_orderby_groupby;
+EXECUTE forjson_vu_v_resjunk_orderby_groupby;
 GO
 
-select * from forjson_vu_v_resjunk_window_functions;
+EXECUTE forjson_vu_v_resjunk_window_functions;
 GO
 
 EXECUTE forjson_vu_p_resjunk_groupby_having_orderby;
