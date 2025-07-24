@@ -4875,6 +4875,7 @@ keyword
     | PER_DB
     | PER_NODE
     | PLATFORM
+    | POINT
     | POISON_MESSAGE_HANDLING
     | POLICY
     | POOL
@@ -5077,6 +5078,7 @@ keyword
     | STDISJOINT 
     | STDISTANCE
     | STEQUALS
+    | STGEOMFROMTEXT
     | STINTERSECTS
     | STISCLOSED
     | STISEMPTY
@@ -5088,6 +5090,7 @@ keyword
     | STOPLIST
     | STOPPED
     | STOP_ON_ERROR
+    | STPOINTFROMTEXT
     | STRING_AGG
     | STRING_DELIMITER
     | STSRID

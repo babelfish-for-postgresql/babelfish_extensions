@@ -2237,3 +2237,10 @@ sql_variant
 1
 ~~END~~
 
+
+select geometry   ::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 1000000000 )
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SRID value should be between 0 and 999999)~~
+

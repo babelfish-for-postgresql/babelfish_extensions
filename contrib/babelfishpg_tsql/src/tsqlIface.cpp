@@ -1055,6 +1055,53 @@ public:
 		}
 	}
 
+	void exitDatatype_coloncolon_methods(TSqlParser::Datatype_coloncolon_methodsContext *ctx) override
+	{
+		std::string typeStr = ::getFullText(ctx->data_type());
+		PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
+		
+		if (is_tsql_geometry_or_geography_datatype(type->typoid))
+		{
+			/* 
+			 * Rewrite the Static methods of geometry and geography as follows 
+			 * ([sys.]geometry::method / [sys.]geography::method )-> geometry__method / geography__method
+			 */
+			if (ctx->datatype_static_method())
+			{
+				std::string ctx_str = ::getFullText(ctx);
+				std::string original_exp = ctx_str.substr(0, ctx->datatype_static_method()->stop->getStopIndex() - ctx->start->getStartIndex() + 1);
+				std::string rewritten_exp = std::string(type->typname) + "__" + ::getFullText(ctx->datatype_static_method());
+
+				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(original_exp, rewritten_exp)));	
+			}
+			else
+			{
+				if (ctx->datatype_field_or_method()->method)
+				{
+					TSqlParser::IdContext *method = ctx->datatype_field_or_method()->method;
+					std::string methodNameStr;
+					
+					methodNameStr = stripQuoteFromId(method);
+					throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_OBJECT, format_errmsg("Could not find method '%s' for type %s.", methodNameStr.c_str(), typeStr.c_str()), getLineAndPos(ctx));
+				}
+				else if (ctx->datatype_field_or_method()->field)
+				{
+					TSqlParser::IdContext *field = ctx->datatype_field_or_method()->field;
+					std::string fieldNameStr;
+
+					fieldNameStr = stripQuoteFromId(field);
+					throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_OBJECT, format_errmsg("Could not find property or field '%s' for type %s.", fieldNameStr.c_str(), typeStr.c_str()), getLineAndPos(ctx));
+				}
+			}
+		}
+		else
+		{
+			// if type is not a datatype which support static methods/fields throw error
+			throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("Cannot call methods on %s.", typeStr.c_str()), getLineAndPos(ctx->data_type()));
+		}
+
+	}
+
 	/* We are adding handling for CLR_UDT Types in:
 	 * tsqlCommonMutator: for cases CREATE/ALTER View, Procedure, Function
 	 */
@@ -3151,51 +3198,6 @@ public:
 	void exitFunc_body_return_select_body(TSqlParser::Func_body_return_select_bodyContext *ctx) override
 	{
 		in_func_body_return_select_body = false;
-	}
-
-	void exitDatatype_coloncolon_methods(TSqlParser::Datatype_coloncolon_methodsContext *ctx) override
-	{
-		std::string typeStr = ::getFullText(ctx->data_type());
-		PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
-		
-		if (is_tsql_geometry_or_geography_datatype(type->typoid))
-		{
-			/* 
-			 * Rewrite the Static methods of geometry and geography as follows 
-			 * geometry::method / geography::method -> geometry__method / geography__method
-			 */
-			if (ctx->datatype_static_method())
-			{
-				std::string rewritten_exp = std::string(type->typname) + "__" + ::getFullText(ctx->datatype_static_method()) + ::getFullText(ctx->LR_BRACKET()) + ::getFullText(ctx->expression_list()) + ::getFullText(ctx->RR_BRACKET());
-				rewritten_exp = std::string(typeStr.length() - strlen(type->typname), ' ') + rewritten_exp;
-				stream.setText(ctx->start->getStartIndex(), rewritten_exp.c_str());
-			}
-			else
-			{
-				if (ctx->datatype_field_or_method()->method)
-				{
-					TSqlParser::IdContext *method = ctx->datatype_field_or_method()->method;
-					std::string methodNameStr;
-					
-					methodNameStr = stripQuoteFromId(method);
-					throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_OBJECT, format_errmsg("Could not find method '%s' for type %s.", methodNameStr.c_str(), typeStr.c_str()), getLineAndPos(ctx));
-				}
-				else if (ctx->datatype_field_or_method()->field)
-				{
-					TSqlParser::IdContext *field = ctx->datatype_field_or_method()->field;
-					std::string fieldNameStr;
-
-					fieldNameStr = stripQuoteFromId(field);
-					throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_OBJECT, format_errmsg("Could not find property or field '%s' for type %s.", fieldNameStr.c_str(), typeStr.c_str()), getLineAndPos(ctx));
-				}
-			}
-		}
-		else
-		{
-			// if type is not a datatype which support static methods/fields throw error
-			throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("Cannot call methods on %s.", typeStr.c_str()), getLineAndPos(ctx->data_type()));
-		}
-
 	}
 
   void enterFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override
