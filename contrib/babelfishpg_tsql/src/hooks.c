@@ -851,11 +851,11 @@ pltsql_GetNewTempObjectId()
 			if (tempOidStart < FirstNormalObjectId)
 			{
 				/* 
-				* This situation should not be reached in an ideal state 
-				* since oid < FirstNormalObjectId is during bootstrapping
-				* or when the regular oid has also gone into a wraparound.
-				* However, if it does we simply start from FirstNormalObjectId 
-				*/
+				 * This situation should not be reached in an ideal state 
+				 * since oid < FirstNormalObjectId is during bootstrapping
+				 * or when the regular oid has also gone into a wraparound.
+				 * However, if it does we simply start from FirstNormalObjectId 
+				 */
 				elog(LOG, "TransamVariables->nextOid is below FirstNormalObjectId");
 				tempOidStart = FirstNormalObjectId;
 			}
@@ -962,8 +962,8 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	Assert(temp_oid_buffer_size > 0);
 
 	/*
-	* debug level logs when trying to generate a new temp object oid from the given catalog.
-	*/
+	 * debug level logs when trying to generate a new temp object oid from the given catalog.
+	 */
 	elog(DEBUG1, "Generating new oid for tsql temp object from system catalog with oid: %u and relfilenode: %u", relation->rd_id, relation->rd_rel->relfilenode);
 
 	/* Generate new OIDs until we find one not in the table */
@@ -972,8 +972,8 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 		CHECK_FOR_INTERRUPTS();
 
 		/*
-		* We do not expect a lot of collision, so this log should be fine
-		*/
+		 * We do not expect a lot of collision, so this log should be fine
+		 */
 		if (retries > 0)
 		{
 			elog(LOG, "There is a collision with oid %u when determing oid for a temp object from system catalog with oid: %u", newOid, relation->rd_id);
