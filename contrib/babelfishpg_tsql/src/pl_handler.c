@@ -1639,7 +1639,7 @@ buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 	sprintf(nest, "%d", nestLevel);
 	// Adding JSONAUTOALIAS prevents us from modifying
 	// a column more than once
-	if(!strcmp(te->resname, "\?column\?")) {
+	if(te->resname == NULL || !strcmp(te->resname, "\?column\?")) {
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
@@ -1659,10 +1659,23 @@ static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, 
 	int i = 0;
 	int currMax = 0;
 	ListCell* lc;
+	
 	foreach(lc, targetList) {
-		TargetEntry* te = castNode(TargetEntry, lfirst(lc));
-		int oid = te->resorigtbl;
-		String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
+		TargetEntry* te;
+		int oid;
+		String *s;
+
+		// Add null check for target entry
+		if (!lc || !lfirst(lc))
+			continue;
+		
+		te = castNode(TargetEntry, lfirst(lc));
+
+		if(te->resjunk)
+			continue;
+
+		oid = te->resorigtbl;
+		s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
 		if(te->expr != NULL && nodeTag(te->expr) == T_SubLink) {
 			SubLink *sl = castNode(SubLink, te->expr);
 			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query) {
