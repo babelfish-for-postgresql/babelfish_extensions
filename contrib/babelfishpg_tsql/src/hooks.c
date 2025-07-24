@@ -844,15 +844,31 @@ pltsql_GetNewTempObjectId()
 				TransamVariables->oidCount -= temp_oid_buffer_size;
 
 			/*
-			 * If TransamVariables->nextOid is below FirstNormalObjectId then we can start at FirstNormalObjectId here and
+			 * If TransamVariables->nextOid is below FirstNormalObjectId then 
+			 * we can start at FirstNormalObjectId here and
 			 * GetNewObjectId will return the right value on the next call.  
 			 */
 			if (tempOidStart < FirstNormalObjectId)
+			{
+				/* 
+				 * This situation should not be reached in an ideal state 
+				 * since oid < FirstNormalObjectId is during bootstrapping
+				 * or when the regular oid has also gone into a wraparound.
+				 * However, if it does we simply start from FirstNormalObjectId 
+				 */
+				elog(LOG, "TransamVariables->nextOid is below FirstNormalObjectId");
 				tempOidStart = FirstNormalObjectId;
+			}
 
 			/* If the OID range would wraparound, start from beginning instead. */
 			if (tempOidStart + temp_oid_buffer_size < tempOidStart)
 			{
+				/* Raise a notice */
+				elog(LOG, "Temp OID range wraparound reached while trying to allocate OIDs for tsql temp objects. This will lead to nextOid being assigned < FirstNormalObjectId");
+
+				/* Dump essential values like oid start and temp oid buffer size */
+				elog(LOG, "tempOidStart: %u, buffer_size: %u", tempOidStart, temp_oid_buffer_size);
+
 				tempOidStart = FirstNormalObjectId;
 
 				/* As in GetNewObjectId - wraparound in standalone mode (unlikely but possible) */
@@ -945,10 +961,23 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	 */
 	Assert(temp_oid_buffer_size > 0);
 
+	/*
+	 * debug level logs when trying to generate a new temp object oid from the given catalog.
+	 */
+	elog(DEBUG1, "Generating new oid for tsql temp object from system catalog with oid: %u and relfilenode: %u", relation->rd_id, relation->rd_rel->relfilenode);
+
 	/* Generate new OIDs until we find one not in the table */
 	do
 	{
 		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * We do not expect a lot of collision, so this log should be fine
+		 */
+		if (retries > 0)
+		{
+			elog(LOG, "There is a collision with oid %u when determing oid for a temp object from system catalog with oid: %u", newOid, relation->rd_id);
+		}
 
 		newOid = pltsql_GetNewTempObjectId();
 
@@ -6999,8 +7028,7 @@ is_dummy_view(Oid viewOid)
 
 	if (viewQuery->commandType == CMD_SELECT &&
 			viewQuery->jointree &&
-			list_length(viewQuery->jointree->fromlist) == 0 &&
-			viewQuery->jointree->quals == NULL)
+			list_length(viewQuery->jointree->fromlist) == 0)
 	{
 		is_dummy = true;	
 		foreach(lc, viewQuery->targetList)
@@ -7251,6 +7279,13 @@ create_dummy_view_query_for_broken_view(Oid viewOid)
 	Query 		*dummyQuery;
 	List 		*targetList = NIL;
 	int 		i;
+	FuncExpr	*funcExpr;
+	OpExpr 		*opExpr;
+	Oid 		funcoid;
+	Oid 		opoid;
+	Const 		*constExpr;
+	List 		*opname;
+	List 		*funcname;
 	
 	viewRel = relation_open(viewOid, AccessShareLock);
 	tupdesc = RelationGetDescr(viewRel);
@@ -7285,6 +7320,55 @@ create_dummy_view_query_for_broken_view(Oid viewOid)
 		targetList = lappend(targetList, te);
 	}
 	dummyQuery->targetList = targetList;
+
+	/* This WHERE clause serves as an additional safety mechanism to ensure
+	 * broken views fail explicitly even if user somehow bypass the primary
+	 * view repair mechanism. While the view repair process should typically
+	 * fail earlier, this acts as extra check against accessing broken views. 
+	 */
+
+	funcname = list_make2(makeString("sys"), makeString("babelfish_broken_view_function"));
+	funcoid = LookupFuncName(funcname, 0, NULL, false);
+	if (OidIsValid(funcoid))
+	{
+		/* Create a function expression */
+		funcExpr =	makeFuncExpr(funcoid,
+								 INT4OID,
+								 NIL,
+								 InvalidOid,
+								 InvalidOid,
+								 COERCE_EXPLICIT_CALL);
+		
+		/* Create a constant for "1" */
+		constExpr = makeConst(INT4OID,
+							  -1,
+							  InvalidOid,
+							  sizeof(int32),
+							  Int32GetDatum(1),
+							  false,
+							  true);
+							
+		opname = list_make1(makeString("="));
+		opoid = LookupOperName(NULL, opname, INT4OID, INT4OID, false, -1);
+		list_free_deep(opname);
+		opname = NIL;
+		
+		/* Create operator expression for func() = 1 */
+		if (OidIsValid(opoid))
+		{
+			opExpr = makeNode(OpExpr);
+			opExpr->opno = opoid;
+			opExpr->opfuncid = get_opcode(opoid);
+			opExpr->opresulttype = BOOLOID;
+			opExpr->opretset = false;
+			opExpr->opcollid = InvalidOid;
+			opExpr->inputcollid = InvalidOid;
+			opExpr->args = list_make2(funcExpr, constExpr);
+			
+			/* Adding WHERE clause to the dummy query */
+			dummyQuery->jointree->quals = (Node *) opExpr;
+		}
+	}
 	relation_close(viewRel, AccessShareLock);
 	
 	return dummyQuery;
