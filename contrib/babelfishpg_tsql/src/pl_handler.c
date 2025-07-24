@@ -76,6 +76,7 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 #include "utils/guc.h"
+#include "utils/hsearch.h"
 
 #include "analyzer.h"
 #include "catalog.h"
@@ -192,12 +193,16 @@ typedef struct {
 	int nestLevel;
 } forjson_table;
 
-static bool handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables);
+typedef struct RTEAliasEntry {
+	char alias_name[NAMEDATALEN];
+	int nest_level;
+} RTEAliasEntry;
+
+static bool handleForJsonAuto(Query *query);
 static bool isJsonAuto(List* target);
 static bool check_json_auto_walker(Node *node, ParseState *pstate);
 static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te);
-static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve);
-
+static void modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias);
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -1052,7 +1057,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
-	
+
 	(void) check_json_auto_walker((Node*) query, pstate);
 
 	if (query->commandType == CMD_INSERT)
@@ -1468,139 +1473,70 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 }
 
 static bool
-handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables)
+handleForJsonAuto(Query *wrapperQuery)
 {
-	Query* subq;
-	List* target = query->targetList;
-	List* rtable;
-	List* subqRtable;
-	ListCell* lc;
-	ListCell* lc2;
-	RangeTblEntry* rte;
-	RangeTblEntry* subqRte;
-	RangeTblEntry* queryRte;
-	Alias *colnameAlias;
-	int newTables = 0;
-	int currTables = numTables;
-	
-	if(!isJsonAuto(target))
+	Query	   *origQuery;
+	List	   *wrapperTarget = wrapperQuery->targetList;
+	List	   *wrapperRtable;
+	List	   *origqRtable;
+	ListCell   *lc;
+	int 		validSrcCnt = 0;
+	Alias	   *wrapperRteAlias;
+	RangeTblEntry *wrapperRte = NULL;
+
+	if (!isJsonAuto(wrapperTarget))
 		return false;
 
-	// Modify query to be of the form "JSONAUTOALIAS.[nest_level].[table_alias]" 
-	rtable = (List*) query->rtable;
-	if(rtable != NULL && list_length(rtable) > 0) {
-		rte = linitial_node(RangeTblEntry, rtable);
-		if(rte != NULL) {
-			subq = (Query*) rte->subquery;
-			if(subq != NULL && (subq->cteList == NULL || list_length(subq->cteList) == 0)) {
-				subqRtable = (List*) subq->rtable;
-				if(subqRtable != NULL && list_length(subqRtable) > 0) {
-					forjson_table **tempArr;
-					foreach(lc, subqRtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc));
-						if(subqRte->rtekind == RTE_RELATION) {
-							newTables++;
-						} else if(subqRte->rtekind == RTE_SUBQUERY) {
-							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										errmsg("sub-select and values for json auto are not currently supported.")));
-						}
-					}
+	wrapperRtable = (List *) wrapperQuery->rtable;
+	if (wrapperRtable != NULL && list_length(wrapperRtable) > 0)
+		wrapperRte = linitial_node(RangeTblEntry, wrapperRtable);
 
-					if(numTables + newTables == 0) {
-						ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_TABLE),
-										errmsg("FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.")));
-					}
+	Assert(wrapperRtable != NULL && wrapperRte != NULL);
 
-					tempArr = palloc((numTables + newTables) * sizeof(forjson_table));
-					for(int j = 0; j < numTables; j++) {
-						tempArr[j] = tableInfoArr[j];
-					}
-					tableInfoArr = tempArr;
-					tempArr = NULL;
-					queryRte = linitial_node(RangeTblEntry, query->rtable);
-					colnameAlias = (Alias*) queryRte->eref;
+	wrapperRteAlias = (Alias *)wrapperRte->eref;
+	origQuery = wrapperRte->subquery;
 
-					foreach(lc, subqRtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc));
-						if(subqRte->rtekind == RTE_RELATION) {
-							forjson_table *table = palloc(sizeof(forjson_table));
-							Alias* a = (Alias*) subqRte->eref;
-							table->oid = subqRte->relid;
-							table->nestLevel = -1;
-							table->alias = a->aliasname;
-							tableInfoArr[currTables] = table;
-							currTables++;
-						}
-					}
-					numTables = numTables + newTables;
-					modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, false);
-					return true;
-				}
-			} else if(subq->cteList != NULL && list_length(subq->cteList) > 0) {
-				Query* ctequery;
-				CommonTableExpr* cte;
-				forjson_table **tempArr;
-				foreach(lc, subq->cteList) {
-					cte = castNode(CommonTableExpr, lfirst(lc));
-					ctequery = (Query*) cte->ctequery;
-					foreach(lc2, ctequery->rtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc2));
-						if(subqRte->rtekind == RTE_RELATION)
-							newTables++;
-					}
-				}
+	/*
+	 * Check if we need to return "at least one table" error.
 
-				if(newTables == 0) {
-					forjson_table *table = palloc(sizeof(forjson_table));
-					tempArr = palloc((numTables + 1) * sizeof(forjson_table));
-					table->oid = 0;
-					table->nestLevel = -1;
-					table->alias = "cteplaceholder";
-					tempArr[numTables] = table;
-					newTables++;
-				} else {
-					tempArr = palloc((numTables + newTables) * sizeof(forjson_table));
-				}
+	 * MSSQL behavior:
+	 * If the query (origQuery) contains no valid source, it will report
+	 * "at least one table" error.
+	 * 
+	 * Valid source types: [RTE_RELATION, RTE_SUBQUERY, RTE_CTE]
+	 * 
+	 * We call a source type valid or not by testing query with only 1 source
+	 * of that type without any inner source
+	 *   - does return "at least one table" error : invalid source
+	 *   - doesn't return "at least one table" error: valid source
+	 * 
+	 * There could be some cte in ctelist but not used in the query. So for
+	 * CTE cases, we don't check ctelist, instead we check if there are
+	 * RTE_CTEs actually used in the query's rtable.
+	 */
+	origqRtable = (List *)origQuery->rtable;
+	if (origqRtable != NULL && list_length(origqRtable) > 0)
+	{
+		foreach(lc, origqRtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY ||
+				rte->rtekind == RTE_CTE)
+				validSrcCnt++;
+		}
 
-				for(int j = 0; j < numTables; j++) {
-					tempArr[j] = tableInfoArr[j];
-				}
-
-				tableInfoArr = tempArr;
-				tempArr = NULL;
-				numTables = numTables + newTables;
-				queryRte = linitial_node(RangeTblEntry, query->rtable);
-				colnameAlias = (Alias*) queryRte->eref;
-
-				foreach(lc, subq->cteList) {
-					cte = castNode(CommonTableExpr, lfirst(lc));
-					ctequery = (Query*) cte->ctequery;
-					foreach(lc2, ctequery->rtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc2));
-						if(subqRte->rtekind == RTE_RELATION) {
-							forjson_table *table = palloc(sizeof(forjson_table));
-							Alias* a = (Alias*) subqRte->eref;
-							table->oid = subqRte->relid;
-							table->nestLevel = -1;
-							table->alias = a->aliasname;
-							tableInfoArr[currTables] = table;
-							currTables++;
-						}
-					}
-				}
-
-				modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, true);
-				
-				return true;
-			}
+		if (validSrcCnt > 0)
+		{
+			modifyColumnEntries(origQuery, wrapperRteAlias);
+			return true;
 		}
 	}
 
 	ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-					errmsg("FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.")));
+			(errcode(ERRCODE_UNDEFINED_TABLE),
+			errmsg("FOR JSON AUTO requires at least one table for "
+				"generating JSON objects. Use FOR JSON PATH or add a FROM"
+				" clause with a table name.")));
 	return true;
 }
 
@@ -1654,49 +1590,144 @@ buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 	return te;
 }
 
-static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve)
+static void modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 {
-	int i = 0;
-	int currMax = 0;
-	ListCell* lc;
-	foreach(lc, targetList) {
-		TargetEntry* te = castNode(TargetEntry, lfirst(lc));
-		int oid = te->resorigtbl;
-		String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
-		if(te->expr != NULL && nodeTag(te->expr) == T_SubLink) {
-			SubLink *sl = castNode(SubLink, te->expr);
-			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query) {
-				if(handleForJsonAuto(castNode(Query, sl->subselect), tableInfoArr, numTables)) {
-					CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+	/* 
+	 * currAlias: for those RTE referenced by TargetEntry, if their type
+	 * make their alias not be used, we will need to use current nest_level
+	 * and currAlias to put this TargetEntry in the same level.
+	 * Initially we can set currAlias to any value because when nest_level
+	 * is 1, the alias won't get used.
+	 *   
+	 */
+	int			i = 0;
+	int 		currNestLevel = 1;
+	char	   *currAlias = "temp";
+	bool 		nestingLevel1Used = false;
+	List	   *origTgtList = origQuery->targetList;
+	HTAB	   *RTEAliasNestHash;
+	HASHCTL		ct;
+	bool		found;
+	char	   *hashKey;
+	ListCell   *lc;
+	RTEAliasEntry *hashEntry;
+	TargetEntry *te;
+	String	   *s;
+	SubLink    *sl;
+	CoerceViaIO *iocoerce;
+	Var		   *var;
+	int			varno;
+	int			varLevelsUp;
+	RangeTblEntry *rte;
+	char	   *rteAlias;
+
+	/*
+	 * Hash initialization.
+	 * store mapping { RTE_alias : nest_level }
+	 */
+	memset(&ct, 0, sizeof(ct));
+	ct.keysize = NAMEDATALEN;
+	ct.entrysize = sizeof(RTEAliasEntry);
+	ct.hcxt = CurrentMemoryContext;
+	RTEAliasNestHash = hash_create("RTEAliasNestHash",
+								   256,
+								   &ct,
+								   HASH_ELEM | HASH_STRINGS);
+
+	foreach(lc, origTgtList)
+	{
+		te = castNode(TargetEntry, lfirst(lc));
+		if (te->resjunk)
+			continue;
+		s = castNode(String, lfirst(list_nth_cell(wrapperRteAlias->colnames, i)));
+
+		if (te->expr == NULL)
+			continue;
+		if (nodeTag(te->expr) == T_SubLink)
+		{
+			sl = castNode(SubLink, te->expr);
+			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query)
+			{
+				if(handleForJsonAuto(castNode(Query, sl->subselect)))
+				{
+					iocoerce = makeNode(CoerceViaIO);
 					iocoerce->arg = (Expr*) sl;
 					iocoerce->resulttype = TypenameGetTypid("json");
 					iocoerce->resultcollid = 0;
 					iocoerce->coerceformat = COERCE_EXPLICIT_CAST;
-					buildJsonEntry(1, "temp", te);
-					s->sval = te->resname;
 					te->expr = (Expr*) iocoerce;
-					continue;
 				}
 			}
 		}
-		for(int j = 0; j < numTables; j++) {
-			if(tableInfoArr[j]->oid == oid) {
-				// build entry
-				if(tableInfoArr[j]->nestLevel == -1) {
-					currMax++;
-					tableInfoArr[j]->nestLevel = currMax;
+
+		if (nodeTag(te->expr) == T_Var)
+		{
+			var = castNode(Var, te->expr);
+			varno = var->varno;
+			varLevelsUp = var->varlevelsup;
+			rte = list_nth(origQuery->rtable, varno-1);
+
+			/*
+			 * These cases we don't want to use the matched RTE source' alias
+			 * as JSON nesting key.
+			 * 
+			 * 1. if varLevelsUp > 0: RTE source is from outer/upper layer
+			 * 2. if RTE is a function
+			 * 3. if RTE is a CTE  (we need to check further to match sources
+			 *     inside the CTE.
+			 */
+			if (varLevelsUp > 0 || rte->rtekind == RTE_FUNCTION)
+				te = buildJsonEntry(currNestLevel, currAlias, te);
+			else if (rte->rtekind == RTE_CTE)
+			{ // TODO: implementing
+				te = buildJsonEntry(currNestLevel, currAlias, te);
+			}
+			else
+			{
+				rteAlias = rte->eref->aliasname;
+				hashKey = rteAlias;
+				hashEntry = (RTEAliasEntry *)hash_search(RTEAliasNestHash,
+														hashKey,
+														HASH_FIND,
+														&found);
+				if (found) // Use existing nest level from hash
+					te = buildJsonEntry(hashEntry->nest_level, rteAlias, te);
+				else
+				{
+					/*
+					 * Create new hash entry with new nest level
+					 *
+					 * 1. currNestLevel == 1, hasn't been assigned to an alias
+					 *     => assign (currNestLevel) to RTE's alias
+					 * 2. currNestLevel == 1, has been assigned to an alias
+					 * 3. currNestLevel >= 2
+					 *     => assign (currNestLevel+1) to RTE's alias
+					 */
+					if (currNestLevel == 1 && !nestingLevel1Used) // case 1
+						nestingLevel1Used = true;
+					else // case 2,3
+						currNestLevel++;
+					currAlias = rteAlias;
+
+					hashEntry = (RTEAliasEntry *)hash_search(RTEAliasNestHash,
+															hashKey,
+															HASH_ENTER,
+															&found);
+					Assert(!found);
+					strcpy(hashEntry->alias_name, rteAlias);
+					hashEntry->nest_level = currNestLevel;
+					te = buildJsonEntry(hashEntry->nest_level, rteAlias, te);
 				}
-				te = buildJsonEntry(tableInfoArr[j]->nestLevel, tableInfoArr[j]->alias, te);
-				s->sval = te->resname;
-				break;
-			} else if(!isCve && oid == 0 && j == numTables - 1) {
-				te = buildJsonEntry(1, "temp", te);
-				s->sval = te->resname;
-				break;
 			}
 		}
+		// other target types => put in current JSON nesting level/key
+		else
+			te = buildJsonEntry(currNestLevel, currAlias, te);
+		s->sval = te->resname;
 		i++;
 	}
+
+	hash_destroy(RTEAliasNestHash);
 }
 
 static bool check_json_auto_walker(Node *node, ParseState *pstate)
@@ -1704,7 +1735,7 @@ static bool check_json_auto_walker(Node *node, ParseState *pstate)
 	if (node == NULL)
 		return false;
 	if (IsA(node, Query)) {
-		if(handleForJsonAuto((Query*) node, NULL, 0))
+		if(handleForJsonAuto((Query*) node))
 			return true;
 		else {
 			return query_tree_walker((Query*) node,
