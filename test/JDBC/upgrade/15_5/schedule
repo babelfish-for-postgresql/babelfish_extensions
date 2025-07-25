@@ -564,3 +564,6 @@ MONEY_OBJECT-before-16_4
 money_smallmoney
 money_smallmoney_bit_dep_obj_before_17_6
 weak-binding
+babel_numeric_fixeddecimal_oper
+babel_numeric_money_oper-before-16_10-or-17_6
+babel_numeric_smallmoney_oper-before-16_10-or-17_6

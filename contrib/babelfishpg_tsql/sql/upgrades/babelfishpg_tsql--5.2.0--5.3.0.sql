@@ -1012,6 +1012,19 @@ END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_broken_view_function()
+RETURNS INT
+AS $$
+BEGIN
+    RAISE EXCEPTION 'Cannot reference a broken view in query';
+    RETURN 1;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+GRANT EXECUTE ON FUNCTION sys.babelfish_broken_view_function() TO PUBLIC;
+COMMENT ON FUNCTION sys.babelfish_broken_view_function() IS 'Internal function used by broken views to prevent silent failures';
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

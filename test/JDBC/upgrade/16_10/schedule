@@ -622,3 +622,6 @@ money_smallmoney
 money_smallmoney_bit_dep_obj
 z_sp_helplogins
 weak-binding
+babel_numeric_fixeddecimal_oper
+babel_numeric_money_oper
+babel_numeric_smallmoney_oper
