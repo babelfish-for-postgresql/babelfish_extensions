@@ -566,7 +566,7 @@ go
 
 create table t(a sparsevec(3), b varchar(max))
 go
-select * from information_schema.columns where table_name = 't'
+select * from information_schema.columns where table_name = 't' ORDER BY COLUMN_NAME
 go
 select count(*) from sys.columns where object_id = sys.object_id('t')
 go
