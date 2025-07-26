@@ -2,6 +2,9 @@
 # 1. Lines starting with '#' will be treated as comments
 # 2. To ignore any test file, add an entry like ignore#!#<test_file_name>
 
+# These tests are ignored since latest changes with UTF-16<->binary conversion
+# They show the previous behavior of the conversion functions
+# and are not relevant to the current implementation.
 ignore#!#BABEL-2736-before-vu-prepare
 ignore#!#BABEL-2736-before-vu-verify
 ignore#!#BABEL-2736-before-vu-cleanup
