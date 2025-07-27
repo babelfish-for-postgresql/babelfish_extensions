@@ -3824,7 +3824,7 @@ bool
 privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 							const char *object_name,
 							const char *grantee,
-							const char *object_type)
+							const char *object_type, int curr_permission)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
@@ -3919,7 +3919,25 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 
 	tuple_bbf_schema = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple_bbf_schema))
-		catalog_entry_exists = true;
+    {
+		if(curr_permission == -1)
+		{
+			catalog_entry_exists = true;
+			return catalog_entry_exists;
+		}
+
+		else
+		{
+			// find the permission corresponding to tuple_bbf_schema
+			Datum datum;
+			bool isnull;
+			int sch_permission;
+			datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, RelationGetDescr(bbf_schema_rel), &isnull);
+			sch_permission = DatumGetInt32(datum);
+			if (!isnull && ((sch_permission & curr_permission) != curr_permission ))
+				catalog_entry_exists = true;
+		}
+    }
 
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
@@ -4077,7 +4095,7 @@ add_or_update_object_in_bbf_schema(const char *schema_name,
 				bool is_grant,
 				const char *func_args)
 {
-	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, object_type))
+	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, object_type, -1))
 		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type, func_args);
 	else
 		update_privileges_of_object(schema_name, object_name, new_permission, grantee, object_type, is_grant);

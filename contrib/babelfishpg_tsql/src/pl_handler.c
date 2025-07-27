@@ -4670,6 +4670,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool exec_pg_command = false;
 					ListCell   *lc;
 					ListCell	*lc1;
+					List *filtered_list = NIL;
 					if (rv->schemaname != NULL)
 						logical_schema = get_logical_schema_name(rv->schemaname, false);
 					else
@@ -4700,7 +4701,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
-								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
+								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, -1))
 									return;
 							}
 						}
@@ -4738,13 +4739,27 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									/*
 									 * If permission on schema exists, don't revoke any permission from the object.
 									 */
-									if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
+									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+									{
 										exec_pg_command = true;
+									}
+									else
+									{
+										// Temporary comment: here we can say that the role does not exist for schema via any grantor, append in filtered list -> 
+										filtered_list = lappend(filtered_list, ap);
+									}
+									
 
 									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
 								}
 							}
 						}
+					}
+					if(filtered_list != NIL)
+					{
+						list_free(grant->privileges);
+						grant->privileges = filtered_list;
+						pstmt->utilityStmt = (Node*)grant;
 					}
 					if (exec_pg_command)
 						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
@@ -4762,6 +4777,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *obj_type = NULL;
 					Oid func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, ob, true);
 					const char *func_args = NULL;
+					List *filtered_list = NIL;
 					if (OidIsValid(func_oid))
 						func_args = gen_func_arg_list(func_oid);
 					if (grant->objtype == OBJECT_FUNCTION)
@@ -4808,7 +4824,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, false);
-								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, -1))
 									return;
 							}
 						}
@@ -4846,12 +4862,25 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/*
 								 * If permission on schema exists, don't revoke any permission from the object.
 								 */
-								if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
+								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+								{
 									exec_pg_command = true;
+								}
+								else
+								{
+									// Temporary comment: here we can say that the role does not exist for schema via any grantor, append in filtered list -> 
+									filtered_list = lappend(filtered_list, ap);
+								}
 								/* Update the privilege in the catalog. */
 								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);
 							}
 						}
+					}
+					if(filtered_list != NIL)
+					{
+						list_free(grant->privileges);
+						grant->privileges = filtered_list;
+						pstmt->utilityStmt = (Node*)grant;
 					}
 					if (exec_pg_command)
 						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);

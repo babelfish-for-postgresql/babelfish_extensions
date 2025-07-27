@@ -1,0 +1,41 @@
+-- tsql
+create schema sch;
+go
+create table sch.t1(a int)
+go
+create login l with password = '123';create user u for login l;
+go
+
+--Case 1 : when perms on schema and object are overlapping(i.e not mutually exclusive)
+grant select on schema::sch to u
+go
+grant select, insert on sch.t1 to u;
+go
+-- psql 
+select * from sys.babelfish_schema_permissions;
+go
+
+-- tsql
+revoke select, insert on sch.t1 to u;
+go
+
+-- psql 
+select * from sys.babelfish_schema_permissions;
+go
+
+-- tsql user=l password=123
+select * from sch.t1
+go
+insert into sch.t1 values (1)
+go
+-- terminate-tsql-conn user=l password=123
+
+-- tsql
+drop table sch.t1
+go
+drop schema sch
+go
+drop user u
+go
+drop login l
+go
