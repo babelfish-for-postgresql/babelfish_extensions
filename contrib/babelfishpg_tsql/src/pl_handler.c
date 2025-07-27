@@ -2480,7 +2480,7 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 				Oid relOid =	sdepForm->objid;
 				int cacheid =	get_object_catcache_oid(sdepForm->classid);
 
-				tup = SearchSysCacheLocked1(cacheid, ObjectIdGetDatum(relOid));
+				tup = SearchSysCache1(cacheid, ObjectIdGetDatum(relOid));
 				aclDatum = SysCacheGetAttr(cacheid, tup, get_object_attnum_acl(sdepForm->classid),
 										&isNull);
 				if(!isNull)
