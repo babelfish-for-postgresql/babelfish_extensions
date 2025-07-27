@@ -206,7 +206,51 @@ go
 ------------------------------------- TEST 32
 SELECT id, vb, TRY_CONVERT(NCHAR(13), vb) AS try_conv_nchar FROM varbinary_crash_test_utf16le;
 go
- 
+
+
+------------------------------------- TEST 33
+-- Test the problematic case that was causing errors
+-- What happens during conversion
+SELECT CAST(0xE4B8ADE59BBD AS CHAR(6)) AS result;
+SELECT LENGTH(CAST(0xE4B8ADE59BBD AS CHAR(6))) AS character_count;
+SELECT DATALENGTH(CAST(0xE4B8ADE59BBD AS CHAR(6))) AS byte_count;
+GO
+
+-- Show how this differs from VARCHAR
+SELECT CAST(0xE4B8ADE59BBD AS VARCHAR(6)) AS varchar_result;
+SELECT LENGTH(CAST(0xE4B8ADE59BBD AS VARCHAR(6))) AS varchar_char_count;
+SELECT DATALENGTH(CAST(0xE4B8ADE59BBD AS VARCHAR(6))) AS varchar_byte_count;
+GO
+
+-- Edge Case 1: Truncation when input has more characters than limit
+SELECT CAST(0xE4B8ADE59BBDE4B8ADE59BBD AS CHAR(2)) AS truncated_result;
+SELECT LENGTH(CAST(0xE4B8ADE59BBDE4B8ADE59BBD AS CHAR(2))) AS truncated_length;
+GO
+
+-- Edge Case 2: Single byte characters (no expansion)
+SELECT CAST(0x616263 AS CHAR(5)) AS ascii_result;  -- "abc" -> "abc  "
+SELECT LENGTH(CAST(0x616263 AS CHAR(5))) AS ascii_length;
+GO
+
+-- Edge Case 3: Mixed single and multi-byte
+SELECT CAST(0x61E4B8AD62 AS CHAR(5)) AS mixed_result;  -- "a中b" -> "aä¸­b"
+SELECT LENGTH(CAST(0x61E4B8AD62 AS CHAR(5))) AS mixed_length;
+GO
+
+-- Edge Case 4: Empty input
+SELECT CAST(0x AS CHAR(3)) AS empty_result;
+SELECT LENGTH(CAST(0x AS CHAR(3))) AS empty_length;
+SELECT '"|' || CAST(0x AS CHAR(3)) || '|"' AS empty_visualized;
+GO
+
+-- Performance test with large inputs
+-- Create a binary string with many characters
+DECLARE @large_binary VARBINARY(MAX);
+SET @large_binary = 0xE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBD; -- 20 Chinese chars
+SELECT CAST(@large_binary AS CHAR(10)) AS large_truncated_result;
+SELECT LENGTH(CAST(@large_binary AS CHAR(10))) AS large_truncated_length;
+GO
+
 -- CLEANUP
 IF OBJECT_ID('varbinary_crash_test_utf8', 'U') IS NOT NULL DROP TABLE varbinary_crash_test_utf8;
 go

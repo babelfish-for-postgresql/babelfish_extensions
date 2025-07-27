@@ -964,6 +964,34 @@ varbinarynchar(PG_FUNCTION_ARGS)
 	{
 		maxlen = encodedByteLen; /* No length restriction */
 	}
+	else
+	{
+		/*
+		 * For NCHAR(n), we need to properly calculate the byte length for padding.
+		 * maxlen currently represents character count, but we need byte length
+		 * for the final UTF-8 result. Similar to bpchar_input logic.
+		 */
+		size_t		charlen = pg_mbstrlen_with_len(encoded_result, encodedByteLen);
+		
+		if (charlen > maxlen)
+		{
+			/* 
+			 * Input has more characters than allowed, truncate to maxlen characters
+			 * and adjust byte length accordingly 
+			 */
+			size_t mbmaxlen = pg_mbcharcliplen(encoded_result, encodedByteLen, maxlen);
+			encodedByteLen = mbmaxlen;
+			maxlen = mbmaxlen; /* maxlen is now byte length */
+		}
+		else
+		{
+			/*
+			 * Input fits within character limit, calculate the byte length needed
+			 * for padding: current byte length + spaces for remaining characters
+			 */
+			maxlen = encodedByteLen + (maxlen - charlen);
+		}
+	}
 
 	result = (BpChar *) palloc0(maxlen + VARHDRSZ);
 	SET_VARSIZE(result, maxlen + VARHDRSZ);
@@ -1047,6 +1075,34 @@ varbinarybpchar(PG_FUNCTION_ARGS)
 	if (maxlen < 0)
 	{
 		maxlen = encodedByteLen; /* No length restriction */
+	}
+	else
+	{
+		/*
+		 * For CHAR(n), we need to properly calculate the byte length for padding.
+		 * maxlen currently represents character count, but we need byte length
+		 * for the final UTF-8 result. Similar to bpchar_input logic.
+		 */
+		size_t		charlen = pg_mbstrlen_with_len(encoded_result, encodedByteLen);
+		
+		if (charlen > maxlen)
+		{
+			/* 
+			 * Input has more characters than allowed, truncate to maxlen characters
+			 * and adjust byte length accordingly 
+			 */
+			size_t mbmaxlen = pg_mbcharcliplen(encoded_result, encodedByteLen, maxlen);
+			encodedByteLen = mbmaxlen;
+			maxlen = mbmaxlen; /* maxlen is now byte length */
+		}
+		else
+		{
+			/*
+			 * Input fits within character limit, calculate the byte length needed
+			 * for padding: current byte length + spaces for remaining characters
+			 */
+			maxlen = encodedByteLen + (maxlen - charlen);
+		}
 	}
 	
 	result = (BpChar *) palloc0(maxlen + VARHDRSZ);
