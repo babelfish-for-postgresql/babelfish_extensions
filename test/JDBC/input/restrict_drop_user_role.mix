@@ -6,6 +6,18 @@ create user u1 for login l1
 go
 create schema sch authorization u1
 go
+create login l2 with password = '123'
+go
+create user u2 for login l2
+go
+create login l3 with password = '123'
+go
+create user u3 for login l3
+go
+create table grant_tbl(a int)
+go
+grant select on grant_tbl to u2 with grant option
+go
 create login no_priv_login1 with password = '12345678'
 go
 
@@ -54,6 +66,38 @@ go
 drop schema sch
 go
 -- terminate-tsql-conn user=l1 password=123
+
+-- psql 
+select * from sys.BABELFISH_SCHEMA_PERMISSIONS;
+go
+-- case: User is grantor of permission  
+-- tsql user=l2 password=123
+select current_user;
+go
+grant select on grant_tbl to u3
+go
+-- terminate-tsql-conn user=l2 password=123
+
+-- tsql 
+-- Not able to drop the user since u2 is grantor of permission on grant_tbl to u3
+drop user u2
+go
+drop table grant_tbl
+go
+-- Able to drop since we dropped the table grant_tbl
+drop user u2
+go
+drop login l2
+go
+drop user u3
+go
+drop login l3
+go
+
+-- psql 
+-- the catalog get updated
+select * from sys.BABELFISH_SCHEMA_PERMISSIONS;
+go
 
 -- case-1 - when current user is guest
 -- permission denied

@@ -2417,9 +2417,9 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 {
 	Relation			sdepRel;
 	ObjectAddresses		*deleteobjs;
-	ScanKeyData key[2];
-	SysScanDesc scan;
-	HeapTuple	tuple;
+	ScanKeyData 		key[2];
+	SysScanDesc 		scan;
+	HeapTuple			tuple;
 
 	deleteobjs = new_object_addresses();
 	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
@@ -2473,9 +2473,38 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 			 */
 			if (sdepForm->classid != AuthMemRelationId)
 			{
+				HeapTuple		tup;
+				bool			isNull;
+				Datum			aclDatum;
+				Acl				*old_acl;
+				Oid relOid =	sdepForm->objid;
+				int cacheid =	get_object_catcache_oid(sdepForm->classid);
+
+				tup = SearchSysCacheLocked1(cacheid, ObjectIdGetDatum(relOid));
+				aclDatum = SysCacheGetAttr(cacheid, tup, get_object_attnum_acl(sdepForm->classid),
+										&isNull);
+				if(!isNull)
+				{
+					/* 
+					 * Check if the current user is grantor for any permission to any object
+					 * If yes then return and do not allow to drop the user
+					 */
+					const AclItem *acldat;
+					old_acl = DatumGetAclPCopy(aclDatum);
+					acldat = ACL_DAT(old_acl);
+						for (int i = 0; i < ACL_NUM(old_acl); i++)
+							{
+								const AclItem *ai = &acldat[i];
+								/* no need to remove if grantor */
+								if (ai->ai_grantor == roleid)
+									return;
+							}
+				}
 				RemoveRoleFromObjectACL(roleid,
 										sdepForm->classid,
 										sdepForm->objid);
+				/* Update the catalog after deleting the user */
+				remove_user_entry_from_bbf_schema_perms(roleid);
 				break;
 			}
 			/* FALLTHROUGH */
@@ -3952,7 +3981,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								Oid		db_owner = get_db_owner_oid(db_name, false);
 								Oid		db_accessadmin = get_db_accessadmin_oid(db_name, false);
 								Oid		db_securityadmin = get_db_securityadmin_oid(db_name, false);
-								// List 	*role_oids = NIL;
 
 								foreach(item, stmt->roles)
 								{
@@ -3966,7 +3994,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									
 									user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
 									role_oid = get_role_oid(user_name, true);
-									// role_oids = list_append_unique_oid(role_oids, role_oid);
 
 									if (!OidIsValid(role_oid) ||                        /* Not found */
 									    (drop_user && get_db_principal_kind(role_oid, db_name) != BBF_USER) ||      /* Found but not a user in current logical db */
@@ -4044,7 +4071,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									pfree(rolspec->rolename);
 
 									rolspec->rolename = user_name;
-									bbf_shdep_drop_owned_dependent_acl((Oid)role_oid,DROP_CASCADE);
+									bbf_shdep_drop_owned_dependent_acl((Oid) role_oid, DROP_CASCADE);
 								}
 							}
 							else
