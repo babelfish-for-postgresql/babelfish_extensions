@@ -1660,10 +1660,6 @@ static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, 
 	int currMax = 0;
 	ListCell* lc;
 	
-	// Add null check for input parameters
-	if (!targetList || !tableInfoArr || !colnameAlias)
-		return;
-	
 	foreach(lc, targetList) {
 		TargetEntry* te;
 		int oid;
