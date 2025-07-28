@@ -2907,7 +2907,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							originalView.classId = RelationRelationId;
 							originalView.objectSubId = 0;
 
-							if (!(handle_bbf_view_binding_on_object_drop(&originalView, NULL, stmt)))
+							if (!(handle_bbf_view_binding_on_object_drop(&originalView, true)))
 							/* Strong view dependency found, abort the drop */
 								ereport(ERROR,
 										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
