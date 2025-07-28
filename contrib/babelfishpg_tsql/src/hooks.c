@@ -7481,7 +7481,7 @@ handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, bool 
 				}
 				CommandCounterIncrement();
 			}
-			else if (tsql_alter_view_op && pltsql_weak_view_binding)
+			else if (is_alter_view && pltsql_weak_view_binding)
 			{
 				/* ALTER operation: mark weak & broken */
 				update_bbf_view_flags(viewOid, BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW, 0, true);
