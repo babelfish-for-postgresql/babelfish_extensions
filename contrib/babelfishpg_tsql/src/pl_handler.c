@@ -4772,18 +4772,19 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 									/* Special database roles should throw an error. */
 									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
-									/*
-									 * If permission on schema exists, don't revoke any permission from the object.
-									 */
-									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
-									{
-										exec_pg_command = true;
-									}
-									else
-									{
-										// Temporary comment: here we can say that the role does not exist for schema via any grantor, append in filtered list -> 
-										filtered_list = lappend(filtered_list, ap);
-									}
+								/*
+								 * If permission on schema exists, don't revoke any permission from the object.
+								 */
+								if (exec_pg_command == false && privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+								{
+									exec_pg_command = false;
+								}
+								if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+								{
+									// Temporary comment: here we can say that the role does not exist for schema via any grantor, append in filtered list -> 
+									exec_pg_command = true;
+									filtered_list = lappend(filtered_list, ap);
+								}
 									
 
 									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
@@ -4791,8 +4792,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 						}
 					}
-					if(filtered_list != NIL)
+					if(list_length(grant->privileges) > 1 && !(grant->is_grant))
 					{
+						if(filtered_list == NIL)
+							return;
+
 						list_free(grant->privileges);
 						grant->privileges = filtered_list;
 						pstmt->utilityStmt = (Node*)grant;
@@ -4898,13 +4902,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/*
 								 * If permission on schema exists, don't revoke any permission from the object.
 								 */
+								if (exec_pg_command == false && privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+								{
+									exec_pg_command = false;
+								}
 								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
 								{
-									exec_pg_command = true;
-								}
-								else
-								{
 									// Temporary comment: here we can say that the role does not exist for schema via any grantor, append in filtered list -> 
+									exec_pg_command = true;
 									filtered_list = lappend(filtered_list, ap);
 								}
 								/* Update the privilege in the catalog. */
@@ -4912,8 +4917,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 						}
 					}
-					if(filtered_list != NIL)
+					if(list_length(grant->privileges) != 0 && !(grant->is_grant))
 					{
+						if(filtered_list == NIL)
+							return;
 						list_free(grant->privileges);
 						grant->privileges = filtered_list;
 						pstmt->utilityStmt = (Node*)grant;
