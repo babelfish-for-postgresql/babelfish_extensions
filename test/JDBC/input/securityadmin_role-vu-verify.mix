@@ -18,6 +18,8 @@ TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
 GO
 
 -- sp_helpsrvrolemember
+SET NOCOUNT ON
+GO
 INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
 GO
 
@@ -408,6 +410,8 @@ TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
 GO
 
 -- sp_helpsrvrolemember
+SET NOCOUNT ON
+GO
 INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
 GO
 

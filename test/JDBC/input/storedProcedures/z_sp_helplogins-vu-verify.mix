@@ -53,6 +53,12 @@ GO
 alter login testloginindb1 with password = '12345678'
 GO
 
+alter login sp_helplogin_loginwithusermemberofdbowner with password = '12345678'
+GO
+
+alter login justanotherloginwithsecad with password = '12345678'
+GO
+
 -------- alter roles and add users and logins 
 alter role db_securityadmin add member userof_sp_helplogins_testlogin
 GO
@@ -61,6 +67,9 @@ alter server role securityadmin add member testloginwithsecurityadmin
 GO
 
 alter server role securityadmin add member testloginwithsecurityadmin2
+GO
+
+alter server role securityadmin add member sp_helplogin_loginwithusermemberofdbowner
 GO
 
 use sp_helplogins_db1
@@ -118,6 +127,25 @@ GO
 EXEC sp_helplogins
 GO
 
+-- we can query for the login which is currently connected 
+-- to the session and we WILL BE able to see the user for 
+-- that login
+-- ignore_columns 2
+EXEC sp_helplogins 'testloginwithsecurityadmin'
+GO
+
+-- HOWEVER if we explicitly query for other logins with users, 
+-- the corresponding users should not be visible
+-- ignore_columns 2
+EXEC sp_helplogins 'sp_helplogins_testlogin'
+GO
+
+-- but if we query for superuser the logins and its users should be visible
+-- but only from the databases that this user has access to
+-- ignore_columns 2
+EXEC sp_helplogins 'jdbc_user'
+GO
+
 -- tsql user=testloginwithsecurityadmin2 password=12345678
 -- since this login is a member of securityadmin, it will be able to call the proc
 -- it will see all logins and since it also has db_securityadmin in sp_helplogins_db1
@@ -172,4 +200,32 @@ GO
 
 -- ignore_columns 2
 EXEC sp_helplogins ' '
+GO
+
+-- tsql user=sp_helplogin_loginwithusermemberofdbowner password=12345678
+-- since this login is a member of securityadmin, it will be able to call the proc
+-- it will see all logins and since it also has db_owner in master
+-- it will also see all the users in that database
+-- ignore_columns 2
+EXEC sp_helplogins
+GO
+
+-- and also it will be able to see users for which it calls
+-- the proc explicitly
+-- ignore_columns 2
+EXEC sp_helplogins 'jdbc_user'
+GO
+-- ignore_columns 2
+EXEC sp_helplogins 'sp_helplogins_testlogin'
+GO
+
+-- tsql user=justanotherloginwithsecad password=12345678
+-- since it is a member of securityadmin, it will be able to call the proc
+-- and since it is also member of db_accessadmin in master db,
+-- it can view the users in master db
+-- ignore_columns 2
+EXEC sp_helplogins
+GO
+-- ignore_columns 2
+EXEC sp_helplogins 'sp_helplogins_testlogin'
 GO

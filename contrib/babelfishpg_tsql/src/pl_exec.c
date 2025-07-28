@@ -67,6 +67,7 @@
 uint64		rowcount_var = 0;
 List	   *columns_updated_list = NIL;
 static char *original_query_string = NULL;
+static bool is_schemabinding_view = true;
 
 int			fetch_status_var = 0;
 int			saved_expr_kind = -1;
@@ -4824,6 +4825,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 						  (strcmp(estate->func->fn_signature, "inline_code_block") != 0);
 
 	original_query_string = stmt->original_query ? stmt->original_query : NULL;
+	is_schemabinding_view = stmt->is_schemabinding;
 
 	if (is_cross_db)
 	{
@@ -5272,6 +5274,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	PG_FINALLY();
 	{
 		original_query_string = NULL;
+		is_schemabinding_view = true;
 
 		if (is_cross_db)
 		{
@@ -10476,6 +10479,15 @@ char *
 get_original_query_string(void)
 {
 	return original_query_string;
+}
+
+/*
+ * Get the is_schemabinding flag for the view definition.
+ */
+bool
+get_is_schemabinding_view(void)
+{
+	return is_schemabinding_view;
 }
 
 Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,

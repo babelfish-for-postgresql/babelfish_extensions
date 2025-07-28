@@ -202,18 +202,22 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 #define Anum_bbf_view_def_schema_name 2
 #define Anum_bbf_view_def_object_name 3
 #define Anum_bbf_view_def_definition 4
+#define Anum_bbf_view_def_flag_validity 5
+#define Anum_bbf_view_def_flag_values 6
 #define BBF_VIEW_DEF_NUM_COLS 8
 #define BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER (1<<1)
 #define BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4 (0<<2)
+#define BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW (1<<3)
+#define BBF_VIEW_DEF_FLAG_IS_BROKEN (1<<4)
+
 extern Oid	bbf_view_def_oid;
 extern Oid	bbf_view_def_idx_oid;
 
 extern Oid	get_bbf_view_def_oid(void);
 extern Oid	get_bbf_view_def_idx_oid(void);
-extern HeapTuple search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid,
-									 const char *logical_schema_name, const char *view_name);
-extern bool check_is_tsql_view(Oid relid);
+extern HeapTuple search_bbf_view_def(Relation bbf_view_def_rel, Oid viewOid);
+extern bool check_is_tsql_view(Oid relid, bool *is_weak_view);
 extern void clean_up_bbf_view_def(int16 dbid);
 extern void drop_bbf_schema_permission_entries(int16 dbid);
 

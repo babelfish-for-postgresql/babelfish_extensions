@@ -9831,9 +9831,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = CAST(500.00 AS MONEY)
-Seq Scan on numeric_index_test (actual rows=1 loops=1)
-  Filter: (num_col = (('500.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
-  Rows Removed by Filter: 2
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = (('500.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
 ~~END~~
 
 

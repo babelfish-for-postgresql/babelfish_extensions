@@ -703,6 +703,12 @@ tdsutils_ProcessUtility(PlannedStmt *pstmt,
 		return;
 	}
 
+	/* Case that deal with Drop Database */
+	if (nodeTag(parsetree) == T_DropdbStmt)
+	{
+		handle_result = handle_dropdb((DropdbStmt *) parsetree);		
+	}
+
 	/* Ignore any of this for real superusers */
 	if (superuser())
 	{
@@ -717,10 +723,6 @@ tdsutils_ProcessUtility(PlannedStmt *pstmt,
 			break;
 		case T_RenameStmt:
 			handle_result = handle_rename((RenameStmt *) parsetree);
-			break;
-			/* Case that deal with Drop Database */
-		case T_DropdbStmt:
-			handle_result = handle_dropdb((DropdbStmt *) parsetree);
 			break;
 		case T_AlterRoleStmt:
 			handle_result = handle_alter_role((AlterRoleStmt*)parsetree);

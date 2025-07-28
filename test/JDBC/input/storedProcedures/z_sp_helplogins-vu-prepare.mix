@@ -1,3 +1,4 @@
+-- sla 150000
 -- create a dummy db
 create database sp_helplogins_db1
 GO
@@ -68,4 +69,11 @@ GO
 -- creating a login which has a user which is a member of the db_owner db role (this is not the same as the login being owner of the db)
 create login sp_helplogin_loginwithusermemberofdbowner with password = '12345678'
 create user u_sp_helplogin_loginwithusermemberofdbowner for login sp_helplogin_loginwithusermemberofdbowner
+GO
+
+-- creating a user which is a member of securityadmin and db_accessadmin
+create login justanotherloginwithsecad with password = '12345678';
+alter server role securityadmin add member justanotherloginwithsecad;
+create user u_justanotherloginwithsecad for login justanotherloginwithsecad;
+alter role db_accessadmin add member u_justanotherloginwithsecad;
 GO
