@@ -2481,6 +2481,9 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 				int cacheid =	get_object_catcache_oid(sdepForm->classid);
 
 				tup = SearchSysCache1(cacheid, ObjectIdGetDatum(relOid));
+				if (!HeapTupleIsValid(tuple))
+					elog(ERROR, "cache lookup failed for relation %u", relOid);
+
 				aclDatum = SysCacheGetAttr(cacheid, tup, get_object_attnum_acl(sdepForm->classid),
 										&isNull);
 				if(!isNull)
@@ -2505,6 +2508,9 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 										sdepForm->objid);
 				/* Update the catalog after deleting the user */
 				remove_user_entry_from_bbf_schema_perms(roleid);
+				ReleaseSysCache(tup);
+				if(!old_acl)
+					pfree(old_acl);
 				break;
 			}
 			/* FALLTHROUGH */
