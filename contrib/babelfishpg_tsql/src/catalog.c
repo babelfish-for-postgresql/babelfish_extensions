@@ -3976,8 +3976,10 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 			Datum datum;
 			bool isnull;
 			int sch_permission;
+
 			datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, RelationGetDescr(bbf_schema_rel), &isnull);
 			sch_permission = DatumGetInt32(datum);
+
 			if (!isnull && ((sch_permission & curr_permission) == curr_permission ))
 				catalog_entry_exists = true;
 			else if(!isnull && ((sch_permission & curr_permission) != curr_permission ))
