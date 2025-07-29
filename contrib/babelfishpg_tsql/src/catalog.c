@@ -3985,7 +3985,6 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 				catalog_entry_exists = false;
 
 		}
-		ReleaseSysCache(tuple_bbf_schema);
     }
 
 	systable_endscan(scan);
