@@ -256,3 +256,202 @@ nvarchar
 
 ~~ROW COUNT: 1~~
 
+
+
+/* BABEL-5910 - Crash inside strcmp(), under buildJsonEntry() */
+-- Should fail gracefully with proper error message rather than crash
+SELECT 1+2 , firstname as [NULL] FROM forjson_auto_vu_t_users FOR JSON AUTO;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table)~~
+
+
+select 1+2 as 'a' for json auto;
+GO
+~~ERROR (Code: 13600)~~
+
+~~ERROR (Message: FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.)~~
+
+
+select NULL as [NULL] from forjson_auto_vu_t_users for json auto;
+GO
+~~START~~
+nvarchar
+[{}, {}, {}]
+~~END~~
+
+
+-- empty result set
+SELECT * FROM forjson_auto_vu_t_users WHERE 1=0 FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+~~END~~
+
+
+-- NULL testing
+SELECT n1.id as "outer.id", 
+       n1.data as "outer.data", 
+       n2.id as "inner.id", 
+       n2.ref_id as "inner.ref_id" 
+FROM forjson_test_nested_1 n1 
+LEFT JOIN forjson_test_nested_2 n2 ON n1.id = n2.id 
+FOR JSON AUTO, INCLUDE_NULL_VALUES;
+GO
+~~START~~
+nvarchar
+[{"outer.id": 2, "outer.data": "test", "n2": [{"inner.id": 2, "inner.ref_id": null}]}, {"outer.id": 1, "outer.data": null, "n2": [{"inner.id": 1, "inner.ref_id": 1}]}]
+~~END~~
+
+
+--Special Unicode characters in column names
+SELECT id as "parent.id", 
+       column_标 as "parent.子.data" 
+FROM forjson_test_unicode 
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"parent.id": 1, "parent.子.data": "unicode data"}]
+~~END~~
+
+
+-- long alias name test check
+SELECT id as "ThisIsAnExtremelyLongColumnNameThatExceedsTheNormalLimitForColumnNamesInMostDatabaseSystemsIncludingPostgreSQLAndShouldTriggerOurHashKeyTruncationWarningWithoutCrashing.id"
+FROM forjson_auto_vu_t_users
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"ThisIsAnExtremelyLongCo": 1}, {"ThisIsAnExtremelyLongCo": 1}, {"ThisIsAnExtremelyLongCo": 1}]
+~~END~~
+
+
+-- ORDER BY with calculation - creates resjunk column
+SELECT id, name, value FROM forjson_test_orderby ORDER BY value * 2 DESC FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"id": 3, "name": "Cherry", "value": 30}, {"id": 5, "name": "Elderberry", "value": 25}, {"id": 1, "name": "Apple", "value": 20}, {"id": 4, "name": "Date", "value": 15}, {"id": 2, "name": "Banana", "value": 10}]
+~~END~~
+
+
+-- ORDER BY with multiple expressions - creates multiple resjunk columns
+SELECT id, name, value FROM forjson_test_orderby ORDER BY SUBSTRING(name, 1, 1), value DESC FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"id": 1, "name": "Apple", "value": 20}, {"id": 2, "name": "Banana", "value": 10}, {"id": 3, "name": "Cherry", "value": 30}, {"id": 4, "name": "Date", "value": 15}, {"id": 5, "name": "Elderberry", "value": 25}]
+~~END~~
+
+
+-- Simple GROUP BY - creates resjunk columns
+SELECT category, SUM(quantity) as total_quantity, AVG(price) as avg_price FROM forjson_test_groupby GROUP BY category FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"category": "Fruit", "total_quantity": 25, "avg_price": 2.125000}]
+~~END~~
+
+
+-- GROUP BY with HAVING - creates resjunk columns with filtering
+SELECT category, COUNT(*) as product_count, SUM(quantity) as total_quantity FROM forjson_test_groupby GROUP BY category
+HAVING SUM(quantity) > 20 FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"category": "Fruit", "product_count": 2, "total_quantity": 25}]
+~~END~~
+
+
+-- This creates multiple resjunk columns of various types
+SELECT category, 
+       COUNT(*) as product_count, 
+       SUM(quantity) as total_quantity,
+       MAX(price) as max_price,
+       MIN(price) as min_price
+FROM forjson_test_groupby
+GROUP BY category
+ORDER BY SUM(quantity * price) DESC
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"category": "Fruit", "product_count": 2, "total_quantity": 25, "max_price": 2.50, "min_price": 1.75}]
+~~END~~
+
+
+-- Test 13: Window functions - create resjunk columns
+SELECT id, 
+       value,
+       ROW_NUMBER() OVER(ORDER BY value) as row_num,
+       RANK() OVER(ORDER BY value) as rank_val
+FROM forjson_test_orderby
+ORDER BY id
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"id": 1, "value": 20, "row_num": 3, "rank_val": 3}, {"id": 2, "value": 10, "row_num": 1, "rank_val": 1}, {"id": 3, "value": 30, "row_num": 5, "rank_val": 5}, {"id": 4, "value": 15, "row_num": 2, "rank_val": 2}, {"id": 5, "value": 25, "row_num": 4, "rank_val": 4}]
+~~END~~
+
+
+-- For Version Upgrade Test
+EXECUTE forjson_vu_v_resjunk_orderby_groupby;
+GO
+~~START~~
+nvarchar
+[{"price": "30", "product_count": 2, "total_quantity": 11}, {"price": "20", "product_count": 2, "total_quantity": 11}]
+~~END~~
+
+
+EXECUTE forjson_vu_v_resjunk_window_functions;
+GO
+~~START~~
+nvarchar
+[{"Id": 1, "firstname": "e", "p": [{"name": "A", "price": "20"}], "quantity_rank": 2}, {"Id": 1, "firstname": "j", "p": [{"name": "A", "price": "20"}], "quantity_rank": 3}, {"Id": 1, "firstname": "e", "p": [{"name": "A", "price": "20"}], "quantity_rank": 4}, {"Id": 1, "firstname": "e", "p": [{"name": "A", "price": "20"}], "quantity_rank": 5}, {"Id": 1, "firstname": "j", "p": [{"name": "A", "price": "20"}], "quantity_rank": 6}, {"Id": 1, "firstname": "j", "p": [{"name": "B", "price": "30"}], "quantity_rank": 1}, {"Id": 1, "firstname": "e", "p": [{"name": "B", "price": "30"}], "quantity_rank": 2}, {"Id": 1, "firstname": "e", "p": [{"name": "B", "price": "30"}], "quantity_rank": 3}, {"Id": 1, "firstname": "e", "p": [{"name": "B", "price": "30"}], "quantity_rank": 4}, {"Id": 1, "firstname": "e", "p": [{"name": "B", "price": "30"}], "quantity_rank": 5}, {"Id": 1, "firstname": "j", "p": [{"name": "B", "price": "30"}], "quantity_rank": 6}, {"Id": 1, "firstname": "e", "p": [{"name": "A", "price": "20"}], "quantity_rank": 1}]
+~~END~~
+
+
+EXECUTE forjson_vu_p_resjunk_groupby_having_orderby;
+GO
+~~START~~
+nvarchar
+[{"price": "30", "product_count": 2, "total_quantity": 11}, {"price": "20", "product_count": 2, "total_quantity": 11}]
+~~END~~
+
+
+
+
+/* ----------- Found Incorrect cases with needs to be handled in future  -------------- */
+/*
+ *  Condition : Only Function in the query
+ *  Expected Output: should not throw any error
+ *  Actual Output: throws incorrect error message
+ */ 
+SELECT  b.EmployeeId
+FROM dbo.forjson_auto_test_diff_cases_fn(1) as b
+FOR JSON AUTO;
+GO
+~~ERROR (Code: 13600)~~
+
+~~ERROR (Message: FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.)~~
+
+
+
+/*
+ *  Condition : FUNCTION + RELATION
+ *  Actual Output: Treats Function as relation and gives incorrect output
+ *  Expected Output: should treat function and relation as separate and provides different
+ *                   nesting key and level for both
+ */ 
+SELECT  b.EmployeeId, a.salary
+FROM dbo.forjson_auto_test_diff_cases_fn(1) as b, forjson_auto_test_diff_cases a
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"EmployeeId": 1, "salary": 75000}, {"EmployeeId": 1, "salary": 85000}, {"EmployeeId": 2, "salary": 75000}, {"EmployeeId": 2, "salary": 85000}]
+~~END~~
+
