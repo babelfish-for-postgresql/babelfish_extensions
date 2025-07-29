@@ -412,7 +412,11 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		RelabelType		*relabel = (RelabelType *) rightop;
 		if (IsA(relabel->arg, Const))
 		{
-			lsecond(op->args) = relabel->arg;
+			Const *con = (Const *) relabel->arg;
+			con->consttype = relabel->resulttype;
+			con->consttypmod = relabel->resulttypmod;
+			// do we need to set other params also?
+			lsecond(op->args) = con;
 			rightop = (Node *) lsecond(op->args);
 		}
 	}
