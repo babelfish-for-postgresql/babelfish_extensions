@@ -1,0 +1,197 @@
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p0;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p00;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p1;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p2;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p3;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p4;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p5;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p6;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p7;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p8;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p9;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p10;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p11;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p12;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p13;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p14;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p15;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p16;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p17;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p18;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p19;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p20;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p21;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p22;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p23;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p24;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p25;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p26;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p27;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p28;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p29;
+GO
+DROP PROCEDURE babel_test_numeric_fixeddecimal_p30;
+GO
+
+DROP VIEW babel_test_numeric_fixeddecimal_v0;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v00;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v1;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v2;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v3;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v4;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v5;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v6;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v7;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v8;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v9;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v10;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v11;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v12;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v13;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v14;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v15;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v16;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v17;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v18;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v19;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v20;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v21;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v22;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v23;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v24;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v25;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v26;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v27;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v28;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v29;
+GO
+DROP VIEW babel_test_numeric_fixeddecimal_v30;
+GO
+
+DROP FUNCTION babel_test_numeric_fixeddecimal_f0;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f00;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f1;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f2;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f3;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f4;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f5;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f6;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f7;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f8;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f9;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f10;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f11;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f12;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f13;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f14;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f15;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f16;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f17;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f18;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f19;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f20;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f21;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f22;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f23;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f24;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f25;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f26;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f27;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f28;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f29;
+GO
+DROP FUNCTION babel_test_numeric_fixeddecimal_f30;
+GO
+
+DROP TABLE babel_test_numeric_fixeddecimal_vu_prepare;
+GO

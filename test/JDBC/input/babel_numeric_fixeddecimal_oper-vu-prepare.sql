@@ -1,0 +1,411 @@
+-- tsql
+create table babel_test_numeric_fixeddecimal_vu_prepare(a numeric);
+GO
+
+-- insert data
+INSERT INTO babel_test_numeric_fixeddecimal_vu_prepare (a) SELECT cast(generate_series(1, 100000) as numeric);
+GO
+
+-- Insert boundary values for fixeddecimal type (same as money)
+INSERT INTO babel_test_numeric_fixeddecimal_vu_prepare VALUES 
+(NULL), 
+(-922337203685477.5808), -- fixeddecimal min
+(922337203685477.5807);  -- fixeddecimal max
+GO
+
+CREATE INDEX babel_test_numeric_fixeddecimal_vu_prepare_idx on babel_test_numeric_fixeddecimal_vu_prepare(a);
+GO
+
+-- Basic equality tests
+create procedure babel_test_numeric_fixeddecimal_p0 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a = cast(1 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p00 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(1 as fixeddecimal) = a;
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p1 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a IS NULL;
+GO
+
+-- seq scan
+create procedure babel_test_numeric_fixeddecimal_p2 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <> cast(5 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p3 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) <> a;
+GO
+
+-- index scan on < and >
+create procedure babel_test_numeric_fixeddecimal_p4 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(5 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p5 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) > a;
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p6 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(-922337203685477.5808 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p7 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(-922337203685477.5808 as fixeddecimal) > a;
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p8 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <= cast(5 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p9 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) >= a;
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p10 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(99995 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p11 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(99995 as fixeddecimal) < a;
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p12 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a >= cast(99995 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p13 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(99995 as fixeddecimal) <= a;
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p14 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(922337203685477.5807 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p15 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(922337203685477.5807 as fixeddecimal) < a;
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p16 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(5 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p17 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) < a;
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p18 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a between cast(5 as fixeddecimal) and cast(10 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p19 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a between cast(5 as fixeddecimal) and cast(922337203685477.5807 as fixeddecimal);
+GO
+
+-- mix of numeric op fixeddecimal and numeric op numeric
+create procedure babel_test_numeric_fixeddecimal_p20 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where (a between cast(5 as fixeddecimal) and cast(99995 as fixeddecimal)) and a = cast(10 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p21 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(5 as fixeddecimal) and a < cast(7 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p22 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) < a and cast(7 as fixeddecimal) > a;
+GO
+
+-- seq scan
+create procedure babel_test_numeric_fixeddecimal_p23 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <> cast(5 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p24 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(5 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p25 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(-922337203685477.5808 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p26 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <= cast(5 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p27 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(99995 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p28 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a >= cast(99995 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p29 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(922337203685477.5807 as fixeddecimal);
+GO
+
+create procedure babel_test_numeric_fixeddecimal_p30 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(5 as fixeddecimal);
+GO
+
+
+-- Views
+create view babel_test_numeric_fixeddecimal_v0 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a = cast(1 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v00 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(1 as fixeddecimal) = a;
+GO
+
+create view babel_test_numeric_fixeddecimal_v1 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a IS NULL;
+GO
+
+create view babel_test_numeric_fixeddecimal_v2 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <> cast(5 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v3 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) <> a;
+GO
+
+create view babel_test_numeric_fixeddecimal_v4 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(5 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v5 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) > a;
+GO
+
+create view babel_test_numeric_fixeddecimal_v6 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(-922337203685477.5808 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v7 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(-922337203685477.5808 as fixeddecimal) > a;
+GO
+
+create view babel_test_numeric_fixeddecimal_v8 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <= cast(5 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v9 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) >= a;
+GO
+
+create view babel_test_numeric_fixeddecimal_v10 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(99995 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v11 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(99995 as fixeddecimal) < a;
+GO
+
+create view babel_test_numeric_fixeddecimal_v12 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a >= cast(99995 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v13 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(99995 as fixeddecimal) <= a;
+GO
+
+create view babel_test_numeric_fixeddecimal_v14 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(922337203685477.5807 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v15 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(922337203685477.5807 as fixeddecimal) < a;
+GO
+
+create view babel_test_numeric_fixeddecimal_v16 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(5 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v17 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) < a;
+GO
+
+create view babel_test_numeric_fixeddecimal_v18 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a between cast(5 as fixeddecimal) and cast(10 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v19 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a between cast(5 as fixeddecimal) and cast(922337203685477.5807 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v20 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where (a between cast(5 as fixeddecimal) and cast(99995 as fixeddecimal)) and a = cast(10 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v21 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(5 as fixeddecimal) and a < cast(7 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v22 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) < a and cast(7 as fixeddecimal) > a;
+GO
+
+create view babel_test_numeric_fixeddecimal_v23 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <> cast(5 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v24 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(5 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v25 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(-922337203685477.5808 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v26 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <= cast(5 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v27 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(99995 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v28 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a >= cast(99995 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v29 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(922337203685477.5807 as fixeddecimal);
+GO
+
+create view babel_test_numeric_fixeddecimal_v30 as
+select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(5 as fixeddecimal);
+GO
+
+
+-- Functions
+create function babel_test_numeric_fixeddecimal_f0() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a = cast(1 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f00() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(1 as fixeddecimal) = a) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f1() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a IS NULL) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f2() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <> cast(5 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f3() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) <> a) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f4() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(5 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f5() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) > a) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f6() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(-922337203685477.5808 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f7() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(-922337203685477.5808 as fixeddecimal) > a) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f8() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <= cast(5 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f9() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) >= a) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f10() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(99995 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f11() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(99995 as fixeddecimal) < a) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f12() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a >= cast(99995 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f13() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(99995 as fixeddecimal) <= a) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f14() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(922337203685477.5807 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f15() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(922337203685477.5807 as fixeddecimal) < a) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f16() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(5 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f17() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) < a) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f18() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a between cast(5 as fixeddecimal) and cast(10 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f19() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a between cast(5 as fixeddecimal) and cast(922337203685477.5807 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f20() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where (a between cast(5 as fixeddecimal) and cast(99995 as fixeddecimal)) and a = cast(10 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f21() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(5 as fixeddecimal) and a < cast(7 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f22() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where cast(5 as fixeddecimal) < a and cast(7 as fixeddecimal) > a) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f23() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <> cast(5 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f24() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(5 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f25() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a < cast(-922337203685477.5808 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f26() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a <= cast(5 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f27() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(99995 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f28() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a >= cast(99995 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f29() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(922337203685477.5807 as fixeddecimal)) end;
+GO
+
+create function babel_test_numeric_fixeddecimal_f30() returns int as
+begin return (select count(*) from babel_test_numeric_fixeddecimal_vu_prepare where a > cast(5 as fixeddecimal)) end;
+GO
+
