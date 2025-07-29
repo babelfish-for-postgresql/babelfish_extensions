@@ -157,6 +157,36 @@ LANGUAGE plpgsql
 STABLE;
 
 ----------------------------------------------------------------
+
+-- Rename the varchar overload to mark as deprecated in 5.4.0
+DO $$
+BEGIN
+	IF EXISTS (
+		SELECT 1 FROM pg_proc p
+		JOIN pg_namespace n ON p.pronamespace = n.oid
+		WHERE n.nspname = 'sys'
+		  AND p.proname = 'babelfish_conv_helper_to_varbinary'
+		  AND pg_get_function_identity_arguments(p.oid) = 'typmod integer, arg sys."varchar", try boolean, p_style numeric')
+	THEN
+		EXECUTE 'ALTER FUNCTION sys.babelfish_conv_helper_to_varbinary(typmod integer, arg sys."varchar", try boolean, p_style numeric) RENAME TO babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_4_0';
+	END IF;
+END$$;
+
+-- Rename the varchar overload of babelfish_try_conv_string_to_varbinary to mark as deprecated in 5.4.0
+DO $$
+BEGIN
+	IF EXISTS (
+		SELECT 1 FROM pg_proc p
+		JOIN pg_namespace n ON p.pronamespace = n.oid
+		WHERE n.nspname = 'sys'
+		  AND p.proname = 'babelfish_try_conv_string_to_varbinary'
+		  AND pg_get_function_identity_arguments(p.oid) = 'arg sys."varchar", p_style numeric')
+	THEN
+		EXECUTE 'ALTER FUNCTION sys.babelfish_try_conv_string_to_varbinary(arg sys."varchar", p_style numeric) RENAME TO babelfish_try_conv_string_to_varbinary_varchar_deprecated_in_5_4_0';
+	END IF;
+END$$;
+
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTEGER,
                                                                   IN arg anyelement,
                                                                   IN try BOOL,

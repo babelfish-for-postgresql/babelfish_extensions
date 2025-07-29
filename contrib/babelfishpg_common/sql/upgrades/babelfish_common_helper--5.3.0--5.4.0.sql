@@ -56,8 +56,6 @@ BEGIN
       WITH FUNCTION sys.decimal2decimal(sys.DECIMAL, integer) AS IMPLICIT;
   END IF;
 END $$;
--- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '5.4.0'" to load this file. \quit
 
 CREATE OR REPLACE FUNCTION sys.ncharbinary(sys.NCHAR, integer, boolean)
 RETURNS sys.BBF_BINARY

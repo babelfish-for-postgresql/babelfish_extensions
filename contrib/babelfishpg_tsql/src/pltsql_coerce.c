@@ -594,13 +594,13 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	/* Check if the UDT's base type is nvarchar or varbinary.
 	 * If so, use the immediate base type for further processing.
 	 */
-	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || is_tsql_binary_family_datatype(UDT_sourceBaseType)))
+	if(UDT_sourceBaseType != InvalidOid && (is_tsql_utf16_string_family_datatype(UDT_sourceBaseType) || is_tsql_binary_family_datatype(UDT_sourceBaseType)))
 	{
 		typeIds[0] = UDT_sourceBaseType;
 		sourceTypeId = UDT_sourceBaseType;
 	}
 
-	if(UDT_targetBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_targetBaseType) || is_tsql_binary_family_datatype(UDT_targetBaseType)))
+	if(UDT_targetBaseType != InvalidOid && (is_tsql_utf16_string_family_datatype(UDT_targetBaseType) || is_tsql_binary_family_datatype(UDT_targetBaseType)))
 	{
 		typeIds[1] = UDT_targetBaseType;
 		targetTypeId = UDT_targetBaseType;
