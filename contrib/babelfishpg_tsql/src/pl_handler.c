@@ -4927,6 +4927,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					if (exec_pg_command)
 						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+					list_free(filtered_list);
 					return;
 				}
 				pfree(db_datareader);
