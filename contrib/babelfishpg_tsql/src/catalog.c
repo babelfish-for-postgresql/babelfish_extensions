@@ -3968,7 +3968,6 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 		if(curr_permission == -1)
 		{
 			catalog_entry_exists = true;
-			return catalog_entry_exists;
 		}
 
 		else
