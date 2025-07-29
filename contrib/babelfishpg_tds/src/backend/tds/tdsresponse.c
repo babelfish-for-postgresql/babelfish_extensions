@@ -154,6 +154,12 @@ static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
 static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
 
+#define INT_PRECISION_RADIX 		10
+#define BIGINT_PRECISION_RADIX 		19
+
+#define DEFAULT_INT_TYPMOD		((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+#define DEFAULT_BIGINT_TYPMOD		((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ
+
 static inline void
 SendPendingDone(bool more)
 {
@@ -1017,6 +1023,17 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				int32		typmod;
 				uint8_t		precision,
 							scale;
+
+				if (aggref->aggstar)
+				{
+					/* handling for COUNT(*) and COUNT_BIG(*) */
+					if (aggref->aggtype == INT4OID)
+						return DEFAULT_INT_TYPMOD;
+					else if (aggref->aggtype == INT8OID)
+						return DEFAULT_BIGINT_TYPMOD;
+					else
+						return -1;
+				}
 
 				Assert(aggref->args != NIL);
 

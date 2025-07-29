@@ -1887,3 +1887,154 @@ numeric
 10.00000000
 ~~END~~
 
+
+
+CREATE TABLE BABEL_5879 (
+    id INT PRIMARY KEY,
+    value NUMERIC(10,2)
+);
+INSERT INTO BABEL_5879 (id, value) VALUES (1, 1234.56), (2, 7890.12);
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT CASE 1
+    WHEN 1 THEN count(*) * 1.00
+    ELSE 3.00
+END AS RESULT
+FROM BABEL_5879;
+GO
+~~START~~
+numeric
+2.00
+~~END~~
+
+
+SELECT CASE 1
+    WHEN 2 THEN 3.00
+    ELSE count(*) * 1.00
+END AS RESULT
+FROM BABEL_5879;
+GO
+~~START~~
+numeric
+2.00
+~~END~~
+
+
+SELECT CASE 1
+    WHEN 1 THEN count_big(*) * 1.00
+    ELSE 3.00
+END AS RESULT
+FROM BABEL_5879;
+GO
+~~START~~
+numeric
+2.00
+~~END~~
+
+
+SELECT CASE 1
+    WHEN 2 THEN 3.00
+    ELSE count_big(*) * 1.00
+END AS RESULT
+FROM BABEL_5879;
+GO
+~~START~~
+numeric
+2.00
+~~END~~
+
+
+SELECT count_big(*) * 1.00
+UNION ALL
+SELECT count(*) * 1.00
+FROM BABEL_5879;
+GO
+~~START~~
+numeric
+1.00
+2.00
+~~END~~
+
+
+SELECT count(*) * 1.00
+UNION ALL
+SELECT count(*) * 1.00
+FROM BABEL_5879;
+GO
+~~START~~
+numeric
+1.00
+2.00
+~~END~~
+
+
+SELECT count_big(*) * 1.00
+UNION ALL
+SELECT count_big(*) * 1.00
+FROM BABEL_5879;
+GO
+~~START~~
+numeric
+1.00
+2.00
+~~END~~
+
+
+SELECT CASE 1
+    WHEN 1 THEN count(*) * 1.00
+    ELSE 3.00
+END AS RESULT
+INTO BABEL_5879_t1
+FROM BABEL_5879;
+GO
+
+SELECT CASE 1
+    WHEN 1 THEN count_big(*) * 1.00
+    ELSE 3.00
+END AS RESULT
+INTO BABEL_5879_t2
+FROM BABEL_5879;
+GO
+
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME LIKE 'BABEL_5879_t1'
+ORDER BY COLUMN_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+babel_5879_t1#!#result#!#numeric#!#14#!#2
+~~END~~
+
+
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME LIKE 'BABEL_5879_t2'
+ORDER BY COLUMN_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+babel_5879_t2#!#result#!#numeric#!#23#!#2
+~~END~~
+
+
+DROP TABLE BABEL_5879_t1;
+GO
+
+DROP TABLE BABEL_5879_t2;
+GO
+
+DROP TABLE BABEL_5879;
+GO
