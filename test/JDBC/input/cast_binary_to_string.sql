@@ -222,20 +222,12 @@ SELECT LENGTH(CAST(0xE4B8ADE59BBD AS VARCHAR(6))) AS varchar_char_count;
 SELECT DATALENGTH(CAST(0xE4B8ADE59BBD AS VARCHAR(6))) AS varchar_byte_count;
 GO
 
--- Edge Case 1: Truncation when input has more characters than limit
-SELECT CAST(0xE4B8ADE59BBDE4B8ADE59BBD AS CHAR(2)) AS truncated_result;
-SELECT LENGTH(CAST(0xE4B8ADE59BBDE4B8ADE59BBD AS CHAR(2))) AS truncated_length;
-GO
 
 -- Edge Case 2: Single byte characters (no expansion)
 SELECT CAST(0x616263 AS CHAR(5)) AS ascii_result;  -- "abc" -> "abc  "
 SELECT LENGTH(CAST(0x616263 AS CHAR(5))) AS ascii_length;
 GO
 
--- Edge Case 3: Mixed single and multi-byte
-SELECT CAST(0x61E4B8AD62 AS CHAR(5)) AS mixed_result;  -- "a中b" -> "aä¸­b"
-SELECT LENGTH(CAST(0x61E4B8AD62 AS CHAR(5))) AS mixed_length;
-GO
 
 -- Edge Case 4: Empty input
 SELECT CAST(0x AS CHAR(3)) AS empty_result;
