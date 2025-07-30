@@ -1017,6 +1017,8 @@ varbinarybpchar(PG_FUNCTION_ARGS)
 	int32		maxlen = -1;
 	coll_info	collInfo;
 	int			encodedByteLen;
+	int			remainingByteLeft;
+	int			lenToEncode;
 	MemoryContext ccxt = CurrentMemoryContext;
  
 	/*
@@ -1028,6 +1030,7 @@ varbinarybpchar(PG_FUNCTION_ARGS)
 	{
 		typmod = PG_GETARG_INT32(1);
 		maxlen = typmod - VARHDRSZ;
+		lenToEncode = maxlen;
 	}
  
 	/*
@@ -1041,18 +1044,15 @@ varbinarybpchar(PG_FUNCTION_ARGS)
 	while(len>0 && data[len-1] == '\0')
 		len -= 1;
  
-	/*
-	 * Cast the entire input binary data if maxlen is 
-	 * invalid or supplied data fits it
-	 * Else truncate it
-	 */
+	if (maxlen < 0 || len <= maxlen)
+	{
+		lenToEncode = len; /* No length restriction */
+	}
+
 	PG_TRY();
 	{
 		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
-		if (maxlen < 0 || len <= maxlen)
-			encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
-		else
-			encoded_result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
+		encoded_result = encoding_conv_util(data, lenToEncode, collInfo.enc, PG_UTF8, &encodedByteLen);
 	}
 	PG_CATCH();
 	{
@@ -1075,40 +1075,18 @@ varbinarybpchar(PG_FUNCTION_ARGS)
 	if (maxlen < 0)
 	{
 		maxlen = encodedByteLen; /* No length restriction */
+		remainingByteLeft = 0; /* No padding needed */
 	}
 	else
 	{
-		/*
-		 * For CHAR(n), we need to properly calculate the byte length for padding.
-		 * maxlen currently represents character count, but we need byte length
-		 * for the final UTF-8 result. Similar to bpchar_input logic.
-		 */
-		size_t		charlen = pg_mbstrlen_with_len(encoded_result, encodedByteLen);
-		
-		if (charlen > maxlen)
-		{
-			/* 
-			 * Input has more characters than allowed, truncate to maxlen characters
-			 * and adjust byte length accordingly 
-			 */
-			size_t mbmaxlen = pg_mbcharcliplen(encoded_result, encodedByteLen, maxlen);
-			encodedByteLen = mbmaxlen;
-			maxlen = mbmaxlen; /* maxlen is now byte length */
-		}
-		else
-		{
-			/*
-			 * Input fits within character limit, calculate the byte length needed
-			 * for padding: current byte length + spaces for remaining characters
-			 */
-			maxlen = encodedByteLen + (maxlen - charlen);
-		}
+		remainingByteLeft = maxlen - lenToEncode;
+		maxlen = encodedByteLen + remainingByteLeft;
 	}
 	
 	result = (BpChar *) palloc0(maxlen + VARHDRSZ);
 	SET_VARSIZE(result, maxlen + VARHDRSZ);
 	memcpy(VARDATA(result), encoded_result, encodedByteLen);
-	memset(VARDATA(result) + encodedByteLen, ' ', maxlen - encodedByteLen);
+	memset(VARDATA(result) + encodedByteLen, ' ', remainingByteLeft);
 	
 	if (encodedByteLen > 0)
 	{
