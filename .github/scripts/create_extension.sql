@@ -10,6 +10,7 @@ ALTER SYSTEM SET babelfishpg_tsql.database_name = :db;
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = :'migration_mode';
 ALTER SYSTEM SET babelfishpg_tds.port = :tsql_port;
 ALTER SYSTEM SET track_functions = 'pl';
+ALTER SYSTEM SET plan_cache_mode to 'force_generic_plan';
 
 \if :parallel_query_mode
     ALTER SYSTEM SET parallel_setup_cost = 0;
