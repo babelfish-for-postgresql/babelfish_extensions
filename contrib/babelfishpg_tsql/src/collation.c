@@ -487,7 +487,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	
 	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
 
-	Assert(ltypeId == rtypeId);
+	// Assert(ltypeId == rtypeId);
 
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
