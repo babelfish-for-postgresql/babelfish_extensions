@@ -592,7 +592,7 @@ dbcreator_role
 db_securityadmin
 db_ddladmin
 smalldatetime_date_cmp
-cast_nvarchar_test-before
+cast_nvarchar_test
 test_conv_string_to_date-before-17_4
 test_conv_string_to_datetime-before-17_4
 test_conv_string_to_datetime2-before-17_4
