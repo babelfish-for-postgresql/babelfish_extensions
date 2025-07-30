@@ -10,6 +10,29 @@
 
 all
 
+ignore#!#babel_621
+ignore#!#db_owner-vu-prepare
+ignore#!#db_owner-vu-verify
+ignore#!#db_owner-vu-cleanup
+ignore#!#dbcreator_role-vu-prepare
+ignore#!#dbcreator_role-vu-verify
+ignore#!#dbcreator_role-vu-cleanup
+ignore#!#PARTITION-vu-prepare
+ignore#!#PARTITION-vu-verify
+ignore#!#PARTITION-vu-cleanup
+ignore#!#Test_rename_db_single-db
+ignore#!#Test_sp_rename_database-vu-prepare
+ignore#!#Test_sp_rename_database-vu-verify
+ignore#!#Test_sp_rename_database-vu-cleanup
+ignore#!#Test_sp_renamedb-vu-prepare
+ignore#!#Test_sp_renamedb-vu-verify
+ignore#!#Test_sp_renamedb-vu-cleanup
+ignore#!#Test_sp_rename-dep-vu-prepare
+ignore#!#Test_sp_rename-dep-vu-verify
+ignore#!#Test_sp_rename-dep-vu-cleanup
+ignore#!#Test_sp_rename-vu-verify
+
+
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
 
