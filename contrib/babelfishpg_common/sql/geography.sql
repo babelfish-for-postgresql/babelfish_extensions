@@ -240,7 +240,7 @@ CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
-	RETURNS sys.bbf_varbinary
+	RETURNS sys.varbinary
 	AS 'babelfishpg_common', 'st_as_binary_geography'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 

@@ -240,7 +240,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__Point(float8, float8, srid integer)
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
-	RETURNS sys.bbf_varbinary
+	RETURNS sys.varbinary
 	AS 'babelfishpg_common', 'st_as_binary_geometry'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 

@@ -40,7 +40,7 @@ DECLARE
 BEGIN
     ALTER FUNCTION sys.GeographyAsTextbp_helper(sys.GEOGRAPHY) RENAME TO geographyastextbp_helper_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN undefined_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -60,7 +60,7 @@ DECLARE
 BEGIN	
 	ALTER FUNCTION sys.bpchar(sys.GEOGRAPHY) RENAME TO bpchar_geog_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN	
+EXCEPTION WHEN undefined_function THEN	
     GET STACKED DIAGNOSTICS	
     exception_message = MESSAGE_TEXT;	
     RAISE WARNING '%', exception_message;	
@@ -96,7 +96,7 @@ DECLARE
 BEGIN	
 	ALTER FUNCTION sys.varchar(sys.GEOGRAPHY) RENAME TO varchar_geog_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN	
+EXCEPTION WHEN undefined_function THEN	
     GET STACKED DIAGNOSTICS	
     exception_message = MESSAGE_TEXT;	
     RAISE WARNING '%', exception_message;	
@@ -138,7 +138,7 @@ DECLARE
 BEGIN	
 	ALTER FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY) RENAME TO bbf_varbinary_geog_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN	
+EXCEPTION WHEN undefined_function THEN	
     GET STACKED DIAGNOSTICS	
     exception_message = MESSAGE_TEXT;	
     RAISE WARNING '%', exception_message;	
@@ -200,7 +200,7 @@ DECLARE
 BEGIN
     ALTER FUNCTION sys.Geography__stgeomfromtext(text, integer) RENAME TO geography__stgeomfromtext_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN undefined_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -228,7 +228,7 @@ DECLARE
 BEGIN
     ALTER FUNCTION sys.STAsText_common(sys.GEOGRAPHY) RENAME TO stastext_common_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN undefined_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -248,7 +248,7 @@ DECLARE
 BEGIN
     ALTER FUNCTION sys.STAsText(sys.GEOGRAPHY) RENAME TO stastext_geog_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN undefined_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -274,7 +274,7 @@ DECLARE
 BEGIN
     ALTER FUNCTION sys.STAsBinary(sys.GEOGRAPHY) RENAME TO stasbinary_geog_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN undefined_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -284,7 +284,7 @@ $$;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stasbinary_geog_deprecated_5_4_0');
 
 CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
-	RETURNS sys.bbf_varbinary
+	RETURNS sys.varbinary
 	AS 'babelfishpg_common', 'st_as_binary_geography'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -299,7 +299,7 @@ DECLARE
 BEGIN
     ALTER FUNCTION sys.Geography__STPointFromText(text, integer) RENAME TO geography__stpointfromtext_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN undefined_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -352,7 +352,7 @@ DECLARE
 BEGIN
     ALTER FUNCTION sys.Geometry__stgeomfromtext(text, integer) RENAME TO geometry__stgeomfromtext_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN undefined_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -380,7 +380,7 @@ DECLARE
 BEGIN
     ALTER FUNCTION sys.STAsText(sys.GEOMETRY) RENAME TO stastext_geom_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN undefined_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -402,7 +402,7 @@ DECLARE
 BEGIN	
 	ALTER FUNCTION sys.bpchar(sys.GEOMETRY) RENAME TO bpchar_geom_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN	
+EXCEPTION WHEN undefined_function THEN	
     GET STACKED DIAGNOSTICS	
     exception_message = MESSAGE_TEXT;	
     RAISE WARNING '%', exception_message;	
@@ -432,7 +432,7 @@ DECLARE
 BEGIN	
 	ALTER FUNCTION sys.varchar(sys.GEOMETRY) RENAME TO varchar_geom_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN	
+EXCEPTION WHEN undefined_function THEN	
     GET STACKED DIAGNOSTICS	
     exception_message = MESSAGE_TEXT;	
     RAISE WARNING '%', exception_message;	
@@ -476,7 +476,7 @@ DECLARE
 BEGIN	
 	ALTER FUNCTION sys.bbf_varbinary(sys.GEOMETRY) RENAME TO bbf_varbinary_geom_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN	
+EXCEPTION WHEN undefined_function THEN	
     GET STACKED DIAGNOSTICS	
     exception_message = MESSAGE_TEXT;	
     RAISE WARNING '%', exception_message;	
@@ -557,7 +557,7 @@ DECLARE
 BEGIN
     ALTER FUNCTION sys.Geometry__STPointFromText(text, integer) RENAME TO geometry__stpointfromtext_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN undefined_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -595,7 +595,7 @@ DECLARE
 BEGIN
     ALTER FUNCTION sys.STAsBinary(sys.GEOMETRY) RENAME TO stasbinary_geom_deprecated_5_4_0;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN undefined_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -605,7 +605,7 @@ $$;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stasbinary_geom_deprecated_5_4_0');
 
 CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
-	RETURNS sys.bbf_varbinary
+	RETURNS sys.varbinary
 	AS 'babelfishpg_common', 'st_as_binary_geometry'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 

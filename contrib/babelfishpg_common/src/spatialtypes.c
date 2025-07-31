@@ -14,7 +14,6 @@
 #include "utils/array.h"
 #include "utils/datum.h"
 #include "catalog/pg_type.h"
-#include "varchar.h"
 
 static void load_functions();
 
@@ -1571,6 +1570,10 @@ geometry_asbpchar(PG_FUNCTION_ARGS)
                                ObjectIdGetDatum(0),
                                Int32GetDatum(typmod));
 
+    pfree(text_result);
+    pfree(rewritten_text);
+    pfree(bpchar_result);
+    pfree(buf_padded);
     PG_RETURN_DATUM(res);
 }
 
