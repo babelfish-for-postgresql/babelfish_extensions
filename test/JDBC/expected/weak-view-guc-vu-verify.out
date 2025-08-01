@@ -1,0 +1,110 @@
+-- CHECK the GUC setting for weak view binding
+EXEC sp_babelfish_configure;
+GO
+~~START~~
+text#!#text#!#text
+babelfishpg_tsql.enable_pg_hint#!#off#!#Loads and enables pg_hint_plan library
+babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
+babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
+babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
+babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
+babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext search
+babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDENTITY() in SELECT-INTO
+babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
+babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
+babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
+babelfishpg_tsql.escape_hatch_inline_function_option#!#strict#!#escape hatch for INLINE option in CREATE FUNCTION
+babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
+babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
+babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
+babelfishpg_tsql.escape_hatch_login_hashed_password#!#strict#!#escape hatch for login hashed passwords
+babelfishpg_tsql.escape_hatch_login_misc_options#!#strict#!#escape hatch for login miscellaneous options
+babelfishpg_tsql.escape_hatch_login_old_password#!#strict#!#escape hatch for login old passwords
+babelfishpg_tsql.escape_hatch_login_password_must_change#!#strict#!#escape hatch for login passwords must_change option
+babelfishpg_tsql.escape_hatch_login_password_unlock#!#strict#!#escape hatch for login passwords unlock option
+babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table add
+babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table on exsiting constraint
+babelfishpg_tsql.escape_hatch_query_hints#!#ignore#!#escape hatch for query hints
+babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore#!#escape hatch for ROWGUIDCOL option
+babelfishpg_tsql.escape_hatch_rowversion#!#strict#!#escape hatch for TIMESTAMP/ROWVERSION columns
+babelfishpg_tsql.escape_hatch_schemabinding_function#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE FUNCTION
+babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE PROCEDURE
+babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE TRIGGER
+babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE VIEW
+babelfishpg_tsql.escape_hatch_session_settings#!#ignore#!#escape hatch for session settings
+babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#strict#!#escape hatch for SET TRANSACTION ISOLATION LEVEL
+babelfishpg_tsql.escape_hatch_showplan_all#!#strict#!#escape hatch for SHOWPLAN_ALL and STATISTICS PROFILE
+babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for storage_on_partition option in CREATE/ALTER TABLE and CREATE INDEX
+babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
+babelfishpg_tsql.escape_hatch_table_hints#!#ignore#!#escape hatch for table hints
+babelfishpg_tsql.explain_buffers#!#off#!#Include information on buffer usage
+babelfishpg_tsql.explain_costs#!#on#!#Include information on estimated startup and total cost
+babelfishpg_tsql.explain_format#!#text#!#Specify the output format, which can be TEXT, XML, JSON, or YAML
+babelfishpg_tsql.explain_settings#!#off#!#Include information on configuration parameters
+babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., totaled timing information) after the query plan
+babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
+babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
+babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
+babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
+babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
+babelfishpg_tsql.weak_view_binding#!#off#!#Sets the default binding mode for views.
+~~END~~
+
+
+DROP TABLE TV1;
+GO
+~~ERROR (Code: 3726)~~
+
+~~ERROR (Message: cannot drop table tv1 because other objects depend on it)~~
+
+
+DROP VIEW V1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot drop view v1 because other objects depend on it)~~
+
+
+-- Turn on GUC for weak view binding
+EXEC sp_babelfish_configure 'babelfishpg_tsql.weak_view_binding', 'on';
+GO
+
+ALTER VIEW V1 AS SELECT a, b FROM TV1;
+GO
+
+ALTER VIEW V3 AS SELECT a FROM TV1 JOIN TV2 ON TV1.a = TV2.id;
+GO
+
+DROP TABLE TV1;
+GO
+
+CREATE TABLE TV1 (a int, b int);
+GO
+
+SELECT * FROM V1;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+SELECT * FROM V2;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- Turn off GUC for weak view binding
+EXEC sp_babelfish_configure 'babelfishpg_tsql.weak_view_binding', 'off';
+GO
+
+CREATE VIEW V4 AS SELECT a, b FROM TV1;
+GO
+
+DROP TABLE TV1;
+GO
+~~ERROR (Code: 3726)~~
+
+~~ERROR (Message: cannot drop table tv1 because other objects depend on it)~~
+
