@@ -4788,14 +4788,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 										
 
-										update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
+									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
 								}
 							}
 						}
 					}
-					if(list_length(grant->privileges) > 1 && !(grant->is_grant))
+					if (list_length(grant->privileges) > 1 && !(grant->is_grant))
 					{
-						if(filtered_list == NIL)
+						if (filtered_list == NIL)
 							return;
 
 						list_free(grant->privileges);
