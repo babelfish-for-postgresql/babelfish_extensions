@@ -1264,3 +1264,9 @@ GO
 
 select cast(geography::STGeomFromText(cast(N'Point(1 1 1 1)' as varbinary(max)), 4326) as varchar(max))
 GO
+
+Select * from GeogFromText
+GO
+
+Select * from GeomFromText
+GO

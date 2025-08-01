@@ -1524,7 +1524,7 @@ geometry_asbpchar(PG_FUNCTION_ARGS)
     text    *text_result,           /* Initial WKT text from PostGIS */
             *rewritten_text;        /* Processed WKT text after rewriting */
     int32   typmod = PG_GETARG_INT32(1);
-    int     maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
+    int     maxlen = typmod - VARHDRSZ;
     char   *bpchar_result;        /* Resulting bpchar text */
     char   *buf_padded;
     int    str_len;
@@ -1544,7 +1544,7 @@ geometry_asbpchar(PG_FUNCTION_ARGS)
      * Uses PostGIS's internal text conversion function (ST_AsText)
      */
     UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
-    text_result = DatumGetTextP(lwgeom_astext_p(fcinfo_local));
+    text_result = DatumGetTextPP(lwgeom_astext_p(fcinfo_local));
 
     /* 
      * Rewrite the WKT text using the geo_wkt_rewrite function

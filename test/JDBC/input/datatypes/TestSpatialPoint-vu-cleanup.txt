@@ -133,3 +133,7 @@ DROP SCHEMA IF EXISTS geom_schema
 DROP TABLE IF EXISTS STX
 
 DROP TABLE geo_cast_test
+
+DROP VIEW GeogFromText
+
+DROP VIEW GeomFromText

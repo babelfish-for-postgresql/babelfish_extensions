@@ -605,3 +605,6 @@ INSERT INTO geo_cast_test VALUES (1, geometry::STGeomFromText('POINT(1 1 1 1)', 
 ~~ROW COUNT: 4~~
 
 
+CREATE VIEW GeogFromText AS SELECT geography::STGeomFromText('POINT (1 2)', 4326) AS geog1, geography::STPointFromText('POINT (1 2)', 4326) AS geog2;
+
+CREATE VIEW GeomFromText AS SELECT geometry::STGeomFromText('POINT (1 2)', 4326) AS geog1, geometry::STPointFromText('POINT (1 2)', 4326) AS geog2;
