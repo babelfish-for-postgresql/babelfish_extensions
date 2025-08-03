@@ -707,18 +707,18 @@ rowversionvarbinary(PG_FUNCTION_ARGS)
 Datum
 varcharvarbinary(PG_FUNCTION_ARGS)
 {
-	VarChar			*source = PG_GETARG_VARCHAR_PP(0);
-	char			*data = VARDATA_ANY(source);		/* Source string is UTF-8 */
-	char			*encoded_data;
-	char			*rp;
-	size_t			len = VARSIZE_ANY_EXHDR(source);
-	int32			typmod = PG_GETARG_INT32(1);
-	bool			isExplicit = PG_GETARG_BOOL(2);
-	int32			maxlen;
-	bytea			*result;
-	coll_info		collInfo;
-	int				encodedByteLen;
-	MemoryContext	ccxt = CurrentMemoryContext;
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char	   *data = VARDATA_ANY(source);		/* Source string is UTF-8 */
+	char	   *encoded_data;
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		maxlen;
+	bytea	   *result;
+	coll_info	collInfo;
+	int			encodedByteLen;
+	MemoryContext ccxt = CurrentMemoryContext;
 
 	if (!isExplicit)
 		ereport(ERROR,
@@ -777,18 +777,18 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 Datum
 nvarcharvarbinary(PG_FUNCTION_ARGS)
 {
-	VarChar			*source = PG_GETARG_VARCHAR_PP(0);
-	char			*data = VARDATA_ANY(source);		/* Source string is UTF-8 */
-	char			*encoded_data;
-	char			*rp;
-	size_t			len = VARSIZE_ANY_EXHDR(source);
-	int32			typmod = PG_GETARG_INT32(1);
-	bool			isExplicit = PG_GETARG_BOOL(2);
-	int32			maxlen;
-	bytea			*result;
-	int				encodedByteLen;
-	StringInfoData	buf; 
-	MemoryContext	ccxt = CurrentMemoryContext;
+	VarChar         *source = PG_GETARG_VARCHAR_PP(0);
+	char	        *data = VARDATA_ANY(source);		/* Source string is UTF-8 */
+	char	        *encoded_data;
+	char	        *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		maxlen;
+	bytea	        *result;
+	int		encodedByteLen;
+	StringInfoData  buf; 
+	MemoryContext   ccxt = CurrentMemoryContext;
 
 	if (!isExplicit)
 		ereport(ERROR,
@@ -963,34 +963,10 @@ varbinarynchar(PG_FUNCTION_ARGS)
 	if (maxlen < 0)
 	{
 		maxlen = encodedByteLen; /* No length restriction */
-	}
-	else
+	}else if ((len >> 1) < maxlen)
 	{
-		/*
-		 * For NCHAR(n), we need to properly calculate the byte length for padding.
-		 * maxlen currently represents character count, but we need byte length
-		 * for the final UTF-8 result. Similar to bpchar_input logic.
-		 */
-		size_t charlen = pg_mbstrlen_with_len(encoded_result, encodedByteLen);
-		
-		if (charlen > maxlen)
-		{
-			/* 
-			 * Input has more characters than allowed, truncate to maxlen characters
-			 * and adjust byte length accordingly 
-			 */
-			size_t mbmaxlen = pg_mbcharcliplen(encoded_result, encodedByteLen, maxlen);
-			encodedByteLen = mbmaxlen;
-			maxlen = mbmaxlen; /* maxlen is now byte length */
-		}
-		else
-		{
-			/*
-			 * Input fits within character limit, calculate the byte length needed
-			 * for padding: current byte length + spaces for remaining characters
-			 */
-			maxlen = encodedByteLen + (maxlen - charlen);
-		}
+		/* If the encoded length is less than maxlen, pad with spaces */
+		maxlen = encodedByteLen + (maxlen - (len >> 1));
 	}
 
 	result = (BpChar *) palloc0(maxlen + VARHDRSZ);
@@ -1164,16 +1140,16 @@ ncharvarbinary(PG_FUNCTION_ARGS)
 Datum
 varbinaryvarchar(PG_FUNCTION_ARGS)
 {
-	bytea			*source = PG_GETARG_BYTEA_PP(0);
-	char			*data = VARDATA_ANY(source); /* Source data is server encoded */
-	VarChar			*result;
-	char			*encoded_result;
-	size_t			len = VARSIZE_ANY_EXHDR(source);
-	int32			typmod = -1;
-	int32			maxlen = -1;
-	coll_info		collInfo;
-	int				encodedByteLen;
-	MemoryContext	ccxt = CurrentMemoryContext;
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);		/* Source data is server encoded */
+	VarChar    *result;
+	char 	   *encoded_result;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = -1;
+	int32		maxlen = -1;
+	coll_info	collInfo;
+	int			encodedByteLen;
+	MemoryContext ccxt = CurrentMemoryContext;
 
 	/*
 	 * Check whether the typmod argument exists, so that we 
@@ -1212,8 +1188,8 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-		MemoryContext	ectx;
-		ErrorData		*errorData;
+		MemoryContext ectx;
+		ErrorData    *errorData;
 
 		ectx = MemoryContextSwitchTo(ccxt);
 		errorData = CopyErrorData();
@@ -1235,17 +1211,17 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 Datum
 varbinarynvarchar(PG_FUNCTION_ARGS)
 {
-	bytea			*source = PG_GETARG_BYTEA_PP(0);
-	char			*data = VARDATA_ANY(source);
-	VarChar			*result;
-	char			*encoded_result;
-	size_t			len = VARSIZE_ANY_EXHDR(source);
-	int32			typmod = -1;
-	int				maxlen = -1;
-	int				encodedByteLen;
-	StringInfoData	buf;
-	char			*paddedData = (char*)palloc0(len+1);
-	MemoryContext	ccxt = CurrentMemoryContext;
+	bytea	        *source = PG_GETARG_BYTEA_PP(0);
+	char	        *data = VARDATA_ANY(source);
+	VarChar         *result;
+	char 	        *encoded_result;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = -1;
+	int		maxlen = -1;
+	int		encodedByteLen;
+	StringInfoData 	buf;
+	char 		*paddedData = (char*)palloc0(len+1);
+	MemoryContext   ccxt = CurrentMemoryContext;
 
 	typmod = PG_GETARG_INT32(1);
 	maxlen = typmod - VARHDRSZ;
@@ -1371,15 +1347,15 @@ varcharbinary(PG_FUNCTION_ARGS)
 Datum
 nvarcharbinary(PG_FUNCTION_ARGS)
 {
-	VarChar			*source = PG_GETARG_VARCHAR_PP(0);
-	char			*data = VARDATA_ANY(source);
-	char			*rp;
-	size_t			len = VARSIZE_ANY_EXHDR(source);
-	int32			typmod = PG_GETARG_INT32(1);
-	bool			isExplicit = PG_GETARG_BOOL(2);
-	int32			maxlen;
-	bytea			*result;
-	StringInfoData	buf;
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		maxlen;
+	bytea	   *result;
+	StringInfoData 		buf;
 
 	if (!isExplicit)
 		ereport(ERROR,
