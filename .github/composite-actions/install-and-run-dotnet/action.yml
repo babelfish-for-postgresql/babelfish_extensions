@@ -20,9 +20,13 @@ runs:
     if: always() && steps.install-mssql-tools.outcome == 'success'
     run: | 
       cd ~
+      # Remove existing repositories
+      sudo rm /etc/apt/sources.list.d/microsoft*.list /etc/apt/sources.list.d/msprod*.list /etc/apt/sources.list.d/mssql*.list
       wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-      sudo dpkg -i packages-microsoft-prod.deb
+      echo "Y" | sudo dpkg -i packages-microsoft-prod.deb
       rm packages-microsoft-prod.deb
+      sudo apt-get clean
+      sudo apt-get update
       sudo apt-get install -y apt-transport-https
       sudo apt-get install -y dotnet-sdk-8.0
       sudo apt-get install -y apt-transport-https
