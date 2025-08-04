@@ -356,3 +356,11 @@ CREATE OPERATOR sys.= (
 alter OPERATOR family bbf_varbinary_ops USING btree add
     OPERATOR 3 sys.= (sys.bbf_varbinary, sys.bbf_binary),
     FUNCTION 1 sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary);
+
+CREATE OR REPLACE FUNCTION sys.decimal2decimal(sys.DECIMAL, integer)
+RETURNS sys.DECIMAL
+AS 'numeric'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.DECIMAL AS sys.DECIMAL)
+WITH FUNCTION sys.decimal2decimal(sys.DECIMAL, integer) AS IMPLICIT;
