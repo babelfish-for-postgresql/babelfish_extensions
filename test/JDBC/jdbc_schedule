@@ -559,3 +559,10 @@ ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-prepare
 ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-verify
 ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-cleanup
 
+# These tests are meant for upgrade scenario prior to 17_7 or 16_11 release
+ignore#!#Test-pointZM_before_17_7-or-16_11-vu-prepare
+ignore#!#Test-pointZM_before_17_7-or-16_11-vu-verify
+ignore#!#Test-pointZM_before_17_7-or-16_11-vu-cleanup
+ignore#!#TestSpatialPoint_before_17_7-or-16_11-vu-prepare
+ignore#!#TestSpatialPoint_before_17_7-or-16_11-vu-verify
+ignore#!#TestSpatialPoint_before_17_7-or-16_11-vu-cleanup
