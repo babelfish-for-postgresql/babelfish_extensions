@@ -374,6 +374,12 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 					// insert new array into existing obj for nest
 					sprintf(hashKey, "%d", num - 1);
 					hashEntry = (JsonbEntry *) hash_search(jsonbHash, hashKey, HASH_FIND, &found);
+					if (!found)
+						ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR)),
+							errmsg("Cannot find parent level: queries with"
+								" some missing intermediate levels in output"
+								" are not supported yet.)"));
 					current = hashEntry->value;
 					insert_existing_json_to_obj(current, hashEntry->parent, &(nestedVal->val.object.pairs[0].value), hashEntry->idx, parts[2]);
 				}
