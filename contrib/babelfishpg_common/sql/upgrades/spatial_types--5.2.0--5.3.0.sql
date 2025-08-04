@@ -378,21 +378,30 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 	AS 'babelfishpg_common', 'get_geography_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
-	RETURNS TEXT
-	AS 'babelfishpg_common', 'st_as_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+DO $$ 
+BEGIN 
+    -- Check if function exists and has return type TEXT
+    IF EXISTS (
+        SELECT 1 
+        FROM pg_proc p
+        WHERE p.proname = 'stastext'
+        AND format_type(p.prorettype, NULL) = 'text'
+    ) THEN
+        -- Create or replace the function
+        CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
+        	RETURNS TEXT
+        	AS 'babelfishpg_common', 'st_as_text'
+        	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
-	RETURNS TEXT
-	AS $$
-	BEGIN
-		-- Call the underlying function after preprocessing
-		-- Here we are flipping the coordinates 
-		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		RETURN (SELECT sys.STAsText_common(sys.Geography__STFlipCoordinates($1)));
-	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+        EXECUTE 'CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
+        		RETURNS TEXT
+        		AS ''
+        		BEGIN
+        			RETURN (SELECT sys.STAsText_common(sys.Geography__STFlipCoordinates($1)));
+        		END;
+        		'' LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;';
+    END IF;
+END $$;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
 	RETURNS sys.GEOMETRY
@@ -414,15 +423,27 @@ CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOGRAPHY)
 	AS 'babelfishpg_common','bytea_from_geography'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
-	RETURNS bytea
-	AS 'babelfishpg_common', 'st_as_binary_geometry'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+DO $$ 
+BEGIN 
+    -- Check if function exists and has return type Bytea
+    IF EXISTS (
+        SELECT 1 
+        FROM pg_proc p
+        WHERE p.proname = 'stasbinary'
+        AND format_type(p.prorettype, NULL) = 'bytea'
+    ) THEN
+        -- Create or replace the function
+        CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
+        	RETURNS bytea
+        	AS 'babelfishpg_common', 'st_as_binary_geometry'
+        	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
-	RETURNS bytea
-	AS 'babelfishpg_common', 'st_as_binary_geography'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+        CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
+        	RETURNS bytea
+        	AS 'babelfishpg_common', 'st_as_binary_geography'
+        	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    END IF;
+END $$;
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 	RETURNS sys.GEOMETRY
@@ -556,10 +577,22 @@ CREATE OR REPLACE FUNCTION sys.STDistance_helper(geom1 sys.GEOMETRY, geom2 sys.G
 	AS '$libdir/postgis-3', 'ST_Distance'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.STAsText_common(sys.GEOGRAPHY)
-	RETURNS TEXT
-	AS 'babelfishpg_common', 'st_as_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+DO $$ 
+BEGIN 
+    -- Check if function exists and has return type TEXT
+    IF EXISTS (
+        SELECT 1 
+        FROM pg_proc p
+        WHERE p.proname = 'stastext_common'
+        AND format_type(p.prorettype, NULL) = 'text'
+    ) THEN
+        -- Create or replace the function
+        CREATE OR REPLACE FUNCTION sys.STAsText_common(sys.GEOGRAPHY)
+        	RETURNS TEXT
+        	AS 'babelfishpg_common', 'st_as_text'
+        	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    END IF;
+END $$;
 
 CREATE OR REPLACE FUNCTION sys.GeographyAsTextbp_helper(sys.GEOGRAPHY)
 	RETURNS sys.bpchar
