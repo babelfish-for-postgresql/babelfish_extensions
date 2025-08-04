@@ -2,6 +2,11 @@
 ---- Include changes related to other datatypes except spatial types here ----
 ------------------------------------------------------------------------------
 
+-- complain if script is sourced in psql, rather than via ALTER EXTENSION
+\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '5.4.0'" to load this file. \quit
+
+SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+
 -- Operator class for numeric_ops to incorporate various operator between numeric and fixeddecimal for Index scan
 DO $$
 BEGIN
@@ -39,3 +44,23 @@ BEGIN
     END IF;
 END $$;
 
+CREATE OR REPLACE FUNCTION sys.decimal2decimal(sys.DECIMAL, integer)
+RETURNS sys.DECIMAL
+AS 'numeric'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+DECLARE 
+    sys_oid Oid;
+    decimal_oid Oid;
+BEGIN
+  sys_oid := (SELECT oid FROM pg_namespace WHERE pg_namespace.nspname ='sys');
+  decimal_oid := (SELECT oid FROM pg_type WHERE pg_type.typname ='decimal' AND pg_type.typnamespace = sys_oid);
+  IF (SELECT COUNT(*) FROM pg_cast WHERE pg_cast.castsource = decimal_oid AND pg_cast.casttarget = decimal_oid) = 0 THEN
+      CREATE CAST (sys.DECIMAL AS sys.DECIMAL)
+      WITH FUNCTION sys.decimal2decimal(sys.DECIMAL, integer) AS IMPLICIT;
+  END IF;
+END $$;
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
