@@ -385,7 +385,7 @@ BEGIN
         SELECT 1 
         FROM pg_proc p
         WHERE p.proname = 'stastext'
-        AND format_type(p.prorettype, NULL) = 'text'
+        AND p.prorettype = 'text'::regtype::oid
     ) THEN
         -- Create or replace the function
         CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
@@ -430,7 +430,7 @@ BEGIN
         SELECT 1 
         FROM pg_proc p
         WHERE p.proname = 'stasbinary'
-        AND format_type(p.prorettype, NULL) = 'bytea'
+        AND p.prorettype = 'bytea'::regtype::oid
     ) THEN
         -- Create or replace the function
         CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
@@ -584,7 +584,7 @@ BEGIN
         SELECT 1 
         FROM pg_proc p
         WHERE p.proname = 'stastext_common'
-        AND format_type(p.prorettype, NULL) = 'text'
+        AND p.prorettype = 'text'::regtype::oid
     ) THEN
         -- Create or replace the function
         CREATE OR REPLACE FUNCTION sys.STAsText_common(sys.GEOGRAPHY)
