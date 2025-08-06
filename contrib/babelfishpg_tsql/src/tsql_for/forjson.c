@@ -496,8 +496,8 @@ tsql_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_values)
 
 		colname = NameStr(att->attname);
 
-		if (!strcmp(colname, "\?column\?")) /* When column name or alias is
-											 * not provided */
+		/* When column name or alias is not provided */
+		if (!colname || !strcmp(colname, "\?column\?") || colname[0] == '\0')
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

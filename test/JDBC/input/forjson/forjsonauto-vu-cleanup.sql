@@ -40,6 +40,15 @@ GO
 DROP VIEW forjson_vu_v_14
 GO
 
+DROP PROCEDURE forjson_vu_v_resjunk_orderby_groupby
+GO
+
+DROP PROCEDURE forjson_vu_v_resjunk_window_functions
+GO
+
+DROP PROCEDURE forjson_vu_p_resjunk_groupby_having_orderby
+GO
+
 DROP PROCEDURE forjson_vu_p_1
 GO
 
@@ -93,6 +102,9 @@ go
 
 drop trigger forjson_vu_trigger_2;
 go
+ 
+DROP FUNCTION dbo.forjson_auto_test_diff_cases_fn;
+GO
 
 DROP TABLE forjson_auto_vu_t_users
 GO
@@ -110,4 +122,12 @@ DROP TABLE forjson_auto_vu_t_times
 GO
 
 DROP TABLE t50
+GO
+
+DROP TABLE forjson_auto_test_diff_cases;
+DROP TABLE forjson_test_nested_1;
+DROP TABLE forjson_test_nested_2;
+DROP TABLE forjson_test_unicode;
+DROP TABLE forjson_test_orderby;
+DROP TABLE forjson_test_groupby;
 GO
