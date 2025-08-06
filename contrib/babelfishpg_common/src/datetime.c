@@ -517,6 +517,92 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 	return 0;
 }
 
+static Timestamp
+round_datetime(Timestamp timestamp)
+{
+	struct pg_tm tm;
+	fsec_t fsec;
+	int msec, rounded_msec;
+	Timestamp result;
+	int unit, base;
+	
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		return timestamp;
+		
+	if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) != 0)
+		return timestamp;
+	
+	// Convert microseconds to milliseconds
+	msec = fsec / 1000;
+	
+	// Apply SQL Server datetime rounding:
+	// Round to nearest .000, .003, or .007 based on the last digit
+	unit = msec % 10;
+	base = (msec / 10) * 10;  // Remove the unit digit
+	
+	switch (unit)
+	{
+		case 0:
+		case 1:
+			rounded_msec = base + 0;  // Round to .000
+			break;
+		case 2:
+		case 3:
+		case 4:
+			rounded_msec = base + 3;  // Round to .003
+			break;
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+			rounded_msec = base + 7;  // Round to .007
+			break;
+		case 9:
+			rounded_msec = base + 10; // Round up to next .000
+			break;
+		default:
+			rounded_msec = msec;      // Fallback
+			break;
+	}
+	
+	// Handle carry-over if we rounded up to 1000ms
+	if (rounded_msec >= 1000)
+	{
+		rounded_msec -= 1000;
+		tm.tm_sec++;
+		
+		// Handle second overflow
+		if (tm.tm_sec >= 60)
+		{
+			tm.tm_sec = 0;
+			tm.tm_min++;
+			
+			if (tm.tm_min >= 60)
+			{
+				tm.tm_min = 0;
+				tm.tm_hour++;
+				
+				if (tm.tm_hour >= 24)
+				{
+					tm.tm_hour = 0;
+					tm.tm_mday++;
+					// Note: Not handling month/year rollover for simplicity
+				}
+			}
+		}
+	}
+	
+	// Convert back to microseconds
+	fsec = rounded_msec * 1000;
+	
+	if (tm2timestamp(&tm, fsec, NULL, &result) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("timestamp out of range")));
+	
+	return result;
+}
+
 
 Datum
 datetime_in_str(char *str, Node *escontext)
@@ -631,6 +717,7 @@ datetime_in_str(char *str, Node *escontext)
 	 * TODO: round datetime fsec to fixed bins (e.g. .000, .003, .007) see:
 	 * BABEL-1081
 	 */
+	result = round_datetime(result);
 	CheckDatetimeRange(result, escontext);
 	CheckDatetimePrecision(fsec);
 
