@@ -790,6 +790,119 @@ WHERE c.CompanyName = 'Alfreds Inc'
 FOR JSON AUTO;
 GO
 
+-- direct reference Recursive CTEs
+WITH category_hierarchy AS (
+
+    SELECT CategoryID, CategoryName, 0 as Level
+    FROM forjsonauto_t_categories
+    WHERE ParentCategoryID IS NULL
+
+    UNION ALL
+
+    SELECT c.CategoryID, c.CategoryName, ch.Level + 1
+    FROM forjsonauto_t_categories c
+    INNER JOIN category_hierarchy ch ON c.ParentCategoryID = ch.CategoryID
+)
+SELECT
+    p.ProductName,
+    c.CompanyName,
+    ch.CategoryName,
+    ch.Level
+FROM category_hierarchy ch
+LEFT JOIN forjsonauto_t_products p ON ch.CategoryID = p.CategoryID
+LEFT JOIN forjsonauto_t_order_details od ON p.ProductID = od.ProductID
+LEFT JOIN forjsonauto_t_orders o ON od.OrderID = o.OrderID
+LEFT JOIN forjsonauto_t_customers c ON o.CustomerID = c.CustomerID
+WHERE p.ProductName = 'Laptop'
+FOR JSON AUTO;
+GO
+
+-- nested reference Recursive CTE (outer non-recursive CTE w/ alias  +  inner recursive CTE)
+WITH order_tree AS (
+    SELECT
+        orderid,
+        customerid,
+        1 AS depth
+    FROM forjsonauto_t_orders
+    WHERE orderid = 10248
+
+    UNION ALL
+
+    SELECT
+        o.orderid,
+        o.customerid,
+        ot.depth + 1
+    FROM forjsonauto_t_orders o
+    INNER JOIN order_tree ot
+    ON o.orderid = ot.orderid + 1
+    WHERE ot.depth < 2 )
+,level2_cte AS (
+    SELECT
+        ot.orderid,
+        c.companyname
+    FROM order_tree ot
+    JOIN forjsonauto_t_customers c
+    ON ot.customerid = c.customerid )
+,level3_cte AS (
+    SELECT
+        l2.orderid,
+        l2.companyname,
+        'Primary' AS ordertype
+    FROM level2_cte l2 )
+SELECT
+    p.productname,
+    l3cte.companyname,
+    l3cte.orderid
+FROM level3_cte l3cte
+JOIN forjsonauto_t_order_details od ON l3cte.orderid = od.orderid
+JOIN forjsonauto_t_products p ON od.productid = p.productid
+WHERE p.productname = 'Chai'
+FOR json auto;
+GO
+
+-- nested reference recursive CTE (outer non-recursive CTE w/o alias  +  inner recursive CTE)
+WITH order_tree AS (
+    SELECT
+        orderid,
+        customerid,
+        1 AS depth
+    FROM forjsonauto_t_orders
+    WHERE orderid = 10248
+
+    UNION ALL
+
+    SELECT
+        o.orderid,
+        o.customerid,
+        ot.depth + 1
+    FROM forjsonauto_t_orders o
+    INNER JOIN order_tree ot
+    ON o.orderid = ot.orderid + 1
+    WHERE ot.depth < 2 )
+,level2_cte AS (
+    SELECT
+        ot.orderid,
+        c.companyname
+    FROM order_tree ot
+    JOIN forjsonauto_t_customers c
+    ON ot.customerid = c.customerid )
+,level3_cte AS (
+    SELECT
+        l2.orderid,
+        l2.companyname,
+        'Primary' AS ordertype
+    FROM level2_cte l2 )
+SELECT
+    p.productname,
+    level3_cte.companyname,
+    level3_cte.orderid
+FROM level3_cte
+JOIN forjsonauto_t_order_details od ON level3_cte.orderid = od.orderid
+JOIN forjsonauto_t_products p ON od.productid = p.productid
+WHERE p.productname = 'Chai'
+FOR json auto;
+GO
+
 ---------------------------------------- Different types of Targets (in SELECT_clause) ----------------------------------------
 -- subquery as target (nest_level > 1)
 SELECT c.CompanyName, 

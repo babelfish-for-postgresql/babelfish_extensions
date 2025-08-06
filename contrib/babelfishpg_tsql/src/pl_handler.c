@@ -1534,11 +1534,14 @@ handleForJsonAuto(Query *wrapperQuery)
 		}
 	}
 
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_TABLE),
-			errmsg("FOR JSON AUTO requires at least one table for "
-				"generating JSON objects. Use FOR JSON PATH or add a FROM"
-				" clause with a table name.")));
+	if (validSrcCnt == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("FOR JSON AUTO requires at least one table for "
+					"generating JSON objects. Use FOR JSON PATH or add a FROM"
+					" clause with a table name.")));
+	else
+		Assert(false);
 	return true;
 }
 
@@ -1672,6 +1675,7 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 	int			varlevelsup;	/* Variable's nesting level */
 	int			varattno;	/* Variable's attribute number */
 	RangeTblEntry *matched_src = NULL;	/* Source RTE matched by variable */
+	bool matched_src_CTE_is_recursive = false;
 	char	   *matched_src_alias;
 	StringInfoData full_src_path;	/* Accumulated source path for hash key */
 	char	   *hashed_full_src_path;
@@ -1737,12 +1741,13 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 		cur_te = outermost_te;
 		curQuery = origQuery;
 		at_outermost = true;
+		matched_src_CTE_is_recursive = false;
 
 		while (nodeTag(cur_te->expr) == T_Var)
 		{
 			cur_var = castNode(Var, cur_te->expr);
-			varno = cur_var->varno;
-			varattno = cur_var->varattno;
+			varno = cur_var->varno; // index to the source in current layer's rtable
+			varattno = cur_var->varattno; // index to target in next layer's targetList (in current layer source)
 			matched_src = list_nth(curQuery->rtable, varno-1);
 
 			/* Build full source path for unique identification */
@@ -1750,15 +1755,27 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 				appendStringInfo(&full_src_path, ".");
 			appendStringInfo(&full_src_path, "%s", matched_src->eref->aliasname);
 
+			/*
+			 * if outermost CTE:
+			 * 	  => only do unwrapping when alias is set
+			 * if we reach inner CTE:
+			 *    => we already decided to do unwrapping, keep unwrapping. inner CTE's alias is
+			 *       set or not doesn't affect the unwrapping decision.
+			 */
 			if (matched_src->rtekind == RTE_CTE && (matched_src->alias != NULL || !at_outermost))
 			{
-				/* Navigate into CTE definition */
+				/* get info in the CTE from ctelist (which cannot get from RTE_CTE) */
 				cteHashEntry = (CtenameIdx *) hash_search(ctename_idx_hash,
 														  matched_src->ctename,
 														  HASH_FIND,
 														  &found);
 				Assert(found);
 				cteEntry = (CommonTableExpr *) list_nth(origQuery->cteList, cteHashEntry->idx_in_ctelist);
+				if (cteEntry->cterecursive)
+				{
+					matched_src_CTE_is_recursive = true;
+					break;
+				}
 				curQuery = castNode(Query, cteEntry->ctequery);
 				cur_te = (TargetEntry *) list_nth(curQuery->targetList, varattno-1);
 			}
@@ -1775,7 +1792,7 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 				at_outermost = false;
 		}
 
-		/* Handle nested subqueries with FOR JSON AUTO */
+		/* Handle nested FOR JSON AUTO in sub-select in target entry */
 		if (nodeTag(cur_te->expr) == T_SubLink)
 		{
 			sl = castNode(SubLink, cur_te->expr);
@@ -1797,8 +1814,17 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 		if (nodeTag(cur_te->expr) == T_Var) {
 			varlevelsup = cur_var->varlevelsup;
 
-			/* Don't use source alias for functions or outer source */
-			if (varlevelsup > 0 || matched_src->rtekind == RTE_FUNCTION)
+			/*
+			 * Don't use source alias for functions or outer source
+			 * 1. if T_Var is referencing from outer sources
+			 * 2. if source is a RTE_FUNCTION
+			 * 3. if source is a RTE_CTE after the previous unwrapping loop
+			 *    - either this CTE is at outermost layer w/o an alias assigned
+			 *      => we want to use this CTE's ctename as JSON nesting key
+			 *    - or this CTE is a recursive CTE
+			 *      => we don't want to use this CTE's ctename as JSON nesting key
+			 */
+			if (varlevelsup > 0 || matched_src->rtekind == RTE_FUNCTION || (matched_src->rtekind == RTE_CTE && matched_src_CTE_is_recursive))
 				outermost_te = buildJsonEntry(curMaxUsedJsonLevel, curMaxUsedJsonKey, outermost_te);
 
 			else
@@ -1819,7 +1845,7 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 				else
 				{
 					/* Create new hash entry with incremented nest level */
-					if (curMaxUsedJsonLevel == 1 && !nestingLevel1Used) // case 1
+					if (curMaxUsedJsonLevel == 1 && !nestingLevel1Used)
 						nestingLevel1Used = true;
 					else
 						curMaxUsedJsonLevel++;

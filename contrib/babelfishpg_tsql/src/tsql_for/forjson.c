@@ -377,9 +377,10 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 					if (!found)
 						ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR)),
-							errmsg("Cannot find parent level: queries with"
-								" some missing intermediate levels in output"
-								" are not supported yet.)"));
+							errmsg("FOR JSON AUTO limitation: Your query has"
+								" produced empty result subsets that skip "
+								"intermediate nesting keys in the JSON hierarchy."
+								" This pattern is not currently supported."));
 					current = hashEntry->value;
 					insert_existing_json_to_obj(current, hashEntry->parent, &(nestedVal->val.object.pairs[0].value), hashEntry->idx, parts[2]);
 				}
