@@ -39,3 +39,20 @@ BEGIN
     END IF;
 END $$;
 
+CREATE OR REPLACE FUNCTION sys.decimal2decimal(sys.DECIMAL, integer)
+RETURNS sys.DECIMAL
+AS 'numeric'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+DECLARE 
+    sys_oid Oid;
+    decimal_oid Oid;
+BEGIN
+  sys_oid := (SELECT oid FROM pg_namespace WHERE pg_namespace.nspname ='sys');
+  decimal_oid := (SELECT oid FROM pg_type WHERE pg_type.typname ='decimal' AND pg_type.typnamespace = sys_oid);
+  IF (SELECT COUNT(*) FROM pg_cast WHERE pg_cast.castsource = decimal_oid AND pg_cast.casttarget = decimal_oid) = 0 THEN
+      CREATE CAST (sys.DECIMAL AS sys.DECIMAL)
+      WITH FUNCTION sys.decimal2decimal(sys.DECIMAL, integer) AS IMPLICIT;
+  END IF;
+END $$;
