@@ -3,7 +3,7 @@
 ------------------------------------------------------------------------------
 
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '5.3.0'" to load this file. \quit
+\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '5.4.0'" to load this file. \quit
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
