@@ -1,0 +1,198 @@
+-- tsql
+create login l3014_1 with password='12345678';
+go
+
+create user l3014_1;
+go
+
+create table t3014_1(a int);
+go
+
+create table t3014_2(a int);
+go
+
+create view v3014_a as select * from t3014_1;
+go
+
+create function f3014_a() returns int as begin return 1 end;
+go
+
+-- CASE 1 Simple Table/View references inside views
+-- CASE 1.1 view referring table
+create view v3014_1_1 as select * from t3014_1;
+go
+
+-- CASE 1.2 View referring multiple table joined 
+create view v3014_1_2 as select t3014_1.a as a , t3014_2.a as b from t3014_1, t3014_2;
+go
+
+-- CASE 1.3 nesting cases
+-- <TBA>
+
+-- CASE 1.4 Nested view scenario
+create view v3014_1_4 as select * from v3014_a;
+go
+
+-- CASE 2 Subquery inside views
+-- CASE 2.1: Subquery in SELECT clause
+create view v3014_2_1 as select t3014_1.a, (SELECT TOP 1 a FROM t3014_2 b2 WHERE b2.a = t3014_1.a) AS subquery_data FROM t3014_1;
+go
+
+-- CASE 2.2: Subquery in WHERE clause
+create view v3014_2_2 as SELECT * FROM t3014_1 t1 WHERE t1.a IN (SELECT a FROM t3014_2 WHERE a > 1);
+go
+
+-- CASE 2.3: Subquery in FROM clause
+create view v3014_2_3 as SELECT sq.* FROM (SELECT t1.a, t2.a as a2 FROM t3014_1 t1 LEFT JOIN t3014_2 t2 ON t1.a = t2.a) sq;
+go
+
+-- CASE 2.4: Correlated subquery in WHERE
+create view v3014_2_4 as SELECT * FROM t3014_1 t1 WHERE EXISTS (SELECT 1 FROM t3014_2 t2 WHERE t2.a = t1.a);
+go
+
+-- CASE 2.5: Multiple nested subqueries
+create view v3014_2_5 as SELECT * FROM t3014_1 t1 WHERE a IN (SELECT a FROM t3014_2 WHERE a IN (SELECT a FROM t3014_1 WHERE a < 3));
+go
+
+-- CASE 2.6: Subquery with function (negative test)
+create view v3014_2_6 as SELECT t1.*, (SELECT f3014_a()) as func_result FROM t3014_1 t1;
+go
+
+-- CASE 2.7: Subquery in HAVING clause
+create view v3014_2_7 as SELECT t1.a, COUNT(*) as cnt FROM t3014_1 t1 GROUP BY t1.a HAVING COUNT(*) > (SELECT COUNT(*)/2 FROM t3014_2);
+go
+
+-- CASE 2.8: Subquery with set operations
+create view v3014_2_8 as SELECT * FROM (SELECT a FROM t3014_1 UNION SELECT a FROM t3014_2) AS combined WHERE a IN (SELECT a FROM t3014_1);
+go
+
+-- CASE 3 function/procedure references (negative tests)
+-- setup
+create function f3014_1() returns int as begin return 1 end;
+go
+
+CREATE FUNCTION f3014_2() RETURNS @t TABLE (n INT) AS BEGIN INSERT INTO @t SELECT 2 UNION SELECT 4 UNION SELECT 6; RETURN; END;
+go
+
+create function f3014_3() RETURNS INT AS BEGIN RETURN f3014_1() * 2; END;
+go
+
+create function f3014_4() RETURNS INT AS BEGIN RETURN (SELECT 1 FROM t3014_1 WHERE a = 1); END;
+go
+
+create function f3014_5() RETURNS TABLE AS RETURN (SELECT n = 1);
+go
+
+-- CASE 3.1: Views with scalar function references
+create view v3014_3_1 as select f3014_1();
+go
+
+-- CASE 3.2: Views with table-valued function references
+create view v3014_3_2 as select * from f3014_2();
+go
+
+-- CASE 3.3: Views with multiple function references
+create view v3014_3_3 as select f3014_1() from f3014_2();
+go
+
+-- CASE 3.4: Views with table-returning function
+create view v3014_3_4 as select f3014_5();
+go
+
+-- CASE 3.5: Views with nested function calls
+create view v3014_3_5 as select f3014_3();
+go
+
+-- CASE 3.6: Views with function accessing tables
+create view v3014_3_6 as select f3014_4();
+go
+
+-- Grants for CASE 1 views
+grant select on v3014_1_1 to l3014_1;
+go
+grant select on v3014_1_2 to l3014_1;
+go
+grant select on v3014_1_4 to l3014_1;
+go
+
+-- Grants for CASE 2 views
+grant select on v3014_2_1 to l3014_1;
+go
+grant select on v3014_2_2 to l3014_1;
+go
+grant select on v3014_2_3 to l3014_1;
+go
+grant select on v3014_2_4 to l3014_1;
+go
+grant select on v3014_2_5 to l3014_1;
+go
+grant select on v3014_2_6 to l3014_1;
+go
+grant select on v3014_2_7 to l3014_1;
+go
+grant select on v3014_2_8 to l3014_1;
+go
+
+-- Grants for CASE 3 views
+grant select on v3014_3_1 to l3014_1;
+go
+grant select on v3014_3_2 to l3014_1;
+go
+grant select on v3014_3_3 to l3014_1;
+go
+grant select on v3014_3_4 to l3014_1;
+go
+grant select on v3014_3_5 to l3014_1;
+go
+grant select on v3014_3_6 to l3014_1;
+go
+
+-- psql
+set babelfishpg_tsql.enable_create_alter_view_from_pg = true;
+go
+
+-- Alter CASE 1 views
+alter view master_dbo.v3014_1_1 set (security_invoker = true);
+go
+alter view master_dbo.v3014_1_2 set (security_invoker = true);
+go
+alter view master_dbo.v3014_1_4 set (security_invoker = true);
+go
+
+-- Alter CASE 2 views
+alter view master_dbo.v3014_2_1 set (security_invoker = true);
+go
+alter view master_dbo.v3014_2_2 set (security_invoker = true);
+go
+alter view master_dbo.v3014_2_3 set (security_invoker = true);
+go
+alter view master_dbo.v3014_2_4 set (security_invoker = true);
+go
+alter view master_dbo.v3014_2_5 set (security_invoker = true);
+go
+alter view master_dbo.v3014_2_6 set (security_invoker = true);
+go
+alter view master_dbo.v3014_2_7 set (security_invoker = true);
+go
+alter view master_dbo.v3014_2_8 set (security_invoker = true);
+go
+
+-- Alter CASE 3 views
+alter view master_dbo.v3014_3_1 set (security_invoker = true);
+go
+alter view master_dbo.v3014_3_2 set (security_invoker = true);
+go
+alter view master_dbo.v3014_3_3 set (security_invoker = true);
+go
+alter view master_dbo.v3014_3_4 set (security_invoker = true);
+go
+alter view master_dbo.v3014_3_5 set (security_invoker = true);
+go
+alter view master_dbo.v3014_3_6 set (security_invoker = true);
+go
+
+-- Also alter the helper view
+alter view master_dbo.v3014_a set (security_invoker = true);
+go
+
+-- tsql

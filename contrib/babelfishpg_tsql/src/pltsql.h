@@ -2262,7 +2262,7 @@ extern bool is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.v
 extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
 extern void downcase_truncate_split_object_name(char *four_part_object_name, char** server_name, char** db_name, char** schema_name, char** object_name);
-
+extern Oid get_rel_owner(Oid relid);
 typedef struct
 {
 	bool		success;

@@ -117,6 +117,11 @@ typedef enum PltsqlInitPrivsOptions
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
 
+/* Used to mark parsenode inside/outside view to apply ownership chaining logic */
+#define PNODE_UNMARKED		0
+#define PNODE_INSIDE_VIEW	1
+#define PNODE_OUTSIDE_VIEW	2
+
 /*****************************************
  * 			General Hooks
  *****************************************/
@@ -175,6 +180,7 @@ static void transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt);
 static bool transform_unpivot_clause_recursive(Node **node, List **measure_cols, List **unpivot_src_cols);
 static List* filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **source_cols);
 static bool repair_broken_views(Query *parsetree);
+static void mark_nodes_inside_view(Query *query, Oid view_owner);
 
 /*****************************************
  * 			Commands Hooks
@@ -356,6 +362,7 @@ static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
+static walk_view_rule_hook_type prev_walk_view_rule_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 
@@ -614,6 +621,9 @@ InstallExtendedHooks(void)
 	prev_pre_QueryRewrite_hook = pre_QueryRewrite_hook;
 	pre_QueryRewrite_hook = repair_broken_views;
 
+	prev_walk_view_rule_hook = walk_view_rule_hook;
+	walk_view_rule_hook = mark_nodes_inside_view;
+
 }
 
 void
@@ -690,6 +700,7 @@ UninstallExtendedHooks(void)
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
+	walk_view_rule_hook = prev_walk_view_rule_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -7634,4 +7645,112 @@ find_all_view_references(Node *node, List **view_oids)
 									find_view_references_walker,
 									(void *) &context,
 									QTW_EXAMINE_RTES_BEFORE);
+}
+
+typedef struct
+{
+	Oid view_owner;
+} mark_nodes_inside_view_context;
+
+/*
+ * Walker function to mark relations and functions inside view definitions
+ * 
+ * Walks through the query parse tree to:
+ * 1. Mark relations and functions as being inside a view context
+ * 2. For relations:
+ *    - Set checkAsUser to the view_owner when it matches the relation's owner,
+ *      enabling permission checking to pass at the executor stage (ownership chaining)
+ * 3. For procedures/functions:
+ *    - Store the view_owner in the parentOwnerId field to support
+ *      procedure/function-specific ownership chaining logic
+ *      during permission checks at the executor stage
+ * 
+ */
+static bool
+mark_nodes_inside_view_walker(Node *node, mark_nodes_inside_view_context *context)
+{
+	Oid nspid;
+	char *physical_schemaname = NULL;
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Query))
+    {
+        Query *query = (Query *) node;
+        ListCell *lc;
+        
+        foreach(lc, query->rtable)
+        {
+            RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+            RTEPermissionInfo *perminfo = NULL;
+
+			/* Process tables and view subqueries */
+            if (OidIsValid(rte->relid) &&
+				(rte->rtekind == RTE_RELATION ||
+				 (rte->rtekind == RTE_SUBQUERY && rte->relkind == RELKIND_VIEW)))
+            {
+                nspid = get_rel_namespace(rte->relid);
+                physical_schemaname = get_namespace_name(nspid);
+                perminfo = getRTEPermissionInfo(query->rteperminfos, rte);
+                
+                if (physical_schemaname && !is_shared_schema(physical_schemaname))
+                {
+                    if (get_rel_owner(rte->relid) == context->view_owner)
+                    {
+                        perminfo->checkAsUser = context->view_owner;
+                    }
+                    perminfo->insideView = PNODE_INSIDE_VIEW;
+                }
+                if (physical_schemaname)
+                    pfree(physical_schemaname);
+            }
+        }
+		return query_tree_walker(query, 
+                            	 mark_nodes_inside_view_walker,
+                            	 (void *) context,
+                            	 0);
+	}
+
+	if (IsA(node, FuncExpr))
+    {
+        FuncExpr *funcexpr = (FuncExpr *) node;
+		nspid = get_func_namespace(funcexpr->funcid);
+		physical_schemaname = get_namespace_name(nspid);
+		if (physical_schemaname && !is_shared_schema(physical_schemaname))
+		{
+			funcexpr->parentOwnerId = context->view_owner;
+			funcexpr->insideView = PNODE_INSIDE_VIEW;
+		}
+
+		if (physical_schemaname)
+				pfree(physical_schemaname);
+        
+        return expression_tree_walker(node, mark_nodes_inside_view_walker,
+								  (void *) context);
+    }
+
+	return expression_tree_walker(node, mark_nodes_inside_view_walker,
+								  (void *) context);
+}
+
+/*
+ * Main entry point for marking nodes inside view definitions
+ * 
+ * Performs security check and initiates tree walk to:
+ * - Mark relations and functions as being inside a view
+ * - Set parent owner context for permission chaining
+ */
+static void
+mark_nodes_inside_view(Query *query, Oid view_owner)
+{
+
+	mark_nodes_inside_view_context context;
+	context.view_owner = view_owner;
+
+	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
+		return;
+
+	mark_nodes_inside_view_walker((Node *)query,
+								  &context);
+
 }

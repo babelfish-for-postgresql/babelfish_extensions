@@ -2955,3 +2955,26 @@ downcase_truncate_split_object_name(char *four_part_object_name, char **server_n
 	if (object_name != NULL)
 		*object_name = temp_object_name;
 }
+
+/*
+ * Get owner OID for a relation
+ */
+Oid
+get_rel_owner(Oid relid)
+{
+    HeapTuple   tuple;
+    Oid         owner;
+
+    /* Get relation tuple from pg_class */
+    tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+    if (!HeapTupleIsValid(tuple))
+        elog(ERROR, "cache lookup failed for relation %u", relid);
+
+    /* Get owner from tuple */
+    owner = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
+
+    /* Release tuple */
+    ReleaseSysCache(tuple);
+
+    return owner;
+}
