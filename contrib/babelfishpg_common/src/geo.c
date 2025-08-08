@@ -473,10 +473,7 @@ rewrite_dim_linestring_query(PointArray *pa)
 
     /* Create a copy of the string that will survive after we free output */
     result = pstrdup(output.data);
-    
 
-
-    
     /* Clean up resources */
     pfree(output.data);
     free_point_array(pa);
