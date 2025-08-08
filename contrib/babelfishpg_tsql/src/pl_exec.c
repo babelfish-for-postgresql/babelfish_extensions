@@ -7473,7 +7473,7 @@ exec_eval_expr(PLtsql_execstate *estate,
 	 * If first time through, create a plan for this expression.
 	 */
 	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, true);
+		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, true); // already done.
 
 	/*
 	 * If this is a simple expression, bypass SPI and use the executor
@@ -7481,7 +7481,7 @@ exec_eval_expr(PLtsql_execstate *estate,
 	 */
 	if (exec_eval_simple_expr(estate, expr,
 							  &result, isNull, rettype, rettypmod))
-		return result;
+		return result; // 122419776
 
 	/*
 	 * Else do it the hard way via exec_run_select
@@ -9512,6 +9512,8 @@ get_cast_hashentry(PLtsql_execstate *estate,
 												  COERCE_IMPLICIT_CAST,
 												  -1);
 		}
+
+		(*common_utility_plugin_ptr->handle_type_and_collation)(cast_expr, dsttype, InvalidOid);
 
 		/* Note: we don't bother labeling the expression tree with collation */
 
