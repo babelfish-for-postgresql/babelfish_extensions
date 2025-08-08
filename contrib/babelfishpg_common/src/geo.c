@@ -424,6 +424,7 @@ rewrite_dim_linestring_query(PointArray *pa)
     for (int i = 0; i < pa->count; i++) 
     {
         POINT p = pa->points[i];
+
         /* X and Y coordinates are always included */
         appendStringInfo(&output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
         
@@ -472,6 +473,9 @@ rewrite_dim_linestring_query(PointArray *pa)
 
     /* Create a copy of the string that will survive after we free output */
     result = pstrdup(output.data);
+    
+
+
     
     /* Clean up resources */
     pfree(output.data);
