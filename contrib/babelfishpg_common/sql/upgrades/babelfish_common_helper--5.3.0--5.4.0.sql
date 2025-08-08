@@ -86,3 +86,9 @@ CREATE OR REPLACE FUNCTION sys.varbinarynchar(sys.BBF_VARBINARY, integer, boolea
 RETURNS sys.NCHAR
 AS 'babelfishpg_common', 'varbinarynchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.nvarchar2nchar(sys.NVARCHAR, integer, boolean)
+RETURNS sys.NCHAR
+AS 'babelfishpg_common', 'nchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+

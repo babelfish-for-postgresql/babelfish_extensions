@@ -285,6 +285,7 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "bpchar", "binarybpchar", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "nchar", "varbinarynchar", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "nchar", "binarynchar", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "nchar", "nvarchar2nchar", 'i', 'f'},
 /*  fixeddecimal */
 	{PG_CAST_ENTRY, "sys", "fixeddecimal", "pg_catalog", "bpchar", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "fixeddecimal", "sys", "bpchar", NULL, 'i', 'f'},
@@ -542,6 +543,7 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	bool		isInt8ToMoney = false;
 	bool		isVarbinaryToNvarchar = false;
 	bool		isNvarchartoVarbinary = false;
+	bool		isNvarcharToNchar = false;
 
 	Oid			typeIds[2] = {sourceTypeId, targetTypeId};
 	Oid			UDT_sourceBaseType = InvalidOid;
@@ -614,6 +616,9 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	if (is_tsql_utf16_string_family_datatype(typeIds[0]) && is_tsql_binary_family_datatype(typeIds[1]))
 		isNvarchartoVarbinary = true;
 
+	if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[0]) && (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(typeIds[1]))
+		isNvarcharToNchar = true;
+
 	/* Perhaps the types are domains; if so, look at their base types */
 	if (!isSqlVariantCast)
 	{
@@ -622,7 +627,7 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 		 * source so that it can call the cast function which matches with the
 		 * exact types
 		 */
-		if (OidIsValid(sourceTypeId) && !isNvarchartoVarbinary)
+		if (OidIsValid(sourceTypeId) && !isNvarchartoVarbinary && !isNvarcharToNchar)
 			sourceTypeId = getBaseType(sourceTypeId);
 
 		/*
@@ -630,7 +635,7 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 		 * target so that it can call the cast function which matches with the
 		 * exact types
 		 */
-		if (OidIsValid(targetTypeId) && !isInt8ToMoney && !isVarbinaryToNvarchar)
+		if (OidIsValid(targetTypeId) && !isInt8ToMoney && !isVarbinaryToNvarchar && !isNvarcharToNchar)
 			targetTypeId = getBaseType(targetTypeId);
 	}
 
