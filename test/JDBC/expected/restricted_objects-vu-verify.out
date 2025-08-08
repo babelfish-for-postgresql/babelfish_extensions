@@ -42,6 +42,7 @@ GO
 
 ~~ERROR (Message: must be owner of view syspolicy_system_health_state)~~
 
+-- terminate-tsql-conn user=babel_5146_user_l1 password=abc
 
 -- psql user=babel_5146_user_l1 password=abc
 -- should throw error
@@ -69,7 +70,7 @@ GO
     Server SQLState: 42501)~~
 
 
--- terminate-tsql-conn user=babel_5146_user_l1 password=abc
+-- terminate-psql-conn user=babel_5146_user_l1 password=abc
 
 -- tsql user=babel_5146_owner_l password=abc
 -- should throw error

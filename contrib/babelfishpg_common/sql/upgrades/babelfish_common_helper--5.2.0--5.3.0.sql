@@ -7,6 +7,36 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- Drops an object if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when undefined_function then --if 'Deprecated function does not exist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 -- casting from bytea to binary
 CREATE OR REPLACE FUNCTION sys.byteabinary(pg_catalog.BYTEA, integer, boolean)
 RETURNS sys.BBF_BINARY
@@ -144,6 +174,87 @@ BEGIN
             FUNCTION 1 sys.numeric_int8_cmp(numeric, int8);
     END IF;
 END $$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.char(x in int) RENAME TO chr_deprecated_5_3_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'chr_deprecated_5_3_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+   ALTER FUNCTION sys.nchar(In x INTEGER) RENAME TO nchar_int_deprecated_5_3_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'nchar_int_deprecated_5_3_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+   ALTER FUNCTION sys.nchar(In x varbinary) RENAME TO nchar_varbinary_deprecated_5_3_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'nchar_varbinary_deprecated_5_3_0');
+
+create or replace function sys.cht_(x in int) returns sys.varchar
+AS
+$body$
+BEGIN
+/***************************************************************
+EXTENSION PACK function CHAR(x)
+***************************************************************/
+    if x = 0 then 
+        return ('\x00'::bytea)::sys.varbinary;
+    end if;
+    if x between 1 and 255 then
+        return chr(x);
+    else
+        return null;
+    end if;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ncht_(x in int) RETURNS sys.nvarchar
+AS
+$body$
+BEGIN
+    if x = 0 then 
+        return ('\x00'::bytea)::sys.varbinary;
+    end if;
+    --- 65535 is 0x0000FFFF - max value permitted as specified by documentation without SC collation
+    if x between 1 and 65535 then
+        return(select chr(x))::sys.nvarchar;
+    else
+        return null;
+    end if;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- arithmetic functions where one of the 
 -- operand is smallmoney
@@ -668,6 +779,10 @@ BEGIN
 
 	END IF;
 END $$;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

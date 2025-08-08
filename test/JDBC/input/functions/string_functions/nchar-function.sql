@@ -413,3 +413,50 @@ GO
 DROP TYPE nchar_type_output;
 DROP TYPE nchar_type_nvarchar;
 GO
+
+select nchar(cast(45 as binary))
+go
+select nchar(cast(45 as varbinary))
+go
+select nchar(0)
+go
+select nchar(63535)
+go
+select nchar(65536)
+go
+-- Test with UDF named char in a schema other than sys
+CREATE SCHEMA test_schema;
+GO
+create function test_schema.nchar(@x int)
+returns integer as 
+BEGIN
+    return 1;
+END;
+GO
+select test_schema.nchar(255);
+GO
+drop function test_schema.nchar;
+GO
+drop schema test_schema;
+go
+select Nchar(63535)
+go
+select NcHaR(63535)
+go
+create type user_UDT_int from int
+go
+select nchar(cast(63535 as user_UDT_int))
+go
+drop type user_UDT_int
+go
+SET QUOTED_IDENTIFIER ON
+go
+select "char"(256)
+go
+select "nchar"(63535)
+go
+set QUOTED_IDENTIFIER OFF
+go
+select nchar(0);
+go
+

@@ -141,3 +141,8 @@ SELECT @@trancount
 GO
 DROP TABLE babel_5446
 GO
+
+-- psql
+-- BABEL-5805
+RESET ALL;
+GO

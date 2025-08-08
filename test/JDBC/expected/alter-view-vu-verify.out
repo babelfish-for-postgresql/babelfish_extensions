@@ -399,7 +399,7 @@ ALTER VIEW alter_v24 AS SELECT a,b FROM alter_t;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot drop view alter_v24 because other objects depend on it)~~
+~~ERROR (Message: cannot alter view because other objects depend on it)~~
 
 
 SELECT * FROM alter_v24;

@@ -293,7 +293,7 @@ float
 SELECT geom.STAsText(), geog.STAsText() FROM GEOSPATIALPOINTEMPTYdt;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 POINT EMPTY#!#<NULL>
 <NULL>#!#POINT EMPTY
 ~~END~~
@@ -805,10 +805,9 @@ geography
 
 SELECT geography::STGeomFromText('POINT(45 90)', NULL);
 GO
-~~START~~
-geography
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geography::STGeomFromText' failed because parameter 2 is not allowed to be null.)~~
 
 
 -- STPointFromText tests
@@ -952,26 +951,23 @@ GO
 
 SELECT geography::Point(90, 45, NULL);
 GO
-~~START~~
-geography
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geography::Point' failed because parameter 3 is not allowed to be null.)~~
 
 
 SELECT geography::Point(NULL, 45, 4326);
 GO
-~~START~~
-geography
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geography::Point' failed because parameter 1 is not allowed to be null.)~~
 
 
 SELECT geography::Point(90, NULL, 4326);
 GO
-~~START~~
-geography
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geography::Point' failed because parameter 2 is not allowed to be null.)~~
 
 
 -- Test with zero values
@@ -1331,26 +1327,23 @@ GO
 -- TODO: This test will be updated later to match T-SQL output
 SELECT geometry::STGeomFromText('POINT(1 1)', NULL);
 GO
-~~START~~
-geometry
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geometry::STGeomFromText' failed because parameter 2 is not allowed to be null.)~~
 
 
 SELECT geography::STGeomFromText('POINT(1 1)', NULL);
 GO
-~~START~~
-geography
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geography::STGeomFromText' failed because parameter 2 is not allowed to be null.)~~
 
 
 SELECT geography::STPointFromText('POINT(45 90)', NULL);
 GO
-~~START~~
-geography
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geography::STPointFromText' failed because parameter 2 is not allowed to be null.)~~
 
 
 -- Input length is less than 22 bytes
@@ -1907,7 +1900,7 @@ GO
 SELECT sys.STAsText(sys.Geography__STFlipCoordinates(geography::STGeomFromText('POINT(45 90)', 4326)));
 GO
 ~~START~~
-text
+nvarchar
 POINT(90 45)
 ~~END~~
 
@@ -1915,7 +1908,7 @@ POINT(90 45)
 SELECT sys.STAsText(sys.Geography__STFlipCoordinates(geography::STGeomFromText('POINT(-180 -90)', 4326)));
 GO
 ~~START~~
-text
+nvarchar
 POINT(-90 -180)
 ~~END~~
 
@@ -1923,7 +1916,7 @@ POINT(-90 -180)
 SELECT sys.STAsText(sys.Geography__STFlipCoordinates(geography::STGeomFromText('POINT(180 90)', 4326)));
 GO
 ~~START~~
-text
+nvarchar
 POINT(90 180)
 ~~END~~
 
@@ -1931,7 +1924,7 @@ POINT(90 180)
 SELECT sys.STAsText(sys.Geography__STFlipCoordinates(geography::STGeomFromText('POINT(1 2 10)', 4326)));    -- 3D point
 GO
 ~~START~~
-text
+nvarchar
 POINT(2 1)
 ~~END~~
 
@@ -1939,7 +1932,7 @@ POINT(2 1)
 SELECT sys.STAsText(sys.Geography__STFlipCoordinates(geography::STGeomFromText('POINT(45 90 10 1)', 4326)));    -- 4D point
 GO
 ~~START~~
-text
+nvarchar
 POINT(90 45)
 ~~END~~
 
@@ -1947,7 +1940,7 @@ POINT(90 45)
 SELECT sys.STAsText(sys.Geography__STFlipCoordinates(geography::STGeomFromText('POINT EMPTY', 4326)));
 GO
 ~~START~~
-text
+nvarchar
 POINT EMPTY
 ~~END~~
 
@@ -2439,7 +2432,7 @@ float
 SELECT * FROM TextFromGeometry;
 GO
 ~~START~~
-text
+nvarchar
 POINT EMPTY
 POINT EMPTY
 POINT(47.651 -22.349)
@@ -2463,7 +2456,7 @@ POINT(47.651 -22.349)
 SELECT * FROM TextFromGeography;
 GO
 ~~START~~
-text
+nvarchar
 POINT EMPTY
 POINT EMPTY
 POINT(47.651 -22.349)

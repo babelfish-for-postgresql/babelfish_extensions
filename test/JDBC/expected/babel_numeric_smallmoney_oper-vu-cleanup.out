@@ -1,0 +1,197 @@
+DROP PROCEDURE babel_test_numeric_smallmoney_p0;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p00;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p1;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p2;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p3;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p4;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p5;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p6;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p7;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p8;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p9;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p10;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p11;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p12;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p13;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p14;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p15;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p16;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p17;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p18;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p19;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p20;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p21;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p22;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p23;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p24;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p25;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p26;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p27;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p28;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p29;
+GO
+DROP PROCEDURE babel_test_numeric_smallmoney_p30;
+GO
+
+DROP VIEW babel_test_numeric_smallmoney_v0;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v00;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v1;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v2;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v3;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v4;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v5;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v6;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v7;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v8;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v9;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v10;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v11;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v12;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v13;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v14;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v15;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v16;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v17;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v18;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v19;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v20;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v21;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v22;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v23;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v24;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v25;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v26;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v27;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v28;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v29;
+GO
+DROP VIEW babel_test_numeric_smallmoney_v30;
+GO
+
+DROP FUNCTION babel_test_numeric_smallmoney_f0;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f00;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f1;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f2;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f3;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f4;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f5;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f6;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f7;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f8;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f9;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f10;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f11;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f12;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f13;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f14;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f15;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f16;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f17;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f18;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f19;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f20;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f21;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f22;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f23;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f24;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f25;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f26;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f27;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f28;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f29;
+GO
+DROP FUNCTION babel_test_numeric_smallmoney_f30;
+GO
+
+DROP TABLE babel_test_numeric_smallmoney_vu_prepare;
+GO
