@@ -1890,9 +1890,9 @@ select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2)) union sele
 GO
 ~~START~~
 nchar
-a         
          
 ਀         
+a         
 ~~END~~
 
 
