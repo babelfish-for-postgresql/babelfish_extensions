@@ -41,7 +41,7 @@ bool		pltsql_numeric_roundabort = false;
 bool		pltsql_nocount = false;
 char	   *pltsql_database_name = NULL;
 char	   *pltsql_version = NULL;
-int			pltsql_datefirst = 7;
+double		pltsql_datefirst = 7.0;
 int			pltsql_rowcount = 0;
 char	   *pltsql_language = NULL;
 char	   *pltsql_psql_logical_babelfish_db_name = NULL;
@@ -115,7 +115,7 @@ static void assign_ansi_padding(bool newval, void *extra);
 static void assign_concat_null_yields_null(bool newval, void *extra);
 static void assign_language(const char *newval, void *extra);
 static void assign_lock_timeout(int newval, void *extra);
-static void assign_datefirst(int newval, void *extra);
+static void assign_datefirst(double newval, void *extra);
 static bool check_no_browsetable(bool *newval, void **extra, GucSource source);
 static void assign_enable_pg_hint(bool newval, void *extra);
 int			escape_hatch_session_settings;	/* forward declaration */
@@ -607,10 +607,19 @@ assign_lock_timeout(int newval, void *extra)
 }
 
 static void
-assign_datefirst(int newval, void *extra)
+assign_datefirst(double newval, void *extra)
 {
-	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
-		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.datefirst", false, NULL, newval);
+	if(newval != floor(newval))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				errmsg("SET DATEFIRST option requires integer parameter")));
+	}
+	else
+	{
+		if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.datefirst", false, NULL, (int)newval);
+	}
 }
 
 void
@@ -838,11 +847,11 @@ define_custom_variables(void)
 							   GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   NULL, assign_psql_logical_babelfish_db_name, NULL);
 
-	DefineCustomIntVariable("babelfishpg_tsql.datefirst",
+	DefineCustomRealVariable("babelfishpg_tsql.datefirst",
 							gettext_noop("Sets the first day of the week to a number from 1 through 7."),
 							NULL,
-							&pltsql_datefirst,
-							7, 1, 7,
+							&pltsql_datefirst, 
+							7.0, 1.0, 7.0,
 							PGC_USERSET,
 							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							NULL, assign_datefirst, NULL);
