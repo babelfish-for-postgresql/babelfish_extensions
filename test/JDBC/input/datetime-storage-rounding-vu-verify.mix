@@ -273,10 +273,25 @@ GO
 SELECT * INTO dbo.datetime_test_new  FROM dbo.datetime_test;
 GO
 
+UPDATE dbo.datetime_test SET time1 = time1, time2 = time2;
+GO
+
+SELECT * INTO dbo.datetime_test;
+GO
+
 SELECT * FROM dbo.datetime_test_new;
+GO
+
+select * from dbo.datetime_test_new where time1 = '2014-03-12 12:00:34.467'
+GO
+
+select * from dbo.datetime_test_new where time1 = '2014-03-12 12:00:34.466'
 GO
 
 -- psql
 SELECT * FROM master_dbo.datetime_test_new;
+GO
+
+SELECT * FROM master_dbo.datetime_test;
 GO
 
