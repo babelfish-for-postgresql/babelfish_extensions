@@ -3991,9 +3991,10 @@ ABC
 
 SELECT dbo.implicit_cast_to_nchar(ImageCol) FROM ImplicitToStringTest
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.implicit_cast_to_nchar is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+nchar
+ABC                                               
+~~END~~
 
 SELECT dbo.implicit_cast_to_nvarchar(ImageCol) FROM ImplicitToStringTest
 GO
@@ -4536,9 +4537,10 @@ SELECT
         ELSE CAST(0x414243 AS BINARY(10))  -- BINARY(10)
     END AS CaseResult_2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to varbinary)~~
+~~START~~
+char#!#text
+Fixed String                                      #!#Unicode
+~~END~~
 
 
 -- Test 3: COALESCE with different string and binary types
@@ -4555,7 +4557,7 @@ SELECT
         CAST(0x414243 AS BINARY(10))  -- BINARY(10)
     ) AS CoalesceResult_2;
 GO
-+~~START~~
+~~START~~
 char#!#ntext
 Fixed               #!#Unicode
 ~~END~~
