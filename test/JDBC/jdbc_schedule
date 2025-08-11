@@ -16,6 +16,9 @@ all
 ignore#!#BABEL-2736-before-vu-prepare
 ignore#!#BABEL-2736-before-vu-verify
 ignore#!#BABEL-2736-before-vu-cleanup
+ignore#!#BABEL-2736-before-16_11-or-17_6-vu-prepare
+ignore#!#BABEL-2736-before-16_11-or-17_6-vu-verify
+ignore#!#BABEL-2736-before-16_11-or-17_6-vu-cleanup
 
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
