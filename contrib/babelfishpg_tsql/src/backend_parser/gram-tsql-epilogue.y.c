@@ -282,10 +282,6 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 		args = lcons(makeStringConst(typename_string, typename->location), args);
 		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_nvarchar"), args, COERCE_EXPLICIT_CALL, location);
  
-		/*
-		 * BABEL-1661, add a type cast on top of the CONVERT helper function
-		 * so typmod can be applied
-		 */
 		result = makeTypeCast(helperFuncCall, typename, location);
 	}
 

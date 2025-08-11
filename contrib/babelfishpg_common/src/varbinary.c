@@ -987,27 +987,14 @@ varbinarybpchar(PG_FUNCTION_ARGS)
 	bytea		*source = PG_GETARG_BYTEA_PP(0);
 	char		*data = VARDATA_ANY(source); /* input is UTF-8 bytes */
 	size_t		len = VARSIZE_ANY_EXHDR(source);
-	BpChar		*result;
-	char		*encoded_result;
-	int32		typmod = -1;
-	int32		maxlen = -1;
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen = typmod - VARHDRSZ;
 	coll_info	collInfo;
+	char		*encoded_result;
 	int			encodedByteLen;
-	int			remainingByteLeft;
-	int			lenToEncode;
+	int			remainingByteLeft = 0;
+	BpChar		*result;
 	MemoryContext ccxt = CurrentMemoryContext;
-
-	/*
-	 * Check whether the typmod argument exists, so that we 
-	 * will not be reading any garbage values for typmod 
-	 * which might cause Invalid read such as BABEL-4475
-	 */
-	if (PG_NARGS() > 1)
-	{
-		typmod = PG_GETARG_INT32(1);
-		maxlen = typmod - VARHDRSZ;
-		lenToEncode = maxlen;
-	}
 
 	/*
 	 * Allow trailing null bytes 
@@ -1019,16 +1006,20 @@ varbinarybpchar(PG_FUNCTION_ARGS)
 	 */
 	while(len>0 && data[len-1] == '\0')
 		len -= 1;
- 
-	if (maxlen < 0 || len <= maxlen)
-	{
-		lenToEncode = len; /* No length restriction */
-	}
+
 
 	PG_TRY();
 	{
 		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
-		encoded_result = encoding_conv_util(data, lenToEncode, collInfo.enc, PG_UTF8, &encodedByteLen);
+		if (maxlen < 0 || len <= maxlen)
+		{
+			encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
+		}
+		else
+		{
+			encoded_result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
+			len = maxlen; /* Adjust length to maxlen */
+		}
 	}
 	PG_CATCH();
 	{
@@ -1051,14 +1042,13 @@ varbinarybpchar(PG_FUNCTION_ARGS)
 	if (maxlen < 0)
 	{
 		maxlen = encodedByteLen; /* No length restriction */
-		remainingByteLeft = 0; /* No padding needed */
 	}
-	else
+	else if (len < maxlen)
 	{
-		remainingByteLeft = maxlen - lenToEncode;
-		maxlen = encodedByteLen + remainingByteLeft;
+		remainingByteLeft = maxlen - len;
 	}
-	
+	maxlen = encodedByteLen + remainingByteLeft;
+		
 	result = (BpChar *) palloc0(maxlen + VARHDRSZ);
 	SET_VARSIZE(result, maxlen + VARHDRSZ);
 	memcpy(VARDATA(result), encoded_result, encodedByteLen);
@@ -1442,16 +1432,14 @@ bpcharbinary(PG_FUNCTION_ARGS)
 	if (encodedByteLen > maxlen)
 		encodedByteLen = maxlen;
 
-	result = (bytea *) palloc(maxlen + VARHDRSZ);
+	result = (bytea *) palloc0(maxlen + VARHDRSZ);
 	SET_VARSIZE(result, maxlen + VARHDRSZ);
 
 	rp = VARDATA(result);
 
 	/* Copy encoded data */
 	memcpy(rp, encoded_data, encodedByteLen);
-
-	/* Pad the rest with null bytes (\0) */
-	memset(rp + encodedByteLen, '\0', maxlen - encodedByteLen);
+	pfree(encoded_data);
 
 	PG_RETURN_BYTEA_P(result);
 }
