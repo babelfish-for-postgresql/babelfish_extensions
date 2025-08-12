@@ -1,50 +1,51 @@
 -- tsql user=l3014_1 password=12345678
--- CASE 1 Simple Table/View references inside views
--- CASE 1.1 view referring table
+-- CASE 1: Simple Table/View references inside views
+-- CASE 1.1: View referring table (success: ownership chain dbo->dbo)
 select * from v3014_1_1;
 go
 
--- CASE 1.2 View referring multiple table joined 
+-- CASE 1.2: View referring multiple table joined (success: all tables owned by dbo)
 select * from v3014_1_2;
 go
 
--- CASE 1.3 nesting cases
--- <TBA>
+-- CASE 1.3: Nesting case - one-level (success: view->view->table all dbo owned)
+select * from v3014_1_3;
+go
 
--- CASE 1.4 Nested view scenario
+-- CASE 1.4: Nesting case - two-level (success: recursive view reference in same owner)
 select * from v3014_1_4;
 go
 
--- CASE 2 Subquery inside views
--- CASE 2.1: Subquery in SELECT clause
+-- CASE 2: Subquery inside views
+-- CASE 2.1: Subquery in SELECT clause (success: correlated subquery within same owner)
 select * from v3014_2_1;
 go
 
--- CASE 2.2: Subquery in WHERE clause
+-- CASE 2.2: Subquery in WHERE clause (success: IN subquery within same owner)
 select * from v3014_2_2;
 go
 
--- CASE 2.3: Subquery in FROM clause
+-- CASE 2.3: Subquery in FROM clause (success: derived table with join in same owner)
 select * from v3014_2_3;
 go
 
--- CASE 2.4: Correlated subquery in WHERE
+-- CASE 2.4: Correlated subquery in WHERE (success: EXISTS subquery within same owner)
 select * from v3014_2_4;
 go
 
--- CASE 2.5: Multiple nested subqueries
+-- CASE 2.5: Multiple nested subqueries (success: nested IN clauses all within same owner)
 select * from v3014_2_5;
 go
 
--- CASE 2.6: Subquery with function (negative test)
+-- CASE 2.6: Subquery with function (failure: function ownership chain not supported)
 select * from v3014_2_6;
 go
 
--- CASE 2.7: Subquery in HAVING clause
+-- CASE 2.7: Subquery in HAVING clause (success: aggregate subquery within same owner)
 select * from v3014_2_7;
 go
 
--- CASE 2.8: Subquery with set operations
+-- CASE 2.8: Subquery with set operations (success: UNION and IN within same owner)
 select * from v3014_2_8;
 go
 
@@ -73,7 +74,61 @@ go
 select * from v3014_3_6;
 go
 
--- Dynamic SQL through view
+-- CASE 4: Negative cases where owners are different
+-- CASE 4.1: View in dbo schema referencing table in sch3014_b (failure: cross-owner direct reference)
+select * from v3014_4_1;
+go
+
+-- CASE 4.2: View in sch3014_b referencing table in dbo schema (failure: cross-owner direct reference)
+select * from sch3014_b.v3014_4_2;
+go
+
+-- CASE 4.3: View in dbo schema referencing view in sch3014_b (failure: cross-owner view reference)
+select * from v3014_4_3;
+go
+
+-- CASE 4.4: View in sch3014_b referencing view in dbo schema (failure: cross-owner view reference)
+select * from sch3014_b.v3014_4_4;
+go
+
+-- CASE 4.5: View in dbo schema with subquery referencing table in sch3014_b (failure: cross-owner subquery)
+select * from v3014_4_5;
+go
+
+-- CASE 4.6: View in sch3014_b with subquery referencing table in dbo schema (failure: cross-owner subquery)
+select * from sch3014_b.v3014_4_6;
+go
+
+-- CASE 4.7: View in dbo schema referencing tables from both dbo and sch3014_b (failure: mixed owner join)
+select * from v3014_4_7;
+go
+
+-- CASE 4.8: View in sch3014_b referencing tables from both sch3014_b and sch3014_c (failure: mixed owner join)
+select * from sch3014_b.v3014_4_8;
+go
+
+-- CASE 5: Multi-level ownership chaining scenarios
+-- CASE 5.1: Three-level chaining, all dbo owned (success: complete ownership chain)
+select * from v3014_5_1c;
+go
+
+-- CASE 5.2: Three-level mixed ownership dbo->sch3014_b->dbo (failure: broken ownership chain)
+select * from v3014_5_2c;
+go
+
+-- CASE 5.3: Three-level mixed ownership with joins (failure: multiple broken chains)
+select * from sch3014_c.v3014_5_3c;
+go
+
+-- CASE 5.4: Three-level with subqueries, all dbo owned (success: complete ownership chain with subqueries)
+select * from v3014_5_4c;
+go
+
+-- CASE 5.5: Three-level mixed ownership with subqueries (failure: broken chains in subqueries)
+select * from sch3014_c.v3014_5_5c;
+go
+
+-- Dynamic SQL test (success: ownership chain preserved through dynamic SQL)
 declare @sql nvarchar(max);
 set @sql = N'select * from v3014_1_1 where a = @id';
 exec sp_executesql @sql, N'@id int', 1;
