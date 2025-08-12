@@ -923,6 +923,7 @@ varbinarynchar(PG_FUNCTION_ARGS)
 	int				maxlen = typmod - VARHDRSZ;
 	StringInfoData	buf;
 	char			*paddedData = (char *) palloc0(len + 1);
+	int				remainingByteLeft = 0;
 	MemoryContext	ccxt = CurrentMemoryContext;
  
 	/* Trim trailing null bytes */
@@ -935,7 +936,7 @@ varbinarynchar(PG_FUNCTION_ARGS)
 		len++;
  
 	/* Enforce max UTF-16 code unit limit (in bytes) */
-	if (!(maxlen < 0 || (len >> 1) <= maxlen))
+	if (!(maxlen < 0 || (int)(len >> 1) <= maxlen))
 		len = maxlen << 1;
  
 	PG_TRY();
@@ -959,20 +960,16 @@ varbinarynchar(PG_FUNCTION_ARGS)
 	}
 	PG_END_TRY();
  
-	/* Allocate and pad result as bpchar (fixed-length) */
-	if (maxlen < 0)
+	if ((int)(len >> 1) < maxlen)
 	{
-		maxlen = encodedByteLen; /* No length restriction */
-	}else if ((len >> 1) < maxlen)
-	{
-		/* If the encoded length is less than maxlen, pad with spaces */
-		maxlen = encodedByteLen + (maxlen - (len >> 1));
+		/* If the encoded length is less than maxlen, calculate number of pad spaces */
+		remainingByteLeft = maxlen - (int)(len >> 1);
 	}
 
-	result = (BpChar *) palloc0(maxlen + VARHDRSZ);
-	SET_VARSIZE(result, maxlen + VARHDRSZ);
+	result = (BpChar *) palloc0(encodedByteLen + remainingByteLeft + VARHDRSZ);
+	SET_VARSIZE(result, encodedByteLen + remainingByteLeft + VARHDRSZ);
 	memcpy(VARDATA(result), encoded_result, encodedByteLen);
-	memset(VARDATA(result) + encodedByteLen, ' ', maxlen - encodedByteLen);
+	memset(VARDATA(result) + encodedByteLen, ' ', remainingByteLeft);
  
 	pfree(buf.data);
 	pfree(paddedData);
@@ -1038,19 +1035,14 @@ varbinarybpchar(PG_FUNCTION_ARGS)
 	}
 	PG_END_TRY();
  
-	/* Allocate and pad result as bpchar (fixed-length) */
-	if (maxlen < 0)
+	if ((int)len < maxlen)
 	{
-		maxlen = encodedByteLen; /* No length restriction */
+		/* If the encoded length is less than maxlen, calculate number of pad spaces */
+		remainingByteLeft = maxlen - (int)len;
 	}
-	else if (len < maxlen)
-	{
-		remainingByteLeft = maxlen - len;
-	}
-	maxlen = encodedByteLen + remainingByteLeft;
 		
-	result = (BpChar *) palloc0(maxlen + VARHDRSZ);
-	SET_VARSIZE(result, maxlen + VARHDRSZ);
+	result = (BpChar *) palloc0(encodedByteLen + remainingByteLeft + VARHDRSZ);
+	SET_VARSIZE(result, encodedByteLen + remainingByteLeft + VARHDRSZ);
 	memcpy(VARDATA(result), encoded_result, encodedByteLen);
 	memset(VARDATA(result) + encodedByteLen, ' ', remainingByteLeft);
 	

@@ -277,40 +277,6 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
--- Helper function to convert to binary or varbinary
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(IN input_value sys.VARCHAR, IN style NUMERIC DEFAULT 0) 
-RETURNS sys.varbinary 
-AS 
-$BODY$
-DECLARE
-    result bytea; 
-BEGIN
-    IF style = 0 THEN
-        RETURN CAST(input_value AS sys.varbinary);
-    ELSIF style = 1 THEN
-        -- Handle hexadecimal conversion
-        IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
-            result := decode(substring(input_value from 3), 'hex');
-        ELSE
-            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
-        END IF;
-    ELSIF style = 2 THEN
-        IF PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" THEN
-            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
-        ELSE
-            result := decode(input_value, 'hex');
-        END IF;
-    ELSE
-        RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
-    END IF;
-
-    RETURN CAST(result AS sys.varbinary);
-END;
-$BODY$ 
-LANGUAGE plpgsql
-IMMUTABLE
-STRICT;
-
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
     IN typmod INTEGER,
     IN arg TEXT,
