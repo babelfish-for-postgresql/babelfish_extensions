@@ -1,4 +1,22 @@
 -- tsql
+-- Drop CASE 6 cross-database views
+DROP VIEW IF EXISTS v3014_6_1;
+GO
+USE db3014;
+GO
+DROP VIEW IF EXISTS v3014_6_2;
+GO
+USE master;
+GO
+DROP VIEW IF EXISTS v3014_6_3;
+GO
+DROP VIEW IF EXISTS v3014_6_4;
+GO
+
+-- Drop test database
+DROP DATABASE db3014;
+GO
+
 -- Drop CASE 5 views
 DROP VIEW IF EXISTS v3014_5_1c;
 GO

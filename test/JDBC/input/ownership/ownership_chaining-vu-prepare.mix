@@ -239,6 +239,39 @@ GO
 CREATE VIEW sch3014_c.v3014_5_5c AS SELECT * FROM sch3014_b.v3014_5_5b WHERE a IN (SELECT a FROM sch3014_c.t3014_1);
 GO
 
+-- CASE 6: Cross-database ownership chain should be disabled
+-- Setup test database and objects
+CREATE DATABASE db3014;
+GO
+USE db3014;
+GO
+CREATE USER l3014_1;
+GO
+CREATE TABLE t3014_cross_db(a int);
+GO
+USE master;
+GO
+
+-- CASE 6.1: View in current database referencing table in another database (should fail)
+CREATE VIEW v3014_6_1 AS SELECT * FROM db3014.dbo.t3014_cross_db;
+GO
+
+-- CASE 6.2: View in another database referencing table in current database (should fail)
+USE db3014;
+GO
+CREATE VIEW v3014_6_2 AS SELECT * FROM master.dbo.t3014_1;
+GO
+USE master;
+GO
+
+-- CASE 6.3: View with subquery referencing cross-database table (should fail)
+CREATE VIEW v3014_6_3 AS SELECT * FROM t3014_1 WHERE a IN (SELECT a FROM db3014.dbo.t3014_cross_db);
+GO
+
+-- CASE 6.4: View with join to cross-database table (should fail)
+CREATE VIEW v3014_6_4 AS SELECT t1.a, t2.a as cross_db_a FROM t3014_1 t1 JOIN db3014.dbo.t3014_cross_db t2 ON t1.a = t2.a;
+GO
+
 -- Grants for CASE 1 views
 grant select on v3014_1_1 to l3014_1;
 go
@@ -307,6 +340,20 @@ GO
 GRANT SELECT ON v3014_5_4c TO l3014_1;
 GO
 GRANT SELECT ON sch3014_c.v3014_5_5c TO l3014_1;
+GO
+
+-- Grants for CASE 6 views
+GRANT SELECT ON v3014_6_1 TO l3014_1;
+GO
+USE db3014;
+GO
+GRANT SELECT ON v3014_6_2 TO l3014_1;
+GO
+USE master;
+GO
+GRANT SELECT ON v3014_6_3 TO l3014_1;
+GO
+GRANT SELECT ON v3014_6_4 TO l3014_1;
 GO
 
 -- psql
@@ -401,6 +448,16 @@ GO
 ALTER VIEW master_sch3014_b.v3014_5_5b SET (security_invoker = true);
 GO
 ALTER VIEW master_sch3014_c.v3014_5_5c SET (security_invoker = true);
+GO
+
+-- Alter CASE 6 views
+ALTER VIEW master_dbo.v3014_6_1 SET (security_invoker = true);
+GO
+ALTER VIEW db3014_dbo.v3014_6_2 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_6_3 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_6_4 SET (security_invoker = true);
 GO
 
 -- Also alter the helper view

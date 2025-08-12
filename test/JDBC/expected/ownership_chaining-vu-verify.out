@@ -252,6 +252,39 @@ go
 ~~ERROR (Message: permission denied for view v3014_5_5b)~~
 
 
+-- CASE 6: Cross-database ownership chain should be disabled
+-- CASE 6.1: View in current database referencing table in another database (failure: cross-db reference)
+select * from v3014_6_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_cross_db)~~
+
+
+-- CASE 6.2: View in another database referencing table in current database (failure: cross-db reference)
+select * from db3014.dbo.v3014_6_2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_1)~~
+
+
+-- CASE 6.3: View with subquery referencing cross-database table (failure: cross-db in subquery)
+select * from v3014_6_3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_cross_db)~~
+
+
+-- CASE 6.4: View with join to cross-database table (failure: cross-db join)
+select * from v3014_6_4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_cross_db)~~
+
+
 -- Dynamic SQL test (success: ownership chain preserved through dynamic SQL)
 declare @sql nvarchar(max);
 set @sql = N'select * from v3014_1_1 where a = @id';
