@@ -7,8 +7,6 @@ runs:
   - name: Install MSSQL Tools
     id: install-mssql-tools
     run: |
-        curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
-        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
         sudo apt-get update
         sudo apt-get install mssql-tools18 unixodbc-dev
         echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
@@ -20,11 +18,6 @@ runs:
     if: always() && steps.install-mssql-tools.outcome == 'success'
     run: | 
       cd ~
-      # Remove existing repositories
-      sudo rm /etc/apt/sources.list.d/microsoft*.list /etc/apt/sources.list.d/msprod*.list /etc/apt/sources.list.d/mssql*.list
-      wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-      echo "Y" | sudo dpkg -i packages-microsoft-prod.deb
-      rm packages-microsoft-prod.deb
       sudo apt-get clean
       sudo apt-get update
       sudo apt-get install -y apt-transport-https
