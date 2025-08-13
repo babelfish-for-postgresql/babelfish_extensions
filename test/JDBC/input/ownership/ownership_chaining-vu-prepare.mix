@@ -91,7 +91,7 @@ create view v3014_1_4 as select * from v3014_b;
 go
 
 
--- CASE 2 Subquery inside views
+-- CASE 2 Subquery/CTE inside views
 -- CASE 2.1: Subquery in SELECT clause
 create view v3014_2_1 as select t3014_1.a, (SELECT TOP 1 a FROM t3014_2 b2 WHERE b2.a = t3014_1.a) AS subquery_data FROM t3014_1;
 go
@@ -123,6 +123,22 @@ go
 -- CASE 2.8: Subquery with set operations
 create view v3014_2_8 as SELECT * FROM (SELECT a FROM t3014_1 UNION SELECT a FROM t3014_2) AS combined WHERE a IN (SELECT a FROM t3014_1);
 go
+
+-- CASE 2.9: Simple CTE
+CREATE VIEW v3014_2_9 AS WITH cte AS (SELECT * FROM t3014_1) SELECT * FROM cte;
+GO
+
+-- CASE 2.10: CTE with JOIN
+CREATE VIEW v3014_2_10 AS WITH cte AS (SELECT t1.a, t2.a as b FROM t3014_1 t1 JOIN t3014_2 t2 ON t1.a = t2.a) SELECT * FROM cte;
+GO
+
+-- CASE 2.11: Nested CTEs
+CREATE VIEW v3014_2_11 AS WITH cte1 AS (SELECT * FROM t3014_1), cte2 AS (SELECT * FROM cte1 WHERE a > 1) SELECT * FROM cte2;
+GO
+
+-- CASE 2.12: CTE with subquery
+CREATE VIEW v3014_2_12 AS WITH cte AS (SELECT * FROM t3014_1 WHERE a IN (SELECT a FROM t3014_2)) SELECT * FROM cte;
+GO
 
 -- CASE 3 function/procedure references (negative tests)
 -- setup
@@ -272,6 +288,16 @@ GO
 CREATE VIEW v3014_6_4 AS SELECT t1.a, t2.a as cross_db_a FROM t3014_1 t1 JOIN db3014.dbo.t3014_cross_db t2 ON t1.a = t2.a;
 GO
 
+-- CASE 7: Prep-Exec, Parametrized Query, Dynamic SQL cases
+CREATE VIEW v3014_7_1 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_7_2 AS SELECT t1.a, t2.a as b FROM t3014_1 t1 JOIN t3014_2 t2 ON t1.a = t2.a;
+GO
+CREATE VIEW v3014_7_3 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_7_4 AS SELECT * FROM t3014_1;
+GO
+
 -- Grants for CASE 1 views
 grant select on v3014_1_1 to l3014_1;
 go
@@ -297,6 +323,14 @@ grant select on v3014_2_7 to l3014_1;
 go
 grant select on v3014_2_8 to l3014_1;
 go
+GRANT SELECT ON v3014_2_9 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_10 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_11 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_12 TO l3014_1;
+GO
 
 -- Grants for CASE 3 views
 grant select on v3014_3_1 to l3014_1;
@@ -356,6 +390,16 @@ GO
 GRANT SELECT ON v3014_6_4 TO l3014_1;
 GO
 
+-- Grants for CASE 7 views
+GRANT SELECT ON v3014_7_1 TO l3014_1;
+GO
+GRANT SELECT ON v3014_7_2 TO l3014_1;
+GO
+GRANT SELECT ON v3014_7_3 TO l3014_1;
+GO
+GRANT SELECT ON v3014_7_4 TO l3014_1;
+GO
+
 -- psql
 set babelfishpg_tsql.enable_create_alter_view_from_pg = true;
 go
@@ -385,6 +429,14 @@ alter view master_dbo.v3014_2_7 set (security_invoker = true);
 go
 alter view master_dbo.v3014_2_8 set (security_invoker = true);
 go
+ALTER VIEW master_dbo.v3014_2_9 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_2_10 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_2_11 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_2_12 SET (security_invoker = true);
+GO
 
 -- Alter CASE 3 views
 alter view master_dbo.v3014_3_1 set (security_invoker = true);
@@ -458,6 +510,16 @@ GO
 ALTER VIEW master_dbo.v3014_6_3 SET (security_invoker = true);
 GO
 ALTER VIEW master_dbo.v3014_6_4 SET (security_invoker = true);
+GO
+
+-- Alter CASE 7 views
+ALTER VIEW master_dbo.v3014_7_1 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_7_2 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_7_3 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_7_4 SET (security_invoker = true);
 GO
 
 -- Also alter the helper view

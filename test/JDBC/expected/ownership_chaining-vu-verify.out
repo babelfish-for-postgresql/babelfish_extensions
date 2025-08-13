@@ -97,6 +97,35 @@ int
 ~~END~~
 
 
+-- CASE 2.9: Simple CTE
+SELECT * FROM v3014_2_9;
+GO
+~~START~~
+int
+~~END~~
+
+-- CASE 2.10: CTE with JOIN
+SELECT * FROM v3014_2_10;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+-- CASE 2.11: Nested CTEs
+SELECT * FROM v3014_2_11;
+GO
+~~START~~
+int
+~~END~~
+
+-- CASE 2.12: CTE with subquery
+SELECT * FROM v3014_2_12;
+GO
+~~START~~
+int
+~~END~~
+
+
 -- CASE 3: Function/procedure references (negative tests)
 -- CASE 3.1: Views with scalar function references
 select * from v3014_3_1;
@@ -285,11 +314,75 @@ GO
 ~~ERROR (Message: permission denied for table t3014_cross_db)~~
 
 
--- Dynamic SQL test (success: ownership chain preserved through dynamic SQL)
-declare @sql nvarchar(max);
-set @sql = N'select * from v3014_1_1 where a = @id';
-exec sp_executesql @sql, N'@id int', 1;
-go
+-- CASE 7: Prep-Exec, Parametrized Query, Dynamic SQL cases
+-- CASE 7.1: Parametrized query with ownership chain
+-- First execution creates plan
+DECLARE @param int = 1;
+SELECT * FROM v3014_7_1 WHERE a = @param;
+GO
+~~START~~
+int
+~~END~~
+
+-- Second execution uses cached plan
+DECLARE @param int = 2;
+SELECT * FROM v3014_7_1 WHERE a = @param;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- CASE 7.2: Parametrized query with joins
+-- First execution creates plan
+DECLARE @param int = 1;
+SELECT * FROM v3014_7_2 WHERE a = @param;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+-- Second execution uses cached plan
+DECLARE @param int = 2;
+SELECT * FROM v3014_7_2 WHERE a = @param;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+-- CASE 7.3: Prepare/Execute with ownership chain
+-- Prepare statement
+DECLARE @handle int;
+DECLARE @stmt nvarchar(max) = N'SELECT * FROM v3014_7_3 WHERE a = @p1';
+EXEC sp_prepare @handle OUTPUT, N'@p1 int', @stmt;
+GO
+~~START~~
+int
+~~END~~
+
+-- Execute prepared statement multiple times
+EXEC sp_execute 1, 1;
+GO
+~~START~~
+int
+~~END~~
+
+EXEC sp_execute 1, 2;
+GO
+~~START~~
+int
+~~END~~
+
+-- Deallocate prepared statement
+EXEC sp_unprepare 1;
+GO
+
+-- CASE 7.4: Dynamic SQL with ownership chain
+DECLARE @sql nvarchar(max);
+SET @sql = N'SELECT * FROM v3014_7_4 WHERE a = @id';
+EXEC sp_executesql @sql, N'@id int', 1;
+GO
 ~~START~~
 int
 ~~END~~

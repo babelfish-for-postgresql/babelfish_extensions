@@ -7647,11 +7647,6 @@ find_all_view_references(Node *node, List **view_oids)
 									QTW_EXAMINE_RTES_BEFORE);
 }
 
-typedef struct
-{
-	Oid view_owner;
-} mark_nodes_inside_view_context;
-
 /*
  * Walker function to mark relations and functions inside view definitions
  * 
@@ -7667,7 +7662,7 @@ typedef struct
  * 
  */
 static bool
-mark_nodes_inside_view_walker(Node *node, mark_nodes_inside_view_context *context)
+mark_nodes_inside_view_walker(Node *node, Oid *context)
 {
 	Oid nspid;
 	char *physical_schemaname = NULL;
@@ -7695,9 +7690,9 @@ mark_nodes_inside_view_walker(Node *node, mark_nodes_inside_view_context *contex
                 
                 if (physical_schemaname && !is_shared_schema(physical_schemaname))
                 {
-                    if (get_rel_owner(rte->relid) == context->view_owner)
+                    if (get_rel_owner(rte->relid) == *context)
                     {
-                        perminfo->checkAsUser = context->view_owner;
+                        perminfo->checkAsUser = *context;
                     }
                     perminfo->insideView = PNODE_INSIDE_VIEW;
                 }
@@ -7710,23 +7705,21 @@ mark_nodes_inside_view_walker(Node *node, mark_nodes_inside_view_context *contex
                             	 (void *) context,
                             	 0);
 	}
-
-	if (IsA(node, FuncExpr))
+	else if (IsA(node, FuncExpr))
     {
         FuncExpr *funcexpr = (FuncExpr *) node;
 		nspid = get_func_namespace(funcexpr->funcid);
 		physical_schemaname = get_namespace_name(nspid);
 		if (physical_schemaname && !is_shared_schema(physical_schemaname))
 		{
-			funcexpr->parentOwnerId = context->view_owner;
+			funcexpr->parentOwnerId = *context;
 			funcexpr->insideView = PNODE_INSIDE_VIEW;
 		}
 
 		if (physical_schemaname)
 				pfree(physical_schemaname);
         
-        return expression_tree_walker(node, mark_nodes_inside_view_walker,
-								  (void *) context);
+		/* else walk through function args */
     }
 
 	return expression_tree_walker(node, mark_nodes_inside_view_walker,
@@ -7744,13 +7737,10 @@ static void
 mark_nodes_inside_view(Query *query, Oid view_owner)
 {
 
-	mark_nodes_inside_view_context context;
-	context.view_owner = view_owner;
-
 	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
 		return;
 
 	mark_nodes_inside_view_walker((Node *)query,
-								  &context);
+								  &view_owner);
 
 }
