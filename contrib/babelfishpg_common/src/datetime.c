@@ -517,6 +517,114 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 	return 0;
 }
 
+/*
+ * Apply datetime rounding
+ * This implements the same logic as TdsTimeDifferenceDatetime
+ */
+static Timestamp
+roundoff_datetime(Timestamp timestamp)
+{
+	struct pg_tm tm;
+	fsec_t		fsec;
+	int			msec, rounded_msec;
+	Timestamp	result;
+	int			unit, base;
+	int leap;
+	int max_days;
+
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		return timestamp;
+
+	if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) != 0)
+		return timestamp;
+
+	/* Debug: Log input values */
+	elog(NOTICE, "DEBUG: Rounding datetime - Input fsec: %d, msec: %d", 
+		 fsec, fsec / 1000);
+
+	/* Convert microseconds to milliseconds */
+	msec = fsec / 1000;
+
+	/* Round to nearest .000, .003, or .007 based on the last digit */
+	unit = msec % 10;
+	base = (msec / 10) * 10;  /* Remove the unit digit */
+
+	switch (unit)
+	{
+		case 0:
+		case 1:
+			rounded_msec = base + 0;  /* Round to .000 */
+			break;
+		case 2:
+		case 3:
+		case 4:
+			rounded_msec = base + 3;  /* Round to .003 */
+			break;
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+			rounded_msec = base + 7;  /* Round to .007 */
+			break;
+		case 9:
+			rounded_msec = base + 10; /* Round up to next .000 */
+			break;
+		default:
+			rounded_msec = msec;      /* Fallback */
+			break;
+	}
+
+	/* Handle carry-over if we rounded up to 1000ms */
+	if (rounded_msec >= 1000)
+	{
+		rounded_msec -= 1000;
+		tm.tm_sec++;
+
+		/* Handle second overflow */
+		if (tm.tm_sec >= 60)
+		{
+			tm.tm_sec = 0;
+			tm.tm_min++;
+
+			if (tm.tm_min >= 60)
+			{
+				tm.tm_min = 0;
+				tm.tm_hour++;
+
+				if (tm.tm_hour >= 24)
+				{
+					tm.tm_hour = 0;
+					tm.tm_mday++;
+
+					/* Handle month/year rollover using PostgreSQL's day_tab */
+					leap = isleap(tm.tm_year) ? 1 : 0;
+					max_days = day_tab[leap][tm.tm_mon - 1];
+
+					if (tm.tm_mday > max_days)
+					{
+						tm.tm_mday = 1;
+						tm.tm_mon++;
+						if (tm.tm_mon > 12)
+						{
+							tm.tm_mon = 1;
+							tm.tm_year++;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/* Convert back to microseconds */
+	fsec = rounded_msec * 1000;
+
+	if (tm2timestamp(&tm, fsec, NULL, &result) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
+
+	return result;
+}
 
 Datum
 datetime_in_str(char *str, Node *escontext)
@@ -627,10 +735,9 @@ datetime_in_str(char *str, Node *escontext)
 			TIMESTAMP_NOEND(result);
 	}
 
-	/*
-	 * TODO: round datetime fsec to fixed bins (e.g. .000, .003, .007) see:
-	 * BABEL-1081
-	 */
+	/* Apply datetime rounding */
+	result = roundoff_datetime(result);
+
 	CheckDatetimeRange(result, escontext);
 	CheckDatetimePrecision(fsec);
 
@@ -724,6 +831,7 @@ date_datetime(PG_FUNCTION_ARGS)
 	else
 		result = dateVal * USECS_PER_DAY;
 
+	result = roundoff_datetime(result);
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -749,6 +857,7 @@ time_datetime(PG_FUNCTION_ARGS)
 	/* Convert TimeADT type to tm  */
 	time2tm(timeVal, tm, &fsec);
 
+	result = roundoff_datetime(result);
 	if (tm2timestamp(tm, fsec, NULL, &result) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -765,6 +874,7 @@ timestamp_datetime(PG_FUNCTION_ARGS)
 {
 	Timestamp	result = PG_GETARG_TIMESTAMP(0);
 
+	result = roundoff_datetime(result);
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -813,6 +923,8 @@ varbinary_datetime(PG_FUNCTION_ARGS)
 		int64 total_usecs = days * USECS_PER_DAY + usecs;
 		result = TSQL_DEFAULT_DATETIME + total_usecs;
 	}
+
+	result = roundoff_datetime(result);
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -844,6 +956,8 @@ timestamptz_datetime(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("data out of range for datetime")));
 	}
+
+	result = roundoff_datetime(result);
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -862,6 +976,7 @@ datetime_varchar(PG_FUNCTION_ARGS)
 	char		buf[MAXDATELEN + 1];
 	VarChar    *result;
 
+	timestamp = roundoff_datetime(timestamp);
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
@@ -906,6 +1021,7 @@ datetime_char(PG_FUNCTION_ARGS)
 	char		buf[MAXDATELEN + 1];
 	VarChar    *result;
 
+	timestamp = roundoff_datetime(timestamp);
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
@@ -1351,7 +1467,7 @@ int roundFractionalSeconds(int v_fractseconds)
 Datum
 datetime_to_bit(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp_left = roundoff_datetime(PG_GETARG_TIMESTAMP(0));
 	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_BOOL((bool)result);
 }
@@ -1359,7 +1475,7 @@ datetime_to_bit(PG_FUNCTION_ARGS)
 Datum
 datetime_to_int2(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp_left = roundoff_datetime(PG_GETARG_TIMESTAMP(0));
 	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_INT16((int16)round(result));
 }
@@ -1368,7 +1484,7 @@ datetime_to_int2(PG_FUNCTION_ARGS)
 Datum
 datetime_to_int4(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp_left = roundoff_datetime(PG_GETARG_TIMESTAMP(0));
 	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_INT32((int32)round(result));
 }
@@ -1376,7 +1492,7 @@ datetime_to_int4(PG_FUNCTION_ARGS)
 Datum
 datetime_to_int8(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp_left = roundoff_datetime(PG_GETARG_TIMESTAMP(0));
 	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_INT64((int64)round(result));
 }
@@ -1384,7 +1500,7 @@ datetime_to_int8(PG_FUNCTION_ARGS)
 Datum
 datetime_to_float4(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp_left = roundoff_datetime(PG_GETARG_TIMESTAMP(0));
 	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_FLOAT4((float4)result);
 }
@@ -1392,7 +1508,7 @@ datetime_to_float4(PG_FUNCTION_ARGS)
 Datum
 datetime_to_float8(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp_left = roundoff_datetime(PG_GETARG_TIMESTAMP(0));
 	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_FLOAT8((float8)result);
 }
@@ -1400,7 +1516,7 @@ datetime_to_float8(PG_FUNCTION_ARGS)
 Datum
 datetime_to_numeric(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp_left = roundoff_datetime(PG_GETARG_TIMESTAMP(0));
 	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	return (DirectFunctionCall1(float8_numeric, Float8GetDatum(result)));
 }
