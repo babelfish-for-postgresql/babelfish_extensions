@@ -82,7 +82,7 @@ POINT (10 500)
 #D#master.sys.geography
 POINT (500 10)
 #Q#SELECT location.STAsText() FROM POINTGEOM_dt;
-#D#text
+#D#nvarchar
 POINT(47.651 -22.349)
 POINT(1 2)
 POINT(47.651 -22.349)
@@ -97,7 +97,7 @@ POINT(47.651 -22.349)
 POINT(47.651 -22.349)
 POINT EMPTY
 #Q#SELECT location.STAsText() FROM POINTGEOG_dt;
-#D#text
+#D#nvarchar
 POINT(47.651 -22.349)
 POINT(1 2)
 POINT(1 2)
@@ -110,7 +110,7 @@ POINT(-22.349 47.651)
 POINT(47.651 -22.349)
 POINT EMPTY
 #Q#SELECT geom.STAsText(), geog.STAsText() FROM POINT_dt;
-#D#text#!#text
+#D#nvarchar#!#nvarchar
 POINT(47.651 -22.349)#!#
 POINT EMPTY#!#
 #!#POINT(47.651 -22.349)
@@ -139,7 +139,7 @@ False#!#False
 #Q#INSERT INTO POINTEMP_dt(geom) values(@geom) 
 #Q#INSERT INTO POINTEMP_dt(geog) values(@geog) 
 #Q#SELECT geom.STAsText(), geog.STAsText() FROM POINTEMP_dt;
-#D#text#!#text
+#D#nvarchar#!#nvarchar
 POINT EMPTY#!#
 #!#POINT EMPTY
 POINT EMPTY#!#

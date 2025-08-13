@@ -64,14 +64,14 @@ GO
 select .GEOSPATIALPOINTEMPTYdt.geom.STAsText() from GEOSPATIALPOINTEMPTYdt
 GO
 ~~START~~
-text
+nvarchar
 ~~END~~
 
 
 select ..geom.STAsText() from GEOSPATIALPOINTEMPTYdt
 GO
 ~~START~~
-text
+nvarchar
 ~~END~~
 
 

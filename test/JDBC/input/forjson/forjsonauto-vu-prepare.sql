@@ -3,12 +3,22 @@ CREATE TABLE forjson_auto_vu_t_orders ([Id] int, [userid] int, [productid] int, 
 CREATE TABLE forjson_auto_vu_t_products ([Id] int, [name] varchar(50), [price] varchar (25));
 CREATE TABLE forjson_auto_vu_t_sales ([Id] int, [price] varchar(25), [totalSales] int);
 CREATE TABLE forjson_auto_vu_t_times ([Id] int, [date] Date);
+CREATE TABLE forjson_test_nested_1 (id int, [data] varchar(50));
+CREATE TABLE forjson_test_nested_2 (id int, [ref_id] int);
+CREATE TABLE forjson_test_unicode (id int, [column_标] varchar(50));
+CREATE TABLE forjson_test_orderby (id int, value int, name varchar(50));
+CREATE TABLE forjson_test_groupby (category varchar(20), product varchar(50), quantity int, price decimal(10,2));
 
 INSERT INTO forjson_auto_vu_t_users VALUES (1, 'j', 'o', 'testemail'), (1, 'e', 'l', 'testemail2');
 INSERT INTO forjson_auto_vu_t_orders VALUES (1, 1, 1, 5, '2023-06-25'), (2, 1, 1, 6, '2023-06-25');
 INSERT INTO forjson_auto_vu_t_products VALUES (1, 'A', 20), (1, 'B', 30);
 INSERT INTO forjson_auto_vu_t_sales VALUES (1, 20, 50), (2, 30, 100);
 INSERT INTO forjson_auto_vu_t_times VALUES (1, '2023-11-26'), (2, '2023-11-27');
+INSERT INTO forjson_test_nested_1 VALUES (1, NULL), (2, 'test');
+INSERT INTO forjson_test_nested_2 VALUES (1, 1), (2, NULL);
+INSERT INTO forjson_test_unicode VALUES (1, 'unicode data');
+INSERT INTO forjson_test_orderby VALUES (1, 20, 'Apple'), (2, 10, 'Banana'), (3, 30, 'Cherry'), (4, 15, 'Date'), (5, 25, 'Elderberry');
+INSERT INTO forjson_test_groupby VALUES ('Fruit', 'Apple', 10, 2.50), ('Fruit', 'Banana', 15, 1.75);
 GO
 
 CREATE VIEW forjson_vu_v_1 AS 
@@ -263,4 +273,65 @@ CREATE PROCEDURE forjson_vu_p_15 AS
         SET @json_string = (select P.price, O.productId from forjson_auto_vu_t_orders O JOIN forjson_auto_vu_t_products P ON (P.id = O.productid) for json auto) 
         select U.id, U.firstname, @json_string as details from forjson_auto_vu_t_users U for json auto
 END
+GO
+
+-- FOR JSON AUTO + orderby + groupby
+CREATE PROCEDURE forjson_vu_v_resjunk_orderby_groupby AS
+SELECT (
+    SELECT P.price, 
+           COUNT(*) as product_count, 
+           SUM(O.quantity) as total_quantity
+    FROM forjson_auto_vu_t_orders O
+    JOIN forjson_auto_vu_t_products P ON P.Id = O.productid
+    GROUP BY P.price
+    ORDER BY SUM(O.quantity) DESC
+    FOR JSON AUTO
+) AS json_data;
+GO
+
+-- FOR JSON AUTO + window function
+CREATE PROCEDURE forjson_vu_v_resjunk_window_functions AS
+SELECT (
+    SELECT U.Id, U.firstname, P.name, P.price,
+           ROW_NUMBER() OVER(PARTITION BY P.price ORDER BY O.quantity DESC) as quantity_rank
+    FROM forjson_auto_vu_t_users U
+    JOIN forjson_auto_vu_t_orders O ON U.Id = O.userid
+    JOIN forjson_auto_vu_t_products P ON P.Id = O.productid
+    ORDER BY P.price, quantity_rank
+    FOR JSON AUTO
+) AS json_data;
+GO
+
+-- Stored procedure with GROUP BY, HAVING and ORDER BY
+CREATE PROCEDURE forjson_vu_p_resjunk_groupby_having_orderby AS
+BEGIN
+    SELECT P.price,
+           COUNT(*) as product_count,
+           SUM(O.quantity) as total_quantity
+    FROM forjson_auto_vu_t_orders O
+    JOIN forjson_auto_vu_t_products P ON P.Id = O.productid
+    GROUP BY P.price
+    HAVING COUNT(*) >= 1
+    ORDER BY SUM(O.quantity) DESC
+    FOR JSON AUTO;
+END;
+GO
+
+
+/*--------------- Found some incorrect cases which needs to be handled in future ------------------- */
+
+/*
+* CASE 1: FOR JSON AUTO + Function
+*/
+CREATE TABLE forjson_auto_test_diff_cases ( EmployeeId INT, Salary INT);
+INSERT INTO forjson_auto_test_diff_cases (EmployeeId, Salary) VALUES(1, 75000),(2, 85000)
+GO
+
+CREATE FUNCTION dbo.forjson_auto_test_diff_cases_fn(@DepartmentId INT)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT  e.EmployeeId FROM forjson_auto_test_diff_cases e
+);
 GO
