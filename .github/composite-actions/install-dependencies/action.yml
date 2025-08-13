@@ -10,6 +10,7 @@ runs:
         sudo rm -f /etc/apt/sources.list.d/packages-microsoft-com-prod.list
         sudo rm -f /etc/apt/trusted.gpg.d/microsoft.gpg
         sudo rm -f /usr/share/keyrings/microsoft-prod.gpg
+        
         # Download and install Microsoft's GPG key properly
         wget -qO- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
         # Add Microsoft repository with proper GPG key configuration
