@@ -196,7 +196,8 @@ is_valid_geography_srid(int32 srid)
 static void 
 check_geom_type(const char *geom_type)
 {
-    if (strcmp(geom_type, "ST_Point") != 0 )
+    if (strcmp(geom_type, "ST_Point") != 0 &&
+        strcmp(geom_type, "ST_LineString") != 0 )
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
