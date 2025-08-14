@@ -5,8 +5,16 @@ runs:
     - name: Install Dependencies
       run: |
         sudo apt clean && sudo apt-get update --fix-missing -y
-        curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+        # Clean up any existing Microsoft repository configurations to avoid conflicts
+        sudo rm -f /etc/apt/sources.list.d/msprod.list
+        sudo rm -f /etc/apt/sources.list.d/packages-microsoft-com-prod.list
+        sudo rm -f /etc/apt/trusted.gpg.d/microsoft.gpg
+        sudo rm -f /usr/share/keyrings/microsoft-prod.gpg
+        
+        # Download and install Microsoft's GPG key properly
+        wget -qO- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+        # Add Microsoft repository with proper GPG key configuration
+        echo "deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" | sudo tee /etc/apt/sources.list.d/msprod.list
         sudo apt-get update --fix-missing -y
         sudo apt-get install gcc-9 uuid-dev openjdk-8-jre libicu-dev libxml2-dev openssl libssl-dev python3-dev libossp-uuid-dev libpq-dev pkg-config g++ build-essential bison mssql-tools unixodbc-dev libsybdb5 freetds-dev freetds-common gdal-bin libgdal-dev libgeos-dev gdb libkrb5-dev
         sudo apt install -y ccache
