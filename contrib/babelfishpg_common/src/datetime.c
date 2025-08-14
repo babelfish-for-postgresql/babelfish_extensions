@@ -538,10 +538,6 @@ roundoff_datetime(Timestamp timestamp)
 	if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) != 0)
 		return timestamp;
 
-	/* Debug: Log input values */
-	elog(NOTICE, "DEBUG: Rounding datetime - Input fsec: %d, msec: %d", 
-		 fsec, fsec / 1000);
-
 	/* Convert microseconds to milliseconds */
 	msec = fsec / 1000;
 
