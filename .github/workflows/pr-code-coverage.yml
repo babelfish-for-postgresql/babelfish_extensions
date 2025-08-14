@@ -2,7 +2,6 @@ name: Tests
 on: [push, pull_request]
 
 jobs:
-
   run-jdbc-tests:
     name: JDBC Tests
     uses: ./.github/workflows/jdbc-tests.yml
@@ -27,7 +26,6 @@ jobs:
     needs: [run-jdbc-tests, run-odbc-tests, run-dotnet-tests, run-python-tests, run-isolation-tests]
     runs-on: ubuntu-22.04
     steps:
-    
     - uses: actions/checkout@v2
       id: checkout
     
@@ -36,54 +34,45 @@ jobs:
       if: always()
       run: |
         sudo apt-get install lcov
-
-    - uses: actions/download-artifact@v4
-      id: download-jdbc-coverage
-      with:
-        name:  coverage-babelfish-extensions-jdbc
-        path: contrib/
     
-    - uses: actions/download-artifact@v4
-      id: download-dotnet-coverage
+    - name: Download Coverage Reports
+      uses: actions/download-artifact@v4
       with:
-        name: coverage-babelfish-extensions-dotnet
+        pattern: coverage-babelfish-extensions-*
         path: contrib/
-    
-    - uses: actions/download-artifact@v4
-      id: download-odbc-coverage
-      with:
-        name: coverage-babelfish-extensions-odbc
-        path: contrib/
-    
-    - uses: actions/download-artifact@v4
-      id: download-python-coverage
-      with:
-        name: coverage-babelfish-extensions-python
-        path: contrib/
-        
-    - uses: actions/download-artifact@v4
-      id: download-isolation-coverage
-      with:
-        name: coverage-babelfish-extensions-isolation
-        path: contrib/
+        merge-multiple: true
 
     - name: Generate Overall Code Coverage
       id: generate-total-code-coverage
-      if: |
-        always() && steps.download-dotnet-coverage.outcome == 'success'
-        && steps.download-jdbc-coverage.outcome == 'success' 
-        && steps.download-odbc-coverage.outcome == 'success' 
-        && steps.download-python-coverage.outcome == 'success'
-        && steps.download-isolation-coverage.outcome == 'success'
+      if: success()
       run: |
         cd contrib/
-        lcov -a jdbc-lcov.info -a dotnet-lcov.info -a odbc-lcov.info -o lcov.info
+        # Combine all coverage files
+        lcov $(for f in *-lcov.info; do echo "-a $f "; done) -o lcov.info
+        # Generate coverage report
         lcov --list lcov.info
       shell: bash
 
-    - name: Upload coverage to coveralls
-      if: always() && steps.generate-total-code-coverage.outcome == 'success'
+    - name: Upload coverage to Coveralls
+      if: success()
       uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: $GITHUB_WORKSPACE/contrib/lcov.info
+        path-to-lcov: contrib/lcov.info
+        parallel: true
+        flag-name: ${{ github.job }}
+
+  finish-coverage:
+    needs: run-babelfish-code-coverage-for-pull_request
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Finish Coveralls parallel build
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true
+
+env:
+    COVERALLS_DEBUG: true  # Enable debug output
+    COVERALLS_ENDPOINT: https://coveralls.io
+    COVERALLS_SERVICE_NAME: github
