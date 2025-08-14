@@ -5,11 +5,11 @@ runs:
     - name: Install Dependencies
       run: |
         sudo apt clean && sudo apt-get update --fix-missing -y
-        # Remove any existing Microsoft repository configurations
+        # Remove any existing repository configurations
         sudo rm -f /etc/apt/sources.list.d/microsoft*
         sudo rm -f /usr/share/keyrings/microsoft*
         
-        # Setup Microsoft repository with new key
+        # Setup repository with new key
         curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /usr/share/keyrings/microsoft.asc
         sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg </usr/share/keyrings/microsoft.asc
         echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" | sudo tee /etc/apt/sources.list.d/microsoft.list

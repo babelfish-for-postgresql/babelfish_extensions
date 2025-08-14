@@ -49,11 +49,26 @@ jobs:
       
       - name: Configure Python environment
         run: |
-          cd ~
-          curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          # Clean up existing repository configurations
+          sudo rm -f /etc/apt/sources.list.d/microsoft*
+          sudo rm -f /etc/apt/trusted.gpg.d/microsoft*
+          sudo rm -f /usr/share/keyrings/microsoft*
+
+          # Setup repository properly
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" | sudo tee /etc/apt/sources.list.d/microsoft.list
+          
+          # Update package list
+          sudo apt-get update
+
+          # Install required packages
           cd ~/work/babelfish_extensions/babelfish_extensions/test/python
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
+          
+          # Install Python packages
           pip3 install pyodbc pymssql pytest pytest-xdist antlr4-python3-runtime==4.13.2
+        shell: bash
+
       
       - name: Generate .spec file parser
         run: |
