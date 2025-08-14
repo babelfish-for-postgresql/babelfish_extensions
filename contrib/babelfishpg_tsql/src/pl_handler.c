@@ -32,6 +32,7 @@
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_shdepend.h"
 #include "commands/createas.h"
+#include "catalog/pg_namespace.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/extension.h"
@@ -189,21 +190,30 @@ static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
 
-typedef struct CtenameIdx {
+typedef struct CtenameIdx
+{
 	char ctename[NAMEDATALEN];
 	int idx_in_ctelist;
 } CtenameIdx;
-typedef struct RTEAliasEntry {
+typedef struct RTEAliasEntry
+{
 	char alias_name[NAMEDATALEN];
 	int json_nest_level;
 } RTEAliasEntry;
 
-static bool handleForJsonAuto(Query *query);
+typedef struct JsonAutoContext
+{
+	List *cteList;
+	HTAB *ctenameIdxHash;
+} JsonAutoContext;
+
+static bool handleForJsonAuto(Query *query, JsonAutoContext *jsonAutoCtx);
 static bool isJsonAuto(List* target);
-static bool check_json_auto_walker(Node *node, ParseState *pstate);
+void checkForJsonAuto(Query *query);
+static bool jsonAutoWalker(Node *node, JsonAutoContext *jsonAutoCtx);
 static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te);
 static char *string_to_fixed_hash(const char *input);
-static void modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias);
+static void modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *jsonAutoCtx);
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -1059,7 +1069,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	(void) check_json_auto_walker((Node*) query, pstate);
+	checkForJsonAuto(query);
 
 	if (query->commandType == CMD_INSERT)
 	{
@@ -1477,13 +1487,16 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
  * handleForJsonAuto - Process FOR JSON AUTO queries
  * 
  * @param wrapperQuery: The outer query containing FOR JSON AUTO clause
+ * @param jsonAutoCtx: Context for processing FOR JSON AUTO clause
+ *        ->cteList: cteList set in the tree walker
+ *        ->ctenameIdxHashFromOuterQuery: Hash table containing CTE names and their indices.
  * @return: true if it's a FOR JSON AUTO query, false if not
  * 
  * Validates that the query has at least one valid source table and processes
  * the target columns for JSON nesting. Follows MSSQL behavior by reporting
  * "at least one table" error when no valid sources are found.
  *
- * Valid source types: RTE_RELATION, RTE_SUBQUERY, RTE_CTE
+ * Valid source types: RTE_RELATION, RTE_SUBQUERY, RTE_CTE, user-defined RTE_FUNCTION
  * Source validity determined by single-source testing without inner sources:
  *   - Returns "at least one table" error: invalid source
  *   - No error: valid source
@@ -1492,7 +1505,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
  * CTEs may exist in ctelist but not be referenced in the actual query.
  */
 static bool
-handleForJsonAuto(Query *wrapperQuery)
+handleForJsonAuto(Query *wrapperQuery, JsonAutoContext *jsonAutoCtx)
 {
 	Query			   *origQuery;
 	List			   *wrapperTarget = wrapperQuery->targetList;
@@ -1501,7 +1514,7 @@ handleForJsonAuto(Query *wrapperQuery)
 	ListCell		   *lc;
 	Alias			   *wrapperRteAlias;
 	RangeTblEntry	   *wrapperRte = NULL;
-	int					validSrcCnt = 0;	/* Count of valid source tables */
+	bool				hasValidSrc = false;
 
 	if (!isJsonAuto(wrapperTarget))
 		return false;
@@ -1525,27 +1538,58 @@ handleForJsonAuto(Query *wrapperQuery)
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE)
 			{
-				validSrcCnt++;
-				break; // as long as valid source >= 1 , we should do modifyColumnEntries
+				hasValidSrc = true;
+				break;
 			}
-			// TODO: check RTE_FUNCTION, and other RTEKinds
-		}
+			else if (rte->rtekind == RTE_FUNCTION)
+			{
+				RangeTblFunction	   *rteFunc;
+				FuncExpr			   *funcExpr;
+				HeapTuple				procTuple;
+				Form_pg_proc			procForm;
+				bool					isSystemFunction = false;
+				Oid						funcId;
+				Oid						sysNamespaceOid;
 
-		if (validSrcCnt > 0)
-		{
-			modifyColumnEntries(origQuery, wrapperRteAlias);
-			return true;
+				/* Get the first function from the RTE_FUNCTION */
+				if (rte->functions && list_length(rte->functions) > 0)
+				{
+					rteFunc = (RangeTblFunction *) linitial(rte->functions);
+					funcExpr = (FuncExpr *) rteFunc->funcexpr;
+					funcId = funcExpr->funcid;
+
+					/* Look up function info to check namespace */
+					procTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcId));
+					if (HeapTupleIsValid(procTuple))
+					{
+						procForm = (Form_pg_proc) GETSTRUCT(procTuple);
+						sysNamespaceOid = get_namespace_oid("sys", true);
+						if (procForm->pronamespace == PG_CATALOG_NAMESPACE ||
+							(OidIsValid(sysNamespaceOid) && procForm->pronamespace == sysNamespaceOid))
+							isSystemFunction = true;
+						ReleaseSysCache(procTuple);
+
+						/* Only user-defined functions count as valid sources */
+						if (!isSystemFunction)
+						{
+							hasValidSrc = true;
+							break;
+						}
+					}
+				}
+			}
 		}
 	}
 
-	if (validSrcCnt == 0)
+	if (hasValidSrc)
+		modifyColumnEntries(origQuery, wrapperRteAlias, jsonAutoCtx);
+	else
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 				errmsg("FOR JSON AUTO requires at least one table for "
 					"generating JSON objects. Use FOR JSON PATH or add a FROM"
 					" clause with a table name.")));
-	else
-		Assert(false);
+
 	return true;
 }
 
@@ -1613,6 +1657,9 @@ string_to_fixed_hash(const char *input)
  * 
  * @param origQuery: The original query to process (without FOR JSON AUTO wrapper)
  * @param wrapperRteAlias: Alias information from wrapper query
+ * @param jsonAutoCtx: Context for processing FOR JSON AUTO clause
+ *        ->cteList: cteList set in the tree walker
+ *        ->ctenameIdxHashFromOuterQuery: Hash table containing CTE names and their indices.
  * 
  * Analyzes each target entry to assign appropriate JSON nesting keys and levels.
  * Transforms target entry names to include JSON nesting information in the format:
@@ -1651,9 +1698,8 @@ string_to_fixed_hash(const char *input)
  * table names in different contexts, ensuring proper nesting separation.
  */
 static void
-modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
+modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *jsonAutoCtx)
 {
-	// TODO: 1. move variables to its used scope
 
 	/* JSON nesting variables */
 	char			   *curMaxUsedJsonKey = "temp";	/* Current nesting key for non-source entries */
@@ -1664,10 +1710,11 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 	int					targetIterIdx = 0;
 
 	/* CTE processing variables */
-	HTAB			   *ctenameIdxHash;	/* CTE name-to-index mapping */
+	HTAB			   *ctenameIdxHash = jsonAutoCtx->ctenameIdxHash;	/* CTE name-to-index mapping */
 	ListCell		   *cteLc;
 	CommonTableExpr	   *cteEntry;
 	CtenameIdx		   *cteHashEntry;
+	List			   *cteList = jsonAutoCtx->cteList;
 	HASHCTL				cteHashCtl;
 	int					cteIdx = 0;
 
@@ -1681,20 +1728,23 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 	List			   *origTargetList = origQuery->targetList;
 	ListCell		   *lc;
 
-	/* Initialize CTE name-to-index hash table */
-	memset(&cteHashCtl, 0, sizeof(cteHashCtl));
-	cteHashCtl.keysize = NAMEDATALEN;
-	cteHashCtl.entrysize = sizeof(CtenameIdx);
-	cteHashCtl.hcxt = CurrentMemoryContext;
-	ctenameIdxHash = hash_create("ctenameIdxHash",
-								 64, // initial allocation size
-								 &cteHashCtl,
-								 HASH_ELEM | HASH_STRINGS);
-
-	/* Populate CTE name-to-index hash table */
-	if (origQuery->cteList != NULL)
+	/*
+	 * If ctenameIdxHash hasn't been initialized yet, initialize it if we
+	 * have cteList.
+	 */
+	if (ctenameIdxHash == NULL && cteList != NULL)
 	{
-		foreach(cteLc, origQuery->cteList)
+		memset(&cteHashCtl, 0, sizeof(cteHashCtl));
+		cteHashCtl.keysize = NAMEDATALEN;
+		cteHashCtl.entrysize = sizeof(CtenameIdx);
+		cteHashCtl.hcxt = CurrentMemoryContext;
+		ctenameIdxHash = hash_create("ctenameIdxHash",
+									 64, // initial allocation size
+									 &cteHashCtl,
+									 HASH_ELEM | HASH_STRINGS);
+
+		/* Populate CTE name-to-index hash table */
+		foreach(cteLc, cteList)
 		{
 			cteEntry = (CommonTableExpr *) lfirst(cteLc);
 			cteHashEntry = (CtenameIdx *) hash_search(ctenameIdxHash,
@@ -1749,6 +1799,7 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 			continue;
 
 		outermostTargetEntry = castNode(TargetEntry, lfirst(lc));
+
 		if (outermostTargetEntry->resjunk)
 			continue;
 
@@ -1794,7 +1845,7 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 														  HASH_FIND,
 														  &found);
 				Assert(found);
-				cteEntry = (CommonTableExpr *) list_nth(origQuery->cteList, cteHashEntry->idx_in_ctelist);
+				cteEntry = (CommonTableExpr *) list_nth(cteList, cteHashEntry->idx_in_ctelist);
 				if (cteEntry->cterecursive)
 				{
 					matchedSrcCTEIsRecursive = true;
@@ -1817,15 +1868,17 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 				atOutermostLayer = false;
 		}
 
-		/* Handle sub-select in target entry */
 		if (nodeTag(curTargetEntry->expr) == T_SubLink)
 		{
 			sl = castNode(SubLink, curTargetEntry->expr);
 			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query)
 			{
-				if(handleForJsonAuto(castNode(Query, sl->subselect)))
+				if (isJsonAuto(((Query *)sl->subselect)->targetList))
 				{
-					/* Wrap subquery result in JSON coercion */
+					/*
+					 * Because this SubLink FOR JSON AUTO still needs to be processed 
+					 * by postgres, we need to convert the type from NVARCHAR to json.
+					 */
 					iocoerce = makeNode(CoerceViaIO);
 					iocoerce->arg = (Expr*) sl;
 					iocoerce->resulttype = TypenameGetTypid("json");
@@ -1900,25 +1953,41 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias)
 	}
 
 	/* Cleanup hash tables */
-	hash_destroy(ctenameIdxHash);
 	hash_destroy(RTEAliasNestHash);
 }
 
-static bool check_json_auto_walker(Node *node, ParseState *pstate)
+void checkForJsonAuto(Query *query)
+{
+	JsonAutoContext *jsonAutoCtx;
+	if (query == NULL) return;
+
+	jsonAutoCtx = (JsonAutoContext *) palloc(sizeof(JsonAutoContext));
+	jsonAutoCtx->cteList = NULL;
+	jsonAutoCtx->ctenameIdxHash = NULL;
+
+	jsonAutoWalker((Node *)query, jsonAutoCtx);
+
+	hash_destroy(jsonAutoCtx->ctenameIdxHash);
+	pfree(jsonAutoCtx);
+	return;
+}
+
+static bool jsonAutoWalker(Node *node, JsonAutoContext *jsonAutoCtx)
 {
 	if (node == NULL)
 		return false;
 	if (IsA(node, Query)) {
-		if(handleForJsonAuto((Query*) node))
-			return true;
-		else {
-			return query_tree_walker((Query*) node,
-								 check_json_auto_walker,
-								 (void *) pstate, 0);
-		}
+
+		if (((Query *)node)->cteList != NULL)
+			jsonAutoCtx->cteList = ((Query *)node)->cteList;
+
+		// First walk inner queries recursively to handle nested FOR JSON AUTO
+		query_tree_walker((Query*) node, jsonAutoWalker, (void *) jsonAutoCtx, 0);
+
+		// Then check if this layer has FOR JSON AUTO and handle it
+		return handleForJsonAuto((Query*) node, jsonAutoCtx);
 	}
-	return expression_tree_walker(node, check_json_auto_walker,
-								  (void *) pstate);
+	return expression_tree_walker(node, jsonAutoWalker, (void *) jsonAutoCtx);
 }
 
 static bool

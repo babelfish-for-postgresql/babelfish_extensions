@@ -230,8 +230,6 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 
 		colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
-		if (isnull && !include_null_values)
-			continue;
 
 		/*
 		 * Below is a workaround for is_tsql_x_datatype() which does not work
@@ -251,7 +249,7 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 		 * datatypes in different namespaces but with the same name. Examples:
 		 * bigint, int, etc.
 		 */
-		if (tsql_datatype_oid == datatype_oid)
+		if (tsql_datatype_oid == datatype_oid && (!isnull || include_null_values))
 		{
 			/* binary datatypes are not supported */
 			if (strcmp(typename, "binary") == 0 ||
@@ -312,9 +310,15 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 		}
 		
 		// Check for NULL
-		if (isnull && include_null_values)	{
-			value = palloc(sizeof(JsonbValue));
-			value->type=jbvNull;
+		if (isnull)
+		{
+			if (include_null_values)
+			{
+				value = palloc(sizeof(JsonbValue));
+				value->type=jbvNull;
+			}
+			else
+				value = NULL;
 		}
 		else	{
 			/*
@@ -339,8 +343,8 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 		parts = determine_parts(colname, &num);
 		if(strcmp(parts[0], "JSONAUTOALIAS") != 0) {
 			ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("sub-select and values for json auto are not currently supported.")));
+						(errcode(ERRCODE_INTERNAL_ERROR),
+							errmsg("FOR JSON AUTO: Column '%s' was not properly processed by the analyzer stage", colname)));
 		}
 		colname = remove_index_and_alias(colname);
 		nestedVal = value;
@@ -351,6 +355,24 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 
 		maxDepth = (num > maxDepth) ? num : maxDepth;
 
+		/*
+		 * Null value handling for JSON nesting structure creation:
+		 *
+		 * When processing null values where num > 1 and the hash for this nesting level
+		 * doesn't exist, we must create the hash structure to allow sub-levels to append
+		 * to this layer.
+		 *
+		 * nestedVal can be NULL in cases where (isnull && !include_null_values). We still
+		 * pass NULL here to ensure JSON nesting layer structures are generated when needed.
+		 *
+		 * When nestedVal == NULL, the only required action is checking if the hashEntry
+		 * for this JSON nesting level exists, and creating it if missing. All other
+		 * processing blocks should skip NULL cases:
+		 *
+		 * - insert_existing_json_to_obj(): Skip when nestedVal == NULL
+		 * - create_json_array(): Should create empty [{}] (jbvArray->jbvObject with 0 pairs)
+		 * - When num == 1: Skip inserting the pair in jsonbRow if nestedVal == NULL
+		 */
 		if (num > 1)	{
 			hashKey = parts[1];
 
@@ -360,9 +382,13 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 			if (hashEntry)	{
 				// function call
 				current = hashEntry->value;
-				insert_existing_json_to_obj(current, hashEntry->parent, nestedVal, hashEntry->idx, colname);
+				if (nestedVal != NULL)
+					insert_existing_json_to_obj(current, hashEntry->parent, nestedVal, hashEntry->idx, colname);
 				pfree(hashKey);
-			} else {
+			}
+			else
+			{
+				/* create hashEntry for this layer (hashKey == "<nesting_level>") */
 				hashEntry = (JsonbEntry *) hash_search(jsonbHash, (void *) hashKey, HASH_ENTER, NULL);
 				strlcpy(hashEntry->path, hashKey, NAMEDATALEN);
 				nestedVal = create_json_array(parts[2], colname, nestedVal, &hashEntry->idx);
@@ -382,6 +408,11 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 								"intermediate nesting keys in the JSON hierarchy."
 								" This pattern is not currently supported."));
 					current = hashEntry->value;
+					/*
+					 * nestedVal->val.object.pairs[0].value points to value of jsonbPair <nesting_key, jbvArray of this layer>
+					 * for example, we created nesting level 3 from create_json_array(): {"o": [{"a": 1}]},
+					 * nestedVal->val.object.pairs[0].value points to                          ↑
+					 */
 					insert_existing_json_to_obj(current, hashEntry->parent, &(nestedVal->val.object.pairs[0].value), hashEntry->idx, parts[2]);
 				}
 				else	{
@@ -400,7 +431,9 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 				jsonbRow->val.object.nPairs++;
 				}
 		}
-		else {
+		/* num == 1 && nestedVal != NULL */
+		else if (nestedVal != NULL)
+		{
 			// Increment nPairs in the row if it isnt inserted into an already existing json object.
 			jsonbRow->val.object.nPairs++;
 
@@ -871,15 +904,23 @@ create_json_array(char *arrayKey, char* pairKey, JsonbValue* pairVal, int *idx)
 	jsonbArray->val.array.elems = (JsonbValue *) palloc(sizeof(JsonbValue));
 
 	// Create pair to hold key and value
-	innerPair = palloc(sizeof(JsonbPair));
-	innerPair->key = *innerKey;
-	innerPair->value = *pairVal;
 
 	innerObj = palloc(sizeof(JsonbValue));
 	innerObj->type = jbvObject;
-	innerObj->val.object.nPairs = 1;
-	innerObj->val.object.pairs = palloc(sizeof(JsonbPair));
-	innerObj->val.object.pairs[innerObj->val.object.nPairs - 1] = *innerPair;
+	if (pairVal != NULL)
+	{
+		innerPair = palloc(sizeof(JsonbPair));
+		innerPair->key = *innerKey;
+		innerPair->value = *pairVal;
+		innerObj->val.object.nPairs = 1;
+		innerObj->val.object.pairs = palloc(sizeof(JsonbPair));
+		innerObj->val.object.pairs[innerObj->val.object.nPairs - 1] = *innerPair;
+	}
+	else
+	{
+		innerObj->val.object.nPairs = 0;
+		innerObj->val.object.pairs = NULL;
+	}
 	
 	jsonbArray->val.array.elems[0] = *innerObj;
 

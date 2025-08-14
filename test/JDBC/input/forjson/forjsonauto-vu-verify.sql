@@ -357,6 +357,54 @@ WHERE p.ProductName = 'Coffee Beans'
 FOR JSON AUTO;
 GO
 
+-- nested FOR JSON AUTO in subquery at outer query's FROM_clause
+WITH SalesData AS (
+    SELECT * FROM (VALUES
+        (1, 'East', '2023-01', 1000),
+        (1, 'East', '2023-02', 1200),
+        (2, 'West', '2023-01', 800),
+        (2, 'West', '2023-02', 900)
+    ) AS v(RegionId, RegionName, Period, Sales)
+)
+SELECT
+    v.RegionId,
+    v.RegionName,
+    (
+        SELECT
+            sd.Period,
+            sd.Sales,
+            sd.Sales * 0.15 as Commission,
+            (
+                SELECT TOP 1 t.TargetValue
+                FROM (VALUES
+                    ('East', 1100),
+                    ('West', 850)
+                ) t(Region, TargetValue)
+                WHERE t.Region = v.RegionName
+            ) as MonthlyTarget,
+            CASE
+                WHEN sd.Sales >= (
+                    SELECT TOP 1 t.TargetValue
+                    FROM (VALUES
+                        ('East', 1100),
+                        ('West', 850)
+                    ) t(Region, TargetValue)
+                    WHERE t.Region = v.RegionName
+                ) THEN 'Achieved'
+                ELSE 'Not Achieved'
+            END as TargetStatus
+        FROM SalesData sd
+        WHERE sd.RegionId = v.RegionId
+        FOR JSON AUTO
+    ) as MonthlyPerformance
+FROM (VALUES
+    (1, 'East'),
+    (2, 'West')
+) v(RegionId, RegionName)
+WHERE v.RegionId = 1
+FOR JSON AUTO;
+GO
+
 ---------------------------------------- VALUES (in FROM_clause) ----------------------------------------
 -- VALUES with Mixed Data Types
 SELECT v.product_name, v.price, v.in_stock, v.launch_date
@@ -1067,6 +1115,7 @@ LEFT JOIN forjsonauto_t_orders o ON c.CustomerID = o.CustomerID
 LEFT JOIN forjsonauto_t_order_details od ON o.OrderID = od.OrderID
 LEFT JOIN forjsonauto_t_products p ON od.ProductID = p.ProductID AND p.UnitPrice > 100
 WHERE c.CustomerID = 'ALFKI'
+AND od.OrderDetailID = 1
 FOR JSON AUTO;
 GO
 
@@ -1110,6 +1159,7 @@ LEFT JOIN (
     WHERE s.Rating > 4
 ) supplier_info ON expensive_products.CategoryID = supplier_info.Rating
 WHERE c.CustomerID = 'ALFKI'
+AND od.OrderDetailID = 1
 FOR JSON AUTO;
 GO
 

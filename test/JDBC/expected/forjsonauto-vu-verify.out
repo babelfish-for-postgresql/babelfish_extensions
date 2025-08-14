@@ -176,7 +176,7 @@ GO
 nvarchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+~~ERROR (Message: invalid input syntax for type integer: "[{"max": 1}]")~~
 
 
 EXECUTE forjson_vu_p_9
@@ -435,9 +435,10 @@ SELECT  b.EmployeeId
 FROM dbo.forjson_auto_test_diff_cases_fn(1) as b
 FOR JSON AUTO;
 GO
-~~ERROR (Code: 13600)~~
-
-~~ERROR (Message: FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.)~~
+~~START~~
+nvarchar
+[{"EmployeeId": 1}, {"EmployeeId": 2}]
+~~END~~
 
 
 
@@ -652,6 +653,59 @@ GO
 ~~START~~
 nvarchar
 [{"ProductName": "Coffee Beans", "c": [{"CategoryName": "Coffee", "product_sales_analysis": [{"od": [{"cu": [{"CustomerID": "ALFKI", "CategoryName": "Coffee", "analyzed_product": "Coffee Beans"}], "Quantity": 10, "UnitPrice": 19.0000, "line_total": 190.0000}], "OrderID": 10248}]}]}]
+~~END~~
+
+
+-- nested FOR JSON AUTO in subquery at outer query's FROM_clause
+WITH SalesData AS (
+    SELECT * FROM (VALUES
+        (1, 'East', '2023-01', 1000),
+        (1, 'East', '2023-02', 1200),
+        (2, 'West', '2023-01', 800),
+        (2, 'West', '2023-02', 900)
+    ) AS v(RegionId, RegionName, Period, Sales)
+)
+SELECT
+    v.RegionId,
+    v.RegionName,
+    (
+        SELECT
+            sd.Period,
+            sd.Sales,
+            sd.Sales * 0.15 as Commission,
+            (
+                SELECT TOP 1 t.TargetValue
+                FROM (VALUES
+                    ('East', 1100),
+                    ('West', 850)
+                ) t(Region, TargetValue)
+                WHERE t.Region = v.RegionName
+            ) as MonthlyTarget,
+            CASE
+                WHEN sd.Sales >= (
+                    SELECT TOP 1 t.TargetValue
+                    FROM (VALUES
+                        ('East', 1100),
+                        ('West', 850)
+                    ) t(Region, TargetValue)
+                    WHERE t.Region = v.RegionName
+                ) THEN 'Achieved'
+                ELSE 'Not Achieved'
+            END as TargetStatus
+        FROM SalesData sd
+        WHERE sd.RegionId = v.RegionId
+        FOR JSON AUTO
+    ) as MonthlyPerformance
+FROM (VALUES
+    (1, 'East'),
+    (2, 'West')
+) v(RegionId, RegionName)
+WHERE v.RegionId = 1
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"RegionId": 1, "RegionName": "East", "MonthlyPerformance": [{"Sales": 1000, "Period": "2023-01", "Commission": 150.00, "TargetStatus": "Not Achieved", "MonthlyTarget": 1100}, {"Sales": 1200, "Period": "2023-02", "Commission": 180.00, "TargetStatus": "Achieved", "MonthlyTarget": 1100}]}]
 ~~END~~
 
 
@@ -1547,13 +1601,13 @@ LEFT JOIN forjsonauto_t_orders o ON c.CustomerID = o.CustomerID
 LEFT JOIN forjsonauto_t_order_details od ON o.OrderID = od.OrderID
 LEFT JOIN forjsonauto_t_products p ON od.ProductID = p.ProductID AND p.UnitPrice > 100
 WHERE c.CustomerID = 'ALFKI'
+AND od.OrderDetailID = 1
 FOR JSON AUTO;
 GO
 ~~START~~
 nvarchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: FOR JSON AUTO limitation: Your query has produced empty result subsets that skip intermediate nesting keys in the JSON hierarchy. This pattern is not currently supported.)~~
+[{"CustomerID": "ALFKI", "o": [{"OrderID": 10248, "p": [{"od": [{"OrderDetailID": 1}]}]}]}]
+~~END~~
 
 
 -- base tables LEFT JOIN with multiple NULL intermediate levels
@@ -1576,7 +1630,7 @@ FOR JSON AUTO;
 GO
 ~~START~~
 nvarchar
-[{"CustomerID": "ALFKI", "o": [{"OrderID": 10248}, {"OrderID": 10248}]}]
+[{"CustomerID": "ALFKI", "o": [{"OrderID": 10248, "p": [{"cat": [{"s": [{"w": [{}]}]}]}]}, {"OrderID": 10248, "p": [{"cat": [{"s": [{"w": [{}]}]}]}]}]}]
 ~~END~~
 
 
@@ -1601,13 +1655,13 @@ LEFT JOIN (
     WHERE s.Rating > 4
 ) supplier_info ON expensive_products.CategoryID = supplier_info.Rating
 WHERE c.CustomerID = 'ALFKI'
+AND od.OrderDetailID = 1
 FOR JSON AUTO;
 GO
 ~~START~~
 nvarchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: FOR JSON AUTO limitation: Your query has produced empty result subsets that skip intermediate nesting keys in the JSON hierarchy. This pattern is not currently supported.)~~
+[{"CustomerID": "ALFKI", "o": [{"OrderID": 10248, "expensive_products": [{"supplier_info": [{"od": [{"OrderDetailID": 1}]}]}]}]}]
+~~END~~
 
 
 -- CTE LEFT JOIN with NULL intermediate levels
@@ -1640,7 +1694,6 @@ FOR JSON AUTO;
 GO
 ~~START~~
 nvarchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: FOR JSON AUTO limitation: Your query has produced empty result subsets that skip intermediate nesting keys in the JSON hierarchy. This pattern is not currently supported.)~~
+[{"CustomerID": "ALFKI", "o": [{"o": [{"customerID": "ALFKI", "total_order_count": 1}]}]}]
+~~END~~
 

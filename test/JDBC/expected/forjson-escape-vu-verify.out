@@ -332,9 +332,8 @@ FOR JSON AUTO;
 GO
 ~~START~~
 nvarchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+[{"ID": 1, "employee_info": {"name": "Naruto"}}, {"ID": 2, "employee_info": {"name": "Sasuke"}}]
+~~END~~
 
 
 SELECT 

@@ -176,7 +176,7 @@ GO
 nvarchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+~~ERROR (Message: invalid input syntax for type integer: "[{"max": 1}]")~~
 
 
 EXECUTE forjson_vu_p_9
