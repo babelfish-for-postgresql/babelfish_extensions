@@ -102,6 +102,8 @@
 
 #include "access/xact.h"
 
+#define FORJSON_INITIAL_HASH_SIZE 64
+
 extern int  escape_hatch_set_transaction_isolation_level;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
@@ -1739,7 +1741,7 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *j
 		cteHashCtl.entrysize = sizeof(CtenameIdx);
 		cteHashCtl.hcxt = CurrentMemoryContext;
 		ctenameIdxHash = hash_create("ctenameIdxHash",
-									 64, // initial allocation size
+									 FORJSON_INITIAL_HASH_SIZE,
 									 &cteHashCtl,
 									 HASH_ELEM | HASH_STRINGS);
 
@@ -1764,7 +1766,7 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *j
 	rteJSONHashCtl.entrysize = sizeof(RTEAliasEntry);
 	rteJSONHashCtl.hcxt = CurrentMemoryContext;
 	RTEAliasNestHash = hash_create("RTEAliasNestHash",
-								   64, // initial allocation size
+								   FORJSON_INITIAL_HASH_SIZE,
 								   &rteJSONHashCtl,
 								   HASH_ELEM | HASH_STRINGS);
 
@@ -1936,10 +1938,10 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *j
 																&found);
 					Assert(!found);
 					strcpy(rteHashEntry->alias_name, hashedFullSrcPath);
-					pfree(hashedFullSrcPath);
 					rteHashEntry->json_nest_level = curMaxUsedJsonLevel;
 					outermostTargetEntry = buildJsonEntry(rteHashEntry->json_nest_level, matchedSrcAlias, outermostTargetEntry);
 				}
+				pfree(hashedFullSrcPath);
 			}
 		}
 		else

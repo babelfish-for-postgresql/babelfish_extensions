@@ -951,6 +951,21 @@ WHERE p.productname = 'Chai'
 FOR json auto;
 GO
 
+-- outer query w/o FOR JSON AUTO + inner query w/ FOR JSON AUTO
+WITH customer_orders AS (
+    SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+    FROM forjsonauto_t_customers c
+    JOIN forjsonauto_t_orders o ON c.CustomerID = o.CustomerID
+)
+SELECT subquery_result.aa
+FROM (
+    SELECT co.CompanyName, co.OrderID, co.TotalAmount
+    FROM customer_orders co
+      where co.OrderID = 10248
+    FOR JSON AUTO
+) AS subquery_result(aa)
+GO
+
 ---------------------------------------- Different types of Targets (in SELECT_clause) ----------------------------------------
 -- subquery as target (nest_level > 1)
 SELECT c.CompanyName, 
@@ -1190,4 +1205,68 @@ LEFT JOIN all_customer_orders aco ON c.CustomerID = aco.CustomerID
 WHERE aco.CustomerID IS NOT NULL
 AND c.CustomerID = 'ALFKI'
 FOR JSON AUTO;
+GO
+
+-- only NULL-value columns in level 1
+WITH high_value_orders AS (
+    SELECT o.CustomerID,
+           COUNT(*) as high_order_count,
+           AVG(o.TotalAmount) as avg_high_amount
+    FROM forjsonauto_t_orders o
+    WHERE o.TotalAmount > 1000
+    GROUP BY o.CustomerID
+),
+all_customer_orders AS (
+    SELECT o.CustomerID,
+           o.OrderID,
+           COUNT(*) as total_order_count
+    FROM forjsonauto_t_orders o
+    GROUP BY o.CustomerID, o.OrderID
+)
+SELECT
+    hvo.CustomerID,
+    c.CustomerID,
+    hvo.customerID,
+    aco.customerID,
+    aco.total_order_count
+FROM forjsonauto_t_customers c
+LEFT JOIN high_value_orders hvo ON c.CustomerID = hvo.CustomerID
+LEFT JOIN all_customer_orders aco ON c.CustomerID = aco.CustomerID
+WHERE aco.CustomerID IS NOT NULL
+AND c.CustomerID = 'ALFKI'
+FOR JSON AUTO;
+GO
+
+-- NULL-value columns in level 1 with “INCLUDE_NULL_VALUES”
+WITH high_value_orders AS (
+    SELECT o.CustomerID,
+           COUNT(*) as high_order_count,
+           AVG(o.TotalAmount) as avg_high_amount
+    FROM forjsonauto_t_orders o
+    WHERE o.TotalAmount > 1000
+    GROUP BY o.CustomerID
+),
+all_customer_orders AS (
+    SELECT o.CustomerID,
+           o.OrderID,
+           COUNT(*) as total_order_count
+    FROM forjsonauto_t_orders o
+    GROUP BY o.CustomerID, o.OrderID
+)
+SELECT
+    hvo.CustomerID,
+    c.CustomerID,
+    hvo.customerID,
+    aco.customerID,
+    aco.total_order_count
+FROM forjsonauto_t_customers c
+LEFT JOIN high_value_orders hvo ON c.CustomerID = hvo.CustomerID
+LEFT JOIN all_customer_orders aco ON c.CustomerID = aco.CustomerID
+WHERE aco.CustomerID IS NOT NULL
+AND c.CustomerID = 'ALFKI'
+FOR JSON AUTO, INCLUDE_NULL_VALUES;
+GO
+
+-- SELECT FROM a table which value is a result of FOR JSON AUTO
+SELECT * FROM JsonTable;
 GO

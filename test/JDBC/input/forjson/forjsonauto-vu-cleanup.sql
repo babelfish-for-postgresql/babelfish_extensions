@@ -140,4 +140,5 @@ DROP TABLE IF EXISTS forjsonauto_t_order_details;
 DROP TABLE IF EXISTS forjsonauto_t_inventory_schema.forjsonauto_t_warehouses;
 DROP TABLE IF EXISTS forjsonauto_t_inventory_schema.forjsonauto_t_suppliers;
 DROP SCHEMA IF EXISTS forjsonauto_t_inventory_schema;
+DROP TABLE IF EXISTS JsonTable;
 GO
