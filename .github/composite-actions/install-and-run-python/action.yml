@@ -10,33 +10,17 @@ runs:
       with:
         python-version: 'v3.10'
 
-    - name: Clean existing repositories
-      run: |
-        sudo rm -f /etc/apt/sources.list.d/microsoft*
-        sudo rm -f /etc/apt/sources.list.d/mssql*
-        sudo rm -f /etc/apt/trusted.gpg.d/microsoft*
-        sudo rm -f /usr/share/keyrings/microsoft*
-      shell: bash
-
     - name: Configure Python Environment
       id: configure-python-environment
       if: always() && steps.install-python.outcome == 'success'
       run: |
-        # Setup repository
-        curl https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
-        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" | sudo tee /etc/apt/sources.list.d/microsoft.list
-        sudo apt-get update
-
-        # Setup SQL Tools Service
+        cd ~
+        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
         cd ~/work/babelfish_extensions/babelfish_extensions/test/python
-        mkdir -p sqltoolsservice
+        mkdir sqltoolsservice
         cd sqltoolsservice
-        wget https://github.com/microsoft/sqltoolsservice/releases/download/4.4.0.12/Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz
-        tar -xzf Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz
-        rm Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz
-        cd ..
-
-        # Install ODBC driver and Python dependencies
+        wget https://github.com/microsoft/sqltoolsservice/releases/download/4.4.0.12/Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz && tar -xzvf Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz
+        cd ../
         sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
         pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
       shell: bash
