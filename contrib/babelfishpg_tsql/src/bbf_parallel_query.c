@@ -99,7 +99,7 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 				/* getRTEPermissionInfo would return valid perfInfo, error will be raised otherwise */
 				perminfo = getRTEPermissionInfo(estate->es_plannedstmt->permInfos, rte);
 				/* probably (re)do perm check */
-				if (!ExecCheckOneRelPerms_wrapper(perminfo))
+				if (!ExecCheckOneRelPerms(perminfo))
 				{
 					aclcheck_error(ACLCHECK_NO_PRIV,
 									get_relkind_objtype(get_rel_relkind(perminfo->relid)),
