@@ -68,7 +68,7 @@ TEST_F(PSQL_Datatypes_Datetime, Insertion_Success) {
   const vector<string> EXPECTED = {
     "NULL", // NULL values
     "1753-01-01 00:00:00", // smallest value
-    "2011-04-15 16:44:09", // random regular value
+    "2011-04-15 16:44:09.000", // random regular value
     "9999-12-31 23:59:59.997", // max value
     "1900-01-01 00:00:00" // blank value
   };
