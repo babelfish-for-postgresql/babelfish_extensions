@@ -528,6 +528,52 @@ TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int ch
 	}
 }
 
+/**
+ * Helper function to validate T-SQL float literals.
+ */
+static bool
+is_valid_tsql_float(const char *num)
+{
+	const char *ptr = num;
+	bool has_digits = false;
+
+	/*optional sign*/
+	if (*ptr == '+' || *ptr == '-')
+		ptr++;
+
+	while (isdigit((unsigned char) *ptr)) {
+		ptr++;
+		has_digits = true;
+	}
+
+	if (*ptr == '.')
+	{
+		ptr++;
+		while (isdigit((unsigned char) *ptr)) {
+			ptr++;
+			has_digits = true;
+		}
+	}
+
+	if (!has_digits)
+	{
+		return false; /* no digits found */
+	}
+
+	if (*ptr == 'e' || *ptr == 'E')
+	{
+		ptr++;
+		if (*ptr == '+' || *ptr == '-')
+			ptr++;
+		if (!isdigit((unsigned char) *ptr))
+			return false; /* exponent must be followed by digits */
+		while (isdigit((unsigned char) *ptr))
+			ptr++;
+	}
+
+	return *ptr == '\0'; /* valid if we reached the end of the string */
+}
+
 /*  Function Registeration  */
 PG_FUNCTION_INFO_V1(bpcharin);
 PG_FUNCTION_INFO_V1(bpchar);
@@ -1035,11 +1081,23 @@ Datum
 varchar2float4(PG_FUNCTION_ARGS)
 {
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char 	   *num;
 
 	if (varcharTruelen(source) == 0)
 		PG_RETURN_FLOAT4(0);
 
-	return cstring2float4(varchar2cstring(source));
+	num = varchar2cstring(source);
+
+	/* Validate the input string for T-SQL float literals */
+	if (!is_valid_tsql_float(num))
+	{
+		pfree(num);
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("Error converting data type varchar to float.")));
+	}
+
+	return cstring2float4(num);
 }
 
 Datum
@@ -1052,6 +1110,16 @@ varchar2float8(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(0);
 
 	num = varchar2cstring(source);
+
+	/* Validate the input string for T-SQL float literals */
+	if (!is_valid_tsql_float(num))
+	{
+		pfree(num);
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("Error converting data type varchar to float.")));
+	}
+		
 	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num, fcinfo->context));
 }
 
