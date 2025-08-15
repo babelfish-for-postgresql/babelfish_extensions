@@ -10,12 +10,12 @@ runs:
       sudo rm -f /etc/apt/sources.list.d/mssql*
       sudo rm -f /etc/apt/trusted.gpg.d/microsoft*
       sudo rm -f /usr/share/keyrings/microsoft*
-      sudo rm -f /usr/share/keyrings/microsoft-prod*
     shell: bash
 
   - name: Install MSSQL Tools
     id: install-mssql-tools
     run: |
+      # Setup repository keys
       curl https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
       echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" | sudo tee /etc/apt/sources.list.d/microsoft.list
       sudo apt-get update
@@ -24,21 +24,14 @@ runs:
       source ~/.bashrc
     shell: bash
 
-  - name: Clean for Dotnet install
-    id: clean-dotnet
-    if: always() && steps.install-mssql-tools.outcome == 'success'
-    run: |
-      sudo rm -f /etc/apt/sources.list.d/microsoft*
-      sudo rm -f /usr/share/keyrings/microsoft*
-    shell: bash
-
   - name: Install Dotnet
     id: install-dotnet
-    if: always() && steps.clean-dotnet.outcome == 'success'
+    if: always() && steps.install-mssql-tools.outcome == 'success'
     run: | 
-      # Setup repository keys for Dotnet
-      curl https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
-      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" | sudo tee /etc/apt/sources.list.d/microsoft.list
+      cd ~
+      wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+      sudo dpkg -i packages-microsoft-prod.deb
+      rm packages-microsoft-prod.deb
       
       sudo apt-get update
       sudo apt-get install -y apt-transport-https
