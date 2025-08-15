@@ -1802,6 +1802,7 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *j
 
 		outermostTargetEntry = castNode(TargetEntry, lfirst(lc));
 
+		/* junk node - won't appear in the final result */
 		if (outermostTargetEntry->resjunk)
 			continue;
 
