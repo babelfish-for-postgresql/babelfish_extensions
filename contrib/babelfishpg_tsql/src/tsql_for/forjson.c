@@ -344,7 +344,8 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 		if(strcmp(parts[0], "JSONAUTOALIAS") != 0) {
 			ereport(ERROR,
 						(errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("FOR JSON AUTO: Column '%s' was not properly processed by the analyzer stage", colname)));
+							errmsg("An unexpected error occurred while processing JSON data."
+								" Unable to process column '%s' for JSON conversion", colname)));
 		}
 		colname = remove_index_and_alias(colname);
 		nestedVal = value;
