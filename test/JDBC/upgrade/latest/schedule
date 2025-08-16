@@ -655,3 +655,6 @@ alter-table-null-notnull
 openxml_without_with_clause
 Select_top_N_percent
 ascii_function
+#babel_timezoneinfo#Commenting the test as a temporary fix to ticket BABEL 5370
+test_convert_to_binary
+cast_datetime_to_binary
