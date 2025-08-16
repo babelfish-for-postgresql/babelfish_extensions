@@ -1,0 +1,34 @@
+
+-- Cleanup dependent objects (in reverse order of creation)
+-- Drop tables (triggers will be dropped automatically)
+DROP TABLE test_default_binary;
+GO
+
+DROP TABLE test_constraint_binary;
+GO
+
+-- Drop index (will be dropped with table, but explicit for clarity)
+DROP INDEX IX_computed_binary ON test_computed_binary;
+GO
+
+DROP TABLE test_computed_binary;
+GO
+
+-- Drop stored procedure
+DROP PROCEDURE sp_convert_datetime_binary;
+GO
+
+-- Drop functions
+DROP FUNCTION fn_get_datetime_binary_range;
+GO
+
+DROP FUNCTION fn_datetime_to_binary;
+GO
+
+-- Drop view
+DROP VIEW vw_datetime_binary;
+GO
+
+-- Drop main test table
+DROP TABLE test_datetime_binary;
+GO
