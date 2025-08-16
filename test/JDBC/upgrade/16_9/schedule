@@ -593,7 +593,7 @@ db_securityadmin
 BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
-BABEL-2736
+BABEL-2736-before-17_7-16_11
 cast_nvarchar_test
 smalldatetime_date_cmp
 datareader_datawriter
@@ -636,3 +636,5 @@ alter-function-with-weak-view
 mathematical_func_tests-before-17_7-or-16_11
 alter-table-null-notnull
 ascii_function_before-17_7-or-16_11
+test_convert_to_binary-before-17_7-16_11
+cast_datetime_to_binary-before-17_7-16_11

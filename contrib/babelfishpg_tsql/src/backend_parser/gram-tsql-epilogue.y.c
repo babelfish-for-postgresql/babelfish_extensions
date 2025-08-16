@@ -228,7 +228,7 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 		result = makeTypeCast(helperFuncCall, typename, location);
 	}
 
-	else if (strcmp(typename_string, "binary") == 0 || strcmp(typename_string, "varbinary") == 0)
+	else if (strcmp(typename_string, "varbinary") == 0)
 	{
 			Node	   *helperFuncCall;
 
@@ -238,6 +238,17 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 				helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), lcons(makeIntConst(typmod, location), args), COERCE_EXPLICIT_CALL, location);
 			// add a type cast on top of the CONVERT helper function so typmod can be applied
 			result = makeTypeCast(helperFuncCall, typename, location);
+	}
+	else if (strcmp(typename_string, "binary") == 0)
+	{
+		Node	   *helperFuncCall;
+
+		if(typmod > VARHDRSZ)
+			helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_binary"), lcons(makeIntConst(typmod - VARHDRSZ, location), args), COERCE_EXPLICIT_CALL, location);
+		else
+			helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_binary"), lcons(makeIntConst(typmod, location), args), COERCE_EXPLICIT_CALL, location);
+		// add a type cast on top of the CONVERT helper function so typmod can be applied
+		result = makeTypeCast(helperFuncCall, typename, location);
 	}
 
 	else
