@@ -1,0 +1,110 @@
+
+-- Test datetime to binary cast function
+CREATE TABLE test_datetime_binary (
+    id INT,
+    dt_col DATETIME,
+    bin_col BINARY(8)
+);
+INSERT INTO test_datetime_binary VALUES 
+(1, '2023-01-01 12:30:45.123', NULL),
+(2, '1900-01-01 00:00:00.000', NULL),
+(3, '2099-12-31 23:59:59.997', NULL),
+(4, NULL, NULL);
+GO
+~~ROW COUNT: 4~~
+
+
+
+/*
+ * ======================================================================================================================
+ *                                          DEPENDENT OBJECTS TESTS
+ * ======================================================================================================================
+ */
+-- Test View with datetime to binary conversion
+CREATE VIEW vw_datetime_binary AS
+SELECT 
+    id,
+    dt_col,
+    CAST(dt_col AS BINARY(8)) AS dt_as_binary,
+    CONVERT(BINARY(4), dt_col) AS dt_as_binary4
+FROM test_datetime_binary
+WHERE dt_col IS NOT NULL;
+GO
+
+-- Test User-Defined Function with datetime to binary
+CREATE FUNCTION fn_datetime_to_binary(@input_dt DATETIME)
+RETURNS BINARY(8)
+AS
+BEGIN
+    RETURN CAST(@input_dt AS BINARY(8));
+END;
+GO
+
+-- Test Table-Valued Function
+CREATE FUNCTION fn_get_datetime_binary_range(@start_dt DATETIME, @end_dt DATETIME)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        dt_col,
+        CAST(dt_col AS BINARY(8)) AS dt_binary
+    FROM test_datetime_binary
+    WHERE dt_col BETWEEN @start_dt AND @end_dt
+);
+GO
+
+-- Test Stored Procedure with datetime to binary conversion
+CREATE PROCEDURE sp_convert_datetime_binary
+    @input_dt DATETIME,
+    @output_bin BINARY(8) OUTPUT
+AS
+BEGIN
+    SET @output_bin = CAST(@input_dt AS BINARY(8));
+    
+    -- Also insert a test record
+    INSERT INTO test_datetime_binary (id, dt_col, bin_col)
+    VALUES (999, @input_dt, @output_bin);
+END;
+GO
+
+-- Test Computed Column with datetime to binary
+CREATE TABLE test_computed_binary (
+    id INT,
+    dt_col DATETIME,
+    computed_binary AS CAST(dt_col AS BINARY(8)) PERSISTED
+);
+GO
+
+-- Test Index on computed binary column
+CREATE INDEX IX_computed_binary ON test_computed_binary(computed_binary);
+GO
+
+-- Test Trigger with datetime to binary conversion
+CREATE TRIGGER tr_datetime_binary_audit
+ON test_datetime_binary
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    INSERT INTO test_computed_binary (dt_col)
+    SELECT CAST(dt_col AS DATETIME)
+    FROM inserted
+    WHERE dt_col IS NOT NULL;
+END;
+GO
+
+-- Test Check Constraint using datetime to binary
+CREATE TABLE test_constraint_binary (
+    id INT,
+    dt_col DATETIME,
+    CONSTRAINT CK_datetime_binary CHECK (CAST(dt_col AS BINARY(8)) IS NOT NULL OR dt_col IS NULL)
+);
+GO
+
+-- Test Default Constraint with datetime to binary
+CREATE TABLE test_default_binary (
+    id INT,
+    dt_col DATETIME DEFAULT '2023-01-01 00:00:00.000',
+    bin_col BINARY(8) DEFAULT CAST('2023-01-01 00:00:00.000' AS BINARY(8))
+);
+GO
