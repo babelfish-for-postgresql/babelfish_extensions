@@ -67,10 +67,10 @@ TEST_F(PSQL_Datatypes_Datetime, Insertion_Success) {
 
   const vector<string> EXPECTED = {
     "NULL", // NULL values
-    "1753-01-01 00:00:00", // smallest value
+    "1753-01-01 00:00:00.000", // smallest value
     "2011-04-15 16:44:09.000", // random regular value
     "9999-12-31 23:59:59.997", // max value
-    "1900-01-01 00:00:00" // blank value
+    "1900-01-01 00:00:00.000" // blank value
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
@@ -102,10 +102,10 @@ TEST_F(PSQL_Datatypes_Datetime, Update_Success) {
   };
 
   const vector<string> EXPECTED_UPDATED_VALUES = {
-    "1900-01-31 12:59:59.999", // standard value
+    "1900-01-31 13:00:00.000", // standard value (rounded from 12:59:59.999)
     "9999-12-31 23:59:59.997", // max value
-    "1753-01-01 00:00:00", // min value
-    "1900-01-01 00:00:00" // blank value
+    "1753-01-01 00:00:00.000", // min value
+    "1900-01-01 00:00:00.000" // blank value
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
@@ -140,10 +140,10 @@ TEST_F(PSQL_Datatypes_Datetime, View_creation) {
 
   const vector<string> EXPECTED = {
     "NULL", // NULL values
-    "1753-01-01 00:00:00", // smallest value
-    "2011-04-15 16:44:09", // random regular value
+    "1753-01-01 00:00:00.000", // smallest value
+    "2011-04-15 16:44:09.000", // random regular value
     "9999-12-31 23:59:59.997", // max value
-    "1900-01-01 00:00:00" // blank value
+    "1900-01-01 00:00:00.000" // blank value
   };
 
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
@@ -181,10 +181,10 @@ TEST_F(PSQL_Datatypes_Datetime, Table_Single_Primary_Keys) {
   };
 
   const vector<string> EXPECTED = {
-    "1753-01-01 00:00:00", // smallest value
-    "2011-04-15 16:44:09", // random regular value
+    "1753-01-01 00:00:00.000", // smallest value
+    "2011-04-15 16:44:09.000", // random regular value
     "9999-12-31 23:59:59.997", // max value
-    "1900-01-01 00:00:00" // blank value
+    "1900-01-01 00:00:00.000" // blank value
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
@@ -217,10 +217,10 @@ TEST_F(PSQL_Datatypes_Datetime, Table_Composite_Primary_Keys) {
   };
 
   const vector<string> EXPECTED = {
-    "1753-01-01 00:00:00", // smallest value
-    "2011-04-15 16:44:09", // random regular value
+    "1753-01-01 00:00:00.000", // smallest value
+    "2011-04-15 16:44:09.000", // random regular value
     "9999-12-31 23:59:59.997", // max value
-    "1900-01-01 00:00:00" // blank value
+    "1900-01-01 00:00:00.000" // blank value
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
@@ -252,10 +252,10 @@ TEST_F(PSQL_Datatypes_Datetime, Table_Unique_Constraint) {
   };
 
   const vector<string> EXPECTED = {
-    "1753-01-01 00:00:00", // smallest value
-    "2011-04-15 16:44:09", // random regular value
+    "1753-01-01 00:00:00.000", // smallest value
+    "2011-04-15 16:44:09.000", // random regular value
     "9999-12-31 23:59:59.997", // max value
-    "1900-01-01 00:00:00" // blank value
+    "1900-01-01 00:00:00.000" // blank value
   };
 
   // table name without the schema
@@ -333,8 +333,8 @@ TEST_F(PSQL_Datatypes_Datetime, Comparison_Functions) {
   };
 
   const vector<string> EXPECTED_RESULTS = {
-    "1753-01-01 00:00:00",
-    "2011-04-15 16:44:09",
+    "1753-01-01 00:00:00.000",
+    "2011-04-15 16:44:09.000",
     "9999-12-31 23:59:59.997"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
