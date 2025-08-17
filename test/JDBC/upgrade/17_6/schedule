@@ -561,7 +561,7 @@ babel_4328_datetime2
 translate
 substring
 babel_4328_datetimeoffset
-babel_726
+babel_726-before-16_11-or-17_7
 test_conv_string_to_date
 test_conv_string_to_datetime
 test_conv_string_to_datetime2
