@@ -840,7 +840,6 @@ time_datetime(PG_FUNCTION_ARGS)
 {
 	TimeADT		timeVal = PG_GETARG_TIMEADT(0);
 	Timestamp	result;
-	int			res;
 
 	struct pg_tm tt,
 			   *tm = &tt;
