@@ -21,6 +21,7 @@
 #include "common/int.h"
 #include "miscadmin.h"
 #include "datetime.h"
+#include "datetime2.h"
 
 
 PG_FUNCTION_INFO_V1(datetime_in);
@@ -1999,10 +2000,10 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 
 	switch(dttype) {
 		case TIME:
-			timestamp = DirectFunctionCall1(time_datetime, (TimeADT) PG_GETARG_TIMEADT(2));
+			timestamp = DirectFunctionCall1(time_datetime2, (TimeADT) PG_GETARG_TIMEADT(2));
 			break;
 		case DATE:
-			timestamp = DirectFunctionCall1(date_datetime, (DateADT) PG_GETARG_DATEADT(2));
+			timestamp = DirectFunctionCall1(date_datetime2, (DateADT) PG_GETARG_DATEADT(2));
 			break;
 		default:
 			timestamp = PG_GETARG_TIMESTAMP(2);
