@@ -7473,7 +7473,7 @@ exec_eval_expr(PLtsql_execstate *estate,
 	 * If first time through, create a plan for this expression.
 	 */
 	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, true); // already done.
+		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, true);
 
 	/*
 	 * If this is a simple expression, bypass SPI and use the executor
@@ -7481,7 +7481,7 @@ exec_eval_expr(PLtsql_execstate *estate,
 	 */
 	if (exec_eval_simple_expr(estate, expr,
 							  &result, isNull, rettype, rettypmod))
-		return result; // 122419776
+		return result;
 
 	/*
 	 * Else do it the hard way via exec_run_select
