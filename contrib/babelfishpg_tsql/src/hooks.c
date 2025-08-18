@@ -7028,7 +7028,7 @@ repair_broken_view_recursive(Oid viewOid, List *visitedViews)
 			rawstmt->stmt_location = -1;
 			rawstmt->stmt_len = 0;
 			
-			query = parse_analyze_fixedparams(rawstmt, viewdef, NULL, 0, NULL);
+			query = parse_analyze_fixedparams(rawstmt, stmt_sql->sqlstmt->query, NULL, 0, NULL);
 		}
 		PG_FINALLY();
 		{
