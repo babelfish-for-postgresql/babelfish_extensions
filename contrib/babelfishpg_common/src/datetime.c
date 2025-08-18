@@ -840,6 +840,7 @@ time_datetime(PG_FUNCTION_ARGS)
 {
 	TimeADT		timeVal = PG_GETARG_TIMEADT(0);
 	Timestamp	result;
+	int			res;
 
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -853,8 +854,13 @@ time_datetime(PG_FUNCTION_ARGS)
 	/* Convert TimeADT type to tm  */
 	time2tm(timeVal, tm, &fsec);
 
-	result = roundoff_datetime(result);
 	if (tm2timestamp(tm, fsec, NULL, &result) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("data out of range for datetime")));
+	
+	result = roundoff_datetime(result);
+	if (!IS_VALID_TIMESTAMP(result))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("data out of range for datetime")));

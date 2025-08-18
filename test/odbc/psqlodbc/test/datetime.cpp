@@ -91,7 +91,7 @@ TEST_F(PSQL_Datatypes_Datetime, Insertion_Failure) {
 
 TEST_F(PSQL_Datatypes_Datetime, Update_Success) {
   const vector<string> INSERTED_VALUES = {
-    "2011-04-15 16:44:09"
+    "2011-04-15 16:44:09.000"
   };
 
   const vector<string> UPDATED_VALUES = {
@@ -116,7 +116,7 @@ TEST_F(PSQL_Datatypes_Datetime, Update_Success) {
 
 TEST_F(PSQL_Datatypes_Datetime, Update_Fail) {
   const vector<string> INSERTED_VALUES = {
-    "2011-04-15 16:44:09"
+    "2011-04-15 16:44:09.000"
   };
 
   const vector<string> UPDATED_VALUES = {
