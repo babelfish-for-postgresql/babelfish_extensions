@@ -2805,6 +2805,40 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				ViewStmt *stmt = (ViewStmt *) parsetree;
 
 				/*
+				 * By default, TSQL view should be created with security_invoker
+				 * property. It adds security_invoker option to the options list.
+				 */
+				if (sql_dialect == SQL_DIALECT_TSQL && IS_TDS_CLIENT() && (stmt->createOrAlter || stmt->replace == false))
+				{
+					ListCell   *lc;
+					bool        security_invoker_found = false;
+
+					/* Check if security_invoker option already exists */
+					foreach(lc, stmt->options)
+					{
+						DefElem    *defel = (DefElem *) lfirst(lc);
+
+						if (strcmp(defel->defname, "security_invoker") == 0)
+						{
+							/* Modify existing option to true */
+							defel->arg = (Node *) makeInteger(1);
+							security_invoker_found = true;
+							break;
+						}
+					}
+
+					/* If security_invoker option not found, add it */
+					if (!security_invoker_found)
+					{
+						DefElem *new_option;
+						new_option = makeDefElem("security_invoker",
+											(Node *) makeInteger(1),
+											-1);
+						stmt->options = lappend(stmt->options, new_option);
+					}
+				}
+
+				/*
 				 * We are using PostgreSQL's existing ViewStmt node which is shared between PostgreSQL's
 				 * CREATE VIEW and T-SQL's ALTER VIEW/CREATE OR ALTER VIEW operations. To properly distinguish 
 				 * between these operations and not let CREATE VIEW inside this case we use createOrAlter flag
