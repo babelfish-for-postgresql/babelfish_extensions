@@ -51,13 +51,15 @@
 
 #define TDS_RETURN_DATUM(x)		return ((Datum) (x))
 
-#define FLAG_Z         1 << 0
-#define FLAG_M         1 << 1
+#define FLAG_Z         0x01
+#define FLAG_M         0x02
+#define FLAG_BBOX      0x04
 
 #define VARCHAR_MAX 2147483647
 /* TODO: need to add for other geometry types when introduced */
 /* Geometry type definitions */
 #define POINTTYPE               1
+#define LINETYPE                2
 
 /* spatial format constants */
 #define EMPTY_GEOMETRY_LENGTH   27      /* Fixed length for empty geometry */
@@ -66,6 +68,8 @@
 #define EMPTY_SHAPE_INDEX       0xFFFFFFFF
 #define SRID_OFFSET             4       /* Offset to SRID in the binary format */
 #define HEADER_SIZE             6       /* Size of header (4 bytes SRID + 2 bytes type) */
+#define NPOINTS_SIZE            4       /* Size of no. of points data (4 bytes ) */
+#define GEOM_METADATA_SIZE      22      /* Geometries containing more than 2 points have trailing metadata of 22 bytes */
 #define NPOINTS_OFFSET          4       /* Offset to Npoints in the binary format */
 
 /* Dimension type values for Point geometries */
@@ -80,12 +84,16 @@
 /* Geometry indicators */
 #define GEOMETRY_INDICATOR      1       /* Indicator for geometry type */
 #define EMPTY_INDICATOR         4       /* Indicator for empty geometry when npoints = 0 */
+#define INVALID_GEOGRAPHY_INDICATOR      2     /* Indicator for invalid geography instance */
 
-#define POINT_XY    0x010C  /* XY point geometry type (type 1 -> driver version constant, subtype 12 -> TSQL's flag) */
-#define POINT_XYZ   0x010D  /* XYZ point geometry type (type 1 -> driver version constant, subtype 13 -> TSQL's flag) */
-#define POINT_XYM   0x010E  /* XYM point geometry type (type 1 -> driver version constant, subtype 14 -> TSQL's flag) */
-#define POINT_XYZM  0x010F  /* XYZM point geometry type (type 1 -> driver version constant, subtype 15 -> TSQL's flag) */
-#define EMPTY_GEOM  0x0104  /* Empty geometry type (type 1 -> driver version constant, subtype 4 -> TSQL's flag) */
+#define POINT_XY    0x0C  /* XY point geometry type (type 1 -> driver version constant, subtype 12 -> TSQL's flag) */
+#define POINT_XYZ   0x0D  /* XYZ point geometry type (type 1 -> driver version constant, subtype 13 -> TSQL's flag) */
+#define POINT_XYM   0x0E  /* XYM point geometry type (type 1 -> driver version constant, subtype 14 -> TSQL's flag) */
+#define POINT_XYZM  0x0F  /* XYZM point geometry type (type 1 -> driver version constant, subtype 15 -> TSQL's flag) */
+#define EMPTY_GEOM  0x04  /* Empty geometry type (type 1 -> driver version constant, subtype 4 -> TSQL's flag) */
+
+#define GEO_HEADER1   0x01  /* header byte used to denote geometry/geography datatypes type 1*/
+#define GEO_HEADER2   0x02  /* header byte used to denote geometry/geography datatypes type 2*/
 
 #define DIM_FLAG_Z           0x01 /* Z dimension flag in SRID 4th byte */
 #define DIM_FLAG_M           0x02 /* M dimension flag in SRID 4th byte */
@@ -108,6 +116,19 @@ EMPTY_COORD[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0xff
+};
+/* NAN format used by TSQL */
+static const uint8 
+SPECIFIC_NAN[8] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0xff
+};
+
+/* Linestring instances containing more than 2 points have trailing metadata of 22 bytes */
+static const uint8 
+line_end_metadata[] = {
+    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x00, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
+    0xff, 0x00, 0x00, 0x00, 0x00, 0x02
 };
 
 #define GetPgOid(pgTypeOid, finfo) \
@@ -1531,7 +1552,8 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	        npoints = 0;     /* Number of points in geometry */
 	bool    isempty = false; /* Flag indicating if geometry is empty */
 	uint8_t lastByte = buf->data[buf->len - 1]; /* Last byte in buffer, used for empty detection */
-	uint16_t geomTypeId;     /* Combined geometry type identifier */
+    uint8_t geomTypeId;
+	uint8_t geomclass;
 	StringInfo  destBuf = makeStringInfo(); /* Destination buffer for building result */
 
 	/*
@@ -1547,12 +1569,16 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	 */
 	SwapData(destBuf, destBuf->cursor + 0, destBuf->cursor + 2);
 
-	/* 
-	 * Extract the combined geometry type identifier (2 bytes)
-	 * This combines the geometry type (1st byte) and (2nd byte)
-	 */
-	geomTypeId = (buf->data[buf->cursor + GEOM_TYPE_OFFSET] << 8) | 
-	                buf->data[buf->cursor + GEOM_TYPE_OFFSET + 1];
+    /* Extract the combined geometry type identifier (2 bytes) */
+    geomTypeId = buf->data[buf->cursor + GEOM_TYPE_OFFSET + 1];
+    geomclass = buf->data[buf->cursor + GEOM_TYPE_OFFSET];
+
+    if(geomclass != GEO_HEADER1 && geomclass != GEO_HEADER2)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Unsupported geometry type")));
+    }
 
 	/* Process based on combined geometry type identifier */
 	switch (geomTypeId)
@@ -4390,35 +4416,61 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
                 pointSize,
                 hasZ,
                 hasM,
+                hasBBox,
+                stride = 0,
+                dataoffset = 0,
                 actualLen;              /* Number of bytes that would be needed to
                                          * store given string in given encoding. */
 
     char        *destBuf,
+                *src = NULL,
                 *buf = NULL;
     uint32_t    geom_type;
     int32_t     srid;
     unsigned char *itr;
-
+    bool        isValid = false;
+    double      firstX = 0.0,
+                firstY = 0.0;
+				
     TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
     GSERIALIZED *gser = (GSERIALIZED *)PG_DETOAST_DATUM(value);    /* Used to Store the bytes in the Format which is stored in PostGIS */
 
     /* Get SRID (Spatial Reference ID) from the PostGIS object */
     srid = get_srid(gser->srid);
 
-    /* Check for Z (elevation) and M (measure) dimensions */
+    /* Check for Z (elevation), M (measure) dimensions  and bounding box */
     hasZ = (gser->gflags & FLAG_Z) ? 1 : 0;
     hasM = (gser->gflags & FLAG_M) ? 1 : 0;
+    hasBBox = (gser->gflags & FLAG_BBOX) ? 1 : 0;
 
-    /* Extract geometry type from the PostGIS object */
-    geom_type = *((uint32_t *)gser->data);
+    /* 
+     * A bounding box (bbox) is a rectangular container that completely encompasses a geometric object or a set of objects. 
+     * It is defined by its minimum and maximum coordinates in each dimension.
+     */
+    if (hasBBox)
+    {
+        /* For a 2D geometry : bbox has min x, max x, min y, max y each in 4 byte format totalling 16 bytes */
+        dataoffset = 16;
+        
+        /* If hasZ or hasM, add 8 bytes offset for min z / min m , max z / max m  */
+        if (hasZ)
+            dataoffset += 8;
+        if (hasM)
+            dataoffset += 8;
+    }
+
+    /* Whenever bbox is present the gser->data starts with bbox coordinates followed by geom_type */
+
+    /* Extract geometry type from the PostGIS object, if bbox is absent then dataoffset remains 0 as initialized */
+    geom_type = *((uint32_t *)(gser->data + dataoffset));
 
     /* Get number of points in the geometry */
-    npoints = *((int *)((char*)gser->data + NPOINTS_OFFSET));
+    npoints = *((int *)((char*)gser->data + NPOINTS_OFFSET + dataoffset));
 
-    /* Currently only POINT geometries are supported */
-    if (geom_type != POINTTYPE)
+    /* Currently only POINT and LINESTRING geometries are supported */
+    if (geom_type != POINTTYPE && geom_type != LINETYPE)
     {
-		elog(ERROR, "Unsupported geometry type");
+        elog(ERROR, "Unsupported geometry type");
     }
 
     /* Handle EMPTY GEOMETRY case (no points) */
@@ -4459,38 +4511,51 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
         /* Set final byte for POINT EMPTY (0x01) */
         if (geom_type == POINTTYPE)
             *itr = POINTTYPE;
+        /* Set final byte for LINESTRING EMPTY (0x02) */
+        else if (geom_type == LINETYPE)
+            *itr = LINETYPE;
+
     }
     else
     {
+        /* Handle non-empty POINT and LINESTRING geometry */
+
+        /*
+         * Calculate buffer length:
+         * pointSize * (No. of Points) + HEADER_SIZE
+         * pointSize -> COORD_SIZE * 2( for X and Y) + COORD_SIZE(if Z exists) + COORD_SIZE_M(if M exists)
+         * HEADER_SIZE -> 4 Byte SRID + 2 Byte Geometry Type
+         */
+        pointSize = COORD_SIZE * 2; /* Base size for X,Y coordinates */
+
+        /* Add Z coordinate size if present */
+        if (hasZ)
+            pointSize += COORD_SIZE;
+
+        /* Add M coordinate size if present */	
+        if (hasM)
+            pointSize += COORD_SIZE;
+ 
+        /* 
+         * Calculate buffer size based on number of points:
+         * - For upto 2 points: coordinates + 6 bytes header
+         * - For greater than 2 points: coordinates + 6 bytes header + 4 bytes no. of points + 22 bytes metadata
+         */
+        if (npoints <= 2)
+            len = npoints * pointSize + HEADER_SIZE;
+        else /* npoints > 2 */
+            len = npoints * pointSize + HEADER_SIZE + NPOINTS_SIZE + GEOM_METADATA_SIZE;
+
+        /* Allocate memory for the buffer and initialize with zeros */
+        buf = (char *) palloc0(len);
+
+        /* Set SRID in the first 4 bytes */
+        *((int32_t*)buf) = srid;
+        itr = (unsigned char *)buf + SRID_OFFSET;
+
         switch(geom_type)
         {
             case POINTTYPE:
-                /* Handle non-empty POINT geometry */
-
-                /*
-                 * Calculate buffer length:
-                 * pointSize * (No. of Points) + HEADER_SIZE
-                 * pointSize -> COORD_SIZE*2( for X and Y) + COORD_SIZE(if Z exists) + COORD_SIZE_M(if M exists)
-                 * HEADER_SIZE -> 4 Byte SRID + 2 Byte Geometry Type
-                 */
-                pointSize = COORD_SIZE*2;  /* Base size for X,Y coordinates */
-                
-                /* Add Z coordinate size if present */
-                if (hasZ)
-                    pointSize += COORD_SIZE;
-
-                /* Add M coordinate size if present */
-                if (hasM)
-                    pointSize += COORD_SIZE;
-
-                /* Calculate total buffer length */
-                len = npoints * pointSize + HEADER_SIZE;
-                buf = (char *) palloc0(len);
-
-                /* Set SRID in the first 4 bytes */
-                *((int32_t*)buf) = srid;
-                itr = (unsigned char *)buf + SRID_OFFSET; 
-
                 /* Set point type indicator */
                 *itr = GEOMETRY_INDICATOR;
                 itr++;
@@ -4514,6 +4579,129 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
 
                 /* Copy coordinate data */
                 memcpy(itr, (char *)gser->data + 8, len - 6);
+                break;
+
+            case LINETYPE:              
+                /* 
+                 * The PostGIS structure stores coordinate data in X1 Y1 Z1 M1 , X2 Y2 Z2 M2,.... format (each point together)
+                 * but TSQL expects it in X1 Y1 X2 Y2 Z1 Z2 M1 M2 .... format ( all XY ahead then all Z then all M)
+                 * So we need to rearrange the data.
+                 */
+
+                /* Calculate stride (bytes between consecutive points in source data) */
+                stride = COORD_SIZE * 2 + (hasZ ? COORD_SIZE : 0) + (hasM ? COORD_SIZE : 0);
+                
+                /* Position source pointer after header, with offset adjustment for multi-point lines */
+                src = (char *)gser->data + COORD_SIZE + (npoints > 2 ? dataoffset : 0);
+
+                /* Check if all X and Y coordinates are equal */
+                memcpy(&firstX, src, sizeof(double));
+                memcpy(&firstY, src + 8, sizeof(double));
+                
+                for (int i = 1; i < npoints; i++)
+                {
+                    double x, y;
+                    memcpy(&x, src + (i * stride), sizeof(double));
+                    memcpy(&y, src + (i * stride) + COORD_SIZE, sizeof(double));
+                    
+                    if (x != firstX || y != firstY)
+                    {
+                        isValid = true;
+                        break;
+                    }
+                }
+
+                /* 
+                 * Set byte 1 of geometry header:
+                 * - Value 1: All geometry and valid geography instance
+                 * - Value 2: Invalid geography instance
+                 */
+                if (TdsInstr == (int)INSTR_TDS_DATATYPE_GEOGRAPHY && !isValid)
+                    *itr = INVALID_GEOGRAPHY_INDICATOR;
+                else
+                    *itr = GEOMETRY_INDICATOR;
+                itr++;
+                
+                /* 
+                 * Set the geometry type byte based on dimensions, no. of points and validity :
+                 * For 2 points:
+                 * 0x0113 (invalid) -> 19 / 0x0117 -> 23 (valid) for 3D Point with M (XYZM) 
+                 * 0x0112 (invalid) -> 18 / 0x0116 -> 22 (valid) for 2D Point with M (XYM) 
+                 * 0x0111 (invalid) -> 17 / 0x0115 -> 21 (valid) for 3D Point (XYZ)
+                 * 0x0110 (invalid) -> 16 / 0x0114 -> 20 (valid) for 2D Point (XY)
+                 * For more than 2 points:
+                 * 0x0103 (invalid) -> 3 / 0x0107 -> 7 (valid) for 3D Point with M (XYZM) 
+                 * 0x0102 (invalid) -> 2 / 0x0106 -> 6 (valid) for 2D Point with M (XYM) 
+                 * 0x0101 (invalid) -> 1 / 0x0105 -> 5 (valid) for 3D Point (XYZ)
+                 * 0x0100 (invalid) -> 0 / 0x0104 -> 4 (valid) for 2D Point (XY)
+                 */
+                if (npoints == 2)
+                {
+                    if (!isValid)
+                        *itr = 16 + (hasZ ? 1 : 0) + (hasM ? 2 : 0);
+                    else
+                        *itr = 20 + (hasZ ? 1 : 0) + (hasM ? 2 : 0);
+                }
+                else /* npoints > 2 */
+                {
+                    if (!isValid)
+                        *itr = 0 + (hasZ ? 1 : 0) + (hasM ? 2 : 0);
+                    else
+                        *itr = 4 + (hasZ ? 1 : 0) + (hasM ? 2 : 0);
+                }
+                itr++;
+                
+                /* For npoints > 2, TSQL expects npoints data as 4-byte integer */
+                if (npoints > 2)
+                    write_int32(&itr, npoints);
+                
+                /* Copy coordinate data in sequence: first all X/Y, then all Z, then all M */
+                src = (char *)gser->data + COORD_SIZE + (npoints > 2 ? dataoffset : 0);
+				
+                /* Copy XY coordinates (16 bytes per point: 8 for X, 8 for Y), skips all Z and M */
+                for (int i = 0; i < npoints; i++)
+                {
+                    memcpy(itr, src + (i * stride), COORD_SIZE * 2);
+                    itr += COORD_SIZE * 2;
+                }
+                
+                /* Copy Z coordinates if present (8 bytes per coordinate) , skips XY and M */
+                if (hasZ)
+                {
+                    for (int i = 0; i < npoints; i++)
+                    {
+                        double *z_coord = (double*)(src + (i * stride) + COORD_SIZE * 2);
+                        
+                        /* PostGIS represents NAN as 0xf8f7 but TSQL represents it as 0xf8ff */
+                        if (isnan(*z_coord))
+                            memcpy(itr, SPECIFIC_NAN, COORD_SIZE);
+                        else
+                            memcpy(itr, z_coord, COORD_SIZE);
+                        itr += 8;
+                    }
+                }
+                
+                /* Copy M coordinates if present (8 bytes per coordinate), skips XY and Z */
+                if (hasM)
+                {
+                    for (int i = 0; i < npoints; i++)
+                    {
+                        double *m_coord = (double*)(src + (i * stride) + COORD_SIZE * 2 + (hasZ ? COORD_SIZE : 0));
+                        
+                        /* PostGIS represents NAN as 0xf8f7 but TSQL represents it as 0xf8ff */
+                        if (isnan(*m_coord))
+                            memcpy(itr, SPECIFIC_NAN, COORD_SIZE);
+                        else
+                            memcpy(itr, m_coord, COORD_SIZE);
+                        itr += COORD_SIZE;
+                    }
+                }
+                
+                /* Write additional metadata for multi-point lines (>2 points) */
+                if (npoints > 2)
+                {
+                    memcpy(itr, line_end_metadata, sizeof(line_end_metadata));
+                }               
                 break;
         }
     }

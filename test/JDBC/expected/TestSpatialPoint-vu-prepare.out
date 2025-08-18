@@ -185,11 +185,6 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 ~~ROW COUNT: 1~~
 
-prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported geometry type)~~
-
 
 create table geominTable (a geometry);
 Insert into geominTable values('POINT(1 2)');
@@ -200,11 +195,6 @@ Insert into geominTable values('POINT(1 2 3)');
 
 Insert into geominTable values('POINT(1 2 3 4)');
 ~~ROW COUNT: 1~~
-
-Insert into geominTable values('LINESTRING(1 2,3 4)');
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: LINESTRING is not supported)~~
 
 Insert into geominTable values('POINT(1000 2000)');
 ~~ROW COUNT: 1~~
@@ -445,11 +435,6 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 ~~ROW COUNT: 1~~
 
-prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported geometry type)~~
-
 
 CREATE VIEW TextFromGeog AS SELECT Lat(location) AS Latitude, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
@@ -473,11 +458,6 @@ Insert into geoginTable values('POINT(1 2 3)');
 
 Insert into geoginTable values('POINT(1 2 3 4)');
 ~~ROW COUNT: 1~~
-
-Insert into geoginTable values('LINESTRING(1 2,3 4)');
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: LINESTRING is not supported)~~
 
 Insert into geoginTable values('POINT(1000 2000)');
 ~~ERROR (Code: 33557097)~~

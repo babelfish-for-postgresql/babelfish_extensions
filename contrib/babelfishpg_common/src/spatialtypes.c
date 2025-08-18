@@ -277,6 +277,14 @@ static lwgeom_asBinary_t lwgeom_asBinary_p;
 typedef Datum (*lwgeom_astext_t)(PG_FUNCTION_ARGS);
 static lwgeom_astext_t lwgeom_astext_p;
 
+typedef Datum (*st_npoints_t)(PG_FUNCTION_ARGS);
+static st_npoints_t st_npoints_p;
+
+typedef Datum (*st_pointn_t)(PG_FUNCTION_ARGS);
+static st_pointn_t st_pointn_p;
+
+static void validate_geography_latitude(Datum geom_datum, bool is_flipped);
+
 PG_FUNCTION_INFO_V1(geometry_in);
 PG_FUNCTION_INFO_V1(geography_in);
 PG_FUNCTION_INFO_V1(get_geometry_from_text);
@@ -315,6 +323,8 @@ load_functions()
         lwgeom_force_2d_p = (lwgeom_force_2d_t) load_external_function("$libdir/postgis-3", "LWGEOM_force_2d", true, NULL);
         lwgeom_asBinary_p = (lwgeom_asBinary_t) load_external_function("$libdir/postgis-3", "LWGEOM_asBinary", true, NULL);
         lwgeom_astext_p = (lwgeom_astext_t) load_external_function("$libdir/postgis-3", "LWGEOM_asText", true, NULL);
+        st_npoints_p = (st_npoints_t) load_external_function("$libdir/postgis-3", "LWGEOM_npoints", true, NULL);
+        st_pointn_p = (st_pointn_t) load_external_function("$libdir/postgis-3", "LWGEOM_pointn_linestring", true, NULL);
     }
 }
 
@@ -329,6 +339,81 @@ GetGeometryTypeName(FunctionCallInfoBaseData *fcinfo, Datum geom_datum)
     UpdateFunctionCallInfo(fcinfo, 1, geom_datum);
     geom_type = geometry_type_p(fcinfo);
     return text_to_cstring(DatumGetTextP(geom_type));
+}
+
+/*
+ * Validates that all latitude values in a geometry are within valid range (-90 to 90 degrees).
+ */
+static void 
+validate_geography_latitude(Datum geom_datum, bool is_flipped)
+{
+    LOCAL_FCINFO(fcinfo_local, 2);  /* Local function call info with max 2 args */
+    char *geom_type;
+    Datum flipped_geom;
+    float8 lat;
+    int npoints;
+    int i;
+    Datum point;
+
+    /* Initialize function call info */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, InvalidOid, NULL, NULL);
+    
+    /* Get geometry type name using helper function */
+    geom_type = GetGeometryTypeName(fcinfo_local, geom_datum);
+    
+    if (!is_flipped) 
+    {
+        /* For text format, flip coordinates before validation (x,y becomes y,x) */
+        UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
+        flipped_geom = st_flipcoordinates_p(fcinfo_local);
+    } 
+    else 
+    {
+        /* Coordinates are already flipped, use as-is */
+        flipped_geom = geom_datum;
+    }
+
+    if (strcmp(geom_type, "ST_Point") == 0) 
+    {
+        /* Check single point latitude - after flipping, x coordinate is latitude */
+        UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
+        lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
+        
+        /* Validate latitude is within -90 to 90 degrees range */
+        if (lat < -90.0 || lat > 90.0) 
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_DATA_EXCEPTION),
+                 errmsg("Latitude values must be between -90 and 90 degrees")));
+        }
+    } 
+    else if (strcmp(geom_type, "ST_LineString") == 0) 
+    {
+        /* Get total number of points in the linestring */
+        UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
+        npoints = DatumGetInt32(st_npoints_p(fcinfo_local));
+        
+        /* Check each point in the linestring */
+        for (i = 1; i <= npoints; i++) 
+        {
+            /* Extract the i-th point from the linestring */
+            UpdateFunctionCallInfo(fcinfo_local, 2, flipped_geom, Int32GetDatum(i));
+            point = st_pointn_p(fcinfo_local);
+            
+            /* Get latitude value (x coordinate after flipping) */
+            UpdateFunctionCallInfo(fcinfo_local, 1, point);
+            lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
+            
+            /* Validate latitude is within -90 to 90 degrees range */
+            if (lat < -90.0 || lat > 90.0)
+            {
+                ereport(ERROR,
+                    (errcode(ERRCODE_DATA_EXCEPTION),
+                     errmsg("Latitude values must be between -90 and 90 degrees")));
+            }
+        }
+    }
+    /* Other geometry types are not validated in this function */
 }
 
 /* Input function for the geometry data type. */
@@ -553,11 +638,9 @@ Datum
 get_geography_from_text(PG_FUNCTION_ARGS)
 {
     Datum       geom_datum,         /* Geometry object */
-                lat_datum,          /* Latitude value as datum */
                 flipped_geom_datum; /* Geometry with flipped coordinates */
     text       *rewritten_wkt_text; /* Processed WKT text */          
     char       *geom_type;          /* String representation of geometry type */
-    float8      lat;                /* Latitude value */
     int32       srid;               /* Input SRID value */
     LOCAL_FCINFO(fcinfo_local, 2);  /* Local function call info with 2 arguments */
 
@@ -591,25 +674,12 @@ get_geography_from_text(PG_FUNCTION_ARGS)
     geom_type = GetGeometryTypeName(fcinfo_local, geom_datum);
     check_geom_type(geom_type);
 
-    if (strcmp(geom_type, "ST_Point") == 0)
-    {
-        /* Flip coordinates to check latitude */
-        UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
-        flipped_geom_datum = st_flipcoordinates_p(fcinfo_local);
+    /* Validate latitude values using helper function */
+    validate_geography_latitude(geom_datum, false);
 
-        /* Extract and validate latitude */
-        UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom_datum);
-        lat_datum = lwgeom_x_p(fcinfo_local);
-        lat = DatumGetFloat8(lat_datum);
+    UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
+    flipped_geom_datum = st_flipcoordinates_p(fcinfo_local);
 
-        /* Validate latitude is within -90 to 90 degrees or NaN */
-        if ((lat < -90.0 || lat > 90.0) && !isnan(lat)) 
-        {
-            ereport(ERROR,
-                (errcode(ERRCODE_DATA_EXCEPTION),
-                 errmsg("Latitude values must be between -90 and 90 degrees")));
-        } 
-    }
     PG_RETURN_DATUM(flipped_geom_datum);
 }
 
@@ -668,42 +738,6 @@ geography_point(PG_FUNCTION_ARGS)
 
 /* Helper function implementations for char to geometry/geography conversions */
 
-/* Validate whether latitude is between -90 to 90  for non-empty geography */
-static void 
-validate_latitude(Datum geom_datum) 
-{
-    Datum   flipped_geom,      /* Geometry with flipped coordinates */
-            lat_datum;         /* Latitude value as datum */
-    float8  lat;               /* Latitude value as double */
-    LOCAL_FCINFO(fcinfo_local, 1);  /* Local function call info */
-
-    /* Initialize function call info for PostGIS function calls */
-    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
-
-    /* 
-     * Flip coordinates:
-     * This converts from longitude/latitude to latitude/longitude order
-     */
-    UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
-    flipped_geom = st_flipcoordinates_p(fcinfo_local);
-
-    /* 
-     * Extract latitude after flipping
-     * using PostGIS's LWGEOM_x_point function
-     */
-    UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
-    lat_datum = lwgeom_x_p(fcinfo_local);
-    lat = DatumGetFloat8(lat_datum);
-
-    /* Check if latitude is within valid range (-90 to 90 degrees) */
-    if (lat < -90.0 || lat > 90.0) {
-        /* Report error for invalid latitude */
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Latitude values must be between -90 and 90 degrees")));
-    }
-}
-
 /* Common function to handle  WKT to both geometry and geography conversion */
 static Datum 
 char_to_geo_common(text *input_text, bool is_geography) 
@@ -755,7 +789,7 @@ char_to_geo_common(text *input_text, bool is_geography)
              * For non-empty geography points, validate latitude values
              * to ensure they are within the valid range (-90 to 90 degrees)
              */
-            validate_latitude(geom_datum);
+            validate_geography_latitude(geom_datum, false);
         }
     }
 

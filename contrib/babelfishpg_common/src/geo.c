@@ -278,7 +278,7 @@ determine_linestring_type(PointArray *pa)
         else if (FLAGS_GET_M(p.flags)) 
             has_m = 1;
     }
-    /* If in a linestring, any point has M and any other has Z then linestring dimension will be both ZM */
+    /* If in a linestring, any point has M and any other has Z then linestring dimension will be ZM */
     if (has_zm || (has_z && has_m)) 
         return ZM;
     if (has_m) 
