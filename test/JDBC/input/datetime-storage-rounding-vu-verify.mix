@@ -295,3 +295,10 @@ GO
 SELECT * FROM master_dbo.datetime_test;
 GO
 
+-- tsql
+UPDATE dbo.datetime_test SET time1 = cast(time1 as datetime), time2 = cast(time2 as datetime);
+GO
+
+-- psql
+SELECT * FROM master_dbo.datetime_test;
+GO
