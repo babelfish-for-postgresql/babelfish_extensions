@@ -74,6 +74,7 @@ static void load_functions();
 
 #define EMPTY_Binary_SIZE      9   /* Size of empty representation in binary */
 #define EMPTY_POINT_Binary   "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty point */
+#define EMPTY_LINE_Binary    "\x01\x02\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty linestring */
 /* 
  * Global array representing NaN coordinate value in IEEE 754 format
  * Used for empty point detection and creation
@@ -484,7 +485,6 @@ geography_in(PG_FUNCTION_ARGS)
     char    *rewritten_cstring,        /* Rewritten WKT as cstring */
             *geography_name,           /* String representation of geography type */
             *input_str = PG_GETARG_CSTRING(0);  /* Input string */
-    float8   lat;                      /* Latitude value */
     bool     is_binary_format = false; /* Flag for binary format detection */
     LOCAL_FCINFO(fcinfo_local, 3);     /* Local function call info with 3 arguments */
 
@@ -561,20 +561,12 @@ geography_in(PG_FUNCTION_ARGS)
     check_geom_type(geography_name);
 
     /* 
-     * Extract and validate latitude value
+     * Validate latitude values
      * Geography objects require latitude values between -90 and 90 degrees
+     * here,we don't flip coordinates as it's already done above
      */
-    UpdateFunctionCallInfo(fcinfo_local, 1, geog_datum);
-    lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
+    validate_geography_latitude(geog_datum, true);
 
-    /* Check if latitude is within valid range */
-    if (lat > 90.0 || lat < -90.0)
-    {
-        /* Report error for invalid latitude */
-        ereport(ERROR,
-            (errcode(ERRCODE_DATA_EXCEPTION),
-            errmsg("Latitude values must be between -90 and 90 degrees")));
-    }
 
     /* Return the PostGIS geography object */
     PG_RETURN_DATUM(geog_datum);
@@ -1434,6 +1426,11 @@ st_as_binary_common(Datum input, bool is_geography)
         {
             /* Copy empty point WKB pattern */
             memcpy(VARDATA(empty_geom), EMPTY_POINT_Binary, EMPTY_Binary_SIZE);
+        }
+        else if (strcmp(geom_type, "ST_LineString" ) == 0) 
+        {
+            /* Copy empty linestring WKB pattern */
+            memcpy(VARDATA(empty_geom), EMPTY_LINE_Binary, EMPTY_Binary_SIZE);
         }
         
         /* Free allocated memory and return the empty WKB */

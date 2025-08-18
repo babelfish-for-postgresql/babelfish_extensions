@@ -272,6 +272,29 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR, integer)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR, integer)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOGRAPHY;
+	BEGIN
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geography::STLineFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		geom = (SELECT sys.geogfromtext_helper($1::text, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_LineString' THEN
+			RETURN geom;
+		ELSE
+			RAISE EXCEPTION '% is not supported', Geomtype;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOGRAPHY)
 	RETURNS text
 	AS '$libdir/postgis-3', 'geometry_geometrytype'
