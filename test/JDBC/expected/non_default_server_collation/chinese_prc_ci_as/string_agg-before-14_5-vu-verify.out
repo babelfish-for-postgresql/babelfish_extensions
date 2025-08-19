@@ -150,7 +150,7 @@ varchar
 abc                 尸    ?defghi             尸    ??                  
 比尔·拉                尸    莫斯                  
 <NULL>
-Rohit               尸    Bhagat                
+Rohit               尸    Bhagat              
 ~~END~~
 
 
@@ -535,10 +535,10 @@ SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_
 GO
 ~~START~~
 nvarchar
-abc                 尸    🙂defghi             尸    🙂🙂                  
-比尔·拉                尸    莫斯                    
+abc                 尸    🙂defghi             尸    🙂🙂                                     
+比尔·拉                尸    莫斯                  
 <NULL>
-Rohit               尸    Bhagat               
+Rohit               尸    Bhagat              
 ~~END~~
 
 

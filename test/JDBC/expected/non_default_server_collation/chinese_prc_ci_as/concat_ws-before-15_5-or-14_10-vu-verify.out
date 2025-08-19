@@ -290,7 +290,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, '比拉斯 ', '尔·比?') + '|
 GO
 ~~START~~
 varchar
-|  ??·???                                           ·?                                               ???  ·?                                               ?·??|
+|  比尔·拉莫斯                                     ·比                                             比拉斯  ·比                                             尔·比?|
 ~~END~~
 
 
@@ -300,7 +300,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, '比拉斯 ', '尔·比?') + '|
 GO
 ~~START~~
 varchar
-|  ??·???                                           ·? ???  ·? ?·??|
+|  比尔·拉莫斯                                     ·比 比拉斯  ·比 尔·比?|
 ~~END~~
 
 
@@ -310,7 +310,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, '比拉斯 ', '尔·比?') + '|
 GO
 ~~START~~
 nvarchar
-|  ??·???                                           ·比                                               比拉斯  ·比                                               尔·比?|
+|  比尔·拉莫斯                                     ·比                                               比拉斯  ·比                                               尔·比?|
 ~~END~~
 
 
@@ -320,7 +320,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, '比拉斯 ', '尔·比?') + '|
 GO
 ~~START~~
 nvarchar
-|  ??·???                                           ·比 比拉斯  ·比 尔·比?|
+|  比尔·拉莫斯                                     ·比 比拉斯  ·比 尔·比?|
 ~~END~~
 
 
@@ -330,7 +330,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, '比拉斯 ', '尔·比?') COLL
 GO
 ~~START~~
 varchar
-|  ??·???                                           ·?                                               比拉斯  ·?                                               尔·比?|
+|  比尔·拉莫斯                                     ·比                                             比拉斯  ·比                                             尔·比?|
 ~~END~~
 
 
@@ -339,8 +339,8 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, @inputString1, @inputString2) +
 GO
 ~~START~~
 varchar
-|  ??·???                                           ·?                                               ???        ·?                                               ???       |
-~~END~~
+|  比尔·拉莫斯                                     ·比                                             比拉斯     ·比                                             比拉斯    |
+ ~~END~~
 
 
 DECLARE @seperator CHAR(50) = ' ·比 ', @inputString CHAR(50) = '  比尔·拉莫斯    ', @inputString1 CHAR(10) = '比拉斯 ', @inputString2 CHAR(10) = '比拉斯 '
@@ -348,7 +348,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, @inputString1, @inputString2) C
 GO
 ~~START~~
 varchar
-|  ??·???                                           ·?                                               ???        ·?                                               ???       |
+|  比尔·拉莫斯                                     ·比                                             比拉斯     ·比                                             比拉斯    |
 ~~END~~
 
 
@@ -419,7 +419,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, '比拉斯 ', '尔·比?') + '|
 GO
 ~~START~~
 varchar
-|  ??·???     ·?                                               ???  ·?                                               ?·??|
+|  比尔·拉莫斯     ·比                                             比拉斯  ·比                                             尔·比?|
 ~~END~~
 
 
@@ -429,7 +429,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, '比拉斯 ', '尔·比?') + '|
 GO
 ~~START~~
 varchar
-|  ??·???     ·? ???  ·? ?·??|
+|  比尔·拉莫斯     ·比 比拉斯  ·比 尔·比?|
 ~~END~~
 
 
@@ -468,7 +468,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, @inputString1, @inputString2) +
 GO
 ~~START~~
 varchar
-|  ??·???     ·? ???  ·? ??? |
+|  比尔·拉莫斯     ·比 比拉斯  ·比 比拉斯 |
 ~~END~~
 
 
@@ -486,7 +486,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, @inputString1, @inputString2) +
 GO
 ~~START~~
 varchar
-|  ??·???     ·? ???  ·? ??? |
+|  比尔·拉莫斯     ·比 比拉斯  ·比 比拉斯 |
 ~~END~~
 
 
@@ -504,7 +504,7 @@ SELECT CONCAT_WS('-', 'a', 'b', 'c', 'd', 'e', CAST('f' AS char(1)), '比尔', '
 GO
 ~~START~~
 varchar
-a-b-c-d-e-f-??-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-ef-O-P-Q-R-S-T-??-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-fg
+a-b-c-d-e-f-比尔-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-ef-O-P-Q-R-S-T-??-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-fg
 ~~END~~
 
 
@@ -512,7 +512,7 @@ SELECT CONCAT_WS(CAST('-' AS char(1)), 'a', 'b', 'c', 'd', 'e', CAST('f' AS char
 GO
 ~~START~~
 varchar
-a-b-c-d-e-f-??-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-ef-O-P-Q-R-S-T-??-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-fg
+a-b-c-d-e-f-比尔-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-ef-O-P-Q-R-S-T-??-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-fg
 ~~END~~
 
 
@@ -520,7 +520,7 @@ SELECT CONCAT_WS(CAST('-' AS varchar), 'a', 'b', 'c', 'd', 'e', CAST('f' AS char
 GO
 ~~START~~
 varchar
-a-b-c-d-e-f-??-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-ef-O-P-Q-R-S-T-??-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-fg
+a-b-c-d-e-f-比尔-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-ef-O-P-Q-R-S-T-??-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-fg
 ~~END~~
 
 
@@ -591,7 +591,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, '比拉斯 ', '尔·比?') + '|
 GO
 ~~START~~
 nvarchar
-|  比尔·拉莫斯                                           ·?                                               比拉斯  ·?                                               尔·比?|
+|  比尔·拉莫斯                                           ·比                                             比拉斯  ·比                                             尔·比?|
 ~~END~~
 
 
@@ -720,7 +720,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, '比拉斯 ', '尔·比?') + '|
 GO
 ~~START~~
 nvarchar
-|  比尔·拉莫斯     ·?                                               比拉斯  ·?                                               尔·比?|
+|  比尔·拉莫斯     ·比                                             比拉斯  ·比                                             尔·比?|
 ~~END~~
 
 

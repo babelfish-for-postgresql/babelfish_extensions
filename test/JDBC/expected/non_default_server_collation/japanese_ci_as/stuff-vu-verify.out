@@ -270,7 +270,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比??拉·比                      斯             
+比??拉·比                      斯               
 ~~END~~
 
 DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
@@ -364,7 +364,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??拉·比                      斯             
+比??拉·比                      斯               
 ~~END~~
 
 DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
@@ -1036,7 +1036,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比尔·拉?比                    斯             
+比尔·拉?比                    斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1330,7 +1330,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比尔·拉·比                   斯
+比尔·拉?比                    斯
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
@@ -1424,7 +1424,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比尔·拉·比                   斯
+比尔·拉?比                    斯
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'

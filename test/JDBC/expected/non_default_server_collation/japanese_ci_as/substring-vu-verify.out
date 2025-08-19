@@ -648,7 +648,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 nvarchar
-bc🙂defghi🙂🙂   
+bc🙂defghi🙂🙂    
 ~~END~~
 
 
@@ -690,7 +690,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 nvarchar
-??拉莫斯          
+尔·拉莫斯          
 ~~END~~
 
 

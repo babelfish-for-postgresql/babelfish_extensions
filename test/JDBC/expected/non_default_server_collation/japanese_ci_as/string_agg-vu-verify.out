@@ -148,9 +148,9 @@ GO
 ~~START~~
 varchar
 abc                 尸    ?defghi             尸    ??                  
-比尔·拉                尸    莫斯                  
+比??拉              尸    莫斯                
 <NULL>
-Rohit               尸    Bhagat                
+Rohit               尸    Bhagat              
 ~~END~~
 
 
@@ -315,7 +315,7 @@ GO
 ~~START~~
 varchar
 abc尸    ?defghi尸    ??
-比尔·拉尸    莫斯
+比??拉尸    莫斯
 <NULL>
 Rohit尸    Bhagat
 ~~END~~
@@ -536,9 +536,9 @@ GO
 ~~START~~
 nvarchar
 abc                 尸    🙂defghi             尸    🙂🙂                  
-比尔·拉                尸    莫斯                    
+比尔·拉                尸    莫斯                  
 <NULL>
-Rohit               尸    Bhagat               
+Rohit               尸    Bhagat              
 ~~END~~
 
 

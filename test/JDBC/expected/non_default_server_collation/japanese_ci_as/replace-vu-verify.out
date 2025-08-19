@@ -1017,7 +1017,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-??·???
+比??拉莫斯
 ~~END~~
 
 

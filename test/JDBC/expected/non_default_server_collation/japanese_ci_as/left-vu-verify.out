@@ -314,7 +314,7 @@ SELECT '|' + LEFT(@inputString, 4) + '|'
 GO
 ~~START~~
 nvarchar
-|比??拉|
+|比尔·拉|
 ~~END~~
 
 
