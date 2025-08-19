@@ -340,7 +340,7 @@ GO
 ~~START~~
 varchar
 |  比尔·拉莫斯                                     ·比                                             比拉斯     ·比                                             比拉斯    |
- ~~END~~
+~~END~~
 
 
 DECLARE @seperator CHAR(50) = ' ·比 ', @inputString CHAR(50) = '  比尔·拉莫斯    ', @inputString1 CHAR(10) = '比拉斯 ', @inputString2 CHAR(10) = '比拉斯 '
