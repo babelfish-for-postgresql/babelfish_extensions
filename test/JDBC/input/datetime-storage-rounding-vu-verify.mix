@@ -259,6 +259,12 @@ GO
 select * from dbo.datetime_test where time1 = '2014-03-12 12:00:34.466'
 GO
 
+select * from dbo.datetime_test where time1 <= '2014-03-12 12:00:34.467'
+GO
+
+select * from dbo.datetime_test where time1 <= '2014-03-12 12:00:34.466'
+GO
+
 select cast('2014-03-12 12:00:34.462' as datetime)
 GO
 select cast('2014-03-12 12:00:34.464' as datetime)
@@ -268,6 +274,16 @@ GO
 select cast('2014-03-12 12:00:34.462' as datetime) - cast('2014-03-12 12:00:34.464' as datetime)
 GO
 select cast('2014-03-12 12:00:34.462' as datetime) + cast('2014-03-12 12:00:34.466' as datetime)
+GO
+
+INSERT INTO dbo.datetime_test (time1, time2)  VALUES ('2014-03-12 12:00:34.466', '2010-03-04 12:55:41.149');
+INSERT INTO dbo.datetime_test (time1, time2)  VALUES ('2014-03-12 12:00:34.467', '2010-03-04 12:55:41.150');
+GO
+
+select * from dbo.datetime_test where time1 <= '2014-03-12 12:00:34.467'
+GO
+
+select * from dbo.datetime_test where time1 <= '2014-03-12 12:00:34.466'
 GO
 
 SELECT * INTO dbo.datetime_test_new  FROM dbo.datetime_test;
