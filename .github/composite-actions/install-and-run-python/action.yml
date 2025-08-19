@@ -14,8 +14,6 @@ runs:
       id: configure-python-environment
       if: always() && steps.install-python.outcome == 'success'
       run: |
-        cd ~
-        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
         cd ~/work/babelfish_extensions/babelfish_extensions/test/python
         mkdir sqltoolsservice
         cd sqltoolsservice
