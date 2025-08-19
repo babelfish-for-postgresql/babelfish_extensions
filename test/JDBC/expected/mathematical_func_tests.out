@@ -1,0 +1,613 @@
+------------------------------------------------------------------------
+---- 1. SQRT Function Tests
+------------------------------------------------------------------------
+-- NUMERIC Tests
+SELECT SQRT(CAST(144 AS NUMERIC(3,0))) AS result;                -- Positive NUMERIC
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT(CAST(0 AS NUMERIC(3,0))) AS result;                  -- Zero NUMERIC
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(CAST(12.25 AS NUMERIC(4,2))) AS result;             -- Decimal NUMERIC
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+
+SELECT SQRT(CAST(-144 AS NUMERIC(3,0))) AS result;              -- Negative NUMERIC
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(CAST(NULL AS NUMERIC(5,2))) AS result;              -- NULL NUMERIC
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(CAST(2 AS NUMERIC(1,0))) AS result;                 -- Irrational NUMERIC
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT(CAST(9999999999999999 AS NUMERIC(16,0))) AS result; -- Large NUMERIC
+GO
+~~START~~
+float
+1.0E8
+~~END~~
+
+
+SELECT SQRT(CAST(0.0000000001 AS NUMERIC(11,10))) AS result;    -- Small NUMERIC
+GO
+~~START~~
+float
+1.0E-5
+~~END~~
+
+
+-- DECIMAL Tests
+SELECT SQRT(CAST(144 AS DECIMAL(3,0))) AS result;               -- Positive DECIMAL
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT(CAST(0 AS DECIMAL(3,0))) AS result;                 -- Zero DECIMAL
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(CAST(12.25 AS DECIMAL(4,2))) AS result;            -- Decimal DECIMAL
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+
+SELECT SQRT(CAST(-144 AS DECIMAL(3,0))) AS result;             -- Negative DECIMAL
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(CAST(NULL AS DECIMAL(5,2))) AS result;             -- NULL DECIMAL
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(CAST(2 AS DECIMAL(1,0))) AS result;                -- Irrational DECIMAL
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT(CAST(9999999999999999 AS DECIMAL(16,0))) AS result;-- Large DECIMAL
+GO
+~~START~~
+float
+1.0E8
+~~END~~
+
+
+SELECT SQRT(CAST(0.0000000001 AS DECIMAL(11,10))) AS result;   -- Small DECIMAL
+GO
+~~START~~
+float
+1.0E-5
+~~END~~
+
+
+-- INT Tests
+SELECT SQRT(144) AS result;                                     -- Positive INT
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT(0) AS result;                                       -- Zero INT
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(-144) AS result;                                    -- Negative INT
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(CAST(NULL AS INT)) AS result;                      -- NULL INT
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(2) AS result;                                      -- Irrational INT
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT(2147483647) AS result;                            -- MAX INT
+GO
+~~START~~
+float
+46340.950001051984
+~~END~~
+
+
+-- BIGINT Tests
+SELECT SQRT(CAST(144 AS BIGINT)) AS result;                    -- Positive BIGINT
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT(CAST(0 AS BIGINT)) AS result;                      -- Zero BIGINT
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(CAST(-144 AS BIGINT)) AS result;                   -- Negative BIGINT
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(CAST(NULL AS BIGINT)) AS result;                   -- NULL BIGINT
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(CAST(2 AS BIGINT)) AS result;                      -- Irrational BIGINT
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT(CAST(9223372036854775807 AS BIGINT)) AS result;    -- MAX BIGINT
+GO
+~~START~~
+float
+3.03700049997605E9
+~~END~~
+
+
+-- SMALLINT Tests
+SELECT SQRT(CAST(144 AS SMALLINT)) AS result;                  -- Positive SMALLINT
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT(CAST(0 AS SMALLINT)) AS result;                    -- Zero SMALLINT
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(CAST(-144 AS SMALLINT)) AS result;                 -- Negative SMALLINT
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(CAST(NULL AS SMALLINT)) AS result;                 -- NULL SMALLINT
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(CAST(2 AS SMALLINT)) AS result;                    -- Irrational SMALLINT
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT(CAST(32767 AS SMALLINT)) AS result;               -- MAX SMALLINT
+GO
+~~START~~
+float
+181.01657382681842
+~~END~~
+
+
+-- TINYINT Tests
+SELECT SQRT(CAST(144 AS TINYINT)) AS result;                   -- Positive TINYINT
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT(CAST(0 AS TINYINT)) AS result;                     -- Zero TINYINT
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(CAST(NULL AS TINYINT)) AS result;                  -- NULL TINYINT
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(CAST(2 AS TINYINT)) AS result;                     -- Irrational TINYINT
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT(CAST(255 AS TINYINT)) AS result;                  -- MAX TINYINT
+GO
+~~START~~
+float
+15.968719422671311
+~~END~~
+
+
+-- MONEY Tests
+SELECT SQRT(CAST(144.00 AS MONEY)) AS result;                  -- Positive MONEY
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT(CAST(0.00 AS MONEY)) AS result;                    -- Zero MONEY
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(CAST(-144.00 AS MONEY)) AS result;                 -- Negative MONEY
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(CAST(NULL AS MONEY)) AS result;                    -- NULL MONEY
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(CAST(2.00 AS MONEY)) AS result;                    -- Irrational MONEY
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT(CAST(922337203685477.5807 AS MONEY)) AS result;    -- Large MONEY
+GO
+~~START~~
+float
+3.0370004999760497E7
+~~END~~
+
+
+SELECT SQRT(CAST(0.0001 AS MONEY)) AS result;                  -- Small MONEY
+GO
+~~START~~
+float
+0.01
+~~END~~
+
+
+-- SMALLMONEY Tests
+SELECT SQRT(CAST(144.00 AS SMALLMONEY)) AS result;             -- Positive SMALLMONEY
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT(CAST(0.00 AS SMALLMONEY)) AS result;               -- Zero SMALLMONEY
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(CAST(-144.00 AS SMALLMONEY)) AS result;            -- Negative SMALLMONEY
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(CAST(NULL AS SMALLMONEY)) AS result;               -- NULL SMALLMONEY
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(CAST(2.00 AS SMALLMONEY)) AS result;               -- Irrational SMALLMONEY
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT(CAST(214748.3647 AS SMALLMONEY)) AS result;        -- MAX SMALLMONEY
+GO
+~~START~~
+float
+463.4095000105199
+~~END~~
+
+
+-- BIT Tests
+SELECT SQRT(CAST(1 AS BIT)) AS result;                         -- ONE BIT
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT SQRT(CAST(0 AS BIT)) AS result;                         -- ZERO BIT
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(CAST(NULL AS BIT)) AS result;                      -- NULL BIT
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+-- REAL Tests
+SELECT SQRT(CAST(144.0 AS REAL)) AS result;                    -- Positive REAL
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT(CAST(0.0 AS REAL)) AS result;                      -- Zero REAL
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(CAST(-144.0 AS REAL)) AS result;                   -- Negative REAL
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(CAST(NULL AS REAL)) AS result;                     -- NULL REAL
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(CAST(2.0 AS REAL)) AS result;                      -- Irrational REAL
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT(CAST(3.402823E+38 AS REAL)) AS result;            -- Large REAL
+GO
+~~START~~
+float
+1.8446742424442036E19
+~~END~~
+
+
+SELECT SQRT(CAST(1.175494E-38 AS REAL)) AS result;            -- Small REAL
+GO
+~~START~~
+float
+1.084201978615031E-19
+~~END~~
+
+
+-- Character Type Tests
+SELECT SQRT('144') AS result;                                  -- Positive STRING
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT('0') AS result;                                    -- Zero STRING
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT('-144') AS result;                                 -- Negative STRING
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT('12.25') AS result;                               -- Decimal STRING
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+
+SELECT SQRT('2') AS result;                                   -- Irrational STRING
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT('') AS result;                                    -- Empty STRING
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT('ABC') AS result;                                 -- Invalid STRING
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "ABC")~~
+
+
+SELECT SQRT(N'144') AS result;                                -- Positive NSTRING
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+
+SELECT SQRT(N'0') AS result;                                  -- Zero NSTRING
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(N'-144') AS result;                               -- Negative NSTRING
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(N'12.25') AS result;                             -- Decimal NSTRING
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+
+SELECT SQRT(N'2') AS result;                                 -- Irrational NSTRING
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+SELECT SQRT(N'') AS result;                                  -- Empty NSTRING
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT SQRT(N'ABC') AS result;                               -- Invalid NSTRING
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "ABC")~~
+

@@ -1880,8 +1880,8 @@ SELECT CASE
 END AS result;
 GO
 ~~START~~
-numeric
-10.00000000
+float
+10.0
 ~~END~~
 
 
