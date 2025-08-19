@@ -574,7 +574,7 @@ roundoff_datetime(Timestamp timestamp)
 {
 	struct pg_tm tm;
 	fsec_t		fsec;
-	int			msec, rounded_msec;
+	int			msec, rounded_msec = 0;
 	Timestamp	result;
 	int			unit, base;
 
