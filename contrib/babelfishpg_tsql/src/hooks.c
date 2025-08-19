@@ -4865,11 +4865,67 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 	return argsprinted;
 }
 
+/*
+ * update_rte_perms_info_walker
+ *		Recursively scan a query or expression tree and set the checkAsUser
+ *		field to corresponding TSQL login in RTEPermissionInfos of view RTEs of Query.
+ */
+static bool
+update_rte_perms_info_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Query))
+	{
+		ListCell   *l;
+		Query	*qry = (Query *) node;
+
+		foreach(l, qry->rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+
+			if (rte->rtekind == RTE_SUBQUERY && get_rel_relkind(rte->relid) == RELKIND_VIEW)
+			{
+				Oid nspid = get_rel_namespace(rte->relid);
+
+				if (OidIsValid(nspid))
+				{
+					char *physical_schemaname = NULL;
+					RTEPermissionInfo *perminfo = NULL;
+
+					physical_schemaname = get_namespace_name(nspid);
+					perminfo = getRTEPermissionInfo(qry->rteperminfos, rte);
+
+					if (physical_schemaname && !is_shared_schema(physical_schemaname))
+					{
+						if (OidIsValid(perminfo->checkAsUser))
+						{
+							Oid loginId = get_login_for_user(perminfo->checkAsUser, physical_schemaname);
+							if (OidIsValid(loginId))
+								perminfo->checkAsUser = loginId;
+						}
+						else
+							perminfo->checkAsUser = GetSessionUserId();
+					}
+					if (physical_schemaname)
+						pfree(physical_schemaname);
+				}
+			}
+		}
+		return query_tree_walker(qry, update_rte_perms_info_walker, NULL, 0);
+	}
+	return expression_tree_walker(node, update_rte_perms_info_walker, NULL);
+}
+
 static PlannedStmt *
 pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 {
 	PlannedStmt *plan;
 	PLtsql_execstate *estate = NULL;
+
+	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
+		update_rte_perms_info_walker((Node *) parse, NULL);
 
 	if (pltsql_explain_analyze)
 	{
