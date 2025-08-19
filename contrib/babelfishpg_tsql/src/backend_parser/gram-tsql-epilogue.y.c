@@ -447,7 +447,10 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
 
 	else if (type_oid == INT8OID)
 		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_bigint"), list_make1(arg), COERCE_EXPLICIT_CALL, location);
-
+	
+	else if (type_oid == FLOAT4OID)
+		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_real"), list_make1(arg), COERCE_EXPLICIT_CALL, location);
+	
 	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime2")))
 	{
 		/*

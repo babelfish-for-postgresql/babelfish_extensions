@@ -1,0 +1,474 @@
+-- ======== REAL
+SELECT CAST('NaN' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST('Infinity' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST('+Infinity' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST('-Infinity' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST('inf' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST('+inf' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST('-inf' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT TRY_CAST('NaN' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST('Infinity' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST('+Infinity' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST('-Infinity' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST('inf' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST('+inf' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST('-inf' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT CONVERT(REAL, 'NaN');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, 'Infinity');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, '+Infinity');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, '-Infinity');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL,'inf');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, '+inf');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, '-inf');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT TRY_CONVERT(REAL, 'NaN');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, 'Infinity');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, '+Infinity');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, '-Infinity');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL,'inf');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, '+inf');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, '-inf');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+DECLARE @f REAL='NaN';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL='Infinity';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL='+Infinity';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL='-Infinity';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL='inf';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL='+inf';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL='-inf';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+
+-- ======== REAL
+SELECT CAST(N'NaN' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST(N'Infinity' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST(N'+Infinity' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST(N'-Infinity' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST(N'inf' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST(N'+inf' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST(N'-inf' AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT TRY_CAST(N'NaN' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST(N'Infinity' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST(N'+Infinity' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST(N'-Infinity' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST(N'inf' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST(N'+inf' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST(N'-inf' AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT CONVERT(REAL, N'NaN');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, N'Infinity');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, N'+Infinity');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, N'-Infinity');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL,N'inf');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, N'+inf');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, N'-inf');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT TRY_CONVERT(REAL, N'NaN');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, N'Infinity');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, N'+Infinity');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, N'-Infinity');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, N'inf');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, N'+inf');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, N'-inf');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+DECLARE @f REAL=N'NaN';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL=N'Infinity';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL=N'+Infinity';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL=N'-Infinity';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL=N'inf';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL=N'+inf';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+DECLARE @f REAL=N'-inf';
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+

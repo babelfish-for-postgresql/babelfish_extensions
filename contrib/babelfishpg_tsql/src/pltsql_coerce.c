@@ -144,9 +144,17 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "pg_catalog", "float8", "pg_catalog", "int8", "dtrunci8", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "float8", "pg_catalog", "int4", "dtrunci4", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "float8", "pg_catalog", "int2", "dtrunci2", 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "varchar", "pg_catalog", "float8", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "float8", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "bpchar", "pg_catalog", "float8", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'f'},
 /*  float4 */
 	{PG_CAST_ENTRY, "pg_catalog", "float4", "pg_catalog", "numeric", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "pg_catalog", "float4", "sys", "fixeddecimal", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "varchar", "pg_catalog", "float4", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "float4", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "bpchar", "pg_catalog", "float4", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float4", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "float4", "pg_catalog", "int8", "ftrunci8", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "float4", "pg_catalog", "int4", "ftrunci4", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "float4", "pg_catalog", "int2", "ftrunci2", 'i', 'f'},
@@ -289,13 +297,13 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{PG_CAST_ENTRY, "sys", "fixeddecimal", "pg_catalog", "varchar", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "fixeddecimal", "sys", "varchar", NULL, 'i', 'f'},
 /*  string -> float8 via I/O */
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "varchar", "pg_catalog", "float8", NULL, 'i', 'i'},
+	// {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
+	// {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},
+	// {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "varchar", "pg_catalog", "float8", NULL, 'i', 'i'},
 /*  string -> float4 via I/O */
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float4", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float4", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "varchar", "pg_catalog", "float4", NULL, 'i', 'i'},
+	// {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float4", NULL, 'i', 'i'},
+	// {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float4", NULL, 'i', 'i'},
+	// {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "varchar", "pg_catalog", "float4", NULL, 'i', 'i'},
 /*  string -> int2 via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "int2", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "int2", NULL, 'i', 'i'},
@@ -457,6 +465,7 @@ tsql_special_function_t tsql_special_function_list[] =
 {
 	{"sys", "replace", "replace", false, 3},
 	{"sys", "string_agg", "string_agg", false, 2},
+	{"sys", "string_split", "string_agg", false, 2},
 	{"sys", "substring", "substring", false, 3},
 	{"sys", "stuff", "stuff", false, 4},
 	{"sys", "translate", "translate", false, 3},
@@ -2842,6 +2851,81 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 				default:
 					newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
 			}
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_binary_datatype) (baseTypeId) ||
+				 (*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (baseTypeId) ||
+				 (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (baseTypeId))
+		{
+			/*
+			 * binary datatype should be passed in client encoding
+			 * when explicit cast is called
+			 */
+
+			TypeName 	*varcharTypeName = makeTypeNameFromNameList(list_make2(makeString("sys"),
+																	makeString("varchar")));
+			Node 		*result;
+			Const 		*tempcon;
+
+			typenameTypeIdAndMod(NULL, (const TypeName *)varcharTypeName, &baseTypeId, &baseTypeMod);
+
+			tempcon = makeConst(baseTypeId, -1,
+								tsql_get_database_or_server_collation_oid_internal(false),
+								-1, PointerGetDatum(cstring_to_text(value)),
+								false, false);
+
+			result = coerce_to_target_type(NULL, (Node *) tempcon, baseTypeId,
+										   targetTypeId, targetTypeMod,
+										   COERCION_EXPLICIT,
+										   COERCE_EXPLICIT_CAST,
+										   location);
+			
+			pfree(varcharTypeName);
+			ReleaseSysCache(baseType);
+			
+			return result;
+		}
+		else if (baseTypeId == FLOAT4OID || (*common_utility_plugin_ptr->is_tsql_real_datatype) (targetTypeId) ||
+				 baseTypeId == FLOAT8OID || (*common_utility_plugin_ptr->is_tsql_float_datatype) (targetTypeId))
+		{
+			/* Build sys.varchar TypeName */
+		    TypeName *varcharTypeName =
+		        makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("varchar")));
+
+		    Oid varcharOid;
+		    int32 varcharTypmod;
+			Const *tempcon;
+		    Node *result;
+			typenameTypeIdAndMod(NULL, (const TypeName *) varcharTypeName, &varcharOid, &varcharTypmod);
+
+		    /* Create a Const of type sys.varchar with T-SQL collation */
+		    tempcon = makeConst(varcharOid,
+		                               -1,
+		                               tsql_get_database_or_server_collation_oid_internal(false),
+		                               -1,
+		                               PointerGetDatum(cstring_to_text(value)),
+		                               false, /* isnull */
+		                               false  /* byval (varlena is by ref) */);
+			
+		    /* Coerce to REAL/FLOAT (Babelfish cast will call varchar2float4/8) */
+		    result =
+		        coerce_to_target_type(NULL,
+		                              (Node *) tempcon,
+		                              varcharOid,
+		                              targetTypeId,
+		                              targetTypeMod,
+		                              COERCION_EXPLICIT,
+		                              COERCE_EXPLICIT_CAST,
+		                              location);
+				
+		    if (result == NULL)
+		        ereport(ERROR,
+		                (errcode(ERRCODE_CANNOT_COERCE),
+		                 errmsg("cannot cast sys.varchar to requested float/real type")));
+				
+		    pfree(varcharTypeName);
+		    if (baseType) ReleaseSysCache(baseType); /* if previously fetched */
+				
+		    return result;
 		}
 		else
 		{

@@ -77,6 +77,8 @@ typedef struct common_utility_plugin
 	/* FIX ME: Remove is_tsql_int_datatype and is_tsql_bigint_datatype once BABEL-5955 is fixed */
 	bool		(*is_tsql_int_datatype) (Oid oid);
 	bool		(*is_tsql_bigint_datatype) (Oid oid);
+	bool		(*is_tsql_real_datatype) (Oid oid);
+	bool		(*is_tsql_float_datatype) (Oid oid);
 	
 	Datum		(*datetime_in_str) (char *str, Node *escontext);
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);

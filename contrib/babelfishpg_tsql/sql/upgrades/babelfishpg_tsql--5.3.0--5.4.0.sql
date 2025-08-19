@@ -295,6 +295,28 @@ END;
 $$
 LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_real(IN arg TEXT) RETURNS REAL
+AS $BODY$ BEGIN
+    BEGIN
+        RETURN CAST(arg::sys.varchar AS REAL);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END;
+END; $BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_real(IN arg ANYELEMENT) RETURNS REAL
+AS $BODY$ BEGIN
+    BEGIN
+        RETURN CAST(arg AS REAL);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END;
+END; $BODY$
+LANGUAGE plpgsql;
+
 DO $$
 DECLARE
     exception_message text;

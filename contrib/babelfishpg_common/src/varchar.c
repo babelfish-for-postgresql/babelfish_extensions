@@ -537,6 +537,9 @@ is_valid_tsql_float(const char *num)
 	const char *ptr = num;
 	bool has_digits = false;
 
+	while (*ptr != '\0' && isspace((unsigned char) *ptr))
+		ptr++;
+
 	/*optional sign*/
 	if (*ptr == '+' || *ptr == '-')
 		ptr++;
@@ -571,6 +574,9 @@ is_valid_tsql_float(const char *num)
 			ptr++;
 	}
 
+	while (*ptr != '\0' && isspace((unsigned char) *ptr))
+		ptr++;
+		
 	return *ptr == '\0'; /* valid if we reached the end of the string */
 }
 
@@ -961,10 +967,7 @@ cstring2float4(char *num)
 	 * strtod() on different platforms.
 	 */
 	if (*num == '\0')
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type %s: \"%s\"",
-						"real", orig_num)));
+		PG_RETURN_FLOAT4(0.0);
 
 	errno = 0;
 	val = strtof(num, &endptr);
@@ -975,49 +978,20 @@ cstring2float4(char *num)
 		int			save_errno = errno;
 
 		/*
-		 * C99 requires that strtof() accept NaN, [+-]Infinity, and [+-]Inf,
-		 * but not all platforms support all of these (and some accept them
-		 * but set ERANGE anyway...)  Therefore, we check for these inputs
-		 * ourselves if strtof() fails.
-		 *
-		 * Note: C99 also requires hexadecimal input as well as some extended
-		 * forms of NaN, but we consider these forms unportable and don't try
-		 * to support them.  You can use 'em if your strtof() takes 'em.
+		 * Do not accept special values as input
 		 */
-		if (pg_strncasecmp(num, "NaN", 3) == 0)
+		if (pg_strncasecmp(num, "NaN", 3) == 0 || 
+			pg_strncasecmp(num, "Infinity", 8) == 0 ||
+			pg_strncasecmp(num, "+Infinity", 9) == 0 ||
+			pg_strncasecmp(num, "-Infinity", 9) == 0 ||
+			pg_strncasecmp(num, "inf", 3) == 0 ||
+			pg_strncasecmp(num, "+inf", 4) == 0 || 
+			pg_strncasecmp(num, "-inf", 4) == 0)
 		{
-			val = get_float4_nan();
-			endptr = num + 3;
-		}
-		else if (pg_strncasecmp(num, "Infinity", 8) == 0)
-		{
-			val = get_float4_infinity();
-			endptr = num + 8;
-		}
-		else if (pg_strncasecmp(num, "+Infinity", 9) == 0)
-		{
-			val = get_float4_infinity();
-			endptr = num + 9;
-		}
-		else if (pg_strncasecmp(num, "-Infinity", 9) == 0)
-		{
-			val = -get_float4_infinity();
-			endptr = num + 9;
-		}
-		else if (pg_strncasecmp(num, "inf", 3) == 0)
-		{
-			val = get_float4_infinity();
-			endptr = num + 3;
-		}
-		else if (pg_strncasecmp(num, "+inf", 4) == 0)
-		{
-			val = get_float4_infinity();
-			endptr = num + 4;
-		}
-		else if (pg_strncasecmp(num, "-inf", 4) == 0)
-		{
-			val = -get_float4_infinity();
-			endptr = num + 4;
+			pfree(num);
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Error converting data type varchar to real.")));
 		}
 		else if (save_errno == ERANGE)
 		{
@@ -1094,7 +1068,7 @@ varchar2float4(PG_FUNCTION_ARGS)
 		pfree(num);
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("Error converting data type varchar to float.")));
+			errmsg("Error converting data type varchar to real.")));
 	}
 
 	return cstring2float4(num);
@@ -1764,11 +1738,14 @@ Datum
 bpchar2float4(PG_FUNCTION_ARGS)
 {
 	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
+	char	   *num;
 
 	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
 		PG_RETURN_FLOAT4(0);
 
-	return cstring2float4(bpchar2cstring(source));
+	num = bpchar2cstring(source);
+
+	return cstring2float4(num);
 }
 
 Datum
@@ -1781,6 +1758,16 @@ bpchar2float8(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(0);
 
 	num = bpchar2cstring(source);
+
+	/* Validate the input string for T-SQL float literals */
+	if (!is_valid_tsql_float(num))
+	{
+		pfree(num);
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("Error converting data type varchar to float.")));
+	}
+
 	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num, fcinfo->context));
 }
 

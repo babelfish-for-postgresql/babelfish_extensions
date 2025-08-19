@@ -297,6 +297,8 @@ Oid			tsql_bit_oid = InvalidOid;
 Oid			tsql_vector_oid = InvalidOid;
 Oid			tsql_sparsevec_oid = InvalidOid;
 Oid			tsql_halfvec_oid = InvalidOid;
+Oid			tsql_real_oid = InvalidOid;
+Oid			tsql_float_oid = InvalidOid;
 
 /* FIX ME: Remove tsql_int_oid and tsql_bigint_oid once BABEL-5955 is fixed */
 Oid			tsql_int_oid = InvalidOid;
@@ -347,6 +349,22 @@ is_tsql_bigint_datatype(Oid oid)
 	if (tsql_bigint_oid == InvalidOid)
 		tsql_bigint_oid = lookup_tsql_datatype_oid("bigint");
 	return tsql_bigint_oid == oid;
+}
+
+bool
+is_tsql_real_datatype(Oid oid)
+{
+	if (tsql_real_oid == InvalidOid)
+		tsql_real_oid = lookup_tsql_datatype_oid("real");
+	return (tsql_real_oid == oid);
+}
+
+bool
+is_tsql_float_datatype(Oid oid)
+{
+	if (tsql_float_oid == InvalidOid)
+		tsql_float_oid = lookup_tsql_datatype_oid("float");
+	return tsql_float_oid == oid;
 }
 
 bool
