@@ -378,9 +378,9 @@ GO
 
 SELECT * FROM view_test.weak_view_complex1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change name of view column "name" to "est")~~
+~~START~~
+varchar#!#int#!#int
+~~END~~
 
 
 SELECT * FROM view_test.weak_view_complex2;
@@ -569,6 +569,9 @@ on
 ~~END~~
 
 
+-- Create a weak binding view for binary data
+-- test comment 1
+-- test comment 2
 CREATE VIEW view_test.weak_binary_view AS
 SELECT id, binary_data FROM view_test.binary_test_table;
 GO
