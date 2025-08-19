@@ -378,6 +378,9 @@ GO
 SELECT set_config('babelfishpg_tsql.weak_view_binding', 'true', false);
 GO
 
+-- Create a weak binding view for binary data
+-- test comment 1
+-- test comment 2
 CREATE VIEW view_test.weak_binary_view AS
 SELECT id, binary_data FROM view_test.binary_test_table;
 GO
