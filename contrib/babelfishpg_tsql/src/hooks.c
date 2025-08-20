@@ -4958,27 +4958,10 @@ update_rte_perms_info_walker(Node *node, void *context)
 					}
 				}
 			}
-
-			if (rte->rtekind == RTE_SUBQUERY)
-				update_rte_perms_info_walker((Node *) rte->subquery, NULL);
 		}
-
-		/* Recurse into subquery-in-WITH */
-		foreach(l, qry->cteList)
-		{
-			CommonTableExpr *cte = (CommonTableExpr *) lfirst(l);
-
-			update_rte_perms_info_walker(cte->ctequery, NULL);
-		}
-
-		/* If there are sublinks, search for them and process their RTEs */
-		if (qry->hasSubLinks)
-			query_tree_walker(qry, update_rte_perms_info_walker, NULL,
-							QTW_IGNORE_RC_SUBQUERIES);
-		return false;
+		return query_tree_walker(qry, update_rte_perms_info_walker, NULL, 0);
 	}
-	return expression_tree_walker(node, update_rte_perms_info_walker,
-								  NULL);
+	return expression_tree_walker(node, update_rte_perms_info_walker, NULL);
 }
 
 static PlannedStmt *
