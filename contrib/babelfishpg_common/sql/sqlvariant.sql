@@ -249,7 +249,7 @@ WITH FUNCTION sys.uniqueidentifier_sqlvariant (sys.UNIQUEIDENTIFIER) AS IMPLICIT
 
 CREATE OR REPLACE FUNCTION sys.sqlvariant_datetime(sys.SQL_VARIANT)
 RETURNS sys.DATETIME
-AS 'babelfishpg_common', 'sqlvariant2datetime'
+AS 'babelfishpg_common', 'sqlvariant2timestamp'
 LANGUAGE C VOLATILE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.SQL_VARIANT AS sys.DATETIME)
@@ -273,7 +273,7 @@ WITH FUNCTION sys.sqlvariant_datetimeoffset (sys.SQL_VARIANT) AS ASSIGNMENT;
 
 CREATE OR REPLACE FUNCTION sys.sqlvariant_smalldatetime(sys.SQL_VARIANT)
 RETURNS sys.SMALLDATETIME
-AS 'babelfishpg_common', 'sqlvariant2smalldatetime'
+AS 'babelfishpg_common', 'sqlvariant2timestamp'
 LANGUAGE C VOLATILE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.SQL_VARIANT AS sys.SMALLDATETIME)
