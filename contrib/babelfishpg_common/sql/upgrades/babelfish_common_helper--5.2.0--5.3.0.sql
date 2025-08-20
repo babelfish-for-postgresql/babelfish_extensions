@@ -780,16 +780,6 @@ BEGIN
 	END IF;
 END $$;
 
-CREATE OR REPLACE FUNCTION sys.sqlvariant_smalldatetime(sys.SQL_VARIANT)
-RETURNS sys.SMALLDATETIME
-AS 'babelfishpg_common', 'sqlvariant2smalldatetime'
-LANGUAGE C VOLATILE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.sqlvariant_datetime(sys.SQL_VARIANT)
-RETURNS sys.DATETIME
-AS 'babelfishpg_common', 'sqlvariant2datetime'
-LANGUAGE C VOLATILE STRICT PARALLEL SAFE;
-
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
