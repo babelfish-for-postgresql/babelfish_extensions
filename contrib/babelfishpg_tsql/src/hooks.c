@@ -4987,7 +4987,7 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 	PlannedStmt *plan;
 	PLtsql_execstate *estate = NULL;
 
-	if (sql_dialect == SQL_DIALECT_TSQL && IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
+	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
 		update_rte_perms_info_walker((Node *) parse, NULL);
 
 	if (pltsql_explain_analyze)
