@@ -446,3 +446,44 @@ go
 
 ~~ERROR (Message: SRID value should be between 0 and 999999)~~
 
+
+-- dependent objects
+EXEC babel_5987_colon_colon_dep_proc
+GO
+~~START~~
+geometry#!#geography#!#nvarchar
+00000000010C000000000000F03F0000000000000040#!#E6100000010C0000000000000040000000000000F03F#!#POINT(1 2)
+~~END~~
+
+
+SELECT babel_5987_colon_colon_dep_func_1()
+GO
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+
+SELECT babel_5987_colon_colon_dep_func_2()
+GO
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+
+SELECT babel_5987_colon_colon_dep_func_3()
+GO
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+SELECT * FROM babel_5987_colon_colon_dep_view
+GO
+~~START~~
+geometry#!#geography#!#nvarchar
+00000000010C000000000000F03F0000000000000040#!#E6100000010C0000000000000040000000000000F03F#!#POINT(1 2)
+~~END~~
+

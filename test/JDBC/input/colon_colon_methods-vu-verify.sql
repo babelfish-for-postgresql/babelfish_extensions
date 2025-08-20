@@ -188,3 +188,19 @@ GO
 
 select geometry   ::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 1000000000 )
 go
+
+-- dependent objects
+EXEC babel_5987_colon_colon_dep_proc
+GO
+
+SELECT babel_5987_colon_colon_dep_func_1()
+GO
+
+SELECT babel_5987_colon_colon_dep_func_2()
+GO
+
+SELECT babel_5987_colon_colon_dep_func_3()
+GO
+
+SELECT * FROM babel_5987_colon_colon_dep_view
+GO
