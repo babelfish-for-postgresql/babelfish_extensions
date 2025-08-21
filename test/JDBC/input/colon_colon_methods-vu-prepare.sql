@@ -16,8 +16,16 @@ VALUES ('<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist
         geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326))
 GO
 
-CREATE PROCEDURE babel_5987_colon_colon_dep_proc AS
+CREATE PROCEDURE babel_5987_colon_colon_dep_proc1 AS
     select geometry::STGeomFromText('POINT (1 2)', 0) as geometryCol, geography::STGeomFromText('POINT (1 2)', 4326) as geographyCol, geometry::STGeomFromText('POINT (1 2)', 0).STAsText() as geometryTextCol
+GO
+
+CREATE PROCEDURE babel_5987_colon_colon_dep_proc2 AS
+    select geometry::NonExistentMethod() as NonExistentMethod
+GO
+
+CREATE PROCEDURE babel_5987_colon_colon_dep_proc3 AS
+    select geometry::NonExistentMethodField as NonExistentMethodField
 GO
 
 CREATE FUNCTION babel_5987_colon_colon_dep_func_1()
@@ -44,6 +52,30 @@ RETURN (select geometry::STGeomFromText('POINT (1 2)', 0).STAsText())
 END
 GO
 
-CREATE VIEW babel_5987_colon_colon_dep_view AS
+CREATE FUNCTION babel_5987_colon_colon_dep_func_4()
+RETURNS geometry
+AS
+BEGIN
+RETURN (select geometry::NonExistentMethod())
+END
+GO
+
+CREATE FUNCTION babel_5987_colon_colon_dep_func_5()
+RETURNS geometry
+AS
+BEGIN
+RETURN (select geometry::NonExistentMethodField)
+END
+GO
+
+CREATE VIEW babel_5987_colon_colon_dep_view1 AS
     select geometry::STGeomFromText('POINT (1 2)', 0), geography::STGeomFromText('POINT (1 2)', 4326), geometry::STGeomFromText('POINT (1 2)', 0).STAsText()
+GO
+
+CREATE VIEW babel_5987_colon_colon_dep_view2 AS
+    select geometry::NonExistentMethod() as NonExistentMethod
+GO
+
+CREATE VIEW babel_5987_colon_colon_dep_view3 AS
+    select geometry::NonExistentMethodField as NonExistentMethodField
 GO

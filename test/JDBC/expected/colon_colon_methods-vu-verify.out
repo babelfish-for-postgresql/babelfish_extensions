@@ -448,12 +448,26 @@ go
 
 
 -- dependent objects
-EXEC babel_5987_colon_colon_dep_proc
+EXEC babel_5987_colon_colon_dep_proc1
 GO
 ~~START~~
 geometry#!#geography#!#nvarchar
 00000000010C000000000000F03F0000000000000040#!#E6100000010C0000000000000040000000000000F03F#!#POINT(1 2)
 ~~END~~
+
+
+EXEC babel_5987_colon_colon_dep_proc2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure babel_5987_colon_colon_dep_proc2() does not exist)~~
+
+
+EXEC babel_5987_colon_colon_dep_proc3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure babel_5987_colon_colon_dep_proc3() does not exist)~~
 
 
 SELECT babel_5987_colon_colon_dep_func_1()
@@ -480,10 +494,38 @@ POINT(1 2)
 ~~END~~
 
 
-SELECT * FROM babel_5987_colon_colon_dep_view
+SELECT babel_5987_colon_colon_dep_func_4()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function babel_5987_colon_colon_dep_func_4() does not exist)~~
+
+
+SELECT babel_5987_colon_colon_dep_func_5()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function babel_5987_colon_colon_dep_func_5() does not exist)~~
+
+
+SELECT * FROM babel_5987_colon_colon_dep_view1
 GO
 ~~START~~
 geometry#!#geography#!#nvarchar
 00000000010C000000000000F03F0000000000000040#!#E6100000010C0000000000000040000000000000F03F#!#POINT(1 2)
 ~~END~~
+
+
+SELECT * FROM babel_5987_colon_colon_dep_view2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5987_colon_colon_dep_view2" does not exist)~~
+
+
+SELECT * FROM babel_5987_colon_colon_dep_view3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5987_colon_colon_dep_view3" does not exist)~~
 
