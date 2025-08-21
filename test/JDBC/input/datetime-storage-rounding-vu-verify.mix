@@ -320,6 +320,14 @@ SELECT * FROM master_dbo.datetime_test;
 GO
 
 -- tsql
+UPDATE dbo.datetime_test SET time1 = cast(cast(time1 as varchar) as datetime), time2 = cast(cast(time2 as varchar) as datetime);
+GO
+
+-- psql
+SELECT * FROM master_dbo.datetime_test;
+GO
+
+-- tsql
 
 -- Index Testing
 select set_config('enable_seqscan','off',false)
