@@ -61,3 +61,19 @@ GO
 -- Test for all parser rules
 SELECT * FROM forjson_vu_v_order_by
 GO
+
+/* 
+ * Found a crash in FOR JSON PATH 
+ * If the colname is empty, then system is crashing which needs handling
+ */
+--Empty column test
+select id as '', firstname as '' from forjson_vu_t_people for json path
+GO
+select id as '' from forjson_vu_t_people for json path, INCLUDE_NULL_VALUES
+GO
+select id as '', firstname as '' from forjson_vu_t_people for json auto
+GO
+select id as '' from forjson_vu_t_people for json auto, INCLUDE_NULL_VALUES
+GO
+select 1+1 as '' from forjson_vu_t_people for json path
+GO

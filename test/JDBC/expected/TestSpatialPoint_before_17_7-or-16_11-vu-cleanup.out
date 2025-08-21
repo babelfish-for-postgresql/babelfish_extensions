@@ -1,0 +1,133 @@
+DROP VIEW IF EXISTS TextFromGeom
+
+DROP VIEW IF EXISTS BinaryFromGeom
+
+DROP VIEW IF EXISTS CoordsFromGeom
+
+DROP VIEW IF EXISTS equal_geom
+
+DROP VIEW IF EXISTS point_distances_geom
+
+DROP VIEW IF EXISTS TextFromGeog
+
+DROP VIEW IF EXISTS BinaryFromGeog
+
+DROP VIEW IF EXISTS CoordsFromGeog
+
+DROP VIEW IF EXISTS TransformFromGeog
+
+DROP VIEW IF EXISTS equal_geog
+
+DROP VIEW IF EXISTS GeomView
+
+DROP TABLE IF EXISTS geominTable
+
+DROP PROCEDURE IF EXISTS geominTest
+
+DROP PROCEDURE IF EXISTS dbo.p_getcoordinates
+
+DROP FUNCTION IF EXISTS f_getval
+
+DROP VIEW IF EXISTS ValFromGeom
+
+DROP VIEW IF EXISTS GeogView
+
+DROP TABLE IF EXISTS geoginTable
+
+DROP VIEW IF EXISTS SubqueryView
+
+DROP VIEW IF EXISTS FuncExprView
+
+DROP VIEW IF EXISTS BrackExprView
+
+DROP TABLE IF EXISTS test_table
+
+DROP PROCEDURE IF EXISTS dbo.proc_getdata
+
+DROP PROCEDURE IF EXISTS geoginTest
+
+DROP FUNCTION IF EXISTS func_getval
+
+DROP VIEW IF EXISTS point_distances_geog
+
+DROP function IF EXISTS testspatial_tvf;
+
+DROP TABLE IF EXISTS SpatialData;
+
+DROP TABLE IF EXISTS SPATIALPOINTGEOM_dt
+
+DROP TABLE IF EXISTS GeomToVarbinary
+
+DROP TABLE IF EXISTS GeomTochar
+
+DROP TABLE IF EXISTS GeomToVarchar
+
+DROP TABLE IF EXISTS TypeToGeom
+
+DROP TABLE IF EXISTS TypeTable
+
+DROP TYPE IF EXISTS geom
+
+DROP TABLE IF EXISTS SPATIALPOINTGEOG_dt
+
+DROP TABLE IF EXISTS GeogToVarbinary
+
+DROP TABLE IF EXISTS GeogTochar
+
+DROP TABLE IF EXISTS GeogToVarchar
+
+DROP TABLE IF EXISTS TypeToGeog
+
+DROP TABLE IF EXISTS SPATIALPOINT_dt
+
+DROP TABLE IF EXISTS geomTabWithoutSrid
+
+drop procedure IF EXISTS geometry_proc_1;
+
+drop procedure IF EXISTS geography_proc_1;
+
+drop table IF EXISTS geo_view_test;
+
+DROP PROCEDURE IF EXISTS GetPointsByXCoordinate
+
+DROP PROCEDURE IF EXISTS GetPointsByXCoordinate1
+
+DROP PROCEDURE IF EXISTS GetDistanceByXCoordinate
+
+DROP FUNCTION IF EXISTS dbo.GetXCoordinate
+
+DROP FUNCTION IF EXISTS GetGeometry
+
+DROP TRIGGER IF EXISTS trg_LogXCoordinateChange
+
+DROP TABLE IF EXISTS XCoordinateChangeLog
+
+DROP TRIGGER IF EXISTS trg_LogDistanceChange
+
+DROP TABLE IF EXISTS DistanceChangeLog
+
+DROP TABLE IF EXISTS YourTable
+
+DROP TABLE IF EXISTS GeomTab
+
+DROP TABLE IF EXISTS YourTable1
+
+DROP TABLE IF EXISTS TableA
+
+DROP TABLE IF EXISTS TableB
+
+DROP PROCEDURE IF EXISTS GetPointsWithinDistance
+
+DROP FUNCTION IF EXISTS dbo.CalculateDistance
+
+DROP TABLE IF EXISTS YourTable2
+
+DROP TABLE IF EXISTS geometry_test
+
+DROP TYPE IF EXISTS dbo.GeospatialUDT;
+
+DROP FUNCTION IF EXISTS geom_schema.STDistance
+
+DROP SCHEMA IF EXISTS geom_schema
+
+DROP TABLE IF EXISTS STX

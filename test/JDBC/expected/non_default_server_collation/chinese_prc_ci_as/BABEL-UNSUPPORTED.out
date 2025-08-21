@@ -2114,6 +2114,7 @@ babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regardin
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
 babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
 babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
+babelfishpg_tsql.weak_view_binding#!#off#!#Sets the default binding mode for views.
 ~~END~~
 
 
@@ -2184,6 +2185,7 @@ babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regardin
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
 babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
 babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
+babelfishpg_tsql.weak_view_binding#!#off#!#Sets the default binding mode for views.
 ~~END~~
 
 
@@ -2235,6 +2237,7 @@ babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regardin
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
 babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
 babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
+babelfishpg_tsql.weak_view_binding#!#off#!#Sets the default binding mode for views.
 ~~END~~
 
 

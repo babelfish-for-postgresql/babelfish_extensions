@@ -528,3 +528,6 @@ alter-view
 test_conv_int_to_varbinary_binary_before_16_6_or_15_10
 MONEY_OBJECT-before-16_4
 weak-binding
+babel_numeric_fixeddecimal_oper
+babel_numeric_money_oper-before-16_10-or-17_6
+babel_numeric_smallmoney_oper-before-16_10-or-17_6

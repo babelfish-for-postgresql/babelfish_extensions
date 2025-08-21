@@ -632,6 +632,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
+CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
+    SELECT * 
+    FROM pg_catalog.pg_settings 
+    WHERE name collate "C" like 'babelfishpg_tsql.explain_%' OR
+          name collate "C" like 'babelfishpg_tsql.escape_hatch_%' OR
+          name collate "C" = 'babelfishpg_tsql.enable_pg_hint' OR
+          name collate "C" like 'babelfishpg_tsql.isolation_level_%' OR
+          name collate "C" = 'babelfishpg_tsql.weak_view_binding';
+GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
+
 /*
  * Updates typmod values in pg_proc for smallmoney/money data types in
  * PLTSQL procedures/functions, defined in babelfish_namespace_ext schemas.
@@ -1011,6 +1021,19 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_broken_view_function()
+RETURNS INT
+AS $$
+BEGIN
+    RAISE EXCEPTION 'Cannot reference a broken view in query';
+    RETURN 1;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+GRANT EXECUTE ON FUNCTION sys.babelfish_broken_view_function() TO PUBLIC;
+COMMENT ON FUNCTION sys.babelfish_broken_view_function() IS 'Internal function used by broken views to prevent silent failures';
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

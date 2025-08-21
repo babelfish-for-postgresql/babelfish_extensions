@@ -193,7 +193,7 @@ protected:
 		antlrcpp::Any visitOdbc_scalar_function(TSqlParser::Odbc_scalar_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override;
 
-		antlrcpp::Any visitHierarchyid_coloncolon(TSqlParser::Hierarchyid_coloncolonContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitHierarchyid_static_method(TSqlParser::Hierarchyid_static_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitOdbc_literal_expr(TSqlParser::Odbc_literal_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_ODBC_LITERAL, "odbc literal", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitDollar_action_expr(TSqlParser::Dollar_action_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DOLLAR_ACTION, "$ACTION", getLineAndPos(ctx)); return visitChildren(ctx); }
 

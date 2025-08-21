@@ -434,13 +434,13 @@ TestInt
 TestMoney
 TestNotNull
 TestNumeric
-Test-pointZM
+Test-pointZM_before_17_7-or-16_11
 TestReal
 TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
-TestSpatialPoint
+TestSpatialPoint_before_17_7-or-16_11
 Test-spatial-functions
 Test-spatial-functions-2
 Test-sp_addrole
@@ -637,3 +637,7 @@ money_smallmoney
 money_smallmoney_bit_dep_obj
 user_token-dep
 len
+weak-binding
+babel_numeric_fixeddecimal_oper
+babel_numeric_money_oper
+babel_numeric_smallmoney_oper
