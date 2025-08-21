@@ -318,3 +318,44 @@ GO
 -- psql
 SELECT * FROM master_dbo.datetime_test;
 GO
+
+-- tsql
+
+-- Index Testing
+select set_config('enable_seqscan','off',false)
+GO
+
+set BABELFISH_STATISTICS PROFILE on;
+GO
+select * from datetime_index_test where created_at = '2024-01-15 10:30:45.004';
+GO
+
+set BABELFISH_STATISTICS PROFILE off;
+GO
+-- insert same values post upgrade
+INSERT INTO datetime_index_test (created_at, data) VALUES
+('2024-01-15 10:30:45.001', 'record1'),
+('2024-01-15 10:30:45.002', 'record2'),
+('2024-01-15 10:30:45.003', 'record3'),
+('2024-01-15 10:30:45.004', 'record4'),
+('2024-01-15 10:30:45.005', 'record5');
+GO
+
+set BABELFISH_STATISTICS PROFILE on;
+GO
+select * from datetime_index_test where created_at = '2024-01-15 10:30:45.004';
+GO
+set BABELFISH_STATISTICS PROFILE off;
+GO
+
+-- psql
+REINDEX index master_dbo.ix_datetime_index_test_created_66a6b1d45f144f1482b6a7f096be9038;
+GO
+
+-- tsql
+set BABELFISH_STATISTICS PROFILE on;
+GO
+select * from datetime_index_test where created_at = '2024-01-15 10:30:45.004';
+GO
+set BABELFISH_STATISTICS PROFILE off;
+GO
