@@ -9482,7 +9482,7 @@ SELECT
     schemaname,
     relname as tablename,
     indexrelname as indexname,
-    pg_size_pretty(pg_relation_size(schemaname || '.' || indexrelname::text)) as index_size
+    pg_size_pretty(pg_relation_size(schemaname || '.' || cast(indexrelname as text))) as index_size
 FROM pg_stat_all_indexes
 WHERE relname = 'dateindextest'
 AND schemaname = 'dbo';
