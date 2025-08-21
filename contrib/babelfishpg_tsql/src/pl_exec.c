@@ -9513,8 +9513,6 @@ get_cast_hashentry(PLtsql_execstate *estate,
 												  -1);
 		}
 
-		(*common_utility_plugin_ptr->handle_type_and_collation)(cast_expr, dsttype, InvalidOid);
-
 		/* Note: we don't bother labeling the expression tree with collation */
 
 		/* 
