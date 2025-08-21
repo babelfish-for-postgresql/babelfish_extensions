@@ -4932,7 +4932,7 @@ update_rte_perms_info_walker(Node *node, void *context)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
-			if (get_rel_relkind(rte->relid) == RELKIND_VIEW)
+			if (rte->perminfoindex != 0 && get_rel_relkind(rte->relid) == RELKIND_VIEW)
 			{
 				Oid nspid = get_rel_namespace(rte->relid);
 
