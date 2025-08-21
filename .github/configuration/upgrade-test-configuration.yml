@@ -2,18 +2,6 @@ upgrade-version: [
 {
   upgrade-path: [
     {
-      version: source.latest,
-      upgrade-type: null
-    },
-    { 
-      version: target.latest,
-      upgrade-type: major
-    }
-  ]
-},
-{
-  upgrade-path: [
-    {
       version: 17.6,
       upgrade-type: null
     },
