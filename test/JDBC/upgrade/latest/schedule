@@ -635,6 +635,7 @@ user_token-dep
 Test_cast_binary_bytea
 len
 weak-binding
+colon_colon_methods
 babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper
 babel_numeric_smallmoney_oper
