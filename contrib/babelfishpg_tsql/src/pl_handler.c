@@ -154,6 +154,8 @@ static void set_pgtype_byval(List *name, bool byval);
 static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc, bool is_proc);
 static Acl *get_old_view_acl(Oid oldViewOid);
 static void pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl);
+static List *get_old_view_column_acls(Oid oldViewOid);
+static void restore_view_column_acls(Oid newViewOid, List *column_acls);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -193,8 +195,6 @@ static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
 
-static List *get_old_view_column_acls(Oid oldViewOid);
-static void restore_view_column_acls(Oid newViewOid, List *column_acls);
 typedef struct ColumnAclInfo
 {
     AttrNumber  attnum;    /* Column number */
@@ -5366,99 +5366,99 @@ pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl)
 static List *
 get_old_view_column_acls(Oid oldViewOid)
 {
-    Relation pg_attribute_rel;
-    SysScanDesc scan;
-    ScanKeyData skey;
-    HeapTuple tuple;
-    List *column_acls = NIL;
-    
-    pg_attribute_rel = table_open(AttributeRelationId, AccessShareLock);
-    
-    ScanKeyInit(&skey,
-                Anum_pg_attribute_attrelid,
-                BTEqualStrategyNumber, F_OIDEQ,
-                ObjectIdGetDatum(oldViewOid));
-    
-    scan = systable_beginscan(pg_attribute_rel, AttributeRelidNumIndexId,
-                             true, NULL, 1, &skey);
-    
-    while (HeapTupleIsValid(tuple = systable_getnext(scan)))
-    {
-        Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
-        Datum aclDatum;
-        bool isNull;
-        ColumnAclInfo *info;
-        
-        /* Skip system columns */
-        if (att->attnum <= 0)
-            continue;
-            
-        aclDatum = SysCacheGetAttr(ATTNAME, tuple, 
-                                  Anum_pg_attribute_attacl, &isNull);
-        
-        info = palloc(sizeof(ColumnAclInfo));
-        info->attnum = att->attnum;
-        info->attname = pstrdup(NameStr(att->attname));
-        info->acl = isNull ? NULL : DatumGetAclPCopy(aclDatum);
-        
-        column_acls = lappend(column_acls, info);
-    }
-    
-    systable_endscan(scan);
-    table_close(pg_attribute_rel, AccessShareLock);
-    
-    return column_acls;
+	Relation pg_attribute_rel;
+	SysScanDesc scan;
+	ScanKeyData skey;
+	HeapTuple tuple;
+	List *column_acls = NIL;
+	
+	pg_attribute_rel = table_open(AttributeRelationId, AccessShareLock);
+	
+	ScanKeyInit(&skey,
+				Anum_pg_attribute_attrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(oldViewOid));
+	
+	scan = systable_beginscan(pg_attribute_rel, AttributeRelidNumIndexId,
+							true, NULL, 1, &skey);
+	
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+		Datum aclDatum;
+		bool isNull;
+		ColumnAclInfo *info;
+		
+		/* Skip system columns */
+		if (att->attnum <= 0)
+			continue;
+			
+		aclDatum = SysCacheGetAttr(ATTNAME, tuple, 
+								Anum_pg_attribute_attacl, &isNull);
+		
+		info = palloc(sizeof(ColumnAclInfo));
+		info->attnum = att->attnum;
+		info->attname = pstrdup(NameStr(att->attname));
+		info->acl = isNull ? NULL : DatumGetAclPCopy(aclDatum);
+		
+		column_acls = lappend(column_acls, info);
+	}
+	
+	systable_endscan(scan);
+	table_close(pg_attribute_rel, AccessShareLock);
+	
+	return column_acls;
 }
 
 static void
 restore_view_column_acls(Oid newViewOid, List *column_acls)
 {
-    ListCell *lc;
-    
-    foreach(lc, column_acls)
-    {
-        ColumnAclInfo *info = (ColumnAclInfo *) lfirst(lc);
-        Relation pg_attribute_rel;
-        HeapTuple attTup;
-        AttrNumber attnum = InvalidAttrNumber;
-        
-        /* Find the corresponding column in the new view by name */
-        attnum = get_attnum(newViewOid, info->attname);
-        if (attnum == InvalidAttrNumber)
-            continue;  /* Column doesn't exist in new view */
-            
-        /* Update the ACL */
-        pg_attribute_rel = table_open(AttributeRelationId, RowExclusiveLock);
-        attTup = SearchSysCacheCopyAttName(newViewOid, info->attname);
-        
-        if (HeapTupleIsValid(attTup))
-        {
-            Datum values[Natts_pg_attribute];
-            bool nulls[Natts_pg_attribute];
-            bool replaces[Natts_pg_attribute];
-            HeapTuple newTuple;
-            
-            memset(values, 0, sizeof(values));
-            memset(nulls, false, sizeof(nulls));
-            memset(replaces, false, sizeof(replaces));
-            
-            if (info->acl != NULL)
-                values[Anum_pg_attribute_attacl - 1] = PointerGetDatum(info->acl);
-            else
-                nulls[Anum_pg_attribute_attacl - 1] = true;
-                
-            replaces[Anum_pg_attribute_attacl - 1] = true;
-            
-            newTuple = heap_modify_tuple(attTup, RelationGetDescr(pg_attribute_rel),
-                                       values, nulls, replaces);
-                                       
-            CatalogTupleUpdate(pg_attribute_rel, &newTuple->t_self, newTuple);
-            heap_freetuple(newTuple);
-        }
-        
-        heap_freetuple(attTup);
-        table_close(pg_attribute_rel, RowExclusiveLock);
-    }
+	ListCell *lc;
+	
+	foreach(lc, column_acls)
+	{
+		ColumnAclInfo *info = (ColumnAclInfo *) lfirst(lc);
+		Relation pg_attribute_rel;
+		HeapTuple attTup;
+		AttrNumber attnum = InvalidAttrNumber;
+		
+		/* Find the corresponding column in the new view by name */
+		attnum = get_attnum(newViewOid, info->attname);
+		if (attnum == InvalidAttrNumber)
+			continue;  /* Column doesn't exist in new view */
+			
+		/* Update the ACL */
+		pg_attribute_rel = table_open(AttributeRelationId, RowExclusiveLock);
+		attTup = SearchSysCacheCopyAttName(newViewOid, info->attname);
+		
+		if (HeapTupleIsValid(attTup))
+		{
+			Datum values[Natts_pg_attribute];
+			bool nulls[Natts_pg_attribute];
+			bool replaces[Natts_pg_attribute];
+			HeapTuple newTuple;
+			
+			memset(values, 0, sizeof(values));
+			memset(nulls, false, sizeof(nulls));
+			memset(replaces, false, sizeof(replaces));
+			
+			if (info->acl != NULL)
+				values[Anum_pg_attribute_attacl - 1] = PointerGetDatum(info->acl);
+			else
+				nulls[Anum_pg_attribute_attacl - 1] = true;
+				
+			replaces[Anum_pg_attribute_attacl - 1] = true;
+			
+			newTuple = heap_modify_tuple(attTup, RelationGetDescr(pg_attribute_rel),
+									values, nulls, replaces);
+									
+			CatalogTupleUpdate(pg_attribute_rel, &newTuple->t_self, newTuple);
+			heap_freetuple(newTuple);
+		}
+		
+		heap_freetuple(attTup);
+		table_close(pg_attribute_rel, RowExclusiveLock);
+	}
 }
 
 /*
