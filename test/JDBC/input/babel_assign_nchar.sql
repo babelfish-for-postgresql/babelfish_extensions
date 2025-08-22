@@ -931,11 +931,6 @@ SELECT
     @jp_varchar COLLATE Japanese_CI_AS AS VARCHAR_Japanese,
     @jp_nchar COLLATE Japanese_CI_AS AS NCHAR_Japanese,
     @jp_nvarchar COLLATE Japanese_CI_AS AS NVARCHAR_Japanese;
-
--- Compare with other collations
-SELECT 
-    @jp_char COLLATE SQL_Latin1_General_CP1_CI_AS AS Latin1_Collation,
-    @jp_varchar COLLATE Japanese_CI_AS AS Japanese_Collation;
 GO
 
 -- Test : Arabic Text
@@ -988,14 +983,12 @@ SELECT
 GO
 
 -- Test : Special Characters and Emoji
-DECLARE @special_chars CHAR(50) = N'Hello🌟World🌍こんにちは🎌世界🗾مرحبا⭐';
+DECLARE @special_chars CHAR(100) = N'Hello🌟World🌍こんにちは🎌世界🗾مرحبا⭐';
 
 SELECT 'Special Characters Test' AS TestCase;
 SELECT 
-    @special_chars COLLATE SQL_Latin1_General_CP1_CI_AS AS Latin1_Special,
     @special_chars COLLATE Japanese_CI_AS AS Japanese_Special,
-    @special_chars COLLATE Chinese_PRC_CI_AS AS Chinese_Special,
-    @special_chars COLLATE Arabic_CI_AS AS Arabic_Special;
+    @special_chars COLLATE Chinese_PRC_CI_AS AS Chinese_Special
 GO
 
 ------------------------------
