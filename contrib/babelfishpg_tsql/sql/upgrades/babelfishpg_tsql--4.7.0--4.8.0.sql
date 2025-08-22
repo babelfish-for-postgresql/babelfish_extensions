@@ -11,6 +11,37 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * final behaviour.
  */
 
+CREATE OR REPLACE PROCEDURE sys.sp_datatype_info (
+	"@data_type" int = 0,
+	"@odbcver" smallint = 2)
+AS $$
+BEGIN
+        select TYPE_NAME, DATA_TYPE, PRECISION, LITERAL_PREFIX, LITERAL_SUFFIX,
+              CAST(CREATE_PARAMS AS CHAR(20)), NULLABLE, CASE_SENSITIVE, SEARCHABLE,
+              UNSIGNED_ATTRIBUTE, MONEY, AUTO_INCREMENT, LOCAL_TYPE_NAME,
+              MINIMUM_SCALE, MAXIMUM_SCALE, SQL_DATA_TYPE, SQL_DATETIME_SUB,
+              NUM_PREC_RADIX, INTERVAL_PRECISION, USERTYPE
+        from sys.sp_datatype_info_helper(@odbcver, false) where @data_type = 0 or data_type = @data_type
+        order by DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
+END;
+$$
+LANGUAGE 'pltsql';
+
+CREATE OR REPLACE PROCEDURE sys.sp_datatype_info_100 (
+	"@data_type" int = 0,
+	"@odbcver" smallint = 2)
+AS $$
+BEGIN
+        select TYPE_NAME, DATA_TYPE, PRECISION, LITERAL_PREFIX, LITERAL_SUFFIX,
+              CAST(CREATE_PARAMS AS CHAR(20)), NULLABLE, CASE_SENSITIVE, SEARCHABLE,
+              UNSIGNED_ATTRIBUTE, MONEY, AUTO_INCREMENT, LOCAL_TYPE_NAME,
+              MINIMUM_SCALE, MAXIMUM_SCALE, SQL_DATA_TYPE, SQL_DATETIME_SUB,
+              NUM_PREC_RADIX, INTERVAL_PRECISION, USERTYPE
+        from sys.sp_datatype_info_helper(@odbcver, true) where @data_type = 0 or data_type = @data_type
+        order by DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
+END;
+$$
+LANGUAGE 'pltsql';
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

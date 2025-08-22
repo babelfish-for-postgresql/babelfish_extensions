@@ -127,10 +127,10 @@ SELECT * FROM babel_5512_upgrade_v9;
 GO
 
 -- for r,i,v,p,I
-SELECT c.relkind as object_type, a.attname as column_name, a.atttypid::regtype::text as data_type, a.atttypmod as type_modifier 
+SELECT c.relkind as object_type, a.attname as column_name, cast(cast(a.atttypid as regtype) as text) as data_type, a.atttypmod as type_modifier 
 FROM pg_class c 
 JOIN pg_attribute a ON c.oid = a.attrelid 
-WHERE a.atttypid::regtype::text IN ('money', 'smallmoney') 
+WHERE cast(cast(a.atttypid as regtype) as text) IN ('money', 'smallmoney') 
 AND a.attname IN ('babel_5512_mon3','babel_5512_mon1','babel_5512_small3','babel_5512_result1',
             'babel_5512_result2','babel_5512_result3','babel_5512_result4','babel_5512_result5','babel_5512_result6','babel_5512_small1') 
 AND c.relkind IN ('r', 'i', 'v', 'p', 'I') 

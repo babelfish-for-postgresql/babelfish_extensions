@@ -3485,8 +3485,6 @@ expression
     | full_column_name                                                          #full_col_name_expr
     | DEFAULT                                                                   #default_expr
     | case_expression                                                           #case_expr
-    | hierarchyid_coloncolon_methods                                            #hierarchyid_coloncolon
-    | spatial_coloncolon_methods                                                #spatial_coloncolon
     | over_clause                                                               #over_clause_expr
     | odbc_literal                                                              #odbc_literal_expr
     | DOLLAR_ACTION                                                             #dollar_action_expr
@@ -3498,6 +3496,7 @@ clr_udt_func_call
     | subquery (DOT calls+=method_call)*
     | LR_BRACKET expression RR_BRACKET (DOT calls+=method_call)*
     | function_call (DOT calls+=method_call)*
+    | datatype_coloncolon_methods (DOT calls+=method_call)*
     ;
 
 method_call
@@ -3956,16 +3955,34 @@ geospatial_func_arg
     | STINTERSECTS
     ;
 
+geospatial_static_method
+    : STGEOMFROMTEXT
+    | STPOINTFROMTEXT
+    | POINT
+    ;
+
 hierarchyid_methods
     : method=( GETANCESTOR | GETDESCENDANT | GETLEVEL | ISDESCENDANTOF | READ | GETREPARENTEDVALUE | TOSTRING ) LR_BRACKET expression_list? RR_BRACKET
     ;
 
-hierarchyid_coloncolon_methods
-    : id colon_colon  method=(GETROOT | PARSE) LR_BRACKET expression? RR_BRACKET
+hierarchyid_static_method
+    : GETROOT
+    | PARSE
     ;
 
-spatial_coloncolon_methods
-    : data_type colon_colon function_call
+datatype_static_method
+    : hierarchyid_static_method
+    | geospatial_static_method
+    ;
+
+datatype_field_or_method
+    : method=id (LR_BRACKET expression_list? RR_BRACKET)
+    | field=id
+    ;
+
+datatype_coloncolon_methods
+    : data_type colon_colon datatype_static_method LR_BRACKET expression_list? RR_BRACKET
+    | data_type colon_colon datatype_field_or_method
     ;
 
 xml_methods
@@ -4858,6 +4875,7 @@ keyword
     | PER_DB
     | PER_NODE
     | PLATFORM
+    | POINT
     | POISON_MESSAGE_HANDLING
     | POLICY
     | POOL
@@ -5060,6 +5078,7 @@ keyword
     | STDISJOINT 
     | STDISTANCE
     | STEQUALS
+    | STGEOMFROMTEXT
     | STINTERSECTS
     | STISCLOSED
     | STISEMPTY
@@ -5071,6 +5090,7 @@ keyword
     | STOPLIST
     | STOPPED
     | STOP_ON_ERROR
+    | STPOINTFROMTEXT
     | STRING_AGG
     | STRING_DELIMITER
     | STSRID
@@ -5331,7 +5351,6 @@ id
     | keyword
     | DOLLAR_IDENTITY                        
     | DOLLAR_ROWGUID								 
-    | id colon_colon id
     ;
 
 local_id

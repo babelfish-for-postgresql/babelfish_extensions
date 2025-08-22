@@ -1055,6 +1055,53 @@ public:
 		}
 	}
 
+	void exitDatatype_coloncolon_methods(TSqlParser::Datatype_coloncolon_methodsContext *ctx) override
+	{
+		std::string typeStr = ::getFullText(ctx->data_type());
+		PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
+		
+		if (is_tsql_geometry_or_geography_datatype(type->typoid))
+		{
+			/* 
+			 * Rewrite the Static methods of geometry and geography as follows 
+			 * ([sys.]geometry::method / [sys.]geography::method )-> geometry__method / geography__method
+			 */
+			if (ctx->datatype_static_method())
+			{
+				std::string ctx_str = ::getFullText(ctx);
+				std::string original_exp = ctx_str.substr(0, ctx->datatype_static_method()->stop->getStopIndex() - ctx->start->getStartIndex() + 1);
+				std::string rewritten_exp = std::string(type->typname) + "__" + ::getFullText(ctx->datatype_static_method());
+
+				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(original_exp, rewritten_exp)));	
+			}
+			else
+			{
+				if (ctx->datatype_field_or_method()->method)
+				{
+					TSqlParser::IdContext *method = ctx->datatype_field_or_method()->method;
+					std::string methodNameStr;
+					
+					methodNameStr = stripQuoteFromId(method);
+					throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_OBJECT, format_errmsg("Could not find method '%s' for type %s.", methodNameStr.c_str(), typeStr.c_str()), getLineAndPos(ctx));
+				}
+				else if (ctx->datatype_field_or_method()->field)
+				{
+					TSqlParser::IdContext *field = ctx->datatype_field_or_method()->field;
+					std::string fieldNameStr;
+
+					fieldNameStr = stripQuoteFromId(field);
+					throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_OBJECT, format_errmsg("Could not find property or field '%s' for type %s.", fieldNameStr.c_str(), typeStr.c_str()), getLineAndPos(ctx));
+				}
+			}
+		}
+		else
+		{
+			// if type is not a datatype which support static methods/fields throw error
+			throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("Cannot call methods on %s.", typeStr.c_str()), getLineAndPos(ctx->data_type()));
+		}
+
+	}
+
 	/* We are adding handling for CLR_UDT Types in:
 	 * tsqlCommonMutator: for cases CREATE/ALTER View, Procedure, Function
 	 */
@@ -3057,7 +3104,7 @@ public:
 	//  rule (id colon_colon id) looks like it might be a call to a type method; we
 	//  ignore those as well.
 	
-	if (proc->keyword() || proc->colon_colon())
+	if (proc->keyword())
 	    return;
 	
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
@@ -3163,29 +3210,6 @@ public:
 
 	TSqlParser::IdContext *proc = ctx->procedure;
 	TSqlParser::IdContext *schema = ctx->schema;
-
-	#ifdef ENABLE_SPATIAL_TYPES
-	if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
-	{
-		TSqlParser::IdContext *idctx = ctx->id()[0];
-		if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
-		{
-			std::string idText = idctx->id()[0]->getText();
-			transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
-			size_t start = idText.find_first_not_of(" \n\r\t\f\v");
-    		idText = (start == std::string::npos) ? "" : idText.substr(start);
-			size_t end = idText.find_last_not_of(" \n\r\t\f\v");
-    		idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
-			if(idText == "geography" || idText == "geometry"){
-				// Replace colon_colon with underscores of the same length
-				std::string colonText = idctx->colon_colon()->getText();
-				std::string underScores(colonText.size(), '_');
-
-				stream.setText(idctx->colon_colon()->start->getStartIndex(), underScores.c_str());
-			}
-		}
-	}
-	#endif
 	
 	// if the func name contains colon_colon, it must begin with it. see grammar
     if (ctx->colon_colon())
@@ -3196,7 +3220,7 @@ public:
 
 	// See the commment in enterFunc_proc_name_schema() for an explanation of this code
 	
-	if (proc->keyword() || proc->colon_colon())
+	if (proc->keyword())
 	    return;
 	
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
@@ -9341,6 +9365,7 @@ handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx)
 				else if(ctx->subquery()) ind = ctx->subquery()->stop->getStopIndex();
 				else if(ctx->function_call()) ind = ctx->function_call()->stop->getStopIndex();
 				else if(ctx->RR_BRACKET()) ind = ctx->RR_BRACKET()->getSymbol()->getStopIndex();
+				else if(ctx->datatype_coloncolon_methods()) ind = ctx->datatype_coloncolon_methods()->stop->getStopIndex();
 			}
 			else ind = method_calls[i-1]->stop->getStopIndex();
 
