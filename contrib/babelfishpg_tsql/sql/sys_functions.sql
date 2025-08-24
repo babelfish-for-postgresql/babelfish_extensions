@@ -1637,6 +1637,47 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
+create or replace function sys.isdate(v anyelement)
+returns integer
+as
+$body$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+begin
+    arg_datatype_oid := pg_typeof(v)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    IF arg_datatype IN ('date','time','datetime2','text','ntext') THEN
+        RAISE EXCEPTION USING 
+        ERRCODE = 'invalid_parameter_value',
+        MESSAGE = format('Argument data type %s is invalid for argument 1 of ISDATE function.', arg_datatype);
+    END IF;
+
+    IF NOT (arg_datatype IN ('datetime', 'smalldatetime')) THEN
+        return 0;
+    END IF;
+    if v is NULL THEN
+        return 0;
+    else
+        perform v::datetime;
+        return 1;
+    end if;
+    EXCEPTION 
+        WHEN invalid_parameter_value THEN
+            RAISE;
+        WHEN others THEN
+            RETURN 0;
+end
+$body$
+language 'plpgsql' STABLE;
+
 create or replace function sys.isdate(v text)
 returns integer
 as
@@ -1645,7 +1686,7 @@ begin
     if v is NULL THEN
         return 0;
     else
-        perform v::date;
+        perform v::datetime;
         return 1;
     end if;
     EXCEPTION WHEN others THEN

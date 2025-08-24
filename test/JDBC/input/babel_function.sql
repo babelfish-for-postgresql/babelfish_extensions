@@ -189,6 +189,36 @@ GO
 SELECT ISDATE(NULL);
 GO
 
+-- Invalid input with in appropriate delimiters
+select isdate(/10/20/12);
+go
+select isdate(10/20/12/);
+go
+select isdate(10//20/12);
+go
+select isdate(10@20@12);
+go
+-- Invalid date input
+select ISDATE('1752-12-31')
+go
+-- Invalid input as datetime2 is not valid input for ISDATE function
+declare @isdat_out datetime2 = '2016-12-26 23:30:05.523456';
+select isdate(@isdat_out);
+go
+-- Valid input as only datetime and smalldatetime are valid input for ISDATE function
+declare @isdat_out2 datetime = '2016-12-26 23:30:05.52';
+select isdate(@isdat_out2);
+go
+-- UDT tests
+declare @isdat_out3 smalldatetime = '2016-12-26 23:30:05.52';
+select isdate(@isdat_out3);
+go
+create type isdate_udt from datetime not null;
+declare @isdat_out4 isdate_udt = '2016-12-26 23:30:05.52';
+select isdate(@isdat_out4);
+go
+drop type isdate_udt;
+go
 -- test DATEFROMPARTS function
 -- test valid arguments
 select datefromparts(2020,12,31);

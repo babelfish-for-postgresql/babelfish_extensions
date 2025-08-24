@@ -413,7 +413,7 @@ select serverproperty(N'collation');
 GO
 ~~START~~
 sql_variant
-chinese_prc_ci_as
+sql_latin1_general_cp1_ci_as
 ~~END~~
 
 select serverproperty(N'IsSingleUser');
@@ -451,7 +451,7 @@ SELECT ISDATE('2016-12-26 23:30:05.523456');
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 -- test invalid argument
@@ -483,6 +483,81 @@ int
 0
 ~~END~~
 
+
+-- Invalid input with in appropriate delimiters
+select isdate(/10/20/12);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '/' at line 2 and character position 14)~~
+
+select isdate(10/20/12/);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '10' at line 1 and character position 14)~~
+
+select isdate(10//20/12);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '10' at line 1 and character position 14)~~
+
+select isdate(10@20@12);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '10' at line 1 and character position 14)~~
+
+-- Invalid date input
+select ISDATE('1752-12-31')
+go
+~~START~~
+int
+0
+~~END~~
+
+-- Invalid input as datetime2 is not valid input for ISDATE function
+declare @isdat_out datetime2 = '2016-12-26 23:30:05.523456';
+select isdate(@isdat_out);
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of ISDATE function.)~~
+
+-- Valid input as only datetime and smalldatetime are valid input for ISDATE function
+declare @isdat_out2 datetime = '2016-12-26 23:30:05.52';
+select isdate(@isdat_out2);
+go
+~~START~~
+int
+1
+~~END~~
+
+-- UDT tests
+declare @isdat_out3 smalldatetime = '2016-12-26 23:30:05.52';
+select isdate(@isdat_out3);
+go
+~~START~~
+int
+1
+~~END~~
+
+create type isdate_udt from datetime not null;
+declare @isdat_out4 isdate_udt = '2016-12-26 23:30:05.52';
+select isdate(@isdat_out4);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "isdate_udt" does not exist)~~
+
+drop type isdate_udt;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "isdate_udt" does not exist)~~
 
 -- test DATEFROMPARTS function
 -- test valid arguments
