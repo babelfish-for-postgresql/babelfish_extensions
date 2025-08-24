@@ -220,53 +220,13 @@ TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
 
 	*numDays = GetDayDifference(tt, tm);
 
-	if (tm->tm_hour == 23 && tm->tm_min == 59 && tm->tm_sec == 59 &&
-		fsec == 999000)
-	{
-		msec = 0;
-		GetNumDaysHelper(tm);
-		(*numDays)++;
-	}
-	else
-	{
-		msec = (fsec / 1000);
-		unit = msec % 10;
-
-		/*
-		 * millisecond value rounded to increments of .000, .003, or .007
-		 * seconds. We add the number of extra ticks to final value based 
-		 * on the unit digit milliseconds.
-		 */
-		switch (unit)
-		{
-			case 0:
-			case 1:
-				extra_ticks = 0;
-				break;
-			case 2:
-			case 3:
-			case 4:
-				extra_ticks = 1;
-				break;
-			case 5:
-			case 6:
-			case 7:
-			case 8:
-				extra_ticks = 2;
-				break;
-			case 9:
-				extra_ticks = 3;
-				break;
-			default:
-				break;
-		}
-		msec = msec - unit;
-	}
-	milliCount = ((tm->tm_hour * 60 + tm->tm_min) * 60 +
-				  tm->tm_sec) * 1000 + msec;
+	/* as we are storing the rounded off value, the following holds true */
+	msec = (fsec / 1000);
+	unit = msec % 10;
+	extra_ticks = (int) unit / 3;
+	milliCount = ((tm->tm_hour * 60 + tm->tm_min) * 60 + tm->tm_sec) * 1000 + msec - unit;
 
 	*numTicks = (int) (milliCount / tick) + extra_ticks;
-
 }
 
 /*

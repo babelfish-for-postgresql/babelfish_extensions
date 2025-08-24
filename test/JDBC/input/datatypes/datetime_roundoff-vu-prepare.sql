@@ -1,0 +1,192 @@
+-- Test cases for datetime storage rounding version upgrade impact
+-- This tests what existing users will observe after implementing storage-level rounding
+
+-- Create test tables to simulate existing data patterns
+CREATE TABLE datetime_storage_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    test_name VARCHAR(100),
+    dt_value DATETIME,
+    description VARCHAR(200)
+);
+GO
+
+-- Test Case 1: Basic datetime values with various millisecond precisions
+-- These represent typical user data that might exist before the change
+INSERT INTO datetime_storage_test (test_name, dt_value, description) VALUES
+('basic_000', '2024-01-15 10:30:45.000', 'Already at .000 boundary'),
+('basic_001', '2024-01-15 10:30:45.001', 'Should round to .000'),
+('basic_002', '2024-01-15 10:30:45.002', 'Should round to .003'),
+('basic_003', '2024-01-15 10:30:45.003', 'Already at .003 boundary'),
+('basic_004', '2024-01-15 10:30:45.004', 'Should round to .003'),
+('basic_005', '2024-01-15 10:30:45.005', 'Should round to .007'),
+('basic_006', '2024-01-15 10:30:45.006', 'Should round to .007'),
+('basic_007', '2024-01-15 10:30:45.007', 'Already at .007 boundary'),
+('basic_008', '2024-01-15 10:30:45.008', 'Should round to .007'),
+('basic_009', '2024-01-15 10:30:45.009', 'Should round to .010');
+GO
+
+-- Test Case 2: Edge cases that might cause rollover
+INSERT INTO datetime_storage_test (test_name, dt_value, description) VALUES
+('edge_second_rollover', '2024-01-15 10:30:59.999', 'Should rollover to next second'),
+('edge_minute_rollover', '2024-01-15 10:59:59.999', 'Should rollover to next minute'),
+('edge_hour_rollover', '2024-01-15 23:59:59.999', 'Should rollover to next hour'),
+('edge_day_rollover', '2024-01-31 23:59:59.999', 'Should rollover to next day');
+GO
+
+-- Test Case 3: Common business scenarios
+INSERT INTO datetime_storage_test (test_name, dt_value, description) VALUES
+('business_timestamp', '2024-03-12 09:15:30.123', 'Typical business timestamp'),
+('log_entry', '2024-03-12 14:22:18.456', 'Log entry timestamp'),
+('transaction_time', '2024-03-12 16:45:22.789', 'Transaction timestamp'),
+('audit_time', '2024-03-12 11:33:44.234', 'Audit trail timestamp');
+GO
+
+-- Test Case 4: Comparison scenarios that might break existing queries
+CREATE TABLE datetime_comparison_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    event_time DATETIME,
+    event_type VARCHAR(50)
+);
+GO
+
+-- Insert pairs of values that currently compare as different but will compare as equal after rounding
+INSERT INTO datetime_comparison_test (event_time, event_type) VALUES
+('2024-01-15 10:30:45.149', 'login_attempt'),
+('2024-01-15 10:30:45.150', 'login_success'),
+('2024-01-15 10:30:45.151', 'session_start'),
+('2024-01-15 10:30:45.152', 'page_load');
+GO
+
+-- Test Case 5: Aggregation and grouping scenarios
+CREATE TABLE datetime_aggregation_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    process_time DATETIME,
+    amount DECIMAL(10,2),
+    status VARCHAR(20)
+);
+GO
+
+INSERT INTO datetime_aggregation_test (process_time, amount, status) VALUES
+('2024-01-15 10:30:45.001', 100.00, 'completed'),
+('2024-01-15 10:30:45.002', 150.00, 'completed'),
+('2024-01-15 10:30:45.003', 200.00, 'completed'),
+('2024-01-15 10:30:45.004', 75.00, 'pending');
+GO
+
+-- Test Case 6: Index and performance scenarios
+CREATE TABLE datetime_index_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    created_at DATETIME,
+    data VARCHAR(100)
+);
+GO
+
+CREATE INDEX IX_datetime_index_test_created_at ON datetime_index_test(created_at);
+GO
+
+INSERT INTO datetime_index_test (created_at, data) VALUES
+('2024-01-15 10:30:45.001', 'record1'),
+('2024-01-15 10:30:45.002', 'record2'),
+('2024-01-15 10:30:45.003', 'record3'),
+('2024-01-15 10:30:45.004', 'record4'),
+('2024-01-15 10:30:45.005', 'record5');
+GO
+
+-- Test Case 7: Stored procedure parameter scenarios
+CREATE PROCEDURE test_datetime_parameter
+    @input_datetime DATETIME
+AS
+BEGIN
+    SELECT 
+        @input_datetime as input_value,
+        CAST(@input_datetime AS VARCHAR(30)) as string_representation;
+END;
+GO
+
+-- Test Case 8: Function scenarios
+CREATE FUNCTION get_rounded_datetime(@dt DATETIME)
+RETURNS DATETIME
+AS
+BEGIN
+    RETURN @dt;
+END;
+GO
+
+-- Test Case 9: View scenarios
+CREATE VIEW datetime_view AS
+SELECT 
+    id,
+    dt_value,
+    CAST(dt_value AS VARCHAR(30)) as dt_string
+FROM datetime_storage_test
+WHERE dt_value > '2024-01-15 10:30:45.000';
+GO
+
+-- Test Case 10: Trigger scenarios
+CREATE TABLE datetime_audit_log (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    table_name VARCHAR(50),
+    operation VARCHAR(10),
+    operation_time DATETIME DEFAULT GETDATE()
+);
+GO
+
+CREATE TRIGGER tr_datetime_storage_test_audit
+ON datetime_storage_test
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    INSERT INTO datetime_audit_log (table_name, operation, operation_time)
+    SELECT 'datetime_storage_test', 'CHANGE', GETDATE();
+END;
+GO
+
+-- Display current state for comparison
+SELECT 'PREPARE PHASE - Current datetime values:' as phase;
+SELECT test_name, dt_value, CAST(dt_value AS VARCHAR(30)) as dt_string, description 
+FROM datetime_storage_test 
+ORDER BY id;
+GO
+
+SELECT 'PREPARE PHASE - Comparison test data:' as phase;
+SELECT id, event_time, CAST(event_time AS VARCHAR(30)) as time_string, event_type 
+FROM datetime_comparison_test 
+ORDER BY id;
+GO
+
+SELECT 'PREPARE PHASE - Aggregation test data:' as phase;
+SELECT process_time, CAST(process_time AS VARCHAR(30)) as time_string, amount, status 
+FROM datetime_aggregation_test 
+ORDER BY id;
+GO
+
+-- BASIC UPGRADE TESTING
+CREATE TABLE datetime_test ( id SERIAL PRIMARY KEY, date_time1 datetime NOT NULL, date_time2 datetime NOT NULL);
+INSERT INTO datetime_test (date_time1, date_time2)  VALUES ('2014-03-12 12:00:34.466', '2010-03-04 12:55:41.149');
+INSERT INTO datetime_test (date_time1, date_time2)  VALUES ('2014-03-12 12:00:34.467', '2010-03-04 12:55:41.150');
+GO
+
+
+select * from datetime_test where date_time1 = '2014-03-12 12:00:34.467'
+GO
+
+select * from datetime_test where date_time1 = '2014-03-12 12:00:34.466'
+GO
+
+select cast('2014-03-12 12:00:34.462' as datetime)
+GO
+select cast('2014-03-12 12:00:34.464' as datetime)
+GO
+select cast('2014-03-12 12:00:34.466' as datetime)
+GO
+select cast('2014-03-12 12:00:34.462' as datetime) - cast('2014-03-12 12:00:34.464' as datetime)
+GO
+select cast('2014-03-12 12:00:34.462' as datetime) + cast('2014-03-12 12:00:34.466' as datetime)
+GO
+
+-- UNIQUE INDEX (using primary key)
+CREATE TABLE datetime_unique_index(datetime_unique_index_col datetime PRIMARY KEY);
+GO
+
+INSERT INTO datetime_unique_index VALUES('2014-03-12 12:00:34.466');
+GO

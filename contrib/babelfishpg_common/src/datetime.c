@@ -63,6 +63,9 @@ PG_FUNCTION_INFO_V1(timestamp_diff_big);
 
 void		CheckDatetimeRange(const Timestamp time, Node *escontext);
 void		CheckDatetimePrecision(fsec_t fsec);
+int			roundFractionalSeconds(int v_fractseconds);
+
+int			DaycountInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 #define DTK_NANO 32
 
@@ -518,102 +521,75 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 	return 0;
 }
 
-/*
- * Apply datetime rounding
- * This implements the same logic as TdsTimeDifferenceDatetime
- */
+/* Same as GetNumDaysHelper in tdstimestamp.c */
+static inline void
+GetNumDaysHelper(struct pg_tm *tm)
+{
+	tm->tm_hour = 0;
+	if (tm->tm_mday == DaycountInMonth[tm->tm_mon - 1] &&
+		tm->tm_mon == 12)
+	{
+		tm->tm_year++;
+		tm->tm_mon = tm->tm_mday = 1;
+	}
+	else if ((tm->tm_mday == DaycountInMonth[tm->tm_mon - 1] && tm->tm_mon != 2) ||
+			 (tm->tm_mon == 2 && tm->tm_mday == 29 && isleap(tm->tm_year)) ||
+			 (tm->tm_mon == 2 && tm->tm_mday == 28 && !isleap(tm->tm_year)))
+	{
+		tm->tm_mon++;
+		tm->tm_mday = 1;
+	}
+	else
+		tm->tm_mday++;
+}
 
 static void
 handle_datetime_carry_over(struct pg_tm *tm, int *rounded_msec)
-{
-	int leap, max_days;
-	
-	if (*rounded_msec >= 1000)
+{	
+	if (*rounded_msec == 1000)
 	{
 		*rounded_msec -= 1000;
 		tm->tm_sec++;
 		
 		/* Handle cascading overflows */
-		if (tm->tm_sec >= 60)
+		if (tm->tm_sec == 60)
 		{
 			tm->tm_sec = 0;
 			tm->tm_min++;
 			
-			if (tm->tm_min >= 60)
+			if (tm->tm_min == 60)
 			{
 				tm->tm_min = 0;
 				tm->tm_hour++;
 				
-				if (tm->tm_hour >= 24)
+				if (tm->tm_hour == 24)
 				{
-					tm->tm_hour = 0;
-					tm->tm_mday++;
-					
-					/* Handle month/year rollover */
-					leap = isleap(tm->tm_year) ? 1 : 0;
-					max_days = day_tab[leap][tm->tm_mon - 1];
-					
-					if (tm->tm_mday > max_days)
-					{
-						tm->tm_mday = 1;
-						tm->tm_mon++;
-						if (tm->tm_mon > 12)
-						{
-							tm->tm_mon = 1;
-							tm->tm_year++;
-						}
-					}
+					GetNumDaysHelper(tm);
 				}
 			}
 		}
 	}
 }
 
+/*
+ * Apply datetime rounding
+ * This implements the same logic as TdsTimeDifferenceDatetime
+ */
+
 Timestamp
 roundoff_datetime(Timestamp timestamp)
 {
 	struct pg_tm tm;
 	fsec_t		fsec;
-	int			msec, rounded_msec = 0;
+	int			rounded_msec = 0;
 	Timestamp	result;
-	int			unit, base;
 
-	if (TIMESTAMP_NOT_FINITE(timestamp))
-		return timestamp;
-
-	if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) != 0)
+	if (TIMESTAMP_NOT_FINITE(timestamp) || timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range")));
+				 errmsg("datetime out of range")));
 
-	/* Convert microseconds to milliseconds */
-	msec = fsec / 1000;
-
-	/* Round to nearest .000, .003, or .007 based on the last digit */
-	unit = msec % 10;
-	base = (msec / 10) * 10;  /* Remove the unit digit */
-
-	switch (unit)
-	{
-		case 0:
-		case 1:
-			rounded_msec = base + 0;  /* Round to .000 */
-			break;
-		case 2:
-		case 3:
-		case 4:
-			rounded_msec = base + 3;  /* Round to .003 */
-			break;
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-			rounded_msec = base + 7;  /* Round to .007 */
-			break;
-		case 9:
-			rounded_msec = base + 10; /* Round up to next .000 */
-			break;
-	}
+	rounded_msec = roundFractionalSeconds(fsec/1000);
 
 	/* Handle carry-over using the new dedicated function */
 	handle_datetime_carry_over(&tm, &rounded_msec);
@@ -624,7 +600,7 @@ roundoff_datetime(Timestamp timestamp)
 	if (tm2timestamp(&tm, fsec, NULL, &result) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range")));
+				 errmsg("datetime out of range")));
 
 	return result;
 }
@@ -834,7 +810,6 @@ date_datetime(PG_FUNCTION_ARGS)
 	else
 		result = dateVal * USECS_PER_DAY;
 
-	result = roundoff_datetime(result);
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -863,13 +838,10 @@ time_datetime(PG_FUNCTION_ARGS)
 	if (tm2timestamp(tm, fsec, NULL, &result) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("data out of range for datetime")));
+				 errmsg("datetime of range for datetime")));
 	
 	result = roundoff_datetime(result);
-	if (!IS_VALID_TIMESTAMP(result))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("data out of range for datetime")));
+	CheckDatetimeRange(result, NULL);
 
 	PG_RETURN_TIMESTAMP(result);
 }
