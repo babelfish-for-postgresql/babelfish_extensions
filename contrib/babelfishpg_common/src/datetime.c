@@ -521,11 +521,8 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 	return 0;
 }
 
-/*
- * Decides whether the effective date to consider is the next day
- * based on hour, minute, second value 23:59:59
- */
-void
+/* Same as GetNumDaysHelper in tdstimestamp.c */
+static inline void
 GetNumDaysHelper(struct pg_tm *tm)
 {
 	tm->tm_hour = 0;

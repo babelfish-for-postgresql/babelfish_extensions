@@ -1810,8 +1810,6 @@ typedef struct PLtsql_protocol_plugin
 	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
 													char **tvp_type_name, char **tvp_type_schema_name);
 
-	void		(*GetNumDaysHelper) (struct pg_tm *tm);
-
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
