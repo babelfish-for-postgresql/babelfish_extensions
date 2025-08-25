@@ -330,6 +330,13 @@ GO
 -- tsql
 
 -- Index Testing
+-- seq scan
+set BABELFISH_STATISTICS PROFILE on;
+GO
+select * from datetime_index_test where created_at = '2024-01-15 10:30:45.004';
+GO
+
+-- index scan
 select set_config('enable_seqscan','off',false)
 GO
 
@@ -349,6 +356,21 @@ INSERT INTO datetime_index_test (created_at, data) VALUES
 ('2024-01-15 10:30:45.005', 'record5');
 GO
 
+-- seq scan
+select set_config('enable_seqscan','on',false)
+GO
+set BABELFISH_STATISTICS PROFILE on;
+GO
+select * from datetime_index_test where created_at = '2024-01-15 10:30:45.004';
+GO
+set BABELFISH_STATISTICS PROFILE off;
+GO
+
+-- index scan
+
+select set_config('enable_seqscan','off',false)
+GO
+
 set BABELFISH_STATISTICS PROFILE on;
 GO
 select * from datetime_index_test where created_at = '2024-01-15 10:30:45.004';
@@ -360,7 +382,21 @@ GO
 REINDEX index master_dbo.ix_datetime_index_test_created_66a6b1d45f144f1482b6a7f096be9038;
 GO
 
--- tsql
+-- seq scan
+select set_config('enable_seqscan','on',false)
+GO
+set BABELFISH_STATISTICS PROFILE on;
+GO
+select * from datetime_index_test where created_at = '2024-01-15 10:30:45.004';
+GO
+set BABELFISH_STATISTICS PROFILE off;
+GO
+
+-- index scan
+
+select set_config('enable_seqscan','off',false)
+GO
+
 set BABELFISH_STATISTICS PROFILE on;
 GO
 select * from datetime_index_test where created_at = '2024-01-15 10:30:45.004';
