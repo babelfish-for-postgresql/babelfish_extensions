@@ -617,3 +617,6 @@ ignore#!#TestSpatialPoint_before_17_7-or-16_11-vu-cleanup
 ignore#!#babel_726-before-16_10-or-17_6-vu-prepare
 ignore#!#babel_726-before-16_10-or-17_6-vu-verify
 ignore#!#babel_726-before-16_10-or-17_6-vu-cleanup
+ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-prepare
+ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-verify
+ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-cleanup

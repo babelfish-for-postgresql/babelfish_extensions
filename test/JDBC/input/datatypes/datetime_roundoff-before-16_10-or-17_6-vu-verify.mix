@@ -1,4 +1,3 @@
--- parallel_query_expected
 -- tsql
 -- Verification tests for datetime storage rounding version upgrade impact
 -- This verifies the behavior after implementing storage-level rounding
