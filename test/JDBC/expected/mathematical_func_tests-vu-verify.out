@@ -1,0 +1,680 @@
+SELECT SQRT(numeric_val) FROM sqrt_exact_numeric_tests WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+99999.99999995
+0.1
+3.5
+~~END~~
+
+SELECT SQRT(numeric_val) FROM sqrt_exact_numeric_tests WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(float_val) FROM sqrt_approximate_numeric_tests WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+1.3379088160259651E154
+1.493318452306808E-154
+3.5
+~~END~~
+
+SELECT SQRT(float_val) FROM sqrt_approximate_numeric_tests WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(varchar_val) FROM sqrt_char_tests WHERE id != 4;
+GO
+~~START~~
+float
+12.0
+0.0
+<NULL>
+0.0
+~~END~~
+
+SELECT SQRT(varchar_val) FROM sqrt_char_tests WHERE id = 4;
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "ABC")~~
+
+
+SELECT SQRT(nvarchar_val) FROM sqrt_unicode_tests WHERE id != 4;
+GO
+~~START~~
+float
+12.0
+0.0
+<NULL>
+0.0
+~~END~~
+
+SELECT SQRT(nvarchar_val) FROM sqrt_unicode_tests WHERE id = 4;
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "ABC")~~
+
+
+SELECT * FROM sqrt_numeric;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM sqrt_numeric_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_numeric_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM sqrt_numeric_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM sqrt_numeric_max;
+GO
+~~START~~
+float
+1.0E19
+~~END~~
+
+SELECT * FROM sqrt_numeric_min;
+GO
+~~START~~
+float
+3.1622776601683796E-19
+~~END~~
+
+
+SELECT * FROM sqrt_decimal;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM sqrt_decimal_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_decimal_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM sqrt_decimal_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM sqrt_decimal_max;
+GO
+~~START~~
+float
+1.0E19
+~~END~~
+
+SELECT * FROM sqrt_decimal_min;
+GO
+~~START~~
+float
+3.1622776601683796E-19
+~~END~~
+
+
+SELECT * FROM sqrt_bit;
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+SELECT * FROM sqrt_bit_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_bit_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM sqrt_int;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM sqrt_int_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_int_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM sqrt_int_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM sqrt_int_max;
+GO
+~~START~~
+float
+46340.950001051984
+~~END~~
+
+SELECT * FROM sqrt_int_min;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT * FROM sqrt_bigint;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM sqrt_bigint_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_bigint_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM sqrt_bigint_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM sqrt_bigint_max;
+GO
+~~START~~
+float
+3.03700049997605E9
+~~END~~
+
+SELECT * FROM sqrt_bigint_min;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT * FROM sqrt_smallint;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM sqrt_smallint_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_smallint_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM sqrt_smallint_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM sqrt_smallint_max;
+GO
+~~START~~
+float
+181.01657382681842
+~~END~~
+
+SELECT * FROM sqrt_smallint_min;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT * FROM sqrt_tinyint;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM sqrt_tinyint_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_tinyint_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM sqrt_tinyint_max;
+GO
+~~START~~
+float
+15.968719422671311
+~~END~~
+
+SELECT * FROM sqrt_tinyint_min;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT * FROM sqrt_float;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM sqrt_float_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_float_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM sqrt_float_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM sqrt_float_max;
+GO
+~~START~~
+float
+1.3379088160259651E154
+~~END~~
+
+SELECT * FROM sqrt_float_min;
+GO
+~~START~~
+float
+1.493318452306808E-154
+~~END~~
+
+
+SELECT * FROM sqrt_real;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM sqrt_real_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_real_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM sqrt_real_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM sqrt_real_max;
+GO
+~~START~~
+float
+1.8439088914585774E19
+~~END~~
+
+SELECT * FROM sqrt_real_min;
+GO
+~~START~~
+float
+1.0862780491200215E-19
+~~END~~
+
+
+SELECT * FROM sqrt_money;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM sqrt_money_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_money_negative;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM sqrt_money_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM sqrt_money_max;
+GO
+~~START~~
+float
+3.0370004999760497E7
+~~END~~
+
+SELECT * FROM sqrt_money_min;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT * FROM sqrt_smallmoney;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM sqrt_smallmoney_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM sqrt_smallmoney_negative;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM sqrt_smallmoney_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM sqrt_smallmoney_max;
+GO
+~~START~~
+float
+463.4095000105199
+~~END~~
+
+SELECT * FROM sqrt_smallmoney_min;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT sqrt_test_numeric();
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT sqrt_test_numeric_zero();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT sqrt_test_numeric_negative();
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT sqrt_test_numeric_null();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT sqrt_test_decimal();
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT sqrt_test_decimal_zero();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT sqrt_test_decimal_negative();
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT sqrt_test_decimal_null();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT sqrt_test_bit();
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+SELECT sqrt_test_bit_zero();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT sqrt_test_bit_null();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC sqrt_test_numeric_proc;
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+EXEC sqrt_test_numeric_zero_proc;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+EXEC sqrt_test_numeric_negative_proc;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+EXEC sqrt_test_numeric_null_proc;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC sqrt_test_decimal_proc;
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+EXEC sqrt_test_decimal_zero_proc;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+EXEC sqrt_test_decimal_negative_proc;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+EXEC sqrt_test_decimal_null_proc;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC sqrt_test_bit_proc;
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+EXEC sqrt_test_bit_zero_proc;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+EXEC sqrt_test_bit_null_proc;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
