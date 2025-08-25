@@ -574,9 +574,8 @@ roundoff_datetime(Timestamp timestamp)
 {
 	struct pg_tm tm;
 	fsec_t		fsec;
-	int			msec, rounded_msec = 0;
+	int			rounded_msec = 0;
 	Timestamp	result;
-	int			unit, base;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		return timestamp;
@@ -586,34 +585,7 @@ roundoff_datetime(Timestamp timestamp)
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
 
-	/* Convert microseconds to milliseconds */
-	msec = fsec / 1000;
-
-	/* Round to nearest .000, .003, or .007 based on the last digit */
-	unit = msec % 10;
-	base = (msec / 10) * 10;  /* Remove the unit digit */
-
-	switch (unit)
-	{
-		case 0:
-		case 1:
-			rounded_msec = base + 0;  /* Round to .000 */
-			break;
-		case 2:
-		case 3:
-		case 4:
-			rounded_msec = base + 3;  /* Round to .003 */
-			break;
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-			rounded_msec = base + 7;  /* Round to .007 */
-			break;
-		case 9:
-			rounded_msec = base + 10; /* Round up to next .000 */
-			break;
-	}
+	rounded_msec = roundFractionalSeconds(fsec/1000);
 
 	/* Handle carry-over using the new dedicated function */
 	handle_datetime_carry_over(&tm, &rounded_msec);
