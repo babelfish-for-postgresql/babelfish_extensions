@@ -331,15 +331,22 @@ GO
 
 -- Index Testing
 -- seq scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'off', false);
+GO
 set BABELFISH_STATISTICS PROFILE on;
 GO
 select * from datetime_index_test where created_at = '2024-01-15 10:30:45.004';
 GO
-
--- index scan
-select set_config('enable_seqscan','off',false)
+set BABELFISH_STATISTICS PROFILE off;
 GO
 
+-- index scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
+GO
 set BABELFISH_STATISTICS PROFILE on;
 GO
 select * from datetime_index_test where created_at = '2024-01-15 10:30:45.004';
@@ -357,7 +364,9 @@ INSERT INTO datetime_index_test (created_at, data) VALUES
 GO
 
 -- seq scan
-select set_config('enable_seqscan','on',false)
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'off', false);
 GO
 set BABELFISH_STATISTICS PROFILE on;
 GO
@@ -368,7 +377,9 @@ GO
 
 -- index scan
 
-select set_config('enable_seqscan','off',false)
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
 GO
 
 set BABELFISH_STATISTICS PROFILE on;
@@ -382,8 +393,11 @@ GO
 REINDEX index master_dbo.ix_datetime_index_test_created_66a6b1d45f144f1482b6a7f096be9038;
 GO
 
+-- tsql
 -- seq scan
-select set_config('enable_seqscan','on',false)
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'off', false);
 GO
 set BABELFISH_STATISTICS PROFILE on;
 GO
@@ -394,7 +408,9 @@ GO
 
 -- index scan
 
-select set_config('enable_seqscan','off',false)
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
 GO
 
 set BABELFISH_STATISTICS PROFILE on;
