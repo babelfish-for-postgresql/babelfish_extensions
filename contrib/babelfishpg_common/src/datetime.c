@@ -528,7 +528,7 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 void
 GetNumDaysHelper(struct pg_tm *tm)
 {
-	tm->tm_hour = 0;
+	tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
 	if (tm->tm_mday == DaycountInMonth[tm->tm_mon - 1] &&
 		tm->tm_mon == 12)
 	{
