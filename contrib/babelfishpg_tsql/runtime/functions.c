@@ -947,17 +947,41 @@ Datum sysutcdatetime(PG_FUNCTION_ARGS)
 
 Datum getutcdate(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_DATUM(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
-                                                            TimestampTzGetDatum(GetCurrentStatementStartTimestamp()))));
-    
+	Datum utc_time;
+    Timestamp rounded_time;
+
+	/* First get UTC time */
+    utc_time = DirectFunctionCall2(timestamptz_zone,
+									CStringGetTextDatum("UTC"),
+									TimestampTzGetDatum(GetCurrentStatementStartTimestamp()));
+
+	/* Convert Datum to Timestamp for roundoff_datetime */
+	rounded_time = (*common_utility_plugin_ptr->roundoff_datetime)(DatumGetTimestamp(utc_time));
+
+	/* Convert back to Datum and return */
+	PG_RETURN_TIMESTAMP(rounded_time);
 }
 
 Datum getdate_internal(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime, 
-						DirectFunctionCall2(timestamptz_trunc,CStringGetTextDatum("millisecond"),
-											TimestampTzGetDatum(GetCurrentStatementStartTimestamp()))));
-	
+	Datum truncated_time;
+	Datum datetime_time;
+	Timestamp rounded_time;
+
+	/* First truncate to millisecond */
+	truncated_time = DirectFunctionCall2(timestamptz_trunc,
+									CStringGetTextDatum("millisecond"),
+									TimestampTzGetDatum(GetCurrentStatementStartTimestamp()));
+
+	/* Convert to datetime format */
+	datetime_time = DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime, 
+									truncated_time);
+
+	/* Round off the datetime */
+	rounded_time = (*common_utility_plugin_ptr->roundoff_datetime)(DatumGetTimestamp(datetime_time));
+
+	/* Return the rounded timestamp */
+	PG_RETURN_TIMESTAMP(rounded_time);	
 }
 
 Datum sysdatetime(PG_FUNCTION_ARGS)
