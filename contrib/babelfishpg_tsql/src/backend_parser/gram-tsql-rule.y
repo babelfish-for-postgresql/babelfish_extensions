@@ -1504,7 +1504,17 @@ simple_select:
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					n->targetList = $4;
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
@@ -1529,7 +1539,17 @@ simple_select:
 					SelectStmt *n = makeNode(SelectStmt);
 
 					n->distinctClause = $2;
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					n->targetList = $4;
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
@@ -1552,7 +1572,17 @@ simple_select:
 			group_clause having_clause window_clause 
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1572,7 +1602,17 @@ simple_select:
 			group_clause having_clause window_clause 
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2286,7 +2326,17 @@ tsql_output_simple_select:
 			group_clause having_clause window_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					n->targetList = $4;
 					n->intoClause = $5;
 					n->fromClause = $6;
@@ -2304,7 +2354,17 @@ tsql_output_simple_select:
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->distinctClause = $2;
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					n->targetList = $4;
 					n->intoClause = $5;
 					n->fromClause = $6;
@@ -2321,7 +2381,17 @@ tsql_output_simple_select:
 			group_clause having_clause window_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					n->intoClause = $5;
 					n->whereClause = $9;
 					n->groupClause = ($10)->list;
@@ -2336,7 +2406,17 @@ tsql_output_simple_select:
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->distinctClause = $2;
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					n->intoClause = $5;
 					n->whereClause = $9;
 					n->groupClause = ($10)->list;
@@ -3551,8 +3631,20 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 			;
 
 tsql_top_clause:
-			TSQL_TOP '(' a_expr ')'						{ $$ = $3; }
-			| TSQL_TOP I_or_F_const						{ $$ = $2; }
+			TSQL_TOP '(' a_expr ')'						
+				{ 
+					TopClause *n = makeNode(TopClause);
+					n->limitCount = $3;
+					n->isPercent = false;
+					$$ = (Node *)n; 
+				}
+			| TSQL_TOP I_or_F_const
+				{
+					TopClause *n = makeNode(TopClause);
+					n->limitCount = $2;
+					n->isPercent = false;
+					$$ = (Node *)n;
+				}
 			| TSQL_TOP select_with_parens
 				{
 					/*
@@ -3561,64 +3653,33 @@ tsql_top_clause:
 					 * In other words, the first rule will be hit only when double parenthesis is used like `SELECT TOP ((select 1)) ...`
 					 */
 					SubLink *n = makeNode(SubLink);
+					TopClause *tc = makeNode(TopClause);
+
 					n->subLinkType = EXPR_SUBLINK;
 					n->subLinkId = 0;
 					n->testexpr = NULL;
 					n->operName = NIL;
 					n->subselect = $2;
 					n->location = @1;
-					$$ = (Node *)n;
+
+					/* Updating top clause Node */
+					tc->limitCount = (Node *)n;
+					tc->isPercent = false;
+					$$ = (Node *)tc;
 				}
 			| TSQL_TOP '(' a_expr ')' TSQL_PERCENT
 				{
-					if (IsA($3, A_Const))
-					{
-						A_Const* n = (A_Const *)$3;
-						if(IsA(&n->val, Integer) && n->val.ival.ival == 100)
-						{
-								$$ = NULL;
-						}
-						else if(IsA(&n->val, Float) && atof(n->val.fval.fval) == 100.0)
-						{
-								$$ = NULL;
-						}
-						else
-						{
-							TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_TOP_PERCENT_IN_STMT);
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									errmsg("TOP # PERCENT is not yet supported"),
-									parser_errposition(@1)));
-						}
-					}
-					else
-					{
-						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_TOP_PERCENT_IN_STMT);
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								errmsg("TOP # PERCENT is not yet supported"),
-								parser_errposition(@1)));
-					}
+					TopClause *n = makeNode(TopClause);
+					n->limitCount = $3;
+					n->isPercent = true;
+					$$ = (Node *)n;
 				}
 			| TSQL_TOP I_or_F_const TSQL_PERCENT
 				{
-					A_Const* n = (A_Const *)$2;
-					if(IsA(&n->val, Integer) && n->val.ival.ival == 100)
-					{
-							$$ = NULL;
-					}
-					else if(IsA(&n->val, Float) && atof(n->val.fval.fval) == 100.0)
-					{
-							$$ = NULL;
-					}
-					else
-					{
-						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_TOP_PERCENT_IN_STMT);
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								errmsg("TOP # PERCENT is not yet supported"),
-								parser_errposition(@1)));
-					}
+					TopClause *n = makeNode(TopClause);
+					n->limitCount = $2;
+					n->isPercent = true;
+					$$ = (Node *)n;
 				}
 		;
 
