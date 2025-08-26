@@ -2978,3 +2978,82 @@ get_rel_owner(Oid relid)
 
     return owner;
 }
+
+/*
+ * Get owner OID for a function
+ */
+Oid
+get_func_owner(Oid funcid)
+{
+	HeapTuple tup;
+	Form_pg_proc procform;
+	Oid owner;
+
+	tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	procform = (Form_pg_proc) GETSTRUCT(tup);
+	owner = procform->proowner;
+
+	ReleaseSysCache(tup);
+
+	return owner;
+}
+
+/*
+ * Retuns function owner which is cached at the start of every function/proc call
+ * only if we are currently in function/proc execution
+ */
+static Oid
+get_current_func_owner(void)
+{
+	PLtsql_execstate *top_estate;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return InvalidOid;
+
+	if (pltsql_non_tsql_proc_entry_count > 0 || pltsql_sys_func_entry_count > 0)
+		return InvalidOid;
+
+	/*
+	* Fetch the top procedure excution state from execution state call stack
+	* and get the owner of that procedure. Top entry in stack will have
+	* fn_oid and fn_owner value set.
+	*/
+	if (!exec_state_call_stack ||
+		!exec_state_call_stack->estate)
+		return InvalidOid;
+
+	top_estate = exec_state_call_stack->estate;
+
+	if (!top_estate ||
+		!top_estate->func)
+		return InvalidOid;
+
+	return top_estate->func->fn_oid;
+}
+
+extern bool
+is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
+{
+	Oid top_func = InvalidOid;
+
+	if (IsA(expr, FuncExpr))
+	{
+		FuncExpr *fexpr = (FuncExpr *)expr;
+		if (fexpr->insideView == PNODE_OUTSIDE_VIEW)
+		{
+			top_func = get_current_func_owner();
+		}
+	}
+	else if (IsA(expr, RTEPermissionInfo))
+	{
+		RTEPermissionInfo *perminfo = (RTEPermissionInfo *)expr;
+		if (perminfo->insideView == PNODE_OUTSIDE_VIEW)
+		{
+			top_func = get_current_func_owner();
+		}
+	}
+	return (OidIsValid(top_func) && (get_func_owner(top_func) == objectOwnerId));
+}

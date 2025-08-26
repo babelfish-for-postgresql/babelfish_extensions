@@ -185,6 +185,7 @@ static int isolation_to_int(char *isolation_level);
 static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
+static void mark_outside_view(Query *query);
 
 typedef struct {
 	int oid;
@@ -1052,6 +1053,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
+	
+	(void) mark_outside_view((Query*) query);
 	
 	(void) check_json_auto_walker((Node*) query, pstate);
 
@@ -7590,3 +7593,75 @@ gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 					(revoke_createdb ? "nocreatedb" : ""));
 
 }
+
+/*
+ * Walker function to mark relations and functions inside view definitions
+ * 
+ * Walks through the query parse tree to:
+ * 1. Mark relations and functions as being inside a view context
+ * 2. For relations:
+ *    - Set checkAsUser to the view_owner when it matches the relation's owner,
+ *      enabling permission checking to pass at the executor stage (ownership chaining)
+ * 3. For procedures/functions:
+ *    - Store the view_owner in the parentOwnerId field to support
+ *      procedure/function-specific ownership chaining logic
+ *      during permission checks at the executor stage
+ * 
+ */
+static bool
+mark_outside_view_ref_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Query))
+    {
+        Query *query = (Query *) node;
+        ListCell *lc;
+        
+        foreach(lc, query->rtable)
+        {
+            RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+            RTEPermissionInfo *perminfo = getRTEPermissionInfo(query->rteperminfos, rte);
+
+			if (perminfo->insideView == PNODE_UNMARKED)
+			{
+				perminfo->insideView = PNODE_OUTSIDE_VIEW;
+			}
+        }
+		return query_tree_walker(query, 
+                            	 mark_outside_view_ref_walker,
+                            	 NULL,
+                            	 0);
+	}
+	else if (IsA(node, FuncExpr))
+    {
+        FuncExpr *funcexpr = (FuncExpr *) node;
+
+		if (funcexpr->insideView == PNODE_UNMARKED)
+		{
+			funcexpr->insideView = PNODE_OUTSIDE_VIEW;
+		}
+		/* else walk through function args */
+    }
+
+	return expression_tree_walker(node, mark_outside_view_ref_walker, NULL);
+}
+
+/*
+ * Main entry point for marking nodes inside view definitions
+ * 
+ * Performs security check and initiates tree walk to:
+ * - Mark relations and functions as being inside a view
+ * - Set parent owner context for permission chaining
+ */
+static void
+mark_outside_view(Query *query)
+{
+
+	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
+		return;
+
+	mark_outside_view_ref_walker((Node *)query, NULL);
+}
+

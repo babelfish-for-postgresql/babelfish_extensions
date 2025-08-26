@@ -117,11 +117,6 @@ typedef enum PltsqlInitPrivsOptions
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
 
-/* Used to mark parsenode inside/outside view to apply ownership chaining logic */
-#define PNODE_UNMARKED		0
-#define PNODE_INSIDE_VIEW	1
-#define PNODE_OUTSIDE_VIEW	2
-
 /*****************************************
  * 			General Hooks
  *****************************************/
@@ -230,7 +225,7 @@ extern bool called_for_tsql_itvf_func();
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
-static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
+static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr);
 static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
 static bool pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan);
 
@@ -1019,7 +1014,7 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 }
 
 static AclResult
-pltsql_ExecFuncProc_AclCheck(Oid funcid)
+pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 {
 	Oid userid = GetUserId();
 
@@ -1044,13 +1039,27 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid)
 			 */
 			if (nspname != NULL && !is_shared_schema(nspname) &&
 				!is_schema_from_db(schema_id, get_cur_db_id()))
+			{
 				userid = GetSessionUserId();
+			}
+			else
+			{
+				/*
+				 * Ownership Chaining Logic for object references inside function/procedures.
+				 * Only applicable for same-db ownership chaining cases.
+				 */
+				if(IsA(expr, FuncExpr) &&
+				   is_valid_func_ownership_chain(expr, get_func_owner(((FuncExpr *)expr)->funcid)))
+				{
+					return true;
+				}
+			}
 			if (nspname)
 				pfree(nspname);
 		}
 	}
 	else if (prev_ExecFuncProc_AclCheck_hook)
-		return prev_ExecFuncProc_AclCheck_hook(funcid);
+		return prev_ExecFuncProc_AclCheck_hook(funcid, expr);
 
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }
@@ -1125,6 +1134,10 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 						}
 						else
 							perminfo->checkAsUser = GetSessionUserId();
+						if (is_valid_func_ownership_chain(perminfo, get_rel_owner(relOid)))
+						{
+							perminfo->checkAsUser = get_rel_owner(relOid);
+						}
 					}
 					if (nspname)
 						pfree(nspname);

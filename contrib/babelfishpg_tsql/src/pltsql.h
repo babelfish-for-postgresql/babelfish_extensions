@@ -2027,6 +2027,11 @@ extern bool insert_bulk_check_constraints;
 	 (strlen(rolname) == 13 && strncmp(rolname, DB_DATAWRITER, 13) == 0) || \
 	 (strlen(rolname) == 11 && strncmp(rolname, DB_DDLADMIN, 11) == 0))
 
+/* Used to mark parsenode inside/outside view to apply ownership chaining logic */
+#define PNODE_UNMARKED		0
+#define PNODE_INSIDE_VIEW	1
+#define PNODE_OUTSIDE_VIEW	2
+
 /**********************************************************************
  * Function declarations
  **********************************************************************/
@@ -2263,6 +2268,8 @@ extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varcha
 extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
 extern void downcase_truncate_split_object_name(char *four_part_object_name, char** server_name, char** db_name, char** schema_name, char** object_name);
 extern Oid get_rel_owner(Oid relid);
+extern Oid get_func_owner(Oid funcid);
+extern bool is_valid_func_ownership_chain(void *expr, Oid objectOwnerId);
 typedef struct
 {
 	bool		success;
