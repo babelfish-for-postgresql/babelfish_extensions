@@ -32,6 +32,7 @@
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_shdepend.h"
 #include "commands/createas.h"
+#include "catalog/pg_namespace.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/extension.h"
@@ -76,6 +77,9 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 #include "utils/guc.h"
+#include "utils/hsearch.h"
+
+#include "common/hashfn.h"
 
 #include "analyzer.h"
 #include "catalog.h"
@@ -97,6 +101,8 @@
 #include "table_variable_mvcc.h"
 
 #include "access/xact.h"
+
+#define FORJSON_INITIAL_HASH_SIZE 64
 
 extern int  escape_hatch_set_transaction_isolation_level;
 extern bool pltsql_recursive_triggers;
@@ -186,18 +192,30 @@ static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
 
-typedef struct {
-	int oid;
-	char *alias;
-	int nestLevel;
-} forjson_table;
+typedef struct CtenameIdx
+{
+	char ctename[NAMEDATALEN];
+	int idx_in_ctelist;
+} CtenameIdx;
+typedef struct RTEAliasEntry
+{
+	char alias_name[NAMEDATALEN];
+	int json_nest_level;
+} RTEAliasEntry;
 
-static bool handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables);
+typedef struct JsonAutoContext
+{
+	List *cteList;
+	HTAB *ctenameIdxHash;
+} JsonAutoContext;
+
+static bool handleForJsonAuto(Query *query, JsonAutoContext *jsonAutoCtx);
 static bool isJsonAuto(List* target);
-static bool check_json_auto_walker(Node *node, ParseState *pstate);
+void checkForJsonAuto(Query *query);
+static bool jsonAutoWalker(Node *node, JsonAutoContext *jsonAutoCtx);
 static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te);
-static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve);
-
+static char *string_to_fixed_hash(const char *input);
+static void modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *jsonAutoCtx);
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -1052,8 +1070,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
-	
-	(void) check_json_auto_walker((Node*) query, pstate);
+
+	checkForJsonAuto(query);
 
 	if (query->commandType == CMD_INSERT)
 	{
@@ -1467,140 +1485,113 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	}
 }
 
+/**
+ * handleForJsonAuto - Process FOR JSON AUTO queries
+ * 
+ * @param wrapperQuery: The outer query containing FOR JSON AUTO clause
+ * @param jsonAutoCtx: Context for processing FOR JSON AUTO clause
+ *        ->cteList: cteList set in the tree walker
+ *        ->ctenameIdxHashFromOuterQuery: Hash table containing CTE names and their indices.
+ * @return: true if it's a FOR JSON AUTO query, false if not
+ * 
+ * Validates that the query has at least one valid source table and processes
+ * the target columns for JSON nesting. Follows MSSQL behavior by reporting
+ * "at least one table" error when no valid sources are found.
+ *
+ * Valid source types: RTE_RELATION, RTE_SUBQUERY, RTE_CTE, user-defined RTE_FUNCTION
+ * Source validity determined by single-source testing without inner sources:
+ *   - Returns "at least one table" error: invalid source
+ *   - No error: valid source
+ * 
+ * Note: Only considers CTEs actually used in rtable, not just those in ctelist.
+ * CTEs may exist in ctelist but not be referenced in the actual query.
+ */
 static bool
-handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables)
+handleForJsonAuto(Query *wrapperQuery, JsonAutoContext *jsonAutoCtx)
 {
-	Query* subq;
-	List* target = query->targetList;
-	List* rtable;
-	List* subqRtable;
-	ListCell* lc;
-	ListCell* lc2;
-	RangeTblEntry* rte;
-	RangeTblEntry* subqRte;
-	RangeTblEntry* queryRte;
-	Alias *colnameAlias;
-	int newTables = 0;
-	int currTables = numTables;
-	
-	if(!isJsonAuto(target))
+	Query			   *origQuery;
+	List			   *wrapperTarget = wrapperQuery->targetList;
+	List			   *wrapperRtable;
+	List			   *origqRtable;
+	ListCell		   *lc;
+	Alias			   *wrapperRteAlias;
+	RangeTblEntry	   *wrapperRte = NULL;
+	bool				hasValidSrc = false;
+
+	if (!isJsonAuto(wrapperTarget))
 		return false;
 
-	// Modify query to be of the form "JSONAUTOALIAS.[nest_level].[table_alias]" 
-	rtable = (List*) query->rtable;
-	if(rtable != NULL && list_length(rtable) > 0) {
-		rte = linitial_node(RangeTblEntry, rtable);
-		if(rte != NULL) {
-			subq = (Query*) rte->subquery;
-			if(subq != NULL && (subq->cteList == NULL || list_length(subq->cteList) == 0)) {
-				subqRtable = (List*) subq->rtable;
-				if(subqRtable != NULL && list_length(subqRtable) > 0) {
-					forjson_table **tempArr;
-					foreach(lc, subqRtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc));
-						if(subqRte->rtekind == RTE_RELATION) {
-							newTables++;
-						} else if(subqRte->rtekind == RTE_SUBQUERY) {
-							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										errmsg("sub-select and values for json auto are not currently supported.")));
-						}
-					}
+	wrapperRtable = (List *) wrapperQuery->rtable;
+	if (wrapperRtable != NULL && list_length(wrapperRtable) > 0)
+		wrapperRte = linitial_node(RangeTblEntry, wrapperRtable);
 
-					if(numTables + newTables == 0) {
-						ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_TABLE),
-										errmsg("FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.")));
-					}
+	Assert(wrapperRtable != NULL && wrapperRte != NULL);
 
-					tempArr = palloc((numTables + newTables) * sizeof(forjson_table));
-					for(int j = 0; j < numTables; j++) {
-						tempArr[j] = tableInfoArr[j];
-					}
-					tableInfoArr = tempArr;
-					tempArr = NULL;
-					queryRte = linitial_node(RangeTblEntry, query->rtable);
-					colnameAlias = (Alias*) queryRte->eref;
+	wrapperRteAlias = (Alias *)wrapperRte->eref;
+	origQuery = wrapperRte->subquery;
+	Assert(origQuery != NULL);
 
-					foreach(lc, subqRtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc));
-						if(subqRte->rtekind == RTE_RELATION) {
-							forjson_table *table = palloc(sizeof(forjson_table));
-							Alias* a = (Alias*) subqRte->eref;
-							table->oid = subqRte->relid;
-							table->nestLevel = -1;
-							table->alias = a->aliasname;
-							tableInfoArr[currTables] = table;
-							currTables++;
-						}
-					}
-					numTables = numTables + newTables;
-					modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, false);
-					return true;
-				}
-			} else if(subq->cteList != NULL && list_length(subq->cteList) > 0) {
-				Query* ctequery;
-				CommonTableExpr* cte;
-				forjson_table **tempArr;
-				foreach(lc, subq->cteList) {
-					cte = castNode(CommonTableExpr, lfirst(lc));
-					ctequery = (Query*) cte->ctequery;
-					foreach(lc2, ctequery->rtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc2));
-						if(subqRte->rtekind == RTE_RELATION)
-							newTables++;
-					}
-				}
+	/* Count valid sources in original query */
+	origqRtable = (List *)origQuery->rtable;
+	if (origqRtable != NULL && list_length(origqRtable) > 0)
+	{
+		foreach(lc, origqRtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE)
+			{
+				hasValidSrc = true;
+				break;
+			}
+			else if (rte->rtekind == RTE_FUNCTION)
+			{
+				RangeTblFunction	   *rteFunc;
+				FuncExpr			   *funcExpr;
+				HeapTuple				procTuple;
+				Form_pg_proc			procForm;
+				bool					isSystemFunction = false;
+				Oid						funcId;
+				Oid						sysNamespaceOid;
 
-				if(newTables == 0) {
-					forjson_table *table = palloc(sizeof(forjson_table));
-					tempArr = palloc((numTables + 1) * sizeof(forjson_table));
-					table->oid = 0;
-					table->nestLevel = -1;
-					table->alias = "cteplaceholder";
-					tempArr[numTables] = table;
-					newTables++;
-				} else {
-					tempArr = palloc((numTables + newTables) * sizeof(forjson_table));
-				}
+				/* Get the first function from the RTE_FUNCTION */
+				if (rte->functions && list_length(rte->functions) > 0)
+				{
+					rteFunc = (RangeTblFunction *) linitial(rte->functions);
+					funcExpr = (FuncExpr *) rteFunc->funcexpr;
+					funcId = funcExpr->funcid;
 
-				for(int j = 0; j < numTables; j++) {
-					tempArr[j] = tableInfoArr[j];
-				}
+					/* Look up function info to check namespace */
+					procTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcId));
+					if (HeapTupleIsValid(procTuple))
+					{
+						procForm = (Form_pg_proc) GETSTRUCT(procTuple);
+						sysNamespaceOid = get_namespace_oid("sys", true);
+						if (procForm->pronamespace == PG_CATALOG_NAMESPACE ||
+							(OidIsValid(sysNamespaceOid) && procForm->pronamespace == sysNamespaceOid))
+							isSystemFunction = true;
+						ReleaseSysCache(procTuple);
 
-				tableInfoArr = tempArr;
-				tempArr = NULL;
-				numTables = numTables + newTables;
-				queryRte = linitial_node(RangeTblEntry, query->rtable);
-				colnameAlias = (Alias*) queryRte->eref;
-
-				foreach(lc, subq->cteList) {
-					cte = castNode(CommonTableExpr, lfirst(lc));
-					ctequery = (Query*) cte->ctequery;
-					foreach(lc2, ctequery->rtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc2));
-						if(subqRte->rtekind == RTE_RELATION) {
-							forjson_table *table = palloc(sizeof(forjson_table));
-							Alias* a = (Alias*) subqRte->eref;
-							table->oid = subqRte->relid;
-							table->nestLevel = -1;
-							table->alias = a->aliasname;
-							tableInfoArr[currTables] = table;
-							currTables++;
+						/* Only user-defined functions count as valid sources */
+						if (!isSystemFunction)
+						{
+							hasValidSrc = true;
+							break;
 						}
 					}
 				}
-
-				modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, true);
-				
-				return true;
 			}
 		}
 	}
 
-	ereport(ERROR,
+	if (hasValidSrc)
+		modifyColumnEntries(origQuery, wrapperRteAlias, jsonAutoCtx);
+	else
+		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-					errmsg("FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.")));
+				errmsg("FOR JSON AUTO requires at least one table for "
+					"generating JSON objects. Use FOR JSON PATH or add a FROM"
+					" clause with a table name.")));
+
 	return true;
 }
 
@@ -1654,79 +1645,352 @@ buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 	return te;
 }
 
-static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve)
+static char *
+string_to_fixed_hash(const char *input)
 {
-	int i = 0;
-	int currMax = 0;
-	ListCell* lc;
-	
-	foreach(lc, targetList) {
-		TargetEntry* te;
-		int oid;
-		String *s;
+	Datum hash_val = hash_any_extended((unsigned char *)input, strlen(input), 0);
+	char *result = palloc(17); // 16 hex chars + null terminator
+	snprintf(result, 17, "%016lx", DatumGetUInt64(hash_val));
+	return result;
+}
 
+/**
+ * modifyColumnEntries - Determine JSON nesting structure for target columns
+ * 
+ * @param origQuery: The original query to process (without FOR JSON AUTO wrapper)
+ * @param wrapperRteAlias: Alias information from wrapper query
+ * @param jsonAutoCtx: Context for processing FOR JSON AUTO clause
+ *        ->cteList: cteList set in the tree walker
+ *        ->ctenameIdxHashFromOuterQuery: Hash table containing CTE names and their indices.
+ * 
+ * Analyzes each target entry to assign appropriate JSON nesting keys and levels.
+ * Transforms target entry names to include JSON nesting information in the format:
+ * "JSONAUTOALIAS.[nest_level].[nest_key].[colname]"
+ * 
+ * Algorithm Overview:
+ * 1. Build two hash tables:
+ *    - CTE lookup (ctename -> index in ctelist)
+ *    - alias-to-level mapping (assigned JSON nesting level for an alias)
+ * 2. For each target entry:
+ *    - If T_Var: use matched source's alias as JSON nesting key, assign next unused
+ *                JSON nesting level to it and store in hash so that later columns
+ *                referencing the same source can know the correct JSON nesting level to use.
+ *    - Other types of target entry: assign current max used JSON nesting
+ *                key and level to this target entry.
+ * 3. Handle special cases:
+ *    - If source is a RTE_FUNCTION, do not use its alias; instead we use
+ *      current max used JSON nesting key and level.
+ *    - If outermost source RTE is RTE_CTE and it's assigned an alias, we need
+ *      to unwrap recursively.
+ * 
+ * Recursive Unwrapping Algorithm:
+ * Follows variable references (varno and varattno in T_Var) to match outer target to
+ * inner target and get matched inner source recursively until reaching stop conditions:
+ * - Outermost RTE is not a CTE
+ * - Outermost CTE has no alias assigned  
+ * - Current target entry is not a T_Var
+ * - Inner RTE is not RTE_CTE or RTE_SUBQUERY
+ *
+ * JSON Nesting Level Logic:
+ * - Level 1: root level, initially unused, will be assigned to first unique source alias
+ * - Level N+1: Each additional unique source alias
+ *
+ * Hash Key Strategy:
+ * Uses full source path (e.g., "cte1.table1", "cte2.table1") to distinguish identical
+ * table names in different contexts, ensuring proper nesting separation.
+ */
+static void
+modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *jsonAutoCtx)
+{
+
+	/* JSON nesting variables */
+	char			   *curMaxUsedJsonKey = "temp";	/* Current nesting key for non-source entries */
+	int					curMaxUsedJsonLevel = 1;	/* Current maximum JSON nesting level */
+	bool				nestingLevel1Used = false;	/* Whether level 1 has been assigned */
+
+	/* Target entries iteration index */
+	int					targetIterIdx = 0;
+
+	/* CTE processing variables */
+	HTAB			   *ctenameIdxHash = jsonAutoCtx->ctenameIdxHash;	/* CTE name-to-index mapping */
+	ListCell		   *cteLc;
+	CommonTableExpr	   *cteEntry;
+	CtenameIdx		   *cteHashEntry;
+	List			   *cteList = jsonAutoCtx->cteList;
+	HASHCTL				cteHashCtl;
+	int					cteIdx = 0;
+
+	/* Alias-to-level mapping variables */
+	HTAB			   *RTEAliasNestHash;	/* RTE alias-to-nesting-level mapping */
+	RTEAliasEntry	   *rteHashEntry;
+	HASHCTL				rteJSONHashCtl;
+	bool				found;
+
+	/* target entry iteration variables */
+	List			   *origTargetList = origQuery->targetList;
+	ListCell		   *lc;
+
+	/*
+	 * If ctenameIdxHash hasn't been initialized yet, initialize it if we
+	 * have cteList.
+	 */
+	if (ctenameIdxHash == NULL && cteList != NULL)
+	{
+		memset(&cteHashCtl, 0, sizeof(cteHashCtl));
+		cteHashCtl.keysize = NAMEDATALEN;
+		cteHashCtl.entrysize = sizeof(CtenameIdx);
+		cteHashCtl.hcxt = CurrentMemoryContext;
+		ctenameIdxHash = hash_create("ctenameIdxHash",
+									 FORJSON_INITIAL_HASH_SIZE,
+									 &cteHashCtl,
+									 HASH_ELEM | HASH_STRINGS);
+
+		/* Populate CTE name-to-index hash table */
+		foreach(cteLc, cteList)
+		{
+			cteEntry = (CommonTableExpr *) lfirst(cteLc);
+			cteHashEntry = (CtenameIdx *) hash_search(ctenameIdxHash,
+													  cteEntry->ctename,
+													  HASH_ENTER,
+													  &found);
+			Assert(!found);
+			strcpy(cteHashEntry->ctename, cteEntry->ctename);
+			cteHashEntry->idx_in_ctelist = cteIdx;
+			cteIdx++;
+		}
+	}
+
+	/* Initialize RTE alias-to-nesting-level hash table */
+	memset(&rteJSONHashCtl, 0, sizeof(rteJSONHashCtl));
+	rteJSONHashCtl.keysize = NAMEDATALEN;
+	rteJSONHashCtl.entrysize = sizeof(RTEAliasEntry);
+	rteJSONHashCtl.hcxt = CurrentMemoryContext;
+	RTEAliasNestHash = hash_create("RTEAliasNestHash",
+								   FORJSON_INITIAL_HASH_SIZE,
+								   &rteJSONHashCtl,
+								   HASH_ELEM | HASH_STRINGS);
+
+	/* Process each target entry to determine JSON nesting structure */
+	foreach(lc, origTargetList)
+	{
+		/* variables for each target entry iteration */
+		TargetEntry		   *outermostTargetEntry;	/* Original target entry to modify */
+		TargetEntry		   *curTargetEntry;	/* Current target during unwrapping */
+		String			   *colnameStr;
+		RangeTblEntry	   *matchedSrc = NULL;	/* Source RTE matched by variable */
+		char			   *matchedSrcAlias;
+		char			   *hashedFullSrcPath;
+		Query			   *curQuery;	/* Current query context during unwrapping */
+		StringInfoData		fullSrcPath;	/* Accumulated source path for hash key */
+		bool				matchedSrcCTEIsRecursive = false;
+		bool				atOutermostLayer = true; // at outermost layer or not when unwrapping
+
+		/* T_SubLink target entry variables */
+		SubLink			   *sl;
+		CoerceViaIO		   *iocoerce;
+
+		/* T_Var target entry variables */
+		Var				   *curVar = NULL;	/* Current variable node */
+		int					varNo;	/* Variable's range table index */
+		int					varLevelsUp;	/* Variable's nesting level */
+		int					varAttNo;	/* Variable's attribute number */
+
+		initStringInfo(&fullSrcPath);
 		// Add null check for target entry
 		if (!lc || !lfirst(lc))
 			continue;
-		
-		te = castNode(TargetEntry, lfirst(lc));
 
-		if(te->resjunk)
+		outermostTargetEntry = castNode(TargetEntry, lfirst(lc));
+
+		/* junk node - won't appear in the final result */
+		if (outermostTargetEntry->resjunk)
 			continue;
 
-		oid = te->resorigtbl;
-		s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
-		if(te->expr != NULL && nodeTag(te->expr) == T_SubLink) {
-			SubLink *sl = castNode(SubLink, te->expr);
-			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query) {
-				if(handleForJsonAuto(castNode(Query, sl->subselect), tableInfoArr, numTables)) {
-					CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+		if (outermostTargetEntry->expr == NULL)
+			continue;
+
+		/* The wrapperQuery's view of column references from this origQuery will need to be updated too */
+		colnameStr = castNode(String, lfirst(list_nth_cell(wrapperRteAlias->colnames, targetIterIdx)));
+
+		/* Set up initial state for recursive unwrapping */
+		curTargetEntry = outermostTargetEntry;
+		curQuery = origQuery;
+		atOutermostLayer = true;
+		matchedSrcCTEIsRecursive = false;
+
+		/* Recursively unwrap CTE/subquery chains to find ultimate source */
+		while (nodeTag(curTargetEntry->expr) == T_Var)
+		{
+			/* Update T_Var variables when we goto inner T_Var */
+			curVar = castNode(Var, curTargetEntry->expr);
+			varNo = curVar->varno; // index to the source in current layer's rtable
+			varAttNo = curVar->varattno; // index to target in next layer's targetList (in current layer source)
+			matchedSrc = list_nth(curQuery->rtable, varNo-1);
+
+			/* Keep appending src's alias when unwrapping for unique identification */
+			if (fullSrcPath.len != 0)
+				appendStringInfo(&fullSrcPath, ".");
+			appendStringInfo(&fullSrcPath, "%s", matchedSrc->eref->aliasname);
+
+			/*
+			 * If outermost CTE:
+			 * 	  => only do unwrapping when alias is set
+			 * If we reach inner CTE:
+			 *    => we already decided to do unwrapping, keep unwrapping. inner CTE's alias is
+			 *       set or not doesn't affect the unwrapping decision.
+			 * For recursive CTE, we don't unwrap it.
+			 */
+			if (matchedSrc->rtekind == RTE_CTE && (matchedSrc->alias != NULL || !atOutermostLayer))
+			{
+				/* get info in the CTE from ctelist (which cannot get from RTE_CTE) */
+				cteHashEntry = (CtenameIdx *) hash_search(ctenameIdxHash,
+														  matchedSrc->ctename,
+														  HASH_FIND,
+														  &found);
+				Assert(found);
+				cteEntry = (CommonTableExpr *) list_nth(cteList, cteHashEntry->idx_in_ctelist);
+				if (cteEntry->cterecursive)
+				{
+					matchedSrcCTEIsRecursive = true;
+					break;
+				}
+				curQuery = castNode(Query, cteEntry->ctequery);
+				curTargetEntry = (TargetEntry *) list_nth(curQuery->targetList, varAttNo-1);
+			}
+			/* We only unwrap RTE_SUBQUERY when it's at inner layers */
+			else if (!atOutermostLayer && matchedSrc->rtekind == RTE_SUBQUERY)
+			{
+				/* Navigate into subquery */
+				curQuery = matchedSrc->subquery;
+				curTargetEntry = (TargetEntry *) list_nth(curQuery->targetList, varAttNo-1);
+			}
+			else
+				break;
+
+			if (atOutermostLayer)
+				atOutermostLayer = false;
+		}
+
+		if (nodeTag(curTargetEntry->expr) == T_SubLink)
+		{
+			sl = castNode(SubLink, curTargetEntry->expr);
+			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query)
+			{
+				if (isJsonAuto(((Query *)sl->subselect)->targetList))
+				{
+					/*
+					 * Because this SubLink FOR JSON AUTO still needs to be processed 
+					 * by postgres, we need to convert the type from NVARCHAR to json.
+					 */
+					iocoerce = makeNode(CoerceViaIO);
 					iocoerce->arg = (Expr*) sl;
 					iocoerce->resulttype = TypenameGetTypid("json");
 					iocoerce->resultcollid = 0;
 					iocoerce->coerceformat = COERCE_EXPLICIT_CAST;
-					buildJsonEntry(1, "temp", te);
-					s->sval = te->resname;
-					te->expr = (Expr*) iocoerce;
-					continue;
+					curTargetEntry->expr = (Expr*) iocoerce;
 				}
 			}
 		}
-		for(int j = 0; j < numTables; j++) {
-			if(tableInfoArr[j]->oid == oid) {
-				// build entry
-				if(tableInfoArr[j]->nestLevel == -1) {
-					currMax++;
-					tableInfoArr[j]->nestLevel = currMax;
+
+		/* If final matched target is a T_Var, we might want ot use matchedSrc's alias as JSON nesting key */
+		if (nodeTag(curTargetEntry->expr) == T_Var) {
+			varLevelsUp = curVar->varlevelsup;
+
+			/*
+			 * Don't use source alias for functions or outer source
+			 * 1. if T_Var is referencing from outer sources
+			 * 2. if source is a RTE_FUNCTION
+			 * 3. if source is a RTE_CTE after the previous unwrapping loop
+			 *    - either this CTE is at outermost layer w/o an alias assigned
+			 *      => we want to use this CTE's ctename as JSON nesting key
+			 *    - or this CTE is a recursive CTE
+			 *      => we don't want to use this CTE's ctename as JSON nesting key
+			 */
+			if (varLevelsUp > 0 || matchedSrc->rtekind == RTE_FUNCTION ||
+				(matchedSrc->rtekind == RTE_CTE && matchedSrcCTEIsRecursive))
+				outermostTargetEntry = buildJsonEntry(curMaxUsedJsonLevel, curMaxUsedJsonKey, outermostTargetEntry);
+
+			else
+			{
+				/* Use full path as hash key to handle duplicate table names */
+				hashedFullSrcPath = string_to_fixed_hash(fullSrcPath.data);
+				matchedSrcAlias = matchedSrc->eref->aliasname;
+
+				rteHashEntry = (RTEAliasEntry *)hash_search(RTEAliasNestHash,
+															hashedFullSrcPath,
+															HASH_FIND,
+															&found);
+				if (found)
+				{
+					// Use existing nest level from hash
+					outermostTargetEntry = buildJsonEntry(rteHashEntry->json_nest_level, matchedSrcAlias, outermostTargetEntry);
 				}
-				te = buildJsonEntry(tableInfoArr[j]->nestLevel, tableInfoArr[j]->alias, te);
-				s->sval = te->resname;
-				break;
-			} else if(!isCve && oid == 0 && j == numTables - 1) {
-				te = buildJsonEntry(1, "temp", te);
-				s->sval = te->resname;
-				break;
+				else
+				{
+					/* Create new hash entry with incremented nest level */
+					if (curMaxUsedJsonLevel == 1 && !nestingLevel1Used)
+						nestingLevel1Used = true;
+					else
+						curMaxUsedJsonLevel++;
+					curMaxUsedJsonKey = matchedSrcAlias;
+					rteHashEntry = (RTEAliasEntry *)hash_search(RTEAliasNestHash,
+																hashedFullSrcPath,
+																HASH_ENTER,
+																&found);
+					Assert(!found);
+					strcpy(rteHashEntry->alias_name, hashedFullSrcPath);
+					rteHashEntry->json_nest_level = curMaxUsedJsonLevel;
+					outermostTargetEntry = buildJsonEntry(rteHashEntry->json_nest_level, matchedSrcAlias, outermostTargetEntry);
+				}
+				pfree(hashedFullSrcPath);
 			}
 		}
-		i++;
+		else
+		{
+			/* Non-variable expressions use current max level/key */
+			outermostTargetEntry = buildJsonEntry(curMaxUsedJsonLevel, curMaxUsedJsonKey, outermostTargetEntry);
+		}
+
+		colnameStr->sval = outermostTargetEntry->resname;
+		targetIterIdx++;
 	}
+
+	/* Cleanup hash tables */
+	hash_destroy(RTEAliasNestHash);
 }
 
-static bool check_json_auto_walker(Node *node, ParseState *pstate)
+void checkForJsonAuto(Query *query)
+{
+	JsonAutoContext *jsonAutoCtx;
+	if (query == NULL) return;
+
+	jsonAutoCtx = (JsonAutoContext *) palloc(sizeof(JsonAutoContext));
+	jsonAutoCtx->cteList = NULL;
+	jsonAutoCtx->ctenameIdxHash = NULL;
+
+	jsonAutoWalker((Node *)query, jsonAutoCtx);
+
+	hash_destroy(jsonAutoCtx->ctenameIdxHash);
+	pfree(jsonAutoCtx);
+	return;
+}
+
+static bool jsonAutoWalker(Node *node, JsonAutoContext *jsonAutoCtx)
 {
 	if (node == NULL)
 		return false;
 	if (IsA(node, Query)) {
-		if(handleForJsonAuto((Query*) node, NULL, 0))
-			return true;
-		else {
-			return query_tree_walker((Query*) node,
-								 check_json_auto_walker,
-								 (void *) pstate, 0);
-		}
+
+		if (((Query *)node)->cteList != NULL)
+			jsonAutoCtx->cteList = ((Query *)node)->cteList;
+
+		// First walk inner queries recursively to handle nested FOR JSON AUTO
+		query_tree_walker((Query*) node, jsonAutoWalker, (void *) jsonAutoCtx, 0);
+
+		// Then check if this layer has FOR JSON AUTO and handle it
+		return handleForJsonAuto((Query*) node, jsonAutoCtx);
 	}
-	return expression_tree_walker(node, check_json_auto_walker,
-								  (void *) pstate);
+	return expression_tree_walker(node, jsonAutoWalker, (void *) jsonAutoCtx);
 }
 
 static bool
