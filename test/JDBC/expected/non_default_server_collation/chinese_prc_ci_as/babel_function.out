@@ -413,7 +413,7 @@ select serverproperty(N'collation');
 GO
 ~~START~~
 sql_variant
-sql_latin1_general_cp1_ci_as
+chinese_prc_ci_as
 ~~END~~
 
 select serverproperty(N'IsSingleUser');

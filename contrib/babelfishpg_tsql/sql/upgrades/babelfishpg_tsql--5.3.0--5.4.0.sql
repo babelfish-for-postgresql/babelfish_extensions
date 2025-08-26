@@ -3,36 +3,6 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
--- Drops an object if it does not have any dependent objects.
--- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
--- Please have this be one of the first statements executed in this upgrade script. 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
-$$
-DECLARE
-    error_msg text;
-    query1 text;
-    query2 text;
-BEGIN
-
-    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
-    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
-
-    execute query1;
-    execute query2;
-EXCEPTION
-    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-    when dependent_objects_still_exist then --if 'drop view' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-    when undefined_function then --if 'Deprecated function does not exist'
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-end
-$$
-LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
@@ -70,20 +40,6 @@ $$;
  * final behaviour.
  */
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.isdate(v text) RENAME TO isdate_deprecated_5_4_0;
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'isdate_deprecated_5_4_0');
 
 create or replace function sys.isdate(IN v anyelement)
 returns integer
@@ -152,6 +108,18 @@ end
 $body$
 language 'plpgsql' STABLE;
 
+create or replace function sys.isdate(v text)
+returns integer as
+$body$
+begin
+    RAISE EXCEPTION USING 
+    ERRCODE = 'invalid_parameter_value',
+    MESSAGE = 'Argument data type (n)text is invalid for argument 1 of ISDATE function.';
+    return 0;
+end;
+$body$
+language plpgsql stable;
+
 CREATE OR REPLACE PROCEDURE sys.sp_datatype_info (
 	"@data_type" int = 0,
 	"@odbcver" smallint = 2)
@@ -183,10 +151,6 @@ BEGIN
 END;
 $$
 LANGUAGE 'pltsql';
-
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

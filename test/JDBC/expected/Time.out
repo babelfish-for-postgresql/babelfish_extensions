@@ -9590,9 +9590,9 @@ SET STATISTICS IO ON;
 SELECT * FROM TimeIndexTest WHERE TimeColumn = DATEADD(MINUTE, 360, '00:00:00');
 SET STATISTICS IO OFF;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+int#!#time#!#time#!#nvarchar#!#int
+~~END~~
 
 
 
@@ -9675,9 +9675,9 @@ SET STATISTICS IO ON;
 SELECT * FROM TimeIndexTest WHERE TimeColumn = DATEADD(MINUTE, 30, '12:00:00');
 SET STATISTICS IO OFF;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+int#!#time#!#time#!#nvarchar#!#int
+~~END~~
 
 
 

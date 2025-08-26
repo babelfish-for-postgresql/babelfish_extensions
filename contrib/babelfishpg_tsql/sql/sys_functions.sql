@@ -1704,6 +1704,18 @@ end
 $body$
 language 'plpgsql' STABLE;
 
+create or replace function sys.isdate(v text)
+returns integer as
+$body$
+begin
+    RAISE EXCEPTION USING 
+    ERRCODE = 'invalid_parameter_value',
+    MESSAGE = 'Argument data type (n)text is invalid for argument 1 of ISDATE function.';
+    return 0;
+end;
+$body$
+language plpgsql stable;
+
 CREATE OR REPLACE FUNCTION sys.is_collated_ci_as_internal(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ci_as_internal'
 LANGUAGE C VOLATILE PARALLEL SAFE;
@@ -1946,8 +1958,10 @@ AS
 $body$
 DECLARE
     is_date INT;
+    startdate_varchar sys.varchar;
 BEGIN
-    is_date = sys.isdate(startdate::sys.varchar::sys.varchar);
+    startdate_varchar := startdate::sys.varchar;
+    is_date = sys.isdate(startdate_varchar);
     IF (is_date = 1) THEN 
         RETURN sys.dateadd_internal(datepart,num,startdate::datetime);
     ELSEIF (startdate is NULL) THEN
