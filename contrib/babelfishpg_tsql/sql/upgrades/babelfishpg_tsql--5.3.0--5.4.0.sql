@@ -120,6 +120,26 @@ end;
 $body$
 language plpgsql stable;
 
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate TEXT) RETURNS DATETIME
+AS
+$body$
+DECLARE
+    is_date INT;
+    startdate_varchar sys.varchar;
+BEGIN
+    startdate_varchar := startdate::sys.varchar;
+    is_date = sys.isdate(startdate_varchar);
+    IF (is_date = 1) THEN 
+        RETURN sys.dateadd_internal(datepart,num,startdate::datetime);
+    ELSEIF (startdate is NULL) THEN
+        RETURN NULL;
+    ELSE
+        RAISE EXCEPTION 'Conversion failed when converting date and/or time from character string.';
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE parallel safe;
+
 CREATE OR REPLACE PROCEDURE sys.sp_datatype_info (
 	"@data_type" int = 0,
 	"@odbcver" smallint = 2)
