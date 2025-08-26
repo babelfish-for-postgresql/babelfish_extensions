@@ -1816,40 +1816,40 @@ ORDER BY ID;
 GO
 ~~START~~
 int#!#nvarchar#!#datetime#!#nvarchar#!#nvarchar#!#varchar
-1#!#Midnight UTC#!#2023-06-16 00:00:00.0#!#UTC#!#2023-06-16 00:00:00 +00:00#!#Valid DateTime
-2#!#Noon UTC#!#2023-06-16 12:00:00.0#!#UTC#!#2023-06-16 12:00:00 +00:00#!#Valid DateTime
-3#!#Evening UTC#!#2023-06-16 18:30:00.0#!#UTC#!#2023-06-16 18:30:00 +00:00#!#Valid DateTime
-4#!#Morning PST#!#2023-06-16 09:30:00.0#!#Pacific Standard Time#!#2023-06-16 09:30:00 -07:00#!#Valid DateTime
-5#!#Afternoon EST#!#2023-06-16 14:30:00.0#!#Eastern Standard Time#!#2023-06-16 14:30:00 -04:00#!#Valid DateTime
-6#!#Evening CET#!#2023-06-16 20:30:00.0#!#Central European Standard Time#!#2023-06-16 20:30:00 +02:00#!#Valid DateTime
-7#!#Night JST#!#2023-06-16 23:30:00.0#!#Tokyo Standard Time#!#2023-06-16 23:30:00 +09:00#!#Valid DateTime
-8#!#DST Start PST Morning#!#2023-03-12 01:30:00.0#!#Pacific Standard Time#!#2023-03-12 01:30:00 -08:00#!#Valid DateTime
-9#!#DST Start PST Transition#!#2023-03-12 02:30:00.0#!#Pacific Standard Time#!#2023-03-12 03:30:00 -07:00#!#Valid DateTime
-10#!#DST Start PST After#!#2023-03-12 03:30:00.0#!#Pacific Standard Time#!#2023-03-12 03:30:00 -07:00#!#Valid DateTime
-11#!#DST End PST Before#!#2023-11-05 01:30:00.0#!#Pacific Standard Time#!#2023-11-05 01:30:00 -08:00#!#Valid DateTime
-12#!#DST End PST Transition#!#2023-11-05 02:30:00.0#!#Pacific Standard Time#!#2023-11-05 02:30:00 -08:00#!#Valid DateTime
-13#!#DST End PST After#!#2023-11-05 03:30:00.0#!#Pacific Standard Time#!#2023-11-05 03:30:00 -08:00#!#Valid DateTime
-14#!#Summer Morning PST#!#2023-07-15 09:30:00.0#!#Pacific Standard Time#!#2023-07-15 09:30:00 -07:00#!#Valid DateTime
-15#!#Summer Afternoon EST#!#2023-07-15 14:30:00.0#!#Eastern Standard Time#!#2023-07-15 14:30:00 -04:00#!#Valid DateTime
-16#!#Summer Evening CET#!#2023-07-15 20:30:00.0#!#Central European Standard Time#!#2023-07-15 20:30:00 +02:00#!#Valid DateTime
-17#!#Winter Morning PST#!#2023-12-15 09:30:00.0#!#Pacific Standard Time#!#2023-12-15 09:30:00 -08:00#!#Valid DateTime
-18#!#Winter Afternoon EST#!#2023-12-15 14:30:00.0#!#Eastern Standard Time#!#2023-12-15 14:30:00 -05:00#!#Valid DateTime
-19#!#Winter Evening CET#!#2023-12-15 20:30:00.0#!#Central European Standard Time#!#2023-12-15 20:30:00 +01:00#!#Valid DateTime
-20#!#Precision Test 1#!#2023-06-16 14:30:20.123#!#UTC#!#2023-06-16 14:30:20.123 +00:00#!#Valid DateTime
-21#!#Precision Test 2#!#2023-06-16 14:30:20.997#!#UTC#!#2023-06-16 14:30:20.997 +00:00#!#Valid DateTime
-22#!#Precision Test 3#!#2023-06-16 14:30:20.0#!#UTC#!#2023-06-16 14:30:20 +00:00#!#Valid DateTime
-23#!#Min DateTime UTC#!#1753-01-01 00:00:00.0#!#UTC#!#1753-01-01 00:00:00 +00:00#!#Valid DateTime
-24#!#Max DateTime UTC#!#9999-12-31 23:59:59.997#!#UTC#!#9999-12-31 23:59:59.997 +00:00#!#Valid DateTime
-25#!#IST Midnight#!#2023-06-16 00:00:00.0#!#India Standard Time#!#2023-06-16 00:00:00 +05:30#!#Valid DateTime
-26#!#NZ Noon#!#2023-06-16 12:00:00.0#!#New Zealand Standard Time#!#2023-06-16 12:00:00 +12:00#!#Valid DateTime
-27#!#Day Boundary 1#!#2023-06-16 23:30:00.0#!#UTC#!#2023-06-16 23:30:00 +00:00#!#Valid DateTime
-28#!#Day Boundary 2#!#2023-06-16 00:30:00.0#!#UTC#!#2023-06-16 00:30:00 +00:00#!#Valid DateTime
-29#!#Month Boundary 1#!#2023-06-30 23:30:00.0#!#UTC#!#2023-06-30 23:30:00 +00:00#!#Valid DateTime
-30#!#Month Boundary 2#!#2023-07-01 00:30:00.0#!#UTC#!#2023-07-01 00:30:00 +00:00#!#Valid DateTime
-31#!#Year Boundary 1#!#2023-12-31 23:30:00.0#!#UTC#!#2023-12-31 23:30:00 +00:00#!#Valid DateTime
-32#!#Year Boundary 2#!#2024-01-01 00:30:00.0#!#UTC#!#2024-01-01 00:30:00 +00:00#!#Valid DateTime
-33#!#Leap Year Eve#!#2024-02-28 23:30:00.0#!#UTC#!#2024-02-28 23:30:00 +00:00#!#Valid DateTime
-34#!#Leap Year Day#!#2024-02-29 00:30:00.0#!#UTC#!#2024-02-29 00:30:00 +00:00#!#Valid DateTime
+1#!#Midnight UTC#!#2023-06-16 00:00:00.0#!#UTC#!#2023-06-16 00:00:00 +00:00#!#Invalid/Error
+2#!#Noon UTC#!#2023-06-16 12:00:00.0#!#UTC#!#2023-06-16 12:00:00 +00:00#!#Invalid/Error
+3#!#Evening UTC#!#2023-06-16 18:30:00.0#!#UTC#!#2023-06-16 18:30:00 +00:00#!#Invalid/Error
+4#!#Morning PST#!#2023-06-16 09:30:00.0#!#Pacific Standard Time#!#2023-06-16 09:30:00 -07:00#!#Invalid/Error
+5#!#Afternoon EST#!#2023-06-16 14:30:00.0#!#Eastern Standard Time#!#2023-06-16 14:30:00 -04:00#!#Invalid/Error
+6#!#Evening CET#!#2023-06-16 20:30:00.0#!#Central European Standard Time#!#2023-06-16 20:30:00 +02:00#!#Invalid/Error
+7#!#Night JST#!#2023-06-16 23:30:00.0#!#Tokyo Standard Time#!#2023-06-16 23:30:00 +09:00#!#Invalid/Error
+8#!#DST Start PST Morning#!#2023-03-12 01:30:00.0#!#Pacific Standard Time#!#2023-03-12 01:30:00 -08:00#!#Invalid/Error
+9#!#DST Start PST Transition#!#2023-03-12 02:30:00.0#!#Pacific Standard Time#!#2023-03-12 03:30:00 -07:00#!#Invalid/Error
+10#!#DST Start PST After#!#2023-03-12 03:30:00.0#!#Pacific Standard Time#!#2023-03-12 03:30:00 -07:00#!#Invalid/Error
+11#!#DST End PST Before#!#2023-11-05 01:30:00.0#!#Pacific Standard Time#!#2023-11-05 01:30:00 -08:00#!#Invalid/Error
+12#!#DST End PST Transition#!#2023-11-05 02:30:00.0#!#Pacific Standard Time#!#2023-11-05 02:30:00 -08:00#!#Invalid/Error
+13#!#DST End PST After#!#2023-11-05 03:30:00.0#!#Pacific Standard Time#!#2023-11-05 03:30:00 -08:00#!#Invalid/Error
+14#!#Summer Morning PST#!#2023-07-15 09:30:00.0#!#Pacific Standard Time#!#2023-07-15 09:30:00 -07:00#!#Invalid/Error
+15#!#Summer Afternoon EST#!#2023-07-15 14:30:00.0#!#Eastern Standard Time#!#2023-07-15 14:30:00 -04:00#!#Invalid/Error
+16#!#Summer Evening CET#!#2023-07-15 20:30:00.0#!#Central European Standard Time#!#2023-07-15 20:30:00 +02:00#!#Invalid/Error
+17#!#Winter Morning PST#!#2023-12-15 09:30:00.0#!#Pacific Standard Time#!#2023-12-15 09:30:00 -08:00#!#Invalid/Error
+18#!#Winter Afternoon EST#!#2023-12-15 14:30:00.0#!#Eastern Standard Time#!#2023-12-15 14:30:00 -05:00#!#Invalid/Error
+19#!#Winter Evening CET#!#2023-12-15 20:30:00.0#!#Central European Standard Time#!#2023-12-15 20:30:00 +01:00#!#Invalid/Error
+20#!#Precision Test 1#!#2023-06-16 14:30:20.123#!#UTC#!#2023-06-16 14:30:20.123 +00:00#!#Invalid/Error
+21#!#Precision Test 2#!#2023-06-16 14:30:20.997#!#UTC#!#2023-06-16 14:30:20.997 +00:00#!#Invalid/Error
+22#!#Precision Test 3#!#2023-06-16 14:30:20.0#!#UTC#!#2023-06-16 14:30:20 +00:00#!#Invalid/Error
+23#!#Min DateTime UTC#!#1753-01-01 00:00:00.0#!#UTC#!#1753-01-01 00:00:00 +00:00#!#Invalid/Error
+24#!#Max DateTime UTC#!#9999-12-31 23:59:59.997#!#UTC#!#9999-12-31 23:59:59.997 +00:00#!#Invalid/Error
+25#!#IST Midnight#!#2023-06-16 00:00:00.0#!#India Standard Time#!#2023-06-16 00:00:00 +05:30#!#Invalid/Error
+26#!#NZ Noon#!#2023-06-16 12:00:00.0#!#New Zealand Standard Time#!#2023-06-16 12:00:00 +12:00#!#Invalid/Error
+27#!#Day Boundary 1#!#2023-06-16 23:30:00.0#!#UTC#!#2023-06-16 23:30:00 +00:00#!#Invalid/Error
+28#!#Day Boundary 2#!#2023-06-16 00:30:00.0#!#UTC#!#2023-06-16 00:30:00 +00:00#!#Invalid/Error
+29#!#Month Boundary 1#!#2023-06-30 23:30:00.0#!#UTC#!#2023-06-30 23:30:00 +00:00#!#Invalid/Error
+30#!#Month Boundary 2#!#2023-07-01 00:30:00.0#!#UTC#!#2023-07-01 00:30:00 +00:00#!#Invalid/Error
+31#!#Year Boundary 1#!#2023-12-31 23:30:00.0#!#UTC#!#2023-12-31 23:30:00 +00:00#!#Invalid/Error
+32#!#Year Boundary 2#!#2024-01-01 00:30:00.0#!#UTC#!#2024-01-01 00:30:00 +00:00#!#Invalid/Error
+33#!#Leap Year Eve#!#2024-02-28 23:30:00.0#!#UTC#!#2024-02-28 23:30:00 +00:00#!#Invalid/Error
+34#!#Leap Year Day#!#2024-02-29 00:30:00.0#!#UTC#!#2024-02-29 00:30:00 +00:00#!#Invalid/Error
 35#!#NULL Time Zone#!#2023-06-16 12:00:00.0#!#<NULL>#!#<NULL>#!#Invalid/Error
 ~~END~~
 

@@ -179,7 +179,6 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 	int i = 0, j = 0;
 	int last_non_space = -1;
 	int num_colons = 0;
-	int num_delimiters = 0;
 	bool has_trailing_delimiter = false;
 	bool has_leading_delimiter = false;
 	bool consecutive_delimiters = false;
@@ -187,16 +186,10 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 	char *context_str = (context == DATE_TIME) ? "datetime" 
 			: ((context == DATE_TIME_2) ? "datetime2" : "datetimeoffset");
 
-	/* Check for NULL or empty string */
-	if (!str || str[0] == '\0')
-	{
-		pfree(result);
-		return NULL;
-	}
-
 	/* Check for leading delimiter */
 	if (str[0] == '/' || str[0] == '-' || str[0] == '.')
-		has_leading_delimiter = true;	
+		has_leading_delimiter = true;
+
 	while (str[i] != '\0')
 	{
 		/*
@@ -221,29 +214,35 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));
 		}
+
 		/* Check for consecutive delimiters */
 		if ((str[i] == '/' || str[i] == '-' || str[i] == '.') &&
 			(last_char == '/' || last_char == '-' || last_char == '.'))
 		{
 			consecutive_delimiters = true;
 		}
+		
 		if (context == DATE_TIME_OFFSET && str[i] == ':')
 			num_colons++;
 
-		/* Track delimiters */
-		if (str[i] == '/' || str[i] == '-' || str[i] == '.')
-		{
-			num_delimiters++;
-			/* Check if this is the last character */
-			if (str[i + 1] == '\0')
-				has_trailing_delimiter = true;
-		}
-		/* Handle DATE delimiters */
+		/* Check if this is the last character */
+		if ((str[i] == '/' || str[i] == '-' || str[i] == '.') && str[i + 1] == '\0')
+			has_trailing_delimiter = true;
+
+		/*
+		 * Modify DATE delimiters to '.' as in DATETIME multiple delimiters can
+		 * be passed for DATE field.
+		 */
 		if (context == DATE_TIME && (str[i] == '/' || str[i] == '-' || str[i] == '.'))
 		{
 			result[j] = '.';
 			j++;
 		}
+		/*
+		 * If the current character is an alphabet, do not add
+		 * space if the last non space character is a delimiter,
+		 * else an additional space is required.
+		 */
 		else if (isalpha(str[i]))
 		{
 			if (last_non_space == -1 ||
@@ -270,8 +269,14 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 				j+=2;
 			}
 		}
+		/*
+		 * If the current character is a digit, do not add
+		 * space if the last non space character is a delimiter,
+		 * else an additional space is required.
+		 */
 		else if (isdigit(str[i]))
 		{
+			
 			if (last_non_space == -1 || 
 				(!isdigit(str[last_non_space]) && !isalpha(str[last_non_space])))
 			{
@@ -296,40 +301,51 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 				j+=2;
 			}
 		}
+		/*
+		 * If the context is DATETIME only ',' and ':' are allowed
+		 * other than above mentioned characters.
+		 */
 		else if ((str[i] == ',' || str[i] == ':') || 
 				(context != DATE_TIME && (str[i] == '.' || str[i] == '/' 
 				|| str[i] == '+' || str[i] == '-')))
 		{
+			/* For datetimeoffset, preserve space before timezone indicator (+/-) */
 			if (context == DATE_TIME_OFFSET && (str[i] == '+' || str[i] == '-') && num_colons > 0)
-				result[j++] = ' ';	
+				result[j++] = ' ';
+
 			result[j] = str[i];
 			j++;
 		}
 		else
 		{
-			pfree(result);
+			if (result)
+				pfree(result);
+			
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));
-		}	
+		}
+
 		last_non_space = i;
 		last_char = str[i];
 		i++;
 	}
 
 	result[j] = '\0';
+
 	/* Additional validation checks */
-	if (has_trailing_delimiter ||
+	if (context == DATE_TIME && (has_trailing_delimiter ||
 		has_leading_delimiter ||
-		consecutive_delimiters)
+		consecutive_delimiters))
 	{
 		pfree(result);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));
 	}	
-	return result;
 
+	return result;
+	
 }
 
 static bool

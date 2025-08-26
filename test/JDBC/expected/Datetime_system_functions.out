@@ -7485,9 +7485,9 @@ SELECT
     -- Zero value
     CASE WHEN DATEADD(DAY, 0, '2023-01-01') = '2023-01-01' THEN 'PASS' ELSE 'FAIL' END AS ZeroValueTest;
 GO
-~~ERROR (Code: 517)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetime)~~
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 -- Test 12: Testing with MAX, TOP, DISTINCT, OVER functions
@@ -9060,10 +9060,9 @@ BEGIN CATCH
     SELECT 'PASS: ISDATE rejected multiple parameters' AS MultipleArgumentsTest;
 END CATCH
 GO
-~~START~~
-varchar
-PASS: ISDATE rejected multiple parameters
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The isdate function requires 1 argument)~~
 
 
 -- Test 4: Testing various date formats and validation
@@ -9171,7 +9170,7 @@ SELECT
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-PASS#!#PASS#!#PASS#!#PASS#!#FAIL#!#FAIL
+PASS#!#PASS#!#PASS#!#PASS#!#PASS#!#PASS
 ~~END~~
 
 
