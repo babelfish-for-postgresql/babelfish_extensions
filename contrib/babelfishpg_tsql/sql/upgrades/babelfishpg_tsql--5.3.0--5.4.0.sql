@@ -73,6 +73,24 @@ END;
 $$
 LANGUAGE 'pltsql';
 
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.degrees(arg1::PG_CATALOG.NUMERIC)::sys.MONEY;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.radians(arg1::PG_CATALOG.NUMERIC)::sys.MONEY;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
