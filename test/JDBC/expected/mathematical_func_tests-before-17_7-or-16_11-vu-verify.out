@@ -317,15 +317,15 @@ float
 SELECT * FROM sqrt_numeric;
 GO
 ~~START~~
-float
-12.0
+numeric
+12.000000000000000
 ~~END~~
 
 SELECT * FROM sqrt_numeric_zero;
 GO
 ~~START~~
-float
-0.0
+numeric
+0E-15
 ~~END~~
 
 SELECT * FROM sqrt_numeric_negative;
@@ -337,37 +337,37 @@ GO
 SELECT * FROM sqrt_numeric_null;
 GO
 ~~START~~
-float
+numeric
 <NULL>
 ~~END~~
 
 SELECT * FROM sqrt_numeric_max;
 GO
 ~~START~~
-float
-1.0E19
+numeric
+10000000000000000000
 ~~END~~
 
 SELECT * FROM sqrt_numeric_min;
 GO
 ~~START~~
-float
-3.1622776601683796E-19
+numeric
+3.162277660168379332E-19
 ~~END~~
 
 
 SELECT * FROM sqrt_decimal;
 GO
 ~~START~~
-float
-12.0
+numeric
+12.000000000000000
 ~~END~~
 
 SELECT * FROM sqrt_decimal_zero;
 GO
 ~~START~~
-float
-0.0
+numeric
+0E-15
 ~~END~~
 
 SELECT * FROM sqrt_decimal_negative;
@@ -379,43 +379,43 @@ GO
 SELECT * FROM sqrt_decimal_null;
 GO
 ~~START~~
-float
+numeric
 <NULL>
 ~~END~~
 
 SELECT * FROM sqrt_decimal_max;
 GO
 ~~START~~
-float
-1.0E19
+numeric
+10000000000000000000
 ~~END~~
 
 SELECT * FROM sqrt_decimal_min;
 GO
 ~~START~~
-float
-3.1622776601683796E-19
+numeric
+3.162277660168379332E-19
 ~~END~~
 
 
 SELECT * FROM sqrt_bit;
 GO
 ~~START~~
-float
-1.0
+numeric
+1.000000000000000
 ~~END~~
 
 SELECT * FROM sqrt_bit_zero;
 GO
 ~~START~~
-float
-0.0
+numeric
+0E-15
 ~~END~~
 
 SELECT * FROM sqrt_bit_null;
 GO
 ~~START~~
-float
+numeric
 <NULL>
 ~~END~~
 
@@ -608,17 +608,15 @@ float
 
 SELECT * FROM sqrt_float_max;
 GO
-~~START~~
-float
-1.3379088160259651E154
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 SELECT * FROM sqrt_float_min;
 GO
-~~START~~
-float
-1.493318452306808E-154
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
 SELECT * FROM sqrt_real;
@@ -651,16 +649,15 @@ float
 SELECT * FROM sqrt_real_max;
 GO
 ~~START~~
-float
-1.8439088914585774E19
+numeric
+18439088914585774620
 ~~END~~
 
 SELECT * FROM sqrt_real_min;
 GO
-~~START~~
-float
-1.0862780491200215E-19
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
 SELECT * FROM sqrt_money;
