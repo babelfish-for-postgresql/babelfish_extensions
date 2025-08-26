@@ -97,6 +97,7 @@ go
 SELECT ID, child.child_col as json_query_parent_col 
 from 
   (select ID ,JSON_QUERY(EmployeeDetails,'$.contact') as child_col from babel_5112_test5 ) child
+WHERE ID = 1
 FOR JSON AUTO;
 go
 
@@ -135,7 +136,7 @@ FOR JSON PATH;
 go
 
 --FAIL (KNOWN CASE)
-select * from (
+select MIN(test_union) as min_test_union from (
     SELECT JSON_QUERY(EmployeeDetails, '$.skills') as test_union FROM babel_5112_test7
     UNION 
     SELECT JSON_QUERY(EmployeeDetails, '$.contact') as test_union FROM babel_5112_test7

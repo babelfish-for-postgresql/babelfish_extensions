@@ -1,0 +1,531 @@
+-- Tests for colon_colon syntax
+select geometry::STGeomFromText('POINT (1 2)', 0)
+go
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+
+select sys.geometry::STGeomFromText('POINT (1 2)', 0)
+go
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+
+select [sys].[geometry]::STGeomFromText('POINT (1 2)', 0)
+go
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+
+select geography::STGeomFromText('POINT (1 2)', 4326)
+go
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+
+select sys.geography::STGeomFromText('POINT (1 2)', 4326)
+go
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+
+select [sys].[geography]::STGeomFromText('POINT (1 2)', 4326)
+go
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+
+select [geography]::STGeomFromText('POINT (1 2)', 4326)
+go
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+
+select [geometry]::STGeomFromText('POINT (1 2)', 0)
+go
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+
+select (geography)::STGeomFromText('POINT (1 2)', 4326)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ':' at line 1 and character position 18)~~
+
+
+select (geometry)::STGeomFromText('POINT (1 2)', 0)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ':' at line 1 and character position 17)~~
+
+
+select "geography"::STGeomFromText('POINT (1 2)', 4326)
+go
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+
+select "geometry"::STGeomFromText('POINT (1 2)', 0)
+go
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+
+select xml::XmlColumn.value('/', 'varchar') from babel_5987_colon_colon_t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+
+
+select geometry::GeomColumn.STAsText() from babel_5987_colon_colon_t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find property or field 'GeomColumn' for type geometry.)~~
+
+
+select geography::GeogColumn.STAsText() from babel_5987_colon_colon_t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find property or field 'GeogColumn' for type geography.)~~
+
+
+select XmlColumn::xml.value('/', 'varchar') from babel_5987_colon_colon_t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+
+
+select GeomColumn::geometry.STAsText() from babel_5987_colon_colon_t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "geomcolumn" does not exist)~~
+
+
+select GeogColumn::geography.STAsText() from babel_5987_colon_colon_t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "geogcolumn" does not exist)~~
+
+
+select geometry::STGeomFromText('POINT (1 2)', 0).STAsText()
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+select geography::STGeomFromText('POINT (1 2)', 4326).STAsText()
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+-- HierarchyId is not supported
+select hierarchyid::GETROOT()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
+
+
+select geometry::NonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find method 'NonExistentMethod' for type geometry.)~~
+
+
+select geography::NonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find method 'NonExistentMethod' for type geography.)~~
+
+
+select xml::NonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on xml.)~~
+
+
+select int::NonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+select geometry::[NonExistentMethod]()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find method 'NonExistentMethod' for type geometry.)~~
+
+
+select geography::[NonExistentMethod]()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find method 'NonExistentMethod' for type geography.)~~
+
+
+select xml::[NonExistentMethod]()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on xml.)~~
+
+
+select int::[NonExistentMethod]()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+select geometry::NonExistentMethodField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find property or field 'NonExistentMethodField' for type geometry.)~~
+
+
+select geography::NonExistentMethodField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find property or field 'NonExistentMethodField' for type geography.)~~
+
+
+select xml::NonExistentMethodField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on xml.)~~
+
+
+select int::NonExistentMethodField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+select geometry::[NonExistentMethodField]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find property or field 'NonExistentMethodField' for type geometry.)~~
+
+
+select geography::[NonExistentMethodField]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find property or field 'NonExistentMethodField' for type geography.)~~
+
+
+select xml::[NonExistentMethodField]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on xml.)~~
+
+
+select int::[NonExistentMethodField]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+select geometry::NonExistentMethod().AnotherNonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find method 'NonExistentMethod' for type geometry.)~~
+
+
+select geography::NonExistentMethod().AnotherNonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find method 'NonExistentMethod' for type geography.)~~
+
+
+select xml::NonExistentMethod().AnotherNonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on xml.)~~
+
+
+select int::NonExistentMethod().AnotherNonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+select geometry::NonExistentMethodField.AnotherNonExistentField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find property or field 'NonExistentMethodField' for type geometry.)~~
+
+
+select geography::NonExistentMethodField.AnotherNonExistentField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find property or field 'NonExistentMethodField' for type geography.)~~
+
+
+select xml::NonExistentMethodField.AnotherNonExistentField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on xml.)~~
+
+
+select int::NonExistentMethodField.AnotherNonExistentField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+select geometry::NonExistentMethod().AnotherNonExistentField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find method 'NonExistentMethod' for type geometry.)~~
+
+
+select geography::NonExistentMethod().AnotherNonExistentField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find method 'NonExistentMethod' for type geography.)~~
+
+
+select xml::NonExistentMethod().AnotherNonExistentField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on xml.)~~
+
+
+select int::NonExistentMethod().AnotherNonExistentField
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+select geometry::NonExistentMethodField.AnotherNonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find property or field 'NonExistentMethodField' for type geometry.)~~
+
+
+select geography::NonExistentMethodField.AnotherNonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find property or field 'NonExistentMethodField' for type geography.)~~
+
+
+select xml::NonExistentMethodField.AnotherNonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on xml.)~~
+
+
+select int::NonExistentMethodField.AnotherNonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+select babel_5987_xmlUDT::NonExistentMethod()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on babel_5987_xmlUDT.)~~
+
+
+select babel_5987_geometryUDT::STGeomFromText('POINT (1 2)', 0)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on babel_5987_geometryUDT.)~~
+
+
+select babel_5987_geographyUDT::STGeomFromText('POINT (1 2)', 4326)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on babel_5987_geographyUDT.)~~
+
+
+SET QUOTED_IDENTIFIER OFF
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+select "geography"::STGeomFromText('POINT (1 2)', 4326)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ':' at line 1 and character position 18)~~
+
+
+select "geometry"::STGeomFromText('POINT (1 2)', 0)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ':' at line 1 and character position 17)~~
+
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+select geometry   ::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 1000000000 )
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SRID value should be between 0 and 999999)~~
+
+
+-- dependent objects
+EXEC babel_5987_colon_colon_dep_proc1
+GO
+~~START~~
+geometry#!#geography#!#nvarchar
+00000000010C000000000000F03F0000000000000040#!#E6100000010C0000000000000040000000000000F03F#!#POINT(1 2)
+~~END~~
+
+
+EXEC babel_5987_colon_colon_dep_proc2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure babel_5987_colon_colon_dep_proc2() does not exist)~~
+
+
+EXEC babel_5987_colon_colon_dep_proc3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure babel_5987_colon_colon_dep_proc3() does not exist)~~
+
+
+SELECT babel_5987_colon_colon_dep_func_1()
+GO
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+
+SELECT babel_5987_colon_colon_dep_func_2()
+GO
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+
+SELECT babel_5987_colon_colon_dep_func_3()
+GO
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+SELECT babel_5987_colon_colon_dep_func_4()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function babel_5987_colon_colon_dep_func_4() does not exist)~~
+
+
+SELECT babel_5987_colon_colon_dep_func_5()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function babel_5987_colon_colon_dep_func_5() does not exist)~~
+
+
+SELECT * FROM babel_5987_colon_colon_dep_view1
+GO
+~~START~~
+geometry#!#geography#!#nvarchar
+00000000010C000000000000F03F0000000000000040#!#E6100000010C0000000000000040000000000000F03F#!#POINT(1 2)
+~~END~~
+
+
+SELECT * FROM babel_5987_colon_colon_dep_view2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5987_colon_colon_dep_view2" does not exist)~~
+
+
+SELECT * FROM babel_5987_colon_colon_dep_view3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5987_colon_colon_dep_view3" does not exist)~~
+
