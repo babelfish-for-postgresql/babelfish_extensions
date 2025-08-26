@@ -1318,7 +1318,17 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 					UpdateStmt *n = makeNode(UpdateStmt);
 					tsql_reset_update_delete_globals();
 					n->withClause = $1;
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					n->relation = $4;
 					n->targetList = $7;
 					n->fromClause = $8;
@@ -1347,7 +1357,17 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 						}
 						else
 						{
-							n->limitCount = $3;
+							if ($3 != NULL)  // if tsql_top_clause is present
+							{
+								TopClause *tc = (TopClause *)$3;
+								n->limitCount = tc->limitCount;
+								n->isPercent = tc->isPercent;
+							}
+							else
+							{
+								n->limitCount = NULL;
+								n->isPercent = false;
+							}
 							n->fromClause = $9;
 							n->whereClause = $10;
 						}
@@ -2768,7 +2788,17 @@ tsql_InsertStmt:
 			opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			tsql_output_insert_rest
 				{
-					$10->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						$10->limitCount = tc->limitCount;
+						$10->isPercent = tc->isPercent;
+					}
+					else
+					{
+						$10->limitCount = NULL;
+						$10->isPercent = false;
+					}
 					$10->relation = $5;
 					$10->onConflictClause = NULL;
 					$10->returningList = NULL;
@@ -2778,7 +2808,17 @@ tsql_InsertStmt:
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_insert_rest
 				{
-					$7->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						$7->limitCount = tc->limitCount;
+						$7->isPercent = tc->isPercent;
+					}
+					else
+					{
+						$7->limitCount = NULL;
+						$7->isPercent = false;
+					}
 					$7->relation = $5;
 					$7->onConflictClause = NULL;
 					$7->returningList = NULL;
@@ -2789,7 +2829,17 @@ tsql_InsertStmt:
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr DEFAULT TSQL_VALUES
 				{
 					InsertStmt *i = makeNode(InsertStmt);
-					i->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						i->limitCount = tc->limitCount;
+						i->isPercent = tc->isPercent;
+					}
+					else
+					{
+						i->limitCount = NULL;
+						i->isPercent = false;
+					}
 					i->relation = $5;
 					i->onConflictClause = NULL;
 					i->returningList = NULL;
@@ -2808,7 +2858,17 @@ tsql_InsertStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@10)));
-					$11->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						$11->limitCount = tc->limitCount;
+						$11->isPercent = tc->isPercent;
+					}
+					else
+					{
+						$11->limitCount = NULL;
+						$11->isPercent = false;
+					}
 					$11->relation = $5;
 					$11->onConflictClause = NULL;
 					$11->returningList = $10;
@@ -2823,7 +2883,17 @@ tsql_InsertStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@7)));
-					$8->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						$8->limitCount = tc->limitCount;
+						$8->isPercent = tc->isPercent;
+					}
+					else
+					{
+						$8->limitCount = NULL;
+						$8->isPercent = false;
+					}
 					$8->relation = $5;
 					$8->onConflictClause = NULL;
 					$8->returningList = $7;
@@ -2835,7 +2905,17 @@ tsql_InsertStmt:
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause DEFAULT VALUES
 				{
 					InsertStmt *i = makeNode(InsertStmt);
-					i->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						$i->limitCount = tc->limitCount;
+						$i->isPercent = tc->isPercent;
+					}
+					else
+					{
+						$i->limitCount = NULL;
+						$i->isPercent = false;
+					}
 					i->relation = $5;
 					i->onConflictClause = NULL;
 					i->returningList = $7;
@@ -3593,7 +3673,17 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 			tsql_opt_table_hint_expr from_clause where_or_current_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					n->relation = $5;
 					n->usingClause = $7;
 					n->whereClause = $8;
@@ -3608,7 +3698,17 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 					DeleteStmt *n = makeNode(DeleteStmt);
 					tsql_reset_update_delete_globals();
 					n->relation = $5;
-					n->limitCount = $3;
+					if ($3 != NULL)  // if tsql_top_clause is present
+					{
+						TopClause *tc = (TopClause *)$3;
+						n->limitCount = tc->limitCount;
+						n->isPercent = tc->isPercent;
+					}
+					else
+					{
+						n->limitCount = NULL;
+						n->isPercent = false;
+					}
 					n->usingClause = $8;
 					n->whereClause = $9;
 					n->returningList = $7;

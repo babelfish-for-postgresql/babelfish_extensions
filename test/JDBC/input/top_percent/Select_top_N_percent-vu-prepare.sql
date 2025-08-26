@@ -36,26 +36,35 @@
  * | 29  | TOP PERCENT in VIEW                              | Dependent Objects   | Tests TOP PERCENT within VIEW definition      |
  * | 30  | TOP PERCENT in FUNCTION                          | Dependent Objects   | Tests TOP PERCENT in table-valued function    |
  * | 31  | TOP PERCENT in STORED PROCEDURE                  | Dependent Objects   | Tests TOP PERCENT in stored procedure         |
+ * | 32  | TOP PERCENT with FOR JSON AUTO                   | JSON Output         | Tests 50% with FOR JSON AUTO                  |
+ * | 33  | TOP PERCENT with FOR JSON PATH                   | JSON Output         | Tests 30% with FOR JSON PATH                  |
+ * | 34  | TOP PERCENT with FOR JSON INCLUDE_NULL_VALUES    | JSON Output         | Tests 33% with NULL handling in JSON          |
+ * | 35  | TOP PERCENT with UNION ALL                       | Set Operations      | Tests 30% and 50% with UNION ALL              |
+ * | 36  | TOP PERCENT with UNION                           | Set Operations      | Tests 40% and 60% with UNION (deduplication)  |
+ * | 37  | TOP PERCENT on outside of UNION                  | Set Operations      | Tests 20% applied to UNION result             |
+ * | 38  | TOP PERCENT with cross schema JOIN               | Cross Schema        | Tests 30% with cross-schema LEFT JOIN         |
+ * | 39  | TOP PERCENT with cross schema subquery           | Cross Schema        | Tests 40% with cross-schema subquery          |
+ * | 40  | TOP PERCENT with cross schema CTE                | Cross Schema        | Tests 50% with cross-schema CTE               |
+ * | 41  | UPDATE TOP N PERCENT                             | Error Case          | Should throw error - not supported            |
+ * | 42  | DELETE TOP N PERCENT                             | Error Case          | Should throw error - not supported            |
+ * | 43  | INSERT TOP N PERCENT                             | Error Case          | Should throw error - not supported            |
  */
 
--- Create database for TOP PERCENT testing
-CREATE DATABASE jira_babel_1358;
-GO
-
-USE jira_babel_1358;
+-- Create schema for TOP PERCENT testing
+CREATE SCHEMA jira_babel_1358;
 GO
 
  -- Create test tables for TOP N PERCENT testing
-CREATE TABLE test_percent_scores (
-    id INT IDENTITY(1,1) PRIMARY KEY,
+CREATE TABLE jira_babel_1358.test_percent_scores (
+    id INT PRIMARY KEY,
     student_name VARCHAR(50),
     score DECIMAL(5,2),
     class_name VARCHAR(50),
     year INT
 );
 
-CREATE TABLE test_percent_sales (
-    id INT IDENTITY(1,1) PRIMARY KEY,
+CREATE TABLE jira_babel_1358.test_percent_sales (
+    id INT PRIMARY KEY,
     product_name VARCHAR(50),
     revenue MONEY,
     region VARCHAR(50),
@@ -64,30 +73,29 @@ CREATE TABLE test_percent_sales (
 GO
 
 -- Insert test data for scores
-INSERT INTO test_percent_scores (student_name, score, class_name, year) VALUES
-('John Doe', 95.5, 'Math', 2023),
-('Jane Smith', 87.3, 'Math', 2023),
-('Bob Wilson', 92.0, 'Math', 2023),
-('Alice Brown', 78.5, 'Math', 2023),
-('Charlie Davis', 88.9, 'Math', 2023),
-('Eva White', 100.0, 'Physics', 2023),
-('Frank Black', 100.0, 'Physics', 2023),
-('George Grey', 0.0, 'Physics', 2023),
-('Helen Green', NULL, 'Physics', 2023);
+INSERT INTO jira_babel_1358.test_percent_scores (id, student_name, score, class_name, year) VALUES
+(1, 'John Doe', 95.5, 'Math', 2023),
+(2, 'Jane Smith', 87.3, 'Math', 2023),
+(3, 'Bob Wilson', 92.0, 'Math', 2023),
+(4, 'Alice Brown', 78.5, 'Math', 2023),
+(5, 'Charlie Davis', 88.9, 'Math', 2023),
+(6, 'Eva White', 100.0, 'Physics', 2023),
+(7, 'Frank Black', 100.0, 'Physics', 2023),
+(8, 'George Grey', 0.0, 'Physics', 2023),
+(9, 'Helen Green', NULL, 'Physics', 2023);
 
 -- Insert test data for sales
-INSERT INTO test_percent_sales (product_name, revenue, region, quarter) VALUES
-('Product A', 10000.00, 'North', 'Q1'),
-('Product B', 15000.50, 'North', 'Q1'),
-('Product C', 20000.75, 'North', 'Q1'),
-('Product D', 5000.25, 'South', 'Q1'),
-('Product E', 7500.50, 'South', 'Q1'),
-('Product F', NULL, 'South', 'Q1');
+INSERT INTO jira_babel_1358.test_percent_sales (id, product_name, revenue, region, quarter) VALUES
+(1, 'Product A', 10000.00, 'North', 'Q1'),
+(2, 'Product B', 15000.50, 'North', 'Q1'),
+(3, 'Product C', 20000.75, 'North', 'Q1'),
+(4, 'Product D', 5000.25, 'South', 'Q1'),
+(5, 'Product E', 7500.50, 'South', 'Q1'),
+(6, 'Product F', NULL, 'South', 'Q1');
 GO
 
 -- Create a simple large table
-CREATE TABLE test_percent_sales_large (
-    id INT IDENTITY(1,1) PRIMARY KEY,
+CREATE TABLE jira_babel_1358.test_percent_sales_large (
     product_name VARCHAR(20),
     category VARCHAR(20),
     sales_amount DECIMAL(10,2)
@@ -96,23 +104,23 @@ GO
 
 -- Insert sample data (10,000 rows)
 WITH Numbers AS (
-    SELECT TOP 10000 
-        ROW_NUMBER() OVER (ORDER BY a.object_id) AS RowNum
-    FROM 
-        sys.all_columns a
-        CROSS JOIN sys.all_columns b
+    SELECT 1 AS n
+    UNION ALL
+    SELECT n + 1 
+    FROM Numbers 
+    WHERE n < 10000
 )
-INSERT INTO test_percent_sales_large (product_name, category, sales_amount)
+INSERT INTO jira_babel_1358.test_percent_sales_large (product_name, category, sales_amount)
 SELECT 
-    'Product' + CAST((ABS(CHECKSUM(NEWID())) % 10 + 1) AS VARCHAR),
-    CASE (ABS(CHECKSUM(NEWID())) % 3)
+    'Product' + CAST((n % 10) AS VARCHAR(2)),
+    CASE (n % 3)
         WHEN 0 THEN 'Electronics'
         WHEN 1 THEN 'Clothing'
-        WHEN 2 THEN 'Food'
+        ELSE 'Food'
     END,
-    CAST((ABS(CHECKSUM(NEWID())) % 1000) + 100 AS DECIMAL(10,2))
-FROM 
-    Numbers;
+    100 + (n % 900)
+FROM Numbers
+OPTION (MAXRECURSION 10000);
 GO
 
 
@@ -123,27 +131,27 @@ GO
  */
 
  -- View 
-CREATE VIEW top_performers_view AS
+CREATE VIEW jira_babel_1358.top_performers_view AS
     SELECT TOP 20 PERCENT student_name, score, class_name
-    FROM test_percent_scores
+    FROM jira_babel_1358.test_percent_scores
     WHERE score IS NOT NULL
     ORDER BY score DESC;
 GO
 
 
 -- Function
-CREATE FUNCTION get_top_sales(@percentage FLOAT)
+CREATE FUNCTION jira_babel_1358.get_top_sales(@percentage FLOAT)
 RETURNS TABLE
 AS
 RETURN (
-    SELECT TOP (@percentage) PERCENT id, product_name, sales_amount
-    FROM test_percent_sales_large
+    SELECT TOP (@percentage) PERCENT product_name, sales_amount
+    FROM jira_babel_1358.test_percent_sales_large
     ORDER BY sales_amount DESC
 );
 GO
 
 -- Procedure
-CREATE PROCEDURE get_top_percent_by_category
+CREATE PROCEDURE jira_babel_1358.get_top_percent_by_category
     @category VARCHAR(20),
     @percentage FLOAT
 AS
@@ -151,7 +159,7 @@ BEGIN
     SELECT COUNT(*) as row_count
     FROM (
         SELECT TOP (@percentage) PERCENT *
-        FROM test_percent_sales_large
+        FROM jira_babel_1358.test_percent_sales_large
         WHERE category = @category
         ORDER BY sales_amount DESC
     ) as derived_table;
@@ -159,3 +167,24 @@ END;
 GO
 
 
+-- Create second schema for cross-schema testing
+CREATE SCHEMA test_schema2_jira_babel_1358;
+GO
+
+CREATE TABLE test_schema2_jira_babel_1358.test_cross_sales (
+    id INT PRIMARY KEY,
+    product_name VARCHAR(50),
+    revenue MONEY,
+    region VARCHAR(50),
+    sales_date DATE
+);
+GO
+
+-- Insert test data for cross-schema testing
+INSERT INTO test_schema2_jira_babel_1358.test_cross_sales (id, product_name, revenue, region, sales_date) VALUES
+(1, 'Cross Product A', 12000.00, 'East', '2023-01-15'),
+(2, 'Cross Product B', 18000.50, 'West', '2023-02-20'),
+(3, 'Cross Product C', 25000.75, 'East', '2023-03-10'),
+(4, 'Cross Product D', 8000.25, 'West', '2023-04-05'),
+(5, 'Cross Product E', 15500.50, 'North', '2023-05-12');
+GO
