@@ -1509,6 +1509,14 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return pre_transform_qual;
 
+	if(stmt->isPercent)
+	{
+		ereport(ERROR,
+		        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		         errmsg(" UPDATE TOP N PERCENT is not currently supported"),
+		         errhint("Rewrite the query to use window function NTILE() OVER() for percentage-based update.")));
+	}
+
 	/* Support Update w/ TOP */
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
 								EXPR_KIND_LIMIT, "LIMIT",
@@ -1585,6 +1593,14 @@ post_transform_delete(ParseState *pstate, DeleteStmt *stmt, Query *query)
 {
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
+
+	if(stmt->isPercent)
+	{
+		ereport(ERROR,
+		        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		         errmsg("DELETE TOP N PERCENT is not currently supported"),
+		         errhint("Rewrite the query to use window function NTILE() OVER() for percentage-based deletion.")));
+	}
 
 	/* Handle DELETE TOP */
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
@@ -3490,6 +3506,14 @@ pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query)
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
+
+	if(stmt->isPercent)
+	{
+		ereport(ERROR,
+		        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		         errmsg("INSERT TOP N PERCENT is not currently supported"),
+		         errhint("Rewrite the query to use window function NTILE() OVER() for percentage-based insert.")));
+	}
 
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
 											EXPR_KIND_LIMIT, "LIMIT",
