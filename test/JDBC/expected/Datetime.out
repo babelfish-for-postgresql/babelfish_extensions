@@ -6820,18 +6820,20 @@ GO
 
 ~~ERROR (Message: data out of range for datetime)~~
 
+-- BABEL-6027
 SELECT CASE WHEN CAST('2023-06-16 12:34:56.789' AS DATETIME) <> CAST('2023-06-16 12:34:56.789' AS text) THEN 'Not Equal' ELSE 'Equal' END;
 GO
 ~~START~~
 varchar
-Equal
+Not Equal
 ~~END~~
 
+-- BABEL-6027
 SELECT CASE WHEN CAST('2023-06-16 12:34:56.789' AS DATETIME) <> CAST('2023-06-16 12:34:56.789' AS ntext) THEN 'Not Equal' ELSE 'Equal' END;
 GO
 ~~START~~
 varchar
-Equal
+Not Equal
 ~~END~~
 
 SELECT CASE WHEN CAST('2023-06-16 12:34:56.789' AS DATETIME) <> CAST(CAST('2023-06-16 12:34:56.789' AS datetime) AS sql_variant) THEN 'Not Equal' ELSE 'Equal' END;
@@ -7017,18 +7019,20 @@ GO
 
 ~~ERROR (Message: data out of range for datetime)~~
 
+-- BABEL-6027
 SELECT CASE WHEN CAST('2023-06-16 12:34:56.789' AS text) <> CAST('2023-06-16 12:34:56.789' AS DATETIME) THEN 'Not Equal' ELSE 'Equal' END;
 GO
 ~~START~~
 varchar
-Equal
+Not Equal
 ~~END~~
 
+-- BABEL-6027
 SELECT CASE WHEN CAST('2023-06-16 12:34:56.789' AS ntext) <> CAST('2023-06-16 12:34:56.789' AS DATETIME) THEN 'Not Equal' ELSE 'Equal' END;
 GO
 ~~START~~
 varchar
-Equal
+Not Equal
 ~~END~~
 
 SELECT CASE WHEN CAST(CAST('2023-06-16 12:34:56.789' AS datetime) AS sql_variant) <> CAST('2023-06-16 12:34:56.789' AS DATETIME) THEN 'Not Equal' ELSE 'Equal' END;
@@ -10024,8 +10028,8 @@ GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 1#!#2023-06-16 14:30:20.123#!#2000-01-01 00:00:00.0#!#2023-06-17 14:30:20.123#!#2023#!#6#!#16#!#14#!#30#!#20#!#123
-2#!#2023-06-17 09:15:45.457#!#2000-01-01 00:00:00.0#!#2023-06-18 09:15:45.457#!#2023#!#6#!#17#!#9#!#15#!#45#!#456
-3#!#2023-06-18 18:45:30.79#!#2000-01-01 00:00:00.0#!#2023-06-19 18:45:30.79#!#2023#!#6#!#18#!#18#!#45#!#30#!#789
+2#!#2023-06-17 09:15:45.457#!#2000-01-01 00:00:00.0#!#2023-06-18 09:15:45.457#!#2023#!#6#!#17#!#9#!#15#!#45#!#457
+3#!#2023-06-18 18:45:30.79#!#2000-01-01 00:00:00.0#!#2023-06-19 18:45:30.79#!#2023#!#6#!#18#!#18#!#45#!#30#!#790
 ~~END~~
 
 

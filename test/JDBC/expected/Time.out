@@ -2767,12 +2767,12 @@ GO
 ~~START~~
 int#!#nvarchar#!#nvarchar#!#nvarchar#!#time#!#bit
 1#!#UNION#!#Implicit conversion in UNION#!#Multiple time types#!#15:45:30.1230000#!#1
-2#!#UNION ALL#!#Implicit conversion in UNION ALL#!#Multiple time types#!#12:34:56.7890000#!#1
+2#!#UNION ALL#!#Implicit conversion in UNION ALL#!#Multiple time types#!#12:34:56.7900000#!#1
 3#!#CASE#!#Implicit conversion in CASE#!#Multiple time types#!#15:45:30.1230000#!#1
-4#!#COALESCE#!#Implicit conversion in COALESCE#!#Multiple time types#!#12:34:56.7890000#!#1
+4#!#COALESCE#!#Implicit conversion in COALESCE#!#Multiple time types#!#12:34:56.7900000#!#1
 5#!#INTERSECT#!#Implicit conversion in INTERSECT#!#TIME and String#!#12:34:56.7890000#!#1
 6#!#EXCEPT#!#Implicit conversion in EXCEPT#!#TIME and String#!#12:34:56.7890000#!#1
-7#!#VALUES#!#Implicit conversion in VALUES#!#Multiple time types#!#12:34:56.7890000#!#1
+7#!#VALUES#!#Implicit conversion in VALUES#!#Multiple time types#!#12:34:56.7900000#!#1
 8#!#ISNULL#!#Implicit conversion in ISNULL#!#NULL and String#!#14:30:00.0000000#!#1
 9#!#TIME Formats#!#Different time format conversions#!#Various time formats#!#12:34:56.7890120#!#1
 10#!#TIME Edge Cases#!#Edge case time values#!#Edge time values#!#00:00:00.0000000#!#1
@@ -10259,11 +10259,11 @@ time#!#time#!#time
 09:30:00.0000000#!#10:30:00.0000000#!#07:30:00.0000000
 12:00:00.0000000#!#13:00:00.0000000#!#10:00:00.0000000
 13:30:00.0000000#!#14:30:00.0000000#!#11:30:00.0000000
-15:45:30.1234570#!#16:45:30.1234570#!#13:45:30.1234570
+15:45:30.1234570#!#16:45:30.1230000#!#13:45:30.1230000
 17:30:00.0000000#!#18:30:00.0000000#!#15:30:00.0000000
 18:15:00.0000000#!#19:15:00.0000000#!#16:15:00.0000000
 20:00:00.0000000#!#21:00:00.0000000#!#18:00:00.0000000
-21:30:45.9876540#!#22:30:45.9876540#!#19:30:45.9876540
+21:30:45.9876540#!#22:30:45.9870000#!#19:30:45.9870000
 22:45:00.0000000#!#23:45:00.0000000#!#20:45:00.0000000
 ~~END~~
 
