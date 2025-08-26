@@ -219,7 +219,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.initializeToDefaultDate = &initializeToDefaultDate;
 		common_utility_plugin_var.initializeToDefaultTime = &initializeToDefaultTime;
 		common_utility_plugin_var.roundoff_datetime = &roundoff_datetime;
-		common_utility_plugin_var.GetNumDaysHelper = &GetNumDaysHelper;
+		common_utility_plugin_var.UpdateToNextDayHelper = &UpdateToNextDayHelper;
 	}
 	return &common_utility_plugin_var;
 }

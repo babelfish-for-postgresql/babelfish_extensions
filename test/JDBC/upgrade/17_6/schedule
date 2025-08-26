@@ -561,7 +561,7 @@ babel_4328_datetime2
 translate
 substring
 babel_4328_datetimeoffset
-# babel_726 -- need to uncomment
+babel_726
 test_conv_string_to_date
 test_conv_string_to_datetime
 test_conv_string_to_datetime2

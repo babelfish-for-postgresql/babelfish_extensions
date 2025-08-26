@@ -99,5 +99,5 @@ typedef struct common_utility_plugin
 	DateADT		(*initializeToDefaultDate) (void);
 	TimeADT		(*initializeToDefaultTime) (int32 typmod);
 	Timestamp	(*roundoff_datetime) (Timestamp timestamp);
-	void		(*GetNumDaysHelper) (struct pg_tm *tm);
+	void		(*UpdateToNextDayHelper) (struct pg_tm *tm);
 } common_utility_plugin;

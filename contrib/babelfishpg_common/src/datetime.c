@@ -526,7 +526,7 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
  * based on hour, minute, second value 23:59:59
  */
 void
-GetNumDaysHelper(struct pg_tm *tm)
+UpdateToNextDayHelper(struct pg_tm *tm)
 {
 	tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
 	if (tm->tm_mday == DaycountInMonth[tm->tm_mon - 1] &&
@@ -567,7 +567,7 @@ handle_datetime_carry_over(struct pg_tm *tm, int *rounded_msec)
 				
 				if (tm->tm_hour == 24)
 				{
-					GetNumDaysHelper(tm);
+					UpdateToNextDayHelper(tm);
 				}
 			}
 		}
@@ -575,10 +575,8 @@ handle_datetime_carry_over(struct pg_tm *tm, int *rounded_msec)
 }
 
 /*
- * Apply datetime rounding
- * This implements the same logic as TdsTimeDifferenceDatetime
+ * Apply datetime rounding off logic 
  */
-
 Timestamp
 roundoff_datetime(Timestamp timestamp)
 {

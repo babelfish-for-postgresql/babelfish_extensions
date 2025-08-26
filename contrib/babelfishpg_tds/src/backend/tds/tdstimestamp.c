@@ -158,7 +158,7 @@ TdsTimeDifferenceSmalldatetime(Datum value, uint16 *numDays,
 	if (tm->tm_hour == 23 && tm->tm_min == 59 && tm->tm_sec == 59)
 	{
 		fsec = 0;
-		pltsql_plugin_handler_ptr->GetNumDaysHelper(tm);
+		pltsql_plugin_handler_ptr->UpdateToNextDayHelper(tm);
 		(*numDays)++;
 	}
 	else if ((tm->tm_sec == 29 && (fsec / 1000) > 998) || tm->tm_sec > 29)
@@ -200,7 +200,7 @@ TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
 		fsec == 999000)
 	{
 		msec = 0;
-		pltsql_plugin_handler_ptr->GetNumDaysHelper(tm);
+		pltsql_plugin_handler_ptr->UpdateToNextDayHelper(tm);
 		(*numDays)++;
 	}
 	else
@@ -242,6 +242,7 @@ TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
 				  tm->tm_sec) * 1000 + msec;
 
 	*numTicks = (int) (milliCount / tick) + extra_ticks;
+
 }
 
 /*

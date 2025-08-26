@@ -964,24 +964,10 @@ Datum getutcdate(PG_FUNCTION_ARGS)
 
 Datum getdate_internal(PG_FUNCTION_ARGS)
 {
-	Datum truncated_time;
-	Datum datetime_time;
-	Timestamp rounded_time;
-
-	/* First truncate to millisecond */
-	truncated_time = DirectFunctionCall2(timestamptz_trunc,
-									CStringGetTextDatum("millisecond"),
-									TimestampTzGetDatum(GetCurrentStatementStartTimestamp()));
-
-	/* Convert to datetime format */
-	datetime_time = DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime, 
-									truncated_time);
-
-	/* Round off the datetime */
-	rounded_time = (*common_utility_plugin_ptr->roundoff_datetime)(DatumGetTimestamp(datetime_time));
-
-	/* Return the rounded timestamp */
-	PG_RETURN_TIMESTAMP(rounded_time);	
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime, 
+						DirectFunctionCall2(timestamptz_trunc,CStringGetTextDatum("millisecond"),
+											TimestampTzGetDatum(GetCurrentStatementStartTimestamp()))));
+	
 }
 
 Datum sysdatetime(PG_FUNCTION_ARGS)
