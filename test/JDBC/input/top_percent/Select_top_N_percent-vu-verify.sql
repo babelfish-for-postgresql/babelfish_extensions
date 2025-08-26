@@ -36,17 +36,28 @@
  * | 29  | TOP PERCENT in VIEW                              | Dependent Objects   | Tests TOP PERCENT within VIEW definition      |
  * | 30  | TOP PERCENT in FUNCTION                          | Dependent Objects   | Tests TOP PERCENT in table-valued function    |
  * | 31  | TOP PERCENT in STORED PROCEDURE                  | Dependent Objects   | Tests TOP PERCENT in stored procedure         |
+ * | 32  | TOP PERCENT with FOR JSON AUTO                   | JSON Output         | Tests 50% with FOR JSON AUTO                  |
+ * | 33  | TOP PERCENT with FOR JSON PATH                   | JSON Output         | Tests 30% with FOR JSON PATH                  |
+ * | 34  | TOP PERCENT with FOR JSON INCLUDE_NULL_VALUES    | JSON Output         | Tests 33% with NULL handling in JSON          |
+ * | 35  | TOP PERCENT with UNION ALL                       | Set Operations      | Tests 30% and 50% with UNION ALL              |
+ * | 36  | TOP PERCENT with UNION                           | Set Operations      | Tests 40% and 60% with UNION (deduplication)  |
+ * | 37  | TOP PERCENT on outside of UNION                  | Set Operations      | Tests 20% applied to UNION result             |
+ * | 38  | TOP PERCENT with cross schema JOIN               | Cross Schema        | Tests 30% with cross-schema LEFT JOIN         |
+ * | 39  | TOP PERCENT with cross schema subquery           | Cross Schema        | Tests 40% with cross-schema subquery          |
+ * | 40  | TOP PERCENT with cross schema CTE                | Cross Schema        | Tests 50% with cross-schema CTE               |
+ * | 41  | UPDATE TOP N PERCENT                             | Error Case          | Should throw error - not supported            |
+ * | 42  | DELETE TOP N PERCENT                             | Error Case          | Should throw error - not supported            |
+ * | 43  | INSERT TOP N PERCENT                             | Error Case          | Should throw error - not supported            |
  */
 
--- Use the test database
-USE jira_babel_1358;
-GO
+-- Use the test schema
+-- Tables are in jira_babel_1358 schema
 
  -- Test Case 1: Basic TOP PERCENT
-SELECT COUNT(*) FROM (SELECT TOP 50 PERCENT * FROM test_percent_scores ORDER BY score DESC) AS t1;
+SELECT COUNT(*) FROM (SELECT TOP 50 PERCENT * FROM jira_babel_1358.test_percent_scores ORDER BY score DESC) AS t1;
 GO
 
-SELECT COUNT(*) FROM (SELECT TOP 0 PERCENT * FROM test_percent_scores ORDER BY score DESC) AS t2;
+SELECT COUNT(*) FROM (SELECT TOP 0 PERCENT * FROM jira_babel_1358.test_percent_scores ORDER BY score DESC) AS t2;
 GO
 
 -- Test Case 2: TOP PERCENT with ties
@@ -54,22 +65,22 @@ GO
 * It seems currently we don't support "with ties" and thus it will throw the error
 * Expected Output : should return 30% of records
 */
-SELECT COUNT(*) FROM (SELECT TOP 30 PERCENT WITH TIES * FROM test_percent_scores ORDER BY score DESC) AS t3;
+SELECT COUNT(*) FROM (SELECT TOP 30 PERCENT WITH TIES * FROM jira_babel_1358.test_percent_scores ORDER BY score DESC) AS t3;
 GO
 
 -- Test Case 3: TOP PERCENT with WHERE clause
-SELECT COUNT(*) FROM (SELECT TOP 25 PERCENT * FROM test_percent_scores WHERE class_name = 'Math' ORDER BY score DESC) AS t4;
+SELECT COUNT(*) FROM (SELECT TOP 25 PERCENT * FROM jira_babel_1358.test_percent_scores WHERE class_name = 'Math' ORDER BY score DESC) AS t4;
 GO
 
-SELECT COUNT(*) FROM (SELECT TOP 20.4 PERCENT * FROM test_percent_scores WHERE class_name = 'Math' ORDER BY score DESC) AS t5;
+SELECT COUNT(*) FROM (SELECT TOP 20.4 PERCENT * FROM jira_babel_1358.test_percent_scores WHERE class_name = 'Math' ORDER BY score DESC) AS t5;
 GO
 
 -- Test Case 4: TOP PERCENT with NULL values
-SELECT COUNT(*) FROM (SELECT TOP 40 PERCENT * FROM test_percent_scores WHERE class_name = 'Physics' ORDER BY score DESC) AS t6;
+SELECT COUNT(*) FROM (SELECT TOP 40 PERCENT * FROM jira_babel_1358.test_percent_scores WHERE class_name = 'Physics' ORDER BY score DESC) AS t6;
 GO
 
 -- Test Case 5: TOP PERCENT with money data type
-SELECT COUNT(*) FROM (SELECT TOP 50 PERCENT * FROM test_percent_sales ORDER BY revenue DESC) AS t7;
+SELECT COUNT(*) FROM (SELECT TOP 50 PERCENT * FROM jira_babel_1358.test_percent_sales ORDER BY revenue DESC) AS t7;
 GO
 
 -- Test Case 6: TOP PERCENT in subquery
@@ -77,7 +88,7 @@ SELECT COUNT(*) FROM (
     SELECT *
     FROM (
         SELECT TOP 50 PERCENT *
-        FROM test_percent_scores
+        FROM jira_babel_1358.test_percent_scores
         ORDER BY score DESC
     ) AS subq
     WHERE score > 90
@@ -85,13 +96,13 @@ SELECT COUNT(*) FROM (
 GO
 
 -- Test Case 7: TOP PERCENT with GROUP BY
-SELECT COUNT(*) FROM (SELECT TOP 50 PERCENT class_name, AVG(score) as avg_score FROM test_percent_scores
+SELECT COUNT(*) FROM (SELECT TOP 50 PERCENT class_name, AVG(score) as avg_score FROM jira_babel_1358.test_percent_scores
 GROUP BY class_name
 ORDER BY avg_score DESC) AS t9;
 GO
 
 -- Test Case 7a: TOP PERCENT with GROUP BY and HAVING clause
-SELECT COUNT(*) FROM (SELECT TOP 50 PERCENT class_name, AVG(score) as avg_score FROM test_percent_scores
+SELECT COUNT(*) FROM (SELECT TOP 50 PERCENT class_name, AVG(score) as avg_score FROM jira_babel_1358.test_percent_scores
 GROUP BY class_name
 HAVING AVG(score) > 80
 ORDER BY avg_score DESC) AS t10;
@@ -99,39 +110,39 @@ GO
 
 -- Test Case 8: TOP PERCENT with decimal percentage
 SELECT COUNT(*) FROM (SELECT TOP 33.33 PERCENT *
-FROM test_percent_scores
+FROM jira_babel_1358.test_percent_scores
 ORDER BY score DESC) AS t11;
 GO
 
 -- Test Case 9: TOP PERCENT with DISTINCT
 SELECT COUNT(*) FROM (SELECT DISTINCT TOP 50 PERCENT class_name
-FROM test_percent_scores
+FROM jira_babel_1358.test_percent_scores
 ORDER BY class_name) AS t12;
 GO
 
 -- Test Case 10: TOP PERCENT with JOIN
 SELECT COUNT(*) FROM (SELECT TOP 50 PERCENT s.student_name, s.score, t.revenue
-FROM test_percent_scores s
-LEFT JOIN test_percent_sales t ON s.id = t.id
+FROM jira_babel_1358.test_percent_scores s
+LEFT JOIN jira_babel_1358.test_percent_sales t ON s.id = t.id
 ORDER BY s.score DESC) AS t13;
 GO
 
 -- Test Case 11: TOP 100 PERCENT (should return all rows)
 SELECT COUNT(*) FROM (SELECT TOP 100 PERCENT *
-FROM test_percent_scores
+FROM jira_babel_1358.test_percent_scores
 ORDER BY score DESC) AS t14;
 GO
 
 -- Test Case 12: TOP 1 PERCENT (minimum count case)
-SELECT COUNT(*) FROM (SELECT TOP 1 PERCENT * FROM test_percent_scores ORDER BY score DESC) AS t15; 
+SELECT COUNT(*) FROM (SELECT TOP 1 PERCENT * FROM jira_babel_1358.test_percent_scores ORDER BY score DESC) AS t15; 
 GO
 
 -- Test Case 13: TOP 0 PERCENT (Extreme min count case)
-SELECT COUNT(*) FROM (SELECT TOP 0 PERCENT * FROM test_percent_scores ORDER BY score DESC) AS t16;
+SELECT COUNT(*) FROM (SELECT TOP 0 PERCENT * FROM jira_babel_1358.test_percent_scores ORDER BY score DESC) AS t16;
 GO
 
 -- Test Case 14: TOP 0.5 PERCENT (Extreme min decimal count case)
-SELECT COUNT(*) FROM (SELECT TOP 0.5 PERCENT * FROM test_percent_scores ORDER BY score DESC) AS t17;
+SELECT COUNT(*) FROM (SELECT TOP 0.5 PERCENT * FROM jira_babel_1358.test_percent_scores ORDER BY score DESC) AS t17;
 GO
 
 -- Test Case 15: TOP PERCENT with PIVOT
@@ -145,7 +156,7 @@ SELECT COUNT(*) FROM (
                    WHEN score >= 70 THEN 'C'
                    ELSE 'D'
                END as grade
-        FROM test_percent_scores
+        FROM jira_babel_1358.test_percent_scores
         WHERE score IS NOT NULL
     ) AS SourceTable
     PIVOT (
@@ -162,7 +173,7 @@ WITH QuarterlyRevenue AS (
            region,
            SUM(CASE WHEN quarter = 'Q1' THEN revenue ELSE 0 END) as Q1_Revenue,
            SUM(CASE WHEN quarter = 'Q2' THEN revenue ELSE 0 END) as Q2_Revenue
-    FROM test_percent_sales
+    FROM jira_babel_1358.test_percent_sales
     GROUP BY region
 )
 SELECT COUNT(*) FROM (
@@ -185,7 +196,7 @@ SELECT COUNT(*) FROM (
                class_name,
                ROW_NUMBER() OVER(PARTITION BY class_name ORDER BY score DESC) as rank_in_class,
                AVG(score) OVER(PARTITION BY class_name) as class_avg
-        FROM test_percent_scores
+        FROM jira_babel_1358.test_percent_scores
         WHERE score IS NOT NULL
         ORDER BY score DESC
     ) AS ranked_scores
@@ -200,7 +211,7 @@ WITH ClassStats AS (
         AVG(score) as avg_score,
         COUNT(*) as student_count,
         MAX(score) as max_score
-    FROM test_percent_scores
+    FROM jira_babel_1358.test_percent_scores
     WHERE score IS NOT NULL
     GROUP BY class_name
     ORDER BY AVG(score) DESC
@@ -224,13 +235,13 @@ SELECT COUNT(*) FROM (
     SELECT TOP 30 PERCENT c.class_name, c.avg_score, s.student_name, s.score
     FROM (
         SELECT class_name, AVG(score) as avg_score
-        FROM test_percent_scores
+        FROM jira_babel_1358.test_percent_scores
         WHERE score IS NOT NULL
         GROUP BY class_name
     ) c
     CROSS APPLY (
         SELECT TOP 2 student_name, score
-        FROM test_percent_scores s
+        FROM jira_babel_1358.test_percent_scores s
         WHERE s.class_name = c.class_name
         AND score IS NOT NULL
         ORDER BY score DESC
@@ -250,7 +261,7 @@ SELECT COUNT(*) FROM (
                AVG(score) OVER(PARTITION BY class_name) as class_avg,
                score - AVG(score) OVER(PARTITION BY class_name) as score_diff,
                DENSE_RANK() OVER(ORDER BY score DESC) as overall_rank
-        FROM test_percent_scores
+        FROM jira_babel_1358.test_percent_scores
         WHERE score IS NOT NULL
         ORDER BY score DESC
     ) sub
@@ -267,7 +278,7 @@ SELECT COUNT(*) FROM (
                score,
                class_name,
                NTILE(4) OVER(ORDER BY score DESC) as quartile
-        FROM test_percent_scores
+        FROM jira_babel_1358.test_percent_scores
         WHERE score IS NOT NULL
         ORDER BY score DESC
     ) sub
@@ -284,14 +295,14 @@ WITH RevenueAnalysis AS (
            revenue,
            SUM(revenue) OVER(PARTITION BY region) as total_region_revenue,
            SUM(revenue) OVER(PARTITION BY quarter) as total_quarter_revenue
-    FROM test_percent_sales
+    FROM jira_babel_1358.test_percent_sales
     WHERE revenue IS NOT NULL
     ORDER BY revenue DESC
 )
 SELECT COUNT(*) FROM (
     SELECT *
     FROM RevenueAnalysis
-    WHERE revenue > (SELECT AVG(revenue) FROM test_percent_sales WHERE revenue IS NOT NULL)
+    WHERE revenue > (SELECT AVG(revenue) FROM jira_babel_1358.test_percent_sales WHERE revenue IS NOT NULL)
 ) AS t25;
 GO
 
@@ -303,7 +314,7 @@ SELECT COUNT(*) FROM (
            class_name,
            SUM(score) OVER(PARTITION BY class_name ORDER BY score DESC) as running_total,
            COUNT(*) OVER(PARTITION BY class_name ORDER BY score DESC) as running_count
-    FROM test_percent_scores
+    FROM jira_babel_1358.test_percent_scores
     WHERE score IS NOT NULL
     ORDER BY class_name, score DESC
 ) AS t26;
@@ -317,15 +328,15 @@ SELECT COUNT(*) FROM (
            s.class_name,
            t.revenue as related_revenue,
            AVG(s.score) OVER(PARTITION BY s.class_name) as class_avg
-    FROM test_percent_scores s
-    LEFT JOIN test_percent_sales t ON t.id = s.id
+    FROM jira_babel_1358.test_percent_scores s
+    LEFT JOIN jira_babel_1358.test_percent_sales t ON t.id = s.id
     WHERE s.score IS NOT NULL
     ORDER BY s.score DESC, t.revenue DESC
 ) AS t27;
 GO
 
 -- Test Case 25: Performance test with large table
-select count(*) from ( SELECT TOP 10 PERCENT id FROM test_percent_sales_large );
+select count(*) from ( SELECT TOP 10 PERCENT product_name FROM jira_babel_1358.test_percent_sales_large );
 GO
 
 -- Test Case 26: Complex performance test with large table
@@ -336,7 +347,7 @@ SELECT COUNT(*) FROM (
            COUNT(*) as product_count,
            SUM(sales_amount) as total_sales,
            RANK() OVER(ORDER BY AVG(sales_amount) DESC) as category_rank
-    FROM test_percent_sales_large
+    FROM jira_babel_1358.test_percent_sales_large
     WHERE sales_amount > 200
     GROUP BY category
     HAVING COUNT(*) > 100
@@ -346,14 +357,13 @@ GO
 
 -- Test Case 27: TOP PERCENT with variables and reuse
 DECLARE @top_products TABLE (
-    id INT,
     product_name VARCHAR(20),
     sales_amount DECIMAL(10,2)
 );
 
 INSERT INTO @top_products
-SELECT TOP 5 PERCENT id, product_name, sales_amount 
-FROM test_percent_sales_large 
+SELECT TOP 5 PERCENT product_name, sales_amount 
+FROM jira_babel_1358.test_percent_sales_large 
 ORDER BY sales_amount DESC;
 
 SELECT COUNT(*) FROM @top_products;
@@ -363,7 +373,7 @@ GO
 DECLARE @percent_value FLOAT = 15.5;
 SELECT COUNT(*) FROM (
     SELECT TOP (@percent_value) PERCENT * 
-    FROM test_percent_sales_large 
+    FROM jira_babel_1358.test_percent_sales_large 
     WHERE category = 'Electronics'
     ORDER BY sales_amount DESC
 ) AS variable_percent_test;
@@ -376,13 +386,156 @@ GO
  */
 
 -- Test Case 28: TOP PERCENT in VIEW
-SELECT COUNT(*) FROM top_performers_view;
+SELECT COUNT(*) FROM jira_babel_1358.top_performers_view;
 GO
 
 -- Test Case 29: TOP PERCENT in FUNCTION
-SELECT COUNT(*) FROM get_top_sales(10.5);
+SELECT COUNT(*) FROM jira_babel_1358.get_top_sales(10.5);
 GO
 
 -- Test Case 30: TOP PERCENT in STORED PROCEDURE
-EXEC get_top_percent_by_category 'Electronics', 25.0;
+EXEC jira_babel_1358.get_top_percent_by_category 'Electronics', 25.0;
+GO
+
+
+/*
+ * ======================================================================================================================
+ *                                          ADDITIONAL COMPLEX Example TESTING
+ * ======================================================================================================================
+ */
+
+-- Test Case 31: Basic TOP PERCENT with FOR JSON AUTO
+SELECT TOP 50 PERCENT student_name
+FROM jira_babel_1358.test_percent_scores 
+ORDER BY score DESC
+FOR JSON AUTO;
+GO
+
+-- Test Case 32: TOP PERCENT with FOR JSON PATH
+SELECT TOP 30 PERCENT student_name, score, class_name
+FROM jira_babel_1358.test_percent_scores 
+WHERE score IS NOT NULL
+ORDER BY score DESC
+FOR JSON PATH;
+GO
+
+-- Test Case 33: TOP PERCENT with FOR JSON PATH and INCLUDE_NULL_VALUES
+SELECT TOP 33 PERCENT student_name, score, class_name
+FROM jira_babel_1358.test_percent_scores 
+ORDER BY id
+FOR JSON PATH, INCLUDE_NULL_VALUES;
+GO
+
+
+-- Test Case 34: TOP PERCENT with UNION ALL : 
+/*
+* will fail because of order by issue with subquery (known error)
+* BABEL-4313: Handle ORDER BY clause when inside subquery with UNION and TOP
+* The ORDER BY clause is invalid in views, inline functions, derived tables, 
+* subqueries, and common table expressions, unless TOP, OFFSET or FOR XML is also specified.
+*/
+SELECT COUNT(*) FROM (
+    SELECT TOP 30 student_name, score, class_name FROM jira_babel_1358.test_percent_scores WHERE class_name = 'Math' ORDER BY score DESC
+    UNION ALL
+    SELECT TOP 50 student_name, score, class_name FROM jira_babel_1358.test_percent_scores WHERE class_name = 'Physics' ORDER BY score DESC
+) AS t34;
+GO
+
+-- The above sql query passing without order by clause
+SELECT COUNT(*) FROM (
+    SELECT TOP 30 student_name, score, class_name FROM jira_babel_1358.test_percent_scores WHERE class_name = 'Math' 
+    UNION ALL
+    SELECT TOP 50 student_name, score, class_name FROM jira_babel_1358.test_percent_scores WHERE class_name = 'Physics'
+) AS t34;
+GO
+
+-- Test Case 35: TOP PERCENT with UNION (removes duplicates)
+SELECT COUNT(*) FROM (
+    SELECT TOP 40 PERCENT student_name, score FROM jira_babel_1358.test_percent_scores WHERE score > 80
+    UNION
+    SELECT TOP 60 PERCENT student_name, score FROM jira_babel_1358.test_percent_scores WHERE score < 90
+) AS t35;
+GO
+
+-- Test Case 36: TOP PERCENT on outside of UNION
+SELECT TOP 20 PERCENT * FROM (
+    SELECT student_name, score, class_name FROM jira_babel_1358.test_percent_scores WHERE class_name = 'Math'
+    UNION ALL
+    SELECT student_name, score, class_name FROM jira_babel_1358.test_percent_scores WHERE class_name = 'Physics'
+) AS union_result
+ORDER BY score DESC;
+GO
+
+
+/*
+ * ======================================================================================================================
+ *                                          CROSS SCHEMA TESTING WITH TOP PERCENT
+ * ======================================================================================================================
+ */
+
+-- Test Case 37: TOP PERCENT with cross schema JOIN
+SELECT COUNT(*) FROM (
+    SELECT TOP 30 PERCENT 
+           s.student_name, 
+           s.score, 
+           t.revenue
+    FROM jira_babel_1358.test_percent_scores s
+    LEFT JOIN test_schema2_jira_babel_1358.test_cross_sales t ON s.id = t.id
+    WHERE s.score IS NOT NULL
+    ORDER BY s.score DESC
+) AS t39;
+GO
+
+-- Test Case 38: TOP PERCENT with cross schema subquery
+SELECT COUNT(*) FROM (
+    SELECT TOP 40 PERCENT *
+    FROM jira_babel_1358.test_percent_scores s
+    WHERE s.score > (
+        SELECT AVG(revenue) 
+        FROM test_schema2_jira_babel_1358.test_cross_sales 
+        WHERE revenue IS NOT NULL
+    )
+    ORDER BY s.score DESC
+) AS t41;
+GO
+
+-- Test Case 39: TOP PERCENT with cross schema CTE
+WITH CrossSchemaData AS (
+    SELECT TOP 50 PERCENT 
+           s.student_name,
+           s.score,
+           (SELECT COUNT(*) FROM test_schema2_jira_babel_1358.test_cross_sales WHERE revenue > s.score) as higher_revenue_count
+    FROM jira_babel_1358.test_percent_scores s
+    WHERE s.score IS NOT NULL
+    ORDER BY s.score DESC
+)
+SELECT COUNT(*) FROM CrossSchemaData WHERE higher_revenue_count > 0;
+GO
+
+
+/*
+ * ======================================================================================================================
+ *                                          Update/Delete/Insert TOP N PERCENT ..
+ *                                  Currently, we are not supporting top N Percent for other DMLs
+ *                              Creates BABEL-6059 to track support for TOP N PERCENT for others DMLs
+ * ======================================================================================================================
+ */
+
+-- Test Case 40: UPDATE TOP N PERCENT (will throw error)
+UPDATE TOP (30) PERCENT jira_babel_1358.test_percent_scores 
+SET score = score + 5 
+WHERE score IS NOT NULL;
+GO
+
+-- Test Case 41: DELETE TOP N PERCENT (will throw error)
+DELETE TOP (20) PERCENT FROM jira_babel_1358.test_percent_scores 
+WHERE score < 80;
+GO
+
+-- Test Case 42: INSERT TOP N PERCENT (will throw error)
+INSERT TOP (50) PERCENT INTO jira_babel_1358.test_percent_scores (id, student_name, score, class_name, year)
+SELECT id + 200, 'New_' + student_name, score, class_name, 2024
+FROM jira_babel_1358.test_percent_scores
+WHERE score IS NOT NULL
+ORDER BY score DESC;
 GO
