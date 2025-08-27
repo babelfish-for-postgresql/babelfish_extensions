@@ -48,6 +48,9 @@ extern char* datetypeName(int num);
 extern bool int64_multiply_add(int64 val, int64 multiplier, int64 *sum);
 extern bool int32_multiply_add(int32 val, int32 multiplier, int32 *sum);
 
+extern Timestamp roundoff_datetime(Timestamp timestamp);
+extern void UpdateToNextDayHelper(struct pg_tm *tm);
+
 /* Range-check a datetime */
 #define IS_VALID_DATETIME(t)  (MIN_DATETIME <= (t) && (t) < END_DATETIME)
 

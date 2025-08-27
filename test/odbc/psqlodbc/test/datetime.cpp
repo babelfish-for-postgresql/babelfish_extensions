@@ -102,7 +102,7 @@ TEST_F(PSQL_Datatypes_Datetime, Update_Success) {
   };
 
   const vector<string> EXPECTED_UPDATED_VALUES = {
-    "1900-01-31 12:59:59.999", // standard value
+    "1900-01-31 13:00:00", // standard value (rounded from 12:59:59.999)
     "9999-12-31 23:59:59.997", // max value
     "1753-01-01 00:00:00", // min value
     "1900-01-01 00:00:00" // blank value
