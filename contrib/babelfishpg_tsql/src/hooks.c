@@ -1509,6 +1509,10 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return pre_transform_qual;
 
+	/*
+	 * Note: The error will not be thrown if the percentage is 100,
+	 * as TOP 100 PERCENT is equivalent to no TOP clause.
+	 */
 	if(stmt->isPercent)
 	{
 		ereport(ERROR,
@@ -1594,6 +1598,10 @@ post_transform_delete(ParseState *pstate, DeleteStmt *stmt, Query *query)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+	/*
+	 * Note: The error will not be thrown if the percentage is 100,
+	 * as TOP 100 PERCENT is equivalent to no TOP clause.
+	 */
 	if(stmt->isPercent)
 	{
 		ereport(ERROR,
@@ -3507,6 +3515,10 @@ pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+	/*
+	 * Note: The error will not be thrown if the percentage is 100,
+	 * as TOP 100 PERCENT is equivalent to no TOP clause.
+	 */
 	if(stmt->isPercent)
 	{
 		ereport(ERROR,

@@ -3769,17 +3769,51 @@ tsql_top_clause:
 				}
 			| TSQL_TOP '(' a_expr ')' TSQL_PERCENT
 				{
-					TopClause *n = makeNode(TopClause);
-					n->limitCount = $3;
-					n->isPercent = true;
-					$$ = (Node *)n;
+					if (IsA($3, A_Const))
+					{
+						A_Const* n = (A_Const *)$3;
+						if(IsA(&n->val, Integer) && n->val.ival.ival == 100)
+						{
+								$$ = NULL;
+						}
+						else if(IsA(&n->val, Float) && atof(n->val.fval.fval) == 100.0)
+						{
+								$$ = NULL;
+						}
+						else
+						{
+							TopClause *n = makeNode(TopClause);
+							n->limitCount = $3;
+							n->isPercent = true;
+							$$ = (Node *)n;
+						}
+					}
+					else
+					{
+						TopClause *n = makeNode(TopClause);
+						n->limitCount = $3;
+						n->isPercent = true;
+						$$ = (Node *)n;
+					}
 				}
 			| TSQL_TOP I_or_F_const TSQL_PERCENT
 				{
-					TopClause *n = makeNode(TopClause);
-					n->limitCount = $2;
-					n->isPercent = true;
-					$$ = (Node *)n;
+					A_Const* n = (A_Const *)$2;
+					if(IsA(&n->val, Integer) && n->val.ival.ival == 100)
+					{
+							$$ = NULL;
+					}
+					else if(IsA(&n->val, Float) && atof(n->val.fval.fval) == 100.0)
+					{
+							$$ = NULL;
+					}
+					else
+					{
+						TopClause *n = makeNode(TopClause);
+						n->limitCount = $2;
+						n->isPercent = true;
+						$$ = (Node *)n;
+					}
 				}
 		;
 
