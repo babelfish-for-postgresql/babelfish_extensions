@@ -604,3 +604,9 @@ ignore#!#money_aggregate-before-17_6-or-16_10-vu-cleanup
 ignore#!#money_smallmoney_bit_dep_obj_before_17_6-vu-prepare
 ignore#!#money_smallmoney_bit_dep_obj_before_17_6-vu-verify
 ignore#!#money_smallmoney_bit_dep_obj_before_17_6-vu-cleanup
+ignore#!#babel_726-before-16_10-or-17_6-vu-prepare
+ignore#!#babel_726-before-16_10-or-17_6-vu-verify
+ignore#!#babel_726-before-16_10-or-17_6-vu-cleanup
+ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-prepare
+ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-verify
+ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-cleanup
