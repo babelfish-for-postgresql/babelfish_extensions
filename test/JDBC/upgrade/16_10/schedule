@@ -638,3 +638,4 @@ weak-binding
 babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper
 babel_numeric_smallmoney_oper
+datetime_roundoff
