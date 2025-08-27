@@ -1682,7 +1682,7 @@ begin
             RETURN 0;
 end
 $body$
-language 'plpgsql' STABLE;
+language 'plpgsql' IMMUTABLE PARALLEL SAFE;
 
 create or replace function sys.isdate(IN v sys.varchar)
 returns integer
@@ -1702,7 +1702,7 @@ begin
     RETURN 0;
 end
 $body$
-language 'plpgsql' STABLE;
+language 'plpgsql' IMMUTABLE PARALLEL SAFE;
 
 create or replace function sys.isdate(v text)
 returns integer as
@@ -1714,7 +1714,7 @@ begin
     return 0;
 end;
 $body$
-language plpgsql stable;
+language plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.is_collated_ci_as_internal(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ci_as_internal'
