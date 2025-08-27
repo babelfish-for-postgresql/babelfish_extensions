@@ -536,7 +536,6 @@ int
 1
 ~~END~~
 
--- UDT tests
 declare @isdat_out3 smalldatetime = '2016-12-26 23:30:05.52';
 select isdate(@isdat_out3);
 go
@@ -545,20 +544,19 @@ int
 1
 ~~END~~
 
+-- UDT tests
 create type isdate_udt from datetime not null;
+go
 declare @isdat_out4 isdate_udt = '2016-12-26 23:30:05.52';
 select isdate(@isdat_out4);
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: type "isdate_udt" does not exist)~~
+~~START~~
+int
+1
+~~END~~
 
 drop type isdate_udt;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: type "isdate_udt" does not exist)~~
-
 -- test DATEFROMPARTS function
 -- test valid arguments
 select datefromparts(2020,12,31);

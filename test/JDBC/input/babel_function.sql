@@ -209,11 +209,12 @@ go
 declare @isdat_out2 datetime = '2016-12-26 23:30:05.52';
 select isdate(@isdat_out2);
 go
--- UDT tests
 declare @isdat_out3 smalldatetime = '2016-12-26 23:30:05.52';
 select isdate(@isdat_out3);
 go
+-- UDT tests
 create type isdate_udt from datetime not null;
+go
 declare @isdat_out4 isdate_udt = '2016-12-26 23:30:05.52';
 select isdate(@isdat_out4);
 go

@@ -86,7 +86,7 @@ begin
             RETURN 0;
 end
 $body$
-language 'plpgsql' STABLE;
+language 'plpgsql' IMMUTABLE PARALLEL SAFE;
 
 create or replace function sys.isdate(IN v sys.varchar)
 returns integer
@@ -106,7 +106,7 @@ begin
     RETURN 0;
 end
 $body$
-language 'plpgsql' STABLE;
+language 'plpgsql' IMMUTABLE PARALLEL SAFE;
 
 create or replace function sys.isdate(v text)
 returns integer as
@@ -118,7 +118,7 @@ begin
     return 0;
 end;
 $body$
-language plpgsql stable;
+language plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate TEXT) RETURNS DATETIME
 AS
