@@ -5500,6 +5500,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->datefirst = pltsql_datefirst;
 		(*pltsql_protocol_plugin_ptr)->lock_timeout = pltsql_lock_timeout;
 		(*pltsql_protocol_plugin_ptr)->language = pltsql_language;
+		(*pltsql_protocol_plugin_ptr)->UpdateToNextDayHelper = common_utility_plugin_ptr->UpdateToNextDayHelper;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
