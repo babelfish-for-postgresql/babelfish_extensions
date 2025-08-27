@@ -115,7 +115,7 @@ select coalesce(a4, a3) from babel_726_t1
 GO
 ~~START~~
 datetime2
-2000-02-28 23:59:59.9900000
+2000-02-28 23:59:59.9890000
 ~~END~~
 
 

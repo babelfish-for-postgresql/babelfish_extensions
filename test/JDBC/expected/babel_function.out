@@ -1418,21 +1418,21 @@ select datediff(millisecond, CAST('2036-02-28 01:23:45.234'AS sys.datetime), CAS
 GO
 ~~START~~
 int
--111
+-110
 ~~END~~
 
 select datediff(microsecond, CAST('2036-02-28 01:23:45.234'AS sys.datetime), CAST('2036-02-28 01:23:45.123'AS sys.datetime));
 GO
 ~~START~~
 int
--111000
+-110000
 ~~END~~
 
 select datediff(nanosecond, CAST('2036-02-28 01:23:45.234'AS sys.datetime), CAST('2036-02-28 01:23:45.123'AS sys.datetime));
 GO
 ~~START~~
 int
--111000000
+-110000000
 ~~END~~
 
 -- test different types of date/time arguments
