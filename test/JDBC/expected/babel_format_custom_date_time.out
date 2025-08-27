@@ -89,7 +89,7 @@ SELECT FORMAT(@curr_datetime4, 'dd, MM, y yy yyy yyyy yyyyy, ffffff  gg h hh H H
 GO
 ~~START~~
 nvarchar
-01, 01, 53 53 753 1753 01753, 456000  A.D. 12 12 0 00 0 00 0 00 AM AM
+01, 01, 53 53 753 1753 01753, 457000  A.D. 12 12 0 00 0 00 0 00 AM AM
 ~~END~~
 
 
