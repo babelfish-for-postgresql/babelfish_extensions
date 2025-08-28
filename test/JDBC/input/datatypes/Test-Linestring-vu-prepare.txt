@@ -232,7 +232,35 @@ INSERT INTO GeoVarcharAsgeometryline (geometryData) VALUES (CAST(CAST(geometry::
 INSERT INTO GeoVarcharAsgeometryline (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('LINESTRING(-3 2, -1 7, -2 3)', 4326) AS VARCHAR(500)) AS geometry));
 INSERT INTO GeoVarcharAsgeometryline (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('LINESTRING EMPTY', 4326) AS VARCHAR(500)) AS geometry));
 
+CREATE TABLE geometryToBytealine (ID INT PRIMARY KEY, geo_line geometry );
 
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (1, geometry::STGeomFromText('LINESTRING(3 5, 2 4)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (2, geometry::STGeomFromText('LINESTRING(1 3, 5 7, 4 5 NULL NULL)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (3, geometry::STGeomFromText('LINESTRING(4 5, 1 1, 2 2, 3 3, 4 4, 5 5, 6 6, 7 7, 8 8, 9 9, 10 10)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (4, geometry::STGeomFromText('LINESTRING(2 -3, 4 -1, 3 -2 NULL, 4 6 , 3 6)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (5, geometry::STGeomFromText('LINESTRING(3 5 4, 2 4 7)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (6, geometry::STGeomFromText('LINESTRING(1 3 2, 5 7 6 , 4 5)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (7, geometry::STGeomFromText('LINESTRING(4 5, 1 1 3, 2 2 5, 3 3 2, 4 4 4, 5 5, 6 6 NULL , 7 7 NULL NULL , 8 8, 9 9 4 NULL, 10 10)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (8, geometry::STGeomFromText('LINESTRING(2 -3 -5, 4 -1, 3 -2  5 NULL, 4 6 , 3 6)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (9, geometry::STGeomFromText('LINESTRING(3 5  NULL 4, 2 4 )', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (10, geometry::STGeomFromText('LINESTRING(1 3 NULL 3, 5 7 NULL 5 , 4 5)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (11, geometry::STGeomFromText('LINESTRING(4 5, 1 1 NULL 4, 2 2  NULL 5, 3 3 NULL 2, 4 4 , 5 5, 6 6 NULL 8 , 7 7 NULL 9 , 8 8, 9 9 , 10 10 NULL 4)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (12, geometry::STGeomFromText('LINESTRING(2 -3 NULL -5, 4 -1, 3 -2  NULL, 4 6 , 3 6 NULL NULL)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (13, geometry::STGeomFromText('LINESTRING(3 5 4 5, 2 4 7 2)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (14, geometry::STGeomFromText('LINESTRING(1 3 NULL 7, 5 7 6 NULL , 4 5 2 6)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (15, geometry::STGeomFromText('LINESTRING(4 5 2 5, 1 1 3, 2 2 5, 3 3 2 NULL , 4 4 NULL 4, 5 5, 6 6 NULL 5 , 7 7 NULL NULL , 8 8, 9 9 4 NULL, 10 10 4 6)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (16, geometry::STGeomFromText('LINESTRING(2 -3 -5 -10, 4 -1, 3 -2  5 NULL, 4 6 3 5, 3 6)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (17, geometry::STGeomFromText('LINESTRING(3 5 5, 2 4 NULL 2)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (18, geometry::STGeomFromText('LINESTRING(1 3 NULL 7, 5 7 6 NULL , 4 5 2 NULL)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (19, geometry::STGeomFromText('LINESTRING(4 5 2, 1 1 3, 2 2 5, 3 3 2 NULL , 4 4 NULL 4, 5 5, 6 6 NULL 5 , 7 7 NULL NULL , 8 8, 9 9 4 NULL, 10 10 4)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (20, geometry::STGeomFromText('LINESTRING(2 -3 -10, 4 -1, 3 -2  NULL 4, 4 6 5, 3 6)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (21, geometry::STGeomFromText('LINESTRING(1 2, 3 5, 6 4)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (22, geometry::STGeomFromText('LINESTRING(-1 -2, -3 -4)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (23, geometry::STGeomFromText('LINESTRING(5 3, 4.5 2, 3 1)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (24, geometry::STGeomFromText('LINESTRING(1 2, 3 7)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (25, geometry::STGeomFromText('LINESTRING(0 1, 2 5, 4 6)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (26, geometry::STGeomFromText('LINESTRING(-3 2, -1 7, -2 3)', 4326));
+INSERT INTO geometryToBytealine (ID, geo_line) VALUES (27, geometry::STGeomFromText('LINESTRING EMPTY', 4326));
 
 # geography Test Cases
 
@@ -470,3 +498,33 @@ INSERT INTO GeoVarcharAsgeographyline (geographyData) VALUES (CAST(CAST(geograph
 INSERT INTO GeoVarcharAsgeographyline (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('LINESTRING(0 1, 2 5, 4 6)', 4326) AS VARCHAR(500)) AS geography));
 INSERT INTO GeoVarcharAsgeographyline (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('LINESTRING(-3 2, -1 7, -2 3)', 4326) AS VARCHAR(500)) AS geography));
 INSERT INTO GeoVarcharAsgeographyline (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('LINESTRING EMPTY', 4326) AS VARCHAR(500)) AS geography));
+
+CREATE TABLE geographyToBytealine (ID INT PRIMARY KEY, geo_line geography );
+
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (1, geography::STGeomFromText('LINESTRING(3 5, 2 4)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (2, geography::STGeomFromText('LINESTRING(1 3, 5 7, 4 5 NULL NULL)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (3, geography::STGeomFromText('LINESTRING(4 5, 1 1, 2 2, 3 3, 4 4, 5 5, 6 6, 7 7, 8 8, 9 9, 10 10)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (4, geography::STGeomFromText('LINESTRING(2 -3, 4 -1, 3 -2 NULL, 4 6 , 3 6)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (5, geography::STGeomFromText('LINESTRING(3 5 4, 2 4 7)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (6, geography::STGeomFromText('LINESTRING(1 3 2, 5 7 6 , 4 5)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (7, geography::STGeomFromText('LINESTRING(4 5, 1 1 3, 2 2 5, 3 3 2, 4 4 4, 5 5, 6 6 NULL , 7 7 NULL NULL , 8 8, 9 9 4 NULL, 10 10)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (8, geography::STGeomFromText('LINESTRING(2 -3 -5, 4 -1, 3 -2  5 NULL, 4 6 , 3 6)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (9, geography::STGeomFromText('LINESTRING(3 5  NULL 4, 2 4 )', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (10, geography::STGeomFromText('LINESTRING(1 3 NULL 3, 5 7 NULL 5 , 4 5)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (11, geography::STGeomFromText('LINESTRING(4 5, 1 1 NULL 4, 2 2  NULL 5, 3 3 NULL 2, 4 4 , 5 5, 6 6 NULL 8 , 7 7 NULL 9 , 8 8, 9 9 , 10 10 NULL 4)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (12, geography::STGeomFromText('LINESTRING(2 -3 NULL -5, 4 -1, 3 -2  NULL, 4 6 , 3 6 NULL NULL)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (13, geography::STGeomFromText('LINESTRING(3 5 4 5, 2 4 7 2)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (14, geography::STGeomFromText('LINESTRING(1 3 NULL 7, 5 7 6 NULL , 4 5 2 6)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (15, geography::STGeomFromText('LINESTRING(4 5 2 5, 1 1 3, 2 2 5, 3 3 2 NULL , 4 4 NULL 4, 5 5, 6 6 NULL 5 , 7 7 NULL NULL , 8 8, 9 9 4 NULL, 10 10 4 6)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (16, geography::STGeomFromText('LINESTRING(2 -3 -5 -10, 4 -1, 3 -2  5 NULL, 4 6 3 5, 3 6)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (17, geography::STGeomFromText('LINESTRING(3 5 5, 2 4 NULL 2)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (18, geography::STGeomFromText('LINESTRING(1 3 NULL 7, 5 7 6 NULL , 4 5 2 NULL)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (19, geography::STGeomFromText('LINESTRING(4 5 2, 1 1 3, 2 2 5, 3 3 2 NULL , 4 4 NULL 4, 5 5, 6 6 NULL 5 , 7 7 NULL NULL , 8 8, 9 9 4 NULL, 10 10 4)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (20, geography::STGeomFromText('LINESTRING(2 -3 -10, 4 -1, 3 -2  NULL 4, 4 6 5, 3 6)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (21, geography::STGeomFromText('LINESTRING(1 2, 3 5, 6 4)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (22, geography::STGeomFromText('LINESTRING(-1 -2, -3 -4)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (23, geography::STGeomFromText('LINESTRING(5 3, 4.5 2, 3 1)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (24, geography::STGeomFromText('LINESTRING(1 2, 3 7)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (25, geography::STGeomFromText('LINESTRING(0 1, 2 5, 4 6)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (26, geography::STGeomFromText('LINESTRING(-3 2, -1 7, -2 3)', 4326));
+INSERT INTO geographyToBytealine (ID, geo_line) VALUES (27, geography::STGeomFromText('LINESTRING EMPTY', 4326));

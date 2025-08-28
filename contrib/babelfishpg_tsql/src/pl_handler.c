@@ -5712,6 +5712,8 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->lock_timeout = pltsql_lock_timeout;
 		(*pltsql_protocol_plugin_ptr)->language = pltsql_language;
 		(*pltsql_protocol_plugin_ptr)->UpdateToNextDayHelper = common_utility_plugin_ptr->UpdateToNextDayHelper;
+		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geometry = common_utility_plugin_ptr->bytea_from_geometry;
+		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geography = common_utility_plugin_ptr->bytea_from_geography;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);

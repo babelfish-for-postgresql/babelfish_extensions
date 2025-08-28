@@ -117,6 +117,13 @@ GO
 SELECT ID, GeographyData FROM GeoVarcharAsgeographyline ORDER BY ID;
 GO
 
+-- Test CAST ( Geometry/Geography As  Bytea )
+SELECT ID, CAST(geo_line AS VARBINARY(500) ) AS bytea_line FROM geometryToBytealine;
+GO
+
+SELECT ID,  CAST(geo_line AS VARBINARY(500)  ) AS bytea_line FROM geographyToBytealine;
+GO
+
 SELECT * FROM GEOSPATIALLINEGEOM_dt;
 go
 

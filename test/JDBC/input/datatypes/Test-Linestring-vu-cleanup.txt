@@ -60,6 +60,8 @@ DROP VIEW equals_opgeomlinesr
 
 DROP VIEW notequal_opgeomlinesr
 
+DROP TABLE  geometryToBytealine
+
 
 DROP VIEW DimOfgeographyline
 
@@ -105,6 +107,7 @@ DROP VIEW equals_opgeoglinesr
 
 DROP VIEW notequal_opgeoglinesr
 
+DROP TABLE  geographyToBytealine
 
 DROP TABLE geospatialpointgeom_linesr
 

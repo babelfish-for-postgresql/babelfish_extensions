@@ -117,19 +117,6 @@ EMPTY_COORD[] = {
     0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0xff
 };
-/* NAN format used by TSQL */
-static const uint8 
-SPECIFIC_NAN[8] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0xff
-};
-
-/* Linestring instances containing more than 2 points have trailing metadata of 22 bytes */
-static const uint8 
-line_end_metadata[] = {
-    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-    0x00, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
-    0xff, 0x00, 0x00, 0x00, 0x00, 0x02
-};
 
 #define GetPgOid(pgTypeOid, finfo) \
 do { \
@@ -182,7 +169,6 @@ const char *GetMsgBytes(StringInfo msg, int datalen);
 unsigned int GetMsgInt(StringInfo msg, int b);
 int64		GetMsgInt64(StringInfo msg);
 uint128		GetMsgUInt128(StringInfo msg);
-static int32_t get_srid(uint8_t *id);
 float4		GetMsgFloat4(StringInfo msg);
 float8		GetMsgFloat8(StringInfo msg);
 static void SwapData(StringInfo buf, int st, int end);
@@ -232,27 +218,6 @@ typedef struct FunctionCacheByTdsIdEntry
 	FunctionCacheByTdsIdKey key;
 	TdsIoFunctionData data;
 } FunctionCacheByTdsIdEntry;
-
-/*
- * This is a modified copy of a function from POSTGIS to get SRID from GSERIALIZED struct
- */
-static int32_t
-get_srid(uint8_t *id)
-{
-	int32_t srid = 0;
-	srid = srid | (id[0] << 16);
-	srid = srid | (id[1] << 8);
-	srid = srid | (id[2]);
-	/* Only the first 21 bits are set. Slide up and back to pull
-	   the negative bits down, if we need them. */
-	srid = (srid<<11)>>11;
-
-	/* 0 is our internal unknown value. We'll map back and forth here for now */
-	if (srid == 0)
-		return 0;
-	else
-		return srid;
-}
 
 /* Helper function to write a 32-bit integer to a buffer and advance the pointer */
 static inline void 
@@ -4411,308 +4376,38 @@ int
 TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr)
 {
     int         rc = EOF,
-                npoints,
                 len = 0,                /* number of bytes used to store the string. */
-                pointSize,
-                hasZ,
-                hasM,
-                hasBBox,
-                stride = 0,
-                dataoffset = 0,
                 actualLen;              /* Number of bytes that would be needed to
                                          * store given string in given encoding. */
 
     char        *destBuf,
-                *src = NULL,
                 *buf = NULL;
-    uint32_t    geom_type;
-    int32_t     srid;
-    unsigned char *itr;
-    bool        isValid = false;
-    double      firstX = 0.0,
-                firstY = 0.0;
-				
+    Datum       bytea_datum;
+    bytea       *bytea_result;
     TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
-    GSERIALIZED *gser = (GSERIALIZED *)PG_DETOAST_DATUM(value);    /* Used to Store the bytes in the Format which is stored in PostGIS */
 
-    /* Get SRID (Spatial Reference ID) from the PostGIS object */
-    srid = get_srid(gser->srid);
-
-    /* Check for Z (elevation), M (measure) dimensions  and bounding box */
-    hasZ = (gser->gflags & FLAG_Z) ? 1 : 0;
-    hasM = (gser->gflags & FLAG_M) ? 1 : 0;
-    hasBBox = (gser->gflags & FLAG_BBOX) ? 1 : 0;
-
-    /* 
-     * A bounding box (bbox) is a rectangular container that completely encompasses a geometric object or a set of objects. 
-     * It is defined by its minimum and maximum coordinates in each dimension.
-     */
-    if (hasBBox)
-    {
-        /* For a 2D geometry : bbox has min x, max x, min y, max y each in 4 byte format totalling 16 bytes */
-        dataoffset = 16;
-        
-        /* If hasZ or hasM, add 8 bytes offset for min z / min m , max z / max m  */
-        if (hasZ)
-            dataoffset += 8;
-        if (hasM)
-            dataoffset += 8;
-    }
-
-    /* Whenever bbox is present the gser->data starts with bbox coordinates followed by geom_type */
-
-    /* Extract geometry type from the PostGIS object, if bbox is absent then dataoffset remains 0 as initialized */
-    geom_type = *((uint32_t *)(gser->data + dataoffset));
-
-    /* Get number of points in the geometry */
-    npoints = *((int *)((char*)gser->data + NPOINTS_OFFSET + dataoffset));
-
-    /* Currently only POINT and LINESTRING geometries are supported */
-    if (geom_type != POINTTYPE && geom_type != LINETYPE)
-    {
-        elog(ERROR, "Unsupported geometry type");
-    }
-
-    /* Handle EMPTY GEOMETRY case (no points) */
-    if (npoints == 0) 
-    {
-        /* Fixed length for expected output */
-        len = EMPTY_GEOMETRY_LENGTH;
-        buf = (char *) palloc0(len);
-        itr = (unsigned char *)buf;
-
-        /* Set SRID in the first 4 bytes */
-        *((int32_t*)buf) = srid;
-        itr = (unsigned char *)buf + SRID_OFFSET;
-
-        /* Set geometry type indicator: 5th byte */
-        *itr = GEOMETRY_INDICATOR;
-        itr++;
-
-        /* Set empty indicator: 6th byte */
-        *itr = EMPTY_INDICATOR;
-        itr++;
-
-        /* Write number of points */
-        write_int32(&itr, 0);
-
-        /* Write number of figures */
-        write_int32(&itr, 0);
-
-        /* Write number of shapes */
-        write_int32(&itr, SHAPE_COUNT_EMPTY);
-
-        /* Write figure index */
-        write_int32(&itr, EMPTY_FIGURE_INDEX);
-
-        /* Write shape index */
-        write_int32(&itr, EMPTY_SHAPE_INDEX);
-
-        /* Set final byte for POINT EMPTY (0x01) */
-        if (geom_type == POINTTYPE)
-            *itr = POINTTYPE;
-        /* Set final byte for LINESTRING EMPTY (0x02) */
-        else if (geom_type == LINETYPE)
-            *itr = LINETYPE;
-
-    }
+    LOCAL_FCINFO(fcinfo, 1);
+    InitFunctionCallInfoData(*fcinfo, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo->args[0].value = value;
+    fcinfo->args[0].isnull = false;
+    
+    if (TdsInstr == (int)INSTR_TDS_DATATYPE_GEOMETRY)
+        bytea_datum = pltsql_plugin_handler_ptr->sql_bytea_from_geometry(fcinfo);
     else
-    {
-        /* Handle non-empty POINT and LINESTRING geometry */
+        bytea_datum = pltsql_plugin_handler_ptr->sql_bytea_from_geography(fcinfo);
 
-        /*
-         * Calculate buffer length:
-         * pointSize * (No. of Points) + HEADER_SIZE
-         * pointSize -> COORD_SIZE * 2( for X and Y) + COORD_SIZE(if Z exists) + COORD_SIZE_M(if M exists)
-         * HEADER_SIZE -> 4 Byte SRID + 2 Byte Geometry Type
-         */
-        pointSize = COORD_SIZE * 2; /* Base size for X,Y coordinates */
-
-        /* Add Z coordinate size if present */
-        if (hasZ)
-            pointSize += COORD_SIZE;
-
-        /* Add M coordinate size if present */	
-        if (hasM)
-            pointSize += COORD_SIZE;
- 
-        /* 
-         * Calculate buffer size based on number of points:
-         * - For upto 2 points: coordinates + 6 bytes header
-         * - For greater than 2 points: coordinates + 6 bytes header + 4 bytes no. of points + 22 bytes metadata
-         */
-        if (npoints <= 2)
-            len = npoints * pointSize + HEADER_SIZE;
-        else /* npoints > 2 */
-            len = npoints * pointSize + HEADER_SIZE + NPOINTS_SIZE + GEOM_METADATA_SIZE;
-
-        /* Allocate memory for the buffer and initialize with zeros */
-        buf = (char *) palloc0(len);
-
-        /* Set SRID in the first 4 bytes */
-        *((int32_t*)buf) = srid;
-        itr = (unsigned char *)buf + SRID_OFFSET;
-
-        switch(geom_type)
-        {
-            case POINTTYPE:
-                /* Set point type indicator */
-                *itr = GEOMETRY_INDICATOR;
-                itr++;
-
-                /* 
-                 * Set the geometry type byte based on dimensions:
-                 * 01 0F for 3D Point with M (XYZM) -> 15
-                 * 01 0E for 2D Point with M (XYM) -> 14
-                 * 01 0D for 3D Point (XYZ) -> 13
-                 * 01 0C for 2D Point (XY) -> 12
-                 */
-                if (hasZ && hasM)
-                    *itr = POINT_TYPE_XYZM;
-                else if (hasM)
-                    *itr = POINT_TYPE_XYM;
-                else if (hasZ)
-                    *itr = POINT_TYPE_XYZ;
-                else
-                    *itr = POINT_TYPE_XY;
-                itr++;
-
-                /* Copy coordinate data */
-                memcpy(itr, (char *)gser->data + 8, len - 6);
-                break;
-
-            case LINETYPE:              
-                /* 
-                 * The PostGIS structure stores coordinate data in X1 Y1 Z1 M1 , X2 Y2 Z2 M2,.... format (each point together)
-                 * but TSQL expects it in X1 Y1 X2 Y2 Z1 Z2 M1 M2 .... format ( all XY ahead then all Z then all M)
-                 * So we need to rearrange the data.
-                 */
-
-                /* Calculate stride (bytes between consecutive points in source data) */
-                stride = COORD_SIZE * 2 + (hasZ ? COORD_SIZE : 0) + (hasM ? COORD_SIZE : 0);
-                
-                /* Position source pointer after header, with offset adjustment for multi-point lines */
-                src = (char *)gser->data + COORD_SIZE + (npoints > 2 ? dataoffset : 0);
-
-                /* Check if all X and Y coordinates are equal */
-                memcpy(&firstX, src, sizeof(double));
-                memcpy(&firstY, src + 8, sizeof(double));
-                
-                for (int i = 1; i < npoints; i++)
-                {
-                    double x, y;
-                    memcpy(&x, src + (i * stride), sizeof(double));
-                    memcpy(&y, src + (i * stride) + COORD_SIZE, sizeof(double));
-                    
-                    if (x != firstX || y != firstY)
-                    {
-                        isValid = true;
-                        break;
-                    }
-                }
-
-                /* 
-                 * Set byte 1 of geometry header:
-                 * - Value 1: All geometry and valid geography instance
-                 * - Value 2: Invalid geography instance
-                 */
-                if (TdsInstr == (int)INSTR_TDS_DATATYPE_GEOGRAPHY && !isValid)
-                    *itr = INVALID_GEOGRAPHY_INDICATOR;
-                else
-                    *itr = GEOMETRY_INDICATOR;
-                itr++;
-                
-                /* 
-                 * Set the geometry type byte based on dimensions, no. of points and validity :
-                 * For 2 points:
-                 * 0x0113 (invalid) -> 19 / 0x0117 -> 23 (valid) for 3D Point with M (XYZM) 
-                 * 0x0112 (invalid) -> 18 / 0x0116 -> 22 (valid) for 2D Point with M (XYM) 
-                 * 0x0111 (invalid) -> 17 / 0x0115 -> 21 (valid) for 3D Point (XYZ)
-                 * 0x0110 (invalid) -> 16 / 0x0114 -> 20 (valid) for 2D Point (XY)
-                 * For more than 2 points:
-                 * 0x0103 (invalid) -> 3 / 0x0107 -> 7 (valid) for 3D Point with M (XYZM) 
-                 * 0x0102 (invalid) -> 2 / 0x0106 -> 6 (valid) for 2D Point with M (XYM) 
-                 * 0x0101 (invalid) -> 1 / 0x0105 -> 5 (valid) for 3D Point (XYZ)
-                 * 0x0100 (invalid) -> 0 / 0x0104 -> 4 (valid) for 2D Point (XY)
-                 */
-                if (npoints == 2)
-                {
-                    if (!isValid)
-                        *itr = 16 + (hasZ ? 1 : 0) + (hasM ? 2 : 0);
-                    else
-                        *itr = 20 + (hasZ ? 1 : 0) + (hasM ? 2 : 0);
-                }
-                else /* npoints > 2 */
-                {
-                    if (!isValid)
-                        *itr = 0 + (hasZ ? 1 : 0) + (hasM ? 2 : 0);
-                    else
-                        *itr = 4 + (hasZ ? 1 : 0) + (hasM ? 2 : 0);
-                }
-                itr++;
-                
-                /* For npoints > 2, TSQL expects npoints data as 4-byte integer */
-                if (npoints > 2)
-                    write_int32(&itr, npoints);
-                
-                /* Copy coordinate data in sequence: first all X/Y, then all Z, then all M */
-                src = (char *)gser->data + COORD_SIZE + (npoints > 2 ? dataoffset : 0);
-				
-                /* Copy XY coordinates (16 bytes per point: 8 for X, 8 for Y), skips all Z and M */
-                for (int i = 0; i < npoints; i++)
-                {
-                    memcpy(itr, src + (i * stride), COORD_SIZE * 2);
-                    itr += COORD_SIZE * 2;
-                }
-                
-                /* Copy Z coordinates if present (8 bytes per coordinate) , skips XY and M */
-                if (hasZ)
-                {
-                    for (int i = 0; i < npoints; i++)
-                    {
-                        double *z_coord = (double*)(src + (i * stride) + COORD_SIZE * 2);
-                        
-                        /* PostGIS represents NAN as 0xf8f7 but TSQL represents it as 0xf8ff */
-                        if (isnan(*z_coord))
-                            memcpy(itr, SPECIFIC_NAN, COORD_SIZE);
-                        else
-                            memcpy(itr, z_coord, COORD_SIZE);
-                        itr += 8;
-                    }
-                }
-                
-                /* Copy M coordinates if present (8 bytes per coordinate), skips XY and Z */
-                if (hasM)
-                {
-                    for (int i = 0; i < npoints; i++)
-                    {
-                        double *m_coord = (double*)(src + (i * stride) + COORD_SIZE * 2 + (hasZ ? COORD_SIZE : 0));
-                        
-                        /* PostGIS represents NAN as 0xf8f7 but TSQL represents it as 0xf8ff */
-                        if (isnan(*m_coord))
-                            memcpy(itr, SPECIFIC_NAN, COORD_SIZE);
-                        else
-                            memcpy(itr, m_coord, COORD_SIZE);
-                        itr += COORD_SIZE;
-                    }
-                }
-                
-                /* Write additional metadata for multi-point lines (>2 points) */
-                if (npoints > 2)
-                {
-                    memcpy(itr, line_end_metadata, sizeof(line_end_metadata));
-                }               
-                break;
-        }
-    }
-
+    bytea_result = DatumGetByteaP(bytea_datum);
+    buf = VARDATA(bytea_result);
+    len = VARSIZE(bytea_result) - VARHDRSZ;
+                                                       
     destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 
     TDSInstrumentation(TdsInstr);
 
     rc = TdsSendPlpDataHelper(destBuf, actualLen);
 
-    pfree(destBuf);
+    if (destBuf != buf)
+        pfree(destBuf);
     return rc;
 }
 

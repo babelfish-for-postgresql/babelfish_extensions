@@ -103,4 +103,6 @@ typedef struct common_utility_plugin
 	TimeADT		(*initializeToDefaultTime) (int32 typmod);
 	Timestamp	(*roundoff_datetime) (Timestamp timestamp);
 	void		(*UpdateToNextDayHelper) (struct pg_tm *tm);
+	Datum       (*bytea_from_geometry) (PG_FUNCTION_ARGS);
+	Datum       (*bytea_from_geography) (PG_FUNCTION_ARGS);
 } common_utility_plugin;
