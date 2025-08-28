@@ -6664,3 +6664,64 @@ go
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
 ~~END~~
 
+
+-- tsql
+create schema sch;
+go
+create table sch.t1(a int)
+go
+create login l with password = '123';create user u for login l;
+go
+
+--Case 1 : when perms on schema and object are overlapping(i.e not mutually exclusive)
+grant select on schema::sch to u
+go
+grant select, insert on sch.t1 to u;
+go
+-- psql 
+select * from sys.babelfish_schema_permissions;
+go
+~~START~~
+int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+1#!#sch#!#ALL#!#2#!#master_u#!#s#!#<NULL>#!#<NULL>
+1#!#sch#!#t1#!#3#!#master_u#!#r#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- tsql
+revoke select, insert on sch.t1 to u;
+go
+
+-- psql 
+select * from sys.babelfish_schema_permissions;
+go
+~~START~~
+int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+1#!#sch#!#ALL#!#2#!#master_u#!#s#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- tsql user=l password=123
+select * from sch.t1
+go
+~~START~~
+int
+~~END~~
+
+insert into sch.t1 values (1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+-- terminate-tsql-conn user=l password=123
+
+-- tsql
+drop table sch.t1
+go
+drop schema sch
+go
+drop user u
+go
+drop login l
+go

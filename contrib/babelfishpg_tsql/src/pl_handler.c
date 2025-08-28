@@ -4955,7 +4955,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				char		*db_datareader = get_db_datareader_name(dbname);
 				char		*db_datawriter = get_db_datawriter_name(dbname);
 				char		*db_accessadmin = get_db_accessadmin_role_name(dbname);
-
+				List 		*revokable_privileges = NIL;
+				bool 		 exec_pg_command = false;
 				/*
 				 * NOTE: GRANT/REVOKE on OBJECT(schema-contained)/SCHEMA are allowed
 				 * if current_user is member of db_securityadmin via engine hooks.
@@ -4980,10 +4981,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *current_user = GetUserNameFromId(GetUserId(), false);
 					const char *logical_schema = NULL;
 					char	   *obj = rv->relname;
-					bool exec_pg_command = false;
 					ListCell   *lc;
 					ListCell	*lc1;
-					List *filtered_list = NIL;
+
 					if (rv->schemaname != NULL)
 						logical_schema = get_logical_schema_name(rv->schemaname, false);
 					else
@@ -5050,39 +5050,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									/* Special database roles should throw an error. */
 									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 									/* If permission on schema exists, don't revoke any permission from the object. */
-									if (exec_pg_command == false && privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
-									{
-										exec_pg_command = false;
-									}
-									else if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
 									{
 										/* 
 										 * If the privilege is not common to schema and object then 
 										 * execute_pg_command true and append the privilege to filtered list 
 										 */
 										exec_pg_command = true;
-										filtered_list = lappend(filtered_list, ap);
-									}
-										
-
+										revokable_privileges = lappend(revokable_privileges, ap);
+									}	
 									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
 								}
 							}
 						}
 					}
-					if (list_length(grant->privileges) > 1 && !(grant->is_grant))
-					{
-						if (filtered_list == NIL)
-							return;
-
-						list_free(grant->privileges);
-						grant->privileges = filtered_list;
-						pstmt->utilityStmt = (Node*)grant;
-					}
-					if (exec_pg_command)
-						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
-					list_free(filtered_list);
-					return;
 				}
 				else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
 				{
@@ -5090,13 +5071,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *current_user = GetUserNameFromId(GetUserId(), false);
 					ListCell   *lc;
 					ListCell	*lc1;
-					bool exec_pg_command = false;
 					const char *logicalschema = NULL;
 					char *funcname = NULL;
 					const char *obj_type = NULL;
 					Oid func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, ob, true);
 					const char *func_args = NULL;
-					List *filtered_list = NIL;
+
 					if (OidIsValid(func_oid))
 						func_args = gen_func_arg_list(func_oid);
 					if (grant->objtype == OBJECT_FUNCTION)
@@ -5179,37 +5159,35 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/* Special database roles should throw an error. */
 								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 								/* If permission on schema exists, don't revoke any permission from the object. */
-								if (exec_pg_command == false && privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
-								{
-									exec_pg_command = false;
-								}
-								else if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
 								{
 									/* 
 									 * If the privilege is not common to schema and object then 
 									 * execute_pg_command true and append the privilege to filtered list 
 									 */
 									exec_pg_command = true;
-									filtered_list = lappend(filtered_list, ap);
+									revokable_privileges = lappend(revokable_privileges, ap);
 								}
+
 								/* Update the privilege in the catalog. */
 								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);
 							}
 						}
 					}
-					if(list_length(grant->privileges) != 0 && !(grant->is_grant))
-					{
-						if(filtered_list == NIL)
-							return;
-						list_free(grant->privileges);
-						grant->privileges = filtered_list;
-						pstmt->utilityStmt = (Node*)grant;
-					}
-					if (exec_pg_command)
-						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
-					list_free(filtered_list);
-					return;
 				}
+
+				if(list_length(grant->privileges) != 0 && !(grant->is_grant))
+				{
+					if(revokable_privileges == NIL)
+						return;
+					list_free(grant->privileges);
+					grant->privileges = revokable_privileges;
+					pstmt->utilityStmt = (Node*)grant;
+				}
+				if (exec_pg_command)
+					call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+				list_free(revokable_privileges);
+
 				pfree(db_datareader);
 				pfree(db_datawriter);
 				pfree(db_accessadmin);
