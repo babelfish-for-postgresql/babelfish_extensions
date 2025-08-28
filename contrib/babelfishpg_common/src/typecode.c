@@ -294,6 +294,9 @@ Oid			tsql_money_oid = InvalidOid;
 Oid			tsql_smallmoney_oid = InvalidOid;
 Oid			tsql_fixeddecimal_oid = InvalidOid;
 Oid			tsql_bit_oid = InvalidOid;
+Oid			tsql_vector_oid = InvalidOid;
+Oid			tsql_sparsevec_oid = InvalidOid;
+Oid			tsql_halfvec_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -535,6 +538,30 @@ is_tsql_smallmoney_datatype(Oid oid)
 	if (tsql_smallmoney_oid == InvalidOid)
 		tsql_smallmoney_oid = lookup_tsql_datatype_oid("smallmoney");
 	return tsql_smallmoney_oid == oid;
+}
+
+bool
+is_tsql_vector_datatype(Oid oid)
+{
+	if (tsql_vector_oid == InvalidOid)
+		tsql_vector_oid = lookup_tsql_datatype_oid("vector");
+	return tsql_vector_oid == oid;
+}
+
+bool
+is_tsql_sparsevec_datatype(Oid oid)
+{
+	if (tsql_sparsevec_oid == InvalidOid)
+		tsql_sparsevec_oid = lookup_tsql_datatype_oid("sparsevec");
+	return tsql_sparsevec_oid == oid;
+}
+
+bool
+is_tsql_halfvec_datatype(Oid oid)
+{
+	if (tsql_halfvec_oid == InvalidOid)
+		tsql_halfvec_oid = lookup_tsql_datatype_oid("halfvec");
+	return tsql_halfvec_oid == oid;
 }
 
 /*
