@@ -12,12 +12,16 @@ GO
 
 
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('()[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
 
 GO
 
@@ -28,12 +32,16 @@ GO
 
 
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('()[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
 
 
 
@@ -59,14 +67,18 @@ GO
 create procedure error_mapping.ErrorHandling1 as
 begin
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('()[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
 
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
@@ -103,14 +115,18 @@ GO
 create procedure error_mapping.ErrorHandling1 as
 begin
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('()[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
 
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
@@ -140,12 +156,16 @@ GO
 
 
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('(*:)[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
 
 GO
 
@@ -156,12 +176,16 @@ GO
 
 
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('(*:)[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
 
 
 
@@ -186,14 +210,18 @@ GO
 create procedure error_mapping.ErrorHandling1 as
 begin
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('(*:)[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
 
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
@@ -230,14 +258,18 @@ GO
 create procedure error_mapping.ErrorHandling1 as
 begin
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('(*:)[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
 
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
