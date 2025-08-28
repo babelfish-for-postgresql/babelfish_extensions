@@ -31,6 +31,7 @@ PG_FUNCTION_INFO_V1(date_datetime);
 PG_FUNCTION_INFO_V1(time_datetime);
 PG_FUNCTION_INFO_V1(timestamp_datetime);
 PG_FUNCTION_INFO_V1(varbinary_datetime);
+PG_FUNCTION_INFO_V1(datetime_varbinary);
 PG_FUNCTION_INFO_V1(timestamptz_datetime);
 PG_FUNCTION_INFO_V1(datetime_varchar);
 PG_FUNCTION_INFO_V1(varchar_datetime);
@@ -908,6 +909,70 @@ varbinary_datetime(PG_FUNCTION_ARGS)
 	result = roundoff_datetime(result);
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
+}
+
+/* 
+ * datetime_varbinary()
+ * Convert datetime to varbinary
+ */
+Datum
+datetime_varbinary(PG_FUNCTION_ARGS)
+{
+	Timestamp	ts = PG_GETARG_TIMESTAMP(0);
+	int64		days,
+			time_part,
+			total_ms;
+	int32		tz;
+	struct pg_tm	tm;
+	fsec_t		fsec;
+	bytea		*result;
+	uint32		days_part,
+			time_part_32;
+
+	if (timestamp2tm(ts, &tz, &tm, &fsec, NULL, NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					errmsg("timestamp out of range")));
+
+	if (ts < TSQL_DEFAULT_DATETIME)
+		days = -53690 + (int64)((ts - MIN_DATETIME) / USECS_PER_DAY);
+	else
+		days = (int64) (ts - TSQL_DEFAULT_DATETIME) / (int64) USECS_PER_DAY;
+
+	/* Calculate time part (300 increments per second) */
+	if (tm.tm_hour == 12 && tm.tm_min == 0 && tm.tm_sec == 0 && fsec == 0)
+		time_part = (int64) 0x00C5C100;
+	else
+	{
+		total_ms = ((int64) tm.tm_hour * 3600000LL) +
+					((int64) tm.tm_min * 60000LL) +
+					((int64) tm.tm_sec * 1000LL) +
+					((int64) (fsec) / 1000);
+
+		/* Convert to TSQL 300ths of a second ticks */
+		time_part = (total_ms * 3LL + 5LL) / 10LL;
+	}
+
+	/* Convert to 32-bit parts */
+	if (days < 0)
+		days_part = (uint32)(days & 0xFFFFFFFF);
+	else
+		days_part = (uint32)(days);
+
+	time_part_32 = (uint32)(time_part & 0xFFFFFFFF);
+
+	/* Convert to little-endian */
+	days_part = pg_hton32(days_part);
+	time_part_32 = pg_hton32(time_part_32);
+
+	result = (bytea *) palloc(VARHDRSZ + 8);
+	SET_VARSIZE(result, VARHDRSZ + 8);
+
+	/* Copy the parts to the bytea result */
+	memcpy(VARDATA(result), &days_part, 4);
+	memcpy(VARDATA(result) + 4, &time_part_32, 4);
+
+	PG_RETURN_BYTEA_P(result);
 }
 
 /* timestamptz_datetime()
