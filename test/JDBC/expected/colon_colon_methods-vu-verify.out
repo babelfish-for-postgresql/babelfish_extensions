@@ -97,7 +97,7 @@ select xml::XmlColumn.value('/', 'varchar') from babel_5987_colon_colon_t1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~ERROR (Message: Cannot call methods on xml.)~~
 
 
 select geometry::GeomColumn.STAsText() from babel_5987_colon_colon_t1
@@ -118,7 +118,7 @@ select XmlColumn::xml.value('/', 'varchar') from babel_5987_colon_colon_t1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~ERROR (Message: type "xmlcolumn" does not exist)~~
 
 
 select GeomColumn::geometry.STAsText() from babel_5987_colon_colon_t1

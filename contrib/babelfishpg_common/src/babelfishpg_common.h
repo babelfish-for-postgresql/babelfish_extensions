@@ -69,6 +69,9 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_tinyint_datatype) (Oid oid);
 	bool		(*is_tsql_money_datatype) (Oid oid);
 	bool		(*is_tsql_smallmoney_datatype) (Oid oid);
+	bool		(*is_tsql_vector_datatype) (Oid oid);
+	bool		(*is_tsql_sparsevec_datatype) (Oid oid);
+	bool		(*is_tsql_halfvec_datatype) (Oid oid);
 	
 	Datum		(*datetime_in_str) (char *str, Node *escontext);
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);
