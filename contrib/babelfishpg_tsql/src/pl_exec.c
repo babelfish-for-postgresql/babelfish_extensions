@@ -9519,7 +9519,8 @@ get_cast_hashentry(PLtsql_execstate *estate,
 		 * Override funcresulttype with domain OID when target column datatype is 
 		 * [n][var]char or a user defined dataype created over it.
 		 */
-		(*common_utility_plugin_ptr->handle_type_and_collation)(cast_expr, dsttype, InvalidOid);
+		if (cast_expr != NULL)
+			(*common_utility_plugin_ptr->handle_type_and_collation)(cast_expr, dsttype, InvalidOid);
 
 		/* Plan the expression and build a CachedExpression */
 		cast_cexpr = GetCachedExpression(cast_expr);

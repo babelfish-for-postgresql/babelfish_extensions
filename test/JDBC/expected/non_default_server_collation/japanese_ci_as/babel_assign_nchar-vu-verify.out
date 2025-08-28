@@ -191,7 +191,7 @@ SELECT  @charMultibyte, @ncharMultibyte
 GO
 ~~START~~
 char#!#nchar
-???                 #!#你好🙂                
+?好?                #!#你好🙂                
 ~~END~~
 
 
@@ -441,7 +441,7 @@ select @testString
 GO
 ~~START~~
 char
-Hello ??? with emojis ?                           
+Hello 日本語 with emojis ?                        
 ~~END~~
 
 
@@ -523,7 +523,7 @@ select @testString
 GO
 ~~START~~
 varchar
-Hello ??? with emojis ?
+Hello 日本語 with emojis ?
 ~~END~~
 
 
@@ -701,42 +701,42 @@ SELECT 'NCHAR_SELECT_ASSIGN' as AssignmentType,
 GO
 ~~START~~
 varchar#!#varchar#!#char#!#nchar#!#varchar#!#nvarchar
-VARCHAR_SOURCE#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!
+VARCHAR_SOURCE#!#Special: ?????????? ????? ?￠￡?\?§ 123!#!#Special: ?????????? ????? ?￠￡?\?§ 123!         #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: ?????????? ????? ?￠￡?\?§ 123!#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!
 ~~END~~
 
 ~~START~~
 varchar#!#nvarchar#!#char#!#nchar#!#varchar#!#nvarchar
-NVARCHAR_SOURCE#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã#!#???? Testing Text ?? ???? ????? ???? ?? àáâã      #!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#???? Testing Text ?? ???? ????? ???? ?? àáâã#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã
+NVARCHAR_SOURCE#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã#!#?好世界 Testing Text 中文 ???? こんにちは カタカナ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#?好世界 Testing Text 中文 ???? こんにちは カタカナ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã
 ~~END~~
 
 ~~START~~
 varchar#!#char#!#char#!#nchar#!#varchar#!#nvarchar
-CHAR_SOURCE#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            
+CHAR_SOURCE#!#Special: ?????????? ????? ?￠￡?\?§ 123!         #!#Special: ?????????? ????? ?￠￡?\?§ 123!         #!#Special: ?????????? ????? ?￠￡?\?§ 123!            #!#Special: ?????????? ????? ?￠￡?\?§ 123!         #!#Special: ?????????? ????? ?￠￡?\?§ 123!         
 ~~END~~
 
 ~~START~~
 varchar#!#nchar#!#char#!#nchar#!#varchar#!#nvarchar
-NCHAR_SOURCE#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#???? Testing Text ?? ???? ????? ???? ?? àáâã      #!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#???? Testing Text ?? ???? ????? ???? ?? àáâã      #!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  
+NCHAR_SOURCE#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#?好世界 Testing Text 中文 ???? こんにちは カタカナ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#?好世界 Testing Text 中文 ???? こんにちは カタカナ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  
 ~~END~~
 
 ~~START~~
 varchar#!#varchar#!#char#!#nchar#!#varchar#!#nvarchar
-VARCHAR_SELECT_ASSIGN#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!
+VARCHAR_SELECT_ASSIGN#!#Special: ?????????? ????? ?￠￡?\?§ 123!#!#Special: ?????????? ????? ?￠￡?\?§ 123!         #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: ?????????? ????? ?￠￡?\?§ 123!#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!
 ~~END~~
 
 ~~START~~
 varchar#!#nvarchar#!#char#!#nchar#!#varchar#!#nvarchar
-NVARCHAR_SELECT_ASSIGN#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã#!#???? Testing Text ?? ???? ????? ???? ?? àáâã      #!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#???? Testing Text ?? ???? ????? ???? ?? àáâã#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã
+NVARCHAR_SELECT_ASSIGN#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã#!#?好世界 Testing Text 中文 ???? こんにちは カタカナ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#?好世界 Testing Text 中文 ???? こんにちは カタカナ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã
 ~~END~~
 
 ~~START~~
 varchar#!#char#!#char#!#nchar#!#varchar#!#nvarchar
-CHAR_SELECT_ASSIGN#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            
+CHAR_SELECT_ASSIGN#!#Special: ?????????? ????? ?￠￡?\?§ 123!         #!#Special: ?????????? ????? ?￠￡?\?§ 123!         #!#Special: ?????????? ????? ?￠￡?\?§ 123!            #!#Special: ?????????? ????? ?￠￡?\?§ 123!         #!#Special: ?????????? ????? ?￠￡?\?§ 123!         
 ~~END~~
 
 ~~START~~
 varchar#!#nchar#!#char#!#nchar#!#varchar#!#nvarchar
-NCHAR_SELECT_ASSIGN#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#???? Testing Text ?? ???? ????? ???? ?? àáâã      #!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#???? Testing Text ?? ???? ????? ???? ?? àáâã      #!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  
+NCHAR_SELECT_ASSIGN#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#?好世界 Testing Text 中文 ???? こんにちは カタカナ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#?好世界 Testing Text 中文 ???? こんにちは カタカナ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  
 ~~END~~
 
 
@@ -804,12 +804,12 @@ SELECT @nvarchar_var
 GO
 ~~START~~
 char
-???? Text ?? ???? ?????                           
+?好世界 Text 中文 ???? こんにちは                 
 ~~END~~
 
 ~~START~~
 char
-???? Text ?? ?????                                
+?好世界 Text 中文 こんにちは                      
 ~~END~~
 
 ~~START~~
@@ -819,7 +819,7 @@ Text
 
 ~~START~~
 char
-???? Text ?? ???? ?????                           
+?好世界 Text 中文 ???? こんにちは                 
 ~~END~~
 
 ~~START~~
@@ -829,12 +829,12 @@ nchar
 
 ~~START~~
 nchar
-你好世界 Text 中文 😀😍🌟💖 こんにちは                       
+?好世界 Text 中文 ???? こんに                             
 ~~END~~
 
 ~~START~~
 nchar
-???? Text ?? ???? ?????                           
+?好世界 Text 中文 ???? こんに                             
 ~~END~~
 
 ~~START~~
@@ -844,22 +844,22 @@ nchar
 
 ~~START~~
 varchar
-???? Text ?? ???? ?????
+?好世界 Text 中文 ???? こんにちは
 ~~END~~
 
 ~~START~~
 varchar
-???? Text ?? ???? ?????
+?好世界 Text 中文 ???? こんに
 ~~END~~
 
 ~~START~~
 varchar
-???? Text ?? ???? ?????       
+?好世界 Text 中文 ???? こんに 
 ~~END~~
 
 ~~START~~
 varchar
-???? Text ?? ???? ?????       
+?好世界 Text 中文 ???? こんにちは       
 ~~END~~
 
 ~~START~~
@@ -869,12 +869,12 @@ nvarchar
 
 ~~START~~
 nvarchar
-你好世界 Text 中文 😀😍🌟💖 こんにちは
+?好世界 Text 中文 ???? こんに
 ~~END~~
 
 ~~START~~
 nvarchar
-???? Text ?? ???? ?????       
+?好世界 Text 中文 ???? こんに 
 ~~END~~
 
 ~~START~~
@@ -955,12 +955,12 @@ SELECT CAST(CAST(@ascii_string AS NTEXT) AS NTEXT) AS Result36;
 GO
 ~~START~~
 char
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
+Hello World 123! ASCII Test ???????????? ?????    
 ~~END~~
 
 ~~START~~
 varchar
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
+Hello World 123! ASCII Test ???????????? ?????    
 ~~END~~
 
 ~~START~~
@@ -975,22 +975,22 @@ Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
 
 ~~START~~
 text
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
+Hello World 123! ASCII Test ???????????? ?????    
 ~~END~~
 
 ~~START~~
 ntext
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
+Hello World 123! ASCII Test ???????????? ?????    
 ~~END~~
 
 ~~START~~
 char
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
+Hello World 123! ASCII Test ???????????? ?????    
 ~~END~~
 
 ~~START~~
 varchar
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
+Hello World 123! ASCII Test ???????????? ?????
 ~~END~~
 
 ~~START~~
@@ -1005,37 +1005,7 @@ Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
 
 ~~START~~
 text
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
-~~END~~
-
-~~START~~
-ntext
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
-~~END~~
-
-~~START~~
-char
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
-~~END~~
-
-~~START~~
-varchar
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
-~~END~~
-
-~~START~~
-nchar
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
-~~END~~
-
-~~START~~
-nvarchar
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
-~~END~~
-
-~~START~~
-text
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
+Hello World 123! ASCII Test ???????????? ?????
 ~~END~~
 
 ~~START~~
@@ -1045,12 +1015,12 @@ Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
 
 ~~START~~
 char
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
+Hello World 123! ASCII Test ???????????? ?????    
 ~~END~~
 
 ~~START~~
 varchar
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
+Hello World 123! ASCII Test ???????????? ?????
 ~~END~~
 
 ~~START~~
@@ -1065,7 +1035,7 @@ Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
 
 ~~START~~
 text
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
+Hello World 123! ASCII Test ???????????? ?????
 ~~END~~
 
 ~~START~~
@@ -1075,12 +1045,12 @@ Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
 
 ~~START~~
 char
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
+Hello World 123! ASCII Test ???????????? ?????    
 ~~END~~
 
 ~~START~~
 varchar
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
+Hello World 123! ASCII Test ???????????? ?????
 ~~END~~
 
 ~~START~~
@@ -1095,7 +1065,7 @@ Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
 
 ~~START~~
 text
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
+Hello World 123! ASCII Test ???????????? ?????
 ~~END~~
 
 ~~START~~
@@ -1105,12 +1075,12 @@ Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
 
 ~~START~~
 char
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
+Hello World 123! ASCII Test ???????????? ?????    
 ~~END~~
 
 ~~START~~
 varchar
-Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
+Hello World 123! ASCII Test ???????????? ?????
 ~~END~~
 
 ~~START~~
@@ -1125,7 +1095,37 @@ Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
 
 ~~START~~
 text
+Hello World 123! ASCII Test ???????????? ?????
+~~END~~
+
+~~START~~
+ntext
 Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
+~~END~~
+
+~~START~~
+char
+Hello World 123! ASCII Test ???????????? ?????    
+~~END~~
+
+~~START~~
+varchar
+Hello World 123! ASCII Test ???????????? ?????
+~~END~~
+
+~~START~~
+nchar
+Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö    
+~~END~~
+
+~~START~~
+nvarchar
+Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö
+~~END~~
+
+~~START~~
+text
+Hello World 123! ASCII Test ???????????? ?????
 ~~END~~
 
 ~~START~~
@@ -1417,12 +1417,12 @@ SELECT CAST(CAST(@mixed_string AS NTEXT) AS NTEXT) AS Result36;
 GO
 ~~START~~
 char
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123   
 ~~END~~
 
 ~~START~~
 varchar
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123   
 ~~END~~
 
 ~~START~~
@@ -1437,22 +1437,22 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 text
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123   
 ~~END~~
 
 ~~START~~
 ntext
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123   
 ~~END~~
 
 ~~START~~
 char
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123   
 ~~END~~
 
 ~~START~~
 varchar
-Mixed: Hello ?? ????? ?? àáâã ??????? 123
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 ~~END~~
 
 ~~START~~
@@ -1467,37 +1467,7 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 text
-Mixed: Hello ?? ????? ?? àáâã ??????? 123
-~~END~~
-
-~~START~~
-ntext
-Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
-~~END~~
-
-~~START~~
-char
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
-~~END~~
-
-~~START~~
-varchar
-Mixed: Hello ?? ????? ?? àáâã ??????? 123
-~~END~~
-
-~~START~~
-nchar
-Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
-~~END~~
-
-~~START~~
-nvarchar
-Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
-~~END~~
-
-~~START~~
-text
-Mixed: Hello ?? ????? ?? àáâã ??????? 123
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 ~~END~~
 
 ~~START~~
@@ -1507,12 +1477,12 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 char
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123   
 ~~END~~
 
 ~~START~~
 varchar
-Mixed: Hello ?? ????? ?? àáâã ??????? 123
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 ~~END~~
 
 ~~START~~
@@ -1527,7 +1497,7 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 text
-Mixed: Hello ?? ????? ?? àáâã ??????? 123
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 ~~END~~
 
 ~~START~~
@@ -1537,12 +1507,12 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 char
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123   
 ~~END~~
 
 ~~START~~
 varchar
-Mixed: Hello ?? ????? ?? àáâã ??????? 123
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 ~~END~~
 
 ~~START~~
@@ -1557,7 +1527,7 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 text
-Mixed: Hello ?? ????? ?? àáâã ??????? 123
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 ~~END~~
 
 ~~START~~
@@ -1567,12 +1537,12 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 char
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123   
 ~~END~~
 
 ~~START~~
 varchar
-Mixed: Hello ?? ????? ?? àáâã ??????? 123
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 ~~END~~
 
 ~~START~~
@@ -1587,7 +1557,37 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 text
-Mixed: Hello ?? ????? ?? àáâã ??????? 123
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
+~~END~~
+
+~~START~~
+ntext
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+char
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123   
+~~END~~
+
+~~START~~
+varchar
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
+~~END~~
+
+~~START~~
+nchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
+~~END~~
+
+~~START~~
+nvarchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+text
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 ~~END~~
 
 ~~START~~
@@ -1651,14 +1651,6 @@ Collation Test 你好 こんにちは àáâã
 ---------
 -- UDT 
 ---------
-CREATE TYPE nchar_type FROM NCHAR(30);
-CREATE TYPE nvarchar_type FROM NVARCHAR(30);
-CREATE TYPE char_type FROM CHAR(30);
-CREATE TYPE varchar_type FROM VARCHAR(30);
-CREATE TYPE binary_type FROM BINARY(10);
-CREATE TYPE varbinary_type FROM VARBINARY(10);
-GO
-
 -- Test Cases for NCHAR_TYPE
 DECLARE @nchar_test1 nchar_type = N'  abc🙂defghi🙂🙂    '
 DECLARE @nchar_test2 nchar_type = N'🎌こんにちは🌸世界🗾'
@@ -1713,7 +1705,7 @@ SELECT @nchar_special, @nvarchar_special, @char_special, @varchar_special
 GO
 ~~START~~
 nchar#!#nvarchar#!#char#!#varchar
-Special©®™€£¥                 #!#Special©®™€£¥#!#Special©®™€£¥                 #!#Special©®™€£¥
+Special©®™€£¥                 #!#Special©®™€£¥#!#Special????￡\                #!#Special????￡\
 ~~END~~
 
 
@@ -1821,42 +1813,10 @@ Test VARCHAR#!#Test NVARCHAR 你好 😊#!#Test CHAR                     #!#Test
 
 
 
+
 ---------------------------
 -- implicite function calls
 ---------------------------
-CREATE FUNCTION babel_4803_varchar_func (@s VARCHAR(4000)) 
-RETURNS VARCHAR(4000) 
-AS 
-BEGIN 
-    RETURN @s; 
-END 
-GO
-
-CREATE FUNCTION babel_4803_nvarchar_func (@s NVARCHAR(4000))
-RETURNS NVARCHAR(4000)
-AS
-BEGIN
-    RETURN @s;
-END
-GO
-
-CREATE FUNCTION babel_4803_char_func (@s CHAR(50))
-RETURNS CHAR(50)
-AS
-BEGIN
-    RETURN @s;
-END
-GO
-
-CREATE FUNCTION babel_4803_nchar_func (@s NCHAR(50))
-RETURNS NCHAR(50)
-AS
-BEGIN
-    RETURN @s;
-END
-GO
-
-
 DECLARE @varchar_text VARCHAR(50) = 'VARCHAR Text';
 DECLARE @nvarchar_text NVARCHAR(50) = N'NVARCHAR Text 你好 😌😌😌';
 DECLARE @char_text CHAR(50) = 'CHAR Text';
@@ -1896,7 +1856,7 @@ Test 2: Cross-Type Casting
 
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#char#!#nchar
-NVARCHAR to VARCHAR ??#!#VARCHAR to NVARCHAR 你好 😁#!#NCHAR to NVARCHAR 你好 😁#!#NCHAR to CHAR ?? ?                                #!#CHAR to NCHAR ?? ?                                
+NVARCHAR to VARCHAR ?好#!#VARCHAR to NVARCHAR 你好 😁#!#NCHAR to NVARCHAR 你好 😁#!#NCHAR to CHAR ?好 ?                               #!#CHAR to NCHAR ?好 ?                                
 ~~END~~
 
 
@@ -1915,7 +1875,7 @@ Test 3: Special Characters
 
 ~~START~~
 varchar#!#nvarchar#!#char#!#nchar
-Special: àáâãäçèéêë#!#Special: 你好世界 😀😍🌟💖#!#Special: ñóôõö                                    #!#Special: ?????                                    
+Special: ??????????#!#Special: 你好世界 😀😍🌟💖#!#Special: ?????                                    #!#Special: こんにちは                                    
 ~~END~~
 
 
@@ -1954,7 +1914,7 @@ Test 10: Edge Cases
 
 ~~START~~
 varchar#!#nvarchar#!#char#!#nchar
-#!##!#                                                  #!#　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+#!##!#                                                  #!#　　　　　　　　　　　　　　　　　　　　　　　　　                         
 ~~END~~
 
 
@@ -1984,7 +1944,7 @@ Japanese Collation Tests
 
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-???????                                           #!#?こんにちは?世界?#!#こんにちは世界                                           #!#🎌こんにちは🌸世界🗾
+こんにちは世界                                    #!#?こんにちは?世界?#!#こんにちは世界                                           #!#🎌こんにちは🌸世界🗾
 ~~END~~
 
 
@@ -2047,7 +2007,7 @@ Chinese Collation Tests
 
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-????                          #!#比尔·拉莫斯#!#你好世界                          #!#比尔·拉莫斯
+?好世界                       #!#比尔·拉莫斯#!#你好世界                          #!#比尔·拉莫斯
 ~~END~~
 
 ~~START~~
@@ -2092,7 +2052,7 @@ Special Characters Test
 
 ~~START~~
 char#!#char
-Hello?World????????????????                                                                         #!#Hello?World????????????????                                                                         
+Hello?World?こんにちは?世界???????                                                                  #!#Hello?World?こんにちは?世界???????                                                                  
 ~~END~~
 
 
@@ -2203,21 +2163,70 @@ nvarchar
 ~~END~~
 
 
-
---------------------
--- cleanup
--------------------
-DROP TYPE nchar_type;
-DROP TYPE nvarchar_type;
-DROP TYPE char_type;
-DROP TYPE varchar_type;
-DROP TYPE binary_type;
-DROP TYPE varbinary_type;
+---------------------------
+-- proc and func testing
+---------------------------
+Exec babel_4803_proc_nchar
 GO
+~~START~~
+nchar#!#int
+Hello 🙂🙂世界                            #!#10
+~~END~~
 
-DROP FUNCTION babel_4803_varchar_func;
-DROP FUNCTION babel_4803_nvarchar_func;
-DROP FUNCTION babel_4803_char_func;
-DROP FUNCTION babel_4803_nchar_func;
+Exec babel_4803_proc_nvarchar
 GO
+~~START~~
+nvarchar#!#int
+Hello 🙂🙂世界#!#10
+~~END~~
+
+Exec babel_4803_proc_ntext
+GO
+~~START~~
+ntext
+Hello 🙂🙂世界
+~~END~~
+
+Exec babel_4803_proc_char
+GO
+~~START~~
+char
+Hello ?? ??世界                         
+~~END~~
+
+Exec babel_4803_proc_varchar
+GO
+~~START~~
+varchar
+Hello ?? ??世界
+~~END~~
+
+
+SELECT babel_4803_nchar_func1()
+GO
+~~START~~
+nchar
+  abc🙂defghi🙂🙂                                 
+~~END~~
+
+SELECT babel_4803_nvarchar_func1()
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+SELECT babel_4803_char_func1()
+GO
+~~START~~
+char
+  Hello ??世界                                    
+~~END~~
+
+SELECT babel_4803_varchar_func1()
+GO
+~~START~~
+varchar
+  Hello ??世界   
+~~END~~
 

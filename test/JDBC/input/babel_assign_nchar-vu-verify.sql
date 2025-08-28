@@ -716,14 +716,6 @@ GO
 ---------
 -- UDT 
 ---------
-CREATE TYPE nchar_type FROM NCHAR(30);
-CREATE TYPE nvarchar_type FROM NVARCHAR(30);
-CREATE TYPE char_type FROM CHAR(30);
-CREATE TYPE varchar_type FROM VARCHAR(30);
-CREATE TYPE binary_type FROM BINARY(10);
-CREATE TYPE varbinary_type FROM VARBINARY(10);
-GO
-
 -- Test Cases for NCHAR_TYPE
 DECLARE @nchar_test1 nchar_type = N'  abc🙂defghi🙂🙂    '
 DECLARE @nchar_test2 nchar_type = N'🎌こんにちは🌸世界🗾'
@@ -828,38 +820,6 @@ GO
 ---------------------------
 -- implicite function calls
 ---------------------------
-
-CREATE FUNCTION babel_4803_varchar_func (@s VARCHAR(4000)) 
-RETURNS VARCHAR(4000) 
-AS 
-BEGIN 
-    RETURN @s; 
-END 
-GO
-
-CREATE FUNCTION babel_4803_nvarchar_func (@s NVARCHAR(4000))
-RETURNS NVARCHAR(4000)
-AS
-BEGIN
-    RETURN @s;
-END
-GO
-
-CREATE FUNCTION babel_4803_char_func (@s CHAR(50))
-RETURNS CHAR(50)
-AS
-BEGIN
-    RETURN @s;
-END
-GO
-
-CREATE FUNCTION babel_4803_nchar_func (@s NCHAR(50))
-RETURNS NCHAR(50)
-AS
-BEGIN
-    RETURN @s;
-END
-GO
 
 DECLARE @varchar_text VARCHAR(50) = 'VARCHAR Text';
 DECLARE @nvarchar_text NVARCHAR(50) = N'NVARCHAR Text 你好 😌😌😌';
@@ -1038,21 +998,25 @@ go
 SELECT CAST(CAST('你好世界 Text 中文 😀😍🌟💖' AS CHAR) AS NVARCHAR)
 go
 
---------------------
--- cleanup
--------------------
-
-DROP TYPE nchar_type;
-DROP TYPE nvarchar_type;
-DROP TYPE char_type;
-DROP TYPE varchar_type;
-DROP TYPE binary_type;
-DROP TYPE varbinary_type;
+---------------------------
+-- proc and func testing
+---------------------------
+Exec babel_4803_proc_nchar
+GO
+Exec babel_4803_proc_nvarchar
+GO
+Exec babel_4803_proc_ntext
+GO
+Exec babel_4803_proc_char
+GO
+Exec babel_4803_proc_varchar
 GO
 
-DROP FUNCTION babel_4803_varchar_func;
-DROP FUNCTION babel_4803_nvarchar_func;
-DROP FUNCTION babel_4803_char_func;
-DROP FUNCTION babel_4803_nchar_func;
+SELECT babel_4803_nchar_func1()
 GO
-
+SELECT babel_4803_nvarchar_func1()
+GO
+SELECT babel_4803_char_func1()
+GO
+SELECT babel_4803_varchar_func1()
+GO
