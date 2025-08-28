@@ -1069,13 +1069,9 @@ go
 -- Get all results
 SELECT * FROM DateTypeTestDetailedView;
 GO
-~~START~~
-int#!#datetime#!#int#!#varchar#!#int#!#varchar#!#int#!#date#!#date#!#date#!#int
-1#!#2023-10-15 14:30:00.0#!#1#!#2023-10-15#!#1#!#2023-10-15#!#1#!#2023-10-15#!#2023-10-15#!#2023-10-15#!#1
-2#!#2023-12-25 00:00:00.0#!#1#!#not a date#!#0#!#2023/12/25#!#1#!#2023-12-25#!#<NULL>#!#2023-12-25#!#1
-3#!#<NULL>#!#0#!#2023-13-45#!#0#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1
-4#!#2023-01-01 10:20:30.0#!#1#!#01/01/2023#!#1#!#2023.01.01#!#1#!#2023-01-01#!#2023-01-01#!#2023-01-01#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type (n)text is invalid for argument 1 of ISDATE function.)~~
 
 -- Get only valid dates
 SELECT * FROM DateTypeTestDetailedView 
@@ -1083,12 +1079,9 @@ WHERE IsValidDateTime = 1
    OR IsValidText = 1 
    OR IsValidSysVarchar = 1;
 GO
-~~START~~
-int#!#datetime#!#int#!#varchar#!#int#!#varchar#!#int#!#date#!#date#!#date#!#int
-1#!#2023-10-15 14:30:00.0#!#1#!#2023-10-15#!#1#!#2023-10-15#!#1#!#2023-10-15#!#2023-10-15#!#2023-10-15#!#1
-2#!#2023-12-25 00:00:00.0#!#1#!#not a date#!#0#!#2023/12/25#!#1#!#2023-12-25#!#<NULL>#!#2023-12-25#!#1
-4#!#2023-01-01 10:20:30.0#!#1#!#01/01/2023#!#1#!#2023.01.01#!#1#!#2023-01-01#!#2023-01-01#!#2023-01-01#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type (n)text is invalid for argument 1 of ISDATE function.)~~
 
 
 -- Get invalid dates
@@ -1097,9 +1090,7 @@ WHERE IsValidDateTime = 0
    OR IsValidText = 0 
    OR IsValidSysVarchar = 0;
 GO
-~~START~~
-int#!#datetime#!#int#!#varchar#!#int#!#varchar#!#int#!#date#!#date#!#date#!#int
-2#!#2023-12-25 00:00:00.0#!#1#!#not a date#!#0#!#2023/12/25#!#1#!#2023-12-25#!#<NULL>#!#2023-12-25#!#1
-3#!#<NULL>#!#0#!#2023-13-45#!#0#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type (n)text is invalid for argument 1 of ISDATE function.)~~
 

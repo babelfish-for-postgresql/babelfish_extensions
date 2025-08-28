@@ -46,6 +46,6 @@ SELECT
         WHEN ISDATE(SysVarcharCol) = 1 THEN CONVERT(DATE, SysVarcharCol)
         ELSE NULL
     END AS ConvertedSysVarchar,
-    ISDATE('2023-10-15') AS IsText
+    ISDATE(cast('2023-10-15' as text)) AS IsText
 FROM DateTestTable;
 GO
