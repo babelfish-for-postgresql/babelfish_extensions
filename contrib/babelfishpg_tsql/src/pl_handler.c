@@ -5176,7 +5176,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 				}
 
-				if(list_length(grant->privileges) != 0 && !(grant->is_grant))
+				if((list_length(grant->privileges) != 0 && !(grant->is_grant)) && 
+					((grant->objtype == OBJECT_FUNCTION) || (grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_TABLE)))
 				{
 					if(revokable_privileges == NIL)
 						return;
@@ -5184,7 +5185,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					grant->privileges = revokable_privileges;
 					pstmt->utilityStmt = (Node*)grant;
 				}
-				if (exec_pg_command)
+				if (exec_pg_command && ((grant->objtype == OBJECT_FUNCTION) || (grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_TABLE)))
 				{
 					call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 					list_free(revokable_privileges);
