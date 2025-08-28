@@ -5185,8 +5185,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					pstmt->utilityStmt = (Node*)grant;
 				}
 				if (exec_pg_command)
+				{
 					call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
-				list_free(revokable_privileges);
+					list_free(revokable_privileges);
+					return;
+				}
+
 
 				pfree(db_datareader);
 				pfree(db_datawriter);
