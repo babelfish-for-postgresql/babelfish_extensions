@@ -401,3 +401,11 @@ SERIALFUNC = int8_avg_serialize,
 DESERIALFUNC = int8_avg_deserialize,
 PARALLEL = SAFE
 );
+
+CREATE OR REPLACE FUNCTION sys.decimal2decimal(sys.DECIMAL, integer)
+RETURNS sys.DECIMAL
+AS 'numeric'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.DECIMAL AS sys.DECIMAL)
+WITH FUNCTION sys.decimal2decimal(sys.DECIMAL, integer) AS IMPLICIT;

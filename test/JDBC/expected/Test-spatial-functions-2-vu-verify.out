@@ -184,7 +184,7 @@ int#!#bit
 SELECT PointA.STAsText(),PointB.STAsText() FROM  TestGeospatialMethods_TableATemp JOIN  TestGeospatialMethods_TableBTemp ON PointA.STIntersects(TestGeospatialMethods_TableBTemp.PointB) != 1 ORDER BY PointA.STX;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 POINT(1 2)#!#POINT(3 4)
 ~~END~~
 
@@ -193,7 +193,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM  TestGeospatialMethods_TableATemp JOIN  TestGeospatialMethods_TableBTemp ON @referencePoint.STIntersects(TestGeospatialMethods_TableBTemp.PointB) = 1 ORDER BY PointA.STX;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 ~~END~~
 
 
@@ -201,7 +201,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM  TestGeospatialMethods_TableATemp JOIN  TestGeospatialMethods_TableBTemp ON PointA.STIntersects(@referencePoint) != 1 ORDER BY PointA.STX;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 POINT(1 2)#!#POINT(3 4)
 ~~END~~
 
@@ -593,7 +593,7 @@ DECLARE @disjoint BIT = 1;
 SELECT PointColumn.STAsText() FROM  TestGeospatialMethods_YourTableTemp WHERE PointColumn.STDisjoint(@referencePoint) = @disjoint ORDER BY PointColumn.STX;
 go
 ~~START~~
-text
+nvarchar
 ~~END~~
 
 
@@ -601,7 +601,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointColumn.STAsText() FROM  TestGeospatialMethods_YourTableTemp WHERE @referencePoint.STDisjoint(PointColumn) = @referencePoint.STX ORDER BY PointColumn.STX;
 go
 ~~START~~
-text
+nvarchar
 POINT(0 0)
 POINT(0 0)
 ~~END~~
@@ -619,7 +619,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointColumn.STAsText() FROM  TestGeospatialMethods_YourTableTemp WHERE PointColumn.STDisjoint(@referencePoint) != @referencePoint.STX ORDER BY PointColumn.STX;
 go
 ~~START~~
-text
+nvarchar
 ~~END~~
 
 
@@ -627,7 +627,7 @@ text
 SELECT PointA.STAsText(),PointB.STAsText() FROM  TestGeospatialMethods_TableATemp JOIN  TestGeospatialMethods_TableBTemp ON PointA.STDisjoint(TestGeospatialMethods_TableBTemp.PointB) = 1 ORDER BY TestGeospatialMethods_TableBTemp.PointB.STX;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 POINT(1 2)#!#POINT(3 4)
 ~~END~~
 
@@ -636,7 +636,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM  TestGeospatialMethods_TableATemp JOIN  TestGeospatialMethods_TableBTemp ON @referencePoint.STDisjoint(TestGeospatialMethods_TableBTemp.PointB) = 1 ORDER BY TestGeospatialMethods_TableBTemp.PointB.STX;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 POINT(1 2)#!#POINT(3 4)
 ~~END~~
 
@@ -645,7 +645,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM  TestGeospatialMethods_TableATemp JOIN  TestGeospatialMethods_TableBTemp ON PointA.STDisjoint(@referencePoint) = 1 ORDER BY TestGeospatialMethods_TableBTemp.PointB.STX;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 POINT(1 2)#!#POINT(3 4)
 ~~END~~
 
@@ -654,7 +654,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM  TestGeospatialMethods_TableATemp JOIN  TestGeospatialMethods_TableBTemp ON TestGeospatialMethods_TableBTemp.PointB.STDisjoint(@referencePoint) = 0 ORDER BY PointB.STX;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 ~~END~~
 
 
@@ -1985,7 +1985,7 @@ bit
 Select CAST(CAST('POINT EMPTY' as varchar(100)) AS geography).STAsText();
 go
 ~~START~~
-text
+nvarchar
 POINT EMPTY
 ~~END~~
 
@@ -1993,7 +1993,7 @@ POINT EMPTY
 Select CAST(CAST('POINT EMPTY' as char(100)) AS geography).STAsText();
 go
 ~~START~~
-text
+nvarchar
 POINT EMPTY
 ~~END~~
 

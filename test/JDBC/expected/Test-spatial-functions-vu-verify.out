@@ -167,7 +167,7 @@ int#!#bit
 SELECT PointA.STAsText(),PointB.STAsText() FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON PointA.STEquals(TestSpatialFunction_TableBTemp.PointB) != 1 ORDER BY PointA.STX;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 POINT(1 2)#!#POINT(3 4)
 ~~END~~
 
@@ -176,7 +176,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON @referencePoint.STEquals(TestSpatialFunction_TableBTemp.PointB) = 1 ORDER BY PointA.STX;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 ~~END~~
 
 
@@ -184,7 +184,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON PointA.STEquals(@referencePoint) != 1 ORDER BY PointA.STX;
 go
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 POINT(1 2)#!#POINT(3 4)
 ~~END~~
 
@@ -214,7 +214,7 @@ int
 SELECT PointColumn1.STAsText() FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn1.STX;
 go
 ~~START~~
-text
+nvarchar
 POINT(3 4)
 ~~END~~
 
@@ -533,7 +533,7 @@ DECLARE @contain BIT = 1;
 SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp WHERE PointColumn.STContains(@referencePoint) = @contain ORDER BY PointColumn.STX;
 GO
 ~~START~~
-text
+nvarchar
 ~~END~~
 
 
@@ -541,7 +541,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp WHERE @referencePoint.STContains(PointColumn) = @referencePoint.STX ORDER BY PointColumn.STX;
 GO
 ~~START~~
-text
+nvarchar
 POINT(3 4)
 POINT(5 6)
 ~~END~~
@@ -559,14 +559,14 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp WHERE PointColumn.STContains(@referencePoint) != @referencePoint.STX ORDER BY PointColumn.STX;
 GO
 ~~START~~
-text
+nvarchar
 ~~END~~
 
 
 SELECT PointA.STAsText(),PointB.STAsText() FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON PointA.STContains(TestSpatialFunction_TableBTemp.PointB) = 1 ORDER BY TestSpatialFunction_TableBTemp.PointB.STX;
 GO
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 ~~END~~
 
 
@@ -574,7 +574,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON @referencePoint.STContains(TestSpatialFunction_TableBTemp.PointB) = 1 ORDER BY TestSpatialFunction_TableBTemp.PointB.STX;
 GO
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 ~~END~~
 
 
@@ -582,7 +582,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON PointA.STContains(@referencePoint) = 1 ORDER BY TestSpatialFunction_TableBTemp.PointB.STX;
 GO
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 ~~END~~
 
 
@@ -590,7 +590,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON TestSpatialFunction_TableBTemp.PointB.STContains(@referencePoint) = 0 ORDER BY TestSpatialFunction_TableBTemp.PointB.STX;
 GO
 ~~START~~
-text#!#text
+nvarchar#!#nvarchar
 POINT(1 2)#!#POINT(3 4)
 ~~END~~
 
@@ -598,7 +598,7 @@ POINT(1 2)#!#POINT(3 4)
 SELECT PointColumn1.STAsText() FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn1.STX;
 GO
 ~~START~~
-text
+nvarchar
 POINT(3 4)
 ~~END~~
 
@@ -607,7 +607,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~START~~
-text
+nvarchar
 POINT(3 4)
 POINT(3 4)
 POINT(5 6)
@@ -618,7 +618,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~START~~
-text
+nvarchar
 POINT(3 4)
 POINT(3 4)
 POINT(5 6)
@@ -1184,7 +1184,7 @@ SET @point1 = geometry::Point(3.0, 4.0, 4326);
 SELECT PointColumn.STAsText() from TestSpatialFunction_YourTableTemp where PointColumn <> @point1;
 GO
 ~~START~~
-text
+nvarchar
 POINT(5 6)
 POINT(3 4)
 ~~END~~
@@ -1195,7 +1195,7 @@ SET @point1 = geometry::Point(3.0, 4.0, 4326);
 SELECT PointColumn.STAsText() from TestSpatialFunction_YourTableTemp where PointColumn = @point1;
 GO
 ~~START~~
-text
+nvarchar
 POINT(3 4)
 ~~END~~
 
