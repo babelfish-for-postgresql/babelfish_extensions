@@ -190,24 +190,24 @@ GO
 SELECT SQRT(real_val) FROM BABEL_5672_sqrt_approximate_numeric_table WHERE id = 8;
 GO
 
-SELECT SQRT(char_val) FROM BABEL_5672_sqrt_char_tests WHERE id != 4;
+SELECT SQRT(char_val) FROM BABEL_5672_sqrt_char_table WHERE id != 4;
 GO
-SELECT SQRT(char_val) FROM BABEL_5672_sqrt_char_tests WHERE id = 4;
-GO
-
-SELECT SQRT(varchar_val) FROM BABEL_5672_sqrt_char_tests WHERE id != 4;
-GO
-SELECT SQRT(varchar_val) FROM BABEL_5672_sqrt_char_tests WHERE id = 4;
+SELECT SQRT(char_val) FROM BABEL_5672_sqrt_char_table WHERE id = 4;
 GO
 
-SELECT SQRT(nchar_val) FROM BABEL_5672_sqrt_unicode_tests WHERE id != 4;
+SELECT SQRT(varchar_val) FROM BABEL_5672_sqrt_char_table WHERE id != 4;
 GO
-SELECT SQRT(nchar_val) FROM BABEL_5672_sqrt_unicode_tests WHERE id = 4;
+SELECT SQRT(varchar_val) FROM BABEL_5672_sqrt_char_table WHERE id = 4;
 GO
 
-SELECT SQRT(nvarchar_val) FROM BABEL_5672_sqrt_unicode_tests WHERE id != 4;
+SELECT SQRT(nchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id != 4;
 GO
-SELECT SQRT(nvarchar_val) FROM BABEL_5672_sqrt_unicode_tests WHERE id = 4;
+SELECT SQRT(nchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id = 4;
+GO
+
+SELECT SQRT(nvarchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id != 4;
+GO
+SELECT SQRT(nvarchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id = 4;
 GO
 
 -- Views
