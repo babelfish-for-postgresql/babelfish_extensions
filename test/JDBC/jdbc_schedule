@@ -8,9 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-BABEL_5748-vu-prepare
-BABEL_5748-vu-verify
-BABEL_5748-vu-cleanup
+all
 
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
