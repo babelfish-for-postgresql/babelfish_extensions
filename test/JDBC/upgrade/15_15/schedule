@@ -139,7 +139,7 @@ BABEL-CHECK-CONSTRAINT
 babel_context_info
 BABEL-CROSS-DB
 babel_datatype_sqlvariant
-babel_datetime
+babel_datetime-before-16_11-or-17_7
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
