@@ -630,6 +630,7 @@ babel_varbinary
 babel_test_numeric_int2_oper
 babel_test_numeric_int4_oper
 babel_test_numeric_int8_oper
+xml_value
 Test_cast_binary_bytea
 numeric_money
 MONEY_OBJECT
@@ -643,3 +644,4 @@ babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper
 babel_numeric_smallmoney_oper
 mathematical_func_tests
+datetime_roundoff

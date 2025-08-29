@@ -18,6 +18,7 @@
 #include "utils/datetime.h"
 
 #include "src/include/tds_timestamp.h"
+#include "src/include/tds_int.h"
 
 int			DaycountInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 static inline
@@ -136,31 +137,6 @@ TdsDayDifference(Datum value)
 }
 
 /*
- * Decides whether the effective date to consider is the next day
- * based on hour, minute, second value 23:59:59
- */
-static inline void
-GetNumDaysHelper(struct pg_tm *tm)
-{
-	tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
-	if (tm->tm_mday == DaycountInMonth[tm->tm_mon - 1] &&
-		tm->tm_mon == 12)
-	{
-		tm->tm_year++;
-		tm->tm_mon = tm->tm_mday = 1;
-	}
-	else if ((tm->tm_mday == DaycountInMonth[tm->tm_mon - 1] && tm->tm_mon != 2) ||
-			 (tm->tm_mon == 2 && tm->tm_mday == 29 && IsLeap(tm->tm_year)) ||
-			 (tm->tm_mon == 2 && tm->tm_mday == 28 && !IsLeap(tm->tm_year)))
-	{
-		tm->tm_mon++;
-		tm->tm_mday = 1;
-	}
-	else
-		tm->tm_mday++;
-}
-
-/*
  * Returns numDays and numTicks elapsed between given date
  * and 1-1-1900
  */
@@ -182,7 +158,7 @@ TdsTimeDifferenceSmalldatetime(Datum value, uint16 *numDays,
 	if (tm->tm_hour == 23 && tm->tm_min == 59 && tm->tm_sec == 59)
 	{
 		fsec = 0;
-		GetNumDaysHelper(tm);
+		pltsql_plugin_handler_ptr->UpdateToNextDayHelper(tm);
 		(*numDays)++;
 	}
 	else if ((tm->tm_sec == 29 && (fsec / 1000) > 998) || tm->tm_sec > 29)
@@ -224,7 +200,7 @@ TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
 		fsec == 999000)
 	{
 		msec = 0;
-		GetNumDaysHelper(tm);
+		pltsql_plugin_handler_ptr->UpdateToNextDayHelper(tm);
 		(*numDays)++;
 	}
 	else

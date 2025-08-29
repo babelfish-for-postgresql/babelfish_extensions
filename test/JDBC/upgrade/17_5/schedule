@@ -557,7 +557,7 @@ babel_4328_datetime2
 translate
 substring
 babel_4328_datetimeoffset
-babel_726
+babel_726-before-16_10-or-17_6
 test_conv_string_to_date
 test_conv_string_to_datetime
 test_conv_string_to_datetime2
@@ -634,3 +634,4 @@ babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper-before-16_10-or-17_6
 babel_numeric_smallmoney_oper-before-16_10-or-17_6
 mathematical_func_tests-before-17_7-or-16_11
+datetime_roundoff-before-16_10-or-17_6

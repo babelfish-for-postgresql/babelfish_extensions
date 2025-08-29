@@ -4832,17 +4832,19 @@ GO
 -- XML -> NUMERIC
 SELECT CAST(CAST('<root>123</root>' AS XML).value('/root[1]', 'varchar(10)') AS NUMERIC(10,2));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~START~~
+numeric
+123.00
+~~END~~
 
 
 -- XML -> DECIMAL
 SELECT CAST(CAST('<root>123.45</root>' AS XML).value('/root[1]', 'varchar(10)') AS DECIMAL(10,2));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~START~~
+numeric
+123.45
+~~END~~
 
 
 -- DATETIMEOFFSET -> NUMERIC/DECIMAL
@@ -5756,17 +5758,19 @@ GO
 -- XML -> NUMERIC using CONVERT
 SELECT CONVERT(NUMERIC(10,2), CAST('<root>123</root>' AS XML).value('/root[1]', 'varchar(10)'));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~START~~
+numeric
+123.00
+~~END~~
 
 
 -- XML -> DECIMAL using CONVERT
 SELECT CONVERT(DECIMAL(10,2), CAST('<root>123.45</root>' AS XML).value('/root[1]', 'varchar(10)'));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~START~~
+numeric
+123.45
+~~END~~
 
 
 -- DATETIMEOFFSET -> NUMERIC using CONVERT
