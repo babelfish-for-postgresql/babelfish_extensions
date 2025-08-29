@@ -176,7 +176,28 @@ GO
 EXECUTE BABEL_5748_vu_prepare_t_p12
 GO
 
----Radians Test with money/smallmoney in views and procedures
+SELECT * FROM BABEL_5748_vu_prepare_t_table1;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table2;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table3;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table4;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table5;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table6;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table7;
+GO
+
+---Radians Test with money/smallmoney in views, procedures and tables
 SELECT * FROM BABEL_5748_vu_prepare_t_11
 GO
 
@@ -241,4 +262,22 @@ EXECUTE BABEL_5748_vu_prepare_t_p23
 GO
 
 EXECUTE BABEL_5748_vu_prepare_t_p24
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table8;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table9;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table10;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table11;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table12;
+GO
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table13;
 GO

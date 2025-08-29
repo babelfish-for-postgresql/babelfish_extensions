@@ -8,7 +8,9 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+BABEL_5748-vu-prepare
+BABEL_5748-vu-verify
+BABEL_5748-vu-cleanup
 
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
@@ -100,9 +102,6 @@ ignore#!#babel_datetime-before-15_12-or-16_8-or-17_4-vu-cleanup
 ignore#!#fixeddecimal_modulo-vu-prepare
 ignore#!#fixeddecimal_modulo-vu-verify
 ignore#!#fixeddecimal_modulo-vu-cleanup
-ignore#!#BABEL_5748-before-17_6-or-16_11-vu-prepare
-ignore#!#BABEL_5748-before-17_6-or-16_11-vu-verify
-ignore#!#BABEL_5748-before-17_6-or-16_11-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -623,3 +622,6 @@ ignore#!#babel_726-before-16_10-or-17_6-vu-cleanup
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-prepare
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-verify
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-cleanup
+ignore#!#BABEL_5748-before-17_7-or-16_11-vu-prepare
+ignore#!#BABEL_5748-before-17_7-or-16_11-vu-verify
+ignore#!#BABEL_5748-before-17_7-or-16_11-vu-cleanup
