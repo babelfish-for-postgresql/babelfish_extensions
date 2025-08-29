@@ -2863,9 +2863,7 @@ INSERT INTO BinaryFunctionTests VALUES
  CAST((SELECT MIN(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARBINARY(100)),
  'MIN');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type datetime to varbinary)~~
+~~ROW COUNT: 2~~
 
 
 -- 2. String/Binary Functions
