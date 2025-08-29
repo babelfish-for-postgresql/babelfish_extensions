@@ -1761,34 +1761,30 @@ varbinary
 
 SELECT * from babel_datetime_varbinary_vu_view1;
 GO
-~~START~~
-varbinary
-0000B022018B81FF
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_varbinary_vu_view1" does not exist)~~
 
 
 SELECT * from babel_datetime_varbinary_vu_view2;
 GO
-~~START~~
-varbinary
-0000000000000001
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_varbinary_vu_view2" does not exist)~~
 
 
 SELECT * from babel_datetime_varbinary_vu_view3;
 GO
-~~START~~
-varbinary
-002D247F018B81FF
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_varbinary_vu_view3" does not exist)~~
 
 
 SELECT * from babel_datetime_varbinary_vu_view4;
 GO
-~~START~~
-varbinary
-FFFF2E4600034BEC
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_varbinary_vu_view4" does not exist)~~
 
 
 EXEC babel_datetime_varbinary_vu_procedure
