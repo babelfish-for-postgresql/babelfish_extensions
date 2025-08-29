@@ -1,5 +1,5 @@
 -- Test Tables
-CREATE TABLE sqrt_exact_numeric_tests
+CREATE TABLE BABEL_5672_sqrt_exact_numeric_table
 (
     id INT,
     numeric_val NUMERIC(12,2),
@@ -14,50 +14,48 @@ CREATE TABLE sqrt_exact_numeric_tests
 );
 GO
 
-INSERT INTO sqrt_exact_numeric_tests 
-(id, numeric_val, decimal_val, bigint_val, int_val, smallint_val, tinyint_val, money_val, smallmoney_val, bit_val) 
+INSERT INTO BABEL_5672_sqrt_exact_numeric_table                                                    -- Positive values
 VALUES 
--- Positive values
-(1, CAST(144.00 AS NUMERIC(12,2)), CAST(144.00 AS DECIMAL(12,2)), CAST(144 AS BIGINT), 
-    CAST(144 AS INT), CAST(144 AS SMALLINT), CAST(144 AS TINYINT), 
-    CAST(144.00 AS MONEY), CAST(144.00 AS SMALLMONEY), CAST(1 AS BIT)),
-
--- Zero values
-(2, CAST(0.00 AS NUMERIC(12,2)), CAST(0.00 AS DECIMAL(12,2)), CAST(0 AS BIGINT), 
-    CAST(0 AS INT), CAST(0 AS SMALLINT), CAST(0 AS TINYINT), 
-    CAST(0.00 AS MONEY), CAST(0.00 AS SMALLMONEY), CAST(0 AS BIT)),
-
--- Irrational result
-(3, CAST(2.00 AS NUMERIC(12,2)), CAST(2.00 AS DECIMAL(12,2)), CAST(2 AS BIGINT), 
-    CAST(2 AS INT), CAST(2 AS SMALLINT), CAST(2 AS TINYINT), 
-    CAST(2.00 AS MONEY), CAST(2.00 AS SMALLMONEY), NULL),
-
--- NULL values
-(4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-
--- Large values 
-(5, CAST(9999999999.99 AS NUMERIC(12,2)), CAST(9999999999.99 AS DECIMAL(12,2)), 
-    CAST(9223372036854775807 AS BIGINT), CAST(2147483647 AS INT), 
-    CAST(32767 AS SMALLINT), CAST(255 AS TINYINT), 
-    CAST(922337203685477.5807 AS MONEY), CAST(214748.3647 AS SMALLMONEY), 
-    CAST(1 AS BIT)),
-
--- Small values
-(6, CAST(0.01 AS NUMERIC(12,2)), CAST(0.01 AS DECIMAL(12,2)), 
-    CAST(1 AS BIGINT), CAST(1 AS INT), CAST(1 AS SMALLINT), CAST(1 AS TINYINT), 
-    CAST(0.0001 AS MONEY), CAST(0.0001 AS SMALLMONEY), CAST(0 AS BIT)),
-
--- Decimal values
-(7, CAST(12.25 AS NUMERIC(12,2)), CAST(12.25 AS DECIMAL(12,2)), NULL, NULL, NULL, NULL, 
-    CAST(12.25 AS MONEY), CAST(12.25 AS SMALLMONEY), NULL),
-
--- Negative values
-(8, CAST(-144.00 AS NUMERIC(12,2)), CAST(-144.00 AS DECIMAL(12,2)), 
-    CAST(-144 AS BIGINT), CAST(-144 AS INT), CAST(-144 AS SMALLINT), NULL, 
-    CAST(-144.00 AS MONEY), CAST(-144.00 AS SMALLMONEY), NULL);
+(1, 144.00, 144.00, 144, 144, 144, 144, 144.00, 144.00, 1)
 GO
 
-CREATE TABLE sqrt_approximate_numeric_tests
+INSERT INTO BABEL_5672_sqrt_exact_numeric_table                                                    -- Zero values
+VALUES 
+(2, 0.00, 0.00, 0, 0, 0, 0, 0.00, 0.00, 0)
+GO
+
+INSERT INTO BABEL_5672_sqrt_exact_numeric_table                                                    -- Irrational result
+VALUES 
+(3, 2.00, 2.00, 2, 2, 2, 2, 2.00, 2.00, NULL)
+GO
+
+INSERT INTO BABEL_5672_sqrt_exact_numeric_table                                                    -- NULL values
+VALUES 
+(4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+GO
+
+INSERT INTO BABEL_5672_sqrt_exact_numeric_table                                                    -- Large values
+VALUES 
+(5, 9999999999.99, 9999999999.99, 9223372036854775807, 2147483647, 32767, 255, 
+    922337203685477.5807, 214748.3647, 1)
+GO
+
+INSERT INTO BABEL_5672_sqrt_exact_numeric_table                                                    -- Small values
+VALUES 
+(6, 0.01, 0.01, 1, 1, 1, 1, 0.0001, 0.0001, 0)
+GO
+
+INSERT INTO BABEL_5672_sqrt_exact_numeric_table                                                    -- Decimal values
+VALUES 
+(7, 12.25, 12.25, NULL, NULL, NULL, NULL, 12.25, 12.25, NULL)
+GO
+
+INSERT INTO BABEL_5672_sqrt_exact_numeric_table                                                    -- Negative values
+VALUES 
+(8, -144.00, -144.00, -144, -144, -144, NULL, -144.00, -144.00, NULL)
+GO
+
+CREATE TABLE BABEL_5672_sqrt_approximate_numeric_table
 (
     id INT,
     float_val FLOAT,
@@ -65,35 +63,47 @@ CREATE TABLE sqrt_approximate_numeric_tests
 );
 GO
 
-INSERT INTO sqrt_approximate_numeric_tests 
-(id, float_val, real_val) 
+INSERT INTO BABEL_5672_sqrt_approximate_numeric_table                                              -- Positive values    
 VALUES 
--- Positive values
-(1, CAST(144.00 AS FLOAT), CAST(144.00 AS REAL)),
-
--- Zero values
-(2, CAST(0.00 AS FLOAT), CAST(0.00 AS REAL)),
-
--- Irrational result
-(3, CAST(2.00 AS FLOAT), CAST(2.00 AS REAL)),
-
--- NULL values
-(4, NULL, NULL),
-
--- Large values
-(5, CAST(1.79E+308 AS FLOAT), CAST(3.40E+38 AS REAL)),
-
--- Small values
-(6, CAST(2.23E-308 AS FLOAT), CAST(1.18E-38 AS REAL)),
-
--- Decimal values
-(7, CAST(12.25 AS FLOAT), CAST(12.25 AS REAL)),
-
--- Negative values
-(8, CAST(-144.00 AS FLOAT), CAST(-144.00 AS REAL));
+(1, 144.00, 144.00) 
 GO
 
-CREATE TABLE sqrt_char_tests
+INSERT INTO BABEL_5672_sqrt_approximate_numeric_table                                              -- Zero values    
+VALUES 
+(2, 0.00 , 0.00) 
+GO
+
+INSERT INTO BABEL_5672_sqrt_approximate_numeric_table                                              -- Irrational result    
+VALUES 
+(3, 2.00, 2.00) 
+GO
+
+INSERT INTO BABEL_5672_sqrt_approximate_numeric_table                                              -- NULL values    
+VALUES 
+(4, NULL, NULL) 
+GO
+
+INSERT INTO BABEL_5672_sqrt_approximate_numeric_table                                              -- Large values    
+VALUES 
+(5, 1.79E+308, 3.40E+38) 
+GO
+
+INSERT INTO BABEL_5672_sqrt_approximate_numeric_table                                              -- Small values    
+VALUES 
+(6, 2.23E-308, 1.18E-38) 
+GO
+
+INSERT INTO BABEL_5672_sqrt_approximate_numeric_table                                              -- Decimal values    
+VALUES 
+(7, 12.25, 12.25) 
+GO
+
+INSERT INTO BABEL_5672_sqrt_approximate_numeric_table                                              -- Negative values    
+VALUES 
+(8, -144.00, -144.00) 
+GO
+
+CREATE TABLE BABEL_5672_sqrt_char_table
 (
     id INT,
     char_val CHAR(10),
@@ -101,26 +111,32 @@ CREATE TABLE sqrt_char_tests
 );
 GO
 
-INSERT INTO sqrt_char_tests 
-(id, char_val, varchar_val) 
+INSERT INTO BABEL_5672_sqrt_char_table                                                             -- Positive values
 VALUES 
--- Positive values
-(1, '144', '144'),
-
--- Zero
-(2, '0', '0'),
-
--- NULL values
-(3, NULL, NULL),
-
--- Invalid string
-(4, 'ABC', 'ABC'),
-
--- Empty string
-(5, '', '');
+(1, '144', '144')
 GO
 
-CREATE TABLE sqrt_unicode_tests
+INSERT INTO BABEL_5672_sqrt_char_table                                                             -- Zero values
+VALUES 
+(2, '0', '0')
+GO
+
+INSERT INTO BABEL_5672_sqrt_char_table                                                             -- NULL values
+VALUES 
+(3, NULL, NULL)
+GO
+
+INSERT INTO BABEL_5672_sqrt_char_table                                                             -- Invalid string
+VALUES 
+(4, 'ABC', 'ABC')
+GO
+
+INSERT INTO BABEL_5672_sqrt_char_table                                                             -- Empty string
+VALUES 
+(5, '', '')
+GO
+
+CREATE TABLE BABEL_5672_sqrt_unicode_table
 (
     id INT,
     nchar_val NCHAR(10),
@@ -128,163 +144,169 @@ CREATE TABLE sqrt_unicode_tests
 );
 GO
 
-INSERT INTO sqrt_unicode_tests 
-(id, nchar_val, nvarchar_val) 
+INSERT INTO BABEL_5672_sqrt_unicode_table                                                          -- Positive values
 VALUES 
--- Positive values
-(1, N'144', N'144'),
+(1, N'144', N'144')
+GO
 
--- Zero
-(2, N'0', N'0'),
+INSERT INTO BABEL_5672_sqrt_unicode_table                                                          -- Zero values
+VALUES 
+(2, N'0', N'0')
+GO
 
--- NULL values
-(3, NULL, NULL),
+INSERT INTO BABEL_5672_sqrt_unicode_table                                                          -- NULL values
+VALUES 
+(3, NULL, NULL)
+GO
 
--- Invalid string
-(4, N'ABC', N'ABC'),
+INSERT INTO BABEL_5672_sqrt_unicode_table                                                          -- Invalid string
+VALUES 
+(4, N'ABC', N'ABC')
+GO
 
--- Empty string
-(5, N'', N'');
+INSERT INTO BABEL_5672_sqrt_unicode_table                                                          -- Empty string
+VALUES 
+(5, N'', N'')
 GO
 
 -- Test Views
-CREATE VIEW sqrt_numeric AS SELECT SQRT(CAST(144.00 AS NUMERIC(38,2)));
+CREATE VIEW BABEL_5672_sqrt_numeric AS SELECT SQRT(CAST(144.00 AS NUMERIC(38,2)));
 GO
-CREATE VIEW sqrt_numeric_zero AS SELECT SQRT(CAST(0 AS NUMERIC(38,2)));
+CREATE VIEW BABEL_5672_sqrt_numeric_zero AS SELECT SQRT(CAST(0 AS NUMERIC(38,2)));
 GO
-CREATE VIEW sqrt_numeric_negative AS SELECT SQRT(CAST(-144.00 AS NUMERIC(38,2)));
+CREATE VIEW BABEL_5672_sqrt_numeric_negative AS SELECT SQRT(CAST(-144.00 AS NUMERIC(38,2)));
 GO
-CREATE VIEW sqrt_numeric_null AS SELECT SQRT(CAST(NULL AS NUMERIC(38,2)));
+CREATE VIEW BABEL_5672_sqrt_numeric_null AS SELECT SQRT(CAST(NULL AS NUMERIC(38,2)));
 GO
-CREATE VIEW sqrt_numeric_max AS SELECT SQRT(CAST(99999999999999999999999999999999999999 AS NUMERIC(38,0)));
+CREATE VIEW BABEL_5672_sqrt_numeric_max AS SELECT SQRT(CAST(99999999999999999999999999999999999999 AS NUMERIC(38,0)));
 GO
-CREATE VIEW sqrt_numeric_min AS SELECT SQRT(CAST(0.0000000000000000000000000000000000001 AS NUMERIC(38,37)));
-GO
-
-CREATE VIEW sqrt_decimal AS SELECT SQRT(CAST(144.00 AS DECIMAL(38,2)));
-GO
-CREATE VIEW sqrt_decimal_zero AS SELECT SQRT(CAST(0 AS DECIMAL(38,2)));
-GO
-CREATE VIEW sqrt_decimal_negative AS SELECT SQRT(CAST(-144.00 AS DECIMAL(38,2)));
-GO
-CREATE VIEW sqrt_decimal_null AS SELECT SQRT(CAST(NULL AS DECIMAL(38,2)));
-GO
-CREATE VIEW sqrt_decimal_max AS SELECT SQRT(CAST(99999999999999999999999999999999999999 AS DECIMAL(38,0)));
-GO
-CREATE VIEW sqrt_decimal_min AS SELECT SQRT(CAST(0.0000000000000000000000000000000000001 AS DECIMAL(38,37)));
+CREATE VIEW BABEL_5672_sqrt_numeric_min AS SELECT SQRT(CAST(0.0000000000000000000000000000000000001 AS NUMERIC(38,37)));
 GO
 
-CREATE VIEW sqrt_bit AS SELECT SQRT(CAST(1 AS BIT));
+CREATE VIEW BABEL_5672_sqrt_decimal AS SELECT SQRT(CAST(144.00 AS DECIMAL(38,2)));
 GO
-CREATE VIEW sqrt_bit_zero AS SELECT SQRT(CAST(0 AS BIT));
+CREATE VIEW BABEL_5672_sqrt_decimal_zero AS SELECT SQRT(CAST(0 AS DECIMAL(38,2)));
 GO
-CREATE VIEW sqrt_bit_null AS SELECT SQRT(CAST(NULL AS BIT));
+CREATE VIEW BABEL_5672_sqrt_decimal_negative AS SELECT SQRT(CAST(-144.00 AS DECIMAL(38,2)));
 GO
-
-CREATE VIEW sqrt_int AS SELECT SQRT(CAST(144 AS INT));
+CREATE VIEW BABEL_5672_sqrt_decimal_null AS SELECT SQRT(CAST(NULL AS DECIMAL(38,2)));
 GO
-CREATE VIEW sqrt_int_zero AS SELECT SQRT(CAST(0 AS INT));
+CREATE VIEW BABEL_5672_sqrt_decimal_max AS SELECT SQRT(CAST(99999999999999999999999999999999999999 AS DECIMAL(38,0)));
 GO
-CREATE VIEW sqrt_int_negative AS SELECT SQRT(CAST(-144 AS INT));
-GO
-CREATE VIEW sqrt_int_null AS SELECT SQRT(CAST(NULL AS INT));
-GO
-CREATE VIEW sqrt_int_max AS SELECT SQRT(2147483647);
-GO
-CREATE VIEW sqrt_int_min AS SELECT SQRT(-2147483648);
+CREATE VIEW BABEL_5672_sqrt_decimal_min AS SELECT SQRT(CAST(0.0000000000000000000000000000000000001 AS DECIMAL(38,37)));
 GO
 
-CREATE VIEW sqrt_bigint AS SELECT SQRT(CAST(144 AS BIGINT));
+CREATE VIEW BABEL_5672_sqrt_bit AS SELECT SQRT(CAST(1 AS BIT));
 GO
-CREATE VIEW sqrt_bigint_zero AS SELECT SQRT(CAST(0 AS BIGINT));
+CREATE VIEW BABEL_5672_sqrt_bit_zero AS SELECT SQRT(CAST(0 AS BIT));
 GO
-CREATE VIEW sqrt_bigint_negative AS SELECT SQRT(CAST(-144 AS BIGINT));
-GO
-CREATE VIEW sqrt_bigint_null AS SELECT SQRT(CAST(NULL AS BIGINT));
-GO
-CREATE VIEW sqrt_bigint_max AS SELECT SQRT(9223372036854775807);
-GO
-CREATE VIEW sqrt_bigint_min AS SELECT SQRT(-9223372036854775808);
+CREATE VIEW BABEL_5672_sqrt_bit_null AS SELECT SQRT(CAST(NULL AS BIT));
 GO
 
-CREATE VIEW sqrt_smallint AS SELECT SQRT(CAST(144 AS SMALLINT));
+CREATE VIEW BABEL_5672_sqrt_int AS SELECT SQRT(CAST(144 AS INT));
 GO
-CREATE VIEW sqrt_smallint_zero AS SELECT SQRT(CAST(0 AS SMALLINT));
+CREATE VIEW BABEL_5672_sqrt_int_zero AS SELECT SQRT(CAST(0 AS INT));
 GO
-CREATE VIEW sqrt_smallint_negative AS SELECT SQRT(CAST(-144 AS SMALLINT));
+CREATE VIEW BABEL_5672_sqrt_int_negative AS SELECT SQRT(CAST(-144 AS INT));
 GO
-CREATE VIEW sqrt_smallint_null AS SELECT SQRT(CAST(NULL AS SMALLINT));
+CREATE VIEW BABEL_5672_sqrt_int_null AS SELECT SQRT(CAST(NULL AS INT));
 GO
-CREATE VIEW sqrt_smallint_max AS SELECT SQRT(32767);
+CREATE VIEW BABEL_5672_sqrt_int_max AS SELECT SQRT(2147483647);
 GO
-CREATE VIEW sqrt_smallint_min AS SELECT SQRT(-32768);
-GO
-
-CREATE VIEW sqrt_tinyint AS SELECT SQRT(CAST(144 AS TINYINT));
-GO
-CREATE VIEW sqrt_tinyint_zero AS SELECT SQRT(CAST(0 AS TINYINT));
-GO
-CREATE VIEW sqrt_tinyint_null AS SELECT SQRT(CAST(NULL AS TINYINT));
-GO
-CREATE VIEW sqrt_tinyint_max AS SELECT SQRT(255);
-GO
-CREATE VIEW sqrt_tinyint_min AS SELECT SQRT(0);
+CREATE VIEW BABEL_5672_sqrt_int_min AS SELECT SQRT(-2147483648);
 GO
 
-CREATE VIEW sqrt_float AS SELECT SQRT(CAST(144.00 AS FLOAT));
+CREATE VIEW BABEL_5672_sqrt_bigint AS SELECT SQRT(CAST(144 AS BIGINT));
 GO
-CREATE VIEW sqrt_float_zero AS SELECT SQRT(CAST(0 AS FLOAT));
+CREATE VIEW BABEL_5672_sqrt_bigint_zero AS SELECT SQRT(CAST(0 AS BIGINT));
 GO
-CREATE VIEW sqrt_float_negative AS SELECT SQRT(CAST(-144.00 AS FLOAT));
+CREATE VIEW BABEL_5672_sqrt_bigint_negative AS SELECT SQRT(CAST(-144 AS BIGINT));
 GO
-CREATE VIEW sqrt_float_null AS SELECT SQRT(CAST(NULL AS FLOAT));
+CREATE VIEW BABEL_5672_sqrt_bigint_null AS SELECT SQRT(CAST(NULL AS BIGINT));
 GO
-CREATE VIEW sqrt_float_max AS SELECT SQRT(1.79E+308);
+CREATE VIEW BABEL_5672_sqrt_bigint_max AS SELECT SQRT(9223372036854775807);
 GO
-CREATE VIEW sqrt_float_min AS SELECT SQRT(2.23E-308);
-GO
-
-CREATE VIEW sqrt_real AS SELECT SQRT(CAST(144.00 AS REAL));
-GO
-CREATE VIEW sqrt_real_zero AS SELECT SQRT(CAST(0 AS REAL));
-GO
-CREATE VIEW sqrt_real_negative AS SELECT SQRT(CAST(-144.00 AS REAL));
-GO
-CREATE VIEW sqrt_real_null AS SELECT SQRT(CAST(NULL AS REAL));
-GO
-CREATE VIEW sqrt_real_max AS SELECT SQRT(3.40E+38);
-GO
-CREATE VIEW sqrt_real_min AS SELECT SQRT(1.18E-38);
+CREATE VIEW BABEL_5672_sqrt_bigint_min AS SELECT SQRT(-9223372036854775808);
 GO
 
-CREATE VIEW sqrt_money AS SELECT SQRT(CAST(144.00 AS MONEY));
+CREATE VIEW BABEL_5672_sqrt_smallint AS SELECT SQRT(CAST(144 AS SMALLINT));
 GO
-CREATE VIEW sqrt_money_zero AS SELECT SQRT(CAST(0 AS MONEY));
+CREATE VIEW BABEL_5672_sqrt_smallint_zero AS SELECT SQRT(CAST(0 AS SMALLINT));
 GO
-CREATE VIEW sqrt_money_negative AS SELECT SQRT(CAST(-144.00 AS MONEY));
+CREATE VIEW BABEL_5672_sqrt_smallint_negative AS SELECT SQRT(CAST(-144 AS SMALLINT));
 GO
-CREATE VIEW sqrt_money_null AS SELECT SQRT(CAST(NULL AS MONEY));
+CREATE VIEW BABEL_5672_sqrt_smallint_null AS SELECT SQRT(CAST(NULL AS SMALLINT));
 GO
-CREATE VIEW sqrt_money_max AS SELECT SQRT(CAST(922337203685477.5807 AS MONEY));
+CREATE VIEW BABEL_5672_sqrt_smallint_max AS SELECT SQRT(32767);
 GO
-CREATE VIEW sqrt_money_min AS SELECT SQRT(CAST(-922337203685477.5808 AS MONEY));
+CREATE VIEW BABEL_5672_sqrt_smallint_min AS SELECT SQRT(-32768);
 GO
 
-CREATE VIEW sqrt_smallmoney AS SELECT SQRT(CAST(144.00 AS SMALLMONEY));
+CREATE VIEW BABEL_5672_sqrt_tinyint AS SELECT SQRT(CAST(144 AS TINYINT));
 GO
-CREATE VIEW sqrt_smallmoney_zero AS SELECT SQRT(CAST(0 AS SMALLMONEY));
+CREATE VIEW BABEL_5672_sqrt_tinyint_zero AS SELECT SQRT(CAST(0 AS TINYINT));
 GO
-CREATE VIEW sqrt_smallmoney_negative AS SELECT SQRT(CAST(-144.00 AS SMALLMONEY));
+CREATE VIEW BABEL_5672_sqrt_tinyint_null AS SELECT SQRT(CAST(NULL AS TINYINT));
 GO
-CREATE VIEW sqrt_smallmoney_null AS SELECT SQRT(CAST(NULL AS SMALLMONEY));
+CREATE VIEW BABEL_5672_sqrt_tinyint_max AS SELECT SQRT(255);
 GO
-CREATE VIEW sqrt_smallmoney_max AS SELECT SQRT(CAST(214748.3647 AS SMALLMONEY));
+CREATE VIEW BABEL_5672_sqrt_tinyint_min AS SELECT SQRT(0);
 GO
-CREATE VIEW sqrt_smallmoney_min AS SELECT SQRT(CAST(-214748.3648 AS SMALLMONEY));
+
+CREATE VIEW BABEL_5672_sqrt_float AS SELECT SQRT(CAST(144.00 AS FLOAT));
+GO
+CREATE VIEW BABEL_5672_sqrt_float_zero AS SELECT SQRT(CAST(0 AS FLOAT));
+GO
+CREATE VIEW BABEL_5672_sqrt_float_negative AS SELECT SQRT(CAST(-144.00 AS FLOAT));
+GO
+CREATE VIEW BABEL_5672_sqrt_float_null AS SELECT SQRT(CAST(NULL AS FLOAT));
+GO
+CREATE VIEW BABEL_5672_sqrt_float_max AS SELECT SQRT(1.79E+308);
+GO
+CREATE VIEW BABEL_5672_sqrt_float_min AS SELECT SQRT(2.23E-308);
+GO
+
+CREATE VIEW BABEL_5672_sqrt_real AS SELECT SQRT(CAST(144.00 AS REAL));
+GO
+CREATE VIEW BABEL_5672_sqrt_real_zero AS SELECT SQRT(CAST(0 AS REAL));
+GO
+CREATE VIEW BABEL_5672_sqrt_real_negative AS SELECT SQRT(CAST(-144.00 AS REAL));
+GO
+CREATE VIEW BABEL_5672_sqrt_real_null AS SELECT SQRT(CAST(NULL AS REAL));
+GO
+CREATE VIEW BABEL_5672_sqrt_real_max AS SELECT SQRT(3.40E+38);
+GO
+CREATE VIEW BABEL_5672_sqrt_real_min AS SELECT SQRT(1.18E-38);
+GO
+
+CREATE VIEW BABEL_5672_sqrt_money AS SELECT SQRT(CAST(144.00 AS MONEY));
+GO
+CREATE VIEW BABEL_5672_sqrt_money_zero AS SELECT SQRT(CAST(0 AS MONEY));
+GO
+CREATE VIEW BABEL_5672_sqrt_money_negative AS SELECT SQRT(CAST(-144.00 AS MONEY));
+GO
+CREATE VIEW BABEL_5672_sqrt_money_null AS SELECT SQRT(CAST(NULL AS MONEY));
+GO
+CREATE VIEW BABEL_5672_sqrt_money_max AS SELECT SQRT(CAST(922337203685477.5807 AS MONEY));
+GO
+CREATE VIEW BABEL_5672_sqrt_money_min AS SELECT SQRT(CAST(-922337203685477.5808 AS MONEY));
+GO
+
+CREATE VIEW BABEL_5672_sqrt_smallmoney AS SELECT SQRT(CAST(144.00 AS SMALLMONEY));
+GO
+CREATE VIEW BABEL_5672_sqrt_smallmoney_zero AS SELECT SQRT(CAST(0 AS SMALLMONEY));
+GO
+CREATE VIEW BABEL_5672_sqrt_smallmoney_negative AS SELECT SQRT(CAST(-144.00 AS SMALLMONEY));
+GO
+CREATE VIEW BABEL_5672_sqrt_smallmoney_null AS SELECT SQRT(CAST(NULL AS SMALLMONEY));
+GO
+CREATE VIEW BABEL_5672_sqrt_smallmoney_max AS SELECT SQRT(CAST(214748.3647 AS SMALLMONEY));
+GO
+CREATE VIEW BABEL_5672_sqrt_smallmoney_min AS SELECT SQRT(CAST(-214748.3648 AS SMALLMONEY));
 GO
 
 -- Test Functions
-CREATE FUNCTION sqrt_test_numeric()
+CREATE FUNCTION BABEL_5672_sqrt_test_numeric()
 RETURNS FLOAT
 AS
 BEGIN
@@ -292,7 +314,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION sqrt_test_numeric_zero()
+CREATE FUNCTION BABEL_5672_sqrt_test_numeric_zero()
 RETURNS FLOAT
 AS
 BEGIN
@@ -300,7 +322,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION sqrt_test_numeric_negative()
+CREATE FUNCTION BABEL_5672_sqrt_test_numeric_negative()
 RETURNS FLOAT
 AS
 BEGIN
@@ -308,7 +330,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION sqrt_test_numeric_null()
+CREATE FUNCTION BABEL_5672_sqrt_test_numeric_null()
 RETURNS FLOAT
 AS
 BEGIN
@@ -316,7 +338,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION sqrt_test_decimal()
+CREATE FUNCTION BABEL_5672_sqrt_test_decimal()
 RETURNS FLOAT
 AS
 BEGIN
@@ -324,7 +346,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION sqrt_test_decimal_zero()
+CREATE FUNCTION BABEL_5672_sqrt_test_decimal_zero()
 RETURNS FLOAT
 AS
 BEGIN
@@ -332,7 +354,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION sqrt_test_decimal_negative()
+CREATE FUNCTION BABEL_5672_sqrt_test_decimal_negative()
 RETURNS FLOAT
 AS
 BEGIN
@@ -340,7 +362,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION sqrt_test_decimal_null()
+CREATE FUNCTION BABEL_5672_sqrt_test_decimal_null()
 RETURNS FLOAT
 AS
 BEGIN
@@ -348,7 +370,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION sqrt_test_bit()
+CREATE FUNCTION BABEL_5672_sqrt_test_bit()
 RETURNS FLOAT
 AS
 BEGIN
@@ -356,7 +378,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION sqrt_test_bit_zero()
+CREATE FUNCTION BABEL_5672_sqrt_test_bit_zero()
 RETURNS FLOAT
 AS
 BEGIN
@@ -364,7 +386,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION sqrt_test_bit_null()
+CREATE FUNCTION BABEL_5672_sqrt_test_bit_null()
 RETURNS FLOAT
 AS
 BEGIN
@@ -373,57 +395,57 @@ END
 GO
 
 -- Test Procedures
-CREATE PROCEDURE sqrt_test_numeric_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_numeric_proc
 AS
 SELECT SQRT(CAST(12.25 AS NUMERIC(12,2)));
 GO
 
-CREATE PROCEDURE sqrt_test_numeric_zero_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_numeric_zero_proc
 AS
 SELECT SQRT(CAST(0 AS NUMERIC(12,2)));
 GO
 
-CREATE PROCEDURE sqrt_test_numeric_negative_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_numeric_negative_proc
 AS
 SELECT SQRT(CAST(-12.25 AS NUMERIC(12,2)));
 GO
 
-CREATE PROCEDURE sqrt_test_numeric_null_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_numeric_null_proc
 AS
 SELECT SQRT(CAST(NULL AS NUMERIC(12,2)));
 GO
 
-CREATE PROCEDURE sqrt_test_decimal_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_decimal_proc
 AS
 SELECT SQRT(CAST(12.25 AS DECIMAL(12,2)));
 GO
 
-CREATE PROCEDURE sqrt_test_decimal_zero_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_decimal_zero_proc
 AS
 SELECT SQRT(CAST(0 AS DECIMAL(12,2)));
 GO
 
-CREATE PROCEDURE sqrt_test_decimal_negative_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_decimal_negative_proc
 AS
 SELECT SQRT(CAST(-12.25 AS DECIMAL(12,2)));
 GO
 
-CREATE PROCEDURE sqrt_test_decimal_null_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_decimal_null_proc
 AS
 SELECT SQRT(CAST(NULL AS DECIMAL(12,2)));
 GO
 
-CREATE PROCEDURE sqrt_test_bit_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_bit_proc
 AS
 SELECT SQRT(CAST(1 AS BIT));
 GO
 
-CREATE PROCEDURE sqrt_test_bit_zero_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_bit_zero_proc
 AS
 SELECT SQRT(CAST(0 AS BIT));
 GO
 
-CREATE PROCEDURE sqrt_test_bit_null_proc
+CREATE PROCEDURE BABEL_5672_sqrt_test_bit_null_proc
 AS
 SELECT SQRT(CAST(NULL AS BIT));
 GO

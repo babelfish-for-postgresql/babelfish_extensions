@@ -1,193 +1,193 @@
 -- Drop Tables
-DROP TABLE sqrt_exact_numeric_tests;
+DROP TABLE BABEL_5672_sqrt_exact_numeric_table;
 GO
-DROP TABLE sqrt_approximate_numeric_tests;
+DROP TABLE BABEL_5672_sqrt_approximate_numeric_table;
 GO
-DROP TABLE sqrt_char_tests;
+DROP TABLE BABEL_5672_sqrt_char_table;
 GO
-DROP TABLE sqrt_unicode_tests;
+DROP TABLE BABEL_5672_sqrt_unicode_table;
 GO
 
 -- Drop Views
-DROP VIEW sqrt_numeric;
+DROP VIEW BABEL_5672_sqrt_numeric;
 GO
-DROP VIEW sqrt_numeric_zero;
+DROP VIEW BABEL_5672_sqrt_numeric_zero;
 GO
-DROP VIEW sqrt_numeric_negative;
+DROP VIEW BABEL_5672_sqrt_numeric_negative;
 GO
-DROP VIEW sqrt_numeric_null;
+DROP VIEW BABEL_5672_sqrt_numeric_null;
 GO
-DROP VIEW sqrt_numeric_max;
+DROP VIEW BABEL_5672_sqrt_numeric_max;
 GO
-DROP VIEW sqrt_numeric_min;
-GO
-
-DROP VIEW sqrt_decimal;
-GO
-DROP VIEW sqrt_decimal_zero;
-GO
-DROP VIEW sqrt_decimal_negative;
-GO
-DROP VIEW sqrt_decimal_null;
-GO
-DROP VIEW sqrt_decimal_max;
-GO
-DROP VIEW sqrt_decimal_min;
+DROP VIEW BABEL_5672_sqrt_numeric_min;
 GO
 
-DROP VIEW sqrt_bit;
+DROP VIEW BABEL_5672_sqrt_decimal;
 GO
-DROP VIEW sqrt_bit_zero;
+DROP VIEW BABEL_5672_sqrt_decimal_zero;
 GO
-DROP VIEW sqrt_bit_null;
+DROP VIEW BABEL_5672_sqrt_decimal_negative;
 GO
-
-DROP VIEW sqrt_int;
+DROP VIEW BABEL_5672_sqrt_decimal_null;
 GO
-DROP VIEW sqrt_int_zero;
+DROP VIEW BABEL_5672_sqrt_decimal_max;
 GO
-DROP VIEW sqrt_int_negative;
-GO
-DROP VIEW sqrt_int_null;
-GO
-DROP VIEW sqrt_int_max;
-GO
-DROP VIEW sqrt_int_min;
+DROP VIEW BABEL_5672_sqrt_decimal_min;
 GO
 
-DROP VIEW sqrt_bigint;
+DROP VIEW BABEL_5672_sqrt_bit;
 GO
-DROP VIEW sqrt_bigint_zero;
+DROP VIEW BABEL_5672_sqrt_bit_zero;
 GO
-DROP VIEW sqrt_bigint_negative;
-GO
-DROP VIEW sqrt_bigint_null;
-GO
-DROP VIEW sqrt_bigint_max;
-GO
-DROP VIEW sqrt_bigint_min;
+DROP VIEW BABEL_5672_sqrt_bit_null;
 GO
 
-DROP VIEW sqrt_smallint;
+DROP VIEW BABEL_5672_sqrt_int;
 GO
-DROP VIEW sqrt_smallint_zero;
+DROP VIEW BABEL_5672_sqrt_int_zero;
 GO
-DROP VIEW sqrt_smallint_negative;
+DROP VIEW BABEL_5672_sqrt_int_negative;
 GO
-DROP VIEW sqrt_smallint_null;
+DROP VIEW BABEL_5672_sqrt_int_null;
 GO
-DROP VIEW sqrt_smallint_max;
+DROP VIEW BABEL_5672_sqrt_int_max;
 GO
-DROP VIEW sqrt_smallint_min;
-GO
-
-DROP VIEW sqrt_tinyint;
-GO
-DROP VIEW sqrt_tinyint_zero;
-GO
-DROP VIEW sqrt_tinyint_null;
-GO
-DROP VIEW sqrt_tinyint_max;
-GO
-DROP VIEW sqrt_tinyint_min;
+DROP VIEW BABEL_5672_sqrt_int_min;
 GO
 
-DROP VIEW sqrt_float;
+DROP VIEW BABEL_5672_sqrt_bigint;
 GO
-DROP VIEW sqrt_float_zero;
+DROP VIEW BABEL_5672_sqrt_bigint_zero;
 GO
-DROP VIEW sqrt_float_negative;
+DROP VIEW BABEL_5672_sqrt_bigint_negative;
 GO
-DROP VIEW sqrt_float_null;
+DROP VIEW BABEL_5672_sqrt_bigint_null;
 GO
-DROP VIEW sqrt_float_max;
+DROP VIEW BABEL_5672_sqrt_bigint_max;
 GO
-DROP VIEW sqrt_float_min;
-GO
-
-DROP VIEW sqrt_real;
-GO
-DROP VIEW sqrt_real_zero;
-GO
-DROP VIEW sqrt_real_negative;
-GO
-DROP VIEW sqrt_real_null;
-GO
-DROP VIEW sqrt_real_max;
-GO
-DROP VIEW sqrt_real_min;
+DROP VIEW BABEL_5672_sqrt_bigint_min;
 GO
 
-DROP VIEW sqrt_money;
+DROP VIEW BABEL_5672_sqrt_smallint;
 GO
-DROP VIEW sqrt_money_zero;
+DROP VIEW BABEL_5672_sqrt_smallint_zero;
 GO
-DROP VIEW sqrt_money_negative;
+DROP VIEW BABEL_5672_sqrt_smallint_negative;
 GO
-DROP VIEW sqrt_money_null;
+DROP VIEW BABEL_5672_sqrt_smallint_null;
 GO
-DROP VIEW sqrt_money_max;
+DROP VIEW BABEL_5672_sqrt_smallint_max;
 GO
-DROP VIEW sqrt_money_min;
+DROP VIEW BABEL_5672_sqrt_smallint_min;
 GO
 
-DROP VIEW sqrt_smallmoney;
+DROP VIEW BABEL_5672_sqrt_tinyint;
 GO
-DROP VIEW sqrt_smallmoney_zero;
+DROP VIEW BABEL_5672_sqrt_tinyint_zero;
 GO
-DROP VIEW sqrt_smallmoney_negative;
+DROP VIEW BABEL_5672_sqrt_tinyint_null;
 GO
-DROP VIEW sqrt_smallmoney_null;
+DROP VIEW BABEL_5672_sqrt_tinyint_max;
 GO
-DROP VIEW sqrt_smallmoney_max;
+DROP VIEW BABEL_5672_sqrt_tinyint_min;
 GO
-DROP VIEW sqrt_smallmoney_min;
+
+DROP VIEW BABEL_5672_sqrt_float;
+GO
+DROP VIEW BABEL_5672_sqrt_float_zero;
+GO
+DROP VIEW BABEL_5672_sqrt_float_negative;
+GO
+DROP VIEW BABEL_5672_sqrt_float_null;
+GO
+DROP VIEW BABEL_5672_sqrt_float_max;
+GO
+DROP VIEW BABEL_5672_sqrt_float_min;
+GO
+
+DROP VIEW BABEL_5672_sqrt_real;
+GO
+DROP VIEW BABEL_5672_sqrt_real_zero;
+GO
+DROP VIEW BABEL_5672_sqrt_real_negative;
+GO
+DROP VIEW BABEL_5672_sqrt_real_null;
+GO
+DROP VIEW BABEL_5672_sqrt_real_max;
+GO
+DROP VIEW BABEL_5672_sqrt_real_min;
+GO
+
+DROP VIEW BABEL_5672_sqrt_money;
+GO
+DROP VIEW BABEL_5672_sqrt_money_zero;
+GO
+DROP VIEW BABEL_5672_sqrt_money_negative;
+GO
+DROP VIEW BABEL_5672_sqrt_money_null;
+GO
+DROP VIEW BABEL_5672_sqrt_money_max;
+GO
+DROP VIEW BABEL_5672_sqrt_money_min;
+GO
+
+DROP VIEW BABEL_5672_sqrt_smallmoney;
+GO
+DROP VIEW BABEL_5672_sqrt_smallmoney_zero;
+GO
+DROP VIEW BABEL_5672_sqrt_smallmoney_negative;
+GO
+DROP VIEW BABEL_5672_sqrt_smallmoney_null;
+GO
+DROP VIEW BABEL_5672_sqrt_smallmoney_max;
+GO
+DROP VIEW BABEL_5672_sqrt_smallmoney_min;
 GO
 
 -- Drop Functions
-DROP FUNCTION sqrt_test_numeric;
+DROP FUNCTION BABEL_5672_sqrt_test_numeric;
 GO
-DROP FUNCTION sqrt_test_numeric_zero;
+DROP FUNCTION BABEL_5672_sqrt_test_numeric_zero;
 GO
-DROP FUNCTION sqrt_test_numeric_negative;
+DROP FUNCTION BABEL_5672_sqrt_test_numeric_negative;
 GO
-DROP FUNCTION sqrt_test_numeric_null;
+DROP FUNCTION BABEL_5672_sqrt_test_numeric_null;
 GO
-DROP FUNCTION sqrt_test_decimal;
+DROP FUNCTION BABEL_5672_sqrt_test_decimal;
 GO
-DROP FUNCTION sqrt_test_decimal_zero;
+DROP FUNCTION BABEL_5672_sqrt_test_decimal_zero;
 GO
-DROP FUNCTION sqrt_test_decimal_negative;
+DROP FUNCTION BABEL_5672_sqrt_test_decimal_negative;
 GO
-DROP FUNCTION sqrt_test_decimal_null;
+DROP FUNCTION BABEL_5672_sqrt_test_decimal_null;
 GO
-DROP FUNCTION sqrt_test_bit;
+DROP FUNCTION BABEL_5672_sqrt_test_bit;
 GO
-DROP FUNCTION sqrt_test_bit_zero;
+DROP FUNCTION BABEL_5672_sqrt_test_bit_zero;
 GO
-DROP FUNCTION sqrt_test_bit_null;
+DROP FUNCTION BABEL_5672_sqrt_test_bit_null;
 GO
 
 -- Drop Procedures
-DROP PROCEDURE sqrt_test_numeric_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_numeric_proc;
 GO
-DROP PROCEDURE sqrt_test_numeric_zero_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_numeric_zero_proc;
 GO
-DROP PROCEDURE sqrt_test_numeric_negative_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_numeric_negative_proc;
 GO
-DROP PROCEDURE sqrt_test_numeric_null_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_numeric_null_proc;
 GO
-DROP PROCEDURE sqrt_test_decimal_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_decimal_proc;
 GO
-DROP PROCEDURE sqrt_test_decimal_zero_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_decimal_zero_proc;
 GO
-DROP PROCEDURE sqrt_test_decimal_negative_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_decimal_negative_proc;
 GO
-DROP PROCEDURE sqrt_test_decimal_null_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_decimal_null_proc;
 GO
-DROP PROCEDURE sqrt_test_bit_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_bit_proc;
 GO
-DROP PROCEDURE sqrt_test_bit_zero_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_bit_zero_proc;
 GO
-DROP PROCEDURE sqrt_test_bit_null_proc;
+DROP PROCEDURE BABEL_5672_sqrt_test_bit_null_proc;
 GO
