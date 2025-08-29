@@ -21,6 +21,9 @@
 /* Range-check a datetime */
 #define IS_VALID_DATETIME2(t)  (MIN_DATETIME2 <= (t) && (t) < END_DATETIME2)
 
+extern Datum time_datetime2(PG_FUNCTION_ARGS);
+extern Datum date_datetime2(PG_FUNCTION_ARGS);
+
 extern bool tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
 				bool contains_extra_spaces, struct pg_tm *tm,
 				bool *is_year_set, DateTimeContext context);
