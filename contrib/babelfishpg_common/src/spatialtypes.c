@@ -291,6 +291,7 @@ PG_FUNCTION_INFO_V1(st_as_binary_geometry);
 PG_FUNCTION_INFO_V1(st_as_binary_geography);
 PG_FUNCTION_INFO_V1(st_as_text);
 PG_FUNCTION_INFO_V1(geometry_astext);
+PG_FUNCTION_INFO_V1(geometry_asbpchar);
 /*
  * Module to load external PostGIS functions
  */
@@ -623,6 +624,12 @@ geography_point(PG_FUNCTION_ARGS)
 
     /* Initialize function call info once */
     InitFunctionCallInfoData(*fcinfo_local, NULL, 3, InvalidOid, NULL, NULL);
+
+    for (int i = 0; i < 3; i++)    
+        if (PG_ARGISNULL(i))
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                    errmsg("'geography::Point' failed because parameter %d is not allowed to be null.", i+1)));
 
     /* Extract input parameters from function arguments */
     lat = PG_GETARG_FLOAT8(0);
@@ -1507,6 +1514,67 @@ geometry_astext(PG_FUNCTION_ARGS)
 
     /* Return the rewritten WKT representation */
     PG_RETURN_DATUM(PointerGetDatum(rewritten_text));
+}
+
+/* Converts a PostGIS geometry to its WKT representation with custom formatting. */
+Datum
+geometry_asbpchar(PG_FUNCTION_ARGS)
+{
+    Datum    geom_datum;            /* Input geometry */
+    text    *text_result,           /* Initial WKT text from PostGIS */
+            *rewritten_text;        /* Processed WKT text after rewriting */
+    int32   typmod = PG_GETARG_INT32(1);
+    int     maxlen = typmod - VARHDRSZ;
+    char   *bpchar_result;        /* Resulting bpchar text */
+    char   *buf_padded;
+    int    str_len;
+    Datum  res;
+    LOCAL_FCINFO(fcinfo_local, 3);  /* Local function call info */
+
+    /* Initialize function call info with collation for text processing */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 3, PG_GET_COLLATION(), NULL, NULL);
+
+    load_functions();
+
+    /* Get input geometry object from function arguments */
+    geom_datum = PG_GETARG_DATUM(0);
+
+    /* 
+     * Get standard WKT text representation of geometry
+     * Uses PostGIS's internal text conversion function (ST_AsText)
+     */
+    UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
+    text_result = DatumGetTextPP(lwgeom_astext_p(fcinfo_local));
+
+    /* 
+     * Rewrite the WKT text using the geo_wkt_rewrite function
+     * This applies custom formatting rules to the standard WKT
+     */
+    rewritten_text = geo_wkt_rewrite(text_result);
+    bpchar_result = text_to_cstring(rewritten_text);
+
+    /* Check if the string fits within the specified length */
+    str_len = strlen(bpchar_result);
+    if (str_len > maxlen) 
+        ereport(ERROR,
+            (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+            errmsg("There is insufficient result space to convert a geometry/geography value to char/nchar.")));
+
+    /* Right pad string value with the spaces */
+    buf_padded = (char *) palloc0(maxlen + 1);
+    memcpy(buf_padded, bpchar_result, str_len);
+    memset(buf_padded + str_len, ' ', maxlen - str_len);
+
+    res = DirectFunctionCall3(bpcharin,
+                               CStringGetDatum(buf_padded),
+                               ObjectIdGetDatum(0),
+                               Int32GetDatum(typmod));
+
+    pfree(text_result);
+    pfree(rewritten_text);
+    pfree(bpchar_result);
+    pfree(buf_padded);
+    PG_RETURN_DATUM(res);
 }
 
 #endif

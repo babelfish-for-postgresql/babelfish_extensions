@@ -375,3 +375,6 @@ test_conv_float_to_varchar_char_before_17_4
 BABEL-5467
 round_return_type_test-before-16_9-or-17_5
 MONEY_OBJECT-before-16_4
+babel_numeric_fixeddecimal_oper
+babel_numeric_money_oper-before-16_10-or-17_6
+babel_numeric_smallmoney_oper-before-16_10-or-17_6
