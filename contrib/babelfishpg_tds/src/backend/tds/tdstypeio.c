@@ -66,7 +66,7 @@
 #define EMPTY_SHAPE_INDEX       0xFFFFFFFF
 #define SRID_OFFSET             4       /* Offset to SRID in the binary format */
 #define HEADER_SIZE             6       /* Size of header (4 bytes SRID + 2 bytes type) */
-#define NPOINTS_SIZE            4       /* Size of no. of points data (4 bytes ) */
+#define NPOINTS_OFFSET          4       /* Offset to Npoints in the binary format */
 
 /* Dimension type values for Point geometries */
 #define POINT_TYPE_XYZM         15      /* 3D Point with M (XYZM) */
@@ -86,9 +86,6 @@
 #define POINT_XYM   0x010E  /* XYM point geometry type (type 1 -> driver version constant, subtype 14 -> TSQL's flag) */
 #define POINT_XYZM  0x010F  /* XYZM point geometry type (type 1 -> driver version constant, subtype 15 -> TSQL's flag) */
 #define EMPTY_GEOM  0x0104  /* Empty geometry type (type 1 -> driver version constant, subtype 4 -> TSQL's flag) */
-
-#define GEO_HEADER1   0x01  /* header byte used to denote geometry/geography datatypes type 1*/
-#define GEO_HEADER2   0x02  /* header byte used to denote geometry/geography datatypes type 2*/
 
 #define DIM_FLAG_Z           0x01 /* Z dimension flag in SRID 4th byte */
 #define DIM_FLAG_M           0x02 /* M dimension flag in SRID 4th byte */
@@ -1512,7 +1509,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	        npoints = 0;     /* Number of points in geometry */
 	bool    isempty = false; /* Flag indicating if geometry is empty */
 	uint8_t lastByte = buf->data[buf->len - 1]; /* Last byte in buffer, used for empty detection */
-    uint16_t geomTypeId;
+	uint16_t geomTypeId;     /* Combined geometry type identifier */
 	StringInfo  destBuf = makeStringInfo(); /* Destination buffer for building result */
 
 	/*
