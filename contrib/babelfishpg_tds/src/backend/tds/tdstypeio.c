@@ -51,15 +51,13 @@
 
 #define TDS_RETURN_DATUM(x)		return ((Datum) (x))
 
-#define FLAG_Z         0x01
-#define FLAG_M         0x02
-#define FLAG_BBOX      0x04
+#define FLAG_Z         1 << 0
+#define FLAG_M         1 << 1
 
 #define VARCHAR_MAX 2147483647
 /* TODO: need to add for other geometry types when introduced */
 /* Geometry type definitions */
 #define POINTTYPE               1
-#define LINETYPE                2
 
 /* spatial format constants */
 #define EMPTY_GEOMETRY_LENGTH   27      /* Fixed length for empty geometry */
@@ -69,8 +67,6 @@
 #define SRID_OFFSET             4       /* Offset to SRID in the binary format */
 #define HEADER_SIZE             6       /* Size of header (4 bytes SRID + 2 bytes type) */
 #define NPOINTS_SIZE            4       /* Size of no. of points data (4 bytes ) */
-#define GEOM_METADATA_SIZE      22      /* Geometries containing more than 2 points have trailing metadata of 22 bytes */
-#define NPOINTS_OFFSET          4       /* Offset to Npoints in the binary format */
 
 /* Dimension type values for Point geometries */
 #define POINT_TYPE_XYZM         15      /* 3D Point with M (XYZM) */
@@ -84,13 +80,12 @@
 /* Geometry indicators */
 #define GEOMETRY_INDICATOR      1       /* Indicator for geometry type */
 #define EMPTY_INDICATOR         4       /* Indicator for empty geometry when npoints = 0 */
-#define INVALID_GEOGRAPHY_INDICATOR      2     /* Indicator for invalid geography instance */
 
-#define POINT_XY    0x0C  /* XY point geometry type (type 1 -> driver version constant, subtype 12 -> TSQL's flag) */
-#define POINT_XYZ   0x0D  /* XYZ point geometry type (type 1 -> driver version constant, subtype 13 -> TSQL's flag) */
-#define POINT_XYM   0x0E  /* XYM point geometry type (type 1 -> driver version constant, subtype 14 -> TSQL's flag) */
-#define POINT_XYZM  0x0F  /* XYZM point geometry type (type 1 -> driver version constant, subtype 15 -> TSQL's flag) */
-#define EMPTY_GEOM  0x04  /* Empty geometry type (type 1 -> driver version constant, subtype 4 -> TSQL's flag) */
+#define POINT_XY    0x010C  /* XY point geometry type (type 1 -> driver version constant, subtype 12 -> TSQL's flag) */
+#define POINT_XYZ   0x010D  /* XYZ point geometry type (type 1 -> driver version constant, subtype 13 -> TSQL's flag) */
+#define POINT_XYM   0x010E  /* XYM point geometry type (type 1 -> driver version constant, subtype 14 -> TSQL's flag) */
+#define POINT_XYZM  0x010F  /* XYZM point geometry type (type 1 -> driver version constant, subtype 15 -> TSQL's flag) */
+#define EMPTY_GEOM  0x0104  /* Empty geometry type (type 1 -> driver version constant, subtype 4 -> TSQL's flag) */
 
 #define GEO_HEADER1   0x01  /* header byte used to denote geometry/geography datatypes type 1*/
 #define GEO_HEADER2   0x02  /* header byte used to denote geometry/geography datatypes type 2*/
@@ -1517,8 +1512,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	        npoints = 0;     /* Number of points in geometry */
 	bool    isempty = false; /* Flag indicating if geometry is empty */
 	uint8_t lastByte = buf->data[buf->len - 1]; /* Last byte in buffer, used for empty detection */
-    uint8_t geomTypeId;
-	uint8_t geomclass;
+    uint16_t geomTypeId;
 	StringInfo  destBuf = makeStringInfo(); /* Destination buffer for building result */
 
 	/*
@@ -1534,16 +1528,12 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	 */
 	SwapData(destBuf, destBuf->cursor + 0, destBuf->cursor + 2);
 
-    /* Extract the combined geometry type identifier (2 bytes) */
-    geomTypeId = buf->data[buf->cursor + GEOM_TYPE_OFFSET + 1];
-    geomclass = buf->data[buf->cursor + GEOM_TYPE_OFFSET];
-
-    if(geomclass != GEO_HEADER1 && geomclass != GEO_HEADER2)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Unsupported geometry type")));
-    }
+	/* 
+	 * Extract the combined geometry type identifier (2 bytes)
+	 * This combines the geometry type (1st byte) and (2nd byte)
+	 */
+	geomTypeId = (buf->data[buf->cursor + GEOM_TYPE_OFFSET] << 8) | 
+	                buf->data[buf->cursor + GEOM_TYPE_OFFSET + 1];
 
 	/* Process based on combined geometry type identifier */
 	switch (geomTypeId)
@@ -4376,29 +4366,31 @@ int
 TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr)
 {
     int         rc = EOF,
-                len = 0,                /* number of bytes used to store the string. */
-                actualLen;              /* Number of bytes that would be needed to
-                                         * store given string in given encoding. */
+                len = 0,                /* Number of bytes in the binary data */
+                actualLen;              /* Number of bytes after encoding conversion */
 
-    char        *destBuf,
-                *buf = NULL;
-    Datum       bytea_datum;
-    bytea       *bytea_result;
+    char        *destBuf,               /* Buffer after encoding conversion */
+                *buf = NULL;            /* Raw binary data from spatial object */
+    Datum       bytea_datum;            /* Datum containing binary spatial data */
+    bytea       *bytea_result;          /* Binary result from spatial conversion */
     TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
+    /* Set up function call info for spatial conversion functions */
     LOCAL_FCINFO(fcinfo, 1);
     InitFunctionCallInfoData(*fcinfo, NULL, 1, InvalidOid, NULL, NULL);
     fcinfo->args[0].value = value;
     fcinfo->args[0].isnull = false;
     
+    /* Convert spatial data to binary format based on type */
     if (TdsInstr == (int)INSTR_TDS_DATATYPE_GEOMETRY)
         bytea_datum = pltsql_plugin_handler_ptr->sql_bytea_from_geometry(fcinfo);
     else
         bytea_datum = pltsql_plugin_handler_ptr->sql_bytea_from_geography(fcinfo);
 
+    /* Extract binary data from the bytea result */
     bytea_result = DatumGetByteaP(bytea_datum);
-    buf = VARDATA(bytea_result);
-    len = VARSIZE(bytea_result) - VARHDRSZ;
+    buf = VARDATA(bytea_result);             /* Get pointer to actual data */
+    len = VARSIZE(bytea_result) - VARHDRSZ;  /* Calculate data length */
                                                        
     destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 
@@ -4406,8 +4398,10 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
 
     rc = TdsSendPlpDataHelper(destBuf, actualLen);
 
+    /* Clean up allocated memory if encoding conversion created a new buffer */
     if (destBuf != buf)
         pfree(destBuf);
+		
     return rc;
 }
 
