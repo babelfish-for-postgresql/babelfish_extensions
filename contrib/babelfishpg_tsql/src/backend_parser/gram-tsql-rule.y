@@ -1378,9 +1378,8 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 							n->fromClause = $9;
 							n->whereClause = $10;
 						}
-						tsql_check_update_output_transformation($8);
-						n->returningClause->exprs = $8;
-						n->returningClause->options = NIL;
+						tsql_check_update_output_transformation(((ReturningClause *)$8)->exprs);
+						n->returningClause = (ReturningClause *) $8;
 						n->withClause = $1;
 						$$ = (Node *)n;
 					}
@@ -1392,7 +1391,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 				from_clause
 				where_or_current_clause
 					{
-						$$ = tsql_update_output_into_cte_transformation($1, $3, $4, $7, $8, $10, 
+						$$ = tsql_update_output_into_cte_transformation($1, $3, $4, $7, ((ReturningClause *) $8)->exprs, $10, 
 																	$11, $12, $13, yyscanner);
 					}
 				/* Without OUTPUT target column list */
@@ -1403,7 +1402,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 				from_clause
 				where_or_current_clause
 					{
-						$$ = tsql_update_output_into_cte_transformation($1, $3, $4, $7, $8, $10, 
+						$$ = tsql_update_output_into_cte_transformation($1, $3, $4, $7, ((ReturningClause *) $8)->exprs, $10, 
 																	NIL, $11, $12, yyscanner);
 					}
 		;
@@ -2542,7 +2541,13 @@ tsql_values_clause:
 		;
 
 tsql_output_clause:
-					TSQL_OUTPUT tsql_output_target_list	{ $$ = $2; }
+				TSQL_OUTPUT tsql_output_target_list
+					{
+						ReturningClause *n = makeNode(ReturningClause);
+						n->options = NIL;
+						n->exprs = $2;
+						$$ = (Node *) n;
+					}
 		;
 
 tsql_output_target_list:
@@ -2904,8 +2909,7 @@ tsql_InsertStmt:
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$11->relation = $5;
 					$11->onConflictClause = NULL;
-					$11->returningClause->exprs = $10;
-					$11->returningClause->options = NIL;
+					$11->returningClause = (ReturningClause *) $10;
 					$11->withClause = $1;
 					$11->cols = $8;
 					$$ = (Node *) $11;
@@ -2923,8 +2927,7 @@ tsql_InsertStmt:
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$8->relation = $5;
 					$8->onConflictClause = NULL;
-					$8->returningClause->exprs = $7;
-					$8->returningClause->options = NIL;
+					$8->returningClause = (ReturningClause *) $7;
 					$8->withClause = $1;
 					$8->cols = NIL;
 					$$ = (Node *) $8;
@@ -2938,8 +2941,7 @@ tsql_InsertStmt:
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					i->relation = $5;
 					i->onConflictClause = NULL;
-					i->returningClause->exprs = $7;
-					i->returningClause->options = NIL;
+					i->returningClause = $7;
 					i->withClause = $1;
 					i->cols = NIL;
 					i->selectStmt = NULL;
@@ -2956,7 +2958,7 @@ tsql_InsertStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@14)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, $10, $12, $13, $14, 5, yyscanner);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, ((ReturningClause *) $10)->exprs, $12, $13, $14, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_into_target_columns tsql_output_insert_rest
@@ -2966,7 +2968,7 @@ tsql_InsertStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@10)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, $10, $11, 5, yyscanner);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, ((ReturningClause *) $7)->exprs, $9, $10, $11, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_into_target_columns DEFAULT VALUES
@@ -2979,7 +2981,7 @@ tsql_InsertStmt:
 					i->cols = NIL;
 					i->selectStmt = NULL;
 					i->execStmt = NULL;
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, $10, i, 5, yyscanner);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, ((ReturningClause *) $7)->exprs, $9, $10, i, 5, yyscanner);
 				}
 			/* Without OUTPUT target column list */
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
@@ -2990,7 +2992,7 @@ tsql_InsertStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@13)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, $10, $12, NIL, $13, 5, yyscanner);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, ((ReturningClause *) $10)->exprs, $12, NIL, $13, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_insert_rest_no_paren
@@ -3000,7 +3002,7 @@ tsql_InsertStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@9)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, NIL, $10, 5, yyscanner);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, ((ReturningClause *) $7)->exprs, $9, NIL, $10, 5, yyscanner);
 				}
 			/*
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
@@ -3718,8 +3720,7 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 					tsql_check_top_percent_support(top_stmt, "DELETE", @3, yyscanner);
 					n->usingClause = $8;
 					n->whereClause = $9;
-					n->returningClause->exprs = $7;
-					n->returningClause->options = NIL;
+					n->returningClause = (ReturningClause *) $7;
 					n->withClause = $1;
 					$$ = (Node *)n;
 				}
@@ -3728,13 +3729,13 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 			tsql_opt_table_hint_expr tsql_output_clause INTO insert_target tsql_output_into_target_columns from_clause
 			where_or_current_clause
 				{
-					$$ = tsql_delete_output_into_cte_transformation($1, $3, $5, $7, $9, $10, $11, $12, yyscanner);
+					$$ = tsql_delete_output_into_cte_transformation($1, $3, $5, ((ReturningClause *) $7)->exprs, $9, $10, $11, $12, yyscanner);
 				}
 			/* Without OUTPUT target column list */
 			| opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_opt_alias
 			tsql_opt_table_hint_expr tsql_output_clause INTO insert_target from_clause where_or_current_clause
 				{
-					$$ = tsql_delete_output_into_cte_transformation($1, $3, $5, $7, $9, NIL, $10, $11, yyscanner);
+					$$ = tsql_delete_output_into_cte_transformation($1, $3, $5, ((ReturningClause *) $7)->exprs, $9, NIL, $10, $11, yyscanner);
 				}
 			;
 

@@ -97,8 +97,8 @@
 
 %type <istmt> tsql_output_insert_rest tsql_output_insert_rest_no_paren
 
-%type <node> tsql_output_simple_select tsql_values_clause
-%type <list> tsql_output_clause tsql_output_target_list tsql_output_into_target_columns
+%type <node> tsql_output_simple_select tsql_values_clause tsql_output_clause
+%type <list> tsql_output_target_list tsql_output_into_target_columns
 %type <target> tsql_output_target_el
 %type <node> tsql_alter_server_role
 

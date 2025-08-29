@@ -1263,8 +1263,9 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	tsql_check_top_percent_support(top_stmt, "INSERT", -1, yyscanner);
 	i->relation = insert_target;
 	i->onConflictClause = NULL;
+	i->returningClause = makeNode(ReturningClause);
 	i->returningClause->exprs = get_transformed_output_list(tsql_output_clause);
-	i->returningClause->options = NULL;
+	i->returningClause->options = NIL;
 	i->withClause = NULL;
 	i->override = false;
 
@@ -1414,6 +1415,7 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		d->limitCount = top_stmt->limitCount;
 		tsql_check_top_percent_support(top_stmt, "DELETE", -1, yyscanner);
 	}
+	d->returningClause = makeNode(ReturningClause);
 	d->returningClause->exprs = get_transformed_output_list(tsql_output_clause);
 	d->returningClause->options = NULL;
 	d->withClause = opt_with_clause;
@@ -1587,6 +1589,7 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		u->limitCount = top_stmt->limitCount;
 		tsql_check_top_percent_support(top_stmt, "UPDATE", -1, yyscanner);
 	}
+	u->returningClause = makeNode(ReturningClause);
 	u->returningClause->exprs = get_transformed_output_list(tsql_output_clause);
 	u->returningClause->options = NULL;
 	u->withClause = opt_with_clause;
