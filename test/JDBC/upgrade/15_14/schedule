@@ -583,3 +583,4 @@ babel_assign_nchar
 alter-function-with-weak-view
 mathematical_func_tests-before-17_7-or-16_11
 alter-table-null-notnull
+ascii_function_before-17_7-or-16_11

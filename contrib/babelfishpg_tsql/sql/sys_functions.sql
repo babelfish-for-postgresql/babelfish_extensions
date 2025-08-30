@@ -3335,6 +3335,50 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+-- wrapper functions for ascii --
+CREATE OR REPLACE FUNCTION sys.ascii(ANYELEMENT)
+RETURNS INTEGER
+AS $$
+DECLARE
+    arg_datatype text;
+    basetype oid;
+BEGIN
+    arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof($1)::oid);
+    IF arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof($1)::oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for ascii function
+    IF arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of ascii function.', arg_datatype;
+    END IF;
+    
+    IF arg_datatype IN ('binary', 'varbinary') THEN
+        IF len($1) = 0 THEN
+            RETURN NULL;
+        END IF;
+    ELSE
+        IF length($1::TEXT) = 0 THEN
+            RETURN NULL;
+        END IF;
+    END IF;
+    RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ascii(TEXT)
+RETURNS INTEGER
+AS $$
+BEGIN
+    IF length($1) = 0 THEN
+        RETURN NULL;
+    END IF;
+    RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- wrapper functions for TRIM
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.VARCHAR)
 RETURNS sys.VARCHAR

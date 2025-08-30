@@ -124,12 +124,12 @@ int#!#int#!#int#!#int
 ~~END~~
 
 
--- following throws error in babelfish
+-- following throws wrong output in babelfish as char(0) return empty string value [BABEL-6068]
 SELECT ASCII(CHAR(0)) AS NullChar
 GO
 ~~START~~
 int
-0
+<NULL>
 ~~END~~
 
 
@@ -170,7 +170,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-<NULL>#!#0#!#32#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#32#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -549,9 +549,9 @@ FROM ascii_conversion_t3;
 GO
 ~~START~~
 int#!#int#!#int#!#int
-54#!#54#!#50#!#48
-57#!#57#!#50#!#48
-51#!#51#!#50#!#48
+54#!#54#!#50#!#65
+57#!#57#!#50#!#97
+51#!#51#!#50#!#32
 ~~END~~
 
 
@@ -600,12 +600,12 @@ SELECT * FROM ascii_v2 WHERE TestResult = 'Fail';
 GO
 ~~START~~
 int#!#char#!#int#!#varchar#!#int#!#text#!#int#!#int#!#varchar
-16#!#          #!#32#!##!#0#!##!#0#!#<NULL>#!#Fail
+16#!#          #!#32#!##!#<NULL>#!##!#<NULL>#!#<NULL>#!#Fail
 ~~END~~
 
 ~~START~~
 int#!#nchar#!#int#!#nvarchar#!#int#!#ntext#!#int#!#int#!#varchar
-16#!#          #!#32#!##!#0#!##!#0#!#<NULL>#!#Fail
+16#!#          #!#32#!##!#<NULL>#!##!#<NULL>#!#<NULL>#!#Fail
 ~~END~~
 
 
@@ -896,4 +896,3 @@ DROP TYPE ascii_type_varchar;
 DROP TYPE ascii_type_nchar;
 DROP TYPE ascii_type_nvarchar;
 GO
-

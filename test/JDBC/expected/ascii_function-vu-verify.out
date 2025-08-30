@@ -1,0 +1,1258 @@
+
+-- 1. Test binary, varbinary, char, varchar combinations
+UPDATE ascii_function_binary_test
+SET CharASCII = ASCII(CharCol),
+    VarcharASCII = ASCII(VarcharCol),
+    BinaryASCII = ASCII(BinaryCol),
+    VarbinaryASCII = ASCII(VarbinaryCol),
+    TestResult = CASE 
+        WHEN ASCII(CharCol) = ASCII(VarcharCol) 
+             AND ASCII(CharCol) = ASCII(BinaryCol)
+             AND ASCII(CharCol) = ASCII(VarbinaryCol)
+        THEN 'Pass' 
+        ELSE 'Fail' 
+    END;
+SELECT * FROM ascii_function_binary_test ORDER BY ID;
+GO
+~~ROW COUNT: 9~~
+
+~~START~~
+int#!#binary#!#int#!#varbinary#!#int#!#char#!#int#!#varchar#!#int#!#varchar#!#varchar
+1#!#41000000000000000000#!#65#!#41#!#65#!#A         #!#65#!#A#!#65#!#Letter A#!#Pass
+2#!#65000000000000000000#!#101#!#65#!#101#!#e         #!#101#!#e#!#101#!#Letter A#!#Pass
+3#!#61000000000000000000#!#97#!#61#!#97#!#a         #!#97#!#a#!#97#!#Letter a#!#Pass
+4#!#20000000000000000000#!#32#!#20#!#32#!#          #!#32#!# #!#32#!#Space#!#Pass
+5#!#42000000000000000000#!#66#!#42#!#66#!#B         #!#66#!#B#!#66#!#Letter B#!#Pass
+6#!#31000000000000000000#!#49#!#31#!#49#!#1         #!#49#!#1#!#49#!#Number 1#!#Pass
+7#!#21000000000000000000#!#33#!#21#!#33#!#!         #!#33#!#!#!#33#!#Exclamation#!#Pass
+8#!#41424300000000000000#!#65#!#414243#!#65#!#ABC       #!#65#!#ABC#!#65#!#Multiple chars#!#Pass
+9#!#20414243000000000000#!#32#!#20414243#!#32#!# ABC      #!#32#!# ABC#!#32#!#Space and chars#!#Pass
+~~END~~
+
+
+
+-- 2. Test empty strings
+UPDATE ascii_function_empty_test
+SET CharASCII = ASCII(CharCol),
+    VarcharASCII = ASCII(VarcharCol),
+    IsNull = CASE 
+        WHEN ASCII(CharCol) IS NULL AND ASCII(VarcharCol) IS NULL THEN 1
+        ELSE 0 
+    END;
+SELECT * FROM ascii_function_empty_test ORDER BY ID;
+GO
+~~ROW COUNT: 5~~
+
+~~START~~
+int#!#char#!#int#!#varchar#!#int#!#bit#!#varchar
+1#!#          #!#32#!##!#<NULL>#!#0#!#Empty string
+2#!#          #!#32#!# #!#32#!#0#!#Single space
+3#!#          #!#32#!#  #!#32#!#0#!#Two spaces
+4#!# A        #!#32#!# A#!#32#!#0#!#Space then char
+5#!#A         #!#65#!#A #!#65#!#0#!#Char then space
+~~END~~
+
+
+-- 3. Test CHAR(n) range
+SELECT 
+    ID,
+    CharValue,
+    ASCII(CHAR(CharValue)) AS ComputedASCII,
+    Description
+FROM ascii_function_char_range
+ORDER BY CharValue;
+GO
+~~START~~
+int#!#int#!#int#!#varchar
+1#!#1#!#1#!#CHAR(1)
+2#!#2#!#2#!#CHAR(2)
+3#!#3#!#3#!#CHAR(3)
+4#!#4#!#4#!#CHAR(4)
+5#!#5#!#5#!#CHAR(5)
+6#!#6#!#6#!#CHAR(6)
+7#!#7#!#7#!#CHAR(7)
+8#!#8#!#8#!#CHAR(8)
+9#!#9#!#9#!#CHAR(9)
+10#!#10#!#10#!#CHAR(10)
+11#!#11#!#11#!#CHAR(11)
+12#!#12#!#12#!#CHAR(12)
+13#!#13#!#13#!#CHAR(13)
+14#!#14#!#14#!#CHAR(14)
+15#!#15#!#15#!#CHAR(15)
+16#!#16#!#16#!#CHAR(16)
+17#!#17#!#17#!#CHAR(17)
+18#!#18#!#18#!#CHAR(18)
+19#!#19#!#19#!#CHAR(19)
+20#!#20#!#20#!#CHAR(20)
+21#!#21#!#21#!#CHAR(21)
+22#!#22#!#22#!#CHAR(22)
+23#!#23#!#23#!#CHAR(23)
+24#!#24#!#24#!#CHAR(24)
+25#!#25#!#25#!#CHAR(25)
+26#!#26#!#26#!#CHAR(26)
+27#!#27#!#27#!#CHAR(27)
+28#!#28#!#28#!#CHAR(28)
+29#!#29#!#29#!#CHAR(29)
+30#!#30#!#30#!#CHAR(30)
+31#!#31#!#31#!#CHAR(31)
+32#!#32#!#32#!#CHAR(32)
+33#!#33#!#33#!#CHAR(33)
+34#!#34#!#34#!#CHAR(34)
+35#!#35#!#35#!#CHAR(35)
+36#!#36#!#36#!#CHAR(36)
+37#!#37#!#37#!#CHAR(37)
+38#!#38#!#38#!#CHAR(38)
+39#!#39#!#39#!#CHAR(39)
+40#!#40#!#40#!#CHAR(40)
+41#!#41#!#41#!#CHAR(41)
+42#!#42#!#42#!#CHAR(42)
+43#!#43#!#43#!#CHAR(43)
+44#!#44#!#44#!#CHAR(44)
+45#!#45#!#45#!#CHAR(45)
+46#!#46#!#46#!#CHAR(46)
+47#!#47#!#47#!#CHAR(47)
+48#!#48#!#48#!#CHAR(48)
+49#!#49#!#49#!#CHAR(49)
+50#!#50#!#50#!#CHAR(50)
+51#!#51#!#51#!#CHAR(51)
+52#!#52#!#52#!#CHAR(52)
+53#!#53#!#53#!#CHAR(53)
+54#!#54#!#54#!#CHAR(54)
+55#!#55#!#55#!#CHAR(55)
+56#!#56#!#56#!#CHAR(56)
+57#!#57#!#57#!#CHAR(57)
+58#!#58#!#58#!#CHAR(58)
+59#!#59#!#59#!#CHAR(59)
+60#!#60#!#60#!#CHAR(60)
+61#!#61#!#61#!#CHAR(61)
+62#!#62#!#62#!#CHAR(62)
+63#!#63#!#63#!#CHAR(63)
+64#!#64#!#64#!#CHAR(64)
+65#!#65#!#65#!#CHAR(65)
+66#!#66#!#66#!#CHAR(66)
+67#!#67#!#67#!#CHAR(67)
+68#!#68#!#68#!#CHAR(68)
+69#!#69#!#69#!#CHAR(69)
+70#!#70#!#70#!#CHAR(70)
+71#!#71#!#71#!#CHAR(71)
+72#!#72#!#72#!#CHAR(72)
+73#!#73#!#73#!#CHAR(73)
+74#!#74#!#74#!#CHAR(74)
+75#!#75#!#75#!#CHAR(75)
+76#!#76#!#76#!#CHAR(76)
+77#!#77#!#77#!#CHAR(77)
+78#!#78#!#78#!#CHAR(78)
+79#!#79#!#79#!#CHAR(79)
+80#!#80#!#80#!#CHAR(80)
+81#!#81#!#81#!#CHAR(81)
+82#!#82#!#82#!#CHAR(82)
+83#!#83#!#83#!#CHAR(83)
+84#!#84#!#84#!#CHAR(84)
+85#!#85#!#85#!#CHAR(85)
+86#!#86#!#86#!#CHAR(86)
+87#!#87#!#87#!#CHAR(87)
+88#!#88#!#88#!#CHAR(88)
+89#!#89#!#89#!#CHAR(89)
+90#!#90#!#90#!#CHAR(90)
+91#!#91#!#91#!#CHAR(91)
+92#!#92#!#92#!#CHAR(92)
+93#!#93#!#93#!#CHAR(93)
+94#!#94#!#94#!#CHAR(94)
+95#!#95#!#95#!#CHAR(95)
+96#!#96#!#96#!#CHAR(96)
+97#!#97#!#97#!#CHAR(97)
+98#!#98#!#98#!#CHAR(98)
+99#!#99#!#99#!#CHAR(99)
+100#!#100#!#100#!#CHAR(100)
+101#!#101#!#101#!#CHAR(101)
+102#!#102#!#102#!#CHAR(102)
+103#!#103#!#103#!#CHAR(103)
+104#!#104#!#104#!#CHAR(104)
+105#!#105#!#105#!#CHAR(105)
+106#!#106#!#106#!#CHAR(106)
+107#!#107#!#107#!#CHAR(107)
+108#!#108#!#108#!#CHAR(108)
+109#!#109#!#109#!#CHAR(109)
+110#!#110#!#110#!#CHAR(110)
+111#!#111#!#111#!#CHAR(111)
+112#!#112#!#112#!#CHAR(112)
+113#!#113#!#113#!#CHAR(113)
+114#!#114#!#114#!#CHAR(114)
+115#!#115#!#115#!#CHAR(115)
+116#!#116#!#116#!#CHAR(116)
+117#!#117#!#117#!#CHAR(117)
+118#!#118#!#118#!#CHAR(118)
+119#!#119#!#119#!#CHAR(119)
+120#!#120#!#120#!#CHAR(120)
+121#!#121#!#121#!#CHAR(121)
+122#!#122#!#122#!#CHAR(122)
+123#!#123#!#123#!#CHAR(123)
+124#!#124#!#124#!#CHAR(124)
+125#!#125#!#125#!#CHAR(125)
+126#!#126#!#126#!#CHAR(126)
+127#!#127#!#127#!#CHAR(127)
+128#!#128#!#128#!#CHAR(128)
+129#!#129#!#129#!#CHAR(129)
+130#!#130#!#130#!#CHAR(130)
+131#!#131#!#131#!#CHAR(131)
+132#!#132#!#132#!#CHAR(132)
+133#!#133#!#133#!#CHAR(133)
+134#!#134#!#134#!#CHAR(134)
+135#!#135#!#135#!#CHAR(135)
+136#!#136#!#136#!#CHAR(136)
+137#!#137#!#137#!#CHAR(137)
+138#!#138#!#138#!#CHAR(138)
+139#!#139#!#139#!#CHAR(139)
+140#!#140#!#140#!#CHAR(140)
+141#!#141#!#141#!#CHAR(141)
+142#!#142#!#142#!#CHAR(142)
+143#!#143#!#143#!#CHAR(143)
+144#!#144#!#144#!#CHAR(144)
+145#!#145#!#145#!#CHAR(145)
+146#!#146#!#146#!#CHAR(146)
+147#!#147#!#147#!#CHAR(147)
+148#!#148#!#148#!#CHAR(148)
+149#!#149#!#149#!#CHAR(149)
+150#!#150#!#150#!#CHAR(150)
+151#!#151#!#151#!#CHAR(151)
+152#!#152#!#152#!#CHAR(152)
+153#!#153#!#153#!#CHAR(153)
+154#!#154#!#154#!#CHAR(154)
+155#!#155#!#155#!#CHAR(155)
+156#!#156#!#156#!#CHAR(156)
+157#!#157#!#157#!#CHAR(157)
+158#!#158#!#158#!#CHAR(158)
+159#!#159#!#159#!#CHAR(159)
+160#!#160#!#160#!#CHAR(160)
+161#!#161#!#161#!#CHAR(161)
+162#!#162#!#162#!#CHAR(162)
+163#!#163#!#163#!#CHAR(163)
+164#!#164#!#164#!#CHAR(164)
+165#!#165#!#165#!#CHAR(165)
+166#!#166#!#166#!#CHAR(166)
+167#!#167#!#167#!#CHAR(167)
+168#!#168#!#168#!#CHAR(168)
+169#!#169#!#169#!#CHAR(169)
+170#!#170#!#170#!#CHAR(170)
+171#!#171#!#171#!#CHAR(171)
+172#!#172#!#172#!#CHAR(172)
+173#!#173#!#173#!#CHAR(173)
+174#!#174#!#174#!#CHAR(174)
+175#!#175#!#175#!#CHAR(175)
+176#!#176#!#176#!#CHAR(176)
+177#!#177#!#177#!#CHAR(177)
+178#!#178#!#178#!#CHAR(178)
+179#!#179#!#179#!#CHAR(179)
+180#!#180#!#180#!#CHAR(180)
+181#!#181#!#181#!#CHAR(181)
+182#!#182#!#182#!#CHAR(182)
+183#!#183#!#183#!#CHAR(183)
+184#!#184#!#184#!#CHAR(184)
+185#!#185#!#185#!#CHAR(185)
+186#!#186#!#186#!#CHAR(186)
+187#!#187#!#187#!#CHAR(187)
+188#!#188#!#188#!#CHAR(188)
+189#!#189#!#189#!#CHAR(189)
+190#!#190#!#190#!#CHAR(190)
+191#!#191#!#191#!#CHAR(191)
+192#!#192#!#192#!#CHAR(192)
+193#!#193#!#193#!#CHAR(193)
+194#!#194#!#194#!#CHAR(194)
+195#!#195#!#195#!#CHAR(195)
+196#!#196#!#196#!#CHAR(196)
+197#!#197#!#197#!#CHAR(197)
+198#!#198#!#198#!#CHAR(198)
+199#!#199#!#199#!#CHAR(199)
+200#!#200#!#200#!#CHAR(200)
+201#!#201#!#201#!#CHAR(201)
+202#!#202#!#202#!#CHAR(202)
+203#!#203#!#203#!#CHAR(203)
+204#!#204#!#204#!#CHAR(204)
+205#!#205#!#205#!#CHAR(205)
+206#!#206#!#206#!#CHAR(206)
+207#!#207#!#207#!#CHAR(207)
+208#!#208#!#208#!#CHAR(208)
+209#!#209#!#209#!#CHAR(209)
+210#!#210#!#210#!#CHAR(210)
+211#!#211#!#211#!#CHAR(211)
+212#!#212#!#212#!#CHAR(212)
+213#!#213#!#213#!#CHAR(213)
+214#!#214#!#214#!#CHAR(214)
+215#!#215#!#215#!#CHAR(215)
+216#!#216#!#216#!#CHAR(216)
+217#!#217#!#217#!#CHAR(217)
+218#!#218#!#218#!#CHAR(218)
+219#!#219#!#219#!#CHAR(219)
+220#!#220#!#220#!#CHAR(220)
+221#!#221#!#221#!#CHAR(221)
+222#!#222#!#222#!#CHAR(222)
+223#!#223#!#223#!#CHAR(223)
+224#!#224#!#224#!#CHAR(224)
+225#!#225#!#225#!#CHAR(225)
+226#!#226#!#226#!#CHAR(226)
+227#!#227#!#227#!#CHAR(227)
+228#!#228#!#228#!#CHAR(228)
+229#!#229#!#229#!#CHAR(229)
+230#!#230#!#230#!#CHAR(230)
+231#!#231#!#231#!#CHAR(231)
+232#!#232#!#232#!#CHAR(232)
+233#!#233#!#233#!#CHAR(233)
+234#!#234#!#234#!#CHAR(234)
+235#!#235#!#235#!#CHAR(235)
+236#!#236#!#236#!#CHAR(236)
+237#!#237#!#237#!#CHAR(237)
+238#!#238#!#238#!#CHAR(238)
+239#!#239#!#239#!#CHAR(239)
+240#!#240#!#240#!#CHAR(240)
+241#!#241#!#241#!#CHAR(241)
+242#!#242#!#242#!#CHAR(242)
+243#!#243#!#243#!#CHAR(243)
+244#!#244#!#244#!#CHAR(244)
+245#!#245#!#245#!#CHAR(245)
+246#!#246#!#246#!#CHAR(246)
+247#!#247#!#247#!#CHAR(247)
+248#!#248#!#248#!#CHAR(248)
+249#!#249#!#249#!#CHAR(249)
+250#!#250#!#250#!#CHAR(250)
+251#!#251#!#251#!#CHAR(251)
+252#!#252#!#252#!#CHAR(252)
+253#!#253#!#253#!#CHAR(253)
+254#!#254#!#254#!#CHAR(254)
+255#!#255#!#255#!#CHAR(255)
+~~END~~
+
+
+-- 4. Test CAST and CONVERT functions
+SELECT 
+    InputValue,
+    ASCII(CAST(InputValue AS CHAR(10))) AS CastToChar,
+    ASCII(CAST(InputValue AS VARCHAR(50))) AS CastToVarchar,
+    ASCII(CAST(InputValue AS NCHAR(10))) AS CastToNChar,
+    ASCII(CAST(InputValue AS NVARCHAR(50))) AS CastToNVarchar
+FROM ascii_function_conversion_test;
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int
+65#!#54#!#54#!#54#!#54
+97.0#!#57#!#57#!#57#!#57
+A#!#65#!#65#!#65#!#65
+123#!#49#!#49#!#49#!#49
+ABC#!#65#!#65#!#65#!#65
+~~END~~
+
+
+-- 5. Test negative numbers
+SELECT 
+    NegativeNum,
+    ASCII(NegativeNum) AS ASCIIValue,
+    Description
+FROM ascii_function_negative_test;
+GO
+~~START~~
+varchar#!#int#!#varchar
+-1#!#45#!#Negative one
+-123#!#45#!#Negative three digits
+-0.123#!#45#!#Negative decimal
+-1E+10#!#45#!#Negative scientific
+-9999999#!#45#!#Large negative
+~~END~~
+
+
+-- Test money types 
+SELECT 
+    ID,
+    ASCII(CAST(MoneyValue AS VARCHAR)) AS MoneyASCII,
+    ASCII(CAST(SmallMoneyValue AS VARCHAR)) AS SmallMoneyASCII,
+    Description
+FROM ascii_function_special_types;
+GO
+~~START~~
+int#!#int#!#int#!#varchar
+1#!#49#!#49#!#Basic values
+2#!#45#!#45#!#Negative money
+3#!#50#!#50#!#Max values
+4#!#48#!#48#!#zero money
+~~END~~
+
+
+
+-- Test NULL handling for different types
+SELECT ASCII(CAST(NULL AS CHAR)) AS NullChar,
+       ASCII(CAST(NULL AS VARCHAR)) AS NullVarchar,
+       ASCII(CAST(NULL AS NCHAR)) AS NullNchar,
+       ASCII(CAST(NULL AS NVARCHAR)) AS NullNvarchar,
+       ASCII(CAST(NULL AS BINARY)) AS NullBinary,
+       ASCII(CAST(NULL AS VARBINARY)) AS NullVarbinary,
+       ASCII(CAST(NULL AS DATETIME)) AS NullDateTime,
+       ASCII(CAST(NULL AS MONEY)) AS NullMoney,
+       ASCII(CAST(NULL AS SMALLMONEY)) AS NullSmallMoney;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test empty string and zero value handling
+SELECT ASCII('') AS EmptyString,
+       ASCII(CAST('' AS NVARCHAR)) AS EmptyNVarchar,
+       ASCII(CAST(0x00 AS VARBINARY)) AS ZeroBinary,
+       ASCII(CAST(0 AS VARCHAR)) AS ZeroNumber,
+       ASCII(CAST(0.00 AS MONEY)) AS ZeroMoney;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+<NULL>#!#<NULL>#!#0#!#48#!#48
+~~END~~
+
+
+-- Test date formats
+SELECT ASCII(CONVERT(VARCHAR, GETDATE(), 101)) AS USDate,
+       ASCII(CONVERT(VARCHAR, GETDATE(), 103)) AS BritishDate,
+       ASCII(CONVERT(VARCHAR, GETDATE(), 120)) AS ISODate;
+GO
+~~START~~
+int#!#int#!#int
+48#!#49#!#50
+~~END~~
+
+
+-- Test money formats
+SELECT ASCII(CAST(CAST(1234.56 AS MONEY) AS VARCHAR)) AS PositiveMoney,
+       ASCII(CAST(CAST(-1234.56 AS MONEY) AS VARCHAR)) AS NegativeMoney,
+       ASCII(CAST(CAST(0.00 AS MONEY) AS VARCHAR)) AS ZeroMoney,
+       ASCII(CAST(CAST(214748.3647 AS SMALLMONEY) AS VARCHAR)) AS MaxSmallMoney;
+GO
+~~START~~
+int#!#int#!#int#!#int
+49#!#45#!#48#!#50
+~~END~~
+
+
+-- Test type conversion combinations
+SELECT ASCII(CAST(CAST(123.45 AS MONEY) AS NVARCHAR)) AS MoneyToNVarchar,
+       ASCII(CAST(CAST(123.45 AS DECIMAL(10,2)) AS VARCHAR)) AS DecimalToVarchar;
+GO
+~~START~~
+int#!#int
+49#!#49
+~~END~~
+
+
+-- Test with different date parts
+SELECT ASCII(CAST(DATEPART(YEAR, GETDATE()) AS VARCHAR)) AS YearASCII,
+       ASCII(CAST(DATEPART(MONTH, GETDATE()) AS VARCHAR)) AS MonthASCII,
+       ASCII(CAST(DATEPART(DAY, GETDATE()) AS VARCHAR)) AS DayASCII;
+GO
+~~START~~
+int#!#int#!#int
+50#!#57#!#49
+~~END~~
+
+
+-- Test with currency symbols
+SELECT ASCII('$') AS DollarSign,
+       ASCII('¥') AS YenSign,
+       ASCII('£') AS PoundSign;
+GO
+~~START~~
+int#!#int#!#int
+36#!#165#!#163
+~~END~~
+
+
+-- Test with special money formats
+SELECT ASCII(CAST(CAST(1234.56 AS MONEY) AS VARCHAR)) AS Standard,
+       ASCII('$' + CAST(CAST(1234.56 AS MONEY) AS VARCHAR)) AS WithDollar,
+       ASCII(CAST(CAST(-1234.56 AS MONEY) AS VARCHAR)) AS Negative;
+GO
+~~START~~
+int#!#int#!#int
+49#!#36#!#45
+~~END~~
+
+
+-- Test NULL in combinations
+SELECT * FROM ascii_function_null_types
+WHERE ID = 1;
+GO
+~~START~~
+int#!#char#!#varchar#!#nchar#!#nvarchar#!#binary#!#varbinary#!#money#!#varchar
+1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#All NULL values
+~~END~~
+
+
+-- Additional edge cases
+SELECT ASCII(CAST(CAST(NULL AS MONEY) AS VARCHAR)) AS NullMoneyToVarchar,
+       ASCII(CAST(CAST(NULL AS DATETIME) AS NVARCHAR)) AS NullDateToNVarchar;
+GO
+~~START~~
+int#!#int
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- 6. Test CHAR(0)-- give wrong output in babelfish as char(0) return empty string value [BABEL-6068]
+SELECT ASCII(CHAR(0)) AS ASCIIofChar0;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- 7. Test Functions
+SELECT * FROM ascii_function_analyze_pattern('Hello123!@#');
+SELECT * FROM ascii_function_analyze_pattern('ABC   123');
+GO
+~~START~~
+int#!#char#!#int
+72#!#H#!#1
+101#!#e#!#2
+108#!#l#!#3
+108#!#l#!#4
+111#!#o#!#5
+49#!#1#!#6
+50#!#2#!#7
+51#!#3#!#8
+33#!#!#!#9
+64#!#@#!#10
+35#!###!#11
+~~END~~
+
+~~START~~
+int#!#char#!#int
+65#!#A#!#1
+66#!#B#!#2
+67#!#C#!#3
+32#!# #!#4
+32#!# #!#5
+32#!# #!#6
+49#!#1#!#7
+50#!#2#!#8
+51#!#3#!#9
+~~END~~
+
+
+SELECT * FROM ascii_function_compare_types('A', 'A', 0x41, 0x41);
+SELECT * FROM ascii_function_compare_types('1', '1', 0x31, 0x31);
+GO
+~~START~~
+varchar#!#int#!#bit
+CHAR#!#65#!#1
+VARCHAR#!#65#!#1
+BINARY#!#65#!#1
+VARBINARY#!#65#!#1
+~~END~~
+
+~~START~~
+varchar#!#int#!#bit
+CHAR#!#49#!#1
+VARCHAR#!#49#!#1
+BINARY#!#49#!#1
+VARBINARY#!#49#!#1
+~~END~~
+
+
+-- 8. Test Procedures
+EXEC ascii_function_analyze_string 'Hello123!@#';
+EXEC ascii_function_analyze_string 'ABC   123';
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#char#!#int#!#varchar
+1#!#H#!#72#!#Uppercase
+2#!#e#!#101#!#Lowercase
+3#!#l#!#108#!#Lowercase
+4#!#l#!#108#!#Lowercase
+5#!#o#!#111#!#Lowercase
+6#!#1#!#49#!#Digit
+7#!#2#!#50#!#Digit
+8#!#3#!#51#!#Digit
+9#!#!#!#33#!#Special
+10#!#@#!#64#!#Special
+11#!###!#35#!#Special
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#char#!#int#!#varchar
+1#!#A#!#65#!#Uppercase
+2#!#B#!#66#!#Uppercase
+3#!#C#!#67#!#Uppercase
+4#!# #!#32#!#Special
+5#!# #!#32#!#Special
+6#!# #!#32#!#Special
+7#!#1#!#49#!#Digit
+8#!#2#!#50#!#Digit
+9#!#3#!#51#!#Digit
+~~END~~
+
+
+EXEC ascii_function_validate_conversion '65', 'CHAR';
+EXEC ascii_function_validate_conversion 'A', 'NCHAR';
+EXEC ascii_function_validate_conversion '123', 'VARCHAR';
+GO
+~~START~~
+varchar#!#varchar#!#int
+65#!#CHAR#!#54
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#int
+A#!#NCHAR#!#65
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#int
+123#!#VARCHAR#!#49
+~~END~~
+
+
+-- 9. Test Views
+SELECT * FROM ascii_function_v_empty_analysis;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#int#!#int#!#varchar
+1#!#32#!#NULL#!#0#!#0#!#Empty string
+2#!#32#!#32#!#0#!#0#!#Single space
+3#!#32#!#32#!#0#!#0#!#Two spaces
+4#!#32#!#32#!#2#!#2#!#Space then char
+5#!#65#!#65#!#1#!#1#!#Char then space
+~~END~~
+
+
+-- 10. Additional Edge Cases
+SELECT ASCII('') AS EmptyString,
+       ASCII(' ') AS SingleSpace,
+       ASCII('  ') AS TwoSpaces,
+       ASCII(CHAR(1)) AS Char1,
+       ASCII(CHAR(127)) AS Char127,
+       ASCII(CAST(NULL AS VARCHAR)) AS NullVarchar,
+       ASCII(CAST('' AS NVARCHAR)) AS EmptyNVarchar;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int
+<NULL>#!#32#!#32#!#1#!#127#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- 11. Mixed Data Type Tests
+SELECT ASCII(CAST(65 AS CHAR)) AS IntToChar,
+       ASCII(CAST(97.0 AS VARCHAR)) AS FloatToVarchar,
+       ASCII(CAST('A' AS NCHAR)) AS CharToNChar,
+       ASCII(CONVERT(VARCHAR, 65)) AS IntToVarchar;
+GO
+~~START~~
+int#!#int#!#int#!#int
+54#!#57#!#65#!#54
+~~END~~
+
+
+-- 12. Special Character Tests
+SELECT ASCII('+') AS Plus,
+       ASCII('-') AS Minus,
+       ASCII('.') AS Dot,
+       ASCII('E') AS E_Char;
+GO
+~~START~~
+int#!#int#!#int#!#int
+43#!#45#!#46#!#69
+~~END~~
+
+
+-- String Types
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    ';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+32
+~~END~~
+
+
+-- Date and Time Types
+DECLARE @inputString date = '2016-12-21';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+50
+~~END~~
+
+
+-- Test ASCII with datetime  --> will give incorrect results in babelfish [BABEL-1664]
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+50
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+-- Numeric Types
+DECLARE @inputString decimal = 123456;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString numeric = 12345.12;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString float = 12345.1;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString real = 12345.1;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString bigint = 12345678;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString int = 12345678;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString smallint = 12356;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString tinyint = 235;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+50
+~~END~~
+
+
+-- Money Types
+DECLARE @inputString money = 12356;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString smallmoney = 12356;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+-- Bit Type
+DECLARE @inputString bit = 1;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+-- Special Types
+DECLARE @inputString uniqueidentifier = CAST('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier);
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+54
+~~END~~
+
+
+-- Complex Types
+DECLARE @inputString sql_variant = CAST('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant);
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of ascii function.)~~
+
+
+DECLARE @inputString xml = CAST('<body><fruit/></body>' AS xml);
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of ascii function.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of ascii function.)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of ascii function.)~~
+
+
+-- Complex Types with Explicit Casting
+DECLARE @inputString sql_variant = CAST('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant);
+SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
+GO
+~~START~~
+int
+54
+~~END~~
+
+
+DECLARE @inputString xml = CAST('<body><fruit/></body>' AS xml);
+SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
+GO
+~~START~~
+int
+60
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
+GO
+~~START~~
+int
+80
+~~END~~
+
+
+-- Test IMAGE type
+SELECT ASCII(a) AS image_ascii FROM ascii_function_image;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of ascii function.)~~
+
+
+-- Test TEXT and NTEXT types
+SELECT ASCII(a) AS text_ascii, ASCII(b) AS ntext_ascii 
+FROM ascii_function_text;
+GO
+~~START~~
+int#!#int
+97#!#97
+~~END~~
+
+
+-- Test VARBINARY(MAX) and TEXT types with various data
+SELECT ID, ASCII(a) AS varbinary_ascii 
+FROM ascii_function_test_image 
+ORDER BY ID;
+GO
+~~START~~
+int#!#int
+1#!#65
+2#!#97
+3#!#49
+4#!#33
+~~END~~
+
+
+SELECT 
+    ID,
+    ASCII(a) AS text_ascii,
+    ASCII(b) AS ntext_ascii
+FROM ascii_function_test_text;
+GO
+~~START~~
+int#!#int#!#int
+1#!#65#!#65
+2#!#97#!#97
+3#!#49#!#49
+4#!#33#!#33
+5#!#32#!#32
+6#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test NULL and empty string handling
+SELECT 
+    ASCII(CAST(NULL AS IMAGE)) AS null_image,
+    ASCII(CAST(NULL AS TEXT)) AS null_text,
+    ASCII(CAST(NULL AS NTEXT)) AS null_ntext,
+    ASCII(CAST('' AS TEXT)) AS empty_text,
+    ASCII(CAST(N'' AS NTEXT)) AS empty_ntext;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test ASCII with UDTs
+SELECT 
+    ID,
+    ASCII(char_col) as char_ascii,
+    ASCII(varchar_col) as varchar_ascii,
+    ASCII(nchar_col) as nchar_ascii,
+    ASCII(nvarchar_col) as nvarchar_ascii,
+    ASCII(text_col) as text_ascii,
+    ASCII(ntext_col) as ntext_ascii,
+    ASCII(binary_col) as binary_ascii,
+    ASCII(varbinary_col) as varbinary_ascii
+FROM ascii_function_UDT_test;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+1#!#65#!#65#!#65#!#65#!#65#!#65#!#65#!#65
+2#!#32#!#<NULL>#!#32#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+-- Test ASCII with numeric UDTs
+SELECT 
+    ID,
+    ASCII(CAST(bigint_col AS VARCHAR)) as bigint_ascii,
+    ASCII(CAST(int_col AS VARCHAR)) as int_ascii,
+    ASCII(CAST(smallint_col AS VARCHAR)) as smallint_ascii,
+    ASCII(CAST(tinyint_col AS VARCHAR)) as tinyint_ascii,
+    ASCII(CAST(decimal_col AS VARCHAR)) as decimal_ascii,
+    ASCII(CAST(numeric_col AS VARCHAR)) as numeric_ascii,
+    ASCII(CAST(float_col AS VARCHAR)) as float_ascii,
+    ASCII(CAST(real_col AS VARCHAR)) as real_ascii
+FROM ascii_function_UDT_test;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+1#!#49#!#49#!#49#!#49#!#49#!#49#!#49#!#49
+2#!#48#!#48#!#48#!#48#!#48#!#48#!#48#!#48
+~~END~~
+
+
+-- Test ASCII with datetime UDTs --> will give incorrect results in babelfish [BABEL-1664]
+SELECT 
+    ID,
+    ASCII(CAST(datetime_col AS VARCHAR)) as datetime_ascii,
+    ASCII(CAST(smalldatetime_col AS VARCHAR)) as smalldatetime_ascii,
+    ASCII(CAST(date_col AS VARCHAR)) as date_ascii,
+    ASCII(CAST(time_col AS VARCHAR)) as time_ascii,
+    ASCII(CAST(datetime2_col AS VARCHAR)) as datetime2_ascii,
+    ASCII(CAST(datetimeoffset_col AS VARCHAR)) as datetimeoffset_ascii
+FROM ascii_function_UDT_test;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int
+1#!#50#!#50#!#50#!#49#!#50#!#50
+2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test ASCII with money
+SELECT 
+    ID,
+    ASCII(CAST(money_col AS VARCHAR)) as money_ascii,
+    ASCII(CAST(smallmoney_col AS VARCHAR)) as smallmoney_ascii
+FROM ascii_function_UDT_test;
+GO
+~~START~~
+int#!#int#!#int
+1#!#49#!#49
+2#!#48#!#48
+~~END~~
+
+
+SELECT ASCII(CAST('A' AS dbo.ascii_function_charUDT)) AS char_udt,
+       ASCII(CAST(123 AS dbo.ascii_function_intUDT)) AS int_udt,
+       ASCII(CAST(0x41 AS dbo.ascii_function_binaryUDT)) AS binary_udt;
+GO
+~~START~~
+int#!#int#!#int
+65#!#49#!#65
+~~END~~
+
+
+SELECT 'Testing NULL with UDTs' AS TestType;
+SELECT ASCII(CAST(NULL AS dbo.ascii_function_charUDT)) AS null_char_udt,
+       ASCII(CAST(NULL AS dbo.ascii_function_binaryUDT)) AS null_binary_udt;
+GO
+~~START~~
+varchar
+Testing NULL with UDTs
+~~END~~
+
+~~START~~
+int#!#int
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test ASCII with special types
+SELECT ASCII(a) as image_ascii FROM ascii_function_image;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of ascii function.)~~
+
+
+SELECT ASCII(a) as text_ascii, ASCII(b) as ntext_ascii FROM ascii_function_text;
+GO
+~~START~~
+int#!#int
+97#!#97
+~~END~~
+
+
+-- Test ASCII with NULL values
+SELECT 
+    ASCII(CAST(NULL as dbo.ascii_function_charUDT)) as null_char,
+    ASCII(CAST(NULL as dbo.ascii_function_varcharUDT)) as null_varchar,
+    ASCII(CAST(NULL as dbo.ascii_function_ncharUDT)) as null_nchar,
+    ASCII(CAST(NULL as dbo.ascii_function_nvarcharUDT)) as null_nvarchar;
+GO
+~~START~~
+int#!#int#!#int#!#int
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test ASCII with empty strings
+SELECT 
+    ASCII(CAST('' as dbo.ascii_function_charUDT)) as empty_char,
+    ASCII(CAST('' as dbo.ascii_function_varcharUDT)) as empty_varchar,
+    ASCII(CAST(N'' as dbo.ascii_function_ncharUDT)) as empty_nchar,
+    ASCII(CAST(N'' as dbo.ascii_function_nvarcharUDT)) as empty_nvarchar;
+GO
+~~START~~
+int#!#int#!#int#!#int
+32#!#<NULL>#!#32#!#<NULL>
+~~END~~
+
+
+SELECT ASCII(CAST(0x AS VARBINARY)) AS empty_varbinary,
+       ASCII(CAST(0x AS BINARY(1))) AS empty_binary;
+GO
+~~START~~
+int#!#int
+<NULL>#!#0
+~~END~~
+
+
+SELECT ASCII(CAST('A' as dbo.ascii_function_charUDT)) as char_udt_direct;
+GO
+~~START~~
+int
+65
+~~END~~
+
+
+SELECT ASCII(CAST(123 as dbo.ascii_function_intUDT)) as int_udt_direct;
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+SELECT ASCII(CAST(CAST('123' AS dbo.ascii_function_intUDT) AS VARCHAR)) as int_udt_to_varchar;
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+SELECT ASCII(CAST(0x20 as dbo.ascii_function_binaryUDT)) as binary_udt_direct;
+GO
+~~START~~
+int
+32
+~~END~~
+
+
+SELECT ASCII(CAST('0X20' as TEXT)) as text_ascii;
+GO
+~~START~~
+int
+48
+~~END~~
+
+
+DECLARE @temp TABLE (col TEXT);
+INSERT INTO @temp VALUES ('Hello World');
+SELECT ASCII(col) AS text_variable_ascii FROM @temp;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+72
+~~END~~
+
+
+--dependent test for ascii(text) function
+EXEC ascii_function_text_validator 'A', 65;
+EXEC ascii_function_text_validator 'B', 66;
+EXEC ascii_function_text_validator '', 0;
+GO
+~~START~~
+varchar
+Pass
+~~END~~
+
+~~START~~
+varchar
+Pass
+~~END~~
+
+~~START~~
+varchar
+Fail
+~~END~~
+
+
+SELECT * FROM ascii_function_text_analysis;
+GO
+~~START~~
+varchar#!#int#!#varchar
+A#!#65#!#Valid
+~~END~~
+
+
+SELECT * FROM ascii_function_analysis ORDER BY ID;
+GO
+~~START~~
+int#!#text#!#int#!#int#!#varchar
+1#!#A#!#65#!#65#!#Valid
+2#!#a#!#97#!#97#!#Valid
+3#!#1#!#49#!#49#!#Valid
+4#!#!#!#33#!#33#!#Valid
+5#!# #!#32#!#32#!#Valid
+6#!##!#<NULL>#!#<NULL>#!#Valid
+7#!#<NULL>#!#<NULL>#!#<NULL>#!#Valid
+~~END~~
+
