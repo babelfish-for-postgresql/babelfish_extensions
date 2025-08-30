@@ -9,7 +9,7 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 all
-
+ 
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
 
@@ -538,6 +538,9 @@ ignore#!#cast_nvarchar_test_before_16_5-vu-cleanup
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-cleanup
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-prepare
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
+ignore#!#BABEL-5809-ascii-before-17_7-or-16_11-vu-cleanup
+ignore#!#BABEL-5809-ascii-before-17_7-or-16_11-vu-prepare
+ignore#!#BABEL-5809-ascii-before-17_7-or-16_11-vu-verify
 
 ignore#!#test_windows_login_before-17_2-vu-prepare
 ignore#!#test_windows_login_before-17_2-vu-verify

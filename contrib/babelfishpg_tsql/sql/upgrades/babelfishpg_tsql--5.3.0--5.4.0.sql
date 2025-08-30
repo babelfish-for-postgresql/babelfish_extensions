@@ -40,6 +40,51 @@ $$;
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION sys.ascii(sys.NVARCHAR)
+RETURNS INTEGER
+AS $$
+BEGIN
+    IF length($1) = 0 THEN
+        RETURN NULL;
+    END IF;
+    RETURN pg_catalog.ascii($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
+
+CREATE OR REPLACE FUNCTION sys.ascii(sys.VARCHAR)
+RETURNS INTEGER
+AS $$
+BEGIN
+     IF length($1) = 0 THEN
+        RETURN NULL;
+    END IF;
+    RETURN pg_catalog.ascii($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ascii(TEXT)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN pg_catalog.ascii($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ascii(sys.VARBINARY)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ascii(sys.BINARY)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
