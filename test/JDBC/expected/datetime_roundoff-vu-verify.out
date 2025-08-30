@@ -1,0 +1,820 @@
+-- tsql
+
+-- Verification tests for datetime storage rounding version upgrade impact
+-- This verifies the behavior after implementing storage-level rounding
+SELECT 'VERIFY PHASE - Testing datetime storage rounding behavior' as test_phase;
+GO
+~~START~~
+varchar
+VERIFY PHASE - Testing datetime storage rounding behavior
+~~END~~
+
+
+-- Test Case 1: Verify basic rounding behavior
+SELECT 'Test 1: Basic rounding verification' as test_case;
+GO
+~~START~~
+varchar
+Test 1: Basic rounding verification
+~~END~~
+
+SELECT 
+    test_name,
+    dt_value as stored_value,
+    CAST(dt_value AS VARCHAR(30)) as stored_string,
+    description,
+    CASE 
+        WHEN test_name = 'basic_000' AND CAST(dt_value AS VARCHAR(30)) LIKE '%.000' THEN 'PASS'
+        WHEN test_name = 'basic_001' AND CAST(dt_value AS VARCHAR(30)) LIKE '%.000' THEN 'PASS'
+        WHEN test_name = 'basic_002' AND CAST(dt_value AS VARCHAR(30)) LIKE '%.003' THEN 'PASS'
+        WHEN test_name = 'basic_003' AND CAST(dt_value AS VARCHAR(30)) LIKE '%.003' THEN 'PASS'
+        WHEN test_name = 'basic_004' AND CAST(dt_value AS VARCHAR(30)) LIKE '%.003' THEN 'PASS'
+        WHEN test_name = 'basic_005' AND CAST(dt_value AS VARCHAR(30)) LIKE '%.007' THEN 'PASS'
+        WHEN test_name = 'basic_006' AND CAST(dt_value AS VARCHAR(30)) LIKE '%.007' THEN 'PASS'
+        WHEN test_name = 'basic_007' AND CAST(dt_value AS VARCHAR(30)) LIKE '%.007' THEN 'PASS'
+        WHEN test_name = 'basic_008' AND CAST(dt_value AS VARCHAR(30)) LIKE '%.007' THEN 'PASS'
+        WHEN test_name = 'basic_009' AND CAST(dt_value AS VARCHAR(30)) LIKE '%.010' THEN 'PASS'
+    END as test_result
+FROM datetime_storage_test 
+WHERE test_name LIKE 'basic_%'
+ORDER BY test_name;
+GO
+~~START~~
+varchar#!#datetime#!#varchar#!#varchar#!#varchar
+basic_000#!#2024-01-15 10:30:45.0#!#2024-01-15 10:30:45#!#Already at .000 boundary#!#<NULL>
+basic_001#!#2024-01-15 10:30:45.0#!#2024-01-15 10:30:45#!#Should round to .000#!#<NULL>
+basic_002#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#Should round to .003#!#PASS
+basic_003#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#Already at .003 boundary#!#PASS
+basic_004#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#Should round to .003#!#PASS
+basic_005#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007#!#Should round to .007#!#PASS
+basic_006#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007#!#Should round to .007#!#PASS
+basic_007#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007#!#Already at .007 boundary#!#PASS
+basic_008#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007#!#Should round to .007#!#PASS
+basic_009#!#2024-01-15 10:30:45.01#!#2024-01-15 10:30:45.01#!#Should round to .010#!#<NULL>
+~~END~~
+
+
+-- Test Case 2: Verify edge case rollover behavior
+SELECT 'Test 2: Edge case rollover verification' as test_case;
+GO
+~~START~~
+varchar
+Test 2: Edge case rollover verification
+~~END~~
+
+SELECT 
+    test_name,
+    dt_value as stored_value,
+    CAST(dt_value AS VARCHAR(30)) as stored_string,
+    description,
+    CASE 
+        WHEN test_name = 'edge_second_rollover' AND DATEPART(second, dt_value) = 0 AND DATEPART(millisecond, dt_value) = 0 THEN 'PASS'
+        WHEN test_name = 'edge_minute_rollover' AND DATEPART(minute, dt_value) = 0 AND DATEPART(second, dt_value) = 0 THEN 'PASS'
+        WHEN test_name = 'edge_hour_rollover' AND DATEPART(hour, dt_value) = 0 AND DATEPART(minute, dt_value) = 0 THEN 'PASS'
+        WHEN test_name = 'edge_day_rollover' AND DATEPART(day, dt_value) = 1 AND DATEPART(hour, dt_value) = 0 THEN 'PASS'
+        ELSE 'NEEDS_REVIEW'
+    END as test_result
+FROM datetime_storage_test 
+WHERE test_name LIKE 'edge_%'
+ORDER BY test_name;
+GO
+~~START~~
+varchar#!#datetime#!#varchar#!#varchar#!#varchar
+edge_day_rollover#!#2024-02-01 00:00:00.0#!#2024-02-01 00:00:00#!#Should rollover to next day#!#PASS
+edge_hour_rollover#!#2024-01-16 00:00:00.0#!#2024-01-16 00:00:00#!#Should rollover to next hour#!#PASS
+edge_minute_rollover#!#2024-01-15 11:00:00.0#!#2024-01-15 11:00:00#!#Should rollover to next minute#!#PASS
+edge_second_rollover#!#2024-01-15 10:31:00.0#!#2024-01-15 10:31:00#!#Should rollover to next second#!#PASS
+~~END~~
+
+
+-- Test Case 3: Test new datetime insertions with rounding
+SELECT 'Test 3: New insertions with rounding' as test_case;
+GO
+~~START~~
+varchar
+Test 3: New insertions with rounding
+~~END~~
+
+
+-- Insert new values to test current rounding behavior
+INSERT INTO datetime_storage_test (test_name, dt_value, description) VALUES
+('new_466', '2024-03-12 12:00:34.466', 'Should round to .467'),
+('new_149', '2024-03-12 12:00:34.149', 'Should round to .150'),
+('new_555', '2024-03-12 12:00:34.555', 'Should round to .557');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 3~~
+
+
+SELECT 
+    test_name,
+    dt_value,
+    CAST(dt_value AS VARCHAR(30)) as stored_string,
+    description
+FROM datetime_storage_test 
+WHERE test_name LIKE 'new_%'
+ORDER BY test_name;
+GO
+~~START~~
+varchar#!#datetime#!#varchar#!#varchar
+new_149#!#2024-03-12 12:00:34.15#!#2024-03-12 12:00:34.15#!#Should round to .150
+new_466#!#2024-03-12 12:00:34.467#!#2024-03-12 12:00:34.467#!#Should round to .467
+new_555#!#2024-03-12 12:00:34.557#!#2024-03-12 12:00:34.557#!#Should round to .557
+~~END~~
+
+
+-- Test Case 4: Comparison behavior changes
+SELECT 'Test 4: Comparison behavior verification' as test_case;
+GO
+~~START~~
+varchar
+Test 4: Comparison behavior verification
+~~END~~
+
+
+-- Test if values that were different before are now equal
+SELECT 
+    'Equality test' as comparison_type,
+    COUNT(*) as total_records,
+    COUNT(DISTINCT event_time) as distinct_times,
+    CASE 
+        WHEN COUNT(*) > COUNT(DISTINCT event_time) THEN 'VALUES_NOW_EQUAL'
+        ELSE 'VALUES_STILL_DISTINCT'
+    END as comparison_result
+FROM datetime_comparison_test;
+GO
+~~START~~
+varchar#!#int#!#int#!#varchar
+Equality test#!#4#!#2#!#VALUES_NOW_EQUAL
+~~END~~
+
+
+-- Show the actual values
+SELECT 
+    id,
+    event_time,
+    CAST(event_time AS VARCHAR(30)) as time_string,
+    event_type
+FROM datetime_comparison_test
+ORDER BY event_time, id;
+GO
+~~START~~
+int#!#datetime#!#varchar#!#varchar
+1#!#2024-01-15 10:30:45.15#!#2024-01-15 10:30:45.15#!#login_attempt
+2#!#2024-01-15 10:30:45.15#!#2024-01-15 10:30:45.15#!#login_success
+3#!#2024-01-15 10:30:45.15#!#2024-01-15 10:30:45.15#!#session_start
+4#!#2024-01-15 10:30:45.153#!#2024-01-15 10:30:45.153#!#page_load
+~~END~~
+
+
+-- Test Case 5: Aggregation impact
+SELECT 'Test 5: Aggregation behavior verification' as test_case;
+GO
+~~START~~
+varchar
+Test 5: Aggregation behavior verification
+~~END~~
+
+
+SELECT 
+    process_time,
+    CAST(process_time AS VARCHAR(30)) as time_string,
+    COUNT(*) as record_count,
+    SUM(amount) as total_amount,
+    AVG(amount) as avg_amount
+FROM datetime_aggregation_test
+GROUP BY process_time
+ORDER BY process_time;
+GO
+~~START~~
+datetime#!#varchar#!#int#!#numeric#!#numeric
+2024-01-15 10:30:45.0#!#2024-01-15 10:30:45#!#1#!#100.00#!#100.000000
+2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#3#!#425.00#!#141.666666
+~~END~~
+
+
+-- Test Case 6: Index performance impact
+SELECT 'Test 6: Index behavior verification' as test_case;
+GO
+~~START~~
+varchar
+Test 6: Index behavior verification
+~~END~~
+
+
+-- psql
+ANALYZE master_dbo.datetime_index_test;
+GO
+
+-- tsql
+select set_config('enable_seqscan','off','false');
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE ON
+GO
+
+-- Test range queries that might be affected by rounding
+SELECT COUNT(*) as records_in_range
+FROM datetime_index_test
+WHERE created_at BETWEEN '2024-01-15 10:30:45.001' AND '2024-01-15 10:30:45.003';
+GO
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT COUNT(*) as records_in_range
+FROM datetime_index_test
+WHERE created_at BETWEEN '2024-01-15 10:30:45.001' AND '2024-01-15 10:30:45.003'
+Aggregate (actual rows=1 loops=1)
+  ->  Index Only Scan using ix_datetime_index_test_created_66a6b1d45f144f1482b6a7f096be9038 on datetime_index_test (actual rows=4 loops=1)
+        Index Cond: ((created_at >= '2024-01-15 10:30:45'::datetime) AND (created_at <= '2024-01-15 10:30:45.003'::datetime))
+        Heap Fetches: 4
+~~END~~
+
+
+SELECT 
+    created_at,
+    CAST(created_at AS VARCHAR(30)) as time_string,
+    data
+FROM datetime_index_test
+WHERE created_at = '2024-01-15 10:30:45.002';
+GO
+~~START~~
+datetime#!#varchar#!#varchar
+2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#record2
+2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#record3
+2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#record4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 
+    created_at,
+    CAST(created_at AS VARCHAR(30)) as time_string,
+    data
+FROM datetime_index_test
+WHERE created_at = '2024-01-15 10:30:45.002'
+Index Scan using ix_datetime_index_test_created_66a6b1d45f144f1482b6a7f096be9038 on datetime_index_test (actual rows=3 loops=1)
+  Index Cond: (created_at = '2024-01-15 10:30:45.003'::datetime)
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE OFF
+GO
+
+select set_config('enable_seqscan','on','false');
+GO
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_timing', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_summary', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- Test Case 7: Stored procedure behavior
+SELECT 'Test 7: Stored procedure behavior verification' as test_case;
+GO
+~~START~~
+varchar
+Test 7: Stored procedure behavior verification
+~~END~~
+
+
+EXEC test_datetime_parameter '2024-03-12 12:00:34.466';
+GO
+~~START~~
+datetime#!#varchar
+2024-03-12 12:00:34.467#!#2024-03-12 12:00:34.467
+~~END~~
+
+EXEC test_datetime_parameter '2024-03-12 12:00:34.149';
+GO
+~~START~~
+datetime#!#varchar
+2024-03-12 12:00:34.15#!#2024-03-12 12:00:34.15
+~~END~~
+
+
+-- Test Case 8: Function behavior
+SELECT 'Test 8: Function behavior verification' as test_case;
+GO
+~~START~~
+varchar
+Test 8: Function behavior verification
+~~END~~
+
+
+SELECT 
+    'Function test' as test_type,
+    dbo.get_rounded_datetime('2024-03-12 12:00:34.466') as function_result,
+    CAST(dbo.get_rounded_datetime('2024-03-12 12:00:34.466') AS VARCHAR(30)) as result_string;
+GO
+~~START~~
+varchar#!#datetime#!#varchar
+Function test#!#2024-03-12 12:00:34.467#!#2024-03-12 12:00:34.467
+~~END~~
+
+
+-- Test Case 9: View behavior
+SELECT 'Test 9: View behavior verification' as test_case;
+GO
+~~START~~
+varchar
+Test 9: View behavior verification
+~~END~~
+
+
+SELECT COUNT(*) as view_record_count FROM datetime_view;
+GO
+~~START~~
+int
+19
+~~END~~
+
+
+SELECT TOP 5 
+    id,
+    dt_value,
+    dt_string
+FROM datetime_view
+ORDER BY id;
+GO
+~~START~~
+int#!#datetime#!#varchar
+3#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003
+4#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003
+5#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003
+6#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007
+7#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007
+~~END~~
+
+
+-- Test Case 10: Trigger behavior verification
+SELECT 'Test 10: Trigger behavior verification' as test_case;
+GO
+~~START~~
+varchar
+Test 10: Trigger behavior verification
+~~END~~
+
+
+-- Insert a record to trigger the audit
+INSERT INTO datetime_storage_test (test_name, dt_value, description) 
+VALUES ('trigger_test', '2024-03-12 12:00:34.999', 'Testing trigger behavior');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Test Case 11: Backward compatibility verification
+SELECT 'Test 11: Backward compatibility verification' as test_case;
+GO
+~~START~~
+varchar
+Test 11: Backward compatibility verification
+~~END~~
+
+
+-- Test queries that existing applications might use
+SELECT 
+    'Date equality' as test_type,
+    COUNT(*) as matching_records
+FROM datetime_storage_test 
+WHERE dt_value = '2024-01-15 10:30:45.003';
+GO
+~~START~~
+varchar#!#int
+Date equality#!#3
+~~END~~
+
+
+SELECT 
+    'Date range' as test_type,
+    COUNT(*) as records_in_range
+FROM datetime_storage_test 
+WHERE dt_value BETWEEN '2024-01-15 10:30:45.000' AND '2024-01-15 10:30:45.010';
+GO
+~~START~~
+varchar#!#int
+Date range#!#10
+~~END~~
+
+
+-- Test Case 12: Cast and conversion behavior
+SELECT 'Test 12: Cast and conversion verification' as test_case;
+GO
+~~START~~
+varchar
+Test 12: Cast and conversion verification
+~~END~~
+
+
+SELECT 
+    'Direct cast' as conversion_type,
+    CAST('2024-03-12 12:00:34.466' AS DATETIME) as casted_value,
+    CAST(CAST('2024-03-12 12:00:34.466' AS DATETIME) AS VARCHAR(30)) as casted_string;
+GO
+~~START~~
+varchar#!#datetime#!#varchar
+Direct cast#!#2024-03-12 12:00:34.467#!#2024-03-12 12:00:34.467
+~~END~~
+
+
+-- Test Case 13: Arithmetic operations
+SELECT 'Test 13: Arithmetic operations verification' as test_case;
+GO
+~~START~~
+varchar
+Test 13: Arithmetic operations verification
+~~END~~
+
+
+
+
+DECLARE @dt1 DATETIME = '2024-03-12 12:00:34.466';
+DECLARE @dt2 DATETIME = '2024-03-12 12:00:34.465';
+SELECT 
+    'Addition' as operation,
+    @dt1 + @dt2 as result,
+    CAST(@dt1 + @dt2 AS VARCHAR(30)) as result_string;
+SELECT 
+    'Subtraction' as operation,
+    @dt1 - @dt2 as result,
+    CAST(@dt1 - @dt2 AS VARCHAR(30)) as result_string;
+GO
+~~START~~
+varchar#!#datetime#!#varchar
+Addition#!#2148-05-23 00:01:08.933#!#2148-05-23 00:01:08.934
+~~END~~
+
+~~START~~
+varchar#!#datetime#!#varchar
+Subtraction#!#1900-01-01 00:00:00.0#!#1900-01-01 00:00:00
+~~END~~
+
+
+-- Summary report
+SELECT 'SUMMARY: Version upgrade impact assessment' as summary_section;
+GO
+~~START~~
+varchar
+SUMMARY: Version upgrade impact assessment
+~~END~~
+
+
+SELECT 
+    'Total test records' as metric,
+    COUNT(*) as value
+FROM datetime_storage_test;
+GO
+~~START~~
+varchar#!#int
+Total test records#!#22
+~~END~~
+
+
+SELECT 
+    'Records with .000 precision' as metric,
+    COUNT(*) as value
+FROM datetime_storage_test
+WHERE CAST(dt_value AS VARCHAR(30)) LIKE '%.000';
+GO
+~~START~~
+varchar#!#int
+Records with .000 precision#!#0
+~~END~~
+
+
+SELECT 
+    'Records with .003 precision' as metric,
+    COUNT(*) as value
+FROM datetime_storage_test
+WHERE CAST(dt_value AS VARCHAR(30)) LIKE '%.003';
+GO
+~~START~~
+varchar#!#int
+Records with .003 precision#!#3
+~~END~~
+
+
+SELECT 
+    'Records with .007 precision' as metric,
+    COUNT(*) as value
+FROM datetime_storage_test
+WHERE CAST(dt_value AS VARCHAR(30)) LIKE '%.007';
+GO
+~~START~~
+varchar#!#int
+Records with .007 precision#!#4
+~~END~~
+
+
+-- BASIC UPGRADE TESTING
+select * from datetime_test where date_time1 = '2014-03-12 12:00:34.467'
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+select * from datetime_test where date_time1 = '2014-03-12 12:00:34.466'
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+select * from datetime_test where date_time1 <= '2014-03-12 12:00:34.467'
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+select * from datetime_test where date_time1 <= '2014-03-12 12:00:34.466'
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+select cast('2014-03-12 12:00:34.462' as datetime)
+GO
+~~START~~
+datetime
+2014-03-12 12:00:34.463
+~~END~~
+
+select cast('2014-03-12 12:00:34.464' as datetime)
+GO
+~~START~~
+datetime
+2014-03-12 12:00:34.463
+~~END~~
+
+select cast('2014-03-12 12:00:34.466' as datetime)
+GO
+~~START~~
+datetime
+2014-03-12 12:00:34.467
+~~END~~
+
+select cast('2014-03-12 12:00:34.462' as datetime) - cast('2014-03-12 12:00:34.464' as datetime)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+select cast('2014-03-12 12:00:34.462' as datetime) + cast('2014-03-12 12:00:34.466' as datetime)
+GO
+~~START~~
+datetime
+2128-05-22 00:01:08.93
+~~END~~
+
+
+INSERT INTO datetime_test (date_time1, date_time2)  VALUES ('2014-03-12 12:00:34.466', '2010-03-04 12:55:41.149');
+INSERT INTO datetime_test (date_time1, date_time2)  VALUES ('2014-03-12 12:00:34.467', '2010-03-04 12:55:41.150');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from datetime_test where date_time1 <= '2014-03-12 12:00:34.467'
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+select * from datetime_test where date_time1 <= '2014-03-12 12:00:34.466'
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+SELECT * INTO datetime_test_new FROM datetime_test;
+GO
+
+UPDATE datetime_test SET date_time1 = date_time1, date_time2 = date_time2;
+GO
+~~ROW COUNT: 4~~
+
+
+SELECT * FROM datetime_test;
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+SELECT * FROM datetime_test_new;
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+select * from datetime_test_new where date_time1 = '2014-03-12 12:00:34.467'
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+select * from datetime_test_new where date_time1 = '2014-03-12 12:00:34.466'
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+-- psql
+SELECT * FROM master_dbo.datetime_test_new;
+GO
+~~START~~
+int4#!#"sys"."datetime"#!#"sys"."datetime"
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+SELECT * FROM master_dbo.datetime_test;
+GO
+~~START~~
+serial#!#"sys"."datetime"#!#"sys"."datetime"
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+-- tsql
+UPDATE datetime_test SET date_time1 = cast(date_time1 as datetime), date_time2 = cast(date_time2 as datetime);
+GO
+~~ROW COUNT: 4~~
+
+
+-- psql
+SELECT * FROM master_dbo.datetime_test;
+GO
+~~START~~
+serial#!#"sys"."datetime"#!#"sys"."datetime"
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+-- tsql
+-- should be updated to rounded values (workaround for existing data)
+UPDATE datetime_test SET date_time1 = cast(cast(date_time1 as varchar) as datetime), date_time2 = cast(cast(date_time2 as varchar) as datetime);
+GO
+~~ROW COUNT: 4~~
+
+
+-- psql
+SELECT * FROM master_dbo.datetime_test;
+GO
+~~START~~
+serial#!#"sys"."datetime"#!#"sys"."datetime"
+1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+~~END~~
+
+
+-- tsql
+-- UNIQUE INDEX (using primary key)
+UPDATE datetime_unique_index SET datetime_unique_index_col = cast(cast(datetime_unique_index_col as varchar) as datetime);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO datetime_unique_index VALUES('2014-03-12 12:00:34.467');
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "datetime_unique_index_pkey")~~
+
+
+TRUNCATE TABLE datetime_unique_index;
+GO
+
+INSERT INTO datetime_unique_index VALUES('2014-03-12 12:00:34.467');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM datetime_unique_index WHERE datetime_unique_index_col = '2014-03-12 12:00:34.466'
+GO
+~~START~~
+datetime
+2014-03-12 12:00:34.467
+~~END~~
+

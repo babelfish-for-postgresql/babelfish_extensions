@@ -1810,6 +1810,8 @@ typedef struct PLtsql_protocol_plugin
 	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
 													char **tvp_type_name, char **tvp_type_schema_name);
 
+	void		(*UpdateToNextDayHelper) (struct pg_tm *tm);
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2271,6 +2273,8 @@ extern void downcase_truncate_split_object_name(char *four_part_object_name, cha
 extern Oid get_rel_owner(Oid relid);
 extern Oid get_func_owner(Oid funcid);
 extern bool is_valid_func_ownership_chain(void *expr, Oid objectOwnerId);
+extern bool is_xml_value_typearg_valid(Oid Oid);
+
 typedef struct
 {
 	bool		success;
@@ -2365,8 +2369,9 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 /*
  * Functions in pltsql_coerce.c
  */
-extern bool validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
-extern int32	resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
+extern bool     validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
+extern int32    resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
+extern Oid      get_immediate_base_type_of_UDT_internal(Oid oid);
 
 /*
  * Function in pltsql_ruleutils.c

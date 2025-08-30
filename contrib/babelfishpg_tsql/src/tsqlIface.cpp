@@ -1048,7 +1048,7 @@ public:
 
 	void exitXml_func_arg(TSqlParser::Xml_func_argContext *ctx) override
 	{
-		if (ctx->EXIST())
+		if (ctx->EXIST() || ctx->VALUE())
 		{
 			size_t startPosition = ctx->start->getStartIndex();
 			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "bbf_xml")));
@@ -8993,8 +8993,34 @@ rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx)
 }
 
 /*
+ * Helper function to extract the typename from the second argument of XML VALUE function
+ * and validate it. If the type is invalid, we throw an error.
+ * If valid, we return the typename string without quotes.
+ */
+static std::string
+extract_xml_value_typearg(TSqlParser::ExpressionContext *expression)
+{
+	std::string arg_str = ::getFullText(expression);
+	std::string typename_arg;
+	PLtsql_type *type;
+
+	typename_arg = arg_str.substr(1, arg_str.size() - 2);
+	type = parse_datatype(typename_arg.c_str(), 0);
+
+	if (is_xml_value_typearg_valid(type->typoid))
+	{
+		throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("The data type '%s' used in the VALUE method is invalid.", typename_arg.c_str()), getLineAndPos(expression));
+	}
+
+	return typename_arg;
+}
+
+/*
  * In this helper function we Rewrite the Query for XML and Geospatial Handling
  * For Func_Ref Functions with args (such as EXIST(arg), STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
+ * 
+ * Exception: For XML Value function rewriting will happen as follows
+ *   ColRef.VALUE(xpath, 'typename')  -> convert(typename, bbf_xmlvalue(xpath, 'typename', ColRef))
  */
 template<class T>
 void
@@ -9011,7 +9037,22 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	int offset2 = 0;
 	std::vector<std::pair<int, int>> arg_offset_list;
 	int local_id_end_offset = 0;
-	
+	std::string typename_arg;
+
+	/*
+	 * Extract typename from second argument of VALUE function which is 'typename',
+	 * and also update the local_id_end_offset accordingly for VALUE function.
+	 */
+	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
+	{
+		typename_arg = extract_xml_value_typearg(method->xml_methods()->expression_list()->expression()[1]);
+
+		/*
+		 * local_id_end_offset is going to increase by 5 (length of string 'cast(')
+		 */
+		local_id_end_offset += 5;
+	}
+
 	/* writing the previously rewritten XML and/or Geospatial context */
 	for (auto &entry : rewritten_query_fragment)
 	{
@@ -9067,6 +9108,11 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	for (const auto &key : keysToRemove) local_id_positions.erase(key);
 	keysToRemove.clear();
 	std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, func_call_len + offset1 + 1) + ")";
+
+	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
+	{
+		rewritten_exp = "cast(" + rewritten_exp + " as " + typename_arg + ")";
+	}
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
 }
 
@@ -9207,6 +9253,9 @@ rewrite_function_call_geospatial_func_ref_no_arg(T ctx)
  * In this helper function we rewrite the Query for Dot Function Handling
  * This implementation is different for Function_Call Rule
  * For Func_Ref Functions with args (such as EXIST(arg), STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
+ *
+ * Exception: For XML Value function rewriting will happen as follows
+ *   ColRef.VALUE(xpath, 'typename')  -> convert(typename, bbf_xmlvalue(xpath, 'typename', ColRef))
  */
 template<class T>
 void
@@ -9244,7 +9293,22 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	int offset2 = 0;
 	std::vector<std::pair<int, int>> arg_offset_list;
 	int local_id_end_offset = 0;
-	
+	std::string typename_arg = "";
+
+	/*
+	 * Extract typename from second argument of VALUE function which is 'typename',
+	 * and also update the local_id_end_offset accordingly for VALUE function.
+	 */
+	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
+	{
+		typename_arg = extract_xml_value_typearg(ctx->expression_list()->expression()[1]);
+
+		/*
+		 * local_id_end_offset is going to increase by 5 (length of string 'cast(')
+		 */
+		local_id_end_offset += 5;
+	}
+
 	/* writing the previously rewritten Dot Function context */
 	for (auto &entry : rewritten_query_fragment)
 	{
@@ -9293,6 +9357,11 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	 * Rewriting the query as: table.col.Func_name(arg) -> Func_name(arg, table.col)
 	 */
 	std::string rewritten_func = expr.substr((int)func_start_index - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, col_len + offset1 + 1) + ")";
+	
+	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
+	{
+		rewritten_func = "cast(" + rewritten_func + " as " + typename_arg + ")";
+	}
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 }
 
@@ -9341,6 +9410,10 @@ validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::E
 	/* XML EXIST function requires only 1 argument */
 	if (xml_func->EXIST() && (expr_list == NULL || expr_list->expression().size() != 1))
 		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The exist function requires 1 argument(s).", getLineAndPos(xml_func));
+
+	/* XML VALUE function requires only 2 argument */
+	if (xml_func->VALUE() && (expr_list == NULL || expr_list->expression().size() != 2))
+		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The value function requires 2 argument(s).", getLineAndPos(xml_func));
 
 	/* Only String Literal is allowed as agument for XML Functions */
 	if (expr_list)
