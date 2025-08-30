@@ -7885,11 +7885,14 @@ mark_outside_view_ref_walker(Node *node, void *context)
         foreach(lc, query->rtable)
         {
             RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-            RTEPermissionInfo *perminfo = getRTEPermissionInfo(query->rteperminfos, rte);
-
-			if (perminfo->insideView == PNODE_UNMARKED)
+			if (OidIsValid(rte->relid) && rte->rtekind == RTE_RELATION)
 			{
-				perminfo->insideView = PNODE_OUTSIDE_VIEW;
+				RTEPermissionInfo *perminfo = getRTEPermissionInfo(query->rteperminfos, rte);
+
+				if (perminfo && perminfo->insideView == PNODE_UNMARKED)
+				{
+					perminfo->insideView = PNODE_OUTSIDE_VIEW;
+				}
 			}
         }
 		return query_tree_walker(query, 

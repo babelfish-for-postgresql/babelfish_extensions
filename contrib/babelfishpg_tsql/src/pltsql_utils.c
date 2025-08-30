@@ -3015,7 +3015,6 @@ get_func_owner(Oid funcid)
 static Oid
 get_current_func_owner(void)
 {
-	PLtsql_execstate *top_estate;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return InvalidOid;
@@ -3029,16 +3028,11 @@ get_current_func_owner(void)
 	* fn_oid and fn_owner value set.
 	*/
 	if (!exec_state_call_stack ||
-		!exec_state_call_stack->estate)
+		!exec_state_call_stack->estate ||
+		!exec_state_call_stack->estate->func)
 		return InvalidOid;
 
-	top_estate = exec_state_call_stack->estate;
-
-	if (!top_estate ||
-		!top_estate->func)
-		return InvalidOid;
-
-	return top_estate->func->fn_oid;
+	return exec_state_call_stack->estate->func->fn_oid;
 }
 
 extern bool
