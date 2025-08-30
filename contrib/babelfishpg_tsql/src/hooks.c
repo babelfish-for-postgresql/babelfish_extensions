@@ -1051,7 +1051,7 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 				if(IsA(expr, FuncExpr) &&
 				   is_valid_func_ownership_chain(expr, get_func_owner(((FuncExpr *)expr)->funcid)))
 				{
-					return true;
+					return ACLCHECK_OK;
 				}
 			}
 			if (nspname)
