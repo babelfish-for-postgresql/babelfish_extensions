@@ -7907,8 +7907,21 @@ mark_outside_view_ref_walker(Node *node, void *context)
 
 		if (funcexpr->insideView == PNODE_UNMARKED)
 		{
-			funcexpr->insideView = PNODE_OUTSIDE_VIEW;
+			Oid nspid;
+			char *physical_schemaname = NULL;
+
+			nspid = get_func_namespace(funcexpr->funcid);
+			physical_schemaname = get_namespace_name(nspid);
+			if (physical_schemaname &&
+				!is_shared_schema(physical_schemaname))
+			{
+				funcexpr->insideView = PNODE_OUTSIDE_VIEW;
+			}
+
+			if (physical_schemaname)
+					pfree(physical_schemaname);
 		}
+    
 		/* else walk through function args */
     }
 
