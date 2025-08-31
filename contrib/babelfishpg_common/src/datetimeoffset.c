@@ -596,7 +596,7 @@ datetimeoffset_datetime(PG_FUNCTION_ARGS)
 	tsql_datetimeoffset *df = PG_GETARG_DATETIMEOFFSET(0);
 	Timestamp	result;
 
-	result = df->tsql_ts;
+	result = roundoff_datetime(df->tsql_ts);
 	CheckDatetimeRange(result, fcinfo->context);
 
 	PG_RETURN_TIMESTAMP(result);

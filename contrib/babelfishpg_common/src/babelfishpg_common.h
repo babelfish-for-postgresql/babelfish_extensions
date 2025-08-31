@@ -69,6 +69,9 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_tinyint_datatype) (Oid oid);
 	bool		(*is_tsql_money_datatype) (Oid oid);
 	bool		(*is_tsql_smallmoney_datatype) (Oid oid);
+	bool		(*is_tsql_vector_datatype) (Oid oid);
+	bool		(*is_tsql_sparsevec_datatype) (Oid oid);
+	bool		(*is_tsql_halfvec_datatype) (Oid oid);
 	
 	Datum		(*datetime_in_str) (char *str, Node *escontext);
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);
@@ -98,4 +101,6 @@ typedef struct common_utility_plugin
 	int32_t		(*tsql_numeric_get_typmod) (Numeric num);
 	DateADT		(*initializeToDefaultDate) (void);
 	TimeADT		(*initializeToDefaultTime) (int32 typmod);
+	Timestamp	(*roundoff_datetime) (Timestamp timestamp);
+	void		(*UpdateToNextDayHelper) (struct pg_tm *tm);
 } common_utility_plugin;

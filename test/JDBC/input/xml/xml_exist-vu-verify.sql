@@ -589,11 +589,11 @@ DECLARE @xml XML = '<root><child>Hello</child></root>';
 SELECT @xml.exist('(//*:child)[1]');
 GO
 
--- Unsupported XML functions VALUE(), QUERY(), MODIFY()
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.value('(/artists/artist/@name)[1]','varchar(20)')
 GO
 
+-- Unsupported XML functions QUERY(), MODIFY()
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.query('/artists/artist')
 GO

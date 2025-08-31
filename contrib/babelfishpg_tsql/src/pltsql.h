@@ -1810,6 +1810,8 @@ typedef struct PLtsql_protocol_plugin
 	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
 													char **tvp_type_name, char **tvp_type_schema_name);
 
+	void		(*UpdateToNextDayHelper) (struct pg_tm *tm);
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2261,8 +2263,11 @@ extern bool is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvar
 extern bool is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
 extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
+extern bool is_tsql_geometry_or_geography_datatype(Oid oid); /* sys.geometry / sys.geography */
 extern void downcase_truncate_split_object_name(char *four_part_object_name, char** server_name, char** db_name, char** schema_name, char** object_name);
 extern Oid get_rel_owner(Oid relid);
+extern bool is_xml_value_typearg_valid(Oid Oid);
+
 typedef struct
 {
 	bool		success;
@@ -2357,8 +2362,9 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 /*
  * Functions in pltsql_coerce.c
  */
-extern bool validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
-extern int32	resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
+extern bool     validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
+extern int32    resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
+extern Oid      get_immediate_base_type_of_UDT_internal(Oid oid);
 
 /*
  * Function in pltsql_ruleutils.c
