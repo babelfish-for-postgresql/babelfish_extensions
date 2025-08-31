@@ -3013,20 +3013,20 @@ get_rel_owner(Oid relid)
 Oid
 get_func_owner(Oid funcid)
 {
-	HeapTuple tup;
-	Form_pg_proc procform;
-	Oid owner;
+	HeapTuple	tp;
 
-	tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
+	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_proc functup = (Form_pg_proc) GETSTRUCT(tp);
+		Oid			result;
 
-	procform = (Form_pg_proc) GETSTRUCT(tup);
-	owner = procform->proowner;
-
-	ReleaseSysCache(tup);
-
-	return owner;
+		result = functup->proowner;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
 }
 
 /*
