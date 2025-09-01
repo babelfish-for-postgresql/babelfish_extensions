@@ -926,8 +926,6 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 	struct pg_tm	tm;
 	fsec_t			fsec;
 	bytea			*result;
-	uint32			days_part,
-					time_part_32;
 
 	if (timestamp2tm(ts, &tz, &tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
@@ -948,24 +946,16 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 	/* Convert to TSQL 300ths of a second ticks */
 	time_part = (total_ms * 3LL + 5LL) / 10LL;
 
-	/* Convert to 32-bit parts */
-	if (days < 0)
-		days_part = (uint32)(days & 0xFFFFFFFF);
-	else
-		days_part = (uint32)(days);
-
-	time_part_32 = (uint32)(time_part & 0xFFFFFFFF);
-
 	/* Convert to little-endian */
-	days_part = pg_hton32(days_part);
-	time_part_32 = pg_hton32(time_part_32);
+	days = pg_hton32(days);
+	time_part = pg_hton32(time_part);
 
 	result = (bytea *) palloc(VARHDRSZ + 8);
 	SET_VARSIZE(result, VARHDRSZ + 8);
 
 	/* Copy the parts to the bytea result */
-	memcpy(VARDATA(result), &days_part, 4);
-	memcpy(VARDATA(result) + 4, &time_part_32, 4);
+	memcpy(VARDATA(result), &days, 4);
+	memcpy(VARDATA(result) + 4, &time_part, 4);
 
 	PG_RETURN_BYTEA_P(result);
 }
