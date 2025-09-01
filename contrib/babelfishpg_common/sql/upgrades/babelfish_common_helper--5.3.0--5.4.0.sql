@@ -73,6 +73,6 @@ BEGIN
 	datetime_oid := (SELECT oid FROM pg_type WHERE pg_type.typname ='datetime' AND pg_type.typnamespace = sys_oid);
   IF (SELECT COUNT(*) FROM pg_cast WHERE pg_cast.castsource = datetime_oid AND pg_cast.casttarget = bbf_varbinary_oid) = 0 THEN
       CREATE CAST (SYS.DATETIME AS sys.bbf_varbinary)
-      WITH FUNCTION sys.datetime2varbinary(SYS.DATETIME);
+      WITH FUNCTION sys.datetime2varbinary(SYS.DATETIME, integer, boolean) AS ASSIGNMENT;
   END IF;
 END $$;
