@@ -148,5 +148,5 @@ insert into babel_datetime_varbinary_vu_prepare_testing_2 values (cast('2023-06-
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: column "a" is of type varbinary but expression is of type datetime)~~
+~~ERROR (Message: Implicit conversion from data type datetime to varbinary is not allowed. Use the CONVERT function to run this query.)~~
 
