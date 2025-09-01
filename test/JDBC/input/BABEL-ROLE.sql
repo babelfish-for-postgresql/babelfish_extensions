@@ -480,24 +480,39 @@ create database mydb
 go
 use mydb
 go
-create login u1 with password = '123'
+create login babel_role_login with password = '123'
 go
-create user u1
+create user babel_role_user for login babel_role_login
 go
-create table t(a int)
+create table t_role(a int)
 go
-grant select on t to u1
+grant select on t_role to babel_role_user
 go
-drop user u1
+drop user babel_role_user
 go
-drop login u1
+drop login babel_role_login
 go
-drop table t
+drop table t_role
 go
 use master
 GO
 drop database mydb
 GO
+-- Case: when user is granted with some permissions over schema
+create schema role_sch1
+go
+create login babel_role_login with password = '123'
+go
+create user babel_role_user for login babel_role_login
+go
+grant select on schema::sch1 to babel_role_user
+go
+drop user babel_role_user
+go
+drop login babel_role_login
+go
+drop schema role_sch1
+go
 -- Check if catalog is cleaned up
 SELECT rolname, type, orig_username, database_name
 FROM sys.babelfish_authid_user_ext

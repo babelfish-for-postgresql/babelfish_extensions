@@ -3792,7 +3792,7 @@ update_privileges_of_object(const char *schema_name,
 
 	if (current_permission == 0)
 	{
-		remove_entry_from_bbf_schema_perms(schema_name, object_name, grantee, object_type);
+		remove_entry_from_bbf_schema_perms(schema_name, object_name, grantee, object_type, InvalidOid, false);
 		return;
 	}
 
@@ -4046,112 +4046,108 @@ void
 remove_entry_from_bbf_schema_perms(const char *schema_name,
 				  const char *object_name,
 				  const char *grantee,
-				  const char *object_type)
+				  const char *object_type,
+				  Oid user_oid,
+				  bool is_user_dropped)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
-	ScanKeyData scanKey[5];
 	SysScanDesc scan;
-	int16	dbid = get_cur_db_id();
 
-	/* Immediately return false, if SCHEMA name is NULL or it's a shared schema. */
-	if (schema_name == NULL || is_shared_schema(schema_name))
-		return;
-
-	/* Immediately return, if grantee is NULL or PUBLIC. */
-	if ((grantee == NULL) || (strcmp(grantee, PUBLIC_ROLE_NAME) == 0))
-		return;
-
-	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
-									RowExclusiveLock);
-	ScanKeyInit(&scanKey[0],
-				Anum_bbf_schema_perms_dbid,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(dbid));
-	ScanKeyEntryInitialize(&scanKey[1], 0,
-				Anum_bbf_schema_perms_schema_name,
-				BTEqualStrategyNumber,
-				InvalidOid,
-				tsql_get_database_or_server_collation_oid_internal(false),
-				F_TEXTEQ,
-				CStringGetTextDatum(schema_name));
-	ScanKeyEntryInitialize(&scanKey[2], 0,
-				Anum_bbf_schema_perms_object_name,
-				BTEqualStrategyNumber,
-				InvalidOid,
-				tsql_get_database_or_server_collation_oid_internal(false),
-				F_TEXTEQ,
-				CStringGetTextDatum(object_name));
-	ScanKeyEntryInitialize(&scanKey[3], 0,
-				Anum_bbf_schema_perms_grantee,
-				BTEqualStrategyNumber,
-				InvalidOid,
-				tsql_get_database_or_server_collation_oid_internal(false),
-				F_TEXTEQ,
-				CStringGetTextDatum(grantee));
-	ScanKeyEntryInitialize(&scanKey[4], 0,
-				Anum_bbf_schema_perms_object_type,
-				BTEqualStrategyNumber,
-				InvalidOid,
-				tsql_get_database_or_server_collation_oid_internal(false),
-				F_TEXTEQ,
-				CStringGetTextDatum(object_type));
-	scan = systable_beginscan(bbf_schema_rel,
-				get_bbf_schema_perms_idx_oid(),
-				true, NULL, 5, scanKey);
-
-	tuple_bbf_schema = systable_getnext(scan);
-
-	if (HeapTupleIsValid(tuple_bbf_schema))
-		CatalogTupleDelete(bbf_schema_rel, &tuple_bbf_schema->t_self);
-
-	systable_endscan(scan);
-	table_close(bbf_schema_rel, RowExclusiveLock);
-}
-
-/*
- * Removes a row from the catalog BABELFISH_SCHEMA_PERMISSIONS when a user is dropped.
- */
-void
-remove_user_entry_from_bbf_schema_perms(Oid user_oid)
-{
-	Relation	bbf_schema_rel;
-	HeapTuple	tuple_bbf_schema;
-	ScanKeyData scanKey[1];
-	SysScanDesc scan;
-	const char* user_name = GetUserNameFromId(user_oid, true);
-
-	/* Return if the Oid is invalid */
-	if (!OidIsValid(user_oid))
-		return;
-
-	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
-									RowExclusiveLock);
-	ScanKeyEntryInitialize(&scanKey[0], 0,
-				Anum_bbf_schema_perms_grantee,
-				BTEqualStrategyNumber,
-				InvalidOid,
-				tsql_get_database_or_server_collation_oid_internal(false),
-				F_TEXTEQ,
-				CStringGetTextDatum(user_name));
-
-	scan = systable_beginscan(bbf_schema_rel,
-				get_bbf_schema_perms_idx_oid(),
-				true, NULL, 1, scanKey);
-
-	tuple_bbf_schema = systable_getnext(scan);
-	/* Multiple entries can be there */
-	while (HeapTupleIsValid(tuple_bbf_schema))
+	/* Case when removing all the entries coresponding to a user */
+	if(is_user_dropped)
 	{
-		/* Delete the entry */
-		CatalogTupleDelete(bbf_schema_rel, &tuple_bbf_schema->t_self);
-		tuple_bbf_schema = systable_getnext(scan);
-	}
+		ScanKeyData scanKey[1];
+		const char* user_name = GetUserNameFromId(user_oid, true);
 
+		/* Return if the Oid is invalid */
+		if (!OidIsValid(user_oid))
+			return;
+
+		bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
+										RowExclusiveLock);
+		ScanKeyEntryInitialize(&scanKey[0], 0,
+					Anum_bbf_schema_perms_grantee,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(user_name));
+
+		scan = systable_beginscan(bbf_schema_rel,
+					get_bbf_schema_perms_idx_oid(),
+					true, NULL, 1, scanKey);
+
+		tuple_bbf_schema = systable_getnext(scan);
+		/* Multiple entries can be there */
+		while (HeapTupleIsValid(tuple_bbf_schema))
+		{
+			/* Delete the entry */
+			CatalogTupleDelete(bbf_schema_rel, &tuple_bbf_schema->t_self);
+			tuple_bbf_schema = systable_getnext(scan);
+		}
+	}
+	/* Case when removing entry corresponding to specific schema, object, grantee and object type */
+	else
+	{
+		ScanKeyData scanKey[5];
+		int16	dbid = get_cur_db_id();
+
+		/* Immediately return false, if SCHEMA name is NULL or it's a shared schema. */
+		if (schema_name == NULL || is_shared_schema(schema_name))
+			return;
+
+		/* Immediately return, if grantee is NULL or PUBLIC. */
+		if ((grantee == NULL) || (strcmp(grantee, PUBLIC_ROLE_NAME) == 0))
+			return;
+
+		bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
+										RowExclusiveLock);
+		ScanKeyInit(&scanKey[0],
+					Anum_bbf_schema_perms_dbid,
+					BTEqualStrategyNumber, F_INT2EQ,
+					Int16GetDatum(dbid));
+		ScanKeyEntryInitialize(&scanKey[1], 0,
+					Anum_bbf_schema_perms_schema_name,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(schema_name));
+		ScanKeyEntryInitialize(&scanKey[2], 0,
+					Anum_bbf_schema_perms_object_name,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(object_name));
+		ScanKeyEntryInitialize(&scanKey[3], 0,
+					Anum_bbf_schema_perms_grantee,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(grantee));
+		ScanKeyEntryInitialize(&scanKey[4], 0,
+					Anum_bbf_schema_perms_object_type,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(object_type));
+		scan = systable_beginscan(bbf_schema_rel,
+					get_bbf_schema_perms_idx_oid(),
+					true, NULL, 5, scanKey);
+
+		tuple_bbf_schema = systable_getnext(scan);
+
+		if (HeapTupleIsValid(tuple_bbf_schema))
+			CatalogTupleDelete(bbf_schema_rel, &tuple_bbf_schema->t_self);
+
+	}
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
-
 /*
  * Add an entry to BABELFISH_SCHEMA_PERMISSIONS table, if it doesn't exist already.
  * If exists, updates the PERMISSION column in the table.

@@ -101,9 +101,6 @@
 #include "table_variable_mvcc.h"
 
 #include "access/xact.h"
-#include <catalog/pg_auth_members_d.h>
-#include "utils/fmgroids.h"
-#include "access/genam.h"
 
 #define FORJSON_INITIAL_HASH_SIZE 64
 
@@ -187,7 +184,7 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 											   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char *name);
-static void bbf_shdep_drop_owned_dependent_acl(Oid roleoids, DropBehavior behavior);
+// static void bbf_shdep_drop_owned_dependent_acl(Oid roleoids, DropBehavior behavior);
 
 static void bbf_ExecDropStmt(DropStmt *stmt);
 
@@ -2687,130 +2684,6 @@ validateUserAndRole(char *name)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("'%s' is not a valid name because it contains invalid characters.", name)));
 }
-
-/* Revoke the permissions from an object present in Dependent ACL list within the same database */
-void
-bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
-{
-	Relation			sdepRel;
-	ObjectAddresses		*deleteobjs;
-	ScanKeyData 		key[2];
-	SysScanDesc 		scan;
-	HeapTuple			tuple;
-
-	deleteobjs = new_object_addresses();
-	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
-
-	/* Doesn't work for pinned objects */
-	if (IsPinnedObject(AuthIdRelationId, roleid))
-	{
-		ObjectAddress obj;
-		obj.classId = AuthIdRelationId;
-		obj.objectId = roleid;
-		obj.objectSubId = 0;
-		ereport(ERROR,
-				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-				 errmsg("cannot drop objects owned by %s because they are "
-						"required by the database system",
-						getObjectDescription(&obj, false))));
-	}
-
-	ScanKeyInit(&key[0],
-				Anum_pg_shdepend_refclassid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(AuthIdRelationId));
-
-	ScanKeyInit(&key[1],
-				Anum_pg_shdepend_refobjid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(roleid));
-
-	scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
-							  NULL, 2, key);
-
-	while ((tuple = systable_getnext(scan)) != NULL)
-	{
-		Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tuple);
-		/*
-		 * We only operate on shared objects and objects in the current
-		 * database
-		 */
-		if (sdepForm->dbid != MyDatabaseId &&
-			sdepForm->dbid != InvalidOid)
-			continue;
-		if (sdepForm->deptype == SHARED_DEPENDENCY_ACL)
-		{
-			/*
-			 * Dependencies on role grants are recorded using
-			 * SHARED_DEPENDENCY_ACL, but unlike a regular ACL list
-			 * which stores all permissions for a particular object in
-			 * a single ACL array, there's a separate catalog row for
-			 * each grant - so removing the grant just means removing
-			 * the entire row.
-			 */
-			if (sdepForm->classid != AuthMemRelationId)
-			{
-				HeapTuple		tup;
-				bool			isNull;
-				Datum			aclDatum;
-				Acl				*old_acl;
-				Oid relOid =	sdepForm->objid;
-				int cacheid =	get_object_catcache_oid(sdepForm->classid);
-
-				tup = SearchSysCache1(cacheid, ObjectIdGetDatum(relOid));
-				if (!HeapTupleIsValid(tuple))
-					elog(ERROR, "cache lookup failed for relation %u", relOid);
-
-				aclDatum = SysCacheGetAttr(cacheid, tup, get_object_attnum_acl(sdepForm->classid),
-										&isNull);
-				if(!isNull)
-				{
-					/* 
-					 * Check if the current user is grantor for any permission to any object
-					 * If yes then return and do not allow to drop the user
-					 */
-					const AclItem *acldat;
-					old_acl = DatumGetAclPCopy(aclDatum);
-					acldat = ACL_DAT(old_acl);
-						for (int i = 0; i < ACL_NUM(old_acl); i++)
-							{
-								const AclItem *ai = &acldat[i];
-								/* no need to remove if grantor */
-								if (ai->ai_grantor == roleid)
-									return;
-							}
-				}
-				RemoveRoleFromObjectACL(roleid,
-										sdepForm->classid,
-										sdepForm->objid);
-				/* Update the catalog after deleting the user */
-				remove_user_entry_from_bbf_schema_perms(roleid);
-				ReleaseSysCache(tup);
-				if(!old_acl)
-					pfree(old_acl);
-				break;
-			}
-			/* FALLTHROUGH */
-		}
-	}
-	systable_endscan(scan);
-
-	/*
-	 * For stability of deletion-report ordering, sort the objects into
-	 * approximate reverse creation order before deletion.  (This might also
-	 * make the deletion go a bit faster, since there's less chance of having
-	 * to rearrange the objects due to dependencies.)
-	 */
-	sort_object_addresses(deleteobjs);
-
-	/* the dependency mechanism does the actual work */
-	performMultipleDeletions(deleteobjs, behavior, 0);
-
-	table_close(sdepRel, RowExclusiveLock);
-
-	free_object_addresses(deleteobjs);
-}
-
 
 /*
  * Use this hook to handle utility statements that needs special treatment, and
