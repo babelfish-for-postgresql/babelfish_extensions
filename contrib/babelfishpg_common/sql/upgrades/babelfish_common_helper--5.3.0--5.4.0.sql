@@ -57,7 +57,7 @@ BEGIN
   END IF;
 END $$;
 
-CREATE OR REPLACE FUNCTION sys.datetime2varbinary(SYS.DATETIME, integer, boolean) AS ASSIGNMENT;
+CREATE OR REPLACE FUNCTION sys.datetime2varbinary(SYS.DATETIME, integer, boolean)
 RETURNS sys.bbf_varbinary
 AS 'babelfishpg_common', 'datetime_varbinary'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
