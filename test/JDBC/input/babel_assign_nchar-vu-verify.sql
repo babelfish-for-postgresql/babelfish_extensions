@@ -1012,6 +1012,30 @@ GO
 Exec babel_4803_proc_varchar
 GO
 
+EXEC babel_4803_proc1 N'TESTこんにちは🙂🙂世界'
+GO
+EXEC babel_4803_proc2 N'TESTこんにちは🙂🙂世界'
+GO
+EXEC babel_4803_proc3 N'TESTこんにちは🙂🙂世界'
+GO
+EXEC babel_4803_proc4 N'TESTこんにちは🙂🙂世界'
+GO
+EXEC babel_4803_proc5 N'TESTこんにちは🙂🙂世界'
+GO
+EXEC babel_4803_proc6 N'TESTこんにちは🙂🙂世界'
+GO
+EXEC babel_4803_proc7 N'TESTこんにちは🙂🙂世界'
+GO
+EXEC babel_4803_proc8 N'TESTこんにちは🙂🙂世界'
+GO
+
+-- testing with Collate Clause
+EXEC babel_4803_proc9
+GO
+EXEC babel_4803_proc10 N'こん 世界',N'こん 世界',N'こん 世界',N'こん 世界'
+GO
+
+
 SELECT babel_4803_nchar_func1()
 GO
 SELECT babel_4803_nvarchar_func1()
@@ -1020,3 +1044,92 @@ SELECT babel_4803_char_func1()
 GO
 SELECT babel_4803_varchar_func1()
 GO
+
+-- testing with collate clause
+SELECT babel_4803_varchar_func2(N'こんにちはこんにちは')
+GO
+SELECT babel_4803_char_func2(N'こんにちはこんにちは')
+GO
+
+-------------------------------------
+-- Truncation with multibyte strings
+--------------------------------------
+-- Japense
+DECLARE @jap_trunc_nchar NCHAR(5) = N'こんにちはこんにちは'
+DECLARE @jap_trunc_nvarchar NVARCHAR(5) = N'こんにちはこんにちは'
+DECLARE @jap_trunc_char CHAR(5) = N'こんにちはこんにちは'
+DECLARE @jap_trunc_varchar VARCHAR(5) = N'こんにちはこんにちは'
+SELECT 
+    @jap_trunc_nchar, LEN(@jap_trunc_nchar), 
+    @jap_trunc_nvarchar, LEN(@jap_trunc_nvarchar), 
+    @jap_trunc_char, LEN(@jap_trunc_char), 
+    @jap_trunc_varchar, LEN(@jap_trunc_varchar)
+GO
+
+-- Chinese characters
+DECLARE @chi_trunc_nchar NCHAR(5) = N'你好世界测试你好世界'
+DECLARE @chi_trunc_nvarchar NVARCHAR(5) = N'你好世界测试你好世界'
+DECLARE @chi_trunc_char CHAR(5) = N'你好世界测试你好世界'
+DECLARE @chi_trunc_varchar VARCHAR(5) = N'你好世界测试你好世界'
+SELECT 
+    @chi_trunc_nchar ,LEN(@chi_trunc_nchar) AS nchar_length,
+    @chi_trunc_nvarchar ,LEN(@chi_trunc_nvarchar) AS nvarchar_length,
+    @chi_trunc_char ,LEN(@chi_trunc_char) AS char_length,
+    @chi_trunc_varchar ,LEN(@chi_trunc_varchar) AS varchar_length
+GO
+
+-- surrogate pairs
+DECLARE @emoji_trunc_nchar NCHAR(6) = N'😀😁😂🤣😃😀😍🌟😉😊'
+DECLARE @emoji_trunc_nvarchar NVARCHAR(6) = N'😀😁😂🤣😃😀😍🌟😉😊'
+DECLARE @emoji_trunc_char CHAR(6) = N'😀😁😂🤣😃😀😍🌟😉😊'
+DECLARE @emoji_trunc_varchar VARCHAR(6) = N'😁😂😀😍🌟😆😉😊😉'
+    
+SELECT 
+    @emoji_trunc_nchar ,LEN(@emoji_trunc_nchar) AS nchar_length,
+    @emoji_trunc_nvarchar ,LEN(@emoji_trunc_nvarchar) AS nvarchar_length,
+    @emoji_trunc_char ,LEN(@emoji_trunc_char) AS char_length,
+    @emoji_trunc_varchar ,LEN(@emoji_trunc_varchar) AS varchar_length
+GO
+
+-- mixed
+DECLARE @mixed_basic_nchar NCHAR(8) = N'你好こんに😀世界🌍テスト🚀测试💡'
+DECLARE @mixed_basic_nvarchar NVARCHAR(8) = N'你好こんに😀世界🌍テスト🚀测试💡'
+DECLARE @mixed_basic_char CHAR(8) = N'你好こんに😀世界🌍テスト🚀测试💡'
+DECLARE @mixed_basic_varchar VARCHAR(8) = N'你好こんに😀世界🌍テスト🚀测试💡'
+    
+SELECT 
+    @mixed_basic_nchar,LEN(@mixed_basic_nchar) AS nchar_length,
+    @mixed_basic_nvarchar,LEN(@mixed_basic_nvarchar) AS nvarchar_length,
+    @mixed_basic_char,LEN(@mixed_basic_char) AS char_length,
+    @mixed_basic_varchar,LEN(@mixed_basic_varchar) AS varchar_length
+GO
+
+---------------------------------------------------------
+-- views to show that return descriptor, is not affected
+-----------------------------------------------------
+SELECT * FROM babel_4803_view1;
+GO
+SELECT * FROM babel_4803_view2;
+GO
+SELECT * FROM babel_4803_view3;
+GO
+SELECT * FROM babel_4803_view4;
+GO
+SELECT * FROM babel_4803_view5;
+GO
+SELECT * FROM babel_4803_view6;
+GO
+SELECT * FROM babel_4803_view7;
+GO
+SELECT * FROM babel_4803_view8;
+GO
+SELECT * FROM babel_4803_view9;
+GO
+SELECT * FROM babel_4803_view10;
+GO
+SELECT * FROM babel_4803_view11;
+Go
+SELECT * FROM babel_4803_view12;
+Go
+
+
