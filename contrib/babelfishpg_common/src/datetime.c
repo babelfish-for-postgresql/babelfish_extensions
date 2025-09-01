@@ -919,6 +919,10 @@ Datum
 datetime_varbinary(PG_FUNCTION_ARGS)
 {
 	Timestamp		ts = PG_GETARG_TIMESTAMP(0);
+#ifdef NOT_USED
+	int32			typmod = PG_GETARG_INT32(1);
+#endif
+	bool			isExplicit = PG_GETARG_BOOL(2);
 	int64			days,
 					time_part,
 					total_ms;
@@ -926,6 +930,13 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 	struct pg_tm	tm;
 	fsec_t			fsec;
 	bytea			*result;
+
+	if (!isExplicit)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("Implicit conversion from data type datetime to "
+						"varbinary is not allowed. Use the CONVERT function "
+						"to run this query.")));
 
 	if (timestamp2tm(ts, &tz, &tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
