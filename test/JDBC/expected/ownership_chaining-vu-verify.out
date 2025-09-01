@@ -387,3 +387,97 @@ GO
 int
 ~~END~~
 
+
+-- CASE 8: DML-only ownership chaining
+-- CASE 8.1: View with SELECT, INSERT permissions
+SELECT * FROM v3014_8_1;  -- Should succeed
+GO
+~~START~~
+int
+~~END~~
+
+INSERT INTO v3014_8_1 VALUES (1);  -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+UPDATE v3014_8_1 SET a = 2 WHERE a = 1;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_1)~~
+
+DELETE FROM v3014_8_1 WHERE a = 1;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_1)~~
+
+
+-- CASE 8.2: View with SELECT, UPDATE permissions
+SELECT * FROM v3014_8_2;  -- Should succeed
+GO
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO v3014_8_2 VALUES (2);  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_2)~~
+
+UPDATE v3014_8_2 SET a = 3 WHERE a = 2;  -- Should succeed
+GO
+DELETE FROM v3014_8_2 WHERE a = 2;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_2)~~
+
+
+-- CASE 8.3: View with SELECT, DELETE permissions
+SELECT * FROM v3014_8_3;  -- Should succeed
+GO
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO v3014_8_3 VALUES (3);  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_3)~~
+
+UPDATE v3014_8_3 SET a = 4 WHERE a = 3;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_3)~~
+
+DELETE FROM v3014_8_3 WHERE a = 3;  -- Should succeed
+GO
+
+-- CASE 8.4: View with SELECT, INSERT, UPDATE permissions
+SELECT * FROM v3014_8_4;  -- Should succeed
+GO
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO v3014_8_4 VALUES (4);  -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+UPDATE v3014_8_4 SET a = 5 WHERE a = 4;  -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+DELETE FROM v3014_8_4 WHERE a = 4;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_4)~~
+

@@ -298,6 +298,16 @@ GO
 CREATE VIEW v3014_7_4 AS SELECT * FROM t3014_1;
 GO
 
+-- CASE 8: DML-only ownership chaining
+CREATE VIEW v3014_8_1 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_8_2 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_8_3 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_8_4 AS SELECT * FROM t3014_1;
+GO
+
 -- Grants for CASE 1 views
 grant select on v3014_1_1 to l3014_1;
 go
@@ -398,6 +408,16 @@ GO
 GRANT SELECT ON v3014_7_3 TO l3014_1;
 GO
 GRANT SELECT ON v3014_7_4 TO l3014_1;
+GO
+
+-- Grant for CASE 8 views
+GRANT SELECT, INSERT ON v3014_8_1 TO l3014_1;
+GO
+GRANT SELECT, UPDATE ON v3014_8_2 TO l3014_1;
+GO
+GRANT SELECT, DELETE ON v3014_8_3 TO l3014_1;
+GO
+GRANT SELECT, INSERT, UPDATE ON v3014_8_4 TO l3014_1;
 GO
 
 -- psql
@@ -520,6 +540,16 @@ GO
 ALTER VIEW master_dbo.v3014_7_3 SET (security_invoker = true);
 GO
 ALTER VIEW master_dbo.v3014_7_4 SET (security_invoker = true);
+GO
+
+-- Alter CASE 8 views
+ALTER VIEW master_dbo.v3014_8_1 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_8_2 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_8_3 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_8_4 SET (security_invoker = true);
 GO
 
 -- Also alter the helper view
