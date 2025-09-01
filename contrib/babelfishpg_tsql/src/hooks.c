@@ -7756,10 +7756,16 @@ static void
 tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *view_rte)
 {
 	Oid view_owner = InvalidOid;
+	bool nonDMLpermscheck = false;
 
 	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
 		return;
 	
+	nonDMLpermscheck = new_perminfo->requiredPerms & ~(ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE);
+
+	if (nonDMLpermscheck)
+		return;
+
 	view_owner = get_rel_owner(view_rte->relid);
 	if (view_owner == get_rel_owner(new_perminfo->relid))
 	{
