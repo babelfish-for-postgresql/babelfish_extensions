@@ -625,4 +625,6 @@ weak-binding
 babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper
 babel_numeric_smallmoney_oper
+datetime_roundoff
 BABEL-5809-ascii-before-17_7-or-16_11
+
