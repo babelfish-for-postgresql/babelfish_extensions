@@ -918,16 +918,16 @@ varbinary_datetime(PG_FUNCTION_ARGS)
 Datum
 datetime_varbinary(PG_FUNCTION_ARGS)
 {
-	Timestamp	ts = PG_GETARG_TIMESTAMP(0);
-	int64		days,
-			time_part,
-			total_ms;
-	int32		tz;
+	Timestamp		ts = PG_GETARG_TIMESTAMP(0);
+	int64			days,
+					time_part,
+					total_ms;
+	int32			tz;
 	struct pg_tm	tm;
-	fsec_t		fsec;
-	bytea		*result;
-	uint32		days_part,
-			time_part_32;
+	fsec_t			fsec;
+	bytea			*result;
+	uint32			days_part,
+					time_part_32;
 
 	if (timestamp2tm(ts, &tz, &tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
@@ -935,23 +935,18 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 					errmsg("timestamp out of range")));
 
 	if (ts < TSQL_DEFAULT_DATETIME)
-		days = -53690 + (int64)((ts - MIN_DATETIME) / USECS_PER_DAY);
+		days = DATEPART_MIN_VALUE + ((ts - MIN_DATETIME) / USECS_PER_DAY);
 	else
-		days = (int64) (ts - TSQL_DEFAULT_DATETIME) / (int64) USECS_PER_DAY;
+		days = (ts - TSQL_DEFAULT_DATETIME) / USECS_PER_DAY;
 
-	/* Calculate time part (300 increments per second) */
-	if (tm.tm_hour == 12 && tm.tm_min == 0 && tm.tm_sec == 0 && fsec == 0)
-		time_part = (int64) 0x00C5C100;
-	else
-	{
-		total_ms = ((int64) tm.tm_hour * 3600000LL) +
-					((int64) tm.tm_min * 60000LL) +
-					((int64) tm.tm_sec * 1000LL) +
-					((int64) (fsec) / 1000);
+	/* Calculate total milliseconds from time portion */
+	total_ms = ((int64) tm.tm_hour * 3600000LL) +
+				((int64) tm.tm_min * 60000LL) +
+				((int64) tm.tm_sec * 1000LL) +
+				((int64) (fsec) / 1000);
 
-		/* Convert to TSQL 300ths of a second ticks */
-		time_part = (total_ms * 3LL + 5LL) / 10LL;
-	}
+	/* Convert to TSQL 300ths of a second ticks */
+	time_part = (total_ms * 3LL + 5LL) / 10LL;
 
 	/* Convert to 32-bit parts */
 	if (days < 0)
