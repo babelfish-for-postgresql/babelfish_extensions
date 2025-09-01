@@ -15,7 +15,6 @@ GO
 CREATE VIEW BABEL_5748_vu_prepare_t_5 AS (SELECT degrees(CAST(NULL AS MONEY)));
 GO
 
-
 CREATE PROCEDURE BABEL_5748_vu_prepare_t_p1 AS (SELECT degrees(CAST(922337203.5807 AS MONEY)));
 GO
 
@@ -67,7 +66,6 @@ GO
 
 CREATE PROCEDURE BABEL_5748_vu_prepare_t_p12 AS (SELECT degrees(CAST(214749.3647 AS SMALLMONEY)));
 GO
-
 
 --Radians Test
 --money
