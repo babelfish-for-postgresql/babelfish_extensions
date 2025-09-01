@@ -951,6 +951,9 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 
 						c->contype = CONSTR_NOTNULL;
 						c->location = -1;
+						c->is_enforced = true;
+						c->skip_validation = false;
+						c->initially_valid = true;
 						coldef->constraints = lappend(coldef->constraints, c);
 					}
 				}
@@ -985,6 +988,9 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 
 									c->contype = CONSTR_NOTNULL;
 									c->location = -1;
+									c->is_enforced = true;
+									c->skip_validation = false;
+									c->initially_valid = true;
 									coldef->constraints = lappend(coldef->constraints, c);
 								}
 								break;

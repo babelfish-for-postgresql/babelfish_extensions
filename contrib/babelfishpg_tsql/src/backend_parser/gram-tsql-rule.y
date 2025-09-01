@@ -885,6 +885,7 @@ ConstraintElem:
 					n->options = $9;
 					n->indexname = NULL;
 					n->indexspace = $10;
+					n->is_enforced = true;
 					processCASbits($11, @11, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -921,6 +922,7 @@ ConstraintElem:
 					n->options = $8;
 					n->indexname = NULL;
 					n->indexspace = $9;
+					n->is_enforced = true;
 					processCASbits($10, @10, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -939,6 +941,7 @@ ConstraintElem:
 					n->options = $8;
 					n->indexname = NULL;
 					n->indexspace = $9;
+					n->is_enforced = true;
 					processCASbits($10, @10, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -955,6 +958,7 @@ ConstraintElem:
 					n->options = NIL;
 					n->indexname = $4;
 					n->indexspace = NULL;
+					n->is_enforced = true;
 					processCASbits($5, @5, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -972,6 +976,7 @@ ConstraintElem:
 					n->options = $9;
 					n->indexname = NULL;
 					n->indexspace = $10;
+					n->is_enforced = true;
 					processCASbits($11, @11, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -989,6 +994,7 @@ ConstraintElem:
 					n->options = $9;
 					n->indexname = NULL;
 					n->indexspace = $10;
+					n->is_enforced = true;
 					processCASbits($11, @11, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -1006,6 +1012,7 @@ ConstraintElem:
 					n->options = $8;
 					n->indexname = NULL;
 					n->indexspace = $9;
+					n->is_enforced = true;
 					processCASbits($10, @10, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -1023,6 +1030,7 @@ ConstraintElem:
 					n->options = $8;
 					n->indexname = NULL;
 					n->indexspace = $9;
+					n->is_enforced = true;
 					processCASbits($10, @10, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -1038,6 +1046,7 @@ ConstraintElem:
 					n->options = NIL;
 					n->indexname = $4;
 					n->indexspace = NULL;
+					n->is_enforced = true;
 					processCASbits($5, @5, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -1102,6 +1111,9 @@ DefineStmt:
 
 					c->contype = CONSTR_NOTNULL;
 					c->location = @6;
+					c->is_enforced = true;
+					c->skip_validation = false;
+					c->initially_valid = true;
 
 					$$ = (Node *)n;
 
@@ -1117,6 +1129,9 @@ DefineStmt:
 
 					c->contype = CONSTR_NULL;
 					c->location = @6;
+					c->is_enforced = true;
+					c->skip_validation = false;
+					c->initially_valid = true;
 
 					$$ = (Node *)n;
 
@@ -3144,6 +3159,7 @@ TSQL_computed_column:
 					n->raw_expr = $2;
 					n->cooked_expr = NULL;
 					n->location = @1;
+					n->is_enforced = true;
 
 					$$ = (Node *)n;
 				}
@@ -3156,6 +3172,7 @@ TSQL_computed_column:
 					n->raw_expr = $2;
 					n->cooked_expr = NULL;
 					n->location = @1;
+					n->is_enforced = true;
 
 					$$ = (Node *)n;
 				}
@@ -4758,6 +4775,7 @@ tsql_ColConstraintElem: /* nullable */
 					n->options = $4;
 					n->indexname = NULL;
 					n->indexspace = $5;
+					n->is_enforced = true;
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY tsql_cluster opt_definition OptConsTableSpace
@@ -4769,6 +4787,7 @@ tsql_ColConstraintElem: /* nullable */
 					n->options = $4;
 					n->indexname = NULL;
 					n->indexspace = $5;
+					n->is_enforced = true;
 					$$ = (Node *)n;
 				}
 			| IDENTITY_P tsql_OptParenthesizedIdentList
@@ -4785,6 +4804,7 @@ tsql_ColConstraintElem: /* nullable */
 					n->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
 					n->options = $2;
 					n->location = @1;
+					n->is_enforced = true;
 					$$ = (Node *)n;
 				}
 			| TSQL_ROWGUIDCOL
