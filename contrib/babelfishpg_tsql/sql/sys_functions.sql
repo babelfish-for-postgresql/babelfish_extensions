@@ -1694,10 +1694,6 @@ DECLARE
     basetype oid;
 begin
 
-    if v is NULL THEN
-        return 0;
-    end if;
-
     arg_datatype_oid := pg_typeof(v)::oid;
     arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
 
@@ -1720,8 +1716,12 @@ begin
         return 0;
     end if;
 
-    perform v::datetime;
-    return 1;
+    if v is NULL THEN
+        return 0;
+    else
+        perform v::datetime;
+        return 1;
+    end if;
 
     EXCEPTION 
         WHEN invalid_parameter_value THEN
@@ -1737,16 +1737,17 @@ returns integer
 as
 $body$
 begin
-    if v is NULL THEN
-        return 0;
-    end if;
 
     if length(v::sys.varchar) = 0 then
         return 0;
     end if;
 
-    perform v::datetime;
-    return 1;
+    if v is NULL THEN
+        return 0;
+    else
+        perform v::datetime;
+        return 1;
+    end if;
 
     EXCEPTION WHEN others THEN
     RETURN 0;
