@@ -89,6 +89,12 @@ GO
 SELECT CAST(CAST('LINESTRING(1 2, 1  3, 3 4, 10 -1000)' AS VARCHAR(500)) AS geography)
 GO
 
+Select * from LineGeogFromText
+GO
+
+Select * from LineGeomFromText
+GO
+
 -- Test CAST ( Geometry/Geography As Varchar )
 SELECT ID, geometryData FROM geometryAsVarcharline ORDER BY ID;
 GO

@@ -132,7 +132,6 @@ rewrite_point_query(POINT coord)
     /* Close parenthesis */
     appendStringInfoChar(&output, ')');
     
-    /* Return the resulting string */
     return output.data; 
 }
 
@@ -198,7 +197,7 @@ rewrite_point_dim_query(POINT coord)
 void 
 init_point_array(PointArray *pa) 
 {
-    pa->capacity = 1024;
+    pa->capacity = 64;
     pa->points = palloc(pa->capacity * sizeof(POINT));
     pa->count = 0;
 
@@ -334,7 +333,6 @@ transform_points(PointArray *pa, LineStringType type)
 char* 
 rewrite_linestring_query(PointArray *pa) 
 {
-    char* res;
     LineStringType type;
     StringInfoData output;
 
@@ -392,14 +390,12 @@ rewrite_linestring_query(PointArray *pa)
 
     /* Close parenthesis */
     appendStringInfoChar(&output, ')');
+
+    /* Clean up resources */
+    free_point_array(pa);
+    pfree(pa);
     
-    /* Create a copy of the string that will survive after we free output */
-    res = pstrdup(output.data);
-    
-    /* Clean up the StringInfoData */
-    pfree(output.data);
-    
-    return res;
+    return output.data;
 }
 
 /*
@@ -410,7 +406,6 @@ rewrite_linestring_query(PointArray *pa)
 char* 
 rewrite_dim_linestring_query(PointArray *pa) 
 {
-    char *result;
     StringInfoData output;
     initStringInfo(&output);
 
@@ -438,12 +433,12 @@ rewrite_dim_linestring_query(PointArray *pa)
                 appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
                 appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
             }
-            else if (!isnan(p.z) && isnan(p.m)) 
+            else if (!isnan(p.z)) 
             {
                 /* Only Z is not NaN */
                 appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
             }
-            else if (isnan(p.z) && !isnan(p.m)) 
+            else if (!isnan(p.m)) 
             {
                 /* Only M is not NaN */
                 appendStringInfoString(&output, " NULL");
@@ -471,13 +466,9 @@ rewrite_dim_linestring_query(PointArray *pa)
     /* Close parenthesis */
     appendStringInfoChar(&output, ')');
 
-    /* Create a copy of the string that will survive after we free output */
-    result = pstrdup(output.data);
-
     /* Clean up resources */
-    pfree(output.data);
     free_point_array(pa);
     pfree(pa);
     
-    return result;
+    return output.data;
 }

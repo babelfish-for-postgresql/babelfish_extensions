@@ -107,6 +107,10 @@ DROP VIEW equals_opgeoglinesr
 
 DROP VIEW notequal_opgeoglinesr
 
+DROP VIEW LineGeogFromText
+
+DROP VIEW LineGeomFromText
+
 DROP TABLE  geographyToBytealine
 
 DROP TABLE geospatialpointgeom_linesr

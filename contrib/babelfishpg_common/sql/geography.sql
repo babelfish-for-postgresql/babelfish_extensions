@@ -267,7 +267,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR, integer)
 		IF Geomtype = 'ST_Point' THEN
 			RETURN geom;
 		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
+			RAISE EXCEPTION 'Invalid function usage : Expected "POINT"';
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -290,7 +290,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR, integer)
 		IF Geomtype = 'ST_LineString' THEN
 			RETURN geom;
 		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
+			RAISE EXCEPTION 'Invalid function usage : Expected "LINESTRING"';
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

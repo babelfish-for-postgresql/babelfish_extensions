@@ -111,6 +111,8 @@ CREATE VIEW equals_opgeomlinesr AS SELECT p1.location AS point FROM GEOSPATIALLI
 
 CREATE VIEW notequal_opgeomlinesr AS SELECT p1.location AS point FROM GEOSPATIALLINEGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_linesr p2 WHERE p1.location <> p2.location ORDER BY p1.id;
 
+CREATE VIEW LineGeomFromText AS SELECT geometry::STGeomFromText('LINESTRING(3 5, 2 4)', 4326) AS geom1, geometry::STLineFromText('LINESTRING(1 3, 5 7, 4 5 NULL NULL)', 4326) AS geom2;
+
 
 CREATE TABLE geometryAsVarcharline ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARCHAR(500) );
 
@@ -378,6 +380,9 @@ CREATE VIEW ContainTempGeoglinesr AS SELECT p1.location.STAsText() AS geometry1,
 CREATE VIEW equals_opgeoglinesr AS SELECT p1.location AS point FROM GEOSPATIALLINEGEOG_dt p1 CROSS JOIN GEOSPATIALPOINTGEOG_linesr p2 WHERE p1.location = p2.location ORDER BY p1.id;
 
 CREATE VIEW notequal_opgeoglinesr AS SELECT p1.location AS point FROM GEOSPATIALLINEGEOG_dt p1 CROSS JOIN GEOSPATIALPOINTGEOG_linesr p2 WHERE p1.location <> p2.location ORDER BY p1.id;
+
+CREATE VIEW LineGeogFromText AS SELECT geography::STGeomFromText('LINESTRING(3 5, 2 4)', 4326) AS geog1, geography::STLineFromText('LINESTRING(1 3, 5 7, 4 5 NULL NULL)', 4326) AS geog2;
+
 
 CREATE TABLE geographyAsVarcharline ( ID INT IDENTITY(1,1) PRIMARY KEY, geographyData VARCHAR(500) );
 

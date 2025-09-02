@@ -145,9 +145,14 @@ EMPTY_COORD[] = {
     0xff, 0xff, 0xff, 0xff
 };
 
-/* Linestring instances containing more than 2 points have trailing metadata of 22 bytes */
+/* 
+ * Trailing metadata appended to linestring instances with more than 2 points.
+ * These 22 bytes are required by T-SQL's spatial format but their exact
+ * meaning is unclear however they are constant for all linestring with >2 points 
+ * and doesn't have any identified use case. The pattern only changes for different geometry types.
+ */
 static const uint8 
-line_end_metada[] = {
+line_end_metadata[] = {
     0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
     0x00, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
     0xff, 0x00, 0x00, 0x00, 0x00, 0x02
@@ -155,7 +160,7 @@ line_end_metada[] = {
 
 /* NAN format used by TSQL */
 static const uint8 
-SPECIFIC_NAN[8] = {
+SPECIFIC_NAN[COORD_SIZE] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0xff
 };
 
@@ -254,7 +259,8 @@ UpdateFunctionCallInfo(
     va_end(args);
 }
 
-
+/* Function to rewrite geospatial data */
+text* geo_wkt_rewrite(text *input_text);
 
 typedef Datum (*lwgeom_in_t)(PG_FUNCTION_ARGS);
 static lwgeom_in_t lwgeom_in_p;
@@ -1220,106 +1226,6 @@ validate_geom_type(const GeoDataInfo *geom_data)
            geom_data->byte_data[GEOM_TYPE_POS_POSTGIS+2] == 0x00;
 }
 
-/* Helper to handle XY dimension cases */
-static void
-handle_xy_dimension(GeoDataInfo *geom_data)
-{
-    switch (geom_data->postgis_geom_type)
-    {
-        case POINT_TYPE:
-            geom_data->geom_type = 0x0C;
-            geom_data->coord_size = COORD_SIZE_XY;
-            break;
-        case LINE_TYPE:
-            switch (geom_data->is_valid)
-            {
-                case true:
-                    geom_data->geom_type = (geom_data->npoints > 2) ? 0x04 : 0x14;
-                    break;
-                case false:
-                    geom_data->geom_type = (geom_data->npoints > 2) ? 0x00 : 0x10;
-                    break;
-            }
-            geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
-            break;
-    }
-}
-
-/* Helper to handle XYZ dimension cases */
-static void
-handle_xyz_dimension(GeoDataInfo *geom_data)
-{
-    switch (geom_data->postgis_geom_type)
-    {
-        case POINT_TYPE:
-            geom_data->geom_type = 0x0D;
-            geom_data->coord_size = COORD_SIZE_XYZ;
-            break;
-        case LINE_TYPE:
-            switch (geom_data->is_valid)
-            {
-                case true:
-                    geom_data->geom_type = (geom_data->npoints > 2) ? 0x05 : 0x15;
-                    break;
-                case false:
-                    geom_data->geom_type = (geom_data->npoints > 2) ? 0x01 : 0x11;
-                    break;
-            }
-            geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
-            break;
-    }
-}
-
-/* Helper to handle XYZM dimension cases */
-static void
-handle_xyzm_dimension(GeoDataInfo *geom_data)
-{
-    switch (geom_data->postgis_geom_type)
-    {
-        case POINT_TYPE:
-            geom_data->geom_type = 0x0F;
-            geom_data->coord_size = COORD_SIZE_XYZM;
-            break;
-        case LINE_TYPE:
-            switch (geom_data->is_valid)
-            {
-                case true:
-                    geom_data->geom_type = (geom_data->npoints > 2) ? 0x07 : 0x17;
-                    break;
-                case false:
-                    geom_data->geom_type = (geom_data->npoints > 2) ? 0x03 : 0x13;
-                    break;
-            }
-            geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
-            break;
-    }
-}
-
-/* Helper to handle XYM dimension cases */
-static void
-handle_xym_dimension(GeoDataInfo *geom_data)
-{
-    switch (geom_data->postgis_geom_type)
-    {
-        case POINT_TYPE:
-            geom_data->geom_type = 0x0E;
-            geom_data->coord_size = COORD_SIZE_XYM;
-            break;
-        case LINE_TYPE:
-            switch (geom_data->is_valid)
-            {
-                case true:
-                    geom_data->geom_type = (geom_data->npoints > 2) ? 0x06 : 0x16;
-                    break;
-                case false:
-                    geom_data->geom_type = (geom_data->npoints > 2) ? 0x02 : 0x12;
-                    break;
-            }
-            geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
-            break;
-    }
-}
-
 /* Determines the dimension flags and coordinate size of a geometry. */
 static bool
 determine_geom_dimensions(GeoDataInfo *geom_data) 
@@ -1330,25 +1236,72 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
     switch (geom_data->srid_flag & DIMENSION_MASK) 
     {
         case POSTGIS_DIM_XY:
-            switch (geom_data->is_empty)
+            if (geom_data->is_empty) 
             {
-                case true:
-                    geom_data->geom_type = 0x04;
-                    geom_data->coord_size = COORD_SIZE_EMPTY;
-                    break;
-                case false:
-                    handle_xy_dimension(geom_data);
-                    break;
+                geom_data->geom_type = 0x04;
+                geom_data->coord_size = COORD_SIZE_EMPTY;
+            } 
+            else 
+            {
+                switch (geom_data->postgis_geom_type)
+                {
+                    case POINT_TYPE:
+                        geom_data->geom_type = 0x0C;
+                        geom_data->coord_size = COORD_SIZE_XY;
+                        break;
+                    case LINE_TYPE:
+                        geom_data->geom_type = geom_data->is_valid ? 
+                            (geom_data->npoints > 2 ? 0x04 : 0x14) :
+                            (geom_data->npoints > 2 ? 0x00 : 0x10);
+                        geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
+                        break;
+                }
             }
             break;
         case POSTGIS_DIM_XYZ:
-            handle_xyz_dimension(geom_data);
+            switch (geom_data->postgis_geom_type)
+            {
+                case POINT_TYPE:
+                    geom_data->geom_type = 0x0D;
+                    geom_data->coord_size = COORD_SIZE_XYZ;
+                    break;
+                case LINE_TYPE:
+                    geom_data->geom_type = geom_data->is_valid ? 
+                        (geom_data->npoints > 2 ? 0x05 : 0x15) :
+                        (geom_data->npoints > 2 ? 0x01 : 0x11);
+                    geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
+                    break;
+            }
             break;
         case POSTGIS_DIM_XYZM:
-            handle_xyzm_dimension(geom_data);
+            switch (geom_data->postgis_geom_type)
+            {
+                case POINT_TYPE:
+                    geom_data->geom_type = 0x0F;
+                    geom_data->coord_size = COORD_SIZE_XYZM;
+                    break;
+                case LINE_TYPE:
+                    geom_data->geom_type = geom_data->is_valid ? 
+                        (geom_data->npoints > 2 ? 0x07 : 0x17) :
+                        (geom_data->npoints > 2 ? 0x03 : 0x13);
+                    geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
+                    break;
+            }
             break;
         case POSTGIS_DIM_XYM:
-            handle_xym_dimension(geom_data);
+            switch (geom_data->postgis_geom_type)
+            {
+                case POINT_TYPE:
+                    geom_data->geom_type = 0x0E;
+                    geom_data->coord_size = COORD_SIZE_XYM;
+                    break;
+                case LINE_TYPE:
+                    geom_data->geom_type = geom_data->is_valid ? 
+                        (geom_data->npoints > 2 ? 0x06 : 0x16) :
+                        (geom_data->npoints > 2 ? 0x02 : 0x12);
+                    geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
+                    break;
+            }
             break;
         default:
             return false;
@@ -1451,7 +1404,7 @@ handle_linestring_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *r
     if (has_m) copy_m_coords(dst, src, geom_data->npoints, stride, has_z);
     
     if (geom_data->npoints > 2)
-        memcpy(dst + geom_data->coord_size, line_end_metada, sizeof(line_end_metada));
+        memcpy(dst + geom_data->coord_size, line_end_metadata, sizeof(line_end_metadata));
     
     return result;
 }
@@ -1467,7 +1420,7 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     
     total_size = SRID_SIZE + GEOM_TYPE_SIZE + geom_data->coord_size;
     if (geom_data->npoints > 2 && geom_data->postgis_geom_type == LINE_TYPE)
-        total_size += NPOINTS_SIZE + sizeof(line_end_metada);
+        total_size += NPOINTS_SIZE + sizeof(line_end_metadata);
     
     result = (bytea *) palloc(VARHDRSZ + total_size);
     SET_VARSIZE(result, VARHDRSZ + total_size);
