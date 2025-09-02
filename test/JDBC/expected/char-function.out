@@ -70,7 +70,7 @@ SELECT CHAR(ASCII(CHAR(0))) AS NullChar
 GO
 ~~START~~
 varchar
-
+<NULL>
 ~~END~~
 
 

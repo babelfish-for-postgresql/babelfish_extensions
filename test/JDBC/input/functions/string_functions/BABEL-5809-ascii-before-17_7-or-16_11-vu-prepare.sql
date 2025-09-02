@@ -1,9 +1,3 @@
-/*
-===========================================
-BABEL-5809: ASCII Function Testing - Setup
-===========================================
-*/
-
 -- 1. USER DEFINED TYPES
 CREATE TYPE babel_5809_type_char FROM CHAR(10);
 CREATE TYPE babel_5809_type_varchar FROM VARCHAR(50);
@@ -51,7 +45,7 @@ UPDATE babel_5809_t1
 SET ActualValue = ASCII(VarcharCol),
     TestResult = CASE 
         WHEN ASCII(VarcharCol) IS NULL AND ExpectedValue IS NULL THEN 'Pass'
-        WHEN ASCII(VarcharCol) = ExpectedValue THEN 'Pass'
+        WHEN ASCII(CharCol) = ExpectedValue THEN 'Pass'
         ELSE 'Fail' 
      END;
 GO
@@ -111,8 +105,8 @@ VALUES
 (0x612063, 0x612063, 97, 'Hex for "a c"');
 
 UPDATE babel_5809_t3_hex
-SET ActualValue = ASCII(VarbinaryCol),
-    TestResult = CASE WHEN ASCII(VarbinaryCol) = ExpectedValue THEN 'Pass' ELSE 'Fail' END;
+SET ActualValue = ASCII(BinaryCol),
+    TestResult = CASE WHEN ASCII(BinaryCol) = ExpectedValue THEN 'Pass' ELSE 'Fail' END;
 GO
 
 -- 2.4 Binary Conversion Testing Table
@@ -138,8 +132,8 @@ VALUES
 UPDATE babel_5809_t4_convert
 SET ActualValue = ASCII(BinaryValue),
     TestResult = CASE 
-        WHEN ASCII(BinaryASCII) IS NULL AND ExpectedValue IS NULL THEN 'Pass'
-        WHEN ASCII(BinaryASCII) = ExpectedValue THEN 'Pass'
+        WHEN ASCII(BinaryValue) IS NULL AND ExpectedASCII IS NULL THEN 'Pass'
+        WHEN ASCII(BinaryValue) = ExpectedASCII THEN 'Pass'
         ELSE 'Fail' 
     END;
 GO
@@ -179,8 +173,8 @@ VALUES
 UPDATE babel_5809_t5_edge
 SET ActualValue = ASCII(CharValue),
     TestResult = CASE 
-        WHEN ASCII(CharValue) IS NULL AND ExpectedValue IS NULL THEN 'Pass'
-        WHEN ASCII(CharValue) = ExpectedValue THEN 'Pass'
+        WHEN ASCII(CharValue) IS NULL AND ExpectedASCII IS NULL THEN 'Pass'
+        WHEN ASCII(CharValue) = ExpectedASCII THEN 'Pass'
         ELSE 'Fail' 
     END;
 GO
@@ -188,7 +182,7 @@ GO
 -- 2.6 Numeric Conversion Testing Table
 CREATE TABLE babel_5809_t6_numeric (
     ID INT IDENTITY(1,1) PRIMARY KEY,
-    NumValue DECIMAL(38,0),
+    NumValue DECIMAL(38,9),
     StringValue VARCHAR(40),
     ExpectedASCII INT,
     ActualValue INT,
@@ -202,27 +196,27 @@ VALUES
 -- Extreme negative values
 (-99999999999, '-99999999999', 45, 'Large negative decimal'),
 (-0.123, '-0.123', 45, 'Negative decimal less than 1'),
-(-0.0000000001, '-0.0000000001', 45, 'Very small negative decimal'),
+(-0.000000001, '-0.000000001', 45, 'Very small negative decimal'),
 -- Zero variations
 (0.0, '0.0', 48, 'Zero with decimal'),
 (0.000000, '0.000000', 48, 'Zero with multiple decimals'),
 -- Extreme positive values
 (99999999999, '99999999999', 57, 'Large positive decimal'),
-(0.999999999999999999, '0.999999999999999999', 48, 'Decimal close to 1'),
+(0.999999999, '0.999999999', 48, 'Decimal close to 1'),
 -- Scientific notation values
 (1E+10, '1E+10', 49, 'Scientific notation positive'),
-(1E-10, '1E-10', 49, 'Scientific notation negative exponent');
+(1E-10, '1E-10', 48, 'Scientific notation negative exponent');
 
 UPDATE babel_5809_t6_numeric
-SET ActualValue = ASCII(StringValue),
+SET ActualValue = ASCII(NumValue),
    TestResult = CASE 
-        WHEN ASCII(StringValue) IS NULL AND ExpectedValue IS NULL THEN 'Pass'
-        WHEN ASCII(StringValue) = ExpectedValue THEN 'Pass'
+        WHEN ASCII(NumValue) IS NULL AND ExpectedASCII IS NULL THEN 'Pass'
+        WHEN ASCII(NumValue) = ExpectedASCII THEN 'Pass'
         ELSE 'Fail' 
     END;
 GO
 
--- 2.7 Invalid Input Testing Table
+-- 2.7  Input Testing Table
 CREATE TABLE babel_5809_t7_edge (
     ID INT IDENTITY(1,1) PRIMARY KEY,
     TestCase VARCHAR(100),
@@ -237,15 +231,16 @@ INSERT INTO babel_5809_t7_edge (TestCase, TestValue, ExpectedValue)
 VALUES
 ('NULL Value', NULL, NULL),
 ('Zero Length String', '', NULL),
+('Ascii of char(0)',CHAR(0), NULL),
 ('Very Large Binary', CAST(0xFFFFFFFFFFFFFFFF AS VARCHAR(100)), 255),
-('Invalid Hex String', 0xGG, 'Msg 33557097, Level 16, State 1, Server BABELFISH, Line 1 syntax error near '0x' at line 1 and character position 0'),
 ('Special Characters Only', '@@@@', 64),
 ('Mixed Invalid Chars', '123@#$%', 49);
+GO
 
 UPDATE babel_5809_t7_edge
 SET ActualValue = ASCII(TestValue),
     TestResult = CASE 
-        WHEN TestValue IS NULL AND ExpectedValue IS NULL THEN 'Pass'
+        WHEN ActualValue IS NULL AND ExpectedValue IS NULL THEN 'Pass'
         WHEN ASCII(TestValue) = ExpectedValue THEN 'Pass'
         ELSE 'Fail'
     END;
@@ -325,7 +320,7 @@ BEGIN
             SUBSTRING(@InputString, @i, 1),
             ASCII(SUBSTRING(@InputString, @i, 1)),
             dbo.babel_5809_fn_ascii_category(SUBSTRING(@InputString, @i, 1)),
-            'Pass'; -- Since this is validation, all results are considered valid
+            'Pass'; 
         
         SET @i = @i + 1;
     END;
@@ -404,6 +399,20 @@ CREATE TABLE babel_5809_constrained_ascii (
     
     CONSTRAINT CHK_NoControl 
         CHECK (ASCII(InputChar) >= 32)
+);
+GO
+
+CREATE TABLE babel_5809_ascii_constrained_t6 (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    InputString VARCHAR(10),
+    
+    -- First character must be uppercase
+    CONSTRAINT CHK_StartsWithUpper 
+        CHECK (ASCII(InputString) BETWEEN 65 AND 90),
+    
+    -- No control characters allowed
+    CONSTRAINT CHK_NoControl 
+        CHECK (ASCII(InputString) >= 32)
 );
 GO
 

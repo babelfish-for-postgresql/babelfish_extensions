@@ -1,9 +1,3 @@
-
-/*
-===========================================
-BABEL-5809: ASCII Function Testing - Cleanup
-===========================================
-*/
 -- 1. Drop Views
 DROP VIEW babel_5809_v2_binary;
 GO
@@ -39,6 +33,9 @@ DROP TABLE babel_5809_t7_edge;
 GO
 
 DROP TABLE babel_5809_t6_numeric;
+GO
+
+DROP TABLE babel_5809_ascii_constrained_t6;
 GO
 
 DROP TABLE babel_5809_t5_edge;

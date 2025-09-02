@@ -643,8 +643,5 @@ colon_colon_methods
 babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper
 babel_numeric_smallmoney_oper
-<<<<<<< HEAD
-BABEL-5809-ascii
-=======
 datetime_roundoff
->>>>>>> upstream/BABEL_5_X_DEV
+BABEL-5809-ascii
