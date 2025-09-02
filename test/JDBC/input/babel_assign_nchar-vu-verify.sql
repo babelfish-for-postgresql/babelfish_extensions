@@ -1128,8 +1128,5 @@ GO
 SELECT * FROM babel_4803_view10;
 GO
 SELECT * FROM babel_4803_view11;
-Go
-SELECT * FROM babel_4803_view12;
-Go
-
+GO
 

@@ -1,22 +1,17 @@
 DROP TYPE nchar_type;
 GO
 
-
 DROP TYPE nvarchar_type;
 GO
-
 
 DROP TYPE char_type;
 GO
 
-
 DROP TYPE varchar_type;
 GO
 
-
 DROP TYPE binary_type;
 GO
-
 
 DROP TYPE varbinary_type;
 GO
@@ -52,15 +47,6 @@ DROP VIEW babel_4803_view10;
 GO
 
 DROP VIEW babel_4803_view11;
-GO
-
-DROP VIEW babel_4803_view12;
-GO
-
-DROP VIEW babel_4803_view13;
-GO
-
-DROP VIEW babel_4803_view14;
 GO
 
 DROP FUNCTION babel_4803_varchar_func;

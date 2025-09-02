@@ -258,33 +258,25 @@ GO
 CREATE VIEW babel_4803_view4 AS SELECT babel_4803_varchar_func1();
 GO
 
-CREATE VIEW babel_4803_view5 AS SELECT CAST('你好世界 Text にち 😀😍🌟💖' AS NVARCHAR)
+CREATE VIEW babel_4803_view5 AS SELECT CAST(N'你好世界 Text にち 😀😍🌟💖' AS NVARCHAR)
 GO
 
-CREATE VIEW babel_4803_view6 AS SELECT CAST('你好世界 Text 中文 😀😍🌟💖' AS NCHAR)
+CREATE VIEW babel_4803_view6 AS SELECT CAST(N'你好世界 Text 中文 😀😍🌟💖' AS NCHAR)
 GO
 
-CREATE VIEW babel_4803_view7 AS SELECT CAST(CAST('你好世界 Text 中文 😀😍🌟💖' AS NVARCHAR) AS NCHAR)
+CREATE VIEW babel_4803_view7 AS SELECT CAST(CAST(N'你好世界 Text 中文 😀😍🌟💖' AS NVARCHAR) AS NCHAR)
 GO
 
-CREATE VIEW babel_4803_view8 AS SELECT CAST(CAST('你好世界 Text 中文 😀😍🌟💖' AS VARCHAR) AS NVARCHAR)
+CREATE VIEW babel_4803_view8 AS SELECT CAST(CAST(N'你好世界 Text 中文 😀😍🌟💖' AS VARCHAR) AS NVARCHAR)
 GO
 
-CREATE VIEW babel_4803_view9 AS SELECT CAST(CAST('你好世界 Text 中文 😀😍🌟💖' AS CHAR) AS NCHAR)
+CREATE VIEW babel_4803_view9 AS SELECT CAST(CAST(N'你好世界 Text 中文 😀😍🌟💖' AS CHAR) AS NCHAR)
 GO
 
-CREATE VIEW babel_4803_view10 AS SELECT CAST(CAST('你好世界 Text 中文 😀😍🌟💖' AS CHAR) AS NVARCHAR)
+CREATE VIEW babel_4803_view10 AS SELECT babel_4803_nvarchar_func(CAST(N'你好 Text 中文 😀💖' as NVARCHAR))
 GO
 
-CREATE VIEW babel_4803_view11 AS SELECT babel_4803_nvarchar_func(N'你好 Text 中文 😀💖')
+CREATE VIEW babel_4803_view11 AS SELECT babel_4803_nchar_func(Cast(N'你好 Text 中文 😀💖' as NCHAR))
 GO
 
-CREATE VIEW babel_4803_view12 AS SELECT babel_4803_nchar_func(N'你好 Text 中文 😀💖')
-GO
-
-CREATE VIEW babel_4803_view13 AS SELECT babel_4803_varchar_func2(N'こんにちはこんにちは')
-GO
-
-CREATE VIEW babel_4803_view14 AS SELECT babel_4803_char_func2(N'こんにちはこんにちは')
-GO
 

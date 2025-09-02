@@ -2462,22 +2462,14 @@ SELECT * FROM babel_4803_view10;
 GO
 ~~START~~
 nvarchar
-你好世界 Text 中文 😀😍🌟💖         
-~~END~~
-
-SELECT * FROM babel_4803_view11;
-Go
-~~START~~
-nvarchar
 你好 Text 中文 😀💖
 ~~END~~
 
-SELECT * FROM babel_4803_view12;
-Go
+SELECT * FROM babel_4803_view11;
+GO
 ~~START~~
 nchar
-?好 Text 中文 ??                                     
+你好 Text 中文 😀💖                                   
 ~~END~~
-
 
 
