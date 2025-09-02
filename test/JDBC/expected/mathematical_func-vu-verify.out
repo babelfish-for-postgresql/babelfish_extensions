@@ -1,3 +1,180 @@
+--Degrees Test
+SELECT * FROM BABEL_3914_vu_prepare_t_1
+GO
+~~START~~
+numeric
+52846029059076010366.8765880392063642
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_2
+GO
+~~START~~
+numeric
+-52846029059076010309.5808085261240572
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_3
+GO
+~~START~~
+numeric
+12798274973032.1750311769211282
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_4
+GO
+~~START~~
+numeric
+0E-16
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_5
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p1
+GO
+~~START~~
+numeric
+52846029059076010366.8765880392063642
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p2
+GO
+~~START~~
+numeric
+-52846029059076010309.5808085261240572
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p3
+GO
+~~START~~
+numeric
+12798274973032.1750311769211282
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p4
+GO
+~~START~~
+numeric
+0E-16
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p5
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p11
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+
+---Radians Test
+SELECT * FROM BABEL_3914_vu_prepare_t_6
+GO
+~~START~~
+numeric
+16097821017949166.1092585854200800
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_7
+GO
+~~START~~
+numeric
+-16097821017949166.0918052929001367
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_8
+GO
+~~START~~
+numeric
+3898577500.0058706301103215
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_9
+GO
+~~START~~
+numeric
+0E-16
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_10
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p6
+GO
+~~START~~
+numeric
+16097821017949166.1092585854200800
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p7
+GO
+~~START~~
+numeric
+-16097821017949166.0918052929001367
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p8
+GO
+~~START~~
+numeric
+3898577500.0058706301103215
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p9
+GO
+~~START~~
+numeric
+0E-16
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p10
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p12
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
 -----------------------------------------------------------------------------
 -- Test DEGREES function with MONEY/SMALLMONEY
 SELECT DEGREES(CAST(PI()/2 AS MONEY)) AS result1, DEGREES(CAST(PI()/2 AS SMALLMONEY)) AS result2;
@@ -299,39 +476,39 @@ money
 SELECT * FROM BABEL_5748_vu_prepare_t_1
 GO
 ~~START~~
-float
-5.284602906621063E10
+money
+52846029066.2106
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_2
 GO
 ~~START~~
-float
--5.284602906621063E10
+money
+-52846029066.2106
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_3
 GO
 ~~START~~
-float
-127985.93717761496
+money
+127985.9372
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_4
 GO
 ~~START~~
-float
-0.0
+money
+0.0000
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_5
 GO
 ~~START~~
-float
+money
 <NULL>
 ~~END~~
 
@@ -387,39 +564,39 @@ money
 SELECT * FROM BABEL_5748_vu_prepare_t_6
 GO
 ~~START~~
-float
-1.230417495464619E7
+money
+12304174.9546
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_7
 GO
 ~~START~~
-float
--1.2304174960375769E7
+money
+-12304174.9604
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_8
 GO
 ~~START~~
-float
-1074639.640547372
+money
+1074639.6405
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_9
 GO
 ~~START~~
-float
-0.0
+money
+0.0000
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_10
 GO
 ~~START~~
-float
+money
 <NULL>
 ~~END~~
 
@@ -473,43 +650,97 @@ money
 ~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
 
 
----Radians Test with money/smallmoney in views and procedures
+SELECT * FROM BABEL_5748_vu_prepare_t_table1;
+GO
+~~START~~
+int#!#money
+1#!#52846029066.2106
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table2;
+GO
+~~START~~
+int#!#money
+1#!#-52846029066.2106
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table3;
+GO
+~~START~~
+int#!#money
+1#!#0.0000
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table4;
+GO
+~~START~~
+int#!#money
+1#!#<NULL>
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table5;
+GO
+~~START~~
+int#!#smallmoney
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table6;
+GO
+~~START~~
+int#!#smallmoney
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table7;
+GO
+~~START~~
+int#!#smallmoney
+1#!#0.0000
+~~END~~
+
+
+---Radians Test with money/smallmoney in views, procedures and tables
 SELECT * FROM BABEL_5748_vu_prepare_t_11
 GO
 ~~START~~
-float
-1.6097821020122487E7
+money
+16097821.0201
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_12
 GO
 ~~START~~
-float
--1.6097821020122487E7
+money
+-16097821.0201
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_13
 GO
 ~~START~~
-float
-389857.75158010994
+money
+389857.7516
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_14
 GO
 ~~START~~
-float
-0.0
+money
+0.0000
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_15
 GO
 ~~START~~
-float
+money
 <NULL>
 ~~END~~
 
@@ -518,7 +749,7 @@ EXECUTE BABEL_5748_vu_prepare_t_p13
 GO
 ~~START~~
 money
-0.3318
+1609782101.7995
 ~~END~~
 
 
@@ -526,7 +757,7 @@ EXECUTE BABEL_5748_vu_prepare_t_p14
 GO
 ~~START~~
 money
--0.3143
+-1609782101.7995
 ~~END~~
 
 
@@ -534,7 +765,7 @@ EXECUTE BABEL_5748_vu_prepare_t_p15
 GO
 ~~START~~
 money
-3898577500.0020
+38985775.0040
 ~~END~~
 
 
@@ -556,47 +787,48 @@ money
 
 EXECUTE BABEL_5748_vu_prepare_t_p18
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value "9223372036854775999.91" is out of range for type fixeddecimal)~~
+~~START~~
+money
+1609782101.8012
+~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_16
 GO
 ~~START~~
-float
-3748.066027288565
+money
+3748.0660
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_17
 GO
 ~~START~~
-float
--3748.066029033894
+money
+-3748.0660
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_18
 GO
 ~~START~~
-float
-327.35395450405645
+money
+327.3540
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_19
 GO
 ~~START~~
-float
-0.0
+money
+0.0000
 ~~END~~
 
 
 SELECT * FROM BABEL_5748_vu_prepare_t_20
 GO
 ~~START~~
-float
+money
 <NULL>
 ~~END~~
 
@@ -648,4 +880,52 @@ money
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table8;
+GO
+~~START~~
+int#!#money
+1#!#16097821.0201
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table9;
+GO
+~~START~~
+int#!#money
+1#!#-16097821.0201
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table10;
+GO
+~~START~~
+int#!#money
+1#!#0.0000
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table11;
+GO
+~~START~~
+int#!#smallmoney
+1#!#3748.0660
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table12;
+GO
+~~START~~
+int#!#smallmoney
+1#!#-3748.0660
+~~END~~
+
+
+SELECT * FROM BABEL_5748_vu_prepare_t_table13;
+GO
+~~START~~
+int#!#smallmoney
+1#!#0.0000
+~~END~~
 

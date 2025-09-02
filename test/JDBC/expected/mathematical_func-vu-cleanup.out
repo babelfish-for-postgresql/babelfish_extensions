@@ -1,4 +1,72 @@
 --Degrees Test
+DROP VIEW BABEL_3914_vu_prepare_t_1
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_2
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_3
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_4
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_5
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p1
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p2
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p3
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p4
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p5
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p11
+GO
+
+--Radians Test
+DROP VIEW BABEL_3914_vu_prepare_t_6
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_7
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_8
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_9
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_10
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p6
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p7
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p8
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p9
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p10
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p12
+GO
+
+--Degrees Test
 DROP VIEW BABEL_5748_vu_prepare_t_1
 GO
 
@@ -130,4 +198,44 @@ DROP PROCEDURE BABEL_5748_vu_prepare_t_p23
 GO
 
 DROP PROCEDURE BABEL_5748_vu_prepare_t_p24
+GO
+
+-- Drop all test tables
+DROP TABLE BABEL_5748_vu_prepare_t_table1;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table2;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table3;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table4;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table5;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table6;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table7;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table8;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table9;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table10;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table11;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table12;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table13;
 GO
