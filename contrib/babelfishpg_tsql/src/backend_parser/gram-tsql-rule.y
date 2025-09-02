@@ -3162,6 +3162,7 @@ TSQL_computed_column:
 					n->cooked_expr = NULL;
 					n->location = @1;
 					n->is_enforced = true;
+					n->generated_kind = ATTRIBUTE_GENERATED_STORED;
 
 					$$ = (Node *)n;
 				}
@@ -3175,6 +3176,7 @@ TSQL_computed_column:
 					n->cooked_expr = NULL;
 					n->location = @1;
 					n->is_enforced = true;
+					n->generated_kind = ATTRIBUTE_GENERATED_STORED;
 
 					$$ = (Node *)n;
 				}
