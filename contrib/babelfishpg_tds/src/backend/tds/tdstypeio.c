@@ -4347,7 +4347,7 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 /**
  * Helper function to send spatial data (geometry/geography) over TDS protocol.
  *
- * This function converts PostGIS spatial data (GSERIALIZED format) to the
+ * This function converts PostGIS spatial data to the
  * SQL Server binary format for geometry/geography types and sends it over
  * the TDS protocol.
  *

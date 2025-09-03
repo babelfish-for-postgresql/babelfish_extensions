@@ -34,16 +34,16 @@ typedef enum
 } LineStringType;
 
 /* Function declarations for lexer and parser */
-void geo_yyerror(char **result, const char *message) pg_attribute_noreturn();
-int geo_yylex(void);
-int geo_yyparse(char** result_query);
+extern void geo_yyerror(char **result, const char *message) pg_attribute_noreturn();
+extern int geo_yylex(void);
+extern int geo_yyparse(char** result_query);
 
 /* Scanner initialization and cleanup functions */
-void geo_scanner_init(const char *str);
-void geo_scanner_finish(void);
+extern void geo_scanner_init(const char *str);
+extern void geo_scanner_finish(void);
 
 /* External variable for lexer text */
-char *geo_yytext;
+extern char *geo_yytext;
 
 text* geo_wkt_rewrite(text* input_text);
 
