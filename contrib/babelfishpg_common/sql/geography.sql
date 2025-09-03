@@ -249,7 +249,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
 	AS 'babelfishpg_common', 'geography_point'
 	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR,srid integer)
+CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR, integer)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	DECLARE
@@ -272,7 +272,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR,srid inte
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR,srid integer)
+CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR, integer)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	DECLARE

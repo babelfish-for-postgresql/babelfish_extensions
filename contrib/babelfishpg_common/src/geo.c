@@ -283,9 +283,6 @@ determine_linestring_type(PointArray *pa)
 void 
 transform_points(PointArray *pa, LineStringType type) 
 {
-    if (type == XY) 
-        return;
-
     for (int i = 0; i < pa->count; i++) 
     {
         POINT *p = &pa->points[i];
