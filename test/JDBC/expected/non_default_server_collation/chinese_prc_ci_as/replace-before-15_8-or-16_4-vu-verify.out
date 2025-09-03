@@ -283,7 +283,7 @@ SELECT replace(@inputString, '🙂de', 'x🙂y')
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abcx🙂yfghi🙂🙂                                      
 ~~END~~
 
 
@@ -292,7 +292,7 @@ SELECT replace(@inputString, '?de', 'x🙂y')
 GO
 ~~START~~
 nvarchar
-abcx🙂yfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -301,7 +301,7 @@ SELECT replace(@inputString, '😎de', 'x🙂y')
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -310,7 +310,7 @@ SELECT replace(@inputString, '拉莫', '尔·比')
 GO
 ~~START~~
 nvarchar
-比尔·尔·比斯                                      
+比尔·尔·比斯                                            
 ~~END~~
 
 
@@ -319,7 +319,7 @@ SELECT replace(@inputString, '拉莫', '尔·比') COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比尔·尔·比斯                                      
+比尔·尔·比斯                                            
 ~~END~~
 
 
@@ -328,7 +328,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-比尔·拉莫斯                                      
+比尔·拉莫斯                                            
 ~~END~~
 
 
@@ -337,7 +337,7 @@ SELECT replace(@inputString, @pattern, @replacement) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比尔·拉莫斯                                      
+比尔·拉莫斯                                            
 ~~END~~
 
 
@@ -690,7 +690,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx?y                 fghi??                                      
+abcx🙂y                 fghi??                                      
 ~~END~~
 
 
@@ -798,7 +798,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx?y                 fghi??                                      
+abcx🙂y                 fghi??                                      
 ~~END~~
 
 
@@ -924,7 +924,7 @@ SELECT replace(@inputString, '?de', @replacement)
 GO
 ~~START~~
 nvarchar
-abcx?y                                     fghi??                                      
+abcx🙂y                                     fghi??                                      
 ~~END~~
 
 
@@ -1365,7 +1365,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1374,7 +1374,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1383,7 +1383,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1392,7 +1392,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-比尔·拉莫斯                                      
+比尔·拉莫斯                                            
 ~~END~~
 
 
@@ -1401,7 +1401,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂yfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1410,7 +1410,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abcx🙂yfghi🙂🙂                                      
 ~~END~~
 
 
@@ -1419,7 +1419,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1428,7 +1428,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-比尔·尔·比斯                                      
+比尔·尔·比斯                                            
 ~~END~~
 
 
@@ -1437,7 +1437,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abcx🙂yfghi🙂🙂                                      
 ~~END~~
 
 
@@ -1446,7 +1446,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1455,7 +1455,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-比尔·尔·比斯                                      
+比尔·尔·比斯                                            
 ~~END~~
 
 
@@ -1464,7 +1464,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1473,7 +1473,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1482,7 +1482,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1491,7 +1491,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1500,7 +1500,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1509,7 +1509,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1518,7 +1518,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1527,7 +1527,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1536,7 +1536,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1545,7 +1545,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1554,7 +1554,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1563,7 +1563,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1572,7 +1572,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂yfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1581,7 +1581,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx?y                 fghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1590,7 +1590,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx?y                 fghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1599,7 +1599,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂yfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1608,7 +1608,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂ywfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1617,7 +1617,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂ywfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1626,7 +1626,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx?y                 fghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1635,7 +1635,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx?y                 fghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1644,7 +1644,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂yfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1653,7 +1653,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂yfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1662,7 +1662,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂ywfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1671,7 +1671,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx?yw                                    fghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1680,7 +1680,7 @@ SELECT replace(@inputString, '?de', @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂yfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1689,7 +1689,7 @@ SELECT replace(@inputString, '?de', @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂yfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1698,7 +1698,7 @@ SELECT replace(@inputString, '?de', @replacement)
 GO
 ~~START~~
 nvarchar
-abcx?y                                     fghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1707,7 +1707,7 @@ SELECT replace(@inputString, '?de', @replacement)
 GO
 ~~START~~
 nvarchar
-abcx?y                                     fghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1716,7 +1716,7 @@ SELECT replace(@inputString, @pattern, 'x🙂y')
 GO
 ~~START~~
 nvarchar
-abcx🙂yfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1725,7 +1725,7 @@ SELECT replace(@inputString, @pattern, 'x🙂y')
 GO
 ~~START~~
 nvarchar
-abcx🙂yfghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1734,7 +1734,7 @@ SELECT replace(@inputString, @pattern, 'x🙂y')
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1743,7 +1743,7 @@ SELECT replace(@inputString, @pattern, 'x🙂y')
 GO
 ~~START~~
 nvarchar
-abc?defghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
