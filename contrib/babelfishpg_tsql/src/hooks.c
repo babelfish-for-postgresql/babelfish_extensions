@@ -1124,7 +1124,7 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 					 * with session user (login). We are using login to allow cross database queries since login
 					 * can access all its objects across the databases.
 					 */
-					if (nspname != NULL && !is_shared_schema(nspname))
+					if (nspname != NULL && !is_shared_schema(nspname) && strncmp(nspname, "pg_temp_", 8) == 0)
 					{
 						if (OidIsValid(perminfo->checkAsUser))
 						{
