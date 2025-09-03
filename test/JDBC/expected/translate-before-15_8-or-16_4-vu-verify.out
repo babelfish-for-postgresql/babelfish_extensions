@@ -318,7 +318,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab🙂', 'x🙂y') + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂c?defghi??                                    |
+|  x🙂cydefghiyy                                    |
 ~~END~~
 
 
@@ -327,7 +327,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', 'x🙂y') + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -336,7 +336,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab😎', 'x🙂y') + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂c?defghi??                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -345,7 +345,7 @@ SELECT '|' + TRANSLATE(@inputString, '比拉斯 ', '尔·比?') + '|'
 GO
 ~~START~~
 nvarchar
-|????·?????????????????????????????????????????????|
+|??尔尔··莫比??????????????????????????????????????????|
 ~~END~~
 
 
@@ -354,7 +354,7 @@ SELECT '|' + TRANSLATE(@inputString, '比拉斯 ', '尔·比?') COLLATE CHINESE_
 GO
 ~~START~~
 nvarchar
-|????·?????????????????????????????????????????????|
+|??尔尔··莫比??????????????????????????????????????????|
 ~~END~~
 
 
@@ -363,7 +363,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  ??·???                                          |
+|  比尔·拉莫斯                                          |
 ~~END~~
 
 
@@ -372,7 +372,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) COLLATE CHINESE
 GO
 ~~START~~
 nvarchar
-|  ??·???                                          |
+|  比尔·拉莫斯                                          |
 ~~END~~
 
 
@@ -560,7 +560,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 varchar
-|  x?cydefghiyy                                    |
+|  x?c?defghi??                                    |
 ~~END~~
 
 
@@ -569,7 +569,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 varchar
-|  x?cydefghiyy                                    |
+|  x?c?defghi??                                    |
 ~~END~~
 
 
@@ -978,7 +978,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 varchar
-|  x?c?defghi??    |
+|  x?cydefghiyy    |
 ~~END~~
 
 
@@ -996,7 +996,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 varchar
-|????·???????|
+|????··??????|
 ~~END~~
 
 
@@ -1351,7 +1351,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?cydefghiyy                                    |
+|  x?c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1360,7 +1360,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?cydefghiyy                                    |
+|  x?c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1369,7 +1369,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?cydefghiyy                                    |
+|  x?c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1378,7 +1378,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|????·?????????????????????????????????????????????|
+|??比尔·拉莫斯??????????????????????????????????????????|
 ~~END~~
 
 
@@ -1387,7 +1387,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1396,7 +1396,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂c?defghi??                                    |
+|  x🙂cydefghiyy                                    |
 ~~END~~
 
 
@@ -1405,7 +1405,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂c?defghi??                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1414,7 +1414,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|????·?????????????????????????????????????????????|
+|??尔尔··莫比??????????????????????????????????????????|
 ~~END~~
 
 
@@ -1423,7 +1423,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂c?defghi??                                    |
+|  x🙂cydefghiyy                                    |
 ~~END~~
 
 
@@ -1432,7 +1432,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂c?defghi??                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1441,7 +1441,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|????·?????????????????????????????????????????????|
+|??尔尔··莫比??????????????????????????????????????????|
 ~~END~~
 
 
@@ -1460,7 +1460,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1509,7 +1509,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?cydefghiyy                                    |
+|  x?c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1568,7 +1568,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1597,7 +1597,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1646,7 +1646,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1655,7 +1655,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1684,7 +1684,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1693,7 +1693,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1722,7 +1722,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1731,7 +1731,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1832,7 +1832,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?c🙂defghi🙂🙂    |
+|  x🙂cydefghiyy    |
 ~~END~~
 
 
@@ -1841,7 +1841,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?c🙂defghi🙂🙂    |
+|  x🙂c🙂defghi🙂🙂    |
 ~~END~~
 
 
@@ -1850,7 +1850,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|??比尔·拉莫斯????|
+|??尔尔··莫比????|
 ~~END~~
 
 
@@ -1869,7 +1869,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?c🙂defghi🙂🙂    |
+|  x🙂c🙂defghi🙂🙂    |
 ~~END~~
 
 

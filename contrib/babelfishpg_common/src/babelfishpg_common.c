@@ -195,6 +195,8 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_tinyint_datatype = &is_tsql_tinyint_datatype;
 		common_utility_plugin_var.is_tsql_money_datatype = &is_tsql_money_datatype;
 		common_utility_plugin_var.is_tsql_smallmoney_datatype = &is_tsql_smallmoney_datatype;
+		common_utility_plugin_var.handle_type_and_collation = &handle_type_and_collation;
+
 		
 		common_utility_plugin_var.datetime_in_str = &datetime_in_str;
 		common_utility_plugin_var.datetime2sqlvariant = &datetime2sqlvariant;
