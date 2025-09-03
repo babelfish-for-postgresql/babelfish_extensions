@@ -21,6 +21,7 @@ CREATE TABLE babel_5809_t1 (
 );
 GO
 
+
 INSERT INTO babel_5809_t1 (CharCol, VarcharCol, NCharCol, NVarcharCol, TextCol, NTextCol, ExpectedValue, Description)
 VALUES
 ('A', 'A', N'A', N'A', 'A', N'A', 65, 'Capital A'),
@@ -40,7 +41,6 @@ VALUES
 ('123', '123', N'123', N'123', '123', N'123', 49, 'Multiple numbers - returns first'),
 ('', '', N'', N'', '', N'', NULL, 'Empty string'),
 (' A', ' A', N' A', N' A', ' A', N' A', 32, 'Space then char');
-
 UPDATE babel_5809_t1
 SET ActualValue = ASCII(VarcharCol),
     TestResult = CASE 
@@ -49,6 +49,10 @@ SET ActualValue = ASCII(VarcharCol),
         ELSE 'Fail' 
      END;
 GO
+~~ROW COUNT: 17~~
+
+~~ROW COUNT: 17~~
+
 
 -- 2.2 Unicode Testing Table
 CREATE TABLE babel_5809_t2 (
@@ -62,6 +66,7 @@ CREATE TABLE babel_5809_t2 (
 );
 GO
 
+
 INSERT INTO babel_5809_t2 (UnicodeChar, UnicodeString, ExpectedValue, Description)
 VALUES
 (N'A', N'ASCII in Unicode', 65, N'ASCII character in Unicode string'),
@@ -69,7 +74,6 @@ VALUES
 (N'', N'Empty Unicode', NULL, N'Empty Unicode string'),
 (NCHAR(9), N'Tab in Unicode', 9, N'Unicode tab character'),
 (N'é', N'Accented e', 233, N'Accented character');
-
 UPDATE babel_5809_t2
 SET ActualValue = ASCII(UnicodeChar),
     TestResult = CASE 
@@ -78,6 +82,10 @@ SET ActualValue = ASCII(UnicodeChar),
         ELSE 'Fail' 
      END;    
 GO
+~~ROW COUNT: 5~~
+
+~~ROW COUNT: 5~~
+
 
 -- 2.3 Binary and Hex Testing Table
 CREATE TABLE babel_5809_t3_hex (
@@ -91,6 +99,7 @@ CREATE TABLE babel_5809_t3_hex (
 );
 GO
 
+
 INSERT INTO babel_5809_t3_hex (BinaryCol, VarbinaryCol, ExpectedValue, Description)
 VALUES
 (0x41, 0x41, 65, 'Hex for "A"'),
@@ -103,11 +112,14 @@ VALUES
 (0xFF, 0xFF, 255, 'Hex for 255'),
 (0x414243, 0x414243, 65, 'Hex for "ABC"'),
 (0x612063, 0x612063, 97, 'Hex for "a c"');
-
 UPDATE babel_5809_t3_hex
 SET ActualValue = ASCII(BinaryCol),
     TestResult = CASE WHEN ASCII(BinaryCol) = ExpectedValue THEN 'Pass' ELSE 'Fail' END;
 GO
+~~ROW COUNT: 10~~
+
+~~ROW COUNT: 10~~
+
 
 -- 2.4 Binary Conversion Testing Table
 CREATE TABLE babel_5809_t4_convert (
@@ -121,6 +133,7 @@ CREATE TABLE babel_5809_t4_convert (
 );
 GO
 
+
 INSERT INTO babel_5809_t4_convert (CharValue, BinaryValue, ExpectedASCII, Description)
 VALUES
 ('A', CAST('A' AS VARBINARY(10)), 65, 'Capital A conversion'),
@@ -128,7 +141,6 @@ VALUES
 ('0', CAST('0' AS VARBINARY(10)), 48, 'Zero conversion'),
 (' ', CAST(' ' AS VARBINARY(10)), 32, 'Space conversion'),
 ('!', CAST('!' AS VARBINARY(10)), 33, 'Exclamation mark conversion');
-
 UPDATE babel_5809_t4_convert
 SET ActualValue = ASCII(BinaryValue),
     TestResult = CASE 
@@ -137,6 +149,10 @@ SET ActualValue = ASCII(BinaryValue),
         ELSE 'Fail' 
     END;
 GO
+~~ROW COUNT: 5~~
+
+~~ROW COUNT: 5~~
+
 
 -- 2.5 Edge Cases and Negative Values Table
 CREATE TABLE babel_5809_t5_edge (
@@ -149,6 +165,7 @@ CREATE TABLE babel_5809_t5_edge (
     Description VARCHAR(100)
 );
 GO
+
 
 INSERT INTO babel_5809_t5_edge (IntValue, CharValue, ExpectedASCII, Description)
 VALUES
@@ -169,7 +186,6 @@ VALUES
 (922337203685477581, '9', 57, 'Large BIGINT value + 1'),
 (-2147483648, '-', 45, 'INT MIN'),
 (-922337203685477580, '-', 45, 'Large negative BIGINT value');
-
 UPDATE babel_5809_t5_edge
 SET ActualValue = ASCII(CharValue),
     TestResult = CASE 
@@ -178,6 +194,10 @@ SET ActualValue = ASCII(CharValue),
         ELSE 'Fail' 
     END;
 GO
+~~ROW COUNT: 13~~
+
+~~ROW COUNT: 13~~
+
 
 -- 2.6 Numeric Conversion Testing Table
 CREATE TABLE babel_5809_t6_numeric (
@@ -190,6 +210,7 @@ CREATE TABLE babel_5809_t6_numeric (
     Description VARCHAR(100)
 );
 GO
+
 
 INSERT INTO babel_5809_t6_numeric (NumValue, StringValue, ExpectedASCII, Description)
 VALUES
@@ -206,7 +227,6 @@ VALUES
 -- Scientific notation values
 (1E+10, '1E+10', 49, 'Scientific notation positive'),
 (1E-10, '1E-10', 48, 'Scientific notation negative exponent');
-
 UPDATE babel_5809_t6_numeric
 SET ActualValue = ASCII(NumValue),
    TestResult = CASE 
@@ -215,6 +235,10 @@ SET ActualValue = ASCII(NumValue),
         ELSE 'Fail' 
     END;
 GO
+~~ROW COUNT: 9~~
+
+~~ROW COUNT: 9~~
+
 
 -- 2.7  Input Testing Table
 CREATE TABLE babel_5809_t7_edge (
@@ -236,6 +260,8 @@ VALUES
 ('Special Characters Only', '@@@@', 64),
 ('Mixed Invalid Chars', '123@#$%', 49);
 GO
+~~ROW COUNT: 6~~
+
 
 UPDATE babel_5809_t7_edge
 SET ActualValue = ASCII(TestValue),
@@ -245,6 +271,8 @@ SET ActualValue = ASCII(TestValue),
         ELSE 'Fail'
     END;
 GO
+~~ROW COUNT: 6~~
+
 
 -- 3. FUNCTIONS
 -- 3.1 ASCII Range Validation Function
@@ -452,6 +480,7 @@ SELECT
 FROM babel_5809_t3_hex;
 GO
 
+
 -- 8. Populate tables
 -- 8.1 Populate Computed Columns Table
 INSERT INTO babel_5809_computed_ascii 
@@ -463,11 +492,15 @@ VALUES
 (' ', 32, 'Special', 1, 1),
 (CHAR(27), 27, 'Control', 1, 0),
 (CHAR(160), 160, 'Extended', 1, 0);
-
 UPDATE babel_5809_computed_ascii
 SET ActualValue = ASCII(InputChar),
     TestResult = CASE WHEN ASCII(InputChar) = ASCIIValue THEN 'Pass' ELSE 'Fail' END;
 GO
+~~ROW COUNT: 6~~
+
+~~ROW COUNT: 6~~
+
+
 
 -- 8.2 Populate Constrained Table
 INSERT INTO babel_5809_constrained_ascii (InputChar, ExpectedValue)
@@ -476,8 +509,11 @@ VALUES
 ('z', 122),
 ('0', 48),
 ('$', 36);
-
 UPDATE babel_5809_constrained_ascii
 SET ActualValue = ASCII(InputChar),
     TestResult = CASE WHEN ASCII(InputChar) = ExpectedValue THEN 'Pass' ELSE 'Fail' END;
 GO
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 4~~
+

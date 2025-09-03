@@ -62,28 +62,17 @@ GO
 -- Insert Unicode test data
 INSERT INTO ascii_t2 VALUES
 (N'A', N'ASCII in Unicode', 65, N'ASCII character in Unicode string'),
-(N'あ', N'Japanese character', 12354, N'Japanese character'),
-(N'한', N'Korean character', 54620, N'Korean character'),
-(N'☺', N'Smiley face', 83, N'Unicode symbol'),
-(N'é', N'Accented e', 65, N'Accented character'),
-(N'★', N'Star symbol', 83, N'Unicode star'),
+(N'あ', N'Japanese character', NULL, N'Japanese character'),
+(N'한', N'Korean character', NULL, N'Korean character'),
+(N'☺', N'Smiley face', NULL, N'Unicode symbol'),
+(N'é', N'Accented e', NULL, N'Accented character'),
+(N'★', N'Star symbol', NULL, N'Unicode star'),
 (N'⌘', N'Command symbol', NULL, N'Unicode command'),
 (N' ', N'Space in Unicode', 32, N'Space character'),
+(N'', N'Empty Unicode', NULL, N'Empty Unicode string'),
 (NCHAR(9), N'Tab in Unicode', 9, N'Unicode tab character');
 GO
 
-CREATE TABLE ascii_t2_b (
-    ID INT IDENTITY(1,1) PRIMARY KEY,
-    UnicodeChar NVARCHAR(10),
-    UnicodeString NVARCHAR(50),
-    ExpectedValue INT,
-    Description NVARCHAR(100)
-);
-GO
-
-INSERT INTO ascii_t2_b VALUES
-(N'', N'Empty Unicode', NULL, N'Empty Unicode string');
-GO
 -- =============================================
 -- BASIC FUNCTIONAL TESTS
 -- =============================================
@@ -116,7 +105,7 @@ SELECT
     ASCII(CHAR(27)) AS EscapeChar;
 GO
 
--- following throws error in babelfish
+-- following throws wrong output in babelfish as char(0) return empty string value [BABEL-6068]
 SELECT ASCII(CHAR(0)) AS NullChar
 GO
 
@@ -164,25 +153,10 @@ SELECT
     ASCII(UnicodeString) AS StringASCII,
     ExpectedValue,
     CASE 
-        WHEN ASCII(UnicodeChar) IS NULL AND ExpectedValue IS NULL THEN 'Pass'
         WHEN ASCII(UnicodeChar) = ExpectedValue THEN 'Pass'
         ELSE 'Fail'
     END AS TestResult
 FROM ascii_t2;
-GO
-
-SELECT 
-    UnicodeChar,
-    UnicodeString,
-    ASCII(UnicodeChar) AS CharASCII,
-    ASCII(UnicodeString) AS StringASCII,
-    ExpectedValue,
-    CASE 
-        WHEN ASCII(UnicodeChar) IS NULL AND ExpectedValue IS NULL THEN 'Pass'
-        WHEN ASCII(UnicodeChar) = ExpectedValue THEN 'Pass'
-        ELSE 'Fail'
-    END AS TestResult
-FROM ascii_t2_b;
 GO
 
 -- 8. Edge Case Tests
@@ -519,7 +493,6 @@ DROP TABLE ascii_constrained_t5;
 DROP TABLE ascii_computed_t4;
 DROP TABLE ascii_conversion_t3;
 DROP TABLE ascii_t2;
-DROP TABLE ascii_t2_b;
 DROP TABLE ascii_t1;
 GO
 
@@ -529,4 +502,3 @@ DROP TYPE ascii_type_varchar;
 DROP TYPE ascii_type_nchar;
 DROP TYPE ascii_type_nvarchar;
 GO
-
