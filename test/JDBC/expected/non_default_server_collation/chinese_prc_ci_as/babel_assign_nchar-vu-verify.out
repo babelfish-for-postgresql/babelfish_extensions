@@ -1,0 +1,2474 @@
+-------------
+-- NCHAR
+-------------
+-- JIRA query
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT @inputString
+GO
+~~START~~
+nchar
+  abc🙂defghi🙂🙂                                 
+~~END~~
+
+
+-- Simple ASCII string
+DECLARE @simpleString NCHAR(20) = N'Hello World'
+SELECT @simpleString
+GO
+~~START~~
+nchar
+Hello World         
+~~END~~
+
+
+-- Empty string
+DECLARE @emptyString NCHAR(10) = N''
+SELECT @emptyString, LEN(@emptyString) as length
+GO
+~~START~~
+nchar#!#int
+          #!#0
+~~END~~
+
+
+-- String with numbers and symbols
+DECLARE @alphaNumeric NCHAR(30) = N'Test123!@#$%'
+SELECT @alphaNumeric
+GO
+~~START~~
+nchar
+Test123!@#$%                  
+~~END~~
+
+
+-- Chinese characters
+DECLARE @chineseString NCHAR(20) = N'你好世界'
+SELECT @chineseString , LEN(@chineseString) AS Length
+GO
+~~START~~
+nchar#!#int
+你好世界                #!#4
+~~END~~
+
+
+-- Japanese characters
+DECLARE @japaneseString NCHAR(25) = N'こんにちは'
+SELECT @japaneseString , LEN(@japaneseString) AS Length
+GO
+~~START~~
+nchar#!#int
+こんにちは                    #!#5
+~~END~~
+
+
+-- Arabic characters (right-to-left)
+DECLARE @arabicString NCHAR(30) = N'مرحبا بالعالم'
+SELECT @arabicString AS 'Arabic String'
+GO
+~~START~~
+nchar
+مرحبا بالعالم                 
+~~END~~
+
+
+-- Mixed multibyte and ASCII
+DECLARE @mixedString NCHAR(40) = N'Hello 🙂🙂世界 مرحبا'
+SELECT @mixedString AS 'Mixed String', LEN(@mixedString) AS 'Length'
+GO
+~~START~~
+nchar#!#int
+Hello 🙂🙂世界 مرحبا                      #!#16
+~~END~~
+
+
+-- Single emoji
+DECLARE @singleEmoji NCHAR(10) = N'😀'
+SELECT @singleEmoji , LEN(@singleEmoji) AS 'Length'
+GO
+~~START~~
+nchar#!#int
+😀        #!#1
+~~END~~
+
+
+-- Multiple emojis
+DECLARE @multiEmoji NCHAR(30) = N'😀😍🎉🚀💖'
+SELECT @multiEmoji , LEN(@multiEmoji) AS 'Length'
+GO
+~~START~~
+nchar#!#int
+😀😍🎉🚀💖                    #!#5
+~~END~~
+
+
+-- Text with emojis
+DECLARE @textWithEmoji NCHAR(50) = N'Hello 😀 World 🌍 Test 🎉'
+SELECT @textWithEmoji
+GO
+~~START~~
+nchar
+Hello 😀 World 🌍 Test 🎉                         
+~~END~~
+
+
+-- Complex emojis (skin tone modifiers)
+DECLARE @complexEmoji NCHAR(30) = N'👋🏽👨‍💻👩‍🎨'
+SELECT @complexEmoji, LEN(@complexEmoji) AS 'Length', DATALENGTH(@complexEmoji) AS 'Bytes'
+GO
+~~START~~
+nchar#!#int#!#int
+👋🏽👨‍💻👩‍🎨                #!#8#!#30
+~~END~~
+
+
+-- Emoji with multibyte text
+DECLARE @emojiMultibyte NCHAR(40) = N'🎌こんにちは🌸世界🗾'
+SELECT @emojiMultibyte , LEN(@emojiMultibyte) AS 'Length'
+GO
+~~START~~
+nchar#!#int
+🎌こんにちは🌸世界🗾                           #!#10
+~~END~~
+
+
+-- String with line breaks and tabs
+DECLARE @specialChars NCHAR(30) = N'Line1' + CHAR(13) + CHAR(10) + N'Line2' + CHAR(9) + N'Tab'
+SELECT @specialChars , LEN(@specialChars) AS 'Length'
+GO
+~~START~~
+nchar#!#int
+Line1<newline>Line2	Tab              #!#16
+~~END~~
+
+
+-- String with quotes
+DECLARE @quotedString NCHAR(30) = N'He said "Hello World"'
+SELECT @quotedString
+GO
+~~START~~
+nchar
+He said "Hello World"         
+~~END~~
+
+
+-- String with backslashes
+DECLARE @backslashString NCHAR(30) = N'C:\Temp\File.txt'
+SELECT @backslashString
+GO
+~~START~~
+nchar
+C:\Temp\File.txt              
+~~END~~
+
+
+-- Very long string (testing padding)
+DECLARE @longString NCHAR(50) = N'Short'
+SELECT @longString, LEN(@longString) AS 'Actual Length'
+GO
+~~START~~
+nchar#!#int
+Short                                             #!#5
+~~END~~
+
+
+-- CHAR vs NCHAR
+DECLARE @charString CHAR(20) = 'Hello World🙂🙂'
+DECLARE @ncharString NCHAR(20) = N'Hello World🙂🙂'
+SELECT 
+    @charString , LEN(@charString) as length1,
+    @ncharString , LEN(@ncharString) as length2
+GO
+~~START~~
+char#!#int#!#nchar#!#int
+Hello World??       #!#13#!#Hello World🙂🙂     #!#13
+~~END~~
+
+
+-- CHAR vs NCHAR with multibyte (CHAR will have issues with multibyte)
+DECLARE @charMultibyte CHAR(20) = '你好🙂' 
+DECLARE @ncharMultibyte NCHAR(20) = N'你好🙂'
+SELECT  @charMultibyte, @ncharMultibyte
+GO
+~~START~~
+char#!#nchar
+你好?               #!#你好🙂                
+~~END~~
+
+
+
+
+-----------------------------------
+-- testing other domain datatypes 
+-----------------------------------
+-------------
+-- NVARCHAR
+-------------
+-- Basic NVARCHAR
+DECLARE @basicNVarchar NVARCHAR(50) = N'Hello World'
+SELECT @basicNVarchar, LEN(@basicNVarchar) AS 'Length'
+GO
+~~START~~
+nvarchar#!#int
+Hello World#!#11
+~~END~~
+
+
+-- NVARCHAR with emojis
+DECLARE @emojiNVarchar NVARCHAR(50) = N'Hello 😀 World 🌍 Test 🎉'
+SELECT @emojiNVarchar , DATALENGTH(@emojiNVarchar) AS 'Bytes'
+GO
+~~START~~
+nvarchar#!#int
+Hello 😀 World 🌍 Test 🎉#!#31
+~~END~~
+
+
+-- NVARCHAR with multibyte characters
+DECLARE @multibyteNVarchar NVARCHAR(50) = N'English 日本語 العربية 中文'
+SELECT @multibyteNVarchar , LEN(@multibyteNVarchar) AS 'Length'
+GO
+~~START~~
+nvarchar#!#int
+English 日本語 العربية 中文#!#22
+~~END~~
+
+
+-- NVARCHAR(MAX)
+DECLARE @maxNVarchar NVARCHAR(MAX) = REPLICATE(N'Long Text ', 1000)
+SELECT LEFT(@maxNVarchar, 50), LEN(@maxNVarchar) AS 'Total Length'
+GO
+~~START~~
+nvarchar#!#int
+Long Text Long Text Long Text Long Text Long Text #!#9999
+~~END~~
+
+
+
+
+-------------
+-- NTEXT
+-------------
+-- Basic NTEXT
+SELECT CAST(CAST(N'Basic NTEXT content' AS NTEXT) AS NVARCHAR(MAX)) AS 'Basic NText'
+GO
+~~START~~
+nvarchar
+Basic NTEXT content
+~~END~~
+
+
+-- NTEXT with mixed content
+SELECT CAST(CAST( N'English 😀 日本語 with emojis 😀' AS NTEXT) AS NCHAR(50))
+GO
+~~START~~
+nchar
+English 😀 日本語 with emojis 😀                     
+~~END~~
+
+
+
+-------------
+-- BINARY
+-------------
+-- Simple BINARY
+DECLARE @simpleBinary BINARY(10) = 0x48656C6C6F
+SELECT 
+    @simpleBinary AS 'Binary Data',
+    CAST(@simpleBinary AS VARCHAR(20)) AS 'Converted to String',
+    DATALENGTH(@simpleBinary) AS 'Length'
+GO
+~~START~~
+binary#!#varchar#!#int
+48656C6C6F0000000000#!#Hello#!#10
+~~END~~
+
+
+-- BINARY with padding
+DECLARE @paddedBinary BINARY(20) = 0x48656C6C6F
+SELECT 
+    @paddedBinary AS 'Padded Binary',
+    LEN(@paddedBinary) AS 'Length'
+GO
+~~START~~
+binary#!#int
+48656C6C6F000000000000000000000000000000#!#20
+~~END~~
+
+
+-- BINARY comparison
+DECLARE @binary1 BINARY(5) = 0x48656C6C6F
+DECLARE @binary2 BINARY(5) = 0x48656C6C6F
+SELECT 
+    CASE WHEN @binary1 = @binary2 THEN 'Equal' ELSE 'Not Equal' END AS 'Comparison'
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+
+
+-------------
+-- VARBINARY
+-------------
+-- Simple VARBINARY
+DECLARE @simpleVarBinary VARBINARY(50) = 0x48656C6C6F
+SELECT 
+    @simpleVarBinary AS 'VarBinary Data',
+    CAST(@simpleVarBinary AS VARCHAR(20)) AS 'As String',
+    DATALENGTH(@simpleVarBinary) AS 'Actual Length'
+GO
+~~START~~
+varbinary#!#varchar#!#int
+48656C6C6F#!#Hello#!#5
+~~END~~
+
+
+-- VARBINARY(MAX)
+DECLARE @largeVarBinary VARBINARY(MAX) = 0x48656C6C6F
+SELECT 
+    @largeVarBinary AS 'Large VarBinary',
+    DATALENGTH(@largeVarBinary) AS 'Length'
+GO
+~~START~~
+varbinary#!#int
+48656C6C6F#!#5
+~~END~~
+
+
+-- Converting string to VARBINARY
+DECLARE @convertedVarBinary VARBINARY(50) = CAST('Hello World' AS VARBINARY)
+SELECT 
+    @convertedVarBinary AS 'Converted Data',
+    CAST(@convertedVarBinary AS VARCHAR(20)) AS 'Back to String'
+GO
+~~START~~
+varbinary#!#varchar
+48656C6C6F20576F726C64#!#Hello World
+~~END~~
+
+
+
+-- Compare different types
+DECLARE @testString NVARCHAR(50) = N'Hello 日本語 with emojis 😀'
+DECLARE @testBinary VARBINARY(50) = CAST('Hello' AS VARBINARY)
+SELECT 
+    @testString AS 'NVARCHAR',
+    @testBinary AS 'VARBINARY',
+    CAST(CAST(N'Hello😀😀😀😀😀' as NTEXT) AS NVARCHAR(MAX)) AS 'NTEXT',
+    LEN(@testString) AS 'NVARCHAR_Length',
+    LEN(@testBinary) AS 'VARBINARY_Length'
+GO
+~~START~~
+nvarchar#!#varbinary#!#nvarchar#!#int#!#int
+Hello 日本語 with emojis 😀#!#48656C6C6F#!#Hello😀😀😀😀😀#!#23#!#5
+~~END~~
+
+
+
+-------------
+-- CHAR
+-------------
+-- Basic CHAR Tests
+DECLARE @basicChar CHAR(10) = 'Hello'
+SELECT 
+    @basicChar AS 'Basic',
+    LEN(@basicChar) AS 'Length',
+    DATALENGTH(@basicChar) AS 'DataLength',
+    '|' + @basicChar + '|' AS 'With Delimiters'  -- Shows padding
+GO
+~~START~~
+char#!#int#!#int#!#varchar
+Hello     #!#5#!#10#!#|Hello     |
+~~END~~
+
+
+-- CHAR with Special Characters
+DECLARE @specialChar CHAR(50) = 'Test#$@!&*()'
+SELECT 
+    @specialChar AS 'Special Chars',
+    DATALENGTH(@specialChar) AS 'DataLength'
+GO
+~~START~~
+char#!#int
+Test#$@!&*()                                      #!#50
+~~END~~
+
+
+-- CHAR with Numbers and Spaces
+DECLARE @mixedChar CHAR(15) = '123 ABC 456'
+SELECT 
+    '|' + @mixedChar + '|' AS 'Mixed Content',
+    DATALENGTH(@mixedChar) AS 'DataLength'
+GO
+~~START~~
+varchar#!#int
+|123 ABC 456    |#!#15
+~~END~~
+
+
+-- CHAR Truncation Test
+DECLARE @truncChar CHAR(5) = 'Too Long String'  -- Will be truncated
+SELECT @truncChar AS 'Truncated'
+GO
+~~START~~
+char
+Too L
+~~END~~
+
+
+-- CHAR with Different Collations
+DECLARE @collateChar1 CHAR(10) = 'Test'
+DECLARE @collateChar2 CHAR(10) = 'test'
+SELECT 
+    @collateChar1 COLLATE SQL_Latin1_General_CP1_CS_AS AS 'Case Sensitive',
+    @collateChar2 COLLATE SQL_Latin1_General_CP1_CI_AS AS 'Case Insensitive',
+    CASE 
+        WHEN @collateChar1 = @collateChar2 COLLATE SQL_Latin1_General_CP1_CS_AS 
+        THEN 'Equal' 
+        ELSE 'Not Equal' 
+    END AS 'Comparison'
+GO
+~~START~~
+char#!#char#!#varchar
+Test      #!#test      #!#Not Equal
+~~END~~
+
+
+-- With multibyte
+DECLARE @testString CHAR(50) = 'Hello 日本語 with emojis 😀'
+select @testString
+GO
+~~START~~
+char
+Hello 日本語 with emojis ?                        
+~~END~~
+
+
+
+-------------
+-- VARCHAR
+-------------
+-- Basic VARCHAR Tests
+DECLARE @basicVarchar VARCHAR(10) = 'Hello'
+SELECT 
+    @basicVarchar AS 'Basic',
+    LEN(@basicVarchar) AS 'Length',
+    DATALENGTH(@basicVarchar) AS 'DataLength',
+    '|' + @basicVarchar + '|' AS 'With Delimiters'
+GO
+~~START~~
+varchar#!#int#!#int#!#varchar
+Hello#!#5#!#5#!#|Hello|
+~~END~~
+
+
+-- VARCHAR(MAX) Tests
+DECLARE @maxVarchar VARCHAR(MAX) = REPLICATE('Test String ', 1000)
+SELECT 
+    LEFT(@maxVarchar, 50) + '...' AS 'Sample',
+    LEN(@maxVarchar) AS 'Total Length',
+    DATALENGTH(@maxVarchar) AS 'Total Bytes'
+GO
+~~START~~
+varchar#!#int#!#int
+Test String Test String Test String Test String Te...#!#11999#!#12000
+~~END~~
+
+
+-- VARCHAR with Special Characters
+DECLARE @specialVarchar VARCHAR(50) = 'Line 1' + CHAR(13) + CHAR(10) + 'Line 2'
+SELECT 
+    @specialVarchar AS 'With Line Break',
+    LEN(@specialVarchar) AS 'Length',
+    DATALENGTH(@specialVarchar) AS 'DataLength'
+GO
+~~START~~
+varchar#!#int#!#int
+Line 1<newline>Line 2#!#14#!#14
+~~END~~
+
+
+-- VARCHAR with Different Content Types
+DECLARE @mixedVarchar VARCHAR(50) = '123-ABC-!@#-   -456'
+SELECT 
+    @mixedVarchar AS 'Mixed Content',
+    LEN(@mixedVarchar) AS 'Length',
+    DATALENGTH(@mixedVarchar) AS 'DataLength'
+GO
+~~START~~
+varchar#!#int#!#int
+123-ABC-!@#-   -456#!#19#!#19
+~~END~~
+
+
+-- VARCHAR Empty and NULL Tests
+DECLARE @emptyVarchar VARCHAR(10) = ''
+DECLARE @nullVarchar VARCHAR(10) = NULL
+SELECT 
+    '|' + ISNULL(@emptyVarchar, 'NULL') + '|' AS 'Empty',
+    '|' + ISNULL(@nullVarchar, 'NULL') + '|' AS 'Null',
+    DATALENGTH(@emptyVarchar) AS 'Empty DataLength',
+    DATALENGTH(@nullVarchar) AS 'Null DataLength'
+GO
+~~START~~
+varchar#!#varchar#!#int#!#int
+||#!#|NULL|#!#0#!#<NULL>
+~~END~~
+
+
+-- With multibyte
+DECLARE @testString VARCHAR(50) = 'Hello 日本語 with emojis 😀'
+select @testString
+GO
+~~START~~
+varchar
+Hello 日本語 with emojis ?
+~~END~~
+
+
+
+
+---------------------------------------
+-- converting between different types
+---------------------------------------
+-- Converting between types
+DECLARE @sourceString NVARCHAR(50) = N'Test String 测试 🙂🙂🙂🙂'
+SELECT 
+    -- To BINARY
+    CAST(CAST(@sourceString AS VARBINARY) AS BINARY(50)) AS 'As BINARY',
+    -- To VARBINARY
+    CAST(@sourceString AS VARBINARY) AS 'As VARBINARY',
+    -- To NTEXT
+    CAST(@sourceString AS NTEXT) AS 'As NTEXT',
+    -- Back to NVARCHAR
+    CAST(CAST(@sourceString AS VARBINARY) AS NVARCHAR(50)) AS 'Back to NVARCHAR',
+    -- To NCHAR
+    CAST(@sourceString AS NCHAR) AS 'AS NCHAR',
+    -- TO CHAR
+    CAST(@sourceString AS CHAR) AS 'AS CHAR',
+    -- TO VARCHAR
+    CAST(@sourceString AS VARCHAR) AS 'AS VARCHAR'
+GO
+~~START~~
+binary#!#varbinary#!#ntext#!#nvarchar#!#nchar#!#char#!#varchar
+5400650073007400200053007400720069006E00670020004B6DD58B20000000000000000000000000000000000000000000#!#5400650073007400200053007400720069006E00670020004B6DD58B2000#!#Test String 测试 🙂🙂🙂🙂#!#Test String 测试 #!#Test String 测试 🙂🙂🙂🙂       #!#Test String 测试 ????         #!#Test String 测试 ????
+~~END~~
+
+
+DECLARE @sourceString NCHAR(50) = N'Test String 测试 🙂🙂🙂🙂';
+SELECT 
+    -- To BINARY
+    CAST(CAST(@sourceString AS VARBINARY(20)) AS BINARY(20)) AS 'As_BINARY',
+    -- To VARBINARY
+    CAST(@sourceString AS VARBINARY(20)) AS 'As_VARBINARY',
+    -- To NTEXT
+    CAST(@sourceString AS NTEXT) AS 'As_NTEXT',
+    -- To NVARCHAR
+    CAST(@sourceString AS NVARCHAR(50)) AS 'Back_to_NVARCHAR',
+    -- To NCHAR
+    CAST(@sourceString AS NCHAR(50)) AS 'AS_NCHAR',
+    -- TO CHAR
+    CAST(@sourceString AS CHAR(50)) AS 'AS_CHAR',
+    -- TO VARCHAR
+    CAST(@sourceString AS VARCHAR(50)) AS 'AS_VARCHAR';
+GO
+~~START~~
+binary#!#varbinary#!#ntext#!#nvarchar#!#nchar#!#char#!#varchar
+5465737420537472696E6720E6B58BE8AF9520F0#!#5465737420537472696E6720E6B58BE8AF9520F0#!#Test String 测试 🙂🙂🙂🙂                               #!#Test String 测试 🙂🙂🙂🙂                           #!#Test String 测试 🙂🙂🙂🙂                           #!#Test String 测试 ????                             #!#Test String 测试 ????                             
+~~END~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------
+-- testing with set and select statements
+--------------------------------------------
+DECLARE @varchar_text VARCHAR(50) = 'Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!';
+DECLARE @nvarchar_text NVARCHAR(50) = N'你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã';
+DECLARE @char_text CHAR(50) = 'Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!';
+DECLARE @nchar_text NCHAR(50) = N'你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã';
+-- Assignment casting with SET
+DECLARE @char_var CHAR(50);
+DECLARE @nchar_var NCHAR(50);
+DECLARE @varchar_var VARCHAR(50);
+DECLARE @nvarchar_var NVARCHAR(50);
+-- From VARCHAR to all target types
+SET @char_var = @varchar_text;
+SET @nchar_var = @varchar_text;
+SET @varchar_var = @varchar_text;
+SET @nvarchar_var = @varchar_text;
+SELECT 'VARCHAR_SOURCE' as SourceType,
+    @varchar_text as Original,
+    @char_var as to_CHAR,
+    @nchar_var as to_NCHAR,
+    @varchar_var as to_VARCHAR,
+    @nvarchar_var as to_NVARCHAR;
+-- From NVARCHAR to all target types
+SET @char_var = @nvarchar_text;        
+SET @nchar_var = @nvarchar_text;
+SET @varchar_var = @nvarchar_text;    
+SET @nvarchar_var = @nvarchar_text;
+SELECT 'NVARCHAR_SOURCE' as SourceType,
+    @nvarchar_text as Original,
+    @char_var as to_CHAR,
+    @nchar_var as to_NCHAR,
+    @varchar_var as to_VARCHAR,
+    @nvarchar_var as to_NVARCHAR;
+-- From CHAR to all target types
+SET @char_var = @char_text;
+SET @nchar_var = @char_text;
+SET @varchar_var = @char_text;
+SET @nvarchar_var = @char_text;
+SELECT 'CHAR_SOURCE' as SourceType,
+    @char_text as Original,
+    @char_var as to_CHAR,
+    @nchar_var as to_NCHAR,
+    @varchar_var as to_VARCHAR,
+    @nvarchar_var as to_NVARCHAR;
+-- From NCHAR to all target types
+SET @char_var = @nchar_text;         
+SET @nchar_var = @nchar_text;
+SET @varchar_var = @nchar_text;       
+SET @nvarchar_var = @nchar_text;
+SELECT 'NCHAR_SOURCE' as SourceType,
+    @nchar_text as Original,
+    @char_var as to_CHAR,
+    @nchar_var as to_NCHAR,
+    @varchar_var as to_VARCHAR,
+    @nvarchar_var as to_NVARCHAR;
+-- Using SELECT for assignment (same combinations)
+-- From VARCHAR using SELECT
+SELECT @char_var = @varchar_text;
+SELECT @nchar_var = @varchar_text;
+SELECT @varchar_var = @varchar_text;
+SELECT @nvarchar_var = @varchar_text;
+SELECT 'VARCHAR_SELECT_ASSIGN' as AssignmentType,
+    @varchar_text as Original,
+    @char_var as to_CHAR,
+    @nchar_var as to_NCHAR,
+    @varchar_var as to_VARCHAR,
+    @nvarchar_var as to_NVARCHAR;
+-- From NVARCHAR using SELECT
+SELECT @char_var = @nvarchar_text;       
+SELECT @nchar_var = @nvarchar_text;
+SELECT @varchar_var = @nvarchar_text;    
+SELECT @nvarchar_var = @nvarchar_text;
+SELECT 'NVARCHAR_SELECT_ASSIGN' as AssignmentType,
+    @nvarchar_text as Original,
+    @char_var as to_CHAR,
+    @nchar_var as to_NCHAR,
+    @varchar_var as to_VARCHAR,
+    @nvarchar_var as to_NVARCHAR;
+-- From CHAR using SELECT
+SELECT @char_var = @char_text;
+SELECT @nchar_var = @char_text;
+SELECT @varchar_var = @char_text;
+SELECT @nvarchar_var = @char_text;
+SELECT 'CHAR_SELECT_ASSIGN' as AssignmentType,
+    @char_text as Original,
+    @char_var as to_CHAR,
+    @nchar_var as to_NCHAR,
+    @varchar_var as to_VARCHAR,
+    @nvarchar_var as to_NVARCHAR;
+-- From NCHAR using SELECT
+SELECT @char_var = @nchar_text;          
+SELECT @nchar_var = @nchar_text;
+SELECT @varchar_var = @nchar_text;      
+SELECT @nvarchar_var = @nchar_text;
+SELECT 'NCHAR_SELECT_ASSIGN' as AssignmentType,
+    @nchar_text as Original,
+    @char_var as to_CHAR,
+    @nchar_var as to_NCHAR,
+    @varchar_var as to_VARCHAR,
+    @nvarchar_var as to_NVARCHAR;
+GO
+~~START~~
+varchar#!#varchar#!#char#!#nchar#!#varchar#!#nvarchar
+VARCHAR_SOURCE#!#Special: àá????èéê? ?ó??? ???¤??§ 123!#!#Special: àá????èéê? ?ó??? ???¤??§ 123!    #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àá????èéê? ?ó??? ???¤??§ 123!#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!
+~~END~~
+
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar#!#varchar#!#nvarchar
+NVARCHAR_SOURCE#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã#!#你好世界 Testing Text 中文 ???? こんにちは カタカ #!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#你好世界 Testing Text 中文 ???? こんにちは カタカ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã
+~~END~~
+
+~~START~~
+varchar#!#char#!#char#!#nchar#!#varchar#!#nvarchar
+CHAR_SOURCE#!#Special: àá????èéê? ?ó??? ???¤??§ 123!    #!#Special: àá????èéê? ?ó??? ???¤??§ 123!    #!#Special: àá????èéê? ?ó??? ???¤??§ 123!            #!#Special: àá????èéê? ?ó??? ???¤??§ 123!    #!#Special: àá????èéê? ?ó??? ???¤??§ 123!    
+~~END~~
+
+~~START~~
+varchar#!#nchar#!#char#!#nchar#!#varchar#!#nvarchar
+NCHAR_SOURCE#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#你好世界 Testing Text 中文 ???? こんにちは カタカ #!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#你好世界 Testing Text 中文 ???? こんにちは カタカ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#char#!#nchar#!#varchar#!#nvarchar
+VARCHAR_SELECT_ASSIGN#!#Special: àá????èéê? ?ó??? ???¤??§ 123!#!#Special: àá????èéê? ?ó??? ???¤??§ 123!    #!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!            #!#Special: àá????èéê? ?ó??? ???¤??§ 123!#!#Special: àáâãäçèéêë ñóôõö ¡¢£¤¥¦§ 123!
+~~END~~
+
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar#!#varchar#!#nvarchar
+NVARCHAR_SELECT_ASSIGN#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã#!#你好世界 Testing Text 中文 ???? こんにちは カタカ #!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#你好世界 Testing Text 中文 ???? こんにちは カタカ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã
+~~END~~
+
+~~START~~
+varchar#!#char#!#char#!#nchar#!#varchar#!#nvarchar
+CHAR_SELECT_ASSIGN#!#Special: àá????èéê? ?ó??? ???¤??§ 123!    #!#Special: àá????èéê? ?ó??? ???¤??§ 123!    #!#Special: àá????èéê? ?ó??? ???¤??§ 123!            #!#Special: àá????èéê? ?ó??? ???¤??§ 123!    #!#Special: àá????èéê? ?ó??? ???¤??§ 123!    
+~~END~~
+
+~~START~~
+varchar#!#nchar#!#char#!#nchar#!#varchar#!#nvarchar
+NCHAR_SELECT_ASSIGN#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#你好世界 Testing Text 中文 ???? こんにちは カタカ #!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  #!#你好世界 Testing Text 中文 ???? こんにちは カタカ#!#你好世界 Testing Text 中文 😀😍🌟💖 こんにちは カタカナ 漢字 àáâã  
+~~END~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------
+-- Set with cast
+--------------------
+-- Assignment casting with SET statments
+DECLARE @char_var CHAR(50);
+DECLARE @nchar_var NCHAR(50);
+DECLARE @varchar_var VARCHAR(50);
+DECLARE @nvarchar_var NVARCHAR(50);
+-- Target: @char_var (CHAR)
+SET @char_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS NVARCHAR);
+SELECT @char_var
+SET @char_var  = CAST(N'你好世界 Text 中文 こんにちは' AS VARCHAR);
+SELECT @char_var
+SET @char_var = CAST(N'Text' AS CHAR);
+SELECT @char_var
+SET @char_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS NCHAR);
+SELECT @char_var
+-- Target: @nchar_var (NCHAR)
+SET @nchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS NVARCHAR);
+select @nchar_var
+SET @nchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS VARCHAR);
+select @nchar_var
+SET @nchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS CHAR);
+select @nchar_var
+SET @nchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS NCHAR);
+select @nchar_var
+-- Target: @varchar_var (VARCHAR)
+SET @varchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS NVARCHAR);
+select @varchar_var
+SET @varchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS VARCHAR);
+select @varchar_var
+SET @varchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS CHAR);
+select @varchar_var
+SET @varchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS NCHAR);
+select @varchar_var
+-- Target: @nvarchar_var (NVARCHAR)
+SET @nvarchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS NVARCHAR);
+SELECT @nvarchar_var
+SET @nvarchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS VARCHAR);
+SELECT @nvarchar_var
+SET @nvarchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS CHAR);
+SELECT @nvarchar_var
+SET @nvarchar_var = CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS NCHAR);
+SELECT @nvarchar_var
+GO
+~~START~~
+char
+你好世界 Text 中文 ???? こんにちは                
+~~END~~
+
+~~START~~
+char
+你好世界 Text 中文 こんにちは                     
+~~END~~
+
+~~START~~
+char
+Text                                              
+~~END~~
+
+~~START~~
+char
+你好世界 Text 中文 ???? こんにちは                
+~~END~~
+
+~~START~~
+nchar
+你好世界 Text 中文 😀😍🌟💖 こんにちは                       
+~~END~~
+
+~~START~~
+nchar
+你好世界 Text 中文 ???? こんに                             
+~~END~~
+
+~~START~~
+nchar
+你好世界 Text 中文 ???? こんに                             
+~~END~~
+
+~~START~~
+nchar
+你好世界 Text 中文 😀😍🌟💖 こんにちは                       
+~~END~~
+
+~~START~~
+varchar
+你好世界 Text 中文 ???? こんにちは
+~~END~~
+
+~~START~~
+varchar
+你好世界 Text 中文 ???? こんに
+~~END~~
+
+~~START~~
+varchar
+你好世界 Text 中文 ???? こんに
+~~END~~
+
+~~START~~
+varchar
+你好世界 Text 中文 ???? こんにちは       
+~~END~~
+
+~~START~~
+nvarchar
+你好世界 Text 中文 😀😍🌟💖 こんにちは
+~~END~~
+
+~~START~~
+nvarchar
+你好世界 Text 中文 ???? こんに
+~~END~~
+
+~~START~~
+nvarchar
+你好世界 Text 中文 ???? こんに
+~~END~~
+
+~~START~~
+nvarchar
+你好世界 Text 中文 😀😍🌟💖 こんにちは       
+~~END~~
+
+
+
+--------------------
+-- Explicit casting
+--------------------
+SELECT CAST(CAST('你好世界 Text 中文 😀😍🌟💖 こんにちは' AS VARCHAR) AS NCHAR)
+GO
+~~START~~
+nchar
+你好世界 Text 中文 😀😍🌟💖 こんにちは   
+~~END~~
+
+
+SELECT CAST(CAST(N'你好世界 Text 中文 😀😍🌟💖 こんにちは' AS NVARCHAR) AS NCHAR)
+GO
+~~START~~
+nchar
+你好世界 Text 中文 😀😍🌟💖 こんにちは   
+~~END~~
+
+
+
+
+
+
+
+
+
+
+-------------------------
+-- simple ascii string
+-------------------------
+DECLARE @ascii_string VARCHAR(50) = 'Hello World 123! ASCII Test àáâãäåæçèéêë ñóôõö';
+-- ASCII: All combinations of nested CAST (including TEXT and NTEXT)
+SELECT CAST(CAST(@ascii_string AS CHAR(50)) AS CHAR(50)) AS Result1;
+SELECT CAST(CAST(@ascii_string AS CHAR(50)) AS VARCHAR(50)) AS Result2;
+SELECT CAST(CAST(@ascii_string AS CHAR(50)) AS NCHAR(50)) AS Result3;
+SELECT CAST(CAST(@ascii_string AS CHAR(50)) AS NVARCHAR(50)) AS Result4;
+SELECT CAST(CAST(@ascii_string AS CHAR(50)) AS TEXT) AS Result5;
+SELECT CAST(CAST(@ascii_string AS CHAR(50)) AS NTEXT) AS Result6;
+SELECT CAST(CAST(@ascii_string AS VARCHAR(50)) AS CHAR(50)) AS Result7;
+SELECT CAST(CAST(@ascii_string AS VARCHAR(50)) AS VARCHAR(50)) AS Result8;
+SELECT CAST(CAST(@ascii_string AS VARCHAR(50)) AS NCHAR(50)) AS Result9;
+SELECT CAST(CAST(@ascii_string AS VARCHAR(50)) AS NVARCHAR(50)) AS Result10;
+SELECT CAST(CAST(@ascii_string AS VARCHAR(50)) AS TEXT) AS Result11;
+SELECT CAST(CAST(@ascii_string AS VARCHAR(50)) AS NTEXT) AS Result12;
+SELECT CAST(CAST(@ascii_string AS NCHAR(50)) AS CHAR(50)) AS Result13;
+SELECT CAST(CAST(@ascii_string AS NCHAR(50)) AS VARCHAR(50)) AS Result14;
+SELECT CAST(CAST(@ascii_string AS NCHAR(50)) AS NCHAR(50)) AS Result15;
+SELECT CAST(CAST(@ascii_string AS NCHAR(50)) AS NVARCHAR(50)) AS Result16;
+SELECT CAST(CAST(@ascii_string AS NCHAR(50)) AS TEXT) AS Result17;
+SELECT CAST(CAST(@ascii_string AS NCHAR(50)) AS NTEXT) AS Result18;
+SELECT CAST(CAST(@ascii_string AS NVARCHAR(50)) AS CHAR(50)) AS Result19;
+SELECT CAST(CAST(@ascii_string AS NVARCHAR(50)) AS VARCHAR(50)) AS Result20;
+SELECT CAST(CAST(@ascii_string AS NVARCHAR(50)) AS NCHAR(50)) AS Result21;
+SELECT CAST(CAST(@ascii_string AS NVARCHAR(50)) AS NVARCHAR(50)) AS Result22;
+SELECT CAST(CAST(@ascii_string AS NVARCHAR(50)) AS TEXT) AS Result23;
+SELECT CAST(CAST(@ascii_string AS NVARCHAR(50)) AS NTEXT) AS Result24;
+SELECT CAST(CAST(@ascii_string AS TEXT) AS CHAR(50)) AS Result25;
+SELECT CAST(CAST(@ascii_string AS TEXT) AS VARCHAR(50)) AS Result26;
+SELECT CAST(CAST(@ascii_string AS TEXT) AS NCHAR(50)) AS Result27;
+SELECT CAST(CAST(@ascii_string AS TEXT) AS NVARCHAR(50)) AS Result28;
+SELECT CAST(CAST(@ascii_string AS TEXT) AS TEXT) AS Result29;
+SELECT CAST(CAST(@ascii_string AS TEXT) AS NTEXT) AS Result30;
+SELECT CAST(CAST(@ascii_string AS NTEXT) AS CHAR(50)) AS Result31;
+SELECT CAST(CAST(@ascii_string AS NTEXT) AS VARCHAR(50)) AS Result32;
+SELECT CAST(CAST(@ascii_string AS NTEXT) AS NCHAR(50)) AS Result33;
+SELECT CAST(CAST(@ascii_string AS NTEXT) AS NVARCHAR(50)) AS Result34;
+SELECT CAST(CAST(@ascii_string AS NTEXT) AS TEXT) AS Result35;
+SELECT CAST(CAST(@ascii_string AS NTEXT) AS NTEXT) AS Result36;
+GO
+~~START~~
+char
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+varchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+nchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?      
+~~END~~
+
+~~START~~
+nvarchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?      
+~~END~~
+
+~~START~~
+text
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+ntext
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+char
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+varchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+nchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?      
+~~END~~
+
+~~START~~
+nvarchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+text
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+ntext
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+char
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+varchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+nchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?      
+~~END~~
+
+~~START~~
+nvarchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+text
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+ntext
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+char
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+varchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+nchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?      
+~~END~~
+
+~~START~~
+nvarchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+text
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+ntext
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+char
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+varchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+nchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?      
+~~END~~
+
+~~START~~
+nvarchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+text
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+ntext
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+char
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+varchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+nchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?      
+~~END~~
+
+~~START~~
+nvarchar
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+text
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+~~START~~
+ntext
+Hello World 123! ASCII Test àá??????èéê? ?ó?
+~~END~~
+
+
+
+
+
+
+
+
+
+
+-------------------------
+-- Emojis
+-------------------------
+DECLARE @emoji_string NVARCHAR(50) = N'Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻';
+-- All 36 combinations for Emoji strings
+SELECT CAST(CAST(@emoji_string AS CHAR(50)) AS CHAR(50)) AS Result1;
+SELECT CAST(CAST(@emoji_string AS CHAR(50)) AS VARCHAR(50)) AS Result2;
+SELECT CAST(CAST(@emoji_string AS CHAR(50)) AS NCHAR(50)) AS Result3;
+SELECT CAST(CAST(@emoji_string AS CHAR(50)) AS NVARCHAR(50)) AS Result4;
+SELECT CAST(CAST(@emoji_string AS CHAR(50)) AS TEXT) AS Result5;
+SELECT CAST(CAST(@emoji_string AS CHAR(50)) AS NTEXT) AS Result6;
+SELECT CAST(CAST(@emoji_string AS VARCHAR(50)) AS CHAR(50)) AS Result7;
+SELECT CAST(CAST(@emoji_string AS VARCHAR(50)) AS VARCHAR(50)) AS Result8;
+SELECT CAST(CAST(@emoji_string AS VARCHAR(50)) AS NCHAR(50)) AS Result9;
+SELECT CAST(CAST(@emoji_string AS VARCHAR(50)) AS NVARCHAR(50)) AS Result10;
+SELECT CAST(CAST(@emoji_string AS VARCHAR(50)) AS TEXT) AS Result11;
+SELECT CAST(CAST(@emoji_string AS VARCHAR(50)) AS NTEXT) AS Result12;
+SELECT CAST(CAST(@emoji_string AS NCHAR(50)) AS CHAR(50)) AS Result13;
+SELECT CAST(CAST(@emoji_string AS NCHAR(50)) AS VARCHAR(50)) AS Result14;
+SELECT CAST(CAST(@emoji_string AS NCHAR(50)) AS NCHAR(50)) AS Result15;
+SELECT CAST(CAST(@emoji_string AS NCHAR(50)) AS NVARCHAR(50)) AS Result16;
+SELECT CAST(CAST(@emoji_string AS NCHAR(50)) AS TEXT) AS Result17;
+SELECT CAST(CAST(@emoji_string AS NCHAR(50)) AS NTEXT) AS Result18;
+SELECT CAST(CAST(@emoji_string AS NVARCHAR(50)) AS CHAR(50)) AS Result19;
+SELECT CAST(CAST(@emoji_string AS NVARCHAR(50)) AS VARCHAR(50)) AS Result20;
+SELECT CAST(CAST(@emoji_string AS NVARCHAR(50)) AS NCHAR(50)) AS Result21;
+SELECT CAST(CAST(@emoji_string AS NVARCHAR(50)) AS NVARCHAR(50)) AS Result22;
+SELECT CAST(CAST(@emoji_string AS NVARCHAR(50)) AS TEXT) AS Result23;
+SELECT CAST(CAST(@emoji_string AS NVARCHAR(50)) AS NTEXT) AS Result24;
+SELECT CAST(CAST(@emoji_string AS TEXT) AS CHAR(50)) AS Result25;
+SELECT CAST(CAST(@emoji_string AS TEXT) AS VARCHAR(50)) AS Result26;
+SELECT CAST(CAST(@emoji_string AS TEXT) AS NCHAR(50)) AS Result27;
+SELECT CAST(CAST(@emoji_string AS TEXT) AS NVARCHAR(50)) AS Result28;
+SELECT CAST(CAST(@emoji_string AS TEXT) AS TEXT) AS Result29;
+SELECT CAST(CAST(@emoji_string AS TEXT) AS NTEXT) AS Result30;
+SELECT CAST(CAST(@emoji_string AS NTEXT) AS CHAR(50)) AS Result31;
+SELECT CAST(CAST(@emoji_string AS NTEXT) AS VARCHAR(50)) AS Result32;
+SELECT CAST(CAST(@emoji_string AS NTEXT) AS NCHAR(50)) AS Result33;
+SELECT CAST(CAST(@emoji_string AS NTEXT) AS NVARCHAR(50)) AS Result34;
+SELECT CAST(CAST(@emoji_string AS NTEXT) AS TEXT) AS Result35;
+SELECT CAST(CAST(@emoji_string AS NTEXT) AS NTEXT) AS Result36;
+GO
+~~START~~
+char
+Hello ?????? Emoji Test ?????????                 
+~~END~~
+
+~~START~~
+varchar
+Hello ?????? Emoji Test ?????????                 
+~~END~~
+
+~~START~~
+nchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻     
+~~END~~
+
+~~START~~
+nvarchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻     
+~~END~~
+
+~~START~~
+text
+Hello ?????? Emoji Test ?????????                 
+~~END~~
+
+~~START~~
+ntext
+Hello ?????? Emoji Test ?????????                 
+~~END~~
+
+~~START~~
+char
+Hello ?????? Emoji Test ?????????                 
+~~END~~
+
+~~START~~
+varchar
+Hello ?????? Emoji Test ?????????
+~~END~~
+
+~~START~~
+nchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻     
+~~END~~
+
+~~START~~
+nvarchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+~~END~~
+
+~~START~~
+text
+Hello ?????? Emoji Test ?????????
+~~END~~
+
+~~START~~
+ntext
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+~~END~~
+
+~~START~~
+char
+Hello ?????? Emoji Test ?????????                 
+~~END~~
+
+~~START~~
+varchar
+Hello ?????? Emoji Test ?????????
+~~END~~
+
+~~START~~
+nchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻     
+~~END~~
+
+~~START~~
+nvarchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+~~END~~
+
+~~START~~
+text
+Hello ?????? Emoji Test ?????????
+~~END~~
+
+~~START~~
+ntext
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+~~END~~
+
+~~START~~
+char
+Hello ?????? Emoji Test ?????????                 
+~~END~~
+
+~~START~~
+varchar
+Hello ?????? Emoji Test ?????????
+~~END~~
+
+~~START~~
+nchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻     
+~~END~~
+
+~~START~~
+nvarchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+~~END~~
+
+~~START~~
+text
+Hello ?????? Emoji Test ?????????
+~~END~~
+
+~~START~~
+ntext
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+~~END~~
+
+~~START~~
+char
+Hello ?????? Emoji Test ?????????                 
+~~END~~
+
+~~START~~
+varchar
+Hello ?????? Emoji Test ?????????
+~~END~~
+
+~~START~~
+nchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻     
+~~END~~
+
+~~START~~
+nvarchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+~~END~~
+
+~~START~~
+text
+Hello ?????? Emoji Test ?????????
+~~END~~
+
+~~START~~
+ntext
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+~~END~~
+
+~~START~~
+char
+Hello ?????? Emoji Test ?????????                 
+~~END~~
+
+~~START~~
+varchar
+Hello ?????? Emoji Test ?????????
+~~END~~
+
+~~START~~
+nchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻     
+~~END~~
+
+~~START~~
+nvarchar
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+~~END~~
+
+~~START~~
+text
+Hello ?????? Emoji Test ?????????
+~~END~~
+
+~~START~~
+ntext
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+~~END~~
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------
+-- Emojis, chinese, japenese, arabic mixed string
+--------------------------------------------------
+DECLARE @mixed_string NVARCHAR(50) = N'Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123';
+-- All 36 combinations for Mixed International characters
+SELECT CAST(CAST(@mixed_string AS CHAR(50)) AS CHAR(50)) AS Result1;
+SELECT CAST(CAST(@mixed_string AS CHAR(50)) AS VARCHAR(50)) AS Result2;
+SELECT CAST(CAST(@mixed_string AS CHAR(50)) AS NCHAR(50)) AS Result3;
+SELECT CAST(CAST(@mixed_string AS CHAR(50)) AS NVARCHAR(50)) AS Result4;
+SELECT CAST(CAST(@mixed_string AS CHAR(50)) AS TEXT) AS Result5;
+SELECT CAST(CAST(@mixed_string AS CHAR(50)) AS NTEXT) AS Result6;
+SELECT CAST(CAST(@mixed_string AS VARCHAR(50)) AS CHAR(50)) AS Result7;
+SELECT CAST(CAST(@mixed_string AS VARCHAR(50)) AS VARCHAR(50)) AS Result8;
+SELECT CAST(CAST(@mixed_string AS VARCHAR(50)) AS NCHAR(50)) AS Result9;
+SELECT CAST(CAST(@mixed_string AS VARCHAR(50)) AS NVARCHAR(50)) AS Result10;
+SELECT CAST(CAST(@mixed_string AS VARCHAR(50)) AS TEXT) AS Result11;
+SELECT CAST(CAST(@mixed_string AS VARCHAR(50)) AS NTEXT) AS Result12;
+SELECT CAST(CAST(@mixed_string AS NCHAR(50)) AS CHAR(50)) AS Result13;
+SELECT CAST(CAST(@mixed_string AS NCHAR(50)) AS VARCHAR(50)) AS Result14;
+SELECT CAST(CAST(@mixed_string AS NCHAR(50)) AS NCHAR(50)) AS Result15;
+SELECT CAST(CAST(@mixed_string AS NCHAR(50)) AS NVARCHAR(50)) AS Result16;
+SELECT CAST(CAST(@mixed_string AS NCHAR(50)) AS TEXT) AS Result17;
+SELECT CAST(CAST(@mixed_string AS NCHAR(50)) AS NTEXT) AS Result18;
+SELECT CAST(CAST(@mixed_string AS NVARCHAR(50)) AS CHAR(50)) AS Result19;
+SELECT CAST(CAST(@mixed_string AS NVARCHAR(50)) AS VARCHAR(50)) AS Result20;
+SELECT CAST(CAST(@mixed_string AS NVARCHAR(50)) AS NCHAR(50)) AS Result21;
+SELECT CAST(CAST(@mixed_string AS NVARCHAR(50)) AS NVARCHAR(50)) AS Result22;
+SELECT CAST(CAST(@mixed_string AS NVARCHAR(50)) AS TEXT) AS Result23;
+SELECT CAST(CAST(@mixed_string AS NVARCHAR(50)) AS NTEXT) AS Result24;
+SELECT CAST(CAST(@mixed_string AS TEXT) AS CHAR(50)) AS Result25;
+SELECT CAST(CAST(@mixed_string AS TEXT) AS VARCHAR(50)) AS Result26;
+SELECT CAST(CAST(@mixed_string AS TEXT) AS NCHAR(50)) AS Result27;
+SELECT CAST(CAST(@mixed_string AS TEXT) AS NVARCHAR(50)) AS Result28;
+SELECT CAST(CAST(@mixed_string AS TEXT) AS TEXT) AS Result29;
+SELECT CAST(CAST(@mixed_string AS TEXT) AS NTEXT) AS Result30;
+SELECT CAST(CAST(@mixed_string AS NTEXT) AS CHAR(50)) AS Result31;
+SELECT CAST(CAST(@mixed_string AS NTEXT) AS VARCHAR(50)) AS Result32;
+SELECT CAST(CAST(@mixed_string AS NTEXT) AS NCHAR(50)) AS Result33;
+SELECT CAST(CAST(@mixed_string AS NTEXT) AS NVARCHAR(50)) AS Result34;
+SELECT CAST(CAST(@mixed_string AS NTEXT) AS TEXT) AS Result35;
+SELECT CAST(CAST(@mixed_string AS NTEXT) AS NTEXT) AS Result36;
+GO
+~~START~~
+char
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+varchar
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+nchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
+~~END~~
+
+~~START~~
+nvarchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
+~~END~~
+
+~~START~~
+text
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+ntext
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+char
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+varchar
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+nchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
+~~END~~
+
+~~START~~
+nvarchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+text
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+ntext
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+char
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+varchar
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+nchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
+~~END~~
+
+~~START~~
+nvarchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+text
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+ntext
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+char
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+varchar
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+nchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
+~~END~~
+
+~~START~~
+nvarchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+text
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+ntext
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+char
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+varchar
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+nchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
+~~END~~
+
+~~START~~
+nvarchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+text
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+ntext
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+char
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+varchar
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+nchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
+~~END~~
+
+~~START~~
+nvarchar
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+~~START~~
+text
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+~~END~~
+
+~~START~~
+ntext
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+~~END~~
+
+
+
+--------------------------------
+-- Collation with nested case
+--------------------------------
+DECLARE @collation_test NVARCHAR(150) = N'Collation Test 你好 こんにちは àáâã ÀÁÂà Case Test';
+SELECT CAST(CAST(@collation_test AS VARCHAR(150)) AS TEXT) COLLATE SQL_Latin1_General_CP1_CI_AS AS Result1;
+SELECT CAST(CAST(@collation_test AS VARCHAR(150)) AS NTEXT) COLLATE SQL_Latin1_General_CP1_CS_AS AS Result2;
+SELECT CAST(CAST(@collation_test AS NVARCHAR(150)) AS NTEXT) COLLATE Chinese_PRC_CI_AS AS Result3;
+SELECT CAST(CAST(@collation_test AS NCHAR(150)) AS TEXT) COLLATE Japanese_CI_AS AS Result4;
+GO
+~~START~~
+text
+Collation Test ?? ????? àáâã ÀÁÂà Case Test
+~~END~~
+
+~~START~~
+ntext
+Collation Test 你好 こんにちは àáâã ÀÁÂà Case Test
+~~END~~
+
+~~START~~
+ntext
+Collation Test 你好 こんにちは àáâã ÀÁÂà Case Test
+~~END~~
+
+~~START~~
+text
+Collation Test ?好 こんにちは ???? ???? Case Test
+~~END~~
+
+
+DECLARE @collation_test NVARCHAR(50) = N'Collation Test 你好 こんにちは àáâã';
+SELECT CAST(CAST(@collation_test AS NVARCHAR(50)) AS NCHAR(50)) COLLATE Chinese_PRC_CI_AS AS Result1
+SELECT CAST(CAST(@collation_test AS NVARCHAR(50)) AS NVARCHAR(50)) COLLATE Japanese_CI_AS AS Result2;
+SELECT CAST(CAST(@collation_test AS VARCHAR(50)) AS NVARCHAR(50)) COLLATE SQL_Latin1_General_CP1_CI_AS AS Result3;
+GO
+~~START~~
+nchar
+Collation Test 你好 こんにちは àáâã                      
+~~END~~
+
+~~START~~
+nvarchar
+Collation Test 你好 こんにちは àáâã
+~~END~~
+
+~~START~~
+nvarchar
+Collation Test 你好 こんにちは àáâã
+~~END~~
+
+
+---------
+-- UDT 
+---------
+-- Test Cases for NCHAR_TYPE
+DECLARE @nchar_test1 nchar_type = N'  abc🙂defghi🙂🙂    '
+DECLARE @nchar_test2 nchar_type = N'🎌こんにちは🌸世界🗾'
+SELECT @nchar_test1, @nchar_test2
+GO
+~~START~~
+nchar#!#nchar
+  abc🙂defghi🙂🙂             #!#🎌こんにちは🌸世界🗾                 
+~~END~~
+
+
+-- Test Cases for NVARCHAR_TYPE
+DECLARE @nvarchar_test1 nvarchar_type = N'  abc🙂defghi🙂🙂    '
+DECLARE @nvarchar_test2 nvarchar_type = N'🎌こんにちは🌸世界🗾'
+SELECT @nvarchar_test1, @nvarchar_test2
+GO
+~~START~~
+nvarchar#!#nvarchar
+  abc🙂defghi🙂🙂    #!#🎌こんにちは🌸世界🗾
+~~END~~
+
+
+-- Test Cases for CHAR_TYPE
+DECLARE @char_test1 char_type = '  abc🙂defghi🙂🙂    '
+DECLARE @char_test2 char_type = 'Testing CHAR   '
+SELECT @char_test1, @char_test2
+GO
+~~START~~
+char#!#char
+  abc?defghi??                #!#Testing CHAR                  
+~~END~~
+
+
+-- Test Cases for VARCHAR_TYPE
+DECLARE @varchar_test1 varchar_type = '  abc🙂defghi🙂🙂    '
+DECLARE @varchar_test2 varchar_type = 'Testing VARCHAR ✌🏻  '
+SELECT @varchar_test1, @varchar_test2
+GO
+~~START~~
+varchar#!#varchar
+  abc?defghi??    #!#Testing VARCHAR ??  
+~~END~~
+
+
+
+-- Testing with Special Characters
+DECLARE @nchar_special nchar_type = N'Special©®™€£¥'
+DECLARE @nvarchar_special nvarchar_type = N'Special©®™€£¥'
+DECLARE @char_special char_type = 'Special©®™€£¥'
+DECLARE @varchar_special varchar_type = 'Special©®™€£¥'
+SELECT @nchar_special, @nvarchar_special, @char_special, @varchar_special
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: character with byte sequence 0x80 0x3f in encoding "GBK" has no equivalent in encoding "UTF8")~~
+
+
+
+-- Testing with NULL values
+DECLARE @nchar_null nchar_type = NULL
+DECLARE @nvarchar_null nvarchar_type = NULL
+DECLARE @char_null char_type = NULL
+DECLARE @varchar_null varchar_type = NULL
+SELECT @nchar_null, @nvarchar_null, @char_null, @varchar_null
+GO
+~~START~~
+nchar#!#nvarchar#!#char#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+
+-- Testing with Empty Strings
+DECLARE @nchar_empty nchar_type = N'';
+DECLARE @nvarchar_empty nvarchar_type = N'';
+DECLARE @char_empty char_type = '';
+DECLARE @varchar_empty varchar_type = '';
+SELECT @nchar_empty AS 'NCHAR_Empty', LEN(@nchar_empty) AS 'Length1';
+SELECT @nvarchar_empty AS 'NVARCHAR_Empty', LEN(@nvarchar_empty) AS 'Length2';
+SELECT @char_empty AS 'CHAR_Empty', LEN(@char_empty) AS 'Length3';
+SELECT @varchar_empty AS 'VARCHAR_Empty', LEN(@varchar_empty) AS 'Length4';
+GO
+~~START~~
+nchar#!#int
+                              #!#0
+~~END~~
+
+~~START~~
+nvarchar#!#int
+#!#0
+~~END~~
+
+~~START~~
+char#!#int
+                              #!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+#!#0
+~~END~~
+
+
+
+-- Test conversion between different UDT types
+DECLARE @sourceString nchar_type = N'Test String 测试 🙂🌸🎌🗾';
+SELECT
+    -- Original Value
+    @sourceString AS 'Original (NCHAR_type)',
+    -- Convert to other Unicode types
+    CAST(@sourceString AS nvarchar_type) AS 'To NVARCHAR_type',
+    -- Convert to non-Unicode types
+    CAST(@sourceString AS char_type) AS 'To CHAR_type',
+    CAST(@sourceString AS varchar_type) AS 'To VARCHAR_type',
+    -- Convert to binary types
+    CAST(@sourceString AS binary_type) AS 'To BINARY_type',
+    CAST(@sourceString AS varbinary_type) AS 'To VARBINARY_type',
+    -- Convert back from binary to string types
+    CAST(CAST(@sourceString AS binary_type) AS nchar_type) AS 'BINARY back to NCHAR_type',
+    CAST(CAST(@sourceString AS varbinary_type) AS nvarchar_type) AS 'VARBINARY back to NVARCHAR_type',
+    -- Length comparisons
+    LEN(@sourceString) AS 'Original Length'
+GO
+~~START~~
+nchar#!#nvarchar#!#char#!#varchar#!#binary#!#varbinary#!#nchar#!#nvarchar#!#int
+Test String 测试 🙂🌸🎌🗾       #!#Test String 测试 🙂🌸🎌🗾       #!#Test String 测试 ????         #!#Test String 测试 ????         #!#5465737420537472696E#!#5465737420537472696E#!#0x5465737420537472696e        #!#敔瑳匠牴湩#!#19
+~~END~~
+
+
+
+
+
+
+-- Test: Basic SET and SELECT operations
+DECLARE @varchar_var varchar_type;
+DECLARE @nvarchar_var nvarchar_type;
+DECLARE @char_var char_type;
+DECLARE @nchar_var nchar_type;
+-- SET operations
+SET @varchar_var = 'Test VARCHAR';
+SET @nvarchar_var = N'Test NVARCHAR 你好 😊';
+SET @char_var = 'Test CHAR';
+SET @nchar_var = N'Test NCHAR 世界 ☺️';
+SELECT 
+    @varchar_var AS VARCHAR_Value,
+    @nvarchar_var AS NVARCHAR_Value,
+    @char_var AS CHAR_Value,
+    @nchar_var AS NCHAR_Value;
+-- SELECT operations
+SELECT @varchar_var = 'Test VARCHAR';
+SELECT @nvarchar_var = N'Test NVARCHAR 你好 😊';
+SELECT @char_var = 'Test CHAR';
+SELECT @nchar_var = N'Test NCHAR 世界 ☺️';
+GO
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+Test VARCHAR#!#Test NVARCHAR 你好 😊#!#Test CHAR                     #!#Test NCHAR 世界 ☺️              
+~~END~~
+
+
+
+
+---------------------------
+-- implicite function calls
+---------------------------
+DECLARE @varchar_text VARCHAR(50) = 'VARCHAR Text';
+DECLARE @nvarchar_text NVARCHAR(50) = N'NVARCHAR Text 你好 😌😌😌';
+DECLARE @char_text CHAR(50) = 'CHAR Text';
+DECLARE @nchar_text NCHAR(50) = N'NCHAR Text 世界 😌😌😌';
+-- Test 1: Basic Type Casting
+SELECT 'Test 1: Basic Variable Casting' AS TestCase;
+SELECT 
+    babel_4803_varchar_func(@varchar_text) AS From_VARCHAR,
+    babel_4803_nvarchar_func(@nvarchar_text ) AS From_NVARCHAR,
+    babel_4803_char_func(@char_text) AS From_CHAR,
+    babel_4803_nchar_func(@nchar_text) AS From_NCHAR;
+GO
+~~START~~
+varchar
+Test 1: Basic Variable Casting
+~~END~~
+
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+VARCHAR Text#!#NVARCHAR Text 你好 😌😌😌#!#CHAR Text                                         #!#NCHAR Text 世界 😌😌😌                              
+~~END~~
+
+
+-- Test 2: Cross-Type Casting
+SELECT 'Test 2: Cross-Type Casting' AS TestCase;
+SELECT 
+    babel_4803_varchar_func(CAST(N'NVARCHAR to VARCHAR 你好' AS NVARCHAR(50))) AS NVARCHAR_to_VARCHAR,
+    babel_4803_nvarchar_func(CAST('VARCHAR to NVARCHAR 你好 😁' AS VARCHAR(50))) AS VARCHAR_to_NVARCHAR,
+    babel_4803_nvarchar_func(CAST('NCHAR to NVARCHAR 你好 😁' AS VARCHAR(50))) AS NCHAR_to_NVARCHAR,
+    babel_4803_char_func(CAST(N'NCHAR to CHAR 你好 😁' AS NCHAR(50))) AS NCHAR_to_CHAR,
+    babel_4803_nchar_func(CAST('CHAR to NCHAR 你好 😁' AS CHAR(50))) AS CHAR_to_NCHAR;
+GO
+~~START~~
+varchar
+Test 2: Cross-Type Casting
+~~END~~
+
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#char#!#nchar
+NVARCHAR to VARCHAR 你好#!#VARCHAR to NVARCHAR 你好 😁#!#NCHAR to NVARCHAR 你好 😁#!#NCHAR to CHAR 你好 ?                              #!#CHAR to NCHAR 你好 ?                                
+~~END~~
+
+
+-- Test 3: Special Characters
+SELECT 'Test 3: Special Characters' AS TestCase;
+SELECT 
+    babel_4803_varchar_func('Special: àáâãäçèéêë') AS Special_VARCHAR,
+    babel_4803_nvarchar_func(N'Special: 你好世界 😀😍🌟💖') AS Special_NVARCHAR,
+    babel_4803_char_func('Special: ñóôõö') AS Special_CHAR,
+    babel_4803_nchar_func(N'Special: こんにちは') AS Special_NCHAR;
+GO
+~~START~~
+varchar
+Test 3: Special Characters
+~~END~~
+
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+Special: àá????èéê?#!#Special: 你好世界 😀😍🌟💖#!#Special: ?ó???                                   #!#Special: こんにちは                                    
+~~END~~
+
+
+-- Test 4: NULL and Empty Strings
+SELECT 'Test 4: NULL and Empty Strings' AS TestCase;
+SELECT 
+    babel_4803_varchar_func(NULL) AS NULL_VARCHAR,
+    babel_4803_nvarchar_func(NULL) AS NULL_NVARCHAR,
+    babel_4803_char_func('') AS Empty_CHAR,
+    babel_4803_nchar_func(N'') AS Empty_NCHAR;
+GO
+~~START~~
+varchar
+Test 4: NULL and Empty Strings
+~~END~~
+
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+<NULL>#!#<NULL>#!#                                                  #!#                                                  
+~~END~~
+
+
+
+-- Test 5: Edge Cases
+SELECT 'Test 10: Edge Cases' AS TestCase;
+SELECT 
+    babel_4803_varchar_func(CHAR(0)) AS Null_Char_VARCHAR,
+    babel_4803_nvarchar_func(NCHAR(0)) AS Null_Char_NVARCHAR,
+    babel_4803_char_func(SPACE(50)) AS All_Spaces_CHAR,
+    babel_4803_nchar_func(REPLICATE(N'　', 50)) AS Unicode_Spaces_NCHAR;
+GO
+~~START~~
+varchar
+Test 10: Edge Cases
+~~END~~
+
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+#!##!#                                                  #!#　　　　　　　　　　　　　　　　　　　　　　　　　                         
+~~END~~
+
+
+
+
+
+------------------
+-- Collation 
+------------------
+-- Test Set for Different Collations across Character Types
+-- Test : Japanese Text
+DECLARE @jp_char CHAR(50) = N'こんにちは世界';
+DECLARE @jp_varchar VARCHAR(50) = N'🎌こんにちは🌸世界🗾';
+DECLARE @jp_nchar NCHAR(50) = N'こんにちは世界';
+DECLARE @jp_nvarchar NVARCHAR(50) = N'🎌こんにちは🌸世界🗾';
+SELECT 'Japanese Collation Tests' AS TestCase;
+SELECT 
+    @jp_char COLLATE Japanese_CI_AS AS CHAR_Japanese,
+    @jp_varchar COLLATE Japanese_CI_AS AS VARCHAR_Japanese,
+    @jp_nchar COLLATE Japanese_CI_AS AS NCHAR_Japanese,
+    @jp_nvarchar COLLATE Japanese_CI_AS AS NVARCHAR_Japanese;
+GO
+~~START~~
+varchar
+Japanese Collation Tests
+~~END~~
+
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+こんにちは世界                                    #!#?こんにちは?世界?#!#こんにちは世界                                           #!#🎌こんにちは🌸世界🗾
+~~END~~
+
+
+
+
+-- Test : Arabic Text
+DECLARE @ar_char CHAR(30) = N'مرحبا بالعالم';
+DECLARE @ar_varchar VARCHAR(30) = N'بطاقة التسجيل - قياسية';
+DECLARE @ar_nchar NCHAR(30) = N'مرحبا بالعالم';
+DECLARE @ar_nvarchar NVARCHAR(30) = N'بطاقة التسجيل - قياسية';
+SELECT 'Arabic Collation Tests' AS TestCase;
+SELECT 
+    @ar_char COLLATE Arabic_CI_AS AS CHAR_Arabic,
+    @ar_varchar COLLATE Arabic_CI_AS AS VARCHAR_Arabic,
+    @ar_nchar COLLATE Arabic_CI_AS AS NCHAR_Arabic,
+    @ar_nvarchar COLLATE Arabic_CI_AS AS NVARCHAR_Arabic;
+-- Compare with other collations
+SELECT 
+    @ar_varchar COLLATE SQL_Latin1_General_CP1_CI_AS AS Latin1_Collation,
+    @ar_varchar COLLATE Arabic_CI_AS AS Arabic_Collation;
+GO
+~~START~~
+varchar
+Arabic Collation Tests
+~~END~~
+
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+????? ???????                 #!#بطاقة التسجيل - قياسية#!#مرحبا بالعالم                 #!#بطاقة التسجيل - قياسية
+~~END~~
+
+~~START~~
+varchar#!#varchar
+????? ??????? - ??????#!#بطاقة التسجيل - قياسية
+~~END~~
+
+
+
+
+-- Test : Chinese Text
+DECLARE @cn_char CHAR(30) = N'你好世界';
+DECLARE @cn_varchar VARCHAR(30) = N'比尔·拉莫斯';
+DECLARE @cn_nchar NCHAR(30) = N'你好世界';
+DECLARE @cn_nvarchar NVARCHAR(30) = N'比尔·拉莫斯';
+SELECT 'Chinese Collation Tests' AS TestCase;
+SELECT 
+    @cn_char COLLATE Chinese_PRC_CI_AS AS CHAR_Chinese,
+    @cn_varchar COLLATE Chinese_PRC_CI_AS AS VARCHAR_Chinese,
+    @cn_nchar COLLATE Chinese_PRC_CI_AS AS NCHAR_Chinese,
+    @cn_nvarchar COLLATE Chinese_PRC_CI_AS AS NVARCHAR_Chinese;
+-- Compare with other collations
+SELECT 
+    @cn_varchar COLLATE SQL_Latin1_General_CP1_CI_AS AS Latin1_Collation,
+    @cn_varchar COLLATE Chinese_PRC_CI_AS AS Chinese_Collation;
+GO
+~~START~~
+varchar
+Chinese Collation Tests
+~~END~~
+
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+你好世界                      #!#比尔·拉莫斯#!#你好世界                          #!#比尔·拉莫斯
+~~END~~
+
+~~START~~
+varchar#!#varchar
+??·???#!#比尔·拉莫斯
+~~END~~
+
+
+
+-- Test : Mixed Language Text
+DECLARE @mixed_nchar NCHAR(30) = N'Hello 你好 こんにちは مرحبا';
+SELECT 'Mixed Language Tests' AS TestCase;
+SELECT 
+    @mixed_nchar COLLATE SQL_Latin1_General_CP1_CI_AS AS Latin1_Collation,
+    @mixed_nchar COLLATE Japanese_CI_AS AS Japanese_Collation,
+    @mixed_nchar COLLATE Chinese_PRC_CI_AS AS Chinese_Collation,
+    @mixed_nchar COLLATE Arabic_CI_AS AS Arabic_Collation;
+GO
+~~START~~
+varchar
+Mixed Language Tests
+~~END~~
+
+~~START~~
+nchar#!#nchar#!#nchar#!#nchar
+Hello 你好 こんにちは مرحبا          #!#Hello 你好 こんにちは مرحبا          #!#Hello 你好 こんにちは مرحبا          #!#Hello 你好 こんにちは مرحبا          
+~~END~~
+
+
+
+-- Test : Special Characters and Emoji
+DECLARE @special_chars CHAR(100) = N'Hello🌟World🌍こんにちは🎌世界🗾مرحبا⭐';
+SELECT 'Special Characters Test' AS TestCase;
+SELECT 
+    @special_chars COLLATE Japanese_CI_AS AS Japanese_Special,
+    @special_chars COLLATE Chinese_PRC_CI_AS AS Chinese_Special
+GO
+~~START~~
+varchar
+Special Characters Test
+~~END~~
+
+~~START~~
+char#!#char
+Hello?World?こんにちは?世界???????                                                                  #!#Hello?World?こんにちは?世界???????                                                                  
+~~END~~
+
+
+------------------------------
+-- misc, nchar vs nvarchar
+------------------------------
+DECLARE @inputString NCHAR(50) = cast(N'  abc🙂defghi🙂🙂    ' as nvarchar)
+select @inputString
+GO
+~~START~~
+nchar
+  abc🙂defghi🙂🙂                                 
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = cast(N'  abc🙂defghi🙂🙂    ' as nchar)
+select @inputString
+GO
+~~START~~
+nchar
+  abc🙂defghi🙂🙂                                 
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = cast(N'  abc🙂defghi🙂🙂    ' as varchar)
+select @inputString
+GO
+~~START~~
+nchar
+  abc🙂defghi🙂🙂                                 
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = cast(N'  abc🙂defghi🙂🙂    ' as char)
+select @inputString
+GO
+~~START~~
+nchar
+  abc?defghi??                                    
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = cast(N'  abc🙂defghi🙂🙂    ' as nchar)
+select @inputString
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂                
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = cast(N'  abc🙂defghi🙂🙂    ' as nvarchar)
+select @inputString
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = cast(N'  abc🙂defghi🙂🙂    ' as varchar)
+select @inputString
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = cast(N'  abc🙂defghi🙂🙂    ' as char)
+select @inputString
+GO
+~~START~~
+nvarchar
+  abc?defghi??                
+~~END~~
+
+
+SELECT CAST(CAST('你好世界 Text 中文 😀😍🌟💖' AS VARCHAR) AS NCHAR)
+go
+~~START~~
+nchar
+你好世界 Text 中文 😀😍🌟💖         
+~~END~~
+
+
+SELECT CAST(CAST('你好世界 Text 中文 😀😍🌟💖' AS VARCHAR) AS NVARCHAR)
+go
+~~START~~
+nvarchar
+你好世界 Text 中文 😀😍🌟💖
+~~END~~
+
+
+SELECT CAST(CAST('你好世界 Text 中文 😀😍🌟💖' AS CHAR) AS NCHAR)
+go
+~~START~~
+nchar
+你好世界 Text 中文 😀😍🌟💖         
+~~END~~
+
+
+SELECT CAST(CAST('你好世界 Text 中文 😀😍🌟💖' AS CHAR) AS NVARCHAR)
+go
+~~START~~
+nvarchar
+你好世界 Text 中文 😀😍🌟💖         
+~~END~~
+
+
+---------------------------
+-- proc and func testing
+---------------------------
+Exec babel_4803_proc_nchar
+GO
+~~START~~
+nchar#!#int
+Hello 🙂🙂世界                            #!#10
+~~END~~
+
+Exec babel_4803_proc_nvarchar
+GO
+~~START~~
+nvarchar#!#int
+Hello 🙂🙂世界#!#10
+~~END~~
+
+Exec babel_4803_proc_ntext
+GO
+~~START~~
+ntext
+Hello 🙂🙂世界
+~~END~~
+
+Exec babel_4803_proc_char
+GO
+~~START~~
+char
+Hello ?? ??世界                         
+~~END~~
+
+Exec babel_4803_proc_varchar
+GO
+~~START~~
+varchar
+Hello ?? ??世界
+~~END~~
+
+
+EXEC babel_4803_proc1 N'TESTこんにちは🙂🙂世界'
+GO
+~~START~~
+nchar
+TESTこんにちは??世界                 
+~~END~~
+
+EXEC babel_4803_proc2 N'TESTこんにちは🙂🙂世界'
+GO
+~~START~~
+nvarchar
+TESTこんにちは🙂🙂世界
+~~END~~
+
+EXEC babel_4803_proc3 N'TESTこんにちは🙂🙂世界'
+GO
+~~START~~
+char
+TESTこんにちは??世界          
+~~END~~
+
+EXEC babel_4803_proc4 N'TESTこんにちは🙂🙂世界'
+GO
+~~START~~
+varchar
+TESTこんにちは??世界
+~~END~~
+
+EXEC babel_4803_proc5 N'TESTこんにちは🙂🙂世界'
+GO
+~~START~~
+nvarchar#!#varchar#!#char
+TESTこんにちは??世界          #!#TESTこんにちは??世界          #!#TESTこんにちは??世界                    
+~~END~~
+
+EXEC babel_4803_proc6 N'TESTこんにちは🙂🙂世界'
+GO
+~~START~~
+nchar#!#varchar#!#char
+TESTこんにちは🙂🙂世界                         #!#TESTこんにちは??世界#!#TESTこんにちは??世界                    
+~~END~~
+
+EXEC babel_4803_proc7 N'TESTこんにちは🙂🙂世界'
+GO
+~~START~~
+nchar#!#nvarchar#!#char
+TESTこんにちは🙂🙂世界                         #!#TESTこんにちは🙂🙂世界#!#TESTこんにちは??世界                    
+~~END~~
+
+EXEC babel_4803_proc8 N'TESTこんにちは🙂🙂世界'
+GO
+~~START~~
+nchar#!#nvarchar#!#varchar
+TESTこんにちは??世界                           #!#TESTこんにちは??世界          #!#TESTこんにちは??世界          
+~~END~~
+
+
+-- testing with Collate Clause
+EXEC babel_4803_proc9
+GO
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar#!#char#!#varchar#!#nchar#!#nvarchar
+こん 世界                     #!#こん 世界#!#こん 世界                         #!#こん 世界#!#こん 世界                     #!#こん 世界#!#こん 世界                         #!#こん 世界
+~~END~~
+
+EXEC babel_4803_proc10 N'こん 世界',N'こん 世界',N'こん 世界',N'こん 世界'
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nchar#!#varchar#!#char#!#nvarchar#!#nchar
+こん 世界#!#こん 世界                     #!#こん 世界#!#こん 世界                         #!#こん 世界#!#こん 世界                     #!#こん 世界#!#こん 世界                         
+~~END~~
+
+
+
+SELECT babel_4803_nchar_func1()
+GO
+~~START~~
+nchar
+  abc🙂defghi🙂🙂                                 
+~~END~~
+
+SELECT babel_4803_nvarchar_func1()
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+SELECT babel_4803_char_func1()
+GO
+~~START~~
+char
+  Hello ??世界                                    
+~~END~~
+
+SELECT babel_4803_varchar_func1()
+GO
+~~START~~
+varchar
+  Hello ??世界   
+~~END~~
+
+
+-- testing with collate clause
+SELECT babel_4803_varchar_func2(N'こんにちはこんにちは')
+GO
+~~START~~
+varchar
+こんにちはこんにちは
+~~END~~
+
+SELECT babel_4803_char_func2(N'こんにちはこんにちは')
+GO
+~~START~~
+char
+こんにちはこんにちは                              
+~~END~~
+
+
+-------------------------------------
+-- Truncation with multibyte strings
+--------------------------------------
+-- Japense
+DECLARE @jap_trunc_nchar NCHAR(5) = N'こんにちはこんにちは'
+DECLARE @jap_trunc_nvarchar NVARCHAR(5) = N'こんにちはこんにちは'
+DECLARE @jap_trunc_char CHAR(5) = N'こんにちはこんにちは'
+DECLARE @jap_trunc_varchar VARCHAR(5) = N'こんにちはこんにちは'
+SELECT 
+    @jap_trunc_nchar, LEN(@jap_trunc_nchar), 
+    @jap_trunc_nvarchar, LEN(@jap_trunc_nvarchar), 
+    @jap_trunc_char, LEN(@jap_trunc_char), 
+    @jap_trunc_varchar, LEN(@jap_trunc_varchar)
+GO
+~~START~~
+nchar#!#int#!#nvarchar#!#int#!#char#!#int#!#varchar#!#int
+こんにちは#!#5#!#こんにちは#!#5#!#こん #!#2#!#こん#!#2
+~~END~~
+
+
+-- Chinese characters
+DECLARE @chi_trunc_nchar NCHAR(5) = N'你好世界测试你好世界'
+DECLARE @chi_trunc_nvarchar NVARCHAR(5) = N'你好世界测试你好世界'
+DECLARE @chi_trunc_char CHAR(5) = N'你好世界测试你好世界'
+DECLARE @chi_trunc_varchar VARCHAR(5) = N'你好世界测试你好世界'
+SELECT 
+    @chi_trunc_nchar ,LEN(@chi_trunc_nchar) AS nchar_length,
+    @chi_trunc_nvarchar ,LEN(@chi_trunc_nvarchar) AS nvarchar_length,
+    @chi_trunc_char ,LEN(@chi_trunc_char) AS char_length,
+    @chi_trunc_varchar ,LEN(@chi_trunc_varchar) AS varchar_length
+GO
+~~START~~
+nchar#!#int#!#nvarchar#!#int#!#char#!#int#!#varchar#!#int
+你好世界测#!#5#!#你好世界测#!#5#!#你好 #!#2#!#你好#!#2
+~~END~~
+
+
+-- surrogate pairs
+DECLARE @emoji_trunc_nchar NCHAR(6) = N'😀😁😂🤣😃😀😍🌟😉😊'
+DECLARE @emoji_trunc_nvarchar NVARCHAR(6) = N'😀😁😂🤣😃😀😍🌟😉😊'
+DECLARE @emoji_trunc_char CHAR(6) = N'😀😁😂🤣😃😀😍🌟😉😊'
+DECLARE @emoji_trunc_varchar VARCHAR(6) = N'😁😂😀😍🌟😆😉😊😉'
+    
+SELECT 
+    @emoji_trunc_nchar ,LEN(@emoji_trunc_nchar) AS nchar_length,
+    @emoji_trunc_nvarchar ,LEN(@emoji_trunc_nvarchar) AS nvarchar_length,
+    @emoji_trunc_char ,LEN(@emoji_trunc_char) AS char_length,
+    @emoji_trunc_varchar ,LEN(@emoji_trunc_varchar) AS varchar_length
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value too long for type character(6) as UTF16 output)~~
+
+
+-- mixed
+DECLARE @mixed_basic_nchar NCHAR(8) = N'你好こんに😀世界🌍テスト🚀测试💡'
+DECLARE @mixed_basic_nvarchar NVARCHAR(8) = N'你好こんに😀世界🌍テスト🚀测试💡'
+DECLARE @mixed_basic_char CHAR(8) = N'你好こんに😀世界🌍テスト🚀测试💡'
+DECLARE @mixed_basic_varchar VARCHAR(8) = N'你好こんに😀世界🌍テスト🚀测试💡'
+    
+SELECT 
+    @mixed_basic_nchar,LEN(@mixed_basic_nchar) AS nchar_length,
+    @mixed_basic_nvarchar,LEN(@mixed_basic_nvarchar) AS nvarchar_length,
+    @mixed_basic_char,LEN(@mixed_basic_char) AS char_length,
+    @mixed_basic_varchar,LEN(@mixed_basic_varchar) AS varchar_length
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value too long for type character(8) as UTF16 output)~~
+
+
+---------------------------------------------------------
+-- views to show that return descriptor, is not affected
+-----------------------------------------------------
+SELECT * FROM babel_4803_view1;
+GO
+~~START~~
+nchar
+  abc🙂defghi🙂🙂                                 
+~~END~~
+
+SELECT * FROM babel_4803_view2;
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+SELECT * FROM babel_4803_view3;
+GO
+~~START~~
+char
+  Hello ??世界                                    
+~~END~~
+
+SELECT * FROM babel_4803_view4;
+GO
+~~START~~
+varchar
+  Hello ??世界   
+~~END~~
+
+SELECT * FROM babel_4803_view5;
+GO
+~~START~~
+nvarchar
+你好世界 Text にち 😀😍🌟💖
+~~END~~
+
+SELECT * FROM babel_4803_view6;
+GO
+~~START~~
+nchar
+你好世界 Text 中文 😀😍🌟💖         
+~~END~~
+
+SELECT * FROM babel_4803_view7;
+GO
+~~START~~
+nchar
+你好世界 Text 中文 😀😍🌟💖         
+~~END~~
+
+SELECT * FROM babel_4803_view8;
+GO
+~~START~~
+nvarchar
+你好世界 Text 中文 😀😍🌟💖
+~~END~~
+
+SELECT * FROM babel_4803_view9;
+GO
+~~START~~
+nchar
+你好世界 Text 中文 😀😍🌟💖         
+~~END~~
+
+SELECT * FROM babel_4803_view10;
+GO
+~~START~~
+nvarchar
+你好 Text 中文 😀💖
+~~END~~
+
+SELECT * FROM babel_4803_view11;
+GO
+~~START~~
+nchar
+你好 Text 中文 😀💖                                   
+~~END~~
+
+
