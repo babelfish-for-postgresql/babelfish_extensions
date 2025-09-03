@@ -3072,20 +3072,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				 * By default, TSQL view should be created with security_invoker
 				 * property. It adds security_invoker option to the options list.
 				 */
-				if (sql_dialect == SQL_DIALECT_TSQL && IS_TDS_CLIENT() && (stmt->createOrAlter || stmt->replace == false))
+				if (sql_dialect == SQL_DIALECT_TSQL &&
+					IS_TDS_CLIENT() &&
+					!InSecurityRestrictedOperation() &&
+					(stmt->createOrAlter || stmt->replace == false))
 				{
-					ListCell   *lc;
 					bool        security_invoker_found = false;
 
 					/* Check if security_invoker option already exists */
-					foreach(lc, stmt->options)
+					foreach_node(DefElem, defel, stmt->options)
 					{
-						DefElem    *defel = (DefElem *) lfirst(lc);
-
 						if (strcmp(defel->defname, "security_invoker") == 0)
 						{
 							/* Modify existing option to true */
-							defel->arg = (Node *) makeInteger(1);
+							defel->arg = (Node *) makeBoolean(true);
 							security_invoker_found = true;
 							break;
 						}
@@ -3096,8 +3096,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						DefElem *new_option;
 						new_option = makeDefElem("security_invoker",
-											(Node *) makeInteger(1),
-											-1);
+												 (Node *) makeBoolean(true),
+												 -1);
 						stmt->options = lappend(stmt->options, new_option);
 					}
 				}
