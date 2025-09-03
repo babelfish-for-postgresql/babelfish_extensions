@@ -1992,3 +1992,127 @@ nvarchar
 This is correct: master.dbo.sp_test_babel_5448_1
 ~~END~~
 
+
+-- tsql user=babel_cross_db_vu_prepare_l1 password=12345678
+-- CASE: cross-db views inside subquery/cte
+-- Cross-database view access with different users
+-- user should have access
+USE master;
+GO
+
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 ORDER BY id;
+GO
+~~START~~
+int#!#int#!#varchar#!#varchar
+~~END~~
+
+
+SELECT * FROM (SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2) AS derived ORDER BY id;
+GO
+~~START~~
+int#!#int#!#varchar#!#varchar
+~~END~~
+
+
+SELECT * FROM (SELECT * FROM (SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2) AS inner_derived) AS outer_derived ORDER BY id;
+GO
+~~START~~
+int#!#int#!#varchar#!#varchar
+~~END~~
+
+
+WITH cte AS (SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2) SELECT * FROM cte ORDER BY id;
+GO
+~~START~~
+int#!#int#!#varchar#!#varchar
+~~END~~
+
+
+WITH cte1 AS (SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2), cte2 AS (SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2) SELECT c1.id, c2.id as id2 FROM cte1 c1 JOIN cte2 c2 ON c1.id = c2.id ORDER BY c1.id;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+SELECT d1.id, d2.id as id2 FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 d1 JOIN my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 d2 ON d1.id = d2.id ORDER BY d1.id;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 v1 WHERE id IN (SELECT id FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 v2 WHERE v2.id > 1) ORDER BY id;
+GO
+~~START~~
+int#!#int#!#varchar#!#varchar
+~~END~~
+
+
+SELECT id FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 UNION SELECT id FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 ORDER BY id;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- tsql user=babel_cross_db_vu_prepare_l2 password=12345678
+-- user should not have access
+USE master;
+GO
+
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_cross_db_vu_prepare_v2)~~
+
+
+SELECT * FROM (SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2) AS derived ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_cross_db_vu_prepare_v2)~~
+
+
+SELECT * FROM (SELECT * FROM (SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2) AS inner_derived) AS outer_derived ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_cross_db_vu_prepare_v2)~~
+
+
+WITH cte AS (SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2) SELECT * FROM cte ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_cross_db_vu_prepare_v2)~~
+
+
+WITH cte1 AS (SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2), cte2 AS (SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2) SELECT c1.id, c2.id as id2 FROM cte1 c1 JOIN cte2 c2 ON c1.id = c2.id ORDER BY c1.id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_cross_db_vu_prepare_v2)~~
+
+
+SELECT d1.id, d2.id as id2 FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 d1 JOIN my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 d2 ON d1.id = d2.id ORDER BY d1.id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_cross_db_vu_prepare_v2)~~
+
+
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 v1 WHERE id IN (SELECT id FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 v2 WHERE v2.id > 1) ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_cross_db_vu_prepare_v2)~~
+
+
+SELECT id FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 UNION SELECT id FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_cross_db_vu_prepare_v2)~~
+
