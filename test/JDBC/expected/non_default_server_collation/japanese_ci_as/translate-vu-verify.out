@@ -1462,7 +1462,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1511,7 +1511,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?cydefghiyy                                    |
+|  x?c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1570,7 +1570,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1599,7 +1599,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1648,7 +1648,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1657,7 +1657,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1686,7 +1686,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1695,7 +1695,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1724,7 +1724,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1733,7 +1733,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~START~~
 nvarchar
-|  x🙂cydefghiyy                                    |
+|  x🙂c🙂defghi🙂🙂                                    |
 ~~END~~
 
 
@@ -1872,7 +1872,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~START~~
 nvarchar
-|  x?c🙂defghi🙂🙂    |
+|  x🙂c🙂defghi🙂🙂    |
 ~~END~~
 
 
