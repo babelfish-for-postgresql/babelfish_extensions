@@ -140,6 +140,29 @@ GO
 CREATE VIEW v3014_2_12 AS WITH cte AS (SELECT * FROM t3014_1 WHERE a IN (SELECT a FROM t3014_2)) SELECT * FROM cte;
 GO
 
+-- CASE 2.13: Subquery in CASE expression
+CREATE VIEW v3014_2_13 AS 
+SELECT a,
+    CASE (SELECT SUM(a) FROM t3014_2 b2 WHERE b2.a = t3014_1.a)
+        WHEN 1 THEN 'One'
+        WHEN 2 THEN 'Two'
+        WHEN 3 THEN 'Three'
+        ELSE 'Other'
+    END AS sum_case
+FROM t3014_1;
+GO
+
+-- CASE 2.14: EXISTS and NOT EXISTS subqueries in WHERE clause
+CREATE VIEW v3014_2_14 AS 
+SELECT t1.a,
+       CASE 
+           WHEN EXISTS (SELECT 1 FROM t3014_2 t2 WHERE t2.a = t1.a AND t2.a > 5) THEN 'Exists'
+           WHEN NOT EXISTS (SELECT 1 FROM t3014_2 t2 WHERE t2.a = t1.a AND t2.a <= 5) THEN 'Not Exists'
+           ELSE 'Neither'
+       END AS existence_check
+FROM t3014_1 t1;
+GO
+
 -- CASE 3 function/procedure references (negative tests)
 -- setup
 create function f3014_1() returns int as begin return 1 end;
@@ -308,6 +331,56 @@ GO
 CREATE VIEW v3014_8_4 AS SELECT * FROM t3014_1;
 GO
 
+-- CASE 9: Trigger ownership chaining scenarios
+-- Base tables for triggers
+CREATE TABLE t3014_9_1 (a INT);
+GO
+CREATE TABLE t3014_9_2 (a INT);
+GO
+CREATE TABLE sch3014_b.t3014_9_3 (a INT);  -- In schema owned by owner3014_b
+GO
+CREATE TABLE t3014_9_4 (a INT);
+GO
+CREATE TABLE t3014_9_5 (a INT);
+GO
+CREATE TABLE t3014_9_6 (a INT);
+GO
+CREATE TABLE t3014_9_7 (a INT);
+GO
+CREATE TABLE t3014_9_8 (a INT);
+GO
+
+-- CASE 9.1: AFTER INSERT trigger with same owner
+CREATE VIEW v3014_9_1 AS SELECT * FROM t3014_9_1;
+GO
+CREATE TRIGGER tr3014_9_1 ON t3014_9_1 AFTER INSERT AS
+    INSERT INTO t3014_9_2 SELECT a FROM inserted;
+GO
+
+-- CASE 9.2: AFTER UPDATE trigger with different owner (using schema ownership)
+CREATE VIEW v3014_9_2 AS SELECT * FROM sch3014_b.t3014_9_3;
+GO
+CREATE TRIGGER sch3014_b.tr3014_9_2 ON sch3014_b.t3014_9_3 AFTER UPDATE AS
+    INSERT INTO t3014_9_4 SELECT a FROM inserted;
+GO
+
+-- CASE 9.3: INSTEAD OF trigger same owner
+CREATE VIEW v3014_9_3 AS SELECT * FROM t3014_9_5;
+GO
+CREATE TRIGGER tr3014_9_3 ON v3014_9_3 INSTEAD OF INSERT AS
+    INSERT INTO t3014_9_5 SELECT a FROM inserted;
+GO
+
+-- CASE 9.4: Nested triggers same owner
+CREATE VIEW v3014_9_4 AS SELECT * FROM t3014_9_6;
+GO
+CREATE TRIGGER tr3014_9_4 ON t3014_9_6 AFTER DELETE AS
+    INSERT INTO t3014_9_7 SELECT a FROM deleted;
+GO
+CREATE TRIGGER tr3014_9_5 ON t3014_9_7 AFTER INSERT AS
+    INSERT INTO t3014_9_8 SELECT a FROM inserted;
+GO
+
 -- Grants for CASE 1 views
 grant select on v3014_1_1 to l3014_1;
 go
@@ -340,6 +413,10 @@ GO
 GRANT SELECT ON v3014_2_11 TO l3014_1;
 GO
 GRANT SELECT ON v3014_2_12 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_13 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_14 TO l3014_1;
 GO
 
 -- Grants for CASE 3 views
@@ -420,6 +497,16 @@ GO
 GRANT SELECT, INSERT, UPDATE ON v3014_8_4 TO l3014_1;
 GO
 
+-- Grant for CASE 8 views
+GRANT SELECT, INSERT ON v3014_9_1 TO l3014_1;
+GO
+GRANT SELECT, UPDATE ON v3014_9_2 TO l3014_1;
+GO
+GRANT SELECT, INSERT ON v3014_9_3 TO l3014_1;
+GO
+GRANT SELECT, DELETE ON v3014_9_4 TO l3014_1;
+GO
+
 -- psql
 set babelfishpg_tsql.enable_create_alter_view_from_pg = true;
 go
@@ -456,6 +543,10 @@ GO
 ALTER VIEW master_dbo.v3014_2_11 SET (security_invoker = true);
 GO
 ALTER VIEW master_dbo.v3014_2_12 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_2_13 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_2_14 SET (security_invoker = true);
 GO
 
 -- Alter CASE 3 views
@@ -550,6 +641,16 @@ GO
 ALTER VIEW master_dbo.v3014_8_3 SET (security_invoker = true);
 GO
 ALTER VIEW master_dbo.v3014_8_4 SET (security_invoker = true);
+GO
+
+-- Alter CASE 9 views
+ALTER VIEW master_dbo.v3014_9_1 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_9_2 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_9_3 SET (security_invoker = true);
+GO
+ALTER VIEW master_dbo.v3014_9_4 SET (security_invoker = true);
 GO
 
 -- Also alter the helper view

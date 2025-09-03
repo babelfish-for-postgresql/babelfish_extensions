@@ -363,8 +363,6 @@ static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
-static walk_view_rule_hook_type prev_walk_view_rule_hook = NULL;
-static handle_target_view_hook_type prev_handle_target_view_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 
@@ -623,10 +621,8 @@ InstallExtendedHooks(void)
 	prev_pre_QueryRewrite_hook = pre_QueryRewrite_hook;
 	pre_QueryRewrite_hook = repair_broken_views;
 
-	prev_walk_view_rule_hook = walk_view_rule_hook;
 	walk_view_rule_hook = mark_nodes_inside_view;
 
-	prev_handle_target_view_hook = handle_target_view_hook;
 	handle_target_view_hook = tsql_handle_target_view_hook;
 }
 
@@ -704,8 +700,6 @@ UninstallExtendedHooks(void)
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
-	walk_view_rule_hook = prev_walk_view_rule_hook;
-	handle_target_view_hook = prev_handle_target_view_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -718,6 +712,8 @@ UninstallExtendedHooks(void)
 	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
 	ExecCheckOneRelPerms_hook = NULL;
 	get_domain_typmodin_hook = NULL;
+	walk_view_rule_hook = NULL;
+	handle_target_view_hook = NULL;
 }
 
 /*****************************************
@@ -7683,7 +7679,7 @@ mark_nodes_inside_view_walker(Node *node, Oid *context)
         {
             RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
             RTEPermissionInfo *perminfo = NULL;
-			bool nonDMLpermscheck = false;
+			AclMode nonDMLpermscheck = false;
 
 			/* Process tables and view subqueries */
             if (OidIsValid(rte->relid) &&
@@ -7693,11 +7689,15 @@ mark_nodes_inside_view_walker(Node *node, Oid *context)
                 nspid = get_rel_namespace(rte->relid);
                 physical_schemaname = get_namespace_name(nspid);
                 perminfo = getRTEPermissionInfo(query->rteperminfos, rte);
+				/*
+				 * Only allow SELECT, INSERT, UPDATE, DELETE dml operations through 
+				 * ownership chaining.
+				 */
 				nonDMLpermscheck = perminfo->requiredPerms & ~(ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE);
                 
                 if (physical_schemaname && !is_shared_schema(physical_schemaname))
                 {
-                    if (get_rel_owner(rte->relid) == *context && nonDMLpermscheck == 0)
+                    if (get_rel_owner(rte->relid) == *context && nonDMLpermscheck == ACL_NO_RIGHTS)
                     {
                         perminfo->checkAsUser = *context;
                     }
@@ -7752,15 +7752,23 @@ mark_nodes_inside_view(Query *query, Oid view_owner)
 
 }
 
+/*
+ * This look will update the permsinfo of corresponding relation when there in ownership
+ * chaining scenarios in case when view is specified as target for DML operations.
+ */
 static void
 tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *view_rte)
 {
 	Oid view_owner = InvalidOid;
-	bool nonDMLpermscheck = false;
+	AclMode nonDMLpermscheck;
 
 	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
 		return;
 	
+	/*
+	 * Note that for DML operations on views, SELECT privileges are still required.
+	 * So keeping all allowed DMLs INSERT, UPDATE, DELETE along with SELECT.
+	 */
 	nonDMLpermscheck = new_perminfo->requiredPerms & ~(ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE);
 
 	if (nonDMLpermscheck)

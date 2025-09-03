@@ -3071,11 +3071,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				/*
 				 * By default, TSQL view should be created with security_invoker
 				 * property. It adds security_invoker option to the options list.
+				 * Note that,  (stmt->createOrAlter && !stmt->replace) captures the 
+				 * TSQL "CREATE OR ALTER view" stmt and
+				 * (!stmt->createOrAlter && !stmt->replace) will capture the TSQL
+				 * "CREATE view" stmt, combination of both condition simplifies
+				 * into !(stmt->replace)
 				 */
 				if (sql_dialect == SQL_DIALECT_TSQL &&
 					IS_TDS_CLIENT() &&
 					!InSecurityRestrictedOperation() &&
-					(stmt->createOrAlter || stmt->replace == false))
+					!(stmt->replace))
 				{
 					bool        security_invoker_found = false;
 
