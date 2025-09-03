@@ -1581,7 +1581,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂y                 fghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1626,7 +1626,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂y                 fghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 
@@ -1671,7 +1671,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-abcx🙂yw                                    fghi??                                      
+abc🙂defghi🙂🙂                                      
 ~~END~~
 
 

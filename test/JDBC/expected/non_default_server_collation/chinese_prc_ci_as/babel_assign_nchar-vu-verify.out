@@ -117,7 +117,7 @@ SELECT @complexEmoji, LEN(@complexEmoji) AS 'Length', DATALENGTH(@complexEmoji) 
 GO
 ~~START~~
 nchar#!#int#!#int
-👋🏽👨‍💻👩‍🎨                #!#8#!#30
+👋🏽👨‍💻👩‍🎨                #!#8#!#52
 ~~END~~
 
 
@@ -575,7 +575,7 @@ SELECT
 GO
 ~~START~~
 binary#!#varbinary#!#ntext#!#nvarchar#!#nchar#!#char#!#varchar
-5465737420537472696E6720E6B58BE8AF9520F0#!#5465737420537472696E6720E6B58BE8AF9520F0#!#Test String 测试 🙂🙂🙂🙂                               #!#Test String 测试 🙂🙂🙂🙂                           #!#Test String 测试 🙂🙂🙂🙂                           #!#Test String 测试 ????                             #!#Test String 测试 ????                             
+5400650073007400200053007400720069006E00#!#5400650073007400200053007400720069006E00#!#Test String 测试 🙂🙂🙂🙂                               #!#Test String 测试 🙂🙂🙂🙂                           #!#Test String 测试 🙂🙂🙂🙂                           #!#Test String 测试 ????                             #!#Test String 测试 ????                             
 ~~END~~
 
 
@@ -1251,7 +1251,7 @@ Hello ?????? Emoji Test ?????????
 
 ~~START~~
 varchar
-Hello ?????? Emoji Test ?????????
+Hello ?????? Emoji Test ?????????                 
 ~~END~~
 
 ~~START~~
@@ -1261,17 +1261,17 @@ Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
 
 ~~START~~
 nvarchar
-Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻     
 ~~END~~
 
 ~~START~~
 text
-Hello ?????? Emoji Test ?????????
+Hello ?????? Emoji Test ?????????                 
 ~~END~~
 
 ~~START~~
 ntext
-Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻                 
 ~~END~~
 
 ~~START~~
@@ -1492,17 +1492,17 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 nvarchar
-Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
 ~~END~~
 
 ~~START~~
 text
-Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123
+Mixed: Hello 你好 こんにちは ?? àá?? ??????? 123         
 ~~END~~
 
 ~~START~~
 ntext
-Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123         
 ~~END~~
 
 ~~START~~
@@ -1623,7 +1623,7 @@ Collation Test 你好 こんにちは àáâã ÀÁÂà Case Test
 
 ~~START~~
 text
-Collation Test ?好 こんにちは ???? ???? Case Test
+Collation Test ?好 こんにちは ???? ???? Case Test                                                                                                           
 ~~END~~
 
 
@@ -1776,7 +1776,7 @@ SELECT
 GO
 ~~START~~
 nchar#!#nvarchar#!#char#!#varchar#!#binary#!#varbinary#!#nchar#!#nvarchar#!#int
-Test String 测试 🙂🌸🎌🗾       #!#Test String 测试 🙂🌸🎌🗾       #!#Test String 测试 ????         #!#Test String 测试 ????         #!#5465737420537472696E#!#5465737420537472696E#!#0x5465737420537472696e        #!#敔瑳匠牴湩#!#19
+Test String 测试 🙂🌸🎌🗾       #!#Test String 测试 🙂🌸🎌🗾       #!#Test String 测试 ????         #!#Test String 测试 ????         #!#54006500730074002000#!#54006500730074002000#!#Test                          #!#Test #!#19
 ~~END~~
 
 
@@ -1913,7 +1913,7 @@ Test 10: Edge Cases
 
 ~~START~~
 varchar#!#nvarchar#!#char#!#nchar
-#!##!#                                                  #!#　　　　　　　　　　　　　　　　　　　　　　　　　                         
+#!##!#                                                  #!#　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
 ~~END~~
 
 
@@ -2205,7 +2205,7 @@ EXEC babel_4803_proc1 N'TESTこんにちは🙂🙂世界'
 GO
 ~~START~~
 nchar
-TESTこんにちは??世界                 
+TESTこんにちは🙂🙂世界               
 ~~END~~
 
 EXEC babel_4803_proc2 N'TESTこんにちは🙂🙂世界'
@@ -2233,7 +2233,7 @@ EXEC babel_4803_proc5 N'TESTこんにちは🙂🙂世界'
 GO
 ~~START~~
 nvarchar#!#varchar#!#char
-TESTこんにちは??世界          #!#TESTこんにちは??世界          #!#TESTこんにちは??世界                    
+TESTこんにちは🙂🙂世界                 #!#TESTこんにちは??世界                 #!#TESTこんにちは??世界                    
 ~~END~~
 
 EXEC babel_4803_proc6 N'TESTこんにちは🙂🙂世界'
