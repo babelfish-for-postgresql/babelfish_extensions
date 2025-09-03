@@ -395,11 +395,11 @@ BEGIN
 
         EXECUTE 'CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
         		RETURNS TEXT
-        		AS ''
+        		AS $$
         		BEGIN
         			RETURN (SELECT sys.STAsText_common(sys.Geography__STFlipCoordinates($1)));
         		END;
-        		'' LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;';
+        		$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;';
     END IF;
 END $$;
 
