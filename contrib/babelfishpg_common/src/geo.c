@@ -191,7 +191,7 @@ rewrite_point_dim_query(POINT coord)
 
 /**
  * Initialize a PointArray structure with default capacity
- * Allocates memory for points array with initial capacity of 1024 points.
+ * Allocates memory for points array with initial capacity of 64 points.
  * Sets count to 0 and reports error if memory allocation fails.
  */
 void 
@@ -230,19 +230,6 @@ add_point(PointArray *pa, POINT p)
 }
 
 /*
- * Free resources used by a PointArray
- * Releases memory allocated for points and resets all fields.
- */
-void 
-free_point_array(PointArray *pa) 
-{
-    pfree(pa->points);
-    pa->points = NULL;
-    pa->capacity = 0;
-    pa->count = 0;
-}
-
-/*
  * Determine the appropriate LineString type based on point dimensions
  * Examines all points to determine the most appropriate LineString type:
  * - ZM: Points with both Z and M coordinates (4D)
@@ -253,9 +240,8 @@ free_point_array(PointArray *pa)
 LineStringType 
 determine_linestring_type(PointArray *pa) 
 {
-    int has_zm = 0, 
-        has_z = 0, 
-        has_m = 0;
+    bool has_z = false, 
+         has_m = false;
 
     for (int i = 0; i < pa->count; i++) 
     {
@@ -270,16 +256,16 @@ determine_linestring_type(PointArray *pa)
                         errmsg("Invalid coordinate value (NaN)")));
         }
 
-        if (FLAGS_GET_Z(p.flags) && FLAGS_GET_M(p.flags)) 
-            has_zm = 1;
-        else if (FLAGS_GET_Z(p.flags)) 
-            has_z = 1;
-        else if (FLAGS_GET_M(p.flags)) 
-            has_m = 1;
+        if (FLAGS_GET_Z(p.flags)) 
+            has_z = true;
+        if (FLAGS_GET_M(p.flags)) 
+            has_m = true;
+            
+        /* Early return if we have both Z and M */
+        if (has_z && has_m) 
+            return ZM;
     }
-    /* If in a linestring, any point has M and any other has Z then linestring dimension will be ZM */
-    if (has_zm || (has_z && has_m)) 
-        return ZM;
+
     if (has_m) 
         return M;
     if (has_z) 
@@ -297,6 +283,9 @@ determine_linestring_type(PointArray *pa)
 void 
 transform_points(PointArray *pa, LineStringType type) 
 {
+    if (type == XY) 
+        return;
+
     for (int i = 0; i < pa->count; i++) 
     {
         POINT *p = &pa->points[i];
@@ -324,6 +313,7 @@ transform_points(PointArray *pa, LineStringType type)
         }
     }
 }
+
 /*
  * Converts a PointArray to a PostGIS-compatible LINESTRING WKT representation
  * Determines the appropriate LineString type (Z, M, ZM, etc.) based on the points,
@@ -368,20 +358,11 @@ rewrite_linestring_query(PointArray *pa)
         /* X and Y coordinates are always included */
         appendStringInfo(&output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
 
-        /* For ZM types, always include Z and M values */
-        if (type == ZM)
-        {
-             appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
-             appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
-        }
-        else
-        {
-            /* For other types, include Z and M based on flags */
-            if (FLAGS_GET_Z(p.flags)) 
-                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
-            if (FLAGS_GET_M(p.flags)) 
-                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
-        }
+        /* Add Z and M coordinates based on flags */
+        if (FLAGS_GET_Z(p.flags)) 
+            appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
+        if (FLAGS_GET_M(p.flags)) 
+            appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
 
         /* Add comma between points, except after the last point */
         if (i < pa->count - 1) 
@@ -392,7 +373,7 @@ rewrite_linestring_query(PointArray *pa)
     appendStringInfoChar(&output, ')');
 
     /* Clean up resources */
-    free_point_array(pa);
+    pfree(pa->points);
     pfree(pa);
     
     return output.data;
@@ -467,7 +448,7 @@ rewrite_dim_linestring_query(PointArray *pa)
     appendStringInfoChar(&output, ')');
 
     /* Clean up resources */
-    free_point_array(pa);
+    pfree(pa->points);
     pfree(pa);
     
     return output.data;

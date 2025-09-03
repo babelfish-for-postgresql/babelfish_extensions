@@ -1,3 +1,11 @@
+/*-------------------------------------------------------------------------
+ *
+ * spatialtypes.h
+ *	  Definitions for spatial data type conversions.
+ *
+ *-------------------------------------------------------------------------
+ */
+
 #include "postgres.h"
 #include "fmgr.h"
 
