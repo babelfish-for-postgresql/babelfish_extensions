@@ -487,10 +487,10 @@ SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_
 GO
 ~~START~~
 nvarchar
-abc                 ?    🙂defghi             ?    🙂🙂                  
-比尔·拉                ?    莫斯                  
+abc                 🫥    🙂defghi             🫥    🙂🙂                  
+比尔·拉                🫥    莫斯                  
 <NULL>
-Rohit               ?    Bhagat              
+Rohit               🫥    Bhagat              
 ~~END~~
 
 
@@ -535,10 +535,10 @@ SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_
 GO
 ~~START~~
 nvarchar
-abc                 ?    🙂defghi             ?    🙂🙂                  
-比尔·拉                ?    莫斯                  
+abc                 尸    🙂defghi             尸    🙂🙂                  
+比尔·拉                尸    莫斯                  
 <NULL>
-Rohit               ?    Bhagat              
+Rohit               尸    Bhagat              
 ~~END~~
 
 
@@ -654,10 +654,10 @@ SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY gro
 GO
 ~~START~~
 nvarchar
-abc?    🙂defghi?    🙂🙂
-比尔·拉?    莫斯
+abc🫥    🙂defghi🫥    🙂🙂
+比尔·拉🫥    莫斯
 <NULL>
-Rohit?    Bhagat
+Rohit🫥    Bhagat
 ~~END~~
 
 
@@ -702,10 +702,10 @@ SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY gro
 GO
 ~~START~~
 nvarchar
-abc?    🙂defghi?    🙂🙂
-比尔·拉?    莫斯
+abc尸    🙂defghi尸    🙂🙂
+比尔·拉尸    莫斯
 <NULL>
-Rohit?    Bhagat
+Rohit尸    Bhagat
 ~~END~~
 
 

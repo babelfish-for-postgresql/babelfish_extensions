@@ -406,7 +406,7 @@ SELECT '|' + TRIM(@inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|abc?defghi??|
+|abc🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -424,7 +424,7 @@ SELECT '|' + TRIM('ab🙂😎 ' FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|?c?defghi??|
+|c🙂defghi|
 ~~END~~
 
 
@@ -667,7 +667,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 varchar
-|c?defghi|
+|c?defghi??|
 ~~END~~
 
 
@@ -676,7 +676,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 varchar
-|c?defghi|
+|c?defghi??|
 ~~END~~
 
 
@@ -775,7 +775,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 varchar
-|c?defghi??|
+|c?defghi|
 ~~END~~
 
 
@@ -838,7 +838,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -847,7 +847,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -856,7 +856,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -874,7 +874,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -883,7 +883,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi??|
+|c🙂defghi|
 ~~END~~
 
 
@@ -892,7 +892,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi??|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -910,7 +910,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi??|
+|c🙂defghi|
 ~~END~~
 
 
@@ -919,7 +919,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi??|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -1009,7 +1009,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c🙂defghi🙂🙂|
+|c🙂defghi|
 ~~END~~
 
 
