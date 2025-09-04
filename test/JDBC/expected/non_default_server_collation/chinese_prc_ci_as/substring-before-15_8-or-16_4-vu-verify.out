@@ -520,7 +520,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 nvarchar
-?d
+🙂d
 ~~END~~
 
 ~~START~~
