@@ -2733,6 +2733,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if(!cfs->is_procedure)
 						{
+							if (!(handle_bbf_view_binding_on_object_drop(&originalFunc, false)))
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+											errmsg("Cannot alter function %s because it is bound to a view.", NameListToString(cfs->funcname))));
+							}
 							/*
 							 * Postgres does not allow us to create functions with different return types
 							 * so we need to delete and recreate them 
@@ -2743,6 +2749,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						else if (!isSameProc) /* i.e. different signature */
 						{
+							if (!(handle_bbf_view_binding_on_object_drop(&originalFunc, false)))
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+											errmsg("Cannot alter function %s because it is bound to a view.", NameListToString(cfs->funcname))));
+							}
 							performDeletion(&originalFunc, DROP_RESTRICT, 0);
 							CommandCounterIncrement();
 						}
@@ -2940,7 +2952,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							originalView.classId = RelationRelationId;
 							originalView.objectSubId = 0;
 
-							if (!(handle_bbf_view_binding_on_object_drop(&originalView, NULL, stmt)))
+							if (!(handle_bbf_view_binding_on_object_drop(&originalView, true)))
 							/* Strong view dependency found, abort the drop */
 								ereport(ERROR,
 										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),

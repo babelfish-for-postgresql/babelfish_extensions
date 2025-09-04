@@ -3157,7 +3157,7 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 			obj.objectSubId = subId;
 
 			/* Call view dependency handling function */
-			handle_bbf_view_binding_on_object_drop(&obj, NULL, NULL);
+			handle_bbf_view_binding_on_object_drop(&obj, false);
 		}
 	}
 	if (access == OAT_DROP && classId == ProcedureRelationId)
@@ -3175,7 +3175,7 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 			obj.objectSubId = 0;
 			
 			/* Call view dependency handling for functions */
-			handle_bbf_view_binding_on_object_drop(&obj, NULL, NULL);
+			handle_bbf_view_binding_on_object_drop(&obj, false);
 		}
 	}
 	if (sql_dialect != SQL_DIALECT_TSQL)
@@ -7273,21 +7273,18 @@ create_dummy_view_query_for_broken_view(Oid viewOid)
  */
 
 bool
-handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, Relation depRel, ViewStmt *stmt)
+handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, bool is_alter_view)
 {
 	ScanKeyData 	key[3];
 	SysScanDesc 	scan;
 	HeapTuple 		tup;
+	Relation 		depRel;
 	List 			*processed_views = NIL;
 	Oid 			viewOid = InvalidOid;
-	bool 			is_alter_view = false;
 	bool 			is_weak_view = false;
 	bool 			processed = true;
 	bool 			updated;
-	int             nkeys = 2;
-
-	/* Check if this is an ALTER VIEW operation */
-	is_alter_view = (stmt != NULL && stmt->createOrAlter);
+	int				nkeys = 2;
 	
 	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
 		return false;
