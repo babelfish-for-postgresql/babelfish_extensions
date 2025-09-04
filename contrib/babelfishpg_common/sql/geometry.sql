@@ -68,13 +68,21 @@ CREATE OR REPLACE FUNCTION sys.point(sys.GEOMETRY)
 CREATE CAST (sys.GEOMETRY AS point) WITH FUNCTION sys.point(sys.GEOMETRY);
 CREATE CAST (point AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(point);
 
-CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
+CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(sys.NVARCHAR, integer)
 	RETURNS sys.GEOMETRY
-	AS 'babelfishpg_common', 'get_geometry_from_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	BEGIN
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geometry::STGeomFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		RETURN (SELECT sys.geomfromtext_helper($1::text, $2));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
-	RETURNS TEXT
+	RETURNS sys.NVARCHAR
 	AS 'babelfishpg_common', 'st_as_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -86,9 +94,9 @@ CREATE OR REPLACE FUNCTION sys.text(sys.GEOMETRY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY)
+CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY, integer, boolean)
 	RETURNS sys.bpchar
-	AS 'babelfishpg_common','geometry_astext'
+	AS 'babelfishpg_common','geometry_asbpchar'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
@@ -99,10 +107,19 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
+CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY, integer, boolean)
 	RETURNS sys.varchar
-	AS 'babelfishpg_common','geometry_astext'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	DECLARE
+		str_notation sys.varchar;
+	BEGIN
+		str_notation := (SELECT sys.varchar_helper($1));
+		IF pg_catalog.length(str_notation) + 4 > $2 AND $2 != -1 THEN
+			RAISE EXCEPTION 'There is insufficient result space to convert a geometry value to varchar/nvarchar.';
+		END IF;
+		RETURN str_notation;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)
 	RETURNS sys.GEOMETRY
@@ -134,13 +151,16 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_varbinary)
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOMETRY)
+CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOMETRY, integer, boolean)
     RETURNS sys.bbf_varbinary
     AS $$
     DECLARE
         byte bytea;
     BEGIN
         byte := (SELECT sys.bytea($1));
+        IF pg_catalog.length(byte) + 4 > $2 AND $2 != -1 THEN
+            RAISE EXCEPTION 'Error converting sys.geometry to binary. The result would be truncated.';
+        END IF;
         RETURN (SELECT CAST (byte AS sys.bbf_varbinary)); 
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -169,48 +189,74 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(text, integer, boolean)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.bbf_binary(sys.GEOMETRY, integer, boolean)
+	RETURNS sys.bbf_binary
+	AS $$
+	DECLARE
+		byte bytea;
+	BEGIN
+		byte := (SELECT sys.bytea($1));
+		IF pg_catalog.length(byte) + 4 = $2 THEN
+			RETURN (SELECT CAST (byte AS sys.bbf_binary));
+		ELSEIF pg_catalog.length(byte) + 4 > $2 THEN
+			RAISE EXCEPTION 'Error converting sys.geometry to binary. The result would be truncated.';
+		ELSE
+			RAISE EXCEPTION 'Error converting sys.geometry to fixed length binary type. The result would be padded and cannot be converted back.';
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE CAST (text AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(text, integer, boolean) AS IMPLICIT;
 CREATE CAST (sys.GEOMETRY AS text) WITH FUNCTION sys.text(sys.GEOMETRY);
 CREATE CAST (sys.bpchar AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bpchar) AS IMPLICIT;
-CREATE CAST (sys.GEOMETRY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOMETRY);
+CREATE CAST (sys.GEOMETRY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOMETRY, integer, boolean);
 CREATE CAST (sys.varchar AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.varchar) AS IMPLICIT;
-CREATE CAST (sys.GEOMETRY AS sys.varchar) WITH FUNCTION sys.varchar(sys.GEOMETRY);
+CREATE CAST (sys.GEOMETRY AS sys.varchar) WITH FUNCTION sys.varchar(sys.GEOMETRY, integer, boolean);
 CREATE CAST (bytea AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(bytea) AS IMPLICIT;
 CREATE CAST (sys.GEOMETRY AS bytea) WITH FUNCTION sys.bytea(sys.GEOMETRY);
 CREATE CAST (sys.bbf_varbinary AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bbf_varbinary) AS IMPLICIT;
-CREATE CAST (sys.GEOMETRY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(sys.GEOMETRY);
+CREATE CAST (sys.GEOMETRY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(sys.GEOMETRY, integer, boolean);
 CREATE CAST (sys.bbf_binary AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bbf_binary) AS IMPLICIT;
+CREATE CAST (sys.GEOMETRY AS sys.bbf_binary) WITH FUNCTION sys.bbf_binary(sys.GEOMETRY, integer, boolean);
 
 -- Availability: 3.2.0 current supported in APG
 CREATE OR REPLACE FUNCTION sys.Geometry__Point(float8, float8, srid integer)
 	RETURNS sys.GEOMETRY
 	AS $$
-	DECLARE
-		srid integer;
 	BEGIN
-		srid := $3;
-		IF srid >= 0 AND srid <= 999999 THEN
+		IF $1 is NULL THEN
+			RAISE EXCEPTION '''geometry::Point'' failed because parameter 1 is not allowed to be null.';
+		ELSEIF $2 is NULL THEN
+			RAISE EXCEPTION '''geometry::Point'' failed because parameter 2 is not allowed to be null.';
+		ELSEIF srid is NULL THEN
+			RAISE EXCEPTION '''geometry::Point'' failed because parameter 3 is not allowed to be null.';
+		ELSEIF srid >= 0 AND srid <= 999999 THEN
 			-- Call the underlying function after preprocessing
 			RETURN (SELECT sys.GeomPoint_helper($1, $2, $3));
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
 		END IF;
 	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
-	RETURNS bytea
+	RETURNS sys.varbinary
 	AS 'babelfishpg_common', 'st_as_binary_geometry'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
+CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR, integer)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE
 		Geomtype text;
 		geom sys.GEOMETRY;
 	BEGIN
-		geom = (SELECT sys.geomfromtext_helper($1, $2));
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geometry::STPointFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		geom = (SELECT sys.geomfromtext_helper($1::text, $2));
 		Geomtype = (SELECT sys.ST_GeometryType(geom));
 
 		IF Geomtype = 'ST_Point' THEN
@@ -219,7 +265,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 			RAISE EXCEPTION '% is not supported', Geomtype;
 		END IF;
 	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOMETRY)
 	RETURNS text
@@ -459,14 +505,14 @@ CREATE OR REPLACE FUNCTION sys.HasM(geom sys.GEOMETRY)
 CREATE OR REPLACE FUNCTION sys.Z(sys.GEOMETRY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_z_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT;
 
 -- M
 -- Returns the M coordinate value (measure) for a point geometry instance 
 CREATE OR REPLACE FUNCTION sys.M(sys.GEOMETRY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_m_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT;
 
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STContains_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
@@ -512,5 +558,10 @@ CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
 CREATE OR REPLACE FUNCTION sys.geomfromtext_helper(text, integer)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'get_geometry_from_text'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.varchar_helper(sys.GEOMETRY)
+	RETURNS sys.varchar
+	AS 'babelfishpg_common','geometry_astext'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 	

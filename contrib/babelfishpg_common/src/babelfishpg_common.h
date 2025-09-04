@@ -98,4 +98,7 @@ typedef struct common_utility_plugin
 	int32_t		(*tsql_numeric_get_typmod) (Numeric num);
 	DateADT		(*initializeToDefaultDate) (void);
 	TimeADT		(*initializeToDefaultTime) (int32 typmod);
+	Timestamp	(*roundoff_datetime) (Timestamp timestamp);
+	void		(*UpdateToNextDayHelper) (struct pg_tm *tm);
+	void 		(*handle_type_and_collation) (struct Node *node, Oid typid, Oid collationid);
 } common_utility_plugin;

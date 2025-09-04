@@ -436,13 +436,13 @@ TestInt
 TestMoney
 TestNotNull
 TestNumeric
-Test-pointZM
+Test-pointZM_before_17_7-or-16_11
 TestReal
 TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
-TestSpatialPoint
+TestSpatialPoint_before_17_7-or-16_11
 Test-spatial-functions
 Test-spatial-functions-2
 Test-sp_addrole
