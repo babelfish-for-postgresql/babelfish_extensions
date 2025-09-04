@@ -5360,6 +5360,7 @@ select * from s1.v3
 go
 ~~START~~
 int
+1
 ~~END~~
 
 exec s2.p3;
