@@ -334,6 +334,7 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define OBJ_PROCEDURE "p"
 #define OBJ_FUNCTION "f"
 #define NUMBER_OF_PERMISSIONS 6
+#define INVALID_PERMISSION -1
 
 /* check if rolename is sysadmin */
 #define IS_ROLENAME_SYSADMIN(rolname) \

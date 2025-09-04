@@ -4955,8 +4955,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				char		*db_datareader = get_db_datareader_name(dbname);
 				char		*db_datawriter = get_db_datawriter_name(dbname);
 				char		*db_accessadmin = get_db_accessadmin_role_name(dbname);
-				List 		*revokable_privileges = NIL;
-				bool 		 exec_pg_command = false;
+				bool 		exec_pg_command = false;
 				/*
 				 * NOTE: GRANT/REVOKE on OBJECT(schema-contained)/SCHEMA are allowed
 				 * if current_user is member of db_securityadmin via engine hooks.
@@ -5014,7 +5013,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
-								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, -1))
+								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, INVALID_PERMISSION))
 									return;
 							}
 						}
@@ -5057,8 +5056,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										 * execute_pg_command true and append the privilege to filtered list 
 										 */
 										exec_pg_command = true;
-										revokable_privileges = lappend(revokable_privileges, ap);
-									}	
+									}
+									else
+										foreach_delete_current(grant->privileges, lc1);
 									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
 								}
 							}
@@ -5123,7 +5123,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, false);
-								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, -1))
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, INVALID_PERMISSION))
 									return;
 							}
 						}
@@ -5163,11 +5163,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									/* 
 									 * If the privilege is not common to schema and object then 
-									 * execute_pg_command true and append the privilege to filtered list 
+									 * execute_pg_command true.
 									 */
 									exec_pg_command = true;
-									revokable_privileges = lappend(revokable_privileges, ap);
 								}
+								else
+									foreach_delete_current(grant->privileges, lc1);
 
 								/* Update the privilege in the catalog. */
 								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);
@@ -5176,19 +5177,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 				}
 
-				if((list_length(grant->privileges) != 0 && !(grant->is_grant)) && 
-					((grant->objtype == OBJECT_FUNCTION) || (grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_TABLE)))
-				{
-					if(revokable_privileges == NIL)
-						return;
-					list_free(grant->privileges);
-					grant->privileges = revokable_privileges;
-					pstmt->utilityStmt = (Node*)grant;
-				}
 				if (exec_pg_command && ((grant->objtype == OBJECT_FUNCTION) || (grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_TABLE)))
 				{
 					call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
-					list_free(revokable_privileges);
 					return;
 				}
 
