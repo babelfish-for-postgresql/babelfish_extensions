@@ -1,0 +1,121 @@
+-- tsql user=l6030_1 password=12345678
+
+-- CASE 8: Simple Object References Inside Procedures/Functions
+-- CASE 8.1: Procedure referring single table (success: ownership chain dbo->dbo)
+EXEC p6030_8_1;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- CASE 8.2: Procedure referring multiple joined tables (success: all tables owned by dbo)
+EXEC p6030_8_2;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+-- CASE 8.3: Procedure calling another procedure (success: nested procedure chain)
+EXEC p6030_8_3b;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p6030_8_3a)~~
+
+
+-- CASE 8.4: Function referring table (success: function->table chain)
+SELECT * FROM f6030_8_4();
+GO
+~~START~~
+int
+~~END~~
+
+
+-- CASE 9: DML Operations Inside Procedures
+-- CASE 9.1: INSERT operation (success: DML ownership chain)
+EXEC p6030_9_1;
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 9.2: UPDATE operation (success: DML ownership chain)
+EXEC p6030_9_2;
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 9.3: DELETE operation (success: DML ownership chain)
+EXEC p6030_9_3;
+GO
+
+-- CASE 10: Complex Scenarios
+-- CASE 10.1: Procedure with transaction (success: transaction ownership chain)
+EXEC p6030_10_1;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- CASE 10.2: Procedure with error handling (success: error handling ownership chain)
+EXEC p6030_10_2;
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 11: Cross-Schema References
+-- CASE 11.1: Procedure in dbo accessing sch6030_b table (failure: cross-owner direct reference)
+EXEC p6030_11_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_1)~~
+
+
+-- CASE 11.2: Procedure in sch6030_b accessing dbo table (failure: cross-owner direct reference)
+EXEC sch6030_b.p6030_11_2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_1)~~
+
+
+-- CASE 12: Function Chain Scenarios
+-- CASE 12.1: Function calling another function (success: function chain within same owner)
+SELECT dbo.f6030_12_1b();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- CASE 12.2: Function accessing view (success: function->view chain within same owner)
+SELECT * FROM f6030_12_2();
+GO
+~~START~~
+int
+2
+1
+1
+~~END~~
+
+
+-- CASE 13: Dynamic SQL Inside Procedures
+-- CASE 13.1: Simple dynamic SQL (success: dynamic SQL ownership chain)
+EXEC p6030_13_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_1)~~
+
+
+-- CASE 13.2: Parameterized dynamic SQL (success: parameterized dynamic SQL chain)
+EXEC p6030_13_2 @id = 1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_1)~~
+

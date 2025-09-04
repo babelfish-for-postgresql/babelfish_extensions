@@ -59,6 +59,10 @@ DROP TABLE IF EXISTS t6030_2;
 GO
 DROP TABLE IF EXISTS t6030_1;
 GO
+~~ERROR (Code: 3726)~~
+
+~~ERROR (Message: cannot drop table t6030_1 because other objects depend on it)~~
+
 
 -- Drop helper views
 DROP VIEW IF EXISTS v6030_a;
