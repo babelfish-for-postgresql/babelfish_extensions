@@ -117,6 +117,11 @@ typedef enum PltsqlInitPrivsOptions
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
 
+/* Used to mark parsenode inside/outside view to apply ownership chaining logic */
+#define PNODE_UNMARKED		0
+#define PNODE_INSIDE_VIEW	1
+#define PNODE_OUTSIDE_VIEW	2
+
 /*****************************************
  * 			General Hooks
  *****************************************/
