@@ -283,6 +283,10 @@ determine_linestring_type(PointArray *pa)
 void 
 transform_points(PointArray *pa, LineStringType type) 
 {
+
+    if (type == XY)
+        return;  /* No transformation needed for XY type */
+    
     for (int i = 0; i < pa->count; i++) 
     {
         POINT *p = &pa->points[i];
@@ -324,9 +328,8 @@ rewrite_linestring_query(PointArray *pa)
     StringInfoData output;
 
     if (!pa) 
-    {
         return NULL;
-    }
+
     initStringInfo(&output);
     
     /* Determine the appropriate type based on point dimensions */
@@ -386,6 +389,9 @@ rewrite_dim_linestring_query(PointArray *pa)
 {
     StringInfoData output;
     initStringInfo(&output);
+
+    if (!pa) 
+        return NULL;
 
     /* Start with LINESTRING keyword */
     appendStringInfoString(&output, "LINESTRING ");

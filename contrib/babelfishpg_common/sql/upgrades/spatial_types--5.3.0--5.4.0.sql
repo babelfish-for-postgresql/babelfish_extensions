@@ -308,7 +308,7 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geography__stpointfromtext_deprecated_5_4_0');
 
-CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR, integer)
+CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR,srid integer)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	DECLARE
@@ -566,7 +566,7 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geometry__stpointfromtext_deprecated_5_4_0');
 
-CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR, integer)
+CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR,srid integer)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE
@@ -624,7 +624,7 @@ CREATE OR REPLACE FUNCTION sys.geomfromtext_helper(text, integer)
 	AS 'babelfishpg_common', 'get_geometry_from_text'
 	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geometry__STLineFromText(sys.NVARCHAR, integer)
+CREATE OR REPLACE FUNCTION sys.Geometry__STLineFromText(sys.NVARCHAR,srid integer)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE
@@ -647,7 +647,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STLineFromText(sys.NVARCHAR, integer)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR, integer)
+CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR,srid integer)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	DECLARE

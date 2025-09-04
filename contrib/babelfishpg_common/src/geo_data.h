@@ -34,13 +34,13 @@ typedef enum
 } LineStringType;
 
 /* Function declarations for lexer and parser */
-extern void geo_yyerror(char **result, const char *message) pg_attribute_noreturn();
-extern int geo_yylex(void);
-extern int geo_yyparse(char** result_query);
+void geo_yyerror(char **result, const char *message) pg_attribute_noreturn();
+int geo_yylex(void);
+int geo_yyparse(char** result_query);
 
 /* Scanner initialization and cleanup functions */
-extern void geo_scanner_init(const char *str);
-extern void geo_scanner_finish(void);
+void geo_scanner_init(const char *str);
+void geo_scanner_finish(void);
 
 /* External variable for lexer text */
 extern char *geo_yytext;
@@ -52,7 +52,7 @@ POINT create_point(double x, double y, double z, double m, int has_z, int has_m)
 
 /* Function to rewrite a POINT query to WKT format */
 char* rewrite_point_query(POINT p);
-char* rewrite_point_dim_query (POINT coord);
+char* rewrite_point_dim_query(POINT coord);
 
 /* PointArray management and LineString WKT conversion functions */
 void init_point_array(PointArray *pa);
