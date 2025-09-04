@@ -3410,13 +3410,13 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 						acldat = ACL_DAT(old_acl);
 
 						for (int i = 0; i < ACL_NUM(old_acl); i++)
-							{
-								const AclItem *ai = &acldat[i];
+						{
+							const AclItem *ai = &acldat[i];
 
-								/* no need to remove if grantor */
-								if (ai->ai_grantor == roleid)
-									user_is_grantor = true;
-							}
+							/* no need to remove if grantor */
+							if (ai->ai_grantor == roleid)
+								user_is_grantor = true;
+						}
 					}
 
 					ReleaseSysCache(tup);

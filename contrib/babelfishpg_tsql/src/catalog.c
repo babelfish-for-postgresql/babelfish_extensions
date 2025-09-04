@@ -4113,11 +4113,11 @@ remove_entry_from_bbf_schema_perms(const char *schema_name,
 void
 remove_user_entry_from_bbf_schema_perms(Oid user_oid)
 {
-	Relation	bbf_schema_rel;
-	HeapTuple	tuple_bbf_schema;
-	ScanKeyData scanKey[1];
-	SysScanDesc scan;
-	const char* user_name = GetUserNameFromId(user_oid, true);
+	Relation		bbf_schema_rel;
+	HeapTuple		tuple_bbf_schema;
+	ScanKeyData		scanKey[1];
+	SysScanDesc		scan;
+	const char		*user_name = GetUserNameFromId(user_oid, true);
 
 	/* Return if the Oid is invalid */
 	if (!OidIsValid(user_oid))
@@ -4125,6 +4125,7 @@ remove_user_entry_from_bbf_schema_perms(Oid user_oid)
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
+
 	ScanKeyEntryInitialize(&scanKey[0], 0,
 				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber,

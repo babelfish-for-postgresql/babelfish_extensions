@@ -184,7 +184,6 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 											   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char *name);
-// static void bbf_shdep_drop_owned_dependent_acl(Oid roleoids, DropBehavior behavior);
 
 static void bbf_ExecDropStmt(DropStmt *stmt);
 
@@ -2684,6 +2683,7 @@ validateUserAndRole(char *name)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("'%s' is not a valid name because it contains invalid characters.", name)));
 }
+
 
 /*
  * Use this hook to handle utility statements that needs special treatment, and
