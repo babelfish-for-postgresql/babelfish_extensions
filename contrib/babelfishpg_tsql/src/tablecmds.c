@@ -415,6 +415,8 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 		Type		targetType;
 		Form_pg_attribute attTup;
 		Form_pg_type tform;
+		CompactAttribute *orig_cattr;
+		char              orig_nullability;
 
 		/* skip if not a computed column */
 		if (!atp->attgenerated)
@@ -487,6 +489,10 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 		attTup->attalign = tform->typalign;
 		attTup->attstorage = tform->typstorage;
 
+		/* Preserve original nullability before updating */
+		orig_cattr = TupleDescCompactAttr(rel->rd_att, colDef->attnum - 1);
+		orig_nullability = orig_cattr->attnullability;
+
 		/*
 		 * Instead of invalidating and refetching the relcache entry, just
 		 * update the entry that we've fetched previously.  This works because
@@ -494,6 +500,18 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 		 * only updated the fixed part of Form_pg_attribute.
 		 */
 		memcpy(atp, attTup, ATTRIBUTE_FIXED_PART_SIZE);
+
+		/* Update the compact attribute to keep it in sync */
+		populate_compact_attribute(rel->rd_att, colDef->attnum - 1);
+
+		/* Restore nullability from the original compact attribute */
+		{
+			CompactAttribute *cattr = TupleDescCompactAttr(rel->rd_att, colDef->attnum - 1);
+			
+			/* Restore original nullability if it was valid */
+			if (orig_nullability != ATTNULLABLE_UNKNOWN)
+				cattr->attnullability = orig_nullability;
+		}
 
 		CatalogTupleUpdate(attrelation, &heapTup->t_self, heapTup);
 		ReleaseSysCache((HeapTuple) targetType);
