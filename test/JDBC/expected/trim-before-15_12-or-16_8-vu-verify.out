@@ -406,7 +406,7 @@ SELECT '|' + TRIM(@inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|abc?defghi??|
+|abc🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -415,7 +415,7 @@ SELECT '|' + TRIM(@inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|??·???|
+|比尔·拉莫斯|
 ~~END~~
 
 
@@ -424,7 +424,7 @@ SELECT '|' + TRIM('ab🙂😎 ' FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|?c?defghi??|
+|c🙂defghi|
 ~~END~~
 
 
@@ -433,7 +433,7 @@ SELECT '|' + TRIM('比拉斯 ' FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|??·???|
+|尔·拉莫|
 ~~END~~
 
 
@@ -442,7 +442,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|·|
+|尔·拉莫|
 ~~END~~
 
 
@@ -644,7 +644,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 varchar
-|c?defghi|
+|c?defghi??|
 ~~END~~
 
 
@@ -653,7 +653,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 varchar
-|c?defghi|
+|c?defghi??|
 ~~END~~
 
 
@@ -662,7 +662,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 varchar
-|·|
+|??·???|
 ~~END~~
 
 
@@ -752,7 +752,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 varchar
-|c?defghi??|
+|c?defghi|
 ~~END~~
 
 
@@ -770,7 +770,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 varchar
-|??·???|
+|?·??|
 ~~END~~
 
 
@@ -815,7 +815,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -824,7 +824,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -833,7 +833,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -842,7 +842,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|·|
+|比尔·拉莫斯|
 ~~END~~
 
 
@@ -851,7 +851,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -860,7 +860,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi??|
+|c🙂defghi|
 ~~END~~
 
 
@@ -869,7 +869,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi??|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -878,7 +878,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|??·???|
+|尔·拉莫|
 ~~END~~
 
 
@@ -887,7 +887,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi??|
+|c🙂defghi|
 ~~END~~
 
 
@@ -896,7 +896,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c?defghi??|
+|c🙂defghi🙂🙂|
 ~~END~~
 
 
@@ -905,7 +905,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|??·???|
+|尔·拉莫|
 ~~END~~
 
 
@@ -986,7 +986,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|c🙂defghi🙂🙂|
+|c🙂defghi|
 ~~END~~
 
 
@@ -1004,7 +1004,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|比尔·拉莫斯|
+|尔·拉莫|
 ~~END~~
 
 
