@@ -436,6 +436,10 @@ ignore#!#catalogs_dbo_sys_schema-upgrade-vu-prepare
 ignore#!#catalogs_dbo_sys_schema-upgrade-vu-verify
 ignore#!#catalogs_dbo_sys_schema-upgrade-vu-cleanup
 
+ignore#!#BABEL-CROSS-DB-14-17-vu-prepare
+ignore#!#BABEL-CROSS-DB-14-17-vu-verify
+ignore#!#BABEL-CROSS-DB-14-17-vu-cleanup
+
 # These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
 ignore#!#reverse-before-15_8-or-16_4-vu-prepare
 ignore#!#reverse-before-15_8-or-16_4-vu-verify

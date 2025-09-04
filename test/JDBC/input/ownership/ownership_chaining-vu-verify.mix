@@ -52,14 +52,25 @@ go
 -- CASE 2.9: Simple CTE
 SELECT * FROM v3014_2_9;
 GO
+
 -- CASE 2.10: CTE with JOIN
 SELECT * FROM v3014_2_10;
 GO
+
 -- CASE 2.11: Nested CTEs
 SELECT * FROM v3014_2_11;
 GO
+
 -- CASE 2.12: CTE with subquery
 SELECT * FROM v3014_2_12;
+GO
+
+-- CASE 2.13: CASE expression with subquery (success: subquery in CASE expression within same owner)
+SELECT * FROM v3014_2_13;
+GO
+
+-- CASE 2.14: EXISTS and NOT EXISTS subqueries in WHERE clause (success: EXISTS and NOT EXISTS subqueries within same owner)
+SELECT * FROM v3014_2_14;
 GO
 
 -- CASE 3: Function/procedure references (negative tests)
@@ -198,4 +209,83 @@ GO
 DECLARE @sql nvarchar(max);
 SET @sql = N'SELECT * FROM v3014_7_4 WHERE a = @id';
 EXEC sp_executesql @sql, N'@id int', 1;
+GO
+
+-- CASE 8: DML-only ownership chaining
+-- CASE 8.1: View with SELECT, INSERT permissions
+SELECT * FROM v3014_8_1;  -- Should succeed
+GO
+INSERT INTO v3014_8_1 VALUES (1);  -- Should succeed
+GO
+UPDATE v3014_8_1 SET a = 2 WHERE a = 1;  -- Should fail
+GO
+DELETE FROM v3014_8_1 WHERE a = 1;  -- Should fail
+GO
+
+-- CASE 8.2: View with SELECT, UPDATE permissions
+SELECT * FROM v3014_8_2;  -- Should succeed
+GO
+INSERT INTO v3014_8_2 VALUES (2);  -- Should fail
+GO
+UPDATE v3014_8_2 SET a = 3 WHERE a = 2;  -- Should succeed
+GO
+DELETE FROM v3014_8_2 WHERE a = 2;  -- Should fail
+GO
+
+-- CASE 8.3: View with SELECT, DELETE permissions
+SELECT * FROM v3014_8_3;  -- Should succeed
+GO
+INSERT INTO v3014_8_3 VALUES (3);  -- Should fail
+GO
+UPDATE v3014_8_3 SET a = 4 WHERE a = 3;  -- Should fail
+GO
+DELETE FROM v3014_8_3 WHERE a = 3;  -- Should succeed
+GO
+
+-- CASE 8.4: View with SELECT, INSERT, UPDATE permissions
+SELECT * FROM v3014_8_4;  -- Should succeed
+GO
+INSERT INTO v3014_8_4 VALUES (4);  -- Should succeed
+GO
+UPDATE v3014_8_4 SET a = 5 WHERE a = 4;  -- Should succeed
+GO
+DELETE FROM v3014_8_4 WHERE a = 4;  -- Should fail
+GO
+
+-- CASE 9: Trigger ownership chaining scenarios
+-- TODO: will be passing after procedure/function support
+-- CASE 9.1: AFTER INSERT trigger with same owner
+INSERT INTO v3014_9_1 VALUES (1);  -- Should succeed and trigger should fire
+GO
+SELECT * FROM v3014_9_1;  -- Should show inserted value
+GO
+SELECT * FROM t3014_9_2;  -- Should fail (no direct access)
+GO
+
+-- CASE 9.2: AFTER UPDATE trigger with different owner
+INSERT INTO t3014_9_3 VALUES (1);  -- Setup data
+GO
+UPDATE v3014_9_2 SET a = 2 WHERE a = 1;  -- Should fail due to trigger permission
+GO
+SELECT * FROM v3014_9_2;  -- Should show original value
+GO
+
+-- CASE 9.3: INSTEAD OF trigger same owner
+INSERT INTO v3014_9_3 VALUES (1);  -- Should succeed through INSTEAD OF trigger
+GO
+SELECT * FROM v3014_9_3;  -- Should show inserted value
+GO
+SELECT * FROM t3014_9_5;  -- Should fail (no direct access)
+GO
+
+-- CASE 9.4: Nested triggers same owner
+INSERT INTO t3014_9_6 VALUES (1);  -- Setup data
+GO
+DELETE FROM v3014_9_4 WHERE a = 1;  -- Should succeed and both triggers should fire
+GO
+SELECT * FROM v3014_9_4;  -- Should show empty
+GO
+SELECT * FROM t3014_9_7;  -- Should fail (no direct access)
+GO
+SELECT * FROM t3014_9_8;  -- Should fail (no direct access)
 GO

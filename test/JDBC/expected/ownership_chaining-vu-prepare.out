@@ -140,6 +140,29 @@ GO
 CREATE VIEW v3014_2_12 AS WITH cte AS (SELECT * FROM t3014_1 WHERE a IN (SELECT a FROM t3014_2)) SELECT * FROM cte;
 GO
 
+-- CASE 2.13: Subquery in CASE expression
+CREATE VIEW v3014_2_13 AS 
+SELECT a,
+    CASE (SELECT SUM(a) FROM t3014_2 b2 WHERE b2.a = t3014_1.a)
+        WHEN 1 THEN 'One'
+        WHEN 2 THEN 'Two'
+        WHEN 3 THEN 'Three'
+        ELSE 'Other'
+    END AS sum_case
+FROM t3014_1;
+GO
+
+-- CASE 2.14: EXISTS and NOT EXISTS subqueries in WHERE clause
+CREATE VIEW v3014_2_14 AS 
+SELECT t1.a,
+       CASE 
+           WHEN EXISTS (SELECT 1 FROM t3014_2 t2 WHERE t2.a = t1.a AND t2.a > 5) THEN 'Exists'
+           WHEN NOT EXISTS (SELECT 1 FROM t3014_2 t2 WHERE t2.a = t1.a AND t2.a <= 5) THEN 'Not Exists'
+           ELSE 'Neither'
+       END AS existence_check
+FROM t3014_1 t1;
+GO
+
 -- CASE 3 function/procedure references (negative tests)
 -- setup
 create function f3014_1() returns int as begin return 1 end;
@@ -298,6 +321,66 @@ GO
 CREATE VIEW v3014_7_4 AS SELECT * FROM t3014_1;
 GO
 
+-- CASE 8: DML-only ownership chaining
+CREATE VIEW v3014_8_1 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_8_2 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_8_3 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_8_4 AS SELECT * FROM t3014_1;
+GO
+
+-- CASE 9: Trigger ownership chaining scenarios
+-- Base tables for triggers
+CREATE TABLE t3014_9_1 (a INT);
+GO
+CREATE TABLE t3014_9_2 (a INT);
+GO
+CREATE TABLE sch3014_b.t3014_9_3 (a INT);  -- In schema owned by owner3014_b
+GO
+CREATE TABLE t3014_9_4 (a INT);
+GO
+CREATE TABLE t3014_9_5 (a INT);
+GO
+CREATE TABLE t3014_9_6 (a INT);
+GO
+CREATE TABLE t3014_9_7 (a INT);
+GO
+CREATE TABLE t3014_9_8 (a INT);
+GO
+
+-- CASE 9.1: AFTER INSERT trigger with same owner
+CREATE VIEW v3014_9_1 AS SELECT * FROM t3014_9_1;
+GO
+CREATE TRIGGER tr3014_9_1 ON t3014_9_1 AFTER INSERT AS
+    INSERT INTO t3014_9_2 SELECT a FROM inserted;
+GO
+
+-- CASE 9.2: AFTER UPDATE trigger with different owner (using schema ownership)
+CREATE VIEW v3014_9_2 AS SELECT * FROM sch3014_b.t3014_9_3;
+GO
+CREATE TRIGGER sch3014_b.tr3014_9_2 ON sch3014_b.t3014_9_3 AFTER UPDATE AS
+    INSERT INTO t3014_9_4 SELECT a FROM inserted;
+GO
+
+-- CASE 9.3: INSTEAD OF trigger same owner
+CREATE VIEW v3014_9_3 AS SELECT * FROM t3014_9_5;
+GO
+CREATE TRIGGER tr3014_9_3 ON v3014_9_3 INSTEAD OF INSERT AS
+    INSERT INTO t3014_9_5 SELECT a FROM inserted;
+GO
+
+-- CASE 9.4: Nested triggers same owner
+CREATE VIEW v3014_9_4 AS SELECT * FROM t3014_9_6;
+GO
+CREATE TRIGGER tr3014_9_4 ON t3014_9_6 AFTER DELETE AS
+    INSERT INTO t3014_9_7 SELECT a FROM deleted;
+GO
+CREATE TRIGGER tr3014_9_5 ON t3014_9_7 AFTER INSERT AS
+    INSERT INTO t3014_9_8 SELECT a FROM inserted;
+GO
+
 -- Grants for CASE 1 views
 grant select on v3014_1_1 to l3014_1;
 go
@@ -330,6 +413,10 @@ GO
 GRANT SELECT ON v3014_2_11 TO l3014_1;
 GO
 GRANT SELECT ON v3014_2_12 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_13 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_14 TO l3014_1;
 GO
 
 -- Grants for CASE 3 views
@@ -400,130 +487,24 @@ GO
 GRANT SELECT ON v3014_7_4 TO l3014_1;
 GO
 
--- psql
-set babelfishpg_tsql.enable_create_alter_view_from_pg = true;
-go
-
--- Alter CASE 1 views
-alter view master_dbo.v3014_1_1 set (security_invoker = true);
-go
-alter view master_dbo.v3014_1_2 set (security_invoker = true);
-go
-alter view master_dbo.v3014_1_4 set (security_invoker = true);
-go
-
--- Alter CASE 2 views
-alter view master_dbo.v3014_2_1 set (security_invoker = true);
-go
-alter view master_dbo.v3014_2_2 set (security_invoker = true);
-go
-alter view master_dbo.v3014_2_3 set (security_invoker = true);
-go
-alter view master_dbo.v3014_2_4 set (security_invoker = true);
-go
-alter view master_dbo.v3014_2_5 set (security_invoker = true);
-go
-alter view master_dbo.v3014_2_6 set (security_invoker = true);
-go
-alter view master_dbo.v3014_2_7 set (security_invoker = true);
-go
-alter view master_dbo.v3014_2_8 set (security_invoker = true);
-go
-ALTER VIEW master_dbo.v3014_2_9 SET (security_invoker = true);
+-- Grant for CASE 8 views
+GRANT SELECT, INSERT ON v3014_8_1 TO l3014_1;
 GO
-ALTER VIEW master_dbo.v3014_2_10 SET (security_invoker = true);
+GRANT SELECT, UPDATE ON v3014_8_2 TO l3014_1;
 GO
-ALTER VIEW master_dbo.v3014_2_11 SET (security_invoker = true);
+GRANT SELECT, DELETE ON v3014_8_3 TO l3014_1;
 GO
-ALTER VIEW master_dbo.v3014_2_12 SET (security_invoker = true);
+GRANT SELECT, INSERT, UPDATE ON v3014_8_4 TO l3014_1;
 GO
 
--- Alter CASE 3 views
-alter view master_dbo.v3014_3_1 set (security_invoker = true);
-go
-alter view master_dbo.v3014_3_2 set (security_invoker = true);
-go
-alter view master_dbo.v3014_3_3 set (security_invoker = true);
-go
-alter view master_dbo.v3014_3_4 set (security_invoker = true);
-go
-alter view master_dbo.v3014_3_5 set (security_invoker = true);
-go
-alter view master_dbo.v3014_3_6 set (security_invoker = true);
-go
-
--- Alter CASE 4 views
-ALTER VIEW master_dbo.v3014_4_1 SET (security_invoker = true);
+-- Grant for CASE 8 views
+GRANT SELECT, INSERT ON v3014_9_1 TO l3014_1;
 GO
-ALTER VIEW master_sch3014_b.v3014_4_2 SET (security_invoker = true);
+GRANT SELECT, UPDATE ON v3014_9_2 TO l3014_1;
 GO
-ALTER VIEW master_dbo.v3014_4_3 SET (security_invoker = true);
+GRANT SELECT, INSERT ON v3014_9_3 TO l3014_1;
 GO
-ALTER VIEW master_sch3014_b.v3014_4_4 SET (security_invoker = true);
+GRANT SELECT, DELETE ON v3014_9_4 TO l3014_1;
 GO
-ALTER VIEW master_dbo.v3014_4_5 SET (security_invoker = true);
-GO
-ALTER VIEW master_sch3014_b.v3014_4_6 SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_4_7 SET (security_invoker = true);
-GO
-ALTER VIEW master_sch3014_b.v3014_4_8 SET (security_invoker = true);
-GO
-
--- Alter CASE 5 views
-ALTER VIEW master_dbo.v3014_5_1a SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_5_1b SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_5_1c SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_5_2a SET (security_invoker = true);
-GO
-ALTER VIEW master_sch3014_b.v3014_5_2b SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_5_2c SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_5_3a SET (security_invoker = true);
-GO
-ALTER VIEW master_sch3014_b.v3014_5_3b SET (security_invoker = true);
-GO
-ALTER VIEW master_sch3014_c.v3014_5_3c SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_5_4a SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_5_4b SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_5_4c SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_5_5a SET (security_invoker = true);
-GO
-ALTER VIEW master_sch3014_b.v3014_5_5b SET (security_invoker = true);
-GO
-ALTER VIEW master_sch3014_c.v3014_5_5c SET (security_invoker = true);
-GO
-
--- Alter CASE 6 views
-ALTER VIEW master_dbo.v3014_6_1 SET (security_invoker = true);
-GO
-ALTER VIEW db3014_dbo.v3014_6_2 SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_6_3 SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_6_4 SET (security_invoker = true);
-GO
-
--- Alter CASE 7 views
-ALTER VIEW master_dbo.v3014_7_1 SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_7_2 SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_7_3 SET (security_invoker = true);
-GO
-ALTER VIEW master_dbo.v3014_7_4 SET (security_invoker = true);
-GO
-
--- Also alter the helper view
-alter view master_dbo.v3014_a set (security_invoker = true);
-go
 
 -- tsql
