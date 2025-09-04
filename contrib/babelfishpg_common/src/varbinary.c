@@ -1070,7 +1070,9 @@ ncharvarbinary(PG_FUNCTION_ARGS)
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("Implicit conversion from data type nchar to varbinary is not allowed. Use the CONVERT function to run this query.")));
+					errmsg("Implicit conversion from data type nchar to "
+						"varbinary is not allowed. Use the CONVERT function "
+						"to run this query.")));
  
 	initStringInfo(&buf);
  
@@ -1452,7 +1454,9 @@ ncharbinary(PG_FUNCTION_ARGS)
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("Implicit conversion from data type nchar to binary is not allowed. Use explicit CAST.")));
+				errmsg("Implicit conversion from data type nchar to "
+					"binary is not allowed. Use the CONVERT function "
+					"to run this query.")));
  
 	/* Convert UTF-8 input to UTF-16LE bytes */
 	initStringInfo(&utf16_buf);

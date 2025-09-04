@@ -3,6 +3,36 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- Drops an object if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when undefined_function then --if 'Deprecated function does not exist'
+       GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+       raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
@@ -33,9 +63,132 @@ $$
     end;
 $$;
 
+-- Rename the varchar overloads to mark as deprecated in 5.4.0
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_varbinary(typmod integer, arg sys."varchar", try boolean, p_style numeric) RENAME TO babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_4_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_try_conv_string_to_varbinary(arg sys."varchar", p_style numeric) RENAME TO babelfish_try_conv_string_to_varbinary_varchar_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_varbinary_varchar_deprecated_in_5_4_0');
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(typename text, arg text, try boolean, p_style numeric) RENAME TO babelfish_conv_helper_to_varchar_text_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_text_deprecated_in_5_4_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(typename text, arg anyelement, try boolean, p_style numeric) RENAME TO babelfish_conv_helper_to_varchar_anyelement_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_anyelement_deprecated_in_5_4_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_try_conv_to_varchar(typename text, arg text, p_style numeric) RENAME TO babelfish_try_conv_to_varchar_text_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varchar_text_deprecated_in_5_4_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_try_conv_to_varchar(typename text, arg anyelement, p_style numeric) RENAME TO babelfish_try_conv_to_varchar_anyelement_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varchar_anyelement_deprecated_in_5_4_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_to_varchar(typename text, arg text, p_style numeric) RENAME TO babelfish_conv_to_varchar_text_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_text_deprecated_in_5_4_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_to_varchar(typename text, arg anyelement, p_style NUMERIC) RENAME TO babelfish_conv_to_varchar_anyelement_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_anyelement_deprecated_in_5_4_0');
 
 -- convertion to NVARCHAR
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_nvarchar(IN typename TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
+                                                        IN arg TEXT,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+	IF try THEN
+	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
+    ELSE
+	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg ANYELEMENT,
                                                         IN try BOOL,
                                                         IN p_style NUMERIC DEFAULT -1)
@@ -44,33 +197,29 @@ AS
 $BODY$
 BEGIN
 	IF try THEN
-	    RETURN sys.babelfish_try_conv_to_nvarchar(typename, arg, p_style);
+	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
     ELSE
-	    RETURN sys.babelfish_conv_to_nvarchar(typename, arg, p_style);
+	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
     END IF;
 END;
 $BODY$
 LANGUAGE plpgsql
 STABLE;
 
--- ANYELEMENT
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_nvarchar(IN typename TEXT,
-														IN arg anyelement,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
+														IN arg TEXT,
 														IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_to_nvarchar(typename, arg, p_style);
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
+    RETURN CAST(arg AS sys.NVARCHAR);
 END;
 $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_nvarchar(IN typename TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
 														IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.NVARCHAR
@@ -112,80 +261,59 @@ BEGIN
 		ELSE
 			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
 		END IF;
-    WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
-        RETURN sys.varbinarysysnvarchar(arg, -1, true);
-    WHEN 'sys.binary'::regtype THEN
-        RETURN sys.binarysysnvarchar(arg, -1, true);
 	ELSE
-		RETURN CAST(arg AS sys.NVARCHAR);
+		IF lower(typename) LIKE 'nvarchar%' THEN
+		CASE pg_typeof(arg)
+            WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
+                RETURN (sys.varbinarysysnvarchar(arg, -1, true));
+
+            WHEN 'sys.binary'::regtype THEN
+                RETURN (sys.binarysysnvarchar(arg, -1, true));
+
+            ELSE
+                RETURN (CAST(arg AS sys.NVARCHAR));
+        END CASE;
+		ELSE
+        	RETURN (CAST(arg AS sys.NVARCHAR));
+    	END IF;
 	END CASE;
 END;
 $BODY$
 LANGUAGE plpgsql
 STABLE;
 
--- arg TEXT
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_nvarchar(IN typename TEXT,
-                                                        IN arg TEXT,
-                                                        IN try BOOL,
-                                                        IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
-AS
-$BODY$
-BEGIN
-	IF try THEN
-	    RETURN sys.babelfish_try_conv_to_nvarchar(typename, arg, p_style);
-    ELSE
-	    RETURN sys.babelfish_conv_to_nvarchar(typename, arg, p_style);
-    END IF;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_nvarchar(IN typename TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
 														IN arg TEXT,
 														IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN CAST(arg AS sys.NVARCHAR);
+    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
 END;
 $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
+														IN arg anyelement,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
 ----------------------------------------------------------------
-
--- Rename the varchar overload to mark as deprecated in 5.4.0
-DO $$
-BEGIN
-	IF EXISTS (
-		SELECT 1 FROM pg_proc p
-		JOIN pg_namespace n ON p.pronamespace = n.oid
-		WHERE n.nspname = 'sys'
-		  AND p.proname = 'babelfish_conv_helper_to_varbinary'
-		  AND pg_get_function_identity_arguments(p.oid) = 'typmod integer, arg sys."varchar", try boolean, p_style numeric')
-	THEN
-		EXECUTE 'ALTER FUNCTION sys.babelfish_conv_helper_to_varbinary(typmod integer, arg sys."varchar", try boolean, p_style numeric) RENAME TO babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_4_0';
-	END IF;
-END$$;
-
--- Rename the varchar overload of babelfish_try_conv_string_to_varbinary to mark as deprecated in 5.4.0
-DO $$
-BEGIN
-	IF EXISTS (
-		SELECT 1 FROM pg_proc p
-		JOIN pg_namespace n ON p.pronamespace = n.oid
-		WHERE n.nspname = 'sys'
-		  AND p.proname = 'babelfish_try_conv_string_to_varbinary'
-		  AND pg_get_function_identity_arguments(p.oid) = 'arg sys."varchar", p_style numeric')
-	THEN
-		EXECUTE 'ALTER FUNCTION sys.babelfish_try_conv_string_to_varbinary(arg sys."varchar", p_style numeric) RENAME TO babelfish_try_conv_string_to_varbinary_varchar_deprecated_in_5_4_0';
-	END IF;
-END$$;
-
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTEGER,
 																	IN arg anyelement,
@@ -195,8 +323,8 @@ RETURNS sys.varbinary
 AS
 $BODY$
 DECLARE
-    result sys.varbinary;
-    string_typmod INTEGER;
+	result sys.varbinary;
+	string_typmod INTEGER;
 BEGIN
 	IF try THEN
 		RETURN sys.babelfish_try_conv_to_varbinary(typmod, arg, p_style);
@@ -204,11 +332,11 @@ BEGIN
 		IF p_style != 0 AND pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.varchar'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
 			RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
 		ELSE
-            IF typmod > 0 THEN
-                string_typmod := typmod + 4;
-            ELSE
-                string_typmod := typmod;
-            END IF;
+			IF typmod > 0 THEN
+				string_typmod := typmod + 4;
+			ELSE
+				string_typmod := typmod;
+			END IF;
 			CASE pg_typeof(arg)
 				WHEN 'sys.nvarchar'::regtype THEN
 					RETURN sys.nvarcharvarbinary(arg, string_typmod, true);
@@ -220,11 +348,11 @@ BEGIN
 					RETURN sys.varcharvarbinary(arg, string_typmod, true);
 				ELSE
 					IF typmod = -1 THEN
-                        RETURN CAST(arg as sys.varbinary);
-                    ELSE
-                        EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
-                        RETURN result;
-                    END IF;
+						RETURN CAST(arg as sys.varbinary);
+					ELSE
+						EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+						RETURN result;
+					END IF;
 			END CASE;
 		END IF;
 	END IF;
@@ -240,17 +368,17 @@ RETURNS sys.varbinary
 AS
 $BODY$
 DECLARE 
-    result sys.varbinary;
-    string_typmod INTEGER;
+	result sys.varbinary;
+	string_typmod INTEGER;
 BEGIN
 	IF p_style != 0 AND pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.varchar'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
 		RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
 	ELSE
-        IF typmod > 0 THEN
-            string_typmod := typmod + 4;
-        ELSE
-            string_typmod := typmod;
-        END IF;
+		IF typmod > 0 THEN
+			string_typmod := typmod + 4;
+		ELSE
+			string_typmod := typmod;
+		END IF;
 		CASE pg_typeof(arg)
 			WHEN 'sys.nvarchar'::regtype THEN
 				RETURN sys.nvarcharvarbinary(arg, string_typmod, true);
@@ -262,11 +390,11 @@ BEGIN
 				RETURN sys.varcharvarbinary(arg, string_typmod, true);
 			ELSE
 				IF typmod = -1 THEN
-                    ETURN CAST(arg as sys.varbinary);
-                ELSE
-                    EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
-                    RETURN result;
-                END IF;
+					ETURN CAST(arg as sys.varbinary);
+				ELSE
+					EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+					RETURN result;
+				END IF;
 		END CASE;
 	END IF;
 	EXCEPTION
@@ -288,9 +416,9 @@ AS
 $BODY$
 BEGIN
     IF try THEN
-        RETURN sys.babelfish_try_conv_string_to_varbinary(arg::sys.varchar, p_style);
+        RETURN sys.babelfish_try_conv_string_to_varbinary(arg, p_style);
     ELSE
-        RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
+        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
     END IF;
 END;
 $BODY$
@@ -305,7 +433,7 @@ RETURNS sys.varbinary
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
+    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
 EXCEPTION
     WHEN OTHERS THEN
         RETURN NULL;
@@ -313,13 +441,8 @@ END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
+
 ----------------------------------------------------------------
--- Please add your SQLs here
-/*
- * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
- * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
- * final behaviour.
- */
 
 CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT)
 RETURNS sys.NVARCHAR
@@ -398,6 +521,10 @@ BEGIN
 END;
 $$
 LANGUAGE 'pltsql';
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

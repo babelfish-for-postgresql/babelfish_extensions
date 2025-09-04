@@ -117,7 +117,7 @@ SELECT @complexEmoji, LEN(@complexEmoji) AS 'Length', DATALENGTH(@complexEmoji) 
 GO
 ~~START~~
 nchar#!#int#!#int
-👋🏽👨‍💻👩‍🎨                #!#8#!#52
+👋🏽👨‍💻👩‍🎨                #!#8#!#30
 ~~END~~
 
 
@@ -1251,7 +1251,7 @@ Hello ?????? Emoji Test ?????????
 
 ~~START~~
 varchar
-Hello ?????? Emoji Test ?????????                 
+Hello ?????? Emoji Test ?????????
 ~~END~~
 
 ~~START~~
@@ -1261,17 +1261,17 @@ Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
 
 ~~START~~
 nvarchar
-Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻     
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
 ~~END~~
 
 ~~START~~
 text
-Hello ?????? Emoji Test ?????????                 
+Hello ?????? Emoji Test ?????????
 ~~END~~
 
 ~~START~~
 ntext
-Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻                 
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
 ~~END~~
 
 ~~START~~
@@ -1482,7 +1482,7 @@ Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 
 ~~START~~
 varchar
-Mixed: Hello ?好 こんにちは ?? ???? ??????? 123   
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 ~~END~~
 
 ~~START~~
@@ -1492,17 +1492,17 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 nvarchar
-Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 ~~END~~
 
 ~~START~~
 text
-Mixed: Hello ?好 こんにちは ?? ???? ??????? 123         
+Mixed: Hello ?好 こんにちは ?? ???? ??????? 123
 ~~END~~
 
 ~~START~~
 ntext
-Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123         
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 ~~END~~
 
 ~~START~~
@@ -1623,7 +1623,7 @@ Collation Test 你好 こんにちは àáâã ÀÁÂà Case Test
 
 ~~START~~
 text
-Collation Test ?好 こんにちは ???? ???? Case Test                                                                                                           
+Collation Test ?好 こんにちは ???? ???? Case Test
 ~~END~~
 
 
@@ -1914,7 +1914,7 @@ Test 10: Edge Cases
 
 ~~START~~
 varchar#!#nvarchar#!#char#!#nchar
-#!##!#                                                  #!#　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+#!##!#                                                  #!#　　　　　　　　　　　　　　　　　　　　　　　　　                         
 ~~END~~
 
 
@@ -2206,7 +2206,7 @@ EXEC babel_4803_proc1 N'TESTこんにちは🙂🙂世界'
 GO
 ~~START~~
 nchar
-TESTこんにちは🙂🙂世界               
+TESTこんにちは??世界                 
 ~~END~~
 
 EXEC babel_4803_proc2 N'TESTこんにちは🙂🙂世界'
@@ -2234,7 +2234,7 @@ EXEC babel_4803_proc5 N'TESTこんにちは🙂🙂世界'
 GO
 ~~START~~
 nvarchar#!#varchar#!#char
-TESTこんにちは🙂🙂世界                 #!#TESTこんにちは??世界                 #!#TESTこんにちは??世界                    
+TESTこんにちは??世界          #!#TESTこんにちは??世界          #!#TESTこんにちは??世界                    
 ~~END~~
 
 EXEC babel_4803_proc6 N'TESTこんにちは🙂🙂世界'

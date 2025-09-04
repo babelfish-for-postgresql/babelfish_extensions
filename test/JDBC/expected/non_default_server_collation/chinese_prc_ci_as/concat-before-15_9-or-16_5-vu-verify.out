@@ -332,7 +332,7 @@ SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) + '|'
 GO
 ~~START~~
 nvarchar
-|  比尔·拉莫斯                                          比拉斯       比拉斯       |
+|  比尔·拉莫斯                                          比拉斯 比拉斯 |
 ~~END~~
 
 
@@ -341,7 +341,7 @@ SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) COLLATE CHINESE_
 GO
 ~~START~~
 nvarchar
-|  比尔·拉莫斯                                          比拉斯       比拉斯       |
+|  比尔·拉莫斯                                          比拉斯 比拉斯 |
 ~~END~~
 
 

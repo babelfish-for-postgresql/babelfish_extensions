@@ -640,7 +640,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, @inputString1, @inputString2) +
 GO
 ~~START~~
 nvarchar
-|  比尔·拉莫斯                                           ·比                                               比拉斯        ·比                                               比拉斯       |
+|  比尔·拉莫斯                                           ·比                                               比拉斯  ·比                                               比拉斯 |
 ~~END~~
 
 
@@ -649,7 +649,7 @@ SELECT '|' + CONCAT_WS(@seperator, @inputString, @inputString1, @inputString2) C
 GO
 ~~START~~
 nvarchar
-|  比尔·拉莫斯                                           ·比                                               比拉斯        ·比                                               比拉斯       |
+|  比尔·拉莫斯                                           ·比                                               比拉斯  ·比                                               比拉斯 |
 ~~END~~
 
 

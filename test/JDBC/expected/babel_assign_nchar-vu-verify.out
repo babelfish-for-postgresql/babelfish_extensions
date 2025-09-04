@@ -117,7 +117,7 @@ SELECT @complexEmoji, LEN(@complexEmoji) AS 'Length', DATALENGTH(@complexEmoji) 
 GO
 ~~START~~
 nchar#!#int#!#int
-👋🏽👨‍💻👩‍🎨                #!#8#!#52
+👋🏽👨‍💻👩‍🎨                #!#8#!#30
 ~~END~~
 
 
@@ -1251,7 +1251,7 @@ Hello ?????? Emoji Test ?????????
 
 ~~START~~
 varchar
-Hello ?????? Emoji Test ?????????                 
+Hello ?????? Emoji Test ?????????
 ~~END~~
 
 ~~START~~
@@ -1261,17 +1261,17 @@ Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
 
 ~~START~~
 nvarchar
-Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻     
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
 ~~END~~
 
 ~~START~~
 text
-Hello ?????? Emoji Test ?????????                 
+Hello ?????? Emoji Test ?????????
 ~~END~~
 
 ~~START~~
 ntext
-Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻                 
+Hello 😀😍🌟💖🎉🚀 Emoji Test 🐱‍👤🐱‍🏍🐱‍💻
 ~~END~~
 
 ~~START~~
@@ -1482,7 +1482,7 @@ Mixed: Hello ?? ????? ?? àáâã ??????? 123
 
 ~~START~~
 varchar
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
+Mixed: Hello ?? ????? ?? àáâã ??????? 123
 ~~END~~
 
 ~~START~~
@@ -1492,17 +1492,17 @@ Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 
 ~~START~~
 nvarchar
-Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123       
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 ~~END~~
 
 ~~START~~
 text
-Mixed: Hello ?? ????? ?? àáâã ??????? 123         
+Mixed: Hello ?? ????? ?? àáâã ??????? 123
 ~~END~~
 
 ~~START~~
 ntext
-Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123         
+Mixed: Hello 你好 こんにちは 😀🌟 àáâã التسجيل 123
 ~~END~~
 
 ~~START~~
@@ -1623,7 +1623,7 @@ Collation Test 你好 こんにちは àáâã ÀÁÂà Case Test
 
 ~~START~~
 text
-Collation Test ?好 こんにちは ???? ???? Case Test                                                                                                           
+Collation Test ?好 こんにちは ???? ???? Case Test
 ~~END~~
 
 
@@ -1875,7 +1875,7 @@ Test 3: Special Characters
 
 ~~START~~
 varchar#!#nvarchar#!#char#!#nchar
-Special: àáâãäçèéêë#!#Special: 你好世界 😀😍🌟💖#!#Special: ñóôõö                                    #!#Special: こんにちは                                    
+Special: àáâãäçèéêë#!#Special: 你好世界 😀😍🌟💖#!#Special: ñóôõö                                    #!#Special: ?????                                    
 ~~END~~
 
 
@@ -2206,7 +2206,7 @@ EXEC babel_4803_proc1 N'TESTこんにちは🙂🙂世界'
 GO
 ~~START~~
 nchar
-TESTこんにちは🙂🙂世界               
+TEST?????????                 
 ~~END~~
 
 EXEC babel_4803_proc2 N'TESTこんにちは🙂🙂世界'
@@ -2234,7 +2234,7 @@ EXEC babel_4803_proc5 N'TESTこんにちは🙂🙂世界'
 GO
 ~~START~~
 nvarchar#!#varchar#!#char
-TESTこんにちは🙂🙂世界                 #!#TEST?????????                 #!#TEST?????????                           
+TEST?????????                 #!#TEST?????????                 #!#TEST?????????                           
 ~~END~~
 
 EXEC babel_4803_proc6 N'TESTこんにちは🙂🙂世界'
@@ -2271,7 +2271,7 @@ EXEC babel_4803_proc10 N'こん 世界',N'こん 世界',N'こん 世界',N'こ�
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#nchar#!#varchar#!#char#!#nvarchar#!#nchar
-こん 世界#!#?? ??                         #!#こん 世界#!#こん 世界                         #!#こん 世界#!#?? ??                         #!#こん 世界#!#こん 世界                         
+こん 世界#!#?? ??                         #!#こん 世界#!#?? ??                         #!#こん 世界#!#?? ??                         #!#こん 世界#!#?? ??                         
 ~~END~~
 
 

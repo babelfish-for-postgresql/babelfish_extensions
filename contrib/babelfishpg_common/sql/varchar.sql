@@ -267,11 +267,6 @@ CREATE CAST (sys.nvarchar AS sys.nvarchar)
 WITH FUNCTION sys.nvarchar (sys.nvarchar, integer, BOOLEAN) AS ASSIGNMENT;
 SET client_min_messages = 'WARNING';
 
-CREATE OR REPLACE FUNCTION sys.nvarchar2nchar(sys.NVARCHAR, integer, boolean)
-RETURNS sys.NCHAR
-AS 'babelfishpg_common', 'nchar'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE CAST (sys.VARCHAR as pg_catalog.xml)
 WITHOUT FUNCTION AS IMPLICIT;
  
