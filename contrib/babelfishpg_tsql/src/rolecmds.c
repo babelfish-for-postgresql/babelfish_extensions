@@ -3384,7 +3384,7 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 			if (sdepForm->classid != AuthMemRelationId)
 			{
 
-				if(sdepForm->classid != DefaultAclRelationId)
+				if (sdepForm->classid != DefaultAclRelationId)
 				{
 					HeapTuple		tup;
 					bool			isNull;
@@ -3399,12 +3399,12 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 
 					aclDatum = SysCacheGetAttr(cacheid, tup, get_object_attnum_acl(sdepForm->classid),
 											&isNull);
-					if(!isNull)
+					if (!isNull)
 					{
 						/* 
-						* Check if the current user is grantor for any permission to any object
-						* If yes then do not allow to drop the user
-						*/
+						 * Check if the current user is grantor for any permission in current object acl
+						 * If yes then do not allow to drop the user
+						 */
 						const AclItem *acldat;
 						old_acl = DatumGetAclPCopy(aclDatum);
 						acldat = ACL_DAT(old_acl);
@@ -3420,21 +3420,23 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 					}
 
 					ReleaseSysCache(tup);
-					if(!old_acl)
+					if (!old_acl)
 						pfree(old_acl);
 				}
-				if(!user_is_grantor)
+				if (!user_is_grantor)
 				{
 					RemoveRoleFromObjectACL(roleid,
 											sdepForm->classid,
 											sdepForm->objid);
-					/* Update the catalog after deleting the user */
-					remove_entry_from_bbf_schema_perms(NULL, NULL, NULL, NULL, roleid, true);
 				}
 			}
-			/* FALLTHROUGH */
 		}
 	}
+
+	/* Update the catalog after deleting the user if user is not grantor. */
+	if (!user_is_grantor)
+		remove_user_entry_from_bbf_schema_perms(roleid);
+
 	systable_endscan(scan);
 
 	/*
