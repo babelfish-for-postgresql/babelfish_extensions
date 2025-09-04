@@ -199,3 +199,43 @@ GO
 
 DROP PROCEDURE BABEL_5748_vu_prepare_t_p24
 GO
+
+-- Drop all test tables
+DROP TABLE BABEL_5748_vu_prepare_t_table1;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table2;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table3;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table4;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table5;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table6;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table7;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table8;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table9;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table10;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table11;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table12;
+GO
+
+DROP TABLE BABEL_5748_vu_prepare_t_table13;
+GO
