@@ -5177,9 +5177,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 				}
 
-				if (exec_pg_command && ((grant->objtype == OBJECT_FUNCTION) || (grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_TABLE)))
+				if (((grant->objtype == OBJECT_FUNCTION) || (grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_TABLE)))
 				{
-					call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+					if (exec_pg_command)
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 					return;
 				}
 
