@@ -165,20 +165,20 @@ GO
 
 CREATE TABLE BABEL_5748_vu_prepare_t_table5 (id INT, result SMALLMONEY);
 GO
-INSERT INTO BABEL_5748_vu_prepare_t_table5 VALUES (1, degrees(CAST(214748.3647 AS SMALLMONEY)));
+INSERT INTO BABEL_5748_vu_prepare_t_table5 VALUES (1, cast(degrees(CAST(214748.3647 AS SMALLMONEY)) AS SMALLMONEY));
 GO
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
 
 
 CREATE TABLE BABEL_5748_vu_prepare_t_table6 (id INT, result SMALLMONEY);
 GO
-INSERT INTO BABEL_5748_vu_prepare_t_table6 VALUES (1, degrees(CAST(-214748.3648 AS SMALLMONEY)));
+INSERT INTO BABEL_5748_vu_prepare_t_table6 VALUES (1, cast(degrees(CAST(-214748.3648 AS SMALLMONEY)) AS SMALLMONEY));
 GO
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+~~ERROR (Message: FIXEDDECIMAL field overflow)~~
 
 
 CREATE TABLE BABEL_5748_vu_prepare_t_table7 (id INT, result SMALLMONEY);
