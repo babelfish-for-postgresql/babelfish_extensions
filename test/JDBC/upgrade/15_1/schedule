@@ -464,3 +464,4 @@ babel_numeric_money_oper-before-16_10-or-17_6
 babel_numeric_smallmoney_oper-before-16_10-or-17_6
 babel_assign_nchar
 view_sec_setting
+alter-function-with-weak-view
