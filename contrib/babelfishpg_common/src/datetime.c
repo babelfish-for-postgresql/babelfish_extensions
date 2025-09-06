@@ -924,7 +924,6 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 	int64			days,
 					time_part,
 					total_ms;
-	int32			tz;
 	struct pg_tm	tt,
 					*tm = &tt;
 	fsec_t			fsec;
