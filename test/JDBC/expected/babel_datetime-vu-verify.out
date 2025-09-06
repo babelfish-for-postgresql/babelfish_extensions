@@ -1836,3 +1836,248 @@ GO
 varbinary
 ~~END~~
 
+
+-- Testing using typmod
+select cast(cast('1753-01-01 00:00:00.000' as datetime) as varbinary(8))
+GO
+~~START~~
+varbinary
+FFFF2E4600000000
+~~END~~
+
+
+select cast(cast('9999-12-31 23:59:59.997' as datetime) as varbinary(7))
+GO
+~~START~~
+varbinary
+2D247F018B81FF
+~~END~~
+
+
+select cast(cast('9999-12-31 23:59:59.998' as datetime) as varbinary(6))
+GO
+~~START~~
+varbinary
+247F018B81FF
+~~END~~
+
+
+select cast(cast('1753-01-01 00:00:00.003' as datetime) as varbinary(5))
+GO
+~~START~~
+varbinary
+4600000001
+~~END~~
+
+
+select cast(cast('1753-01-01 00:00:00.002' as datetime) as varbinary(4))
+GO
+~~START~~
+varbinary
+00000001
+~~END~~
+
+
+select cast(cast('9999-12-31 23:59:59.993' as datetime) as varbinary(3))
+GO
+~~START~~
+varbinary
+8B81FE
+~~END~~
+
+
+select cast(cast('9999-12-31 23:59:59.995' as datetime) as varbinary(2))
+GO
+~~START~~
+varbinary
+81FF
+~~END~~
+
+
+select cast(cast('1908-10-21 00:00:00.000' as datetime) as varbinary(1))
+GO
+~~START~~
+varbinary
+00
+~~END~~
+
+
+select cast(cast('1908-10-21 21:12:01.020' as datetime) as varbinary(max))
+GO
+~~START~~
+varbinary
+00000C8F015D5EB2
+~~END~~
+
+
+select cast(cast('2031-11-08 00:00:00.000' as datetime) as varbinary(10))
+GO
+~~START~~
+varbinary
+0000BC1E00000000
+~~END~~
+
+
+select cast(cast('2031-11-08 23:59:59.997' as datetime) as varbinary(16))
+GO
+~~START~~
+varbinary
+0000BC1E018B81FF
+~~END~~
+
+
+select cast(cast('2023-06-15 00:00:00.003' as datetime) as varbinary(1234))
+GO
+~~START~~
+varbinary
+0000B02200000001
+~~END~~
+
+
+select cast(cast('2023-06-15 00:00:00.423' as datetime) as varbinary(0))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: length for type varbinary must be at least 1)~~
+
+
+select cast(cast('2023-06-15 00:00:00.850' as datetime) as varbinary(-1))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 68)~~
+
+
+select cast(cast('1900-01-01 00:02:30.300' as datetime) as varbinary(2))
+GO
+~~START~~
+varbinary
+B022
+~~END~~
+
+
+select cast(cast('1752-12-31 23:59:59.997' as datetime) as varbinary(6))
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+select cast(cast('9999-12-31 23:59:59.999' as datetime) as varbinary(3))
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+select cast(cast('2000-02-28 00:00:00.000' as datetime) as varbinary(5))
+GO
+~~START~~
+varbinary
+E600000000
+~~END~~
+
+
+select cast(cast('2000-02-29 00:00:00.000' as datetime) as varbinary(max))
+GO
+~~START~~
+varbinary
+00008EE700000000
+~~END~~
+
+
+select cast(cast('2000-03-01 00:00:00.000' as datetime) as varbinary(8))
+GO
+~~START~~
+varbinary
+00008EE800000000
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(1)) as datetime)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(2)) as datetime)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(3)) as datetime)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(4)) as datetime)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(5)) as datetime)
+GO
+~~START~~
+datetime
+1900-03-26 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(6)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(7)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(8)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(9)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(10)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(max)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+

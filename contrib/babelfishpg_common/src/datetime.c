@@ -919,15 +919,14 @@ Datum
 datetime_varbinary(PG_FUNCTION_ARGS)
 {
 	Timestamp		ts = PG_GETARG_TIMESTAMP(0);
-#ifdef NOT_USED
 	int32			typmod = PG_GETARG_INT32(1);
-#endif
 	bool			isExplicit = PG_GETARG_BOOL(2);
 	int64			days,
 					time_part,
 					total_ms;
 	int32			tz;
-	struct pg_tm	tm;
+	struct pg_tm	tt,
+					*tm = &tt;
 	fsec_t			fsec;
 	bytea			*result;
 
@@ -938,7 +937,7 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 						"varbinary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
-	if (timestamp2tm(ts, &tz, &tm, &fsec, NULL, NULL) != 0)
+	if (timestamp2tm(ts, &tz, tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					errmsg("timestamp out of range")));
@@ -949,10 +948,10 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 		days = (ts - TSQL_DEFAULT_DATETIME) / USECS_PER_DAY;
 
 	/* Calculate total milliseconds from time portion */
-	total_ms = ((int64) tm.tm_hour * 3600000LL) +
-				((int64) tm.tm_min * 60000LL) +
-				((int64) tm.tm_sec * 1000LL) +
-				((int64) (fsec) / 1000);
+	total_ms = (tm->tm_hour * 3600000LL) +
+				(tm->tm_min * 60000LL) +
+				(tm->tm_sec * 1000LL) +
+				(fsec / 1000);
 
 	/* Convert to TSQL 300ths of a second ticks */
 	time_part = (total_ms * 3LL + 5LL) / 10LL;
@@ -961,12 +960,33 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 	days = pg_hton32(days);
 	time_part = pg_hton32(time_part);
 
-	result = (bytea *) palloc(VARHDRSZ + 8);
-	SET_VARSIZE(result, VARHDRSZ + 8);
+	if (typmod < 8 + VARHDRSZ && typmod > VARHDRSZ)
+	{
+		int32 result_size = typmod - VARHDRSZ;
+		result = (bytea *) palloc(VARHDRSZ + result_size);
+		SET_VARSIZE(result, VARHDRSZ + result_size);
 
-	/* Copy the parts to the bytea result */
-	memcpy(VARDATA(result), &days, 4);
-	memcpy(VARDATA(result) + 4, &time_part, 4);
+		if (result_size <= 4)
+		{
+			/* Copy only time_part to the bytea result */
+			memcpy(VARDATA(result), (char *)&time_part + (4 - result_size), result_size);
+		}
+		else
+		{
+			/* Copy the parts to the bytea result */
+			memcpy(VARDATA(result), (char *)&days + (4 - (result_size - 4)), result_size - 4);
+			memcpy(VARDATA(result) + (result_size - 4), &time_part, 4);
+		}
+	}
+	else
+	{
+		result = (bytea *) palloc(VARHDRSZ + 8);
+		SET_VARSIZE(result, VARHDRSZ + 8);
+
+		/* Copy the parts to the bytea result */
+		memcpy(VARDATA(result), &days, 4);
+		memcpy(VARDATA(result) + 4, &time_part, 4);
+	}
 
 	PG_RETURN_BYTEA_P(result);
 }
