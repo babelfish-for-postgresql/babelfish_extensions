@@ -937,10 +937,10 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 						"varbinary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
-	if (timestamp2tm(ts, &tz, tm, &fsec, NULL, NULL) != 0)
+	if (TIMESTAMP_NOT_FINITE(ts) || timestamp2tm(ts, NULL, tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					errmsg("timestamp out of range")));
+				 errmsg("datetime out of range")));
 
 	if (ts < TSQL_DEFAULT_DATETIME)
 		days = DATEPART_MIN_VALUE + ((ts - MIN_DATETIME) / USECS_PER_DAY);
