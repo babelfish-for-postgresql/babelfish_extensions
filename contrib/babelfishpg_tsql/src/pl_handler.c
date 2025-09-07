@@ -4994,6 +4994,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					char	   *obj = rv->relname;
 					ListCell   *lc;
 					ListCell	*lc1;
+					List  		*all_privileges = NIL;    /* Initialize an empty list */
 
 					if (rv->schemaname != NULL)
 						logical_schema = get_logical_schema_name(rv->schemaname, false);
@@ -5012,66 +5013,109 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 								add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true, NULL);
 							}
+							exec_pg_command = true;
 						}
 						else
 						{
+							/* Append the values to the list */
+
+							AccessPriv *ap_insert = 	makeNode(AccessPriv);
+							AccessPriv *ap_select = 	makeNode(AccessPriv);
+							AccessPriv *ap_update = 	makeNode(AccessPriv);
+							AccessPriv *ap_references = makeNode(AccessPriv);
+
+							ap_insert->priv_name = "insert";
+							ap_insert->cols = NIL; 
+							all_privileges = lappend(all_privileges, ap_insert);
+
+							ap_select->priv_name = "select";
+							ap_select->cols = NIL;
+							all_privileges = lappend(all_privileges, ap_select);
+
+							ap_update->priv_name = "update";
+							ap_update->cols = NIL;
+							all_privileges = lappend(all_privileges, ap_update);
+
+							ap_references->priv_name = "references";
+							ap_references->cols = NIL;
+							all_privileges = lappend(all_privileges, ap_references);
+
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+
 								/* Special database roles should throw an error. */
 								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
+
 								/*
 								 * 1. If permission on schema exists, don't revoke any permission from the object.
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
+								foreach(lc1, all_privileges)
+								{
+									AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+									AclMode privilege = string_to_privilege(ap->priv_name);
+								
+									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+										exec_pg_command = true;
+									else
+										all_privileges = foreach_delete_current(all_privileges, lc1);
+
+								}
 								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
-								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, INVALID_PERMISSION))
-									return;
+							}
+							if (list_length(all_privileges) == 0)
+								return;
+							else
+							{
+								grant->privileges = all_privileges;
 							}
 						}
-						exec_pg_command = true;
 					}
-					foreach(lc1, grant->privileges)
+					else
 					{
-						AccessPriv *ap = (AccessPriv *) lfirst(lc1);
-						AclMode privilege = string_to_privilege(ap->priv_name);
-						if (grant->is_grant)
+						foreach(lc1, grant->privileges)
 						{
-							exec_pg_command = true;
-							/* Don't add/update an entry, if the permission is granted on column list.*/
-							if (ap->cols == NULL)
+							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+							AclMode privilege = string_to_privilege(ap->priv_name);
+							if (grant->is_grant)
 							{
-								foreach(lc, grant->grantees)
+								exec_pg_command = true;
+								/* Don't add/update an entry, if the permission is granted on column list.*/
+								if (ap->cols == NULL)
 								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									/* Special database roles should throw an error. */
-									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
-									add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
+									foreach(lc, grant->grantees)
+									{
+										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+										/* Special database roles should throw an error. */
+										throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
+										add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
+									}
 								}
 							}
-						}
-						else
-						{
-							/* Don't update an entry, if the permission is granted on column list.*/
-							if (ap->cols == NULL)
+							else
 							{
-								foreach(lc, grant->grantees)
+								/* Don't update an entry, if the permission is granted on column list.*/
+								if (ap->cols == NULL)
 								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									/* Special database roles should throw an error. */
-									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
-									/* If permission on schema exists, don't revoke any permission from the object. */
-									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+									foreach(lc, grant->grantees)
 									{
-										/* 
-										 * If the privilege is not common to schema and object then 
-										 * execute_pg_command true and append the privilege to filtered list 
-										 */
-										exec_pg_command = true;
+										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+										/* Special database roles should throw an error. */
+										throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
+										/* If permission on schema exists, don't revoke any permission from the object. */
+										if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+										{
+											/* 
+											* If the privilege is not common to schema and object then 
+											* execute_pg_command true and append the privilege to filtered list 
+											*/
+											exec_pg_command = true;
+										}
+										else
+											grant->privileges = foreach_delete_current(grant->privileges, lc1);
+										update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
 									}
-									else
-										foreach_delete_current(grant->privileges, lc1);
-									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
 								}
 							}
 						}
@@ -5180,7 +5224,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									exec_pg_command = true;
 								}
 								else
-									foreach_delete_current(grant->privileges, lc1);
+									grant->privileges =foreach_delete_current(grant->privileges, lc1);
 
 								/* Update the privilege in the catalog. */
 								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);

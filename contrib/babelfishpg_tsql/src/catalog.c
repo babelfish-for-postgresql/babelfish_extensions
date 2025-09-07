@@ -3965,7 +3965,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 	tuple_bbf_schema = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple_bbf_schema))
     {
-		if (curr_permission == -1)
+		if (curr_permission == INVALID_PERMISSION)
 		{
 			catalog_entry_exists = true;
 		}
@@ -3978,12 +3978,13 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 			int sch_permission;
 
 			datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, RelationGetDescr(bbf_schema_rel), &isnull);
-			sch_permission = DatumGetInt32(datum);
+			if(isnull)
+				catalog_entry_exists = false;
+			else
+				sch_permission = DatumGetInt32(datum);
 
 			if (!isnull && ((sch_permission & curr_permission) == curr_permission))
 				catalog_entry_exists = true;
-			else if (!isnull && ((sch_permission & curr_permission) != curr_permission))
-				catalog_entry_exists = false;
 
 		}
     }

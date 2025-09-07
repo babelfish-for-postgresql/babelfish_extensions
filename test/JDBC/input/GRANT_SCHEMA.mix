@@ -3715,3 +3715,52 @@ drop user u
 go
 drop login l
 go
+
+-- tsql
+-- Test Group 19 [REVOKE ALL with schema permissions]
+create login babel_test_l1 with password = '123';
+go
+
+create user babel_test_u1 for login babel_test_l1;
+go
+
+create schema babel_test_s1;
+go
+
+create table babel_test_s1.t1(a int);
+go
+
+-- Grant table and schema permissions
+grant select, insert on babel_test_s1.t1 to babel_test_u1;
+go
+
+grant select on schema::babel_test_s1 to babel_test_u1;
+go
+
+-- Revoke all permissions from table
+revoke all on babel_test_s1.t1 from babel_test_u1;
+go
+
+-- tsql user=babel_test_l1 password=123
+-- Try to insert into table (should fail due to revoked permissions)
+select * from babel_test_s1.t1;
+go
+
+insert into babel_test_s1.t1 values (1);
+go
+-- terminate-tsql-conn user=babel_test_l1 password=123
+
+-- tsql
+-- Cleanup
+drop table babel_test_s1.t1;
+go
+
+drop schema babel_test_s1;
+go
+
+drop user babel_test_u1;
+go
+
+-- tsql
+drop login babel_test_l1;
+go
