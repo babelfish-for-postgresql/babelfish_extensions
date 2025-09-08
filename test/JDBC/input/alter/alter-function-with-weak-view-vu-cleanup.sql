@@ -1,0 +1,40 @@
+DROP VIEW IF EXISTS dbo.order_summary
+GO
+DROP VIEW IF EXISTS dbo.order_discount_summary
+GO
+DROP VIEW IF EXISTS dbo.order_final_price
+GO
+DROP VIEW IF EXISTS dbo.order_pricing_details
+GO
+DROP VIEW IF EXISTS dbo.order_regional_summary
+GO
+DROP VIEW IF EXISTS dbo.category_analytics
+GO
+DROP VIEW IF EXISTS dbo.order_details_extended
+GO
+DROP VIEW IF EXISTS dbo.high_value_orders
+GO
+DROP VIEW IF EXISTS dbo.category_summaries
+GO
+DROP FUNCTION IF EXISTS dbo.calculate_tax
+GO
+DROP FUNCTION IF EXISTS dbo.calculate_discount
+GO
+DROP FUNCTION IF EXISTS dbo.calculate_base_price
+GO
+DROP FUNCTION IF EXISTS dbo.calculate_final_price
+GO
+DROP FUNCTION IF EXISTS dbo.calculate_regional_tax
+GO
+DROP FUNCTION IF EXISTS dbo.get_category_average
+GO
+DROP FUNCTION IF EXISTS dbo.calculate_safe_discount
+GO
+DROP FUNCTION IF EXISTS dbo.generate_order_code
+GO
+DROP FUNCTION IF EXISTS dbo.get_orders_by_amount
+GO
+DROP FUNCTION IF EXISTS dbo.get_order_summary
+GO
+DROP TABLE IF EXISTS orders
+GO
