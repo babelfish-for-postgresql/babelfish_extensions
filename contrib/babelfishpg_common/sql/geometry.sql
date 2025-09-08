@@ -262,7 +262,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR,srid integ
 		IF Geomtype = 'ST_Point' THEN
 				RETURN geom;
 		ELSE
-			RAISE EXCEPTION 'Invalid function usage : Expected "POINT"';
+			RAISE EXCEPTION 'Expected "POINT" at Position 1. The input has %', $1;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -285,7 +285,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STLineFromText(sys.NVARCHAR,srid intege
 		IF Geomtype = 'ST_LineString' THEN
 				RETURN geom;
 		ELSE
-			RAISE EXCEPTION 'Invalid function usage : Expected "LINESTRING"';
+			RAISE EXCEPTION 'Expected "LINESTRING" at Position 1. The input has %', $1;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
