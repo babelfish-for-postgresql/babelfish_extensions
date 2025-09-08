@@ -1451,7 +1451,6 @@ TdsTypeSpatialToDatum(StringInfo buf, bool is_geography)
 	else
 		result = pltsql_plugin_handler_ptr->sql_geometry_from_bytea(fcinfo);
 
-	pfree(input_bytea);
 	return result;
 }
 
