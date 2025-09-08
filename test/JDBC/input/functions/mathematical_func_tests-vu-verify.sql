@@ -15,6 +15,22 @@ SELECT SQRT(255);
 GO
 SELECT SQRT(9223372036854775808);
 GO
+SELECT SQRT(CAST(2147483647 AS INT));
+GO
+SELECT SQRT(CAST(2147483648 AS INT));
+GO
+SELECT SQRT(CAST(9223372036854775807 AS BIGINT));
+GO
+SELECT SQRT(CAST(9223372036854775808 AS BIGINT));
+GO
+SELECT SQRT(CAST(32767 AS SMALLINT));
+GO
+SELECT SQRT(CAST(32768 AS SMALLINT));
+GO
+SELECT SQRT(CAST(255 AS TINYINT));
+GO
+SELECT SQRT(CAST(256 AS TINYINT));
+GO
 
 -- Numeric/Decimal
 SELECT SQRT(144.00);
@@ -32,6 +48,8 @@ GO
 SELECT SQRT(12.25);
 GO
 SELECT SQRT(9999999999999999999999999999999999999.99);
+GO
+SELECT SQRT(CAST(99999999999999999999999999999999999999.99 AS NUMERIC(38,2)));
 GO
 
 -- BIT
@@ -97,6 +115,10 @@ SELECT SQRT(CAST(1.79769E+308 AS FLOAT));
 GO
 SELECT SQRT(CAST(2.22507E-308 AS FLOAT));  
 GO
+SELECT SQRT(CAST(1.79E+309 AS FLOAT));
+GO
+SELECT SQRT(CAST(2.22E-308 AS FLOAT));
+GO
 
 -- REAL
 SELECT SQRT(CAST(144.00 AS REAL));
@@ -116,6 +138,10 @@ GO
 SELECT SQRT(CAST(3.40282E+38 AS REAL));
 GO
 SELECT SQRT(CAST(1.17549E-38 AS REAL));
+GO
+SELECT SQRT(CAST(3.41E+38 AS REAL));
+GO
+SELECT SQRT(CAST(1.17E-38 AS REAL));
 GO
 
 -- Character Types
@@ -223,6 +249,10 @@ SELECT * FROM BABEL_5672_sqrt_numeric_max;
 GO
 SELECT * FROM BABEL_5672_sqrt_numeric_min;
 GO
+SELECT * FROM BABEL_5672_sqrt_numeric_overflow1;
+GO
+SELECT * FROM BABEL_5672_sqrt_numeric_overflow2;
+GO
 
 SELECT * FROM BABEL_5672_sqrt_decimal;
 GO
@@ -235,6 +265,10 @@ GO
 SELECT * FROM BABEL_5672_sqrt_decimal_max;
 GO
 SELECT * FROM BABEL_5672_sqrt_decimal_min;
+GO
+SELECT * FROM BABEL_5672_sqrt_decimal_overflow1;
+GO
+SELECT * FROM BABEL_5672_sqrt_decimal_overflow2;
 GO
 
 SELECT * FROM BABEL_5672_sqrt_bit;
@@ -256,6 +290,8 @@ SELECT * FROM BABEL_5672_sqrt_int_max;
 GO
 SELECT * FROM BABEL_5672_sqrt_int_min;
 GO
+SELECT * FROM BABEL_5672_sqrt_int_overflow;
+GO
 
 SELECT * FROM BABEL_5672_sqrt_bigint;
 GO
@@ -268,6 +304,8 @@ GO
 SELECT * FROM BABEL_5672_sqrt_bigint_max;
 GO
 SELECT * FROM BABEL_5672_sqrt_bigint_min;
+GO
+SELECT * FROM BABEL_5672_sqrt_bigint_overflow;
 GO
 
 SELECT * FROM BABEL_5672_sqrt_smallint;
@@ -282,6 +320,8 @@ SELECT * FROM BABEL_5672_sqrt_smallint_max;
 GO
 SELECT * FROM BABEL_5672_sqrt_smallint_min;
 GO
+SELECT * FROM BABEL_5672_sqrt_smallint_overflow;
+GO
 
 SELECT * FROM BABEL_5672_sqrt_tinyint;
 GO
@@ -292,6 +332,8 @@ GO
 SELECT * FROM BABEL_5672_sqrt_tinyint_max;
 GO
 SELECT * FROM BABEL_5672_sqrt_tinyint_min;
+GO
+SELECT * FROM BABEL_5672_sqrt_tinyint_overflow;
 GO
 
 SELECT * FROM BABEL_5672_sqrt_float;
@@ -306,6 +348,10 @@ SELECT * FROM BABEL_5672_sqrt_float_max;
 GO
 SELECT * FROM BABEL_5672_sqrt_float_min;
 GO
+SELECT * FROM BABEL_5672_sqrt_float_overflow;
+GO
+SELECT * FROM BABEL_5672_sqrt_float_underflow;
+GO
 
 SELECT * FROM BABEL_5672_sqrt_real;
 GO
@@ -318,6 +364,10 @@ GO
 SELECT * FROM BABEL_5672_sqrt_real_max;
 GO
 SELECT * FROM BABEL_5672_sqrt_real_min;
+GO
+SELECT * FROM BABEL_5672_sqrt_real_overflow;
+GO
+SELECT * FROM BABEL_5672_sqrt_real_underflow;
 GO
 
 SELECT * FROM BABEL_5672_sqrt_money;
@@ -332,6 +382,8 @@ SELECT * FROM BABEL_5672_sqrt_money_max;
 GO
 SELECT * FROM BABEL_5672_sqrt_money_min;
 GO
+SELECT * FROM BABEL_5672_sqrt_money_overflow;
+GO
 
 SELECT * FROM BABEL_5672_sqrt_smallmoney;
 GO
@@ -345,6 +397,8 @@ SELECT * FROM BABEL_5672_sqrt_smallmoney_max;
 GO
 SELECT * FROM BABEL_5672_sqrt_smallmoney_min;
 GO
+SELECT * FROM BABEL_5672_sqrt_smallmoney_overflow;
+GO
 
 -- Functions
 SELECT BABEL_5672_sqrt_test_numeric();
@@ -355,6 +409,8 @@ SELECT BABEL_5672_sqrt_test_numeric_negative();
 GO
 SELECT BABEL_5672_sqrt_test_numeric_null();
 GO
+SELECT BABEL_5672_sqrt_test_numeric_overflow();
+GO
 
 SELECT BABEL_5672_sqrt_test_decimal();
 GO
@@ -363,6 +419,8 @@ GO
 SELECT BABEL_5672_sqrt_test_decimal_negative();
 GO
 SELECT BABEL_5672_sqrt_test_decimal_null();
+GO
+SELECT BABEL_5672_sqrt_test_decimal_overflow();
 GO
 
 SELECT BABEL_5672_sqrt_test_bit();
@@ -381,6 +439,8 @@ EXEC BABEL_5672_sqrt_test_numeric_negative_proc;
 GO
 EXEC BABEL_5672_sqrt_test_numeric_null_proc;
 GO
+EXEC BABEL_5672_sqrt_test_numeric_overflow_proc;
+GO
 
 EXEC BABEL_5672_sqrt_test_decimal_proc;
 GO
@@ -389,6 +449,8 @@ GO
 EXEC BABEL_5672_sqrt_test_decimal_negative_proc;
 GO
 EXEC BABEL_5672_sqrt_test_decimal_null_proc;
+GO
+EXEC BABEL_5672_sqrt_test_decimal_overflow_proc;
 GO
 
 EXEC BABEL_5672_sqrt_test_bit_proc;

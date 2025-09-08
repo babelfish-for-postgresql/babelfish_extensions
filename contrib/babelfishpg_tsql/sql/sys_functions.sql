@@ -1647,16 +1647,11 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.sqrt_internal(number sys.float)
-RETURNS sys.float 
-AS 'dsqrt' 
-LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.sqrt(number PG_CATALOG.NUMERIC)
 RETURNS sys.float
 AS $$
 BEGIN
-    RETURN sys.sqrt_internal(number::float8);
+    RETURN PG_CATALOG.SQRT(number::float8);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

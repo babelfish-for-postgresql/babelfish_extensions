@@ -54,6 +54,62 @@ float
 3.03700049997605E9
 ~~END~~
 
+SELECT SQRT(CAST(2147483647 AS INT));
+GO
+~~START~~
+float
+46340.950001051984
+~~END~~
+
+SELECT SQRT(CAST(2147483648 AS INT));
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+SELECT SQRT(CAST(9223372036854775807 AS BIGINT));
+GO
+~~START~~
+float
+3.03700049997605E9
+~~END~~
+
+SELECT SQRT(CAST(9223372036854775808 AS BIGINT));
+GO
+~~START~~
+float
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+SELECT SQRT(CAST(32767 AS SMALLINT));
+GO
+~~START~~
+float
+181.01657382681842
+~~END~~
+
+SELECT SQRT(CAST(32768 AS SMALLINT));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+SELECT SQRT(CAST(255 AS TINYINT));
+GO
+~~START~~
+float
+15.968719422671311
+~~END~~
+
+SELECT SQRT(CAST(256 AS TINYINT));
+GO
+~~START~~
+float
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
 
 -- Numeric/Decimal
 SELECT SQRT(144.00);
@@ -110,6 +166,12 @@ GO
 float
 3.1622776601683794E18
 ~~END~~
+
+SELECT SQRT(CAST(99999999999999999999999999999999999999.99 AS NUMERIC(38,2)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
 
 
 -- BIT
@@ -316,6 +378,19 @@ float
 1.4916668528863942E-154
 ~~END~~
 
+SELECT SQRT(CAST(1.79E+309 AS FLOAT));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" is out of range for type double precision)~~
+
+SELECT SQRT(CAST(2.22E-308 AS FLOAT));
+GO
+~~START~~
+float
+1.489966442575134E-154
+~~END~~
+
 
 -- REAL
 SELECT SQRT(CAST(144.00 AS REAL));
@@ -378,6 +453,19 @@ GO
 ~~START~~
 float
 1.0842001691556076E-19
+~~END~~
+
+SELECT SQRT(CAST(3.41E+38 AS REAL));
+GO
+~~ERROR (Code: 232)~~
+
+~~ERROR (Message: "341000000000000000000000000000000000000" is out of range for type real)~~
+
+SELECT SQRT(CAST(1.17E-38 AS REAL));
+GO
+~~START~~
+float
+1.0816653824882797E-19
 ~~END~~
 
 
@@ -638,6 +726,7 @@ float
 1.3379088160259651E154
 1.493318452306808E-154
 3.5
+1.4916668528863942E-154
 ~~END~~
 
 SELECT SQRT(float_val) FROM BABEL_5672_sqrt_approximate_numeric_table WHERE id = 8;
@@ -660,6 +749,7 @@ float
 1.8439088784818962E19
 1.086278024160772E-19
 3.5
+1.0842001691556076E-19
 ~~END~~
 
 SELECT SQRT(real_val) FROM BABEL_5672_sqrt_approximate_numeric_table WHERE id = 8;
@@ -679,7 +769,9 @@ float
 0.0
 <NULL>
 0.0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1.79E+309" is out of range for type double precision)~~
 
 SELECT SQRT(char_val) FROM BABEL_5672_sqrt_char_table WHERE id = 4;
 GO
@@ -698,7 +790,9 @@ float
 0.0
 <NULL>
 0.0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1.79E+309" is out of range for type double precision)~~
 
 SELECT SQRT(varchar_val) FROM BABEL_5672_sqrt_char_table WHERE id = 4;
 GO
@@ -717,7 +811,9 @@ float
 0.0
 <NULL>
 0.0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1.79E+309" is out of range for type double precision)~~
 
 SELECT SQRT(nchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id = 4;
 GO
@@ -736,7 +832,9 @@ float
 0.0
 <NULL>
 0.0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1.79E+309" is out of range for type double precision)~~
 
 SELECT SQRT(nvarchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id = 4;
 GO
@@ -789,6 +887,19 @@ numeric
 3.162277660168379332E-19
 ~~END~~
 
+SELECT * FROM BABEL_5672_sqrt_numeric_overflow1;
+GO
+~~START~~
+numeric
+10000000000000000000.00
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_numeric_overflow2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
 
 SELECT * FROM BABEL_5672_sqrt_decimal;
 GO
@@ -830,6 +941,18 @@ GO
 numeric
 3.162277660168379332E-19
 ~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_decimal_overflow1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+SELECT * FROM BABEL_5672_sqrt_decimal_overflow2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
 
 
 SELECT * FROM BABEL_5672_sqrt_bit;
@@ -894,6 +1017,13 @@ GO
 
 ~~ERROR (Message: cannot take square root of a negative number)~~
 
+SELECT * FROM BABEL_5672_sqrt_int_overflow;
+GO
+~~START~~
+float
+46340.95001184158
+~~END~~
+
 
 SELECT * FROM BABEL_5672_sqrt_bigint;
 GO
@@ -934,6 +1064,13 @@ GO
 ~~ERROR (Code: 3623)~~
 
 ~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_bigint_overflow;
+GO
+~~START~~
+float
+3.03700049997605E9
+~~END~~
 
 
 SELECT * FROM BABEL_5672_sqrt_smallint;
@@ -976,6 +1113,13 @@ GO
 
 ~~ERROR (Message: cannot take square root of a negative number)~~
 
+SELECT * FROM BABEL_5672_sqrt_smallint_overflow;
+GO
+~~START~~
+float
+181.01933598375618
+~~END~~
+
 
 SELECT * FROM BABEL_5672_sqrt_tinyint;
 GO
@@ -1012,6 +1156,13 @@ float
 0.0
 ~~END~~
 
+SELECT * FROM BABEL_5672_sqrt_tinyint_overflow;
+GO
+~~START~~
+float
+16.0
+~~END~~
+
 
 SELECT * FROM BABEL_5672_sqrt_float;
 GO
@@ -1042,15 +1193,30 @@ float
 
 SELECT * FROM BABEL_5672_sqrt_float_max;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+float
+1.3379088160259651E154
+~~END~~
 
 SELECT * FROM BABEL_5672_sqrt_float_min;
 GO
+~~START~~
+float
+1.493318452306808E-154
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_float_overflow;
+GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~ERROR (Message: "1790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" is out of range for type double precision)~~
+
+SELECT * FROM BABEL_5672_sqrt_float_underflow;
+GO
+~~START~~
+float
+1.489966442575134E-154
+~~END~~
 
 
 SELECT * FROM BABEL_5672_sqrt_real;
@@ -1083,15 +1249,30 @@ float
 SELECT * FROM BABEL_5672_sqrt_real_max;
 GO
 ~~START~~
-numeric
-18439088914585774620
+float
+1.8439088914585774E19
 ~~END~~
 
 SELECT * FROM BABEL_5672_sqrt_real_min;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+float
+1.0862780491200215E-19
+~~END~~
 
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+SELECT * FROM BABEL_5672_sqrt_real_overflow;
+GO
+~~START~~
+float
+1.846618531261939E19
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_real_underflow;
+GO
+~~START~~
+float
+1.0816653826391968E-19
+~~END~~
 
 
 SELECT * FROM BABEL_5672_sqrt_money;
@@ -1138,6 +1319,12 @@ float
 
 ~~ERROR (Message: cannot take square root of a negative number)~~
 
+SELECT * FROM BABEL_5672_sqrt_money_overflow;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685477.5808" is out of range for type fixeddecimal)~~
+
 
 SELECT * FROM BABEL_5672_sqrt_smallmoney;
 GO
@@ -1183,6 +1370,14 @@ float
 
 ~~ERROR (Message: cannot take square root of a negative number)~~
 
+SELECT * FROM BABEL_5672_sqrt_smallmoney_overflow;
+GO
+~~START~~
+float
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
 
 -- Functions
 SELECT BABEL_5672_sqrt_test_numeric();
@@ -1214,6 +1409,14 @@ float
 <NULL>
 ~~END~~
 
+SELECT BABEL_5672_sqrt_test_numeric_overflow();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
 
 SELECT BABEL_5672_sqrt_test_decimal();
 GO
@@ -1243,6 +1446,14 @@ GO
 float
 <NULL>
 ~~END~~
+
+SELECT BABEL_5672_sqrt_test_decimal_overflow();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
 
 
 SELECT BABEL_5672_sqrt_test_bit();
@@ -1295,6 +1506,12 @@ float
 <NULL>
 ~~END~~
 
+EXEC BABEL_5672_sqrt_test_numeric_overflow_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
 
 EXEC BABEL_5672_sqrt_test_decimal_proc;
 GO
@@ -1322,6 +1539,12 @@ GO
 float
 <NULL>
 ~~END~~
+
+EXEC BABEL_5672_sqrt_test_decimal_overflow_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
 
 
 EXEC BABEL_5672_sqrt_test_bit_proc;
