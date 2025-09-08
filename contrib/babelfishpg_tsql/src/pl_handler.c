@@ -5019,26 +5019,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							/* Append the values to the list */
 
-							AccessPriv *ap_insert = 	makeNode(AccessPriv);
-							AccessPriv *ap_select = 	makeNode(AccessPriv);
-							AccessPriv *ap_update = 	makeNode(AccessPriv);
-							AccessPriv *ap_references = makeNode(AccessPriv);
+							char *privileges[] = {
+								"insert", "select", "update", "delete", "references"
+							};
 
-							ap_insert->priv_name = "insert";
-							ap_insert->cols = NIL; 
-							all_privileges = lappend(all_privileges, ap_insert);
-
-							ap_select->priv_name = "select";
-							ap_select->cols = NIL;
-							all_privileges = lappend(all_privileges, ap_select);
-
-							ap_update->priv_name = "update";
-							ap_update->cols = NIL;
-							all_privileges = lappend(all_privileges, ap_update);
-
-							ap_references->priv_name = "references";
-							ap_references->cols = NIL;
-							all_privileges = lappend(all_privileges, ap_references);
+							for (int i = 0; i < sizeof(privileges)/sizeof(privileges[0]); i++)
+							{
+								AccessPriv *ap = makeNode(AccessPriv);
+								ap->priv_name = privileges[i];
+								ap->cols = NIL;
+								all_privileges = lappend(all_privileges, ap);
+							}
 
 							foreach(lc, grant->grantees)
 							{
@@ -5066,7 +5057,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 							if (list_length(all_privileges) == 0)
 								return;
-							else
+							else if (list_length(all_privileges) != 5)
 							{
 								grant->privileges = all_privileges;
 							}
