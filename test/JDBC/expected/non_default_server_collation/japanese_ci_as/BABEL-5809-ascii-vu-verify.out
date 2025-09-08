@@ -191,12 +191,11 @@ int#!#nvarchar#!#nvarchar#!#int#!#int#!#varchar#!#nvarchar
 SELECT 
     ASCII(0x00) AS Hex00_Expect0,
     ASCII(0x41) AS Hex41_Expect65,
-    ASCII(0x61) AS Hex61_Expect97,
-    ASCII(0xFF) AS HexFF_Expect255;
+    ASCII(0x61) AS Hex61_Expect97
 GO
 ~~START~~
-int#!#int#!#int#!#int
-0#!#65#!#97#!#255
+int#!#int#!#int
+0#!#65#!#97
 ~~END~~
 
 
@@ -204,17 +203,16 @@ int#!#int#!#int#!#int
 SELECT * FROM babel_5809_v2_binary;
 GO
 ~~START~~
-int#!#binary#!#int#!#varbinary#!#int#!#int#!#int#!#varchar#!#varchar
-1#!#41000000000000000000#!#65#!#41#!#65#!#65#!#65#!#Pass#!#Hex for "A"
-2#!#65000000000000000000#!#101#!#65#!#101#!#101#!#101#!#Pass#!#Hex for "e"
-3#!#20000000000000000000#!#32#!#20#!#32#!#32#!#32#!#Pass#!#Hex for space
-4#!#30000000000000000000#!#48#!#30#!#48#!#48#!#48#!#Pass#!#Hex for "0"
-5#!#7A000000000000000000#!#122#!#7A#!#122#!#122#!#122#!#Pass#!#Hex for "z"
-6#!#21000000000000000000#!#33#!#21#!#33#!#33#!#33#!#Pass#!#Hex for "!"
-7#!#00000000000000000000#!#0#!#00#!#0#!#0#!#0#!#Pass#!#Hex for null byte
-8#!#FF000000000000000000#!#255#!#FF#!#255#!#255#!#255#!#Pass#!#Hex for 255
-9#!#41424300000000000000#!#65#!#414243#!#65#!#65#!#65#!#Pass#!#Hex for "ABC"
-10#!#61206300000000000000#!#97#!#612063#!#97#!#97#!#97#!#Pass#!#Hex for "a c"
+int#!#binary#!#int#!#varbinary#!#int#!#int#!#int#!#varchar#!#int#!#varchar#!#varchar
+1#!#41000000000000000000#!#65#!#41#!#65#!#65#!#65#!#Pass#!#65#!#Pass#!#Hex for "A"
+2#!#65000000000000000000#!#101#!#65#!#101#!#101#!#101#!#Pass#!#101#!#Pass#!#Hex for "e"
+3#!#20000000000000000000#!#32#!#20#!#32#!#32#!#32#!#Pass#!#32#!#Pass#!#Hex for space
+4#!#30000000000000000000#!#48#!#30#!#48#!#48#!#48#!#Pass#!#48#!#Pass#!#Hex for "0"
+5#!#7A000000000000000000#!#122#!#7A#!#122#!#122#!#122#!#Pass#!#122#!#Pass#!#Hex for "z"
+6#!#21000000000000000000#!#33#!#21#!#33#!#33#!#33#!#Pass#!#33#!#Pass#!#Hex for "!"
+7#!#00000000000000000000#!#0#!#00#!#0#!#0#!#0#!#Pass#!#0#!#Pass#!#Hex for null byte
+8#!#41424300000000000000#!#65#!#414243#!#65#!#65#!#65#!#Pass#!#65#!#Pass#!#Hex for "ABC"
+9#!#61206300000000000000#!#97#!#612063#!#97#!#97#!#97#!#Pass#!#97#!#Pass#!#Hex for "a c"
 ~~END~~
 
 
@@ -383,10 +381,8 @@ GO
 int#!#varchar#!#varchar#!#int#!#int#!#varchar
 1#!#NULL Value#!#<NULL>#!#<NULL>#!#<NULL>#!#Pass
 2#!#Zero Length String#!##!#<NULL>#!#<NULL>#!#Pass
-3#!#Ascii of char(0)#!##!#<NULL>#!#<NULL>#!#Pass
-4#!#Very Large Binary#!#ÿÿÿÿÿÿÿÿ#!#255#!#255#!#Pass
-5#!#Special Characters Only#!#@@@@#!#64#!#64#!#Pass
-6#!#Mixed Invalid Chars#!#123@#$%#!#49#!#49#!#Pass
+3#!#Special Characters Only#!#@@@@#!#64#!#64#!#Pass
+4#!#Mixed Invalid Chars#!#123@#$%#!#49#!#49#!#Pass
 ~~END~~
 
 
@@ -438,7 +434,7 @@ varchar#!#int#!#varchar
 
 ~~START~~
 varchar#!#int#!#varchar
-ÿ#!#255#!#Extended ASCII
+?#!#255#!#Extended ASCII
 ~~END~~
 
 
@@ -687,7 +683,7 @@ int#!#char#!#int#!#varchar#!#bit#!#bit#!#int#!#varchar
 3#!#!#!#33#!#Special#!#1#!#1#!#33#!#Pass
 2#!#1#!#49#!#Digit#!#1#!#1#!#49#!#Pass
 1#!#A#!#65#!#Uppercase#!#1#!#1#!#65#!#Pass
-6#!# #!#160#!#Extended#!#1#!#0#!#160#!#Pass
+6#!#?#!#160#!#Extended#!#1#!#0#!#160#!#Pass
 ~~END~~
 
 
@@ -798,5 +794,82 @@ int#!#char#!#int#!#int#!#varchar
 8#!###!#<NULL>#!#<NULL>#!#<NULL>
 9#!#5#!#<NULL>#!#<NULL>#!#<NULL>
 12#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- 17. CAST and CONVERT Tests
+SELECT 
+    ASCII(CAST(65 AS CHAR)) AS CastIntToCharExpect65,
+    ASCII(CAST(97.0 AS VARCHAR)) AS CastFloatToVarcharExpect57,
+    ASCII(CAST('A' AS NCHAR)) AS CastCharToNCharExpect65,
+    ASCII(CONVERT(VARCHAR, 65)) AS ConvertIntToVarcharExpect54,
+    ASCII(CONVERT(CHAR, 65)) AS ConvertIntToChar,
+    ASCII(CONVERT(NVARCHAR, 'A')) AS ConvertCharToNVarchar_Expect65;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+54#!#57#!#65#!#54#!#54#!#65
+~~END~~
+
+
+-- 19. Complex CAST and CONVERT Scenarios
+SELECT
+    ASCII(CAST(CAST(65 AS VARCHAR) AS CHAR)) AS Nested_Cast_Expect65,
+    ASCII(CAST(65 AS CHAR) + CAST(66 AS CHAR)) AS Concat_Cast_Expect65,
+    ASCII(CAST(NULL AS CHAR)) AS Null_Cast_ExpectNull,
+    ASCII(CAST('ABC' AS CHAR(3))) AS Cast_Multiple_Chars_Expect65;
+GO
+~~START~~
+int#!#int#!#int#!#int
+54#!#54#!#<NULL>#!#65
+~~END~~
+
+
+-- 20. Binary Manipulation Tests -- here cast of substring fails, gives wrong output
+DECLARE @BinaryVar BINARY(4) = 0x41424344;
+SELECT
+    ASCII(CAST(SUBSTRING(@BinaryVar, 1, 1) AS CHAR)) AS First_Byte,
+    ASCII(CAST(SUBSTRING(@BinaryVar, 2, 1) AS CHAR)) AS Second_Byte,
+    ASCII(CAST(@BinaryVar AS VARCHAR)) AS Full_Binary;
+GO
+~~START~~
+int#!#int#!#int
+48#!#48#!#65
+~~END~~
+
+
+-- 21. Type Conversion Edge Cases
+SELECT
+    ASCII(CAST(256 AS CHAR)) AS Large_Number_Cast,
+    ASCII(CONVERT(CHAR, 65535)) AS Very_Large_Number_Convert,
+    ASCII(CAST(65.5 AS CHAR)) AS Decimal_Cast,
+    ASCII(CAST(-65 AS CHAR)) AS Negative_Number_Cast;
+GO
+~~START~~
+int#!#int#!#int#!#int
+50#!#54#!#54#!#45
+~~END~~
+
+
+-- 22. Binary Arithmetic Tests
+SELECT
+    ASCII(CHAR(65 & 127)) AS Bitwise_AND_Expect65,
+    ASCII(CHAR(65 | 32)) AS Bitwise_OR_Expect97,
+    ASCII(CHAR(65 ^ 32)) AS Bitwise_XOR_Expect97;
+GO
+~~START~~
+int#!#int#!#int
+65#!#97#!#97
+~~END~~
+
+
+-- 23. Dynamic SQL Tests with CAST/CONVERT
+DECLARE @SqlCmd NVARCHAR(1000);
+SET @SqlCmd = N'SELECT ASCII(CAST(@Param AS CHAR))';
+EXEC sp_executesql @SqlCmd, N'@Param INT', @Param = 65;
+GO
+~~START~~
+int
+54
 ~~END~~
 

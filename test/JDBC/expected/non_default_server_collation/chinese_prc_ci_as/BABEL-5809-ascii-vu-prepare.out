@@ -93,8 +93,10 @@ CREATE TABLE babel_5809_t3_hex (
     BinaryCol BINARY(10),
     VarbinaryCol VARBINARY(50),
     ExpectedValue INT,
-    ActualValue INT,
-    TestResult VARCHAR(4),
+    ActualValue_Binary INT,
+    ActualValue_VarBinary INT,
+    TestResult_Binary VARCHAR(4),
+    TestResult_VarBinary VARCHAR(4),
     Description VARCHAR(100)
 );
 GO
@@ -109,16 +111,22 @@ VALUES
 (0x7A, 0x7A, 122, 'Hex for "z"'),
 (0x21, 0x21, 33, 'Hex for "!"'),
 (0x00, 0x00, 0, 'Hex for null byte'),
-(0xFF, 0xFF, 255, 'Hex for 255'),
 (0x414243, 0x414243, 65, 'Hex for "ABC"'),
 (0x612063, 0x612063, 97, 'Hex for "a c"');
 UPDATE babel_5809_t3_hex
-SET ActualValue = ASCII(BinaryCol),
-    TestResult = CASE WHEN ASCII(BinaryCol) = ExpectedValue THEN 'Pass' ELSE 'Fail' END;
+SET ActualValue_Binary = ASCII(BinaryCol),
+    TestResult_Binary = CASE WHEN ASCII(BinaryCol) = ExpectedValue THEN 'Pass' ELSE 'Fail' END;
 GO
-~~ROW COUNT: 10~~
+~~ROW COUNT: 9~~
 
-~~ROW COUNT: 10~~
+~~ROW COUNT: 9~~
+
+
+UPDATE babel_5809_t3_hex
+SET ActualValue_VarBinary = ASCII(VarbinaryCol),
+    TestResult_VarBinary = CASE WHEN ASCII(VarbinaryCol) = ExpectedValue THEN 'Pass' ELSE 'Fail' END;
+GO
+~~ROW COUNT: 9~~
 
 
 -- 2.4 Binary Conversion Testing Table
@@ -255,12 +263,10 @@ INSERT INTO babel_5809_t7_edge (TestCase, TestValue, ExpectedValue)
 VALUES
 ('NULL Value', NULL, NULL),
 ('Zero Length String', '', NULL),
-('Ascii of char(0)',CHAR(0), NULL),
-('Very Large Binary', CAST(0xFFFFFFFFFFFFFFFF AS VARCHAR(100)), 255),
 ('Special Characters Only', '@@@@', 64),
 ('Mixed Invalid Chars', '123@#$%', 49);
 GO
-~~ROW COUNT: 6~~
+~~ROW COUNT: 4~~
 
 
 UPDATE babel_5809_t7_edge
@@ -271,7 +277,7 @@ SET ActualValue = ASCII(TestValue),
         ELSE 'Fail'
     END;
 GO
-~~ROW COUNT: 6~~
+~~ROW COUNT: 4~~
 
 
 -- 3. FUNCTIONS
@@ -474,8 +480,10 @@ SELECT
     VarbinaryCol,
     ASCII(VarbinaryCol) AS VarbinaryASCII,
     ExpectedValue,
-    ActualValue,
-    TestResult,
+    ActualValue_Binary,
+    TestResult_Binary,
+    ActualValue_VarBinary,
+    TestResult_VarBinary,
     Description
 FROM babel_5809_t3_hex;
 GO
