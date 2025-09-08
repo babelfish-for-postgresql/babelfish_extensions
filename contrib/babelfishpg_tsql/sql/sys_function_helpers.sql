@@ -10233,44 +10233,26 @@ CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTE
 RETURNS sys.varbinary
 AS
 $BODY$
-DECLARE
-	result sys.varbinary;
-	string_typmod INTEGER;
+DECLARE result sys.varbinary;
 BEGIN
-	IF try THEN
-		RETURN sys.babelfish_try_conv_to_varbinary(typmod, arg, p_style);
-	ELSE
-		IF p_style != 0 AND pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.varchar'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
-			RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
-		ELSE
-			IF typmod > 0 THEN
-				string_typmod := typmod + 4;
-			ELSE
-				string_typmod := typmod;
-			END IF;
-			CASE pg_typeof(arg)
-				WHEN 'sys.nvarchar'::regtype THEN
-					RETURN sys.nvarcharvarbinary(arg, string_typmod, true);
-				WHEN 'sys.nchar'::regtype THEN
-					RETURN sys.ncharvarbinary(arg, string_typmod, true);
-				WHEN 'sys.bpchar'::regtype THEN
-					RETURN sys.bpcharvarbinary(arg, string_typmod, true);
-				WHEN 'sys.varchar'::regtype THEN
-					RETURN sys.varcharvarbinary(arg, string_typmod, true);
-				ELSE
-					IF typmod = -1 THEN
-						RETURN CAST(arg as sys.varbinary);
-					ELSE
-						EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
-						RETURN result;
-					END IF;
-			END CASE;
-		END IF;
-	END IF;
+    IF try THEN
+        RETURN sys.babelfish_try_conv_to_varbinary(typmod, arg, p_style);
+    ELSE
+        IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype, 'sys.varchar'::regtype) THEN
+            RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+        ELSE
+            IF typmod = -1 THEN
+                RETURN CAST(arg as sys.varbinary);
+            ELSE
+                EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+                RETURN result;
+            END IF;
+        END IF;
+    END IF;
 END;
 $BODY$
 LANGUAGE plpgsql
-IMMUTABLE;
+IMMUTABLE;  
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN typmod INTEGER,
 																IN arg anyelement,
@@ -10278,35 +10260,17 @@ CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN typmod INTEGER
 RETURNS sys.varbinary
 AS
 $BODY$
-DECLARE 
-    result sys.varbinary;
-    string_typmod INTEGER;
+DECLARE result sys.varbinary;
 BEGIN
-	IF p_style != 0 AND pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.varchar'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+	IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype, 'sys.varchar') THEN
 		RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
 	ELSE
-        IF typmod > 0 THEN
-            string_typmod := typmod + 4;
-        ELSE
-            string_typmod := typmod;
-        END IF;
-		CASE pg_typeof(arg)
-			WHEN 'sys.nvarchar'::regtype THEN
-				RETURN sys.nvarcharvarbinary(arg, string_typmod, true);
-			WHEN 'sys.nchar'::regtype THEN
-				RETURN sys.ncharvarbinary(arg, string_typmod, true);
-            WHEN 'sys.bpchar'::regtype THEN
-				RETURN sys.bpcharvarbinary(arg, string_typmod, true);
-			WHEN 'sys.varchar'::regtype THEN
-				RETURN sys.varcharvarbinary(arg, string_typmod, true);
-			ELSE
-				IF typmod = -1 THEN
-                    RETURN CAST(arg as sys.varbinary);
-                ELSE
-                    EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
-                    RETURN result;
-                END IF;
-		END CASE;
+		IF typmod = -1 THEN
+			RETURN CAST(arg as sys.varbinary);
+		ELSE
+			EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+			RETURN result;
+		END IF;
 	END IF;
 	EXCEPTION
 		WHEN OTHERS THEN
@@ -10314,10 +10278,10 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-IMMUTABLE;
+IMMUTABLE;  
 
 -- Helper function to convert to binary or varbinary
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(IN input_value sys.VARCHAR, IN style NUMERIC DEFAULT 0) 
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(IN input_value anyelement, IN style NUMERIC DEFAULT 0) 
 RETURNS sys.varbinary 
 AS 
 $BODY$
@@ -10325,7 +10289,14 @@ DECLARE
     result bytea; 
 BEGIN
     IF style = 0 THEN
-        RETURN CAST(input_value AS sys.varbinary);
+        CASE pg_typeof(input_value)
+			WHEN 'sys.nvarchar'::regtype THEN
+				RETURN sys.nvarcharvarbinary(input_value, -1, true);
+			WHEN 'sys.nchar'::regtype THEN
+				RETURN sys.ncharvarbinary(input_value, -1, true);
+			ELSE
+                RETURN CAST(input_value AS sys.varbinary);
+        END CASE;
     ELSIF style = 1 THEN
         -- Handle hexadecimal conversion
         IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
@@ -10378,7 +10349,7 @@ RETURNS sys.varbinary
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
+    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
 EXCEPTION
     WHEN OTHERS THEN
         RETURN NULL;
