@@ -1068,8 +1068,8 @@ GO
 SELECT * FROM BABEL_5672_sqrt_bigint_overflow;
 GO
 ~~START~~
-float
-3.03700049997605E9
+numeric
+3037000499.9760497
 ~~END~~
 
 
@@ -1193,17 +1193,15 @@ float
 
 SELECT * FROM BABEL_5672_sqrt_float_max;
 GO
-~~START~~
-float
-1.3379088160259651E154
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 SELECT * FROM BABEL_5672_sqrt_float_min;
 GO
-~~START~~
-float
-1.493318452306808E-154
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 SELECT * FROM BABEL_5672_sqrt_float_overflow;
 GO
@@ -1213,10 +1211,9 @@ GO
 
 SELECT * FROM BABEL_5672_sqrt_float_underflow;
 GO
-~~START~~
-float
-1.489966442575134E-154
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
 SELECT * FROM BABEL_5672_sqrt_real;
@@ -1248,31 +1245,29 @@ float
 
 SELECT * FROM BABEL_5672_sqrt_real_max;
 GO
-~~START~~
-float
-1.8439088914585774E19
-~~END~~
+ ~~START~~
+numeric
+18439088914585774620
+ ~~END~~
 
 SELECT * FROM BABEL_5672_sqrt_real_min;
 GO
-~~START~~
-float
-1.0862780491200215E-19
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 SELECT * FROM BABEL_5672_sqrt_real_overflow;
 GO
 ~~START~~
-float
-1.846618531261939E19
+numeric
+18466185312619387878
 ~~END~~
 
 SELECT * FROM BABEL_5672_sqrt_real_underflow;
 GO
-~~START~~
-float
-1.0816653826391968E-19
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
 SELECT * FROM BABEL_5672_sqrt_money;
