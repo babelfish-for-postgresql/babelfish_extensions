@@ -3370,65 +3370,66 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 		 */
 		if (sdepForm->dbid != MyDatabaseId &&
 			sdepForm->dbid != InvalidOid)
-			continue;
-		if (sdepForm->deptype == SHARED_DEPENDENCY_ACL)
+			break;
+
+		if (sdepForm->deptype != SHARED_DEPENDENCY_ACL)
+			break;
+
+		/*
+			* Dependencies on role grants are recorded using
+			* SHARED_DEPENDENCY_ACL, but unlike a regular ACL list
+			* which stores all permissions for a particular object in
+			* a single ACL array, there's a separate catalog row for
+			* each grant - so removing the grant just means removing
+			* the entire row.
+			*/
+		if (sdepForm->classid != AuthMemRelationId)
 		{
-			/*
-			 * Dependencies on role grants are recorded using
-			 * SHARED_DEPENDENCY_ACL, but unlike a regular ACL list
-			 * which stores all permissions for a particular object in
-			 * a single ACL array, there's a separate catalog row for
-			 * each grant - so removing the grant just means removing
-			 * the entire row.
-			 */
-			if (sdepForm->classid != AuthMemRelationId)
+
+			if (sdepForm->classid != DefaultAclRelationId)
 			{
+				HeapTuple		tup;
+				bool			isNull;
+				Datum			aclDatum;
+				Acl				*old_acl = NULL;
+				Oid relOid =	sdepForm->objid;
+				int cacheid =	get_object_catcache_oid(sdepForm->classid);
 
-				if (sdepForm->classid != DefaultAclRelationId)
+				tup = SearchSysCache1(cacheid, ObjectIdGetDatum(relOid));
+				if (!HeapTupleIsValid(tuple))
+					elog(ERROR, "cache lookup failed for relation %u", relOid);
+
+				aclDatum = SysCacheGetAttr(cacheid, tup, get_object_attnum_acl(sdepForm->classid),
+										&isNull);
+				if (!isNull)
 				{
-					HeapTuple		tup;
-					bool			isNull;
-					Datum			aclDatum;
-					Acl				*old_acl = NULL;
-					Oid relOid =	sdepForm->objid;
-					int cacheid =	get_object_catcache_oid(sdepForm->classid);
+					/* 
+						* Check if the current user is grantor for any permission in current object acl
+						* If yes then do not allow to drop the user
+						*/
+					const AclItem *acldat;
+					old_acl = DatumGetAclPCopy(aclDatum);
+					acldat = ACL_DAT(old_acl);
 
-					tup = SearchSysCache1(cacheid, ObjectIdGetDatum(relOid));
-					if (!HeapTupleIsValid(tuple))
-						elog(ERROR, "cache lookup failed for relation %u", relOid);
-
-					aclDatum = SysCacheGetAttr(cacheid, tup, get_object_attnum_acl(sdepForm->classid),
-											&isNull);
-					if (!isNull)
+					for (int i = 0; i < ACL_NUM(old_acl); i++)
 					{
-						/* 
-						 * Check if the current user is grantor for any permission in current object acl
-						 * If yes then do not allow to drop the user
-						 */
-						const AclItem *acldat;
-						old_acl = DatumGetAclPCopy(aclDatum);
-						acldat = ACL_DAT(old_acl);
+						const AclItem *ai = &acldat[i];
 
-						for (int i = 0; i < ACL_NUM(old_acl); i++)
-						{
-							const AclItem *ai = &acldat[i];
-
-							/* no need to remove if grantor */
-							if (ai->ai_grantor == roleid)
-								user_is_grantor = true;
-						}
+						/* no need to remove if grantor */
+						if (ai->ai_grantor == roleid)
+							user_is_grantor = true;
 					}
+				}
 
-					ReleaseSysCache(tup);
-					if (!old_acl)
-						pfree(old_acl);
-				}
-				if (!user_is_grantor)
-				{
-					RemoveRoleFromObjectACL(roleid,
-											sdepForm->classid,
-											sdepForm->objid);
-				}
+				ReleaseSysCache(tup);
+				if (!old_acl)
+					pfree(old_acl);
+			}
+			if (!user_is_grantor)
+			{
+				RemoveRoleFromObjectACL(roleid,
+										sdepForm->classid,
+										sdepForm->objid);
 			}
 		}
 	}

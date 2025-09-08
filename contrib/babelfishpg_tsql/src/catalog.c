@@ -4109,7 +4109,7 @@ remove_entry_from_bbf_schema_perms(const char *schema_name,
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
-/* Removes a row from the catalog BABELFISH_SCHEMA_PERMISSIONS when a user is dropped. */
+/* Removes all rows for babelfish database user from the catalog BABELFISH_SCHEMA_PERMISSIONS when a user is dropped. */
 void
 remove_user_entry_from_bbf_schema_perms(Oid user_oid)
 {
@@ -4117,11 +4117,13 @@ remove_user_entry_from_bbf_schema_perms(Oid user_oid)
 	HeapTuple		tuple_bbf_schema;
 	ScanKeyData		scanKey[1];
 	SysScanDesc		scan;
-	const char		*user_name = GetUserNameFromId(user_oid, true);
+	const char		*user_name = NULL;
 
 	/* Return if the Oid is invalid */
 	if (!OidIsValid(user_oid))
 		return;
+
+	user_name = GetUserNameFromId(user_oid, true);
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
