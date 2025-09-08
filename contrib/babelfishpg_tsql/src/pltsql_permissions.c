@@ -128,11 +128,9 @@ mark_nodes_inside_view(Query *query, Oid view_owner)
  * chaining scenarios in case when view is specified as target for DML operations.
  */
 void
-tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *view_rte)
+tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *view_rte, Oid view_owner, Oid base_rel_owner)
 {
-	Oid view_owner = InvalidOid;
 	AclMode nonDMLpermscheck;
-    Relation rel = NULL;
 
 	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
 		return;
@@ -146,13 +144,9 @@ tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *vie
 	if (nonDMLpermscheck)
 		return;
 
-    rel = relation_open(view_rte->relid, AccessShareLock);
-
-	view_owner = rel->rd_rel->relowner;
-	if (view_owner == get_rel_owner(new_perminfo->relid))
+	if (view_owner == base_rel_owner)
 	{
 		new_perminfo->checkAsUser = view_owner;
 		new_perminfo->insideView = PNODE_INSIDE_VIEW;
 	}
-    relation_close(rel, AccessShareLock);
 }

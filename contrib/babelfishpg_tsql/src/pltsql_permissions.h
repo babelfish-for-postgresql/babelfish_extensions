@@ -14,6 +14,6 @@
 /* Function declarations */
 extern bool mark_nodes_inside_view_walker(Node *node, Oid *context);
 extern void mark_nodes_inside_view(Query *query, Oid view_owner);
-extern void tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *view_rte);
+extern void tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *view_rte, Oid view_owner, Oid base_rel_owner);
 
 #endif
