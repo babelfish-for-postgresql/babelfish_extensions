@@ -236,7 +236,7 @@ SELECT replicate(@inputString, 4)
 GO
 ~~START~~
 nvarchar
-abc?defghi??             abc?defghi??             abc?defghi??             abc?defghi??             
+abc🙂defghi🙂🙂             abc🙂defghi🙂🙂             abc🙂defghi🙂🙂             abc🙂defghi🙂🙂             
 ~~END~~
 
 
@@ -245,7 +245,7 @@ SELECT replicate(@inputString, 4)
 GO
 ~~START~~
 nvarchar
-比尔·拉莫斯             比尔·拉莫斯             比尔·拉莫斯             比尔·拉莫斯             
+比尔·拉莫斯                   比尔·拉莫斯                   比尔·拉莫斯                   比尔·拉莫斯                   
 ~~END~~
 
 
