@@ -259,6 +259,7 @@ UpdateFunctionCallInfo(
     va_end(args);
 }
 
+
 /* Function to rewrite geospatial data */
 text* geo_wkt_rewrite(text *input_text);
 
@@ -1210,6 +1211,7 @@ initialize_geom_data(Datum input_datum)
     /* Extract binary data and metadata */
     geom_data->byte_data = (uint8 *)VARDATA_ANY(geom_data->byte);
     geom_data->byte_len = VARSIZE_ANY_EXHDR(geom_data->byte);
+    /* Set the default SRID size */
     geom_data->srid_size = SRID_SIZE;
     geom_data->postgis_geom_type = (geom_data->byte_len > POSTGIS_HEADER_SIZE) ? geom_data->byte_data[1] : 0;
     
@@ -1245,11 +1247,13 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
         case POSTGIS_DIM_XY:
             if (geom_data->is_empty) 
             {
+                /* Empty point geometry */
                 geom_data->geom_type = 0x04;
                 geom_data->coord_size = COORD_SIZE_EMPTY;
             } 
             else 
             {
+                /* 2D geometry (XY) */
                 switch (geom_data->postgis_geom_type)
                 {
                     case POINT_TYPE:
@@ -1266,6 +1270,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             }
             break;
         case POSTGIS_DIM_XYZ:
+            /* 3D geometry (XYZ) */
             switch (geom_data->postgis_geom_type)
             {
                 case POINT_TYPE:
@@ -1281,6 +1286,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             }
             break;
         case POSTGIS_DIM_XYZM:
+            /* 3D geometry with measure (XYZM) */
             switch (geom_data->postgis_geom_type)
             {
                 case POINT_TYPE:
@@ -1296,6 +1302,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             }
             break;
         case POSTGIS_DIM_XYM:
+            /* 2D geometry with measure (XYM) */
             switch (geom_data->postgis_geom_type)
             {
                 case POINT_TYPE:
@@ -1311,9 +1318,11 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             }
             break;
         default:
+            /* Invalid dimension flags */
             return false;
     }
-    
+
+    /* Dimensions successfully determined */    
     return true;
 }
 
@@ -1423,7 +1432,6 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     int total_size;
     bytea *result;
     uint8 *result_data;
-    int offset;
     
     /* Calculate total size needed for result bytea */
     total_size = SRID_SIZE + GEOM_TYPE_SIZE + geom_data->coord_size;
@@ -1433,6 +1441,8 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     /* Allocate and initialize result bytea */
     result = (bytea *) palloc(VARHDRSZ + total_size);
     SET_VARSIZE(result, VARHDRSZ + total_size);
+
+    /* Get pointer to the data portion of the bytea */
     result_data = (uint8 *)VARDATA(result);
     
     /* Build result binary data step by step */
@@ -1446,8 +1456,11 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     } 
     else 
     {
-        /* Calculate offset based on SRID presence */
-        offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+        /* 
+         * For non-empty geometries, determine the source offset based on SRID presence
+         * and copy the coordinate data from the source
+         */
+        int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
         
         /* Copy coordinate data based on geometry type */
         switch (geom_data->postgis_geom_type) 

@@ -230,14 +230,14 @@ add_point(PointArray *pa, POINT p)
 }
 
 /*
- * Determine the appropriate LineString type based on point dimensions
- * Examines all points to determine the most appropriate LineString type:
+ * Determine the appropriate dimension type based on point dimensions
+ * Examines all points to determine the most appropriate dimension type:
  * - ZM: Points with both Z and M coordinates (4D)
  * - M: Points with M coordinate but no Z coordinate
  * - Z: Points with Z coordinate but no M coordinate
  * - XY: Points with only X and Y coordinates (2D)
  */
-LineStringType 
+DimensionType 
 determine_linestring_type(PointArray *pa) 
 {
     bool has_z = false, 
@@ -276,12 +276,12 @@ determine_linestring_type(PointArray *pa)
 
 /*
  * Modifies point flags and coordinates to ensure all points conform to the
- * specified LineString type. Like if any point has M or Z then all other points must have M or Z
+ * specified dimension type. Like if any point has M or Z then all other points must have M or Z
  * to conform to PostGIS's expectations. If a point doesn't have Z or M and other point has,
  * then we sets Z/M to NAN and set the respective flag.
  */
 void 
-transform_points(PointArray *pa, LineStringType type) 
+transform_points(PointArray *pa, DimensionType type) 
 {
 
     if (type == XY)
@@ -309,7 +309,7 @@ transform_points(PointArray *pa, LineStringType type)
                 FLAGS_SET_Z(p->flags, 0);
                 FLAGS_SET_M(p->flags, 1);
                 break;
-            case XY:
+            default:
                 break;
         }
     }
@@ -317,14 +317,14 @@ transform_points(PointArray *pa, LineStringType type)
 
 /*
  * Converts a PointArray to a PostGIS-compatible LINESTRING WKT representation
- * Determines the appropriate LineString type (Z, M, ZM, etc.) based on the points,
+ * Determines the appropriate dimension type (Z, M, ZM, etc.) based on the points,
  * transforms points to conform to that type, and generates a properly formatted
  * WKT string. Returns NULL if input is NULL.
  */
 char* 
 rewrite_linestring_query(PointArray *pa) 
 {
-    LineStringType type;
+    DimensionType type;
     StringInfoData output;
 
     if (!pa) 
