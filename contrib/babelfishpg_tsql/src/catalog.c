@@ -3975,7 +3975,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 			/* find the permission corresponding to tuple_bbf_schema */
 			Datum datum;
 			bool isnull;
-			int sch_permission;
+			int sch_permission = INVALID_PERMISSION;
 
 			datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, RelationGetDescr(bbf_schema_rel), &isnull);
 			if(isnull)

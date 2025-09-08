@@ -5018,7 +5018,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 						{
 							/* Append the values to the list */
-
 							char *privileges[] = {
 								"insert", "select", "update", "delete", "references"
 							};
@@ -5055,6 +5054,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								}
 								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
 							}
+							/* 
+							 * If all_privileges length is 5 then pass grant->privilege as NIL i.e fallback to existing behaviour,
+							 * as no common privilege between object and schema.
+							*/
 							if (list_length(all_privileges) == 0)
 								return;
 							else if (list_length(all_privileges) != 5)
