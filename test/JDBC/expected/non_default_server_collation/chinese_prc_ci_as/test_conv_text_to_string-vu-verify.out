@@ -1,0 +1,581 @@
+SELECT * FROM cast_text_to_char_1;
+GO
+~~START~~
+char
+-123.456325678543             
+-123.456325678543             
+~~END~~
+
+SELECT * FROM conv_text_to_char_1;
+GO
+~~START~~
+char
+-123.456325678543             
+-123.456325678543             
+~~END~~
+
+SELECT * FROM cast_text_to_char_2;
+GO
+~~START~~
+char
+?Bilal DEN?ZL? Türkiye       
+?Bilal DEN?ZL? Türkiye       
+~~END~~
+
+SELECT * FROM conv_text_to_char_2;
+GO
+~~START~~
+char
+?Bilal DEN?ZL? Türkiye       
+?Bilal DEN?ZL? Türkiye       
+~~END~~
+
+SELECT * FROM cast_text_to_char_3;
+GO
+~~START~~
+char
+                              
+                              
+~~END~~
+
+SELECT * FROM conv_text_to_char_3;
+GO
+~~START~~
+char
+                              
+                              
+~~END~~
+
+SELECT * FROM cast_text_to_char_4;
+GO
+~~START~~
+char
+                              
+                              
+~~END~~
+
+SELECT * FROM conv_text_to_char_4;
+GO
+~~START~~
+char
+                              
+                              
+~~END~~
+
+SELECT * FROM cast_text_to_char_5;
+GO
+~~START~~
+char
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_char_5;
+GO
+~~START~~
+char
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM cast_text_to_char_6;
+GO
+~~START~~
+char
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_char_6;
+GO
+~~START~~
+char
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+
+SELECT * FROM cast_text_to_nchar_1;
+GO
+~~START~~
+nchar
+-123.456325678543             
+-123.456325678543             
+~~END~~
+
+SELECT * FROM conv_text_to_nchar_1;
+GO
+~~START~~
+nchar
+-123.456325678543             
+-123.456325678543             
+~~END~~
+
+SELECT * FROM cast_text_to_nchar_2;
+GO
+~~START~~
+nchar
+😎Bilal DENİZLİ Türkiye       
+😎Bilal DENİZLİ Türkiye       
+~~END~~
+
+SELECT * FROM conv_text_to_nchar_2;
+GO
+~~START~~
+nchar
+😎Bilal DENİZLİ Türkiye       
+😎Bilal DENİZLİ Türkiye       
+~~END~~
+
+SELECT * FROM cast_text_to_nchar_3;
+GO
+~~START~~
+nchar
+                              
+                              
+~~END~~
+
+SELECT * FROM conv_text_to_nchar_3;
+GO
+~~START~~
+nchar
+                              
+                              
+~~END~~
+
+SELECT * FROM cast_text_to_nchar_4;
+GO
+~~START~~
+nchar
+                              
+                              
+~~END~~
+
+SELECT * FROM conv_text_to_nchar_4;
+GO
+~~START~~
+nchar
+                              
+                              
+~~END~~
+
+SELECT * FROM cast_text_to_nchar_5;
+GO
+~~START~~
+nchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_nchar_5;
+GO
+~~START~~
+nchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM cast_text_to_nchar_6;
+GO
+~~START~~
+nchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_nchar_6;
+GO
+~~START~~
+nchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+
+SELECT * FROM cast_text_to_varchar_1;
+GO
+~~START~~
+varchar
+-123.456325678543
+-123.456325678543
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_1;
+GO
+~~START~~
+varchar
+-123.456325678543
+-123.456325678543
+~~END~~
+
+SELECT * FROM cast_text_to_varchar_2;
+GO
+~~START~~
+varchar
+?Bilal DEN?ZL? Türkiye
+?Bilal DEN?ZL? Türkiye
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_2;
+GO
+~~START~~
+varchar
+?Bilal DEN?ZL? Türkiye
+?Bilal DEN?ZL? Türkiye
+~~END~~
+
+SELECT * FROM cast_text_to_varchar_3;
+GO
+~~START~~
+varchar
+
+
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_3;
+GO
+~~START~~
+varchar
+
+
+~~END~~
+
+SELECT * FROM cast_text_to_varchar_4;
+GO
+~~START~~
+varchar
+
+
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_4;
+GO
+~~START~~
+varchar
+
+
+~~END~~
+
+SELECT * FROM cast_text_to_varchar_5;
+GO
+~~START~~
+varchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_5;
+GO
+~~START~~
+varchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM cast_text_to_varchar_6;
+GO
+~~START~~
+varchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_6;
+GO
+~~START~~
+varchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+
+SELECT * FROM cast_text_to_nvarchar_1;
+GO
+~~START~~
+nvarchar
+-123.456325678543
+-123.456325678543
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_1;
+GO
+~~START~~
+nvarchar
+-123.456325678543
+-123.456325678543
+~~END~~
+
+SELECT * FROM cast_text_to_nvarchar_2;
+GO
+~~START~~
+nvarchar
+😎Bilal DENİZLİ Türkiye
+😎Bilal DENİZLİ Türkiye
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_2;
+GO
+~~START~~
+nvarchar
+😎Bilal DENİZLİ Türkiye
+😎Bilal DENİZLİ Türkiye
+~~END~~
+
+SELECT * FROM cast_text_to_nvarchar_3;
+GO
+~~START~~
+nvarchar
+
+
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_3;
+GO
+~~START~~
+nvarchar
+
+
+~~END~~
+
+SELECT * FROM cast_text_to_nvarchar_4;
+GO
+~~START~~
+nvarchar
+
+
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_4;
+GO
+~~START~~
+nvarchar
+
+
+~~END~~
+
+SELECT * FROM cast_text_to_nvarchar_5;
+GO
+~~START~~
+nvarchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_5;
+GO
+~~START~~
+nvarchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM cast_text_to_nvarchar_6;
+GO
+~~START~~
+nvarchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_6;
+GO
+~~START~~
+nvarchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+
+EXEC p_text_to_char_reg;
+GO
+~~START~~
+char
+-123.456325678543             
+-123.456325678543             
+~~END~~
+
+~~START~~
+char
+-123.456325678543             
+-123.456325678543             
+~~END~~
+
+EXEC p_text_to_char_uni;
+GO
+~~START~~
+char
+?Bilal DEN?ZL? Türkiye       
+?Bilal DEN?ZL? Türkiye       
+~~END~~
+
+~~START~~
+char
+?Bilal DEN?ZL? Türkiye       
+?Bilal DEN?ZL? Türkiye       
+~~END~~
+
+EXEC p_text_to_nchar_reg;
+GO
+~~START~~
+nchar
+-123.456325678543             
+-123.456325678543             
+~~END~~
+
+~~START~~
+nchar
+-123.456325678543             
+-123.456325678543             
+~~END~~
+
+EXEC p_text_to_nchar_uni;
+GO
+~~START~~
+nchar
+😎Bilal DENİZLİ Türkiye       
+😎Bilal DENİZLİ Türkiye       
+~~END~~
+
+~~START~~
+nchar
+😎Bilal DENİZLİ Türkiye       
+😎Bilal DENİZLİ Türkiye       
+~~END~~
+
+EXEC p_text_to_varchar_reg;
+GO
+~~START~~
+varchar
+-123.456325678543
+-123.456325678543
+~~END~~
+
+~~START~~
+varchar
+-123.456325678543
+-123.456325678543
+~~END~~
+
+EXEC p_text_to_varchar_uni;
+GO
+~~START~~
+varchar
+?Bilal DEN?ZL? Türkiye
+?Bilal DEN?ZL? Türkiye
+~~END~~
+
+~~START~~
+varchar
+?Bilal DEN?ZL? Türkiye
+?Bilal DEN?ZL? Türkiye
+~~END~~
+
+EXEC p_text_to_nvarchar_reg;
+GO
+~~START~~
+nvarchar
+-123.456325678543
+-123.456325678543
+~~END~~
+
+~~START~~
+nvarchar
+-123.456325678543
+-123.456325678543
+~~END~~
+
+EXEC p_text_to_nvarchar_uni;
+GO
+~~START~~
+nvarchar
+😎Bilal DENİZLİ Türkiye
+😎Bilal DENİZLİ Türkiye
+~~END~~
+
+~~START~~
+nvarchar
+😎Bilal DENİZLİ Türkiye
+😎Bilal DENİZLİ Türkiye
+~~END~~
+
+
+SELECT * FROM f_text_to_char_reg();
+GO
+~~START~~
+char
+-123.456325678543             
+-123.456325678543             
+-123.456325678543             
+-123.456325678543             
+~~END~~
+
+SELECT * FROM f_text_to_char_uni();
+GO
+~~START~~
+char
+?Bilal DEN?ZL? Türkiye       
+?Bilal DEN?ZL? Türkiye       
+?Bilal DEN?ZL? Türkiye       
+?Bilal DEN?ZL? Türkiye       
+~~END~~
+
+SELECT * FROM f_text_to_nchar_reg();
+GO
+~~START~~
+nchar
+-123.456325678543             
+-123.456325678543             
+-123.456325678543             
+-123.456325678543             
+~~END~~
+
+SELECT * FROM f_text_to_nchar_uni();
+GO
+~~START~~
+nchar
+😎Bilal DENİZLİ Türkiye       
+😎Bilal DENİZLİ Türkiye       
+😎Bilal DENİZLİ Türkiye       
+😎Bilal DENİZLİ Türkiye       
+~~END~~
+
+SELECT * FROM f_text_to_varchar_reg();
+GO
+~~START~~
+varchar
+-123.456325678543
+-123.456325678543
+-123.456325678543
+-123.456325678543
+~~END~~
+
+SELECT * FROM f_text_to_varchar_uni();
+GO
+~~START~~
+varchar
+?Bilal DEN?ZL? Türkiye
+?Bilal DEN?ZL? Türkiye
+?Bilal DEN?ZL? Türkiye
+?Bilal DEN?ZL? Türkiye
+~~END~~
+
+SELECT * FROM f_text_to_nvarchar_reg();
+GO
+~~START~~
+nvarchar
+-123.456325678543
+-123.456325678543
+-123.456325678543
+-123.456325678543
+~~END~~
+
+SELECT * FROM f_text_to_nvarchar_uni();
+GO
+~~START~~
+nvarchar
+😎Bilal DENİZLİ Türkiye
+😎Bilal DENİZLİ Türkiye
+😎Bilal DENİZLİ Türkiye
+😎Bilal DENİZLİ Türkiye
+~~END~~
+
