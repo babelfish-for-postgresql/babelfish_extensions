@@ -665,7 +665,8 @@ CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR,srid integ
 		IF Geomtype = 'ST_LineString' THEN
 			RETURN geom;
 		ELSE
-			RAISE EXCEPTION 'Expected "LINESTRING" at Position 1. The input has %', $1;		END IF;
+			RAISE EXCEPTION 'Expected "LINESTRING" at Position 1. The input has %', $1;		
+		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
