@@ -624,3 +624,6 @@ ignore#!#babel_726-before-16_10-or-17_6-vu-cleanup
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-prepare
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-verify
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-cleanup
+ignore#!#view_sec_setting_before_17_6-or-16_10-vu-prepare
+ignore#!#view_sec_setting_before_17_6-or-16_10-vu-verify
+ignore#!#view_sec_setting_before_17_6-or-16_10-vu-cleanup
