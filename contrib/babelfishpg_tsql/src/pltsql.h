@@ -1816,6 +1816,10 @@ typedef struct PLtsql_protocol_plugin
 	
 	Datum       (*sql_bytea_from_geography) (PG_FUNCTION_ARGS);
 
+	Datum       (*sql_geometry_from_bytea) (PG_FUNCTION_ARGS);
+	
+	Datum       (*sql_geography_from_bytea) (PG_FUNCTION_ARGS);
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;

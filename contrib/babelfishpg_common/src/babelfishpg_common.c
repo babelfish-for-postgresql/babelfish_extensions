@@ -227,6 +227,8 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.UpdateToNextDayHelper = &UpdateToNextDayHelper;
 		common_utility_plugin_var.bytea_from_geometry = &bytea_from_geometry;
 		common_utility_plugin_var.bytea_from_geography = &bytea_from_geography;
+		common_utility_plugin_var.geometry_from_bytea = &geometry_from_bytea;
+		common_utility_plugin_var.geography_from_bytea = &geography_from_bytea;
 	}
 	return &common_utility_plugin_var;
 }
