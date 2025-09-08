@@ -45,7 +45,7 @@ SELECT c.relname as view_name, CASE WHEN 'security_invoker=true' = ANY (c.relopt
 go
 ~~START~~
 name#!#text
-v6031_existing#!#SECURITY DEFINER
+v6031_existing#!#SECURITY INVOKER
 v6031_new#!#SECURITY INVOKER
 ~~END~~
 
@@ -75,7 +75,7 @@ go
 ~~START~~
 name#!#text
 v6031_existing#!#SECURITY INVOKER
-v6031_new#!#SECURITY DEFINER
+v6031_new#!#SECURITY INVOKER
 ~~END~~
 
 

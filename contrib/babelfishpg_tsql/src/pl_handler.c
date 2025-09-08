@@ -3090,9 +3090,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				 * into !(stmt->replace)
 				 */
 				if (sql_dialect == SQL_DIALECT_TSQL &&
-					IS_TDS_CLIENT() &&
-					!InSecurityRestrictedOperation() &&
-					!(stmt->replace))
+					IS_TDS_CLIENT())
 				{
 					bool        security_invoker_found = false;
 
