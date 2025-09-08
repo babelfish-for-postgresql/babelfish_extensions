@@ -5101,9 +5101,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
 										{
 											/* 
-											* If the privilege is not common to schema and object then 
-											* execute_pg_command true and append the privilege to filtered list 
-											*/
+											 * If the privilege is not common to schema and object then 
+											 * execute_pg_command true and append the privilege to filtered list 
+											 */
 											exec_pg_command = true;
 										}
 										else
@@ -5233,7 +5233,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 					return;
 				}
-
 
 				pfree(db_datareader);
 				pfree(db_datawriter);
