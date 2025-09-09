@@ -12,7 +12,9 @@
 #include "postgres.h"
 #include "fmgr.h"
 
+#ifdef ENABLE_SPATIAL_TYPES
 extern Datum bytea_from_geometry(PG_FUNCTION_ARGS);
 extern Datum bytea_from_geography(PG_FUNCTION_ARGS);
+#endif
 
 #endif  /* SPATIALTYPES_H */
