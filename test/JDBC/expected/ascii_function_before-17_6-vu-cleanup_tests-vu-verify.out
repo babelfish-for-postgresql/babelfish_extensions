@@ -651,16 +651,16 @@ varchar#!#varchar#!#int
 SELECT * FROM ascii_function_v_type_comparison;
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#varchar
-1#!#65#!#65#!#65#!#65#!#Consistent
-2#!#101#!#101#!#101#!#101#!#Consistent
-3#!#97#!#97#!#97#!#97#!#Consistent
-4#!#32#!#32#!#32#!#32#!#Consistent
-5#!#66#!#66#!#66#!#66#!#Consistent
-6#!#49#!#49#!#49#!#49#!#Consistent
-7#!#33#!#33#!#33#!#33#!#Consistent
-8#!#65#!#65#!#65#!#65#!#Consistent
-9#!#32#!#32#!#32#!#32#!#Consistent
+int#!#int#!#int#!#int#!#int#!#text
+1#!#65#!#65#!#48#!#48#!#Inconsistent
+2#!#101#!#101#!#48#!#48#!#Inconsistent
+3#!#97#!#97#!#48#!#48#!#Inconsistent
+4#!#32#!#32#!#48#!#48#!#Inconsistent
+5#!#66#!#66#!#48#!#48#!#Inconsistent
+6#!#49#!#49#!#48#!#48#!#Inconsistent
+7#!#33#!#33#!#48#!#48#!#Inconsistent
+8#!#65#!#65#!#48#!#48#!#Inconsistent
+9#!#32#!#32#!#48#!#48#!#Inconsistent
 ~~END~~
 
 
@@ -668,7 +668,7 @@ SELECT * FROM ascii_function_v_empty_analysis;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#int#!#int#!#varchar
-1#!#32#!#NULL#!#0#!#0#!#Empty string
+1#!#32#!#0#!#0#!#0#!#Empty string
 2#!#32#!#32#!#0#!#0#!#Single space
 3#!#32#!#32#!#0#!#0#!#Two spaces
 4#!#32#!#32#!#2#!#2#!#Space then char

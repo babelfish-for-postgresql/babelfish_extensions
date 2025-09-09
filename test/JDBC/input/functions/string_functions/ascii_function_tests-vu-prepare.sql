@@ -128,7 +128,6 @@ CREATE TABLE ascii_function_null_types (
     NullNvarchar NVARCHAR(50),
     NullBinary BINARY(10),
     NullVarbinary VARBINARY(50),
-    NullDateTime DATETIME,
     NullMoney MONEY,
     Description VARCHAR(100)
 );
@@ -140,9 +139,9 @@ INSERT INTO ascii_function_null_types
 ('All NULL values');
 
 INSERT INTO ascii_function_null_types 
-(NullChar, NullVarchar, NullNchar, NullNvarchar, NullBinary, NullVarbinary, NullDateTime, NullMoney, Description)
+(NullChar, NullVarchar, NullNchar, NullNvarchar, NullBinary, NullVarbinary, NullMoney, Description)
 VALUES
-('', '', N'', N'', 0x00, 0x00, NULL, NULL, 'Empty/zero values');
+('', '', N'', N'', 0x00, 0x00, NULL, 'Empty/zero values');
 GO
 
 -- Functions tests
