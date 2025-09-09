@@ -1431,8 +1431,8 @@ TdsTypeSpatialToDatum(StringInfo buf, bool is_geography)
 	bytea   *input_bytea;
 	Datum   result;
 	int     nbytes;
-	FunctionCallInfoBaseData fcinfo_data;
-	FunctionCallInfo fcinfo = &fcinfo_data;
+	LOCAL_FCINFO(fcinfo, 1);
+
 
 	/* Convert StringInfo buffer to bytea */
 	nbytes = buf->len - buf->cursor;
@@ -1443,7 +1443,8 @@ TdsTypeSpatialToDatum(StringInfo buf, bool is_geography)
 
 	/* Set up function call info */
 	InitFunctionCallInfoData(*fcinfo, NULL, 1, InvalidOid, NULL, NULL);
-	PG_GETARG_DATUM(0) = PointerGetDatum(input_bytea);
+	fcinfo->args[0].value = PointerGetDatum(input_bytea);
+	fcinfo->args[0].isnull = false;
 
 	/* Call appropriate function based on spatial type */
 	if (is_geography)
