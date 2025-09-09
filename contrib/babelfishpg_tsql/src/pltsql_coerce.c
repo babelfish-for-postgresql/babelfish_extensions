@@ -1434,8 +1434,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				/* if varno is INNER_VAR or OUTER_VAR then we need plan, else we cannot find typmod, hence set found as false and return -1 */
 				if (plan == NULL && (var->varno == INNER_VAR || var->varno == OUTER_VAR))
 				{
-					if (found != NULL) *found = false;
-					return -1;
+					if (var->vartypmod == -1)
+						if (found != NULL) *found = false;
+
+					return var->vartypmod;
 				}
 
 				if (var->vartypmod == -1)
