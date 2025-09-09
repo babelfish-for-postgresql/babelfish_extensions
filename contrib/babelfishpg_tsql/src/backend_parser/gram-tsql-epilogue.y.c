@@ -1018,34 +1018,16 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 		{
 			n_d->usingClause = from_clause;
 			n_d->whereClause = where_clause;
-			if (top_clause != NULL)
-			{
-				TopClause *tc = (TopClause *)top_clause;
-				n_d->limitCount = tc->limitCount;
-				n_d->isPercent = tc->isPercent;
-			}
-			else
-			{
-				n_d->limitCount = NULL;
-				n_d->isPercent = false;
-			}
+			n_d->limitCount = ((TopClause *)top_clause)->limitCount;
+			n_d->isPercent = ((TopClause *)top_clause)->isPercent;
 			return (Node *) n_d;
 		}
 		else
 		{
 			n_u->fromClause = from_clause;
 			n_u->whereClause = where_clause;
-			if (top_clause != NULL)
-			{
-				TopClause *tc = (TopClause *)top_clause;
-				n_u->limitCount = tc->limitCount;
-				n_u->isPercent = tc->isPercent;
-			}
-			else
-			{
-				n_u->limitCount = NULL;
-				n_u->isPercent = false;
-			}
+			n_u->limitCount = ((TopClause *)top_clause)->limitCount;
+			n_u->isPercent = ((TopClause *)top_clause)->isPercent;
 			return (Node *) n_u;
 		}
 	}
@@ -1071,17 +1053,8 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 	selectstmt->fromClause = from_clause;
 	selectstmt->whereClause = where_clause;
 	/* if we end up createing a subquery for JOIN, attach TOP clause to it */
-	if (top_clause != NULL)
-	{
-		TopClause *tc = (TopClause *)top_clause;
-		selectstmt->limitCount = tc->limitCount;
-		selectstmt->isPercent = tc->isPercent;
-	}
-	else
-	{
-		selectstmt->limitCount = NULL;
-		selectstmt->isPercent = false;
-	}
+	selectstmt->limitCount = ((TopClause *)top_clause)->limitCount;
+	selectstmt->isPercent = ((TopClause *)top_clause)->isPercent;
 	/* construct where_clause(subLink) */
 	link = makeNode(SubLink);
 	link->subselect = (Node *) selectstmt;
@@ -1220,17 +1193,8 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	/* PreparableStmt inside CTE */
 	i->cols = insert_column_list;
 	i->selectStmt = tsql_output_insert_rest->selectStmt;
-	if (opt_top_clause != NULL)
-	{
-		TopClause *tc = (TopClause *)opt_top_clause;
-		i->limitCount = tc->limitCount;
-		i->isPercent = tc->isPercent;
-	}
-	else
-	{
-		i->limitCount = NULL;
-		i->isPercent = false;
-	}
+	i->limitCount = ((TopClause *)opt_top_clause)->limitCount;
+	i->isPercent = ((TopClause *)opt_top_clause)->isPercent;
 	i->relation = insert_target;
 	i->onConflictClause = NULL;
 	i->returningList = get_transformed_output_list(tsql_output_clause);
@@ -1379,17 +1343,8 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	{
 		d->usingClause = from_clause;
 		d->whereClause = where_or_current_clause;
-		if (opt_top_clause != NULL)
-		{
-			TopClause *tc = (TopClause *)opt_top_clause;
-			d->limitCount = tc->limitCount;
-			d->isPercent = tc->isPercent;
-		}
-		else
-		{
-			d->limitCount = NULL;
-			d->isPercent = false;
-		}
+		d->limitCount = ((TopClause *)opt_top_clause)->limitCount;
+		d->isPercent = ((TopClause *)opt_top_clause)->isPercent;
 	}
 	d->returningList = get_transformed_output_list(tsql_output_clause);
 	d->withClause = opt_with_clause;
@@ -1560,18 +1515,8 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	{
 		u->fromClause = from_clause;
 		u->whereClause = where_or_current_clause;
-		if (opt_top_clause != NULL)  // if tsql_top_clause is present
-		{
-			TopClause *tc = (TopClause *)opt_top_clause;
-			u->limitCount = tc->limitCount;
-			u->isPercent = tc->isPercent;
-		}
-		else
-		{
-			u->limitCount = NULL;
-			u->isPercent = false;
-		}
-		
+		u->limitCount = ((TopClause *)opt_top_clause)->limitCount;
+		u->isPercent = ((TopClause *)opt_top_clause)->isPercent;
 	}
 	u->returningList = get_transformed_output_list(tsql_output_clause);
 	u->withClause = opt_with_clause;
