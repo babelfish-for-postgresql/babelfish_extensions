@@ -549,6 +549,24 @@ END;
 $$
 LANGUAGE 'pltsql';
 
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.degrees(arg1::PG_CATALOG.NUMERIC);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.radians(arg1::PG_CATALOG.NUMERIC);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
