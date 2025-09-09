@@ -103,8 +103,14 @@ GO
 CREATE VIEW test_schema.test_view as select * from test_schema.base_table
 GO
 
+CREATE VIEW test_schema.colacl_view1 as select 1 as a, 2 as b, 3 as c;
+GO
+
 -- Verify view_owner can select from view
 SELECT * FROM test_schema.test_view;
+GO
+
+SELECT * FROM test_schema.colacl_view1;
 GO
 
 -- Verify view_user cannot access the view yet
@@ -116,12 +122,18 @@ GO
 SELECT * FROM test_schema.test_view;
 GO
 
+SELECT * FROM test_schema.colacl_view1;
+GO
+
 -- Grant permission to view_user
 -- tsql user=view_owner_login password=12345678
 USE view_perm_db;
 GO
 
 GRANT SELECT ON test_schema.test_view TO view_user;
+GO
+
+GRANT SELECT ON test_schema.colacl_view1(a, c) TO view_user;
 GO
 
 -- Now view_user should be able to select
@@ -131,6 +143,19 @@ GO
 
 -- This should succeed
 SELECT * FROM test_schema.test_view;
+GO
+
+SELECT a FROM test_schema.colacl_view1;
+GO
+
+--This should fail
+SELECT b FROM test_schema.colacl_view1;
+GO
+
+SELECT c FROM test_schema.colacl_view1;
+GO
+
+SELECT * FROM test_schema.colacl_view1;
 GO
 
 -- Alter view as view_owner
@@ -143,8 +168,14 @@ AS
     SELECT id, name FROM test_schema.base_table;
 GO
 
+ALTER VIEW test_schema.colacl_view1 AS SELECT 2 AS a;
+GO
+
 -- Verify view_owner can still access
 SELECT * FROM test_schema.test_view;
+GO
+
+SELECT a FROM test_schema.colacl_view1;
 GO
 
 -- Verify view_user can still access after alter
@@ -154,6 +185,9 @@ GO
 
 -- This should succeed as permissions are retained
 SELECT * FROM test_schema.test_view;
+GO
+
+SELECT a FROM test_schema.colacl_view1;
 GO
 
 -- Revoke permission to view_user
@@ -211,6 +245,9 @@ USE view_perm_db;
 GO
 
 DROP VIEW test_schema.test_view;
+GO
+
+DROP VIEW test_schema.colacl_view1;
 GO
 
 DROP TABLE test_schema.base_table;
