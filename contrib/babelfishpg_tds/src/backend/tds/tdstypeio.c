@@ -161,7 +161,6 @@ const char *GetMsgBytes(StringInfo msg, int datalen);
 unsigned int GetMsgInt(StringInfo msg, int b);
 int64		GetMsgInt64(StringInfo msg);
 uint128		GetMsgUInt128(StringInfo msg);
-static int32_t get_srid(uint8_t *id);
 float4		GetMsgFloat4(StringInfo msg);
 float8		GetMsgFloat8(StringInfo msg);
 static void SwapData(StringInfo buf, int st, int end);
@@ -211,27 +210,6 @@ typedef struct FunctionCacheByTdsIdEntry
 	FunctionCacheByTdsIdKey key;
 	TdsIoFunctionData data;
 } FunctionCacheByTdsIdEntry;
-
-/*
- * This is a modified copy of a function from POSTGIS to get SRID from GSERIALIZED struct
- */
-static int32_t
-get_srid(uint8_t *id)
-{
-	int32_t srid = 0;
-	srid = srid | (id[0] << 16);
-	srid = srid | (id[1] << 8);
-	srid = srid | (id[2]);
-	/* Only the first 21 bits are set. Slide up and back to pull
-	   the negative bits down, if we need them. */
-	srid = (srid<<11)>>11;
-
-	/* 0 is our internal unknown value. We'll map back and forth here for now */
-	if (srid == 0)
-		return 0;
-	else
-		return srid;
-}
 
 /* Helper function to write a 32-bit integer to a buffer and advance the pointer */
 static inline void 
@@ -4369,7 +4347,7 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 /**
  * Helper function to send spatial data (geometry/geography) over TDS protocol.
  *
- * This function converts PostGIS spatial data (GSERIALIZED format) to the
+ * This function converts PostGIS spatial data to the
  * SQL Server binary format for geometry/geography types and sends it over
  * the TDS protocol.
  *
@@ -4385,146 +4363,42 @@ int
 TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr)
 {
     int         rc = EOF,
-                npoints,
-                len = 0,                /* number of bytes used to store the string. */
-                pointSize,
-                hasZ,
-                hasM,
-                actualLen;              /* Number of bytes that would be needed to
-                                         * store given string in given encoding. */
+                len = 0,                /* Number of bytes in the binary data */
+                actualLen;              /* Number of bytes after encoding conversion */
 
-    char        *destBuf,
-                *buf = NULL;
-    uint32_t    geom_type;
-    int32_t     srid;
-    unsigned char *itr;
-
+    char        *destBuf,               /* Buffer after encoding conversion */
+                *buf = NULL;            /* Raw binary data from spatial object */
+    Datum       bytea_datum;            /* Datum containing binary spatial data */
+    bytea       *bytea_result;          /* Binary result from spatial conversion */
     TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
-    GSERIALIZED *gser = (GSERIALIZED *)PG_DETOAST_DATUM(value);    /* Used to Store the bytes in the Format which is stored in PostGIS */
 
-    /* Get SRID (Spatial Reference ID) from the PostGIS object */
-    srid = get_srid(gser->srid);
-
-    /* Check for Z (elevation) and M (measure) dimensions */
-    hasZ = (gser->gflags & FLAG_Z) ? 1 : 0;
-    hasM = (gser->gflags & FLAG_M) ? 1 : 0;
-
-    /* Extract geometry type from the PostGIS object */
-    geom_type = *((uint32_t *)gser->data);
-
-    /* Get number of points in the geometry */
-    npoints = *((int *)((char*)gser->data + NPOINTS_OFFSET));
-
-    /* Currently only POINT geometries are supported */
-    if (geom_type != POINTTYPE)
-    {
-		elog(ERROR, "Unsupported geometry type");
-    }
-
-    /* Handle EMPTY GEOMETRY case (no points) */
-    if (npoints == 0) 
-    {
-        /* Fixed length for expected output */
-        len = EMPTY_GEOMETRY_LENGTH;
-        buf = (char *) palloc0(len);
-        itr = (unsigned char *)buf;
-
-        /* Set SRID in the first 4 bytes */
-        *((int32_t*)buf) = srid;
-        itr = (unsigned char *)buf + SRID_OFFSET;
-
-        /* Set geometry type indicator: 5th byte */
-        *itr = GEOMETRY_INDICATOR;
-        itr++;
-
-        /* Set empty indicator: 6th byte */
-        *itr = EMPTY_INDICATOR;
-        itr++;
-
-        /* Write number of points */
-        write_int32(&itr, 0);
-
-        /* Write number of figures */
-        write_int32(&itr, 0);
-
-        /* Write number of shapes */
-        write_int32(&itr, SHAPE_COUNT_EMPTY);
-
-        /* Write figure index */
-        write_int32(&itr, EMPTY_FIGURE_INDEX);
-
-        /* Write shape index */
-        write_int32(&itr, EMPTY_SHAPE_INDEX);
-
-        /* Set final byte for POINT EMPTY (0x01) */
-        if (geom_type == POINTTYPE)
-            *itr = POINTTYPE;
-    }
+    /* Set up function call info for spatial conversion functions */
+    LOCAL_FCINFO(fcinfo, 1);
+    InitFunctionCallInfoData(*fcinfo, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo->args[0].value = value;
+    fcinfo->args[0].isnull = false;
+    
+    /* Convert spatial data to binary format based on type */
+    if (TdsInstr == (int)INSTR_TDS_DATATYPE_GEOMETRY)
+        bytea_datum = pltsql_plugin_handler_ptr->sql_bytea_from_geometry(fcinfo);
     else
-    {
-        switch(geom_type)
-        {
-            case POINTTYPE:
-                /* Handle non-empty POINT geometry */
+        bytea_datum = pltsql_plugin_handler_ptr->sql_bytea_from_geography(fcinfo);
 
-                /*
-                 * Calculate buffer length:
-                 * pointSize * (No. of Points) + HEADER_SIZE
-                 * pointSize -> COORD_SIZE*2( for X and Y) + COORD_SIZE(if Z exists) + COORD_SIZE_M(if M exists)
-                 * HEADER_SIZE -> 4 Byte SRID + 2 Byte Geometry Type
-                 */
-                pointSize = COORD_SIZE*2;  /* Base size for X,Y coordinates */
-                
-                /* Add Z coordinate size if present */
-                if (hasZ)
-                    pointSize += COORD_SIZE;
-
-                /* Add M coordinate size if present */
-                if (hasM)
-                    pointSize += COORD_SIZE;
-
-                /* Calculate total buffer length */
-                len = npoints * pointSize + HEADER_SIZE;
-                buf = (char *) palloc0(len);
-
-                /* Set SRID in the first 4 bytes */
-                *((int32_t*)buf) = srid;
-                itr = (unsigned char *)buf + SRID_OFFSET; 
-
-                /* Set point type indicator */
-                *itr = GEOMETRY_INDICATOR;
-                itr++;
-
-                /* 
-                 * Set the geometry type byte based on dimensions:
-                 * 01 0F for 3D Point with M (XYZM) -> 15
-                 * 01 0E for 2D Point with M (XYM) -> 14
-                 * 01 0D for 3D Point (XYZ) -> 13
-                 * 01 0C for 2D Point (XY) -> 12
-                 */
-                if (hasZ && hasM)
-                    *itr = POINT_TYPE_XYZM;
-                else if (hasM)
-                    *itr = POINT_TYPE_XYM;
-                else if (hasZ)
-                    *itr = POINT_TYPE_XYZ;
-                else
-                    *itr = POINT_TYPE_XY;
-                itr++;
-
-                /* Copy coordinate data */
-                memcpy(itr, (char *)gser->data + 8, len - 6);
-                break;
-        }
-    }
-
+    /* Extract binary data from the bytea result */
+    bytea_result = DatumGetByteaP(bytea_datum);
+    buf = VARDATA(bytea_result);             /* Get pointer to actual data */
+    len = VARSIZE(bytea_result) - VARHDRSZ;  /* Calculate data length */
+                                                       
     destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 
     TDSInstrumentation(TdsInstr);
 
     rc = TdsSendPlpDataHelper(destBuf, actualLen);
 
-    pfree(destBuf);
+    /* Clean up allocated memory if encoding conversion created a new buffer */
+    if (destBuf != buf)
+        pfree(destBuf);
+		
     return rc;
 }
 

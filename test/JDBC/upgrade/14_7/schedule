@@ -100,7 +100,7 @@ BABEL-3781
 BABEL-3802
 BABEL-3818
 BABEL-383
-BABEL-3914
+mathematical_func-before_17_6-or-16_10
 BABEL-3938-before-16_5-or-15_9
 BABEL-404-before-15_7-or-16_3
 BABEL-405
@@ -482,3 +482,4 @@ MONEY_OBJECT-before-16_4
 babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper-before-16_10-or-17_6
 babel_numeric_smallmoney_oper-before-16_10-or-17_6
+babel_assign_nchar

@@ -19,6 +19,20 @@ typedef struct
     double m;
 } POINT;
 
+/* Dynamic array to store geometric points */
+typedef struct 
+{
+    POINT *points;
+    int count; 
+    int capacity;       
+} PointArray;
+
+/* Enum for different dimension types */
+typedef enum 
+{ 
+    XY, ZM, Z, M
+} DimensionType;
+
 /* Function declarations for lexer and parser */
 extern void geo_yyerror(char **result, const char *message) pg_attribute_noreturn();
 extern int geo_yylex(void);
@@ -38,6 +52,15 @@ POINT create_point(double x, double y, double z, double m, int has_z, int has_m)
 /* Function to rewrite a POINT query to WKT format */
 char* rewrite_point_query(POINT p);
 char* rewrite_point_dim_query (POINT coord);
+
+/* PointArray management and LineString WKT conversion functions */
+void init_point_array(PointArray *pa);
+void resize_point_array(PointArray *pa);
+void add_point(PointArray *pa, POINT p);
+void transform_points(PointArray *pa, DimensionType type);
+char* rewrite_linestring_query(PointArray *pa);
+char* rewrite_dim_linestring_query(PointArray *pa);
+DimensionType determine_linestring_type(PointArray *pa);
 
 #endif /* GEO_DATA_H */
 
