@@ -31,14 +31,14 @@
  * 	if relid <= INT32_MAX
  * 		add relid to temp_relids
  * 	else
- * 		add (relid - INT32_MAX - 1) to temp_relids_beyond_in32
+ * 		add (relid - INT32_MAX - 1) to temp_relids_beyond_int32
  */
 static Bitmapset   *temp_relids = NULL;
-static Bitmapset   *temp_relids_beyond_in32 = NULL;
+static Bitmapset   *temp_relids_beyond_int32 = NULL;
 
 /*
  * string representation of list of temp table oids computed by Leader node to be shared
- * with parallel worker. Check comment above temp_relids_beyond_in32 for reason to
+ * with parallel worker. Check comment above temp_relids_beyond_int32 for reason to
  * keep two bitmapset string.
  */
 static char		   *temp_relids_str = NULL;
@@ -181,7 +181,7 @@ bbf_ParallelQueryMain(shm_toc *toc)
 	temp_relids = (Bitmapset *) stringToNode(shm_toc_lookup(toc,
 															BABELFISH_PARALLEL_KEY_TEMP_RELIDS,
 															false));
-	temp_relids_beyond_in32 = (Bitmapset *) stringToNode(shm_toc_lookup(toc,
+	temp_relids_beyond_int32 = (Bitmapset *) stringToNode(shm_toc_lookup(toc,
 															BABELFISH_PARALLEL_KEY_TEMP_RELIDS_BEYOND_INT32,
 															false));
 }
@@ -210,6 +210,6 @@ bbf_ExecCheckOneRelPerms(RTEPermissionInfo *perminfo)
 	if (perminfo->relid <= (Oid) INT32_MAX)
 		return bms_is_member(perminfo->relid, temp_relids);
 	else
-		return bms_is_member((perminfo->relid - (Oid) INT32_MAX - 1U), temp_relids_beyond_in32);
+		return bms_is_member((perminfo->relid - (Oid) INT32_MAX - 1U), temp_relids_beyond_int32);
 }
 
