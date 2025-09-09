@@ -1812,6 +1812,10 @@ typedef struct PLtsql_protocol_plugin
 
 	void		(*UpdateToNextDayHelper) (struct pg_tm *tm);
 
+	Datum       (*sql_bytea_from_geometry) (PG_FUNCTION_ARGS);
+	
+	Datum       (*sql_bytea_from_geography) (PG_FUNCTION_ARGS);
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
