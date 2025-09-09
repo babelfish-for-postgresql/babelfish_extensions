@@ -10,7 +10,7 @@ SELECT * from int_to_varbinary_v2
 GO
 ~~START~~
 varbinary
-<NULL>
+000000
 ~~END~~
 
 
@@ -18,7 +18,7 @@ SELECT * from int_to_varbinary_v3
 GO
 ~~START~~
 varbinary
-<NULL>
+00000026
 ~~END~~
 
 
@@ -34,7 +34,7 @@ SELECT * from int_to_binary_v2
 GO
 ~~START~~
 binary
-<NULL>
+000000
 ~~END~~
 
 

@@ -369,6 +369,8 @@ BEGIN
             ELSE
                 RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
             END IF;
+
+			RETURN CAST(result AS sys.varbinary);
         END;
         $BODY$ 
         LANGUAGE plpgsql
@@ -376,6 +378,13 @@ BEGIN
         STRICT;
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_varbinary_deprecated_in_5_4_0');
     END IF;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTEGER,
 																	IN arg anyelement,
@@ -445,7 +454,7 @@ BEGIN
     IF try THEN
         RETURN sys.babelfish_try_conv_string_to_varbinary(arg, p_style);
     ELSE
-        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+        RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
     END IF;
 END;
 $BODY$
@@ -460,7 +469,7 @@ RETURNS sys.varbinary
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+    RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
 EXCEPTION
     WHEN OTHERS THEN
         RETURN NULL;

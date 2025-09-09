@@ -10227,9 +10227,9 @@ LANGUAGE plpgsql
 IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTEGER,
-																	IN arg anyelement,
-																	IN try BOOL,
-																	IN p_style NUMERIC DEFAULT 0)
+                                                                  IN arg anyelement,
+                                                                  IN try BOOL,
+                                                                  IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
 AS
 $BODY$
@@ -10255,26 +10255,26 @@ LANGUAGE plpgsql
 IMMUTABLE;  
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN typmod INTEGER,
-																IN arg anyelement,
-																IN p_style NUMERIC DEFAULT 0)
+                                                               IN arg anyelement,
+                                                               IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
 AS
 $BODY$
 DECLARE result sys.varbinary;
 BEGIN
-	IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype, 'sys.varchar') THEN
-		RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
-	ELSE
-		IF typmod = -1 THEN
-			RETURN CAST(arg as sys.varbinary);
-		ELSE
-			EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
-			RETURN result;
-		END IF;
-	END IF;
-	EXCEPTION
-		WHEN OTHERS THEN
-			RETURN NULL;
+    IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype, 'sys.varchar') THEN
+        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+    ELSE
+        IF typmod = -1 THEN
+            RETURN CAST(arg as sys.varbinary);
+        ELSE
+            EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+            RETURN result;
+        END IF;
+    END IF;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
 END;
 $BODY$
 LANGUAGE plpgsql
@@ -10334,7 +10334,7 @@ BEGIN
     IF try THEN
         RETURN sys.babelfish_try_conv_string_to_varbinary(arg, p_style);
     ELSE
-        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+        RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
     END IF;
 END;
 $BODY$
@@ -10349,7 +10349,7 @@ RETURNS sys.varbinary
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+    RETURN sys.babelfish_conv_string_to_varbinary(arg::sys.varchar, p_style);
 EXCEPTION
     WHEN OTHERS THEN
         RETURN NULL;
