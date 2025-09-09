@@ -588,9 +588,6 @@ weak-binding
 babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper-before-16_10-or-17_6
 babel_numeric_smallmoney_oper-before-16_10-or-17_6
-<<<<<<< Updated upstream
 babel_assign_nchar
 alter-function-with-weak-view
-=======
 babel_datetimeoffset
->>>>>>> Stashed changes
