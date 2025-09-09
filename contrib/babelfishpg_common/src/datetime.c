@@ -338,7 +338,7 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 	result[j] = '\0';
 
 	/* Additional validation checks */
-	if (context == DATE_TIME && (has_trailing_delimiter ||
+	if ((context == DATE_TIME_2 || context == DATE_TIME) && (has_trailing_delimiter ||
 		has_leading_delimiter ||
 		consecutive_delimiters))
 	{

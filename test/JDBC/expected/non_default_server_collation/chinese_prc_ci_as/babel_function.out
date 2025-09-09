@@ -485,29 +485,33 @@ int
 
 
 -- Invalid input with in appropriate delimiters
-select isdate(/10/20/12);
+select isdate('/10/20/12');
 go
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+0
+~~END~~
 
-~~ERROR (Message: syntax error near '/' at line 2 and character position 14)~~
-
-select isdate(10/20/12/);
+select isdate('10/20/12/');
 go
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+0
+~~END~~
 
-~~ERROR (Message: syntax error near '10' at line 1 and character position 14)~~
-
-select isdate(10//20/12);
+select isdate('10//20/12');
 go
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+0
+~~END~~
 
-~~ERROR (Message: syntax error near '10' at line 1 and character position 14)~~
-
-select isdate(10@20@12);
+select isdate('10@20@12');
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '10' at line 1 and character position 14)~~
+~~START~~
+int
+0
+~~END~~
 
 -- Invalid date input
 select ISDATE('1752-12-31')
