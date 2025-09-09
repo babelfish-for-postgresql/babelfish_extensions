@@ -359,6 +359,19 @@ GO
 SELECT geography::STPointFromText('POINT(45 90)', NULL);
 GO
 
+-- Tests for common error handling
+SELECT geometry::STPointFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
+GO
+
+SELECT geography::STPointFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
+GO
+
 -- Input length is less than 22 bytes
 SELECT CAST(0xE6100000010C000000000000F03F0000000000040 as geometry)
 GO
@@ -366,7 +379,13 @@ GO
 SELECT CAST(0xE6100000010C000000000000F03F0000000000040 as geography)
 GO
 
--- Test with Invalid bytes
+-- Test with Invalid flags
+SELECT CAST(0xE61000000105000000000000F03F0000000000000040 as geometry)
+GO
+
+SELECT CAST(0xE61000000105000000000000F03F0000000000000040 as geography)
+GO
+
 SELECT CAST(0xE61000000104000000000000F03F0000000000000040 as geometry)
 GO
 
@@ -442,6 +461,13 @@ GO
 
 -- Test with unsupported geometry instances (these should raise errors)
 -- TODO: Update these tests as we implement support for each geometry instance
+
+-- LINESTRING
+SELECT geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
+GO
 
 -- POLYGON
 SELECT geometry::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 4326);

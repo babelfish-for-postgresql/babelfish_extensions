@@ -11,7 +11,6 @@ static int      scanbuflen;
     char* str;
     double val;
     POINT coordinatevalue;
-    PointArray* pointarray;
 }
 
 %token <val> DOUBLE_TOK
@@ -23,108 +22,27 @@ static int      scanbuflen;
 %token COLLECTION_TOK TIN_TOK POLYHEDRALSURFACE_TOK
 
 %type <coordinatevalue> coordinate coordz coordm coordzm
-%type <pointarray> ptarray ptarraym ptarrayzm ptarrayz
-%type <str> geospatial_query point_query linestring_query 
+%type <str> point_query 
 
-%start geospatial_query
+%start point_query
 %define api.prefix {geo_yy}
 %parse-param {char** result}
 %expect 0
 
 %%
 
-geospatial_query:
-    linestring_query { $$ = $1; *result = $$;  }
-    | point_query { $$ = $1; *result = $$;  }
-    ;
-
 point_query:
     POINT_TOK LPAREN coordinate RPAREN
-        { $$ = rewrite_point_query($3); }
+        { *result = rewrite_point_query($3); }
     | POINT_TOK EMPTY_TOK
-        { $$ = strdup("POINT EMPTY"); }
+        { *result = strdup("POINT EMPTY"); }
     | POINT_TOK  Z_TOK LPAREN coordz RPAREN
-        { $$ = rewrite_point_dim_query($4); }
+        { *result = rewrite_point_dim_query($4); }
     | POINT_TOK  M_TOK LPAREN coordm RPAREN
-        { $$ = rewrite_point_dim_query($4); }
+        { *result = rewrite_point_dim_query($4); }
     | POINT_TOK  ZM_TOK LPAREN coordzm RPAREN
-        { $$ = rewrite_point_dim_query($4); }
+        { *result = rewrite_point_dim_query($4); }
     ;
-
-linestring_query:
-    LINESTRING_TOK LPAREN ptarray RPAREN
-        { $$ = rewrite_linestring_query($3); }
-    | LINESTRING_TOK EMPTY_TOK
-        { $$ = strdup("LINESTRING EMPTY"); }
-    | LINESTRING_TOK Z_TOK LPAREN ptarrayz RPAREN
-        { $$ = rewrite_dim_linestring_query($4); }
-    | LINESTRING_TOK M_TOK LPAREN ptarraym RPAREN
-        { $$ = rewrite_dim_linestring_query($4); }
-    | LINESTRING_TOK ZM_TOK LPAREN ptarrayzm RPAREN
-        { $$ = rewrite_dim_linestring_query($4); }
-    ;
-    
-ptarray:
-    ptarray COMMA_TOK coordinate
-        {
-            add_point($1, $3);
-            $$ = $1;
-        }
-    | coordinate
-        {
-            PointArray *pa = palloc(sizeof(PointArray));
-            init_point_array(pa);
-            add_point(pa, $1);
-            $$ = pa;
-        }
-    ;
-
-ptarraym:
-    ptarraym COMMA_TOK coordm
-        {
-            add_point($1, $3);
-            $$ = $1;
-        }
-    | coordm
-        {
-            PointArray *pa = palloc(sizeof(PointArray));
-            init_point_array(pa);
-            add_point(pa, $1);
-            $$ = pa;
-        }
-    ;
-
-ptarrayz:
-    ptarrayz COMMA_TOK coordz
-        {
-            add_point($1, $3);
-            $$ = $1;
-        }
-    | coordz
-        {
-            PointArray *pa = palloc(sizeof(PointArray));
-            init_point_array(pa);
-            add_point(pa, $1);
-            $$ = pa;
-        }
-    ;
-
-ptarrayzm:
-    ptarrayzm COMMA_TOK coordzm
-        {
-            add_point($1, $3);
-            $$ = $1;
-        }
-    | coordzm
-        {
-            PointArray *pa = palloc(sizeof(PointArray));
-            init_point_array(pa);
-            add_point(pa, $1);
-            $$ = pa;
-        }
-    ;
-
-
 
 coordz:
     DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK

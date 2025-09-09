@@ -20,7 +20,7 @@ static YY_BUFFER_STATE scanbufhandle;
 %%
 
 POINT                 { return POINT_TOK; }
-LINESTRING            { return LINESTRING_TOK; }
+LINESTRING            { yyerror(NULL, "LINESTRING is not supported"); return LINESTRING_TOK; }
 CIRCULARSTRING        { yyerror(NULL, "CIRCULARSTRING is not supported"); return CIRCULARSTRING_TOK; }
 POLYGON               { yyerror(NULL, "POLYGON is not supported");  return POLYGON_TOK; }
 MULTIPOINT            { yyerror(NULL, "MULTIPOINT is not supported");  return MPOINT_TOK; }
@@ -49,7 +49,6 @@ TIN                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
 NULL             { return NULL_TOK; }
 [ \t\n\r]+EMPTY  { return EMPTY_TOK; }
 
-,          { return COMMA_TOK;}
 \(         { return LPAREN; }
 \)         { return RPAREN; }
 

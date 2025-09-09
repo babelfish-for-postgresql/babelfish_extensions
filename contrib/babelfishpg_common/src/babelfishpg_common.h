@@ -104,6 +104,4 @@ typedef struct common_utility_plugin
 	Timestamp	(*roundoff_datetime) (Timestamp timestamp);
 	void		(*UpdateToNextDayHelper) (struct pg_tm *tm);
 	void 		(*handle_type_and_collation) (struct Node *node, Oid typid, Oid collationid);
-	Datum       (*bytea_from_geometry) (PG_FUNCTION_ARGS);
-	Datum       (*bytea_from_geography) (PG_FUNCTION_ARGS);
 } common_utility_plugin;

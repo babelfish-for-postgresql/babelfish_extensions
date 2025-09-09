@@ -3958,7 +3958,6 @@ geospatial_func_arg
 geospatial_static_method
     : STGEOMFROMTEXT
     | STPOINTFROMTEXT
-    | STLINEFROMTEXT
     | POINT
     ;
 
@@ -5084,7 +5083,6 @@ keyword
     | STISCLOSED
     | STISEMPTY
     | STISVALID
-    | STLINEFROMTEXT
     | STOP
     | STOPAT
     | STOPATMARK
