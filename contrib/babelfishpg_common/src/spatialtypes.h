@@ -6,7 +6,8 @@
  *-------------------------------------------------------------------------
  */
 
-#ifdef SPATIALTYPES_H
+#ifndef SPATIALTYPES_H
+#define SPATIALTYPES_H
 
 #include "postgres.h"
 #include "fmgr.h"
