@@ -620,6 +620,3 @@ ignore#!#babel_726-before-16_10-or-17_6-vu-cleanup
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-prepare
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-verify
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-cleanup
-ignore#!#BABEL-5809-before-17_7-or-16_11-ascii-vu-cleanup
-ignore#!#BABEL-5809-before-17_7-or-16_11-ascii-vu-prepare
-ignore#!#BABEL-5809-before-17_7-or-16_11-ascii-vu-verify

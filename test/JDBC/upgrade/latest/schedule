@@ -646,4 +646,4 @@ babel_numeric_smallmoney_oper
 datetime_roundoff
 babel_assign_nchar
 alter-function-with-weak-view
-BABEL-5809-ascii
+ascii_function_tests

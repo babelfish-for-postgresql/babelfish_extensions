@@ -1,0 +1,42 @@
+-- Drop Views
+DROP VIEW ascii_function_v_type_comparison;
+GO
+
+DROP VIEW ascii_function_v_empty_analysis;
+GO
+
+-- Drop Procedures
+DROP PROCEDURE ascii_function_analyze_string;
+GO
+
+DROP PROCEDURE ascii_function_validate_conversion;
+GO
+
+-- Drop Functions
+DROP FUNCTION ascii_function_analyze_pattern;
+GO
+
+DROP FUNCTION ascii_function_compare_types;
+GO
+
+-- Drop Tables
+DROP TABLE ascii_function_binary_test;
+GO
+
+DROP TABLE ascii_function_empty_test;
+GO
+
+DROP TABLE ascii_function_char_range;
+GO
+
+DROP TABLE ascii_function_conversion_test;
+GO
+
+DROP TABLE ascii_function_negative_test;
+GO
+
+DROP TABLE ascii_function_special_types;
+GO
+
+DROP TABLE ascii_function_null_types;
+GO
