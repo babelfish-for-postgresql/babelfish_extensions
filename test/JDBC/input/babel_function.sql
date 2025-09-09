@@ -190,13 +190,13 @@ SELECT ISDATE(NULL);
 GO
 
 -- Invalid input with in appropriate delimiters
-select isdate(/10/20/12);
+select isdate('/10/20/12');
 go
-select isdate(10/20/12/);
+select isdate('10/20/12/');
 go
-select isdate(10//20/12);
+select isdate('10//20/12');
 go
-select isdate(10@20@12);
+select isdate('10@20@12');
 go
 -- Invalid date input
 select ISDATE('1752-12-31')

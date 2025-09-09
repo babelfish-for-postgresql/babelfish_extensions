@@ -1712,7 +1712,7 @@ begin
         return 0;
     END IF;
 
-    if length(v::sys.varchar) = 0 then
+    if pg_catalog.length(v::sys.varchar) = 0 then
         return 0;
     end if;
 
@@ -1738,7 +1738,7 @@ as
 $body$
 begin
 
-    if length(v::sys.varchar) = 0 then
+    if pg_catalog.length(v) = 0 then
         return 0;
     end if;
 
