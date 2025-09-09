@@ -125,6 +125,9 @@ GO
 CREATE VIEW test_schema.test_view as select * from test_schema.base_table
 GO
 
+CREATE VIEW test_schema.colacl_view1 as select 1 as a, 2 as b, 3 as c;
+GO
+
 -- Verify view_owner can select from view
 SELECT * FROM test_schema.test_view;
 GO
@@ -132,6 +135,14 @@ GO
 int#!#varchar#!#varchar
 1#!#John#!#john@test.com
 2#!#Jane#!#jane@test.com
+~~END~~
+
+
+SELECT * FROM test_schema.colacl_view1;
+GO
+~~START~~
+int#!#int#!#int
+1#!#2#!#3
 ~~END~~
 
 
@@ -148,12 +159,22 @@ GO
 ~~ERROR (Message: permission denied for view test_view)~~
 
 
+SELECT * FROM test_schema.colacl_view1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view colacl_view1)~~
+
+
 -- tsql user=view_owner_login password=12345678
 -- Grant permission to view_user
 USE view_perm_db;
 GO
 
 GRANT SELECT ON test_schema.test_view TO view_user;
+GO
+
+GRANT SELECT ON test_schema.colacl_view1(a, c) TO view_user;
 GO
 
 -- tsql user=view_user_login password=12345678
@@ -171,6 +192,37 @@ int#!#varchar#!#varchar
 ~~END~~
 
 
+SELECT a FROM test_schema.colacl_view1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+--This should fail
+SELECT b FROM test_schema.colacl_view1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view colacl_view1)~~
+
+
+SELECT c FROM test_schema.colacl_view1;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT * FROM test_schema.colacl_view1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view colacl_view1)~~
+
+
 -- tsql user=view_owner_login password=12345678
 -- Alter view as view_owner
 USE view_perm_db;
@@ -181,6 +233,9 @@ AS
     SELECT id, name FROM test_schema.base_table;
 GO
 
+ALTER VIEW test_schema.colacl_view1 AS SELECT 2 AS a;
+GO
+
 -- Verify view_owner can still access
 SELECT * FROM test_schema.test_view;
 GO
@@ -188,6 +243,14 @@ GO
 int#!#varchar
 1#!#John
 2#!#Jane
+~~END~~
+
+
+SELECT a FROM test_schema.colacl_view1;
+GO
+~~START~~
+int
+2
 ~~END~~
 
 
@@ -203,6 +266,14 @@ GO
 int#!#varchar
 1#!#John
 2#!#Jane
+~~END~~
+
+
+SELECT a FROM test_schema.colacl_view1;
+GO
+~~START~~
+int
+2
 ~~END~~
 
 
@@ -280,6 +351,9 @@ USE view_perm_db;
 GO
 
 DROP VIEW test_schema.test_view;
+GO
+
+DROP VIEW test_schema.colacl_view1;
 GO
 
 DROP TABLE test_schema.base_table;
