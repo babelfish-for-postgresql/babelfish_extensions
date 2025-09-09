@@ -31,7 +31,7 @@
  * 	if relid <= INT32_MAX
  * 		add relid to temp_relids
  * 	else
- * 		add (relid - INT32_MAX) to temp_relids_beyond_in32
+ * 		add (relid - INT32_MAX - 1) to temp_relids_beyond_in32
  */
 static Bitmapset   *temp_relids = NULL;
 static Bitmapset   *temp_relids_beyond_in32 = NULL;
@@ -120,7 +120,7 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 				if (rte->relid <= (Oid) INT32_MAX)
 					temp_relids_local = bms_add_member(temp_relids_local, rte->relid);
 				else
-					temp_relids_beyond_int32_local = bms_add_member(temp_relids_beyond_int32_local, (rte->relid - (Oid) INT32_MAX));
+					temp_relids_beyond_int32_local = bms_add_member(temp_relids_beyond_int32_local, (rte->relid - (Oid) INT32_MAX - 1U));
 			}
 		}
 		temp_relids_str = bmsToString(temp_relids_local);
@@ -210,6 +210,6 @@ bbf_ExecCheckOneRelPerms(RTEPermissionInfo *perminfo)
 	if (perminfo->relid <= (Oid) INT32_MAX)
 		return bms_is_member(perminfo->relid, temp_relids);
 	else
-		return bms_is_member((perminfo->relid - (Oid) INT32_MAX), temp_relids_beyond_in32);
+		return bms_is_member((perminfo->relid - (Oid) INT32_MAX - 1U), temp_relids_beyond_in32);
 }
 
