@@ -626,3 +626,6 @@ ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-cleanup
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-prepare
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-verify
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-cleanup
+ignore#!#babel_datetimeoffset_before_16_10-or-17_6-vu-prepare
+ignore#!#babel_datetimeoffset_before_16_10-or-17_6-vu-verify
+ignore#!#babel_datetimeoffset_before_16_10-or-17_6-vu-cleanup
