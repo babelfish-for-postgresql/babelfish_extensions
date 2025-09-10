@@ -286,6 +286,34 @@ WHERE CAST(dt_value AS VARCHAR(30)) LIKE '%.007';
 GO
 
 -- BASIC UPGRADE TESTING
+SELECT 
+    'SELECT COUNT(*) as affected_rows, ''' + t.TABLE_NAME + ''' as table_name, ''' + c.COLUMN_NAME + ''' as column_name ' +
+    'FROM ' + t.TABLE_SCHEMA + '.' + t.TABLE_NAME + ' ' +
+    'WHERE ' + c.COLUMN_NAME + ' <> CAST(CAST(' + c.COLUMN_NAME + ' AS VARCHAR) AS DATETIME);'
+FROM 
+    INFORMATION_SCHEMA.TABLES t
+JOIN 
+    INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME
+WHERE 
+    c.DATA_TYPE = 'datetime'
+    AND t.TABLE_TYPE = 'BASE TABLE';
+GO
+
+SELECT 
+    'SELECT TOP 10 ' + c.COLUMN_NAME + ' as original_value, ' +
+    'CAST(CAST(' + c.COLUMN_NAME + ' AS VARCHAR) AS DATETIME) as new_value ' +
+    'FROM ' + t.TABLE_SCHEMA + '.' + t.TABLE_NAME + ' ' +
+    'WHERE ' + c.COLUMN_NAME + ' <> CAST(CAST(' + c.COLUMN_NAME + ' AS VARCHAR) AS DATETIME);'
+FROM 
+    INFORMATION_SCHEMA.TABLES t
+JOIN 
+    INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME
+WHERE 
+    c.DATA_TYPE = 'datetime'
+    AND t.TABLE_TYPE = 'BASE TABLE';
+GO
+
+
 select * from datetime_test where date_time1 = '2014-03-12 12:00:34.467'
 GO
 
