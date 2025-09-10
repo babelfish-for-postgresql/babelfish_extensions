@@ -1,7 +1,4 @@
 -- Drop Views
-DROP VIEW ascii_function_v_type_comparison;
-GO
-
 DROP VIEW ascii_function_v_empty_analysis;
 GO
 

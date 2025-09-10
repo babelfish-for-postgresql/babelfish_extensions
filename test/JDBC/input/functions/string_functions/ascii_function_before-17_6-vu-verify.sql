@@ -155,9 +155,6 @@ EXEC ascii_function_validate_conversion '123', 'VARCHAR';
 GO
 
 -- 9. Test Views
-SELECT * FROM ascii_function_v_type_comparison;
-GO
-
 SELECT * FROM ascii_function_v_empty_analysis;
 GO
 

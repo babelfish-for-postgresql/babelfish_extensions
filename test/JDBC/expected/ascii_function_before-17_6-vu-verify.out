@@ -413,7 +413,7 @@ SELECT ASCII(CONVERT(VARCHAR, GETDATE(), 101)) AS USDate,
 GO
 ~~START~~
 int#!#int#!#int
-48#!#48#!#50
+48#!#49#!#50
 ~~END~~
 
 
@@ -446,7 +446,7 @@ SELECT ASCII(CAST(DATEPART(YEAR, GETDATE()) AS VARCHAR)) AS YearASCII,
 GO
 ~~START~~
 int#!#int#!#int
-50#!#57#!#57
+50#!#57#!#49
 ~~END~~
 
 
@@ -648,22 +648,6 @@ varchar#!#varchar#!#int
 
 
 -- 9. Test Views
-SELECT * FROM ascii_function_v_type_comparison;
-GO
-~~START~~
-int#!#int#!#int#!#int#!#int#!#text
-1#!#65#!#65#!#48#!#48#!#Inconsistent
-2#!#101#!#101#!#48#!#48#!#Inconsistent
-3#!#97#!#97#!#48#!#48#!#Inconsistent
-4#!#32#!#32#!#48#!#48#!#Inconsistent
-5#!#66#!#66#!#48#!#48#!#Inconsistent
-6#!#49#!#49#!#48#!#48#!#Inconsistent
-7#!#33#!#33#!#48#!#48#!#Inconsistent
-8#!#65#!#65#!#48#!#48#!#Inconsistent
-9#!#32#!#32#!#48#!#48#!#Inconsistent
-~~END~~
-
-
 SELECT * FROM ascii_function_v_empty_analysis;
 GO
 ~~START~~

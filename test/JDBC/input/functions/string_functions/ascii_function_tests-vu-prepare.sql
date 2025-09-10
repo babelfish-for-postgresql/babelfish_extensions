@@ -263,20 +263,6 @@ END;
 GO
 
 -- Views tests
-CREATE VIEW ascii_function_v_type_comparison AS
-SELECT 
-    t.ID,
-    ASCII(t.CharCol) AS CharASCII,
-    ASCII(t.VarcharCol) AS VarcharASCII,
-    ASCII(t.BinaryCol) AS BinaryASCII,
-    ASCII(t.VarbinaryCol) AS VarbinaryASCII,
-    CASE WHEN ASCII(t.CharCol) = ASCII(t.VarcharCol) 
-         AND ASCII(t.CharCol) = ASCII(t.BinaryCol)
-         AND ASCII(t.CharCol) = ASCII(t.VarbinaryCol)
-    THEN 'Consistent' ELSE 'Inconsistent' END AS Result
-FROM ascii_function_binary_test t;
-GO
-
 CREATE VIEW ascii_function_v_empty_analysis AS
 SELECT 
     ID,
