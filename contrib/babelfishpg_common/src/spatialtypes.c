@@ -970,7 +970,8 @@ charTogeog(PG_FUNCTION_ARGS)
 static void 
 validate_input_length(const bytea *input, const char *type_name) 
 {
-    if (VARSIZE_ANY_EXHDR(input) < MIN_GEOMETRY_LENGTH) {
+    if (VARSIZE_ANY_EXHDR(input) < MIN_GEOMETRY_LENGTH) 
+    {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
                  errmsg("Invalid %s", type_name)));
@@ -1190,7 +1191,8 @@ validate_geography_latitude_bytes(GeometryData *geom_data)
         int offset = geom_data->has_npoints_data ? HEADER_SIZE + NPOINTS_SIZE : HEADER_SIZE;
         
         /* Check each point in the linestring */
-        for (i = 0; i < point_count; i++) {
+        for (i = 0; i < point_count; i++) 
+        {
             /* Extract latitude value for this point */
             memcpy(&lat_bits, geom_data->input_data + offset + (i * point_size), sizeof(uint64_t));
             lat_bits = le64toh(lat_bits);  /* Convert from little-endian to host byte order */
@@ -1200,11 +1202,12 @@ validate_geography_latitude_bytes(GeometryData *geom_data)
             if (!is_valid_geography_srid(geom_data->srid) || 
                 geom_data->isNaN || 
                 lat < -90.0 || 
-                lat > 90.0) {
-                ereport(ERROR,
-                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                        errmsg("Error converting data type varbinary to geography.")));
-            }
+                lat > 90.0) 
+                {
+                    ereport(ERROR,
+                            (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("Error converting data type varbinary to geography.")));
+                }
         }
     }
     else /* Point or other geometry types */
@@ -1306,7 +1309,8 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
     int new_data_size;
     
     /* Update dimension information in header */
-    if (geom_data->dimension_flag <= MAX_DIMENSION_FLAG) {
+    if (geom_data->dimension_flag <= MAX_DIMENSION_FLAG) 
+    {
         postgis_header[HEADER_DIMENSION_POS] = DIMENSION_HEADERS[geom_data->dimension_flag];
     }
     
@@ -1339,7 +1343,7 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
     {
         handle_point_coordinates(geom_data, result_data);
     }
-    
+
     return result;
 }
 
@@ -1559,7 +1563,6 @@ call_postgis_func(void *func, Datum arg)
     return ((PGFunction)func)(fcinfo);
 }
 
-/* Step 1: Initialize GeoDataInfo structure from PostGIS datum */
 /* Step 1: Initialize geometry data structure from PostGIS datum */
 static GeoDataInfo* 
 initialize_geom_data(Datum input_datum) 

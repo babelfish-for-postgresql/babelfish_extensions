@@ -856,7 +856,6 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
 	RETURNS integer
 	AS $$ 
 	BEGIN
-		-- Check if the geography is valid
 		IF STIsValid(geom) = 0 THEN
 			RAISE EXCEPTION 'The geography instance is not valid';
 		-- Check if the geography is empty
