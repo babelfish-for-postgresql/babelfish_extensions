@@ -647,3 +647,4 @@ datetime_roundoff
 babel_assign_nchar
 alter-function-with-weak-view
 babel_datetimeoffset
+alter-table-null-notnull

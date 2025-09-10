@@ -592,3 +592,4 @@ datetime_roundoff-before-16_10-or-17_6
 babel_assign_nchar
 alter-function-with-weak-view
 babel_datetimeoffset_before_16_10-or-17_6
+alter-table-null-notnull
