@@ -4,8 +4,9 @@
 #include "nodes/execnodes.h"
 
 /* Key for sharing additional context for Babelfish */
-#define BABELFISH_PARALLEL_KEY_FIXED		UINT64CONST(0xBBF0000000000001)
-#define BABELFISH_PARALLEL_KEY_TEMP_RELIDS	UINT64CONST(0xBBF0000000000002)
+#define BABELFISH_PARALLEL_KEY_FIXED					UINT64CONST(0xBBF0000000000001)
+#define BABELFISH_PARALLEL_KEY_TEMP_RELIDS				UINT64CONST(0xBBF0000000000002)
+#define BABELFISH_PARALLEL_KEY_TEMP_RELIDS_BEYOND_INT32	UINT64CONST(0xBBF0000000000003)
 
 extern ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook;
 extern ParallelQueryMain_hook_type prev_ParallelQueryMain_hook;
