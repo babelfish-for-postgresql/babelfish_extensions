@@ -729,7 +729,7 @@ int#!#datetime#!#datetime
 SELECT * FROM master_dbo.datetime_test_new;
 GO
 ~~START~~
-int4#!#"sys"."datetime"#!#"sys"."datetime"
+serial#!#"sys"."datetime"#!#"sys"."datetime"
 1#!#2014-03-12 12:00:34.466#!#2010-03-04 12:55:41.149
 2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
 3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
