@@ -42,16 +42,8 @@ go
 
 alter table cities alter column region varchar(50) not null
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'NOT NULL in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
 
 alter table cities alter column region varchar(50) null
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'NULL in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
 
 
