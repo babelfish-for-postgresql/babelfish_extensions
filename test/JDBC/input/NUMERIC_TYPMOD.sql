@@ -1216,9 +1216,6 @@ go
 
 
 
--- TODO FIX: SQRT function returns float in TSQL. while
--- selecting commontype between flaot ansd numeric,
--- is selected. where as in BBF SQRT function returns numeric.
 -- Test Case: T_SubPlan with different numeric operations
 SELECT CASE 
     WHEN (SELECT POWER(CAST(2 AS NUMERIC(5,2)), 3)) > 7
