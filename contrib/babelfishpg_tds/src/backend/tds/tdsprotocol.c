@@ -107,7 +107,7 @@ TdsDiscardAll()
 	ResetPlanCache();
 
 	/*
-	 * ResetTempTableNamespace might involve TOAST table access, so ensure we
+	 * ResetTempTableNamespace might involve TOAST table access,
 	 * so ensure we to have a valid snapshot.
 	 */
 	PushActiveSnapshot(GetTransactionSnapshot());
