@@ -1,0 +1,175 @@
+CREATE TABLE test_datatypes (
+    num_col INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL
+);
+GO
+
+INSERT INTO test_datatypes VALUES (123, 456.78);
+GO
+
+CREATE TABLE test_strings (
+    short_text VARCHAR(50) NOT NULL,
+    fixed_text CHAR(10) NOT NULL,
+    text_col TEXT NULL
+);
+GO
+
+INSERT INTO test_strings VALUES ('Short text', 'Fixed     ', 'Long text content');
+GO
+
+CREATE TABLE test_datetime (
+    simple_date DATE NULL,
+    timestamp_col DATETIME NOT NULL,
+    precise_time TIME(0) NULL
+);
+GO
+
+INSERT INTO test_datetime VALUES ('2024-01-01', '2024-01-01 12:34:56', '12:34:56');
+GO
+
+CREATE TABLE test_complex (
+    json_col NVARCHAR(MAX) NULL,
+    xml_data XML NULL,
+    binary_col VARBINARY(100) NOT NULL
+);
+
+INSERT INTO test_complex VALUES ('{"key": "value"}', '<root><child>value</child></root>', 0x123456);
+GO
+
+CREATE TABLE test_precision (
+    decimal_col DECIMAL(10,2) NOT NULL,
+    numeric_col NUMERIC(8,4) NULL,
+    float_col FLOAT NULL
+);
+GO
+
+INSERT INTO test_precision VALUES (1234567.89, 1234.5678, 123.456);
+GO
+
+CREATE TABLE test_computed (
+    price DECIMAL(10,2),
+    quantity INT,
+    total AS (price * quantity)
+);
+
+INSERT INTO test_computed (price, quantity) VALUES (10.99, 5);
+GO
+
+CREATE TABLE unique_test ( id INT, email VARCHAR(100) NOT NULL UNIQUE );
+GO
+
+CREATE TABLE employee_records (
+    id INT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    department VARCHAR(50) NULL,
+    salary DECIMAL(10,2) NOT NULL,
+    email VARCHAR(100) NULL
+);
+GO
+
+INSERT INTO employee_records VALUES
+(1, 'John Doe', 'IT', 50000.00, 'john@email.com'),
+(2, 'Jane Smith', NULL, 60000.00, NULL),
+(3, 'Mike Ross', 'HR', 55000.00, 'mike@email.com');
+GO
+
+CREATE TABLE cust_orders (
+    order_id INT PRIMARY KEY,
+    status VARCHAR(20) NOT NULL,
+    notes VARCHAR(200) NULL
+);
+GO
+
+INSERT INTO cust_orders VALUES
+(1, 'Pending', 'Urgent order'),
+(2, 'Completed', NULL),
+(3, 'Cancelled', 'Customer request');
+GO
+
+CREATE TABLE redundant_test (
+    id INT PRIMARY KEY,
+    col1 VARCHAR(50) NULL,
+    col2 VARCHAR(50) NOT NULL
+);
+GO
+
+INSERT INTO redundant_test VALUES
+(1, 'Test', 'Required'),
+(2, NULL, 'Required2');
+GO
+
+CREATE TABLE employee_projects (
+    emp_id INT,
+    project_name VARCHAR(50) NOT NULL,
+    assignment_date DATE NULL,
+    status VARCHAR(20) NULL
+);
+GO
+
+INSERT INTO employee_projects VALUES
+(1, 'Project A', '2024-01-01', 'Active'),
+(2, 'Project B', NULL, 'Pending'),
+(3, 'Project C', '2024-02-01', NULL);
+GO
+
+CREATE TABLE financial_records (
+    transaction_id INT PRIMARY KEY,
+    amount DECIMAL(10,2) NOT NULL,
+    description VARCHAR(100) NULL,
+    category VARCHAR(50) NULL
+);
+GO
+
+INSERT INTO financial_records VALUES
+(1, 1000.00, 'Initial deposit', NULL),
+(2, -500.00, NULL, 'Withdrawal'),
+(3, 750.00, 'Transfer', 'Deposit');
+GO
+
+CREATE TABLE products (
+    id INT,
+    name VARCHAR(50),
+    price DECIMAL(10,2)
+);
+GO
+
+CREATE VIEW product_summary AS
+SELECT id, name, price FROM products;
+GO
+
+CREATE VIEW price_list AS
+SELECT id, price FROM products WHERE price > 0;
+GO
+
+INSERT INTO products VALUES (1, 'Test', 10.99);
+GO
+
+CREATE TABLE customers (
+    cust_id INT,
+    name VARCHAR(50)
+);
+GO
+
+CREATE TABLE customer_orders (
+    order_id INT,
+    cust_id INT,
+    order_date DATE
+);
+GO
+
+-- View with joins
+CREATE VIEW customer_order_view AS
+SELECT 
+    c.cust_id,
+    c.name,
+    co.order_id,
+    co.order_date
+FROM customers c
+JOIN customer_orders co ON c.cust_id = co.cust_id;
+GO
+
+INSERT INTO customers VALUES (1, 'John'), (2, 'Jane');
+GO
+
+INSERT INTO customer_orders VALUES (1, 1, '2024-01-01'), (2, 2, '2024-01-02');
+GO
