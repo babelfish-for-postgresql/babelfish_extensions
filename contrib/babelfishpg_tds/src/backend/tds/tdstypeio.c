@@ -1433,7 +1433,6 @@ TdsTypeSpatialToDatum(StringInfo buf, bool is_geography)
 	int     nbytes;
 	LOCAL_FCINFO(fcinfo, 1);
 
-
 	/* Convert StringInfo buffer to bytea */
 	nbytes = buf->len - buf->cursor;
 	input_bytea = (bytea *) palloc(VARHDRSZ + nbytes);
@@ -1451,6 +1450,9 @@ TdsTypeSpatialToDatum(StringInfo buf, bool is_geography)
 		result = pltsql_plugin_handler_ptr->sql_geography_from_bytea(fcinfo);
 	else
 		result = pltsql_plugin_handler_ptr->sql_geometry_from_bytea(fcinfo);
+
+	/* Free the temporary bytea */
+	pfree(input_bytea);
 
 	return result;
 }
