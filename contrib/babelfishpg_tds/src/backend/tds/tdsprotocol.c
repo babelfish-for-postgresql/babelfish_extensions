@@ -105,7 +105,15 @@ TdsDiscardAll()
 	Async_UnlistenAll();
 	LockReleaseAll(USER_LOCKMETHOD, true);
 	ResetPlanCache();
+
+	/*
+	 * ResetTempTableNamespace might involve TOAST table access, so ensure we
+	 * so ensure we to have a valid snapshot.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
 	ResetTempTableNamespace();
+	PopActiveSnapshot();
+	
 	ResetSequenceCaches();
 }
 
