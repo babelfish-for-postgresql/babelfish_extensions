@@ -1,0 +1,57 @@
+
+-- Cleanup script for datetime storage rounding version upgrade tests
+SELECT 'CLEANUP PHASE - Removing test objects' as cleanup_phase;
+GO
+~~START~~
+varchar
+CLEANUP PHASE - Removing test objects
+~~END~~
+
+
+-- Drop triggers first (to avoid dependency issues)
+DROP TRIGGER tr_datetime_storage_test_audit;
+GO
+
+-- Drop views
+DROP VIEW datetime_view;
+GO
+
+-- Drop functions
+DROP FUNCTION get_rounded_datetime;
+GO
+
+-- Drop stored procedures
+DROP PROCEDURE test_datetime_parameter;
+GO
+
+-- Drop tables (in reverse dependency order)
+DROP TABLE datetime_audit_log;
+GO
+
+DROP TABLE datetime_index_test;
+GO
+DROP TABLE datetime_aggregation_test;
+GO
+
+DROP TABLE datetime_comparison_test;
+GO
+
+DROP TABLE datetime_storage_test;
+GO
+
+DROP TABLE datetime_test_new;
+GO
+
+DROP TABLE datetime_test;
+GO
+
+DROP TABLE datetime_unique_index;
+GO
+
+SELECT 'CLEANUP COMPLETE - All test objects removed' as cleanup_status;
+GO
+~~START~~
+varchar
+CLEANUP COMPLETE - All test objects removed
+~~END~~
+

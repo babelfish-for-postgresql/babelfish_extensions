@@ -1234,6 +1234,34 @@ is_tsql_text_ntext_or_image_datatype(Oid oid)
 		(*common_utility_plugin_ptr->is_tsql_image_datatype) (oid);
 }
 
+bool
+is_xml_value_typearg_valid(Oid typeid)
+{
+	Oid			 base_typeid = InvalidOid;
+
+	base_typeid = get_immediate_base_type_of_UDT_internal(typeid);
+	if (OidIsValid(base_typeid))
+		typeid = base_typeid;
+
+	return (typeid == XMLOID
+			|| (*common_utility_plugin_ptr->is_tsql_image_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_text_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_geography_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_vector_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_sparsevec_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_halfvec_datatype) (typeid));
+}
+
+bool
+ is_tsql_geometry_or_geography_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_geometry_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_geography_datatype) (oid);
+}
+
 /*
  * Try to acquire a lock with no wait
  */
