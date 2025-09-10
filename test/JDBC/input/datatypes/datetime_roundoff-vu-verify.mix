@@ -286,6 +286,84 @@ WHERE CAST(dt_value AS VARCHAR(30)) LIKE '%.007';
 GO
 
 -- BASIC UPGRADE TESTING
+-- psql
+DO $$
+DECLARE
+    v_sql text;
+BEGIN
+    SELECT string_agg(
+        format(
+            'SELECT %L AS table_name, %L AS column_name, %I AS original_value, 
+             CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
+             FROM %I.%I 
+             WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+            t.table_name,
+            c.column_name,
+            c.column_name,
+            c.column_name,
+            t.table_schema,
+            t.table_name,
+            c.column_name,
+            c.column_name
+        ),
+        ' UNION ALL '
+    )
+    INTO v_sql
+    FROM information_schema.tables t
+    JOIN information_schema.columns c 
+        ON t.table_schema = c.table_schema 
+        AND t.table_name = c.table_name
+    WHERE c.data_type = 'datetime'
+        AND t.table_type = 'BASE TABLE';
+
+    IF v_sql IS NULL THEN
+        RAISE NOTICE 'No datetime columns found in the database.';
+    ELSE
+        EXECUTE v_sql;
+    END IF;
+END;
+$$;
+GO
+
+DO $$
+DECLARE
+    v_sql text;
+BEGIN
+    SELECT string_agg(
+        format(
+            'SELECT %L AS table_name, %L AS column_name, %I AS original_value, 
+             CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
+             FROM %I.%I 
+             WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+            t.table_name,
+            c.column_name,
+            c.column_name,
+            c.column_name,
+            t.table_schema,
+            t.table_name,
+            c.column_name,
+            c.column_name
+        ),
+        ' UNION ALL '
+    )
+    INTO v_sql
+    FROM information_schema.tables t
+    JOIN information_schema.columns c 
+        ON t.table_schema = c.table_schema 
+        AND t.table_name = c.table_name
+    WHERE c.data_type = 'sys.datetime'
+        AND t.table_type = 'BASE TABLE';
+
+    IF v_sql IS NULL THEN
+        RAISE NOTICE 'No datetime columns found in the database.';
+    ELSE
+        EXECUTE v_sql;
+    END IF;
+END;
+$$;
+GO
+
+-- tsql
 DECLARE @sql NVARCHAR(MAX) = '';
 
 SELECT @sql = @sql + 
