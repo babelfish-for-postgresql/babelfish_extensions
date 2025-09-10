@@ -2270,7 +2270,6 @@ extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varcha
 extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
 extern bool is_tsql_geometry_or_geography_datatype(Oid oid); /* sys.geometry / sys.geography */
 extern void downcase_truncate_split_object_name(char *four_part_object_name, char** server_name, char** db_name, char** schema_name, char** object_name);
-extern Oid get_rel_owner(Oid relid);
 extern bool is_xml_value_typearg_valid(Oid Oid);
 
 typedef struct
