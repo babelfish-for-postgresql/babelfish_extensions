@@ -43,6 +43,15 @@ END;
 $$
 LANGUAGE 'pltsql';
 
+CREATE OR REPLACE FUNCTION sys.sqrt(number PG_CATALOG.NUMERIC)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN PG_CATALOG.SQRT(number::float8);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
