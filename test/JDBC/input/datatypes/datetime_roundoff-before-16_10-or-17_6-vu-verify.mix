@@ -362,6 +362,48 @@ END;
 $$;
 GO
 
+DO $$
+DECLARE
+    v_sql text;
+BEGIN
+    SELECT string_agg(
+        format(
+            'SELECT %L AS table_name, %L AS column_name, %I AS original_value, 
+             CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
+             FROM %I.%I 
+             WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+            c.relname,
+            a.attname,
+            a.attname,
+            a.attname,
+            n.nspname,
+            c.relname,
+            a.attname,
+            a.attname
+        ),
+        ' UNION ALL '
+    )
+    INTO v_sql
+    FROM pg_class c
+    JOIN pg_namespace n ON c.relnamespace = n.oid
+    JOIN pg_attribute a ON c.oid = a.attrelid
+    JOIN pg_type t ON a.atttypid = t.oid
+    WHERE c.relkind = 'r'  -- regular tables only
+        AND NOT a.attisdropped  -- exclude dropped columns
+        AND t.typname = 'datetime'  -- datetime type
+        AND n.nspname NOT LIKE 'pg_%'  -- exclude system schemas
+        AND n.nspname != 'information_schema'
+        AND a.attnum > 0;  -- exclude system columns
+
+    IF v_sql IS NULL THEN
+        RAISE NOTICE 'No datetime columns found in the database.';
+    ELSE
+        EXECUTE v_sql;
+    END IF;
+END;
+$$;
+GO
+
 -- tsql
 DECLARE @sql NVARCHAR(MAX) = '';
 
