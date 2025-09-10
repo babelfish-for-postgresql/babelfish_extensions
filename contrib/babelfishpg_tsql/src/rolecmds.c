@@ -3325,13 +3325,11 @@ void
 bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 {
 	Relation			sdepRel;
-	ObjectAddresses		*deleteobjs;
 	ScanKeyData 		key[2];
 	SysScanDesc 		scan;
 	HeapTuple			tuple;
 	bool				user_is_grantor = false;
 
-	deleteobjs = new_object_addresses();
 	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 
 	/* Doesn't work for pinned objects */
@@ -3439,19 +3437,5 @@ bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
 		remove_user_entry_from_bbf_schema_perms(roleid);
 
 	systable_endscan(scan);
-
-	/*
-	 * For stability of deletion-report ordering, sort the objects into
-	 * approximate reverse creation order before deletion.  (This might also
-	 * make the deletion go a bit faster, since there's less chance of having
-	 * to rearrange the objects due to dependencies.)
-	 */
-	sort_object_addresses(deleteobjs);
-
-	/* the dependency mechanism does the actual work */
-	performMultipleDeletions(deleteobjs, behavior, 0);
-
 	table_close(sdepRel, RowExclusiveLock);
-
-	free_object_addresses(deleteobjs);
 }
