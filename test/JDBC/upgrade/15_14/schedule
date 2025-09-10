@@ -591,4 +591,5 @@ babel_numeric_smallmoney_oper-before-16_10-or-17_6
 datetime_roundoff-before-16_10-or-17_6
 babel_assign_nchar
 alter-function-with-weak-view
+alter-table-null-notnull
 ascii_function_before-17_6

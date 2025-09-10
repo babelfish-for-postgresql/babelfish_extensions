@@ -1,0 +1,628 @@
+SELECT * FROM test_datatypes;
+GO
+~~START~~
+int#!#numeric
+123#!#456.78
+~~END~~
+
+
+ALTER TABLE test_datatypes ALTER COLUMN num_col BIGINT NULL;
+GO
+
+ALTER TABLE test_datatypes ALTER COLUMN price FLOAT NULL;
+GO
+
+INSERT INTO test_datatypes VALUES (NULL, NULL); -- [Test nullability]
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_datatypes VALUES (9223372036854775807, 123456.789); -- [Test larger numbers]
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_datatypes;
+GO
+~~START~~
+bigint#!#float
+123#!#456.78
+<NULL>#!#<NULL>
+9223372036854775807#!#123456.789
+~~END~~
+
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+SELECT * FROM test_strings;
+GO
+~~START~~
+varchar#!#char#!#text
+Short text#!#Fixed     #!#Long text content
+~~END~~
+
+
+ALTER TABLE test_strings ALTER COLUMN short_text VARCHAR(100) NULL;
+GO
+
+ALTER TABLE test_strings ALTER COLUMN fixed_text VARCHAR(20) NOT NULL;
+GO
+
+ALTER TABLE test_strings ALTER COLUMN text_col VARCHAR(MAX) NOT NULL;
+GO
+
+INSERT INTO test_strings VALUES (NULL, 'New Fixed Text', 'Required Text');
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO test_strings VALUES ('Text longer than 50 characters but less than 100 characters', 'Fixed', 'Long text');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT LEN(short_text), LEN(fixed_text) FROM test_strings;
+GO
+~~START~~
+int#!#int
+10#!#5
+<NULL>#!#14
+59#!#5
+~~END~~
+
+
+SELECT * FROM test_strings;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+Short text#!#Fixed     #!#Long text content
+<NULL>#!#New Fixed Text#!#Required Text
+Text longer than 50 characters but less than 100 characters#!#Fixed#!#Long text
+~~END~~
+
+
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+SELECT simple_date, timestamp_col, precise_time FROM test_datetime;
+GO
+~~START~~
+date#!#datetime#!#time
+2024-01-01#!#2024-01-01 12:34:56.0#!#12:34:56
+~~END~~
+
+
+ALTER TABLE test_datetime ALTER COLUMN simple_date DATETIME2 NULL;
+GO
+
+ALTER TABLE test_datetime ALTER COLUMN timestamp_col DATETIME2(7) NOT NULL;
+GO
+
+ALTER TABLE test_datetime ALTER COLUMN precise_time TIME(7) NULL;
+GO
+
+INSERT INTO test_datetime VALUES (NULL, '2024-01-01 12:34:56.1234567', NULL);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_datetime VALUES ('2024-01-01 12:34:56.1234567', '2024-01-01 12:34:56.1234567', '12:34:56.1234567');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT simple_date, timestamp_col, precise_time FROM test_datetime;
+GO
+~~START~~
+datetime2#!#datetime2#!#time
+2024-01-01 00:00:00.0000000#!#2024-01-01 12:34:56.0000000#!#12:34:56.0000000
+<NULL>#!#2024-01-01 12:34:56.1234570#!#<NULL>
+2024-01-01 12:34:56.1234570#!#2024-01-01 12:34:56.1234570#!#12:34:56.1234570
+~~END~~
+
+
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+SELECT * FROM test_complex;
+GO
+~~START~~
+nvarchar#!#xml#!#varbinary
+{"key": "value"}#!#<root><child>value</child></root>#!#123456
+~~END~~
+
+
+ALTER TABLE test_complex ALTER COLUMN json_col VARCHAR(MAX) NOT NULL;
+GO
+ALTER TABLE test_complex ALTER COLUMN binary_col VARBINARY(MAX) NULL;
+GO
+
+INSERT INTO test_complex VALUES ('{"complex": "json"}', '<root><test>xml</test></root>', NULL);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT DATALENGTH(json_col),binary_col FROM test_complex;
+GO
+~~START~~
+int#!#varbinary
+16#!#123456
+19#!#<NULL>
+~~END~~
+
+
+SELECT * FROM test_complex;
+GO
+~~START~~
+varchar#!#xml#!#varbinary
+{"key": "value"}#!#<root><child>value</child></root>#!#123456
+{"complex": "json"}#!#<root><test>xml</test></root>#!#<NULL>
+~~END~~
+
+
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+SELECT * FROM test_precision;
+GO
+~~START~~
+numeric#!#numeric#!#float
+1234567.89#!#1234.5678#!#123.456
+~~END~~
+
+
+ALTER TABLE test_precision ALTER COLUMN decimal_col DECIMAL(15,4) NULL;
+GO
+
+ALTER TABLE test_precision ALTER COLUMN numeric_col NUMERIC(12,6) NOT NULL;
+GO
+
+ALTER TABLE test_precision ALTER COLUMN float_col DECIMAL(10,2) NOT NULL;
+GO
+
+INSERT INTO test_precision VALUES (12345678901.2345, 123456.123456, 123.45);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_precision;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+1234567.8900#!#1234.567800#!#123.46
+12345678901.2345#!#123456.123456#!#123.45
+~~END~~
+
+
+------------------------------------------------------------------------------------------------
+-- Computed Column Change
+------------------------------------------------------------------------------------------------
+SELECT * FROM test_computed;
+GO
+~~START~~
+numeric#!#int#!#numeric
+10.99#!#5#!#54.95000000
+~~END~~
+
+
+ALTER TABLE test_computed ALTER COLUMN price DECIMAL(15,4);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot alter type of a column used by a generated column)~~
+
+
+INSERT INTO test_computed (price, quantity) VALUES (10.9999, 3);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_computed;
+GO
+~~START~~
+numeric#!#int#!#numeric
+10.99#!#5#!#54.95000000
+11.00#!#3#!#33.00000000
+~~END~~
+
+
+
+-------------------------------------------------------------------------------------------------
+-- Altering a NOT NULL Column to NULL When It's Part of a UNIQUE Constraint:
+-------------------------------------------------------------------------------------------------
+SELECT * FROM unique_test;
+GO
+~~START~~
+int#!#varchar
+~~END~~
+
+
+ALTER TABLE unique_test ALTER COLUMN email VARCHAR(100) NULL;
+GO
+
+INSERT INTO unique_test VALUES (1, NULL); -- [Should succeed]
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO unique_test VALUES (2, 'abcde');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO unique_test VALUES (3, 'abcde'); -- [Should fail due to UNIQUE constraint]
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "unique_test_email_key")~~
+
+
+SELECT * FROM unique_test;
+GO
+~~START~~
+int#!#varchar
+1#!#<NULL>
+2#!#abcde
+~~END~~
+
+
+
+-------------------------------------------------------------------------------------------------
+-- Pre-existing Data and Updates
+-------------------------------------------------------------------------------------------------
+SELECT * FROM employee_records;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric#!#varchar
+1#!#John Doe#!#IT#!#50000.00#!#john@email.com
+2#!#Jane Smith#!#<NULL>#!#60000.00#!#<NULL>
+3#!#Mike Ross#!#HR#!#55000.00#!#mike@email.com
+~~END~~
+
+
+UPDATE employee_records SET department = 'Unassigned' WHERE department IS NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE employee_records ALTER COLUMN department VARCHAR(50) NOT NULL;
+GO
+
+ALTER TABLE employee_records ALTER COLUMN email VARCHAR(100) NOT NULL; -- [should fail due to existing NULLs]
+GO
+~~ERROR (Code: 4901)~~
+
+~~ERROR (Message: column "email" of relation "employee_records" contains null values)~~
+
+
+SELECT * FROM employee_records;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric#!#varchar
+1#!#John Doe#!#IT#!#50000.00#!#john@email.com
+3#!#Mike Ross#!#HR#!#55000.00#!#mike@email.com
+2#!#Jane Smith#!#Unassigned#!#60000.00#!#<NULL>
+~~END~~
+
+
+
+-----------------------------------------------------------------------------------------------
+-- Testing Updates After Column Alteration
+-----------------------------------------------------------------------------------------------
+SELECT * FROM cust_orders;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#Pending#!#Urgent order
+2#!#Completed#!#<NULL>
+3#!#Cancelled#!#Customer request
+~~END~~
+
+
+ALTER TABLE cust_orders ALTER COLUMN status VARCHAR(20) NULL;
+GO
+
+UPDATE cust_orders SET status = NULL WHERE order_id = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE cust_orders SET notes = NULL WHERE order_id = 3;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM cust_orders;
+GO
+~~START~~
+int#!#varchar#!#varchar
+2#!#Completed#!#<NULL>
+1#!#<NULL>#!#Urgent order
+3#!#Cancelled#!#<NULL>
+~~END~~
+
+
+
+-----------------------------------------------------------------------------------------------
+-- Redundant NULL/NOT NULL Alterations
+-----------------------------------------------------------------------------------------------
+SELECT * FROM redundant_test;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#Test#!#Required
+2#!#<NULL>#!#Required2
+~~END~~
+
+
+ALTER TABLE redundant_test ALTER COLUMN col1 VARCHAR(50) NULL;
+GO
+
+ALTER TABLE redundant_test ALTER COLUMN col2 VARCHAR(50) NOT NULL;
+GO
+
+SELECT * FROM redundant_test;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#Test#!#Required
+2#!#<NULL>#!#Required2
+~~END~~
+
+
+INSERT INTO redundant_test VALUES (3, NULL, 'Required3');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO redundant_test VALUES (4, 'Test4', 'Required4');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM redundant_test;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#Test#!#Required
+2#!#<NULL>#!#Required2
+3#!#<NULL>#!#Required3
+4#!#Test4#!#Required4
+~~END~~
+
+
+-----------------------------------------------------------------------------------------------
+-- Insert, Update, Alter
+-----------------------------------------------------------------------------------------------
+SELECT * FROM employee_projects;
+GO
+~~START~~
+int#!#varchar#!#date#!#varchar
+1#!#Project A#!#2024-01-01#!#Active
+2#!#Project B#!#<NULL>#!#Pending
+3#!#Project C#!#2024-02-01#!#<NULL>
+~~END~~
+
+
+-- Update existing data to ensure no NULLs before altering
+UPDATE employee_projects SET status = 'Active' WHERE status IS NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- alter status to NOT NULL
+ALTER TABLE employee_projects ALTER COLUMN status VARCHAR(20) NOT NULL;
+GO
+
+-- Update after alteration
+UPDATE employee_projects SET status = 'Completed' WHERE emp_id = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+-- Update with NULL (should fail)
+UPDATE employee_projects SET status = NULL WHERE emp_id = 2;
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "status" of relation "employee_projects" violates not-null constraint)~~
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------
+-- Testing with Transaction Boundaries
+-----------------------------------------------------------------------------------------------
+BEGIN TRANSACTION;
+    UPDATE financial_records
+    SET description = 'No description provided' 
+    WHERE description IS NULL;
+    ALTER TABLE financial_records 
+    ALTER COLUMN description VARCHAR(100) NOT NULL;
+    SELECT * FROM financial_records;
+COMMIT TRANSACTION;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#numeric#!#varchar#!#varchar
+1#!#1000.00#!#Initial deposit#!#<NULL>
+3#!#750.00#!#Transfer#!#Deposit
+2#!#-500.00#!#No description provided#!#Withdrawal
+~~END~~
+
+
+-- Try updates after transaction [Should fail]
+UPDATE financial_records SET description = NULL WHERE transaction_id = 1; 
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "description" of relation "financial_records" violates not-null constraint)~~
+
+
+-------------------------------------------------------------------------------------------------
+-- Altering Columns in Views
+-------------------------------------------------------------------------------------------------
+SELECT * FROM product_summary;
+GO
+~~START~~
+int#!#varchar#!#numeric
+1#!#Test#!#10.99
+~~END~~
+
+
+--[ERROR] Attempting to alter base table column type used in view
+ALTER TABLE products ALTER COLUMN price DECIMAL(12,4) NOT NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot alter type of a column used by a view or rule)~~
+
+
+-- [SUCCESS] Altering to the same type but changing nullability
+ALTER TABLE products ALTER COLUMN price DECIMAL(10,2) NOT NULL;
+GO
+
+SELECT * FROM product_summary;
+GO
+~~START~~
+int#!#varchar#!#numeric
+1#!#Test#!#10.99
+~~END~~
+
+
+SELECT * FROM price_list;
+GO
+~~START~~
+int#!#numeric
+1#!#10.99
+~~END~~
+
+
+INSERT INTO product_summary VALUES (3, 'Test3', 15.99); -- [Should succeed]
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO product_summary VALUES (4, 'Test4', NULL); -- [Should fail due to NOT NULL constraint]
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "price" of relation "products" violates not-null constraint)~~
+
+
+CREATE TABLE products_weak (
+    id INT,
+    name VARCHAR(50),
+    price DECIMAL(10,2)
+);
+GO
+
+-- Weak binding view will also error if base table column type is changed
+EXEC sp_babelfish_configure 'babelfishpg_tsql.weak_view_binding', 'on';
+GO
+
+CREATE VIEW product_summary_weak AS
+SELECT id, name, price FROM products_weak;
+GO
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.weak_view_binding', 'off';
+GO
+
+--[ERROR] Attempting to alter base table column type used in weak view
+ALTER TABLE products_weak ALTER COLUMN price DECIMAL(12,4) NOT NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot alter type of a column used by a view or rule)~~
+
+
+-- [SUCCESS] Altering to the same type but changing nullability
+ALTER TABLE products_weak ALTER COLUMN price DECIMAL(10,2) NOT NULL;
+GO
+
+SELECT * FROM product_summary_weak;
+GO
+~~START~~
+int#!#varchar#!#numeric
+~~END~~
+
+
+INSERT INTO product_summary_weak VALUES (3, 'Test3', 15.99); -- [Should succeed]
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO product_summary_weak VALUES (4, 'Test4', NULL); -- [Should fail due to NOT NULL constraint]
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "price" of relation "products_weak" violates not-null constraint)~~
+
+
+-------------------------------------------------------------------------------------------------
+-- View with Joins
+-------------------------------------------------------------------------------------------------
+SELECT * FROM customer_order_view;
+GO
+~~START~~
+int#!#varchar#!#int#!#date
+1#!#John#!#1#!#2024-01-01
+2#!#Jane#!#2#!#2024-01-02
+~~END~~
+
+
+--[ERROR] Attempting to alter base table column typmod used in view
+ALTER TABLE customers ALTER COLUMN name VARCHAR(100) NOT NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot alter type of a column used by a view or rule)~~
+
+
+--[ERROR] Attempting to alter base table column type used in view
+ALTER TABLE customer_orders ALTER COLUMN order_date DATETIME2 NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot alter type of a column used by a view or rule)~~
+
+
+ALTER TABLE customers ALTER COLUMN name VARCHAR(50) NOT NULL;
+GO
+
+ALTER TABLE customer_orders ALTER COLUMN order_date DATE NOT NULL;
+GO
+
+--[Both inserts should fail anyways as views that don't select from single table cannot be updated automatically]
+INSERT INTO customer_order_view VALUES (3, 'New Customer', 103, NULL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot insert into view "customer_order_view")~~
+
+
+INSERT INTO customer_order_view VALUES (4, 'New Customer 2', 104, '2024-01-02');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot insert into view "customer_order_view")~~
+
+
+INSERT INTO customers VALUES (3, 'New Customer'), (4, 'New Customer 2'); -- [Should succeed]
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO customer_orders VALUES (103, 3, NULL), (104, 4, '2024-01-02'); -- [Should fail due to NOT NULL constraint]
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "order_date" of relation "customer_orders" violates not-null constraint)~~
+
+
+SELECT * FROM customer_order_view;
+GO
+~~START~~
+int#!#varchar#!#int#!#date
+1#!#John#!#1#!#2024-01-01
+2#!#Jane#!#2#!#2024-01-02
+~~END~~
+
