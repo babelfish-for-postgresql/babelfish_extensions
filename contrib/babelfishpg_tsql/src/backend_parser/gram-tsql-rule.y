@@ -4435,6 +4435,12 @@ tsql_VariableSetStmt:
 				}
 		;
 
+tsql_opt_null_constraint:
+	/* empty */		{ $$ = -1; }  /* No nullability specified */
+	| NULL_P 		{ $$ = 0; }
+	| NOT NULL_P 	{ $$ = 1; }
+;
+
 tsql_alter_table_cmd:
 			/* ALTER TABLE <name> ADD [CONSTRAINT <conname>] DEFAULT <expr> FOR <colname> */
 			ADD_P tsql_opt_constraint_name DEFAULT a_expr FOR ColId
@@ -4460,7 +4466,7 @@ tsql_alter_table_cmd:
 			 * ALTER TABLE <name> ALTER [COLUMN] <colname> [SET DATA] <tsql_typename>
 			 *		[ USING <expression> ]
 			 */
-			| ALTER opt_column ColId opt_set_data TSQL_Typename opt_collate_clause alter_using
+			| ALTER opt_column ColId opt_set_data TSQL_Typename opt_collate_clause tsql_opt_null_constraint alter_using
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					ColumnDef *def = makeNode(ColumnDef);
@@ -4471,13 +4477,18 @@ tsql_alter_table_cmd:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("This syntax is only valid when babelfishpg_tsql.sql_dialect is TSQL"),
 								 parser_errposition(@1)));
+					if ($7 != -1) 
+					{
+      					def->is_not_null = ($7 == 1);  // true for NOT NULL, false for NULL
+						def->storage_name = pstrdup(TSQL_EXPLICIT_NULLABILITY_MARKER);
+    				}
 					n->subtype = AT_AlterColumnType;
 					n->name = $3;
 					n->def = (Node *) def;
 					/* We only use these fields of the ColumnDef node */
 					def->typeName = $5;
 					def->collClause = (CollateClause *) $6;
-					def->raw_default = $7;
+					def->raw_default = $8;
 					def->location = @3;
 					$$ = (Node *)n;
 				}
