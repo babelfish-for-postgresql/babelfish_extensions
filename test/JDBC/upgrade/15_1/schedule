@@ -465,3 +465,4 @@ babel_numeric_smallmoney_oper-before-16_10-or-17_6
 babel_assign_nchar
 view_sec_setting_before_17_6-or-16_10
 alter-function-with-weak-view
+alter-table-null-notnull
