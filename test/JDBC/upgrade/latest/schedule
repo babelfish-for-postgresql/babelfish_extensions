@@ -648,3 +648,4 @@ datetime_roundoff
 babel_assign_nchar
 alter-function-with-weak-view
 alter-table-null-notnull
+babel_binary
