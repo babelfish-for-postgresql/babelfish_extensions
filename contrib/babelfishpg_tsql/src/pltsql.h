@@ -2034,11 +2034,6 @@ extern bool insert_bulk_check_constraints;
 	 (strlen(rolname) == 13 && strncmp(rolname, DB_DATAWRITER, 13) == 0) || \
 	 (strlen(rolname) == 11 && strncmp(rolname, DB_DDLADMIN, 11) == 0))
 
-/* Used to mark parsenode inside/outside view to apply ownership chaining logic */
-#define PNODE_UNMARKED		0
-#define PNODE_INSIDE_VIEW	1
-#define PNODE_OUTSIDE_VIEW	2
-
 /**********************************************************************
  * Function declarations
  **********************************************************************/

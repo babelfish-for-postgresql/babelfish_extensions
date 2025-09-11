@@ -97,6 +97,7 @@
 #include "session.h"
 #include "pltsql.h"
 #include "pltsql_partition.h"
+#include "pltsql_permissions.h"
 #include "pl_explain.h"
 #include "table_variable_mvcc.h"
 

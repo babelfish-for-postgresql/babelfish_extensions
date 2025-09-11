@@ -14,6 +14,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "pltsql.h"
+#include "pltsql_permissions.h"
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
