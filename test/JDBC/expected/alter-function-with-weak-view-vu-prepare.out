@@ -1,0 +1,197 @@
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    total_amount DECIMAL(18,2)
+)
+GO
+
+INSERT INTO orders (order_id, total_amount) VALUES 
+(1, 100.00),
+(2, 200.00),
+(3, 500.00),
+(4, 1000.00)
+GO
+~~ROW COUNT: 4~~
+
+
+CREATE FUNCTION dbo.calculate_tax(@amount DECIMAL(18,2))
+    RETURNS DECIMAL(18,2)
+    AS
+    BEGIN
+        RETURN @amount * 0.1;
+    END
+GO
+
+CREATE VIEW dbo.order_summary AS
+SELECT 
+    order_id,
+    total_amount,
+    dbo.calculate_tax(total_amount) AS tax_amount,
+    total_amount + dbo.calculate_tax(total_amount) AS total_with_tax
+FROM 
+    orders
+GO
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+-- Multiple Views Depending on Same Function
+CREATE FUNCTION dbo.calculate_discount(@amount DECIMAL(18,2))
+RETURNS DECIMAL(18,2)
+AS
+BEGIN
+    RETURN @amount * 0.05;
+END
+GO
+
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+CREATE FUNCTION dbo.calculate_base_price(@amount DECIMAL(18,2))
+RETURNS DECIMAL(18,2)
+AS
+BEGIN
+    RETURN @amount * 1.2;
+END
+GO
+
+CREATE FUNCTION dbo.calculate_final_price(@amount DECIMAL(18,2))
+RETURNS DECIMAL(18,2)
+AS
+BEGIN
+    RETURN dbo.calculate_base_price(@amount) + dbo.calculate_tax(@amount);
+END
+GO
+
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+CREATE FUNCTION dbo.calculate_regional_tax(
+    @amount DECIMAL(18,2),
+    @region_code VARCHAR(2)
+)
+RETURNS DECIMAL(18,2)
+AS
+BEGIN
+    RETURN CASE 
+        WHEN @region_code = 'NY' THEN @amount * 0.08
+        WHEN @region_code = 'CA' THEN @amount * 0.09
+        ELSE @amount * 0.05
+    END
+END
+GO
+
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+ALTER TABLE orders ADD transaction_date DATE
+GO
+ALTER TABLE orders ADD customer_type VARCHAR(10)
+GO
+ALTER TABLE orders ADD category VARCHAR(20)
+GO
+
+UPDATE orders SET 
+    transaction_date = DATEADD(day, order_id, '2024-01-01'),
+    customer_type = CASE WHEN order_id % 2 = 0 THEN 'Premium' ELSE 'Regular' END,
+    category = CASE 
+        WHEN order_id = 1 THEN 'Electronics'
+        WHEN order_id = 2 THEN 'Books'
+        WHEN order_id = 3 THEN 'Electronics'
+        ELSE 'Furniture'
+    END
+GO
+~~ROW COUNT: 4~~
+
+
+-- Function using aggregates
+CREATE FUNCTION dbo.get_category_average(@category VARCHAR(20))
+RETURNS DECIMAL(18,2)
+AS
+BEGIN
+    DECLARE @avg_amount DECIMAL(18,2)
+    SELECT @avg_amount = AVG(total_amount)
+    FROM orders
+    WHERE category = @category
+    RETURN ISNULL(@avg_amount, 0)
+END
+GO
+
+-- Function with error handling
+CREATE FUNCTION dbo.calculate_safe_discount(
+    @amount DECIMAL(18,2),
+    @discount_percent DECIMAL(5,2)
+)
+RETURNS DECIMAL(18,2)
+AS
+BEGIN
+    BEGIN TRY
+        IF @discount_percent > 50
+            THROW 50000, 'Discount cannot exceed 50%', 1
+        RETURN @amount * (@discount_percent / 100)
+    END TRY
+    BEGIN CATCH
+        RETURN 0
+    END CATCH
+END
+GO
+
+-- Function with string manipulations
+CREATE FUNCTION dbo.generate_order_code(
+    @order_id INT,
+    @category VARCHAR(20)
+)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+    RETURN UPPER(LEFT(@category, 3)) + '-' + 
+           RIGHT('0000' + CAST(@order_id AS VARCHAR(4)), 4)
+END
+GO
+
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+-- Inline Table-Valued Function
+CREATE FUNCTION dbo.get_orders_by_amount(@min_amount DECIMAL(18,2))
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        order_id,
+        total_amount,
+        customer_type,
+        category
+    FROM 
+        orders
+    WHERE 
+        total_amount >= @min_amount
+)
+GO
+
+
+-- Multi-Statement Table-Valued Function
+CREATE FUNCTION dbo.get_order_summary(@category VARCHAR(20))
+RETURNS @result TABLE 
+(
+    category VARCHAR(20),
+    total_orders INT,
+    total_amount DECIMAL(18,2),
+    avg_amount DECIMAL(18,2)
+)
+AS
+BEGIN
+    INSERT INTO @result
+    SELECT 
+        category,
+        COUNT(*) as total_orders,
+        SUM(total_amount) as total_amount,
+        AVG(total_amount) as avg_amount
+    FROM 
+        orders
+    WHERE 
+        category = @category
+    GROUP BY 
+        category
+    RETURN
+END
+GO

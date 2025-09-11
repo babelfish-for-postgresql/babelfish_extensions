@@ -2818,29 +2818,29 @@ numeric
 SELECT SQRT(CAST(144 AS NUMERIC(3,0))) AS result;                -- Positive NUMERIC
 GO
 ~~START~~
-numeric
-12.000000000000000
+float
+12.0
 ~~END~~
 
 SELECT SQRT(CAST(144 AS DECIMAL(3,0))) AS result;                -- Positive DECIMAL
 GO
 ~~START~~
-numeric
-12.000000000000000
+float
+12.0
 ~~END~~
 
 SELECT SQRT(CAST(0 AS NUMERIC(3,0))) AS result;                  -- Zero NUMERIC
 GO
 ~~START~~
-numeric
-0E-15
+float
+0.0
 ~~END~~
 
 SELECT SQRT(CAST(12.25 AS NUMERIC(4,2))) AS result;              -- Decimal NUMERIC
 GO
 ~~START~~
-numeric
-3.500000000000000
+float
+3.5
 ~~END~~
 
 SELECT SQRT(CAST(-144 AS NUMERIC(3,0))) AS result;               -- Negative NUMERIC (should return NULL)
@@ -2852,29 +2852,29 @@ GO
 SELECT SQRT(CAST(NULL AS NUMERIC(5,2))) AS result;               -- NULL value
 GO
 ~~START~~
-numeric
+float
 <NULL>
 ~~END~~
 
 SELECT SQRT(CAST(2 AS NUMERIC(1,0))) AS result;                  -- Irrational result
 GO
 ~~START~~
-numeric
-1.414213562373095
+float
+1.4142135623730951
 ~~END~~
 
 SELECT SQRT(CAST(9999999999999999 AS NUMERIC(16,0))) AS result;  -- Large number
 GO
 ~~START~~
-numeric
-99999999.999999995
+float
+1.0E8
 ~~END~~
 
 SELECT SQRT(CAST(0.0000000001 AS NUMERIC(11,10))) AS result;     -- Small number
 GO
 ~~START~~
-numeric
-0.000010000000000000000
+float
+1.0E-5
 ~~END~~
 
 

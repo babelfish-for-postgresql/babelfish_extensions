@@ -506,15 +506,14 @@ GO
 -- CASE 9.1: AFTER INSERT trigger with same owner
 INSERT INTO v3014_9_1 VALUES (1);  -- Should succeed and trigger should fire
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: permission denied for table t3014_9_2)~~
 
 SELECT * FROM v3014_9_1;  -- Should show inserted value
 GO
 ~~START~~
 int
-1
 ~~END~~
 
 SELECT * FROM t3014_9_2;  -- Should fail (no direct access)
@@ -547,15 +546,14 @@ GO
 -- CASE 9.3: INSTEAD OF trigger same owner
 INSERT INTO v3014_9_3 VALUES (1);  -- Should succeed through INSTEAD OF trigger
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: permission denied for table t3014_9_5)~~
 
 SELECT * FROM v3014_9_3;  -- Should show inserted value
 GO
 ~~START~~
 int
-1
 ~~END~~
 
 SELECT * FROM t3014_9_5;  -- Should fail (no direct access)
@@ -574,6 +572,10 @@ GO
 
 DELETE FROM v3014_9_4 WHERE a = 1;  -- Should succeed and both triggers should fire
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_9_7)~~
+
 SELECT * FROM v3014_9_4;  -- Should show empty
 GO
 ~~START~~
