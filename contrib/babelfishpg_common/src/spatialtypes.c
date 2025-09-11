@@ -1676,7 +1676,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             switch (geom_data->postgis_geom_type)
             {
                 case POINT_TYPE:
-                    geom_data->geom_type = POINT_XYZ;
+                    geom_data->geom_type = POINT_XYM;
                     geom_data->coord_size = COORD_SIZE_XYM;
                     break;
                 case LINE_TYPE:
