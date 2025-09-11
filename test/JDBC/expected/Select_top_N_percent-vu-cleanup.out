@@ -17,6 +17,18 @@ GO
 DROP TABLE IF EXISTS jira_babel_1358.test_percent_sales;
 GO
 
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_sales_second;
+GO
+
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_sales_third;
+GO
+
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_scores_second;
+GO
+
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_scores_third;
+GO
+
 DROP TABLE IF EXISTS jira_babel_1358.test_percent_sales_large;
 GO
 

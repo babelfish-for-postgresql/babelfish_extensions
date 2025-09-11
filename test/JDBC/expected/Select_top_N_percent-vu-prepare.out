@@ -49,6 +49,11 @@
  * | 41  | UPDATE TOP N PERCENT                             | Error Case          | Should throw error - not supported            |
  * | 42  | DELETE TOP N PERCENT                             | Error Case          | Should throw error - not supported            |
  * | 43  | INSERT TOP N PERCENT                             | Error Case          | Should throw error - not supported            |
+ * | 44  | INSERT with OUTPUT INTO and TOP N PERCENT        | OUTPUT INTO         | Tests INSERT TOP 100% with OUTPUT INTO        |
+ * | 45  | UPDATE with JOIN and TOP N PERCENT               | JOIN with DML       | Tests UPDATE TOP 100% with JOIN               |
+ * | 46  | UPDATE with OUTPUT INTO and TOP N PERCENT        | OUTPUT INTO         | Tests UPDATE TOP 100% with OUTPUT INTO        |
+ * | 47  | DELETE with JOIN and TOP N PERCENT               | JOIN with DML       | Tests DELETE TOP 100% with JOIN               |
+ * | 48  | DELETE with OUTPUT INTO and TOP N PERCENT        | OUTPUT INTO         | Tests DELETE TOP 100% with OUTPUT INTO        |
  */
 -- Create schema for TOP PERCENT testing
 CREATE SCHEMA jira_babel_1358;
@@ -57,14 +62,14 @@ GO
 
  -- Create test tables for TOP N PERCENT testing
 CREATE TABLE jira_babel_1358.test_percent_scores (
-    id INT PRIMARY KEY,
+    id INT,
     student_name VARCHAR(50),
     score DECIMAL(5,2),
     class_name VARCHAR(50),
     year INT
 );
 CREATE TABLE jira_babel_1358.test_percent_sales (
-    id INT PRIMARY KEY,
+    id INT,
     product_name VARCHAR(50),
     revenue MONEY,
     region VARCHAR(50),
@@ -178,7 +183,7 @@ CREATE SCHEMA test_schema2_jira_babel_1358;
 GO
 
 CREATE TABLE test_schema2_jira_babel_1358.test_cross_sales (
-    id INT PRIMARY KEY,
+    id INT,
     product_name VARCHAR(50),
     revenue MONEY,
     region VARCHAR(50),
@@ -196,3 +201,42 @@ INSERT INTO test_schema2_jira_babel_1358.test_cross_sales (id, product_name, rev
 GO
 ~~ROW COUNT: 5~~
 
+
+
+
+/*
+ * Created to test insert into output ..
+ * test case 43-48 
+ */ 
+CREATE TABLE jira_babel_1358.test_percent_scores_second (
+    id INT,
+    student_name VARCHAR(50),
+    score DECIMAL(5,2),
+    class_name VARCHAR(50),
+    year INT
+);
+CREATE TABLE jira_babel_1358.test_percent_sales_second (
+    id INT,
+    product_name VARCHAR(50),
+    revenue MONEY,
+    region VARCHAR(50),
+    quarter VARCHAR(2)
+);
+GO
+
+
+CREATE TABLE jira_babel_1358.test_percent_scores_third (
+    id INT,
+    student_name VARCHAR(50),
+    score DECIMAL(5,2),
+    class_name VARCHAR(50),
+    year INT
+);
+CREATE TABLE jira_babel_1358.test_percent_sales_third (
+    id INT,
+    product_name VARCHAR(50),
+    revenue MONEY,
+    region VARCHAR(50),
+    quarter VARCHAR(2)
+);
+GO
