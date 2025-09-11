@@ -1042,7 +1042,7 @@ set_dimension_flag(GeometryData *geom_data)
 
     switch (geom_data->geom_type) 
     {
-        case VALID_2DLINE_MP:
+        case 0x04:
             /* If EMPTY_COORD data is present then it represents Empty geometries */                               
             if ( memcmp(geom_data->input_data + HEADER_SIZE, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0)
             {
@@ -1627,13 +1627,13 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                 switch (geom_data->postgis_geom_type)
                 {
                     case POINT_TYPE:
-                        geom_data->geom_type = 0x0C;
+                        geom_data->geom_type = POINT_XY;
                         geom_data->coord_size = COORD_SIZE_XY;
                         break;
                     case LINE_TYPE:
                         geom_data->geom_type = geom_data->is_valid ? 
-                            (geom_data->npoints > 2 ? 0x04 : 0x14) :
-                            (geom_data->npoints > 2 ? 0x00 : 0x10);
+                            (geom_data->npoints > 2 ? VALID_2DLINE_MP : VALID_2DLINE_2P) :
+                            (geom_data->npoints > 2 ? INVALID_2DLINE_MP : INVALID_2DLINE_2P);
                         geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
                         break;
                 }
@@ -1644,13 +1644,13 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             switch (geom_data->postgis_geom_type)
             {
                 case POINT_TYPE:
-                    geom_data->geom_type = 0x0D;
+                    geom_data->geom_type = POINT_XYZ;
                     geom_data->coord_size = COORD_SIZE_XYZ;
                     break;
                 case LINE_TYPE:
                     geom_data->geom_type = geom_data->is_valid ? 
-                        (geom_data->npoints > 2 ? 0x05 : 0x15) :
-                        (geom_data->npoints > 2 ? 0x01 : 0x11);
+                        (geom_data->npoints > 2 ? VALID_3DLINE_MP : VALID_3DLINE_2P) :
+                        (geom_data->npoints > 2 ? INVALID_3DLINE_MP : INVALID_3DLINE_2P);
                     geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
                     break;
             }
@@ -1660,13 +1660,13 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             switch (geom_data->postgis_geom_type)
             {
                 case POINT_TYPE:
-                    geom_data->geom_type = 0x0F;
+                    geom_data->geom_type = POINT_XYZM;
                     geom_data->coord_size = COORD_SIZE_XYZM;
                     break;
                 case LINE_TYPE:
                     geom_data->geom_type = geom_data->is_valid ? 
-                        (geom_data->npoints > 2 ? 0x07 : 0x17) :
-                        (geom_data->npoints > 2 ? 0x03 : 0x13);
+                        (geom_data->npoints > 2 ? VALID_3DMLINE_MP : VALID_3DMLINE_2P) :
+                        (geom_data->npoints > 2 ? INVALID_3DMLINE_MP : INVALID_3DMLINE_2P);
                     geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
                     break;
             }
@@ -1676,13 +1676,13 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             switch (geom_data->postgis_geom_type)
             {
                 case POINT_TYPE:
-                    geom_data->geom_type = 0x0E;
+                    geom_data->geom_type = POINT_XYZ;
                     geom_data->coord_size = COORD_SIZE_XYM;
                     break;
                 case LINE_TYPE:
                     geom_data->geom_type = geom_data->is_valid ? 
-                        (geom_data->npoints > 2 ? 0x06 : 0x16) :
-                        (geom_data->npoints > 2 ? 0x02 : 0x12);
+                        (geom_data->npoints > 2 ? VALID_2DMLINE_MP : VALID_2DMLINE_2P) :
+                        (geom_data->npoints > 2 ? INVALID_2DMLINE_MP : INVALID_2DMLINE_2P);
                     geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
                     break;
             }
