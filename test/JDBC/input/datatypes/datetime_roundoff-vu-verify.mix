@@ -444,6 +444,33 @@ END;
 $$;
 GO
 
+WITH datetime_columns AS (
+    SELECT c.relname as table_name,
+           a.attname as column_name,
+           n.nspname as schema_name
+    FROM pg_class c
+    JOIN pg_namespace n ON c.relnamespace = n.oid
+    JOIN pg_attribute a ON c.oid = a.attrelid
+    JOIN pg_type t ON a.atttypid = t.oid
+    WHERE c.relkind = 'r'
+        AND NOT a.attisdropped
+        AND t.typname = 'datetime'
+        AND n.nspname NOT LIKE 'pg_%'  -- exclude system schemas
+        AND n.nspname != 'information_schema'
+        AND a.attnum > 0
+)
+SELECT d.table_name, 
+       d.column_name,
+       format(
+           'SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)) as affected FROM %I.%I',
+           d.column_name,
+           d.column_name,
+           d.schema_name,
+           d.table_name
+       ) as analysis_query
+FROM datetime_columns d;
+GO
+
 -- tsql
 DECLARE @sql NVARCHAR(MAX) = '';
 
