@@ -766,6 +766,8 @@ CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
 		-- Check if any figures of the geometry instance are points
 		IF geom_type = 'ST_Point' THEN
 			RETURN 0;
+		ELSIF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'The geometry instance is not valid';
 		END IF; 
    
 		RETURN sys.STIsClosed_helper(geom);
