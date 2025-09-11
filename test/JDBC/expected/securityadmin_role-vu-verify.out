@@ -33,6 +33,8 @@ TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
 GO
 
 -- sp_helpsrvrolemember
+SET NOCOUNT ON
+GO
 INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
 GO
 
@@ -616,10 +618,10 @@ TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
 GO
 
 -- sp_helpsrvrolemember
+SET NOCOUNT ON
+GO
 INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM sadm_sp_helpsrvrolemember_tbl where MemberName like '%securityadmin%'
 GO

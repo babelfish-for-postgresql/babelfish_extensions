@@ -58,7 +58,7 @@ public class JDBCCallableStatement {
                 handleSQLExceptionWithFile(e, bw, logger);
                 resultsProcessed++;
             }
-            CompareResults.processResults(cstmt_bbl, bw, resultsProcessed, resultSetExist, warningExist, logger);
+            CompareResults.processResults(cstmt_bbl, bw, resultsProcessed, resultSetExist, warningExist, logger, null);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
         }

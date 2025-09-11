@@ -21,6 +21,7 @@
 #include "common/int.h"
 #include "miscadmin.h"
 #include "datetime.h"
+#include "datetime2.h"
 
 
 PG_FUNCTION_INFO_V1(datetime_in);
@@ -62,6 +63,9 @@ PG_FUNCTION_INFO_V1(timestamp_diff_big);
 
 void		CheckDatetimeRange(const Timestamp time, Node *escontext);
 void		CheckDatetimePrecision(fsec_t fsec);
+int			roundFractionalSeconds(int v_fractseconds);
+
+int			DaycountInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 #define DTK_NANO 32
 
@@ -517,6 +521,90 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 	return 0;
 }
 
+/*
+ * Decides whether the effective date to consider is the next day
+ * based on hour, minute, second value 23:59:59
+ */
+void
+UpdateToNextDayHelper(struct pg_tm *tm)
+{
+	tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
+	if (tm->tm_mday == DaycountInMonth[tm->tm_mon - 1] &&
+		tm->tm_mon == 12)
+	{
+		tm->tm_year++;
+		tm->tm_mon = tm->tm_mday = 1;
+	}
+	else if ((tm->tm_mday == DaycountInMonth[tm->tm_mon - 1] && tm->tm_mon != 2) ||
+			 (tm->tm_mon == 2 && tm->tm_mday == 29 && isleap(tm->tm_year)) ||
+			 (tm->tm_mon == 2 && tm->tm_mday == 28 && !isleap(tm->tm_year)))
+	{
+		tm->tm_mon++;
+		tm->tm_mday = 1;
+	}
+	else
+		tm->tm_mday++;
+}
+
+static void
+handle_datetime_carry_over(struct pg_tm *tm, int *rounded_msec)
+{	
+	if (*rounded_msec == 1000)
+	{
+		*rounded_msec -= 1000;
+		tm->tm_sec++;
+		
+		/* Handle cascading overflows */
+		if (tm->tm_sec == 60)
+		{
+			tm->tm_sec = 0;
+			tm->tm_min++;
+			
+			if (tm->tm_min == 60)
+			{
+				tm->tm_min = 0;
+				tm->tm_hour++;
+				
+				if (tm->tm_hour == 24)
+				{
+					UpdateToNextDayHelper(tm);
+				}
+			}
+		}
+	}
+}
+
+/*
+ * Apply datetime rounding off logic 
+ */
+Timestamp
+roundoff_datetime(Timestamp timestamp)
+{
+	struct pg_tm tm;
+	fsec_t		fsec;
+	int			rounded_msec = 0;
+	Timestamp	result;
+
+	if (TIMESTAMP_NOT_FINITE(timestamp) || timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("datetime out of range")));
+
+	rounded_msec = roundFractionalSeconds(fsec/1000);
+
+	/* Handle carry-over using the new dedicated function */
+	handle_datetime_carry_over(&tm, &rounded_msec);
+
+	/* Convert back to microseconds */
+	fsec = rounded_msec * 1000;
+
+	if (tm2timestamp(&tm, fsec, NULL, &result) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("datetime out of range")));
+
+	return result;
+}
 
 Datum
 datetime_in_str(char *str, Node *escontext)
@@ -544,7 +632,7 @@ datetime_in_str(char *str, Node *escontext)
 	 * Set input to default '1900-01-01 00:00:00.000' if empty string
 	 * encountered
 	 */
-	if (*str == '\0')
+	if (isEmptyOrWhitespace(str))
 	{
 		result = initializeToDefaultDatetime();
 		PG_RETURN_TIMESTAMP(result);
@@ -627,10 +715,9 @@ datetime_in_str(char *str, Node *escontext)
 			TIMESTAMP_NOEND(result);
 	}
 
-	/*
-	 * TODO: round datetime fsec to fixed bins (e.g. .000, .003, .007) see:
-	 * BABEL-1081
-	 */
+	/* Apply datetime rounding */
+	result = roundoff_datetime(result);
+
 	CheckDatetimeRange(result, escontext);
 	CheckDatetimePrecision(fsec);
 
@@ -752,7 +839,10 @@ time_datetime(PG_FUNCTION_ARGS)
 	if (tm2timestamp(tm, fsec, NULL, &result) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("data out of range for datetime")));
+				 errmsg("datetime of range for datetime")));
+	
+	result = roundoff_datetime(result);
+	CheckDatetimeRange(result, NULL);
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -765,6 +855,7 @@ timestamp_datetime(PG_FUNCTION_ARGS)
 {
 	Timestamp	result = PG_GETARG_TIMESTAMP(0);
 
+	result = roundoff_datetime(result);
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -813,6 +904,8 @@ varbinary_datetime(PG_FUNCTION_ARGS)
 		int64 total_usecs = days * USECS_PER_DAY + usecs;
 		result = TSQL_DEFAULT_DATETIME + total_usecs;
 	}
+
+	result = roundoff_datetime(result);
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -844,6 +937,8 @@ timestamptz_datetime(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("data out of range for datetime")));
 	}
+
+	result = roundoff_datetime(result);
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -1199,6 +1294,62 @@ initializeToDefaultDatetime(void)
 	tm2timestamp(tm, 0, NULL, &result);
 
 	return result;
+}
+
+/*
+ * Set input to default '1900-01-01' if empty string encountered
+ */
+DateADT
+initializeToDefaultDate(void)
+{
+	DateADT date;
+	struct pg_tm tt,
+				 *tm = &tt;
+	tm->tm_year = 1900;
+	tm->tm_mon = 1;
+	tm->tm_mday = 1;
+	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+
+	return date;
+}
+
+/*
+ * Set input to default '00:00:00.0000000' if empty string encountered
+ */
+TimeADT
+initializeToDefaultTime(int32 typmod)
+{
+	TimeADT	time;
+	struct pg_tm tt,
+				 *tm = &tt;
+	tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
+	tm2time(tm, 0, &time);
+	AdjustTimeForTypmod(&time, typmod);
+
+	return time;
+}
+
+
+/*
+ * Check if string is empty or contains only whitespace
+ * Returns true if string is empty or contains only whitespace characters
+ */
+bool
+isEmptyOrWhitespace(const char *str)
+{
+	size_t i;
+	size_t len;
+
+	if (!str)
+		return true;
+
+	len = strlen(str);
+	for (i = 0; i < len; i++)
+	{
+		if (!isspace((unsigned char)str[i]))
+			return false;
+	}
+	return true;
 }
 
 Datum
@@ -1826,10 +1977,10 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 
 	switch(dttype) {
 		case TIME:
-			timestamp = DirectFunctionCall1(time_datetime, (TimeADT) PG_GETARG_TIMEADT(2));
+			timestamp = DirectFunctionCall1(time_datetime2, (TimeADT) PG_GETARG_TIMEADT(2));
 			break;
 		case DATE:
-			timestamp = DirectFunctionCall1(date_datetime, (DateADT) PG_GETARG_DATEADT(2));
+			timestamp = DirectFunctionCall1(date_datetime2, (DateADT) PG_GETARG_DATEADT(2));
 			break;
 		default:
 			timestamp = PG_GETARG_TIMESTAMP(2);

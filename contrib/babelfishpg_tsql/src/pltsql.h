@@ -70,6 +70,7 @@
 #define FIXEDDECIMAL_SCALE 4
 #define TSQL_MONEY_TYPMOD ((MONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
 #define TSQL_SMALLMONEY_TYPMOD ((SMALLMONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
+#define TSQL_EXPLICIT_NULLABILITY_MARKER "tsql_explicit_nullability"
 
 /*
  * Compiler's namespace item types
@@ -1178,6 +1179,7 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_create_view; /* CREATE VIEW? */
 	bool		is_set_tran_isolation; /* SET TRANSACTION ISOLATION? */
 	char	   *original_query; /* Only for batch level statement. */
+	bool        is_schemabinding; /* Is schema binding? */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1808,7 +1810,12 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_reset_tds_connection_flag) ();
 	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
 													char **tvp_type_name, char **tvp_type_schema_name);
-	int32_t 	(*get_tds_numeric_get_typmod) (Numeric num);
+
+	void		(*UpdateToNextDayHelper) (struct pg_tm *tm);
+
+	Datum       (*sql_bytea_from_geometry) (PG_FUNCTION_ARGS);
+	
+	Datum       (*sql_bytea_from_geography) (PG_FUNCTION_ARGS);
 
 	/* Session level GUCs */
 	bool		quoted_identifier;
@@ -2108,6 +2115,7 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 extern int	get_insert_bulk_rows_per_batch(void);
 extern int	get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
+extern bool get_is_schemabinding_view(void);
 extern AclMode string_to_privilege(const char *privname);
 extern const char *privilege_to_string(AclMode privilege);
 extern Oid get_owner_of_schema(const char *schema);
@@ -2260,7 +2268,9 @@ extern bool is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvar
 extern bool is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
 extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
+extern bool is_tsql_geometry_or_geography_datatype(Oid oid); /* sys.geometry / sys.geography */
 extern void downcase_truncate_split_object_name(char *four_part_object_name, char** server_name, char** db_name, char** schema_name, char** object_name);
+extern bool is_xml_value_typearg_valid(Oid Oid);
 
 typedef struct
 {
@@ -2357,8 +2367,9 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 /*
  * Functions in pltsql_coerce.c
  */
-extern bool validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
-extern int32	resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
+extern bool     validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
+extern int32    resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
+extern Oid      get_immediate_base_type_of_UDT_internal(Oid oid);
 
 /*
  * Function in pltsql_ruleutils.c

@@ -108,6 +108,53 @@ END
 $BODY$
 LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
 
+-- helper functions for XML VALUE(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    temp_datatype text;
+    temp_basetype oid;
+    result_set xml[];
+    result sys.NVARCHAR;
+    pltsql_quoted_identifier text;
+BEGIN
+    temp_datatype := sys.translate_pg_type_to_tsql(pg_typeof(xml_element)::oid);
+    IF temp_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for xml_element datatype validation
+        temp_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(xml_element)::oid);
+        temp_datatype := sys.translate_pg_type_to_tsql(temp_basetype);
+    END IF;
+
+    IF (temp_datatype != 'xml') THEN
+        RAISE EXCEPTION 'Cannot call methods on %.', temp_datatype;
+    END IF;
+
+    pltsql_quoted_identifier := current_setting('babelfishpg_tsql.quoted_identifier');
+
+    IF (pltsql_quoted_identifier = 'off') THEN
+        RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
+    END IF;
+
+    result_set := xpath(xpath_pattern, xml_element);
+    IF (cardinality(result_set) > 1) THEN
+        RAISE EXCEPTION 'XML Value result is not a single value.';
+    ELSIF (cardinality(result_set) = 0) THEN
+        RETURN NULL;
+    ELSE
+        result := (xpath('string(' + xpath_pattern + ')', xml_element))[1];
+        result := pg_catalog.replace(result, '&lt;', '<');
+        result := pg_catalog.replace(result, '&gt;', '>');
+        result := pg_catalog.replace(result, '&apos;', '''');
+        result := pg_catalog.replace(result, '&quot;', '"');
+        result := pg_catalog.replace(result, '&amp;', '&');
+        return result;
+    END IF; 
+END
+$BODY$
+LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
+
 -- SELECT FOR JSON
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
     state INTERNAL,
@@ -1505,6 +1552,11 @@ CREATE OR REPLACE FUNCTION sys.len(expr sys.BBF_VARBINARY) RETURNS INTEGER AS
 STRICT
 LANGUAGE c IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.len(expr sys.BBF_BINARY) RETURNS INTEGER AS
+'babelfishpg_common', 'varbinary_length'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 -- DATALENGTH
 CREATE OR REPLACE FUNCTION sys.datalength(ANYELEMENT) RETURNS INTEGER
 AS 'babelfishpg_tsql', 'datalength' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -1595,6 +1647,15 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.sqrt(number PG_CATALOG.NUMERIC)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN PG_CATALOG.SQRT(number::float8);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.day(date ANYELEMENT)
 RETURNS INTEGER AS
 $BODY$
@@ -1670,27 +1731,40 @@ declare
   v_find_result VARCHAR;
   v_pos bigint;
   v_regexp_pattern VARCHAR;
+  start_offset boolean;
+  end_offset boolean;
 begin
   if pattern is null or expression is null then
     return null;
+  end if;
+  if pattern = '%' or pattern = '%%' then
+    return 1;
   end if;
   if sys.is_collated_ai(expression) then
     return sys.patindex_ai_collations(pattern, expression);
   end if;
   if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i'::pg_catalog.TEXT);
+    start_offset := true;
   else
     v_regexp_pattern := '#"' || pattern;
+    start_offset := false;
   end if;
 
   if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i'::pg_catalog.TEXT);
+    end_offset := true;
   else
    v_regexp_pattern := v_regexp_pattern || '#"';
+   end_offset := false;
   end if;
   v_find_result := substring(expression, v_regexp_pattern, '#');
   if v_find_result <> '' collate sys.database_default then
-    v_pos := strpos(expression, v_find_result);
+    if start_offset and not end_offset then
+      v_pos := LENGTH(expression) - STRPOS(REVERSE(expression), REVERSE(v_find_result)) + 2 - LENGTH(v_find_result);
+    else
+      v_pos := strpos(expression, v_find_result);
+    end if;
   else
     v_pos := 0;
   end if;
@@ -2038,36 +2112,59 @@ LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg anyelement) RETURNS TEXT AS 
 $BODY$
-SELECT
-    CASE
-    WHEN dp = 'month'::text THEN
-        to_char(arg::sys.DATETIME, 'TMMonth')
-    -- '1969-12-28' is a Sunday
-    WHEN dp = 'dow'::text THEN
-        to_char(arg::sys.DATETIME, 'TMDay')
-    ELSE
-        sys.datepart(dp, arg)::TEXT
-    END 
-$BODY$
-STRICT
-LANGUAGE sql IMMUTABLE;
+DECLARE
+    date_arg_datatype regtype;
+    result TEXT;
+    datetimeoffset_value sys.datetimeoffset;
+BEGIN
+    date_arg_datatype := pg_typeof(arg);
 
--- Duplicate functions with arg TEXT since ANYELEMENT cannot handle type unknown.
+    IF dp = 'month'::text THEN
+        result := to_char(arg::sys.DATETIME, 'TMMonth');
+    -- '1969-12-28' is a Sunday
+    ELSIF dp = 'dow'::text THEN
+        result := to_char(arg::sys.DATETIME, 'TMDay');
+    ELSIF dp = 'tzoffset'::text THEN
+        IF date_arg_datatype IN ('sys.datetimeoffset'::regtype, 'sys.datetime2'::regtype) THEN
+            -- Explicitly cast to datetimeoffset to validate
+            -- This will throw an error if the timezone offset is invalid
+            datetimeoffset_value := arg::DATETIMEOFFSET;
+            result := PG_CATALOG.RIGHT(datetimeoffset_value::PG_CATALOG.TEXT, 6);
+        ELSE
+            RAISE EXCEPTION 'The datepart tzoffset is not supported by date function datename for data type %.', date_arg_datatype;
+        END IF;
+    ELSE
+        result := sys.datepart(dp, arg)::TEXT;
+    END IF;
+    RETURN result;
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg TEXT) RETURNS TEXT AS
 $BODY$
-SELECT
-    CASE
-    WHEN dp = 'month'::text THEN
-        to_char(arg::date, 'TMMonth')
+DECLARE
+    result TEXT;
+    datetimeoffset_value sys.datetimeoffset;
+BEGIN
+    IF dp = 'month'::text THEN
+        result := to_char(arg::date, 'TMMonth');
     -- '1969-12-28' is a Sunday
-    WHEN dp = 'dow'::text THEN
-        to_char(arg::date, 'TMDay')
+    ELSIF dp = 'dow'::text THEN
+        result := to_char(arg::date, 'TMDay');
+    ELSIF dp = 'tzoffset'::text THEN
+        -- Explicitly cast to datetimeoffset to validate
+        -- This will throw an error if the timezone offset is invalid
+        datetimeoffset_value := arg::datetimeoffset;
+        result := PG_CATALOG.RIGHT(datetimeoffset_value::PG_CATALOG.TEXT, 6);
     ELSE
-        sys.datepart(dp, arg)::TEXT
-    END
+        result := sys.datepart(dp, arg)::TEXT;
+    END IF;
+    RETURN result;
+END;
 $BODY$
-STRICT
-LANGUAGE sql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 -- These come from the built-in pg_catalog.count in pg_aggregate.dat
 CREATE AGGREGATE sys.count(*)
@@ -2297,6 +2394,9 @@ AS 'babelfishpg_tsql', 'int_floor' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.floor(tinyint) RETURNS TINYINT
 AS 'babelfishpg_tsql', 'int_floor' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.floor(sys.fixeddecimal) RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimal_floor' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Ceiling for bit
 CREATE OR REPLACE FUNCTION sys.ceiling(sys.bit) RETURNS DOUBLE PRECISION
 AS 'babelfishpg_tsql', 'bit_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -2313,6 +2413,9 @@ AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.ceiling(tinyint) RETURNS TINYINT
 AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ceiling(sys.fixeddecimal) RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimal_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE AGGREGATE sys.STDEV(float8) (
     SFUNC = float8_accum,
@@ -2458,6 +2561,7 @@ CREATE OR REPLACE FUNCTION sys.sign(IN arg SMALLINT) RETURNS INT AS
 $BODY$
 SELECT sys.sign(arg::INT);
 $BODY$
+STRICT
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.sign(SMALLINT) TO PUBLIC;
 
@@ -2465,6 +2569,7 @@ CREATE OR REPLACE FUNCTION sys.sign(IN arg SYS.TINYINT) RETURNS INT AS
 $BODY$
 SELECT sys.sign(arg::INT);
 $BODY$
+STRICT
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.sign(SYS.TINYINT) TO PUBLIC;
 
@@ -2477,6 +2582,7 @@ SELECT
 		ELSE 0::BIGINT
 	END;
 $BODY$
+STRICT
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.sign(BIGINT) TO PUBLIC;
 
@@ -2489,6 +2595,7 @@ SELECT
 		ELSE 0::SYS.MONEY
 	END;
 $BODY$
+STRICT
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.sign(SYS.MONEY) TO PUBLIC;
 
@@ -2496,6 +2603,7 @@ CREATE OR REPLACE FUNCTION sys.sign(IN arg SYS.SMALLMONEY) RETURNS SYS.MONEY AS
 $BODY$
 SELECT sys.sign(arg::SYS.MONEY);
 $BODY$
+STRICT
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.sign(SYS.SMALLMONEY) TO PUBLIC;
 
@@ -2505,6 +2613,7 @@ $BODY$
 SELECT
 	sign(arg::SYS.FLOAT);
 $BODY$
+STRICT
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.sign(ANYELEMENT) TO PUBLIC;
 
@@ -2514,6 +2623,7 @@ $BODY$
 SELECT
 	sign(arg::SYS.FLOAT);
 $BODY$
+STRICT
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.sign(TEXT) TO PUBLIC;
 
@@ -4294,13 +4404,35 @@ CREATE OR REPLACE FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC)
 RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(TINYINT,NUMERIC) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 sys.FIXEDDECIMAL, IN arg2 NUMERIC)
+RETURNS sys.MONEY  AS 'babelfishpg_money','fixeddecimal_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(sys.FIXEDDECIMAL,NUMERIC) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 NUMERIC)
 RETURNS numeric  AS 'babelfishpg_tsql','numeric_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(NUMERIC) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.degrees(arg1::PG_CATALOG.NUMERIC);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 NUMERIC)
 RETURNS numeric  AS 'babelfishpg_tsql','numeric_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.radians(arg1::PG_CATALOG.NUMERIC);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.bbf_log(IN arg1 FLOAT)
 RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log_natural' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
@@ -4390,11 +4522,11 @@ RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_schema_name'
 LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION OBJECT_DEFINITION(IN object_id INT)
-RETURNS sys.NVARCHAR(4000)
+CREATE OR REPLACE FUNCTION sys.OBJECT_DEFINITION(IN object_id INT)
+RETURNS sys.NVARCHAR
 AS $$
 DECLARE
-    definition sys.nvarchar(4000);
+    definition sys.NVARCHAR;
 BEGIN
 
     definition = (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
@@ -5008,3 +5140,16 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
 CREATE OR REPLACE FUNCTION sys.pltsql_assign_var(dno INT, val ANYELEMENT)
 RETURNS ANYELEMENT
 AS 'babelfishpg_tsql', 'pltsql_assign_var' LANGUAGE C PARALLEL UNSAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_broken_view_function()
+RETURNS INT
+AS $$
+BEGIN
+    RAISE EXCEPTION 'Cannot reference a broken view in query';
+    RETURN 1;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+GRANT EXECUTE ON FUNCTION sys.babelfish_broken_view_function() TO PUBLIC;
+COMMENT ON FUNCTION sys.babelfish_broken_view_function() IS 'Internal function used by broken views to prevent silent failures';

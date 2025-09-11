@@ -1,0 +1,76 @@
+-- tsql
+-- resetting passwords for logins (dump-restore)
+alter login login_without_any_permissions with password = '12345678';
+GO
+
+-- tsql
+use sys_database_principals_vu_db
+GO
+
+-- add sys_database_principals_vu_login_with_sysadmin to sysadmin
+alter server role sysadmin add member sys_database_principals_vu_login_with_sysadmin
+GO
+
+-- making login_without_any_permissions the owner of a database
+use sys_database_principals_vu_db_another;
+GO
+exec sp_changedbowner 'login_without_any_permissions'
+GO
+use master
+GO
+
+-- change db owner to the new sysadmin login
+alter authorization on database::sys_database_principals_db_different_owner to sys_database_principals_vu_login_with_sysadmin
+GO
+
+select suser_sname(sid) from database_principals where name = 'dbo';
+GO
+
+select suser_sname(sid) from database_principals where name = 'sys_database_principals_vu_user'
+GO
+
+select suser_sname(sid) from database_principals 
+where name in ('sys_database_principals_vu_orphaned_user', 'db_owner', 'db_securityadmin', 'db_datawriter', 'db_accessadmin', 'db_datareader', 'db_ddladmin')
+GO
+
+-- filtering only logins which are created within this test
+-- (sys_database_principals_vu_login, sys_database_principals_vu_login_tbd, jdbc_user <masteruser>, 'login_without_any_permissions')
+select name, suser_sname(sid) from database_principals 
+where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user', 'login_without_any_permissions')
+order by name;
+GO
+
+use sys_database_principals_db_different_owner
+GO
+
+select suser_sname(sid) from database_principals where name = 'dbo';
+GO
+
+use master
+GO
+
+-- filtering only logins which are created within this test
+-- (sys_database_principals_vu_login, sys_database_principals_vu_login_tbd, jdbc_user <masteruser>)
+select suser_sname(sid), name, type, default_schema_name from sys_database_principals_another_vu
+where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user', 'login_without_any_permissions')
+order by name;
+GO
+
+select suser_sname(sid), name, cast(type as char) from sys_database_principals_another_func()
+where suser_sname(sid) IS NULL OR suser_sname(sid) IN ('sys_database_principals_vu_login', 'sys_database_principals_vu_login_tbd', 'jdbc_user', 'login_without_any_permissions')
+order by name;
+GO
+
+select * from sys_database_principals_fixed_roles;
+GO
+
+-- tsql user=login_without_any_permissions password=12345678
+select name, suser_sname(sid) from sys.database_principals where name = 'dbo'
+GO
+use sys_database_principals_vu_db_another
+GO
+select name, suser_sname(sid) from sys.database_principals where name = 'dbo'
+GO
+use master
+GO
+-- terminate-tsql-conn user=login_without_any_permissions password=12345678

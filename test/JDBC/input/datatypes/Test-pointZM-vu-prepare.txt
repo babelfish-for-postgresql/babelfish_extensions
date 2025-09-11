@@ -593,8 +593,6 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 100.5 200.75):<NU
 
 #Negative Test for STGeomFromText when a coordinate is missing
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
-#Negative Test when an unsupported feature in queried
-prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
 
 #Tests for geography type Prepared Statements
 
@@ -644,8 +642,6 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900 100.5 200.75):<N
 
 #Negative Test for STGeomFromText when a coordinate is missing
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
-#Negative Test when an unsupported feature in queried
-prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 
 CREATE TABLE GEOSPATIALPOINTEMPTYdt (geom geometry, geog geography);
 

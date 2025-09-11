@@ -287,7 +287,7 @@ SELECT '|' + CONCAT(@inputString, 'ab🙂', 'x🙂y') + '|'
 GO
 ~~START~~
 nvarchar
-|  abc?defghi??                                    ab🙂x🙂y|
+|  abc🙂defghi🙂🙂                                    ab🙂x🙂y|
 ~~END~~
 
 
@@ -296,7 +296,7 @@ SELECT '|' + CONCAT(@inputString, 'ab?', 'x🙂y') + '|'
 GO
 ~~START~~
 nvarchar
-|  abc?defghi??                                    ab?x🙂y|
+|  abc🙂defghi🙂🙂                                    ab?x🙂y|
 ~~END~~
 
 
@@ -305,7 +305,7 @@ SELECT '|' + CONCAT(@inputString, 'ab😎', 'x🙂y') + '|'
 GO
 ~~START~~
 nvarchar
-|  abc?defghi??                                    ab😎x🙂y|
+|  abc🙂defghi🙂🙂                                    ab😎x🙂y|
 ~~END~~
 
 
@@ -314,7 +314,7 @@ SELECT '|' + CONCAT(@inputString, '比拉斯 ', '尔·比?') + '|'
 GO
 ~~START~~
 nvarchar
-|  比尔·拉莫斯                                    比拉斯 尔·比?|
+|  比尔·拉莫斯                                          比拉斯 尔·比?|
 ~~END~~
 
 
@@ -323,7 +323,7 @@ SELECT '|' + CONCAT(@inputString, '比拉斯 ', '尔·比?') COLLATE CHINESE_PRC
 GO
 ~~START~~
 nvarchar
-|  比尔·拉莫斯                                    比拉斯 尔·比?|
+|  比尔·拉莫斯                                          比拉斯 尔·比?|
 ~~END~~
 
 
@@ -332,7 +332,7 @@ SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) + '|'
 GO
 ~~START~~
 nvarchar
-|  比尔·拉莫斯                                    比拉斯 比拉斯 |
+|  比尔·拉莫斯                                          比拉斯 比拉斯 |
 ~~END~~
 
 
@@ -341,7 +341,7 @@ SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) COLLATE CHINESE_
 GO
 ~~START~~
 nvarchar
-|  比尔·拉莫斯                                    比拉斯 比拉斯 |
+|  比尔·拉莫斯                                          比拉斯 比拉斯 |
 ~~END~~
 
 

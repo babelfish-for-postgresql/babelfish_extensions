@@ -1590,7 +1590,11 @@ icu_compare_utf8_coll(UCollator  *coll, UChar *uchar1, int32_t ulen1,
 
 	if (is_cs_ai_range_cmp)
 	{
+#if U_ICU_VERSION_MAJOR_NUM < 71
 		collator = ucol_safeClone(coll, NULL, NULL, &status);
+#else
+		collator = ucol_clone(coll, &status);
+#endif
 
 		if (U_FAILURE(status))
 			ereport(ERROR,
@@ -2044,6 +2048,7 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 {
 	bool start_offset = false;
 	int  itr = 0;
+	bool end_offset = false;
 
 	if (pattern == NULL || strlen(pattern) == 0)
 		return 0;
@@ -2196,8 +2201,11 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 		* pattern can match a zero-length string, ie, it's zero or more %'s.
 		*/
 		while (plen > 0 && *p == '%')
+		{
 			next_char(&p, &plen);
-		if (plen <= 0 && !match_failed)
+			end_offset = true;
+		}
+		if (plen <= 0 && !match_failed && (end_offset || tlen <=0))
 			return itr;
 
 		if (start_offset)

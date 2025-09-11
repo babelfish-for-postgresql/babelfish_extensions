@@ -1048,11 +1048,58 @@ public:
 
 	void exitXml_func_arg(TSqlParser::Xml_func_argContext *ctx) override
 	{
-		if (ctx->EXIST())
+		if (ctx->EXIST() || ctx->VALUE())
 		{
 			size_t startPosition = ctx->start->getStartIndex();
 			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "bbf_xml")));
 		}
+	}
+
+	void exitDatatype_coloncolon_methods(TSqlParser::Datatype_coloncolon_methodsContext *ctx) override
+	{
+		std::string typeStr = ::getFullText(ctx->data_type());
+		PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
+		
+		if (is_tsql_geometry_or_geography_datatype(type->typoid))
+		{
+			/* 
+			 * Rewrite the Static methods of geometry and geography as follows 
+			 * ([sys.]geometry::method / [sys.]geography::method )-> geometry__method / geography__method
+			 */
+			if (ctx->datatype_static_method())
+			{
+				std::string ctx_str = ::getFullText(ctx);
+				std::string original_exp = ctx_str.substr(0, ctx->datatype_static_method()->stop->getStopIndex() - ctx->start->getStartIndex() + 1);
+				std::string rewritten_exp = std::string(type->typname) + "__" + ::getFullText(ctx->datatype_static_method());
+
+				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(original_exp, rewritten_exp)));	
+			}
+			else
+			{
+				if (ctx->datatype_field_or_method()->method)
+				{
+					TSqlParser::IdContext *method = ctx->datatype_field_or_method()->method;
+					std::string methodNameStr;
+					
+					methodNameStr = stripQuoteFromId(method);
+					throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_OBJECT, format_errmsg("Could not find method '%s' for type %s.", methodNameStr.c_str(), typeStr.c_str()), getLineAndPos(ctx));
+				}
+				else if (ctx->datatype_field_or_method()->field)
+				{
+					TSqlParser::IdContext *field = ctx->datatype_field_or_method()->field;
+					std::string fieldNameStr;
+
+					fieldNameStr = stripQuoteFromId(field);
+					throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_OBJECT, format_errmsg("Could not find property or field '%s' for type %s.", fieldNameStr.c_str(), typeStr.c_str()), getLineAndPos(ctx));
+				}
+			}
+		}
+		else
+		{
+			// if type is not a datatype which support static methods/fields throw error
+			throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("Cannot call methods on %s.", typeStr.c_str()), getLineAndPos(ctx->data_type()));
+		}
+
 	}
 
 	/* We are adding handling for CLR_UDT Types in:
@@ -3004,6 +3051,33 @@ public:
     {
     }
 
+private:
+    void handleCharNcharTypeRename(const std::string &procNameStr, TSqlParser::IdContext *proc, 
+				TSqlParser::IdContext *schema)
+    {
+
+	int startIndex = proc->start->getStartIndex();
+	std::string alias;
+	std::string formattedName;
+
+	if (pg_strcasecmp(procNameStr.c_str(), "char") == 0)
+		alias = "cht_";
+	else if (pg_strcasecmp(procNameStr.c_str(), "nchar") == 0)
+		alias = "ncht_";
+
+	if(schema && pg_strcasecmp(stripQuoteFromId(schema).c_str(), "sys") != 0)
+		return;
+
+	if (proc->DOUBLE_QUOTE_ID())
+		formattedName = "\"" + alias + "\"";
+	else if (proc->SQUARE_BRACKET_ID())
+		formattedName = "[" + alias + "]";
+	else
+		formattedName = alias;
+
+	stream.setText(startIndex, formattedName.c_str());
+    }
+
 public:
     void enterFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override
     {	
@@ -3014,6 +3088,7 @@ public:
 	// "char" is a data type name in PostgreSQL
 
 	TSqlParser::IdContext *proc = ctx->procedure;
+	TSqlParser::IdContext *schema = ctx->schema;
 
 	//  According to the grammar, an id can be any of the following:
 	//
@@ -3029,20 +3104,14 @@ public:
 	//  rule (id colon_colon id) looks like it might be a call to a type method; we
 	//  ignore those as well.
 	
-	if (proc->keyword() || proc->colon_colon())
+	if (proc->keyword())
 	    return;
 	
-	// FIXME: handle the schema here too
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
 
-	if (pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
+	if (pg_strcasecmp(procNameStr.c_str(), "char") == 0 || pg_strcasecmp(procNameStr.c_str(), "nchar") == 0)
 	{
-	    if (proc->DOUBLE_QUOTE_ID())
-		stream.setText(ctx->start->getStartIndex(), "\"chr\" ");
-	    else if (proc->SQUARE_BRACKET_ID())
-		stream.setText(ctx->start->getStartIndex(), "[chr] ");		
-	    else
-		stream.setText(ctx->start->getStartIndex(), " chr");
+		handleCharNcharTypeRename(procNameStr, proc, schema);
 	}
     }	
     
@@ -3140,29 +3209,7 @@ public:
 	// "char" is a data type name in PostgreSQL
 
 	TSqlParser::IdContext *proc = ctx->procedure;
-
-	#ifdef ENABLE_SPATIAL_TYPES
-	if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
-	{
-		TSqlParser::IdContext *idctx = ctx->id()[0];
-		if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
-		{
-			std::string idText = idctx->id()[0]->getText();
-			transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
-			size_t start = idText.find_first_not_of(" \n\r\t\f\v");
-    		idText = (start == std::string::npos) ? "" : idText.substr(start);
-			size_t end = idText.find_last_not_of(" \n\r\t\f\v");
-    		idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
-			if(idText == "geography" || idText == "geometry"){
-				// Replace colon_colon with underscores of the same length
-				std::string colonText = idctx->colon_colon()->getText();
-				std::string underScores(colonText.size(), '_');
-
-				stream.setText(idctx->colon_colon()->start->getStartIndex(), underScores.c_str());
-			}
-		}
-	}
-	#endif
+	TSqlParser::IdContext *schema = ctx->schema;
 	
 	// if the func name contains colon_colon, it must begin with it. see grammar
     if (ctx->colon_colon())
@@ -3173,20 +3220,14 @@ public:
 
 	// See the commment in enterFunc_proc_name_schema() for an explanation of this code
 	
-	if (proc->keyword() || proc->colon_colon())
+	if (proc->keyword())
 	    return;
 	
-	// FIXME: handle the schema here too
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
 
-	if (pg_strcasecmp(procNameStr.c_str(), "char") ==  0)
+	if (pg_strcasecmp(procNameStr.c_str(), "char") == 0 || pg_strcasecmp(procNameStr.c_str(), "nchar") == 0)
 	{
-	    if (proc->DOUBLE_QUOTE_ID())
-		stream.setText(ctx->start->getStartIndex(), "\"chr\" ");
-	    else if (proc->SQUARE_BRACKET_ID())
-		stream.setText(ctx->start->getStartIndex(), "[chr] ");		
-	    else
-		stream.setText(ctx->start->getStartIndex(), " chr");
+		handleCharNcharTypeRename(procNameStr, proc, schema);
 	}
     }
 
@@ -4435,6 +4476,19 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	if (ctx->create_or_alter_view())
 	{
 		execsql->is_create_view = true;
+		// Check if the view has SCHEMABINDING
+		if (ctx->create_or_alter_view()->WITH().size() > 0)
+		{
+			auto options = ctx->create_or_alter_view()->view_attribute();
+			for (auto option : options)
+			{
+				if (option->SCHEMABINDING())
+				{
+					execsql->is_schemabinding = true;
+					break;
+				}
+			}
+		}
 		if (ctx->create_or_alter_view()->simple_name() && ctx->create_or_alter_view()->simple_name()->schema)
 		{
 			std::string schema_name = stripQuoteFromId(ctx->create_or_alter_view()->simple_name()->schema);
@@ -8939,8 +8993,34 @@ rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx)
 }
 
 /*
+ * Helper function to extract the typename from the second argument of XML VALUE function
+ * and validate it. If the type is invalid, we throw an error.
+ * If valid, we return the typename string without quotes.
+ */
+static std::string
+extract_xml_value_typearg(TSqlParser::ExpressionContext *expression)
+{
+	std::string arg_str = ::getFullText(expression);
+	std::string typename_arg;
+	PLtsql_type *type;
+
+	typename_arg = arg_str.substr(1, arg_str.size() - 2);
+	type = parse_datatype(typename_arg.c_str(), 0);
+
+	if (is_xml_value_typearg_valid(type->typoid))
+	{
+		throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("The data type '%s' used in the VALUE method is invalid.", typename_arg.c_str()), getLineAndPos(expression));
+	}
+
+	return typename_arg;
+}
+
+/*
  * In this helper function we Rewrite the Query for XML and Geospatial Handling
  * For Func_Ref Functions with args (such as EXIST(arg), STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
+ * 
+ * Exception: For XML Value function rewriting will happen as follows
+ *   ColRef.VALUE(xpath, 'typename')  -> convert(typename, bbf_xmlvalue(xpath, 'typename', ColRef))
  */
 template<class T>
 void
@@ -8957,7 +9037,22 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	int offset2 = 0;
 	std::vector<std::pair<int, int>> arg_offset_list;
 	int local_id_end_offset = 0;
-	
+	std::string typename_arg;
+
+	/*
+	 * Extract typename from second argument of VALUE function which is 'typename',
+	 * and also update the local_id_end_offset accordingly for VALUE function.
+	 */
+	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
+	{
+		typename_arg = extract_xml_value_typearg(method->xml_methods()->expression_list()->expression()[1]);
+
+		/*
+		 * local_id_end_offset is going to increase by 5 (length of string 'cast(')
+		 */
+		local_id_end_offset += 5;
+	}
+
 	/* writing the previously rewritten XML and/or Geospatial context */
 	for (auto &entry : rewritten_query_fragment)
 	{
@@ -9013,6 +9108,11 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	for (const auto &key : keysToRemove) local_id_positions.erase(key);
 	keysToRemove.clear();
 	std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, func_call_len + offset1 + 1) + ")";
+
+	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
+	{
+		rewritten_exp = "cast(" + rewritten_exp + " as " + typename_arg + ")";
+	}
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
 }
 
@@ -9153,6 +9253,9 @@ rewrite_function_call_geospatial_func_ref_no_arg(T ctx)
  * In this helper function we rewrite the Query for Dot Function Handling
  * This implementation is different for Function_Call Rule
  * For Func_Ref Functions with args (such as EXIST(arg), STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
+ *
+ * Exception: For XML Value function rewriting will happen as follows
+ *   ColRef.VALUE(xpath, 'typename')  -> convert(typename, bbf_xmlvalue(xpath, 'typename', ColRef))
  */
 template<class T>
 void
@@ -9190,7 +9293,22 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	int offset2 = 0;
 	std::vector<std::pair<int, int>> arg_offset_list;
 	int local_id_end_offset = 0;
-	
+	std::string typename_arg = "";
+
+	/*
+	 * Extract typename from second argument of VALUE function which is 'typename',
+	 * and also update the local_id_end_offset accordingly for VALUE function.
+	 */
+	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
+	{
+		typename_arg = extract_xml_value_typearg(ctx->expression_list()->expression()[1]);
+
+		/*
+		 * local_id_end_offset is going to increase by 5 (length of string 'cast(')
+		 */
+		local_id_end_offset += 5;
+	}
+
 	/* writing the previously rewritten Dot Function context */
 	for (auto &entry : rewritten_query_fragment)
 	{
@@ -9239,6 +9357,11 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	 * Rewriting the query as: table.col.Func_name(arg) -> Func_name(arg, table.col)
 	 */
 	std::string rewritten_func = expr.substr((int)func_start_index - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, col_len + offset1 + 1) + ")";
+	
+	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
+	{
+		rewritten_func = "cast(" + rewritten_func + " as " + typename_arg + ")";
+	}
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 }
 
@@ -9288,6 +9411,10 @@ validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::E
 	if (xml_func->EXIST() && (expr_list == NULL || expr_list->expression().size() != 1))
 		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The exist function requires 1 argument(s).", getLineAndPos(xml_func));
 
+	/* XML VALUE function requires only 2 argument */
+	if (xml_func->VALUE() && (expr_list == NULL || expr_list->expression().size() != 2))
+		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The value function requires 2 argument(s).", getLineAndPos(xml_func));
+
 	/* Only String Literal is allowed as agument for XML Functions */
 	if (expr_list)
 	{
@@ -9335,6 +9462,7 @@ handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx)
 				else if(ctx->subquery()) ind = ctx->subquery()->stop->getStopIndex();
 				else if(ctx->function_call()) ind = ctx->function_call()->stop->getStopIndex();
 				else if(ctx->RR_BRACKET()) ind = ctx->RR_BRACKET()->getSymbol()->getStopIndex();
+				else if(ctx->datatype_coloncolon_methods()) ind = ctx->datatype_coloncolon_methods()->stop->getStopIndex();
 			}
 			else ind = method_calls[i-1]->stop->getStopIndex();
 

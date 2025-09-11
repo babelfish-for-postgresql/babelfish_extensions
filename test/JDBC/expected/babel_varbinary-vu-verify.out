@@ -713,7 +713,7 @@ Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b6080
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.781 ms
+Babelfish T-SQL Batch Parsing Time: 4.031 ms
 ~~END~~
 
 
@@ -728,7 +728,7 @@ Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b6080
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.217 ms
+Babelfish T-SQL Batch Parsing Time: 0.182 ms
 ~~END~~
 
 
@@ -743,7 +743,7 @@ Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b6080
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.684 ms
+Babelfish T-SQL Batch Parsing Time: 3.663 ms
 ~~END~~
 
 
@@ -762,7 +762,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 33.697 ms
+Babelfish T-SQL Batch Parsing Time: 16.572 ms
 ~~END~~
 
 
@@ -781,7 +781,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.216 ms
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
 ~~END~~
 
 
@@ -917,8 +917,8 @@ ORDER BY
     float_binary_add;
 GO
 ~~START~~
-float#!#float#!#float#!#float#!#float#!#float#!#float#!#datetime#!#float#!#varchar#!#datetime#!#bigint
-201.0#!#201.0#!#1100.5#!#200.5#!#110.5#!#101.5#!#201.0#!#1900-04-11 12:00:00.0#!#201.0#!#100.5A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100
+float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#varchar#!#datetime#!#bigint
+201.0#!#201.0#!#1100.5#!#200.5#!#110.5#!#101.5#!#201.0#!#100.5#!#201.0#!#100.5A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100
 ~~END~~
 
 
@@ -952,8 +952,8 @@ ORDER BY
     real_binary_add;
 GO
 ~~START~~
-real#!#float#!#real#!#real#!#real#!#real#!#real#!#datetime#!#real#!#varchar#!#datetime#!#bigint
-201.0#!#201.0#!#1100.5#!#200.5#!#110.5#!#101.5#!#201.0#!#1900-04-11 12:00:00.0#!#201.0#!#100.5A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100
+real#!#float#!#real#!#real#!#real#!#real#!#real#!#float#!#real#!#varchar#!#datetime#!#bigint
+201.0#!#201.0#!#1100.5#!#200.5#!#110.5#!#101.5#!#201.0#!#100.5#!#201.0#!#100.5A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100
 ~~END~~
 
 
@@ -1142,7 +1142,6 @@ SELECT
     bit_col + smallint_col as bit_smallint_add,
     bit_col + tinyint_col as bit_tinyint_add,
     bit_col + money_col as bit_money_add,
-    bit_col + bit_col as bit_bit_add,
     bit_col + guid_col as bit_guid_add,
     bit_col + image_col as bit_image_add,
     bit_col + binary_col as bit_binary_add
@@ -1156,14 +1155,13 @@ ORDER BY
     bit_smallint_add,
     bit_tinyint_add,
     bit_money_add,
-    bit_bit_add,
     bit_guid_add,
     bit_image_add,
     bit_binary_add;
 GO
 ~~START~~
-numeric#!#datetime#!#datetime#!#bigint#!#int#!#smallint#!#smallint#!#money#!#datetime#!#varchar#!#datetime#!#bigint
-100.50#!#1900-04-11 12:00:00.0#!#1900-04-11 12:00:00.0#!#1000#!#100#!#10#!#1#!#100.5000#!#1900-01-01 00:00:00.0#!#0A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#0
+numeric#!#float#!#float#!#bigint#!#int#!#smallint#!#smallint#!#money#!#varchar#!#datetime#!#bigint
+100.50#!#100.5#!#100.5#!#1000#!#100#!#10#!#1#!#100.5000#!#0A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#0
 ~~END~~
 
 

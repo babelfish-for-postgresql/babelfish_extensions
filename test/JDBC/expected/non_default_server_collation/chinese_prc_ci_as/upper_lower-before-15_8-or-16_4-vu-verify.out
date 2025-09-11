@@ -244,12 +244,12 @@ select '|' + LOWER(@string1) + '|'
 GO
 ~~START~~
 nvarchar
-|比尔·拉                      |
+|比尔·拉                          |
 ~~END~~
 
 ~~START~~
 nvarchar
-|比尔·拉                      |
+|比尔·拉                          |
 ~~END~~
 
 

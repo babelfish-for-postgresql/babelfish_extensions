@@ -1,0 +1,1751 @@
+SELECT CAST(214748 AS INT) * CAST(0.5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+107374.0000
+~~END~~
+
+
+SELECT CAST(214748 AS INT) / CAST(0.5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214748 AS INT) * CAST(-0.05 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-10737.4000
+~~END~~
+
+
+SELECT CAST(214748 AS INT) / CAST(-0.05 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214748 AS INT) * CAST(0.5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-107374.0000
+~~END~~
+
+
+SELECT CAST(-214748 AS INT) / CAST(0.5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214748 AS INT) * CAST(-0.05 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+10737.4000
+~~END~~
+
+
+SELECT CAST(-214748 AS INT) / CAST(-0.05 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214749 AS INT) * CAST(0.5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+107374.5000
+~~END~~
+
+
+SELECT CAST(214749 AS INT) / CAST(0.5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214749 AS INT) * CAST(-0.05 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-10737.4500
+~~END~~
+
+
+SELECT CAST(214749 AS INT) / CAST(-0.05 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214747 AS INT) * CAST(0.5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+107373.5000
+~~END~~
+
+
+SELECT CAST(214747 AS INT) / CAST(0.5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214747 AS INT) * CAST(-0.05 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-10737.3500
+~~END~~
+
+
+SELECT CAST(214747 AS INT) / CAST(-0.05 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) * CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+46116860184273.8000
+~~END~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) / CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) * CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+-461168601842738.0000
+~~END~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) / CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) * CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+-46116860184273.8000
+~~END~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) / CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) * CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+461168601842738.0000
+~~END~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) / CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) * CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+46116860184273.9000
+~~END~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) / CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) * CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+-461168601842739.0000
+~~END~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) / CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) * CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+-46116860184273.9000
+~~END~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) / CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) * CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+461168601842739.0000
+~~END~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) / CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) * CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+46116860184273.8500
+~~END~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) / CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) * CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+-461168601842738.5000
+~~END~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) / CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) * CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+-46116860184273.8500
+~~END~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) / CAST(0.05 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) * CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+461168601842738.5000
+~~END~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) / CAST(-0.5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(214748 AS INT) + CAST(-5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+214743.0000
+~~END~~
+
+
+SELECT CAST(214748 AS INT) - CAST(-5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214748 AS INT) + CAST(-50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+214698.0000
+~~END~~
+
+
+SELECT CAST(214748 AS INT) - CAST(-50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214748 AS INT) + CAST(5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-214743.0000
+~~END~~
+
+
+SELECT CAST(-214748 AS INT) - CAST(5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214749 AS INT) + CAST(5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214749 AS INT) - CAST(5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214749 AS INT) + CAST(-5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214749 AS INT) - CAST(-5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214749 AS INT) + CAST(50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214749 AS INT) - CAST(50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214749 AS INT) + CAST(-50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214749 AS INT) - CAST(-50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214747 AS INT) + CAST(5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(214747 AS INT) - CAST(5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+214742.0000
+~~END~~
+
+
+SELECT CAST(214747 AS INT) + CAST(-5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+214742.0000
+~~END~~
+
+
+SELECT CAST(214747 AS INT) - CAST(-5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214749 AS INT) + CAST(50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214749 AS INT) - CAST(50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214749 AS INT) + CAST(-50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214749 AS INT) - CAST(-50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214747 AS INT) + CAST(5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-214742.0000
+~~END~~
+
+
+SELECT CAST(-214747 AS INT) - CAST(5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214747 AS INT) + CAST(-5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214747 AS INT) - CAST(-5 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-214742.0000
+~~END~~
+
+
+SELECT CAST(-214747 AS INT) + CAST(50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-214697.0000
+~~END~~
+
+
+SELECT CAST(-214747 AS INT) - CAST(50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214747 AS INT) + CAST(-50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-214747 AS INT) - CAST(-50 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-214697.0000
+~~END~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) + CAST(5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) - CAST(5 AS MONEY);
+GO
+~~START~~
+money
+922337203685471.0000
+~~END~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) + CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+922337203685426.0000
+~~END~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) - CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) + CAST(50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) - CAST(50 AS MONEY);
+GO
+~~START~~
+money
+922337203685426.0000
+~~END~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) + CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+922337203685471.0000
+~~END~~
+
+
+SELECT CAST(922337203685476 AS BIGINT) - CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) + CAST(5 AS MONEY);
+GO
+~~START~~
+money
+-922337203685471.0000
+~~END~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) - CAST(5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) + CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) - CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+-922337203685426.0000
+~~END~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) + CAST(50 AS MONEY);
+GO
+~~START~~
+money
+-922337203685426.0000
+~~END~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) - CAST(50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) + CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685476 AS BIGINT) - CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+-922337203685471.0000
+~~END~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) + CAST(5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) - CAST(5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) + CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) - CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) + CAST(50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) - CAST(50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) + CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685478 AS BIGINT) - CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) + CAST(5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) - CAST(5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) + CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) - CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) + CAST(50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) - CAST(50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) + CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685478 AS BIGINT) - CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) + CAST(5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) - CAST(5 AS MONEY);
+GO
+~~START~~
+money
+922337203685472.0000
+~~END~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) + CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+922337203685427.0000
+~~END~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) - CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) + CAST(50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) - CAST(50 AS MONEY);
+GO
+~~START~~
+money
+922337203685427.0000
+~~END~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) + CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+922337203685472.0000
+~~END~~
+
+
+SELECT CAST(922337203685477 AS BIGINT) - CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) + CAST(5 AS MONEY);
+GO
+~~START~~
+money
+-922337203685472.0000
+~~END~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) - CAST(5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) + CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) - CAST(-50 AS MONEY);
+GO
+~~START~~
+money
+-922337203685427.0000
+~~END~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) + CAST(50 AS MONEY);
+GO
+~~START~~
+money
+-922337203685427.0000
+~~END~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) - CAST(50 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) + CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-922337203685477 AS BIGINT) - CAST(-5 AS MONEY);
+GO
+~~START~~
+money
+-922337203685472.0000
+~~END~~
+
+
+SELECT CAST(5 AS MONEY) - CAST(922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(5 AS MONEY) + CAST(-922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(5 AS MONEY) - CAST(-922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(5 AS MONEY) + CAST(922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(5 AS MONEY) - CAST(922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+-922337203685472.0000
+~~END~~
+
+
+SELECT CAST(5 AS MONEY) + CAST(-922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+-922337203685472.0000
+~~END~~
+
+
+SELECT CAST(5 AS MONEY) - CAST(-922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-50 AS MONEY) + CAST(922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+922337203685426.0000
+~~END~~
+
+
+SELECT CAST(-50 AS MONEY) - CAST(922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-50 AS MONEY) + CAST(-922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-50 AS MONEY) - CAST(-922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+922337203685426.0000
+~~END~~
+
+
+SELECT CAST(-50 AS MONEY) + CAST(922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-50 AS MONEY) - CAST(922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-50 AS MONEY) + CAST(-922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-50 AS MONEY) - CAST(-922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-50 AS MONEY) + CAST(922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+922337203685427.0000
+~~END~~
+
+
+SELECT CAST(-50 AS MONEY) - CAST(922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-50 AS MONEY) + CAST(-922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-50 AS MONEY) - CAST(-922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+922337203685427.0000
+~~END~~
+
+
+SELECT CAST(50 AS MONEY) + CAST(922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(50 AS MONEY) - CAST(922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+-922337203685426.0000
+~~END~~
+
+
+SELECT CAST(50 AS MONEY) + CAST(-922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+-922337203685426.0000
+~~END~~
+
+
+SELECT CAST(50 AS MONEY) - CAST(922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+-922337203685427.0000
+~~END~~
+
+
+SELECT CAST(50 AS MONEY) + CAST(-922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+-922337203685427.0000
+~~END~~
+
+
+SELECT CAST(50 AS MONEY) - CAST(-922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-5 AS MONEY) + CAST(922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+922337203685471.0000
+~~END~~
+
+
+SELECT CAST(-5 AS MONEY) - CAST(922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-5 AS MONEY) + CAST(-922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-5 AS MONEY) - CAST(-922337203685476 AS BIGINT);
+GO
+~~START~~
+money
+922337203685471.0000
+~~END~~
+
+
+SELECT CAST(-5 AS MONEY) + CAST(922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-5 AS MONEY) - CAST(922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-5 AS MONEY) + CAST(-922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-5 AS MONEY) - CAST(-922337203685478 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-5 AS MONEY) + CAST(922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+922337203685472.0000
+~~END~~
+
+
+SELECT CAST(-5 AS MONEY) - CAST(922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-5 AS MONEY) + CAST(-922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+SELECT CAST(-5 AS MONEY) - CAST(-922337203685477 AS BIGINT);
+GO
+~~START~~
+money
+922337203685472.0000
+~~END~~
+
+
+SELECT CAST(5 AS SMALLMONEY) + CAST(214748 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(5 AS SMALLMONEY) - CAST(214748 AS INT);
+GO
+~~START~~
+smallmoney
+-214743.0000
+~~END~~
+
+
+SELECT CAST(5 AS SMALLMONEY) + CAST(-214748 AS INT);
+GO
+~~START~~
+smallmoney
+-214743.0000
+~~END~~
+
+
+SELECT CAST(5 AS SMALLMONEY) - CAST(-214748 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(5 AS SMALLMONEY) + CAST(214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(5 AS SMALLMONEY) - CAST(214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(5 AS SMALLMONEY) + CAST(214747 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(5 AS SMALLMONEY) - CAST(214747 AS INT);
+GO
+~~START~~
+smallmoney
+-214742.0000
+~~END~~
+
+
+SELECT CAST(5 AS SMALLMONEY) + CAST(-214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(5 AS SMALLMONEY) - CAST(-214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(5 AS SMALLMONEY) + CAST(-214747 AS INT);
+GO
+~~START~~
+smallmoney
+-214742.0000
+~~END~~
+
+
+SELECT CAST(5 AS SMALLMONEY) - CAST(-214747 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) + CAST(214748 AS INT);
+GO
+~~START~~
+smallmoney
+214743.0000
+~~END~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) - CAST(214748 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) + CAST(-214748 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) - CAST(-214748 AS INT);
+GO
+~~START~~
+smallmoney
+214743.0000
+~~END~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) + CAST(214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) - CAST(214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) + CAST(214747 AS INT);
+GO
+~~START~~
+smallmoney
+214742.0000
+~~END~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) - CAST(214747 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) + CAST(-214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) - CAST(-214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) + CAST(-214747 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-5 AS SMALLMONEY) - CAST(-214747 AS INT);
+GO
+~~START~~
+smallmoney
+214742.0000
+~~END~~
+
+
+SELECT CAST(50 AS SMALLMONEY) + CAST(214748 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(50 AS SMALLMONEY) - CAST(214748 AS INT);
+GO
+~~START~~
+smallmoney
+-214698.0000
+~~END~~
+
+
+SELECT CAST(50 AS SMALLMONEY) + CAST(-214748 AS INT);
+GO
+~~START~~
+smallmoney
+-214698.0000
+~~END~~
+
+
+SELECT CAST(50 AS SMALLMONEY) - CAST(-214748 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(50 AS SMALLMONEY) + CAST(214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(50 AS SMALLMONEY) - CAST(214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(50 AS SMALLMONEY) + CAST(214747 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(50 AS SMALLMONEY) - CAST(214747 AS INT);
+GO
+~~START~~
+smallmoney
+-214697.0000
+~~END~~
+
+
+SELECT CAST(50 AS SMALLMONEY) + CAST(-214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(50 AS SMALLMONEY) - CAST(-214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(50 AS SMALLMONEY) + CAST(-214747 AS INT);
+GO
+~~START~~
+smallmoney
+-214697.0000
+~~END~~
+
+
+SELECT CAST(50 AS SMALLMONEY) - CAST(-214747 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) + CAST(214748 AS INT);
+GO
+~~START~~
+smallmoney
+214698.0000
+~~END~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) - CAST(214748 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) + CAST(-214748 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) - CAST(-214748 AS INT);
+GO
+~~START~~
+smallmoney
+214698.0000
+~~END~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) + CAST(214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) - CAST(214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) + CAST(214747 AS INT);
+GO
+~~START~~
+smallmoney
+214697.0000
+~~END~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) - CAST(214747 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) + CAST(-214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) - CAST(-214749 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) + CAST(-214747 AS INT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: smallmoney out of range)~~
+
+
+SELECT CAST(-50 AS SMALLMONEY) - CAST(-214747 AS INT);
+GO
+~~START~~
+smallmoney
+214697.0000
+~~END~~
+

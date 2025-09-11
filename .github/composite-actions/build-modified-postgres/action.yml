@@ -50,7 +50,7 @@ runs:
         fi
         $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$REPOSITORY_OWNER" "$ENGINE_BRANCH"
         cd postgresql_modified_for_babelfish
-        rm -rf ~/.ccache
+        rm -rf ~/.cache
         if [[ ${{inputs.tap_tests}} == "yes" ]]; then
           echo "CRESTORE_KEY=$(git rev-parse --short HEAD)-tapTest" >> $GITHUB_ENV
         elif [[ ${{inputs.code_coverage}} == "yes" ]]; then
@@ -67,7 +67,7 @@ runs:
       if: ${{ github.event_name == 'pull_request' }} || ${{ inputs.code_coverage == 'yes' }}
       with:
         path: 
-          ~/.ccache
+          ~/.cache
         key: 
           random-random
         restore-keys: 

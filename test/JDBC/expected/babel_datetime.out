@@ -126,6 +126,13 @@ datetime
 
 
 -- Test date
+select CAST(CAST('' AS date) AS datetime)
+go
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
 select CAST(CAST('1999-12-31' AS date) AS datetime)
 go
 ~~START~~
@@ -137,7 +144,7 @@ select CAST(CAST('2000-01-01 23:59:59.999' AS datetime) AS date)
 go
 ~~START~~
 date
-2000-01-01
+2000-01-02
 ~~END~~
 
 -- out of range
@@ -151,6 +158,13 @@ datetime
 
 
 -- Test time
+select CAST(CAST('' AS time) AS datetime)
+go
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
 select CAST(CAST('00:00:00.000' AS time) AS datetime)
 go
 ~~START~~
@@ -176,7 +190,7 @@ select CAST(CAST('1900-05-06 23:59:29.998' AS datetime) AS time)
 go
 ~~START~~
 time
-23:59:29.9980000
+23:59:29.9970000
 ~~END~~
 
 select CAST(CAST('2050-05-06 00:00:00' AS datetime) AS time)
@@ -190,7 +204,7 @@ select CAST(CAST('2050-05-06 23:59:29.998' AS datetime) AS time)
 go
 ~~START~~
 time
-23:59:29.9980000
+23:59:29.9970000
 ~~END~~
 
 

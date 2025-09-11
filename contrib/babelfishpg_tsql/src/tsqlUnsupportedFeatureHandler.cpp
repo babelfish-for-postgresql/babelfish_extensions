@@ -193,7 +193,7 @@ protected:
 		antlrcpp::Any visitOdbc_scalar_function(TSqlParser::Odbc_scalar_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override;
 
-		antlrcpp::Any visitHierarchyid_coloncolon(TSqlParser::Hierarchyid_coloncolonContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitHierarchyid_static_method(TSqlParser::Hierarchyid_static_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitOdbc_literal_expr(TSqlParser::Odbc_literal_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_ODBC_LITERAL, "odbc literal", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitDollar_action_expr(TSqlParser::Dollar_action_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DOLLAR_ACTION, "$ACTION", getLineAndPos(ctx)); return visitChildren(ctx); }
 
@@ -764,13 +764,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_table(TSqlParser::Al
 		{
 			if (!cdctx->collation().empty())
 				handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_COLLATE, "COLLATE in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
-			if (!cdctx->null_notnull().empty())
-			{
-				if (cdctx->null_notnull()[0]->NOT())
-					handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NOT_NULL, "NOT NULL in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
-				else
-					handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NULL, "NULL in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
-			}
 		}
 	}
 
@@ -1527,9 +1520,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitId(TSqlParser::IdContext *
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitXml_func_arg(TSqlParser::Xml_func_argContext *ctx)
 {
-	if (ctx->VALUE())
-		handle(INSTR_UNSUPPORTED_TSQL_XML_VALUE, "XML VALUE", getLineAndPos(ctx));
-	else if (ctx->QUERY())
+	if (ctx->QUERY())
 		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY", getLineAndPos(ctx));
 	else if (ctx->MODIFY())
 		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML MODIFY", getLineAndPos(ctx));
@@ -1712,7 +1703,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_generate_database_ledger_digest",
 	"sp_grantdbaccess",
 	"sp_grantlogin",
-	"sp_helplogins",
 	"sp_helpntgroup",
 	"sp_helpremotelogin",
 	"sp_helprotect",
