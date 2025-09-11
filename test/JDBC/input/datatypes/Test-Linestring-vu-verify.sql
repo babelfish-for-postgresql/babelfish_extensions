@@ -146,6 +146,61 @@ GO
 SELECT CAST(CAST(0x000000000104000000000000000002000000fffffffffffffff02 as geometry) As varchar(MAX))
 GO
 
+-- Test functions with Invalid geometries
+SELECT geography::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STIsValid();
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STIsValid();
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STIsClosed();
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STIsClosed();
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STDimension();
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STDimension();
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STArea();
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STArea();
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STDistance(geography::STGeomFromText('LINESTRING(3 4, 3 4, 3 4 5 5 )', 4326));
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STDistance(geometry::STGeomFromText('LINESTRING(3 4, 3 4, 3 4 5 5 )', 4326));
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STContains(geography::STGeomFromText('LINESTRING(3 4, 3 4, 3 4 5 5 )', 4326));
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STContains(geometry::STGeomFromText('LINESTRING(3 4, 3 4, 3 4 5 5 )', 4326));
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STDisjoint(geography::STGeomFromText('LINESTRING(3 4, 3 4, 3 4 5 5 )', 4326));
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STDisjoint(geometry::STGeomFromText('LINESTRING(3 4, 3 4, 3 4 5 5 )', 4326));
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STIntersects(geography::STGeomFromText('LINESTRING(3 4, 3 4, 3 4 5 5 )', 4326));
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STIntersects(geometry::STGeomFromText('LINESTRING(3 4, 3 4, 3 4 5 5 )', 4326));
+GO
+
+Select * from GEOSPATIALLINEGEOM_INVALID_dt;
+GO
+
+Select * from GEOSPATIALLINEGEOG_INVALID_dt;
+GO
+
 Select * from LineGeogFromText
 GO
 

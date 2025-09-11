@@ -772,25 +772,6 @@ CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
-	RETURNS sys.BIT
-	AS $$
-	DECLARE
-		geom_type text;
-	BEGIN
-		-- Get the geometry type
-		geom_type := ST_GeometryType(geom); 
-		-- Check if any figures of the geometry instance are points
-		IF geom_type = 'ST_Point' THEN
-			RETURN 0;
-		ELSIF STIsValid(geom) = 0 THEN
-			RAISE EXCEPTION 'The geometry instance is not valid';
-		END IF; 
-   
-		RETURN sys.STIsClosed_helper(geom);
-	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS float8
 	AS $$
