@@ -980,12 +980,59 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 								}
 								break;
 							}
-
+						case AT_AlterColumnType:
+						{
+							ColumnDef *def = castNode(ColumnDef, cmd->def);
+							
+							/* SYSNAME datatype is default not null */
+							if (is_sysname_column(def) && !have_null_constr(def->constraints))
+							{
+								Constraint *c = makeNode(Constraint);
+								c->contype = CONSTR_NOTNULL;
+								c->location = -1;
+								def->constraints = lappend(def->constraints, c);
+							}
+							
 							/*
-							 * TODO: After ALTER TABLE ALTER COLUMN [NOT] NULL
-							 * is supported, we should add same SYSNAME check
-							 * code for ALTER TABLE ALTER COLUMN
+							 * When a user explicitly specifies NULL or NOT NULL in an ALTER COLUMN statement, 
+							 * we need to process this separately from the type change. We:
+							 *	- Detect explicit nullability (marked by "tsql_explicit_nullability" in def->storage_name)
+							 *  - Check if only nullability is changing (type/typmod unchanged): If yes:
+							 *		- Update subtype to AT_SetNotNull or AT_DropNotNull accordingly
+							 *	- If type/typmod is also changing along with nullability:
+							 * 		- Append this new subcommand to the command list for later execution
 							 */
+							if (def && def->storage_name && strcmp(def->storage_name, TSQL_EXPLICIT_NULLABILITY_MARKER) == 0)
+							{
+								Relation rel = relation_openrv(atstmt->relation, AccessShareLock);
+								TupleDesc tupdesc = RelationGetDescr(rel);
+								AttrNumber attnum = get_attnum(RelationGetRelid(rel), cmd->name);
+								
+								if (attnum != InvalidAttrNumber)
+								{
+									Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+									Oid new_typeid;
+									int32 new_typmod;
+									typenameTypeIdAndMod(NULL, def->typeName, &new_typeid, &new_typmod);
+									
+									/* Check if column type and typmod is actually changing or just nullability */
+									if (attr->atttypid == new_typeid && attr->atttypmod == new_typmod)
+									{
+										cmd->subtype = def->is_not_null ? AT_SetNotNull : AT_DropNotNull;
+									}
+									else
+									{
+										/* Type is changing - append nullability command to the atstmt list */
+										AlterTableCmd *nullCmd = makeNode(AlterTableCmd);
+										nullCmd->subtype = def->is_not_null ? AT_SetNotNull : AT_DropNotNull;
+										nullCmd->name = pstrdup(cmd->name);
+										atstmt->cmds = lappend(atstmt->cmds, nullCmd);
+									}
+								}
+								relation_close(rel, AccessShareLock);
+							}
+							break;
+						}
 						default:
 							break;
 					}
@@ -2944,6 +2991,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if(!cfs->is_procedure)
 						{
+							if (!(handle_bbf_view_binding_on_object_drop(&originalFunc, false)))
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+											errmsg("Cannot alter function %s because it is bound to a view.", NameListToString(cfs->funcname))));
+							}
 							/*
 							 * Postgres does not allow us to create functions with different return types
 							 * so we need to delete and recreate them 
@@ -2954,6 +3007,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						else if (!isSameProc) /* i.e. different signature */
 						{
+							if (!(handle_bbf_view_binding_on_object_drop(&originalFunc, false)))
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+											errmsg("Cannot alter function %s because it is bound to a view.", NameListToString(cfs->funcname))));
+							}
 							performDeletion(&originalFunc, DROP_RESTRICT, 0);
 							CommandCounterIncrement();
 						}
@@ -3069,6 +3128,43 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				ViewStmt *stmt = (ViewStmt *) parsetree;
 
 				/*
+				 * By default, TSQL view should be created with security_invoker
+				 * property. It adds security_invoker option to the options list.
+				 * Note that,  (stmt->createOrAlter && !stmt->replace) captures the 
+				 * TSQL "CREATE OR ALTER view" stmt and
+				 * (!stmt->createOrAlter && !stmt->replace) will capture the TSQL
+				 * "CREATE view" stmt, combination of both condition simplifies
+				 * into !(stmt->replace)
+				 */
+				if (sql_dialect == SQL_DIALECT_TSQL &&
+					IS_TDS_CLIENT())
+				{
+					bool        security_invoker_found = false;
+
+					/* Check if security_invoker option already exists */
+					foreach_node(DefElem, defel, stmt->options)
+					{
+						if (strcmp(defel->defname, "security_invoker") == 0)
+						{
+							/* Modify existing option to true */
+							defel->arg = (Node *) makeBoolean(true);
+							security_invoker_found = true;
+							break;
+						}
+					}
+
+					/* If security_invoker option not found, add it */
+					if (!security_invoker_found)
+					{
+						DefElem *new_option;
+						new_option = makeDefElem("security_invoker",
+												 (Node *) makeBoolean(true),
+												 -1);
+						stmt->options = lappend(stmt->options, new_option);
+					}
+				}
+
+				/*
 				 * We are using PostgreSQL's existing ViewStmt node which is shared between PostgreSQL's
 				 * CREATE VIEW and T-SQL's ALTER VIEW/CREATE OR ALTER VIEW operations. To properly distinguish 
 				 * between these operations and not let CREATE VIEW inside this case we use createOrAlter flag
@@ -3151,7 +3247,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							originalView.classId = RelationRelationId;
 							originalView.objectSubId = 0;
 
-							if (!(handle_bbf_view_binding_on_object_drop(&originalView, NULL, stmt)))
+							if (!(handle_bbf_view_binding_on_object_drop(&originalView, true)))
 							/* Strong view dependency found, abort the drop */
 								ereport(ERROR,
 										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
@@ -4227,6 +4323,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									pfree(rolspec->rolename);
 
 									rolspec->rolename = user_name;
+									bbf_shdep_drop_owned_dependent_acl((Oid) role_oid, DROP_CASCADE);
 								}
 							}
 							else
@@ -5712,6 +5809,8 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->lock_timeout = pltsql_lock_timeout;
 		(*pltsql_protocol_plugin_ptr)->language = pltsql_language;
 		(*pltsql_protocol_plugin_ptr)->UpdateToNextDayHelper = common_utility_plugin_ptr->UpdateToNextDayHelper;
+		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geometry = common_utility_plugin_ptr->bytea_from_geometry;
+		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geography = common_utility_plugin_ptr->bytea_from_geography;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);

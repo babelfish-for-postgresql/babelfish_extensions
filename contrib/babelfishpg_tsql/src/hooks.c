@@ -84,6 +84,7 @@
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
+#include "pltsql_permissions.h"
 #include "pl_explain.h"
 #include "catalog.h"
 #include "dbcmds.h"
@@ -614,6 +615,9 @@ InstallExtendedHooks(void)
 	prev_pre_QueryRewrite_hook = pre_QueryRewrite_hook;
 	pre_QueryRewrite_hook = repair_broken_views;
 
+	walk_view_rule_hook = mark_nodes_inside_view;
+
+	handle_target_view_hook = tsql_handle_target_view_hook;
 }
 
 void
@@ -702,6 +706,8 @@ UninstallExtendedHooks(void)
 	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
 	ExecCheckOneRelPerms_hook = NULL;
 	get_domain_typmodin_hook = NULL;
+	walk_view_rule_hook = NULL;
+	handle_target_view_hook = NULL;
 }
 
 /*****************************************
@@ -3204,7 +3210,7 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 			obj.objectSubId = subId;
 
 			/* Call view dependency handling function */
-			handle_bbf_view_binding_on_object_drop(&obj, NULL, NULL);
+			handle_bbf_view_binding_on_object_drop(&obj, false);
 		}
 	}
 	if (access == OAT_DROP && classId == ProcedureRelationId)
@@ -3222,7 +3228,7 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 			obj.objectSubId = 0;
 			
 			/* Call view dependency handling for functions */
-			handle_bbf_view_binding_on_object_drop(&obj, NULL, NULL);
+			handle_bbf_view_binding_on_object_drop(&obj, false);
 		}
 	}
 	if (sql_dialect != SQL_DIALECT_TSQL)
@@ -4912,11 +4918,67 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 	return argsprinted;
 }
 
+/*
+ * update_rte_perms_info_walker
+ *		Recursively scan a query or expression tree and set the checkAsUser
+ *		field to corresponding TSQL login in RTEPermissionInfos of view RTEs of Query.
+ */
+static bool
+update_rte_perms_info_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Query))
+	{
+		ListCell   *l;
+		Query	*qry = (Query *) node;
+
+		foreach(l, qry->rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+
+			if (rte->rtekind == RTE_SUBQUERY && get_rel_relkind(rte->relid) == RELKIND_VIEW)
+			{
+				Oid nspid = get_rel_namespace(rte->relid);
+
+				if (OidIsValid(nspid))
+				{
+					char *physical_schemaname = NULL;
+					RTEPermissionInfo *perminfo = NULL;
+
+					physical_schemaname = get_namespace_name(nspid);
+					perminfo = getRTEPermissionInfo(qry->rteperminfos, rte);
+
+					if (physical_schemaname && !is_shared_schema(physical_schemaname))
+					{
+						if (OidIsValid(perminfo->checkAsUser))
+						{
+							Oid loginId = get_login_for_user(perminfo->checkAsUser, physical_schemaname);
+							if (OidIsValid(loginId))
+								perminfo->checkAsUser = loginId;
+						}
+						else
+							perminfo->checkAsUser = GetSessionUserId();
+					}
+					if (physical_schemaname)
+						pfree(physical_schemaname);
+				}
+			}
+		}
+		return query_tree_walker(qry, update_rte_perms_info_walker, NULL, 0);
+	}
+	return expression_tree_walker(node, update_rte_perms_info_walker, NULL);
+}
+
 static PlannedStmt *
 pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 {
 	PlannedStmt *plan;
 	PLtsql_execstate *estate = NULL;
+
+	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
+		update_rte_perms_info_walker((Node *) parse, NULL);
 
 	if (pltsql_explain_analyze)
 	{
@@ -7414,21 +7476,18 @@ create_dummy_view_query_for_broken_view(Oid viewOid)
  */
 
 bool
-handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, Relation depRel, ViewStmt *stmt)
+handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, bool is_alter_view)
 {
 	ScanKeyData 	key[3];
 	SysScanDesc 	scan;
 	HeapTuple 		tup;
+	Relation 		depRel;
 	List 			*processed_views = NIL;
 	Oid 			viewOid = InvalidOid;
-	bool 			is_alter_view = false;
 	bool 			is_weak_view = false;
 	bool 			processed = true;
 	bool 			updated;
-	int             nkeys = 2;
-
-	/* Check if this is an ALTER VIEW operation */
-	is_alter_view = (stmt != NULL && stmt->createOrAlter);
+	int				nkeys = 2;
 	
 	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
 		return false;

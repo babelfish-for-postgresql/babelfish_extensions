@@ -188,7 +188,7 @@ SELECT '|' + RTRIM(@inputString) + '|'
 GO
 ~~START~~
 nvarchar
-|  abc?defghi??|
+|  abc🙂defghi🙂🙂|
 ~~END~~
 
 
