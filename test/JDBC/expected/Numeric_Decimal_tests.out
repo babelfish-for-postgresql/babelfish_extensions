@@ -2818,29 +2818,29 @@ numeric
 SELECT SQRT(CAST(144 AS NUMERIC(3,0))) AS result;                -- Positive NUMERIC
 GO
 ~~START~~
-numeric
-12.000000000000000
+float
+12.0
 ~~END~~
 
 SELECT SQRT(CAST(144 AS DECIMAL(3,0))) AS result;                -- Positive DECIMAL
 GO
 ~~START~~
-numeric
-12.000000000000000
+float
+12.0
 ~~END~~
 
 SELECT SQRT(CAST(0 AS NUMERIC(3,0))) AS result;                  -- Zero NUMERIC
 GO
 ~~START~~
-numeric
-0E-15
+float
+0.0
 ~~END~~
 
 SELECT SQRT(CAST(12.25 AS NUMERIC(4,2))) AS result;              -- Decimal NUMERIC
 GO
 ~~START~~
-numeric
-3.500000000000000
+float
+3.5
 ~~END~~
 
 SELECT SQRT(CAST(-144 AS NUMERIC(3,0))) AS result;               -- Negative NUMERIC (should return NULL)
@@ -2852,29 +2852,29 @@ GO
 SELECT SQRT(CAST(NULL AS NUMERIC(5,2))) AS result;               -- NULL value
 GO
 ~~START~~
-numeric
+float
 <NULL>
 ~~END~~
 
 SELECT SQRT(CAST(2 AS NUMERIC(1,0))) AS result;                  -- Irrational result
 GO
 ~~START~~
-numeric
-1.414213562373095
+float
+1.4142135623730951
 ~~END~~
 
 SELECT SQRT(CAST(9999999999999999 AS NUMERIC(16,0))) AS result;  -- Large number
 GO
 ~~START~~
-numeric
-99999999.999999995
+float
+1.0E8
 ~~END~~
 
 SELECT SQRT(CAST(0.0000000001 AS NUMERIC(11,10))) AS result;     -- Small number
 GO
 ~~START~~
-numeric
-0.000010000000000000000
+float
+1.0E-5
 ~~END~~
 
 
@@ -4236,7 +4236,7 @@ SELECT CAST(CAST(123.456789 AS DECIMAL(10,6)) AS DECIMAL(8,2)), CAST(CAST(123.45
 GO
 ~~START~~
 numeric#!#numeric
-123.45#!#123.45678900
+123.46#!#123.45678900
 ~~END~~
 
 
@@ -4445,7 +4445,7 @@ SELECT CAST(CAST(123.4567 AS DECIMAL(8,4)) AS DECIMAL(5,2));
 GO
 ~~START~~
 numeric
-123.45
+123.46
 ~~END~~
 
 
@@ -4577,7 +4577,7 @@ SELECT CAST(CAST(123.45 AS DECIMAL(5,2)) AS DECIMAL(5,1));
 GO
 ~~START~~
 numeric
-123.4
+123.5
 ~~END~~
 
 
@@ -4614,7 +4614,7 @@ SELECT TRY_CAST(CAST(999.99 AS DECIMAL(5,2)) AS DECIMAL(4,1));
 GO
 ~~START~~
 numeric
-999.99000000
+<NULL>
 ~~END~~
 
 
@@ -4633,7 +4633,7 @@ SELECT CAST(CAST(-123.45 AS DECIMAL(5,2)) AS DECIMAL(5,1));
 GO
 ~~START~~
 numeric
--123.4
+-123.5
 ~~END~~
 
 
@@ -4701,7 +4701,7 @@ SELECT CAST(CAST(1.5 AS DECIMAL(2,1)) AS DECIMAL(1,0));
 GO
 ~~START~~
 numeric
-1
+2
 ~~END~~
 
 
@@ -4832,17 +4832,19 @@ GO
 -- XML -> NUMERIC
 SELECT CAST(CAST('<root>123</root>' AS XML).value('/root[1]', 'varchar(10)') AS NUMERIC(10,2));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~START~~
+numeric
+123.00
+~~END~~
 
 
 -- XML -> DECIMAL
 SELECT CAST(CAST('<root>123.45</root>' AS XML).value('/root[1]', 'varchar(10)') AS DECIMAL(10,2));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~START~~
+numeric
+123.45
+~~END~~
 
 
 -- DATETIMEOFFSET -> NUMERIC/DECIMAL
@@ -5500,7 +5502,7 @@ SELECT CONVERT(DECIMAL(8,2), CONVERT(DECIMAL(10,6), 123.456789)), CONVERT(DECIMA
 GO
 ~~START~~
 numeric#!#numeric
-123.45#!#123.45678900
+123.46#!#123.45678900
 ~~END~~
 
 
@@ -5552,7 +5554,7 @@ SELECT CONVERT(NUMERIC(5,2), CONVERT(DECIMAL(1,0), 1)), CONVERT(DECIMAL(20,5), C
 GO
 ~~START~~
 numeric#!#numeric
-1.00#!#123.45678
+1.00#!#123.45679
 ~~END~~
 
 
@@ -5756,17 +5758,19 @@ GO
 -- XML -> NUMERIC using CONVERT
 SELECT CONVERT(NUMERIC(10,2), CAST('<root>123</root>' AS XML).value('/root[1]', 'varchar(10)'));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~START~~
+numeric
+123.00
+~~END~~
 
 
 -- XML -> DECIMAL using CONVERT
 SELECT CONVERT(DECIMAL(10,2), CAST('<root>123.45</root>' AS XML).value('/root[1]', 'varchar(10)'));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+~~START~~
+numeric
+123.45
+~~END~~
 
 
 -- DATETIMEOFFSET -> NUMERIC using CONVERT
@@ -9831,9 +9835,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = CAST(500.00 AS MONEY)
-Seq Scan on numeric_index_test (actual rows=1 loops=1)
-  Filter: (num_col = (('500.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
-  Rows Removed by Filter: 2
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = (('500.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
 ~~END~~
 
 

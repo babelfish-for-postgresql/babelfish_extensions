@@ -9,6 +9,7 @@
 #define PLTSQL_DATETIME_H
 
 #include "datatype/timestamp.h"
+#include "utils/date.h"
 
 /*	Round off to MAX_DATETIME_PRECISION decimal places. */
 #define DT_PREC_INV 1000
@@ -33,6 +34,10 @@
 #define TSQL_DEFAULT_DATETIME	INT64CONST(-3155673600000000)
 
 extern Timestamp initializeToDefaultDatetime(void);
+extern DateADT initializeToDefaultDate(void);
+extern TimeADT initializeToDefaultTime(int32 typmod);
+extern bool isEmptyOrWhitespace(const char *str);
+
 /** Utility function to calculate days from '1900-01-01 00:00:00' */
 extern double calculateDaysFromDefaultDatetime(Timestamp timestamp_left); 
 extern int roundFractionalSeconds(int fractseconds); 
@@ -42,6 +47,9 @@ extern char* datetypeName(int num);
 
 extern bool int64_multiply_add(int64 val, int64 multiplier, int64 *sum);
 extern bool int32_multiply_add(int32 val, int32 multiplier, int32 *sum);
+
+extern Timestamp roundoff_datetime(Timestamp timestamp);
+extern void UpdateToNextDayHelper(struct pg_tm *tm);
 
 /* Range-check a datetime */
 #define IS_VALID_DATETIME(t)  (MIN_DATETIME <= (t) && (t) < END_DATETIME)

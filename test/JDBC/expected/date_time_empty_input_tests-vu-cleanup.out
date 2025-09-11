@@ -1,0 +1,14 @@
+DROP TABLE test_empty_strings;
+GO
+
+DROP VIEW empty_string_date_time_view;
+GO
+
+DROP VIEW string_vars_to_date_view;
+GO
+
+DROP VIEW string_vars_to_time_view;
+GO
+
+DROP VIEW tab_space_dates_view;
+GO

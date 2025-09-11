@@ -56,6 +56,9 @@
   engine_branch: BABEL_2_13_STABLE__PG_14_18
   extension_branch: BABEL_2_13_STABLE
 '14.19':
+  engine_branch: BABEL_2_14_STABLE__PG_14_19
+  extension_branch: BABEL_2_14_STABLE
+'14.20':
   engine_branch: BABEL_2_X_DEV__PG_14_X
   extension_branch: BABEL_2_X_DEV
 '15.2':
@@ -89,6 +92,9 @@
   engine_branch: BABEL_3_10_STABLE__PG_15_13
   extension_branch: BABEL_3_10_STABLE
 '15.14':
+  engine_branch: BABEL_3_11_STABLE__PG_15_14
+  extension_branch: BABEL_3_11_STABLE
+'15.15':
   engine_branch: BABEL_3_X_DEV__PG_15_X
   extension_branch: BABEL_3_X_DEV
 '16.1':
@@ -113,6 +119,9 @@
   engine_branch: BABEL_4_6_STABLE__PG_16_9
   extension_branch: BABEL_4_6_STABLE
 '16.10':
+  engine_branch: BABEL_4_7_STABLE__PG_16_10
+  extension_branch: BABEL_4_7_STABLE
+'16.11':
   engine_branch: BABEL_4_X_DEV__PG_16_X
   extension_branch: BABEL_4_X_DEV
 '17.4':
@@ -121,6 +130,9 @@
 '17.5':
   engine_branch: BABEL_5_2_STABLE__PG_17_5
   extension_branch: BABEL_5_2_STABLE
+'17.6':
+  engine_branch: BABEL_5_3_STABLE__PG_17_6
+  extension_branch: BABEL_5_3_STABLE
 'source.latest':
   engine_branch: latest
   extension_branch: latest

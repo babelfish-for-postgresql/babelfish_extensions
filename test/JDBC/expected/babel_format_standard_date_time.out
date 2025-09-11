@@ -1,5 +1,9 @@
 --DATE standard formatting
 CREATE TABLE date_testing(d DATE);
+INSERT INTO date_testing VALUES('');
+go
+~~ROW COUNT: 1~~
+
 INSERT INTO date_testing VALUES('1753-1-1');
 go
 ~~ROW COUNT: 1~~
@@ -17,6 +21,7 @@ select * from date_testing;
 go
 ~~START~~
 date
+1900-01-01
 1753-01-01
 9999-12-31
 1992-05-23
@@ -26,6 +31,7 @@ select FORMAT(d, 'd','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+1/1/1900
 1/1/1753
 12/31/9999
 5/23/1992
@@ -35,6 +41,7 @@ select FORMAT(d, 'D','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+Monday, January 1, 1900
 Monday, January 1, 1753
 Friday, December 31, 9999
 Saturday, May 23, 1992
@@ -44,6 +51,7 @@ select FORMAT(d, 'f','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+Monday, January 1, 1900 12:00 AM
 Monday, January 1, 1753 12:00 AM
 Friday, December 31, 9999 12:00 AM
 Saturday, May 23, 1992 12:00 AM
@@ -53,6 +61,7 @@ select FORMAT(d, 'F','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+Monday, January 1, 1900 12:00:00 AM
 Monday, January 1, 1753 12:00:00 AM
 Friday, December 31, 9999 12:00:00 AM
 Saturday, May 23, 1992 12:00:00 AM
@@ -62,6 +71,7 @@ select FORMAT(d, 'g','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+1/1/1900 12:00 AM
 1/1/1753 12:00 AM
 12/31/9999 12:00 AM
 5/23/1992 12:00 AM
@@ -71,6 +81,7 @@ select FORMAT(d, 'G','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+1/1/1900 12:00:00 AM
 1/1/1753 12:00:00 AM
 12/31/9999 12:00:00 AM
 5/23/1992 12:00:00 AM
@@ -80,6 +91,7 @@ select FORMAT(d, 'R','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+Mon, 01 Jan 1900 00:00:00 GMT
 Mon, 01 Jan 1753 00:00:00 GMT
 Fri, 31 Dec 9999 00:00:00 GMT
 Sat, 23 May 1992 00:00:00 GMT
@@ -89,6 +101,7 @@ select FORMAT(d, 'r','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+Mon, 01 Jan 1900 00:00:00 GMT
 Mon, 01 Jan 1753 00:00:00 GMT
 Fri, 31 Dec 9999 00:00:00 GMT
 Sat, 23 May 1992 00:00:00 GMT
@@ -98,6 +111,7 @@ select FORMAT(d, 's','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+1900-01-01T00:00:00
 1753-01-01T00:00:00
 9999-12-31T00:00:00
 1992-05-23T00:00:00
@@ -110,6 +124,7 @@ nvarchar
 12:00 AM
 12:00 AM
 12:00 AM
+12:00 AM
 ~~END~~
 
 select FORMAT(d, 'T','en-us') from date_testing;
@@ -119,12 +134,14 @@ nvarchar
 12:00:00 AM
 12:00:00 AM
 12:00:00 AM
+12:00:00 AM
 ~~END~~
 
 select FORMAT(d, 'u','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+1900-01-01 00:00:00Z
 1753-01-01 00:00:00Z
 9999-12-31 00:00:00Z
 1992-05-23 00:00:00Z
@@ -134,6 +151,7 @@ select FORMAT(d, 'U','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+Monday, January 1, 1900 12:00:00 AM
 Monday, January 1, 1753 12:00:00 AM
 Friday, December 31, 9999 12:00:00 AM
 Saturday, May 23, 1992 12:00:00 AM
@@ -143,6 +161,7 @@ select FORMAT(d, 'Y','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+January 1900
 January 1753
 December 9999
 May 1992
@@ -152,6 +171,7 @@ select FORMAT(d, 'y','en-us') from date_testing;
 GO
 ~~START~~
 nvarchar
+January 1900
 January 1753
 December 9999
 May 1992
@@ -827,6 +847,7 @@ June 2079
 
 --TIME standard formatting
 create table time_testing ( ti TIME );
+INSERT INTO time_testing VALUES('');
 INSERT INTO time_testing VALUES('00:00:00.12345');
 INSERT INTO time_testing VALUES('3:53:59');
 INSERT INTO time_testing VALUES('15:5:45.0000');
@@ -841,8 +862,11 @@ go
 
 ~~ROW COUNT: 1~~
 
+~~ROW COUNT: 1~~
+
 ~~START~~
 time
+00:00:00.0000000
 00:00:00.1234500
 03:53:59.0000000
 15:05:45.0000000
@@ -853,6 +877,7 @@ select FORMAT(ti, 'c','en-us') from time_testing;
 GO
 ~~START~~
 nvarchar
+00:00:00
 00:00:00.123450
 03:53:59
 15:05:45
@@ -867,12 +892,14 @@ nvarchar
 <NULL>
 <NULL>
 <NULL>
+<NULL>
 ~~END~~
 
 select FORMAT(ti, 'D','en-us') from time_testing;
 GO
 ~~START~~
 nvarchar
+<NULL>
 <NULL>
 <NULL>
 <NULL>
@@ -887,6 +914,7 @@ nvarchar
 <NULL>
 <NULL>
 <NULL>
+<NULL>
 ~~END~~
 
 select FORMAT(ti, 'F','en-us') from time_testing;
@@ -897,12 +925,14 @@ nvarchar
 <NULL>
 <NULL>
 <NULL>
+<NULL>
 ~~END~~
 
 select FORMAT(ti, 'g','en-us') from time_testing;
 GO
 ~~START~~
 nvarchar
+00:00:00
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Format g is not supported currently! Please try again with another format)~~
@@ -911,6 +941,7 @@ select FORMAT(ti, 'R','en-us') from time_testing;
 GO
 ~~START~~
 nvarchar
+<NULL>
 <NULL>
 <NULL>
 <NULL>
@@ -925,6 +956,7 @@ nvarchar
 <NULL>
 <NULL>
 <NULL>
+<NULL>
 ~~END~~
 
 select FORMAT(ti, 's','en-us') from time_testing;
@@ -935,12 +967,14 @@ nvarchar
 <NULL>
 <NULL>
 <NULL>
+<NULL>
 ~~END~~
 
 select FORMAT(ti, 't','en-us') from time_testing;
 GO
 ~~START~~
 nvarchar
+00:00:00
 00:00:00.123450
 03:53:59
 15:05:45
@@ -951,6 +985,7 @@ select FORMAT(ti, 'T','en-us') from time_testing;
 GO
 ~~START~~
 nvarchar
+00:00:00
 00:00:00.123450
 03:53:59
 15:05:45
@@ -965,12 +1000,14 @@ nvarchar
 <NULL>
 <NULL>
 <NULL>
+<NULL>
 ~~END~~
 
 select FORMAT(ti, 'U','en-us') from time_testing;
 GO
 ~~START~~
 nvarchar
+<NULL>
 <NULL>
 <NULL>
 <NULL>
@@ -985,12 +1022,14 @@ nvarchar
 <NULL>
 <NULL>
 <NULL>
+<NULL>
 ~~END~~
 
 select FORMAT(ti, 'y','en-us') from time_testing;
 GO
 ~~START~~
 nvarchar
+<NULL>
 <NULL>
 <NULL>
 <NULL>

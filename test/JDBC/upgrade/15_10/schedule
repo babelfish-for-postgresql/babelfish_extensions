@@ -111,7 +111,7 @@ BABEL-3818
 BABEL-3828
 BABEL-383
 BABEL-3844
-BABEL-3914
+mathematical_func-before_17_6-or-16_10
 BABEL-3938
 BABEL-3952
 BABEL-3953-datetrunc
@@ -524,7 +524,7 @@ babel_4328_datetime
 babel_4328_datetime2
 babel_4328_datetimeoffset
 BABEL-3401
-babel_726
+babel_726-before-16_10-or-17_6
 upper_lower
 trim-before-15_12-or-16_8
 ltrim
@@ -566,6 +566,7 @@ test_conv_string_to_datetimeoffset-before-17_4
 test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-17_4
 BABEL-5031
+BABEL-USER-GRANT
 test_conv_money_to_varchar
 sp_xml_preparedocument
 sp_xml_removedocument
@@ -579,3 +580,14 @@ round_return_type_test-before-16_9-or-17_5
 alter-view
 test_conv_int_to_varbinary_binary_before_17_5_or_16_9
 MONEY_OBJECT-before-16_4
+money_smallmoney
+money_smallmoney_bit_dep_obj_before_17_6
+z_sp_helplogins
+weak-binding
+babel_numeric_fixeddecimal_oper
+babel_numeric_money_oper-before-16_10-or-17_6
+babel_numeric_smallmoney_oper-before-16_10-or-17_6
+mathematical_func_tests-before-17_7-or-16_11
+babel_assign_nchar
+alter-function-with-weak-view
+alter-table-null-notnull

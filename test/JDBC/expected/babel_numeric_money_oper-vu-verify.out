@@ -1,0 +1,1711 @@
+-- psql
+analyse master_dbo.babel_test_numeric_money_vu_prepare;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+exec babel_test_numeric_money_p0;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p0
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a = cast(1 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a = (('1.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 106.214 ms
+~~END~~
+
+exec babel_test_numeric_money_p00;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p00
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where cast(1 as money) = a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a = (('1.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.341 ms
+~~END~~
+
+exec babel_test_numeric_money_p1;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p1
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a IS NULL
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a IS NULL)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.189 ms
+~~END~~
+
+exec babel_test_numeric_money_p2;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p2
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a <> cast(5 as money)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_money_vu_prepare
+              Filter: (a <> (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.553 ms
+~~END~~
+
+exec babel_test_numeric_money_p3;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p3
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where cast(5 as money) <> a
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_money_vu_prepare
+              Filter: ((('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal <> a)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.678 ms
+~~END~~
+
+exec babel_test_numeric_money_p4;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p4
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a < cast(5 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a < (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.587 ms
+~~END~~
+
+exec babel_test_numeric_money_p5;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p5
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where cast(5 as money) > a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a < (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.142 ms
+~~END~~
+
+exec babel_test_numeric_money_p6;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p6
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a < cast(-922337203685477.5808 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a < (('-922337203685477.5808'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.716 ms
+~~END~~
+
+exec babel_test_numeric_money_p7;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p7
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where cast(-922337203685477.5808 as money) > a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a < (('-922337203685477.5808'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.888 ms
+~~END~~
+
+exec babel_test_numeric_money_p8;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p8
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a <= cast(5 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a <= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.542 ms
+~~END~~
+
+exec babel_test_numeric_money_p9;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p9
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where cast(5 as money) >= a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a <= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.544 ms
+~~END~~
+
+exec babel_test_numeric_money_p10;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p10
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a > cast(99995 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a > (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.112 ms
+~~END~~
+
+exec babel_test_numeric_money_p11;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p11
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where cast(99995 as money) < a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a > (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.564 ms
+~~END~~
+
+exec babel_test_numeric_money_p12;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p12
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a >= cast(99995 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a >= (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
+~~END~~
+
+exec babel_test_numeric_money_p13;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p13
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where cast(99995 as money) <= a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a >= (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
+~~END~~
+
+exec babel_test_numeric_money_p14;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p14
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a > cast(922337203685477.5807 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a > (('922337203685477.5807'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.156 ms
+~~END~~
+
+exec babel_test_numeric_money_p15;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p15
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where cast(922337203685477.5807 as money) < a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a > (('922337203685477.5807'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.550 ms
+~~END~~
+
+exec babel_test_numeric_money_p16;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p16
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a > cast(5 as money)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_money_vu_prepare
+              Filter: (a > (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.108 ms
+~~END~~
+
+exec babel_test_numeric_money_p17;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p17
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where cast(5 as money) < a
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_money_vu_prepare
+              Filter: ((('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal < a)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.125 ms
+~~END~~
+
+exec babel_test_numeric_money_p18;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p18
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a between cast(5 as money) and cast(10 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: ((a >= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a <= (('10.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 4.151 ms
+~~END~~
+
+exec babel_test_numeric_money_p19;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p19
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a between cast(5 as money) and cast(922337203685477.5807 as money)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_money_vu_prepare
+              Filter: ((a >= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a <= (('922337203685477.5807'::fixeddecimal(19,4))::money(1245192))::fixeddecimal))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
+~~END~~
+
+exec babel_test_numeric_money_p20;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p20
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where (a between cast(5 as money) and cast(99995 as money)) and a = cast(10 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: ((a >= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a <= (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a = (('10.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.180 ms
+~~END~~
+
+exec babel_test_numeric_money_p21;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p21
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a > cast(5 as money) and a < cast(7 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: ((a > (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a < (('7.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
+~~END~~
+
+exec babel_test_numeric_money_p22;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p22
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where cast(5 as money) < a and cast(7 as money) > a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: ((a > (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a < (('7.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.194 ms
+~~END~~
+
+exec babel_test_numeric_money_p23;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p23
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a <> cast(5 as money)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_money_vu_prepare
+              Filter: (a <> (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
+~~END~~
+
+exec babel_test_numeric_money_p24;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p24
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a < cast(5 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a < (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
+~~END~~
+
+exec babel_test_numeric_money_p25;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p25
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a < cast(-922337203685477.5808 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a < (('-922337203685477.5808'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
+~~END~~
+
+exec babel_test_numeric_money_p26;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p26
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a <= cast(5 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a <= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.108 ms
+~~END~~
+
+exec babel_test_numeric_money_p27;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p27
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a > cast(99995 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a > (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
+~~END~~
+
+exec babel_test_numeric_money_p28;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p28
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a >= cast(99995 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a >= (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
+~~END~~
+
+exec babel_test_numeric_money_p29;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p29
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a > cast(922337203685477.5807 as money)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+              Index Cond: (a > (('922337203685477.5807'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.108 ms
+~~END~~
+
+exec babel_test_numeric_money_p30;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_money_p30
+  Query Text: select count(*) from babel_test_numeric_money_vu_prepare where a > cast(5 as money)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_money_vu_prepare
+              Filter: (a > (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+exec babel_test_numeric_money_p0;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p00;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p2;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+exec babel_test_numeric_money_p3;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+exec babel_test_numeric_money_p4;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec babel_test_numeric_money_p5;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec babel_test_numeric_money_p6;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p7;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p8;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_money_p9;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_money_p10;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_money_p11;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_money_p12;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec babel_test_numeric_money_p13;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec babel_test_numeric_money_p14;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p15;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p16;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+exec babel_test_numeric_money_p17;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+exec babel_test_numeric_money_p18;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_money_p19;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+exec babel_test_numeric_money_p20;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p21;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p22;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p23;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+exec babel_test_numeric_money_p24;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec babel_test_numeric_money_p25;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p26;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_money_p27;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_money_p28;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec babel_test_numeric_money_p29;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_money_p30;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+select * from babel_test_numeric_money_v0;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v0
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a = (('1.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.980 ms
+~~END~~
+
+select * from babel_test_numeric_money_v00;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v00
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a = (('1.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.062 ms
+~~END~~
+
+select * from babel_test_numeric_money_v1;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v1
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a IS NULL)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.057 ms
+~~END~~
+
+select * from babel_test_numeric_money_v2;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v2
+Aggregate
+  ->  Seq Scan on babel_test_numeric_money_vu_prepare
+        Filter: (a <> (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
+~~END~~
+
+select * from babel_test_numeric_money_v3;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v3
+Aggregate
+  ->  Seq Scan on babel_test_numeric_money_vu_prepare
+        Filter: ((('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal <> a)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.057 ms
+~~END~~
+
+select * from babel_test_numeric_money_v4;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v4
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a < (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.057 ms
+~~END~~
+
+select * from babel_test_numeric_money_v5;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v5
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a < (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v6;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v6
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a < (('-922337203685477.5808'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v7;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v7
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a < (('-922337203685477.5808'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
+~~END~~
+
+select * from babel_test_numeric_money_v8;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v8
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a <= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.057 ms
+~~END~~
+
+select * from babel_test_numeric_money_v9;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v9
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a <= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
+~~END~~
+
+select * from babel_test_numeric_money_v10;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v10
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a > (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v11;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v11
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a > (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
+~~END~~
+
+select * from babel_test_numeric_money_v12;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v12
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a >= (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.059 ms
+~~END~~
+
+select * from babel_test_numeric_money_v13;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v13
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a >= (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v14;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v14
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a > (('922337203685477.5807'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
+~~END~~
+
+select * from babel_test_numeric_money_v15;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v15
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a > (('922337203685477.5807'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v16;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v16
+Aggregate
+  ->  Seq Scan on babel_test_numeric_money_vu_prepare
+        Filter: (a > (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.057 ms
+~~END~~
+
+select * from babel_test_numeric_money_v17;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v17
+Aggregate
+  ->  Seq Scan on babel_test_numeric_money_vu_prepare
+        Filter: ((('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal < a)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v18;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v18
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: ((a >= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a <= (('10.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v19;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v19
+Aggregate
+  ->  Seq Scan on babel_test_numeric_money_vu_prepare
+        Filter: ((a >= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a <= (('922337203685477.5807'::fixeddecimal(19,4))::money(1245192))::fixeddecimal))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v20;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v20
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: ((a >= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a <= (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a = (('10.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v21;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v21
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: ((a > (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a < (('7.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v22;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v22
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: ((a > (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal) AND (a < (('7.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
+~~END~~
+
+select * from babel_test_numeric_money_v23;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v23
+Aggregate
+  ->  Seq Scan on babel_test_numeric_money_vu_prepare
+        Filter: (a <> (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
+~~END~~
+
+select * from babel_test_numeric_money_v24;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v24
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a < (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
+~~END~~
+
+select * from babel_test_numeric_money_v25;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v25
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a < (('-922337203685477.5808'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v26;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v26
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a <= (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
+~~END~~
+
+select * from babel_test_numeric_money_v27;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v27
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a > (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
+~~END~~
+
+select * from babel_test_numeric_money_v28;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v28
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a >= (('99995.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+select * from babel_test_numeric_money_v29;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v29
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_money_vu_pre42ac9426c902490f603af866c612192c on babel_test_numeric_money_vu_prepare
+        Index Cond: (a > (('922337203685477.5807'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
+~~END~~
+
+select * from babel_test_numeric_money_v30;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_money_v30
+Aggregate
+  ->  Seq Scan on babel_test_numeric_money_vu_prepare
+        Filter: (a > (('5.0000'::fixeddecimal(19,4))::money(1245192))::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+select * from babel_test_numeric_money_v0;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v00;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v2;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select * from babel_test_numeric_money_v3;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select * from babel_test_numeric_money_v4;
+GO
+~~START~~
+int
+5
+~~END~~
+
+select * from babel_test_numeric_money_v5;
+GO
+~~START~~
+int
+5
+~~END~~
+
+select * from babel_test_numeric_money_v6;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v7;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v8;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_money_v9;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_money_v10;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_money_v11;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_money_v12;
+GO
+~~START~~
+int
+7
+~~END~~
+
+select * from babel_test_numeric_money_v13;
+GO
+~~START~~
+int
+7
+~~END~~
+
+select * from babel_test_numeric_money_v14;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v15;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v16;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select * from babel_test_numeric_money_v17;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select * from babel_test_numeric_money_v18;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_money_v19;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select * from babel_test_numeric_money_v20;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v21;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v22;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v23;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select * from babel_test_numeric_money_v24;
+GO
+~~START~~
+int
+5
+~~END~~
+
+select * from babel_test_numeric_money_v25;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v26;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_money_v27;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_money_v28;
+GO
+~~START~~
+int
+7
+~~END~~
+
+select * from babel_test_numeric_money_v29;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_money_v30;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+select babel_test_numeric_money_f0();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f00();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f1();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f2();
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select babel_test_numeric_money_f3();
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select babel_test_numeric_money_f4();
+GO
+~~START~~
+int
+5
+~~END~~
+
+select babel_test_numeric_money_f5();
+GO
+~~START~~
+int
+5
+~~END~~
+
+select babel_test_numeric_money_f6();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f7();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f8();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_money_f9();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_money_f10();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_money_f11();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_money_f12();
+GO
+~~START~~
+int
+7
+~~END~~
+
+select babel_test_numeric_money_f13();
+GO
+~~START~~
+int
+7
+~~END~~
+
+select babel_test_numeric_money_f14();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f15();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f16();
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select babel_test_numeric_money_f17();
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select babel_test_numeric_money_f18();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_money_f19();
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select babel_test_numeric_money_f20();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f21();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f22();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f23();
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select babel_test_numeric_money_f24();
+GO
+~~START~~
+int
+5
+~~END~~
+
+select babel_test_numeric_money_f25();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f26();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_money_f27();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_money_f28();
+GO
+~~START~~
+int
+7
+~~END~~
+
+select babel_test_numeric_money_f29();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_money_f30();
+GO
+~~START~~
+int
+99996
+~~END~~
+
+

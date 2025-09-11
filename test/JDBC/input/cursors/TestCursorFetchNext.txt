@@ -20,6 +20,15 @@ cursor#!#fetch#!#next
 #cursor#!#fetch#!#afterlast
 #cursor#!#fetch#!#next
 cursor#!#close
+cursor#!#open#!#SELECT a year, b month, c quarter FROM test_cursors_fetch_next#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+cursor#!#fetch#!#next
+cursor#!#fetch#!#first
+cursor#!#fetch#!#next
+cursor#!#fetch#!#last
+cursor#!#close
+cursor#!#open#!#DECLARE @var INT; select @var = 5; select @var + 1;#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+cursor#!#fetch#!#next
+cursor#!#close
 DROP TABLE test_cursors_fetch_next
 
 CREATE TABLE test_cursors_fetch_next(a CHAR(30), b VARCHAR(30), c NCHAR(30), d NVARCHAR(30));

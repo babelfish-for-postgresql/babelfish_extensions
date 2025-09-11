@@ -180,7 +180,7 @@ SELECT reverse(@inputString)
 GO
 ~~START~~
 nvarchar
-             ??ihgfed?cba
+             🙂🙂ihgfed🙂cba
 ~~END~~
 
 
@@ -189,7 +189,7 @@ SELECT reverse(@inputString)
 GO
 ~~START~~
 nvarchar
-               斯莫拉??比
+                   斯莫拉·尔比
 ~~END~~
 
 

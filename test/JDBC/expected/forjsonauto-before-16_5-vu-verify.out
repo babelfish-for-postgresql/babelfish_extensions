@@ -148,9 +148,10 @@ nvarchar
 
 EXECUTE forjson_vu_p_5
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+~~START~~
+nvarchar
+[{"Val": 1, "y": [{"ValY": 1}]}]
+~~END~~
 
 
 EXECUTE forjson_vu_p_6
@@ -175,7 +176,7 @@ GO
 nvarchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+~~ERROR (Message: invalid input syntax for type integer: "[{"max": 1}]")~~
 
 
 EXECUTE forjson_vu_p_9

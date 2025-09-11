@@ -3292,7 +3292,7 @@ SELECT
 GO
 ~~START~~
 varchar
-FAIL: TZOFFSET issue
+PASS: TZOFFSET works correctly
 ~~END~~
 
 
