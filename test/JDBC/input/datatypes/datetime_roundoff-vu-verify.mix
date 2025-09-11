@@ -403,7 +403,45 @@ BEGIN
     END IF;
 END;
 $$;
+GO
 
+DO $$
+DECLARE
+    v_sql text;
+BEGIN
+    SELECT string_agg(
+        format(
+            'SELECT %L AS table_name, %L AS column_name, COUNT(*) as total_rows, 
+             COUNT(*) FILTER (WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)) as affected_rows
+             FROM %I.%I',
+            c.relname,
+            a.attname,
+            a.attname,
+            a.attname,
+            n.nspname,
+            c.relname
+        ),
+        ' UNION ALL '
+    )
+    INTO v_sql
+    FROM pg_class c
+    JOIN pg_namespace n ON c.relnamespace = n.oid
+    JOIN pg_attribute a ON c.oid = a.attrelid
+    JOIN pg_type t ON a.atttypid = t.oid
+    WHERE c.relkind = 'r'
+        AND NOT a.attisdropped
+        AND t.typname = 'datetime'
+        AND n.nspname = 'master_dbo'
+        AND a.attnum > 0;
+
+    IF v_sql IS NULL THEN
+        RAISE NOTICE 'No datetime columns found in the database.';
+    ELSE
+        RAISE NOTICE 'Executing SQL: %', v_sql;
+        EXECUTE v_sql;
+    END IF;
+END;
+$$;
 GO
 
 -- tsql
