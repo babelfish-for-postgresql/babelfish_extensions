@@ -187,3 +187,52 @@ txn#!#commit
 
 DROP TABLE txntable1;
 
+CREATE TABLE txntable2 (col1 INT, col2 TEXT);
+
+# begin transaction -> save transaction name -> SELECT -> rollback to savepoint --> INSERT --> commit tran
+txn#!#begin#!#tx1
+txn#!#savepoint#!#sp1
+select * from txntable2 order by col1;
+txn#!#rollback#!#sp1
+insert into txntable2 values(1, 'AAA');
+txn#!#commit$!#tx1
+txn#!#commit$!#tx1
+
+select * from txntable2;
+
+delete from txntable2;
+
+# begin transaction -> save transaction name -> SELECT -> rollback to savepoint --> INSERT --> rollback tran
+txn#!#begin#!#tx1
+txn#!#savepoint#!#sp1
+select * from txntable2 order by col1;
+txn#!#rollback#!#sp1
+insert into txntable2 values(1, 'AAA');
+txn#!#rollback
+
+select * from txntable2;
+
+delete from txntable2;
+
+# begin transaction -> save transaction name -> SELECT -> rollback top level tran --> INSERT --> rollback tran
+txn#!#begin#!#tx1
+txn#!#savepoint#!#sp1
+select * from txntable2 order by col1;
+txn#!#rollback#!#tx1
+insert into txntable2 values(1, 'AAA');
+txn#!#rollback
+
+select * from txntable2;
+
+delete from txntable2;
+
+# begin transaction -> save transaction name -> SELECT -> rollback top level tran --> INSERT --> commit tran
+txn#!#begin#!#tx1
+txn#!#savepoint#!#sp1
+select * from txntable2 order by col1;
+txn#!#rollback#!#tx1
+insert into txntable2 values(1, 'AAA');
+txn#!#commit
+select * from txntable2;
+
+DROP TABLE txntable2;
