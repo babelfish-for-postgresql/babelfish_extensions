@@ -647,4 +647,5 @@ mathematical_func_tests
 datetime_roundoff
 babel_assign_nchar
 alter-function-with-weak-view
+view_sec_setting
 alter-table-null-notnull
