@@ -24,15 +24,25 @@
 
 /*
  * temp_relids - maintains relid list of temp table shared by leader node. This should be
-* strictly accessed within parallel worker context.
+ * strictly accessed within parallel worker context.
+ * Here, we keep two bitmapset, one for relids <= INT32_MAX and another for relids > INT32_MAX
+ * because OID is unsigned int and bitmapset will not be handle OID > INT32_MAX.
+ * Overall,
+ * 	if relid <= INT32_MAX
+ * 		add relid to temp_relids
+ * 	else
+ * 		add (relid - INT32_MAX - 1) to temp_relids_beyond_int32
  */
 static Bitmapset   *temp_relids = NULL;
+static Bitmapset   *temp_relids_beyond_int32 = NULL;
 
 /*
  * string representation of list of temp table oids computed by Leader node to be shared
- * with parallel worker.
+ * with parallel worker. Check comment above temp_relids_beyond_int32 for reason to
+ * keep two bitmapset string.
  */
 static char		   *temp_relids_str = NULL;
+static char		   *temp_relids_beyond_int32_str = NULL;
 
 /*
  * In Babelfish, Any user under given session should be able access the temp tables. 
@@ -75,8 +85,10 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 	if (estimate)
 	{
 		ListCell   *lc;
-		Bitmapset  *temp_relids_local = NULL;
+		Bitmapset  *temp_relids_local = NULL;				/* For relid <= INT32_MAX */
+		Bitmapset  *temp_relids_beyond_int32_local = NULL;	/* For relid > INT32_MAX */
 		temp_relids_str = NULL;
+		temp_relids_beyond_int32_str = NULL;
 
 		foreach(lc, estate->es_range_table)
 		{
@@ -105,15 +117,21 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 									get_relkind_objtype(get_rel_relkind(perminfo->relid)),
 									get_rel_name(perminfo->relid));
 				}
-				temp_relids_local = bms_add_member(temp_relids_local, rte->relid);
+				if (rte->relid <= (Oid) INT32_MAX)
+					temp_relids_local = bms_add_member(temp_relids_local, rte->relid);
+				else
+					temp_relids_beyond_int32_local = bms_add_member(temp_relids_beyond_int32_local, (rte->relid - (Oid) INT32_MAX - 1U));
 			}
 		}
 		temp_relids_str = bmsToString(temp_relids_local);
+		temp_relids_beyond_int32_str = bmsToString(temp_relids_beyond_int32_local);
 
 		/*
 		 * Estimate extra context for Babelfish
 		 */
 		shm_toc_estimate_chunk(&pcxt->estimator, strlen(temp_relids_str) + 1);
+		shm_toc_estimate_keys(&pcxt->estimator, 1);
+		shm_toc_estimate_chunk(&pcxt->estimator, strlen(temp_relids_beyond_int32_str) + 1);
 		shm_toc_estimate_keys(&pcxt->estimator, 1);
 	}
 	else
@@ -121,7 +139,7 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 		char *temp_relids_space;
 
 		/*temp_relids_str will never be NULL even if there is no temp tables in the query. */
-		if (temp_relids_str == NULL)
+		if (temp_relids_str == NULL || temp_relids_beyond_int32_str == NULL)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
@@ -132,9 +150,15 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 		memcpy(temp_relids_space, temp_relids_str, strlen(temp_relids_str) + 1);
 		shm_toc_insert(pcxt->toc, BABELFISH_PARALLEL_KEY_TEMP_RELIDS, temp_relids_space);
 
-		/* And reset temp_relids_str */
+		temp_relids_space = shm_toc_allocate(pcxt->toc, strlen(temp_relids_beyond_int32_str) + 1);
+		memcpy(temp_relids_space, temp_relids_beyond_int32_str, strlen(temp_relids_beyond_int32_str) + 1);
+		shm_toc_insert(pcxt->toc, BABELFISH_PARALLEL_KEY_TEMP_RELIDS_BEYOND_INT32, temp_relids_space);
+
+		/* And reset temp_relids_str and temp_relids_beyond_int32_str */
 		pfree(temp_relids_str);
+		pfree(temp_relids_beyond_int32_str);
 		temp_relids_str = NULL;
+		temp_relids_beyond_int32_str = NULL;
 	}
 }
 /*
@@ -156,6 +180,9 @@ bbf_ParallelQueryMain(shm_toc *toc)
 
 	temp_relids = (Bitmapset *) stringToNode(shm_toc_lookup(toc,
 															BABELFISH_PARALLEL_KEY_TEMP_RELIDS,
+															false));
+	temp_relids_beyond_int32 = (Bitmapset *) stringToNode(shm_toc_lookup(toc,
+															BABELFISH_PARALLEL_KEY_TEMP_RELIDS_BEYOND_INT32,
 															false));
 }
 
@@ -180,6 +207,9 @@ bbf_ExecCheckOneRelPerms(RTEPermissionInfo *perminfo)
 		return false;
 	}
 
-	return bms_is_member(perminfo->relid, temp_relids);
+	if (perminfo->relid <= (Oid) INT32_MAX)
+		return bms_is_member(perminfo->relid, temp_relids);
+	else
+		return bms_is_member((perminfo->relid - (Oid) INT32_MAX - 1U), temp_relids_beyond_int32);
 }
 
