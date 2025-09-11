@@ -316,7 +316,7 @@ WHERE pt.typname = 'datetime'
     AND (t.relkind = 'r' OR t.relkind = 'p')
     AND NOT a.attisdropped
     AND a.attnum > 0
-    AND t.relname = 't1'  
+    AND t.relname = 'datetime_test'  
     AND n.nspname = 'master_dbo'  
 ORDER BY a.attname;
 GO
@@ -385,7 +385,7 @@ END;
 $$ LANGUAGE plpgsql;
 GO
 
-SELECT * FROM check_datetime_rounding_for_table('master_dbo', 't1');
+SELECT * FROM check_datetime_rounding_for_table('master_dbo', 'datetime_test');
 GO
 
 -- obtain statistics from all tables 
