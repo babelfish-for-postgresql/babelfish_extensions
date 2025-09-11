@@ -5380,13 +5380,13 @@ get_old_view_column_acls(Oid oldViewOid)
 		ColumnAclInfo *info;
 
 		/* Skip system columns */
-		if (att->attnum <= 0)
+		if (att->attnum <= InvalidAttrNumber)
 			continue;
 
 		aclDatum = SysCacheGetAttr(ATTNUM, tuple, 
 								Anum_pg_attribute_attacl, &isNull);
 
-		info = palloc(sizeof(ColumnAclInfo));
+		info = (ColumnAclInfo *) palloc0(sizeof(ColumnAclInfo));
 		info->attname = pstrdup(NameStr(att->attname));
 		info->acl = isNull ? NULL : DatumGetAclPCopy(aclDatum);
 
