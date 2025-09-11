@@ -181,8 +181,6 @@ static void transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt);
 static bool transform_unpivot_clause_recursive(Node **node, List **measure_cols, List **unpivot_src_cols);
 static List* filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **source_cols);
 static bool repair_broken_views(Query *parsetree);
-static void mark_nodes_inside_view(Query *query, Oid view_owner);
-static void tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *view_rte);
 
 /*****************************************
  * 			Commands Hooks
@@ -1133,7 +1131,7 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 					 */
 					if (nspname != NULL && !is_shared_schema(nspname))
 					{
-						if (OidIsValid(perminfo->checkAsUser) && strncmp(nspname, "pg_temp_", 8) != 0)
+						if (OidIsValid(perminfo->checkAsUser) && !isTempNamespace(schema_id))
 						{
 							Oid loginId = get_login_for_user(perminfo->checkAsUser, nspname);
 							if (OidIsValid(loginId))
@@ -7718,138 +7716,4 @@ find_all_view_references(Node *node, List **view_oids)
 									find_view_references_walker,
 									(void *) &context,
 									QTW_EXAMINE_RTES_BEFORE);
-}
-
-/*
- * Walker function to mark relations and functions inside view definitions
- * 
- * Walks through the query parse tree to:
- * 1. Mark relations and functions as being inside a view context
- * 2. For relations:
- *    - Set checkAsUser to the view_owner when it matches the relation's owner,
- *      enabling permission checking to pass at the executor stage (ownership chaining)
- * 3. For procedures/functions:
- *    - Store the view_owner in the parentOwnerId field to support
- *      procedure/function-specific ownership chaining logic
- *      during permission checks at the executor stage
- * 
- */
-static bool
-mark_nodes_inside_view_walker(Node *node, Oid *context)
-{
-	Oid nspid;
-	char *physical_schemaname = NULL;
-	if (node == NULL)
-		return false;
-
-	if (IsA(node, Query))
-    {
-        Query *query = (Query *) node;
-        ListCell *lc;
-        
-        foreach(lc, query->rtable)
-        {
-            RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-            RTEPermissionInfo *perminfo = NULL;
-			AclMode nonDMLpermscheck = false;
-
-			/* Process tables and view subqueries */
-            if (OidIsValid(rte->relid) &&
-				(rte->rtekind == RTE_RELATION ||
-				 rte->relkind == RELKIND_VIEW))
-            {
-                nspid = get_rel_namespace(rte->relid);
-                physical_schemaname = get_namespace_name(nspid);
-                perminfo = getRTEPermissionInfo(query->rteperminfos, rte);
-				/*
-				 * Only allow SELECT, INSERT, UPDATE, DELETE dml operations through 
-				 * ownership chaining.
-				 */
-				nonDMLpermscheck = perminfo->requiredPerms & ~(ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE);
-                
-                if (physical_schemaname && !is_shared_schema(physical_schemaname))
-                {
-                    if (get_rel_owner(rte->relid) == *context && nonDMLpermscheck == ACL_NO_RIGHTS)
-                    {
-                        perminfo->checkAsUser = *context;
-                    }
-                    perminfo->insideView = PNODE_INSIDE_VIEW;
-                }
-                if (physical_schemaname)
-                    pfree(physical_schemaname);
-            }
-        }
-		return query_tree_walker(query, 
-                            	 mark_nodes_inside_view_walker,
-                            	 (void *) context,
-                            	 0);
-	}
-	else if (IsA(node, FuncExpr))
-    {
-        FuncExpr *funcexpr = (FuncExpr *) node;
-		nspid = get_func_namespace(funcexpr->funcid);
-		physical_schemaname = get_namespace_name(nspid);
-		if (physical_schemaname && !is_shared_schema(physical_schemaname))
-		{
-			funcexpr->parentOwnerId = *context;
-			funcexpr->insideView = PNODE_INSIDE_VIEW;
-		}
-
-		if (physical_schemaname)
-				pfree(physical_schemaname);
-        
-		/* else walk through function args */
-    }
-
-	return expression_tree_walker(node, mark_nodes_inside_view_walker,
-								  (void *) context);
-}
-
-/*
- * Main entry point for marking nodes inside view definitions
- * 
- * Performs security check and initiates tree walk to:
- * - Mark relations and functions as being inside a view
- * - Set parent owner context for permission chaining
- */
-static void
-mark_nodes_inside_view(Query *query, Oid view_owner)
-{
-
-	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
-		return;
-
-	mark_nodes_inside_view_walker((Node *)query,
-								  &view_owner);
-
-}
-
-/*
- * This look will update the permsinfo of corresponding relation when there in ownership
- * chaining scenarios in case when view is specified as target for DML operations.
- */
-static void
-tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *view_rte)
-{
-	Oid view_owner = InvalidOid;
-	AclMode nonDMLpermscheck;
-
-	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
-		return;
-	
-	/*
-	 * Note that for DML operations on views, SELECT privileges are still required.
-	 * So keeping all allowed DMLs INSERT, UPDATE, DELETE along with SELECT.
-	 */
-	nonDMLpermscheck = new_perminfo->requiredPerms & ~(ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE);
-
-	if (nonDMLpermscheck)
-		return;
-
-	view_owner = get_rel_owner(view_rte->relid);
-	if (view_owner == get_rel_owner(new_perminfo->relid))
-	{
-		new_perminfo->checkAsUser = view_owner;
-		new_perminfo->insideView = PNODE_INSIDE_VIEW;
-	}
 }
