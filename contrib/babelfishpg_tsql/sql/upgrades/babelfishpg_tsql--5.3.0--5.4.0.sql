@@ -71,6 +71,15 @@ $$;
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION sys.sqrt(number PG_CATALOG.NUMERIC)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN PG_CATALOG.SQRT(number::float8);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT)
 RETURNS sys.NVARCHAR
 AS
