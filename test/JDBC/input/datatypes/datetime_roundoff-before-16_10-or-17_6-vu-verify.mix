@@ -286,188 +286,208 @@ GO
 
 -- BASIC UPGRADE TESTING
 -- psql
-DO $$
-DECLARE
-    v_sql text;
-BEGIN
-    SELECT string_agg(
-        format(
-            'SELECT %L AS table_name, %L AS column_name, %I AS original_value, 
-             CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
-             FROM %I.%I 
-             WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
-            t.table_name,
-            c.column_name,
-            c.column_name,
-            c.column_name,
-            t.table_schema,
-            t.table_name,
-            c.column_name,
-            c.column_name
-        ),
-        ' UNION ALL '
-    )
-    INTO v_sql
-    FROM information_schema.tables t
-    JOIN information_schema.columns c 
-        ON t.table_schema = c.table_schema 
-        AND t.table_name = c.table_name
-    WHERE c.data_type = 'datetime'
-        AND t.table_type = 'BASE TABLE';
-
-    IF v_sql IS NULL THEN
-        RAISE NOTICE 'No datetime columns found in the database.';
-    ELSE
-        EXECUTE v_sql;
-    END IF;
-END;
-$$;
+-- get total number of columns whose datatype is datetime
+SELECT 
+    n.nspname as schema_name,
+    t.relname as table_name,
+    a.attname as column_name
+FROM pg_class t
+JOIN pg_namespace n ON t.relnamespace = n.oid
+JOIN pg_attribute a ON t.oid = a.attrelid
+JOIN pg_type pt ON a.atttypid = pt.oid
+WHERE pt.typname = 'datetime'
+    AND (t.relkind = 'r' OR t.relkind = 'p')
+    AND NOT a.attisdropped
+    AND a.attnum > 0
+    AND n.nspname <> 'sys'
+ORDER BY n.nspname, t.relname, a.attname;
 GO
 
-DO $$
-DECLARE
-    v_sql text;
-BEGIN
-    SELECT string_agg(
-        format(
-            'SELECT %L AS table_name, %L AS column_name, %I AS original_value, 
-             CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
-             FROM %I.%I 
-             WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
-            t.table_name,
-            c.column_name,
-            c.column_name,
-            c.column_name,
-            t.table_schema,
-            t.table_name,
-            c.column_name,
-            c.column_name
-        ),
-        ' UNION ALL '
-    )
-    INTO v_sql
-    FROM information_schema.tables t
-    JOIN information_schema.columns c 
-        ON t.table_schema = c.table_schema 
-        AND t.table_name = c.table_name
-    WHERE c.data_type = 'sys.datetime'
-        AND t.table_type = 'BASE TABLE';
-
-    IF v_sql IS NULL THEN
-        RAISE NOTICE 'No datetime columns found in the database.';
-    ELSE
-        EXECUTE v_sql;
-    END IF;
-END;
-$$;
+-- get the columns whose datatype is datetime for a specific table
+SELECT 
+    n.nspname as schema_name,
+    t.relname as table_name,
+    a.attname as column_name
+FROM pg_class t
+JOIN pg_namespace n ON t.relnamespace = n.oid
+JOIN pg_attribute a ON t.oid = a.attrelid
+JOIN pg_type pt ON a.atttypid = pt.oid
+WHERE pt.typname = 'datetime'
+    AND (t.relkind = 'r' OR t.relkind = 'p')
+    AND NOT a.attisdropped
+    AND a.attnum > 0
+    AND t.relname = 't1'  
+    AND n.nspname = 'master_dbo'  
+ORDER BY a.attname;
 GO
 
-DO $$
-DECLARE
-    v_sql text;
-BEGIN
-    SELECT string_agg(
-        format(
-            'SELECT %L AS table_name, %L AS column_name, %I AS original_value, 
-             CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
-             FROM %I.%I 
-             WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
-            c.relname,
-            a.attname,
-            a.attname,
-            a.attname,
-            n.nspname,
-            c.relname,
-            a.attname,
-            a.attname
-        ),
-        ' UNION ALL '
-    )
-    INTO v_sql
-    FROM pg_class c
-    JOIN pg_namespace n ON c.relnamespace = n.oid
-    JOIN pg_attribute a ON c.oid = a.attrelid
-    JOIN pg_type t ON a.atttypid = t.oid
-    WHERE c.relkind = 'r'  -- regular tables only
-        AND NOT a.attisdropped  -- exclude dropped columns
-        AND t.typname = 'datetime'  -- datetime type
-        AND n.nspname NOT LIKE 'pg_%'  -- exclude system schemas
-        AND n.nspname != 'information_schema'
-        AND a.attnum > 0;  -- exclude system columns
-
-    IF v_sql IS NULL THEN
-        RAISE NOTICE 'No datetime columns found in the database.';
-    ELSE
-        EXECUTE v_sql;
-    END IF;
-END;
-$$;
-GO
-
-DO $$
-DECLARE
-    v_sql text;
-BEGIN
-    SELECT string_agg(
-        format(
-            'SELECT %L AS table_name, %L AS column_name, COUNT(*) as total_rows, 
-             COUNT(*) FILTER (WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)) as affected_rows
-             FROM %I.%I',
-            c.relname,
-            a.attname,
-            a.attname,
-            a.attname,
-            n.nspname,
-            c.relname
-        ),
-        ' UNION ALL '
-    )
-    INTO v_sql
-    FROM pg_class c
-    JOIN pg_namespace n ON c.relnamespace = n.oid
-    JOIN pg_attribute a ON c.oid = a.attrelid
-    JOIN pg_type t ON a.atttypid = t.oid
-    WHERE c.relkind = 'r'
-        AND NOT a.attisdropped
-        AND t.typname = 'datetime'
-        AND n.nspname = 'master_dbo'
-        AND a.attnum > 0;
-
-    IF v_sql IS NULL THEN
-        RAISE NOTICE 'No datetime columns found in the database.';
-    ELSE
-        RAISE NOTICE 'Executing SQL: %', v_sql;
-        EXECUTE v_sql;
-    END IF;
-END;
-$$;
-GO
-
-WITH datetime_columns AS (
-    SELECT c.relname as table_name,
-           a.attname as column_name,
-           n.nspname as schema_name
-    FROM pg_class c
-    JOIN pg_namespace n ON c.relnamespace = n.oid
-    JOIN pg_attribute a ON c.oid = a.attrelid
-    JOIN pg_type t ON a.atttypid = t.oid
-    WHERE c.relkind = 'r'
-        AND NOT a.attisdropped
-        AND t.typname = 'datetime'
-        AND n.nspname NOT LIKE 'pg_%'  -- exclude system schemas
-        AND n.nspname != 'information_schema'
-        AND a.attnum > 0
+-- get the number of rows which would be modified for a specific table
+CREATE OR REPLACE FUNCTION check_datetime_rounding_for_table(
+    p_schema_name text,
+    p_table_name text
 )
-SELECT d.table_name, 
-       d.column_name,
-       format(
-           'SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)) as affected FROM %I.%I',
-           d.column_name,
-           d.column_name,
-           d.schema_name,
-           d.table_name
-       ) as analysis_query
-FROM datetime_columns d;
+RETURNS TABLE (
+    column_name text,
+    total_rows bigint,
+    affected_rows bigint,
+    original_value sys.datetime,
+    new_value sys.datetime
+) AS $$
+DECLARE
+    v_sql text;
+    v_column record;
+BEGIN
+    -- For each datetime column in the specified table
+    FOR v_column IN
+        SELECT a.attname
+        FROM pg_class t
+        JOIN pg_namespace n ON t.relnamespace = n.oid
+        JOIN pg_attribute a ON t.oid = a.attrelid
+        JOIN pg_type pt ON a.atttypid = pt.oid
+        WHERE pt.typname = 'datetime'
+            AND (t.relkind = 'r' OR t.relkind = 'p')
+            AND NOT a.attisdropped
+            AND a.attnum > 0
+            AND t.relname = p_table_name
+            AND n.nspname = p_schema_name
+    LOOP
+        -- First get the counts
+        EXECUTE format(
+            'SELECT 
+                %L::text,
+                COUNT(*)::bigint,
+                COUNT(*) FILTER (WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME))::bigint,
+                NULL::sys.datetime,
+                NULL::sys.datetime
+            FROM %I.%I
+            UNION ALL
+            SELECT 
+                %L::text,
+                NULL::bigint,
+                NULL::bigint,
+                %I,
+                CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+            FROM %I.%I
+            WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+            v_column.attname,
+            v_column.attname, v_column.attname,
+            p_schema_name, p_table_name,
+            v_column.attname,
+            v_column.attname,
+            v_column.attname,
+            p_schema_name, p_table_name,
+            v_column.attname, v_column.attname
+        ) INTO column_name, total_rows, affected_rows, original_value, new_value;
+        
+        RETURN NEXT;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+SELECT * FROM check_datetime_rounding_for_table('master_dbo', 't1');
+GO
+
+-- obtain statistics from all tables 
+DO $$
+DECLARE
+    v_sql text := '';
+    v_count_sql text := '';
+    datetime_typoid oid;
+    r record;
+    affected_count bigint;
+    total_count bigint;
+    has_affected_rows boolean := false;
+BEGIN
+    -- Get the OID for datetime type
+    SELECT oid INTO datetime_typoid 
+    FROM pg_type 
+    WHERE typname = 'datetime';
+
+    -- Create the query for affected rows
+    SELECT string_agg(
+        format(
+            'SELECT %L AS table_name, %L AS column_name, 
+             COUNT(*) as total_rows,
+             COUNT(*) FILTER (WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)) as affected_rows
+             FROM %s.%I',
+            t.relname,
+            c.attname,
+            c.attname,
+            c.attname,
+            t.relnamespace::regnamespace,
+            t.relname
+        ),
+        ' UNION ALL '
+    )
+    INTO v_count_sql
+    FROM pg_class t
+    JOIN pg_namespace n ON t.relnamespace = n.oid
+    JOIN pg_attribute c ON t.oid = c.attrelid
+    WHERE c.atttypid = datetime_typoid
+        AND (t.relkind = 'r' OR t.relkind = 'p')
+        AND c.attnum > 0
+        AND NOT c.attisdropped
+        AND n.nspname <> 'sys';  -- Only master_dbo schema
+
+    -- Create the query for affected values
+    SELECT string_agg(
+        format(
+            'SELECT %L AS table_name, %L AS column_name, 
+             %I AS original_value, 
+             CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
+             FROM %s.%I 
+             WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+            t.relname,
+            c.attname,
+            c.attname,
+            c.attname,
+            t.relnamespace::regnamespace,
+            t.relname,
+            c.attname,
+            c.attname
+        ),
+        ' UNION ALL '
+    )
+    INTO v_sql
+    FROM pg_class t
+    JOIN pg_namespace n ON t.relnamespace = n.oid
+    JOIN pg_attribute c ON t.oid = c.attrelid
+    WHERE c.atttypid = datetime_typoid
+        AND (t.relkind = 'r' OR t.relkind = 'p')
+        AND c.attnum > 0
+        AND NOT c.attisdropped
+        AND n.nspname <> 'sys';  -- Only master_dbo schema
+
+    IF v_count_sql IS NULL THEN
+        RAISE NOTICE 'No datetime columns found in the database.';
+    ELSE
+        -- Execute the count query
+        FOR r IN EXECUTE v_count_sql
+        LOOP
+            IF r.affected_rows > 0 THEN  -- Only show if there are affected rows
+                has_affected_rows := true;
+                RAISE NOTICE 'Table: %, Column: %, Total Rows: %, Affected Rows: %',
+                    r.table_name, r.column_name, r.total_rows, r.affected_rows;
+            END IF;
+        END LOOP;
+
+        -- Execute the query for affected values
+        IF NOT has_affected_rows THEN
+            RAISE NOTICE 'No rows need to be modified.';
+        ELSE
+            IF v_sql IS NOT NULL THEN
+                RAISE NOTICE '--- Detailed Changes ---';
+                FOR r IN EXECUTE v_sql
+                LOOP
+                    RAISE NOTICE 'Table: %, Column: %, Original Value: %, New Value: %',
+                        r.table_name, r.column_name, r.original_value, r.new_value;
+                END LOOP;
+            END IF;
+        END IF;
+    END IF;
+END;
+$$;
 GO
 
 -- tsql
