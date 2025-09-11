@@ -56,6 +56,7 @@ OBJS += src/guc.o
 OBJS += src/catalog.o
 OBJS += src/schemacmds.o
 OBJS += src/hooks.o
+OBJS += src/pltsql_permissions.o
 OBJS += src/tsqlNodes.o
 OBJS += src/tsqlHandler.o
 OBJS += src/tsqlUnsupportedFeatureHandler.o

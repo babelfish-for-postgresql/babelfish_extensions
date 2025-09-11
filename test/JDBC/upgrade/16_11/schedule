@@ -137,7 +137,7 @@ BABEL-APPLOCK
 babel_char
 BABEL-CHECK-CONSTRAINT
 babel_context_info
-BABEL-CROSS-DB
+BABEL-CROSS-DB-14-17
 babel_datatype_sqlvariant
 babel_datetime
 Babel_domain_mapping_test
@@ -627,5 +627,6 @@ mathematical_func_tests
 datetime_roundoff
 babel_assign_nchar
 alter-function-with-weak-view
+view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 babel_binary
