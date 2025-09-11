@@ -4108,6 +4108,49 @@ remove_entry_from_bbf_schema_perms(const char *schema_name,
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
+/* Removes all rows for babelfish database user from the catalog BABELFISH_SCHEMA_PERMISSIONS when a user is dropped. */
+void
+remove_user_entry_from_bbf_schema_perms(Oid user_oid)
+{
+	Relation		bbf_schema_rel;
+	HeapTuple		tuple_bbf_schema;
+	ScanKeyData		scanKey[1];
+	SysScanDesc		scan;
+	const char		*user_name = NULL;
+
+	/* Return if the Oid is invalid */
+	if (!OidIsValid(user_oid))
+		return;
+
+	user_name = GetUserNameFromId(user_oid, true);
+
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
+									RowExclusiveLock);
+
+	ScanKeyEntryInitialize(&scanKey[0], 0,
+				Anum_bbf_schema_perms_grantee,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ,
+				CStringGetTextDatum(user_name));
+
+	scan = systable_beginscan(bbf_schema_rel,
+				get_bbf_schema_perms_idx_oid(),
+				true, NULL, 1, scanKey);
+
+	tuple_bbf_schema = systable_getnext(scan);
+	/* Multiple entries can be there */
+	while (HeapTupleIsValid(tuple_bbf_schema))
+	{
+		/* Delete the entry */
+		CatalogTupleDelete(bbf_schema_rel, &tuple_bbf_schema->t_self);
+		tuple_bbf_schema = systable_getnext(scan);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, RowExclusiveLock);
+}
 /*
  * Add an entry to BABELFISH_SCHEMA_PERMISSIONS table, if it doesn't exist already.
  * If exists, updates the PERMISSION column in the table.
