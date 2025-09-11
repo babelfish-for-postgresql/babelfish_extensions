@@ -71,7 +71,7 @@
 #include "utils/plancache.h"
 #include "utils/ps_status.h"
 #include "utils/queryenvironment.h"
-#include "utils/fmgroids.h"
+#include "utils/catcache.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
@@ -197,7 +197,6 @@ static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *
 
 typedef struct ColumnAclInfo
 {
-    AttrNumber  attnum;    /* Column number */
     char       *attname;   /* Column name */
     Acl        *acl;       /* ACL for the column */
 } ColumnAclInfo;
@@ -5366,47 +5365,35 @@ pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl)
 static List *
 get_old_view_column_acls(Oid oldViewOid)
 {
-	Relation pg_attribute_rel;
-	SysScanDesc scan;
-	ScanKeyData skey;
-	HeapTuple tuple;
+	CatCList *catlist;
 	List *column_acls = NIL;
-	
-	pg_attribute_rel = table_open(AttributeRelationId, AccessShareLock);
-	
-	ScanKeyInit(&skey,
-				Anum_pg_attribute_attrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(oldViewOid));
-	
-	scan = systable_beginscan(pg_attribute_rel, AttributeRelidNumIndexId,
-							true, NULL, 1, &skey);
-	
-	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	int i;
+
+	catlist = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(oldViewOid));
+
+	for (i = 0; i < catlist->n_members; i++)
 	{
+		HeapTuple tuple = &catlist->members[i]->tuple;
 		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
 		Datum aclDatum;
 		bool isNull;
 		ColumnAclInfo *info;
-		
+
 		/* Skip system columns */
 		if (att->attnum <= 0)
 			continue;
-			
-		aclDatum = SysCacheGetAttr(ATTNAME, tuple, 
+
+		aclDatum = SysCacheGetAttr(ATTNUM, tuple, 
 								Anum_pg_attribute_attacl, &isNull);
-		
+
 		info = palloc(sizeof(ColumnAclInfo));
-		info->attnum = att->attnum;
 		info->attname = pstrdup(NameStr(att->attname));
 		info->acl = isNull ? NULL : DatumGetAclPCopy(aclDatum);
-		
+
 		column_acls = lappend(column_acls, info);
 	}
-	
-	systable_endscan(scan);
-	table_close(pg_attribute_rel, AccessShareLock);
-	
+
+	ReleaseCatCacheList(catlist);
 	return column_acls;
 }
 
