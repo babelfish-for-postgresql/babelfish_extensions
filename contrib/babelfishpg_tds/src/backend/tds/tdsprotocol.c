@@ -110,9 +110,13 @@ TdsDiscardAll()
 	 * ResetTempTableNamespace might involve TOAST table access,
 	 * so we need to ensure that there is a valid snapshot.
 	 */
-	PushActiveSnapshot(GetTransactionSnapshot());
+	if (!ActiveSnapshotSet())
+		PushActiveSnapshot(GetTransactionSnapshot());
+
 	ResetTempTableNamespace();
-	PopActiveSnapshot();
+
+	if (!ActiveSnapshotSet())
+		PopActiveSnapshot();
 	
 	ResetSequenceCaches();
 }
