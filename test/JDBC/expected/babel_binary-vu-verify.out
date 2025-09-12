@@ -1284,8 +1284,8 @@ GO
 text
 Query Text: SELECT * FROM BABEL_5597_binary_test 
 WHERE binary_col < cast(cast(0x1 as [binary](5)) + cast(0x1 as [binary](5)) as [binary](10))
-Seq Scan on babel_5597_binary_test
-  Filter: ((binary_col)::bbf_binary < '0x01000000000100000000'::bbf_binary)
+Index Only Scan using babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05 on babel_5597_binary_test
+  Index Cond: (binary_col < '0x01000000000100000000'::bbf_binary)
 ~~END~~
 
 ~~START~~
@@ -1301,8 +1301,8 @@ GO
 text
 Query Text: SELECT * FROM BABEL_5597_binary_test 
 WHERE binary_col < cast(0x1 as [binary](5)) + cast(0x1 as [binary](5))
-Seq Scan on babel_5597_binary_test
-  Filter: ((binary_col)::bbf_binary < '0x01000000000100000000'::bbf_binary)
+Index Only Scan using babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05 on babel_5597_binary_test
+  Index Cond: (binary_col < '0x01000000000100000000'::bbf_binary)
 ~~END~~
 
 ~~START~~
@@ -1337,8 +1337,8 @@ GO
 text
 Query Text: SELECT/*+ indexscan(babel_5597_binary_test babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05) */ * FROM BABEL_5597_binary_test                                    
 WHERE binary_col < cast(cast(0x1 as [binary](5)) + cast(0x1 as [binary](5)) as [binary](10))
-Seq Scan on babel_5597_binary_test
-  Filter: ((binary_col)::bbf_binary < '0x01000000000100000000'::bbf_binary)
+Index Only Scan using babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05 on babel_5597_binary_test
+  Index Cond: (binary_col < '0x01000000000100000000'::bbf_binary)
 ~~END~~
 
 ~~START~~
