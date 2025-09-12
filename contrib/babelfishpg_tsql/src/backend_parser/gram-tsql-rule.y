@@ -2500,15 +2500,15 @@ tsql_output_simple_select:
 			| tsql_values_clause							{ $$ = $1; }
 			| tsql_output_simple_select UNION set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_UNION, $3 == SET_QUANTIFIER_ALL, $1, $4, @1);
+					$$ = makeSetOp(SETOP_UNION, $3 == SET_QUANTIFIER_ALL, $1, $4);
 				}
 			| tsql_output_simple_select INTERSECT set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_INTERSECT, $3 == SET_QUANTIFIER_ALL, $1, $4, @1);
+					$$ = makeSetOp(SETOP_INTERSECT, $3 == SET_QUANTIFIER_ALL, $1, $4);
 				}
 			| tsql_output_simple_select EXCEPT set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_EXCEPT, $3 == SET_QUANTIFIER_ALL, $1, $4, @1);
+					$$ = makeSetOp(SETOP_EXCEPT, $3 == SET_QUANTIFIER_ALL, $1, $4);
 				}
 			
 		;
