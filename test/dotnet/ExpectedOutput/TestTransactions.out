@@ -261,3 +261,26 @@
 #D#int
 0
 #Q#DROP TABLE txntable1;
+#Q#CREATE TABLE txntable2 (col1 INT, col2 TEXT);
+#Q#select * from txntable2 order by col1;
+#Q#insert into txntable2 values(1, 'AAA');
+#Q#select * from txntable2;
+#D#int#!#text
+1#!#AAA
+#Q#delete from txntable2;
+#Q#select * from txntable2 order by col1;
+#Q#insert into txntable2 values(1, 'AAA');
+#Q#select * from txntable2;
+#Q#delete from txntable2;
+#Q#select * from txntable2 order by col1;
+#Q#insert into txntable2 values(1, 'AAA');
+#Q#select * from txntable2;
+#D#int#!#text
+1#!#AAA
+#Q#delete from txntable2;
+#Q#select * from txntable2 order by col1;
+#Q#insert into txntable2 values(1, 'AAA');
+#Q#select * from txntable2;
+#D#int#!#text
+1#!#AAA
+#Q#DROP TABLE txntable2;
