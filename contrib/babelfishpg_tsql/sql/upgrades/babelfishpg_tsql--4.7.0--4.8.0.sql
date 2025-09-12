@@ -43,6 +43,24 @@ END;
 $$
 LANGUAGE 'pltsql';
 
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.degrees(arg1::PG_CATALOG.NUMERIC);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.radians(arg1::PG_CATALOG.NUMERIC);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.sqrt(number PG_CATALOG.NUMERIC)
 RETURNS sys.float
 AS $$
