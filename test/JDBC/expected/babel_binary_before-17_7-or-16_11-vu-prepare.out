@@ -667,3 +667,4 @@ GO
 -- Create index
 CREATE INDEX BABEL_5597_binary_ind ON BABEL_5597_binary_test (binary_col);
 GO
+
