@@ -409,7 +409,7 @@ ProcessTxnMgmtRequest(TDSRequest request)
 				 * ROLLBACK TO SAVEPOINT command.  So if we've rolled back the
 				 * top transaction, send the token.
 				 */
-				if (GetTopTransactionIdIfAny() == InvalidTransactionId)
+				if (!IsTransactionBlock())
 					TdsSendEnvChangeBinary(TDS_ENVID_ROLLBACKTXN, NULL, 0,
 										   &txnId, sizeof(uint64_t));
 				if (req->nextTxn != NULL)
