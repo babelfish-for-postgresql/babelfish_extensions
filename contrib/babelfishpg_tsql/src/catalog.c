@@ -4479,9 +4479,9 @@ exec_internal_grant_on_function(Oid objectId)
 			int     		save_sec_context;
 
 			if (object_type == PROKIND_FUNCTION)
-				query = psprintf("GRANT EXECUTE ON FUNCTION [%s].[%s] TO %s", schema, object_name, grantee);
+				query = psprintf("GRANT EXECUTE ON FUNCTION [%s].[%s] TO [%s]", schema, object_name, grantee);
 			else if (object_type == PROKIND_PROCEDURE)
-				query = psprintf("GRANT EXECUTE ON PROCEDURE [%s].[%s] TO %s", schema, object_name, grantee);
+				query = psprintf("GRANT EXECUTE ON PROCEDURE [%s].[%s] TO [%s]", schema, object_name, grantee);
 			res = raw_parser(query, RAW_PARSE_DEFAULT);
 			grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
 

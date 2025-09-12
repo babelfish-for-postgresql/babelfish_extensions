@@ -5,7 +5,13 @@ go
 create login babel_4768_l1 with password = '12345678'
 go
 
+create login [babel-6067-l1] with password = '12345678'
+go
+
 create user babel_4768_u1 for login babel_4768_l1
+go
+
+create user [babel-6067-u1] for login [babel-6067-l1]
 go
 
 create table babel_4768_t1(a int, b int);
@@ -86,6 +92,13 @@ GRANT SELECT, EXECUTE ON SCHEMA::dbo TO babel_4768_u1
 GO
 
 GRANT SELECT, EXECUTE ON SCHEMA::babel_4768_s1 TO babel_4768_u1
+GO
+
+GRANT SELECT,INSERT,UPDATE,DELETE,EXECUTE ON SCHEMA::dbo TO [babel-6067-u1];
+GO
+
+-- Validate create procedure grants proc permission to username having hypens like babel-6067-u1
+CREATE PROCEDURE babel_6067_p1 AS SELECT 'Hello';
 GO
 
 -- psql

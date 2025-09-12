@@ -37,6 +37,9 @@ sp_rename 'babel_4768_f1', 'babel_4768_f1_new', 'OBJECT';
 go
 sp_rename 'babel_4768_f2', 'babel_4768_f2_new', 'OBJECT';
 go
+sp_rename 'babel_6067_p1', 'babel_6067_p1_new', 'OBJECT';
+go
+
 
 -- psql
 -- catalog should show new object names
@@ -51,6 +54,9 @@ REVOKE SELECT, EXECUTE ON SCHEMA::dbo FROM babel_4768_u1
 GO
 
 REVOKE SELECT, EXECUTE ON SCHEMA::babel_4768_s1 FROM babel_4768_u1
+GO
+
+REVOKE EXECUTE ON SCHEMA::dbo FROM [babel-6067-u1];
 GO
 
 -- psql
