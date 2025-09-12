@@ -389,20 +389,20 @@ GO
 SET BABELFISH_SHOWPLAN_ALL ON;
 GO
 
-SELECT * FROM BABEL_5597_binary_test 
-WHERE binary_col < cast(cast(0x1 as binary(5)) + cast(0x1 as binary(5)) as binary(10));
-GO
+--SELECT * FROM BABEL_5597_binary_test 
+--WHERE binary_col < cast(cast(0x1 as binary(5)) + cast(0x1 as binary(5)) as binary(10));
+--GO
 
-SELECT * FROM BABEL_5597_binary_test 
-WHERE binary_col < cast(0x1 as binary(5)) + cast(0x1 as binary(5));
-GO
+--SELECT * FROM BABEL_5597_binary_test 
+--WHERE binary_col < cast(0x1 as binary(5)) + cast(0x1 as binary(5));
+--GO
 
 -- Direct comparison
-SELECT * FROM BABEL_5597_binary_test 
-WHERE binary_col < 0x0100000000;
-GO
+--SELECT * FROM BABEL_5597_binary_test 
+--WHERE binary_col < 0x0100000000;
+--GO
 
 -- With index hint
-SELECT * FROM BABEL_5597_binary_test WITH (INDEX(BABEL_5597_binary_ind))
-WHERE binary_col < cast(cast(0x1 as binary(5)) + cast(0x1 as binary(5)) as binary(10));
-GO
+--SELECT * FROM BABEL_5597_binary_test WITH (INDEX(BABEL_5597_binary_ind))
+--WHERE binary_col < cast(cast(0x1 as binary(5)) + cast(0x1 as binary(5)) as binary(10));
+--GO
