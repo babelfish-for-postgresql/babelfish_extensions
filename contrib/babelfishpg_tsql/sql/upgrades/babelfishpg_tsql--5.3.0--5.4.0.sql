@@ -40,6 +40,15 @@ $$;
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION sys.sqrt(number PG_CATALOG.NUMERIC)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN PG_CATALOG.SQRT(number::float8);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT)
 RETURNS sys.NVARCHAR
 AS
@@ -117,6 +126,24 @@ BEGIN
 END;
 $$
 LANGUAGE 'pltsql';
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.degrees(arg1::PG_CATALOG.NUMERIC);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.radians(arg1::PG_CATALOG.NUMERIC);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

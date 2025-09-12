@@ -308,7 +308,7 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geography__stpointfromtext_deprecated_5_4_0');
 
-CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR, integer)
+CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR,srid integer)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	DECLARE
@@ -326,7 +326,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR, integer)
 		IF Geomtype = 'ST_Point' THEN
 			RETURN geom;
 		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
+			RAISE EXCEPTION 'Expected "POINT" at Position 1. The input has %', $1;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -566,7 +566,7 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geometry__stpointfromtext_deprecated_5_4_0');
 
-CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR, integer)
+CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR,srid integer)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE
@@ -584,7 +584,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR, integer)
 		IF Geomtype = 'ST_Point' THEN
 				RETURN geom;
 		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
+			RAISE EXCEPTION 'Expected "POINT" at Position 1. The input has %', $1;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -623,6 +623,52 @@ CREATE OR REPLACE FUNCTION sys.geomfromtext_helper(text, integer)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'get_geometry_from_text'
 	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STLineFromText(sys.NVARCHAR,srid integer)
+	RETURNS sys.GEOMETRY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOMETRY;
+	BEGIN
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geometry::STLineFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		geom = (SELECT sys.geomfromtext_helper($1::text, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_LineString' THEN
+				RETURN geom;
+		ELSE
+			RAISE EXCEPTION 'Expected "LINESTRING" at Position 1. The input has %', $1;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR,srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOGRAPHY;
+	BEGIN
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geography::STLineFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		geom = (SELECT sys.geogfromtext_helper($1::text, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_LineString' THEN
+			RETURN geom;
+		ELSE
+			RAISE EXCEPTION 'Expected "LINESTRING" at Position 1. The input has %', $1;		
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

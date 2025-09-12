@@ -100,6 +100,9 @@ ignore#!#babel_datetime-before-15_12-or-16_8-or-17_4-vu-cleanup
 ignore#!#fixeddecimal_modulo-vu-prepare
 ignore#!#fixeddecimal_modulo-vu-verify
 ignore#!#fixeddecimal_modulo-vu-cleanup
+ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-prepare
+ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-verify
+ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -436,6 +439,10 @@ ignore#!#catalogs_dbo_sys_schema-upgrade-vu-prepare
 ignore#!#catalogs_dbo_sys_schema-upgrade-vu-verify
 ignore#!#catalogs_dbo_sys_schema-upgrade-vu-cleanup
 
+ignore#!#BABEL-CROSS-DB-14-17-vu-prepare
+ignore#!#BABEL-CROSS-DB-14-17-vu-verify
+ignore#!#BABEL-CROSS-DB-14-17-vu-cleanup
+
 # These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
 ignore#!#reverse-before-15_8-or-16_4-vu-prepare
 ignore#!#reverse-before-15_8-or-16_4-vu-verify
@@ -606,6 +613,9 @@ ignore#!#babel_numeric_smallmoney_oper-before-16_10-or-17_6-vu-cleanup
 ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-prepare
 ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-verify
 ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-cleanup
+ignore#!#mathematical_func-before_17_6-or-16_10-vu-prepare
+ignore#!#mathematical_func-before_17_6-or-16_10-vu-verify
+ignore#!#mathematical_func-before_17_6-or-16_10-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 17_7 or 16_11 release
 ignore#!#Test-pointZM_before_17_7-or-16_11-vu-prepare
@@ -620,3 +630,9 @@ ignore#!#babel_726-before-16_10-or-17_6-vu-cleanup
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-prepare
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-verify
 ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-cleanup
+ignore#!#view_sec_setting_before_17_6-or-16_10-vu-prepare
+ignore#!#view_sec_setting_before_17_6-or-16_10-vu-verify
+ignore#!#view_sec_setting_before_17_6-or-16_10-vu-cleanup
+ignore#!#mathematical_func-before_17_7-or-16_11-vu-prepare
+ignore#!#mathematical_func-before_17_7-or-16_11-vu-verify
+ignore#!#mathematical_func-before_17_7-or-16_11-vu-cleanup
