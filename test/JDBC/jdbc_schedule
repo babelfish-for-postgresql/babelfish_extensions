@@ -616,6 +616,9 @@ ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-cleanup
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-prepare
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-verify
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-cleanup
+ignore#!#Select_top_N_percent-before-17-6-or-16-10-vu-prepare
+ignore#!#Select_top_N_percent-before-17-6-or-16-10-vu-verify
+ignore#!#Select_top_N_percent-before-17-6-or-16-10-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 17_7 or 16_11 release
 ignore#!#Test-pointZM_before_17_7-or-16_11-vu-prepare
