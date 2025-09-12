@@ -114,9 +114,10 @@ bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
+#define              MD5_HASH_LEN 32
 const  int           XML_HANDLE_COUNTER_START = 0;
 const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
-static int           current_xml_handle_counter;
+static int           handle_counter = INT_MAX / 2;
 Bitmapset           *active_xml_handles_counter = NULL;
 static char         *xml_handle_temp_table_name = NULL;
 int                  get_next_xml_handle_counter(void);
@@ -4325,30 +4326,30 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
 int 
 get_next_xml_handle_counter()
 {
-	int           old_handle_counter = current_xml_handle_counter;
+	int           old_handle_counter = handle_counter;
 	bool          handle_valid = false;
 
 	while (!handle_valid)
 	{
-		++current_xml_handle_counter;
+		++handle_counter;
 
-		if (current_xml_handle_counter == XML_HANDLE_COUNTER_INVALID)
+		if (handle_counter == XML_HANDLE_COUNTER_INVALID)
 		{
-			current_xml_handle_counter = XML_HANDLE_COUNTER_START + 1;
+			handle_counter = XML_HANDLE_COUNTER_START + 1;
 		}
 
-		if (unlikely(current_xml_handle_counter == old_handle_counter))
+		if (unlikely(handle_counter == old_handle_counter))
 		{
 			ereport(ERROR,
 				   (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					errmsg("Out of XML Handles")));
 		}
 
-		/* Check if the handle is in the active set */
-		if (bms_is_member(current_xml_handle_counter, active_xml_handles_counter))
+		/* Check if the handle is in the active set and table exists */
+		if (bms_is_member(handle_counter, active_xml_handles_counter) && xml_handle_temp_table_name != NULL)
 		{
 			/* Handle is in active set, check if it actually exists in the table */
-			int                    document_id = 2 * current_xml_handle_counter - 1;
+			int                    document_id = 2 * handle_counter - 1;
 			Relation               relation = NULL;
 			ScanKeyData            skey[1];
 			SysScanDesc            scan;
@@ -4356,33 +4357,29 @@ get_next_xml_handle_counter()
 			bool                   entry_exists = false;
 			EphemeralNamedRelation enr = NULL;
 			
-			/* Only check the table if it exists using ENR lookup */
-			if (xml_handle_temp_table_name != NULL)
+			enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+			if (enr)
 			{
-				enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
-				if (enr)
-				{
-					relation = relation_open(enr->md.reliddesc, AccessShareLock);
+				relation = relation_open(enr->md.reliddesc, AccessShareLock);
+			
+				/* Set up scan key to look for this document_id */
+				ScanKeyInit(&skey[0],
+							1,
+							BTEqualStrategyNumber, F_INT4EQ,
+							Int32GetDatum(document_id));
 				
-					/* Set up scan key to look for this document_id */
-					ScanKeyInit(&skey[0],
-								1,
-								BTEqualStrategyNumber, F_INT4EQ,
-								Int32GetDatum(document_id));
-					
-					/* Scan the table for this document_id */
-					scan = systable_beginscan(relation, InvalidOid, false, NULL, 1, skey);
-					tuple = systable_getnext(scan);
-					
-					/* If we find a tuple, the entry exists */
-					if (HeapTupleIsValid(tuple))
-					{
-						entry_exists = true;
-					}
-
-					systable_endscan(scan);
-					relation_close(relation, AccessShareLock);
+				/* Scan the table for this document_id */
+				scan = systable_beginscan(relation, InvalidOid, false, NULL, 1, skey);
+				tuple = systable_getnext(scan);
+				
+				/* If we find a tuple, the entry exists */
+				if (HeapTupleIsValid(tuple))
+				{
+					entry_exists = true;
 				}
+
+				systable_endscan(scan);
+				relation_close(relation, AccessShareLock);
 			}
 			/* If no entry exists in the table, we can use this handle */
 			if (!entry_exists)
@@ -4393,12 +4390,12 @@ get_next_xml_handle_counter()
 		}
 		else
 		{
-			/* Handle is not in active set, we can use it */
+			/* Handle is not in active set or table doesn't exist, we can use it */
 			handle_valid = true;
 		}
 	}
 
-	return current_xml_handle_counter;
+	return handle_counter;
 }
 
 /* Define column definitions for #xml_handle_temp_table
@@ -4446,14 +4443,12 @@ create_xml_handle_columns(void)
  * Returns:
  *   A unique table name with the base name and an MD5 hash suffix
  */
-#define MD5_HASH_LEN 32
-
 static char *
 generate_unique_table_name(const char *base_name)
 {
-	char		md5[MD5_HASH_LEN + 1];
-	const char     *errstr = NULL;
-	bool		success;
+	char          md5[MD5_HASH_LEN + 1];
+	const char   *errstr = NULL;
+	bool          success;
 	
 	/* Generate a unique input string for the MD5 hash */
 	char *random_input = psprintf("%s%d", base_name, rand());
@@ -4555,7 +4550,7 @@ create_xml_handle_temp_table()
 	}
 	PG_END_TRY();
 
-	current_xml_handle_counter = XML_HANDLE_COUNTER_START;
+	handle_counter = XML_HANDLE_COUNTER_START;
 }
 
 /*
@@ -4679,7 +4674,7 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 		* is reset, which would cause the handles to be lost and potentially reused.
 		*/
 		oldContext = MemoryContextSwitchTo(TopMemoryContext);
-		active_xml_handles_counter = bms_add_member(active_xml_handles_counter, current_xml_handle_counter);
+		active_xml_handles_counter = bms_add_member(active_xml_handles_counter, handle_counter);
 		MemoryContextSwitchTo(oldContext);
 	}
 	PG_FINALLY();
@@ -4723,7 +4718,7 @@ delete_xml_handle_entry(int document_id)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Could not find prepared statement with handle %d", document_id)));
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
 	}
 
 	/* Calculate the handle counter */
@@ -4734,7 +4729,7 @@ delete_xml_handle_entry(int document_id)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Could not find prepared statement with handle %d", document_id)));
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
 	}
 
 	/* Check if the table exists using ENR lookup by name */
@@ -4753,7 +4748,7 @@ delete_xml_handle_entry(int document_id)
 		/* Table doesn't exist, so the handle definitely doesn't exist */
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Could not find prepared statement with handle %d", document_id)));
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
 	}
 
 	ScanKeyInit(&skey[0],
@@ -4795,7 +4790,7 @@ delete_xml_handle_entry(int document_id)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Could not find prepared statement with handle %d", document_id)));
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
 	}
 }
 
@@ -4812,7 +4807,7 @@ reset_cached_xml_handle()
 	active_xml_handles_counter = NULL;
 
 	/* Reset xml handles */
-	current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID;
+	handle_counter = XML_HANDLE_COUNTER_INVALID;
 
 	/* Reset the table name */
 	xml_handle_temp_table_name = NULL;
@@ -4911,7 +4906,7 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Could not find prepared statement with handle NULL")));
+				 errmsg("sp_xml_removedocument: The value supplied for parameter number 1 is invalid.")));
 	}
 
 	/* Get the document handle */
