@@ -117,7 +117,7 @@ static bool is_supported_case_sp_describe_undeclared_parameters = true;
 #define              MD5_HASH_LEN 32
 const  int           XML_HANDLE_COUNTER_START = 0;
 const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
-static int           handle_counter = INT_MAX / 2;
+static int           current_xml_handle_counter = INT_MAX / 2;
 Bitmapset           *active_xml_handles_counter = NULL;
 static char         *xml_handle_temp_table_name = NULL;
 int                  get_next_xml_handle_counter(void);
@@ -4326,19 +4326,19 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
 int 
 get_next_xml_handle_counter()
 {
-	int           old_handle_counter = handle_counter;
+	int           old_handle_counter = current_xml_handle_counter;
 	bool          handle_valid = false;
 
 	while (!handle_valid)
 	{
-		++handle_counter;
+		++current_xml_handle_counter;
 
-		if (handle_counter == XML_HANDLE_COUNTER_INVALID)
+		if (current_xml_handle_counter == XML_HANDLE_COUNTER_INVALID)
 		{
-			handle_counter = XML_HANDLE_COUNTER_START + 1;
+			current_xml_handle_counter = XML_HANDLE_COUNTER_START + 1;
 		}
 
-		if (unlikely(handle_counter == old_handle_counter))
+		if (unlikely(current_xml_handle_counter == old_handle_counter))
 		{
 			ereport(ERROR,
 				   (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
@@ -4346,10 +4346,10 @@ get_next_xml_handle_counter()
 		}
 
 		/* Check if the handle is in the active set and table exists */
-		if (bms_is_member(handle_counter, active_xml_handles_counter) && xml_handle_temp_table_name != NULL)
+		if (xml_handle_temp_table_name != NULL && bms_is_member(current_xml_handle_counter, active_xml_handles_counter))
 		{
 			/* Handle is in active set, check if it actually exists in the table */
-			int                    document_id = 2 * handle_counter - 1;
+			int                    document_id = 2 * current_xml_handle_counter - 1;
 			Relation               relation = NULL;
 			ScanKeyData            skey[1];
 			SysScanDesc            scan;
@@ -4395,7 +4395,7 @@ get_next_xml_handle_counter()
 		}
 	}
 
-	return handle_counter;
+	return current_xml_handle_counter;
 }
 
 /* Define column definitions for #xml_handle_temp_table
@@ -4550,7 +4550,7 @@ create_xml_handle_temp_table()
 	}
 	PG_END_TRY();
 
-	handle_counter = XML_HANDLE_COUNTER_START;
+	current_xml_handle_counter = XML_HANDLE_COUNTER_START;
 }
 
 /*
@@ -4713,12 +4713,19 @@ delete_xml_handle_entry(int document_id)
 	bool                   table_exists = false;
 	EphemeralNamedRelation enr = NULL;
 	
-	/* Check for negative document ID */
-	if (document_id <= 0)
+	/* Check for negative & zero document ID */
+	if (document_id < 0)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	}
+
+	if (document_id == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("sp_xml_removedocument: The value supplied for parameter number 1 is invalid.")));
 	}
 
 	/* Calculate the handle counter */
@@ -4807,7 +4814,7 @@ reset_cached_xml_handle()
 	active_xml_handles_counter = NULL;
 
 	/* Reset xml handles */
-	handle_counter = XML_HANDLE_COUNTER_INVALID;
+	current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID;
 
 	/* Reset the table name */
 	xml_handle_temp_table_name = NULL;

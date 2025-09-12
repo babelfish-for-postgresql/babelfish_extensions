@@ -145,6 +145,34 @@ END;
 $$
 LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_sp_xml_preparedocument RENAME TO babelfish_sp_xml_preparedocument_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_sp_xml_preparedocument_deprecated_in_5_4_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_sp_xml_removedocument RENAME TO babelfish_sp_xml_removedocument_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_sp_xml_removedocument_deprecated_in_5_4_0');
+
 CREATE OR REPLACE PROCEDURE sys.sp_xml_preparedocument(
     INOUT "@hdoc"  INTEGER,                 
     IN "@xmltext" sys.VARCHAR DEFAULT NULL,    
