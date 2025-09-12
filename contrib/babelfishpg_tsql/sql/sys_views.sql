@@ -3715,3 +3715,32 @@ AS SELECT
   CAST(0 AS INT) AS container_type,
   CAST(NULL AS sys.NVARCHAR(60)) AS container_type_desc;
 GRANT SELECT ON sys.dm_os_sys_info TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.time_zone_info AS
+SELECT 
+    -- Mapping PostgreSQL timezone names to Windows format names
+    pg_catalog.initcap(sys.reverse_timezone_mapping(name))
+    AS name,
+    
+    CASE 
+        WHEN utc_offset < '00:00:00' THEN 
+            '-' + RIGHT('0' + CAST(ABS(EXTRACT(HOUR FROM utc_offset)) AS VARCHAR(2)), 2) + ':' + 
+            RIGHT('0' + CAST(ABS(EXTRACT(MINUTE FROM utc_offset)) AS VARCHAR(2)), 2)
+        ELSE 
+            '+' + RIGHT('0' + CAST(EXTRACT(HOUR FROM utc_offset) AS VARCHAR(2)), 2) + ':' + 
+            RIGHT('0' + CAST(EXTRACT(MINUTE FROM utc_offset) AS VARCHAR(2)), 2)
+    END AS current_utc_offset,
+    
+    -- Converting boolean is_dst to bit (0/1)
+    CAST(
+        CASE 
+            WHEN is_dst = true THEN 1
+            ELSE 0
+        END AS sys.BIT
+    ) AS is_currently_dst
+FROM pg_catalog.pg_timezone_names
+WHERE name NOT LIKE 'posix/%'
+  AND name NOT LIKE 'Etc/%'
+  AND sys.reverse_timezone_mapping(name) IS NOT NULL
+ORDER BY name;
+GRANT SELECT ON sys.time_zone_info TO PUBLIC;
