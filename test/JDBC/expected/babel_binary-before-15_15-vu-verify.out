@@ -1259,7 +1259,7 @@ WHERE tablename = 'babel_5597_binary_test';
 GO
 ~~START~~
 name#!#name#!#name#!#text
-master_dbo#!#babel_5597_binary_test#!#babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05#!#CREATE INDEX babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05 ON master_dbo.babel_5597_binary_test USING btree (binary_col NULLS FIRST) WITH (bbf_original_rel_name=babel_5597_binary_ind)
+master_dbo#!#babel_5597_binary_test#!#babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05#!#CREATE INDEX babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05 ON master_dbo.babel_5597_binary_test USING btree (binary_col NULLS FIRST)
 ~~END~~
 
 

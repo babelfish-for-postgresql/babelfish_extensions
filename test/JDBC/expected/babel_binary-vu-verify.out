@@ -1273,9 +1273,6 @@ off
 ~~END~~
 
 
--- Test query with execution plan (Index not getting used)
-SET BABELFISH_SHOWPLAN_ALL ON;
-GO
 
 
 

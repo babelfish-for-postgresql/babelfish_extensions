@@ -536,4 +536,4 @@ babel_assign_nchar
 alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
-babel_binary-before-17_7-or-16_11
+babel_binary-before-14_6-or-15_5
