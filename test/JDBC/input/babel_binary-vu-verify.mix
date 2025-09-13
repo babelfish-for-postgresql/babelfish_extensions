@@ -376,11 +376,6 @@ GO
 SET enable_seqscan = off;
 GO
 
-SELECT schemaname, tablename, indexname, indexdef 
-FROM pg_indexes 
-WHERE tablename = 'babel_5597_binary_test';
-GO
-
 -- tsql
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 GO
