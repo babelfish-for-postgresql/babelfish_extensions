@@ -1513,7 +1513,7 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 	 * Note: The error will not be thrown if the percentage is 100,
 	 * as TOP 100 PERCENT is equivalent to no TOP clause.
 	 */
-	if(stmt->isPercent)
+	if(stmt->limitCount != NULL && stmt->limitOption == LIMIT_OPTION_PERCENT)
 	{
 		ereport(ERROR,
 		        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1602,7 +1602,7 @@ post_transform_delete(ParseState *pstate, DeleteStmt *stmt, Query *query)
 	 * Note: The error will not be thrown if the percentage is 100,
 	 * as TOP 100 PERCENT is equivalent to no TOP clause.
 	 */
-	if(stmt->isPercent)
+	if(stmt->limitCount != NULL && stmt->limitOption == LIMIT_OPTION_PERCENT)
 	{
 		ereport(ERROR,
 		        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -3519,7 +3519,7 @@ pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query)
 	 * Note: The error will not be thrown if the percentage is 100,
 	 * as TOP 100 PERCENT is equivalent to no TOP clause.
 	 */
-	if(stmt->isPercent)
+	if(stmt->limitCount != NULL && stmt->limitOption == LIMIT_OPTION_PERCENT)
 	{
 		ereport(ERROR,
 		        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -5750,13 +5750,13 @@ transform_percent_clause(ParseState *pstate, SelectStmt *stmt)
     A_Const       *intConst;         /* Integer constant (100) */
     FuncCall      *ceilFunc;         /* CEIL function for rounding */
     
-    if (sql_dialect != SQL_DIALECT_TSQL)
+    if (sql_dialect != SQL_DIALECT_TSQL || stmt->limitCount == NULL)
         return;
     
-    if(!stmt->isPercent)
+    if(stmt->limitOption!=LIMIT_OPTION_PERCENT)
         return;
     else
-        stmt->isPercent = false;
+        stmt->limitOption = LIMIT_OPTION_COUNT;
 
     /* Add validation check for percentage value > 100 */
     if (IsA(stmt->limitCount, A_Const))

@@ -1320,7 +1320,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 					tsql_reset_update_delete_globals();
 					n->withClause = $1;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					n->relation = $4;
 					n->targetList = $7;
 					n->fromClause = $8;
@@ -1351,7 +1351,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 						{
 							List *top_info = (List *)$3;
 							n->limitCount = (Node *)linitial(top_info);
-							n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+							n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 							n->fromClause = $9;
 							n->whereClause = $10;
 						}
@@ -1509,7 +1509,7 @@ simple_select:
 					SelectStmt *n = makeNode(SelectStmt);
 					List *top_info = (List *)$3;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					n->targetList = $4;
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
@@ -1535,7 +1535,7 @@ simple_select:
 					List *top_info = (List *)$3;
 					n->distinctClause = $2;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					n->targetList = $4;
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
@@ -1560,7 +1560,7 @@ simple_select:
 					SelectStmt *n = makeNode(SelectStmt);
 					List *top_info = (List *)$3;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1582,7 +1582,7 @@ simple_select:
 					SelectStmt *n = makeNode(SelectStmt);
 					List *top_info = (List *)$3;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2298,7 +2298,7 @@ tsql_output_simple_select:
 					SelectStmt *n = makeNode(SelectStmt);
 					List *top_info = (List *)$3;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					n->targetList = $4;
 					n->intoClause = $5;
 					n->fromClause = $6;
@@ -2318,7 +2318,7 @@ tsql_output_simple_select:
 					List *top_info = (List *)$3;
 					n->distinctClause = $2;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					n->targetList = $4;
 					n->intoClause = $5;
 					n->fromClause = $6;
@@ -2337,7 +2337,7 @@ tsql_output_simple_select:
 					SelectStmt *n = makeNode(SelectStmt);
 					List *top_info = (List *)$3;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					n->intoClause = $5;
 					n->whereClause = $9;
 					n->groupClause = ($10)->list;
@@ -2354,7 +2354,7 @@ tsql_output_simple_select:
 					List *top_info = (List *)$3;
 					n->distinctClause = $2;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					n->intoClause = $5;
 					n->whereClause = $9;
 					n->groupClause = ($10)->list;
@@ -2708,7 +2708,7 @@ tsql_InsertStmt:
 				{
 					List *top_info = (List *)$3;
 					$10->limitCount = (Node *)linitial(top_info);
-					$10->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					$10->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					$10->relation = $5;
 					$10->onConflictClause = NULL;
 					$10->returningList = NULL;
@@ -2720,7 +2720,7 @@ tsql_InsertStmt:
 				{
 					List *top_info = (List *)$3;
 					$7->limitCount = (Node *)linitial(top_info);
-					$7->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					$7->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					$7->relation = $5;
 					$7->onConflictClause = NULL;
 					$7->returningList = NULL;
@@ -2733,7 +2733,7 @@ tsql_InsertStmt:
 					InsertStmt *i = makeNode(InsertStmt);
 					List *top_info = (List *)$3;
 					i->limitCount = (Node *)linitial(top_info);
-					i->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					i->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					i->relation = $5;
 					i->onConflictClause = NULL;
 					i->returningList = NULL;
@@ -2755,7 +2755,7 @@ tsql_InsertStmt:
 								 parser_errposition(@10)));
 
 					$11->limitCount = (Node *)linitial(top_info);
-					$11->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					$11->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					$11->relation = $5;
 					$11->onConflictClause = NULL;
 					$11->returningList = $10;
@@ -2773,7 +2773,7 @@ tsql_InsertStmt:
 								 parser_errposition(@7)));
 					
 					$8->limitCount = (Node *)linitial(top_info);
-					$8->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					$8->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					$8->relation = $5;
 					$8->onConflictClause = NULL;
 					$8->returningList = $7;
@@ -2787,7 +2787,7 @@ tsql_InsertStmt:
 					InsertStmt *i = makeNode(InsertStmt);
 					List *top_info = (List *)$3;
 					i->limitCount = (Node *)linitial(top_info);
-					i->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					i->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					i->relation = $5;
 					i->onConflictClause = NULL;
 					i->returningList = $7;
@@ -3547,7 +3547,7 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 					DeleteStmt *n = makeNode(DeleteStmt);
 					List *top_info = (List *)$3;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					n->relation = $5;
 					n->usingClause = $7;
 					n->whereClause = $8;
@@ -3564,7 +3564,7 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 					tsql_reset_update_delete_globals();
 					n->relation = $5;
 					n->limitCount = (Node *)linitial(top_info);
-					n->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+					n->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 					n->usingClause = $8;
 					n->whereClause = $9;
 					n->returningList = $7;

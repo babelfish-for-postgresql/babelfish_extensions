@@ -1019,7 +1019,7 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 		if (n_d)
 		{
 			n_d->limitCount = (Node *)linitial(top_info);
-			n_d->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+			n_d->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 			n_d->usingClause = from_clause;
 			n_d->whereClause = where_clause;
 			return (Node *) n_d;
@@ -1027,7 +1027,7 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 		else
 		{
 			n_u->limitCount = (Node *)linitial(top_info);
-			n_u->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+			n_u->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 			n_u->fromClause = from_clause;
 			n_u->whereClause = where_clause;
 			return (Node *) n_u;
@@ -1056,7 +1056,7 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 	selectstmt->whereClause = where_clause;
 	/* if we end up createing a subquery for JOIN, attach TOP clause to it */
 	selectstmt->limitCount = (Node *)linitial(top_info);
-	selectstmt->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+	selectstmt->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 	/* construct where_clause(subLink) */
 	link = makeNode(SubLink);
 	link->subselect = (Node *) selectstmt;
@@ -1197,7 +1197,7 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	i->cols = insert_column_list;
 	i->selectStmt = tsql_output_insert_rest->selectStmt;
 	i->limitCount = (Node *)linitial(top_info);
-	i->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+	i->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 	i->relation = insert_target;
 	i->onConflictClause = NULL;
 	i->returningList = get_transformed_output_list(tsql_output_clause);
@@ -1266,7 +1266,7 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 
 	/* SelectStmt inside outer InsertStmt */
 	n->limitCount = NULL;
-	n->isPercent = false;
+	
 	n->targetList = output_list;
 	n->intoClause = NULL;
 	n->fromClause = list_make1(makeRangeVar(NULL, internal_ctename, select_location));
@@ -1348,7 +1348,7 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		d->usingClause = from_clause;
 		d->whereClause = where_or_current_clause;
 		d->limitCount = (Node *)linitial(top_info);
-		d->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+		d->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 	}
 	d->returningList = get_transformed_output_list(tsql_output_clause);
 	d->withClause = opt_with_clause;
@@ -1414,7 +1414,7 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 
 	/* SelectStmt inside outer InsertStmt */
 	n->limitCount = NULL;
-	n->isPercent = false;
+	
 	n->targetList = output_list;
 	n->intoClause = NULL;
 	n->fromClause = list_make1(makeRangeVar(NULL, internal_ctename, 4));
@@ -1521,7 +1521,7 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		u->fromClause = from_clause;
 		u->whereClause = where_or_current_clause;
 		u->limitCount = (Node *)linitial(top_info);
-		u->isPercent = ((Boolean *)lsecond(top_info))->boolval;
+		u->limitOption = ((Boolean *)lsecond(top_info))->boolval ? LIMIT_OPTION_PERCENT : LIMIT_OPTION_COUNT;
 	}
 	u->returningList = get_transformed_output_list(tsql_output_clause);
 	u->withClause = opt_with_clause;
@@ -1599,7 +1599,7 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 
 	/* SelectStmt inside outer InsertStmt */
 	n->limitCount = NULL;
-	n->isPercent = false;
+	
 	n->targetList = output_list;
 	n->intoClause = NULL;
 	n->fromClause = list_make1(makeRangeVar(NULL, internal_ctename, -1));
