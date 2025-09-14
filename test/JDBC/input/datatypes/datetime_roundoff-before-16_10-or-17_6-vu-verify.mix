@@ -490,6 +490,181 @@ END;
 $$;
 GO
 
+-- procedure for all use case
+CREATE OR REPLACE PROCEDURE datetime_rounding_handler(
+    p_action text DEFAULT NULL,           -- 'list', 'check', 'update'
+    p_schema_name text DEFAULT NULL,      -- schema name, NULL for all schemas
+    p_table_name text DEFAULT NULL,       -- table name, NULL for all tables
+    p_commit_after_table boolean DEFAULT true  -- commit after each table for updates
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_sql text;
+    v_datetime_typoid oid;
+    r record;
+    v_affected_count bigint;
+    v_table_count int := 0;
+BEGIN
+    -- Get datetime type OID
+    SELECT oid INTO v_datetime_typoid 
+    FROM pg_type 
+    WHERE typname = 'datetime';
+
+    -- Show help if no action specified
+    IF p_action IS NULL THEN
+        RAISE NOTICE 'Usage: CALL datetime_rounding_handler(p_action, p_schema_name, p_table_name, p_commit_after_table)';
+        RAISE NOTICE 'Actions:';
+        RAISE NOTICE '  list   - List all tables and columns with datetime type';
+        RAISE NOTICE '  check  - Check for values that need rounding';
+        RAISE NOTICE '  update - Update affected values (requires schema and table names unless "all" specified)';
+        RETURN;
+    END IF;
+
+    -- Validate action
+    IF p_action NOT IN ('list', 'check', 'update') THEN
+        RAISE EXCEPTION 'Invalid action. Valid actions are: list, check, update';
+    END IF;
+
+    -- For update action, validate parameters
+    IF p_action = 'update' AND p_schema_name IS NULL AND p_table_name != 'all' THEN
+        RAISE EXCEPTION 'Schema name is required for update action unless table_name is "all"';
+    END IF;
+
+    -- Build base query for finding datetime columns
+    WITH datetime_columns AS (
+        SELECT 
+            n.nspname as schema_name,
+            t.relname as table_name,
+            a.attname as column_name
+        FROM pg_class t
+        JOIN pg_namespace n ON t.relnamespace = n.oid
+        JOIN pg_attribute a ON t.oid = a.attrelid
+        WHERE a.atttypid = v_datetime_typoid
+            AND t.relkind = 'r'
+            AND NOT a.attisdropped
+            AND a.attnum > 0
+            AND (p_schema_name IS NULL OR n.nspname = p_schema_name)
+            AND (p_table_name IS NULL OR p_table_name = 'all' OR t.relname = p_table_name)
+            AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog')
+    )
+    SELECT * INTO r FROM datetime_columns LIMIT 1;
+
+    IF NOT FOUND THEN
+        RAISE NOTICE 'No datetime columns found matching the specified criteria.';
+        RETURN;
+    END IF;
+
+    -- LIST action
+    IF p_action = 'list' THEN
+        FOR r IN (
+            SELECT 
+                schema_name,
+                table_name,
+                string_agg(column_name, ', ') as datetime_columns
+            FROM datetime_columns
+            GROUP BY schema_name, table_name
+            ORDER BY schema_name, table_name
+        )
+        LOOP
+            RAISE NOTICE 'Schema: %, Table: %, Datetime Columns: %',
+                r.schema_name, r.table_name, r.datetime_columns;
+        END LOOP;
+        RETURN;
+    END IF;
+
+    -- CHECK or UPDATE action
+    FOR r IN (
+        SELECT * FROM datetime_columns ORDER BY schema_name, table_name, column_name
+    )
+    LOOP
+        v_table_count := v_table_count + 1;
+
+        IF p_action = 'check' THEN
+            EXECUTE format(
+                'SELECT COUNT(*) FROM %I.%I WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+                r.schema_name, r.table_name, r.column_name, r.column_name
+            ) INTO v_affected_count;
+
+            IF v_affected_count > 0 THEN
+                RAISE NOTICE 'Schema: %, Table: %, Column: %, Affected Rows: %',
+                    r.schema_name, r.table_name, r.column_name, v_affected_count;
+
+                -- Show sample of affected values
+                RAISE NOTICE 'Sample of affected values:';
+                FOR r2 IN EXECUTE format(
+                    'SELECT %I as original_value, 
+                            CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
+                     FROM %I.%I 
+                     WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) 
+                     LIMIT 5',
+                    r.column_name, r.column_name,
+                    r.schema_name, r.table_name,
+                    r.column_name, r.column_name
+                )
+                LOOP
+                    RAISE NOTICE 'Original: %, New: %', r2.original_value, r2.new_value;
+                END LOOP;
+            END IF;
+
+        ELSIF p_action = 'update' THEN
+            RAISE NOTICE 'Processing table: %.%', r.schema_name, r.table_name;
+            
+            EXECUTE format(
+                'UPDATE %I.%I 
+                 SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+                 WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+                r.schema_name, r.table_name,
+                r.column_name, r.column_name,
+                r.column_name, r.column_name
+            );
+
+            GET DIAGNOSTICS v_affected_count = ROW_COUNT;
+            RAISE NOTICE 'Updated % rows in %.%.%',
+                v_affected_count, r.schema_name, r.table_name, r.column_name;
+
+            IF p_commit_after_table THEN
+                COMMIT;
+                RAISE NOTICE 'Committed changes for table %.%', r.schema_name, r.table_name;
+            END IF;
+        END IF;
+    END LOOP;
+
+    IF v_table_count = 0 THEN
+        RAISE NOTICE 'No tables found matching the specified criteria.';
+    ELSIF p_action = 'update' AND NOT p_commit_after_table THEN
+        COMMIT;
+        RAISE NOTICE 'Final commit performed.';
+    END IF;
+END;
+$$;
+GO
+
+-- Usage examples:
+-- Show help
+CALL datetime_rounding_handler();
+GO
+
+-- List all tables with datetime columns
+CALL datetime_rounding_handler('list');
+GO
+
+-- Check specific schema/table
+CALL datetime_rounding_handler('check', 'master_dbo', 'datetime_test');
+GO
+
+-- Check all tables
+CALL datetime_rounding_handler('check', NULL, 'all');
+GO
+
+-- Update specific table
+CALL datetime_rounding_handler('update', 'master_dbo', 'datetime_test');
+GO
+
+-- Update all tables (use with caution)
+CALL datetime_rounding_handler('update', NULL, 'all');
+GO
+
 -- tsql
 DECLARE @sql NVARCHAR(MAX) = '';
 
