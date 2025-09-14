@@ -1,0 +1,2 @@
+DROP PROCEDURE openxml_without_with_dep_proc
+GO

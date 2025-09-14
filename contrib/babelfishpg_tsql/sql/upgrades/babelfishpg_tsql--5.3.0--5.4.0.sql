@@ -145,6 +145,23 @@ END;
 $$
 LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.openxml_simple(idoc INT, 
+                                       rowpattern TEXT, 
+                                       flags INTEGER DEFAULT 0)
+RETURNS table (
+  id sys.BIGINT,
+  parentid sys.BIGINT,
+  nodetype sys.INT,
+  localname sys.NVARCHAR,
+  prefix sys.NVARCHAR,
+  namespaceuri sys.NVARCHAR,
+  datatype sys.NVARCHAR,
+  prev sys.BIGINT,
+  text sys.NTEXT
+) 
+AS 'babelfishpg_tsql', 'openxml_simple'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts

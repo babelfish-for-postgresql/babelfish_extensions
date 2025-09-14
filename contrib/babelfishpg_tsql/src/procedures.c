@@ -114,6 +114,9 @@ bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
+#define XML_HANDLE_DOC_COLUMN_NUM 6
+#define XML_HANDLE_NAMESPACE_COLUMN_NUM 7
+
 const  int           XML_HANDLE_COUNTER_START = 0;
 const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
 static int           current_xml_handle_counter;
@@ -4921,4 +4924,89 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
 	delete_xml_handle_entry(doc_handle);
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * Function to retrieve XML document and namespace from temporary table using document ID
+ */
+void
+get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
+{
+	EphemeralNamedRelation		enr = NULL;
+	Relation               		relation;
+	ScanKeyData            		skey[1];
+	TableScanDesc      		    scan;
+	HeapTuple              		tuple;
+	Datum                  		datum;
+	bool                   		isnull;
+	bool              	        table_exists = false;
+
+	if (xml_data == NULL && ns_data == NULL)
+		return;
+
+	if (xml_data)
+		*xml_data = NULL;
+	if (ns_data)
+		*ns_data = NULL;
+
+	if (xml_handle_temp_table_name != NULL)
+	{
+		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+		if (enr)
+		{
+			relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+			table_exists = true;
+		}
+	}
+
+	if (!table_exists)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", idoc)));
+	}
+
+	ScanKeyInit(&skey[0],
+				1,  /* Column number */
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(idoc));
+	
+	scan = table_beginscan_catalog(relation, 1, skey);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+	
+	if (HeapTupleIsValid(tuple))
+	{
+		/* Get the XML document */
+		if (xml_data)
+		{
+			isnull = true;
+			datum = heap_getattr(tuple, XML_HANDLE_DOC_COLUMN_NUM, RelationGetDescr(relation), &isnull);
+			
+			if (!isnull)
+				*xml_data = DatumGetXmlP(datum);
+			else
+				*xml_data = NULL;
+		}
+		
+		/* Get the namespaces */
+		if (ns_data)
+		{
+			isnull = true;
+			datum = heap_getattr(tuple, XML_HANDLE_NAMESPACE_COLUMN_NUM, RelationGetDescr(relation), &isnull);
+			
+			if (!isnull)
+				*ns_data = DatumGetXmlP(datum);
+			else
+				*ns_data = NULL;
+		}
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", idoc)));
+	}
+
+	table_endscan(scan);
+	relation_close(relation, AccessShareLock);
 }
