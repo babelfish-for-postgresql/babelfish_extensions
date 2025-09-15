@@ -637,21 +637,22 @@ GO
 
 -- Tables and Indexes
 CREATE TABLE BABEL_5597_binary_test (
-    binary_col BINARY(10)
+    id int,
+    binary_col binary(5)
 );
 GO
 
--- Insert test data
-INSERT INTO BABEL_5597_binary_test (binary_col) 
-    SELECT CAST(0x1 AS BINARY(10)) FROM generate_series(1, 3);
+INSERT INTO BABEL_5597_binary_test (id, binary_col)
+SELECT 
+    generate_series(1, 100000),
+    CAST(0x0000000100 as binary(5))
+;
 GO
 
-INSERT INTO BABEL_5597_binary_test (binary_col) 
-    SELECT CAST(0x4 AS BINARY(10)) FROM generate_series(1, 3000000);
-GO
-
-INSERT INTO BABEL_5597_binary_test (binary_col) 
-    SELECT CAST(0x8 AS BINARY(10)) FROM generate_series(1, 3);
+INSERT INTO BABEL_5597_binary_test (id, binary_col) VALUES
+(100003, 0x0000000049), 
+(100001, 0x0000000050),  
+(100002, 0x0000000150); 
 GO
 
 -- Create index
