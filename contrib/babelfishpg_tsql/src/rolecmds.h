@@ -90,5 +90,6 @@ extern bool is_grantee_role_db_owner(GrantRoleStmt *stmt);
 extern void change_object_owner_if_db_owner(void);
 extern char* get_obj_role(const char *rolname);
 extern void grant_revoke_role_to_login(const char* login, const char *role_name, const char *grantor, bool is_grant);
+extern void bbf_shdep_drop_owned_dependent_acl(Oid roleoids, DropBehavior behavior);
 
 #endif
