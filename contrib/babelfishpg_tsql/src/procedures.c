@@ -5012,3 +5012,4 @@ get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
 	table_endscan(scan);
 	relation_close(relation, AccessShareLock);
 }
+
