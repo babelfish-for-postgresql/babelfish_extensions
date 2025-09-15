@@ -382,7 +382,7 @@ int
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find prepared statement with handle 4033)~~
+~~ERROR (Message: Could not find prepared statement with handle 4033.)~~
 
 
 -- Impact of statement terminating/transaction abort errors
@@ -419,7 +419,7 @@ int
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find prepared statement with handle 4035)~~
+~~ERROR (Message: Could not find prepared statement with handle 4035.)~~
 
 
 -- Test with large XML documents
@@ -470,7 +470,7 @@ EXEC sp_xml_removedocument @stored_hdoc;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find prepared statement with handle 4043)~~
+~~ERROR (Message: Could not find prepared statement with handle 4043.)~~
 
 
 -- Now handles will start from 1

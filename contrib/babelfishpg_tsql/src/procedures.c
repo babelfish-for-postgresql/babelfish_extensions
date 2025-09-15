@@ -117,9 +117,10 @@ bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
+#define              MD5_HASH_LEN 32
 const  int           XML_HANDLE_COUNTER_START = 0;
 const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
-static int           current_xml_handle_counter;
+static int           current_xml_handle_counter = INT_MAX / 2;
 Bitmapset           *active_xml_handles_counter = NULL;
 static char         *xml_handle_temp_table_name = NULL;
 int                  get_next_xml_handle_counter(void);
