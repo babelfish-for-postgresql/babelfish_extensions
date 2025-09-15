@@ -1,4 +1,22 @@
 -- tsql
+create login l1 with password = '123'
+go
+create user u1 for login l1
+go
+create schema sch authorization u1
+go
+create login l2 with password = '123'
+go
+create user u2 for login l2
+go
+create login l3 with password = '123'
+go
+create user u3 for login l3
+go
+create table grant_tbl(a int)
+go
+grant select on grant_tbl to u2 with grant option
+go
 create login no_priv_login1 with password = '12345678'
 go
 
@@ -34,6 +52,73 @@ go
 
 use master
 go
+-- tsql user=l1 password=123
+-- case-0 - user is owner of an object 
+create table sch.t1(a int)
+go
+-- tsql
+drop user u1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_u1" cannot be dropped because some objects depend on it)~~
+
+-- tsql user=l1 password=123
+drop table sch.t1
+go
+drop schema sch
+go
+-- terminate-tsql-conn user=l1 password=123
+
+-- psql 
+select * from sys.BABELFISH_SCHEMA_PERMISSIONS;
+go
+~~START~~
+int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+1#!#dbo#!#grant_tbl#!#2#!#master_u2#!#r#!#<NULL>#!#<NULL>
+~~END~~
+
+-- tsql user=l2 password=123
+-- case: User is grantor of permission  
+select current_user;
+go
+~~START~~
+varchar
+u2
+~~END~~
+
+grant select on grant_tbl to u3
+go
+-- terminate-tsql-conn user=l2 password=123
+
+-- tsql 
+-- Not able to drop the user since u2 is grantor of permission on grant_tbl to u3
+drop user u2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_u2" cannot be dropped because some objects depend on it)~~
+
+drop table grant_tbl
+go
+-- Able to drop since we dropped the table grant_tbl
+drop user u2
+go
+drop login l2
+go
+drop user u3
+go
+drop login l3
+go
+
+-- psql 
+-- the catalog get updated
+select * from sys.BABELFISH_SCHEMA_PERMISSIONS;
+go
+~~START~~
+int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+~~END~~
+
 
 -- tsql user=no_priv_login1 password=12345678
 -- case-1 - when current user is guest
@@ -338,6 +423,12 @@ drop login no_priv_login3
 go
 
 drop database restrict_user_db1
+go
+
+drop user u1
+go
+
+drop login l1
 go
 
 -- tsql
