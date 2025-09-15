@@ -5406,44 +5406,63 @@ restore_view_column_acls(Oid newViewOid, List *column_acls)
 	{
 		ColumnAclInfo *info = (ColumnAclInfo *) lfirst(lc);
 		Relation pg_attribute_rel;
-		HeapTuple attTup;
-		AttrNumber attnum = InvalidAttrNumber;
+		HeapTuple attTup = NULL;
+		CatCList *catlist;
+		bool found = false;
+		Datum values[Natts_pg_attribute];
+		bool nulls[Natts_pg_attribute];
+		bool replaces[Natts_pg_attribute];
+		HeapTuple newTuple;
 		
-		/* Find the corresponding column in the new view by name */
-		attnum = get_attnum(newViewOid, info->attname);
-		if (attnum == InvalidAttrNumber)
-			continue;  /* Column doesn't exist in new view */
-			
-		/* Update the ACL */
-		pg_attribute_rel = table_open(AttributeRelationId, RowExclusiveLock);
-		attTup = SearchSysCacheCopyAttName(newViewOid, info->attname);
+		catlist = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(newViewOid));
 		
-		if (HeapTupleIsValid(attTup))
+		/* Search for case-insensitive match */
+		for (int i = 0; i < catlist->n_members; i++)
 		{
-			Datum values[Natts_pg_attribute];
-			bool nulls[Natts_pg_attribute];
-			bool replaces[Natts_pg_attribute];
-			HeapTuple newTuple;
+			HeapTuple  tuple = &catlist->members[i]->tuple;
+			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
 			
-			memset(values, 0, sizeof(values));
-			memset(nulls, false, sizeof(nulls));
-			memset(replaces, false, sizeof(replaces));
-			
-			if (info->acl != NULL)
-				values[Anum_pg_attribute_attacl - 1] = PointerGetDatum(info->acl);
-			else
-				nulls[Anum_pg_attribute_attacl - 1] = true;
+			/* Skip system columns */
+			if (att->attnum <= InvalidAttrNumber)
+				continue;
 				
-			replaces[Anum_pg_attribute_attacl - 1] = true;
-			
-			newTuple = heap_modify_tuple(attTup, RelationGetDescr(pg_attribute_rel),
-									values, nulls, replaces);
-									
-			CatalogTupleUpdate(pg_attribute_rel, &newTuple->t_self, newTuple);
-			heap_freetuple(newTuple);
+			/* Case-insensitive comparison */
+			if (pg_strcasecmp(NameStr(att->attname), info->attname) == 0)
+			{
+				attTup = SearchSysCacheCopy2(ATTNUM,
+										ObjectIdGetDatum(newViewOid),
+										Int16GetDatum(att->attnum));
+				found = true;
+				break;
+			}
 		}
 		
+		ReleaseCatCacheList(catlist);
+		
+		if (!found || !HeapTupleIsValid(attTup))
+			continue;
+		
+		/* Update the ACL */
+		pg_attribute_rel = table_open(AttributeRelationId, RowExclusiveLock);
+		
+		memset(values, 0, sizeof(values));
+		memset(nulls, false, sizeof(nulls));
+		memset(replaces, false, sizeof(replaces));
+		
+		if (info->acl != NULL)
+			values[Anum_pg_attribute_attacl - 1] = PointerGetDatum(info->acl);
+		else
+			nulls[Anum_pg_attribute_attacl - 1] = true;
+			
+		replaces[Anum_pg_attribute_attacl - 1] = true;
+		
+		newTuple = heap_modify_tuple(attTup, RelationGetDescr(pg_attribute_rel),
+								values, nulls, replaces);
+								
+		CatalogTupleUpdate(pg_attribute_rel, &newTuple->t_self, newTuple);
+		heap_freetuple(newTuple);
 		heap_freetuple(attTup);
+		
 		table_close(pg_attribute_rel, RowExclusiveLock);
 	}
 }
