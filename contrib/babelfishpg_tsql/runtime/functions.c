@@ -2266,6 +2266,13 @@ isnumeric(PG_FUNCTION_ARGS)
 		value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
 	}
 
+	/* Handling empty string. */
+	if ((*common_utility_plugin_ptr->isEmptyOrWhitespace)(value_str))
+	{
+		pfree(value_str);
+		PG_RETURN_INT32(0);
+	}
+		
 	/* Try to perform the conversion to numeric. */
 	result = InputFunctionCallSafe(&my_extra->numeric_inputproc,
 								 value_str,

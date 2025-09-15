@@ -72,6 +72,7 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_vector_datatype) (Oid oid);
 	bool		(*is_tsql_sparsevec_datatype) (Oid oid);
 	bool		(*is_tsql_halfvec_datatype) (Oid oid);
+	bool 		(*isEmptyOrWhitespace) (const char *str);
 	
 	Datum		(*datetime_in_str) (char *str, Node *escontext);
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);
