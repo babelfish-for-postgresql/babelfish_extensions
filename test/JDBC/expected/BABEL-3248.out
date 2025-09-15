@@ -79,7 +79,7 @@ int
 ~~START~~
 text
 Query Text: select 1
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 set statistics profile off;

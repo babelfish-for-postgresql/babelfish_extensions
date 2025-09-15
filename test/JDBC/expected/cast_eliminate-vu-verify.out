@@ -309,7 +309,7 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE CAST(CAST(s_int AS INT) AS BIGINT) >= 2394 AND CAST(CAST(ROID AS BIGINT) AS SMALLINT) >= 3
-Seq Scan on cast_eliminate (actual rows=1 loops=1)
+Seq Scan on cast_eliminate (actual rows=1.00 loops=1)
   Filter: ((s_int >= 2394) AND (((roid)::bigint)::smallint >= 3))
   Rows Removed by Filter: 4
 ~~END~~
@@ -325,7 +325,7 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE -32768 = CAST(s_int AS INT)
-Seq Scan on cast_eliminate (actual rows=1 loops=1)
+Seq Scan on cast_eliminate (actual rows=1.00 loops=1)
   Filter: ('-32768'::integer = s_int)
   Rows Removed by Filter: 4
 ~~END~~
@@ -341,7 +341,7 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE -32768 = CAST(CAST(s_int AS INT) AS BIGINT)
-Seq Scan on cast_eliminate (actual rows=1 loops=1)
+Seq Scan on cast_eliminate (actual rows=1.00 loops=1)
   Filter: ('-32768'::integer = s_int)
   Rows Removed by Filter: 4
 ~~END~~
@@ -361,7 +361,7 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE -32768 < CAST(CAST(s_int AS INT) AS BIGINT) OR CAST(ROID AS BIGINT) = -2147483648
-Seq Scan on cast_eliminate (actual rows=5 loops=1)
+Seq Scan on cast_eliminate (actual rows=5.00 loops=1)
   Filter: (('-32768'::integer < s_int) OR (roid = '-2147483648'::integer))
 ~~END~~
 
@@ -375,7 +375,7 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE -9223372036854775808 = CAST(s_int AS BIGINT)
-Seq Scan on cast_eliminate (actual rows=0 loops=1)
+Seq Scan on cast_eliminate (actual rows=0.00 loops=1)
   Filter: ('-9223372036854775808'::bigint = s_int)
   Rows Removed by Filter: 5
 ~~END~~

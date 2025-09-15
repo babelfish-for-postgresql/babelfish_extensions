@@ -266,15 +266,15 @@ int
 ~~START~~
 text
 Query Text: SELECT * FROM pq_t where id IN (select a from #temp)
-Hash Join (actual rows=1 loops=1)
+Hash Join (actual rows=1.00 loops=1)
   Hash Cond: ("#temp".a = pq_t.id)
-  ->  HashAggregate (actual rows=1 loops=1)
+  ->  HashAggregate (actual rows=1.00 loops=1)
         Group Key: "#temp".a
         Batches: 1  Memory Usage: 40kB
-        ->  Seq Scan on "#temp" (actual rows=1 loops=1)
-  ->  Hash (actual rows=5 loops=1)
+        ->  Seq Scan on "#temp" (actual rows=1.00 loops=1)
+  ->  Hash (actual rows=5.00 loops=1)
         Buckets: 1024  Batches: 1  Memory Usage: 9kB
-        ->  Seq Scan on pq_t (actual rows=5 loops=1)
+        ->  Seq Scan on pq_t (actual rows=5.00 loops=1)
 ~~END~~
 
 
@@ -294,14 +294,14 @@ int#!#int
 ~~START~~
 text
 Query Text: SELECT * FROM pq_t LEFT JOIN #temp ON id = a order by id
-Sort (actual rows=5 loops=1)
+Sort (actual rows=5.00 loops=1)
   Sort Key: pq_t.id NULLS FIRST
   Sort Method: quicksort  Memory: 25kB
-  ->  Hash Right Join (actual rows=5 loops=1)
+  ->  Hash Right Join (actual rows=5.00 loops=1)
         Hash Cond: ("#temp".a = pq_t.id)
-        ->  Seq Scan on "#temp" (actual rows=1 loops=1)
-        ->  Hash (actual rows=5 loops=1)
-              ->  Seq Scan on pq_t (actual rows=5 loops=1)
+        ->  Seq Scan on "#temp" (actual rows=1.00 loops=1)
+        ->  Hash (actual rows=5.00 loops=1)
+              ->  Seq Scan on pq_t (actual rows=5.00 loops=1)
 ~~END~~
 
 

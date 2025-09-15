@@ -226,7 +226,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: date/time field value out of range: "14-22-12"
-  Hint: Perhaps you need a different "datestyle" setting.
+  Hint: Perhaps you need a different "DateStyle" setting.
   Position: 86
     Server SQLState: 22008)~~
 
@@ -242,7 +242,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: date/time field value out of range: "14-22-12"
-  Hint: Perhaps you need a different "datestyle" setting.
+  Hint: Perhaps you need a different "DateStyle" setting.
   Position: 86
     Server SQLState: 22008)~~
 
