@@ -597,6 +597,9 @@ GO
 
 
 -- Dependent objects tests
-EXEC openxml_without_with_dep_proc N'<root><child>content</child></root>'
+EXEC openxml_without_with_dep_proc1 N'<root><child>content</child></root>'
+GO
+
+EXEC openxml_without_with_dep_proc2 N'<root><child>content</child></root>'
 GO
 

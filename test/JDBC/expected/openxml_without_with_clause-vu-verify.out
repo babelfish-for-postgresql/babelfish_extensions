@@ -1081,7 +1081,17 @@ specialChars#!#1#!#<NULL>#!#<NULL>
 
 
 -- Dependent objects tests
-EXEC openxml_without_with_dep_proc N'<root><child>content</child></root>'
+EXEC openxml_without_with_dep_proc1 N'<root><child>content</child></root>'
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content
+~~END~~
+
+
+EXEC openxml_without_with_dep_proc2 N'<root><child>content</child></root>'
 GO
 ~~START~~
 bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
