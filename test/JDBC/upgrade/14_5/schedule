@@ -99,7 +99,7 @@ BABEL-889
 BABEL-APPLOCK
 babel_char
 BABEL-CHECK-CONSTRAINT-before-14_6
-BABEL-CROSS-DB
+BABEL-CROSS-DB-14-17
 babel_datatype_sqlvariant
 babel_datetime-before-15_12-or-16_8-or-17_4
 BABEL-EXTENDEDPROPERTY-before-15_4
@@ -426,3 +426,4 @@ babel_numeric_money_oper-before-16_10-or-17_6
 babel_numeric_smallmoney_oper-before-16_10-or-17_6
 mathematical_func_tests-before-17_7-or-16_11
 babel_assign_nchar
+view_sec_setting_before_17_6-or-16_10

@@ -84,6 +84,7 @@
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
+#include "pltsql_permissions.h"
 #include "pl_explain.h"
 #include "catalog.h"
 #include "dbcmds.h"
@@ -620,6 +621,9 @@ InstallExtendedHooks(void)
 	prev_pre_QueryRewrite_hook = pre_QueryRewrite_hook;
 	pre_QueryRewrite_hook = repair_broken_views;
 
+	walk_view_rule_hook = mark_nodes_inside_view;
+
+	handle_target_view_hook = tsql_handle_target_view_hook;
 }
 
 void
@@ -709,6 +713,8 @@ UninstallExtendedHooks(void)
 	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
 	ExecCheckOneRelPerms_hook = NULL;
 	get_domain_typmodin_hook = NULL;
+	walk_view_rule_hook = NULL;
+	handle_target_view_hook = NULL;
 }
 
 /*****************************************
