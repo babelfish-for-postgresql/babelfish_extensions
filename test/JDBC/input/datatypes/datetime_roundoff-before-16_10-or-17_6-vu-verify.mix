@@ -651,21 +651,27 @@ GO
 
 -- Show help
 CALL datetime_rounding_handler();
+GO
 
 -- List all tables with datetime columns
 CALL datetime_rounding_handler('list');
+GO
 
 -- Check specific schema/table
 CALL datetime_rounding_handler('check', 'master_dbo', 'datetime_test');
+GO
 
 -- Check all tables
 CALL datetime_rounding_handler('check', NULL, 'all');
+GO
 
 -- Update specific table
 CALL datetime_rounding_handler('update', 'master_dbo', 'datetime_test');
+GO
 
 -- Update all tables (use with caution)
 CALL datetime_rounding_handler('update', NULL, 'all');
+GO
 
 -- tsql
 DECLARE @sql NVARCHAR(MAX) = '';
