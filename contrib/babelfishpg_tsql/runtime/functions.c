@@ -197,6 +197,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_money);
 PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 PG_FUNCTION_INFO_V1(replace_special_chars_fts);
 PG_FUNCTION_INFO_V1(isnumeric);
+PG_FUNCTION_INFO_V1(isdate);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -2289,7 +2290,76 @@ isnumeric(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result ? 1 : 0);
 }
 
+Datum
+isdate(PG_FUNCTION_ARGS)
+{
+    Oid         argtypeid;
+    char        *value_str;
+    bool        result = false;
 
+    if (PG_ARGISNULL(0))
+        PG_RETURN_INT32(result ? 1 : 0);
+
+    argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+
+    /* Sanity check */
+    if (!OidIsValid(argtypeid))
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("could not determine input data type")));
+
+    /* Check for invalid types */
+    if (argtypeid == DATEOID ||
+        argtypeid == TIMEOID ||
+        argtypeid == TIMESTAMPTZOID ||
+        argtypeid == TEXTOID ||
+        (*common_utility_plugin_ptr->is_tsql_datetime2_datatype) (argtypeid) ||
+        (*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype) (argtypeid))
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Argument data type %s is invalid for argument 1 of ISDATE function.",
+                        format_type_be(argtypeid))));
+    }
+
+    /* Get the string representation from input datum */
+    if (argtypeid == VARCHAROID || argtypeid == BPCHAROID)
+    {
+        value_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
+    }
+    else
+    {
+        Oid typoutput;
+        bool typisvarlena;
+        getTypeOutputInfo(argtypeid, &typoutput, &typisvarlena);
+        value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
+    }
+
+
+    /* Check for empty string */
+    if (strlen(value_str) == 0)
+    {
+        pfree(value_str);
+        PG_RETURN_INT32(0);
+    }
+
+    /* Try to parse as datetime */
+    PG_TRY();
+    {
+        /* Use datetime_in function for parsing */
+        (*common_utility_plugin_ptr->datetime_in_str) (value_str, fcinfo->context);
+        result = true;
+    }
+    PG_CATCH();
+    {
+        result = false;
+        FlushErrorState();
+    }
+    PG_END_TRY();
+
+    pfree(value_str);
+    PG_RETURN_INT32(result ? 1 : 0);
+}
 
 /*
  * object_id

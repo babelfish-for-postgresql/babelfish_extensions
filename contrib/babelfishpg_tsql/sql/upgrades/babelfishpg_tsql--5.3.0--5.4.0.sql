@@ -141,88 +141,16 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'isdate_deprecated_5_3_0');
 
-create or replace function sys.isdate(IN v anyelement)
-returns integer
-as
-$body$
-DECLARE
-    arg_datatype text;
-    arg_datatype_oid oid;
-    basetype oid;
-begin
+CREATE FUNCTION sys.isdate(IN v anyelement)
+RETURNS integer
+AS 'babelfishpg_tsql', 'isdate'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-    arg_datatype_oid := pg_typeof(v)::oid;
-    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+CREATE FUNCTION sys.isdate(IN v sys.varchar)
+RETURNS integer
+AS 'babelfishpg_tsql', 'isdate'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-    IF arg_datatype IS NULL THEN
-        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
-        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
-    END IF;
-
-    IF arg_datatype IN ('date','time','datetime2','datetimeoffset','text','ntext','image') THEN
-        RAISE EXCEPTION USING 
-        ERRCODE = 'invalid_parameter_value',
-        MESSAGE = format('Argument data type %s is invalid for argument 1 of ISDATE function.', arg_datatype);
-    END IF;
-
-    IF NOT (arg_datatype IN ('datetime', 'smalldatetime','varchar','sys.varchar','char','nchar')) THEN
-        return 0;
-    END IF;
-
-    if length(v::sys.varchar) = 0 then
-        return 0;
-    end if;
-
-    if v is NULL THEN
-        return 0;
-    else
-        perform v::datetime;
-        return 1;
-    end if;
-
-    EXCEPTION 
-        WHEN invalid_parameter_value THEN
-            RAISE;
-        WHEN others THEN
-            RETURN 0;
-end
-$body$
-language 'plpgsql' IMMUTABLE PARALLEL SAFE;
-
-create or replace function sys.isdate(IN v sys.varchar)
-returns integer
-as
-$body$
-begin
-
-    if length(v::sys.varchar) = 0 then
-        return 0;
-    end if;
-
-    if v is NULL THEN
-        return 0;
-    else
-        perform v::datetime;
-        return 1;
-    end if;
-
-    EXCEPTION WHEN others THEN
-    RETURN 0;
-end
-$body$
-language 'plpgsql' IMMUTABLE PARALLEL SAFE;
-
-create or replace function sys.isdate(v text)
-returns integer as
-$body$
-begin
-    RAISE EXCEPTION USING 
-    ERRCODE = 'invalid_parameter_value',
-    MESSAGE = 'Argument data type (n)text is invalid for argument 1 of ISDATE function.';
-    return 0;
-end;
-$body$
-language plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate TEXT) RETURNS DATETIME
 AS

@@ -1071,7 +1071,7 @@ SELECT * FROM DateTypeTestDetailedView;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type (n)text is invalid for argument 1 of ISDATE function.)~~
+~~ERROR (Message: Argument data type text is invalid for argument 1 of ISDATE function.)~~
 
 -- Get only valid dates
 SELECT * FROM DateTypeTestDetailedView 
@@ -1081,7 +1081,7 @@ WHERE IsValidDateTime = 1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type (n)text is invalid for argument 1 of ISDATE function.)~~
+~~ERROR (Message: Argument data type text is invalid for argument 1 of ISDATE function.)~~
 
 
 -- Get invalid dates
@@ -1092,5 +1092,5 @@ WHERE IsValidDateTime = 0
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type (n)text is invalid for argument 1 of ISDATE function.)~~
+~~ERROR (Message: Argument data type text is invalid for argument 1 of ISDATE function.)~~
 
