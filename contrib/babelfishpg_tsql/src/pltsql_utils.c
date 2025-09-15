@@ -2994,6 +2994,8 @@ get_rel_owner(Oid relid)
     HeapTuple   tuple;
     Oid         owner;
 
+	Assert(OidIsValid(relid)); 
+
     /* Get relation tuple from pg_class */
     tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
     if (!HeapTupleIsValid(tuple))
@@ -3016,6 +3018,8 @@ get_func_owner(Oid funcid)
 {
 	HeapTuple	tp;
 
+	Assert(OidIsValid(funcid));  
+
 	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (HeapTupleIsValid(tp))
 	{
@@ -3031,7 +3035,7 @@ get_func_owner(Oid funcid)
 }
 
 /*
- * Retuns function owner which is cached at the start of every function/proc call
+ * Retuns function oid which is cached at the start of every function/proc call
  * only if we are currently in function/proc execution
  */
 static Oid
@@ -3057,6 +3061,8 @@ extern bool
 is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 {
 	Oid top_func = InvalidOid;
+
+	Assert(OidIsValid(objectOwnerId)); 
 
 	if (IsA(expr, FuncExpr))
 	{
