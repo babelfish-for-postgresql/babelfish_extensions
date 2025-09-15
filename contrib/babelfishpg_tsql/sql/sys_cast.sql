@@ -217,6 +217,32 @@ BEGIN
     END;
 END; $$;
 
+CREATE OR REPLACE FUNCTION sys.text2float4(arg pg_catalog.text)
+RETURNS REAL
+LANGUAGE sql
+STRICT IMMUTABLE PARALLEL SAFE
+AS $$
+    SELECT CAST(arg::sys.varchar as REAL);
+$$;
+
+CREATE OR REPLACE FUNCTION sys.text2float8(arg pg_catalog.text)
+RETURNS DOUBLE PRECISION
+LANGUAGE sql
+STRICT IMMUTABLE PARALLEL SAFE
+AS $$
+    SELECT CAST(arg::sys.varchar as DOUBLE PRECISION);
+$$;
+
+DROP CAST IF EXISTS (pg_catalog.text AS pg_catalog.float4);
+CREATE CAST (pg_catalog.text AS pg_catalog.float4)
+WITH FUNCTION sys.text2float4(pg_catalog.text)
+AS IMPLICIT;
+
+DROP CAST IF EXISTS (pg_catalog.text AS pg_catalog.float8);
+CREATE CAST (pg_catalog.text AS pg_catalog.float8)
+WITH FUNCTION sys.text2float8(pg_catalog.text)
+AS IMPLICIT;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg TEXT, IN typmod INTEGER)
 RETURNS sys.DATETIME2
 AS $BODY$

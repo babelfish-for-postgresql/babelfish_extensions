@@ -68,7 +68,9 @@ SELECT CAST(CAST(-3e-38 as real) as numeric(30,10));
 GO
 
 -- table insertion
-INSERT INTO babel_3066_vu_prepare_t1 VALUES (122.34562), (735412.97354), (-467822.56378), (-456.24516), (1234.465), ('inf'), ('-inf'), ('nan');
+INSERT INTO babel_3066_vu_prepare_t1 VALUES (122.34562), (735412.97354), (-467822.56378), (-456.24516), (1234.465);
+GO
+INSERT INTO babel_3066_vu_prepare_t1 VALUES ('inf'), ('-inf'), ('nan');
 GO
 INSERT INTO babel_3066_vu_prepare_t1 VALUES (123456789123456789123456789123456789.123456789);
 GO

@@ -282,49 +282,49 @@ GO
 SELECT TRY_CAST(N'NaN' AS FLOAT);
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CAST(N'Infinity' AS FLOAT(53));
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CAST(N'+Infinity' AS FLOAT);
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CAST(N'-Infinity' AS FLOAT(53));
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CAST(N'inf' AS FLOAT);
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CAST(N'+inf' AS FLOAT(53));
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CAST(N'-inf' AS FLOAT);
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
@@ -375,49 +375,49 @@ GO
 SELECT TRY_CONVERT(FLOAT, N'NaN');
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CONVERT(FLOAT(53), N'Infinity');
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CONVERT(FLOAT, N'+Infinity');
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CONVERT(FLOAT(53), N'-Infinity');
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CONVERT(FLOAT, N'inf');
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CONVERT(FLOAT(53), N'+inf');
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
 SELECT TRY_CONVERT(FLOAT, N'-inf');
 GO
 ~~START~~
-real
+float
 <NULL>
 ~~END~~
 
@@ -554,28 +554,28 @@ GO
 SELECT TRY_CAST(N'3.1' AS FLOAT);
 GO
 ~~START~~
-real
+float
 3.1
 ~~END~~
 
 SELECT TRY_CAST(N'9.99909' AS FLOAT(53));
 GO
 ~~START~~
-real
+float
 9.99909
 ~~END~~
 
 SELECT TRY_CAST(N'123.321' AS FLOAT);
 GO
 ~~START~~
-real
+float
 123.321
 ~~END~~
 
 SELECT TRY_CAST(N'1000.10001' AS FLOAT(53));
 GO
 ~~START~~
-real
-1000.10004
+float
+1000.10001
 ~~END~~
 

@@ -148,6 +148,7 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{PG_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "float8", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bpchar", "pg_catalog", "float8", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'f'},
 /*  float4 */
 	{PG_CAST_ENTRY, "pg_catalog", "float4", "pg_catalog", "numeric", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "pg_catalog", "float4", "sys", "fixeddecimal", NULL, 'i', 'f'},
@@ -155,6 +156,7 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{PG_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "float4", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bpchar", "pg_catalog", "float4", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float4", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "pg_catalog", "text", "pg_catalog", "float4", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "float4", "pg_catalog", "int8", "ftrunci8", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "float4", "pg_catalog", "int4", "ftrunci4", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "float4", "pg_catalog", "int2", "ftrunci2", 'i', 'f'},

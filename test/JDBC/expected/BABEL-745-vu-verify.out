@@ -72,7 +72,7 @@ GO
 float
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "Product A")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT VAR(SalesAmount) AS SalesAmountStdev
@@ -152,32 +152,28 @@ float#!#float
 
 SELECT VARP(CAST('inf' AS float8)), VAR(CAST('inf' AS float8));
 GO
-~~START~~
-float#!#float
-NaN#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT STDEVP(CAST('inf' AS float8)), STDEV(CAST('inf' AS float8));
 GO
-~~START~~
-float#!#float
-NaN#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT VARP(CAST('nan' AS float8)), VAR(CAST('nan' AS float8));
 GO
-~~START~~
-float#!#float
-NaN#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT STDEVP(CAST('nan' AS float8)), STDEV(CAST('nan' AS float8));
 GO
-~~START~~
-float#!#float
-NaN#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
 

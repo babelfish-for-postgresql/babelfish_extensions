@@ -4269,7 +4269,7 @@ SELECT N'Prefix_' + BitCol AS BitConcatN FROM ImplicitToStringTest;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "Prefix_")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 -- DECIMAL
@@ -4296,7 +4296,7 @@ SELECT N'Prefix_' + FloatCol AS FloatConcatN FROM ImplicitToStringTest;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "Prefix_")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 -- REAL
@@ -4305,7 +4305,7 @@ SELECT N'Prefix_' + RealCol AS RealConcatN FROM ImplicitToStringTest;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type real: "Prefix_")~~
+~~ERROR (Message: Error converting data type varchar to real.)~~
 
 
 -- MONEY

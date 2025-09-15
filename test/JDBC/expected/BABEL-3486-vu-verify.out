@@ -1250,9 +1250,8 @@ SELECT * FROM BABEL_3486_vu_prepare_v52
 GO
 ~~START~~
 float
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type date to double precision.)~~
+<NULL>
+~~END~~
 
 DROP VIEW BABEL_3486_vu_prepare_v52
 GO
@@ -1261,9 +1260,8 @@ EXEC BABEL_3486_vu_prepare_p52
 GO
 ~~START~~
 float
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type date to double precision.)~~
+<NULL>
+~~END~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p52
 GO
@@ -1272,9 +1270,8 @@ SELECT BABEL_3486_vu_prepare_f52()
 GO
 ~~START~~
 float
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type date to double precision.)~~
+<NULL>
+~~END~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f52()
 GO
@@ -1283,9 +1280,8 @@ SELECT * FROM BABEL_3486_vu_prepare_v53
 GO
 ~~START~~
 float
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type time without time zone to double precision.)~~
+<NULL>
+~~END~~
 
 DROP VIEW BABEL_3486_vu_prepare_v53
 GO
@@ -1294,9 +1290,8 @@ EXEC BABEL_3486_vu_prepare_p53
 GO
 ~~START~~
 float
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type time without time zone to double precision.)~~
+<NULL>
+~~END~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p53
 GO
@@ -1305,9 +1300,8 @@ SELECT BABEL_3486_vu_prepare_f53()
 GO
 ~~START~~
 float
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type time without time zone to double precision.)~~
+<NULL>
+~~END~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f53()
 GO

@@ -494,7 +494,7 @@ SELECT SQRT('ABC');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "ABC")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 SELECT SQRT('12.25');
 GO
@@ -779,7 +779,7 @@ GO
 float
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "ABC       ")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT SQRT(varchar_val) FROM BABEL_5672_sqrt_char_table WHERE id != 4;
@@ -800,7 +800,7 @@ GO
 float
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "ABC")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT SQRT(nchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id != 4;
@@ -821,7 +821,7 @@ GO
 float
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "ABC       ")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT SQRT(nvarchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id != 4;
@@ -842,7 +842,7 @@ GO
 float
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "ABC")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 -- Views

@@ -165,9 +165,15 @@ numeric
 
 
 -- table insertion
-INSERT INTO babel_3066_vu_prepare_t1 VALUES (122.34562), (735412.97354), (-467822.56378), (-456.24516), (1234.465), ('inf'), ('-inf'), ('nan');
+INSERT INTO babel_3066_vu_prepare_t1 VALUES (122.34562), (735412.97354), (-467822.56378), (-456.24516), (1234.465);
 GO
-~~ROW COUNT: 8~~
+~~ROW COUNT: 5~~
+
+INSERT INTO babel_3066_vu_prepare_t1 VALUES ('inf'), ('-inf'), ('nan');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
 
 INSERT INTO babel_3066_vu_prepare_t1 VALUES (123456789123456789123456789123456789.123456789);
 GO

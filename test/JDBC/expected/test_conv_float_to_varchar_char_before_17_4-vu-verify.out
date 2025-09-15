@@ -347,25 +347,25 @@ SELECT CAST(CAST('NaN' as Float) as VARCHAR(30))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error Converting Float Value to String.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 SELECT CAST(CAST('NaN' as Float) as CHAR(30))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error Converting Float Value to String.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 SELECT CAST(CAST('Inf' as Float) as VARCHAR)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error Converting Float Value to String.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 SELECT CAST(CAST('Inf' as Float) as CHAR)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error Converting Float Value to String.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 -- 7. Test Constraints

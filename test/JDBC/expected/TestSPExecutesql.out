@@ -302,7 +302,7 @@ EXEC sp_executesql @SQLString, @ParamDef, @a = @p OUT;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 /* 6. Invalid OUT param */

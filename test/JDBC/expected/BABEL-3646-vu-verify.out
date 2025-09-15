@@ -95,9 +95,8 @@ SELECT * FROM BABEL_3646_vu_prepare_v4
 GO
 ~~START~~
 float
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "binary" to double precision.)~~
+<NULL>
+~~END~~
 
 DROP VIEW BABEL_3646_vu_prepare_v4
 GO
@@ -106,9 +105,8 @@ EXEC BABEL_3646_vu_prepare_p4
 GO
 ~~START~~
 float
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "binary" to double precision.)~~
+<NULL>
+~~END~~
 
 DROP PROCEDURE BABEL_3646_vu_prepare_p4
 GO
@@ -117,9 +115,8 @@ SELECT BABEL_3646_vu_prepare_f4()
 GO
 ~~START~~
 float
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "binary" to double precision.)~~
+<NULL>
+~~END~~
 
 DROP FUNCTION BABEL_3646_vu_prepare_f4()
 GO
@@ -128,9 +125,8 @@ SELECT * FROM BABEL_3646_vu_prepare_v5
 GO
 ~~START~~
 real
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "binary" to real.)~~
+<NULL>
+~~END~~
 
 DROP VIEW BABEL_3646_vu_prepare_v5
 GO
@@ -139,9 +135,8 @@ EXEC BABEL_3646_vu_prepare_p5
 GO
 ~~START~~
 real
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "binary" to real.)~~
+<NULL>
+~~END~~
 
 DROP PROCEDURE BABEL_3646_vu_prepare_p5
 GO
@@ -150,9 +145,8 @@ SELECT BABEL_3646_vu_prepare_f5()
 GO
 ~~START~~
 real
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "binary" to real.)~~
+<NULL>
+~~END~~
 
 DROP FUNCTION BABEL_3646_vu_prepare_f5()
 GO

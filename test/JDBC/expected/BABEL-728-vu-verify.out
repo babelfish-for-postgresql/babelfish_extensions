@@ -65,7 +65,7 @@ select sign('sdflkjs')
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "sdflkjs")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 select sign('123123.913');

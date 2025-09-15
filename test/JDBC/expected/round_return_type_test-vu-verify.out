@@ -232,28 +232,28 @@ select round(cast ('abc' as char(3)), 1)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 select round(cast ('abc' as nchar(3)), 1)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 select round(cast ('abc' as varchar(3)), 1)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 select round(cast ('abc' as nvarchar(3)), 1)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 select round(cast ('11-11-2025' as datetime), 1)
@@ -407,14 +407,14 @@ select round(cast ('abc' as ntext), 1)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 select round(cast ('abc' as text), 1)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 select round(cast ('abc' as sql_variant), 1)

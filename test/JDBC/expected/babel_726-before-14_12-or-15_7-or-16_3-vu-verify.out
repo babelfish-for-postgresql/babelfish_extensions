@@ -538,7 +538,7 @@ float
 1.02
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abcde")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 DECLARE @ID_UNDE INT = 7;

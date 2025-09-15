@@ -132,10 +132,9 @@ SELECT
     STR(CAST('-Infinity' AS FLOAT), 10, 2) AS NegativeInfinityTest,
     STR(CAST('NaN' AS FLOAT), 10, 2) AS NaNTest;
 GO
-~~START~~
-varchar#!#varchar#!#varchar#!#varchar
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 -- 7. Different Numeric Types Tests
