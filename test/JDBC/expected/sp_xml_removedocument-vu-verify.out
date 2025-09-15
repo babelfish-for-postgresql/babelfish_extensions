@@ -7,7 +7,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find prepared statement with handle 1)~~
+~~ERROR (Message: Could not find prepared statement with handle 1.)~~
 
 
 -- Removing negative handle
@@ -16,7 +16,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find prepared statement with handle -1)~~
+~~ERROR (Message: Could not find prepared statement with handle -1.)~~
 
 
 -- Removing a handle which does not exists in the session
@@ -25,7 +25,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find prepared statement with handle 999999)~~
+~~ERROR (Message: Could not find prepared statement with handle 999999.)~~
 
 
 -- Removing a handle which is NULL;
@@ -34,5 +34,5 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find prepared statement with handle NULL)~~
+~~ERROR (Message: sp_xml_removedocument: The value supplied for parameter number 1 is invalid.)~~
 
