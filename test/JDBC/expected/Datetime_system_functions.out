@@ -9570,7 +9570,7 @@ SELECT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 0 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+~~ERROR (Message: SET DATEFIRST 0 is out of range.)~~
 
 
 
@@ -9592,7 +9592,7 @@ SELECT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 8 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+~~ERROR (Message: SET DATEFIRST 8 is out of range.)~~
 
 
 
@@ -9630,7 +9630,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET DATEFIRST option requires integer parameter)~~
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
 
 
 

@@ -126,3 +126,16 @@ GO
 
 SET DATEFIRST -65.045
 GO
+
+-- arbitrary values
+SET DATEFIRST 'one'
+GO
+
+SET DATEFIRST '4'
+GO
+
+SET DATEFIRST "three"
+GO
+
+SET DATEFIRST "2"
+GO

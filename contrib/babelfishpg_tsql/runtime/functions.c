@@ -215,6 +215,7 @@ static Tuplestorestate *get_bbf_pivot_tuplestore(const char 	*sourcetext,
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
 
+extern int 	pltsql_datefirst;
 extern bool pltsql_cursor_close_on_commit;
 extern bool pltsql_ansi_warnings;
 extern bool pltsql_ansi_padding;
@@ -233,7 +234,6 @@ extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern char *replace_special_chars_fts_impl(char *input_str);
-extern double pltsql_datefirst;
 
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
@@ -478,8 +478,8 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 					year / 4 - year / 100 + year / 400 + 2) % 7;
 		
 		/* Adjusting the dow accourding to the datefirst guc */
-		PG_RETURN_INT32(((res) + 7 - (int)pltsql_datefirst)%7 == 0 ?
-					7 : ((res) + 7 - (int)pltsql_datefirst)%7);
+		PG_RETURN_INT32(((res) + 7 - pltsql_datefirst)%7 == 0 ?
+					7 : ((res) + 7 - pltsql_datefirst)%7);
 
 	}
 	else if (strcasecmp(field , "tsql_week") == 0)		/* week number of the year  */
@@ -1389,7 +1389,7 @@ schema_id(PG_FUNCTION_ARGS)
 Datum
 datefirst(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_UINT32((int)pltsql_datefirst);
+	PG_RETURN_UINT32(pltsql_datefirst);
 }
 
 /* @@OPTIONS returns a bitmap of the current boolean SET options */
