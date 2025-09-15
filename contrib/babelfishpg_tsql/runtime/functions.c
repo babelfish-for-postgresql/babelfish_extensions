@@ -2290,75 +2290,91 @@ isnumeric(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result ? 1 : 0);
 }
 
+/*
+ * isdate()
+ *  Returns 1 if the input value can be converted to a valid datetime value,
+ *  and 0 otherwise. Returns 0 for NULL input. Raises error for invalid types
+ *  (date, time, timestamptz, text). Valid datetime range is 1753-01-01
+ *  through 9999-12-31.
+ */
 Datum
 isdate(PG_FUNCTION_ARGS)
 {
-    Oid         argtypeid;
-    char        *value_str;
-    bool        result = false;
+	Oid 	argtypeid;
+	char	*value_str;
+	bool	result = false;
+	Oid		basetypeid;
 
     if (PG_ARGISNULL(0))
-        PG_RETURN_INT32(result ? 1 : 0);
+		PG_RETURN_INT32(0);
 
-    argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	basetypeid = get_immediate_base_type_of_UDT_internal(argtypeid);
 
-    /* Sanity check */
-    if (!OidIsValid(argtypeid))
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("could not determine input data type")));
+	if (OidIsValid(basetypeid))
+		argtypeid = basetypeid;
 
-    /* Check for invalid types */
-    if (argtypeid == DATEOID ||
-        argtypeid == TIMEOID ||
-        argtypeid == TIMESTAMPTZOID ||
-        argtypeid == TEXTOID ||
-        (*common_utility_plugin_ptr->is_tsql_datetime2_datatype) (argtypeid) ||
-        (*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype) (argtypeid))
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Argument data type %s is invalid for argument 1 of ISDATE function.",
-                        format_type_be(argtypeid))));
-    }
+	/* Sanity check */
+	if (!OidIsValid(argtypeid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not determine input data type")));
 
-    /* Get the string representation from input datum */
-    if (argtypeid == VARCHAROID || argtypeid == BPCHAROID)
-    {
-        value_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
-    }
-    else
-    {
-        Oid typoutput;
-        bool typisvarlena;
-        getTypeOutputInfo(argtypeid, &typoutput, &typisvarlena);
-        value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
-    }
+	/* Check for invalid types */
+	if (!((*common_utility_plugin_ptr->is_tsql_datetime_datatype) (argtypeid) ||
+		(*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype) (argtypeid) ||
+		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (argtypeid) ||
+		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (argtypeid) ||
+		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (argtypeid) ||
+		(*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (argtypeid) ||
+		 argtypeid == VARCHAROID || argtypeid == BPCHAROID))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Argument data type %s is invalid for argument 1 of ISDATE function.",
+						format_type_be(argtypeid))));
+	}
+
+	/* Get the string representation from input datum */
+	if (argtypeid == VARCHAROID || argtypeid == BPCHAROID ||
+		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (argtypeid) ||
+		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (argtypeid) ||
+		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (argtypeid) ||
+		(*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (argtypeid))
+		value_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	else
+	{
+		Oid typoutput;
+		bool typisvarlena;
+		getTypeOutputInfo(argtypeid, &typoutput, &typisvarlena);
+		value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
+	}
 
 
-    /* Check for empty string */
-    if (strlen(value_str) == 0)
-    {
-        pfree(value_str);
-        PG_RETURN_INT32(0);
-    }
+	/* Check for empty string */
+	if (strlen(value_str) == 0)
+	{
+		pfree(value_str);
+		PG_RETURN_INT32(0);
+	}
 
-    /* Try to parse as datetime */
-    PG_TRY();
-    {
-        /* Use datetime_in function for parsing */
-        (*common_utility_plugin_ptr->datetime_in_str) (value_str, fcinfo->context);
-        result = true;
-    }
-    PG_CATCH();
-    {
-        result = false;
-        FlushErrorState();
-    }
-    PG_END_TRY();
+	/* Try to parse as datetime */
+	PG_TRY();
+	{
+		/* Use datetime_in function for parsing */
+		(*common_utility_plugin_ptr->datetime_in_str) (value_str, fcinfo->context);
+		result = true;
+	}
+	PG_CATCH();
+	{
+		result = false;
+		FlushErrorState();
+	}
+	PG_END_TRY();
 
-    pfree(value_str);
-    PG_RETURN_INT32(result ? 1 : 0);
+	pfree(value_str);
+	PG_RETURN_INT32(result ? 1 : 0);
 }
 
 /*

@@ -188,6 +188,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_geography_datatype = &is_tsql_geography_datatype;
 		common_utility_plugin_var.is_tsql_timestamp_datatype = &is_tsql_timestamp_datatype;
 		common_utility_plugin_var.is_tsql_datetime2_datatype = &is_tsql_datetime2_datatype;
+		common_utility_plugin_var.is_tsql_datetime_datatype = &is_tsql_datetime_datatype;
 		common_utility_plugin_var.is_tsql_smalldatetime_datatype = &is_tsql_smalldatetime_datatype;
 		common_utility_plugin_var.is_tsql_datetimeoffset_datatype = &is_tsql_datetimeoffset_datatype;
 		common_utility_plugin_var.is_tsql_decimal_datatype = &is_tsql_decimal_datatype;

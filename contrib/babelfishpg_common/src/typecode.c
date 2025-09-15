@@ -282,6 +282,7 @@ Oid			tsql_sys_varbinary_oid = InvalidOid;
 Oid			tsql_rowversion_oid = InvalidOid;
 Oid			tsql_timestamp_oid = InvalidOid;
 Oid			tsql_datetime2_oid = InvalidOid;
+Oid			tsql_datetime_oid = InvalidOid;
 Oid			tsql_smalldatetime_oid = InvalidOid;
 Oid			tsql_datetimeoffset_oid = InvalidOid;
 Oid			tsql_decimal_oid = InvalidOid;
@@ -482,6 +483,14 @@ is_tsql_datetime2_datatype(Oid oid)
 	if (tsql_datetime2_oid == InvalidOid)
 		tsql_datetime2_oid = lookup_tsql_datatype_oid("datetime2");
 	return tsql_datetime2_oid == oid;
+}
+
+bool
+is_tsql_datetime_datatype(Oid oid)
+{
+	if (tsql_datetime_oid == InvalidOid)
+		tsql_datetime_oid = lookup_tsql_datatype_oid("datetime");
+	return tsql_datetime_oid == oid;
 }
 
 bool
