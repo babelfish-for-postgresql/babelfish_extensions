@@ -3035,13 +3035,9 @@ get_func_owner(Oid funcid)
  * only if we are currently in function/proc execution
  */
 static Oid
-get_current_func_owner(void)
+get_current_func_oid(void)
 {
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return InvalidOid;
-
-	if (pltsql_non_tsql_proc_entry_count > 0 || pltsql_sys_func_entry_count > 0)
+	if (!pltsql_support_tsql_transactions())
 		return InvalidOid;
 
 	/*
@@ -3067,7 +3063,7 @@ is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 		FuncExpr *fexpr = (FuncExpr *)expr;
 		if (fexpr->insideView == PNODE_OUTSIDE_VIEW)
 		{
-			top_func = get_current_func_owner();
+			top_func = get_current_func_oid();
 		}
 	}
 	else if (IsA(expr, RTEPermissionInfo))
@@ -3075,7 +3071,7 @@ is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 		RTEPermissionInfo *perminfo = (RTEPermissionInfo *)expr;
 		if (perminfo->insideView == PNODE_OUTSIDE_VIEW)
 		{
-			top_func = get_current_func_owner();
+			top_func = get_current_func_oid();
 		}
 	}
 	return (OidIsValid(top_func) && (get_func_owner(top_func) == objectOwnerId));

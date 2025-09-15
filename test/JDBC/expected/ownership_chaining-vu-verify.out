@@ -592,3 +592,132 @@ GO
 
 ~~ERROR (Message: permission denied for table t3014_9_8)~~
 
+-- terminate-tsql-conn user=l3014_1 password=12345678
+
+-- tsql
+---------------------------------------------------------
+-- FUNCTION AND PROCEDURE TESTING FOR OWNERSHIP CHAINING
+---------------------------------------------------------
+CREATE DATABASE db3014_1;
+GO
+USE db3014_1;
+GO
+
+-- Create test users and schemas
+CREATE LOGIN l3014_0 WITH PASSWORD = '[REDACTED:PASSWORD]';
+CREATE LOGIN l3014_01 WITH PASSWORD = '[REDACTED:PASSWORD]';
+CREATE USER u3014_0 FOR LOGIN l3014_0;
+CREATE USER u3014_01 FOR LOGIN l3014_01;
+GO
+
+-- Create schemas (as admin)
+CREATE SCHEMA sch3014_a AUTHORIZATION u3014_0;
+CREATE SCHEMA sch3014_a1 AUTHORIZATION u3014_01;
+GO
+
+
+-- Section 1: basic ownership chaining
+-- Create objects as dbo
+CREATE TABLE dbo.t3014_1 (id INT, val VARCHAR(50));
+INSERT INTO dbo.t3014_1 VALUES (1, 'test1'), (2, 'test2');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE PROCEDURE dbo.sp3014_1
+AS
+BEGIN
+    SELECT * FROM dbo.t3014_1;
+END;
+GO
+
+GRANT EXECUTE ON dbo.sp3014_1 TO u3014_0;
+REVOKE SELECT ON dbo.t3014_1 FROM u3014_0;
+GO
+-- terminate-tsql-conn
+-- tsql user=l3014_0 password=[REDACTED:PASSWORD]
+-- Test as u3014_0
+USE db3014_1;
+GO
+EXEC dbo.sp3014_1;  -- Should succeed
+GO
+~~START~~
+int#!#varchar
+1#!#test1
+2#!#test2
+~~END~~
+
+SELECT * FROM dbo.t3014_1;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_1)~~
+
+
+
+-- tsql user=l3014_01 password=[REDACTED:PASSWORD]
+-- Test Section 2 : cross schema
+-- Create objects as u3014_01
+USE db3014_1;
+GO
+CREATE TABLE sch3014_a1.t3014_3 (id INT, val VARCHAR(50));
+INSERT INTO sch3014_a1.t3014_3 VALUES (1, 'test1'), (2, 'test2');
+GO
+~~ROW COUNT: 2~~
+
+-- terminate-tsql-conn user=l3014_01 password=[REDACTED:PASSWORD]
+
+-- tsql user=l3014_0 password=[REDACTED:PASSWORD]
+-- Create procedure as u3014_0
+USE db3014_1;
+GO
+CREATE PROCEDURE sch3014_a.sp3014_3
+AS
+BEGIN
+    SELECT * FROM sch3014_a1.t3014_3;
+END;
+GO
+
+-- Test the cross-schema access
+EXEC sch3014_a.sp3014_3;  -- Should fail due to broken ownership chain
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_3)~~
+
+SELECT * FROM sch3014_a1.t3014_3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_3)~~
+
+-- terminate-tsql-conn user=l3014_0 password=[REDACTED:PASSWORD]
+
+-- tsql
+USE db3014_1;
+GO
+drop table dbo.t3014_1
+go
+drop table sch3014_a1.t3014_3
+go
+drop procedure dbo.sp3014_1
+go
+drop procedure sch3014_a.sp3014_3
+go
+drop schema sch3014_a;
+go
+drop schema sch3014_a1
+go
+drop user u3014_0
+go
+drop user u3014_01
+go
+drop login l3014_0
+GO
+drop login l3014_01
+GO
+USE master;
+GO
+DROP DATABASE db3014_1;
+GO
+-- terminate-tsql-conn

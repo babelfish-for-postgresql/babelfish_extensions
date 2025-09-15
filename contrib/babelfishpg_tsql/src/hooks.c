@@ -1044,13 +1044,18 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 			}
 			else
 			{
+				/* If user already has the permission then return */
+				if (object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE) == ACLCHECK_OK)
+					return ACLCHECK_OK;
 				/*
 				 * Ownership Chaining Logic for object references inside function/procedures.
 				 * Only applicable for same-db ownership chaining cases.
 				 */
-				if(IsA(expr, FuncExpr) &&
+				if (IsA(expr, FuncExpr) &&
 				   is_valid_func_ownership_chain(expr, get_func_owner(((FuncExpr *)expr)->funcid)))
 				{
+					if (nspname)
+						pfree(nspname);
 					return ACLCHECK_OK;
 				}
 			}
@@ -1126,6 +1131,8 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 					 */
 					if (nspname != NULL && !is_shared_schema(nspname))
 					{
+						Oid relOwner = get_rel_owner(relOid);
+
 						if (OidIsValid(perminfo->checkAsUser) && !isTempNamespace(schema_id))
 						{
 							Oid loginId = get_login_for_user(perminfo->checkAsUser, nspname);
@@ -1134,9 +1141,9 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 						}
 						else
 							perminfo->checkAsUser = GetSessionUserId();
-						if (is_valid_func_ownership_chain(perminfo, get_rel_owner(relOid)))
+						if (is_valid_func_ownership_chain(perminfo, relOwner))
 						{
-							perminfo->checkAsUser = get_rel_owner(relOid);
+							perminfo->checkAsUser = relOwner;
 						}
 					}
 					if (nspname)
