@@ -620,25 +620,32 @@ BEGIN
         ELSIF p_action = 'update' THEN
             RAISE INFO E'\nProcessing table: %.%', r.schema_name, r.table_name;
             
-            -- For update, we need to use sys.sp_executesql to handle triggers
-            EXECUTE format(
-                'SELECT sys.sp_executesql N''UPDATE %I.%I 
-                 SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
-                 WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)''',
-                r.schema_name, r.table_name,
-                r.column_name, r.column_name,
-                r.column_name, r.column_name
-            );
+            BEGIN
+                v_sql := format(
+                    'UPDATE %I.%I 
+                     SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+                     WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+                    r.schema_name, r.table_name,
+                    r.column_name, r.column_name,
+                    r.column_name, r.column_name
+                );
 
-            GET DIAGNOSTICS v_affected_count = ROW_COUNT;
-            v_total_affected_count := v_total_affected_count + v_affected_count;
-            RAISE INFO 'Updated % rows in %.%.%',
-                v_affected_count, r.schema_name, r.table_name, r.column_name;
+                EXECUTE v_sql;
+                GET DIAGNOSTICS v_affected_count = ROW_COUNT;
+                v_total_affected_count := v_total_affected_count + v_affected_count;
+                RAISE INFO 'Updated % rows in %.%.%',
+                    v_affected_count, r.schema_name, r.table_name, r.column_name;
 
-            IF p_commit_after_table THEN
-                COMMIT;
-                RAISE INFO 'Committed changes for table %.%', r.schema_name, r.table_name;
-            END IF;
+                IF p_commit_after_table THEN
+                    COMMIT;
+                    RAISE INFO 'Committed changes for table %.%', r.schema_name, r.table_name;
+                END IF;
+            EXCEPTION WHEN OTHERS THEN
+                RAISE WARNING 'Error updating table %.%: %', r.schema_name, r.table_name, SQLERRM;
+                IF p_commit_after_table THEN
+                    ROLLBACK;
+                END IF;
+            END;
         END IF;
     END LOOP;
 
