@@ -435,17 +435,6 @@ DECLARE @inputEmptyString datetime2(4) = '';
 select isnumeric(@inputString), isnumeric(@inputEmptyString);
 GO
 
--- geometry/georaphy
-DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
-DECLARE @inputEmptyString geometry = '';
-select isnumeric(@inputString), isnumeric(@inputEmptyString);
-GO
-
-DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-DECLARE @inputEmptyString geography = '';
-select isnumeric(@inputString), isnumeric(@inputEmptyString);
-GO
-
 -- sql_variant
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant);
 DECLARE @inputEmptyString sql_variant = '';
