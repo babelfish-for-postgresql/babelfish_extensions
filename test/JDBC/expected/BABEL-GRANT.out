@@ -16,12 +16,27 @@ GO
 DROP TYPE IF EXISTS type_int;
 GO
 
+DROP USER IF EXISTS [babel-6067-u1];
+GO
+
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel-6067-l1')
+BEGIN
+    DROP LOGIN [babel-6067-l1];
+END
+GO
+
 
 ---
 ---  Prepare Objects
 ---
 ---- SCHEMA
 CREATE SCHEMA scm;
+GO
+
+CREATE LOGIN [babel-6067-l1] WITH PASSWORD = '12345678'
+GO
+
+CREATE USER [babel-6067-u1] FOR LOGIN [babel-6067-l1]
 GO
 
 ---- TABLE
@@ -152,6 +167,13 @@ GRANT UPDATE (a) ON t1 TO guest WITH GRANT OPTION;
 GO
 
 REVOKE GRANT OPTION FOR UPDATE (a) ON t1 FROM guest;
+GO
+
+GRANT SELECT,INSERT,UPDATE,DELETE,EXECUTE ON SCHEMA::scm TO [babel-6067-u1];
+GO
+
+-- Validate create procedure grants proc permission to username having hypens like babel-6067-u1
+CREATE PROCEDURE babel_6067_p1 AS SELECT 'Hello';
 GO
 
 --- 
@@ -792,4 +814,16 @@ DROP PROCEDURE IF EXISTS my_proc;
 GO
 
 DROP TYPE IF EXISTS type_int;
+GO
+
+DROP PROCEDURE IF EXISTS babel_6067_p1;
+GO
+
+DROP USER IF EXISTS [babel-6067-u1];
+GO
+
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel-6067-l1')
+BEGIN
+    DROP LOGIN [babel-6067-l1];
+END
 GO
