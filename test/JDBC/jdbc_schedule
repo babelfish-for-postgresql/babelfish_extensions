@@ -664,3 +664,6 @@ ignore#!#test_convert_to_binary-before-17_7-16_11-vu-cleanup
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-prepare
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
+ignore#!#babel_timezoneinfo_before_17_7-vu-prepare
+ignore#!#babel_timezoneinfo_before_17_7-vu-verify
+ignore#!#babel_timezoneinfo_before_17_7-vu-cleanup
