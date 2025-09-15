@@ -126,6 +126,7 @@ int                  get_next_xml_handle_counter(void);
 void                 create_xml_handle_temp_table(void);
 void                 delete_xml_handle_entry(int  handle);
 int                  insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
+void                 get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data);
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};

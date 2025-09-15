@@ -243,6 +243,7 @@ extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern char *replace_special_chars_fts_impl(char *input_str);
+extern void get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data);
 
 #ifdef USE_LIBXML
 MemoryContext TransMemoryContext = NULL;

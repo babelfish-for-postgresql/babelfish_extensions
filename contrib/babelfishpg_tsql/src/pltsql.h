@@ -32,7 +32,6 @@
 #include "utils/plancache.h"
 #include "utils/portal.h"
 #include "utils/typcache.h"
-#include "utils/xml.h"
 #include "tcop/utility.h"
 
 #include "dynavec.h"
@@ -2380,10 +2379,5 @@ extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags
 #define NUM_DB_OBJECTS 11
 
 extern const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2];
-
-/*
- * Function in procedures.c
- */
-extern void get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data);
 
 #endif							/* PLTSQL_H */
