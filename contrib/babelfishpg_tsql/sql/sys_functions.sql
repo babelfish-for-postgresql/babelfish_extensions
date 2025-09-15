@@ -5169,5 +5169,5 @@ RETURNS table (
   text sys.NTEXT
 ) 
 AS 'babelfishpg_tsql', 'openxml_simple'
-LANGUAGE C IMMUTABLE PARALLEL SAFE;
+LANGUAGE C IMMUTABLE;
 
