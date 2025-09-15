@@ -183,6 +183,40 @@ AS $BODY$ BEGIN
 END; $BODY$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_float(arg ANYELEMENT, p INT)
+RETURNS DOUBLE PRECISION
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v DOUBLE PRECISION;
+BEGIN
+    BEGIN
+        v := CAST(arg AS DOUBLE PRECISION);
+
+        IF p IS NOT NULL AND p BETWEEN 1 AND 24 THEN
+            v := CAST(CAST(v AS REAL) AS DOUBLE PRECISION);
+        END IF;
+
+        RETURN v;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END;
+END; $$;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_float(arg TEXT, p INT)
+RETURNS DOUBLE PRECISION
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    BEGIN
+        RETURN sys.babelfish_try_cast_float(arg::sys.varchar, p);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END;
+END; $$;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg TEXT, IN typmod INTEGER)
 RETURNS sys.DATETIME2
 AS $BODY$

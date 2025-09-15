@@ -214,7 +214,7 @@ DECLARE @p FLOAT;
 EXEC sp_executesql @SQLString, @ParamDef, @a = @p OUT;
 GO
 ~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]invalid input syntax for type double precision: "abc" (33557097) (SQLExecDirectW))~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Error converting data type varchar to float. (33557097) (SQLExecDirectW))~~
 
 /* 6. Invalid OUT param */
 DECLARE @SQLString NVARCHAR(100);

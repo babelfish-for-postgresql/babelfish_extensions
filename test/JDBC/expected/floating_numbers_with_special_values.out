@@ -235,187 +235,93 @@ GO
 ~~ERROR (Message: Error converting data type varchar to real.)~~
 
 
-
--- ======== REAL
-SELECT CAST(N'NaN' AS REAL);
+-- ======== FLOAT
+SELECT CAST(N'NaN' AS FLOAT(53));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-SELECT CAST(N'Infinity' AS REAL);
+SELECT CAST(N'Infinity' AS FLOAT);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-SELECT CAST(N'+Infinity' AS REAL);
+SELECT CAST(N'+Infinity' AS FLOAT(53));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-SELECT CAST(N'-Infinity' AS REAL);
+SELECT CAST(N'-Infinity' AS FLOAT);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-SELECT CAST(N'inf' AS REAL);
+SELECT CAST(N'inf' AS FLOAT(53));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-SELECT CAST(N'+inf' AS REAL);
+SELECT CAST(N'+inf' AS FLOAT);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-SELECT CAST(N'-inf' AS REAL);
+SELECT CAST(N'-inf' AS FLOAT(53));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
-SELECT TRY_CAST(N'NaN' AS REAL);
+SELECT TRY_CAST(N'NaN' AS FLOAT);
 GO
 ~~START~~
 real
 <NULL>
 ~~END~~
 
-SELECT TRY_CAST(N'Infinity' AS REAL);
+SELECT TRY_CAST(N'Infinity' AS FLOAT(53));
 GO
 ~~START~~
 real
 <NULL>
 ~~END~~
 
-SELECT TRY_CAST(N'+Infinity' AS REAL);
+SELECT TRY_CAST(N'+Infinity' AS FLOAT);
 GO
 ~~START~~
 real
 <NULL>
 ~~END~~
 
-SELECT TRY_CAST(N'-Infinity' AS REAL);
+SELECT TRY_CAST(N'-Infinity' AS FLOAT(53));
 GO
 ~~START~~
 real
 <NULL>
 ~~END~~
 
-SELECT TRY_CAST(N'inf' AS REAL);
+SELECT TRY_CAST(N'inf' AS FLOAT);
 GO
 ~~START~~
 real
 <NULL>
 ~~END~~
 
-SELECT TRY_CAST(N'+inf' AS REAL);
+SELECT TRY_CAST(N'+inf' AS FLOAT(53));
 GO
 ~~START~~
 real
 <NULL>
 ~~END~~
 
-SELECT TRY_CAST(N'-inf' AS REAL);
-GO
-~~START~~
-real
-<NULL>
-~~END~~
-
-
-SELECT CONVERT(REAL, N'NaN');
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varchar to real.)~~
-
-SELECT CONVERT(REAL, N'Infinity');
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varchar to real.)~~
-
-SELECT CONVERT(REAL, N'+Infinity');
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varchar to real.)~~
-
-SELECT CONVERT(REAL, N'-Infinity');
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varchar to real.)~~
-
-SELECT CONVERT(REAL,N'inf');
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varchar to real.)~~
-
-SELECT CONVERT(REAL, N'+inf');
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varchar to real.)~~
-
-SELECT CONVERT(REAL, N'-inf');
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varchar to real.)~~
-
-
-SELECT TRY_CONVERT(REAL, N'NaN');
-GO
-~~START~~
-real
-<NULL>
-~~END~~
-
-SELECT TRY_CONVERT(REAL, N'Infinity');
-GO
-~~START~~
-real
-<NULL>
-~~END~~
-
-SELECT TRY_CONVERT(REAL, N'+Infinity');
-GO
-~~START~~
-real
-<NULL>
-~~END~~
-
-SELECT TRY_CONVERT(REAL, N'-Infinity');
-GO
-~~START~~
-real
-<NULL>
-~~END~~
-
-SELECT TRY_CONVERT(REAL, N'inf');
-GO
-~~START~~
-real
-<NULL>
-~~END~~
-
-SELECT TRY_CONVERT(REAL, N'+inf');
-GO
-~~START~~
-real
-<NULL>
-~~END~~
-
-SELECT TRY_CONVERT(REAL, N'-inf');
+SELECT TRY_CAST(N'-inf' AS FLOAT);
 GO
 ~~START~~
 real
@@ -423,52 +329,253 @@ real
 ~~END~~
 
 
-DECLARE @f REAL=N'NaN';
+SELECT CONVERT(FLOAT(53), N'NaN');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CONVERT(FLOAT, N'Infinity');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CONVERT(FLOAT(53), N'+Infinity');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CONVERT(FLOAT, N'-Infinity');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CONVERT(FLOAT(53),N'inf');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CONVERT(FLOAT, N'+inf');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CONVERT(FLOAT(53), N'-inf');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT TRY_CONVERT(FLOAT, N'NaN');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(FLOAT(53), N'Infinity');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(FLOAT, N'+Infinity');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(FLOAT(53), N'-Infinity');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(FLOAT, N'inf');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(FLOAT(53), N'+inf');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CONVERT(FLOAT, N'-inf');
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+DECLARE @f FLOAT(53)=N'NaN';
 SELECT @f;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-DECLARE @f REAL=N'Infinity';
+DECLARE @f FLOAT=N'Infinity';
 SELECT @f;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-DECLARE @f REAL=N'+Infinity';
+DECLARE @f FLOAT(53)=N'+Infinity';
 SELECT @f;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-DECLARE @f REAL=N'-Infinity';
+DECLARE @f FLOAT=N'-Infinity';
 SELECT @f;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-DECLARE @f REAL=N'inf';
+DECLARE @f FLOAT(53)=N'inf';
 SELECT @f;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-DECLARE @f REAL=N'+inf';
+DECLARE @f FLOAT=N'+inf';
 SELECT @f;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
-DECLARE @f REAL=N'-inf';
+DECLARE @f FLOAT(53)=N'-inf';
 SELECT @f;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to real.)~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+-- ======== FLOAT with different precisions
+SELECT CAST(N'1.1' AS FLOAT(58));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: precision for type float must be less than 54 bits)~~
+
+SELECT CAST(N'' AS FLOAT(56));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: precision for type float must be less than 54 bits)~~
+
+SELECT CAST(N'1.1' AS FLOAT(-1));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 27)~~
+
+SELECT CAST(N'1.1' AS FLOAT(0));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: precision for type float must be at least 1 bit)~~
+
+SELECT CAST(N'3.1' AS FLOAT);
+GO
+~~START~~
+float
+3.1
+~~END~~
+
+SELECT CAST(N'9.99909' AS FLOAT(53));
+GO
+~~START~~
+float
+9.99909
+~~END~~
+
+SELECT CAST(N'123.321' AS FLOAT);
+GO
+~~START~~
+float
+123.321
+~~END~~
+
+SELECT CAST(N'1000.10001' AS FLOAT(53));
+GO
+~~START~~
+float
+1000.10001
+~~END~~
+
+
+
+SELECT TRY_CAST(N'1.1' AS FLOAT(58));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: precision for type float must be less than 54 bits)~~
+
+SELECT TRY_CAST(N'' AS FLOAT(56));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: precision for type float must be less than 54 bits)~~
+
+SELECT TRY_CAST(N'1.1' AS FLOAT(-1));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 31)~~
+
+SELECT TRY_CAST(N'1.1' AS FLOAT(0));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: precision for type float must be at least 1 bit)~~
+
+SELECT TRY_CAST(N'3.1' AS FLOAT);
+GO
+~~START~~
+real
+3.1
+~~END~~
+
+SELECT TRY_CAST(N'9.99909' AS FLOAT(53));
+GO
+~~START~~
+real
+9.99909
+~~END~~
+
+SELECT TRY_CAST(N'123.321' AS FLOAT);
+GO
+~~START~~
+real
+123.321
+~~END~~
+
+SELECT TRY_CAST(N'1000.10001' AS FLOAT(53));
+GO
+~~START~~
+real
+1000.10004
+~~END~~
 

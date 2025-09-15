@@ -465,7 +465,6 @@ tsql_special_function_t tsql_special_function_list[] =
 {
 	{"sys", "replace", "replace", false, 3},
 	{"sys", "string_agg", "string_agg", false, 2},
-	{"sys", "string_split", "string_agg", false, 2},
 	{"sys", "substring", "substring", false, 3},
 	{"sys", "stuff", "stuff", false, 4},
 	{"sys", "translate", "translate", false, 3},
