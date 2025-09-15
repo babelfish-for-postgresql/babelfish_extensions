@@ -5,7 +5,7 @@ BEGIN
     EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
     SELECT 
         id, parentid, nodetype, localname, prefix, namespaceuri, datatype, prev, text
-    FROM OPENXML(@handle, '/');
+    FROM OPENXML(@handle, '/') ORDER BY id;
     EXEC sp_xml_removedocument @handle;
 END 
 GO

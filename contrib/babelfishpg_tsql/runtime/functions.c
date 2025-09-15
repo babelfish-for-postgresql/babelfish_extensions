@@ -5660,8 +5660,8 @@ openxml_simple(PG_FUNCTION_ARGS)
 	tupdesc = CreateTemplateTupleDesc(TSQL_OPENXML_EDGE_TABLE_COLS);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "id", bigint_oid, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "parentid", bigint_oid, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "nodetype", int_oid, 32, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "localname", nvarchar_oid, 128, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "nodetype", int_oid, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "localname", nvarchar_oid, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "prefix", nvarchar_oid, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "namespaceuri", nvarchar_oid, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "datatype", nvarchar_oid, -1, 0);
@@ -5782,12 +5782,12 @@ openxml_simple(PG_FUNCTION_ARGS)
 				xml_visited_nodes_set = NULL;
 			}
 		}
-
-		/* Destroy the hash table that used to store xml node pointer to id mapping */
-		destroy_xml_handles_htab();
 	}
 	PG_CATCH();
 	{
+		/* Destroy the hash table that used to store xml node pointer to id mapping */
+		destroy_xml_handles_htab();
+
 		if (xpathobj)
 			xmlXPathFreeObject(xpathobj);
 		if (xpathcomp)
@@ -5805,6 +5805,8 @@ openxml_simple(PG_FUNCTION_ARGS)
 	}
 	PG_END_TRY();
 
+	/* Destroy the hash table that used to store xml node pointer to id mapping */
+	destroy_xml_handles_htab();
 	xmlXPathFreeObject(xpathobj);
 	xmlXPathFreeCompExpr(xpathcomp);
 	xmlXPathFreeContext(xpathctx);
