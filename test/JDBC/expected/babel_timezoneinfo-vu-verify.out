@@ -1,3 +1,4 @@
+-- Test to display all time zones
 select * from sys.time_zone_info;
 GO
 ~~START~~
@@ -59,6 +60,7 @@ Iran Standard Time#!#+03:30#!#0
 Israel Standard Time#!#+03:00#!#1
 Jordan Standard Time#!#+03:00#!#0
 Kaliningrad Standard Time#!#+02:00#!#0
+Kamchatka Standard Time#!#+12:00#!#0
 Korea Standard Time#!#+09:00#!#0
 Libya Standard Time#!#+02:00#!#0
 Line Islands Standard Time#!#+14:00#!#0
@@ -93,7 +95,6 @@ Qyzylorda Standard Time#!#+05:00#!#0
 Romance Standard Time#!#+02:00#!#1
 Russian Standard Time#!#+03:00#!#0
 Russia Time Zone 10#!#+11:00#!#0
-Russia Time Zone 11#!#+12:00#!#0
 Russia Time Zone 3#!#+04:00#!#0
 Sa Eastern Standard Time#!#-03:00#!#0
 Saint Pierre Standard Time#!#-02:00#!#1
@@ -201,6 +202,7 @@ Iran Standard Time#!#+03:30#!#0
 Israel Standard Time#!#+03:00#!#1
 Jordan Standard Time#!#+03:00#!#0
 Kaliningrad Standard Time#!#+02:00#!#0
+Kamchatka Standard Time#!#+12:00#!#0
 Korea Standard Time#!#+09:00#!#0
 Libya Standard Time#!#+02:00#!#0
 Line Islands Standard Time#!#+14:00#!#0
@@ -235,7 +237,6 @@ Qyzylorda Standard Time#!#+05:00#!#0
 Romance Standard Time#!#+02:00#!#1
 Russian Standard Time#!#+03:00#!#0
 Russia Time Zone 10#!#+11:00#!#0
-Russia Time Zone 11#!#+12:00#!#0
 Russia Time Zone 3#!#+04:00#!#0
 Sa Eastern Standard Time#!#-03:00#!#0
 Saint Pierre Standard Time#!#-02:00#!#1
@@ -365,27 +366,8 @@ Lord Howe Standard Time#!#+10:30
 Chatham Islands Standard Time#!#+12:45
 ~~END~~
 
--- Test case 6: Function to find specific pattern
-DROP FUNCTION IF EXISTS dbo.FindZonesByPattern;
-GO
-CREATE FUNCTION dbo.FindZonesByPattern(@pattern NVARCHAR(50))
-RETURNS TABLE
-AS
-RETURN
-(
-    SELECT 
-        name,
-        current_utc_offset,
-        is_currently_dst,
-        CASE 
-            WHEN is_currently_dst = 1 THEN 'DST'
-            ELSE 'STD'
-        END AS time_type
-    FROM sys.time_zone_info
-    WHERE name LIKE '%' + @pattern + '%'
-);
-GO
--- Test
+
+-- Test function to specific pattern
 SELECT * FROM dbo.FindZonesByPattern('Pacific') ORDER BY name;
 GO
 ~~START~~
@@ -398,19 +380,8 @@ Sa Pacific Standard Time#!#-05:00#!#0#!#STD
 West Pacific Standard Time#!#+10:00#!#0#!#STD
 ~~END~~
 
--- Test case 7: Function to Get zones in offset range
-DROP FUNCTION IF EXISTS dbo.GetZonesInOffsetRange;
-GO
-CREATE FUNCTION dbo.GetZonesInOffsetRange(@startOffset VARCHAR(6), @endOffset VARCHAR(6))
-RETURNS TABLE
-AS
-RETURN
-(
-    SELECT name, current_utc_offset, is_currently_dst
-    FROM sys.time_zone_info
-    WHERE current_utc_offset BETWEEN @startOffset AND @endOffset
-);
-GO
+
+-- Test function to verify 
 SELECT * FROM dbo.GetZonesInOffsetRange('+08:00', '+10:00') ORDER BY current_utc_offset;
 GO
 ~~START~~
@@ -436,15 +407,8 @@ Vladivostok Standard Time#!#+10:00#!#0
 West Pacific Standard Time#!#+10:00#!#0
 ~~END~~
 
--- Test case 8: GMT/UTC zones
-DROP VIEW IF EXISTS dbo.ZeroOffsetZones;
-GO
-CREATE VIEW dbo.ZeroOffsetZones AS
-SELECT name, current_utc_offset, is_currently_dst
-FROM sys.time_zone_info 
-WHERE current_utc_offset = '+00:00';
-GO
 
+-- Test to check the UTC/GMT zones
 SELECT * FROM dbo.ZeroOffsetZones;
 GO
 ~~START~~
@@ -456,40 +420,17 @@ Utc#!#+00:00#!#0
 ~~END~~
 
 
---Test Case 9: Zones with numbers in names
-DROP VIEW IF EXISTS dbo.NumericNameZones;
-GO
-CREATE VIEW dbo.NumericNameZones AS
-SELECT name, current_utc_offset, is_currently_dst
-FROM sys.time_zone_info
-WHERE name LIKE '%[0-9]%';
-GO
-
+-- Test zones with numbers in names
 SELECT * FROM dbo.NumericNameZones ORDER BY name;
 GO
 ~~START~~
 text#!#varchar#!#bit
 Russia Time Zone 10#!#+11:00#!#0
-Russia Time Zone 11#!#+12:00#!#0
 Russia Time Zone 3#!#+04:00#!#0
 ~~END~~
 
 
---Test 10: Palindromic offset detection
-DROP VIEW IF EXISTS dbo.PalindromicOffsets;
-GO
-CREATE VIEW dbo.PalindromicOffsets AS
-SELECT 
-    name,
-    current_utc_offset,
-    CASE 
-        WHEN REVERSE(SUBSTRING(current_utc_offset, 2, 5)) = SUBSTRING(current_utc_offset, 2, 5) THEN 'Palindromic'
-        ELSE 'Non-Palindromic'
-    END AS palindrome_status
-FROM sys.time_zone_info
-WHERE REVERSE(SUBSTRING(current_utc_offset, 2, 5)) = SUBSTRING(current_utc_offset, 2, 5);
-GO
-
+-- Test palindromic offset 
 SELECT * FROM dbo.PalindromicOffsets;
 GO
 ~~START~~
@@ -502,7 +443,7 @@ Utc#!#+00:00#!#Palindromic
 ~~END~~
 
 
---Test case 11: Edge case for testing duplicate enteries (should not exist)
+--Test case: Edge case for testing duplicate enteries (should not exist)
 SELECT 
     name,
     current_utc_offset,
@@ -517,4 +458,102 @@ text#!#varchar#!#bit#!#int
 ~~END~~
 
 
+-- Procedure to find Top 20 time zones
+EXEC sp_ListTimeZones;
+GO
+~~START~~
+text#!#varchar#!#bit
+Afghanistan Standard Time#!#+04:30#!#0
+Alaskan Standard Time#!#-08:00#!#1
+Aleutian Standard Time#!#-09:00#!#1
+Altai Standard Time#!#+07:00#!#0
+Arabian Standard Time#!#+04:00#!#0
+Arabic Standard Time#!#+03:00#!#0
+Arab Standard Time#!#+03:00#!#0
+Argentina Standard Time#!#-03:00#!#0
+Astrakhan Standard Time#!#+04:00#!#0
+Atlantic Standard Time#!#-03:00#!#1
+Aus Central Standard Time#!#+09:30#!#0
+Aus Central W. Standard Time#!#+08:45#!#0
+Aus Eastern Standard Time#!#+10:00#!#0
+Azerbaijan Standard Time#!#+04:00#!#0
+Azores Standard Time#!#+00:00#!#1
+Bahia Standard Time#!#-03:00#!#0
+Bangladesh Standard Time#!#+06:00#!#0
+Belarus Standard Time#!#+03:00#!#0
+Bougainville Standard Time#!#+11:00#!#0
+Canada Central Standard Time#!#-06:00#!#0
+~~END~~
+
+
+-- Test case: Subquery to find "Lonely DST zone"
+SELECT name, current_utc_offset
+FROM sys.time_zone_info t1
+WHERE EXISTS (
+    SELECT 1 
+    FROM sys.time_zone_info t2
+    WHERE t2.current_utc_offset = '+05:45'
+    AND t1.name = t2.name
+);
+GO
+~~START~~
+text#!#varchar
+Nepal Standard Time#!#+05:45
+~~END~~
+
+
+--Test cases to check valid/invalid 
+                  
+EXEC ValidateTimeZone 'Pacific Standard Time', '-07:00';
+EXEC ValidateTimeZone 'UTC', '-08:00';   
+EXEC ValidateTimeZone 'India Standard Time', '-05:00';
+GO
+~~START~~
+varchar#!#nvarchar
+pass#!#Testing Pacific Standard Time for offset -07:00
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+fail#!#Testing UTC for offset -08:00
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+fail#!#Testing India Standard Time for offset -05:00
+~~END~~
+
+
+-- Test case:  CTE for DST zones with specific offset
+WITH DSTZones AS (
+    SELECT name, current_utc_offset
+    FROM sys.time_zone_info
+    WHERE is_currently_dst = 1
+    AND current_utc_offset IN ('-07:00', '-08:00', '-06:00')
+)
+SELECT * FROM DSTZones;
+GO
+~~START~~
+text#!#varchar
+Alaskan Standard Time#!#-08:00
+Mountain Standard Time#!#-06:00
+Pacific Standard Time#!#-07:00
+Pacific Standard Time (Mexico)#!#-07:00
+~~END~~
+
+
+
+--Trigger to test valid/invalid time zones
+EXEC sp_ValidateTimeZoneData 'India Standard Time';
+EXEC sp_ValidateTimeZoneData 'Title Zone';
+GO
+~~START~~
+varchar#!#nvarchar
+Valid#!#India Standard Time
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+Invalid#!#Title Zone
+~~END~~
 
