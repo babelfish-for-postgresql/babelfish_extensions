@@ -309,3 +309,10 @@ GO
 
 ~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
 
+
+SET DATEFIRST NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+

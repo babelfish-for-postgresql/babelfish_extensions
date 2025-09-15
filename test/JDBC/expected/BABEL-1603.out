@@ -79,21 +79,21 @@ SET DATEFIRST 0
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 0 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+~~ERROR (Message: SET DATEFIRST 0 is out of range.)~~
 
 
 SET DATEFIRST 8
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 8 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+~~ERROR (Message: SET DATEFIRST 8 is out of range.)~~
 
 
 SET DATEFIRST NULL;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near "NULL")~~
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
 
 
 DECLARE @rc INT = 0;

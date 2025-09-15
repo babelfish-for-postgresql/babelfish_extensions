@@ -6063,37 +6063,47 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 				{
 					if(ctx->set_special()->constant_LOCAL_ID())
 					{
-						std::string datefirst_value = ::getFullText(ctx->set_special()->constant_LOCAL_ID()->constant());
-						char *datefirst_val = pstrdup(datefirst_value.c_str());
-	
-						// Non integral values and strings are not valid input
-						if (strchr(datefirst_val, '.') || strchr(datefirst_val, '\'') || strchr(datefirst_val, '\"'))
+						if(ctx->set_special()->constant_LOCAL_ID()->constant())
 						{
-							ereport(ERROR,
-									(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-										errmsg("SET DATEFIRST option requires integer parameter.")));
-						}
-						// Only integral values from 1 to 7 (inclusive) are accepted
-						else
-						{
-							char *strtol_endptr;
-							int val = (int) strtol(datefirst_val, &strtol_endptr, 10);
-	
-							if (val < 1 || val > 7)
+
+							std::string datefirst_value = ::getFullText(ctx->set_special()->constant_LOCAL_ID()->constant());
+							char *datefirst_val = pstrdup(datefirst_value.c_str());
+							
+							// Non integral values and strings are not valid input
+							if (strchr(datefirst_val, '.') || strchr(datefirst_val, '\'') || strchr(datefirst_val, '\"') || pg_strcasecmp("NULL", datefirst_val) == 0)
 							{
 								ereport(ERROR,
 									(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-										errmsg("SET DATEFIRST %d is out of range.", val)));
+										errmsg("SET DATEFIRST option requires integer parameter.")));
 							}
+							// Only integral values from 1 to 7 (inclusive) are accepted
+							else
+							{
+								char *strtol_endptr;
+								int val = (int) strtol(datefirst_val, &strtol_endptr, 10);
+								
+								if (val < 1 || val > 7)
+								{
+									ereport(ERROR,
+										(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+											errmsg("SET DATEFIRST %d is out of range.", val)));
+								}
+							}
+									
+							pfree(datefirst_val);
 						}
-
-						pfree(datefirst_val);
+						else
+						{
+							ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("SET DATEFIRST option requires integer parameter.")));
+						}
 					}
 					else
 					{
 						ereport(ERROR,
-									(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-										errmsg("SET DATEFIRST option requires integer parameter.")));
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("SET DATEFIRST option requires integer parameter.")));
 					}
 				}
 				// We get here for other SET options that do not fall under set_on_off_option or special_variable, like DATEFORMAT
