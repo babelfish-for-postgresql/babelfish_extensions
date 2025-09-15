@@ -503,6 +503,7 @@ DECLARE
     v_sql text;
     v_datetime_typoid oid;
     r record;
+    r2 record;  -- Added explicit declaration for second loop variable
     v_affected_count bigint;
     v_table_count int := 0;
 BEGIN
@@ -531,27 +532,33 @@ BEGIN
         RAISE EXCEPTION 'Schema name is required for update action unless table_name is "all"';
     END IF;
 
-    -- Build base query for finding datetime columns
-    WITH datetime_columns AS (
-        SELECT 
-            n.nspname as schema_name,
-            t.relname as table_name,
-            a.attname as column_name
-        FROM pg_class t
-        JOIN pg_namespace n ON t.relnamespace = n.oid
-        JOIN pg_attribute a ON t.oid = a.attrelid
-        WHERE a.atttypid = v_datetime_typoid
-            AND t.relkind = 'r'
-            AND NOT a.attisdropped
-            AND a.attnum > 0
-            AND (p_schema_name IS NULL OR n.nspname = p_schema_name)
-            AND (p_table_name IS NULL OR p_table_name = 'all' OR t.relname = p_table_name)
-            AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog')
-    )
-    SELECT * INTO r FROM datetime_columns LIMIT 1;
+    -- Create temporary table for datetime columns
+    CREATE TEMP TABLE IF NOT EXISTS temp_datetime_columns (
+        schema_name text,
+        table_name text,
+        column_name text
+    );
 
-    IF NOT FOUND THEN
+    -- Populate temporary table
+    INSERT INTO temp_datetime_columns
+    SELECT 
+        n.nspname as schema_name,
+        t.relname as table_name,
+        a.attname as column_name
+    FROM pg_class t
+    JOIN pg_namespace n ON t.relnamespace = n.oid
+    JOIN pg_attribute a ON t.oid = a.attrelid
+    WHERE a.atttypid = v_datetime_typoid
+        AND t.relkind = 'r'
+        AND NOT a.attisdropped
+        AND a.attnum > 0
+        AND (p_schema_name IS NULL OR n.nspname = p_schema_name)
+        AND (p_table_name IS NULL OR p_table_name = 'all' OR t.relname = p_table_name)
+        AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog');
+
+    IF NOT EXISTS (SELECT 1 FROM temp_datetime_columns) THEN
         RAISE NOTICE 'No datetime columns found matching the specified criteria.';
+        DROP TABLE temp_datetime_columns;
         RETURN;
     END IF;
 
@@ -562,7 +569,7 @@ BEGIN
                 schema_name,
                 table_name,
                 string_agg(column_name, ', ') as datetime_columns
-            FROM datetime_columns
+            FROM temp_datetime_columns
             GROUP BY schema_name, table_name
             ORDER BY schema_name, table_name
         )
@@ -570,12 +577,13 @@ BEGIN
             RAISE NOTICE 'Schema: %, Table: %, Datetime Columns: %',
                 r.schema_name, r.table_name, r.datetime_columns;
         END LOOP;
+        DROP TABLE temp_datetime_columns;
         RETURN;
     END IF;
 
     -- CHECK or UPDATE action
     FOR r IN (
-        SELECT * FROM datetime_columns ORDER BY schema_name, table_name, column_name
+        SELECT * FROM temp_datetime_columns ORDER BY schema_name, table_name, column_name
     )
     LOOP
         v_table_count := v_table_count + 1;
@@ -591,7 +599,6 @@ BEGIN
                     r.schema_name, r.table_name, r.column_name, v_affected_count;
 
                 -- Show sample of affected values
-                RAISE NOTICE 'Sample of affected values:';
                 FOR r2 IN EXECUTE format(
                     'SELECT %I as original_value, 
                             CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
@@ -636,34 +643,29 @@ BEGIN
         COMMIT;
         RAISE NOTICE 'Final commit performed.';
     END IF;
+
+    DROP TABLE temp_datetime_columns;
 END;
 $$;
 GO
 
--- Usage examples:
 -- Show help
 CALL datetime_rounding_handler();
-GO
 
 -- List all tables with datetime columns
 CALL datetime_rounding_handler('list');
-GO
 
 -- Check specific schema/table
 CALL datetime_rounding_handler('check', 'master_dbo', 'datetime_test');
-GO
 
 -- Check all tables
 CALL datetime_rounding_handler('check', NULL, 'all');
-GO
 
 -- Update specific table
 CALL datetime_rounding_handler('update', 'master_dbo', 'datetime_test');
-GO
 
 -- Update all tables (use with caution)
 CALL datetime_rounding_handler('update', NULL, 'all');
-GO
 
 -- tsql
 DECLARE @sql NVARCHAR(MAX) = '';
