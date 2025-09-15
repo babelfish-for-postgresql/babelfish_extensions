@@ -1039,36 +1039,6 @@ COMMENT ON FUNCTION sys.babelfish_broken_view_function() IS 'Internal function u
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
-CREATE OR REPLACE PROCEDURE sys.sp_xml_preparedocument(
-    INOUT "@hdoc"  INTEGER,                 
-    IN "@xmltext" sys.VARCHAR DEFAULT NULL,    
-    IN "@xpath_namespaces" sys.VARCHAR DEFAULT NULL 
-) 
-AS 'babelfishpg_tsql', 'sp_xml_preparedocument'
-LANGUAGE C;
-GRANT EXECUTE ON PROCEDURE sys.sp_xml_preparedocument(
-	INOUT INTEGER, IN sys.varchar, IN sys.varchar
-) TO PUBLIC;
-
-CREATE OR REPLACE PROCEDURE sys.sp_xml_removedocument(
-    IN "@hdoc" INTEGER
-) 
-AS 'babelfishpg_tsql', 'sp_xml_removedocument'
-LANGUAGE C;
-GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(
-	IN INTEGER
-) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_xmldoc(int)
-RETURNS xml
-AS 'babelfishpg_tsql', 'tsql_openxml_get_xmldoc'
-LANGUAGE C STRICT;
-
-CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_colpattern(text,int)
-RETURNS sys.nvarchar
-AS 'babelfishpg_tsql', 'tsql_openxml_get_colpattern'
-LANGUAGE C STRICT;
-
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
