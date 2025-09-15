@@ -244,6 +244,7 @@ reset_session_properties(void)
 {
 	reset_cached_batch();
 	reset_cached_cursor();
+	reset_cached_xml_handle();
 	pltsql_explain_only = false;
 	pltsql_explain_analyze = false;
 }
