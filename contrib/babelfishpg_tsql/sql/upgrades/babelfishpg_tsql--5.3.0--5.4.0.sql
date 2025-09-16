@@ -223,6 +223,16 @@ GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(
 	IN INTEGER
 ) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_xmldoc(int)
+RETURNS xml
+AS 'babelfishpg_tsql', 'tsql_openxml_get_xmldoc'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_colpattern(text,int)
+RETURNS sys.nvarchar
+AS 'babelfishpg_tsql', 'tsql_openxml_get_colpattern'
+LANGUAGE C STRICT;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
