@@ -132,7 +132,7 @@ typedef struct
 {
     bytea   *input;
     uint8   *input_data;
-    int      input_len;
+    unsigned int input_len;
     int32_t  srid;
     int32_t  npoints;
     uint8_t  geom_type;
@@ -149,16 +149,16 @@ typedef struct
     Datum    geom_datum;    /* Input geometry/geography datum */
     bytea   *byte;          /* Binary representation */
     uint8   *byte_data;     /* Raw binary data pointer */
-    int      byte_len;      /* Length of binary data */
     uint8    srid_flag;     /* SRID and dimension flags */
     uint8    geom_type;     /* Point dimension type */
-    int      srid_size;     /* Size of SRID data (4 bytes) */
-    int      coord_size;    /* Size of coordinate data */
     bool     is_empty;      /* Flag indicating empty geometry */
     bool     is_valid;      /* Flag indicating valid geometry */
     bool     has_srid;      /* Flag indicating SRID presence */
     uint8    postgis_geom_type;   /* 2nd byte of byte_data */
-    int      npoints;       /* Number of points in geometry */
+    unsigned int byte_len;  /* Length of binary data */
+    unsigned int srid_size; /* Size of SRID data (4 bytes) */
+    unsigned int coord_size;/* Size of coordinate data */
+    unsigned int npoints;   /* Number of points in geometry */
 } GeoDataInfo;
 
 /* Define header values for different dimensions */
@@ -417,8 +417,8 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
     char *geom_type;
     Datum flipped_geom;
     float8 lat;
-    int npoints;
-    int i;
+    unsigned int npoints;
+    unsigned int i;
     Datum point;
 
     /* Initialize function call info */
@@ -481,7 +481,8 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
     }
     
     /* Free allocated memory */
-    pfree(geom_type);
+    if (geom_type)
+        pfree(geom_type);
     /* Other geometry types are not validated in this function */
 }
 
@@ -541,7 +542,8 @@ geometry_in(PG_FUNCTION_ARGS)
     check_geom_type(geometry_name);
 
     /* Free allocated memory */
-    pfree(geometry_name);
+    if (geometry_name)
+        pfree(geometry_name);
     if (!is_binary_format) 
     {
         pfree(rewritten_wkt_text);
@@ -644,7 +646,8 @@ geography_in(PG_FUNCTION_ARGS)
     validate_geography_latitude(geog_datum, true);
 
     /* Free allocated memory */
-    pfree(geography_name);
+    if (geography_name)
+        pfree(geography_name);
     if (!is_binary_format) 
     {
         pfree(rewritten_wkt_text);
@@ -703,7 +706,8 @@ get_geometry_from_text(PG_FUNCTION_ARGS)
     check_geom_type(geom_type);
 
     /* Free allocated memory */
-    pfree(geom_type);
+    if (geom_type)
+        pfree(geom_type);
     pfree(rewritten_wkt_text);
 
     PG_RETURN_DATUM(geom_datum);
@@ -760,7 +764,8 @@ get_geography_from_text(PG_FUNCTION_ARGS)
     flipped_geom_datum = st_flipcoordinates_p(fcinfo_local);
 
     /* Free allocated memory */
-    pfree(geom_type);
+    if (geom_type)
+        pfree(geom_type);
     pfree(rewritten_wkt_text);
 
     PG_RETURN_DATUM(flipped_geom_datum);
@@ -774,12 +779,13 @@ geography_point(PG_FUNCTION_ARGS)
     float8   lat,                /* Latitude value */
              lon;                /* Longitude value */
     int32    srid;              /* Spatial Reference ID */
+    unsigned int i;
     LOCAL_FCINFO(fcinfo_local, 3); /* Local function call info with 3 arguments */
 
     /* Initialize function call info once */
     InitFunctionCallInfoData(*fcinfo_local, NULL, 3, InvalidOid, NULL, NULL);
 
-    for (int i = 0; i < 3; i++)    
+    for (i = 0; i < 3; i++)    
         if (PG_ARGISNULL(i))
             ereport(ERROR,
                     (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -877,7 +883,8 @@ char_to_geo_common(text *input_text, bool is_geography)
     }
 
     /* Free allocated memory */
-    pfree(geom_type);
+    if (geom_type)
+        pfree(geom_type);
     pfree(rewritten_wkt_text);
 
     /* Return the resulting geometry or geography object */
@@ -1009,7 +1016,7 @@ initialize_geometry_data(bytea *input)
     geom_data->geom_class = geom_data->input_data[4];
     geom_data->geom_type = geom_data->input_data[5];
     
-    /* Extract number of points data from next 4 bytes (little-endian) : 7th to 10th , we are using it only when  npoints > 2 */
+    /* Extract number of points data from next 4 bytes (little-endian) : 7th to 10th , we are using it only when has_npoints_data is set true */
     geom_data->npoints = (geom_data->input_data[9] << 24) | 
                          (geom_data->input_data[8] << 16) | 
                          (geom_data->input_data[7] << 8) | 
@@ -1033,7 +1040,7 @@ static void
 set_dimension_flag(GeometryData *geom_data) 
 {
 
-    if(geom_data->geom_class != GEO_HEADER1 && geom_data->geom_class != GEO_HEADER2)
+    if (geom_data->geom_class != GEO_HEADER1 && geom_data->geom_class != GEO_HEADER2)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1082,36 +1089,43 @@ set_dimension_flag(GeometryData *geom_data)
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true;
             break;
-        case INVALID_3DLINE_MP: case VALID_3DLINE_MP:
+        case INVALID_3DLINE_MP: 
+        case VALID_3DLINE_MP:
             geom_data->dimension_flag = DIM_FLAG_3D; /* Has 3D Points (XYZ) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true; 
             break;
-        case INVALID_2DMLINE_MP: case VALID_2DMLINE_MP:
+        case INVALID_2DMLINE_MP: 
+        case VALID_2DMLINE_MP:
             geom_data->dimension_flag = DIM_FLAG_2DM; /* Has 2D Points with M (XYM) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true; 
             break;
-        case INVALID_3DMLINE_MP: case VALID_3DMLINE_MP:
+        case INVALID_3DMLINE_MP: 
+        case VALID_3DMLINE_MP:
             geom_data->dimension_flag = DIM_FLAG_3DM; /* Has 3D Points with M (XYZM) */
             geom_data->geom_name = LINE_TYPE;
             geom_data->has_npoints_data = true; 
             break;
             
         /* Linestring Cases with 2 points */
-        case INVALID_2DLINE_2P: case VALID_2DLINE_2P:
+        case INVALID_2DLINE_2P: 
+        case VALID_2DLINE_2P:
             geom_data->dimension_flag = DIM_FLAG_2D; /* Has 2D Points (XY) */
             geom_data->geom_name = LINE_TYPE;
             break;
-        case INVALID_3DLINE_2P: case VALID_3DLINE_2P:
+        case INVALID_3DLINE_2P: 
+        case VALID_3DLINE_2P:
             geom_data->dimension_flag = DIM_FLAG_3D; /* Has 3D Points (XYZ) */
             geom_data->geom_name = LINE_TYPE;
             break;
-        case INVALID_2DMLINE_2P: case VALID_2DMLINE_2P:
+        case INVALID_2DMLINE_2P: 
+        case VALID_2DMLINE_2P:
             geom_data->dimension_flag = DIM_FLAG_2DM; /* Has 2D Points with M (XYM) */
             geom_data->geom_name = LINE_TYPE;
             break;
-        case INVALID_3DMLINE_2P: case VALID_3DMLINE_2P:
+        case INVALID_3DMLINE_2P: 
+        case VALID_3DMLINE_2P:
             geom_data->dimension_flag = DIM_FLAG_3DM; /* Has 3D Points with M (XYZM) */
             geom_data->geom_name = LINE_TYPE;
             break;
@@ -1134,8 +1148,9 @@ static void
 check_nan_coordinates(GeometryData *geom_data) 
 {
     double coord_value;
-    int byte_position;
-    int check_count;
+    unsigned int byte_position;
+    unsigned int check_count;
+    unsigned int i;
     
     /* Determine starting position and count based on geometry type */
     if (geom_data->geom_name == LINE_TYPE) 
@@ -1158,7 +1173,7 @@ check_nan_coordinates(GeometryData *geom_data)
     }
     
     /* Check coordinates for NaN values */
-    for (int i = 0; i < check_count; i++) 
+    for (i = 0; i < check_count; i++) 
     {
         /* Copy the coordinate bytes to a double value */
         memcpy(&coord_value, geom_data->input_data + byte_position, COORD_SIZE);
@@ -1180,15 +1195,15 @@ check_nan_coordinates(GeometryData *geom_data)
 static void
 validate_geography_latitude_bytes(GeometryData *geom_data)
 {
-    int i;
+    unsigned int i;
     double lat;
     uint64_t lat_bits;
-    int point_size = COORD_SIZE * 2; /* Size of XY coordinates (2 doubles) */
+    unsigned int point_size = COORD_SIZE * 2; /* Size of XY coordinates (2 doubles) */
     
     if (geom_data->geom_name == LINE_TYPE) /* LineString */
     {
-        int point_count = geom_data->has_npoints_data ? geom_data->npoints : 2;
-        int offset = geom_data->has_npoints_data ? HEADER_SIZE + NPOINTS_SIZE : HEADER_SIZE;
+        unsigned int point_count = geom_data->has_npoints_data ? geom_data->npoints : 2;
+        unsigned int offset = geom_data->has_npoints_data ? HEADER_SIZE + NPOINTS_SIZE : HEADER_SIZE;
         
         /* Check each point in the linestring */
         for (i = 0; i < point_count; i++) 
@@ -1203,11 +1218,11 @@ validate_geography_latitude_bytes(GeometryData *geom_data)
                 geom_data->isNaN || 
                 lat < -90.0 || 
                 lat > 90.0) 
-                {
-                    ereport(ERROR,
-                            (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                            errmsg("Error converting data type varbinary to geography.")));
-                }
+            {
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("Error converting data type varbinary to geography.")));
+            }
         }
     }
     else /* Point or other geometry types */
@@ -1230,7 +1245,7 @@ validate_geography_latitude_bytes(GeometryData *geom_data)
 }
 
 /* STEP 6.1: SIZE CALCULATION - Calculate required buffer size for linestring geometries */
-static int
+static unsigned int
 calculate_linestring_size(GeometryData *geom_data)
 {
     return geom_data->has_npoints_data ? 
@@ -1239,7 +1254,7 @@ calculate_linestring_size(GeometryData *geom_data)
 }
 
 /* STEP 6.2: SIZE CALCULATION - Calculate required buffer size for point geometries */
-static int
+static unsigned int
 calculate_point_size(GeometryData *geom_data)
 {
     return geom_data->input_len - GEOM_TYPE_SIZE + POSTGIS_HEADER_SIZE;
@@ -1247,12 +1262,12 @@ calculate_point_size(GeometryData *geom_data)
 
 /* STEP 6.3: COORDINATE COPYING - Copy coordinate data with proper handling of Z and M dimensions */
 static void
-copy_coordinates_with_dimensions(uint8_t *src, uint8_t *dst, uint32_t npoints, int dimension_flag)
+copy_coordinates_with_dimensions(uint8_t *src, uint8_t *dst, uint32_t npoints, unsigned int dimension_flag)
 {
     bool has_z = dimension_flag == DIM_FLAG_3DM || dimension_flag == DIM_FLAG_3D;
     bool has_m = dimension_flag == DIM_FLAG_3DM || dimension_flag == DIM_FLAG_2DM;
-    int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
-    int i;
+    unsigned int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
+    unsigned int i;
     
     for (i = 0; i < npoints; i++) 
     {
@@ -1306,7 +1321,7 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
     uint8 postgis_header[POSTGIS_HEADER_SIZE] = "\x01\x01\x00\x00\x20";
     bytea *result;
     uint8 *result_data;
-    int new_data_size;
+    unsigned int new_data_size;
     
     /* Update dimension information in header */
     if (geom_data->dimension_flag <= MAX_DIMENSION_FLAG) 
@@ -1473,7 +1488,8 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
     geometry_result = lwgeom_from_bytea_p(fcinfo_local);
 
     /* Free allocated memory */
-    pfree(geom_data);
+    if (geom_data)
+        pfree(geom_data);
     
     /* Return the PostGIS geometry object */
     return geometry_result;
@@ -1524,7 +1540,8 @@ geography_from_bytea(PG_FUNCTION_ARGS)
     geography_result = lwgeom_from_bytea_p(fcinfo_local);
 
     /* Free allocated memory */
-    pfree(geom_data);
+    if (geom_data)
+        pfree(geom_data);
     
     /* Return the PostGIS geography object */
     return geography_result;
@@ -1708,9 +1725,9 @@ copy_coord_with_nan_check(uint8 *dst, double *src)
 
 /* Step 4.4.2: Copy XY coordinates for all points */
 static void
-copy_xy_coords(uint8 *dst, uint8 *src, int npoints, int stride)
+copy_xy_coords(uint8 *dst, uint8 *src, unsigned int npoints, unsigned int stride)
 {
-    int i;
+    unsigned int i;
     
     for (i = 0; i < npoints; i++)
         memcpy(dst + (i * COORD_SIZE * 2), src + (i * stride), COORD_SIZE * 2);
@@ -1718,9 +1735,9 @@ copy_xy_coords(uint8 *dst, uint8 *src, int npoints, int stride)
 
 /* Step 4.4.3: Copy Z coordinates for all points */
 static void
-copy_z_coords(uint8 *dst, uint8 *src, int npoints, int stride)
+copy_z_coords(uint8 *dst, uint8 *src, unsigned int npoints, unsigned int stride)
 {
-    int i;
+    unsigned int i;
     double *z_coord;
     
     for (i = 0; i < npoints; i++) {
@@ -1731,11 +1748,11 @@ copy_z_coords(uint8 *dst, uint8 *src, int npoints, int stride)
 
 /* Step 4.4.4: Copy M coordinates for all points */
 static void
-copy_m_coords(uint8 *dst, uint8 *src, int npoints, int stride, bool has_z)
+copy_m_coords(uint8 *dst, uint8 *src, unsigned int npoints, unsigned int stride, bool has_z)
 {
-    int z_offset = has_z ? npoints * COORD_SIZE : 0;
-    int coord_offset = has_z ? COORD_SIZE : 0;
-    int i;
+    unsigned int z_offset = has_z ? npoints * COORD_SIZE : 0;
+    unsigned int coord_offset = has_z ? COORD_SIZE : 0;
+    unsigned int i;
     double *m_coord;
     
     for (i = 0; i < npoints; i++) {
@@ -1775,7 +1792,7 @@ handle_empty_geometry(uint8 *result_data, GeoDataInfo *geom_data)
 static bytea*
 handle_linestring_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *result, bool is_geography)
 {
-    int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+    unsigned int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
     uint8 *src = geom_data->byte_data + offset + NPOINTS_SIZE;
     uint8 *dst = (geom_data->npoints > 2) ? result_data + HEADER_SIZE + NPOINTS_SIZE : result_data + HEADER_SIZE;
     
@@ -1783,7 +1800,7 @@ handle_linestring_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *r
     bool has_z = (dim_mask == POSTGIS_DIM_XYZ || dim_mask == POSTGIS_DIM_XYZM);
     bool has_m = (dim_mask == POSTGIS_DIM_XYM || dim_mask == POSTGIS_DIM_XYZM);
     
-    int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
+    unsigned int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
     
     copy_xy_coords(dst, src, geom_data->npoints, stride);
     if (has_z) copy_z_coords(dst, src, geom_data->npoints, stride);
@@ -1799,7 +1816,7 @@ handle_linestring_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *r
 static bytea* 
 construct_result_bytea(GeoDataInfo *geom_data, bool is_geography) 
 {
-    int total_size;
+    unsigned int total_size;
     bytea *result;
     uint8 *result_data;
     
@@ -1830,7 +1847,7 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
          * For non-empty geometries, determine the source offset based on SRID presence
          * and copy the coordinate data from the source
          */
-        int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+        unsigned int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
         
         /* Copy coordinate data based on geometry type */
         switch (geom_data->postgis_geom_type) 
@@ -1869,7 +1886,8 @@ bytea_from_geometry(PG_FUNCTION_ARGS)
     if (!validate_geom_type(geom_data)) 
     {
         result = geom_data->byte;
-        pfree(geom_data);
+        if (geom_data)
+            pfree(geom_data);
         PG_RETURN_BYTEA_P(result);
     }
     
@@ -1880,7 +1898,8 @@ bytea_from_geometry(PG_FUNCTION_ARGS)
     if (!determine_geom_dimensions(geom_data))
     {
         result = geom_data->byte;
-        pfree(geom_data);
+        if (geom_data)
+            pfree(geom_data);
         PG_RETURN_BYTEA_P(result);
     }
    
@@ -1888,7 +1907,8 @@ bytea_from_geometry(PG_FUNCTION_ARGS)
     result = construct_result_bytea(geom_data, false);
     
     /* Free allocated memory */
-    pfree(geom_data);
+    if (geom_data)
+        pfree(geom_data);
     
     /* Return the binary representation */
     PG_RETURN_BYTEA_P(result);
@@ -1913,7 +1933,8 @@ bytea_from_geography(PG_FUNCTION_ARGS)
     if (!validate_geom_type(geom_data)) 
     {
         result = geom_data->byte;
-        pfree(geom_data);
+        if (geom_data)
+            pfree(geom_data);
         PG_RETURN_BYTEA_P(result);
     }
     
@@ -1924,7 +1945,8 @@ bytea_from_geography(PG_FUNCTION_ARGS)
     if (!determine_geom_dimensions(geom_data)) 
     {
         result = geom_data->byte;
-        pfree(geom_data);
+        if (geom_data)
+            pfree(geom_data);
         PG_RETURN_BYTEA_P(result);
     }
     
@@ -1936,7 +1958,8 @@ bytea_from_geography(PG_FUNCTION_ARGS)
     result = construct_result_bytea(geom_data, true);
     
     /* Free allocated memory */
-    pfree(geom_data);
+    if (geom_data)
+        pfree(geom_data);
     
     /* Return the binary representation */
     PG_RETURN_BYTEA_P(result);
@@ -1987,7 +2010,8 @@ st_as_binary_common(Datum input, bool is_geography)
         }
         
         /* Free allocated memory and return the empty WKB */
-        pfree(geom_type);
+        if (geom_type)
+            pfree(geom_type);
         return PointerGetDatum(empty_geom);
     }
 
@@ -2115,7 +2139,7 @@ geometry_asbpchar(PG_FUNCTION_ARGS)
     int     maxlen = typmod - VARHDRSZ;
     char   *bpchar_result;        /* Resulting bpchar text */
     char   *buf_padded;
-    int    str_len;
+    unsigned int str_len;
     Datum  res;
     LOCAL_FCINFO(fcinfo_local, 3);  /* Local function call info */
 
