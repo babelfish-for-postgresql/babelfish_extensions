@@ -70,6 +70,7 @@
 #define FIXEDDECIMAL_SCALE 4
 #define TSQL_MONEY_TYPMOD ((MONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
 #define TSQL_SMALLMONEY_TYPMOD ((SMALLMONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
+#define TSQL_EXPLICIT_NULLABILITY_MARKER "tsql_explicit_nullability"
 
 /*
  * Compiler's namespace item types
@@ -1812,6 +1813,10 @@ typedef struct PLtsql_protocol_plugin
 
 	void		(*UpdateToNextDayHelper) (struct pg_tm *tm);
 
+	Datum       (*sql_bytea_from_geometry) (PG_FUNCTION_ARGS);
+	
+	Datum       (*sql_bytea_from_geography) (PG_FUNCTION_ARGS);
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2313,6 +2318,7 @@ int			execute_sp_cursoroption(int cursor_handle, int code, int value);
 int			execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
 int			execute_sp_cursorclose(int cursor_handle);
 void		reset_cached_cursor(void);
+void		reset_cached_xml_handle(void);
 
 /*
  * Functions in string.c

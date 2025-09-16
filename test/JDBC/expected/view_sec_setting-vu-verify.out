@@ -1,0 +1,94 @@
+-- tsql
+create view v6031_new as select * from t6031_1;
+go
+
+grant select on v6031_new to l6031_1;
+go
+
+-- psql
+SELECT c.relname as view_name, CASE WHEN 'security_invoker=true' = ANY (c.reloptions) THEN 'SECURITY INVOKER' ELSE 'SECURITY DEFINER' END as security_type FROM pg_class c WHERE c.relkind = 'v' AND relname LIKE 'v6031_%' ORDER BY view_name;
+go
+~~START~~
+name#!#text
+v6031_existing#!#SECURITY INVOKER
+v6031_new#!#SECURITY INVOKER
+~~END~~
+
+
+-- tsql
+-- reset the login password
+ALTER LOGIN l6031_1 WITH PASSWORD = '12345678';
+GO
+
+-- tsql user=l6031_1 password=12345678
+select * from v6031_existing;
+go
+~~START~~
+int
+~~END~~
+
+
+select * from v6031_new;
+go
+~~START~~
+int
+~~END~~
+
+
+-- tsql
+-- operations on existing view
+alter view v6031_existing as select * from t6031_1;
+go
+
+-- psql
+SELECT c.relname as view_name, CASE WHEN 'security_invoker=true' = ANY (c.reloptions) THEN 'SECURITY INVOKER' ELSE 'SECURITY DEFINER' END as security_type FROM pg_class c WHERE c.relkind = 'v' AND relname LIKE 'v6031_%' ORDER BY view_name;
+go
+~~START~~
+name#!#text
+v6031_existing#!#SECURITY INVOKER
+v6031_new#!#SECURITY INVOKER
+~~END~~
+
+
+-- tsql
+create or alter view v6031_existing as select * from t6031_1;
+go
+
+-- psql
+SELECT c.relname as view_name, CASE WHEN 'security_invoker=true' = ANY (c.reloptions) THEN 'SECURITY INVOKER' ELSE 'SECURITY DEFINER' END as security_type FROM pg_class c WHERE c.relkind = 'v' AND relname LIKE 'v6031_%' ORDER BY view_name;
+go
+~~START~~
+name#!#text
+v6031_existing#!#SECURITY INVOKER
+v6031_new#!#SECURITY INVOKER
+~~END~~
+
+
+-- tsql
+-- operations on new view
+alter view v6031_new as select * from t6031_1;
+go
+
+-- psql
+SELECT c.relname as view_name, CASE WHEN 'security_invoker=true' = ANY (c.reloptions) THEN 'SECURITY INVOKER' ELSE 'SECURITY DEFINER' END as security_type FROM pg_class c WHERE c.relkind = 'v' AND relname LIKE 'v6031_%' ORDER BY view_name;
+go
+~~START~~
+name#!#text
+v6031_existing#!#SECURITY INVOKER
+v6031_new#!#SECURITY INVOKER
+~~END~~
+
+
+-- tsql
+create or alter view v6031_new as select * from t6031_1;
+go
+
+-- psql
+SELECT c.relname as view_name, CASE WHEN 'security_invoker=true' = ANY (c.reloptions) THEN 'SECURITY INVOKER' ELSE 'SECURITY DEFINER' END as security_type FROM pg_class c WHERE c.relkind = 'v' AND relname LIKE 'v6031_%' ORDER BY view_name;
+go
+~~START~~
+name#!#text
+v6031_existing#!#SECURITY INVOKER
+v6031_new#!#SECURITY INVOKER
+~~END~~
+
