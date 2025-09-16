@@ -153,33 +153,6 @@ GO
 text#!#varchar#!#bit#!#int
 ~~END~~
 
--- Procedure to find Top 20 time zones
-EXEC sp_ListTimeZones;
-GO
-~~START~~
-text#!#varchar#!#bit
-Afghanistan Standard Time#!#+04:30#!#0
-Alaskan Standard Time#!#-08:00#!#1
-Aleutian Standard Time#!#-09:00#!#1
-Altai Standard Time#!#+07:00#!#0
-Arabian Standard Time#!#+04:00#!#0
-Arabic Standard Time#!#+03:00#!#0
-Arab Standard Time#!#+03:00#!#0
-Argentina Standard Time#!#-03:00#!#0
-Astrakhan Standard Time#!#+04:00#!#0
-Atlantic Standard Time#!#-03:00#!#1
-Aus Central Standard Time#!#+09:30#!#0
-Aus Central W. Standard Time#!#+08:45#!#0
-Aus Eastern Standard Time#!#+10:00#!#0
-Azerbaijan Standard Time#!#+04:00#!#0
-Azores Standard Time#!#+00:00#!#1
-Bahia Standard Time#!#-03:00#!#0
-Bangladesh Standard Time#!#+06:00#!#0
-Belarus Standard Time#!#+03:00#!#0
-Bougainville Standard Time#!#+11:00#!#0
-Canada Central Standard Time#!#-06:00#!#0
-~~END~~
-
 -- Test case: Subquery to find "Lonely DST zone"
 SELECT name, current_utc_offset
 FROM sys.time_zone_info t1

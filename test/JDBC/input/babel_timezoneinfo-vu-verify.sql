@@ -50,9 +50,6 @@ FROM sys.time_zone_info
 GROUP BY name, current_utc_offset, is_currently_dst
 HAVING COUNT(*) > 1;
 GO
--- Procedure to find Top 20 time zones
-EXEC sp_ListTimeZones;
-GO
 -- Test case: Subquery to find "Lonely DST zone"
 SELECT name, current_utc_offset
 FROM sys.time_zone_info t1

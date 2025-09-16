@@ -56,19 +56,6 @@ FROM sys.time_zone_info
 WHERE REVERSE(SUBSTRING(current_utc_offset, 2, 5)) = SUBSTRING(current_utc_offset, 2, 5);
 GO
 
---Procedure to find top 20 time zones
-CREATE PROCEDURE sp_ListTimeZones
-AS
-BEGIN
-    SELECT TOP 20
-        name,
-        current_utc_offset,
-        is_currently_dst
-    FROM sys.time_zone_info
-    ORDER BY name;
-END
-GO
-
 -- Procedure to find valid/invalid cases
 CREATE PROCEDURE ValidateTimeZone
     @zoneName NVARCHAR(128),

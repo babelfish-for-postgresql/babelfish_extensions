@@ -17,11 +17,6 @@ GO
 -- Palindromic offset detection
 DROP VIEW IF EXISTS dbo.PalindromicOffsets;
 GO
-
--- Procedure to find top 20 Time Zone enteries
-IF OBJECT_ID('sp_ListTimeZones', 'P') IS NOT NULL
-    DROP PROCEDURE sp_ListTimeZones;
-GO
  
 -- Procedure to check valid and invalid cases
 IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'ValidateTimeZone')
