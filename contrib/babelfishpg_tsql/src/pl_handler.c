@@ -5104,14 +5104,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 						{
 							Oid objoid = 	InvalidOid;
-							HeapTuple		tuple;
 							Form_pg_class	pg_class_tuple;
 							char 			**privileges;
-							int 			number_of_privs;
 
 							objoid = RangeVarGetRelid(rv, NoLock, true);
 							if (OidIsValid(objoid))
 							{
+								HeapTuple		tuple;
+								int 			number_of_privs;
 								/* Get the namespace OID and rekind type of the table. */
 								tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objoid));
 								if (!HeapTupleIsValid(tuple))
@@ -5148,6 +5148,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									ap->cols = NIL;
 									all_privileges = lappend(all_privileges, ap);
 								}
+								ReleaseSysCache(tuple);
+								pfree(privileges);
 							}
 
 							foreach(lc, grant->grantees)
@@ -5174,8 +5176,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								}
 								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
 							}
-							ReleaseSysCache(tuple);
-							pfree(privileges);
 							/* 
 							 * If all_privileges length is 5 then pass grant->privilege as NIL i.e fallback to existing behaviour,
 							 * as no common privilege between object and schema.
