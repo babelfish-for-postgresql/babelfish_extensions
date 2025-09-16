@@ -11648,7 +11648,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "登録カード–標準                                                                                            ")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT CASE 2
@@ -11682,7 +11682,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT CASE 1
@@ -11693,7 +11693,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT CASE 1
@@ -11715,7 +11715,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT CASE 2
@@ -11746,9 +11746,10 @@ SELECT CASE 2
    WHEN 3 THEN CAST(0.123 AS BABEL_CASE_EXPR_TEST_UDT2)
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~START~~
+float
+54.0
+~~END~~
 
 
 SELECT CASE 2
@@ -11782,7 +11783,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "char0                                                                                               ")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 drop type BABEL_CASE_EXPR_TEST_UDT0;
@@ -11847,7 +11848,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "登録カード–標準                                                                                            ")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT CASE 2
@@ -11881,7 +11882,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT CASE 1
@@ -11892,7 +11893,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT CASE 1
@@ -11914,7 +11915,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT CASE 2
@@ -11945,9 +11946,10 @@ SELECT CASE 2
    WHEN 3 THEN CAST(0.123 AS FLOAT)
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+~~START~~
+float
+54.0
+~~END~~
 
 
 SELECT CASE 2
@@ -11981,7 +11983,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type double precision: "char0                                                                                               ")~~
+~~ERROR (Message: Error converting data type varchar to float.)~~
 
 
 SELECT CASE 2

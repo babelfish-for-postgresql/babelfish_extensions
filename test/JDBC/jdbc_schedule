@@ -155,6 +155,10 @@ ignore#!#babel_datetime-before-16_11-or-17_7-vu-cleanup
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-prepare
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-verify
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-cleanup
+ignore#!#BABEL-3646-before-17_6-vu-prepare
+ignore#!#BABEL-3646-before-17_6-vu-verify
+ignore#!#BABEL-3486-before-17_6-vu-prepare
+ignore#!#BABEL-3486-before-17_6-vu-verify
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
