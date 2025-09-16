@@ -80,7 +80,7 @@
 %type <list> tsql_triggername tsql_trigger_list
 %type <node> tsql_enable_disable_trigger
 
-%type <node> tsql_top_clause opt_top_clause
+%type <selectlimit> tsql_top_clause opt_top_clause
 
 %type <str> tokens_remaining
 %type <str> tsql_table_hint_kw_no_with

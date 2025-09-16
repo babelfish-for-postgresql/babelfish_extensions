@@ -1509,18 +1509,6 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return pre_transform_qual;
 
-	/*
-	 * Note: The error will not be thrown if the percentage is 100,
-	 * as TOP 100 PERCENT is equivalent to no TOP clause.
-	 */
-	if(stmt->isPercent)
-	{
-		ereport(ERROR,
-		        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		         errmsg(" UPDATE TOP N PERCENT is not currently supported"),
-		         errhint("Rewrite the query to use window function NTILE() OVER() for percentage-based update.")));
-	}
-
 	/* Support Update w/ TOP */
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
 								EXPR_KIND_LIMIT, "LIMIT",
@@ -1598,17 +1586,6 @@ post_transform_delete(ParseState *pstate, DeleteStmt *stmt, Query *query)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	/*
-	 * Note: The error will not be thrown if the percentage is 100,
-	 * as TOP 100 PERCENT is equivalent to no TOP clause.
-	 */
-	if(stmt->isPercent)
-	{
-		ereport(ERROR,
-		        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		         errmsg("DELETE TOP N PERCENT is not currently supported"),
-		         errhint("Rewrite the query to use window function NTILE() OVER() for percentage-based deletion.")));
-	}
 
 	/* Handle DELETE TOP */
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
@@ -3515,17 +3492,6 @@ pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	/*
-	 * Note: The error will not be thrown if the percentage is 100,
-	 * as TOP 100 PERCENT is equivalent to no TOP clause.
-	 */
-	if(stmt->isPercent)
-	{
-		ereport(ERROR,
-		        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		         errmsg("INSERT TOP N PERCENT is not currently supported"),
-		         errhint("Rewrite the query to use window function NTILE() OVER() for percentage-based insert.")));
-	}
 
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
 											EXPR_KIND_LIMIT, "LIMIT",
@@ -5750,13 +5716,14 @@ transform_percent_clause(ParseState *pstate, SelectStmt *stmt)
     A_Const       *intConst;         /* Integer constant (100) */
     FuncCall      *ceilFunc;         /* CEIL function for rounding */
     
-    if (sql_dialect != SQL_DIALECT_TSQL)
+    /* Check whether TSQL and limit value present */
+	if (sql_dialect != SQL_DIALECT_TSQL || stmt->limitCount == NULL)
         return;
     
-    if(!stmt->isPercent)
+    if(stmt->limitOption != LIMIT_OPTION_PERCENT)
         return;
     else
-        stmt->isPercent = false;
+        stmt->limitOption = LIMIT_OPTION_COUNT;
 
     /* Add validation check for percentage value > 100 */
     if (IsA(stmt->limitCount, A_Const))

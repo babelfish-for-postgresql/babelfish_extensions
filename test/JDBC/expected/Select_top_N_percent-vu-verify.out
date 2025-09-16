@@ -755,7 +755,7 @@ WHERE score IS NOT NULL;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message:  UPDATE TOP N PERCENT is not currently supported)~~
+~~ERROR (Message: UPDATE TOP N PERCENT is not supported yet)~~
 
 
 UPDATE TOP (100) PERCENT jira_babel_1358.test_percent_scores 
@@ -771,7 +771,7 @@ WHERE score < 80;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: DELETE TOP N PERCENT is not currently supported)~~
+~~ERROR (Message: DELETE TOP N PERCENT is not supported yet)~~
 
 
 -- Test Case 43: INSERT TOP N PERCENT (will throw error)
@@ -783,7 +783,7 @@ ORDER BY score DESC;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: INSERT TOP N PERCENT is not currently supported)~~
+~~ERROR (Message: INSERT TOP N PERCENT is not supported yet)~~
 
 
 -- Test Case 44: INSERT TOP N PERCENT with OUTPUT INTO

@@ -223,14 +223,14 @@ update top (10) percent t4 set b = 100
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message:  UPDATE TOP N PERCENT is not currently supported)~~
+~~ERROR (Message: UPDATE TOP N PERCENT is not supported yet)~~
 
 
 delete top (10) percent from t4
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: DELETE TOP N PERCENT is not currently supported)~~
+~~ERROR (Message: DELETE TOP N PERCENT is not supported yet)~~
 
 
 drop table t
