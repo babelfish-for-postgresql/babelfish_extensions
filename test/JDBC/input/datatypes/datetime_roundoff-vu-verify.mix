@@ -518,9 +518,9 @@ BEGIN
     IF p_action IS NULL THEN
         RAISE INFO E'\nUsage: CALL datetime_rounding_handler(p_action, p_schema_name, p_table_name, p_commit_after_table)';
         RAISE INFO E'\nActions:';
-        RAISE INFO E'  list   - List all tables and columns with datetime type';
-        RAISE INFO E'  check  - Check for values that need rounding';
-        RAISE INFO E'  update - Update affected values (requires schema and table names unless "all" specified)';
+        RAISE INFO E'\n  list   - List all tables and columns with datetime type';
+        RAISE INFO E'\n  check  - Check for values that need rounding';
+        RAISE INFO E'\n  update - Update affected values (requires schema and table names unless "all" specified)';
         RETURN;
     END IF;
 
@@ -534,15 +534,18 @@ BEGIN
         RAISE EXCEPTION 'Schema name is required for update action unless table_name is "all"';
     END IF;
 
+    -- Drop temporary table if it exists
+    DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
+
     -- Create temporary table for datetime columns
-    CREATE TEMP TABLE IF NOT EXISTS temp_datetime_columns (
+    CREATE TEMP TABLE temp_datetime_columns (
         schema_name text,
         table_name text,
         column_name text
     );
 
     -- Populate temporary table
-    INSERT INTO temp_datetime_columns
+    INSERT INTO pg_temp.temp_datetime_columns
     SELECT 
         n.nspname as schema_name,
         t.relname as table_name,
@@ -558,9 +561,9 @@ BEGIN
         AND (p_table_name IS NULL OR p_table_name = 'all' OR t.relname = p_table_name)
         AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog');
 
-    IF NOT EXISTS (SELECT 1 FROM temp_datetime_columns) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_temp.temp_datetime_columns) THEN
         RAISE INFO 'No datetime columns found matching the specified criteria.';
-        DROP TABLE temp_datetime_columns;
+        DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
         RETURN;
     END IF;
 
@@ -571,7 +574,7 @@ BEGIN
                 schema_name,
                 table_name,
                 string_agg(column_name, ', ') as datetime_columns
-            FROM temp_datetime_columns
+            FROM pg_temp.temp_datetime_columns
             GROUP BY schema_name, table_name
             ORDER BY schema_name, table_name
         )
@@ -579,13 +582,13 @@ BEGIN
             RAISE INFO E'\nSchema: %, Table: %, Datetime Columns: %',
                 r.schema_name, r.table_name, r.datetime_columns;
         END LOOP;
-        DROP TABLE temp_datetime_columns;
+        DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
         RETURN;
     END IF;
 
     -- CHECK or UPDATE action
     FOR r IN (
-        SELECT * FROM temp_datetime_columns ORDER BY schema_name, table_name, column_name
+        SELECT * FROM pg_temp.temp_datetime_columns ORDER BY schema_name, table_name, column_name
     )
     LOOP
         v_table_count := v_table_count + 1;
@@ -621,32 +624,25 @@ BEGIN
         ELSIF p_action = 'update' THEN
             RAISE INFO E'\nProcessing table: %.%', r.schema_name, r.table_name;
             
-            BEGIN
-                v_sql := format(
-                    'UPDATE %I.%I 
-                     SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
-                     WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
-                    r.schema_name, r.table_name,
-                    r.column_name, r.column_name,
-                    r.column_name, r.column_name
-                );
+            v_sql := format(
+                'UPDATE %I.%I 
+                 SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+                 WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+                r.schema_name, r.table_name,
+                r.column_name, r.column_name,
+                r.column_name, r.column_name
+            );
 
-                EXECUTE v_sql;
-                GET DIAGNOSTICS v_affected_count = ROW_COUNT;
-                v_total_affected_count := v_total_affected_count + v_affected_count;
-                RAISE INFO 'Updated % rows in %.%.%',
-                    v_affected_count, r.schema_name, r.table_name, r.column_name;
+            EXECUTE v_sql;
+            GET DIAGNOSTICS v_affected_count = ROW_COUNT;
+            v_total_affected_count := v_total_affected_count + v_affected_count;
+            RAISE INFO 'Updated % rows in %.%.%',
+                v_affected_count, r.schema_name, r.table_name, r.column_name;
 
-                IF p_commit_after_table THEN
-                    COMMIT;
-                    RAISE INFO 'Committed changes for table %.%', r.schema_name, r.table_name;
-                END IF;
-            EXCEPTION WHEN OTHERS THEN
-                RAISE WARNING 'Error updating table %.%: %', r.schema_name, r.table_name, SQLERRM;
-                IF p_commit_after_table THEN
-                    ROLLBACK;
-                END IF;
-            END;
+            IF p_commit_after_table THEN
+                -- No explicit COMMIT needed here as it's handled by autonomous transaction
+                RAISE INFO 'Processed table %.%', r.schema_name, r.table_name;
+            END IF;
         END IF;
     END LOOP;
 
@@ -655,13 +651,9 @@ BEGIN
     ELSE
         RAISE INFO E'\nTotal tables processed: %', v_table_count;
         RAISE INFO 'Total rows affected: %', v_total_affected_count;
-        IF p_action = 'update' AND NOT p_commit_after_table THEN
-            COMMIT;
-            RAISE INFO 'Final commit performed.';
-        END IF;
     END IF;
 
-    DROP TABLE IF EXISTS temp_datetime_columns;
+    DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
 END;
 $$;
 GO
