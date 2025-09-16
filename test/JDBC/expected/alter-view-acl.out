@@ -160,8 +160,7 @@ GO
 
 -- psql
 -- Print initial permissions
-SELECT 
-    TABLE_SCHEMA,
+SELECT
     TABLE_NAME, 
     COLUMN_NAME, 
     PRIVILEGE_TYPE
@@ -174,23 +173,23 @@ ORDER BY
     COLUMN_NAME, PRIVILEGE_TYPE;
 GO
 ~~START~~
-name#!#name#!#name#!#varchar
-view_perm_db_test_schema#!#test_view1#!#id#!#INSERT
-view_perm_db_test_schema#!#test_view1#!#id#!#INSERT
-view_perm_db_test_schema#!#test_view1#!#id#!#REFERENCES
-view_perm_db_test_schema#!#test_view1#!#id#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#id#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#id#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#id#!#UPDATE
-view_perm_db_test_schema#!#test_view1#!#id#!#UPDATE
-view_perm_db_test_schema#!#test_view1#!#name#!#INSERT
-view_perm_db_test_schema#!#test_view1#!#name#!#INSERT
-view_perm_db_test_schema#!#test_view1#!#name#!#REFERENCES
-view_perm_db_test_schema#!#test_view1#!#name#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#name#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#name#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#name#!#UPDATE
-view_perm_db_test_schema#!#test_view1#!#name#!#UPDATE
+name#!#name#!#varchar
+test_view1#!#id#!#INSERT
+test_view1#!#id#!#INSERT
+test_view1#!#id#!#REFERENCES
+test_view1#!#id#!#SELECT
+test_view1#!#id#!#SELECT
+test_view1#!#id#!#SELECT
+test_view1#!#id#!#UPDATE
+test_view1#!#id#!#UPDATE
+test_view1#!#name#!#INSERT
+test_view1#!#name#!#INSERT
+test_view1#!#name#!#REFERENCES
+test_view1#!#name#!#SELECT
+test_view1#!#name#!#SELECT
+test_view1#!#name#!#SELECT
+test_view1#!#name#!#UPDATE
+test_view1#!#name#!#UPDATE
 ~~END~~
 
 
@@ -210,8 +209,7 @@ GO
 
 -- psql
 -- Print permissions after alteration
-SELECT 
-    TABLE_SCHEMA,
+SELECT
     TABLE_NAME, 
     COLUMN_NAME, 
     PRIVILEGE_TYPE
@@ -224,23 +222,23 @@ ORDER BY
     COLUMN_NAME, PRIVILEGE_TYPE;
 GO
 ~~START~~
-name#!#name#!#name#!#varchar
-view_perm_db_test_schema#!#test_view1#!#NAME#!#INSERT
-view_perm_db_test_schema#!#test_view1#!#NAME#!#INSERT
-view_perm_db_test_schema#!#test_view1#!#NAME#!#REFERENCES
-view_perm_db_test_schema#!#test_view1#!#NAME#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#NAME#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#NAME#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#NAME#!#UPDATE
-view_perm_db_test_schema#!#test_view1#!#NAME#!#UPDATE
-view_perm_db_test_schema#!#test_view1#!#id#!#INSERT
-view_perm_db_test_schema#!#test_view1#!#id#!#INSERT
-view_perm_db_test_schema#!#test_view1#!#id#!#REFERENCES
-view_perm_db_test_schema#!#test_view1#!#id#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#id#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#id#!#SELECT
-view_perm_db_test_schema#!#test_view1#!#id#!#UPDATE
-view_perm_db_test_schema#!#test_view1#!#id#!#UPDATE
+name#!#name#!#varchar
+test_view1#!#NAME#!#INSERT
+test_view1#!#NAME#!#INSERT
+test_view1#!#NAME#!#REFERENCES
+test_view1#!#NAME#!#SELECT
+test_view1#!#NAME#!#SELECT
+test_view1#!#NAME#!#SELECT
+test_view1#!#NAME#!#UPDATE
+test_view1#!#NAME#!#UPDATE
+test_view1#!#id#!#INSERT
+test_view1#!#id#!#INSERT
+test_view1#!#id#!#REFERENCES
+test_view1#!#id#!#SELECT
+test_view1#!#id#!#SELECT
+test_view1#!#id#!#SELECT
+test_view1#!#id#!#UPDATE
+test_view1#!#id#!#UPDATE
 ~~END~~
 
 
@@ -322,8 +320,7 @@ GO
 
 -- psql
 -- Print initial permissions
-SELECT 
-    TABLE_SCHEMA,
+SELECT
     TABLE_NAME, 
     COLUMN_NAME, 
     PRIVILEGE_TYPE
@@ -336,30 +333,30 @@ ORDER BY
     COLUMN_NAME, PRIVILEGE_TYPE;
 GO
 ~~START~~
-name#!#name#!#name#!#varchar
-view_perm_db_test_schema#!#test_view2#!#col1#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col1#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col1#!#REFERENCES
-view_perm_db_test_schema#!#test_view2#!#col1#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col1#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col1#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col1#!#UPDATE
-view_perm_db_test_schema#!#test_view2#!#col1#!#UPDATE
-view_perm_db_test_schema#!#test_view2#!#col2#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col2#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col2#!#REFERENCES
-view_perm_db_test_schema#!#test_view2#!#col2#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col2#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col2#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col2#!#UPDATE
-view_perm_db_test_schema#!#test_view2#!#col2#!#UPDATE
-view_perm_db_test_schema#!#test_view2#!#col3#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col3#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col3#!#REFERENCES
-view_perm_db_test_schema#!#test_view2#!#col3#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col3#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col3#!#UPDATE
-view_perm_db_test_schema#!#test_view2#!#col3#!#UPDATE
+name#!#name#!#varchar
+test_view2#!#col1#!#INSERT
+test_view2#!#col1#!#INSERT
+test_view2#!#col1#!#REFERENCES
+test_view2#!#col1#!#SELECT
+test_view2#!#col1#!#SELECT
+test_view2#!#col1#!#SELECT
+test_view2#!#col1#!#UPDATE
+test_view2#!#col1#!#UPDATE
+test_view2#!#col2#!#INSERT
+test_view2#!#col2#!#INSERT
+test_view2#!#col2#!#REFERENCES
+test_view2#!#col2#!#SELECT
+test_view2#!#col2#!#SELECT
+test_view2#!#col2#!#SELECT
+test_view2#!#col2#!#UPDATE
+test_view2#!#col2#!#UPDATE
+test_view2#!#col3#!#INSERT
+test_view2#!#col3#!#INSERT
+test_view2#!#col3#!#REFERENCES
+test_view2#!#col3#!#SELECT
+test_view2#!#col3#!#SELECT
+test_view2#!#col3#!#UPDATE
+test_view2#!#col3#!#UPDATE
 ~~END~~
 
 
@@ -379,8 +376,7 @@ GO
 
 -- psql
 -- Print permissions after alteration
-SELECT 
-    TABLE_SCHEMA,
+SELECT
     TABLE_NAME, 
     COLUMN_NAME, 
     PRIVILEGE_TYPE
@@ -393,30 +389,30 @@ ORDER BY
     COLUMN_NAME, PRIVILEGE_TYPE;
 GO
 ~~START~~
-name#!#name#!#name#!#varchar
-view_perm_db_test_schema#!#test_view2#!#col1#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col1#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col1#!#REFERENCES
-view_perm_db_test_schema#!#test_view2#!#col1#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col1#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col1#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col1#!#UPDATE
-view_perm_db_test_schema#!#test_view2#!#col1#!#UPDATE
-view_perm_db_test_schema#!#test_view2#!#col2#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col2#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col2#!#REFERENCES
-view_perm_db_test_schema#!#test_view2#!#col2#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col2#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col2#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col2#!#UPDATE
-view_perm_db_test_schema#!#test_view2#!#col2#!#UPDATE
-view_perm_db_test_schema#!#test_view2#!#col3#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col3#!#INSERT
-view_perm_db_test_schema#!#test_view2#!#col3#!#REFERENCES
-view_perm_db_test_schema#!#test_view2#!#col3#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col3#!#SELECT
-view_perm_db_test_schema#!#test_view2#!#col3#!#UPDATE
-view_perm_db_test_schema#!#test_view2#!#col3#!#UPDATE
+name#!#name#!#varchar
+test_view2#!#col1#!#INSERT
+test_view2#!#col1#!#INSERT
+test_view2#!#col1#!#REFERENCES
+test_view2#!#col1#!#SELECT
+test_view2#!#col1#!#SELECT
+test_view2#!#col1#!#SELECT
+test_view2#!#col1#!#UPDATE
+test_view2#!#col1#!#UPDATE
+test_view2#!#col2#!#INSERT
+test_view2#!#col2#!#INSERT
+test_view2#!#col2#!#REFERENCES
+test_view2#!#col2#!#SELECT
+test_view2#!#col2#!#SELECT
+test_view2#!#col2#!#SELECT
+test_view2#!#col2#!#UPDATE
+test_view2#!#col2#!#UPDATE
+test_view2#!#col3#!#INSERT
+test_view2#!#col3#!#INSERT
+test_view2#!#col3#!#REFERENCES
+test_view2#!#col3#!#SELECT
+test_view2#!#col3#!#SELECT
+test_view2#!#col3#!#UPDATE
+test_view2#!#col3#!#UPDATE
 ~~END~~
 
 
