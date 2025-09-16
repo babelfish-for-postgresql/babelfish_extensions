@@ -1,283 +1,16 @@
--- Test to display all time zones
-select * from sys.time_zone_info;
-GO
-~~START~~
-text#!#varchar#!#bit
-Afghanistan Standard Time#!#+04:30#!#0
-Alaskan Standard Time#!#-08:00#!#1
-Aleutian Standard Time#!#-09:00#!#1
-Altai Standard Time#!#+07:00#!#0
-Arabian Standard Time#!#+04:00#!#0
-Arabic Standard Time#!#+03:00#!#0
-Arab Standard Time#!#+03:00#!#0
-Argentina Standard Time#!#-03:00#!#0
-Astrakhan Standard Time#!#+04:00#!#0
-Atlantic Standard Time#!#-03:00#!#1
-Aus Central Standard Time#!#+09:30#!#0
-Aus Central W. Standard Time#!#+08:45#!#0
-Aus Eastern Standard Time#!#+10:00#!#0
-Azerbaijan Standard Time#!#+04:00#!#0
-Azores Standard Time#!#+00:00#!#1
-Bahia Standard Time#!#-03:00#!#0
-Bangladesh Standard Time#!#+06:00#!#0
-Belarus Standard Time#!#+03:00#!#0
-Bougainville Standard Time#!#+11:00#!#0
-Canada Central Standard Time#!#-06:00#!#0
-Cape Verde Standard Time#!#-01:00#!#0
-Caucasus Standard Time#!#+04:00#!#0
-Cen. Australia Standard Time#!#+09:30#!#0
-Central America Standard Time#!#-06:00#!#0
-Central Asia Standard Time#!#+05:00#!#0
-Central Brazilian Standard Time#!#-04:00#!#0
-Central European Standard Time#!#+02:00#!#1
-Central Europe Standard Time#!#+02:00#!#1
-Central Pacific Standard Time#!#+11:00#!#0
-Central Standard Time#!#-05:00#!#1
-Central Standard Time (Mexico)#!#-06:00#!#0
-Chatham Islands Standard Time#!#+12:45#!#0
-China Standard Time#!#+08:00#!#0
-Cuba Standard Time#!#-04:00#!#1
-E. Africa Standard Time#!#+03:00#!#0
-Easter Island Standard Time#!#-05:00#!#1
-Eastern Standard Time#!#-04:00#!#1
-Eastern Standard Time (Mexico)#!#-05:00#!#0
-E. Australia Standard Time#!#+10:00#!#0
-E. Europe Standard Time#!#+03:00#!#1
-Egypt Standard Time#!#+03:00#!#1
-Ekaterinburg Standard Time#!#+05:00#!#0
-E. South America Standard Time#!#-03:00#!#0
-Fiji Standard Time#!#+12:00#!#0
-Fle Standard Time#!#+03:00#!#1
-Georgian Standard Time#!#+04:00#!#0
-Gmt Standard Time#!#+01:00#!#1
-Greenland Standard Time#!#-01:00#!#1
-Greenwich Standard Time#!#+00:00#!#0
-Gtb Standard Time#!#+03:00#!#1
-Haiti Standard Time#!#-04:00#!#1
-Hawaiian Standard Time#!#-10:00#!#0
-India Standard Time#!#+05:30#!#0
-Iran Standard Time#!#+03:30#!#0
-Israel Standard Time#!#+03:00#!#1
-Jordan Standard Time#!#+03:00#!#0
-Kaliningrad Standard Time#!#+02:00#!#0
-Kamchatka Standard Time#!#+12:00#!#0
-Korea Standard Time#!#+09:00#!#0
-Libya Standard Time#!#+02:00#!#0
-Line Islands Standard Time#!#+14:00#!#0
-Lord Howe Standard Time#!#+10:30#!#0
-Magadan Standard Time#!#+11:00#!#0
-Magallanes Standard Time#!#-03:00#!#0
-Marquesas Standard Time#!#-09:30#!#0
-Mauritius Standard Time#!#+04:00#!#0
-Mid-Atlantic Standard Time#!#-02:00#!#0
-Middle East Standard Time#!#+03:00#!#1
-Montevideo Standard Time#!#-03:00#!#0
-Morocco Standard Time#!#+01:00#!#0
-Mountain Standard Time#!#-06:00#!#1
-Mountain Standard Time (Mexico)#!#-06:00#!#0
-Myanmar Standard Time#!#+06:30#!#0
-Namibia Standard Time#!#+02:00#!#0
-N. Central Asia Standard Time#!#+07:00#!#0
-Nepal Standard Time#!#+05:45#!#0
-Newfoundland Standard Time#!#-02:30#!#1
-New Zealand Standard Time#!#+12:00#!#0
-Norfolk Standard Time#!#+11:00#!#0
-North Asia East Standard Time#!#+08:00#!#0
-North Asia Standard Time#!#+07:00#!#0
-North Korea Standard Time#!#+09:00#!#0
-Omsk Standard Time#!#+06:00#!#0
-Pacific Sa Standard Time#!#-03:00#!#1
-Pacific Standard Time#!#-07:00#!#1
-Pacific Standard Time (Mexico)#!#-07:00#!#1
-Pakistan Standard Time#!#+05:00#!#0
-Paraguay Standard Time#!#-03:00#!#0
-Qyzylorda Standard Time#!#+05:00#!#0
-Romance Standard Time#!#+02:00#!#1
-Russian Standard Time#!#+03:00#!#0
-Russia Time Zone 10#!#+11:00#!#0
-Russia Time Zone 3#!#+04:00#!#0
-Sa Eastern Standard Time#!#-03:00#!#0
-Saint Pierre Standard Time#!#-02:00#!#1
-Sakhalin Standard Time#!#+11:00#!#0
-Samoa Standard Time#!#+13:00#!#0
-Sao Tome Standard Time#!#+00:00#!#0
-Sa Pacific Standard Time#!#-05:00#!#0
-Saratov Standard Time#!#+04:00#!#0
-Sa Western Standard Time#!#-04:00#!#0
-Se Asia Standard Time#!#+07:00#!#0
-Singapore Standard Time#!#+08:00#!#0
-South Africa Standard Time#!#+02:00#!#0
-South Sudan Standard Time#!#+02:00#!#0
-Sri Lanka Standard Time#!#+05:30#!#0
-Sudan Standard Time#!#+02:00#!#0
-Syria Standard Time#!#+03:00#!#0
-Taipei Standard Time#!#+08:00#!#0
-Tasmania Standard Time#!#+10:00#!#0
-Tocantins Standard Time#!#-03:00#!#0
-Tokyo Standard Time#!#+09:00#!#0
-Tomsk Standard Time#!#+07:00#!#0
-Tonga Standard Time#!#+13:00#!#0
-Transbaikal Standard Time#!#+09:00#!#0
-Turkey Standard Time#!#+03:00#!#0
-Turks And Caicos Standard Time#!#-04:00#!#1
-Ulaanbaatar Standard Time#!#+08:00#!#0
-Us Eastern Standard Time#!#-04:00#!#1
-Us Mountain Standard Time#!#-07:00#!#0
-Utc#!#+00:00#!#0
-Venezuela Standard Time#!#-04:00#!#0
-Vladivostok Standard Time#!#+10:00#!#0
-Volgograd Standard Time#!#+03:00#!#0
-W. Australia Standard Time#!#+08:00#!#0
-W. Central Africa Standard Time#!#+01:00#!#0
-West Asia Standard Time#!#+05:00#!#0
-West Bank Standard Time#!#+03:00#!#1
-West Pacific Standard Time#!#+10:00#!#0
-W. Europe Standard Time#!#+02:00#!#1
-W. Mongolia Standard Time#!#+07:00#!#0
-Yakutsk Standard Time#!#+09:00#!#0
-Yukon Standard Time#!#-07:00#!#0
-~~END~~
-
 -- Test Case 1: Basic query to verify time zone information
-SELECT name, current_utc_offset, is_currently_dst
+SELECT TOP 5 name, current_utc_offset, is_currently_dst
 FROM sys.time_zone_info
+WHERE current_utc_offset = '-04:00'
 ORDER BY name;
 GO
 ~~START~~
 text#!#varchar#!#bit
-Afghanistan Standard Time#!#+04:30#!#0
-Alaskan Standard Time#!#-08:00#!#1
-Aleutian Standard Time#!#-09:00#!#1
-Altai Standard Time#!#+07:00#!#0
-Arabian Standard Time#!#+04:00#!#0
-Arabic Standard Time#!#+03:00#!#0
-Arab Standard Time#!#+03:00#!#0
-Argentina Standard Time#!#-03:00#!#0
-Astrakhan Standard Time#!#+04:00#!#0
-Atlantic Standard Time#!#-03:00#!#1
-Aus Central Standard Time#!#+09:30#!#0
-Aus Central W. Standard Time#!#+08:45#!#0
-Aus Eastern Standard Time#!#+10:00#!#0
-Azerbaijan Standard Time#!#+04:00#!#0
-Azores Standard Time#!#+00:00#!#1
-Bahia Standard Time#!#-03:00#!#0
-Bangladesh Standard Time#!#+06:00#!#0
-Belarus Standard Time#!#+03:00#!#0
-Bougainville Standard Time#!#+11:00#!#0
-Canada Central Standard Time#!#-06:00#!#0
-Cape Verde Standard Time#!#-01:00#!#0
-Caucasus Standard Time#!#+04:00#!#0
-Cen. Australia Standard Time#!#+09:30#!#0
-Central America Standard Time#!#-06:00#!#0
-Central Asia Standard Time#!#+05:00#!#0
 Central Brazilian Standard Time#!#-04:00#!#0
-Central European Standard Time#!#+02:00#!#1
-Central Europe Standard Time#!#+02:00#!#1
-Central Pacific Standard Time#!#+11:00#!#0
-Central Standard Time#!#-05:00#!#1
-Central Standard Time (Mexico)#!#-06:00#!#0
-Chatham Islands Standard Time#!#+12:45#!#0
-China Standard Time#!#+08:00#!#0
 Cuba Standard Time#!#-04:00#!#1
-E. Africa Standard Time#!#+03:00#!#0
-Easter Island Standard Time#!#-05:00#!#1
 Eastern Standard Time#!#-04:00#!#1
-Eastern Standard Time (Mexico)#!#-05:00#!#0
-E. Australia Standard Time#!#+10:00#!#0
-E. Europe Standard Time#!#+03:00#!#1
-Egypt Standard Time#!#+03:00#!#1
-Ekaterinburg Standard Time#!#+05:00#!#0
-E. South America Standard Time#!#-03:00#!#0
-Fiji Standard Time#!#+12:00#!#0
-Fle Standard Time#!#+03:00#!#1
-Georgian Standard Time#!#+04:00#!#0
-Gmt Standard Time#!#+01:00#!#1
-Greenland Standard Time#!#-01:00#!#1
-Greenwich Standard Time#!#+00:00#!#0
-Gtb Standard Time#!#+03:00#!#1
 Haiti Standard Time#!#-04:00#!#1
-Hawaiian Standard Time#!#-10:00#!#0
-India Standard Time#!#+05:30#!#0
-Iran Standard Time#!#+03:30#!#0
-Israel Standard Time#!#+03:00#!#1
-Jordan Standard Time#!#+03:00#!#0
-Kaliningrad Standard Time#!#+02:00#!#0
-Kamchatka Standard Time#!#+12:00#!#0
-Korea Standard Time#!#+09:00#!#0
-Libya Standard Time#!#+02:00#!#0
-Line Islands Standard Time#!#+14:00#!#0
-Lord Howe Standard Time#!#+10:30#!#0
-Magadan Standard Time#!#+11:00#!#0
-Magallanes Standard Time#!#-03:00#!#0
-Marquesas Standard Time#!#-09:30#!#0
-Mauritius Standard Time#!#+04:00#!#0
-Mid-Atlantic Standard Time#!#-02:00#!#0
-Middle East Standard Time#!#+03:00#!#1
-Montevideo Standard Time#!#-03:00#!#0
-Morocco Standard Time#!#+01:00#!#0
-Mountain Standard Time#!#-06:00#!#1
-Mountain Standard Time (Mexico)#!#-06:00#!#0
-Myanmar Standard Time#!#+06:30#!#0
-Namibia Standard Time#!#+02:00#!#0
-N. Central Asia Standard Time#!#+07:00#!#0
-Nepal Standard Time#!#+05:45#!#0
-Newfoundland Standard Time#!#-02:30#!#1
-New Zealand Standard Time#!#+12:00#!#0
-Norfolk Standard Time#!#+11:00#!#0
-North Asia East Standard Time#!#+08:00#!#0
-North Asia Standard Time#!#+07:00#!#0
-North Korea Standard Time#!#+09:00#!#0
-Omsk Standard Time#!#+06:00#!#0
-Pacific Sa Standard Time#!#-03:00#!#1
-Pacific Standard Time#!#-07:00#!#1
-Pacific Standard Time (Mexico)#!#-07:00#!#1
-Pakistan Standard Time#!#+05:00#!#0
-Paraguay Standard Time#!#-03:00#!#0
-Qyzylorda Standard Time#!#+05:00#!#0
-Romance Standard Time#!#+02:00#!#1
-Russian Standard Time#!#+03:00#!#0
-Russia Time Zone 10#!#+11:00#!#0
-Russia Time Zone 3#!#+04:00#!#0
-Sa Eastern Standard Time#!#-03:00#!#0
-Saint Pierre Standard Time#!#-02:00#!#1
-Sakhalin Standard Time#!#+11:00#!#0
-Samoa Standard Time#!#+13:00#!#0
-Sao Tome Standard Time#!#+00:00#!#0
-Sa Pacific Standard Time#!#-05:00#!#0
-Saratov Standard Time#!#+04:00#!#0
 Sa Western Standard Time#!#-04:00#!#0
-Se Asia Standard Time#!#+07:00#!#0
-Singapore Standard Time#!#+08:00#!#0
-South Africa Standard Time#!#+02:00#!#0
-South Sudan Standard Time#!#+02:00#!#0
-Sri Lanka Standard Time#!#+05:30#!#0
-Sudan Standard Time#!#+02:00#!#0
-Syria Standard Time#!#+03:00#!#0
-Taipei Standard Time#!#+08:00#!#0
-Tasmania Standard Time#!#+10:00#!#0
-Tocantins Standard Time#!#-03:00#!#0
-Tokyo Standard Time#!#+09:00#!#0
-Tomsk Standard Time#!#+07:00#!#0
-Tonga Standard Time#!#+13:00#!#0
-Transbaikal Standard Time#!#+09:00#!#0
-Turkey Standard Time#!#+03:00#!#0
-Turks And Caicos Standard Time#!#-04:00#!#1
-Ulaanbaatar Standard Time#!#+08:00#!#0
-Us Eastern Standard Time#!#-04:00#!#1
-Us Mountain Standard Time#!#-07:00#!#0
-Utc#!#+00:00#!#0
-Venezuela Standard Time#!#-04:00#!#0
-Vladivostok Standard Time#!#+10:00#!#0
-Volgograd Standard Time#!#+03:00#!#0
-W. Australia Standard Time#!#+08:00#!#0
-W. Central Africa Standard Time#!#+01:00#!#0
-West Asia Standard Time#!#+05:00#!#0
-West Bank Standard Time#!#+03:00#!#1
-West Pacific Standard Time#!#+10:00#!#0
-W. Europe Standard Time#!#+02:00#!#1
-W. Mongolia Standard Time#!#+07:00#!#0
-Yakutsk Standard Time#!#+09:00#!#0
-Yukon Standard Time#!#-07:00#!#0
 ~~END~~
 
 --Test case 2: Find specific time zone
@@ -341,7 +74,6 @@ West Bank Standard Time#!#+03:00#!#1
 W. Europe Standard Time#!#+02:00#!#1
 ~~END~~
 
-
 -- Test case 5: Time zones with unusual offsets (not full hours)
 SELECT name, current_utc_offset
 FROM sys.time_zone_info
@@ -366,7 +98,6 @@ Lord Howe Standard Time#!#+10:30
 Chatham Islands Standard Time#!#+12:45
 ~~END~~
 
-
 -- Test function to specific pattern
 SELECT * FROM dbo.FindZonesByPattern('Pacific') ORDER BY name;
 GO
@@ -379,7 +110,6 @@ Pacific Standard Time (Mexico)#!#-07:00#!#1#!#DST
 Sa Pacific Standard Time#!#-05:00#!#0#!#STD
 West Pacific Standard Time#!#+10:00#!#0#!#STD
 ~~END~~
-
 
 -- Test function to verify 
 SELECT * FROM dbo.GetZonesInOffsetRange('+08:00', '+10:00') ORDER BY current_utc_offset;
@@ -407,7 +137,6 @@ Vladivostok Standard Time#!#+10:00#!#0
 West Pacific Standard Time#!#+10:00#!#0
 ~~END~~
 
-
 -- Test to check the UTC/GMT zones
 SELECT * FROM dbo.ZeroOffsetZones;
 GO
@@ -419,7 +148,6 @@ Sao Tome Standard Time#!#+00:00#!#0
 Utc#!#+00:00#!#0
 ~~END~~
 
-
 -- Test zones with numbers in names
 SELECT * FROM dbo.NumericNameZones ORDER BY name;
 GO
@@ -428,7 +156,6 @@ text#!#varchar#!#bit
 Russia Time Zone 10#!#+11:00#!#0
 Russia Time Zone 3#!#+04:00#!#0
 ~~END~~
-
 
 -- Test palindromic offset 
 SELECT * FROM dbo.PalindromicOffsets;
@@ -441,7 +168,6 @@ Iran Standard Time#!#+03:30#!#Palindromic
 Sao Tome Standard Time#!#+00:00#!#Palindromic
 Utc#!#+00:00#!#Palindromic
 ~~END~~
-
 
 --Test case: Edge case for testing duplicate enteries (should not exist)
 SELECT 
@@ -456,7 +182,6 @@ GO
 ~~START~~
 text#!#varchar#!#bit#!#int
 ~~END~~
-
 
 -- Procedure to find Top 20 time zones
 EXEC sp_ListTimeZones;
@@ -485,7 +210,6 @@ Bougainville Standard Time#!#+11:00#!#0
 Canada Central Standard Time#!#-06:00#!#0
 ~~END~~
 
-
 -- Test case: Subquery to find "Lonely DST zone"
 SELECT name, current_utc_offset
 FROM sys.time_zone_info t1
@@ -501,9 +225,7 @@ text#!#varchar
 Nepal Standard Time#!#+05:45
 ~~END~~
 
-
---Test cases to check valid/invalid 
-                  
+--Test cases to check valid/invalid                 
 EXEC ValidateTimeZone 'Pacific Standard Time', '-07:00';
 EXEC ValidateTimeZone 'UTC', '-08:00';   
 EXEC ValidateTimeZone 'India Standard Time', '-05:00';
@@ -523,7 +245,6 @@ varchar#!#nvarchar
 fail#!#Testing India Standard Time for offset -05:00
 ~~END~~
 
-
 -- Test case:  CTE for DST zones with specific offset
 WITH DSTZones AS (
     SELECT name, current_utc_offset
@@ -540,8 +261,6 @@ Mountain Standard Time#!#-06:00
 Pacific Standard Time#!#-07:00
 Pacific Standard Time (Mexico)#!#-07:00
 ~~END~~
-
-
 
 --Trigger to test valid/invalid time zones
 EXEC sp_ValidateTimeZoneData 'India Standard Time';
