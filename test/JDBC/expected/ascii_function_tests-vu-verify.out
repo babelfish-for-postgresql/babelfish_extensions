@@ -652,7 +652,7 @@ SELECT * FROM ascii_function_v_empty_analysis;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#int#!#int#!#varchar
-1#!#32#!#NULL#!#0#!#0#!#Empty string
+1#!#32#!#0#!#0#!#0#!#Empty string
 2#!#32#!#32#!#0#!#0#!#Single space
 3#!#32#!#32#!#0#!#0#!#Two spaces
 4#!#32#!#32#!#2#!#2#!#Space then char
@@ -902,17 +902,21 @@ int
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT ASCII(@inputString);
 GO
+~~START~~
+int
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of ascii function.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT ASCII(@inputString);
 GO
+~~START~~
+int
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of ascii function.)~~
 
 
 -- Complex Types with Explicit Casting
@@ -937,9 +941,10 @@ int
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~START~~
+int
+80
+~~END~~
 
 
 -- Test IMAGE type
@@ -1023,7 +1028,7 @@ GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 1#!#65#!#65#!#65#!#65#!#65#!#65#!#65#!#65
-2#!#32#!#<NULL>#!#32#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
+2#!#32#!#<NULL>#!#32#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 

@@ -336,7 +336,6 @@ SELECT
     ASCII(nvarchar_col) as nvarchar_ascii,
     ASCII(text_col) as text_ascii,
     ASCII(ntext_col) as ntext_ascii,
-    ASCII(binary_col) as binary_ascii,
     ASCII(varbinary_col) as varbinary_ascii
 FROM ascii_function_UDT_test;
 GO

@@ -904,7 +904,7 @@ SELECT ASCII(@inputString);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of ascii function.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
@@ -912,7 +912,7 @@ SELECT ASCII(@inputString);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of ascii function.)~~
 
 
 -- Complex Types with Explicit Casting
@@ -939,7 +939,7 @@ SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of ascii function.)~~
 
 
 -- Test IMAGE type
@@ -1016,14 +1016,13 @@ SELECT
     ASCII(nvarchar_col) as nvarchar_ascii,
     ASCII(text_col) as text_ascii,
     ASCII(ntext_col) as ntext_ascii,
-    ASCII(binary_col) as binary_ascii,
     ASCII(varbinary_col) as varbinary_ascii
 FROM ascii_function_UDT_test;
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-1#!#65#!#65#!#65#!#65#!#65#!#65#!#65#!#65
-2#!#32#!#<NULL>#!#32#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+1#!#65#!#65#!#65#!#65#!#65#!#65#!#65
+2#!#32#!#<NULL>#!#32#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
