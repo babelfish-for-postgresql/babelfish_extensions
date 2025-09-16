@@ -5203,7 +5203,12 @@ extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris,
 	 */
 	root = xmlDocGetRootElement(doc);
     for (xmlNs *cur = root->nsDef; cur != NULL; cur = cur->next)
-        (*ns_count)++;
+	{
+		if (cur->prefix)	// Ignore default namespace declaration
+		{
+			(*ns_count)++;
+		}
+	}
     
     if (*ns_count == 0)
     {
@@ -5228,9 +5233,10 @@ extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris,
         {
             (*ns_names)[index] = (char *) pstrdup((const char *) cur->prefix);
             (*ns_uris)[index] = cur->href ? (char *) pstrdup((const char *) cur->href) : NULL;
+			index++;
         }
     }
-    
+
     if (doc)
 		xmlFreeDoc(doc);
 }

@@ -374,6 +374,37 @@ SELECT * FROM OPENXML(@handle, '/root/ns1:child') ORDER BY id;
 EXEC sp_xml_removedocument @handle
 GO
 
+-- Default Namespace in XML Document but XPATH does not have any prefix no result
+DECLARE @xml nvarchar(1000) = '<root xmlns="http://example.com/default"><child>content</child></root>'
+DECLARE @ns nvarchar(1000) = '<root xmlns="http://example.com/default"></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @ns
+SELECT * FROM OPENXML(@handle, '/root/child') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+-- Default Namespace in XML Document but Prefix Namespace with same URI in Namespace document
+DECLARE @xml nvarchar(1000) = '<root xmlns="http://example.com/default"><child>content</child></root>'
+DECLARE @ns nvarchar(1000) = '<root xmlns:dns="http://example.com/default"></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @ns
+SELECT * FROM OPENXML(@handle, '/dns:root') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+-- Multiple namespaces in XPATH
+DECLARE @xml nvarchar(1000) = 
+'<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2">
+    <ns1:child>value</ns1:child>
+    <ns2:child>value</ns2:child>
+</root>';
+DECLARE @namespace nvarchar(100) = '<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2" />';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+SELECT * FROM OPENXML(@handle, '/root/ns1:child | /root/ns2:child') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
 -- namespace xml document with root and child both having namespaces,
 -- but xpath only root namespace is considered
 DECLARE @xml nvarchar(1000) = 
