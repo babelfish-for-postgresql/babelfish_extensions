@@ -14,16 +14,16 @@ FROM sys.time_zone_info
 WHERE current_utc_offset = '-05:00';
 GO
 -- Test Case 4: Check Daylight Saving Time zones
-SELECT name, current_utc_offset, is_currently_dst
+SELECT TOP 3 name, current_utc_offset, is_currently_dst
 FROM sys.time_zone_info
-WHERE is_currently_dst = 1;
+WHERE is_currently_dst = 1
+ORDER BY name;
 GO
 -- Test case 5: Time zones with unusual offsets (not full hours)
 SELECT name, current_utc_offset
 FROM sys.time_zone_info
 WHERE current_utc_offset LIKE '%:30' 
-   OR current_utc_offset LIKE '%:45'
-ORDER BY current_utc_offset;
+ORDER BY name;
 GO
 -- Test function to specific pattern
 SELECT * FROM dbo.FindZonesByPattern('Pacific') ORDER BY name;

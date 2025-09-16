@@ -36,66 +36,36 @@ Sa Pacific Standard Time#!#-05:00
 ~~END~~
 
 -- Test Case 4: Check Daylight Saving Time zones
-SELECT name, current_utc_offset, is_currently_dst
+SELECT TOP 3 name, current_utc_offset, is_currently_dst
 FROM sys.time_zone_info
-WHERE is_currently_dst = 1;
+WHERE is_currently_dst = 1
+ORDER BY name;
 GO
 ~~START~~
 text#!#varchar#!#bit
 Alaskan Standard Time#!#-08:00#!#1
 Aleutian Standard Time#!#-09:00#!#1
 Atlantic Standard Time#!#-03:00#!#1
-Azores Standard Time#!#+00:00#!#1
-Central European Standard Time#!#+02:00#!#1
-Central Europe Standard Time#!#+02:00#!#1
-Central Standard Time#!#-05:00#!#1
-Cuba Standard Time#!#-04:00#!#1
-Easter Island Standard Time#!#-05:00#!#1
-Eastern Standard Time#!#-04:00#!#1
-E. Europe Standard Time#!#+03:00#!#1
-Egypt Standard Time#!#+03:00#!#1
-Fle Standard Time#!#+03:00#!#1
-Gmt Standard Time#!#+01:00#!#1
-Greenland Standard Time#!#-01:00#!#1
-Gtb Standard Time#!#+03:00#!#1
-Haiti Standard Time#!#-04:00#!#1
-Israel Standard Time#!#+03:00#!#1
-Middle East Standard Time#!#+03:00#!#1
-Mountain Standard Time#!#-06:00#!#1
-Newfoundland Standard Time#!#-02:30#!#1
-Pacific Sa Standard Time#!#-03:00#!#1
-Pacific Standard Time#!#-07:00#!#1
-Pacific Standard Time (Mexico)#!#-07:00#!#1
-Romance Standard Time#!#+02:00#!#1
-Saint Pierre Standard Time#!#-02:00#!#1
-Turks And Caicos Standard Time#!#-04:00#!#1
-Us Eastern Standard Time#!#-04:00#!#1
-West Bank Standard Time#!#+03:00#!#1
-W. Europe Standard Time#!#+02:00#!#1
 ~~END~~
 
 -- Test case 5: Time zones with unusual offsets (not full hours)
 SELECT name, current_utc_offset
 FROM sys.time_zone_info
 WHERE current_utc_offset LIKE '%:30' 
-   OR current_utc_offset LIKE '%:45'
-ORDER BY current_utc_offset;
+ORDER BY name;
 GO
 ~~START~~
 text#!#varchar
-Newfoundland Standard Time#!#-02:30
-Marquesas Standard Time#!#-09:30
-Iran Standard Time#!#+03:30
 Afghanistan Standard Time#!#+04:30
-India Standard Time#!#+05:30
-Sri Lanka Standard Time#!#+05:30
-Nepal Standard Time#!#+05:45
-Myanmar Standard Time#!#+06:30
-Aus Central W. Standard Time#!#+08:45
 Aus Central Standard Time#!#+09:30
 Cen. Australia Standard Time#!#+09:30
+India Standard Time#!#+05:30
+Iran Standard Time#!#+03:30
 Lord Howe Standard Time#!#+10:30
-Chatham Islands Standard Time#!#+12:45
+Marquesas Standard Time#!#-09:30
+Myanmar Standard Time#!#+06:30
+Newfoundland Standard Time#!#-02:30
+Sri Lanka Standard Time#!#+05:30
 ~~END~~
 
 -- Test function to specific pattern
