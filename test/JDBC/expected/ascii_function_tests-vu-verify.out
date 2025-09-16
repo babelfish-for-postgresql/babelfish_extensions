@@ -698,3 +698,493 @@ int#!#int#!#int#!#int
 43#!#45#!#46#!#69
 ~~END~~
 
+
+-- String Types
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    ';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+32
+~~END~~
+
+
+-- Date and Time Types
+DECLARE @inputString date = '2016-12-21';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+50
+~~END~~
+
+
+-- Test ASCII with datetime  --> will give incorrect results in babelfish [BABEL-1664]
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+50
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+-- Numeric Types
+DECLARE @inputString decimal = 123456;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString numeric = 12345.12;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString float = 12345.1;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString real = 12345.1;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString bigint = 12345678;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString int = 12345678;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString smallint = 12356;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString tinyint = 235;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+50
+~~END~~
+
+
+-- Money Types
+DECLARE @inputString money = 12356;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+DECLARE @inputString smallmoney = 12356;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+-- Bit Type
+DECLARE @inputString bit = 1;
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+-- Special Types
+DECLARE @inputString uniqueidentifier = CAST('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier);
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+54
+~~END~~
+
+
+-- Complex Types
+DECLARE @inputString sql_variant = CAST('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant);
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of ascii function.)~~
+
+
+DECLARE @inputString xml = CAST('<body><fruit/></body>' AS xml);
+SELECT ASCII(@inputString);
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of ascii function.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT ASCII(@inputString);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT ASCII(@inputString);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+
+-- Complex Types with Explicit Casting
+DECLARE @inputString sql_variant = CAST('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant);
+SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
+GO
+~~START~~
+int
+54
+~~END~~
+
+
+DECLARE @inputString xml = CAST('<body><fruit/></body>' AS xml);
+SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
+GO
+~~START~~
+int
+60
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+
+-- Test IMAGE type
+SELECT ASCII(a) AS image_ascii FROM ascii_function_image;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of ascii function.)~~
+
+
+-- Test TEXT and NTEXT types
+SELECT ASCII(a) AS text_ascii, ASCII(b) AS ntext_ascii 
+FROM ascii_function_text;
+GO
+~~START~~
+int#!#int
+97#!#97
+~~END~~
+
+
+-- Test VARBINARY(MAX) and TEXT types with various data
+SELECT ID, ASCII(a) AS varbinary_ascii 
+FROM ascii_function_test_image 
+ORDER BY ID;
+GO
+~~START~~
+int#!#int
+1#!#65
+2#!#97
+3#!#49
+4#!#33
+~~END~~
+
+
+SELECT 
+    ID,
+    ASCII(a) AS text_ascii,
+    ASCII(b) AS ntext_ascii
+FROM ascii_function_test_text;
+GO
+~~START~~
+int#!#int#!#int
+1#!#65#!#65
+2#!#97#!#97
+3#!#49#!#49
+4#!#33#!#33
+5#!#32#!#32
+6#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test NULL and empty string handling
+SELECT 
+    ASCII(CAST(NULL AS IMAGE)) AS null_image,
+    ASCII(CAST(NULL AS TEXT)) AS null_text,
+    ASCII(CAST(NULL AS NTEXT)) AS null_ntext,
+    ASCII(CAST('' AS TEXT)) AS empty_text,
+    ASCII(CAST(N'' AS NTEXT)) AS empty_ntext;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test ASCII with UDTs
+SELECT 
+    ID,
+    ASCII(char_col) as char_ascii,
+    ASCII(varchar_col) as varchar_ascii,
+    ASCII(nchar_col) as nchar_ascii,
+    ASCII(nvarchar_col) as nvarchar_ascii,
+    ASCII(text_col) as text_ascii,
+    ASCII(ntext_col) as ntext_ascii,
+    ASCII(binary_col) as binary_ascii,
+    ASCII(varbinary_col) as varbinary_ascii
+FROM ascii_function_UDT_test;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+1#!#65#!#65#!#65#!#65#!#65#!#65#!#65#!#65
+2#!#32#!#<NULL>#!#32#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+-- Test ASCII with numeric UDTs
+SELECT 
+    ID,
+    ASCII(CAST(bigint_col AS VARCHAR)) as bigint_ascii,
+    ASCII(CAST(int_col AS VARCHAR)) as int_ascii,
+    ASCII(CAST(smallint_col AS VARCHAR)) as smallint_ascii,
+    ASCII(CAST(tinyint_col AS VARCHAR)) as tinyint_ascii,
+    ASCII(CAST(decimal_col AS VARCHAR)) as decimal_ascii,
+    ASCII(CAST(numeric_col AS VARCHAR)) as numeric_ascii,
+    ASCII(CAST(float_col AS VARCHAR)) as float_ascii,
+    ASCII(CAST(real_col AS VARCHAR)) as real_ascii
+FROM ascii_function_UDT_test;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+1#!#49#!#49#!#49#!#49#!#49#!#49#!#49#!#49
+2#!#48#!#48#!#48#!#48#!#48#!#48#!#48#!#48
+~~END~~
+
+
+-- Test ASCII with datetime UDTs --> will give incorrect results in babelfish [BABEL-1664]
+SELECT 
+    ID,
+    ASCII(CAST(datetime_col AS VARCHAR)) as datetime_ascii,
+    ASCII(CAST(smalldatetime_col AS VARCHAR)) as smalldatetime_ascii,
+    ASCII(CAST(date_col AS VARCHAR)) as date_ascii,
+    ASCII(CAST(time_col AS VARCHAR)) as time_ascii,
+    ASCII(CAST(datetime2_col AS VARCHAR)) as datetime2_ascii,
+    ASCII(CAST(datetimeoffset_col AS VARCHAR)) as datetimeoffset_ascii
+FROM ascii_function_UDT_test;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int
+1#!#50#!#50#!#50#!#49#!#50#!#50
+2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test ASCII with money
+SELECT 
+    ID,
+    ASCII(CAST(money_col AS VARCHAR)) as money_ascii,
+    ASCII(CAST(smallmoney_col AS VARCHAR)) as smallmoney_ascii
+FROM ascii_function_UDT_test;
+GO
+~~START~~
+int#!#int#!#int
+1#!#49#!#49
+2#!#48#!#48
+~~END~~
+
+
+SELECT ASCII(CAST('A' AS dbo.ascii_function_charUDT)) AS char_udt,
+       ASCII(CAST(123 AS dbo.ascii_function_intUDT)) AS int_udt,
+       ASCII(CAST(0x41 AS dbo.ascii_function_binaryUDT)) AS binary_udt;
+GO
+~~START~~
+int#!#int#!#int
+65#!#49#!#65
+~~END~~
+
+
+SELECT 'Testing NULL with UDTs' AS TestType;
+SELECT ASCII(CAST(NULL AS dbo.ascii_function_charUDT)) AS null_char_udt,
+       ASCII(CAST(NULL AS dbo.ascii_function_binaryUDT)) AS null_binary_udt;
+GO
+~~START~~
+varchar
+Testing NULL with UDTs
+~~END~~
+
+~~START~~
+int#!#int
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test ASCII with special types
+SELECT ASCII(a) as image_ascii FROM ascii_function_image;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of ascii function.)~~
+
+
+SELECT ASCII(a) as text_ascii, ASCII(b) as ntext_ascii FROM ascii_function_text;
+GO
+~~START~~
+int#!#int
+97#!#97
+~~END~~
+
+
+-- Test ASCII with NULL values
+SELECT 
+    ASCII(CAST(NULL as dbo.ascii_function_charUDT)) as null_char,
+    ASCII(CAST(NULL as dbo.ascii_function_varcharUDT)) as null_varchar,
+    ASCII(CAST(NULL as dbo.ascii_function_ncharUDT)) as null_nchar,
+    ASCII(CAST(NULL as dbo.ascii_function_nvarcharUDT)) as null_nvarchar;
+GO
+~~START~~
+int#!#int#!#int#!#int
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test ASCII with empty strings
+SELECT 
+    ASCII(CAST('' as dbo.ascii_function_charUDT)) as empty_char,
+    ASCII(CAST('' as dbo.ascii_function_varcharUDT)) as empty_varchar,
+    ASCII(CAST(N'' as dbo.ascii_function_ncharUDT)) as empty_nchar,
+    ASCII(CAST(N'' as dbo.ascii_function_nvarcharUDT)) as empty_nvarchar;
+GO
+~~START~~
+int#!#int#!#int#!#int
+32#!#<NULL>#!#32#!#<NULL>
+~~END~~
+
+
+SELECT ASCII(CAST(0x AS VARBINARY)) AS empty_varbinary,
+       ASCII(CAST(0x AS BINARY(1))) AS empty_binary;
+GO
+~~START~~
+int#!#int
+<NULL>#!#0
+~~END~~
+
+
+SELECT ASCII(CAST('A' as dbo.ascii_function_charUDT)) as char_udt_direct;
+GO
+~~START~~
+int
+65
+~~END~~
+
+
+SELECT ASCII(CAST(123 as dbo.ascii_function_intUDT)) as int_udt_direct;
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+SELECT ASCII(CAST(CAST('123' AS dbo.ascii_function_intUDT) AS VARCHAR)) as int_udt_to_varchar;
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+SELECT ASCII(CAST(0x20 as dbo.ascii_function_binaryUDT)) as binary_udt_direct;
+GO
+~~START~~
+int
+32
+~~END~~
+

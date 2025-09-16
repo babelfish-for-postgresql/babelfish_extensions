@@ -291,3 +291,178 @@ SELECT
     Description
 FROM ascii_function_empty_test;
 GO
+
+-- different data types
+CREATE TABLE ascii_function_image(a IMAGE);
+GO
+
+INSERT INTO ascii_function_image 
+VALUES(CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS image));
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE ascii_function_text(a TEXT, b NTEXT);
+GO
+
+INSERT INTO ascii_function_text 
+VALUES (N'abc🙂defghi🙂🙂', N'abc🙂defghi🙂🙂');
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE ascii_function_test_image (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    a VARBINARY(MAX)
+);
+GO
+
+INSERT INTO ascii_function_test_image (a) VALUES 
+(0x41424344), -- 'ABCD'
+(0x61626364), -- 'abcd'
+(0x31323334), -- '1234'
+(0x21402324); -- '!@#$'
+GO
+~~ROW COUNT: 4~~
+
+
+CREATE TABLE ascii_function_test_text (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    a TEXT,
+    b NTEXT
+);
+GO
+
+INSERT INTO ascii_function_test_text (a, b) VALUES 
+('ABCD', N'ABCD'),
+('abcd', N'abcd'),
+('1234', N'1234'),
+('!@#$', N'!@#$'),
+('    ', N'    '),
+('', N'');
+GO
+~~ROW COUNT: 6~~
+
+
+-- Create User Defined Types
+-- String UDTs
+CREATE TYPE dbo.ascii_function_charUDT FROM char(10);
+GO
+CREATE TYPE dbo.ascii_function_varcharUDT FROM varchar(50);
+GO
+CREATE TYPE dbo.ascii_function_ncharUDT FROM nchar(10);
+GO
+CREATE TYPE dbo.ascii_function_nvarcharUDT FROM nvarchar(50);
+GO
+CREATE TYPE dbo.ascii_function_textUDT FROM text;
+GO
+CREATE TYPE dbo.ascii_function_ntextUDT FROM ntext;
+GO
+
+-- Binary UDTs
+CREATE TYPE dbo.ascii_function_binaryUDT FROM binary(10);
+GO
+CREATE TYPE dbo.ascii_function_varbinaryUDT FROM varbinary(50);
+GO
+CREATE TYPE dbo.ascii_function_imageUDT FROM image;
+GO
+
+-- Numeric UDTs
+CREATE TYPE dbo.ascii_function_bigintUDT FROM bigint;
+GO
+CREATE TYPE dbo.ascii_function_intUDT FROM int;
+GO
+CREATE TYPE dbo.ascii_function_smallintUDT FROM smallint;
+GO
+CREATE TYPE dbo.ascii_function_tinyintUDT FROM tinyint;
+GO
+CREATE TYPE dbo.ascii_function_decimalUDT FROM decimal(18,2);
+GO
+CREATE TYPE dbo.ascii_function_numericUDT FROM numeric(18,2);
+GO
+CREATE TYPE dbo.ascii_function_floatUDT FROM float;
+GO
+CREATE TYPE dbo.ascii_function_realUDT FROM real;
+GO
+
+--- DateTime UDTs
+CREATE TYPE dbo.ascii_function_datetimeUDT FROM datetime;
+GO
+CREATE TYPE dbo.ascii_function_smalldatetimeUDT FROM smalldatetime;
+GO
+CREATE TYPE dbo.ascii_function_dateUDT FROM date;
+GO
+CREATE TYPE dbo.ascii_function_timeUDT FROM time;
+GO
+CREATE TYPE dbo.ascii_function_datetime2UDT FROM datetime2;
+GO
+CREATE TYPE dbo.ascii_function_datetimeoffsetUDT FROM datetimeoffset;
+GO
+
+-- Money UDTs
+CREATE TYPE dbo.ascii_function_moneyUDT FROM money;
+GO
+CREATE TYPE dbo.ascii_function_smallmoneyUDT FROM smallmoney;
+GO
+
+-- Create test tables
+CREATE TABLE ascii_function_UDT_test (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    char_col dbo.ascii_function_charUDT,
+    varchar_col dbo.ascii_function_varcharUDT,
+    nchar_col dbo.ascii_function_ncharUDT,
+    nvarchar_col dbo.ascii_function_nvarcharUDT,
+    text_col dbo.ascii_function_textUDT,
+    ntext_col dbo.ascii_function_ntextUDT,
+    binary_col dbo.ascii_function_binaryUDT,
+    varbinary_col dbo.ascii_function_varbinaryUDT,
+    bigint_col dbo.ascii_function_bigintUDT,
+    int_col dbo.ascii_function_intUDT,
+    smallint_col dbo.ascii_function_smallintUDT,
+    tinyint_col dbo.ascii_function_tinyintUDT,
+    decimal_col dbo.ascii_function_decimalUDT,
+    numeric_col dbo.ascii_function_numericUDT,
+    float_col dbo.ascii_function_floatUDT,
+    real_col dbo.ascii_function_realUDT,
+    datetime_col dbo.ascii_function_datetimeUDT,
+    smalldatetime_col dbo.ascii_function_smalldatetimeUDT,
+    date_col dbo.ascii_function_dateUDT,
+    time_col dbo.ascii_function_timeUDT,
+    datetime2_col dbo.ascii_function_datetime2UDT,
+    datetimeoffset_col dbo.ascii_function_datetimeoffsetUDT,
+    money_col dbo.ascii_function_moneyUDT,
+    smallmoney_col dbo.ascii_function_smallmoneyUDT
+);
+GO
+
+-- Insert test data
+INSERT INTO ascii_function_UDT_test (
+    char_col, varchar_col, nchar_col, nvarchar_col,
+    text_col, ntext_col, binary_col, varbinary_col,
+    bigint_col, int_col, smallint_col,
+    tinyint_col, decimal_col, numeric_col, float_col,
+    real_col, datetime_col, smalldatetime_col, date_col,
+    time_col, datetime2_col, datetimeoffset_col,
+    money_col, smallmoney_col
+)
+VALUES (
+    'ABC', 'ABC', N'ABC', N'ABC',
+    'ABC', N'ABC', 0x414243, 0x414243,
+    123456, 12345, 1234,
+    123, 123.45, 123.45, 123.45,
+    123.45, '2023-01-01', '2023-01-01', '2023-01-01',
+    '12:34:56', '2023-01-01 12:34:56', '2023-01-01 12:34:56 +00:00',
+    123.45, 123.45
+),
+(
+    '', '', N'', N'',
+    '', N'', 0x, 0x,
+    0, 0, 0,
+    0, 0.00, 0.00, 0.00,
+    0.00, NULL, NULL, NULL,
+    NULL, NULL, NULL,
+    0.00, 0.00
+);
+GO
+~~ROW COUNT: 2~~
+

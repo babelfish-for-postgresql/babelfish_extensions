@@ -181,3 +181,245 @@ SELECT ASCII('+') AS Plus,
        ASCII('.') AS Dot,
        ASCII('E') AS E_Char;
 GO
+
+-- String Types
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    ';
+SELECT ASCII(@inputString);
+GO
+
+-- Date and Time Types
+DECLARE @inputString date = '2016-12-21';
+SELECT ASCII(@inputString);
+GO
+
+-- Test ASCII with datetime  --> will give incorrect results in babelfish [BABEL-1664]
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT ASCII(@inputString);
+GO
+
+-- Numeric Types
+DECLARE @inputString decimal = 123456;
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString numeric = 12345.12;
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString float = 12345.1;
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString real = 12345.1;
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString bigint = 12345678;
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString int = 12345678;
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString smallint = 12356;
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString tinyint = 235;
+SELECT ASCII(@inputString);
+GO
+
+-- Money Types
+DECLARE @inputString money = 12356;
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString smallmoney = 12356;
+SELECT ASCII(@inputString);
+GO
+
+-- Bit Type
+DECLARE @inputString bit = 1;
+SELECT ASCII(@inputString);
+GO
+
+-- Special Types
+DECLARE @inputString uniqueidentifier = CAST('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier);
+SELECT ASCII(@inputString);
+GO
+
+-- Complex Types
+DECLARE @inputString sql_variant = CAST('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant);
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString xml = CAST('<body><fruit/></body>' AS xml);
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT ASCII(@inputString);
+GO
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT ASCII(@inputString);
+GO
+
+-- Complex Types with Explicit Casting
+DECLARE @inputString sql_variant = CAST('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant);
+SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
+GO
+
+DECLARE @inputString xml = CAST('<body><fruit/></body>' AS xml);
+SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
+GO
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
+GO
+
+-- Test IMAGE type
+SELECT ASCII(a) AS image_ascii FROM ascii_function_image;
+GO
+
+-- Test TEXT and NTEXT types
+SELECT ASCII(a) AS text_ascii, ASCII(b) AS ntext_ascii 
+FROM ascii_function_text;
+GO
+
+-- Test VARBINARY(MAX) and TEXT types with various data
+SELECT ID, ASCII(a) AS varbinary_ascii 
+FROM ascii_function_test_image 
+ORDER BY ID;
+GO
+
+SELECT 
+    ID,
+    ASCII(a) AS text_ascii,
+    ASCII(b) AS ntext_ascii
+FROM ascii_function_test_text;
+GO
+
+-- Test NULL and empty string handling
+SELECT 
+    ASCII(CAST(NULL AS IMAGE)) AS null_image,
+    ASCII(CAST(NULL AS TEXT)) AS null_text,
+    ASCII(CAST(NULL AS NTEXT)) AS null_ntext,
+    ASCII(CAST('' AS TEXT)) AS empty_text,
+    ASCII(CAST(N'' AS NTEXT)) AS empty_ntext;
+GO
+
+-- Test ASCII with UDTs
+SELECT 
+    ID,
+    ASCII(char_col) as char_ascii,
+    ASCII(varchar_col) as varchar_ascii,
+    ASCII(nchar_col) as nchar_ascii,
+    ASCII(nvarchar_col) as nvarchar_ascii,
+    ASCII(text_col) as text_ascii,
+    ASCII(ntext_col) as ntext_ascii,
+    ASCII(binary_col) as binary_ascii,
+    ASCII(varbinary_col) as varbinary_ascii
+FROM ascii_function_UDT_test;
+GO
+
+-- Test ASCII with numeric UDTs
+SELECT 
+    ID,
+    ASCII(CAST(bigint_col AS VARCHAR)) as bigint_ascii,
+    ASCII(CAST(int_col AS VARCHAR)) as int_ascii,
+    ASCII(CAST(smallint_col AS VARCHAR)) as smallint_ascii,
+    ASCII(CAST(tinyint_col AS VARCHAR)) as tinyint_ascii,
+    ASCII(CAST(decimal_col AS VARCHAR)) as decimal_ascii,
+    ASCII(CAST(numeric_col AS VARCHAR)) as numeric_ascii,
+    ASCII(CAST(float_col AS VARCHAR)) as float_ascii,
+    ASCII(CAST(real_col AS VARCHAR)) as real_ascii
+FROM ascii_function_UDT_test;
+GO
+
+-- Test ASCII with datetime UDTs --> will give incorrect results in babelfish [BABEL-1664]
+SELECT 
+    ID,
+    ASCII(CAST(datetime_col AS VARCHAR)) as datetime_ascii,
+    ASCII(CAST(smalldatetime_col AS VARCHAR)) as smalldatetime_ascii,
+    ASCII(CAST(date_col AS VARCHAR)) as date_ascii,
+    ASCII(CAST(time_col AS VARCHAR)) as time_ascii,
+    ASCII(CAST(datetime2_col AS VARCHAR)) as datetime2_ascii,
+    ASCII(CAST(datetimeoffset_col AS VARCHAR)) as datetimeoffset_ascii
+FROM ascii_function_UDT_test;
+GO
+
+-- Test ASCII with money
+SELECT 
+    ID,
+    ASCII(CAST(money_col AS VARCHAR)) as money_ascii,
+    ASCII(CAST(smallmoney_col AS VARCHAR)) as smallmoney_ascii
+FROM ascii_function_UDT_test;
+GO
+
+SELECT ASCII(CAST('A' AS dbo.ascii_function_charUDT)) AS char_udt,
+       ASCII(CAST(123 AS dbo.ascii_function_intUDT)) AS int_udt,
+       ASCII(CAST(0x41 AS dbo.ascii_function_binaryUDT)) AS binary_udt;
+GO
+
+SELECT 'Testing NULL with UDTs' AS TestType;
+SELECT ASCII(CAST(NULL AS dbo.ascii_function_charUDT)) AS null_char_udt,
+       ASCII(CAST(NULL AS dbo.ascii_function_binaryUDT)) AS null_binary_udt;
+GO
+
+-- Test ASCII with special types
+SELECT ASCII(a) as image_ascii FROM ascii_function_image;
+GO
+
+SELECT ASCII(a) as text_ascii, ASCII(b) as ntext_ascii FROM ascii_function_text;
+GO
+
+-- Test ASCII with NULL values
+SELECT 
+    ASCII(CAST(NULL as dbo.ascii_function_charUDT)) as null_char,
+    ASCII(CAST(NULL as dbo.ascii_function_varcharUDT)) as null_varchar,
+    ASCII(CAST(NULL as dbo.ascii_function_ncharUDT)) as null_nchar,
+    ASCII(CAST(NULL as dbo.ascii_function_nvarcharUDT)) as null_nvarchar;
+GO
+
+-- Test ASCII with empty strings
+SELECT 
+    ASCII(CAST('' as dbo.ascii_function_charUDT)) as empty_char,
+    ASCII(CAST('' as dbo.ascii_function_varcharUDT)) as empty_varchar,
+    ASCII(CAST(N'' as dbo.ascii_function_ncharUDT)) as empty_nchar,
+    ASCII(CAST(N'' as dbo.ascii_function_nvarcharUDT)) as empty_nvarchar;
+GO
+
+SELECT ASCII(CAST(0x AS VARBINARY)) AS empty_varbinary,
+       ASCII(CAST(0x AS BINARY(1))) AS empty_binary;
+GO
+
+SELECT ASCII(CAST('A' as dbo.ascii_function_charUDT)) as char_udt_direct;
+GO
+
+SELECT ASCII(CAST(123 as dbo.ascii_function_intUDT)) as int_udt_direct;
+GO
+
+SELECT ASCII(CAST(CAST('123' AS dbo.ascii_function_intUDT) AS VARCHAR)) as int_udt_to_varchar;
+GO
+
+SELECT ASCII(CAST(0x20 as dbo.ascii_function_binaryUDT)) as binary_udt_direct;
+GO
