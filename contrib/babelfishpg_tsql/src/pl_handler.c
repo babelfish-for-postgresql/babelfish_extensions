@@ -5103,11 +5103,41 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						else
 						{
-							/* Append the values to the list */
-							char *privileges[] = {
-								"insert", "select", "update", "delete", "references",
-								"truncate", "maintain", "trigger"
-							};
+							Oid objoid = 	InvalidOid;
+							HeapTuple		tuple;
+							Form_pg_class	pg_class_tuple;
+							char 			**privileges;
+
+							objoid = RangeVarGetRelid(rv, NoLock, true);
+							if (!OidIsValid(objoid))
+								return;
+
+							/* Get the namespace OID and rekind type of the table. */
+							tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objoid));
+							if (!HeapTupleIsValid(tuple))
+								return;
+
+							pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
+
+							if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
+							{
+								privileges = (char **) palloc0(3 * sizeof(char *));
+								privileges[0] = "select";
+								privileges[1] = "update";
+								privileges[2] = "usage";
+							}
+							else
+							{
+								privileges = (char **) palloc0(8 * sizeof(char *));
+								privileges[0] = "insert";
+								privileges[1] = "select";
+								privileges[2] = "update";
+								privileges[3] = "delete";
+								privileges[4] = "references";
+								privileges[5] = "truncate";
+								privileges[6] = "maintain";
+								privileges[7] = "trigger";
+							}
 
 							for (int i = 0; i < sizeof(privileges)/sizeof(privileges[0]); i++)
 							{
@@ -5141,6 +5171,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								}
 								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
 							}
+							ReleaseSysCache(tuple);
+							pfree(privileges);
 							/* 
 							 * If all_privileges length is 5 then pass grant->privilege as NIL i.e fallback to existing behaviour,
 							 * as no common privilege between object and schema.

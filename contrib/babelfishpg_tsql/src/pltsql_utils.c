@@ -2718,6 +2718,8 @@ string_to_privilege(const char *privname)
 		return ACL_MAINTAIN;
 	if (strcmp(privname, "trigger") == 0)
 		return ACL_TRIGGER;
+	if (strcmp(privname, "usage") == 0)
+		return ACL_USAGE;
 	else
 		return 0;
 }
