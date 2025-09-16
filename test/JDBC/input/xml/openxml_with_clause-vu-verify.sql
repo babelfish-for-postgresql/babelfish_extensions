@@ -596,7 +596,7 @@ GO
 
 -- Test with empty XML document
 DECLARE @DocHandle int;
-EXEC sp_xml_preparedocument @DocHandle OUTPUT, @DocHandle;
+EXEC sp_xml_preparedocument @DocHandle OUTPUT;
 SELECT * 
 FROM OPENXML (@DocHandle, '/', 1)
 WITH (

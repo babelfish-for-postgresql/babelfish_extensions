@@ -6816,10 +6816,11 @@ pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	tsql_docid_node = linitial(rtf->namespaces);
-	tsql_flag = lsecond(rtf->namespaces);
+	tsql_docid_node = rtf->docexpr;
+	tsql_flag = linitial(rtf->namespaces);
 
 	rtf->namespaces = NIL;
+	rtf->docexpr = NULL;
 
 	/* 
 	 * Set the document expression to retrieve the XML document using the document handle.

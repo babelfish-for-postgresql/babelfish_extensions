@@ -1803,11 +1803,11 @@ table_ref:	relation_expr tsql_table_hint_expr
 openxml_expr: OPENXML '(' a_expr ',' a_expr ')' WITH_table TABLE qualified_name opt_alias_clause
 				{
 					RangeTableFunc *n = makeNode(RangeTableFunc);
-					n->docexpr = NULL;
+					n->docexpr = $3;
 					n->rowexpr = $5;
 					n->location = @1;
 					/* Default flag is 0 when not specified */
-					n->namespaces = list_make2((Node *)$3, makeIntConst(0, @1));
+					n->namespaces = list_make1(makeIntConst(0, @1));
 					n->columns = list_make1($9);
 					n->alias = $10;
 					$$ = (Node *) n;
@@ -1815,10 +1815,10 @@ openxml_expr: OPENXML '(' a_expr ',' a_expr ')' WITH_table TABLE qualified_name 
 			| OPENXML '(' a_expr ',' a_expr ',' a_expr ')' WITH_table TABLE qualified_name opt_alias_clause
 				{
 					RangeTableFunc *n = makeNode(RangeTableFunc);
-					n->docexpr = NULL;
+					n->docexpr = $3;
 					n->rowexpr = $5;
 					n->location = @1;
-					n->namespaces = list_make2((Node *)$3, (Node *)$7);
+					n->namespaces = list_make1((Node *)$7);
 					n->columns = list_make1($11);
 					n->alias = $12;
 					$$ = (Node *) n;
@@ -1826,23 +1826,23 @@ openxml_expr: OPENXML '(' a_expr ',' a_expr ')' WITH_table TABLE qualified_name 
 			| OPENXML '(' a_expr ',' a_expr ')' WITH_paren '(' openxml_column_list ')' opt_alias_clause
 				{
 					RangeTableFunc *n = makeNode(RangeTableFunc);
-					n->docexpr = NULL;
+					n->docexpr = $3;
 					n->rowexpr = $5;
 					n->location = @1;
-					/* Default flag is 0 when not specified */
 					n->columns = $9;
-					n->namespaces = list_make2((Node *)$3, makeIntConst(0, @1));
+					/* Default flag is 0 when not specified */
+					n->namespaces = list_make1(makeIntConst(0, @1));
 					n->alias = $11;
 					$$ = (Node *) n;
 				}
 			| OPENXML '(' a_expr ',' a_expr ',' a_expr ')' WITH_paren '(' openxml_column_list ')' opt_alias_clause
 				{
 					RangeTableFunc *n = makeNode(RangeTableFunc);
-					n->docexpr = NULL;
+					n->docexpr = $3;
 					n->rowexpr = $5;
 					n->columns = $11;
 					n->location = @1;
-					n->namespaces = list_make2((Node *)$3, (Node *)$7);
+					n->namespaces = list_make1((Node *)$7);
 					n->alias = $13;
 					$$ = (Node *) n;
 				}
