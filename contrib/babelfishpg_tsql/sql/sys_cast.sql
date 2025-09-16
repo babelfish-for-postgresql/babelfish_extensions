@@ -161,6 +161,62 @@ AS $BODY$ BEGIN
 END; $BODY$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_real(IN arg TEXT) RETURNS REAL
+AS $BODY$ BEGIN
+    BEGIN
+        RETURN CAST(arg AS REAL);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END;
+END; $BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_real(IN arg ANYELEMENT) RETURNS REAL
+AS $BODY$ BEGIN
+    BEGIN
+        RETURN CAST(arg AS REAL);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END;
+END; $BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_float(arg ANYELEMENT, p INT)
+RETURNS DOUBLE PRECISION
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v DOUBLE PRECISION;
+BEGIN
+    BEGIN
+        v := CAST(arg AS DOUBLE PRECISION);
+
+        IF p IS NOT NULL AND p BETWEEN 1 AND 24 THEN
+            v := CAST(CAST(v AS REAL) AS DOUBLE PRECISION);
+        END IF;
+
+        RETURN v;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END;
+END; $$;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_float(arg TEXT, p INT)
+RETURNS DOUBLE PRECISION
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    BEGIN
+        RETURN CAST(arg AS DOUBLE PRECISION);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END;
+END; $$;
+
 CREATE OR REPLACE FUNCTION sys.text2float4(arg pg_catalog.text)
 RETURNS REAL
 LANGUAGE sql
