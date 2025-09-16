@@ -20,6 +20,7 @@
 #include "catalog/indexing.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
+#include "commands/tablecmds.h"
 #include "common/string.h"
 #include "executor/spi.h"
 #include "foreign/foreign.h"
@@ -47,8 +48,11 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "tsearch/ts_locale.h"
+#include "utils/xml.h"
+#include "common/md5.h"
 
 #include "catalog.h"
+#include "catalog/toasting.h"
 #include "extendedproperty.h"
 #include "multidb.h"
 #include "session.h"
@@ -78,6 +82,8 @@ PG_FUNCTION_INFO_V1(sp_execute_postgresql);
 PG_FUNCTION_INFO_V1(sp_enum_oledb_providers_internal);
 PG_FUNCTION_INFO_V1(sp_reset_connection_internal);
 PG_FUNCTION_INFO_V1(sp_renamedb_internal);
+PG_FUNCTION_INFO_V1(sp_xml_preparedocument);
+PG_FUNCTION_INFO_V1(sp_xml_removedocument);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -107,6 +113,17 @@ char	   *sp_describe_first_result_set_view_name = NULL;
 bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
+
+#define              MD5_HASH_LEN 32
+const  int           XML_HANDLE_COUNTER_START = 0;
+const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
+static int           current_xml_handle_counter = INT_MAX / 2;
+Bitmapset           *active_xml_handles_counter = NULL;
+static char         *xml_handle_temp_table_name = NULL;
+int                  get_next_xml_handle_counter(void);
+void                 create_xml_handle_temp_table(void);
+void                 delete_xml_handle_entry(int  handle);
+int                  insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -4287,6 +4304,623 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
 	{
 		(*pltsql_protocol_plugin_ptr)->set_reset_tds_connection_flag();
 	}
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * get_next_xml_handle_counter - Allocates unique XML handle counters using circular allocation strategy.
+ * 
+ * This function manages XML document handles by tracking them in a bitmap set.
+ * It increments the current handle counter and verifies its availability through two checks:
+ * 1. If the handle is not in the active set, it's considered valid
+ * 2. If the handle is in the active set but has no corresponding entry in the table,
+ *    it's considered valid (handles stale bitmap entries)
+ * 
+ * This approach ensures we don't leak handles and can recover from situations where
+ * the bitmap contains handles that no longer have corresponding table entries.
+ *
+ * Returns: Next available XML handle counter (integer)
+ * Errors: Throws error when all possible handle counters are in use
+ */
+int 
+get_next_xml_handle_counter()
+{
+	int           old_handle_counter = current_xml_handle_counter;
+	bool          handle_valid = false;
+
+	while (!handle_valid)
+	{
+		++current_xml_handle_counter;
+
+		if (current_xml_handle_counter == XML_HANDLE_COUNTER_INVALID)
+		{
+			current_xml_handle_counter = XML_HANDLE_COUNTER_START + 1;
+		}
+
+		if (unlikely(current_xml_handle_counter == old_handle_counter))
+		{
+			ereport(ERROR,
+				   (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("Out of XML Handles")));
+		}
+
+		/* Check if the handle is in the active set and table exists */
+		if (xml_handle_temp_table_name != NULL && bms_is_member(current_xml_handle_counter, active_xml_handles_counter))
+		{
+			/* Handle is in active set, check if it actually exists in the table */
+			int                    document_id = 2 * current_xml_handle_counter - 1;
+			Relation               relation = NULL;
+			ScanKeyData            skey[1];
+			SysScanDesc            scan;
+			HeapTuple              tuple;
+			bool                   entry_exists = false;
+			EphemeralNamedRelation enr = NULL;
+			
+			enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+			if (enr)
+			{
+				relation = relation_open(enr->md.reliddesc, AccessShareLock);
+			
+				/* Set up scan key to look for this document_id */
+				ScanKeyInit(&skey[0],
+							1,
+							BTEqualStrategyNumber, F_INT4EQ,
+							Int32GetDatum(document_id));
+				
+				/* Scan the table for this document_id */
+				scan = systable_beginscan(relation, InvalidOid, false, NULL, 1, skey);
+				tuple = systable_getnext(scan);
+				
+				/* If we find a tuple, the entry exists */
+				if (HeapTupleIsValid(tuple))
+				{
+					entry_exists = true;
+				}
+
+				systable_endscan(scan);
+				relation_close(relation, AccessShareLock);
+			}
+			/* If no entry exists in the table, we can use this handle */
+			if (!entry_exists)
+			{
+				handle_valid = true;
+			}
+			/* Otherwise, continue to the next potential handle */
+		}
+		else
+		{
+			/* Handle is not in active set or table doesn't exist, we can use it */
+			handle_valid = true;
+		}
+	}
+
+	return current_xml_handle_counter;
+}
+
+/* Define column definitions for #xml_handle_temp_table
+ The table has the following structure:
+ *
+ * - document_id: A unique identifier for the XML document (INT, NOT NULL)
+ * - namespace_id: An identifier for the namespace, if present (INT)
+ * - doc_size: The size of the XML document in bytes (BIGINT)
+ * - ns_size: The size of the namespace in bytes (BIGINT)
+ * - is_namespace_null: Flag indicating if namespace is NULL (BOOLEAN)
+ * - xml_data: The actual XML document content (XML)
+ * - ns_data: The namespace content, if any (XML)
+ */
+static List *
+create_xml_handle_columns(void)
+{
+	List      *columns = NIL;
+	ColumnDef *docIdCol;
+	
+	/* Create column definitions */
+	docIdCol = makeColumnDef("document_id", INT4OID, -1, InvalidOid);
+	docIdCol->is_not_null = true;
+	columns = lappend(columns, docIdCol);
+	columns = lappend(columns, makeColumnDef("namespace_id", INT4OID, -1, InvalidOid));
+	columns = lappend(columns, makeColumnDef("doc_size", INT8OID, -1, InvalidOid));
+	columns = lappend(columns, makeColumnDef("ns_size", INT8OID, -1, InvalidOid));
+	columns = lappend(columns, makeColumnDef("is_namespace_null", BOOLOID, -1, InvalidOid));
+	columns = lappend(columns, makeColumnDef("xml_data", XMLOID, -1, InvalidOid));
+	columns = lappend(columns, makeColumnDef("ns_data", XMLOID, -1, InvalidOid));
+	
+	return columns;
+}
+
+/*
+ * generate_unique_table_name - Creates a unique table name using MD5 hash
+ *
+ * This function generates a unique table name by creating an MD5 hash of
+ * a base name combined with a random number. This ensures that each session
+ * gets a unique temp table name, avoiding conflicts when multiple sessions are
+ * creating these tables simultaneously.
+ *
+ * Parameters:
+ *   base_name - The base name to use for the table
+ *
+ * Returns:
+ *   A unique table name with the base name and an MD5 hash suffix
+ */
+static char *
+generate_unique_table_name(const char *base_name)
+{
+	char          md5[MD5_HASH_LEN + 1];
+	const char   *errstr = NULL;
+	bool          success;
+	
+	/* Generate a unique input string for the MD5 hash */
+	char *random_input = psprintf("%s%d", base_name, rand());
+	
+	/* Generate MD5 hash */
+	success = pg_md5_hash(random_input, strlen(random_input), md5, &errstr);
+	
+	if (unlikely(!success))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not compute MD5 hash for XML handle table name generation: %s", errstr ? errstr : "unknown error"),
+				 errdetail("Failed to generate unique table name for base name \"%s\"", base_name)));
+
+	/* Create and return table name with prefix and MD5 hash */
+	return psprintf("%s_%s", base_name, md5);
+}
+
+/*
+ * create_xml_handle_temp_table:
+ *     Creates a temporary table to store XML document handles and their associated data.
+ *
+ * This function creates a temporary table with a unique name generated using an MD5 hash
+ * that persists for the duration of the session. The table stores XML documents and their 
+ * associated namespace information for use with the sp_xml_preparedocument and 
+ * sp_xml_removedocument procedures. 
+ * 
+ * The unique table name helps avoid conflicts when multiple sessions are creating these
+ * tables simultaneously. The table name follows the pattern "#xml_handle_temp_table_[MD5 hash]".
+ * 
+ * The function temporarily elevates privileges to "bbf_role_admin" to ensure it has
+ * the necessary permissions to create the table. It also sets the SQL dialect
+ * to TSQL to ensure proper table creation semantics.
+ */
+void 
+create_xml_handle_temp_table()  
+{
+	CreateStmt         *stmt = makeNode(CreateStmt);
+	RangeVar           *relation;
+	Oid                 save_userid;
+	int                 save_sec_context;
+	int                 saved_dialect = sql_dialect;
+	ObjectAddress       address;
+	QueryEnvironment   *saved_queryEnv = currentQueryEnv;
+	MemoryContext       oldContext;
+	char               *table_name;
+
+	/* Generate a unique table name */
+	table_name = generate_unique_table_name("#xml_handle_temp_table");
+	relation = makeRangeVar(NULL, table_name, -1);
+
+	/* Switch to the top-level query environment */
+	currentQueryEnv = topLevelQueryEnv;
+
+	/* This makes it temporary table */
+	relation->relpersistence = RELPERSISTENCE_TEMP;
+
+	/* Set up the CreateStmt */
+	stmt->relation = relation;
+	stmt->tableElts = create_xml_handle_columns();
+	stmt->constraints = NIL;
+	stmt->inhRelations = NIL; 
+	stmt->partspec = NULL;
+	stmt->ofTypename = NULL;
+	stmt->oncommit = ONCOMMIT_PRESERVE_ROWS;
+	stmt->tablespacename = NULL;
+	stmt->if_not_exists = false; 
+	stmt->options = NIL;
+	stmt->accessMethod = NULL;
+
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	PG_TRY();
+	{
+		sql_dialect = SQL_DIALECT_TSQL;
+		/* Create the relation (table) with the specified attributes &
+		 * Set current user to bbf_role_admin for create permissions
+		*/
+		address = DefineRelation(stmt, RELKIND_RELATION, get_bbf_role_admin_oid(), NULL, NULL);
+
+		/* 
+		* Create a TOAST table for the relation if needed.
+		* TOAST tables store large values that don't fit in the main table pages.
+		* This is important for XML data which can be large.
+		* The second parameter (0) means no special options for the TOAST table.
+		*/
+		NewRelationCreateToastTable(address.objectId, (Datum)0);
+		
+		/* Store the table name in TopMemoryContext so it persists across transactions */
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		xml_handle_temp_table_name = pstrdup(table_name);
+		MemoryContextSwitchTo(oldContext);
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		sql_dialect = saved_dialect;
+		/* Restore the original query environment */
+		currentQueryEnv = saved_queryEnv;
+	}
+	PG_END_TRY();
+
+	current_xml_handle_counter = XML_HANDLE_COUNTER_START;
+}
+
+/*
+ * insert_xml_handle_entry - Stores XML document data in the temporary handle table.
+ *
+ * This function inserts a new XML document and its optional namespace data into
+ * the XML handle temporary table. 
+ * 
+ * Returns:
+ *   The document_id that can be used to reference this XML document
+ *
+ * Errors:
+ *   Throws error if the temporary table cannot be created or accessed
+ */
+int 
+insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length, int ns_data_length)
+{
+	int                     handle_counter;
+	int                     document_id;
+	int                     namespace_id = 0;
+	bool                    is_namespace_null = true;
+	Relation                relation;
+	Datum                   values[7];
+	int                     saved_dialect = sql_dialect;
+	HeapTuple               tuple;
+	bool                    nulls[7] = {false, true, false, true, true, false, true};
+	bool                    table_exists = false;
+	EphemeralNamedRelation  enr = NULL;
+	MemoryContext           oldContext = NULL;
+
+	/* Check if the table exists using ENR lookup */
+	if (xml_handle_temp_table_name != NULL)
+	{
+		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+		if (enr)
+		{
+			relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+			table_exists = true;
+		}
+	}
+
+	if (!table_exists)
+	{
+		/* Table doesn't exist or was dropped, create it */
+		create_xml_handle_temp_table();
+
+		/* Look up the newly created table */
+		if (xml_handle_temp_table_name != NULL)
+		{
+			enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+			if (enr)
+			{
+				relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+				table_exists = true;
+			}
+		}
+		
+		if (!table_exists)
+			ereport(ERROR,
+				   (errcode(ERRCODE_UNDEFINED_TABLE),
+					errmsg("Failed to create XML handle temporary table")));
+	}
+	
+	/* get the next handle */
+	handle_counter = get_next_xml_handle_counter();
+
+	/* document_id is always odd and unique */
+	document_id = 2 * handle_counter - 1;
+	
+	if (ns_data_length > 0)
+	{
+		/* namespace_id is always even and unique if namespace is present */
+		namespace_id = 2 * handle_counter;
+		is_namespace_null = false;
+		nulls[1] = false;
+		nulls[3] = false;
+		nulls[4] = false;
+		nulls[6] = false;
+	}
+	
+	/* Set up the values for insertion */
+	values[0] = Int32GetDatum(document_id);
+	values[1] = Int32GetDatum(namespace_id);
+	values[2] = Int32GetDatum(xml_data_length);
+	values[3] = Int32GetDatum(ns_data_length);
+	values[4] = BoolGetDatum(is_namespace_null);
+	nulls[4] = false;
+	
+	if (xml_data == NULL)
+	{
+		nulls[5] = true;
+		values[5] = (Datum)0;
+	}
+	else
+	{
+		values[5] = PointerGetDatum(xml_data);
+	}
+	
+	/* For namespace data */
+	if (!nulls[6])
+	{
+		values[6] = PointerGetDatum(ns_data);
+	}
+	else
+	{
+		values[6] = (Datum)0;
+	}
+	tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
+
+	sql_dialect = SQL_DIALECT_TSQL;
+	
+	PG_TRY();
+	{
+		/* Insert the entries into the table */
+		simple_heap_insert(relation, tuple);
+		CommandCounterIncrement();
+
+		/*
+		* Switch to TopMemoryContext to ensure the bitmap set persists across transactions.
+		* This prevents the bitmap set from being freed when the current memory context
+		* is reset, which would cause the handles to be lost and potentially reused.
+		*/
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		active_xml_handles_counter = bms_add_member(active_xml_handles_counter, handle_counter);
+		MemoryContextSwitchTo(oldContext);
+	}
+	PG_FINALLY();
+	{
+		sql_dialect = saved_dialect;
+	}
+	PG_END_TRY();
+		
+	heap_freetuple(tuple);
+	
+	relation_close(relation, NoLock);
+	
+	return document_id;
+}
+
+/*
+ * delete_xml_handle_entry - Removes an XML document from the xml handle temp table.
+ *
+ * This function deletes an XML document entry from the temporary handle table
+ * based on its document_id. It also releases the associated handle by removing
+ * it from the active_xml_handles bitmap set, making the handle available for
+ * reuse. This is typically called by sp_xml_removedocument to clean up XML
+ * documents when they are no longer needed.
+ */
+void 
+delete_xml_handle_entry(int document_id)
+{
+	Relation               relation;
+	ScanKeyData            skey[1];
+	SysScanDesc            scan;
+	HeapTuple              tuple;
+	bool                   found = false;
+	int                    curr_handle_counter;
+	int                    saved_dialect = sql_dialect;
+	MemoryContext          oldContext = NULL;
+	bool                   table_exists = false;
+	EphemeralNamedRelation enr = NULL;
+	
+	/* Check for negative & zero document ID */
+	if (document_id < 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	}
+
+	if (document_id == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("sp_xml_removedocument: The value supplied for parameter number 1 is invalid.")));
+	}
+
+	/* Calculate the handle counter */
+	curr_handle_counter = (document_id + 1) / 2;
+
+	/* Check if the handle is still active */
+	if (!bms_is_member(curr_handle_counter, active_xml_handles_counter))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	}
+
+	/* Check if the table exists using ENR lookup by name */
+	if (xml_handle_temp_table_name != NULL)
+	{
+		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+		if (enr)
+		{
+			relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+			table_exists = true;
+		}
+	}
+
+	if (!table_exists)
+	{
+		/* Table doesn't exist, so the handle definitely doesn't exist */
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	}
+
+	ScanKeyInit(&skey[0],
+				1,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(document_id));
+	
+
+	scan = systable_beginscan(relation, InvalidOid, false, NULL, 1, skey);
+	tuple = systable_getnext(scan);
+	
+	/* Find and delete the tuple */
+	if (HeapTupleIsValid(tuple))
+	{
+		sql_dialect = SQL_DIALECT_TSQL;
+		 
+		PG_TRY();
+		{
+			simple_heap_delete(relation, &tuple->t_self);
+			CommandCounterIncrement();
+			oldContext = MemoryContextSwitchTo(TopMemoryContext);
+			active_xml_handles_counter = bms_del_member(active_xml_handles_counter, curr_handle_counter);
+			MemoryContextSwitchTo(oldContext);
+		}
+		PG_FINALLY();
+		{
+			sql_dialect = saved_dialect;
+		}
+		PG_END_TRY();
+		
+		found = true;
+	}
+	
+	systable_endscan(scan);
+	relation_close(relation, NoLock);
+	
+	/* If we didn't find the handle or couldn't delete it, throw an error */
+	if (!found)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	}
+}
+
+/*
+ * reset_cached_xml_handle:
+ *        Cleans up all the stale states and resets the xml handles.
+ *        This function should be called when a connection is reset or terminated.
+ */
+void
+reset_cached_xml_handle()
+{
+	/* Reset active handles bitmap */
+	bms_free(active_xml_handles_counter);
+	active_xml_handles_counter = NULL;
+
+	/* Reset xml handles */
+	current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID;
+
+	/* Reset the table name */
+	xml_handle_temp_table_name = NULL;
+
+	/* Reset the query environment */
+	pltsql_remove_current_query_env();
+}
+
+Datum
+sp_xml_preparedocument(PG_FUNCTION_ARGS)
+{
+	char            *xml_text = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char            *xpath_namespaces = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
+	bool             is_xml_text_well_formed;
+	bool             is_xpath_namespaces_well_formed;
+	xmltype         *xml_data;
+	xmltype         *ns_data;
+	int              document_id;
+	int              xml_data_length = xml_text == NULL ? 0 : strlen(xml_text);
+	int              ns_data_length  = xpath_namespaces == NULL ? 0 : strlen(xpath_namespaces);
+
+	HeapTuple        tuple;
+	HeapTupleHeader  result;
+	TupleDesc        tupdesc;
+	bool             isnull = false;
+	Datum            values[1];
+
+	/* Validating the given xml text string & Handle NULL case */
+	if (xml_data_length == 0)
+	{
+		xml_data = NULL;
+	}
+	else
+	{
+		is_xml_text_well_formed = DatumGetBool(DirectFunctionCall1(xml_is_well_formed_document, PG_GETARG_DATUM(1)));
+	
+		if (is_xml_text_well_formed)
+		{
+			xml_data = (xmltype *) PG_GETARG_DATUM(1);
+		}
+		else
+		{
+			ereport(ERROR, 
+				   (errcode(ERRCODE_INVALID_XML_DOCUMENT),
+					errmsg("The XML input is not well-formed.")));
+		}
+	}
+	
+	/* Validating the given namespaces & Handle NULL case */
+	if (ns_data_length == 0) 
+	{
+		ns_data = NULL;
+	}
+	else
+	{
+		is_xpath_namespaces_well_formed = DatumGetBool(DirectFunctionCall1(xml_is_well_formed_document, PG_GETARG_DATUM(2)));
+	
+		if (is_xpath_namespaces_well_formed)
+		{
+			ns_data = (xmltype *) PG_GETARG_DATUM(2);
+		}
+		else
+		{
+			ereport(ERROR, 
+					(errcode(ERRCODE_INVALID_XML_DOCUMENT),
+					 errmsg("The XPath namespace declarations are not well-formed.")));
+		}
+	}
+	
+	/* Insert the entries into temporary table and return the document_id */
+	document_id = insert_xml_handle_entry(xml_data, ns_data, xml_data_length, ns_data_length);
+	 
+	/* Return back the handle */
+	tupdesc = CreateTemplateTupleDesc(1);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "document_id", INT4OID, -1, 0);
+	tupdesc = BlessTupleDesc(tupdesc);
+	values[0] = Int32GetDatum(document_id);
+	tuple = heap_form_tuple(tupdesc, values, &isnull);
+
+	result = (HeapTupleHeader) palloc(tuple->t_len);
+	memcpy(result, tuple->t_data, tuple->t_len);
+
+	heap_freetuple(tuple);
+	ReleaseTupleDesc(tupdesc);
+
+	PG_RETURN_HEAPTUPLEHEADER(result);
+}
+
+Datum
+sp_xml_removedocument(PG_FUNCTION_ARGS)
+{
+	int doc_handle;
+	
+	/* Check if document handle argument is NULL */
+	if (PG_ARGISNULL(0))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("sp_xml_removedocument: The value supplied for parameter number 1 is invalid.")));
+	}
+
+	/* Get the document handle */
+	doc_handle = PG_GETARG_INT32(0);
+
+	/* Remove the entry from the temporary table */
+	delete_xml_handle_entry(doc_handle);
 
 	PG_RETURN_VOID();
 }

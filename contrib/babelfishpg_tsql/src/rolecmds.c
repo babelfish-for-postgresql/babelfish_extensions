@@ -19,6 +19,7 @@
 #include "access/xact.h"
 #include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
+#include "catalog/pg_shdepend.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
@@ -58,6 +59,7 @@
 #include "pltsql.h"
 #include "dbcmds.h"
 #include "utils/guc.h"
+#include "catalog/pg_default_acl.h"
 
 #include <ctype.h>
 
@@ -3312,4 +3314,128 @@ drop_db_owner_related_roles(Oid roleid, const char* rolname)
 		pfree(query.data);
 		pfree(obj_rolname);
 	}
+}
+
+/* 
+ * Function bbf_shdep_drop_owned_dependent_acl() is being forked from pg function shdepDropOwned()
+ * Check if the object is grantor of any permission, if yes then do not allow to drop the user.
+ * If not grantor, revoke the permissions from an object present in Dependent ACL list within the same database.
+ */
+void
+bbf_shdep_drop_owned_dependent_acl(Oid roleid, DropBehavior behavior)
+{
+	Relation			sdepRel;
+	ScanKeyData 		key[2];
+	SysScanDesc 		scan;
+	HeapTuple			tuple;
+	bool				user_is_grantor = false;
+
+	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
+
+	/* Doesn't work for pinned objects */
+	if (IsPinnedObject(AuthIdRelationId, roleid))
+	{
+		ObjectAddress obj;
+		obj.classId = AuthIdRelationId;
+		obj.objectId = roleid;
+		obj.objectSubId = 0;
+		ereport(ERROR,
+				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+				 errmsg("cannot drop objects owned by %s because they are "
+						"required by the database system",
+						getObjectDescription(&obj, false))));
+	}
+
+	ScanKeyInit(&key[0],
+				Anum_pg_shdepend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(AuthIdRelationId));
+
+	ScanKeyInit(&key[1],
+				Anum_pg_shdepend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleid));
+
+	scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
+							  NULL, 2, key);
+
+	while ((tuple = systable_getnext(scan)) != NULL)
+	{
+		Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tuple);
+		/*
+		 * We only operate on shared objects and objects in the current
+		 * database
+		 */
+		if (sdepForm->dbid != MyDatabaseId &&
+			sdepForm->dbid != InvalidOid)
+			break;
+
+		if (sdepForm->deptype != SHARED_DEPENDENCY_ACL)
+			break;
+
+		/*
+			* Dependencies on role grants are recorded using
+			* SHARED_DEPENDENCY_ACL, but unlike a regular ACL list
+			* which stores all permissions for a particular object in
+			* a single ACL array, there's a separate catalog row for
+			* each grant - so removing the grant just means removing
+			* the entire row.
+			*/
+		if (sdepForm->classid != AuthMemRelationId)
+		{
+
+			if (sdepForm->classid != DefaultAclRelationId)
+			{
+				HeapTuple		tup;
+				bool			isNull;
+				Datum			aclDatum;
+				Acl				*old_acl = NULL;
+				Oid relOid =	sdepForm->objid;
+				int cacheid =	get_object_catcache_oid(sdepForm->classid);
+
+				tup = SearchSysCache1(cacheid, ObjectIdGetDatum(relOid));
+				if (!HeapTupleIsValid(tuple))
+					elog(ERROR, "cache lookup failed for relation %u", relOid);
+
+				aclDatum = SysCacheGetAttr(cacheid, tup, get_object_attnum_acl(sdepForm->classid),
+										&isNull);
+				if (!isNull)
+				{
+					/* 
+						* Check if the current user is grantor for any permission in current object acl
+						* If yes then do not allow to drop the user
+						*/
+					const AclItem *acldat;
+					old_acl = DatumGetAclPCopy(aclDatum);
+					acldat = ACL_DAT(old_acl);
+
+					for (int i = 0; i < ACL_NUM(old_acl); i++)
+					{
+						const AclItem *ai = &acldat[i];
+
+						/* no need to remove if grantor */
+						if (ai->ai_grantor == roleid)
+							user_is_grantor = true;
+					}
+				}
+
+				ReleaseSysCache(tup);
+				if (!old_acl)
+					pfree(old_acl);
+			}
+			if (!user_is_grantor)
+			{
+				RemoveRoleFromObjectACL(roleid,
+										sdepForm->classid,
+										sdepForm->objid);
+			}
+		}
+	}
+
+	/* Update the catalog after deleting the user if user is not grantor. */
+	if (!user_is_grantor)
+		remove_user_entry_from_bbf_schema_perms(roleid);
+
+	systable_endscan(scan);
+	table_close(sdepRel, RowExclusiveLock);
 }

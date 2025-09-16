@@ -100,17 +100,17 @@ GO
 
 SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'agg_testing_table_avg';
+WHERE TABLE_NAME = 'agg_testing_table_avg' order by COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-agg_testing_table_avg#!#col_tinyint#!#numeric#!#14#!#2
-agg_testing_table_avg#!#col_smallint#!#numeric#!#14#!#2
-agg_testing_table_avg#!#col_int#!#numeric#!#14#!#2
 agg_testing_table_avg#!#col_bigint#!#numeric#!#23#!#2
-agg_testing_table_avg#!#col_numeric#!#numeric#!#38#!#6
+agg_testing_table_avg#!#col_int#!#numeric#!#14#!#2
 agg_testing_table_avg#!#col_money#!#numeric#!#23#!#6
+agg_testing_table_avg#!#col_numeric#!#numeric#!#38#!#6
+agg_testing_table_avg#!#col_smallint#!#numeric#!#14#!#2
 agg_testing_table_avg#!#col_smallmoney#!#numeric#!#23#!#6
+agg_testing_table_avg#!#col_tinyint#!#numeric#!#14#!#2
 ~~END~~
 
 
@@ -188,17 +188,17 @@ GO
 
 SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'agg_testing_table_count';
+WHERE TABLE_NAME = 'agg_testing_table_count' order by COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-agg_testing_table_count#!#col_tinyint#!#numeric#!#14#!#2
-agg_testing_table_count#!#col_smallint#!#numeric#!#14#!#2
-agg_testing_table_count#!#col_int#!#numeric#!#14#!#2
 agg_testing_table_count#!#col_bigint#!#numeric#!#14#!#2
-agg_testing_table_count#!#col_numeric#!#numeric#!#14#!#2
+agg_testing_table_count#!#col_int#!#numeric#!#14#!#2
 agg_testing_table_count#!#col_money#!#numeric#!#14#!#2
+agg_testing_table_count#!#col_numeric#!#numeric#!#14#!#2
+agg_testing_table_count#!#col_smallint#!#numeric#!#14#!#2
 agg_testing_table_count#!#col_smallmoney#!#numeric#!#14#!#2
+agg_testing_table_count#!#col_tinyint#!#numeric#!#14#!#2
 ~~END~~
 
 
@@ -231,12 +231,12 @@ GO
 
 SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'agg_testing_table_count_star';
+WHERE TABLE_NAME = 'agg_testing_table_count_star' order by COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-agg_testing_table_count_star#!#col_star#!#numeric#!#14#!#2
 agg_testing_table_count_star#!#col_one#!#numeric#!#14#!#2
+agg_testing_table_count_star#!#col_star#!#numeric#!#14#!#2
 ~~END~~
 
 
@@ -314,17 +314,17 @@ GO
 
 SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'agg_testing_table_count_big';
+WHERE TABLE_NAME = 'agg_testing_table_count_big' order by COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-agg_testing_table_count_big#!#col_tinyint#!#numeric#!#23#!#2
-agg_testing_table_count_big#!#col_smallint#!#numeric#!#23#!#2
-agg_testing_table_count_big#!#col_int#!#numeric#!#23#!#2
 agg_testing_table_count_big#!#col_bigint#!#numeric#!#23#!#2
-agg_testing_table_count_big#!#col_numeric#!#numeric#!#23#!#2
+agg_testing_table_count_big#!#col_int#!#numeric#!#23#!#2
 agg_testing_table_count_big#!#col_money#!#numeric#!#23#!#2
+agg_testing_table_count_big#!#col_numeric#!#numeric#!#23#!#2
+agg_testing_table_count_big#!#col_smallint#!#numeric#!#23#!#2
 agg_testing_table_count_big#!#col_smallmoney#!#numeric#!#23#!#2
+agg_testing_table_count_big#!#col_tinyint#!#numeric#!#23#!#2
 ~~END~~
 
 
@@ -357,12 +357,12 @@ GO
 
 SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'agg_testing_table_count_big_star';
+WHERE TABLE_NAME = 'agg_testing_table_count_big_star' order by COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-agg_testing_table_count_big_star#!#col_star#!#numeric#!#23#!#2
 agg_testing_table_count_big_star#!#col_one#!#numeric#!#23#!#2
+agg_testing_table_count_big_star#!#col_star#!#numeric#!#23#!#2
 ~~END~~
 
 
@@ -449,17 +449,17 @@ GO
 
 SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'agg_testing_table_sum';
+WHERE TABLE_NAME = 'agg_testing_table_sum' order by COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-agg_testing_table_sum#!#col_tinyint#!#numeric#!#14#!#2
-agg_testing_table_sum#!#col_smallint#!#numeric#!#14#!#2
-agg_testing_table_sum#!#col_int#!#numeric#!#14#!#2
 agg_testing_table_sum#!#col_bigint#!#numeric#!#23#!#2
-agg_testing_table_sum#!#col_numeric#!#numeric#!#38#!#6
+agg_testing_table_sum#!#col_int#!#numeric#!#14#!#2
 agg_testing_table_sum#!#col_money#!#numeric#!#23#!#6
+agg_testing_table_sum#!#col_numeric#!#numeric#!#38#!#6
+agg_testing_table_sum#!#col_smallint#!#numeric#!#14#!#2
 agg_testing_table_sum#!#col_smallmoney#!#numeric#!#23#!#6
+agg_testing_table_sum#!#col_tinyint#!#numeric#!#14#!#2
 ~~END~~
 
 
@@ -546,17 +546,17 @@ GO
 
 SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'agg_testing_table_max';
+WHERE TABLE_NAME = 'agg_testing_table_max' order by COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-agg_testing_table_max#!#col_tinyint#!#numeric#!#7#!#2
-agg_testing_table_max#!#col_smallint#!#numeric#!#9#!#2
-agg_testing_table_max#!#col_int#!#numeric#!#14#!#2
 agg_testing_table_max#!#col_bigint#!#numeric#!#23#!#2
-agg_testing_table_max#!#col_numeric#!#numeric#!#19#!#7
+agg_testing_table_max#!#col_int#!#numeric#!#14#!#2
 agg_testing_table_max#!#col_money#!#numeric#!#23#!#6
+agg_testing_table_max#!#col_numeric#!#numeric#!#19#!#7
+agg_testing_table_max#!#col_smallint#!#numeric#!#9#!#2
 agg_testing_table_max#!#col_smallmoney#!#numeric#!#14#!#6
+agg_testing_table_max#!#col_tinyint#!#numeric#!#7#!#2
 ~~END~~
 
 
@@ -643,17 +643,17 @@ GO
 
 SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'agg_testing_table_min';
+WHERE TABLE_NAME = 'agg_testing_table_min' order by COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-agg_testing_table_min#!#col_tinyint#!#numeric#!#7#!#2
-agg_testing_table_min#!#col_smallint#!#numeric#!#9#!#2
-agg_testing_table_min#!#col_int#!#numeric#!#14#!#2
 agg_testing_table_min#!#col_bigint#!#numeric#!#23#!#2
-agg_testing_table_min#!#col_numeric#!#numeric#!#19#!#7
+agg_testing_table_min#!#col_int#!#numeric#!#14#!#2
 agg_testing_table_min#!#col_money#!#numeric#!#23#!#6
+agg_testing_table_min#!#col_numeric#!#numeric#!#19#!#7
+agg_testing_table_min#!#col_smallint#!#numeric#!#9#!#2
 agg_testing_table_min#!#col_smallmoney#!#numeric#!#14#!#6
+agg_testing_table_min#!#col_tinyint#!#numeric#!#7#!#2
 ~~END~~
 
 

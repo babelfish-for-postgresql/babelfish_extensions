@@ -161,7 +161,7 @@ ORDER BY id;
 GO
 
 -- BASIC UPGRADE TESTING
-CREATE TABLE datetime_test ( id SERIAL PRIMARY KEY, date_time1 datetime NOT NULL, date_time2 datetime NOT NULL);
+CREATE TABLE datetime_test ( id INT IDENTITY(1,1) PRIMARY KEY, date_time1 datetime NOT NULL, date_time2 datetime NOT NULL);
 INSERT INTO datetime_test (date_time1, date_time2)  VALUES ('2014-03-12 12:00:34.466', '2010-03-04 12:55:41.149');
 INSERT INTO datetime_test (date_time1, date_time2)  VALUES ('2014-03-12 12:00:34.467', '2010-03-04 12:55:41.150');
 GO

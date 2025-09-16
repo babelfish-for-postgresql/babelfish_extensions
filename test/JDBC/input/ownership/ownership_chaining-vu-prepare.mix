@@ -1,0 +1,510 @@
+-- tsql
+create login l3014_1 with password='12345678';
+go
+
+create user l3014_1;
+go
+
+-- create following objects in [schema]dbo [owner]dbo
+create table t3014_1(a int);
+go
+
+create table t3014_2(a int);
+go
+
+create view v3014_a as select * from t3014_1;
+go
+
+create view v3014_b as select * from v3014_a;
+go
+
+create function f3014_a() returns int as begin return 1 end;
+go
+
+-- setup another object owner and objects owned by it
+create login l3014_2 with password='12345678';
+go
+
+create user owner3014_b for login l3014_2;
+go
+
+create schema sch3014_b authorization owner3014_b;
+go
+
+-- create following objects in [schema]schema3014_b [owner]owner3014_b
+create table sch3014_b.t3014_1(a int);
+go
+
+create table sch3014_b.t3014_2(a int);
+go
+
+create view sch3014_b.v3014_a as select * from sch3014_b.t3014_1;
+go
+
+create view sch3014_b.v3014_b as select * from sch3014_b.v3014_a;
+go
+
+create function sch3014_b.f3014_a() returns int as begin return 1 end;
+go
+
+-- setup owner3014_c
+create login l3014_3 with password='12345678';
+go
+
+create user owner3014_c for login l3014_3;
+go
+
+create schema sch3014_c authorization owner3014_c;
+go
+
+-- create following objects in [schema]schema3014_b [owner]owner3014_b
+create table sch3014_c.t3014_1(a int);
+go
+
+create table sch3014_c.t3014_2(a int);
+go
+
+create view sch3014_c.v3014_a as select * from sch3014_c.t3014_1;
+go
+
+create view sch3014_c.v3014_b as select * from sch3014_c.v3014_a;
+go
+
+create function sch3014_c.f3014_a() returns int as begin return 1 end;
+go
+
+-- CASE 1 Simple Table/View references inside views
+-- CASE 1.1 view referring table
+create view v3014_1_1 as select * from t3014_1;
+go
+
+-- CASE 1.2 View referring multiple table joined 
+create view v3014_1_2 as select t3014_1.a as a , t3014_2.a as b from t3014_1, t3014_2;
+go
+
+-- CASE 1.3 nesting case - one-level
+create view v3014_1_3 as select * from v3014_a;
+go
+
+-- CASE 1.4 nesting case - two-level
+create view v3014_1_4 as select * from v3014_b;
+go
+
+
+-- CASE 2 Subquery/CTE inside views
+-- CASE 2.1: Subquery in SELECT clause
+create view v3014_2_1 as select t3014_1.a, (SELECT TOP 1 a FROM t3014_2 b2 WHERE b2.a = t3014_1.a) AS subquery_data FROM t3014_1;
+go
+
+-- CASE 2.2: Subquery in WHERE clause
+create view v3014_2_2 as SELECT * FROM t3014_1 t1 WHERE t1.a IN (SELECT a FROM t3014_2 WHERE a > 1);
+go
+
+-- CASE 2.3: Subquery in FROM clause
+create view v3014_2_3 as SELECT sq.* FROM (SELECT t1.a, t2.a as a2 FROM t3014_1 t1 LEFT JOIN t3014_2 t2 ON t1.a = t2.a) sq;
+go
+
+-- CASE 2.4: Correlated subquery in WHERE
+create view v3014_2_4 as SELECT * FROM t3014_1 t1 WHERE EXISTS (SELECT 1 FROM t3014_2 t2 WHERE t2.a = t1.a);
+go
+
+-- CASE 2.5: Multiple nested subqueries
+create view v3014_2_5 as SELECT * FROM t3014_1 t1 WHERE a IN (SELECT a FROM t3014_2 WHERE a IN (SELECT a FROM t3014_1 WHERE a < 3));
+go
+
+-- CASE 2.6: Subquery with function (negative test)
+create view v3014_2_6 as SELECT t1.*, (SELECT f3014_a()) as func_result FROM t3014_1 t1;
+go
+
+-- CASE 2.7: Subquery in HAVING clause
+create view v3014_2_7 as SELECT t1.a, COUNT(*) as cnt FROM t3014_1 t1 GROUP BY t1.a HAVING COUNT(*) > (SELECT COUNT(*)/2 FROM t3014_2);
+go
+
+-- CASE 2.8: Subquery with set operations
+create view v3014_2_8 as SELECT * FROM (SELECT a FROM t3014_1 UNION SELECT a FROM t3014_2) AS combined WHERE a IN (SELECT a FROM t3014_1);
+go
+
+-- CASE 2.9: Simple CTE
+CREATE VIEW v3014_2_9 AS WITH cte AS (SELECT * FROM t3014_1) SELECT * FROM cte;
+GO
+
+-- CASE 2.10: CTE with JOIN
+CREATE VIEW v3014_2_10 AS WITH cte AS (SELECT t1.a, t2.a as b FROM t3014_1 t1 JOIN t3014_2 t2 ON t1.a = t2.a) SELECT * FROM cte;
+GO
+
+-- CASE 2.11: Nested CTEs
+CREATE VIEW v3014_2_11 AS WITH cte1 AS (SELECT * FROM t3014_1), cte2 AS (SELECT * FROM cte1 WHERE a > 1) SELECT * FROM cte2;
+GO
+
+-- CASE 2.12: CTE with subquery
+CREATE VIEW v3014_2_12 AS WITH cte AS (SELECT * FROM t3014_1 WHERE a IN (SELECT a FROM t3014_2)) SELECT * FROM cte;
+GO
+
+-- CASE 2.13: Subquery in CASE expression
+CREATE VIEW v3014_2_13 AS 
+SELECT a,
+    CASE (SELECT SUM(a) FROM t3014_2 b2 WHERE b2.a = t3014_1.a)
+        WHEN 1 THEN 'One'
+        WHEN 2 THEN 'Two'
+        WHEN 3 THEN 'Three'
+        ELSE 'Other'
+    END AS sum_case
+FROM t3014_1;
+GO
+
+-- CASE 2.14: EXISTS and NOT EXISTS subqueries in WHERE clause
+CREATE VIEW v3014_2_14 AS 
+SELECT t1.a,
+       CASE 
+           WHEN EXISTS (SELECT 1 FROM t3014_2 t2 WHERE t2.a = t1.a AND t2.a > 5) THEN 'Exists'
+           WHEN NOT EXISTS (SELECT 1 FROM t3014_2 t2 WHERE t2.a = t1.a AND t2.a <= 5) THEN 'Not Exists'
+           ELSE 'Neither'
+       END AS existence_check
+FROM t3014_1 t1;
+GO
+
+-- CASE 3 function/procedure references (negative tests)
+-- setup
+create function f3014_1() returns int as begin return 1 end;
+go
+
+CREATE FUNCTION f3014_2() RETURNS @t TABLE (n INT) AS BEGIN INSERT INTO @t SELECT 2 UNION SELECT 4 UNION SELECT 6; RETURN; END;
+go
+
+create function f3014_3() RETURNS INT AS BEGIN RETURN f3014_1() * 2; END;
+go
+
+create function f3014_4() RETURNS INT AS BEGIN RETURN (SELECT 1 FROM t3014_1 WHERE a = 1); END;
+go
+
+create function f3014_5() RETURNS TABLE AS RETURN (SELECT n = 1);
+go
+
+-- CASE 3.1: Views with scalar function references
+create view v3014_3_1 as select f3014_1();
+go
+
+-- CASE 3.2: Views with table-valued function references
+create view v3014_3_2 as select * from f3014_2();
+go
+
+-- CASE 3.3: Views with multiple function references
+create view v3014_3_3 as select f3014_1() from f3014_2();
+go
+
+-- CASE 3.4: Views with table-returning function
+create view v3014_3_4 as select f3014_5();
+go
+
+-- CASE 3.5: Views with nested function calls
+create view v3014_3_5 as select f3014_3();
+go
+
+-- CASE 3.6: Views with function accessing tables
+create view v3014_3_6 as select f3014_4();
+go
+
+-- CASE 4: Negative cases where owners are different
+-- CASE 4.1: View in dbo schema referencing table in sch3014_b
+CREATE VIEW v3014_4_1 AS SELECT * FROM sch3014_b.t3014_1;
+GO
+
+-- CASE 4.2: View in sch3014_b referencing table in dbo schema
+CREATE VIEW sch3014_b.v3014_4_2 AS SELECT * FROM dbo.t3014_1;
+GO
+
+-- CASE 4.3: View in dbo schema referencing view in sch3014_b
+CREATE VIEW v3014_4_3 AS SELECT * FROM sch3014_b.v3014_a;
+GO
+
+-- CASE 4.4: View in sch3014_b referencing view in dbo schema
+CREATE VIEW sch3014_b.v3014_4_4 AS SELECT * FROM dbo.v3014_a;
+GO
+
+-- CASE 4.5: View in dbo schema with subquery referencing table in sch3014_b
+CREATE VIEW v3014_4_5 AS SELECT * FROM t3014_1 WHERE a IN (SELECT a FROM sch3014_b.t3014_2);
+GO
+
+-- CASE 4.6: View in sch3014_b with subquery referencing table in dbo schema
+CREATE VIEW sch3014_b.v3014_4_6 AS SELECT * FROM sch3014_b.t3014_1 WHERE a IN (SELECT a FROM dbo.t3014_2);
+GO
+
+-- CASE 4.7: View in dbo schema referencing tables from both dbo and sch3014_b
+CREATE VIEW v3014_4_7 AS SELECT t1.a, t2.a AS b FROM t3014_1 t1 JOIN sch3014_b.t3014_2 t2 ON t1.a = t2.a;
+GO
+
+-- CASE 4.8: View in sch3014_b referencing tables from both sch3014_b and sch3014_c
+CREATE VIEW sch3014_b.v3014_4_8 AS SELECT t1.a, t2.a AS b FROM sch3014_b.t3014_1 t1 JOIN sch3014_c.t3014_2 t2 ON t1.a = t2.a;
+GO
+
+-- CASE 5: Multi-level ownership chaining scenarios
+-- CASE 5.1: Three-level chaining (all same owner - dbo, should succeed due to complete ownership chain)
+CREATE VIEW v3014_5_1a AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_5_1b AS SELECT * FROM v3014_5_1a;
+GO
+CREATE VIEW v3014_5_1c AS SELECT * FROM v3014_5_1b;
+GO
+
+-- CASE 5.2: Three-level mixed ownership (dbo -> sch3014_b -> dbo, should fail due to broken ownership chain at sch3014_b level)
+CREATE VIEW v3014_5_2a AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW sch3014_b.v3014_5_2b AS SELECT * FROM dbo.v3014_5_2a;
+GO
+CREATE VIEW v3014_5_2c AS SELECT * FROM sch3014_b.v3014_5_2b;
+GO
+
+-- CASE 5.3: Three-level mixed ownership with joins (dbo -> sch3014_b -> sch3014_c, should fail due to multiple broken ownership chains)
+CREATE VIEW v3014_5_3a AS SELECT t1.a, t2.a as b FROM t3014_1 t1, t3014_2 t2;
+GO
+CREATE VIEW sch3014_b.v3014_5_3b AS SELECT a.*, b.a as c FROM dbo.v3014_5_3a a JOIN sch3014_b.t3014_1 b ON a.a = b.a;
+GO
+CREATE VIEW sch3014_c.v3014_5_3c AS SELECT b.*, c.a as d FROM sch3014_b.v3014_5_3b b JOIN sch3014_c.t3014_1 c ON b.a = c.a;
+GO
+
+-- CASE 5.4: Three-level with subqueries (all dbo, should succeed due to complete ownership chain)
+CREATE VIEW v3014_5_4a AS SELECT a, (SELECT TOP 1 a FROM t3014_2 WHERE a > t1.a) as sub_a FROM t3014_1 t1;
+GO
+CREATE VIEW v3014_5_4b AS SELECT * FROM v3014_5_4a a WHERE EXISTS (SELECT 1 FROM t3014_2 WHERE a = a.a);
+GO
+CREATE VIEW v3014_5_4c AS SELECT * FROM v3014_5_4b WHERE sub_a IN (SELECT a FROM t3014_1);
+GO
+
+-- CASE 5.5: Three-level mixed ownership with subqueries (dbo -> sch3014_b -> sch3014_c, should fail due to broken ownership chains)
+CREATE VIEW v3014_5_5a AS SELECT * FROM t3014_1 WHERE a IN (SELECT a FROM t3014_2);
+GO
+CREATE VIEW sch3014_b.v3014_5_5b AS SELECT * FROM dbo.v3014_5_5a WHERE a IN (SELECT a FROM sch3014_b.t3014_1);
+GO
+CREATE VIEW sch3014_c.v3014_5_5c AS SELECT * FROM sch3014_b.v3014_5_5b WHERE a IN (SELECT a FROM sch3014_c.t3014_1);
+GO
+
+-- CASE 6: Cross-database ownership chain should be disabled
+-- Setup test database and objects
+CREATE DATABASE db3014;
+GO
+USE db3014;
+GO
+CREATE USER l3014_1;
+GO
+CREATE TABLE t3014_cross_db(a int);
+GO
+USE master;
+GO
+
+-- CASE 6.1: View in current database referencing table in another database (should fail)
+CREATE VIEW v3014_6_1 AS SELECT * FROM db3014.dbo.t3014_cross_db;
+GO
+
+-- CASE 6.2: View in another database referencing table in current database (should fail)
+USE db3014;
+GO
+CREATE VIEW v3014_6_2 AS SELECT * FROM master.dbo.t3014_1;
+GO
+USE master;
+GO
+
+-- CASE 6.3: View with subquery referencing cross-database table (should fail)
+CREATE VIEW v3014_6_3 AS SELECT * FROM t3014_1 WHERE a IN (SELECT a FROM db3014.dbo.t3014_cross_db);
+GO
+
+-- CASE 6.4: View with join to cross-database table (should fail)
+CREATE VIEW v3014_6_4 AS SELECT t1.a, t2.a as cross_db_a FROM t3014_1 t1 JOIN db3014.dbo.t3014_cross_db t2 ON t1.a = t2.a;
+GO
+
+-- CASE 7: Prep-Exec, Parametrized Query, Dynamic SQL cases
+CREATE VIEW v3014_7_1 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_7_2 AS SELECT t1.a, t2.a as b FROM t3014_1 t1 JOIN t3014_2 t2 ON t1.a = t2.a;
+GO
+CREATE VIEW v3014_7_3 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_7_4 AS SELECT * FROM t3014_1;
+GO
+
+-- CASE 8: DML-only ownership chaining
+CREATE VIEW v3014_8_1 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_8_2 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_8_3 AS SELECT * FROM t3014_1;
+GO
+CREATE VIEW v3014_8_4 AS SELECT * FROM t3014_1;
+GO
+
+-- CASE 9: Trigger ownership chaining scenarios
+-- Base tables for triggers
+CREATE TABLE t3014_9_1 (a INT);
+GO
+CREATE TABLE t3014_9_2 (a INT);
+GO
+CREATE TABLE sch3014_b.t3014_9_3 (a INT);  -- In schema owned by owner3014_b
+GO
+CREATE TABLE t3014_9_4 (a INT);
+GO
+CREATE TABLE t3014_9_5 (a INT);
+GO
+CREATE TABLE t3014_9_6 (a INT);
+GO
+CREATE TABLE t3014_9_7 (a INT);
+GO
+CREATE TABLE t3014_9_8 (a INT);
+GO
+
+-- CASE 9.1: AFTER INSERT trigger with same owner
+CREATE VIEW v3014_9_1 AS SELECT * FROM t3014_9_1;
+GO
+CREATE TRIGGER tr3014_9_1 ON t3014_9_1 AFTER INSERT AS
+    INSERT INTO t3014_9_2 SELECT a FROM inserted;
+GO
+
+-- CASE 9.2: AFTER UPDATE trigger with different owner (using schema ownership)
+CREATE VIEW v3014_9_2 AS SELECT * FROM sch3014_b.t3014_9_3;
+GO
+CREATE TRIGGER sch3014_b.tr3014_9_2 ON sch3014_b.t3014_9_3 AFTER UPDATE AS
+    INSERT INTO t3014_9_4 SELECT a FROM inserted;
+GO
+
+-- CASE 9.3: INSTEAD OF trigger same owner
+CREATE VIEW v3014_9_3 AS SELECT * FROM t3014_9_5;
+GO
+CREATE TRIGGER tr3014_9_3 ON v3014_9_3 INSTEAD OF INSERT AS
+    INSERT INTO t3014_9_5 SELECT a FROM inserted;
+GO
+
+-- CASE 9.4: Nested triggers same owner
+CREATE VIEW v3014_9_4 AS SELECT * FROM t3014_9_6;
+GO
+CREATE TRIGGER tr3014_9_4 ON t3014_9_6 AFTER DELETE AS
+    INSERT INTO t3014_9_7 SELECT a FROM deleted;
+GO
+CREATE TRIGGER tr3014_9_5 ON t3014_9_7 AFTER INSERT AS
+    INSERT INTO t3014_9_8 SELECT a FROM inserted;
+GO
+
+-- Grants for CASE 1 views
+grant select on v3014_1_1 to l3014_1;
+go
+grant select on v3014_1_2 to l3014_1;
+go
+grant select on v3014_1_4 to l3014_1;
+go
+
+-- Grants for CASE 2 views
+grant select on v3014_2_1 to l3014_1;
+go
+grant select on v3014_2_2 to l3014_1;
+go
+grant select on v3014_2_3 to l3014_1;
+go
+grant select on v3014_2_4 to l3014_1;
+go
+grant select on v3014_2_5 to l3014_1;
+go
+grant select on v3014_2_6 to l3014_1;
+go
+grant select on v3014_2_7 to l3014_1;
+go
+grant select on v3014_2_8 to l3014_1;
+go
+GRANT SELECT ON v3014_2_9 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_10 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_11 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_12 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_13 TO l3014_1;
+GO
+GRANT SELECT ON v3014_2_14 TO l3014_1;
+GO
+
+-- Grants for CASE 3 views
+grant select on v3014_3_1 to l3014_1;
+go
+grant select on v3014_3_2 to l3014_1;
+go
+grant select on v3014_3_3 to l3014_1;
+go
+grant select on v3014_3_4 to l3014_1;
+go
+grant select on v3014_3_5 to l3014_1;
+go
+grant select on v3014_3_6 to l3014_1;
+go
+
+-- Grants for CASE 4 views
+GRANT SELECT ON v3014_4_1 TO l3014_1;
+GO
+GRANT SELECT ON sch3014_b.v3014_4_2 TO l3014_1;
+GO
+GRANT SELECT ON v3014_4_3 TO l3014_1;
+GO
+GRANT SELECT ON sch3014_b.v3014_4_4 TO l3014_1;
+GO
+GRANT SELECT ON v3014_4_5 TO l3014_1;
+GO
+GRANT SELECT ON sch3014_b.v3014_4_6 TO l3014_1;
+GO
+GRANT SELECT ON v3014_4_7 TO l3014_1;
+GO
+GRANT SELECT ON sch3014_b.v3014_4_8 TO l3014_1;
+GO
+
+-- Grants for CASE 5 views
+GRANT SELECT ON v3014_5_1c TO l3014_1;
+GO
+GRANT SELECT ON v3014_5_2c TO l3014_1;
+GO
+GRANT SELECT ON sch3014_c.v3014_5_3c TO l3014_1;
+GO
+GRANT SELECT ON v3014_5_4c TO l3014_1;
+GO
+GRANT SELECT ON sch3014_c.v3014_5_5c TO l3014_1;
+GO
+
+-- Grants for CASE 6 views
+GRANT SELECT ON v3014_6_1 TO l3014_1;
+GO
+USE db3014;
+GO
+GRANT SELECT ON v3014_6_2 TO l3014_1;
+GO
+USE master;
+GO
+GRANT SELECT ON v3014_6_3 TO l3014_1;
+GO
+GRANT SELECT ON v3014_6_4 TO l3014_1;
+GO
+
+-- Grants for CASE 7 views
+GRANT SELECT ON v3014_7_1 TO l3014_1;
+GO
+GRANT SELECT ON v3014_7_2 TO l3014_1;
+GO
+GRANT SELECT ON v3014_7_3 TO l3014_1;
+GO
+GRANT SELECT ON v3014_7_4 TO l3014_1;
+GO
+
+-- Grant for CASE 8 views
+GRANT SELECT, INSERT ON v3014_8_1 TO l3014_1;
+GO
+GRANT SELECT, UPDATE ON v3014_8_2 TO l3014_1;
+GO
+GRANT SELECT, DELETE ON v3014_8_3 TO l3014_1;
+GO
+GRANT SELECT, INSERT, UPDATE ON v3014_8_4 TO l3014_1;
+GO
+
+-- Grant for CASE 8 views
+GRANT SELECT, INSERT ON v3014_9_1 TO l3014_1;
+GO
+GRANT SELECT, UPDATE ON v3014_9_2 TO l3014_1;
+GO
+GRANT SELECT, INSERT ON v3014_9_3 TO l3014_1;
+GO
+GRANT SELECT, DELETE ON v3014_9_4 TO l3014_1;
+GO
+
+-- tsql
