@@ -902,6 +902,8 @@ int
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT ASCII(@inputString);
 GO
+~~START~~
+int
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geometry is invalid for argument 1 of ascii function.)~~
@@ -910,6 +912,8 @@ GO
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT ASCII(@inputString);
 GO
+~~START~~
+int
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geography is invalid for argument 1 of ascii function.)~~
@@ -937,9 +941,10 @@ int
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT ASCII(CAST(@inputString AS VARCHAR(50)));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of ascii function.)~~
+~~START~~
+int
+80
+~~END~~
 
 
 -- Test IMAGE type

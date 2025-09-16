@@ -600,12 +600,12 @@ SELECT * FROM ascii_v2 WHERE TestResult = 'Fail';
 GO
 ~~START~~
 int#!#char#!#int#!#varchar#!#int#!#text#!#int#!#int#!#varchar
-16#!#          #!#32#!##!#<NULL>#!##!#0#!#<NULL>#!#Fail
+16#!#          #!#32#!##!#<NULL>#!##!#<NULL>#!#<NULL>#!#Fail
 ~~END~~
 
 ~~START~~
 int#!#nchar#!#int#!#nvarchar#!#int#!#ntext#!#int#!#int#!#varchar
-16#!#          #!#32#!##!#<NULL>#!##!#0#!#<NULL>#!#Fail
+16#!#          #!#32#!##!#<NULL>#!##!#<NULL>#!#<NULL>#!#Fail
 ~~END~~
 
 

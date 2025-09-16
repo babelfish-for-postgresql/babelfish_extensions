@@ -652,7 +652,7 @@ SELECT * FROM ascii_function_v_empty_analysis;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#int#!#int#!#varchar
-1#!#32#!#0#!#0#!#0#!#Empty string
+1#!#32#!#NULL#!#0#!#0#!#Empty string
 2#!#32#!#32#!#0#!#0#!#Single space
 3#!#32#!#32#!#0#!#0#!#Two spaces
 4#!#32#!#32#!#2#!#2#!#Space then char
@@ -1028,7 +1028,7 @@ GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 1#!#65#!#65#!#65#!#65#!#65#!#65#!#65#!#65
-2#!#32#!#<NULL>#!#32#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#32#!#<NULL>#!#32#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
 ~~END~~
 
 
