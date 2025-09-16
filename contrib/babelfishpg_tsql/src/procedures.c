@@ -4982,7 +4982,7 @@ get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
 	 * Fetch xml data and namespace data from xml_handle_temp_table, for given document id.
 	 */
 	ScanKeyInit(&skey[0],
-				Anum_xml_handle_temp_table_document_id
+				Anum_xml_handle_temp_table_document_id,
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(idoc));
 	

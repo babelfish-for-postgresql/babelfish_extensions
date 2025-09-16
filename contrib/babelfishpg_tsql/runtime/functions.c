@@ -5624,9 +5624,8 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
  *		Prepare the tuple descriptor and tuplestore for OPENXML function without WITH clause.
  */
 static void
-prepare_tupledesc_tuplestore_for_openxml(FunctionCallInfo fcinfo, TupleDesc *tupdesc, Tuplestorestate **tupstore)
+prepare_tupledesc_tuplestore_for_openxml(ReturnSetInfo *rsinfo, TupleDesc *tupdesc, Tuplestorestate **tupstore)
 {
-	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	Oid           bigint_oid, int_oid, nvarchar_oid, ntext_oid;
@@ -5696,18 +5695,26 @@ Datum
 openxml_simple(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-    int        idoc = PG_GETARG_INT32(0);
-    text      *xpath_expr_text;
+    int              idoc = PG_GETARG_INT32(0);
+    text            *xpath_expr_text;
 #ifdef NOT_USED
-	int        flags = PG_GETARG_INT32(2);
+	int              flags = PG_GETARG_INT32(2);
 #endif
-    xmltype   *xmldata;
-    xmltype   *ns_data;
-    char	 **ns_names;
-    char	 **ns_uris;
-	int        ns_count;
-	TupleDesc	tupdesc;
+    xmltype         *xmldata;
+    xmltype         *ns_data;
+    char           **ns_names;
+    char           **ns_uris;
+	int              ns_count;
+	char            *datastr;
+	int32            len;
+	int32            xpath_len;
+	xmlChar         *string;
+	xmlChar         *xpath_expr;
+	size_t           xmldecl_len = 0;
+
+	TupleDesc        tupdesc;
 	Tuplestorestate *tupstore;
+	ReturnSetInfo   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	PgXmlErrorContext *xmlerrcxt;
 	volatile xmlParserCtxtPtr ctxt = NULL;
@@ -5715,18 +5722,11 @@ openxml_simple(PG_FUNCTION_ARGS)
 	volatile xmlXPathContextPtr xpathctx = NULL;
 	volatile xmlXPathCompExprPtr xpathcomp = NULL;
 	volatile xmlXPathObjectPtr xpathobj = NULL;
-	
-	char	   *datastr;
-	int32		len;
-	int32		xpath_len;
-	xmlChar    *string;
-	xmlChar    *xpath_expr;
-	size_t		xmldecl_len = 0;
 
 	/*
 	 * Prepare tuple descriptor and tuplestore for returning the result set.
 	 */
-	prepare_tupledesc_tuplestore_for_openxml(fcinfo, &tupdesc, &tupstore)
+	prepare_tupledesc_tuplestore_for_openxml(rsinfo, &tupdesc, &tupstore);
 
     /*
      * Using idoc fetch the xml document and namespaces list from 

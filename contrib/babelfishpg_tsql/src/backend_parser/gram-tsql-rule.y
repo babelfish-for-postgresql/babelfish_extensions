@@ -1808,6 +1808,7 @@ openxml_expr: OPENXML '(' a_expr ',' a_expr ')' opt_alias_clause
 					n->ordinality = false;
 					n->is_rowsfrom = false;
 					n->functions = list_make1(list_make2(makeFuncCall(TsqlSystemFuncName("openxml_simple"), list_make2($3, $5), COERCE_EXPLICIT_CALL, -1), NIL));
+					/* map to OPENXML_SIMPLE */
 					$$ = (Node*) n;
 				}
 			| OPENXML '(' a_expr ',' a_expr ',' a_expr ')' opt_alias_clause
@@ -1818,6 +1819,7 @@ openxml_expr: OPENXML '(' a_expr ',' a_expr ')' opt_alias_clause
 					n->ordinality = false;
 					n->is_rowsfrom = false;
 					n->functions = list_make1(list_make2(makeFuncCall(TsqlSystemFuncName("openxml_simple"), list_make3($3, $5, $7), COERCE_EXPLICIT_CALL, -1), NIL));
+					/* map to OPENXML_SIMPLE */
 					$$ = (Node*) n;		
 				}
 		;
