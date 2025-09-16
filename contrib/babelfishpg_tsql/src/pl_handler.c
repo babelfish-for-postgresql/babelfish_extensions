@@ -5110,44 +5110,44 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							int 			number_of_privs;
 
 							objoid = RangeVarGetRelid(rv, NoLock, true);
-							if (!OidIsValid(objoid))
-								return;
-
-							/* Get the namespace OID and rekind type of the table. */
-							tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objoid));
-							if (!HeapTupleIsValid(tuple))
-								return;
-
-							pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
-
-							if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
+							if (OidIsValid(objoid))
 							{
-								privileges = (char **) palloc0(3 * sizeof(char *));
-								privileges[0] = "select";
-								privileges[1] = "update";
-								privileges[2] = "usage";
-								number_of_privs = 3;
-							}
-							else
-							{
-								privileges = (char **) palloc0(8 * sizeof(char *));
-								privileges[0] = "insert";
-								privileges[1] = "select";
-								privileges[2] = "update";
-								privileges[3] = "delete";
-								privileges[4] = "references";
-								privileges[5] = "truncate";
-								privileges[6] = "maintain";
-								privileges[7] = "trigger";
-								number_of_privs = 8;
-							}
+								/* Get the namespace OID and rekind type of the table. */
+								tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objoid));
+								if (!HeapTupleIsValid(tuple))
+									return;
 
-							for (int i = 0; i < number_of_privs; i++)
-							{
-								AccessPriv *ap = makeNode(AccessPriv);
-								ap->priv_name = privileges[i];
-								ap->cols = NIL;
-								all_privileges = lappend(all_privileges, ap);
+								pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
+
+								if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
+								{
+									privileges = (char **) palloc0(3 * sizeof(char *));
+									privileges[0] = "select";
+									privileges[1] = "update";
+									privileges[2] = "usage";
+									number_of_privs = 3;
+								}
+								else
+								{
+									privileges = (char **) palloc0(8 * sizeof(char *));
+									privileges[0] = "insert";
+									privileges[1] = "select";
+									privileges[2] = "update";
+									privileges[3] = "delete";
+									privileges[4] = "references";
+									privileges[5] = "truncate";
+									privileges[6] = "maintain";
+									privileges[7] = "trigger";
+									number_of_privs = 8;
+								}
+
+								for (int i = 0; i < number_of_privs; i++)
+								{
+									AccessPriv *ap = makeNode(AccessPriv);
+									ap->priv_name = privileges[i];
+									ap->cols = NIL;
+									all_privileges = lappend(all_privileges, ap);
+								}
 							}
 
 							foreach(lc, grant->grantees)
