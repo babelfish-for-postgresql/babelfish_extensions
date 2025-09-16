@@ -34,7 +34,7 @@ typedef enum
 } DimensionType;
 
 /* Function declarations for lexer and parser */
-extern void geo_yyerror(char **result, const char *message) pg_attribute_noreturn();
+pg_noreturn extern void geo_yyerror(char **result, const char *message);
 extern int geo_yylex(void);
 extern int geo_yyparse(char** result_query);
 

@@ -27,7 +27,7 @@ static int      scanbuflen;
 %type <str> geospatial_query point_query linestring_query 
 
 %start geospatial_query
-%define api.prefix {geo_yy}
+%define api.prefix geo_yy
 %parse-param {char** result}
 %expect 0
 
