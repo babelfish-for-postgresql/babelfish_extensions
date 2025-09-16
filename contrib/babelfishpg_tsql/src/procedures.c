@@ -114,19 +114,22 @@ bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
-#define 			 XML_HANDLE_DOC_COLUMN_NUM 6
-#define 			 XML_HANDLE_NAMESPACE_COLUMN_NUM 7
-#define              MD5_HASH_LEN 32
-const  int           XML_HANDLE_COUNTER_START = 0;
-const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
-static int           current_xml_handle_counter = INT_MAX / 2;
-Bitmapset           *active_xml_handles_counter = NULL;
-static char         *xml_handle_temp_table_name = NULL;
-int                  get_next_xml_handle_counter(void);
-void                 create_xml_handle_temp_table(void);
-void                 delete_xml_handle_entry(int  handle);
-int                  insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
-void                 get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data);
+#define Anum_xml_handle_temp_table_document_id 1
+#define Anum_xml_handle_temp_table_xml_data 6
+#define Anum_xml_handle_temp_table_ns_data 7
+
+#define MD5_HASH_LEN 32
+
+const  int   XML_HANDLE_COUNTER_START = 0;
+const  int   XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
+static int   current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID;
+Bitmapset   *active_xml_handles_counter = NULL;
+static char *xml_handle_temp_table_name = NULL;
+int          get_next_xml_handle_counter(void);
+void         create_xml_handle_temp_table(void);
+void         delete_xml_handle_entry(int  handle);
+int          insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
+void         get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data);
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -4946,11 +4949,18 @@ get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
 	if (xml_data == NULL && ns_data == NULL)
 		return;
 
+	/*
+	 * Initialise xml_data and ns_data to NULL.
+	 */
 	if (xml_data)
 		*xml_data = NULL;
 	if (ns_data)
 		*ns_data = NULL;
 
+	/* 
+	 * Check if the xml_handle_temp_table exists using ENR lookup,
+	 * if found get its relation descriptor.
+	 */
 	if (xml_handle_temp_table_name != NULL)
 	{
 		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
@@ -4968,8 +4978,11 @@ get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
 				 errmsg("Could not find prepared statement with handle %d.", idoc)));
 	}
 
+	/*
+	 * Fetch xml data and namespace data from xml_handle_temp_table, for given document id.
+	 */
 	ScanKeyInit(&skey[0],
-				1,  /* Column number */
+				Anum_xml_handle_temp_table_document_id
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(idoc));
 	
@@ -4982,7 +4995,7 @@ get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
 		if (xml_data)
 		{
 			isnull = true;
-			datum = heap_getattr(tuple, XML_HANDLE_DOC_COLUMN_NUM, RelationGetDescr(relation), &isnull);
+			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_xml_data, RelationGetDescr(relation), &isnull);
 			
 			if (!isnull)
 				*xml_data = DatumGetXmlP(datum);
@@ -4994,7 +5007,7 @@ get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
 		if (ns_data)
 		{
 			isnull = true;
-			datum = heap_getattr(tuple, XML_HANDLE_NAMESPACE_COLUMN_NUM, RelationGetDescr(relation), &isnull);
+			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_ns_data, RelationGetDescr(relation), &isnull);
 			
 			if (!isnull)
 				*ns_data = DatumGetXmlP(datum);

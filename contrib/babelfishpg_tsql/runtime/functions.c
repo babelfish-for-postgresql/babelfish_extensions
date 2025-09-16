@@ -5336,8 +5336,9 @@ populate_xml_nodes(xmlNode *node)
 }
 
 /*
- * For a given XML Document Node, 
- * function assign_ids prepares a hash table mapping for each xmlNodePtr to a unique ID.
+ * assign_ids -
+ *  For the given XML Document node, prepares a hash table 
+ *  which stores the mapping of each xmlNodePtr to a unique ID.
  */
 static void
 assign_ids(xmlDoc *doc)
@@ -5359,7 +5360,7 @@ assign_ids(xmlDoc *doc)
 	/*
 	 * For each node in the list, if it is not already in the hash table,
 	 * assign it a unique ID and add it to the hash table. The root node
-	 * is assigned ID 0. counter is used to generate unique IDs.
+	 * is assigned ID 0. Counter is used to generate unique IDs.
 	 */
 	counter = 1;
 	for (i = 1; i <= xml_nodes_list_size; i++)
@@ -5417,12 +5418,6 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 	bool             nulls[TSQL_OPENXML_EDGE_TABLE_COLS];
 	long long int    node_id;
 
-	/*
-	 * Initialize all values to NULL and nulls to true
-	 */
-	memset(values, 0, sizeof(values));
-	memset(nulls, true, sizeof(nulls));
-
 	if (node->type == XML_TEXT_NODE && xmlIsBlankNode(node))
 		return;  // skip whitespace-only text node
 
@@ -5436,6 +5431,12 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 		|| node->type == XML_COMMENT_NODE 
 		|| node->type == XML_PI_NODE)
 	{
+		/*
+		 * Initialize all values to NULL and nulls to true
+		 */
+		memset(values, 0, sizeof(values));
+		memset(nulls, true, sizeof(nulls));
+
 		node_id = lookup_xmlNode_id(node);
 		if (node_id != -1)
 		{
@@ -5493,7 +5494,7 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 		}
 
 		/*
-		 * datatype column of openxml refers Attribute-type, hence it is only applicable for Attribute nodes.
+		 * datatype column of openxml edge table refers Attribute-type, hence it is only applicable for Attribute nodes.
 		 * Following block fetches the attribute type from DTD if available and sets the value accordingly.
 		 * If DTD is not available or attribute type is not defined in DTD, datatype column is kept NULL.
 		 */
@@ -5504,7 +5505,12 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 
 			if (dtd != NULL)
 			{
-				attr_def = xmlGetDtdAttrDesc(dtd, node->parent->name, node->name);
+				/*
+				 * Its Unlikely that node->parent is NULL, Just a sanity check
+				 */
+				if (node->parent != NULL)
+					attr_def = xmlGetDtdAttrDesc(dtd, node->parent->name, node->name);
+
 				if (attr_def != NULL)
 				{
 					switch (attr_def->atype)
@@ -5580,11 +5586,12 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 			{
 				char *ptr = (char *) node->content;
 
-				/* skip leading spaces */
+				/* for content, trim leading and trailing spaces */
 				while (isspace((char) *ptr))
 					ptr++;
 
 				remove_trailing_spaces(ptr);
+
 				nulls[8] = false;
 				values[8] = PointerGetDatum(cstring_to_text((const char *) ptr)); // text
 			}
@@ -5612,12 +5619,85 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 }
 #endif							/* USE_LIBXML */
 
+/*
+ * prepare_tupledesc_tuplestore_for_openxml
+ *		Prepare the tuple descriptor and tuplestore for OPENXML function without WITH clause.
+ */
+static void
+prepare_tupledesc_tuplestore_for_openxml(FunctionCallInfo fcinfo, TupleDesc *tupdesc, Tuplestorestate **tupstore)
+{
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	Oid           bigint_oid, int_oid, nvarchar_oid, ntext_oid;
+
+	/* Unlikely, just a sanity check */
+	if (tupdesc == NULL || tupstore == NULL)
+		return;
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
+
+	bigint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bigint");
+	int_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("int");
+	nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+	ntext_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("ntext");
+
+	/* build tupdesc for result tuples. */
+	*tupdesc = CreateTemplateTupleDesc(TSQL_OPENXML_EDGE_TABLE_COLS);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 1, "id", bigint_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 2, "parentid", bigint_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 3, "nodetype", int_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 4, "localname", nvarchar_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 5, "prefix", nvarchar_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 6, "namespaceuri", nvarchar_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 7, "datatype", nvarchar_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 8, "prev", bigint_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 9, "text", ntext_oid, -1, 0);
+	*tupdesc = BlessTupleDesc(*tupdesc);
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	*tupstore = tuplestore_begin_heap(true, false, work_mem);
+
+	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
+ * openxml_simple
+ *		Implementation of T-SQL OPENXML function without WITH clause.
+ *
+ * This function takes an XML document identified by an integer handle,
+ * an XPath expression, and returns a rowset representing the XML nodes
+ * that match the XPath expression. The rowset is structured according to
+ * the OPENXML edge table format, which includes columns for node ID,
+ * parent ID, node type, local name, prefix, namespace URI, datatype,
+ * previous sibling ID, and text content.
+ *
+ * The function retrieves the XML document and any associated namespace
+ * declarations using the provided handle. It then parses the XML document,
+ * applies the XPath expression to select nodes, and constructs a tuplestore
+ * containing the details of each selected node and its attributes.
+ *
+ * The function returns a set of rows, each representing an XML node in the
+ * specified format. If no nodes match the XPath expression, an empty set is
+ * returned.
+ */
 Datum
 openxml_simple(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
     int        idoc = PG_GETARG_INT32(0);
-    text      *xpath_expr_text = PG_GETARG_TEXT_PP(1);
+    text      *xpath_expr_text;
 #ifdef NOT_USED
 	int        flags = PG_GETARG_INT32(2);
 #endif
@@ -5626,12 +5706,8 @@ openxml_simple(PG_FUNCTION_ARGS)
     char	 **ns_names;
     char	 **ns_uris;
 	int        ns_count;
-
-	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 
 	PgXmlErrorContext *xmlerrcxt;
 	volatile xmlParserCtxtPtr ctxt = NULL;
@@ -5646,41 +5722,11 @@ openxml_simple(PG_FUNCTION_ARGS)
 	xmlChar    *string;
 	xmlChar    *xpath_expr;
 	size_t		xmldecl_len = 0;
-	Oid			bigint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bigint");
-	Oid			int_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("int");
-	Oid         nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
-	Oid         ntext_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("ntext");
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not " \
-						"allowed in this context")));
-
-	/* build tupdesc for result tuples. */
-	tupdesc = CreateTemplateTupleDesc(TSQL_OPENXML_EDGE_TABLE_COLS);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "id", bigint_oid, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "parentid", bigint_oid, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "nodetype", int_oid, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "localname", nvarchar_oid, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "prefix", nvarchar_oid, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "namespaceuri", nvarchar_oid, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "datatype", nvarchar_oid, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 8, "prev", bigint_oid, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "text", ntext_oid, -1, 0);
-	tupdesc = BlessTupleDesc(tupdesc);
-
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
-
-	MemoryContextSwitchTo(oldcontext);
+	/*
+	 * Prepare tuple descriptor and tuplestore for returning the result set.
+	 */
+	prepare_tupledesc_tuplestore_for_openxml(fcinfo, &tupdesc, &tupstore)
 
     /*
      * Using idoc fetch the xml document and namespaces list from 
@@ -5696,6 +5742,13 @@ openxml_simple(PG_FUNCTION_ARGS)
 
 	datastr = VARDATA(xmldata);
 	len = VARSIZE(xmldata) - VARHDRSZ;
+
+	if (PG_ARGISNULL(1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("XPath expression cannot be null")));
+
+	xpath_expr_text = PG_GETARG_TEXT_PP(1);
 	xpath_len = VARSIZE_ANY_EXHDR(xpath_expr_text);
 	if (xpath_len == 0)
 		ereport(ERROR,
