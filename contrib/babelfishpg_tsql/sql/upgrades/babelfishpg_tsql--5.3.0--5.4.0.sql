@@ -223,7 +223,7 @@ GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(
 	IN INTEGER
 ) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.openxml_simple(idoc INT, 
+CREATE OR REPLACE FUNCTION sys.openxml_simple(document_id INT, 
                                        rowpattern TEXT, 
                                        flags INTEGER DEFAULT 0)
 RETURNS table (
@@ -238,7 +238,7 @@ RETURNS table (
   text sys.NTEXT
 ) 
 AS 'babelfishpg_tsql', 'openxml_simple'
-LANGUAGE C IMMUTABLE PARALLEL SAFE;
+LANGUAGE C IMMUTABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

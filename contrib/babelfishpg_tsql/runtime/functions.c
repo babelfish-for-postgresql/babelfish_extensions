@@ -243,7 +243,7 @@ extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern char *replace_special_chars_fts_impl(char *input_str);
-extern void get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data);
+extern void get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
 
 #ifdef USE_LIBXML
 MemoryContext TransMemoryContext = NULL;
@@ -5170,10 +5170,12 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 
 #ifdef USE_LIBXML
 /*
- * Extracts namespace names and URIs from root node of the given XML data.
- * The extracted names and URIs are stored in ns_names and ns_uris respectively.
- * The count of extracted namespaces is stored in ns_count.
- * If no namespaces are found, ns_names and ns_uris are set to NULL and ns_count to 0.
+ * extract_namespaces_from_xml
+ * 		Extracts namespace names and URIs from root node of the given XML data.
+ *
+ * Note: The extracted names and URIs are stored in ns_names and ns_uris respectively.
+ * The count of extracted namespaces is stored in ns_count. If no namespaces are found, 
+ * ns_names and ns_uris are set to NULL and ns_count to 0.
  */
 static void
 extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count)
@@ -5243,7 +5245,8 @@ extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris,
 
 
 /*
- * Initializes the hash table to map xmlNodePtr to unique IDs.
+ * init_xml_handles_htab
+ * 		Initializes the hash table to map xmlNodePtr to unique IDs.
  */
 static void
 init_xml_handles_htab(long long int nelem)
@@ -5275,7 +5278,8 @@ init_xml_handles_htab(long long int nelem)
 }
 
 /*
- * Destroys the hash table and frees associated memory.
+ * destroy_xml_handles_htab
+ * 		Destroys the hash table and frees associated memory.
  */
 static void
 destroy_xml_handles_htab()
@@ -5295,7 +5299,8 @@ destroy_xml_handles_htab()
 }
 
 /*
- * populate_xml_nodes recursively traverse the XML tree and populate xml_nodes_list
+ * populate_xml_nodes 
+ * 		Recursively traverse the XML tree and populate xml_nodes_list
  */
 static void 
 populate_xml_nodes(xmlNode *node)
@@ -5336,9 +5341,9 @@ populate_xml_nodes(xmlNode *node)
 }
 
 /*
- * assign_ids -
- *  For the given XML Document node, prepares a hash table 
- *  which stores the mapping of each xmlNodePtr to a unique ID.
+ * assign_ids
+ *  	For the given XML Document node, prepares a hash table 
+ *  	which stores the mapping of each xmlNodePtr to a unique ID.
  */
 static void
 assign_ids(xmlDoc *doc)
@@ -5385,8 +5390,9 @@ assign_ids(xmlDoc *doc)
 }
 
 /*
- * lookup_xmlNode_id returns the unique ID for a given xmlNodePtr from the hash table.
- * If the node is not found in the hash table, it returns -1.
+ * lookup_xmlNode_id
+ *  	Returns the unique ID for a given xmlNodePtr from the hash table. 
+ * 		If the node is not found in the hash table, it returns -1.
  */
 static long long int
 lookup_xmlNode_id(xmlNode *key)
@@ -5408,8 +5414,9 @@ lookup_xmlNode_id(xmlNode *key)
 }
 
 /*
- * add_node_details adds the details of a given xmlNodePtr to the tuplestore. 
- * It also recursively adds details of its attribute nodes (properties) and child nodes to the tuplestore.
+ * add_node_details 
+ *		 Add details of given xmlNodePtr to the tuplestore. It also recursively add 
+ *  	 details of its attribute nodes (properties) and child nodes to the tuplestore.
  */
 static void
 add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, Bitmapset **xml_visited_nodes_set)
@@ -5441,18 +5448,18 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 		if (node_id != -1)
 		{
 			nulls[0] = false;
-			values[0] = Int64GetDatum(node_id); // id
+			values[0] = Int64GetDatum(node_id);
 		}
 
 		node_id = lookup_xmlNode_id(node->parent);
 		if (node_id != -1)
 		{
 			nulls[1] = false;
-			values[1] = Int64GetDatum(node_id); // parentid
+			values[1] = Int64GetDatum(node_id);
 		}
 
 		nulls[2] = false;
-		values[2] = Int32GetDatum(node->type); // nodetype
+		values[2] = Int32GetDatum(node->type);
 
 		if (node->type == XML_TEXT_NODE)
 		{
@@ -5474,7 +5481,7 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 			if (node->name != NULL)
 			{
 				nulls[3] = false;
-				values[3] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->name)); // localname
+				values[3] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->name));
 			}
 		}
 
@@ -5483,13 +5490,13 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 			if (node->ns->prefix != NULL)
 			{
 				nulls[4] = false;
-				values[4] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->ns->prefix)); // prefix
+				values[4] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->ns->prefix));
 			}
 
 			if (node->ns->href != NULL)
 			{
 				nulls[5] = false;
-				values[5] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->ns->href)); // namespaceuri
+				values[5] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->ns->href));
 			}
 		}
 
@@ -5578,7 +5585,7 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 				if (node_id != -1)
 				{
 					nulls[7] = false;
-					values[7] = Int64GetDatum(node_id); // prev
+					values[7] = Int64GetDatum(node_id);
 				}
 			}
 
@@ -5593,7 +5600,7 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 				remove_trailing_spaces(ptr);
 
 				nulls[8] = false;
-				values[8] = PointerGetDatum(cstring_to_text((const char *) ptr)); // text
+				values[8] = PointerGetDatum(cstring_to_text((const char *) ptr));
 			}
 		}
 
@@ -5695,7 +5702,7 @@ Datum
 openxml_simple(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-    int              idoc = PG_GETARG_INT32(0);
+    int              document_id = PG_GETARG_INT32(0);
     text            *xpath_expr_text;
 #ifdef NOT_USED
 	int              flags = PG_GETARG_INT32(2);
@@ -5706,8 +5713,8 @@ openxml_simple(PG_FUNCTION_ARGS)
     char           **ns_uris;
 	int              ns_count;
 	char            *datastr;
-	int32            len;
-	int32            xpath_len;
+	int              len;
+	int              xpath_len;
 	xmlChar         *string;
 	xmlChar         *xpath_expr;
 	size_t           xmldecl_len = 0;
@@ -5729,11 +5736,11 @@ openxml_simple(PG_FUNCTION_ARGS)
 	prepare_tupledesc_tuplestore_for_openxml(rsinfo, &tupdesc, &tupstore);
 
     /*
-     * Using idoc fetch the xml document and namespaces list from 
+     * Using document_id fetch the xml document and namespaces list from 
      * xml_handle_temp_table which is used to store the xml handles created
      * using sp_xml_preparedocument.
      */
-    get_xml_data_and_namespace_data(idoc, &xmldata, &ns_data);
+    get_xml_data_and_namespace_data(document_id, &xmldata, &ns_data);
 
 	if (xmldata == NULL)
 		goto done;
@@ -5858,6 +5865,21 @@ openxml_simple(PG_FUNCTION_ARGS)
 		if (ctxt)
 			xmlFreeParserCtxt(ctxt);
 
+		/*
+		 * ns_count > 0, should be sufficient here, other checks are just sanity 
+		 * checks which are unlikely to be NULLs if ns_count > 0  
+		 */
+		if (ns_count > 0 && ns_names != NULL && ns_uris != NULL)
+		{
+			for (int i = 0; i < ns_count; i++)
+			{
+				xpfree(ns_names[i]);
+				xpfree(ns_uris[i]);
+			}
+			xpfree(ns_names);
+			xpfree(ns_uris);
+		}
+
 		pg_xml_done(xmlerrcxt, true);
 
 		PG_RE_THROW();
@@ -5866,11 +5888,31 @@ openxml_simple(PG_FUNCTION_ARGS)
 
 	/* Destroy the hash table that used to store xml node pointer to id mapping */
 	destroy_xml_handles_htab();
-	xmlXPathFreeObject(xpathobj);
-	xmlXPathFreeCompExpr(xpathcomp);
-	xmlXPathFreeContext(xpathctx);
-	xmlFreeDoc(doc);
-	xmlFreeParserCtxt(ctxt);
+	if (xpathobj)
+		xmlXPathFreeObject(xpathobj);
+	if (xpathcomp)
+		xmlXPathFreeCompExpr(xpathcomp);
+	if (xpathctx)
+		xmlXPathFreeContext(xpathctx);
+	if (doc)
+		xmlFreeDoc(doc);
+	if (ctxt)
+		xmlFreeParserCtxt(ctxt);
+
+	/*
+	 * ns_count > 0, should be sufficient here, other checks are just sanity 
+	 * checks which are unlikely to be NULLs if ns_count > 0  
+	 */
+	if (ns_count > 0 && ns_names != NULL && ns_uris != NULL)
+	{
+		for (int i = 0; i < ns_count; i++)
+		{
+			xpfree(ns_names[i]);
+			xpfree(ns_uris[i]);
+		}
+		xpfree(ns_names);
+		xpfree(ns_uris);
+	}
 
 	pg_xml_done(xmlerrcxt, false);
 

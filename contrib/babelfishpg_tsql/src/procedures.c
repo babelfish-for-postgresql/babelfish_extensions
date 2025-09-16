@@ -129,7 +129,7 @@ int          get_next_xml_handle_counter(void);
 void         create_xml_handle_temp_table(void);
 void         delete_xml_handle_entry(int  handle);
 int          insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
-void         get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data);
+void         get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -4935,7 +4935,7 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
  * Function to retrieve XML document and namespace from temporary table using document ID
  */
 void
-get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
+get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data)
 {
 	EphemeralNamedRelation		enr = NULL;
 	Relation               		relation;
@@ -4975,7 +4975,7 @@ get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Could not find prepared statement with handle %d.", idoc)));
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
 	}
 
 	/*
@@ -4984,7 +4984,7 @@ get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
 	ScanKeyInit(&skey[0],
 				Anum_xml_handle_temp_table_document_id,
 				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(idoc));
+				Int32GetDatum(document_id));
 	
 	scan = table_beginscan_catalog(relation, 1, skey);
 	tuple = heap_getnext(scan, ForwardScanDirection);
@@ -5019,7 +5019,7 @@ get_xml_data_and_namespace_data(int idoc, xmltype **xml_data, xmltype **ns_data)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Could not find prepared statement with handle %d.", idoc)));
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
 	}
 
 	table_endscan(scan);

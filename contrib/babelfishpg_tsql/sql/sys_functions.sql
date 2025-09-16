@@ -5154,7 +5154,7 @@ LANGUAGE plpgsql STABLE;
 GRANT EXECUTE ON FUNCTION sys.babelfish_broken_view_function() TO PUBLIC;
 COMMENT ON FUNCTION sys.babelfish_broken_view_function() IS 'Internal function used by broken views to prevent silent failures';
 
-CREATE OR REPLACE FUNCTION sys.openxml_simple(idoc INT, 
+CREATE OR REPLACE FUNCTION sys.openxml_simple(document_id INT, 
                                        rowpattern TEXT, 
                                        flags INTEGER DEFAULT 0)
 RETURNS table (
