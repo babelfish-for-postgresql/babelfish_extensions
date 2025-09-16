@@ -118,6 +118,8 @@ char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
 #define              MD5_HASH_LEN 32
+#define              Anum_xml_handle_temp_table_xml_data 6
+#define              Anum_xml_handle_temp_table_doc_id 1 
 const  int           XML_HANDLE_COUNTER_START = 0;
 const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
 static int           current_xml_handle_counter = INT_MAX / 2;
@@ -4931,7 +4933,6 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
 /*
  * Function to retrieve XML document from temporary table using document ID
  */
-#define XML_HANDLE_DOC_COLUMN_NUM 6
 Datum
 tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
 {
@@ -4961,11 +4962,11 @@ tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Could not find prepared statement with handle %d", document_id)));
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
 	}
 
 	ScanKeyInit(&skey[0],
-				1,  /* Column number */
+				Anum_xml_handle_temp_table_doc_id,  /* Column number */
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(document_id));
 	
@@ -4975,13 +4976,21 @@ tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
 	if (HeapTupleIsValid(tuple))
 	{
 		/* Get the XML document from column 6 (doc) */
-		result = heap_getattr(tuple, XML_HANDLE_DOC_COLUMN_NUM, RelationGetDescr(relation), &isnull);
+		result = heap_getattr(tuple, Anum_xml_handle_temp_table_xml_data, RelationGetDescr(relation), &isnull);
 		
 		if (!isnull)
 		{
 			/* Make a copy of the value */
 			result = datumCopy(result, false, -1);
 			found = true;
+		}
+
+		else
+		{
+			/* Document is NULL, return NULL */
+			table_endscan(scan);
+			relation_close(relation, AccessShareLock);
+			PG_RETURN_NULL();
 		}
 	}
 	
@@ -4995,9 +5004,7 @@ tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
 	/* If we didn't find the handle , throw an error */
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			 errmsg("Could not find prepared statement with handle %d", document_id)));
-	
-	PG_RETURN_NULL();
+			 errmsg("Could not find prepared statement with handle %d.", document_id)));
 }
 
 /*

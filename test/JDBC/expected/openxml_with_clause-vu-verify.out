@@ -754,9 +754,7 @@ EXEC sp_xml_removedocument @DocHandle;
 GO
 ~~START~~
 varchar#!#varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Could not find prepared statement with handle 43)~~
+~~END~~
 
 
 

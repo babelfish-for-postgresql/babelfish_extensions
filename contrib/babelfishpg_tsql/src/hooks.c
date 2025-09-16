@@ -6822,8 +6822,9 @@ pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
 	rtf->namespaces = NIL;
 
 	/* 
-	 * Set the document expression to retrieve the XML document using the document handle. This creates a function call to tsql_openxml_get_xmldoc
-	 * which retrieves the  previously prepared XML document based on the document ID from sp_xml_preparedocument.
+	 * Set the document expression to retrieve the XML document using the document handle.
+	 * This creates a function call to tsql_openxml_get_xmldoc which retrieves the  previously
+	 * prepared XML document based on the document ID from sp_xml_preparedocument.
 	 */
 	rtf->docexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_xmldoc")), list_make1(tsql_docid_node), COERCE_EXPLICIT_CALL, -1);
 
@@ -6849,14 +6850,18 @@ pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
 				/* If no column expression is provided, generate one based on the flag */
 				if(fc->colexpr == NULL && tsql_flag != NULL)
 				{
-					/* To get original column name, utilize location of ColumnDef and query string. For colexpr, we need orignal name of columns (no downcase or uppercase) */
+					/* 
+					 * To get original column name, utilize location of ColumnDef and query string. 
+					 * For colexpr, we need orignal name of columns (no downcase or uppercase) 
+					 */
 					const char *column_name_start = pstate->p_sourcetext + fc->location;
 					char	   *original_name = extract_identifier(column_name_start, NULL);
 
 					if (original_name == NULL)
 						original_name = fc->colname;
 					/*
-					 * Create an XPath expression for the column using tsql_openxml_get_colpattern. This builds a function call to generate the appropriate XPath pattern
+					 * Create an XPath expression for the column using tsql_openxml_get_colpattern.
+					 * This builds a function call to generate the appropriate XPath pattern
 					 * based on the column name and the OPENXML flag parameter
 					 */
 					fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), list_make2(makeStringConst(original_name, -1), tsql_flag), COERCE_EXPLICIT_CALL, -1);
