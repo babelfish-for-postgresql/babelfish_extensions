@@ -113,7 +113,7 @@ SET DATEFIRST 8
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET DATEFIRST 8 is out of range.)~~
+~~ERROR (Message: 8 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
 
 -- Invalid value not updated
 SELECT @@DATEFIRST
@@ -128,7 +128,7 @@ SET DATEFIRST 23
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET DATEFIRST 23 is out of range.)~~
+~~ERROR (Message: 23 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
 
 -- Invalid value not updated
 SELECT @@DATEFIRST
@@ -143,7 +143,7 @@ SET DATEFIRST 0
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET DATEFIRST 0 is out of range.)~~
+~~ERROR (Message: 0 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
 
 -- Invalid value not updated
 SELECT @@DATEFIRST
@@ -158,7 +158,7 @@ SET DATEFIRST -4
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET DATEFIRST -4 is out of range.)~~
+~~ERROR (Message: -4 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
 
 -- Invalid value not updated
 SELECT @@DATEFIRST
@@ -173,7 +173,7 @@ SET DATEFIRST -55
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET DATEFIRST -55 is out of range.)~~
+~~ERROR (Message: -55 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
 
 -- Invalid value not updated
 SELECT @@DATEFIRST
@@ -286,15 +286,11 @@ SET DATEFIRST 'one'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.datefirst": "one")~~
 
 
 SET DATEFIRST '4'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
-
 
 SET DATEFIRST "three"
 GO
@@ -314,5 +310,5 @@ SET DATEFIRST NULL
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+~~ERROR (Message: syntax error at or near "NULL")~~
 
