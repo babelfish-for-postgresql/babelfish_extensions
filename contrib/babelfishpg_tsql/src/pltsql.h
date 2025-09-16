@@ -2318,6 +2318,7 @@ int			execute_sp_cursoroption(int cursor_handle, int code, int value);
 int			execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
 int			execute_sp_cursorclose(int cursor_handle);
 void		reset_cached_cursor(void);
+void		reset_cached_xml_handle(void);
 
 /*
  * Functions in string.c

@@ -3,6 +3,36 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- Drops an object if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when undefined_function then --if 'Deprecated function does not exist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
@@ -144,6 +174,58 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_sp_xml_preparedocument RENAME TO babelfish_sp_xml_preparedocument_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_sp_xml_preparedocument_deprecated_in_5_4_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_sp_xml_removedocument RENAME TO babelfish_sp_xml_removedocument_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_sp_xml_removedocument_deprecated_in_5_4_0');
+
+CREATE OR REPLACE PROCEDURE sys.sp_xml_preparedocument(
+    INOUT "@hdoc"  INTEGER,                 
+    IN "@xmltext" sys.VARCHAR DEFAULT NULL,    
+    IN "@xpath_namespaces" sys.VARCHAR DEFAULT NULL 
+) 
+AS 'babelfishpg_tsql', 'sp_xml_preparedocument'
+LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_xml_preparedocument(
+	INOUT INTEGER, IN sys.varchar, IN sys.varchar
+) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_xml_removedocument(
+    IN "@hdoc" INTEGER
+) 
+AS 'babelfishpg_tsql', 'sp_xml_removedocument'
+LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(
+	IN INTEGER
+) TO PUBLIC;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

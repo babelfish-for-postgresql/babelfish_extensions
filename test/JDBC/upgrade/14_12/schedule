@@ -481,6 +481,8 @@ smalldatetime_date_cmp-before-15_5-16_1
 BABEL-5031
 BABEL-USER-GRANT
 test_conv_money_to_varchar
+sp_xml_preparedocument
+sp_xml_removedocument
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 BABEL-5467
