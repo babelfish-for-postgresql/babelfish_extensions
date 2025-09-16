@@ -3870,7 +3870,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 							const char *object_name,
 							const char *grantee,
 							const char *object_type,
-							int curr_permission)
+							int	curr_permission)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;

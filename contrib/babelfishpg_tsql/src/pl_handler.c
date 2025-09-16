@@ -5107,6 +5107,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							HeapTuple		tuple;
 							Form_pg_class	pg_class_tuple;
 							char 			**privileges;
+							int 			number_of_privs;
 
 							objoid = RangeVarGetRelid(rv, NoLock, true);
 							if (!OidIsValid(objoid))
@@ -5125,6 +5126,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								privileges[0] = "select";
 								privileges[1] = "update";
 								privileges[2] = "usage";
+								number_of_privs = 3;
 							}
 							else
 							{
@@ -5137,9 +5139,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								privileges[5] = "truncate";
 								privileges[6] = "maintain";
 								privileges[7] = "trigger";
+								number_of_privs = 8;
 							}
 
-							for (int i = 0; i < sizeof(privileges)/sizeof(privileges[0]); i++)
+							for (int i = 0; i < number_of_privs; i++)
 							{
 								AccessPriv *ap = makeNode(AccessPriv);
 								ap->priv_name = privileges[i];
