@@ -3869,7 +3869,8 @@ bool
 privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 							const char *object_name,
 							const char *grantee,
-							const char *object_type, int curr_permission)
+							const char *object_type,
+							int curr_permission)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
@@ -3963,13 +3964,10 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 	}
 
 	tuple_bbf_schema = systable_getnext(scan);
-	if (HeapTupleIsValid(tuple_bbf_schema))
+	while (HeapTupleIsValid(tuple_bbf_schema))
     {
 		if (curr_permission == INVALID_PERMISSION)
-		{
 			catalog_entry_exists = true;
-		}
-
 		else
 		{
 			/* find the permission corresponding to tuple_bbf_schema */
@@ -3987,6 +3985,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 				catalog_entry_exists = true;
 
 		}
+		tuple_bbf_schema = systable_getnext(scan);
     }
 
 	systable_endscan(scan);

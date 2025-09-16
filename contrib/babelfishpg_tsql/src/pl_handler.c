@@ -5052,7 +5052,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				char		*db_datareader = get_db_datareader_name(dbname);
 				char		*db_datawriter = get_db_datawriter_name(dbname);
 				char		*db_accessadmin = get_db_accessadmin_role_name(dbname);
-				bool 		exec_pg_command = false;
+
 				/*
 				 * NOTE: GRANT/REVOKE on OBJECT(schema-contained)/SCHEMA are allowed
 				 * if current_user is member of db_securityadmin via engine hooks.
@@ -5077,6 +5077,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *current_user = GetUserNameFromId(GetUserId(), false);
 					const char *logical_schema = NULL;
 					char	   *obj = rv->relname;
+					bool exec_pg_command = false;
 					ListCell   *lc;
 					ListCell	*lc1;
 					List  		*all_privileges = NIL;    /* Initialize an empty list */
@@ -5104,7 +5105,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							/* Append the values to the list */
 							char *privileges[] = {
-								"insert", "select", "update", "delete", "references"
+								"insert", "select", "update", "delete", "references",
+								"truncate", "maintain", "trigger"
 							};
 
 							for (int i = 0; i < sizeof(privileges)/sizeof(privileges[0]); i++)
@@ -5142,13 +5144,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							/* 
 							 * If all_privileges length is 5 then pass grant->privilege as NIL i.e fallback to existing behaviour,
 							 * as no common privilege between object and schema.
-							*/
+							 */
 							if (list_length(all_privileges) == 0)
 								return;
-							else if (list_length(all_privileges) != 5)
-							{
+							else
 								grant->privileges = all_privileges;
-							}
 						}
 					}
 					else
@@ -5199,6 +5199,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 						}
 					}
+					if (exec_pg_command)
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+					return;
 				}
 				else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
 				{
@@ -5206,6 +5209,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *current_user = GetUserNameFromId(GetUserId(), false);
 					ListCell   *lc;
 					ListCell	*lc1;
+					bool exec_pg_command = false;
 					const char *logicalschema = NULL;
 					char *funcname = NULL;
 					const char *obj_type = NULL;
@@ -5310,15 +5314,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 						}
 					}
-				}
-
-				if (((grant->objtype == OBJECT_FUNCTION) || (grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_TABLE)))
-				{
 					if (exec_pg_command)
 						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 					return;
 				}
-
 				pfree(db_datareader);
 				pfree(db_datawriter);
 				pfree(db_accessadmin);

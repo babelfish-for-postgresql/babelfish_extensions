@@ -3738,7 +3738,16 @@ grant select on schema::babel_test_s1 to babel_test_u1;
 go
 
 -- Revoke all permissions from table
+SELECT relname, relacl 
+FROM pg_class 
+WHERE relname = 't1'
+go
 revoke all on babel_test_s1.t1 from babel_test_u1;
+go
+
+SELECT relname, relacl 
+FROM pg_class 
+WHERE relname = 't1'
 go
 
 -- tsql user=babel_test_l1 password=123
