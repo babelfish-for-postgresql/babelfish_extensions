@@ -15,6 +15,7 @@ DECLARE
 BEGIN
 
     query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
+    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
     query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
 
     execute query1;
@@ -221,6 +222,58 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_sp_xml_preparedocument RENAME TO babelfish_sp_xml_preparedocument_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_sp_xml_preparedocument_deprecated_in_5_4_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_sp_xml_removedocument RENAME TO babelfish_sp_xml_removedocument_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_sp_xml_removedocument_deprecated_in_5_4_0');
+
+CREATE OR REPLACE PROCEDURE sys.sp_xml_preparedocument(
+    INOUT "@hdoc"  INTEGER,                 
+    IN "@xmltext" sys.VARCHAR DEFAULT NULL,    
+    IN "@xpath_namespaces" sys.VARCHAR DEFAULT NULL 
+) 
+AS 'babelfishpg_tsql', 'sp_xml_preparedocument'
+LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_xml_preparedocument(
+	INOUT INTEGER, IN sys.varchar, IN sys.varchar
+) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_xml_removedocument(
+    IN "@hdoc" INTEGER
+) 
+AS 'babelfishpg_tsql', 'sp_xml_removedocument'
+LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(
+	IN INTEGER
+) TO PUBLIC;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
