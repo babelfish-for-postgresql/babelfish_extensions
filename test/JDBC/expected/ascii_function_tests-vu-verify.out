@@ -1213,3 +1213,46 @@ int
 72
 ~~END~~
 
+
+--dependent test for ascii(text) function
+EXEC ascii_function_text_validator 'A', 65;
+EXEC ascii_function_text_validator 'B', 66;
+EXEC ascii_function_text_validator '', 0;
+GO
+~~START~~
+varchar
+Pass
+~~END~~
+
+~~START~~
+varchar
+Pass
+~~END~~
+
+~~START~~
+varchar
+Fail
+~~END~~
+
+
+SELECT * FROM ascii_function_text_analysis;
+GO
+~~START~~
+varchar#!#int#!#varchar
+A#!#65#!#Valid
+~~END~~
+
+
+SELECT * FROM ascii_function_analysis ORDER BY ID;
+GO
+~~START~~
+int#!#text#!#int#!#int#!#varchar
+1#!#A#!#65#!#65#!#Valid
+2#!#a#!#97#!#97#!#Valid
+3#!#1#!#49#!#49#!#Valid
+4#!#!#!#33#!#33#!#Valid
+5#!# #!#32#!#32#!#Valid
+6#!##!#<NULL>#!#<NULL>#!#Valid
+7#!#<NULL>#!#<NULL>#!#<NULL>#!#Valid
+~~END~~
+

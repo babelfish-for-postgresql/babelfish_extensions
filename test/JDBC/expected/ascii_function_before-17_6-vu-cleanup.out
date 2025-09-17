@@ -2,11 +2,20 @@
 DROP VIEW ascii_function_v_empty_analysis;
 GO
 
+DROP VIEW ascii_function_text_analysis;
+GO
+
+DROP VIEW ascii_function_analysis;
+GO
+
 -- Drop Procedures
 DROP PROCEDURE ascii_function_analyze_string;
 GO
 
 DROP PROCEDURE ascii_function_validate_conversion;
+GO
+
+DROP PROCEDURE ascii_function_text_validator;
 GO
 
 -- Drop Functions
@@ -127,4 +136,7 @@ DROP TYPE dbo.ascii_function_moneyUDT;
 GO
 
 DROP TYPE dbo.ascii_function_smallmoneyUDT;
+GO
+
+DROP TABLE ascii_function_source_table;
 GO
