@@ -295,87 +295,99 @@ END;
 $$
 LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_real(IN arg TEXT) RETURNS REAL
-AS $BODY$ BEGIN
-    BEGIN
-        RETURN CAST(arg AS REAL);
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
-    END;
-END; $BODY$
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_real(IN arg ANYELEMENT) 
+RETURNS REAL
+AS
+$BODY$
+BEGIN
+	BEGIN
+		RETURN CAST(arg AS REAL);
+	EXCEPTION
+		WHEN OTHERS THEN
+			RETURN NULL;
+	END;
+END;
+$BODY$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_real(IN arg ANYELEMENT) RETURNS REAL
-AS $BODY$ BEGIN
-    BEGIN
-        RETURN CAST(arg AS REAL);
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
-    END;
-END; $BODY$
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_real(IN arg TEXT) 
+RETURNS REAL
+AS
+$BODY$
+BEGIN
+	BEGIN
+		RETURN CAST(arg AS REAL);
+	EXCEPTION
+		WHEN OTHERS THEN
+			RETURN NULL;
+	END;
+END;
+$BODY$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_float(arg ANYELEMENT, p INT)
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_float(arg ANYELEMENT, typmod INT)
 RETURNS DOUBLE PRECISION
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    v DOUBLE PRECISION;
+AS
+$BODY$
 BEGIN
-    BEGIN
-        v := CAST(arg AS DOUBLE PRECISION);
+	BEGIN
+		IF typmod BETWEEN 1 AND 24 THEN
+			RETURN CAST(arg as REAL);
+		ELSE
+			RETURN CAST(arg as DOUBLE PRECISION);
+		END IF;
+	EXCEPTION
+		WHEN OTHERS THEN
+			RETURN NULL;
+	END;
+END;
+$BODY$
+LANGUAGE plpgsql;
 
-        IF p IS NOT NULL AND p BETWEEN 1 AND 24 THEN
-            v := CAST(CAST(v AS REAL) AS DOUBLE PRECISION);
-        END IF;
-
-        RETURN v;
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
-    END;
-END; $$;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_float(arg TEXT, p INT)
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_float(arg TEXT, typmod INT)
 RETURNS DOUBLE PRECISION
-LANGUAGE plpgsql
-AS $$
+AS
+$BODY$
 BEGIN
-    BEGIN
-        RETURN CAST(arg AS DOUBLE PRECISION);
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
-    END;
-END; $$;
+	BEGIN
+		IF typmod BETWEEN 1 AND 24 THEN
+			RETURN CAST(arg as REAL);
+		ELSE
+			RETURN CAST(arg as DOUBLE PRECISION);
+		END IF;
+	EXCEPTION
+		WHEN OTHERS THEN
+			RETURN NULL;
+	END;
+END;
+$BODY$
+LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION sys.text2float4(arg pg_catalog.text)
 RETURNS REAL
-LANGUAGE sql
-STRICT IMMUTABLE PARALLEL SAFE
 AS $$
-    SELECT CAST(arg::sys.varchar as REAL);
-$$;
-
-CREATE OR REPLACE FUNCTION sys.text2float8(arg pg_catalog.text)
-RETURNS DOUBLE PRECISION
-LANGUAGE sql
-STRICT IMMUTABLE PARALLEL SAFE
-AS $$
-    SELECT CAST(arg::sys.varchar as DOUBLE PRECISION);
-$$;
+BEGIN
+    RETURN CAST(arg::sys.varchar AS REAL);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
 DROP CAST IF EXISTS (pg_catalog.text AS pg_catalog.float4);
 CREATE CAST (pg_catalog.text AS pg_catalog.float4)
-WITH FUNCTION sys.text2float4(pg_catalog.text)
-AS IMPLICIT;
+WITH FUNCTION sys.text2float4(pg_catalog.text) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.text2float8(arg pg_catalog.text)
+RETURNS DOUBLE PRECISION
+AS $$
+BEGIN
+    RETURN CAST(arg::sys.varchar AS DOUBLE PRECISION);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
 DROP CAST IF EXISTS (pg_catalog.text AS pg_catalog.float8);
 CREATE CAST (pg_catalog.text AS pg_catalog.float8)
-WITH FUNCTION sys.text2float8(pg_catalog.text)
-AS IMPLICIT;
+WITH FUNCTION sys.text2float8(pg_catalog.text) AS IMPLICIT;
 
 DO $$
 DECLARE

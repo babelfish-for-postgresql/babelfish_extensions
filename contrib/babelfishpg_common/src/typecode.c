@@ -356,7 +356,7 @@ is_tsql_real_datatype(Oid oid)
 {
 	if (tsql_real_oid == InvalidOid)
 		tsql_real_oid = lookup_tsql_datatype_oid("real");
-	return (tsql_real_oid == oid);
+	return tsql_real_oid == oid;
 }
 
 bool

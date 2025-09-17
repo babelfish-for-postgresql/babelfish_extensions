@@ -2879,48 +2879,39 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 			
 			return result;
 		}
-		else if (baseTypeId == FLOAT4OID || (*common_utility_plugin_ptr->is_tsql_real_datatype) (targetTypeId) ||
-				 baseTypeId == FLOAT8OID || (*common_utility_plugin_ptr->is_tsql_float_datatype) (targetTypeId))
+		else if ((*common_utility_plugin_ptr->is_tsql_real_datatype) (targetTypeId) ||
+				 (*common_utility_plugin_ptr->is_tsql_float_datatype) (targetTypeId) ||
+				 baseTypeId == FLOAT4OID || baseTypeId == FLOAT8OID )
 		{
 			/* Build sys.varchar TypeName */
-		    TypeName *varcharTypeName =
-		        makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("varchar")));
+			Const		*tempcon;
+			Node		*result;
+			TypeName	*varcharTypeName = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("varchar")));
 
-		    Oid varcharOid;
-		    int32 varcharTypmod;
-			Const *tempcon;
-		    Node *result;
-			typenameTypeIdAndMod(NULL, (const TypeName *) varcharTypeName, &varcharOid, &varcharTypmod);
+			typenameTypeIdAndMod(NULL, (const TypeName *) varcharTypeName, &baseTypeId, &baseTypeMod);
 
-		    /* Create a Const of type sys.varchar with T-SQL collation */
-		    tempcon = makeConst(varcharOid,
-		                               -1,
-		                               tsql_get_database_or_server_collation_oid_internal(false),
-		                               -1,
-		                               PointerGetDatum(cstring_to_text(value)),
-		                               false, /* isnull */
-		                               false  /* byval (varlena is by ref) */);
+			/* Create a Const of type sys.varchar with T-SQL collation */
+			tempcon	= makeConst(baseTypeId, -1,
+									tsql_get_database_or_server_collation_oid_internal(false),
+									-1, PointerGetDatum(cstring_to_text(value)),
+									false, false);
 			
-		    /* Coerce to REAL/FLOAT (Babelfish cast will call varchar2float4/8) */
-		    result =
-		        coerce_to_target_type(NULL,
-		                              (Node *) tempcon,
-		                              varcharOid,
-		                              targetTypeId,
-		                              targetTypeMod,
-		                              COERCION_EXPLICIT,
-		                              COERCE_EXPLICIT_CAST,
-		                              location);
+			/* Coerce to REAL/FLOAT */
+			result = coerce_to_target_type(NULL, (Node *) tempcon, baseTypeId,
+											targetTypeId, targetTypeMod,
+											COERCION_EXPLICIT,
+											COERCE_EXPLICIT_CAST,
+											location);
 				
-		    if (result == NULL)
-		        ereport(ERROR,
-		                (errcode(ERRCODE_CANNOT_COERCE),
-		                 errmsg("cannot cast sys.varchar to requested float/real type")));
+			if (result == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_CANNOT_COERCE),
+						 errmsg("cannot cast type \"varchar\" to \"float\"")));
 				
-		    pfree(varcharTypeName);
-		    if (baseType) ReleaseSysCache(baseType); /* if previously fetched */
+			pfree(varcharTypeName);
+			ReleaseSysCache(baseType);
 				
-		    return result;
+			return result;
 		}
 		else
 		{
