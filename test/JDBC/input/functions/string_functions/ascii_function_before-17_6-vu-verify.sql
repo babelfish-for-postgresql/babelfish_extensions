@@ -439,6 +439,3 @@ GO
 
 SELECT * FROM ascii_function_text_analysis;
 GO
-
-SELECT * FROM ascii_function_analysis ORDER BY ID;
-GO

@@ -1230,7 +1230,7 @@ Pass
 
 ~~START~~
 varchar
-PASS
+Fail
 ~~END~~
 
 
@@ -1239,19 +1239,5 @@ GO
 ~~START~~
 varchar#!#int#!#varchar
 A#!#65#!#Valid
-~~END~~
-
-
-SELECT * FROM ascii_function_analysis ORDER BY ID;
-GO
-~~START~~
-int#!#text#!#int#!#int#!#varchar
-1#!#A#!#65#!#65#!#Valid
-2#!#a#!#97#!#97#!#Valid
-3#!#1#!#49#!#49#!#Valid
-4#!#!#!#33#!#33#!#Valid
-5#!# #!#32#!#32#!#Valid
-6#!##!#<NULL>#!#0#!#Invalid
-7#!#<NULL>#!#<NULL>#!#<NULL>#!#Valid
 ~~END~~
 

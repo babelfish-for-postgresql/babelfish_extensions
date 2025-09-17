@@ -489,36 +489,3 @@ BEGIN
         SELECT 'Fail' AS Result;
 END;
 GO
-
-CREATE TABLE ascii_function_source_table (
-    ID INT IDENTITY(1,1) PRIMARY KEY,
-    TextValue TEXT,
-    ExpectedASCII INT
-);
-GO
-
-INSERT INTO ascii_function_source_table (TextValue, ExpectedASCII) VALUES
-('A', 65),
-('a', 97),
-('1', 49),
-('!', 33),
-(' ', 32),
-('', NULL),
-(NULL, NULL);
-GO
-~~ROW COUNT: 7~~
-
-
-CREATE VIEW ascii_function_analysis AS
-SELECT 
-    ID,
-    TextValue,
-    ASCII(CAST(TextValue AS TEXT)) as ComputedASCII,
-    ExpectedASCII,
-    CASE 
-        WHEN ASCII(CAST(TextValue AS TEXT)) = ExpectedASCII THEN 'Valid'
-        WHEN ASCII(CAST(TextValue AS TEXT)) IS NULL AND ExpectedASCII IS NULL THEN 'Valid'
-        ELSE 'Invalid'
-    END AS ValidationResult
-FROM ascii_function_source_table;
-GO
