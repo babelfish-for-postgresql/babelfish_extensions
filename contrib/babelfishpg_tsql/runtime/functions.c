@@ -2223,6 +2223,26 @@ isnumeric(PG_FUNCTION_ARGS)
 			PG_RETURN_INT32(1);
 	}
 
+	/* Get the string representation from input datum. */
+	if (argtypeid == TEXTOID)
+	{
+		value_str = text_to_cstring(PG_GETARG_TEXT_P(0));
+	}
+	else
+	{
+		Oid typoutput;
+		bool typisvarlena;
+		getTypeOutputInfo(argtypeid, &typoutput, &typisvarlena);
+		value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
+	}
+
+	/* Handling empty string. */
+	if ((*common_utility_plugin_ptr->isEmptyOrWhitespace)(value_str))
+	{
+		pfree(value_str);
+		PG_RETURN_INT32(0);
+	}
+
 	/* Get or initialize the cached data. */
 	my_extra = (IsNumericIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
@@ -2252,19 +2272,6 @@ isnumeric(PG_FUNCTION_ARGS)
 		fmgr_info_cxt(numeric_typiofunc,
 					&my_extra->numeric_inputproc,
 					fcinfo->flinfo->fn_mcxt);
-	}
-
-	/* Get the string representation from input datum. */
-	if (argtypeid == TEXTOID)
-	{
-		value_str = text_to_cstring(PG_GETARG_TEXT_P(0));
-	}
-	else
-	{
-		Oid typoutput;
-		bool typisvarlena;
-		getTypeOutputInfo(argtypeid, &typoutput, &typisvarlena);
-		value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
 	}
 
 	/* Try to perform the conversion to numeric. */
