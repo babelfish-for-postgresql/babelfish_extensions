@@ -1745,6 +1745,15 @@ bpchar2float4(PG_FUNCTION_ARGS)
 
 	num = bpchar2cstring(source);
 
+	/* Validate the input string for T-SQL float literals */
+	if (!is_valid_tsql_float(num))
+	{
+		pfree(num);
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("Error converting data type varchar to float.")));
+	}
+
 	return cstring2float4(num);
 }
 

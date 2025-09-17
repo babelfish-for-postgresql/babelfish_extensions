@@ -41,6 +41,20 @@ GO
 
 ~~ERROR (Message: Error converting data type varchar to real.)~~
 
+SELECT CAST('' AS REAL);
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+SELECT CAST(' ' AS REAL);
+GO
+~~START~~
+real
+0.0
+~~END~~
+
 
 SELECT TRY_CAST('NaN' AS REAL);
 GO
@@ -91,6 +105,20 @@ real
 <NULL>
 ~~END~~
 
+SELECT TRY_CAST('' AS REAL);
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+SELECT TRY_CAST(' ' AS REAL);
+GO
+~~START~~
+real
+0.0
+~~END~~
+
 
 SELECT CONVERT(REAL, 'NaN');
 GO
@@ -133,6 +161,20 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CONVERT(REAL, '');
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+SELECT CONVERT(REAL, ' ');
+GO
+~~START~~
+real
+0.0
+~~END~~
 
 
 SELECT TRY_CONVERT(REAL, 'NaN');
@@ -182,6 +224,20 @@ GO
 ~~START~~
 real
 <NULL>
+~~END~~
+
+SELECT TRY_CONVERT(REAL, '');
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+SELECT TRY_CONVERT(REAL, ' ');
+GO
+~~START~~
+real
+0.0
 ~~END~~
 
 
@@ -234,6 +290,22 @@ GO
 
 ~~ERROR (Message: Error converting data type varchar to real.)~~
 
+DECLARE @f REAL='';
+SELECT @f;
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+DECLARE @f REAL=' ';
+SELECT @f;
+GO
+~~START~~
+real
+0.0
+~~END~~
+
 
 -- ======== FLOAT
 SELECT CAST(N'NaN' AS FLOAT(53));
@@ -277,6 +349,20 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CAST(N'' AS FLOAT);
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT CAST(N' ' AS FLOAT(53));
+GO
+~~START~~
+float
+0.0
+~~END~~
 
 
 SELECT TRY_CAST(N'NaN' AS FLOAT);
@@ -328,6 +414,20 @@ float
 <NULL>
 ~~END~~
 
+SELECT TRY_CAST(N'' AS FLOAT(53));
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT TRY_CAST(N' ' AS FLOAT);
+GO
+~~START~~
+float
+0.0
+~~END~~
+
 
 SELECT CONVERT(FLOAT(53), N'NaN');
 GO
@@ -370,6 +470,20 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CONVERT(FLOAT, N'');
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT CONVERT(FLOAT(53), N' ');
+GO
+~~START~~
+float
+0.0
+~~END~~
 
 
 SELECT TRY_CONVERT(FLOAT, N'NaN');
@@ -421,6 +535,20 @@ float
 <NULL>
 ~~END~~
 
+SELECT TRY_CONVERT(FLOAT(53), N'');
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT TRY_CONVERT(FLOAT, N' ');
+GO
+~~START~~
+float
+0.0
+~~END~~
+
 
 DECLARE @f FLOAT(53)=N'NaN';
 SELECT @f;
@@ -470,6 +598,22 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to float.)~~
+
+DECLARE @f FLOAT=N'';
+SELECT @f;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+DECLARE @f FLOAT(53)=N' ';
+SELECT @f;
+GO
+~~START~~
+float
+0.0
+~~END~~
 
 
 -- ======== FLOAT with different precisions
@@ -577,5 +721,171 @@ GO
 ~~START~~
 float
 1000.10001
+~~END~~
+
+
+SELECT CAST(CAST(N'1.1' AS TEXT) AS FLOAT(53));
+GO
+~~START~~
+float
+1.1
+~~END~~
+
+SELECT CAST(CAST(N'' AS NTEXT) AS FLOAT(53));
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT CAST(CAST(N'Infinity' AS NTEXT) AS FLOAT(53));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CAST(CAST(N'+inf' AS TEXT) AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+SELECT CAST(CAST(N'1.1' AS TEXT) AS REAL);
+GO
+~~START~~
+real
+1.1
+~~END~~
+
+SELECT CAST(CAST(N'' AS NTEXT) AS REAL);
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+SELECT CAST(CAST(N'+inf' AS CHAR) AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CAST(CAST(N'1.1' AS CHAR) AS REAL);
+GO
+~~START~~
+real
+1.1
+~~END~~
+
+SELECT CAST(CAST(N'' AS CHAR) AS REAL);
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+SELECT CAST(CAST(N'+inf' AS NCHAR) AS REAL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+SELECT CAST(CAST(N'1.1' AS NCHAR) AS REAL);
+GO
+~~START~~
+real
+1.1
+~~END~~
+
+SELECT CAST(CAST(N'' AS NCHAR) AS REAL);
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+SELECT TRY_CAST(CAST(N'1.1' AS TEXT) AS FLOAT(53));
+GO
+~~START~~
+float
+1.1
+~~END~~
+
+SELECT TRY_CAST(CAST(N'' AS NTEXT) AS FLOAT(53));
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT TRY_CAST(CAST(N'inf' AS NTEXT) AS FLOAT(53));
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT TRY_CAST(CAST(N'NaN' AS TEXT) AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST(CAST(N'1.1' AS TEXT) AS REAL);
+GO
+~~START~~
+real
+1.1
+~~END~~
+
+SELECT TRY_CAST(CAST(N'' AS NTEXT) AS REAL);
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+SELECT TRY_CAST(CAST(N'1.1' AS CHAR) AS FLOAT(53));
+GO
+~~START~~
+float
+1.1
+~~END~~
+
+SELECT TRY_CAST(CAST(N'' AS CHAR) AS FLOAT(53));
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT TRY_CAST(CAST(N'inf' AS CHAR) AS FLOAT(53));
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT TRY_CAST(CAST(N'NaN' AS NCHAR) AS REAL);
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+SELECT TRY_CAST(CAST(N'1.1' AS NCHAR) AS REAL);
+GO
+~~START~~
+real
+1.1
+~~END~~
+
+SELECT TRY_CAST(CAST(N'' AS NCHAR) AS REAL);
+GO
+~~START~~
+real
+0.0
 ~~END~~
 
