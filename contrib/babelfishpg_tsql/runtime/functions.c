@@ -210,9 +210,7 @@ void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
-#ifdef USE_LIBXML
 void        extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count);
-#endif
 
 Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
 static HTAB *load_categories_hash(const char *sourcetext, MemoryContext per_query_ctx);
@@ -246,6 +244,8 @@ extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern char *replace_special_chars_fts_impl(char *input_str);
 
 #ifdef USE_LIBXML
+
+/* This came from backend/utils/adt/xml.c */
 struct PgXmlErrorContext
 {
 	int			magic;
@@ -5157,7 +5157,6 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 	return tupstore;
 }
 
-#ifdef USE_LIBXML
 /*
  * extract_namespaces_from_xml
  * 		Extracts namespace names and URIs from root node of the given XML data.
@@ -5169,7 +5168,8 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 void
 extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count)
 {
-	xmlDocPtr	doc;
+#ifdef USE_LIBXML
+	xmlDocPtr   doc;
 	xmlNode    *root;
 	int         index;
 
@@ -5231,5 +5231,7 @@ extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris,
 
 	if (doc)
 		xmlFreeDoc(doc);
+#else
+NO_XML_SUPPORT();
+#endif							/* not USE_LIBXML */
 }
-#endif

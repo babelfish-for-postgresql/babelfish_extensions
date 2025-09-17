@@ -126,6 +126,9 @@ typedef enum PltsqlInitPrivsOptions
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
 
+extern void get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
+extern void extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count);
+
 /*****************************************
  * 			General Hooks
  *****************************************/
@@ -6912,6 +6915,11 @@ openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, 
 	char	             **ns_uris;
 	int                    ns_count;
 
+	/*
+	 * We will reach here in only two cases, Either when using function XMLTable or OPENXML. 
+	 * And since XMLTable syntax is not supported by ANTLR, single dialect check is enough
+	 * to identify that this is for OPENXML.
+	 */
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 

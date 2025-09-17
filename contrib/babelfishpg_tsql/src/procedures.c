@@ -4942,7 +4942,7 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 	EphemeralNamedRelation		enr = NULL;
 	Relation               		relation;
 	ScanKeyData            		skey[1];
-	TableScanDesc      		    scan;
+	TableScanDesc      		scan;
 	HeapTuple              		tuple;
 	Datum                  		datum;
 	bool                   		isnull;

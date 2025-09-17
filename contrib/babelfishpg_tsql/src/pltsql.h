@@ -33,7 +33,6 @@
 #include "utils/portal.h"
 #include "utils/typcache.h"
 #include "tcop/utility.h"
-#include "utils/xml.h"
 
 #include "dynavec.h"
 #include "dynastack.h"
@@ -2180,10 +2179,6 @@ extern int	pltsql_yyparse(void);
 
 /* functions in hooks.c */
 extern char *extract_identifier(const char *start, int *last_pos);
-extern void get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
-#ifdef USE_LIBXML
-extern void  extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count);
-#endif
 
 /* functions in pltsql_utils.c */
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
