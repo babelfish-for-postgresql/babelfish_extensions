@@ -223,10 +223,6 @@ GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(
 	IN INTEGER
 ) TO PUBLIC;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
 CREATE OR REPLACE FUNCTION sys.ascii(ANYELEMENT)
 RETURNS INTEGER
 AS $$
@@ -269,6 +265,10 @@ BEGIN
     RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
