@@ -117,9 +117,11 @@ bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
-#define              MD5_HASH_LEN 32
+#define              Anum_xml_handle_temp_table_document_id 1
 #define              Anum_xml_handle_temp_table_xml_data 6
-#define              Anum_xml_handle_temp_table_doc_id 1 
+#define              Anum_xml_handle_temp_table_ns_data 7
+
+#define              MD5_HASH_LEN 32
 const  int           XML_HANDLE_COUNTER_START = 0;
 const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
 static int           current_xml_handle_counter = INT_MAX / 2;
@@ -129,6 +131,7 @@ int                  get_next_xml_handle_counter(void);
 void                 create_xml_handle_temp_table(void);
 void                 delete_xml_handle_entry(int  handle);
 int                  insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
+void                 get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -4931,23 +4934,35 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
 }
 
 /*
- * Function to retrieve XML document from temporary table using document ID
+ * Function to retrieve XML document and namespace from temporary table using document ID
  */
-Datum
-tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
+void
+get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data)
 {
-	int32                  document_id = PG_GETARG_INT32(0);
-	Relation               relation;
-	ScanKeyData            skey[1];
-	TableScanDesc          scan;
-	HeapTuple              tuple;
-	bool                   found = false;
-	Datum                  result = (Datum) 0;
-	bool                   isnull = true;
-	EphemeralNamedRelation enr = NULL;
-	bool                   table_exists = false;
-	
-	/* Check if the temporary table exists */
+	EphemeralNamedRelation		enr = NULL;
+	Relation               		relation;
+	ScanKeyData            		skey[1];
+	TableScanDesc      		    scan;
+	HeapTuple              		tuple;
+	Datum                  		datum;
+	bool                   		isnull;
+	bool              	        table_exists = false;
+
+	if (xml_data == NULL && ns_data == NULL)
+		return;
+
+	/*
+	 * Initialise xml_data and ns_data to NULL.
+	 */
+	if (xml_data)
+		*xml_data = NULL;
+	if (ns_data)
+		*ns_data = NULL;
+
+	/* 
+	 * Check if the xml_handle_temp_table exists using ENR lookup,
+	 * if found get its relation descriptor.
+	 */
 	if (xml_handle_temp_table_name != NULL)
 	{
 		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
@@ -4965,46 +4980,70 @@ tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
 				 errmsg("Could not find prepared statement with handle %d.", document_id)));
 	}
 
+	/*
+	 * Fetch xml data and namespace data from xml_handle_temp_table, for given document id.
+	 */
 	ScanKeyInit(&skey[0],
-				Anum_xml_handle_temp_table_doc_id,  /* Column number */
+				Anum_xml_handle_temp_table_document_id,
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(document_id));
-	
+
 	scan = table_beginscan_catalog(relation, 1, skey);
 	tuple = heap_getnext(scan, ForwardScanDirection);
-	
+
 	if (HeapTupleIsValid(tuple))
 	{
-		/* Get the XML document from column 6 (doc) */
-		result = heap_getattr(tuple, Anum_xml_handle_temp_table_xml_data, RelationGetDescr(relation), &isnull);
-		
-		if (!isnull)
+		/* Get the XML document */
+		if (xml_data)
 		{
-			/* Make a copy of the value */
-			result = datumCopy(result, false, -1);
-			found = true;
+			isnull = true;
+			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_xml_data, RelationGetDescr(relation), &isnull);
+
+			if (!isnull)
+				*xml_data = DatumGetXmlP(datum);
+			else
+				*xml_data = NULL;
 		}
 
-		else
+		/* Get the namespaces */
+		if (ns_data)
 		{
-			/* Document is NULL, return NULL */
-			table_endscan(scan);
-			relation_close(relation, AccessShareLock);
-			PG_RETURN_NULL();
+			isnull = true;
+			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_ns_data, RelationGetDescr(relation), &isnull);
+
+			if (!isnull)
+				*ns_data = DatumGetXmlP(datum);
+			else
+				*ns_data = NULL;
 		}
 	}
-	
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	}
+
 	table_endscan(scan);
 	relation_close(relation, AccessShareLock);
+}
+
+/*
+ * Function to retrieve XML document using document ID
+ */
+Datum
+tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
+{
+	int32                 document_id = PG_GETARG_INT32(0);
+	xmltype              *xmldata = NULL;
+
+	get_xml_data_and_namespace_data(document_id, &xmldata, NULL);
 	
 	/* If we found the document, return it */
-	if (found)
-		PG_RETURN_DATUM(result);
+	if (xmldata)
+		PG_RETURN_XML_P(xmldata);
 	
-	/* If we didn't find the handle , throw an error */
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	PG_RETURN_NULL();
 }
 
 /*

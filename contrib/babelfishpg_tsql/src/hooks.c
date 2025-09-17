@@ -95,6 +95,13 @@
 #include "table_variable_mvcc.h"
 #include "bbf_parallel_query.h"
 #include "extendedproperty.h"
+#include "utils/xml.h"
+
+#ifdef USE_LIBXML
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+#endif							/* USE_LIBXML */
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 
@@ -260,6 +267,9 @@ static const char *remove_db_name_in_schema(const char *schema_name, const char 
 static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
 static Oid get_domain_typmodin(Type typ);
 static void pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf);
+#ifdef USE_LIBXML
+static void openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str);
+#endif
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -362,6 +372,9 @@ static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_
 static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
+#ifdef USE_LIBXML
+static openxml_set_namespaces_hook_type prev_openxml_set_namespaces_hook = NULL;
+#endif
 
 /*****************************************
  * 			Install / Uninstall
@@ -493,6 +506,11 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_openxml_columns_hook = pre_transform_openxml_columns_hook;
 	pre_transform_openxml_columns_hook = pre_transform_openxml_columns;
+
+	#ifdef USE_LIBXML
+	prev_openxml_set_namespaces_hook = openxml_set_namespaces_hook;
+	openxml_set_namespaces_hook = openxml_set_namespaces;
+	#endif
 
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
@@ -701,6 +719,9 @@ UninstallExtendedHooks(void)
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
+	#ifdef USE_LIBXML
+	openxml_set_namespaces_hook = prev_openxml_set_namespaces_hook;
+	#endif
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -6812,6 +6833,7 @@ pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
 	Node       *tsql_docid_node;
 	Node       *tsql_flag;
 	RangeVar   *table_ref;
+	ResTarget  *res = makeNode(ResTarget);
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -6821,6 +6843,14 @@ pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
 
 	rtf->namespaces = NIL;
 	rtf->docexpr = NULL;
+
+	/* Storing doc_id in the res->name field */
+	res->name = pstrdup("openxml_doc_id");
+	res->name_location = -1;
+	res->indirection = NIL;
+	res->val = tsql_docid_node;
+	res->location = -1;
+	rtf->namespaces = list_make1(res);
 
 	/* 
 	 * Set the document expression to retrieve the XML document using the document handle.
@@ -6871,6 +6901,52 @@ pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
 		}
 	}
 }
+
+#ifdef USE_LIBXML
+static void
+openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str)
+{
+	int	               doc_id;
+	xmltype	              *ns_data;
+	char	             **ns_names;
+	char	             **ns_uris;
+	int                    ns_count;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	doc_id = pg_strtoint32(doc_id_str);
+	get_xml_data_and_namespace_data(doc_id, NULL, &ns_data);
+	if (ns_data == NULL)
+		return;
+
+	extract_namespaces_from_xml(ns_data, &ns_names, &ns_uris, &ns_count);
+
+	/* register namespaces, if any */
+	if (ns_count > 0)
+	{
+		for (int i = 0; i < ns_count; i++)
+		{
+			char	*ns_name;
+			char	*ns_uri;
+
+			if (ns_names[i] == NULL || ns_uris[i] == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("neither namespace name nor URI may be null")));
+
+			ns_name = ns_names[i];
+			ns_uri = ns_uris[i];
+
+			if (xmlXPathRegisterNs(xpathctx,
+								   pg_xmlCharStrndup_wrapper(ns_name, strlen(ns_name)),
+								   pg_xmlCharStrndup_wrapper(ns_uri, strlen(ns_uri))) != 0)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_DATA_EXCEPTION,
+							"could not set XML namespace");
+		}
+	}
+}
+#endif
 
 /*
  * pltsql_ExecUpdateResultTypeTL

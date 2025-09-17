@@ -784,3 +784,440 @@ WHERE s.region_id = r.region_id OR s.region_id IS NULL;
 EXEC sp_xml_removedocument @xml_doc3;
 GO
 
+-- With namespaces
+--test1
+DECLARE @xml nvarchar(1000) = 
+'<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2">
+    <ns1:child>value1</ns1:child>
+    <ns2:child>value2</ns2:child>
+</root>';
+DECLARE @namespace nvarchar(100) = '<root xmlns:ns1="http://example.com/ns1" />';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+SELECT * FROM OPENXML(@handle, '/root/ns1:child', 3) WITH (child nvarchar(10) '.');
+EXEC sp_xml_removedocument @handle;
+GO
+ 
+DECLARE @h int;
+EXEC sp_xml_preparedocument @h OUTPUT,
+         N'<root xmlns:a="urn:1">
+           <a:Elem abar="asdf">
+             T<a>a</a>U
+           </a:Elem>
+         </root>',
+         '<ns xmlns:b="urn:1" />';
+
+SELECT * FROM openxml(@h, '/root/b:Elem', 3)
+      WITH (Col1 varchar(20) '.');
+EXEC sp_xml_removedocument @h;
+GO
+
+-- test2
+DECLARE @xml nvarchar(2000) = '
+<root xmlns:hr="http://hr.example.com" 
+      xmlns:fin="http://finance.example.com">
+    <hr:employee>
+        <hr:name>John Doe</hr:name>
+        <fin:salary currency="USD">50000</fin:salary>
+    </hr:employee>
+    <hr:employee>
+        <hr:name>Jane Smith</hr:name>
+        <fin:salary currency="USD">60000</fin:salary>
+    </hr:employee>
+</root>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:hr="http://hr.example.com" 
+      xmlns:fin="http://finance.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/root/hr:employee', 2)
+WITH (
+    name nvarchar(50) 'hr:name',
+    salary int 'fin:salary',
+    currency nvarchar(10) 'fin:salary/@currency'
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test3
+DECLARE @xml nvarchar(2000) = '
+<catalog xmlns:prod="http://products.example.com"
+         xmlns:cat="http://categories.example.com">
+    <cat:category name="Electronics">
+        <prod:product>
+            <prod:name>Laptop</prod:name>
+            <prod:price>999.99</prod:price>
+        </prod:product>
+        <prod:product>
+            <prod:name>Smartphone</prod:name>
+            <prod:price>599.99</prod:price>
+        </prod:product>
+    </cat:category>
+</catalog>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:prod="http://products.example.com"
+      xmlns:cat="http://categories.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/catalog/cat:category/prod:product', 2)
+WITH (
+    category_name nvarchar(50) '../../@name',
+    product_name nvarchar(50) 'prod:name',
+    price decimal(10,2) 'prod:price'
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test4
+DECLARE @xml nvarchar(2000) = '
+<orders xmlns:ord="http://orders.example.com"
+        xmlns:cust="http://customers.example.com"
+        xmlns:prod="http://products.example.com">
+    <ord:order id="1001">
+        <cust:customer>
+            <cust:name>Alice Johnson</cust:name>
+            <cust:email>alice@email.com</cust:email>
+        </cust:customer>
+        <prod:items>
+            <prod:item qty="2">Widget A</prod:item>
+            <prod:item qty="1">Widget B</prod:item>
+        </prod:items>
+    </ord:order>
+</orders>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:ord="http://orders.example.com"
+      xmlns:cust="http://customers.example.com"
+      xmlns:prod="http://products.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/orders/ord:order/prod:items/prod:item', 2)
+WITH (
+    order_id int '../../../@id',
+    customer_name nvarchar(50) '../../../cust:customer/cust:name',
+    item_name nvarchar(50) '.',
+    quantity int '@qty'
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test5
+DECLARE @xml nvarchar(2000) = '
+<weather xmlns:loc="http://location.example.com"
+         xmlns:met="http://meteorology.example.com">
+    <loc:city id="NYC">
+        <loc:name>New York</loc:name>
+        <met:conditions date="2023-01-01">
+            <met:temperature unit="C">20</met:temperature>
+            <met:humidity>65</met:humidity>
+        </met:conditions>
+    </loc:city>
+</weather>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:loc="http://location.example.com"
+      xmlns:met="http://meteorology.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/weather/loc:city', 2)
+WITH (
+    city_id varchar(10) '@id',
+    city_name varchar(50) 'loc:name',
+    temperature int 'met:conditions/met:temperature',
+    temp_unit varchar(1) 'met:conditions/met:temperature/@unit',
+    humidity int 'met:conditions/met:humidity',
+    reading_date date 'met:conditions/@date'
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test6
+DECLARE @xml nvarchar(2000) = '
+<medical xmlns:pat="http://patient.example.com"
+         xmlns:doc="http://doctor.example.com"
+         xmlns:treat="http://treatment.example.com">
+    <pat:record id="12345">
+        <pat:info>
+            <pat:name>John Smith</pat:name>
+            <pat:age>45</pat:age>
+        </pat:info>
+        <doc:physician>
+            <doc:name>Dr. Brown</doc:name>
+            <doc:specialty>Cardiology</doc:specialty>
+        </doc:physician>
+        <treat:treatment>
+            <treat:diagnosis>Hypertension</treat:diagnosis>
+            <treat:medication>Lisinopril</treat:medication>
+        </treat:treatment>
+    </pat:record>
+</medical>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:pat="http://patient.example.com"
+      xmlns:doc="http://doctor.example.com"
+      xmlns:treat="http://treatment.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/medical/pat:record', 2)
+WITH (
+    record_id int '@id',
+    patient_name nvarchar(50) 'pat:info/pat:name',
+    patient_age int 'pat:info/pat:age',
+    doctor_name nvarchar(50) 'doc:physician/doc:name',
+    specialty nvarchar(50) 'doc:physician/doc:specialty',
+    diagnosis nvarchar(100) 'treat:treatment/treat:diagnosis',
+    medication nvarchar(100) 'treat:treatment/treat:medication'
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test7
+DECLARE @xml nvarchar(2000) = '
+<employees xmlns:hr="http://hr.example.com">
+    <hr:employee id="1" department="IT">
+        <hr:name>John Doe</hr:name>
+        <hr:salary>50000</hr:salary>
+    </hr:employee>
+    <hr:employee id="2" department="HR">
+        <hr:name>Jane Smith</hr:name>
+        <hr:salary>60000</hr:salary>
+    </hr:employee>
+</employees>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:hr="http://hr.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/employees/hr:employee', 1)
+WITH (
+    id int,
+    department varchar(20),
+    name varchar(50),
+    salary int
+);
+
+SELECT * FROM OPENXML(@handle, '/employees/hr:employee', 2)
+WITH (
+    id int,
+    department varchar(20),
+    name varchar(50),
+    salary int
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test8
+DECLARE @xml nvarchar(2000) = '
+<employees xmlns:hr="http://hr.example.com">
+    <hr:employee id="1" department="IT">
+        <hr:name>John Doe</hr:name>
+        <hr:salary>50000</hr:salary>
+    </hr:employee>
+    <hr:employee id="2" department="HR">
+        <hr:name>Jane Smith</hr:name>
+        <hr:salary>60000</hr:salary>
+    </hr:employee>
+</employees>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:hr="http://hr.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/employees/hr:employee', 3)
+WITH (
+    id int '@id',
+    department varchar(20) '@department',
+    name varchar(50) 'hr:name', 
+    salary int 'hr:salary'
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test9
+DECLARE @xml nvarchar(2000) = '
+<root xmlns:cust="http://customer.example.com">
+    <cust:Customer customerid="VINET" contactname="Paul Henriot" country="France">
+        <cust:Order orderid="10248" total="100.00"/>
+    </cust:Customer>
+    <cust:Customer customerid="LILAS" contactname="Carlos Gonzalez" country="Spain">
+        <cust:Order orderid="10283" total="200.00"/>
+    </cust:Customer>
+</root>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:cust="http://customer.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/root/cust:Customer', 1)
+WITH (
+    customerid varchar(10),
+    contactname varchar(50),
+    country varchar(20)
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test10
+DECLARE @xml nvarchar(2000) = '
+<root xmlns:emp="http://employee.example.com">
+    <emp:Employee>
+        <emp:EmployeeId>1001</emp:EmployeeId>
+        <emp:FirstName>John</emp:FirstName>
+        <emp:LastName>Doe</emp:LastName>
+        <emp:Department>IT</emp:Department>
+    </emp:Employee>
+    <emp:Employee>
+        <emp:EmployeeId>1002</emp:EmployeeId>
+        <emp:FirstName>Jane</emp:FirstName>
+        <emp:LastName>Smith</emp:LastName>
+        <emp:Department>HR</emp:Department>
+    </emp:Employee>
+</root>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:emp="http://employee.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/root/emp:Employee', 2)
+WITH (
+    EmployeeId varchar(10),
+    FirstName varchar(50),
+    LastName varchar(50),
+    Department varchar(20)
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test11
+DECLARE @xml nvarchar(2000) = '
+<root xmlns:ord="http://order.example.com">
+    <ord:Order id="1001" date="2023-01-01">
+        <ord:CustomerName>John Doe</ord:CustomerName>
+        <ord:Total>100.00</ord:Total>
+    </ord:Order>
+    <ord:Order id="1002" date="2023-01-02">
+        <ord:CustomerName>Jane Smith</ord:CustomerName>
+        <ord:Total>200.00</ord:Total>
+    </ord:Order>
+</root>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:ord="http://order.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/root/ord:Order', 3)
+WITH (
+    id varchar(10),
+    date datetime,
+    CustomerName varchar(50),
+    Total decimal(10,2)
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test12
+DECLARE @xml nvarchar(2000) = '
+<root xmlns:cust="http://customer.example.com"
+      xmlns:addr="http://address.example.com">
+    <cust:Customer id="C001">
+        <cust:Name>John Doe</cust:Name>
+        <addr:Address>
+            <addr:Street>123 Main St</addr:Street>
+            <addr:City>New York</addr:City>
+        </addr:Address>
+    </cust:Customer>
+    <cust:Customer id="C002">
+        <cust:Name>Jane Smith</cust:Name>
+        <addr:Address>
+            <addr:Street>456 Oak Ave</addr:Street>
+            <addr:City>Los Angeles</addr:City>
+        </addr:Address>
+    </cust:Customer>
+</root>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:cust="http://customer.example.com"
+      xmlns:addr="http://address.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/root/cust:Customer', 3)
+WITH (
+    id varchar(10),
+    Name varchar(50),
+    Street varchar(100),
+    City varchar(50)
+);
+
+EXEC sp_xml_removedocument @handle;
+GO
+
+--test13
+DECLARE @xml nvarchar(2000) = '
+<root xmlns:inv="http://invoice.example.com">
+    <inv:Invoice number="INV001" type="Standard">
+        <inv:Details>
+            <inv:Amount>1000.00</inv:Amount>
+            <inv:Tax>100.00</inv:Tax>
+            <inv:Total>1100.00</inv:Total>
+        </inv:Details>
+    </inv:Invoice>
+    <inv:Invoice number="INV002" type="Express">
+        <inv:Details>
+            <inv:Amount>2000.00</inv:Amount>
+            <inv:Tax>200.00</inv:Tax>
+            <inv:Total>2200.00</inv:Total>
+        </inv:Details>
+    </inv:Invoice>
+</root>';
+
+DECLARE @namespace nvarchar(200) = '
+<root xmlns:inv="http://invoice.example.com" />';
+
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+
+SELECT * FROM OPENXML(@handle, '/root/inv:Invoice', 3)
+WITH (
+    number varchar(10),
+    type varchar(20),
+    Amount decimal(10,2),
+    Tax decimal(10,2),
+    Total decimal(10,2)
+);
+
+EXEC sp_xml_removedocument @handle;
+GO

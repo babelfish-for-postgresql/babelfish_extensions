@@ -49,6 +49,7 @@
 #include "utils/queryenvironment.h"
 #include "utils/float.h"
 #include "utils/xid8.h"
+#include "utils/xml.h"
 #include <math.h>
 
 #include "../src/babelfish_version.h"
@@ -71,6 +72,12 @@
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
 #include "parser/parse_oper.h"
+
+#ifdef USE_LIBXML
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+#endif							/* USE_LIBXML */
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -203,6 +210,9 @@ void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
+#ifdef USE_LIBXML
+void        extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count);
+#endif
 
 Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
 static HTAB *load_categories_hash(const char *sourcetext, MemoryContext per_query_ctx);
@@ -234,6 +244,29 @@ extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern char *replace_special_chars_fts_impl(char *input_str);
+
+#ifdef USE_LIBXML
+struct PgXmlErrorContext
+{
+	int			magic;
+	/* strictness argument passed to pg_xml_init */
+	PgXmlStrictness strictness;
+	/* current error status and accumulated message, if any */
+	bool		err_occurred;
+	StringInfoData err_buf;
+	/* previous libxml error handling state (saved by pg_xml_init) */
+	xmlStructuredErrorFunc saved_errfunc;
+	void	   *saved_errcxt;
+	/* previous libxml entity handler (saved by pg_xml_init) */
+	xmlExternalEntityLoader saved_entityfunc;
+};
+#endif							/* USE_LIBXML */
+
+#define NO_XML_SUPPORT() \
+	ereport(ERROR, \
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
+			 errmsg("unsupported XML feature"), \
+			 errdetail("This functionality requires the server to be built with libxml support.")))
 
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
@@ -5123,3 +5156,80 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 
 	return tupstore;
 }
+
+#ifdef USE_LIBXML
+/*
+ * extract_namespaces_from_xml
+ * 		Extracts namespace names and URIs from root node of the given XML data.
+ *
+ * Note: The extracted names and URIs are stored in ns_names and ns_uris respectively.
+ * The count of extracted namespaces is stored in ns_count. If no namespaces are found, 
+ * ns_names and ns_uris are set to NULL and ns_count to 0.
+ */
+void
+extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count)
+{
+	xmlDocPtr	doc;
+	xmlNode    *root;
+	int         index;
+
+	/* Unlikely, just a sanity check */
+	if (ns_names == NULL || ns_uris == NULL || ns_count == NULL)
+		return;
+
+	*ns_names = NULL;
+	*ns_uris = NULL;
+	*ns_count = 0;
+
+	if (ns_data == NULL)
+		return;
+
+	doc = xml_parse_wrapper(ns_data, XMLOPTION_DOCUMENT, false, GetDatabaseEncoding(), NULL, NULL, NULL);
+
+	if (doc == NULL)
+		return;
+
+	/*
+	 * Get namespace declaration count
+	 */
+	root = xmlDocGetRootElement(doc);
+	for (xmlNs *cur = root->nsDef; cur != NULL; cur = cur->next)
+	{
+		/* Ignore default namespace declaration */
+		if (cur->prefix)
+		{
+			(*ns_count)++;
+		}
+	}
+
+	if (*ns_count == 0)
+	{
+		if (doc)
+		xmlFreeDoc(doc);
+		return;
+	}
+
+	/*
+	 * Allocate memory for namespace names and URIs
+	 */
+	*ns_names = (char **) palloc0((*ns_count) * sizeof(char *));
+	*ns_uris = (char **) palloc0((*ns_count) * sizeof(char *));
+
+	/*
+	 * Store namespace names and URIs in ns_names and ns_uris
+	 */
+	index = 0;
+	for (xmlNs *cur = root->nsDef; cur != NULL; cur = cur->next)
+	{
+		if (cur->prefix)
+		{
+		(*ns_names)[index] = (char *) pstrdup((const char *) cur->prefix);
+		(*ns_uris)[index] = cur->href ? (char *) pstrdup((const char *) cur->href) : NULL;
+				index++;
+		}
+	}
+
+	if (doc)
+		xmlFreeDoc(doc);
+}
+#endif
