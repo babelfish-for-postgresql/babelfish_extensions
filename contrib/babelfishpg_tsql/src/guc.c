@@ -70,6 +70,7 @@ char	   *pltsql_host_release = NULL;
 char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
+bool		pltsql_disable_unmapped_error_termination = false; 					/*flag that identify if termination on unmapped error will occur or not  */
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -1243,6 +1244,16 @@ define_custom_variables(void)
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
+	
+							 /*  GUC Variable that defines the termination behaviour once unmapped error occured */
+	DefineCustomBoolVariable("babelfishpg_tsql.disable_unmapped_error_termination",
+		gettext_noop("disable termination once unmapped Error caughted"),
+		NULL,
+		&pltsql_disable_unmapped_error_termination,
+		false,
+		PGC_USERSET,
+		GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+		NULL, NULL, NULL);				
 }
 
 int			escape_hatch_storage_options = EH_IGNORE;
@@ -1708,3 +1719,13 @@ metadata_inconsistency_check_enabled(void)
 {
 	return enable_metadata_inconsistency_check;
 }
+
+
+/* 
+	* This function returns the value of the variable pltsql_disable_unmapped_error_termination.
+	* This variable is a boolean that indicates whether the termination once an unmapped error is caught should be disabled.
+	* It is part of the configuration settings for error handling in the Babelfish T-SQL extension for PostgreSQL.
+	*/
+	bool unmapped_error_termination_disabled(void){
+		return pltsql_disable_unmapped_error_termination;
+	}

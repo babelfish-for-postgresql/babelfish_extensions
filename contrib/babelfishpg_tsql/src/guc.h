@@ -48,4 +48,7 @@ extern void pltsql_revert_last_scope_identity(int nest_level);
 extern void pltsql_remove_current_query_env(void);
 
 extern void assign_psql_logical_babelfish_db_name(const char *newval, void *extra);
+
+extern bool unmapped_error_termination_disabled(void);
+
 #endif
