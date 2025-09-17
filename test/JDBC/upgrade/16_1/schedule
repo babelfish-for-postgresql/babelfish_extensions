@@ -582,4 +582,4 @@ babel_assign_nchar
 alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
-ascii_function_before-17_6
+ascii_function_before-17_7-or-16_11
