@@ -1,0 +1,148 @@
+-- Drop tables
+DROP TABLE IF EXISTS money_style_conversion_test;
+GO
+
+DROP TABLE IF EXISTS smallmoney_style_conversion_test;
+GO
+
+-- Drop views
+DROP VIEW money_style_test_v1;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "money_style_test_v1" does not exist)~~
+
+
+DROP VIEW money_style_test_v2;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "money_style_test_v2" does not exist)~~
+
+
+DROP VIEW money_style_test_v3;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "money_style_test_v3" does not exist)~~
+
+
+DROP VIEW money_style_test_v4;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "money_style_test_v4" does not exist)~~
+
+
+DROP VIEW money_style;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "money_style" does not exist)~~
+
+
+DROP VIEW smallmoney_style_tes
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "smallmoney_style_tes" does not exist)~~
+
+
+DROP VIEW smallmoney_style_tes
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "smallmoney_style_tes" does not exist)~~
+
+
+DROP VIEW smallmoney_style_tes
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "smallmoney_style_tes" does not exist)~~
+
+
+DROP VIEW smallmoney_style_tes
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "smallmoney_style_tes" does not exist)~~
+
+
+DROP VIEW smallmoney_style_tes
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "smallmoney_style_tes" does not exist)~~
+
+
+
+-- Drop procedures
+DROP PROCEDURE money_style_tes
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "money_style_tes")~~
+
+
+DROP PROCEDURE money_style_tes
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "money_style_tes")~~
+
+
+DROP PROCEDURE money_style_tes
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "money_style_tes")~~
+
+
+DROP PROCEDURE money_style_tes
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "money_style_tes")~~
+
+
+DROP PROCEDURE money_style;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "money_style")~~
+
+DROP PROCEDURE smallmoney_styl
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "smallmoney_styl")~~
+
+
+DROP PROCEDURE smallmoney_styl
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "smallmoney_styl")~~
+
+
+DROP PROCEDURE smallmoney_styl
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "smallmoney_styl")~~
+
+
+DROP PROCEDURE smallmoney_styl
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "smallmoney_styl")~~
+
+
+DROP PROCEDURE smallmoney_style_test_p5;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "smallmoney_style_test_p5")~~
+

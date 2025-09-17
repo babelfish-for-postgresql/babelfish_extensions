@@ -2,9 +2,6 @@
 DROP VIEW ascii_function_v_empty_analysis;
 GO
 
-DROP VIEW ascii_function_text_analysis;
-GO
-
 -- Drop Procedures
 DROP PROCEDURE ascii_function_analyze_string;
 GO

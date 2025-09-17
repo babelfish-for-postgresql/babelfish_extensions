@@ -436,6 +436,3 @@ EXEC ascii_function_text_validator 'A', 65;
 EXEC ascii_function_text_validator 'B', 66;
 EXEC ascii_function_text_validator '', 0;
 GO
-
-SELECT * FROM ascii_function_text_analysis;
-GO

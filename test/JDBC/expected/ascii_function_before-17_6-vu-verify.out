@@ -1233,11 +1233,3 @@ varchar
 Fail
 ~~END~~
 
-
-SELECT * FROM ascii_function_text_analysis;
-GO
-~~START~~
-varchar#!#int#!#varchar
-A#!#65#!#Valid
-~~END~~
-

@@ -1,0 +1,609 @@
+-- Test from tables
+SELECT 'MONEY Conversions' AS test_type;
+SELECT test_value, style_number, 
+       TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS converted_value,
+       description
+FROM money_style_conversion_test
+ORDER BY id;
+GO
+~~START~~
+varchar
+MONEY Conversions
+~~END~~
+
+~~START~~
+money#!#sql_variant#!#varchar#!#varchar
+1234.1357#!#0#!#1234.14#!#Basic decimal - style 0
+1234.1357#!#1#!#1,234.14#!#Basic decimal - style 1
+1234.1357#!#2#!#1234.1357#!#Basic decimal - style 2
+1234.1357#!#126#!#1234.1357#!#Basic decimal - style 126
+1234.1357#!#<NULL>#!#<NULL>#!#Basic decimal - NULL style
+-1234.1357#!#0#!#-1234.14#!#Negative decimal - style 0
+-1234.1357#!#1#!#-1,234.14#!#Negative decimal - style 1
+-1234.1357#!#2#!#-1234.1357#!#Negative decimal - style 2
+922337203685477.5807#!#0#!#922337203685477.58#!#Maximum MONEY value
+-922337203685477.5808#!#0#!#-922337203685477.58#!#Minimum MONEY value
+922337203685477.5807#!#1#!#922,337,203,685,477.58#!#Maximum MONEY value with comma format
+-922337203685477.5808#!#1#!#-922,337,203,685,477.58#!#Minimum MONEY value with comma format
+0.0000#!#0#!#0.00#!#Zero value - style 0
+0.0000#!#1#!#0.00#!#Zero value - style 1
+0.0000#!#2#!#0.0000#!#Zero value - style 2
+1234.1000#!#0#!#1234.10#!#Two decimal places
+1234.1000#!#0#!#1234.10#!#One decimal place
+1234.0000#!#0#!#1234.00#!#Four trailing zeros
+0.1234#!#0#!#0.12#!#Leading zero decimal
+123.4500#!#-1#!#123.45#!#Negative style -1
+123.4500#!#-126#!#123.45#!#Negative style -126
+123.4568#!#0#!#123.46#!#Float-like decimal
+-123.4568#!#0#!#-123.46#!#Negative float-like decimal
+123456789.1234#!#0#!#123456789.12#!#Large number with decimals
+-123456789.1234#!#1#!#-123,456,789.12#!#Large negative with comma format
+123.4500#!#0#!#123.45#!#Currency symbol value
+-123.4500#!#1#!#-123.45#!#Negative currency symbol value
+~~END~~
+
+
+SELECT 'SMALLMONEY Conversions' AS test_type;
+SELECT test_value, style_number,
+       TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS converted_value,
+       description
+FROM smallmoney_style_conversion_test
+ORDER BY id;
+GO
+~~START~~
+varchar
+SMALLMONEY Conversions
+~~END~~
+
+~~START~~
+smallmoney#!#sql_variant#!#varchar#!#varchar
+1234.1357#!#0#!#1234.14#!#Basic decimal - style 0
+1234.1357#!#1#!#1,234.14#!#Basic decimal - style 1
+1234.1357#!#2#!#1234.1357#!#Basic decimal - style 2
+1234.1357#!#126#!#1234.1357#!#Basic decimal - style 126
+1234.1357#!#<NULL>#!#<NULL>#!#Basic decimal - NULL style
+-1234.1357#!#0#!#-1234.14#!#Negative decimal - style 0
+-1234.1357#!#1#!#-1,234.14#!#Negative decimal - style 1
+-1234.1357#!#2#!#-1234.1357#!#Negative decimal - style 2
+214748.3647#!#0#!#214748.36#!#Maximum SMALLMONEY value
+-214748.3648#!#0#!#-214748.36#!#Minimum SMALLMONEY value
+214748.3647#!#1#!#214,748.36#!#Maximum SMALLMONEY with comma format
+-214748.3648#!#1#!#-214,748.36#!#Minimum SMALLMONEY with comma format
+0.0000#!#0#!#0.00#!#Zero value - style 0
+0.0000#!#1#!#0.00#!#Zero value - style 1
+0.0000#!#2#!#0.0000#!#Zero value - style 2
+1234.1000#!#0#!#1234.10#!#Two decimal places
+1234.1000#!#0#!#1234.10#!#One decimal place
+1234.0000#!#0#!#1234.00#!#Four trailing zeros
+0.1234#!#0#!#0.12#!#Leading zero decimal
+123.4500#!#-1#!#123.45#!#Negative style -1
+123.4500#!#-126#!#123.45#!#Negative style -126
+123.4567#!#0#!#123.46#!#Float-like decimal
+-123.4567#!#0#!#-123.46#!#Negative float-like decimal
+123.4500#!#0#!#123.45#!#Currency symbol value
+-123.4500#!#1#!#-123.45#!#Negative currency symbol value
+~~END~~
+
+
+-- Test MONEY conversion with different styles
+DECLARE @val MONEY = 1234.1357;
+SELECT CONVERT(VARCHAR, @val);
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+DECLARE @val MONEY = 1234.1357;
+SELECT CONVERT(VARCHAR, @val, 0);
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+DECLARE @val MONEY = 1234.1357;
+SELECT CONVERT(VARCHAR, @val, 1);
+GO
+~~START~~
+varchar
+1,234.14
+~~END~~
+
+
+DECLARE @val MONEY = 1234.1357;
+SELECT CONVERT(VARCHAR, @val, 2);
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+DECLARE @val MONEY = 1234.1357;
+SELECT CONVERT(VARCHAR, @val, 126);
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+-- Test SMALLMONEY conversion with different styles
+DECLARE @val SMALLMONEY = 1234.1357;
+SELECT CONVERT(VARCHAR, @val);
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+DECLARE @val SMALLMONEY = 1234.1357;
+SELECT CONVERT(VARCHAR, @val, 0);
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+DECLARE @val SMALLMONEY = 1234.1357;
+SELECT CONVERT(VARCHAR, @val, 1);
+GO
+~~START~~
+varchar
+1,234.14
+~~END~~
+
+
+DECLARE @val SMALLMONEY = 1234.1357;
+SELECT CONVERT(VARCHAR, @val, 2);
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+DECLARE @val SMALLMONEY = 1234.1357;
+SELECT CONVERT(VARCHAR, @val, 126);
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+-- Test negative styles
+SELECT CONVERT(VARCHAR, CAST(123 AS MONEY), -126);
+GO
+~~START~~
+varchar
+123.00
+~~END~~
+
+
+SELECT CONVERT(VARCHAR, CAST(123 AS MONEY), -1);
+GO
+~~START~~
+varchar
+123.00
+~~END~~
+
+
+-- Test decimal style (should fail)
+SELECT CONVERT(VARCHAR, CAST(123376736.12345678923456789 AS MONEY), 1.8);
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function)~~
+
+
+-- Test style 16
+SELECT CONVERT(VARCHAR, CAST($23.12 AS MONEY), 16);
+GO
+~~START~~
+varchar
+23.12
+~~END~~
+
+
+-- Test edge cases
+SELECT CONVERT(VARCHAR, CAST(214748.3647 AS SMALLMONEY));
+GO
+~~START~~
+varchar
+214748.36
+~~END~~
+
+
+SELECT CONVERT(VARCHAR, CAST(-214748.3648 AS SMALLMONEY));
+GO
+~~START~~
+varchar
+-214748.36
+~~END~~
+
+
+SELECT CONVERT(VARCHAR, CAST(922337203685477.5807 AS MONEY));
+GO
+~~START~~
+varchar
+922337203685477.58
+~~END~~
+
+
+SELECT CONVERT(VARCHAR, CAST(-922337203685477.5808 AS MONEY));
+GO
+~~START~~
+varchar
+-922337203685477.58
+~~END~~
+
+
+-- Test views
+SELECT * FROM money_style_test_v1;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+SELECT * FROM money_style_test_v2;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+SELECT * FROM money_style_test_v3;
+GO
+~~START~~
+varchar
+1,234.14
+~~END~~
+
+
+SELECT * FROM money_style_test_v4;
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+SELECT * FROM money_style_test_v5;
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+SELECT * FROM smallmoney_style_test_v1;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+SELECT * FROM smallmoney_style_test_v2;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+SELECT * FROM smallmoney_style_test_v3;
+GO
+~~START~~
+varchar
+1,234.14
+~~END~~
+
+
+SELECT * FROM smallmoney_style_test_v4;
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+SELECT * FROM smallmoney_style_test_v5;
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+-- Test procedures
+EXECUTE money_style_test_p1;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+EXECUTE money_style_test_p2;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+EXECUTE money_style_test_p3;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+EXECUTE money_style_test_p4;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function)~~
+
+
+EXECUTE money_style_test_p5;
+GO
+~~START~~
+varchar
+23.12
+~~END~~
+
+
+EXECUTE smallmoney_style_test_p1;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+EXECUTE smallmoney_style_test_p2;
+GO
+~~START~~
+varchar
+-1234.14
+~~END~~
+
+
+EXECUTE smallmoney_style_test_p3;
+GO
+~~START~~
+varchar
+214748.36
+~~END~~
+
+
+EXECUTE smallmoney_style_test_p4;
+GO
+~~START~~
+varchar
+-214748.36
+~~END~~
+
+
+EXECUTE smallmoney_style_test_p5;
+GO
+~~START~~
+varchar
+0.00
+~~END~~
+
+
+
+-- Test MONEY direct conversions
+DECLARE @val MONEY;
+-- Basic style tests
+SET @val = 1234.1357;
+SELECT CONVERT(VARCHAR, @val);
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+SET @val = 1234.1357;
+SELECT CONVERT(VARCHAR, @val, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@val" is not a known variable)~~
+
+
+SET @val = 1234.1357;
+SELECT CONVERT(VARCHAR, @val, 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@val" is not a known variable)~~
+
+
+-- Edge cases
+SET @val = 922337203685477.5807;  -- Max MONEY
+SELECT CONVERT(VARCHAR, @val, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@val" is not a known variable)~~
+
+
+SET @val = -922337203685477.5808;  -- Min MONEY
+SELECT CONVERT(VARCHAR, @val, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@val" is not a known variable)~~
+
+
+-- Negative numbers
+SET @val = -1234.1357;
+SELECT CONVERT(VARCHAR, @val, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@val" is not a known variable)~~
+
+
+SET @val = -1234.1357;
+SELECT CONVERT(VARCHAR, @val, 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@val" is not a known variable)~~
+
+
+-- Float-like values
+SET @val = 123.45678901234;
+SELECT CONVERT(VARCHAR, @val, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@val" is not a known variable)~~
+
+
+SET @val = -123.45678901234;
+SELECT CONVERT(VARCHAR, @val, 2);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@val" is not a known variable)~~
+
+
+-- Zero values
+SET @val = 0.00;
+SELECT CONVERT(VARCHAR, @val, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@val" is not a known variable)~~
+
+
+SET @val = 0.00;
+SELECT CONVERT(VARCHAR, @val, 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@val" is not a known variable)~~
+
+
+
+-- Test SMALLMONEY direct conversions
+DECLARE @sval SMALLMONEY;
+-- Basic style tests
+SET @sval = 1234.1357;
+SELECT CONVERT(VARCHAR, @sval);
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+SET @sval = 1234.1357;
+SELECT CONVERT(VARCHAR, @sval, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@sval" is not a known variable)~~
+
+
+-- Edge cases
+SET @sval = 214748.3647;  -- Max SMALLMONEY
+SELECT CONVERT(VARCHAR, @sval, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@sval" is not a known variable)~~
+
+
+SET @sval = -214748.3648;  -- Min SMALLMONEY
+SELECT CONVERT(VARCHAR, @sval, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@sval" is not a known variable)~~
+
+
+-- Negative numbers
+SET @sval = -1234.1357;
+SELECT CONVERT(VARCHAR, @sval, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@sval" is not a known variable)~~
+
+
+SET @sval = -1234.1357;
+SELECT CONVERT(VARCHAR, @sval, 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@sval" is not a known variable)~~
+
+
+-- Test invalid conversions (should fail)
+-- Decimal style
+SELECT CONVERT(VARCHAR, CAST(123.45 AS MONEY), 1.8);
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function)~~
+
+
+-- Overflow tests
+SELECT CONVERT(VARCHAR, CAST(214748.3648 AS SMALLMONEY));  -- SMALLMONEY overflow
+GO
+~~START~~
+varchar
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CONVERT(VARCHAR, CAST(-214748.3649 AS SMALLMONEY));  -- SMALLMONEY underflow
+GO
+~~START~~
+varchar
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- Test NULL handling
+SELECT CONVERT(VARCHAR, CAST(NULL AS MONEY));
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT CONVERT(VARCHAR, CAST(NULL AS SMALLMONEY));
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+

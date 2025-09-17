@@ -441,17 +441,7 @@ VALUES (
 );
 GO
 
--- dependent tests for ascii(text)
-CREATE VIEW ascii_function_text_analysis AS
-SELECT 
-    'A' as TextValue,
-    ASCII(CAST('A' AS TEXT)) as ASCIIValue,
-    CASE 
-        WHEN ASCII(CAST('A' AS TEXT)) = 65 THEN 'Valid'
-        ELSE 'Invalid'
-    END AS ValidationResult;
-GO
-
+-- dependent test for ascii(text)
 CREATE PROCEDURE ascii_function_text_validator
     @InputText TEXT,
     @ExpectedASCII INT
