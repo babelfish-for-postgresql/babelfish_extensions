@@ -466,6 +466,7 @@ VALUES (
 GO
 ~~ROW COUNT: 2~~
 
+
 -- dependent tests for ascii(text)
 CREATE VIEW ascii_function_text_analysis AS
 SELECT 
