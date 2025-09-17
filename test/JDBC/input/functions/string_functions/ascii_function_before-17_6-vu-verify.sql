@@ -422,3 +422,11 @@ GO
 
 SELECT ASCII(CAST(0x20 as dbo.ascii_function_binaryUDT)) as binary_udt_direct;
 GO
+
+SELECT ASCII(CAST('0X20' as TEXT)) as text_ascii;
+GO
+
+DECLARE @temp TABLE (col TEXT);
+INSERT INTO @temp VALUES ('Hello World');
+SELECT ASCII(col) AS text_variable_ascii FROM @temp;
+GO

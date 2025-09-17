@@ -50,13 +50,6 @@ GO
 DROP TABLE ascii_function_test_text;
 GO
 
-DROP TABLE ascii_function_UDT;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "ascii_function_udt" does not exist)~~
-
-
 DROP TABLE ascii_function_UDT_test;
 GO
 

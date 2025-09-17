@@ -50,9 +50,6 @@ GO
 DROP TABLE ascii_function_test_text;
 GO
 
-DROP TABLE ascii_function_UDT;
-GO
-
 DROP TABLE ascii_function_UDT_test;
 GO
 

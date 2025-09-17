@@ -1193,3 +1193,23 @@ int
 32
 ~~END~~
 
+
+SELECT ASCII(CAST('0X20' as TEXT)) as text_ascii;
+GO
+~~START~~
+int
+48
+~~END~~
+
+
+DECLARE @temp TABLE (col TEXT);
+INSERT INTO @temp VALUES ('Hello World');
+SELECT ASCII(col) AS text_variable_ascii FROM @temp;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+72
+~~END~~
+
