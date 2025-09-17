@@ -5318,15 +5318,32 @@ populate_xml_nodes(xmlNode *node)
 
 	if (node->type == XML_ELEMENT_NODE)
 	{
+		xmlNs *ns = NULL;
+		xmlAttr *attr = NULL;
+
 		/*
 		 * For each of the namespace declaration in the node, create a new attribute.
 		 */
 		for (xmlNs *cur = node->nsDef; cur != NULL; cur = cur->next)
 		{
+			ns = xmlNewNs(NULL, NULL, BAD_CAST "xmlns");
+			
+			/* Unlikely, Just a sanity check */
+			if (ns == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("could not process XML document.")));
+
 			if (cur->prefix == NULL)	// Default namespace declaration
-				xmlNewNsProp(node, xmlNewNs(NULL, NULL, BAD_CAST "xmlns"), BAD_CAST "xmlns", BAD_CAST cur->href);
+				attr = xmlNewNsProp(node, ns, BAD_CAST "xmlns", BAD_CAST cur->href);
 			else
-				xmlNewNsProp(node, xmlNewNs(NULL, NULL, BAD_CAST "xmlns"), BAD_CAST cur->prefix, BAD_CAST cur->href);
+				attr = xmlNewNsProp(node, ns, BAD_CAST cur->prefix, BAD_CAST cur->href);
+			
+			/* Unlikely, Just a sanity check */
+			if (attr == NULL)
+				ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("could not process XML document.")));
 		}
 
 		for (xmlAttr *cur = node->properties; cur != NULL; cur = cur->next)
@@ -5815,7 +5832,7 @@ openxml_simple(PG_FUNCTION_ARGS)
 				if (xmlXPathRegisterNs(xpathctx,
 									(xmlChar *) ns_name,
 									(xmlChar *) ns_uri) != 0)
-					ereport(ERROR,	/* is this an internal error??? */
+					ereport(ERROR,
 							(errmsg("could not register XML namespace with name \"%s\" and URI \"%s\"",
 									ns_name, ns_uri)));
 			}
