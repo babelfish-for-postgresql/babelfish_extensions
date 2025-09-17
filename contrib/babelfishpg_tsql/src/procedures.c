@@ -4691,7 +4691,7 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 		
 	heap_freetuple(tuple);
 	
-	relation_close(relation, NoLock);
+	relation_close(relation, RowExclusiveLock);
 	
 	return document_id;
 }
@@ -4796,7 +4796,7 @@ delete_xml_handle_entry(int document_id)
 	}
 	
 	systable_endscan(scan);
-	relation_close(relation, NoLock);
+	relation_close(relation, RowExclusiveLock);
 	
 	/* If we didn't find the handle or couldn't delete it, throw an error */
 	if (!found)
@@ -4966,7 +4966,7 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
 		if (enr)
 		{
-			relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+			relation = relation_open(enr->md.reliddesc, AccessShareLock);
 			table_exists = true;
 		}
 	}
@@ -5017,6 +5017,9 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 	}
 	else
 	{
+		table_endscan(scan);
+		relation_close(relation, AccessShareLock);
+
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("Could not find prepared statement with handle %d.", document_id)));

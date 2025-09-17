@@ -257,6 +257,7 @@ typedef struct ht_xmlNode2Id_entry
 	long long int      id;
 } ht_xmlNode2Id_entry_t;
 
+/* This came from backend/utils/adt/xml.c */
 struct PgXmlErrorContext
 {
 	int			magic;
@@ -5917,7 +5918,7 @@ openxml_simple(PG_FUNCTION_ARGS)
 	pg_xml_done(xmlerrcxt, false);
 
 done:
-	/* clean up and return the tuplestore */
+	/* return the tuplestore */
 	tuplestore_donestoring(tupstore);
 
 	rsinfo->returnMode = SFRM_Materialize;
