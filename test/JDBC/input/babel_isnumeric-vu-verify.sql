@@ -362,7 +362,7 @@ select isnumeric(cast('' as float))
 go
 
 -- decimal/numeric (Fixed precision)
-select isnumeric(cast('' as numeric)) -- same in bbf 
+select isnumeric(cast('' as numeric))
 go
 
 select isnumeric(cast('' as decimal))
@@ -420,7 +420,7 @@ DECLARE @inputEmptyString time(4) = '';
 select isnumeric(@inputString), isnumeric(@inputEmptyString);
 GO
 
-DECLARE @context datetime = '2006-01-02 15:04:05'
+DECLARE @inputString datetime = '2006-01-02 15:04:05'
 DECLARE @inputEmptyString datetime = '';
 select isnumeric(@inputString), isnumeric(@inputEmptyString);
 go

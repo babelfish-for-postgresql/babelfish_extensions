@@ -907,7 +907,7 @@ int
 
 
 -- decimal/numeric (Fixed precision)
-select isnumeric(cast('' as numeric)) -- same in bbf 
+select isnumeric(cast('' as numeric))
 go
 ~~START~~
 int
@@ -1042,13 +1042,14 @@ int#!#int
 ~~END~~
 
 
-DECLARE @context datetime = '2006-01-02 15:04:05'
+DECLARE @inputString datetime = '2006-01-02 15:04:05'
 DECLARE @inputEmptyString datetime = '';
 select isnumeric(@inputString), isnumeric(@inputEmptyString);
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "@inputstring" does not exist)~~
+~~START~~
+int#!#int
+0#!#0
+~~END~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
