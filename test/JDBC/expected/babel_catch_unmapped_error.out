@@ -1,19 +1,36 @@
 
-
-
-
-
-
 -- Invalid Function Param ,  without catch flag set 
 SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','off',false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
 BEGIN TRY 
 SELECT SWITCHOFFSET('2025-07-23 12:00:00 +00:00', 'abc') AS shifted_time; 
 END TRY
 BEGIN CATCH 
  SELECT ERROR_NUMBER() AS tsql_error_number, ERROR_MESSAGE() AS message_text;  
 END CATCH;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
 -- Invalid Function Param, with catch flag set 
 SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','on',false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+
 BEGIN TRY 
 SELECT SWITCHOFFSET('2025-07-23 12:00:00 +00:00', 'abc') AS shifted_time; 
 END TRY
@@ -21,29 +38,29 @@ BEGIN CATCH
     SELECT 'Catch Error ';
     SELECT ERROR_NUMBER() AS tsql_error_number, ERROR_MESSAGE() AS message_text;  
 END CATCH;
--- numeric field overflow, with catch flag set 
-SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','on',false)
-BEGIN TRY
-    SELECT CAST(123456 AS DECIMAL(5,2));  -- exceeds precision -> overflow at runtime
-END TRY
-BEGIN CATCH
-    SELECT 'Catch Error ';
-    SELECT ERROR_NUMBER() AS tsql_error_number, ERROR_MESSAGE() AS message_text;
-END CATCH;
+GO
+~~START~~
+varchar
+Catch Error 
+~~END~~
+
+~~START~~
+int#!#nvarchar
+33557097#!#The timezone provided to builtin function todatetimeoffset is invalid.
+~~END~~
+
+
+
+
+-- time field value out of range, Termination scenario
+SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','off',false);
 GO
 ~~START~~
 text
 off
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
-
-
-
--- time field value out of range, Termination scenario
-SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','off',false);
 BEGIN TRY
     SELECT CAST('2025-13-40 25:61:61' AS DATETIME);  
 END TRY
@@ -52,20 +69,21 @@ BEGIN CATCH
     SELECT ERROR_NUMBER() AS tsql_error_number, ERROR_MESSAGE() AS message_text;
 END CATCH;
 GO
-~~START~~
-text
-off
-~~END~~
-
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: date/time field value out of range: "2025-13-40 25:61:61")~~
 
 
 
-
 -- time field value out of range, Catch scenario
 SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','on',false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
 BEGIN TRY
     SELECT CAST('2025-13-40 25:61:61' AS DATETIME);  
 END TRY
@@ -74,11 +92,6 @@ BEGIN CATCH
     SELECT ERROR_NUMBER() AS tsql_error_number, ERROR_MESSAGE() AS message_text;
 END CATCH;
 GO
-~~START~~
-text
-on
-~~END~~
-
 ~~START~~
 varchar
 Catch Error 
@@ -93,6 +106,13 @@ int#!#nvarchar
 
 -- numeric field overflow, without catch flag set
 SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','off',false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
 BEGIN TRY
     SELECT CAST(123456 AS DECIMAL(5,2));  -- exceeds precision -> overflow at runtime
 END TRY
@@ -101,11 +121,6 @@ BEGIN CATCH
     SELECT ERROR_NUMBER() AS tsql_error_number, ERROR_MESSAGE() AS message_text;
 END CATCH;
 GO
-~~START~~
-text
-off
-~~END~~
-
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: numeric field overflow)~~
@@ -114,6 +129,13 @@ off
 
 -- numeric field overflow, with catch flag set 
 SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','on',false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+
 BEGIN TRY
     SELECT CAST(123456 AS DECIMAL(5,2));  -- exceeds precision -> overflow at runtime
 END TRY
@@ -122,11 +144,6 @@ BEGIN CATCH
     SELECT ERROR_NUMBER() AS tsql_error_number, ERROR_MESSAGE() AS message_text;
 END CATCH;
 GO
-~~START~~
-text
-on
-~~END~~
-
 ~~START~~
 varchar
 Catch Error 
@@ -144,7 +161,15 @@ int#!#nvarchar
 DROP TABLE IF EXISTS error_test6;
 CREATE TABLE error_test6 (id INT);
 GO
+
 SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','off',false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
 BEGIN TRY
     INSERT INTO error_test6 VALUES ('not_an_int'); -- bad cast
 END TRY
@@ -154,11 +179,6 @@ BEGIN CATCH
            ERROR_MESSAGE() AS message_text;
 END CATCH;
 GO
-~~START~~
-text
-off
-~~END~~
-
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "not_an_int")~~
@@ -173,7 +193,16 @@ GO
 DROP TABLE IF EXISTS error_test6;
 CREATE TABLE error_test6 (id INT);
 GO
+
 SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','on',false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+
 BEGIN TRY
     INSERT INTO error_test6 VALUES ('not_an_int'); -- bad cast
 END TRY
@@ -183,11 +212,6 @@ BEGIN CATCH
            ERROR_MESSAGE() AS message_text;
 END CATCH;
 GO
-~~START~~
-text
-on
-~~END~~
-
 ~~START~~
 varchar
 Catch Error 
@@ -205,6 +229,37 @@ GO
 
 -- numeric field overflow, without catch flag set 
 SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','off',false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
+BEGIN TRY
+    SELECT CAST(123456 AS DECIMAL(5,2));  -- exceeds precision -> overflow at runtime
+END TRY
+BEGIN CATCH
+    SELECT 'Catch Error ';
+    SELECT ERROR_NUMBER() AS tsql_error_number, ERROR_MESSAGE() AS message_text;
+END CATCH;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+-- numeric field overflow, with catch flag set 
+SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','on',false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+
 BEGIN TRY
     SELECT CAST(123456 AS DECIMAL(5,2));  -- exceeds precision -> overflow at runtime
 END TRY
@@ -214,13 +269,20 @@ BEGIN CATCH
 END CATCH;
 GO
 ~~START~~
+varchar
+Catch Error 
+~~END~~
+
+~~START~~
+int#!#nvarchar
+33557097#!#numeric field overflow
+~~END~~
+
+
+SELECT SET_CONFIG('babelfishpg_tsql.disable_unmapped_error_termination','off',false)
+GO
+~~START~~
 text
 off
 ~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: numeric field overflow)~~
-
-
 
