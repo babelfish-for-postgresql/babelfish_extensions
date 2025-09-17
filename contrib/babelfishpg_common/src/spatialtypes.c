@@ -132,7 +132,7 @@ typedef struct
 {
     bytea   *input;
     uint8   *input_data;
-    unsigned int input_len;
+    uint32_t input_len;
     int32_t  srid;
     int32_t  npoints;
     uint8_t  geom_type;
@@ -155,10 +155,10 @@ typedef struct
     bool     is_valid;      /* Flag indicating valid geometry */
     bool     has_srid;      /* Flag indicating SRID presence */
     uint8    postgis_geom_type;   /* 2nd byte of byte_data */
-    unsigned int byte_len;  /* Length of binary data */
-    unsigned int srid_size; /* Size of SRID data (4 bytes) */
-    unsigned int coord_size;/* Size of coordinate data */
-    unsigned int npoints;   /* Number of points in geometry */
+    uint32_t byte_len;  /* Length of binary data */
+    uint32_t srid_size; /* Size of SRID data (4 bytes) */
+    uint32_t coord_size;/* Size of coordinate data */
+    int npoints;   /* Number of points in geometry */
 } GeoDataInfo;
 
 /* Define header values for different dimensions */
@@ -417,8 +417,8 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
     char *geom_type;
     Datum flipped_geom;
     float8 lat;
-    unsigned int npoints;
-    unsigned int i;
+    int npoints;
+    int i;
     Datum point;
 
     /* Initialize function call info */
@@ -779,7 +779,7 @@ geography_point(PG_FUNCTION_ARGS)
     float8   lat,                /* Latitude value */
              lon;                /* Longitude value */
     int32    srid;              /* Spatial Reference ID */
-    unsigned int i;
+    int i;
     LOCAL_FCINFO(fcinfo_local, 3); /* Local function call info with 3 arguments */
 
     /* Initialize function call info once */
@@ -1148,9 +1148,9 @@ static void
 check_nan_coordinates(GeometryData *geom_data) 
 {
     double coord_value;
-    unsigned int byte_position;
-    unsigned int check_count;
-    unsigned int i;
+    uint32_t byte_position;
+    uint32_t check_count;
+    int i;
     
     /* Determine starting position and count based on geometry type */
     if (geom_data->geom_name == LINE_TYPE) 
@@ -1195,15 +1195,15 @@ check_nan_coordinates(GeometryData *geom_data)
 static void
 validate_geography_latitude_bytes(GeometryData *geom_data)
 {
-    unsigned int i;
+    int i;
     double lat;
     uint64_t lat_bits;
-    unsigned int point_size = COORD_SIZE * 2; /* Size of XY coordinates (2 doubles) */
+    uint32_t point_size = COORD_SIZE * 2; /* Size of XY coordinates (2 doubles) */
     
     if (geom_data->geom_name == LINE_TYPE) /* LineString */
     {
-        unsigned int point_count = geom_data->has_npoints_data ? geom_data->npoints : 2;
-        unsigned int offset = geom_data->has_npoints_data ? HEADER_SIZE + NPOINTS_SIZE : HEADER_SIZE;
+        int point_count = geom_data->has_npoints_data ? geom_data->npoints : 2;
+        uint32_t offset = geom_data->has_npoints_data ? HEADER_SIZE + NPOINTS_SIZE : HEADER_SIZE;
         
         /* Check each point in the linestring */
         for (i = 0; i < point_count; i++) 
@@ -1245,7 +1245,7 @@ validate_geography_latitude_bytes(GeometryData *geom_data)
 }
 
 /* STEP 6.1: SIZE CALCULATION - Calculate required buffer size for linestring geometries */
-static unsigned int
+static uint32_t
 calculate_linestring_size(GeometryData *geom_data)
 {
     return geom_data->has_npoints_data ? 
@@ -1254,7 +1254,7 @@ calculate_linestring_size(GeometryData *geom_data)
 }
 
 /* STEP 6.2: SIZE CALCULATION - Calculate required buffer size for point geometries */
-static unsigned int
+static uint32_t
 calculate_point_size(GeometryData *geom_data)
 {
     return geom_data->input_len - GEOM_TYPE_SIZE + POSTGIS_HEADER_SIZE;
@@ -1262,12 +1262,12 @@ calculate_point_size(GeometryData *geom_data)
 
 /* STEP 6.3: COORDINATE COPYING - Copy coordinate data with proper handling of Z and M dimensions */
 static void
-copy_coordinates_with_dimensions(uint8_t *src, uint8_t *dst, uint32_t npoints, unsigned int dimension_flag)
+copy_coordinates_with_dimensions(uint8_t *src, uint8_t *dst, uint32_t npoints, uint32_t dimension_flag)
 {
     bool has_z = dimension_flag == DIM_FLAG_3DM || dimension_flag == DIM_FLAG_3D;
     bool has_m = dimension_flag == DIM_FLAG_3DM || dimension_flag == DIM_FLAG_2DM;
-    unsigned int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
-    unsigned int i;
+    uint32_t stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
+    int i;
     
     for (i = 0; i < npoints; i++) 
     {
@@ -1321,7 +1321,7 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
     uint8 postgis_header[POSTGIS_HEADER_SIZE] = "\x01\x01\x00\x00\x20";
     bytea *result;
     uint8 *result_data;
-    unsigned int new_data_size;
+    uint32_t new_data_size;
     
     /* Update dimension information in header */
     if (geom_data->dimension_flag <= MAX_DIMENSION_FLAG) 
@@ -1725,9 +1725,9 @@ copy_coord_with_nan_check(uint8 *dst, double *src)
 
 /* Step 4.4.2: Copy XY coordinates for all points */
 static void
-copy_xy_coords(uint8 *dst, uint8 *src, unsigned int npoints, unsigned int stride)
+copy_xy_coords(uint8 *dst, uint8 *src, int npoints, uint32_t stride)
 {
-    unsigned int i;
+    int i;
     
     for (i = 0; i < npoints; i++)
         memcpy(dst + (i * COORD_SIZE * 2), src + (i * stride), COORD_SIZE * 2);
@@ -1735,9 +1735,9 @@ copy_xy_coords(uint8 *dst, uint8 *src, unsigned int npoints, unsigned int stride
 
 /* Step 4.4.3: Copy Z coordinates for all points */
 static void
-copy_z_coords(uint8 *dst, uint8 *src, unsigned int npoints, unsigned int stride)
+copy_z_coords(uint8 *dst, uint8 *src, int npoints, uint32_t stride)
 {
-    unsigned int i;
+    int i;
     double *z_coord;
     
     for (i = 0; i < npoints; i++) {
@@ -1748,11 +1748,11 @@ copy_z_coords(uint8 *dst, uint8 *src, unsigned int npoints, unsigned int stride)
 
 /* Step 4.4.4: Copy M coordinates for all points */
 static void
-copy_m_coords(uint8 *dst, uint8 *src, unsigned int npoints, unsigned int stride, bool has_z)
+copy_m_coords(uint8 *dst, uint8 *src, int npoints, uint32_t stride, bool has_z)
 {
-    unsigned int z_offset = has_z ? npoints * COORD_SIZE : 0;
-    unsigned int coord_offset = has_z ? COORD_SIZE : 0;
-    unsigned int i;
+    uint32_t z_offset = has_z ? npoints * COORD_SIZE : 0;
+    uint32_t coord_offset = has_z ? COORD_SIZE : 0;
+    int i;
     double *m_coord;
     
     for (i = 0; i < npoints; i++) {
@@ -1792,7 +1792,7 @@ handle_empty_geometry(uint8 *result_data, GeoDataInfo *geom_data)
 static bytea*
 handle_linestring_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *result, bool is_geography)
 {
-    unsigned int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+    uint32_t offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
     uint8 *src = geom_data->byte_data + offset + NPOINTS_SIZE;
     uint8 *dst = (geom_data->npoints > 2) ? result_data + HEADER_SIZE + NPOINTS_SIZE : result_data + HEADER_SIZE;
     
@@ -1800,7 +1800,7 @@ handle_linestring_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *r
     bool has_z = (dim_mask == POSTGIS_DIM_XYZ || dim_mask == POSTGIS_DIM_XYZM);
     bool has_m = (dim_mask == POSTGIS_DIM_XYM || dim_mask == POSTGIS_DIM_XYZM);
     
-    unsigned int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
+    uint32_t stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
     
     copy_xy_coords(dst, src, geom_data->npoints, stride);
     if (has_z) copy_z_coords(dst, src, geom_data->npoints, stride);
@@ -1816,7 +1816,7 @@ handle_linestring_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *r
 static bytea* 
 construct_result_bytea(GeoDataInfo *geom_data, bool is_geography) 
 {
-    unsigned int total_size;
+    uint32_t total_size;
     bytea *result;
     uint8 *result_data;
     
@@ -1847,7 +1847,7 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
          * For non-empty geometries, determine the source offset based on SRID presence
          * and copy the coordinate data from the source
          */
-        unsigned int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+        uint32_t offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
         
         /* Copy coordinate data based on geometry type */
         switch (geom_data->postgis_geom_type) 
@@ -2139,7 +2139,7 @@ geometry_asbpchar(PG_FUNCTION_ARGS)
     int     maxlen = typmod - VARHDRSZ;
     char   *bpchar_result;        /* Resulting bpchar text */
     char   *buf_padded;
-    unsigned int str_len;
+    int str_len;
     Datum  res;
     LOCAL_FCINFO(fcinfo_local, 3);  /* Local function call info */
 
