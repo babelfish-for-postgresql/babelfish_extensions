@@ -2139,7 +2139,7 @@ geometry_asbpchar(PG_FUNCTION_ARGS)
     int     maxlen = typmod - VARHDRSZ;
     char   *bpchar_result;        /* Resulting bpchar text */
     char   *buf_padded;
-    int str_len;
+    int    str_len;
     Datum  res;
     LOCAL_FCINFO(fcinfo_local, 3);  /* Local function call info */
 
