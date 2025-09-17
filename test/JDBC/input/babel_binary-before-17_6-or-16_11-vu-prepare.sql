@@ -1,428 +1,660 @@
--- parallel_query_expected
--- tsql
-
-select cast(cast(0x as binary(5)) + cast(0x as binary(3)) as binary(8)) as EmptyBinaryAddition
-GO
-
-select cast(cast(0x as binary(8000)) + cast(0x as binary(3)) as binary(8000)) as EmptyBinaryMaxAddition
-GO
-
-select cast(cast(0x as binary(8000)) + cast(0x as binary(3)) as binary(8000)) as EmptyBinaryMaxAddition2
-GO
-
-select cast(cast(0x as binary(5)) + cast(0x as binary(8000)) as binary(8000)) as EmptyBinaryAdditionMax
-GO
-
-select cast(cast(0x as binary(5)) + cast(0x as binary(8000)) as binary(80)) as EmptyBinaryAdditionMax2
-GO
-
-select cast(cast(0x123 as binary(5)) + cast(0x123 as binary(8)) as binary(13)) as FixedLengthAddition
-GO
-
-select cast(cast(0x123 as binary(8000)) + cast(0x123 as binary(8)) as binary(8000)) as MaxFixedLengthAddition
-GO
-
-select cast(cast(0x123 as binary(5)) + cast(0x123 as binary(8000)) as binary(8000)) as FixedMaxLengthAddition
-GO
-
-select cast(cast(0xFFFFFFFF as binary(10)) + cast(0xFFFFFFFF as binary(10)) as binary(20)) as LargeValueAddition
-GO
-
-select cast(cast(0xFFFFFFFF as binary(8000)) + cast(0xFFFFFFFF as binary(10)) as binary(8000)) as LargeValueMaxAddition
-GO
-
-select cast(cast(0xFFFFFFFF as binary(10)) + cast(0xFFFFFFFF as binary(8000)) as binary(8000)) as LargeValueAdditionMax
-GO
-
-select cast(cast(0x123 as binary(3)) + cast(0x45678 as binary(5)) as binary(8)) as DifferentLengthAddition 
-GO
-
-select cast(cast(0x123 as binary(8000)) + cast(0x45678 as binary(5)) as binary(8000)) as DifferentLengthMaxAddition
-GO
-
-select cast(cast(0x123 as binary(3)) + cast(0x45678 as binary(8000)) as binary(8000)) as DifferentLengthAdditionMax
-GO
-
-select cast(cast(NULL as binary(5)) + cast(NULL as binary(3)) as binary(8)) as NullAddition_Small
-GO
-
-select cast(cast(NULL as binary(8000)) + cast(NULL as binary(3)) as binary(8000)) as NullAddition_MaxSmall
-GO
-
-select cast(cast(NULL as binary(5)) + cast(NULL as binary(8000)) as binary(8000)) as NullAddition_SmallMax
-GO
-
-select cast(cast(NULL as binary(10)) + cast(0x as binary(5)) as binary(15)) as NullEmptyAddition_Regular
-GO
-
-select cast(cast(NULL as binary(8000)) + cast(0x as binary(5)) as binary(8000)) as NullEmptyAddition_MaxSmall
-GO
-
-select cast(cast(NULL as binary(10)) + cast(0x as binary(8000)) as binary(8000)) as NullEmptyAddition_RegularMax
-GO
-
-select cast(cast(NULL as binary(10)) + cast(0x12345 as binary(5)) as binary(15)) as NullValueAddition_Regular
-GO
-
-select cast(cast(NULL as binary(8000)) + cast(0x12345 as binary(5)) as binary(8000)) as NullValueAddition_MaxSmall
-GO
-
-select cast(cast(NULL as binary(10)) + cast(0x12345 as binary(8000)) as binary(8000)) as NullValueAddition_RegularMax
-GO
-
-select cast(cast(0x001 as binary(8001)) + cast(0x09 as binary(5)) as binary(8000)) as InvalidLength_ExceedMax
-GO
-
-select cast(cast(0x001 as binary(0)) + cast(0x09 as binary(5)) as binary(5)) as InvalidLength_Zero
-GO
-
-select cast(cast(0x001 as binary(-1)) + cast(0x09 as binary(5)) as binary(5)) as InvalidLength_Negative
-GO
-
-select cast(cast(0x as binary(5)) + cast(0x as varbinary(3)) as varbinary(8)) as EmptyBinaryVarbinaryAddition
-GO
-
-select cast(cast(0x as varbinary(3)) + cast(0x as binary(5)) as varbinary(8)) as EmptyVarbinaryBinaryAddition
-GO
-
-select cast(cast(0x as binary(8000)) + cast(0x as varbinary(max)) as varbinary(max)) as EmptyBinaryMaxVarbinaryMaxAddition
-GO
-
-select cast(cast(0x as varbinary(max)) + cast(0x as binary(8000)) as varbinary(max)) as EmptyVarbinaryMaxBinaryMaxAddition
-GO
-
-select cast(cast(0x123 as binary(5)) + cast(0x123 as varbinary(8)) as varbinary(13)) as FixedBinaryVarbinaryAddition
-GO
-
-select cast(cast(0x123 as varbinary(8)) + cast(0x123 as binary(5)) as varbinary(13)) as FixedVarbinaryBinaryAddition
-GO
-
-select cast(cast(0x123 as binary(8000)) + cast(0x123 as varbinary(max)) as varbinary(max)) as MaxBinaryVarbinaryMaxAddition
-GO
-
-select cast(cast(0x123 as varbinary(max)) + cast(0x123 as binary(8000)) as varbinary(max)) as VarbinaryMaxBinaryMaxAddition
-GO
-
-select cast(cast(0xFFFFFFFF as binary(10)) + cast(0xFFFFFFFF as varbinary(10)) as varbinary(20)) as LargeValueBinaryVarbinaryAddition
-GO
-
-select cast(cast(0xFFFFFFFF as varbinary(10)) + cast(0xFFFFFFFF as binary(10)) as varbinary(20)) as LargeValueVarbinaryBinaryAddition
-GO
-
-select cast(cast(0xFFFFFFFF as binary(8000)) + cast(0xFFFFFFFF as varbinary(max)) as varbinary(max)) as LargeValueBinaryMaxVarbinaryMaxAddition
-GO
-
-select cast(cast(0xFFFFFFFF as varbinary(max)) + cast(0xFFFFFFFF as binary(8000)) as varbinary(max)) as LargeValueVarbinaryMaxBinaryMaxAddition
-GO
-
-select cast(cast(0x123 as binary(3)) + cast(0x45678 as varbinary(5)) as varbinary(8)) as DifferentLengthBinaryVarbinaryAddition 
-GO
-
-select cast(cast(0x45678 as varbinary(5)) + cast(0x123 as binary(3)) as varbinary(8)) as DifferentLengthVarbinaryBinaryAddition
-GO
-
-select cast(cast(0x123 as binary(8000)) + cast(0x45678 as varbinary(max)) as varbinary(max)) as DifferentLengthBinaryMaxVarbinaryMaxAddition
-GO
-
-select cast(cast(0x45678 as varbinary(max)) + cast(0x123 as binary(8000)) as varbinary(max)) as DifferentLengthVarbinaryMaxBinaryMaxAddition
-GO
-
-select cast(cast(NULL as binary(5)) + cast(NULL as varbinary(3)) as varbinary(8)) as NullBinaryVarbinaryAddition_Small
-GO
-
-select cast(cast(NULL as varbinary(3)) + cast(NULL as binary(5)) as varbinary(8)) as NullVarbinaryBinaryAddition_Small
-GO
-
-select cast(cast(NULL as binary(8000)) + cast(NULL as varbinary(max)) as varbinary(max)) as NullBinaryVarbinaryAddition_Max
-GO
-
-select cast(cast(NULL as varbinary(max)) + cast(NULL as binary(8000)) as varbinary(max)) as NullVarbinaryBinaryAddition_Max
-GO
-
-select cast(cast(NULL as binary(10)) + cast(0x as varbinary(5)) as varbinary(15)) as NullBinaryEmptyVarbinaryAddition_Regular
-GO
-
-select cast(cast(0x as varbinary(5)) + cast(NULL as binary(10)) as varbinary(15)) as EmptyVarbinaryNullBinaryAddition_Regular
-GO
-
-select cast(cast(NULL as binary(8000)) + cast(0x as varbinary(max)) as varbinary(max)) as NullBinaryEmptyVarbinaryAddition_Max
-GO
-
-select cast(cast(0x as varbinary(max)) + cast(NULL as binary(8000)) as varbinary(max)) as EmptyVarbinaryNullBinaryAddition_Max
-GO
-
-select cast(cast(NULL as binary(10)) + cast(0x12345 as varbinary(5)) as varbinary(15)) as NullBinaryValueVarbinaryAddition_Regular
-GO
-
-select cast(cast(0x12345 as varbinary(5)) + cast(NULL as binary(10)) as varbinary(15)) as ValueVarbinaryNullBinaryAddition_Regular
-GO
-
-select cast(cast(NULL as binary(8000)) + cast(0x12345 as varbinary(max)) as varbinary(max)) as NullBinaryValueVarbinaryAddition_Max
-GO
-
-select cast(cast(0x12345 as varbinary(max)) + cast(NULL as binary(8000)) as varbinary(max)) as ValueVarbinaryNullBinaryAddition_Max
-GO
-
--- Invalid cases
-select cast(cast(0x001 as binary(8001)) + cast(0x09 as varbinary(5)) as varbinary(8006)) as InvalidBinaryLengthVarbinaryAddition_ExceedMax
-GO
-
-select cast(cast(0x09 as varbinary(5)) + cast(0x001 as binary(8001)) as varbinary(8006)) as VarbinaryInvalidBinaryLengthAddition_ExceedMax
-GO
-
-select cast(cast(0x001 as binary(0)) + cast(0x09 as varbinary(5)) as varbinary(5)) as InvalidBinaryLengthVarbinaryAddition_Zero
-GO
-
-select cast(cast(0x09 as varbinary(5)) + cast(0x001 as binary(0)) as varbinary(5)) as VarbinaryInvalidBinaryLengthAddition_Zero
-GO
-
-select cast(cast(0x001 as binary(-1)) + cast(0x09 as varbinary(5)) as varbinary(5)) as InvalidBinaryLengthVarbinaryAddition_Negative
-GO
-
-select cast(cast(0x09 as varbinary(5)) + cast(0x001 as binary(-1)) as varbinary(5)) as VarbinaryInvalidBinaryLengthAddition_Negative
-GO
-
--- Length tests
-select datalength(cast(cast(0x123 as binary(100)) + cast(0x456 as binary(100)) as binary(200))) as binary_result_len
-GO
-
-select datalength(cast(cast(0x123 as binary(100)) + cast(0x456 as varbinary(100)) as varbinary(200))) as mixed_result_len
-GO
-
--- Multiple concatenations
-select cast(cast(0x12 as binary(2)) + cast(0x34 as binary(2)) + cast(0x56 as binary(2)) as binary(6))
-GO
-
-select cast(cast(0x12 as binary(2)) + cast(0x34 as varbinary(2)) + cast(0x56 as binary(2)) as varbinary(6))
-GO
-
--- Issue
-select cast(0x123 as binary(3)) + cast(0x45678 as binary(5)) as BinaryConcatenation
-GO
-
--- Issue
-declare @binary_val1 binary(5) = 0x4142434445 
-declare @binary_val2 binary(100) = 0x 
-select @binary_val1 + @binary_val2 as BinaryVariableAddition
-GO
-
--- Issue
-declare @binary_val1 binary(8000) = 0x4142434445 
-declare @binary_val2 binary(100) = 0x 
-select @binary_val1 + @binary_val2 as BinaryVariableMaxAddition
-GO
-
-declare @binary_val1 binary(5) = 0x4142434445 
-declare @binary_val2 binary(100) = 0x 
-select @binary_val1, datalength(@binary_val1), @binary_val2, datalength(@binary_val2) 
-select cast(@binary_val1 + @binary_val2 as binary(10)) as BinaryVariableCastAddition
-GO
-
-
-declare @binary_val binary(5) = 0x4142434445 
-declare @varbinary_val varbinary(100) = 0x 
-select @binary_val + @varbinary_val as BinaryVarbinaryVariableAddition,
-       @varbinary_val + @binary_val as VarbinaryBinaryVariableAddition
-GO
-
-declare @binary_val binary(8000) = 0x4142434445 
-declare @varbinary_val varbinary(max) = 0x 
-select @binary_val + @varbinary_val as BinaryMaxVarbinaryMaxVariableAddition,
-       @varbinary_val + @binary_val as VarbinaryMaxBinaryMaxVariableAddition
+CREATE TABLE BABEL_5597_binary_test_table (
+    fixedlen_col BINARY(50), 
+    maxlen_col BINARY(8000)
+)
 GO
 
-declare @binary_val binary(5) = 0x4142434445 
-declare @varbinary_val varbinary(100) = 0x 
-select @binary_val, datalength(@binary_val), @varbinary_val, datalength(@varbinary_val) 
-select cast(@binary_val + @varbinary_val as binary(10)) as BinaryVarbinaryVariableCastAddition,
-       cast(@varbinary_val + @binary_val as varbinary(10)) as VarbinaryBinaryVariableCastAddition
+INSERT INTO BABEL_5597_binary_test_table (fixedlen_col, maxlen_col) VALUES 
+    (0x, 0x), 
+    (NULL, NULL), 
+    (0x0, 0x0), 
+    (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF), 
+    (0x0123, 0x0123)
 GO
 
--- UDT testing
+CREATE VIEW BABEL_5597_binary_test_view1 AS 
 SELECT 
-    CAST(CAST(0x11 AS FIXEDLEN_BINARY) + CAST(0x22 AS FIXEDLEN_BINARY) AS BINARY(10)) AS FixedBinaryUDT_Test,
-    CAST(CAST(0x11 AS MAXLEN_BINARY) + CAST(0x22 AS MAXLEN_BINARY) AS BINARY(8000)) AS MaxBinaryUDT_Test,
-    CAST(CAST(0x11 AS FIXEDLEN_BINARY) + CAST(0x22 AS FIXEDLEN_VARBINARY) AS VARBINARY(10)) AS FixedMixedUDT_Test,
-    CAST(CAST(0x11 AS MAXLEN_BINARY) + CAST(0x22 AS MAXLEN_VARBINARY) AS VARBINARY(MAX)) AS MaxMixedUDT_Test;
+    CAST(t1.fixedlen_col + t1.fixedlen_col as BINARY(100)) as fixed_fixed_addition
+FROM BABEL_5597_binary_test_table t1
+ORDER BY fixed_fixed_addition;
 GO
 
--- Test Tables
-SELECT * FROM BABEL_5597_binary_test_table;
+CREATE VIEW BABEL_5597_binary_test_view2 AS 
+SELECT
+    CAST(t1.maxlen_col + t1.fixedlen_col as BINARY(8000)) as max_fixed_addition,
+    CAST(t1.fixedlen_col + t1.maxlen_col as BINARY(8000)) as fixed_max_addition, 
+    CAST(t1.maxlen_col + t1.maxlen_col as BINARY(8000)) as max_max_addition
+FROM BABEL_5597_binary_test_table t1
+ORDER BY max_fixed_addition, fixed_max_addition, max_max_addition;
 GO
 
-SELECT * FROM BABEL_5597_mixed_test_table;
+CREATE VIEW BABEL_5597_binary_test_view3 AS 
+SELECT 
+    CAST(t1.fixedlen_col + t2.fixedlen_col as BINARY(100)) as fixed_fixed_addition
+FROM BABEL_5597_binary_test_table t1
+CROSS JOIN BABEL_5597_binary_test_table t2
+ORDER BY fixed_fixed_addition;
 GO
 
--- Test Views
-
-SELECT * FROM BABEL_5597_binary_test_view1;
-GO
-SELECT * FROM BABEL_5597_binary_test_view2;
-GO
-SELECT * FROM BABEL_5597_binary_test_view3;
-GO
-SELECT * FROM BABEL_5597_binary_test_view4;
-GO
-SELECT * FROM BABEL_5597_binary_test_view5;
-GO
-SELECT * FROM BABEL_5597_binary_test_view6;
-GO
-SELECT * FROM BABEL_5597_binary_test_view7;
-GO
-SELECT * FROM BABEL_5597_binary_test_view8;
+CREATE VIEW BABEL_5597_binary_test_view4 AS 
+SELECT
+    CAST(t1.maxlen_col + t2.fixedlen_col as BINARY(8000)) as max_fixed_addition,
+    CAST(t1.fixedlen_col + t2.maxlen_col as BINARY(8000)) as fixed_max_addition, 
+    CAST(t1.maxlen_col + t2.maxlen_col as BINARY(8000)) as max_max_addition
+FROM BABEL_5597_binary_test_table t1
+CROSS JOIN BABEL_5597_binary_test_table t2
+ORDER BY max_fixed_addition, fixed_max_addition, max_max_addition;
 GO
 
-SELECT * FROM BABEL_5597_mixed_test_view1;
-GO
-SELECT * FROM BABEL_5597_mixed_test_view2;
-GO
-SELECT * FROM BABEL_5597_mixed_test_view3;
-GO
-SELECT * FROM BABEL_5597_mixed_test_view4;
-GO
-SELECT * FROM BABEL_5597_mixed_test_view5;
-GO
-SELECT * FROM BABEL_5597_mixed_test_view6;
-GO
-SELECT * FROM BABEL_5597_mixed_test_view7;
-GO
-SELECT * FROM BABEL_5597_mixed_test_view8;
+CREATE VIEW BABEL_5597_binary_test_view5 AS
+SELECT 
+    CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as BINARY(10)) as BINARY(8000)) as max_fixed_result,
+    CAST(CAST(NULL as BINARY(100)) + CAST(0x0 as BINARY(100)) as BINARY(200)) as fixed_fixed_result,
+    CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as BINARY(8000)) as BINARY(8000)) as max_max_result
 GO
 
--- Test Functions (ISSUE in All functions)
-SELECT * FROM BABEL_5597_binary_test_func1();
-GO
-SELECT * FROM BABEL_5597_binary_test_func2();
-GO
-SELECT * FROM BABEL_5597_binary_test_func3();
-GO
-SELECT * FROM BABEL_5597_binary_test_func4();
-GO
-SELECT * FROM BABEL_5597_binary_test_func5();
-GO
-SELECT * FROM BABEL_5597_binary_test_func6();
-GO
-SELECT * FROM BABEL_5597_binary_test_func7();
-GO
-SELECT * FROM BABEL_5597_binary_test_func8();
-GO
-SELECT * FROM BABEL_5597_binary_test_func9(0x123, 0x456, 0x789);
+CREATE VIEW BABEL_5597_binary_test_view6 AS
+SELECT 
+    CAST(CAST(NULL as BINARY(8000)) + CAST(NULL as BINARY(100)) as BINARY(8000)) as max_fixed_result,
+    CAST(CAST(NULL as BINARY(100)) + CAST(NULL as BINARY(100)) as BINARY(200)) as fixed_fixed_result,
+    CAST(CAST(NULL as BINARY(8000)) + CAST(NULL as BINARY(8000)) as BINARY(8000)) as max_max_result
 GO
 
-SELECT * FROM BABEL_5597_mixed_test_func1();
-GO
-SELECT * FROM BABEL_5597_mixed_test_func2();
-GO
-SELECT * FROM BABEL_5597_mixed_test_func3();
-GO
-SELECT * FROM BABEL_5597_mixed_test_func4();
-GO
-SELECT * FROM BABEL_5597_mixed_test_func5();
-GO
-SELECT * FROM BABEL_5597_mixed_test_func6();
-GO
-SELECT * FROM BABEL_5597_mixed_test_func7();
-GO
-SELECT * FROM BABEL_5597_mixed_test_func8();
-GO
-SELECT * FROM BABEL_5597_mixed_test_func9(0x123, 0x456, 0x789, 0xABC);
+CREATE VIEW BABEL_5597_binary_test_view7 AS
+SELECT 
+    CAST(CAST(0x098765 as BINARY(20)) + CAST(0x012345 as BINARY(10)) as BINARY(30)) as max_fixed_result,
+    CAST(CAST(0x098765 as BINARY(10)) + CAST(0x012345 as BINARY(10)) as BINARY(20)) as fixed_fixed_result,
+    CAST(CAST(0x098765 as BINARY(20)) + CAST(0x012345 as BINARY(20)) as BINARY(40)) as max_max_result
 GO
 
--- Test Procedures
-EXEC BABEL_5597_binary_test_proc1;
-GO
-EXEC BABEL_5597_binary_test_proc2;
-GO
-EXEC BABEL_5597_binary_test_proc3;
-GO
-EXEC BABEL_5597_binary_test_proc4;
-GO
--- Issue
-EXEC BABEL_5597_binary_test_proc5;
-GO
--- Issue
-EXEC BABEL_5597_binary_test_proc6;
-GO
--- Issue
-EXEC BABEL_5597_binary_test_proc7 
-    @max_input1=0x123, 
-    @fixed_input=0x456, 
-    @max_input2=0x789;
+CREATE VIEW BABEL_5597_binary_test_view8 AS
+SELECT 
+    CAST(CAST(0x as BINARY(20)) + CAST(0x098765 as BINARY(10)) as BINARY(30)) as max_fixed_result,
+    CAST(CAST(0x as BINARY(10)) + CAST(0x098765 as BINARY(10)) as BINARY(20)) as fixed_fixed_result,
+    CAST(CAST(0x as BINARY(20)) + CAST(0x098765 as BINARY(20)) as BINARY(40)) as max_max_result
 GO
 
-EXEC BABEL_5597_mixed_test_proc1;
-GO
-EXEC BABEL_5597_mixed_test_proc2;
-GO
-EXEC BABEL_5597_mixed_test_proc3;
-GO
-EXEC BABEL_5597_mixed_test_proc4;
-GO
-EXEC BABEL_5597_mixed_test_proc5;
-GO
-EXEC BABEL_5597_mixed_test_proc6;
-GO
-EXEC BABEL_5597_mixed_test_proc7 
-    @binary_max=0x123, 
-    @binary_fixed=0x456, 
-    @varbinary_fixed=0x789, 
-    @varbinary_max=0xABC;
+CREATE TABLE BABEL_5597_mixed_test_table (
+    binary_fixed BINARY(20),
+    binary_max BINARY(8000),
+    varbinary_fixed VARBINARY(20),
+    varbinary_max VARBINARY(MAX)
+)
 GO
 
--- psql
-ANALYZE master_dbo.BABEL_5597_binary_test;
+INSERT INTO BABEL_5597_mixed_test_table VALUES 
+    (0x, 0x, 0x, 0x),
+    (NULL, NULL, NULL, NULL),
+    (0x0, 0x0, 0x0, 0x0),
+    (0xFFFFFFFFFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFFFFFFFFFF,
+     0xFFFFFFFFFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFFFFFFFFFF),
+    (0x0123, 0x0123, 0x0123, 0x0123)
 GO
 
-SET enable_seqscan = off;
+CREATE VIEW BABEL_5597_mixed_test_view1 AS 
+SELECT 
+    CAST(t1.binary_fixed + t1.varbinary_fixed as VARBINARY(40)) as binary_varbinary_fixed_addition,
+    CAST(t1.varbinary_fixed + t1.binary_fixed as VARBINARY(40)) as varbinary_binary_fixed_addition
+FROM BABEL_5597_mixed_test_table t1
+ORDER BY binary_varbinary_fixed_addition, varbinary_binary_fixed_addition;
 GO
 
--- tsql
-SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+CREATE VIEW BABEL_5597_mixed_test_view2 AS 
+SELECT
+    CAST(t1.binary_max + t1.varbinary_fixed as VARBINARY(MAX)) as binary_max_varbinary_fixed_addition,
+    CAST(t1.varbinary_fixed + t1.binary_max as VARBINARY(MAX)) as varbinary_fixed_binary_max_addition,
+    CAST(t1.binary_fixed + t1.varbinary_max as VARBINARY(MAX)) as binary_fixed_varbinary_max_addition,
+    CAST(t1.varbinary_max + t1.binary_fixed as VARBINARY(MAX)) as varbinary_max_binary_fixed_addition,
+    CAST(t1.binary_max + t1.varbinary_max as VARBINARY(MAX)) as binary_max_varbinary_max_addition,
+    CAST(t1.varbinary_max + t1.binary_max as VARBINARY(MAX)) as varbinary_max_binary_max_addition
+FROM BABEL_5597_mixed_test_table t1
+ORDER BY binary_max_varbinary_fixed_addition, 
+         varbinary_fixed_binary_max_addition,
+         binary_fixed_varbinary_max_addition, 
+         varbinary_max_binary_fixed_addition,
+         binary_max_varbinary_max_addition, 
+         varbinary_max_binary_max_addition;
 GO
 
--- Test query with execution plan
-SET BABELFISH_SHOWPLAN_ALL ON;
+CREATE VIEW BABEL_5597_mixed_test_view3 AS 
+SELECT 
+    CAST(t1.binary_fixed + t2.varbinary_fixed as VARBINARY(40)) as binary_varbinary_fixed_addition,
+    CAST(t1.varbinary_fixed + t2.binary_fixed as VARBINARY(40)) as varbinary_binary_fixed_addition
+FROM BABEL_5597_mixed_test_table t1
+CROSS JOIN BABEL_5597_mixed_test_table t2
+ORDER BY binary_varbinary_fixed_addition, varbinary_binary_fixed_addition;
 GO
 
-SELECT binary_col FROM BABEL_5597_binary_test WHERE binary_col = 0x0000000150;
+CREATE VIEW BABEL_5597_mixed_test_view4 AS 
+SELECT
+    CAST(t1.binary_max + t2.varbinary_fixed as VARBINARY(MAX)) as binary_max_varbinary_fixed_addition,
+    CAST(t1.varbinary_fixed + t2.binary_max as VARBINARY(MAX)) as varbinary_fixed_binary_max_addition,
+    CAST(t1.binary_fixed + t2.varbinary_max as VARBINARY(MAX)) as binary_fixed_varbinary_max_addition,
+    CAST(t1.varbinary_max + t2.binary_fixed as VARBINARY(MAX)) as varbinary_max_binary_fixed_addition,
+    CAST(t1.binary_max + t2.varbinary_max as VARBINARY(MAX)) as binary_max_varbinary_max_addition,
+    CAST(t1.varbinary_max + t2.binary_max as VARBINARY(MAX)) as varbinary_max_binary_max_addition
+FROM BABEL_5597_mixed_test_table t1
+CROSS JOIN BABEL_5597_mixed_test_table t2
+ORDER BY binary_max_varbinary_fixed_addition,
+         varbinary_fixed_binary_max_addition,
+         binary_fixed_varbinary_max_addition,
+         varbinary_max_binary_fixed_addition,
+         binary_max_varbinary_max_addition,
+         varbinary_max_binary_max_addition;
 GO
 
-SELECT binary_col FROM BABEL_5597_binary_test 
-WHERE binary_col = cast(cast(0x00000001 as binary(4)) + cast(0x50 as binary(1)) as binary(5));
+CREATE VIEW BABEL_5597_mixed_test_view5 AS
+SELECT 
+    CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as VARBINARY(100)) as VARBINARY(MAX)) as binary_max_varbinary_fixed_result,
+    CAST(CAST(0x0 as VARBINARY(100)) + CAST(NULL as BINARY(8000)) as VARBINARY(MAX)) as varbinary_fixed_binary_max_result,
+    CAST(CAST(NULL as BINARY(100)) + CAST(0x0 as VARBINARY(100)) as VARBINARY(200)) as binary_varbinary_fixed_result,
+    CAST(CAST(0x0 as VARBINARY(100)) + CAST(NULL as BINARY(100)) as VARBINARY(200)) as varbinary_binary_fixed_result,
+    CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as VARBINARY(MAX)) as VARBINARY(MAX)) as binary_max_varbinary_max_result,
+    CAST(CAST(0x0 as VARBINARY(MAX)) + CAST(NULL as BINARY(8000)) as VARBINARY(MAX)) as varbinary_max_binary_max_result
 GO
 
-SELECT binary_col FROM BABEL_5597_binary_test WHERE binary_col < 0x0000000100;
+CREATE VIEW BABEL_5597_mixed_test_view6 AS
+SELECT 
+    CAST(CAST(NULL as BINARY(8000)) + CAST(NULL as VARBINARY(100)) as VARBINARY(MAX)) as binary_max_varbinary_fixed_result,
+    CAST(CAST(NULL as VARBINARY(100)) + CAST(NULL as BINARY(8000)) as VARBINARY(MAX)) as varbinary_fixed_binary_max_result,
+    CAST(CAST(NULL as BINARY(100)) + CAST(NULL as VARBINARY(100)) as VARBINARY(200)) as binary_varbinary_fixed_result,
+    CAST(CAST(NULL as VARBINARY(100)) + CAST(NULL as BINARY(100)) as VARBINARY(200)) as varbinary_binary_fixed_result,
+    CAST(CAST(NULL as BINARY(8000)) + CAST(NULL as VARBINARY(MAX)) as VARBINARY(MAX)) as binary_max_varbinary_max_result,
+    CAST(CAST(NULL as VARBINARY(MAX)) + CAST(NULL as BINARY(8000)) as VARBINARY(MAX)) as varbinary_max_binary_max_result
 GO
 
-SELECT binary_col FROM BABEL_5597_binary_test
-WHERE binary_col < cast(cast(0x00000001 as binary(4)) + cast(0x00 as binary(1)) as binary(5));
+CREATE VIEW BABEL_5597_mixed_test_view7 AS
+SELECT 
+    CAST(CAST(0x098765 as BINARY(20)) + CAST(0x012345 as VARBINARY(10)) as VARBINARY(MAX)) as binary_max_varbinary_fixed_result,
+    CAST(CAST(0x012345 as VARBINARY(10)) + CAST(0x098765 as BINARY(20)) as VARBINARY(MAX)) as varbinary_fixed_binary_max_result,
+    CAST(CAST(0x098765 as BINARY(10)) + CAST(0x012345 as VARBINARY(10)) as VARBINARY(20)) as binary_varbinary_fixed_result,
+    CAST(CAST(0x012345 as VARBINARY(10)) + CAST(0x098765 as BINARY(10)) as VARBINARY(20)) as varbinary_binary_fixed_result,
+    CAST(CAST(0x098765 as BINARY(20)) + CAST(0x012345 as VARBINARY(MAX)) as VARBINARY(MAX)) as binary_max_varbinary_max_result,
+    CAST(CAST(0x012345 as VARBINARY(MAX)) + CAST(0x098765 as BINARY(20)) as VARBINARY(MAX)) as varbinary_max_binary_max_result
 GO
 
-SELECT binary_col FROM BABEL_5597_binary_test WHERE binary_col > 0x0000000100;
+CREATE VIEW BABEL_5597_mixed_test_view8 AS
+SELECT 
+    CAST(CAST(0x as BINARY(20)) + CAST(0x098765 as VARBINARY(10)) as VARBINARY(MAX)) as binary_max_varbinary_fixed_result,
+    CAST(CAST(0x098765 as VARBINARY(10)) + CAST(0x as BINARY(20)) as VARBINARY(MAX)) as varbinary_fixed_binary_max_result,
+    CAST(CAST(0x as BINARY(10)) + CAST(0x098765 as VARBINARY(10)) as VARBINARY(20)) as binary_varbinary_fixed_result,
+    CAST(CAST(0x098765 as VARBINARY(10)) + CAST(0x as BINARY(10)) as VARBINARY(20)) as varbinary_binary_fixed_result,
+    CAST(CAST(0x as BINARY(20)) + CAST(0x098765 as VARBINARY(MAX)) as VARBINARY(MAX)) as binary_max_varbinary_max_result,
+    CAST(CAST(0x098765 as VARBINARY(MAX)) + CAST(0x as BINARY(20)) as VARBINARY(MAX)) as varbinary_max_binary_max_result
 GO
 
-SELECT binary_col FROM BABEL_5597_binary_test 
-WHERE binary_col > cast(cast(0x00000001 as binary(4)) + cast(0x00 as binary(1)) as binary(5));
+-- Testing with functions
+CREATE FUNCTION BABEL_5597_binary_test_func1()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(t1.fixedlen_col + t1.fixedlen_col as BINARY(100)) as fixed_fixed_addition
+    FROM BABEL_5597_binary_test_table t1
+    ORDER BY fixed_fixed_addition
+);
 GO
 
-SET BABELFISH_SHOWPLAN_ALL OFF;
+CREATE FUNCTION BABEL_5597_binary_test_func2()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT
+        CAST(t1.maxlen_col + t1.fixedlen_col as BINARY(8000)) as max_fixed_addition,
+        CAST(t1.fixedlen_col + t1.maxlen_col as BINARY(8000)) as fixed_max_addition,
+        CAST(t1.maxlen_col + t1.maxlen_col as BINARY(8000)) as max_max_addition
+    FROM BABEL_5597_binary_test_table t1
+    ORDER BY max_fixed_addition, fixed_max_addition, max_max_addition
+);
 GO
 
--- Checking row counts to verify selectivity
-SELECT COUNT(*) FROM BABEL_5597_binary_test WHERE binary_col = 0x0000000100;
-GO
-SELECT COUNT(*) FROM BABEL_5597_binary_test 
-WHERE binary_col = cast(cast(0x00000000 as binary(4)) + cast(0x50 as binary(1)) as binary(5));
+CREATE FUNCTION BABEL_5597_binary_test_func3()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(t1.fixedlen_col + t2.fixedlen_col as BINARY(100)) as fixed_fixed_addition
+    FROM BABEL_5597_binary_test_table t1
+    CROSS JOIN BABEL_5597_binary_test_table t2
+    ORDER BY fixed_fixed_addition
+);
 GO
 
-SELECT COUNT(*) FROM BABEL_5597_binary_test WHERE binary_col < 0x0000000100;
-GO
-SELECT COUNT(*) FROM BABEL_5597_binary_test 
-WHERE binary_col < cast(cast(0x00000001 as binary(4)) + cast(0x00 as binary(1)) as binary(5));
+CREATE FUNCTION BABEL_5597_binary_test_func4()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT
+        CAST(t1.maxlen_col + t2.fixedlen_col as BINARY(8000)) as max_fixed_addition,
+        CAST(t1.fixedlen_col + t2.maxlen_col as BINARY(8000)) as fixed_max_addition,
+        CAST(t1.maxlen_col + t2.maxlen_col as BINARY(8000)) as max_max_addition
+    FROM BABEL_5597_binary_test_table t1
+    CROSS JOIN BABEL_5597_binary_test_table t2
+    ORDER BY max_fixed_addition, fixed_max_addition, max_max_addition
+);
 GO
 
-SELECT COUNT(*) FROM BABEL_5597_binary_test WHERE binary_col > 0x0000000100;
+CREATE FUNCTION BABEL_5597_binary_test_func5()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as BINARY(100)) as BINARY(8000)) as max_fixed_result,
+        CAST(CAST(NULL as BINARY(100)) + CAST(0x0 as BINARY(100)) as BINARY(200)) as fixed_fixed_result,
+        CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as BINARY(8000)) as BINARY(8000)) as max_max_result
+);
 GO
-SELECT COUNT(*) FROM BABEL_5597_binary_test 
-WHERE binary_col > cast(cast(0x00000001 as binary(4)) + cast(0x00 as binary(1)) as binary(5));
+
+CREATE FUNCTION BABEL_5597_binary_test_func6()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(CAST(NULL as BINARY(8000)) + CAST(NULL as BINARY(100)) as BINARY(8000)) as max_fixed_result,
+        CAST(CAST(NULL as BINARY(100)) + CAST(NULL as BINARY(100)) as BINARY(200)) as fixed_fixed_result,
+        CAST(CAST(NULL as BINARY(8000)) + CAST(NULL as BINARY(8000)) as BINARY(8000)) as max_max_result
+);
+GO
+
+CREATE FUNCTION BABEL_5597_binary_test_func7()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(CAST(0x098765 as BINARY(20)) + CAST(0x012345 as BINARY(10)) as BINARY(30)) as max_fixed_result,
+        CAST(CAST(0x098765 as BINARY(10)) + CAST(0x012345 as BINARY(10)) as BINARY(20)) as fixed_fixed_result,
+        CAST(CAST(0x098765 as BINARY(20)) + CAST(0x012345 as BINARY(20)) as BINARY(40)) as max_max_result
+);
+GO
+
+CREATE FUNCTION BABEL_5597_binary_test_func8()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(CAST(0x as BINARY(20)) + CAST(0x098765 as BINARY(10)) as BINARY(30)) as max_fixed_result,
+        CAST(CAST(0x as BINARY(10)) + CAST(0x098765 as BINARY(10)) as BINARY(20)) as fixed_fixed_result,
+        CAST(CAST(0x as BINARY(20)) + CAST(0x098765 as BINARY(20)) as BINARY(40)) as max_max_result
+);
+GO
+
+CREATE FUNCTION BABEL_5597_binary_test_func9
+(
+    @max_input1 BINARY(20),
+    @fixed_input BINARY(10),
+    @max_input2 BINARY(20)
+)
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(@max_input1 + @fixed_input as BINARY(30)) as max_fixed_result,
+        CAST(@fixed_input + @fixed_input as BINARY(20)) as fixed_fixed_result,
+        CAST(@max_input1 + @max_input2 as BINARY(40)) as max_max_result
+);
+GO
+
+CREATE FUNCTION BABEL_5597_mixed_test_func1()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(t1.binary_fixed + t1.varbinary_fixed as BINARY(200)) as binary_varbinary_fixed_addition,
+        CAST(t1.varbinary_fixed + t1.binary_fixed as BINARY(200)) as varbinary_binary_fixed_addition
+    FROM BABEL_5597_mixed_test_table t1
+    ORDER BY binary_varbinary_fixed_addition, varbinary_binary_fixed_addition
+);
+GO
+
+CREATE FUNCTION BABEL_5597_mixed_test_func2()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT
+        CAST(t1.binary_max + t1.varbinary_fixed as BINARY(8000)) as binary_max_varbinary_fixed_addition,
+        CAST(t1.varbinary_fixed + t1.binary_max as BINARY(8000)) as varbinary_fixed_binary_max_addition,
+        CAST(t1.binary_fixed + t1.varbinary_max as BINARY(8000)) as binary_fixed_varbinary_max_addition,
+        CAST(t1.varbinary_max + t1.binary_fixed as BINARY(8000)) as varbinary_max_binary_fixed_addition,
+        CAST(t1.binary_max + t1.varbinary_max as BINARY(8000)) as binary_max_varbinary_max_addition,
+        CAST(t1.varbinary_max + t1.binary_max as BINARY(8000)) as varbinary_max_binary_max_addition
+    FROM BABEL_5597_mixed_test_table t1
+    ORDER BY binary_max_varbinary_fixed_addition, 
+             varbinary_fixed_binary_max_addition,
+             binary_fixed_varbinary_max_addition,
+             varbinary_max_binary_fixed_addition,
+             binary_max_varbinary_max_addition,
+             varbinary_max_binary_max_addition
+);
+GO
+
+CREATE FUNCTION BABEL_5597_mixed_test_func3()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(t1.binary_fixed + t2.varbinary_fixed as BINARY(200)) as binary_varbinary_fixed_addition,
+        CAST(t1.varbinary_fixed + t2.binary_fixed as BINARY(200)) as varbinary_binary_fixed_addition
+    FROM BABEL_5597_mixed_test_table t1
+    CROSS JOIN BABEL_5597_mixed_test_table t2
+    ORDER BY binary_varbinary_fixed_addition, varbinary_binary_fixed_addition
+);
+GO
+
+CREATE FUNCTION BABEL_5597_mixed_test_func4()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT
+        CAST(t1.binary_max + t2.varbinary_fixed as BINARY(8000)) as binary_max_varbinary_fixed_addition,
+        CAST(t1.varbinary_fixed + t2.binary_max as BINARY(8000)) as varbinary_fixed_binary_max_addition,
+        CAST(t1.binary_fixed + t2.varbinary_max as BINARY(8000)) as binary_fixed_varbinary_max_addition,
+        CAST(t1.varbinary_max + t2.binary_fixed as BINARY(8000)) as varbinary_max_binary_fixed_addition,
+        CAST(t1.binary_max + t2.varbinary_max as BINARY(8000)) as binary_max_varbinary_max_addition,
+        CAST(t1.varbinary_max + t2.binary_max as BINARY(8000)) as varbinary_max_binary_max_addition
+    FROM BABEL_5597_mixed_test_table t1
+    CROSS JOIN BABEL_5597_mixed_test_table t2
+    ORDER BY binary_max_varbinary_fixed_addition,
+             varbinary_fixed_binary_max_addition,
+             binary_fixed_varbinary_max_addition,
+             varbinary_max_binary_fixed_addition,
+             binary_max_varbinary_max_addition,
+             varbinary_max_binary_max_addition
+);
+GO
+
+CREATE FUNCTION BABEL_5597_mixed_test_func5()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as VARBINARY(100)) as BINARY(8000)) as binary_max_varbinary_fixed_result,
+        CAST(CAST(0x0 as VARBINARY(100)) + CAST(NULL as BINARY(8000)) as BINARY(8000)) as varbinary_fixed_binary_max_result,
+        CAST(CAST(NULL as BINARY(100)) + CAST(0x0 as VARBINARY(100)) as BINARY(200)) as binary_varbinary_fixed_result,
+        CAST(CAST(0x0 as VARBINARY(100)) + CAST(NULL as BINARY(100)) as BINARY(200)) as varbinary_binary_fixed_result,
+        CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as VARBINARY(MAX)) as BINARY(8000)) as binary_max_varbinary_max_result,
+        CAST(CAST(0x0 as VARBINARY(MAX)) + CAST(NULL as BINARY(8000)) as BINARY(8000)) as varbinary_max_binary_max_result
+);
+GO
+
+CREATE FUNCTION BABEL_5597_mixed_test_func6()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(CAST(NULL as BINARY(8000)) + CAST(NULL as VARBINARY(100)) as BINARY(8000)) as binary_max_varbinary_fixed_result,
+        CAST(CAST(NULL as VARBINARY(100)) + CAST(NULL as BINARY(8000)) as BINARY(8000)) as varbinary_fixed_binary_max_result,
+        CAST(CAST(NULL as BINARY(100)) + CAST(NULL as VARBINARY(100)) as BINARY(200)) as binary_varbinary_fixed_result,
+        CAST(CAST(NULL as VARBINARY(100)) + CAST(NULL as BINARY(100)) as BINARY(200)) as varbinary_binary_fixed_result,
+        CAST(CAST(NULL as BINARY(8000)) + CAST(NULL as VARBINARY(MAX)) as BINARY(8000)) as binary_max_varbinary_max_result,
+        CAST(CAST(NULL as VARBINARY(MAX)) + CAST(NULL as BINARY(8000)) as BINARY(8000)) as varbinary_max_binary_max_result
+);
+GO
+
+CREATE FUNCTION BABEL_5597_mixed_test_func7()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(CAST(0x098765 as BINARY(20)) + CAST(0x012345 as VARBINARY(10)) as BINARY(30)) as binary_max_varbinary_fixed_result,
+        CAST(CAST(0x012345 as VARBINARY(10)) + CAST(0x098765 as BINARY(20)) as BINARY(30)) as varbinary_fixed_binary_max_result,
+        CAST(CAST(0x098765 as BINARY(10)) + CAST(0x012345 as VARBINARY(10)) as BINARY(20)) as binary_varbinary_fixed_result,
+        CAST(CAST(0x012345 as VARBINARY(10)) + CAST(0x098765 as BINARY(10)) as BINARY(20)) as varbinary_binary_fixed_result,
+        CAST(CAST(0x098765 as BINARY(20)) + CAST(0x012345 as VARBINARY(MAX)) as BINARY(30)) as binary_max_varbinary_max_result,
+        CAST(CAST(0x012345 as VARBINARY(MAX)) + CAST(0x098765 as BINARY(20)) as BINARY(30)) as varbinary_max_binary_max_result
+);
+GO
+
+CREATE FUNCTION BABEL_5597_mixed_test_func8()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(CAST(0x as BINARY(20)) + CAST(0x098765 as VARBINARY(10)) as BINARY(30)) as binary_max_varbinary_fixed_result,
+        CAST(CAST(0x098765 as VARBINARY(10)) + CAST(0x as BINARY(20)) as BINARY(30)) as varbinary_fixed_binary_max_result,
+        CAST(CAST(0x as BINARY(10)) + CAST(0x098765 as VARBINARY(10)) as BINARY(20)) as binary_varbinary_fixed_result,
+        CAST(CAST(0x098765 as VARBINARY(10)) + CAST(0x as BINARY(10)) as BINARY(20)) as varbinary_binary_fixed_result,
+        CAST(CAST(0x as BINARY(20)) + CAST(0x098765 as VARBINARY(MAX)) as BINARY(30)) as binary_max_varbinary_max_result,
+        CAST(CAST(0x098765 as VARBINARY(MAX)) + CAST(0x as BINARY(20)) as BINARY(30)) as varbinary_max_binary_max_result
+);
+GO
+
+CREATE FUNCTION BABEL_5597_mixed_test_func9
+(
+    @binary_max BINARY(20),
+    @binary_fixed BINARY(10),
+    @varbinary_fixed VARBINARY(10),
+    @varbinary_max VARBINARY(MAX)
+)
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        CAST(@binary_max + @varbinary_fixed as BINARY(30)) as binary_max_varbinary_fixed_result,
+        CAST(@varbinary_fixed + @binary_max as BINARY(30)) as varbinary_fixed_binary_max_result,
+        CAST(@binary_fixed + @varbinary_max as BINARY(30)) as binary_fixed_varbinary_max_result,
+        CAST(@varbinary_max + @binary_fixed as BINARY(30)) as varbinary_max_binary_fixed_result
+);
+GO
+
+-- Procedures testing combinations
+CREATE PROCEDURE BABEL_5597_binary_test_proc1
+AS
+BEGIN
+    SELECT 
+        CAST(t1.maxlen_col + t1.fixedlen_col as BINARY(8000)) as max_fixed_addition,
+        CAST(t1.fixedlen_col + t1.fixedlen_col as BINARY(200)) as fixed_fixed_addition,
+        CAST(t1.maxlen_col + t1.maxlen_col as BINARY(8000)) as max_max_addition,
+        CAST(t1.fixedlen_col + t1.maxlen_col as BINARY(8000)) as fixed_max_addition
+    FROM BABEL_5597_binary_test_table t1
+    ORDER BY max_fixed_addition, 
+             fixed_fixed_addition, 
+             max_max_addition,
+             fixed_max_addition;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_binary_test_proc2
+AS
+BEGIN
+    SELECT 
+        CAST(t1.maxlen_col + t2.fixedlen_col as BINARY(8000)) as max_fixed_addition,
+        CAST(t1.fixedlen_col + t2.fixedlen_col as BINARY(200)) as fixed_fixed_addition,
+        CAST(t1.maxlen_col + t2.maxlen_col as BINARY(8000)) as max_max_addition,
+        CAST(t1.fixedlen_col + t2.maxlen_col as BINARY(8000)) as fixed_max_addition
+    FROM BABEL_5597_binary_test_table t1 
+    CROSS JOIN BABEL_5597_binary_test_table t2
+    ORDER BY max_fixed_addition, 
+             fixed_fixed_addition, 
+             max_max_addition,
+             fixed_max_addition;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_binary_test_proc3
+AS
+BEGIN
+    SELECT 
+        CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as BINARY(100)) as BINARY(8000)) as max_fixed_result,
+        CAST(CAST(NULL as BINARY(100)) + CAST(0x0 as BINARY(100)) as BINARY(8000)) as fixed_fixed_result,
+        CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as BINARY(8000)) as BINARY(8000)) as max_max_result;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_binary_test_proc4
+AS
+BEGIN
+    SELECT 
+        CAST(NULL as BINARY(8000)) + CAST(NULL as BINARY(100)) as max_fixed_result,
+        CAST(NULL as BINARY(100)) + CAST(NULL as BINARY(100)) as fixed_fixed_result,
+        CAST(NULL as BINARY(8000)) + CAST(NULL as BINARY(8000)) as max_max_result;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_binary_test_proc5
+AS
+BEGIN
+    SELECT 
+        CAST(0x098765 as BINARY(20)) + CAST(0x012345 as BINARY(10)) as max_fixed_result,
+        CAST(0x098765 as BINARY(10)) + CAST(0x012345 as BINARY(10)) as fixed_fixed_result,
+        CAST(0x098765 as BINARY(20)) + CAST(0x012345 as BINARY(20)) as max_max_result;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_binary_test_proc6
+AS
+BEGIN
+    SELECT 
+        CAST(0x as BINARY(20)) + CAST(0x098765 as BINARY(10)) as max_fixed_result,
+        CAST(0x as BINARY(10)) + CAST(0x098765 as BINARY(10)) as fixed_fixed_result,
+        CAST(0x as BINARY(20)) + CAST(0x098765 as BINARY(20)) as max_max_result;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_binary_test_proc7
+(
+    @max_input1 BINARY(20),
+    @fixed_input BINARY(10),
+    @max_input2 BINARY(20)
+)
+AS
+BEGIN
+    SELECT 
+        @max_input1 + @fixed_input as max_fixed_result,
+        @fixed_input + @fixed_input as fixed_fixed_result,
+        @max_input1 + @max_input2 as max_max_result;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_mixed_test_proc1
+AS
+BEGIN
+    SELECT 
+        CAST(t1.binary_fixed + t1.varbinary_fixed as BINARY(200)) as binary_varbinary_fixed_addition,
+        CAST(t1.varbinary_fixed + t1.binary_fixed as BINARY(200)) as varbinary_binary_fixed_addition
+    FROM BABEL_5597_mixed_test_table t1
+    ORDER BY binary_varbinary_fixed_addition, varbinary_binary_fixed_addition;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_mixed_test_proc2
+AS
+BEGIN
+    SELECT 
+        CAST(t1.binary_max + t1.varbinary_fixed as BINARY(8000)) as binary_max_varbinary_fixed_addition,
+        CAST(t1.varbinary_fixed + t1.binary_max as BINARY(8000)) as varbinary_fixed_binary_max_addition,
+        CAST(t1.binary_fixed + t1.varbinary_max as BINARY(8000)) as binary_fixed_varbinary_max_addition,
+        CAST(t1.varbinary_max + t1.binary_fixed as BINARY(8000)) as varbinary_max_binary_fixed_addition,
+        CAST(t1.binary_max + t1.varbinary_max as BINARY(8000)) as binary_max_varbinary_max_addition,
+        CAST(t1.varbinary_max + t1.binary_max as BINARY(8000)) as varbinary_max_binary_max_addition
+    FROM BABEL_5597_mixed_test_table t1
+    ORDER BY binary_max_varbinary_fixed_addition, varbinary_fixed_binary_max_addition,
+            binary_fixed_varbinary_max_addition, varbinary_max_binary_fixed_addition,
+            binary_max_varbinary_max_addition, varbinary_max_binary_max_addition;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_mixed_test_proc3
+AS
+BEGIN
+    SELECT 
+        CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as VARBINARY(100)) as BINARY(8000)) as binary_max_varbinary_fixed_result,
+        CAST(CAST(0x0 as VARBINARY(100)) + CAST(NULL as BINARY(8000)) as BINARY(8000)) as varbinary_fixed_binary_max_result,
+        CAST(CAST(NULL as BINARY(100)) + CAST(0x0 as VARBINARY(100)) as BINARY(200)) as binary_varbinary_fixed_result,
+        CAST(CAST(0x0 as VARBINARY(100)) + CAST(NULL as BINARY(100)) as BINARY(200)) as varbinary_binary_fixed_result,
+        CAST(CAST(NULL as BINARY(8000)) + CAST(0x0 as VARBINARY(MAX)) as BINARY(8000)) as binary_max_varbinary_max_result,
+        CAST(CAST(0x0 as VARBINARY(MAX)) + CAST(NULL as BINARY(8000)) as BINARY(8000)) as varbinary_max_binary_max_result;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_mixed_test_proc4
+AS
+BEGIN
+    SELECT 
+        CAST(CAST(NULL as BINARY(8000)) + CAST(NULL as VARBINARY(100)) as BINARY(8000)) as binary_max_varbinary_fixed_result,
+        CAST(CAST(NULL as VARBINARY(100)) + CAST(NULL as BINARY(8000)) as BINARY(8000)) as varbinary_fixed_binary_max_result,
+        CAST(CAST(NULL as BINARY(100)) + CAST(NULL as VARBINARY(100)) as BINARY(200)) as binary_varbinary_fixed_result,
+        CAST(CAST(NULL as VARBINARY(100)) + CAST(NULL as BINARY(100)) as BINARY(200)) as varbinary_binary_fixed_result,
+        CAST(CAST(NULL as BINARY(8000)) + CAST(NULL as VARBINARY(MAX)) as BINARY(8000)) as binary_max_varbinary_max_result,
+        CAST(CAST(NULL as VARBINARY(MAX)) + CAST(NULL as BINARY(8000)) as BINARY(8000)) as varbinary_max_binary_max_result;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_mixed_test_proc5
+AS
+BEGIN
+    SELECT 
+        CAST(CAST(0x098765 as BINARY(20)) + CAST(0x012345 as VARBINARY(10)) as BINARY(30)) as binary_max_varbinary_fixed_result,
+        CAST(CAST(0x012345 as VARBINARY(10)) + CAST(0x098765 as BINARY(20)) as BINARY(30)) as varbinary_fixed_binary_max_result,
+        CAST(CAST(0x098765 as BINARY(10)) + CAST(0x012345 as VARBINARY(10)) as BINARY(20)) as binary_varbinary_fixed_result,
+        CAST(CAST(0x012345 as VARBINARY(10)) + CAST(0x098765 as BINARY(10)) as BINARY(20)) as varbinary_binary_fixed_result,
+        CAST(CAST(0x098765 as BINARY(20)) + CAST(0x012345 as VARBINARY(MAX)) as BINARY(30)) as binary_max_varbinary_max_result,
+        CAST(CAST(0x012345 as VARBINARY(MAX)) + CAST(0x098765 as BINARY(20)) as BINARY(30)) as varbinary_max_binary_max_result;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_mixed_test_proc6
+AS
+BEGIN
+    SELECT 
+        CAST(CAST(0x as BINARY(20)) + CAST(0x098765 as VARBINARY(10)) as BINARY(30)) as binary_max_varbinary_fixed_result,
+        CAST(CAST(0x098765 as VARBINARY(10)) + CAST(0x as BINARY(20)) as BINARY(30)) as varbinary_fixed_binary_max_result,
+        CAST(CAST(0x as BINARY(10)) + CAST(0x098765 as VARBINARY(10)) as BINARY(20)) as binary_varbinary_fixed_result,
+        CAST(CAST(0x098765 as VARBINARY(10)) + CAST(0x as BINARY(10)) as BINARY(20)) as varbinary_binary_fixed_result,
+        CAST(CAST(0x as BINARY(20)) + CAST(0x098765 as VARBINARY(MAX)) as BINARY(30)) as binary_max_varbinary_max_result,
+        CAST(CAST(0x098765 as VARBINARY(MAX)) + CAST(0x as BINARY(20)) as BINARY(30)) as varbinary_max_binary_max_result;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5597_mixed_test_proc7
+(
+    @binary_max BINARY(20),
+    @binary_fixed BINARY(10),
+    @varbinary_fixed VARBINARY(10),
+    @varbinary_max VARBINARY(MAX)
+)
+AS
+BEGIN
+    SELECT 
+        CAST(@binary_max + @varbinary_fixed as BINARY(30)) as binary_max_varbinary_fixed_result,
+        CAST(@varbinary_fixed + @binary_max as BINARY(30)) as varbinary_fixed_binary_max_result,
+        CAST(@binary_fixed + @varbinary_max as BINARY(30)) as binary_fixed_varbinary_max_result,
+        CAST(@varbinary_max + @binary_fixed as BINARY(30)) as varbinary_max_binary_fixed_result;
+END;
+GO
+
+--Testing with UDTs
+CREATE TYPE FIXEDLEN_BINARY FROM BINARY(5)
+GO
+
+CREATE TYPE MAXLEN_BINARY FROM BINARY(8000)
+GO
+
+CREATE TYPE FIXEDLEN_VARBINARY FROM VARBINARY(5)
+GO
+
+CREATE TYPE MAXLEN_VARBINARY FROM VARBINARY(max)
+GO
+
+-- Tables and Indexes
+CREATE TABLE BABEL_5597_binary_test (
+    id int,
+    binary_col binary(5)
+);
+GO
+
+INSERT INTO BABEL_5597_binary_test (id, binary_col)
+SELECT 
+    generate_series(1, 100000),
+    CAST(0x0000000100 as binary(5))
+;
+GO
+
+INSERT INTO BABEL_5597_binary_test (id, binary_col) VALUES
+(100003, 0x0000000049), 
+(100001, 0x0000000050),  
+(100002, 0x0000000150); 
+GO
+
+-- Create index
+CREATE INDEX BABEL_5597_binary_ind ON BABEL_5597_binary_test (binary_col);
 GO
