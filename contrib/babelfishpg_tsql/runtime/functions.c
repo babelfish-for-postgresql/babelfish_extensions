@@ -2327,7 +2327,7 @@ isdate(PG_FUNCTION_ARGS)
 		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (argtypeid) ||
 		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (argtypeid) ||
 		(*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (argtypeid) ||
-		 argtypeid == VARCHAROID || argtypeid == BPCHAROID))
+		 argtypeid == VARCHAROID || argtypeid == BPCHAROID || argtypeid == INT4OID))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
