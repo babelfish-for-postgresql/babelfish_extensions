@@ -2417,7 +2417,11 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 							values[i] = TdsTypeSqlVariantToDatum(temp);
 							break;
 						case TDS_TYPE_CLRUDT:
-							values[i] = TdsTypeSpatialToDatum(temp, false);
+							/* Determine if it's geometry (false) or geography (true) */
+							if (colMetaData[currentColumn].columnTdsType == TDS_TYPE_GEOMETRY)
+								values[i] = TdsTypeSpatialToDatum(temp, false);
+							else if (colMetaData[currentColumn].columnTdsType == TDS_TYPE_GEOGRAPHY)
+								values[i] = TdsTypeSpatialToDatum(temp, true);
 							break; 
 					}
 				/* Build a string for bind parameters. */
