@@ -6066,8 +6066,8 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 						std::string datefirst_value = ::getFullText(ctx->set_special()->constant_LOCAL_ID()->constant());
 						char *datefirst_val = pstrdup(datefirst_value.c_str());
 						
-						// Non integral values and strings are not valid input
-						if (strchr(datefirst_val, '.'))
+						// Non integral values and strings are not a valid input
+						if (strchr(datefirst_val, '.') || strchr(datefirst_val, '\''))
 						{
 							ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
