@@ -70,6 +70,7 @@
 #include "utils/plancache.h"
 #include "utils/ps_status.h"
 #include "utils/queryenvironment.h"
+#include "utils/catcache.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
@@ -147,6 +148,8 @@ static void set_pgtype_byval(List *name, bool byval);
 static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc, bool is_proc);
 static Acl *get_old_view_acl(Oid oldViewOid);
 static void pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl);
+static List *get_old_view_column_acls(Oid oldViewOid);
+static void restore_view_column_acls(Oid newViewOid, List *column_acls);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -186,6 +189,12 @@ static int isolation_to_int(char *isolation_level);
 static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
+
+typedef struct ColumnAclInfo
+{
+    char       *attname;   /* Column name */
+    Acl        *acl;       /* ACL for the column */
+} ColumnAclInfo;
 
 typedef struct {
 	int oid;
@@ -2941,6 +2950,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					ObjectAddress address, originalView;
 					Oid oldViewOid;
 					Acl *oldViewAcl = NULL;
+					List *oldColumnAcls = NIL;
 					bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
 					bool needCleanup;
 			
@@ -2992,6 +3002,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							/* Save ACL before dropping the view */
 							oldViewAcl = get_old_view_acl(oldViewOid);
+
+							/* Save column ACLs before dropping the view */
+							oldColumnAcls = get_old_view_column_acls(oldViewOid);
 							CacheInvalidateRelcacheByRelid(oldViewOid);
 			
 							/* Drop the old view */
@@ -3030,6 +3043,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							/* Update ACL info */
 							pg_class_update_acl(address.objectId, oldViewAcl);
+							restore_view_column_acls(address.objectId, oldColumnAcls);
 
 							if(oldViewAcl != NULL)
 								pfree(oldViewAcl);
@@ -5184,6 +5198,111 @@ pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl)
 	ReleaseSysCache(classtup);
 	heap_freetuple(newtup);
 	table_close(pg_class_rel, RowExclusiveLock);
+}
+
+static List *
+get_old_view_column_acls(Oid oldViewOid)
+{
+	CatCList *catlist;
+	List *column_acls = NIL;
+	int i;
+
+	catlist = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(oldViewOid));
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple tuple = &catlist->members[i]->tuple;
+		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+		Datum aclDatum;
+		bool isNull;
+		ColumnAclInfo *info;
+
+		/* Skip system columns */
+		if (att->attnum <= InvalidAttrNumber)
+			continue;
+
+		aclDatum = SysCacheGetAttr(ATTNUM, tuple, 
+								Anum_pg_attribute_attacl, &isNull);
+
+		info = (ColumnAclInfo *) palloc0(sizeof(ColumnAclInfo));
+		info->attname = pstrdup(NameStr(att->attname));
+		info->acl = isNull ? NULL : DatumGetAclPCopy(aclDatum);
+
+		column_acls = lappend(column_acls, info);
+	}
+
+	ReleaseCatCacheList(catlist);
+	return column_acls;
+}
+
+static void
+restore_view_column_acls(Oid newViewOid, List *column_acls)
+{
+	ListCell *lc;
+	
+	foreach(lc, column_acls)
+	{
+		ColumnAclInfo *info = (ColumnAclInfo *) lfirst(lc);
+		Relation pg_attribute_rel;
+		HeapTuple attTup = NULL;
+		CatCList *catlist;
+		bool found = false;
+		Datum values[Natts_pg_attribute];
+		bool nulls[Natts_pg_attribute];
+		bool replaces[Natts_pg_attribute];
+		HeapTuple newTuple;
+		
+		catlist = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(newViewOid));
+		
+		/* Search for case-insensitive match */
+		for (int i = 0; i < catlist->n_members; i++)
+		{
+			HeapTuple  tuple = &catlist->members[i]->tuple;
+			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+			
+			/* Skip system columns */
+			if (att->attnum <= InvalidAttrNumber)
+				continue;
+				
+			/* Case-insensitive comparison */
+			if (pg_strcasecmp(NameStr(att->attname), info->attname) == 0)
+			{
+				attTup = SearchSysCacheCopy2(ATTNUM,
+										ObjectIdGetDatum(newViewOid),
+										Int16GetDatum(att->attnum));
+				found = true;
+				break;
+			}
+		}
+		
+		ReleaseCatCacheList(catlist);
+		
+		if (!found || !HeapTupleIsValid(attTup))
+			continue;
+		
+		/* Update the ACL */
+		pg_attribute_rel = table_open(AttributeRelationId, RowExclusiveLock);
+		
+		memset(values, 0, sizeof(values));
+		memset(nulls, false, sizeof(nulls));
+		memset(replaces, false, sizeof(replaces));
+		
+		if (info->acl != NULL)
+			values[Anum_pg_attribute_attacl - 1] = PointerGetDatum(info->acl);
+		else
+			nulls[Anum_pg_attribute_attacl - 1] = true;
+			
+		replaces[Anum_pg_attribute_attacl - 1] = true;
+		
+		newTuple = heap_modify_tuple(attTup, RelationGetDescr(pg_attribute_rel),
+								values, nulls, replaces);
+								
+		CatalogTupleUpdate(pg_attribute_rel, &newTuple->t_self, newTuple);
+		heap_freetuple(newTuple);
+		heap_freetuple(attTup);
+		
+		table_close(pg_attribute_rel, RowExclusiveLock);
+	}
 }
 
 /*
