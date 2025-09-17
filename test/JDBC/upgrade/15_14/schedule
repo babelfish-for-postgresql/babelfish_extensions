@@ -570,6 +570,7 @@ BABEL-USER-GRANT
 test_conv_money_to_varchar
 sp_xml_preparedocument
 sp_xml_removedocument
+openxml_with_clause
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 BABEL-5467
