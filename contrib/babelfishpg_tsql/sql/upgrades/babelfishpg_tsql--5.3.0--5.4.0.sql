@@ -301,15 +301,16 @@ SELECT
     -- Mapping PostgreSQL timezone names to Windows format names
     pg_catalog.initcap(sys.reverse_timezone_mapping(name))
     AS name,
-
-    CASE 
-        WHEN utc_offset < '00:00:00' THEN 
-            '-' + RIGHT('0' + CAST(ABS(EXTRACT(HOUR FROM utc_offset)) AS VARCHAR(2)), 2) + ':' + 
-            RIGHT('0' + CAST(ABS(EXTRACT(MINUTE FROM utc_offset)) AS VARCHAR(2)), 2)
-        ELSE 
-            '+' + RIGHT('0' + CAST(EXTRACT(HOUR FROM utc_offset) AS VARCHAR(2)), 2) + ':' + 
-            RIGHT('0' + CAST(EXTRACT(MINUTE FROM utc_offset) AS VARCHAR(2)), 2)
-    END AS current_utc_offset,
+    CAST(
+        CASE 
+            WHEN utc_offset < '00:00:00' THEN 
+                '-' || RIGHT('0' || CAST(ABS(EXTRACT(HOUR FROM utc_offset)) AS VARCHAR(2)), 2) || ':' ||
+                RIGHT('0' || CAST(ABS(EXTRACT(MINUTE FROM utc_offset)) AS VARCHAR(2)), 2)
+            ELSE 
+                '+' || RIGHT('0' || CAST(EXTRACT(HOUR FROM utc_offset) AS VARCHAR(2)), 2) || ':' || 
+                RIGHT('0' || CAST(EXTRACT(MINUTE FROM utc_offset) AS VARCHAR(2)), 2)
+        END AS VARCHAR(6)
+    ) AS current_utc_offset,
 
     -- Converting boolean is_dst to bit (0/1)
     CAST(
