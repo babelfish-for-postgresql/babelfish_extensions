@@ -96,6 +96,9 @@ GO
 CREATE TABLE test_schema.base_table (id INT PRIMARY KEY, name VARCHAR(50), email VARCHAR(100));
 GO
 
+CREATE TABLE test_schema.base_table1 ( id INT PRIMARY KEY, name VARCHAR(50), email VARCHAR(100), age INT, salary DECIMAL(10,2) );
+GO
+
 INSERT INTO test_schema.base_table VALUES (1, 'John', 'john@test.com'), (2, 'Jane', 'jane@test.com');
 GO
 
@@ -103,8 +106,67 @@ GO
 CREATE VIEW test_schema.test_view as select * from test_schema.base_table
 GO
 
+CREATE VIEW test_schema.colacl_view1 as select 1 as a, 2 as b, 3 as c;
+GO
+
 -- Verify view_owner can select from view
 SELECT * FROM test_schema.test_view;
+GO
+
+SELECT * FROM test_schema.colacl_view1;
+GO
+
+-- Create view with 3 columns
+CREATE VIEW test_schema.test_view1 AS 
+SELECT id, name, email FROM test_schema.base_table1;
+GO
+
+-- Grant permissions
+GRANT SELECT ON test_schema.test_view1(id, name) TO view_user;
+GO
+
+-- psql
+-- Print initial permissions
+SELECT
+    TABLE_NAME, 
+    COLUMN_NAME, 
+    PRIVILEGE_TYPE
+FROM 
+    INFORMATION_SCHEMA.COLUMN_PRIVILEGES
+WHERE 
+    TABLE_NAME = 'test_view1' AND
+    COLUMN_NAME IN ('id', 'name')
+ORDER BY 
+    COLUMN_NAME, PRIVILEGE_TYPE;
+GO
+
+-- tsql user=view_owner_login password=12345678
+-- Alter view to have 4+ columns
+ALTER VIEW test_schema.test_view1 AS
+SELECT 
+    id,
+    name AS "NAME" , -- Same name as existing column, different case
+    email,
+    age,
+    salary,
+    UPPER(name) AS new_column
+FROM 
+    test_schema.base_table1;
+GO
+
+-- psql
+-- Print permissions after alteration
+SELECT
+    TABLE_NAME, 
+    COLUMN_NAME, 
+    PRIVILEGE_TYPE
+FROM 
+    INFORMATION_SCHEMA.COLUMN_PRIVILEGES
+WHERE 
+    TABLE_NAME = 'test_view1' AND
+    COLUMN_NAME IN ('id', 'NAME')
+ORDER BY 
+    COLUMN_NAME, PRIVILEGE_TYPE;
 GO
 
 -- Verify view_user cannot access the view yet
@@ -116,12 +178,87 @@ GO
 SELECT * FROM test_schema.test_view;
 GO
 
+SELECT * FROM test_schema.colacl_view1;
+GO
+
+-- This should succeed (has permissions)
+SELECT id, "NAME" FROM test_schema.test_view1;
+GO
+
+SELECT id, name FROM test_schema.test_view1;
+GO
+
+-- These should fail (no permissions)
+SELECT email FROM test_schema.test_view1;
+GO
+
+SELECT age FROM test_schema.test_view1;
+GO
+
+SELECT new_column FROM test_schema.test_view1;
+GO
+
 -- Grant permission to view_user
 -- tsql user=view_owner_login password=12345678
 USE view_perm_db;
 GO
 
 GRANT SELECT ON test_schema.test_view TO view_user;
+GO
+
+GRANT SELECT ON test_schema.colacl_view1(a, c) TO view_user;
+GO
+
+CREATE VIEW test_schema.test_view2 (col1, col2, col3) AS
+SELECT id, name, email FROM test_schema.base_table1;
+GO
+
+-- Grant permissions
+GRANT SELECT ON test_schema.test_view2(col1, col2) TO view_user;
+GO
+
+-- psql
+-- Print initial permissions
+SELECT
+    TABLE_NAME, 
+    COLUMN_NAME, 
+    PRIVILEGE_TYPE
+FROM 
+    INFORMATION_SCHEMA.COLUMN_PRIVILEGES
+WHERE 
+    TABLE_NAME = 'test_view2' AND
+    COLUMN_NAME IN ('col1', 'col2', 'col3')
+ORDER BY 
+    COLUMN_NAME, PRIVILEGE_TYPE;
+GO
+
+-- tsql user=view_owner_login password=12345678
+-- Alter view with explicit column aliases
+ALTER VIEW test_schema.test_view2 (col1, COL2, col3, col4, col5, col6) AS
+SELECT 
+    id,
+    name,
+    email,
+    age,
+    salary,
+    UPPER(name)
+FROM 
+    test_schema.base_table1;
+GO
+
+-- psql
+-- Print permissions after alteration
+SELECT
+    TABLE_NAME, 
+    COLUMN_NAME, 
+    PRIVILEGE_TYPE
+FROM 
+    INFORMATION_SCHEMA.COLUMN_PRIVILEGES
+WHERE 
+    TABLE_NAME = 'test_view2' AND
+    COLUMN_NAME IN ('col1', 'col2', 'col3')
+ORDER BY 
+    COLUMN_NAME, PRIVILEGE_TYPE;
 GO
 
 -- Now view_user should be able to select
@@ -131,6 +268,36 @@ GO
 
 -- This should succeed
 SELECT * FROM test_schema.test_view;
+GO
+
+SELECT a FROM test_schema.colacl_view1;
+GO
+
+--This should fail
+SELECT b FROM test_schema.colacl_view1;
+GO
+
+SELECT c FROM test_schema.colacl_view1;
+GO
+
+SELECT * FROM test_schema.colacl_view1;
+GO
+
+-- These should succeed (has permissions)
+SELECT col1, col2 FROM test_schema.test_view2;
+GO
+
+SELECT col1, COL2 FROM test_schema.test_view2;
+GO
+
+-- These should fail (no permissions)
+SELECT col3 FROM test_schema.test_view2;
+GO
+SELECT col4 FROM test_schema.test_view2;
+GO
+SELECT col5 FROM test_schema.test_view2;
+GO
+SELECT col6 FROM test_schema.test_view2;
 GO
 
 -- Alter view as view_owner
@@ -143,8 +310,14 @@ AS
     SELECT id, name FROM test_schema.base_table;
 GO
 
+ALTER VIEW test_schema.colacl_view1 AS SELECT 2 AS a;
+GO
+
 -- Verify view_owner can still access
 SELECT * FROM test_schema.test_view;
+GO
+
+SELECT a FROM test_schema.colacl_view1;
 GO
 
 -- Verify view_user can still access after alter
@@ -154,6 +327,9 @@ GO
 
 -- This should succeed as permissions are retained
 SELECT * FROM test_schema.test_view;
+GO
+
+SELECT a FROM test_schema.colacl_view1;
 GO
 
 -- Revoke permission to view_user
@@ -213,7 +389,19 @@ GO
 DROP VIEW test_schema.test_view;
 GO
 
+DROP VIEW test_schema.colacl_view1;
+GO
+
+DROP VIEW test_schema.test_view1;
+GO
+
+DROP VIEW test_schema.test_view2;
+GO
+
 DROP TABLE test_schema.base_table;
+GO
+
+DROP TABLE test_schema.base_table1;
 GO
 
 DROP SCHEMA test_schema;
