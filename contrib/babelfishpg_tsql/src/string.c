@@ -543,7 +543,7 @@ tsql_varbinary_substr(PG_FUNCTION_ARGS)
 /*
  * Returns character data converted from numeric data. The character data
  * is right-justified, with a specified length and decimal precision.
-*/
+ */
 Datum
 float_str(PG_FUNCTION_ARGS)
 {
@@ -557,7 +557,7 @@ float_str(PG_FUNCTION_ARGS)
 	char	   *ptr;
 	int			input_deci_digits;
 	int			has_neg_sign = 0;
-	int			input_deci_point = 0;
+	int			input_deci_point = 0; /* NOTE: this is a flag (0/1), not an index */
 	int			has_deci_point = 0;
 	int			num_spaces = 0;
 	int			int_digits = 0;
@@ -643,6 +643,8 @@ float_str(PG_FUNCTION_ARGS)
 	/* allocate buffer for putting result together */
 	buf = palloc(size);
 	memset(buf, 0, size);
+
+	/* account for sign and decimal point in available length */
 	if (has_neg_sign)
 		length--;
 	if (decimal > 0 && length > int_digits)
@@ -680,7 +682,7 @@ float_str(PG_FUNCTION_ARGS)
 
 	num_spaces = length - int_digits - deci_digits;
 
-	/* comp space for the decimal point */
+	/* if we planned a decimal point but deci_digits=0, remove point and reclaim 1 space */
 	if (has_deci_point && !deci_digits)
 	{
 		/*
@@ -688,7 +690,7 @@ float_str(PG_FUNCTION_ARGS)
 		 * one space. STR(1.234, 2, 1) returns " 1"
 		 */
 		num_spaces++;
-		has_deci_point--;
+		has_deci_point = 0;
 	}
 
 	/*
@@ -749,6 +751,7 @@ float_str(PG_FUNCTION_ARGS)
 					 */
 					memset(buf + num_spaces - 1, '-', 1);
 					num_spaces++;
+					++float_char; /* skip '-' in source */
 				}
 				memset(buf + num_spaces - 1, '1', 1);
 				memset(float_char, '0', 1);
@@ -773,7 +776,6 @@ float_str(PG_FUNCTION_ARGS)
 			}
 		}
 	}
-
 
 	/* copy the actual number to the buffer after preceding spaces */
 	strncpy(buf + num_spaces, float_char, size - 1 - num_spaces);
@@ -801,47 +803,50 @@ float_str(PG_FUNCTION_ARGS)
 		}
 	}
 
-	return return_varchar_pointer(buf, size);
+	/* return VARCHAR with actual content length (no NUL) */
+	return return_varchar_pointer(buf, (int)strlen(buf));
 }
 
 /*
  * Find the rounding position of the float_char input using the constraints
  * returns the rounding position
-*/
+ */
 static int
 find_round_pos(char *float_char, int has_neg_sign, int int_digits, int deci_digits, int input_deci_digits, int input_deci_point, int deci_sig)
 {
 	int			round_pos = 0;
 	int			curr_digit;
+	int 		look_idx;
 
 	if (int_digits + input_deci_digits > 17)
 	{
-		/*
-		 * exceeds the max precision, need to round to 17th digit(excluding -
-		 * and .)
-		 */
+		/* Case 1: 18th significant digit is in integer part */
 		if (int_digits > 17)
 		{
-			/* round in int part */
-			/* STR(12345678901234567890, 20) returns "1234567890123456800" */
-			curr_digit = float_char[17 + has_neg_sign] - '0';
+			/* look at the 18th significant digit (skip '-') */
+			look_idx = 17 + has_neg_sign;
+			curr_digit = float_char[look_idx] - '0';
 
 			if (curr_digit >= 5)
-				round_pos = 16 + has_neg_sign;
+				round_pos = look_idx - 1; /* round the 17th significant digit */
 		}
 		else
 		{
-			/* round in decimal part */
-
 			/*
-			 * STR(1234567890.1234567890, 22, 20) returns
-			 * "1234567890.12345670000"
+			 * Case 2: 18th significant digit is in decimal part.
+			 * We still "walk" 17 significant digits from start (skipping '-'
+			 * and not counting '.'), so index is:
+			 * has_neg_sign + input_deci_point + 17
+			 * (int_digits cancels out: int_digits + (17 - int_digits) = 17)
 			 */
-			curr_digit = float_char[17 + has_neg_sign + input_deci_point] - '0';
+			look_idx = 17 + has_neg_sign + input_deci_point;
+			curr_digit = float_char[look_idx] - '0';
+
 			if (curr_digit >= 5)
-				round_pos = 16 + has_neg_sign + input_deci_point;
+				round_pos = look_idx - 1; /* round the 17th significant digit */
 		}
 	}
+	/* Otherwise, if we have more input decimals than we will print, round to last printed decimal */
 	else if (deci_digits && input_deci_digits > deci_sig)
 	{
 		/* input decimal digits > needed, round to last output decimal digit  */
@@ -850,6 +855,7 @@ find_round_pos(char *float_char, int has_neg_sign, int int_digits, int deci_digi
 		if (curr_digit >= 5)
 			round_pos = has_neg_sign + int_digits + input_deci_point + deci_sig - 1;
 	}
+	/* If no decimal will be printed but input had decimals, round to integer */
 	else if (!deci_sig && input_deci_digits)
 	{
 		/* int part == length and has deci digit input, round to integer */
@@ -865,14 +871,14 @@ find_round_pos(char *float_char, int has_neg_sign, int int_digits, int deci_digi
 
 /*
  * Inplace round the float_char to the digit at round_pos, returns the final carried over digit
-*/
+ */
 static int
 round_float_char(char *float_char, int round_pos, int has_neg_sign)
 {
 	int			curr_digit;
 	int			carry = 1;
 
-	while (round_pos > (0 + has_neg_sign) && carry)
+	while (round_pos >= (0 + has_neg_sign) && carry)
 	{
 		if (float_char[round_pos] == '.')
 		{
