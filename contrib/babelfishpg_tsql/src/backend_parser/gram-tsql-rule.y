@@ -1316,14 +1316,11 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 			returning_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
+					SelectLimit *top_stmt = (SelectLimit *)$3;
 					tsql_reset_update_delete_globals();
 					n->withClause = $1;
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL && $3->limitOption == LIMIT_OPTION_PERCENT)
-						ereport(ERROR,
-						        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						        errmsg("UPDATE TOP N PERCENT is not supported yet"),
-						        parser_errposition(@3)));
+					n->limitCount = top_stmt->limitCount;
+					tsql_check_top_percent_support(top_stmt, "UPDATE", @3, yyscanner);
 					n->relation = $4;
 					n->targetList = $7;
 					n->fromClause = $8;
@@ -1352,12 +1349,9 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 						}
 						else
 						{
-							n->limitCount = $3->limitCount;
-							if ($3->limitCount != NULL && $3->limitOption == LIMIT_OPTION_PERCENT)
-								ereport(ERROR,
-								        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								        errmsg("UPDATE TOP N PERCENT is not supported yet"),
-								        parser_errposition(@3)));
+							SelectLimit *top_stmt = (SelectLimit *)$3;
+							n->limitCount = top_stmt->limitCount;
+							tsql_check_top_percent_support(top_stmt, "UPDATE", @3, yyscanner);
 							n->fromClause = $9;
 							n->whereClause = $10;
 						}
@@ -1513,9 +1507,10 @@ simple_select:
 			group_clause having_clause window_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL)
-						n->limitOption = $3->limitOption;
+					SelectLimit *top_stmt = (SelectLimit *)$3;
+					n->limitCount = top_stmt->limitCount;
+					if (top_stmt->limitCount != NULL)
+						n->limitOption = top_stmt->limitOption;
 					n->targetList = $4;
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
@@ -1538,10 +1533,11 @@ simple_select:
 			group_clause having_clause window_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
+					SelectLimit *top_stmt = (SelectLimit *)$3;
 					n->distinctClause = $2;
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL)
-						n->limitOption = $3->limitOption;
+					n->limitCount = top_stmt->limitCount;
+					if (top_stmt->limitCount != NULL)
+						n->limitOption = top_stmt->limitOption;
 					n->targetList = $4;
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
@@ -1564,9 +1560,10 @@ simple_select:
 			group_clause having_clause window_clause 
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL)
-						n->limitOption = $3->limitOption;
+					SelectLimit *top_stmt = (SelectLimit *)$3;
+					n->limitCount = top_stmt->limitCount;
+					if (top_stmt->limitCount != NULL)
+						n->limitOption = top_stmt->limitOption;
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1586,9 +1583,10 @@ simple_select:
 			group_clause having_clause window_clause 
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL)
-						n->limitOption = $3->limitOption;
+					SelectLimit *top_stmt = (SelectLimit *)$3;
+					n->limitCount = top_stmt->limitCount;
+					if (top_stmt->limitCount != NULL)
+						n->limitOption = top_stmt->limitOption;
 					if ($3 != NULL && $4 == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2302,9 +2300,10 @@ tsql_output_simple_select:
 			group_clause having_clause window_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL)
-						n->limitOption = $3->limitOption;
+					SelectLimit *top_stmt = (SelectLimit *)$3;
+					n->limitCount = top_stmt->limitCount;
+					if (top_stmt->limitCount != NULL)
+						n->limitOption = top_stmt->limitOption;
 					n->targetList = $4;
 					n->intoClause = $5;
 					n->fromClause = $6;
@@ -2321,10 +2320,11 @@ tsql_output_simple_select:
 			group_clause having_clause window_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
+					SelectLimit *top_stmt = (SelectLimit *)$3;
 					n->distinctClause = $2;
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL)
-						n->limitOption = $3->limitOption;
+					n->limitCount = top_stmt->limitCount;
+					if (top_stmt->limitCount != NULL)
+						n->limitOption = top_stmt->limitOption;
 					n->targetList = $4;
 					n->intoClause = $5;
 					n->fromClause = $6;
@@ -2341,9 +2341,10 @@ tsql_output_simple_select:
 			group_clause having_clause window_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL)
-						n->limitOption = $3->limitOption;
+					SelectLimit *top_stmt = (SelectLimit *)$3;
+					n->limitCount = top_stmt->limitCount;
+					if (top_stmt->limitCount != NULL)
+						n->limitOption = top_stmt->limitOption;
 					n->intoClause = $5;
 					n->whereClause = $9;
 					n->groupClause = ($10)->list;
@@ -2357,10 +2358,11 @@ tsql_output_simple_select:
 			group_clause having_clause window_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
+					SelectLimit *top_stmt = (SelectLimit *)$3;
 					n->distinctClause = $2;
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL)
-						n->limitOption = $3->limitOption;
+					n->limitCount = top_stmt->limitCount;
+					if (top_stmt->limitCount != NULL)
+						n->limitOption = top_stmt->limitOption;
 					n->intoClause = $5;
 					n->whereClause = $9;
 					n->groupClause = ($10)->list;
@@ -2712,12 +2714,9 @@ tsql_InsertStmt:
 			opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			tsql_output_insert_rest
 				{
-					$10->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL && $3->limitOption == LIMIT_OPTION_PERCENT)
-						ereport(ERROR,
-						        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						        errmsg("INSERT TOP N PERCENT is not supported yet"),
-						        parser_errposition(@3)));
+					SelectLimit *top_stmt = (SelectLimit *)$3;
+					$10->limitCount = top_stmt->limitCount;
+					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$10->relation = $5;
 					$10->onConflictClause = NULL;
 					$10->returningList = NULL;
@@ -2727,12 +2726,9 @@ tsql_InsertStmt:
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_insert_rest
 				{
-					$7->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL && $3->limitOption == LIMIT_OPTION_PERCENT)
-						ereport(ERROR,
-						        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						        errmsg("INSERT TOP N PERCENT is not supported yet"),
-						        parser_errposition(@3)));
+					SelectLimit *top_stmt = (SelectLimit *)$3;
+					$7->limitCount = top_stmt->limitCount;
+					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$7->relation = $5;
 					$7->onConflictClause = NULL;
 					$7->returningList = NULL;
@@ -2742,13 +2738,10 @@ tsql_InsertStmt:
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr DEFAULT TSQL_VALUES
 				{
+					SelectLimit *top_stmt = (SelectLimit *)$3;
 					InsertStmt *i = makeNode(InsertStmt);
-					i->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL && $3->limitOption == LIMIT_OPTION_PERCENT)
-						ereport(ERROR,
-						        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						        errmsg("INSERT TOP N PERCENT is not supported yet"),
-						        parser_errposition(@3)));
+					i->limitCount = top_stmt->limitCount;
+					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					i->relation = $5;
 					i->onConflictClause = NULL;
 					i->returningList = NULL;
@@ -2762,17 +2755,14 @@ tsql_InsertStmt:
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			 tsql_output_clause tsql_output_insert_rest_no_paren 
 				{
+					SelectLimit *top_stmt = (SelectLimit *)$3;
 					if ($11->execStmt)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@10)));
-					$11->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL && $3->limitOption == LIMIT_OPTION_PERCENT)
-						ereport(ERROR,
-						        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						        errmsg("INSERT TOP N PERCENT is not supported yet"),
-						        parser_errposition(@3)));
+					$11->limitCount = top_stmt->limitCount;
+					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$11->relation = $5;
 					$11->onConflictClause = NULL;
 					$11->returningList = $10;
@@ -2782,18 +2772,15 @@ tsql_InsertStmt:
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause tsql_output_insert_rest_no_paren 
 				{
+					SelectLimit *top_stmt = (SelectLimit *)$3;
 					if ($8->execStmt)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@7)));
 					
-					$8->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL && $3->limitOption == LIMIT_OPTION_PERCENT)
-						ereport(ERROR,
-						        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						        errmsg("INSERT TOP N PERCENT is not supported yet"),
-						        parser_errposition(@3)));
+					$8->limitCount = top_stmt->limitCount;
+					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$8->relation = $5;
 					$8->onConflictClause = NULL;
 					$8->returningList = $7;
@@ -2805,12 +2792,9 @@ tsql_InsertStmt:
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause DEFAULT VALUES
 				{
 					InsertStmt *i = makeNode(InsertStmt);
-					i->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL && $3->limitOption == LIMIT_OPTION_PERCENT)
-						ereport(ERROR,
-						        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						        errmsg("INSERT TOP N PERCENT is not supported yet"),
-						        parser_errposition(@3)));
+					SelectLimit *top_stmt = (SelectLimit *)$3;
+					i->limitCount = top_stmt->limitCount;
+					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					i->relation = $5;
 					i->onConflictClause = NULL;
 					i->returningList = $7;
@@ -2830,7 +2814,7 @@ tsql_InsertStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@14)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, $10, $12, $13, $14, 5);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, $10, $12, $13, $14, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_into_target_columns tsql_output_insert_rest
@@ -2840,7 +2824,7 @@ tsql_InsertStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@10)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, $10, $11, 5);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, $10, $11, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_into_target_columns DEFAULT VALUES
@@ -2853,7 +2837,7 @@ tsql_InsertStmt:
 					i->cols = NIL;
 					i->selectStmt = NULL;
 					i->execStmt = NULL;
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, $10, i, 5);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, $10, i, 5, yyscanner);
 				}
 			/* Without OUTPUT target column list */
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
@@ -2864,7 +2848,7 @@ tsql_InsertStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@13)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, $10, $12, NIL, $13, 5);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, $10, $12, NIL, $13, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_insert_rest_no_paren
@@ -2874,7 +2858,7 @@ tsql_InsertStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@9)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, NIL, $10, 5);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, NIL, $10, 5, yyscanner);
 				}
 			/*
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
@@ -2888,7 +2872,7 @@ tsql_InsertStmt:
 					i->cols = NIL;
 					i->selectStmt = NULL;
 					i->execStmt = NULL;
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, NIL, i, 5);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, NIL, i, 5, yyscanner);
 				}
 			*/
 		;
@@ -3568,12 +3552,9 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 			tsql_opt_table_hint_expr from_clause where_or_current_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL && $3->limitOption == LIMIT_OPTION_PERCENT)
-						ereport(ERROR,
-						        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						        errmsg("DELETE TOP N PERCENT is not supported yet"),
-						        parser_errposition(@3)));
+					SelectLimit *top_stmt = (SelectLimit *)$3;
+					n->limitCount = top_stmt->limitCount;
+					tsql_check_top_percent_support(top_stmt, "DELETE", @3, yyscanner);
 					n->relation = $5;
 					n->usingClause = $7;
 					n->whereClause = $8;
@@ -3586,14 +3567,11 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 			tsql_opt_table_hint_expr tsql_output_clause from_clause where_or_current_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
+					SelectLimit *top_stmt = (SelectLimit *)$3;
 					tsql_reset_update_delete_globals();
 					n->relation = $5;
-					n->limitCount = $3->limitCount;
-					if ($3->limitCount != NULL && $3->limitOption == LIMIT_OPTION_PERCENT)
-						ereport(ERROR,
-						        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						        errmsg("DELETE TOP N PERCENT is not supported yet"),
-						        parser_errposition(@3)));
+					n->limitCount = top_stmt->limitCount;
+					tsql_check_top_percent_support(top_stmt, "DELETE", @3, yyscanner);
 					n->usingClause = $8;
 					n->whereClause = $9;
 					n->returningList = $7;
@@ -3618,17 +3596,17 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 tsql_top_clause:
 			TSQL_TOP '(' a_expr ')'						
 				{ 
-					SelectLimit *n = (SelectLimit *) palloc(sizeof(SelectLimit));
+					SelectLimit *n = (SelectLimit *) palloc0(sizeof(SelectLimit));
 					n->limitCount = $3;
 					n->limitOption = LIMIT_OPTION_COUNT;
-					$$ = n;
+					$$ = (Node *)n;
 				}
 			| TSQL_TOP I_or_F_const
 				{
-					SelectLimit *n = (SelectLimit *) palloc(sizeof(SelectLimit));
+					SelectLimit *n = (SelectLimit *) palloc0(sizeof(SelectLimit));
 					n->limitCount = $2;
 					n->limitOption = LIMIT_OPTION_COUNT;
-					$$ = n;
+					$$ = (Node *)n;
 				}
 			| TSQL_TOP select_with_parens
 				{
@@ -3637,7 +3615,7 @@ tsql_top_clause:
 					 * because c_expr (in a_expr) has a rule select_with_parens but we defined the first rule as '(' a_expr ')'.
 					 * In other words, the first rule will be hit only when double parenthesis is used like `SELECT TOP ((select 1)) ...`
 					 */
-					SelectLimit *n = (SelectLimit *) palloc(sizeof(SelectLimit));
+					SelectLimit *n = (SelectLimit *) palloc0(sizeof(SelectLimit));
 					SubLink *sublink = makeNode(SubLink);
 
 					sublink->subLinkType = EXPR_SUBLINK;
@@ -3649,11 +3627,11 @@ tsql_top_clause:
 
 					n->limitCount = (Node *)sublink;
 					n->limitOption = LIMIT_OPTION_COUNT;
-					$$ = n;
+					$$ = (Node *)n;
 				}
 			| TSQL_TOP '(' a_expr ')' TSQL_PERCENT
 				{
-					SelectLimit *stmt = (SelectLimit *) palloc(sizeof(SelectLimit));
+					SelectLimit *stmt = (SelectLimit *) palloc0(sizeof(SelectLimit));
 
 					if (IsA($3, A_Const))
 					{
@@ -3679,11 +3657,11 @@ tsql_top_clause:
                 		stmt->limitOption = LIMIT_OPTION_PERCENT;
 					}
 
-					$$ = stmt;
+					$$ = (Node *)stmt;
 				}
 			| TSQL_TOP I_or_F_const TSQL_PERCENT
 				{
-					SelectLimit *stmt = (SelectLimit *) palloc(sizeof(SelectLimit));
+					SelectLimit *stmt = (SelectLimit *) palloc0(sizeof(SelectLimit));
 					A_Const* n = (A_Const *)$2;
 
 					if(IsA(&n->val, Integer) && n->val.ival.ival == 100)
@@ -3700,7 +3678,7 @@ tsql_top_clause:
                 		stmt->limitOption = LIMIT_OPTION_PERCENT;
 					}
 
-					$$ = stmt;
+					$$ = (Node *)stmt;
 				}
 		;
 
@@ -3708,9 +3686,9 @@ opt_top_clause:
 				tsql_top_clause { $$ = $1; }
 			| /*EMPTY*/ 
 			{ 
-				SelectLimit *n = (SelectLimit *) palloc(sizeof(SelectLimit));
+				SelectLimit *n = (SelectLimit *) palloc0(sizeof(SelectLimit));
 				n->limitCount = NULL;
-				$$ = n;
+				$$ = (Node *)n;
 			}
 		;
 

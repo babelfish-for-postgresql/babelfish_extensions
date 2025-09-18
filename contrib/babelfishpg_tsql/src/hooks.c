@@ -174,6 +174,7 @@ static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 static void transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt);
 static bool transform_unpivot_clause_recursive(Node **node, List **measure_cols, List **unpivot_src_cols);
+static void transform_tsql_select_statement(ParseState *pstate, SelectStmt *stmt);
 static void transform_percent_clause(ParseState *pstate, SelectStmt *stmt);
 static SelectStmt *handle_group_by_percent_count(SelectStmt *stmt);
 static List* filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **source_cols);
@@ -345,8 +346,7 @@ static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
-static transform_unpivot_clause_hook_type pre_transform_unpivot_clause_hook = NULL;
-static transform_percent_clause_hook_type pre_transform_percent_clause_hook = NULL;
+static transform_tsql_select_stmt_hook_type pre_transform_tsql_select_stmt_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static called_for_tsql_itvf_func_hook_type prev_called_for_tsql_itvf_func_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
@@ -548,11 +548,8 @@ InstallExtendedHooks(void)
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
 	transform_pivot_clause_hook = transform_pivot_clause;
 
-	pre_transform_unpivot_clause_hook = transform_unpivot_clause_hook;
-	transform_unpivot_clause_hook = transform_unpivot_clause;
-
-	pre_transform_percent_clause_hook = transform_percent_clause_hook;
-	transform_percent_clause_hook = transform_percent_clause;
+	pre_transform_tsql_select_stmt_hook = transform_tsql_select_stmt_hook;
+	transform_tsql_select_stmt_hook = transform_tsql_select_statement;
 
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
@@ -686,8 +683,7 @@ UninstallExtendedHooks(void)
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	get_bbf_admin_oid_hook = prev_get_bbf_admin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
-	transform_unpivot_clause_hook = pre_transform_unpivot_clause_hook;
-	transform_percent_clause_hook = pre_transform_percent_clause_hook;
+	transform_tsql_select_stmt_hook = pre_transform_tsql_select_stmt_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
@@ -5692,6 +5688,16 @@ handle_group_by_percent_count(SelectStmt *groupbySelectStmt)
 }
 
 /*
+ * Common hook to transform TSQL unpivot and TOP N Percent
+ */
+static void
+transform_tsql_select_statement(ParseState *pstate, SelectStmt *stmt)
+{
+	transform_percent_clause(pstate, stmt);
+	transform_unpivot_clause(pstate, stmt);
+}
+
+/*
  * Transform T-SQL PERCENT clause in SELECT statements
  *
  * Converts "SELECT TOP N PERCENT ..." to "SELECT TOP CEIL((COUNT(*) * N) / 100) ..."
@@ -5720,7 +5726,7 @@ transform_percent_clause(ParseState *pstate, SelectStmt *stmt)
 	if (sql_dialect != SQL_DIALECT_TSQL || stmt->limitCount == NULL)
         return;
     
-    if(stmt->limitOption != LIMIT_OPTION_PERCENT)
+    if (stmt->limitOption != LIMIT_OPTION_PERCENT)
         return;
     else
         stmt->limitOption = LIMIT_OPTION_COUNT;
