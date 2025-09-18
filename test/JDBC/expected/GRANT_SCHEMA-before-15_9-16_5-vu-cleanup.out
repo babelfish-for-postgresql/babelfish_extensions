@@ -66,10 +66,10 @@ go
 drop schema babel_5172_s1;
 go
 
-drop user babel_5172-u1;
+drop user babel_5172_u1;
 go
 
-drop user babel_5172-u2;
+drop user babel_5172_u2;
 go
 
 use master
