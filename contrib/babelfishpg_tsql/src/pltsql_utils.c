@@ -3038,7 +3038,7 @@ get_func_owner(Oid funcid)
  * Retuns function oid which is cached at the start of every function/proc call
  * only if we are currently in function/proc execution
  */
-static Oid
+Oid
 get_current_func_oid(void)
 {
 	if (!pltsql_support_tsql_transactions())
@@ -3060,7 +3060,7 @@ get_current_func_oid(void)
 extern bool
 is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 {
-	Oid top_func = InvalidOid;
+	Oid immediate_parent_func = InvalidOid;
 
 	Assert(OidIsValid(objectOwnerId)); 
 
@@ -3069,7 +3069,7 @@ is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 		FuncExpr *fexpr = (FuncExpr *)expr;
 		if (fexpr->insideView == PNODE_OUTSIDE_VIEW)
 		{
-			top_func = get_current_func_oid();
+			immediate_parent_func = get_current_func_oid();
 		}
 	}
 	else if (IsA(expr, RTEPermissionInfo))
@@ -3077,8 +3077,8 @@ is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 		RTEPermissionInfo *perminfo = (RTEPermissionInfo *)expr;
 		if (perminfo->insideView == PNODE_OUTSIDE_VIEW)
 		{
-			top_func = get_current_func_oid();
+			immediate_parent_func = get_current_func_oid();
 		}
 	}
-	return (OidIsValid(top_func) && (get_func_owner(top_func) == objectOwnerId));
+	return (OidIsValid(immediate_parent_func) && (get_func_owner(immediate_parent_func) == objectOwnerId));
 }

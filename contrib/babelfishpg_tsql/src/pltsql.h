@@ -2273,6 +2273,7 @@ extern void downcase_truncate_split_object_name(char *four_part_object_name, cha
 extern Oid get_rel_owner(Oid relid);
 extern Oid get_func_owner(Oid funcid);
 extern bool is_valid_func_ownership_chain(void *expr, Oid objectOwnerId);
+extern Oid get_current_func_oid(void);
 extern bool is_xml_value_typearg_valid(Oid Oid);
 
 typedef struct

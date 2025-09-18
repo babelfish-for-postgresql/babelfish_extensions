@@ -1051,7 +1051,7 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 				 * Ownership Chaining Logic for object references inside function/procedures.
 				 * Only applicable for same-db ownership chaining cases.
 				 */
-				if (IsA(expr, FuncExpr) &&
+				if (IsA(expr, FuncExpr) && OidIsValid(get_current_func_oid()) &&
 				   is_valid_func_ownership_chain(expr, get_func_owner(((FuncExpr *)expr)->funcid)))
 				{
 					if (nspname)
