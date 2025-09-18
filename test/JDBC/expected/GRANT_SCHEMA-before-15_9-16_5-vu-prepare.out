@@ -9,7 +9,7 @@ go
 create login babel_5172_l1 with password = '123'
 go
 
-create user babel_5172-u1 for login babel_5172_l1;
+create user babel_5172_u1 for login babel_5172_l1;
 go
 
 create login babel_5172_l2 with password = '123';
@@ -19,7 +19,7 @@ create user babel_5172_u2 for login babel_5172_l2;
 go
 
 -- create schema with authorization
-create schema babel_5172_s1 authorization babel_5172-u1
+create schema babel_5172_s1 authorization babel_5172_u1
 go
 
 -- create objects with dbo user
@@ -39,7 +39,7 @@ use master
 go
 
 -- tsql user=babel_5172_l1 password=123
--- create objects with babel_5172-u1 user
+-- create objects with babel_5172_u1 user
 use babel_5172_db
 go
 
@@ -59,11 +59,11 @@ use master
 go
 
 -- tsql
--- create objects with babel_5172-u1 user
+-- create objects with babel_5172_u1 user
 use babel_5172_db
 go
 
--- grant select privilege on the schema with user babel_5172-u1
+-- grant select privilege on the schema with user babel_5172_u1
 grant select, execute on schema::babel_5172_s1 to babel_5172_u2;
 go
 
@@ -71,7 +71,7 @@ use master;
 go
 
 -- tsql user=babel_5172_l1 password=123
--- create new objects using babel_5172-u1 user
+-- create new objects using babel_5172_u1 user
 use babel_5172_db
 go
 
@@ -91,7 +91,7 @@ use master;
 go
 
 -- tsql user=babel_5172_l2 password=123
--- new tables/views created by babel_5172-u1 should not be accessible
+-- new tables/views created by babel_5172_u1 should not be accessible
 use babel_5172_db;
 go
 
