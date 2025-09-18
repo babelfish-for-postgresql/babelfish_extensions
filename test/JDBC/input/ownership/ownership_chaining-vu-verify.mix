@@ -1,4 +1,3 @@
--- single_db_mode_expected
 -- tsql user=l3014_1 password=12345678
 -- CASE 1: Simple Table/View references inside views
 -- CASE 1.1: View referring table (success: ownership chain dbo->dbo)
