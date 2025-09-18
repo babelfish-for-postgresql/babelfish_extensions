@@ -1434,3 +1434,56 @@ bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#nte
 ~~ERROR (Message: Could not find prepared statement with handle 1.)~~
 
 
+-- xml document with UDT on different datatypes
+DECLARE @xml nvarcharUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml varcharUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml charUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml ncharUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+

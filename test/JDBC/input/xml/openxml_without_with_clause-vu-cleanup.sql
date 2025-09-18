@@ -10,3 +10,11 @@ GO
 DROP TABLE babel_6046_school_details
 GO
 
+DROP TYPE varcharUDT
+GO
+DROP TYPE nvarcharUDT
+GO
+DROP TYPE charUDT
+GO
+DROP TYPE ncharUDT
+GO

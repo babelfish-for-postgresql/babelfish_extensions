@@ -784,3 +784,32 @@ SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
 EXEC sp_xml_removedocument @handle
 GO
 
+-- xml document with UDT on different datatypes
+DECLARE @xml nvarcharUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+DECLARE @xml varcharUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+DECLARE @xml charUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+DECLARE @xml ncharUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
