@@ -962,7 +962,7 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 	if (typmod < 8 + VARHDRSZ && typmod > VARHDRSZ)
 	{
 		int32 result_size = typmod - VARHDRSZ;
-		result = (bytea *) palloc(VARHDRSZ + result_size);
+		result = (bytea *) palloc0(VARHDRSZ + result_size);
 		SET_VARSIZE(result, VARHDRSZ + result_size);
 
 		if (result_size <= 4)
@@ -979,7 +979,7 @@ datetime_varbinary(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		result = (bytea *) palloc(VARHDRSZ + 8);
+		result = (bytea *) palloc0(VARHDRSZ + 8);
 		SET_VARSIZE(result, VARHDRSZ + 8);
 
 		/* Copy the parts to the bytea result */
