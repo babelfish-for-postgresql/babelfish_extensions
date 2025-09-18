@@ -229,7 +229,7 @@ select isnumeric(' ')
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 select isnumeric('1 .1234')
@@ -720,5 +720,375 @@ GO
 ~~START~~
 int
 1
+~~END~~
+
+
+
+-- Testing empty string 
+-- string datatypes
+select isnumeric('')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select isnumeric('    ')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select isnumeric(cast('' as varchar))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+
+select isnumeric(cast('' as char))
+go  
+select isnumeric(cast('' as nchar))
+go
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+select isnumeric(cast('' as nvarchar(max)))
+go
+~~START~~
+int
+0
+~~END~~
+
+           
+select isnumeric(cast('' as nvarchar(1)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select isnumeric(cast('' as varchar(1)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select isnumeric(N'')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select isnumeric(cast('' as nvarchar))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select isnumeric(N'123')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- binary/varbinary
+select isnumeric(cast('' as binary))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select isnumeric(cast('' as varbinary))
+go
+~~START~~
+int
+0
+~~END~~
+
+ 
+select isnumeric(cast('' as binary(1)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- Exact numerics 
+select isnumeric(cast('' as bigint))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select isnumeric(cast('' as tinyint))
+go
+~~START~~
+int
+1
+~~END~~
+
+          
+select isnumeric(cast('' as smallint))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select isnumeric(cast('' as int))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- money/smallmoney (Monetary values)
+select isnumeric(cast('' as money))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select isnumeric(cast('' as smallmoney))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- real/float (Approximate)
+select isnumeric(cast('' as real))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select isnumeric(cast('' as float))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- decimal/numeric (Fixed precision)
+select isnumeric(cast('' as numeric))
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An empty or space-only string cannot be converted into numeric/decimal data type)~~
+
+
+select isnumeric(cast('' as decimal))
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An empty or space-only string cannot be converted into numeric/decimal data type)~~
+
+
+select isnumeric(cast('' as text))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- text/ntext
+select isnumeric(cast(12234555 as text))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select isnumeric(cast('12234555' as text))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select isnumeric(cast('' as ntext))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- xml
+select isnumeric(cast('' as xml))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- bit
+select isnumeric(cast('' as bit))
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- large input values
+select isnumeric(1234567812345678123456781234567812345678)
+Go
+~~START~~
+int
+1
+~~END~~
+
+
+select isnumeric(cast(1234567812345678123456781234567812345678 as text))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- misc tests
+select isnumeric(cast(24 as varbinary))
+Go
+~~START~~
+int
+1
+~~END~~
+
+
+select isnumeric(cast('24' as varbinary))
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- time/date/smalldatetime/datetime/datetime2/datetimeoffset
+DECLARE @inputString date = '2016-12-21';
+DECLARE @inputEmptyString date = '';
+select isnumeric(@inputString), isnumeric(@inputEmptyString);
+GO
+~~START~~
+int#!#int
+0#!#0
+~~END~~
+
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+DECLARE @inputEmptyString smalldatetime = '';
+select isnumeric(@inputString), isnumeric(@inputEmptyString);
+GO
+~~START~~
+int#!#int
+0#!#0
+~~END~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+DECLARE @inputEmptyString time(4) = '';
+select isnumeric(@inputString), isnumeric(@inputEmptyString);
+GO
+~~START~~
+int#!#int
+0#!#0
+~~END~~
+
+
+DECLARE @inputString datetime = '2006-01-02 15:04:05'
+DECLARE @inputEmptyString datetime = '';
+select isnumeric(@inputString), isnumeric(@inputEmptyString);
+go
+~~START~~
+int#!#int
+0#!#0
+~~END~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+DECLARE @inputEmptyString datetimeoffset(4) = '';
+select isnumeric(@inputString), isnumeric(@inputEmptyString);
+GO
+~~START~~
+int#!#int
+0#!#0
+~~END~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+DECLARE @inputEmptyString datetime2(4) = '';
+select isnumeric(@inputString), isnumeric(@inputEmptyString);
+GO
+~~START~~
+int#!#int
+0#!#0
+~~END~~
+
+
+-- sql_variant
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant);
+DECLARE @inputEmptyString sql_variant = '';
+SELECT isnumeric(CAST(@inputString AS VARCHAR(50))), isnumeric(CAST(@inputEmptyString AS VARCHAR(50)))
+GO
+~~START~~
+int#!#int
+0#!#0
+~~END~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+DECLARE @inputEmptyString sql_variant = '';
+select isnumeric(@inputString), isnumeric(@inputEmptyString);
+GO
+~~START~~
+int#!#int
+0#!#0
 ~~END~~
 
