@@ -3863,12 +3863,21 @@ update_privileges_of_object(const char *schema_name,
 
 /*
  * Checks if a particular privilege exists in catalog BABELFISH_SCHEMA_PERMISSIONS.
+ * 
+ * If curr_permission is set to INVALID_PERMISSION, this function only checks for
+ * the existence of an entry in the catalog without validating specific permissions.
+ * Otherwise, it verifies if the specified permission bits (curr_permission) are
+ * set in the catalog entry's permission field.
+ *
+ * Returns true if the requested permission exists (or if an entry exists when
+ * INVALID_PERMISSION is specified), false otherwise.
  */
 bool
 privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 							const char *object_name,
 							const char *grantee,
-							const char *object_type)
+							const char *object_type,
+							int	curr_permission)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
@@ -3962,8 +3971,29 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 	}
 
 	tuple_bbf_schema = systable_getnext(scan);
-	if (HeapTupleIsValid(tuple_bbf_schema))
-		catalog_entry_exists = true;
+	while (HeapTupleIsValid(tuple_bbf_schema))
+    {
+		if (curr_permission == INVALID_PERMISSION)
+			catalog_entry_exists = true;
+		else
+		{
+			/* find the permission corresponding to tuple_bbf_schema */
+			Datum datum;
+			bool isnull;
+			int sch_permission = INVALID_PERMISSION;
+
+			datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, RelationGetDescr(bbf_schema_rel), &isnull);
+			if (isnull)
+				catalog_entry_exists = false;
+			else
+				sch_permission = DatumGetInt32(datum);
+
+			if (!isnull && ((sch_permission & curr_permission) == curr_permission))
+				catalog_entry_exists = true;
+
+		}
+		tuple_bbf_schema = systable_getnext(scan);
+    }
 
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
@@ -4164,7 +4194,7 @@ add_or_update_object_in_bbf_schema(const char *schema_name,
 				bool is_grant,
 				const char *func_args)
 {
-	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, object_type))
+	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, object_type, INVALID_PERMISSION))
 		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type, func_args);
 	else
 		update_privileges_of_object(schema_name, object_name, new_permission, grantee, object_type, is_grant);
