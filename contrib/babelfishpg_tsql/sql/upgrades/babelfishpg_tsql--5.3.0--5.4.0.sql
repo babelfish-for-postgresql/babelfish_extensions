@@ -261,21 +261,20 @@ BEGIN
 		ELSE
 			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
 		END IF;
-	ELSE
+	WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
 		IF lower(typename) LIKE 'nvarchar%' THEN
-		CASE pg_typeof(arg)
-            WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
-                RETURN (sys.varbinarysysnvarchar(arg, -1, true));
-
-            WHEN 'sys.binary'::regtype THEN
-                RETURN (sys.binarysysnvarchar(arg, -1, true));
-
-            ELSE
-                RETURN (CAST(arg AS sys.NVARCHAR));
-        END CASE;
+			RETURN (sys.varbinarysysnvarchar(arg, -1, true));
 		ELSE
-        	RETURN (CAST(arg AS sys.NVARCHAR));
-    	END IF;
+			RETURN CAST(arg AS sys.VARCHAR);
+		END IF;
+	WHEN 'sys.binary'::regtype THEN
+		IF lower(typename) LIKE 'nvarchar%' THEN
+			RETURN (sys.binarysysnvarchar(arg, -1, true));
+		ELSE
+			RETURN CAST(arg AS sys.VARCHAR);
+		END IF;
+	ELSE
+		RETURN CAST(arg AS sys.VARCHAR);
 	END CASE;
 END;
 $BODY$

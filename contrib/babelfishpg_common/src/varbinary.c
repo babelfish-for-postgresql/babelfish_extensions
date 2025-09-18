@@ -893,7 +893,7 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 	}
 	PG_END_TRY();
 
-	if (typmod < (int32) VARHDRSZ)
+	if (typmod < VARHDRSZ)
 		maxlen = encodedByteLen;
 	else
 		maxlen = typmod - VARHDRSZ;
@@ -1098,7 +1098,7 @@ ncharvarbinary(PG_FUNCTION_ARGS)
 	}
 	PG_END_TRY();
  
-	if (typmod < (int32) VARHDRSZ)
+	if (typmod < VARHDRSZ)
 		maxlen = buf.len;
 	else
 		maxlen = typmod - VARHDRSZ;
@@ -1311,7 +1311,7 @@ varcharbinary(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	/* Determine max length after conversion */
-	if (typmod < (int32) VARHDRSZ)
+	if (typmod < VARHDRSZ)
 		maxlen = encodedByteLen;
 	else
 		maxlen = typmod - VARHDRSZ;
@@ -1417,7 +1417,7 @@ bpcharbinary(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	/* Determine fixed output length */
-	if (typmod < (int32) VARHDRSZ)
+	if (typmod < VARHDRSZ)
 		maxlen = encodedByteLen;
 	else
 		maxlen = typmod - VARHDRSZ;
@@ -1479,7 +1479,7 @@ ncharbinary(PG_FUNCTION_ARGS)
 	PG_END_TRY();
  
 	/* Determine max bytes from typmod */
-	if (typmod < (int32) VARHDRSZ)
+	if (typmod < VARHDRSZ)
 		max_bytes = utf16_buf.len;  /* no fixed length specified, use actual length */
 	else
 		max_bytes = typmod - VARHDRSZ;
