@@ -9628,10 +9628,9 @@ BEGIN CATCH
     SELECT 'PASS: SET DATEFIRST rejected non-integer value 1.5' AS NonIntegerTest;
 END CATCH
 GO
-~~START~~
-varchar
-FAIL: SET DATEFIRST accepted non-integer value 1.5
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
 
 
 
@@ -10153,7 +10152,7 @@ GO
 
 ~~START~~
 varchar
-FAIL: us_english did not set expected DATEFIRST value
+PASS: us_english sets DATEFIRST to 7 (Sunday)
 ~~END~~
 
 ~~WARNING (Code: 0)~~
