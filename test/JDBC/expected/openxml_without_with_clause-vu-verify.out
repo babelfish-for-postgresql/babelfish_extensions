@@ -1316,3 +1316,121 @@ bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#nte
 ~~END~~
 
 
+-- OPENXML with different type of Argument
+-- money
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type money = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+-- smallmoney
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type smallmoney = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+-- bigint
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type bigint = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+-- strings
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type char(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type varchar(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type nvarchar(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type nchar(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+-- bit
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type bit = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find prepared statement with handle 1.)~~
+
+

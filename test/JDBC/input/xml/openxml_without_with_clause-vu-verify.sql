@@ -714,3 +714,73 @@ GO
 SELECT * FROM babel_6046_school_details
 GO
 
+-- OPENXML with different type of Argument
+-- money
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type money = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+-- smallmoney
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type smallmoney = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+-- bigint
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type bigint = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+-- strings
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type char(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type varchar(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type nvarchar(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type nchar(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
+-- bit
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type bit = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
