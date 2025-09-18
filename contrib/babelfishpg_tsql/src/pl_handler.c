@@ -5122,22 +5122,22 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
 								{
 									privileges = (char **) palloc0(3 * sizeof(char *));
-									privileges[0] = "select";
-									privileges[1] = "update";
-									privileges[2] = "usage";
+									privileges[0] = pstrdup("select");
+									privileges[1] = pstrdup("update");
+									privileges[2] = pstrdup("usage");
 									number_of_privs = 3;
 								}
 								else
 								{
 									privileges = (char **) palloc0(8 * sizeof(char *));
-									privileges[0] = "insert";
-									privileges[1] = "select";
-									privileges[2] = "update";
-									privileges[3] = "delete";
-									privileges[4] = "references";
-									privileges[5] = "truncate";
-									privileges[6] = "maintain";
-									privileges[7] = "trigger";
+									privileges[0] = pstrdup("insert");
+									privileges[1] = pstrdup("select");
+									privileges[2] = pstrdup("update");
+									privileges[3] = pstrdup("delete");
+									privileges[4] = pstrdup("references");
+									privileges[5] = pstrdup("truncate");
+									privileges[6] = pstrdup("maintain");
+									privileges[7] = pstrdup("trigger");
 									number_of_privs = 8;
 								}
 

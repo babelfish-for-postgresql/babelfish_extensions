@@ -3864,6 +3864,14 @@ update_privileges_of_object(const char *schema_name,
 
 /*
  * Checks if a particular privilege exists in catalog BABELFISH_SCHEMA_PERMISSIONS.
+ * 
+ * If curr_permission is set to INVALID_PERMISSION, this function only checks for
+ * the existence of an entry in the catalog without validating specific permissions.
+ * Otherwise, it verifies if the specified permission bits (curr_permission) are
+ * set in the catalog entry's permission field.
+ *
+ * Returns true if the requested permission exists (or if an entry exists when
+ * INVALID_PERMISSION is specified), false otherwise.
  */
 bool
 privilege_exists_in_bbf_schema_permissions(const char *schema_name,
@@ -3976,7 +3984,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 			int sch_permission = INVALID_PERMISSION;
 
 			datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, RelationGetDescr(bbf_schema_rel), &isnull);
-			if(isnull)
+			if (isnull)
 				catalog_entry_exists = false;
 			else
 				sch_permission = DatumGetInt32(datum);
