@@ -73,9 +73,6 @@ go
 grant select, execute on schema::babel_5172_s1 to babel_5172_u2;
 go
 
-grant select, execute on schema::babel_5172_s1 to [babel_5172-u3];
-go
-
 use master;
 go
 
@@ -134,15 +131,10 @@ int
 ~~END~~
 
 
--- tsql user=babel_5172-l3 password=123
--- new tables/views created by babel_5172_u1 should not be accessible
-use babel_5172_db;
+-- tsql
+use babel_5172_db
 go
 
-exec babel_5172_s1.p5;
+-- grant select privilege on the schema with user babel_5172-u3
+grant select, execute on schema::babel_5172_s1 to [babel_5172-u3];
 go
-~~START~~
-int
-1
-~~END~~
-
