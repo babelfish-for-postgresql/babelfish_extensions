@@ -225,6 +225,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.initializeToDefaultTime = &initializeToDefaultTime;
 		common_utility_plugin_var.roundoff_datetime = &roundoff_datetime;
 		common_utility_plugin_var.UpdateToNextDayHelper = &UpdateToNextDayHelper;
+		common_utility_plugin_var.isEmptyOrWhitespace = &isEmptyOrWhitespace;
 	#ifdef ENABLE_SPATIAL_TYPES
 		common_utility_plugin_var.bytea_from_geometry = &bytea_from_geometry;
 		common_utility_plugin_var.bytea_from_geography = &bytea_from_geography;
