@@ -6218,9 +6218,9 @@ alter_default_privilege_for_db(char *dbname)
 				{
 					char	*alter_query = NULL;
 					char	*grant_query = NULL;
-					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
+					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\", \"%s\" IN SCHEMA \"%s\" GRANT %s ON TABLES TO \"%s\"", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
 					exec_utility_cmd_helper(alter_query);
-					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
+					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", privilege_to_string(permissions[i]), physical_schema, grantee);
 					exec_utility_cmd_helper(grant_query);
 					pfree(alter_query);
 					pfree(grant_query);
