@@ -1,5 +1,5 @@
 -- tsql user=babel_5172_l2 password=123
--- new tables/views created by babel_5172_u1 should be accessible
+-- new tables/views created by babel_5172-u1 should be accessible
 use babel_5172_db;
 go
 
@@ -32,7 +32,7 @@ go
 select babel_5172_s1.f1();
 go
 
--- objects created by babel_5172_u1 should be accessible
+-- objects created by babel_5172-u1 should be accessible
 select * from babel_5172_s1.t2;
 go
 
@@ -69,7 +69,7 @@ use master
 go
 
 -- tsql user=babel_5172_l1 password=123
--- create new objects using babel_5172_u1 user
+-- create new objects using babel_5172-u1 user
 use babel_5172_db
 go
 
@@ -125,8 +125,8 @@ go
 use babel_5172_db;
 go
 
--- revoke select privilege on the schema with user babel_5172_u1
-revoke select, execute on schema::babel_5172_s1 from babel_5172_u2;
+-- revoke select privilege on the schema with user babel_5172-u1
+revoke select, execute on schema::babel_5172_s1 from babel_5172-u2;
 go
 
 use master;
