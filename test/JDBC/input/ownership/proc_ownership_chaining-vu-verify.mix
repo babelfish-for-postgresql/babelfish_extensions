@@ -816,8 +816,9 @@ GO
 ---------------------------------------------------------
 -- tsql
 CREATE DATABASE db_cross1;
-CREATE DATABASE db_cross2;
 GO
+CREATE DATABASE db_cross2;
+go
 
 -- Setup db_cross1
 USE db_cross1;
@@ -954,8 +955,9 @@ GO
 
 USE master;
 GO
-DROP DATABASE db_cross1;
 DROP DATABASE db_cross2;
+go
+DROP DATABASE db_cross1;
 DROP LOGIN login_cross1;
 DROP LOGIN login_cross2;
 GO
@@ -1175,4 +1177,37 @@ DROP DATABASE db_missing_tests_v2;
 DROP LOGIN login_test_a_v2;
 DROP LOGIN login_test_b_v2;
 GO
+-- terminate-tsql-conn
+
+---------------------------------------------------------
+-- Basic DDL inside procedures
+---------------------------------------------------------
+
+-- tsql
+create login ddl_login with password = '123'
+go
+create user ddl_login;
+go
+create procedure ddl_procedure
+as
+begin
+    create table ddl_oc_table(oc_col int);
+    insert into ddl_oc_table values (1);
+end;
+go
+grant execute on ddl_procedure to ddl_login
+go
+-- terminate-tsql-conn
+-- tsql user=ddl_login password=123
+exec ddl_procedure;
+go
+-- terminate-tsql-conn user=ddl_login password=123
+
+-- tsql
+drop procedure ddl_procedure
+go
+drop user ddl_login
+go
+drop login ddl_login
+go
 -- terminate-tsql-conn
