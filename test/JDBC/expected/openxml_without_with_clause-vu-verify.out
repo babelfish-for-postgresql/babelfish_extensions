@@ -252,6 +252,25 @@ bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#nte
 ~~END~~
 
 
+-- XML Entities in Nested nodes
+DECLARE @xml nvarchar(1000) = '<root><child>&lt;escaped&gt;</child><child>&amp; &quot;quoted&quot;</child><child>&apos;apostrophe&apos;</child></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<escaped>
+4#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#2#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#& "quoted"
+6#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#4#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#'apostrophe'
+~~END~~
+
+
 -- Unicode Characters
 DECLARE @xml nvarchar(1000) = N'<root>Unicode: αβγ 中文 العربية русский</root>'
 DECLARE @handle INT
@@ -1211,6 +1230,89 @@ Employee#!#Element#!#Alice Johnson
 ID#!#Attribute#!#101
 Employee#!#Element#!#Bob Wilson
 ID#!#Attribute#!#102
+~~END~~
+
+
+-- Testing Trigger on OPENXML
+SELECT * FROM babel_6046_school_details_raw_xml
+GO
+~~START~~
+int#!#nvarchar
+~~END~~
+
+
+SELECT * FROM babel_6046_school_details
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~END~~
+
+
+INSERT INTO babel_6046_school_details_raw_xml (id, student)
+VALUES (1, '<student classid="1" rollid="1" studentname="StudentA" />')
+GO
+~~ROW COUNT: 7~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_6046_school_details_raw_xml
+GO
+~~START~~
+int#!#nvarchar
+1#!#<student classid="1" rollid="1" studentname="StudentA" />
+~~END~~
+
+
+SELECT * FROM babel_6046_school_details
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#student#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#classid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+4#!#0#!#2#!#rollid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+6#!#0#!#2#!#studentname#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#StudentA
+~~END~~
+
+
+INSERT INTO babel_6046_school_details_raw_xml (id, student)
+VALUES (2, '<student classid="1" rollid="2" studentname="StudentB" />')
+GO
+~~ROW COUNT: 7~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_6046_school_details_raw_xml
+GO
+~~START~~
+int#!#nvarchar
+1#!#<student classid="1" rollid="1" studentname="StudentA" />
+2#!#<student classid="1" rollid="2" studentname="StudentB" />
+~~END~~
+
+
+SELECT * FROM babel_6046_school_details
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#student#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#classid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+4#!#0#!#2#!#rollid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+6#!#0#!#2#!#studentname#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#StudentA
+0#!#<NULL>#!#1#!#student#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#classid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+4#!#0#!#2#!#rollid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+6#!#0#!#2#!#studentname#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#StudentB
 ~~END~~
 
 

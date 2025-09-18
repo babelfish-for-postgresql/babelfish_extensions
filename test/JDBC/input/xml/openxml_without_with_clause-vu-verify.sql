@@ -115,6 +115,14 @@ SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
 EXEC sp_xml_removedocument @handle
 GO
 
+-- XML Entities in Nested nodes
+DECLARE @xml nvarchar(1000) = '<root><child>&lt;escaped&gt;</child><child>&amp; &quot;quoted&quot;</child><child>&apos;apostrophe&apos;</child></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+
 -- Unicode Characters
 DECLARE @xml nvarchar(1000) = N'<root>Unicode: αβγ 中文 العربية русский</root>'
 DECLARE @handle INT
@@ -677,5 +685,32 @@ FROM OPENXML(@handle, '/Company/Employee') x
 OUTER APPLY OPENXML(@handle, '/Company/Employee') d 
 WHERE x.nodetype IN (1,2) AND d.nodetype = 3 AND d.parentid = x.id;
 EXEC sp_xml_removedocument @handle;
+GO
+
+-- Testing Trigger on OPENXML
+SELECT * FROM babel_6046_school_details_raw_xml
+GO
+
+SELECT * FROM babel_6046_school_details
+GO
+
+INSERT INTO babel_6046_school_details_raw_xml (id, student)
+VALUES (1, '<student classid="1" rollid="1" studentname="StudentA" />')
+GO
+
+SELECT * FROM babel_6046_school_details_raw_xml
+GO
+
+SELECT * FROM babel_6046_school_details
+GO
+
+INSERT INTO babel_6046_school_details_raw_xml (id, student)
+VALUES (2, '<student classid="1" rollid="2" studentname="StudentB" />')
+GO
+
+SELECT * FROM babel_6046_school_details_raw_xml
+GO
+
+SELECT * FROM babel_6046_school_details
 GO
 
