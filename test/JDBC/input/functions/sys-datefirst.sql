@@ -17,9 +17,9 @@ GO
 
 -- Integral Value
 -- inbound value (1-7)
-SET DATEFIRST 2
+SET datefirst 2
 GO
-SELECT @@DATEFIRST
+SELECT @@datefirst
 GO
 
 SET DATEFIRST 3
@@ -29,10 +29,11 @@ GO
 
 SET DATEFIRST 4
 GO
-SELECT @@DATEFIRST
+SELECT @@datefirst
 GO
 
-SET DATEFIRST 5
+DECLARE @i INT = 5
+SET DATEFIRST @i
 GO
 SELECT @@DATEFIRST
 GO
@@ -43,12 +44,13 @@ SELECT @@DATEFIRST
 GO
 
 -- edge point values 
-SET DATEFIRST 1
+declare @i int = 1
+SET datefirst @i
 GO
-SELECT @@DATEFIRST
+SELECT @@datefirst
 GO
 
-SET DATEFIRST 7
+SET datefirst 7
 GO
 SELECT @@DATEFIRST
 GO
@@ -72,7 +74,8 @@ GO
 SELECT @@DATEFIRST
 GO
 
-SET DATEFIRST -4
+DECLARE @i INT = -4
+SET DATEFIRST @i
 GO
 -- Invalid value not updated
 SELECT @@DATEFIRST
@@ -91,7 +94,7 @@ GO
 SET DATEFIRST 3.5
 GO
 
-SET DATEFIRST 5.68
+SET datefirst 5.68
 GO
 
 SET DATEFIRST 1.23
@@ -141,4 +144,19 @@ SET DATEFIRST "2"
 GO
 
 SET DATEFIRST NULL
+GO
+
+-- should throw integer parameter required error
+DECLARE @i decimal(10,2) = 2.35
+SET DATEFIRST @i
+GO
+
+SELECT @@DATEFIRST
+GO
+
+DECLARE @i varchar = '4'
+SET DATEFIRST @i
+GO
+
+SELECT @@DATEFIRST
 GO

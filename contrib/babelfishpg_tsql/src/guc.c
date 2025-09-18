@@ -841,7 +841,7 @@ define_custom_variables(void)
 	DefineCustomIntVariable("babelfishpg_tsql.datefirst",
 							gettext_noop("Sets the first day of the week to a number from 1 through 7."),
 							NULL,
-							&pltsql_datefirst, 
+							&pltsql_datefirst,
 							7, 1, 7,
 							PGC_USERSET,
 							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,

@@ -37,9 +37,9 @@ int
 
 -- Integral Value
 -- inbound value (1-7)
-SET DATEFIRST 2
+SET datefirst 2
 GO
-SELECT @@DATEFIRST
+SELECT @@datefirst
 GO
 ~~START~~
 int
@@ -59,7 +59,7 @@ int
 
 SET DATEFIRST 4
 GO
-SELECT @@DATEFIRST
+SELECT @@datefirst
 GO
 ~~START~~
 int
@@ -67,7 +67,8 @@ int
 ~~END~~
 
 
-SET DATEFIRST 5
+DECLARE @i INT = 5
+SET DATEFIRST @i
 GO
 SELECT @@DATEFIRST
 GO
@@ -88,9 +89,10 @@ int
 
 
 -- edge point values 
-SET DATEFIRST 1
+declare @i int = 1
+SET datefirst @i
 GO
-SELECT @@DATEFIRST
+SELECT @@datefirst
 GO
 ~~START~~
 int
@@ -98,7 +100,7 @@ int
 ~~END~~
 
 
-SET DATEFIRST 7
+SET datefirst 7
 GO
 SELECT @@DATEFIRST
 GO
@@ -154,7 +156,8 @@ int
 ~~END~~
 
 
-SET DATEFIRST -4
+DECLARE @i INT = -4
+SET DATEFIRST @i
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -195,7 +198,7 @@ GO
 ~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
 
 
-SET DATEFIRST 5.68
+SET datefirst 5.68
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -315,4 +318,29 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error at or near "NULL")~~
+
+
+-- should throw integer parameter required error
+DECLARE @i decimal(10,2) = 2.35
+SET DATEFIRST @i
+GO
+
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+DECLARE @i varchar = '4'
+SET DATEFIRST @i
+GO
+
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+4
+~~END~~
 
