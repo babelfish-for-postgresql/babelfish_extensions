@@ -72,6 +72,9 @@ go
 drop user babel_5172_u2;
 go
 
+drop user [babel_5172-u3];
+go
+
 use master
 go
 
@@ -99,6 +102,9 @@ drop login babel_5172_l1;
 go
 
 drop login babel_5172_l2;
+go
+
+drop login [babel_5172-l3];
 go
 
 drop database babel_5172_db

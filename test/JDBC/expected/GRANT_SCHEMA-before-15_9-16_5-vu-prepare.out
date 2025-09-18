@@ -18,6 +18,12 @@ go
 create user babel_5172_u2 for login babel_5172_l2;
 go
 
+create login [babel_5172-l3] with password = '123';
+go
+
+create user [babel_5172-u3] for login [babel_5172-l3];
+go
+
 -- create schema with authorization
 create schema babel_5172_s1 authorization babel_5172_u1
 go
@@ -65,6 +71,9 @@ go
 
 -- grant select privilege on the schema with user babel_5172_u1
 grant select, execute on schema::babel_5172_s1 to babel_5172_u2;
+go
+
+grant select, execute on schema::babel_5172_s1 to [babel_5172-u3];
 go
 
 use master;
@@ -118,6 +127,19 @@ int
 
 
 select babel_5172_s1.f5();
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=babel_5172-l3 password=123
+-- new tables/views created by babel_5172_u1 should not be accessible
+use babel_5172_db;
+go
+
+exec babel_5172_s1.p5;
 go
 ~~START~~
 int
