@@ -634,3 +634,48 @@ GO
 EXEC openxml_without_with_dep_proc2 N'<root><child>content</child></root>'
 GO
 
+
+-- CROSS APPLY
+DECLARE @xml NVARCHAR(1000) = '
+<Company>
+    <Employee ID="101">Alice Johnson</Employee>
+    <Employee ID="102">Bob Wilson</Employee>
+</Company>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT
+    CAST(x.localname AS NVARCHAR(20)) as element, 
+    CASE x.nodetype
+        WHEN 1 THEN 'Element'
+        WHEN 2 THEN 'Attribute' 
+        ELSE 'Other'
+    END as type,
+    CAST(d.text AS NVARCHAR(20)) as value 
+FROM OPENXML(@handle, '/Company/Employee') x 
+CROSS APPLY OPENXML(@handle, '/Company/Employee') d 
+WHERE x.nodetype IN (1,2) AND d.nodetype = 3 AND d.parentid = x.id;
+EXEC sp_xml_removedocument @handle;
+GO
+
+-- OUTER APPLY
+DECLARE @xml NVARCHAR(1000) = '
+<Company>
+    <Employee ID="101">Alice Johnson</Employee>
+    <Employee ID="102">Bob Wilson</Employee>
+</Company>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT
+    CAST(x.localname AS NVARCHAR(20)) as element, 
+    CASE x.nodetype
+        WHEN 1 THEN 'Element'
+        WHEN 2 THEN 'Attribute' 
+        ELSE 'Other'
+    END as type,
+    CAST(d.text AS NVARCHAR(20)) as value 
+FROM OPENXML(@handle, '/Company/Employee') x 
+OUTER APPLY OPENXML(@handle, '/Company/Employee') d 
+WHERE x.nodetype IN (1,2) AND d.nodetype = 3 AND d.parentid = x.id;
+EXEC sp_xml_removedocument @handle;
+GO
+

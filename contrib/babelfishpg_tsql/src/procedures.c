@@ -4946,6 +4946,7 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 	bool                   		isnull;
 	bool              	        table_exists = false;
 
+	/* Unlikely, Just a sanity check */
 	if (xml_data == NULL && ns_data == NULL)
 		return;
 

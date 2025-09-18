@@ -249,7 +249,6 @@ extern void get_xml_data_and_namespace_data(int document_id, xmltype **xml_data,
 MemoryContext TransMemoryContext = NULL;
 HTAB	     *ht_xmlNode2Id = NULL;
 static bool   inited_ht_xmlNode2Id = false;
-DynaVec 	 *xml_nodes_list = NULL;
 
 typedef struct ht_xmlNode2Id_entry
 {
@@ -5304,8 +5303,12 @@ destroy_xml_handles_htab()
  * 		Recursively traverse the XML tree and populate xml_nodes_list
  */
 static void 
-populate_xml_nodes(xmlNode *node)
+populate_xml_nodes(xmlNode *node, DynaVec *xml_nodes_list)
 {
+	/* Sanity Check */
+	if (node == NULL)
+		return;
+
 	if (node->type == XML_TEXT_NODE && xmlIsBlankNode(node))
 		return;  // skip whitespace-only text node
 
@@ -5348,13 +5351,13 @@ populate_xml_nodes(xmlNode *node)
 
 		for (xmlAttr *cur = node->properties; cur != NULL; cur = cur->next)
 		{
-			populate_xml_nodes((xmlNode *) cur);
+			populate_xml_nodes((xmlNode *) cur, xml_nodes_list);
 		}
 	}
 
 	for (xmlNodePtr cur = node->children; cur != NULL; cur = cur->next)
 	{
-		populate_xml_nodes(cur);
+		populate_xml_nodes(cur, xml_nodes_list);
 	}
 }
 
@@ -5370,12 +5373,13 @@ assign_ids(xmlDoc *doc)
 	size_t                 i;
 	long long int          counter;
 	xmlNode               *root = xmlDocGetRootElement(doc);
+	DynaVec				  *xml_nodes_list = NULL;
 
 	/*
 	 * Create a temporary list of all XML nodes in the document.
 	 */
 	xml_nodes_list = create_vector(sizeof(xmlNodePtr));
-	populate_xml_nodes((xmlNodePtr) doc);
+	populate_xml_nodes((xmlNodePtr) doc, xml_nodes_list);
 	xml_nodes_list_size = vec_size(xml_nodes_list);
 
 	init_xml_handles_htab(xml_nodes_list_size);
@@ -5627,6 +5631,11 @@ add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, 
 			tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 			*xml_visited_nodes_set = bms_add_member(*xml_visited_nodes_set, DatumGetInt64(values[0]));
 		}
+		else
+		{
+			/* This node is already visited, no need of further processing. */
+			return;
+		}
 	}
 
 	if (node->type == XML_ELEMENT_NODE)
@@ -5725,8 +5734,8 @@ openxml_simple(PG_FUNCTION_ARGS)
 #ifdef NOT_USED
 	int              flags = PG_GETARG_INT32(2);
 #endif
-    xmltype         *xmldata;
-    xmltype         *ns_data;
+    xmltype         *xmldata = NULL;
+    xmltype         *ns_data = NULL;
     char           **ns_names;
     char           **ns_uris;
 	int              ns_count;
@@ -5736,6 +5745,7 @@ openxml_simple(PG_FUNCTION_ARGS)
 	xmlChar         *string;
 	xmlChar         *xpath_expr;
 	size_t           xmldecl_len = 0;
+	int 			 res_code;
 
 	TupleDesc        tupdesc;
 	Tuplestorestate *tupstore;
@@ -5765,8 +5775,8 @@ openxml_simple(PG_FUNCTION_ARGS)
 
     extract_namespaces_from_xml(ns_data, &ns_names, &ns_uris, &ns_count);
 
-	datastr = VARDATA(xmldata);
-	len = VARSIZE(xmldata) - VARHDRSZ;
+	datastr = VARDATA_ANY(xmldata);
+	len = VARSIZE_ANY_EXHDR(xmldata);
 
 	if (PG_ARGISNULL(1))
 		ereport(ERROR,
@@ -5783,13 +5793,13 @@ openxml_simple(PG_FUNCTION_ARGS)
 	string = pg_xmlCharStrndup_wrapper(datastr, len);
 	xpath_expr = pg_xmlCharStrndup_wrapper(VARDATA_ANY(xpath_expr_text), xpath_len);
 
-	/*
-	 * In a UTF8 database, skip any xml declaration, which might assert
-	 * another encoding.  Ignore parse_xml_decl_wrapper() failure, letting
-	 * xmlCtxtReadMemory() report parse errors.
-	 */
-	if (GetDatabaseEncoding() == PG_UTF8)
-		parse_xml_decl_wrapper((xmlChar *) string, &xmldecl_len, NULL, NULL, NULL);
+	res_code = parse_xml_decl_wrapper((xmlChar *) string, &xmldecl_len, NULL, NULL, NULL);
+	if (res_code != 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_XML_CONTENT),
+					errmsg("Invalid XML declaration")));
+	}
 
 	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
@@ -5898,6 +5908,9 @@ openxml_simple(PG_FUNCTION_ARGS)
 			xpfree(ns_uris);
 		}
 
+		xpfree(string);
+		xpfree(xpath_expr);
+
 		pg_xml_done(xmlerrcxt, true);
 
 		PG_RE_THROW();
@@ -5931,6 +5944,9 @@ openxml_simple(PG_FUNCTION_ARGS)
 		xpfree(ns_names);
 		xpfree(ns_uris);
 	}
+
+	xpfree(string);
+	xpfree(xpath_expr);
 
 	pg_xml_done(xmlerrcxt, false);
 
