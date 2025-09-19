@@ -372,3 +372,4 @@ babel_numeric_money_oper-before-16_10-or-17_6
 babel_numeric_smallmoney_oper-before-16_10-or-17_6
 babel_assign_nchar
 mathematical_func_tests-before-17_7-or-16_11
+ascii_function_before-17_7-or-16_11

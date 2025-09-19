@@ -644,3 +644,4 @@ babel_assign_nchar
 alter-function-with-weak-view
 mathematical_func_tests
 alter-table-null-notnull
+ascii_function

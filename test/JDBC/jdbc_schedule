@@ -584,3 +584,6 @@ ignore#!#TestSpatialPoint_before_17_7-or-16_11-vu-cleanup
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-prepare
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-verify
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-cleanup
+ignore#!#ascii_function_before-17_7-or-16_11-vu-prepare
+ignore#!#ascii_function_before-17_7-or-16_11-vu-verify
+ignore#!#ascii_function_before-17_7-or-16_11-vu-cleanup
