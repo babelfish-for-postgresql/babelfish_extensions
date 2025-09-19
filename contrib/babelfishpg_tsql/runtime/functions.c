@@ -246,7 +246,6 @@ extern char *replace_special_chars_fts_impl(char *input_str);
 extern void get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
 
 #ifdef USE_LIBXML
-MemoryContext TransMemoryContext = NULL;
 HTAB	     *ht_xmlNode2Id = NULL;
 static bool   inited_ht_xmlNode2Id = false;
 
@@ -5260,20 +5259,12 @@ init_xml_handles_htab(long long int nelem)
 {
 	HASHCTL		hashCtl;
 
-	if (TransMemoryContext == NULL) /* initialize memory context */
-	{
-		TransMemoryContext =
-			AllocSetContextCreateInternal(NULL,
-										  "OpenXML Context",
-										  ALLOCSET_DEFAULT_SIZES);
-	}
-
 	if (ht_xmlNode2Id == NULL)	/* create hash table */
 	{
 		MemSet(&hashCtl, 0, sizeof(hashCtl));
 		hashCtl.keysize = sizeof(xmlNodePtr);
 		hashCtl.entrysize = sizeof(ht_xmlNode2Id_entry_t);
-		hashCtl.hcxt = TransMemoryContext;
+		hashCtl.hcxt = CurrentMemoryContext;
 		ht_xmlNode2Id = hash_create("Xml Node pointer to id Mapping",
 									  nelem,
 									  &hashCtl,
@@ -5297,12 +5288,6 @@ destroy_xml_handles_htab()
 		ht_xmlNode2Id = NULL;
 	}
 	inited_ht_xmlNode2Id = false;
-
-	if (TransMemoryContext != NULL)
-	{
-		MemoryContextDelete(TransMemoryContext);
-		TransMemoryContext = NULL;
-	}
 }
 
 /*

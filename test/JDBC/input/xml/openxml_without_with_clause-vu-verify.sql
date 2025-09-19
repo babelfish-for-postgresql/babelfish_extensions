@@ -813,3 +813,12 @@ SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
 EXEC sp_xml_removedocument @handle
 GO
 
+-- Multiple execution of OPENXML within same batch
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
