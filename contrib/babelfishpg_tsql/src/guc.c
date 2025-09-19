@@ -1245,13 +1245,14 @@ define_custom_variables(void)
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
+/* GUC to enable/disabl the ownership chaining feature, by default enabled */
 DefineCustomBoolVariable("babelfishpg_tsql.enable_ownership_chaining",
                         gettext_noop("Enables ownership chaining"),
                         NULL,
                         &pltsql_enable_ownership_chaining,
                         true,
-                        PGC_SUSET,    /* context - allows regular users to set */
-                        GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL,  /* flags */
+                        PGC_SUSET,
+                        GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL,
                         NULL, NULL, NULL);
 }
 
