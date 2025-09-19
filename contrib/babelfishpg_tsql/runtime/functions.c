@@ -5236,7 +5236,7 @@ extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris,
 	 * Store namespace names and URIs in ns_names and ns_uris
 	 */
     index = 0;
-    for (xmlNs *cur = root->nsDef; cur != NULL; cur = cur->next)
+    for (xmlNs *cur = root->nsDef; cur != NULL && index < *ns_count; cur = cur->next)
     {
         if (cur->prefix)
         {
