@@ -232,7 +232,7 @@ void
 mark_outside_view(Query *query)
 {
 
-	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
+	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation() || !pltsql_enable_ownership_chaining)
 		return;
 
 	mark_outside_view_ref_walker((Node *)query, NULL);

@@ -258,7 +258,7 @@ text
 off
 ~~END~~
 
-alter system set babelfishpg_tsql.enable_ownership_chaining = 'on';
+alter database babelfish_db set babelfishpg_tsql.enable_ownership_chaining = 'on';
 go
 select pg_reload_conf();
 go
@@ -274,12 +274,15 @@ void
 
 ~~END~~
 
-show babelfishpg_tsql.enable_ownership_chaining;
+-- terminate-psql-conn
+
+-- tsql
+select current_setting('babelfishpg_tsql.enable_ownership_chaining');
 go
 ~~START~~
 text
 on
 ~~END~~
 
--- terminate-psql-conn
+-- terminate-tsql-conn
 

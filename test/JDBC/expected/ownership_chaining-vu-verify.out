@@ -603,7 +603,7 @@ text
 on
 ~~END~~
 
-alter system set babelfishpg_tsql.enable_ownership_chaining = 'off';
+alter database babelfish_db set babelfishpg_tsql.enable_ownership_chaining = 'off';
 go
 select pg_reload_conf();
 go
@@ -619,14 +619,17 @@ void
 
 ~~END~~
 
-show babelfishpg_tsql.enable_ownership_chaining;
+-- terminate-psql-conn
+
+-- tsql
+select current_setting('babelfishpg_tsql.enable_ownership_chaining');
 go
 ~~START~~
 text
 off
 ~~END~~
 
--- terminate-psql-conn
+-- terminate-tsql-conn
 
 -- tsql user=l3014_1 password=12345678
 -- should fail since we disabled the ownership chaining
