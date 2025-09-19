@@ -4358,11 +4358,11 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 			{
 				priv_name = privilege_to_string(permission);
 				if (strcmp(object_type, OBJ_RELATION) == 0)
-					query = psprintf("GRANT %s ON [%s].[%s] TO %s", priv_name, schema, object_name, grantee);
+					query = psprintf("GRANT %s ON [%s].[%s] TO [%s]", priv_name, schema, object_name, grantee);
 				else if (strcmp(object_type, OBJ_FUNCTION) == 0)
-					query = psprintf("GRANT %s ON FUNCTION [%s].[%s](%s) TO %s", priv_name, schema, object_name, func_args, grantee);
+					query = psprintf("GRANT %s ON FUNCTION [%s].[%s](%s) TO [%s]", priv_name, schema, object_name, func_args, grantee);
 				else if (strcmp(object_type, OBJ_PROCEDURE) == 0)
-					query = psprintf("GRANT %s ON PROCEDURE [%s].[%s](%s) TO %s", priv_name, schema, object_name, func_args, grantee);
+					query = psprintf("GRANT %s ON PROCEDURE [%s].[%s](%s) TO [%s]", priv_name, schema, object_name, func_args, grantee);
 				res = raw_parser(query, RAW_PARSE_DEFAULT);
 				grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
 
@@ -4478,9 +4478,9 @@ exec_internal_grant_on_function(Oid objectId)
 			int     		save_sec_context;
 
 			if (object_type == PROKIND_FUNCTION)
-				query = psprintf("GRANT EXECUTE ON FUNCTION [%s].[%s] TO %s", schema, object_name, grantee);
+				query = psprintf("GRANT EXECUTE ON FUNCTION [%s].[%s] TO [%s]", schema, object_name, grantee);
 			else if (object_type == PROKIND_PROCEDURE)
-				query = psprintf("GRANT EXECUTE ON PROCEDURE [%s].[%s] TO %s", schema, object_name, grantee);
+				query = psprintf("GRANT EXECUTE ON PROCEDURE [%s].[%s] TO [%s]", schema, object_name, grantee);
 			res = raw_parser(query, RAW_PARSE_DEFAULT);
 			grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
 
@@ -6217,9 +6217,9 @@ alter_default_privilege_for_db(char *dbname)
 				{
 					char	*alter_query = NULL;
 					char	*grant_query = NULL;
-					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
+					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\", \"%s\" IN SCHEMA \"%s\" GRANT %s ON TABLES TO \"%s\"", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
 					exec_utility_cmd_helper(alter_query);
-					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
+					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", privilege_to_string(permissions[i]), physical_schema, grantee);
 					exec_utility_cmd_helper(grant_query);
 					pfree(alter_query);
 					pfree(grant_query);
