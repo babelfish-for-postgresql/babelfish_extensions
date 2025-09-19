@@ -5770,6 +5770,18 @@ openxml_simple(PG_FUNCTION_ARGS)
 	 */
 	prepare_tupledesc_tuplestore_for_openxml(rsinfo, &tupdesc, &tupstore);
 
+	if (PG_ARGISNULL(1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("XPath expression cannot be null")));
+
+	xpath_expr_text = PG_GETARG_TEXT_PP(1);
+	xpath_len = VARSIZE_ANY_EXHDR(xpath_expr_text);
+	if (xpath_len == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				errmsg("empty XPath expression")));
+
     /*
      * Using document_id fetch the xml document and namespaces list from 
      * xml_handle_temp_table which is used to store the xml handles created
@@ -5784,18 +5796,6 @@ openxml_simple(PG_FUNCTION_ARGS)
 
 	datastr = VARDATA_ANY(xmldata);
 	len = VARSIZE_ANY_EXHDR(xmldata);
-
-	if (PG_ARGISNULL(1))
-		ereport(ERROR,
-				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("XPath expression cannot be null")));
-
-	xpath_expr_text = PG_GETARG_TEXT_PP(1);
-	xpath_len = VARSIZE_ANY_EXHDR(xpath_expr_text);
-	if (xpath_len == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				errmsg("empty XPath expression")));
 
 	string = pg_xmlCharStrndup_wrapper(datastr, len);
 	xpath_expr = pg_xmlCharStrndup_wrapper(VARDATA_ANY(xpath_expr_text), xpath_len);
