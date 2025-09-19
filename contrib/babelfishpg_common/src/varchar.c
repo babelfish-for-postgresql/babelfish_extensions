@@ -977,9 +977,7 @@ cstring2float4(char *num)
 	{
 		int			save_errno = errno;
 
-		/*
-		 * Do not accept special values as input
-		 */
+		/* Do not accept special values as input */
 		if (pg_strncasecmp(num, "NaN", 3) == 0 || 
 			pg_strncasecmp(num, "Infinity", 8) == 0 ||
 			pg_strncasecmp(num, "+Infinity", 9) == 0 ||
