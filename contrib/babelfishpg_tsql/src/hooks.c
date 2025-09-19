@@ -174,6 +174,9 @@ static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 static void transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt);
 static bool transform_unpivot_clause_recursive(Node **node, List **measure_cols, List **unpivot_src_cols);
+static void transform_tsql_select_statement(ParseState *pstate, SelectStmt *stmt);
+static void transform_percent_clause(ParseState *pstate, SelectStmt *stmt);
+static SelectStmt *handle_group_by_percent_count(SelectStmt *stmt);
 static List* filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **source_cols);
 static bool repair_broken_views(Query *parsetree);
 
@@ -225,7 +228,7 @@ extern bool called_for_tsql_itvf_func();
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
-static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
+static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr);
 static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
 static bool pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan);
 
@@ -343,7 +346,7 @@ static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
-static transform_unpivot_clause_hook_type pre_transform_unpivot_clause_hook = NULL;
+static transform_tsql_select_stmt_hook_type pre_transform_tsql_select_stmt_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static called_for_tsql_itvf_func_hook_type prev_called_for_tsql_itvf_func_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
@@ -545,8 +548,8 @@ InstallExtendedHooks(void)
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
 	transform_pivot_clause_hook = transform_pivot_clause;
 
-	pre_transform_unpivot_clause_hook = transform_unpivot_clause_hook;
-	transform_unpivot_clause_hook = transform_unpivot_clause;
+	pre_transform_tsql_select_stmt_hook = transform_tsql_select_stmt_hook;
+	transform_tsql_select_stmt_hook = transform_tsql_select_statement;
 
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
@@ -680,7 +683,7 @@ UninstallExtendedHooks(void)
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	get_bbf_admin_oid_hook = prev_get_bbf_admin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
-	transform_unpivot_clause_hook = pre_transform_unpivot_clause_hook;
+	transform_tsql_select_stmt_hook = pre_transform_tsql_select_stmt_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
@@ -1014,7 +1017,7 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 }
 
 static AclResult
-pltsql_ExecFuncProc_AclCheck(Oid funcid)
+pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 {
 	Oid userid = GetUserId();
 
@@ -1039,13 +1042,32 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid)
 			 */
 			if (nspname != NULL && !is_shared_schema(nspname) &&
 				!is_schema_from_db(schema_id, get_cur_db_id()))
+			{
 				userid = GetSessionUserId();
+			}
+			else
+			{
+				/* If user already has the permission then return */
+				if (object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE) == ACLCHECK_OK)
+					return ACLCHECK_OK;
+				/*
+				 * Ownership Chaining Logic for object references inside function/procedures.
+				 * Only applicable for same-db ownership chaining cases.
+				 */
+				if (IsA(expr, FuncExpr) && OidIsValid(get_current_func_oid()) &&
+				   is_valid_func_ownership_chain(expr, get_func_owner(((FuncExpr *)expr)->funcid)))
+				{
+					if (nspname)
+						pfree(nspname);
+					return ACLCHECK_OK;
+				}
+			}
 			if (nspname)
 				pfree(nspname);
 		}
 	}
 	else if (prev_ExecFuncProc_AclCheck_hook)
-		return prev_ExecFuncProc_AclCheck_hook(funcid);
+		return prev_ExecFuncProc_AclCheck_hook(funcid, expr);
 
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }
@@ -1112,7 +1134,9 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 					 */
 					if (nspname != NULL && !is_shared_schema(nspname))
 					{
-						if (OidIsValid(perminfo->checkAsUser))
+						Oid relOwner = get_rel_owner(relOid);
+
+						if (OidIsValid(perminfo->checkAsUser) && !isTempNamespace(schema_id))
 						{
 							Oid loginId = get_login_for_user(perminfo->checkAsUser, nspname);
 							if (OidIsValid(loginId))
@@ -1120,6 +1144,10 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 						}
 						else
 							perminfo->checkAsUser = GetSessionUserId();
+						if (is_valid_func_ownership_chain(perminfo, relOwner))
+						{
+							perminfo->checkAsUser = relOwner;
+						}
 					}
 					if (nspname)
 						pfree(nspname);
@@ -1578,6 +1606,7 @@ post_transform_delete(ParseState *pstate, DeleteStmt *stmt, Query *query)
 {
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
+
 
 	/* Handle DELETE TOP */
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
@@ -3483,6 +3512,7 @@ pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query)
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
+
 
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
 											EXPR_KIND_LIMIT, "LIMIT",
@@ -5621,6 +5651,214 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 							  COERCE_EXPLICIT_CALL, 
 							  -1);
 	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
+}
+
+/*
+ * Handle GROUP BY case for PERCENT clause transformation
+ *
+ * Creates a subquery to count distinct groups since PostgreSQL doesn't support
+ * COUNT(DISTINCT col1, col2, ...) with multiple columns.
+ *
+ * Transforms the input statement to select only GROUP BY columns, then wraps it
+ * in an outer COUNT(*) query to get the total number of distinct groups.
+ *
+ * Example: SELECT col1, col2 FROM table GROUP BY col1, col2 HAVING condition
+ * Becomes: SELECT COUNT(*) FROM (SELECT col1, col2 FROM table GROUP BY col1, col2 HAVING condition) AS grouped_data
+ */
+static SelectStmt *
+handle_group_by_percent_count(SelectStmt *groupbySelectStmt)
+{
+    /* For GROUP BY queries, we need to count the number of groups */
+    SelectStmt        *outerCountStmt = makeNode(SelectStmt);
+    RangeSubselect    *subselect      = makeNode(RangeSubselect);
+    FuncCall          *countFunc;         /* COUNT function for total rows */
+    ResTarget         *countTarget;       /* Target entry for COUNT result */
+    ListCell          *lc;
+    
+    /* Keep only GROUP BY columns in target list */
+    groupbySelectStmt->targetList = NIL;
+    foreach(lc, groupbySelectStmt->groupClause)
+    {
+        ResTarget *rt = makeNode(ResTarget);
+        rt->name = NULL;
+        rt->indirection = NIL;
+        rt->val = copyObject(lfirst(lc));
+        rt->location = -1;
+        groupbySelectStmt->targetList = lappend(groupbySelectStmt->targetList, rt);
+    }
+    
+    /* Wrap in another COUNT(*) query */
+    subselect->subquery = (Node *) groupbySelectStmt;
+    subselect->alias = makeAlias("grouped_data", NIL);
+    
+    outerCountStmt->fromClause = list_make1(subselect);
+    
+    /* Create COUNT(*) for outer query */
+    countFunc = makeNode(FuncCall);
+    countFunc->funcname = list_make1(makeString("count"));
+    countFunc->args = NIL;
+    countFunc->agg_star = true;
+    countFunc->agg_distinct = false;
+    countFunc->location = -1;
+    
+    countTarget = makeNode(ResTarget);
+    countTarget->name = NULL;
+    countTarget->indirection = NIL;
+    countTarget->val = (Node *) countFunc;
+    countTarget->location = -1;
+    
+    outerCountStmt->targetList = list_make1(countTarget);
+    
+    return outerCountStmt;
+}
+
+/*
+ * Common hook to transform TSQL unpivot and TOP N Percent
+ */
+static void
+transform_tsql_select_statement(ParseState *pstate, SelectStmt *stmt)
+{
+	transform_percent_clause(pstate, stmt);
+	transform_unpivot_clause(pstate, stmt);
+}
+
+/*
+ * Transform T-SQL PERCENT clause in SELECT statements
+ *
+ * Converts "SELECT TOP N PERCENT ..." to "SELECT TOP CEIL((COUNT(*) * N) / 100) ..."
+ * by replacing the limitCount with a calculated expression based on total row count.
+ *
+ * For GROUP BY queries, uses subquery approach to count distinct groups: 
+ * SELECT COUNT(*) FROM (SELECT group_cols FROM table GROUP BY group_cols) AS grouped_data
+ * Function : handle_group_by_percent_count(SelectStmt *groupbySelectStmt) 
+ *
+ * For regular queries, uses simple COUNT(*) from the table.
+ */
+static void 
+transform_percent_clause(ParseState *pstate, SelectStmt *stmt)
+{
+    /* To create inner select count(*) from t for percent */
+    SelectStmt    *totalCountSelectStmt; 
+    
+    /* Variables for building percentage calculation expression */
+    SubLink       *countSublink;     /* Subquery link for wrap select COUNT(*).. */
+    A_Expr        *mulExpr;          /* to multiply N*(select count(*)..) */
+    A_Expr        *divExpr;          /* Division expression to divide by 100 */
+    A_Const       *intConst;         /* Integer constant (100) */
+    FuncCall      *ceilFunc;         /* CEIL function for rounding */
+    
+    /* Check whether TSQL and limit value present */
+	if (sql_dialect != SQL_DIALECT_TSQL || stmt->limitCount == NULL)
+        return;
+    
+    if (stmt->limitOption != LIMIT_OPTION_PERCENT)
+        return;
+    else
+        stmt->limitOption = LIMIT_OPTION_COUNT;
+
+    /* Add validation check for percentage value > 100 */
+    if (IsA(stmt->limitCount, A_Const))
+    {
+        A_Const *const_val = (A_Const *) stmt->limitCount;
+        if (const_val->val.ival.type == T_Integer)
+        {
+            int percent_val = const_val->val.ival.ival;
+            if (percent_val > 100)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("Percent values must be between 0 and 100.")));
+        }
+        else if (const_val->val.fval.type == T_Float)
+        {
+            float8 percent_val = strtod(const_val->val.fval.fval, NULL);
+            if (percent_val > 100.0)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("Percent values must be between 0 and 100.")));
+        }
+    }
+
+    /* Make a deep copy of the statement for the COUNT query */
+    totalCountSelectStmt = (SelectStmt *) copyObject(stmt);
+    
+    /* Clear limit, offset, and sorting from the copy */
+    totalCountSelectStmt->limitCount = NULL;
+    totalCountSelectStmt->limitOffset = NULL;
+    totalCountSelectStmt->sortClause = NIL;
+    
+    /* 
+    * Since group by with (count(*) in targetList) doesn't return single record 
+    * Hence We will rewrite the totalCountSelectStmt query as - 
+    * select count(*) from (select group_by_columns from t group by col1, col2, ...) as t
+    * instead of (select count(*) from t)
+    */
+    if (stmt->groupClause != NIL)
+    {
+        totalCountSelectStmt = handle_group_by_percent_count(totalCountSelectStmt);
+    }
+    else
+    {
+        FuncCall      *countFunc;       /* COUNT function for total rows */
+        ResTarget     *countTarget;     /* Target entry for COUNT result */
+
+        /* Regular query without GROUP BY - use COUNT(*) */
+        countFunc = makeNode(FuncCall);
+        countFunc->funcname = list_make1(makeString("count"));
+        countFunc->args = NIL;
+        countFunc->agg_star = true;
+        countFunc->agg_distinct = false;
+        countFunc->location = -1;
+        
+        countTarget = makeNode(ResTarget);
+        countTarget->name = NULL;
+        countTarget->indirection = NIL;
+        countTarget->val = (Node *) countFunc;
+        countTarget->location = -1;
+        
+        totalCountSelectStmt->targetList = list_make1(countTarget);
+    }
+	
+	/* Create subquery node to store transformed select count(*).. query */
+	countSublink = makeNode(SubLink);
+	countSublink->subLinkType = EXPR_SUBLINK;
+	countSublink->subselect = (Node *) totalCountSelectStmt;
+	countSublink->location = -1;
+	
+	/* Create multiplication: (COUNT(*) * limitCount) */
+	mulExpr = makeNode(A_Expr);
+	mulExpr->kind = AEXPR_OP;
+	mulExpr->name = list_make1(makeString("*"));
+	mulExpr->lexpr = (Node *) countSublink;
+	mulExpr->rexpr = stmt->limitCount;
+	mulExpr->location = -1;
+	
+	/* Create division: ((COUNT(*) * limitCount) / 100) */
+	divExpr = makeNode(A_Expr);
+	divExpr->kind = AEXPR_OP;
+	divExpr->name = list_make1(makeString("/"));
+	divExpr->lexpr = (Node *) mulExpr;
+	
+	/* Create A_Const for float 100.0 to ensure floating-point division */
+	intConst = makeNode(A_Const);
+	intConst->val.fval.type = T_Float;
+	intConst->val.fval.fval = pstrdup("100.0");
+	intConst->isnull = false;
+	intConst->location = -1;
+	
+	divExpr->rexpr = (Node *) intConst;
+	divExpr->location = -1;
+
+	/* Create CEIL function call-  ceil (((COUNT(*) * limitCount) / 100))  */
+    ceilFunc = makeNode(FuncCall);
+    ceilFunc->funcname = list_make1(makeString("ceil"));
+    ceilFunc->args = list_make1(divExpr);  // Add the division expression as argument
+    ceilFunc->agg_star = false;
+    ceilFunc->agg_distinct = false;
+    ceilFunc->location = -1;
+
+    /* Replace the original limitCount with CEIL function */
+    stmt->limitCount = (Node *) ceilFunc;
+
 }
 
 /*
