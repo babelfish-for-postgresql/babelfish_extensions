@@ -6057,6 +6057,31 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			}
 			else
 			{
+				// We add a check for DATEFIRST to only accept valid input
+				if (pg_strcasecmp("DATEFIRST", val.c_str()) == 0)
+				{
+					if(ctx->set_special()->constant_LOCAL_ID() && ctx->set_special()->constant_LOCAL_ID()->constant())
+					{
+						std::string datefirst_value = ::getFullText(ctx->set_special()->constant_LOCAL_ID()->constant());
+						char *datefirst_val = pstrdup(datefirst_value.c_str());
+						
+						// Non integral values and strings are not a valid input
+						if (strchr(datefirst_val, '.') || strchr(datefirst_val, '\''))
+						{
+							ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("SET DATEFIRST option requires integer parameter.")));
+						}
+								
+						pfree(datefirst_val);
+					}
+					else
+					{
+						ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("SET DATEFIRST option requires integer parameter.")));
+					}
+				}
 				// We get here for other SET options that do not fall under set_on_off_option or special_variable, like DATEFORMAT
 				return makeSQL(ctx);
 			}
