@@ -289,3 +289,4 @@ SELECT * FROM t3014_9_7;  -- Should fail (no direct access)
 GO
 SELECT * FROM t3014_9_8;  -- Should fail (no direct access)
 GO
+-- terminate-tsql-conn user=l3014_1 password=12345678
