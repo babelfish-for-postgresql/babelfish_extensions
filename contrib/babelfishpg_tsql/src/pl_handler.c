@@ -98,6 +98,7 @@
 #include "session.h"
 #include "pltsql.h"
 #include "pltsql_partition.h"
+#include "pltsql_permissions.h"
 #include "pl_explain.h"
 #include "table_variable_mvcc.h"
 
@@ -1126,6 +1127,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+	(void) mark_outside_view((Query*) query);
 	checkForJsonAuto(query);
 
 	if (query->commandType == CMD_INSERT)

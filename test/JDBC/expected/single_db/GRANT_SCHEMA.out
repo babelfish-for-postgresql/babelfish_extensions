@@ -5096,9 +5096,9 @@ go
 
 exec s1.p1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for view v1)~~
+~~START~~
+int
+~~END~~
 
 exec s2.p1;
 go
@@ -5116,9 +5116,7 @@ select s1.f1();
 go
 ~~START~~
 int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for view v1)~~
+~~END~~
 
 select s2.f1();
 go
@@ -5239,15 +5237,15 @@ go
 
 exec s2.p1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table t1)~~
+~~START~~
+int
+~~END~~
 
 exec s2.p2;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for function f1)~~
+~~START~~
+int
+~~END~~
 
 select s1.f1();
 go
@@ -5259,17 +5257,14 @@ select s2.f1();
 go
 ~~START~~
 int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table t1)~~
+~~END~~
 
 select s2.f2();
 go
 ~~START~~
 int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for function f2)~~
+1
+~~END~~
 
 
 -- tsql user=l4 password=123
