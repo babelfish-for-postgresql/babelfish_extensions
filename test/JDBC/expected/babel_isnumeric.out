@@ -412,8 +412,8 @@ text
 Query Text: SELECT count(*)
 FROM babel_isnumeric_test
 WHERE isnumeric(val) = 1
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on babel_isnumeric_test (actual rows=4000 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Seq Scan on babel_isnumeric_test (actual rows=4000.00 loops=1)
         Filter: (isnumeric(val) = 1)
         Rows Removed by Filter: 2000
 ~~END~~
