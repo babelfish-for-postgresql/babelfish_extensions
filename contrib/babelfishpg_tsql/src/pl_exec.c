@@ -5675,7 +5675,7 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 			Oid			seqid = InvalidOid;
 			SPITupleTable *tuptable = SPI_tuptable;
 			uint64		n_processed = SPI_processed;
-			bool		is_cross_db;
+			bool		is_cross_db = false;
 			char	   *schema_name = NULL;
 			HeapTuple	schema_tuple;
 			Oid			current_user_id = InvalidOid;
