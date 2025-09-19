@@ -85,7 +85,7 @@ static void tsql_reset_update_delete_globals(void);
 static void tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause);
 static Node *tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *opt_top_clause, RangeVar *insert_target,
 														List *insert_column_list, List *tsql_output_clause, RangeVar *output_target, List *tsql_output_into_target_columns,
-														InsertStmt *tsql_output_insert_rest, int select_location);
+														InsertStmt *tsql_output_insert_rest, int select_location, core_yyscan_t yyscanner);
 static Node *tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *opt_top_clause,
 														RangeVar *relation_expr_opt_alias, List *tsql_output_clause, RangeVar *insert_target,
 														List *tsql_output_into_target_columns, List *from_clause, Node *where_or_current_clause,
@@ -99,3 +99,4 @@ static List *get_transformed_output_list(List *tsql_output_clause);
 static bool returning_list_has_column_name(List *existing_colnames, char *current_colname);
 static void tsql_index_nulls_order(List *indexParams, const char *accessMethod);
 static void check_server_role_and_throw_if_unsupported(const char* serverrole, int position, core_yyscan_t yyscanner);
+static void tsql_check_top_percent_support(SelectLimit *top_clause, const char *dml_stmt_type, int location, core_yyscan_t yyscanner);
