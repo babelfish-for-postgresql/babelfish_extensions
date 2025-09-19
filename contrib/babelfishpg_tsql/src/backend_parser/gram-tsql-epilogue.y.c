@@ -1020,10 +1020,12 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 	List	   *indirect;
 	SelectStmt *selectstmt;
 	ResTarget  *resTarget;
+	SelectLimit *top_stmt = (SelectLimit *)top_clause;
 
 	/* use queue to go over all join expr and find target table */
 	List	   *queue = list_make1(jexpr);
 	ListCell   *queue_item;
+
 
 	if (IsA(n, DeleteStmt))
 		n_d = (DeleteStmt *) n;
@@ -1075,16 +1077,19 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 		 */
 		if (n_d)
 		{
+			
+			n_d->limitCount = top_stmt->limitCount;
+			tsql_check_top_percent_support(top_stmt, "DELETE", -1, yyscanner);
 			n_d->usingClause = from_clause;
 			n_d->whereClause = where_clause;
-			n_d->limitCount = top_clause;
 			return (Node *) n_d;
 		}
 		else
 		{
+			n_u->limitCount = top_stmt->limitCount;
+			tsql_check_top_percent_support(top_stmt, "UPDATE", -1, yyscanner);
 			n_u->fromClause = from_clause;
 			n_u->whereClause = where_clause;
-			n_u->limitCount = top_clause;
 			return (Node *) n_u;
 		}
 	}
@@ -1110,7 +1115,11 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 	selectstmt->fromClause = from_clause;
 	selectstmt->whereClause = where_clause;
 	/* if we end up createing a subquery for JOIN, attach TOP clause to it */
-	selectstmt->limitCount = top_clause;
+	selectstmt->limitCount = top_stmt->limitCount;
+	if (n_d)
+		tsql_check_top_percent_support(top_stmt, "DELETE", -1, yyscanner);
+	else
+		tsql_check_top_percent_support(top_stmt, "UPDATE", -1, yyscanner);
 	/* construct where_clause(subLink) */
 	link = makeNode(SubLink);
 	link->subselect = (Node *) selectstmt;
@@ -1225,7 +1234,7 @@ tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 static Node *
 tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *opt_top_clause, RangeVar *insert_target,
 										   List *insert_column_list, List *tsql_output_clause, RangeVar *output_target, List *tsql_output_into_target_columns,
-										   InsertStmt *tsql_output_insert_rest, int select_location)
+										   InsertStmt *tsql_output_insert_rest, int select_location, core_yyscan_t yyscanner)
 {
 
 	CommonTableExpr *cte = makeNode(CommonTableExpr);
@@ -1242,6 +1251,7 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	ListCell   *lc;
 	Node	   *field1;
 	char	   *qualifier = NULL;
+	SelectLimit *top_stmt = (SelectLimit *)opt_top_clause;
 
 	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void *) i);
 	internal_ctename = pstrdup(ctename);
@@ -1249,7 +1259,8 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	/* PreparableStmt inside CTE */
 	i->cols = insert_column_list;
 	i->selectStmt = tsql_output_insert_rest->selectStmt;
-	i->limitCount = opt_top_clause;
+	i->limitCount = top_stmt->limitCount;
+	tsql_check_top_percent_support(top_stmt, "INSERT", -1, yyscanner);
 	i->relation = insert_target;
 	i->onConflictClause = NULL;
 	i->returningList = get_transformed_output_list(tsql_output_clause);
@@ -1317,7 +1328,8 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	}
 
 	/* SelectStmt inside outer InsertStmt */
-	n->limitCount = NULL;
+	n->limitCount = top_stmt->limitCount;
+	tsql_check_top_percent_support(top_stmt, "INSERT", -1, yyscanner);
 	n->targetList = output_list;
 	n->intoClause = NULL;
 	n->fromClause = list_make1(makeRangeVar(NULL, internal_ctename, select_location));
@@ -1378,6 +1390,7 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	ListCell   *expr;
 	char		col_alias_arr[NAMEDATALEN];
 	char	   *col_alias = NULL;
+	SelectLimit *top_stmt = (SelectLimit *)opt_top_clause;
 
 	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void *) i);
 	internal_ctename = pstrdup(ctename);
@@ -1397,7 +1410,8 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	{
 		d->usingClause = from_clause;
 		d->whereClause = where_or_current_clause;
-		d->limitCount = opt_top_clause;
+		d->limitCount = top_stmt->limitCount;
+		tsql_check_top_percent_support(top_stmt, "DELETE", -1, yyscanner);
 	}
 	d->returningList = get_transformed_output_list(tsql_output_clause);
 	d->withClause = opt_with_clause;
@@ -1547,6 +1561,7 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	ListCell   *expr;
 	char		col_alias_arr[NAMEDATALEN];
 	char	   *col_alias = NULL;
+	SelectLimit *top_stmt = (SelectLimit *)opt_top_clause;
 
 	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void *) i);
 	internal_ctename = pstrdup(ctename);
@@ -1567,7 +1582,8 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	{
 		u->fromClause = from_clause;
 		u->whereClause = where_or_current_clause;
-		u->limitCount = opt_top_clause;
+		u->limitCount = top_stmt->limitCount;
+		tsql_check_top_percent_support(top_stmt, "UPDATE", -1, yyscanner);
 	}
 	u->returningList = get_transformed_output_list(tsql_output_clause);
 	u->withClause = opt_with_clause;
@@ -2553,4 +2569,22 @@ check_server_role_and_throw_if_unsupported (const char *serverrole, int position
 				errmsg("Only fixed server role is supported in ALTER SERVER ROLE statement"),
 							parser_errposition(position)));
 	}
+}
+
+/*
+ * Common function to throw error message for UPDATE/DELETE/INSERT TOP N PERCENT support
+ */
+static void
+tsql_check_top_percent_support(SelectLimit *top_clause, const char *dml_stmt_type, int location, core_yyscan_t yyscanner)
+{
+	if (top_clause->limitCount != NULL && top_clause->limitOption == LIMIT_OPTION_PERCENT)
+	{
+		char error_msg[256];
+		snprintf(error_msg, sizeof(error_msg), "%s TOP N PERCENT is not supported yet", dml_stmt_type);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s", error_msg),
+				 parser_errposition(location)));
+	}
+
 }

@@ -1366,14 +1366,14 @@ SELECT CAST(0xE61000000105000000000000F03F0000000000000040 as geometry)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Unsupported geometry type)~~
+~~ERROR (Message: WKB structure does not match expected size!)~~
 
 
 SELECT CAST(0xE61000000105000000000000F03F0000000000000040 as geography)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Unsupported geometry type)~~
+~~ERROR (Message: WKB structure does not match expected size!)~~
 
 
 SELECT CAST(0xE61000000104000000000000F03F0000000000000040 as geometry)

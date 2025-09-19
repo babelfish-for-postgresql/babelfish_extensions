@@ -62,6 +62,14 @@ DROP VIEW notequal_opgeomlinesr
 
 DROP TABLE  geometryToBytealine
 
+DROP TABLE  geometryAsVarbinaryline
+
+DROP TABLE  CharAsVarbinaryGeomline
+
+DROP TABLE  VarbinaryAsgeometryline
+
+DROP TABLE  ByteaTogeometryline
+
 
 DROP VIEW DimOfgeographyline
 
@@ -113,6 +121,15 @@ DROP VIEW LineGeomFromText
 
 DROP TABLE  geographyToBytealine
 
+DROP TABLE  GeographyAsVarbinaryline
+
+DROP TABLE  CharAsVarbinaryGeogline
+
+DROP TABLE  VarbinaryAsgeographyline
+
+DROP TABLE  ByteaTogeographyline
+
+
 DROP TABLE geospatialpointgeom_linesr
 
 DROP TABLE GEOSPATIALLINEGEOM_dt
@@ -120,3 +137,11 @@ DROP TABLE GEOSPATIALLINEGEOM_dt
 DROP TABLE geospatialpointgeog_linesr
 
 DROP TABLE GEOSPATIALLINEGEOG_dt
+
+DROP TABLE  GEOSPATIAL_LINEGEOMRCV_dt
+
+DROP TABLE  GEOSPATIAL_LINEGEOGRCV_dt
+
+DROP TABLE GEOSPATIALLINEGEOM_INVALID_dt
+
+DROP TABLE GEOSPATIALLINEGEOG_INVALID_dt

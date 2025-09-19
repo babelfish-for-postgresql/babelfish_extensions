@@ -72,6 +72,7 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_vector_datatype) (Oid oid);
 	bool		(*is_tsql_sparsevec_datatype) (Oid oid);
 	bool		(*is_tsql_halfvec_datatype) (Oid oid);
+	bool 		(*isEmptyOrWhitespace) (const char *str);
 	
 	Datum		(*datetime_in_str) (char *str, Node *escontext);
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);
@@ -106,4 +107,6 @@ typedef struct common_utility_plugin
 	void 		(*handle_type_and_collation) (struct Node *node, Oid typid, Oid collationid);
 	Datum       (*bytea_from_geometry) (PG_FUNCTION_ARGS);
 	Datum       (*bytea_from_geography) (PG_FUNCTION_ARGS);
+	Datum       (*geometry_from_bytea) (PG_FUNCTION_ARGS);
+	Datum       (*geography_from_bytea) (PG_FUNCTION_ARGS);
 } common_utility_plugin;
