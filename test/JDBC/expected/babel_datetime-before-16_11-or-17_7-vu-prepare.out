@@ -3,42 +3,78 @@ create table babel_datetime_vu_prepare_testing_1 (a datetime, b int)
 go
 insert into babel_datetime_vu_prepare_testing_1 (b) values (1)
 go
+~~ROW COUNT: 1~~
+
 
 -- Testing inserting into the table
 create table babel_datetime_vu_prepare_testing ( dt DATETIME )
 go
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('1753-1-1 00:00:00.000')
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('9999-12-31 23:59:59.998')
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('1992-05-23 23:40:29.999')
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('1992-05-23 23:40:30.000')
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('1999-12-31 23:59:59.998')
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('1999-12-31 23:59:59.999')
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('23:40:29.999')
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('23:40:30.000')
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('2020-03-14')
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x0000B022)
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x0000B02200EF28C0)
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x00008EE700C5C100)
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0xFFFF2E4600000000)
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x0000B02200EF28C1)
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x002D247F018B81FF)
 go
+~~ROW COUNT: 1~~
+
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x002D247F018B8200)
 go
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 
 create view babel_datetime_vu_view1
 as
@@ -65,38 +101,42 @@ BEGIN
 END
 GO
 
--- convert string to datetime test
-CREATE VIEW babel_datetime_empty_string_vw as (SELECT CONVERT(datetime, ''));
-GO
-CREATE PROCEDURE babel_datetime_empty_string_p as (SELECT CONVERT(datetime, ''));
-GO
-CREATE FUNCTION babel_datetime_empty_string_f()
-RETURNS datetime AS
-BEGIN
-RETURN (SELECT CONVERT(datetime, ''));
-END
-GO
-
 -- Views for datetime to varbinary conversion
 create view babel_datetime_varbinary_vu_view1
 as
 	select cast(cast('2023-06-15 23:59:59.997' as datetime) as varbinary)
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to varbinary)~~
+
 
 create view babel_datetime_varbinary_vu_view2
 as
 	select cast(cast('1900-01-01 00:00:00.003' as datetime) as varbinary)
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to varbinary)~~
+
 
 create view babel_datetime_varbinary_vu_view3
 as
 	select cast(cast('9999-12-31 23:59:59.997' as datetime) as varbinary)
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to varbinary)~~
+
 
 create view babel_datetime_varbinary_vu_view4
 as
 	select cast(cast('1753-01-01 00:12:00.145' as datetime) as varbinary)
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to varbinary)~~
+
 
 -- Procedure for datetime to varbinary conversion
 CREATE PROCEDURE babel_datetime_varbinary_vu_procedure
@@ -122,3 +162,7 @@ GO
 
 insert into babel_datetime_varbinary_vu_prepare_testing_2 values (cast('2023-06-15 14:30:45.123' as datetime))
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "a" is of type varbinary but expression is of type datetime)~~
+
