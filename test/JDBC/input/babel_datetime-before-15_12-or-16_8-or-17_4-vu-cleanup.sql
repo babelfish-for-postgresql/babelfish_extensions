@@ -11,3 +11,17 @@ drop procedure babel_datetime_vu_procedure
 go
 drop function babel_datetime_vu_function1
 go
+drop view babel_datetime_varbinary_vu_view1
+go
+drop view babel_datetime_varbinary_vu_view2
+go
+drop view babel_datetime_varbinary_vu_view3
+go
+drop view babel_datetime_varbinary_vu_view4
+go
+drop procedure babel_datetime_varbinary_vu_procedure
+go
+drop function babel_datetime_varbinary_vu_function1
+go
+drop table babel_datetime_varbinary_vu_prepare_testing_2
+go
