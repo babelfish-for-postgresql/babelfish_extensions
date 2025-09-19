@@ -92,11 +92,8 @@ text
 Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE (CAST(ROID AS BIGINT) = 1) OR (CAST(ROID AS BIGINT) = 2)
 Bitmap Heap Scan on cast_eliminate
   Recheck Cond: ((roid = 1) OR (roid = 2))
-  ->  BitmapOr
-        ->  Bitmap Index Scan on cast_eliminate_pkey
-              Index Cond: (roid = 1)
-        ->  Bitmap Index Scan on cast_eliminate_pkey
-              Index Cond: (roid = 2)
+  ->  Bitmap Index Scan on cast_eliminate_pkey
+        Index Cond: (roid = ANY ('{1,2}'::integer[]))
 ~~END~~
 
 
@@ -286,16 +283,14 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE (CAST(CAST(ROID AS BIGINT) AS BIGINT) = 3 OR CAST(CAST(ROID AS INT) AS BIGINT) = 2147483647) AND CAST(CAST(s_int AS INT) AS BIGINT) != 32767
-Bitmap Heap Scan on cast_eliminate (actual rows=1 loops=1)
+Bitmap Heap Scan on cast_eliminate (actual rows=1.00 loops=1)
   Recheck Cond: ((roid = 3) OR (roid = 2147483647))
   Filter: (((s_int)::integer)::bigint <> 32767)
   Rows Removed by Filter: 1
   Heap Blocks: exact=1
-  ->  BitmapOr (actual rows=0 loops=1)
-        ->  Bitmap Index Scan on cast_eliminate_pkey (actual rows=1 loops=1)
-              Index Cond: (roid = 3)
-        ->  Bitmap Index Scan on cast_eliminate_pkey (actual rows=1 loops=1)
-              Index Cond: (roid = 2147483647)
+  ->  Bitmap Index Scan on cast_eliminate_pkey (actual rows=2.00 loops=1)
+        Index Cond: (roid = ANY ('{3,2147483647}'::integer[]))
+        Index Searches: 1
 ~~END~~
 
 

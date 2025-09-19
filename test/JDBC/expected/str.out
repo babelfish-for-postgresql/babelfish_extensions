@@ -514,9 +514,15 @@ INSERT INTO str_computed_t1 (NumberValue) VALUES
 (9999.99999);
 SELECT * FROM str_computed_t1;
 GO
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 4~~
 
-~~ERROR (Message: nondeterministic collations are not supported for LIKE)~~
+~~START~~
+int#!#numeric#!#varchar#!#varchar#!#varchar#!#int
+1#!#123.456789#!#       123#!#    123.46#!#       123.4568#!#0
+2#!#-123.456789#!#      -123#!#   -123.46#!#      -123.4568#!#0
+3#!#0.123456#!#         0#!#      0.12#!#         0.1235#!#0
+4#!#9999.999990#!#     10000#!#  10000.00#!#     10000.0000#!#0
+~~END~~
 
 
 
