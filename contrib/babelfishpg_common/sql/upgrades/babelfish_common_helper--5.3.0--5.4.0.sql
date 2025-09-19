@@ -110,3 +110,22 @@ AS 'babelfishpg_common', 'varbinarynchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 
+CREATE OR REPLACE FUNCTION sys.datetime2varbinary(SYS.DATETIME, integer, boolean)
+RETURNS sys.bbf_varbinary
+AS 'babelfishpg_common', 'datetime_varbinary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+DECLARE 
+	sys_oid Oid;
+	bbf_varbinary_oid Oid;
+	datetime_oid Oid;
+BEGIN
+	sys_oid := (SELECT oid FROM pg_namespace WHERE pg_namespace.nspname ='sys');
+	bbf_varbinary_oid := (SELECT oid FROM pg_type WHERE pg_type.typname ='bbf_varbinary' AND pg_type.typnamespace = sys_oid);
+	datetime_oid := (SELECT oid FROM pg_type WHERE pg_type.typname ='datetime' AND pg_type.typnamespace = sys_oid);
+  IF (SELECT COUNT(*) FROM pg_cast WHERE pg_cast.castsource = datetime_oid AND pg_cast.casttarget = bbf_varbinary_oid) = 0 THEN
+      CREATE CAST (SYS.DATETIME AS sys.bbf_varbinary)
+      WITH FUNCTION sys.datetime2varbinary(SYS.DATETIME, integer, boolean) AS ASSIGNMENT;
+  END IF;
+END $$;

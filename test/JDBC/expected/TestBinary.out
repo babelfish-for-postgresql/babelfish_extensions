@@ -2043,9 +2043,12 @@ varchar
 Binary vs DateTime Comparisons
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type datetime to varbinary)~~
+~~START~~
+varchar#!#varchar
+Binary < Later DateTime#!#True
+Binary = DateTime#!#False
+Binary > Earlier DateTime#!#True
+~~END~~
 
 
 
@@ -2860,9 +2863,7 @@ INSERT INTO BinaryFunctionTests VALUES
  CAST((SELECT MIN(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARBINARY(100)),
  'MIN');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type datetime to varbinary)~~
+~~ROW COUNT: 2~~
 
 
 -- 2. String/Binary Functions
@@ -2948,13 +2949,15 @@ ORDER BY TestID;
 GO
 ~~START~~
 int#!#varchar#!#varbinary#!#varbinary#!#varchar
-1#!#DATALENGTH#!#1234#!#00000002#!#DATALENGTH
-2#!#LEN#!#1234#!#00000002#!#LEN
-3#!#SUBSTRING#!#123456#!#3456#!#SUBSTRING
-4#!#LEFT#!#123456#!#1234#!#LEFT
-5#!#RIGHT#!#123456#!#3456#!#RIGHT
-6#!#HASHBYTES SHA2_256#!#54657374#!#532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25#!#HASHBYTES
-7#!#AVG Function#!#1234#!#00000012#!#AVG
+1#!#MAX Function#!#1234#!#0000000000001234#!#MAX
+2#!#MIN Function#!#1234#!#0000000000001234#!#MIN
+3#!#DATALENGTH#!#1234#!#00000002#!#DATALENGTH
+4#!#LEN#!#1234#!#00000002#!#LEN
+5#!#SUBSTRING#!#123456#!#3456#!#SUBSTRING
+6#!#LEFT#!#123456#!#1234#!#LEFT
+7#!#RIGHT#!#123456#!#3456#!#RIGHT
+8#!#HASHBYTES SHA2_256#!#54657374#!#532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25#!#HASHBYTES
+9#!#AVG Function#!#1234#!#00000012#!#AVG
 ~~END~~
 
 
@@ -3815,9 +3818,10 @@ SELECT 'DATETIME to BINARY(8)' AS Test,
     CONVERT(BINARY(8), CAST('2024-01-15' AS DATETIME)) AS ConvertedValue,
     DATALENGTH(CONVERT(BINARY(8), '2024-01-15')) AS Length;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type datetime to varbinary)~~
+~~START~~
+varchar#!#binary#!#int
+DATETIME to BINARY(8)#!#0000B0F800000000#!#8
+~~END~~
 
 
 SELECT 'DATE to VARBINARY(6)' AS Test,
