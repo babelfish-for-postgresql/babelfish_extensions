@@ -1,0 +1,1433 @@
+-- tsql user=l6030_1 password=12345678
+
+-- CASE 8: Simple Object References Inside Procedures/Functions
+-- CASE 8.1: Procedure referring single table (success: ownership chain dbo->dbo)
+EXEC p6030_8_1;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- CASE 8.2: Procedure referring multiple joined tables (success: all tables owned by dbo)
+EXEC p6030_8_2;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+-- CASE 8.3: Procedure calling another procedure (success: nested procedure chain)
+EXEC p6030_8_3b;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p6030_8_3a)~~
+
+
+-- CASE 8.4: Function referring table (success: function->table chain)
+SELECT * FROM f6030_8_4();
+GO
+~~START~~
+int
+~~END~~
+
+
+-- CASE 9: DML Operations Inside Procedures
+-- CASE 9.1: INSERT operation (success: DML ownership chain)
+EXEC p6030_9_1;
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 9.2: UPDATE operation (success: DML ownership chain)
+EXEC p6030_9_2;
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 9.3: DELETE operation (success: DML ownership chain)
+EXEC p6030_9_3;
+GO
+
+-- CASE 10: Complex Scenarios
+-- CASE 10.1: Procedure with transaction (success: transaction ownership chain)
+EXEC p6030_10_1;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- CASE 10.2: Procedure with error handling (success: error handling ownership chain)
+EXEC p6030_10_2;
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 11: Cross-Schema References
+-- CASE 11.1: Procedure in dbo accessing sch6030_b table (failure: cross-owner direct reference)
+EXEC p6030_11_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_1)~~
+
+
+-- CASE 11.2: Procedure in sch6030_b accessing dbo table (failure: cross-owner direct reference)
+EXEC sch6030_b.p6030_11_2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_1)~~
+
+
+-- CASE 12: Function Chain Scenarios
+-- CASE 12.1: Function calling another function (success: function chain within same owner)
+SELECT dbo.f6030_12_1b();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- CASE 12.2: Function accessing view (success: function->view chain within same owner)
+SELECT * FROM f6030_12_2();
+GO
+~~START~~
+int
+2
+1
+1
+~~END~~
+
+
+-- CASE 13: Dynamic SQL Inside Procedures
+-- CASE 13.1: Simple dynamic SQL (success: dynamic SQL ownership chain)
+EXEC p6030_13_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_1)~~
+
+
+-- CASE 13.2: Parameterized dynamic SQL (success: parameterized dynamic SQL chain)
+EXEC p6030_13_2 @id = 1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_1)~~
+
+-- tsql
+---------------------------------------------------------
+-- FUNCTION AND PROCEDURE TESTING FOR OWNERSHIP CHAINING
+---------------------------------------------------------
+CREATE DATABASE db3014_1;
+GO
+USE db3014_1;
+GO
+
+-- Create test users and schemas
+CREATE LOGIN l3014_0 WITH PASSWORD = '123';
+CREATE LOGIN l3014_01 WITH PASSWORD = '123';
+CREATE USER u3014_0 FOR LOGIN l3014_0;
+CREATE USER u3014_01 FOR LOGIN l3014_01;
+GO
+
+-- Create schemas (as admin)
+CREATE SCHEMA sch3014_a AUTHORIZATION u3014_0;
+CREATE SCHEMA sch3014_a1 AUTHORIZATION u3014_01;
+GO
+
+
+-- Section 1: basic ownership chaining
+-- Create objects as dbo
+CREATE TABLE dbo.t3014_1 (id INT, val VARCHAR(50));
+INSERT INTO dbo.t3014_1 VALUES (1, 'test1'), (2, 'test2');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE PROCEDURE dbo.sp3014_1
+AS
+BEGIN
+    SELECT * FROM dbo.t3014_1;
+END;
+GO
+
+GRANT EXECUTE ON dbo.sp3014_1 TO u3014_0;
+REVOKE SELECT ON dbo.t3014_1 FROM u3014_0;
+GO
+-- terminate-tsql-conn
+-- tsql user=l3014_0 password=123
+-- Test as u3014_0
+USE db3014_1;
+GO
+EXEC dbo.sp3014_1;  -- Should succeed
+GO
+~~START~~
+int#!#varchar
+1#!#test1
+2#!#test2
+~~END~~
+
+SELECT * FROM dbo.t3014_1;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_1)~~
+
+
+
+-- tsql user=l3014_01 password=123
+-- Test Section 2 : cross schema
+-- Create objects as u3014_01
+USE db3014_1;
+GO
+CREATE TABLE sch3014_a1.t3014_3 (id INT, val VARCHAR(50));
+INSERT INTO sch3014_a1.t3014_3 VALUES (1, 'test1'), (2, 'test2');
+GO
+~~ROW COUNT: 2~~
+
+-- terminate-tsql-conn user=l3014_01 password=123
+
+-- tsql user=l3014_0 password=123
+-- Create procedure as u3014_0
+USE db3014_1;
+GO
+CREATE PROCEDURE sch3014_a.sp3014_3
+AS
+BEGIN
+    SELECT * FROM sch3014_a1.t3014_3;
+END;
+GO
+
+-- Test the cross-schema access
+EXEC sch3014_a.sp3014_3;  -- Should fail due to broken ownership chain
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_3)~~
+
+SELECT * FROM sch3014_a1.t3014_3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_3)~~
+
+-- terminate-tsql-conn user=l3014_0 password=123
+
+-- tsql
+USE db3014_1;
+GO
+drop table dbo.t3014_1
+go
+drop table sch3014_a1.t3014_3
+go
+drop procedure dbo.sp3014_1
+go
+drop procedure sch3014_a.sp3014_3
+go
+drop schema sch3014_a;
+go
+drop schema sch3014_a1
+go
+drop user u3014_0
+go
+drop user u3014_01
+go
+drop login l3014_0
+GO
+drop login l3014_01
+GO
+USE master;
+GO
+DROP DATABASE db3014_1;
+GO
+-- terminate-tsql-conn
+
+
+
+-- tsql
+---------------------------------------------------------
+-- SECTION 2: NESTED OBJECT REFERENCES (CORRECTED)
+---------------------------------------------------------
+CREATE DATABASE db_nested_ref_v2;
+GO
+USE db_nested_ref_v2;
+GO
+
+-- Create test logins and users
+CREATE LOGIN login_nest1_v2 WITH PASSWORD = '123';
+CREATE LOGIN login_nest2_v2 WITH PASSWORD = '123';
+CREATE LOGIN login_nest3_v2 WITH PASSWORD = '123';
+GO
+
+CREATE USER user_nest1_v2 FOR LOGIN login_nest1_v2;
+CREATE USER user_nest2_v2 FOR LOGIN login_nest2_v2;
+CREATE USER user_nest3_v2 FOR LOGIN login_nest3_v2;
+GO
+
+-- Grant database access
+GRANT CONNECT TO user_nest1_v2;
+GRANT CONNECT TO user_nest2_v2;
+GRANT CONNECT TO user_nest3_v2;
+GO
+
+-- Create schemas
+CREATE SCHEMA schema_nest1_v2 AUTHORIZATION user_nest1_v2;
+CREATE SCHEMA schema_nest2_v2 AUTHORIZATION user_nest2_v2;
+go
+-- terminate-tsql-conn
+
+
+-- tsql user=login_nest1_v2 password=123
+---------------------------------------------------------
+-- 2.1 Function Nesting
+---------------------------------------------------------
+-- Test Case 2.1.1: Function calling another function (same owner)
+USE db_nested_ref_v2;
+GO
+
+CREATE FUNCTION schema_nest1_v2.inner_func1()
+RETURNS INT
+AS
+BEGIN
+    RETURN 42;
+END;
+GO
+
+CREATE FUNCTION schema_nest1_v2.outer_func1()
+RETURNS INT
+AS
+BEGIN
+    RETURN schema_nest1_v2.inner_func1() + 10;
+END;
+GO
+
+-- Grant EXECUTE permission on outer function only
+-- Do NOT grant permission on inner_func1 to test ownership chaining
+GRANT EXECUTE ON schema_nest1_v2.outer_func1 TO user_nest2_v2;
+GO
+-- terminate-tsql-conn user=login_nest1_v2 password=123
+
+-- tsql user=login_nest2_v2 password=123
+-- Test as user_nest2_v2
+USE db_nested_ref_v2;
+GO
+SELECT schema_nest1_v2.outer_func1();  -- Should succeed through ownership chain
+GO
+~~START~~
+int
+52
+~~END~~
+
+SELECT schema_nest1_v2.inner_func1();  -- Should fail (no direct permission)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function inner_func1)~~
+
+-- terminate-tsql-conn user=login_nest2_v2 password=123
+
+-- tsql user=login_nest2_v2 password=123
+-- Test Case 2.1.2: Function calling multiple functions (mixed ownership)
+USE db_nested_ref_v2;
+GO
+CREATE FUNCTION schema_nest2_v2.func_nest2()
+RETURNS INT
+AS
+BEGIN
+    RETURN 20;
+END;
+GO
+-- terminate-tsql-conn user=login_nest2_v2 password=123
+
+-- tsql user=login_nest1_v2 password=123
+USE db_nested_ref_v2;
+GO
+CREATE FUNCTION schema_nest1_v2.mixed_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN schema_nest1_v2.inner_func1() + schema_nest2_v2.func_nest2();  -- Mixed ownership
+END;
+GO
+
+-- Test
+SELECT schema_nest1_v2.mixed_func();  -- Should fail due to broken ownership chain
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function func_nest2)~~
+
+-- terminate-tsql-conn user=login_nest1_v2 password=123
+
+-- tsql user=login_nest1_v2 password=123
+-- Test Case 2.1.3: Deep nesting (3+ levels)
+USE db_nested_ref_v2;
+GO
+CREATE FUNCTION schema_nest1_v2.level1_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN 1;
+END;
+GO
+
+CREATE FUNCTION schema_nest1_v2.level2_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN schema_nest1_v2.level1_func() + 1;
+END;
+GO
+
+CREATE FUNCTION schema_nest1_v2.level3_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN schema_nest1_v2.level2_func() + 1;
+END;
+GO
+
+-- Grant permission only on top-level function
+GRANT EXECUTE ON schema_nest1_v2.level3_func TO user_nest3_v2;
+GO
+-- terminate-tsql-conn user=login_nest1_v2 password=123
+
+-- tsql user=login_nest3_v2 password=123
+-- Test as user_nest3_v2
+USE db_nested_ref_v2;
+GO
+SELECT schema_nest1_v2.level3_func();  -- Should succeed through ownership chain
+GO
+~~START~~
+int
+3
+~~END~~
+
+-- terminate-tsql-conn user=login_nest3_v2 password=123
+
+
+-- tsql user=login_nest1_v2 password=123
+---------------------------------------------------------
+-- 2.2 View Integration
+---------------------------------------------------------
+-- Test Case 2.2.1: Function inside view (same owner)
+USE db_nested_ref_v2;
+GO
+CREATE FUNCTION schema_nest1_v2.view_func1()
+RETURNS INT
+AS
+BEGIN
+    RETURN 100;
+END;
+GO
+
+CREATE VIEW schema_nest1_v2.view_test1
+AS
+SELECT schema_nest1_v2.view_func1() AS result;
+GO
+
+-- Grant permission on view only
+GRANT SELECT ON schema_nest1_v2.view_test1 TO user_nest2_v2;
+GO
+-- terminate-tsql-conn user=login_nest1_v2 password=123
+
+-- tsql user=login_nest2_v2 password=123
+-- Test as user_nest2_v2
+USE db_nested_ref_v2;
+GO
+-- Function inside view, currently case not supported
+SELECT * FROM schema_nest1_v2.view_test1;  -- Should not succeed through ownership chain
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function view_func1)~~
+
+-- terminate-tsql-conn user=login_nest2_v2 password=123
+
+-- tsql user=login_nest2_v2 password=123
+-- Test Case 2.2.2: Function inside view (different owner)
+USE db_nested_ref_v2;
+GO
+CREATE VIEW schema_nest2_v2.view_test2
+AS
+SELECT schema_nest1_v2.view_func1() AS result;  -- Different owner
+GO
+
+-- Test
+SELECT * FROM schema_nest2_v2.view_test2;  -- Should fail without proper permissions
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function view_func1)~~
+
+-- terminate-tsql-conn user=login_nest2_v2 password=123
+
+-- tsql user=login_nest1_v2 password=123
+-- Grant permission and test again
+USE db_nested_ref_v2;
+GO
+GRANT EXECUTE ON schema_nest1_v2.view_func1 TO user_nest2_v2;
+GO
+-- terminate-tsql-conn user=login_nest1_v2 password=123
+
+-- tsql user=login_nest2_v2 password=123
+USE db_nested_ref_v2;
+GO
+SELECT * FROM schema_nest2_v2.view_test2;  -- Should now succeed
+GO
+~~START~~
+int
+100
+~~END~~
+
+-- terminate-tsql-conn user=login_nest2_v2 password=123
+
+-- tsql
+---------------------------------------------------------
+-- Cleanup Section 2
+---------------------------------------------------------
+USE db_nested_ref_v2;
+GO
+DROP VIEW schema_nest1_v2.view_test1;
+DROP VIEW schema_nest2_v2.view_test2;
+DROP FUNCTION schema_nest1_v2.inner_func1;
+DROP FUNCTION schema_nest1_v2.outer_func1;
+DROP FUNCTION schema_nest2_v2.func_nest2;
+DROP FUNCTION schema_nest1_v2.mixed_func;
+DROP FUNCTION schema_nest1_v2.level1_func;
+DROP FUNCTION schema_nest1_v2.level2_func;
+DROP FUNCTION schema_nest1_v2.level3_func;
+DROP FUNCTION schema_nest1_v2.view_func1;
+DROP SCHEMA schema_nest1_v2;
+DROP SCHEMA schema_nest2_v2;
+DROP USER user_nest1_v2;
+DROP USER user_nest2_v2;
+DROP USER user_nest3_v2;
+GO
+USE master;
+GO
+DROP DATABASE db_nested_ref_v2;
+DROP LOGIN login_nest1_v2;
+DROP LOGIN login_nest2_v2;
+DROP LOGIN login_nest3_v2;
+GO
+-- terminate-tsql-conn
+
+-- tsql
+---------------------------------------------------------
+-- SECTION 3: SCHEMA-LEVEL TESTING (CORRECTED)
+---------------------------------------------------------
+CREATE DATABASE db_schema_test_v3;
+GO
+USE db_schema_test_v3;
+GO
+
+-- Create test logins and users
+CREATE LOGIN login_sch1_v3 WITH PASSWORD = '123';
+CREATE LOGIN login_sch2_v3 WITH PASSWORD = '123';
+GO
+
+CREATE USER user_sch1_v3 FOR LOGIN login_sch1_v3;
+CREATE USER user_sch2_v3 FOR LOGIN login_sch2_v3;
+GO
+
+-- Grant database access
+GRANT CONNECT TO user_sch1_v3;
+GRANT CONNECT TO user_sch2_v3;
+GO
+
+-- Create schemas
+CREATE SCHEMA schema_sch1_v3 AUTHORIZATION user_sch1_v3;
+CREATE SCHEMA schema_sch2_v3 AUTHORIZATION user_sch2_v3;
+GO
+
+
+---------------------------------------------------------
+-- 3.1 Schema Ownership
+---------------------------------------------------------
+-- Test Case 3.1.1: Objects in same schema, different owners
+-- Create table as dbo in schema owned by user_sch1_v3
+CREATE TABLE schema_sch1_v3.table_sch1 (id INT, val VARCHAR(50));
+INSERT INTO schema_sch1_v3.table_sch1 VALUES (1, 'test1');
+GO
+~~ROW COUNT: 1~~
+
+
+-- terminate-tsql-conn
+
+-- tsql user=login_sch1_v3 password=123
+-- Create procedure as user_sch1_v3
+USE db_schema_test_v3;
+GO
+CREATE PROCEDURE schema_sch1_v3.proc_sch1
+AS
+BEGIN
+    SELECT * FROM schema_sch1_v3.table_sch1;
+END;
+GO
+
+-- Test - this should pass because as user have the permission on schema
+EXEC schema_sch1_v3.proc_sch1; 
+GO
+~~START~~
+int#!#varchar
+1#!#test1
+~~END~~
+
+-- terminate-tsql-conn
+
+-- tsql user=login_sch1_v3 password=123
+-- Test Case 3.1.2: Objects across different schemas
+USE db_schema_test_v3;
+GO
+CREATE TABLE schema_sch1_v3.cross_table (id INT, val VARCHAR(50));
+INSERT INTO schema_sch1_v3.cross_table VALUES (1, 'cross_test');
+GO
+~~ROW COUNT: 1~~
+
+-- terminate-tsql-conn
+
+-- tsql user=login_sch2_v3 password=123
+USE db_schema_test_v3;
+GO
+CREATE PROCEDURE schema_sch2_v3.cross_proc
+AS
+BEGIN
+    SELECT * FROM schema_sch1_v3.cross_table;  -- Cross-schema access, different owners
+END;
+GO
+
+-- Test - this should fail due to cross-schema access with different owners
+EXEC schema_sch2_v3.cross_proc;  -- Should fail (cross-schema, different owners)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table cross_table)~~
+
+-- terminate-tsql-conn
+
+-- tsql user=login_sch1_v3 password=123
+-- Test Case 3.1.3: Same owner across different schemas (should work)
+USE db_schema_test_v3;
+GO
+-- Create a procedure in schema_sch1_v3 that accesses table in same schema (same owner)
+CREATE PROCEDURE schema_sch1_v3.same_owner_proc
+AS
+BEGIN
+    SELECT * FROM schema_sch1_v3.cross_table;  -- Same owner
+END;
+GO
+
+-- Grant execute permission to test user
+GRANT EXECUTE ON schema_sch1_v3.same_owner_proc TO user_sch2_v3;
+GO
+-- terminate-tsql-conn
+
+-- tsql user=login_sch2_v3 password=123
+-- Test as user_sch2_v3
+USE db_schema_test_v3;
+GO
+EXEC schema_sch1_v3.same_owner_proc;  -- Should succeed through ownership chain
+GO
+~~START~~
+int#!#varchar
+1#!#cross_test
+~~END~~
+
+-- terminate-tsql-conn
+
+-- tsql user=login_sch1_v3 password=123
+---------------------------------------------------------
+-- 3.2 System Schema Interaction
+---------------------------------------------------------
+-- Test Case 3.2.1: References to system objects
+USE db_schema_test_v3;
+GO
+CREATE PROCEDURE schema_sch1_v3.sys_proc
+AS
+BEGIN
+    SELECT 1 as test_value;
+    SELECT COUNT(*) as table_count FROM sys.tables;
+END;
+GO
+
+-- Grant execute permission
+GRANT EXECUTE ON schema_sch1_v3.sys_proc TO user_sch2_v3;
+GO
+-- terminate-tsql-conn user=login_sch1_v3 password=123
+
+-- tsql user=login_sch2_v3 password=123
+-- Test as user_sch2_v3
+USE db_schema_test_v3;
+GO
+EXEC schema_sch1_v3.sys_proc;  -- Should succeed (system objects are accessible)
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+-- terminate-tsql-conn user=login_sch2_v3 password=123
+-- tsql
+---------------------------------------------------------
+-- Cleanup Section 3
+---------------------------------------------------------
+USE db_schema_test_v3;
+GO
+DROP PROCEDURE schema_sch1_v3.proc_sch1;
+DROP PROCEDURE schema_sch2_v3.cross_proc;
+DROP PROCEDURE schema_sch1_v3.same_owner_proc;
+DROP PROCEDURE schema_sch1_v3.sys_proc;
+DROP TABLE schema_sch1_v3.table_sch1;
+DROP TABLE schema_sch1_v3.cross_table;
+DROP SCHEMA schema_sch1_v3;
+DROP SCHEMA schema_sch2_v3;
+DROP USER user_sch1_v3;
+DROP USER user_sch2_v3;
+GO
+USE master;
+GO
+DROP DATABASE db_schema_test_v3;
+DROP LOGIN login_sch1_v3;
+DROP LOGIN login_sch2_v3;
+GO
+-- terminate-tsql-conn
+
+-- tsql
+---------------------------------------------------------
+-- SECTION 4: DML OPERATIONS (CORRECTED)
+---------------------------------------------------------
+CREATE DATABASE db_dml_test_v4;
+GO
+USE db_dml_test_v4;
+GO
+
+-- Create test logins and users
+CREATE LOGIN login_dml1_v4 WITH PASSWORD = '123';
+CREATE LOGIN login_dml2_v4 WITH PASSWORD = '123';
+GO
+
+CREATE USER user_dml1_v4 FOR LOGIN login_dml1_v4;
+CREATE USER user_dml2_v4 FOR LOGIN login_dml2_v4;
+GO
+
+-- Grant database access
+GRANT CONNECT TO user_dml1_v4;
+GRANT CONNECT TO user_dml2_v4;
+GO
+
+-- Create schemas
+CREATE SCHEMA schema_dml1_v4 AUTHORIZATION user_dml1_v4;
+CREATE SCHEMA schema_dml2_v4 AUTHORIZATION user_dml2_v4;
+GO
+-- terminate-tsql-conn
+
+-- tsql user=login_dml1_v4 password=123
+---------------------------------------------------------
+-- 4.1 Basic DML inside function/procedure
+---------------------------------------------------------
+-- Test Case 4.1.1: SELECT operations
+USE db_dml_test_v4;
+GO
+CREATE TABLE schema_dml1_v4.select_table (id INT, val VARCHAR(50));
+INSERT INTO schema_dml1_v4.select_table VALUES (1, 'test1'), (2, 'test2');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE PROCEDURE schema_dml1_v4.select_proc
+AS
+BEGIN
+    SELECT * FROM schema_dml1_v4.select_table WHERE id = 1;
+END;
+GO
+
+-- Grant execute permission to test ownership chaining
+GRANT EXECUTE ON schema_dml1_v4.select_proc TO user_dml2_v4;
+GO
+-- terminate-tsql-conn user=login_dml1_v4 password=123
+
+-- tsql user=login_dml2_v4 password=123
+-- Test as user_dml2_v4
+USE db_dml_test_v4;
+GO
+EXEC schema_dml1_v4.select_proc;  -- Should succeed through ownership chain
+GO
+~~START~~
+int#!#varchar
+1#!#test1
+~~END~~
+
+-- terminate-tsql-conn user=login_dml2_v4 password=123
+
+-- tsql user=login_dml1_v4 password=123
+-- Test Case 4.1.2: INSERT operations
+USE db_dml_test_v4;
+GO
+CREATE TABLE schema_dml1_v4.insert_table (id INT, val VARCHAR(50));
+GO
+
+CREATE PROCEDURE schema_dml1_v4.insert_proc
+AS
+BEGIN
+    INSERT INTO schema_dml1_v4.insert_table VALUES (1, 'inserted');
+END;
+GO
+
+-- Grant execute permission
+GRANT EXECUTE ON schema_dml1_v4.insert_proc TO user_dml2_v4;
+GO
+-- terminate-tsql-conn user=login_dml1_v4 password=123
+
+-- tsql user=login_dml2_v4 password=123
+-- Test as user_dml2_v4
+USE db_dml_test_v4;
+GO
+EXEC schema_dml1_v4.insert_proc;  -- Should succeed through ownership chain
+GO
+~~ROW COUNT: 1~~
+
+-- terminate-tsql-conn user=login_dml2_v4 password=123
+
+-- tsql user=login_dml1_v4 password=123
+-- Test Case 4.1.3: UPDATE operations
+USE db_dml_test_v4;
+GO
+CREATE TABLE schema_dml1_v4.update_table (id INT, val VARCHAR(50));
+INSERT INTO schema_dml1_v4.update_table VALUES (1, 'original');
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE schema_dml1_v4.update_proc
+AS
+BEGIN
+    UPDATE schema_dml1_v4.update_table SET val = 'updated' WHERE id = 1;
+END;
+GO
+
+-- Grant execute permission
+GRANT EXECUTE ON schema_dml1_v4.update_proc TO user_dml2_v4;
+GO
+-- terminate-tsql-conn user=login_dml1_v4 password=123
+
+-- tsql user=login_dml2_v4 password=123
+-- Test as user_dml2_v4
+USE db_dml_test_v4;
+GO
+EXEC schema_dml1_v4.update_proc;  -- Should succeed through ownership chain
+GO
+~~ROW COUNT: 1~~
+
+-- terminate-tsql-conn user=login_dml2_v4 password=123
+
+-- tsql user=login_dml1_v4 password=123
+-- Test Case 4.1.4: DELETE operations
+USE db_dml_test_v4;
+GO
+CREATE TABLE schema_dml1_v4.delete_table (id INT, val VARCHAR(50));
+INSERT INTO schema_dml1_v4.delete_table VALUES (1, 'to_delete');
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE schema_dml1_v4.delete_proc
+AS
+BEGIN
+    DELETE FROM schema_dml1_v4.delete_table WHERE id = 1;
+END;
+GO
+
+-- Grant execute permission
+GRANT EXECUTE ON schema_dml1_v4.delete_proc TO user_dml2_v4;
+GO
+-- terminate-tsql-conn user=login_dml1_v4 password=123
+
+-- tsql user=login_dml2_v4 password=123
+-- Test as user_dml2_v4
+USE db_dml_test_v4;
+GO
+EXEC schema_dml1_v4.delete_proc;  -- Should succeed through ownership chain
+GO
+~~ROW COUNT: 1~~
+
+-- terminate-tsql-conn user=login_dml2_v4 password=123
+
+
+-- tsql user=login_dml1_v4 password=123
+---------------------------------------------------------
+-- 4.2 Complex DML
+---------------------------------------------------------
+-- Test Case 4.2.1: Multi-table operations
+USE db_dml_test_v4;
+GO
+CREATE TABLE schema_dml1_v4.source_table (id INT, val VARCHAR(50));
+CREATE TABLE schema_dml1_v4.target_table (id INT, val VARCHAR(50));
+INSERT INTO schema_dml1_v4.source_table VALUES (1, 'source1'), (2, 'source2');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE PROCEDURE schema_dml1_v4.multi_table_proc
+AS
+BEGIN
+    INSERT INTO schema_dml1_v4.target_table
+    SELECT * FROM schema_dml1_v4.source_table;
+    
+    UPDATE t SET val = s.val + '_updated'
+    FROM schema_dml1_v4.target_table t
+    JOIN schema_dml1_v4.source_table s ON t.id = s.id;
+END;
+GO
+
+-- Grant execute permission
+GRANT EXECUTE ON schema_dml1_v4.multi_table_proc TO user_dml2_v4;
+GO
+-- terminate-tsql-conn user=login_dml1_v4 password=123
+
+-- tsql user=login_dml2_v4 password=123
+-- Test as user_dml2_v4
+USE db_dml_test_v4;
+GO
+EXEC schema_dml1_v4.multi_table_proc;  -- Should succeed through ownership chain
+GO
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+-- terminate-tsql-conn user=login_dml2_v4 password=123
+
+-- tsql user=login_dml1_v4 password=123
+-- Test Case 4.2.2: Transaction handling
+USE db_dml_test_v4;
+GO
+CREATE TABLE schema_dml1_v4.trans_table (id INT, val VARCHAR(50));
+GO
+
+CREATE PROCEDURE schema_dml1_v4.trans_proc
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    INSERT INTO schema_dml1_v4.trans_table VALUES (1, 'trans1');
+    INSERT INTO schema_dml1_v4.trans_table VALUES (2, 'trans2');
+    COMMIT TRANSACTION;
+END;
+GO
+
+-- Grant execute permission
+GRANT EXECUTE ON schema_dml1_v4.trans_proc TO user_dml2_v4;
+GO
+-- terminate-tsql-conn user=login_dml1_v4 password=123
+
+-- tsql user=login_dml2_v4 password=123
+-- Test as user_dml2_v4
+USE db_dml_test_v4;
+GO
+EXEC schema_dml1_v4.trans_proc;  -- Should succeed through ownership chain
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+-- terminate-tsql-conn user=login_dml2_v4 password=123
+
+-- tsql
+---------------------------------------------------------
+-- Cleanup Section 4
+---------------------------------------------------------
+USE db_dml_test_v4;
+GO
+DROP PROCEDURE schema_dml1_v4.select_proc;
+DROP PROCEDURE schema_dml1_v4.insert_proc;
+DROP PROCEDURE schema_dml1_v4.update_proc;
+DROP PROCEDURE schema_dml1_v4.delete_proc;
+DROP PROCEDURE schema_dml1_v4.multi_table_proc;
+DROP PROCEDURE schema_dml1_v4.trans_proc;
+DROP TABLE schema_dml1_v4.select_table;
+DROP TABLE schema_dml1_v4.insert_table;
+DROP TABLE schema_dml1_v4.update_table;
+DROP TABLE schema_dml1_v4.delete_table;
+DROP TABLE schema_dml1_v4.source_table;
+DROP TABLE schema_dml1_v4.target_table;
+DROP TABLE schema_dml1_v4.trans_table;
+DROP SCHEMA schema_dml1_v4;
+DROP SCHEMA schema_dml2_v4;
+DROP USER user_dml1_v4;
+DROP USER user_dml2_v4;
+GO
+USE master;
+GO
+DROP DATABASE db_dml_test_v4;
+DROP LOGIN login_dml1_v4;
+DROP LOGIN login_dml2_v4;
+GO
+-- terminate-tsql-conn
+
+-- tsql
+---------------------------------------------------------
+-- SECTION 5: CROSS-DATABASE SCENARIOS
+---------------------------------------------------------
+CREATE DATABASE db_cross1;
+GO
+CREATE DATABASE db_cross2;
+go
+
+-- Setup db_cross1
+USE db_cross1;
+GO
+CREATE LOGIN login_cross1 WITH PASSWORD = '123';
+CREATE LOGIN login_cross2 WITH PASSWORD = '123';
+CREATE USER user_cross1 FOR LOGIN login_cross1;
+CREATE USER user_cross2 FOR LOGIN login_cross2;
+GO
+CREATE SCHEMA schema_cross1 AUTHORIZATION user_cross1;
+GO
+
+-- Setup db_cross2
+USE db_cross2;
+GO
+CREATE USER user_cross1 FOR LOGIN login_cross1;
+CREATE USER user_cross2 FOR LOGIN login_cross2;
+GO
+CREATE SCHEMA schema_cross1 AUTHORIZATION user_cross1;
+GO
+
+
+---------------------------------------------------------
+-- 5.1 Basic Cross-DB Access
+---------------------------------------------------------
+-- Test Case 5.1.1: Function accessing table in different database
+-- Create table in db_cross2
+USE db_cross2;
+GO
+-- terminate-tsql-conn
+
+-- tsql user=login_cross1 password=123
+USE db_cross2;
+GO
+CREATE TABLE schema_cross1.cross_table (id INT, val VARCHAR(50));
+INSERT INTO schema_cross1.cross_table VALUES (1, 'cross_test');
+GO
+~~ROW COUNT: 1~~
+
+-- terminate-tsql-conn user=login_cross1 password=123
+
+-- tsql user=login_cross1 password=123
+-- Create function in db_cross1
+USE db_cross1;
+GO
+CREATE FUNCTION schema_cross1.cross_func()
+RETURNS TABLE
+AS
+RETURN (SELECT * FROM db_cross2.schema_cross1.cross_table);
+GO
+
+-- Test
+SELECT * FROM schema_cross1.cross_func();  -- Should succeed (same login across databases)
+GO
+~~START~~
+int#!#varchar
+1#!#cross_test
+~~END~~
+
+-- terminate-tsql-conn user=login_cross1 password=123
+
+-- tsql user=login_cross1 password=123
+-- Test Case 5.1.2: Procedure accessing table in different database
+USE db_cross1;
+GO
+CREATE PROCEDURE schema_cross1.cross_proc
+AS
+BEGIN
+    SELECT * FROM db_cross2.schema_cross1.cross_table;
+END;
+GO
+GRANT EXECUTE ON schema_cross1.cross_proc TO user_cross2;
+go
+
+-- terminate-tsql-conn user=login_cross1 password=123
+
+-- tsql user=login_cross2 password=123
+-- Test as user_cross2
+USE db_cross1;
+GO
+EXEC schema_cross1.cross_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table cross_table)~~
+
+
+
+---------------------------------------------------------
+-- 5.2 Mixed Database Access
+---------------------------------------------------------
+-- Test Case 5.2.1: Function accessing objects across multiple databases
+-- Create additional objects
+USE db_cross1;
+GO
+-- terminate-tsql-conn user=login_cross2 password=123
+
+-- tsql user=login_cross1 password=123
+USE db_cross1;
+GO
+CREATE TABLE schema_cross1.local_table (id INT, val VARCHAR(50));
+INSERT INTO schema_cross1.local_table VALUES (1, 'local_test');
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE schema_cross1.mixed_proc
+AS
+BEGIN
+    SELECT 'Local' AS source, * FROM schema_cross1.local_table
+    UNION ALL
+    SELECT 'Cross' AS source, * FROM db_cross2.schema_cross1.cross_table;
+END;
+GO
+-- terminate-tsql-conn user=login_cross1 password=123
+
+-- tsql user=login_cross2 password=123
+-- Test as user_cross2
+USE db_cross1;
+GO
+EXEC schema_cross1.mixed_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure mixed_proc)~~
+
+-- terminate-tsql-conn user=login_cross2 password=123
+
+-- tsql
+---------------------------------------------------------
+-- Cleanup Section 5
+---------------------------------------------------------
+USE db_cross1;
+GO
+DROP FUNCTION schema_cross1.cross_func;
+DROP PROCEDURE schema_cross1.cross_proc;
+DROP PROCEDURE schema_cross1.mixed_proc;
+DROP TABLE schema_cross1.local_table;
+DROP SCHEMA schema_cross1;
+DROP USER user_cross1;
+DROP USER user_cross2;
+GO
+
+USE db_cross2;
+GO
+DROP TABLE schema_cross1.cross_table;
+DROP SCHEMA schema_cross1;
+DROP USER user_cross1;
+DROP USER user_cross2;
+GO
+
+USE master;
+GO
+DROP DATABASE db_cross2;
+go
+DROP DATABASE db_cross1;
+DROP LOGIN login_cross1;
+DROP LOGIN login_cross2;
+GO
+-- terminate-tsql-conn
+
+
+-- tsql
+---------------------------------------------------------
+-- MISSING TEST CASES - CORRECTED VERSION
+---------------------------------------------------------
+CREATE DATABASE db_missing_tests_v2;
+GO
+USE db_missing_tests_v2;
+GO
+
+-- Create test logins and users
+CREATE LOGIN login_test_a_v2 WITH PASSWORD = '123';
+CREATE LOGIN login_test_b_v2 WITH PASSWORD = '123';
+GO
+
+CREATE USER user_test_a_v2 FOR LOGIN login_test_a_v2;
+CREATE USER user_test_b_v2 FOR LOGIN login_test_b_v2;
+GO
+
+-- Grant database access
+GRANT CONNECT TO user_test_a_v2;
+GRANT CONNECT TO user_test_b_v2;
+GO
+
+-- Create schemas
+CREATE SCHEMA schema_test_a_v2 AUTHORIZATION user_test_a_v2;
+CREATE SCHEMA schema_test_b_v2 AUTHORIZATION user_test_b_v2;
+GO
+-- terminate-tsql-conn
+
+
+-- tsql user=login_test_a_v2 password=123
+---------------------------------------------------------
+-- Testing Table-Valued Functions
+---------------------------------------------------------
+-- Test Case: Inline Table-Valued Function
+USE db_missing_tests_v2;
+GO
+CREATE TABLE schema_test_a_v2.products (id INT, name VARCHAR(50), price DECIMAL(10,2));
+INSERT INTO schema_test_a_v2.products VALUES (1, 'Product1', 10.50), (2, 'Product2', 20.75);
+GO
+~~ROW COUNT: 2~~
+
+
+-- Inline Table-Valued Function
+CREATE FUNCTION schema_test_a_v2.get_products_by_price(@min_price DECIMAL(10,2))
+RETURNS TABLE
+AS
+RETURN (SELECT * FROM schema_test_a_v2.products WHERE price >= @min_price);
+GO
+
+-- CORRECTED: Grant EXECUTE permission for functions
+GRANT EXECUTE ON schema_test_a_v2.get_products_by_price TO user_test_b_v2;
+GO
+-- terminate-tsql-conn user=login_test_a_v2 password=123
+
+-- tsql user=login_test_b_v2 password=123
+-- Test as user_test_b_v2
+USE db_missing_tests_v2;
+GO
+SELECT * FROM schema_test_a_v2.get_products_by_price(15.00);  -- Should succeed through ownership chain
+GO
+~~START~~
+int#!#varchar#!#numeric
+2#!#Product2#!#20.75000000
+~~END~~
+
+SELECT * FROM schema_test_a_v2.products;  -- Should fail (no direct permission)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table products)~~
+
+-- terminate-tsql-conn user=login_test_b_v2 password=123
+
+-- tsql user=login_test_a_v2 password=123
+-- Test Case: Multi-Statement Table-Valued Function
+USE db_missing_tests_v2;
+GO
+CREATE FUNCTION schema_test_a_v2.get_product_summary()
+RETURNS @result TABLE (total_products INT, avg_price DECIMAL(10,2))
+AS
+BEGIN
+    INSERT @result
+    SELECT COUNT(*), AVG(price) FROM schema_test_a_v2.products;
+    RETURN;
+END;
+GO
+
+-- CORRECTED: Grant EXECUTE permission for functions
+GRANT EXECUTE ON schema_test_a_v2.get_product_summary TO user_test_b_v2;
+GO
+-- terminate-tsql-conn user=login_test_a_v2 password=123
+
+-- tsql user=login_test_b_v2 password=123
+-- Test as user_test_b_v2
+USE db_missing_tests_v2;
+GO
+SELECT * FROM schema_test_a_v2.get_product_summary();  -- Should succeed through ownership chain
+GO
+~~START~~
+int#!#numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table @result_get_product_summary)~~
+
+-- terminate-tsql-conn user=login_test_b_v2 password=123
+
+
+-- tsql user=login_test_a_v2 password=123
+---------------------------------------------------------
+-- Testing Triggers
+---------------------------------------------------------
+-- Test Case: AFTER INSERT Trigger
+USE db_missing_tests_v2;
+GO
+CREATE TABLE schema_test_a_v2.orders (id INT, product_id INT, quantity INT);
+CREATE TABLE schema_test_a_v2.audit_log (log_id INT IDENTITY(1,1), action VARCHAR(50), table_name VARCHAR(50));
+GO
+
+CREATE TRIGGER schema_test_a_v2.trg_orders_audit
+ON schema_test_a_v2.orders
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO schema_test_a_v2.audit_log (action, table_name)
+    SELECT 'INSERT', 'orders' FROM inserted;
+END;
+GO
+
+-- Grant INSERT permission on orders table
+GRANT INSERT ON schema_test_a_v2.orders TO user_test_b_v2;
+GO
+-- terminate-tsql-conn user=login_test_a_v2 password=123
+
+-- tsql user=login_test_b_v2 password=123
+-- Test as user_test_b_v2
+USE db_missing_tests_v2;
+GO
+INSERT INTO schema_test_a_v2.orders VALUES (1, 1, 5);  -- Should succeed, trigger works through ownership chain
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+-- terminate-tsql-conn user=login_test_b_v2 password=123
+
+-- tsql user=login_test_a_v2 password=123
+-- Verify trigger worked
+USE db_missing_tests_v2;
+GO
+SELECT * FROM schema_test_a_v2.audit_log;  -- Should show the audit record
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#INSERT#!#orders
+~~END~~
+
+-- terminate-tsql-conn user=login_test_a_v2 password=123
+
+
+-- tsql user=login_test_a_v2 password=123
+---------------------------------------------------------
+-- Testing Dynamic SQL (LIMITATIONS IDENTIFIED)
+---------------------------------------------------------
+-- Test Case: Simple dynamic SQL in stored procedure
+USE db_missing_tests_v2;
+GO
+CREATE PROCEDURE schema_test_a_v2.dynamic_select_proc(@table_name NVARCHAR(50))
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX);
+    SET @sql = N'SELECT COUNT(*) FROM schema_test_a_v2.' + @table_name;
+    EXEC sp_executesql @sql;
+END;
+GO
+
+-- Grant execute permission
+GRANT EXECUTE ON schema_test_a_v2.dynamic_select_proc TO user_test_b_v2;
+GO
+-- terminate-tsql-conn user=login_test_a_v2 password=123
+
+-- tsql user=login_test_b_v2 password=123
+-- Test as user_test_b_v2
+USE db_missing_tests_v2;
+GO
+-- NOTE: This may fail because dynamic SQL might not follow ownership chaining rules
+EXEC schema_test_a_v2.dynamic_select_proc 'products';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table products)~~
+
+-- terminate-tsql-conn user=login_test_b_v2 password=123
+
+-- tsql user=login_test_a_v2 password=123
+-- Test Case: Regular (non-dynamic) procedure for comparison
+USE db_missing_tests_v2;
+GO
+CREATE PROCEDURE schema_test_a_v2.regular_select_proc
+AS
+BEGIN
+    SELECT COUNT(*) FROM schema_test_a_v2.products;
+END;
+GO
+
+-- Grant execute permission
+GRANT EXECUTE ON schema_test_a_v2.regular_select_proc TO user_test_b_v2;
+GO
+-- terminate-tsql-conn user=login_test_a_v2 password=123
+
+-- tsql user=login_test_b_v2 password=123
+-- Test as user_test_b_v2
+USE db_missing_tests_v2;
+GO
+EXEC schema_test_a_v2.regular_select_proc;  -- Should succeed through ownership chain
+GO
+~~START~~
+int
+2
+~~END~~
+
+-- terminate-tsql-conn user=login_test_b_v2 password=123
+
+-- tsql
+---------------------------------------------------------
+-- Cleanup
+---------------------------------------------------------
+USE db_missing_tests_v2;
+GO
+DROP TRIGGER schema_test_a_v2.trg_orders_audit;
+DROP FUNCTION schema_test_a_v2.get_products_by_price;
+DROP FUNCTION schema_test_a_v2.get_product_summary;
+DROP PROCEDURE schema_test_a_v2.dynamic_select_proc;
+DROP PROCEDURE schema_test_a_v2.regular_select_proc;
+DROP TABLE schema_test_a_v2.products;
+DROP TABLE schema_test_a_v2.orders;
+DROP TABLE schema_test_a_v2.audit_log;
+DROP SCHEMA schema_test_a_v2;
+DROP SCHEMA schema_test_b_v2;
+DROP USER user_test_a_v2;
+DROP USER user_test_b_v2;
+GO
+USE master;
+GO
+DROP DATABASE db_missing_tests_v2;
+DROP LOGIN login_test_a_v2;
+DROP LOGIN login_test_b_v2;
+GO
+-- terminate-tsql-conn
+
+
+-- tsql
+---------------------------------------------------------
+-- Basic DDL inside procedures
+---------------------------------------------------------
+create login ddl_login with password = '123'
+go
+create user ddl_login;
+go
+create procedure ddl_procedure
+as
+begin
+    create table ddl_oc_table(oc_col int);
+    insert into ddl_oc_table values (1);
+end;
+go
+grant execute on ddl_procedure to ddl_login
+go
+-- terminate-tsql-conn
+-- tsql user=ddl_login password=123
+exec ddl_procedure;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+-- terminate-tsql-conn user=ddl_login password=123
+
+-- tsql
+drop procedure ddl_procedure
+go
+drop user ddl_login
+go
+drop login ddl_login
+go
+-- terminate-tsql-conn

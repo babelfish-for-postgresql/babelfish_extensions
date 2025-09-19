@@ -14,6 +14,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "pltsql.h"
+#include "pltsql_permissions.h"
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
@@ -2712,6 +2713,14 @@ string_to_privilege(const char *privname)
 		return ACL_REFERENCES;
 	if (strcmp(privname, "execute") == 0)
 		return ACL_EXECUTE;
+	if (strcmp(privname, "truncate") == 0)
+		return ACL_TRUNCATE;
+	if (strcmp(privname, "maintain") == 0)
+		return ACL_MAINTAIN;
+	if (strcmp(privname, "trigger") == 0)
+		return ACL_TRIGGER;
+	if (strcmp(privname, "usage") == 0)
+		return ACL_USAGE;
 	else
 		return 0;
 }
@@ -2982,4 +2991,102 @@ downcase_truncate_split_object_name(char *four_part_object_name, char **server_n
 		*schema_name = temp_schema_name;
 	if (object_name != NULL)
 		*object_name = temp_object_name;
+}
+
+/*
+ * Get owner OID for a relation
+ */
+Oid
+get_rel_owner(Oid relid)
+{
+    HeapTuple   tuple;
+    Oid         owner;
+
+	Assert(OidIsValid(relid)); 
+
+    /* Get relation tuple from pg_class */
+    tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+    if (!HeapTupleIsValid(tuple))
+        elog(ERROR, "cache lookup failed for relation %u", relid);
+
+    /* Get owner from tuple */
+    owner = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
+
+    /* Release tuple */
+    ReleaseSysCache(tuple);
+
+    return owner;
+}
+
+/*
+ * Get owner OID for a function
+ */
+Oid
+get_func_owner(Oid funcid)
+{
+	HeapTuple	tp;
+
+	Assert(OidIsValid(funcid));  
+
+	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_proc functup = (Form_pg_proc) GETSTRUCT(tp);
+		Oid			result;
+
+		result = functup->proowner;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+
+/*
+ * Retuns function oid which is cached at the start of every function/proc call
+ * only if we are currently in function/proc execution
+ */
+Oid
+get_current_func_oid(void)
+{
+	if (!pltsql_support_tsql_transactions())
+		return InvalidOid;
+
+	/*
+	* Fetch the top procedure excution state from execution state call stack
+	* and get the owner of that procedure. Top entry in stack will have
+	* fn_oid and fn_owner value set.
+	*/
+	if (!exec_state_call_stack ||
+		!exec_state_call_stack->estate ||
+		!exec_state_call_stack->estate->func)
+		return InvalidOid;
+
+	return exec_state_call_stack->estate->func->fn_oid;
+}
+
+extern bool
+is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
+{
+	Oid immediate_parent_func = InvalidOid;
+
+	Assert(OidIsValid(objectOwnerId)); 
+
+	if (IsA(expr, FuncExpr))
+	{
+		FuncExpr *fexpr = (FuncExpr *)expr;
+		if (fexpr->insideView == PNODE_OUTSIDE_VIEW)
+		{
+			immediate_parent_func = get_current_func_oid();
+		}
+	}
+	else if (IsA(expr, RTEPermissionInfo))
+	{
+		RTEPermissionInfo *perminfo = (RTEPermissionInfo *)expr;
+		if (perminfo->insideView == PNODE_OUTSIDE_VIEW)
+		{
+			immediate_parent_func = get_current_func_oid();
+		}
+	}
+	return (OidIsValid(immediate_parent_func) && (get_func_owner(immediate_parent_func) == objectOwnerId));
 }

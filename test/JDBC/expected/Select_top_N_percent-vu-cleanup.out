@@ -1,0 +1,44 @@
+
+-- Cleanup script for TOP PERCENT test cases
+-- Drop dependent objects created in prepare file
+DROP VIEW IF EXISTS jira_babel_1358.top_performers_view;
+GO
+
+DROP FUNCTION IF EXISTS jira_babel_1358.get_top_sales;
+GO
+
+DROP PROCEDURE IF EXISTS jira_babel_1358.get_top_percent_by_category;
+GO
+
+-- Drop test tables created in prepare file
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_scores;
+GO
+
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_sales;
+GO
+
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_sales_second;
+GO
+
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_sales_third;
+GO
+
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_scores_second;
+GO
+
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_scores_third;
+GO
+
+DROP TABLE IF EXISTS jira_babel_1358.test_percent_sales_large;
+GO
+
+-- Drop cross-schema test table
+DROP TABLE IF EXISTS test_schema2_jira_babel_1358.test_cross_sales;
+GO
+
+-- Drop the test schemas
+DROP SCHEMA IF EXISTS jira_babel_1358;
+GO
+
+DROP SCHEMA IF EXISTS test_schema2_jira_babel_1358;
+GO

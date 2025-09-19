@@ -652,3 +652,4 @@ alter-function-with-weak-view
 babel_datetimeoffset
 view_sec_setting
 alter-table-null-notnull
+Select_top_N_percent

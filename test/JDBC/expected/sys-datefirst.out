@@ -1,3 +1,12 @@
+-- Default value
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+7
+~~END~~
+
+
 SELECT * FROM sys.datefirst()
 GO
 ~~START~~
@@ -22,5 +31,316 @@ GO
 ~~START~~
 int
 3
+~~END~~
+
+
+
+-- Integral Value
+-- inbound value (1-7)
+SET datefirst 2
+GO
+SELECT @@datefirst
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SET DATEFIRST 3
+GO
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SET DATEFIRST 4
+GO
+SELECT @@datefirst
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+DECLARE @i INT = 5
+SET DATEFIRST @i
+GO
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SET DATEFIRST 6
+GO
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- edge point values 
+declare @i int = 1
+SET datefirst @i
+GO
+SELECT @@datefirst
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SET datefirst 7
+GO
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+-- out of bound values
+SET DATEFIRST 8
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 8 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+
+-- Invalid value not updated
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SET DATEFIRST 23
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 23 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+
+-- Invalid value not updated
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SET DATEFIRST 0
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 0 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+
+-- Invalid value not updated
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+DECLARE @i INT = -4
+SET DATEFIRST @i
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: -4 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+
+-- Invalid value not updated
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SET DATEFIRST -55
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: -55 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+
+-- Invalid value not updated
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+
+
+-- Non Integral Value
+-- inbound values
+SET DATEFIRST 3.5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET datefirst 5.68
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET DATEFIRST 1.23
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET DATEFIRST 6.999
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+-- edge point values
+SET DATEFIRST 1.00
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SET DATEFIRST 7.00
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+-- out of bound values
+SET DATEFIRST 7.01
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET DATEFIRST 59.0974
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET DATEFIRST 0.99
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET DATEFIRST -2.34
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET DATEFIRST -65.045
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+-- arbitrary values
+SET DATEFIRST 'one'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET DATEFIRST '4'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET DATEFIRST "three"
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET DATEFIRST "2"
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET DATEFIRST option requires integer parameter.)~~
+
+
+SET DATEFIRST NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "NULL")~~
+
+
+-- should throw integer parameter required error
+DECLARE @i decimal(10,2) = 2.35
+SET DATEFIRST @i
+GO
+
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+DECLARE @i varchar = '4'
+SET DATEFIRST @i
+GO
+
+SELECT @@DATEFIRST
+GO
+~~START~~
+int
+4
 ~~END~~
 
