@@ -1252,7 +1252,7 @@ define_custom_variables(void)
 							 &pltsql_enable_ownership_chaining,
 							 true,
 							 PGC_SUSET,
-							 GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL,
+							 GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
 }
 

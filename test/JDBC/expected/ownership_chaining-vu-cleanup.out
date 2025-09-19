@@ -281,8 +281,11 @@ select current_setting('babelfishpg_tsql.enable_ownership_chaining');
 go
 ~~START~~
 text
-on
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to examine "babelfishpg_tsql.enable_ownership_chaining")~~
 
 -- terminate-tsql-conn
+
+
 
