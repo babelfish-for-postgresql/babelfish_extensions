@@ -593,3 +593,54 @@ GO
 ~~ERROR (Message: permission denied for table t3014_9_8)~~
 
 -- terminate-tsql-conn user=l3014_1 password=12345678
+
+-- psql
+-- Testing Ownershhip chaining with setting GUC false
+show babelfishpg_tsql.enable_ownership_chaining;
+go
+~~START~~
+text
+on
+~~END~~
+
+alter system set babelfishpg_tsql.enable_ownership_chaining = 'off';
+go
+select pg_reload_conf();
+go
+~~START~~
+bool
+t
+~~END~~
+
+select pg_sleep(2);
+go
+~~START~~
+void
+
+~~END~~
+
+show babelfishpg_tsql.enable_ownership_chaining;
+go
+~~START~~
+text
+off
+~~END~~
+
+-- terminate-psql-conn
+
+-- tsql user=l3014_1 password=12345678
+-- should fail since we disabled the ownership chaining
+select * from v3014_1_1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_1)~~
+
+SELECT * FROM v3014_9_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_9_1)~~
+
+-- terminate-tsql-conn user=l3014_1 password=12345678
+

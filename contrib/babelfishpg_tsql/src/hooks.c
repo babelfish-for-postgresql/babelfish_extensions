@@ -1053,8 +1053,9 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 				/*
 				 * Ownership Chaining Logic for object references inside function/procedures.
 				 * Only applicable for same-db ownership chaining cases.
+				 * check if we have ownership chaining enabled.
 				 */
-				if (IsA(expr, FuncExpr) && OidIsValid(get_current_func_oid()) &&
+				if (pltsql_enable_ownership_chaining && IsA(expr, FuncExpr) && OidIsValid(get_current_func_oid()) &&
 				   is_valid_func_ownership_chain(expr, get_func_owner(((FuncExpr *)expr)->funcid)))
 				{
 					if (nspname)
@@ -1144,7 +1145,7 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 						}
 						else
 							perminfo->checkAsUser = GetSessionUserId();
-						if (is_valid_func_ownership_chain(perminfo, relOwner))
+						if (pltsql_enable_ownership_chaining && is_valid_func_ownership_chain(perminfo, relOwner))
 						{
 							perminfo->checkAsUser = relOwner;
 						}
