@@ -492,35 +492,197 @@ $$;
 GO
 
 -- procedure for all use case
+-- CREATE OR REPLACE PROCEDURE datetime_rounding_handler(
+--     p_action text DEFAULT NULL,
+--     p_schema_name text DEFAULT NULL,
+--     p_table_name text DEFAULT NULL,
+--     p_commit_after_table boolean DEFAULT true
+-- )
+-- LANGUAGE plpgsql
+-- AS $$
+-- DECLARE
+--     v_sql text;
+--     v_datetime_typoid oid;
+--     r record;
+--     r2 record;
+--     v_affected_count bigint;
+--     v_table_count int := 0;
+--     v_total_affected_count bigint := 0;
+-- BEGIN
+--     -- Get datetime type OID
+--     SELECT oid INTO v_datetime_typoid 
+--     FROM pg_type 
+--     WHERE typname = 'datetime';
+
+--     -- Show help if no action specified
+--     IF p_action IS NULL THEN
+--         RAISE INFO E'\nUsage: CALL datetime_rounding_handler(p_action, p_schema_name, p_table_name, p_commit_after_table)';
+--         RAISE INFO E'\nActions:';
+--         RAISE INFO E'\n  list   - List all tables and columns with datetime type';
+--         RAISE INFO E'\n  check  - Check for values that need rounding';
+--         RAISE INFO E'\n  update - Update affected values (requires schema and table names unless "all" specified)';
+--         RETURN;
+--     END IF;
+
+--     -- Validate action
+--     IF p_action NOT IN ('list', 'check', 'update') THEN
+--         RAISE EXCEPTION 'Invalid action. Valid actions are: list, check, update';
+--     END IF;
+
+--     -- For update action, validate parameters
+--     IF p_action = 'update' AND p_schema_name IS NULL AND p_table_name != 'all' THEN
+--         RAISE EXCEPTION 'Schema name is required for update action unless table_name is "all"';
+--     END IF;
+
+--     -- Drop temporary table if it exists
+--     DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
+
+--     -- Create temporary table for datetime columns
+--     CREATE TEMP TABLE temp_datetime_columns (
+--         schema_name text,
+--         table_name text,
+--         column_name text
+--     );
+
+--     -- Populate temporary table
+--     INSERT INTO pg_temp.temp_datetime_columns
+--     SELECT 
+--         n.nspname as schema_name,
+--         t.relname as table_name,
+--         a.attname as column_name
+--     FROM pg_class t
+--     JOIN pg_namespace n ON t.relnamespace = n.oid
+--     JOIN pg_attribute a ON t.oid = a.attrelid
+--     WHERE a.atttypid = v_datetime_typoid
+--         AND t.relkind = 'r'
+--         AND NOT a.attisdropped
+--         AND a.attnum > 0
+--         AND (p_schema_name IS NULL OR n.nspname = p_schema_name)
+--         AND (p_table_name IS NULL OR p_table_name = 'all' OR t.relname = p_table_name)
+--         AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog');
+
+--     IF NOT EXISTS (SELECT 1 FROM pg_temp.temp_datetime_columns) THEN
+--         RAISE INFO 'No datetime columns found matching the specified criteria.';
+--         DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
+--         RETURN;
+--     END IF;
+
+--     -- LIST action
+--     IF p_action = 'list' THEN
+--         FOR r IN (
+--             SELECT 
+--                 schema_name,
+--                 table_name,
+--                 string_agg(column_name, ', ') as datetime_columns
+--             FROM pg_temp.temp_datetime_columns
+--             GROUP BY schema_name, table_name
+--             ORDER BY schema_name, table_name
+--         )
+--         LOOP
+--             RAISE INFO E'\nSchema: %, Table: %, Datetime Columns: %',
+--                 r.schema_name, r.table_name, r.datetime_columns;
+--         END LOOP;
+--         DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
+--         RETURN;
+--     END IF;
+
+--     -- CHECK or UPDATE action
+--     FOR r IN (
+--         SELECT * FROM pg_temp.temp_datetime_columns ORDER BY schema_name, table_name, column_name
+--     )
+--     LOOP
+--         v_table_count := v_table_count + 1;
+
+--         IF p_action = 'check' THEN
+--             EXECUTE format(
+--                 'SELECT COUNT(*) FROM %I.%I WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+--                 r.schema_name, r.table_name, r.column_name, r.column_name
+--             ) INTO v_affected_count;
+
+--             IF v_affected_count > 0 THEN
+--                 v_total_affected_count := v_total_affected_count + v_affected_count;
+--                 RAISE INFO E'\nSchema: %, Table: %, Column: %, Affected Rows: %',
+--                     r.schema_name, r.table_name, r.column_name, v_affected_count;
+
+--                 -- Show sample of affected values
+--                 RAISE INFO E'\nSample of affected values:';
+--                 FOR r2 IN EXECUTE format(
+--                     'SELECT %I as original_value, 
+--                             CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
+--                      FROM %I.%I 
+--                      WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) 
+--                      LIMIT 5',
+--                     r.column_name, r.column_name,
+--                     r.schema_name, r.table_name,
+--                     r.column_name, r.column_name
+--                 )
+--                 LOOP
+--                     RAISE INFO E'Original: %, New: %', r2.original_value, r2.new_value;
+--                 END LOOP;
+--             END IF;
+
+--         ELSIF p_action = 'update' THEN
+--             RAISE INFO E'\nProcessing table: %.%', r.schema_name, r.table_name;
+            
+--             v_sql := format(
+--                 'UPDATE %I.%I 
+--                  SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+--                  WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+--                 r.schema_name, r.table_name,
+--                 r.column_name, r.column_name,
+--                 r.column_name, r.column_name
+--             );
+
+--             EXECUTE v_sql;
+--             GET DIAGNOSTICS v_affected_count = ROW_COUNT;
+--             v_total_affected_count := v_total_affected_count + v_affected_count;
+--             RAISE INFO 'Updated % rows in %.%.%',
+--                 v_affected_count, r.schema_name, r.table_name, r.column_name;
+
+--             IF p_commit_after_table THEN
+--                 -- No explicit COMMIT needed here as it's handled by autonomous transaction
+--                 RAISE INFO 'Processed table %.%', r.schema_name, r.table_name;
+--             END IF;
+--         END IF;
+--     END LOOP;
+
+--     IF v_table_count = 0 THEN
+--         RAISE INFO 'No tables found matching the specified criteria.';
+--     ELSE
+--         RAISE INFO E'\nTotal tables processed: %', v_table_count;
+--         RAISE INFO 'Total rows affected: %', v_total_affected_count;
+--     END IF;
+
+--     DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
+-- END;
+-- $$;
+-- GO
+
 CREATE OR REPLACE PROCEDURE datetime_rounding_handler(
     p_action text DEFAULT NULL,
     p_schema_name text DEFAULT NULL,
     p_table_name text DEFAULT NULL,
-    p_commit_after_table boolean DEFAULT true
+    p_batch_size int DEFAULT 1000
 )
 LANGUAGE plpgsql
 AS $$
 DECLARE
     v_sql text;
-    v_datetime_typoid oid;
     r record;
-    r2 record;
-    v_affected_count bigint;
-    v_table_count int := 0;
-    v_total_affected_count bigint := 0;
+    v_count int;
+    v_total_count int := 0;
 BEGIN
-    -- Get datetime type OID
-    SELECT oid INTO v_datetime_typoid 
-    FROM pg_type 
-    WHERE typname = 'datetime';
-
-    -- Show help if no action specified
+    -- Help text if no action specified
     IF p_action IS NULL THEN
-        RAISE INFO E'\nUsage: CALL datetime_rounding_handler(p_action, p_schema_name, p_table_name, p_commit_after_table)';
+        RAISE INFO E'\nUsage: CALL datetime_rounding_handler(p_action, p_schema_name, p_table_name, p_batch_size)';
         RAISE INFO E'\nActions:';
-        RAISE INFO E'\n  list   - List all tables and columns with datetime type';
-        RAISE INFO E'\n  check  - Check for values that need rounding';
-        RAISE INFO E'\n  update - Update affected values (requires schema and table names unless "all" specified)';
+        RAISE INFO E'  list   - List all tables and columns with datetime type';
+        RAISE INFO E'  check  - Check for values that need rounding';
+        RAISE INFO E'  update - Update affected values';
+        RAISE INFO E'\nParameters:';
+        RAISE INFO E'  p_schema_name - Schema name (NULL for all schemas)';
+        RAISE INFO E'  p_table_name  - Table name (NULL for all tables)';
+        RAISE INFO E'  p_batch_size  - Number of rows to process per batch (default 1000)';
         RETURN;
     END IF;
 
@@ -529,131 +691,108 @@ BEGIN
         RAISE EXCEPTION 'Invalid action. Valid actions are: list, check, update';
     END IF;
 
-    -- For update action, validate parameters
-    IF p_action = 'update' AND p_schema_name IS NULL AND p_table_name != 'all' THEN
-        RAISE EXCEPTION 'Schema name is required for update action unless table_name is "all"';
-    END IF;
-
-    -- Drop temporary table if it exists
-    DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
-
-    -- Create temporary table for datetime columns
-    CREATE TEMP TABLE temp_datetime_columns (
-        schema_name text,
-        table_name text,
-        column_name text
-    );
-
-    -- Populate temporary table
-    INSERT INTO pg_temp.temp_datetime_columns
-    SELECT 
-        n.nspname as schema_name,
-        t.relname as table_name,
-        a.attname as column_name
-    FROM pg_class t
-    JOIN pg_namespace n ON t.relnamespace = n.oid
-    JOIN pg_attribute a ON t.oid = a.attrelid
-    WHERE a.atttypid = v_datetime_typoid
-        AND t.relkind = 'r'
-        AND NOT a.attisdropped
-        AND a.attnum > 0
-        AND (p_schema_name IS NULL OR n.nspname = p_schema_name)
-        AND (p_table_name IS NULL OR p_table_name = 'all' OR t.relname = p_table_name)
-        AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog');
-
-    IF NOT EXISTS (SELECT 1 FROM pg_temp.temp_datetime_columns) THEN
-        RAISE INFO 'No datetime columns found matching the specified criteria.';
-        DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
-        RETURN;
-    END IF;
-
-    -- LIST action
-    IF p_action = 'list' THEN
-        FOR r IN (
-            SELECT 
-                schema_name,
-                table_name,
-                string_agg(column_name, ', ') as datetime_columns
-            FROM pg_temp.temp_datetime_columns
-            GROUP BY schema_name, table_name
-            ORDER BY schema_name, table_name
-        )
-        LOOP
-            RAISE INFO E'\nSchema: %, Table: %, Datetime Columns: %',
-                r.schema_name, r.table_name, r.datetime_columns;
-        END LOOP;
-        DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
-        RETURN;
-    END IF;
-
-    -- CHECK or UPDATE action
+    -- Get tables and columns with datetime type
     FOR r IN (
-        SELECT * FROM pg_temp.temp_datetime_columns ORDER BY schema_name, table_name, column_name
+        SELECT 
+            n.nspname as schema_name,
+            c.relname as table_name,
+            a.attname as column_name
+        FROM pg_class c
+        JOIN pg_namespace n ON c.relnamespace = n.oid
+        JOIN pg_attribute a ON c.oid = a.attrelid
+        JOIN pg_type t ON a.atttypid = t.oid
+        WHERE t.typname = 'datetime'
+            AND c.relkind = 'r'
+            AND NOT a.attisdropped
+            AND a.attnum > 0
+            AND (p_schema_name IS NULL OR n.nspname = p_schema_name)
+            AND (p_table_name IS NULL OR c.relname = p_table_name)
+            AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog')
+        ORDER BY n.nspname, c.relname, a.attname
     )
     LOOP
-        v_table_count := v_table_count + 1;
+        CASE p_action
+            WHEN 'list' THEN
+                RAISE INFO 'Schema: %, Table: %, Column: %',
+                    r.schema_name, r.table_name, r.column_name;
 
-        IF p_action = 'check' THEN
-            EXECUTE format(
-                'SELECT COUNT(*) FROM %I.%I WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
-                r.schema_name, r.table_name, r.column_name, r.column_name
-            ) INTO v_affected_count;
-
-            IF v_affected_count > 0 THEN
-                v_total_affected_count := v_total_affected_count + v_affected_count;
-                RAISE INFO E'\nSchema: %, Table: %, Column: %, Affected Rows: %',
-                    r.schema_name, r.table_name, r.column_name, v_affected_count;
-
-                -- Show sample of affected values
-                RAISE INFO E'\nSample of affected values:';
-                FOR r2 IN EXECUTE format(
-                    'SELECT %I as original_value, 
-                            CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
-                     FROM %I.%I 
-                     WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) 
-                     LIMIT 5',
-                    r.column_name, r.column_name,
+            WHEN 'check' THEN
+                EXECUTE format(
+                    'SELECT count(*) FROM (
+                        SELECT 1 
+                        FROM %I.%I 
+                        WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+                        LIMIT 1
+                    ) s',
                     r.schema_name, r.table_name,
                     r.column_name, r.column_name
-                )
+                ) INTO v_count;
+
+                IF v_count > 0 THEN
+                    RAISE INFO E'\nFound affected rows in %.%.%', 
+                        r.schema_name, r.table_name, r.column_name;
+                    
+                    -- Show sample of affected values
+                    RAISE INFO 'Sample values that need rounding:';
+                    FOR v_sql IN EXECUTE format(
+                        'SELECT %I as original_value, 
+                                CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as rounded_value
+                         FROM %I.%I 
+                         WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+                         LIMIT 5',
+                        r.column_name, r.column_name,
+                        r.schema_name, r.table_name,
+                        r.column_name, r.column_name
+                    ) LOOP
+                        RAISE INFO 'Original: %, Rounded: %', 
+                            v_sql.original_value, v_sql.rounded_value;
+                    END LOOP;
+                END IF;
+
+            WHEN 'update' THEN
+                RAISE INFO E'\nProcessing %.%.%', 
+                    r.schema_name, r.table_name, r.column_name;
+
+                v_count := 0;
                 LOOP
-                    RAISE INFO E'Original: %, New: %', r2.original_value, r2.new_value;
+                    -- Update in batches
+                    v_sql := format(
+                        'WITH rows_to_update AS (
+                            SELECT ctid 
+                            FROM %I.%I 
+                            WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+                            LIMIT %s
+                        )
+                        UPDATE %I.%I t
+                        SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+                        FROM rows_to_update rtu
+                        WHERE t.ctid = rtu.ctid',
+                        r.schema_name, r.table_name,
+                        r.column_name, r.column_name,
+                        p_batch_size,
+                        r.schema_name, r.table_name,
+                        r.column_name, r.column_name
+                    );
+
+                    EXECUTE v_sql;
+                    GET DIAGNOSTICS v_count = ROW_COUNT;
+                    
+                    EXIT WHEN v_count = 0;
+                    
+                    v_total_count := v_total_count + v_count;
+                    RAISE INFO 'Updated % rows...', v_count;
                 END LOOP;
-            END IF;
 
-        ELSIF p_action = 'update' THEN
-            RAISE INFO E'\nProcessing table: %.%', r.schema_name, r.table_name;
-            
-            v_sql := format(
-                'UPDATE %I.%I 
-                 SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
-                 WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
-                r.schema_name, r.table_name,
-                r.column_name, r.column_name,
-                r.column_name, r.column_name
-            );
-
-            EXECUTE v_sql;
-            GET DIAGNOSTICS v_affected_count = ROW_COUNT;
-            v_total_affected_count := v_total_affected_count + v_affected_count;
-            RAISE INFO 'Updated % rows in %.%.%',
-                v_affected_count, r.schema_name, r.table_name, r.column_name;
-
-            IF p_commit_after_table THEN
-                -- No explicit COMMIT needed here as it's handled by autonomous transaction
-                RAISE INFO 'Processed table %.%', r.schema_name, r.table_name;
-            END IF;
-        END IF;
+                IF v_total_count > 0 THEN
+                    RAISE INFO 'Completed updating % total rows in %.%.%',
+                        v_total_count, r.schema_name, r.table_name, r.column_name;
+                END IF;
+        END CASE;
     END LOOP;
 
-    IF v_table_count = 0 THEN
-        RAISE INFO 'No tables found matching the specified criteria.';
-    ELSE
-        RAISE INFO E'\nTotal tables processed: %', v_table_count;
-        RAISE INFO 'Total rows affected: %', v_total_affected_count;
+    IF p_action = 'update' AND v_total_count > 0 THEN
+        RAISE INFO E'\nTotal rows updated across all tables: %', v_total_count;
     END IF;
-
-    DROP TABLE IF EXISTS pg_temp.temp_datetime_columns;
 END;
 $$;
 GO
