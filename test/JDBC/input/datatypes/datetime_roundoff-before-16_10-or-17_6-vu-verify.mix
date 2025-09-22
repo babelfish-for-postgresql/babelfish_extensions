@@ -657,6 +657,145 @@ GO
 -- $$;
 -- GO
 
+-- CREATE OR REPLACE PROCEDURE datetime_rounding_handler(
+--     p_action text DEFAULT NULL,
+--     p_schema_name text DEFAULT NULL,
+--     p_table_name text DEFAULT NULL,
+--     p_batch_size int DEFAULT 1000
+-- )
+-- LANGUAGE plpgsql
+-- AS $$
+-- DECLARE
+--     v_sql text;
+--     r record;
+--     v_count int;
+--     v_total_count int := 0;
+-- BEGIN
+--     -- Help text if no action specified
+--     IF p_action IS NULL THEN
+--         RAISE INFO E'\nUsage: CALL datetime_rounding_handler(p_action, p_schema_name, p_table_name, p_batch_size)';
+--         RAISE INFO E'\nActions:';
+--         RAISE INFO E'  list   - List all tables and columns with datetime type';
+--         RAISE INFO E'  check  - Check for values that need rounding';
+--         RAISE INFO E'  update - Update affected values';
+--         RAISE INFO E'\nParameters:';
+--         RAISE INFO E'  p_schema_name - Schema name (NULL for all schemas)';
+--         RAISE INFO E'  p_table_name  - Table name (NULL for all tables)';
+--         RAISE INFO E'  p_batch_size  - Number of rows to process per batch (default 1000)';
+--         RETURN;
+--     END IF;
+
+--     -- Validate action
+--     IF p_action NOT IN ('list', 'check', 'update') THEN
+--         RAISE EXCEPTION 'Invalid action. Valid actions are: list, check, update';
+--     END IF;
+
+--     -- Get tables and columns with datetime type
+--     FOR r IN (
+--         SELECT 
+--             n.nspname as schema_name,
+--             c.relname as table_name,
+--             a.attname as column_name
+--         FROM pg_class c
+--         JOIN pg_namespace n ON c.relnamespace = n.oid
+--         JOIN pg_attribute a ON c.oid = a.attrelid
+--         JOIN pg_type t ON a.atttypid = t.oid
+--         WHERE t.typname = 'datetime'
+--             AND c.relkind = 'r'
+--             AND NOT a.attisdropped
+--             AND a.attnum > 0
+--             AND (p_schema_name IS NULL OR n.nspname = p_schema_name)
+--             AND (p_table_name IS NULL OR c.relname = p_table_name)
+--             AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog')
+--         ORDER BY n.nspname, c.relname, a.attname
+--     )
+--     LOOP
+--         CASE p_action
+--             WHEN 'list' THEN
+--                 RAISE INFO 'Schema: %, Table: %, Column: %',
+--                     r.schema_name, r.table_name, r.column_name;
+
+--             WHEN 'check' THEN
+--                 EXECUTE format(
+--                     'SELECT count(*) FROM (
+--                         SELECT 1 
+--                         FROM %I.%I 
+--                         WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+--                         LIMIT 1
+--                     ) s',
+--                     r.schema_name, r.table_name,
+--                     r.column_name, r.column_name
+--                 ) INTO v_count;
+
+--                 IF v_count > 0 THEN
+--                     RAISE INFO E'\nFound affected rows in %.%.%', 
+--                         r.schema_name, r.table_name, r.column_name;
+                    
+--                     -- Show sample of affected values
+--                     RAISE INFO 'Sample values that need rounding:';
+--                     FOR v_sql IN EXECUTE format(
+--                         'SELECT %I as original_value, 
+--                                 CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as rounded_value
+--                          FROM %I.%I 
+--                          WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+--                          LIMIT 5',
+--                         r.column_name, r.column_name,
+--                         r.schema_name, r.table_name,
+--                         r.column_name, r.column_name
+--                     ) LOOP
+--                         RAISE INFO 'Original: %, Rounded: %', 
+--                             v_sql.original_value, v_sql.rounded_value;
+--                     END LOOP;
+--                 END IF;
+
+--             WHEN 'update' THEN
+--                 RAISE INFO E'\nProcessing %.%.%', 
+--                     r.schema_name, r.table_name, r.column_name;
+
+--                 v_count := 0;
+--                 LOOP
+--                     -- Update in batches
+--                     v_sql := format(
+--                         'WITH rows_to_update AS (
+--                             SELECT ctid 
+--                             FROM %I.%I 
+--                             WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+--                             LIMIT %s
+--                         )
+--                         UPDATE %I.%I t
+--                         SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+--                         FROM rows_to_update rtu
+--                         WHERE t.ctid = rtu.ctid',
+--                         r.schema_name, r.table_name,
+--                         r.column_name, r.column_name,
+--                         p_batch_size,
+--                         r.schema_name, r.table_name,
+--                         r.column_name, r.column_name
+--                     );
+
+--                     EXECUTE v_sql;
+--                     GET DIAGNOSTICS v_count = ROW_COUNT;
+                    
+--                     EXIT WHEN v_count = 0;
+                    
+--                     v_total_count := v_total_count + v_count;
+--                     RAISE INFO 'Updated % rows...', v_count;
+--                 END LOOP;
+
+--                 IF v_total_count > 0 THEN
+--                     RAISE INFO 'Completed updating % total rows in %.%.%',
+--                         v_total_count, r.schema_name, r.table_name, r.column_name;
+--                 END IF;
+--         END CASE;
+--     END LOOP;
+
+--     IF p_action = 'update' AND v_total_count > 0 THEN
+--         RAISE INFO E'\nTotal rows updated across all tables: %', v_total_count;
+--     END IF;
+-- END;
+-- $$;
+-- GO
+
 CREATE OR REPLACE PROCEDURE datetime_rounding_handler(
     p_action text DEFAULT NULL,
     p_schema_name text DEFAULT NULL,
@@ -670,6 +809,8 @@ DECLARE
     r record;
     v_count int;
     v_total_count int := 0;
+    v_tables_processed int := 0;
+    v_tables_affected int := 0;
 BEGIN
     -- Help text if no action specified
     IF p_action IS NULL THEN
@@ -688,6 +829,14 @@ BEGIN
     -- Validate action
     IF p_action NOT IN ('list', 'check', 'update') THEN
         RAISE EXCEPTION 'Invalid action. Valid actions are: list, check, update';
+    END IF;
+
+    RAISE INFO E'\nStarting % operation...', p_action;
+    IF p_schema_name IS NOT NULL THEN
+        RAISE INFO 'Schema filter: %', p_schema_name;
+    END IF;
+    IF p_table_name IS NOT NULL THEN
+        RAISE INFO 'Table filter: %', p_table_name;
     END IF;
 
     -- Get tables and columns with datetime type
@@ -710,51 +859,53 @@ BEGIN
         ORDER BY n.nspname, c.relname, a.attname
     )
     LOOP
+        v_tables_processed := v_tables_processed + 1;
+
         CASE p_action
             WHEN 'list' THEN
-                RAISE INFO 'Schema: %, Table: %, Column: %',
+                RAISE INFO 'Found datetime column: %.%.%',
                     r.schema_name, r.table_name, r.column_name;
 
             WHEN 'check' THEN
+                RAISE INFO E'\nChecking %.%.%...', 
+                    r.schema_name, r.table_name, r.column_name;
+
                 EXECUTE format(
-                    'SELECT count(*) FROM (
-                        SELECT 1 
-                        FROM %I.%I 
-                        WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
-                        LIMIT 1
-                    ) s',
+                    'SELECT count(*) FROM %I.%I WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
                     r.schema_name, r.table_name,
                     r.column_name, r.column_name
                 ) INTO v_count;
 
                 IF v_count > 0 THEN
-                    RAISE INFO E'\nFound affected rows in %.%.%', 
-                        r.schema_name, r.table_name, r.column_name;
-                    
+                    v_tables_affected := v_tables_affected + 1;
+                    v_total_count := v_total_count + v_count;
+                    RAISE INFO 'Found % rows that need updating', v_count;
+
                     -- Show sample of affected values
-                    RAISE INFO 'Sample values that need rounding:';
+                    RAISE INFO 'Sample values:';
                     FOR v_sql IN EXECUTE format(
                         'SELECT %I as original_value, 
                                 CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as rounded_value
                          FROM %I.%I 
                          WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
-                         LIMIT 5',
+                         LIMIT 3',
                         r.column_name, r.column_name,
                         r.schema_name, r.table_name,
                         r.column_name, r.column_name
                     ) LOOP
-                        RAISE INFO 'Original: %, Rounded: %', 
+                        RAISE INFO '  Original: %, Will be rounded to: %', 
                             v_sql.original_value, v_sql.rounded_value;
                     END LOOP;
+                ELSE
+                    RAISE INFO 'No rows need updating';
                 END IF;
 
             WHEN 'update' THEN
-                RAISE INFO E'\nProcessing %.%.%', 
+                RAISE INFO E'\nProcessing %.%.%...', 
                     r.schema_name, r.table_name, r.column_name;
 
                 v_count := 0;
                 LOOP
-                    -- Update in batches
                     v_sql := format(
                         'WITH rows_to_update AS (
                             SELECT ctid 
@@ -779,19 +930,32 @@ BEGIN
                     EXIT WHEN v_count = 0;
                     
                     v_total_count := v_total_count + v_count;
-                    RAISE INFO 'Updated % rows...', v_count;
+                    RAISE INFO '  Updated % rows...', v_count;
                 END LOOP;
 
                 IF v_total_count > 0 THEN
-                    RAISE INFO 'Completed updating % total rows in %.%.%',
-                        v_total_count, r.schema_name, r.table_name, r.column_name;
+                    v_tables_affected := v_tables_affected + 1;
+                    RAISE INFO 'Completed! Updated % total rows', v_total_count;
+                ELSE
+                    RAISE INFO 'No rows needed updating';
                 END IF;
         END CASE;
     END LOOP;
 
-    IF p_action = 'update' AND v_total_count > 0 THEN
-        RAISE INFO E'\nTotal rows updated across all tables: %', v_total_count;
-    END IF;
+    -- Print summary
+    RAISE INFO E'\nOperation Summary:';
+    RAISE INFO 'Tables processed: %', v_tables_processed;
+    
+    CASE p_action
+        WHEN 'list' THEN
+            RAISE INFO 'Total datetime columns found: %', v_tables_processed;
+        WHEN 'check' THEN
+            RAISE INFO 'Tables needing updates: %', v_tables_affected;
+            RAISE INFO 'Total rows that need updating: %', v_total_count;
+        WHEN 'update' THEN
+            RAISE INFO 'Tables updated: %', v_tables_affected;
+            RAISE INFO 'Total rows updated: %', v_total_count;
+    END CASE;
 END;
 $$;
 GO
