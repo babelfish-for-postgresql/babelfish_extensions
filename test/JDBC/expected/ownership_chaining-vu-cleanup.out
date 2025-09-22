@@ -267,13 +267,6 @@ bool
 t
 ~~END~~
 
-select pg_sleep(2);
-go
-~~START~~
-void
-
-~~END~~
-
 -- terminate-psql-conn
 
 -- tsql

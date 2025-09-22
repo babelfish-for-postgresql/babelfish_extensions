@@ -299,8 +299,6 @@ alter database babelfish_db set babelfishpg_tsql.enable_ownership_chaining = 'of
 go
 select pg_reload_conf();
 go
-select pg_sleep(2);
-go
 -- terminate-psql-conn
 
 -- tsql
