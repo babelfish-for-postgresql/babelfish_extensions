@@ -1793,10 +1793,48 @@ table_ref:	relation_expr tsql_table_hint_expr
 					 */
 					$$ = (Node *) $1;
 				}
+			| TSQL_APPLY openxml_expr
+				{
+					/*
+					 * This case handles openxml cross/outer apply
+					 */
+					$$ = (Node *) $2;
+				}
+			| openxml_expr
+				{
+					/*
+					 * Standard openxml case
+					 */
+					$$ = (Node *) $1;
+				}
 			| table_ref TSQL_UNPIVOT tsql_unpivot_clause alias_clause
 				{
 					List *unpivot_info = list_make3($1, (List *)$3, $4);
                     $$ = tsql_unpivot_transformation(unpivot_info, @1);
+				}
+		;
+
+openxml_expr: OPENXML '(' a_expr ',' a_expr ')' opt_alias_clause
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->alias = $7;
+					n->lateral = false;
+					n->ordinality = false;
+					n->is_rowsfrom = false;
+					n->functions = list_make1(list_make2(makeFuncCall(TsqlSystemFuncName("openxml_simple"), list_make2($3, $5), COERCE_EXPLICIT_CALL, -1), NIL));
+					/* map to OPENXML_SIMPLE */
+					$$ = (Node*) n;
+				}
+			| OPENXML '(' a_expr ',' a_expr ',' a_expr ')' opt_alias_clause
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->alias = $9;
+					n->lateral = false;
+					n->ordinality = false;
+					n->is_rowsfrom = false;
+					n->functions = list_make1(list_make2(makeFuncCall(TsqlSystemFuncName("openxml_simple"), list_make3($3, $5, $7), COERCE_EXPLICIT_CALL, -1), NIL));
+					/* map to OPENXML_SIMPLE */
+					$$ = (Node*) n;		
 				}
 		;
 
