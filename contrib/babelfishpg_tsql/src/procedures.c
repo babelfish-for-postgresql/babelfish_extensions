@@ -122,9 +122,9 @@ static bool is_supported_case_sp_describe_undeclared_parameters = true;
 #define Anum_xml_handle_temp_table_ns_data 7
 
 #define MD5_HASH_LEN 32
+#define XML_HANDLE_COUNTER_START 0
+#define XML_HANDLE_COUNTER_INVALID (INT_MAX / 2)
 
-#define      XML_HANDLE_COUNTER_START 0
-#define      XML_HANDLE_COUNTER_INVALID (INT_MAX / 2)
 static int   current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID;
 Bitmapset   *active_xml_handles_counter = NULL;
 static char *xml_handle_temp_table_name = NULL;
