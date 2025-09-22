@@ -121,17 +121,22 @@ static bool is_supported_case_sp_describe_undeclared_parameters = true;
 #define              Anum_xml_handle_temp_table_xml_data 6
 #define              Anum_xml_handle_temp_table_ns_data 7
 
-#define              MD5_HASH_LEN 32
-const  int           XML_HANDLE_COUNTER_START = 0;
-const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
-static int           current_xml_handle_counter = INT_MAX / 2;
-Bitmapset           *active_xml_handles_counter = NULL;
-static char         *xml_handle_temp_table_name = NULL;
-int                  get_next_xml_handle_counter(void);
-void                 create_xml_handle_temp_table(void);
-void                 delete_xml_handle_entry(int  handle);
-int                  insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
-void                 get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
+#define Anum_xml_handle_temp_table_document_id 1
+#define Anum_xml_handle_temp_table_xml_data 6
+#define Anum_xml_handle_temp_table_ns_data 7
+
+#define MD5_HASH_LEN 32
+
+const  int   XML_HANDLE_COUNTER_START = 0;
+const  int   XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
+static int   current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID;
+Bitmapset   *active_xml_handles_counter = NULL;
+static char *xml_handle_temp_table_name = NULL;
+int          get_next_xml_handle_counter(void);
+void         create_xml_handle_temp_table(void);
+void         delete_xml_handle_entry(int  handle);
+int          insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
+void         get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -4693,7 +4698,7 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 		
 	heap_freetuple(tuple);
 	
-	relation_close(relation, NoLock);
+	relation_close(relation, RowExclusiveLock);
 	
 	return document_id;
 }
@@ -4798,7 +4803,7 @@ delete_xml_handle_entry(int document_id)
 	}
 	
 	systable_endscan(scan);
-	relation_close(relation, NoLock);
+	relation_close(relation, RowExclusiveLock);
 	
 	/* If we didn't find the handle or couldn't delete it, throw an error */
 	if (!found)
@@ -4942,12 +4947,13 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 	EphemeralNamedRelation		enr = NULL;
 	Relation               		relation;
 	ScanKeyData            		skey[1];
-	TableScanDesc      		scan;
+	TableScanDesc      		    scan;
 	HeapTuple              		tuple;
 	Datum                  		datum;
 	bool                   		isnull;
 	bool              	        table_exists = false;
 
+	/* Unlikely, Just a sanity check */
 	if (xml_data == NULL && ns_data == NULL)
 		return;
 
@@ -4968,7 +4974,7 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
 		if (enr)
 		{
-			relation = relation_open(enr->md.reliddesc, RowExclusiveLock);
+			relation = relation_open(enr->md.reliddesc, AccessShareLock);
 			table_exists = true;
 		}
 	}
@@ -4987,10 +4993,10 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 				Anum_xml_handle_temp_table_document_id,
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(document_id));
-
+	
 	scan = table_beginscan_catalog(relation, 1, skey);
 	tuple = heap_getnext(scan, ForwardScanDirection);
-
+	
 	if (HeapTupleIsValid(tuple))
 	{
 		/* Get the XML document */
@@ -4998,19 +5004,19 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 		{
 			isnull = true;
 			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_xml_data, RelationGetDescr(relation), &isnull);
-
+			
 			if (!isnull)
 				*xml_data = DatumGetXmlP(datum);
 			else
 				*xml_data = NULL;
 		}
-
+		
 		/* Get the namespaces */
 		if (ns_data)
 		{
 			isnull = true;
 			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_ns_data, RelationGetDescr(relation), &isnull);
-
+			
 			if (!isnull)
 				*ns_data = DatumGetXmlP(datum);
 			else
@@ -5019,6 +5025,9 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 	}
 	else
 	{
+		table_endscan(scan);
+		relation_close(relation, AccessShareLock);
+
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("Could not find prepared statement with handle %d.", document_id)));
