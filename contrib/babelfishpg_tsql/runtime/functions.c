@@ -50,7 +50,6 @@
 #include "utils/float.h"
 #include "utils/xid8.h"
 #include "utils/xml.h"
-#include "utils/xml.h"
 #include <math.h>
 
 #include "../src/babelfish_version.h"
