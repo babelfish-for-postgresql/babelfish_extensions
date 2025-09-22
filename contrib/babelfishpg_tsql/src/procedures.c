@@ -5067,14 +5067,20 @@ tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
 {
 	char *xpath_expr;
 	int flag = PG_GETARG_INT32(1);
-	char *colname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char *colname;
 
 	/* Check if colname is NULL or empty */
-	if (colname == NULL || strlen(colname) == 0)
+    if (PG_ARGISNULL(0))
+          ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Column name cannot be NULL for OPENXML")));
+
+    colname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	if (strlen(colname) == 0)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("Column name cannot be NULL or empty for OPENXML")));
+				 errmsg("Column name cannot be empty for OPENXML")));
 	}
 
 	/* Check for negative flag values */

@@ -7033,7 +7033,7 @@ fetch_table_schema(RangeVar *relation, Node *flag)
 			}
 			else
 			{
-				colname = NameStr(att->attname);
+				colname = pstrdup(NameStr(att->attname));
 			}
 			
 			/* Create a column definition */
@@ -7085,7 +7085,7 @@ pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
 	rtf->namespaces = NIL;
 	rtf->docexpr = NULL;
 
-	/* Storing doc_id in the res->name field */
+	/* Storing doc_id in the rtf->namespaces field */
 	res->name = pstrdup("openxml_doc_id");
 	res->name_location = -1;
 	res->indirection = NIL;
