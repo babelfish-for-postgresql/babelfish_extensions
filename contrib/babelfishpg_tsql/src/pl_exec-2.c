@@ -4154,6 +4154,7 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 	List		*res;
 	Node	   	*res_stmt;
 	PlannedStmt *wrapper;
+	bool		need_snapshot = !ActiveSnapshotSet();
 
 	Assert(stmt->schema_name != NULL);
 
@@ -4242,6 +4243,14 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 	wrapper->stmt_location = 0;
 	wrapper->stmt_len = 1;
 
+	/*
+	 * CREATE/DELETE FULLTEXT INDEX might involve TOAST table access,
+	 * so we need to ensure that there is a valid snapshot.
+	 */
+	if (need_snapshot)
+	{
+		PushActiveSnapshot(GetTransactionSnapshot());
+	}
 	/* do this step */
 	ProcessUtility(wrapper,
 				is_create ? CREATE_FULLTEXT_INDEX : DELETE_FULLTEXT_INDEX,
@@ -4251,6 +4260,11 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 				NULL,
 				None_Receiver,
 				NULL);
+
+	if (need_snapshot)
+	{
+		PopActiveSnapshot();
+	}
 
 	/* make sure later steps can see the object created here */
 	CommandCounterIncrement();
