@@ -1,0 +1,22 @@
+-- Cleanup dependent objects first
+DROP VIEW IF EXISTS OutputTestView;
+GO
+
+DROP TRIGGER IF EXISTS tr_OutputTest_Insert;
+GO
+
+DROP TRIGGER IF EXISTS tr_OutputTest_Update;
+GO
+
+DROP TRIGGER IF EXISTS tr_OutputTest_Delete;
+GO
+
+-- Cleanup test tables
+DROP TABLE IF EXISTS OutputTest;
+GO
+
+DROP TABLE IF EXISTS OutputLog;
+GO
+
+DROP TABLE IF EXISTS TriggerLog;
+GO
