@@ -285,6 +285,12 @@ FROM datetime_storage_test
 WHERE CAST(dt_value AS VARCHAR(30)) LIKE '%.007';
 GO
 
+DROP TRIGGER tr_datetime_storage_test_audit;
+GO
+
+DROP VIEW datetime_view;
+GO
+
 DROP TABLE datetime_storage_test;
 GO
 
