@@ -1267,6 +1267,37 @@ AND c.CustomerID = 'ALFKI'
 FOR JSON AUTO, INCLUDE_NULL_VALUES;
 GO
 
+-- GROUP BY on multiple tables
+WITH cte_inner AS (
+    SELECT t1.Country as Country1, 
+           t2.Region as Country2, 
+           COUNT(*) as order_count 
+    FROM (SELECT 'USA' as Country) t1 
+    JOIN (SELECT 'North' as Region) t2 
+        ON t1.Country = t1.Country 
+    GROUP BY t1.Country, t2.Region
+),
+cte1 AS (
+    SELECT cin.Country1 as c1C, 
+           cin.Country2 as c2C, 
+           cin.order_count, 
+           p.ProductName 
+    FROM cte_inner cin 
+    JOIN forjsonauto_t_products p 
+        ON p.ProductID = 2
+)
+SELECT c.CompanyName, 
+       c1.c1C, 
+       c1.c2C, 
+       c1.productname, 
+       c1.order_count 
+FROM forjsonauto_t_customers c 
+JOIN cte1 c1 
+    ON c.Country = c1.c1C 
+WHERE c.CompanyName = 'Alfreds Inc' 
+FOR JSON AUTO;
+GO
+
 -- SELECT FROM a table which value is a result of FOR JSON AUTO
 SELECT * FROM JsonTable;
 GO
