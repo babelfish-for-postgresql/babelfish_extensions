@@ -530,10 +530,20 @@ TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int ch
 
 /**
  * Helper function to validate T-SQL float literals.
+ * 
+ * The function expects non-null char pointer 
+ * terminated with null character ('\0'). It only returns
+ * true if the giving string is only consist of valid float literals.
+ * Otherwise, it returns false if the float literal is not validated 
+ * or the input num is NULL.
  */
 static bool
 is_valid_tsql_float(const char *num)
 {
+	if (num == NULL)
+	{
+		return false;
+	}
 	const char *ptr = num;
 	bool has_digits = false;
 
