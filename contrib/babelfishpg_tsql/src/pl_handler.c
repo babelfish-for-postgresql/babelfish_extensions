@@ -1603,7 +1603,7 @@ handleForJsonAuto(Query *wrapperQuery, JsonAutoContext *jsonAutoCtx)
 		foreach(lc, origqRtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE)
+			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE || rte->rtekind == RTE_GROUP)
 			{
 				hasValidSrc = true;
 				break;
@@ -1891,6 +1891,41 @@ modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *j
 			varNo = curVar->varno; // index to the source in current layer's rtable
 			varAttNo = curVar->varattno; // index to target in next layer's targetList (in current layer source)
 			matchedSrc = list_nth(curQuery->rtable, varNo-1);
+
+			/*
+			 * Handle RTE_GROUP entries created by GROUP BY operations.
+			 * PostgreSQL creates these with generic "*GROUP*" aliases, but we need
+			 * to resolve them to the actual source table names for proper JSON nesting.
+			 */
+			if (matchedSrc->rtekind == RTE_GROUP)
+			{
+				ListCell   *expr_lc;
+				int				expr_idx = 1;
+
+				/*
+				 * Find the groupexpr that corresponds to our current varAttNo.
+				 * The varAttNo indexes into the GROUP BY expressions list.
+				 */
+				foreach(expr_lc, matchedSrc->groupexprs)
+				{
+					if (expr_idx == varAttNo)
+					{
+						Node	   *expr = (Node *) lfirst(expr_lc);
+
+						if (IsA(expr, Var))
+						{
+							Var           *var = (Var *) expr;
+							RangeTblEntry *sourceRte = list_nth(curQuery->rtable, var->varno - 1);
+
+							/* Replace GROUP RTE with actual source RTE */
+							matchedSrc = sourceRte;
+							varAttNo = var->varattno;
+						}
+						break;
+					}
+					expr_idx++;
+				}
+			}
 
 			/* Keep appending src's alias when unwrapping for unique identification */
 			if (fullSrcPath.len != 0)
