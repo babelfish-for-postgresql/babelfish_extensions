@@ -90,230 +90,6 @@ END;
 $$;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_varbinary_varchar_deprecated_in_5_4_0');
 
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(typename text, arg text, try boolean, p_style numeric) RENAME TO babelfish_conv_helper_to_varchar_text_deprecated_in_5_4_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_text_deprecated_in_5_4_0');
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(typename text, arg anyelement, try boolean, p_style numeric) RENAME TO babelfish_conv_helper_to_varchar_anyelement_deprecated_in_5_4_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_anyelement_deprecated_in_5_4_0');
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_to_varchar(typename text, arg text, p_style numeric) RENAME TO babelfish_try_conv_to_varchar_text_deprecated_in_5_4_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varchar_text_deprecated_in_5_4_0');
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_to_varchar(typename text, arg anyelement, p_style numeric) RENAME TO babelfish_try_conv_to_varchar_anyelement_deprecated_in_5_4_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varchar_anyelement_deprecated_in_5_4_0');
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_conv_to_varchar(typename text, arg text, p_style numeric) RENAME TO babelfish_conv_to_varchar_text_deprecated_in_5_4_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_text_deprecated_in_5_4_0');
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_conv_to_varchar(typename text, arg anyelement, p_style NUMERIC) RENAME TO babelfish_conv_to_varchar_anyelement_deprecated_in_5_4_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_anyelement_deprecated_in_5_4_0');
-
--- convertion to NVARCHAR
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
-                                                        IN arg TEXT,
-                                                        IN try BOOL,
-                                                        IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
-AS
-$BODY$
-BEGIN
-	IF try THEN
-	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
-    ELSE
-	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
-    END IF;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
-                                                        IN arg ANYELEMENT,
-                                                        IN try BOOL,
-                                                        IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
-AS
-$BODY$
-BEGIN
-	IF try THEN
-	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
-    ELSE
-	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
-    END IF;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
-														IN arg TEXT,
-														IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
-AS
-$BODY$
-BEGIN
-    RETURN CAST(arg AS sys.NVARCHAR);
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
-														IN arg anyelement,
-														IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
-AS
-$BODY$
-DECLARE
-	v_style SMALLINT;
-BEGIN
-	v_style := floor(p_style)::SMALLINT;
-
-	CASE pg_typeof(arg)
-	WHEN 'date'::regtype THEN
-		IF v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
-		ELSE
-			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
-		END IF;
-	WHEN 'time'::regtype THEN
-		IF v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
-		ELSE
-			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
-		END IF;
-	WHEN 'sys.datetime'::regtype THEN
-		IF v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
-		ELSE
-			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
-		END IF;
-	WHEN 'float'::regtype THEN
-		IF v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
-		ELSE
-			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
-		END IF;
-	WHEN 'sys.money'::regtype THEN
-		IF v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
-		ELSE
-			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
-		END IF;
-	WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
-		IF lower(typename) LIKE 'nvarchar%' THEN
-			RETURN (sys.varbinarysysnvarchar(arg, -1, true));
-		ELSE
-			RETURN CAST(arg AS sys.VARCHAR);
-		END IF;
-	WHEN 'sys.binary'::regtype THEN
-		IF lower(typename) LIKE 'nvarchar%' THEN
-			RETURN (sys.binarysysnvarchar(arg, -1, true));
-		ELSE
-			RETURN CAST(arg AS sys.VARCHAR);
-		END IF;
-	ELSE
-		RETURN CAST(arg AS sys.VARCHAR);
-	END CASE;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
-														IN arg TEXT,
-														IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
-AS
-$BODY$
-BEGIN
-    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
-														IN arg anyelement,
-														IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
-AS
-$BODY$
-BEGIN
-    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
-----------------------------------------------------------------
-
 DO $$
 DECLARE
     old_function_exists boolean;
@@ -477,6 +253,70 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+----------------------------------------------------------------
+
+-- convertion to varchar
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
+														IN arg anyelement,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+BEGIN
+	v_style := floor(p_style)::SMALLINT;
+
+	CASE pg_typeof(arg)
+	WHEN 'date'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'time'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
+		END IF;
+	WHEN 'sys.datetime'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
+		ELSE
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+		END IF;
+	WHEN 'float'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'sys.money'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
+		ELSE
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
+		END IF;
+	WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
+		IF lower(typename) LIKE 'nvarchar%' THEN
+			RETURN (sys.varbinarysysnvarchar(arg, -1, true));
+		ELSE
+			RETURN CAST(arg AS sys.VARCHAR);
+		END IF;
+	WHEN 'sys.binary'::regtype THEN
+		IF lower(typename) LIKE 'nvarchar%' THEN
+			RETURN (sys.binarysysnvarchar(arg, -1, true));
+		ELSE
+			RETURN CAST(arg AS sys.VARCHAR);
+		END IF;
+	ELSE
+		RETURN CAST(arg AS sys.VARCHAR);
+	END CASE;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
 ----------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION sys.sqrt(number PG_CATALOG.NUMERIC)

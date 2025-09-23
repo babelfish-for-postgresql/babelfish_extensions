@@ -10691,12 +10691,12 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
--- convertion to NVARCHAR
+-- convertion to varchar
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg TEXT,
                                                         IN try BOOL,
                                                         IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
+RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
@@ -10714,7 +10714,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT
                                                         IN arg ANYELEMENT,
                                                         IN try BOOL,
                                                         IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
+RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
@@ -10731,11 +10731,11 @@ STABLE;
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg TEXT,
 														IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
+RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN CAST(arg AS sys.NVARCHAR);
+    RETURN CAST(arg AS sys.VARCHAR);
 END;
 $BODY$
 LANGUAGE plpgsql
@@ -10744,7 +10744,7 @@ STABLE;
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
 														IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
+RETURNS sys.VARCHAR
 AS
 $BODY$
 DECLARE
@@ -10806,7 +10806,7 @@ STABLE;
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
 														IN arg TEXT,
 														IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
+RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
@@ -10822,7 +10822,7 @@ STABLE;
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
 														IN p_style NUMERIC DEFAULT -1)
-RETURNS sys.NVARCHAR
+RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
