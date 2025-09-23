@@ -284,6 +284,9 @@ FROM datetime_storage_test
 WHERE CAST(dt_value AS VARCHAR(30)) LIKE '%.007';
 GO
 
+DROP TABLE datetime_storage_test;
+GO
+
 -- BASIC UPGRADE TESTING
 -- psql
 -- get total number of columns whose datatype is datetime
@@ -489,8 +492,6 @@ BEGIN
 END;
 $$;
 GO
-
--- procedure for all use case
 CREATE OR REPLACE PROCEDURE datetime_rounding_handler(
     p_action text DEFAULT NULL,
     p_schema_name text DEFAULT NULL,
@@ -533,27 +534,8 @@ BEGIN
         RAISE EXCEPTION 'Schema name is required for update action unless table_name is "all"';
     END IF;
 
-    -- Drop temporary tables if they exist
+    -- Drop temporary table if exists
     DROP TABLE IF EXISTS temp_datetime_columns;
-    DROP TABLE IF EXISTS temp_tables_with_triggers;
-
-    -- Create temporary table for tables with triggers
-    CREATE TEMP TABLE temp_tables_with_triggers (
-        schema_name text,
-        table_name text
-    );
-
-    -- Populate temporary table with tables that have triggers
-    INSERT INTO temp_tables_with_triggers
-    SELECT
-        n.nspname AS schema_name,
-        t.relname AS table_name
-    FROM
-        pg_trigger tr
-    JOIN
-        pg_class t ON t.oid = tr.tgrelid
-    JOIN
-        pg_namespace n ON n.oid = t.relnamespace;
 
     -- Create temporary table for datetime columns
     CREATE TEMP TABLE temp_datetime_columns (
@@ -562,7 +544,7 @@ BEGIN
         column_name text
     );
 
-    -- Populate temporary table, excluding tables with triggers
+    -- Populate temporary table
     INSERT INTO temp_datetime_columns
     SELECT 
         n.nspname as schema_name,
@@ -572,23 +554,16 @@ BEGIN
     JOIN pg_namespace n ON t.relnamespace = n.oid
     JOIN pg_attribute a ON t.oid = a.attrelid
     WHERE a.atttypid = v_datetime_typoid
-        AND t.relkind = 'r'
+        AND (t.relkind = 'r' or t.relkind = 'p')
         AND NOT a.attisdropped
         AND a.attnum > 0
         AND (p_schema_name IS NULL OR n.nspname = p_schema_name)
         AND (p_table_name IS NULL OR p_table_name = 'all' OR t.relname = p_table_name)
-        AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog')
-        -- Exclude tables with triggers
-        AND NOT EXISTS (
-            SELECT 1
-            FROM temp_tables_with_triggers
-            WHERE schema_name = n.nspname AND table_name = t.relname
-        );
+        AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog');
 
     IF NOT EXISTS (SELECT 1 FROM temp_datetime_columns) THEN
         RAISE INFO 'No datetime columns found matching the specified criteria.';
         DROP TABLE IF EXISTS temp_datetime_columns;
-        DROP TABLE IF EXISTS temp_tables_with_triggers;
         RETURN;
     END IF;
 
@@ -608,7 +583,6 @@ BEGIN
                 r.schema_name, r.table_name, r.datetime_columns;
         END LOOP;
         DROP TABLE IF EXISTS temp_datetime_columns;
-        DROP TABLE IF EXISTS temp_tables_with_triggers;
         RETURN;
     END IF;
 
@@ -635,9 +609,9 @@ BEGIN
                 FOR r2 IN EXECUTE format(
                     'SELECT %I as original_value, 
                             CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
-                       FROM %I.%I 
-                      WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) 
-                      LIMIT 5',
+                     FROM %I.%I 
+                     WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) 
+                     LIMIT 5',
                     r.column_name, r.column_name,
                     r.schema_name, r.table_name,
                     r.column_name, r.column_name
@@ -648,26 +622,33 @@ BEGIN
             END IF;
 
         ELSIF p_action = 'update' THEN
-            RAISE INFO E'\nProcessing table: %.%', r.schema_name, r.table_name;
-            
-            v_sql := format(
-                'UPDATE %I.%I 
-                 SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
-                 WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
-                r.schema_name, r.table_name,
-                r.column_name, r.column_name,
-                r.column_name, r.column_name
-            );
+            -- First check if there are any rows to update
+            EXECUTE format(
+                'SELECT COUNT(*) FROM %I.%I WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+                r.schema_name, r.table_name, r.column_name, r.column_name
+            ) INTO v_affected_count;
 
-            EXECUTE v_sql;
-            GET DIAGNOSTICS v_affected_count = ROW_COUNT;
-            v_total_affected_count := v_total_affected_count + v_affected_count;
-            RAISE INFO 'Updated % rows in %.%.%',
-                v_affected_count, r.schema_name, r.table_name, r.column_name;
+            IF v_affected_count > 0 THEN
+                RAISE INFO E'\nProcessing table: %.%', r.schema_name, r.table_name;
+                
+                v_sql := format(
+                    'UPDATE %I.%I 
+                    SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+                    WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+                    r.schema_name, r.table_name,
+                    r.column_name, r.column_name,
+                    r.column_name, r.column_name
+                );
 
-            IF p_commit_after_table THEN
-                -- No explicit COMMIT needed here as it's handled by autonomous transaction
-                RAISE INFO 'Processed table %.%', r.schema_name, r.table_name;
+                EXECUTE v_sql;
+                GET DIAGNOSTICS v_affected_count = ROW_COUNT;
+                v_total_affected_count := v_total_affected_count + v_affected_count;
+                RAISE INFO 'Updated % rows in %.%.%',
+                    v_affected_count, r.schema_name, r.table_name, r.column_name;
+
+                IF p_commit_after_table THEN
+                    RAISE INFO 'Processed table %.%', r.schema_name, r.table_name;
+                END IF;
             END IF;
         END IF;
     END LOOP;
@@ -680,7 +661,6 @@ BEGIN
     END IF;
 
     DROP TABLE IF EXISTS temp_datetime_columns;
-    DROP TABLE IF EXISTS temp_tables_with_triggers;
 END;
 $$;
 GO
