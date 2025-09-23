@@ -21,3 +21,9 @@ GO
 
 DROP TABLE regions;
 GO
+
+DROP VIEW openxml_column_patterns
+GO
+
+DROP VIEW openxml_documents
+GO

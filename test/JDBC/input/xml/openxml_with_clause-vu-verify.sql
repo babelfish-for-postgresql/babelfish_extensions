@@ -1221,3 +1221,60 @@ WITH (
 
 EXEC sp_xml_removedocument @handle;
 GO
+
+-- Tests for tsql_openxml_get_colpattern and tsql_openxml_get_xmldoc
+-- Test basic flag patterns
+SELECT sys.tsql_openxml_get_colpattern('name', 0);
+GO
+
+SELECT sys.tsql_openxml_get_colpattern('name', 1);
+GO
+
+SELECT sys.tsql_openxml_get_colpattern('name', 2);
+GO
+
+SELECT sys.tsql_openxml_get_colpattern('name', 3);
+GO
+
+-- Test flag normalization (mod 4)
+SELECT sys.tsql_openxml_get_colpattern('id', 4)
+GO
+
+SELECT sys.tsql_openxml_get_colpattern('id', 5);
+GO
+
+SELECT sys.tsql_openxml_get_colpattern('id', 6);
+GO
+
+SELECT sys.tsql_openxml_get_colpattern('id', 7);
+GO
+
+-- Test error and null cases
+SELECT sys.tsql_openxml_get_colpattern(NULL, 1);
+GO
+
+SELECT sys.tsql_openxml_get_colpattern('', 1);
+GO
+
+SELECT sys.tsql_openxml_get_colpattern('name', -1);
+GO
+
+-- Test with valid document handle
+DECLARE @doc_handle INT;
+EXEC sp_xml_preparedocument @doc_handle OUTPUT, '<root><item>test</item></root>';
+SELECT sys.tsql_openxml_get_xmldoc(@doc_handle);
+EXEC sp_xml_removedocument @doc_handle;
+GO
+
+-- Test with invalid or NULL handle
+SELECT sys.tsql_openxml_get_xmldoc(999);
+GO
+SELECT sys.tsql_openxml_get_xmldoc(NULL);
+GO
+
+-- Tests for views for col pattern and xml doc generation
+SELECT * FROM openxml_column_patterns WHERE flag = 3;
+GO
+
+SELECT document_id FROM openxml_documents;
+GO

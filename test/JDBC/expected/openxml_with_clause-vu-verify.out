@@ -1504,3 +1504,146 @@ INV001#!#Standard#!#<NULL>#!#<NULL>#!#<NULL>
 INV002#!#Express#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
+
+-- Tests for tsql_openxml_get_colpattern and tsql_openxml_get_xmldoc
+-- Test basic flag patterns
+SELECT sys.tsql_openxml_get_colpattern('name', 0);
+GO
+~~START~~
+nvarchar
+@name
+~~END~~
+
+
+SELECT sys.tsql_openxml_get_colpattern('name', 1);
+GO
+~~START~~
+nvarchar
+@name
+~~END~~
+
+
+SELECT sys.tsql_openxml_get_colpattern('name', 2);
+GO
+~~START~~
+nvarchar
+name
+~~END~~
+
+
+SELECT sys.tsql_openxml_get_colpattern('name', 3);
+GO
+~~START~~
+nvarchar
+name|@name
+~~END~~
+
+
+-- Test flag normalization (mod 4)
+SELECT sys.tsql_openxml_get_colpattern('id', 4)
+GO
+~~START~~
+nvarchar
+@id
+~~END~~
+
+
+SELECT sys.tsql_openxml_get_colpattern('id', 5);
+GO
+~~START~~
+nvarchar
+@id
+~~END~~
+
+
+SELECT sys.tsql_openxml_get_colpattern('id', 6);
+GO
+~~START~~
+nvarchar
+id
+~~END~~
+
+
+SELECT sys.tsql_openxml_get_colpattern('id', 7);
+GO
+~~START~~
+nvarchar
+id|@id
+~~END~~
+
+
+-- Test error and null cases
+SELECT sys.tsql_openxml_get_colpattern(NULL, 1);
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT sys.tsql_openxml_get_colpattern('', 1);
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Column name cannot be empty for OPENXML)~~
+
+
+SELECT sys.tsql_openxml_get_colpattern('name', -1);
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid flag value -1 for OPENXML)~~
+
+
+-- Test with valid document handle
+DECLARE @doc_handle INT;
+EXEC sp_xml_preparedocument @doc_handle OUTPUT, '<root><item>test</item></root>';
+SELECT sys.tsql_openxml_get_xmldoc(@doc_handle);
+EXEC sp_xml_removedocument @doc_handle;
+GO
+~~START~~
+xml
+<root><item>test</item></root>
+~~END~~
+
+
+-- Test with invalid or NULL handle
+SELECT sys.tsql_openxml_get_xmldoc(999);
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find prepared statement with handle 999.)~~
+
+SELECT sys.tsql_openxml_get_xmldoc(NULL);
+GO
+~~START~~
+xml
+<NULL>
+~~END~~
+
+
+-- Tests for views for col pattern and xml doc generation
+SELECT * FROM openxml_column_patterns WHERE flag = 3;
+GO
+~~START~~
+varchar#!#int#!#nvarchar
+id#!#3#!#id|@id
+name#!#3#!#name|@name
+value#!#3#!#value|@value
+~~END~~
+
+
+SELECT document_id FROM openxml_documents;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find prepared statement with handle 1.)~~
+
