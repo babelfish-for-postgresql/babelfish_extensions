@@ -1,2 +1,6 @@
 Test data created successfully
+Test Case 1 completed: UPDATE with OUTPUT EPQ
+Test Case 2 completed: DELETE with OUTPUT EPQ
+Test Case 3 completed: INSERT with OUTPUT during concurrent operations
+Test Case 4 completed: Mixed DML - INSERT, UPDATE, DELETE in sequence
 Test passed
