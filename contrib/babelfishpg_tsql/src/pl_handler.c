@@ -4895,16 +4895,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								}
 								else
 								{
-									privileges = (char **) palloc0(8 * sizeof(char *));
+									privileges = (char **) palloc0(7 * sizeof(char *));
 									privileges[0] = pstrdup("insert");
 									privileges[1] = pstrdup("select");
 									privileges[2] = pstrdup("update");
 									privileges[3] = pstrdup("delete");
 									privileges[4] = pstrdup("references");
 									privileges[5] = pstrdup("truncate");
-									privileges[6] = pstrdup("maintain");
 									privileges[7] = pstrdup("trigger");
-									number_of_privs = 8;
+									number_of_privs = 7;
 								}
 
 								for (int i = 0; i < number_of_privs; i++)

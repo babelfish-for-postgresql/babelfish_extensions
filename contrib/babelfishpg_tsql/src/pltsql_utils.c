@@ -2493,8 +2493,6 @@ string_to_privilege(const char *privname)
 		return ACL_EXECUTE;
 	if (strcmp(privname, "truncate") == 0)
 		return ACL_TRUNCATE;
-	if (strcmp(privname, "maintain") == 0)
-		return ACL_MAINTAIN;
 	if (strcmp(privname, "trigger") == 0)
 		return ACL_TRIGGER;
 	if (strcmp(privname, "usage") == 0)
