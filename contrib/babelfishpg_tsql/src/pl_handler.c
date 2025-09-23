@@ -4902,7 +4902,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									privileges[3] = pstrdup("delete");
 									privileges[4] = pstrdup("references");
 									privileges[5] = pstrdup("truncate");
-									privileges[7] = pstrdup("trigger");
+									privileges[6] = pstrdup("trigger");
 									number_of_privs = 7;
 								}
 
