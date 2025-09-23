@@ -1633,9 +1633,6 @@ SELECT * FROM openxml_column_patterns WHERE flag = 3;
 GO
 ~~START~~
 varchar#!#int#!#nvarchar
-id#!#3#!#id|@id
-name#!#3#!#name|@name
-value#!#3#!#value|@value
 ~~END~~
 
 

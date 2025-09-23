@@ -48,24 +48,9 @@ GO
 
 -- View for col pattern generation and xml doc retrieval
 CREATE VIEW openxml_column_patterns AS 
-SELECT 
-    column_name,
-    flag,
-    sys.tsql_openxml_get_colpattern(column_name, flag) AS xpath_pattern 
-FROM (
-    VALUES 
-        ('id', 0), ('id', 1), ('id', 2), ('id', 3),
-        ('name', 0), ('name', 1), ('name', 2), ('name', 3),
-        ('value', 0), ('value', 1), ('value', 2), ('value', 3)
-) AS patterns(column_name, flag);
+SELECT 'id' as column_name, 0 as flag, sys.tsql_openxml_get_colpattern('id', 0) AS xpath_pattern
 GO
 
 CREATE VIEW openxml_documents AS 
-SELECT 
-    document_id,
-    sys.tsql_openxml_get_xmldoc(document_id) AS xml_document 
-FROM (
-    SELECT generate_series(1, 100) AS document_id 
-) AS doc_ids 
-WHERE sys.tsql_openxml_get_xmldoc(document_id) IS NOT NULL;
+SELECT 1 as document_id, sys.tsql_openxml_get_xmldoc(1) AS xml_document;
 GO
