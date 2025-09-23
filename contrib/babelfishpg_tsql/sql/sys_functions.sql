@@ -1138,7 +1138,7 @@ LANGUAGE C IMMUTABLE ;
 
 create or replace function sys.reverse_timezone_mapping(IN tmz text) returns text
 AS 'babelfishpg_tsql', 'reverse_timezone_mapping'
-LANGUAGE C IMMUTABLE ;
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT ,  IN input_expr PG_CATALOG.TEXT)
 RETURNS sys.datetimeoffset

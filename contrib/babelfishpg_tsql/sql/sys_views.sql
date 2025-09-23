@@ -3729,7 +3729,7 @@ SELECT
           ELSE 
               '+' || RIGHT('0' || CAST(EXTRACT(HOUR FROM utc_offset) AS VARCHAR(2)), 2) || ':' || 
               RIGHT('0' || CAST(EXTRACT(MINUTE FROM utc_offset) AS VARCHAR(2)), 2)
-      END AS VARCHAR(6)
+      END AS sys.NVARCHAR(12)
     ) AS current_utc_offset,
     -- Converting boolean is_dst to bit (0/1)
     CAST(

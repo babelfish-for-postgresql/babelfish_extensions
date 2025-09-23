@@ -294,7 +294,7 @@ SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('sear
 
 create or replace function sys.reverse_timezone_mapping(IN tmz text) returns text
 AS 'babelfishpg_tsql', 'reverse_timezone_mapping'
-LANGUAGE C IMMUTABLE ;
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
 
 CREATE OR REPLACE VIEW sys.time_zone_info AS
 SELECT 
@@ -302,16 +302,15 @@ SELECT
     pg_catalog.initcap(sys.reverse_timezone_mapping(name))
     AS name,
     CAST(
-        CASE 
-            WHEN utc_offset < '00:00:00' THEN 
-                '-' || RIGHT('0' || CAST(ABS(EXTRACT(HOUR FROM utc_offset)) AS VARCHAR(2)), 2) || ':' ||
-                RIGHT('0' || CAST(ABS(EXTRACT(MINUTE FROM utc_offset)) AS VARCHAR(2)), 2)
-            ELSE 
-                '+' || RIGHT('0' || CAST(EXTRACT(HOUR FROM utc_offset) AS VARCHAR(2)), 2) || ':' || 
-                RIGHT('0' || CAST(EXTRACT(MINUTE FROM utc_offset) AS VARCHAR(2)), 2)
-        END AS VARCHAR(6)
+      CASE 
+          WHEN utc_offset < '00:00:00' THEN 
+              '-' || RIGHT('0' || CAST(ABS(EXTRACT(HOUR FROM utc_offset)) AS VARCHAR(2)), 2) || ':' ||
+              RIGHT('0' || CAST(ABS(EXTRACT(MINUTE FROM utc_offset)) AS VARCHAR(2)), 2)
+          ELSE 
+              '+' || RIGHT('0' || CAST(EXTRACT(HOUR FROM utc_offset) AS VARCHAR(2)), 2) || ':' || 
+              RIGHT('0' || CAST(EXTRACT(MINUTE FROM utc_offset) AS VARCHAR(2)), 2)
+      END AS sys.NVARCHAR(12)
     ) AS current_utc_offset,
-
     -- Converting boolean is_dst to bit (0/1)
     CAST(
         CASE 

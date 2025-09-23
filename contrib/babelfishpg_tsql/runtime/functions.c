@@ -1299,6 +1299,9 @@ timezone_mapping(PG_FUNCTION_ARGS)
 	PG_RETURN_VARCHAR_P(result);
 }
 
+/*
+* The reverse_timezone_mapping() is used for fetching Windows name of standard timezone from PostgreSQL timezone name
+*/
 Datum
 reverse_timezone_mapping(PG_FUNCTION_ARGS)
 {
@@ -1308,9 +1311,11 @@ reverse_timezone_mapping(PG_FUNCTION_ARGS)
 	{
 		if(pg_strcasecmp(win32_tzmap[i].pgtzname,pgtmz) == 0)
 		{
+			pfree(pgtmz);
 			PG_RETURN_VARCHAR_P(cstring_to_text(win32_tzmap[i].stdname));
 		}
 	}
+	pfree(pgtmz);
 	PG_RETURN_NULL();
 }
 

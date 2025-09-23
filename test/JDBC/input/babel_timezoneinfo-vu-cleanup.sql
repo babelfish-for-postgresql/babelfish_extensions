@@ -27,8 +27,3 @@ GO
 IF OBJECT_ID('sp_ValidateTimeZoneData', 'P') IS NOT NULL
     DROP PROCEDURE sp_ValidateTimeZoneData;
 GO
-
-
-
-
-
