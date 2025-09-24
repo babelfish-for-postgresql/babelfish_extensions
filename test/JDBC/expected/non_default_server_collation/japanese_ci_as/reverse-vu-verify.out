@@ -418,7 +418,7 @@ SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t9
 GO
 ~~START~~
 varchar
-079686766656x\
+\x706968676665
 ~~END~~
 
 
