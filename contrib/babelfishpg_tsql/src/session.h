@@ -11,7 +11,7 @@ extern const char *get_current_pltsql_db_name(void);
 extern const char *get_current_db_search_path(void);
 extern void bbf_set_current_user(const char *user_name);
 extern void check_session_db_access(const char *dn_name);
-extern void set_cur_user_db_and_path(const char *db_name, bool check_db_id);
+extern void set_cur_user_db_and_path(const char *db_name, bool check_db_id, bool called_as_trigger);
 extern void restore_session_properties(void);
 extern void reset_session_properties(void);
 extern void set_cur_db_name_for_parallel_worker(const char* logical_db_name);
