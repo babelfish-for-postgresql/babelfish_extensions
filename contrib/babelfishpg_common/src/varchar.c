@@ -540,12 +540,13 @@ TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int ch
 static bool
 is_valid_tsql_float(const char *num)
 {
+	const char *ptr = num;
+	bool has_digits = false;
+	
 	if (num == NULL)
 	{
 		return false;
 	}
-	const char *ptr = num;
-	bool has_digits = false;
 
 	while (*ptr != '\0' && isspace((unsigned char) *ptr))
 		ptr++;
