@@ -2445,11 +2445,11 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 		}
 		
 		/* Ignore following definitions as these are used when no other potential definition can be used. */
-		if ((current_candidate->args[0] == TEXTOID && rettype == get_sys_varcharoid())
+		if (((current_candidate->args[0] == TEXTOID || current_candidate->args[0] == BYTEAOID) && rettype == get_sys_varcharoid())
 			|| (current_candidate->args[0] == BYTEAOID && rettype == BYTEAOID))
 			continue;
 		/*
-                 * Find the best candidate based on second_arg_type(this will be valid only for the case of hasbytes) 
+         * Find the best candidate based on second_arg_type(this will be valid only for the case of hasbytes) 
 		 * for hashbytes function. For other special functions we are selecting best candidate on the basis 
 		 * of return type.
 		 */
