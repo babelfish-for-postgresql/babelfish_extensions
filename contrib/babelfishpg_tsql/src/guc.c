@@ -47,6 +47,7 @@ char	   *pltsql_language = NULL;
 char	   *pltsql_psql_logical_babelfish_db_name = NULL;
 int			pltsql_lock_timeout = -1;
 bool		pltsql_enable_linked_servers = true;
+bool		pltsql_enable_ownership_chaining = true;
 bool		pltsql_allow_windows_login = true;
 bool		pltsql_allow_fulltext_parser = false;
 
@@ -1242,6 +1243,16 @@ define_custom_variables(void)
 							 true,
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/* GUC to enable/disable the ownership chaining feature, by default enabled */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_ownership_chaining",
+							 gettext_noop("Enables ownership chaining"),
+							 NULL,
+							 &pltsql_enable_ownership_chaining,
+							 true,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
 }
 

@@ -1,0 +1,43 @@
+-- Clean up
+drop table babel_datetime_vu_prepare_testing
+go
+drop table babel_datetime_vu_prepare_testing_1
+go
+drop view babel_datetime_vu_view1
+go
+drop view babel_datetime_vu_view2
+go
+drop procedure babel_datetime_vu_procedure
+go
+drop function babel_datetime_vu_function1
+go
+drop view babel_datetime_varbinary_vu_view1
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_datetime_varbinary_vu_view1" does not exist)~~
+
+drop view babel_datetime_varbinary_vu_view2
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_datetime_varbinary_vu_view2" does not exist)~~
+
+drop view babel_datetime_varbinary_vu_view3
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_datetime_varbinary_vu_view3" does not exist)~~
+
+drop view babel_datetime_varbinary_vu_view4
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_datetime_varbinary_vu_view4" does not exist)~~
+
+drop procedure babel_datetime_varbinary_vu_procedure
+go
+drop function babel_datetime_varbinary_vu_function1
+go
+drop table babel_datetime_varbinary_vu_prepare_testing_2
+go

@@ -92,3 +92,17 @@ DROP USER IF EXISTS owner6030_b;
 GO
 DROP LOGIN l6030_2;
 GO
+
+-- psql
+show babelfishpg_tsql.enable_ownership_chaining;
+go
+alter database babelfish_db set babelfishpg_tsql.enable_ownership_chaining = 'on';
+go
+select pg_reload_conf();
+go
+-- terminate-psql-conn
+
+-- tsql
+select current_setting('babelfishpg_tsql.enable_ownership_chaining');
+go
+-- terminate-tsql-conn

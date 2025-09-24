@@ -114,16 +114,22 @@ bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
-#define              MD5_HASH_LEN 32
-const  int           XML_HANDLE_COUNTER_START = 0;
-const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
-static int           current_xml_handle_counter = INT_MAX / 2;
-Bitmapset           *active_xml_handles_counter = NULL;
-static char         *xml_handle_temp_table_name = NULL;
-int                  get_next_xml_handle_counter(void);
-void                 create_xml_handle_temp_table(void);
-void                 delete_xml_handle_entry(int  handle);
-int                  insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
+#define Anum_xml_handle_temp_table_document_id 1
+#define Anum_xml_handle_temp_table_xml_data 6
+#define Anum_xml_handle_temp_table_ns_data 7
+
+#define MD5_HASH_LEN 32
+#define XML_HANDLE_COUNTER_START 0
+#define XML_HANDLE_COUNTER_INVALID (INT_MAX / 2)
+
+static int   current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID;
+Bitmapset   *active_xml_handles_counter = NULL;
+static char *xml_handle_temp_table_name = NULL;
+int          get_next_xml_handle_counter(void);
+void         create_xml_handle_temp_table(void);
+void         delete_xml_handle_entry(int  handle);
+int          insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
+void         get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -4685,7 +4691,7 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 		
 	heap_freetuple(tuple);
 	
-	relation_close(relation, NoLock);
+	relation_close(relation, RowExclusiveLock);
 	
 	return document_id;
 }
@@ -4790,7 +4796,7 @@ delete_xml_handle_entry(int document_id)
 	}
 	
 	systable_endscan(scan);
-	relation_close(relation, NoLock);
+	relation_close(relation, RowExclusiveLock);
 	
 	/* If we didn't find the handle or couldn't delete it, throw an error */
 	if (!found)
@@ -4924,3 +4930,103 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
+
+/*
+ * Function to retrieve XML document and namespace from temporary table using document ID
+ */
+void
+get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data)
+{
+	EphemeralNamedRelation		enr = NULL;
+	Relation               		relation;
+	ScanKeyData            		skey[1];
+	TableScanDesc      		    scan;
+	HeapTuple              		tuple;
+	Datum                  		datum;
+	bool                   		isnull;
+	bool              	        table_exists = false;
+
+	/* Unlikely, Just a sanity check */
+	if (xml_data == NULL && ns_data == NULL)
+		return;
+
+	/*
+	 * Initialise xml_data and ns_data to NULL.
+	 */
+	if (xml_data)
+		*xml_data = NULL;
+	if (ns_data)
+		*ns_data = NULL;
+
+	/* 
+	 * Check if the xml_handle_temp_table exists using ENR lookup,
+	 * if found get its relation descriptor.
+	 */
+	if (xml_handle_temp_table_name != NULL)
+	{
+		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+		if (enr)
+		{
+			relation = relation_open(enr->md.reliddesc, AccessShareLock);
+			table_exists = true;
+		}
+	}
+
+	if (!table_exists)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	}
+
+	/*
+	 * Fetch xml data and namespace data from xml_handle_temp_table, for given document id.
+	 */
+	ScanKeyInit(&skey[0],
+				Anum_xml_handle_temp_table_document_id,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(document_id));
+	
+	scan = table_beginscan_catalog(relation, 1, skey);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+	
+	if (HeapTupleIsValid(tuple))
+	{
+		/* Get the XML document */
+		if (xml_data)
+		{
+			isnull = true;
+			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_xml_data, RelationGetDescr(relation), &isnull);
+			
+			if (!isnull)
+				*xml_data = DatumGetXmlP(datum);
+			else
+				*xml_data = NULL;
+		}
+		
+		/* Get the namespaces */
+		if (ns_data)
+		{
+			isnull = true;
+			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_ns_data, RelationGetDescr(relation), &isnull);
+			
+			if (!isnull)
+				*ns_data = DatumGetXmlP(datum);
+			else
+				*ns_data = NULL;
+		}
+	}
+	else
+	{
+		table_endscan(scan);
+		relation_close(relation, AccessShareLock);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	}
+
+	table_endscan(scan);
+	relation_close(relation, AccessShareLock);
+}
+

@@ -105,7 +105,7 @@ SELECT
     ASCII(CHAR(27)) AS EscapeChar;
 GO
 
--- following throws error in babelfish
+-- following throws wrong output in babelfish as char(0) return empty string value [BABEL-6068]
 SELECT ASCII(CHAR(0)) AS NullChar
 GO
 
@@ -502,4 +502,3 @@ DROP TYPE ascii_type_varchar;
 DROP TYPE ascii_type_nchar;
 DROP TYPE ascii_type_nvarchar;
 GO
-

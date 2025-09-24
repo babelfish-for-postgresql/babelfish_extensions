@@ -119,6 +119,7 @@ GO
 
 ~~ERROR (Message: permission denied for table t6030_1)~~
 
+-- terminate-tsql-conn user=l6030_1 password=12345678
 -- tsql
 ---------------------------------------------------------
 -- FUNCTION AND PROCEDURE TESTING FOR OWNERSHIP CHAINING
@@ -1431,3 +1432,53 @@ go
 drop login ddl_login
 go
 -- terminate-tsql-conn
+
+
+-- psql
+-- Testing Ownershhip chaining with setting GUC false
+show babelfishpg_tsql.enable_ownership_chaining;
+go
+~~START~~
+text
+on
+~~END~~
+
+alter database babelfish_db set babelfishpg_tsql.enable_ownership_chaining = 'off';
+go
+select pg_reload_conf();
+go
+~~START~~
+bool
+t
+~~END~~
+
+-- terminate-psql-conn
+
+-- tsql
+select current_setting('babelfishpg_tsql.enable_ownership_chaining');
+go
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to examine "babelfishpg_tsql.enable_ownership_chaining")~~
+
+-- terminate-tsql-conn
+
+-- tsql user=l6030_1 password=12345678
+-- should fail since we disabled the ownership chaining
+EXEC p6030_8_1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_1)~~
+
+SELECT * FROM f6030_8_4();
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_1)~~
+
+-- terminate-tsql-conn user=l6030_1 password=12345678
