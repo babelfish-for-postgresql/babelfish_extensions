@@ -212,7 +212,6 @@ void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
-void        extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count);
 
 Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
 static HTAB *load_categories_hash(const char *sourcetext, MemoryContext per_query_ctx);
@@ -244,7 +243,6 @@ extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern char *replace_special_chars_fts_impl(char *input_str);
-extern void get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
 
 #ifdef USE_LIBXML
 HTAB	     *ht_xmlNode2Id = NULL;
