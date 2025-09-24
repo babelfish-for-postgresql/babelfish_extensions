@@ -452,9 +452,8 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
 	else if ((strcmp(typename_string, "varchar") == 0) || (strcmp(typename_string, "bpchar") == 0)
 			|| (strcmp(typename_string, "nvarchar") == 0) || (strcmp(typename_string, "nchar") == 0))
 	{
-		List	   *args;
+		List	   *args = list_make1(arg);
 		Node	   *helperFuncCall;
-		args = list_make2(arg, makeBoolAConst(true, location));
 
 		if((strcmp(typename_string, "nvarchar") == 0) || (strcmp(typename_string, "nchar") == 0))
 		{
@@ -464,27 +463,19 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
 		{
 			typename_string = format_type_extended(VARCHAROID, typmod, FORMAT_TYPE_TYPEMOD_GIVEN);
 		}
-		args = lcons(makeStringConst(typename_string, typename->location), args);
-		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varchar"), args, COERCE_EXPLICIT_CALL, location);
+		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_varchar"), lcons(makeStringConst(typename_string, typename->location), args), COERCE_EXPLICIT_CALL, location);
 
-		/*
-		 * BABEL-1661, add a type cast on top of the CONVERT helper function
-		 * so typmod can be applied
-		 */
+		// Add a type cast on top of the CAST helper function so typmod can be applied
 		result = makeTypeCast(helperFuncCall, typename, location);
 	}
 	else if (strcmp(typename_string, "binary") == 0 || strcmp(typename_string, "varbinary") == 0)
 	{
-		List	   *args;
+		List	   *args = list_make1(arg);
 		Node	   *helperFuncCall;
-		/* For handling try boolean logic on babelfishpg_tsql side */
-		args = list_make2(arg, makeBoolAConst(true, location));
 
-		if(typmod > VARHDRSZ)
-			helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), lcons(makeIntConst(typmod - VARHDRSZ, location), args), COERCE_EXPLICIT_CALL, location);
-		else
-			helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), lcons(makeIntConst(typmod, location), args), COERCE_EXPLICIT_CALL, location);
-		// add a type cast on top of the CONVERT helper function so typmod can be applied
+		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_varbinary"), args, COERCE_EXPLICIT_CALL, location);
+		
+		// Add a type cast on top of the CAST helper function so typmod can be applied
 		result = makeTypeCast(helperFuncCall, typename, location);
 	}
 	else
