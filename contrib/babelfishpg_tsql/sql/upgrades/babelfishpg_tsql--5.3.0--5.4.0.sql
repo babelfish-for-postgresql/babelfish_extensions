@@ -292,14 +292,14 @@ CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
-create or replace function sys.reverse_timezone_mapping(IN tmz text) returns text
-AS 'babelfishpg_tsql', 'reverse_timezone_mapping'
+create or replace function sys.timezone_mapping_pg_to_windows(IN tmz text) returns text
+AS 'babelfishpg_tsql', 'timezone_mapping_pg_to_windows'
 LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
 
 CREATE OR REPLACE VIEW sys.time_zone_info AS
 SELECT 
     -- Mapping PostgreSQL timezone names to Windows format names
-    pg_catalog.initcap(sys.reverse_timezone_mapping(name))
+    pg_catalog.initcap(sys.timezone_mapping_pg_to_windows(name))
     AS name,
     CAST(
       CASE 
@@ -321,6 +321,6 @@ SELECT
 FROM pg_catalog.pg_timezone_names
 WHERE name NOT LIKE 'posix/%'
   AND name NOT LIKE 'Etc/%'
-  AND sys.reverse_timezone_mapping(name) IS NOT NULL
+  AND sys.timezone_mapping_pg_to_windows(name) IS NOT NULL
 ORDER BY name;
 GRANT SELECT ON sys.time_zone_info TO PUBLIC;

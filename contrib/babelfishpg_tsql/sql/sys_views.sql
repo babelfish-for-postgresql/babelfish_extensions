@@ -3719,7 +3719,7 @@ GRANT SELECT ON sys.dm_os_sys_info TO PUBLIC;
 CREATE OR REPLACE VIEW sys.time_zone_info AS
 SELECT 
     -- Mapping PostgreSQL timezone names to Windows format names
-    pg_catalog.initcap(sys.reverse_timezone_mapping(name))
+    pg_catalog.initcap(sys.timezone_mapping_pg_to_windows(name))
     AS name,
     CAST(
       CASE 
@@ -3741,6 +3741,6 @@ SELECT
 FROM pg_catalog.pg_timezone_names
 WHERE name NOT LIKE 'posix/%'
   AND name NOT LIKE 'Etc/%'
-  AND sys.reverse_timezone_mapping(name) IS NOT NULL
+  AND sys.timezone_mapping_pg_to_windows(name) IS NOT NULL
 ORDER BY name;
 GRANT SELECT ON sys.time_zone_info TO PUBLIC;

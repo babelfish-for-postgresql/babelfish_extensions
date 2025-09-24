@@ -137,7 +137,7 @@ PG_FUNCTION_INFO_V1(xact_state);
 PG_FUNCTION_INFO_V1(get_enr_list);
 PG_FUNCTION_INFO_V1(tsql_random);
 PG_FUNCTION_INFO_V1(timezone_mapping);
-PG_FUNCTION_INFO_V1(reverse_timezone_mapping);
+PG_FUNCTION_INFO_V1(timezone_mapping_pg_to_windows);
 PG_FUNCTION_INFO_V1(is_member);
 PG_FUNCTION_INFO_V1(schema_id);
 PG_FUNCTION_INFO_V1(schema_name);
@@ -1300,10 +1300,10 @@ timezone_mapping(PG_FUNCTION_ARGS)
 }
 
 /*
-* The reverse_timezone_mapping() is used for fetching Windows name of standard timezone from PostgreSQL timezone name
-*/
+ * The timezone_mapping_pg_to_windows() is used for fetching Windows name of standard timezone from PostgreSQL timezone name
+ */
 Datum
-reverse_timezone_mapping(PG_FUNCTION_ARGS)
+timezone_mapping_pg_to_windows(PG_FUNCTION_ARGS)
 {
 	char *pgtmz = text_to_cstring(PG_GETARG_TEXT_P(0));
 	int len = (sizeof(win32_tzmap) / sizeof(*(win32_tzmap)));
@@ -1311,11 +1311,13 @@ reverse_timezone_mapping(PG_FUNCTION_ARGS)
 	{
 		if(pg_strcasecmp(win32_tzmap[i].pgtzname,pgtmz) == 0)
 		{
-			pfree(pgtmz);
+			if (pgtmz)
+				pfree(pgtmz);
 			PG_RETURN_VARCHAR_P(cstring_to_text(win32_tzmap[i].stdname));
 		}
 	}
-	pfree(pgtmz);
+	if (pgtmz)
+		pfree(pgtmz);
 	PG_RETURN_NULL();
 }
 
