@@ -9631,57 +9631,6 @@ $body$
 LANGUAGE 'plpgsql'
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_sp_xml_preparedocument(IN XmlDocument TEXT,OUT DocHandle BIGINT)
-AS
-$BODY$
-DECLARE
-   XmlDocument$data XML;
-BEGIN
-     /*Create temporary structure for xmldocument saving*/
-     CREATE TEMPORARY SEQUENCE IF NOT EXISTS sys$seq_openmxl_id MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 INCREMENT BY 1 CACHE 5;
-
-     CREATE TEMPORARY TABLE IF NOT EXISTS sys$openxml
-          (DocID BigInt NOT NULL DEFAULT NEXTVAL('sys$seq_openmxl_id'),
-           XmlData XML not NULL,
-           CONSTRAINT pk_sys$doc_id PRIMARY KEY(DocID)
-          ) ON COMMIT PRESERVE ROWS;
-
-     IF xml_is_well_formed(XmlDocument) THEN
-       XmlDocument$data := XmlDocument::XML;
-     ELSE
-       RAISE EXCEPTION '%','The XML parse error occurred';
-     END IF;
-
-     INSERT INTO sys$openxml(XmlData)
-          VALUES (XmlDocument$data)
-       RETURNING DocID INTO DocHandle;
-END;
-$BODY$
-LANGUAGE  plpgsql;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_sp_xml_removedocument(IN DocHandle BIGINT) RETURNS VOID
-AS
-$BODY$
-DECLARE
-  lt_error_text TEXT := 'Could not find prepared statement with handle '||CASE
-                                                                            WHEN DocHandle IS NULL THEN 'null'
-                                                                              ELSE DocHandle::TEXT
-                                                                           END;
-BEGIN
-	DELETE FROM sys$openxml t
-	 WHERE t.DocID = DocHandle;
-
-	IF NOT FOUND THEN
-	     RAISE EXCEPTION '%', lt_error_text;
-	END IF;
-
-	EXCEPTION
-	  WHEN SQLSTATE '42P01' THEN
-	      RAISE EXCEPTION '%',lt_error_text;
-END;
-$BODY$
-LANGUAGE  plpgsql;
-
 /* ***********************************************
 EXTENSION PACK function STRPOS3(x)
 schema sys

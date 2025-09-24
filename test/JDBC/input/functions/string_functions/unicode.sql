@@ -165,6 +165,7 @@ SELECT
     UNICODE(CAST(N'A' AS NTEXT)) AS NTextA;
 GO
 
+-- following throws wrong output in babelfish as nchar(0) return empty string value [BABEL-6068]
 -- 7. Control Character Tests
 SELECT 
     UNICODE(NCHAR(0)) AS NullChar,
@@ -238,6 +239,7 @@ INSERT INTO unicode_blocks_t3 VALUES
 (44032, 55215, 'Hangul Syllables');
 GO
 
+-- following throws wrong output in babelfish as nchar(0) return empty string value [BABEL-6068] so unicode(nchar(0)) will return null
 -- Test characters from each Unicode block
 WITH BlockCharacters AS (
     SELECT 

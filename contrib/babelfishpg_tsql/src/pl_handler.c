@@ -71,6 +71,7 @@
 #include "utils/plancache.h"
 #include "utils/ps_status.h"
 #include "utils/queryenvironment.h"
+#include "utils/catcache.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
@@ -97,6 +98,7 @@
 #include "session.h"
 #include "pltsql.h"
 #include "pltsql_partition.h"
+#include "pltsql_permissions.h"
 #include "pl_explain.h"
 #include "table_variable_mvcc.h"
 
@@ -153,6 +155,8 @@ static void set_pgtype_byval(List *name, bool byval);
 static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc, bool is_proc);
 static Acl *get_old_view_acl(Oid oldViewOid);
 static void pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl);
+static List *get_old_view_column_acls(Oid oldViewOid);
+static void restore_view_column_acls(Oid newViewOid, List *column_acls);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -192,6 +196,11 @@ static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
 
+typedef struct ColumnAclInfo
+{
+    char       *attname;   /* Column name */
+    Acl        *acl;       /* ACL for the column */
+} ColumnAclInfo;
 typedef struct CtenameIdx
 {
 	char ctename[NAMEDATALEN];
@@ -980,12 +989,59 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 								}
 								break;
 							}
-
+						case AT_AlterColumnType:
+						{
+							ColumnDef *def = castNode(ColumnDef, cmd->def);
+							
+							/* SYSNAME datatype is default not null */
+							if (is_sysname_column(def) && !have_null_constr(def->constraints))
+							{
+								Constraint *c = makeNode(Constraint);
+								c->contype = CONSTR_NOTNULL;
+								c->location = -1;
+								def->constraints = lappend(def->constraints, c);
+							}
+							
 							/*
-							 * TODO: After ALTER TABLE ALTER COLUMN [NOT] NULL
-							 * is supported, we should add same SYSNAME check
-							 * code for ALTER TABLE ALTER COLUMN
+							 * When a user explicitly specifies NULL or NOT NULL in an ALTER COLUMN statement, 
+							 * we need to process this separately from the type change. We:
+							 *	- Detect explicit nullability (marked by "tsql_explicit_nullability" in def->storage_name)
+							 *  - Check if only nullability is changing (type/typmod unchanged): If yes:
+							 *		- Update subtype to AT_SetNotNull or AT_DropNotNull accordingly
+							 *	- If type/typmod is also changing along with nullability:
+							 * 		- Append this new subcommand to the command list for later execution
 							 */
+							if (def && def->storage_name && strcmp(def->storage_name, TSQL_EXPLICIT_NULLABILITY_MARKER) == 0)
+							{
+								Relation rel = relation_openrv(atstmt->relation, AccessShareLock);
+								TupleDesc tupdesc = RelationGetDescr(rel);
+								AttrNumber attnum = get_attnum(RelationGetRelid(rel), cmd->name);
+								
+								if (attnum != InvalidAttrNumber)
+								{
+									Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+									Oid new_typeid;
+									int32 new_typmod;
+									typenameTypeIdAndMod(NULL, def->typeName, &new_typeid, &new_typmod);
+									
+									/* Check if column type and typmod is actually changing or just nullability */
+									if (attr->atttypid == new_typeid && attr->atttypmod == new_typmod)
+									{
+										cmd->subtype = def->is_not_null ? AT_SetNotNull : AT_DropNotNull;
+									}
+									else
+									{
+										/* Type is changing - append nullability command to the atstmt list */
+										AlterTableCmd *nullCmd = makeNode(AlterTableCmd);
+										nullCmd->subtype = def->is_not_null ? AT_SetNotNull : AT_DropNotNull;
+										nullCmd->name = pstrdup(cmd->name);
+										atstmt->cmds = lappend(atstmt->cmds, nullCmd);
+									}
+								}
+								relation_close(rel, AccessShareLock);
+							}
+							break;
+						}
 						default:
 							break;
 					}
@@ -1071,6 +1127,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+	(void) mark_outside_view((Query*) query);
 	checkForJsonAuto(query);
 
 	if (query->commandType == CMD_INSERT)
@@ -3081,6 +3138,43 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				ViewStmt *stmt = (ViewStmt *) parsetree;
 
 				/*
+				 * By default, TSQL view should be created with security_invoker
+				 * property. It adds security_invoker option to the options list.
+				 * Note that,  (stmt->createOrAlter && !stmt->replace) captures the 
+				 * TSQL "CREATE OR ALTER view" stmt and
+				 * (!stmt->createOrAlter && !stmt->replace) will capture the TSQL
+				 * "CREATE view" stmt, combination of both condition simplifies
+				 * into !(stmt->replace)
+				 */
+				if (sql_dialect == SQL_DIALECT_TSQL &&
+					IS_TDS_CLIENT())
+				{
+					bool        security_invoker_found = false;
+
+					/* Check if security_invoker option already exists */
+					foreach_node(DefElem, defel, stmt->options)
+					{
+						if (strcmp(defel->defname, "security_invoker") == 0)
+						{
+							/* Modify existing option to true */
+							defel->arg = (Node *) makeBoolean(true);
+							security_invoker_found = true;
+							break;
+						}
+					}
+
+					/* If security_invoker option not found, add it */
+					if (!security_invoker_found)
+					{
+						DefElem *new_option;
+						new_option = makeDefElem("security_invoker",
+												 (Node *) makeBoolean(true),
+												 -1);
+						stmt->options = lappend(stmt->options, new_option);
+					}
+				}
+
+				/*
 				 * We are using PostgreSQL's existing ViewStmt node which is shared between PostgreSQL's
 				 * CREATE VIEW and T-SQL's ALTER VIEW/CREATE OR ALTER VIEW operations. To properly distinguish 
 				 * between these operations and not let CREATE VIEW inside this case we use createOrAlter flag
@@ -3105,6 +3199,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					ObjectAddress address, originalView;
 					Oid oldViewOid;
 					Acl *oldViewAcl = NULL;
+					List *oldColumnAcls = NIL;
 					bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
 					bool needCleanup;
 			
@@ -3156,6 +3251,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							/* Save ACL before dropping the view */
 							oldViewAcl = get_old_view_acl(oldViewOid);
+
+							/* Save column ACLs before dropping the view */
+							oldColumnAcls = get_old_view_column_acls(oldViewOid);
 							CacheInvalidateRelcacheByRelid(oldViewOid);
 			
 							/* Drop the old view */
@@ -3194,6 +3292,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							/* Update ACL info */
 							pg_class_update_acl(address.objectId, oldViewAcl);
+							restore_view_column_acls(address.objectId, oldColumnAcls);
 
 							if(oldViewAcl != NULL)
 								pfree(oldViewAcl);
@@ -4239,6 +4338,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									pfree(rolspec->rolename);
 
 									rolspec->rolename = user_name;
+									bbf_shdep_drop_owned_dependent_acl((Oid) role_oid, DROP_CASCADE);
 								}
 							}
 							else
@@ -4995,6 +5095,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool exec_pg_command = false;
 					ListCell   *lc;
 					ListCell	*lc1;
+					List  		*all_privileges = NIL;    /* Initialize an empty list */
+
 					if (rv->schemaname != NULL)
 						logical_schema = get_logical_schema_name(rv->schemaname, false);
 					else
@@ -5012,61 +5114,137 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 								add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true, NULL);
 							}
+							exec_pg_command = true;
 						}
 						else
 						{
+							Oid objoid = 	InvalidOid;
+							Form_pg_class	pg_class_tuple;
+							char 			**privileges;
+
+							objoid = RangeVarGetRelid(rv, NoLock, true);
+							if (OidIsValid(objoid))
+							{
+								HeapTuple		tuple;
+								int 			number_of_privs;
+								/* Get the namespace OID and rekind type of the table. */
+								tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objoid));
+								if (!HeapTupleIsValid(tuple))
+									return;
+
+								pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
+
+								if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
+								{
+									privileges = (char **) palloc0(3 * sizeof(char *));
+									privileges[0] = pstrdup("select");
+									privileges[1] = pstrdup("update");
+									privileges[2] = pstrdup("usage");
+									number_of_privs = 3;
+								}
+								else
+								{
+									privileges = (char **) palloc0(8 * sizeof(char *));
+									privileges[0] = pstrdup("insert");
+									privileges[1] = pstrdup("select");
+									privileges[2] = pstrdup("update");
+									privileges[3] = pstrdup("delete");
+									privileges[4] = pstrdup("references");
+									privileges[5] = pstrdup("truncate");
+									privileges[6] = pstrdup("maintain");
+									privileges[7] = pstrdup("trigger");
+									number_of_privs = 8;
+								}
+
+								for (int i = 0; i < number_of_privs; i++)
+								{
+									AccessPriv *ap = makeNode(AccessPriv);
+									ap->priv_name = privileges[i];
+									ap->cols = NIL;
+									all_privileges = lappend(all_privileges, ap);
+								}
+								ReleaseSysCache(tuple);
+								pfree(privileges);
+							}
+
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+
 								/* Special database roles should throw an error. */
 								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
+
 								/*
 								 * 1. If permission on schema exists, don't revoke any permission from the object.
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
-								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
-								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
-									return;
-							}
-						}
-						exec_pg_command = true;
-					}
-					foreach(lc1, grant->privileges)
-					{
-						AccessPriv *ap = (AccessPriv *) lfirst(lc1);
-						AclMode privilege = string_to_privilege(ap->priv_name);
-						if (grant->is_grant)
-						{
-							exec_pg_command = true;
-							/* Don't add/update an entry, if the permission is granted on column list.*/
-							if (ap->cols == NULL)
-							{
-								foreach(lc, grant->grantees)
+								foreach(lc1, all_privileges)
 								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									/* Special database roles should throw an error. */
-									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
-									add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
+									AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+									AclMode privilege = string_to_privilege(ap->priv_name);
+								
+									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+										exec_pg_command = true;
+									else
+										all_privileges = foreach_delete_current(all_privileges, lc1);
+
+								}
+								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
+							}
+							/* 
+							 * If all_privileges length is 5 then pass grant->privilege as NIL i.e fallback to existing behaviour,
+							 * as no common privilege between object and schema.
+							 */
+							if (list_length(all_privileges) == 0)
+								return;
+							else
+								grant->privileges = all_privileges;
+						}
+					}
+					else
+					{
+						foreach(lc1, grant->privileges)
+						{
+							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+							AclMode privilege = string_to_privilege(ap->priv_name);
+							if (grant->is_grant)
+							{
+								exec_pg_command = true;
+								/* Don't add/update an entry, if the permission is granted on column list.*/
+								if (ap->cols == NULL)
+								{
+									foreach(lc, grant->grantees)
+									{
+										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+										/* Special database roles should throw an error. */
+										throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
+										add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
+									}
 								}
 							}
-						}
-						else
-						{
-							/* Don't update an entry, if the permission is granted on column list.*/
-							if (ap->cols == NULL)
+							else
 							{
-								foreach(lc, grant->grantees)
+								/* Don't update an entry, if the permission is granted on column list.*/
+								if (ap->cols == NULL)
 								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									/* Special database roles should throw an error. */
-									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
-									/*
-									 * If permission on schema exists, don't revoke any permission from the object.
-									 */
-									if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
-										exec_pg_command = true;
-
-									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
+									foreach(lc, grant->grantees)
+									{
+										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+										/* Special database roles should throw an error. */
+										throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
+										/* If permission on schema exists, don't revoke any permission from the object. */
+										if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+										{
+											/* 
+											 * If the privilege is not common to schema and object then 
+											 * execute_pg_command true and append the privilege to filtered list 
+											 */
+											exec_pg_command = true;
+										}
+										else
+											grant->privileges = foreach_delete_current(grant->privileges, lc1);
+										update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
+									}
 								}
 							}
 						}
@@ -5087,6 +5265,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *obj_type = NULL;
 					Oid func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, ob, true);
 					const char *func_args = NULL;
+
 					if (OidIsValid(func_oid))
 						func_args = gen_func_arg_list(func_oid);
 					if (grant->objtype == OBJECT_FUNCTION)
@@ -5133,7 +5312,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, false);
-								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, INVALID_PERMISSION))
 									return;
 							}
 						}
@@ -5168,11 +5347,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								/* Special database roles should throw an error. */
 								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
-								/*
-								 * If permission on schema exists, don't revoke any permission from the object.
-								 */
-								if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
+								/* If permission on schema exists, don't revoke any permission from the object. */
+								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+								{
+									/* 
+									 * If the privilege is not common to schema and object then 
+									 * execute_pg_command true.
+									 */
 									exec_pg_command = true;
+								}
+								else
+									grant->privileges =foreach_delete_current(grant->privileges, lc1);
+
 								/* Update the privilege in the catalog. */
 								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);
 							}
@@ -5347,6 +5533,111 @@ pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl)
 	ReleaseSysCache(classtup);
 	heap_freetuple(newtup);
 	table_close(pg_class_rel, RowExclusiveLock);
+}
+
+static List *
+get_old_view_column_acls(Oid oldViewOid)
+{
+	CatCList *catlist;
+	List *column_acls = NIL;
+	int i;
+
+	catlist = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(oldViewOid));
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple tuple = &catlist->members[i]->tuple;
+		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+		Datum aclDatum;
+		bool isNull;
+		ColumnAclInfo *info;
+
+		/* Skip system columns */
+		if (att->attnum <= InvalidAttrNumber)
+			continue;
+
+		aclDatum = SysCacheGetAttr(ATTNUM, tuple, 
+								Anum_pg_attribute_attacl, &isNull);
+
+		info = (ColumnAclInfo *) palloc0(sizeof(ColumnAclInfo));
+		info->attname = pstrdup(NameStr(att->attname));
+		info->acl = isNull ? NULL : DatumGetAclPCopy(aclDatum);
+
+		column_acls = lappend(column_acls, info);
+	}
+
+	ReleaseCatCacheList(catlist);
+	return column_acls;
+}
+
+static void
+restore_view_column_acls(Oid newViewOid, List *column_acls)
+{
+	ListCell *lc;
+	
+	foreach(lc, column_acls)
+	{
+		ColumnAclInfo *info = (ColumnAclInfo *) lfirst(lc);
+		Relation pg_attribute_rel;
+		HeapTuple attTup = NULL;
+		CatCList *catlist;
+		bool found = false;
+		Datum values[Natts_pg_attribute];
+		bool nulls[Natts_pg_attribute];
+		bool replaces[Natts_pg_attribute];
+		HeapTuple newTuple;
+		
+		catlist = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(newViewOid));
+		
+		/* Search for case-insensitive match */
+		for (int i = 0; i < catlist->n_members; i++)
+		{
+			HeapTuple  tuple = &catlist->members[i]->tuple;
+			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+			
+			/* Skip system columns */
+			if (att->attnum <= InvalidAttrNumber)
+				continue;
+				
+			/* Case-insensitive comparison */
+			if (pg_strcasecmp(NameStr(att->attname), info->attname) == 0)
+			{
+				attTup = SearchSysCacheCopy2(ATTNUM,
+										ObjectIdGetDatum(newViewOid),
+										Int16GetDatum(att->attnum));
+				found = true;
+				break;
+			}
+		}
+		
+		ReleaseCatCacheList(catlist);
+		
+		if (!found || !HeapTupleIsValid(attTup))
+			continue;
+		
+		/* Update the ACL */
+		pg_attribute_rel = table_open(AttributeRelationId, RowExclusiveLock);
+		
+		memset(values, 0, sizeof(values));
+		memset(nulls, false, sizeof(nulls));
+		memset(replaces, false, sizeof(replaces));
+		
+		if (info->acl != NULL)
+			values[Anum_pg_attribute_attacl - 1] = PointerGetDatum(info->acl);
+		else
+			nulls[Anum_pg_attribute_attacl - 1] = true;
+			
+		replaces[Anum_pg_attribute_attacl - 1] = true;
+		
+		newTuple = heap_modify_tuple(attTup, RelationGetDescr(pg_attribute_rel),
+								values, nulls, replaces);
+								
+		CatalogTupleUpdate(pg_attribute_rel, &newTuple->t_self, newTuple);
+		heap_freetuple(newTuple);
+		heap_freetuple(attTup);
+		
+		table_close(pg_attribute_rel, RowExclusiveLock);
+	}
 }
 
 /*
@@ -5724,6 +6015,10 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->lock_timeout = pltsql_lock_timeout;
 		(*pltsql_protocol_plugin_ptr)->language = pltsql_language;
 		(*pltsql_protocol_plugin_ptr)->UpdateToNextDayHelper = common_utility_plugin_ptr->UpdateToNextDayHelper;
+		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geometry = common_utility_plugin_ptr->bytea_from_geometry;
+		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geography = common_utility_plugin_ptr->bytea_from_geography;
+		(*pltsql_protocol_plugin_ptr)->sql_geometry_from_bytea = common_utility_plugin_ptr->geometry_from_bytea;
+		(*pltsql_protocol_plugin_ptr)->sql_geography_from_bytea = common_utility_plugin_ptr->geography_from_bytea;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);

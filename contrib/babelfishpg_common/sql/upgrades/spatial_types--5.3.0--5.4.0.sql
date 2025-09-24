@@ -308,7 +308,7 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geography__stpointfromtext_deprecated_5_4_0');
 
-CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR, integer)
+CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR,srid integer)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	DECLARE
@@ -326,7 +326,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR, integer)
 		IF Geomtype = 'ST_Point' THEN
 			RETURN geom;
 		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
+			RAISE EXCEPTION 'Expected "POINT" at Position 1. The input has %', $1;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -566,7 +566,7 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geometry__stpointfromtext_deprecated_5_4_0');
 
-CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR, integer)
+CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR,srid integer)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE
@@ -584,7 +584,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR, integer)
 		IF Geomtype = 'ST_Point' THEN
 				RETURN geom;
 		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
+			RAISE EXCEPTION 'Expected "POINT" at Position 1. The input has %', $1;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -623,6 +623,307 @@ CREATE OR REPLACE FUNCTION sys.geomfromtext_helper(text, integer)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'get_geometry_from_text'
 	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STLineFromText(sys.NVARCHAR,srid integer)
+	RETURNS sys.GEOMETRY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOMETRY;
+	BEGIN
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geometry::STLineFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		geom = (SELECT sys.geomfromtext_helper($1::text, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_LineString' THEN
+				RETURN geom;
+		ELSE
+			RAISE EXCEPTION 'Expected "LINESTRING" at Position 1. The input has %', $1;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR,srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOGRAPHY;
+	BEGIN
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geography::STLineFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		geom = (SELECT sys.geogfromtext_helper($1::text, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_LineString' THEN
+			RETURN geom;
+		ELSE
+			RAISE EXCEPTION 'Expected "LINESTRING" at Position 1. The input has %', $1;		
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STArea(geom sys.GEOMETRY)
+	RETURNS float8
+	AS $$
+	BEGIN
+		IF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'The geometry instance is not valid';
+		ELSE
+			RETURN sys.STArea_helper(geom);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geometry instance is not valid';
+		ELSE
+			Return sys.STEquals_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geometry instance is not valid';
+		ELSE
+			Return sys.STContains_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
+	RETURNS integer
+	AS $$ 
+	BEGIN
+		IF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'The geometry instance is not valid';
+		-- Check if the geometry is empty
+		ELSEIF STIsEmpty(geom) = 1 THEN  
+			RETURN -1;
+		ELSE
+			RETURN sys.STDimension_helper($1);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		--Check if the SRIDs do not match
+		IF sys.STSrid(geom1) != sys.STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geometry instance is not valid';
+		ELSE 
+			RETURN sys.STDisjoint_helper($1, $2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		--Check if the SRIDs do not match
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geometry instance is not valid';
+		ELSE
+			RETURN sys.STIntersects_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
+
+CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	DECLARE
+		geom_type text;
+	BEGIN
+		-- Get the geometry type
+		geom_type := ST_GeometryType(geom); 
+		-- Check if any figures of the geometry instance are points
+		IF geom_type = 'ST_Point' THEN
+			RETURN 0;
+		ELSIF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'The geometry instance is not valid';
+		END IF; 
+   
+		RETURN sys.STIsClosed_helper(geom);
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS float8
+	AS $$
+	BEGIN
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsEmpty(geom1) = 1 OR STIsEmpty(geom1) = 1  THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom1) = 0 THEN
+			RAISE EXCEPTION 'The geometry instance is not valid';
+		ELSE
+			Return sys.STDistance_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STArea_helper(sys.GEOMETRY)
+	RETURNS float8
+	AS '$libdir/postgis-3','ST_Area'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STArea(geom sys.GEOGRAPHY)
+	RETURNS float8
+	AS $$
+	BEGIN
+		IF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		ELSE
+			RETURN sys.STArea_helper(geom);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		ELSE
+			Return sys.STEquals_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		ELSE
+			Return sys.STContains_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
+	RETURNS integer
+	AS $$ 
+	BEGIN
+		IF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		-- Check if the geography is empty
+		ELSEIF STIsEmpty(geom) = 1 THEN  
+			RETURN -1;
+		ELSE
+			RETURN sys.STDimension_helper($1);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		--Check if the SRIDs do not match
+		IF sys.STSrid(geom1) != sys.STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		ELSE 
+			RETURN sys.STDisjoint_helper($1, $2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		--Check if the SRIDs do not match
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		ELSE
+			RETURN sys.STIntersects_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
+
+CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS $$
+	DECLARE
+		geom_type text;
+	BEGIN
+		-- Get the geography type
+		geom_type := ST_GeometryType(geom); 
+		-- Check if any figures of the geography instance are points
+		IF geom_type = 'ST_Point' THEN
+			RETURN 0;
+		ELSIF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		END IF; 
+   
+		RETURN sys.STIsClosed_helper(geom);
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
+	RETURNS float8
+	AS $$
+	BEGIN
+		IF STSrid(geog1) != STSrid(geog2) THEN
+			RETURN NULL;
+
+		ELSEIF STIsEmpty(geog1) = 1 OR STIsEmpty(geog2) = 1  THEN
+			RETURN NULL;
+
+		ELSEIF STIsValid(geog1) = 0 OR STIsValid(geog2) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		ELSE
+		-- Call the underlying function after preprocessing
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
+			RETURN (SELECT sys.STDistance_helper(sys.Geography__STFlipCoordinates($1), sys.Geography__STFlipCoordinates($2)));
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STArea_helper(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','ST_Area'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

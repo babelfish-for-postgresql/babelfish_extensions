@@ -1,0 +1,15 @@
+-- tsql
+create login l6031_1 with password='12345678';
+go
+
+create user l6031_1;
+go
+
+create table t6031_1(a int);
+go
+
+create view v6031_existing as select * from t6031_1;
+go
+
+grant select on v6031_existing to l6031_1;
+go

@@ -68,6 +68,14 @@ go
 use master
 go
 
+-- tsql user=babel_5172-l3 password=123
+-- objects created by babel_5172_u1 should be accessible
+use babel_5172_db
+go
+
+exec babel_5172_s1.p5;
+go
+
 -- tsql user=babel_5172_l1 password=123
 -- create new objects using babel_5172_u1 user
 use babel_5172_db
@@ -129,6 +137,10 @@ go
 revoke select, execute on schema::babel_5172_s1 from babel_5172_u2;
 go
 
+-- revoke select privilege on the schema with user babel_5172_u1
+revoke select, execute on schema::babel_5172_s1 from [babel_5172-u3];
+go
+
 use master;
 go
 
@@ -186,4 +198,15 @@ select babel_5172_s1.f4();
 go
 
 use master
+go
+
+-- tsql user=babel_5172-l3 password=123
+-- no objects should be accessible, since schema privilege is revoked
+use babel_5172_db;
+go
+
+select * from babel_5172_s1.t1;
+go
+
+exec babel_5172_s1.p1;
 go

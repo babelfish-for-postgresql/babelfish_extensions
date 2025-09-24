@@ -182,7 +182,7 @@ protected:
 		antlrcpp::Any visitFunction_call(TSqlParser::Function_callContext *ctx) override;
 		antlrcpp::Any visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx) override;
 		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override {
-			if (!ctx->open_json() && (!pltsql_enable_linked_servers || !ctx->open_query())) {
+			if (!ctx->open_json() && (!pltsql_enable_linked_servers || !ctx->open_query()) && ctx->open_xml()->WITH()) {
 				handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function", getLineAndPos(ctx));
 			}
 			return visitChildren(ctx);
@@ -764,13 +764,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_table(TSqlParser::Al
 		{
 			if (!cdctx->collation().empty())
 				handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_COLLATE, "COLLATE in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
-			if (!cdctx->null_notnull().empty())
-			{
-				if (cdctx->null_notnull()[0]->NOT())
-					handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NOT_NULL, "NOT NULL in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
-				else
-					handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NULL, "NULL in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
-			}
 		}
 	}
 
