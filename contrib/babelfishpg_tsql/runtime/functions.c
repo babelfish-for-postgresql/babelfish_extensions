@@ -243,7 +243,6 @@ extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern char *replace_special_chars_fts_impl(char *input_str);
-extern void get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
 
 #ifdef USE_LIBXML
 HTAB	     *ht_xmlNode2Id = NULL;
@@ -5231,7 +5230,7 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
  * The count of extracted namespaces is stored in ns_count. If no namespaces are found, 
  * ns_names and ns_uris are set to NULL and ns_count to 0.
  */
-static void
+void
 extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count)
 {
     xmlDocPtr	doc;
