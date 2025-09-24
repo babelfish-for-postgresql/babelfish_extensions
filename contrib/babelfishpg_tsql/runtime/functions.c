@@ -1102,6 +1102,7 @@ datalength(PG_FUNCTION_ARGS)
 
 	/* Lookup the datatype of the supplied argument */
 	Oid argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	/* UDT Handling. */
 	Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(argtypeid);
 	if (OidIsValid(immediate_base_type))
 	{
@@ -1162,13 +1163,6 @@ datalength(PG_FUNCTION_ARGS)
 		{
 			PG_RETURN_INT32(17);
 		}
-	}
-
-	/* Handling Nchar/Nvarchar datatypes. */
-	if (is_tsql_nchar_or_nvarchar_datatype(argtypeid))
-	{
-		int utf16_length = ((*common_utility_plugin_ptr->TsqlUTF8LengthInUTF16)(VARDATA_ANY(value),VARSIZE_ANY_EXHDR(value))) * 2;
-		PG_RETURN_INT32(utf16_length);
 	}
 
 	if (typlen == -1)
