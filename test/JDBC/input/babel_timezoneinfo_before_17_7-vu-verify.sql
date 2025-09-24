@@ -79,5 +79,5 @@ EXEC sp_ValidateTimeZoneData 'India Standard Time';
 EXEC sp_ValidateTimeZoneData 'Title Zone';
 GO
 --Verify the null case
-SELECT sys.reverse_timezone_mapping(' ');
+SELECT sys.timezone_mapping_pg_to_windows(' ');
 GO

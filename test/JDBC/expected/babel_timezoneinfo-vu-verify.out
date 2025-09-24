@@ -220,7 +220,7 @@ Invalid#!#Title Zone
 ~~END~~
 
 --Verify the null case
-SELECT sys.reverse_timezone_mapping(' ');
+SELECT sys.timezone_mapping_pg_to_windows(' ');
 GO
 ~~START~~
 text

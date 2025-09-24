@@ -7,6 +7,14 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+~~START~~
+text#!#nvarchar#!#bit
+Central Brazilian Standard Time#!#-04:00#!#0
+Cuba Standard Time#!#-04:00#!#1
+Eastern Standard Time#!#-04:00#!#1
+Haiti Standard Time#!#-04:00#!#1
+Sa Western Standard Time#!#-04:00#!#0
+~~END~~
 
 --Test case 2: Find specific time zone
 SELECT * FROM sys.time_zone_info 
@@ -15,6 +23,10 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+~~START~~
+text#!#nvarchar#!#bit
+Eastern Standard Time#!#-04:00#!#1
+~~END~~
 
 -- Test Case 3: Find all time zones with specific UTC offset
 SELECT name, current_utc_offset
@@ -24,6 +36,13 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+~~START~~
+text#!#nvarchar
+Central Standard Time#!#-05:00
+Easter Island Standard Time#!#-05:00
+Eastern Standard Time (Mexico)#!#-05:00
+Sa Pacific Standard Time#!#-05:00
+~~END~~
 
 -- Test Case 4: Check Daylight Saving Time zones
 SELECT TOP 3 name, current_utc_offset, is_currently_dst
@@ -34,6 +53,12 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+~~START~~
+text#!#nvarchar#!#bit
+Alaskan Standard Time#!#-08:00#!#1
+Aleutian Standard Time#!#-09:00#!#1
+Atlantic Standard Time#!#-03:00#!#1
+~~END~~
 
 -- Test case 5: Time zones with unusual offsets (not full hours)
 SELECT name, current_utc_offset
@@ -44,13 +69,29 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+~~START~~
+text#!#nvarchar
+Afghanistan Standard Time#!#+04:30
+Aus Central Standard Time#!#+09:30
+Cen. Australia Standard Time#!#+09:30
+India Standard Time#!#+05:30
+Iran Standard Time#!#+03:30
+Lord Howe Standard Time#!#+10:30
+Marquesas Standard Time#!#-09:30
+Myanmar Standard Time#!#+06:30
+Newfoundland Standard Time#!#-02:30
+Sri Lanka Standard Time#!#+05:30
+~~END~~
 
 -- Test function to specific pattern
 SELECT * FROM dbo.FindZonesByPattern('Pacific') ORDER BY name;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function dbo.findzonesbypattern(unknown) does not exist)~~
+~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+~~START~~
+text#!#nvarchar#!#bit#!#int
+~~END~~
 
 -- Test function to verify 
 SELECT * FROM dbo.GetZonesInOffsetRange('+08:00', '+10:00') ORDER BY current_utc_offset;
@@ -107,6 +148,10 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+~~START~~
+text#!#nvarchar
+Nepal Standard Time#!#+05:45
+~~END~~
 
 --Test cases to check valid/invalid                 
 EXEC ValidateTimeZone 'Pacific Standard Time', '-07:00';
@@ -116,6 +161,20 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+~~START~~
+varchar#!#nvarchar
+pass#!#Testing Pacific Standard Time for offset -07:00
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+fail#!#Testing UTC for offset -08:00
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+fail#!#Testing India Standard Time for offset -05:00
+~~END~~
 
 -- Test case:  CTE for DST zones with specific offset
 WITH DSTZones AS (
@@ -129,6 +188,13 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+~~START~~
+text#!#nvarchar
+Alaskan Standard Time#!#-08:00
+Mountain Standard Time#!#-06:00
+Pacific Standard Time#!#-07:00
+Pacific Standard Time (Mexico)#!#-07:00
+~~END~~
 
 --Trigger to test valid/invalid time zones
 EXEC sp_ValidateTimeZoneData 'India Standard Time';
@@ -137,11 +203,20 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+~~START~~
+varchar#!#nvarchar
+Valid#!#India Standard Time
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+Invalid#!#Title Zone
+~~END~~
 
 --Verify the null case
-SELECT sys.reverse_timezone_mapping(' ');
+SELECT sys.timezone_mapping_pg_to_windows(' ');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function sys.reverse_timezone_mapping(unknown) does not exist)~~
+~~ERROR (Message: function sys.timezone_mapping_pg_to_windows(unknown) does not exist)~~
 
