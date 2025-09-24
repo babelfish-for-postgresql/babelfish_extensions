@@ -642,6 +642,6 @@ ignore#!#mathematical_func-before_17_7-or-16_11-vu-cleanup
 ignore#!#ascii_function_before-17_7-or-16_11-vu-prepare
 ignore#!#ascii_function_before-17_7-or-16_11-vu-verify
 ignore#!#ascii_function_before-17_7-or-16_11-vu-cleanup
-ignore#!#babel_timezoneinfo_before_17_6-vu-prepare
-ignore#!#babel_timezoneinfo_before_17_6-vu-verify
-ignore#!#babel_timezoneinfo_before_17_6-vu-cleanup
+ignore#!#babel_timezoneinfo_before_17_7-vu-prepare
+ignore#!#babel_timezoneinfo_before_17_7-vu-verify
+ignore#!#babel_timezoneinfo_before_17_7-vu-cleanup

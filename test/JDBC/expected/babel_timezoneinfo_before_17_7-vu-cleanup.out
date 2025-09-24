@@ -17,7 +17,7 @@ GO
 -- Palindromic offset detection
 DROP VIEW IF EXISTS dbo.PalindromicOffsets;
 GO
- 
+
 -- Procedure to check valid and invalid cases
 IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'ValidateTimeZone')
     DROP PROCEDURE ValidateTimeZone;
