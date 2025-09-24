@@ -58,9 +58,9 @@ public class JDBCBabelOutputConcurrency {
             Statement stmt = conn.createStatement();
             
             // Create test table
-            stmt.execute("CREATE TABLE EmailPosts (EmailPostID INT, Param1 VARCHAR(50), LockProcessID INT DEFAULT 0)");
-            stmt.execute("INSERT INTO EmailPosts VALUES (1, 'InitialValue', 100)");
-            stmt.execute("INSERT INTO EmailPosts VALUES (2, NULL, 100)");
+            stmt.execute("CREATE TABLE TestTable_jira_4880 (TestID INT, Param1 VARCHAR(50), LockProcessID INT DEFAULT 0)");
+            stmt.execute("INSERT INTO TestTable_jira_4880 VALUES (1, 'InitialValue', 100)");
+            stmt.execute("INSERT INTO TestTable_jira_4880 VALUES (2, NULL, 100)");
             
             bw.write("Test data created successfully");
             bw.newLine();
@@ -71,12 +71,13 @@ public class JDBCBabelOutputConcurrency {
         String connectionString = initializeConnectionString();
         try (Connection conn = DriverManager.getConnection(connectionString)) {
             Statement stmt = conn.createStatement();
-            stmt.execute("DROP TABLE IF EXISTS EmailPosts");
+            stmt.execute("DROP TABLE IF EXISTS TestTable_jira_4880");
         }
     }
     
     /*
-     * This will be a concurrency test for OUTPUT clause operations to ensure no issues or crashes are encountered.
+     * JIRA-4880: This will be a concurrency test for OUTPUT clause operations to ensure no issues or crashes are encountered.
+     * Tests EPQ (EvalPlanQual) handling with OUTPUT clauses in concurrent scenarios.
      */
     private static void babel_output_concurrency_test(BufferedWriter bw) throws Exception {
         String connectionString = initializeConnectionString();
@@ -141,7 +142,7 @@ public class JDBCBabelOutputConcurrency {
         
         // Insert test data for DELETE test
         try (Statement stmt = conn1.createStatement()) {
-            stmt.execute("INSERT INTO EmailPosts VALUES (2, 'ToBeDeleted', 200)");
+            stmt.execute("INSERT INTO TestTable_jira_4880 VALUES (2, 'ToBeDeleted', 200)");
         }
         
         CountDownLatch session1Ready = new CountDownLatch(1);
@@ -203,13 +204,13 @@ public class JDBCBabelOutputConcurrency {
         // Add Param2 column for NULL alignment test
         try (Statement stmt = conn1.createStatement()) {
             try {
-                stmt.execute("ALTER TABLE EmailPosts ADD Param2 VARCHAR(50)");
+                stmt.execute("ALTER TABLE TestTable_jira_4880 ADD Param2 VARCHAR(50)");
             } catch (SQLException e) {
                 // Column might already exist, ignore
             }
             // Ensure record 3 exists for the test
-            stmt.execute("DELETE FROM EmailPosts WHERE EmailPostID = 3");
-            stmt.execute("INSERT INTO EmailPosts (EmailPostID, Param1, LockProcessID, Param2) VALUES (3, 'TestRecord', 300, NULL)");
+            stmt.execute("DELETE FROM TestTable_jira_4880 WHERE TestID = 3");
+            stmt.execute("INSERT INTO TestTable_jira_4880 (TestID, Param1, LockProcessID, Param2) VALUES (3, 'TestRecord', 300, NULL)");
         }
         
         CountDownLatch session1Ready = new CountDownLatch(1);
@@ -252,7 +253,7 @@ class EPQSession1Worker implements Runnable {
             Statement stmt = conn.createStatement();
             
             // Session 1 - Start transaction and lock the row
-            stmt.execute("UPDATE EmailPosts SET Param1 = 'ModifiedBySession1' WHERE EmailPostID = 1");
+            stmt.execute("UPDATE TestTable_jira_4880 SET Param1 = 'ModifiedBySession1' WHERE TestID = 1");
             
             // Signal that Session 1 has locked the row
             session1Ready.countDown();
@@ -292,10 +293,10 @@ class EPQSession2Worker implements Runnable {
             Statement stmt = conn.createStatement();
             
             // This will be blocked until Session 1 commits, then EPQ will process it
-            stmt.execute("UPDATE EmailPosts SET LockProcessID = 7 " +
+            stmt.execute("UPDATE TestTable_jira_4880 SET LockProcessID = 7 " +
                        "OUTPUT deleted.Param1 as old_param1, inserted.Param1 as new_param1, " +
                        "deleted.LockProcessID as old_lock, inserted.LockProcessID as new_lock " +
-                       "WHERE EmailPostID = 1");
+                       "WHERE TestID = 1");
             
             conn.commit();
             
@@ -324,7 +325,7 @@ class EPQDeleteSession1Worker implements Runnable {
             Statement stmt = conn.createStatement();
             
             // Session 1 - Update the row that will be deleted by Session 2
-            stmt.execute("UPDATE EmailPosts SET Param1 = 'UpdatedBeforeDelete' WHERE EmailPostID = 2");
+            stmt.execute("UPDATE TestTable_jira_4880 SET Param1 = 'UpdatedBeforeDelete' WHERE TestID = 2");
             
             // Signal that Session 1 has locked the row
             session1Ready.countDown();
@@ -364,9 +365,9 @@ class EPQDeleteSession2Worker implements Runnable {
             Statement stmt = conn.createStatement();
             
             // DELETE with OUTPUT - should see EPQ-processed values
-            stmt.execute("DELETE FROM EmailPosts " +
+            stmt.execute("DELETE FROM TestTable_jira_4880 " +
                        "OUTPUT deleted.Param1, deleted.LockProcessID " +
-                       "WHERE EmailPostID = 2");
+                       "WHERE TestID = 2");
             
             conn.commit();
             
@@ -395,7 +396,7 @@ class EPQInsertSession1Worker implements Runnable {
             Statement stmt = conn.createStatement();
             
             // Session 1 - Create lock contention
-            stmt.execute("UPDATE EmailPosts SET LockProcessID = 999 WHERE EmailPostID = 1");
+            stmt.execute("UPDATE TestTable_jira_4880 SET LockProcessID = 999 WHERE TestID = 1");
             
             // Signal that Session 1 has created lock contention
             session1Ready.countDown();
@@ -435,8 +436,8 @@ class EPQInsertSession2Worker implements Runnable {
             Statement stmt = conn.createStatement();
             
             // INSERT with OUTPUT during concurrent operations
-            stmt.execute("INSERT INTO EmailPosts (EmailPostID, Param1, LockProcessID) " +
-                       "OUTPUT inserted.EmailPostID, inserted.Param1, inserted.LockProcessID " +
+            stmt.execute("INSERT INTO TestTable_jira_4880 (TestID, Param1, LockProcessID) " +
+                       "OUTPUT inserted.TestID, inserted.Param1, inserted.LockProcessID " +
                        "VALUES (4, 'ConcurrentInsert', 400)");
             
             conn.commit();
@@ -466,8 +467,8 @@ class EPQMixedSession1Worker implements Runnable {
             Statement stmt = conn.createStatement();
             
             // Complex transaction affecting multiple rows
-            stmt.execute("UPDATE EmailPosts SET Param1 = 'Session1Modified' WHERE EmailPostID IN (1, 2, 3)");
-            stmt.execute("UPDATE EmailPosts SET Param2 = NULL WHERE EmailPostID = 1");
+            stmt.execute("UPDATE TestTable_jira_4880 SET Param1 = 'Session1Modified' WHERE TestID IN (1, 2, 3)");
+            stmt.execute("UPDATE TestTable_jira_4880 SET Param2 = NULL WHERE TestID = 1");
             
             // Signal that Session 1 has locked rows
             session1Ready.countDown();
@@ -513,24 +514,24 @@ class EPQMixedSession2Worker implements Runnable {
             Statement stmt = conn.createStatement();
             
             // First: INSERT new record
-            stmt.execute("INSERT INTO EmailPosts (EmailPostID, Param1, LockProcessID) " +
-                       "OUTPUT inserted.EmailPostID, inserted.Param1, inserted.LockProcessID " +
+            stmt.execute("INSERT INTO TestTable_jira_4880 (TestID, Param1, LockProcessID) " +
+                       "OUTPUT inserted.TestID, inserted.Param1, inserted.LockProcessID " +
                        "VALUES (5, 'NewRecord', 500)");
             
             // Second: UPDATE existing record (will trigger EPQ)
-            stmt.execute("UPDATE EmailPosts " +
-                       "SET LockProcessID = EmailPosts.LockProcessID + 100, Param1 = 'EPQ_Updated' " +
-                       "OUTPUT deleted.EmailPostID, deleted.Param1 as old_param, " +
+            stmt.execute("UPDATE TestTable_jira_4880 " +
+                       "SET LockProcessID = TestTable_jira_4880.LockProcessID + 100, Param1 = 'EPQ_Updated' " +
+                       "OUTPUT deleted.TestID, deleted.Param1 as old_param, " +
                        "deleted.LockProcessID as old_lock, " +
-                       "inserted.EmailPostID, inserted.Param1 as new_param, " +
+                       "inserted.TestID, inserted.Param1 as new_param, " +
                        "inserted.LockProcessID as new_lock " +
-                       "WHERE EmailPostID = 1");
+                       "WHERE TestID = 1");
             
             // Third: DELETE another record (will trigger EPQ)
-            stmt.execute("DELETE FROM EmailPosts " +
-                       "OUTPUT deleted.EmailPostID, deleted.LockProcessID, " +
+            stmt.execute("DELETE FROM TestTable_jira_4880 " +
+                       "OUTPUT deleted.TestID, deleted.LockProcessID, " +
                        "deleted.Param1 " +
-                       "WHERE EmailPostID = 2");
+                       "WHERE TestID = 2");
             
             conn.commit();
             
