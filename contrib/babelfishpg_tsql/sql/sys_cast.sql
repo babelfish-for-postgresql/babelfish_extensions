@@ -264,9 +264,9 @@ BEGIN
 	BEGIN
 		CASE pg_typeof(arg)
 		WHEN 'sys.nvarchar'::regtype THEN
-			RETURN sys.nvarcharvarbinary(arg, typmod, true);
+			RETURN sys.nvarcharvarbinary(arg, -1, true);
 		WHEN 'sys.nchar'::regtype THEN
-			RETURN sys.ncharvarbinary(arg, typmod, true);
+			RETURN sys.ncharvarbinary(arg, -1, true);
 		ELSE
 			RETURN CAST(arg AS sys.varbinary);
 		END CASE;

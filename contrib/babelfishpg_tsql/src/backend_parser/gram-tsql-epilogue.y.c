@@ -452,7 +452,6 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
 	else if ((strcmp(typename_string, "varchar") == 0) || (strcmp(typename_string, "bpchar") == 0)
 			|| (strcmp(typename_string, "nvarchar") == 0) || (strcmp(typename_string, "nchar") == 0))
 	{
-		List	   *args = list_make1(arg);
 		Node	   *helperFuncCall;
 
 		if((strcmp(typename_string, "nvarchar") == 0) || (strcmp(typename_string, "nchar") == 0))
@@ -463,17 +462,16 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
 		{
 			typename_string = format_type_extended(VARCHAROID, typmod, FORMAT_TYPE_TYPEMOD_GIVEN);
 		}
-		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_varchar"), lcons(makeStringConst(typename_string, typename->location), args), COERCE_EXPLICIT_CALL, location);
+		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_varchar"), list_make2(makeStringConst(typename_string, typename->location), arg), COERCE_EXPLICIT_CALL, location);
 
 		// Add a type cast on top of the CAST helper function so typmod can be applied
 		result = makeTypeCast(helperFuncCall, typename, location);
 	}
 	else if (strcmp(typename_string, "binary") == 0 || strcmp(typename_string, "varbinary") == 0)
 	{
-		List	   *args = list_make1(arg);
 		Node	   *helperFuncCall;
 
-		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_varbinary"), args, COERCE_EXPLICIT_CALL, location);
+		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_varbinary"), list_make1(arg), COERCE_EXPLICIT_CALL, location);
 		
 		// Add a type cast on top of the CAST helper function so typmod can be applied
 		result = makeTypeCast(helperFuncCall, typename, location);
