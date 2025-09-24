@@ -1100,12 +1100,17 @@ datalength(PG_FUNCTION_ARGS)
 	int32 result;
 	int			typlen;
 
+	/* Lookup the datatype of the supplied argument */
+	Oid argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(argtypeid);
+	if (OidIsValid(immediate_base_type))
+	{
+		argtypeid = immediate_base_type;
+	}
+
 	/* On first call, get the input type's typlen, and save at *fn_extra */
 	if (fcinfo->flinfo->fn_extra == NULL)
 	{
-		/* Lookup the datatype of the supplied argument */
-		Oid			argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
-
 		typlen = get_typlen(argtypeid);
 		if (typlen == 0)		/* should not happen */
 			elog(ERROR, "cache lookup failed for type %u", argtypeid);
@@ -1116,6 +1121,55 @@ datalength(PG_FUNCTION_ARGS)
 	}
 	else
 		typlen = *((int *) fcinfo->flinfo->fn_extra);
+
+	/* Handling fixed storage size datatypes. */
+	if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(argtypeid))
+	{
+		PG_RETURN_INT32(1);
+	}
+	else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(argtypeid) || 
+			 (*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(argtypeid))
+	{
+		PG_RETURN_INT32(4);
+	}
+	else if (argtypeid == DATEOID)
+	{
+		PG_RETURN_INT32(3);
+	}
+	else if (argtypeid == TIMEOID)
+	{
+		PG_RETURN_INT32(5);
+	}
+	else if (is_numeric_datatype(argtypeid))
+	{
+		Numeric result_numeric_val = DatumGetNumeric(value);
+		int32 val_typmod = (*common_utility_plugin_ptr->tsql_numeric_get_typmod)(result_numeric_val);
+		int32 val_precision = ((val_typmod - VARHDRSZ) >> 16) & 0xffff;
+
+		if (1 <= val_precision && val_precision <= 9)
+		{
+			PG_RETURN_INT32(5);
+		}
+		else if (10 <= val_precision && val_precision <= 19)
+		{
+			PG_RETURN_INT32(9);
+		}
+		else if (20 <= val_precision && val_precision <= 28)
+		{
+			PG_RETURN_INT32(13);
+		}
+		else if (29 <= val_precision && val_precision <= 38)
+		{
+			PG_RETURN_INT32(17);
+		}
+	}
+
+	/* Handling Nchar/Nvarchar datatypes. */
+	if (is_tsql_nchar_or_nvarchar_datatype(argtypeid))
+	{
+		int utf16_length = ((*common_utility_plugin_ptr->TsqlUTF8LengthInUTF16)(VARDATA_ANY(value),VARSIZE_ANY_EXHDR(value))) * 2;
+		PG_RETURN_INT32(utf16_length);
+	}
 
 	if (typlen == -1)
 	{
