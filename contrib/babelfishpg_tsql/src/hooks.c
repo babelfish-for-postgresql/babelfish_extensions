@@ -7805,7 +7805,7 @@ repair_broken_view_recursive(Oid viewOid, List *visitedViews)
 			schema_id = get_rel_namespace(viewOid);
 			schema_name = get_namespace_name(schema_id);
 			logical_dbid = get_dbid_from_physical_schema_name(schema_name, true);
-			set_cur_user_db_and_path(get_db_name(logical_dbid), true);
+			set_cur_user_db_and_path(get_db_name(logical_dbid), true, false);
 			
 			/* Transform the query into a Query structure */
 			rawstmt = makeNode(RawStmt);
@@ -7817,7 +7817,7 @@ repair_broken_view_recursive(Oid viewOid, List *visitedViews)
 		}
 		PG_FINALLY();
 		{
-			set_cur_user_db_and_path(orig_db_name, true);
+			set_cur_user_db_and_path(orig_db_name, true, false);
 			pfree(orig_db_name);
 		}
 		PG_END_TRY();

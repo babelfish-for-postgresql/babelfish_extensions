@@ -875,7 +875,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			{
 
 				if (stmt->db_name != NULL)
-					set_cur_user_db_and_path(stmt->db_name, false);
+					set_cur_user_db_and_path(stmt->db_name, false, false);
 
 				set_search_path_for_sp_procs(stmt->schema_name);
 			}
@@ -886,7 +886,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				 * For sys pltsql routines and sp_ procs switch to
 				 * the database specified while calling it.
 				 */
-				set_cur_user_db_and_path(stmt->db_name, false);
+				set_cur_user_db_and_path(stmt->db_name, false, false);
 			}
 		}
 
@@ -1273,7 +1273,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	PG_FINALLY();
 	{
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
-			set_cur_user_db_and_path(save_db_name, false);
+			set_cur_user_db_and_path(save_db_name, false, false);
 
 		pfree(save_db_name);
 
@@ -1535,7 +1535,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 		cur_db_name = get_cur_db_name();
 		if (strcmp(cur_db_name, old_db_name) != 0)
-			set_cur_user_db_and_path(old_db_name, false);
+			set_cur_user_db_and_path(old_db_name, false, false);
 	}
 	PG_END_TRY();
 
@@ -3059,7 +3059,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 						"\"%s\" is probably undergoing DDL statements in another session.",
 						stmt->db_name, stmt->db_name)));
 
-	set_cur_user_db_and_path(stmt->db_name, false);
+	set_cur_user_db_and_path(stmt->db_name, false, false);
 
 	top_es_entry = exec_state_call_stack->next;
 	while (top_es_entry != NULL)
@@ -3132,7 +3132,7 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 	/* error if new db is not valid and restore original db */
 	if (!DbidIsValid(new_db_id))
 	{
-		set_cur_user_db_and_path(initial_database_name, true);
+		set_cur_user_db_and_path(initial_database_name, true, false);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", stmt->db_name)));
@@ -3159,7 +3159,7 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 						"\"%s\" is probably undergoing DDL statements in another session.",
 						stmt->db_name, stmt->db_name)));
 
-	set_cur_user_db_and_path(stmt->db_name, false);
+	set_cur_user_db_and_path(stmt->db_name, false, false);
 
 	return PLTSQL_RC_OK;
 }

@@ -4199,7 +4199,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						PG_END_TRY();
 
-						set_cur_user_db_and_path(db_name, true);
+						set_cur_user_db_and_path(db_name, true, false);
 						pfree(db_name);
 
 						return;
@@ -6390,7 +6390,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 
 			/* for cross db func/proc calls switch to that db */
 			if (DbidIsValid(func->fn_dbid) && get_cur_db_id() != func->fn_dbid)
-				set_cur_user_db_and_path(get_db_name(func->fn_dbid), false);
+				set_cur_user_db_and_path(get_db_name(func->fn_dbid), false, CALLED_AS_TRIGGER(fcinfo));
 
 			/*
 			 * Determine if called as function or trigger and call appropriate
@@ -6442,7 +6442,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 
 		/* reset db context must always be the last line in this block */
 		if (get_cur_db_id() != saved_dbid)
-			set_cur_user_db_and_path(get_db_name((saved_dbid)), false);
+			set_cur_user_db_and_path(get_db_name((saved_dbid)), false, CALLED_AS_TRIGGER(fcinfo));
 		if (saved_search_path != NULL && strcmp(saved_search_path, namespace_search_path) != 0
 			&& !IsAbortedTransactionBlockState())
 		{

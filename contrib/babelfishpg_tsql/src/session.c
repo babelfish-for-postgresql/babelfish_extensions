@@ -128,8 +128,11 @@ bbf_set_current_user(const char *user_name)
 	Oid			userid;
 
 	userid = get_role_oid(user_name, false);
-	SetConfigOption("role", user_name, PGC_SUSET, PGC_S_DATABASE_USER);
-	SetCurrentRoleId(userid, false);
+	if (userid != GetUserId())
+	{
+		SetConfigOption("role", user_name, PGC_SUSET, PGC_S_DATABASE_USER);
+		SetCurrentRoleId(userid, false);
+	}
 }
 
 /*
@@ -156,7 +159,7 @@ check_session_db_access(const char *db_name)
 }
 
 void
-set_cur_user_db_and_path(const char *db_name, bool check_db_id)
+set_cur_user_db_and_path(const char *db_name, bool check_db_id, bool called_as_trigger)
 {
 	const char *user = get_user_for_database(db_name);
 	int16		db_id = get_db_id(db_name);
@@ -179,8 +182,14 @@ set_cur_user_db_and_path(const char *db_name, bool check_db_id)
 	/* set current DB */
 	set_cur_db(db_id, db_name);
 
-	/* set current user */
-	bbf_set_current_user(user);
+	/*
+	 * With engine commit 01463e1, it is ensured that trigger runs as the instigating user.
+	 * That user is already set from engine side before executing trigger. So don't risk 
+	 * setting user again or else results in Assert failure within SetOuterUserId.
+	 * If it's not trigger then set current user.
+	 */
+	if (!called_as_trigger)
+		bbf_set_current_user(user);
 	current_user_id = GetUserId();
 
 	/* set search path */

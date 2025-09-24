@@ -4836,7 +4836,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * schemas, Change the session property.
 		 */
 		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-			set_cur_user_db_and_path(stmt->db_name, true);
+			set_cur_user_db_and_path(stmt->db_name, true, false);
 	}
 
 	PG_TRY();
@@ -4849,7 +4849,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			if (is_cross_db)
 			{
 				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-					set_cur_user_db_and_path(cur_dbname, true);
+					set_cur_user_db_and_path(cur_dbname, true, false);
 			}
 			return ret;
 		}
@@ -5281,7 +5281,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		if (is_cross_db)
 		{
 			if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-				set_cur_user_db_and_path(cur_dbname, true);
+				set_cur_user_db_and_path(cur_dbname, true, false);
 		}
 
 		pfree(cur_dbname);
