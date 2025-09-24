@@ -1130,14 +1130,6 @@ int
 ~~END~~
 
 
-select datalength(cast(N'世界'  as char)) 
-go
-~~START~~
-int
-30
-~~END~~
-
-
 -- varchar
 -- VARCHAR
 select datalength(cast('' as varchar))

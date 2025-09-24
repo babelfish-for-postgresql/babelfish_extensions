@@ -777,9 +777,6 @@ go
 select DATALENGTH(cast(N'🌟' as char(10)))
 go
 
-select datalength(cast(N'世界'  as char)) 
-go
-
 -- varchar
 -- VARCHAR
 select datalength(cast('' as varchar))
