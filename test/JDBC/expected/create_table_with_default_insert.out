@@ -1,0 +1,110 @@
+IF OBJECT_ID('test_unicode_defaults') IS NOT NULL DROP TABLE test_unicode_defaults;
+GO
+
+CREATE TABLE test_unicode_defaults
+(
+    id              INT IDENTITY PRIMARY KEY,
+    col_char        CHAR(10) DEFAULT 'a😄ğğş',
+    col_nchar       NCHAR(10) DEFAULT N'a😄ğğş',
+    col_varchar     VARCHAR(10) DEFAULT 'a😄ğğş',
+    col_nvarchar    NVARCHAR(10) DEFAULT N'a😄ğğş'
+);
+GO
+
+INSERT INTO test_unicode_defaults DEFAULT VALUES;
+GO
+~~ROW COUNT: 1~~
+
+
+
+SELECT * FROM test_unicode_defaults;
+INSERT INTO test_unicode_defaults VALUES ('a😄ğğş',N'a😄ğğş','a😄ğğş',N'a😄ğğş');
+GO
+~~START~~
+int#!#char#!#nchar#!#varchar#!#nvarchar
+1#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_unicode_defaults;
+GO
+~~START~~
+int#!#char#!#nchar#!#varchar#!#nvarchar
+1#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+2#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+~~END~~
+
+
+INSERT INTO test_unicode_defaults VALUES ('000',N'000','000',N'000');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_unicode_defaults;
+GO
+~~START~~
+int#!#char#!#nchar#!#varchar#!#nvarchar
+1#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+2#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+3#!#000       #!#000       #!#000#!#000
+~~END~~
+
+
+UPDATE test_unicode_defaults
+SET col_nchar = CAST(N'a😄ğğş' AS NVARCHAR(10))
+WHERE id = 3;
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE test_unicode_defaults
+SET col_nvarchar = CAST(N'a😄ğğş' AS NVARCHAR(10))
+WHERE id = 3;
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE test_unicode_defaults
+SET col_char = CAST(N'a😄ğğş' AS VARCHAR(10))
+WHERE id = 3;
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE test_unicode_defaults
+SET col_varchar = CAST(N'a😄ğğş' AS VARCHAR(10))
+WHERE id = 3;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_unicode_defaults;
+GO
+~~START~~
+int#!#char#!#nchar#!#varchar#!#nvarchar
+1#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+2#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+3#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+~~END~~
+
+
+INSERT INTO test_unicode_defaults DEFAULT VALUES;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_unicode_defaults;
+GO
+~~START~~
+int#!#char#!#nchar#!#varchar#!#nvarchar
+1#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+2#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+3#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+4#!#a????     #!#a😄ğğş    #!#a????#!#a😄ğğş
+~~END~~
+
+
+IF OBJECT_ID('test_unicode_defaults') IS NOT NULL DROP TABLE test_unicode_defaults;
+GO
