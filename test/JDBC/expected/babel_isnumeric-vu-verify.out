@@ -831,6 +831,7 @@ int
 0
 ~~END~~
 
+
 -- Fix with BABEL-6101 
 select isnumeric(cast('' as binary(1)))
 go
