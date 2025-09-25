@@ -269,6 +269,16 @@ GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(
 	IN INTEGER
 ) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_xmldoc(int)
+RETURNS xml
+AS 'babelfishpg_tsql', 'tsql_openxml_get_xmldoc'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_colpattern(text,int)
+RETURNS sys.nvarchar
+AS 'babelfishpg_tsql', 'tsql_openxml_get_colpattern'
+LANGUAGE C STRICT;
+
 CREATE OR REPLACE FUNCTION sys.openxml_simple(document_id INT, 
                                        rowpattern TEXT, 
                                        flags INTEGER DEFAULT 0)
@@ -328,6 +338,20 @@ BEGIN
     RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_openxml RENAME TO babelfish_openxml_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_openxml_deprecated_in_5_4_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

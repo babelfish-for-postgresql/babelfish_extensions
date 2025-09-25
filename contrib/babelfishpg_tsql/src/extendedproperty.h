@@ -16,6 +16,7 @@ typedef enum ExtendedPropertyType
 } ExtendedPropertyType;
 
 extern const char *const ExtendedPropertyTypeNames[];
+extern char *get_value_by_name_from_array(ArrayType *array, const char *name);
 
 extern void delete_extended_property(int16 db_id,
                                      const char *type,

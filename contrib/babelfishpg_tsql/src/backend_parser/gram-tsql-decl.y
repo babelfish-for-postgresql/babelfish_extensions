@@ -42,6 +42,8 @@
 %type <str> optional_path
 %type <boolean> optional_asJson
 %type <node> openxml_expr
+%type <list> openxml_column_list
+%type <node> openxml_column_el
 
 %type <node> tsql_opt_arg_dflt
 %type <node> tsql_opt_null_keyword
@@ -137,6 +139,6 @@
  * otherwise the parser cannot tell between 'WITH' and 'WITH (' and thus
  * lead to a shift/reduce conflict.
  */
-%token	WITH_paren TSQL_HINT_START_BRACKET UPDATE_paren
+%token	WITH_paren TSQL_HINT_START_BRACKET UPDATE_paren WITH_table
 
 %left TSQL_CROSS TSQL_OUTER TSQL_UNPIVOT
