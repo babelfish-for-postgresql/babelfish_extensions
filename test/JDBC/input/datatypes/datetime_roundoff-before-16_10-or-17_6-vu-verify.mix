@@ -499,6 +499,8 @@ BEGIN
 END;
 $$;
 GO
+
+-- procedure for all use case
 CREATE OR REPLACE PROCEDURE datetime_rounding_handler(
     p_action text DEFAULT NULL,
     p_schema_name text DEFAULT NULL,
@@ -526,7 +528,7 @@ BEGIN
         RAISE INFO E'\nUsage: CALL datetime_rounding_handler(p_action, p_schema_name, p_table_name, p_commit_after_table)';
         RAISE INFO E'\nActions:';
         RAISE INFO E'\n  list   - List all tables and columns with datetime type';
-        RAISE INFO E'\n  check  - Check for values that need rounding';
+        RAISE INFO E'\n  check  - Check for values that need rounding (requires schema and table names unless "all" specified)';
         RAISE INFO E'\n  update - Update affected values (requires schema and table names unless "all" specified)';
         RETURN;
     END IF;
