@@ -815,11 +815,12 @@ int
 
 
 -- binary/varbinary
+-- Fix with BABEL-6101
 select isnumeric(cast('' as binary))
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -830,12 +831,12 @@ int
 0
 ~~END~~
 
- 
+-- Fix with BABEL-6101 
 select isnumeric(cast('' as binary(1)))
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -994,6 +995,7 @@ int
 
 
 -- misc tests
+-- Fix with BABEL-6101
 select isnumeric(cast(24 as varbinary))
 Go
 ~~START~~
