@@ -188,11 +188,12 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 	bool has_leading_delimiter = false;
 	bool consecutive_delimiters = false;
 	char last_char = '\0';
+	bool time_portion = false;
 	char *context_str = (context == DATE_TIME) ? "datetime" 
 			: ((context == DATE_TIME_2) ? "datetime2" : "datetimeoffset");
 
 	/* Check for leading delimiter */
-	if (str[0] == '/' || str[0] == '-' || str[0] == '.')
+	if (str[0] == '/' || str[0] == '-' || str[0] == '.' || str[i] == ',' || str[i] == ':')
 		has_leading_delimiter = true;
 
 	while (str[i] != '\0')
@@ -221,8 +222,8 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 		}
 
 		/* Check for consecutive delimiters */
-		if ((str[i] == '/' || str[i] == '-' || str[i] == '.') &&
-			(last_char == '/' || last_char == '-' || last_char == '.'))
+		if ((str[i] == '/' || str[i] == '-' || str[i] == '.' || str[i] == ',' || str[i] == ':') &&
+			(last_char == '/' || last_char == '-' || last_char == '.' || last_char == ',' || last_char == ':'))
 		{
 			consecutive_delimiters = true;
 		}
@@ -231,14 +232,14 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 			num_colons++;
 
 		/* Check if this is the last character */
-		if ((str[i] == '/' || str[i] == '-' || str[i] == '.') && str[i + 1] == '\0')
+		if ((str[i] == '/' || str[i] == '-' || str[i] == '.' || str[i] == ',' || str[i] == ':') && str[i + 1] == '\0')
 			has_trailing_delimiter = true;
 
 		/*
 		 * Modify DATE delimiters to '.' as in DATETIME multiple delimiters can
 		 * be passed for DATE field.
 		 */
-		if (context == DATE_TIME && (str[i] == '/' || str[i] == '-' || str[i] == '.'))
+		if (context == DATE_TIME && (str[i] == '/' || str[i] == '-' || str[i] == '.') && (!time_portion || str[i] == '.'))
 		{
 			result[j] = '.';
 			j++;
@@ -320,6 +321,7 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 
 			result[j] = str[i];
 			j++;
+			time_portion = true;
 		}
 		else
 		{
@@ -343,7 +345,8 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 		has_leading_delimiter ||
 		consecutive_delimiters))
 	{
-		pfree(result);
+		if (result)
+			pfree(result);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));

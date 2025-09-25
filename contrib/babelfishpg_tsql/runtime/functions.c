@@ -205,11 +205,8 @@ PG_FUNCTION_INFO_V1(datepart_internal_money);
 PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 PG_FUNCTION_INFO_V1(replace_special_chars_fts);
 PG_FUNCTION_INFO_V1(isnumeric);
-<<<<<<< HEAD
 PG_FUNCTION_INFO_V1(isdate);
-=======
 PG_FUNCTION_INFO_V1(openxml_simple);
->>>>>>> upstream/BABEL_5_X_DEV
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -2345,10 +2342,10 @@ isnumeric(PG_FUNCTION_ARGS)
 
 /*
  * isdate()
- *  Returns 1 if the input value can be converted to a valid datetime value,
- *  and 0 otherwise. Returns 0 for NULL input. Raises error for invalid types
- *  (date, time, timestamptz, text). Valid datetime range is 1753-01-01
- *  through 9999-12-31.
+ * Returns 1 if the input value can be converted to a valid datetime value,
+ * and 0 otherwise. Returns 0 for NULL input. Raises error for invalid types
+ * (date, time, timestamptz, text). Valid datetime range is 1753-01-01
+ * through 9999-12-31.
  */
 Datum
 isdate(PG_FUNCTION_ARGS)
@@ -2380,7 +2377,7 @@ isdate(PG_FUNCTION_ARGS)
 		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (argtypeid) ||
 		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (argtypeid) ||
 		(*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (argtypeid) ||
-		 argtypeid == VARCHAROID || argtypeid == BPCHAROID || argtypeid == INT4OID))
+		 argtypeid == INT4OID))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2389,26 +2386,27 @@ isdate(PG_FUNCTION_ARGS)
 	}
 
 	/* Get the string representation from input datum */
-	if (argtypeid == VARCHAROID || argtypeid == BPCHAROID ||
-		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (argtypeid) ||
-		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (argtypeid) ||
-		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (argtypeid) ||
+	if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype) (argtypeid) ||
 		(*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (argtypeid))
-		value_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
-
+		value_str = text_to_cstring(PG_GETARG_BPCHAR_PP(0));
+	else if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (argtypeid) ||
+			 (*common_utility_plugin_ptr->is_tsql_varchar_datatype) (argtypeid))
+		value_str = text_to_cstring(PG_GETARG_VARCHAR_PP(0));
 	else
 	{
-		Oid typoutput;
-		bool typisvarlena;
+		Oid 	typoutput;
+		bool 	typisvarlena;
+
 		getTypeOutputInfo(argtypeid, &typoutput, &typisvarlena);
 		value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
 	}
 
 
 	/* Check for empty string */
-	if (strlen(value_str) == 0)
+	if ((*common_utility_plugin_ptr->isEmptyOrWhitespace)(value_str))
 	{
-		pfree(value_str);
+		if (value_str)
+			pfree(value_str);
 		PG_RETURN_INT32(0);
 	}
 
@@ -2425,8 +2423,8 @@ isdate(PG_FUNCTION_ARGS)
 		FlushErrorState();
 	}
 	PG_END_TRY();
-
-	pfree(value_str);
+	if (value_str)
+		pfree(value_str);
 	PG_RETURN_INT32(result ? 1 : 0);
 }
 
