@@ -696,7 +696,6 @@ insert into BABEL_6081_t1 values(1,2.5),(1,3.5),(1,4.5),(2,1.5),(2,2.5)
 go
 
 select
-    id,
     avg(value) as avgValue,
     avg(value) * 1.0 as avgValueMul,
     avg(value) / 1.0 as avgValueDiv
@@ -728,8 +727,7 @@ INSERT INTO decimal_test VALUES
 (3, 567.89, 567.8901, 1)
 GO
 
-SELECT 
-    id,
+SELECT
     AVG(value1) as avg_value1,
     AVG(value2) as avg_value2,
     AVG(value1) * 1.000 as avg_value1_mul
@@ -749,8 +747,7 @@ table_name IN ('avg_results')
 ORDER BY COLUMN_NAME;
 GO
 
-SELECT 
-    category,
+SELECT
     SUM(value1) as sum_value1,
     SUM(value2) as sum_value2,
     SUM(value2) / 1.0000 as sum_value2_div
@@ -770,8 +767,7 @@ table_name IN ('sum_results')
 ORDER BY COLUMN_NAME;
 GO
 
-SELECT 
-    id,
+SELECT
     SUM(value1 * value2) as product_sum,
     AVG(value1 * value2) as product_avg,
     SUM(value1) * SUM(value2) / 1.0000 as product_sum_div
@@ -806,7 +802,6 @@ INSERT INTO numeric_test VALUES
 GO
 
 SELECT 
-    id,
     SUM(num1) as sum_num1,
     SUM(num2) as sum_num2,
     AVG(num1) as avg_num1,
@@ -828,8 +823,7 @@ table_name IN ('numeric_results')
 ORDER BY COLUMN_NAME;
 GO
 
-SELECT 
-    id,
+SELECT
     MAX(value1) - MIN(value1) as value1_range,
     MAX(value2) - MIN(value2) as value2_range,
     MAX(value2) * MIN(value2) as value2_product
@@ -849,8 +843,7 @@ table_name IN ('range_results')
 ORDER BY COLUMN_NAME;
 GO
 
-SELECT 
-    id,
+SELECT
     SUM(value1)/COUNT(*) as manual_avg1,
     AVG(value1) as builtin_avg1,
     SUM(value2)/COUNT(*) as manual_avg2,
@@ -871,8 +864,7 @@ table_name IN ('precision_test')
 ORDER BY COLUMN_NAME;
 GO
 
-SELECT 
-    category,
+SELECT
     COUNT(*) as count,
     SUM(value1) as sum1,
     AVG(value1) as avg1,
@@ -908,8 +900,7 @@ INSERT INTO decimal_zero_test VALUES
 (2, 0.00)
 GO
 
-SELECT 
-    id,
+SELECT
     AVG(value) as avg_value,
     SUM(value) as sum_value
 INTO zero_value_results
