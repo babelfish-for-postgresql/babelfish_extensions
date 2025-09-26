@@ -1075,7 +1075,7 @@ FROM BinaryCastingDemo;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#varbinary#!#binary#!#varbinary#!#int#!#int#!#int
-1#!#Empty string#!#VARCHAR#!##!#00000000000000000000#!##!#0#!#0#!#0
+1#!#Empty string#!#VARCHAR#!##!#00000000000000000000#!##!#0#!#10#!#0
 2#!#NULL value#!#VARCHAR#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 3#!#Simple text#!#VARCHAR#!#48656C6C6F#!#48656C6C6F0000000000#!#48656C6C6F#!#5#!#10#!#5
 4#!#Long text#!#VARCHAR#!#546869734973414C6F6E6754657874#!#546869734973414C6F6E#!#546869734973414C6F6E#!#15#!#10#!#10
