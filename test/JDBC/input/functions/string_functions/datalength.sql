@@ -701,44 +701,6 @@ GO
 SELECT * FROM datalength_vw_DataLengthSummary;
 GO
 
-
--- Cleanup
-DROP TABLE datalength_t2;
-DROP TABLE datalength_t3;
-DROP TABLE datalength_t1;
-GO
-
-DROP TABLE datalength_t4;
-GO
-
-DROP TABLE datalength_t5;
-DROP TABLE datalength_t6;
-GO
-
-DROP TYPE EmailAddress;
-DROP TYPE PhoneNumber;
-DROP TYPE FullName;
-DROP TYPE Description;
-DROP TYPE Unicode_Description;
-DROP TYPE ShortCode;
-DROP TYPE LongText;
-DROP TYPE UnicodeCode;
-GO
-
-DROP TRIGGER datalength_tr_ValidateDataLength;
-DROP VIEW datalength_vw_DataLengthSummary;
-DROP VIEW datalength_vw_DataLengthInfo;
-DROP VIEW datalength_vw_DataSizeCategories;
-DROP FUNCTION datalength_fn_GetTotalSize;
-DROP FUNCTION datalength_fn_GetSizeCategory;
-DROP FUNCTION datalength_fn_GetSizeAnalysis;
-DROP PROCEDURE datalength_sp_AnalyzeDataSizes;
-DROP PROCEDURE datalength_sp_ValidateAndInsert;
-DROP TABLE datalength_ComputedColumnsTest;
-DROP TABLE datalength_ConstrainedTable;
-DROP TABLE datalength_t7;
-GO
-
 -- Extra test cases 
 -- char
 select datalength(char(0))
@@ -1035,6 +997,25 @@ go
 select datalength(CAST('' AS VARBINARY))
 go
 
+-- UDT
+create type tinyint_babel_6120 from tinyint;
+create type date_babel_6120 from date;
+create type smalldatetime_babel_6120 from smalldatetime;
+create type time_babel_6120 from time;
+create type smallmoney_babel_6120 from smallmoney;
+create type numeric_babel_6120 from numeric(21,5);
+create type decimal_babel_6120 from decimal(21,5);
+GO
+
+create type smallint_babel_6120 from smallint;
+create type int_babel_6120 from int;
+create type bigint_babel_6120 from bigint;
+create type datetime_babel_6120 from datetime;
+create type datetime2_babel_6120 from datetime2;
+create type datetimeoffset_babel_6120 from datetimeoffset;
+create type money_babel_6120 from money;
+go
+
 
 -- tinyint
 -- JIRA query
@@ -1050,6 +1031,9 @@ GO
 SELECT DATALENGTH(CAST(123.33 AS TINYINT))
 GO
 
+SELECT DATALENGTH(CAST(123 AS tinyint_babel_6120))
+GO
+
 -- smallint : 2 (as expected)
 SELECT DATALENGTH(CAST(123 AS SMALLINT))
 GO
@@ -1061,6 +1045,9 @@ SELECT DATALENGTH(CAST('' AS SMALLINT))
 GO
 
 SELECT DATALENGTH(CAST(123.33 AS SMALLINT))
+GO
+
+SELECT DATALENGTH(CAST(123 AS smallint_babel_6120))
 GO
 
 
@@ -1080,6 +1067,9 @@ GO
 SELECT DATALENGTH(123)
 go
 
+SELECT DATALENGTH(CAST(123 AS int_babel_6120))
+GO
+
 -- bitint : 8 (as expected)
 
 SELECT DATALENGTH(CAST(123 AS bigint))
@@ -1092,6 +1082,9 @@ SELECT DATALENGTH(CAST('' AS bigint))
 GO
 
 SELECT DATALENGTH(CAST(123.33 AS bigint))
+GO
+
+SELECT DATALENGTH(CAST(123 AS bigint_babel_6120))
 GO
 
 -- numeric, testing for different precision range for actual input
@@ -1155,6 +1148,9 @@ go
 SELECT DATALENGTH(CAST(1.1234567234567891 AS NUMERIC(38,5))) 
 go
 
+SELECT DATALENGTH(CAST(123456789123.679 AS numeric_babel_6120)) 
+go
+
 -- extra 0 is appended and hence 21 precision, 13 result
 SELECT DATALENGTH(CAST(0.12345678912345678912 AS NUMERIC(38,21))) 
 go
@@ -1213,6 +1209,9 @@ go
 Select datalength(123456789123456789123456789123.12345678) 
 GO
 
+SELECT DATALENGTH(CAST(123456789123.679 AS decimal_babel_6120)) 
+go
+
 -- money
 select DATALENGTH(CAST(123.45 AS MONEY))
 go
@@ -1227,6 +1226,9 @@ SELECT DATALENGTH(CAST('' AS MONEY))
 GO
 
 SELECT DATALENGTH(CAST(NULL AS MONEY)) -- NULL
+go
+
+select DATALENGTH(CAST(123.45 AS money_babel_6120))
 go
 
 -- smallmoney
@@ -1246,6 +1248,8 @@ GO
 SELECT DATALENGTH(CAST(NULL AS SMALLMONEY))
 GO
 
+select DATALENGTH(CAST(123.45 AS smallmoney_babel_6120))
+go
 
 -- date
 -- JIRA query
@@ -1255,6 +1259,8 @@ go
 select datalength(CAST('' AS DATE))
 go
 
+SELECT DATALENGTH(CAST('2024-01-01' AS date_babel_6120))
+go
 
 -- smalldatetime
 -- JIRA query
@@ -1263,6 +1269,9 @@ GO
 
 select datalength(CAST('' AS SMALLDATETIME))
 go
+
+SELECT DATALENGTH(CAST('2024-01-01 12:34:56' AS smalldatetime_babel_6120))
+GO
 
 
 -- time
@@ -1279,12 +1288,17 @@ go
 select datalength(CAST('' AS TIME))
 go
 
+SELECT DATALENGTH(CAST('12:10:30.123' AS time_babel_6120))
+go
 
 -- datetime
 select datalength(cast('01/02/03' as datetime))
 go
 
 select datalength(CAST('' AS datetime))
+go
+
+select datalength(cast('01/02/03' as datetime_babel_6120))
 go
 
 -- datetime2
@@ -1294,12 +1308,17 @@ Go
 select datalength(CAST('' AS DATETIME2))
 go
 
+select datalength(cast('Apr 1 2000 14:30' as datetime2_babel_6120))
+Go
 
 -- datetimeoffset
 select datalength(cast('3/12/24 14:30 +8:00' as datetimeoffset))
 go
 
 select datalength(CAST('' AS datetimeoffset))
+go
+
+select datalength(cast('3/12/24 14:30 +8:00' as datetimeoffset_babel_6120))
 go
 
 -- XML
@@ -1310,4 +1329,60 @@ SELECT DATALENGTH(CAST(N'<root>test</root>' AS XML)) AS XML_Length;
 go
 
 SELECT DATALENGTH(CAST('<root>te界t</root>' AS XML)) AS XML_Length;
+go
+
+
+-- Cleanup
+DROP TABLE datalength_t2;
+DROP TABLE datalength_t3;
+DROP TABLE datalength_t1;
+GO
+
+DROP TABLE datalength_t4;
+GO
+
+DROP TABLE datalength_t5;
+DROP TABLE datalength_t6;
+GO
+
+DROP TYPE EmailAddress;
+DROP TYPE PhoneNumber;
+DROP TYPE FullName;
+DROP TYPE Description;
+DROP TYPE Unicode_Description;
+DROP TYPE ShortCode;
+DROP TYPE LongText;
+DROP TYPE UnicodeCode;
+GO
+
+DROP TRIGGER datalength_tr_ValidateDataLength;
+DROP VIEW datalength_vw_DataLengthSummary;
+DROP VIEW datalength_vw_DataLengthInfo;
+DROP VIEW datalength_vw_DataSizeCategories;
+DROP FUNCTION datalength_fn_GetTotalSize;
+DROP FUNCTION datalength_fn_GetSizeCategory;
+DROP FUNCTION datalength_fn_GetSizeAnalysis;
+DROP PROCEDURE datalength_sp_AnalyzeDataSizes;
+DROP PROCEDURE datalength_sp_ValidateAndInsert;
+DROP TABLE datalength_ComputedColumnsTest;
+DROP TABLE datalength_ConstrainedTable;
+DROP TABLE datalength_t7;
+GO
+
+drop type tinyint_babel_6120;
+drop type date_babel_6120;
+drop type smalldatetime_babel_6120;
+drop type time_babel_6120;
+drop type smallmoney_babel_6120;
+drop type numeric_babel_6120;
+drop type decimal_babel_6120;
+GO
+
+drop type smallint_babel_6120;
+drop type int_babel_6120;
+drop type bigint_babel_6120;
+drop type datetime_babel_6120;
+drop type datetime2_babel_6120;
+drop type datetimeoffset_babel_6120;
+drop type money_babel_6120;
 go
