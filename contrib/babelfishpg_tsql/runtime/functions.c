@@ -1122,48 +1122,6 @@ datalength(PG_FUNCTION_ARGS)
 	else
 		typlen = *((int *) fcinfo->flinfo->fn_extra);
 
-	/* Handling fixed storage size datatypes. */
-	if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(argtypeid))
-	{
-		PG_RETURN_INT32(1);
-	}
-	else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(argtypeid) || 
-			 (*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(argtypeid))
-	{
-		PG_RETURN_INT32(4);
-	}
-	else if (argtypeid == DATEOID)
-	{
-		PG_RETURN_INT32(3);
-	}
-	else if (argtypeid == TIMEOID)
-	{
-		PG_RETURN_INT32(5);
-	}
-	else if (is_numeric_datatype(argtypeid))
-	{
-		Numeric result_numeric_val = DatumGetNumeric(value);
-		int32 val_typmod = (*common_utility_plugin_ptr->tsql_numeric_get_typmod)(result_numeric_val);
-		int32 val_precision = ((val_typmod - VARHDRSZ) >> 16) & 0xffff;
-
-		if (1 <= val_precision && val_precision <= 9)
-		{
-			PG_RETURN_INT32(5);
-		}
-		else if (10 <= val_precision && val_precision <= 19)
-		{
-			PG_RETURN_INT32(9);
-		}
-		else if (20 <= val_precision && val_precision <= 28)
-		{
-			PG_RETURN_INT32(13);
-		}
-		else if (29 <= val_precision && val_precision <= 38)
-		{
-			PG_RETURN_INT32(17);
-		}
-	}
-
 	/* Handling Nchar/Nvarchar datatypes. */
 	if (is_tsql_nchar_or_nvarchar_datatype(argtypeid))
 	{
