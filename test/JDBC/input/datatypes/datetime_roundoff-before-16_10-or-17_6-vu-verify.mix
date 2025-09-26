@@ -651,6 +651,7 @@ BEGIN
 
                 EXECUTE v_sql;
                 GET DIAGNOSTICS v_affected_count = ROW_COUNT;
+                COMMIT; 
                 v_total_affected_count := v_total_affected_count + v_affected_count;
                 RAISE INFO 'Updated % rows in %.%.%',
                     v_affected_count, r.schema_name, r.table_name, r.column_name;
