@@ -25,12 +25,14 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_shdepend.h"
 #include "commands/createas.h"
+#include "catalog/pg_namespace.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/extension.h"
@@ -69,12 +71,16 @@
 #include "utils/plancache.h"
 #include "utils/ps_status.h"
 #include "utils/queryenvironment.h"
+#include "utils/catcache.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 #include "utils/guc.h"
+#include "utils/hsearch.h"
+
+#include "common/hashfn.h"
 
 #include "analyzer.h"
 #include "catalog.h"
@@ -92,10 +98,13 @@
 #include "session.h"
 #include "pltsql.h"
 #include "pltsql_partition.h"
+#include "pltsql_permissions.h"
 #include "pl_explain.h"
 #include "table_variable_mvcc.h"
 
 #include "access/xact.h"
+
+#define FORJSON_INITIAL_HASH_SIZE 64
 
 extern int  escape_hatch_set_transaction_isolation_level;
 extern bool pltsql_recursive_triggers;
@@ -146,6 +155,8 @@ static void set_pgtype_byval(List *name, bool byval);
 static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc, bool is_proc);
 static Acl *get_old_view_acl(Oid oldViewOid);
 static void pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl);
+static List *get_old_view_column_acls(Oid oldViewOid);
+static void restore_view_column_acls(Oid newViewOid, List *column_acls);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -185,18 +196,35 @@ static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
 
-typedef struct {
-	int oid;
-	char *alias;
-	int nestLevel;
-} forjson_table;
+typedef struct ColumnAclInfo
+{
+    char       *attname;   /* Column name */
+    Acl        *acl;       /* ACL for the column */
+} ColumnAclInfo;
+typedef struct CtenameIdx
+{
+	char ctename[NAMEDATALEN];
+	int idx_in_ctelist;
+} CtenameIdx;
+typedef struct RTEAliasEntry
+{
+	char alias_name[NAMEDATALEN];
+	int json_nest_level;
+} RTEAliasEntry;
 
-static bool handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables);
+typedef struct JsonAutoContext
+{
+	List *cteList;
+	HTAB *ctenameIdxHash;
+} JsonAutoContext;
+
+static bool handleForJsonAuto(Query *query, JsonAutoContext *jsonAutoCtx);
 static bool isJsonAuto(List* target);
-static bool check_json_auto_walker(Node *node, ParseState *pstate);
+void checkForJsonAuto(Query *query);
+static bool jsonAutoWalker(Node *node, JsonAutoContext *jsonAutoCtx);
 static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te);
-static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve);
-
+static char *string_to_fixed_hash(const char *input);
+static void modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *jsonAutoCtx);
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -262,6 +290,7 @@ static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
 bool		current_query_is_create_tbl_check_constraint = false;
+static bool pltsql_current_query_is_view_definition = false;
 
 /* Configurations */
 bool		pltsql_trace_tree = false;
@@ -960,12 +989,59 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 								}
 								break;
 							}
-
+						case AT_AlterColumnType:
+						{
+							ColumnDef *def = castNode(ColumnDef, cmd->def);
+							
+							/* SYSNAME datatype is default not null */
+							if (is_sysname_column(def) && !have_null_constr(def->constraints))
+							{
+								Constraint *c = makeNode(Constraint);
+								c->contype = CONSTR_NOTNULL;
+								c->location = -1;
+								def->constraints = lappend(def->constraints, c);
+							}
+							
 							/*
-							 * TODO: After ALTER TABLE ALTER COLUMN [NOT] NULL
-							 * is supported, we should add same SYSNAME check
-							 * code for ALTER TABLE ALTER COLUMN
+							 * When a user explicitly specifies NULL or NOT NULL in an ALTER COLUMN statement, 
+							 * we need to process this separately from the type change. We:
+							 *	- Detect explicit nullability (marked by "tsql_explicit_nullability" in def->storage_name)
+							 *  - Check if only nullability is changing (type/typmod unchanged): If yes:
+							 *		- Update subtype to AT_SetNotNull or AT_DropNotNull accordingly
+							 *	- If type/typmod is also changing along with nullability:
+							 * 		- Append this new subcommand to the command list for later execution
 							 */
+							if (def && def->storage_name && strcmp(def->storage_name, TSQL_EXPLICIT_NULLABILITY_MARKER) == 0)
+							{
+								Relation rel = relation_openrv(atstmt->relation, AccessShareLock);
+								TupleDesc tupdesc = RelationGetDescr(rel);
+								AttrNumber attnum = get_attnum(RelationGetRelid(rel), cmd->name);
+								
+								if (attnum != InvalidAttrNumber)
+								{
+									Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+									Oid new_typeid;
+									int32 new_typmod;
+									typenameTypeIdAndMod(NULL, def->typeName, &new_typeid, &new_typmod);
+									
+									/* Check if column type and typmod is actually changing or just nullability */
+									if (attr->atttypid == new_typeid && attr->atttypmod == new_typmod)
+									{
+										cmd->subtype = def->is_not_null ? AT_SetNotNull : AT_DropNotNull;
+									}
+									else
+									{
+										/* Type is changing - append nullability command to the atstmt list */
+										AlterTableCmd *nullCmd = makeNode(AlterTableCmd);
+										nullCmd->subtype = def->is_not_null ? AT_SetNotNull : AT_DropNotNull;
+										nullCmd->name = pstrdup(cmd->name);
+										atstmt->cmds = lappend(atstmt->cmds, nullCmd);
+									}
+								}
+								relation_close(rel, AccessShareLock);
+							}
+							break;
+						}
 						default:
 							break;
 					}
@@ -1050,8 +1126,9 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
-	
-	(void) check_json_auto_walker((Node*) query, pstate);
+
+	(void) mark_outside_view((Query*) query);
+	checkForJsonAuto(query);
 
 	if (query->commandType == CMD_INSERT)
 	{
@@ -1127,6 +1204,17 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				if (!get_rel_name(tsql_identity_insert.rel_oid))
 					tsql_identity_insert.valid = false;
 			}
+		}
+	}
+	else if (query->commandType == CMD_SELECT)
+	{
+		if (pltsql_current_query_is_view_definition)
+		{
+			/* This is a SELECT query, which is part of a view definition.
+			 * Check if CREATE VIEW is allowed as per binding rules.
+			 * This check will happen when calling parse_analyze_fixed_params() present in DefineView()
+			 */
+			check_view_binding_dependencies(query);
 		}
 	}
 	else if (query->commandType == CMD_UTILITY)
@@ -1454,140 +1542,113 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	}
 }
 
+/**
+ * handleForJsonAuto - Process FOR JSON AUTO queries
+ * 
+ * @param wrapperQuery: The outer query containing FOR JSON AUTO clause
+ * @param jsonAutoCtx: Context for processing FOR JSON AUTO clause
+ *        ->cteList: cteList set in the tree walker
+ *        ->ctenameIdxHashFromOuterQuery: Hash table containing CTE names and their indices.
+ * @return: true if it's a FOR JSON AUTO query, false if not
+ * 
+ * Validates that the query has at least one valid source table and processes
+ * the target columns for JSON nesting. Follows MSSQL behavior by reporting
+ * "at least one table" error when no valid sources are found.
+ *
+ * Valid source types: RTE_RELATION, RTE_SUBQUERY, RTE_CTE, user-defined RTE_FUNCTION
+ * Source validity determined by single-source testing without inner sources:
+ *   - Returns "at least one table" error: invalid source
+ *   - No error: valid source
+ * 
+ * Note: Only considers CTEs actually used in rtable, not just those in ctelist.
+ * CTEs may exist in ctelist but not be referenced in the actual query.
+ */
 static bool
-handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables)
+handleForJsonAuto(Query *wrapperQuery, JsonAutoContext *jsonAutoCtx)
 {
-	Query* subq;
-	List* target = query->targetList;
-	List* rtable;
-	List* subqRtable;
-	ListCell* lc;
-	ListCell* lc2;
-	RangeTblEntry* rte;
-	RangeTblEntry* subqRte;
-	RangeTblEntry* queryRte;
-	Alias *colnameAlias;
-	int newTables = 0;
-	int currTables = numTables;
-	
-	if(!isJsonAuto(target))
+	Query			   *origQuery;
+	List			   *wrapperTarget = wrapperQuery->targetList;
+	List			   *wrapperRtable;
+	List			   *origqRtable;
+	ListCell		   *lc;
+	Alias			   *wrapperRteAlias;
+	RangeTblEntry	   *wrapperRte = NULL;
+	bool				hasValidSrc = false;
+
+	if (!isJsonAuto(wrapperTarget))
 		return false;
 
-	// Modify query to be of the form "JSONAUTOALIAS.[nest_level].[table_alias]" 
-	rtable = (List*) query->rtable;
-	if(rtable != NULL && list_length(rtable) > 0) {
-		rte = linitial_node(RangeTblEntry, rtable);
-		if(rte != NULL) {
-			subq = (Query*) rte->subquery;
-			if(subq != NULL && (subq->cteList == NULL || list_length(subq->cteList) == 0)) {
-				subqRtable = (List*) subq->rtable;
-				if(subqRtable != NULL && list_length(subqRtable) > 0) {
-					forjson_table **tempArr;
-					foreach(lc, subqRtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc));
-						if(subqRte->rtekind == RTE_RELATION) {
-							newTables++;
-						} else if(subqRte->rtekind == RTE_SUBQUERY) {
-							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										errmsg("sub-select and values for json auto are not currently supported.")));
-						}
-					}
+	wrapperRtable = (List *) wrapperQuery->rtable;
+	if (wrapperRtable != NULL && list_length(wrapperRtable) > 0)
+		wrapperRte = linitial_node(RangeTblEntry, wrapperRtable);
 
-					if(numTables + newTables == 0) {
-						ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_TABLE),
-										errmsg("FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.")));
-					}
+	Assert(wrapperRtable != NULL && wrapperRte != NULL);
 
-					tempArr = palloc((numTables + newTables) * sizeof(forjson_table));
-					for(int j = 0; j < numTables; j++) {
-						tempArr[j] = tableInfoArr[j];
-					}
-					tableInfoArr = tempArr;
-					tempArr = NULL;
-					queryRte = linitial_node(RangeTblEntry, query->rtable);
-					colnameAlias = (Alias*) queryRte->eref;
+	wrapperRteAlias = (Alias *)wrapperRte->eref;
+	origQuery = wrapperRte->subquery;
+	Assert(origQuery != NULL);
 
-					foreach(lc, subqRtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc));
-						if(subqRte->rtekind == RTE_RELATION) {
-							forjson_table *table = palloc(sizeof(forjson_table));
-							Alias* a = (Alias*) subqRte->eref;
-							table->oid = subqRte->relid;
-							table->nestLevel = -1;
-							table->alias = a->aliasname;
-							tableInfoArr[currTables] = table;
-							currTables++;
-						}
-					}
-					numTables = numTables + newTables;
-					modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, false);
-					return true;
-				}
-			} else if(subq->cteList != NULL && list_length(subq->cteList) > 0) {
-				Query* ctequery;
-				CommonTableExpr* cte;
-				forjson_table **tempArr;
-				foreach(lc, subq->cteList) {
-					cte = castNode(CommonTableExpr, lfirst(lc));
-					ctequery = (Query*) cte->ctequery;
-					foreach(lc2, ctequery->rtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc2));
-						if(subqRte->rtekind == RTE_RELATION)
-							newTables++;
-					}
-				}
+	/* Count valid sources in original query */
+	origqRtable = (List *)origQuery->rtable;
+	if (origqRtable != NULL && list_length(origqRtable) > 0)
+	{
+		foreach(lc, origqRtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE)
+			{
+				hasValidSrc = true;
+				break;
+			}
+			else if (rte->rtekind == RTE_FUNCTION)
+			{
+				RangeTblFunction	   *rteFunc;
+				FuncExpr			   *funcExpr;
+				HeapTuple				procTuple;
+				Form_pg_proc			procForm;
+				bool					isSystemFunction = false;
+				Oid						funcId;
+				Oid						sysNamespaceOid;
 
-				if(newTables == 0) {
-					forjson_table *table = palloc(sizeof(forjson_table));
-					tempArr = palloc((numTables + 1) * sizeof(forjson_table));
-					table->oid = 0;
-					table->nestLevel = -1;
-					table->alias = "cteplaceholder";
-					tempArr[numTables] = table;
-					newTables++;
-				} else {
-					tempArr = palloc((numTables + newTables) * sizeof(forjson_table));
-				}
+				/* Get the first function from the RTE_FUNCTION */
+				if (rte->functions && list_length(rte->functions) > 0)
+				{
+					rteFunc = (RangeTblFunction *) linitial(rte->functions);
+					funcExpr = (FuncExpr *) rteFunc->funcexpr;
+					funcId = funcExpr->funcid;
 
-				for(int j = 0; j < numTables; j++) {
-					tempArr[j] = tableInfoArr[j];
-				}
+					/* Look up function info to check namespace */
+					procTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcId));
+					if (HeapTupleIsValid(procTuple))
+					{
+						procForm = (Form_pg_proc) GETSTRUCT(procTuple);
+						sysNamespaceOid = get_namespace_oid("sys", true);
+						if (procForm->pronamespace == PG_CATALOG_NAMESPACE ||
+							(OidIsValid(sysNamespaceOid) && procForm->pronamespace == sysNamespaceOid))
+							isSystemFunction = true;
+						ReleaseSysCache(procTuple);
 
-				tableInfoArr = tempArr;
-				tempArr = NULL;
-				numTables = numTables + newTables;
-				queryRte = linitial_node(RangeTblEntry, query->rtable);
-				colnameAlias = (Alias*) queryRte->eref;
-
-				foreach(lc, subq->cteList) {
-					cte = castNode(CommonTableExpr, lfirst(lc));
-					ctequery = (Query*) cte->ctequery;
-					foreach(lc2, ctequery->rtable) {
-						subqRte = castNode(RangeTblEntry, lfirst(lc2));
-						if(subqRte->rtekind == RTE_RELATION) {
-							forjson_table *table = palloc(sizeof(forjson_table));
-							Alias* a = (Alias*) subqRte->eref;
-							table->oid = subqRte->relid;
-							table->nestLevel = -1;
-							table->alias = a->aliasname;
-							tableInfoArr[currTables] = table;
-							currTables++;
+						/* Only user-defined functions count as valid sources */
+						if (!isSystemFunction)
+						{
+							hasValidSrc = true;
+							break;
 						}
 					}
 				}
-
-				modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, true);
-				
-				return true;
 			}
 		}
 	}
 
-	ereport(ERROR,
+	if (hasValidSrc)
+		modifyColumnEntries(origQuery, wrapperRteAlias, jsonAutoCtx);
+	else
+		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-					errmsg("FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.")));
+				errmsg("FOR JSON AUTO requires at least one table for "
+					"generating JSON objects. Use FOR JSON PATH or add a FROM"
+					" clause with a table name.")));
+
 	return true;
 }
 
@@ -1626,7 +1687,7 @@ buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 	sprintf(nest, "%d", nestLevel);
 	// Adding JSONAUTOALIAS prevents us from modifying
 	// a column more than once
-	if(!strcmp(te->resname, "\?column\?")) {
+	if(te->resname == NULL || !strcmp(te->resname, "\?column\?")) {
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
@@ -1641,66 +1702,352 @@ buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 	return te;
 }
 
-static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve)
+static char *
+string_to_fixed_hash(const char *input)
 {
-	int i = 0;
-	int currMax = 0;
-	ListCell* lc;
-	foreach(lc, targetList) {
-		TargetEntry* te = castNode(TargetEntry, lfirst(lc));
-		int oid = te->resorigtbl;
-		String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
-		if(te->expr != NULL && nodeTag(te->expr) == T_SubLink) {
-			SubLink *sl = castNode(SubLink, te->expr);
-			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query) {
-				if(handleForJsonAuto(castNode(Query, sl->subselect), tableInfoArr, numTables)) {
-					CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+	Datum hash_val = hash_any_extended((unsigned char *)input, strlen(input), 0);
+	char *result = palloc(17); // 16 hex chars + null terminator
+	snprintf(result, 17, "%016lx", DatumGetUInt64(hash_val));
+	return result;
+}
+
+/**
+ * modifyColumnEntries - Determine JSON nesting structure for target columns
+ * 
+ * @param origQuery: The original query to process (without FOR JSON AUTO wrapper)
+ * @param wrapperRteAlias: Alias information from wrapper query
+ * @param jsonAutoCtx: Context for processing FOR JSON AUTO clause
+ *        ->cteList: cteList set in the tree walker
+ *        ->ctenameIdxHashFromOuterQuery: Hash table containing CTE names and their indices.
+ * 
+ * Analyzes each target entry to assign appropriate JSON nesting keys and levels.
+ * Transforms target entry names to include JSON nesting information in the format:
+ * "JSONAUTOALIAS.[nest_level].[nest_key].[colname]"
+ * 
+ * Algorithm Overview:
+ * 1. Build two hash tables:
+ *    - CTE lookup (ctename -> index in ctelist)
+ *    - alias-to-level mapping (assigned JSON nesting level for an alias)
+ * 2. For each target entry:
+ *    - If T_Var: use matched source's alias as JSON nesting key, assign next unused
+ *                JSON nesting level to it and store in hash so that later columns
+ *                referencing the same source can know the correct JSON nesting level to use.
+ *    - Other types of target entry: assign current max used JSON nesting
+ *                key and level to this target entry.
+ * 3. Handle special cases:
+ *    - If source is a RTE_FUNCTION, do not use its alias; instead we use
+ *      current max used JSON nesting key and level.
+ *    - If outermost source RTE is RTE_CTE and it's assigned an alias, we need
+ *      to unwrap recursively.
+ * 
+ * Recursive Unwrapping Algorithm:
+ * Follows variable references (varno and varattno in T_Var) to match outer target to
+ * inner target and get matched inner source recursively until reaching stop conditions:
+ * - Outermost RTE is not a CTE
+ * - Outermost CTE has no alias assigned  
+ * - Current target entry is not a T_Var
+ * - Inner RTE is not RTE_CTE or RTE_SUBQUERY
+ *
+ * JSON Nesting Level Logic:
+ * - Level 1: root level, initially unused, will be assigned to first unique source alias
+ * - Level N+1: Each additional unique source alias
+ *
+ * Hash Key Strategy:
+ * Uses full source path (e.g., "cte1.table1", "cte2.table1") to distinguish identical
+ * table names in different contexts, ensuring proper nesting separation.
+ */
+static void
+modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *jsonAutoCtx)
+{
+
+	/* JSON nesting variables */
+	char			   *curMaxUsedJsonKey = "temp";	/* Current nesting key for non-source entries */
+	int					curMaxUsedJsonLevel = 1;	/* Current maximum JSON nesting level */
+	bool				nestingLevel1Used = false;	/* Whether level 1 has been assigned */
+
+	/* Target entries iteration index */
+	int					targetIterIdx = 0;
+
+	/* CTE processing variables */
+	HTAB			   *ctenameIdxHash = jsonAutoCtx->ctenameIdxHash;	/* CTE name-to-index mapping */
+	ListCell		   *cteLc;
+	CommonTableExpr	   *cteEntry;
+	CtenameIdx		   *cteHashEntry;
+	List			   *cteList = jsonAutoCtx->cteList;
+	HASHCTL				cteHashCtl;
+	int					cteIdx = 0;
+
+	/* Alias-to-level mapping variables */
+	HTAB			   *RTEAliasNestHash;	/* RTE alias-to-nesting-level mapping */
+	RTEAliasEntry	   *rteHashEntry;
+	HASHCTL				rteJSONHashCtl;
+	bool				found;
+
+	/* target entry iteration variables */
+	List			   *origTargetList = origQuery->targetList;
+	ListCell		   *lc;
+
+	/*
+	 * If ctenameIdxHash hasn't been initialized yet, initialize it if we
+	 * have cteList.
+	 */
+	if (ctenameIdxHash == NULL && cteList != NULL)
+	{
+		memset(&cteHashCtl, 0, sizeof(cteHashCtl));
+		cteHashCtl.keysize = NAMEDATALEN;
+		cteHashCtl.entrysize = sizeof(CtenameIdx);
+		cteHashCtl.hcxt = CurrentMemoryContext;
+		ctenameIdxHash = hash_create("ctenameIdxHash",
+									 FORJSON_INITIAL_HASH_SIZE,
+									 &cteHashCtl,
+									 HASH_ELEM | HASH_STRINGS);
+
+		/* Populate CTE name-to-index hash table */
+		foreach(cteLc, cteList)
+		{
+			cteEntry = (CommonTableExpr *) lfirst(cteLc);
+			cteHashEntry = (CtenameIdx *) hash_search(ctenameIdxHash,
+													  cteEntry->ctename,
+													  HASH_ENTER,
+													  &found);
+			Assert(!found);
+			strcpy(cteHashEntry->ctename, cteEntry->ctename);
+			cteHashEntry->idx_in_ctelist = cteIdx;
+			cteIdx++;
+		}
+	}
+
+	/* Initialize RTE alias-to-nesting-level hash table */
+	memset(&rteJSONHashCtl, 0, sizeof(rteJSONHashCtl));
+	rteJSONHashCtl.keysize = NAMEDATALEN;
+	rteJSONHashCtl.entrysize = sizeof(RTEAliasEntry);
+	rteJSONHashCtl.hcxt = CurrentMemoryContext;
+	RTEAliasNestHash = hash_create("RTEAliasNestHash",
+								   FORJSON_INITIAL_HASH_SIZE,
+								   &rteJSONHashCtl,
+								   HASH_ELEM | HASH_STRINGS);
+
+	/* Process each target entry to determine JSON nesting structure */
+	foreach(lc, origTargetList)
+	{
+		/* variables for each target entry iteration */
+		TargetEntry		   *outermostTargetEntry;	/* Original target entry to modify */
+		TargetEntry		   *curTargetEntry;	/* Current target during unwrapping */
+		String			   *colnameStr;
+		RangeTblEntry	   *matchedSrc = NULL;	/* Source RTE matched by variable */
+		char			   *matchedSrcAlias;
+		char			   *hashedFullSrcPath;
+		Query			   *curQuery;	/* Current query context during unwrapping */
+		StringInfoData		fullSrcPath;	/* Accumulated source path for hash key */
+		bool				matchedSrcCTEIsRecursive = false;
+		bool				atOutermostLayer = true; // at outermost layer or not when unwrapping
+
+		/* T_SubLink target entry variables */
+		SubLink			   *sl;
+		CoerceViaIO		   *iocoerce;
+
+		/* T_Var target entry variables */
+		Var				   *curVar = NULL;	/* Current variable node */
+		int					varNo;	/* Variable's range table index */
+		int					varLevelsUp;	/* Variable's nesting level */
+		int					varAttNo;	/* Variable's attribute number */
+
+		initStringInfo(&fullSrcPath);
+		// Add null check for target entry
+		if (!lc || !lfirst(lc))
+			continue;
+
+		outermostTargetEntry = castNode(TargetEntry, lfirst(lc));
+
+		/* junk node - won't appear in the final result */
+		if (outermostTargetEntry->resjunk)
+			continue;
+
+		if (outermostTargetEntry->expr == NULL)
+			continue;
+
+		/* The wrapperQuery's view of column references from this origQuery will need to be updated too */
+		colnameStr = castNode(String, lfirst(list_nth_cell(wrapperRteAlias->colnames, targetIterIdx)));
+
+		/* Set up initial state for recursive unwrapping */
+		curTargetEntry = outermostTargetEntry;
+		curQuery = origQuery;
+		atOutermostLayer = true;
+		matchedSrcCTEIsRecursive = false;
+
+		/* Recursively unwrap CTE/subquery chains to find ultimate source */
+		while (nodeTag(curTargetEntry->expr) == T_Var)
+		{
+			/* Update T_Var variables when we goto inner T_Var */
+			curVar = castNode(Var, curTargetEntry->expr);
+			varNo = curVar->varno; // index to the source in current layer's rtable
+			varAttNo = curVar->varattno; // index to target in next layer's targetList (in current layer source)
+			matchedSrc = list_nth(curQuery->rtable, varNo-1);
+
+			/* Keep appending src's alias when unwrapping for unique identification */
+			if (fullSrcPath.len != 0)
+				appendStringInfo(&fullSrcPath, ".");
+			appendStringInfo(&fullSrcPath, "%s", matchedSrc->eref->aliasname);
+
+			/*
+			 * If outermost CTE:
+			 * 	  => only do unwrapping when alias is set
+			 * If we reach inner CTE:
+			 *    => we already decided to do unwrapping, keep unwrapping. inner CTE's alias is
+			 *       set or not doesn't affect the unwrapping decision.
+			 * For recursive CTE, we don't unwrap it.
+			 */
+			if (matchedSrc->rtekind == RTE_CTE && (matchedSrc->alias != NULL || !atOutermostLayer))
+			{
+				/* get info in the CTE from ctelist (which cannot get from RTE_CTE) */
+				cteHashEntry = (CtenameIdx *) hash_search(ctenameIdxHash,
+														  matchedSrc->ctename,
+														  HASH_FIND,
+														  &found);
+				Assert(found);
+				cteEntry = (CommonTableExpr *) list_nth(cteList, cteHashEntry->idx_in_ctelist);
+				if (cteEntry->cterecursive)
+				{
+					matchedSrcCTEIsRecursive = true;
+					break;
+				}
+				curQuery = castNode(Query, cteEntry->ctequery);
+				curTargetEntry = (TargetEntry *) list_nth(curQuery->targetList, varAttNo-1);
+			}
+			/* We only unwrap RTE_SUBQUERY when it's at inner layers */
+			else if (!atOutermostLayer && matchedSrc->rtekind == RTE_SUBQUERY)
+			{
+				/* Navigate into subquery */
+				curQuery = matchedSrc->subquery;
+				curTargetEntry = (TargetEntry *) list_nth(curQuery->targetList, varAttNo-1);
+			}
+			else
+				break;
+
+			if (atOutermostLayer)
+				atOutermostLayer = false;
+		}
+
+		if (nodeTag(curTargetEntry->expr) == T_SubLink)
+		{
+			sl = castNode(SubLink, curTargetEntry->expr);
+			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query)
+			{
+				if (isJsonAuto(((Query *)sl->subselect)->targetList))
+				{
+					/*
+					 * Because this SubLink FOR JSON AUTO still needs to be processed 
+					 * by postgres, we need to convert the type from NVARCHAR to json.
+					 */
+					iocoerce = makeNode(CoerceViaIO);
 					iocoerce->arg = (Expr*) sl;
 					iocoerce->resulttype = TypenameGetTypid("json");
 					iocoerce->resultcollid = 0;
 					iocoerce->coerceformat = COERCE_EXPLICIT_CAST;
-					buildJsonEntry(1, "temp", te);
-					s->sval = te->resname;
-					te->expr = (Expr*) iocoerce;
-					continue;
+					curTargetEntry->expr = (Expr*) iocoerce;
 				}
 			}
 		}
-		for(int j = 0; j < numTables; j++) {
-			if(tableInfoArr[j]->oid == oid) {
-				// build entry
-				if(tableInfoArr[j]->nestLevel == -1) {
-					currMax++;
-					tableInfoArr[j]->nestLevel = currMax;
+
+		/* If final matched target is a T_Var, we might want ot use matchedSrc's alias as JSON nesting key */
+		if (nodeTag(curTargetEntry->expr) == T_Var) {
+			varLevelsUp = curVar->varlevelsup;
+
+			/*
+			 * Don't use source alias for functions or outer source
+			 * 1. if T_Var is referencing from outer sources
+			 * 2. if source is a RTE_FUNCTION
+			 * 3. if source is a RTE_CTE after the previous unwrapping loop
+			 *    - either this CTE is at outermost layer w/o an alias assigned
+			 *      => we want to use this CTE's ctename as JSON nesting key
+			 *    - or this CTE is a recursive CTE
+			 *      => we don't want to use this CTE's ctename as JSON nesting key
+			 */
+			if (varLevelsUp > 0 || matchedSrc->rtekind == RTE_FUNCTION ||
+				(matchedSrc->rtekind == RTE_CTE && matchedSrcCTEIsRecursive))
+				outermostTargetEntry = buildJsonEntry(curMaxUsedJsonLevel, curMaxUsedJsonKey, outermostTargetEntry);
+
+			else
+			{
+				/* Use full path as hash key to handle duplicate table names */
+				hashedFullSrcPath = string_to_fixed_hash(fullSrcPath.data);
+				matchedSrcAlias = matchedSrc->eref->aliasname;
+
+				rteHashEntry = (RTEAliasEntry *)hash_search(RTEAliasNestHash,
+															hashedFullSrcPath,
+															HASH_FIND,
+															&found);
+				if (found)
+				{
+					// Use existing nest level from hash
+					outermostTargetEntry = buildJsonEntry(rteHashEntry->json_nest_level, matchedSrcAlias, outermostTargetEntry);
 				}
-				te = buildJsonEntry(tableInfoArr[j]->nestLevel, tableInfoArr[j]->alias, te);
-				s->sval = te->resname;
-				break;
-			} else if(!isCve && oid == 0 && j == numTables - 1) {
-				te = buildJsonEntry(1, "temp", te);
-				s->sval = te->resname;
-				break;
+				else
+				{
+					/* Create new hash entry with incremented nest level */
+					if (curMaxUsedJsonLevel == 1 && !nestingLevel1Used)
+						nestingLevel1Used = true;
+					else
+						curMaxUsedJsonLevel++;
+					curMaxUsedJsonKey = matchedSrcAlias;
+					rteHashEntry = (RTEAliasEntry *)hash_search(RTEAliasNestHash,
+																hashedFullSrcPath,
+																HASH_ENTER,
+																&found);
+					Assert(!found);
+					strcpy(rteHashEntry->alias_name, hashedFullSrcPath);
+					rteHashEntry->json_nest_level = curMaxUsedJsonLevel;
+					outermostTargetEntry = buildJsonEntry(rteHashEntry->json_nest_level, matchedSrcAlias, outermostTargetEntry);
+				}
+				pfree(hashedFullSrcPath);
 			}
 		}
-		i++;
+		else
+		{
+			/* Non-variable expressions use current max level/key */
+			outermostTargetEntry = buildJsonEntry(curMaxUsedJsonLevel, curMaxUsedJsonKey, outermostTargetEntry);
+		}
+
+		colnameStr->sval = outermostTargetEntry->resname;
+		targetIterIdx++;
 	}
+
+	/* Cleanup hash tables */
+	hash_destroy(RTEAliasNestHash);
 }
 
-static bool check_json_auto_walker(Node *node, ParseState *pstate)
+void checkForJsonAuto(Query *query)
+{
+	JsonAutoContext *jsonAutoCtx;
+	if (query == NULL) return;
+
+	jsonAutoCtx = (JsonAutoContext *) palloc(sizeof(JsonAutoContext));
+	jsonAutoCtx->cteList = NULL;
+	jsonAutoCtx->ctenameIdxHash = NULL;
+
+	jsonAutoWalker((Node *)query, jsonAutoCtx);
+
+	hash_destroy(jsonAutoCtx->ctenameIdxHash);
+	pfree(jsonAutoCtx);
+	return;
+}
+
+static bool jsonAutoWalker(Node *node, JsonAutoContext *jsonAutoCtx)
 {
 	if (node == NULL)
 		return false;
 	if (IsA(node, Query)) {
-		if(handleForJsonAuto((Query*) node, NULL, 0))
-			return true;
-		else {
-			return query_tree_walker((Query*) node,
-								 check_json_auto_walker,
-								 (void *) pstate, 0);
-		}
+
+		if (((Query *)node)->cteList != NULL)
+			jsonAutoCtx->cteList = ((Query *)node)->cteList;
+
+		// First walk inner queries recursively to handle nested FOR JSON AUTO
+		query_tree_walker((Query*) node, jsonAutoWalker, (void *) jsonAutoCtx, 0);
+
+		// Then check if this layer has FOR JSON AUTO and handle it
+		return handleForJsonAuto((Query*) node, jsonAutoCtx);
 	}
-	return expression_tree_walker(node, check_json_auto_walker,
-								  (void *) pstate);
+	return expression_tree_walker(node, jsonAutoWalker, (void *) jsonAutoCtx);
 }
 
 static bool
@@ -2461,7 +2808,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					ViewStmt   *vstmt = (ViewStmt *) parsetree;
 					Oid			relid = RangeVarGetRelid(vstmt->view, NoLock, true);
 
-					if (vstmt->replace && check_is_tsql_view(relid))
+					if (vstmt->replace && check_is_tsql_view(relid, NULL))
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_INTERNAL_ERROR),
@@ -2477,7 +2824,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						Oid			relid = RangeVarGetRelid(atstmt->relation, NoLock, true);
 
-						if (check_is_tsql_view(relid))
+						if (check_is_tsql_view(relid, NULL))
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2496,7 +2843,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						Oid			relid = RangeVarGetRelid(rnstmt->relation, NoLock, true);
 
-						if (check_is_tsql_view(relid))
+						if (check_is_tsql_view(relid, NULL))
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2513,7 +2860,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						Oid			relid = RangeVarGetRelid(altschstmt->relation, NoLock, true);
 
-						if (check_is_tsql_view(relid))
+						if (check_is_tsql_view(relid, NULL))
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2654,6 +3001,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if(!cfs->is_procedure)
 						{
+							if (!(handle_bbf_view_binding_on_object_drop(&originalFunc, false)))
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+											errmsg("Cannot alter function %s because it is bound to a view.", NameListToString(cfs->funcname))));
+							}
 							/*
 							 * Postgres does not allow us to create functions with different return types
 							 * so we need to delete and recreate them 
@@ -2664,6 +3017,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						else if (!isSameProc) /* i.e. different signature */
 						{
+							if (!(handle_bbf_view_binding_on_object_drop(&originalFunc, false)))
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+											errmsg("Cannot alter function %s because it is bound to a view.", NameListToString(cfs->funcname))));
+							}
 							performDeletion(&originalFunc, DROP_RESTRICT, 0);
 							CommandCounterIncrement();
 						}
@@ -2779,6 +3138,43 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				ViewStmt *stmt = (ViewStmt *) parsetree;
 
 				/*
+				 * By default, TSQL view should be created with security_invoker
+				 * property. It adds security_invoker option to the options list.
+				 * Note that,  (stmt->createOrAlter && !stmt->replace) captures the 
+				 * TSQL "CREATE OR ALTER view" stmt and
+				 * (!stmt->createOrAlter && !stmt->replace) will capture the TSQL
+				 * "CREATE view" stmt, combination of both condition simplifies
+				 * into !(stmt->replace)
+				 */
+				if (sql_dialect == SQL_DIALECT_TSQL &&
+					IS_TDS_CLIENT())
+				{
+					bool        security_invoker_found = false;
+
+					/* Check if security_invoker option already exists */
+					foreach_node(DefElem, defel, stmt->options)
+					{
+						if (strcmp(defel->defname, "security_invoker") == 0)
+						{
+							/* Modify existing option to true */
+							defel->arg = (Node *) makeBoolean(true);
+							security_invoker_found = true;
+							break;
+						}
+					}
+
+					/* If security_invoker option not found, add it */
+					if (!security_invoker_found)
+					{
+						DefElem *new_option;
+						new_option = makeDefElem("security_invoker",
+												 (Node *) makeBoolean(true),
+												 -1);
+						stmt->options = lappend(stmt->options, new_option);
+					}
+				}
+
+				/*
 				 * We are using PostgreSQL's existing ViewStmt node which is shared between PostgreSQL's
 				 * CREATE VIEW and T-SQL's ALTER VIEW/CREATE OR ALTER VIEW operations. To properly distinguish 
 				 * between these operations and not let CREATE VIEW inside this case we use createOrAlter flag
@@ -2803,6 +3199,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					ObjectAddress address, originalView;
 					Oid oldViewOid;
 					Acl *oldViewAcl = NULL;
+					List *oldColumnAcls = NIL;
 					bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
 					bool needCleanup;
 			
@@ -2818,6 +3215,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_TRY();
 					{
 						StartTransactionCommand();
+						pltsql_current_query_is_view_definition = true;
 						
 						/* Without this, DDL event triggers won't fire for ALTER VIEW operations
 						 * Currently T-SQL DDL triggers are not supported, but this code block is required for PostgreSQL DDL event triggers. 
@@ -2853,12 +3251,23 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							/* Save ACL before dropping the view */
 							oldViewAcl = get_old_view_acl(oldViewOid);
+
+							/* Save column ACLs before dropping the view */
+							oldColumnAcls = get_old_view_column_acls(oldViewOid);
 							CacheInvalidateRelcacheByRelid(oldViewOid);
 			
 							/* Drop the old view */
 							originalView.objectId = oldViewOid;
 							originalView.classId = RelationRelationId;
 							originalView.objectSubId = 0;
+
+							if (!(handle_bbf_view_binding_on_object_drop(&originalView, true)))
+							/* Strong view dependency found, abort the drop */
+								ereport(ERROR,
+										(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+											errmsg("cannot alter view because other objects depend on it"),
+											errdetail("Object cannot be altered because it is referenced by a schema-bound view.")));
+
 							performDeletion(&originalView, DROP_RESTRICT, 0);
 							CommandCounterIncrement();
 			
@@ -2883,6 +3292,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							/* Update ACL info */
 							pg_class_update_acl(address.objectId, oldViewAcl);
+							restore_view_column_acls(address.objectId, oldColumnAcls);
 
 							if(oldViewAcl != NULL)
 								pfree(oldViewAcl);
@@ -2891,14 +3301,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					PG_FINALLY();
 					{
+						pltsql_current_query_is_view_definition = false;
 						if (needCleanup)
 							EventTriggerEndCompleteQuery();
 					}
 					PG_END_TRY();
 					return; 
 				}
-				/* check that no T-SQL ALTER VIEW operations reach this point because they should have been handled earlier in the code.*/
-				Assert(!(sql_dialect == SQL_DIALECT_TSQL && stmt->createOrAlter));
+				else if(sql_dialect == SQL_DIALECT_TSQL)
+				{
+					PG_TRY();
+					{
+						pltsql_current_query_is_view_definition = true;
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, 
+												context, params, queryEnv, dest, qc);
+					}
+					PG_FINALLY();
+					{
+						pltsql_current_query_is_view_definition = false;
+					}
+					PG_END_TRY();
+					return;
+				}
 				break;
 			}
 
@@ -3914,6 +4338,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									pfree(rolspec->rolename);
 
 									rolspec->rolename = user_name;
+									bbf_shdep_drop_owned_dependent_acl((Oid) role_oid, DROP_CASCADE);
 								}
 							}
 							else
@@ -4670,6 +5095,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool exec_pg_command = false;
 					ListCell   *lc;
 					ListCell	*lc1;
+					List  		*all_privileges = NIL;    /* Initialize an empty list */
+
 					if (rv->schemaname != NULL)
 						logical_schema = get_logical_schema_name(rv->schemaname, false);
 					else
@@ -4687,61 +5114,137 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 								add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true, NULL);
 							}
+							exec_pg_command = true;
 						}
 						else
 						{
+							Oid objoid = 	InvalidOid;
+							Form_pg_class	pg_class_tuple;
+							char 			**privileges;
+
+							objoid = RangeVarGetRelid(rv, NoLock, true);
+							if (OidIsValid(objoid))
+							{
+								HeapTuple		tuple;
+								int 			number_of_privs;
+								/* Get the namespace OID and rekind type of the table. */
+								tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objoid));
+								if (!HeapTupleIsValid(tuple))
+									return;
+
+								pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
+
+								if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
+								{
+									privileges = (char **) palloc0(3 * sizeof(char *));
+									privileges[0] = pstrdup("select");
+									privileges[1] = pstrdup("update");
+									privileges[2] = pstrdup("usage");
+									number_of_privs = 3;
+								}
+								else
+								{
+									privileges = (char **) palloc0(8 * sizeof(char *));
+									privileges[0] = pstrdup("insert");
+									privileges[1] = pstrdup("select");
+									privileges[2] = pstrdup("update");
+									privileges[3] = pstrdup("delete");
+									privileges[4] = pstrdup("references");
+									privileges[5] = pstrdup("truncate");
+									privileges[6] = pstrdup("maintain");
+									privileges[7] = pstrdup("trigger");
+									number_of_privs = 8;
+								}
+
+								for (int i = 0; i < number_of_privs; i++)
+								{
+									AccessPriv *ap = makeNode(AccessPriv);
+									ap->priv_name = privileges[i];
+									ap->cols = NIL;
+									all_privileges = lappend(all_privileges, ap);
+								}
+								ReleaseSysCache(tuple);
+								pfree(privileges);
+							}
+
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+
 								/* Special database roles should throw an error. */
 								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
+
 								/*
 								 * 1. If permission on schema exists, don't revoke any permission from the object.
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
-								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
-								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
-									return;
-							}
-						}
-						exec_pg_command = true;
-					}
-					foreach(lc1, grant->privileges)
-					{
-						AccessPriv *ap = (AccessPriv *) lfirst(lc1);
-						AclMode privilege = string_to_privilege(ap->priv_name);
-						if (grant->is_grant)
-						{
-							exec_pg_command = true;
-							/* Don't add/update an entry, if the permission is granted on column list.*/
-							if (ap->cols == NULL)
-							{
-								foreach(lc, grant->grantees)
+								foreach(lc1, all_privileges)
 								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									/* Special database roles should throw an error. */
-									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
-									add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
+									AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+									AclMode privilege = string_to_privilege(ap->priv_name);
+								
+									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+										exec_pg_command = true;
+									else
+										all_privileges = foreach_delete_current(all_privileges, lc1);
+
+								}
+								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
+							}
+							/* 
+							 * If all_privileges length is 5 then pass grant->privilege as NIL i.e fallback to existing behaviour,
+							 * as no common privilege between object and schema.
+							 */
+							if (list_length(all_privileges) == 0)
+								return;
+							else
+								grant->privileges = all_privileges;
+						}
+					}
+					else
+					{
+						foreach(lc1, grant->privileges)
+						{
+							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+							AclMode privilege = string_to_privilege(ap->priv_name);
+							if (grant->is_grant)
+							{
+								exec_pg_command = true;
+								/* Don't add/update an entry, if the permission is granted on column list.*/
+								if (ap->cols == NULL)
+								{
+									foreach(lc, grant->grantees)
+									{
+										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+										/* Special database roles should throw an error. */
+										throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
+										add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
+									}
 								}
 							}
-						}
-						else
-						{
-							/* Don't update an entry, if the permission is granted on column list.*/
-							if (ap->cols == NULL)
+							else
 							{
-								foreach(lc, grant->grantees)
+								/* Don't update an entry, if the permission is granted on column list.*/
+								if (ap->cols == NULL)
 								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									/* Special database roles should throw an error. */
-									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
-									/*
-									 * If permission on schema exists, don't revoke any permission from the object.
-									 */
-									if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
-										exec_pg_command = true;
-
-									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
+									foreach(lc, grant->grantees)
+									{
+										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+										/* Special database roles should throw an error. */
+										throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
+										/* If permission on schema exists, don't revoke any permission from the object. */
+										if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+										{
+											/* 
+											 * If the privilege is not common to schema and object then 
+											 * execute_pg_command true and append the privilege to filtered list 
+											 */
+											exec_pg_command = true;
+										}
+										else
+											grant->privileges = foreach_delete_current(grant->privileges, lc1);
+										update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
+									}
 								}
 							}
 						}
@@ -4762,6 +5265,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *obj_type = NULL;
 					Oid func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, ob, true);
 					const char *func_args = NULL;
+
 					if (OidIsValid(func_oid))
 						func_args = gen_func_arg_list(func_oid);
 					if (grant->objtype == OBJECT_FUNCTION)
@@ -4808,7 +5312,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, false);
-								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, INVALID_PERMISSION))
 									return;
 							}
 						}
@@ -4843,11 +5347,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								/* Special database roles should throw an error. */
 								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
-								/*
-								 * If permission on schema exists, don't revoke any permission from the object.
-								 */
-								if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
+								/* If permission on schema exists, don't revoke any permission from the object. */
+								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA, privilege))
+								{
+									/* 
+									 * If the privilege is not common to schema and object then 
+									 * execute_pg_command true.
+									 */
 									exec_pg_command = true;
+								}
+								else
+									grant->privileges =foreach_delete_current(grant->privileges, lc1);
+
 								/* Update the privilege in the catalog. */
 								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);
 							}
@@ -5022,6 +5533,111 @@ pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl)
 	ReleaseSysCache(classtup);
 	heap_freetuple(newtup);
 	table_close(pg_class_rel, RowExclusiveLock);
+}
+
+static List *
+get_old_view_column_acls(Oid oldViewOid)
+{
+	CatCList *catlist;
+	List *column_acls = NIL;
+	int i;
+
+	catlist = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(oldViewOid));
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple tuple = &catlist->members[i]->tuple;
+		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+		Datum aclDatum;
+		bool isNull;
+		ColumnAclInfo *info;
+
+		/* Skip system columns */
+		if (att->attnum <= InvalidAttrNumber)
+			continue;
+
+		aclDatum = SysCacheGetAttr(ATTNUM, tuple, 
+								Anum_pg_attribute_attacl, &isNull);
+
+		info = (ColumnAclInfo *) palloc0(sizeof(ColumnAclInfo));
+		info->attname = pstrdup(NameStr(att->attname));
+		info->acl = isNull ? NULL : DatumGetAclPCopy(aclDatum);
+
+		column_acls = lappend(column_acls, info);
+	}
+
+	ReleaseCatCacheList(catlist);
+	return column_acls;
+}
+
+static void
+restore_view_column_acls(Oid newViewOid, List *column_acls)
+{
+	ListCell *lc;
+	
+	foreach(lc, column_acls)
+	{
+		ColumnAclInfo *info = (ColumnAclInfo *) lfirst(lc);
+		Relation pg_attribute_rel;
+		HeapTuple attTup = NULL;
+		CatCList *catlist;
+		bool found = false;
+		Datum values[Natts_pg_attribute];
+		bool nulls[Natts_pg_attribute];
+		bool replaces[Natts_pg_attribute];
+		HeapTuple newTuple;
+		
+		catlist = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(newViewOid));
+		
+		/* Search for case-insensitive match */
+		for (int i = 0; i < catlist->n_members; i++)
+		{
+			HeapTuple  tuple = &catlist->members[i]->tuple;
+			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+			
+			/* Skip system columns */
+			if (att->attnum <= InvalidAttrNumber)
+				continue;
+				
+			/* Case-insensitive comparison */
+			if (pg_strcasecmp(NameStr(att->attname), info->attname) == 0)
+			{
+				attTup = SearchSysCacheCopy2(ATTNUM,
+										ObjectIdGetDatum(newViewOid),
+										Int16GetDatum(att->attnum));
+				found = true;
+				break;
+			}
+		}
+		
+		ReleaseCatCacheList(catlist);
+		
+		if (!found || !HeapTupleIsValid(attTup))
+			continue;
+		
+		/* Update the ACL */
+		pg_attribute_rel = table_open(AttributeRelationId, RowExclusiveLock);
+		
+		memset(values, 0, sizeof(values));
+		memset(nulls, false, sizeof(nulls));
+		memset(replaces, false, sizeof(replaces));
+		
+		if (info->acl != NULL)
+			values[Anum_pg_attribute_attacl - 1] = PointerGetDatum(info->acl);
+		else
+			nulls[Anum_pg_attribute_attacl - 1] = true;
+			
+		replaces[Anum_pg_attribute_attacl - 1] = true;
+		
+		newTuple = heap_modify_tuple(attTup, RelationGetDescr(pg_attribute_rel),
+								values, nulls, replaces);
+								
+		CatalogTupleUpdate(pg_attribute_rel, &newTuple->t_self, newTuple);
+		heap_freetuple(newTuple);
+		heap_freetuple(attTup);
+		
+		table_close(pg_attribute_rel, RowExclusiveLock);
+	}
 }
 
 /*
@@ -5398,6 +6014,11 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->datefirst = pltsql_datefirst;
 		(*pltsql_protocol_plugin_ptr)->lock_timeout = pltsql_lock_timeout;
 		(*pltsql_protocol_plugin_ptr)->language = pltsql_language;
+		(*pltsql_protocol_plugin_ptr)->UpdateToNextDayHelper = common_utility_plugin_ptr->UpdateToNextDayHelper;
+		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geometry = common_utility_plugin_ptr->bytea_from_geometry;
+		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geography = common_utility_plugin_ptr->bytea_from_geography;
+		(*pltsql_protocol_plugin_ptr)->sql_geometry_from_bytea = common_utility_plugin_ptr->geometry_from_bytea;
+		(*pltsql_protocol_plugin_ptr)->sql_geography_from_bytea = common_utility_plugin_ptr->geography_from_bytea;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);

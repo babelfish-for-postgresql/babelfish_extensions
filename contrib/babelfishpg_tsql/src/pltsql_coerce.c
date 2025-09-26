@@ -76,13 +76,13 @@ PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
-static Oid get_immediate_base_type_of_UDT_internal(Oid typeid);
 static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
 static bool is_numeric_cast(Oid func_oid);
 static bool is_tsql_fixeddecimal_numeric(Oid oid);
 static bool is_tsql_numeric_fixeddecimal(Oid oid);
 static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
+static int32 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type);
 
 #define TINYINT_PRECISION_RADIX 	3
 #define SMALLINT_PRECISION_RADIX 	5
@@ -1060,7 +1060,7 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
  * This function returns the Immediate base type for UDT.
  * Returns InvalidOid if given type is not an UDT
  */
-static Oid
+Oid
 get_immediate_base_type_of_UDT_internal(Oid typeid)
 {
 	HeapTuple					tuple;
@@ -1700,6 +1700,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				}
 
 				if (rettypmod == -1)
+					rettypmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
+
+				if (rettypmod == -1)
 				{
 					if (found != NULL) *found = false;
 				}
@@ -1778,48 +1781,23 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				 * precision) in a CoalesceExpr
 				 */
 				CaseExpr	*case_expr = (CaseExpr *) expr;
+				List		*resultexprs = NIL;
 				ListCell	*lc;
 				CaseWhen	*casewhen;
 				Node		*casewhen_result;
-				int32		typmod;
-				uint8_t		precision,
-						max_integral_precision = 0,
-						scale,
-						max_scale = 0;
-				bool		found_typmod;
 
 				Assert(case_expr->args != NIL);
 
-				/* Loop through the list of WHEN clauses */
 				foreach(lc, case_expr->args)
 				{
 					casewhen = lfirst(lc);
 					casewhen_result = (Node *) casewhen->result;
-					typmod = resolve_numeric_typmod_from_exp(plan, casewhen_result, &found_typmod);
-					if (!found_typmod)
-					{
-						if (found != NULL) *found = false;
-					}
-
-					/*
-					 * return -1 if we fail to resolve one of the result's
-					 * typmod
-					 */
-					if (typmod == -1)
-						return -1;
-
-					/*
-					 * skip the const NULL, which should have 0 returned as
-					 * typmod
-					 */
-					if (typmod == 0)
-						continue;
-					scale = (typmod - VARHDRSZ) & 0xffff;
-					precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
-					max_scale = Max(scale, max_scale);
-					max_integral_precision = Max(precision - scale, max_integral_precision);
+					resultexprs = lappend(resultexprs, casewhen_result);
 				}
-				return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
+
+				/* Add the default result to the list of results */
+				resultexprs = lappend(resultexprs, (Node *) case_expr->defresult);
+				return tsql_select_common_typmod_hook(NULL, resultexprs, NUMERICOID);
 			}
 		case T_Aggref:
 			{

@@ -10,6 +10,6 @@ CREATE FUNCTION sys_assembly_types_func_vu_prepare()
 RETURNS INT
 AS
 BEGIN
-RETURN (SELECT COUNT(*) FROM sys.assembly_types)
+RETURN (SELECT COUNT(*) FROM sys.assembly_types WHERE is_user_defined=0)
 END
 GO

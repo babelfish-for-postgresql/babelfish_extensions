@@ -5,6 +5,7 @@ Could not find tests for function information_schema_tsql.table_constraints_inte
 Could not find tests for function pltsql_call_handler
 Could not find tests for function pltsql_inline_handler
 Could not find tests for function pltsql_validator
+Could not find tests for function sys.babelfish_broken_view_function
 Could not find tests for function sys.babelfish_runtime_error
 Could not find tests for function sys.babelfish_timezone_mapping
 Could not find tests for function sys.babelfish_try_cast_floor_bigint
@@ -14,6 +15,7 @@ Could not find tests for function sys.babelfish_try_cast_to_any
 Could not find tests for function sys.bbf_is_role_member
 Could not find tests for function sys.bbf_pivot
 Could not find tests for function sys.bbf_xmlexist
+Could not find tests for function sys.bbf_xmlvalue
 Could not find tests for function sys.columns_internal
 Could not find tests for function sys.date_bucket_internal_helper
 Could not find tests for function sys.dateadd_internal
@@ -33,6 +35,7 @@ Could not find tests for function sys.openjson_object
 Could not find tests for function sys.openjson_simple
 Could not find tests for function sys.openjson_with
 Could not find tests for function sys.openquery_internal
+Could not find tests for function sys.openxml_simple
 Could not find tests for function sys.patindex_ai_collations
 Could not find tests for function sys.pltsql_assign_var
 Could not find tests for function sys.remove_accents_internal_using_cache
@@ -103,6 +106,7 @@ Could not find upgrade tests for function information_schema_tsql.table_constrai
 Could not find upgrade tests for function pltsql_call_handler
 Could not find upgrade tests for function pltsql_inline_handler
 Could not find upgrade tests for function pltsql_validator
+Could not find upgrade tests for function sys.babelfish_broken_view_function
 Could not find upgrade tests for function serverproperty
 Could not find upgrade tests for function sys.babelfish_runtime_error
 Could not find upgrade tests for function sys.babelfish_timezone_mapping
@@ -113,6 +117,7 @@ Could not find upgrade tests for function sys.babelfish_try_cast_to_any
 Could not find upgrade tests for function sys.bbf_is_role_member
 Could not find upgrade tests for function sys.bbf_pivot
 Could not find upgrade tests for function sys.bbf_xmlexist
+Could not find upgrade tests for function sys.bbf_xmlvalue
 Could not find upgrade tests for function sys.columns_internal
 Could not find upgrade tests for function sys.cursor_rows
 Could not find upgrade tests for function sys.cursor_status
@@ -139,6 +144,7 @@ Could not find upgrade tests for function sys.openjson_object
 Could not find upgrade tests for function sys.openjson_simple
 Could not find upgrade tests for function sys.openjson_with
 Could not find upgrade tests for function sys.openquery_internal
+Could not find upgrade tests for function sys.openxml_simple
 Could not find upgrade tests for function sys.options
 Could not find upgrade tests for function sys.patindex_ai_collations
 Could not find upgrade tests for function sys.pltsql_assign_var
@@ -189,7 +195,6 @@ Could not find upgrade tests for procedure sys.sp_cursor_list
 Could not find upgrade tests for procedure sys.sp_describe_cursor
 Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
 Could not find upgrade tests for procedure sys.sp_prepare
-Could not find upgrade tests for procedure sys.sp_reset_connection
 Could not find upgrade tests for procedure sys.sp_unprepare
 Could not find upgrade tests for procedure sys.sp_updatestats
 Could not find upgrade tests for table sys.babelfish_configurations

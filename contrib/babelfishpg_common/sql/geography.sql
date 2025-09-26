@@ -77,13 +77,16 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bbf_varbinary)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY, integer, boolean)
 	RETURNS sys.bbf_varbinary
 	AS $$
 	DECLARE
         byte bytea;
 	BEGIN
 		byte := (SELECT sys.bytea($1));
+		IF pg_catalog.length(byte) + 4 > $2 AND $2 != -1 THEN
+			RAISE EXCEPTION 'Error converting sys.geography to binary. The result would be truncated.';
+		END IF;
 		RETURN (SELECT CAST (byte AS sys.bbf_varbinary)); 
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -120,14 +123,14 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(text, integer, boolean)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOGRAPHY, integer, boolean)
 	RETURNS sys.bpchar
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
 		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		RETURN (SELECT sys.GeographyAsTextbp_helper(sys.Geography__STFlipCoordinates($1)));
+		RETURN (SELECT sys.GeographyAsTextbp_helper(sys.Geography__STFlipCoordinates($1), $2, $3));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -145,14 +148,20 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bpchar)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOGRAPHY, integer, boolean)
 	RETURNS sys.varchar
 	AS $$
+	DECLARE
+		str_notation sys.varchar;
 	BEGIN
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
 		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		RETURN (SELECT sys.GeographyAsTextvar_helper(sys.Geography__STFlipCoordinates($1)));
+		str_notation := (SELECT sys.GeographyAsTextvar_helper(sys.Geography__STFlipCoordinates($1)));
+		IF pg_catalog.length(str_notation) + 4 > $2 AND $2 != -1 THEN
+			RAISE EXCEPTION 'There is insufficient result space to convert a geography value to varchar/nvarchar.';
+		END IF;
+		RETURN str_notation;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -170,17 +179,35 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.varchar)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.bbf_binary(sys.GEOGRAPHY, integer, boolean)
+	RETURNS sys.bbf_binary
+	AS $$
+	DECLARE
+		byte bytea;
+	BEGIN
+		byte := (SELECT sys.bytea($1));
+		IF pg_catalog.length(byte) + 4 = $2 THEN
+			RETURN (SELECT CAST (byte AS sys.bbf_binary));
+		ELSEIF pg_catalog.length(byte) + 4 > $2 THEN
+			RAISE EXCEPTION 'Error converting sys.geography to binary. The result would be truncated.';
+		ELSE
+			RAISE EXCEPTION 'Error converting sys.geography to fixed length binary type. The result would be padded and cannot be converted back.';
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE CAST (text AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(text, integer, boolean) AS IMPLICIT;
 CREATE CAST (sys.GEOGRAPHY AS text) WITH FUNCTION sys.text(sys.GEOGRAPHY);
 CREATE CAST (sys.bpchar AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bpchar) AS IMPLICIT;
-CREATE CAST (sys.GEOGRAPHY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOGRAPHY);
+CREATE CAST (sys.GEOGRAPHY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOGRAPHY, integer, boolean);
 CREATE CAST (sys.varchar AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.varchar) AS IMPLICIT;
-CREATE CAST (sys.GEOGRAPHY AS sys.varchar) WITH FUNCTION sys.varchar(sys.GEOGRAPHY);
+CREATE CAST (sys.GEOGRAPHY AS sys.varchar) WITH FUNCTION sys.varchar(sys.GEOGRAPHY, integer, boolean);
 CREATE CAST (sys.bbf_binary AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bbf_binary) AS IMPLICIT;
 CREATE CAST (bytea AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(bytea) AS IMPLICIT;
 CREATE CAST (sys.GEOGRAPHY AS bytea) WITH FUNCTION sys.bytea(sys.GEOGRAPHY);
 CREATE CAST (sys.bbf_varbinary AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bbf_varbinary) AS IMPLICIT;
-CREATE CAST (sys.GEOGRAPHY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY);
+CREATE CAST (sys.GEOGRAPHY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY, integer, boolean);
+CREATE CAST (sys.GEOGRAPHY AS sys.bbf_binary) WITH FUNCTION sys.bbf_binary(sys.GEOGRAPHY, integer, boolean);
 
 -- This Function Flips the Coordinates of the Point (x, y) -> (y, x)
 CREATE OR REPLACE FUNCTION sys.Geography__STFlipCoordinates(sys.GEOGRAPHY)
@@ -188,13 +215,21 @@ CREATE OR REPLACE FUNCTION sys.Geography__STFlipCoordinates(sys.GEOGRAPHY)
 	AS '$libdir/postgis-3', 'ST_FlipCoordinates'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
+CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(sys.NVARCHAR, integer)
 	RETURNS sys.GEOGRAPHY
-	AS 'babelfishpg_common', 'get_geography_from_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	BEGIN
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geography::STGeomFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		RETURN (SELECT sys.geogfromtext_helper($1::text, $2));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
-	RETURNS TEXT
+	RETURNS sys.NVARCHAR
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
@@ -205,32 +240,60 @@ CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
-	RETURNS bytea
+	RETURNS sys.varbinary
 	AS 'babelfishpg_common', 'st_as_binary_geography'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
 	RETURNS sys.GEOGRAPHY
 	AS 'babelfishpg_common', 'geography_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
+CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR,srid integer)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	DECLARE
 		Geomtype text;
 		geom sys.GEOGRAPHY;
 	BEGIN
-		geom = (SELECT sys.geogfromtext_helper($1, $2));
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geography::STPointFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		geom = (SELECT sys.geogfromtext_helper($1::text, $2));
 		Geomtype = (SELECT sys.ST_GeometryType(geom));
 
 		IF Geomtype = 'ST_Point' THEN
 			RETURN geom;
 		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
+			RAISE EXCEPTION 'Expected "POINT" at Position 1. The input has %', $1;
 		END IF;
 	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR,srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOGRAPHY;
+	BEGIN
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geography::STLineFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		geom = (SELECT sys.geogfromtext_helper($1::text, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_LineString' THEN
+			RETURN geom;
+		ELSE
+			RAISE EXCEPTION 'Expected "LINESTRING" at Position 1. The input has %', $1;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOGRAPHY)
 	RETURNS text
@@ -242,10 +305,17 @@ CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOGRAPHY)
 	AS '$libdir/postgis-3', 'LWGEOM_zmflag'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.STArea(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.STArea(geom sys.GEOGRAPHY)
 	RETURNS float8
-	AS '$libdir/postgis-3','ST_Area'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	BEGIN
+		IF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		ELSE
+			RETURN sys.STArea_helper(geom);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOGRAPHY)
 	RETURNS integer
@@ -258,6 +328,8 @@ CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY
 	BEGIN
 		IF STSrid(geom1) != STSrid(geom2) THEN
 			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
 		ELSE
 			Return sys.STEquals_helper($1,$2);
 		END IF;
@@ -270,6 +342,8 @@ CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAP
 	BEGIN
 		IF STSrid(geom1) != STSrid(geom2) THEN
 			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
 		ELSE
 			Return sys.STContains_helper($1,$2);
 		END IF;
@@ -322,64 +396,74 @@ CREATE OPERATOR sys.<> (
 -- STDimension
 -- Retrieves spatial dimension
 CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
-        RETURNS integer
-        AS $$ 
-        BEGIN
-	        -- Check if the geography is empty
-                IF STIsEmpty(geom) = 1 THEN  
-                        RETURN -1;
-                END IF;
-                RETURN sys.STDimension_helper($1);
-        END;
-        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	RETURNS integer
+	AS $$ 
+	BEGIN
+		IF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		-- Check if the geography is empty
+		ELSEIF STIsEmpty(geom) = 1 THEN  
+			RETURN -1;
+		ELSE
+			RETURN sys.STDimension_helper($1);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS $$
-        BEGIN
-	        --Check if the SRIDs do not match
-                IF sys.STSrid(geom1) != sys.STSrid(geom2) THEN
-                        RETURN NULL;
-                END IF;
-                RETURN sys.STDisjoint_helper($1, $2);
-        END;
-        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		--Check if the SRIDs do not match
+		IF sys.STSrid(geom1) != sys.STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		ELSE 
+			RETURN sys.STDisjoint_helper($1, $2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- STIntersects
 -- Checks if two geometries spatially intersect
 CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS $$
-        BEGIN
-	        --Check if the SRIDs do not match
-                IF STSrid(geom1) != STSrid(geom2) THEN
-                        RETURN NULL;
-                ELSE
-                        RETURN sys.STIntersects_helper($1,$2);
-                END IF;
-        END;
-        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		--Check if the SRIDs do not match
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSEIF STIsValid(geom1) = 0 OR STIsValid(geom2) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		ELSE
+			RETURN sys.STIntersects_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
 
 -- STIsClosed
 -- Checks if geometry is closed
 CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS $$
-        DECLARE
-                geom_type text;
-        BEGIN
-                -- Get the geography type
-                geom_type := ST_GeometryType(geom); 
-                -- Check if any figures of the geography instance are points
-                IF geom_type = 'ST_Point' THEN
-                        RETURN 0;
-                END IF; 
-       
-                RETURN sys.STIsClosed_helper(geom);
-        END;
-        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	RETURNS sys.BIT
+	AS $$
+	DECLARE
+		geom_type text;
+	BEGIN
+		-- Get the geography type
+		geom_type := ST_GeometryType(geom); 
+		-- Check if any figures of the geography instance are points
+		IF geom_type = 'ST_Point' THEN
+			RETURN 0;
+		ELSIF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		END IF; 
+   
+		RETURN sys.STIsClosed_helper(geom);
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Minimum distance
 CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
@@ -392,6 +476,8 @@ CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAP
 		ELSEIF STIsEmpty(geog1) = 1 OR STIsEmpty(geog2) = 1  THEN
 			RETURN NULL;
 
+		ELSEIF STIsValid(geog1) = 0 OR STIsValid(geog2) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
 		ELSE
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
@@ -477,14 +563,14 @@ CREATE OR REPLACE FUNCTION sys.HasM(geog sys.GEOGRAPHY)
 CREATE OR REPLACE FUNCTION sys.Z(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_z_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT;
   
 -- M
 -- Returns the M coordinate value (measure) for a point geography instance
 CREATE OR REPLACE FUNCTION sys.M(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_m_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT;
 
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
@@ -523,7 +609,7 @@ CREATE OR REPLACE FUNCTION sys.STAsText_helper(sys.GEOGRAPHY)
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE; 
 
 CREATE OR REPLACE FUNCTION sys.STAsText_common(sys.GEOGRAPHY)
-	RETURNS TEXT
+	RETURNS sys.NVARCHAR
 	AS 'babelfishpg_common', 'st_as_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -542,9 +628,9 @@ CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
 	AS 'babelfishpg_common', 'charTogeog'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.GeographyAsTextbp_helper(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.GeographyAsTextbp_helper(sys.GEOGRAPHY, integer, boolean)
 	RETURNS sys.bpchar
-	AS 'babelfishpg_common', 'geometry_astext'
+	AS 'babelfishpg_common', 'geometry_asbpchar'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GeographyAsTextvar_helper(sys.GEOGRAPHY)
@@ -555,4 +641,9 @@ CREATE OR REPLACE FUNCTION sys.GeographyAsTextvar_helper(sys.GEOGRAPHY)
 CREATE OR REPLACE FUNCTION sys.geogfromtext_helper(text, integer)
 	RETURNS sys.GEOGRAPHY
 	AS 'babelfishpg_common', 'get_geography_from_text'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STArea_helper(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','ST_Area'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;

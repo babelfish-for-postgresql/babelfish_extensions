@@ -1,0 +1,11 @@
+DROP TABLE datename_tzoffset_test_cases;
+GO
+
+DROP TABLE datename_stability_test;
+GO
+
+DROP VIEW datename_tzoffset_no_offset_tests_view;
+GO
+
+DROP TABLE datename_tzoffset_different_test_scenarios;
+GO

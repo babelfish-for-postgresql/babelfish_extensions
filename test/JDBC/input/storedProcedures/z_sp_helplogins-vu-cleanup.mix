@@ -72,6 +72,10 @@ drop user if exists u_sp_helplogin_loginwithusermemberofdbowner
 drop login sp_helplogin_loginwithusermemberofdbowner
 GO
 
+drop user if exists u_justanotherloginwithsecad
+drop login justanotherloginwithsecad
+GO
+
 drop login sp_helplogin_loginwithdifferentdefaultdb;
 GO
 

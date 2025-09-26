@@ -1199,17 +1199,40 @@ get_bbf_view_def_idx_oid()
 }
 
 HeapTuple
-search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_schema_name, const char *view_name)
+search_bbf_view_def(Relation bbf_view_def_rel, Oid viewOid)
 {
 
 	ScanKeyData scanKey[3];
 	SysScanDesc scan;
 	HeapTuple	scantup,
 				oldtup;
+	Oid 		schema_id;
+	char 		*schema_name = NULL;
+	char		*view_name = NULL;
+	const char  *logical_schema_name = NULL;
+	int16 		dbid = InvalidDbid;
 
-	if (!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
+	if (!OidIsValid(viewOid))
 		return NULL;
 
+	schema_id = get_rel_namespace(viewOid);
+	schema_name = get_namespace_name(schema_id);
+	view_name = get_rel_name(viewOid);
+	
+	if (!schema_name)
+		return NULL;
+	
+	logical_schema_name = get_logical_schema_name(schema_name, true);
+	dbid = get_dbid_from_physical_schema_name(schema_name, true);
+
+	if (!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
+	{
+		pfree(view_name);
+		pfree(schema_name);
+		if (logical_schema_name)
+			pfree((char *) logical_schema_name);
+		return NULL;
+	}
 
 	/* Search and drop the definition */
 	ScanKeyInit(&scanKey[0],
@@ -1239,7 +1262,7 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 
 /* Checks if it is view created during v2.2.0 or after that */
 bool
-check_is_tsql_view(Oid relid)
+check_is_tsql_view(Oid relid, bool *is_weak_view)
 {
 	Oid			schema_oid;
 	Relation	bbf_view_def_rel;
@@ -1249,10 +1272,17 @@ check_is_tsql_view(Oid relid)
 	int16		logical_dbid;
 	const char *logical_schema_name;
 	bool		is_tsql_view = false;
+	bool 		bisnull;
+	Datum 		flag_values_datum;
+	uint64 		flag_values;
 
 	view_name = get_rel_name(relid);
 	schema_oid = get_rel_namespace(relid);
 	schema_name = get_namespace_name(schema_oid);
+
+	if (is_weak_view != NULL)
+		*is_weak_view = false;
+
 	if (view_name == NULL || schema_name == NULL || is_shared_schema(schema_name))
 	{
 		if (view_name)
@@ -1273,12 +1303,27 @@ check_is_tsql_view(Oid relid)
 	}
 	/* Fetch the relation */
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), AccessShareLock);
-
-	scantup = search_bbf_view_def(bbf_view_def_rel, logical_dbid, logical_schema_name, view_name);
+	scantup = search_bbf_view_def(bbf_view_def_rel, relid);
 
 	if (HeapTupleIsValid(scantup))
 	{
 		is_tsql_view = true;
+
+		/* Check if the view is a weak bound view */
+		if (is_weak_view != NULL)
+		{
+			flag_values_datum = heap_getattr(scantup, 
+								Anum_bbf_view_def_flag_values,
+								RelationGetDescr(bbf_view_def_rel), 
+								&bisnull);
+			
+			if (!bisnull)
+			{
+				flag_values = DatumGetUInt64(flag_values_datum);
+				*is_weak_view = (flag_values & BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW) != 0;
+			}
+		}
+
 		heap_freetuple(scantup);
 	}
 	table_close(bbf_view_def_rel, AccessShareLock);
@@ -3819,12 +3864,21 @@ update_privileges_of_object(const char *schema_name,
 
 /*
  * Checks if a particular privilege exists in catalog BABELFISH_SCHEMA_PERMISSIONS.
+ * 
+ * If curr_permission is set to INVALID_PERMISSION, this function only checks for
+ * the existence of an entry in the catalog without validating specific permissions.
+ * Otherwise, it verifies if the specified permission bits (curr_permission) are
+ * set in the catalog entry's permission field.
+ *
+ * Returns true if the requested permission exists (or if an entry exists when
+ * INVALID_PERMISSION is specified), false otherwise.
  */
 bool
 privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 							const char *object_name,
 							const char *grantee,
-							const char *object_type)
+							const char *object_type,
+							int	curr_permission)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
@@ -3918,8 +3972,29 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 	}
 
 	tuple_bbf_schema = systable_getnext(scan);
-	if (HeapTupleIsValid(tuple_bbf_schema))
-		catalog_entry_exists = true;
+	while (HeapTupleIsValid(tuple_bbf_schema))
+    {
+		if (curr_permission == INVALID_PERMISSION)
+			catalog_entry_exists = true;
+		else
+		{
+			/* find the permission corresponding to tuple_bbf_schema */
+			Datum datum;
+			bool isnull;
+			int sch_permission = INVALID_PERMISSION;
+
+			datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, RelationGetDescr(bbf_schema_rel), &isnull);
+			if (isnull)
+				catalog_entry_exists = false;
+			else
+				sch_permission = DatumGetInt32(datum);
+
+			if (!isnull && ((sch_permission & curr_permission) == curr_permission))
+				catalog_entry_exists = true;
+
+		}
+		tuple_bbf_schema = systable_getnext(scan);
+    }
 
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
@@ -4064,6 +4139,49 @@ remove_entry_from_bbf_schema_perms(const char *schema_name,
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
+/* Removes all rows for babelfish database user from the catalog BABELFISH_SCHEMA_PERMISSIONS when a user is dropped. */
+void
+remove_user_entry_from_bbf_schema_perms(Oid user_oid)
+{
+	Relation		bbf_schema_rel;
+	HeapTuple		tuple_bbf_schema;
+	ScanKeyData		scanKey[1];
+	SysScanDesc		scan;
+	const char		*user_name = NULL;
+
+	/* Return if the Oid is invalid */
+	if (!OidIsValid(user_oid))
+		return;
+
+	user_name = GetUserNameFromId(user_oid, true);
+
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
+									RowExclusiveLock);
+
+	ScanKeyEntryInitialize(&scanKey[0], 0,
+				Anum_bbf_schema_perms_grantee,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ,
+				CStringGetTextDatum(user_name));
+
+	scan = systable_beginscan(bbf_schema_rel,
+				get_bbf_schema_perms_idx_oid(),
+				true, NULL, 1, scanKey);
+
+	tuple_bbf_schema = systable_getnext(scan);
+	/* Multiple entries can be there */
+	while (HeapTupleIsValid(tuple_bbf_schema))
+	{
+		/* Delete the entry */
+		CatalogTupleDelete(bbf_schema_rel, &tuple_bbf_schema->t_self);
+		tuple_bbf_schema = systable_getnext(scan);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, RowExclusiveLock);
+}
 /*
  * Add an entry to BABELFISH_SCHEMA_PERMISSIONS table, if it doesn't exist already.
  * If exists, updates the PERMISSION column in the table.
@@ -4077,7 +4195,7 @@ add_or_update_object_in_bbf_schema(const char *schema_name,
 				bool is_grant,
 				const char *func_args)
 {
-	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, object_type))
+	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, object_type, INVALID_PERMISSION))
 		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type, func_args);
 	else
 		update_privileges_of_object(schema_name, object_name, new_permission, grantee, object_type, is_grant);
@@ -4271,11 +4389,11 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 			{
 				priv_name = privilege_to_string(permission);
 				if (strcmp(object_type, OBJ_RELATION) == 0)
-					query = psprintf("GRANT %s ON [%s].[%s] TO %s", priv_name, schema, object_name, grantee);
+					query = psprintf("GRANT %s ON [%s].[%s] TO [%s]", priv_name, schema, object_name, grantee);
 				else if (strcmp(object_type, OBJ_FUNCTION) == 0)
-					query = psprintf("GRANT %s ON FUNCTION [%s].[%s](%s) TO %s", priv_name, schema, object_name, func_args, grantee);
+					query = psprintf("GRANT %s ON FUNCTION [%s].[%s](%s) TO [%s]", priv_name, schema, object_name, func_args, grantee);
 				else if (strcmp(object_type, OBJ_PROCEDURE) == 0)
-					query = psprintf("GRANT %s ON PROCEDURE [%s].[%s](%s) TO %s", priv_name, schema, object_name, func_args, grantee);
+					query = psprintf("GRANT %s ON PROCEDURE [%s].[%s](%s) TO [%s]", priv_name, schema, object_name, func_args, grantee);
 				res = raw_parser(query, RAW_PARSE_DEFAULT);
 				grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
 
@@ -4391,9 +4509,9 @@ exec_internal_grant_on_function(Oid objectId)
 			int     		save_sec_context;
 
 			if (object_type == PROKIND_FUNCTION)
-				query = psprintf("GRANT EXECUTE ON FUNCTION [%s].[%s] TO %s", schema, object_name, grantee);
+				query = psprintf("GRANT EXECUTE ON FUNCTION [%s].[%s] TO [%s]", schema, object_name, grantee);
 			else if (object_type == PROKIND_PROCEDURE)
-				query = psprintf("GRANT EXECUTE ON PROCEDURE [%s].[%s] TO %s", schema, object_name, grantee);
+				query = psprintf("GRANT EXECUTE ON PROCEDURE [%s].[%s] TO [%s]", schema, object_name, grantee);
 			res = raw_parser(query, RAW_PARSE_DEFAULT);
 			grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
 
@@ -6130,9 +6248,9 @@ alter_default_privilege_for_db(char *dbname)
 				{
 					char	*alter_query = NULL;
 					char	*grant_query = NULL;
-					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
+					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\", \"%s\" IN SCHEMA \"%s\" GRANT %s ON TABLES TO \"%s\"", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
 					exec_utility_cmd_helper(alter_query);
-					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
+					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", privilege_to_string(permissions[i]), physical_schema, grantee);
 					exec_utility_cmd_helper(grant_query);
 					pfree(alter_query);
 					pfree(grant_query);

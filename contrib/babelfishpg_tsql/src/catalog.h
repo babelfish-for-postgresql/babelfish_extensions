@@ -202,18 +202,22 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 #define Anum_bbf_view_def_schema_name 2
 #define Anum_bbf_view_def_object_name 3
 #define Anum_bbf_view_def_definition 4
+#define Anum_bbf_view_def_flag_validity 5
+#define Anum_bbf_view_def_flag_values 6
 #define BBF_VIEW_DEF_NUM_COLS 8
 #define BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER (1<<1)
 #define BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4 (0<<2)
+#define BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW (1<<3)
+#define BBF_VIEW_DEF_FLAG_IS_BROKEN (1<<4)
+
 extern Oid	bbf_view_def_oid;
 extern Oid	bbf_view_def_idx_oid;
 
 extern Oid	get_bbf_view_def_oid(void);
 extern Oid	get_bbf_view_def_idx_oid(void);
-extern HeapTuple search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid,
-									 const char *logical_schema_name, const char *view_name);
-extern bool check_is_tsql_view(Oid relid);
+extern HeapTuple search_bbf_view_def(Relation bbf_view_def_rel, Oid viewOid);
+extern bool check_is_tsql_view(Oid relid, bool *is_weak_view);
 extern void clean_up_bbf_view_def(int16 dbid);
 extern void drop_bbf_schema_permission_entries(int16 dbid);
 
@@ -330,6 +334,7 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define OBJ_PROCEDURE "p"
 #define OBJ_FUNCTION "f"
 #define NUMBER_OF_PERMISSIONS 6
+#define INVALID_PERMISSION -1
 
 /* check if rolename is sysadmin */
 #define IS_ROLENAME_SYSADMIN(rolname) \
@@ -372,9 +377,10 @@ typedef struct FormData_bbf_schema_perms
 typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
 
 extern void add_entry_to_bbf_schema_perms(const char *schema_name, const char *object_name, int permission, const char *grantee, const char *object_type, const char *func_args);
-extern bool privilege_exists_in_bbf_schema_permissions(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
+extern bool privilege_exists_in_bbf_schema_permissions(const char *schema_name, const char *object_name, const char *grantee, const char *object_type, int curr_permission);
 extern void update_privileges_of_object(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant);
 extern void remove_entry_from_bbf_schema_perms(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
+extern void remove_user_entry_from_bbf_schema_perms(Oid user_oid);
 extern void add_or_update_object_in_bbf_schema(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant, const char *func_args);
 extern void clean_up_bbf_schema_permissions(const char *schema_name, const char *object_name, bool is_schema);
 extern void grant_perms_to_objects_in_schema(const char *schema_name, int permission, const char *grantee);

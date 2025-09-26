@@ -26,3 +26,6 @@ ignore#!#sys_database_principals-vu-cleanup
 ignore#!#psql_logical_babelfish_db
 ignore#!#user_token-dep-vu-prepare
 ignore#!#user_token-dep-vu-verify
+ignore#!#proc_ownership_chaining-vu-prepare
+ignore#!#proc_ownership_chaining-vu-verify
+ignore#!#proc_ownership_chaining-vu-cleanup
