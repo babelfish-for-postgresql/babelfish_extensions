@@ -6664,3 +6664,140 @@ go
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
 ~~END~~
 
+
+-- tsql
+create schema sch;
+go
+create table sch.t1(a int)
+go
+create login l with password = '123';create user u for login l;
+go
+
+--Case 1 : when perms on schema and object are overlapping(i.e not mutually exclusive)
+grant select on schema::sch to u
+go
+grant select, insert on sch.t1 to u;
+go
+-- psql 
+select * from sys.babelfish_schema_permissions;
+go
+~~START~~
+int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+1#!#sch#!#ALL#!#2#!#master_u#!#s#!#<NULL>#!#<NULL>
+1#!#sch#!#t1#!#3#!#master_u#!#r#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- tsql
+revoke select, insert on sch.t1 to u;
+go
+
+-- psql 
+select * from sys.babelfish_schema_permissions;
+go
+~~START~~
+int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+1#!#sch#!#ALL#!#2#!#master_u#!#s#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- tsql user=l password=123
+select * from sch.t1
+go
+~~START~~
+int
+~~END~~
+
+insert into sch.t1 values (1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+-- terminate-tsql-conn user=l password=123
+
+-- tsql
+drop table sch.t1
+go
+drop schema sch
+go
+drop user u
+go
+drop login l
+go
+
+-- tsql
+-- Test Group 19 [REVOKE ALL with schema permissions]
+create login babel_test_l1 with password = '123';
+go
+
+create user babel_test_u1 for login babel_test_l1;
+go
+
+create schema babel_test_s1;
+go
+
+create table babel_test_s1.t1(a int);
+go
+
+-- Grant table and schema permissions
+grant select, insert on babel_test_s1.t1 to babel_test_u1;
+go
+
+grant select on schema::babel_test_s1 to babel_test_u1;
+go
+
+-- Revoke all permissions from table
+SELECT relname, relacl 
+FROM pg_class 
+WHERE relname = 't1'
+go
+~~START~~
+varchar#!#varchar
+t1#!#{master_dbo=arwdDxt/master_dbo,master_db_datareader=r/master_dbo,master_db_datawriter=awd/master_dbo,master_db_ddladmin=D/master_dbo,master_babel_test_u1=ar/master_dbo}
+~~END~~
+
+revoke all on babel_test_s1.t1 from babel_test_u1;
+go
+
+SELECT relname, relacl 
+FROM pg_class 
+WHERE relname = 't1'
+go
+~~START~~
+varchar#!#varchar
+t1#!#{master_dbo=arwdDxt/master_dbo,master_db_datareader=r/master_dbo,master_db_datawriter=awd/master_dbo,master_db_ddladmin=D/master_dbo,master_babel_test_u1=r/master_dbo}
+~~END~~
+
+
+-- tsql user=babel_test_l1 password=123
+-- Try to insert into table (should fail due to revoked permissions)
+select * from babel_test_s1.t1;
+go
+~~START~~
+int
+~~END~~
+
+
+insert into babel_test_s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+-- terminate-tsql-conn user=babel_test_l1 password=123
+
+-- tsql
+-- Cleanup
+drop table babel_test_s1.t1;
+go
+
+drop schema babel_test_s1;
+go
+
+drop user babel_test_u1;
+go
+
+-- tsql
+drop login babel_test_l1;
+go
