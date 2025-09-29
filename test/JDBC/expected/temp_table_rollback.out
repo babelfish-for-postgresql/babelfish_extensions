@@ -1,4 +1,4 @@
-expected/temp_table_rollback.out-- psql 
+-- psql 
 -- Session-local setting, so it will only apply to this test.
 show babelfishpg_tsql.temp_table_xact_support;
 GO
