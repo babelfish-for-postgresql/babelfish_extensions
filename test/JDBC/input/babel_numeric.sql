@@ -1119,3 +1119,127 @@ GO
 drop table if exists [testtable2];
 GO
 
+CREATE TYPE BABEL_6081_int FROM INT;
+GO
+
+CREATE TYPE BABEL_6081_numeric FROM NUMERIC(4, 2);
+GO
+
+CREATE TABLE BABEL_6081_t2 (id NUMERIC(4, 2));
+GO
+INSERT INTO BABEL_6081_t2 VALUES (1.0)
+GO
+
+WITH 
+cte1 AS ( 
+    SELECT id, CAST(id AS INT) AS int_id 
+    FROM BABEL_6081_t2 
+), 
+cte2 AS ( 
+    SELECT DISTINCT int_id 
+    FROM cte1 
+) 
+SELECT 
+    c1.id * avg(c2.int_id) AS product 
+    INTO 
+        BABEL_6081_t3 
+FROM cte1 c1 
+JOIN cte2 c2 ON c1.int_id = c2.int_id 
+GROUP BY c1.id; 
+GO
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE 
+from information_schema.columns 
+where TABLE_NAME = 'BABEL_6081_t3' order by COLUMN_NAME
+GO
+
+WITH 
+cte1 AS ( 
+    SELECT id, CAST(id AS BABEL_6081_int) AS int_id 
+    FROM BABEL_6081_t2 
+), 
+cte2 AS ( 
+    SELECT DISTINCT int_id 
+    FROM cte1 
+) 
+SELECT 
+    c1.id * avg(c2.int_id) AS product 
+    INTO 
+        BABEL_6081_t4 
+FROM cte1 c1 
+JOIN cte2 c2 ON c1.int_id = c2.int_id 
+GROUP BY c1.id; 
+GO
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE 
+from information_schema.columns 
+where TABLE_NAME = 'BABEL_6081_t4' order by COLUMN_NAME
+GO
+
+WITH 
+cte1 AS ( 
+    SELECT id, CAST(id AS BABEL_6081_numeric) AS int_id 
+    FROM BABEL_6081_t2 
+), 
+cte2 AS ( 
+    SELECT DISTINCT int_id 
+    FROM cte1 
+) 
+SELECT 
+    c1.id * avg(c2.int_id) AS product 
+    INTO 
+        BABEL_6081_t5 
+FROM cte1 c1 
+JOIN cte2 c2 ON c1.int_id = c2.int_id 
+GROUP BY c1.id; 
+GO
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'BABEL_6081_t5' order by COLUMN_NAME
+GO
+
+WITH 
+cte1 AS ( 
+    SELECT id, CAST(id AS INT) AS int_id 
+    FROM BABEL_6081_t2 
+), 
+cte2 AS ( 
+    SELECT DISTINCT int_id 
+    FROM cte1 
+) 
+SELECT 
+    c1.id, 
+    c1.id * avg(c2.int_id) AS product 
+INTO 
+    BABEL_6081_t6 
+FROM cte1 c1 
+JOIN cte2 c2 ON c1.int_id = c2.int_id 
+GROUP BY c1.id; 
+GO
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE 
+from information_schema.columns 
+where TABLE_NAME = 'BABEL_6081_t6' order by COLUMN_NAME
+GO
+
+DROP TABLE BABEL_6081_t2
+GO
+
+DROP TABLE BABEL_6081_t3
+GO
+
+DROP TABLE BABEL_6081_t4
+GO
+
+DROP TABLE BABEL_6081_t5
+GO
+
+DROP TABLE BABEL_6081_t6
+GO
+
+DROP TYPE BABEL_6081_int;
+GO
+
+DROP TYPE BABEL_6081_numeric;
+GO
