@@ -24,6 +24,9 @@ GO
 SELECT * FROM #temp_rollback_1
 GO
 
+DROP TABLE #temp_rollback_1;
+GO
+
 -- psql
 set babelfishpg_tsql.temp_table_xact_support = on; 
 GO

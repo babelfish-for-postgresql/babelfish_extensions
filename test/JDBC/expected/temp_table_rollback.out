@@ -36,6 +36,9 @@ int
 ~~END~~
 
 
+DROP TABLE #temp_rollback_1;
+GO
+
 -- psql
 set babelfishpg_tsql.temp_table_xact_support = on; 
 GO
@@ -235,7 +238,6 @@ text
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
 #t1_proc1
-#temp_rollback_1
 ~~END~~
 
 ~~ROW COUNT: 1~~
@@ -268,7 +270,6 @@ text
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
 #t1_proc1
-#temp_rollback_1
 ~~END~~
 
 ~~START~~
@@ -382,7 +383,6 @@ SELECT * FROM enr_view;
 GO
 ~~START~~
 text
-#temp_rollback_1
 #t_with_ident
 #t_with_ident_a_seq
 #t_with_ident_pkey
@@ -394,7 +394,6 @@ SELECT * FROM enr_view;
 GO
 ~~START~~
 text
-#temp_rollback_1
 ~~END~~
 
 
