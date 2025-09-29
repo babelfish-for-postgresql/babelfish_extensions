@@ -11159,7 +11159,7 @@ DECLARE
     counter int;
     cur_pos int;
 BEGIN
-    lower_object_name = pg_catalog.lower(PG_CATALOG.rtrim(name));
+    lower_object_name = pg_catalog.lower(name);
 
     counter = 1;
     cur_pos = babelfish_get_name_delimiter_pos(lower_object_name);
@@ -11171,7 +11171,7 @@ BEGIN
             RETURN;
         END IF;
 
-        names[counter] = babelfish_remove_delimiter_pair(PG_CATALOG.rtrim(PG_CATALOG.left(lower_object_name, cur_pos - 1)));
+        names[counter] = babelfish_remove_delimiter_pair(PG_CATALOG.left(lower_object_name, cur_pos - 1));
         
         -- invalid name
         IF names[counter] IS NULL THEN
@@ -11198,7 +11198,7 @@ BEGIN
     END CASE;
 
     -- Assign each name accordingly
-    object_name = sys.babelfish_truncate_identifier(babelfish_remove_delimiter_pair(PG_CATALOG.rtrim(lower_object_name)));
+    object_name = sys.babelfish_truncate_identifier(babelfish_remove_delimiter_pair(lower_object_name));
 END;
 $$
 LANGUAGE plpgsql

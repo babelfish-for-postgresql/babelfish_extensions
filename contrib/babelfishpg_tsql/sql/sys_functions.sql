@@ -2994,7 +2994,7 @@ BEGIN
 
     -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
     -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
-    cs_as_securable = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_securable));
+    cs_as_securable = pg_catalog.lower(cs_as_securable);
     cs_as_securable_class = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_securable_class));
     cs_as_permission = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_permission));
     cs_as_sub_securable = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_sub_securable));
