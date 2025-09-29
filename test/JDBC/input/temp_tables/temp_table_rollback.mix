@@ -65,6 +65,12 @@ GO
 SET XACT_ABORT OFF;
 GO
 
+CREATE VIEW enr_view AS
+    SELECT relname
+    FROM sys.babelfish_get_enr_list()
+	ORDER BY relname
+GO
+
 CREATE PROCEDURE test_nested_rollback_in_proc AS
 BEGIN
     CREATE TABLE #t1_proc1(a int)
@@ -72,7 +78,7 @@ BEGIN
     BEGIN TRAN;
         ALTER TABLE #t1_proc1 ADD b varchar(50)
 		-- Shows all the ENRs created
-		SELECT * FROM sys.babelfish_get_enr_list();
+		SELECT * FROM enr_view;
         TRUNCATE TABLE #t1_proc1
         INSERT INTO #t1_proc1 VALUES (1, 'two')
         -- Should just be (1, 'two')
@@ -93,7 +99,7 @@ BEGIN
 				-- (1,2,3,4,5)
 				SELECT * FROM #t1_proc1
 				-- Shows all the ENRs created
-				SELECT * FROM sys.babelfish_get_enr_list();
+				SELECT * FROM enr_view;
         ROLLBACK TRAN s1
 
         -- Should just be (1, 'two')
@@ -216,9 +222,12 @@ GO
 
 CREATE TABLE #t_with_ident(a INT IDENTITY(1,5) PRIMARY KEY);
 GO
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT * FROM enr_view;
 GO
 DROP TABLE #t_with_ident;
 GO
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT * FROM enr_view;
+GO
+
+DROP VIEW enr_view;
 GO

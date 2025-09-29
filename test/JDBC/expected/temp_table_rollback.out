@@ -103,6 +103,12 @@ GO
 SET XACT_ABORT OFF;
 GO
 
+CREATE VIEW enr_view AS
+    SELECT relname
+    FROM sys.babelfish_get_enr_list()
+	ORDER BY relname
+GO
+
 
 
 
@@ -114,7 +120,7 @@ BEGIN
     BEGIN TRAN;
         ALTER TABLE #t1_proc1 ADD b varchar(50)
 		-- Shows all the ENRs created
-		SELECT * FROM sys.babelfish_get_enr_list();
+		SELECT * FROM enr_view;
         TRUNCATE TABLE #t1_proc1
         INSERT INTO #t1_proc1 VALUES (1, 'two')
         -- Should just be (1, 'two')
@@ -134,7 +140,7 @@ BEGIN
 				-- (1,2,3,4,5)
 				SELECT * FROM #t1_proc1
 				-- Shows all the ENRs created
-				SELECT * FROM sys.babelfish_get_enr_list();
+				SELECT * FROM enr_view;
         ROLLBACK TRAN s1
         -- Should just be (1, 'two')
         SELECT * FROM #t1_proc1
@@ -220,11 +226,11 @@ GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
-int#!#text
-20073#!##t1_proc1
-20076#!##pg_toast_20073
-20077#!##pg_toast_20073_index
-20057#!##temp_rollback_1
+text
+#pg_toast_20073
+#pg_toast_20073_index
+#t1_proc1
+#temp_rollback_1
 ~~END~~
 
 ~~ROW COUNT: 1~~
@@ -253,11 +259,11 @@ int
 ~~END~~
 
 ~~START~~
-int#!#text
-20081#!##t1_proc1
-20084#!##pg_toast_20081
-20085#!##pg_toast_20081_index
-20057#!##temp_rollback_1
+text
+#pg_toast_20081
+#pg_toast_20081_index
+#t1_proc1
+#temp_rollback_1
 ~~END~~
 
 ~~START~~
@@ -367,22 +373,25 @@ GO
 
 CREATE TABLE #t_with_ident(a INT IDENTITY(1,5) PRIMARY KEY);
 GO
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT * FROM enr_view;
 GO
 ~~START~~
-int#!#text
-20057#!##temp_rollback_1
-20138#!##t_with_ident_a_seq
-20139#!##t_with_ident
-20142#!##t_with_ident_pkey
+text
+#temp_rollback_1
+#t_with_ident
+#t_with_ident_a_seq
+#t_with_ident_pkey
 ~~END~~
 
 DROP TABLE #t_with_ident;
 GO
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT * FROM enr_view;
 GO
 ~~START~~
-int#!#text
-20057#!##temp_rollback_1
+text
+#temp_rollback_1
 ~~END~~
 
+
+DROP VIEW enr_view;
+GO
