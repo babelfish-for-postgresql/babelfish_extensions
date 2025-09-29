@@ -3022,32 +3022,6 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_openxml(IN DocHandle BIGINT)
-   RETURNS TABLE (XmlData XML)
-AS
-$BODY$
-DECLARE
-   XmlDocument$data XML;
-BEGIN
-
-    SELECT t.XmlData
-	  INTO STRICT XmlDocument$data
-	  FROM sys$openxml t
-	 WHERE t.DocID = DocHandle;
-
-   RETURN QUERY SELECT XmlDocument$data;
-
-   EXCEPTION
-	  WHEN SQLSTATE '42P01' OR SQLSTATE 'P0002' THEN
-	      RAISE EXCEPTION '%','Could not find prepared statement with handle '||CASE
-                                                                              WHEN DocHandle IS NULL THEN 'null'
-                                                                                ELSE DocHandle::TEXT
-                                                                             END;
-END;
-$BODY$
-LANGUAGE  plpgsql
-STABLE;
-
 CREATE OR REPLACE FUNCTION sys.babelfish_parse_to_date(IN p_datestring TEXT,
                                                            IN p_culture TEXT DEFAULT '')
 RETURNS DATE
