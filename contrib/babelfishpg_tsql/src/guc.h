@@ -18,6 +18,7 @@ typedef enum IsolationOptions
 extern bool pltsql_fmtonly;
 extern bool pltsql_enable_create_alter_view_from_pg;
 extern bool pltsql_enable_linked_servers;
+extern bool pltsql_enable_ownership_chaining;
 extern bool pltsql_allow_windows_login;
 extern bool pltsql_allow_fulltext_parser;
 extern bool pltsql_weak_view_binding;
