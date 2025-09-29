@@ -191,3 +191,13 @@ text
 <NULL>
 ~~END~~
 
+--Timezone - Central Standard Time
+SELECT name, current_utc_offset, is_currently_dst 
+FROM sys.time_zone_info 
+WHERE name = 'Central Asia Standard Time';
+GO
+~~START~~
+text#!#nvarchar#!#bit
+Central Asia Standard Time#!#+05:00#!#0
+~~END~~
+

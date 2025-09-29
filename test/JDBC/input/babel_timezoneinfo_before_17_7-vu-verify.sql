@@ -81,3 +81,8 @@ GO
 --Verify the null case
 SELECT sys.timezone_mapping_pg_to_windows(' ');
 GO
+--Timezone - Central Standard Time
+SELECT name, current_utc_offset, is_currently_dst 
+FROM sys.time_zone_info 
+WHERE name = 'Central Asia Standard Time';
+GO
