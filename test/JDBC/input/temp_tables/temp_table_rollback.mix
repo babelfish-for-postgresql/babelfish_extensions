@@ -45,12 +45,34 @@ GO
 SELECT * FROM #temp_with_indexes;
 GO
 
+SET XACT_ABORT ON;
+GO
+
+TRUNCATE TABLE #temp_with_indexes;
+GO
+
+BEGIN TRAN
+	INSERT INTO #temp_with_indexes(fullname, id) VALUES ('a', 1);
+	INSERT INTO #temp_with_indexes(fullname, id) VALUES ('a', 1); -- this violates id_idx Constraint
+COMMIT TRAN
+GO
+SELECT * FROM #temp_with_indexes; -- since XACT_ABORT is ON, we should not get any tuples since last transaction is marked aborted after the uniqueness error
+GO
+
+DROP TABLE #temp_with_indexes;
+GO
+
+SET XACT_ABORT OFF;
+GO
+
 CREATE PROCEDURE test_nested_rollback_in_proc AS
 BEGIN
     CREATE TABLE #t1_proc1(a int)
     INSERT INTO #t1_proc1 values (6)
     BEGIN TRAN;
         ALTER TABLE #t1_proc1 ADD b varchar(50)
+		-- Shows all the ENRs created
+		SELECT * FROM sys.babelfish_get_enr_list();
         TRUNCATE TABLE #t1_proc1
         INSERT INTO #t1_proc1 VALUES (1, 'two')
         -- Should just be (1, 'two')
@@ -63,6 +85,15 @@ BEGIN
             CREATE UNIQUE CLUSTERED INDEX IX_tmpSpec ON #t1_proc1(a)
             -- Should just be 'three'
             SELECT * FROM #t1_proc1
+			ALTER TABLE #t1_proc1 ADD b INT
+			TRUNCATE TABLE #t1_proc1
+			SAVE TRAN s2
+				ALTER TABLE #t1_proc1 DROP a;
+				INSERT INTO #t1_proc1 VALUES (GENERATE_SERIES(1,5));
+				-- (1,2,3,4,5)
+				SELECT * FROM #t1_proc1
+				-- Shows all the ENRs created
+				SELECT * FROM sys.babelfish_get_enr_list();
         ROLLBACK TRAN s1
 
         -- Should just be (1, 'two')
@@ -181,4 +212,13 @@ DROP TABLE #temptable;
 GO
 
 DROP PROCEDURE execute_rollback_tests, implicit_rollback_in_proc, test_nested_rollback_in_proc;
+GO
+
+CREATE TABLE #t_with_ident(a INT IDENTITY(1,5) PRIMARY KEY);
+GO
+SELECT * FROM sys.babelfish_get_enr_list();
+GO
+DROP TABLE #t_with_ident;
+GO
+SELECT * FROM sys.babelfish_get_enr_list();
 GO
