@@ -104,7 +104,12 @@ SET XACT_ABORT OFF;
 GO
 
 CREATE VIEW enr_view AS
-    SELECT relname
+    SELECT
+        CASE
+            WHEN relname LIKE '#pg_toast%' AND relname LIKE '%index%' THEN '#pg_toast_#oid_masked#_index'
+            WHEN relname LIKE '#pg_toast%' THEN '#pg_toast_#oid_masked#'
+            ELSE relname
+        END AS relname
     FROM sys.babelfish_get_enr_list()
 	ORDER BY relname
 GO
@@ -227,8 +232,8 @@ GO
 
 ~~START~~
 text
-#pg_toast_20073
-#pg_toast_20073_index
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
 #t1_proc1
 #temp_rollback_1
 ~~END~~
@@ -260,8 +265,8 @@ int
 
 ~~START~~
 text
-#pg_toast_20081
-#pg_toast_20081_index
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
 #t1_proc1
 #temp_rollback_1
 ~~END~~
