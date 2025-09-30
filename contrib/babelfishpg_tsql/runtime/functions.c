@@ -1099,6 +1099,10 @@ datalength(PG_FUNCTION_ARGS)
 	Datum		value = PG_GETARG_DATUM(0);
 	int32 result;
 	int			typlen;
+	coll_info_t collInfo;
+	char	   *tmp = NULL;	
+	int32			encodedByteLen;
+	int32 result_length;
 
 	/* Lookup the datatype of the supplied argument */
 	Oid argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
@@ -1128,6 +1132,17 @@ datalength(PG_FUNCTION_ARGS)
 		int utf16_length = ((*common_utility_plugin_ptr->TsqlUTF8LengthInUTF16)(VARDATA_ANY(value),VARSIZE_ANY_EXHDR(value))) * 2;
 		PG_RETURN_INT32(utf16_length);
 	}
+
+	collInfo = tsql_lookup_collation_table_internal(((FuncExpr *) fcinfo->flinfo->fn_expr)->inputcollid);
+	/*
+	 * And encode the input string (usually in UTF8 encoding) in desired
+	 * encoding.
+	 */
+	tmp = (collation_callbacks_ptr->EncodingConversion)(VARDATA_ANY(value), VARSIZE_ANY_EXHDR(value), PG_UTF8, collInfo.enc, &encodedByteLen);
+	result_length = encodedByteLen;
+	pfree(tmp);
+	PG_RETURN_INT32(result_length);
+
 
 	if (typlen == -1)
 	{
