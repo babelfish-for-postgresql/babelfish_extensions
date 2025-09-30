@@ -3740,7 +3740,11 @@ SELECT
     ) AS is_currently_dst
 FROM pg_catalog.pg_timezone_names
 WHERE name NOT LIKE 'posix/%'
-  AND name NOT LIKE 'Etc/%'
   AND sys.timezone_mapping_pg_to_windows(name) IS NOT NULL
+UNION ALL
+SELECT 
+    'Russia Time Zone 11' AS name,
+    CAST('+12:00' AS sys.NVARCHAR(12)) AS current_utc_offset,
+    CAST(0 AS sys.BIT) AS is_currently_dst
 ORDER BY name;
 GRANT SELECT ON sys.time_zone_info TO PUBLIC;
