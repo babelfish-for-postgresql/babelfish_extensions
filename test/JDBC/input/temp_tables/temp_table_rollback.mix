@@ -24,9 +24,218 @@ GO
 SELECT * FROM #temp_rollback_1
 GO
 
+DROP TABLE #temp_rollback_1;
+GO
+
 -- psql
 set babelfishpg_tsql.temp_table_xact_support = on; 
 GO
 
 show babelfishpg_tsql.temp_table_xact_support;
+GO
+
+-- tsql
+CREATE TABLE #temp_with_indexes(fullname VARCHAR PRIMARY KEY, id INT);
+GO
+CREATE UNIQUE INDEX id_idx on #temp_with_indexes(id);
+GO
+
+BEGIN TRAN
+	INSERT INTO #temp_with_indexes(fullname, id) VALUES ('a', 1);
+	INSERT INTO #temp_with_indexes(fullname, id) VALUES ('a', 1); -- this violates id_idx Constraint
+COMMIT TRAN
+GO
+SELECT * FROM #temp_with_indexes;
+GO
+
+SET XACT_ABORT ON;
+GO
+
+TRUNCATE TABLE #temp_with_indexes;
+GO
+
+BEGIN TRAN
+	INSERT INTO #temp_with_indexes(fullname, id) VALUES ('a', 1);
+	INSERT INTO #temp_with_indexes(fullname, id) VALUES ('a', 1); -- this violates id_idx Constraint
+COMMIT TRAN
+GO
+SELECT * FROM #temp_with_indexes; -- since XACT_ABORT is ON, we should not get any tuples since last transaction is marked aborted after the uniqueness error
+GO
+
+DROP TABLE #temp_with_indexes;
+GO
+
+SET XACT_ABORT OFF;
+GO
+
+CREATE VIEW enr_view AS
+    SELECT
+        CASE
+            WHEN relname LIKE '#pg_toast%' AND relname LIKE '%index%' THEN '#pg_toast_#oid_masked#_index'
+            WHEN relname LIKE '#pg_toast%' THEN '#pg_toast_#oid_masked#'
+            ELSE relname
+        END AS relname
+    FROM sys.babelfish_get_enr_list()
+	ORDER BY relname
+GO
+
+CREATE PROCEDURE test_nested_rollback_in_proc AS
+BEGIN
+    CREATE TABLE #t1_proc1(a int)
+    INSERT INTO #t1_proc1 values (6)
+    BEGIN TRAN;
+        ALTER TABLE #t1_proc1 ADD b varchar(50)
+		-- Shows all the ENRs created
+		SELECT * FROM enr_view;
+        TRUNCATE TABLE #t1_proc1
+        INSERT INTO #t1_proc1 VALUES (1, 'two')
+        -- Should just be (1, 'two')
+        SELECT * FROM #t1_proc1
+
+        SAVE TRAN s1
+            DROP TABLE #t1_proc1
+            CREATE TABLE #t1_proc1(a varchar(100))
+            INSERT INTO #t1_proc1 VALUES ('three')
+            CREATE UNIQUE CLUSTERED INDEX IX_tmpSpec ON #t1_proc1(a)
+            -- Should just be 'three'
+            SELECT * FROM #t1_proc1
+			ALTER TABLE #t1_proc1 ADD b INT
+			TRUNCATE TABLE #t1_proc1
+			SAVE TRAN s2
+				ALTER TABLE #t1_proc1 DROP a;
+				INSERT INTO #t1_proc1 VALUES (GENERATE_SERIES(1,5));
+				-- (1,2,3,4,5)
+				SELECT * FROM #t1_proc1
+				-- Shows all the ENRs created
+				SELECT * FROM enr_view;
+        ROLLBACK TRAN s1
+
+        -- Should just be (1, 'two')
+        SELECT * FROM #t1_proc1
+
+        CREATE TABLE #t2_proc1(b varchar(50), a int identity primary key)
+        INSERT INTO #t2_proc1 VALUES ('four')
+        CREATE UNIQUE CLUSTERED INDEX IX_t2_proc1 ON #t2_proc1(b)
+
+        -- ('four', 1)
+        SELECT * FROM #t2_proc1
+        DROP TABLE #t2_proc1
+    ROLLBACK;
+    -- Should have just 6
+    SELECT * FROM #t1_proc1
+END
+GO
+
+CREATE PROCEDURE implicit_rollback_in_proc AS 
+BEGIN
+    BEGIN TRAN
+        SAVE TRAN S1
+        CREATE TABLE #t1_proc2(a int)
+        ALTER TABLE #t1_proc2 ADD b varchar(50)
+        INSERT INTO #t1_proc2 VALUES (1, 'two')
+		CREATE UNIQUE CLUSTERED INDEX IX_t1_proc2 ON #t1_proc2(a)
+		-- (1,'two')
+        SELECT * FROM #t1_proc2
+        DROP TABLE #t1_proc2
+        CREATE TABLE #t1_proc2(a varchar(100))
+        INSERT INTO #t1_proc2 VALUES ('three')
+		-- ('three')
+        SELECT * FROM #t1_proc2
+
+        CREATE TABLE #t2_proc2(b varchar(50), a int identity primary key)
+        INSERT INTO #t2_proc2 VALUES ('four')
+		CREATE UNIQUE CLUSTERED INDEX IX_t2_proc2 ON #t2_proc2(a)
+		-- ('four',1)
+        SELECT * FROM #t2_proc2
+        DROP TABLE #t2_proc2
+
+        INSERT INTO #t1_proc2 values ('one'), ('two')
+		-- ('three','one','two')
+        SELECT * FROM #t1_proc2
+    COMMIT
+END
+GO
+
+CREATE PROCEDURE execute_rollback_tests(@loop_count int) AS
+BEGIN
+    DECLARE @counter int = 1;
+    DECLARE @error_message varchar(500);
+    
+    WHILE @counter <= @loop_count
+    BEGIN
+        
+        -- Execute first procedure
+        BEGIN TRY
+            EXEC test_nested_rollback_in_proc;
+        END TRY
+        BEGIN CATCH
+            SET @error_message = ERROR_MESSAGE();
+            PRINT 'ERROR in test_nested_rollback_in_proc: ' + @error_message;
+        END CATCH
+        
+        -- Execute second procedure
+        BEGIN TRY
+            EXEC implicit_rollback_in_proc;
+        END TRY
+        BEGIN CATCH
+            SET @error_message = ERROR_MESSAGE();
+            PRINT 'ERROR in implicit_rollback_in_proc: ' + @error_message;
+        END CATCH
+        
+        SET @counter = @counter + 1;
+        
+    END
+    
+    PRINT '';
+    PRINT 'All test iterations completed.';
+END
+GO
+
+EXEC execute_rollback_tests 1;
+GO
+
+CREATE TABLE #temptable(a text);
+GO
+INSERT INTO #temptable VALUES (REPLICATE('a', 900000));
+GO
+CREATE INDEX a_idx on #temptable(a);
+GO
+DROP TABLE #temptable; -- this previously would fail with a cache lookup failed error due to incorrect rollback of index
+GO
+
+CREATE TABLE #temptable(a text);
+GO
+INSERT INTO #temptable VALUES (REPLICATE('a', 900000));
+GO
+CREATE INDEX #a_idx on #temptable(a);
+GO
+DROP TABLE #temptable;
+GO
+
+CREATE TABLE #temptable(a text);
+GO
+INSERT INTO #temptable VALUES (REPLICATE('a', 900000));
+GO
+BEGIN TRAN
+	CREATE INDEX a_idx on #temptable(a);
+COMMIT TRAN
+GO
+SELECT COUNT(*) FROM #temptable; -- this should return the result
+GO
+DROP TABLE #temptable;
+GO
+
+DROP PROCEDURE execute_rollback_tests, implicit_rollback_in_proc, test_nested_rollback_in_proc;
+GO
+
+CREATE TABLE #t_with_ident(a INT IDENTITY(1,5) PRIMARY KEY);
+GO
+SELECT * FROM enr_view;
+GO
+DROP TABLE #t_with_ident;
+GO
+SELECT * FROM enr_view;
+GO
+
+DROP VIEW enr_view;
 GO
