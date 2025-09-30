@@ -328,6 +328,36 @@ SELECT
     DATALENGTH(CAST('Hello' AS IMAGE)) AS Image_Length;
 GO
 
+-- empty string 
+SELECT  
+    DATALENGTH(CAST('' AS BINARY(10))) as binary_10,  
+    DATALENGTH(CAST('' AS BINARY)) as binary_default, 
+    DATALENGTH(CAST(0x00 AS BINARY)) as binary_0_default, 
+    DATALENGTH(CAST('0x00' AS BINARY)) as binary_str0_default, 
+    DATALENGTH(CAST('  ' AS BINARY(10))) as binary_space_10,  
+    DATALENGTH(CAST('  ' AS BINARY)) as binary__space_default, 
+    DATALENGTH(CAST('' AS VARBINARY(10))) as varbinary_10,  
+    DATALENGTH(CAST('' AS VARBINARY)) as varbinary_default  
+GO
+
+-- binary to varbinary, empty string
+select 
+    DATALENGTH(CAST(CAST(0x00 AS BINARY) as varbinary)),
+    DATALENGTH(cast(CAST('0x00' AS BINARY) as varbinary)),
+    DATALENGTH(cast(CAST('' AS BINARY(10)) as varbinary(10))),
+    DATALENGTH(cast(CAST('' AS BINARY(10)) as varbinary(max))),
+    DATALENGTH(cast(CAST('' AS BINARY) as varbinary))
+GO
+
+-- varbinary to binary, empty string
+select 
+    DATALENGTH(CAST(CAST(0x00 AS varbinary) as BINARY)),
+    DATALENGTH(cast(CAST('0x00' AS varbinary) as BINARY)),
+    DATALENGTH(cast(CAST('' AS varbinary(10)) as BINARY(10))),
+    DATALENGTH(cast(CAST('' AS varbinary(max)) as BINARY(10))),
+    DATALENGTH(cast(CAST('' AS varbinary) as BINARY))
+GO
+
 -- 7. Other Data Types
 SELECT 
     DATALENGTH(CAST(1 AS BIT)) AS Bit_Length,
@@ -335,6 +365,27 @@ SELECT
     DATALENGTH(CAST('true' AS SQL_VARIANT)) AS SqlVariant_Length,
     DATALENGTH(CAST('<root>test</root>' AS XML)) AS XML_Length;
 GO
+
+-- -- rowversion, no regression
+-- EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+-- go
+
+-- select datalength(cast(cast('a' as rowversion) as varchar))
+-- go
+-- select datalength(cast('' as rowversion))
+-- go
+-- select datalength(cast(cast('' as rowversion) as varchar))
+-- GO
+
+-- -- timestamp, no regression
+-- select 
+--     datalength(cast('' as TIMESTAMP)),
+--     datalength(cast(' ' as TIMESTAMP)),
+--     datalength(cast(cast('' as TIMESTAMP) as varbinary))
+-- go
+
+-- EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+-- go
 
 -- 8. NULL Values
 SELECT 
