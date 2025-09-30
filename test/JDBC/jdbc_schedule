@@ -645,3 +645,6 @@ ignore#!#openxml_with_clause-before-17_7-vu-cleanup
 ignore#!#ascii_function_before-17_7-or-16_11-vu-prepare
 ignore#!#ascii_function_before-17_7-or-16_11-vu-verify
 ignore#!#ascii_function_before-17_7-or-16_11-vu-cleanup
+ignore#!#charindex-before-17_7-or-16_11-vu-prepare
+ignore#!#charindex-before-17_7-or-16_11-vu-verify
+ignore#!#charindex-before-17_7-or-16_11-vu-cleanup

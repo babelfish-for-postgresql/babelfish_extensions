@@ -307,6 +307,104 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_openxml_deprecated_in_5_4_0');
 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.charindex(PG_CATALOG.TEXT, PG_CATALOG.TEXT, INTEGER) RENAME TO fn_charindex_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'fn_charindex_deprecated_in_5_4_0');
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.BBF_VARBINARY,
+                                        expressionToSearch ANYELEMENT,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN sys.charindex_helper(expressionToFind, expressionToSearch::sys.VARBINARY, start_location);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.BBF_BINARY,
+                                        expressionToSearch ANYELEMENT,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN sys.charindex_helper(expressionToFind, expressionToSearch::sys.BINARY, start_location);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.VARCHAR,
+                                        expressionToSearch ANYELEMENT,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN sys.charindex_helper(expressionToFind, expressionToSearch::VARCHAR, start_location);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.BBF_VARBINARY,
+                                        expressionToSearch sys.VARCHAR,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+   RAISE EXCEPTION 'Implicit Casting from varchar to varbinary is not allowed'; 
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.BBF_BINARY,
+                                        expressionToSearch sys.VARCHAR,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RAISE EXCEPTION 'Implicit Casting from varchar to binary is not allowed'; 
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind sys.VARCHAR,
+                                        expressionToSearch sys.VARCHAR,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS $$
+BEGIN
+    RETURN sys.charindex_helper(expressionToFind, expressionToSearch::VARCHAR, start_location);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex_helper(expressionToFind sys.BBF_VARBINARY,
+                                        expressionToSearch sys.BBF_VARBINARY,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER AS 'babelfishpg_tsql', 'tsql_charindex_binary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex_helper(expressionToFind sys.BBF_BINARY,
+                                        expressionToSearch sys.BBF_BINARY,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER AS 'babelfishpg_tsql', 'tsql_charindex_binary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charindex_helper(expressionToFind TEXT,
+                                        expressionToSearch TEXT,
+                                        start_location INTEGER DEFAULT 0)
+RETURNS INTEGER AS 'babelfishpg_tsql', 'tsql_charindex_char'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

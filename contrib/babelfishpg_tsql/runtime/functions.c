@@ -5199,7 +5199,6 @@ tsql_charindex_char(PG_FUNCTION_ARGS)
     /* Get collation from function call */
     collation = PG_GET_COLLATION();
 
-    /* If no collation specified, use default */
     if (!OidIsValid(collation))
     {
         /*
@@ -5246,7 +5245,7 @@ tsql_charindex_char(PG_FUNCTION_ARGS)
         if (pos > 0)
             result = pos + start_location - 1;
         
-        pfree(substr);
+        xpfree(substr);
     }
     
     PG_RETURN_INT32(result);
@@ -5314,7 +5313,7 @@ tsql_charindex_binary(PG_FUNCTION_ARGS)
         if (pos > 0)
             result = pos + start_location - 1;
         
-        pfree(substr);
+        xpfree(substr);
 
     }
     
