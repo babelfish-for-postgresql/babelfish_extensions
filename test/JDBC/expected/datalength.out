@@ -991,756 +991,6 @@ int#!#int#!#int#!#int
 
 
 -- Extra test cases 
--- char
-select datalength(char(0))
-go
-~~START~~
-int
-0
-~~END~~
-
-
-select datalength(cast('' as char))
-go
-~~START~~
-int
-30
-~~END~~
-
-
-select datalength(cast('' as char(10)))
-go
-~~START~~
-int
-10
-~~END~~
-
-
-select datalength(cast('asdfg' as char(10)))
-go
-~~START~~
-int
-10
-~~END~~
-
-
-select datalength(cast('asdfg' as char))
-go
-~~START~~
-int
-30
-~~END~~
-
-
-select datalength(cast(N'asdfg' as char))
-go
-~~START~~
-int
-30
-~~END~~
-
-
-select datalength(cast(N'asdfg' as char(10)))
-go
-~~START~~
-int
-10
-~~END~~
-
-
-select datalength(cast(NULL as char(10)))
-go
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-select datalength(cast(NULL as char))
-go
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-select DATALENGTH(cast('🌟' as char)) 
-go
-~~START~~
-int
-30
-~~END~~
-
-
-select DATALENGTH(cast(N'🌟' as char)) 
-go
-~~START~~
-int
-30
-~~END~~
-
-
-select DATALENGTH(cast(N'🌟' as char(10)))
-go
-~~START~~
-int
-10
-~~END~~
-
-
--- varchar
--- VARCHAR
-select datalength(cast('' as varchar))
-go
-~~START~~
-int
-0
-~~END~~
-
-
-select datalength(cast('' as varchar(10)))
-go
-~~START~~
-int
-0
-~~END~~
-
-
-select datalength(cast('asdfg' as varchar(10)))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast('asdfg' as varchar))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast(N'asdfg' as varchar))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast(N'asdfg' as varchar(10)))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast(NULL as varchar(10)))
-go
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-select datalength(cast(NULL as varchar))
-go
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-select DATALENGTH(cast('🌟' as varchar)) 
-go
-~~START~~
-int
-4
-~~END~~
-
-
-select DATALENGTH(cast(N'🌟' as varchar)) 
-go
-~~START~~
-int
-4
-~~END~~
-
-
-select DATALENGTH(cast(N'🌟' as varchar(10)))
-go
-~~START~~
-int
-4
-~~END~~
-
-
-select datalength(cast('世界' as varchar)) 
-Go
-~~START~~
-int
-6
-~~END~~
-
-
-select datalength(cast(N'世界' as varchar)) 
-go
-~~START~~
-int
-6
-~~END~~
-
-
-select datalength(cast(N'世界' as varchar(10))) 
-go
-~~START~~
-int
-6
-~~END~~
-
-
--- VARCHAR(MAX)
-select datalength(cast('' as varchar(max)))
-go
-~~START~~
-int
-0
-~~END~~
-
-
-select datalength(cast('asdfg' as varchar(max)))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast(N'asdfg' as varchar(max)))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast(NULL as varchar(max)))
-go
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-select DATALENGTH(cast('🌟' as varchar(max))) 
-go
-~~START~~
-int
-4
-~~END~~
-
-
-select DATALENGTH(cast(N'🌟' as varchar(max))) 
-go
-~~START~~
-int
-4
-~~END~~
-
-
-select datalength(cast(N'世界' as varchar(max))) 
-go
-~~START~~
-int
-6
-~~END~~
-
-
--- NCHAR
-select datalength(nchar(0))
-go
-~~START~~
-int
-0
-~~END~~
-
-
-select datalength(cast('' as nchar))
-go
-~~START~~
-int
-30
-~~END~~
-
-
-select datalength(cast('' as nchar(10)))
-go
-~~START~~
-int
-10
-~~END~~
-
-
-select datalength(cast('asdfg' as nchar(10)))
-go
-~~START~~
-int
-10
-~~END~~
-
-
-select datalength(cast('asdfg' as nchar))
-go
-~~START~~
-int
-30
-~~END~~
-
-
-select datalength(cast(N'asdfg' as nchar))
-go
-~~START~~
-int
-30
-~~END~~
-
-
-select datalength(cast(N'asdfg' as nchar(10)))
-go
-~~START~~
-int
-10
-~~END~~
-
-
-select datalength(cast(NULL as nchar(10)))
-go
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-select datalength(cast(NULL as nchar))
-go
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-select DATALENGTH(cast('🌟' as nchar)) 
-go
-~~START~~
-int
-33
-~~END~~
-
-
-select DATALENGTH(cast(N'🌟' as nchar)) 
-go
-~~START~~
-int
-33
-~~END~~
-
-
-select DATALENGTH(cast(N'🌟' as nchar(10)))
-go
-~~START~~
-int
-13
-~~END~~
-
-
-select datalength(cast(N'世界' as nchar)) 
-go
-~~START~~
-int
-34
-~~END~~
-
-
-select datalength(cast(N'世界' as nchar(10))) 
-go
-~~START~~
-int
-14
-~~END~~
-
-
--- NVARCHAR
-select datalength(cast('' as nvarchar))
-go
-~~START~~
-int
-0
-~~END~~
-
-
-select datalength(cast('' as nvarchar(10)))
-go
-~~START~~
-int
-0
-~~END~~
-
-
-select datalength(cast('asdfg' as nvarchar(10)))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast('asdfg' as nvarchar))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast(N'asdfg' as nvarchar))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast(N'asdfg' as nvarchar(10)))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast(NULL as nvarchar(10)))
-go
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-select datalength(cast(NULL as nvarchar))
-go
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-select DATALENGTH(cast('🌟' as nvarchar)) 
-go
-~~START~~
-int
-4
-~~END~~
-
-
-select DATALENGTH(cast(N'🌟' as nvarchar)) 
-go
-~~START~~
-int
-4
-~~END~~
-
-
-select DATALENGTH(cast(N'🌟' as nvarchar(10)))
-go
-~~START~~
-int
-4
-~~END~~
-
-
-select datalength(cast(N'世界' as nvarchar)) 
-go
-~~START~~
-int
-6
-~~END~~
-
-
-select datalength(cast(N'世界' as nvarchar(10))) 
-go
-~~START~~
-int
-6
-~~END~~
-
-
--- NVARCHAR(MAX)
-select datalength(cast('' as nvarchar(max)))
-go
-~~START~~
-int
-0
-~~END~~
-
-
-select datalength(cast('asdfg' as nvarchar(max)))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast(N'asdfg' as nvarchar(max)))
-go
-~~START~~
-int
-5
-~~END~~
-
-
-select datalength(cast(NULL as nvarchar(max)))
-go
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-select DATALENGTH(cast('🌟' as nvarchar(max))) 
-go
-~~START~~
-int
-4
-~~END~~
-
-
-select DATALENGTH(cast(N'🌟' as nvarchar(max))) 
-go
-~~START~~
-int
-4
-~~END~~
-
-
-select datalength(cast(N'世界' as nvarchar(max))) 
-go
-~~START~~
-int
-6
-~~END~~
-
-
-
--- combination  - multibyte/accented/surroagte
-select DATALENGTH('Hello') , DATALENGTH(N'Hello')
-go
-~~START~~
-int#!#int
-5#!#5
-~~END~~
-
-
-select DATALENGTH('こんにちは'), DATALENGTH(N'こんにちは')
-GO
-~~START~~
-int#!#int
-15#!#15
-~~END~~
-
-
-select DATALENGTH('Hàáâ') , DATALENGTH(N'Hàáâ')
-go
-~~START~~
-int#!#int
-7#!#7
-~~END~~
-
-
-select DATALENGTH('こàáâは'), DATALENGTH(N'こàáâは')
-go
-~~START~~
-int#!#int
-12#!#12
-~~END~~
-
-
-select DATALENGTH('🌟🌟🌟'), DATALENGTH(N'🌟🌟🌟')
-go
-~~START~~
-int#!#int
-12#!#12
-~~END~~
-
-
--- truncation
-declare @a varchar(2) = 'hello'
-select DATALENGTH(@a)
-go
-~~START~~
-int
-2
-~~END~~
-
-
-declare @a Nvarchar(2) = N'hello'
-select DATALENGTH(@a)
-go
-~~START~~
-int
-2
-~~END~~
-
-
-
--- text 
-select datalength(cast('abd' as text))
-Go
-~~START~~
-int
-3
-~~END~~
-
-
-select datalength(cast(N'abd' as text))
-Go
-~~START~~
-int
-3
-~~END~~
-
-
-select DATALENGTH(cast('こんにちは' as text)), DATALENGTH(cast(N'こんにちは' as text))
-GO
-~~START~~
-int#!#int
-15#!#15
-~~END~~
-
-
--- ntext
-select datalength(cast('abd' as ntext))
-Go
-~~START~~
-int
-3
-~~END~~
-
-
-select datalength(cast(N'abd' as ntext))
-Go
-~~START~~
-int
-3
-~~END~~
-
-
-select DATALENGTH(cast('こんにちは' as ntext)), DATALENGTH(cast(N'こんにちは' as ntext))
-GO
-~~START~~
-int#!#int
-15#!#15
-~~END~~
-
-
--- binary
-select datalength(CAST('0x65' AS BINARY(10)))
-GO
-~~START~~
-int
-10
-~~END~~
-
-
-select datalength(CAST(0x65 AS BINARY(10)))
-go
-~~START~~
-int
-10
-~~END~~
-
-
-select datalength(CAST(0x65 AS BINARY))
-go
-~~START~~
-int
-30
-~~END~~
-
-
-select datalength(CAST('' AS BINARY(10)))
-go
-~~START~~
-int
-0
-~~END~~
-
-
-select datalength(CAST('' AS BINARY))
-GO
-~~START~~
-int
-0
-~~END~~
-
-
--- varbinary
-select datalength(CAST(0x65 AS varbinary))
-go
-~~START~~
-int
-1
-~~END~~
-
-
-
-select datalength(CAST(0x65 AS varbinary(max)))
-go
-~~START~~
-int
-1
-~~END~~
-
-
-
-select datalength(CAST(0x65 AS varbinary(10)))
-go
-~~START~~
-int
-1
-~~END~~
-
-
-
-select datalength(CAST('0x65' AS VARBINARY(10)))
-go
-~~START~~
-int
-4
-~~END~~
-
-
-
-select datalength(CAST('' AS VARBINARY(10)))
-go
-~~START~~
-int
-0
-~~END~~
-
-
-
-select datalength(CAST('' AS VARBINARY))
-go
-~~START~~
-int
-0
-~~END~~
-
-
 -- UDT
 create type tinyint_babel_6120 from tinyint;
 create type date_babel_6120 from date;
@@ -2542,6 +1792,757 @@ int
 19
 ~~END~~
 
+
+-- String datatypes : FIX with BABEL-1520/BABEL-1516
+-- char
+select datalength(char(0))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('' as char))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast('' as char(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast('asdfg' as char(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast('asdfg' as char))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast(N'asdfg' as char))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast(N'asdfg' as char(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast(NULL as char(10)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select datalength(cast(NULL as char))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as char)) 
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as char)) 
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as char(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+-- varchar
+-- VARCHAR
+select datalength(cast('' as varchar))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('' as varchar(10)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('asdfg' as varchar(10)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast('asdfg' as varchar))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as varchar))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as varchar(10)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(NULL as varchar(10)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select datalength(cast(NULL as varchar))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as varchar)) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as varchar)) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as varchar(10)))
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select datalength(cast('世界' as varchar)) 
+Go
+~~START~~
+int
+6
+~~END~~
+
+
+select datalength(cast(N'世界' as varchar)) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+select datalength(cast(N'世界' as varchar(10))) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+-- VARCHAR(MAX)
+select datalength(cast('' as varchar(max)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('asdfg' as varchar(max)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as varchar(max)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(NULL as varchar(max)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as varchar(max))) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as varchar(max))) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select datalength(cast(N'世界' as varchar(max))) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+-- NCHAR
+select datalength(nchar(0))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('' as nchar))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast('' as nchar(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast('asdfg' as nchar(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast('asdfg' as nchar))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast(N'asdfg' as nchar))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast(N'asdfg' as nchar(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast(NULL as nchar(10)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select datalength(cast(NULL as nchar))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as nchar)) 
+go
+~~START~~
+int
+33
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as nchar)) 
+go
+~~START~~
+int
+33
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as nchar(10)))
+go
+~~START~~
+int
+13
+~~END~~
+
+
+select datalength(cast(N'世界' as nchar)) 
+go
+~~START~~
+int
+34
+~~END~~
+
+
+select datalength(cast(N'世界' as nchar(10))) 
+go
+~~START~~
+int
+14
+~~END~~
+
+
+-- NVARCHAR
+select datalength(cast('' as nvarchar))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('' as nvarchar(10)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('asdfg' as nvarchar(10)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast('asdfg' as nvarchar))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as nvarchar))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as nvarchar(10)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(NULL as nvarchar(10)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select datalength(cast(NULL as nvarchar))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as nvarchar)) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as nvarchar)) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as nvarchar(10)))
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select datalength(cast(N'世界' as nvarchar)) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+select datalength(cast(N'世界' as nvarchar(10))) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+-- NVARCHAR(MAX)
+select datalength(cast('' as nvarchar(max)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('asdfg' as nvarchar(max)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as nvarchar(max)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(NULL as nvarchar(max)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as nvarchar(max))) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as nvarchar(max))) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select datalength(cast(N'世界' as nvarchar(max))) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+
+-- combination  - multibyte/accented/surroagte
+select DATALENGTH('Hello') , DATALENGTH(N'Hello')
+go
+~~START~~
+int#!#int
+5#!#5
+~~END~~
+
+
+select DATALENGTH('こんにちは'), DATALENGTH(N'こんにちは')
+GO
+~~START~~
+int#!#int
+15#!#15
+~~END~~
+
+
+select DATALENGTH('Hàáâ') , DATALENGTH(N'Hàáâ')
+go
+~~START~~
+int#!#int
+7#!#7
+~~END~~
+
+
+select DATALENGTH('こàáâは'), DATALENGTH(N'こàáâは')
+go
+~~START~~
+int#!#int
+12#!#12
+~~END~~
+
+
+select DATALENGTH('🌟🌟🌟'), DATALENGTH(N'🌟🌟🌟')
+go
+~~START~~
+int#!#int
+12#!#12
+~~END~~
+
+
+-- truncation
+declare @a varchar(2) = 'hello'
+select DATALENGTH(@a)
+go
+~~START~~
+int
+2
+~~END~~
+
+
+declare @a Nvarchar(2) = N'hello'
+select DATALENGTH(@a)
+go
+~~START~~
+int
+2
+~~END~~
+
+
+
+-- text 
+select datalength(cast('abd' as text))
+Go
+~~START~~
+int
+3
+~~END~~
+
+
+select datalength(cast(N'abd' as text))
+Go
+~~START~~
+int
+3
+~~END~~
+
+
+select DATALENGTH(cast('こんにちは' as text)), DATALENGTH(cast(N'こんにちは' as text))
+GO
+~~START~~
+int#!#int
+15#!#15
+~~END~~
+
+
+-- ntext
+select datalength(cast('abd' as ntext))
+Go
+~~START~~
+int
+3
+~~END~~
+
+
+select datalength(cast(N'abd' as ntext))
+Go
+~~START~~
+int
+3
+~~END~~
+
+
+select DATALENGTH(cast('こんにちは' as ntext)), DATALENGTH(cast(N'こんにちは' as ntext))
+GO
+~~START~~
+int#!#int
+15#!#15
+~~END~~
+
+
+-- binary
+select datalength(CAST('0x65' AS BINARY(10)))
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(CAST(0x65 AS BINARY(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(CAST(0x65 AS BINARY))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+-- FIX with BABEL-5610
+select datalength(CAST('' AS BINARY(10)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(CAST('' AS BINARY))
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- varbinary
+select datalength(CAST(0x65 AS varbinary))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+select datalength(CAST(0x65 AS varbinary(max)))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+select datalength(CAST(0x65 AS varbinary(10)))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+select datalength(CAST('0x65' AS VARBINARY(10)))
+go
+~~START~~
+int
+4
+~~END~~
+
+
+
+select datalength(CAST('' AS VARBINARY(10)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+
+select datalength(CAST('' AS VARBINARY))
+go
+~~START~~
+int
+0
+~~END~~
 
 
 -- Cleanup

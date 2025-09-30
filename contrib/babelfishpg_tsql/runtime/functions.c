@@ -1088,39 +1088,57 @@ pgerror(PG_FUNCTION_ARGS)
 	PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input) ((error_sqlstate), strlen(error_sqlstate), -1));
 }
 
+typedef struct ArgIOData
+{
+	Oid			argtypeid;
+	int			typlen;
+} ArgIOData;
 
-/* returns data length of one Datum
- * this function is very similar to pg_column_size, but returns untoasted data without header sizes for bytea objects
-*/
+/* 
+ * datalength()
+ * 	Returns data length of one Datum.
+ * 	This function is very similar to pg_column_size, but returns 
+ * 	untoasted data without header sizes for bytea objects
+ */
 Datum
 datalength(PG_FUNCTION_ARGS)
 {
 	Datum		value = PG_GETARG_DATUM(0);
 	int32 result;
 	int			typlen;
+	ArgIOData *my_extra;
+	Oid			argtypeid;
+	Oid			immediate_base_type;
 
-	/* Lookup the datatype of the supplied argument */
-	Oid argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	/* UDT Handling. */
-	Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(argtypeid);
-	if (OidIsValid(immediate_base_type))
-	{
-		argtypeid = immediate_base_type;
-	}
+	my_extra = (ArgIOData *) fcinfo->flinfo->fn_extra;
 
-	/* On first call, get the input type's typlen, and save at *fn_extra */
-	if (fcinfo->flinfo->fn_extra == NULL)
+	/* On first call, get the input type's oid and typlen, and save at *fn_extra */
+	if (my_extra == NULL)
 	{
+		/* Lookup the datatype of the supplied argument */
+		argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+		
+		/* UDT Handling. */
+		immediate_base_type = get_immediate_base_type_of_UDT_internal(argtypeid);
+		if (OidIsValid(immediate_base_type))
+		{
+			argtypeid = immediate_base_type;
+		}
+
 		typlen = get_typlen(argtypeid);
 		if (typlen == 0)		/* should not happen */
 			elog(ERROR, "cache lookup failed for type %u", argtypeid);
 
-		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													  sizeof(int));
-		*((int *) fcinfo->flinfo->fn_extra) = typlen;
+		my_extra = (ArgIOData *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+														  sizeof(ArgIOData));
+		my_extra->argtypeid = argtypeid;
+		my_extra->typlen = typlen;
 	}
 	else
-		typlen = *((int *) fcinfo->flinfo->fn_extra);
+	{
+		argtypeid = my_extra->argtypeid;
+		typlen = my_extra->typlen;
+	}
 
 	/* Handling fixed storage size datatypes. */
 	if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(argtypeid))
