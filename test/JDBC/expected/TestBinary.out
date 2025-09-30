@@ -4315,3 +4315,53 @@ Leading Zeros Sort#!#0100
 Leading Zeros Sort#!#1000
 ~~END~~
 
+
+
+-- Empty string casting to binary/varbinary
+select cast(CAST('0x00' AS BINARY) as varbinary)
+GO
+~~START~~
+varbinary
+307830300000000000000000000000000000000000000000000000000000
+~~END~~
+
+
+select cast(CAST(0x00 AS BINARY) as varbinary)
+GO
+~~START~~
+varbinary
+000000000000000000000000000000000000000000000000000000000000
+~~END~~
+
+
+select CAST('' AS BINARY(10))
+go
+~~START~~
+binary
+00000000000000000000
+~~END~~
+
+
+select cast(CAST('' AS BINARY(10)) as varbinary(10))
+go
+~~START~~
+varbinary
+00000000000000000000
+~~END~~
+
+
+select cast(CAST('' AS BINARY) as varbinary)
+go
+~~START~~
+varbinary
+000000000000000000000000000000000000000000000000000000000000
+~~END~~
+
+
+select cast(CAST('' AS varbinary) as BINARY)
+go
+~~START~~
+binary
+000000000000000000000000000000000000000000000000000000000000
+~~END~~
+

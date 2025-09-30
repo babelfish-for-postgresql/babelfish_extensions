@@ -366,26 +366,26 @@ SELECT
     DATALENGTH(CAST('<root>test</root>' AS XML)) AS XML_Length;
 GO
 
--- -- rowversion, no regression
--- EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
--- go
+-- rowversion, no regression
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+go
 
--- select datalength(cast(cast('a' as rowversion) as varchar))
--- go
--- select datalength(cast('' as rowversion))
--- go
--- select datalength(cast(cast('' as rowversion) as varchar))
--- GO
+select datalength(cast(cast('a' as rowversion) as varchar))
+go
+select datalength(cast('' as rowversion))
+go
+select datalength(cast(cast('' as rowversion) as varchar))
+GO
 
--- -- timestamp, no regression
--- select 
---     datalength(cast('' as TIMESTAMP)),
---     datalength(cast(' ' as TIMESTAMP)),
---     datalength(cast(cast('' as TIMESTAMP) as varbinary))
--- go
+-- timestamp, no regression
+select 
+    datalength(cast('' as TIMESTAMP)),
+    datalength(cast(' ' as TIMESTAMP)),
+    datalength(cast(cast('' as TIMESTAMP) as varbinary))
+go
 
--- EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
--- go
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+go
 
 -- 8. NULL Values
 SELECT 
