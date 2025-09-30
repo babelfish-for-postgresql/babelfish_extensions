@@ -39,6 +39,15 @@ t
 ~~END~~
 
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
 -- tsql
 drop login babel_4430_l1
 go
