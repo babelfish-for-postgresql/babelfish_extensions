@@ -358,7 +358,7 @@ EXEC sp_enum_oledb_providers
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-TDS_FDW#!#{b4e3f6da-c847-4d8f-7e8a-be928019208c}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.4
+TDS_FDW#!#{95894e3b-539d-844c-2e37-5ee606e4ee42}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.5
 ~~END~~
 
 
@@ -367,7 +367,7 @@ EXEC master.dbo.sp_enum_oledb_providers
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-TDS_FDW#!#{b4e3f6da-c847-4d8f-7e8a-be928019208c}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.4
+TDS_FDW#!#{95894e3b-539d-844c-2e37-5ee606e4ee42}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.5
 ~~END~~
 
 
@@ -376,6 +376,6 @@ EXEC master.sys.sp_enum_oledb_providers
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-TDS_FDW#!#{b4e3f6da-c847-4d8f-7e8a-be928019208c}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.4
+TDS_FDW#!#{95894e3b-539d-844c-2e37-5ee606e4ee42}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.5
 ~~END~~
 
