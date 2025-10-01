@@ -1659,6 +1659,11 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 			is_CS_AI = true;
 		}
 
+		if (src_len_utf8 < 1 || substr_len_utf8 < 1)
+		{
+			return false;
+		}
+
 		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len_utf8);
 		substr_ulen = icu_to_uchar(&substr_uchar, VARDATA_ANY(substr_text), substr_len_utf8);
 
