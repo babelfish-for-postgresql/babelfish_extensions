@@ -89,7 +89,7 @@ SELECT NCHAR(ASCII(CHAR(0))) AS NullChar
 GO
 ~~START~~
 nvarchar
-
+<NULL>
 ~~END~~
 
 

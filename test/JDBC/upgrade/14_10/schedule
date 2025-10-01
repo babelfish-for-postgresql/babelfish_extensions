@@ -482,6 +482,9 @@ test_conv_string_to_time-before-17_4
 BABEL-5031
 BABEL-USER-GRANT
 test_conv_money_to_varchar
+sp_xml_preparedocument
+sp_xml_removedocument
+openxml_with_clause-before-17_7
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 BABEL-5467
@@ -495,3 +498,4 @@ babel_numeric_smallmoney_oper-before-16_10-or-17_6
 mathematical_func_tests-before-17_7-or-16_11
 babel_assign_nchar
 view_sec_setting_before_17_6-or-16_10
+ascii_function_before-17_7-or-16_11

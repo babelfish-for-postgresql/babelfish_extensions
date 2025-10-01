@@ -111,7 +111,7 @@ BABEL-3818
 BABEL-3828
 BABEL-383
 BABEL-3844
-mathematical_func-before_17_7-or-16_11
+mathematical_func
 BABEL-3938
 BABEL-3952
 BABEL-3953-datetrunc
@@ -603,6 +603,9 @@ db_owner
 BABEL-5031
 BABEL-USER-GRANT
 test_conv_money_to_varchar
+sp_xml_preparedocument
+sp_xml_removedocument
+openxml_with_clause-before-17_7
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
@@ -629,3 +632,4 @@ babel_assign_nchar
 alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
+ascii_function

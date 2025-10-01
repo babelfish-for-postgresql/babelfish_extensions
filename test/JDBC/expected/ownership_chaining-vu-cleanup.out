@@ -247,3 +247,38 @@ DROP USER IF EXISTS owner3014_b;
 GO
 DROP LOGIN l3014_2;
 GO
+
+-- terminate-tsql-conn 
+
+-- psql
+show babelfishpg_tsql.enable_ownership_chaining;
+go
+~~START~~
+text
+off
+~~END~~
+
+alter database babelfish_db set babelfishpg_tsql.enable_ownership_chaining = 'on';
+go
+select pg_reload_conf();
+go
+~~START~~
+bool
+t
+~~END~~
+
+-- terminate-psql-conn
+
+-- tsql
+select current_setting('babelfishpg_tsql.enable_ownership_chaining');
+go
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to examine "babelfishpg_tsql.enable_ownership_chaining")~~
+
+-- terminate-tsql-conn
+
+
+

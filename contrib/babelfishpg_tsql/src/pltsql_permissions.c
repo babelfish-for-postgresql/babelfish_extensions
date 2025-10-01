@@ -115,7 +115,7 @@ void
 mark_nodes_inside_view(Query *query, Oid view_owner)
 {
 
-	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
+	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation() || !pltsql_enable_ownership_chaining)
 		return;
 
 	mark_nodes_inside_view_walker((Node *)query,
@@ -132,7 +132,7 @@ tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *vie
 {
 	AclMode nonDMLpermscheck;
 
-	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
+	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation() || !pltsql_enable_ownership_chaining)
 		return;
 	
 	/*
@@ -150,3 +150,91 @@ tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *vie
 		new_perminfo->insideView = PNODE_INSIDE_VIEW;
 	}
 }
+
+/*
+ * Walker function to mark relations and functions inside view definitions
+ * 
+ * Walks through the query parse tree to:
+ * 1. Mark relations and functions as being inside a view context
+ * 2. For relations:
+ *    - Set checkAsUser to the view_owner when it matches the relation's owner,
+ *      enabling permission checking to pass at the executor stage (ownership chaining)
+ * 3. For procedures/functions:
+ *    - Store the view_owner in the parentOwnerId field to support
+ *      procedure/function-specific ownership chaining logic
+ *      during permission checks at the executor stage
+ * 
+ */
+static bool
+mark_outside_view_ref_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Query))
+    {
+        Query *query = (Query *) node;
+        ListCell *lc;
+        
+        foreach(lc, query->rtable)
+        {
+            RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+			if (OidIsValid(rte->relid) && rte->rtekind == RTE_RELATION)
+			{
+				RTEPermissionInfo *perminfo = getRTEPermissionInfo(query->rteperminfos, rte);
+
+				if (perminfo && perminfo->insideView == PNODE_UNMARKED)
+				{
+					perminfo->insideView = PNODE_OUTSIDE_VIEW;
+				}
+			}
+        }
+		return query_tree_walker(query, 
+                            	 mark_outside_view_ref_walker,
+                            	 NULL,
+                            	 0);
+	}
+	else if (IsA(node, FuncExpr))
+    {
+        FuncExpr *funcexpr = (FuncExpr *) node;
+
+		if (funcexpr->insideView == PNODE_UNMARKED)
+		{
+			Oid nspid;
+			char *physical_schemaname = NULL;
+
+			nspid = get_func_namespace(funcexpr->funcid);
+			physical_schemaname = get_namespace_name(nspid);
+			if (physical_schemaname &&
+				!is_shared_schema(physical_schemaname))
+			{
+				funcexpr->insideView = PNODE_OUTSIDE_VIEW;
+			}
+
+			if (physical_schemaname)
+					pfree(physical_schemaname);
+		}
+    
+		/* else walk through function args */
+    }
+
+	return expression_tree_walker(node, mark_outside_view_ref_walker, NULL);
+}
+
+/*
+ * Main entry point for marking nodes inside view definitions
+ * 
+ * Performs security check and initiates tree walk to:
+ * - Mark relations and functions as being inside a view
+ * - Set parent owner context for permission chaining
+ */
+void
+mark_outside_view(Query *query)
+{
+
+	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation() || !pltsql_enable_ownership_chaining)
+		return;
+
+	mark_outside_view_ref_walker((Node *)query, NULL);
+}
+

@@ -1817,6 +1817,10 @@ typedef struct PLtsql_protocol_plugin
 	
 	Datum       (*sql_bytea_from_geography) (PG_FUNCTION_ARGS);
 
+	Datum       (*sql_geometry_from_bytea) (PG_FUNCTION_ARGS);
+	
+	Datum       (*sql_geography_from_bytea) (PG_FUNCTION_ARGS);
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2270,6 +2274,10 @@ extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varcha
 extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
 extern bool is_tsql_geometry_or_geography_datatype(Oid oid); /* sys.geometry / sys.geography */
 extern void downcase_truncate_split_object_name(char *four_part_object_name, char** server_name, char** db_name, char** schema_name, char** object_name);
+extern Oid get_rel_owner(Oid relid);
+extern Oid get_func_owner(Oid funcid);
+extern bool is_valid_func_ownership_chain(void *expr, Oid objectOwnerId);
+extern Oid get_current_func_oid(void);
 extern bool is_xml_value_typearg_valid(Oid Oid);
 
 typedef struct
@@ -2318,6 +2326,7 @@ int			execute_sp_cursoroption(int cursor_handle, int code, int value);
 int			execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
 int			execute_sp_cursorclose(int cursor_handle);
 void		reset_cached_cursor(void);
+void		reset_cached_xml_handle(void);
 
 /*
  * Functions in string.c
