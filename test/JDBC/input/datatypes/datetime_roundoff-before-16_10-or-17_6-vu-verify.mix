@@ -505,7 +505,7 @@ CREATE OR REPLACE PROCEDURE datetime_rounding_handler(
     p_action text DEFAULT NULL,
     p_schema_name text DEFAULT NULL,
     p_table_name text DEFAULT NULL,
-    p_commit_after_table boolean DEFAULT true
+    p_show_values boolean DEFAULT false
 )
 LANGUAGE plpgsql
 AS $$
@@ -525,7 +525,7 @@ BEGIN
 
     -- Show help if no action specified
     IF p_action IS NULL THEN
-        RAISE INFO E'\nUsage: CALL datetime_rounding_handler(p_action, p_schema_name, p_table_name, p_commit_after_table)';
+        RAISE INFO E'\nUsage: CALL datetime_rounding_handler(p_action, p_schema_name, p_table_name, p_show_values)';
         RAISE INFO E'\nActions:';
         RAISE INFO E'\n  list   - List all tables and columns with datetime type';
         RAISE INFO E'\n  check  - Check for values that need rounding (requires schema and table names unless "all" specified)';
@@ -613,21 +613,23 @@ BEGIN
                 RAISE INFO E'\nSchema: %, Table: %, Column: %, Affected Rows: %',
                     r.schema_name, r.table_name, r.column_name, v_affected_count;
 
-                -- Show sample of affected values
-                RAISE INFO E'\nSample of affected values:';
-                FOR r2 IN EXECUTE format(
-                    'SELECT %I as original_value, 
-                            CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
-                     FROM %I.%I 
-                     WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) 
-                     LIMIT 5',
-                    r.column_name, r.column_name,
-                    r.schema_name, r.table_name,
-                    r.column_name, r.column_name
-                )
-                LOOP
-                    RAISE INFO E'Original: %, New: %', r2.original_value, r2.new_value;
-                END LOOP;
+                -- Show sample of affected values only if p_show_values is true
+                IF p_show_values THEN
+                    RAISE INFO E'\nSample of affected values:';
+                    FOR r2 IN EXECUTE format(
+                        'SELECT %I as original_value, 
+                                CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
+                         FROM %I.%I 
+                         WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) 
+                         LIMIT 5',
+                        r.column_name, r.column_name,
+                        r.schema_name, r.table_name,
+                        r.column_name, r.column_name
+                    )
+                    LOOP
+                        RAISE INFO E'Original: %, New: %', r2.original_value, r2.new_value;
+                    END LOOP;
+                END IF;
             END IF;
 
         ELSIF p_action = 'update' THEN
@@ -651,14 +653,10 @@ BEGIN
 
                 EXECUTE v_sql;
                 GET DIAGNOSTICS v_affected_count = ROW_COUNT;
-                COMMIT; 
+                COMMIT;
                 v_total_affected_count := v_total_affected_count + v_affected_count;
                 RAISE INFO 'Updated % rows in %.%.%',
                     v_affected_count, r.schema_name, r.table_name, r.column_name;
-
-                IF p_commit_after_table THEN
-                    RAISE INFO 'Processed table %.%', r.schema_name, r.table_name;
-                END IF;
             END IF;
         END IF;
     END LOOP;
@@ -674,7 +672,6 @@ BEGIN
 END;
 $$;
 GO
-
 -- Show help
 CALL datetime_rounding_handler();
 GO
@@ -683,13 +680,20 @@ GO
 CALL datetime_rounding_handler('list');
 GO
 
--- Check specific schema/table
+-- Check specific table without showing values
 CALL datetime_rounding_handler('check', 'master_dbo', 'datetime_test');
 GO
 
--- Check all tables
+-- Check specific table with showing values
+CALL datetime_rounding_handler('check', 'master_dbo', 'datetime_test', true);
+GO
+
+-- Check all tables without showing values
 CALL datetime_rounding_handler('check', NULL, 'all');
 GO
+
+-- Check all tables with showing values
+CALL datetime_rounding_handler('check', NULL, 'all', true);
 
 -- Update specific table
 CALL datetime_rounding_handler('update', 'master_dbo', 'datetime_test');
