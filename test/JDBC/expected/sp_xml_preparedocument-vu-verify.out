@@ -42,9 +42,9 @@ EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child></root';
 SELECT @hdoc as handle;
 EXEC sp_xml_removedocument @hdoc;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9451)~~
 
-~~ERROR (Message: The XML input is not well-formed.)~~
+~~ERROR (Message: invalid XML content)~~
 
 
 -- When xmltext and namespaces both are given (valid)
@@ -65,9 +65,9 @@ EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child></root', 'xmlns:ns1="htt
 SELECT @hdoc as handle;
 EXEC sp_xml_removedocument @hdoc;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9451)~~
 
-~~ERROR (Message: The XML input is not well-formed.)~~
+~~ERROR (Message: invalid XML content)~~
 
 
 -- When xmltext is valid but namespace invalid
@@ -87,9 +87,9 @@ EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child></root', '<root xmlns:ns
 SELECT @hdoc as handle;
 EXEC sp_xml_removedocument @hdoc;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9451)~~
 
-~~ERROR (Message: The XML input is not well-formed.)~~
+~~ERROR (Message: invalid XML content)~~
 
 
 -- When xmltext is NULL and valid namespace
@@ -492,4 +492,362 @@ GO
 int
 3
 ~~END~~
+
+
+
+-- Test cases for sp_xml_preparedocument with different data types
+-- Testing TEXT, NTEXT, CHAR, NCHAR, VARCHAR, NVARCHAR, XML and UDTs
+-- Test 1: XML datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+-- Test 2: VARCHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+
+-- Test 3: NVARCHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+9
+~~END~~
+
+
+-- Test 4: CHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml CHAR(100) = '<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+11
+~~END~~
+
+
+-- Test 5: NCHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml NCHAR(100) = N'<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+13
+~~END~~
+
+
+-- Test 6: TEXT datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml TEXT = '<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The text, ntext, and image data types are invalid for local variables.)~~
+
+
+-- Test 7: NTEXT datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml NTEXT = N'<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The text, ntext, and image data types are invalid for local variables.)~~
+
+
+-- Test 8: Malformed XML with VARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The XML input is not well-formed.)~~
+
+
+-- Test 9: Malformed XML with NVARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'<root><child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The XML input is not well-formed.)~~
+
+
+-- Test 10: Malformed XML with XML datatype
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The XML input is not well-formed.)~~
+
+
+-- Test 11: NULL XML with different datatypes
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = NULL;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+15
+~~END~~
+
+
+DECLARE @hdoc INT;
+DECLARE @xml XML = NULL;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+17
+~~END~~
+
+
+-- Test 12: Empty string with different datatypes
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+19
+~~END~~
+
+
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+21
+~~END~~
+
+
+-- Test 13: Complex XML with Unicode characters
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root><child name="测试">Hello 🌍</child><item>世界</item></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+23
+~~END~~
+
+
+-- Test 14: XML with namespaces
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root xmlns:ns="http://example.com"><ns:child>value</ns:child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+25
+~~END~~
+
+
+-- Test 15: Large XML content
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(MAX) = N'<root>' + REPLICATE(N'<item>data</item>', 100) + N'</root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+27
+~~END~~
+
+
+-- Test 16: Direct string literals (no variables)
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>direct</child></root>';
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+29
+~~END~~
+
+
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, N'<root><child>direct</child></root>';
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+31
+~~END~~
+
+
+-- Test 17: XML with CDATA sections
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root><![CDATA[<script>alert("test")</script>]]></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+33
+~~END~~
+
+
+-- Test 18: XML with special characters
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root attr="&lt;&gt;&amp;&quot;&apos;">Special &amp; chars</root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+35
+~~END~~
+
+
+-- Test 19: Multiple nested levels
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(300) = N'<root><level1><level2><level3><level4>deep</level4></level3></level2></level1></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+37
+~~END~~
+
+
+-- Test 20: XML with processing instructions and comments
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<?xml version="1.0"?><!-- comment --><root>data</root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+39
+~~END~~
+
+
+-- Basic Tests with different dataype UDTs
+EXEC TestXMLPrepareDocument_Char
+GO
+~~START~~
+int
+41
+~~END~~
+
+
+EXEC TestXMLPrepareDocument_Varchar
+GO
+~~START~~
+int
+43
+~~END~~
+
+
+EXEC TestXMLPrepareDocument_NChar
+GO
+~~START~~
+int
+45
+~~END~~
+
+
+EXEC TestXMLPrepareDocument_NVarchar
+GO
+~~START~~
+int
+47
+~~END~~
+
+
+EXEC TestXMLPrepareDocument_Text
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The procedure sp_xml_preparedocument is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+~~START~~
+int
+<NULL>
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_xml_removedocument: The value supplied for parameter number 1 is invalid.)~~
+
+
+EXEC TestXMLPrepareDocument_NText
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The procedure sp_xml_preparedocument is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+~~START~~
+int
+<NULL>
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_xml_removedocument: The value supplied for parameter number 1 is invalid.)~~
 

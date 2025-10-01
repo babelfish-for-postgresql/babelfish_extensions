@@ -310,3 +310,205 @@ GO
 -- Execute procedure and verify handle
 EXEC test_xml_proc;
 GO
+
+-- Test cases for sp_xml_preparedocument with different data types
+-- Testing TEXT, NTEXT, CHAR, NCHAR, VARCHAR, NVARCHAR, XML and UDTs
+
+-- Test 1: XML datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 2: VARCHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+
+-- Test 3: NVARCHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 4: CHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml CHAR(100) = '<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 5: NCHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml NCHAR(100) = N'<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 6: TEXT datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml TEXT = '<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 7: NTEXT datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml NTEXT = N'<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 8: Malformed XML with VARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 9: Malformed XML with NVARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'<root><child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 10: Malformed XML with XML datatype
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 11: NULL XML with different datatypes
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = NULL;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+DECLARE @hdoc INT;
+DECLARE @xml XML = NULL;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 12: Empty string with different datatypes
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 13: Complex XML with Unicode characters
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root><child name="测试">Hello 🌍</child><item>世界</item></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 14: XML with namespaces
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root xmlns:ns="http://example.com"><ns:child>value</ns:child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 15: Large XML content
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(MAX) = N'<root>' + REPLICATE(N'<item>data</item>', 100) + N'</root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 16: Direct string literals (no variables)
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>direct</child></root>';
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, N'<root><child>direct</child></root>';
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 17: XML with CDATA sections
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root><![CDATA[<script>alert("test")</script>]]></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 18: XML with special characters
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root attr="&lt;&gt;&amp;&quot;&apos;">Special &amp; chars</root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 19: Multiple nested levels
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(300) = N'<root><level1><level2><level3><level4>deep</level4></level3></level2></level1></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 20: XML with processing instructions and comments
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<?xml version="1.0"?><!-- comment --><root>data</root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Basic Tests with different dataype UDTs
+EXEC TestXMLPrepareDocument_Char
+GO
+
+EXEC TestXMLPrepareDocument_Varchar
+GO
+
+EXEC TestXMLPrepareDocument_NChar
+GO
+
+EXEC TestXMLPrepareDocument_NVarchar
+GO
+
+EXEC TestXMLPrepareDocument_Text
+GO
+
+EXEC TestXMLPrepareDocument_NText
+GO
