@@ -1088,11 +1088,14 @@ pgerror(PG_FUNCTION_ARGS)
 	PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input) ((error_sqlstate), strlen(error_sqlstate), -1));
 }
 
-typedef struct ArgIOData
+/*
+ * Structure to cache metadata needed in datalength().
+ */
+typedef struct DatalengthIOData
 {
 	Oid			argtypeid;
 	int			typlen;
-} ArgIOData;
+} DatalengthIOData;
 
 /* 
  * datalength()
@@ -1106,15 +1109,15 @@ datalength(PG_FUNCTION_ARGS)
 	Datum		value = PG_GETARG_DATUM(0);
 	int32 result;
 	int			typlen;
-	ArgIOData *my_extra;
+	DatalengthIOData *my_extra;
 	Oid			argtypeid;
-	Oid			immediate_base_type;
 
-	my_extra = (ArgIOData *) fcinfo->flinfo->fn_extra;
+	my_extra = (DatalengthIOData *) fcinfo->flinfo->fn_extra;
 
 	/* On first call, get the input type's oid and typlen, and save at *fn_extra */
 	if (my_extra == NULL)
 	{
+		Oid			immediate_base_type;
 		/* Lookup the datatype of the supplied argument */
 		argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
 		
@@ -1129,8 +1132,8 @@ datalength(PG_FUNCTION_ARGS)
 		if (typlen == 0)		/* should not happen */
 			elog(ERROR, "cache lookup failed for type %u", argtypeid);
 
-		my_extra = (ArgIOData *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-														  sizeof(ArgIOData));
+		my_extra = (DatalengthIOData *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+														  sizeof(DatalengthIOData));
 		my_extra->argtypeid = argtypeid;
 		my_extra->typlen = typlen;
 	}
