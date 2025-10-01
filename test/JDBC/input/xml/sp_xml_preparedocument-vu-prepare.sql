@@ -15,3 +15,103 @@ EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>proc_value</child></root
 SELECT @hdoc AS handle_inside_proc;
 END
 GO
+
+-- Create UDTs for different XML string representations
+CREATE TYPE XMLCharType FROM CHAR(1000)
+GO
+
+CREATE TYPE XMLVarcharType FROM VARCHAR(MAX)
+GO
+
+CREATE TYPE XMLNCharType FROM NCHAR(1000)
+GO
+
+CREATE TYPE XMLNVarcharType FROM NVARCHAR(MAX)
+GO
+
+CREATE TYPE XMLTextType FROM TEXT
+GO
+
+CREATE TYPE XMLNTextType FROM NTEXT
+GO
+
+-- Basic Test Cases with different UDTs
+-- 1. Test CHAR UDT
+CREATE PROCEDURE TestXMLPrepareDocument_Char
+AS
+BEGIN
+    DECLARE @hdoc INT
+    DECLARE @charXML XMLCharType = '<root><child>char value</child></root>'
+    EXEC sp_xml_preparedocument @hdoc OUTPUT, @charXML
+    SELECT @hdoc as CharHandle
+    EXEC sp_xml_removedocument @hdoc
+END
+GO
+
+-- 2. Test VARCHAR UDT
+CREATE PROCEDURE TestXMLPrepareDocument_Varchar
+AS
+BEGIN
+    DECLARE @hdoc INT
+    DECLARE @varcharXML XMLVarcharType = '<root><child>varchar value</child></root>'
+    EXEC sp_xml_preparedocument @hdoc OUTPUT, @varcharXML
+    SELECT @hdoc as VarcharHandle
+    EXEC sp_xml_removedocument @hdoc
+END
+GO
+
+-- 3. Test NCHAR UDT
+CREATE PROCEDURE TestXMLPrepareDocument_NChar
+AS
+BEGIN
+    DECLARE @hdoc INT
+    DECLARE @ncharXML XMLNCharType = N'<root><child>nchar value 世界</child></root>'
+    EXEC sp_xml_preparedocument @hdoc OUTPUT, @ncharXML
+    SELECT @hdoc as NCharHandle
+    EXEC sp_xml_removedocument @hdoc
+END
+GO
+
+-- 4. Test NVARCHAR UDT
+CREATE PROCEDURE TestXMLPrepareDocument_NVarchar
+AS
+BEGIN
+    DECLARE @hdoc INT
+    DECLARE @nvarcharXML XMLNVarcharType = N'<root><child>nvarchar value 🌟</child></root>'
+    EXEC sp_xml_preparedocument @hdoc OUTPUT, @nvarcharXML
+    SELECT @hdoc as NVarcharHandle
+    EXEC sp_xml_removedocument @hdoc
+END
+GO
+
+-- 5. Test TEXT UDT
+CREATE PROCEDURE TestXMLPrepareDocument_Text 
+AS 
+BEGIN 
+    DECLARE @hdoc INT 
+    DECLARE @textXML XMLTextType = '<root><child>text value</child></root>' 
+    EXEC sp_xml_preparedocument @hdoc OUTPUT, @textXML 
+    SELECT @hdoc as TextHandle 
+    EXEC sp_xml_removedocument @hdoc 
+END 
+GO
+
+-- 6. Test NTEXT UDT
+CREATE PROCEDURE TestXMLPrepareDocument_NText
+AS
+BEGIN
+    DECLARE @hdoc INT
+    DECLARE @ntextXML XMLNTextType = N'<root><child>ntext value 漢字</child></root>'
+    EXEC sp_xml_preparedocument @hdoc OUTPUT, @ntextXML
+    SELECT @hdoc as NTextHandle
+    EXEC sp_xml_removedocument @hdoc
+END
+GO
+
+CREATE TABLE TestTextXML_babel_1168 ( id INT, xml_data TEXT)
+INSERT INTO TestTextXML_babel_1168 VALUES(1, '<root><child>value</child></root>') 
+GO
+
+CREATE TABLE TestNTextXML_babel_1168 ( id INT, xml_data NTEXT )
+INSERT INTO TestNTextXML_babel_1168 VALUES(1, N'<root><child>value 世界</child></root>') 
+GO
