@@ -2725,7 +2725,7 @@ SELECT HAS_PERMS_BY_NAME('dbo.t_perms_by_name     ','OBJECT    ', 'SELECT   ', '
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 
