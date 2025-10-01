@@ -1,6 +1,6 @@
 IF OBJECT_ID('test_unicode_defaults') IS NOT NULL DROP TABLE test_unicode_defaults;
 GO
-
+ 
 CREATE TABLE test_unicode_defaults
 (
     id              INT IDENTITY PRIMARY KEY,
