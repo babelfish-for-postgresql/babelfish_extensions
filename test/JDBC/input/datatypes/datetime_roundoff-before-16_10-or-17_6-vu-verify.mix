@@ -694,6 +694,7 @@ GO
 
 -- Check all tables with showing values
 CALL datetime_rounding_handler('check', NULL, 'all', true);
+GO
 
 -- Update specific table
 CALL datetime_rounding_handler('update', 'master_dbo', 'datetime_test');
