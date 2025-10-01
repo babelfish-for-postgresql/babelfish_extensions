@@ -124,7 +124,14 @@ GO
 ~~START~~
 text#!#nvarchar#!#bit
 Russia Time Zone 10#!#+11:00#!#0
+Russia Time Zone 11#!#+12:00#!#0
 Russia Time Zone 3#!#+04:00#!#0
+Utc+12#!#+12:00#!#0
+Utc+13#!#+13:00#!#0
+Utc-02#!#-02:00#!#0
+Utc-08#!#-08:00#!#0
+Utc-09#!#-09:00#!#0
+Utc-11#!#-11:00#!#0
 ~~END~~
 
 -- Test palindromic offset 
