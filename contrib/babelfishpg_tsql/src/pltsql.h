@@ -2359,6 +2359,7 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
  */
 extern bool validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
 extern int32	resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
+extern bool 	is_numeric_datatype(Oid typid);
 
 /*
  * Function in pltsql_ruleutils.c

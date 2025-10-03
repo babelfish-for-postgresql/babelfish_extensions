@@ -1200,7 +1200,7 @@ is_numeric_cast(Oid func_oid)
 /*
  * is_numeric_datatype - returns bool if given datatype is numeric, decimal, UDT on numeric or decimal.
  */
-static bool
+bool
 is_numeric_datatype(Oid typid)
 {
 	if (OidIsValid(typid) && getBaseType(typid) == NUMERICOID)
