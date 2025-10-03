@@ -699,7 +699,7 @@ EXCEPTION
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
-                    HINT := 'Correct supplied value, remove all illegal characters and try again.';
+                    HINT := 'Correct supplied value, remove all illegal characters and try again. ';
 END;
 $BODY$
 LANGUAGE plpgsql
