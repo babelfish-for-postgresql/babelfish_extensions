@@ -60,7 +60,7 @@ SELECT ISNUMERIC(@a), LEN(@a), DATALENGTH(@a)
 GO
 ~~START~~
 int#!#int#!#int
-1#!#9#!#6
+1#!#9#!#5
 ~~END~~
 
 
