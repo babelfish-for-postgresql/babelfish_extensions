@@ -1,6 +1,3 @@
 --cleanup databases
 DROP DATABASE IF EXISTS [ blank space    ];
 GO
-
-DROP DATABASE IF EXISTS [ blank space ];
-GO
