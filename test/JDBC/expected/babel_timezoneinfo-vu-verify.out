@@ -124,7 +124,6 @@ GO
 ~~START~~
 text#!#nvarchar#!#bit
 Russia Time Zone 10#!#+11:00#!#0
-Russia Time Zone 11#!#+12:00#!#0
 Russia Time Zone 3#!#+04:00#!#0
 Utc+12#!#+12:00#!#0
 Utc+13#!#+13:00#!#0
@@ -227,7 +226,7 @@ Invalid#!#Title Zone
 ~~END~~
 
 --Verify the null case
-SELECT sys.timezone_mapping_pg_to_windows(' ');
+SELECT sys.pltsql_timezone_mapping_pg_to_windows(' ');
 GO
 ~~START~~
 text

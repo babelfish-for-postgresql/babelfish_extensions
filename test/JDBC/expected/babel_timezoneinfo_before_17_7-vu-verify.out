@@ -184,7 +184,7 @@ Invalid#!#Title Zone
 ~~END~~
 
 --Verify the null case
-SELECT sys.timezone_mapping_pg_to_windows(' ');
+SELECT sys.pltsql_timezone_mapping_pg_to_windows(' ');
 GO
 ~~START~~
 text

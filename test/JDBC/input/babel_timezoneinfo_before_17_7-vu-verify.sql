@@ -79,7 +79,7 @@ EXEC sp_ValidateTimeZoneData 'India Standard Time';
 EXEC sp_ValidateTimeZoneData 'Title Zone';
 GO
 --Verify the null case
-SELECT sys.timezone_mapping_pg_to_windows(' ');
+SELECT sys.pltsql_timezone_mapping_pg_to_windows(' ');
 GO
 --Timezone - Central Standard Time
 SELECT name, current_utc_offset, is_currently_dst 

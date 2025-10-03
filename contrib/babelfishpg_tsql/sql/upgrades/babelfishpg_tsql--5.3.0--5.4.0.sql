@@ -292,23 +292,23 @@ CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
-create or replace function sys.timezone_mapping_pg_to_windows(IN tmz text) returns text
-AS 'babelfishpg_tsql', 'timezone_mapping_pg_to_windows'
+create or replace function sys.pltsql_timezone_mapping_pg_to_windows(IN tmz text) returns text
+AS 'babelfishpg_tsql', 'pltsql_timezone_mapping_pg_to_windows'
 LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
 
 CREATE OR REPLACE VIEW sys.time_zone_info AS
 SELECT 
     -- Mapping PostgreSQL timezone names to Windows format names
-    pg_catalog.initcap(sys.timezone_mapping_pg_to_windows(name))
+    CAST(pg_catalog.initcap(sys.pltsql_timezone_mapping_pg_to_windows(name)) AS sys.nvarchar(128))
     AS name,
     CAST(
       CASE 
-          WHEN utc_offset < '00:00:00' THEN 
-              '-' || RIGHT('0' || CAST(ABS(EXTRACT(HOUR FROM utc_offset)) AS VARCHAR(2)), 2) || ':' ||
-              RIGHT('0' || CAST(ABS(EXTRACT(MINUTE FROM utc_offset)) AS VARCHAR(2)), 2)
+          WHEN utc_offset < INTERVAL '00:00:00' THEN 
+              '-' || pg_catalog.RIGHT('0' || CAST(pg_catalog.ABS(EXTRACT(HOUR FROM utc_offset)) AS VARCHAR(2)), 2) || ':' ||
+              pg_catalog.RIGHT('0' || CAST(pg_catalog.ABS(EXTRACT(MINUTE FROM utc_offset)) AS VARCHAR(2)), 2)
           ELSE 
-              '+' || RIGHT('0' || CAST(EXTRACT(HOUR FROM utc_offset) AS VARCHAR(2)), 2) || ':' || 
-              RIGHT('0' || CAST(EXTRACT(MINUTE FROM utc_offset) AS VARCHAR(2)), 2)
+              '+' || pg_catalog.RIGHT('0' || CAST(EXTRACT(HOUR FROM utc_offset) AS VARCHAR(2)), 2) || ':' || 
+              pg_catalog.RIGHT('0' || CAST(EXTRACT(MINUTE FROM utc_offset) AS VARCHAR(2)), 2)
       END AS sys.NVARCHAR(12)
     ) AS current_utc_offset,
     -- Converting boolean is_dst to bit (0/1)
@@ -319,12 +319,6 @@ SELECT
         END AS sys.BIT
     ) AS is_currently_dst
 FROM pg_catalog.pg_timezone_names
-WHERE name NOT LIKE 'posix/%'
-  AND sys.timezone_mapping_pg_to_windows(name) IS NOT NULL
-UNION ALL
-SELECT 
-    'Russia Time Zone 11' AS name,
-    CAST('+12:00' AS sys.NVARCHAR(12)) AS current_utc_offset,
-    CAST(0 AS sys.BIT) AS is_currently_dst
+WHERE sys.pltsql_timezone_mapping_pg_to_windows(name) IS NOT NULL
 ORDER BY name;
 GRANT SELECT ON sys.time_zone_info TO PUBLIC;
