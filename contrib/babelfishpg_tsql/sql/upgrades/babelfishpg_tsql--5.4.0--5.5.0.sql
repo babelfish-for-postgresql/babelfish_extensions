@@ -464,67 +464,66 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_varchar(IN typename TEXT, IN arg ANYELEMENT)
 RETURNS sys.VARCHAR
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_real(IN arg ANYELEMENT) 
+RETURNS REAL
 AS
 $BODY$
 BEGIN
 	BEGIN
-		CASE pg_typeof(arg)
-		WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
-			IF lower(typename) LIKE 'nvarchar%' THEN
-				RETURN (sys.varbinarysysnvarchar(arg, -1, true));
-			ELSE
-				RETURN CAST(arg AS sys.VARCHAR);
-			END IF;
-		WHEN 'sys.binary'::regtype THEN
-			IF lower(typename) LIKE 'nvarchar%' THEN
-				RETURN (sys.binarysysnvarchar(arg, -1, true));
-			ELSE
-				RETURN CAST(arg AS sys.VARCHAR);
-			END IF;
+		RETURN CAST(arg AS REAL);
+	EXCEPTION
+		WHEN OTHERS THEN
+			RETURN NULL;
+	END;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_real(IN arg TEXT) 
+RETURNS REAL
+AS
+$BODY$
+BEGIN
+	BEGIN
+		RETURN CAST(arg AS REAL);
+	EXCEPTION
+		WHEN OTHERS THEN
+			RETURN NULL;
+	END;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_float(arg ANYELEMENT, typmod INT)
+RETURNS DOUBLE PRECISION
+AS
+$BODY$
+BEGIN
+	BEGIN
+		IF typmod BETWEEN 1 AND 24 THEN
+			RETURN CAST(arg as REAL);
 		ELSE
-			RETURN CAST(arg AS sys.VARCHAR);
-		END CASE;
+			RETURN CAST(arg as DOUBLE PRECISION);
+		END IF;
 	EXCEPTION
 		WHEN OTHERS THEN
 			RETURN NULL;
 	END;
 END;
 $BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
+LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_varchar(IN typename TEXT, IN arg TEXT)
-RETURNS sys.VARCHAR
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_float(arg TEXT, typmod INT)
+RETURNS DOUBLE PRECISION
 AS
 $BODY$
 BEGIN
 	BEGIN
-		RETURN CAST(arg AS sys.VARCHAR);
-	EXCEPTION
-		WHEN OTHERS THEN
-			RETURN NULL;
-	END;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_varbinary(IN arg ANYELEMENT)
-RETURNS sys.varbinary
-AS
-$BODY$
-BEGIN
-	BEGIN
-		CASE pg_typeof(arg)
-		WHEN 'sys.nvarchar'::regtype THEN
-			RETURN sys.nvarcharvarbinary(arg, -1, true);
-		WHEN 'sys.nchar'::regtype THEN
-			RETURN sys.ncharvarbinary(arg, -1, true);
+		IF typmod BETWEEN 1 AND 24 THEN
+			RETURN CAST(arg as REAL);
 		ELSE
-			RETURN CAST(arg AS sys.varbinary);
-		END CASE;
+			RETURN CAST(arg as DOUBLE PRECISION);
+		END IF;
 	EXCEPTION
 		WHEN OTHERS THEN
 			RETURN NULL;
@@ -535,22 +534,31 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_varbinary(IN arg TEXT)
-RETURNS sys.varbinary
-AS
-$BODY$
+CREATE OR REPLACE FUNCTION sys.text2float4(arg pg_catalog.text)
+RETURNS REAL
+AS $$
 BEGIN
-	BEGIN
-		RETURN CAST(arg AS sys.varbinary);
-	EXCEPTION
-		WHEN OTHERS THEN
-			RETURN NULL;
-	END;
+    RETURN CAST(arg::sys.varchar AS REAL);
 END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
+DROP CAST IF EXISTS (pg_catalog.text AS pg_catalog.float4);
+CREATE CAST (pg_catalog.text AS pg_catalog.float4)
+WITH FUNCTION sys.text2float4(pg_catalog.text) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.text2float8(arg pg_catalog.text)
+RETURNS DOUBLE PRECISION
+AS $$
+BEGIN
+    RETURN CAST(arg::sys.varchar AS DOUBLE PRECISION);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
+DROP CAST IF EXISTS (pg_catalog.text AS pg_catalog.float8);
+CREATE CAST (pg_catalog.text AS pg_catalog.float8)
+WITH FUNCTION sys.text2float8(pg_catalog.text) AS IMPLICIT;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

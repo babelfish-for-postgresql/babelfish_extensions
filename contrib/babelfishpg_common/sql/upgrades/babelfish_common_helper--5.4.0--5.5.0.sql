@@ -93,3 +93,34 @@ CREATE OR REPLACE FUNCTION sys.binarysysnchar(sys.BBF_BINARY, integer, boolean)
 RETURNS sys.NCHAR
 AS 'babelfishpg_common', 'varbinarynchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+CREATE OR REPLACE FUNCTION sys.varchar2float4(pg_catalog.VARCHAR)
+RETURNS FLOAT4
+AS 'babelfishpg_common', 'varchar2float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (pg_catalog.VARCHAR AS FLOAT4)
+WITH FUNCTION sys.varchar2float4(pg_catalog.VARCHAR) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.varchar2float8(pg_catalog.VARCHAR)
+RETURNS FLOAT8
+AS 'babelfishpg_common', 'varchar2float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (pg_catalog.VARCHAR AS FLOAT8)
+WITH FUNCTION sys.varchar2float8(pg_catalog.VARCHAR) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.bpchar2float4(pg_catalog.BPCHAR)
+RETURNS FLOAT4
+AS 'babelfishpg_common', 'bpchar2float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (pg_catalog.BPCHAR AS FLOAT4)
+WITH FUNCTION sys.bpchar2float4(pg_catalog.BPCHAR) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.bpchar2float8(pg_catalog.BPCHAR)
+RETURNS FLOAT8
+AS 'babelfishpg_common', 'bpchar2float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (pg_catalog.BPCHAR AS FLOAT8)
+WITH FUNCTION sys.bpchar2float8(pg_catalog.BPCHAR) AS IMPLICIT;
