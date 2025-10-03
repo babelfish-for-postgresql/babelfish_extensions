@@ -5,7 +5,7 @@ WHERE current_utc_offset = '-04:00'
 ORDER BY name;
 GO
 ~~START~~
-text#!#nvarchar#!#bit
+nvarchar#!#nvarchar#!#bit
 Central Brazilian Standard Time#!#-04:00#!#0
 Cuba Standard Time#!#-04:00#!#1
 Eastern Standard Time#!#-04:00#!#1
@@ -18,7 +18,7 @@ SELECT * FROM sys.time_zone_info
 WHERE name = 'Eastern Standard Time';
 GO
 ~~START~~
-text#!#nvarchar#!#bit
+nvarchar#!#nvarchar#!#bit
 Eastern Standard Time#!#-04:00#!#1
 ~~END~~
 
@@ -28,7 +28,7 @@ FROM sys.time_zone_info
 WHERE current_utc_offset = '-05:00';
 GO
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 Central Standard Time#!#-05:00
 Easter Island Standard Time#!#-05:00
 Eastern Standard Time (Mexico)#!#-05:00
@@ -42,7 +42,7 @@ WHERE is_currently_dst = 1
 ORDER BY name;
 GO
 ~~START~~
-text#!#nvarchar#!#bit
+nvarchar#!#nvarchar#!#bit
 Alaskan Standard Time#!#-08:00#!#1
 Aleutian Standard Time#!#-09:00#!#1
 Atlantic Standard Time#!#-03:00#!#1
@@ -55,7 +55,7 @@ WHERE current_utc_offset LIKE '%:30'
 ORDER BY name;
 GO
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 Afghanistan Standard Time#!#+04:30
 Aus Central Standard Time#!#+09:30
 Cen. Australia Standard Time#!#+09:30
@@ -72,7 +72,7 @@ Sri Lanka Standard Time#!#+05:30
 SELECT * FROM dbo.FindZonesByPattern('Pacific') ORDER BY name;
 GO
 ~~START~~
-text#!#nvarchar#!#bit#!#varchar
+nvarchar#!#nvarchar#!#bit#!#varchar
 Central Pacific Standard Time#!#+11:00#!#0#!#STD
 Pacific Sa Standard Time#!#-03:00#!#1#!#DST
 Pacific Standard Time#!#-07:00#!#1#!#DST
@@ -85,7 +85,7 @@ West Pacific Standard Time#!#+10:00#!#0#!#STD
 SELECT * FROM dbo.GetZonesInOffsetRange('+08:00', '+10:00') ORDER BY current_utc_offset;
 GO
 ~~START~~
-text#!#nvarchar#!#bit
+nvarchar#!#nvarchar#!#bit
 North Asia East Standard Time#!#+08:00#!#0
 W. Australia Standard Time#!#+08:00#!#0
 Singapore Standard Time#!#+08:00#!#0
@@ -111,7 +111,7 @@ West Pacific Standard Time#!#+10:00#!#0
 SELECT * FROM dbo.ZeroOffsetZones;
 GO
 ~~START~~
-text#!#nvarchar#!#bit
+nvarchar#!#nvarchar#!#bit
 Azores Standard Time#!#+00:00#!#1
 Greenwich Standard Time#!#+00:00#!#0
 Sao Tome Standard Time#!#+00:00#!#0
@@ -122,22 +122,22 @@ Utc#!#+00:00#!#0
 SELECT * FROM dbo.NumericNameZones ORDER BY name;
 GO
 ~~START~~
-text#!#nvarchar#!#bit
+nvarchar#!#nvarchar#!#bit
 Russia Time Zone 10#!#+11:00#!#0
 Russia Time Zone 3#!#+04:00#!#0
-Utc+12#!#+12:00#!#0
-Utc+13#!#+13:00#!#0
 Utc-02#!#-02:00#!#0
 Utc-08#!#-08:00#!#0
 Utc-09#!#-09:00#!#0
 Utc-11#!#-11:00#!#0
+Utc+12#!#+12:00#!#0
+Utc+13#!#+13:00#!#0
 ~~END~~
 
 -- Test palindromic offset 
 SELECT * FROM dbo.PalindromicOffsets;
 GO
 ~~START~~
-text#!#nvarchar#!#varchar
+nvarchar#!#nvarchar#!#varchar
 Azores Standard Time#!#+00:00#!#Palindromic
 Greenwich Standard Time#!#+00:00#!#Palindromic
 Iran Standard Time#!#+03:30#!#Palindromic
@@ -156,7 +156,7 @@ GROUP BY name, current_utc_offset, is_currently_dst
 HAVING COUNT(*) > 1;
 GO
 ~~START~~
-text#!#nvarchar#!#bit#!#int
+nvarchar#!#nvarchar#!#bit#!#int
 ~~END~~
 
 -- Test case: Subquery to find "Lonely DST zone"
@@ -170,7 +170,7 @@ WHERE EXISTS (
 );
 GO
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 Nepal Standard Time#!#+05:45
 ~~END~~
 
@@ -204,7 +204,7 @@ WITH DSTZones AS (
 SELECT * FROM DSTZones;
 GO
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 Alaskan Standard Time#!#-08:00
 Mountain Standard Time#!#-06:00
 Pacific Standard Time#!#-07:00
@@ -239,7 +239,7 @@ FROM sys.time_zone_info
 WHERE name = 'Central Asia Standard Time';
 GO
 ~~START~~
-text#!#nvarchar#!#bit
+nvarchar#!#nvarchar#!#bit
 Central Asia Standard Time#!#+05:00#!#0
 ~~END~~
 
