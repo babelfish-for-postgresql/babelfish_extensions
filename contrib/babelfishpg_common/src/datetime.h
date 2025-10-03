@@ -32,6 +32,12 @@
 #define END_DATETIME	INT64CONST(252455615999999000)
 /* TSQL default datetime: 1900-01-01 00:00:00.000 */
 #define TSQL_DEFAULT_DATETIME	INT64CONST(-3155673600000000)
+/* 
+ * DATEPART_MIN_VALUE :
+ * minimun number of days possible i.e difference
+ * between 1753-01-01 and 1900-01-01
+ */
+#define DATEPART_MIN_VALUE	INT64CONST(-53690)
 
 extern Timestamp initializeToDefaultDatetime(void);
 extern DateADT initializeToDefaultDate(void);

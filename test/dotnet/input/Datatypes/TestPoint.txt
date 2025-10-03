@@ -6,8 +6,6 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point EMPTY:4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point ZM(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point M(1.0 2.0 3.0):4326
-prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING EMPTY:4326
-prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
 #next seven lines are not allowed
 #prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):1000000000
 #prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):-1
@@ -23,8 +21,6 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point EMPTY:4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point ZM(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point M(1.0 2.0 3.0):4326
-prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING EMPTY:4326
-prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 #next nine lines are not allowed
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):0
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -122.34900):4326

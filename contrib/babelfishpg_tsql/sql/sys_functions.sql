@@ -1647,6 +1647,15 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.sqrt(number PG_CATALOG.NUMERIC)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN PG_CATALOG.SQRT(number::float8);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.day(date ANYELEMENT)
 RETURNS INTEGER AS
 $BODY$
@@ -3373,6 +3382,50 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+-- wrapper functions for ascii --
+CREATE OR REPLACE FUNCTION sys.ascii(ANYELEMENT)
+RETURNS INTEGER
+AS $$
+DECLARE
+    arg_datatype text;
+    basetype oid;
+BEGIN
+    arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof($1)::oid);
+    IF arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof($1)::oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for ascii function
+    IF arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of ascii function.', arg_datatype;
+    END IF;
+    
+    IF arg_datatype IN ('binary', 'varbinary') THEN
+        IF len($1) = 0 THEN
+            RETURN NULL;
+        END IF;
+    ELSE
+        IF length($1::TEXT) = 0 THEN
+            RETURN NULL;
+        END IF;
+    END IF;
+    RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ascii(TEXT)
+RETURNS INTEGER
+AS $$
+BEGIN
+    IF length($1) = 0 THEN
+        RETURN NULL;
+    END IF;
+    RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- wrapper functions for TRIM
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.VARCHAR)
 RETURNS sys.VARCHAR
@@ -4099,6 +4152,18 @@ CREATE OR REPLACE FUNCTION sys.openjson_with(json_string text, path text, VARIAD
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_openjson_with' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
+/* Function to retrieve XML doc from temp table using doc_id (for openxml) */
+CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_xmldoc(int)
+RETURNS xml
+AS 'babelfishpg_tsql', 'tsql_openxml_get_xmldoc'
+LANGUAGE C STRICT;
+
+/* This function generates XPath expressions for OPENXML columns */
+CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_colpattern(text,int)
+RETURNS sys.nvarchar
+AS 'babelfishpg_tsql', 'tsql_openxml_get_colpattern'
+LANGUAGE C STRICT;
+
 CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
     IN odbcVer smallint,
     IN is_100 bool,
@@ -4403,9 +4468,27 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 NUMERIC)
 RETURNS numeric  AS 'babelfishpg_tsql','numeric_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(NUMERIC) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.degrees(arg1::PG_CATALOG.NUMERIC);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 NUMERIC)
 RETURNS numeric  AS 'babelfishpg_tsql','numeric_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 sys.fixeddecimal)
+RETURNS sys.MONEY
+AS $$
+BEGIN
+    RETURN sys.radians(arg1::PG_CATALOG.NUMERIC);
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.bbf_log(IN arg1 FLOAT)
 RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log_natural' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
@@ -5126,3 +5209,21 @@ LANGUAGE plpgsql STABLE;
 
 GRANT EXECUTE ON FUNCTION sys.babelfish_broken_view_function() TO PUBLIC;
 COMMENT ON FUNCTION sys.babelfish_broken_view_function() IS 'Internal function used by broken views to prevent silent failures';
+
+CREATE OR REPLACE FUNCTION sys.openxml_simple(document_id INT, 
+                                       rowpattern TEXT, 
+                                       flags INTEGER DEFAULT 0)
+RETURNS table (
+  id sys.BIGINT,
+  parentid sys.BIGINT,
+  nodetype sys.INT,
+  localname sys.NVARCHAR,
+  prefix sys.NVARCHAR,
+  namespaceuri sys.NVARCHAR,
+  datatype sys.NVARCHAR,
+  prev sys.BIGINT,
+  text sys.NTEXT
+) 
+AS 'babelfishpg_tsql', 'openxml_simple'
+LANGUAGE C IMMUTABLE;
+

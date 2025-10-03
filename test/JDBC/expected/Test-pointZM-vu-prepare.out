@@ -1303,12 +1303,6 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 
 ~~ERROR (Message: Error converting data type varbinary to geometry.)~~
 
-#Negative Test when an unsupported feature in queried
-prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported geometry type)~~
-
 
 #Tests for geography type Prepared Statements
 
@@ -1439,12 +1433,6 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varbinary to geography.)~~
-
-#Negative Test when an unsupported feature in queried
-prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported geometry type)~~
 
 
 CREATE TABLE GEOSPATIALPOINTEMPTYdt (geom geometry, geog geography);

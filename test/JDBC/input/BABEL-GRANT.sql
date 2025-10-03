@@ -16,12 +16,30 @@ GO
 DROP TYPE IF EXISTS type_int;
 GO
 
+DROP USER IF EXISTS [babel-6067-u1];
+GO
+
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel-6067-l1')
+BEGIN
+    DROP LOGIN [babel-6067-l1];
+END
+GO
+
 ---
 ---  Prepare Objects
 ---
 
 ---- SCHEMA
 CREATE SCHEMA scm;
+GO
+
+create SCHEMA scm2;
+GO
+
+CREATE LOGIN [babel-6067-l1] WITH PASSWORD = '12345678'
+GO
+
+CREATE USER [babel-6067-u1] FOR LOGIN [babel-6067-l1]
 GO
 
 ---- TABLE
@@ -150,6 +168,13 @@ GRANT UPDATE (a) ON t1 TO guest WITH GRANT OPTION;
 GO
 
 REVOKE GRANT OPTION FOR UPDATE (a) ON t1 FROM guest;
+GO
+
+GRANT SELECT,INSERT,UPDATE,DELETE,EXECUTE ON SCHEMA::scm2 TO [babel-6067-u1];
+GO
+
+-- Validate create procedure grants proc permission to username having hypens like babel-6067-u1
+CREATE PROCEDURE scm2.babel_6067_p1 AS SELECT 'Hello';
 GO
 
 --- 
@@ -285,6 +310,9 @@ GO
 GRANT EXECUTE ON XML SCHEMA COLLECTION::scm TO public;
 GO
 
+GRANT EXECUTE ON scm2.babel_6067_p1 TO [babel-6067-u1];
+GO
+
 ---
 ---  Check for supported and unsupported REVOKE syntax
 ---
@@ -362,6 +390,9 @@ REVOKE EXECUTE ON USER::test TO public;
 GO
 
 REVOKE EXECUTE ON XML SCHEMA COLLECTION::scm TO public;
+GO
+
+REVOKE EXECUTE ON SCHEMA::scm2 TO [babel-6067-u1];
 GO
 
 ---
@@ -446,8 +477,13 @@ GO
 ---
 ---  Clean Up
 ---
+DROP PROCEDURE IF EXISTS scm2.babel_6067_p1;
+GO
 
 DROP SCHEMA scm;
+GO
+
+DROP SCHEMA scm2;
 GO
 
 DROP VIEW IF EXISTS my_view;
@@ -466,4 +502,13 @@ DROP PROCEDURE IF EXISTS my_proc;
 GO
 
 DROP TYPE IF EXISTS type_int;
+GO
+
+DROP USER IF EXISTS [babel-6067-u1];
+GO
+
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel-6067-l1')
+BEGIN
+    DROP LOGIN [babel-6067-l1];
+END
 GO

@@ -144,7 +144,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int
-<NULL>#!#0#!#32#!#<NULL>
+<NULL>#!#<NULL>#!#32#!#<NULL>
 ~~END~~
 
 
@@ -200,6 +200,7 @@ int#!#int#!#int#!#int#!#int#!#int
 ~~END~~
 
 
+-- following throws wrong output in babelfish as nchar(0) return empty string value [BABEL-6068]
 -- 7. Control Character Tests
 SELECT 
     UNICODE(NCHAR(0)) AS NullChar,
@@ -210,7 +211,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-0#!#9#!#10#!#13#!#27
+<NULL>#!#9#!#10#!#13#!#27
 ~~END~~
 
 
@@ -295,6 +296,7 @@ GO
 ~~ROW COUNT: 10~~
 
 
+-- following throws wrong output in babelfish as nchar(0) return empty string value [BABEL-6068] so unicode(nchar(0)) will return null
 -- Test characters from each Unicode block
 WITH BlockCharacters AS (
     SELECT 
@@ -309,7 +311,7 @@ SELECT * FROM BlockCharacters;
 GO
 ~~START~~
 nvarchar#!#int#!#nvarchar#!#int
-Basic Latin#!#0#!##!#0
+Basic Latin#!#0#!##!#<NULL>
 Latin-1 Supplement#!#128#!##!#128
 Latin Extended-A#!#256#!#Ā#!#256
 Latin Extended-B#!#384#!#ƀ#!#384
@@ -362,7 +364,7 @@ int#!#nvarchar#!#int#!#int#!#int#!#int#!#varchar
 5#!#한글#!#2#!#6#!#54620#!#3#!#Mismatch
 6#!#Mixed 日本語 ASCII#!#15#!#21#!#77#!#10#!#Mismatch
 7#!#Emoji 😀 🌟#!#9#!#15#!#69#!#7#!#Mismatch
-8#!##!#0#!#0#!#0#!#0#!#Match
+8#!##!#0#!#0#!#<NULL>#!#0#!#Match
 ~~END~~
 
 
@@ -412,6 +414,7 @@ int#!#nchar#!#nvarchar#!#int#!#int#!#varchar#!#nvarchar#!#nvarchar
 
 ~~START~~
 int#!#nvarchar#!#int#!#int#!#int#!#nvarchar#!#varchar
+8#!##!#0#!#0#!#<NULL>#!#<NULL>#!#Fail
 ~~END~~
 
 

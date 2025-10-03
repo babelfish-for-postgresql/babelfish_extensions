@@ -1,0 +1,15 @@
+-- tsql
+drop view v6031_new;
+go
+
+drop view v6031_existing;
+go
+
+drop table t6031_1;
+go
+
+drop user l6031_1;
+go
+
+drop login l6031_1;
+go

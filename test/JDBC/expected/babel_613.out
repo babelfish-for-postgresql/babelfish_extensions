@@ -66,10 +66,10 @@ numeric
 select sqrt(a) from t1;
 go
 ~~START~~
-numeric
-2.00000000
-3.18172908
-1.09544511
+float
+2.0
+3.181729089661783
+1.0954451150103321
 <NULL>
 ~~END~~
 
