@@ -659,9 +659,6 @@ InstallExtendedHooks(void)
 	prev_post_relation_open_hook = post_relation_open_hook;
 	post_relation_open_hook = repair_view_table;
 
-	walk_view_rule_hook = mark_nodes_inside_view;
-
-	handle_target_view_hook = tsql_handle_target_view_hook;
 }
 
 void
@@ -741,7 +738,6 @@ UninstallExtendedHooks(void)
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 	// pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
 	post_relation_open_hook = prev_post_relation_open_hook;
-	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
 	#ifdef USE_LIBXML
 	openxml_set_namespaces_hook = prev_openxml_set_namespaces_hook;
 	#endif

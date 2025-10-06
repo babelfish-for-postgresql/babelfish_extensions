@@ -48,5 +48,9 @@ extern bool repair_broken_views_raw(Node *rawNode);
 extern bool is_view_being_repaired(Oid viewOid);
 extern void get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
 extern void extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count);
+extern bool repair_broken_view_recursive(Oid viewOid, List *visitedViews);
+extern bool repair_broken_views(Query *parsetree);
+extern bool repair_broken_views_raw(Node *rawNode);
+extern bool is_view_being_repaired(Oid viewOid);
 #endif
 
