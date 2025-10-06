@@ -91,7 +91,7 @@ DECLARE
     exception_message text;
 BEGIN
     IF (SELECT count(*) FROM pg_proc as p where p.pronamespace = 'sys'::regnamespace::oid AND p.proname = 'round' AND p.pronargs = 3 AND p.proargtypes[0] = 'pg_catalog.numeric'::regtype AND p.proargtypes[1] = 'integer'::regtype AND p.proargtypes[2] = 'integer'::regtype AND p.prorettype = 'sys.decimal'::regtype) = 0 THEN
-        ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) 
+        ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) 
         RENAME TO bbf_numeric_trunc_deprecated_5_5_0;
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_trunc_deprecated_5_5_0');
     END IF;
