@@ -1728,7 +1728,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (funcName &&
 						is_namespace_sys_or_pg_catalog(func_namespace_oid))
 					{
-						if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)))
+						if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)) ||
+							(strlen(funcName) == 34 && (strncmp(funcName, "bbf_numeric_round_deprecated_5_2_0", 34) == 0)) ||
+							(strlen(funcName) == 34 && (strncmp(funcName, "bbf_numeric_trunc_deprecated_5_2_0", 34) == 0)))
 						{
 							if (list_length(func->args) >= 1)
 							{
