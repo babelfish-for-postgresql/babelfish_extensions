@@ -1238,25 +1238,6 @@ get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
 }
 
 /*
- * get_typmod_from_func_arg()
- * This function retrieves the typmod from the first argument of a function.
- * If the typmod cannot be determined, it returns -1.
- */
-static int32
-get_typmod_from_func_arg(Plan *plan, bool *found_typmod, List *args)
-{
-	int32		rettypmod = -1;
-	Node		*arg = NULL;
-
-	if (list_length(args) >= 1)
-	{
-		arg = linitial(args);
-		rettypmod = resolve_numeric_typmod_from_exp(plan, arg, found_typmod);
-	}
-	return rettypmod;
-}
-
-/*
  * is_namespace_sys_or_pg_catalog
  * Returns true if the given namespace Oid is either sys or pg_catalog.
  */
@@ -1749,19 +1730,25 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					{
 						if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)))
 						{
-							int32 argtypmod = get_typmod_from_func_arg(plan, &found_typmod, func->args);
+							if (list_length(func->args) >= 1)
+							{
+								arg = linitial(func->args);
+								rettypmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
+							}
 							if (!found_typmod)
 							{
 								if (found != NULL) *found = false;
 							}
-							if (argtypmod != -1)
+							if (rettypmod != -1)
 							{
 								pfree(funcName);
-								return argtypmod;
+								return rettypmod;
 							}
 						}
 						/* TODO: handle more functions if needed */
 					}
+					if (funcName)
+						pfree(funcName);
 				}
 
 				if (rettypmod == -1)
