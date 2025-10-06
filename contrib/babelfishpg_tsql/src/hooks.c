@@ -94,6 +94,14 @@
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
 #include "bbf_parallel_query.h"
+#include "extendedproperty.h"
+#include "utils/xml.h"
+
+#ifdef USE_LIBXML
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+#endif							/* USE_LIBXML */
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 
@@ -117,6 +125,7 @@ typedef enum PltsqlInitPrivsOptions
 	DISCARD_INIT_PRIVS,
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
+
 
 /*****************************************
  * 			General Hooks
@@ -261,6 +270,10 @@ static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
 static Oid get_domain_typmodin(Type typ);
+static void pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf);
+#ifdef USE_LIBXML
+static void openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str);
+#endif
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -327,6 +340,7 @@ static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static replace_pltsql_function_defaults_hook_type prev_replace_pltsql_function_defaults_hook = NULL;
 static exprTypmod_hook_type prev_exprTypmod_hook = NULL;
+static pre_transform_openxml_columns_hook_type prev_pre_transform_openxml_columns_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
@@ -362,6 +376,9 @@ static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_
 static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
+#ifdef USE_LIBXML
+static openxml_set_namespaces_hook_type prev_openxml_set_namespaces_hook = NULL;
+#endif
 
 /*****************************************
  * 			Install / Uninstall
@@ -490,6 +507,14 @@ InstallExtendedHooks(void)
 
 	prev_exprTypmod_hook = exprTypmod_hook;
 	exprTypmod_hook = pltsql_exprTypmod;
+
+	prev_pre_transform_openxml_columns_hook = pre_transform_openxml_columns_hook;
+	pre_transform_openxml_columns_hook = pre_transform_openxml_columns;
+
+	#ifdef USE_LIBXML
+	prev_openxml_set_namespaces_hook = openxml_set_namespaces_hook;
+	openxml_set_namespaces_hook = openxml_set_namespaces;
+	#endif
 
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
@@ -663,6 +688,7 @@ UninstallExtendedHooks(void)
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = prev_replace_pltsql_function_defaults_hook;
 	exprTypmod_hook = prev_exprTypmod_hook;
+	pre_transform_openxml_columns_hook = prev_pre_transform_openxml_columns_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
@@ -697,6 +723,9 @@ UninstallExtendedHooks(void)
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
+	#ifdef USE_LIBXML
+	openxml_set_namespaces_hook = prev_openxml_set_namespaces_hook;
+	#endif
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -6927,6 +6956,242 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 	}
 	return result_typmod;
 }
+
+/*
+ * fetch_table_schema - Extract column metadata from a table for OPENXML processing
+ *
+ * This function retrieves column definitions from an existing table and transforms
+ * them into RangeTableFuncCol nodes with appropriate XPath expressions. It handles
+ * column name, type information, and creates expressions using tsql_openxml_get_colpattern function.
+ * 
+ * Parameters:
+ *   relation - The table to extract schema information from
+ *   flag - The OPENXML flag parameter that controls XML mapping behavior
+ *
+ * Returns:
+ *   List of RangeTableFuncCol nodes representing the table's columns
+ */
+static List *
+fetch_table_schema(RangeVar *relation, Node *flag)
+{
+	List *columns = NIL;
+	
+	if (relation != NULL)
+	{
+		Relation    rel;
+		ScanKeyData skey[1];
+		SysScanDesc scan;
+		HeapTuple   tuple;
+		Relation    attrel;
+		
+		/* Open the relation to get its schema */
+		rel = relation_openrv(relation, AccessShareLock);
+		
+		if (rel == NULL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("table \"%s\" does not exist", 
+							relation->relname)));
+		}
+		
+		/* Open pg_attribute catalog */
+		attrel = table_open(AttributeRelationId, AccessShareLock);
+		
+		/* Set up scan key for this relation */
+		ScanKeyInit(&skey[0],
+					Anum_pg_attribute_attrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(RelationGetRelid(rel)));
+		
+		scan = systable_beginscan(attrel, AttributeRelidNumIndexId, true,
+								  NULL, 1, skey);
+		
+		/* Process each column */
+		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+		{
+			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+			RangeTableFuncCol *fc;
+			char *colname;
+			ArrayType *attoptions;
+			Datum datum;
+			bool isnull;
+			
+			/* Skip dropped columns, system columns and identity columns */
+			if (att->attisdropped || att->attnum <= 0 || att->attidentity)
+				continue;
+			
+			/* Get original column name from attoptions */
+			datum = heap_getattr(tuple, Anum_pg_attribute_attoptions,
+								 RelationGetDescr(attrel), &isnull);
+			
+			if (!isnull)
+			{
+				attoptions = DatumGetArrayTypeP(datum);
+				colname = get_value_by_name_from_array(attoptions, ATTOPTION_BBF_ORIGINAL_NAME);
+			}
+			else
+			{
+				colname = pstrdup(NameStr(att->attname));
+			}
+			
+			/* Create a column definition */
+			fc = makeNode(RangeTableFuncCol);
+			fc->colname = pstrdup(colname);
+			
+			/* Create a TypeName node for the column type */
+			fc->typeName = makeTypeNameFromOid(att->atttypid, att->atttypmod);
+			
+			/* Set the column expression to the generated XPath */
+			fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), list_make2(makeStringConst(colname, -1), flag), COERCE_EXPLICIT_CALL, -1);
+			fc->coldefexpr = NULL;
+			fc->location = -1;
+			
+			columns = lappend(columns, fc);
+		}
+		
+		systable_endscan(scan);
+		table_close(attrel, AccessShareLock);
+		relation_close(rel, AccessShareLock);
+	}
+
+	return columns;
+}
+
+/*
+ * pre_transform_openxml_columns - Transform OPENXML syntax to XMLTABLE-compatible format
+ *
+ * This hook function converts TSQL OPENXML syntax into PostgreSQL XMLTABLE format
+ * by transforming the RangeTableFunc structure. It extracts the document handle
+ * and flag from the namespaces list, creates a document expression using
+ * tsql_openxml_get_xmldoc, and generates appropriate XPath column expressions
+ * using tsql_openxml_get_colpattern for TSQL compatibility.
+ */
+static void
+pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
+{
+	Node       *tsql_docid_node;
+	Node       *tsql_flag;
+	RangeVar   *table_ref;
+	ResTarget  *res = makeNode(ResTarget);
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	tsql_docid_node = rtf->docexpr;
+	tsql_flag = linitial(rtf->namespaces);
+
+	rtf->namespaces = NIL;
+	rtf->docexpr = NULL;
+
+	/* Storing doc_id in the rtf->namespaces field */
+	res->name = pstrdup("openxml_doc_id");
+	res->name_location = -1;
+	res->indirection = NIL;
+	res->val = tsql_docid_node;
+	res->location = -1;
+	rtf->namespaces = list_make1(res);
+
+	/* 
+	 * Set the document expression to retrieve the XML document using the document handle.
+	 * This creates a function call to tsql_openxml_get_xmldoc which retrieves the  previously
+	 * prepared XML document based on the document ID from sp_xml_preparedocument.
+	 */
+	rtf->docexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_xmldoc")), list_make1(tsql_docid_node), COERCE_EXPLICIT_CALL, -1);
+
+	if (rtf->columns != NIL)
+	{
+		Node  *first_col = linitial(rtf->columns);
+		
+		/* Check if we have exactly one column and it's a table reference */
+		if (list_length(rtf->columns) == 1 && IsA(first_col, RangeVar))
+		{
+			table_ref = (RangeVar *) first_col;
+			/* Fetch the table schema and generate column definitions with appropriate XPath expressions */
+			rtf->columns = fetch_table_schema(table_ref, tsql_flag);
+		}
+		else
+		{
+			ListCell *lc;
+			
+			foreach(lc, rtf->columns)
+			{
+				RangeTableFuncCol *fc = (RangeTableFuncCol *) lfirst(lc);
+
+				/* If no column expression is provided, generate one based on the flag */
+				if(fc->colexpr == NULL && tsql_flag != NULL)
+				{
+					/* 
+					 * To get original column name, utilize location of ColumnDef and query string. 
+					 * For colexpr, we need orignal name of columns (no downcase or uppercase) 
+					 */
+					const char *column_name_start = pstate->p_sourcetext + fc->location;
+					char	   *original_name = extract_identifier(column_name_start, NULL);
+
+					if (original_name == NULL)
+						original_name = fc->colname;
+					/*
+					 * Create an XPath expression for the column using tsql_openxml_get_colpattern.
+					 * This builds a function call to generate the appropriate XPath pattern
+					 * based on the column name and the OPENXML flag parameter
+					 */
+					fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), list_make2(makeStringConst(original_name, -1), tsql_flag), COERCE_EXPLICIT_CALL, -1);
+				}
+			}
+		}
+	}
+}
+
+#ifdef USE_LIBXML
+static void
+openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str)
+{
+	int	               doc_id;
+	xmltype	              *ns_data;
+	char	             **ns_names;
+	char	             **ns_uris;
+	int                    ns_count;
+
+	/*
+	 * We will reach here in only two cases, Either when using function XMLTable or OPENXML. 
+	 * And since XMLTable syntax is not supported by ANTLR, single dialect check is enough
+	 * to identify that this is for OPENXML.
+	 */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	doc_id = pg_strtoint32(doc_id_str);
+	get_xml_data_and_namespace_data(doc_id, NULL, &ns_data);
+	if (ns_data == NULL)
+		return;
+
+	extract_namespaces_from_xml(ns_data, &ns_names, &ns_uris, &ns_count);
+
+	/* register namespaces, if any */
+	if (ns_count > 0)
+	{
+		for (int i = 0; i < ns_count; i++)
+		{
+			char	*ns_name;
+			char	*ns_uri;
+
+			if (ns_names[i] == NULL || ns_uris[i] == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("neither namespace name nor URI may be null")));
+
+			ns_name = ns_names[i];
+			ns_uri = ns_uris[i];
+
+			if (xmlXPathRegisterNs(xpathctx,
+								   pg_xmlCharStrndup_wrapper(ns_name, strlen(ns_name)),
+								   pg_xmlCharStrndup_wrapper(ns_uri, strlen(ns_uri))) != 0)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_DATA_EXCEPTION,
+							"could not set XML namespace");
+		}
+	}
+}
+#endif
 
 /*
  * pltsql_ExecUpdateResultTypeTL
