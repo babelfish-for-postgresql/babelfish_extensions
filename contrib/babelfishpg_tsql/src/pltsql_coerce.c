@@ -1357,8 +1357,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				TargetEntry	*tle;
 				int		rettypmod;
 				bool		found_typmod;
-				int32 		fixlen_default_typmod;
-				Oid			immediate_base_type;
 
 				/* If the current node is a subqueryscan,
 				 * find the original target list entry from subplan.
@@ -1436,7 +1434,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (var->vartypmod == -1)
 				{
 					/* UDT handling in T_var */
-					immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
+					Oid	immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
 					if (OidIsValid(immediate_base_type))
 					{
 						int32 typmod = -1;
@@ -1445,7 +1443,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							return typmod;
 						else
 						{
-							fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(immediate_base_type);
+							int32	fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(immediate_base_type);
 							if (fixlen_default_typmod != -1)
 								return fixlen_default_typmod;
 						}
@@ -1461,7 +1459,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 */
 					if (plan || (plan == NULL && (var->varno == INNER_VAR || var->varno == OUTER_VAR)))
 					{
-						fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(var->vartype);
+						int32	fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(var->vartype);
 						if (fixlen_default_typmod != -1)
 							return fixlen_default_typmod;
 					}
