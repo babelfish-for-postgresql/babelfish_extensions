@@ -296,7 +296,7 @@ float
 select ROUND(10.1234567, 5);
 ~~START~~
 numeric
-10.12346.00
+10.1234600
 ~~END~~
 
 

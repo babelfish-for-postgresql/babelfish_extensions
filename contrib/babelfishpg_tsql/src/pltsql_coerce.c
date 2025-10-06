@@ -1253,10 +1253,6 @@ get_typmod_from_func_arg(Plan *plan, bool *found_typmod, List *args)
 		arg = linitial(args);
 		rettypmod = resolve_numeric_typmod_from_exp(plan, arg, found_typmod);
 	}
-	else if (found_typmod != NULL)
-	{
-		*found_typmod = false;
-	}
 	return rettypmod;
 }
 
