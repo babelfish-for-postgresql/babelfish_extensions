@@ -41,5 +41,9 @@ extern char *update_delete_target_alias;
 extern bool sp_describe_first_result_set_inprogress;
 extern bool handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, bool is_alter_view);
 extern bool check_view_binding_dependencies(Query *viewParse);
+extern bool repair_broken_view_recursive(Oid viewOid, List *visitedViews);
+extern bool repair_broken_views(Query *parsetree);
+extern bool repair_broken_views_raw(Node *rawNode);
+extern bool is_view_being_repaired(Oid viewOid);
 #endif
 

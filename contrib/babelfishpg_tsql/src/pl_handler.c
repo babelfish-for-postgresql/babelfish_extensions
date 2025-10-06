@@ -778,6 +778,10 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				}
 				break;
 			}
+		// case T_SelectStmt:
+		// 	{
+		// 		repair_broken_views_raw(parseTree->stmt);
+		// 	}
 		default:
 			break;
 	}
@@ -3166,7 +3170,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			
 					PG_TRY();
 					{
-						StartTransactionCommand();
+						if(is_view_repair == 0)
+							StartTransactionCommand();
 						pltsql_current_query_is_view_definition = true;
 						
 						/* Without this, DDL event triggers won't fire for ALTER VIEW operations
@@ -3223,8 +3228,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							/* Create new view */
 							stmt->replace = true; 
 							if (prev_ProcessUtility)
+							{
+								is_view_repair = is_view_repair + 1;
 								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
+							}
 							else
 								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 														queryEnv, dest, qc);							
@@ -3235,17 +3243,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							address.classId = RelationRelationId;
 							address.objectSubId = 0;
 							
+							if(!is_view_being_repaired(oldViewOid))
+							{
 							/* Store the view definition in babelfish_view_def */
-							if(store_view_definition_hook)
-								store_view_definition_hook(queryString, address);
-
+								if(store_view_definition_hook)
+									store_view_definition_hook(queryString, address);
+							}
 							/* Update ACL info */
 							pg_class_update_acl(address.objectId, oldViewAcl);
 
 							if(oldViewAcl != NULL)
 								pfree(oldViewAcl);
 						}
-						CommitTransactionCommand();
+						if(is_view_repair == 0)
+							CommitTransactionCommand();
 					}
 					PG_FINALLY();
 					{

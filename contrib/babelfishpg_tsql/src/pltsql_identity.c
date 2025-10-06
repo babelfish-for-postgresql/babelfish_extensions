@@ -52,6 +52,7 @@ typedef struct ScopeIdentityStack
  * to set the max/min(current identity value, new identity value to be inserted.
  */
 bool		pltsql_setval_identity_mode = false;
+int 	  	is_view_repair = 0;
 
 static HTAB *seqhashtabidentity = NULL;
 
