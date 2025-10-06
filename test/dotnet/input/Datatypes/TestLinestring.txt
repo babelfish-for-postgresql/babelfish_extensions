@@ -1,0 +1,99 @@
+CREATE TABLE LINEGEOM_dt(location GEOMETRY);
+prepst#!#INSERT INTO LINEGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|LINESTRING(1 2, 1 2):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING EMPTY:4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4, 2 5, 4 6):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING ZM (1 2 3 4, 3 4 4 5):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING ZM (1 2 3 4, 3 4 4 5, 2 4 3 4, 4 5 6 7):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING M (1 2 4, 3 4 4):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING M (1 2 4, 3 4 4, 2 4 5, 6 8 9):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 3 3, 5 7 4, 4 5 7):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 3 3, 5 7 4):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING Z (1 3 3, 5 7 4, 4 5 7):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING Z (1 3 3, 5 7 4):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING (1 3 2, 5 7 6 , 4 5):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(4 5 2, 1 1 3, 2 2 5, 3 3 2  , 4 4  4, 5 5, 6 6  5 , 7 7   , 8 8, 9 9 4 , 10 10 4):4326
+#next seven lines are not allowed
+#prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 3 3, 5 3 4 ):1000000000
+#prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 3 3, 5 7 4):-1
+#prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 3 3, 5 7 4):<NULL>
+#prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 3 3, 5 7 4):10000000003
+#prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 3 3, 5 ):4326
+#prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING:4326
+#prepst#!#exec#!#GEOMETRY|-|location|-|<NULL>:4326
+
+CREATE TABLE LINEGEOG_dt(location GEOGRAPHY);
+prepst#!#INSERT INTO LINEGEOG_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 1 2):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING EMPTY:4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4, 2 5, 4 6):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING ZM (1 2 3 4, 3 4 4 5):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING ZM (1 2 3 4, 3 4 4 5, 2 4 3 4, 4 5 6 7):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING M (1 2 4, 3 4 4):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING M (1 2 4, 3 4 4, 2 4 5, 6 8 9):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 3 3, 5 7 4, 4 5 7):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 3 3, 5 7 4):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING Z (1 3 3, 5 7 4, 4 5 7):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING Z (1 3 3, 5 7 4):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING (1 3 2, 5 7 6 , 4 5):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(4 5 2, 1 1 3, 2 2 5, 3 3 2  , 4 4  4, 5 5, 6 6  5 , 7 7   , 8 8, 9 9 4 , 10 10 4):4326
+#next seven lines are not allowed
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 3 3, 5 3 4 ):1000000000
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 3 3, 5 7 4):-1
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 3 3, 5 7 4):<NULL>
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 3 3, 5 7 4):10000000003
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 3 3, 5 ):4326
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING:4326
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|<NULL>:4326
+
+INSERT INTO LINEGEOM_dt(location) values(geometry::STGeomFromText('LINESTRING (1 2 NULL 4, 3 4  NULL 4)', 4326))
+INSERT INTO LINEGEOM_dt(location) values(geometry::STGeomFromText('LINESTRING (1 2 4 7, 3 4 4 8, 6 6 8 9)', 4326))
+INSERT INTO LINEGEOM_dt(location) values(geometry::STLineFromText('LINESTRING (1 2 4, 3 4 4)', 4326))
+INSERT INTO LINEGEOM_dt(location) values(geometry::STLineFromText('LINESTRING (1 2, 3 4, 5 4)', 4326))
+INSERT INTO LINEGEOM_dt(location) values(geometry::STLineFromText('LINESTRING EMPTY', 4326))
+
+INSERT INTO LINEGEOG_dt(location) values(geography::STGeomFromText('LINESTRING (1 2 NULL 4, 3 4 NULL 8)', 4326))
+INSERT INTO LINEGEOG_dt(location) values(geography::STGeomFromText('LINESTRING (1 2 4 3, 5 6 8 2, 6 3 4 4)', 4326))
+INSERT INTO LINEGEOG_dt(location) values(geography::STLineFromText('LINESTRING (1 2 4, 3 4 4)', 4326))
+INSERT INTO LINEGEOG_dt(location) values(geography::STLineFromText('LINESTRING (1 2 , 4 6)', 4326))
+INSERT INTO LINEGEOG_dt(location) values(geography::STLineFromText('LINESTRING EMPTY', 4326))
+
+CREATE TABLE LINE_dt(geom GEOMETRY, geog GEOGRAPHY);
+
+prepst#!#INSERT INTO LINE_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|LINESTRING ZM (1 2 3 4, 3 4 4 5, 2 4 3 4, 4 5 6 7):4326
+prepst#!#INSERT INTO LINE_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|LINESTRING M (1 2 4, 3 4 4):4326
+prepst#!#INSERT INTO LINE_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|LINESTRING Z (1 3 3, 5 7 4, 4 5 7):4326
+prepst#!#INSERT INTO LINE_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|LINESTRING(1 2, 3 4):4326
+prepst#!#INSERT INTO LINE_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|LINESTRING EMPTY:4326
+
+prepst#!#INSERT INTO LINE_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|LINESTRING ZM (1 2 3 4, 3 4 4 5, 2 4 3 4, 4 5 6 7):4326
+prepst#!#INSERT INTO LINE_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|LINESTRING M (1 2 4, 3 4 4):4326
+prepst#!#INSERT INTO LINE_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|LINESTRING Z (1 3 3, 5 7 4, 4 5 7):4326
+prepst#!#INSERT INTO LINE_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|LINESTRING(1 2, 3 4):4326
+prepst#!#INSERT INTO LINE_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|LINESTRING EMPTY:4326
+
+SELECT * FROM  LINEGEOM_dt;
+SELECT * FROM  LINEGEOG_dt;
+SELECT * FROM  LINE_dt;
+SELECT geom.STAsText(), geog.STAsText() FROM LINE_dt;
+SELECT geom.STDimension(), geog.STDimension() FROM LINE_dt;
+SELECT geom.STIsClosed(), geog.STIsClosed() FROM LINE_dt;
+SELECT geom.STIsValid(), geog.STIsValid() FROM LINE_dt;
+SELECT geom.STArea(), geog.STArea() FROM LINE_dt;
+
+CREATE TABLE LINE_EMP_dt(geom GEOMETRY, geog GEOGRAPHY);
+prepst#!#INSERT INTO LINE_EMP_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|LINESTRING EMPTY:4326
+prepst#!#INSERT INTO LINE_EMP_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|LINESTRING EMPTY:4326
+prepst#!#INSERT INTO LINE_EMP_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|LINESTRING EMPTY:0
+prepst#!#INSERT INTO LINE_EMP_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|LINESTRING EMPTY:4121
+SELECT geom.STAsText(), geog.STAsText() FROM LINE_EMP_dt;
+SELECT geom.STDimension(), geog.STDimension() FROM LINE_EMP_dt;
+SELECT geom.STIsClosed(), geog.STIsClosed() FROM LINE_EMP_dt;
+SELECT geom.STIsValid(), geog.STIsValid() FROM LINE_EMP_dt;
+SELECT geom.STAsBinary(), geog.STAsBinary() FROM LINE_EMP_dt;
+SELECT geom.STArea(), geog.STArea() FROM LINE_EMP_dt;
+
+DROP TABLE IF EXISTS LINEGEOM_dt;
+DROP TABLE IF EXISTS LINEGEOG_dt;
+DROP TABLE IF EXISTS LINE_dt;
+DROP TABLE IF EXISTS LINE_EMP_dt;

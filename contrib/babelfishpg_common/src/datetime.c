@@ -31,6 +31,7 @@ PG_FUNCTION_INFO_V1(date_datetime);
 PG_FUNCTION_INFO_V1(time_datetime);
 PG_FUNCTION_INFO_V1(timestamp_datetime);
 PG_FUNCTION_INFO_V1(varbinary_datetime);
+PG_FUNCTION_INFO_V1(datetime_varbinary);
 PG_FUNCTION_INFO_V1(timestamptz_datetime);
 PG_FUNCTION_INFO_V1(datetime_varchar);
 PG_FUNCTION_INFO_V1(varchar_datetime);
@@ -908,6 +909,85 @@ varbinary_datetime(PG_FUNCTION_ARGS)
 	result = roundoff_datetime(result);
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
+}
+
+/* 
+ * datetime_varbinary()
+ * Convert datetime to varbinary
+ */
+Datum
+datetime_varbinary(PG_FUNCTION_ARGS)
+{
+	Timestamp		ts = PG_GETARG_TIMESTAMP(0);
+	int32			typmod = PG_GETARG_INT32(1);
+	bool			isExplicit = PG_GETARG_BOOL(2);
+	int64			days,
+					time_part,
+					total_ms;
+	struct pg_tm	tt,
+					*tm = &tt;
+	fsec_t			fsec;
+	bytea			*result;
+
+	if (!isExplicit)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("Implicit conversion from data type datetime to "
+						"varbinary is not allowed. Use the CONVERT function "
+						"to run this query.")));
+
+	if (TIMESTAMP_NOT_FINITE(ts) || timestamp2tm(ts, NULL, tm, &fsec, NULL, NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("datetime out of range")));
+
+	if (ts < TSQL_DEFAULT_DATETIME)
+		days = DATEPART_MIN_VALUE + ((ts - MIN_DATETIME) / USECS_PER_DAY);
+	else
+		days = (ts - TSQL_DEFAULT_DATETIME) / USECS_PER_DAY;
+
+	/* Calculate total milliseconds from time portion */
+	total_ms = (tm->tm_hour * 3600000LL) +
+				(tm->tm_min * 60000LL) +
+				(tm->tm_sec * 1000LL) +
+				(fsec / 1000);
+
+	/* Convert to TSQL 300ths of a second ticks */
+	time_part = (total_ms * 3LL + 5LL) / 10LL;
+
+	/* Convert to little-endian */
+	days = pg_hton32(days);
+	time_part = pg_hton32(time_part);
+
+	if (typmod < 8 + VARHDRSZ && typmod > VARHDRSZ)
+	{
+		int32 result_size = typmod - VARHDRSZ;
+		result = (bytea *) palloc0(VARHDRSZ + result_size);
+		SET_VARSIZE(result, VARHDRSZ + result_size);
+
+		if (result_size <= 4)
+		{
+			/* Copy only time_part to the bytea result */
+			memcpy(VARDATA(result), (char *)&time_part + (4 - result_size), result_size);
+		}
+		else
+		{
+			/* Copy the parts to the bytea result */
+			memcpy(VARDATA(result), (char *)&days + (4 - (result_size - 4)), result_size - 4);
+			memcpy(VARDATA(result) + (result_size - 4), &time_part, 4);
+		}
+	}
+	else
+	{
+		result = (bytea *) palloc0(VARHDRSZ + 8);
+		SET_VARSIZE(result, VARHDRSZ + 8);
+
+		/* Copy the parts to the bytea result */
+		memcpy(VARDATA(result), &days, 4);
+		memcpy(VARDATA(result) + 4, &time_part, 4);
+	}
+
+	PG_RETURN_BYTEA_P(result);
 }
 
 /* timestamptz_datetime()

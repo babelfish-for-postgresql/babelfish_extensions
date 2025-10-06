@@ -1,0 +1,179 @@
+-- tsql
+
+-- Following setup commands from prepare_1 are required:
+create login l6030_1 with password='12345678';
+go
+
+create user l6030_1;
+go
+
+-- create following objects in [schema]dbo [owner]dbo
+create table t6030_1(a int);
+go
+
+create table t6030_2(a int);
+go
+
+create view v6030_a as select * from t6030_1;
+go
+
+-- setup another object owner and objects owned by it
+create login l6030_2 with password='12345678';
+go
+
+create user owner6030_b for login l6030_2;
+go
+
+create schema sch6030_b authorization owner6030_b;
+go
+
+-- create following objects in [schema]schema6030_b [owner]owner6030_b
+create table sch6030_b.t6030_1(a int);
+go
+
+create table sch6030_b.t6030_2(a int);
+go
+
+-- setup owner6030_c
+create login l6030_3 with password='****';
+go
+
+create user owner6030_c for login l6030_3;
+go
+
+create schema sch6030_c authorization owner6030_c;
+go
+
+-- create following objects in [schema]schema6030_c [owner]owner6030_c
+create table sch6030_c.t6030_1(a int);
+go
+
+create table sch6030_c.t6030_2(a int);
+go
+
+-- Now proceeding with procedure/function test cases
+-- CASE 8: Simple Object References Inside Procedures/Functions
+-- CASE 8.1: Procedure referring single table
+CREATE PROCEDURE p6030_8_1 AS SELECT * FROM t6030_1;
+GO
+
+-- CASE 8.2: Procedure referring multiple joined tables
+CREATE PROCEDURE p6030_8_2 AS 
+SELECT t1.a, t2.a as b FROM t6030_1 t1, t6030_2 t2;
+GO
+
+-- CASE 8.3: Procedure calling another procedure
+CREATE PROCEDURE p6030_8_3a AS SELECT * FROM t6030_1;
+GO
+CREATE PROCEDURE p6030_8_3b AS EXEC p6030_8_3a;
+GO
+
+-- CASE 8.4: Function referring table
+CREATE FUNCTION f6030_8_4() 
+RETURNS TABLE 
+AS RETURN SELECT * FROM t6030_1;
+GO
+
+-- CASE 9: DML Operations Inside Procedures
+-- CASE 9.1: INSERT operation
+CREATE PROCEDURE p6030_9_1 AS 
+INSERT INTO t6030_1 VALUES (1);
+GO
+
+-- CASE 9.2: UPDATE operation
+CREATE PROCEDURE p6030_9_2 AS 
+UPDATE t6030_1 SET a = 2 WHERE a = 1;
+GO
+
+-- CASE 9.3: DELETE operation
+CREATE PROCEDURE p6030_9_3 AS 
+DELETE FROM t6030_1 WHERE a = 1;
+GO
+
+-- CASE 10: Complex Scenarios
+-- CASE 10.1: Procedure with transaction
+CREATE PROCEDURE p6030_10_1 AS 
+BEGIN TRANSACTION
+INSERT INTO t6030_1 VALUES (1);
+INSERT INTO t6030_2 VALUES (1);
+COMMIT;
+GO
+
+-- CASE 10.2: Procedure with error handling
+CREATE PROCEDURE p6030_10_2 AS 
+BEGIN TRY
+    INSERT INTO t6030_1 VALUES (1);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH;
+GO
+
+-- CASE 11: Cross-Schema References
+-- CASE 11.1: Procedure in dbo accessing sch6030_b table
+CREATE PROCEDURE p6030_11_1 AS 
+SELECT * FROM sch6030_b.t6030_1;
+GO
+
+-- CASE 11.2: Procedure in sch6030_b accessing dbo table
+CREATE PROCEDURE sch6030_b.p6030_11_2 AS 
+SELECT * FROM dbo.t6030_1;
+GO
+
+-- CASE 12: Function Chain Scenarios
+-- CASE 12.1: Function calling another function
+CREATE FUNCTION f6030_12_1a() RETURNS INT AS 
+BEGIN RETURN 1; END;
+GO
+CREATE FUNCTION f6030_12_1b() RETURNS INT AS 
+BEGIN RETURN dbo.f6030_12_1a(); END;
+GO
+
+-- CASE 12.2: Function accessing view
+CREATE FUNCTION f6030_12_2() RETURNS TABLE AS 
+RETURN SELECT * FROM v6030_a;
+GO
+
+-- CASE 13: Dynamic SQL Inside Procedures
+-- CASE 13.1: Simple dynamic SQL
+CREATE PROCEDURE p6030_13_1 AS 
+EXEC('SELECT * FROM t6030_1');
+GO
+
+-- CASE 13.2: Parameterized dynamic SQL
+CREATE PROCEDURE p6030_13_2 @id int AS 
+EXEC sp_executesql N'SELECT * FROM t6030_1 WHERE a = @p1', 
+N'@p1 int', @id;
+GO
+
+-- Grant execute permissions to test user
+GRANT EXECUTE ON p6030_8_1 TO l6030_1;
+GO
+GRANT EXECUTE ON p6030_8_2 TO l6030_1;
+GO
+GRANT EXECUTE ON p6030_8_3b TO l6030_1;
+GO
+GRANT EXECUTE ON f6030_8_4 TO l6030_1;
+GO
+GRANT EXECUTE ON p6030_9_1 TO l6030_1;
+GO
+GRANT EXECUTE ON p6030_9_2 TO l6030_1;
+GO
+GRANT EXECUTE ON p6030_9_3 TO l6030_1;
+GO
+GRANT EXECUTE ON p6030_10_1 TO l6030_1;
+GO
+GRANT EXECUTE ON p6030_10_2 TO l6030_1;
+GO
+GRANT EXECUTE ON p6030_11_1 TO l6030_1;
+GO
+GRANT EXECUTE ON sch6030_b.p6030_11_2 TO l6030_1;
+GO
+GRANT EXECUTE ON f6030_12_1b TO l6030_1;
+GO
+GRANT EXECUTE ON f6030_12_2 TO l6030_1;
+GO
+GRANT EXECUTE ON p6030_13_1 TO l6030_1;
+GO
+GRANT EXECUTE ON p6030_13_2 TO l6030_1;
+GO

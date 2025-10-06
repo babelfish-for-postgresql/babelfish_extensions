@@ -84,6 +84,7 @@
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
+#include "pltsql_permissions.h"
 #include "pl_explain.h"
 #include "catalog.h"
 #include "dbcmds.h"
@@ -93,6 +94,14 @@
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
 #include "bbf_parallel_query.h"
+#include "extendedproperty.h"
+#include "utils/xml.h"
+
+#ifdef USE_LIBXML
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+#endif							/* USE_LIBXML */
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 
@@ -119,6 +128,7 @@ typedef enum PltsqlInitPrivsOptions
 	DISCARD_INIT_PRIVS,
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
+
 
 /*****************************************
  * 			General Hooks
@@ -176,6 +186,9 @@ static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 static void transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt);
 static bool transform_unpivot_clause_recursive(Node **node, List **measure_cols, List **unpivot_src_cols);
+static void transform_tsql_select_statement(ParseState *pstate, SelectStmt *stmt);
+static void transform_percent_clause(ParseState *pstate, SelectStmt *stmt);
+static SelectStmt *handle_group_by_percent_count(SelectStmt *stmt);
 static List* filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **source_cols);
 // static bool repair_broken_views(Query *parsetree);
 
@@ -227,7 +240,7 @@ extern bool called_for_tsql_itvf_func();
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
-static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
+static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr);
 static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
 static bool pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan);
 
@@ -260,6 +273,10 @@ static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
 static Oid get_domain_typmodin(Type typ);
+static void pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf);
+#ifdef USE_LIBXML
+static void openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str);
+#endif
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -332,6 +349,7 @@ static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static replace_pltsql_function_defaults_hook_type prev_replace_pltsql_function_defaults_hook = NULL;
 static exprTypmod_hook_type prev_exprTypmod_hook = NULL;
+static pre_transform_openxml_columns_hook_type prev_pre_transform_openxml_columns_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
@@ -351,7 +369,7 @@ static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
-static transform_unpivot_clause_hook_type pre_transform_unpivot_clause_hook = NULL;
+static transform_tsql_select_stmt_hook_type pre_transform_tsql_select_stmt_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static called_for_tsql_itvf_func_hook_type prev_called_for_tsql_itvf_func_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
@@ -368,6 +386,9 @@ static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_
 static post_relation_open_hook_type prev_post_relation_open_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
+#ifdef USE_LIBXML
+static openxml_set_namespaces_hook_type prev_openxml_set_namespaces_hook = NULL;
+#endif
 
 /*****************************************
  * 			Install / Uninstall
@@ -500,6 +521,14 @@ InstallExtendedHooks(void)
 	prev_exprTypmod_hook = exprTypmod_hook;
 	exprTypmod_hook = pltsql_exprTypmod;
 
+	prev_pre_transform_openxml_columns_hook = pre_transform_openxml_columns_hook;
+	pre_transform_openxml_columns_hook = pre_transform_openxml_columns;
+
+	#ifdef USE_LIBXML
+	prev_openxml_set_namespaces_hook = openxml_set_namespaces_hook;
+	openxml_set_namespaces_hook = openxml_set_namespaces;
+	#endif
+
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
 
@@ -557,8 +586,8 @@ InstallExtendedHooks(void)
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
 	transform_pivot_clause_hook = transform_pivot_clause;
 
-	pre_transform_unpivot_clause_hook = transform_unpivot_clause_hook;
-	transform_unpivot_clause_hook = transform_unpivot_clause;
+	pre_transform_tsql_select_stmt_hook = transform_tsql_select_stmt_hook;
+	transform_tsql_select_stmt_hook = transform_tsql_select_statement;
 
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
@@ -630,6 +659,9 @@ InstallExtendedHooks(void)
 	prev_post_relation_open_hook = post_relation_open_hook;
 	post_relation_open_hook = repair_view_table;
 
+	walk_view_rule_hook = mark_nodes_inside_view;
+
+	handle_target_view_hook = tsql_handle_target_view_hook;
 }
 
 void
@@ -673,6 +705,7 @@ UninstallExtendedHooks(void)
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = prev_replace_pltsql_function_defaults_hook;
 	exprTypmod_hook = prev_exprTypmod_hook;
+	pre_transform_openxml_columns_hook = prev_pre_transform_openxml_columns_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
@@ -693,7 +726,7 @@ UninstallExtendedHooks(void)
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	get_bbf_admin_oid_hook = prev_get_bbf_admin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
-	transform_unpivot_clause_hook = pre_transform_unpivot_clause_hook;
+	transform_tsql_select_stmt_hook = pre_transform_tsql_select_stmt_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
@@ -708,6 +741,10 @@ UninstallExtendedHooks(void)
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 	// pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
 	post_relation_open_hook = prev_post_relation_open_hook;
+	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
+	#ifdef USE_LIBXML
+	openxml_set_namespaces_hook = prev_openxml_set_namespaces_hook;
+	#endif
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -720,6 +757,8 @@ UninstallExtendedHooks(void)
 	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
 	ExecCheckOneRelPerms_hook = NULL;
 	get_domain_typmodin_hook = NULL;
+	walk_view_rule_hook = NULL;
+	handle_target_view_hook = NULL;
 }
 
 // /* Hash table for view dependencies */
@@ -1181,7 +1220,7 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 }
 
 static AclResult
-pltsql_ExecFuncProc_AclCheck(Oid funcid)
+pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 {
 	Oid userid = GetUserId();
 
@@ -1206,13 +1245,33 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid)
 			 */
 			if (nspname != NULL && !is_shared_schema(nspname) &&
 				!is_schema_from_db(schema_id, get_cur_db_id()))
+			{
 				userid = GetSessionUserId();
+			}
+			else
+			{
+				/* If user already has the permission then return */
+				if (object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE) == ACLCHECK_OK)
+					return ACLCHECK_OK;
+				/*
+				 * Ownership Chaining Logic for object references inside function/procedures.
+				 * Only applicable for same-db ownership chaining cases.
+				 * check if we have ownership chaining enabled.
+				 */
+				if (pltsql_enable_ownership_chaining && IsA(expr, FuncExpr) && OidIsValid(get_current_func_oid()) &&
+				   is_valid_func_ownership_chain(expr, get_func_owner(((FuncExpr *)expr)->funcid)))
+				{
+					if (nspname)
+						pfree(nspname);
+					return ACLCHECK_OK;
+				}
+			}
 			if (nspname)
 				pfree(nspname);
 		}
 	}
 	else if (prev_ExecFuncProc_AclCheck_hook)
-		return prev_ExecFuncProc_AclCheck_hook(funcid);
+		return prev_ExecFuncProc_AclCheck_hook(funcid, expr);
 
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }
@@ -1279,7 +1338,9 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 					 */
 					if (nspname != NULL && !is_shared_schema(nspname))
 					{
-						if (OidIsValid(perminfo->checkAsUser))
+						Oid relOwner = get_rel_owner(relOid);
+
+						if (OidIsValid(perminfo->checkAsUser) && !isTempNamespace(schema_id))
 						{
 							Oid loginId = get_login_for_user(perminfo->checkAsUser, nspname);
 							if (OidIsValid(loginId))
@@ -1287,6 +1348,10 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 						}
 						else
 							perminfo->checkAsUser = GetSessionUserId();
+						if (pltsql_enable_ownership_chaining && is_valid_func_ownership_chain(perminfo, relOwner))
+						{
+							perminfo->checkAsUser = relOwner;
+						}
 					}
 					if (nspname)
 						pfree(nspname);
@@ -1745,6 +1810,7 @@ post_transform_delete(ParseState *pstate, DeleteStmt *stmt, Query *query)
 {
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
+
 
 	/* Handle DELETE TOP */
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
@@ -3651,6 +3717,7 @@ pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
 											EXPR_KIND_LIMIT, "LIMIT",
 											LIMIT_OPTION_COUNT);
@@ -5113,7 +5180,7 @@ update_rte_perms_info_walker(Node *node, void *context)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
-			if (rte->rtekind == RTE_SUBQUERY && get_rel_relkind(rte->relid) == RELKIND_VIEW)
+			if (rte->perminfoindex != 0 && get_rel_relkind(rte->relid) == RELKIND_VIEW)
 			{
 				Oid nspid = get_rel_namespace(rte->relid);
 
@@ -5796,6 +5863,214 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 							  COERCE_EXPLICIT_CALL, 
 							  -1);
 	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
+}
+
+/*
+ * Handle GROUP BY case for PERCENT clause transformation
+ *
+ * Creates a subquery to count distinct groups since PostgreSQL doesn't support
+ * COUNT(DISTINCT col1, col2, ...) with multiple columns.
+ *
+ * Transforms the input statement to select only GROUP BY columns, then wraps it
+ * in an outer COUNT(*) query to get the total number of distinct groups.
+ *
+ * Example: SELECT col1, col2 FROM table GROUP BY col1, col2 HAVING condition
+ * Becomes: SELECT COUNT(*) FROM (SELECT col1, col2 FROM table GROUP BY col1, col2 HAVING condition) AS grouped_data
+ */
+static SelectStmt *
+handle_group_by_percent_count(SelectStmt *groupbySelectStmt)
+{
+    /* For GROUP BY queries, we need to count the number of groups */
+    SelectStmt        *outerCountStmt = makeNode(SelectStmt);
+    RangeSubselect    *subselect      = makeNode(RangeSubselect);
+    FuncCall          *countFunc;         /* COUNT function for total rows */
+    ResTarget         *countTarget;       /* Target entry for COUNT result */
+    ListCell          *lc;
+    
+    /* Keep only GROUP BY columns in target list */
+    groupbySelectStmt->targetList = NIL;
+    foreach(lc, groupbySelectStmt->groupClause)
+    {
+        ResTarget *rt = makeNode(ResTarget);
+        rt->name = NULL;
+        rt->indirection = NIL;
+        rt->val = copyObject(lfirst(lc));
+        rt->location = -1;
+        groupbySelectStmt->targetList = lappend(groupbySelectStmt->targetList, rt);
+    }
+    
+    /* Wrap in another COUNT(*) query */
+    subselect->subquery = (Node *) groupbySelectStmt;
+    subselect->alias = makeAlias("grouped_data", NIL);
+    
+    outerCountStmt->fromClause = list_make1(subselect);
+    
+    /* Create COUNT(*) for outer query */
+    countFunc = makeNode(FuncCall);
+    countFunc->funcname = list_make1(makeString("count"));
+    countFunc->args = NIL;
+    countFunc->agg_star = true;
+    countFunc->agg_distinct = false;
+    countFunc->location = -1;
+    
+    countTarget = makeNode(ResTarget);
+    countTarget->name = NULL;
+    countTarget->indirection = NIL;
+    countTarget->val = (Node *) countFunc;
+    countTarget->location = -1;
+    
+    outerCountStmt->targetList = list_make1(countTarget);
+    
+    return outerCountStmt;
+}
+
+/*
+ * Common hook to transform TSQL unpivot and TOP N Percent
+ */
+static void
+transform_tsql_select_statement(ParseState *pstate, SelectStmt *stmt)
+{
+	transform_percent_clause(pstate, stmt);
+	transform_unpivot_clause(pstate, stmt);
+}
+
+/*
+ * Transform T-SQL PERCENT clause in SELECT statements
+ *
+ * Converts "SELECT TOP N PERCENT ..." to "SELECT TOP CEIL((COUNT(*) * N) / 100) ..."
+ * by replacing the limitCount with a calculated expression based on total row count.
+ *
+ * For GROUP BY queries, uses subquery approach to count distinct groups: 
+ * SELECT COUNT(*) FROM (SELECT group_cols FROM table GROUP BY group_cols) AS grouped_data
+ * Function : handle_group_by_percent_count(SelectStmt *groupbySelectStmt) 
+ *
+ * For regular queries, uses simple COUNT(*) from the table.
+ */
+static void 
+transform_percent_clause(ParseState *pstate, SelectStmt *stmt)
+{
+    /* To create inner select count(*) from t for percent */
+    SelectStmt    *totalCountSelectStmt; 
+    
+    /* Variables for building percentage calculation expression */
+    SubLink       *countSublink;     /* Subquery link for wrap select COUNT(*).. */
+    A_Expr        *mulExpr;          /* to multiply N*(select count(*)..) */
+    A_Expr        *divExpr;          /* Division expression to divide by 100 */
+    A_Const       *intConst;         /* Integer constant (100) */
+    FuncCall      *ceilFunc;         /* CEIL function for rounding */
+    
+    /* Check whether TSQL and limit value present */
+	if (sql_dialect != SQL_DIALECT_TSQL || stmt->limitCount == NULL)
+        return;
+    
+    if (stmt->limitOption != LIMIT_OPTION_PERCENT)
+        return;
+    else
+        stmt->limitOption = LIMIT_OPTION_COUNT;
+
+    /* Add validation check for percentage value > 100 */
+    if (IsA(stmt->limitCount, A_Const))
+    {
+        A_Const *const_val = (A_Const *) stmt->limitCount;
+        if (const_val->val.ival.type == T_Integer)
+        {
+            int percent_val = const_val->val.ival.ival;
+            if (percent_val > 100)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("Percent values must be between 0 and 100.")));
+        }
+        else if (const_val->val.fval.type == T_Float)
+        {
+            float8 percent_val = strtod(const_val->val.fval.fval, NULL);
+            if (percent_val > 100.0)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("Percent values must be between 0 and 100.")));
+        }
+    }
+
+    /* Make a deep copy of the statement for the COUNT query */
+    totalCountSelectStmt = (SelectStmt *) copyObject(stmt);
+    
+    /* Clear limit, offset, and sorting from the copy */
+    totalCountSelectStmt->limitCount = NULL;
+    totalCountSelectStmt->limitOffset = NULL;
+    totalCountSelectStmt->sortClause = NIL;
+    
+    /* 
+    * Since group by with (count(*) in targetList) doesn't return single record 
+    * Hence We will rewrite the totalCountSelectStmt query as - 
+    * select count(*) from (select group_by_columns from t group by col1, col2, ...) as t
+    * instead of (select count(*) from t)
+    */
+    if (stmt->groupClause != NIL)
+    {
+        totalCountSelectStmt = handle_group_by_percent_count(totalCountSelectStmt);
+    }
+    else
+    {
+        FuncCall      *countFunc;       /* COUNT function for total rows */
+        ResTarget     *countTarget;     /* Target entry for COUNT result */
+
+        /* Regular query without GROUP BY - use COUNT(*) */
+        countFunc = makeNode(FuncCall);
+        countFunc->funcname = list_make1(makeString("count"));
+        countFunc->args = NIL;
+        countFunc->agg_star = true;
+        countFunc->agg_distinct = false;
+        countFunc->location = -1;
+        
+        countTarget = makeNode(ResTarget);
+        countTarget->name = NULL;
+        countTarget->indirection = NIL;
+        countTarget->val = (Node *) countFunc;
+        countTarget->location = -1;
+        
+        totalCountSelectStmt->targetList = list_make1(countTarget);
+    }
+	
+	/* Create subquery node to store transformed select count(*).. query */
+	countSublink = makeNode(SubLink);
+	countSublink->subLinkType = EXPR_SUBLINK;
+	countSublink->subselect = (Node *) totalCountSelectStmt;
+	countSublink->location = -1;
+	
+	/* Create multiplication: (COUNT(*) * limitCount) */
+	mulExpr = makeNode(A_Expr);
+	mulExpr->kind = AEXPR_OP;
+	mulExpr->name = list_make1(makeString("*"));
+	mulExpr->lexpr = (Node *) countSublink;
+	mulExpr->rexpr = stmt->limitCount;
+	mulExpr->location = -1;
+	
+	/* Create division: ((COUNT(*) * limitCount) / 100) */
+	divExpr = makeNode(A_Expr);
+	divExpr->kind = AEXPR_OP;
+	divExpr->name = list_make1(makeString("/"));
+	divExpr->lexpr = (Node *) mulExpr;
+	
+	/* Create A_Const for float 100.0 to ensure floating-point division */
+	intConst = makeNode(A_Const);
+	intConst->val.fval.type = T_Float;
+	intConst->val.fval.fval = pstrdup("100.0");
+	intConst->isnull = false;
+	intConst->location = -1;
+	
+	divExpr->rexpr = (Node *) intConst;
+	divExpr->location = -1;
+
+	/* Create CEIL function call-  ceil (((COUNT(*) * limitCount) / 100))  */
+    ceilFunc = makeNode(FuncCall);
+    ceilFunc->funcname = list_make1(makeString("ceil"));
+    ceilFunc->args = list_make1(divExpr);  // Add the division expression as argument
+    ceilFunc->agg_star = false;
+    ceilFunc->agg_distinct = false;
+    ceilFunc->location = -1;
+
+    /* Replace the original limitCount with CEIL function */
+    stmt->limitCount = (Node *) ceilFunc;
+
 }
 
 /*
@@ -6863,6 +7138,242 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 	}
 	return result_typmod;
 }
+
+/*
+ * fetch_table_schema - Extract column metadata from a table for OPENXML processing
+ *
+ * This function retrieves column definitions from an existing table and transforms
+ * them into RangeTableFuncCol nodes with appropriate XPath expressions. It handles
+ * column name, type information, and creates expressions using tsql_openxml_get_colpattern function.
+ * 
+ * Parameters:
+ *   relation - The table to extract schema information from
+ *   flag - The OPENXML flag parameter that controls XML mapping behavior
+ *
+ * Returns:
+ *   List of RangeTableFuncCol nodes representing the table's columns
+ */
+static List *
+fetch_table_schema(RangeVar *relation, Node *flag)
+{
+	List *columns = NIL;
+	
+	if (relation != NULL)
+	{
+		Relation    rel;
+		ScanKeyData skey[1];
+		SysScanDesc scan;
+		HeapTuple   tuple;
+		Relation    attrel;
+		
+		/* Open the relation to get its schema */
+		rel = relation_openrv(relation, AccessShareLock);
+		
+		if (rel == NULL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("table \"%s\" does not exist", 
+							relation->relname)));
+		}
+		
+		/* Open pg_attribute catalog */
+		attrel = table_open(AttributeRelationId, AccessShareLock);
+		
+		/* Set up scan key for this relation */
+		ScanKeyInit(&skey[0],
+					Anum_pg_attribute_attrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(RelationGetRelid(rel)));
+		
+		scan = systable_beginscan(attrel, AttributeRelidNumIndexId, true,
+								  NULL, 1, skey);
+		
+		/* Process each column */
+		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+		{
+			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+			RangeTableFuncCol *fc;
+			char *colname;
+			ArrayType *attoptions;
+			Datum datum;
+			bool isnull;
+			
+			/* Skip dropped columns, system columns and identity columns */
+			if (att->attisdropped || att->attnum <= 0 || att->attidentity)
+				continue;
+			
+			/* Get original column name from attoptions */
+			datum = heap_getattr(tuple, Anum_pg_attribute_attoptions,
+								 RelationGetDescr(attrel), &isnull);
+			
+			if (!isnull)
+			{
+				attoptions = DatumGetArrayTypeP(datum);
+				colname = get_value_by_name_from_array(attoptions, ATTOPTION_BBF_ORIGINAL_NAME);
+			}
+			else
+			{
+				colname = pstrdup(NameStr(att->attname));
+			}
+			
+			/* Create a column definition */
+			fc = makeNode(RangeTableFuncCol);
+			fc->colname = pstrdup(colname);
+			
+			/* Create a TypeName node for the column type */
+			fc->typeName = makeTypeNameFromOid(att->atttypid, att->atttypmod);
+			
+			/* Set the column expression to the generated XPath */
+			fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), list_make2(makeStringConst(colname, -1), flag), COERCE_EXPLICIT_CALL, -1);
+			fc->coldefexpr = NULL;
+			fc->location = -1;
+			
+			columns = lappend(columns, fc);
+		}
+		
+		systable_endscan(scan);
+		table_close(attrel, AccessShareLock);
+		relation_close(rel, AccessShareLock);
+	}
+
+	return columns;
+}
+
+/*
+ * pre_transform_openxml_columns - Transform OPENXML syntax to XMLTABLE-compatible format
+ *
+ * This hook function converts TSQL OPENXML syntax into PostgreSQL XMLTABLE format
+ * by transforming the RangeTableFunc structure. It extracts the document handle
+ * and flag from the namespaces list, creates a document expression using
+ * tsql_openxml_get_xmldoc, and generates appropriate XPath column expressions
+ * using tsql_openxml_get_colpattern for TSQL compatibility.
+ */
+static void
+pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
+{
+	Node       *tsql_docid_node;
+	Node       *tsql_flag;
+	RangeVar   *table_ref;
+	ResTarget  *res = makeNode(ResTarget);
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	tsql_docid_node = rtf->docexpr;
+	tsql_flag = linitial(rtf->namespaces);
+
+	rtf->namespaces = NIL;
+	rtf->docexpr = NULL;
+
+	/* Storing doc_id in the rtf->namespaces field */
+	res->name = pstrdup("openxml_doc_id");
+	res->name_location = -1;
+	res->indirection = NIL;
+	res->val = tsql_docid_node;
+	res->location = -1;
+	rtf->namespaces = list_make1(res);
+
+	/* 
+	 * Set the document expression to retrieve the XML document using the document handle.
+	 * This creates a function call to tsql_openxml_get_xmldoc which retrieves the  previously
+	 * prepared XML document based on the document ID from sp_xml_preparedocument.
+	 */
+	rtf->docexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_xmldoc")), list_make1(tsql_docid_node), COERCE_EXPLICIT_CALL, -1);
+
+	if (rtf->columns != NIL)
+	{
+		Node  *first_col = linitial(rtf->columns);
+		
+		/* Check if we have exactly one column and it's a table reference */
+		if (list_length(rtf->columns) == 1 && IsA(first_col, RangeVar))
+		{
+			table_ref = (RangeVar *) first_col;
+			/* Fetch the table schema and generate column definitions with appropriate XPath expressions */
+			rtf->columns = fetch_table_schema(table_ref, tsql_flag);
+		}
+		else
+		{
+			ListCell *lc;
+			
+			foreach(lc, rtf->columns)
+			{
+				RangeTableFuncCol *fc = (RangeTableFuncCol *) lfirst(lc);
+
+				/* If no column expression is provided, generate one based on the flag */
+				if(fc->colexpr == NULL && tsql_flag != NULL)
+				{
+					/* 
+					 * To get original column name, utilize location of ColumnDef and query string. 
+					 * For colexpr, we need orignal name of columns (no downcase or uppercase) 
+					 */
+					const char *column_name_start = pstate->p_sourcetext + fc->location;
+					char	   *original_name = extract_identifier(column_name_start, NULL);
+
+					if (original_name == NULL)
+						original_name = fc->colname;
+					/*
+					 * Create an XPath expression for the column using tsql_openxml_get_colpattern.
+					 * This builds a function call to generate the appropriate XPath pattern
+					 * based on the column name and the OPENXML flag parameter
+					 */
+					fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), list_make2(makeStringConst(original_name, -1), tsql_flag), COERCE_EXPLICIT_CALL, -1);
+				}
+			}
+		}
+	}
+}
+
+#ifdef USE_LIBXML
+static void
+openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str)
+{
+	int	               doc_id;
+	xmltype	              *ns_data;
+	char	             **ns_names;
+	char	             **ns_uris;
+	int                    ns_count;
+
+	/*
+	 * We will reach here in only two cases, Either when using function XMLTable or OPENXML. 
+	 * And since XMLTable syntax is not supported by ANTLR, single dialect check is enough
+	 * to identify that this is for OPENXML.
+	 */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	doc_id = pg_strtoint32(doc_id_str);
+	get_xml_data_and_namespace_data(doc_id, NULL, &ns_data);
+	if (ns_data == NULL)
+		return;
+
+	extract_namespaces_from_xml(ns_data, &ns_names, &ns_uris, &ns_count);
+
+	/* register namespaces, if any */
+	if (ns_count > 0)
+	{
+		for (int i = 0; i < ns_count; i++)
+		{
+			char	*ns_name;
+			char	*ns_uri;
+
+			if (ns_names[i] == NULL || ns_uris[i] == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("neither namespace name nor URI may be null")));
+
+			ns_name = ns_names[i];
+			ns_uri = ns_uris[i];
+
+			if (xmlXPathRegisterNs(xpathctx,
+								   pg_xmlCharStrndup_wrapper(ns_name, strlen(ns_name)),
+								   pg_xmlCharStrndup_wrapper(ns_uri, strlen(ns_uri))) != 0)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_DATA_EXCEPTION,
+							"could not set XML namespace");
+		}
+	}
+}
+#endif
 
 /*
  * pltsql_ExecUpdateResultTypeTL

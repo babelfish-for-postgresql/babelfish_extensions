@@ -260,6 +260,9 @@ test_conv_string_to_smalldatetime-before-14_6
 test_conv_string_to_time-before-13_6
 BABEL-5031
 test_conv_money_to_varchar
+sp_xml_preparedocument
+sp_xml_removedocument
+openxml_with_clause-before-17_7
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char_before_17_4
@@ -271,3 +274,4 @@ babel_numeric_money_oper-before-16_10-or-17_6
 babel_numeric_smallmoney_oper-before-16_10-or-17_6
 mathematical_func_tests-before-17_7-or-16_11
 babel_assign_nchar
+ascii_function_before-17_7-or-16_11

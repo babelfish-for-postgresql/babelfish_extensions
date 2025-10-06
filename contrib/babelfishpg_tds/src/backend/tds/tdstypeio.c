@@ -51,64 +51,7 @@
 
 #define TDS_RETURN_DATUM(x)		return ((Datum) (x))
 
-#define FLAG_Z         1 << 0
-#define FLAG_M         1 << 1
-
 #define VARCHAR_MAX 2147483647
-/* TODO: need to add for other geometry types when introduced */
-/* Geometry type definitions */
-#define POINTTYPE               1
-
-/* spatial format constants */
-#define EMPTY_GEOMETRY_LENGTH   27      /* Fixed length for empty geometry */
-#define SHAPE_COUNT_EMPTY       0x00000001
-#define EMPTY_FIGURE_INDEX      0xFFFFFFFF
-#define EMPTY_SHAPE_INDEX       0xFFFFFFFF
-#define SRID_OFFSET             4       /* Offset to SRID in the binary format */
-#define HEADER_SIZE             6       /* Size of header (4 bytes SRID + 2 bytes type) */
-#define NPOINTS_OFFSET          4       /* Offset to Npoints in the binary format */
-
-/* Dimension type values for Point geometries */
-#define POINT_TYPE_XYZM         15      /* 3D Point with M (XYZM) */
-#define POINT_TYPE_XYM          14      /* 2D Point with M (XYM) */
-#define POINT_TYPE_XYZ          13      /* 3D Point (XYZ) */
-#define POINT_TYPE_XY           12      /* 2D Point (XY) */
-
-/* Coordinate sizes */
-#define COORD_SIZE              8       /* Size of a coordinate */
-
-/* Geometry indicators */
-#define GEOMETRY_INDICATOR      1       /* Indicator for geometry type */
-#define EMPTY_INDICATOR         4       /* Indicator for empty geometry when npoints = 0 */
-
-#define POINT_XY    0x010C  /* XY point geometry type (type 1 -> driver version constant, subtype 12 -> TSQL's flag) */
-#define POINT_XYZ   0x010D  /* XYZ point geometry type (type 1 -> driver version constant, subtype 13 -> TSQL's flag) */
-#define POINT_XYM   0x010E  /* XYM point geometry type (type 1 -> driver version constant, subtype 14 -> TSQL's flag) */
-#define POINT_XYZM  0x010F  /* XYZM point geometry type (type 1 -> driver version constant, subtype 15 -> TSQL's flag) */
-#define EMPTY_GEOM  0x0104  /* Empty geometry type (type 1 -> driver version constant, subtype 4 -> TSQL's flag) */
-
-#define DIM_FLAG_Z           0x01 /* Z dimension flag in SRID 4th byte */
-#define DIM_FLAG_M           0x02 /* M dimension flag in SRID 4th byte */
-#define DIM_FLAG_ZM          0x03 /* ZM dimension flag in SRID 4th byte */
-
-#define POINT_SIZE_XY        16   /* Size of XY point in bytes */
-#define POINT_SIZE_XYZ       24   /* Size of XYZ point in bytes */
-#define POINT_SIZE_XYM       24   /* Size of XYM point in bytes */
-#define POINT_SIZE_XYZM      32   /* Size of XYZM point in bytes */
-
-#define SRID_SIZE            4    /* Size of SRID in bytes */
-#define GEOM_TYPE_OFFSET     4    /* Offset to geometry type in buffer */
-#define COORD_DATA_OFFSET    6    /* Offset to coordinate data in buffer */
-
-#define POINT_EMPTY_FLAG     1    /* Last byte value indicating empty point geometry */
-
-/* Constant array representing empty coordinate data */
-static const uint8 
-EMPTY_COORD[] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff
-};
 
 #define GetPgOid(pgTypeOid, finfo) \
 do { \
@@ -185,18 +128,9 @@ Datum		TdsTypeSmallMoneyToDatum(StringInfo buf);
 Datum		TdsTypeXMLToDatum(StringInfo buf);
 Datum		TdsTypeUIDToDatum(StringInfo buf);
 Datum		TdsTypeSqlVariantToDatum(StringInfo buf);
-Datum		TdsTypeSpatialToDatum(StringInfo buf);
+Datum		TdsTypeSpatialToDatum(StringInfo buf, bool is_geography);
 
 static void FetchTvpTypeOid(const ParameterToken token, char *tvpName);
-
-/* This is copy of a struct from POSTGIS so that we could store and use the following values directly */
-typedef struct
-{
-    uint32_t size; /* For PgSQL use only, use VAR* macros to manipulate. */
-    uint8_t srid[3]; /* 24 bits of SRID */
-    uint8_t gflags; /* HasZ, HasM, HasBBox, IsGeodetic */
-    uint8_t data[1]; /* See gserialized.txt */
-} GSERIALIZED;
 
 /* Local structures for the Function Cache by TDS Type ID */
 typedef struct FunctionCacheByTdsIdKey
@@ -210,14 +144,6 @@ typedef struct FunctionCacheByTdsIdEntry
 	FunctionCacheByTdsIdKey key;
 	TdsIoFunctionData data;
 } FunctionCacheByTdsIdEntry;
-
-/* Helper function to write a 32-bit integer to a buffer and advance the pointer */
-static inline void 
-write_int32(unsigned char **ptr, int32_t value)
-{
-    *((int32_t*)*ptr) = value;
-    *ptr += sizeof(int32_t);
-}
 
 /*
  * getSendFunc - get the function pointer for type output
@@ -1500,117 +1426,35 @@ TdsTypeUIDToDatum(StringInfo buf)
 
 /* Helper Function to convert Spatial Type values into Datum. */
 Datum
-TdsTypeSpatialToDatum(StringInfo buf)
+TdsTypeSpatialToDatum(StringInfo buf, bool is_geography)
 {
-	bytea   *result;         /* Result bytea to be returned */
-	int32   geomType = 0;    /* PostGIS geometry type */
-	int     nbytes,          /* Total bytes needed for result */
-	        pointSize = 0,   /* Size of each point in bytes */
-	        npoints = 0;     /* Number of points in geometry */
-	bool    isempty = false; /* Flag indicating if geometry is empty */
-	uint8_t lastByte = buf->data[buf->len - 1]; /* Last byte in buffer, used for empty detection */
-	uint16_t geomTypeId;     /* Combined geometry type identifier */
-	StringInfo  destBuf = makeStringInfo(); /* Destination buffer for building result */
+	bytea   *input_bytea;
+	Datum   result;
+	int     nbytes;
+	LOCAL_FCINFO(fcinfo, 1);
 
-	/*
-	 * Input buffer format: 4 bytes SRID + 2 bytes Geometry Type + coordinate data
-	 * But Driver expects: 3 bytes SRID + 1 byte flags + 4 bytes Type + 4 bytes point count + coordinate data
-	 */
+	/* Convert StringInfo buffer to bytea */
+	nbytes = buf->len - buf->cursor;
+	input_bytea = (bytea *) palloc(VARHDRSZ + nbytes);
+	SET_VARSIZE(input_bytea, VARHDRSZ + nbytes);
+	memcpy(VARDATA(input_bytea), &buf->data[buf->cursor], nbytes);
+	buf->cursor += nbytes;
 
-	/* We are copying first 4 Byte SRID from buf */
-	appendBinaryStringInfo(destBuf, buf->data + buf->cursor, SRID_SIZE);
-	/* 
-	 * Swapping first 3 bytes of SRID as the driver expects SRID to be in little endian order
-	 * 4th byte is always 0
-	 */
-	SwapData(destBuf, destBuf->cursor + 0, destBuf->cursor + 2);
+	/* Set up function call info */
+	InitFunctionCallInfoData(*fcinfo, NULL, 1, InvalidOid, NULL, NULL);
+	fcinfo->args[0].value = PointerGetDatum(input_bytea);
+	fcinfo->args[0].isnull = false;
 
-	/* 
-	 * Extract the combined geometry type identifier (2 bytes)
-	 * This combines the geometry type (1st byte) and (2nd byte)
-	 */
-	geomTypeId = (buf->data[buf->cursor + GEOM_TYPE_OFFSET] << 8) | 
-	                buf->data[buf->cursor + GEOM_TYPE_OFFSET + 1];
+	/* Call appropriate function based on spatial type */
+	if (is_geography)
+		result = pltsql_plugin_handler_ptr->sql_geography_from_bytea(fcinfo);
+	else
+		result = pltsql_plugin_handler_ptr->sql_geometry_from_bytea(fcinfo);
 
-	/* Process based on combined geometry type identifier */
-	switch (geomTypeId)
-	{
-		case POINT_XY:  /* XY point (0x010C) */ 
-			geomType = (int32)POINTTYPE;
-			pointSize = POINT_SIZE_XY;  /* 16 bytes for XY point */
-			break;
-			
-		case POINT_XYZ:  /* XYZ point (0x010D) */ 
-			geomType = (int32)POINTTYPE;
-			destBuf->data[3] = DIM_FLAG_Z;  /* Set Z dimension flag in SRID 4th byte */
-			pointSize = POINT_SIZE_XYZ;     /* 24 bytes for XYZ point */
-			break;
-			
-		case POINT_XYM:  /* XYM point (0x010E) */ 
-			geomType = (int32)POINTTYPE;
-			destBuf->data[3] = DIM_FLAG_M;  /* Set M dimension flag in SRID 4th byte */
-			pointSize = POINT_SIZE_XYM;     /* 24 bytes for XYM point */
-			break;
-			
-		case POINT_XYZM:  /* XYZM point (0x010F) */ 
-			geomType = (int32)POINTTYPE;
-			destBuf->data[3] = DIM_FLAG_ZM;  /* Set ZM dimension flag in SRID 4th byte */
-			pointSize = POINT_SIZE_XYZM;     /* 32 bytes for XYZM point */
-			break;
-			
-		case EMPTY_GEOM:  /* Empty geometry (0x0104) */ 
-			/* 
-			 * Check if the geometry has EMPTY_COORD required for an empty geometry
-			 * and if the last byte is the point empty flag (1)
-			 */
-			if ((memcmp(buf->data + buf->cursor + COORD_DATA_OFFSET, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0) && 
-				(lastByte == POINT_EMPTY_FLAG))
-			{
-				geomType = (int32)POINTTYPE;
-				npoints = 0;
-				isempty = true;
-			}
-			else
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("Unsupported geometry type")));
-			}
-			break;
-			
-		default:
-			/* Unsupported geometry type */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported geometry type")));
-			break;
-	}
+	/* Free the temporary bytea */
+	pfree(input_bytea);
 
-	/* Calculate number of points if not empty geometry */
-    if (!isempty)
-		npoints = (buf->len - buf->cursor - COORD_DATA_OFFSET)/pointSize;
-
-	/*  Calculate total bytes needed */
-	nbytes = buf->len - buf->cursor + COORD_DATA_OFFSET;
-
-	/* Allocate memory for result */
-	result = (bytea *) palloc0(nbytes + VARHDRSZ);
-	SET_VARSIZE(result, nbytes + VARHDRSZ);
-
-	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for the geometry */
-	appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
-	appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
-
-	if (!isempty)
-	{
-		/* We are copying the remaining bytes (pointsize)*npoints from buf */
-		appendBinaryStringInfo(destBuf, buf->data + buf->cursor + COORD_DATA_OFFSET, buf->len - buf->cursor - COORD_DATA_OFFSET);
-	}
-
-	memcpy(VARDATA(result), &destBuf->data[0], nbytes);
-	buf->cursor += nbytes - COORD_DATA_OFFSET;
-
-	PG_RETURN_BYTEA_P(result);
+	return result;
 }
 
 StringInfo
@@ -2178,7 +2022,7 @@ TdsRecvTypeGeometry(const char *message, const ParameterToken token)
 	Datum		result;
 	StringInfo	buf = TdsGetPlpStringInfoBufferFromToken(message, token);
 
-	result = TdsTypeSpatialToDatum(buf);
+	result = TdsTypeSpatialToDatum(buf, false);
 
 	pfree(buf->data);
 	pfree(buf);
@@ -2196,7 +2040,7 @@ TdsRecvTypeGeography(const char *message, const ParameterToken token)
 	Datum		result;
 	StringInfo	buf = TdsGetPlpStringInfoBufferFromToken(message, token);
 
-	result = TdsTypeSpatialToDatum(buf);
+	result = TdsTypeSpatialToDatum(buf, true);
 
 	pfree(buf->data);
 	pfree(buf);
@@ -2573,7 +2417,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 							values[i] = TdsTypeSqlVariantToDatum(temp);
 							break;
 						case TDS_TYPE_CLRUDT:
-							values[i] = TdsTypeSpatialToDatum(temp);
+							values[i] = TdsTypeSpatialToDatum(temp, false);
 							break; 
 					}
 				/* Build a string for bind parameters. */
