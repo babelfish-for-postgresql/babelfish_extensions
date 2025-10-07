@@ -1431,23 +1431,22 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					}
 				}
 
-				/* if varno is INNER_VAR or OUTER_VAR then we need plan, else we cannot find typmod, hence set found as false and return -1 */
-				if (plan == NULL && (var->varno == INNER_VAR || var->varno == OUTER_VAR))
-				{
-					if (found != NULL) *found = false;
-					return -1;
-				}
-
 				if (var->vartypmod == -1)
 				{
 					/* UDT handling in T_var */
-					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
+					Oid	immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
 					if (OidIsValid(immediate_base_type))
 					{
 						int32 typmod = -1;
 						getBaseTypeAndTypmod(var->vartype, &typmod);
 						if (typmod != -1)
 							return typmod;
+						else
+						{
+							int32	fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(immediate_base_type);
+							if (fixlen_default_typmod != -1)
+								return fixlen_default_typmod;
+						}
 					}
 
 					/*
@@ -1458,10 +1457,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 * Plan check ensures typmod consistency to preventing incorrect values,
 					 * ensuring plan is not changed if typmod is calculated in execution stage.
 					 */
-					if (plan)
+					if (plan || (plan == NULL && (var->varno == INNER_VAR || var->varno == OUTER_VAR)))
 					{
-						int32 		fixlen_default_typmod;
-						fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(var->vartype);
+						int32	fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(var->vartype);
 						if (fixlen_default_typmod != -1)
 							return fixlen_default_typmod;
 					}
