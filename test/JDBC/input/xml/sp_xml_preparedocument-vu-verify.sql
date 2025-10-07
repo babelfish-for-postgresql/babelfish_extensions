@@ -363,11 +363,27 @@ SELECT @hdoc as handle;
 EXEC sp_xml_removedocument @hdoc;
 GO
 
+DECLARE @hdoc INT;
+DECLARE @xml_content VARCHAR(MAX);
+SELECT @xml_content = CAST(xml_data AS VARCHAR(MAX)) FROM TestTextXML_babel_1168 WHERE id = 1; 
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_content;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
 -- Test 7: NTEXT datatype variable
 DECLARE @hdoc INT;
 DECLARE @xml NTEXT = N'<root><child>value</child></root>';
 EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
 SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+DECLARE @hdoc INT;
+DECLARE @xml_content NVARCHAR(MAX);
+SELECT @xml_content = CAST(xml_data AS NVARCHAR(MAX)) FROM TestNTextXML_babel_1168 WHERE id = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_content;
+SELECT @hdoc as handle ;
 EXEC sp_xml_removedocument @hdoc;
 GO
 

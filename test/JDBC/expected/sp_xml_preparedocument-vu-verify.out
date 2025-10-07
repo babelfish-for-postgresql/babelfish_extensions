@@ -575,6 +575,19 @@ GO
 ~~ERROR (Message: The text, ntext, and image data types are invalid for local variables.)~~
 
 
+DECLARE @hdoc INT;
+DECLARE @xml_content VARCHAR(MAX);
+SELECT @xml_content = CAST(xml_data AS VARCHAR(MAX)) FROM TestTextXML_babel_1168 WHERE id = 1; 
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_content;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+15
+~~END~~
+
+
 -- Test 7: NTEXT datatype variable
 DECLARE @hdoc INT;
 DECLARE @xml NTEXT = N'<root><child>value</child></root>';
@@ -585,6 +598,19 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The text, ntext, and image data types are invalid for local variables.)~~
+
+
+DECLARE @hdoc INT;
+DECLARE @xml_content NVARCHAR(MAX);
+SELECT @xml_content = CAST(xml_data AS NVARCHAR(MAX)) FROM TestNTextXML_babel_1168 WHERE id = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_content;
+SELECT @hdoc as handle ;
+EXEC sp_xml_removedocument @hdoc;
+GO
+~~START~~
+int
+17
+~~END~~
 
 
 -- Test 8: Malformed XML with VARCHAR
@@ -632,7 +658,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-15
+19
 ~~END~~
 
 
@@ -644,7 +670,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-17
+21
 ~~END~~
 
 
@@ -657,7 +683,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-19
+23
 ~~END~~
 
 
@@ -669,7 +695,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-21
+25
 ~~END~~
 
 
@@ -682,7 +708,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-23
+27
 ~~END~~
 
 
@@ -695,7 +721,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-25
+29
 ~~END~~
 
 
@@ -708,7 +734,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-27
+31
 ~~END~~
 
 
@@ -720,7 +746,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-29
+33
 ~~END~~
 
 
@@ -731,7 +757,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-31
+35
 ~~END~~
 
 
@@ -744,7 +770,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-33
+37
 ~~END~~
 
 
@@ -757,7 +783,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-35
+39
 ~~END~~
 
 
@@ -770,7 +796,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-37
+41
 ~~END~~
 
 
@@ -783,7 +809,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-39
+43
 ~~END~~
 
 
@@ -792,7 +818,7 @@ EXEC TestXMLPrepareDocument_Char
 GO
 ~~START~~
 int
-41
+45
 ~~END~~
 
 
@@ -800,7 +826,7 @@ EXEC TestXMLPrepareDocument_Varchar
 GO
 ~~START~~
 int
-43
+47
 ~~END~~
 
 
@@ -808,7 +834,7 @@ EXEC TestXMLPrepareDocument_NChar
 GO
 ~~START~~
 int
-45
+49
 ~~END~~
 
 
@@ -816,7 +842,7 @@ EXEC TestXMLPrepareDocument_NVarchar
 GO
 ~~START~~
 int
-47
+51
 ~~END~~
 
 

@@ -107,3 +107,11 @@ BEGIN
     EXEC sp_xml_removedocument @hdoc
 END
 GO
+
+CREATE TABLE TestTextXML_babel_1168 ( id INT, xml_data TEXT)
+INSERT INTO TestTextXML_babel_1168 VALUES(1, '<root><child>value</child></root>') 
+GO
+
+CREATE TABLE TestNTextXML_babel_1168 ( id INT, xml_data NTEXT )
+INSERT INTO TestNTextXML_babel_1168 VALUES(1, N'<root><child>value 世界</child></root>') 
+GO
