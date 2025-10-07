@@ -6176,7 +6176,14 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 		if ((rc = SPI_finish()) != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
-	if (send_error)
+	/*
+	 * For background workers, MessageContext is not set up. 
+	 * For Background worker errors are handled via PG_RE_THROW() since
+	 * IS_TDS_CLIENT() will be false, bypassing TSQL transaction handling. Without the
+	 * !AmBackgroundWorkerProcess check, attempting to use MessageContext in a background
+	 * worker would cause a crash.
+	 */
+	if (send_error && !AmBackgroundWorkerProcess())
 	{
 		ErrorData  *edata;
 		MemoryContext oldCtx = CurrentMemoryContext;
