@@ -93,74 +93,57 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv
 
 DO $$
 DECLARE
-    old_function_exists boolean;
     exception_message text;
 BEGIN
-    SELECT EXISTS (
-        SELECT 1 
-        FROM pg_proc p 
-        JOIN pg_namespace n ON p.pronamespace = n.oid 
-        WHERE n.nspname = 'sys' 
-        AND p.proname = 'babelfish_conv_string_to_varbinary'
-        AND p.pronargs = 2  -- old version with 2 parameters
-    ) INTO old_function_exists;
-
-    IF old_function_exists THEN
-        ALTER FUNCTION sys.babelfish_conv_string_to_varbinary(
-            IN input_value sys.VARCHAR,
-            IN p_style NUMERIC
-        ) RENAME TO babelfish_conv_string_to_varbinary_deprecated_in_5_5_0;
-        CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(
-            IN input_value anyelement,
-            IN style NUMERIC DEFAULT 0
-        )
-        RETURNS sys.varbinary 
-        AS 
-        $BODY$
-        DECLARE
-            result bytea; 
-        BEGIN
-            IF style = 0 THEN
-                CASE pg_typeof(input_value)
-        			WHEN 'sys.nvarchar'::regtype THEN
-        				RETURN sys.nvarcharvarbinary(input_value, -1, true);
-        			WHEN 'sys.nchar'::regtype THEN
-        				RETURN sys.ncharvarbinary(input_value, -1, true);
-        			ELSE
-                        RETURN CAST(input_value AS sys.varbinary);
-                END CASE;
-            ELSIF style = 1 THEN
-                -- Handle hexadecimal conversion
-                IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
-                    result := decode(substring(input_value from 3), 'hex');
-                ELSE
-                    RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
-                END IF;
-            ELSIF style = 2 THEN
-                IF PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" THEN
-                    RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
-                ELSE
-                    result := decode(input_value, 'hex');
-                END IF;
-            ELSE
-                RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
-            END IF;
-
-			RETURN CAST(result AS sys.varbinary);
-        END;
-        $BODY$ 
-        LANGUAGE plpgsql
-        IMMUTABLE
-        STRICT;
-        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_varbinary_deprecated_in_5_5_0');
-    END IF;
-
+    ALTER FUNCTION sys.babelfish_conv_string_to_varbinary(IN input_value sys.VARCHAR, IN p_style NUMERIC) RENAME TO babelfish_conv_string_to_varbinary_deprecated_in_5_5_0;
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
-        exception_message = MESSAGE_TEXT;
+    exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
 END;
 $$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_varbinary_deprecated_in_5_5_0');
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(IN input_value anyelement,
+																	IN style NUMERIC DEFAULT 0)
+RETURNS sys.varbinary 
+AS 
+$BODY$
+DECLARE
+    result bytea; 
+BEGIN
+    IF style = 0 THEN
+        CASE pg_typeof(input_value)
+			WHEN 'sys.nvarchar'::regtype THEN
+				RETURN sys.nvarcharvarbinary(input_value, -1, true);
+			WHEN 'sys.nchar'::regtype THEN
+				RETURN sys.ncharvarbinary(input_value, -1, true);
+			ELSE
+                RETURN CAST(input_value AS sys.varbinary);
+        END CASE;
+    ELSIF style = 1 THEN
+        -- Handle hexadecimal conversion
+        IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
+            result := decode(substring(input_value from 3), 'hex');
+        ELSE
+            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+        END IF;
+    ELSIF style = 2 THEN
+        IF PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" THEN
+            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+        ELSE
+            result := decode(input_value, 'hex');
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
+    END IF;
+
+	RETURN CAST(result AS sys.varbinary);
+END;
+$BODY$ 
+LANGUAGE plpgsql
+IMMUTABLE
+STRICT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTEGER,
 																	IN arg anyelement,
