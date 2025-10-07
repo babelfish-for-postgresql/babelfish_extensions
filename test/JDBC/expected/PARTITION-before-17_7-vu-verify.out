@@ -624,8 +624,6 @@ DecimalPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 IntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 MoneyPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 NCharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
-NewCharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
-NewNCharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
 NumericPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 NVarCharPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
 partition_float_real_range_partition_func#!#R #!#RANGE#!#6#!#1#!#0
@@ -688,20 +686,6 @@ NCharPartitionFunction#!#1#!#4#!#K
 NCharPartitionFunction#!#1#!#5#!#P    
 NCharPartitionFunction#!#1#!#6#!#U    
 NCharPartitionFunction#!#1#!#7#!#Z    
-NewCharPartitionFunction#!#1#!#1#!##   
-NewCharPartitionFunction#!#1#!#2#!#A    
-NewCharPartitionFunction#!#1#!#3#!#F    
-NewCharPartitionFunction#!#1#!#4#!#K    
-NewCharPartitionFunction#!#1#!#5#!#P    
-NewCharPartitionFunction#!#1#!#6#!#U    
-NewCharPartitionFunction#!#1#!#7#!#Z    
-NewNCharPartitionFunction#!#1#!#1#!#⌁    
-NewNCharPartitionFunction#!#1#!#2#!#A    
-NewNCharPartitionFunction#!#1#!#3#!#F    
-NewNCharPartitionFunction#!#1#!#4#!#K    
-NewNCharPartitionFunction#!#1#!#5#!#P    
-NewNCharPartitionFunction#!#1#!#6#!#U    
-NewNCharPartitionFunction#!#1#!#7#!#Z    
 NumericPartitionFunction#!#1#!#1#!#0.00
 NumericPartitionFunction#!#1#!#2#!#10.00
 NumericPartitionFunction#!#1#!#3#!#20.00
@@ -787,23 +771,21 @@ GO
 nvarchar#!#varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar
 BigIntPartitionFunction#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
 BinaryPartitionFunction#!#binary#!#1#!#8000#!#0#!#0#!#<NULL>
-CharPartitionFunction#!#char#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_ai
+CharPartitionFunction#!#char#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 DatePartitionFunction#!#date#!#1#!#3#!#10#!#0#!#<NULL>
 DateTime2PartitionFunction#!#datetime2#!#1#!#8#!#26#!#6#!#<NULL>
 DateTimePartitionFunction#!#datetime#!#1#!#8#!#23#!#3#!#<NULL>
 DecimalPartitionFunction#!#decimal#!#1#!#17#!#38#!#38#!#<NULL>
 IntPartitionFunction#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 MoneyPartitionFunction#!#money#!#1#!#8#!#19#!#4#!#<NULL>
-NCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_ai
-NewCharPartitionFunction#!#char#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_ai
-NewNCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_ai
+NCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 NumericPartitionFunction#!#numeric#!#1#!#17#!#38#!#38#!#<NULL>
-NVarCharPartitionFunction#!#nvarchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_ai
+NVarCharPartitionFunction#!#nvarchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 partition_float_real_range_partition_func#!#float#!#1#!#8#!#53#!#0#!#<NULL>
 PARTITION_FUNCTION  유니코드스키마👻  #!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PARTITION_FUNCTION 😎$@ #123 🌍rder  #!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PARTITION_FUNCTIONログインαιώνια#!#int#!#1#!#4#!#10#!#0#!#<NULL>
-PartitionFunctionHavingDifferentCollationInput#!#nvarchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_ai
+PartitionFunctionHavingDifferentCollationInput#!#nvarchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 PartitionFunctionInsideProc1#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PartitionFunctionInsideProc2#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
@@ -814,7 +796,7 @@ SmallMoneyPartitionFunction#!#smallmoney#!#1#!#4#!#10#!#4#!#<NULL>
 TinyIntPartitionFunction#!#tinyint#!#1#!#1#!#3#!#0#!#<NULL>
 UniqueIdentifierPartitionFunction#!#uniqueidentifier#!#1#!#16#!#0#!#0#!#<NULL>
 VarBinaryPartitionFunction#!#varbinary#!#1#!#8000#!#0#!#0#!#<NULL>
-VarCharPartitionFunction#!#varchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_ai
+VarCharPartitionFunction#!#varchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
@@ -1435,6 +1417,22 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewCharPartitionFunction (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', cast(0x123 as binary(4)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 7 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewNCharPartitionFunction (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', cast(0x123 as binary(4)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 7 to partition function parameter type.)~~
 
 
 CREATE PARTITION FUNCTION NewBinaryPartitionFunction (binary(4))

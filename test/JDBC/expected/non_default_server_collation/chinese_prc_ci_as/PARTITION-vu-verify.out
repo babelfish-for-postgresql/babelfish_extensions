@@ -624,6 +624,8 @@ DecimalPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 IntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 MoneyPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 NCharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
+NewCharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
+NewNCharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
 NumericPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 NVarCharPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
 partition_float_real_range_partition_func#!#R #!#RANGE#!#6#!#1#!#0
@@ -686,6 +688,20 @@ NCharPartitionFunction#!#1#!#4#!#K
 NCharPartitionFunction#!#1#!#5#!#P    
 NCharPartitionFunction#!#1#!#6#!#U    
 NCharPartitionFunction#!#1#!#7#!#Z    
+NewCharPartitionFunction#!#1#!#1#!##   
+NewCharPartitionFunction#!#1#!#2#!#A    
+NewCharPartitionFunction#!#1#!#3#!#F    
+NewCharPartitionFunction#!#1#!#4#!#K    
+NewCharPartitionFunction#!#1#!#5#!#P    
+NewCharPartitionFunction#!#1#!#6#!#U    
+NewCharPartitionFunction#!#1#!#7#!#Z    
+NewNCharPartitionFunction#!#1#!#1#!#⌁    
+NewNCharPartitionFunction#!#1#!#2#!#A    
+NewNCharPartitionFunction#!#1#!#3#!#F    
+NewNCharPartitionFunction#!#1#!#4#!#K    
+NewNCharPartitionFunction#!#1#!#5#!#P    
+NewNCharPartitionFunction#!#1#!#6#!#U    
+NewNCharPartitionFunction#!#1#!#7#!#Z    
 NumericPartitionFunction#!#1#!#1#!#0.00
 NumericPartitionFunction#!#1#!#2#!#10.00
 NumericPartitionFunction#!#1#!#3#!#20.00
@@ -779,6 +795,8 @@ DecimalPartitionFunction#!#decimal#!#1#!#17#!#38#!#38#!#<NULL>
 IntPartitionFunction#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 MoneyPartitionFunction#!#money#!#1#!#8#!#19#!#4#!#<NULL>
 NCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+NewCharPartitionFunction#!#char#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+NewNCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
 NumericPartitionFunction#!#numeric#!#1#!#17#!#38#!#38#!#<NULL>
 NVarCharPartitionFunction#!#nvarchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
 partition_float_real_range_partition_func#!#float#!#1#!#8#!#53#!#0#!#<NULL>

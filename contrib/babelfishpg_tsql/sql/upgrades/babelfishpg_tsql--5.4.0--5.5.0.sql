@@ -58,12 +58,6 @@ $$
     end;
 $$;
 
--- Please add your SQLs here
-/*
- * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
- * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
- * final behaviour.
- */
 -- Rename the varchar overloads to mark as deprecated in 5.5.0
 DO $$
 DECLARE
@@ -237,9 +231,8 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-----------------------------------------------------------------
 
--- convertion to varchar
+-- conversion to varchar
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
 														IN p_style NUMERIC DEFAULT -1)
@@ -302,7 +295,6 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-----------------------------------------------------------------
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_varchar(IN typename TEXT, IN arg ANYELEMENT)
 RETURNS sys.VARCHAR
 AS
@@ -392,7 +384,6 @@ $BODY$
 LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
-----------------------------------------------------------------
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
