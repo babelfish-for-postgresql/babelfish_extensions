@@ -515,6 +515,7 @@ DECLARE
     r record;
     r2 record;
     v_affected_count bigint;
+    v_row_total bigint;
     v_table_count int := 0;
     v_total_affected_count bigint := 0;
 BEGIN
@@ -525,11 +526,11 @@ BEGIN
 
     -- Show help if no action specified
     IF p_action IS NULL THEN
-        RAISE INFO E'\nUsage: CALL datetime_rounding_handler(p_action, p_schema_name, p_table_name, p_show_values)';
-        RAISE INFO E'\nActions:';
-        RAISE INFO E'\n  list   - List all tables and columns with datetime type';
-        RAISE INFO E'\n  check  - Check for values that need rounding (requires schema and table names unless "all" specified)';
-        RAISE INFO E'\n  update - Update affected values (requires schema and table names unless "all" specified)';
+        RAISE INFO E'\nUsage: CALL datetime_rounding_handler(''p_action'', ''p_schema_name'', ''p_table_name'', p_show_values)\n'
+                     E'Actions:\n'
+                     E'  list   - List all tables and columns with datetime type (includes columns with both old and new datetime formats)\n'
+                     E'  check  - Check for values that need rounding (requires schema and table names unless ''all'' specified)\n'
+                     E'  update - Update affected values (requires schema and table names unless ''all'' specified)';
         RETURN;
     END IF;
 
@@ -538,13 +539,10 @@ BEGIN
         RAISE EXCEPTION 'Invalid action. Valid actions are: list, check, update';
     END IF;
 
-    -- For update action, validate parameters
-    IF p_action = 'update' AND p_schema_name IS NULL AND p_table_name != 'all' THEN
-        RAISE EXCEPTION 'Schema name is required for update action unless table_name is "all"';
+    -- Validate parameters for check/update action
+    IF p_action IN ('check', 'update') AND (p_schema_name IS NULL OR p_table_name IS NULL) AND p_table_name != 'all' THEN
+        RAISE EXCEPTION 'Both schema and table names are required for % action unless table_name is ''all''', p_action;
     END IF;
-
-    -- Drop temporary table if exists
-    DROP TABLE IF EXISTS temp_datetime_columns;
 
     -- Create temporary table for datetime columns
     CREATE TEMP TABLE temp_datetime_columns (
@@ -566,7 +564,9 @@ BEGIN
         AND (t.relkind = 'r' or t.relkind = 'p')
         AND NOT a.attisdropped
         AND a.attnum > 0
-        AND (p_schema_name IS NULL OR n.nspname = p_schema_name)
+        -- Check for NULL or 'all' or specific schema name
+        AND (p_schema_name IS NULL OR p_schema_name = 'all' OR n.nspname = p_schema_name)
+        -- Check for NULL or 'all' or specific table name
         AND (p_table_name IS NULL OR p_table_name = 'all' OR t.relname = p_table_name)
         AND n.nspname NOT IN ('sys', 'information_schema', 'pg_catalog');
 
@@ -578,6 +578,7 @@ BEGIN
 
     -- LIST action
     IF p_action = 'list' THEN
+        RAISE INFO E'\nListing all tables and columns with datetime type (includes columns with both old and new datetime formats):';
         FOR r IN (
             SELECT 
                 schema_name,
@@ -603,15 +604,23 @@ BEGIN
         v_table_count := v_table_count + 1;
 
         IF p_action = 'check' THEN
+            -- Get total row count for the table
+            EXECUTE format(
+                'SELECT COUNT(*) FROM %I.%I',
+                r.schema_name, r.table_name
+            ) INTO v_row_total;
+            
+            -- Check for affected rows
             EXECUTE format(
                 'SELECT COUNT(*) FROM %I.%I WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
                 r.schema_name, r.table_name, r.column_name, r.column_name
             ) INTO v_affected_count;
 
+            -- Only show tables with affected rows
             IF v_affected_count > 0 THEN
                 v_total_affected_count := v_total_affected_count + v_affected_count;
-                RAISE INFO E'\nSchema: %, Table: %, Column: %, Affected Rows: %',
-                    r.schema_name, r.table_name, r.column_name, v_affected_count;
+                RAISE INFO E'\nSchema: %, Table: %, Column: %, Affected Rows: % out of % total rows',
+                    r.schema_name, r.table_name, r.column_name, v_affected_count, v_row_total;
 
                 -- Show sample of affected values only if p_show_values is true
                 IF p_show_values THEN
@@ -619,9 +628,9 @@ BEGIN
                     FOR r2 IN EXECUTE format(
                         'SELECT %I as original_value, 
                                 CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) as new_value 
-                         FROM %I.%I 
-                         WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) 
-                         LIMIT 5',
+                          FROM %I.%I 
+                          WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME) 
+                          LIMIT 5',
                         r.column_name, r.column_name,
                         r.schema_name, r.table_name,
                         r.column_name, r.column_name
@@ -640,12 +649,12 @@ BEGIN
             ) INTO v_affected_count;
 
             IF v_affected_count > 0 THEN
-                RAISE INFO E'\nProcessing table: %.%', r.schema_name, r.table_name;
+                RAISE INFO E'\nProcessing table: %.% (Column: %)', r.schema_name, r.table_name, r.column_name;
                 
                 v_sql := format(
                     'UPDATE %I.%I 
-                    SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
-                    WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
+                     SET %I = CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)
+                     WHERE %I <> CAST(CAST(%I AS sys.VARCHAR) AS sys.DATETIME)',
                     r.schema_name, r.table_name,
                     r.column_name, r.column_name,
                     r.column_name, r.column_name
@@ -653,7 +662,8 @@ BEGIN
 
                 EXECUTE v_sql;
                 GET DIAGNOSTICS v_affected_count = ROW_COUNT;
-                COMMIT;
+                COMMIT; 
+                
                 v_total_affected_count := v_total_affected_count + v_affected_count;
                 RAISE INFO 'Updated % rows in %.%.%',
                     v_affected_count, r.schema_name, r.table_name, r.column_name;
@@ -668,6 +678,7 @@ BEGIN
         RAISE INFO 'Total rows affected: %', v_total_affected_count;
     END IF;
 
+    -- Final cleanup
     DROP TABLE IF EXISTS temp_datetime_columns;
 END;
 $$;
@@ -679,6 +690,10 @@ GO
 -- List all tables with datetime columns
 CALL datetime_rounding_handler('list');
 GO
+CALL datetime_rounding_handler('list', 'master_dbo');
+GO
+CALL datetime_rounding_handler('list', 'master_dbo', 'datetime_test');
+GO
 
 -- Check specific table without showing values
 CALL datetime_rounding_handler('check', 'master_dbo', 'datetime_test');
@@ -689,11 +704,11 @@ CALL datetime_rounding_handler('check', 'master_dbo', 'datetime_test', true);
 GO
 
 -- Check all tables without showing values
-CALL datetime_rounding_handler('check', NULL, 'all');
+CALL datetime_rounding_handler('check', 'all', 'all');
 GO
 
 -- Check all tables with showing values
-CALL datetime_rounding_handler('check', NULL, 'all', true);
+CALL datetime_rounding_handler('check', 'all', 'all', true);
 GO
 
 -- Update specific table
@@ -701,7 +716,7 @@ CALL datetime_rounding_handler('update', 'master_dbo', 'datetime_test');
 GO
 
 -- Update all tables (use with caution)
-CALL datetime_rounding_handler('update', NULL, 'all');
+CALL datetime_rounding_handler('update', 'all', 'all');
 GO
 
 -- tsql
