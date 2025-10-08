@@ -1,0 +1,321 @@
+CREATE SCHEMA test_conversion;
+GO
+
+-- UTF-8 TABLE
+CREATE TABLE test_conversion.varbinary_crash_test_utf8 (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    vb VARBINARY(50)
+);
+go
+
+INSERT INTO test_conversion.varbinary_crash_test_utf8 (vb) VALUES
+(0x48656C6C6F2C20576F726C6421), -- "Hello, World!" (ASCII/UTF-8)
+(0x616263),                     -- "abc"
+(0x7A62),                       -- "zb"
+(0xE4B8ADE59BBD),               -- "中文" (UTF-8)
+(0xDEADBEEF),                   -- Hex pattern
+(0xF09F9880),                   -- 😀 emoji (UTF-8)
+(0x20202020),                   -- Four spaces
+(0x31323334),                   -- "1234"
+(0x41424344),                   -- "ABCD"
+(0xEFBFBD),                     -- Unicode replacement char (UTF-8)
+(0x41),                         -- "A"
+(0x42),                         -- "B"
+(0x43),                         -- "C"
+(0x5A),                         -- "Z"
+(0x61),                         -- "a"
+(0x62),                         -- "b"
+(0x63),                         -- "c"
+(0x2E2E2E),                     -- "..."
+(0x7F7F7F),                     -- ASCII DEL characters
+(0xCAFEBABE),                   -- Hex pattern
+(0xBEEF),                       -- Hex pattern
+(0xABCD),                       -- Hex pattern
+(0x123456),                     -- Hex pattern
+(0xABCDEF),                     -- Hex pattern
+(0x303132),                     -- "012"
+(0x313233),                     -- "123"
+(0x343536),                     -- "456"
+(0x373839),                     -- "789"
+(0x414243),                     -- "ABC"
+(0x61626364),                   -- "abcd"
+(0x414243444546),               -- "ABCDEF"
+(0x616263646566),               -- "abcdef"
+(0x3132333435),                 -- "12345"
+(0x010203040506),               -- Incrementing bytes, no forbidden bytes
+(0xF7),                         -- Valid single byte > 0x7F (not forbidden)
+(0xF0F0F0F0),                   -- Hex pattern
+(CAST('' AS VARBINARY(50)))     -- Empty
+;
+go
+
+-- UTF-16LE TABLE
+CREATE TABLE test_conversion.varbinary_crash_test_utf16le (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    vb VARBINARY(50)
+);
+go
+
+INSERT INTO test_conversion.varbinary_crash_test_utf16le (vb) VALUES
+(0x480065006C006C006F002C00200057006F0072006C00640021), -- "Hello, World!" (UTF-16LE)
+(0x610062006300),                                       -- "abc" (UTF-16LE)
+(0xE900),                                               -- "é" (U+00E9, UTF-16LE)
+(0x7A006200),                                           -- "z""b" (UTF-16LE)
+(0x2D4E8765),                                           -- "中文" (UTF-16LE)
+(0x34D81EDD),                                           -- 𝄞 (musical symbol G clef, surrogate pair, UTF-16LE)
+(0x2000200020002000),                                   -- Four spaces (UTF-16LE)
+(0x3100320033003400),                                   -- "1234" (UTF-16LE)
+(0x4100420043004400),                                   -- "ABCD" (UTF-16LE)
+(0xFDFF),                                               -- Replacement character (U+FFFD, UTF-16LE)
+(0x3DD800DE),                                           -- 😀 emoji (UTF-16LE, surrogate pair)
+(0x4100),                                               -- "A" (UTF-16LE)
+(0x4200),                                               -- "B" (UTF-16LE)
+(0x4300),                                               -- "C" (UTF-16LE)
+(0x5A00),                                               -- "Z" (UTF-16LE)
+(0x6100),                                               -- "a" (UTF-16LE)
+(0x6200),                                               -- "b" (UTF-16LE)
+(0x6300),                                               -- "c" (UTF-16LE)
+(0x2E002E002E00),                                       -- "..." (UTF-16LE)
+(0x010203040506),                                       -- Incrementing bytes, no forbidden bytes
+(0xF0F0F0F0),                                           -- Hex pattern
+(CAST('' AS VARBINARY(50)))                             -- Empty
+;
+go
+
+----------------------
+-- CONVERSION TESTS --
+----------------------
+
+-- CAST
+CREATE VIEW test_conversion.v_utf8_cast
+AS
+	SELECT id,
+		vb,
+		CAST(vb AS CHAR(13)) AS s_char13,
+		CAST(vb AS VARCHAR(13)) AS s_varchar13
+	FROM test_conversion.varbinary_crash_test_utf8;
+GO
+
+CREATE PROCEDURE test_conversion.p_utf16_cast
+AS
+BEGIN
+	SELECT id,
+		vb,
+		CAST(vb AS NCHAR(13)) AS s_nchar13,
+		CAST(vb AS NVARCHAR(13)) AS s_nvarchar13
+	FROM test_conversion.varbinary_crash_test_utf16le;
+END
+GO
+
+-- TRY_CAST
+CREATE VIEW test_conversion.v_utf8_try_cast
+AS
+	SELECT id,
+		vb,
+		TRY_CAST(vb AS CHAR(13)) AS s_char13,
+		TRY_CAST(vb AS VARCHAR(13)) AS s_varchar13
+	FROM test_conversion.varbinary_crash_test_utf8;
+GO
+
+CREATE PROCEDURE test_conversion.p_utf16_try_cast
+AS
+BEGIN
+	SELECT id,
+		vb,
+		TRY_CAST(vb AS NCHAR(13)) AS s_nchar13,
+		TRY_CAST(vb AS NVARCHAR(13)) AS s_nvarchar13
+	FROM test_conversion.varbinary_crash_test_utf16le;
+END
+GO
+
+-- CONVERT
+CREATE VIEW test_conversion.v_utf8_convert
+AS
+SELECT
+    id,
+    vb,
+    CONVERT(CHAR(13), vb)     AS s_char13,
+    CONVERT(VARCHAR(13), vb)  AS s_varchar13
+FROM test_conversion.varbinary_crash_test_utf8;
+GO
+
+CREATE PROCEDURE test_conversion.p_utf16_convert
+AS
+BEGIN
+    SELECT
+        id,
+        vb,
+        CONVERT(NCHAR(13), vb)    AS s_nchar13,
+        CONVERT(NVARCHAR(13), vb) AS s_nvarchar13
+    FROM test_conversion.varbinary_crash_test_utf16le;
+END
+GO
+
+-- TRY_CONVERT
+CREATE VIEW test_conversion.v_utf8_try_convert
+AS
+SELECT
+    id,
+    vb,
+    TRY_CONVERT(CHAR(13), vb)     AS s_char13,
+    TRY_CONVERT(VARCHAR(13), vb)  AS s_varchar13
+FROM test_conversion.varbinary_crash_test_utf8;
+GO
+
+CREATE PROCEDURE test_conversion.p_utf16_try_convert
+AS
+BEGIN
+    SELECT
+        id,
+        vb,
+        TRY_CONVERT(NCHAR(13), vb)    AS s_nchar13,
+        TRY_CONVERT(NVARCHAR(13), vb) AS s_nvarchar13
+    FROM test_conversion.varbinary_crash_test_utf16le;
+END
+GO
+
+CREATE FUNCTION test_conversion.f_case_char6()
+RETURNS @Result TABLE
+(
+    result          CHAR(6)      NULL,
+    character_count INT          NULL,
+    byte_count      INT          NULL
+)
+AS
+BEGIN
+	DECLARE @vb VARBINARY(6) = 0xE4B8ADE59BBD;
+
+	INSERT INTO @Result(result, character_count, byte_count)
+    SELECT
+        CAST(@vb AS CHAR(6)),
+        LEN(CAST(@vb AS CHAR(6))),
+        DATALENGTH(CAST(@vb AS CHAR(6)));
+	RETURN;
+END
+GO
+
+CREATE FUNCTION test_conversion.f_case_varchar6()
+RETURNS @Result TABLE
+(
+    result          VARCHAR(6)      NULL,
+    character_count INT          NULL,
+    byte_count      INT          NULL
+)
+AS
+BEGIN
+	DECLARE @vb VARBINARY(6) = 0xE4B8ADE59BBD;
+
+	INSERT INTO @Result(result, character_count, byte_count)
+    SELECT
+        CAST(@vb AS VARCHAR(6)),
+        LEN(CAST(@vb AS VARCHAR(6))),
+        DATALENGTH(CAST(@vb AS VARCHAR(6)));
+	RETURN;
+END
+GO
+
+IF OBJECT_ID('test_conversion.f_edge_truncation_char2', 'TF') IS NOT NULL
+    DROP FUNCTION test_conversion.f_edge_truncation_char2;
+GO
+
+CREATE FUNCTION test_conversion.f_edge_truncation_char2()
+RETURNS @Result TABLE
+(
+    result          CHAR(2) NULL,
+    character_count INT     NULL
+)
+AS
+BEGIN
+    DECLARE @vb VARBINARY(12) = 0xE4B8ADE59BBDE4B8ADE59BBD;
+
+    INSERT INTO @Result(result, character_count)
+    SELECT
+        CAST(@vb AS CHAR(2)),
+        LEN(CAST(@vb AS CHAR(2)));
+
+    RETURN;
+END;
+GO
+
+IF OBJECT_ID('test_conversion.f_edge_ascii_char5', 'TF') IS NOT NULL
+    DROP FUNCTION test_conversion.f_edge_ascii_char5;
+GO
+
+CREATE FUNCTION test_conversion.f_edge_ascii_char5()
+RETURNS @Result TABLE
+(
+    result          CHAR(5) NULL,
+    character_count INT     NULL
+)
+AS
+BEGIN
+    DECLARE @vb VARBINARY(5) = 0x616263;
+
+    INSERT INTO @Result(result, character_count)
+    SELECT
+        CAST(@vb AS CHAR(5)),
+        LEN(CAST(@vb AS CHAR(5)));
+
+    RETURN;
+END;
+GO
+
+CREATE FUNCTION test_conversion.f_edge_mixed_char5()
+RETURNS @Result TABLE
+(
+    result          CHAR(5) NULL,
+    character_count INT     NULL
+)
+AS
+BEGIN
+    DECLARE @vb VARBINARY(6) = 0x61E4B8AD62;  -- "a中b"
+
+    INSERT INTO @Result(result, character_count)
+    SELECT
+        CAST(@vb AS CHAR(5)),
+        LEN(CAST(@vb AS CHAR(5)));
+
+    RETURN;
+END;
+GO
+
+CREATE FUNCTION test_conversion.f_edge_empty_char3()
+RETURNS @Result TABLE
+(
+    result           CHAR(3) NULL,
+    character_count  INT     NULL,
+    visualized_value NVARCHAR(20) NULL
+)
+AS
+BEGIN
+    DECLARE @vb VARBINARY(1) = 0x; -- empty binary literal
+
+    INSERT INTO @Result(result, character_count, visualized_value)
+    SELECT
+        CAST(@vb AS CHAR(3)),
+        LEN(CAST(@vb AS CHAR(3))),
+        '"' + '|' + CAST(@vb AS CHAR(3)) + '|"' ;
+
+    RETURN;
+END;
+GO
+
+CREATE FUNCTION test_conversion.f_perf_large_char10()
+RETURNS @Result TABLE
+(
+    result          CHAR(10) NULL,
+    character_count INT      NULL
+)
+AS
+BEGIN
+    DECLARE @vb VARBINARY(MAX) =
+        0xE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBDE4B8ADE59BBD;
+
+    INSERT INTO @Result(result, character_count)
+    SELECT
+        CAST(@vb AS CHAR(10)),
+        LEN(CAST(@vb AS CHAR(10)));
+
+    RETURN;
+END;
+GO
