@@ -1,0 +1,643 @@
+-- tsql user=l3014_1 password=12345678
+-- CASE 1: Simple Table/View references inside views
+-- CASE 1.1: View referring table (success: ownership chain dbo->dbo)
+select * from v3014_1_1;
+go
+~~START~~
+int
+~~END~~
+
+
+-- CASE 1.2: View referring multiple table joined (success: all tables owned by dbo)
+select * from v3014_1_2;
+go
+~~START~~
+int#!#int
+~~END~~
+
+
+-- CASE 1.3: Nesting case - one-level (success: view->view->table all dbo owned)
+select * from v3014_1_3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_1_3)~~
+
+
+-- CASE 1.4: Nesting case - two-level (success: recursive view reference in same owner)
+select * from v3014_1_4;
+go
+~~START~~
+int
+~~END~~
+
+
+-- CASE 2: Subquery inside views
+-- CASE 2.1: Subquery in SELECT clause (success: correlated subquery within same owner)
+select * from v3014_2_1;
+go
+~~START~~
+int#!#int
+~~END~~
+
+
+-- CASE 2.2: Subquery in WHERE clause (success: IN subquery within same owner)
+select * from v3014_2_2;
+go
+~~START~~
+int
+~~END~~
+
+
+-- CASE 2.3: Subquery in FROM clause (success: derived table with join in same owner)
+select * from v3014_2_3;
+go
+~~START~~
+int#!#int
+~~END~~
+
+
+-- CASE 2.4: Correlated subquery in WHERE (success: EXISTS subquery within same owner)
+select * from v3014_2_4;
+go
+~~START~~
+int
+~~END~~
+
+
+-- CASE 2.5: Multiple nested subqueries (success: nested IN clauses all within same owner)
+select * from v3014_2_5;
+go
+~~START~~
+int
+~~END~~
+
+
+-- CASE 2.6: Subquery with function (failure: function ownership chain not supported)
+select * from v3014_2_6;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f3014_a)~~
+
+
+-- CASE 2.7: Subquery in HAVING clause (success: aggregate subquery within same owner)
+select * from v3014_2_7;
+go
+~~START~~
+int#!#int
+~~END~~
+
+
+-- CASE 2.8: Subquery with set operations (success: UNION and IN within same owner)
+select * from v3014_2_8;
+go
+~~START~~
+int
+~~END~~
+
+
+-- CASE 2.9: Simple CTE
+SELECT * FROM v3014_2_9;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- CASE 2.10: CTE with JOIN
+SELECT * FROM v3014_2_10;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+-- CASE 2.11: Nested CTEs
+SELECT * FROM v3014_2_11;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- CASE 2.12: CTE with subquery
+SELECT * FROM v3014_2_12;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- CASE 2.13: CASE expression with subquery (success: subquery in CASE expression within same owner)
+SELECT * FROM v3014_2_13;
+GO
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- CASE 2.14: EXISTS and NOT EXISTS subqueries in WHERE clause (success: EXISTS and NOT EXISTS subqueries within same owner)
+SELECT * FROM v3014_2_14;
+GO
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- CASE 3: Function/procedure references (negative tests)
+-- CASE 3.1: Views with scalar function references
+select * from v3014_3_1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f3014_1)~~
+
+
+-- CASE 3.2: Views with table-valued function references
+select * from v3014_3_2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f3014_2)~~
+
+
+-- CASE 3.3: Views with multiple function references
+select * from v3014_3_3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f3014_2)~~
+
+
+-- CASE 3.4: Views with table-returning function
+select * from v3014_3_4;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f3014_5)~~
+
+
+-- CASE 3.5: Views with nested function calls
+select * from v3014_3_5;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f3014_3)~~
+
+
+-- CASE 3.6: Views with function accessing tables
+select * from v3014_3_6;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f3014_4)~~
+
+
+-- CASE 4: Negative cases where owners are different
+-- CASE 4.1: View in dbo schema referencing table in sch3014_b (failure: cross-owner direct reference)
+select * from v3014_4_1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_1)~~
+
+
+-- CASE 4.2: View in sch3014_b referencing table in dbo schema (failure: cross-owner direct reference)
+select * from sch3014_b.v3014_4_2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_1)~~
+
+
+-- CASE 4.3: View in dbo schema referencing view in sch3014_b (failure: cross-owner view reference)
+select * from v3014_4_3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_a)~~
+
+
+-- CASE 4.4: View in sch3014_b referencing view in dbo schema (failure: cross-owner view reference)
+select * from sch3014_b.v3014_4_4;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_a)~~
+
+
+-- CASE 4.5: View in dbo schema with subquery referencing table in sch3014_b (failure: cross-owner subquery)
+select * from v3014_4_5;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_2)~~
+
+
+-- CASE 4.6: View in sch3014_b with subquery referencing table in dbo schema (failure: cross-owner subquery)
+select * from sch3014_b.v3014_4_6;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_2)~~
+
+
+-- CASE 4.7: View in dbo schema referencing tables from both dbo and sch3014_b (failure: mixed owner join)
+select * from v3014_4_7;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_2)~~
+
+
+-- CASE 4.8: View in sch3014_b referencing tables from both sch3014_b and sch3014_c (failure: mixed owner join)
+select * from sch3014_b.v3014_4_8;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_2)~~
+
+
+-- CASE 5: Multi-level ownership chaining scenarios
+-- CASE 5.1: Three-level chaining, all dbo owned (success: complete ownership chain)
+select * from v3014_5_1c;
+go
+~~START~~
+int
+~~END~~
+
+
+-- CASE 5.2: Three-level mixed ownership dbo->sch3014_b->dbo (failure: broken ownership chain)
+select * from v3014_5_2c;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_5_2b)~~
+
+
+-- CASE 5.3: Three-level mixed ownership with joins (failure: multiple broken chains)
+select * from sch3014_c.v3014_5_3c;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_5_3b)~~
+
+
+-- CASE 5.4: Three-level with subqueries, all dbo owned (success: complete ownership chain with subqueries)
+select * from v3014_5_4c;
+go
+~~START~~
+int#!#int
+~~END~~
+
+
+-- CASE 5.5: Three-level mixed ownership with subqueries (failure: broken chains in subqueries)
+select * from sch3014_c.v3014_5_5c;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_5_5b)~~
+
+
+-- CASE 6: Cross-database ownership chain should be disabled
+-- CASE 6.1: View in current database referencing table in another database (failure: cross-db reference)
+select * from v3014_6_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_cross_db)~~
+
+
+-- CASE 6.2: View in another database referencing table in current database (failure: cross-db reference)
+select * from db3014.dbo.v3014_6_2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_1)~~
+
+
+-- CASE 6.3: View with subquery referencing cross-database table (failure: cross-db in subquery)
+select * from v3014_6_3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_cross_db)~~
+
+
+-- CASE 6.4: View with join to cross-database table (failure: cross-db join)
+select * from v3014_6_4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_cross_db)~~
+
+
+-- CASE 7: Prep-Exec, Parametrized Query, Dynamic SQL cases
+-- CASE 7.1: Parametrized query with ownership chain
+-- First execution creates plan
+DECLARE @param int = 1;
+SELECT * FROM v3014_7_1 WHERE a = @param;
+GO
+~~START~~
+int
+~~END~~
+
+-- Second execution uses cached plan
+DECLARE @param int = 2;
+SELECT * FROM v3014_7_1 WHERE a = @param;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- CASE 7.2: Parametrized query with joins
+-- First execution creates plan
+DECLARE @param int = 1;
+SELECT * FROM v3014_7_2 WHERE a = @param;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+-- Second execution uses cached plan
+DECLARE @param int = 2;
+SELECT * FROM v3014_7_2 WHERE a = @param;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+-- CASE 7.3: Prepare/Execute with ownership chain
+-- Prepare statement
+DECLARE @handle int;
+DECLARE @stmt nvarchar(max) = N'SELECT * FROM v3014_7_3 WHERE a = @p1';
+EXEC sp_prepare @handle OUTPUT, N'@p1 int', @stmt;
+GO
+~~START~~
+int
+~~END~~
+
+-- Execute prepared statement multiple times
+EXEC sp_execute 1, 1;
+GO
+~~START~~
+int
+~~END~~
+
+EXEC sp_execute 1, 2;
+GO
+~~START~~
+int
+~~END~~
+
+-- Deallocate prepared statement
+EXEC sp_unprepare 1;
+GO
+
+-- CASE 7.4: Dynamic SQL with ownership chain
+DECLARE @sql nvarchar(max);
+SET @sql = N'SELECT * FROM v3014_7_4 WHERE a = @id';
+EXEC sp_executesql @sql, N'@id int', 1;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- CASE 8: DML-only ownership chaining
+-- CASE 8.1: View with SELECT, INSERT permissions
+SELECT * FROM v3014_8_1;  -- Should succeed
+GO
+~~START~~
+int
+~~END~~
+
+INSERT INTO v3014_8_1 VALUES (1);  -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+UPDATE v3014_8_1 SET a = 2 WHERE a = 1;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_1)~~
+
+DELETE FROM v3014_8_1 WHERE a = 1;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_1)~~
+
+
+-- CASE 8.2: View with SELECT, UPDATE permissions
+SELECT * FROM v3014_8_2;  -- Should succeed
+GO
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO v3014_8_2 VALUES (2);  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_2)~~
+
+UPDATE v3014_8_2 SET a = 3 WHERE a = 2;  -- Should succeed
+GO
+DELETE FROM v3014_8_2 WHERE a = 2;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_2)~~
+
+
+-- CASE 8.3: View with SELECT, DELETE permissions
+SELECT * FROM v3014_8_3;  -- Should succeed
+GO
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO v3014_8_3 VALUES (3);  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_3)~~
+
+UPDATE v3014_8_3 SET a = 4 WHERE a = 3;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_3)~~
+
+DELETE FROM v3014_8_3 WHERE a = 3;  -- Should succeed
+GO
+
+-- CASE 8.4: View with SELECT, INSERT, UPDATE permissions
+SELECT * FROM v3014_8_4;  -- Should succeed
+GO
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO v3014_8_4 VALUES (4);  -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+UPDATE v3014_8_4 SET a = 5 WHERE a = 4;  -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+DELETE FROM v3014_8_4 WHERE a = 4;  -- Should fail
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v3014_8_4)~~
+
+
+-- CASE 9: Trigger ownership chaining scenarios
+-- TODO: will be passing after procedure/function support
+-- CASE 9.1: AFTER INSERT trigger with same owner
+INSERT INTO v3014_9_1 VALUES (1);  -- Should succeed and trigger should fire
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+SELECT * FROM v3014_9_1;  -- Should show inserted value
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT * FROM t3014_9_2;  -- Should fail (no direct access)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_9_2)~~
+
+
+-- CASE 9.2: AFTER UPDATE trigger with different owner
+INSERT INTO t3014_9_3 VALUES (1);  -- Setup data
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "t3014_9_3" does not exist)~~
+
+UPDATE v3014_9_2 SET a = 2 WHERE a = 1;  -- Should fail due to trigger permission
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_9_3)~~
+
+SELECT * FROM v3014_9_2;  -- Should show original value
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_9_3)~~
+
+
+-- CASE 9.3: INSTEAD OF trigger same owner
+INSERT INTO v3014_9_3 VALUES (1);  -- Should succeed through INSTEAD OF trigger
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+SELECT * FROM v3014_9_3;  -- Should show inserted value
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT * FROM t3014_9_5;  -- Should fail (no direct access)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_9_5)~~
+
+
+-- CASE 9.4: Nested triggers same owner
+INSERT INTO t3014_9_6 VALUES (1);  -- Setup data
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_9_6)~~
+
+DELETE FROM v3014_9_4 WHERE a = 1;  -- Should succeed and both triggers should fire
+GO
+SELECT * FROM v3014_9_4;  -- Should show empty
+GO
+~~START~~
+int
+~~END~~
+
+SELECT * FROM t3014_9_7;  -- Should fail (no direct access)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_9_7)~~
+
+SELECT * FROM t3014_9_8;  -- Should fail (no direct access)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_9_8)~~
+
+-- terminate-tsql-conn user=l3014_1 password=12345678
+
+-- psql
+-- Testing Ownershhip chaining with setting GUC false
+show babelfishpg_tsql.enable_ownership_chaining;
+go
+~~START~~
+text
+on
+~~END~~
+
+alter database babelfish_db set babelfishpg_tsql.enable_ownership_chaining = 'off';
+go
+select pg_reload_conf();
+go
+~~START~~
+bool
+t
+~~END~~
+
+-- terminate-psql-conn
+
+-- tsql
+select current_setting('babelfishpg_tsql.enable_ownership_chaining');
+go
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to examine "babelfishpg_tsql.enable_ownership_chaining")~~
+
+-- terminate-tsql-conn
+
+-- tsql user=l3014_1 password=12345678
+-- should fail since we disabled the ownership chaining
+select * from v3014_1_1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_1)~~
+
+SELECT * FROM v3014_9_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3014_9_1)~~
+
+-- terminate-tsql-conn user=l3014_1 password=12345678
+
