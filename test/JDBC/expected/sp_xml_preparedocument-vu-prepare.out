@@ -119,3 +119,189 @@ INSERT INTO TestNTextXML_babel_1168 VALUES(1, N'<root><child>value 世界</child
 GO
 ~~ROW COUNT: 1~~
 
+
+-- VIEWS TEST CASES for sp_xml_preparedocument and sp_xml_removedocument
+-- Test 1: Simple view with XML data
+CREATE TABLE XMLDataSource_babel_1168 (
+    id INT,
+    xml_content VARCHAR(MAX),
+    description VARCHAR(50)
+)
+INSERT INTO XMLDataSource_babel_1168 VALUES 
+(1, '<root><item>value1</item></root>', 'Simple XML'),
+(2, '<data><element>value2</element></data>', 'Data XML'),
+(3, '<config><setting>value3</setting></config>', 'Config XML')
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE VIEW XMLDataView_babel_1168 AS
+SELECT id, xml_content, description
+FROM XMLDataSource_babel_1168
+WHERE xml_content IS NOT NULL
+GO
+
+-- Test 2: View-based XML processing procedure
+CREATE PROCEDURE ProcessXMLFromView_babel_1168(@id INT)
+AS
+BEGIN
+    DECLARE @hdoc INT
+    DECLARE @xml_data VARCHAR(MAX)
+    
+    SELECT @xml_data = xml_content FROM XMLDataView_babel_1168 WHERE id = @id
+    EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_data
+    SELECT @hdoc as ViewHandle, @xml_data as XMLContent
+    EXEC sp_xml_removedocument @hdoc
+END
+GO
+
+-- Test 3: View with XML transformation
+CREATE VIEW TransformedXMLView_babel_1168 AS
+SELECT 
+    id,
+    UPPER(xml_content) as upper_xml,
+    REPLACE(xml_content, 'value', 'data') as modified_xml,
+    LEN(xml_content) as xml_length
+FROM XMLDataSource_babel_1168
+GO
+
+-- Test 4: View with NVARCHAR XML data
+CREATE TABLE NVarcharXMLSource_babel_1168 (
+    id INT,
+    xml_data NVARCHAR(MAX),
+    category NVARCHAR(50)
+)
+INSERT INTO NVarcharXMLSource_babel_1168 VALUES 
+(1, N'<root><child>Unicode 世界</child></root>', N'Unicode'),
+(2, N'<data><item>Emoji 🌟</item></data>', N'Emoji'),
+(3, N'<config><value>Mixed αβγ</value></config>', N'Greek')
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE VIEW NVarcharXMLView_babel_1168 AS
+SELECT id, xml_data, category
+FROM NVarcharXMLSource_babel_1168
+WHERE xml_data LIKE N'%<%>%'
+GO
+
+-- Test 5: Complex view with joins
+CREATE TABLE XMLMetadata_babel_1168 (
+    xml_id INT,
+    created_date DATETIME,
+    xml_type VARCHAR(20)
+)
+INSERT INTO XMLMetadata_babel_1168 VALUES 
+(1, '2023-01-01', 'Config'),
+(2, '2023-01-02', 'Data'),
+(3, '2023-01-03', 'Settings')
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE VIEW XMLWithMetadataView_babel_1168 AS
+SELECT 
+    x.id,
+    x.xml_content,
+    m.created_date,
+    m.xml_type
+FROM XMLDataSource_babel_1168 x
+INNER JOIN XMLMetadata_babel_1168 m ON x.id = m.xml_id
+GO
+
+-- Test 6: View-based XML handle management
+CREATE VIEW ActiveXMLHandlesView_babel_1168 AS
+SELECT 
+    id,
+    xml_content,
+    'Handle_' + CAST(id AS VARCHAR(10)) as handle_name
+FROM XMLDataSource_babel_1168
+WHERE LEN(xml_content) > 20
+GO
+
+
+-- Test 7: View with aggregated XML data
+CREATE VIEW XMLSummaryView_babel_1168 AS
+SELECT 
+    xml_type,
+    COUNT(*) as xml_count,
+    AVG(LEN(x.xml_content)) as avg_length,
+    MAX(m.created_date) as latest_date
+FROM XMLDataSource_babel_1168 x
+INNER JOIN XMLMetadata_babel_1168 m ON x.id = m.xml_id
+GROUP BY xml_type
+GO
+
+-- Test 8: Nested view with XML processing
+CREATE VIEW NestedXMLView_babel_1168 AS
+SELECT 
+    id,
+    xml_content,
+    CASE 
+        WHEN xml_content LIKE '%<root>%' THEN 'Root Type'
+        WHEN xml_content LIKE '%<data>%' THEN 'Data Type'
+        ELSE 'Other Type'
+    END as xml_category
+FROM XMLDataView_babel_1168
+GO
+
+-- Test 9: Parameterized view simulation with table-valued function
+CREATE FUNCTION GetXMLByType_babel_1168(@xml_type VARCHAR(20))
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT id, xml_content, xml_type
+    FROM XMLWithMetadataView_babel_1168
+    WHERE xml_type = @xml_type
+)
+GO
+
+-- Test 10: View with XML error handling
+CREATE VIEW XMLErrorHandlingView_babel_1168 AS
+SELECT 
+    id,
+    xml_content,
+    CASE 
+        WHEN xml_content IS NULL THEN 'NULL XML'
+        WHEN LEN(xml_content) = 0 THEN 'Empty XML'
+        WHEN xml_content NOT LIKE '<%' THEN 'Invalid XML Format'
+        ELSE 'Valid XML'
+    END as xml_status
+FROM XMLDataSource_babel_1168
+GO
+
+
+-- EXPLICIT CASTING AND CONVERTING TESTS FOR sp_xml_preparedocument
+-- Test data tables
+CREATE TABLE CastingTestData_babel_1168 (
+    id INT,
+    varchar_xml VARCHAR(MAX),
+    nvarchar_xml NVARCHAR(MAX),
+    char_xml CHAR(100),
+    nchar_xml NCHAR(100),
+    text_xml TEXT,
+    ntext_xml NTEXT
+)
+INSERT INTO CastingTestData_babel_1168 VALUES 
+(1, '<root><item>varchar</item></root>', N'<root><item>nvarchar 世界</item></root>', 
+ '<root><item>char</item></root>', N'<root><item>nchar 🌟</item></root>',
+ '<root><item>text</item></root>', N'<root><item>ntext 漢字</item></root>')
+GO
+~~ROW COUNT: 1~~
+
+
+-- Test procedures for casting scenarios
+CREATE PROCEDURE TestExplicitCasting_babel_1168
+AS
+BEGIN
+    DECLARE @hdoc INT
+    DECLARE @xml_data VARCHAR(MAX)
+    
+    -- Get data for casting tests
+    SELECT @xml_data = varchar_xml FROM CastingTestData_babel_1168 WHERE id = 1
+    EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_data
+    SELECT @hdoc as CastingHandle
+    EXEC sp_xml_removedocument @hdoc
+END
+GO
