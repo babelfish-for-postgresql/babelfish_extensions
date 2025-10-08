@@ -89,6 +89,7 @@ static
 void
 TdsDiscardAll()
 {
+	bool		need_snapshot = !ActiveSnapshotSet();
 	/*
 	 * Disallow DISCARD ALL in a transaction block. This is arguably
 	 * inconsistent (we don't make a similar check in the command sequence
@@ -105,7 +106,19 @@ TdsDiscardAll()
 	Async_UnlistenAll();
 	LockReleaseAll(USER_LOCKMETHOD, true);
 	ResetPlanCache();
+
+	/*
+	 * ResetTempTableNamespace might involve TOAST table access,
+	 * so we need to ensure that there is a valid snapshot.
+	 */
+	if (need_snapshot)
+		PushActiveSnapshot(GetTransactionSnapshot());
+
 	ResetTempTableNamespace();
+
+	if (need_snapshot)
+	 		PopActiveSnapshot();
+
 	ResetSequenceCaches();
 }
 
