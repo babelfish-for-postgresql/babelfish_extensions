@@ -526,10 +526,10 @@ BEGIN
 
     -- Show help if no action specified
     IF p_action IS NULL THEN
-        RAISE INFO E'\nUsage: CALL datetime_rounding_handler(''p_action'', ''p_schema_name'', ''p_table_name'', p_show_values)\n'
-                     E'Actions:\n'
-                     E'  list   - List all tables and columns with datetime type (includes columns with both old and new datetime formats)\n'
-                     E'  check  - Check for values that need rounding (requires schema and table names unless ''all'' specified)\n'
+        RAISE INFO E'\nUsage: CALL datetime_rounding_handler(''p_action'', ''p_schema_name'', ''p_table_name'', p_show_values)\n' ||
+                     E'Actions:\n' ||
+                     E'  list   - List all tables and columns with datetime type (includes columns with both old and new datetime formats)\n' ||
+                     E'  check  - Check for values that need rounding (requires schema and table names unless ''all'' specified)\n' ||
                      E'  update - Update affected values (requires schema and table names unless ''all'' specified)';
         RETURN;
     END IF;
