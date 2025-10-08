@@ -56,10 +56,10 @@ GO
 CREATE VIEW test_str_bin_conversion.v_varbinary_cast
 AS
 	SELECT id,
-		CAST(c AS VARBINARY(50)) AS s_char13,
-		CAST(v AS VARBINARY(50)) AS s_varchar13,
-		CAST(n AS VARBINARY(50)) AS s_nchar13,
-		CAST(nv AS VARBINARY(50)) AS s_nvarchar13
+		CAST(c AS VARBINARY(20)) AS s_char13,
+		CAST(v AS VARBINARY(20)) AS s_varchar13,
+		CAST(n AS VARBINARY(20)) AS s_nchar13,
+		CAST(nv AS VARBINARY(20)) AS s_nvarchar13
 	FROM test_str_bin_conversion.string_to_varbinary_test;
 GO
 
@@ -78,10 +78,10 @@ CREATE PROCEDURE test_str_bin_conversion.p_varbinary_try_cast
 AS
 BEGIN
 	SELECT id,
-		TRY_CAST(c AS VARBINARY(50)) AS s_char13,
-		TRY_CAST(v AS VARBINARY(50)) AS s_varchar13,
-		TRY_CAST(n AS VARBINARY(50)) AS s_nchar13,
-		TRY_CAST(nv AS VARBINARY(50)) AS s_nvarchar13
+		TRY_CAST(c AS VARBINARY(20)) AS s_char13,
+		TRY_CAST(v AS VARBINARY(20)) AS s_varchar13,
+		TRY_CAST(n AS VARBINARY(20)) AS s_nchar13,
+		TRY_CAST(nv AS VARBINARY(20)) AS s_nvarchar13
 	FROM test_str_bin_conversion.string_to_varbinary_test;
 END
 GO
@@ -102,20 +102,20 @@ GO
 CREATE VIEW test_str_bin_conversion.v_varbinary_convert
 AS
 	SELECT id,
-		CONVERT(VARBINARY(50), c) AS s_char13,
-		CONVERT(VARBINARY(50), v) AS s_varchar13,
-		CONVERT(VARBINARY(50), n) AS s_nchar13,
-		CONVERT(VARBINARY(50), nv) AS s_nvarchar13
+		CONVERT(VARBINARY(20), c) AS s_char13,
+		CONVERT(VARBINARY(20), v) AS s_varchar13,
+		CONVERT(VARBINARY(20), n) AS s_nchar13,
+		CONVERT(VARBINARY(20), nv) AS s_nvarchar13
 	FROM test_str_bin_conversion.string_to_varbinary_test;
 GO
 
 CREATE VIEW test_str_bin_conversion.v_binary_convert
 AS
 	SELECT id,
-		CONVERT(VARBINARY(50), c) AS s_char13,
-		CONVERT(VARBINARY(50), v) AS s_varchar13,
-		CONVERT(VARBINARY(50), n) AS s_nchar13,
-		CONVERT(VARBINARY(50), nv) AS s_nvarchar13
+		CONVERT(BINARY(20), c) AS s_char13,
+		CONVERT(BINARY(20), v) AS s_varchar13,
+		CONVERT(BINARY(20), n) AS s_nchar13,
+		CONVERT(BINARY(20), nv) AS s_nvarchar13
 	FROM test_str_bin_conversion.string_to_varbinary_test;
 GO
 
@@ -124,10 +124,10 @@ CREATE PROCEDURE test_str_bin_conversion.p_varbinary_try_convert
 AS
 BEGIN
 	SELECT id,
-		TRY_CONVERT(VARBINARY(50), c) AS s_char13,
-		TRY_CONVERT(VARBINARY(50), v) AS s_varchar13,
-		TRY_CONVERT(VARBINARY(50), n) AS s_nchar13,
-		TRY_CONVERT(VARBINARY(50), nv) AS s_nvarchar13
+		TRY_CONVERT(VARBINARY(20), c) AS s_char13,
+		TRY_CONVERT(VARBINARY(20), v) AS s_varchar13,
+		TRY_CONVERT(VARBINARY(20), n) AS s_nchar13,
+		TRY_CONVERT(VARBINARY(20), nv) AS s_nvarchar13
 	FROM test_str_bin_conversion.string_to_varbinary_test;
 END
 GO
@@ -136,10 +136,10 @@ CREATE PROCEDURE test_str_bin_conversion.p_binary_try_convert
 AS
 BEGIN
 	SELECT id,
-		TRY_CONVERT(VARBINARY(50), c) AS s_char13,
-		TRY_CONVERT(VARBINARY(50), v) AS s_varchar13,
-		TRY_CONVERT(VARBINARY(50), n) AS s_nchar13,
-		TRY_CONVERT(VARBINARY(50), nv) AS s_nvarchar13
+		TRY_CONVERT(BINARY(20), c) AS s_char13,
+		TRY_CONVERT(BINARY(20), v) AS s_varchar13,
+		TRY_CONVERT(BINARY(20), n) AS s_nchar13,
+		TRY_CONVERT(BINARY(20), nv) AS s_nvarchar13
 	FROM test_str_bin_conversion.string_to_varbinary_test;
 END
 GO
@@ -148,7 +148,7 @@ CREATE FUNCTION test_str_bin_conversion.f_s2vb_nvarchar_emoji()
 RETURNS @Result TABLE
 (
     src_value      NVARCHAR(13)  NULL,
-    vb_value       VARBINARY(50) NULL,
+    vb_value       VARBINARY(20) NULL,
     src_char_len   INT           NULL,
     src_byte_len   INT           NULL,
     vb_byte_len    INT           NULL
@@ -160,10 +160,10 @@ BEGIN
     INSERT INTO @Result
     SELECT
         @s,
-        CAST(@s AS VARBINARY(50)),
+        CAST(@s AS VARBINARY(20)),
         LEN(@s),                 -- 1 character
         DATALENGTH(@s),          -- 4 bytes (surrogate pair)
-        DATALENGTH(CAST(@s AS VARBINARY(50)));
+        DATALENGTH(CAST(@s AS VARBINARY(20)));
 
     RETURN;
 END;
@@ -173,7 +173,7 @@ CREATE FUNCTION test_str_bin_conversion.f_s2vb_char13_spaces()
 RETURNS @Result TABLE
 (
     src_value      CHAR(13)      NULL,
-    vb_value       VARBINARY(50) NULL,
+    vb_value       VARBINARY(20) NULL,
     src_char_len   INT           NULL,
     src_byte_len   INT           NULL,
     vb_byte_len    INT           NULL
@@ -185,10 +185,10 @@ BEGIN
     INSERT INTO @Result
     SELECT
         @s,
-        CAST(@s AS VARBINARY(50)),
+        CAST(@s AS VARBINARY(20)),
         LEN(@s),                 -- LEN ignores trailing spaces -> 0
         DATALENGTH(@s),          -- 13 bytes stored
-        DATALENGTH(CAST(@s AS VARBINARY(50)));
+        DATALENGTH(CAST(@s AS VARBINARY(20)));
 
     RETURN;
 END;
@@ -282,7 +282,7 @@ BEGIN
         @s,
         TRY_CAST(@s AS BINARY(4)),
         TRY_CONVERT(BINARY(4), @s),
-        DATALENGTH(CAST(@s AS VARBINARY(50))),  -- expect 4
+        DATALENGTH(CAST(@s AS VARBINARY(20))),  -- expect 4
         DATALENGTH(TRY_CAST(@s AS BINARY(4))),  -- expect 4
         DATALENGTH(TRY_CONVERT(BINARY(4), @s)); -- expect 4
 
