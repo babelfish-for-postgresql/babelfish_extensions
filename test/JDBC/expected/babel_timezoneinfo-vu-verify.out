@@ -58,10 +58,9 @@ GO
 nvarchar#!#nvarchar
 Afghanistan Standard Time#!#+04:30
 Aus Central Standard Time#!#+09:30
-Cen. Australia Standard Time#!#+09:30
+Cen. Australia Standard Time#!#+10:30
 India Standard Time#!#+05:30
 Iran Standard Time#!#+03:30
-Lord Howe Standard Time#!#+10:30
 Marquesas Standard Time#!#-09:30
 Myanmar Standard Time#!#+06:30
 Newfoundland Standard Time#!#-02:30
@@ -86,12 +85,12 @@ SELECT * FROM dbo.GetZonesInOffsetRange('+08:00', '+10:00') ORDER BY current_utc
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#bit
-North Asia East Standard Time#!#+08:00#!#0
+China Standard Time#!#+08:00#!#0
+Taipei Standard Time#!#+08:00#!#0
 W. Australia Standard Time#!#+08:00#!#0
 Singapore Standard Time#!#+08:00#!#0
 Ulaanbaatar Standard Time#!#+08:00#!#0
-China Standard Time#!#+08:00#!#0
-Taipei Standard Time#!#+08:00#!#0
+North Asia East Standard Time#!#+08:00#!#0
 Aus Central W. Standard Time#!#+08:45#!#0
 Yakutsk Standard Time#!#+09:00#!#0
 Korea Standard Time#!#+09:00#!#0
@@ -99,11 +98,8 @@ North Korea Standard Time#!#+09:00#!#0
 Tokyo Standard Time#!#+09:00#!#0
 Transbaikal Standard Time#!#+09:00#!#0
 Aus Central Standard Time#!#+09:30#!#0
-Cen. Australia Standard Time#!#+09:30#!#0
-Aus Eastern Standard Time#!#+10:00#!#0
-E. Australia Standard Time#!#+10:00#!#0
-Tasmania Standard Time#!#+10:00#!#0
 Vladivostok Standard Time#!#+10:00#!#0
+E. Australia Standard Time#!#+10:00#!#0
 West Pacific Standard Time#!#+10:00#!#0
 ~~END~~
 
