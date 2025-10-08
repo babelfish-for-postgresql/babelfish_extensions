@@ -1,7 +1,7 @@
-CREATE SCHEMA test_conversion;
+CREATE SCHEMA test_str_bin_conversion;
 GO
 
-CREATE TABLE test_conversion.string_to_varbinary_test (
+CREATE TABLE test_str_bin_conversion.string_to_varbinary_test (
     id INT IDENTITY(1,1) PRIMARY KEY,
     c CHAR(13),
     n NCHAR(13),
@@ -11,7 +11,7 @@ CREATE TABLE test_conversion.string_to_varbinary_test (
 GO
  
 -- Insert diverse and edge case strings
-INSERT INTO test_conversion.string_to_varbinary_test (c, n, v, nv) VALUES
+INSERT INTO test_str_bin_conversion.string_to_varbinary_test (c, n, v, nv) VALUES
 ('Hello, World!', N'Hello, World!', 'Hello, World!', N'Hello, World!'),
 ('abc', N'abc', 'abc', N'abc'),
 ('1234567890123', N'1234567890123', '1234567890123', N'1234567890123'),
@@ -41,14 +41,14 @@ GO
 ~~ROW COUNT: 24~~
 
 
-INSERT INTO test_conversion.string_to_varbinary_test (c, n, v, nv) VALUES
+INSERT INTO test_str_bin_conversion.string_to_varbinary_test (c, n, v, nv) VALUES
 (CHAR(0), NCHAR(0), CHAR(0), NCHAR(0)) -- Null character
 ;
 GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO test_conversion.string_to_varbinary_test (c, n, v, nv) VALUES
+INSERT INTO test_str_bin_conversion.string_to_varbinary_test (c, n, v, nv) VALUES
 ('TES'+CHAR(0)+'T', N'TES'+NCHAR(0)+'T', 'TES'+CHAR(0)+'T', N'TES'+NCHAR(0)+'T'); -- Null in middle
 ;
 GO
@@ -59,28 +59,28 @@ GO
 -- CONVERSION TESTS --
 ----------------------
 -- CAST
-CREATE VIEW test_conversion.v_varbinary_cast
+CREATE VIEW test_str_bin_conversion.v_varbinary_cast
 AS
 	SELECT id,
 		CAST(c AS VARBINARY(50)) AS s_char13,
 		CAST(v AS VARBINARY(50)) AS s_varchar13,
 		CAST(n AS VARBINARY(50)) AS s_nchar13,
 		CAST(nv AS VARBINARY(50)) AS s_nvarchar13
-	FROM test_conversion.string_to_varbinary_test;
+	FROM test_str_bin_conversion.string_to_varbinary_test;
 GO
 
-CREATE VIEW test_conversion.v_binary_cast
+CREATE VIEW test_str_bin_conversion.v_binary_cast
 AS
 	SELECT id,
 		CAST(c AS BINARY(20)) AS s_char13,
 		CAST(v AS BINARY(20)) AS s_varchar13,
 		CAST(n AS BINARY(20)) AS s_nchar13,
 		CAST(nv AS BINARY(20)) AS s_nvarchar13
-	FROM test_conversion.string_to_varbinary_test;
+	FROM test_str_bin_conversion.string_to_varbinary_test;
 GO
 
 -- TRY_CAST
-CREATE PROCEDURE test_conversion.p_varbinary_try_cast
+CREATE PROCEDURE test_str_bin_conversion.p_varbinary_try_cast
 AS
 BEGIN
 	SELECT id,
@@ -88,11 +88,11 @@ BEGIN
 		TRY_CAST(v AS VARBINARY(50)) AS s_varchar13,
 		TRY_CAST(n AS VARBINARY(50)) AS s_nchar13,
 		TRY_CAST(nv AS VARBINARY(50)) AS s_nvarchar13
-	FROM test_conversion.string_to_varbinary_test;
+	FROM test_str_bin_conversion.string_to_varbinary_test;
 END
 GO
 
-CREATE PROCEDURE test_conversion.p_binary_try_cast
+CREATE PROCEDURE test_str_bin_conversion.p_binary_try_cast
 AS
 BEGIN
 	SELECT id,
@@ -100,33 +100,33 @@ BEGIN
 		TRY_CAST(v AS BINARY(20)) AS s_varchar13,
 		TRY_CAST(n AS BINARY(20)) AS s_nchar13,
 		TRY_CAST(nv AS BINARY(20)) AS s_nvarchar13
-	FROM test_conversion.string_to_varbinary_test;
+	FROM test_str_bin_conversion.string_to_varbinary_test;
 END
 GO
 
 -- CONVERT
-CREATE VIEW test_conversion.v_varbinary_convert
+CREATE VIEW test_str_bin_conversion.v_varbinary_convert
 AS
 	SELECT id,
 		CONVERT(VARBINARY(50), c) AS s_char13,
 		CONVERT(VARBINARY(50), v) AS s_varchar13,
 		CONVERT(VARBINARY(50), n) AS s_nchar13,
 		CONVERT(VARBINARY(50), nv) AS s_nvarchar13
-	FROM test_conversion.string_to_varbinary_test;
+	FROM test_str_bin_conversion.string_to_varbinary_test;
 GO
 
-CREATE VIEW test_conversion.v_binary_convert
+CREATE VIEW test_str_bin_conversion.v_binary_convert
 AS
 	SELECT id,
 		CONVERT(VARBINARY(50), c) AS s_char13,
 		CONVERT(VARBINARY(50), v) AS s_varchar13,
 		CONVERT(VARBINARY(50), n) AS s_nchar13,
 		CONVERT(VARBINARY(50), nv) AS s_nvarchar13
-	FROM test_conversion.string_to_varbinary_test;
+	FROM test_str_bin_conversion.string_to_varbinary_test;
 GO
 
 -- TRY_CONVERT
-CREATE PROCEDURE test_conversion.p_varbinary_try_convert
+CREATE PROCEDURE test_str_bin_conversion.p_varbinary_try_convert
 AS
 BEGIN
 	SELECT id,
@@ -134,11 +134,11 @@ BEGIN
 		TRY_CONVERT(VARBINARY(50), v) AS s_varchar13,
 		TRY_CONVERT(VARBINARY(50), n) AS s_nchar13,
 		TRY_CONVERT(VARBINARY(50), nv) AS s_nvarchar13
-	FROM test_conversion.string_to_varbinary_test;
+	FROM test_str_bin_conversion.string_to_varbinary_test;
 END
 GO
 
-CREATE PROCEDURE test_conversion.p_binary_try_convert
+CREATE PROCEDURE test_str_bin_conversion.p_binary_try_convert
 AS
 BEGIN
 	SELECT id,
@@ -146,13 +146,13 @@ BEGIN
 		TRY_CONVERT(VARBINARY(50), v) AS s_varchar13,
 		TRY_CONVERT(VARBINARY(50), n) AS s_nchar13,
 		TRY_CONVERT(VARBINARY(50), nv) AS s_nvarchar13
-	FROM test_conversion.string_to_varbinary_test;
+	FROM test_str_bin_conversion.string_to_varbinary_test;
 END
 GO
 
 
 
-CREATE FUNCTION test_conversion.f_s2vb_nvarchar_emoji()
+CREATE FUNCTION test_str_bin_conversion.f_s2vb_nvarchar_emoji()
 RETURNS @Result TABLE
 (
     src_value      NVARCHAR(13)  NULL,
@@ -177,7 +177,7 @@ GO
 
 
 
-CREATE FUNCTION test_conversion.f_s2vb_char13_spaces()
+CREATE FUNCTION test_str_bin_conversion.f_s2vb_char13_spaces()
 RETURNS @Result TABLE
 (
     src_value      CHAR(13)      NULL,
@@ -202,7 +202,7 @@ GO
 
 
 
-CREATE FUNCTION test_conversion.f_s2bin_nchar13_bin32()
+CREATE FUNCTION test_str_bin_conversion.f_s2bin_nchar13_bin32()
 RETURNS @Result TABLE
 (
     src_value      NCHAR(13)   NULL,
@@ -225,7 +225,7 @@ GO
 
 
 
-CREATE FUNCTION test_conversion.f_s2bin_varchar_overflow8()
+CREATE FUNCTION test_str_bin_conversion.f_s2bin_varchar_overflow8()
 RETURNS @Result TABLE
 (
     src_value      VARCHAR(13) NULL,
@@ -248,7 +248,7 @@ GO
 
 
 
-CREATE FUNCTION test_conversion.f_s2bin_nvarchar_overflow3()
+CREATE FUNCTION test_str_bin_conversion.f_s2bin_nvarchar_overflow3()
 RETURNS @Result TABLE
 (
     src_value      NVARCHAR(13) NULL,
@@ -271,7 +271,7 @@ GO
 
 
 
-CREATE FUNCTION test_conversion.f_s2bin_try_compare()
+CREATE FUNCTION test_str_bin_conversion.f_s2bin_try_compare()
 RETURNS @Result TABLE
 (
     src_value        NVARCHAR(13) NULL,

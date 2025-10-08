@@ -1,44 +1,44 @@
 -- Drop views
-IF OBJECT_ID('test_conversion.v_varbinary_cast', 'V') IS NOT NULL DROP VIEW test_conversion.v_varbinary_cast;
+IF OBJECT_ID('test_str_bin_conversion.v_varbinary_cast', 'V') IS NOT NULL DROP VIEW test_str_bin_conversion.v_varbinary_cast;
 GO
-IF OBJECT_ID('test_conversion.v_binary_cast', 'V') IS NOT NULL DROP VIEW test_conversion.v_binary_cast;
+IF OBJECT_ID('test_str_bin_conversion.v_binary_cast', 'V') IS NOT NULL DROP VIEW test_str_bin_conversion.v_binary_cast;
 GO
-IF OBJECT_ID('test_conversion.v_varbinary_convert', 'V') IS NOT NULL DROP VIEW test_conversion.v_varbinary_convert;
+IF OBJECT_ID('test_str_bin_conversion.v_varbinary_convert', 'V') IS NOT NULL DROP VIEW test_str_bin_conversion.v_varbinary_convert;
 GO
-IF OBJECT_ID('test_conversion.v_binary_convert', 'V') IS NOT NULL DROP VIEW test_conversion.v_binary_convert;
+IF OBJECT_ID('test_str_bin_conversion.v_binary_convert', 'V') IS NOT NULL DROP VIEW test_str_bin_conversion.v_binary_convert;
 GO
 
 -- Drop procedures
-IF OBJECT_ID('test_conversion.p_varbinary_try_cast', 'P') IS NOT NULL DROP PROCEDURE test_conversion.p_varbinary_try_cast;
+IF OBJECT_ID('test_str_bin_conversion.p_varbinary_try_cast', 'P') IS NOT NULL DROP PROCEDURE test_str_bin_conversion.p_varbinary_try_cast;
 GO
-IF OBJECT_ID('test_conversion.p_binary_try_cast', 'P') IS NOT NULL DROP PROCEDURE test_conversion.p_binary_try_cast;
+IF OBJECT_ID('test_str_bin_conversion.p_binary_try_cast', 'P') IS NOT NULL DROP PROCEDURE test_str_bin_conversion.p_binary_try_cast;
 GO
-IF OBJECT_ID('test_conversion.p_varbinary_try_convert', 'P') IS NOT NULL DROP PROCEDURE test_conversion.p_varbinary_try_convert;
+IF OBJECT_ID('test_str_bin_conversion.p_varbinary_try_convert', 'P') IS NOT NULL DROP PROCEDURE test_str_bin_conversion.p_varbinary_try_convert;
 GO
-IF OBJECT_ID('test_conversion.p_binary_try_convert', 'P') IS NOT NULL DROP PROCEDURE test_conversion.p_binary_try_convert;
+IF OBJECT_ID('test_str_bin_conversion.p_binary_try_convert', 'P') IS NOT NULL DROP PROCEDURE test_str_bin_conversion.p_binary_try_convert;
 GO
 
 -- Drop functions
-IF OBJECT_ID('test_conversion.f_s2vb_nvarchar_emoji', 'IF') IS NOT NULL DROP FUNCTION test_conversion.f_s2vb_nvarchar_emoji;
+IF OBJECT_ID('test_str_bin_conversion.f_s2vb_nvarchar_emoji', 'IF') IS NOT NULL DROP FUNCTION test_str_bin_conversion.f_s2vb_nvarchar_emoji;
 GO
-IF OBJECT_ID('test_conversion.f_s2vb_char13_spaces', 'IF') IS NOT NULL DROP FUNCTION test_conversion.f_s2vb_char13_spaces;
+IF OBJECT_ID('test_str_bin_conversion.f_s2vb_char13_spaces', 'IF') IS NOT NULL DROP FUNCTION test_str_bin_conversion.f_s2vb_char13_spaces;
 GO
-IF OBJECT_ID('test_conversion.f_s2bin_nchar13_bin32', 'IF') IS NOT NULL DROP FUNCTION test_conversion.f_s2bin_nchar13_bin32;
+IF OBJECT_ID('test_str_bin_conversion.f_s2bin_nchar13_bin32', 'IF') IS NOT NULL DROP FUNCTION test_str_bin_conversion.f_s2bin_nchar13_bin32;
 GO
-IF OBJECT_ID('test_conversion.f_s2bin_varchar_overflow8', 'IF') IS NOT NULL DROP FUNCTION test_conversion.f_s2bin_varchar_overflow8;
+IF OBJECT_ID('test_str_bin_conversion.f_s2bin_varchar_overflow8', 'IF') IS NOT NULL DROP FUNCTION test_str_bin_conversion.f_s2bin_varchar_overflow8;
 GO
-IF OBJECT_ID('test_conversion.f_s2bin_nvarchar_overflow3', 'IF') IS NOT NULL DROP FUNCTION test_conversion.f_s2bin_nvarchar_overflow3;
+IF OBJECT_ID('test_str_bin_conversion.f_s2bin_nvarchar_overflow3', 'IF') IS NOT NULL DROP FUNCTION test_str_bin_conversion.f_s2bin_nvarchar_overflow3;
 GO
-IF OBJECT_ID('test_conversion.f_s2bin_try_compare', 'IF') IS NOT NULL DROP FUNCTION test_conversion.f_s2bin_try_compare;
+IF OBJECT_ID('test_str_bin_conversion.f_s2bin_try_compare', 'IF') IS NOT NULL DROP FUNCTION test_str_bin_conversion.f_s2bin_try_compare;
 GO
 
 -- Drop tables
-IF OBJECT_ID('test_conversion.string_to_varbinary_test', 'U') IS NOT NULL DROP TABLE test_conversion.string_to_varbinary_test;
+IF OBJECT_ID('test_str_bin_conversion.string_to_varbinary_test', 'U') IS NOT NULL DROP TABLE test_str_bin_conversion.string_to_varbinary_test;
 GO
 
 -- (Optional) Drop schema if empty
-IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE schema_id = SCHEMA_ID('test_conversion'))
+IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE schema_id = SCHEMA_ID('test_str_bin_conversion'))
 BEGIN
-    EXEC('DROP SCHEMA test_conversion');
+    EXEC('DROP SCHEMA test_str_bin_conversion');
 END
 GO

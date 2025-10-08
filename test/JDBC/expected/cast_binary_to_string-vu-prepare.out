@@ -1,14 +1,14 @@
-CREATE SCHEMA test_conversion;
+CREATE SCHEMA test_bin_str_conversion;
 GO
 
 -- UTF-8 TABLE
-CREATE TABLE test_conversion.varbinary_crash_test_utf8 (
+CREATE TABLE test_bin_str_conversion.varbinary_crash_test_utf8 (
     id INT IDENTITY(1,1) PRIMARY KEY,
     vb VARBINARY(50)
 );
 go
 
-INSERT INTO test_conversion.varbinary_crash_test_utf8 (vb) VALUES
+INSERT INTO test_bin_str_conversion.varbinary_crash_test_utf8 (vb) VALUES
 (0x48656C6C6F2C20576F726C6421), -- "Hello, World!" (ASCII/UTF-8)
 (0x616263),                     -- "abc"
 (0x7A62),                       -- "zb"
@@ -52,13 +52,13 @@ go
 
 
 -- UTF-16LE TABLE
-CREATE TABLE test_conversion.varbinary_crash_test_utf16le (
+CREATE TABLE test_bin_str_conversion.varbinary_crash_test_utf16le (
     id INT IDENTITY(1,1) PRIMARY KEY,
     vb VARBINARY(50)
 );
 go
 
-INSERT INTO test_conversion.varbinary_crash_test_utf16le (vb) VALUES
+INSERT INTO test_bin_str_conversion.varbinary_crash_test_utf16le (vb) VALUES
 (0x480065006C006C006F002C00200057006F0072006C00640021), -- "Hello, World!" (UTF-16LE)
 (0x610062006300),                                       -- "abc" (UTF-16LE)
 (0xE900),                                               -- "é" (U+00E9, UTF-16LE)
@@ -91,59 +91,59 @@ go
 -- CONVERSION TESTS --
 ----------------------
 -- CAST
-CREATE VIEW test_conversion.v_utf8_cast
+CREATE VIEW test_bin_str_conversion.v_utf8_cast
 AS
 	SELECT id,
 		vb,
 		CAST(vb AS CHAR(13)) AS s_char13,
 		CAST(vb AS VARCHAR(13)) AS s_varchar13
-	FROM test_conversion.varbinary_crash_test_utf8;
+	FROM test_bin_str_conversion.varbinary_crash_test_utf8;
 GO
 
-CREATE PROCEDURE test_conversion.p_utf16_cast
+CREATE PROCEDURE test_bin_str_conversion.p_utf16_cast
 AS
 BEGIN
 	SELECT id,
 		vb,
 		CAST(vb AS NCHAR(13)) AS s_nchar13,
 		CAST(vb AS NVARCHAR(13)) AS s_nvarchar13
-	FROM test_conversion.varbinary_crash_test_utf16le;
+	FROM test_bin_str_conversion.varbinary_crash_test_utf16le;
 END
 GO
 
 -- TRY_CAST
-CREATE VIEW test_conversion.v_utf8_try_cast
+CREATE VIEW test_bin_str_conversion.v_utf8_try_cast
 AS
 	SELECT id,
 		vb,
 		TRY_CAST(vb AS CHAR(13)) AS s_char13,
 		TRY_CAST(vb AS VARCHAR(13)) AS s_varchar13
-	FROM test_conversion.varbinary_crash_test_utf8;
+	FROM test_bin_str_conversion.varbinary_crash_test_utf8;
 GO
 
-CREATE PROCEDURE test_conversion.p_utf16_try_cast
+CREATE PROCEDURE test_bin_str_conversion.p_utf16_try_cast
 AS
 BEGIN
 	SELECT id,
 		vb,
 		TRY_CAST(vb AS NCHAR(13)) AS s_nchar13,
 		TRY_CAST(vb AS NVARCHAR(13)) AS s_nvarchar13
-	FROM test_conversion.varbinary_crash_test_utf16le;
+	FROM test_bin_str_conversion.varbinary_crash_test_utf16le;
 END
 GO
 
 -- CONVERT
-CREATE VIEW test_conversion.v_utf8_convert
+CREATE VIEW test_bin_str_conversion.v_utf8_convert
 AS
 SELECT
     id,
     vb,
     CONVERT(CHAR(13), vb)     AS s_char13,
     CONVERT(VARCHAR(13), vb)  AS s_varchar13
-FROM test_conversion.varbinary_crash_test_utf8;
+FROM test_bin_str_conversion.varbinary_crash_test_utf8;
 GO
 
-CREATE PROCEDURE test_conversion.p_utf16_convert
+CREATE PROCEDURE test_bin_str_conversion.p_utf16_convert
 AS
 BEGIN
     SELECT
@@ -151,22 +151,22 @@ BEGIN
         vb,
         CONVERT(NCHAR(13), vb)    AS s_nchar13,
         CONVERT(NVARCHAR(13), vb) AS s_nvarchar13
-    FROM test_conversion.varbinary_crash_test_utf16le;
+    FROM test_bin_str_conversion.varbinary_crash_test_utf16le;
 END
 GO
 
 -- TRY_CONVERT
-CREATE VIEW test_conversion.v_utf8_try_convert
+CREATE VIEW test_bin_str_conversion.v_utf8_try_convert
 AS
 SELECT
     id,
     vb,
     TRY_CONVERT(CHAR(13), vb)     AS s_char13,
     TRY_CONVERT(VARCHAR(13), vb)  AS s_varchar13
-FROM test_conversion.varbinary_crash_test_utf8;
+FROM test_bin_str_conversion.varbinary_crash_test_utf8;
 GO
 
-CREATE PROCEDURE test_conversion.p_utf16_try_convert
+CREATE PROCEDURE test_bin_str_conversion.p_utf16_try_convert
 AS
 BEGIN
     SELECT
@@ -174,12 +174,12 @@ BEGIN
         vb,
         TRY_CONVERT(NCHAR(13), vb)    AS s_nchar13,
         TRY_CONVERT(NVARCHAR(13), vb) AS s_nvarchar13
-    FROM test_conversion.varbinary_crash_test_utf16le;
+    FROM test_bin_str_conversion.varbinary_crash_test_utf16le;
 END
 GO
 
 
-CREATE FUNCTION test_conversion.f_case_char6()
+CREATE FUNCTION test_bin_str_conversion.f_case_char6()
 RETURNS @Result TABLE
 (
     result          CHAR(6)      NULL,
@@ -199,7 +199,7 @@ END
 GO
 
 
-CREATE FUNCTION test_conversion.f_case_varchar6()
+CREATE FUNCTION test_bin_str_conversion.f_case_varchar6()
 RETURNS @Result TABLE
 (
     result          VARCHAR(6)      NULL,
@@ -218,13 +218,13 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID('test_conversion.f_edge_truncation_char2', 'TF') IS NOT NULL
-    DROP FUNCTION test_conversion.f_edge_truncation_char2;
+IF OBJECT_ID('test_bin_str_conversion.f_edge_truncation_char2', 'TF') IS NOT NULL
+    DROP FUNCTION test_bin_str_conversion.f_edge_truncation_char2;
 GO
 
 
 
-CREATE FUNCTION test_conversion.f_edge_truncation_char2()
+CREATE FUNCTION test_bin_str_conversion.f_edge_truncation_char2()
 RETURNS @Result TABLE
 (
     result          CHAR(2) NULL,
@@ -241,13 +241,13 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('test_conversion.f_edge_ascii_char5', 'TF') IS NOT NULL
-    DROP FUNCTION test_conversion.f_edge_ascii_char5;
+IF OBJECT_ID('test_bin_str_conversion.f_edge_ascii_char5', 'TF') IS NOT NULL
+    DROP FUNCTION test_bin_str_conversion.f_edge_ascii_char5;
 GO
 
 
 
-CREATE FUNCTION test_conversion.f_edge_ascii_char5()
+CREATE FUNCTION test_bin_str_conversion.f_edge_ascii_char5()
 RETURNS @Result TABLE
 (
     result          CHAR(5) NULL,
@@ -266,7 +266,7 @@ GO
 
 
 
-CREATE FUNCTION test_conversion.f_edge_mixed_char5()
+CREATE FUNCTION test_bin_str_conversion.f_edge_mixed_char5()
 RETURNS @Result TABLE
 (
     result          CHAR(5) NULL,
@@ -285,7 +285,7 @@ GO
 
 
 
-CREATE FUNCTION test_conversion.f_edge_empty_char3()
+CREATE FUNCTION test_bin_str_conversion.f_edge_empty_char3()
 RETURNS @Result TABLE
 (
     result           CHAR(3) NULL,
@@ -306,7 +306,7 @@ GO
 
 
 
-CREATE FUNCTION test_conversion.f_perf_large_char10()
+CREATE FUNCTION test_bin_str_conversion.f_perf_large_char10()
 RETURNS @Result TABLE
 (
     result          CHAR(10) NULL,

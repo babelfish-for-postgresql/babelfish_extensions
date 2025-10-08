@@ -1,4 +1,4 @@
-SELECT * FROM test_conversion.v_utf8_cast ORDER BY id;
+SELECT * FROM test_bin_str_conversion.v_utf8_cast ORDER BY id;
 GO
 ~~START~~
 int#!#varbinary#!#char#!#varchar
@@ -10,7 +10,7 @@ int#!#varbinary#!#char#!#varchar
 ~~ERROR (Message: Failed to convert from data type varbinary to char, character with byte sequence 0xad 0xe5 in encoding "GBK" has no equivalent in encoding "UTF8")~~
 
 
-EXEC test_conversion.p_utf16_cast;
+EXEC test_bin_str_conversion.p_utf16_cast;
 GO
 ~~START~~
 int#!#varbinary#!#nchar#!#nvarchar
@@ -39,7 +39,7 @@ int#!#varbinary#!#nchar#!#nvarchar
 ~~END~~
 
 
-SELECT * FROM test_conversion.v_utf8_try_cast ORDER BY id;
+SELECT * FROM test_bin_str_conversion.v_utf8_try_cast ORDER BY id;
 GO
 ~~START~~
 int#!#varbinary#!#char#!#varchar
@@ -83,7 +83,7 @@ int#!#varbinary#!#char#!#varchar
 ~~END~~
 
 
-EXEC test_conversion.p_utf16_try_cast;
+EXEC test_bin_str_conversion.p_utf16_try_cast;
 GO
 ~~START~~
 int#!#varbinary#!#nchar#!#nvarchar
@@ -112,7 +112,7 @@ int#!#varbinary#!#nchar#!#nvarchar
 ~~END~~
 
 
-SELECT * FROM test_conversion.v_utf8_convert ORDER BY id;
+SELECT * FROM test_bin_str_conversion.v_utf8_convert ORDER BY id;
 GO
 ~~START~~
 int#!#varbinary#!#char#!#varchar
@@ -124,7 +124,7 @@ int#!#varbinary#!#char#!#varchar
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, character with byte sequence 0xad 0xe5 in encoding "GBK" has no equivalent in encoding "UTF8")~~
 
 
-EXEC test_conversion.p_utf16_convert;
+EXEC test_bin_str_conversion.p_utf16_convert;
 GO
 ~~START~~
 int#!#varbinary#!#nchar#!#nvarchar
@@ -153,7 +153,7 @@ int#!#varbinary#!#nchar#!#nvarchar
 ~~END~~
 
 
-SELECT * FROM test_conversion.v_utf8_try_convert ORDER BY id;
+SELECT * FROM test_bin_str_conversion.v_utf8_try_convert ORDER BY id;
 GO
 ~~START~~
 int#!#varbinary#!#char#!#varchar
@@ -197,7 +197,7 @@ int#!#varbinary#!#char#!#varchar
 ~~END~~
 
 
-EXEC test_conversion.p_utf16_try_convert;
+EXEC test_bin_str_conversion.p_utf16_try_convert;
 GO
 ~~START~~
 int#!#varbinary#!#nchar#!#nvarchar
@@ -226,7 +226,7 @@ int#!#varbinary#!#nchar#!#nvarchar
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_case_char6();
+SELECT * FROM test_bin_str_conversion.f_case_char6();
 GO
 ~~START~~
 char#!#int#!#int
@@ -235,7 +235,7 @@ char#!#int#!#int
 ~~ERROR (Message: Failed to convert from data type varbinary to char, character with byte sequence 0xad 0xe5 in encoding "GBK" has no equivalent in encoding "UTF8")~~
 
 
-SELECT * FROM test_conversion.f_case_varchar6();
+SELECT * FROM test_bin_str_conversion.f_case_varchar6();
 GO
 ~~START~~
 varchar#!#int#!#int
@@ -244,7 +244,7 @@ varchar#!#int#!#int
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, character with byte sequence 0xad 0xe5 in encoding "GBK" has no equivalent in encoding "UTF8")~~
 
 
-SELECT * FROM test_conversion.f_edge_truncation_char2();
+SELECT * FROM test_bin_str_conversion.f_edge_truncation_char2();
 GO
 ~~START~~
 char#!#int
@@ -252,7 +252,7 @@ char#!#int
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_edge_ascii_char5();
+SELECT * FROM test_bin_str_conversion.f_edge_ascii_char5();
 GO
 ~~START~~
 char#!#int
@@ -260,7 +260,7 @@ abc  #!#3
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_edge_mixed_char5();
+SELECT * FROM test_bin_str_conversion.f_edge_mixed_char5();
 GO
 ~~START~~
 char#!#int
@@ -268,7 +268,7 @@ a涓璪#!#3
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_edge_empty_char3();
+SELECT * FROM test_bin_str_conversion.f_edge_empty_char3();
 GO
 ~~START~~
 char#!#int#!#nvarchar
@@ -276,7 +276,7 @@ char#!#int#!#nvarchar
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_perf_large_char10();
+SELECT * FROM test_bin_str_conversion.f_perf_large_char10();
 GO
 ~~START~~
 char#!#int

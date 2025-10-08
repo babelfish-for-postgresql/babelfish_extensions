@@ -1,4 +1,4 @@
-SELECT * FROM test_conversion.v_varbinary_cast ORDER BY id;
+SELECT * FROM test_str_bin_conversion.v_varbinary_cast ORDER BY id;
 GO
 ~~START~~
 int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
@@ -31,7 +31,7 @@ int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
 ~~END~~
 
 
-SELECT * FROM test_conversion.v_binary_cast ORDER BY id;
+SELECT * FROM test_str_bin_conversion.v_binary_cast ORDER BY id;
 GO
 ~~START~~
 int#!#binary#!#binary#!#binary#!#binary
@@ -64,7 +64,7 @@ int#!#binary#!#binary#!#binary#!#binary
 ~~END~~
 
 
-EXEC test_conversion.p_varbinary_try_cast;
+EXEC test_str_bin_conversion.p_varbinary_try_cast;
 GO
 ~~START~~
 int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
@@ -97,7 +97,7 @@ int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
 ~~END~~
 
 
-EXEC test_conversion.p_binary_try_cast;
+EXEC test_str_bin_conversion.p_binary_try_cast;
 GO
 ~~START~~
 int#!#binary#!#binary#!#binary#!#binary
@@ -130,7 +130,7 @@ int#!#binary#!#binary#!#binary#!#binary
 ~~END~~
 
 
-SELECT * FROM test_conversion.v_varbinary_convert ORDER BY id;
+SELECT * FROM test_str_bin_conversion.v_varbinary_convert ORDER BY id;
 GO
 ~~START~~
 int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
@@ -163,7 +163,7 @@ int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
 ~~END~~
 
 
-SELECT * FROM test_conversion.v_binary_convert ORDER BY id;
+SELECT * FROM test_str_bin_conversion.v_binary_convert ORDER BY id;
 GO
 ~~START~~
 int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
@@ -196,7 +196,7 @@ int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
 ~~END~~
 
 
-EXEC test_conversion.p_varbinary_try_convert;
+EXEC test_str_bin_conversion.p_varbinary_try_convert;
 GO
 ~~START~~
 int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
@@ -229,7 +229,7 @@ int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
 ~~END~~
 
 
-EXEC test_conversion.p_binary_try_convert;
+EXEC test_str_bin_conversion.p_binary_try_convert;
 GO
 ~~START~~
 int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
@@ -262,7 +262,7 @@ int#!#varbinary#!#varbinary#!#varbinary#!#varbinary
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_s2vb_nvarchar_emoji();
+SELECT * FROM test_str_bin_conversion.f_s2vb_nvarchar_emoji();
 GO
 ~~START~~
 nvarchar#!#varbinary#!#int#!#int#!#int
@@ -270,7 +270,7 @@ nvarchar#!#varbinary#!#int#!#int#!#int
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_s2vb_char13_spaces();
+SELECT * FROM test_str_bin_conversion.f_s2vb_char13_spaces();
 GO
 ~~START~~
 char#!#varbinary#!#int#!#int#!#int
@@ -278,7 +278,7 @@ char#!#varbinary#!#int#!#int#!#int
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_s2bin_nchar13_bin32();
+SELECT * FROM test_str_bin_conversion.f_s2bin_nchar13_bin32();
 GO
 ~~START~~
 nchar#!#binary#!#int#!#int
@@ -286,7 +286,7 @@ Hello, World!#!#480065006C006C006F002C00200057006F0072006C0064002100000000000000
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_s2bin_varchar_overflow8();
+SELECT * FROM test_str_bin_conversion.f_s2bin_varchar_overflow8();
 GO
 ~~START~~
 varchar#!#binary#!#int#!#int
@@ -294,7 +294,7 @@ varchar#!#binary#!#int#!#int
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_s2bin_nvarchar_overflow3();
+SELECT * FROM test_str_bin_conversion.f_s2bin_nvarchar_overflow3();
 GO
 ~~START~~
 nvarchar#!#binary#!#int#!#int
@@ -302,7 +302,7 @@ nvarchar#!#binary#!#int#!#int
 ~~END~~
 
 
-SELECT * FROM test_conversion.f_s2bin_try_compare();
+SELECT * FROM test_str_bin_conversion.f_s2bin_try_compare();
 GO
 ~~START~~
 nvarchar#!#binary#!#binary#!#int#!#int#!#int
