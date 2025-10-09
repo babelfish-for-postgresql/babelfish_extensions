@@ -654,4 +654,4 @@ alter-table-null-notnull
 openxml_without_with_clause
 Select_top_N_percent
 ascii_function
-cast_string_to_binary
+cast_string_to_binary-before-17_7
