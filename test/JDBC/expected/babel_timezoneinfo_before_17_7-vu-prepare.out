@@ -6,6 +6,10 @@ SELECT
 FROM sys.time_zone_info
 WHERE name = 'UTC';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+
 
 CREATE VIEW v_test AS
 SELECT name FROM sys.time_zone_info 
