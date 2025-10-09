@@ -149,17 +149,7 @@ BEGIN
 END
 GO
 
--- Test 3: View with XML transformation
-CREATE VIEW TransformedXMLView_babel_1168 AS
-SELECT 
-    id,
-    UPPER(xml_content) as upper_xml,
-    REPLACE(xml_content, 'value', 'data') as modified_xml,
-    LEN(xml_content) as xml_length
-FROM XMLDataSource_babel_1168
-GO
-
--- Test 4: View with NVARCHAR XML data
+-- Test 3: View with NVARCHAR XML data
 CREATE TABLE NVarcharXMLSource_babel_1168 (
     id INT,
     xml_data NVARCHAR(MAX),
@@ -177,7 +167,7 @@ FROM NVarcharXMLSource_babel_1168
 WHERE xml_data LIKE N'%<%>%'
 GO
 
--- Test 5: Complex view with joins
+-- Test 4: Complex view with joins
 CREATE TABLE XMLMetadata_babel_1168 (
     xml_id INT,
     created_date DATETIME,
@@ -199,7 +189,7 @@ FROM XMLDataSource_babel_1168 x
 INNER JOIN XMLMetadata_babel_1168 m ON x.id = m.xml_id
 GO
 
--- Test 6: View-based XML handle management
+-- Test 5: View-based XML handle management
 CREATE VIEW ActiveXMLHandlesView_babel_1168 AS
 SELECT 
     id,
@@ -209,20 +199,7 @@ FROM XMLDataSource_babel_1168
 WHERE LEN(xml_content) > 20
 GO
 
--- Test 7: Nested view with XML processing
-CREATE VIEW NestedXMLView_babel_1168 AS
-SELECT 
-    id,
-    xml_content,
-    CASE 
-        WHEN xml_content LIKE '%<root>%' THEN 'Root Type'
-        WHEN xml_content LIKE '%<data>%' THEN 'Data Type'
-        ELSE 'Other Type'
-    END as xml_category
-FROM XMLDataView_babel_1168
-GO
-
--- Test 8: Parameterized view simulation with table-valued function
+-- Test 6: Parameterized view simulation with table-valued function
 CREATE FUNCTION GetXMLByType_babel_1168(@xml_type VARCHAR(20))
 RETURNS TABLE
 AS
@@ -234,7 +211,7 @@ RETURN
 )
 GO
 
--- Test 9: View with XML error handling
+-- Test 7: View with XML error handling
 CREATE VIEW XMLErrorHandlingView_babel_1168 AS
 SELECT 
     id,

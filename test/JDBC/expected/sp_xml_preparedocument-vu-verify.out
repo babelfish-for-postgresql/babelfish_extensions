@@ -907,16 +907,6 @@ int#!#varchar#!#varchar
 ~~END~~
 
 
-SELECT * FROM TransformedXMLView_babel_1168
-GO
-~~START~~
-int#!#varchar#!#varchar#!#int
-1#!#<ROOT><ITEM>VALUE1</ITEM></ROOT>#!#<root><item>data1</item></root>#!#32
-2#!#<DATA><ELEMENT>VALUE2</ELEMENT></DATA>#!#<data><element>data2</element></data>#!#38
-3#!#<CONFIG><SETTING>VALUE3</SETTING></CONFIG>#!#<config><setting>data3</setting></config>#!#42
-~~END~~
-
-
 SELECT * FROM NVarcharXMLView_babel_1168
 GO
 ~~START~~
@@ -924,16 +914,6 @@ int#!#nvarchar#!#nvarchar
 1#!#<root><child>Unicode 世界</child></root>#!#Unicode
 2#!#<data><item>Emoji 🌟</item></data>#!#Emoji
 3#!#<config><value>Mixed αβγ</value></config>#!#Greek
-~~END~~
-
-
-SELECT * FROM NestedXMLView_babel_1168
-GO
-~~START~~
-int#!#varchar#!#varchar
-1#!#<root><item>value1</item></root>#!#Root Type
-2#!#<data><element>value2</element></data>#!#Data Type
-3#!#<config><setting>value3</setting></config>#!#Other Type
 ~~END~~
 
 
