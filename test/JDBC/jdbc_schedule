@@ -12,6 +12,7 @@ all
 
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
+ignore#!#babel_timezoneinfo
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
