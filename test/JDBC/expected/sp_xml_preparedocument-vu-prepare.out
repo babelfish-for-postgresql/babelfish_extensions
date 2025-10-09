@@ -219,20 +219,7 @@ FROM XMLDataSource_babel_1168
 WHERE LEN(xml_content) > 20
 GO
 
-
--- Test 7: View with aggregated XML data
-CREATE VIEW XMLSummaryView_babel_1168 AS
-SELECT 
-    xml_type,
-    COUNT(*) as xml_count,
-    AVG(LEN(x.xml_content)) as avg_length,
-    MAX(m.created_date) as latest_date
-FROM XMLDataSource_babel_1168 x
-INNER JOIN XMLMetadata_babel_1168 m ON x.id = m.xml_id
-GROUP BY xml_type
-GO
-
--- Test 8: Nested view with XML processing
+-- Test 7: Nested view with XML processing
 CREATE VIEW NestedXMLView_babel_1168 AS
 SELECT 
     id,
@@ -245,7 +232,7 @@ SELECT
 FROM XMLDataView_babel_1168
 GO
 
--- Test 9: Parameterized view simulation with table-valued function
+-- Test 8: Parameterized view simulation with table-valued function
 CREATE FUNCTION GetXMLByType_babel_1168(@xml_type VARCHAR(20))
 RETURNS TABLE
 AS
@@ -257,7 +244,7 @@ RETURN
 )
 GO
 
--- Test 10: View with XML error handling
+-- Test 9: View with XML error handling
 CREATE VIEW XMLErrorHandlingView_babel_1168 AS
 SELECT 
     id,

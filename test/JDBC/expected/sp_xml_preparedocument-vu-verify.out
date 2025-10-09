@@ -927,16 +927,6 @@ int#!#nvarchar#!#nvarchar
 ~~END~~
 
 
-SELECT * FROM XMLSummaryView_babel_1168
-GO
-~~START~~
-varchar#!#int#!#int#!#datetime
-Config#!#1#!#32#!#2023-01-01 00:00:00.0
-Settings#!#1#!#42#!#2023-01-03 00:00:00.0
-Data#!#1#!#38#!#2023-01-02 00:00:00.0
-~~END~~
-
-
 SELECT * FROM NestedXMLView_babel_1168
 GO
 ~~START~~

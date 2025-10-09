@@ -76,9 +76,6 @@ GO
 DROP VIEW IF EXISTS ActiveXMLHandlesView_babel_1168
 GO
 
-DROP VIEW IF EXISTS XMLSummaryView_babel_1168
-GO
-
 DROP VIEW IF EXISTS NestedXMLView_babel_1168
 GO
 

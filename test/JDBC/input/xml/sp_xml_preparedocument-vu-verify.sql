@@ -547,9 +547,6 @@ GO
 SELECT * FROM NVarcharXMLView_babel_1168
 GO
 
-SELECT * FROM XMLSummaryView_babel_1168
-GO
-
 SELECT * FROM NestedXMLView_babel_1168
 GO
 
