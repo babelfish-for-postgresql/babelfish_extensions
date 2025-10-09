@@ -14,3 +14,27 @@ int
 1
 ~~END~~
 
+
+SELECT HAS_PERMS_BY_NAME('[ blank space]','DATABASE','CREATE FUNCTION');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[    blank space    ]','DATABASE','CREATE FUNCTION');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[ blank    space    ]','DATABASE','CREATE FUNCTION');
+GO
+~~START~~
+int
+0
+~~END~~
+
