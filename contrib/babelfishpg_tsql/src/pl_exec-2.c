@@ -31,6 +31,7 @@
 #include "parser/parse_oper.h"
 #include "src/include/lib/qunique.h"
 #include "utils/varlena.h"
+#include "pltsql_permissions.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
@@ -984,6 +985,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 				funcexpr = ((CallStmt *) node)->funcexpr;
 			}
+			funcexpr->insideView = PNODE_OUTSIDE_VIEW;
 
 			func_tuple = SearchSysCache1(PROCOID,
 										 ObjectIdGetDatum(funcexpr->funcid));
