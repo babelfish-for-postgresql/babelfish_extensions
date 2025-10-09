@@ -87,7 +87,7 @@ RETURNS TEXT
 AS 'babelfishpg_tsql', 'bbf_get_login_default_db'
 LANGUAGE C STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
                                                                  IN p_style NUMERIC DEFAULT 20)
 RETURNS TEXT
@@ -264,10 +264,10 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_datetime_to_string(IN p_datatype TEXT,
                                                                      IN p_src_datatype TEXT,
                                                                      IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE,
-                                                                     IN p_style NUMERIC DEFAULT -1)
+                                                                     IN p_style NUMERIC DEFAULT 0)
 RETURNS TEXT
 AS
 $BODY$
@@ -325,7 +325,7 @@ BEGIN
     ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
                 (v_style BETWEEN 20 AND 25) OR
                 (v_style BETWEEN 100 AND 114) OR
-                v_style IN (-1, 120, 121, 126, 127, 130, 131)))
+                v_style IN (120, 121, 126, 127, 130, 131)))
     THEN
         RAISE invalid_parameter_value;
     END IF;
@@ -2205,7 +2205,7 @@ LANGUAGE plpgsql
 IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_time_to_string(IN p_datatype TEXT,
                                                                  IN p_src_datatype TEXT,
                                                                  IN p_timeval TIME(6) WITHOUT TIME ZONE,
                                                                  IN p_style NUMERIC DEFAULT 25)
@@ -9661,46 +9661,6 @@ $BODY$
 LANGUAGE 'plpgsql'
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_date_to_string(IN p_datatype TEXT,
-                                                                     IN p_dateval DATE,
-                                                                     IN p_style NUMERIC DEFAULT 20)
-RETURNS TEXT
-AS
-$BODY$
-BEGIN
-    RETURN sys.babelfish_conv_date_to_string(p_datatype,
-                                                 p_dateval,
-                                                 p_style);
-EXCEPTION
-    WHEN OTHERS THEN
-        RETURN NULL;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_datetime_to_string(IN p_datatype TEXT,
-                                                                         IN p_src_datatype TEXT,
-                                                                         IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE,
-                                                                         IN p_style NUMERIC DEFAULT -1)
-RETURNS TEXT
-AS
-$BODY$
-BEGIN
-    RETURN sys.babelfish_conv_datetime_to_string(p_datatype,
-                                                     p_src_datatype,
-                                                     p_datetimeval,
-                                                     p_style);
-EXCEPTION
-    WHEN OTHERS THEN
-        RETURN NULL;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_datetime2(IN p_datatype TEXT,
                                                                     IN p_datetimestring TEXT,
                                                                     IN p_style NUMERIC DEFAULT 0)
@@ -9756,27 +9716,6 @@ END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE
-RETURNS NULL ON NULL INPUT;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_time_to_string(IN p_datatype TEXT,
-                                                                     IN p_src_datatype TEXT,
-                                                                     IN p_timeval TIME WITHOUT TIME ZONE,
-                                                                     IN p_style NUMERIC DEFAULT 25)
-RETURNS TEXT
-AS
-$BODY$
-BEGIN
-    RETURN sys.babelfish_conv_time_to_string(p_datatype,
-                                                 p_src_datatype,
-                                                 p_timeval,
-                                                 p_style);
-EXCEPTION
-    WHEN OTHERS THEN
-        RETURN NULL;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
 RETURNS NULL ON NULL INPUT;
 
 -- conversion to date
@@ -10676,15 +10615,16 @@ STABLE;
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg ANYELEMENT,
                                                         IN try BOOL,
-                                                        IN p_style NUMERIC DEFAULT -1)
+                                                        IN p_style NUMERIC DEFAULT -1,
+                                                        IN p_style_specified BOOLEAN DEFAULT FALSE)
 RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
 	IF try THEN
-	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
+	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style, p_style_specified);
     ELSE
-	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style,  p_style_specified);
     END IF;
 END;
 $BODY$
@@ -10706,7 +10646,8 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
-														IN p_style NUMERIC DEFAULT -1)
+														IN p_style NUMERIC DEFAULT -1,
+                                                        IN p_style_specified BOOLEAN DEFAULT FALSE)
 RETURNS sys.VARCHAR
 AS
 $BODY$
@@ -10717,35 +10658,41 @@ BEGIN
 
 	CASE pg_typeof(arg)
 	WHEN 'date'::regtype THEN
-		IF v_style = -1 THEN
+		IF NOT p_style_specified THEN
 			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
 		ELSE
 			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
 		END IF;
 	WHEN 'time'::regtype THEN
-		IF v_style = -1 THEN
+		IF NOT p_style_specified THEN
 			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
 		ELSE
 			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
 		END IF;
 	WHEN 'sys.datetime'::regtype THEN
-		IF v_style = -1 THEN
+		IF NOT p_style_specified THEN
 			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
 		ELSE
 			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
 		END IF;
 	WHEN 'float'::regtype THEN
-		IF v_style = -1 THEN
+		IF NOT p_style_specified THEN
 			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
 		ELSE
 			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
 		END IF;
 	WHEN 'sys.money'::regtype THEN
-		IF v_style = -1 THEN
+		IF NOT p_style_specified THEN
 			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
 		ELSE
 			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
 		END IF;
+    WHEN 'sys.smallmoney'::regtype THEN 
+        IF NOT p_style_specified THEN
+            RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4));
+        ELSE
+            RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4), p_style);
+        END IF;
 	ELSE
 		RETURN CAST(arg AS sys.VARCHAR);
 	END CASE;
@@ -10772,12 +10719,13 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
-														IN p_style NUMERIC DEFAULT -1)
+														IN p_style NUMERIC DEFAULT -1,
+                                                        IN p_style_specified BOOLEAN DEFAULT FALSE)
 RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style, p_style_specified);
     EXCEPTION
         WHEN OTHERS THEN
             RETURN NULL;
@@ -10848,7 +10796,10 @@ DECLARE
 	v_decimal_digits SMALLINT;
 	v_result TEXT;
 BEGIN
-	v_style := floor(p_style)::SMALLINT;
+    IF (scale(p_style) > 0) THEN
+		RAISE invalid_parameter_value;
+	END IF;
+	v_style :=floor(p_style);
 	v_digits := length(v_moneyabs::TEXT);
 	v_decimal_digits := scale(v_moneyabs);
 	IF (v_decimal_digits > 0) THEN
@@ -10859,23 +10810,73 @@ BEGIN
 	IF (v_style = 0) THEN
 		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
 		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
-	ELSIF (v_style = 1) THEN
+	ELSIF (v_style = 2 OR v_style = 126) THEN
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
+		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
+	ELSE
+     -- Default format for all other style numbers
 		IF (v_moneysign::SMALLINT = -1) THEN
 			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 1, 1) || substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 3);
 		ELSE
 			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 2);
 		END IF;
-	ELSIF (v_style = 2 OR v_style = 126) THEN
-		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
-		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
-	ELSE
-		RAISE invalid_parameter_value;
 	END IF;
 
 	RETURN v_result;
 EXCEPTION
 	WHEN invalid_parameter_value THEN
-		RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from MONEY to a character string.', v_style),
+		RAISE USING MESSAGE := pg_catalog.format('Argument data type numeric is invalid for argument 3 of convert function.'),
+					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+					HINT := 'Change "style" parameter to the proper value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_smallmoney_to_string(IN p_datatype TEXT,
+														IN p_smallmoneyval NUMERIC,
+														IN p_style NUMERIC DEFAULT 0)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+	v_format VARCHAR COLLATE "C";
+	v_smallmoneyval NUMERIC(10,4) := p_smallmoneyval::NUMERIC(10,4);
+	v_smallmoneysign NUMERIC(10,4) := sign(v_smallmoneyval);
+	v_smallmoneyabs NUMERIC(10,4) := abs(v_smallmoneyval);
+	v_digits SMALLINT;
+	v_integral_digits SMALLINT;
+	v_decimal_digits SMALLINT;
+	v_result TEXT;
+BEGIN
+    IF (scale(p_style) > 0) THEN
+		RAISE invalid_parameter_value;
+	END IF;
+	v_style := CAST(floor(p_style) AS SMALLINT);
+	v_digits := length(v_smallmoneyabs::TEXT);
+	v_decimal_digits := scale(v_smallmoneyabs);
+	IF (v_decimal_digits > 0) THEN
+		v_integral_digits := v_digits - v_decimal_digits - 1;
+	ELSE
+		v_integral_digits := v_digits;
+	END IF;
+	IF (v_style = 0) THEN
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
+		v_result := pg_catalog.btrim(to_char(v_smallmoneyval, v_format));
+	ELSIF (v_style = 2 OR v_style = 126) THEN
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
+		v_result := pg_catalog.btrim(to_char(v_smallmoneyval, v_format));
+	ELSE
+     -- Default format for all other style numbers (style 1 uses comma formatting)
+		v_result := pg_catalog.btrim(to_char(p_smallmoneyval, '999,999,999,990.99'));
+	END IF;
+
+	RETURN v_result;
+EXCEPTION
+	WHEN invalid_parameter_value THEN
+		RAISE USING MESSAGE := pg_catalog.format('Argument data type numeric is invalid for argument 3 of convert function.'),
 					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
 					HINT := 'Change "style" parameter to the proper value and try again.';
 END;
