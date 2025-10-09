@@ -2,3 +2,7 @@ DROP VIEW vw_UTC_Zero;
 Go
 DROP VIEW v_test;
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "v_test" does not exist)~~
+
