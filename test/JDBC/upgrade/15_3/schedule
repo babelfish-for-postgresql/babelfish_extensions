@@ -528,4 +528,4 @@ view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 ascii_function_before-17_7-or-16_11
 babel_timezoneinfo_before_17_7
-cast_string_to_binary-before
+cast_string_to_binary-before-16_8
