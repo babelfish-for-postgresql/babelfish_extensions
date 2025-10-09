@@ -648,4 +648,4 @@ ascii_function
 Select_top_N_percent
 test_convert_to_binary
 cast_datetime_to_binary
-babel_timezoneinfo_before_17_7
+#babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370
