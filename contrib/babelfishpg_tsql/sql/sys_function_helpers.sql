@@ -10597,7 +10597,8 @@ IMMUTABLE;
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg TEXT,
                                                         IN try BOOL,
-                                                        IN p_style NUMERIC DEFAULT -1)
+                                                        IN p_style NUMERIC DEFAULT -1,
+                                                        IN p_style_specified BOOLEAN DEFAULT FALSE)
 RETURNS sys.VARCHAR
 AS
 $BODY$

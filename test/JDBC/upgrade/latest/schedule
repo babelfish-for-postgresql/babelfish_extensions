@@ -656,3 +656,4 @@ openxml_without_with_clause
 Select_top_N_percent
 ascii_function
 babel_timezoneinfo
+babel_convert_with_style

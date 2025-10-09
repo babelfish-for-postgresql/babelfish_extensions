@@ -128,8 +128,22 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg ANYELEMENT, IN try BOOL, IN p_style NUMERIC DEFAULT -1)
+    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg TEXT, IN try BOOL, IN p_style NUMERIC DEFAULT -1)
     RENAME TO babelfish_conv_helper_to_varchar_deprecated_in_5_5_0;
+EXCEPTION
+    WHEN undefined_function THEN
+        GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+        RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg ANYELEMENT, IN try BOOL, IN p_style NUMERIC DEFAULT -1)
+    RENAME TO babelfish_conv_helper_to_varchar_with_text_argument_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -186,6 +200,7 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_datetime_to_string_deprecated_in_5_5_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_time_to_string_deprecated_in_5_5_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_time_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_with_text_argument_deprecated_in_5_5_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_deprecated_in_5_5_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_deprecated_in_5_5_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varchar_deprecated_in_5_5_0');
@@ -844,6 +859,25 @@ $BODY$
 LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
+                                                        IN arg TEXT,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT -1,
+                                                        IN p_style_specified BOOLEAN DEFAULT FALSE)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+	IF try THEN
+	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
+    ELSE
+	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg ANYELEMENT,
