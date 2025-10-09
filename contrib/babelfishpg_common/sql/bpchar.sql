@@ -202,8 +202,14 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.BPCHAR AS INT8)
 WITH FUNCTION sys.bpchar2int8(sys.BPCHAR) AS IMPLICIT;
 
-CREATE CAST (sys.BPCHAR as pg_catalog.xml)
-WITHOUT FUNCTION AS IMPLICIT;
+DO
+$$
+BEGIN
+    IF NOT EXISTS ( SELECT 1 FROM pg_cast WHERE castsource = 'sys.BPCHAR'::regtype AND casttarget = 'pg_catalog.xml'::regtype) THEN
+        EXECUTE 'CREATE CAST (sys.BPCHAR as pg_catalog.xml) WITHOUT FUNCTION AS IMPLICIT';
+    END IF;
+END 
+$$;
 
 CREATE OR REPLACE FUNCTION sys.bpchar2float4(sys.BPCHAR)
 RETURNS FLOAT4
