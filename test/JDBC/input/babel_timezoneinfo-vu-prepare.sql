@@ -1,8 +1,10 @@
 CREATE VIEW vw_UTC_Zero AS
 SELECT 
-    'UTC' AS timezone_name,
-    '+00:00' AS utc_offset,
-    0 AS is_dst;
+    name AS timezone_name,
+    current_utc_offset AS utc_offset,
+    is_currently_dst AS is_dst
+FROM sys.time_zone_info
+WHERE name = 'UTC';
 GO
 
 CREATE VIEW v_test AS

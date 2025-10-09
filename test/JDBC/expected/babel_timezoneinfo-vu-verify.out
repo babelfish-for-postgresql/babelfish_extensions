@@ -1,8 +1,8 @@
 SELECT * FROM vw_UTC_Zero;
 GO
 ~~START~~
-varchar#!#varchar#!#int
-UTC#!#+00:00#!#0
+nvarchar#!#nvarchar#!#bit
+Utc#!#+00:00#!#0
 ~~END~~
 
 SELECT * FROM v_test;
