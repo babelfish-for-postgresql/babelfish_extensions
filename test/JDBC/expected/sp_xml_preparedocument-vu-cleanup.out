@@ -51,3 +51,53 @@ GO
 
 DROP TABLE TestNTextXML_babel_1168 
 GO
+
+-- Cleanup procedures
+DROP PROCEDURE IF EXISTS ProcessXMLFromView_babel_1168
+GO
+
+DROP PROCEDURE IF EXISTS ProcessComplexXMLView_babel_1168
+GO
+
+-- Cleanup function
+DROP FUNCTION IF EXISTS GetXMLByType_babel_1168
+GO
+
+-- Cleanup views
+DROP VIEW IF EXISTS TransformedXMLView_babel_1168
+GO
+
+DROP VIEW IF EXISTS NVarcharXMLView_babel_1168
+GO
+
+DROP VIEW IF EXISTS XMLWithMetadataView_babel_1168
+GO
+
+DROP VIEW IF EXISTS ActiveXMLHandlesView_babel_1168
+GO
+
+DROP VIEW IF EXISTS NestedXMLView_babel_1168
+GO
+
+DROP VIEW IF EXISTS XMLErrorHandlingView_babel_1168
+GO
+
+DROP VIEW IF EXISTS XMLDataView_babel_1168
+GO
+
+-- Cleanup tables
+DROP TABLE IF EXISTS NVarcharXMLSource_babel_1168
+GO
+
+DROP TABLE IF EXISTS XMLMetadata_babel_1168
+GO
+
+DROP TABLE IF EXISTS XMLDataSource_babel_1168
+GO
+
+-- Cleanup casting test objects
+DROP PROCEDURE IF EXISTS TestExplicitCasting_babel_1168;
+GO
+
+DROP TABLE IF EXISTS CastingTestData_babel_1168;
+GO

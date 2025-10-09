@@ -528,3 +528,207 @@ GO
 
 EXEC TestXMLPrepareDocument_NText
 GO
+
+-- Test execution for view-based XML processing
+EXEC ProcessXMLFromView_babel_1168 1
+GO
+
+-- Test table-valued function
+SELECT * FROM GetXMLByType_babel_1168('Data')
+GO
+
+-- Test views directly
+SELECT * FROM XMLDataView_babel_1168
+GO
+
+SELECT * FROM NVarcharXMLView_babel_1168
+GO
+
+-- EXPLICIT CASTING AND CONVERTING TESTS
+-- Test 1: CAST VARCHAR to different types
+DECLARE @hdoc INT;
+DECLARE @xml_varchar VARCHAR(100) = '<root><item>test</item></root>';
+DECLARE @xml_casted VARCHAR(MAX) = CAST(@xml_varchar AS VARCHAR(MAX));
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_casted;
+SELECT @hdoc as CastVarcharToVarcharMax;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 2: CAST NVARCHAR to VARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml_nvarchar NVARCHAR(100) = N'<root><item>Unicode 世界</item></root>';
+DECLARE @xml_casted VARCHAR(MAX) = CAST(@xml_nvarchar AS VARCHAR(MAX));
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_casted;
+SELECT @hdoc as CastNVarcharToVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 3: CAST CHAR to VARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml_char CHAR(50) = '<root><item>char</item></root>';
+DECLARE @xml_casted VARCHAR(100) = CAST(@xml_char AS VARCHAR(100));
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_casted;
+SELECT @hdoc as CastCharToVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 4: CAST NCHAR to NVARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml_nchar NCHAR(50) = N'<root><item>nchar 🌟</item></root>';
+DECLARE @xml_casted NVARCHAR(100) = CAST(@xml_nchar AS NVARCHAR(100));
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_casted;
+SELECT @hdoc as CastNCharToNVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 5: CONVERT VARCHAR to NVARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml_varchar VARCHAR(100) = '<root><item>convert test</item></root>';
+DECLARE @xml_converted NVARCHAR(MAX) = CONVERT(NVARCHAR(MAX), @xml_varchar);
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_converted;
+SELECT @hdoc as ConvertVarcharToNVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 6: CONVERT NVARCHAR to VARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml_nvarchar NVARCHAR(100) = N'<root><item>convert 测试</item></root>';
+DECLARE @xml_converted VARCHAR(MAX) = CONVERT(VARCHAR(MAX), @xml_nvarchar);
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_converted;
+SELECT @hdoc as ConvertNVarcharToVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 7: CAST with length truncation
+DECLARE @hdoc INT;
+DECLARE @xml_long VARCHAR(200) = '<root><item>very long xml content that might be truncated</item></root>';
+DECLARE @xml_truncated VARCHAR(50) = CAST(@xml_long AS VARCHAR(50));
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_truncated;
+SELECT @hdoc as CastWithTruncation;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 8: CONVERT with explicit length
+DECLARE @hdoc INT;
+DECLARE @xml_data NVARCHAR(MAX) = N'<root><item>explicit length conversion 世界</item></root>';
+DECLARE @xml_converted VARCHAR(100) = CONVERT(VARCHAR(100), @xml_data);
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_converted;
+SELECT @hdoc as ConvertWithLength;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 9: CAST TEXT to VARCHAR(MAX)
+DECLARE @hdoc INT;
+DECLARE @xml_varchar VARCHAR(MAX);
+SELECT @xml_varchar = CAST(text_xml AS VARCHAR(MAX)) FROM CastingTestData_babel_1168 WHERE id = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_varchar;
+SELECT @hdoc as CastTextToVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 10: CAST NTEXT to NVARCHAR(MAX)
+DECLARE @hdoc INT;
+DECLARE @xml_nvarchar NVARCHAR(MAX);
+SELECT @xml_nvarchar = CAST(ntext_xml AS NVARCHAR(MAX)) FROM CastingTestData_babel_1168 WHERE id = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_nvarchar;
+SELECT @hdoc as CastNTextToNVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 11: CONVERT with style parameter
+DECLARE @hdoc INT;
+DECLARE @xml_data VARCHAR(100) = '<root><item>style test</item></root>';
+DECLARE @xml_converted NVARCHAR(MAX) = CONVERT(NVARCHAR(MAX), @xml_data, 0);
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_converted;
+SELECT @hdoc as ConvertWithStyle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 12: Nested CAST operations
+DECLARE @hdoc INT;
+DECLARE @xml_char CHAR(100) = '<root><item>nested cast</item></root>';
+DECLARE @xml_nested NVARCHAR(MAX) = CAST(CAST(@xml_char AS VARCHAR(100)) AS NVARCHAR(MAX));
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_nested;
+SELECT @hdoc as NestedCast;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 13: CAST with Unicode preservation
+DECLARE @hdoc INT;
+DECLARE @xml_unicode NVARCHAR(100) = N'<root><item>Unicode: 你好世界 🌍 αβγ</item></root>';
+DECLARE @xml_preserved NVARCHAR(MAX) = CAST(@xml_unicode AS NVARCHAR(MAX));
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_preserved;
+SELECT @hdoc as CastUnicodePreservation;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 14: CONVERT with potential data loss
+DECLARE @hdoc INT;
+DECLARE @xml_unicode NVARCHAR(100) = N'<root><item>Data loss test: 世界 🌟</item></root>';
+DECLARE @xml_converted VARCHAR(MAX) = CONVERT(VARCHAR(MAX), @xml_unicode);
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_converted;
+SELECT @hdoc as ConvertWithDataLoss;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 15: CAST from table columns
+DECLARE @hdoc INT;
+DECLARE @xml_data VARCHAR(MAX);
+SELECT @xml_data = CAST(varchar_xml AS VARCHAR(MAX)) FROM CastingTestData_babel_1168 WHERE id = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_data;
+SELECT @hdoc as CastFromTableColumn;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 16: CONVERT from table columns with Unicode
+DECLARE @hdoc INT;
+DECLARE @xml_data VARCHAR(MAX);
+SELECT @xml_data = CONVERT(VARCHAR(MAX), nvarchar_xml) FROM CastingTestData_babel_1168 WHERE id = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_data;
+SELECT @hdoc as ConvertFromTableUnicode;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 17: CAST with RTRIM/LTRIM
+DECLARE @hdoc INT;
+DECLARE @xml_padded CHAR(100) = '<root><item>padded</item></root>';
+DECLARE @xml_trimmed VARCHAR(MAX) = CAST(RTRIM(@xml_padded) AS VARCHAR(MAX));
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_trimmed;
+SELECT @hdoc as CastWithTrim;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 18: CONVERT with string functions
+DECLARE @hdoc INT;
+DECLARE @xml_data VARCHAR(100) = '<root><item>function test</item></root>';
+DECLARE @xml_upper NVARCHAR(MAX) = CONVERT(NVARCHAR(MAX), UPPER(@xml_data));
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_upper;
+SELECT @hdoc as ConvertWithFunction;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 19: CAST in CASE expression
+DECLARE @hdoc INT;
+DECLARE @xml_type INT = 1;
+DECLARE @xml_result VARCHAR(MAX) = CASE @xml_type 
+    WHEN 1 THEN CAST('<root><item>type1</item></root>' AS VARCHAR(MAX))
+    ELSE CAST('<root><item>default</item></root>' AS VARCHAR(MAX))
+END;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_result;
+SELECT @hdoc as CastInCase;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 20: CONVERT with COALESCE
+DECLARE @hdoc INT;
+DECLARE @xml_null VARCHAR(100) = NULL;
+DECLARE @xml_default VARCHAR(100) = '<root><item>default</item></root>';
+DECLARE @xml_coalesced VARCHAR(MAX) = CONVERT(VARCHAR(MAX), COALESCE(@xml_null, @xml_default));
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_coalesced;
+SELECT @hdoc as ConvertWithCoalesce;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test execution of casting procedure
+EXEC TestExplicitCasting_babel_1168;
+GO
