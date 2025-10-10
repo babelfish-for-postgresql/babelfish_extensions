@@ -989,4 +989,5 @@ View sys.spt_tablecollations_view
 View sys.synonyms
 View sys.syscharsets
 View sys.syslanguages
+View sys.time_zone_info
 View sys.xml_schema_collections
