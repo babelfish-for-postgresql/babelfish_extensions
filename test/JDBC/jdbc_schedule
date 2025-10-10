@@ -738,7 +738,9 @@ ignore#!#TestDecimal
 ignore#!#TestNumeric
 ignore#!#aggregate_testing
 ignore#!#numericOverflow
+ignore#!#pivot-vu-prepare
 ignore#!#pivot-vu-verify
+ignore#!#pivot-vu-cleanup
 ignore#!#select_into-identity-notnull
 ignore#!#temp_catalog_inval-vu-prepare
 ignore#!#temp_catalog_inval-vu-verify

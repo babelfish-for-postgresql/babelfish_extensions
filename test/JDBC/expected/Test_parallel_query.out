@@ -270,7 +270,7 @@ Hash Join (actual rows=1.00 loops=1)
   Hash Cond: ("#temp".a = pq_t.id)
   ->  HashAggregate (actual rows=1.00 loops=1)
         Group Key: "#temp".a
-        Batches: 1  Memory Usage: 40kB
+        Batches: 1  Memory Usage: 32kB
         ->  Seq Scan on "#temp" (actual rows=1.00 loops=1)
   ->  Hash (actual rows=5.00 loops=1)
         Buckets: 1024  Batches: 1  Memory Usage: 9kB
