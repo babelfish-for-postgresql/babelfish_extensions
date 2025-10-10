@@ -44,6 +44,37 @@ ignore#!#cast_string_to_binary-before-17_7-vu-prepare
 ignore#!#cast_string_to_binary-before-17_7-vu-verify
 ignore#!#cast_string_to_binary-before-17_7-vu-cleanup
 
+ignore#!#cast_binary_to_string-before-13_6-vu-prepare
+ignore#!#cast_binary_to_string-before-13_6-vu-verify
+ignore#!#cast_binary_to_string-before-13_6-vu-cleanup
+ignore#!#cast_binary_to_string-before-14_5-vu-prepare
+ignore#!#cast_binary_to_string-before-14_5-vu-verify
+ignore#!#cast_binary_to_string-before-14_5-vu-cleanup
+ignore#!#cast_binary_to_string-before-14_21-vu-prepare
+ignore#!#cast_binary_to_string-before-14_21-vu-verify
+ignore#!#cast_binary_to_string-before-14_21-vu-cleanup
+ignore#!#cast_binary_to_string-before-15_2-vu-prepare
+ignore#!#cast_binary_to_string-before-15_2-vu-verify
+ignore#!#cast_binary_to_string-before-15_2-vu-cleanup
+ignore#!#cast_binary_to_string-before-15_5-vu-prepare
+ignore#!#cast_binary_to_string-before-15_5-vu-verify
+ignore#!#cast_binary_to_string-before-15_5-vu-cleanup
+ignore#!#cast_binary_to_string-before-15_16-vu-prepare
+ignore#!#cast_binary_to_string-before-15_16-vu-verify
+ignore#!#cast_binary_to_string-before-15_16-vu-cleanup
+ignore#!#cast_binary_to_string-before-16_1-vu-prepare
+ignore#!#cast_binary_to_string-before-16_1-vu-verify
+ignore#!#cast_binary_to_string-before-16_1-vu-cleanup
+ignore#!#cast_binary_to_string-before-16_4-vu-prepare
+ignore#!#cast_binary_to_string-before-16_4-vu-verify
+ignore#!#cast_binary_to_string-before-16_4-vu-cleanup
+ignore#!#cast_binary_to_string-before-16_8-vu-prepare
+ignore#!#cast_binary_to_string-before-16_8-vu-verify
+ignore#!#cast_binary_to_string-before-16_8-vu-cleanup
+ignore#!#cast_binary_to_string-before-17_7-vu-prepare
+ignore#!#cast_binary_to_string-before-17_7-vu-verify
+ignore#!#cast_binary_to_string-before-17_7-vu-cleanup
+
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
 

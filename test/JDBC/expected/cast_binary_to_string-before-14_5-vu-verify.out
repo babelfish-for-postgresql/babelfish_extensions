@@ -1,0 +1,251 @@
+SELECT * FROM test_bin_str_conversion.v_utf8_cast ORDER BY id;
+GO
+~~START~~
+int#!#varbinary#!#char#!#varchar#!#char#!#varchar
+1#!#48656C6C6F2C20576F726C6421#!#0x48656c6c6f2#!#Hello, World!#!#0x48656c6c6f2#!#Hello, World!
+2#!#616263#!#0x616263     #!#abc#!#0x616263     #!#abc
+3#!#7A62#!#0x7a62       #!#zb#!#0x7a62       #!#zb
+4#!#E4B8ADE59BBD#!#0xe4b8ade59bb#!#ä¸­å›½#!#0xe4b8ade59bb#!#ä¸­å›½
+5#!#DEADBEEF#!#0xdeadbeef   #!#Þ­¾ï#!#0xdeadbeef   #!#Þ­¾ï
+6#!#F09F9880#!#0xf09f9880   #!#ðŸ˜€#!#0xf09f9880   #!#ðŸ˜€
+7#!#20202020#!#0x20202020   #!#    #!#0x20202020   #!#    
+8#!#31323334#!#0x31323334   #!#1234#!#0x31323334   #!#1234
+9#!#41424344#!#0x41424344   #!#ABCD#!#0x41424344   #!#ABCD
+10#!#EFBFBD#!#0xefbfbd     #!#ï¿½#!#0xefbfbd     #!#ï¿½
+11#!#41#!#0x41         #!#A#!#0x41         #!#A
+12#!#42#!#0x42         #!#B#!#0x42         #!#B
+13#!#43#!#0x43         #!#C#!#0x43         #!#C
+14#!#5A#!#0x5a         #!#Z#!#0x5a         #!#Z
+15#!#61#!#0x61         #!#a#!#0x61         #!#a
+16#!#62#!#0x62         #!#b#!#0x62         #!#b
+17#!#63#!#0x63         #!#c#!#0x63         #!#c
+18#!#2E2E2E#!#0x2e2e2e     #!#...#!#0x2e2e2e     #!#...
+19#!#7F7F7F#!#0x7f7f7f     #!##!#0x7f7f7f     #!#
+20#!#CAFEBABE#!#0xcafebabe   #!#Êþº¾#!#0xcafebabe   #!#Êþº¾
+21#!#BEEF#!#0xbeef       #!#¾ï#!#0xbeef       #!#¾ï
+22#!#ABCD#!#0xabcd       #!#«Í#!#0xabcd       #!#«Í
+23#!#123456#!#0x123456     #!#4V#!#0x123456     #!#4V
+24#!#ABCDEF#!#0xabcdef     #!#«Íï#!#0xabcdef     #!#«Íï
+25#!#303132#!#0x303132     #!#012#!#0x303132     #!#012
+26#!#313233#!#0x313233     #!#123#!#0x313233     #!#123
+27#!#343536#!#0x343536     #!#456#!#0x343536     #!#456
+28#!#373839#!#0x373839     #!#789#!#0x373839     #!#789
+29#!#414243#!#0x414243     #!#ABC#!#0x414243     #!#ABC
+30#!#61626364#!#0x61626364   #!#abcd#!#0x61626364   #!#abcd
+31#!#414243444546#!#0x41424344454#!#ABCDEF#!#0x41424344454#!#ABCDEF
+32#!#616263646566#!#0x61626364656#!#abcdef#!#0x61626364656#!#abcdef
+33#!#3132333435#!#0x3132333435 #!#12345#!#0x3132333435 #!#12345
+34#!#010203040506#!#0x01020304050#!##!#0x01020304050#!#
+35#!#F7#!#0xf7         #!#÷#!#0xf7         #!#÷
+36#!#F0F0F0F0#!#0xf0f0f0f0   #!#ðððð#!#0xf0f0f0f0   #!#ðððð
+37#!##!#0x           #!##!#0x           #!#
+~~END~~
+
+
+EXEC test_bin_str_conversion.p_utf16_cast;
+GO
+~~START~~
+int#!#varbinary#!#nchar#!#nvarchar#!#nchar#!#nvarchar
+1#!#480065006C006C006F002C00200057006F0072006C00640021#!#Hello, World!#!#Hello, World!#!#Hello, World!#!#Hello, World!
+2#!#610062006300#!#abc          #!#abc#!#abc          #!#abc
+3#!#E900#!#é            #!#é#!#é            #!#é
+4#!#7A006200#!#zb           #!#zb#!#zb           #!#zb
+5#!#2D4E8765#!#中文           #!#中文#!#中文           #!#中文
+6#!#34D81EDD#!#𝄞           #!#𝄞#!#𝄞           #!#𝄞
+7#!#2000200020002000#!#             #!#    #!#             #!#    
+8#!#3100320033003400#!#1234         #!#1234#!#1234         #!#1234
+9#!#4100420043004400#!#ABCD         #!#ABCD#!#ABCD         #!#ABCD
+10#!#FDFF#!#�            #!#�#!#�            #!#�
+11#!#3DD800DE#!#😀           #!#😀#!#😀           #!#😀
+12#!#4100#!#A            #!#A#!#A            #!#A
+13#!#4200#!#B            #!#B#!#B            #!#B
+14#!#4300#!#C            #!#C#!#C            #!#C
+15#!#5A00#!#Z            #!#Z#!#Z            #!#Z
+16#!#6100#!#a            #!#a#!#a            #!#a
+17#!#6200#!#b            #!#b#!#b            #!#b
+18#!#6300#!#c            #!#c#!#c            #!#c
+19#!#2E002E002E00#!#...          #!#...#!#...          #!#...
+20#!#010203040506#!#ȁЃ؅          #!#ȁЃ؅#!#ȁЃ؅          #!#ȁЃ؅
+21#!#F0F0F0F0#!#           #!##!#           #!#
+22#!##!#             #!##!#             #!#
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.v_utf8_try_cast ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+EXEC test_bin_str_conversion.p_utf16_try_cast;
+GO
+~~START~~
+int#!#varbinary#!#nchar#!#nvarchar#!#nchar#!#nvarchar
+1#!#480065006C006C006F002C00200057006F0072006C00640021#!#Hello, World!#!#Hello, World!#!#Hello, World!#!#Hello, World!
+2#!#610062006300#!#abc          #!#abc#!#abc          #!#abc
+3#!#E900#!#é            #!#é#!#é            #!#é
+4#!#7A006200#!#zb           #!#zb#!#zb           #!#zb
+5#!#2D4E8765#!#中文           #!#中文#!#中文           #!#中文
+6#!#34D81EDD#!#𝄞           #!#𝄞#!#𝄞           #!#𝄞
+7#!#2000200020002000#!#             #!#    #!#             #!#    
+8#!#3100320033003400#!#1234         #!#1234#!#1234         #!#1234
+9#!#4100420043004400#!#ABCD         #!#ABCD#!#ABCD         #!#ABCD
+10#!#FDFF#!#�            #!#�#!#�            #!#�
+11#!#3DD800DE#!#😀           #!#😀#!#😀           #!#😀
+12#!#4100#!#A            #!#A#!#A            #!#A
+13#!#4200#!#B            #!#B#!#B            #!#B
+14#!#4300#!#C            #!#C#!#C            #!#C
+15#!#5A00#!#Z            #!#Z#!#Z            #!#Z
+16#!#6100#!#a            #!#a#!#a            #!#a
+17#!#6200#!#b            #!#b#!#b            #!#b
+18#!#6300#!#c            #!#c#!#c            #!#c
+19#!#2E002E002E00#!#...          #!#...#!#...          #!#...
+20#!#010203040506#!#ȁЃ؅          #!#ȁЃ؅#!#ȁЃ؅          #!#ȁЃ؅
+21#!#F0F0F0F0#!#           #!##!#           #!#
+22#!##!#             #!##!#             #!#
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.v_utf8_convert ORDER BY id;
+GO
+~~START~~
+int#!#varbinary#!#char#!#varchar#!#char#!#varchar
+1#!#48656C6C6F2C20576F726C6421#!#0x48656c6c6f2#!#Hello, World!#!#0x48656c6c6f2#!#Hello, World!
+2#!#616263#!#0x616263     #!#abc#!#0x616263     #!#abc
+3#!#7A62#!#0x7a62       #!#zb#!#0x7a62       #!#zb
+4#!#E4B8ADE59BBD#!#0xe4b8ade59bb#!#ä¸­å›½#!#0xe4b8ade59bb#!#ä¸­å›½
+5#!#DEADBEEF#!#0xdeadbeef   #!#Þ­¾ï#!#0xdeadbeef   #!#Þ­¾ï
+6#!#F09F9880#!#0xf09f9880   #!#ðŸ˜€#!#0xf09f9880   #!#ðŸ˜€
+7#!#20202020#!#0x20202020   #!#    #!#0x20202020   #!#    
+8#!#31323334#!#0x31323334   #!#1234#!#0x31323334   #!#1234
+9#!#41424344#!#0x41424344   #!#ABCD#!#0x41424344   #!#ABCD
+10#!#EFBFBD#!#0xefbfbd     #!#ï¿½#!#0xefbfbd     #!#ï¿½
+11#!#41#!#0x41         #!#A#!#0x41         #!#A
+12#!#42#!#0x42         #!#B#!#0x42         #!#B
+13#!#43#!#0x43         #!#C#!#0x43         #!#C
+14#!#5A#!#0x5a         #!#Z#!#0x5a         #!#Z
+15#!#61#!#0x61         #!#a#!#0x61         #!#a
+16#!#62#!#0x62         #!#b#!#0x62         #!#b
+17#!#63#!#0x63         #!#c#!#0x63         #!#c
+18#!#2E2E2E#!#0x2e2e2e     #!#...#!#0x2e2e2e     #!#...
+19#!#7F7F7F#!#0x7f7f7f     #!##!#0x7f7f7f     #!#
+20#!#CAFEBABE#!#0xcafebabe   #!#Êþº¾#!#0xcafebabe   #!#Êþº¾
+21#!#BEEF#!#0xbeef       #!#¾ï#!#0xbeef       #!#¾ï
+22#!#ABCD#!#0xabcd       #!#«Í#!#0xabcd       #!#«Í
+23#!#123456#!#0x123456     #!#4V#!#0x123456     #!#4V
+24#!#ABCDEF#!#0xabcdef     #!#«Íï#!#0xabcdef     #!#«Íï
+25#!#303132#!#0x303132     #!#012#!#0x303132     #!#012
+26#!#313233#!#0x313233     #!#123#!#0x313233     #!#123
+27#!#343536#!#0x343536     #!#456#!#0x343536     #!#456
+28#!#373839#!#0x373839     #!#789#!#0x373839     #!#789
+29#!#414243#!#0x414243     #!#ABC#!#0x414243     #!#ABC
+30#!#61626364#!#0x61626364   #!#abcd#!#0x61626364   #!#abcd
+31#!#414243444546#!#0x41424344454#!#ABCDEF#!#0x41424344454#!#ABCDEF
+32#!#616263646566#!#0x61626364656#!#abcdef#!#0x61626364656#!#abcdef
+33#!#3132333435#!#0x3132333435 #!#12345#!#0x3132333435 #!#12345
+34#!#010203040506#!#0x01020304050#!##!#0x01020304050#!#
+35#!#F7#!#0xf7         #!#÷#!#0xf7         #!#÷
+36#!#F0F0F0F0#!#0xf0f0f0f0   #!#ðððð#!#0xf0f0f0f0   #!#ðððð
+37#!##!#0x           #!##!#0x           #!#
+~~END~~
+
+
+EXEC test_bin_str_conversion.p_utf16_convert;
+GO
+~~START~~
+int#!#varbinary#!#nchar#!#nvarchar#!#nchar#!#nvarchar
+1#!#480065006C006C006F002C00200057006F0072006C00640021#!#Hello, World!#!#Hello, World!#!#Hello, World!#!#Hello, World!
+2#!#610062006300#!#abc          #!#abc#!#abc          #!#abc
+3#!#E900#!#é            #!#é#!#é            #!#é
+4#!#7A006200#!#zb           #!#zb#!#zb           #!#zb
+5#!#2D4E8765#!#中文           #!#中文#!#中文           #!#中文
+6#!#34D81EDD#!#𝄞           #!#𝄞#!#𝄞           #!#𝄞
+7#!#2000200020002000#!#             #!#    #!#             #!#    
+8#!#3100320033003400#!#1234         #!#1234#!#1234         #!#1234
+9#!#4100420043004400#!#ABCD         #!#ABCD#!#ABCD         #!#ABCD
+10#!#FDFF#!#�            #!#�#!#�            #!#�
+11#!#3DD800DE#!#😀           #!#😀#!#😀           #!#😀
+12#!#4100#!#A            #!#A#!#A            #!#A
+13#!#4200#!#B            #!#B#!#B            #!#B
+14#!#4300#!#C            #!#C#!#C            #!#C
+15#!#5A00#!#Z            #!#Z#!#Z            #!#Z
+16#!#6100#!#a            #!#a#!#a            #!#a
+17#!#6200#!#b            #!#b#!#b            #!#b
+18#!#6300#!#c            #!#c#!#c            #!#c
+19#!#2E002E002E00#!#...          #!#...#!#...          #!#...
+20#!#010203040506#!#ȁЃ؅          #!#ȁЃ؅#!#ȁЃ؅          #!#ȁЃ؅
+21#!#F0F0F0F0#!#           #!##!#           #!#
+22#!##!#             #!##!#             #!#
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.v_utf8_try_convert ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "test_bin_str_conversion.v_utf8_try_convert" does not exist)~~
+
+
+EXEC test_bin_str_conversion.p_utf16_try_convert;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure test_bin_str_conversion.p_utf16_try_convert() does not exist)~~
+
+
+SELECT * FROM test_bin_str_conversion.f_case_char6();
+GO
+~~START~~
+char#!#int#!#int
+ä¸­å›½#!#6#!#13
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_case_varchar6();
+GO
+~~START~~
+varchar#!#int#!#int
+ä¸­å›½#!#6#!#13
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_edge_truncation_char2();
+GO
+~~START~~
+char#!#int
+ä¸#!#2
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_edge_ascii_char5();
+GO
+~~START~~
+char#!#int
+abc  #!#3
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_edge_mixed_char5();
+GO
+~~START~~
+char#!#int
+aä¸­b#!#5
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_edge_empty_char3();
+GO
+~~START~~
+char#!#int#!#nvarchar
+   #!#0#!#"|   |"
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_perf_large_char10();
+GO
+~~START~~
+char#!#int
+ä¸­å›½ä¸­å#!#10
+~~END~~
+

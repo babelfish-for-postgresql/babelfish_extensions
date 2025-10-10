@@ -1,0 +1,206 @@
+SELECT * FROM test_bin_str_conversion.v_utf8_cast ORDER BY id;
+GO
+~~START~~
+int#!#varbinary#!#char#!#varchar#!#char#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, character with byte sequence 0xad 0xe5 in encoding "GBK" has no equivalent in encoding "UTF8")~~
+
+
+EXEC test_bin_str_conversion.p_utf16_cast;
+GO
+~~START~~
+int#!#varbinary#!#nchar#!#nvarchar#!#nchar#!#nvarchar
+1#!#480065006C006C006F002C00200057006F0072006C00640021#!#Hello, World!#!#Hello, World!#!#Hello, World!#!#Hello, World!
+2#!#610062006300#!#abc          #!#abc#!#abc          #!#abc
+3#!#E900#!#é            #!#é#!#é            #!#é
+4#!#7A006200#!#zb           #!#zb#!#zb           #!#zb
+5#!#2D4E8765#!#中文           #!#中文#!#中文           #!#中文
+6#!#34D81EDD#!#𝄞           #!#𝄞#!#𝄞           #!#𝄞
+7#!#2000200020002000#!#             #!#    #!#             #!#    
+8#!#3100320033003400#!#1234         #!#1234#!#1234         #!#1234
+9#!#4100420043004400#!#ABCD         #!#ABCD#!#ABCD         #!#ABCD
+10#!#FDFF#!#�            #!#�#!#�            #!#�
+11#!#3DD800DE#!#😀           #!#😀#!#😀           #!#😀
+12#!#4100#!#A            #!#A#!#A            #!#A
+13#!#4200#!#B            #!#B#!#B            #!#B
+14#!#4300#!#C            #!#C#!#C            #!#C
+15#!#5A00#!#Z            #!#Z#!#Z            #!#Z
+16#!#6100#!#a            #!#a#!#a            #!#a
+17#!#6200#!#b            #!#b#!#b            #!#b
+18#!#6300#!#c            #!#c#!#c            #!#c
+19#!#2E002E002E00#!#...          #!#...#!#...          #!#...
+20#!#010203040506#!#ȁЃ؅          #!#ȁЃ؅#!#ȁЃ؅          #!#ȁЃ؅
+21#!#F0F0F0F0#!#           #!##!#           #!#
+22#!##!#             #!##!#             #!#
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.v_utf8_try_cast ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+EXEC test_bin_str_conversion.p_utf16_try_cast;
+GO
+~~START~~
+int#!#varbinary#!#nchar#!#nvarchar#!#nchar#!#nvarchar
+1#!#480065006C006C006F002C00200057006F0072006C00640021#!#Hello, World!#!#Hello, World!#!#Hello, World!#!#Hello, World!
+2#!#610062006300#!#abc          #!#abc#!#abc          #!#abc
+3#!#E900#!#é            #!#é#!#é            #!#é
+4#!#7A006200#!#zb           #!#zb#!#zb           #!#zb
+5#!#2D4E8765#!#中文           #!#中文#!#中文           #!#中文
+6#!#34D81EDD#!#𝄞           #!#𝄞#!#𝄞           #!#𝄞
+7#!#2000200020002000#!#             #!#    #!#             #!#    
+8#!#3100320033003400#!#1234         #!#1234#!#1234         #!#1234
+9#!#4100420043004400#!#ABCD         #!#ABCD#!#ABCD         #!#ABCD
+10#!#FDFF#!#�            #!#�#!#�            #!#�
+11#!#3DD800DE#!#😀           #!#😀#!#😀           #!#😀
+12#!#4100#!#A            #!#A#!#A            #!#A
+13#!#4200#!#B            #!#B#!#B            #!#B
+14#!#4300#!#C            #!#C#!#C            #!#C
+15#!#5A00#!#Z            #!#Z#!#Z            #!#Z
+16#!#6100#!#a            #!#a#!#a            #!#a
+17#!#6200#!#b            #!#b#!#b            #!#b
+18#!#6300#!#c            #!#c#!#c            #!#c
+19#!#2E002E002E00#!#...          #!#...#!#...          #!#...
+20#!#010203040506#!#ȁЃ؅          #!#ȁЃ؅#!#ȁЃ؅          #!#ȁЃ؅
+21#!#F0F0F0F0#!#           #!##!#           #!#
+22#!##!#             #!##!#             #!#
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.v_utf8_convert ORDER BY id;
+GO
+~~START~~
+int#!#varbinary#!#char#!#varchar#!#char#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, character with byte sequence 0xad 0xe5 in encoding "GBK" has no equivalent in encoding "UTF8")~~
+
+
+EXEC test_bin_str_conversion.p_utf16_convert;
+GO
+~~START~~
+int#!#varbinary#!#nchar#!#nvarchar#!#nchar#!#nvarchar
+1#!#480065006C006C006F002C00200057006F0072006C00640021#!#Hello, World!#!#Hello, World!#!#Hello, World!#!#Hello, World!
+2#!#610062006300#!#abc          #!#abc#!#abc          #!#abc
+3#!#E900#!#é            #!#é#!#é            #!#é
+4#!#7A006200#!#zb           #!#zb#!#zb           #!#zb
+5#!#2D4E8765#!#中文           #!#中文#!#中文           #!#中文
+6#!#34D81EDD#!#𝄞           #!#𝄞#!#𝄞           #!#𝄞
+7#!#2000200020002000#!#             #!#    #!#             #!#    
+8#!#3100320033003400#!#1234         #!#1234#!#1234         #!#1234
+9#!#4100420043004400#!#ABCD         #!#ABCD#!#ABCD         #!#ABCD
+10#!#FDFF#!#�            #!#�#!#�            #!#�
+11#!#3DD800DE#!#😀           #!#😀#!#😀           #!#😀
+12#!#4100#!#A            #!#A#!#A            #!#A
+13#!#4200#!#B            #!#B#!#B            #!#B
+14#!#4300#!#C            #!#C#!#C            #!#C
+15#!#5A00#!#Z            #!#Z#!#Z            #!#Z
+16#!#6100#!#a            #!#a#!#a            #!#a
+17#!#6200#!#b            #!#b#!#b            #!#b
+18#!#6300#!#c            #!#c#!#c            #!#c
+19#!#2E002E002E00#!#...          #!#...#!#...          #!#...
+20#!#010203040506#!#ȁЃ؅          #!#ȁЃ؅#!#ȁЃ؅          #!#ȁЃ؅
+21#!#F0F0F0F0#!#           #!##!#           #!#
+22#!##!#             #!##!#             #!#
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.v_utf8_try_convert ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+EXEC test_bin_str_conversion.p_utf16_try_convert;
+GO
+~~START~~
+int#!#varbinary#!#nchar#!#nvarchar#!#nchar#!#nvarchar
+1#!#480065006C006C006F002C00200057006F0072006C00640021#!#Hello, World!#!#Hello, World!#!#Hello, World!#!#Hello, World!
+2#!#610062006300#!#abc          #!#abc#!#abc          #!#abc
+3#!#E900#!#é            #!#é#!#é            #!#é
+4#!#7A006200#!#zb           #!#zb#!#zb           #!#zb
+5#!#2D4E8765#!#中文           #!#中文#!#中文           #!#中文
+6#!#34D81EDD#!#𝄞           #!#𝄞#!#𝄞           #!#𝄞
+7#!#2000200020002000#!#             #!#    #!#             #!#    
+8#!#3100320033003400#!#1234         #!#1234#!#1234         #!#1234
+9#!#4100420043004400#!#ABCD         #!#ABCD#!#ABCD         #!#ABCD
+10#!#FDFF#!#�            #!#�#!#�            #!#�
+11#!#3DD800DE#!#😀           #!#😀#!#😀           #!#😀
+12#!#4100#!#A            #!#A#!#A            #!#A
+13#!#4200#!#B            #!#B#!#B            #!#B
+14#!#4300#!#C            #!#C#!#C            #!#C
+15#!#5A00#!#Z            #!#Z#!#Z            #!#Z
+16#!#6100#!#a            #!#a#!#a            #!#a
+17#!#6200#!#b            #!#b#!#b            #!#b
+18#!#6300#!#c            #!#c#!#c            #!#c
+19#!#2E002E002E00#!#...          #!#...#!#...          #!#...
+20#!#010203040506#!#ȁЃ؅          #!#ȁЃ؅#!#ȁЃ؅          #!#ȁЃ؅
+21#!#F0F0F0F0#!#           #!##!#           #!#
+22#!##!#             #!##!#             #!#
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_case_char6();
+GO
+~~START~~
+char#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to char, character with byte sequence 0xad 0xe5 in encoding "GBK" has no equivalent in encoding "UTF8")~~
+
+
+SELECT * FROM test_bin_str_conversion.f_case_varchar6();
+GO
+~~START~~
+varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, character with byte sequence 0xad 0xe5 in encoding "GBK" has no equivalent in encoding "UTF8")~~
+
+
+SELECT * FROM test_bin_str_conversion.f_edge_truncation_char2();
+GO
+~~START~~
+char#!#int
+涓#!#1
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_edge_ascii_char5();
+GO
+~~START~~
+char#!#int
+abc  #!#3
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_edge_mixed_char5();
+GO
+~~START~~
+char#!#int
+a涓璪#!#3
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_edge_empty_char3();
+GO
+~~START~~
+char#!#int#!#nvarchar
+   #!#0#!#"|   |"
+~~END~~
+
+
+SELECT * FROM test_bin_str_conversion.f_perf_large_char10();
+GO
+~~START~~
+char#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to char, character with byte sequence 0xad 0xe5 in encoding "GBK" has no equivalent in encoding "UTF8")~~
+
