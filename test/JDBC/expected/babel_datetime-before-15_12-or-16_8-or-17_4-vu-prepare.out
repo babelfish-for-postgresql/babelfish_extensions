@@ -120,3 +120,69 @@ BEGIN
 	RETURN @inputdate
 END
 GO
+
+-- Views for datetime to varbinary conversion
+create view babel_datetime_varbinary_vu_view1
+as
+	select cast(cast('2023-06-15 23:59:59.997' as datetime) as varbinary)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to varbinary)~~
+
+
+create view babel_datetime_varbinary_vu_view2
+as
+	select cast(cast('1900-01-01 00:00:00.003' as datetime) as varbinary)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to varbinary)~~
+
+
+create view babel_datetime_varbinary_vu_view3
+as
+	select cast(cast('9999-12-31 23:59:59.997' as datetime) as varbinary)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to varbinary)~~
+
+
+create view babel_datetime_varbinary_vu_view4
+as
+	select cast(cast('1753-01-01 00:12:00.145' as datetime) as varbinary)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to varbinary)~~
+
+
+-- Procedure for datetime to varbinary conversion
+CREATE PROCEDURE babel_datetime_varbinary_vu_procedure
+AS
+BEGIN
+	select cast(cast('2023-06-15 14:30:45.123' as datetime) as varbinary)
+	select cast(cast('2000-02-29 12:30:45.000' as datetime) as varbinary)
+	select cast(cast('1999-12-31 23:59:59.997' as datetime) as varbinary)
+END;
+GO
+
+-- Function that takes datetime and returns varbinary
+CREATE FUNCTION babel_datetime_varbinary_vu_function1 (@inputdate VARBINARY)
+RETURNS VARBINARY
+AS
+BEGIN
+	RETURN @inputdate
+END
+GO
+
+create table babel_datetime_varbinary_vu_prepare_testing_2 (a varbinary)
+GO
+
+insert into babel_datetime_varbinary_vu_prepare_testing_2 values (cast('2023-06-15 14:30:45.123' as datetime))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "a" is of type varbinary but expression is of type datetime)~~
+

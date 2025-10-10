@@ -223,6 +223,90 @@ GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(
 	IN INTEGER
 ) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_xmldoc(int)
+RETURNS xml
+AS 'babelfishpg_tsql', 'tsql_openxml_get_xmldoc'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_colpattern(text,int)
+RETURNS sys.nvarchar
+AS 'babelfishpg_tsql', 'tsql_openxml_get_colpattern'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION sys.openxml_simple(document_id INT, 
+                                       rowpattern TEXT, 
+                                       flags INTEGER DEFAULT 0)
+RETURNS table (
+  id sys.BIGINT,
+  parentid sys.BIGINT,
+  nodetype sys.INT,
+  localname sys.NVARCHAR,
+  prefix sys.NVARCHAR,
+  namespaceuri sys.NVARCHAR,
+  datatype sys.NVARCHAR,
+  prev sys.BIGINT,
+  text sys.NTEXT
+) 
+AS 'babelfishpg_tsql', 'openxml_simple'
+LANGUAGE C IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.ascii(ANYELEMENT)
+RETURNS INTEGER
+AS $$
+DECLARE
+    arg_datatype text;
+    basetype oid;
+BEGIN
+    arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof($1)::oid);
+    IF arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof($1)::oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for ascii function
+    IF arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of ascii function.', arg_datatype;
+    END IF;
+    
+    IF arg_datatype IN ('binary', 'varbinary') THEN
+        IF len($1) = 0 THEN
+            RETURN NULL;
+        END IF;
+    ELSE
+        IF length($1::TEXT) = 0 THEN
+            RETURN NULL;
+        END IF;
+    END IF;
+    RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ascii(TEXT)
+RETURNS INTEGER
+AS $$
+BEGIN
+    IF length($1) = 0 THEN
+        RETURN NULL;
+    END IF;
+    RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_openxml RENAME TO babelfish_openxml_deprecated_in_5_4_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_openxml_deprecated_in_5_4_0');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
@@ -231,3 +315,34 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+create or replace function sys.pltsql_timezone_mapping_pg_to_windows(IN tmz text) returns text
+AS 'babelfishpg_tsql', 'pltsql_timezone_mapping_pg_to_windows'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE VIEW sys.time_zone_info AS
+SELECT 
+    -- Mapping PostgreSQL timezone names to Windows format names
+    CAST(pg_catalog.initcap(sys.pltsql_timezone_mapping_pg_to_windows(name)) AS sys.nvarchar(128))
+    AS name,
+    CAST(
+      CASE 
+          WHEN utc_offset < INTERVAL '00:00:00' THEN 
+              '-' || pg_catalog.RIGHT('0' || CAST(pg_catalog.ABS(EXTRACT(HOUR FROM utc_offset)) AS VARCHAR(2)), 2) || ':' ||
+              pg_catalog.RIGHT('0' || CAST(pg_catalog.ABS(EXTRACT(MINUTE FROM utc_offset)) AS VARCHAR(2)), 2)
+          ELSE 
+              '+' || pg_catalog.RIGHT('0' || CAST(EXTRACT(HOUR FROM utc_offset) AS VARCHAR(2)), 2) || ':' || 
+              pg_catalog.RIGHT('0' || CAST(EXTRACT(MINUTE FROM utc_offset) AS VARCHAR(2)), 2)
+      END AS sys.NVARCHAR(12)
+    ) AS current_utc_offset,
+    -- Converting boolean is_dst to bit (0/1)
+    CAST(
+        CASE 
+            WHEN is_dst = true THEN 1
+            ELSE 0
+        END AS sys.BIT
+    ) AS is_currently_dst
+FROM pg_catalog.pg_timezone_names
+WHERE sys.pltsql_timezone_mapping_pg_to_windows(name) IS NOT NULL
+ORDER BY name;
+GRANT SELECT ON sys.time_zone_info TO PUBLIC;

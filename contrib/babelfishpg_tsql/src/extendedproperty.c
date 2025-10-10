@@ -71,7 +71,6 @@ static void init_scan_key(ScanKeyData *scanKey,
 static void sp_execextended_property(PG_FUNCTION_ARGS, ExtendedPropertyProc proc);
 static bool get_extended_property_from_tuple(Relation relation, HeapTuple tuple,
 											 Datum *values, bool *nulls, int len);
-static char* get_value_by_name_from_array(ArrayType *array, const char *name);
 
 static void
 init_scan_key(ScanKeyData *scanKey,
@@ -923,7 +922,7 @@ end:
 extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
 
-static char*
+char*
 get_value_by_name_from_array(ArrayType *array, const char *name)
 {
 	int			i;

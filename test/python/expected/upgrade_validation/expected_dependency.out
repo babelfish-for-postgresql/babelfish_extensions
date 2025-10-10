@@ -132,7 +132,6 @@ Function sys.babelfish_helpdb(character varying)
 Function sys.babelfish_is_ossp_present()
 Function sys.babelfish_is_spatial_present()
 Function sys.babelfish_istime(text)
-Function sys.babelfish_openxml(bigint)
 Function sys.babelfish_parse_helper_to_date(text,boolean,text)
 Function sys.babelfish_parse_helper_to_datetime(text,boolean,text)
 Function sys.babelfish_parse_helper_to_time(text,boolean,text)
@@ -554,6 +553,7 @@ Function sys.openjson_array(text)
 Function sys.openjson_object(text)
 Function sys.openjson_with(text,text,text[])
 Function sys.openquery_internal(text,text)
+Function sys.openxml_simple(integer,text,integer)
 Function sys.options()
 Function sys.original_login()
 Function sys.patindex_ai_collations(character varying,character varying)
@@ -561,6 +561,7 @@ Function sys.pgerror()
 Function sys.pltsql_assign_var(integer,anyelement)
 Function sys.pltsql_call_handler()
 Function sys.pltsql_inline_handler(internal)
+Function sys.pltsql_timezone_mapping_pg_to_windows(text)
 Function sys.pltsql_validator(oid)
 Function sys.point(sys.geometry)
 Function sys.proc_param_helper()
@@ -988,4 +989,5 @@ View sys.spt_tablecollations_view
 View sys.synonyms
 View sys.syscharsets
 View sys.syslanguages
+View sys.time_zone_info
 View sys.xml_schema_collections

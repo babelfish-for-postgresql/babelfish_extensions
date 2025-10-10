@@ -290,3 +290,27 @@ GO
 SELECT * FROM t3014_9_8;  -- Should fail (no direct access)
 GO
 -- terminate-tsql-conn user=l3014_1 password=12345678
+
+-- Testing Ownershhip chaining with setting GUC false
+-- psql
+show babelfishpg_tsql.enable_ownership_chaining;
+go
+alter database babelfish_db set babelfishpg_tsql.enable_ownership_chaining = 'off';
+go
+select pg_reload_conf();
+go
+-- terminate-psql-conn
+
+-- tsql
+select current_setting('babelfishpg_tsql.enable_ownership_chaining');
+go
+-- terminate-tsql-conn
+
+-- tsql user=l3014_1 password=12345678
+-- should fail since we disabled the ownership chaining
+select * from v3014_1_1;
+go
+SELECT * FROM v3014_9_1;
+GO
+-- terminate-tsql-conn user=l3014_1 password=12345678
+

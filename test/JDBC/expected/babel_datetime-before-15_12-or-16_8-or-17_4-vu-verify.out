@@ -1112,3 +1112,954 @@ varchar
 2023-06-15 14:30:45.123
 ~~END~~
 
+
+-- Test Datetime to Varbinary conversion using CAST
+-- Min value
+select cast(cast('1753-01-01 00:00:00.000' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+FFFF2E4600000000
+~~END~~
+
+
+-- Max value
+select cast(cast('9999-12-31 23:59:59.997' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+002D247F018B81FF
+~~END~~
+
+
+select cast(cast('9999-12-31 23:59:59.998' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+002D247F018B81FF
+~~END~~
+
+
+-- One tick after min value
+select cast(cast('1753-01-01 00:00:00.003' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+FFFF2E4600000001
+~~END~~
+
+
+select cast(cast('1753-01-01 00:00:00.002' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+FFFF2E4600000001
+~~END~~
+
+
+-- One tick before max value
+select cast(cast('9999-12-31 23:59:59.993' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+002D247F018B81FE
+~~END~~
+
+
+select cast(cast('9999-12-31 23:59:59.995' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+002D247F018B81FF
+~~END~~
+
+
+-- Early date
+select cast(cast('1908-10-21 00:00:00.000' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+00000C8F00000000
+~~END~~
+
+
+select cast(cast('1908-10-21 21:12:01.020' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+00000C8F015D5EB2
+~~END~~
+
+
+-- Late date
+select cast(cast('2031-11-08 00:00:00.000' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000BC1E00000000
+~~END~~
+
+
+select cast(cast('2031-11-08 23:59:59.997' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000BC1E018B81FF
+~~END~~
+
+
+-- FractionalSecond
+select cast(cast('2023-06-15 00:00:00.003' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B02200000001
+~~END~~
+
+
+select cast(cast('2023-06-15 00:00:00.423' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B0220000007F
+~~END~~
+
+
+select cast(cast('2023-06-15 00:00:00.850' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B022000000FF
+~~END~~
+
+
+select cast(cast('1900-01-01 00:02:30.300' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+000000000000B022
+~~END~~
+
+
+-- Before min value
+select cast(cast('1752-12-31 23:59:59.997' as datetime) as varbinary)
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+-- After max value
+select cast(cast('9999-12-31 23:59:59.999' as datetime) as varbinary)
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+-- February 28th on a leap year
+select cast(cast('2000-02-28 00:00:00.000' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+00008EE600000000
+~~END~~
+
+
+-- February 29th on a leap year
+select cast(cast('2000-02-29 00:00:00.000' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+00008EE700000000
+~~END~~
+
+
+-- March 1st on a leap year
+select cast(cast('2000-03-01 00:00:00.000' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+00008EE800000000
+~~END~~
+
+
+-- February 28th on a non-leap year
+select cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000905400000000
+~~END~~
+
+
+-- March 1st on a non-leap year
+select cast(cast('2001-03-01 00:00:00.000' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000905500000000
+~~END~~
+
+
+-- February 29th on a non-leap year (invalid date)
+select cast(cast('2001-02-29 00:00:00.000' as datetime) as varbinary)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "2001-02-29 00:00:00.000")~~
+
+
+-- Last moment of 1999
+select cast(cast('1999-12-31 23:59:59.997' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+00008EAB018B81FF
+~~END~~
+
+
+-- First moment of 2000
+select cast(cast('2000-01-01 00:00:00.000' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+00008EAC00000000
+~~END~~
+
+
+-- time precision
+select cast(cast('2023-06-15 14:30:45.123' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B02200EF28C1
+~~END~~
+
+
+select cast(cast('2023-06-15 14:30:45.122' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B02200EF28C1
+~~END~~
+
+
+select cast(cast('2023-06-15 14:30:45.156' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B02200EF28CB
+~~END~~
+
+
+select cast(cast('2023-06-15 14:30:45.12321' as datetime) as varbinary)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data precision out of range for datetime)~~
+
+
+-- NULL value
+select cast(cast(NULL as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+-- Empty string
+select cast(cast('' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000000000000000
+~~END~~
+
+
+-- Empty string
+select cast(cast(' ' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000000000000000
+~~END~~
+
+
+-- roundoff tests
+select cast(cast('2023-06-15 14:30:45.999' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B02200EF29C8
+~~END~~
+
+
+select cast(cast('2023-06-15 14:30:59.999' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B02200EF3A30
+~~END~~
+
+
+select cast(cast('2023-06-15 14:59:59.999' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B02200F73140
+~~END~~
+
+
+select cast(cast('2023-06-15 23:59:59.999' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B02300000000
+~~END~~
+
+
+select cast(cast('2023-08-31 23:59:59.999' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B07000000000
+~~END~~
+
+
+select cast(cast('2023-12-31 23:59:59.999' as datetime) as varbinary)
+GO
+~~START~~
+varbinary
+0000B0EA00000000
+~~END~~
+
+
+-- Test Datetime to Varbinary conversion using CONVERT
+-- Min value
+select convert(varbinary, cast('1753-01-01 00:00:00.000' as datetime))
+GO
+~~START~~
+varbinary
+FFFF2E4600000000
+~~END~~
+
+
+-- Max value
+select convert(varbinary, cast('9999-12-31 23:59:59.997' as datetime))
+GO
+~~START~~
+varbinary
+002D247F018B81FF
+~~END~~
+
+
+select convert(varbinary, cast('9999-12-31 23:59:59.998' as datetime))
+GO
+~~START~~
+varbinary
+002D247F018B81FF
+~~END~~
+
+
+-- One tick after min value
+select convert(varbinary, cast('1753-01-01 00:00:00.003' as datetime))
+GO
+~~START~~
+varbinary
+FFFF2E4600000001
+~~END~~
+
+
+select convert(varbinary, cast('1753-01-01 00:00:00.002' as datetime))
+GO
+~~START~~
+varbinary
+FFFF2E4600000001
+~~END~~
+
+
+-- One tick before max value
+select convert(varbinary, cast('9999-12-31 23:59:59.993' as datetime))
+GO
+~~START~~
+varbinary
+002D247F018B81FE
+~~END~~
+
+
+select convert(varbinary, cast('9999-12-31 23:59:59.995' as datetime))
+GO
+~~START~~
+varbinary
+002D247F018B81FF
+~~END~~
+
+
+-- Early date
+select convert(varbinary, cast('1908-10-21 00:00:00.000' as datetime))
+GO
+~~START~~
+varbinary
+00000C8F00000000
+~~END~~
+
+
+select convert(varbinary, cast('1908-10-21 21:12:01.020' as datetime))
+GO
+~~START~~
+varbinary
+00000C8F015D5EB2
+~~END~~
+
+
+-- Late date
+select convert(varbinary, cast('2031-11-08 00:00:00.000' as datetime))
+GO
+~~START~~
+varbinary
+0000BC1E00000000
+~~END~~
+
+
+select convert(varbinary, cast('2031-11-08 23:59:59.997' as datetime))
+GO
+~~START~~
+varbinary
+0000BC1E018B81FF
+~~END~~
+
+
+-- FractionalSecond
+select convert(varbinary, cast('2023-06-15 00:00:00.003' as datetime))
+GO
+~~START~~
+varbinary
+0000B02200000001
+~~END~~
+
+
+select convert(varbinary, cast('2023-06-15 00:00:00.423' as datetime))
+GO
+~~START~~
+varbinary
+0000B0220000007F
+~~END~~
+
+
+select convert(varbinary, cast('2023-06-15 00:00:00.850' as datetime))
+GO
+~~START~~
+varbinary
+0000B022000000FF
+~~END~~
+
+
+select convert(varbinary, cast('1900-01-01 00:02:30.300' as datetime))
+GO
+~~START~~
+varbinary
+000000000000B022
+~~END~~
+
+
+-- Before min value
+select convert(varbinary, cast('1752-12-31 23:59:59.997' as datetime))
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+-- After max value
+select convert(varbinary, cast('9999-12-31 23:59:59.999' as datetime))
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+-- February 28th on a leap year
+select convert(varbinary, cast('2000-02-28 00:00:00.000' as datetime))
+GO
+~~START~~
+varbinary
+00008EE600000000
+~~END~~
+
+
+-- February 29th on a leap year
+select convert(varbinary, cast('2000-02-29 00:00:00.000' as datetime))
+GO
+~~START~~
+varbinary
+00008EE700000000
+~~END~~
+
+
+-- March 1st on a leap year
+select convert(varbinary, cast('2000-03-01 00:00:00.000' as datetime))
+GO
+~~START~~
+varbinary
+00008EE800000000
+~~END~~
+
+
+-- February 28th on a non-leap year
+select convert(varbinary, cast('2001-02-28 00:00:00.000' as datetime))
+GO
+~~START~~
+varbinary
+0000905400000000
+~~END~~
+
+
+-- March 1st on a non-leap year
+select convert(varbinary, cast('2001-03-01 00:00:00.000' as datetime))
+GO
+~~START~~
+varbinary
+0000905500000000
+~~END~~
+
+
+-- February 29th on a non-leap year (invalid date)
+select convert(varbinary, cast('2001-02-29 00:00:00.000' as datetime))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "2001-02-29 00:00:00.000")~~
+
+
+-- Last moment of 1999
+select convert(varbinary, cast('1999-12-31 23:59:59.997' as datetime))
+GO
+~~START~~
+varbinary
+00008EAB018B81FF
+~~END~~
+
+
+-- First moment of 2000
+select convert(varbinary, cast('2000-01-01 00:00:00.000' as datetime))
+GO
+~~START~~
+varbinary
+00008EAC00000000
+~~END~~
+
+
+-- Time precision
+select convert(varbinary, cast('2023-06-15 14:30:45.123' as datetime))
+GO
+~~START~~
+varbinary
+0000B02200EF28C1
+~~END~~
+
+
+select convert(varbinary, cast('2023-06-15 14:30:45.122' as datetime))
+GO
+~~START~~
+varbinary
+0000B02200EF28C1
+~~END~~
+
+
+select convert(varbinary, cast('2023-06-15 14:30:45.156' as datetime))
+GO
+~~START~~
+varbinary
+0000B02200EF28CB
+~~END~~
+
+
+select convert(varbinary, cast('2023-06-15 14:30:45.12321' as datetime))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data precision out of range for datetime)~~
+
+
+-- NULL value
+select convert(varbinary, cast(NULL as datetime))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+-- Empty string
+select convert(varbinary, cast('' as datetime))
+GO
+~~START~~
+varbinary
+0000000000000000
+~~END~~
+
+
+-- Space string
+select convert(varbinary, cast(' ' as datetime))
+GO
+~~START~~
+varbinary
+0000000000000000
+~~END~~
+
+
+-- Roundoff tests
+select convert(varbinary, cast('2023-06-15 14:30:45.999' as datetime))
+GO
+~~START~~
+varbinary
+0000B02200EF29C8
+~~END~~
+
+
+select convert(varbinary, cast('2023-06-15 14:30:59.999' as datetime))
+GO
+~~START~~
+varbinary
+0000B02200EF3A30
+~~END~~
+
+
+select convert(varbinary, cast('2023-06-15 14:59:59.999' as datetime))
+GO
+~~START~~
+varbinary
+0000B02200F73140
+~~END~~
+
+
+select convert(varbinary, cast('2023-06-15 23:59:59.999' as datetime))
+GO
+~~START~~
+varbinary
+0000B02300000000
+~~END~~
+
+
+select convert(varbinary, cast('2023-08-31 23:59:59.999' as datetime))
+GO
+~~START~~
+varbinary
+0000B07000000000
+~~END~~
+
+
+select convert(varbinary, cast('2023-12-31 23:59:59.999' as datetime))
+GO
+~~START~~
+varbinary
+0000B0EA00000000
+~~END~~
+
+
+SELECT * from babel_datetime_varbinary_vu_view1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_varbinary_vu_view1" does not exist)~~
+
+
+SELECT * from babel_datetime_varbinary_vu_view2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_varbinary_vu_view2" does not exist)~~
+
+
+SELECT * from babel_datetime_varbinary_vu_view3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_varbinary_vu_view3" does not exist)~~
+
+
+SELECT * from babel_datetime_varbinary_vu_view4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_varbinary_vu_view4" does not exist)~~
+
+
+EXEC babel_datetime_varbinary_vu_procedure
+GO
+~~START~~
+varbinary
+0000B02200EF28C1
+~~END~~
+
+~~START~~
+varbinary
+00008EE700CE331C
+~~END~~
+
+~~START~~
+varbinary
+00008EAB018B81FF
+~~END~~
+
+
+SELECT babel_datetime_varbinary_vu_function1(cast('2023-06-15 14:30:45.123' as datetime))
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function babel_datetime_varbinary_vu_function1 is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT * from babel_datetime_varbinary_vu_prepare_testing_2
+GO
+~~START~~
+varbinary
+~~END~~
+
+
+-- Testing using typmod
+select cast(cast('1753-01-01 00:00:00.000' as datetime) as varbinary(8))
+GO
+~~START~~
+varbinary
+FFFF2E4600000000
+~~END~~
+
+
+select cast(cast('9999-12-31 23:59:59.997' as datetime) as varbinary(7))
+GO
+~~START~~
+varbinary
+2D247F018B81FF
+~~END~~
+
+
+select cast(cast('9999-12-31 23:59:59.998' as datetime) as varbinary(6))
+GO
+~~START~~
+varbinary
+247F018B81FF
+~~END~~
+
+
+select cast(cast('1753-01-01 00:00:00.003' as datetime) as varbinary(5))
+GO
+~~START~~
+varbinary
+4600000001
+~~END~~
+
+
+select cast(cast('1753-01-01 00:00:00.002' as datetime) as varbinary(4))
+GO
+~~START~~
+varbinary
+00000001
+~~END~~
+
+
+select cast(cast('9999-12-31 23:59:59.993' as datetime) as varbinary(3))
+GO
+~~START~~
+varbinary
+8B81FE
+~~END~~
+
+
+select cast(cast('9999-12-31 23:59:59.995' as datetime) as varbinary(2))
+GO
+~~START~~
+varbinary
+81FF
+~~END~~
+
+
+select cast(cast('1908-10-21 00:00:00.000' as datetime) as varbinary(1))
+GO
+~~START~~
+varbinary
+00
+~~END~~
+
+
+select cast(cast('1908-10-21 21:12:01.020' as datetime) as varbinary(max))
+GO
+~~START~~
+varbinary
+00000C8F015D5EB2
+~~END~~
+
+
+select cast(cast('2031-11-08 00:00:00.000' as datetime) as varbinary(10))
+GO
+~~START~~
+varbinary
+0000BC1E00000000
+~~END~~
+
+
+select cast(cast('2031-11-08 23:59:59.997' as datetime) as varbinary(16))
+GO
+~~START~~
+varbinary
+0000BC1E018B81FF
+~~END~~
+
+
+select cast(cast('2023-06-15 00:00:00.003' as datetime) as varbinary(1234))
+GO
+~~START~~
+varbinary
+0000B02200000001
+~~END~~
+
+
+select cast(cast('2023-06-15 00:00:00.423' as datetime) as varbinary(0))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: length for type varbinary must be at least 1)~~
+
+
+select cast(cast('2023-06-15 00:00:00.850' as datetime) as varbinary(-1))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 68)~~
+
+
+select cast(cast('1900-01-01 00:02:30.300' as datetime) as varbinary(2))
+GO
+~~START~~
+varbinary
+B022
+~~END~~
+
+
+select cast(cast('1752-12-31 23:59:59.997' as datetime) as varbinary(6))
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+select cast(cast('9999-12-31 23:59:59.999' as datetime) as varbinary(3))
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+select cast(cast('2000-02-28 00:00:00.000' as datetime) as varbinary(5))
+GO
+~~START~~
+varbinary
+E600000000
+~~END~~
+
+
+select cast(cast('2000-02-29 00:00:00.000' as datetime) as varbinary(max))
+GO
+~~START~~
+varbinary
+00008EE700000000
+~~END~~
+
+
+select cast(cast('2000-03-01 00:00:00.000' as datetime) as varbinary(8))
+GO
+~~START~~
+varbinary
+00008EE800000000
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(1)) as datetime)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(2)) as datetime)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(3)) as datetime)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(4)) as datetime)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(5)) as datetime)
+GO
+~~START~~
+datetime
+1900-03-26 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(6)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(7)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(8)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(9)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(10)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+
+
+select cast(cast(cast('2001-02-28 00:00:00.000' as datetime) as varbinary(max)) as datetime)
+GO
+~~START~~
+datetime
+2001-02-28 00:00:00.0
+~~END~~
+

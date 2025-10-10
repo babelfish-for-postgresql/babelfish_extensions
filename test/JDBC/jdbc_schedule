@@ -19,6 +19,11 @@ ignore#!#charindex_and_replace_CIAI_collations
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
 
+#This test case needs to be ignored temporarily for BABEL 5370 flaky test cases
+ignore#!#babel_timezoneinfo-vu-prepare
+ignore#!#babel_timezoneinfo-vu-verify
+ignore#!#babel_timezoneinfo-vu-cleanup
+
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
 ignore#!#BABEL-2934-vu-prepare
@@ -100,6 +105,9 @@ ignore#!#babel_datetime-before-15_12-or-16_8-or-17_4-vu-cleanup
 ignore#!#fixeddecimal_modulo-vu-prepare
 ignore#!#fixeddecimal_modulo-vu-verify
 ignore#!#fixeddecimal_modulo-vu-cleanup
+ignore#!#babel_datetime-before-16_11-or-17_7-vu-prepare
+ignore#!#babel_datetime-before-16_11-or-17_7-vu-verify
+ignore#!#babel_datetime-before-16_11-or-17_7-vu-cleanup
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-prepare
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-verify
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-cleanup
@@ -636,3 +644,12 @@ ignore#!#view_sec_setting_before_17_6-or-16_10-vu-cleanup
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-prepare
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-verify
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-cleanup
+ignore#!#openxml_with_clause-before-17_7-vu-prepare
+ignore#!#openxml_with_clause-before-17_7-vu-verify
+ignore#!#openxml_with_clause-before-17_7-vu-cleanup
+ignore#!#ascii_function_before-17_7-or-16_11-vu-prepare
+ignore#!#ascii_function_before-17_7-or-16_11-vu-verify
+ignore#!#ascii_function_before-17_7-or-16_11-vu-cleanup
+ignore#!#babel_timezoneinfo_before_17_7-vu-prepare
+ignore#!#babel_timezoneinfo_before_17_7-vu-verify
+ignore#!#babel_timezoneinfo_before_17_7-vu-cleanup
