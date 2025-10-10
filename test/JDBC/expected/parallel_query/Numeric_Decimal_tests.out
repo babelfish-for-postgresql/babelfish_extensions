@@ -10144,7 +10144,7 @@ FROM numeric_index_test
 GROUP BY CAST(num_col AS DECIMAL(18,2))
 HashAggregate (actual rows=3 loops=1)
   Group Key: ((num_col)::"decimal"(18,2))
-  Batches: 1  Memory Usage: 40kB
+  Batches: 1  Memory Usage: 32kB
   ->  Gather (actual rows=3 loops=1)
         Workers Planned: 1
         Workers Launched: 1
