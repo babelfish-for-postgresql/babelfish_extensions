@@ -701,6 +701,637 @@ GO
 SELECT * FROM datalength_vw_DataLengthSummary;
 GO
 
+-- Extra test cases 
+-- UDT
+create type tinyint_babel_6120 from tinyint;
+create type date_babel_6120 from date;
+create type smalldatetime_babel_6120 from smalldatetime;
+create type time_babel_6120 from time;
+create type smallmoney_babel_6120 from smallmoney;
+create type numeric_babel_6120 from numeric(21,5);
+create type decimal_babel_6120 from decimal(21,5);
+GO
+
+create type smallint_babel_6120 from smallint;
+create type int_babel_6120 from int;
+create type bigint_babel_6120 from bigint;
+create type datetime_babel_6120 from datetime;
+create type datetime2_babel_6120 from datetime2;
+create type datetimeoffset_babel_6120 from datetimeoffset;
+create type money_babel_6120 from money;
+go
+
+
+-- tinyint
+-- JIRA query
+SELECT DATALENGTH(CAST(123 AS TINYINT))
+GO
+
+SELECT DATALENGTH(CAST('123' AS TINYINT))
+GO
+
+SELECT DATALENGTH(CAST('' AS TINYINT))
+GO
+
+SELECT DATALENGTH(CAST(123.33 AS TINYINT))
+GO
+
+SELECT DATALENGTH(CAST(123 AS tinyint_babel_6120))
+GO
+
+-- smallint : 2 (as expected)
+SELECT DATALENGTH(CAST(123 AS SMALLINT))
+GO
+
+SELECT DATALENGTH(CAST('123' AS SMALLINT))
+GO
+
+SELECT DATALENGTH(CAST('' AS SMALLINT))
+GO
+
+SELECT DATALENGTH(CAST(123.33 AS SMALLINT))
+GO
+
+SELECT DATALENGTH(CAST(123 AS smallint_babel_6120))
+GO
+
+
+-- INT : 4 (as expected)
+SELECT DATALENGTH(CAST(123 AS INT))
+GO
+
+SELECT DATALENGTH(CAST('123' AS INT))
+GO
+
+SELECT DATALENGTH(CAST('' AS INT))
+GO
+
+SELECT DATALENGTH(CAST(123.33 AS INT))
+GO
+
+SELECT DATALENGTH(123)
+go
+
+SELECT DATALENGTH(CAST(123 AS int_babel_6120))
+GO
+
+-- bitint : 8 (as expected)
+
+SELECT DATALENGTH(CAST(123 AS bigint))
+GO
+
+SELECT DATALENGTH(CAST('123' AS bigint))
+GO
+
+SELECT DATALENGTH(CAST('' AS bigint))
+GO
+
+SELECT DATALENGTH(CAST(123.33 AS bigint))
+GO
+
+SELECT DATALENGTH(CAST(123 AS bigint_babel_6120))
+GO
+
+-- numeric, testing for different precision range for actual input
+SELECT DATALENGTH(CAST(123.45 AS NUMERIC(10,2)))
+GO
+
+SELECT DATALENGTH(123.45) 
+go
+
+SELECT DATALENGTH(CAST(123.451234 AS NUMERIC(10,2))) 
+go
+
+SELECT DATALENGTH(CAST(123.451234 AS NUMERIC(5,2))) 
+Go
+
+SELECT DATALENGTH(CAST(123.451234 AS NUMERIC(1,0))) -- over flow
+go
+
+SELECT DATALENGTH(CAST(1 AS NUMERIC(1,0)))
+go
+
+SELECT DATALENGTH(CAST(1.0 AS NUMERIC(1,0)))
+go
+
+SELECT DATALENGTH(CAST(1.0 AS NUMERIC(5,3))) 
+go
+
+SELECT DATALENGTH(CAST(12.346 AS NUMERIC(5,3))) 
+go
+
+SELECT DATALENGTH(CAST(12345.6789 AS NUMERIC(9,3))) 
+go
+
+SELECT DATALENGTH(CAST(12345.6789 AS NUMERIC(10,3)))  
+Go
+
+SELECT DATALENGTH(CAST(12345.6789 AS NUMERIC(11,3))) 
+go
+
+SELECT DATALENGTH(CAST(123456789123456789.679 AS NUMERIC(21,3))) 
+go
+
+SELECT DATALENGTH(CAST(123456789123456789123456789123.12345678 AS NUMERIC(38,8))) 
+go
+
+Select datalength(123456789123456789123456789123.12345678) 
+GO
+
+SELECT DATALENGTH(CAST(0.679 AS NUMERIC(21,3))) 
+go
+
+SELECT DATALENGTH(CAST(0.1234567891 AS NUMERIC(21,3))) 
+go
+
+SELECT DATALENGTH(CAST(0.1234567234567891 AS NUMERIC(21,3)))
+go
+
+SELECT DATALENGTH(CAST(0.1234567234567891 AS NUMERIC(21,11))) 
+go
+
+SELECT DATALENGTH(CAST(1.1234567234567891 AS NUMERIC(38,5))) 
+go
+
+SELECT DATALENGTH(CAST(123456789123.679 AS numeric_babel_6120)) 
+go
+
+-- extra 0 is appended and hence 21 precision, 13 result
+SELECT DATALENGTH(CAST(0.12345678912345678912 AS NUMERIC(38,21))) 
+go
+
+-- When significant digit is 0, 
+-- we have divergance between TSQL doc and actual functionality
+-- we are matching TSQL doc.
+
+-- Even though precision is 10, returns 5 byte according to 1-9 precision range
+SELECT DATALENGTH(CAST(0.1234567234567891 AS NUMERIC(21,10)))
+go
+
+-- Even though precision is 20, returns 9 byte according to 10-28 precision range
+SELECT DATALENGTH(CAST(0.12345678912345678912 AS NUMERIC(38,20))) 
+go
+
+-- Even though precision is 20, returns 9 byte according to 10-28 precision range
+SELECT DATALENGTH(CAST(0.123456789123456789121 AS NUMERIC(38,20))) 
+go
+
+-- decimal
+-- JIRA query
+SELECT DATALENGTH(CAST(123.45 AS DECIMAL(10,2)))
+GO
+
+SELECT DATALENGTH(123.45)
+go
+
+SELECT DATALENGTH(CAST(123.451234 AS DECIMAL(10,2)))
+go
+
+SELECT DATALENGTH(CAST(123.451234 AS DECIMAL(5,2))) 
+Go
+
+SELECT DATALENGTH(CAST(123.451234 AS DECIMAL(1,0))) -- over flow
+go
+
+SELECT DATALENGTH(CAST(1 AS DECIMAL(1,0)))
+go
+
+SELECT DATALENGTH(CAST(1.0 AS DECIMAL(5,3))) 
+go
+
+SELECT DATALENGTH(CAST(12.346 AS DECIMAL(5,3))) 
+go
+
+SELECT DATALENGTH(CAST(12345678.679 AS DECIMAL(21,3))) 
+go
+
+SELECT DATALENGTH(CAST(123456789123456789.679 AS DECIMAL(21,3))) 
+go
+
+SELECT DATALENGTH(CAST(123456789123456789123456789123.12345678 AS DECIMAL(38,8))) 
+go
+
+Select datalength(123456789123456789123456789123.12345678) 
+GO
+
+SELECT DATALENGTH(CAST(123456789123.679 AS decimal_babel_6120)) 
+go
+
+-- money
+select DATALENGTH(CAST(123.45 AS MONEY))
+go
+
+SELECT DATALENGTH(CAST(123 AS MONEY))
+GO
+
+SELECT DATALENGTH(CAST('123' AS MONEY))
+GO
+
+SELECT DATALENGTH(CAST('' AS MONEY))
+GO
+
+SELECT DATALENGTH(CAST(NULL AS MONEY)) -- NULL
+go
+
+select DATALENGTH(CAST(123.45 AS money_babel_6120))
+go
+
+-- smallmoney
+-- JIRA query
+select DATALENGTH(CAST(123.45 AS SMALLMONEY))
+go
+
+SELECT DATALENGTH(CAST(123 AS SMALLMONEY))
+GO
+
+SELECT DATALENGTH(CAST('123' AS SMALLMONEY))
+GO
+
+SELECT DATALENGTH(CAST('' AS SMALLMONEY))
+GO
+
+SELECT DATALENGTH(CAST(NULL AS SMALLMONEY))
+GO
+
+select DATALENGTH(CAST(123.45 AS smallmoney_babel_6120))
+go
+
+-- date
+-- JIRA query
+SELECT DATALENGTH(CAST('2024-01-01' AS DATE))
+go
+
+select datalength(CAST('' AS DATE))
+go
+
+SELECT DATALENGTH(CAST('2024-01-01' AS date_babel_6120))
+go
+
+-- smalldatetime
+-- JIRA query
+SELECT DATALENGTH(CAST('2024-01-01 12:34:56' AS SMALLDATETIME))
+GO
+
+select datalength(CAST('' AS SMALLDATETIME))
+go
+
+SELECT DATALENGTH(CAST('2024-01-01 12:34:56' AS smalldatetime_babel_6120))
+GO
+
+
+-- time
+-- JIRA query
+SELECT DATALENGTH(CAST('12:34:56' AS TIME))
+go
+
+SELECT DATALENGTH(CAST('12:10:30.123' AS TIME))
+go
+
+SELECT DATALENGTH(CAST('12:10:30.123' AS TIME(5)))
+go
+
+select datalength(CAST('' AS TIME))
+go
+
+SELECT DATALENGTH(CAST('12:10:30.123' AS time_babel_6120))
+go
+
+-- datetime
+select datalength(cast('01/02/03' as datetime))
+go
+
+select datalength(CAST('' AS datetime))
+go
+
+select datalength(cast('01/02/03' as datetime_babel_6120))
+go
+
+-- datetime2
+select datalength(cast('Apr 1 2000 14:30' as datetime2))
+Go
+
+select datalength(CAST('' AS DATETIME2))
+go
+
+select datalength(cast('Apr 1 2000 14:30' as datetime2_babel_6120))
+Go
+
+-- datetimeoffset
+select datalength(cast('3/12/24 14:30 +8:00' as datetimeoffset))
+go
+
+select datalength(CAST('' AS datetimeoffset))
+go
+
+select datalength(cast('3/12/24 14:30 +8:00' as datetimeoffset_babel_6120))
+go
+
+-- XML
+SELECT DATALENGTH(CAST('<root>test</root>' AS XML)) AS XML_Length;
+Go
+
+SELECT DATALENGTH(CAST(N'<root>test</root>' AS XML)) AS XML_Length;
+go
+
+SELECT DATALENGTH(CAST('<root>te界t</root>' AS XML)) AS XML_Length;
+go
+
+-- String datatypes : FIX with BABEL-1520/BABEL-1516
+-- char
+select datalength(char(0))
+go
+
+select datalength(cast('' as char))
+go
+
+select datalength(cast('' as char(10)))
+go
+
+select datalength(cast('asdfg' as char(10)))
+go
+
+select datalength(cast('asdfg' as char))
+go
+
+select datalength(cast(N'asdfg' as char))
+go
+
+select datalength(cast(N'asdfg' as char(10)))
+go
+
+select datalength(cast(NULL as char(10)))
+go
+
+select datalength(cast(NULL as char))
+go
+
+select DATALENGTH(cast('🌟' as char)) 
+go
+
+select DATALENGTH(cast(N'🌟' as char)) 
+go
+
+select DATALENGTH(cast(N'🌟' as char(10)))
+go
+
+-- varchar
+-- VARCHAR
+select datalength(cast('' as varchar))
+go
+
+select datalength(cast('' as varchar(10)))
+go
+
+select datalength(cast('asdfg' as varchar(10)))
+go
+
+select datalength(cast('asdfg' as varchar))
+go
+
+select datalength(cast(N'asdfg' as varchar))
+go
+
+select datalength(cast(N'asdfg' as varchar(10)))
+go
+
+select datalength(cast(NULL as varchar(10)))
+go
+
+select datalength(cast(NULL as varchar))
+go
+
+select DATALENGTH(cast('🌟' as varchar)) 
+go
+
+select DATALENGTH(cast(N'🌟' as varchar)) 
+go
+
+select DATALENGTH(cast(N'🌟' as varchar(10)))
+go
+
+select datalength(cast('世界' as varchar)) 
+Go
+
+select datalength(cast(N'世界' as varchar)) 
+go
+
+select datalength(cast(N'世界' as varchar(10))) 
+go
+
+-- VARCHAR(MAX)
+select datalength(cast('' as varchar(max)))
+go
+
+select datalength(cast('asdfg' as varchar(max)))
+go
+
+select datalength(cast(N'asdfg' as varchar(max)))
+go
+
+select datalength(cast(NULL as varchar(max)))
+go
+
+select DATALENGTH(cast('🌟' as varchar(max))) 
+go
+
+select DATALENGTH(cast(N'🌟' as varchar(max))) 
+go
+
+select datalength(cast(N'世界' as varchar(max))) 
+go
+
+-- NCHAR
+select datalength(nchar(0))
+go
+
+select datalength(cast('' as nchar))
+go
+
+select datalength(cast('' as nchar(10)))
+go
+
+select datalength(cast('asdfg' as nchar(10)))
+go
+
+select datalength(cast('asdfg' as nchar))
+go
+
+select datalength(cast(N'asdfg' as nchar))
+go
+
+select datalength(cast(N'asdfg' as nchar(10)))
+go
+
+select datalength(cast(NULL as nchar(10)))
+go
+
+select datalength(cast(NULL as nchar))
+go
+
+select DATALENGTH(cast('🌟' as nchar)) 
+go
+
+select DATALENGTH(cast(N'🌟' as nchar)) 
+go
+
+select DATALENGTH(cast(N'🌟' as nchar(10)))
+go
+
+select datalength(cast(N'世界' as nchar)) 
+go
+
+select datalength(cast(N'世界' as nchar(10))) 
+go
+
+-- NVARCHAR
+select datalength(cast('' as nvarchar))
+go
+
+select datalength(cast('' as nvarchar(10)))
+go
+
+select datalength(cast('asdfg' as nvarchar(10)))
+go
+
+select datalength(cast('asdfg' as nvarchar))
+go
+
+select datalength(cast(N'asdfg' as nvarchar))
+go
+
+select datalength(cast(N'asdfg' as nvarchar(10)))
+go
+
+select datalength(cast(NULL as nvarchar(10)))
+go
+
+select datalength(cast(NULL as nvarchar))
+go
+
+select DATALENGTH(cast('🌟' as nvarchar)) 
+go
+
+select DATALENGTH(cast(N'🌟' as nvarchar)) 
+go
+
+select DATALENGTH(cast(N'🌟' as nvarchar(10)))
+go
+
+select datalength(cast(N'世界' as nvarchar)) 
+go
+
+select datalength(cast(N'世界' as nvarchar(10))) 
+go
+
+-- NVARCHAR(MAX)
+select datalength(cast('' as nvarchar(max)))
+go
+
+select datalength(cast('asdfg' as nvarchar(max)))
+go
+
+select datalength(cast(N'asdfg' as nvarchar(max)))
+go
+
+select datalength(cast(NULL as nvarchar(max)))
+go
+
+select DATALENGTH(cast('🌟' as nvarchar(max))) 
+go
+
+select DATALENGTH(cast(N'🌟' as nvarchar(max))) 
+go
+
+select datalength(cast(N'世界' as nvarchar(max))) 
+go
+
+-- combination  - multibyte/accented/surroagte
+
+select DATALENGTH('Hello') , DATALENGTH(N'Hello')
+go
+
+select DATALENGTH('こんにちは'), DATALENGTH(N'こんにちは')
+GO
+
+select DATALENGTH('Hàáâ') , DATALENGTH(N'Hàáâ')
+go
+
+select DATALENGTH('こàáâは'), DATALENGTH(N'こàáâは')
+go
+
+select DATALENGTH('🌟🌟🌟'), DATALENGTH(N'🌟🌟🌟')
+go
+
+-- truncation
+declare @a varchar(2) = 'hello'
+select DATALENGTH(@a)
+go
+
+declare @a Nvarchar(2) = N'hello'
+select DATALENGTH(@a)
+go
+
+
+-- text 
+select datalength(cast('abd' as text))
+Go
+
+select datalength(cast(N'abd' as text))
+Go
+
+select DATALENGTH(cast('こんにちは' as text)), DATALENGTH(cast(N'こんにちは' as text))
+GO
+
+-- ntext
+select datalength(cast('abd' as ntext))
+Go
+
+select datalength(cast(N'abd' as ntext))
+Go
+
+select DATALENGTH(cast('こんにちは' as ntext)), DATALENGTH(cast(N'こんにちは' as ntext))
+GO
+
+-- binary
+select datalength(CAST('0x65' AS BINARY(10)))
+GO
+
+select datalength(CAST(0x65 AS BINARY(10)))
+go
+
+select datalength(CAST(0x65 AS BINARY))
+go
+
+-- FIX with BABEL-5610
+select datalength(CAST('' AS BINARY(10)))
+go
+
+select datalength(CAST('' AS BINARY))
+GO
+
+-- varbinary
+select datalength(CAST(0x65 AS varbinary))
+go
+
+
+select datalength(CAST(0x65 AS varbinary(max)))
+go
+
+
+select datalength(CAST(0x65 AS varbinary(10)))
+go
+
+
+select datalength(CAST('0x65' AS VARBINARY(10)))
+go
+
+
+select datalength(CAST('' AS VARBINARY(10)))
+go
+
+
+select datalength(CAST('' AS VARBINARY))
+go
 
 -- Cleanup
 DROP TABLE datalength_t2;
@@ -739,3 +1370,20 @@ DROP TABLE datalength_ConstrainedTable;
 DROP TABLE datalength_t7;
 GO
 
+drop type tinyint_babel_6120;
+drop type date_babel_6120;
+drop type smalldatetime_babel_6120;
+drop type time_babel_6120;
+drop type smallmoney_babel_6120;
+drop type numeric_babel_6120;
+drop type decimal_babel_6120;
+GO
+
+drop type smallint_babel_6120;
+drop type int_babel_6120;
+drop type bigint_babel_6120;
+drop type datetime_babel_6120;
+drop type datetime2_babel_6120;
+drop type datetimeoffset_babel_6120;
+drop type money_babel_6120;
+go

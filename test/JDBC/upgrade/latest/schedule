@@ -610,6 +610,7 @@ BABEL-USER-GRANT
 test_conv_money_to_varchar
 sp_xml_preparedocument
 sp_xml_removedocument
+openxml_with_clause
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
@@ -651,4 +652,7 @@ babel_assign_nchar
 alter-function-with-weak-view
 view_sec_setting
 alter-table-null-notnull
+openxml_without_with_clause
 Select_top_N_percent
+ascii_function
+#babel_timezoneinfo#Commenting the test as a temporary fix to ticket BABEL 5370

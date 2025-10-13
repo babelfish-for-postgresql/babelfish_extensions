@@ -1,0 +1,1516 @@
+-- Document Structure Tests
+-- XML Document with xpath to select Customers nodes
+DECLARE @handle INT, @xml nvarchar(1000);
+SET @xml = '
+<ROOT>
+<Customers CustomerID="VINET" ContactName="Paul Henriot">
+   <Orders CustomerID="VINET" EmployeeID="5" OrderDate=
+           "1996-07-04T00:00:00">
+      <OrderDetails OrderID="10248" ProductID="11" Quantity="12"/>
+      <OrderDetails OrderID="10248" ProductID="42" Quantity="10"/>
+   </Orders>
+</Customers>
+<Customers CustomerID="LILAS" ContactName="Carlos Gonzlez">
+   <Orders CustomerID="LILAS" EmployeeID="3" OrderDate=
+           "1996-08-16T00:00:00">
+      <OrderDetails OrderID="10283" ProductID="72" Quantity="3"/>
+   </Orders>
+</Customers>
+</ROOT>';
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/ROOT/Customers') ORDER BY id;
+EXEC sp_xml_removedocument @handle;
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+2#!#0#!#1#!#Customers#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#2#!#CustomerID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+4#!#3#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#VINET
+5#!#2#!#2#!#ContactName#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+6#!#5#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Paul Henriot
+7#!#2#!#1#!#Orders#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+8#!#7#!#2#!#CustomerID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+9#!#8#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#VINET
+10#!#7#!#2#!#EmployeeID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+11#!#10#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5
+12#!#7#!#2#!#OrderDate#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+13#!#12#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1996-07-04T00:00:00
+14#!#7#!#1#!#OrderDetails#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+15#!#14#!#2#!#OrderID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+16#!#15#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10248
+17#!#14#!#2#!#ProductID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+18#!#17#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#11
+19#!#14#!#2#!#Quantity#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+20#!#19#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#12
+21#!#7#!#1#!#OrderDetails#!#<NULL>#!#<NULL>#!#<NULL>#!#14#!#<NULL>
+22#!#21#!#2#!#OrderID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+23#!#22#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10248
+24#!#21#!#2#!#ProductID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+25#!#24#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#42
+26#!#21#!#2#!#Quantity#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+27#!#26#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10
+28#!#0#!#1#!#Customers#!#<NULL>#!#<NULL>#!#<NULL>#!#2#!#<NULL>
+29#!#28#!#2#!#CustomerID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+30#!#29#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#LILAS
+31#!#28#!#2#!#ContactName#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+32#!#31#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Carlos Gonzlez
+33#!#28#!#1#!#Orders#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+34#!#33#!#2#!#CustomerID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+35#!#34#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#LILAS
+36#!#33#!#2#!#EmployeeID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+37#!#36#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3
+38#!#33#!#2#!#OrderDate#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+39#!#38#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1996-08-16T00:00:00
+40#!#33#!#1#!#OrderDetails#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+41#!#40#!#2#!#OrderID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+42#!#41#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10283
+43#!#40#!#2#!#ProductID#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+44#!#43#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#72
+45#!#40#!#2#!#Quantity#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+46#!#45#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3
+~~END~~
+
+
+-- Simple XML Document
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+-- Empty XML Document
+DECLARE @xml nvarchar(1000) = '<root></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- XML Declaration
+DECLARE @xml nvarchar(1000) = '<?xml version="1.0"?><root>test</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#test
+~~END~~
+
+
+-- Nested Elements
+DECLARE @xml nvarchar(1000) = '
+<level1>
+    <level2>
+        <level3>
+            <level4>Deep content</level4>
+        </level3>
+    </level2>
+</level1>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#level1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#level2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#1#!#level3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+4#!#3#!#1#!#level4#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Deep content
+~~END~~
+
+
+-- Multiple Siblings
+DECLARE @xml nvarchar(1000) = '
+<root>
+    <sibling1>Content 1</sibling1>
+    <sibling2>Content 2</sibling2>
+    <sibling3>Content 3</sibling3>
+    <sibling4>Content 4</sibling4>
+</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#sibling1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Content 1
+4#!#0#!#1#!#sibling2#!#<NULL>#!#<NULL>#!#<NULL>#!#2#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Content 2
+6#!#0#!#1#!#sibling3#!#<NULL>#!#<NULL>#!#<NULL>#!#4#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Content 3
+8#!#0#!#1#!#sibling4#!#<NULL>#!#<NULL>#!#<NULL>#!#6#!#<NULL>
+9#!#8#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Content 4
+~~END~~
+
+
+-- Mixed Content
+DECLARE @xml nvarchar(1000) = '<root>Text before<child>Child content</child>Text after</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Text before
+3#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#2#!#<NULL>
+4#!#3#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Child content
+5#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#Text after
+~~END~~
+
+
+-- Single Attribute
+DECLARE @xml nvarchar(1000) = '<root id="123">content</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#id#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#123
+4#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content
+~~END~~
+
+
+-- Multiple Attributes
+DECLARE @xml nvarchar(1000) = '<root id="123" name="test" value="456" status="active">content</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#id#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#123
+4#!#0#!#2#!#name#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#test
+6#!#0#!#2#!#value#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#456
+8#!#0#!#2#!#status#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+9#!#8#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#active
+10#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content
+~~END~~
+
+
+-- Namespaced Attributes
+DECLARE @xml nvarchar(1000) = '<root xmlns:attr="http://attr.com" attr:id="123" attr:name="test">content</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#id#!#attr#!#http://attr.com#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#123
+4#!#0#!#2#!#name#!#attr#!#http://attr.com#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#test
+6#!#0#!#2#!#attr#!#xmlns#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#http://attr.com
+8#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content
+~~END~~
+
+
+-- XML Entities
+DECLARE @xml nvarchar(1000) = '<root>&lt;escaped&gt; &amp; &quot;quoted&quot; &apos;apostrophe&apos;</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<escaped> & "quoted" 'apostrophe'
+~~END~~
+
+
+-- XML Entities in Nested nodes
+DECLARE @xml nvarchar(1000) = '<root><child>&lt;escaped&gt;</child><child>&amp; &quot;quoted&quot;</child><child>&apos;apostrophe&apos;</child></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<escaped>
+4#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#2#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#& "quoted"
+6#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#4#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#'apostrophe'
+~~END~~
+
+
+-- Unicode Characters
+DECLARE @xml nvarchar(1000) = N'<root>Unicode: αβγ 中文 العربية русский</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Unicode: αβγ 中文 العربية русский
+~~END~~
+
+
+-- Whitespace Handling
+DECLARE @xml nvarchar(1000) = '<root>
+    <child1>   Content with spaces   </child1>
+    <child2>
+        Multiline
+        Content
+    </child2>
+</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#child1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Content with spaces
+4#!#0#!#1#!#child2#!#<NULL>#!#<NULL>#!#<NULL>#!#2#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Multiline<newline>        Content
+~~END~~
+
+
+-- Empty String XML
+DECLARE @xml NVARCHAR(MAX) = ''
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~END~~
+
+
+-- Self-Closing Tags
+DECLARE @xml nvarchar(1000) = '<root><empty/><selfclosed attr="value"/></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#empty#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#0#!#1#!#selfclosed#!#<NULL>#!#<NULL>#!#<NULL>#!#2#!#<NULL>
+4#!#3#!#2#!#attr#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#value
+~~END~~
+
+
+
+
+-- Parent-Child Relationship Validation
+DECLARE @xml nvarchar(1000) = '<root><parent><child>content</child></parent></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+-- Test parent-child relationships
+SELECT 
+    parent.localname as ParentName,
+    child.localname as ChildName,
+    child.parentid,
+    parent.id,
+    'Relationship Test' as TestType
+FROM OPENXML(@handle, '/') parent
+INNER JOIN OPENXML(@handle, '/') child ON parent.id = child.parentid
+WHERE parent.nodetype = 1 AND child.nodetype = 1
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+nvarchar#!#nvarchar#!#bigint#!#bigint#!#varchar
+root#!#parent#!#0#!#0#!#Relationship Test
+parent#!#child#!#2#!#2#!#Relationship Test
+~~END~~
+
+
+
+-- Node Type Tests
+-- Element Nodes (nodetype = 1)
+DECLARE @xml nvarchar(1000) = '<parent><child1>text1</child1><child2>text2</child2></parent>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') WHERE nodetype = 1 ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#parent#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#child1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+4#!#0#!#1#!#child2#!#<NULL>#!#<NULL>#!#<NULL>#!#2#!#<NULL>
+~~END~~
+
+
+-- Attribute Nodes (nodetype = 2)
+DECLARE @xml nvarchar(1000) = '<root attr1="value1" attr2="value2">content</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') WHERE nodetype = 2 ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+2#!#0#!#2#!#attr1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+4#!#0#!#2#!#attr2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Text Nodes (nodetype = 3)
+DECLARE @xml nvarchar(1000) = '<root>This is text content</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') WHERE nodetype = 3 ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#This is text content
+~~END~~
+
+
+-- CDATA Sections (nodetype = 4)
+DECLARE @xml nvarchar(1000) = '<root><![CDATA[This is CDATA content]]></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') WHERE nodetype = 4 ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+2#!#0#!#4#!##cdata-section#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#This is CDATA content
+~~END~~
+
+
+-- Entity Reference Nodes (nodetype = 5)
+DECLARE @xml NVARCHAR(MAX) = '<!DOCTYPE root [
+    <!ENTITY customEntity "Custom Entity Value">
+]>
+<root>
+    This contains &customEntity; in the text.
+    <element attr="&customEntity;">More &customEntity; content</element>
+</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') WHERE nodetype = 5 ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~END~~
+
+
+-- Entity Nodes (nodetype = 6)
+DECLARE @xml NVARCHAR(MAX) = '<!DOCTYPE root [
+    <!ENTITY entity1 "First Entity">
+    <!ENTITY entity2 "Second Entity">
+    <!ENTITY entity3 "Third Entity">
+]>
+<root>
+    <content>&entity1;</content>
+    <content>&entity2;</content>
+    <content>&entity3;</content>
+</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') WHERE nodetype = 6 ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~END~~
+
+
+-- Processing Instructions (nodetype = 7)
+DECLARE @xml nvarchar(1000) = '<root><?xml-stylesheet type="text/xsl" href="style.xsl"?>content</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') WHERE nodetype = 7 ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+2#!#0#!#7#!#xml-stylesheet#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#type="text/xsl" href="style.xsl"
+~~END~~
+
+
+-- Comments (nodetype = 8)
+DECLARE @xml nvarchar(1000) = '<root><!-- This is a comment -->content</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') WHERE nodetype = 8 ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+2#!#0#!#8#!##comment#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#This is a comment
+~~END~~
+
+
+
+
+-- All Node Types in Single Document
+DECLARE @xml nvarchar(1000) = '<?xml version="1.0"?>
+<!-- Root comment -->
+<root xmlns="http://default.ns" xmlns:prefix="http://prefix.ns" attr="rootattr">
+    Text content
+    <element prefix:attr="prefixedattr">Element text</element>
+    <!-- Element comment -->
+    <![CDATA[CDATA section content]]>
+    <?processing-instruction data?>
+    <selfclosing/>
+</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT 
+    id,
+    parentid,
+    nodetype,
+    CASE nodetype
+        WHEN 1 THEN 'Element'
+        WHEN 2 THEN 'Attribute' 
+        WHEN 3 THEN 'Text'
+        WHEN 4 THEN 'CDATA'
+        WHEN 7 THEN 'Processing Instruction'
+        WHEN 8 THEN 'Comment'
+        ELSE 'Other'
+    END as NodeTypeName,
+    localname,
+    prefix,
+    namespaceuri,
+    prev,
+    SUBSTRING(CAST(text as NVARCHAR(MAX)), 1, 50) as TextContent
+FROM OPENXML(@handle, '/')
+ORDER BY id
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#nvarchar
+0#!#<NULL>#!#1#!#Element#!#root#!#<NULL>#!#http://default.ns#!#1#!#<NULL>
+1#!#<NULL>#!#8#!#Comment#!##comment#!#<NULL>#!#<NULL>#!#<NULL>#!#Root comment
+3#!#0#!#2#!#Attribute#!#attr#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+4#!#3#!#3#!#Text#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#rootattr
+5#!#0#!#2#!#Attribute#!#xmlns#!#xmlns#!#<NULL>#!#<NULL>#!#<NULL>
+6#!#5#!#3#!#Text#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#http://default.ns
+7#!#0#!#2#!#Attribute#!#prefix#!#xmlns#!#<NULL>#!#<NULL>#!#<NULL>
+8#!#7#!#3#!#Text#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#http://prefix.ns
+9#!#0#!#3#!#Text#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#Text content
+10#!#0#!#1#!#Element#!#element#!#<NULL>#!#http://default.ns#!#9#!#<NULL>
+11#!#10#!#2#!#Attribute#!#attr#!#prefix#!#http://prefix.ns#!#<NULL>#!#<NULL>
+12#!#11#!#3#!#Text#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#prefixedattr
+13#!#10#!#3#!#Text#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#Element text
+14#!#0#!#8#!#Comment#!##comment#!#<NULL>#!#<NULL>#!#10#!#Element comment
+15#!#0#!#4#!#CDATA#!##cdata-section#!#<NULL>#!#<NULL>#!#14#!#CDATA section content
+16#!#0#!#7#!#Processing Instruction#!#processing-instruction#!#<NULL>#!#<NULL>#!#15#!#data
+17#!#0#!#1#!#Element#!#selfclosing#!#<NULL>#!#http://default.ns#!#16#!#<NULL>
+~~END~~
+
+
+
+-- DTD Tests
+-- XML with DTD and various attribute types
+DECLARE @handle INT;
+DECLARE @xmlText NVARCHAR(MAX) = 
+'<!DOCTYPE item [
+  <!ELEMENT item EMPTY>
+  <!ATTLIST item
+    name CDATA #IMPLIED
+    id ID "item5"
+    ref IDREF #IMPLIED
+    refs IDREFS #IMPLIED
+    file ENTITY #IMPLIED
+    files ENTITIES #IMPLIED
+    code NMTOKEN #REQUIRED
+    codes NMTOKENS #REQUIRED
+    type (type1|type2|type3) "type1"
+    imgtype NOTATION (gif | jpeg) #REQUIRED
+  >
+]>
+<itemList>
+    <item id="item1" ref="item0" codes="X123 X000 X111" name="Sample Item" file="fileEntity" type="type1" />
+    <item id="item2" refs="item1 item2" code="X345" name="Sample Item" file="fileEntity" type="type2" />
+    <item id="item3" ref="item2" code="X678" name="Sample Item" files="fileEntity1 fileEntity2" type="type3" />
+    <item id="item4" ref="item3" src="logo.gif" imgtype="gif" />
+</itemList>';
+EXEC sp_xml_preparedocument @handle OUTPUT, @xmlText;
+SELECT id, parentid, nodetype, 
+       CAST(localname AS NVARCHAR(20)) as localname, 
+       CAST(prefix AS NVARCHAR(20)) as prefix, 
+       CAST(namespaceuri AS NVARCHAR(20)) as namespaceuri, 
+       CAST(datatype AS NVARCHAR(20)) as datatype, 
+       prev, text 
+FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle;
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#itemList#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#<NULL>
+14#!#0#!#1#!#item#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+15#!#14#!#2#!#id#!#<NULL>#!#<NULL>#!#id#!#<NULL>#!#<NULL>
+16#!#15#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#item1
+17#!#14#!#2#!#ref#!#<NULL>#!#<NULL>#!#idref#!#<NULL>#!#<NULL>
+18#!#17#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#item0
+19#!#14#!#2#!#codes#!#<NULL>#!#<NULL>#!#nmtokens#!#<NULL>#!#<NULL>
+20#!#19#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#X123 X000 X111
+21#!#14#!#2#!#name#!#<NULL>#!#<NULL>#!#string#!#<NULL>#!#<NULL>
+22#!#21#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Sample Item
+23#!#14#!#2#!#file#!#<NULL>#!#<NULL>#!#entity#!#<NULL>#!#<NULL>
+24#!#23#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#fileEntity
+25#!#14#!#2#!#type#!#<NULL>#!#<NULL>#!#enumeration#!#<NULL>#!#<NULL>
+26#!#25#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#type1
+27#!#0#!#1#!#item#!#<NULL>#!#<NULL>#!#<NULL>#!#14#!#<NULL>
+28#!#27#!#2#!#id#!#<NULL>#!#<NULL>#!#id#!#<NULL>#!#<NULL>
+29#!#28#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#item2
+30#!#27#!#2#!#refs#!#<NULL>#!#<NULL>#!#idrefs#!#<NULL>#!#<NULL>
+31#!#30#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#item1 item2
+32#!#27#!#2#!#code#!#<NULL>#!#<NULL>#!#nmtoken#!#<NULL>#!#<NULL>
+33#!#32#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#X345
+34#!#27#!#2#!#name#!#<NULL>#!#<NULL>#!#string#!#<NULL>#!#<NULL>
+35#!#34#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Sample Item
+36#!#27#!#2#!#file#!#<NULL>#!#<NULL>#!#entity#!#<NULL>#!#<NULL>
+37#!#36#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#fileEntity
+38#!#27#!#2#!#type#!#<NULL>#!#<NULL>#!#enumeration#!#<NULL>#!#<NULL>
+39#!#38#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#type2
+40#!#0#!#1#!#item#!#<NULL>#!#<NULL>#!#<NULL>#!#27#!#<NULL>
+41#!#40#!#2#!#id#!#<NULL>#!#<NULL>#!#id#!#<NULL>#!#<NULL>
+42#!#41#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#item3
+43#!#40#!#2#!#ref#!#<NULL>#!#<NULL>#!#idref#!#<NULL>#!#<NULL>
+44#!#43#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#item2
+45#!#40#!#2#!#code#!#<NULL>#!#<NULL>#!#nmtoken#!#<NULL>#!#<NULL>
+46#!#45#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#X678
+47#!#40#!#2#!#name#!#<NULL>#!#<NULL>#!#string#!#<NULL>#!#<NULL>
+48#!#47#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Sample Item
+49#!#40#!#2#!#files#!#<NULL>#!#<NULL>#!#entities#!#<NULL>#!#<NULL>
+50#!#49#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#fileEntity1 fileEntity2
+51#!#40#!#2#!#type#!#<NULL>#!#<NULL>#!#enumeration#!#<NULL>#!#<NULL>
+52#!#51#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#type3
+53#!#0#!#1#!#item#!#<NULL>#!#<NULL>#!#<NULL>#!#40#!#<NULL>
+54#!#53#!#2#!#id#!#<NULL>#!#<NULL>#!#id#!#<NULL>#!#<NULL>
+55#!#54#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#item4
+56#!#53#!#2#!#ref#!#<NULL>#!#<NULL>#!#idref#!#<NULL>#!#<NULL>
+57#!#56#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#item3
+58#!#53#!#2#!#src#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+59#!#58#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#logo.gif
+60#!#53#!#2#!#imgtype#!#<NULL>#!#<NULL>#!#notation#!#<NULL>#!#<NULL>
+61#!#60#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#gif
+62#!#53#!#2#!#type#!#<NULL>#!#<NULL>#!#enumeration#!#<NULL>#!#<NULL>
+63#!#62#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#type1
+~~END~~
+
+
+
+-- Namespace Tests
+-- Default Namespace
+DECLARE @xml nvarchar(1000) = '<root xmlns="http://example.com/default"><child>content</child></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#http://example.com/default#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#xmlns#!#xmlns#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#http://example.com/default
+4#!#0#!#1#!#child#!#<NULL>#!#http://example.com/default#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content
+~~END~~
+
+
+-- Prefixed Namespaces
+DECLARE @xml nvarchar(1000) = '<ns1:root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2">
+    <ns1:child1>content1</ns1:child1>
+    <ns2:child2>content2</ns2:child2>
+</ns1:root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#ns1#!#http://example.com/ns1#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#ns1#!#xmlns#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#http://example.com/ns1
+4#!#0#!#2#!#ns2#!#xmlns#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#http://example.com/ns2
+6#!#0#!#1#!#child1#!#ns1#!#http://example.com/ns1#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content1
+8#!#0#!#1#!#child2#!#ns2#!#http://example.com/ns2#!#<NULL>#!#6#!#<NULL>
+9#!#8#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content2
+~~END~~
+
+
+-- Multiple Namespace Declarations
+DECLARE @xml nvarchar(1000) = '<root xmlns:a="http://a.com" xmlns:b="http://b.com" xmlns:c="http://c.com">
+    <a:elementA>A content</a:elementA>
+    <b:elementB>B content</b:elementB>
+    <c:elementC>C content</c:elementC>
+</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#a#!#xmlns#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#http://a.com
+4#!#0#!#2#!#b#!#xmlns#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#http://b.com
+6#!#0#!#2#!#c#!#xmlns#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#http://c.com
+8#!#0#!#1#!#elementA#!#a#!#http://a.com#!#<NULL>#!#<NULL>#!#<NULL>
+9#!#8#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#A content
+10#!#0#!#1#!#elementB#!#b#!#http://b.com#!#<NULL>#!#8#!#<NULL>
+11#!#10#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#B content
+12#!#0#!#1#!#elementC#!#c#!#http://c.com#!#<NULL>#!#10#!#<NULL>
+13#!#12#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C content
+~~END~~
+
+
+-- Namespace in XPATH
+DECLARE @xml nvarchar(1000) = 
+'<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2">
+    <ns1:child>value</ns1:child>
+    <ns2:child>value</ns2:child>
+</root>'
+DECLARE @namespace nvarchar(100) = '<root xmlns:ns1="http://example.com/ns1" />'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace
+SELECT * FROM OPENXML(@handle, '/root/ns1:child') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+6#!#0#!#1#!#child#!#ns1#!#http://example.com/ns1#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#value
+~~END~~
+
+
+-- Default Namespace in XML Document but XPATH does not have any prefix no result
+DECLARE @xml nvarchar(1000) = '<root xmlns="http://example.com/default"><child>content</child></root>'
+DECLARE @ns nvarchar(1000) = '<root xmlns="http://example.com/default"></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @ns
+SELECT * FROM OPENXML(@handle, '/root/child') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~END~~
+
+
+-- Default Namespace in XML Document but Prefix Namespace with same URI in Namespace document
+DECLARE @xml nvarchar(1000) = '<root xmlns="http://example.com/default"><child>content</child></root>'
+DECLARE @ns nvarchar(1000) = '<root xmlns:dns="http://example.com/default"></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @ns
+SELECT * FROM OPENXML(@handle, '/dns:root') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#http://example.com/default#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#xmlns#!#xmlns#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#http://example.com/default
+4#!#0#!#1#!#child#!#<NULL>#!#http://example.com/default#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content
+~~END~~
+
+
+-- Multiple namespaces in XPATH
+DECLARE @xml nvarchar(1000) = 
+'<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2">
+    <ns1:child>value</ns1:child>
+    <ns2:child>value</ns2:child>
+</root>';
+DECLARE @namespace nvarchar(100) = '<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2" />';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace;
+SELECT * FROM OPENXML(@handle, '/root/ns1:child | /root/ns2:child') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+6#!#0#!#1#!#child#!#ns1#!#http://example.com/ns1#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#value
+8#!#0#!#1#!#child#!#ns2#!#http://example.com/ns2#!#<NULL>#!#6#!#<NULL>
+9#!#8#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#value
+~~END~~
+
+
+-- namespace xml document with root and child both having namespaces,
+-- but xpath only root namespace is considered
+DECLARE @xml nvarchar(1000) = 
+'<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2">
+    <ns1:child>value</ns1:child>
+    <ns2:child>value</ns2:child>
+</root>'
+DECLARE @namespace nvarchar(1000) = 
+'<root xmlns:ns1="http://example.com/ns1"> 
+    <child xmlns:ns2="http://example.com/ns2"></child>
+</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml, @namespace
+SELECT * FROM OPENXML(@handle, '/root/ns1:child') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+6#!#0#!#1#!#child#!#ns1#!#http://example.com/ns1#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#value
+~~END~~
+
+
+DECLARE @xml nvarchar(1000) = 
+'<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2">
+    <ns1:child>value</ns1:child>
+    <ns2:child>value</ns2:child>
+</root>'
+DECLARE @namespace nvarchar(100) = 
+'<root xmlns:ns1="http://example.com/ns1"> 
+    <child xmlns:ns2="http://example.com/ns2"></child>
+</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/root/n2:child') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not create XPath object)~~
+
+
+-- XPATH having namespace, but no namespace provided in sp_xml_preparedocument
+DECLARE @xml nvarchar(1000) = 
+'<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2">
+    <ns1:child>value</ns1:child>
+    <ns2:child>value</ns2:child>
+</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/root/ns1:child') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not create XPath object)~~
+
+
+
+-- Node Selection Tests
+-- Root Node Selection
+DECLARE @xml nvarchar(1000) = '<root><child>content</child></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content
+~~END~~
+
+
+-- Specific Element Selection
+DECLARE @xml nvarchar(1000) = '<root><target>found</target><other>not found</other></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/root/target') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+2#!#0#!#1#!#target#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#found
+~~END~~
+
+
+-- Wildcard Selection
+DECLARE @xml nvarchar(1000) = '<root><child1>c1</child1><child2>c2</child2></root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/root/*') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+2#!#0#!#1#!#child1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#c1
+4#!#0#!#1#!#child2#!#<NULL>#!#<NULL>#!#<NULL>#!#2#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#c2
+~~END~~
+
+
+-- Special Node Selection Tests
+DECLARE @xml nvarchar(1000) = '<?xml version="1.0"?>
+<!-- Root comment -->
+<root xmlns="http://default.ns" xmlns:prefix="http://prefix.ns" attr="rootattr">
+    Text content
+    <element prefix:attr="prefixedattr">Element text</element>
+    <!-- Element comment -->
+    <![CDATA[CDATA section content]]>
+    <?processing-instruction data?>
+    <selfclosing/>
+</root>' 
+DECLARE @handle INT 
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml 
+SELECT * FROM OPENXML(@handle, '//comment() | //processing-instruction()')  ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+1#!#<NULL>#!#8#!##comment#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Root comment
+14#!#0#!#8#!##comment#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#Element comment
+16#!#0#!#7#!#processing-instruction#!#<NULL>#!#<NULL>#!#<NULL>#!#15#!#data
+~~END~~
+
+
+
+-- Error Handling Tests
+-- Invalid XML Error Handling
+DECLARE @xml NVARCHAR(MAX) = '<root><unclosed>content</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The XML input is not well-formed.)~~
+
+
+-- NULL XML Error Handling
+DECLARE @xml nvarchar(1000) = NULL
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~END~~
+
+
+DECLARE @handle INT = NULL;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find prepared statement with handle 0.)~~
+
+
+-- Invalid Handle Error Handling
+DECLARE @handle INT = 999999;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find prepared statement with handle 999999.)~~
+
+
+-- Invalid XPath Error Handling
+DECLARE @xml nvarchar(1000) = '<root>content</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, 'invalid[xpath') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+
+-- Empty XPath Error Handling
+DECLARE @xml nvarchar(1000) = '<root>content</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: empty XPath expression)~~
+
+
+
+-- Edge Cases and Complex Structures
+-- Complex CDATA example
+DECLARE @xml nvarchar(1000) = '<!DOCTYPE root
+    [<!ELEMENT root (Customers)*>
+    <!ELEMENT Customers EMPTY>
+    <!ATTLIST Customers CustomerID CDATA #IMPLIED ContactName CDATA #IMPLIED>]>
+<root>
+    <Customers CustomerID="ALFKI" ContactName="Maria Anders"/>
+</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#<NULL>
+7#!#0#!#1#!#Customers#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+8#!#7#!#2#!#CustomerID#!#<NULL>#!#<NULL>#!#string#!#<NULL>#!#<NULL>
+9#!#8#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#ALFKI
+10#!#7#!#2#!#ContactName#!#<NULL>#!#<NULL>#!#string#!#<NULL>#!#<NULL>
+11#!#10#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Maria Anders
+~~END~~
+
+
+
+
+-- Complex Nested Structure with Mixed Content
+DECLARE @xml nvarchar(1000) = '
+<catalog xmlns:book="http://books.com" xmlns:author="http://authors.com">
+    <book:book id="1" book:isbn="123456789">
+        <book:title>SQL Server Guide</book:title>
+        <author:author author:id="100">
+            <author:name>John Doe</author:name>
+            <author:email>john@example.com</author:email>
+        </author:author>
+        <book:chapters>
+            <book:chapter number="1">Introduction</book:chapter>
+            <book:chapter number="2">Advanced Topics</book:chapter>
+        </book:chapters>
+        <!-- Publication info -->
+        <book:published>2024</book:published>
+    </book:book>
+</catalog>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+-- Show complete node structure
+SELECT 
+    id,
+    parentid,
+    nodetype,
+    localname,
+    prefix,
+    namespaceuri,
+    CASE 
+        WHEN LEN(CAST(text as NVARCHAR(MAX))) > 50 
+        THEN SUBSTRING(CAST(text as NVARCHAR(MAX)), 1, 50) + '...'
+        ELSE CAST(text as NVARCHAR(MAX))
+    END as TextContent
+FROM OPENXML(@handle, '/')
+ORDER BY id
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+0#!#<NULL>#!#1#!#catalog#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#book#!#xmlns#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#http://books.com
+4#!#0#!#2#!#author#!#xmlns#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#http://authors.com
+6#!#0#!#1#!#book#!#book#!#http://books.com#!#<NULL>
+7#!#6#!#2#!#id#!#<NULL>#!#<NULL>#!#<NULL>
+8#!#7#!#3#!##text#!#<NULL>#!#<NULL>#!#1
+9#!#6#!#2#!#isbn#!#book#!#http://books.com#!#<NULL>
+10#!#9#!#3#!##text#!#<NULL>#!#<NULL>#!#123456789
+11#!#6#!#1#!#title#!#book#!#http://books.com#!#<NULL>
+12#!#11#!#3#!##text#!#<NULL>#!#<NULL>#!#SQL Server Guide
+13#!#6#!#1#!#author#!#author#!#http://authors.com#!#<NULL>
+14#!#13#!#2#!#id#!#author#!#http://authors.com#!#<NULL>
+15#!#14#!#3#!##text#!#<NULL>#!#<NULL>#!#100
+16#!#13#!#1#!#name#!#author#!#http://authors.com#!#<NULL>
+17#!#16#!#3#!##text#!#<NULL>#!#<NULL>#!#John Doe
+18#!#13#!#1#!#email#!#author#!#http://authors.com#!#<NULL>
+19#!#18#!#3#!##text#!#<NULL>#!#<NULL>#!#john@example.com
+20#!#6#!#1#!#chapters#!#book#!#http://books.com#!#<NULL>
+21#!#20#!#1#!#chapter#!#book#!#http://books.com#!#<NULL>
+22#!#21#!#2#!#number#!#<NULL>#!#<NULL>#!#<NULL>
+23#!#22#!#3#!##text#!#<NULL>#!#<NULL>#!#1
+24#!#21#!#3#!##text#!#<NULL>#!#<NULL>#!#Introduction
+25#!#20#!#1#!#chapter#!#book#!#http://books.com#!#<NULL>
+26#!#25#!#2#!#number#!#<NULL>#!#<NULL>#!#<NULL>
+27#!#26#!#3#!##text#!#<NULL>#!#<NULL>#!#2
+28#!#25#!#3#!##text#!#<NULL>#!#<NULL>#!#Advanced Topics
+29#!#6#!#8#!##comment#!#<NULL>#!#<NULL>#!#Publication info
+30#!#6#!#1#!#published#!#book#!#http://books.com#!#<NULL>
+31#!#30#!#3#!##text#!#<NULL>#!#<NULL>#!#2024
+~~END~~
+
+
+-- Long element name
+DECLARE @xml nvarchar(1000) = '<longggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg>Hello World</longggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT id, len(localname) FROM OPENXML(@handle, '/') ORDER BY id
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#int
+0#!#131
+2#!#5
+~~END~~
+
+
+
+
+-- Extreme Values and Edge Cases
+DECLARE @xml nvarchar(1000) = '<root 
+    veryLongAttributeName="VeryLongAttributeValueThatExceedsNormalLengthExpectations"
+    emptyAttr=""
+    numericAttr="12345.67"
+    booleanAttr="true"
+    dateAttr="2024-01-01T10:30:00Z">
+    <emptyElement></emptyElement>
+    <whitespaceElement>   </whitespaceElement>
+    <numberElement>42</numberElement>
+    <decimalElement>3.14159</decimalElement>
+    <specialChars>&lt;&gt;&amp;&quot;&apos;</specialChars>
+</root>'
+DECLARE @handle INT
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml
+SELECT 
+    localname,
+    nodetype,
+    LEN(CAST(text as NVARCHAR(MAX))) as TextLength,
+    CAST(text as NVARCHAR(MAX)) as TextContent
+FROM OPENXML(@handle, '/')
+WHERE nodetype IN (1, 2, 3)
+ORDER BY id
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+nvarchar#!#int#!#int#!#nvarchar
+root#!#1#!#<NULL>#!#<NULL>
+veryLongAttributeName#!#2#!#<NULL>#!#<NULL>
+#text#!#3#!#57#!#VeryLongAttributeValueThatExceedsNormalLengthExpectations
+emptyAttr#!#2#!#<NULL>#!#<NULL>
+numericAttr#!#2#!#<NULL>#!#<NULL>
+#text#!#3#!#8#!#12345.67
+booleanAttr#!#2#!#<NULL>#!#<NULL>
+#text#!#3#!#4#!#true
+dateAttr#!#2#!#<NULL>#!#<NULL>
+#text#!#3#!#20#!#2024-01-01T10:30:00Z
+emptyElement#!#1#!#<NULL>#!#<NULL>
+whitespaceElement#!#1#!#<NULL>#!#<NULL>
+numberElement#!#1#!#<NULL>#!#<NULL>
+#text#!#3#!#2#!#42
+decimalElement#!#1#!#<NULL>#!#<NULL>
+#text#!#3#!#7#!#3.14159
+specialChars#!#1#!#<NULL>#!#<NULL>
+#text#!#3#!#5#!#<>&"'
+~~END~~
+
+
+
+-- Dependent objects tests
+EXEC openxml_without_with_dep_proc1 N'<root><child>content</child></root>'
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content
+~~END~~
+
+
+EXEC openxml_without_with_dep_proc2 N'<root><child>content</child></root>'
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#1#!#child#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#content
+~~END~~
+
+
+
+-- CROSS APPLY
+DECLARE @xml NVARCHAR(1000) = '
+<Company>
+    <Employee ID="101">Alice Johnson</Employee>
+    <Employee ID="102">Bob Wilson</Employee>
+</Company>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT
+    CAST(x.localname AS NVARCHAR(20)) as element, 
+    CASE x.nodetype
+        WHEN 1 THEN 'Element'
+        WHEN 2 THEN 'Attribute' 
+        ELSE 'Other'
+    END as type,
+    CAST(d.text AS NVARCHAR(20)) as value 
+FROM OPENXML(@handle, '/Company/Employee') x 
+CROSS APPLY OPENXML(@handle, '/Company/Employee') d 
+WHERE x.nodetype IN (1,2) AND d.nodetype = 3 AND d.parentid = x.id;
+EXEC sp_xml_removedocument @handle;
+GO
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+Employee#!#Element#!#Alice Johnson
+ID#!#Attribute#!#101
+Employee#!#Element#!#Bob Wilson
+ID#!#Attribute#!#102
+~~END~~
+
+
+-- OUTER APPLY
+DECLARE @xml NVARCHAR(1000) = '
+<Company>
+    <Employee ID="101">Alice Johnson</Employee>
+    <Employee ID="102">Bob Wilson</Employee>
+</Company>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT
+    CAST(x.localname AS NVARCHAR(20)) as element, 
+    CASE x.nodetype
+        WHEN 1 THEN 'Element'
+        WHEN 2 THEN 'Attribute' 
+        ELSE 'Other'
+    END as type,
+    CAST(d.text AS NVARCHAR(20)) as value 
+FROM OPENXML(@handle, '/Company/Employee') x 
+OUTER APPLY OPENXML(@handle, '/Company/Employee') d 
+WHERE x.nodetype IN (1,2) AND d.nodetype = 3 AND d.parentid = x.id;
+EXEC sp_xml_removedocument @handle;
+GO
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+Employee#!#Element#!#Alice Johnson
+ID#!#Attribute#!#101
+Employee#!#Element#!#Bob Wilson
+ID#!#Attribute#!#102
+~~END~~
+
+
+-- Testing Trigger on OPENXML
+SELECT * FROM babel_6046_school_details_raw_xml
+GO
+~~START~~
+int#!#nvarchar
+~~END~~
+
+
+SELECT * FROM babel_6046_school_details
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~END~~
+
+
+INSERT INTO babel_6046_school_details_raw_xml (id, student)
+VALUES (1, '<student classid="1" rollid="1" studentname="StudentA" />')
+GO
+~~ROW COUNT: 7~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_6046_school_details_raw_xml
+GO
+~~START~~
+int#!#nvarchar
+1#!#<student classid="1" rollid="1" studentname="StudentA" />
+~~END~~
+
+
+SELECT * FROM babel_6046_school_details
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#student#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#classid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+4#!#0#!#2#!#rollid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+6#!#0#!#2#!#studentname#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#StudentA
+~~END~~
+
+
+INSERT INTO babel_6046_school_details_raw_xml (id, student)
+VALUES (2, '<student classid="1" rollid="2" studentname="StudentB" />')
+GO
+~~ROW COUNT: 7~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_6046_school_details_raw_xml
+GO
+~~START~~
+int#!#nvarchar
+1#!#<student classid="1" rollid="1" studentname="StudentA" />
+2#!#<student classid="1" rollid="2" studentname="StudentB" />
+~~END~~
+
+
+SELECT * FROM babel_6046_school_details
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#student#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#classid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+4#!#0#!#2#!#rollid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+6#!#0#!#2#!#studentname#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#StudentA
+0#!#<NULL>#!#1#!#student#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#2#!#classid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#2#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+4#!#0#!#2#!#rollid#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#4#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+6#!#0#!#2#!#studentname#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#6#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#StudentB
+~~END~~
+
+
+-- OPENXML with different type of Argument
+-- money
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type money = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+-- smallmoney
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type smallmoney = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+-- bigint
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type bigint = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+-- strings
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type char(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type varchar(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type nvarchar(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type nchar(10) = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+-- bit
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+DECLARE @handle_with_another_type bit = @handle;
+SELECT * FROM OPENXML(@handle_with_another_type, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find prepared statement with handle 1.)~~
+
+
+-- xml document with UDT on different datatypes
+DECLARE @xml nvarcharUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml varcharUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml charUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+DECLARE @xml ncharUDT = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+
+-- Multiple execution of OPENXML within same batch
+DECLARE @xml nvarchar(1000) = '<root>Hello World</root>';
+DECLARE @handle INT;
+EXEC sp_xml_preparedocument @handle OUTPUT, @xml;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+SELECT * FROM OPENXML(@handle, '/') ORDER BY id;
+EXEC sp_xml_removedocument @handle
+GO
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+
+~~START~~
+bigint#!#bigint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#bigint#!#ntext
+0#!#<NULL>#!#1#!#root#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#0#!#3#!##text#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Hello World
+~~END~~
+

@@ -3070,6 +3070,9 @@ is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 {
 	Oid immediate_parent_func = InvalidOid;
 
+	if (!pltsql_enable_ownership_chaining)
+		return false;
+
 	Assert(OidIsValid(objectOwnerId)); 
 
 	if (IsA(expr, FuncExpr))

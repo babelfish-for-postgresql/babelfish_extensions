@@ -54,6 +54,7 @@ SELECT
     CHAR(ASCII(CHAR(27))) AS EscapeChar;
 GO
 
+-- following throws wrong output in babelfish as char(0) return empty string value [BABEL-6068]
 SELECT CHAR(ASCII(CHAR(0))) AS NullChar
 GO
 

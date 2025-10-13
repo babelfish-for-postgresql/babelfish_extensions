@@ -50,6 +50,7 @@
 #include "tsearch/ts_locale.h"
 #include "utils/xml.h"
 #include "common/md5.h"
+#include "utils/datum.h"
 
 #include "catalog.h"
 #include "catalog/toasting.h"
@@ -84,6 +85,8 @@ PG_FUNCTION_INFO_V1(sp_reset_connection_internal);
 PG_FUNCTION_INFO_V1(sp_renamedb_internal);
 PG_FUNCTION_INFO_V1(sp_xml_preparedocument);
 PG_FUNCTION_INFO_V1(sp_xml_removedocument);
+PG_FUNCTION_INFO_V1(tsql_openxml_get_colpattern);
+PG_FUNCTION_INFO_V1(tsql_openxml_get_xmldoc);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -114,16 +117,21 @@ bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
-#define              MD5_HASH_LEN 32
-const  int           XML_HANDLE_COUNTER_START = 0;
-const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
-static int           current_xml_handle_counter = INT_MAX / 2;
-Bitmapset           *active_xml_handles_counter = NULL;
-static char         *xml_handle_temp_table_name = NULL;
-int                  get_next_xml_handle_counter(void);
-void                 create_xml_handle_temp_table(void);
-void                 delete_xml_handle_entry(int  handle);
-int                  insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
+#define Anum_xml_handle_temp_table_document_id 1
+#define Anum_xml_handle_temp_table_xml_data 6
+#define Anum_xml_handle_temp_table_ns_data 7
+
+#define MD5_HASH_LEN 32
+#define XML_HANDLE_COUNTER_START 0
+#define XML_HANDLE_COUNTER_INVALID (INT_MAX / 2)
+
+static int   current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID;
+Bitmapset   *active_xml_handles_counter = NULL;
+static char *xml_handle_temp_table_name = NULL;
+int          get_next_xml_handle_counter(void);
+void         create_xml_handle_temp_table(void);
+void         delete_xml_handle_entry(int  handle);
+int          insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -4685,7 +4693,7 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
 		
 	heap_freetuple(tuple);
 	
-	relation_close(relation, NoLock);
+	relation_close(relation, RowExclusiveLock);
 	
 	return document_id;
 }
@@ -4790,7 +4798,7 @@ delete_xml_handle_entry(int document_id)
 	}
 	
 	systable_endscan(scan);
-	relation_close(relation, NoLock);
+	relation_close(relation, RowExclusiveLock);
 	
 	/* If we didn't find the handle or couldn't delete it, throw an error */
 	if (!found)
@@ -4923,4 +4931,188 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
 	delete_xml_handle_entry(doc_handle);
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * Function to retrieve XML document and namespace from temporary table using document ID
+ */
+void
+get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data)
+{
+	EphemeralNamedRelation		enr = NULL;
+	Relation               		relation;
+	ScanKeyData            		skey[1];
+	TableScanDesc      		    scan;
+	HeapTuple              		tuple;
+	Datum                  		datum;
+	bool                   		isnull;
+	bool              	        table_exists = false;
+
+	/* Unlikely, Just a sanity check */
+	if (xml_data == NULL && ns_data == NULL)
+		return;
+
+	/*
+	 * Initialise xml_data and ns_data to NULL.
+	 */
+	if (xml_data)
+		*xml_data = NULL;
+	if (ns_data)
+		*ns_data = NULL;
+
+	/* 
+	 * Check if the xml_handle_temp_table exists using ENR lookup,
+	 * if found get its relation descriptor.
+	 */
+	if (xml_handle_temp_table_name != NULL)
+	{
+		enr = get_ENR(currentQueryEnv, xml_handle_temp_table_name, true);
+		if (enr)
+		{
+			relation = relation_open(enr->md.reliddesc, AccessShareLock);
+			table_exists = true;
+		}
+	}
+
+	if (!table_exists)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	}
+
+	/*
+	 * Fetch xml data and namespace data from xml_handle_temp_table, for given document id.
+	 */
+	ScanKeyInit(&skey[0],
+				Anum_xml_handle_temp_table_document_id,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(document_id));
+	
+	scan = table_beginscan_catalog(relation, 1, skey);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+	
+	if (HeapTupleIsValid(tuple))
+	{
+		/* Get the XML document */
+		if (xml_data)
+		{
+			isnull = true;
+			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_xml_data, RelationGetDescr(relation), &isnull);
+			
+			if (!isnull)
+				*xml_data = DatumGetXmlP(datum);
+			else
+				*xml_data = NULL;
+		}
+		
+		/* Get the namespaces */
+		if (ns_data)
+		{
+			isnull = true;
+			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_ns_data, RelationGetDescr(relation), &isnull);
+			
+			if (!isnull)
+				*ns_data = DatumGetXmlP(datum);
+			else
+				*ns_data = NULL;
+		}
+	}
+	else
+	{
+		table_endscan(scan);
+		relation_close(relation, AccessShareLock);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Could not find prepared statement with handle %d.", document_id)));
+	}
+
+	table_endscan(scan);
+	relation_close(relation, AccessShareLock);
+}
+
+/*
+ * Function to retrieve XML document using document ID
+ */
+Datum
+tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
+{
+	int32                 document_id = PG_GETARG_INT32(0);
+	xmltype              *xmldata = NULL;
+
+	get_xml_data_and_namespace_data(document_id, &xmldata, NULL);
+	
+	/* If we found the document, return it */
+	if (xmldata)
+		PG_RETURN_XML_P(xmldata);
+	
+	PG_RETURN_NULL();
+}
+
+/*
+ * tsql_openxml_get_colpattern - Generate XPath expressions for OPENXML columns
+ *
+ * This function generates the appropriate XPath expression for a column based on
+ * the OPENXML flag value. The flag determines whether to access XML data as
+ * attributes, elements, or either.
+ *   flag - Controls the XPath pattern generation:
+ *   0,1: Use attribute access (@colname)
+ *   2: Use element access (colname)
+ *   3: Try both element and attribute (colname|@colname)
+ */
+Datum
+tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
+{
+	char *xpath_expr;
+	int flag = PG_GETARG_INT32(1);
+	char *colname;
+
+	/* Check if colname is NULL or empty */
+    if (PG_ARGISNULL(0))
+          ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Column name cannot be NULL for OPENXML")));
+
+    colname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	if (strlen(colname) == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Column name cannot be empty for OPENXML")));
+	}
+
+	/* Check for negative flag values */
+	if (flag < 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Invalid flag value %d for OPENXML", flag)));
+	}
+
+	/* Normalize the flag value to 0-3 */
+	flag = flag % 4;
+	
+	switch (flag)
+	{
+		case 0:
+		case 1:
+			/* For flags 0 and 1, use @colname */
+			xpath_expr = psprintf("@%s", colname);
+			break;
+		case 2:
+			/* For flag 2, use colname */
+			xpath_expr = pstrdup(colname);
+			break;
+		case 3:
+			/* For flag 3, use colname|@colname */
+			xpath_expr = psprintf("%s|@%s", colname, colname);
+			break;
+		default:
+			/* Default to @colname for unknown flags */
+			xpath_expr = psprintf("@%s", colname);
+			break;
+	}
+	
+	PG_RETURN_TEXT_P(cstring_to_text(xpath_expr));
 }

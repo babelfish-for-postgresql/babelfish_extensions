@@ -115,7 +115,7 @@ void
 mark_nodes_inside_view(Query *query, Oid view_owner)
 {
 
-	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
+	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation() || !pltsql_enable_ownership_chaining)
 		return;
 
 	mark_nodes_inside_view_walker((Node *)query,
@@ -132,7 +132,7 @@ tsql_handle_target_view_hook(RTEPermissionInfo *new_perminfo, RangeTblEntry *vie
 {
 	AclMode nonDMLpermscheck;
 
-	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
+	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation() || !pltsql_enable_ownership_chaining)
 		return;
 	
 	/*
@@ -232,7 +232,7 @@ void
 mark_outside_view(Query *query)
 {
 
-	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation())
+	if (!IS_TDS_CLIENT() || InSecurityRestrictedOperation() || !pltsql_enable_ownership_chaining)
 		return;
 
 	mark_outside_view_ref_walker((Node *)query, NULL);
