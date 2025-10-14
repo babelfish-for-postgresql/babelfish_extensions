@@ -25,13 +25,13 @@
 #include "rolecmds.h"
 #include "pl_explain.h"
 #include "pltsql.h"
+#include "pltsql_permissions.h"
 #include "rolecmds.h"
 #include "session.h"
 #include "parser/scansup.h"
 #include "parser/parse_oper.h"
 #include "src/include/lib/qunique.h"
 #include "utils/varlena.h"
-#include "pltsql_permissions.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
