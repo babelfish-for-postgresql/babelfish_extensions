@@ -4866,8 +4866,8 @@ FROM try_convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-123.45                                            #!#123.45#!#123.45                                            #!#123.45
-~~END~~
+123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
+ ~~END~~
 
 
 -- Style 126
@@ -4892,8 +4892,8 @@ FROM try_convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-123.45                                            #!#123.45#!#123.45                                            #!#123.45
-~~END~~
+123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
+ ~~END~~
 
 
 

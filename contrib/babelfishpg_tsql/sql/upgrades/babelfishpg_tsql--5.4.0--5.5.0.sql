@@ -40,11 +40,54 @@ $$;
  * final behaviour.
  */
 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when undefined_function then --if 'Deprecated function does not exist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
+-- (sys.VARCHAR AS pg_catalog.TIME)
+DROP CAST (sys.VARCHAR AS pg_catalog.TIME);
+
+DO $$    
+DECLARE	
+    exception_message text;	
+BEGIN	
+    ALTER FUNCTION sys.varchar2time(sys.VARCHAR) RENAME TO varchar2time_deprecated_4_4_0;	
+
+EXCEPTION WHEN OTHERS THEN	
+    GET STACKED DIAGNOSTICS	
+    exception_message = MESSAGE_TEXT;	
+    RAISE WARNING '%', exception_message;	
+END;	
+$$;
+
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_date_to_string (IN p_datatype TEXT, IN p_dateval DATE, IN p_style NUMERIC DEFAULT 20) 
+    ALTER FUNCTION sys.babelfish_try_conv_date_to_string (IN p_datatype TEXT, IN p_dateval DATE, IN p_style NUMERIC) 
     RENAME TO babelfish_try_conv_date_to_string_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
@@ -58,7 +101,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT, IN p_dateval DATE, IN p_style NUMERIC DEFAULT 20) 
+    ALTER FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT, IN p_dateval DATE, IN p_style NUMERIC) 
     RENAME TO babelfish_conv_date_to_string_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
@@ -72,7 +115,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_datetime_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE, IN p_style NUMERIC DEFAULT -1)
+    ALTER FUNCTION sys.babelfish_try_conv_datetime_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE, IN p_style NUMERIC)
     RENAME TO babelfish_try_conv_datetime_to_string_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
@@ -86,7 +129,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE, IN p_style NUMERIC DEFAULT -1)
+    ALTER FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE, IN p_style NUMERIC)
     RENAME TO babelfish_conv_datetime_to_string_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
@@ -100,7 +143,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_timeval TIME(6) WITHOUT TIME ZONE, IN p_style NUMERIC DEFAULT 25)
+    ALTER FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_timeval TIME(6) WITHOUT TIME ZONE, IN p_style NUMERIC )
     RENAME TO babelfish_conv_time_to_string_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
@@ -114,7 +157,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_time_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_timeval TIME WITHOUT TIME ZONE, IN p_style NUMERIC DEFAULT 25)
+    ALTER FUNCTION sys.babelfish_try_conv_time_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_timeval TIME WITHOUT TIME ZONE, IN p_style NUMERIC)
     RENAME TO babelfish_try_conv_time_to_string_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
@@ -128,21 +171,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg TEXT, IN try BOOL, IN p_style NUMERIC DEFAULT -1)
-    RENAME TO babelfish_conv_helper_to_varchar_deprecated_in_5_5_0;
-EXCEPTION
-    WHEN undefined_function THEN
-        GET STACKED DIAGNOSTICS
-        exception_message = MESSAGE_TEXT;
-        RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg ANYELEMENT, IN try BOOL, IN p_style NUMERIC DEFAULT -1)
+    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg TEXT, IN try BOOL, IN p_style NUMERIC)
     RENAME TO babelfish_conv_helper_to_varchar_with_text_argument_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
@@ -156,7 +185,21 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC DEFAULT -1)
+    ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg ANYELEMENT, IN try BOOL, IN p_style NUMERIC)
+    RENAME TO babelfish_conv_helper_to_varchar_deprecated_in_5_5_0;
+EXCEPTION
+    WHEN undefined_function THEN
+        GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+        RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC)
     RENAME TO babelfish_conv_to_varchar_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
@@ -170,7 +213,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC DEFAULT -1)
+    ALTER FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC)
     RENAME TO babelfish_try_conv_to_varchar_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
@@ -184,7 +227,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT, IN p_moneyval NUMERIC, IN p_style NUMERIC DEFAULT 0)
+    ALTER FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT, IN p_moneyval NUMERIC, IN p_style NUMERIC)
     RENAME TO babelfish_try_conv_money_to_string_deprecated_in_5_5_0;
 EXCEPTION
     WHEN undefined_function THEN
@@ -1013,57 +1056,6 @@ BEGIN
 		ELSE
 			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 2);
 		END IF;
-	END IF;
-
-	RETURN v_result;
-EXCEPTION
-	WHEN invalid_parameter_value THEN
-		RAISE USING MESSAGE := pg_catalog.format('Argument data type numeric is invalid for argument 3 of convert function.'),
-					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-					HINT := 'Change "style" parameter to the proper value and try again.';
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_smallmoney_to_string(IN p_datatype TEXT,
-														IN p_smallmoneyval NUMERIC,
-														IN p_style NUMERIC DEFAULT 0)
-RETURNS TEXT
-AS
-$BODY$
-DECLARE
-	v_style SMALLINT;
-	v_format VARCHAR COLLATE "C";
-	v_smallmoneyval NUMERIC(10,4) := p_smallmoneyval::NUMERIC(10,4);
-	v_smallmoneysign NUMERIC(10,4) := sign(v_smallmoneyval);
-	v_smallmoneyabs NUMERIC(10,4) := abs(v_smallmoneyval);
-	v_digits SMALLINT;
-	v_integral_digits SMALLINT;
-	v_decimal_digits SMALLINT;
-	v_result TEXT;
-BEGIN
-    IF (scale(p_style) > 0) THEN
-		RAISE invalid_parameter_value;
-	END IF;
-	v_style := CAST(floor(p_style) AS SMALLINT);
-	v_digits := length(v_smallmoneyabs::TEXT);
-	v_decimal_digits := scale(v_smallmoneyabs);
-	IF (v_decimal_digits > 0) THEN
-		v_integral_digits := v_digits - v_decimal_digits - 1;
-	ELSE
-		v_integral_digits := v_digits;
-	END IF;
-	IF (v_style = 0) THEN
-		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
-		v_result := pg_catalog.btrim(to_char(v_smallmoneyval, v_format));
-	ELSIF (v_style = 2 OR v_style = 126) THEN
-		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
-		v_result := pg_catalog.btrim(to_char(v_smallmoneyval, v_format));
-	ELSE
-     -- Default format for all other style numbers (style 1 uses comma formatting)
-		v_result := pg_catalog.btrim(to_char(p_smallmoneyval, '999,999,999,990.99'));
 	END IF;
 
 	RETURN v_result;

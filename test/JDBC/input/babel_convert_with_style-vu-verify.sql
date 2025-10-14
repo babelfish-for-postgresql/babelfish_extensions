@@ -1,6 +1,7 @@
 -- Test from tables
 SELECT test_value, style_number, 
        CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS converted_value,
+       TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS try_converted_value,
        description
 FROM money_style_conversion_test
 ORDER BY id;
@@ -8,6 +9,7 @@ GO
 
 SELECT test_value, style_number,
        CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS converted_value,
+       TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS try_converted_value,
        description
 FROM smallmoney_style_conversion_test
 ORDER BY id;
@@ -387,3 +389,194 @@ GO
 
 SELECT * FROM time_style_test_v1;
 GO
+
+SELECT CONVERT(VARCHAR(10),CAST(1234.1234 AS MONEY),1.8);
+GO
+
+SELECT TRY_CONVERT(VARCHAR(10),CAST(1234.1234 AS MONEY),1.8);
+GO
+-- Test NULL values
+SELECT 'NULL Money' as test_case, CONVERT(VARCHAR(30), CAST(NULL AS MONEY)) as result;
+GO
+SELECT 'NULL SmallMoney' as test_case, CONVERT(VARCHAR(30), CAST(NULL AS SMALLMONEY)) as result;
+GO
+SELECT 'NULL DateTime' as test_case, CONVERT(VARCHAR(30), CAST(NULL AS DATETIME)) as result;
+GO
+SELECT 'NULL Date' as test_case, CONVERT(VARCHAR(30), CAST(NULL AS DATE)) as result;
+GO
+SELECT 'NULL Time' as test_case, CONVERT(VARCHAR(30), CAST(NULL AS TIME)) as result;
+GO
+
+-- Test extreme values for MONEY
+SELECT 'Max MONEY' as test_case, CONVERT(VARCHAR(30), CAST(922337203685477.5807 AS MONEY)) as result;
+GO
+SELECT 'Min MONEY' as test_case, CONVERT(VARCHAR(30), CAST(-922337203685477.5808 AS MONEY)) as result;
+GO
+SELECT 'Max MONEY with style 1' as test_case, CONVERT(VARCHAR(30), CAST(922337203685477.5807 AS MONEY), 1) as result;
+GO
+SELECT 'Min MONEY with style 2' as test_case, CONVERT(VARCHAR(30), CAST(-922337203685477.5808 AS MONEY), 2) as result;
+GO
+
+-- Test extreme values for SMALLMONEY
+SELECT 'Max SMALLMONEY' as test_case, CONVERT(VARCHAR(30), CAST(214748.3647 AS SMALLMONEY)) as result;
+GO
+SELECT 'Min SMALLMONEY' as test_case, CONVERT(VARCHAR(30), CAST(-214748.3648 AS SMALLMONEY)) as result;
+GO
+SELECT 'Max SMALLMONEY with style 1' as test_case, CONVERT(VARCHAR(30), CAST(214748.3647 AS SMALLMONEY), 1) as result;
+GO
+SELECT 'Min SMALLMONEY with style 2' as test_case, CONVERT(VARCHAR(30), CAST(-214748.3648 AS SMALLMONEY), 2) as result;
+GO
+
+-- Test precision and scale
+SELECT 'MONEY precision test' as test_case, 
+    CONVERT(VARCHAR(30), CAST(0.0001 AS MONEY)) as small_decimal,
+    CONVERT(VARCHAR(30), CAST(0.00001 AS MONEY)) as smaller_decimal,
+    CONVERT(VARCHAR(30), CAST(0.000001 AS MONEY)) as smallest_decimal;
+GO
+
+SELECT 'SMALLMONEY precision test' as test_case, 
+    CONVERT(VARCHAR(30), CAST(0.0001 AS SMALLMONEY)) as small_decimal,
+    CONVERT(VARCHAR(30), CAST(0.00001 AS SMALLMONEY)) as smaller_decimal,
+    CONVERT(VARCHAR(30), CAST(0.000001 AS SMALLMONEY)) as smallest_decimal;
+GO
+
+-- Test zero values with different formats
+SELECT 'Zero MONEY values' as test_case,
+    CONVERT(VARCHAR(30), CAST(0 AS MONEY)) as zero,
+    CONVERT(VARCHAR(30), CAST(0.0 AS MONEY)) as zero_decimal,
+    CONVERT(VARCHAR(30), CAST(0.00 AS MONEY)) as zero_two_decimal,
+    CONVERT(VARCHAR(30), CAST(0.0000 AS MONEY)) as zero_four_decimal;
+GO
+
+SELECT 'Zero SMALLMONEY values' as test_case,
+    CONVERT(VARCHAR(30), CAST(0 AS SMALLMONEY)) as zero,
+    CONVERT(VARCHAR(30), CAST(0.0 AS SMALLMONEY)) as zero_decimal,
+    CONVERT(VARCHAR(30), CAST(0.00 AS SMALLMONEY)) as zero_two_decimal,
+    CONVERT(VARCHAR(30), CAST(0.0000 AS SMALLMONEY)) as zero_four_decimal;
+GO
+
+-- Test datetime extreme values
+SELECT 'DateTime extremes' as test_case,
+    CONVERT(VARCHAR(30), CAST('1753-01-01' AS DATETIME)) as min_datetime,
+    CONVERT(VARCHAR(30), CAST('9999-12-31 23:59:59.997' AS DATETIME)) as max_datetime;
+GO
+
+-- Test date extreme values
+SELECT 'Date extremes' as test_case,
+    CONVERT(VARCHAR(30), CAST('0001-01-01' AS DATE)) as min_date,
+    CONVERT(VARCHAR(30), CAST('9999-12-31' AS DATE)) as max_date;
+GO
+
+-- Test time extreme values
+SELECT 'Time extremes' as test_case,
+    CONVERT(VARCHAR(30), CAST('00:00:00.0000000' AS TIME)) as min_time,
+    CONVERT(VARCHAR(30), CAST('23:59:59.9999999' AS TIME)) as max_time;
+GO
+
+-- Test invalid conversions (these should raise errors)
+BEGIN TRY
+    SELECT CONVERT(VARCHAR(30), CAST('invalid' AS MONEY));
+END TRY
+BEGIN CATCH
+    SELECT 'Invalid MONEY conversion caught' as test_case, ERROR_MESSAGE() as error;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT CONVERT(VARCHAR(30), CAST('invalid' AS SMALLMONEY));
+END TRY
+BEGIN CATCH
+    SELECT 'Invalid SMALLMONEY conversion caught' as test_case, ERROR_MESSAGE() as error;
+END CATCH
+GO
+
+-- Test boundary values near zero
+SELECT 'Near-zero values' as test_case,
+    CONVERT(VARCHAR(30), CAST(0.0001 AS MONEY)) as small_positive_money,
+    CONVERT(VARCHAR(30), CAST(-0.0001 AS MONEY)) as small_negative_money,
+    CONVERT(VARCHAR(30), CAST(0.0001 AS SMALLMONEY)) as small_positive_smallmoney,
+    CONVERT(VARCHAR(30), CAST(-0.0001 AS SMALLMONEY)) as small_negative_smallmoney;
+GO
+
+-- Test rounding behavior
+SELECT 'Rounding tests' as test_case,
+    CONVERT(VARCHAR(30), CAST(123.4545 AS MONEY)) as money_round,
+    CONVERT(VARCHAR(30), CAST(123.4545 AS SMALLMONEY)) as smallmoney_round,
+    CONVERT(VARCHAR(30), CAST(123.4555 AS MONEY)) as money_round_up,
+    CONVERT(VARCHAR(30), CAST(123.4555 AS SMALLMONEY)) as smallmoney_round_up;
+GO
+
+-- Test with different styles for zero and near-zero values
+SELECT 'Style tests with zero/near-zero' as test_case,
+    CONVERT(VARCHAR(30), CAST(0.00 AS MONEY), 0) as style_0,
+    CONVERT(VARCHAR(30), CAST(0.00 AS MONEY), 1) as style_1,
+    CONVERT(VARCHAR(30), CAST(0.00 AS MONEY), 2) as style_2,
+    CONVERT(VARCHAR(30), CAST(0.0001 AS MONEY), 0) as near_zero_style_0,
+    CONVERT(VARCHAR(30), CAST(0.0001 AS MONEY), 1) as near_zero_style_1,
+    CONVERT(VARCHAR(30), CAST(0.0001 AS MONEY), 2) as near_zero_style_2;
+GO
+
+-- Test datetime precision
+SELECT 'DateTime precision tests' as test_case,
+    CONVERT(VARCHAR(30), CAST('2023-12-31 23:59:59.997' AS DATETIME)) as max_precision,
+    CONVERT(VARCHAR(30), CAST('2023-12-31 23:59:59.993' AS DATETIME)) as near_max_precision,
+    CONVERT(VARCHAR(30), CAST('2023-12-31 23:59:59.000' AS DATETIME)) as zero_precision;
+GO
+
+-- Test time precision
+SELECT 'Time precision tests' as test_case,
+    CONVERT(VARCHAR(30), CAST('23:59:59.9999999' AS TIME)) as max_precision,
+    CONVERT(VARCHAR(30), CAST('23:59:59.9999990' AS TIME)) as near_max_precision,
+    CONVERT(VARCHAR(30), CAST('23:59:59.0000000' AS TIME)) as zero_precision;
+GO
+
+-- dependent tests
+
+-- Test views
+SELECT * FROM financial_conversions ORDER BY id;
+GO
+
+SELECT * FROM temporal_conversions ORDER BY id;
+GO
+
+SELECT * FROM string_conversions ;
+GO
+-- Test procedures with UDT
+DECLARE @money_ranges MoneyRange;
+INSERT INTO @money_ranges VALUES 
+(0.00, 1000.00, 0),
+(-1000.00, 0.00, 1),
+(1000.00, 2000.00, 2);
+
+EXEC convert_money_range @money_ranges;
+GO
+
+DECLARE @datetime_ranges DateTimeRange;
+INSERT INTO @datetime_ranges VALUES 
+('2023-01-01', '2023-12-31', 20),
+('2024-01-01', '2024-12-31', 21),
+('2025-01-01', '2025-12-31', 23);
+
+EXEC convert_datetime_range @datetime_ranges;
+GO
+
+-- Test comprehensive conversion procedure
+EXEC test_all_conversions 
+    @money_val = 1234.56,
+    @smallmoney_val = 123.45,
+    @date_val = '2023-12-25',
+    @datetime_val = '2023-12-25 12:34:56.789',
+    @time_val = '12:34:56.789',
+    @style = 0;
+GO
+
+-- Test error cases
+EXEC test_all_conversions 
+    @money_val = 1234.56,
+    @smallmoney_val = 123.45,
+    @date_val = '2023-12-25',
+    @datetime_val = '2023-12-25 12:34:56.789',
+    @time_val = '12:34:56.789',
+    @style = 999;
+GO
+

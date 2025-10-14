@@ -101,3 +101,25 @@ GO
 DROP PROCEDURE time_style_test_p1;
 GO
 
+-- cleanup for dependent tests
+-- Drop procedures
+DROP PROCEDURE convert_money_range;
+DROP PROCEDURE convert_datetime_range;
+DROP PROCEDURE test_all_conversions;
+GO
+
+-- Drop views
+DROP VIEW financial_conversions;
+DROP VIEW temporal_conversions;
+DROP VIEW string_conversions;
+GO
+
+-- Drop tables
+DROP TABLE financial_data;
+DROP TABLE temporal_data;
+GO
+
+-- Drop user-defined types
+DROP TYPE MoneyRange;
+DROP TYPE DateTimeRange;
+GO
