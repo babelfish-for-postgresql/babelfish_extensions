@@ -646,6 +646,7 @@ mathematical_func_tests
 alter-table-null-notnull
 ascii_function
 Select_top_N_percent
+ascii_function
+babel_timezoneinfo
 test_convert_to_binary
 cast_datetime_to_binary
-#babel_timezoneinfo#Commenting the test as a temporary fix to ticket BABEL 5370
