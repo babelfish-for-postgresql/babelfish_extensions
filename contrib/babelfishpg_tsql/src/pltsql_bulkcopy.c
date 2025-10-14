@@ -357,12 +357,16 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 	 * context before calling it.
 	 */
 	oldcontext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+	PushActiveSnapshot(GetTransactionSnapshot());
+
 	table_multi_insert(resultRelInfo->ri_RelationDesc,
 					   slots,
 					   nused,
 					   mycid,
 					   ti_options,
 					   buffer->bistate);
+
+	PopActiveSnapshot();
 
 	for (i = 0; i < nused; i++)
 	{
