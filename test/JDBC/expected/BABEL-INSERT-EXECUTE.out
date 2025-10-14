@@ -78,14 +78,14 @@ int#!#int#!#int
 -- INSERT with matching column list
 insert into t3 (a) execute sp_multi_selects;
 GO
-~~ROW COUNT: 2~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: INSERT EXEC failed because the number of columns in INSERT list (1) is less than the total columns in target table (3))~~
 
 select * from t3;
 GO
 ~~START~~
 int#!#int#!#int
-1#!#<NULL>#!#<NULL>
-1#!#<NULL>#!#<NULL>
 ~~END~~
 
 

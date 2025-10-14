@@ -1135,6 +1135,47 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 		ListCell   *lc;
 		bool		has_ident = false;
 
+		/*
+		 * BABEL-6159: Validate INSERT-EXEC column mapping for top-level statements.
+		 * Check if this is an INSERT...EXECUTE pattern (either ExecuteStmt for
+		 * prepared statements or CallStmt for procedure calls) and validate column counts.
+		 */
+		if (query->utilityStmt && (IsA(query->utilityStmt, CallStmt) || IsA(query->utilityStmt, ExecuteStmt)))
+		{
+			TupleDesc	tupdesc = RelationGetDescr(pstate->p_target_relation);
+			int			insert_col_count;
+			int			table_col_count = tupdesc->natts;
+
+			/*
+			 * For CallStmt, get column count from attrnos if available,
+			 * otherwise fall back to targetList length.
+			 */
+			if (IsA(query->utilityStmt, CallStmt))
+			{
+				CallStmt *callstmt = (CallStmt *) query->utilityStmt;
+				if (callstmt->attrnos)
+					insert_col_count = list_length(callstmt->attrnos);
+				else
+					insert_col_count = list_length(query->targetList);
+			}
+			else
+			{
+				insert_col_count = list_length(query->targetList);
+			}
+
+			/*
+			 * Block when INSERT specifies fewer columns than table has, as positional
+			 * mapping doesn't honor the explicit column list causing data corruption.
+			 */
+			if (insert_col_count < table_col_count)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("INSERT EXEC failed because the number of columns in INSERT list (%d) is less than the total columns in target table (%d)",
+								insert_col_count, table_col_count)));
+			}
+		}
+
 		/* Loop through column attribute list */
 		foreach(lc, query->targetList)
 		{
@@ -6612,6 +6653,24 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		/* look up the INSERT target relation rowtype's tupdesc */
 		reltypeid = get_rel_type_id(codeblock->relation);
 		reldesc = lookup_rowtype_tupdesc(reltypeid, -1);
+
+		/*
+		 * BABEL-6159: Validate INSERT-EXEC column mapping.
+		 * Block when INSERT specifies fewer columns than table has, as positional
+		 * mapping doesn't honor the explicit column list causing data corruption.
+		 */
+		{
+			int insert_col_count = list_length(codeblock->attrnos);
+			int table_col_count = reldesc->natts;
+
+			if (insert_col_count < table_col_count)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("INSERT EXEC failed because the number of columns in INSERT list (%d) is less than the total columns in target table (%d)",
+								insert_col_count, table_col_count)));
+			}
+		}
 
 		/* build a tupdesc that only contains relevant INSERT columns */
 		retdesc = CreateTemplateTupleDesc(list_length(codeblock->attrnos));
