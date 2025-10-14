@@ -635,4 +635,5 @@ alter-table-null-notnull
 ascii_function
 cast_string_to_binary-before-17_7
 cast_binary_to_string-before-17_7
+test_conv_text_to_binary-before-17_7
 #babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370

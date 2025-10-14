@@ -467,4 +467,5 @@ babel_assign_nchar
 view_sec_setting_before_17_6-or-16_10
 ascii_function_before-17_7-or-16_11
 cast_string_to_binary-before-15_2
-cast_binary_to_string-before-15_2
+cast_binary_to_string-before-14_6
+test_conv_text_to_binary-before-14_6
