@@ -1,4 +1,25 @@
-DROP VIEW vw_UTC_Zero;
-Go
+DROP VIEW IF EXISTS dbo.vw_Singapore;
+GO
+
 DROP VIEW v_test;
+GO
+
+IF OBJECT_ID('dbo.fn_GetUTCZonesWithOffset') IS NOT NULL
+    DROP FUNCTION dbo.fn_GetUTCZonesWithOffset;
+GO
+
+IF OBJECT_ID('dbo.vw_TimeZoneCount') IS NOT NULL
+    DROP VIEW dbo.vw_TimeZoneCount;
+GO
+
+IF OBJECT_ID('test_timezone_offset', 'FN') IS NOT NULL
+DROP FUNCTION test_timezone_offset;
+GO
+
+IF OBJECT_ID('sp_ValidateTimeZoneData', 'P') IS NOT NULL
+    DROP PROCEDURE sp_ValidateTimeZoneData;
+GO
+
+IF EXISTS (SELECT 1 FROM sys.objects WHERE name = 'validate_utc_offset' AND type = 'FN')
+    DROP FUNCTION validate_utc_offset;
 GO
