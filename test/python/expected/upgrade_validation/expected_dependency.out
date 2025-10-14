@@ -561,6 +561,7 @@ Function sys.pgerror()
 Function sys.pltsql_assign_var(integer,anyelement)
 Function sys.pltsql_call_handler()
 Function sys.pltsql_inline_handler(internal)
+Function sys.pltsql_timezone_mapping_pg_to_windows(text)
 Function sys.pltsql_validator(oid)
 Function sys.point(sys.geometry)
 Function sys.proc_param_helper()
@@ -988,4 +989,5 @@ View sys.spt_tablecollations_view
 View sys.synonyms
 View sys.syscharsets
 View sys.syslanguages
+View sys.time_zone_info
 View sys.xml_schema_collections

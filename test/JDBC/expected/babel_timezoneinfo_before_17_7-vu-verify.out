@@ -1,0 +1,203 @@
+-- Test Case 1: Basic query to verify time zone information
+SELECT TOP 5 name, current_utc_offset, is_currently_dst
+FROM sys.time_zone_info
+WHERE current_utc_offset = '-04:00'
+ORDER BY name;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#bit
+Central Brazilian Standard Time#!#-04:00#!#0
+Cuba Standard Time#!#-04:00#!#1
+Eastern Standard Time#!#-04:00#!#1
+Haiti Standard Time#!#-04:00#!#1
+Sa Western Standard Time#!#-04:00#!#0
+~~END~~
+
+--Test case 2: Find specific time zone
+SELECT * FROM sys.time_zone_info 
+WHERE name = 'Eastern Standard Time';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#bit
+Eastern Standard Time#!#-04:00#!#1
+~~END~~
+
+-- Test Case 3: Find all time zones with specific UTC offset
+SELECT name, current_utc_offset
+FROM sys.time_zone_info
+WHERE current_utc_offset = '-05:00';
+GO
+~~START~~
+nvarchar#!#nvarchar
+Central Standard Time#!#-05:00
+Easter Island Standard Time#!#-05:00
+Eastern Standard Time (Mexico)#!#-05:00
+Sa Pacific Standard Time#!#-05:00
+~~END~~
+
+-- Test Case 4: Check Daylight Saving Time zones
+SELECT TOP 3 name, current_utc_offset, is_currently_dst
+FROM sys.time_zone_info
+WHERE is_currently_dst = 1
+ORDER BY name;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#bit
+Alaskan Standard Time#!#-08:00#!#1
+Aleutian Standard Time#!#-09:00#!#1
+Atlantic Standard Time#!#-03:00#!#1
+~~END~~
+
+-- Test case 5: Time zones with unusual offsets (not full hours)
+SELECT name, current_utc_offset
+FROM sys.time_zone_info
+WHERE current_utc_offset LIKE '%:30' 
+ORDER BY name;
+GO
+~~START~~
+nvarchar#!#nvarchar
+Afghanistan Standard Time#!#+04:30
+Aus Central Standard Time#!#+09:30
+Cen. Australia Standard Time#!#+09:30
+India Standard Time#!#+05:30
+Iran Standard Time#!#+03:30
+Lord Howe Standard Time#!#+10:30
+Marquesas Standard Time#!#-09:30
+Myanmar Standard Time#!#+06:30
+Newfoundland Standard Time#!#-02:30
+Sri Lanka Standard Time#!#+05:30
+~~END~~
+
+-- Test function to specific pattern
+SELECT * FROM dbo.FindZonesByPattern('Pacific') ORDER BY name;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function dbo.findzonesbypattern(unknown) does not exist)~~
+
+-- Test function to verify 
+SELECT * FROM dbo.GetZonesInOffsetRange('+08:00', '+10:00') ORDER BY current_utc_offset;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function dbo.getzonesinoffsetrange(unknown, unknown) does not exist)~~
+
+-- Test to check the UTC/GMT zones
+SELECT * FROM dbo.ZeroOffsetZones;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.zerooffsetzones" does not exist)~~
+
+-- Test zones with numbers in names
+SELECT * FROM dbo.NumericNameZones ORDER BY name;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.numericnamezones" does not exist)~~
+
+-- Test palindromic offset 
+SELECT * FROM dbo.PalindromicOffsets;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.palindromicoffsets" does not exist)~~
+
+--Test case: Edge case for testing duplicate enteries (should not exist)
+SELECT 
+    name,
+    current_utc_offset,
+    is_currently_dst,
+    COUNT(*) AS duplicate_count
+FROM sys.time_zone_info
+GROUP BY name, current_utc_offset, is_currently_dst
+HAVING COUNT(*) > 1;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#bit#!#int
+~~END~~
+
+-- Test case: Subquery to find "Lonely DST zone"
+SELECT name, current_utc_offset
+FROM sys.time_zone_info t1
+WHERE EXISTS (
+    SELECT 1 
+    FROM sys.time_zone_info t2
+    WHERE t2.current_utc_offset = '+05:45'
+    AND t1.name = t2.name
+);
+GO
+~~START~~
+nvarchar#!#nvarchar
+Nepal Standard Time#!#+05:45
+~~END~~
+
+--Test cases to check valid/invalid                 
+EXEC ValidateTimeZone 'Pacific Standard Time', '-07:00';
+EXEC ValidateTimeZone 'UTC', '-08:00';   
+EXEC ValidateTimeZone 'India Standard Time', '-05:00';
+GO
+~~START~~
+varchar#!#nvarchar
+pass#!#Testing Pacific Standard Time for offset -07:00
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+fail#!#Testing UTC for offset -08:00
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+fail#!#Testing India Standard Time for offset -05:00
+~~END~~
+
+-- Test case:  CTE for DST zones with specific offset
+WITH DSTZones AS (
+    SELECT name, current_utc_offset
+    FROM sys.time_zone_info
+    WHERE is_currently_dst = 1
+    AND current_utc_offset IN ('-07:00', '-08:00', '-06:00')
+)
+SELECT * FROM DSTZones;
+GO
+~~START~~
+nvarchar#!#nvarchar
+Alaskan Standard Time#!#-08:00
+Mountain Standard Time#!#-06:00
+Pacific Standard Time#!#-07:00
+Pacific Standard Time (Mexico)#!#-07:00
+~~END~~
+
+--Trigger to test valid/invalid time zones
+EXEC sp_ValidateTimeZoneData 'India Standard Time';
+EXEC sp_ValidateTimeZoneData 'Title Zone';
+GO
+~~START~~
+varchar#!#nvarchar
+Valid#!#India Standard Time
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+Invalid#!#Title Zone
+~~END~~
+
+--Verify the null case
+SELECT sys.pltsql_timezone_mapping_pg_to_windows(' ');
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+--Timezone - Central Standard Time
+SELECT name, current_utc_offset, is_currently_dst 
+FROM sys.time_zone_info 
+WHERE name = 'Central Asia Standard Time';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#bit
+Central Asia Standard Time#!#+05:00#!#0
+~~END~~
+
