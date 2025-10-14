@@ -76,7 +76,6 @@ PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
-static Oid get_immediate_base_type_of_UDT_internal(Oid typeid);
 static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
 static bool is_numeric_cast(Oid func_oid);
 static bool is_tsql_fixeddecimal_numeric(Oid oid);
@@ -1061,7 +1060,7 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
  * This function returns the Immediate base type for UDT.
  * Returns InvalidOid if given type is not an UDT
  */
-static Oid
+Oid
 get_immediate_base_type_of_UDT_internal(Oid typeid)
 {
 	HeapTuple					tuple;
@@ -1200,7 +1199,7 @@ is_numeric_cast(Oid func_oid)
 /*
  * is_numeric_datatype - returns bool if given datatype is numeric, decimal, UDT on numeric or decimal.
  */
-static bool
+bool
 is_numeric_datatype(Oid typid)
 {
 	if (OidIsValid(typid) && getBaseType(typid) == NUMERICOID)
@@ -1432,23 +1431,22 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					}
 				}
 
-				/* if varno is INNER_VAR or OUTER_VAR then we need plan, else we cannot find typmod, hence set found as false and return -1 */
-				if (plan == NULL && (var->varno == INNER_VAR || var->varno == OUTER_VAR))
-				{
-					if (found != NULL) *found = false;
-					return -1;
-				}
-
 				if (var->vartypmod == -1)
 				{
 					/* UDT handling in T_var */
-					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
+					Oid	immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
 					if (OidIsValid(immediate_base_type))
 					{
 						int32 typmod = -1;
 						getBaseTypeAndTypmod(var->vartype, &typmod);
 						if (typmod != -1)
 							return typmod;
+						else
+						{
+							int32	fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(immediate_base_type);
+							if (fixlen_default_typmod != -1)
+								return fixlen_default_typmod;
+						}
 					}
 
 					/*
@@ -1459,10 +1457,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 * Plan check ensures typmod consistency to preventing incorrect values,
 					 * ensuring plan is not changed if typmod is calculated in execution stage.
 					 */
-					if (plan)
+					if (plan || (plan == NULL && (var->varno == INNER_VAR || var->varno == OUTER_VAR)))
 					{
-						int32 		fixlen_default_typmod;
-						fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(var->vartype);
+						int32	fixlen_default_typmod = get_default_typmod_for_fixedsize_dataypes(var->vartype);
 						if (fixlen_default_typmod != -1)
 							return fixlen_default_typmod;
 					}
