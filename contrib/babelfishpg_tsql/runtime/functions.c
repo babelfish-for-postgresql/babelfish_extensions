@@ -137,6 +137,7 @@ PG_FUNCTION_INFO_V1(xact_state);
 PG_FUNCTION_INFO_V1(get_enr_list);
 PG_FUNCTION_INFO_V1(tsql_random);
 PG_FUNCTION_INFO_V1(timezone_mapping);
+PG_FUNCTION_INFO_V1(pltsql_timezone_mapping_pg_to_windows);
 PG_FUNCTION_INFO_V1(is_member);
 PG_FUNCTION_INFO_V1(schema_id);
 PG_FUNCTION_INFO_V1(schema_name);
@@ -1088,33 +1089,102 @@ pgerror(PG_FUNCTION_ARGS)
 	PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input) ((error_sqlstate), strlen(error_sqlstate), -1));
 }
 
+/*
+ * Structure to cache metadata needed in datalength().
+ */
+typedef struct DatalengthIOData
+{
+	Oid			argtypeid;
+	int			typlen;
+} DatalengthIOData;
 
-/* returns data length of one Datum
- * this function is very similar to pg_column_size, but returns untoasted data without header sizes for bytea objects
-*/
+/* 
+ * datalength()
+ * 	Returns data length of one Datum.
+ * 	This function is very similar to pg_column_size, but returns 
+ * 	untoasted data without header sizes for bytea objects
+ */
 Datum
 datalength(PG_FUNCTION_ARGS)
 {
 	Datum		value = PG_GETARG_DATUM(0);
 	int32 result;
 	int			typlen;
+	DatalengthIOData *my_extra;
+	Oid			argtypeid;
 
-	/* On first call, get the input type's typlen, and save at *fn_extra */
-	if (fcinfo->flinfo->fn_extra == NULL)
+	my_extra = (DatalengthIOData *) fcinfo->flinfo->fn_extra;
+
+	/* On first call, get the input type's oid and typlen, and save at *fn_extra */
+	if (my_extra == NULL)
 	{
+		Oid			immediate_base_type;
 		/* Lookup the datatype of the supplied argument */
-		Oid			argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+		argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+		
+		/* UDT Handling. */
+		immediate_base_type = get_immediate_base_type_of_UDT_internal(argtypeid);
+		if (OidIsValid(immediate_base_type))
+		{
+			argtypeid = immediate_base_type;
+		}
 
 		typlen = get_typlen(argtypeid);
 		if (typlen == 0)		/* should not happen */
 			elog(ERROR, "cache lookup failed for type %u", argtypeid);
 
-		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													  sizeof(int));
-		*((int *) fcinfo->flinfo->fn_extra) = typlen;
+		my_extra = (DatalengthIOData *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+														  sizeof(DatalengthIOData));
+		my_extra->argtypeid = argtypeid;
+		my_extra->typlen = typlen;
 	}
 	else
-		typlen = *((int *) fcinfo->flinfo->fn_extra);
+	{
+		argtypeid = my_extra->argtypeid;
+		typlen = my_extra->typlen;
+	}
+
+	/* Handling fixed storage size datatypes. */
+	if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(argtypeid))
+	{
+		PG_RETURN_INT32(1);
+	}
+	else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(argtypeid) || 
+			 (*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(argtypeid))
+	{
+		PG_RETURN_INT32(4);
+	}
+	else if (argtypeid == DATEOID)
+	{
+		PG_RETURN_INT32(3);
+	}
+	else if (argtypeid == TIMEOID)
+	{
+		PG_RETURN_INT32(5);
+	}
+	else if (is_numeric_datatype(argtypeid))
+	{
+		Numeric result_numeric_val = DatumGetNumeric(value);
+		int32 val_typmod = (*common_utility_plugin_ptr->tsql_numeric_get_typmod)(result_numeric_val);
+		int32 val_precision = ((val_typmod - VARHDRSZ) >> 16) & 0xffff;
+
+		if (1 <= val_precision && val_precision <= 9)
+		{
+			PG_RETURN_INT32(5);
+		}
+		else if (10 <= val_precision && val_precision <= 19)
+		{
+			PG_RETURN_INT32(9);
+		}
+		else if (20 <= val_precision && val_precision <= 28)
+		{
+			PG_RETURN_INT32(13);
+		}
+		else if (29 <= val_precision && val_precision <= 38)
+		{
+			PG_RETURN_INT32(17);
+		}
+	}
 
 	if (typlen == -1)
 	{
@@ -1295,6 +1365,28 @@ timezone_mapping(PG_FUNCTION_ARGS)
 		}
 	}
 	PG_RETURN_VARCHAR_P(result);
+}
+
+/*
+ * The pltsql_timezone_mapping_pg_to_windows() is used for fetching Windows name of standard timezone from PostgreSQL timezone name
+ */
+Datum
+pltsql_timezone_mapping_pg_to_windows(PG_FUNCTION_ARGS)
+{
+	char *pgtmz = text_to_cstring(PG_GETARG_TEXT_P(0));
+	int len = (sizeof(win32_tzmap) / sizeof(*(win32_tzmap)));
+	for(int i=0;i<len;i++)
+	{
+		if(pg_strcasecmp(win32_tzmap[i].pgtzname,pgtmz) == 0)
+		{
+			if (pgtmz)
+				pfree(pgtmz);
+			PG_RETURN_TEXT_P(cstring_to_text(win32_tzmap[i].stdname));
+		}
+	}
+	if (pgtmz)
+		pfree(pgtmz);
+	PG_RETURN_NULL();
 }
 
 Datum

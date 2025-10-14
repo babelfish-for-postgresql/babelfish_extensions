@@ -633,3 +633,4 @@ alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 ascii_function
+#babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370
