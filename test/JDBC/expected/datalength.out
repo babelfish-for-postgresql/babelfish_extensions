@@ -394,6 +394,23 @@ int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 ~~END~~
 
 
+-- NULL testing
+SELECT  
+    DATALENGTH(CAST(NULL AS BINARY(10))) as binary_10,  
+    DATALENGTH(CAST(NULL AS BINARY)) as binary_default, 
+    DATALENGTH(CAST('NULL' AS BINARY)) as binary_str0_default,  
+    DATALENGTH(CAST(' NULL  ' AS BINARY)) as binary_space_default,
+    DATALENGTH(CAST(NULL AS VARBINARY(10))) as varbinary_10,  
+    DATALENGTH(CAST(NULL AS VARBINARY)) as varbinary_default,
+    DATALENGTH(CAST('NULL' AS VARBINARY)) as varbinary_str_default,
+    DATALENGTH(CAST(' NULL ' AS VARBINARY)) as varbinary_space_default   
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+<NULL>#!#<NULL>#!#30#!#30#!#<NULL>#!#<NULL>#!#4#!#6
+~~END~~
+
+
 -- binary to varbinary, empty string
 select 
     DATALENGTH(CAST(CAST(0x00 AS BINARY) as varbinary)),
@@ -437,17 +454,17 @@ int#!#int#!#int#!#int
 
 -- rowversion, no regression
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
-go
+GO
 
 select datalength(cast(cast('a' as rowversion) as varchar))
-go
+GO
 ~~START~~
 int
 1
 ~~END~~
 
 select datalength(cast('' as rowversion))
-go
+GO
 ~~START~~
 int
 12
@@ -460,21 +477,39 @@ int
 0
 ~~END~~
 
+select datalength(cast(NULL as rowversion))
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select datalength(cast(cast('NULL' as rowversion) as varchar))
+GO
+~~START~~
+int
+4
+~~END~~
+
 
 -- timestamp, no regression
 select 
     datalength(cast('' as TIMESTAMP)),
     datalength(cast(' ' as TIMESTAMP)),
-    datalength(cast(cast('' as TIMESTAMP) as varbinary))
-go
+    datalength(cast(cast('' as TIMESTAMP) as varbinary)),
+    datalength(cast(NULL as TIMESTAMP)),
+    datalength(cast('NULL' as TIMESTAMP)),
+    datalength(cast('NULL ' as TIMESTAMP)),
+    datalength(cast(cast('NULL' as TIMESTAMP) as varbinary))
+GO
 ~~START~~
-int#!#int#!#int
-12#!#12#!#8
+int#!#int#!#int#!#int#!#int#!#int#!#int
+12#!#12#!#8#!#<NULL>#!#12#!#12#!#8
 ~~END~~
 
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
-go
+GO
 
 -- 8. NULL Values
 SELECT 
@@ -2560,12 +2595,11 @@ int
 ~~END~~
 
 
--- FIX with BABEL-5610
 select datalength(CAST('' AS BINARY(10)))
 go
 ~~START~~
 int
-0
+10
 ~~END~~
 
 
@@ -2573,7 +2607,7 @@ select datalength(CAST('' AS BINARY))
 GO
 ~~START~~
 int
-0
+30
 ~~END~~
 
 

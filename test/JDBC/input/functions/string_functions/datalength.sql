@@ -340,6 +340,18 @@ SELECT
     DATALENGTH(CAST('' AS VARBINARY)) as varbinary_default  
 GO
 
+-- NULL testing
+SELECT  
+    DATALENGTH(CAST(NULL AS BINARY(10))) as binary_10,  
+    DATALENGTH(CAST(NULL AS BINARY)) as binary_default, 
+    DATALENGTH(CAST('NULL' AS BINARY)) as binary_str0_default,  
+    DATALENGTH(CAST(' NULL  ' AS BINARY)) as binary_space_default,
+    DATALENGTH(CAST(NULL AS VARBINARY(10))) as varbinary_10,  
+    DATALENGTH(CAST(NULL AS VARBINARY)) as varbinary_default,
+    DATALENGTH(CAST('NULL' AS VARBINARY)) as varbinary_str_default,
+    DATALENGTH(CAST(' NULL ' AS VARBINARY)) as varbinary_space_default   
+GO
+
 -- binary to varbinary, empty string
 select 
     DATALENGTH(CAST(CAST(0x00 AS BINARY) as varbinary)),
@@ -368,24 +380,32 @@ GO
 
 -- rowversion, no regression
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
-go
+GO
 
 select datalength(cast(cast('a' as rowversion) as varchar))
-go
+GO
 select datalength(cast('' as rowversion))
-go
+GO
 select datalength(cast(cast('' as rowversion) as varchar))
+GO
+select datalength(cast(NULL as rowversion))
+GO
+select datalength(cast(cast('NULL' as rowversion) as varchar))
 GO
 
 -- timestamp, no regression
 select 
     datalength(cast('' as TIMESTAMP)),
     datalength(cast(' ' as TIMESTAMP)),
-    datalength(cast(cast('' as TIMESTAMP) as varbinary))
-go
+    datalength(cast(cast('' as TIMESTAMP) as varbinary)),
+    datalength(cast(NULL as TIMESTAMP)),
+    datalength(cast('NULL' as TIMESTAMP)),
+    datalength(cast('NULL ' as TIMESTAMP)),
+    datalength(cast(cast('NULL' as TIMESTAMP) as varbinary))
+GO
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
-go
+GO
 
 -- 8. NULL Values
 SELECT 
@@ -1353,7 +1373,6 @@ go
 select datalength(CAST(0x65 AS BINARY))
 go
 
--- FIX with BABEL-5610
 select datalength(CAST('' AS BINARY(10)))
 go
 
