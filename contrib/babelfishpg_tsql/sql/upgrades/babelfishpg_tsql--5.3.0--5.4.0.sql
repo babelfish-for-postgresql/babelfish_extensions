@@ -307,15 +307,6 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_openxml_deprecated_in_5_4_0');
 
-DO
-$$
-BEGIN
-    IF NOT EXISTS ( SELECT 1 FROM pg_cast WHERE castsource = 'sys.BPCHAR'::regtype AND casttarget = 'pg_catalog.xml'::regtype) THEN
-        EXECUTE 'CREATE CAST (sys.BPCHAR as pg_catalog.xml) WITHOUT FUNCTION AS IMPLICIT';
-    END IF;
-END 
-$$;
-
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
