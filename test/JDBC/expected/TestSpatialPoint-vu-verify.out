@@ -1797,7 +1797,7 @@ Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS char)
 GO
 ~~START~~
 char
-POINT(1 2)                    
+POINT (1 2)                   
 ~~END~~
 
 Select CAST(CAST ('POINT(1 2)' AS nchar) as geometry)
@@ -1811,7 +1811,7 @@ Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS nchar)
 GO
 ~~START~~
 nchar
-POINT(1 2)                    
+POINT (1 2)                   
 ~~END~~
 
 Select CAST(CAST ('POINT(1 2)' AS varchar) as geometry)
@@ -1832,7 +1832,7 @@ Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS varchar)
 GO
 ~~START~~
 varchar
-POINT(1 2)
+POINT (1 2)
 ~~END~~
 
 Select CAST(CAST ('POINT(1 2)' AS nvarchar) as geometry)
@@ -1846,7 +1846,7 @@ Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS nvarchar)
 GO
 ~~START~~
 nvarchar
-POINT(1 2)
+POINT (1 2)
 ~~END~~
 
 Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS varbinary)
@@ -3341,7 +3341,7 @@ Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS char)
 GO
 ~~START~~
 char
-POINT(1 2)                    
+POINT (1 2)                   
 ~~END~~
 
 Select CAST(CAST ('POINT(1 2)' AS nchar) as geography)
@@ -3355,7 +3355,7 @@ Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS nchar)
 GO
 ~~START~~
 nchar
-POINT(1 2)                    
+POINT (1 2)                   
 ~~END~~
 
 Select CAST(CAST ('POINT(1 2)' AS varchar) as geography)
@@ -3376,7 +3376,7 @@ Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS varchar)
 GO
 ~~START~~
 varchar
-POINT(1 2)
+POINT (1 2)
 ~~END~~
 
 Select CAST(CAST ('POINT(1 2)' AS nvarchar) as geography)
@@ -3390,7 +3390,7 @@ Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS nvarchar)
 GO
 ~~START~~
 nvarchar
-POINT(1 2)
+POINT (1 2)
 ~~END~~
 
 Select Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 0))
@@ -3983,9 +3983,9 @@ SELECT id, CAST(geom AS char(100)) AS geom_char, CAST(geom AS varchar(100)) AS g
 GO
 ~~START~~
 int#!#char#!#varchar
-1#!#POINT(1 1 1 1)                                                                                      #!#POINT(1 1 1 1)
-2#!#POINT(1 1 0 1)                                                                                      #!#POINT(1 1 0 1)
-3#!#POINT(1 1 4 3)                                                                                      #!#POINT(1 1 4 3)
+1#!#POINT (1 1 1 1)                                                                                     #!#POINT (1 1 1 1)
+2#!#POINT (1 1 0 1)                                                                                     #!#POINT (1 1 0 1)
+3#!#POINT (1 1 4 3)                                                                                     #!#POINT (1 1 4 3)
 4#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -3994,9 +3994,9 @@ SELECT id, CAST(geom AS char) AS geom_char, CAST(geom AS varchar) AS geom_varcha
 GO
 ~~START~~
 int#!#char#!#varchar
-1#!#POINT(1 1 1 1)                #!#POINT(1 1 1 1)
-2#!#POINT(1 1 0 1)                #!#POINT(1 1 0 1)
-3#!#POINT(1 1 4 3)                #!#POINT(1 1 4 3)
+1#!#POINT (1 1 1 1)               #!#POINT (1 1 1 1)
+2#!#POINT (1 1 0 1)               #!#POINT (1 1 0 1)
+3#!#POINT (1 1 4 3)               #!#POINT (1 1 4 3)
 4#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -4005,9 +4005,9 @@ SELECT id, CAST(geom AS varchar(MAX)) AS geom_varchar FROM geo_cast_test ORDER B
 GO
 ~~START~~
 int#!#varchar
-1#!#POINT(1 1 1 1)
-2#!#POINT(1 1 0 1)
-3#!#POINT(1 1 4 3)
+1#!#POINT (1 1 1 1)
+2#!#POINT (1 1 0 1)
+3#!#POINT (1 1 4 3)
 4#!#<NULL>
 ~~END~~
 
@@ -4016,11 +4016,9 @@ SELECT id, CAST(geom AS char(14)) AS geom_char, CAST(geom AS varchar(14)) AS geo
 GO
 ~~START~~
 int#!#char#!#varchar
-1#!#POINT(1 1 1 1)#!#POINT(1 1 1 1)
-2#!#POINT(1 1 0 1)#!#POINT(1 1 0 1)
-3#!#POINT(1 1 4 3)#!#POINT(1 1 4 3)
-4#!#<NULL>#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is insufficient result space to convert a geometry/geography value to char/nchar.)~~
 
 
 SELECT id, CAST(geom AS varchar(1)) AS geom_varchar FROM geo_cast_test ORDER BY id;
@@ -4046,9 +4044,9 @@ SELECT id, CAST(geog AS char(100)) AS geog_char, CAST(geog AS varchar(100)) AS g
 GO
 ~~START~~
 int#!#char#!#varchar
-1#!#POINT(1 1 1 1)                                                                                      #!#POINT(1 1 1 1)
-2#!#POINT(1 1 0 1)                                                                                      #!#POINT(1 1 0 1)
-3#!#POINT(1 1 4 3)                                                                                      #!#POINT(1 1 4 3)
+1#!#POINT (1 1 1 1)                                                                                     #!#POINT (1 1 1 1)
+2#!#POINT (1 1 0 1)                                                                                     #!#POINT (1 1 0 1)
+3#!#POINT (1 1 4 3)                                                                                     #!#POINT (1 1 4 3)
 4#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -4057,9 +4055,9 @@ SELECT id, CAST(geog AS char) AS geog_char, CAST(geog AS varchar) AS geog_varcha
 GO
 ~~START~~
 int#!#char#!#varchar
-1#!#POINT(1 1 1 1)                #!#POINT(1 1 1 1)
-2#!#POINT(1 1 0 1)                #!#POINT(1 1 0 1)
-3#!#POINT(1 1 4 3)                #!#POINT(1 1 4 3)
+1#!#POINT (1 1 1 1)               #!#POINT (1 1 1 1)
+2#!#POINT (1 1 0 1)               #!#POINT (1 1 0 1)
+3#!#POINT (1 1 4 3)               #!#POINT (1 1 4 3)
 4#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -4068,9 +4066,9 @@ SELECT id, CAST(geog AS varchar(MAX)) AS geog_varchar FROM geo_cast_test ORDER B
 GO
 ~~START~~
 int#!#varchar
-1#!#POINT(1 1 1 1)
-2#!#POINT(1 1 0 1)
-3#!#POINT(1 1 4 3)
+1#!#POINT (1 1 1 1)
+2#!#POINT (1 1 0 1)
+3#!#POINT (1 1 4 3)
 4#!#<NULL>
 ~~END~~
 
@@ -4079,11 +4077,9 @@ SELECT id, CAST(geog AS char(14)) AS geog_char, CAST(geog AS varchar(14)) AS geo
 GO
 ~~START~~
 int#!#char#!#varchar
-1#!#POINT(1 1 1 1)#!#POINT(1 1 1 1)
-2#!#POINT(1 1 0 1)#!#POINT(1 1 0 1)
-3#!#POINT(1 1 4 3)#!#POINT(1 1 4 3)
-4#!#<NULL>#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is insufficient result space to convert a geometry/geography value to char/nchar.)~~
 
 
 SELECT id, CAST(geog AS varchar(1)) AS geog_varchar FROM geo_cast_test ORDER BY id;
@@ -4266,7 +4262,7 @@ select cast(geometry::STPointFromText(cast(N'Point(1 1 1 1)' as varbinary(max)),
 GO
 ~~START~~
 varchar
-POINT(1 1 1 1)
+POINT (1 1 1 1)
 ~~END~~
 
 
@@ -4274,7 +4270,7 @@ select cast(geography::STPointFromText(cast(N'Point(1 1 1 1)' as varbinary(max))
 GO
 ~~START~~
 varchar
-POINT(1 1 1 1)
+POINT (1 1 1 1)
 ~~END~~
 
 
@@ -4282,7 +4278,7 @@ select cast(geometry::STGeomFromText(cast(N'Point(1 1 1 1)' as varbinary(max)), 
 GO
 ~~START~~
 varchar
-POINT(1 1 1 1)
+POINT (1 1 1 1)
 ~~END~~
 
 
@@ -4290,7 +4286,7 @@ select cast(geography::STGeomFromText(cast(N'Point(1 1 1 1)' as varbinary(max)),
 GO
 ~~START~~
 varchar
-POINT(1 1 1 1)
+POINT (1 1 1 1)
 ~~END~~
 
 

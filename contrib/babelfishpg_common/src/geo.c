@@ -104,7 +104,7 @@ rewrite_point_query(POINT coord)
     initStringInfo(&output);
     
     /* Start the WKT string with "POINT" */
-    appendStringInfoString(&output, "POINT");
+    appendStringInfoString(&output, "POINT ");
 
     /* 
      * Add 'M' if the point has M coordinate and doesn't have Z coordinate since PostGIS can't interpret it without M value
@@ -144,7 +144,7 @@ rewrite_point_dim_query(POINT coord)
     initStringInfo(&output);
 
     /* Start the WKT string with "POINT" keyword  */
-    appendStringInfoString(&output, "POINT");
+    appendStringInfoString(&output, "POINT ");
 
     /* Open parenthesis for coordinate values */
     appendStringInfoChar(&output, '(');
