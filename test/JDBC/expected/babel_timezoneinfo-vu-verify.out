@@ -1,14 +1,174 @@
-SELECT * FROM vw_UTC_Zero;
+--Test case 1: To print the SST
+SELECT * FROM dbo.vw_Singapore;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#bit
-Utc#!#+00:00#!#0
+nvarchar#!#nvarchar
+Singapore Standard Time#!#+08:00
 ~~END~~
 
+--Test case 2: To print the IST
 SELECT * FROM v_test;
 GO
 ~~START~~
 nvarchar
 India Standard Time
+~~END~~
+
+--Test case 3: Check for any null values
+SELECT COUNT(*) as null_value_count
+FROM sys.time_zone_info
+WHERE name IS NULL OR current_utc_offset IS NULL OR is_currently_dst IS NULL;
+GO
+~~START~~
+int
+0
+~~END~~
+
+--Test case 4: Count total number of timezones
+SELECT * FROM dbo.vw_TimeZoneCount;
+GO
+~~START~~
+int
+140
+~~END~~
+
+--Test case 5: To print all the UTC timezones
+SELECT name, current_utc_offset
+FROM dbo.fn_GetUTCZonesWithOffset()
+ORDER BY sort_order;
+GO
+~~START~~
+nvarchar#!#nvarchar
+Utc#!#+00:00
+Utc+12#!#+12:00
+Utc+13#!#+13:00
+Utc-02#!#-02:00
+Utc-08#!#-08:00
+Utc-09#!#-09:00
+Utc-11#!#-11:00
+~~END~~
+
+--Test case 6: To print duplicates
+SELECT name, COUNT(*) as name_count
+FROM sys.time_zone_info
+GROUP BY name
+HAVING COUNT(*) > 1;
+GO
+~~START~~
+nvarchar#!#int
+~~END~~
+
+--Test case 7: To print top 3 Timezone names
+SELECT TOP 3 name
+FROM sys.time_zone_info
+ORDER BY name;
+GO
+~~START~~
+nvarchar
+Afghanistan Standard Time
+Alaskan Standard Time
+Aleutian Standard Time
+~~END~~
+
+--Test case 8: verify null case
+SELECT sys.pltsql_timezone_mapping_pg_to_windows(' ');
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+SELECT sys.pltsql_timezone_mapping_pg_to_windows('123');
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+--Test case 9: Verify the timezone existance
+EXEC sp_ValidateTimeZoneData 'Indian Standard Time';
+GO
+~~START~~
+varchar#!#nvarchar
+Invalid#!#Indian Standard Time
+~~END~~
+
+EXEC sp_ValidateTimeZoneData 'UTC-02';
+GO
+~~START~~
+varchar#!#nvarchar
+Valid#!#UTC-02
+~~END~~
+
+--Test case 10: To validate the utc format                  
+SELECT dbo.validate_utc_offset(''); 
+GO
+~~START~~
+varchar
+INVALID: Empty string
+~~END~~
+
+SELECT dbo.validate_utc_offset('+02:00');
+GO
+~~START~~
+varchar
+INVALID: Wrong format
+~~END~~
+
+--Test case 11: To verify if there exists a timezone :The following timezone values have been commented out due to: Expected DST and non-DST offset values may change due to future timezone policy updates and to prevent potential flaky test cases
+SELECT dbo.test_timezone_offset('Utc-11', '-11:00', '-11:00') AS test_result_utc;
+GO
+~~START~~
+varchar
+PASSED
+~~END~~
+
+SELECT dbo.test_timezone_offset('Utc-09', '-09:00', '-09:00') AS test_result_utc;
+GO
+~~START~~
+varchar
+PASSED
+~~END~~
+
+SELECT dbo.test_timezone_offset('Utc-08', '-08:00', '-08:00') AS test_result_utc;
+GO
+~~START~~
+varchar
+PASSED
+~~END~~
+
+SELECT dbo.test_timezone_offset('Utc-02', '-02:00', '-02:00') AS test_result_utc;
+GO
+~~START~~
+varchar
+PASSED
+~~END~~
+
+SELECT dbo.test_timezone_offset('Utc+12', '+12:00', '+12:00') AS test_result_utc;
+GO
+~~START~~
+varchar
+PASSED
+~~END~~
+
+SELECT dbo.test_timezone_offset('Utc+13', '+13:00', '+13:00') AS test_result_utc;
+GO
+~~START~~
+varchar
+PASSED
+~~END~~
+
+SELECT dbo.test_timezone_offset('Dateline standard time', '-12:00', '-12:00') AS test_result_utc;
+GO
+~~START~~
+varchar
+PASSED
+~~END~~
+
+SELECT dbo.test_timezone_offset('India Standard Time', '+05:30', '+05:30') AS test_result_utc;
+GO
+~~START~~
+varchar
+PASSED
 ~~END~~
 
