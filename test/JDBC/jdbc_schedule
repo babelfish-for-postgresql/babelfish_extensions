@@ -519,6 +519,9 @@ ignore#!#babel_index_nulls_order-before-16_8-or-17_4-vu-cleanup
 ignore#!#object_ownership-before-16_8-or-17_4-vu-prepare
 ignore#!#object_ownership-before-16_8-or-17_4-vu-verify
 ignore#!#object_ownership-before-16_8-or-17_4-vu-cleanup
+ignore#!#temp_table_dialect_check-before-15_12-or-16_8-vu-prepare
+ignore#!#temp_table_dialect_check-before-15_12-or-16_8-vu-verify
+ignore#!#temp_table_dialect_check-before-15_12-or-16_8-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 17_5 or 16_9 release
 ignore#!#test_constraint_like-17-4-or-16-8-vu-prepare
