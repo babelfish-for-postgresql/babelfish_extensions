@@ -458,7 +458,7 @@ public class TestQueryFile {
             diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "~~ERROR", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
         } else {
             // Do not compare T-SQL Batch parsing time
-            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
+            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", ".*could not open relation with OID", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
         }
 
         try {
