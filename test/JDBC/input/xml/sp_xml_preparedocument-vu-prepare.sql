@@ -108,14 +108,6 @@ BEGIN
 END
 GO
 
-CREATE TABLE TestTextXML_babel_1168 ( id INT, xml_data TEXT)
-INSERT INTO TestTextXML_babel_1168 VALUES(1, '<root><child>value</child></root>') 
-GO
-
-CREATE TABLE TestNTextXML_babel_1168 ( id INT, xml_data NTEXT )
-INSERT INTO TestNTextXML_babel_1168 VALUES(1, N'<root><child>value 世界</child></root>') 
-GO
-
 -- VIEWS TEST CASES for sp_xml_preparedocument and sp_xml_removedocument
 -- Test 1: Simple view with XML data
 CREATE TABLE XMLDataSource_babel_1168 (

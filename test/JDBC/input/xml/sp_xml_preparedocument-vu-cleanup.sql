@@ -46,12 +46,6 @@ GO
 DROP PROCEDURE IF EXISTS TestXMLPrepareDocument_NText
 GO
 
-DROP TABLE TestTextXML_babel_1168
-GO
-
-DROP TABLE TestNTextXML_babel_1168 
-GO
-
 -- Cleanup procedures
 DROP PROCEDURE IF EXISTS ProcessXMLFromView_babel_1168
 GO
