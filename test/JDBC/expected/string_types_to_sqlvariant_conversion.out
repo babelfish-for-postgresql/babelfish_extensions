@@ -1,0 +1,2738 @@
+-- Drop the table if it already exists (safety)
+IF OBJECT_ID('dbo.MyTestTable', 'U') IS NOT NULL
+    DROP TABLE dbo.MyTestTable;
+GO
+
+-- Create the table
+CREATE TABLE MyTestTable (
+    id     INT IDENTITY(1,1) PRIMARY KEY,
+    init   INT,
+    name1  CHAR(10),       -- fixed-length non-Unicode
+    name2  NCHAR(10),      -- fixed-length Unicode
+    name3  VARCHAR(10),    -- variable-length non-Unicode
+    name4  NVARCHAR(10)    -- variable-length Unicode
+);
+GO
+
+-- Insert 5 rows
+INSERT INTO MyTestTable (init, name1, name2, name3, name4) VALUES
+(10, 'Alpha',   N'Αλφα',   'One',   N'Uno'),
+(20, 'Beta',    N'Бета',   'Two',   N'Dos'),
+(30, 'Gamma',   N'Γάμμα',  'Three', N'Tres'),
+(40, 'Delta',   N'Дельта', 'Four',  N'Quattro'),
+(50, 'Epsilon', N'إبسيلون', 'Five', N'Cinco');
+GO
+~~ROW COUNT: 5~~
+
+
+
+----------------------------------------------------------------------------------------------------------------
+-- Test Table Outputs
+----------------------------------------------------------------------------------------------------------------
+-- Test CHAR to SQLVARIANT Conversion
+DECLARE     @testVar1 CHAR(10);
+SET         @testVar1 = (SELECT TOP 1 name1 FROM MyTestTable);
+SELECT		@testVar1 as Expected;
+DECLARE     @result_sql_variant_1 sql_variant;
+SET         @result_sql_variant_1 = ( @testVar1 );
+SELECT      @result_sql_variant_1 AS Result;
+GO
+~~START~~
+char
+Alpha     
+~~END~~
+
+~~START~~
+sql_variant
+Alpha     
+~~END~~
+
+
+
+-- Test NCHAR to SQLVARIANT Conversion
+DECLARE     @testVar2 NCHAR(10);
+SET         @testVar2 = (SELECT TOP 1 name2 FROM MyTestTable);
+SELECT		@testVar2 as Expected;
+DECLARE     @result_sql_variant_2 sql_variant;
+SET         @result_sql_variant_2 = ( @testVar2 );
+SELECT      @result_sql_variant_2 AS Result;
+GO
+~~START~~
+nchar
+Αλφα      
+~~END~~
+
+~~START~~
+sql_variant
+Αλφα      
+~~END~~
+
+
+
+-- Test VARCHAR to SQLVARIANT Conversion
+DECLARE     @testVar3 VARCHAR(10);
+SET         @testVar3 = (SELECT TOP 1 name3 FROM MyTestTable);
+SELECT		@testVar3 as Expected;
+DECLARE     @result_sql_variant_3 sql_variant;
+SET         @result_sql_variant_3 = ( @testVar3 );
+SELECT      @result_sql_variant_3 AS Result;
+GO
+~~START~~
+varchar
+One
+~~END~~
+
+~~START~~
+sql_variant
+One
+~~END~~
+
+
+ 
+ -- Test NVARCHAR to SQLVARIANT Conversion
+DECLARE     @testVar4 NVARCHAR(10);
+SET         @testVar4 = (SELECT TOP 1 name4 FROM MyTestTable);
+SELECT		@testVar4 as Expected;
+DECLARE     @result_sql_variant_4 sql_variant;
+SET         @result_sql_variant_4 = ( @testVar4 );
+SELECT      @result_sql_variant_4 AS Result;
+GO
+~~START~~
+nvarchar
+Uno
+~~END~~
+
+~~START~~
+sql_variant
+Uno
+~~END~~
+
+
+DROP TABLE dbo.MyTestTable;
+GO
+
+
+
+
+----------------------------------------------------------------------------------------------------------------
+-- Test Short Inputs (SV_CAN_USE_SHORT_VALENA macro)
+----------------------------------------------------------------------------------------------------------------
+-- CHAR -> SQL_VARIANT implicit conversion with different sizes (SHORT HEADER(SV_CAN_USE_SHORT_VALENA))
+DECLARE @counter INT = 1;
+DECLARE @max_length INT = 121; -- Max size for SHORT HEADERS
+DECLARE @char_var CHAR(121);
+DECLARE @sql_variant_var SQL_VARIANT;
+WHILE @counter <= @max_length
+BEGIN
+    -- Initialize @char_var with @counter times 'A'
+    SET @char_var = REPLICATE('A', @counter);
+    
+    -- Conversion to SQL_VARIANT
+    SET @sql_variant_var = @char_var;
+    
+    -- Show results
+    SELECT 
+        @counter AS StringLength,
+        @char_var AS OriginalValue,
+        @sql_variant_var AS ConvertedValue,
+        SQL_VARIANT_PROPERTY(@sql_variant_var, 'BaseType') AS BaseType,
+        SQL_VARIANT_PROPERTY(@sql_variant_var, 'MaxLength') AS MaxLength,
+        DATALENGTH(@sql_variant_var) AS ActualDataLength;
+    
+    SET @counter = @counter + 1;
+END
+GO
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+1#!#A                                                                                                                        #!#A                                                                                                                        #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+2#!#AA                                                                                                                       #!#AA                                                                                                                       #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+3#!#AAA                                                                                                                      #!#AAA                                                                                                                      #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+4#!#AAAA                                                                                                                     #!#AAAA                                                                                                                     #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+5#!#AAAAA                                                                                                                    #!#AAAAA                                                                                                                    #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+6#!#AAAAAA                                                                                                                   #!#AAAAAA                                                                                                                   #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+7#!#AAAAAAA                                                                                                                  #!#AAAAAAA                                                                                                                  #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+8#!#AAAAAAAA                                                                                                                 #!#AAAAAAAA                                                                                                                 #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+9#!#AAAAAAAAA                                                                                                                #!#AAAAAAAAA                                                                                                                #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+10#!#AAAAAAAAAA                                                                                                               #!#AAAAAAAAAA                                                                                                               #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+11#!#AAAAAAAAAAA                                                                                                              #!#AAAAAAAAAAA                                                                                                              #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+12#!#AAAAAAAAAAAA                                                                                                             #!#AAAAAAAAAAAA                                                                                                             #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+13#!#AAAAAAAAAAAAA                                                                                                            #!#AAAAAAAAAAAAA                                                                                                            #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+14#!#AAAAAAAAAAAAAA                                                                                                           #!#AAAAAAAAAAAAAA                                                                                                           #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+15#!#AAAAAAAAAAAAAAA                                                                                                          #!#AAAAAAAAAAAAAAA                                                                                                          #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+16#!#AAAAAAAAAAAAAAAA                                                                                                         #!#AAAAAAAAAAAAAAAA                                                                                                         #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+17#!#AAAAAAAAAAAAAAAAA                                                                                                        #!#AAAAAAAAAAAAAAAAA                                                                                                        #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+18#!#AAAAAAAAAAAAAAAAAA                                                                                                       #!#AAAAAAAAAAAAAAAAAA                                                                                                       #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+19#!#AAAAAAAAAAAAAAAAAAA                                                                                                      #!#AAAAAAAAAAAAAAAAAAA                                                                                                      #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+20#!#AAAAAAAAAAAAAAAAAAAA                                                                                                     #!#AAAAAAAAAAAAAAAAAAAA                                                                                                     #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+21#!#AAAAAAAAAAAAAAAAAAAAA                                                                                                    #!#AAAAAAAAAAAAAAAAAAAAA                                                                                                    #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+22#!#AAAAAAAAAAAAAAAAAAAAAA                                                                                                   #!#AAAAAAAAAAAAAAAAAAAAAA                                                                                                   #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+23#!#AAAAAAAAAAAAAAAAAAAAAAA                                                                                                  #!#AAAAAAAAAAAAAAAAAAAAAAA                                                                                                  #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+24#!#AAAAAAAAAAAAAAAAAAAAAAAA                                                                                                 #!#AAAAAAAAAAAAAAAAAAAAAAAA                                                                                                 #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+25#!#AAAAAAAAAAAAAAAAAAAAAAAAA                                                                                                #!#AAAAAAAAAAAAAAAAAAAAAAAAA                                                                                                #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+26#!#AAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                               #!#AAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                               #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+27#!#AAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                              #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+28#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                             #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+29#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                            #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+30#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                           #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+31#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                          #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+32#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                         #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+33#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                        #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+34#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                       #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+35#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                      #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+36#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                     #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+37#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                    #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+38#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                   #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+39#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                  #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+40#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                 #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                 #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+41#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+42#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                               #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                               #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+43#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                              #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+44#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                             #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+45#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                            #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+46#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                           #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+47#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                          #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+48#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                         #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+49#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                        #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+50#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                       #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+51#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                      #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+52#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                     #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+53#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                    #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+54#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                   #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+55#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                  #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+56#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                 #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                 #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+57#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+58#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                               #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                               #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+59#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                              #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+60#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                             #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+61#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                            #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+62#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                           #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+63#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                          #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+64#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                         #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+65#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                        #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+66#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                       #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+67#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                      #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+68#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                     #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+69#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                    #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+70#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                   #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+71#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                  #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+72#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                 #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                 #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+73#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+74#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                               #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                               #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+75#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                              #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+76#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                             #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+77#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                            #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+78#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                           #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+79#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                          #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+80#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                         #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+81#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                        #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+82#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                       #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+83#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                      #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+84#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                     #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+85#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                    #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+86#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                   #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+87#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                  #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+88#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                 #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                 #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+89#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+90#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                               #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                               #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+91#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                              #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+92#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                             #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+93#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                            #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+94#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                           #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+95#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                          #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+96#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                         #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+97#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                        #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+98#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                       #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+99#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                      #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+100#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                     #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+101#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                    #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+102#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                   #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+103#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                  #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+104#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                 #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                 #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+105#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+106#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA               #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA               #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+107#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA              #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+108#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA             #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+109#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA            #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+110#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA           #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+111#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA          #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+112#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+113#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA        #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+114#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA       #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+115#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA      #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+116#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA     #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+117#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA    #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+118#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+119#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+120#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA #!#char#!#65535#!#121
+~~END~~
+
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+121#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#char#!#65535#!#121
+~~END~~
+
+
+
+
+-- NCHAR -> SQL_VARIANT implicit conversion with different sizes (SHORT HEADER(SV_CAN_USE_SHORT_VALENA))
+DECLARE @counter INT = 1;
+DECLARE @max_length INT = 121; -- Max size for SHORT HEADERS
+DECLARE @nchar_var NCHAR(121);
+DECLARE @sql_variant_var SQL_VARIANT;
+WHILE @counter <= @max_length
+BEGIN
+    -- Initialize @nchar_var with @counter times 'A'
+    SET @nchar_var = REPLICATE(N'A', @counter);
+    
+    -- Conversion to SQL_VARIANT
+    SET @sql_variant_var = @nchar_var;
+    
+    -- Show results
+    SELECT 
+        @counter AS StringLength,
+        @nchar_var AS OriginalValue,
+        @sql_variant_var AS ConvertedValue,
+        SQL_VARIANT_PROPERTY(@sql_variant_var, 'BaseType') AS BaseType,
+        SQL_VARIANT_PROPERTY(@sql_variant_var, 'MaxLength') AS MaxLength,
+        SQL_VARIANT_PROPERTY(@sql_variant_var, 'Collation') AS Collation,
+        DATALENGTH(@sql_variant_var) AS ActualDataLength;
+    
+    SET @counter = @counter + 1;
+END
+GO
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+1#!#A                                                                                                                        #!#A                                                                                                                        #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+2#!#AA                                                                                                                       #!#AA                                                                                                                       #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+3#!#AAA                                                                                                                      #!#AAA                                                                                                                      #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+4#!#AAAA                                                                                                                     #!#AAAA                                                                                                                     #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+5#!#AAAAA                                                                                                                    #!#AAAAA                                                                                                                    #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+6#!#AAAAAA                                                                                                                   #!#AAAAAA                                                                                                                   #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+7#!#AAAAAAA                                                                                                                  #!#AAAAAAA                                                                                                                  #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+8#!#AAAAAAAA                                                                                                                 #!#AAAAAAAA                                                                                                                 #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+9#!#AAAAAAAAA                                                                                                                #!#AAAAAAAAA                                                                                                                #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+10#!#AAAAAAAAAA                                                                                                               #!#AAAAAAAAAA                                                                                                               #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+11#!#AAAAAAAAAAA                                                                                                              #!#AAAAAAAAAAA                                                                                                              #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+12#!#AAAAAAAAAAAA                                                                                                             #!#AAAAAAAAAAAA                                                                                                             #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+13#!#AAAAAAAAAAAAA                                                                                                            #!#AAAAAAAAAAAAA                                                                                                            #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+14#!#AAAAAAAAAAAAAA                                                                                                           #!#AAAAAAAAAAAAAA                                                                                                           #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+15#!#AAAAAAAAAAAAAAA                                                                                                          #!#AAAAAAAAAAAAAAA                                                                                                          #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+16#!#AAAAAAAAAAAAAAAA                                                                                                         #!#AAAAAAAAAAAAAAAA                                                                                                         #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+17#!#AAAAAAAAAAAAAAAAA                                                                                                        #!#AAAAAAAAAAAAAAAAA                                                                                                        #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+18#!#AAAAAAAAAAAAAAAAAA                                                                                                       #!#AAAAAAAAAAAAAAAAAA                                                                                                       #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+19#!#AAAAAAAAAAAAAAAAAAA                                                                                                      #!#AAAAAAAAAAAAAAAAAAA                                                                                                      #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+20#!#AAAAAAAAAAAAAAAAAAAA                                                                                                     #!#AAAAAAAAAAAAAAAAAAAA                                                                                                     #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+21#!#AAAAAAAAAAAAAAAAAAAAA                                                                                                    #!#AAAAAAAAAAAAAAAAAAAAA                                                                                                    #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+22#!#AAAAAAAAAAAAAAAAAAAAAA                                                                                                   #!#AAAAAAAAAAAAAAAAAAAAAA                                                                                                   #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+23#!#AAAAAAAAAAAAAAAAAAAAAAA                                                                                                  #!#AAAAAAAAAAAAAAAAAAAAAAA                                                                                                  #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+24#!#AAAAAAAAAAAAAAAAAAAAAAAA                                                                                                 #!#AAAAAAAAAAAAAAAAAAAAAAAA                                                                                                 #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+25#!#AAAAAAAAAAAAAAAAAAAAAAAAA                                                                                                #!#AAAAAAAAAAAAAAAAAAAAAAAAA                                                                                                #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+26#!#AAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                               #!#AAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                               #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+27#!#AAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                              #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+28#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                             #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+29#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                            #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+30#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                           #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+31#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                          #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+32#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                         #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+33#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                        #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+34#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                       #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+35#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                      #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+36#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                     #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+37#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                    #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+38#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                   #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+39#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                  #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+40#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                 #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                 #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+41#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                                #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+42#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                               #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                               #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+43#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                              #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+44#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                             #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+45#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                            #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+46#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                           #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+47#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                          #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+48#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                         #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+49#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                        #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+50#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                       #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+51#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                      #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+52#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                     #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+53#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                    #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+54#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                   #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+55#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                  #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+56#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                 #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                 #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+57#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                                #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+58#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                               #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                               #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+59#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                              #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+60#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                             #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+61#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                            #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+62#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                           #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+63#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                          #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+64#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                         #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+65#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                        #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+66#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                       #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+67#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                      #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+68#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                     #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+69#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                    #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+70#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                   #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+71#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                  #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+72#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                 #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                 #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+73#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+74#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                               #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                               #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+75#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                              #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+76#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                             #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+77#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                            #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+78#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                           #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+79#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                          #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+80#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                         #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+81#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                        #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+82#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                       #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+83#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                      #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+84#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                     #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+85#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                    #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+86#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                   #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+87#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                  #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+88#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                 #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                 #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+89#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+90#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                               #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                               #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+91#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                              #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+92#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                             #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+93#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                            #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+94#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                           #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+95#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                          #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+96#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                         #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+97#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                        #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+98#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                       #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+99#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                      #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+100#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                     #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+101#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                    #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+102#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                   #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+103#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                  #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+104#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                 #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                 #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+105#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+106#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA               #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA               #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+107#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA              #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA              #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+108#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA             #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA             #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+109#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA            #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA            #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+110#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA           #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA           #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+111#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA          #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA          #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+112#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+113#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA        #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA        #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+114#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA       #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA       #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+115#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA      #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA      #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+116#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA     #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA     #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+117#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA    #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA    #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+118#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+119#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+120#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA #!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA #!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int
+121#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nchar#!#65535#!#bbf_unicode_cp1_ci_as#!#121
+~~END~~
+
+
+
+
+-- VARCHAR -> SQL_VARIANT implicit conversion with different sizes (SHORT HEADER(SV_CAN_USE_SHORT_VALENA))
+DECLARE @counter INT = 1;
+DECLARE @max_length INT = 121; -- Max size for SHORT HEADERS
+DECLARE @varchar_var VARCHAR(121);
+DECLARE @sql_variant_var SQL_VARIANT;
+WHILE @counter <= @max_length
+BEGIN
+    -- Initialize @varchar_var with @counter times 'A'
+    SET @varchar_var = REPLICATE('A', @counter);
+    
+    -- Conversion to SQL_VARIANT
+    SET @sql_variant_var = @varchar_var;
+    
+    -- Show results
+    SELECT 
+        @counter AS StringLength,
+        @varchar_var AS OriginalValue,
+        @sql_variant_var AS ConvertedValue,
+        SQL_VARIANT_PROPERTY(@sql_variant_var, 'BaseType') AS BaseType,
+        SQL_VARIANT_PROPERTY(@sql_variant_var, 'MaxLength') AS MaxLength,
+        DATALENGTH(@sql_variant_var) AS ActualDataLength,
+        LEN(@varchar_var) AS OriginalLength,
+        LEN(CAST(@sql_variant_var AS VARCHAR(MAX))) AS ConvertedLength;
+    
+    SET @counter = @counter + 1;
+END
+GO
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+1#!#A#!#A#!#varchar#!#65535#!#1#!#1#!#1
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+2#!#AA#!#AA#!#varchar#!#65535#!#2#!#2#!#2
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+3#!#AAA#!#AAA#!#varchar#!#65535#!#3#!#3#!#3
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+4#!#AAAA#!#AAAA#!#varchar#!#65535#!#4#!#4#!#4
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+5#!#AAAAA#!#AAAAA#!#varchar#!#65535#!#5#!#5#!#5
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+6#!#AAAAAA#!#AAAAAA#!#varchar#!#65535#!#6#!#6#!#6
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+7#!#AAAAAAA#!#AAAAAAA#!#varchar#!#65535#!#7#!#7#!#7
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+8#!#AAAAAAAA#!#AAAAAAAA#!#varchar#!#65535#!#8#!#8#!#8
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+9#!#AAAAAAAAA#!#AAAAAAAAA#!#varchar#!#65535#!#9#!#9#!#9
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+10#!#AAAAAAAAAA#!#AAAAAAAAAA#!#varchar#!#65535#!#10#!#10#!#10
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+11#!#AAAAAAAAAAA#!#AAAAAAAAAAA#!#varchar#!#65535#!#11#!#11#!#11
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+12#!#AAAAAAAAAAAA#!#AAAAAAAAAAAA#!#varchar#!#65535#!#12#!#12#!#12
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+13#!#AAAAAAAAAAAAA#!#AAAAAAAAAAAAA#!#varchar#!#65535#!#13#!#13#!#13
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+14#!#AAAAAAAAAAAAAA#!#AAAAAAAAAAAAAA#!#varchar#!#65535#!#14#!#14#!#14
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+15#!#AAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAA#!#varchar#!#65535#!#15#!#15#!#15
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+16#!#AAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAA#!#varchar#!#65535#!#16#!#16#!#16
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+17#!#AAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#17#!#17#!#17
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+18#!#AAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#18#!#18#!#18
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+19#!#AAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#19#!#19#!#19
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+20#!#AAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#20#!#20#!#20
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+21#!#AAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#21#!#21#!#21
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+22#!#AAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#22#!#22#!#22
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+23#!#AAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#23#!#23#!#23
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+24#!#AAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#24#!#24#!#24
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+25#!#AAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#25#!#25#!#25
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+26#!#AAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#26#!#26#!#26
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+27#!#AAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#27#!#27#!#27
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+28#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#28#!#28#!#28
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+29#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#29#!#29#!#29
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+30#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#30#!#30#!#30
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+31#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#31#!#31#!#31
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+32#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#32#!#32#!#32
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+33#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#33#!#33#!#33
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+34#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#34#!#34#!#34
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+35#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#35#!#35#!#35
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+36#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#36#!#36#!#36
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+37#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#37#!#37#!#37
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+38#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#38#!#38#!#38
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+39#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#39#!#39#!#39
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+40#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#40#!#40#!#40
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+41#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#41#!#41#!#41
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+42#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#42#!#42#!#42
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+43#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#43#!#43#!#43
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+44#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#44#!#44#!#44
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+45#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#45#!#45#!#45
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+46#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#46#!#46#!#46
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+47#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#47#!#47#!#47
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+48#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#48#!#48#!#48
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+49#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#49#!#49#!#49
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+50#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#50#!#50#!#50
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+51#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#51#!#51#!#51
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+52#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#52#!#52#!#52
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+53#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#53#!#53#!#53
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+54#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#54#!#54#!#54
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+55#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#55#!#55#!#55
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+56#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#56#!#56#!#56
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+57#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#57#!#57#!#57
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+58#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#58#!#58#!#58
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+59#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#59#!#59#!#59
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+60#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#60#!#60#!#60
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+61#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#61#!#61#!#61
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+62#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#62#!#62#!#62
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+63#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#63#!#63#!#63
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+64#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#64#!#64#!#64
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+65#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#65#!#65#!#65
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+66#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#66#!#66#!#66
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+67#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#67#!#67#!#67
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+68#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#68#!#68#!#68
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+69#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#69#!#69#!#69
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+70#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#70#!#70#!#70
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+71#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#71#!#71#!#71
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+72#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#72#!#72#!#72
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+73#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#73#!#73#!#73
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+74#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#74#!#74#!#74
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+75#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#75#!#75#!#75
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+76#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#76#!#76#!#76
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+77#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#77#!#77#!#77
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+78#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#78#!#78#!#78
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+79#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#79#!#79#!#79
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+80#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#80#!#80#!#80
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+81#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#81#!#81#!#81
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+82#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#82#!#82#!#82
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+83#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#83#!#83#!#83
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+84#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#84#!#84#!#84
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+85#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#85#!#85#!#85
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+86#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#86#!#86#!#86
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+87#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#87#!#87#!#87
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+88#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#88#!#88#!#88
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+89#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#89#!#89#!#89
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+90#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#90#!#90#!#90
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+91#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#91#!#91#!#91
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+92#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#92#!#92#!#92
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+93#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#93#!#93#!#93
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+94#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#94#!#94#!#94
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+95#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#95#!#95#!#95
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+96#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#96#!#96#!#96
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+97#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#97#!#97#!#97
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+98#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#98#!#98#!#98
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+99#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#99#!#99#!#99
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+100#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#100#!#100#!#100
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+101#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#101#!#101#!#101
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+102#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#102#!#102#!#102
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+103#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#103#!#103#!#103
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+104#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#104#!#104#!#104
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+105#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#105#!#105#!#105
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+106#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#106#!#106#!#106
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+107#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#107#!#107#!#107
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+108#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#108#!#108#!#108
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+109#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#109#!#109#!#109
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+110#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#110#!#110#!#110
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+111#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#111#!#111#!#111
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+112#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#112#!#112#!#112
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+113#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#113#!#113#!#113
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+114#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#114#!#114#!#114
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+115#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#115#!#115#!#115
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+116#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#116#!#116#!#116
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+117#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#117#!#117#!#117
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+118#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#118#!#118#!#118
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+119#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#119#!#119#!#119
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+120#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#120#!#120#!#120
+~~END~~
+
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#int#!#int
+121#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#121#!#121#!#121
+~~END~~
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------
+-- Test Long Inputs
+----------------------------------------------------------------------------------------------------------------
+-- NVARCHAR -> SQL_VARIANT implicit conversion with different sizes (SHORT HEADER(SV_CAN_USE_SHORT_VALENA macro))
+DECLARE @counter INT = 1;
+DECLARE @max_length INT = 121;
+DECLARE @nvarchar_var NVARCHAR(121);
+DECLARE @sql_variant_var SQL_VARIANT;
+WHILE @counter <= @max_length
+BEGIN
+    -- @counter kadar 'A' karakteri ile NVARCHAR değişkeni initialize et
+    -- Initialize @nvarchar_var with @counter times 'A'
+    SET @nvarchar_var = REPLICATE(N'A', @counter);
+    
+    -- Conversion to SQL_VARIANT
+    SET @sql_variant_var = @nvarchar_var;
+    
+    -- Show results
+    SELECT 
+        @counter AS StringLength,
+        @nvarchar_var AS OriginalValue,
+        @sql_variant_var AS ConvertedValue,
+        SQL_VARIANT_PROPERTY(@sql_variant_var, 'BaseType') AS BaseType,
+        SQL_VARIANT_PROPERTY(@sql_variant_var, 'MaxLength') AS MaxLength,
+        SQL_VARIANT_PROPERTY(@sql_variant_var, 'Collation') AS Collation;
+    
+    SET @counter = @counter + 1;
+END
+GO
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+1#!#A#!#A#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+2#!#AA#!#AA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+3#!#AAA#!#AAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+4#!#AAAA#!#AAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+5#!#AAAAA#!#AAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+6#!#AAAAAA#!#AAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+7#!#AAAAAAA#!#AAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+8#!#AAAAAAAA#!#AAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+9#!#AAAAAAAAA#!#AAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+10#!#AAAAAAAAAA#!#AAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+11#!#AAAAAAAAAAA#!#AAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+12#!#AAAAAAAAAAAA#!#AAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+13#!#AAAAAAAAAAAAA#!#AAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+14#!#AAAAAAAAAAAAAA#!#AAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+15#!#AAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+16#!#AAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+17#!#AAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+18#!#AAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+19#!#AAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+20#!#AAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+21#!#AAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+22#!#AAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+23#!#AAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+24#!#AAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+25#!#AAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+26#!#AAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+27#!#AAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+28#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+29#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+30#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+31#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+32#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+33#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+34#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+35#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+36#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+37#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+38#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+39#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+40#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+41#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+42#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+43#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+44#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+45#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+46#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+47#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+48#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+49#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+50#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+51#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+52#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+53#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+54#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+55#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+56#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+57#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+58#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+59#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+60#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+61#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+62#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+63#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+64#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+65#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+66#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+67#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+68#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+69#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+70#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+71#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+72#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+73#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+74#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+75#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+76#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+77#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+78#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+79#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+80#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+81#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+82#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+83#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+84#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+85#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+86#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+87#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+88#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+89#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+90#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+91#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+92#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+93#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+94#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+95#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+96#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+97#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+98#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+99#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+100#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+101#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+102#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+103#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+104#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+105#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+106#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+107#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+108#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+109#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+110#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+111#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+112#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+113#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+114#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+115#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+116#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+117#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+118#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+119#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+120#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+121#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+
+-- CHAR -> SQL_VARIANT implicit conversion with different sizes (LONG HEADER, size > 121)
+DECLARE @test_length INT = 122;
+DECLARE @long_char_var CHAR(122) = REPLICATE('A', @test_length);
+DECLARE @sql_variant_var SQL_VARIANT;
+SET @sql_variant_var = @long_char_var;
+SELECT 
+    @test_length AS StringLength,
+    @long_char_var AS OriginalValue,
+    @sql_variant_var AS ConvertedValue,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'BaseType') AS BaseType,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'MaxLength') AS MaxLength,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'Collation') AS Collation;
+GO
+~~START~~
+int#!#char#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+122#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#char#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+
+-- NCHAR -> SQL_VARIANT implicit conversion with different sizes (LONG HEADER, size > 121)
+DECLARE @test_length INT = 122;
+DECLARE @long_nchar_var NCHAR(122) = REPLICATE('A', @test_length);
+DECLARE @sql_variant_var SQL_VARIANT;
+SET @sql_variant_var = @long_nchar_var;
+SELECT 
+    @test_length AS StringLength,
+    @long_nchar_var AS OriginalValue,
+    @sql_variant_var AS ConvertedValue,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'BaseType') AS BaseType,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'MaxLength') AS MaxLength,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'Collation') AS Collation;
+GO
+~~START~~
+int#!#nchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+122#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+
+-- VARCHAR -> SQL_VARIANT implicit conversion with different sizes (LONG HEADER, size > 121)
+DECLARE @test_length INT = 122;
+DECLARE @long_varchar_var VARCHAR(122) = REPLICATE('A', @test_length);
+DECLARE @sql_variant_var SQL_VARIANT;
+SET @sql_variant_var = @long_varchar_var;
+SELECT 
+    @test_length AS StringLength,
+    @long_varchar_var AS OriginalValue,
+    @sql_variant_var AS ConvertedValue,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'BaseType') AS BaseType,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'MaxLength') AS MaxLength,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'Collation') AS Collation;
+GO
+~~START~~
+int#!#varchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+122#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#varchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+
+
+-- NVARCHAR -> SQL_VARIANT implicit conversion with different sizes (LONG HEADER, size > 121)
+DECLARE @test_length INT = 122;
+DECLARE @long_nvarchar_var NVARCHAR(122) = REPLICATE('A', @test_length);
+DECLARE @sql_variant_var SQL_VARIANT;
+SET @sql_variant_var = @long_nvarchar_var;
+SELECT 
+    @test_length AS StringLength,
+    @long_nvarchar_var AS OriginalValue,
+    @sql_variant_var AS ConvertedValue,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'BaseType') AS BaseType,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'MaxLength') AS MaxLength,
+    SQL_VARIANT_PROPERTY(@sql_variant_var, 'Collation') AS Collation;
+GO
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+122#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#nvarchar#!#65535#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+

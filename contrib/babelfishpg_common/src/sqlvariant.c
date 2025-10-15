@@ -244,6 +244,56 @@ get_int_sv_datum(int32_t value)
 	PG_RETURN_BYTEA_P(result);
 }
 
+/* 
+ * Convert 1 Byte Header to 4 Byte 
+*/
+static Datum normalize_1b_to_4b(Datum data);
+ 
+static Datum normalize_1b_to_4b(Datum data)
+{
+	/*
+	* Data comes with 1 byte when query uses 'SELECT'
+	* Normalize it to 4 byte here.
+	*/
+ 
+	/*
+	* 1B Header + N Byte Data
+	*/
+	Size data_len_with_header = VARSIZE_ANY(data);
+ 
+	/*
+	* Actual data length
+	*/
+    Size data_len_without_header = data_len_with_header - 1;
+ 
+    Size new_header_size = 4;
+    Size new_size = data_len_without_header + new_header_size;
+ 
+	/*
+	* Allocate new datum to put normalized data
+	*/
+    Datum new_data = PointerGetDatum(palloc(new_size));
+	
+	Pointer data_src_start = VARDATA_ANY(DatumGetPointer(data)); //ABCDEFGHI
+ 
+	/*
+	* Put the data to new allocated datum starting from 5th byte.
+	*/
+    Pointer data_dest_start = DatumGetPointer(new_data) + new_header_size;
+ 
+	/*
+	* Set varsize with new size
+	*/
+    SET_VARSIZE(DatumGetPointer(new_data), new_size);
+ 
+	/*
+	* Copy the data to new datum
+	*/
+    memcpy(data_dest_start, data_src_start, data_len_without_header);
+ 
+    return new_data;
+}
+
 /* Helper functions for CAST and COMPARE */
 static Datum do_cast(Oid source_type, Oid target_type, Datum value, int32_t typmod, Oid coll,
 					 CoercionContext cc, bool *cast_by_relabel);
@@ -338,10 +388,19 @@ gen_sqlvariant_bytea_from_type_datum(size_t typcode, Datum data)
 
 	bytea	   *result;
 	size_t		result_len;
+	Datum 		normalized_data= (Datum)0;
 
 	if (IS_STRING_TYPE(typcode) || IS_BINARY_TYPE(typcode) || typcode == NUMERIC_T) /* varlena datatype */
 	{
-		data_len = VARSIZE_ANY(data);
+		/*
+		* If the data comes with 1 byte header, normalize it to 4 byte by creating new datum.
+		*/
+		if(VARATT_IS_1B(DatumGetPointer(data)))
+		{
+			normalized_data = normalize_1b_to_4b(data);
+		}
+
+		data_len = normalized_data ? VARSIZE_ANY(normalized_data) : VARSIZE_ANY(data);
 		if (SV_CAN_USE_SHORT_VALENA(data_len, svhdr_size))
 		{
 			result_len = VARHDRSZ_SHORT + svhdr_size + data_len;
@@ -355,7 +414,7 @@ gen_sqlvariant_bytea_from_type_datum(size_t typcode, Datum data)
 			SET_VARSIZE(result, result_len);
 		}
 		/* Copy Data */
-		memcpy(SV_DATA(result, svhdr_size), (bytea *) DatumGetPointer(data), data_len);
+		memcpy(SV_DATA(result, svhdr_size), (bytea *) DatumGetPointer(normalized_data ? normalized_data : data), data_len);
 	}
 	else						/* fixed length datatype */
 	{
@@ -367,6 +426,14 @@ gen_sqlvariant_bytea_from_type_datum(size_t typcode, Datum data)
 			memcpy(SV_DATA(result, svhdr_size), &data, typlen);
 		else
 			memcpy(SV_DATA(result, svhdr_size), (bytea *) DatumGetPointer(data), typlen);
+	}
+
+	/*
+	* If the data is normalized, don't forget to free the allocated memory.
+	*/
+	if(normalized_data)
+	{
+		pfree((char*)DatumGetPointer(normalized_data));
 	}
 
 	return result;
