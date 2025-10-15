@@ -985,6 +985,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 				funcexpr = ((CallStmt *) node)->funcexpr;
 			}
+
+			/* Mark the procedure outside the view since procedure can never be called inside a view */
 			funcexpr->insideView = PNODE_OUTSIDE_VIEW;
 
 			func_tuple = SearchSysCache1(PROCOID,
