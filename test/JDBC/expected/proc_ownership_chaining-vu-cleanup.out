@@ -45,6 +45,8 @@ DROP PROCEDURE IF EXISTS p6030_8_2;
 GO
 DROP PROCEDURE IF EXISTS p6030_8_1;
 GO
+DROP PROCEDURE IF EXISTS p6030_8_3c;
+GO
 
 -- Drop tables
 DROP TABLE IF EXISTS sch6030_c.t6030_2;
@@ -63,6 +65,8 @@ GO
 
 ~~ERROR (Message: cannot drop table t6030_1 because other objects depend on it)~~
 
+DROP TABLE IF EXISTS t6030_22;
+GO
 
 -- Drop helper views
 DROP VIEW IF EXISTS v6030_a;

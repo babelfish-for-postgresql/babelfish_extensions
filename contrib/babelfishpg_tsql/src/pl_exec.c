@@ -4691,6 +4691,9 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_s
     if (!HeapTupleIsValid(func_tuple))
         elog(ERROR, "cache lookup failed for function %u", funcexpr->funcid);
 
+	/* Mark the procedure outside the view since procedure can never be called inside a view */
+	funcexpr->insideView = PNODE_OUTSIDE_VIEW;
+
     /* Extract function arguments, expanding any named-arg notation */
     funcargs = expand_function_arguments(funcexpr->args,
                                        false,
