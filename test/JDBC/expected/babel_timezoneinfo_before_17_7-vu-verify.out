@@ -1,9 +1,9 @@
 --Test case 1: To print the SST
-SELECT * FROM dbo.vw_Singapore;
+SELECT * FROM dbo.vw_UTC;
 GO
 ~~START~~
 nvarchar#!#nvarchar
-Singapore Standard Time#!#+08:00
+Utc#!#+00:00
 ~~END~~
 
 --Test case 2: To print the IST
@@ -115,8 +115,23 @@ varchar
 INVALID: Wrong format
 ~~END~~
 
+--Test to loose test to validate the count of timezone name
+SELECT CASE WHEN COUNT(name) >= 135 THEN 1 ELSE 0 END AS test FROM sys.time_zone_info;
+GO
+~~START~~
+int
+1
+~~END~~
+
 --Test case 11: To verify if there exists a timezone :The following timezone values have been commented out due to: Expected DST and non-DST offset values may change due to future timezone policy updates and to prevent potential flaky test cases
 SELECT dbo.test_timezone_offset('Utc-11', '-11:00', '-11:00') AS test_result_utc;
+GO
+~~START~~
+varchar
+PASSED
+~~END~~
+
+SELECT dbo.test_timezone_offset('Utc', '+00:00', '+00:00') AS test_result_utc;
 GO
 ~~START~~
 varchar
