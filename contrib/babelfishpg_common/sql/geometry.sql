@@ -258,7 +258,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR,srid integ
 		END IF;
 		geom = (SELECT sys.geomfromtext_helper($1::text, $2));
 		Geomtype = (SELECT sys.ST_GeometryType(geom));
-		
+
 		IF Geomtype = 'ST_Point' THEN
 				RETURN geom;
 		ELSE

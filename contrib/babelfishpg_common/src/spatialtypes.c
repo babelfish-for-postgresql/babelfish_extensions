@@ -488,9 +488,17 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
             if (i > 1)
             {
                 float8 lon;
+                /* Get longitude value (y coordinate after flipping) */
                 UpdateFunctionCallInfo(fcinfo_local, 1, point);
                 lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
                 
+                /* 
+                 * Detect antipodal points - two points are antipodal if:
+                 * 1. Their latitudes sum to zero (opposite signs, same magnitude)
+                 * 2. AND either:
+                 *    a. Their longitudes differ by exactly 180 degrees, OR
+                 *    b. Both points are near the poles (>89.999 degrees latitude)
+                 */
                 if (fabs(lat + prev_lat) < 1e-10 && (fabs(fabs(lon - prev_lon) - 180.0) < 1e-10 || (fabs(lat) > 89.999 && fabs(prev_lat) > 89.999)))
                 {
                     ereport(ERROR,
@@ -498,11 +506,13 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
                          errmsg("The specified input cannot be accepted because it contains an edge with antipodal points")));
                 }
                 
+                /* Store current coordinates for next iteration */
                 prev_lat = lat;
                 prev_lon = lon;
             }
             else
             {
+                /* First point - initialize previous coordinates for comparison */
                 UpdateFunctionCallInfo(fcinfo_local, 1, point);
                 prev_lat = lat;
                 prev_lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
