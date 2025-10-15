@@ -597,3 +597,4 @@ alter-table-null-notnull
 cast_string_to_binary-before-15_16
 cast_binary_to_string-before-15_16
 test_conv_text_to_binary-before-15_16
+test_conv_text_to_string

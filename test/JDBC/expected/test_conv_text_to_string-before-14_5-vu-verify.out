@@ -1,0 +1,413 @@
+SELECT * FROM cast_text_to_char_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_char_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_char_1" does not exist)~~
+
+SELECT * FROM cast_text_to_char_2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_char_2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_char_2" does not exist)~~
+
+SELECT * FROM cast_text_to_char_3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_char_3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_char_3" does not exist)~~
+
+SELECT * FROM cast_text_to_char_4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_char_4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_char_4" does not exist)~~
+
+SELECT * FROM cast_text_to_char_5;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_char_5;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_char_5" does not exist)~~
+
+SELECT * FROM cast_text_to_char_6;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_char_6;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_char_6" does not exist)~~
+
+
+SELECT * FROM cast_text_to_nchar_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_nchar_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nchar_1" does not exist)~~
+
+SELECT * FROM cast_text_to_nchar_2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_nchar_2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nchar_2" does not exist)~~
+
+SELECT * FROM cast_text_to_nchar_3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_nchar_3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nchar_3" does not exist)~~
+
+SELECT * FROM cast_text_to_nchar_4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_nchar_4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nchar_4" does not exist)~~
+
+SELECT * FROM cast_text_to_nchar_5;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_nchar_5;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nchar_5" does not exist)~~
+
+SELECT * FROM cast_text_to_nchar_6;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM conv_text_to_nchar_6;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nchar_6" does not exist)~~
+
+
+SELECT * FROM cast_text_to_varchar_1;
+GO
+~~START~~
+varchar
+-123.456325678543
+-123.456325678543
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_varchar_1" does not exist)~~
+
+SELECT * FROM cast_text_to_varchar_2;
+GO
+~~START~~
+varchar
+?Bilal DEN?ZL? Türkiye
+?Bilal DEN?ZL? Türkiye
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_varchar_2" does not exist)~~
+
+SELECT * FROM cast_text_to_varchar_3;
+GO
+~~START~~
+varchar
+
+
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_varchar_3" does not exist)~~
+
+SELECT * FROM cast_text_to_varchar_4;
+GO
+~~START~~
+varchar
+
+
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_varchar_4" does not exist)~~
+
+SELECT * FROM cast_text_to_varchar_5;
+GO
+~~START~~
+varchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_5;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_varchar_5" does not exist)~~
+
+SELECT * FROM cast_text_to_varchar_6;
+GO
+~~START~~
+varchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_varchar_6;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_varchar_6" does not exist)~~
+
+
+SELECT * FROM cast_text_to_nvarchar_1;
+GO
+~~START~~
+nvarchar
+-123.456325678543
+-123.456325678543
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nvarchar_1" does not exist)~~
+
+SELECT * FROM cast_text_to_nvarchar_2;
+GO
+~~START~~
+nvarchar
+😎Bilal DENİZLİ Türkiye
+😎Bilal DENİZLİ Türkiye
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nvarchar_2" does not exist)~~
+
+SELECT * FROM cast_text_to_nvarchar_3;
+GO
+~~START~~
+nvarchar
+
+
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nvarchar_3" does not exist)~~
+
+SELECT * FROM cast_text_to_nvarchar_4;
+GO
+~~START~~
+nvarchar
+
+
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nvarchar_4" does not exist)~~
+
+SELECT * FROM cast_text_to_nvarchar_5;
+GO
+~~START~~
+nvarchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_5;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nvarchar_5" does not exist)~~
+
+SELECT * FROM cast_text_to_nvarchar_6;
+GO
+~~START~~
+nvarchar
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+~~END~~
+
+SELECT * FROM conv_text_to_nvarchar_6;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "conv_text_to_nvarchar_6" does not exist)~~
+
+
+EXEC p_text_to_char_reg;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure p_text_to_char_reg() does not exist)~~
+
+EXEC p_text_to_char_uni;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure p_text_to_char_uni() does not exist)~~
+
+EXEC p_text_to_nchar_reg;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure p_text_to_nchar_reg() does not exist)~~
+
+EXEC p_text_to_nchar_uni;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure p_text_to_nchar_uni() does not exist)~~
+
+EXEC p_text_to_varchar_reg;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure p_text_to_varchar_reg() does not exist)~~
+
+EXEC p_text_to_varchar_uni;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure p_text_to_varchar_uni() does not exist)~~
+
+EXEC p_text_to_nvarchar_reg;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure p_text_to_nvarchar_reg() does not exist)~~
+
+EXEC p_text_to_nvarchar_uni;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure p_text_to_nvarchar_uni() does not exist)~~
+
+
+SELECT * FROM f_text_to_char_reg();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function f_text_to_char_reg() does not exist)~~
+
+SELECT * FROM f_text_to_char_uni();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function f_text_to_char_uni() does not exist)~~
+
+SELECT * FROM f_text_to_nchar_reg();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function f_text_to_nchar_reg() does not exist)~~
+
+SELECT * FROM f_text_to_nchar_uni();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function f_text_to_nchar_uni() does not exist)~~
+
+SELECT * FROM f_text_to_varchar_reg();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function f_text_to_varchar_reg() does not exist)~~
+
+SELECT * FROM f_text_to_varchar_uni();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function f_text_to_varchar_uni() does not exist)~~
+
+SELECT * FROM f_text_to_nvarchar_reg();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function f_text_to_nvarchar_reg() does not exist)~~
+
+SELECT * FROM f_text_to_nvarchar_uni();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function f_text_to_nvarchar_uni() does not exist)~~
+

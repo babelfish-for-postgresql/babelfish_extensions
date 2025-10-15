@@ -587,4 +587,5 @@ ascii_function_before-17_7-or-16_11
 cast_string_to_binary-before-16_6
 cast_binary_to_string-before-16_1
 test_conv_text_to_binary-before-16_2
+test_conv_text_to_string
 #babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370

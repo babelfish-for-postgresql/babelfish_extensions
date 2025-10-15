@@ -498,3 +498,4 @@ ascii_function_before-17_7-or-16_11
 cast_string_to_binary-before-15_2
 cast_binary_to_string-before-14_21
 test_conv_text_to_binary-before-15_5
+test_conv_text_to_string-before-14_21
