@@ -2665,7 +2665,9 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 										   COERCE_EXPLICIT_CAST,
 										   location);
 			
-			pfree(varcharTypeName);
+			if (varcharTypeName)
+				pfree(varcharTypeName);
+
 			ReleaseSysCache(baseType);
 			
 			return result;
