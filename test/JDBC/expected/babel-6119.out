@@ -1,0 +1,67 @@
+create table babel_6119_test1(content nvarchar(max));
+go
+insert into babel_6119_test1 values(REPEAT('This is a test string. ', 10000))
+go
+~~ROW COUNT: 1~~
+
+
+create table babel_6119_test2(col1 nvarchar(max));
+go
+insert into babel_6119_test2 values(NULL);
+go
+~~ROW COUNT: 1~~
+
+
+
+
+CREATE PROCEDURE dbo.test_proc 
+AS BEGIN 
+DECLARE @p nvarchar(100), @q tinyint; 
+DECLARE @r nvarchar(30);
+SELECT @r = content FROM babel_6119_test1;
+SELECT 
+    @p = 'abc',
+    @r = COALESCE(col1, @r),
+    @q = 1 
+FROM  
+    babel_6119_test2; 
+END;  
+GO
+
+exec dbo.test_proc 
+go
+
+declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
+select @v1 = @v1, @v2 = @v2,@v3 = null;
+go
+
+
+CREATE TABLE babel_6119_t1 (ACC_ACCOUNT NVARCHAR(30) PRIMARY KEY,ACC_PROPERTY NVARCHAR(30)); 
+CREATE TABLE babel_6119_t2 (ORG_CODE NVARCHAR(30) PRIMARY KEY,ORG_NAME NVARCHAR(100));
+go
+-- Insert sample data
+INSERT INTO babel_6119_t1 VALUES ('1000013', 'ORG001'); 
+INSERT INTO babel_6119_t2 VALUES ('ORG001', 'Testing org1'); 
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+DECLARE @pAccount1 NVARCHAR(30),@pDateForward1 DATETIME = NULL, @pUser1 NVARCHAR(30) = NULL; 
+SET @pAccount1 = '1000013'; 
+SET @pDateForward1 = '2024-02-13 00:00:00'; 
+DECLARE @sUser1 NVARCHAR(30) = 'populateDWACCOUNTBALANCES', @bOverwrite TINYINT = 0; 
+SELECT  @bOverwrite = @bOverwrite, @sUser1 = @sUser1 FROM babel_6119_t1 a INNER JOIN babel_6119_t2 o ON o.ORG_CODE = a.ACC_PROPERTY WHERE a.ACC_ACCOUNT = @pAccount1; 
+go
+
+
+-- cleanup
+drop PROCEDURE dbo.test_proc 
+drop table babel_6119_test1
+drop table babel_6119_test2
+drop TABLE babel_6119_t1
+drop TABLE babel_6119_t2
+go
+
+

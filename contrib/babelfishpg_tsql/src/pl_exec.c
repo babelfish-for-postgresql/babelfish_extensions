@@ -10554,6 +10554,8 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	int32 valtypmod = -1;
 	PLtsql_datum *target;
 	MemoryContext oldcontext;
+	int16		resTypLen;
+	bool		resTypByVal;
 
 	PLtsql_execstate *estate = get_current_tsql_estate();
 	if (isNull)
@@ -10563,7 +10565,9 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	target = estate->datums[dno];
 
 	/* we will reuse exec_assign_value function here provided in pl_exec.c */
-	newdata = datumCopy(data, false, -1); // for tinyint should go by ref, so use valtype to call get_typlenbyval. 
+	// newdata = datumCopy(data, false, -1); // for tinyint should go by ref, so use valtype to call get_typlenbyval. 
+	get_typlenbyval(valtype, &resTypLen, &resTypByVal);
+	newdata = datumCopy(data, resTypByVal, resTypLen);
 	exec_assign_value(estate, target, newdata, isNull, valtype, valtypmod);
 
 	MemoryContextSwitchTo(oldcontext);
