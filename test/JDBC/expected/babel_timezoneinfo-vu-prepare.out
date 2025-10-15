@@ -1,11 +1,11 @@
 --Test case to print specific Timezone
-CREATE VIEW dbo.vw_Singapore
+CREATE VIEW dbo.vw_UTC
 AS
     SELECT 
         name AS timezone_name,
         current_utc_offset AS utc_offset
     FROM sys.time_zone_info
-    WHERE name = 'Singapore Standard Time'
+    WHERE name = 'UTC'
 GO
 --Test case to print IST
 CREATE VIEW v_test AS
