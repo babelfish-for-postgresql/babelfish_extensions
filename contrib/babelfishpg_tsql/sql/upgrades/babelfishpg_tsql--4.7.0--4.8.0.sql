@@ -3,6 +3,32 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+ -- Drops an object if it does not have any dependent objects.
+ -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+ -- Please have this be one of the first statements executed in this upgrade script. 
+ CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+ $$
+ DECLARE
+     error_msg text;
+     query1 text;
+     query2 text;
+ BEGIN
+ 
+     query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+     query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+ 
+     execute query1;
+     execute query2;
+ EXCEPTION
+     when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+         raise warning '%', error_msg;
+     when dependent_objects_still_exist then --if 'drop view' statement fails
+         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+         raise warning '%', error_msg;
+ end
+ $$
+ LANGUAGE plpgsql;
 
 -- Please add your SQLs here
 /*
@@ -112,6 +138,177 @@ BEGIN
     RETURN pg_catalog.ascii(CAST($1 AS sys.VARCHAR));
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    IF (SELECT count(*) FROM pg_proc as p where p.pronamespace = 'sys'::regnamespace::oid AND p.proname = 'round' AND p.pronargs = 2 AND p.proargtypes[0] = 'pg_catalog.numeric'::regtype AND p.proargtypes[1] = 'integer'::regtype AND p.prorettype = 'sys.decimal'::regtype) = 0 THEN
+        ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) 
+        RENAME TO bbf_numeric_round_deprecated_4_8_0;
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_round_deprecated_4_8_0');
+    END IF;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    IF (SELECT count(*) FROM pg_proc as p where p.pronamespace = 'sys'::regnamespace::oid AND p.proname = 'round' AND p.pronargs = 3 AND p.proargtypes[0] = 'pg_catalog.numeric'::regtype AND p.proargtypes[1] = 'integer'::regtype AND p.proargtypes[2] = 'integer'::regtype AND p.prorettype = 'sys.decimal'::regtype) = 0 THEN
+        ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) 
+        RENAME TO bbf_numeric_trunc_deprecated_4_8_0;
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_trunc_deprecated_4_8_0');
+    END IF;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER)
+RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_round' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER)
+RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_trunc' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number INTEGER, length INTEGER)
+RETURNS sys.INT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number INTEGER, length INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number INTEGER, length INTEGER, function INTEGER)
+RETURNS sys.INT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number INTEGER, length INTEGER, function INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.BIGINT, length INTEGER)
+RETURNS sys.BIGINT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.BIGINT, length INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.BIGINT, length INTEGER, function INTEGER)
+RETURNS sys.BIGINT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.BIGINT, length INTEGER, function INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.fixeddecimal, length INTEGER)
+RETURNS sys.money
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.fixeddecimal, length INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.fixeddecimal, length INTEGER, function INTEGER)
+RETURNS sys.money
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.fixeddecimal, length INTEGER, function INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.float, length INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.float, length INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.float, length INTEGER, function INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.float, length INTEGER, function INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.dm_os_sys_info 
+AS SELECT 
+  CAST(0 AS BIGINT) AS cpu_ticks,
+  CAST(ROUND(CAST(EXTRACT(EPOCH FROM NOW()) AS NUMERIC(38,0)) * 1000.0, 0) AS BIGINT) AS ms_ticks, 
+  CAST(0 AS INT) AS cpu_count,
+  CAST(0 AS INT) AS hyperthread_ratio,
+  CAST(0 AS BIGINT) AS physical_memory_kb,
+  CAST(0 AS BIGINT) AS virtual_memory_kb,
+  CAST(0 AS BIGINT) AS committed_kb,
+  CAST(0 AS BIGINT) AS committed_target_kb,
+  CAST(0 AS BIGINT) AS visible_target_kb,
+  CAST(0 AS INT) AS stack_size_in_bytes,
+  CAST(0 AS BIGINT) AS os_quantum,
+  CAST(0 AS INT) AS os_error_mode,
+  CAST(0 AS INT) AS os_priority_class,
+  CAST(0 AS INT) AS max_workers_count,
+  CAST(0 AS INT) AS scheduler_count,
+  CAST(0 AS INT) AS scheduler_total_count,
+  CAST(0 AS INT) AS deadlock_monitor_serial_number,
+  CAST(ROUND(CAST(EXTRACT(EPOCH FROM pg_postmaster_start_time()) AS NUMERIC(38,0)) * 1000.0, 0) AS BIGINT) AS sqlserver_start_time_ms_ticks, 
+  CAST(pg_postmaster_start_time() AS sys.DATETIME) AS sqlserver_start_time,
+  CAST(0 AS INT) AS affinity_type,
+  CAST(NULL AS sys.NVARCHAR(60)) AS affinity_type_desc,
+  CAST(0 AS BIGINT) AS process_kernel_time_ms,
+  CAST(0 AS BIGINT) AS process_user_time_ms,
+  CAST(0 AS INT) AS time_source,
+  CAST(NULL AS sys.NVARCHAR(60)) AS time_source_desc,
+  CAST(0 AS INT) AS virtual_machine_type,
+  CAST('NONE' AS sys.NVARCHAR(60)) AS virtual_machine_type_desc,
+  CAST(0 AS INT) AS softnuma_configuration,
+  CAST('OFF' AS sys.NVARCHAR(60)) AS softnuma_configuration_desc,
+  CAST(NULL AS sys.NVARCHAR(3072)) AS process_physical_affinity,
+  CAST(0 AS INT) AS sql_memory_model,
+  CAST(NULL AS sys.NVARCHAR(60)) AS sql_memory_model_desc,
+  CAST(0 AS INT) AS socket_count,
+  CAST(0 AS INT) AS cores_per_socket,
+  CAST(0 AS INT) AS numa_node_count,
+  CAST(0 AS INT) AS container_type,
+  CAST(NULL AS sys.NVARCHAR(60)) AS container_type_desc;
+GRANT SELECT ON sys.dm_os_sys_info TO PUBLIC;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

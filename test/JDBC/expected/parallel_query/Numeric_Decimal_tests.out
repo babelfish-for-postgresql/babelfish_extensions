@@ -397,7 +397,7 @@ SELECT CAST(CAST(123.456 AS NUMERIC(6,3)) AS NUMERIC(5,2)) AS result_truncated,
 GO
 ~~START~~
 numeric#!#numeric
-123.46#!#123.46
+123.46#!#123.460
 ~~END~~
 
 
@@ -763,7 +763,7 @@ ROUND(@num, 2) AS result_rounded;
 GO
 ~~START~~
 numeric#!#numeric
-123.46#!#123.46000000
+123.46#!#123.460
 ~~END~~
 
 
@@ -2452,28 +2452,28 @@ SELECT ROUND(CAST(123.45 AS NUMERIC(5,2)), 0) AS result;     -- Positive NUMERIC
 GO
 ~~START~~
 numeric
-123
+123.00
 ~~END~~
 
 SELECT ROUND(CAST(-123.45 AS NUMERIC(5,2)), 0) AS result;    -- Negative NUMERIC 0 decimals
 GO
 ~~START~~
 numeric
--123
+-123.00
 ~~END~~
 
 SELECT ROUND(CAST(123.45 AS NUMERIC(5,2)), 1) AS result;     -- Positive NUMERIC 1 decimal
 GO
 ~~START~~
 numeric
-123.5
+123.50
 ~~END~~
 
 SELECT ROUND(CAST(-123.45 AS NUMERIC(5,2)), 1) AS result;    -- Negative NUMERIC 1 decimal
 GO
 ~~START~~
 numeric
--123.5
+-123.50
 ~~END~~
 
 SELECT ROUND(CAST(123.45 AS NUMERIC(5,2)), 2) AS result;     -- Positive NUMERIC 2 decimals
@@ -2487,42 +2487,42 @@ SELECT ROUND(CAST(123.45 AS NUMERIC(5,2)), 3) AS result;     -- Positive NUMERIC
 GO
 ~~START~~
 numeric
-123.450
+123.45
 ~~END~~
 
 SELECT ROUND(CAST(123.45 AS DECIMAL(5,2)), 1, 1) AS result;  -- Positive DECIMAL with truncate
 GO
 ~~START~~
 numeric
-123.4
+123.40
 ~~END~~
 
 SELECT ROUND(CAST(-123.45 AS DECIMAL(5,2)), 1, 1) AS result; -- Negative DECIMAL with truncate
 GO
 ~~START~~
 numeric
--123.4
+-123.40
 ~~END~~
 
 SELECT ROUND(CAST(123.45 AS NUMERIC(5,2)), -1) AS result;    -- Positive NUMERIC negative digits (round to tens)
 GO
 ~~START~~
 numeric
-120
+120.00
 ~~END~~
 
 SELECT ROUND(CAST(123.45 AS NUMERIC(5,2)), -2) AS result;    -- Positive NUMERIC negative digits (round to hundreds)
 GO
 ~~START~~
 numeric
-100
+100.00
 ~~END~~
 
 SELECT ROUND(CAST(1234.56 AS NUMERIC(6,2)), -3) AS result;   -- Positive NUMERIC negative digits (round to thousands)
 GO
 ~~START~~
 numeric
-1000
+1000.00
 ~~END~~
 
 SELECT ROUND(CAST(NULL AS NUMERIC(5,2)), 1) AS result;       -- NULL value
@@ -2534,51 +2534,50 @@ numeric
 
 SELECT ROUND(CAST(9999999999999999999999999999.9999999999 AS NUMERIC(38,10)), 5) AS result;  -- Maximum precision
 GO
-~~START~~
-numeric
-10000000000000000000000000000.00000
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 SELECT ROUND(CAST(123.456 AS NUMERIC(6,3)), 2) AS result;    -- Round up
 GO
 ~~START~~
 numeric
-123.46
+123.460
 ~~END~~
 
 SELECT ROUND(CAST(123.454 AS NUMERIC(6,3)), 2) AS result;    -- Round down
 GO
 ~~START~~
 numeric
-123.45
+123.450
 ~~END~~
 
 SELECT ROUND(CAST(123.455 AS NUMERIC(6,3)), 2) AS result;    -- Round half (banker's rounding)
 GO
 ~~START~~
 numeric
-123.46
+123.460
 ~~END~~
 
 SELECT ROUND(CAST(-123.456 AS NUMERIC(6,3)), 2) AS result;   -- Negative round up
 GO
 ~~START~~
 numeric
--123.46
+-123.460
 ~~END~~
 
 SELECT ROUND(CAST(-123.454 AS NUMERIC(6,3)), 2) AS result;   -- Negative round down
 GO
 ~~START~~
 numeric
--123.45
+-123.450
 ~~END~~
 
 SELECT ROUND(CAST(-123.455 AS NUMERIC(6,3)), 2) AS result;   -- Negative round half (banker's rounding)
 GO
 ~~START~~
 numeric
--123.46
+-123.460
 ~~END~~
 
 SELECT ROUND(CAST(123.45 AS NUMERIC(5,2)), 2, 0) AS result;  -- Explicit round (default)
@@ -2599,7 +2598,7 @@ SELECT ROUND(CAST(555.55 AS NUMERIC(5,2)), -2, 1) AS result; -- Truncate to hund
 GO
 ~~START~~
 numeric
-500
+500.00
 ~~END~~
 
 
@@ -8536,7 +8535,7 @@ Rounding Issues
 
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric
-123.46#!#123.46#!#123.46#!#123.45
+123.46#!#123.46#!#123.460#!#123.450
 ~~END~~
 
 
@@ -8666,7 +8665,7 @@ Negative Scale Tests
 
 ~~START~~
 numeric#!#numeric#!#numeric
-1230#!#1200#!#1000
+1230.00000#!#1200.00000#!#1000.00000
 ~~END~~
 
 
