@@ -1,17 +1,25 @@
 --Test case to print specific Timezone
-CREATE VIEW dbo.vw_Singapore
+CREATE VIEW dbo.vw_UTC
 AS
     SELECT 
         name AS timezone_name,
         current_utc_offset AS utc_offset
     FROM sys.time_zone_info
-    WHERE name = 'Singapore Standard Time'
+    WHERE name = 'UTC'
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+
 --Test case to print IST
 CREATE VIEW v_test AS
 SELECT name FROM sys.time_zone_info 
 WHERE name = 'India Standard Time';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+
 --Function that returns UTC zones with their offset
 CREATE FUNCTION dbo.fn_GetUTCZonesWithOffset()
 RETURNS TABLE
@@ -32,12 +40,20 @@ RETURN
     WHERE name LIKE '%UTC%'
 );
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+
 --Function to count the timezones
 CREATE VIEW dbo.vw_TimeZoneCount
 AS
     SELECT COUNT(*) as total_time_zones
     FROM sys.time_zone_info;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
+
 --Function to check if there exists a timezone
 CREATE FUNCTION test_timezone_offset
 (

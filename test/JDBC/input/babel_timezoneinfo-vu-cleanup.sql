@@ -1,4 +1,4 @@
-DROP VIEW IF EXISTS dbo.vw_Singapore;
+DROP VIEW IF EXISTS dbo.vw_UTC;
 GO
 
 DROP VIEW v_test;
