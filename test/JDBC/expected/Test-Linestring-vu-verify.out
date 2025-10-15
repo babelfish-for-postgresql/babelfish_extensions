@@ -522,6 +522,28 @@ float
 ~~END~~
 
 
+SELECT geometry::STGeomFromText(0x504F494E542831203129, 4326);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The input well-known text (WKT) is not valid)~~
+
+
+SELECT geometry::STGeomFromText(0x50004F0049004E0054002800300020003, 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The input well-known text (WKT) is not valid)~~
+
+
+SELECT geometry::STGeomFromText(0x50004F0049004E00540028003000200030002900, 0);
+GO
+~~START~~
+geometry
+00000000010C00000000000000000000000000000000
+~~END~~
+
+
 Select * from GEOSPATIALLINEGEOM_INVALID_dt;
 GO
 ~~START~~

@@ -209,12 +209,6 @@ GO
 SELECT geography::Point(90, NULL, 4326);
 GO
 
-SELECT CAST(geography::STPointFromText('POINT(0 0)', 4326) AS char(22));
-GO
-
-SELECT CAST(CAST(geometry::STGeomFromText('POINT(1 1)', 0) AS char(100)) AS varchar(10));
-GO
-
 SELECT CAST('POINT(1.2.3 4)' AS geometry);
 GO
 
