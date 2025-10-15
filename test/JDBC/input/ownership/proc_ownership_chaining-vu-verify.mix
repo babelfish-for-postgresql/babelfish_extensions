@@ -13,6 +13,9 @@ GO
 EXEC p6030_8_3b;
 GO
 
+EXEC p6030_8_3c;
+GO
+
 -- CASE 8.4: Function referring table (success: function->table chain)
 SELECT * FROM f6030_8_4();
 GO
