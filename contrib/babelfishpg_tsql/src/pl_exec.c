@@ -10548,29 +10548,31 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 {
 	int dno = PG_GETARG_INT32(0);
 	Datum data = PG_GETARG_DATUM(1);
-	Datum newdata;
 	Oid valtype = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	bool isNull = PG_ARGISNULL(1);
 	int32 valtypmod = -1;
 	PLtsql_datum *target;
 	MemoryContext oldcontext;
-	int16		resTypLen;
+	int16		valTypLen;
 	bool		resTypByVal;
 
 	PLtsql_execstate *estate = get_current_tsql_estate();
+	Assert(estate != NULL);
+
 	if (isNull)
 		PG_RETURN_NULL();
-	Assert(estate != NULL);
+
 	oldcontext = MemoryContextSwitchTo(estate->datum_context);
 	target = estate->datums[dno];
 
-	/* we will reuse exec_assign_value function here provided in pl_exec.c */
-	// newdata = datumCopy(data, false, -1); // for tinyint should go by ref, so use valtype to call get_typlenbyval. 
-	get_typlenbyval(valtype, &resTypLen, &resTypByVal);
-	newdata = datumCopy(data, resTypByVal, resTypLen);
-	exec_assign_value(estate, target, newdata, isNull, valtype, valtypmod);
+	/* Fetch the typlen and typbyval info for the arg type. */
+	get_typlenbyval(valtype, &valTypLen, &resTypByVal);
+	/* Copy the datum. */
+	data = datumCopy(data, resTypByVal, valTypLen);
+	/* We will reuse exec_assign_value function here provided in pl_exec.c */
+	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
 
 	MemoryContextSwitchTo(oldcontext);
 
-	PG_RETURN_DATUM(newdata);
+	PG_RETURN_DATUM(data);
 }
