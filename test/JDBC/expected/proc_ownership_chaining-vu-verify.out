@@ -20,10 +20,13 @@ int#!#int
 -- CASE 8.3: Procedure calling another procedure (success: nested procedure chain)
 EXEC p6030_8_3b;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+~~END~~
 
-~~ERROR (Message: permission denied for procedure p6030_8_3a)~~
 
+EXEC p6030_8_3c;
+GO
 
 -- CASE 8.4: Function referring table (success: function->table chain)
 SELECT * FROM f6030_8_4();
