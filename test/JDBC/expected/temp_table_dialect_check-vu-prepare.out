@@ -1,0 +1,44 @@
+-- tsql
+CREATE TABLE fakeGoodsInfo(Description ntext)
+GO
+
+CREATE VIEW enr_view AS
+    SELECT
+        CASE
+            WHEN relname LIKE '#pg_toast%' AND relname LIKE '%index%' THEN '#pg_toast_#oid_masked#_index'
+            WHEN relname LIKE '#pg_toast%' THEN '#pg_toast_#oid_masked#'
+            ELSE relname
+        END AS relname
+    FROM sys.babelfish_get_enr_list()
+	ORDER BY relname
+GO
+
+-- insert a untoasted value
+INSERT INTO fakeGoodsInfo(Description) VALUES (REPLICATE('A', 999));
+GO
+~~ROW COUNT: 1~~
+
+-- verify that it is untoasted
+SELECT pg_column_compression(Description), pg_column_compression(Description) FROM fakeGoodsInfo;
+GO
+~~START~~
+text#!#text
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- insert a toastable value
+INSERT INTO fakeGoodsInfo(Description) VALUES (REPLICATE(newid(), 5000000));
+GO
+~~ROW COUNT: 1~~
+
+-- verify that it is toasted
+SELECT pg_column_compression(Description), pg_column_compression(Description) FROM fakeGoodsInfo;
+GO
+~~START~~
+text#!#text
+<NULL>#!#<NULL>
+pglz#!#pglz
+~~END~~
+
+-- terminate-tsql-conn
