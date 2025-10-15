@@ -10548,6 +10548,7 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 {
 	int dno = PG_GETARG_INT32(0);
 	Datum data = PG_GETARG_DATUM(1);
+	Datum newdata;
 	Oid valtype = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	bool isNull = PG_ARGISNULL(1);
 	int32 valtypmod = -1;
@@ -10555,17 +10556,17 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 
 	PLtsql_execstate *estate = get_current_tsql_estate();
+	if (isNull)
+		PG_RETURN_NULL();
 	Assert(estate != NULL);
 	oldcontext = MemoryContextSwitchTo(estate->datum_context);
 	target = estate->datums[dno];
 
 	/* we will reuse exec_assign_value function here provided in pl_exec.c */
-	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
+	newdata = datumCopy(data, false, -1); // for tinyint should go by ref, so use valtype to call get_typlenbyval. 
+	exec_assign_value(estate, target, newdata, isNull, valtype, valtypmod);
 
 	MemoryContextSwitchTo(oldcontext);
 
-	if (isNull)
-		PG_RETURN_NULL();
-
-	PG_RETURN_DATUM(data);
+	PG_RETURN_DATUM(newdata);
 }
