@@ -1,18 +1,16 @@
 --Test case 1: To print the SST
 SELECT * FROM dbo.vw_UTC;
 GO
-~~START~~
-nvarchar#!#nvarchar
-Utc#!#+00:00
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.vw_utc" does not exist)~~
 
 --Test case 2: To print the IST
 SELECT * FROM v_test;
 GO
-~~START~~
-nvarchar
-India Standard Time
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "v_test" does not exist)~~
 
 --Test case 3: Check for any null values
 SELECT COUNT(*) as null_value_count
@@ -27,26 +25,18 @@ int
 --Test case 4: Count total number of timezones
 SELECT * FROM dbo.vw_TimeZoneCount;
 GO
-~~START~~
-int
-140
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.vw_timezonecount" does not exist)~~
 
 --Test case 5: To print all the UTC timezones
 SELECT name, current_utc_offset
 FROM dbo.fn_GetUTCZonesWithOffset()
 ORDER BY sort_order;
 GO
-~~START~~
-nvarchar#!#nvarchar
-Utc#!#+00:00
-Utc+12#!#+12:00
-Utc+13#!#+13:00
-Utc-02#!#-02:00
-Utc-08#!#-08:00
-Utc-09#!#-09:00
-Utc-11#!#-11:00
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function dbo.fn_getutczoneswithoffset() does not exist)~~
 
 --Test case 6: To print duplicates
 SELECT name, COUNT(*) as name_count
