@@ -44,9 +44,6 @@ ignore#!#cast_string_to_binary-before-17_7-vu-prepare
 ignore#!#cast_string_to_binary-before-17_7-vu-verify
 ignore#!#cast_string_to_binary-before-17_7-vu-cleanup
 
-ignore#!#cast_binary_to_string-before-13_6-vu-prepare
-ignore#!#cast_binary_to_string-before-13_6-vu-verify
-ignore#!#cast_binary_to_string-before-13_6-vu-cleanup
 ignore#!#cast_binary_to_string-before-14_5-vu-prepare
 ignore#!#cast_binary_to_string-before-14_5-vu-verify
 ignore#!#cast_binary_to_string-before-14_5-vu-cleanup
@@ -78,6 +75,9 @@ ignore#!#cast_binary_to_string-before-17_7-vu-prepare
 ignore#!#cast_binary_to_string-before-17_7-vu-verify
 ignore#!#cast_binary_to_string-before-17_7-vu-cleanup
 
+ignore#!#test_conv_text_to_binary-before-14_5-vu-prepare
+ignore#!#test_conv_text_to_binary-before-14_5-vu-verify
+ignore#!#test_conv_text_to_binary-before-14_5-vu-cleanup
 ignore#!#test_conv_text_to_binary-before-14_6-vu-prepare
 ignore#!#test_conv_text_to_binary-before-14_6-vu-verify
 ignore#!#test_conv_text_to_binary-before-14_6-vu-cleanup
