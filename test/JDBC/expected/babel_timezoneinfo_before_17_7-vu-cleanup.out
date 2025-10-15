@@ -3,6 +3,10 @@ GO
 
 DROP VIEW v_test;
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "v_test" does not exist)~~
+
 
 IF OBJECT_ID('dbo.fn_GetUTCZonesWithOffset') IS NOT NULL
     DROP FUNCTION dbo.fn_GetUTCZonesWithOffset;
