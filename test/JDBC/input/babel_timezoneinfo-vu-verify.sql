@@ -1,5 +1,5 @@
 --Test case 1: To print the SST
-SELECT * FROM dbo.vw_Singapore;
+SELECT * FROM dbo.vw_UTC;
 GO
 --Test case 2: To print the IST
 SELECT * FROM v_test;
@@ -43,8 +43,13 @@ SELECT dbo.validate_utc_offset('');
 GO
 SELECT dbo.validate_utc_offset('+02:00');
 GO
+--Test to loose test to validate the count of timezone name
+SELECT CASE WHEN COUNT(name) >= 135 THEN 1 ELSE 0 END AS test FROM sys.time_zone_info;
+GO
 --Test case 11: To verify if there exists a timezone :The following timezone values have been commented out due to: Expected DST and non-DST offset values may change due to future timezone policy updates and to prevent potential flaky test cases
 SELECT dbo.test_timezone_offset('Utc-11', '-11:00', '-11:00') AS test_result_utc;
+GO
+SELECT dbo.test_timezone_offset('Utc', '+00:00', '+00:00') AS test_result_utc;
 GO
 SELECT dbo.test_timezone_offset('Utc-09', '-09:00', '-09:00') AS test_result_utc;
 GO
