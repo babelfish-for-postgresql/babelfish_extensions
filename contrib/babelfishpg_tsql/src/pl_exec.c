@@ -10548,6 +10548,7 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 {
 	int dno = PG_GETARG_INT32(0);
 	Datum data = PG_GETARG_DATUM(1);
+	Datum newdata;
 	Oid valtype = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	bool isNull = PG_ARGISNULL(1);
 	int32 valtypmod = -1;
@@ -10568,11 +10569,11 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	/* Fetch the typlen and typbyval info for the arg type. */
 	get_typlenbyval(valtype, &valTypLen, &resTypByVal);
 	/* Copy the datum. */
-	data = datumCopy(data, resTypByVal, valTypLen);
+	newdata = datumCopy(data, resTypByVal, valTypLen);
 	/* We will reuse exec_assign_value function here provided in pl_exec.c */
-	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
+	exec_assign_value(estate, target, newdata, isNull, valtype, valtypmod);
 
 	MemoryContextSwitchTo(oldcontext);
 
-	PG_RETURN_DATUM(data);
+	PG_RETURN_DATUM(newdata);
 }
