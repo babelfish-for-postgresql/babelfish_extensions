@@ -35,7 +35,9 @@ POLYHEDRALSURFACE     { yyerror(NULL, "Invalid Geometry");  return POLYHEDRALSUR
 TRIANGLE              { yyerror(NULL, "Invalid Geometry");  return TRIANGLE_TOK; }
 TIN                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
 
-[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)? {
+[+-]?[0-9]*\.[0-9]*\.[0-9]* { yyerror(NULL, "Invalid number format"); }
+
+[+-]?([0-9]+\.[0-9]+|[0-9]+|\.[0-9]+)([eE][-+]?[0-9]+)? {
     double val = atof(yytext);
     yylval.val = val;
     return DOUBLE_TOK;
@@ -58,7 +60,7 @@ ZM         { return ZM_TOK; }
 
 [ \t\n\r]+    { /* Ignore whitespace */ }
 
-.           { return yytext[0]; }
+.           { yyerror(NULL, "Invalid geometry"); }
 
 %%
 
