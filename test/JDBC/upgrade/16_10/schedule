@@ -612,7 +612,7 @@ test_conv_float_to_varchar_char
 BABEL-5467
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 test_constraint_like
-round_return_type_test
+round_return_type_test-before-16_11-or-17_7
 alter-view
 test_conv_int_to_varbinary_binary
 test_like_index

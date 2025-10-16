@@ -626,7 +626,7 @@ test_constraint_like
 test_like_index
 unpivot
 forjson-escape
-round_return_type_test
+round_return_type_test-before-16_11-or-17_7
 alter-view
 test_conv_int_to_varbinary_binary
 babel_varbinary
