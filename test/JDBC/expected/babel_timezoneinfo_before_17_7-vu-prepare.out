@@ -54,7 +54,7 @@ GO
 
 ~~ERROR (Message: relation "sys.time_zone_info" does not exist)~~
 
---This function validates whether a specific timezone has the expected UTC offsets during both DST and non-DST periods
+-- This function validates whether a specific timezone has the expected UTC offsets during both DST and non-DST periods
 CREATE FUNCTION test_timezone_offset
 (
     @timezone nvarchar(128),
@@ -79,7 +79,6 @@ BEGIN
     END
 END;
 GO
-
 --Test case to validate if timezone exists
 CREATE PROCEDURE sp_ValidateTimeZoneData
     @timezone NVARCHAR(128)   
