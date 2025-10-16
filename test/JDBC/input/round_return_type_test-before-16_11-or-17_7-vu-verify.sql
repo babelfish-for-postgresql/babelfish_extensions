@@ -2,20 +2,9 @@
 INSERT INTO TestRound (numeric_data, int_data, bigint_data, decimal_data, float_data, money_data) 
 VALUES (3.14159, 3, 3, 3.14159, 3.14159, 3.14);
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM TestRound;
 GO
-~~START~~
-numeric#!#int#!#bigint#!#numeric#!#float#!#money#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
-3.1416#!#3#!#3#!#3.1416#!#3.14159#!#3.1400#!#3.00000000#!#3.14000000#!#3.00000000#!#3.14000000#!#3.00000000#!#3.00000000
-2.7183#!#3#!#3#!#2.7183#!#2.71828#!#2.7200#!#3.00000000#!#2.72000000#!#3.00000000#!#2.72000000#!#3.00000000#!#3.00000000
-1.4142#!#1#!#1#!#1.4142#!#1.41421#!#1.4100#!#1.00000000#!#1.41000000#!#1.00000000#!#1.41000000#!#1.00000000#!#1.00000000
-10.0000#!#10#!#10#!#10.0000#!#9.99999#!#10.0000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000
-3.1416#!#3#!#3#!#3.1416#!#3.14159#!#3.1400#!#3.00000000#!#3.14000000#!#3.00000000#!#3.14000000#!#3.00000000#!#3.00000000
-~~END~~
-
 
 -- TEST CASE 2: Testing ROUND with different data types and decimal places
 SELECT 
@@ -26,11 +15,6 @@ SELECT
     ROUND(CAST(3.14159 AS MONEY), 2) as money_round_2,
     ROUND(CAST(3.14159 AS NUMERIC(10,5)), 2) as numeric_round_2;
 GO
-~~START~~
-numeric#!#numeric#!#numeric#!#int#!#money#!#numeric
-3.00000#!#3.14000#!#3.14000#!#3#!#3.1400#!#3.14000
-~~END~~
-
 
 -- TEST CASE 3: Testing negative decimal places
 SELECT 
@@ -38,11 +22,6 @@ SELECT
     ROUND(1234.5678, -2) as round_hundreds,
     ROUND(1234.5678, -3) as round_thousands;
 GO
-~~START~~
-numeric#!#numeric#!#numeric
-1230.0000#!#1200.0000#!#1000.0000
-~~END~~
-
 
 -- TEST CASE 4: Testing rounding with .5 cases for different types
 SELECT 
@@ -51,11 +30,6 @@ SELECT
     ROUND(CAST(3.5 AS MONEY), 0) as round_up_35_money,
     ROUND(CAST(3.5 AS NUMERIC(10,4)), 0) as round_up_35_numeric;
 GO
-~~START~~
-numeric#!#numeric#!#money#!#numeric
-4.0#!#4.0000#!#4.0000#!#4.0000
-~~END~~
-
 
 -- TEST CASE 5: Testing NULL values for different types
 SELECT 
@@ -64,11 +38,6 @@ SELECT
     ROUND(CAST(NULL AS MONEY), 2) as null_round_money,
     ROUND(CAST(NULL AS NUMERIC(10,4)), 2) as null_round_numeric;
 GO
-~~START~~
-float#!#numeric#!#money#!#numeric
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-~~END~~
-
 
 -- TEST CASE 6: Testing extreme values
 SELECT 
@@ -76,62 +45,29 @@ SELECT
     ROUND(0.000000001, 8) as small_number,
     ROUND(-9999999.99999, 2) as large_negative;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
-
 
 -- TEST CASE 7: Testing the RoundFloat function
 SELECT 
     dbo.RoundFloat(3.14159, 2) as pi_rounded,
     dbo.RoundFloat(2.71828, 3) as e_rounded;
 GO
-~~START~~
-float#!#float
-3.14#!#2.718
-~~END~~
-
 
 -- TEST CASE 8: Testing the RoundDecimal function
 SELECT 
     dbo.RoundDecimal(3.14159, 2) as pi_rounded,
     dbo.RoundDecimal(2.71828, 3) as e_rounded;
 GO
-~~START~~
-numeric#!#numeric
-3.140000#!#2.718000
-~~END~~
-
 
 -- TEST CASE 9: Testing views
 SELECT * FROM dbo.RoundDemoView;
 GO
-~~START~~
-float#!#numeric#!#numeric
-3.14#!#3.140000#!#3.14
-~~END~~
-
 
 SELECT * FROM dbo.TestRoundView;
 GO
-~~START~~
-numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
-3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000
-3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000
-1.00000000#!#1.00000000#!#1.00000000#!#1.00000000#!#1.00000000#!#1.00000000#!#1.00000000#!#1.00000000#!#1.00000000#!#1.00000000#!#1.00000000#!#1.00000000
-10.00000000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000#!#10.00000000
-3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000#!#3.00000000
-~~END~~
-
 
 -- TEST CASE 10: Testing RoundMultipleTypes function
 SELECT * FROM dbo.RoundMultipleTypes(3.14159, 3.14159, 3, 2);
 GO
-~~START~~
-numeric#!#numeric#!#numeric
-3.14000000#!#3.14000000#!#3.00000000
-~~END~~
-
 
 -- TEST CASE 11: Testing with expressions
 SELECT 
@@ -139,11 +75,6 @@ SELECT
     ROUND(SQRT(2), 4) as sqrt_rounded,
     ROUND(PI(), 4) as pi_rounded;
 GO
-~~START~~
-numeric#!#float#!#float
-0.330000#!#1.4142#!#3.1416
-~~END~~
-
 
 -- TEST CASE 12: Testing with different numeric types
 DECLARE @float_val FLOAT = 3.14159;
@@ -158,11 +89,6 @@ SELECT
     ROUND(@numeric_val, 2) as numeric_round,
     ROUND(CAST(@bigint_val AS FLOAT), 2) as bigint_round;
 GO
-~~START~~
-float#!#numeric#!#money#!#numeric#!#float
-3.14#!#3.14000#!#3.1400#!#3.14000#!#3.0
-~~END~~
-
 
 -- TEST CASE 13: Testing edge cases for all types
 SELECT 
@@ -171,11 +97,6 @@ SELECT
     ROUND(CAST(0.0 AS MONEY), 2) as zero_round_money,
     ROUND(CAST(0.0 AS DECIMAL(10,4)), 2) as zero_round_decimal;
 GO
-~~START~~
-numeric#!#numeric#!#money#!#numeric
-0.0000#!#0.0#!#0.0000#!#0.0000
-~~END~~
-
 
 -- TEST CASE 14: Testing with computed columns
 SELECT 
@@ -188,15 +109,6 @@ SELECT
     round_int_2
 FROM TestRound;
 GO
-~~START~~
-numeric#!#numeric#!#float#!#money#!#numeric#!#numeric#!#numeric
-3.1416#!#3.1416#!#3.14159#!#3.1400#!#3.14000000#!#3.14000000#!#3.00000000
-2.7183#!#2.7183#!#2.71828#!#2.7200#!#2.72000000#!#2.72000000#!#3.00000000
-1.4142#!#1.4142#!#1.41421#!#1.4100#!#1.41000000#!#1.41000000#!#1.00000000
-10.0000#!#10.0000#!#9.99999#!#10.0000#!#10.00000000#!#10.00000000#!#10.00000000
-3.1416#!#3.1416#!#3.14159#!#3.1400#!#3.14000000#!#3.14000000#!#3.00000000
-~~END~~
-
 
 -- TEST CASE 15: Testing type conversion with ROUND
 SELECT 
@@ -205,8 +117,103 @@ SELECT
     ROUND(CAST('3.14159' AS MONEY), 2) as string_to_money_round,
     ROUND(CAST('3.14159' AS NUMERIC(10,5)), 2) as string_to_numeric_round;
 GO
-~~START~~
-float#!#numeric#!#money#!#numeric
-3.14#!#3.14000#!#3.1400#!#3.14000
-~~END~~
+
+-- TEST: Testing unsupported data types from sql server documentation
+select round(cast ('abc' as binary), 1)
+go
+
+select round(cast ('abc' as varbinary), 1)
+go
+
+select round(cast ('abc' as char(3)), 1)
+go
+
+select round(cast ('abc' as nchar(3)), 1)
+go
+
+select round(cast ('abc' as varchar(3)), 1)
+go
+
+select round(cast ('abc' as nvarchar(3)), 1)
+go
+
+select round(cast ('11-11-2025' as datetime), 1)
+go
+
+select round(cast ('11-11-2025' as smalldatetime), 1)
+go
+
+select round(cast ('11-11-2025' as date), 1)
+go
+
+select round(cast ('11:30:30' as time), 1)
+go
+
+select round(cast ('11-11-2025' as datetimeoffset), 1)
+go
+
+select round(cast ('11-11-2025' as datetime2), 1)
+go
+
+select round(cast (2.51 as decimal), 1)
+go
+
+select round(cast (1.67 as numeric), 1)
+go
+
+select round(cast (1.77 as float), 1)
+go
+
+select round(cast (1.77 as real), 1)
+go
+
+select round(cast (1.77 as bigint), 1)
+go
+
+select round(cast (2 as int), 1)
+go
+
+select round(cast (2 as smallint), 1)
+go
+
+select round(cast (2 as tinyint), 1)
+go
+
+select round(cast (5 as money), 1)
+go
+
+select round(cast (5 as smallmoney), 1)
+go
+
+select round(cast (0 as bit), 1)
+go
+
+select round(NEWID(), 1)
+go
+
+select round(cast ('abc' as image), 1)
+go
+
+select round(cast ('abc' as ntext), 1)
+go
+
+select round(cast ('abc' as text), 1)
+go
+
+select round(cast ('abc' as sql_variant), 1)
+go
+
+select round(cast ('<body><fruit/></body>' as xml), 1)
+go
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+select round(@inputString, 1)
+go
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+select round(@inputString, 1)
+go
+
+select round(0.0, -1)
+go
 

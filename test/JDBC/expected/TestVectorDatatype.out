@@ -113,7 +113,7 @@ SELECT round(cast(vector_norm('[1,1]') as numeric), 5);
 go
 ~~START~~
 numeric
-1.00000
+1
 ~~END~~
 
 
@@ -1685,7 +1685,7 @@ SELECT round(cast(vector_norm('[1,1]') as numeric), 5);
 go
 ~~START~~
 numeric
-1.00000
+1
 ~~END~~
 
 
