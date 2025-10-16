@@ -38,7 +38,7 @@ AS
     SELECT COUNT(*) as total_time_zones
     FROM sys.time_zone_info;
 GO
---Function to check if there exists a timezone
+-- This function validates whether a specific timezone has the expected UTC offsets during both DST and non-DST periods
 CREATE FUNCTION test_timezone_offset
 (
     @timezone nvarchar(128),
@@ -63,7 +63,6 @@ BEGIN
     END
 END;
 GO
-
 --Test case to validate if timezone exists
 CREATE PROCEDURE sp_ValidateTimeZoneData
     @timezone NVARCHAR(128)   

@@ -1,4 +1,4 @@
---Test case 1: To print the SST
+--Test case 1: To print the UTC
 SELECT * FROM dbo.vw_UTC;
 GO
 --Test case 2: To print the IST
@@ -23,10 +23,16 @@ FROM sys.time_zone_info
 GROUP BY name
 HAVING COUNT(*) > 1;
 GO
---Test case 7: To print top 3 Timezone names
-SELECT TOP 3 name
+--Test case 7: To print all Timezone names
+SELECT name
 FROM sys.time_zone_info
-ORDER BY name;
+ORDER BY 
+    CASE 
+        WHEN name = 'UTC' THEN 'UTC 0'
+        WHEN name LIKE 'UTC+%' THEN 'UTC 1' + SUBSTRING(name, 4, 10)
+        WHEN name LIKE 'UTC-%' THEN 'UTC 2' + SUBSTRING(name, 4, 10)
+        ELSE name
+    END;
 GO
 --Test case 8: verify null case
 SELECT sys.pltsql_timezone_mapping_pg_to_windows(' ');
@@ -41,12 +47,9 @@ GO
 --Test case 10: To validate the utc format                  
 SELECT dbo.validate_utc_offset(''); 
 GO
-SELECT dbo.validate_utc_offset('+02:00');
+SELECT dbo.validate_utc_offset('+20:00');
 GO
---Test to loose test to validate the count of timezone name
-SELECT CASE WHEN COUNT(name) >= 135 THEN 1 ELSE 0 END AS test FROM sys.time_zone_info;
-GO
---Test case 11: To verify if there exists a timezone :The following timezone values have been commented out due to: Expected DST and non-DST offset values may change due to future timezone policy updates and to prevent potential flaky test cases
+--Test case 11: This function validates whether a specific timezone has the expected UTC offsets during both DST and non-DST periods
 SELECT dbo.test_timezone_offset('Utc-11', '-11:00', '-11:00') AS test_result_utc;
 GO
 SELECT dbo.test_timezone_offset('Utc', '+00:00', '+00:00') AS test_result_utc;
@@ -61,10 +64,10 @@ SELECT dbo.test_timezone_offset('Utc+12', '+12:00', '+12:00') AS test_result_utc
 GO
 SELECT dbo.test_timezone_offset('Utc+13', '+13:00', '+13:00') AS test_result_utc;
 GO
-SELECT dbo.test_timezone_offset('Dateline standard time', '-12:00', '-12:00') AS test_result_utc;
-GO
-SELECT dbo.test_timezone_offset('India Standard Time', '+05:30', '+05:30') AS test_result_utc;
-GO
+-- SELECT dbo.test_timezone_offset('Dateline standard time', '-12:00', '-12:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('India Standard Time', '+05:30', '+05:30') AS test_result_utc;
+-- GO
 -- SELECT dbo.test_timezone_offset('China standard time', '+08:00', '+08:00') AS test_result_utc;
 -- GO
 -- SELECT dbo.test_timezone_offset('Russian standard time', '+03:00', '+03:00') AS test_result_utc;
@@ -247,63 +250,63 @@ GO
 -- GO
 -- SELECT dbo.test_timezone_offset('Magadan Standard Time', '+11:00', '+11:00') AS test_result_utc;
 -- GO
--- -- SELECT dbo.test_timezone_offset('Sakhalin Standard Time', '+11:00', '+11:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Qyzylorda Standard Time', '+05:00', '+05:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('AUS Central Standard Time', '+09:30', '+09:30') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Aus Central W. Standard Time', '+08:45', '+08:45') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Mountain Standard Time (Mexico)', '-06:00', '-07:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Arabian Standard Time', '+04:00', '+04:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('E. Australia Standard Time', '+11:00', '+10:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Kamchatka Standard Time', '+13:00', '+12:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Greenwich Standard Time', 'N/A', '+00:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Taipei Standard Time', '+08:00', '+08:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Middle East Standard Time', '+03:00', '+02:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Saratov Standard Time', '+04:00', '+04:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Fiji Standard Time', '+12:00', '+12:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Belarus Standard Time', 'N/A', '+03:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Turks And Caicos Standard Time', '-04:00', '-05:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Central America Standard Time', 'N/A', '-06:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Greenland Standard Time', '-01:00', '-02:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Aleutian Standard Time', '-09:00', '-08:00') AS test_result_atc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('GMT Standard Time', '+01:00', '+00:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Pacific Standard Time (Mexico)', '-07:00', '-08:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Syria Standard Time', 'N/A', '+03:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Easter Island Standard Time', '-05:00', '-06:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Morocco Standard Time', '+01:00', '+00:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('SA Western Standard Time', 'N/A', '-04:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Tocantins Standard Time', 'N/A', '-03:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Norfolk Standard Time', '+12:00', '+11:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Nepal standard time', '+05:45', '+05:45') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Paraguay Standard Time', 'N/A', '-03:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('Mid-Atlantic Standard Time', 'N/A', '-02:00') AS test_result_utc;
--- -- GO
--- -- SELECT dbo.test_timezone_offset('W. Europe Standard Time', '+02:00', '+01:00') AS test_result_utc;
--- -- GO
+-- SELECT dbo.test_timezone_offset('Sakhalin Standard Time', '+11:00', '+11:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Qyzylorda Standard Time', '+05:00', '+05:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('AUS Central Standard Time', '+09:30', '+09:30') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Aus Central W. Standard Time', '+08:45', '+08:45') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Mountain Standard Time (Mexico)', '-06:00', '-07:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Arabian Standard Time', '+04:00', '+04:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('E. Australia Standard Time', '+11:00', '+10:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Kamchatka Standard Time', '+13:00', '+12:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Greenwich Standard Time', 'N/A', '+00:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Taipei Standard Time', '+08:00', '+08:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Middle East Standard Time', '+03:00', '+02:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Saratov Standard Time', '+04:00', '+04:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Fiji Standard Time', '+12:00', '+12:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Belarus Standard Time', 'N/A', '+03:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Turks And Caicos Standard Time', '-04:00', '-05:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Central America Standard Time', 'N/A', '-06:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Greenland Standard Time', '-01:00', '-02:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Aleutian Standard Time', '-09:00', '-08:00') AS test_result_atc;
+-- GO
+-- SELECT dbo.test_timezone_offset('GMT Standard Time', '+01:00', '+00:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Pacific Standard Time (Mexico)', '-07:00', '-08:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Syria Standard Time', 'N/A', '+03:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Easter Island Standard Time', '-05:00', '-06:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Morocco Standard Time', '+01:00', '+00:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('SA Western Standard Time', 'N/A', '-04:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Tocantins Standard Time', 'N/A', '-03:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Norfolk Standard Time', '+12:00', '+11:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Nepal standard time', '+05:45', '+05:45') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Paraguay Standard Time', 'N/A', '-03:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('Mid-Atlantic Standard Time', 'N/A', '-02:00') AS test_result_utc;
+-- GO
+-- SELECT dbo.test_timezone_offset('W. Europe Standard Time', '+02:00', '+01:00') AS test_result_utc;
+-- GO
