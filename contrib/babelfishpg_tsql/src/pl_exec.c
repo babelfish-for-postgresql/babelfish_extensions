@@ -10555,17 +10555,17 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	int32 valtypmod = -1;
 	PLtsql_datum *target;
 	MemoryContext oldcontext;
-	int16		valTypLen;
-	bool		resTypByVal;
 
 	PLtsql_execstate *estate = get_current_tsql_estate();
 	Assert(estate != NULL);
-
 	oldcontext = MemoryContextSwitchTo(estate->datum_context);
 	target = estate->datums[dno];
 
 	if (!isNull)
 	{
+		int16		valTypLen;
+		bool		resTypByVal;
+		
 		/* Fetch the typlen and typbyval info for the arg type. */
 		get_typlenbyval(valtype, &valTypLen, &resTypByVal);
 		/* Copy the datum. */
