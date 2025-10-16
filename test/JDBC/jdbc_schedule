@@ -70,6 +70,12 @@ ignore#!#BABEL-SQLvariant
 
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
+ignore#!#floating_numbers_with_special_values-before-14_5-vu-prepare
+ignore#!#floating_numbers_with_special_values-before-14_5-vu-verify
+ignore#!#floating_numbers_with_special_values-before-14_5-vu-cleanup
+ignore#!#floating_numbers_with_special_values-before-17_7-vu-prepare
+ignore#!#floating_numbers_with_special_values-before-17_7-vu-verify
+ignore#!#floating_numbers_with_special_values-before-17_7-vu-cleanup
 ignore#!#BABEL-2934-vu-prepare
 ignore#!#BABEL-2934-vu-verify
 ignore#!#BABEL-1444-vu-prepare

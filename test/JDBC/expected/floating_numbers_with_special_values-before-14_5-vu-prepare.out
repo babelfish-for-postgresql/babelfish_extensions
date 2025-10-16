@@ -1,0 +1,1058 @@
+CREATE SCHEMA test_float_speacial;
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_char_to_float_01()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CAST(CAST('Infinity' AS CHAR(10)) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_varchar_to_float_02()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CAST(CAST('+inf' AS VARCHAR(10)) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_text_to_float_03()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CAST(CAST(' ' AS TEXT) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_nchar_to_float_04()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CAST(CAST(N'-Infinity' AS NCHAR(20)) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_nvarchar_to_float_05()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CAST(CAST(N'NaN' AS NVARCHAR(10)) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_ntext_to_float_06()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CAST(CAST(N'inf' AS NTEXT) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_char_to_real_01()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CAST(CAST('+Infinity' AS CHAR(20)) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_varchar_to_real_02()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CAST(CAST('-inf' AS VARCHAR(10)) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_text_to_real_03()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CAST(CAST('' AS TEXT) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_nchar_to_real_04()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CAST(CAST(N'+inf' AS NCHAR(10)) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_nvarchar_to_real_05()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CAST(CAST(N'Infinity' AS NVARCHAR(20)) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_cast_ntext_to_real_06()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CAST(CAST(N'-Infinity' AS NTEXT) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_char_to_float_01()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CAST(CAST('-inf' AS CHAR(10)) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_varchar_to_float_02()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CAST(CAST('' AS VARCHAR(1)) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_text_to_float_03()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CAST(CAST('+Infinity' AS TEXT) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_nchar_to_float_04()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CAST(CAST(N' ' AS NCHAR(1)) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_nvarchar_to_float_05()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CAST(CAST(N'-inf' AS NVARCHAR(10)) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_ntext_to_float_06()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CAST(CAST(N'+inf' AS NTEXT) AS FLOAT);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_char_to_real_01()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CAST(CAST('NaN' AS CHAR(10)) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_varchar_to_real_02()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CAST(CAST('inf' AS VARCHAR(10)) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_text_to_real_03()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CAST(CAST('Infinity' AS TEXT) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_nchar_to_real_04()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CAST(CAST(N'+Infinity' AS NCHAR(20)) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_nvarchar_to_real_05()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CAST(CAST(N'' AS NVARCHAR(1)) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_trycast_ntext_to_real_06()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CAST(CAST(N' ' AS NTEXT) AS REAL);
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_char_to_float_01()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CONVERT(FLOAT, CAST('+inf' AS CHAR(10)));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_varchar_to_float_02()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CONVERT(FLOAT, CAST(' ' AS VARCHAR(1)));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_text_to_float_03()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CONVERT(FLOAT, CAST('-Infinity' AS TEXT));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_nchar_to_float_04()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CONVERT(FLOAT, CAST(N'inf' AS NCHAR(10)));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_nvarchar_to_float_05()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CONVERT(FLOAT, CAST(N'+Infinity' AS NVARCHAR(20)));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_ntext_to_float_06()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN CONVERT(FLOAT, CAST(N'' AS NTEXT));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_char_to_real_01()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CONVERT(REAL, CAST('Infinity' AS CHAR(20)));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_varchar_to_real_02()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CONVERT(REAL, CAST('+Infinity' AS VARCHAR(20)));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_text_to_real_03()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CONVERT(REAL, CAST('-inf' AS TEXT));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_nchar_to_real_04()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CONVERT(REAL, CAST(N'NaN' AS NCHAR(10)));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_nvarchar_to_real_05()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CONVERT(REAL, CAST(N'-Infinity' AS NVARCHAR(20)));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_convert_ntext_to_real_06()
+RETURNS REAL
+AS
+BEGIN
+    RETURN CONVERT(REAL, CAST(N'+inf' AS NTEXT));
+END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_char_to_float_01()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CONVERT(FLOAT, CAST('' AS CHAR(1)));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_varchar_to_float_02()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CONVERT(FLOAT, CAST('-inf' AS VARCHAR(10)));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_text_to_float_03()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CONVERT(FLOAT, CAST('NaN' AS TEXT));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_nchar_to_float_04()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CONVERT(FLOAT, CAST(N'+inf' AS NCHAR(10)));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_nvarchar_to_float_05()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CONVERT(FLOAT, CAST(N' ' AS NVARCHAR(1)));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_ntext_to_float_06()
+RETURNS FLOAT
+AS
+BEGIN
+    RETURN TRY_CONVERT(FLOAT, CAST(N'Infinity' AS NTEXT));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_char_to_real_01()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CONVERT(REAL, CAST(' ' AS CHAR(1)));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_varchar_to_real_02()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CONVERT(REAL, CAST('inf' AS VARCHAR(10)));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_text_to_real_03()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CONVERT(REAL, CAST('+inf' AS TEXT));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_nchar_to_real_04()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CONVERT(REAL, CAST(N'-Infinity' AS NCHAR(20)));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_nvarchar_to_real_05()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CONVERT(REAL, CAST(N'+Infinity' AS NVARCHAR(20)));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION test_float_speacial.fn_tryconvert_ntext_to_real_06()
+RETURNS REAL
+AS
+BEGIN
+    RETURN TRY_CONVERT(REAL, CAST(N'-inf' AS NTEXT));
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_cast_char_to_float_01
+AS
+BEGIN
+    SELECT CAST(CAST('Infinity' AS CHAR(10)) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_varchar_to_float_02
+AS
+BEGIN
+    SELECT CAST(CAST('+inf' AS VARCHAR(10)) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_text_to_float_03
+AS
+BEGIN
+    SELECT CAST(CAST(' ' AS TEXT) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_nchar_to_float_04
+AS
+BEGIN
+    SELECT CAST(CAST(N'-Infinity' AS NCHAR(20)) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_nvarchar_to_float_05
+AS
+BEGIN
+    SELECT CAST(CAST(N'NaN' AS NVARCHAR(10)) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_ntext_to_float_06
+AS
+BEGIN
+    SELECT CAST(CAST(N'inf' AS NTEXT) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_char_to_real_01
+AS
+BEGIN
+    SELECT CAST(CAST('+Infinity' AS CHAR(20)) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_varchar_to_real_02
+AS
+BEGIN
+    SELECT CAST(CAST('-inf' AS VARCHAR(10)) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_text_to_real_03
+AS
+BEGIN
+    SELECT CAST(CAST('' AS TEXT) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_nchar_to_real_04
+AS
+BEGIN
+    SELECT CAST(CAST(N'+inf' AS NCHAR(10)) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_nvarchar_to_real_05
+AS
+BEGIN
+    SELECT CAST(CAST(N'Infinity' AS NVARCHAR(20)) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_cast_ntext_to_real_06
+AS
+BEGIN
+    SELECT CAST(CAST(N'-Infinity' AS NTEXT) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_char_to_float_01
+AS
+BEGIN
+    SELECT TRY_CAST(CAST('-inf' AS CHAR(10)) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_varchar_to_float_02
+AS
+BEGIN
+    SELECT TRY_CAST(CAST('' AS VARCHAR(1)) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_text_to_float_03
+AS
+BEGIN
+    SELECT TRY_CAST(CAST('+Infinity' AS TEXT) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_nchar_to_float_04
+AS
+BEGIN
+    SELECT TRY_CAST(CAST(N' ' AS NCHAR(1)) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_nvarchar_to_float_05
+AS
+BEGIN
+    SELECT TRY_CAST(CAST(N'-inf' AS NVARCHAR(10)) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_ntext_to_float_06
+AS
+BEGIN
+    SELECT TRY_CAST(CAST(N'+inf' AS NTEXT) AS FLOAT) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_char_to_real_01
+AS
+BEGIN
+    SELECT TRY_CAST(CAST('NaN' AS CHAR(10)) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_varchar_to_real_02
+AS
+BEGIN
+    SELECT TRY_CAST(CAST('inf' AS VARCHAR(10)) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_text_to_real_03
+AS
+BEGIN
+    SELECT TRY_CAST(CAST('Infinity' AS TEXT) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_nchar_to_real_04
+AS
+BEGIN
+    SELECT TRY_CAST(CAST(N'+Infinity' AS NCHAR(20)) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_nvarchar_to_real_05
+AS
+BEGIN
+    SELECT TRY_CAST(CAST(N'' AS NVARCHAR(1)) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_trycast_ntext_to_real_06
+AS
+BEGIN
+    SELECT TRY_CAST(CAST(N' ' AS NTEXT) AS REAL) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_char_to_float_01
+AS
+BEGIN
+    SELECT CONVERT(FLOAT, CAST('+inf' AS CHAR(10))) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_varchar_to_float_02
+AS
+BEGIN
+    SELECT CONVERT(FLOAT, CAST(' ' AS VARCHAR(1))) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_text_to_float_03
+AS
+BEGIN
+    SELECT CONVERT(FLOAT, CAST('-Infinity' AS TEXT)) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_nchar_to_float_04
+AS
+BEGIN
+    SELECT CONVERT(FLOAT, CAST(N'inf' AS NCHAR(10))) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_nvarchar_to_float_05
+AS
+BEGIN
+    SELECT CONVERT(FLOAT, CAST(N'+Infinity' AS NVARCHAR(20))) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_ntext_to_float_06
+AS
+BEGIN
+    SELECT CONVERT(FLOAT, CAST(N'' AS NTEXT)) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_char_to_real_01
+AS
+BEGIN
+    SELECT CONVERT(REAL, CAST('Infinity' AS CHAR(20))) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_varchar_to_real_02
+AS
+BEGIN
+    SELECT CONVERT(REAL, CAST('+Infinity' AS VARCHAR(20))) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_text_to_real_03
+AS
+BEGIN
+    SELECT CONVERT(REAL, CAST('-inf' AS TEXT)) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_nchar_to_real_04
+AS
+BEGIN
+    SELECT CONVERT(REAL, CAST(N'NaN' AS NCHAR(10))) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_nvarchar_to_real_05
+AS
+BEGIN
+    SELECT CONVERT(REAL, CAST(N'-Infinity' AS NVARCHAR(20))) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_convert_ntext_to_real_06
+AS
+BEGIN
+    SELECT CONVERT(REAL, CAST(N'+inf' AS NTEXT)) AS val;
+END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_char_to_float_01
+AS
+BEGIN
+    SELECT TRY_CONVERT(FLOAT, CAST('' AS CHAR(1))) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_varchar_to_float_02
+AS
+BEGIN
+    SELECT TRY_CONVERT(FLOAT, CAST('-inf' AS VARCHAR(10))) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_text_to_float_03
+AS
+BEGIN
+    SELECT TRY_CONVERT(FLOAT, CAST('NaN' AS TEXT)) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_nchar_to_float_04
+AS
+BEGIN
+    SELECT TRY_CONVERT(FLOAT, CAST(N'+inf' AS NCHAR(10))) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_nvarchar_to_float_05
+AS
+BEGIN
+    SELECT TRY_CONVERT(FLOAT, CAST(N' ' AS NVARCHAR(1))) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_ntext_to_float_06
+AS
+BEGIN
+    SELECT TRY_CONVERT(FLOAT, CAST(N'Infinity' AS NTEXT)) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_char_to_real_01
+AS
+BEGIN
+    SELECT TRY_CONVERT(REAL, CAST(' ' AS CHAR(1))) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_varchar_to_real_02
+AS
+BEGIN
+    SELECT TRY_CONVERT(REAL, CAST('inf' AS VARCHAR(10))) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_text_to_real_03
+AS
+BEGIN
+    SELECT TRY_CONVERT(REAL, CAST('+inf' AS TEXT)) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_nchar_to_real_04
+AS
+BEGIN
+    SELECT TRY_CONVERT(REAL, CAST(N'-Infinity' AS NCHAR(20))) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_nvarchar_to_real_05
+AS
+BEGIN
+    SELECT TRY_CONVERT(REAL, CAST(N'+Infinity' AS NVARCHAR(20))) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE PROCEDURE test_float_speacial.sp_tryconvert_ntext_to_real_06
+AS
+BEGIN
+    SELECT TRY_CONVERT(REAL, CAST(N'-inf' AS NTEXT)) AS val;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_cast_char_to_float_01 AS
+SELECT CAST(CAST('Infinity' AS CHAR(10)) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_varchar_to_float_02 AS
+SELECT CAST(CAST('+inf' AS VARCHAR(10)) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_text_to_float_03 AS
+SELECT CAST(CAST(' ' AS TEXT) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_nchar_to_float_04 AS
+SELECT CAST(CAST(N'-Infinity' AS NCHAR(20)) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_nvarchar_to_float_05 AS
+SELECT CAST(CAST(N'NaN' AS NVARCHAR(10)) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_ntext_to_float_06 AS
+SELECT CAST(CAST(N'inf' AS NTEXT) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_char_to_real_01 AS
+SELECT CAST(CAST('+Infinity' AS CHAR(20)) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_varchar_to_real_02 AS
+SELECT CAST(CAST('-inf' AS VARCHAR(10)) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_text_to_real_03 AS
+SELECT CAST(CAST('' AS TEXT) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_nchar_to_real_04 AS
+SELECT CAST(CAST(N'+inf' AS NCHAR(10)) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_nvarchar_to_real_05 AS
+SELECT CAST(CAST(N'Infinity' AS NVARCHAR(20)) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_cast_ntext_to_real_06 AS
+SELECT CAST(CAST(N'-Infinity' AS NTEXT) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_char_to_float_01 AS
+SELECT TRY_CAST(CAST('-inf' AS CHAR(10)) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_varchar_to_float_02 AS
+SELECT TRY_CAST(CAST('' AS VARCHAR(1)) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_text_to_float_03 AS
+SELECT TRY_CAST(CAST('+Infinity' AS TEXT) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_nchar_to_float_04 AS
+SELECT TRY_CAST(CAST(N' ' AS NCHAR(1)) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_nvarchar_to_float_05 AS
+SELECT TRY_CAST(CAST(N'-inf' AS NVARCHAR(10)) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_ntext_to_float_06 AS
+SELECT TRY_CAST(CAST(N'+inf' AS NTEXT) AS FLOAT) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_char_to_real_01 AS
+SELECT TRY_CAST(CAST('NaN' AS CHAR(10)) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_varchar_to_real_02 AS
+SELECT TRY_CAST(CAST('inf' AS VARCHAR(10)) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_text_to_real_03 AS
+SELECT TRY_CAST(CAST('Infinity' AS TEXT) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_nchar_to_real_04 AS
+SELECT TRY_CAST(CAST(N'+Infinity' AS NCHAR(20)) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_nvarchar_to_real_05 AS
+SELECT TRY_CAST(CAST(N'' AS NVARCHAR(1)) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_trycast_ntext_to_real_06 AS
+SELECT TRY_CAST(CAST(N' ' AS NTEXT) AS REAL) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_char_to_float_01 AS
+SELECT CONVERT(FLOAT, CAST('+inf' AS CHAR(10))) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_varchar_to_float_02 AS
+SELECT CONVERT(FLOAT, CAST(' ' AS VARCHAR(1))) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_text_to_float_03 AS
+SELECT CONVERT(FLOAT, CAST('-Infinity' AS TEXT)) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_nchar_to_float_04 AS
+SELECT CONVERT(FLOAT, CAST(N'inf' AS NCHAR(10))) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_nvarchar_to_float_05 AS
+SELECT CONVERT(FLOAT, CAST(N'+Infinity' AS NVARCHAR(20))) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_ntext_to_float_06 AS
+SELECT CONVERT(FLOAT, CAST(N'' AS NTEXT)) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_char_to_real_01 AS
+SELECT CONVERT(REAL, CAST('Infinity' AS CHAR(20))) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_varchar_to_real_02 AS
+SELECT CONVERT(REAL, CAST('+Infinity' AS VARCHAR(20))) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_text_to_real_03 AS
+SELECT CONVERT(REAL, CAST('-inf' AS TEXT)) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_nchar_to_real_04 AS
+SELECT CONVERT(REAL, CAST(N'NaN' AS NCHAR(10))) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_nvarchar_to_real_05 AS
+SELECT CONVERT(REAL, CAST(N'-Infinity' AS NVARCHAR(20))) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_convert_ntext_to_real_06 AS
+SELECT CONVERT(REAL, CAST(N'+inf' AS NTEXT)) AS val;
+GO
+
+CREATE VIEW test_float_speacial.vw_tryconvert_char_to_float_01 AS
+SELECT TRY_CONVERT(FLOAT, CAST('' AS CHAR(1))) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_varchar_to_float_02 AS
+SELECT TRY_CONVERT(FLOAT, CAST('-inf' AS VARCHAR(10))) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_text_to_float_03 AS
+SELECT TRY_CONVERT(FLOAT, CAST('NaN' AS TEXT)) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_nchar_to_float_04 AS
+SELECT TRY_CONVERT(FLOAT, CAST(N'+inf' AS NCHAR(10))) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_nvarchar_to_float_05 AS
+SELECT TRY_CONVERT(FLOAT, CAST(N' ' AS NVARCHAR(1))) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_ntext_to_float_06 AS
+SELECT TRY_CONVERT(FLOAT, CAST(N'Infinity' AS NTEXT)) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_char_to_real_01 AS
+SELECT TRY_CONVERT(REAL, CAST(' ' AS CHAR(1))) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_varchar_to_real_02 AS
+SELECT TRY_CONVERT(REAL, CAST('inf' AS VARCHAR(10))) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_text_to_real_03 AS
+SELECT TRY_CONVERT(REAL, CAST('+inf' AS TEXT)) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_nchar_to_real_04 AS
+SELECT TRY_CONVERT(REAL, CAST(N'-Infinity' AS NCHAR(20))) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_nvarchar_to_real_05 AS
+SELECT TRY_CONVERT(REAL, CAST(N'+Infinity' AS NVARCHAR(20))) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
+
+CREATE VIEW test_float_speacial.vw_tryconvert_ntext_to_real_06 AS
+SELECT TRY_CONVERT(REAL, CAST(N'-inf' AS NTEXT)) AS val;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TRY_CONVERT' is not currently supported in Babelfish)~~
+
