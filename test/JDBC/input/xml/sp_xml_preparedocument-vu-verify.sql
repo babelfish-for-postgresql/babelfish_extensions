@@ -330,14 +330,6 @@ SELECT @hdoc as handle;
 EXEC sp_xml_removedocument @hdoc;
 GO
 
-DECLARE @hdoc INT;
-DECLARE @xml XML = '<root><child>value</child></root>';
-DECLARE @namespaces XML = '<root xmlns:ns1="http://example.com/ns1"/>';
-EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
-SELECT @hdoc as handle;
-EXEC sp_xml_removedocument @hdoc;
-GO
-
 -- Test 2: VARCHAR datatype variable
 DECLARE @hdoc INT;
 DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
