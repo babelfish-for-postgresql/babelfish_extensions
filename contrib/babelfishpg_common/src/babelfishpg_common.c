@@ -200,6 +200,10 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_sparsevec_datatype = &is_tsql_sparsevec_datatype;
 		common_utility_plugin_var.is_tsql_halfvec_datatype = &is_tsql_halfvec_datatype;
 		common_utility_plugin_var.handle_type_and_collation = &handle_type_and_collation;
+
+		/* FIX ME: Remove is_tsql_int_datatype and is_tsql_bigint_datatype once BABEL-5955 is fixed */
+		common_utility_plugin_var.is_tsql_int_datatype = &is_tsql_int_datatype;
+		common_utility_plugin_var.is_tsql_bigint_datatype = &is_tsql_bigint_datatype;
 		
 		common_utility_plugin_var.datetime_in_str = &datetime_in_str;
 		common_utility_plugin_var.datetime2sqlvariant = &datetime2sqlvariant;
