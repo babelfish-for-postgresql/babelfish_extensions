@@ -1223,3 +1223,280 @@ DROP PROCEDURE p_err_outer;
 DROP PROCEDURE p_err_inner;
 DROP TABLE t_err_nest;
 GO
+
+
+
+-- Test INSERT...EXECUTE with column lists
+-- ============================================
+-- COLUMN COUNT MISMATCHES
+-- ============================================
+-- TEST 1: More columns in result than INSERT list (FAIL)
+CREATE PROCEDURE P1 AS SELECT 'A', 'B', 'C', 'D'
+GO
+CREATE TABLE T1 (A CHAR(1), B CHAR(1), C CHAR(1), D CHAR(1));
+INSERT INTO T1(A, B) EXECUTE P1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: INSERT EXEC failed because the number of columns in INSERT list (2) is less than the total columns in target table (4))~~
+
+DROP TABLE T1; DROP PROCEDURE P1;
+GO
+
+-- TEST 2: Fewer columns in result than table (FAIL)
+CREATE PROCEDURE P2 AS SELECT 'X', 'Y'
+GO
+CREATE TABLE T2 (A CHAR(1), B CHAR(1), C CHAR(1));
+INSERT INTO T2 EXECUTE P2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: structure of query does not match function result type)~~
+
+DROP TABLE T2; DROP PROCEDURE P2;
+GO
+
+-- TEST 3: DEFAULT columns NOT supported in INSERT EXEC (FAIL)
+CREATE PROCEDURE P3 AS SELECT 1, 'A'
+GO
+CREATE TABLE T3 (I INT, A CHAR(1), B CHAR(1) DEFAULT 'Z');
+INSERT INTO T3(I, A) EXECUTE P3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: INSERT EXEC failed because the number of columns in INSERT list (2) is less than the total columns in target table (3))~~
+
+DROP TABLE T3; DROP PROCEDURE P3;
+GO
+
+-- ============================================
+-- DATA TYPE MISMATCHES
+-- ============================================
+-- TEST 4: String to INT - incompatible (FAIL)
+CREATE PROCEDURE P4 AS SELECT 'ABC', 'XYZ'
+GO
+CREATE TABLE T4 (A INT, B INT);
+INSERT INTO T4 EXECUTE P4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "ABC")~~
+
+DROP TABLE T4; DROP PROCEDURE P4;
+GO
+
+-- TEST 5: INT to VARCHAR - compatible (SUCCESS)
+CREATE PROCEDURE P5 AS SELECT 123, 456
+GO
+CREATE TABLE T5 (A VARCHAR(10), B VARCHAR(10));
+INSERT INTO T5 EXECUTE P5;
+SELECT * FROM T5;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#varchar
+123#!#456
+~~END~~
+
+DROP TABLE T5; DROP PROCEDURE P5;
+GO
+
+-- ============================================
+-- SUCCESS CASES
+-- ============================================
+-- TEST 6: Exact column match without list (SUCCESS)
+CREATE PROCEDURE P6 AS SELECT 1, 'A', 'B'
+GO
+CREATE TABLE T6 (I INT, A CHAR(1), B CHAR(1));
+INSERT INTO T6 EXECUTE P6;
+SELECT * FROM T6;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#char#!#char
+1#!#A#!#B
+~~END~~
+
+DROP TABLE T6; DROP PROCEDURE P6;
+GO
+
+-- TEST 7: Exact column match with list (SUCCESS)
+CREATE PROCEDURE P7 AS SELECT 1, 'A', 'B'
+GO
+CREATE TABLE T7 (I INT, A CHAR(1), B CHAR(1));
+INSERT INTO T7(I, A, B) EXECUTE P7;
+SELECT * FROM T7;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#char#!#char
+1#!#A#!#B
+~~END~~
+
+DROP TABLE T7; DROP PROCEDURE P7;
+GO
+
+-- TEST 8: Multiple rows (SUCCESS)
+CREATE PROCEDURE P8 AS SELECT 1, 'A', 'B' UNION ALL SELECT 2, 'C', 'D' UNION ALL SELECT 3, 'E', 'F'
+GO
+CREATE TABLE T8 (I INT, A CHAR(1), B CHAR(1));
+INSERT INTO T8 EXECUTE P8;
+SELECT * FROM T8 ORDER BY I;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#char#!#char
+1#!#A#!#B
+2#!#C#!#D
+3#!#E#!#F
+~~END~~
+
+DROP TABLE T8; DROP PROCEDURE P8;
+GO
+
+-- TEST 9: Empty result set (SUCCESS - 0 rows)
+CREATE PROCEDURE P9 AS SELECT 1 AS I, 'A' AS A, 'B' AS B WHERE 1=0
+GO
+CREATE TABLE T9 (I INT, A CHAR(1), B CHAR(1));
+INSERT INTO T9 EXECUTE P9;
+SELECT COUNT(*) FROM T9;
+GO
+~~START~~
+int
+0
+~~END~~
+
+DROP TABLE T9; DROP PROCEDURE P9;
+GO
+
+-- TEST 10: NULL values (SUCCESS)
+CREATE PROCEDURE P10 AS SELECT NULL, 'A', NULL
+GO
+CREATE TABLE T10 (I INT NULL, A CHAR(1), B CHAR(1) NULL);
+INSERT INTO T10 EXECUTE P10;
+SELECT * FROM T10;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#char#!#char
+<NULL>#!#A#!#<NULL>
+~~END~~
+
+DROP TABLE T10; DROP PROCEDURE P10;
+GO
+
+-- TEST 11: Procedure with parameters (SUCCESS)
+CREATE PROCEDURE P11 @param1 INT, @param2 CHAR(1) AS SELECT @param1, @param2, 'Z'
+GO
+CREATE TABLE T11 (I INT, A CHAR(1), B CHAR(1));
+INSERT INTO T11 EXECUTE P11 10, 'X';
+SELECT * FROM T11;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#char#!#char
+10#!#X#!#Z
+~~END~~
+
+DROP TABLE T11; DROP PROCEDURE P11;
+GO
+
+-- TEST 12: Temp table as target (SUCCESS)
+CREATE PROCEDURE P12 AS SELECT 1, 'A', 'B'
+GO
+CREATE TABLE #T12 (I INT, A CHAR(1), B CHAR(1));
+INSERT INTO #T12 EXECUTE P12;
+SELECT * FROM #T12;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#char#!#char
+1#!#A#!#B
+~~END~~
+
+DROP TABLE #T12; DROP PROCEDURE P12;
+GO
+
+-- ============================================
+-- CONSTRAINTS
+-- ============================================
+-- TEST 13: NOT NULL violation (FAIL)
+CREATE PROCEDURE P13 AS SELECT 'A', NULL
+GO
+CREATE TABLE T13 (A CHAR(1), B CHAR(1) NOT NULL);
+INSERT INTO T13 EXECUTE P13;
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "t13" violates not-null constraint)~~
+
+DROP TABLE T13; DROP PROCEDURE P13;
+GO
+
+-- TEST 14: CHECK constraint violation (FAIL)
+CREATE PROCEDURE P14 AS SELECT 5, 'A'
+GO
+CREATE TABLE T14 (I INT CHECK (I > 10), A CHAR(1));
+INSERT INTO T14 EXECUTE P14;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "t14" violates check constraint "t14_i_check")~~
+
+DROP TABLE T14; DROP PROCEDURE P14;
+GO
+
+-- TEST 15: UNIQUE constraint violation (FAIL)
+CREATE PROCEDURE P15 AS SELECT 1, 'A' UNION ALL SELECT 1, 'B'
+GO
+CREATE TABLE T15 (I INT UNIQUE, A CHAR(1));
+INSERT INTO T15 EXECUTE P15;
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "t15_i_key")~~
+
+DROP TABLE T15; DROP PROCEDURE P15;
+GO
+
+-- TEST 16: Identity column accepts explicit value without IDENTITY_INSERT (SUCCESS)
+CREATE PROCEDURE P16 AS SELECT 100, 'A', 'B'
+GO
+CREATE TABLE T16 (I INT IDENTITY(1,1), A CHAR(1), B CHAR(1));
+INSERT INTO T16(I, A, B) EXECUTE P16;
+SELECT * FROM T16;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#char#!#char
+100#!#A#!#B
+~~END~~
+
+DROP TABLE T16; DROP PROCEDURE P16;
+GO
+
+-- TEST 17: Multiple result sets (SUCCESS)
+CREATE PROCEDURE P17 AS BEGIN SELECT 1, 'A', 'B'; SELECT 2, 'C', 'D'; END
+GO
+CREATE TABLE T17 (I INT, A CHAR(1), B CHAR(1));
+INSERT INTO T17 EXECUTE P17;
+SELECT * FROM T17 ORDER BY I;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#char#!#char
+1#!#A#!#B
+2#!#C#!#D
+~~END~~
+
+DROP TABLE T17; DROP PROCEDURE P17;
+GO
