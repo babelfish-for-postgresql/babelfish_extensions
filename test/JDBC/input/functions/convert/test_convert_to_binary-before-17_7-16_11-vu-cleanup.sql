@@ -1,0 +1,47 @@
+USE TestConvertForBinary;
+GO
+
+-- Drop triggers
+DROP TRIGGER IF EXISTS tr_DocumentBinaryValidation;
+GO
+
+-- Drop stored procedures
+DROP PROCEDURE IF EXISTS sp_UpdateDocument;
+GO
+
+DROP PROCEDURE IF EXISTS sp_InsertDocument;
+GO
+
+-- Drop functions
+DROP FUNCTION IF EXISTS fn_GetBinaryHash;
+GO
+
+DROP FUNCTION IF EXISTS fn_ConvertAndCompare;
+GO
+
+DROP FUNCTION IF EXISTS dbo.GenerateRandomBinary;
+GO
+
+-- Drop views
+DROP VIEW IF EXISTS vw_DocumentVersionComparison;
+GO
+
+DROP VIEW IF EXISTS vw_DocumentBinaryInfo;
+GO
+
+-- Drop tables (in correct order due to foreign keys)
+DROP TABLE IF EXISTS DocumentVersions;
+GO
+
+DROP TABLE IF EXISTS Documents;
+GO
+
+DROP TABLE IF EXISTS Employee;
+GO
+
+-- Drop database
+USE master;
+GO
+
+DROP DATABASE IF EXISTS TestConvertForBinary;
+GO

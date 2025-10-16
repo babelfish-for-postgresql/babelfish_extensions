@@ -462,8 +462,8 @@ binary(PG_FUNCTION_ARGS)
 
 		result = (bytea *) palloc(total_size);
 		SET_VARSIZE(result, total_size);
-		tp = VARDATA(source);
-		rp = VARDATA(result);
+		tp = VARDATA_ANY(source);
+		rp = VARDATA_ANY(result);
 
 		memcpy(rp, tp, len);
 		/* NULL pad the rest of the space */

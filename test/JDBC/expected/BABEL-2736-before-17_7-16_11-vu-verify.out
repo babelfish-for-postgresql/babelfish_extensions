@@ -36,7 +36,7 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v2
 GO
 ~~START~~
 binary
-30783039303444303030
+0904D000340000000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v2
@@ -69,7 +69,7 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v3
 GO
 ~~START~~
 binary
-30393034443030303334
+0904D000340000000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v3
@@ -155,9 +155,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v5
 GO
 ~~START~~
 binary
-3078313233
-3078373837
-3078313233
+1234ABCD00
+7879800000
+1234000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v5
@@ -179,9 +179,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v7
 GO
 ~~START~~
 binary
-3132333441
-3738373938
-3132333400
+1234ABCD00
+7879800000
+1234000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v7
@@ -191,9 +191,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v8_try
 GO
 ~~START~~
 binary
-30
-30
-30
+1234ABCD00
+7879800000
+1234000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v8_try
@@ -203,9 +203,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v9_try
 GO
 ~~START~~
 binary
-30
-30
-30
+3078313233
+3078373837
+3078313233
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v9_try
@@ -215,9 +215,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v10_try
 GO
 ~~START~~
 binary
-31
-37
-31
+1234ABCD00
+7879800000
+1234000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v10_try
@@ -227,9 +227,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v11
 GO
 ~~START~~
 binary
-3078313233
-3078373837
-3078313233
+1234ABCD00
+7879800000
+1234000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v11
@@ -251,10 +251,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v13
 GO
 ~~START~~
 binary
-3078313233
-3078373837
-3078313233
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to varbinary.)~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v13
 GO
@@ -263,9 +262,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v14_try
 GO
 ~~START~~
 binary
-30
-30
-30
+1234ABCD00
+7879800000
+1234000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v14_try
@@ -275,9 +274,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v15_try
 GO
 ~~START~~
 binary
-30
-30
-30
+3078313233
+3078373837
+3078313233
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v15_try
@@ -287,9 +286,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v16_try
 GO
 ~~START~~
 binary
-30
-30
-30
+<NULL>
+<NULL>
+<NULL>
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v16_try
@@ -349,8 +348,8 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v17
 GO
 ~~START~~
 binary
-3078313233
-0000003039
+1234000000
+0000303900
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v17
@@ -360,9 +359,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v18
 GO
 ~~START~~
 binary
-30
-00
-41
+1234000000
+0000303900
+<NULL>
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v18
@@ -372,9 +371,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v19
 GO
 ~~START~~
 binary
-30783100000000000000
-00000000000030390000
-30784142434445460000
+12340000000000000000
+00003039000000000000
+ABCDEF00000000000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v19
@@ -384,9 +383,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v20
 GO
 ~~START~~
 binary
-30
-00
-30
+12340000000000000000
+00003039000000000000
+ABCDEF00000000000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v20
@@ -396,7 +395,7 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v21
 GO
 ~~START~~
 binary
-3078313233
+1234000000
 3136380000
 ~~END~~
 
@@ -407,8 +406,8 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v22
 GO
 ~~START~~
 binary
-30
-31
+1234000000
+3136380000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v22
@@ -418,7 +417,7 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v23
 GO
 ~~START~~
 binary
-3078313233
+1234000000
 1234000000
 4142000000
 ~~END~~
@@ -430,9 +429,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v24
 GO
 ~~START~~
 binary
-30
-30
-41
+1234000000
+1234000000
+4142000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v24
@@ -442,10 +441,10 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v26
 GO
 ~~START~~
 binary
-31
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "decimal" to "binary".)~~
+1234000000
+<NULL>
+ABCD000000
+~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v26
 GO
@@ -483,7 +482,7 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v27
 GO
 ~~START~~
 binary#!#binary#!#binary
-3078313233#!#3078313233#!#3132333400
+3078313233#!#1234000000#!#1234000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v27
@@ -493,7 +492,7 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v28
 GO
 ~~START~~
 binary#!#binary#!#binary
-30#!#30#!#31
+3078313233#!#1234000000#!#1234000000
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v28
@@ -522,7 +521,7 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v29
 GO
 ~~START~~
 binary#!#binary#!#binary#!#binary
-0000003039#!#323032332D#!#48656C6C6F#!#1234ABCD00
+0000303900#!#323032332D#!#48656C6C6F#!#1234ABCD00
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v29
@@ -532,7 +531,7 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v30
 GO
 ~~START~~
 binary#!#binary#!#binary#!#binary
-00#!#32#!#48#!#30
+0000303900#!#323032332D#!#48656C6C6F#!#1234ABCD00
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v30
@@ -552,19 +551,6 @@ GO
 
 SELECT * FROM BABEL_BINARY_test_table_compcol1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_binary_test_table_compcol1" does not exist)~~
-
-DROP TABLE BABEL_BINARY_test_table_compcol1
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "babel_binary_test_table_compcol1" does not exist)~~
-
-
-SELECT * FROM BABEL_BINARY_test_table_compcol2
-GO
 ~~START~~
 varchar#!#varbinary
 0x1234ABCD#!#30783132333441424344
@@ -572,21 +558,32 @@ varchar#!#varbinary
 0x1234#!#307831323334
 ~~END~~
 
+DROP TABLE BABEL_BINARY_test_table_compcol1
+GO
+
+SELECT * FROM BABEL_BINARY_test_table_compcol2
+GO
+~~START~~
+varchar#!#varbinary
+0x1234ABCD#!#1234ABCD
+0x787980#!#787980
+0x1234#!#1234
+~~END~~
+
 DROP TABLE BABEL_BINARY_test_table_compcol2
 GO
 
 SELECT * FROM BABEL_BINARY_test_table_compcol3
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_binary_test_table_compcol3" does not exist)~~
+~~START~~
+varchar#!#varbinary
+0x1234ABCD#!#1234ABCD
+0x787980#!#787980
+0x1234#!#1234
+~~END~~
 
 DROP TABLE BABEL_BINARY_test_table_compcol3
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "babel_binary_test_table_compcol3" does not exist)~~
-
 
 
 -- Additional test cases
