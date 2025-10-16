@@ -336,14 +336,14 @@ AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_xml_preparedocument( INOUT "@hdoc"  INTEGER,                 
-                                                              IN "@xmltext" sys.VARCHAR DEFAULT NULL,    
-                                                              IN "@xpath_namespaces" sys.VARCHAR DEFAULT NULL )
+                                                              IN "@xmltext" XML DEFAULT NULL,    
+                                                              IN "@xpath_namespaces" XML DEFAULT NULL )
 AS 'babelfishpg_tsql', 'sp_xml_preparedocument'
 LANGUAGE C;
 
 GRANT EXECUTE ON PROCEDURE sys.sp_xml_preparedocument( INOUT "@hdoc" INTEGER,
-                                                             IN "@xmltext" sys.VARCHAR ,
-                                                             IN "@xpath_namespaces" sys.VARCHAR )
+                                                             IN "@xmltext" XML ,
+                                                             IN "@xpath_namespaces" XML )
 TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_xml_removedocument( IN "@hdoc" INTEGER ) 
