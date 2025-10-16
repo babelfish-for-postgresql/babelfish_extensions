@@ -703,14 +703,6 @@ CREATE PARTITION FUNCTION NewSmallDateTimePartitionFunction (smalldatetime)
 AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', cast(0x123 as binary(4)));
 GO
 
-CREATE PARTITION FUNCTION NewCharPartitionFunction (char(5))
-AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', cast(0x123 as binary(4)));
-GO
-
-CREATE PARTITION FUNCTION NewNCharPartitionFunction (nchar(5))
-AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', cast(0x123 as binary(4)));
-GO
-
 CREATE PARTITION FUNCTION NewBinaryPartitionFunction (binary(4))
 AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 'xyz');
 GO

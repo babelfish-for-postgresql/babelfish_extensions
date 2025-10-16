@@ -329,6 +329,22 @@ CREATE PARTITION FUNCTION NCharPartitionFunction (nchar(5))
 AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', N'B');
 GO
 
+CREATE PARTITION FUNCTION NewCharPartitionFunction (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', cast(0x123 as binary(4)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 7 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewNCharPartitionFunction (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', cast(0x123 as binary(4)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 7 to partition function parameter type.)~~
+
+
 CREATE PARTITION FUNCTION BinaryPartitionFunction (binary(4))
 AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000);
 GO
