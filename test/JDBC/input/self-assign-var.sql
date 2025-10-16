@@ -1,0 +1,467 @@
+-- JIRA query [BABEL-6119]
+-- direct declare and select
+declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
+select @v1 = @v1, @v2 = @v2,@v3 = null;
+select @v1, @v2, @v3;
+go
+
+-- variations of above query
+declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = null;
+select @v1 = @v1, @v2 = @v2, @v3 = @v3;
+select @v1, @v2, @v3;
+go
+
+declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = 'abc';
+select @v1 = null, @v2 = @v2, @v3 = @v3;
+select @v1, @v2, @v3;
+go
+
+declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = 'abc';
+select @v1 = @v1, @v2 = @v2, @v3 = @v3;
+select @v1, @v2, @v3;
+go
+
+-- updating v3 to null
+declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = 'abc';
+select @v1 = @v1, @v2 = @v2, @v3 = null;
+select @v1, @v2, @v3;
+go
+
+-- updating v2 to 4 and then assigning it to v3
+declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
+select @v1 = @v1, @v2 = 4, @v3 = @v2;
+select @v1, @v2, @v3;
+go
+
+-- updateing v2 to null and then assigning it to v3 
+declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
+select @v1 = @v1, @v2 = null, @v3 = @v2;
+select @v1, @v2, @v3;
+go
+
+declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
+select @v1 = @v1, @v2 = 0, @v3 = @v2;
+select @v1, @v2, @v3;
+go
+
+
+-- more basic test cases for self assignemnt for various datatypes
+-- int/smallint/bigint/tinyint/decimal/numeric/float
+DECLARE @int1 int = 100, @int2 int = 0, @int3 int = NULL;
+DECLARE @bigint bigint = 100, @smallint smallint, @tinyint tinyint = NULL;
+DECLARE @decimal1 decimal(10,2) = 123.45, @numeric numeric(10,2) = 0.00;
+DECLARE @float1 float = 3.14159, @float2 float;
+
+SELECT @int1 = @int1, @int2 = @int2, @int3 = @int3;
+SELECT @bigint = @bigint, @smallint = @smallint, @tinyint = @tinyint;
+SELECT @decimal1 = @decimal1, @numeric = @numeric;
+SELECT @float1 = @float1, @float2 = @float2;
+SELECT @int1, @int2, @int3, @bigint, @smallint, @tinyint, @decimal1, @numeric, @float1, @float2;
+GO
+
+--  date/time/datetime/datetime2/smalldatetime
+DECLARE @date1 date = '2024-01-01', @date2 date;
+DECLARE @datetime1 datetime = '01/02/03', @datetime2 datetime2 = '12-24-3';
+DECLARE @time time = '14:30:00', @smalldatetime smalldatetime = '2020-10-20 09:00:00';
+
+SELECT @date1 = @date1, @date2 = null;
+SELECT @datetime1 = @datetime1, @datetime2 = @datetime2;
+SELECT @time = @time, @smalldatetime = @smalldatetime;
+SELECT @time = @datetime2;
+
+SELECT @date1, @date2, @datetime1, @datetime2, @time, @smalldatetime;
+GO
+
+-- binary/varbinary/bit
+DECLARE @bit1 bit = 1, @bit2 bit = 0, @bit3 bit;
+DECLARE @binary1 binary(4) = 0x1234, @binary2 binary(4);
+DECLARE @varbinary1 varbinary(10) = 0xABCDEF, @varbinary2 varbinary(10) = NULL;
+
+SELECT @bit1 = @bit1, @bit2 = @bit2, @bit3 = @bit3;
+SELECT @binary1 = @binary1, @binary2 = @binary2;
+SELECT @varbinary1 = @varbinary1, @varbinary2 = @varbinary2;
+
+SELECT @bit1, @bit2, @bit3, @binary1, @binary2, @varbinary1, @varbinary2;
+GO
+
+-- money/smallmoney
+DECLARE @money1 money = 1234.56, @money2 money = 0, @money3 money = NULL;
+DECLARE @smallmoney1 smallmoney = 100.25, @smallmoney2 smallmoney;
+
+SELECT @money1 = @money1, @money2 = @money2, @money3 = @money3;
+SELECT @smallmoney1 = @smallmoney1, @smallmoney2 = @smallmoney2;
+
+SELECT @money1, @money2, @money3, @smallmoney1, @smallmoney2;
+GO
+
+-- char/varchar/nvarchar/nchar
+DECLARE @varchar1 varchar(10) = 'Hello World', @varchar2 varchar(10);
+DECLARE @nvarchar1 nvarchar(20) = N'Unicode Text', @nvarchar2 nvarchar(20) = N'NULL';
+DECLARE @char1 char(20) = 'Fixed Length', @char2 char(20);
+DECLARE @nchar1 nchar(20) = 'Fixed Length', @nchar2 nchar(20);
+
+SELECT @varchar1 = @varchar1, @varchar2 = null;
+SELECT @nvarchar1 = @nvarchar1, @nvarchar2 = @nvarchar2;
+SELECT @char1 = @char1, @char2 = null;
+SELECT @nchar1 = @nchar1, @nchar2 = null;
+
+SELECT @varchar1, @varchar2, @nvarchar1, @nvarchar2, @char1, @char2, @nchar1, @nchar2;
+GO
+
+-- JIRA query [BABEL-6119]
+-- declare set and select
+DECLARE @nLedgerGrossAmount NUMERIC(24,6); 
+SET @nLedgerGrossAmount = 110.54; 
+SELECT @nLedgerGrossAmount = @nLedgerGrossAmount FROM (SELECT 1 AS X) t WHERE 1 = 1; 
+
+-- string datatypes
+DECLARE @varchar1 VARCHAR(10) = 'Initial', @varchar2 VARCHAR(10);
+DECLARE @nvarchar1 NVARCHAR(20) = N'Unicode', @char1 CHAR(20) = 'Fixed';
+
+-- SET assignments
+SET @varchar1 = 'Updated via SET'; SET @varchar2 = 'Updated2 via SET';
+SET @nvarchar1 = N'Updated Unicode'; SET @char1 = 'New Fixed';
+
+SELECT @varchar1 = @varchar1 ,@varchar2 = @varchar2 FROM (SELECT 'dummy' as col) t;
+SELECT @nvarchar1 = @nvarchar1 FROM (SELECT 1 as id) t WHERE id = 1;
+SELECT @char1 = @char1 FROM (VALUES (1)) as t(id);
+
+SELECT @varchar1, @varchar2, @nvarchar1, @char1;
+GO
+
+--  date/time/datetime/datetime2/smalldatetime
+DECLARE @date1 date, @datetime1 datetime, @datetime2 datetime2;
+DECLARE @time time, @smalldatetime smalldatetime;
+
+SET @date1 = '2024-01-01'; SET @datetime1 = '01/02/03'; SET @datetime2 = '12-24-3';
+SET @time = '14:30:00'; SET @smalldatetime = '2020-10-20 09:00:00';
+
+SELECT 
+    @date1 = @date1, @datetime1 = @datetime1, @datetime2 = @datetime2,  
+    @time = @time, @smalldatetime = @smalldatetime FROM (SELECT 1 AS X) t WHERE 1 = 1; 
+
+SELECT @date1, @datetime1, @datetime2, @time, @smalldatetime;
+GO
+
+-- binary/varbinary/bit
+DECLARE @bit1 bit, @bit2 bit, @bit3 bit;
+DECLARE @binary1 binary(4), @binary2 binary(4);
+DECLARE @varbinary1 varbinary(10), @varbinary2 varbinary(10);
+
+SET @bit1 = 1; SET @bit2 = 0; SET @bit3 = NULL;
+SET @binary1 = 0x1234; SET @binary2 = 0x5678;
+SET @varbinary1 = 0xABCDEF; SET @varbinary2 = NULL;
+
+SELECT 
+    @bit1 = @bit1, @bit2 = @bit2, @bit3 = @bit3,
+    @binary1 = @binary1, @binary2 = @binary2,
+    @varbinary1 = @varbinary1, @varbinary2 = @varbinary2 FROM (SELECT 1 AS X) t WHERE 1 = 1; 
+
+SELECT @bit1, @bit2, @bit3, @binary1, @binary2, @varbinary1, @varbinary2;
+GO
+
+-- mixed datatypes
+DECLARE @mixed1 int, @mixed2 varchar(20), @mixed3 datetime, @mixed4 bit;
+DECLARE @mixed5 decimal(10,2), @mixed6 money, @mixed7 binary(4);
+
+SET @mixed1 = NULL; SET @mixed2 = 'Test'; SET @mixed3 = '2024-12-31'; SET @mixed4 = 1;
+SET @mixed5 = 999.99; SET @mixed6 = NULL; SET @mixed7 = 0x1234;
+
+SELECT 
+    @mixed1 = @mixed1, @mixed2 = @mixed2, @mixed3 = @mixed3, @mixed4 = @mixed4,
+    @mixed5 = @mixed5, @mixed6 = @mixed6, @mixed7 = @mixed7 FROM (SELECT 1 AS X) t WHERE 1 = 1;
+
+SELECT @mixed1, @mixed2, @mixed3, @mixed4, @mixed5, @mixed6, @mixed7;
+GO
+
+-- JIRA query [BABEL-6119]
+CREATE TABLE babel_6119_t1 (ACC_ACCOUNT NVARCHAR(30) PRIMARY KEY,ACC_PROPERTY NVARCHAR(30)); 
+CREATE TABLE babel_6119_t2 (ORG_CODE NVARCHAR(30) PRIMARY KEY,ORG_NAME NVARCHAR(20));
+go
+
+INSERT INTO babel_6119_t1 VALUES ('1000013', 'ORG001'); 
+INSERT INTO babel_6119_t2 VALUES ('ORG001', 'Testing org1'); 
+go
+
+DECLARE @pAccount1 NVARCHAR(30),@pDateForward1 DATETIME = NULL, @pUser1 NVARCHAR(30) = NULL; 
+SET @pAccount1 = '1000013'; 
+SET @pDateForward1 = '2024-02-13 00:00:00'; 
+DECLARE @sUser1 NVARCHAR(30) = 'populateDWACCOUNTBALANCES', @bOverwrite TINYINT = 0; 
+SELECT  @bOverwrite = @bOverwrite, @sUser1 = @sUser1 FROM babel_6119_t1 a INNER JOIN babel_6119_t2 o ON o.ORG_CODE = a.ACC_PROPERTY WHERE a.ACC_ACCOUNT = @pAccount1; 
+SELECT @bOverwrite, @sUser1;
+go
+
+
+-- JIRA query [BABEL-5947]
+create table babel_6119_test1(content nvarchar(max));
+go
+insert into babel_6119_test1 values(REPEAT('This is a test string. ', 10000))
+go
+
+create table babel_6119_test2(col1 nvarchar(max));
+go
+insert into babel_6119_test2 values(NULL);
+go
+
+CREATE PROCEDURE dbo.test_proc 
+AS BEGIN 
+DECLARE @p nvarchar(20), @q tinyint; 
+DECLARE @r nvarchar(30);
+
+SELECT @r = content FROM babel_6119_test1;
+
+SELECT 
+    @p = 'abc',
+    @r = COALESCE(col1, @r),
+    @q = 1 
+FROM  
+    babel_6119_test2; 
+END;  
+GO
+
+exec dbo.test_proc 
+go
+
+
+-- comprehsive test with all datatypes
+CREATE TABLE babel_6119_master_test1 (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    -- Numeric types
+    col_tinyint TINYINT,
+    col_smallint SMALLINT,
+    col_int INT,
+    col_bigint BIGINT,
+    col_decimal DECIMAL(18,4),
+    col_numeric NUMERIC(24,6),
+    col_float FLOAT,
+    col_real REAL,
+    col_money MONEY,
+    col_smallmoney SMALLMONEY,
+    
+    -- String types
+    col_char CHAR(20),
+    col_varchar VARCHAR(20),
+    col_nchar NCHAR(20),
+    col_nvarchar NVARCHAR(20),
+    col_text TEXT,
+    col_ntext NTEXT,
+    col_nvarchar_max NVARCHAR(MAX),
+    
+    -- Date/Time types
+    col_date DATE,
+    col_datetime DATETIME,
+    col_datetime2 DATETIME2,
+    col_smalldatetime SMALLDATETIME,
+    col_time TIME,
+    
+    -- Binary/bit types
+    col_binary BINARY(8),
+    col_varbinary VARBINARY(10),
+    col_bit BIT
+);
+GO
+
+CREATE TABLE babel_6119_null_test2 (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    null_tinyint TINYINT,
+    null_varchar VARCHAR(10),
+    null_decimal DECIMAL(10,2),
+    null_datetime DATETIME,
+    null_bit BIT,
+    null_money MONEY,
+    null_binary BINARY(4)
+);
+GO
+
+-- Insert comprehensive test data
+INSERT INTO babel_6119_master_test1 VALUES (
+    -- Numeric values
+    255, 32000, 2147483647, 9223372036854775807, 12345.6789, 987654.123456, 3.14159265, 2.718281, 1234567.89, 32767.99,
+    -- String values
+    'CHAR_DATA', 'VARCHAR_DATA', N'NCHAR_DATA', N'NVARCHAR_DATA', 
+    'Large text content for testing purposes', N'Large unicode text content for testing',
+    REPLICATE(N'Long test string', 5),
+    -- Date/Time values
+    '2024-01-15', '2024-01-15 10:30:45.123', '2024-01-15 10:30:45.1234567', '2024-01-15 10:30', '14:30:45.123',
+    -- Binary/bit values
+    0x1234567890ABCDEF, 0xDEADBEEFCA, 1
+);
+
+INSERT INTO babel_6119_master_test1 VALUES (
+    -- Second row with some NULLs
+    NULL, -1000, NULL, -5000000000, NULL, 555.555555, NULL, 1.414, NULL, -100.50,
+    NULL, 'Second VARCHAR', NULL, N'Second NVARCHAR', NULL, N'Second NTEXT content', 
+    N'Second nvarchar(max) content',
+    NULL, '2024-02-20 15:45:30.456', NULL, '2024-02-20 15:45', NULL,
+    NULL, 0x1234567890ABCDEF,
+    0
+);
+GO
+
+-- Insert NULL test data
+INSERT INTO babel_6119_null_test2 VALUES (NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO babel_6119_null_test2 VALUES (100, 'NOT_NULL', 999.99, '2024-03-01', 1, 5000.00, 0x12345678);
+GO
+
+-- Comprehensive stored procedure covering all scenarios
+CREATE PROCEDURE babel_6119_comprehensive_test_proc 
+AS 
+BEGIN 
+    -- Declare all data type variables
+    DECLARE @p_tinyint TINYINT, @p_smallint SMALLINT, @p_int INT, @p_bigint BIGINT;
+    DECLARE @p_decimal DECIMAL(18,4), @p_numeric NUMERIC(24,6), @p_float FLOAT, @p_real REAL;
+    DECLARE @p_money MONEY, @p_smallmoney SMALLMONEY;
+    
+    DECLARE @p_char CHAR(20), @p_varchar VARCHAR(20), @p_nchar NCHAR(20), @p_nvarchar NVARCHAR(20);
+    DECLARE @p_nvarchar_max NVARCHAR(MAX);
+    
+    DECLARE @p_date DATE, @p_datetime DATETIME, @p_datetime2 DATETIME2;
+    DECLARE @p_smalldatetime SMALLDATETIME, @p_time TIME;
+    
+    DECLARE @p_binary BINARY(8), @p_varbinary VARBINARY(10),@p_bit BIT;
+    
+    -- Control variables
+    DECLARE @counter INT, @total_amount MONEY, @process_flag BIT;
+    
+    -- Phase 1: SET statements with initial values
+    SET @p_tinyint = 50; SET @p_smallint = 1000; SET @p_int = 50000; SET @p_bigint = 1000000;
+    SET @p_decimal = 100.5000; SET @p_numeric = 200.123456; SET @p_float = 1.5; SET @p_real = 2.5;
+    SET @p_money = 1000.00; SET @p_smallmoney = 500.25;
+    
+    SET @p_char = 'INIT_CHAR'; SET @p_varchar = 'INIT_VARCHAR'; 
+    SET @p_nchar = N'INIT_NCHAR'; SET @p_nvarchar = N'INIT_NVARCHAR';
+    SET @p_nvarchar_max = N'Initial nvarchar(max) content';
+    
+    SET @p_date = '2024-01-01'; SET @p_datetime = '01/02/03'; SET @p_datetime2 = '2024-01-01 12:00:00.1234567';
+    SET @p_smalldatetime = '2024-01-01 12:00'; SET @p_time = '12:00:00';
+    
+    SET @p_binary = 0x1111111111111111; SET @p_varbinary = 0x2222222222;
+    
+    SET @p_bit = 1;
+    
+    SET @counter = 0; SET @total_amount = 0.00; SET @process_flag = 0;
+    
+    -- Phase 2: SELECT assignment from master table with self-assignment
+    SELECT 
+        -- Self-assign numeric types
+        @p_tinyint = ISNULL(col_tinyint, @p_tinyint),
+        @p_smallint = ISNULL(col_smallint, @p_smallint),
+        @p_int = ISNULL(col_int, @p_int),
+        @p_bigint = ISNULL(col_bigint, @p_bigint),
+        @p_decimal = ISNULL(col_decimal, @p_decimal),
+        @p_numeric = ISNULL(col_numeric, @p_numeric),
+        @p_float = ISNULL(col_float, @p_float),
+        @p_real = ISNULL(col_real, @p_real),
+        @p_money = ISNULL(col_money, @p_money),
+        @p_smallmoney = ISNULL(col_smallmoney, @p_smallmoney),
+        
+        -- Self-assign string types
+        @p_char = ISNULL(col_char, @p_char),
+        @p_varchar = ISNULL(col_varchar, @p_varchar),
+        @p_nchar = ISNULL(col_nchar, @p_nchar),
+        @p_nvarchar = ISNULL(col_nvarchar, @p_nvarchar),
+        @p_nvarchar_max = ISNULL(col_nvarchar_max, @p_nvarchar_max),
+        
+        -- Self-assign date/time types
+        @p_date = ISNULL(col_date, @p_date),
+        @p_datetime = ISNULL(col_datetime, @p_datetime),
+        @p_datetime2 = ISNULL(col_datetime2, @p_datetime2),
+        @p_smalldatetime = ISNULL(col_smalldatetime, @p_smalldatetime),
+        @p_time = ISNULL(col_time, @p_time),
+        
+        -- Self-assign binary types
+        @p_binary = ISNULL(col_binary, @p_binary),
+        @p_varbinary = ISNULL(col_varbinary, @p_varbinary),
+        
+        -- Self-assign special types
+        @p_bit = ISNULL(col_bit, @p_bit)
+    FROM babel_6119_master_test1 
+    WHERE id = 1;
+    
+    -- Phase 3: SELECT with COALESCE from NULL table
+    SELECT 
+        @p_tinyint = COALESCE(null_tinyint, @p_tinyint),
+        @p_varchar = COALESCE(null_varchar, @p_varchar),
+        @p_decimal = COALESCE(null_decimal, @p_decimal),
+        @p_datetime = COALESCE(null_datetime, @p_datetime),
+        @p_bit = COALESCE(null_bit, @p_bit),
+        @p_money = COALESCE(null_money, @p_money),
+        @p_binary = COALESCE(null_binary, @p_binary),
+        @counter = @counter + 1,
+        @process_flag = 1
+    FROM babel_6119_null_test2 
+    WHERE id = 1; -- This row has all NULLs
+    
+    -- Phase 4: Final self-assignment SELECT from derived table
+    SELECT 
+        @p_tinyint = @p_tinyint,
+        @p_smallint = @p_smallint, 
+        @p_int = @p_int,
+        @p_bigint = @p_bigint,
+        @p_decimal = @p_decimal,
+        @p_numeric = @p_numeric,
+        @p_float = @p_float,
+        @p_real = @p_real,
+        @p_money = @p_money,
+        @p_smallmoney = @p_smallmoney,
+        @p_char = @p_char,
+        @p_varchar = @p_varchar,
+        @p_nchar = @p_nchar,
+        @p_nvarchar = @p_nvarchar,
+        @p_date = @p_date,
+        @p_datetime = @p_datetime,
+        @p_datetime2 = @p_datetime2,
+        @p_smalldatetime = @p_smalldatetime,
+        @p_time = @p_time,
+        @p_binary = @p_binary,
+        @p_varbinary = @p_varbinary,
+        @p_bit = @p_bit,
+        @counter = @counter,
+        @total_amount = @total_amount,
+        @process_flag = @process_flag
+    FROM (SELECT 1 AS X) t WHERE 1 = 1;
+    
+    -- Display results
+    SELECT 
+        'NUMERIC_RESULTS' as CATEGORY,
+        @p_tinyint, @p_smallint, @p_int, @p_bigint,
+        @p_decimal, @p_numeric, @p_float, @p_real,
+        @p_money, @p_smallmoney;
+
+    SELECT 
+        'STRING_RESULTS' as CATEGORY,
+        @p_char, @p_varchar, @p_nchar, 
+        @p_nvarchar,@p_nvarchar_max;
+
+    SELECT 
+        'DATETIME_RESULTS' as CATEGORY,
+        @p_date, @p_datetime, @p_datetime2,
+        @p_smalldatetime, @p_time;
+
+    SELECT 
+        'BINARY_SPECIAL_RESULTS' as CATEGORY,
+        @p_binary, @p_varbinary, @p_bit;
+
+    SELECT 
+        'PROCESS_RESULTS' as CATEGORY,
+        @counter, @total_amount, @process_flag;
+    
+END;
+GO
+
+-- Execute the comprehensive test procedure
+EXEC babel_6119_comprehensive_test_proc;
+GO
+
+
+-- Cleanup
+drop PROCEDURE dbo.test_proc 
+drop table babel_6119_test1
+drop table babel_6119_test2
+drop TABLE babel_6119_t1
+drop TABLE babel_6119_t2
+DROP PROCEDURE babel_6119_comprehensive_test_proc;
+DROP TABLE babel_6119_master_test1, babel_6119_null_test2;
+GO
+
+
