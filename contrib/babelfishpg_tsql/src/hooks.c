@@ -5012,7 +5012,11 @@ update_rte_perms_info_walker(Node *node, void *context)
 
 					if (physical_schemaname && !is_shared_schema(physical_schemaname))
 					{
-						if (OidIsValid(perminfo->checkAsUser))
+ 						Oid relOwner = get_rel_owner(rte->relid);
+  		  
+  		 				if (pltsql_enable_ownership_chaining && is_valid_func_ownership_chain(perminfo, relOwner))
+  		 					perminfo->checkAsUser = relOwner;
+  		 				else if (OidIsValid(perminfo->checkAsUser))
 						{
 							Oid loginId = get_login_for_user(perminfo->checkAsUser, physical_schemaname);
 							if (OidIsValid(loginId))
