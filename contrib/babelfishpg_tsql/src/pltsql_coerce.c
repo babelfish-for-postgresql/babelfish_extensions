@@ -1220,9 +1220,10 @@ is_numeric_datatype(Oid typid)
 static int32
 get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
 {
-	if (resulttype == INT4OID)
+	/* FIX ME: Remove is_tsql_int_datatype and is_tsql_bigint_datatype once BABEL-5955 is fixed */
+	if (resulttype == INT4OID || (*common_utility_plugin_ptr->is_tsql_int_datatype)(resulttype))
 		return DEFAULT_INT_TYPMOD;
-	else if (resulttype == INT8OID)
+	else if (resulttype == INT8OID || (*common_utility_plugin_ptr->is_tsql_bigint_datatype)(resulttype))
 		return DEFAULT_BIGINT_TYPMOD;
 	else if (resulttype == INT2OID)
 		return DEFAULT_SMALLINT_TYPMOD;
@@ -1234,6 +1235,19 @@ get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
 		return TSQL_SMALLMONEY_TYPMOD;
 
 	return -1;
+}
+
+/*
+ * is_namespace_sys_or_pg_catalog
+ * Returns true if the given namespace Oid is either sys or pg_catalog.
+ */
+static bool
+is_namespace_sys_or_pg_catalog(Oid nspoid)
+{
+	if (nspoid == PG_CATALOG_NAMESPACE || nspoid == get_namespace_oid("sys", false))
+		return true;
+
+	return false;
 }
 
 /* 
@@ -1699,6 +1713,41 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (rettypmod == -1)
 					rettypmod = get_default_typmod_for_fixedsize_dataypes(func->funcresulttype);
+
+				if (rettypmod == -1)
+				{
+					char		*funcName;
+					Oid			func_namespace_oid = InvalidOid;
+
+					/* We will find typmod for mathematical functions. */
+					funcName = get_func_name(func_oid);
+					func_namespace_oid = get_func_namespace(func_oid);
+
+					if (funcName &&
+						is_namespace_sys_or_pg_catalog(func_namespace_oid))
+					{
+						if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)))
+						{
+							if (list_length(func->args) >= 1)
+							{
+								arg = linitial(func->args);
+								rettypmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
+							}
+							if (!found_typmod)
+							{
+								if (found != NULL) *found = false;
+							}
+							if (rettypmod != -1)
+							{
+								pfree(funcName);
+								return rettypmod;
+							}
+						}
+						/* TODO: handle more functions if needed */
+					}
+					if (funcName)
+						pfree(funcName);
+				}
 
 				if (rettypmod == -1)
 				{
