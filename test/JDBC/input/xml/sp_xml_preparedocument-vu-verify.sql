@@ -310,3 +310,933 @@ GO
 -- Execute procedure and verify handle
 EXEC test_xml_proc;
 GO
+
+-- Test cases for sp_xml_preparedocument with different data types and namespaces
+-- Testing TEXT, NTEXT, CHAR, NCHAR, VARCHAR, NVARCHAR, XML and UDTs with namespace parameter
+
+-- Test 1: XML datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child>value</child></root>';
+DECLARE @namespaces XML = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 2: VARCHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 3: NVARCHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'<root><child>value</child></root>';
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 4: CHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml CHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces CHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 5: NCHAR datatype variable
+DECLARE @hdoc INT;
+DECLARE @xml NCHAR(100) = N'<root><child>value</child></root>';
+DECLARE @namespaces NCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 6: Malformed XML with VARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 7: Malformed XML with NVARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'<root><child></root>';
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 8: Malformed XML with XML datatype
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child></root>';
+DECLARE @namespaces XML = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 9: NULL XML parameter
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = NULL;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+DECLARE @hdoc INT;
+DECLARE @xml XML = NULL;
+DECLARE @namespaces XML = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 10: Empty string parameter
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'';
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 11: Complex XML with Unicode characters
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root><child name="测试">Hello 🌍</child><item>世界</item></root>';
+DECLARE @namespaces NVARCHAR(200) = N'<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 12: Large XML content
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(MAX) = N'<root>' + REPLICATE(N'<item>data</item>', 100) + N'</root>';
+DECLARE @namespaces NVARCHAR(MAX) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 13: Direct string literals
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, '<root><child>direct</child></root>', '<root xmlns:ns1="http://example.com/ns1"/>';
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+DECLARE @hdoc INT;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, N'<root><child>direct</child></root>', N'<root xmlns:ns1="http://example.com/ns1"/>';
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 14: XML with CDATA sections
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root><![CDATA[<script>alert("test")</script>]]></root>';
+DECLARE @namespaces NVARCHAR(200) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 15: XML with special characters
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<root attr="&lt;&gt;&amp;&quot;&apos;">Special &amp; chars</root>';
+DECLARE @namespaces NVARCHAR(200) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 16: Multiple nested levels
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(300) = N'<root><level1><level2><level3><level4>deep</level4></level3></level2></level1></root>';
+DECLARE @namespaces NVARCHAR(300) = N'<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 17: XML with processing instructions and comments
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(200) = N'<?xml version="1.0"?><!-- comment --><root>data</root>';
+DECLARE @namespaces NVARCHAR(200) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Basic Tests with different dataype UDTs
+EXEC TestXMLPrepareDocument_Char
+GO
+
+EXEC TestXMLPrepareDocument_Varchar
+GO
+
+EXEC TestXMLPrepareDocument_NChar
+GO
+
+EXEC TestXMLPrepareDocument_NVarchar
+GO
+
+EXEC TestXMLPrepareDocument_Text
+GO
+
+EXEC TestXMLPrepareDocument_NText
+GO
+
+-- Test execution for view-based XML processing
+EXEC ProcessXMLFromView_babel_1168 1
+GO
+
+-- Test table-valued function
+SELECT * FROM GetXMLByType_babel_1168('Data')
+GO
+
+-- Test views directly
+SELECT * FROM XMLDataView_babel_1168
+GO
+
+SELECT * FROM NVarcharXMLView_babel_1168
+GO
+
+-- EXPLICIT CASTING AND CONVERTING TESTSS
+-- Test 18: CAST VARCHAR to different types
+DECLARE @hdoc INT;
+DECLARE @xml_varchar VARCHAR(100) = '<root><item>test</item></root>';
+DECLARE @xml_casted VARCHAR(MAX) = CAST(@xml_varchar AS VARCHAR(MAX));
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_casted, @namespaces;
+SELECT @hdoc as CastVarcharToVarcharMax;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 19: CAST NVARCHAR to VARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml_nvarchar NVARCHAR(100) = N'<root><item>Unicode 世界</item></root>';
+DECLARE @xml_casted VARCHAR(MAX) = CAST(@xml_nvarchar AS VARCHAR(MAX));
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_casted, @namespaces;
+SELECT @hdoc as CastNVarcharToVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 20: CAST CHAR to VARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml_char CHAR(50) = '<root><item>char</item></root>';
+DECLARE @xml_casted VARCHAR(100) = CAST(@xml_char AS VARCHAR(100));
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_casted, @namespaces;
+SELECT @hdoc as CastCharToVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 21: CAST NCHAR to NVARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml_nchar NCHAR(50) = N'<root><item>nchar 🌟</item></root>';
+DECLARE @xml_casted NVARCHAR(100) = CAST(@xml_nchar AS NVARCHAR(100));
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_casted, @namespaces;
+SELECT @hdoc as CastNCharToNVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 22: CONVERT VARCHAR to NVARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml_varchar VARCHAR(100) = '<root><item>convert test</item></root>';
+DECLARE @xml_converted NVARCHAR(MAX) = CONVERT(NVARCHAR(MAX), @xml_varchar);
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_converted, @namespaces;
+SELECT @hdoc as ConvertVarcharToNVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 23: CONVERT NVARCHAR to VARCHAR
+DECLARE @hdoc INT;
+DECLARE @xml_nvarchar NVARCHAR(100) = N'<root><item>convert 测试</item></root>';
+DECLARE @xml_converted VARCHAR(MAX) = CONVERT(VARCHAR(MAX), @xml_nvarchar);
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_converted, @namespaces;
+SELECT @hdoc as ConvertNVarcharToVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 24: CAST with length truncation
+DECLARE @hdoc INT;
+DECLARE @xml_long VARCHAR(200) = '<root><item>very long xml content that might be truncated</item></root>';
+DECLARE @xml_truncated VARCHAR(50) = CAST(@xml_long AS VARCHAR(50));
+DECLARE @namespaces VARCHAR(50) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_truncated, @namespaces;
+SELECT @hdoc as CastWithTruncation;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 25: CONVERT with explicit length
+DECLARE @hdoc INT;
+DECLARE @xml_data NVARCHAR(MAX) = N'<root><item>explicit length conversion 世界</item></root>';
+DECLARE @xml_converted VARCHAR(100) = CONVERT(VARCHAR(100), @xml_data);
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_converted, @namespaces;
+SELECT @hdoc as ConvertWithLength;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 26: CAST TEXT to VARCHAR(MAX)
+DECLARE @hdoc INT;
+DECLARE @xml_varchar VARCHAR(MAX);
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+SELECT @xml_varchar = CAST(text_xml AS VARCHAR(MAX)) FROM CastingTestData_babel_1168 WHERE id = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_varchar, @namespaces;
+SELECT @hdoc as CastTextToVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 27: CAST NTEXT to NVARCHAR(MAX)
+DECLARE @hdoc INT;
+DECLARE @xml_nvarchar NVARCHAR(MAX);
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+SELECT @xml_nvarchar = CAST(ntext_xml AS NVARCHAR(MAX)) FROM CastingTestData_babel_1168 WHERE id = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_nvarchar, @namespaces;
+SELECT @hdoc as CastNTextToNVarchar;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 28: CONVERT with style parameter
+DECLARE @hdoc INT;
+DECLARE @xml_data VARCHAR(100) = '<root><item>style test</item></root>';
+DECLARE @xml_converted NVARCHAR(MAX) = CONVERT(NVARCHAR(MAX), @xml_data, 0);
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_converted, @namespaces;
+SELECT @hdoc as ConvertWithStyle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 29: Nested CAST operations
+DECLARE @hdoc INT;
+DECLARE @xml_char CHAR(100) = '<root><item>nested cast</item></root>';
+DECLARE @xml_nested NVARCHAR(MAX) = CAST(CAST(@xml_char AS VARCHAR(100)) AS NVARCHAR(MAX));
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_nested, @namespaces;
+SELECT @hdoc as NestedCast;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 30: CAST with Unicode preservation
+DECLARE @hdoc INT;
+DECLARE @xml_unicode NVARCHAR(100) = N'<root><item>Unicode: 你好世界 🌍 αβγ</item></root>';
+DECLARE @xml_preserved NVARCHAR(MAX) = CAST(@xml_unicode AS NVARCHAR(MAX));
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_preserved, @namespaces;
+SELECT @hdoc as CastUnicodePreservation;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 31: CONVERT with potential data loss
+DECLARE @hdoc INT;
+DECLARE @xml_unicode NVARCHAR(100) = N'<root><item>Data loss test: 世界 🌟</item></root>';
+DECLARE @xml_converted VARCHAR(MAX) = CONVERT(VARCHAR(MAX), @xml_unicode);
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_converted, @namespaces;
+SELECT @hdoc as ConvertWithDataLoss;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 32: CAST from table columns
+DECLARE @hdoc INT;
+DECLARE @xml_data VARCHAR(MAX);
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+SELECT @xml_data = CAST(varchar_xml AS VARCHAR(MAX)) FROM CastingTestData_babel_1168 WHERE id = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_data, @namespaces;
+SELECT @hdoc as CastFromTableColumn;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 33: CONVERT from table columns with Unicode
+DECLARE @hdoc INT;
+DECLARE @xml_data VARCHAR(MAX);
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+SELECT @xml_data = CONVERT(VARCHAR(MAX), nvarchar_xml) FROM CastingTestData_babel_1168 WHERE id = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_data, @namespaces;
+SELECT @hdoc as ConvertFromTableUnicode;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 34: CAST with RTRIM/LTRIM
+DECLARE @hdoc INT;
+DECLARE @xml_padded CHAR(100) = '<root><item>padded</item></root>';
+DECLARE @xml_trimmed VARCHAR(MAX) = CAST(RTRIM(@xml_padded) AS VARCHAR(MAX));
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_trimmed, @namespaces;
+SELECT @hdoc as CastWithTrim;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 35: CONVERT with string functions
+DECLARE @hdoc INT;
+DECLARE @xml_data VARCHAR(100) = '<root><item>function test</item></root>';
+DECLARE @xml_upper NVARCHAR(MAX) = CONVERT(NVARCHAR(MAX), UPPER(@xml_data));
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_upper, @namespaces;
+SELECT @hdoc as ConvertWithFunction;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 36: CAST in CASE expression
+DECLARE @hdoc INT;
+DECLARE @xml_type INT = 1;
+DECLARE @xml_result VARCHAR(MAX) = CASE @xml_type 
+    WHEN 1 THEN CAST('<root><item>type1</item></root>' AS VARCHAR(MAX))
+    ELSE CAST('<root><item>default</item></root>' AS VARCHAR(MAX))
+END;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_result, @namespaces;
+SELECT @hdoc as CastInCase;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 37: CONVERT with COALESCE
+DECLARE @hdoc INT;
+DECLARE @xml_null VARCHAR(100) = NULL;
+DECLARE @xml_default VARCHAR(100) = '<root><item>default</item></root>';
+DECLARE @xml_coalesced VARCHAR(MAX) = CONVERT(VARCHAR(MAX), COALESCE(@xml_null, @xml_default));
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_coalesced, @namespaces;
+SELECT @hdoc as ConvertWithCoalesce;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test execution of casting procedure
+EXEC TestExplicitCasting_babel_1168;
+GO
+
+-- INVALID XML AND NAMESPACE TESTS
+-- Test 38: Invalid XML - Missing closing tag
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 39: Invalid XML - Unclosed tag
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 40: Invalid XML - Mismatched tags
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</item></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 41: Invalid XML - Invalid characters in tag name
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><chi@ld>value</chi@ld></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 42: Invalid XML - Unescaped special characters
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value & more</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 43: Invalid XML - Malformed attributes
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child attr="value>content</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 44: Invalid XML - Multiple root elements
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root1>value1</root1><root2>value2</root2>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 45: Invalid XML - Invalid CDATA section
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><![CDATA[unclosed cdata</root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 46: Invalid XML - Tag starting with number
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><1child>value</1child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 47: Invalid XML - Nested tags with same name incorrectly closed
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(150) = '<root><item><item>nested</item></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 48: Invalid namespace - Missing root element
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces VARCHAR(100) = 'xmlns:ns1="http://example.com/ns1"';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 49: Invalid namespace - Malformed namespace declaration
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1=http://example.com/ns1/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 50: Invalid namespace - Unclosed namespace element
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 51: Invalid namespace - Duplicate namespace prefixes
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces VARCHAR(200) = '<root xmlns:ns1="http://example.com/ns1" xmlns:ns1="http://example.com/ns2"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 52: Invalid XML with valid namespace - Broken XML structure
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child><nested>value</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 53: Valid XML with invalid namespace - Broken namespace structure
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1">';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 54: Invalid XML - Attribute without value
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child attr>value</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 55: Invalid XML - Comment inside tag
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child <!-- comment --> attr="value">content</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- INVALID DATATYPE TESTS - Non-string XML parameters
+-- Should give error
+
+-- Test 61: XML parameter as INT with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_int INT = 12345;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_int, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 62: XML parameter as MONEY with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_money MONEY = 1234.56;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_money, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 63: XML parameter as SMALLMONEY with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_smallmoney SMALLMONEY = 123.45;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_smallmoney, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 64: XML parameter as FLOAT with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_float FLOAT = 123.456789;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_float, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 65: XML parameter as DECIMAL with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_decimal DECIMAL(10,2) = 12345.67;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_decimal, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 66: XML parameter as BIGINT with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_bigint BIGINT = 9223372036854775807;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_bigint, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 67: XML parameter as SMALLINT with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_smallint SMALLINT = 32767;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_smallint, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 68: XML parameter as TINYINT with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_tinyint TINYINT = 255;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_tinyint, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 69: XML parameter as BIT with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_bit BIT = 1;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_bit, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 70: XML parameter as DATETIME with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_datetime DATETIME = '2024-01-01 12:30:45';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_datetime, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 71: XML parameter as DATE with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_date DATE = '2024-01-01';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_date, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 72: XML parameter as TIME with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_time TIME = '12:30:45';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_time, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 73: Namespace parameter as INT with valid XML
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces_int INT = 12345;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces_int;
+SELECT @hdoc as handle;
+GO
+
+-- Test 74: Namespace parameter as MONEY with valid XML
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces_money MONEY = 1234.56;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces_money;
+SELECT @hdoc as handle;
+GO
+
+-- Test 75: Namespace parameter as FLOAT with valid XML
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces_float FLOAT = 123.456;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces_float;
+SELECT @hdoc as handle;
+GO
+
+-- Test 76: Namespace parameter as DATETIME with valid XML
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces_datetime DATETIME = '2024-01-01 12:30:45';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces_datetime;
+SELECT @hdoc as handle;
+GO
+
+-- Test 77: Both XML and namespace parameters as INT
+DECLARE @hdoc INT;
+DECLARE @xml_int INT = 12345;
+DECLARE @namespaces_int INT = 67890;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_int, @namespaces_int;
+SELECT @hdoc as handle;
+GO
+
+-- Test 78: Both XML and namespace parameters as MONEY
+DECLARE @hdoc INT;
+DECLARE @xml_money MONEY = 1234.56;
+DECLARE @namespaces_money MONEY = 7890.12;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_money, @namespaces_money;
+SELECT @hdoc as handle;
+GO
+
+-- Test 79: XML parameter as BINARY with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_binary BINARY(10) = 0x48656C6C6F576F726C64;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_binary, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 80: XML parameter as VARBINARY with namespace
+DECLARE @hdoc INT;
+DECLARE @xml_varbinary VARBINARY(20) = 0x3C726F6F743E3C6368696C643E76616C75653C2F6368696C643E3C2F726F6F743E;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml_varbinary, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- MIXED DATATYPE COMBINATION TESTS
+-- Test 81: VARCHAR XML with XML namespace
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces XML = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 82: XML data with VARCHAR namespace
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child>value</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 83: NVARCHAR XML with CHAR namespace
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'<root><child>value</child></root>';
+DECLARE @namespaces CHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 84: CHAR XML with NVARCHAR namespace
+DECLARE @hdoc INT;
+DECLARE @xml CHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 85: VARCHAR XML with NCHAR namespace
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces NCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 86: NCHAR XML with VARCHAR namespace
+DECLARE @hdoc INT;
+DECLARE @xml NCHAR(100) = N'<root><child>value</child></root>';
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 87: XML data with NCHAR namespace
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child>value</child></root>';
+DECLARE @namespaces NCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 88: NCHAR XML with XML namespace
+DECLARE @hdoc INT;
+DECLARE @xml NCHAR(100) = N'<root><child>value</child></root>';
+DECLARE @namespaces XML = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 89: VARCHAR XML with INT namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces INT = 12345;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+EXEC sp_xml_removedocument @hdoc;
+GO
+
+-- Test 90: INT XML with VARCHAR namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml INT = 12345;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 91: XML data with MONEY namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child>value</child></root>';
+DECLARE @namespaces MONEY = 1234.56;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 92: MONEY XML with XML namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml MONEY = 1234.56;
+DECLARE @namespaces XML = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 93: NVARCHAR XML with DATETIME namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml NVARCHAR(100) = N'<root><child>value</child></root>';
+DECLARE @namespaces DATETIME = '2024-01-01 12:30:45';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 94: DATETIME XML with NVARCHAR namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml DATETIME = '2024-01-01 12:30:45';
+DECLARE @namespaces NVARCHAR(100) = N'<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 95: CHAR XML with FLOAT namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml CHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces FLOAT = 123.456;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 96: FLOAT XML with CHAR namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml FLOAT = 123.456;
+DECLARE @namespaces CHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 97: VARCHAR XML with BIT namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml VARCHAR(100) = '<root><child>value</child></root>';
+DECLARE @namespaces BIT = 1;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 98: BIT XML with VARCHAR namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml BIT = 1;
+DECLARE @namespaces VARCHAR(100) = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 99: XML data with BINARY namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml XML = '<root><child>value</child></root>';
+DECLARE @namespaces BINARY(10) = 0x48656C6C6F576F726C64;
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO
+
+-- Test 100: VARBINARY XML with XML namespace (invalid combination)
+DECLARE @hdoc INT;
+DECLARE @xml VARBINARY(50) = 0x3C726F6F743E3C6368696C643E76616C75653C2F6368696C643E3C2F726F6F743E;
+DECLARE @namespaces XML = '<root xmlns:ns1="http://example.com/ns1"/>';
+EXEC sp_xml_preparedocument @hdoc OUTPUT, @xml, @namespaces;
+SELECT @hdoc as handle;
+GO

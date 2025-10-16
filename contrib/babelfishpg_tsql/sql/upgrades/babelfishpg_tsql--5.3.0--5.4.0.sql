@@ -205,13 +205,13 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_sp_xml_r
 
 CREATE OR REPLACE PROCEDURE sys.sp_xml_preparedocument(
     INOUT "@hdoc"  INTEGER,                 
-    IN "@xmltext" sys.VARCHAR DEFAULT NULL,    
-    IN "@xpath_namespaces" sys.VARCHAR DEFAULT NULL 
+    IN "@xmltext" XML DEFAULT NULL,    
+    IN "@xpath_namespaces" XML DEFAULT NULL 
 ) 
 AS 'babelfishpg_tsql', 'sp_xml_preparedocument'
 LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.sp_xml_preparedocument(
-	INOUT INTEGER, IN sys.varchar, IN sys.varchar
+	INOUT INTEGER, IN XML, IN XML
 ) TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_xml_removedocument(
