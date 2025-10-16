@@ -218,6 +218,15 @@ GO
 SELECT geometry::STGeomFromText('POINT(1.2.3 4)', 4326);
 GO
 
+SELECT geometry::STGeomFromText('POINT(1..3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.3.4.3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.3.. 4)', 4326);
+GO
+
 -- Test with zero values
 SELECT geometry::STGeomFromText('POINT(0 0)', 4326);
 GO
