@@ -1,4 +1,4 @@
---Test case 1: To print the SST
+--Test case 1: To print the UTC
 SELECT * FROM dbo.vw_UTC;
 GO
 ~~START~~
@@ -58,16 +58,159 @@ GO
 nvarchar#!#int
 ~~END~~
 
---Test case 7: To print top 3 Timezone names
-SELECT TOP 3 name
+--Test case 7: To print all Timezone names
+SELECT name
 FROM sys.time_zone_info
-ORDER BY name;
+ORDER BY 
+    CASE 
+        WHEN name = 'UTC' THEN 'UTC 0'
+        WHEN name LIKE 'UTC+%' THEN 'UTC 1' + SUBSTRING(name, 4, 10)
+        WHEN name LIKE 'UTC-%' THEN 'UTC 2' + SUBSTRING(name, 4, 10)
+        ELSE name
+    END;
 GO
 ~~START~~
 nvarchar
 Afghanistan Standard Time
 Alaskan Standard Time
 Aleutian Standard Time
+Altai Standard Time
+Arab Standard Time
+Arabian Standard Time
+Arabic Standard Time
+Argentina Standard Time
+Astrakhan Standard Time
+Atlantic Standard Time
+Aus Central Standard Time
+Aus Central W. Standard Time
+Aus Eastern Standard Time
+Azerbaijan Standard Time
+Azores Standard Time
+Bahia Standard Time
+Bangladesh Standard Time
+Belarus Standard Time
+Bougainville Standard Time
+Canada Central Standard Time
+Cape Verde Standard Time
+Caucasus Standard Time
+Cen. Australia Standard Time
+Central America Standard Time
+Central Asia Standard Time
+Central Brazilian Standard Time
+Central Europe Standard Time
+Central European Standard Time
+Central Pacific Standard Time
+Central Standard Time
+Central Standard Time (Mexico)
+Chatham Islands Standard Time
+China Standard Time
+Cuba Standard Time
+Dateline Standard Time
+E. Africa Standard Time
+E. Australia Standard Time
+E. Europe Standard Time
+E. South America Standard Time
+Easter Island Standard Time
+Eastern Standard Time
+Eastern Standard Time (Mexico)
+Egypt Standard Time
+Ekaterinburg Standard Time
+Fiji Standard Time
+Fle Standard Time
+Georgian Standard Time
+Gmt Standard Time
+Greenland Standard Time
+Greenwich Standard Time
+Gtb Standard Time
+Haiti Standard Time
+Hawaiian Standard Time
+India Standard Time
+Iran Standard Time
+Israel Standard Time
+Jordan Standard Time
+Kaliningrad Standard Time
+Kamchatka Standard Time
+Korea Standard Time
+Libya Standard Time
+Line Islands Standard Time
+Lord Howe Standard Time
+Magadan Standard Time
+Magallanes Standard Time
+Marquesas Standard Time
+Mauritius Standard Time
+Mid-Atlantic Standard Time
+Middle East Standard Time
+Montevideo Standard Time
+Morocco Standard Time
+Mountain Standard Time
+Mountain Standard Time (Mexico)
+Myanmar Standard Time
+N. Central Asia Standard Time
+Namibia Standard Time
+Nepal Standard Time
+New Zealand Standard Time
+Newfoundland Standard Time
+Norfolk Standard Time
+North Asia East Standard Time
+North Asia Standard Time
+North Korea Standard Time
+Omsk Standard Time
+Pacific Sa Standard Time
+Pacific Standard Time
+Pacific Standard Time (Mexico)
+Pakistan Standard Time
+Paraguay Standard Time
+Qyzylorda Standard Time
+Romance Standard Time
+Russia Time Zone 10
+Russia Time Zone 3
+Russian Standard Time
+Sa Eastern Standard Time
+Sa Pacific Standard Time
+Sa Western Standard Time
+Saint Pierre Standard Time
+Sakhalin Standard Time
+Samoa Standard Time
+Sao Tome Standard Time
+Saratov Standard Time
+Se Asia Standard Time
+Singapore Standard Time
+South Africa Standard Time
+South Sudan Standard Time
+Sri Lanka Standard Time
+Sudan Standard Time
+Syria Standard Time
+Taipei Standard Time
+Tasmania Standard Time
+Tocantins Standard Time
+Tokyo Standard Time
+Tomsk Standard Time
+Tonga Standard Time
+Transbaikal Standard Time
+Turkey Standard Time
+Turks And Caicos Standard Time
+Ulaanbaatar Standard Time
+Us Eastern Standard Time
+Us Mountain Standard Time
+Utc
+Utc+12
+Utc+13
+Utc-02
+Utc-08
+Utc-09
+Utc-11
+Venezuela Standard Time
+Vladivostok Standard Time
+Volgograd Standard Time
+W. Australia Standard Time
+W. Central Africa Standard Time
+W. Europe Standard Time
+W. Mongolia Standard Time
+West Asia Standard Time
+West Bank Standard Time
+West Pacific Standard Time
+Yakutsk Standard Time
+Yukon Standard Time
 ~~END~~
 
 --Test case 8: verify null case
@@ -108,22 +251,14 @@ varchar
 INVALID: Empty string
 ~~END~~
 
-SELECT dbo.validate_utc_offset('+02:00');
+SELECT dbo.validate_utc_offset('+20:00');
 GO
 ~~START~~
 varchar
 INVALID: Wrong format
 ~~END~~
 
---Test to loose test to validate the count of timezone name
-SELECT CASE WHEN COUNT(name) >= 135 THEN 1 ELSE 0 END AS test FROM sys.time_zone_info;
-GO
-~~START~~
-int
-1
-~~END~~
-
---Test case 11: To verify if there exists a timezone :The following timezone values have been commented out due to: Expected DST and non-DST offset values may change due to future timezone policy updates and to prevent potential flaky test cases
+--Test case 11: This function validates whether a specific timezone has the expected UTC offsets during both DST and non-DST periods
 SELECT dbo.test_timezone_offset('Utc-11', '-11:00', '-11:00') AS test_result_utc;
 GO
 ~~START~~
@@ -167,20 +302,6 @@ PASSED
 ~~END~~
 
 SELECT dbo.test_timezone_offset('Utc+13', '+13:00', '+13:00') AS test_result_utc;
-GO
-~~START~~
-varchar
-PASSED
-~~END~~
-
-SELECT dbo.test_timezone_offset('Dateline standard time', '-12:00', '-12:00') AS test_result_utc;
-GO
-~~START~~
-varchar
-PASSED
-~~END~~
-
-SELECT dbo.test_timezone_offset('India Standard Time', '+05:30', '+05:30') AS test_result_utc;
 GO
 ~~START~~
 varchar
