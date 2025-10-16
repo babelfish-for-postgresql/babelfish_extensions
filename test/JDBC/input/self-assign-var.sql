@@ -1,49 +1,76 @@
 -- JIRA query [BABEL-6119]
 -- direct declare and select
-declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
-select @v1 = @v1, @v2 = @v2,@v3 = null;
-select @v1, @v2, @v3;
-go
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
+SELECT @v1 = @v1, @v2 = @v2,@v3 = null;
+SELECT @v1, @v2, @v3;
+GO
 
 -- variations of above query
-declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = null;
-select @v1 = @v1, @v2 = @v2, @v3 = @v3;
-select @v1, @v2, @v3;
-go
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = null;
+SELECT @v1 = @v1, @v2 = @v2, @v3 = @v3;
+SELECT @v1, @v2, @v3;
+GO
 
-declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = 'abc';
-select @v1 = null, @v2 = @v2, @v3 = @v3;
-select @v1, @v2, @v3;
-go
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = 'abc';
+SELECT @v1 = null, @v2 = @v2, @v3 = @v3;
+SELECT @v1, @v2, @v3;
+GO
 
-declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = 'abc';
-select @v1 = @v1, @v2 = @v2, @v3 = @v3;
-select @v1, @v2, @v3;
-go
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = 'abc';
+SELECT @v1 = @v1, @v2 = @v2, @v3 = @v3;
+SELECT @v1, @v2, @v3;
+GO
 
 -- updating v3 to null
-declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = 'abc';
-select @v1 = @v1, @v2 = @v2, @v3 = null;
-select @v1, @v2, @v3;
-go
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10) = 'abc';
+SELECT @v1 = @v1, @v2 = @v2, @v3 = null;
+SELECT @v1, @v2, @v3;
+GO
 
 -- updating v2 to 4 and then assigning it to v3
-declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
-select @v1 = @v1, @v2 = 4, @v3 = @v2;
-select @v1, @v2, @v3;
-go
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
+SELECT @v1 = @v1, @v2 = 4, @v3 = @v2;
+SELECT @v1, @v2, @v3;
+GO
 
--- updateing v2 to null and then assigning it to v3 
-declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
-select @v1 = @v1, @v2 = null, @v3 = @v2;
-select @v1, @v2, @v3;
-go
+-- updating v2 to null and then assigning it to v3 
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
+SELECT @v1 = @v1, @v2 = null, @v3 = @v2;
+SELECT @v1, @v2, @v3;
+GO
 
-declare @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
-select @v1 = @v1, @v2 = 0, @v3 = @v2;
-select @v1, @v2, @v3;
-go
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2',   @v3 varchar(10);
+SELECT @v1 = @v1, @v2 = 0, @v3 = @v2;
+SELECT @v1, @v2, @v3;
+GO
 
+-- updating the source value later and checking if target is still able to point to previous memory.
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2';
+SELECT @v2 = @v1
+SET @v1 = '5';
+SELECT @v2, @v1
+GO
+
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2';
+SET @v2 = @v1
+SET @v1 = '5';
+SELECT @v2, @v1
+GO
+
+-- testing with double update
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2';
+SELECT @v1 = NULL;
+SELECT @v2 = @v1;
+SELECT @v1 = 'p';
+SELECT @v2, @v1;
+GO
+
+DECLARE @v1 varchar(10) = '1',  @v2 char(10) = '2';
+SET @v1 = NULL;
+SELECT @v2 = @v1;
+SET @v1 = 'p';
+SELECT @v2, @v1;
+GO
 
 -- more basic test cases for self assignemnt for various datatypes
 -- int/smallint/bigint/tinyint/decimal/numeric/float
@@ -177,11 +204,11 @@ GO
 -- JIRA query [BABEL-6119]
 CREATE TABLE babel_6119_t1 (ACC_ACCOUNT NVARCHAR(30) PRIMARY KEY,ACC_PROPERTY NVARCHAR(30)); 
 CREATE TABLE babel_6119_t2 (ORG_CODE NVARCHAR(30) PRIMARY KEY,ORG_NAME NVARCHAR(20));
-go
+GO
 
 INSERT INTO babel_6119_t1 VALUES ('1000013', 'ORG001'); 
 INSERT INTO babel_6119_t2 VALUES ('ORG001', 'Testing org1'); 
-go
+GO
 
 DECLARE @pAccount1 NVARCHAR(30),@pDateForward1 DATETIME = NULL, @pUser1 NVARCHAR(30) = NULL; 
 SET @pAccount1 = '1000013'; 
@@ -189,19 +216,20 @@ SET @pDateForward1 = '2024-02-13 00:00:00';
 DECLARE @sUser1 NVARCHAR(30) = 'populateDWACCOUNTBALANCES', @bOverwrite TINYINT = 0; 
 SELECT  @bOverwrite = @bOverwrite, @sUser1 = @sUser1 FROM babel_6119_t1 a INNER JOIN babel_6119_t2 o ON o.ORG_CODE = a.ACC_PROPERTY WHERE a.ACC_ACCOUNT = @pAccount1; 
 SELECT @bOverwrite, @sUser1;
-go
+GO
 
 
 -- JIRA query [BABEL-5947]
-create table babel_6119_test1(content nvarchar(max));
-go
-insert into babel_6119_test1 values(REPEAT('This is a test string. ', 10000))
-go
+-- toasted value tests
+CREATE TABLE babel_6119_test1(content nvarchar(max));
+GO
+INSERT INTO babel_6119_test1 values(REPLICATE('This is a test string. ', 10000))
+GO
 
-create table babel_6119_test2(col1 nvarchar(max));
-go
-insert into babel_6119_test2 values(NULL);
-go
+CREATE TABLE babel_6119_test2(col1 nvarchar(max));
+GO
+INSERT INTO babel_6119_test2 values(NULL);
+GO
 
 CREATE PROCEDURE dbo.test_proc 
 AS BEGIN 
@@ -219,9 +247,67 @@ FROM
 END;  
 GO
 
-exec dbo.test_proc 
-go
+CREATE PROCEDURE dbo.test_proc1
+AS BEGIN 
+DECLARE @p nvarchar(20), @q tinyint; 
+DECLARE @r nvarchar(30);
 
+SELECT @r = content FROM babel_6119_test1;
+SELECT @r = @r;
+
+SELECT 
+    @p = 'abc',
+    @r = ISNULL(col1, @r),
+    @q = 1 
+FROM  
+    babel_6119_test2; 
+END;  
+GO
+
+-- self assigning the toasted value
+DECLARE @r nvarchar(30);
+SELECT @r = content FROM babel_6119_test1;
+SELECT @r = @r;
+SELECT @r, len(@r)
+GO
+
+-- toasted value, updating row and then checking the variable.
+DECLARE @p nvarchar(20),  @r nvarchar(30);
+SELECT @r = content FROM babel_6119_test1;
+UPDATE babel_6119_test1 SET content = REPLICATE('New pattern. ', 5000);
+Select @p = @r, @r = @r;
+SELECT @p, len(@p), @r, len(@r);
+GO
+
+
+-- toasted value, deleting row and then checking the variable.
+DECLARE @p nvarchar(20),  @r nvarchar(30);
+SELECT @r = content FROM babel_6119_test1;
+DELETE FROM babel_6119_test1;
+Select @p = @r, @r = @r;
+SELECT len(@p), len(@r);
+GO
+
+DECLARE @p nvarchar(max),  @r nvarchar(30);
+SELECT @r = content FROM babel_6119_test1;
+DELETE FROM babel_6119_test1;
+Select @p = @r, @r = @r;
+SELECT len(@p), len(@r);
+GO
+
+DECLARE @p nvarchar(30),  @r nvarchar(max);
+SELECT @r = content FROM babel_6119_test1;
+DELETE FROM babel_6119_test1;
+Select @p = @r, @r = @r;
+SELECT len(@p), len(@r);
+GO
+
+-- execute procedures
+EXEC dbo.test_proc 
+GO
+
+EXEC dbo.test_proc1
+GO
 
 -- comprehsive test with all datatypes
 CREATE TABLE babel_6119_master_test1 (
@@ -341,7 +427,7 @@ BEGIN
     
     SET @counter = 0; SET @total_amount = 0.00; SET @process_flag = 0;
     
-    -- Phase 2: SELECT assignment from master table with self-assignment
+    -- Phase 2: SELECT assignment from master TABLE with self-assignment
     SELECT 
         -- Self-assign numeric types
         @p_tinyint = ISNULL(col_tinyint, @p_tinyint),
@@ -378,7 +464,7 @@ BEGIN
     FROM babel_6119_master_test1 
     WHERE id = 1;
     
-    -- Phase 3: SELECT with COALESCE from NULL table
+    -- Phase 3: SELECT with COALESCE from NULL TABLE
     SELECT 
         @p_tinyint = COALESCE(null_tinyint, @p_tinyint),
         @p_varchar = COALESCE(null_varchar, @p_varchar),
@@ -392,7 +478,7 @@ BEGIN
     FROM babel_6119_null_test2 
     WHERE id = 1; -- This row has all NULLs
     
-    -- Phase 4: Final self-assignment SELECT from derived table
+    -- Phase 4: Final self-assignment SELECT from derived TABLE
     SELECT 
         @p_tinyint = @p_tinyint,
         @p_smallint = @p_smallint, 
@@ -455,11 +541,12 @@ GO
 
 
 -- Cleanup
-drop PROCEDURE dbo.test_proc 
-drop table babel_6119_test1
-drop table babel_6119_test2
-drop TABLE babel_6119_t1
-drop TABLE babel_6119_t2
+DROP PROCEDURE dbo.test_proc 
+DROP PROCEDURE dbo.test_proc1
+DROP TABLE babel_6119_test1
+DROP TABLE babel_6119_test2
+DROP TABLE babel_6119_t1
+DROP TABLE babel_6119_t2
 DROP PROCEDURE babel_6119_comprehensive_test_proc;
 DROP TABLE babel_6119_master_test1, babel_6119_null_test2;
 GO
