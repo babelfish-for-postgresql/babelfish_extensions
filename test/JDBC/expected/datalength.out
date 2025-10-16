@@ -333,7 +333,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int
-2#!#2#!#4#!#8
+1#!#2#!#4#!#8
 ~~END~~
 
 
@@ -345,7 +345,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int
-6#!#6#!#8#!#4
+5#!#5#!#8#!#4
 ~~END~~
 
 
@@ -360,7 +360,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int
-4#!#8#!#8#!#8#!#8#!#10
+3#!#8#!#8#!#4#!#5#!#10
 ~~END~~
 
 
@@ -509,7 +509,7 @@ SELECT
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-8#!#8#!#6#!#6#!#6
+8#!#4#!#5#!#5#!#5
 ~~END~~
 
 
@@ -554,7 +554,7 @@ FROM datalength_t2;
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int
-4#!#6#!#8#!#4#!#8#!#8
+4#!#5#!#8#!#4#!#5#!#8
 ~~END~~
 
 
@@ -990,6 +990,1560 @@ int#!#int#!#int#!#int
 ~~END~~
 
 
+-- Extra test cases 
+-- UDT
+create type tinyint_babel_6120 from tinyint;
+create type date_babel_6120 from date;
+create type smalldatetime_babel_6120 from smalldatetime;
+create type time_babel_6120 from time;
+create type smallmoney_babel_6120 from smallmoney;
+create type numeric_babel_6120 from numeric(21,5);
+create type decimal_babel_6120 from decimal(21,5);
+GO
+
+create type smallint_babel_6120 from smallint;
+create type int_babel_6120 from int;
+create type bigint_babel_6120 from bigint;
+create type datetime_babel_6120 from datetime;
+create type datetime2_babel_6120 from datetime2;
+create type datetimeoffset_babel_6120 from datetimeoffset;
+create type money_babel_6120 from money;
+go
+
+
+-- tinyint
+-- JIRA query
+SELECT DATALENGTH(CAST(123 AS TINYINT))
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATALENGTH(CAST('123' AS TINYINT))
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATALENGTH(CAST('' AS TINYINT))
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123.33 AS TINYINT))
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123 AS tinyint_babel_6120))
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- smallint : 2 (as expected)
+SELECT DATALENGTH(CAST(123 AS SMALLINT))
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATALENGTH(CAST('123' AS SMALLINT))
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATALENGTH(CAST('' AS SMALLINT))
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123.33 AS SMALLINT))
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123 AS smallint_babel_6120))
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+
+-- INT : 4 (as expected)
+SELECT DATALENGTH(CAST(123 AS INT))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATALENGTH(CAST('123' AS INT))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATALENGTH(CAST('' AS INT))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123.33 AS INT))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATALENGTH(123)
+go
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123 AS int_babel_6120))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+
+-- bitint : 8 (as expected)
+SELECT DATALENGTH(CAST(123 AS bigint))
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT DATALENGTH(CAST('123' AS bigint))
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT DATALENGTH(CAST('' AS bigint))
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123.33 AS bigint))
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123 AS bigint_babel_6120))
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+-- numeric, testing for different precision range for actual input
+SELECT DATALENGTH(CAST(123.45 AS NUMERIC(10,2)))
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(123.45) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123.451234 AS NUMERIC(10,2))) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123.451234 AS NUMERIC(5,2))) 
+Go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123.451234 AS NUMERIC(1,0))) -- over flow
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+SELECT DATALENGTH(CAST(1 AS NUMERIC(1,0)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(1.0 AS NUMERIC(1,0)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(1.0 AS NUMERIC(5,3))) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(12.346 AS NUMERIC(5,3))) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(12345.6789 AS NUMERIC(9,3))) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(12345.6789 AS NUMERIC(10,3)))  
+Go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(12345.6789 AS NUMERIC(11,3))) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123456789123456789.679 AS NUMERIC(21,3))) 
+go
+~~START~~
+int
+13
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123456789123456789123456789123.12345678 AS NUMERIC(38,8))) 
+go
+~~START~~
+int
+17
+~~END~~
+
+
+Select datalength(123456789123456789123456789123.12345678) 
+GO
+~~START~~
+int
+17
+~~END~~
+
+
+SELECT DATALENGTH(CAST(0.679 AS NUMERIC(21,3))) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(0.1234567891 AS NUMERIC(21,3))) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(0.1234567234567891 AS NUMERIC(21,3)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(0.1234567234567891 AS NUMERIC(21,11))) 
+go
+~~START~~
+int
+9
+~~END~~
+
+
+SELECT DATALENGTH(CAST(1.1234567234567891 AS NUMERIC(38,5))) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123456789123.679 AS numeric_babel_6120)) 
+go
+~~START~~
+int
+9
+~~END~~
+
+
+-- extra 0 is appended and hence 21 precision, 13 result
+SELECT DATALENGTH(CAST(0.12345678912345678912 AS NUMERIC(38,21))) 
+go
+~~START~~
+int
+13
+~~END~~
+
+
+
+-- When significant digit is 0, 
+-- we have divergance between TSQL doc and actual functionality
+-- we are matching TSQL doc.
+-- Even though precision is 10, returns 5 byte according to 1-9 precision range
+SELECT DATALENGTH(CAST(0.1234567234567891 AS NUMERIC(21,10)))
+go
+~~START~~
+int
+9
+~~END~~
+
+
+-- Even though precision is 20, returns 9 byte according to 10-28 precision range
+SELECT DATALENGTH(CAST(0.12345678912345678912 AS NUMERIC(38,20))) 
+go
+~~START~~
+int
+13
+~~END~~
+
+
+-- Even though precision is 20, returns 9 byte according to 10-28 precision range
+SELECT DATALENGTH(CAST(0.123456789123456789121 AS NUMERIC(38,20))) 
+go
+~~START~~
+int
+13
+~~END~~
+
+
+-- decimal
+-- JIRA query
+SELECT DATALENGTH(CAST(123.45 AS DECIMAL(10,2)))
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(123.45)
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123.451234 AS DECIMAL(10,2)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123.451234 AS DECIMAL(5,2))) 
+Go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123.451234 AS DECIMAL(1,0))) -- over flow
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+SELECT DATALENGTH(CAST(1 AS DECIMAL(1,0)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(1.0 AS DECIMAL(5,3))) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(12.346 AS DECIMAL(5,3))) 
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST(12345678.679 AS DECIMAL(21,3))) 
+go
+~~START~~
+int
+9
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123456789123456789.679 AS DECIMAL(21,3))) 
+go
+~~START~~
+int
+13
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123456789123456789123456789123.12345678 AS DECIMAL(38,8))) 
+go
+~~START~~
+int
+17
+~~END~~
+
+
+Select datalength(123456789123456789123456789123.12345678) 
+GO
+~~START~~
+int
+17
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123456789123.679 AS decimal_babel_6120)) 
+go
+~~START~~
+int
+9
+~~END~~
+
+
+-- money
+select DATALENGTH(CAST(123.45 AS MONEY))
+go
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123 AS MONEY))
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT DATALENGTH(CAST('123' AS MONEY))
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT DATALENGTH(CAST('' AS MONEY))
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT DATALENGTH(CAST(NULL AS MONEY)) -- NULL
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(CAST(123.45 AS money_babel_6120))
+go
+~~START~~
+int
+8
+~~END~~
+
+
+-- smallmoney
+-- JIRA query
+select DATALENGTH(CAST(123.45 AS SMALLMONEY))
+go
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATALENGTH(CAST(123 AS SMALLMONEY))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATALENGTH(CAST('123' AS SMALLMONEY))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATALENGTH(CAST('' AS SMALLMONEY))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATALENGTH(CAST(NULL AS SMALLMONEY))
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(CAST(123.45 AS smallmoney_babel_6120))
+go
+~~START~~
+int
+4
+~~END~~
+
+
+-- date
+-- JIRA query
+SELECT DATALENGTH(CAST('2024-01-01' AS DATE))
+go
+~~START~~
+int
+3
+~~END~~
+
+
+select datalength(CAST('' AS DATE))
+go
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT DATALENGTH(CAST('2024-01-01' AS date_babel_6120))
+go
+~~START~~
+int
+3
+~~END~~
+
+
+-- smalldatetime
+-- JIRA query
+SELECT DATALENGTH(CAST('2024-01-01 12:34:56' AS SMALLDATETIME))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+select datalength(CAST('' AS SMALLDATETIME))
+go
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATALENGTH(CAST('2024-01-01 12:34:56' AS smalldatetime_babel_6120))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+
+-- time
+-- JIRA query
+SELECT DATALENGTH(CAST('12:34:56' AS TIME))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST('12:10:30.123' AS TIME))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST('12:10:30.123' AS TIME(5)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(CAST('' AS TIME))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH(CAST('12:10:30.123' AS time_babel_6120))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+-- datetime
+select datalength(cast('01/02/03' as datetime))
+go
+~~START~~
+int
+8
+~~END~~
+
+
+select datalength(CAST('' AS datetime))
+go
+~~START~~
+int
+8
+~~END~~
+
+
+select datalength(cast('01/02/03' as datetime_babel_6120))
+go
+~~START~~
+int
+8
+~~END~~
+
+
+-- datetime2
+select datalength(cast('Apr 1 2000 14:30' as datetime2))
+Go
+~~START~~
+int
+8
+~~END~~
+
+
+select datalength(CAST('' AS DATETIME2))
+go
+~~START~~
+int
+8
+~~END~~
+
+
+select datalength(cast('Apr 1 2000 14:30' as datetime2_babel_6120))
+Go
+~~START~~
+int
+8
+~~END~~
+
+
+-- datetimeoffset
+select datalength(cast('3/12/24 14:30 +8:00' as datetimeoffset))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(CAST('' AS datetimeoffset))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast('3/12/24 14:30 +8:00' as datetimeoffset_babel_6120))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+-- XML
+SELECT DATALENGTH(CAST('<root>test</root>' AS XML)) AS XML_Length;
+Go
+~~START~~
+int
+17
+~~END~~
+
+
+SELECT DATALENGTH(CAST(N'<root>test</root>' AS XML)) AS XML_Length;
+go
+~~START~~
+int
+17
+~~END~~
+
+
+SELECT DATALENGTH(CAST('<root>te界t</root>' AS XML)) AS XML_Length;
+go
+~~START~~
+int
+19
+~~END~~
+
+
+-- String datatypes : FIX with BABEL-1520/BABEL-1516
+-- char
+select datalength(char(0))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('' as char))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast('' as char(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast('asdfg' as char(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast('asdfg' as char))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast(N'asdfg' as char))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast(N'asdfg' as char(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast(NULL as char(10)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select datalength(cast(NULL as char))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as char)) 
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as char)) 
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as char(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+-- varchar
+-- VARCHAR
+select datalength(cast('' as varchar))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('' as varchar(10)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('asdfg' as varchar(10)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast('asdfg' as varchar))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as varchar))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as varchar(10)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(NULL as varchar(10)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select datalength(cast(NULL as varchar))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as varchar)) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as varchar)) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as varchar(10)))
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select datalength(cast('世界' as varchar)) 
+Go
+~~START~~
+int
+6
+~~END~~
+
+
+select datalength(cast(N'世界' as varchar)) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+select datalength(cast(N'世界' as varchar(10))) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+-- VARCHAR(MAX)
+select datalength(cast('' as varchar(max)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('asdfg' as varchar(max)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as varchar(max)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(NULL as varchar(max)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as varchar(max))) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as varchar(max))) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select datalength(cast(N'世界' as varchar(max))) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+-- NCHAR
+select datalength(nchar(0))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('' as nchar))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast('' as nchar(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast('asdfg' as nchar(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast('asdfg' as nchar))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast(N'asdfg' as nchar))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+select datalength(cast(N'asdfg' as nchar(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(cast(NULL as nchar(10)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select datalength(cast(NULL as nchar))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as nchar)) 
+go
+~~START~~
+int
+33
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as nchar)) 
+go
+~~START~~
+int
+33
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as nchar(10)))
+go
+~~START~~
+int
+13
+~~END~~
+
+
+select datalength(cast(N'世界' as nchar)) 
+go
+~~START~~
+int
+34
+~~END~~
+
+
+select datalength(cast(N'世界' as nchar(10))) 
+go
+~~START~~
+int
+14
+~~END~~
+
+
+-- NVARCHAR
+select datalength(cast('' as nvarchar))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('' as nvarchar(10)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('asdfg' as nvarchar(10)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast('asdfg' as nvarchar))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as nvarchar))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as nvarchar(10)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(NULL as nvarchar(10)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select datalength(cast(NULL as nvarchar))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as nvarchar)) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as nvarchar)) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as nvarchar(10)))
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select datalength(cast(N'世界' as nvarchar)) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+select datalength(cast(N'世界' as nvarchar(10))) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+-- NVARCHAR(MAX)
+select datalength(cast('' as nvarchar(max)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(cast('asdfg' as nvarchar(max)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(N'asdfg' as nvarchar(max)))
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select datalength(cast(NULL as nvarchar(max)))
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(cast('🌟' as nvarchar(max))) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select DATALENGTH(cast(N'🌟' as nvarchar(max))) 
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select datalength(cast(N'世界' as nvarchar(max))) 
+go
+~~START~~
+int
+6
+~~END~~
+
+
+
+-- combination  - multibyte/accented/surroagte
+select DATALENGTH('Hello') , DATALENGTH(N'Hello')
+go
+~~START~~
+int#!#int
+5#!#5
+~~END~~
+
+
+select DATALENGTH('こんにちは'), DATALENGTH(N'こんにちは')
+GO
+~~START~~
+int#!#int
+15#!#15
+~~END~~
+
+
+select DATALENGTH('Hàáâ') , DATALENGTH(N'Hàáâ')
+go
+~~START~~
+int#!#int
+7#!#7
+~~END~~
+
+
+select DATALENGTH('こàáâは'), DATALENGTH(N'こàáâは')
+go
+~~START~~
+int#!#int
+12#!#12
+~~END~~
+
+
+select DATALENGTH('🌟🌟🌟'), DATALENGTH(N'🌟🌟🌟')
+go
+~~START~~
+int#!#int
+12#!#12
+~~END~~
+
+
+-- truncation
+declare @a varchar(2) = 'hello'
+select DATALENGTH(@a)
+go
+~~START~~
+int
+2
+~~END~~
+
+
+declare @a Nvarchar(2) = N'hello'
+select DATALENGTH(@a)
+go
+~~START~~
+int
+2
+~~END~~
+
+
+
+-- text 
+select datalength(cast('abd' as text))
+Go
+~~START~~
+int
+3
+~~END~~
+
+
+select datalength(cast(N'abd' as text))
+Go
+~~START~~
+int
+3
+~~END~~
+
+
+select DATALENGTH(cast('こんにちは' as text)), DATALENGTH(cast(N'こんにちは' as text))
+GO
+~~START~~
+int#!#int
+15#!#15
+~~END~~
+
+
+-- ntext
+select datalength(cast('abd' as ntext))
+Go
+~~START~~
+int
+3
+~~END~~
+
+
+select datalength(cast(N'abd' as ntext))
+Go
+~~START~~
+int
+3
+~~END~~
+
+
+select DATALENGTH(cast('こんにちは' as ntext)), DATALENGTH(cast(N'こんにちは' as ntext))
+GO
+~~START~~
+int#!#int
+15#!#15
+~~END~~
+
+
+-- binary
+select datalength(CAST('0x65' AS BINARY(10)))
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(CAST(0x65 AS BINARY(10)))
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select datalength(CAST(0x65 AS BINARY))
+go
+~~START~~
+int
+30
+~~END~~
+
+
+-- FIX with BABEL-5610
+select datalength(CAST('' AS BINARY(10)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select datalength(CAST('' AS BINARY))
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- varbinary
+select datalength(CAST(0x65 AS varbinary))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+select datalength(CAST(0x65 AS varbinary(max)))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+select datalength(CAST(0x65 AS varbinary(10)))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+select datalength(CAST('0x65' AS VARBINARY(10)))
+go
+~~START~~
+int
+4
+~~END~~
+
+
+
+select datalength(CAST('' AS VARBINARY(10)))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+
+select datalength(CAST('' AS VARBINARY))
+go
+~~START~~
+int
+0
+~~END~~
+
 
 -- Cleanup
 DROP TABLE datalength_t2;
@@ -1032,3 +2586,20 @@ DROP TABLE datalength_ConstrainedTable;
 DROP TABLE datalength_t7;
 GO
 
+drop type tinyint_babel_6120;
+drop type date_babel_6120;
+drop type smalldatetime_babel_6120;
+drop type time_babel_6120;
+drop type smallmoney_babel_6120;
+drop type numeric_babel_6120;
+drop type decimal_babel_6120;
+GO
+
+drop type smallint_babel_6120;
+drop type int_babel_6120;
+drop type bigint_babel_6120;
+drop type datetime_babel_6120;
+drop type datetime2_babel_6120;
+drop type datetimeoffset_babel_6120;
+drop type money_babel_6120;
+go

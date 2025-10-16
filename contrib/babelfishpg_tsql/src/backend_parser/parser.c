@@ -266,6 +266,8 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE * llocp, core_yyscan_t yyscanner)
 				case '(':
 					cur_token = WITH_paren;
 					break;
+				case TABLE:
+					cur_token = WITH_table;
 			}
 			break;
 		case '(':

@@ -1,0 +1,6 @@
+-- tsql
+DROP TABLE IF EXISTS fakeGoodsInfo;
+GO
+
+DROP VIEW enr_view;
+GO

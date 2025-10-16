@@ -50,6 +50,7 @@
 #include "tsearch/ts_locale.h"
 #include "utils/xml.h"
 #include "common/md5.h"
+#include "utils/datum.h"
 
 #include "catalog.h"
 #include "catalog/toasting.h"
@@ -84,6 +85,8 @@ PG_FUNCTION_INFO_V1(sp_reset_connection_internal);
 PG_FUNCTION_INFO_V1(sp_renamedb_internal);
 PG_FUNCTION_INFO_V1(sp_xml_preparedocument);
 PG_FUNCTION_INFO_V1(sp_xml_removedocument);
+PG_FUNCTION_INFO_V1(tsql_openxml_get_colpattern);
+PG_FUNCTION_INFO_V1(tsql_openxml_get_xmldoc);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -129,7 +132,6 @@ int          get_next_xml_handle_counter(void);
 void         create_xml_handle_temp_table(void);
 void         delete_xml_handle_entry(int  handle);
 int          insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
-void         get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **ns_data);
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -5030,3 +5032,87 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 	relation_close(relation, AccessShareLock);
 }
 
+/*
+ * Function to retrieve XML document using document ID
+ */
+Datum
+tsql_openxml_get_xmldoc(PG_FUNCTION_ARGS)
+{
+	int32                 document_id = PG_GETARG_INT32(0);
+	xmltype              *xmldata = NULL;
+
+	get_xml_data_and_namespace_data(document_id, &xmldata, NULL);
+	
+	/* If we found the document, return it */
+	if (xmldata)
+		PG_RETURN_XML_P(xmldata);
+	
+	PG_RETURN_NULL();
+}
+
+/*
+ * tsql_openxml_get_colpattern - Generate XPath expressions for OPENXML columns
+ *
+ * This function generates the appropriate XPath expression for a column based on
+ * the OPENXML flag value. The flag determines whether to access XML data as
+ * attributes, elements, or either.
+ *   flag - Controls the XPath pattern generation:
+ *   0,1: Use attribute access (@colname)
+ *   2: Use element access (colname)
+ *   3: Try both element and attribute (colname|@colname)
+ */
+Datum
+tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
+{
+	char *xpath_expr;
+	int flag = PG_GETARG_INT32(1);
+	char *colname;
+
+	/* Check if colname is NULL or empty */
+    if (PG_ARGISNULL(0))
+          ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Column name cannot be NULL for OPENXML")));
+
+    colname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	if (strlen(colname) == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Column name cannot be empty for OPENXML")));
+	}
+
+	/* Check for negative flag values */
+	if (flag < 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Invalid flag value %d for OPENXML", flag)));
+	}
+
+	/* Normalize the flag value to 0-3 */
+	flag = flag % 4;
+	
+	switch (flag)
+	{
+		case 0:
+		case 1:
+			/* For flags 0 and 1, use @colname */
+			xpath_expr = psprintf("@%s", colname);
+			break;
+		case 2:
+			/* For flag 2, use colname */
+			xpath_expr = pstrdup(colname);
+			break;
+		case 3:
+			/* For flag 3, use colname|@colname */
+			xpath_expr = psprintf("%s|@%s", colname, colname);
+			break;
+		default:
+			/* Default to @colname for unknown flags */
+			xpath_expr = psprintf("@%s", colname);
+			break;
+	}
+	
+	PG_RETURN_TEXT_P(cstring_to_text(xpath_expr));
+}

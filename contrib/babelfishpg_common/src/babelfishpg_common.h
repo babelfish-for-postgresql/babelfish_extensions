@@ -73,6 +73,10 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_sparsevec_datatype) (Oid oid);
 	bool		(*is_tsql_halfvec_datatype) (Oid oid);
 	bool 		(*isEmptyOrWhitespace) (const char *str);
+
+	/* FIX ME: Remove is_tsql_int_datatype and is_tsql_bigint_datatype once BABEL-5955 is fixed */
+	bool		(*is_tsql_int_datatype) (Oid oid);
+	bool		(*is_tsql_bigint_datatype) (Oid oid);
 	
 	Datum		(*datetime_in_str) (char *str, Node *escontext);
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);

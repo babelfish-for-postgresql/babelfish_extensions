@@ -568,12 +568,13 @@ test_conv_string_to_time-before-17_4
 BABEL-5031
 BABEL-USER-GRANT
 test_conv_money_to_varchar
+openxml_with_clause-before-17_7
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 BABEL-5467
 test_conv_float_to_varchar_char_before_17_4
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
-round_return_type_test
+round_return_type_test-before-16_11-or-17_7
 alter-view
 test_conv_int_to_varbinary_binary_before_17_5_or_16_9
 babel_varbinary
@@ -593,3 +594,4 @@ babel_assign_nchar
 alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
+#babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370

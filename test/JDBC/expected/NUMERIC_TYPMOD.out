@@ -3240,3 +3240,560 @@ numeric
 123456789.1
 ~~END~~
 
+
+-- Test ROUND function
+SELECT ROUND(123.456, 2) * 1.00;
+GO
+~~START~~
+numeric
+123.46000
+~~END~~
+
+
+SELECT ROUND(123.456, 0) * 1.00;
+GO
+~~START~~
+numeric
+123.00000
+~~END~~
+
+
+SELECT ROUND(123.456, -1) * 1.00;
+GO
+~~START~~
+numeric
+120.00000
+~~END~~
+
+
+SELECT ROUND(1.2, 2) * CAST(1 AS DECIMAL(5,2));
+GO
+~~START~~
+numeric
+1.200
+~~END~~
+
+
+SELECT ROUND(1.2, 2) * CAST(1 AS DECIMAL(10,4));
+GO
+~~START~~
+numeric
+1.20000
+~~END~~
+
+
+SELECT ROUND(cast(12 as int), 2);
+GO
+~~START~~
+int
+12
+~~END~~
+
+
+SELECT ROUND(cast(12 as smallint), 2);
+GO
+~~START~~
+int
+12
+~~END~~
+
+
+SELECT ROUND(cast(12 as bigint), 2);
+GO
+~~START~~
+bigint
+12
+~~END~~
+
+
+SELECT ROUND(cast(12 as tinyint), 2);
+GO
+~~START~~
+int
+12
+~~END~~
+
+
+SELECT ROUND(cast(12 as money), 2);
+GO
+~~START~~
+money
+12.0000
+~~END~~
+
+
+SELECT ROUND(cast(12 as smallmoney), 2);
+GO
+~~START~~
+money
+12.0000
+~~END~~
+
+
+SELECT 'INT' as Type, ROUND(CAST(123 AS INT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+INT#!#123.00
+~~END~~
+
+SELECT 'BIGINT' as Type, ROUND(CAST(123 AS BIGINT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+BIGINT#!#123.00
+~~END~~
+
+SELECT 'TINYINT' as Type, ROUND(CAST(123 AS TINYINT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+TINYINT#!#123.00
+~~END~~
+
+SELECT 'SMALLINT' as Type, ROUND(CAST(123 AS SMALLINT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+SMALLINT#!#123.00
+~~END~~
+
+
+SELECT 'INT' as Type, ROUND(CAST(123 AS INT), 2);
+GO
+~~START~~
+varchar#!#int
+INT#!#123
+~~END~~
+
+SELECT 'BIGINT' as Type, ROUND(CAST(123 AS BIGINT), 2);
+GO
+~~START~~
+varchar#!#bigint
+BIGINT#!#123
+~~END~~
+
+SELECT 'TINYINT' as Type, ROUND(CAST(123 AS TINYINT), 2);
+GO
+~~START~~
+varchar#!#int
+TINYINT#!#123
+~~END~~
+
+SELECT 'SMALLINT' as Type, ROUND(CAST(123 AS SMALLINT), 2);
+GO
+~~START~~
+varchar#!#int
+SMALLINT#!#123
+~~END~~
+
+
+-- Money types
+SELECT 'MONEY' as Type, ROUND(CAST(123.456 AS MONEY), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+MONEY#!#123.460000
+~~END~~
+
+SELECT 'SMALLMONEY' as Type, ROUND(CAST(123.456 AS SMALLMONEY), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+SMALLMONEY#!#123.460000
+~~END~~
+
+
+SELECT 'MONEY' as Type, ROUND(CAST(123.456 AS MONEY), 2);
+GO
+~~START~~
+varchar#!#money
+MONEY#!#123.4600
+~~END~~
+
+SELECT 'SMALLMONEY' as Type, ROUND(CAST(123.456 AS SMALLMONEY), 2);
+GO
+~~START~~
+varchar#!#money
+SMALLMONEY#!#123.4600
+~~END~~
+
+
+-- Bit type
+SELECT 'BIT' as Type, ROUND(CAST(1 AS BIT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+BIT#!#1.00
+~~END~~
+
+SELECT 'BIT' as Type, ROUND(CAST(0 AS BIT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+BIT#!#0.00
+~~END~~
+
+
+SELECT 'BIT' as Type, ROUND(CAST(1 AS BIT), 2);
+GO
+~~START~~
+varchar#!#bigint
+BIT#!#1
+~~END~~
+
+SELECT 'BIT' as Type, ROUND(CAST(0 AS BIT), 2);
+GO
+~~START~~
+varchar#!#bigint
+BIT#!#0
+~~END~~
+
+
+-- Testing different decimal places
+SELECT 'INT with -1' as Type, ROUND(CAST(123 AS INT), -1) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+INT with -1#!#120.00
+~~END~~
+
+SELECT 'MONEY with -1' as Type, ROUND(CAST(123.456 AS MONEY), -1) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+MONEY with -1#!#120.000000
+~~END~~
+
+SELECT 'INT with -1' as Type, ROUND(CAST(123 AS INT), -1);
+GO
+~~START~~
+varchar#!#int
+INT with -1#!#120
+~~END~~
+
+SELECT 'MONEY with -1' as Type, ROUND(CAST(123.456 AS MONEY), -1);
+GO
+~~START~~
+varchar#!#money
+MONEY with -1#!#120.0000
+~~END~~
+
+
+-- Testing with larger numbers
+SELECT 'BIGINT Large' as Type, ROUND(CAST(9223372036854775807 AS BIGINT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+BIGINT Large#!#9223372036854775807.00
+~~END~~
+
+SELECT 'BIGINT Large' as Type, ROUND(CAST(9223372036854775807 AS BIGINT), 2);
+GO
+~~START~~
+varchar#!#bigint
+BIGINT Large#!#9223372036854775807
+~~END~~
+
+
+-- Testing with different multipliers
+SELECT 'INT' as Type, ROUND(CAST(123 AS INT), 2) * CAST(1 AS DECIMAL(5,2));
+GO
+~~START~~
+varchar#!#numeric
+INT#!#123.00
+~~END~~
+
+SELECT 'MONEY' as Type, ROUND(CAST(123.456 AS MONEY), 2) * CAST(1 AS DECIMAL(10,4));
+GO
+~~START~~
+varchar#!#numeric
+MONEY#!#123.46000000
+~~END~~
+
+
+-- Testing negative numbers
+SELECT 'INT Negative' as Type, ROUND(CAST(-123 AS INT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+INT Negative#!#-123.00
+~~END~~
+
+SELECT 'MONEY Negative' as Type, ROUND(CAST(-123.456 AS MONEY), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+MONEY Negative#!#-123.460000
+~~END~~
+
+
+-- Testing NULL values
+SELECT 'NULL' as Type, ROUND(CAST(NULL AS INT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+NULL#!#<NULL>
+~~END~~
+
+SELECT 'NULL' as Type, ROUND(CAST(NULL AS MONEY), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+NULL#!#<NULL>
+~~END~~
+
+
+-- Testing edge cases
+SELECT 'TINYINT Max' as Type, ROUND(CAST(255 AS TINYINT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+TINYINT Max#!#255.00
+~~END~~
+
+SELECT 'SMALLINT Max' as Type, ROUND(CAST(32767 AS SMALLINT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+SMALLINT Max#!#32767.00
+~~END~~
+
+SELECT 'INT Max' as Type, ROUND(CAST(2147483647 AS INT), 2) * 1.00;
+GO
+~~START~~
+varchar#!#numeric
+INT Max#!#2147483647.00
+~~END~~
+
+
+SELECT 'TINYINT Max' as Type, ROUND(CAST(255 AS TINYINT), 2);
+GO
+~~START~~
+varchar#!#int
+TINYINT Max#!#255
+~~END~~
+
+SELECT 'SMALLINT Max' as Type, ROUND(CAST(32767 AS SMALLINT), 2);
+GO
+~~START~~
+varchar#!#int
+SMALLINT Max#!#32767
+~~END~~
+
+SELECT 'INT Max' as Type, ROUND(CAST(2147483647 AS INT), 2);
+GO
+~~START~~
+varchar#!#int
+INT Max#!#2147483647
+~~END~~
+
+
+-- Testing different rounding positions
+SELECT 'MONEY Different Positions' as Type, 
+    ROUND(CAST(123.456 AS MONEY), 3) * 1.00 as [3_decimals],
+    ROUND(CAST(123.456 AS MONEY), 1) * 1.00 as [1_decimal],
+    ROUND(CAST(123.456 AS MONEY), 0) * 1.00 as [0_decimals],
+    ROUND(CAST(123.456 AS MONEY), -2) * 1.00 as [minus_2];
+GO
+~~START~~
+varchar#!#numeric#!#numeric#!#numeric#!#numeric
+MONEY Different Positions#!#123.456000#!#123.500000#!#123.000000#!#100.000000
+~~END~~
+
+
+GO
+-- Create source data with ROUND results
+SELECT 
+    ROUND(CAST(123.456 AS DECIMAL(10,4)), 2) * 1.00 as decimal_round,
+    ROUND(CAST(123.456 AS NUMERIC(10,4)), 2) * 1.00 as numeric_round,
+    ROUND(CAST(123.456 AS MONEY), 2) * 1.00 as money_round,
+    ROUND(CAST(123.456 AS FLOAT), 2) * 1.00 as float_round,
+    ROUND(CAST(123.456 AS REAL), 2) * 1.00 as real_round,
+    ROUND(CAST(123 AS INT), 2) * 1.00 as int_round,
+    ROUND(CAST(123 AS BIGINT), 2) * 1.00 as bigint_round,
+    ROUND(CAST(123 AS SMALLINT), 2) * 1.00 as smallint_round,
+    ROUND(CAST(123 AS TINYINT), 2) * 1.00 as tinyint_round
+INTO RoundResults;
+GO
+
+-- Query INFORMATION_SCHEMA.COLUMNS for the results
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'RoundResults'
+ORDER BY ORDINAL_POSITION;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+roundresults#!#decimal_round#!#numeric#!#14#!#6
+roundresults#!#numeric_round#!#numeric#!#14#!#6
+roundresults#!#money_round#!#numeric#!#23#!#6
+roundresults#!#float_round#!#float#!#53#!#<NULL>
+roundresults#!#real_round#!#float#!#53#!#<NULL>
+roundresults#!#int_round#!#numeric#!#14#!#2
+roundresults#!#bigint_round#!#numeric#!#23#!#2
+roundresults#!#smallint_round#!#numeric#!#14#!#2
+roundresults#!#tinyint_round#!#numeric#!#14#!#2
+~~END~~
+
+
+-- Clean up
+DROP TABLE RoundResults;
+GO
+
+-- Test with different multipliers
+SELECT 
+    ROUND(CAST(123.456 AS DECIMAL(10,4)), 2) * CAST(1 AS DECIMAL(5,2)) as decimal_round,
+    ROUND(CAST(123.456 AS NUMERIC(10,4)), 2) * CAST(1 AS DECIMAL(10,4)) as numeric_round,
+    ROUND(CAST(123.456 AS MONEY), 2) * CAST(1 AS DECIMAL(15,6)) as money_round
+INTO RoundResultsWithMultipliers;
+GO
+
+-- Query INFORMATION_SCHEMA.COLUMNS for the results with multipliers
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'RoundResultsWithMultipliers'
+ORDER BY ORDINAL_POSITION;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+roundresultswithmultipliers#!#decimal_round#!#numeric#!#16#!#6
+roundresultswithmultipliers#!#numeric_round#!#numeric#!#21#!#8
+roundresultswithmultipliers#!#money_round#!#numeric#!#27#!#10
+~~END~~
+
+
+-- Clean up
+DROP TABLE RoundResultsWithMultipliers;
+GO
+
+-- Test with different rounding positions
+SELECT 
+    ROUND(CAST(123.456 AS DECIMAL(10,4)), 3) * 1.00 as decimal_round_3,
+    ROUND(CAST(123.456 AS DECIMAL(10,4)), 1) * 1.00 as decimal_round_1,
+    ROUND(CAST(123.456 AS DECIMAL(10,4)), 0) * 1.00 as decimal_round_0,
+    ROUND(CAST(123.456 AS DECIMAL(10,4)), -1) * 1.00 as decimal_round_minus_1
+INTO RoundResultsPositions;
+GO
+
+-- Query INFORMATION_SCHEMA.COLUMNS for different rounding positions
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'RoundResultsPositions'
+ORDER BY ORDINAL_POSITION;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+roundresultspositions#!#decimal_round_3#!#numeric#!#14#!#6
+roundresultspositions#!#decimal_round_1#!#numeric#!#14#!#6
+roundresultspositions#!#decimal_round_0#!#numeric#!#14#!#6
+roundresultspositions#!#decimal_round_minus_1#!#numeric#!#14#!#6
+~~END~~
+
+
+-- Clean up
+DROP TABLE RoundResultsPositions;
+GO
+
+-- Test with NULL values and extreme numbers
+SELECT 
+    ROUND(CAST(NULL AS DECIMAL(10,4)), 2) * 1.00 as null_round,
+    ROUND(CAST(9999999.999999 AS NUMERIC(15,6)), 2) * 1.00 as large_decimal_round,
+    ROUND(CAST(-9999999.999999 AS NUMERIC(15,6)), 2) * 1.00 as negative_large_decimal_round
+INTO RoundResultsEdgeCases;
+GO
+
+-- Query INFORMATION_SCHEMA.COLUMNS for edge cases
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'RoundResultsEdgeCases'
+ORDER BY ORDINAL_POSITION;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
+roundresultsedgecases#!#null_round#!#numeric#!#14#!#6
+roundresultsedgecases#!#large_decimal_round#!#numeric#!#19#!#8
+roundresultsedgecases#!#negative_large_decimal_round#!#numeric#!#19#!#8
+~~END~~
+
+
+-- Clean up
+DROP TABLE RoundResultsEdgeCases;
+GO
+
+-- cx query
+DROP TABLE IF EXISTS #Smr_97deeb4d15ea4fb4a1d44eeac24573c9_Averages
+GO
+
+
+CREATE TABLE #Smr_97deeb4d15ea4fb4a1d44eeac24573c9_Averages  (
+    [accid] VARCHAR(50) NOT NULL,
+    [acctyp] VARCHAR(10) NOT NULL,
+    [avgatminamo] MONEY NOT NULL,
+    [avgatmincnt] FLOAT NOT NULL,
+    [avgatmoutamo] MONEY NOT NULL,
+    [avgatmoutcnt] FLOAT NOT NULL,
+    [avgatmamo] MONEY NOT NULL,
+    [avgatmcnt] FLOAT NOT NULL,
+    [insnum] INT NOT NULL DEFAULT (0)
+);
+INSERT INTO #Smr_97deeb4d15ea4fb4a1d44eeac24573c9_Averages (accid, acctyp, avgatminamo, avgatmincnt, avgatmoutamo, avgatmoutcnt, avgatmamo, avgatmcnt, insnum)
+VALUES 
+('1', 'DDA', 60.00, 3, 60.00, 3, 120.00, 6, 0),
+('2', 'DDA', 20.00, 1, 20.00, 1, 40.00, 2, 0),
+('3', 'DDA', 20.00, 1, 20.00, 1, 40.00, 2, 0),
+('5', 'DDA', 20.00, 1, 20.00, 1, 40.00, 2, 0);
+GO
+~~ROW COUNT: 4~~
+
+
+DROP TABLE IF EXISTS #Smr_3c004f142d4d4e1b8754530db0a35a07_ParamCnt
+GO
+CREATE TABLE #Smr_3c004f142d4d4e1b8754530db0a35a07_ParamCnt ([StDevFldCnt] [decimal](11, 2) NULL);
+GO
+	
+INSERT INTO #Smr_3c004f142d4d4e1b8754530db0a35a07_ParamCnt (StDevFldCnt) 
+SELECT 
+case when round(stdevp([avgatmcnt]),2) is null 
+	then 0.00 else round(stdevp([avgatmcnt]),2) 
+	end
+FROM #Smr_97deeb4d15ea4fb4a1d44eeac24573c9_Averages
+GO
+~~ROW COUNT: 1~~
+
+
+Select 
+	case when round(StDevFldCnt,0) is null then 0.00 else round(StDevFldCnt,0) end
+From #Smr_3c004f142d4d4e1b8754530db0a35a07_ParamCnt
+GO
+~~START~~
+numeric
+2.00
+~~END~~
+
+
+DROP TABLE IF EXISTS #Smr_97deeb4d15ea4fb4a1d44eeac24573c9_Averages
+GO
+
+DROP TABLE IF EXISTS #Smr_3c004f142d4d4e1b8754530db0a35a07_ParamCnt
+GO
