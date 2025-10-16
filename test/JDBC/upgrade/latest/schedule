@@ -665,3 +665,4 @@ cast_datetime_to_binary
 test_output_clause
 update_with_var
 BABEL-4271
+floating_numbers_with_special_values

@@ -640,3 +640,4 @@ test_conv_text_to_string
 test_convert_to_binary
 cast_datetime_to_binary
 BABEL-4271
+floating_numbers_with_special_values

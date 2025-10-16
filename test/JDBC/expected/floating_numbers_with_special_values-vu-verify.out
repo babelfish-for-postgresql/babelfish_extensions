@@ -1,0 +1,1133 @@
+
+SELECT test_float_speacial.fn_cast_char_to_float_01();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_cast_varchar_to_float_02();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_cast_text_to_float_03();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_cast_nchar_to_float_04();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_cast_nvarchar_to_float_05();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_cast_ntext_to_float_06();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_cast_char_to_real_01();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_cast_varchar_to_real_02();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT test_float_speacial.fn_cast_text_to_real_03();
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_cast_nchar_to_real_04();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_cast_nvarchar_to_real_05();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT test_float_speacial.fn_cast_ntext_to_real_06();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT test_float_speacial.fn_trycast_char_to_float_01();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_varchar_to_float_02();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_text_to_float_03();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_nchar_to_float_04();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_nvarchar_to_float_05();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_ntext_to_float_06();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_char_to_real_01();
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_varchar_to_real_02();
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_text_to_real_03();
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_nchar_to_real_04();
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_nvarchar_to_real_05();
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_trycast_ntext_to_real_06();
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_convert_char_to_float_01();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_convert_varchar_to_float_02();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_convert_text_to_float_03();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_convert_nchar_to_float_04();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_convert_nvarchar_to_float_05();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_convert_ntext_to_float_06();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_convert_char_to_real_01();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_convert_varchar_to_real_02();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT test_float_speacial.fn_convert_text_to_real_03();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT test_float_speacial.fn_convert_nchar_to_real_04();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT test_float_speacial.fn_convert_nvarchar_to_real_05();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT test_float_speacial.fn_convert_ntext_to_real_06();
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT test_float_speacial.fn_tryconvert_char_to_float_01();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_varchar_to_float_02();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_text_to_float_03();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_nchar_to_float_04();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_nvarchar_to_float_05();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_ntext_to_float_06();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_char_to_real_01();
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_varchar_to_real_02();
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_text_to_real_03();
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_nchar_to_real_04();
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_nvarchar_to_real_05();
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT test_float_speacial.fn_tryconvert_ntext_to_real_06();
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_cast_char_to_float_01;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_cast_varchar_to_float_02;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_cast_text_to_float_03;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_cast_nchar_to_float_04;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_cast_nvarchar_to_float_05;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_cast_ntext_to_float_06;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_cast_char_to_real_01;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_cast_varchar_to_real_02;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+EXEC test_float_speacial.sp_cast_text_to_real_03;
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_cast_nchar_to_real_04;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_cast_nvarchar_to_real_05;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+EXEC test_float_speacial.sp_cast_ntext_to_real_06;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+EXEC test_float_speacial.sp_trycast_char_to_float_01;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_varchar_to_float_02;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_text_to_float_03;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_nchar_to_float_04;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_nvarchar_to_float_05;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_ntext_to_float_06;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_char_to_real_01;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_varchar_to_real_02;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_text_to_real_03;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_nchar_to_real_04;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_nvarchar_to_real_05;
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_trycast_ntext_to_real_06;
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_convert_char_to_float_01;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_convert_varchar_to_float_02;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_convert_text_to_float_03;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_convert_nchar_to_float_04;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_convert_nvarchar_to_float_05;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_convert_ntext_to_float_06;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_convert_char_to_real_01;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_convert_varchar_to_real_02;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+EXEC test_float_speacial.sp_convert_text_to_real_03;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+EXEC test_float_speacial.sp_convert_nchar_to_real_04;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+EXEC test_float_speacial.sp_convert_nvarchar_to_real_05;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+EXEC test_float_speacial.sp_convert_ntext_to_real_06;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+EXEC test_float_speacial.sp_tryconvert_char_to_float_01;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_tryconvert_varchar_to_float_02;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_tryconvert_text_to_float_03;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_tryconvert_nchar_to_float_04;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_tryconvert_nvarchar_to_float_05;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_tryconvert_ntext_to_float_06;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_tryconvert_char_to_real_01;
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+EXEC test_float_speacial.sp_tryconvert_varchar_to_real_02;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_tryconvert_text_to_real_03;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_tryconvert_nchar_to_real_04;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial.sp_tryconvert_nvarchar_to_real_05;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+EXEC test_float_speacial. sp_tryconvert_ntext_to_real_06;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_char_to_float_01;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_varchar_to_float_02;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_text_to_float_03;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_nchar_to_float_04;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_nvarchar_to_float_05;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_ntext_to_float_06;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_char_to_real_01;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_varchar_to_real_02;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_text_to_real_03;
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_nchar_to_real_04;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_nvarchar_to_real_05;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT * FROM test_float_speacial.vw_cast_ntext_to_real_06;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_char_to_float_01;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_varchar_to_float_02;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_text_to_float_03;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_nchar_to_float_04;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_nvarchar_to_float_05;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_ntext_to_float_06;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_char_to_real_01;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_varchar_to_real_02;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_text_to_real_03;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_nchar_to_real_04;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_nvarchar_to_real_05;
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_trycast_ntext_to_real_06;
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_char_to_float_01;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_varchar_to_float_02;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_text_to_float_03;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_nchar_to_float_04;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_nvarchar_to_float_05;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_ntext_to_float_06;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_char_to_real_01;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_varchar_to_real_02;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_text_to_real_03;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_nchar_to_real_04;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to float.)~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_nvarchar_to_real_05;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT * FROM test_float_speacial.vw_convert_ntext_to_real_06;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to real.)~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_char_to_float_01;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_varchar_to_float_02;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_text_to_float_03;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_nchar_to_float_04;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_nvarchar_to_float_05;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_ntext_to_float_06;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_char_to_real_01;
+GO
+~~START~~
+real
+0.0
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_varchar_to_real_02;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_text_to_real_03;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_nchar_to_real_04;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_nvarchar_to_real_05;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+
+SELECT * FROM test_float_speacial.vw_tryconvert_ntext_to_real_06;
+GO
+~~START~~
+real
+<NULL>
+~~END~~
+
+

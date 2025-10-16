@@ -596,3 +596,4 @@ cast_binary_to_string-before-16_8
 test_conv_text_to_binary-before-16_8
 test_conv_text_to_string
 babel_timezoneinfo_before_17_7
+floating_numbers_with_special_values
