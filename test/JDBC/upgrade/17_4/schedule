@@ -590,7 +590,7 @@ db_securityadmin
 BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
-BABEL-2736
+BABEL-2736-before-17_7-16_11
 cast_nvarchar_test
 datareader_datawriter
 db_owner
@@ -629,3 +629,5 @@ alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 ascii_function_before-17_7-or-16_11
+test_convert_to_binary-before-17_7-16_11
+cast_datetime_to_binary-before-17_7-16_11
