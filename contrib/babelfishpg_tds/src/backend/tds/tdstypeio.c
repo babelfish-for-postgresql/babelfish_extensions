@@ -3856,8 +3856,11 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			variantBaseType == VARIANT_TYPE_NVARCHAR)
 		{
 			initStringInfo(&strbuf);
-			TdsUTF8toUTF16StringInfo(&strbuf, buf + VARHDRSZ, dataLen);
-			actualDataLen = strbuf.len;
+			if(dataLen > 0)
+			{
+				TdsUTF8toUTF16StringInfo(&strbuf, buf + VARHDRSZ, dataLen);
+				actualDataLen = strbuf.len;
+			}
 		}
 		else
 		{
