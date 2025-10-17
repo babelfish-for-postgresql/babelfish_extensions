@@ -10559,7 +10559,18 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(estate->datum_context);
 	target = estate->datums[dno];
 
-	/* we will reuse exec_assign_value function here provided in pl_exec.c */
+	if (!isNull)
+	{
+		int16		valTypLen;
+		bool		resTypByVal;
+		
+		/* Fetch the typlen and typbyval info for the arg type. */
+		get_typlenbyval(valtype, &valTypLen, &resTypByVal);
+		/* Copy the datum. */
+		data = datumCopy(data, resTypByVal, valTypLen);
+	}
+
+	/* We will reuse exec_assign_value function here provided in pl_exec.c */
 	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
 
 	MemoryContextSwitchTo(oldcontext);
