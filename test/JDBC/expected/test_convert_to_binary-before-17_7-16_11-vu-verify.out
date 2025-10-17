@@ -153,10 +153,10 @@ FROM Employee e;
 GO
 ~~START~~
 varchar#!#binary
-Test 3: Nested Conversions#!#38363131302E35380000
-Test 3: Nested Conversions#!#39343632302E38360000
-Test 3: Nested Conversions#!#3130383437302E303000
-Test 3: Nested Conversions#!#37373632302E32390000
+Test 3: Nested Conversions#!#38363131302E35383030
+Test 3: Nested Conversions#!#39343632302E38363030
+Test 3: Nested Conversions#!#3130383437302E303030
+Test 3: Nested Conversions#!#37373632302E32393030
 ~~END~~
 
 

@@ -69,7 +69,7 @@ CREATE PROCEDURE sp_convert_datetime_binary
 AS
 BEGIN
     SET @output_bin = CAST(@input_dt AS BINARY(8));
-
+    
     -- Also insert a test record
     INSERT INTO test_datetime_binary (id, dt_col, bin_col)
     VALUES (999, @input_dt, @output_bin);
