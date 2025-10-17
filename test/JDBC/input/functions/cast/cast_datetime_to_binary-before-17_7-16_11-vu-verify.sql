@@ -281,54 +281,15 @@ GO
 /*
  * ======================================================================================================================
  *                                          DEPENDENT OBJECTS TESTS
+ * Didnt add any view, procedure, trigger , function statement as cast datetime to binary was not supported before.
+ * Hence wont be able to create any in prpeare file.
+ * So we wouldnt be able to run any select statement on it                                 
  * ======================================================================================================================
  */
 
--- Test Case 37: View with datetime to binary conversion
-SELECT * FROM vw_datetime_binary ORDER BY id;
-GO
-
--- Test Case 38: User-Defined Function with datetime to binary
-SELECT dbo.fn_datetime_to_binary('2023-01-01 12:30:45.123') AS function_result;
-GO
-
--- Test Case 39: User-Defined Function with different datetime value
-SELECT dbo.fn_datetime_to_binary('2023-12-25 15:45:30.789') AS static_dt_binary;
-GO
 
 -- Test Case 40: Table-Valued Function with datetime range
 SELECT * FROM dbo.fn_get_datetime_binary_range('1900-01-01', '2050-01-01');
-GO
-
--- Test Case 41: Stored Procedure with OUTPUT parameter
-DECLARE @test_dt DATETIME = '2023-07-15 10:30:00.456';
-DECLARE @result_bin BINARY(8);
-EXEC sp_convert_datetime_binary @test_dt, @result_bin OUTPUT;
-SELECT @test_dt AS input_datetime, @result_bin AS output_binary;
-GO
-
--- Test Case 42: Computed Column INSERT test
-INSERT INTO test_computed_binary (id, dt_col) VALUES 
-(1, '2023-01-01 12:00:00'),
-(2, '2023-06-15 18:30:45.123'),
-(3, NULL);
-GO
-
--- Test Case 43: Computed Column SELECT test
-SELECT id, dt_col, computed_binary FROM test_computed_binary ORDER BY id;
-GO
-
--- Test Case 44: Index usage on computed binary column
-SELECT * FROM test_computed_binary 
-WHERE computed_binary = CAST(CAST('2023-01-01 12:00:00' AS DATETIME) AS BINARY(8));
-GO
-
--- Test Case 45: Trigger test - INSERT to fire trigger
-INSERT INTO test_datetime_binary (id, dt_col) VALUES (100, '2023-08-01 14:25:30');
-GO
-
--- Test Case 46: Trigger test - Verify trigger execution
-SELECT * FROM test_computed_binary WHERE dt_col = '2023-08-01 14:25:30';
 GO
 
 -- Test Case 47: Check Constraint test with valid data
