@@ -912,3 +912,207 @@ GO
 CREATE VIEW test_float_speacial.vw_tryconvert_ntext_to_real_06 AS
 SELECT TRY_CONVERT(REAL, CAST(N'-inf' AS NTEXT)) AS val;
 GO
+
+CREATE VIEW test_float_speacial.vw_imp_float_txt_01 AS SELECT CAST(0e0 AS FLOAT) + 'Infinity'  AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_float_txt_02 AS SELECT CAST(0e0 AS FLOAT) + '+inf'      AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_float_txt_03 AS SELECT CAST(0e0 AS FLOAT) + ' '         AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_float_txt_04 AS SELECT CAST(0e0 AS FLOAT) + '-Infinity' AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_float_txt_05 AS SELECT CAST(0e0 AS FLOAT) + 'NaN'       AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_float_txt_06 AS SELECT CAST(0e0 AS FLOAT) + 'inf'       AS val; 
+GO
+
+CREATE VIEW test_float_speacial.vw_imp_float_ntxt_01 AS SELECT CAST(0e0 AS FLOAT) + N'Infinity'  AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_float_ntxt_02 AS SELECT CAST(0e0 AS FLOAT) + N'+inf'      AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_float_ntxt_03 AS SELECT CAST(0e0 AS FLOAT) + N' '         AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_float_ntxt_04 AS SELECT CAST(0e0 AS FLOAT) + N'-Infinity' AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_float_ntxt_05 AS SELECT CAST(0e0 AS FLOAT) + N'NaN'       AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_float_ntxt_06 AS SELECT CAST(0e0 AS FLOAT) + N'inf'       AS val; 
+GO
+
+CREATE VIEW test_float_speacial.vw_imp_real_txt_01 AS SELECT CAST(0e0 AS REAL) + '+Infinity' AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_real_txt_02 AS SELECT CAST(0e0 AS REAL) + '-inf'      AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_real_txt_03 AS SELECT CAST(0e0 AS REAL) + ''          AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_real_txt_04 AS SELECT CAST(0e0 AS REAL) + '+inf'      AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_real_txt_05 AS SELECT CAST(0e0 AS REAL) + 'Infinity'  AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_real_txt_06 AS SELECT CAST(0e0 AS REAL) + '-Infinity' AS val; 
+GO
+
+CREATE VIEW test_float_speacial.vw_imp_real_ntxt_01 AS SELECT CAST(0e0 AS REAL) + N'+Infinity' AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_real_ntxt_02 AS SELECT CAST(0e0 AS REAL) + N'-inf'      AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_real_ntxt_03 AS SELECT CAST(0e0 AS REAL) + N''          AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_real_ntxt_04 AS SELECT CAST(0e0 AS REAL) + N'+inf'      AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_real_ntxt_05 AS SELECT CAST(0e0 AS REAL) + N'Infinity'  AS val; 
+GO
+CREATE VIEW test_float_speacial.vw_imp_real_ntxt_06 AS SELECT CAST(0e0 AS REAL) + N'-Infinity' AS val; 
+GO
+
+CREATE FUNCTION test_float_speacial.fn_imp_float_txt_01() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = 'Infinity';  RETURN @f; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_float_txt_02() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = '+inf';      RETURN @f; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_float_txt_03() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = ' ';         RETURN @f; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_float_txt_04() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = '-Infinity'; RETURN @f; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_float_txt_05() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = 'NaN';       RETURN @f; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_float_txt_06() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = 'inf';       RETURN @f; END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_imp_float_ntxt_01() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = N'Infinity';  RETURN @f; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_float_ntxt_02() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = N'+inf';      RETURN @f; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_float_ntxt_03() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = N' ';         RETURN @f; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_float_ntxt_04() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = N'-Infinity'; RETURN @f; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_float_ntxt_05() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = N'NaN';       RETURN @f; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_float_ntxt_06() RETURNS FLOAT AS
+BEGIN DECLARE @f FLOAT = N'inf';       RETURN @f; END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_imp_real_txt_01() RETURNS REAL AS
+BEGIN DECLARE @r REAL = '+Infinity';  RETURN @r; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_real_txt_02() RETURNS REAL AS
+BEGIN DECLARE @r REAL = '-inf';       RETURN @r; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_real_txt_03() RETURNS REAL AS
+BEGIN DECLARE @r REAL = '';           RETURN @r; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_real_txt_04() RETURNS REAL AS
+BEGIN DECLARE @r REAL = '+inf';       RETURN @r; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_real_txt_05() RETURNS REAL AS
+BEGIN DECLARE @r REAL = 'Infinity';   RETURN @r; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_real_txt_06() RETURNS REAL AS
+BEGIN DECLARE @r REAL = '-Infinity';  RETURN @r; END
+GO
+
+CREATE FUNCTION test_float_speacial.fn_imp_real_ntxt_01() RETURNS REAL AS
+BEGIN DECLARE @r REAL = N'+Infinity';  RETURN @r; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_real_ntxt_02() RETURNS REAL AS
+BEGIN DECLARE @r REAL = N'-inf';       RETURN @r; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_real_ntxt_03() RETURNS REAL AS
+BEGIN DECLARE @r REAL = N'';           RETURN @r; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_real_ntxt_04() RETURNS REAL AS
+BEGIN DECLARE @r REAL = N'+inf';       RETURN @r; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_real_ntxt_05() RETURNS REAL AS
+BEGIN DECLARE @r REAL = N'Infinity';   RETURN @r; END
+GO
+CREATE FUNCTION test_float_speacial.fn_imp_real_ntxt_06() RETURNS REAL AS
+BEGIN DECLARE @r REAL = N'-Infinity';  RETURN @r; END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_imp_float_txt_01 AS
+BEGIN DECLARE @f FLOAT = 'Infinity';  SELECT @f AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_float_txt_02 AS
+BEGIN DECLARE @f FLOAT = '+inf';      SELECT @f AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_float_txt_03 AS
+BEGIN DECLARE @f FLOAT = ' ';         SELECT @f AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_float_txt_04 AS
+BEGIN DECLARE @f FLOAT = '-Infinity'; SELECT @f AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_float_txt_05 AS
+BEGIN DECLARE @f FLOAT = 'NaN';       SELECT @f AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_float_txt_06 AS
+BEGIN DECLARE @f FLOAT = 'inf';       SELECT @f AS val; END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_imp_float_ntxt_01 AS
+BEGIN DECLARE @f FLOAT = N'Infinity';  SELECT @f AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_float_ntxt_02 AS
+BEGIN DECLARE @f FLOAT = N'+inf';      SELECT @f AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_float_ntxt_03 AS
+BEGIN DECLARE @f FLOAT = N' ';         SELECT @f AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_float_ntxt_04 AS
+BEGIN DECLARE @f FLOAT = N'-Infinity'; SELECT @f AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_float_ntxt_05 AS
+BEGIN DECLARE @f FLOAT = N'NaN';       SELECT @f AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_float_ntxt_06 AS
+BEGIN DECLARE @f FLOAT = N'inf';       SELECT @f AS val; END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_imp_real_txt_01 AS
+BEGIN DECLARE @r REAL = '+Infinity';  SELECT @r AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_real_txt_02 AS
+BEGIN DECLARE @r REAL = '-inf';       SELECT @r AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_real_txt_03 AS
+BEGIN DECLARE @r REAL = '';           SELECT @r AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_real_txt_04 AS
+BEGIN DECLARE @r REAL = '+inf';       SELECT @r AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_real_txt_05 AS
+BEGIN DECLARE @r REAL = 'Infinity';   SELECT @r AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_real_txt_06 AS
+BEGIN DECLARE @r REAL = '-Infinity';  SELECT @r AS val; END
+GO
+
+CREATE PROCEDURE test_float_speacial.sp_imp_real_ntxt_01 AS
+BEGIN DECLARE @r REAL = N'+Infinity';  SELECT @r AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_real_ntxt_02 AS
+BEGIN DECLARE @r REAL = N'-inf';       SELECT @r AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_real_ntxt_03 AS
+BEGIN DECLARE @r REAL = N'';           SELECT @r AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_real_ntxt_04 AS
+BEGIN DECLARE @r REAL = N'+inf';       SELECT @r AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_real_ntxt_05 AS
+BEGIN DECLARE @r REAL = N'Infinity';   SELECT @r AS val; END
+GO
+CREATE PROCEDURE test_float_speacial.sp_imp_real_ntxt_06 AS
+BEGIN DECLARE @r REAL = N'-Infinity';  SELECT @r AS val; END
+GO

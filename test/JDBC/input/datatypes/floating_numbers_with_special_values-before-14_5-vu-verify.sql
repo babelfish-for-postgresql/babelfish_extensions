@@ -431,3 +431,218 @@ GO
 SELECT * FROM test_float_speacial.vw_tryconvert_ntext_to_real_06;
 GO
 
+SELECT * FROM test_float_speacial.vw_imp_float_txt_01;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_txt_02;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_txt_03;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_txt_04;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_txt_05;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_txt_06;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_ntxt_01;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_ntxt_02;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_ntxt_03;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_ntxt_04;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_ntxt_05;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_float_ntxt_06;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_txt_01;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_txt_02;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_txt_03;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_txt_04;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_txt_05;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_txt_06;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_ntxt_01;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_ntxt_02;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_ntxt_03;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_ntxt_04;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_ntxt_05;
+GO
+
+SELECT * FROM test_float_speacial.vw_imp_real_ntxt_06;
+GO
+
+SELECT test_float_speacial.fn_imp_float_txt_01();
+GO
+
+SELECT test_float_speacial.fn_imp_float_txt_02();
+GO
+
+SELECT test_float_speacial.fn_imp_float_txt_03();
+GO
+
+SELECT test_float_speacial.fn_imp_float_txt_04();
+GO
+
+SELECT test_float_speacial.fn_imp_float_txt_05();
+GO
+
+SELECT test_float_speacial.fn_imp_float_txt_06();
+GO
+
+SELECT test_float_speacial.fn_imp_float_ntxt_01();
+GO
+
+SELECT test_float_speacial.fn_imp_float_ntxt_02();
+GO
+
+SELECT test_float_speacial.fn_imp_float_ntxt_03();
+GO
+
+SELECT test_float_speacial.fn_imp_float_ntxt_04();
+GO
+
+SELECT test_float_speacial.fn_imp_float_ntxt_05();
+GO
+
+SELECT test_float_speacial.fn_imp_float_ntxt_06();
+GO
+
+SELECT test_float_speacial.fn_imp_real_txt_01();
+GO
+
+SELECT test_float_speacial.fn_imp_real_txt_02();
+GO
+
+SELECT test_float_speacial.fn_imp_real_txt_03();
+GO
+
+SELECT test_float_speacial.fn_imp_real_txt_04();
+GO
+
+SELECT test_float_speacial.fn_imp_real_txt_05();
+GO
+
+SELECT test_float_speacial.fn_imp_real_txt_06();
+GO
+
+SELECT test_float_speacial.fn_imp_real_ntxt_01();
+GO
+
+SELECT test_float_speacial.fn_imp_real_ntxt_02();
+GO
+
+SELECT test_float_speacial.fn_imp_real_ntxt_03();
+GO
+
+SELECT test_float_speacial.fn_imp_real_ntxt_04();
+GO
+
+SELECT test_float_speacial.fn_imp_real_ntxt_05();
+GO
+
+SELECT test_float_speacial.fn_imp_real_ntxt_06();
+GO
+
+EXEC test_float_speacial.sp_imp_float_txt_01;
+GO
+
+EXEC test_float_speacial.sp_imp_float_txt_02;
+GO
+
+EXEC test_float_speacial.sp_imp_float_txt_03;
+GO
+
+EXEC test_float_speacial.sp_imp_float_txt_04;
+GO
+
+EXEC test_float_speacial.sp_imp_float_txt_05;
+GO
+
+EXEC test_float_speacial.sp_imp_float_txt_06;
+GO
+
+EXEC test_float_speacial.sp_imp_float_ntxt_01;
+GO
+
+EXEC test_float_speacial.sp_imp_float_ntxt_02;
+GO
+
+EXEC test_float_speacial.sp_imp_float_ntxt_03;
+GO
+
+EXEC test_float_speacial.sp_imp_float_ntxt_04;
+GO
+
+EXEC test_float_speacial.sp_imp_float_ntxt_05;
+GO
+
+EXEC test_float_speacial.sp_imp_float_ntxt_06;
+GO
+
+EXEC test_float_speacial.sp_imp_real_txt_01;
+GO
+
+EXEC test_float_speacial.sp_imp_real_txt_02;
+GO
+
+EXEC test_float_speacial.sp_imp_real_txt_03;
+GO
+
+EXEC test_float_speacial.sp_imp_real_txt_04;
+GO
+
+EXEC test_float_speacial.sp_imp_real_txt_05;
+GO
+
+EXEC test_float_speacial.sp_imp_real_txt_06;
+GO
+
+EXEC test_float_speacial.sp_imp_real_ntxt_01;
+GO
+
+EXEC test_float_speacial.sp_imp_real_ntxt_02;
+GO
+
+EXEC test_float_speacial.sp_imp_real_ntxt_03;
+GO
+
+EXEC test_float_speacial.sp_imp_real_ntxt_04;
+GO
+
+EXEC test_float_speacial.sp_imp_real_ntxt_05;
+GO
+
+EXEC test_float_speacial.sp_imp_real_ntxt_06;
+GO
