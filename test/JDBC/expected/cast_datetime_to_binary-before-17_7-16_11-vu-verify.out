@@ -220,9 +220,9 @@ UPDATE test_datetime_binary
 SET bin_col = CONVERT(BINARY(8), dt_col) 
 WHERE dt_col IS NOT NULL;
 GO
-~~ROW COUNT: 3~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 3~~
+~~ERROR (Message: relation "test_computed_binary" does not exist)~~
 
 
 -- Test Case 18: SELECT table data with binary conversion
@@ -230,9 +230,9 @@ SELECT id, dt_col, bin_col FROM test_datetime_binary ORDER BY id;
 GO
 ~~START~~
 int#!#datetime#!#binary
-1#!#2023-01-01 12:30:45.123#!#0000AF7D00CE3341
-2#!#1900-01-01 00:00:00.0#!#0000000000000000
-3#!#2099-12-31 23:59:59.997#!#00011D58018B81FF
+1#!#2023-01-01 12:30:45.123#!#<NULL>
+2#!#1900-01-01 00:00:00.0#!#<NULL>
+3#!#2099-12-31 23:59:59.997#!#<NULL>
 4#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -274,7 +274,7 @@ WHERE CAST(dt_col AS BINARY(8)) = CAST(CAST('2023-01-01 12:30:45.123' AS DATETIM
 GO
 ~~START~~
 int#!#datetime#!#binary
-1#!#2023-01-01 12:30:45.123#!#0000AF7D00CE3341
+1#!#2023-01-01 12:30:45.123#!#<NULL>
 ~~END~~
 
 
@@ -493,134 +493,38 @@ binary
 
 
 
+
 /*
  * ======================================================================================================================
  *                                          DEPENDENT OBJECTS TESTS
+ * Didnt add any view, procedure, trigger , function statement as cast datetime to binary was not supported before.
+ * Hence wont be able to create any in prpeare file.
+ * So we wouldnt be able to run any select statement on it                                 
  * ======================================================================================================================
  */
--- Test Case 37: View with datetime to binary conversion
-SELECT * FROM vw_datetime_binary ORDER BY id;
-GO
-~~START~~
-int#!#datetime#!#binary#!#binary
-1#!#2023-01-01 12:30:45.123#!#0000AF7D00CE3341#!#00CE3341
-2#!#1900-01-01 00:00:00.0#!#0000000000000000#!#00000000
-3#!#2099-12-31 23:59:59.997#!#00011D58018B81FF#!#018B81FF
-~~END~~
-
-
--- Test Case 38: User-Defined Function with datetime to binary
-SELECT dbo.fn_datetime_to_binary('2023-01-01 12:30:45.123') AS function_result;
-GO
-~~START~~
-binary
-00
-~~END~~
-
-
--- Test Case 39: User-Defined Function with different datetime value
-SELECT dbo.fn_datetime_to_binary('2023-12-25 15:45:30.789') AS static_dt_binary;
-GO
-~~START~~
-binary
-00
-~~END~~
-
-
 -- Test Case 40: Table-Valued Function with datetime range
 SELECT * FROM dbo.fn_get_datetime_binary_range('1900-01-01', '2050-01-01');
 GO
-~~START~~
-datetime#!#binary
-2023-01-01 12:30:45.123#!#00
-1900-01-01 00:00:00.0#!#00
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-
--- Test Case 41: Stored Procedure with OUTPUT parameter
-DECLARE @test_dt DATETIME = '2023-07-15 10:30:00.456';
-DECLARE @result_bin BINARY(8);
-EXEC sp_convert_datetime_binary @test_dt, @result_bin OUTPUT;
-SELECT @test_dt AS input_datetime, @result_bin AS output_binary;
-GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-datetime#!#binary
-2023-07-15 10:30:00.457#!#0000B04000AD0969
-~~END~~
-
-
--- Test Case 42: Computed Column INSERT test
-INSERT INTO test_computed_binary (id, dt_col) VALUES 
-(1, '2023-01-01 12:00:00'),
-(2, '2023-06-15 18:30:45.123'),
-(3, NULL);
-GO
-~~ROW COUNT: 3~~
-
-
--- Test Case 43: Computed Column SELECT test
-SELECT id, dt_col, computed_binary FROM test_computed_binary ORDER BY id;
-GO
-~~START~~
-int#!#datetime#!#binary
-<NULL>#!#2023-01-01 12:30:45.123#!#0000AF7D00CE3341
-<NULL>#!#1900-01-01 00:00:00.0#!#0000000000000000
-<NULL>#!#2099-12-31 23:59:59.997#!#00011D58018B81FF
-<NULL>#!#2023-07-15 10:30:00.457#!#0000B04000AD0969
-1#!#2023-01-01 12:00:00.0#!#0000AF7D00C5C100
-2#!#2023-06-15 18:30:45.123#!#0000B022013113C1
-3#!#<NULL>#!#<NULL>
-~~END~~
-
-
--- Test Case 44: Index usage on computed binary column
-SELECT * FROM test_computed_binary 
-WHERE computed_binary = CAST(CAST('2023-01-01 12:00:00' AS DATETIME) AS BINARY(8));
-GO
-~~START~~
-int#!#datetime#!#binary
-1#!#2023-01-01 12:00:00.0#!#0000AF7D00C5C100
-~~END~~
-
-
--- Test Case 45: Trigger test - INSERT to fire trigger
-INSERT INTO test_datetime_binary (id, dt_col) VALUES (100, '2023-08-01 14:25:30');
-GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-
--- Test Case 46: Trigger test - Verify trigger execution
-SELECT * FROM test_computed_binary WHERE dt_col = '2023-08-01 14:25:30';
-GO
-~~START~~
-int#!#datetime#!#binary
-<NULL>#!#2023-08-01 14:25:30.0#!#0000B05100EDB778
-~~END~~
+~~ERROR (Message: function dbo.fn_get_datetime_binary_range(unknown, unknown) does not exist)~~
 
 
 -- Test Case 47: Check Constraint test with valid data
 INSERT INTO test_constraint_binary VALUES (1, '2023-01-01 12:00:00');
 INSERT INTO test_constraint_binary VALUES (2, NULL);
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: relation "test_constraint_binary" does not exist)~~
 
 
 -- Test Case 48: Check Constraint verification
 SELECT * FROM test_constraint_binary;
 GO
-~~START~~
-int#!#datetime
-1#!#2023-01-01 12:00:00.0
-2#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "test_constraint_binary" does not exist)~~
 
 
 -- Test Case 49: Default Constraint test
