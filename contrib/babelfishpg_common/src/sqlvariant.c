@@ -395,7 +395,7 @@ gen_sqlvariant_bytea_from_type_datum(size_t typcode, Datum data)
 		/*
 		* If the data comes with 1 byte header, normalize it to 4 byte by creating new datum.
 		*/
-		if(VARATT_IS_1B(DatumGetPointer(data)))
+		if(IS_STRING_TYPE(typcode) && VARATT_IS_1B(DatumGetPointer(data)))
 		{
 			normalized_data = normalize_1b_to_4b(data);
 		}
