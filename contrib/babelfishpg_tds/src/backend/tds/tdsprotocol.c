@@ -117,8 +117,8 @@ TdsDiscardAll()
 	ResetTempTableNamespace();
 
 	if (need_snapshot)
-	 		PopActiveSnapshot();
-
+		PopActiveSnapshot();
+	
 	ResetSequenceCaches();
 }
 

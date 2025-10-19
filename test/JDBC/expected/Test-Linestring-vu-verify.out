@@ -1,6 +1,5 @@
 
 
-
 -- STGeomFromText and STLineFromText tests with different SRIDs
 SELECT geography::STLineFromText('LINESTRING(1 2, 3 5, 6 4)', 4326);
 GO
