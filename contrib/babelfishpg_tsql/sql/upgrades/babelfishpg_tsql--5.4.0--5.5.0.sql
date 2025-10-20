@@ -3,6 +3,33 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when undefined_function then --if 'Deprecated function does not exist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
@@ -39,36 +66,6 @@ $$;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
-
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
-$$
-DECLARE
-    error_msg text;
-    query1 text;
-    query2 text;
-BEGIN
-
-    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
-    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
-
-    execute query1;
-    execute query2;
-EXCEPTION
-    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-    when dependent_objects_still_exist then --if 'drop view' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-    when undefined_function then --if 'Deprecated function does not exist'
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-end
-$$
-LANGUAGE plpgsql;
-
--- (sys.VARCHAR AS pg_catalog.TIME)
-DROP CAST (sys.VARCHAR AS pg_catalog.TIME);
 
 DO $$    
 DECLARE	
@@ -236,18 +233,6 @@ EXCEPTION
         RAISE WARNING '%', exception_message;
 END;
 $$;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_date_to_string_deprecated_in_5_5_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_date_to_string_deprecated_in_5_5_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_datetime_to_string_deprecated_in_5_5_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_datetime_to_string_deprecated_in_5_5_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_time_to_string_deprecated_in_5_5_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_time_to_string_deprecated_in_5_5_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_with_text_argument_deprecated_in_5_5_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_deprecated_in_5_5_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_deprecated_in_5_5_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varchar_deprecated_in_5_5_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_money_to_string_deprecated_in_5_5_0');
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
@@ -1120,6 +1105,18 @@ $BODY$
 LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_date_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_date_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_datetime_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_datetime_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_time_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_time_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_with_text_argument_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varchar_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_money_to_string_deprecated_in_5_5_0');
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
