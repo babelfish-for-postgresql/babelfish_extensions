@@ -4697,6 +4697,8 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_s
                                        funcexpr->funcresulttype,
                                        func_tuple);
 
+    /* Mark the procedure outside the view since procedure can never be called inside a view */
+    funcexpr->insideView = PNODE_OUTSIDE_VIEW;
     /* Get the argument names and modes */
     get_func_arg_info(func_tuple, &argtypes, &argnames, &argmodes);
 
@@ -10559,7 +10561,18 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(estate->datum_context);
 	target = estate->datums[dno];
 
-	/* we will reuse exec_assign_value function here provided in pl_exec.c */
+	if (!isNull)
+	{
+		int16		valTypLen;
+		bool		resTypByVal;
+		
+		/* Fetch the typlen and typbyval info for the arg type. */
+		get_typlenbyval(valtype, &valTypLen, &resTypByVal);
+		/* Copy the datum. */
+		data = datumCopy(data, resTypByVal, valTypLen);
+	}
+
+	/* We will reuse exec_assign_value function here provided in pl_exec.c */
 	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
 
 	MemoryContextSwitchTo(oldcontext);

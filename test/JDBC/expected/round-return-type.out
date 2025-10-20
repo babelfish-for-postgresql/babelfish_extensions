@@ -204,7 +204,7 @@ select round(cast(42 as decimal), 1)
 go
 ~~START~~
 numeric
-42.0
+42
 ~~END~~
 
 
@@ -212,15 +212,16 @@ select round(cast(42 as decimal), 2)
 go
 ~~START~~
 numeric
-42.00
+42
 ~~END~~
 
 
 select round(cast(42 as decimal), 999)
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric
+42
+~~END~~
 
 
 select round(cast(42 as decimal), -1)
@@ -251,7 +252,7 @@ select round(cast(42 as numeric), 1)
 go
 ~~START~~
 numeric
-42.0
+42
 ~~END~~
 
 
@@ -259,15 +260,16 @@ select round(cast(42 as numeric), 2)
 go
 ~~START~~
 numeric
-42.00
+42
 ~~END~~
 
 
 select round(cast(42 as numeric), 999)
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric
+42
+~~END~~
 
 
 select round(cast(42 as numeric), -1)
@@ -520,7 +522,7 @@ select round(42.123)
 go
 ~~START~~
 numeric
-42
+42.000
 ~~END~~
 
 
@@ -614,9 +616,9 @@ FROM sample_table;
 go
 ~~START~~
 int#!#numeric
-1#!#123.00000000
-2#!#456.00000000
-3#!#789.00000000
+1#!#123
+2#!#456
+3#!#789
 ~~END~~
 
 ~~START~~

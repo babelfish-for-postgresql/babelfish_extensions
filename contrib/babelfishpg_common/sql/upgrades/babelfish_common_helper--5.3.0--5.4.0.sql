@@ -63,6 +63,19 @@ AS 'babelfishpg_common', 'datetime_varbinary'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    CREATE CAST (sys.BPCHAR as pg_catalog.xml) 
+    WITHOUT FUNCTION AS IMPLICIT;
+EXCEPTION WHEN duplicate_object THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
 DECLARE 
 	sys_oid Oid;
 	bbf_varbinary_oid Oid;
