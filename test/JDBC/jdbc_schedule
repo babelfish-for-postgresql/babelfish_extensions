@@ -16,9 +16,9 @@ all
 ignore#!#BABEL-2736-before-17_7-vu-prepare
 ignore#!#BABEL-2736-before-17_7-vu-verify
 ignore#!#BABEL-2736-before-17_7-vu-cleanup
-ignore#!#BABEL-2736-before-15_15-vu-prepare
-ignore#!#BABEL-2736-before-15_15-vu-verify
-ignore#!#BABEL-2736-before-15_15-vu-cleanup
+ignore#!#BABEL-2736-before-15_16-vu-prepare
+ignore#!#BABEL-2736-before-15_16-vu-verify
+ignore#!#BABEL-2736-before-15_16-vu-cleanup
 ignore#!#BABEL-2736-before-16_8-vu-prepare
 ignore#!#BABEL-2736-before-16_8-vu-verify
 ignore#!#BABEL-2736-before-16_8-vu-cleanup
