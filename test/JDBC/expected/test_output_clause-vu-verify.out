@@ -284,3 +284,183 @@ int#!#nvarchar#!#int#!#nvarchar
 12#!#SameRowTest#!#1200#!#Active
 ~~END~~
 
+
+
+
+
+/* 
+* --------------------------------------------------------------------------------------------------
+* Trigger on Update DML + OUTPUT clause
+* Trigger 
+* --------------------------------------------------------------------------------------------------
+*/
+------------------------------------------------------- UPDATE -----------------------
+-- update inside update trigger
+UPDATE EPQTest_Update_Update
+SET Value = 500
+OUTPUT 
+    deleted.ID,
+    deleted.Name,
+    deleted.Value as OldValue,
+    deleted.Counter as OldCounter,
+    inserted.Value as NewValue,
+    inserted.Counter as NewCounter
+WHERE ID = 1;
+GO
+~~START~~
+int#!#nvarchar#!#int#!#int#!#int#!#int
+1#!#Row1#!#100#!#1#!#500#!#1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE EPQTest_Update_Update
+SET Value = 999
+OUTPUT 
+    1,
+    inserted.ID,
+    deleted.Value,
+    inserted.Value,
+    'Logged'
+INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
+WHERE ID = 1;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Final state check
+SELECT * FROM EPQTest_Update_Update ORDER BY ID;
+SELECT * FROM EPQOutputLog ORDER BY LogID;
+GO
+~~START~~
+int#!#nvarchar#!#int#!#int#!#nvarchar
+1#!#Row1#!#999#!#201#!#PostTrigger
+2#!#Row2#!#200#!#2#!#Active
+3#!#Row3#!#300#!#3#!#Active
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int#!#nvarchar
+1#!#1#!#500#!#999#!#Logged
+~~END~~
+
+delete from EPQOutputLog;
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- delete inside update trigger
+UPDATE EPQTest_Update_Delete 
+SET Value = 999
+OUTPUT 
+    1,
+    inserted.ID,
+    deleted.Value,
+    inserted.Value,
+    'Logged'
+INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
+WHERE ID = 1;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Final state check
+SELECT * FROM EPQTest_Update_Delete ORDER BY ID;
+SELECT * FROM EPQOutputLog ORDER BY LogID;
+GO
+~~START~~
+int#!#nvarchar#!#int#!#int#!#nvarchar
+2#!#Row2#!#200#!#2#!#Active
+3#!#Row3#!#300#!#3#!#Active
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int#!#nvarchar
+1#!#1#!#100#!#999#!#Logged
+~~END~~
+
+delete from EPQOutputLog;
+GO
+~~ROW COUNT: 1~~
+
+
+
+------------------------------------------------------- DELETE ------------------------------------------------
+-- delete inside delete trigger
+DELETE FROM EPQTest_Delete_Delete
+OUTPUT deleted.ID, deleted.Name, deleted.Value
+WHERE ID = 2;
+GO
+~~START~~
+int#!#nvarchar#!#int
+2#!#Row2#!#200
+~~END~~
+
+
+-- Final state check
+SELECT * FROM EPQTest_Delete_Delete ORDER BY ID;
+SELECT * FROM EPQOutputLog ORDER BY LogID;
+GO
+~~START~~
+int#!#nvarchar#!#int#!#int#!#nvarchar
+3#!#Row3#!#300#!#3#!#Active
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int#!#nvarchar
+~~END~~
+
+delete from EPQOutputLog;
+GO
+
+-- Update inside delete trigger
+DELETE FROM EPQTest_Delete_Update
+OUTPUT deleted.ID, deleted.Name, deleted.Value
+WHERE ID = 2;
+GO
+~~START~~
+int#!#nvarchar#!#int
+2#!#Row2#!#200
+~~END~~
+
+
+-- Final state check
+SELECT * FROM EPQTest_Delete_Update ORDER BY ID;
+SELECT * FROM EPQOutputLog ORDER BY LogID;
+GO
+~~START~~
+int#!#nvarchar#!#int#!#int#!#nvarchar
+1#!#Row1#!#100#!#1#!#Active
+3#!#Row3#!#300#!#3#!#Active
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int#!#nvarchar
+~~END~~
+
+delete from EPQOutputLog;
+GO
+
+
+------------------------------------------------------- INSERT -------------------------------------------------
+--  delete inside insert trigger
+INSERT INTO EPQTest_Insert_Delete (ID, Name, Value, Counter)
+OUTPUT inserted.ID, inserted.Name, 'STRESS_TEST' as TestType
+VALUES (1, 'Row1', 100, 1);
+GO
+~~START~~
+int#!#nvarchar#!#varchar
+1#!#Row1#!#STRESS_TEST
+~~END~~
+
+
+
+

@@ -78,3 +78,227 @@ BEGIN
     SELECT deleted.ID + 3000, 'AFTER_DELETE', 'OutputTest', deleted.ID FROM deleted;
 END;
 GO
+
+
+
+
+
+
+/*
+* -------------------------------------------------------------------------------------------------------------------
+* -------------------------------------------- Triggers with DML test. -------------------------------------------- 
+* -------------------------------------------------------------------------------------------------------------------
+*/
+/*
+* ------------------------------------------------------------------------------------
+*  Update  + update inside update trigger
+* ------------------------------------------------------------------------------------
+*/
+-- Setup EPQ test table
+CREATE TABLE EPQTest_Update_Update (
+    ID INT PRIMARY KEY,
+    Name NVARCHAR(50),
+    Value INT,
+    Counter INT DEFAULT 0,
+    Status NVARCHAR(20) DEFAULT 'Active'
+);
+GO
+
+-- Insert test data
+INSERT INTO EPQTest_Update_Update (ID, Name, Value, Counter) VALUES 
+(1, 'Row1', 100, 1),
+(2, 'Row2', 200, 2),
+(3, 'Row3', 300, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+-- Test Case 17: AFTER trigger that updates the same row
+CREATE TRIGGER tr_EPQTest_After_Update
+ON EPQTest_Update_Update
+AFTER UPDATE
+AS
+BEGIN
+    UPDATE EPQTest_Update_Update 
+    SET Counter = Counter + 100
+    WHERE ID IN (SELECT ID FROM inserted);
+    
+    UPDATE EPQTest_Update_Update 
+    SET Status = 'PostTrigger'
+    WHERE ID IN (SELECT ID FROM inserted);
+END;
+GO
+
+
+
+/*
+* ------------------------------------------------------------------------------------
+*  Update  + delete inside update trigger
+* ------------------------------------------------------------------------------------
+*/
+-- Setup EPQ test table
+CREATE TABLE EPQTest_Update_Delete (
+    ID INT PRIMARY KEY,
+    Name NVARCHAR(50),
+    Value INT,
+    Counter INT DEFAULT 0,
+    Status NVARCHAR(20) DEFAULT 'Active'
+);
+GO
+
+
+-- Insert test data
+INSERT INTO EPQTest_Update_Delete (ID, Name, Value, Counter) VALUES 
+(1, 'Row1', 100, 1),
+(2, 'Row2', 200, 2),
+(3, 'Row3', 300, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+
+-- Test Case 18: AFTER trigger that deletes the row being updated
+CREATE TRIGGER tr_EPQTest_Delete_OnUpdate
+ON EPQTest_Update_Delete
+AFTER UPDATE
+AS
+BEGIN
+    DELETE FROM EPQTest_Update_Delete
+    WHERE ID IN (SELECT ID FROM inserted) ;
+END;
+GO
+
+
+
+-- CREATE TRIGGER tr_EPQTest_After_Update_Complex
+-- ON EPQTest
+-- AFTER UPDATE
+-- AS
+-- BEGIN
+--     UPDATE EPQTest 
+--     SET Counter = Counter + 1
+--     WHERE ID IN (SELECT ID FROM inserted);
+    
+--     UPDATE EPQTest 
+--     SET Counter = Counter + 1
+--     WHERE ID IN (SELECT ID FROM inserted);
+    
+--     UPDATE EPQTest 
+--     SET Value = Value + (SELECT COUNT(*) FROM inserted WHERE inserted.ID = EPQTest.ID)
+--     WHERE ID IN (SELECT ID FROM inserted);
+-- END;
+-- GO
+/*
+* ------------------------------------------------------------------------------------
+*  Delete  + delete inside delete trigger
+* ------------------------------------------------------------------------------------
+*/
+-- Setup EPQ test table
+CREATE TABLE EPQTest_Delete_Delete (
+    ID INT PRIMARY KEY,
+    Name NVARCHAR(50),
+    Value INT,
+    Counter INT DEFAULT 0,
+    Status NVARCHAR(20) DEFAULT 'Active'
+);
+GO
+
+
+-- Insert test data
+INSERT INTO EPQTest_Delete_Delete (ID, Name, Value, Counter) VALUES 
+(1, 'Row1', 100, 1),
+(2, 'Row2', 200, 2),
+(3, 'Row3', 300, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+-- Test Case 19: AFTER trigger that deletes additional rows during DELETE
+CREATE TRIGGER tr_EPQTest_Delete_OnDelete
+ON EPQTest_Delete_Delete
+AFTER DELETE
+AS
+BEGIN
+    DELETE FROM EPQTest_Delete_Delete 
+    WHERE Value < (SELECT MIN(Value) FROM deleted) + 50;
+END;
+GO
+
+
+
+
+/*
+* ------------------------------------------------------------------------------------
+*  Delete  + update inside delete trigger
+* ------------------------------------------------------------------------------------
+*/
+-- Setup EPQ test table
+CREATE TABLE EPQTest_Delete_Update (
+    ID INT PRIMARY KEY,
+    Name NVARCHAR(50),
+    Value INT,
+    Counter INT DEFAULT 0,
+    Status NVARCHAR(20) DEFAULT 'Active'
+);
+GO
+
+
+-- Insert test data
+INSERT INTO EPQTest_Delete_Update (ID, Name, Value, Counter) VALUES
+(1, 'Row1', 100, 1),
+(2, 'Row2', 200, 2),
+(3, 'Row3', 300, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+-- Test Case 20: AFTER DELETE trigger that tries to update deleted rows
+CREATE TRIGGER tr_EPQTest_Update_Update_AfterDelete
+ON EPQTest_Delete_Update
+AFTER DELETE
+AS
+BEGIN
+    UPDATE EPQTest_Delete_Update
+    SET Status = 'Updated_After_Delete'
+    WHERE ID IN (SELECT ID FROM deleted);
+END;
+GO
+
+
+
+/*
+* ------------------------------------------------------------------------------------
+*  Delete  + delete inside insert trigger
+* ------------------------------------------------------------------------------------
+*/
+-- Setup EPQ test table
+CREATE TABLE EPQTest_Insert_Delete (
+    ID INT PRIMARY KEY,
+    Name NVARCHAR(50),
+    Value INT,
+    Counter INT DEFAULT 0,
+    Status NVARCHAR(20) DEFAULT 'Active'
+);
+GO
+
+-- Test Case 21: AFTER INSERT trigger that deletes the inserted row
+CREATE TRIGGER tr_EPQTest_Delete_AfterInsert
+ON EPQTest_Insert_Delete
+AFTER INSERT
+AS
+BEGIN
+    DELETE FROM EPQTest_Insert_Delete 
+    WHERE ID IN (SELECT ID FROM inserted);
+END;
+GO
+
+
+-- Test Case 22: UPDATE with OUTPUT INTO and triggers
+CREATE TABLE EPQOutputLog (
+    LogID INT,
+    SourceID INT,
+    OldValue INT,
+    NewValue INT,
+    LogStatus NVARCHAR(20)
+);
+GO

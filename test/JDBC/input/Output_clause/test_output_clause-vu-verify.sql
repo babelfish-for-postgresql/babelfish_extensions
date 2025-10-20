@@ -133,3 +133,105 @@ GO
 -- Verify final table state
 SELECT * FROM OutputTest ORDER BY ID;
 GO
+
+/* 
+* --------------------------------------------------------------------------------------------------
+* Trigger on Update DML + OUTPUT clause
+* Trigger 
+* --------------------------------------------------------------------------------------------------
+*/
+
+
+------------------------------------------------------- UPDATE -----------------------
+
+-- update inside update trigger
+UPDATE EPQTest_Update_Update
+SET Value = 500
+OUTPUT 
+    deleted.ID,
+    deleted.Name,
+    deleted.Value as OldValue,
+    deleted.Counter as OldCounter,
+    inserted.Value as NewValue,
+    inserted.Counter as NewCounter
+WHERE ID = 1;
+GO
+
+UPDATE EPQTest_Update_Update
+SET Value = 999
+OUTPUT 
+    1,
+    inserted.ID,
+    deleted.Value,
+    inserted.Value,
+    'Logged'
+INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
+WHERE ID = 1;
+GO
+
+-- Final state check
+SELECT * FROM EPQTest_Update_Update ORDER BY ID;
+SELECT * FROM EPQOutputLog ORDER BY LogID;
+GO
+delete from EPQOutputLog;
+GO
+
+
+-- delete inside update trigger
+UPDATE EPQTest_Update_Delete 
+SET Value = 999
+OUTPUT 
+    1,
+    inserted.ID,
+    deleted.Value,
+    inserted.Value,
+    'Logged'
+INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
+WHERE ID = 1;
+GO
+
+-- Final state check
+SELECT * FROM EPQTest_Update_Delete ORDER BY ID;
+SELECT * FROM EPQOutputLog ORDER BY LogID;
+GO
+delete from EPQOutputLog;
+GO
+
+
+------------------------------------------------------- DELETE ------------------------------------------------
+-- delete inside delete trigger
+DELETE FROM EPQTest_Delete_Delete
+OUTPUT deleted.ID, deleted.Name, deleted.Value
+WHERE ID = 2;
+GO
+
+-- Final state check
+SELECT * FROM EPQTest_Delete_Delete ORDER BY ID;
+SELECT * FROM EPQOutputLog ORDER BY LogID;
+GO
+delete from EPQOutputLog;
+GO
+
+-- Update inside delete trigger
+DELETE FROM EPQTest_Delete_Update
+OUTPUT deleted.ID, deleted.Name, deleted.Value
+WHERE ID = 2;
+GO
+
+-- Final state check
+SELECT * FROM EPQTest_Delete_Update ORDER BY ID;
+SELECT * FROM EPQOutputLog ORDER BY LogID;
+GO
+delete from EPQOutputLog;
+GO
+
+------------------------------------------------------- INSERT -------------------------------------------------
+
+--  delete inside insert trigger
+INSERT INTO EPQTest_Insert_Delete (ID, Name, Value, Counter)
+OUTPUT inserted.ID, inserted.Name, 'STRESS_TEST' as TestType
+VALUES (1, 'Row1', 100, 1);
+GO
+
+
+

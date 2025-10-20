@@ -1,7 +1,4 @@
--- Cleanup dependent objects first
-DROP VIEW IF EXISTS OutputTestView;
-GO
-
+-- Drop all triggers first to avoid dependency issues
 DROP TRIGGER IF EXISTS tr_OutputTest_Insert;
 GO
 
@@ -11,7 +8,26 @@ GO
 DROP TRIGGER IF EXISTS tr_OutputTest_Delete;
 GO
 
--- Cleanup test tables
+DROP TRIGGER IF EXISTS tr_EPQTest_After_Update;
+GO
+
+DROP TRIGGER IF EXISTS tr_EPQTest_Delete_OnUpdate;
+GO
+
+DROP TRIGGER IF EXISTS tr_EPQTest_Delete_OnDelete;
+GO
+
+DROP TRIGGER IF EXISTS tr_EPQTest_Update_Update_AfterDelete;
+GO
+
+DROP TRIGGER IF EXISTS tr_EPQTest_Delete_AfterInsert;
+GO
+
+-- Drop views
+DROP VIEW IF EXISTS OutputTestView;
+GO
+
+-- Drop tables
 DROP TABLE IF EXISTS OutputTest;
 GO
 
@@ -19,4 +35,22 @@ DROP TABLE IF EXISTS OutputLog;
 GO
 
 DROP TABLE IF EXISTS TriggerLog;
+GO
+
+DROP TABLE IF EXISTS EPQTest_Update_Update;
+GO
+
+DROP TABLE IF EXISTS EPQTest_Update_Delete;
+GO
+
+DROP TABLE IF EXISTS EPQTest_Delete_Delete;
+GO
+
+DROP TABLE IF EXISTS EPQTest_Delete_Update;
+GO
+
+DROP TABLE IF EXISTS EPQTest_Insert_Delete;
+GO
+
+DROP TABLE IF EXISTS EPQOutputLog;
 GO
