@@ -655,3 +655,5 @@ alter-table-null-notnull
 openxml_without_with_clause
 Select_top_N_percent
 ascii_function
+test_convert_to_binary
+cast_datetime_to_binary
