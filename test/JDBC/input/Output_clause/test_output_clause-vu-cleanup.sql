@@ -1,4 +1,26 @@
--- Drop all triggers first to avoid dependency issues
+-- Drop all INSTEAD OF triggers first
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Update_Update;
+GO
+
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Delete_OnUpdate;
+GO
+
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Delete_OnDelete;
+GO
+
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Update_OnDelete;
+GO
+
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Delete_OnInsert;
+GO
+
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Update_OnInsert;
+GO
+
+DROP TRIGGER IF EXISTS tr_InsteadOf_Mixed;
+GO
+
+-- Drop all AFTER triggers
 DROP TRIGGER IF EXISTS tr_OutputTest_Insert;
 GO
 
@@ -23,11 +45,41 @@ GO
 DROP TRIGGER IF EXISTS tr_EPQTest_Delete_AfterInsert;
 GO
 
--- Drop views
+DROP TRIGGER IF EXISTS tr_EPQTest_Update_AfterInsert;
+GO
+
+DROP TRIGGER IF EXISTS tr_Update_Delete_Deadlock;
+GO
+
+DROP TRIGGER IF EXISTS tr_Delete_Update_Deadlock;
+GO
+
+DROP TRIGGER IF EXISTS tr_After_Mixed;
+GO
+
+-- Drop all views
 DROP VIEW IF EXISTS OutputTestView;
 GO
 
--- Drop tables
+DROP VIEW IF EXISTS EPQView_Update_Update;
+GO
+
+DROP VIEW IF EXISTS EPQView_Update_Delete;
+GO
+
+DROP VIEW IF EXISTS EPQView_Delete_Delete;
+GO
+
+DROP VIEW IF EXISTS EPQView_Delete_Update;
+GO
+
+DROP VIEW IF EXISTS EPQView_Insert_Delete;
+GO
+
+DROP VIEW IF EXISTS EPQView_Insert_Update;
+GO
+
+-- Drop all tables
 DROP TABLE IF EXISTS OutputTest;
 GO
 
@@ -52,5 +104,38 @@ GO
 DROP TABLE IF EXISTS EPQTest_Insert_Delete;
 GO
 
+DROP TABLE IF EXISTS EPQTest_Insert_Update;
+GO
+
 DROP TABLE IF EXISTS EPQOutputLog;
+GO
+
+DROP TABLE IF EXISTS EPQOutputLog_Str;
+GO
+
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Update_Update;
+GO
+
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Update_Delete;
+GO
+
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Delete_Delete;
+GO
+
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Delete_Update;
+GO
+
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Insert_Delete;
+GO
+
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Insert_Update;
+GO
+
+DROP TABLE IF EXISTS EPQTest_Delete_Update_deadlock;
+GO
+
+DROP TABLE IF EXISTS MixedTriggerTest;
+GO
+
+DROP TABLE IF EXISTS OutputCapture;
 GO
