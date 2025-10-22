@@ -445,6 +445,82 @@ GO
 ~~ERROR (Message: The geometry instance is not valid)~~
 
 
+-- Test for antipodal points
+SELECT geography::STLineFromText('LINESTRING(0 0, 180 0)', 4326)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The specified input cannot be accepted because it contains an edge with antipodal points)~~
+
+
+SELECT CAST(geography::STLineFromText('LINESTRING(0 0, 180 0)', 4326) AS binary(38));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The specified input cannot be accepted because it contains an edge with antipodal points)~~
+
+
+SELECT CAST(geography::STLineFromText('LINESTRING(0 -90, 0 90)', 4326) AS binary(38));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The specified input cannot be accepted because it contains an edge with antipodal points)~~
+
+
+SELECT CAST(geography::STLineFromText('LINESTRING(0 0, 180 0)', 4326) AS varbinary(38));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The specified input cannot be accepted because it contains an edge with antipodal points)~~
+
+
+SELECT CAST(geography::STLineFromText('LINESTRING(0 -90, 0 90)', 4326) AS varbinary(38));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The specified input cannot be accepted because it contains an edge with antipodal points)~~
+
+
+SELECT CAST(geography::STLineFromText('LINESTRING(0 0, 180 0)', 4326) AS char(38));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The specified input cannot be accepted because it contains an edge with antipodal points)~~
+
+
+-- Test M and Z functions with Linestring
+SELECT geometry::STGeomFromText('LINESTRING(0 0 0 1, 1 1 1 2)', 4326).M;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT geometry::STGeomFromText('LINESTRING(0 0 0 1, 1 1 1 2)', 4326).Z;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT geography::STGeomFromText('LINESTRING(0 0 0 1, 1 1 1 2)', 4326).M;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT geography::STGeomFromText('LINESTRING(0 0 0 1, 1 1 1 2)', 4326).Z;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
 Select * from GEOSPATIALLINEGEOM_INVALID_dt;
 GO
 ~~START~~
