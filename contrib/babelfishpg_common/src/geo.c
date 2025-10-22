@@ -29,6 +29,22 @@ geo_wkt_rewrite(text* input_text)
 
     /* Convert PostgreSQL TEXT to C string */
     input_str = text_to_cstring(input_text);
+
+     /* Validate input string for printable ASCII characters */
+    if (input_str && strlen(input_str) > 0) 
+    {
+        /* Check all characters for non-printable ASCII (outside range 0-127) */
+        for (int i = 0; input_str[i] != '\0'; i++)
+        {
+            if ((unsigned char)input_str[i] > 127)
+            {
+                pfree(input_str);
+                ereport(ERROR,
+                        (errcode(ERRCODE_SYNTAX_ERROR),
+                         errmsg("The input well-known text (WKT) is not valid")));
+            }
+        }
+    }
    
     PG_TRY();
     {

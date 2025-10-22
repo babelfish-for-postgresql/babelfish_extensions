@@ -244,7 +244,7 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
 	AS 'babelfishpg_common', 'st_as_binary_geometry'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR, integer)
+CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR,srid integer)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE
@@ -262,7 +262,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR, integer)
 		IF Geomtype = 'ST_Point' THEN
 				RETURN geom;
 		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
+			RAISE EXCEPTION 'Expected "POINT" at Position 1. The input has %', $1;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
