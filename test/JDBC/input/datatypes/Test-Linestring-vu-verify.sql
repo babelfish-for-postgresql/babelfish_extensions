@@ -195,6 +195,38 @@ GO
 SELECT geometry::STGeomFromText('LINESTRING(1 2 , 1 2, 1 2 5 5 )', 4326).STIntersects(geometry::STGeomFromText('LINESTRING(3 4, 3 4, 3 4 5 5 )', 4326));
 GO
 
+-- Test for antipodal points
+SELECT geography::STLineFromText('LINESTRING(0 0, 180 0)', 4326)
+go
+
+SELECT CAST(geography::STLineFromText('LINESTRING(0 0, 180 0)', 4326) AS binary(38));
+GO
+
+SELECT CAST(geography::STLineFromText('LINESTRING(0 -90, 0 90)', 4326) AS binary(38));
+GO
+
+SELECT CAST(geography::STLineFromText('LINESTRING(0 0, 180 0)', 4326) AS varbinary(38));
+GO
+
+SELECT CAST(geography::STLineFromText('LINESTRING(0 -90, 0 90)', 4326) AS varbinary(38));
+GO
+
+SELECT CAST(geography::STLineFromText('LINESTRING(0 0, 180 0)', 4326) AS char(38));
+GO
+
+-- Test M and Z functions with Linestring
+SELECT geometry::STGeomFromText('LINESTRING(0 0 0 1, 1 1 1 2)', 4326).M;
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(0 0 0 1, 1 1 1 2)', 4326).Z;
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(0 0 0 1, 1 1 1 2)', 4326).M;
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(0 0 0 1, 1 1 1 2)', 4326).Z;
+GO
+
 Select * from GEOSPATIALLINEGEOM_INVALID_dt;
 GO
 
