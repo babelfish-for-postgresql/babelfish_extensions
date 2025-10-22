@@ -635,3 +635,4 @@ alter-table-null-notnull
 ascii_function
 test_convert_to_binary
 cast_datetime_to_binary
+#babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370

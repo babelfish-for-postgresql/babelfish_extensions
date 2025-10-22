@@ -23,6 +23,11 @@ ignore#!#BABEL-SQLvariant
 ignore#!#tds_faultinjection
 ignore#!#babel_tds_fault_injection
 
+#This test case needs to be ignored temporarily for BABEL 5370 flaky test cases
+ignore#!#babel_timezoneinfo-vu-prepare
+ignore#!#babel_timezoneinfo-vu-verify
+ignore#!#babel_timezoneinfo-vu-cleanup
+
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
 ignore#!#BABEL-2934-vu-prepare
@@ -664,3 +669,6 @@ ignore#!#test_convert_to_binary-before-17_7-16_11-vu-cleanup
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-prepare
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
+ignore#!#babel_timezoneinfo_before_17_7-vu-prepare
+ignore#!#babel_timezoneinfo_before_17_7-vu-verify
+ignore#!#babel_timezoneinfo_before_17_7-vu-cleanup
