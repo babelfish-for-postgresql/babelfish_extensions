@@ -331,12 +331,44 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR,srid inte
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Z(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.Z(geom sys.GEOGRAPHY)
+	RETURNS float8
+	AS $$
+    DECLARE
+        Geomtype text;
+    BEGIN
+		Geomtype := ST_GeometryType(geom); 
+
+        IF Geomtype = 'ST_Point' THEN
+            RETURN sys.Z_helper(geom);
+        ELSE
+			RETURN NULL;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.Z_helper(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_z_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
+  
+CREATE OR REPLACE FUNCTION sys.M(geom sys.GEOGRAPHY)
+	RETURNS float8
+	AS $$
+    DECLARE
+        Geomtype text;
+    BEGIN
+		Geomtype := ST_GeometryType(geom); 
 
-CREATE OR REPLACE FUNCTION sys.M(sys.GEOGRAPHY)
+        IF Geomtype = 'ST_Point' THEN
+            RETURN sys.M_helper(geom);
+        ELSE
+			RETURN NULL;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.M_helper(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_m_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
@@ -609,12 +641,44 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
 	AS 'babelfishpg_common', 'st_as_binary_geometry'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Z(sys.GEOMETRY)
+CREATE OR REPLACE FUNCTION sys.Z(geom sys.GEOMETRY)
+	RETURNS float8
+	AS $$
+    DECLARE
+        Geomtype text;
+    BEGIN
+		Geomtype := ST_GeometryType(geom); 
+
+        IF Geomtype = 'ST_Point' THEN
+            RETURN sys.Z_helper(geom);
+        ELSE
+			RETURN NULL;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.Z_helper(sys.GEOMETRY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_z_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION sys.M(sys.GEOMETRY)
+CREATE OR REPLACE FUNCTION sys.M(geom sys.GEOMETRY)
+	RETURNS float8
+	AS $$
+    DECLARE
+        Geomtype text;
+    BEGIN
+		Geomtype := ST_GeometryType(geom); 
+
+        IF Geomtype = 'ST_Point' THEN
+            RETURN sys.M_helper(geom);
+        ELSE
+			RETURN NULL;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.M_helper(sys.GEOMETRY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_m_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
