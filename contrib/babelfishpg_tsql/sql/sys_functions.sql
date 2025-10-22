@@ -1089,6 +1089,10 @@ create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns t
 AS 'babelfishpg_tsql', 'timezone_mapping'
 LANGUAGE C IMMUTABLE ;
 
+create or replace function sys.pltsql_timezone_mapping_pg_to_windows(IN tmz text) returns text
+AS 'babelfishpg_tsql', 'pltsql_timezone_mapping_pg_to_windows'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
 CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT ,  IN input_expr PG_CATALOG.TEXT)
 RETURNS sys.datetimeoffset
 AS
