@@ -301,7 +301,7 @@ CREATE TABLE OutputCapture (
 GO
 
 -- 2.2.1 INSTEAD OF UPDATE trigger with OUTPUT - EPQ condition
-UPDATE EPQView_Update_Update
+UPDATE EPQTest_InsteadOf_Update_Update
 SET Value = 1500
 OUTPUT 'InsteadOf_Update_Update', deleted.ID, deleted.Name, deleted.Value
 INTO OutputCapture (TestCase, ID, Name, OldValue)
@@ -326,7 +326,7 @@ delete from OutputCapture;
 */
 
 -- 2.2.2 INSTEAD OF UPDATE trigger that deletes with OUTPUT
-UPDATE EPQView_Update_Delete
+UPDATE EPQTest_InsteadOf_Update_Delete
 SET Value = 2000
 OUTPUT 'InsteadOf_Update_Delete', deleted.ID, deleted.Name, deleted.Value
 INTO OutputCapture (TestCase, ID, Name, OldValue)
@@ -348,7 +348,7 @@ GO
 */
 
 -- 2.2.3 INSTEAD OF DELETE trigger with cascading deletes
-DELETE FROM EPQView_Delete_Delete
+DELETE FROM EPQTest_InsteadOf_Delete_Delete
 OUTPUT 'InsteadOf_Delete_Delete', deleted.ID, deleted.Name, deleted.Value
 INTO OutputCapture (TestCase, ID, Name, OldValue)
 WHERE ID = 2;
