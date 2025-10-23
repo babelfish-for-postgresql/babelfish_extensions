@@ -135,7 +135,7 @@ EXEC BABEL_BINARY_vu_prepare_p5
 GO
 ~~ERROR (Code: 9809)~~
 
-~~ERROR (Message: The style 3 is not supported for conversions from varchar to varbinary.)~~
+~~ERROR (Message: The style 3 is not supported for conversions from varchar to binary.)~~
 
 DROP PROCEDURE BABEL_BINARY_vu_prepare_p5
 GO
@@ -253,7 +253,7 @@ GO
 binary
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v13
 GO
@@ -349,7 +349,7 @@ GO
 ~~START~~
 binary
 1234000000
-0000303900
+0000003039
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v17
@@ -360,7 +360,7 @@ GO
 ~~START~~
 binary
 1234000000
-0000303900
+0000003039
 <NULL>
 ~~END~~
 
@@ -372,7 +372,7 @@ GO
 ~~START~~
 binary
 12340000000000000000
-00003039000000000000
+00000000000030390000
 ABCDEF00000000000000
 ~~END~~
 
@@ -384,7 +384,7 @@ GO
 ~~START~~
 binary
 12340000000000000000
-00003039000000000000
+00000000000030390000
 ABCDEF00000000000000
 ~~END~~
 
@@ -466,7 +466,7 @@ GO
 varbinary
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type numeric to varbinary)~~
+~~ERROR (Message: cannot cast type numeric to "binary")~~
 
 
 SELECT dbo.BABEL_BINARY_vu_prepare_f8()
@@ -505,7 +505,7 @@ GO
 varbinary
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 SELECT dbo.BABEL_BINARY_vu_prepare_f10()
@@ -521,7 +521,7 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v29
 GO
 ~~START~~
 binary#!#binary#!#binary#!#binary
-0000303900#!#323032332D#!#480065006C#!#1234ABCD00
+0000003039#!#323032332D#!#48656C6C6F#!#1234ABCD00
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v29
@@ -531,7 +531,7 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v30
 GO
 ~~START~~
 binary#!#binary#!#binary#!#binary
-0000303900#!#323032332D#!#480065006C#!#1234ABCD00
+0000003039#!#323032332D#!#48656C6C6F#!#1234ABCD00
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v30
@@ -695,7 +695,7 @@ SELECT CONVERT(BINARY(10), '0x0904D000341', 1)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 -- string without '0x' prefix (should cause an error)
@@ -703,7 +703,7 @@ SELECT CONVERT(BINARY(10), '0904D00034', 1)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 -- string with '0x' prefix and odd length (should cause an error)
@@ -711,7 +711,7 @@ SELECT CONVERT(BINARY(10), '0x0904D000341', 1)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 -- non-hexadecimal string (should cause an error)
@@ -719,7 +719,7 @@ SELECT CONVERT(BINARY(5), 'Hello', 1)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 -- hexadecimal with padding
@@ -736,7 +736,7 @@ SELECT CONVERT(BINARY(15), '0x0904D000341213440', 1)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 -- non-hexadecimal characters after '0x' (should cause an error)
@@ -744,7 +744,7 @@ SELECT CONVERT(BINARY(16), '0x0904D000341!@', 1)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 -- odd number of hexadecimal digits (should cause an error)
@@ -752,7 +752,7 @@ SELECT CONVERT(BINARY(5), '0x0904D0003', 1)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 -- empty string (should cause an error)
@@ -760,7 +760,7 @@ SELECT CONVERT(BINARY(5), '', 1)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 
@@ -789,7 +789,7 @@ SELECT CONVERT(BINARY(10), '0x0904D00034', 2)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 -- hexadecimal with padding
@@ -884,7 +884,7 @@ SELECT CONVERT(BINARY(5), '', 1)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 -- Null style with '0x' prefix 
@@ -958,7 +958,7 @@ SELECT CONVERT(BINARY(5), '     ', 1)
 Go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 SELECT CONVERT(BINARY(5), '     ', 2)
@@ -974,7 +974,7 @@ SELECT CONVERT(BINARY(10), '0904D00034', 3);
 Go
 ~~ERROR (Code: 9809)~~
 
-~~ERROR (Message: The style 3 is not supported for conversions from varchar to varbinary.)~~
+~~ERROR (Message: The style 3 is not supported for conversions from varchar to binary.)~~
 
 
 -- Length greater than maximum allowed length (8000)

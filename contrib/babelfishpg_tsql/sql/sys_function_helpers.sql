@@ -10149,6 +10149,127 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+
+-- Binary conversion helper functions
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_binary(IN typmod INTEGER,
+                                                               IN arg anyelement,
+                                                               IN try BOOL,
+                                                               IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.binary
+AS
+$BODY$
+DECLARE result sys.binary;
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_to_binary(typmod, arg, p_style);
+    ELSE
+        IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+            RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
+        ELSE
+            IF typmod = -1 THEN
+                RETURN CAST(arg as sys.binary);
+            ELSE
+                EXECUTE format('SELECT CAST($1 as sys.binary(%s))', typmod) INTO result USING arg;
+                RETURN result;
+            END IF;
+        END IF;
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_binary(IN typmod INTEGER,
+                                                               IN arg sys.VARCHAR,
+                                                               IN try BOOL,
+                                                               IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.binary
+AS
+$BODY$
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_string_to_binary(arg, p_style);
+    ELSE
+        RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_binary(IN arg sys.VARCHAR,
+                                                                   IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.binary
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_binary(IN typmod INTEGER,
+                                                            IN arg anyelement,
+                                                            IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.binary
+AS
+$BODY$
+DECLARE result sys.binary;
+BEGIN
+    IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+        RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
+    ELSE
+        IF typmod = -1 THEN
+            RETURN CAST(arg as sys.binary);
+        ELSE
+            EXECUTE format('SELECT CAST($1 as sys.binary(%s))', typmod) INTO result USING arg;
+            RETURN result;
+        END IF;
+    END IF;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_binary(IN input_value sys.VARCHAR, IN style NUMERIC DEFAULT 0)
+RETURNS sys.binary
+AS
+$BODY$
+DECLARE
+    result bytea;
+BEGIN
+    IF style = 0 THEN
+        RETURN CAST(input_value AS sys.binary);
+    ELSIF style = 1 THEN
+        IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
+            result := decode(substring(input_value from 3), 'hex');
+        ELSE
+            RAISE EXCEPTION 'Error converting data type varchar to binary.';
+        END IF;
+    ELSIF style = 2 THEN
+        IF PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" THEN
+            RAISE EXCEPTION 'Error converting data type varchar to binary.';
+        ELSE
+            result := decode(input_value, 'hex');
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'The style % is not supported for conversions from varchar to binary.', style;
+    END IF;
+
+    RETURN CAST(result AS sys.binary);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+STRICT;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTEGER,
                                                                   IN arg anyelement,
                                                                   IN try BOOL,

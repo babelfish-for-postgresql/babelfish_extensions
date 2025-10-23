@@ -637,3 +637,5 @@ cast_string_to_binary-before-17_7
 cast_binary_to_string-before-17_7
 test_conv_text_to_binary-before-17_7
 test_conv_text_to_string
+test_convert_to_binary
+cast_datetime_to_binary
