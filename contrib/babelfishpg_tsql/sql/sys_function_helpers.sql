@@ -10163,7 +10163,7 @@ BEGIN
     IF try THEN
         RETURN sys.babelfish_try_conv_to_binary(typmod, arg, p_style);
     ELSE
-        IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+        IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype, 'sys.varchar'::regtype) THEN
             RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
         ELSE
             IF typmod = -1 THEN
@@ -10180,30 +10180,31 @@ LANGUAGE plpgsql
 IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_binary(IN typmod INTEGER,
-                                                               IN arg sys.VARCHAR,
+                                                               IN arg TEXT,
                                                                IN try BOOL,
                                                                IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.binary
 AS
 $BODY$
+DECLARE result sys.binary;
 BEGIN
     IF try THEN
         RETURN sys.babelfish_try_conv_string_to_binary(arg, p_style);
     ELSE
-        RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
+        RETURN sys.babelfish_conv_string_to_binary(arg::sys.varchar, p_style);
     END IF;
 END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_binary(IN arg sys.VARCHAR,
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_binary(IN arg TEXT,
                                                                    IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.binary
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
+    RETURN sys.babelfish_conv_string_to_binary(arg::sys.varchar, p_style);
     EXCEPTION
         WHEN OTHERS THEN
             RETURN NULL;
@@ -10220,7 +10221,7 @@ AS
 $BODY$
 DECLARE result sys.binary;
 BEGIN
-    IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+    IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype, 'sys.varchar'::regtype) THEN
         RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
     ELSE
         IF typmod = -1 THEN
@@ -10238,7 +10239,7 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_binary(IN input_value sys.VARCHAR, IN style NUMERIC DEFAULT 0)
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_binary(IN input_value ANYELEMENT, IN style NUMERIC DEFAULT 0)
 RETURNS sys.binary
 AS
 $BODY$
@@ -10246,7 +10247,14 @@ DECLARE
     result bytea;
 BEGIN
     IF style = 0 THEN
-        RETURN CAST(input_value AS sys.binary);
+        CASE pg_typeof(input_value)
+			WHEN 'sys.nvarchar'::regtype THEN
+				RETURN sys.nvarcharbinary(input_value, -1, true);
+			WHEN 'sys.nchar'::regtype THEN
+				RETURN sys.ncharbinary(input_value, -1, true);
+			ELSE
+                RETURN CAST(input_value AS sys.binary);
+        END CASE;
     ELSIF style = 1 THEN
         IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
             result := decode(substring(input_value from 3), 'hex');
