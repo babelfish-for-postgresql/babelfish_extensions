@@ -22,11 +22,11 @@ $BODY$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.unicode(IN VARCHAR) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.string_split(IN string VARCHAR, IN separator VARCHAR, OUT value VARCHAR) RETURNS SETOF VARCHAR AS
+CREATE OR REPLACE FUNCTION sys.string_split(IN string sys.NVARCHAR, IN separator sys.NVARCHAR, OUT value sys.NVARCHAR) RETURNS SETOF sys.NVARCHAR AS
 $body$
 DECLARE
-    v_string VARCHAR COLLATE "C";
-    v_separator VARCHAR COLLATE "C";
+    v_string sys.NVARCHAR COLLATE "C";
+    v_separator sys.NVARCHAR COLLATE "C";
 BEGIN
 	if length(separator) != 1 then
 		RAISE EXCEPTION 'Invalid separator: %', separator USING HINT =
@@ -34,12 +34,12 @@ BEGIN
         else
 	        v_string := string; -- use COLLATE "C"
 		v_separator := separator; -- use COLLATE "C"
-		RETURN QUERY(SELECT cast(unnest(string_to_array(v_string, v_separator)) as varchar));
+		RETURN QUERY(SELECT cast(unnest(string_to_array(v_string, v_separator)) as sys.NVARCHAR));
         end if;
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.string_split(IN VARCHAR, IN VARCHAR, OUT VARCHAR) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.string_split(IN sys.NVARCHAR, IN sys.NVARCHAR, OUT sys.NVARCHAR) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.string_escape(IN str sys.NVARCHAR, IN type TEXT) RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'string_escape' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
