@@ -59,8 +59,8 @@ GO
 ~~ERROR (Message: ERROR: remove_createrole_from_logins() can only be called from an SQL script executed by CREATE/ALTER EXTENSION
     Server SQLState: 0A000)~~
 
-
 -- tsql user=jdbc_user password=12345678
+  
 -- setup
 CREATE LOGIN l1 WITH PASSWORD = '12345678';
 GO
