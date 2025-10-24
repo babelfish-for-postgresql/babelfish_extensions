@@ -447,21 +447,102 @@ public class TestQueryFile {
         String CSVFileName = testRunDir + timestamp + "_performanceReport";
         com.sqlsamples.ExportResults.createCSVFile(CSVFileName, statisticsHashMap);
     }
-    
+
+    /**
+     * Helper method to process include directives in expected files
+     * Expands include#!#<path> lines by reading and inserting content from referenced files
+     */
+    private static File processIncludes(File expectedFile) throws IOException {
+        // First check if the file contains any include directives
+        boolean hasIncludes = false;
+        try (BufferedReader br = new BufferedReader(new FileReader(expectedFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.trim().startsWith("include#!#")) {
+                    hasIncludes = true;
+                    break;
+                }
+            }
+        }
+        
+        // If no includes found, return the original file
+        if (!hasIncludes) {
+            return expectedFile;
+        }
+        
+        // Process includes and create a temporary expanded file
+        File tempFile = File.createTempFile("expanded_expected_", ".out");
+        tempFile.deleteOnExit();
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(expectedFile));
+             BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
+            
+            String line;
+            while ((line = br.readLine()) != null) {
+                String trimmedLine = line.trim();
+                if (trimmedLine.startsWith("include#!#")) {
+                    // Extract the path from the include directive
+                    String includePath = trimmedLine.substring("include#!#".length()).trim();
+                    
+                    // Resolve the path relative to the expected file's directory if it's not absolute
+                    File includeFile;
+                    if (new File(includePath).isAbsolute()) {
+                        includeFile = new File(includePath);
+                    } else {
+                        includeFile = new File(expectedFile.getParent(), includePath);
+                    }
+                    
+                    // Read and write the content of the included file
+                    if (includeFile.exists() && includeFile.canRead()) {
+                        // Recursively process includes in the included file
+                        File processedIncludeFile = processIncludes(includeFile);
+                        try (BufferedReader includeBr = new BufferedReader(new FileReader(processedIncludeFile))) {
+                            String includeLine;
+                            while ((includeLine = includeBr.readLine()) != null) {
+                                bw.write(includeLine);
+                                bw.newLine();
+                            }
+                        }
+                        // Clean up temporary file if it was created for the included file
+                        if (!processedIncludeFile.equals(includeFile)) {
+                            processedIncludeFile.delete();
+                        }
+                    } else {
+                        // If include file doesn't exist, write a comment indicating the issue
+                        bw.write("// ERROR: Could not find include file: " + includePath);
+                        bw.newLine();
+                        System.err.println("Warning: Could not find include file: " + includePath);
+                    }
+                } else {
+                    // Regular line, write as-is
+                    bw.write(line);
+                    bw.newLine();
+                }
+            }
+        }
+        
+        return tempFile;
+    }
+
     private static boolean compareOutFiles (File outputFile, File expectedFile) {
         String outputFilePath = outputFile.getAbsolutePath();
-        String expectedFilePath = expectedFile.getAbsolutePath();
         ProcessBuilder diffProcessBuilder;
-
-        if (expectedFilePath.contains("sql_expected")) {
-            // if expected file is generated from T-SQL, do not compare error code and error message
-            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "~~ERROR", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
-        } else {
-            // Do not compare T-SQL Batch parsing time
-            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", ".*could not open relation with OID", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
-        }
-
+        File processedExpectedFile = expectedFile;
+        
         try {
+            // Process includes in the expected file
+            processedExpectedFile = processIncludes(expectedFile);
+            String expectedFilePath = processedExpectedFile.getAbsolutePath();
+
+            //if expected file is generated from SQL Server, do not compare error code and message
+            if (expectedFile.getAbsolutePath().contains("sql_expected")) {
+                // if expected file is generated from T-SQL, do not compare error code and error message
+                diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "~~ERROR", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
+            } else {
+                // Do not compare T-SQL Batch parsing time
+                diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", ".*could not open relation with OID", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
+            }
+
             diffProcessBuilder.redirectError(ProcessBuilder.Redirect.appendTo(diffFile));
             diffProcessBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(diffFile));
             int exitCode = diffProcessBuilder.start().waitFor();
@@ -483,7 +564,12 @@ public class TestQueryFile {
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
-        } 
+        } finally {
+            // Clean up temporary file if it was created
+            if (processedExpectedFile != expectedFile) {
+                processedExpectedFile.delete();
+            }
+        }
         
         return false;
     }
