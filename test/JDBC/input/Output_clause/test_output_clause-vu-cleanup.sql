@@ -57,6 +57,18 @@ GO
 DROP TRIGGER IF EXISTS tr_After_Mixed;
 GO
 
+DROP TRIGGER IF EXISTS tr_InsteadOf_MixedDelete;
+GO
+
+DROP TRIGGER IF EXISTS tr_After_MixedDelete;
+GO
+
+DROP TRIGGER IF EXISTS tr_InsteadOf_MixedInsert;
+GO
+
+DROP TRIGGER IF EXISTS tr_After_MixedInsert;
+GO
+
 -- Drop all views
 DROP VIEW IF EXISTS OutputTestView;
 GO
@@ -77,6 +89,12 @@ DROP VIEW IF EXISTS EPQView_Insert_Delete;
 GO
 
 DROP VIEW IF EXISTS EPQView_Insert_Update;
+GO
+
+DROP VIEW IF EXISTS MixedTriggerViewDelete;
+GO
+
+DROP VIEW IF EXISTS MixedTriggerViewInsert;
 GO
 
 -- Drop all tables
@@ -137,5 +155,23 @@ GO
 DROP TABLE IF EXISTS MixedTriggerTest;
 GO
 
+DROP TABLE IF EXISTS TriggerOutputLogMixed;
+GO
+
+DROP TABLE IF EXISTS MixedTriggerTestDelete;
+GO
+
+DROP TABLE IF EXISTS TriggerOutputLogMixedDelete;
+GO
+
+DROP TABLE IF EXISTS MixedTriggerTestInsert;
+GO
+
+DROP TABLE IF EXISTS TriggerOutputLogMixedInsert;
+GO
+
 DROP TABLE IF EXISTS OutputCapture;
+GO
+
+DROP TABLE IF EXISTS TriggerOutputLogMixed;
 GO
