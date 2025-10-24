@@ -39,3 +39,21 @@ GO
 
 CALL sys.bbf_remove_createrole_from_logins();
 GO
+  
+-- tsql user=jdbc_user password=12345678
+-- setup
+CREATE LOGIN l1 WITH PASSWORD = '12345678';
+GO
+
+-- psql user=l1 password=12345678
+CREATE OR REPLACE PROCEDURE sys.check_migration_mode_consistency()
+AS $$
+BEGIN 
+    RAISE NOTICE 'rewrite babel sys function';
+END; $$ LANGUAGE plpgsql;
+GO
+-- terminate-psql-conn user=l1 password=12345678
+
+-- tsql user=jdbc_user password=12345678
+DROP LOGIN l1;
+GO

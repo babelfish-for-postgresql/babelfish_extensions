@@ -5025,6 +5025,44 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, create_domain->domainname);
 				return;
 			}
+		case T_CreateFunctionStmt:
+			{
+				CreateFunctionStmt 		*stmt = (CreateFunctionStmt *)parsetree;
+
+				/* Check if non-superuser is trying to create procedure in babelfish sys schemas */
+				if (!superuser())
+				{
+					char *schemaname = NULL;
+					char *objname = NULL;
+					
+					/* Extract schema name from function name */
+					DeconstructQualifiedName(stmt->funcname, &schemaname, &objname);
+
+					if (schemaname && pg_strcasecmp(schemaname, "sys") == 0)
+    				{
+						Oid funcoid = LookupFuncName(stmt->funcname, 0, NULL, true);
+						if (OidIsValid(funcoid))
+						{
+							HeapTuple tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+							if (HeapTupleIsValid(tuple))
+							{
+								Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
+
+								/* Check if the function is owned by bootstrap superuser */
+								if (procform->proowner ==  10)
+								{
+									ReleaseSysCache(tuple);
+									ereport(ERROR,
+											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+											errmsg("cannot modify procedures owned by rdsadmin in sys schema")));
+								}
+								ReleaseSysCache(tuple);
+							}
+						}
+					}
+				}
+				break;
+			}
 		case T_VariableSetStmt:
 			{
 				VariableSetStmt *variable_set = (VariableSetStmt *) parsetree;
