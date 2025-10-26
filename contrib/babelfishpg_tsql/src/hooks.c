@@ -17,6 +17,7 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef_d.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_depend.h"	/* Required in handle_bbf_view_binding_on_object_drop to access pg_rewrite dependencies */
 #include "catalog/pg_namespace.h"
@@ -290,6 +291,7 @@ static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNu
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
+static bool verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config);
 
 /*********************************************************
  * 			Weak Binding Views Related Declarations
@@ -5162,26 +5164,25 @@ pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 }
 
 /*
- * To properly persist a new value of temp_oid_buffer_start, we must set it
- * in pg_settings, as it would in an ALTER DATABASE ... SET ... command.
+ * To properly persist a new value of babelfishpg_tsql.temp_oid_buffer_start, we must set it
+ * in pg_db_role_setting, as it would in an ALTER DATABASE ... SET ... command.
  *
  * Returns true on success.
  */
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
 {
-	HeapTuple	tuple, newtuple;
-	Relation	rel;
-	ScanKeyData scankey[2];
-	SysScanDesc scan;
-	const char *babelfish_db_name = NULL;
-	char 	   *new_oid_str = NULL;
-	Oid			babelfish_db_id = InvalidOid;
-	int 		translated_oid = OID_TO_BUFFER_START(new_oid);
-	Datum		repl_val[Natts_pg_db_role_setting];
-	bool		repl_null[Natts_pg_db_role_setting];
-	bool		repl_repl[Natts_pg_db_role_setting];
-	Datum		datum;
-	ArrayType  *a;
+	const char  *babelfish_db_name = NULL;
+	char        *config_name = "babelfishpg_tsql.temp_oid_buffer_start";
+	char        *altdbstmt;
+	Oid         babelfish_db_id = InvalidOid;
+	int         translated_oid = OID_TO_BUFFER_START(new_oid);
+	List        *parsetree_list;
+	Node        *stmt;
+	PlannedStmt *wrapper;
+	Oid         save_userid;
+	int         save_sec_context;
+	HeapTuple   dbtup;
+	Oid         bbf_db_owner;
 
 	babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
 	if (!babelfish_db_name)
@@ -5192,54 +5193,71 @@ static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
 	if (!OidIsValid(babelfish_db_id))
 		return false;
 
-	new_oid_str = psprintf("%d", translated_oid);
-
-	rel = table_open(DbRoleSettingRelationId, RowExclusiveLock);
-	ScanKeyInit(&scankey[0],
-				Anum_pg_db_role_setting_setdatabase,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(babelfish_db_id));
-	ScanKeyInit(&scankey[1],
-				Anum_pg_db_role_setting_setrole,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(InvalidOid));
-	scan = systable_beginscan(rel, DbRoleSettingDatidRolidIndexId, true,
-							  NULL, 2, scankey);
-	tuple = systable_getnext(scan);
-
-	/* temp_oid_buffer_start has a default setting, so it should be there already. */
-	if (!HeapTupleIsValid(tuple))
+	dbtup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(babelfish_db_id));
+	if (!HeapTupleIsValid(dbtup))
 		return false;
 
-	memset(repl_repl, false, sizeof(repl_repl));
-	repl_repl[Anum_pg_db_role_setting_setconfig - 1] = true;
-	repl_null[Anum_pg_db_role_setting_setconfig - 1] = false;
+	bbf_db_owner = ((Form_pg_database) GETSTRUCT(dbtup))->datdba;
+	altdbstmt = psprintf("ALTER DATABASE %s SET %s = %d", babelfish_db_name, config_name, translated_oid);
+	parsetree_list = raw_parser(altdbstmt, RAW_PARSE_DEFAULT);
+	if (list_length(parsetree_list) != 1)
+	{
+		elog(WARNING, "Implicit VariablSet stmt during temp OID buffer initialization is incorrect or corrupt");
+		return false;
+	}
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+	if (!verify_stmt_alterdatabaseset(stmt,babelfish_db_name,config_name))
+	{
+		elog(WARNING, "Implicit VariablSet stmt during temp OID buffer initialization is incorrect or corrupt");
+		return false;
+	}
 
-	Assert(strlen(new_oid_str) > 0);
-	datum = CStringGetTextDatum(psprintf("%s=%s", "babelfishpg_tsql.temp_oid_buffer_start", new_oid_str));
-	a = construct_array(&datum, 1,
-							TEXTOID,
-							-1, false, TYPALIGN_INT);
+	ReleaseSysCache(dbtup);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 
-	repl_val[Anum_pg_db_role_setting_setconfig - 1] =
-		PointerGetDatum(a);
+	PG_TRY();
+	{
+		/* Run the built query */
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = strlen(altdbstmt);
 
-	newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
-									repl_val, repl_null, repl_repl);
-	
-	/*
-	 * During unit tests, this will crash if it's executed multiple times in the same transaction since
-	 * concurrent tuple updates are not allowed.
-	 */
-	if (!TEST_persist_temp_oid_buffer_start_disable_catalog_update)
-		CatalogTupleUpdate(rel, &tuple->t_self, newtuple);
+		SetUserIdAndSecContext(bbf_db_owner, save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-	systable_endscan(scan);
-
-	table_close(rel, RowExclusiveLock);
-
+		ProcessUtility(wrapper,
+					altdbstmt,
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+		CommandCounterIncrement();
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 	temp_oid_buffer_start = translated_oid;
 
+	return true;
+}
+
+static bool
+verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config)
+{
+	AlterDatabaseSetStmt*	stmt = (AlterDatabaseSetStmt*) n;
+	VariableSetStmt* 		vsstmt = stmt->setstmt;
+	if (!stmt->dbname || strcmp(stmt->dbname, dbname) != 0)
+		return false;
+	if (!vsstmt || vsstmt->kind != VAR_SET_VALUE 
+		|| !vsstmt->name || strcmp(vsstmt->name, config) != 0)
+		return false;
 	return true;
 }
 
