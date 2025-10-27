@@ -343,7 +343,7 @@ int
 SELECT value FROM STRING_SPLIT('Lorem ipsum dolor sit amet.', ' ');
 go
 ~~START~~
-varchar
+nvarchar
 Lorem
 ipsum
 dolor
@@ -355,7 +355,7 @@ amet.
 SELECT value FROM STRING_SPLIT('a,b,c,d', ' ');
 go
 ~~START~~
-varchar
+nvarchar
 a,b,c,d
 ~~END~~
 
@@ -363,7 +363,7 @@ a,b,c,d
 SELECT value FROM STRING_SPLIT('123abc456', 'abc'); -- expect 'invalid separator'
 go
 ~~START~~
-varchar
+nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Invalid separator: abc)~~
@@ -387,7 +387,7 @@ SELECT REPLACE('nothing to do', 'none', 'should not see this');
 drop table testing_collation;
 go
 ~~START~~
-varchar
+nvarchar
 clothing
 road
 touring

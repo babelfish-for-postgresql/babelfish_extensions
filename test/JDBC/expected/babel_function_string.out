@@ -488,7 +488,7 @@ int
 SELECT STRING_SPLIT('Lorem ipsum dolor sit amet.', ' ')
 GO
 ~~START~~
-varchar
+nvarchar
 Lorem
 ipsum
 dolor
@@ -500,7 +500,7 @@ amet.
 SELECT STRING_SPLIT('clothing,road,,touring,bike', ',')
 GO
 ~~START~~
-varchar
+nvarchar
 clothing
 road
 
@@ -512,7 +512,7 @@ bike
 SELECT STRING_SPLIT('||||||||', '|')
 GO
 ~~START~~
-varchar
+nvarchar
 
 
 
@@ -528,7 +528,7 @@ varchar
 SELECT STRING_SPLIT(NULL, ' ')
 GO
 ~~START~~
-varchar
+nvarchar
 ~~END~~
 
 
@@ -536,7 +536,7 @@ varchar
 SELECT STRING_SPLIT('asdf', '')
 GO
 ~~START~~
-varchar
+nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Invalid separator: )~~
@@ -545,21 +545,21 @@ varchar
 SELECT STRING_SPLIT('asdf', NULL)
 GO
 ~~START~~
-varchar
+nvarchar
 ~~END~~
 
 
 SELECT STRING_SPLIT(NULL, NULL)
 GO
 ~~START~~
-varchar
+nvarchar
 ~~END~~
 
 
 SELECT STRING_SPLIT(CAST('nvarchar nvarchar nvarchar' as nvarchar), CAST(' ' as nvarchar))
 GO
 ~~START~~
-varchar
+nvarchar
 nvarchar
 nvarchar
 nvarchar
@@ -569,7 +569,7 @@ nvarchar
 SELECT STRING_SPLIT(CAST('varchar varchar varchar' as varchar), CAST(' ' as varchar))
 GO
 ~~START~~
-varchar
+nvarchar
 varchar
 varchar
 varchar
@@ -579,7 +579,7 @@ varchar
 SELECT STRING_SPLIT('char char char', ' ')
 GO
 ~~START~~
-varchar
+nvarchar
 char
 char
 char
@@ -589,7 +589,7 @@ char
 SELECT STRING_SPLIT('a,b,c,d', ',')
 GO
 ~~START~~
-varchar
+nvarchar
 a
 b
 c
@@ -600,7 +600,7 @@ d
 SELECT STRING_SPLIT('mississippi island lives in igloo', 'i')
 GO
 ~~START~~
-varchar
+nvarchar
 m
 ss
 ss
@@ -616,7 +616,7 @@ gloo
 SELECT STRING_SPLIT(CAST('asdf' as nchar(4)), ' ')
 GO
 ~~START~~
-varchar
+nvarchar
 asdf
 ~~END~~
 
@@ -624,7 +624,7 @@ asdf
 SELECT STRING_SPLIT(CAST('asdf' as char(4)), ' ')
 GO
 ~~START~~
-varchar
+nvarchar
 asdf
 ~~END~~
 
@@ -633,7 +633,7 @@ asdf
 SELECT STRING_SPLIT('Lorem ipsum', 'too many chars')
 GO
 ~~START~~
-varchar
+nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Invalid separator: too many chars)~~
@@ -642,7 +642,7 @@ varchar
 SELECT value FROM STRING_SPLIT('Lorem ipsum dolor sit amet.', ' ')
 GO
 ~~START~~
-varchar
+nvarchar
 Lorem
 ipsum
 dolor
