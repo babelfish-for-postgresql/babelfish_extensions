@@ -513,6 +513,8 @@ GO
  */
 
 -- Create temporary table to store OUTPUT results
+drop table if exists OutputResults;
+GO
 CREATE TABLE OutputResults (
     ID INT,
     OldValue INT,

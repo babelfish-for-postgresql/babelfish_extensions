@@ -849,16 +849,14 @@ GO
  * ------------------------------------------------------------------------------------
  */
 -- Create temporary table to store OUTPUT results
+drop table if exists OutputResults;
+GO
 CREATE TABLE OutputResults (
     ID INT,
     OldValue INT,
     NewValue INT
 );
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "outputresults" already exists)~~
-
 
 -- Test UPDATE with OUTPUT on view (triggers both INSTEAD OF and AFTER)
 UPDATE MixedTriggerTest
