@@ -116,7 +116,7 @@ static PLtsql_function *do_compile(FunctionCallInfo fcinfo,
 static void pltsql_compile_error_callback(void *arg);
 static void add_parameter_name(PLtsql_nsitem_type itemtype, int itemno, const char *name);
 static void add_dummy_return(PLtsql_function *function);
-static void add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ);
+static void add_decl_table(PLtsql_function *function, int tbl_dno, List *tbl_typ);
 static Node *pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
 static void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
@@ -325,7 +325,7 @@ do_compile(FunctionCallInfo fcinfo,
 
 	/* Special handling is needed for Multi-Statement Table-Valued Functions. */
 	int			tbl_dno = -1;	/* dno of the output table variable */
-	char	   *tbl_typ = NULL; /* Name of the output table variable's type */
+	List	   *tbl_typ = NIL;	/* Name of the output table variable's type */
 	int		   *typmods = NULL; /* typmod of each argument if available */
 	CompileContext *cmpl_ctx = create_compile_context();
 
@@ -534,19 +534,14 @@ do_compile(FunctionCallInfo fcinfo,
 				 */
 				if (function->is_mstvf)
 				{
-					/* 
-					 * For a user-defined @@var or @var# name,
-					 * delimit with square brackets
-					 */
-					char *typname_fmt = "%s.\"%s\"";
-					if (!is_tsql_atatuservar(argdtype->typname))
-						typname_fmt = pstrdup("%s.%s");
-
 					tbl_dno = argvariable->dno;
-					tbl_typ = psprintf(typname_fmt,
-									   get_namespace_name(
-														  get_rel_namespace(get_typ_typrelid(argtypeid))),
-									   argdtype->typname);
+					
+					/*
+					 * List of the namespace and table type 
+					 */
+					tbl_typ = list_make2(makeString(get_namespace_name(
+																		get_rel_namespace(get_typ_typrelid(argtypeid)))), 
+										makeString(argdtype->typname));				  
 				}
 
 				if (argvariable->dtype == PLTSQL_DTYPE_VAR)
@@ -1476,7 +1471,7 @@ add_dummy_return(PLtsql_function *function)
  * Add a DECLARE TABLE statement to the given function's body
  */
 static void
-add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ)
+add_decl_table(PLtsql_function *function, int tbl_dno, List *tbl_typ)
 {
 	PLtsql_stmt_decl_table *new;
 

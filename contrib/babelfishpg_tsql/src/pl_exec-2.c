@@ -1333,6 +1333,7 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 	char	   *tblname;
 	char	   *tblname_create;
 	char	   *query;
+	char	   *relname;
 	PLtsql_tbl *var = (PLtsql_tbl *) (estate->datums[stmt->dno]);
 	int			rc;
 	bool		isnull;
@@ -1377,8 +1378,15 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 			tblname_create = psprintf("%s", tblname);			
 					
 		if (stmt->tbltypname)
+		{
+			/* 
+			* For a user-defined @@var or @var# name,
+			* delimit with square brackets
+			*/
+			relname = NameListToQuotedString(stmt->tbltypname);
 			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
-							 tblname_create, stmt->tbltypname);
+						 tblname_create, relname);
+		}
 		else
 			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s%s",
 							 tblname_create, stmt->coldef);
