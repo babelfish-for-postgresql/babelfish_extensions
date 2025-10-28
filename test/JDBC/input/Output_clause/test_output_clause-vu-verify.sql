@@ -373,7 +373,7 @@ GO
 */
 
 -- 2.2.4 INSTEAD OF DELETE trigger that updates instead of deleting
-DELETE FROM EPQView_Delete_Update
+DELETE FROM EPQTest_InsteadOf_Delete_Update
 OUTPUT 'InsteadOf_Delete_Update', deleted.ID, deleted.Name, deleted.Counter
 INTO OutputCapture (TestCase, ID, Name, OldValue)
 WHERE ID = 1;
@@ -413,7 +413,7 @@ INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter) VALUES (1
 GO
 
 -- Test Case 34: INSTEAD OF INSERT trigger that deletes existing rows
-INSERT INTO EPQView_Insert_Delete (ID, Name, Value, Counter, Status)
+INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter, Status)
 OUTPUT 'InsteadOf_Insert_Delete', inserted.ID, inserted.Name, 0, inserted.Value, inserted.Status
 INTO OutputCapture_insert (TestCase, ID, Name, OldValue, NewValue, Status)
 VALUES (2, 'NewRow', 100, 2, 'Active');
@@ -444,7 +444,7 @@ INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter) VALUES (1
 GO
 
 -- 2.2.6 INSTEAD OF INSERT trigger that updates existing rows
-INSERT INTO EPQView_Insert_Update (ID, Name, Value, Counter, Status)
+INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
 OUTPUT 'InsteadOf_Insert_Update', inserted.ID, inserted.Name, 0, inserted.Value, inserted.Status
 INTO OutputCapture_insert (TestCase, ID, Name, OldValue, NewValue, Status)
 VALUES (2, 'NewRow', 200, 2, 'Active');

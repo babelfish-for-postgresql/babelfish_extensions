@@ -493,14 +493,9 @@ INSERT INTO EPQTest_InsteadOf_Delete_Update (ID, Name, Value, Counter) VALUES
 (3, 'Row3', 300, 3);
 GO
 
--- Create view for INSTEAD OF trigger
-CREATE VIEW EPQView_Delete_Update AS
-SELECT ID, Name, Value, Counter, Status FROM EPQTest_InsteadOf_Delete_Update;
-GO
-
 -- INSTEAD OF DELETE trigger that updates instead of deleting
 CREATE TRIGGER tr_EPQTest_InsteadOf_Update_OnDelete
-ON EPQView_Delete_Update
+ON EPQTest_InsteadOf_Delete_Update
 INSTEAD OF DELETE
 AS
 BEGIN
@@ -530,14 +525,9 @@ CREATE TABLE EPQTest_InsteadOf_Insert_Delete (
 );
 GO
 
--- Create view for INSTEAD OF trigger
-CREATE VIEW EPQView_Insert_Delete AS
-SELECT ID, Name, Value, Counter, Status FROM EPQTest_InsteadOf_Insert_Delete;
-GO
-
 -- INSTEAD OF INSERT trigger that deletes existing rows
 CREATE TRIGGER tr_EPQTest_InsteadOf_Delete_OnInsert
-ON EPQView_Insert_Delete
+ON EPQTest_InsteadOf_Insert_Delete
 INSTEAD OF INSERT
 AS
 BEGIN
@@ -568,14 +558,9 @@ CREATE TABLE EPQTest_InsteadOf_Insert_Update (
 );
 GO
 
--- Create view for INSTEAD OF trigger
-CREATE VIEW EPQView_Insert_Update AS
-SELECT ID, Name, Value, Counter, Status FROM EPQTest_InsteadOf_Insert_Update;
-GO
-
 -- INSTEAD OF INSERT trigger that updates existing rows and inserts new ones
 CREATE TRIGGER tr_EPQTest_InsteadOf_Update_OnInsert
-ON EPQView_Insert_Update
+ON EPQTest_InsteadOf_Insert_Update
 INSTEAD OF INSERT
 AS
 BEGIN
