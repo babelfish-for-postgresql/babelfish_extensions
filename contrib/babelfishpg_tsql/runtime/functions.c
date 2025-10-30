@@ -2616,9 +2616,11 @@ type_id(PG_FUNCTION_ARGS)
 
     /* length should be restricted to 4000 */
 	if (i > SYSVARCHAR_MAX_LENGTH)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
 				errmsg("input value is too long for object name")));
+	}
 
 	/*
 	 * Split the input string, downcase and truncate if needed
