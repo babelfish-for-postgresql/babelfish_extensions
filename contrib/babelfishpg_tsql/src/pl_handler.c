@@ -3373,6 +3373,35 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								}
 							}
 						}
+						if (cmd->subtype == AT_DropColumn)
+						{
+							Oid relOid = InvalidOid;
+							HeapTuple tuple;
+
+							relOid = RangeVarGetRelid(atstmt->relation, NoLock, true);
+							
+							if (OidIsValid(relOid))
+							{
+								tuple = SearchSysCacheAttName(relOid, cmd->name);
+								
+								if (HeapTupleIsValid(tuple))
+								{
+									Form_pg_attribute attr = (Form_pg_attribute) GETSTRUCT(tuple);
+									ObjectAddress colAddr;
+									
+									colAddr.classId = RelationRelationId;
+									colAddr.objectId = relOid;
+									colAddr.objectSubId = attr->attnum;
+									
+									/* 
+									 * Handle weak view dependencies before dropping column in alter table stmt.
+									 * This will mark weak views as broken and remove their dependencies from pg_depend.
+									 */
+									handle_bbf_view_binding_on_object_drop(&colAddr, false);									
+									ReleaseSysCache(tuple);
+								}
+							}
+						}
 					}
 				}
 				

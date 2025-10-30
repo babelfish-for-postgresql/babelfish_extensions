@@ -311,6 +311,10 @@ static bool bbf_object_dependency_hook_adapter(const ObjectAddress *depender,
 static void find_view_references_raw(Node *node, List **view_oids);
 static bool find_view_references_raw_walker(Node *node, void *context);
 static void repair_view_table(ParseState *pstate, RangeVar *relation, RangeTblEntry *rte);
+static void track_view_dependency(Oid referenced_view, Oid dependent_view);
+static void find_broken_view_references(Oid viewOid, List **broken_views, List **visited);
+static List *get_tracked_dependent_views(Oid viewOid);
+static void cleanup_view_dependency_tracking(Oid viewOid);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -382,8 +386,8 @@ static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
-// static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
-static post_relation_open_hook_type prev_post_relation_open_hook = NULL;
+static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
+static range_table_entry_hook_type prev_range_table_entry_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 #ifdef USE_LIBXML
@@ -653,11 +657,15 @@ InstallExtendedHooks(void)
 
 	get_domain_typmodin_hook = get_domain_typmodin;
 
-	// prev_pre_QueryRewrite_hook = pre_QueryRewrite_hook;
-	// pre_QueryRewrite_hook = repair_broken_views;
+	prev_pre_QueryRewrite_hook = pre_QueryRewrite_hook;
+	pre_QueryRewrite_hook = repair_broken_views;
 
-	prev_post_relation_open_hook = post_relation_open_hook;
-	post_relation_open_hook = repair_view_table;
+	prev_range_table_entry_hook = range_table_entry_hook;
+	range_table_entry_hook = repair_view_table;
+
+	walk_view_rule_hook = mark_nodes_inside_view;
+
+	handle_target_view_hook = tsql_handle_target_view_hook;
 
 }
 
@@ -736,11 +744,11 @@ UninstallExtendedHooks(void)
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
-	// pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
-	post_relation_open_hook = prev_post_relation_open_hook;
+	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
 	#ifdef USE_LIBXML
 	openxml_set_namespaces_hook = prev_openxml_set_namespaces_hook;
 	#endif
+	range_table_entry_hook = prev_range_table_entry_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -756,102 +764,6 @@ UninstallExtendedHooks(void)
 	walk_view_rule_hook = NULL;
 	handle_target_view_hook = NULL;
 }
-
-// /* Hash table for view dependencies */
-// typedef struct ViewDependHashEntry
-// {
-//     Oid dependent_view_oid;    /* View that depends on another view */
-//     Oid referenced_view_oid;   /* View being referenced */
-//     bool valid;                /* For hash lookup */
-// } ViewDependHashEntry;
-
-// /* Global hash table */
-// static HTAB *ViewDependencyHash = NULL;
-
-// static void
-// init_view_dependency_hash(void)
-// {
-//     HASHCTL ctl;
-    
-//     /* Already initialized? */
-//     if (ViewDependencyHash != NULL)
-//         return;
-    
-//     memset(&ctl, 0, sizeof(ctl));
-//     ctl.keysize = sizeof(ViewDependHashEntry);
-//     ctl.entrysize = sizeof(ViewDependHashEntry);
-//     ctl.hcxt = CacheMemoryContext;
-    
-//     ViewDependencyHash = hash_create("View Dependency Hash",
-//                                     128,
-//                                     &ctl,
-//                                     HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
-// }
-
-// /* Store a view dependency */
-// static void
-// store_view_dependency(Oid dependent_view_oid, Oid referenced_view_oid)
-// {
-//     ViewDependHashEntry entry;
-//     bool found;
-    
-//     if (ViewDependencyHash == NULL)
-//         init_view_dependency_hash();
-    
-//     /* Create entry key */
-//     entry.dependent_view_oid = dependent_view_oid;
-//     entry.referenced_view_oid = referenced_view_oid;
-//     entry.valid = true;
-    
-//     hash_search(ViewDependencyHash, &entry, HASH_ENTER, &found);
-//     /* No additional data to set since the key contains all we need */
-// }
-
-// /* Get views that depend on the specified view */
-// static List *
-// get_dependent_views(Oid referenced_view_oid)
-// {
-//     List *dependent_views = NIL;
-//     HASH_SEQ_STATUS status;
-//     ViewDependHashEntry *entry;
-    
-//     if (ViewDependencyHash == NULL)
-//         return NIL;
-    
-//     hash_seq_init(&status, ViewDependencyHash);
-    
-//     while ((entry = (ViewDependHashEntry *) hash_seq_search(&status)) != NULL)
-//     {
-//         if (entry->referenced_view_oid == referenced_view_oid)
-//             dependent_views = lappend_oid(dependent_views, entry->dependent_view_oid);
-//     }
-    
-//     return dependent_views;
-// }
-
-// /* Update a dependency when a view is repaired with a new OID */
-// static void
-// update_view_dependency(Oid dependent_view_oid, Oid old_referenced_oid, Oid new_referenced_oid)
-// {
-//     ViewDependHashEntry old_entry;
-//     bool found;
-    
-//     if (ViewDependencyHash == NULL)
-//         return;
-    
-//     /* Remove old entry */
-//     old_entry.dependent_view_oid = dependent_view_oid;
-//     old_entry.referenced_view_oid = old_referenced_oid;
-//     old_entry.valid = true;
-    
-//     hash_search(ViewDependencyHash, &old_entry, HASH_REMOVE, &found);
-    
-//     if (found)
-//     {
-//         /* Add new entry */
-//         store_view_dependency(dependent_view_oid, new_referenced_oid);
-//     }
-// }
 
 static void
 init_views_being_repaired(void)
@@ -7838,7 +7750,7 @@ repair_broken_view_recursive(Oid viewOid, List *visitedViews)
 		return true;
 
 	visitedViews = lappend_oid(visitedViews, viewOid);
-    
+	
 	/* Check if the view is a dummy view and do repair */
 	if (is_dummy_view(viewOid) && bbf_view_is_broken(viewOid))
 	{	
@@ -7954,6 +7866,7 @@ repair_broken_view_recursive(Oid viewOid, List *visitedViews)
 		foreach(lc, referenced_views)
 		{
 			Oid referenced_view_oid = lfirst_oid(lc);
+
 			/* This will detect circular dependencies and repair broken views */
 			if (repair_broken_view_recursive(referenced_view_oid, visitedViews))
 				repaired = true;
@@ -7972,25 +7885,22 @@ repair_broken_view_table(Oid viewOid, List *visitedViews, List **viewsToRepair)
 	List 			*parsetree_list;
 	RawStmt 		*rawstmt;
 	ViewStmt 		*viewStmt;
-	Query 			*currentQuery = NULL;
 	bool 			repaired = false;
 	bool 			snapshot_registered = false;
 	const char 		*viewdef = NULL;
-	List 			*referenced_views = NIL;
 	ListCell 		*lc, 
 					*lc1;
-	Relation 		viewRel;
 	ANTLR_result 	result;
 	PLtsql_stmt_execsql *stmt_sql = NULL;
 	Oid				newViewOid;
 	char			*schema_name = NULL; 
-    char			*view_name = NULL;
+	char			*view_name = NULL;
 	const RangeVar	*rangevar;
 	bool 			already_repairing;
-
-	bool view_marked = false;
-	bool is_weak_view = false;
-	const char *old_value;
+	bool 			view_marked = false;
+	bool 			is_weak_view = false;
+	const char 		*old_value;
+	List 			*newBrokenViews = NIL;
 
 	old_value = GetConfigOption("babelfishpg_tsql.weak_view_binding", false, false);
 
@@ -8005,10 +7915,16 @@ repair_broken_view_table(Oid viewOid, List *visitedViews, List **viewsToRepair)
 		/* Check if the view is a dummy view and do repair */
 		if (is_dummy_view(viewOid) && bbf_view_is_broken(viewOid))
 		{
+			PlannedStmt 	*pstmt;
+			ObjectAddress 	viewAddr;
+			RangeVar 		*new_view;
+			char 			*pg_schema_name;
+			char 			*rel_name;
+			char 			*clean_sql;
+			ViewStmt 		*alterViewStmt = makeNode(ViewStmt);
 			
-			check_is_tsql_view(viewOid, &is_weak_view); // binding info
+			check_is_tsql_view(viewOid, &is_weak_view);
 
-			// mark_dependent_views_broken(viewOid);
 			already_repairing = is_view_being_repaired(viewOid);
 			if (already_repairing)
 			{
@@ -8081,93 +7997,89 @@ repair_broken_view_table(Oid viewOid, List *visitedViews, List **viewsToRepair)
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 						errmsg("view definition for view OID %u does not contain a select query", viewOid)));
 			}
+
+			SetConfigOption("babelfishpg_tsql.weak_view_binding", 
+							is_weak_view ? "on" : "off", 
+							PGC_USERSET, 
+							PGC_S_SESSION);
+
+			clean_sql = pstrdup(stmt_sql->sqlstmt->query);
+			pg_schema_name = get_namespace_name(get_rel_namespace(viewOid));
+
+			is_view_repair = is_view_repair + 1;
+
+			alterViewStmt->view = copyObject(viewStmt->view);
+			alterViewStmt->query = copyObject(viewStmt->query);
+			alterViewStmt->options = copyObject(viewStmt->options);
+
+			rel_name = pstrdup(alterViewStmt->view->relname);
+			new_view = makeRangeVar(pg_schema_name, rel_name, -1);
+
+			if (alterViewStmt->view->alias)
+				new_view->alias = copyObject(alterViewStmt->view->alias);
+			new_view->inh = alterViewStmt->view->inh;
+			new_view->relpersistence = alterViewStmt->view->relpersistence;
+
+			alterViewStmt->view = new_view;
+			alterViewStmt->replace = true;
+			alterViewStmt->createOrAlter = true;
+								
+			pstmt = makeNode(PlannedStmt);
+			pstmt->commandType = CMD_UTILITY;
+			pstmt->canSetTag = true;
+			pstmt->utilityStmt = (Node *) alterViewStmt;
+			pstmt->stmt_location = -1;
+			pstmt->stmt_len = -1;
+			
+			ProcessUtility(pstmt,
+							clean_sql,
+							false,
+							PROCESS_UTILITY_QUERY,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+			
+			CommandCounterIncrement();
+
+			is_view_repair = is_view_repair - 1;
+
+			rangevar = makeRangeVar(schema_name, view_name, -1);
+			newViewOid = InvalidOid;
+			newViewOid = RangeVarGetRelid(rangevar, NoLock, false);
+			visitedViews = list_delete_oid(visitedViews, viewOid);
+			visitedViews = lappend_oid(visitedViews, newViewOid);
+
+			viewAddr.classId = RelationRelationId;
+			viewAddr.objectId = newViewOid;
+			viewAddr.objectSubId = 0;
+
+			mark_view_being_repaired(newViewOid);
+			pltsql_store_view_definition(viewdef, viewAddr);
+			CommandCounterIncrement();
+
+			repaired = bbf_view_set_broken(newViewOid, false);
+			repaired = true;
+
+			unmark_view_being_repaired(viewOid);
+			if (OidIsValid(newViewOid))
+				unmark_view_being_repaired(newViewOid);
+			view_marked = false;
+
+			newBrokenViews = get_tracked_dependent_views(viewOid);
+			foreach(lc, newBrokenViews)
 			{
-				PlannedStmt *pstmt;
-				ObjectAddress viewAddr;
-				RangeVar *new_view;
-				char *pg_schema_name;
-				char *rel_name;
-				char *clean_sql;
-				ViewStmt *alterViewStmt = makeNode(ViewStmt);
-
-
-				SetConfigOption("babelfishpg_tsql.weak_view_binding", 
-								is_weak_view ? "on" : "off", 
-								PGC_USERSET, 
-								PGC_S_SESSION);
-
-				clean_sql = pstrdup(stmt_sql->sqlstmt->query);
-
-				pg_schema_name = get_namespace_name(get_rel_namespace(viewOid));
-
-				is_view_repair = is_view_repair + 1;
-
-				alterViewStmt->view = copyObject(viewStmt->view);
-				alterViewStmt->query = copyObject(viewStmt->query);
-				alterViewStmt->options = copyObject(viewStmt->options);
-
-				rel_name = pstrdup(alterViewStmt->view->relname);
-				new_view = makeRangeVar(pg_schema_name, rel_name, -1);
-
-				if (alterViewStmt->view->alias)
-					new_view->alias = copyObject(alterViewStmt->view->alias);
-				new_view->inh = alterViewStmt->view->inh;
-				new_view->relpersistence = alterViewStmt->view->relpersistence;
-
-				alterViewStmt->view = new_view;
-
-				alterViewStmt->replace = true;
-				alterViewStmt->createOrAlter = true;
-									
-				pstmt = makeNode(PlannedStmt);
-				pstmt->commandType = CMD_UTILITY;
-				pstmt->canSetTag = true;
-				pstmt->utilityStmt = (Node *) alterViewStmt;
-				pstmt->stmt_location = -1;
-				pstmt->stmt_len = -1;
-				
-				ProcessUtility(pstmt,
-								clean_sql,
-								false, 
-								PROCESS_UTILITY_QUERY,
-								NULL,
-								NULL,
-								None_Receiver,
-								NULL);
-				
-				/* Update the view's status */
-				CommandCounterIncrement();
-
-				is_view_repair = is_view_repair - 1;
-
-				rangevar = makeRangeVar(schema_name, view_name, -1);
-				newViewOid = InvalidOid;
-				newViewOid = RangeVarGetRelid(rangevar, NoLock, false);
-				visitedViews = list_delete_oid(visitedViews, viewOid);
-				visitedViews = lappend_oid(visitedViews, newViewOid);
-
-				if (viewsToRepair != NULL)
+				Oid newBrokenView_oid = lfirst_oid(lc);
+				if (!list_member_oid(visitedViews, newBrokenView_oid) &&
+						is_dummy_view(newBrokenView_oid) && 
+						bbf_view_is_broken(newBrokenView_oid))
 				{
-					*viewsToRepair = list_delete_oid(*viewsToRepair, viewOid);
-					*viewsToRepair = lappend_oid(*viewsToRepair, newViewOid);
+					bool res;
+					res = repair_broken_view_table(newBrokenView_oid, visitedViews, NULL);
+					if(res)
+						cleanup_view_dependency_tracking(newBrokenView_oid);
 				}
-
-				viewAddr.classId = RelationRelationId;
-				viewAddr.objectId = newViewOid;
-				viewAddr.objectSubId = 0;
-
-				mark_view_being_repaired(newViewOid);
-				pltsql_store_view_definition(viewdef, viewAddr);
-				CommandCounterIncrement();
-
-				repaired = bbf_view_set_broken(newViewOid, false);
-				repaired = true;
-
-                unmark_view_being_repaired(viewOid);
-                if (OidIsValid(newViewOid))
-                	unmark_view_being_repaired(newViewOid);
-                view_marked = false;
-            }
+			}
 		}
 
 	}
@@ -8177,9 +8089,9 @@ repair_broken_view_table(Oid viewOid, List *visitedViews, List **viewsToRepair)
 			PopActiveSnapshot();
 		
 		SetConfigOption("babelfishpg_tsql.weak_view_binding", 
-                           old_value, 
-                           PGC_USERSET, 
-                           PGC_S_SESSION);
+						old_value, 
+						PGC_USERSET, 
+						PGC_S_SESSION);
 		if (view_marked)
 		{
 			unmark_view_being_repaired(viewOid);
@@ -8191,207 +8103,265 @@ repair_broken_view_table(Oid viewOid, List *visitedViews, List **viewsToRepair)
 	PG_END_TRY();
 		if (snapshot_registered)
 			PopActiveSnapshot();
-
-	if(!repaired)
-	{
-		viewRel = relation_open(viewOid, AccessShareLock);
-		currentQuery = get_view_query(viewRel);
-		if (currentQuery)
+		
+		SetConfigOption("babelfishpg_tsql.weak_view_binding", 
+						old_value, 
+						PGC_USERSET, 
+						PGC_S_SESSION);
+		if (view_marked)
 		{
-			find_all_view_references((Node *) currentQuery, &referenced_views);
-
-			foreach(lc, referenced_views)
-			{
-				Oid referenced_view_oid = lfirst_oid(lc);
-				if (repair_broken_view_table(referenced_view_oid, visitedViews, viewsToRepair))
-					repaired = true;
-			}
+			unmark_view_being_repaired(viewOid);
+			if (OidIsValid(newViewOid))
+				unmark_view_being_repaired(newViewOid);
 		}
-		relation_close(viewRel, AccessShareLock);
-	}
+
 	if (repaired)
 		CommandCounterIncrement();
 	return repaired;
 }
 
-/* Find only broken views within the provided list */
-static List *
-find_broken_views_in_list(List *viewList)
+
+
+
+/* Structure to hold view dependency information */
+typedef struct ViewDependEntry
 {
-    List *broken_views = NIL;
-    ListCell *lc;
+    Oid referenced_view;  /* The view being referenced/dropped */
+    Oid dependent_view;   /* The view that depends on it */
+} ViewDependEntry;
+
+/* Global hash table for view dependencies */
+static HTAB *ViewDependencies = NULL;
+
+/* Initialize dependency tracking */
+static void
+init_view_dependency_tracking(void)
+{
+    HASHCTL ctl;
     
-    foreach(lc, viewList)
-    {
-        Oid viewOid = lfirst_oid(lc);
-        if (is_dummy_view(viewOid) && bbf_view_is_broken(viewOid))
-            broken_views = lappend_oid(broken_views, viewOid);
-    }
+    if (ViewDependencies != NULL)
+        return;
+        
+    MemSet(&ctl, 0, sizeof(ctl));
+    ctl.keysize = sizeof(ViewDependEntry);
+    ctl.entrysize = sizeof(ViewDependEntry);
+    ctl.hcxt = CacheMemoryContext;  /* Persist across transactions */
     
-    return broken_views;
+    ViewDependencies = hash_create("View Dependencies", 
+                                  128,  /* Initial size */
+                                  &ctl,
+                                  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 }
 
-/* Find all views that reference the specified view */
-static List *
-find_referencing_views(Oid viewOid)
+/* Add dependency to tracking */
+static void
+track_view_dependency(Oid referenced_view, Oid dependent_view)
 {
-    List *referencing_views = NIL;
-    Relation rel;
-    TableScanDesc scan;
-    HeapTuple tuple;
-    Form_pg_class relform;
-    Oid relOid;
-    bool isnull;
-    char *schema_name = get_namespace_name(get_rel_namespace(viewOid));
-    char *view_name = get_rel_name(viewOid);
-    char *qualified_name = psprintf("%s.%s", schema_name, view_name);
+    ViewDependEntry entry;
+    bool found;
     
-    rel = table_open(RelationRelationId, AccessShareLock);
-    scan = table_beginscan_catalog(rel, 0, NULL);
+    if (ViewDependencies == NULL)
+        init_view_dependency_tracking();
     
-    while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+    entry.referenced_view = referenced_view;
+    entry.dependent_view = dependent_view;
+    
+    hash_search(ViewDependencies, &entry, HASH_ENTER, &found);
+    elog(DEBUG1, "Tracked dependency: %u depends on %u", dependent_view, referenced_view);
+}
+
+/* Get views that depend on the specified view */
+static List *
+get_tracked_dependent_views(Oid viewOid)
+{
+    List *dependent_views = NIL;
+    HASH_SEQ_STATUS status;
+    ViewDependEntry *entry;
+    
+    if (ViewDependencies == NULL)
+        return NIL;
+    
+    hash_seq_init(&status, ViewDependencies);
+    
+    while ((entry = (ViewDependEntry *) hash_seq_search(&status)) != NULL)
     {
-        relform = (Form_pg_class) GETSTRUCT(tuple);
-        
-        /* Get the OID from the tuple using heap_getattr */
-        relOid = DatumGetObjectId(heap_getattr(tuple,
-                                             Anum_pg_class_oid,
-                                             RelationGetDescr(rel),
-                                             &isnull));
-        
-        if (!isnull && relform->relkind == RELKIND_VIEW && relOid != viewOid)
+        if (entry->referenced_view == viewOid)
         {
-            /* Check if this view's definition contains our view's name */
-            const char *viewdef = bbf_view_get_definition(relOid);
-            if (viewdef != NULL && strstr(viewdef, qualified_name) != NULL)
+            /* Check if dependent view still exists */
+            if (get_rel_relkind(entry->dependent_view) == RELKIND_VIEW)
             {
-                referencing_views = lappend_oid(referencing_views, relOid);
+                dependent_views = lappend_oid(dependent_views, entry->dependent_view);
+                elog(DEBUG1, "Found tracked dependent view: %u depends on %u", 
+                     entry->dependent_view, viewOid);
             }
         }
     }
     
-    table_endscan(scan);
-    table_close(rel, AccessShareLock);
-    pfree(qualified_name);
-    
-    return referencing_views;
+    return dependent_views;
 }
 
-/* Build a comprehensive view dependency tree (both referencing and referenced views) */
+/*
+ * Clean up view dependency tracking when a view is dropped
+ */
 static void
-build_view_dependency_tree(Oid viewOid, List **result)
+cleanup_view_dependency_tracking(Oid viewOid)
 {
-	/* Find views referenced by this view */
-    Relation viewRel = relation_open(viewOid, AccessShareLock);
-    Query *query = get_view_query(viewRel);
-    List *referenced_views = NIL;
-
-	List *referencing_views = find_referencing_views(viewOid);
-    ListCell *lc;
-
-    if (list_member_oid(*result, viewOid))
-        return;  /* Already processed this view */
+    HASH_SEQ_STATUS status;
+    ViewDependEntry *entry;
+    List *entries_to_remove = NIL;
+	ListCell *lc;
     
-    /* Add this view to the result list */
-    *result = lappend_oid(*result, viewOid);
-    
-    if (query)
-    {
-		ListCell *lc1;
-        find_all_view_references((Node *) query, &referenced_views);
+    if (ViewDependencies == NULL)
+        return;
         
-        /* Recursively process all referenced views */
-        foreach(lc1, referenced_views)
-        {
-            Oid ref_viewOid = lfirst_oid(lc1);
-            build_view_dependency_tree(ref_viewOid, result);
-        }
-        list_free(referenced_views);
-    }
-    relation_close(viewRel, AccessShareLock);
+    /* First, find all entries that reference this view */
+    hash_seq_init(&status, ViewDependencies);
     
-    /* Find views that reference this view */
-    foreach(lc, referencing_views)
+    while ((entry = (ViewDependEntry *) hash_seq_search(&status)) != NULL)
     {
-        Oid ref_viewOid = lfirst_oid(lc);
-        build_view_dependency_tree(ref_viewOid, result);
+        if (entry->referenced_view == viewOid || entry->dependent_view == viewOid)
+        {
+            ViewDependEntry *copy = palloc(sizeof(ViewDependEntry));
+            memcpy(copy, entry, sizeof(ViewDependEntry));
+            entries_to_remove = lappend(entries_to_remove, copy);
+        }
     }
-    list_free(referencing_views);
+    
+    foreach(lc, entries_to_remove)
+    {
+        ViewDependEntry *to_remove = (ViewDependEntry *) lfirst(lc);
+        hash_search(ViewDependencies, to_remove, HASH_REMOVE, NULL);
+        elog(DEBUG1, "Removed dependency tracking: %u depends on %u", 
+             to_remove->dependent_view, to_remove->referenced_view);
+        pfree(to_remove);
+    }
+    
+    list_free(entries_to_remove);
 }
-
-
 
 static void
 repair_view_table(ParseState *pstate, RangeVar *relation, RangeTblEntry *rte)
 {   
-    Oid viewOid;
-    List *visitedViews = NIL;
-    List *viewsToRepair = NIL;
-    bool repaired_any = true;
+	Oid viewOid;
+	List *visitedViews = NIL;
+	List *broken_dependencies = NIL;
 
-    /* Skip for non-Babelfish operations */
-    if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
-        return;
-    if (!relation)
-        return;
-    if(relation->schemaname)
-    {
-        Oid schemaOid = get_namespace_oid(relation->schemaname, true);
-        if (!OidIsValid(schemaOid))
-            return;
-        viewOid = get_relname_relid(relation->relname, schemaOid);
-    }
-    else
-    {
-        viewOid = RangeVarGetRelid(relation, NoLock, false);
-    }
-    if(!OidIsValid(viewOid))
-        return;
-    
-    /* Check if this is a view that needs repair */
-    if (get_rel_relkind(viewOid) == RELKIND_VIEW)
-    {   
-        /* Build initial view dependency tree */
-        build_view_dependency_tree(viewOid, &viewsToRepair);
-        
-        /* Add the current view to make sure it's considered */
-        if (!list_member_oid(viewsToRepair, viewOid))
-            viewsToRepair = lappend_oid(viewsToRepair, viewOid);
-            
-        /* Iterative repair process */
-        while (repaired_any)
-        {
-			List *current_broken_views = find_broken_views_in_list(viewsToRepair);
-            repaired_any = false;
-            
-            /* Process broken views */
-            if (list_length(current_broken_views) > 0)
-            {
-                ListCell *lc;
-                foreach(lc, current_broken_views)
-                {
-                    Oid broken_viewOid = lfirst_oid(lc);
-                    if (!list_member_oid(visitedViews, broken_viewOid))
-                    {
-                        if (repair_broken_view_table(broken_viewOid, visitedViews, &viewsToRepair))
-                            repaired_any = true;
-                    }
-                }
-            }
-            
-            list_free(current_broken_views);
-        }
-
-        list_free(visitedViews);
-        list_free(viewsToRepair);
-        CommandCounterIncrement();
-    }
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return;
+	if (!relation)
+		return;
+	
+	if(relation->schemaname)
+	{
+		Oid schemaOid = get_namespace_oid(relation->schemaname, true);
+		if (!OidIsValid(schemaOid))
+			return;
+		viewOid = get_relname_relid(relation->relname, schemaOid);
+	}
+	else
+		viewOid = RangeVarGetRelid(relation, NoLock, false);
+	
+	if(!OidIsValid(viewOid))
+		return;
+	
+	/* Check if this is a view that needs repair */
+	if (get_rel_relkind(viewOid) == RELKIND_VIEW)
+	{   
+		/* find all broken views recursively starting with current view */
+		find_broken_view_references(viewOid, &broken_dependencies, &visitedViews);
+		
+		list_free(visitedViews);
+		visitedViews = NIL;
+		
+		/* If we found broken dependencies, repair them */
+		if (list_length(broken_dependencies) > 0)
+		{
+			ListCell *lc;
+			
+			foreach(lc, broken_dependencies)
+			{
+				Oid broken_viewOid = lfirst_oid(lc);
+				if (!list_member_oid(visitedViews, broken_viewOid) &&
+					is_dummy_view(broken_viewOid) && 
+					bbf_view_is_broken(broken_viewOid))
+				{
+					repair_broken_view_table(broken_viewOid, visitedViews, NULL);
+				}
+			}
+		}
+		
+		list_free(visitedViews);
+		list_free(broken_dependencies);
+		CommandCounterIncrement();
+	}
 }
 
+/* 
+ * Find all broken views in the dependency tree of a view
+ * This function recursively traces all view references to find any broken views
+ */
+static void
+find_broken_view_references(Oid viewOid, List **broken_views, List **visited)
+{
+	Relation viewRel;
+	Query *query;
 
-
-
-
+	if (list_member_oid(*visited, viewOid))
+		return;
+	
+	*visited = lappend_oid(*visited, viewOid);
+	
+	/* Check if the view is dummy and broken */
+	if (is_dummy_view(viewOid) && bbf_view_is_broken(viewOid))
+	{
+		if (!list_member_oid(*broken_views, viewOid))
+		{
+			*broken_views = lappend_oid(*broken_views, viewOid);
+		}
+		return;
+	}
+	
+	/* If not broken, find its view references */
+	PG_TRY();
+	{
+		viewRel = relation_open(viewOid, AccessShareLock);
+		query = get_view_query(viewRel);
+		
+		if (query)
+		{
+			List *referenced_views = NIL;
+			ListCell *lc;
+			find_all_view_references((Node *) query, &referenced_views);
+			
+			foreach(lc, referenced_views)
+			{
+				Oid ref_viewOid = lfirst_oid(lc);
+				
+				/* Recursively check each referenced view */
+				find_broken_view_references(ref_viewOid, broken_views, visited);
+			}
+			
+			list_free(referenced_views);
+		}
+		
+		relation_close(viewRel, AccessShareLock);
+	}
+	PG_CATCH();
+	{
+		/*
+		 * If we can't open the view or get its query, it might be due to 
+		 * an indirect dependency on a broken view. Mark the view itself as
+		 * potentially needing repair.
+		 */
+		if (!list_member_oid(*broken_views, viewOid))
+		{
+			elog(DEBUG1, "View %u threw an error during dependency check, might need repair", viewOid);
+			*broken_views = lappend_oid(*broken_views, viewOid);
+		}
+		FlushErrorState();
+	}
+	PG_END_TRY();
+}
 
 
 /*
@@ -8640,6 +8610,11 @@ handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, bool 
 		if (OidIsValid(viewOid) && !list_member_oid(processed_views, viewOid))
 		{
 			processed_views = lappend_oid(processed_views, viewOid);
+
+			if (droppedObject->classId == RelationRelationId)
+			{
+				track_view_dependency(droppedObject->objectId, viewOid);
+			}
 			
 			/* DROP operation: if dependent is weak view, mark broken */
 			is_weak_view = false;

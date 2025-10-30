@@ -210,7 +210,7 @@ GO
 SELECT * FROM view_test.weak_view2;
 GO
 ~~START~~
-int#!#varchar
+int#!#varchar#!#varchar
 ~~END~~
 
 
@@ -235,16 +235,16 @@ GO
 -- Verify result for dependent view
 SELECT * FROM view_test.weak_view2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot drop columns from view)~~
+~~START~~
+int#!#varchar
+~~END~~
 
 
 SELECT * FROM view_test.weak_view1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot drop columns from view)~~
+~~START~~
+int#!#varchar
+~~END~~
 
 
 
@@ -385,9 +385,9 @@ varchar#!#int#!#int
 
 SELECT * FROM view_test.weak_view_complex2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot drop columns from view)~~
+~~START~~
+int#!#varchar
+~~END~~
 
 
 
@@ -532,9 +532,9 @@ GO
 -- Verify view behavior with type mismatch
 SELECT * FROM view_test.weak_type_view;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change data type of view column "value" from "varchar"(50) to integer)~~
+~~START~~
+int#!#int
+~~END~~
 
 
 -- Insert data and test again
@@ -545,9 +545,11 @@ GO
 
 SELECT * FROM view_test.weak_type_view;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change data type of view column "value" from "varchar"(50) to integer)~~
+~~START~~
+int#!#int
+1#!#100
+2#!#200
+~~END~~
 
 
 USE master;
@@ -613,18 +615,22 @@ GO
 -- View the data after type change
 SELECT * FROM view_test.weak_binary_view;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change data type of view column "binary_data" from varbinary(50) to "varchar"(50))~~
+~~START~~
+int#!#varchar
+1#!#0x48656C6C6F
+2#!#0x576F726C64
+~~END~~
 
 
 -- Try to convert the hexadecimal strings back to binary
 SELECT id, CAST(binary_data AS VARBINARY(50)) AS converted_binary
 FROM view_test.weak_binary_view;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change data type of view column "binary_data" from varbinary(50) to "varchar"(50))~~
+~~START~~
+int#!#varbinary
+1#!#307834383635364336433646
+2#!#307835373646373236433634
+~~END~~
 
 
 USE master;
@@ -692,16 +698,20 @@ GO
 
 SELECT * from view_test.datetime_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change data type of view column "date_col" from datetime to "varchar"(50))~~
+~~START~~
+int#!#varchar
+1#!#2024-01-01 12:00:00
+2#!#not a date
+~~END~~
 
 
 SELECT * FROM view_test.datetime_view1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change data type of view column "date_col" from datetime to "varchar"(50))~~
+~~START~~
+int#!#varchar
+1#!#2024-01-01 12:00:00
+2#!#not a date
+~~END~~
 
 
 -- 2. Test Case: Numeric Precision Changes
@@ -755,9 +765,10 @@ GO
 
 SELECT * FROM view_test.numeric_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change data type of view column "num_col" from "decimal"(10,2) to "decimal"(5,1))~~
+~~START~~
+int#!#numeric
+1#!#123.4
+~~END~~
 
 
 -- 3. Test Case: XML/JSON Conversions
@@ -808,9 +819,11 @@ GO
 
 SELECT * FROM view_test.doc_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change data type of view column "doc_col" from xml to "varchar")~~
+~~START~~
+int#!#varchar
+1#!#<root><item>Test</item></root>
+2#!#<root><item>Test</root>
+~~END~~
 
 
 -- 4. Test Case: Unicode to Non-Unicode
@@ -857,9 +870,10 @@ GO
 
 SELECT * FROM view_test.string_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change data type of view column "str_col" from nvarchar(100) to "varchar"(100))~~
+~~START~~
+int#!#varchar
+1#!#Hello ??
+~~END~~
 
 
 -- 5. Test Case: Multiple Column Type Changes
@@ -918,9 +932,12 @@ GO
 
 SELECT * FROM view_test.complex_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot change data type of view column "col1" from integer to "decimal"(10,2))~~
+~~START~~
+int#!#numeric#!#nvarchar#!#date
+1#!#100.50#!#Test#!#2024-01-01
+2#!#999999.99#!#Test2#!#2024-01-01
+3#!#99999999.99#!#Test3#!#2024-01-01
+~~END~~
 
 
 -- 6. Test Case: Computed Columns
