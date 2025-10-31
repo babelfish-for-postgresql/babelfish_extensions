@@ -10,7 +10,7 @@ jobs:
       ENGINE_BRANCH_FROM: BABEL_3_9_STABLE__PG_15_12
       EXTENSION_BRANCH_FROM: BABEL_3_9_STABLE
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
