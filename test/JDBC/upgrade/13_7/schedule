@@ -379,7 +379,6 @@ babel_numeric_smallmoney_oper-before-16_10-or-17_6
 mathematical_func_tests-before-17_7-or-16_11
 babel_assign_nchar
 ascii_function_before-17_7-or-16_11
-cast_string_to_binary-before-14_5
 cast_binary_to_string-before-14_5
 test_conv_text_to_binary-before-14_5
 test_conv_text_to_string-before-14_5
