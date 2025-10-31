@@ -2353,6 +2353,8 @@ extern void probin_json_reader(text *probin, int **typmod_arr_p, int typmod_arr_
  */
 extern bool pltsql_setval_identity_mode;
 
+extern int is_view_repair;
+
 /*
  * Functions in pltsql_identity.c
  */

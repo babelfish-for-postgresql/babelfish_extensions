@@ -3214,7 +3214,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			
 					PG_TRY();
 					{
-						StartTransactionCommand();
+						if(is_view_repair == 0)
+							StartTransactionCommand();
 						pltsql_current_query_is_view_definition = true;
 						
 						/* Without this, DDL event triggers won't fire for ALTER VIEW operations
@@ -3239,8 +3240,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 							/* View doesn't exist - create it */
 							if (prev_ProcessUtility)
+							{
+								is_view_repair = is_view_repair + 1;
 								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
+							}
 							else
 								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 														queryEnv, dest, qc);							
@@ -3285,11 +3289,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							address.objectId = RangeVarGetRelid(stmt->view, NoLock, false);
 							address.classId = RelationRelationId;
 							address.objectSubId = 0;
-							
-							/* Store the view definition in babelfish_view_def */
-							if(store_view_definition_hook)
-								store_view_definition_hook(queryString, address);
 
+							if(!is_view_being_repaired(oldViewOid))
+							{
+							/* Store the view definition in babelfish_view_def */
+								if(store_view_definition_hook)
+									store_view_definition_hook(queryString, address);
+							}
 							/* Update ACL info */
 							pg_class_update_acl(address.objectId, oldViewAcl);
 							restore_view_column_acls(address.objectId, oldColumnAcls);
@@ -3297,7 +3303,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if(oldViewAcl != NULL)
 								pfree(oldViewAcl);
 						}
-						CommitTransactionCommand();
+						if(is_view_repair == 0)
+							CommitTransactionCommand();
 					}
 					PG_FINALLY();
 					{
@@ -3359,6 +3366,35 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 													, cmd->subtype == AT_EnableTrig ? "enable" : "disable", get_db_name(stmt_dbid), get_logical_schema_name(atstmt->relation->schemaname, true), atstmt->relation->relname)));
 									}
 									atstmt->objtype = OBJECT_TABLE;
+								}
+							}
+						}
+						if (cmd->subtype == AT_DropColumn)
+						{
+							Oid relOid = InvalidOid;
+							HeapTuple tuple;
+
+							relOid = RangeVarGetRelid(atstmt->relation, NoLock, true);
+							
+							if (OidIsValid(relOid))
+							{
+								tuple = SearchSysCacheAttName(relOid, cmd->name);
+								
+								if (HeapTupleIsValid(tuple))
+								{
+									Form_pg_attribute attr = (Form_pg_attribute) GETSTRUCT(tuple);
+									ObjectAddress colAddr;
+									
+									colAddr.classId = RelationRelationId;
+									colAddr.objectId = relOid;
+									colAddr.objectSubId = attr->attnum;
+									
+									/* 
+									 * Handle weak view dependencies before dropping column in alter table stmt.
+									 * This will mark weak views as broken and remove their dependencies from pg_depend.
+									 */
+									handle_bbf_view_binding_on_object_drop(&colAddr, false);									
+									ReleaseSysCache(tuple);
 								}
 							}
 						}
