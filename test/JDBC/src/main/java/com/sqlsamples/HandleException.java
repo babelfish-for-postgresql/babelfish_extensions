@@ -53,7 +53,7 @@ public class HandleException {
                         bw.close();
                         System.exit(0);
                     }
-                    String errorMsg = e.getMessage();
+                    String errorMsg = ((SQLServerException)e).getSQLServerError().getErrorMessage();
                     //Do not print ClientConnectionId as part of error message
                     int index = errorMsg.indexOf("ClientConnectionId");
                     if (index != -1) {

@@ -20,7 +20,7 @@ void
 -- tsql      user=foo      password=abc
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: "foo" is not a Babelfish user )~~
+~~ERROR (Message: "foo" is not a Babelfish user)~~
 
 -- Login with non babelfish user should fail
 go
@@ -1357,12 +1357,12 @@ varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 java_auth#!#database|-|db1#!#user|-|lgn_2978#!#password|-|123
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot open database "db1" requested by the login. The login failed )~~
+~~ERROR (Message: Cannot open database "db1" requested by the login. The login failed)~~
 
 java_auth#!#database|-|db2#!#user|-|lgn_2978#!#password|-|123
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "db2" does not exist )~~
+~~ERROR (Message: database "db2" does not exist)~~
 
 
 -- tsql      user=lgn_2978      password=123

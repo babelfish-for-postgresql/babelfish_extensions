@@ -55,7 +55,19 @@ public class CompareResults {
                         if(isNull(rs.getObject(i))){
                             bw.write("<NULL>");
                         } else {
-                            String str = rs.getString(i);
+                            // Cannot call getString() directly for byte[] as it may print hashcode instead of actual bytes
+                            Object obj = rs.getObject(i);
+                            String str;
+                            if (obj instanceof byte[]) {
+                                byte[] bytes = (byte[]) obj;
+                                StringBuilder sb = new StringBuilder();
+                                for (byte b : bytes) {
+                                    sb.append(String.format("%02X", b & 0xFF));
+                                }
+                                str = sb.toString();
+                            } else {
+                                str = rs.getString(i);
+                            }
                             str = str.replaceAll("[\r\n]+", "<newline>");
                             bw.write(str);
                         }

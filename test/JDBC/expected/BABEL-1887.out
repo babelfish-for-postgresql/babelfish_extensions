@@ -12,7 +12,7 @@ select language, client_version, client_interface_name, program_name, date_forma
 GO
 ~~START~~
 nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint
-us_english#!#131592#!#Microsoft JDBC Driver 8.2#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
+us_english#!#262666#!#Microsoft JDBC Driver 10.2#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
 ~~END~~
 
 
@@ -47,8 +47,8 @@ select language, client_version, client_interface_name, program_name, date_forma
 GO
 ~~START~~
 nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint
-us_english#!#131592#!#Microsoft JDBC Driver 8.2#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
-us_english#!#131592#!#Microsoft JDBC Driver 8.2#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
+us_english#!#262666#!#Microsoft JDBC Driver 10.2#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
+us_english#!#262666#!#Microsoft JDBC Driver 10.2#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
 ~~END~~
 
 

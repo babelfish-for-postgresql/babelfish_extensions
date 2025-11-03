@@ -3052,9 +3052,8 @@ SELECT * FROM BABEL_3486_vu_prepare_v111
 GO
 ~~START~~
 sql_variant
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+2017-08-25 13:01:59 +12:15
+~~END~~
 
 DROP VIEW BABEL_3486_vu_prepare_v111
 GO
@@ -3063,9 +3062,8 @@ EXEC BABEL_3486_vu_prepare_p111
 GO
 ~~START~~
 sql_variant
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+2017-08-25 13:01:59 +12:15
+~~END~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p111
 GO
@@ -3074,9 +3072,8 @@ SELECT BABEL_3486_vu_prepare_f111()
 GO
 ~~START~~
 sql_variant
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+2017-08-25 13:01:59 +12:15
+~~END~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f111()
 GO

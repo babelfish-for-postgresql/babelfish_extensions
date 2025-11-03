@@ -658,7 +658,7 @@ int
 -- tsql user=test_kill password=12345678 database=test_kill_db2
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "test_kill_db2" does not exist )~~
+~~ERROR (Message: database "test_kill_db2" does not exist)~~
 
 SELECT 1
 GO
@@ -671,7 +671,7 @@ int
 -- tsql user=test_kill password=12345678 database=test_kill_db3
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "test_kill_db3" does not exist )~~
+~~ERROR (Message: database "test_kill_db3" does not exist)~~
 
 SELECT 1
 GO
@@ -684,7 +684,7 @@ int
 -- tsql user=test_kill password=12345678 database=test_kill_db4
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "test_kill_db4" does not exist )~~
+~~ERROR (Message: database "test_kill_db4" does not exist)~~
 
 SELECT 1
 GO
@@ -697,7 +697,7 @@ int
 -- tsql user=test_kill password=12345678 database=test_kill_db5
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "test_kill_db5" does not exist )~~
+~~ERROR (Message: database "test_kill_db5" does not exist)~~
 
 SELECT 1
 GO
@@ -710,7 +710,7 @@ int
 -- tsql user=test_kill password=12345678 database=test_kill_db6
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "test_kill_db6" does not exist )~~
+~~ERROR (Message: database "test_kill_db6" does not exist)~~
 
 SELECT 1
 GO
@@ -723,7 +723,7 @@ int
 -- tsql user=test_kill password=12345678 database=test_kill_db7
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "test_kill_db7" does not exist )~~
+~~ERROR (Message: database "test_kill_db7" does not exist)~~
 
 SELECT 1
 GO
@@ -736,7 +736,7 @@ int
 -- tsql user=test_kill password=12345678 database=test_kill_db8
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "test_kill_db8" does not exist )~~
+~~ERROR (Message: database "test_kill_db8" does not exist)~~
 
 SELECT 1
 GO
@@ -749,7 +749,7 @@ int
 -- tsql user=test_kill password=12345678 database=test_kill_db9
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "test_kill_db9" does not exist )~~
+~~ERROR (Message: database "test_kill_db9" does not exist)~~
 
 SELECT 1
 GO
@@ -762,7 +762,7 @@ int
 -- tsql user=test_kill password=12345678 database=test_kill_db10
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "test_kill_db10" does not exist )~~
+~~ERROR (Message: database "test_kill_db10" does not exist)~~
 
 SELECT 1
 GO
@@ -775,7 +775,7 @@ int
 -- tsql user=test_kill password=12345678 database=test_kill_db11
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "test_kill_db11" does not exist )~~
+~~ERROR (Message: database "test_kill_db11" does not exist)~~
 
 SELECT 1
 GO

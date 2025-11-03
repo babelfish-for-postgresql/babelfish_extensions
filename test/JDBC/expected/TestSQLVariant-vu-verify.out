@@ -8,8 +8,8 @@ Select * from testsqlvariant_sourceTable1;
 go
 ~~START~~
 sql_variant#!#sql_variant
-true#!#true
-<NULL>#!#false
+1#!#1
+<NULL>#!#0
 ~~END~~
 
 

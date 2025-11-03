@@ -141,16 +141,15 @@ select coalesce(a1, a2) from babel_726_t1
 GO
 ~~START~~
 sql_variant
-true
+1
 ~~END~~
 
 select coalesce(a2, a1) from babel_726_t1
 GO
 ~~START~~
 sql_variant
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+1900-01-01 00:00:00 +00:00
+~~END~~
 
 
 -- datetimeoffset and datetime2

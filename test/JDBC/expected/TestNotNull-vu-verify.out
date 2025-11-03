@@ -533,7 +533,7 @@ Select * from test_not_null_vu_prepare_t26
 ~~START~~
 sql_variant#!#sql_variant
 <NULL>#!#2
-false#!#false
+0#!#0
 1#!#abc
 <NULL>#!#abc
 ~~END~~
