@@ -5196,6 +5196,47 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
     PARALLEL = SAFE
 );
 
+CREATE OR REPLACE FUNCTION sys.string_split(IN input_string sys.VARCHAR, IN separator sys.VARCHAR, OUT value sys.VARCHAR)
+RETURNS SETOF sys.VARCHAR AS
+$BODY$
+DECLARE
+    vc_string sys.VARCHAR COLLATE "C";
+    vc_separator sys.VARCHAR COLLATE "C";
+BEGIN
+    -- RAISE EXCEPTION 'VC-VC'; -- OK!!
+    if length(separator) != 1 then
+		RAISE EXCEPTION 'Invalid separator: %', separator USING HINT =
+		'Separator must be length 1';
+    else
+        vc_string := input_string;  -- use COLLATE "C"
+        vc_separator := separator;  -- use COLLATE "C"
+        RETURN QUERY(SELECT cast(unnest(string_to_array(vc_string, vc_separator)) as sys.VARCHAR));
+        end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+ 
+ 
+CREATE OR REPLACE FUNCTION sys.string_split(IN input_string sys.NVARCHAR, IN separator sys.NVARCHAR, OUT value sys.NVARCHAR)
+RETURNS SETOF sys.NVARCHAR AS
+$BODY$
+DECLARE
+    nvc_string sys.NVARCHAR COLLATE "C";
+    nvc_separator sys.NVARCHAR COLLATE "C";
+BEGIN
+    -- RAISE EXCEPTION 'NVC-NVC'; -- OK!!
+    if length(separator) != 1 then
+		RAISE EXCEPTION 'Invalid separator: %', separator USING HINT =
+		'Separator must be length 1';
+    else
+        nvc_string := input_string; -- use COLLATE "C"
+        nvc_separator := separator; -- use COLLATE "C"
+        RETURN QUERY(SELECT cast(unnest(string_to_array(nvc_string, nvc_separator)) as sys.NVARCHAR));
+        end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
 /* Helper function to update local variables dynamically during execution */
 CREATE OR REPLACE FUNCTION sys.pltsql_assign_var(dno INT, val ANYELEMENT)
 RETURNS ANYELEMENT

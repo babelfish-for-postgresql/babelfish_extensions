@@ -3872,6 +3872,7 @@ bif_other
     : IIF LR_BRACKET cond=search_condition COMMA left=expression COMMA right=expression RR_BRACKET   # IIF
     | TRIM LR_BRACKET (expression trim_from)? expression RR_BRACKET #TRIM  
     | STRING_AGG LR_BRACKET expr=expression COMMA separator=expression RR_BRACKET (WITHIN GROUP LR_BRACKET order_by_clause RR_BRACKET )?  #STRING_AGG    
+    | STRING_SPLIT LR_BRACKET string_expr=expression COMMA separator=expression RR_BRACKET  #STRING_SPLIT
     ;
     
 // ODBC scalar functions/literals are called 'escape sequences' in the docs 
@@ -5094,6 +5095,7 @@ keyword
     | STOP_ON_ERROR
     | STPOINTFROMTEXT
     | STRING_AGG
+    | STRING_SPLIT
     | STRING_DELIMITER
     | STSRID
     | STSRID_DOUBLE_QUOTE

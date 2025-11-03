@@ -457,6 +457,7 @@ tsql_special_function_t tsql_special_function_list[] =
 {
 	{"sys", "replace", "replace", false, 3},
 	{"sys", "string_agg", "string_agg", false, 2},
+	{"sys", "string_split", "string_split", false, 2},
 	{"sys", "substring", "substring", false, 3},
 	{"sys", "stuff", "stuff", false, 4},
 	{"sys", "translate", "translate", false, 3},
@@ -2282,6 +2283,20 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 		else
 		{
 			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+		}
+	}
+	else if (strlen(proc_name) == 12 && strncmp(proc_name, "string_split", 12) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[1]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
+		}
+		else
+		{
+			expr_result_type = get_sys_varcharoid();
 		}
 	}
 	else if (strlen(proc_name) == 9 && strncmp(proc_name, "concat_ws", 9) == 0)
