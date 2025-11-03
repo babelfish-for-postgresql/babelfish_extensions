@@ -149,15 +149,32 @@ CREATE SCHEMA [sch#-@$]
 GO
 
 CREATE FUNCTION [sch#-@$].[fn#-a@$]()
-RETURNS @res#@$ TABLE
+RETURNS @@res#@$ TABLE
 (
     [col@#$] VARCHAR(50)
 )
 AS
 BEGIN
-    INSERT INTO @res#@$ ([col@#$]) VALUES ('Test#@$');
+    INSERT INTO @@res#@$ ([col@#$]) VALUES ('Test#@$');
     RETURN;
 END;
+GO
+
+CREATE FUNCTION dbo.[fn#-a@$]()
+RETURNS @@res#@$ TABLE
+(
+    [col@#$] VARCHAR(50)
+)
+AS
+BEGIN
+    INSERT INTO @@res#@$ ([col@#$]) VALUES ('Soln#@$');
+    RETURN;
+END;
+GO
+
+SELECT * FROM [fn#-a@$]()
+GO
+DROP FUNCTION IF EXISTS [fn#-a@$]
 GO
 
 SELECT * FROM [sch#-@$].[fn#-a@$]()
