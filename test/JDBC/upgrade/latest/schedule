@@ -576,6 +576,7 @@ BABEL-5071
 string_agg_within
 reverse
 string_agg
+string_split_function
 getdate
 concat
 concat_ws
