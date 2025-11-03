@@ -387,7 +387,7 @@ SELECT REPLACE('nothing to do', 'none', 'should not see this');
 drop table testing_collation;
 go
 ~~START~~
-varchar
+nvarchar
 clothing
 road
 touring
