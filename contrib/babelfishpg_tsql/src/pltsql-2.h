@@ -156,7 +156,7 @@ typedef struct PLtsql_stmt_decl_table
 	int			lineno;
 	int			dno;			/* dno of the table variable */
 	/* One and only one of the remaining two fields should be used */
-	List	   *tbltypname;		/* List of the name of the table type */
+	char	   *tbltypname;		/* name of the table type */
 	char	   *coldef;			/* column definition list */
 } PLtsql_stmt_decl_table;
 

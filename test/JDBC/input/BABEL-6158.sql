@@ -23,14 +23,14 @@ create schema [sch-ema]
 GO
 
 CREATE FUNCTION [sch-ema].fnSimple()
-RETURNS @names TABLE
+RETURNS @@names TABLE
 (
     Name VARCHAR(50)
 )
 AS
 BEGIN
-      INSERT INTO @names (Name) VALUES ('Broken');
-      INSERT INTO @names (Name) VALUES ('Wing');
+      INSERT INTO @@names (Name) VALUES ('Broken');
+      INSERT INTO @@names (Name) VALUES ('Wing');
       RETURN;
 END;
 GO
@@ -88,13 +88,13 @@ CREATE SCHEMA [sch-ema_test]
 GO
 
 CREATE FUNCTION [sch-ema_test].[fn_Sample-Test]()
-RETURNS @result_set1 TABLE
+RETURNS @@result_set1 TABLE
 (
     [col-umn_1] VARCHAR(50)
 )
 AS
 BEGIN
-    INSERT INTO @result_set1 ([col-umn_1]) VALUES ('Test-1_A');
+    INSERT INTO @@result_set1 ([col-umn_1]) VALUES ('Test-1_A');
     RETURN;
 END;
 GO
@@ -116,10 +116,7 @@ GO
 USE [My Database 2]
 GO
 
-CREATE SCHEMA [My Schema 2]
-GO
-
-CREATE FUNCTION [My Schema 2].[fn Sample]()
+CREATE FUNCTION [fn Sample]()
 RETURNS @result##table@$2 TABLE
 (
     [column name 2] VARCHAR(50)
@@ -131,9 +128,9 @@ BEGIN
 END;
 GO
 
-SELECT * FROM [My Schema 2].[fn Sample]()
+SELECT * FROM dbo. [fn Sample]()
 GO
-DROP FUNCTION IF EXISTS [My Schema 2].[fn Sample]
+DROP FUNCTION IF EXISTS [fn Sample]
 GO
 
 USE master
@@ -184,13 +181,13 @@ CREATE SCHEMA [sch@-#_$]
 GO
 
 CREATE FUNCTION [sch@-#_$].[fn@-#_$]()
-RETURNS @res@#_$ TABLE
+RETURNS @@res@#_$ TABLE
 (
     [col@-#_$] VARCHAR(50)
 )
 AS
 BEGIN
-    INSERT INTO @res@#_$ ([col@-#_$]) VALUES ('Test@-#_$');
+    INSERT INTO @@res@#_$ ([col@-#_$]) VALUES ('Test@-#_$');
     RETURN;
 END;
 GO

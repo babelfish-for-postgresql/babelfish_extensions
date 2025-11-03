@@ -962,9 +962,9 @@ decl_statement	: decl_varname opt_as decl_const decl_datatype decl_collate decl_
 								 * 1. with a pre-defined table type, e.g. DECLARE @tableVar tableType
 								 */
 								if ($4->origtypname && $4->origtypname->names)
-									decl->tbltypname = $4->origtypname->names;
+									decl->tbltypname = pstrdup(NameListToQuotedString($4->origtypname->names));
 								else
-									decl->tbltypname = NIL;
+									decl->tbltypname = NULL;
 
 								/* 2. without a pre-defined table type, e.g. DECLARE @tableVar table(a int, b int) */
 								if ($4->coldef)

@@ -5739,11 +5739,11 @@ makeDeclTableStmt(PLtsql_variable *var, PLtsql_type *type, int lineno)
 	result->cmd_type = PLTSQL_STMT_DECL_TABLE;
 	result->lineno = lineno;
 	result->dno = var->dno;
-	result->tbltypname = NIL;
+	result->tbltypname = NULL;
 	result->coldef = NULL;
 
 	if (type->origtypname && type->origtypname->names)
-		result->tbltypname = list_copy_deep(type->origtypname->names);
+		result->tbltypname = pstrdup(NameListToQuotedString(type->origtypname->names));
 
 	if (type->coldef)
 		result->coldef = pstrdup(type->coldef);
