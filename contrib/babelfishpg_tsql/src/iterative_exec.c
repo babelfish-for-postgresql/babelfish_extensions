@@ -1618,15 +1618,13 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					* If unmapped error termination is not disabled and the last error mapping failed,
 					* or if the batch termination flag is set, the batch termination will applied.
 					*/
-					if (((!unmapped_error_termination_disabled()) && ignore_catch_block_for_unmapped_error(estate)) || terminate_batch) 
+					if (((!pltsql_disable_unmapped_error_termination) && ignore_catch_block_for_unmapped_error(estate)) || terminate_batch) 
 					{
 						/*
 						* Wrap elog() with HOLD_INTERRUPTS()/RESUME_INTERRUPTS() for consistency.
 						* This ensures no risk with logging during cleanup.
 						*/
-						HOLD_INTERRUPTS();
 						elog(DEBUG1, "TSQL TXN Ignore catch block error mapping failed : %d", last_error_mapping_failed);
-						RESUME_INTERRUPTS();
 						ReThrowError(estate->cur_error->error);
 					}
 

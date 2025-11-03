@@ -1247,7 +1247,7 @@ define_custom_variables(void)
 							 NULL, NULL, NULL);
 	
 	/*  GUC Variable that defines the termination behaviour once unmapped error occured */
-	DefineCustomBoolVariable("babelfishpg_tsql.disable_unmapped_error_termination",
+	DefineCustomBoolVariable("babelfishpg_tsql.escape_hatch_catch_unmapped_errors",
 			                gettext_noop("disable termination once unmapped Error caughted"),
 			                NULL,
 			                &pltsql_disable_unmapped_error_termination,
@@ -1730,13 +1730,3 @@ metadata_inconsistency_check_enabled(void)
 {
 	return enable_metadata_inconsistency_check;
 }
-
-
-/* 
-	* This function returns the value of the variable pltsql_disable_unmapped_error_termination.
-	* This variable is a boolean that indicates whether the termination once an unmapped error is caught should be disabled.
-	* It is part of the configuration settings for error handling in the Babelfish T-SQL extension for PostgreSQL.
-	*/
-	bool unmapped_error_termination_disabled(void){
-		return pltsql_disable_unmapped_error_termination;
-	}
