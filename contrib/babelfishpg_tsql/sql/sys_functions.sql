@@ -1136,6 +1136,10 @@ create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns t
 AS 'babelfishpg_tsql', 'timezone_mapping'
 LANGUAGE C IMMUTABLE ;
 
+create or replace function sys.pltsql_timezone_mapping_pg_to_windows(IN tmz text) returns text
+AS 'babelfishpg_tsql', 'pltsql_timezone_mapping_pg_to_windows'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
 CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT ,  IN input_expr PG_CATALOG.TEXT)
 RETURNS sys.datetimeoffset
 AS
@@ -4151,6 +4155,18 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION sys.openjson_with(json_string text, path text, VARIADIC column_paths text[])
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_openjson_with' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+/* Function to retrieve XML doc from temp table using doc_id (for openxml) */
+CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_xmldoc(int)
+RETURNS xml
+AS 'babelfishpg_tsql', 'tsql_openxml_get_xmldoc'
+LANGUAGE C STRICT;
+
+/* This function generates XPath expressions for OPENXML columns */
+CREATE OR REPLACE FUNCTION sys.tsql_openxml_get_colpattern(text,int)
+RETURNS sys.nvarchar
+AS 'babelfishpg_tsql', 'tsql_openxml_get_colpattern'
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
     IN odbcVer smallint,

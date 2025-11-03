@@ -343,6 +343,7 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 	int			nused = buffer->nused;
 	ResultRelInfo *resultRelInfo = buffer->resultRelInfo;
 	TupleTableSlot **slots = buffer->slots;
+	bool		need_snapshot = !ActiveSnapshotSet();
 
 	/*
 	 * Print error context information correctly, if one of the operations
@@ -357,12 +358,23 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 	 * context before calling it.
 	 */
 	oldcontext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
+	/*
+	 * table_multi_insert might involve TOAST table access,
+	 * so we need to ensure that there is a valid snapshot.
+	 */
+	if (need_snapshot)
+		PushActiveSnapshot(GetTransactionSnapshot());
+
 	table_multi_insert(resultRelInfo->ri_RelationDesc,
 					   slots,
 					   nused,
 					   mycid,
 					   ti_options,
 					   buffer->bistate);
+
+	if (need_snapshot)
+	 		PopActiveSnapshot();
 
 	for (i = 0; i < nused; i++)
 	{

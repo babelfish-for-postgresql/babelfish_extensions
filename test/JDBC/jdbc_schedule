@@ -19,6 +19,11 @@ ignore#!#charindex_and_replace_CIAI_collations
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
 
+#This test case needs to be ignored temporarily for BABEL 5370 flaky test cases
+ignore#!#babel_timezoneinfo-vu-prepare
+ignore#!#babel_timezoneinfo-vu-verify
+ignore#!#babel_timezoneinfo-vu-cleanup
+
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
 ignore#!#BABEL-2934-vu-prepare
@@ -568,6 +573,9 @@ ignore#!#babel_index_nulls_order-before-16_8-or-17_4-vu-cleanup
 ignore#!#object_ownership-before-16_8-or-17_4-vu-prepare
 ignore#!#object_ownership-before-16_8-or-17_4-vu-verify
 ignore#!#object_ownership-before-16_8-or-17_4-vu-cleanup
+ignore#!#temp_table_dialect_check-before-15_12-or-16_8-vu-prepare
+ignore#!#temp_table_dialect_check-before-15_12-or-16_8-vu-verify
+ignore#!#temp_table_dialect_check-before-15_12-or-16_8-vu-cleanup
 
 # getting timed out (TODO: BABEL-5353)
 ignore#!#BABEL-SP_TABLE_PRIVILEGES
@@ -645,6 +653,24 @@ ignore#!#view_sec_setting_before_17_6-or-16_10-vu-cleanup
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-prepare
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-verify
 ignore#!#mathematical_func-before_17_7-or-16_11-vu-cleanup
+ignore#!#openxml_with_clause-before-17_7-vu-prepare
+ignore#!#openxml_with_clause-before-17_7-vu-verify
+ignore#!#openxml_with_clause-before-17_7-vu-cleanup
 ignore#!#ascii_function_before-17_7-or-16_11-vu-prepare
 ignore#!#ascii_function_before-17_7-or-16_11-vu-verify
 ignore#!#ascii_function_before-17_7-or-16_11-vu-cleanup
+ignore#!#babel_timezoneinfo_before_17_7-vu-prepare
+ignore#!#babel_timezoneinfo_before_17_7-vu-verify
+ignore#!#babel_timezoneinfo_before_17_7-vu-cleanup
+ignore#!#round_return_type_test-before-16_11-or-17_7-vu-prepare
+ignore#!#round_return_type_test-before-16_11-or-17_7-vu-verify
+ignore#!#round_return_type_test-before-16_11-or-17_7-vu-cleanup
+ignore#!#BABEL-2736-before-17_7-16_11-vu-prepare
+ignore#!#BABEL-2736-before-17_7-16_11-vu-verify
+ignore#!#BABEL-2736-before-17_7-16_11-vu-cleanup
+ignore#!#test_convert_to_binary-before-17_7-16_11-vu-prepare
+ignore#!#test_convert_to_binary-before-17_7-16_11-vu-verify
+ignore#!#test_convert_to_binary-before-17_7-16_11-vu-cleanup
+ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-prepare
+ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
+ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup

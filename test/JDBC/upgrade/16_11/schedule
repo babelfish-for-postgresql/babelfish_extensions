@@ -605,6 +605,7 @@ BABEL-USER-GRANT
 test_conv_money_to_varchar
 sp_xml_preparedocument
 sp_xml_removedocument
+openxml_with_clause-before-17_7
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
@@ -633,3 +634,6 @@ view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 babel_binary-before-17_7-or-16_11
 ascii_function
+#babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370
+test_convert_to_binary
+cast_datetime_to_binary

@@ -13,6 +13,9 @@ GO
 EXEC p6030_8_3b;
 GO
 
+EXEC p6030_8_3c;
+GO
+
 -- CASE 8.4: Function referring table (success: function->table chain)
 SELECT * FROM f6030_8_4();
 GO
@@ -65,6 +68,7 @@ GO
 -- CASE 13.2: Parameterized dynamic SQL (success: parameterized dynamic SQL chain)
 EXEC p6030_13_2 @id = 1;
 GO
+-- terminate-tsql-conn user=l6030_1 password=12345678
 ---------------------------------------------------------
 -- FUNCTION AND PROCEDURE TESTING FOR OWNERSHIP CHAINING
 ---------------------------------------------------------
@@ -1211,3 +1215,27 @@ go
 drop login ddl_login
 go
 -- terminate-tsql-conn
+
+
+-- Testing Ownershhip chaining with setting GUC false
+-- psql
+show babelfishpg_tsql.enable_ownership_chaining;
+go
+alter database babelfish_db set babelfishpg_tsql.enable_ownership_chaining = 'off';
+go
+select pg_reload_conf();
+go
+-- terminate-psql-conn
+
+-- tsql
+select current_setting('babelfishpg_tsql.enable_ownership_chaining');
+go
+-- terminate-tsql-conn
+
+-- tsql user=l6030_1 password=12345678
+-- should fail since we disabled the ownership chaining
+EXEC p6030_8_1;
+go
+SELECT * FROM f6030_8_4();
+go
+-- terminate-tsql-conn user=l6030_1 password=12345678
