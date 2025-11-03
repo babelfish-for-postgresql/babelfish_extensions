@@ -309,6 +309,9 @@ static st_flip_coord_t st_flip_coord_p;
 typedef Datum (*lwgeom_x_t)(PG_FUNCTION_ARGS);
 static lwgeom_x_t lwgeom_x_p;
 
+typedef Datum (*lwgeom_y_t)(PG_FUNCTION_ARGS);
+static lwgeom_y_t lwgeom_y_p;
+
 typedef Datum (*geometry_type_t)(PG_FUNCTION_ARGS);
 static geometry_type_t geometry_type_p;
 
@@ -379,6 +382,7 @@ load_functions()
         gserialized_set_srid_p = (gserialized_set_srid_t) load_external_function("$libdir/postgis-3", "LWGEOM_set_srid", true, NULL);
         st_flip_coord_p = (st_flip_coord_t) load_external_function("$libdir/postgis-3", "ST_FlipCoordinates", true, NULL);
         lwgeom_x_p = (lwgeom_x_t) load_external_function("$libdir/postgis-3", "LWGEOM_x_point", true, NULL);
+        lwgeom_y_p = (lwgeom_y_t) load_external_function("$libdir/postgis-3", "LWGEOM_y_point", true, NULL);
         lwgeom_from_text_p = (lwgeom_from_text_t) load_external_function("$libdir/postgis-3", "LWGEOM_from_text", true, NULL);
         lwgeom_from_bytea_p = (lwgeom_from_bytea_t) load_external_function("$libdir/postgis-3", "LWGEOM_from_bytea", true, NULL);
         lwgeom_to_bytea_p = (lwgeom_to_bytea_t) load_external_function("$libdir/postgis-3", "LWGEOM_to_bytea", true, NULL);
@@ -455,6 +459,8 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
     } 
     else if (strcmp(geom_type, "ST_LineString") == 0) 
     {
+        float8 prev_lat = 0, prev_lon = 0;
+
         /* Get total number of points in the linestring */
         UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
         npoints = DatumGetInt32(st_npoints_p(fcinfo_local));
@@ -476,6 +482,40 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
                 ereport(ERROR,
                     (errcode(ERRCODE_DATA_EXCEPTION),
                      errmsg("Latitude values must be between -90 and 90 degrees")));
+            }
+            
+            /* Check for antipodal points (consecutive points 180 degrees apart) */
+            if (i > 1)
+            {
+                float8 lon;
+                /* Get longitude value (y coordinate after flipping) */
+                UpdateFunctionCallInfo(fcinfo_local, 1, point);
+                lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
+                
+                /* 
+                 * Detect antipodal points - two points are antipodal if:
+                 * 1. Their latitudes sum to zero (opposite signs, same magnitude)
+                 * 2. AND either:
+                 *    a. Their longitudes differ by exactly 180 degrees, OR
+                 *    b. Both points are near the poles (>89.999 degrees latitude)
+                 */
+                if (fabs(lat + prev_lat) < 1e-10 && (fabs(fabs(lon - prev_lon) - 180.0) < 1e-10 || (fabs(lat) > 89.999 && fabs(prev_lat) > 89.999)))
+                {
+                    ereport(ERROR,
+                        (errcode(ERRCODE_DATA_EXCEPTION),
+                         errmsg("The specified input cannot be accepted because it contains an edge with antipodal points")));
+                }
+                
+                /* Store current coordinates for next iteration */
+                prev_lat = lat;
+                prev_lon = lon;
+            }
+            else
+            {
+                /* First point - initialize previous coordinates for comparison */
+                UpdateFunctionCallInfo(fcinfo_local, 1, point);
+                prev_lat = lat;
+                prev_lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
             }
         }
     }

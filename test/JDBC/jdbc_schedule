@@ -659,3 +659,12 @@ ignore#!#babel_timezoneinfo_before_17_7-vu-cleanup
 ignore#!#round_return_type_test-before-16_11-or-17_7-vu-prepare
 ignore#!#round_return_type_test-before-16_11-or-17_7-vu-verify
 ignore#!#round_return_type_test-before-16_11-or-17_7-vu-cleanup
+ignore#!#BABEL-2736-before-17_7-16_11-vu-prepare
+ignore#!#BABEL-2736-before-17_7-16_11-vu-verify
+ignore#!#BABEL-2736-before-17_7-16_11-vu-cleanup
+ignore#!#test_convert_to_binary-before-17_7-16_11-vu-prepare
+ignore#!#test_convert_to_binary-before-17_7-16_11-vu-verify
+ignore#!#test_convert_to_binary-before-17_7-16_11-vu-cleanup
+ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-prepare
+ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
+ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
