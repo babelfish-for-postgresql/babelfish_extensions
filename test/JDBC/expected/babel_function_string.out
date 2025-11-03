@@ -559,7 +559,7 @@ varchar
 SELECT STRING_SPLIT(CAST('nvarchar nvarchar nvarchar' as nvarchar), CAST(' ' as nvarchar))
 GO
 ~~START~~
-varchar
+nvarchar
 nvarchar
 nvarchar
 nvarchar
@@ -616,7 +616,7 @@ gloo
 SELECT STRING_SPLIT(CAST('asdf' as nchar(4)), ' ')
 GO
 ~~START~~
-varchar
+nvarchar
 asdf
 ~~END~~
 
