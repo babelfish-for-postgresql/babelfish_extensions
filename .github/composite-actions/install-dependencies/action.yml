@@ -4,12 +4,11 @@ runs:
   steps:
     - name: Install Dependencies
       run: |
-        $GITHUB_WORKSPACE/.github/scripts/choose_install_mirror
         sudo apt clean && sudo apt-get update --fix-missing -y
         curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-        curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
         sudo apt-get update --fix-missing -y
-        sudo apt-get install uuid-dev openjdk-21-jre libicu-dev libxml2-dev openssl libssl-dev python3-dev libossp-uuid-dev libpq-dev cmake pkg-config g++ build-essential bison mssql-tools unixodbc-dev libsybdb5 freetds-dev freetds-common gdal-bin libgdal-dev libgeos-dev gdb libkrb5-dev
+        sudo apt-get install gcc-9 uuid-dev openjdk-21-jre libicu-dev libxml2-dev openssl libssl-dev python3-dev libossp-uuid-dev libpq-dev cmake pkg-config g++ build-essential bison mssql-tools unixodbc-dev libsybdb5 freetds-dev freetds-common gdal-bin libgdal-dev libgeos-dev gdb libkrb5-dev
         sudo apt install -y ccache
         sudo apt-get install lcov
         sudo /usr/sbin/update-ccache-symlinks
