@@ -1257,7 +1257,7 @@ define_custom_variables(void)
 							 NULL, NULL, NULL);
 	
 	/*  GUC Variable that defines the termination behaviour once unmapped error occured */
-	DefineCustomBoolVariable("babelfishpg_tsql.escape_hatch_catch_unmapped_errors",
+	DefineCustomBoolVariable("babelfishpg_tsql.catch_unmapped_errors",
 			                gettext_noop("disable termination once unmapped Error caughted"),
 			                NULL,
 			                &pltsql_disable_unmapped_error_termination,

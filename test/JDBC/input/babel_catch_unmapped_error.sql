@@ -1,6 +1,6 @@
 
 -- Invalid Function Param ,  without catch flag set 
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','off',false)
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','off',false)
 GO
 
 
@@ -13,7 +13,7 @@ END CATCH;
 GO
 
 -- Invalid Function Param, with catch flag set 
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','on',false)
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','on',false)
 GO
 
 
@@ -29,7 +29,7 @@ GO
 
 
 -- time field value out of range, Termination scenario
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','off',false);
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','off',false);
 GO
 
 BEGIN TRY
@@ -43,7 +43,7 @@ GO
 
 
 -- time field value out of range, Catch scenario
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','on',false);
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','on',false);
 GO
 
 BEGIN TRY
@@ -57,7 +57,7 @@ GO
 
 
 -- numeric field overflow, without catch flag set
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','off',false)
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','off',false)
 GO
 
 BEGIN TRY
@@ -71,7 +71,7 @@ GO
 
 
 -- numeric field overflow, with catch flag set 
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','on',false)
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','on',false)
 GO
 
 BEGIN TRY
@@ -90,7 +90,7 @@ DROP TABLE IF EXISTS error_test6;
 CREATE TABLE error_test6 (id INT);
 GO
 
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','off',false)
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','off',false)
 GO
 
 BEGIN TRY
@@ -113,7 +113,7 @@ DROP TABLE IF EXISTS error_test6;
 CREATE TABLE error_test6 (id INT);
 GO
 
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','on',false)
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','on',false)
 GO
 
 
@@ -132,7 +132,7 @@ GO
 
 
 -- numeric field overflow, without catch flag set 
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','off',false)
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','off',false)
 GO
 
 
@@ -146,7 +146,7 @@ END CATCH;
 GO
 
 -- numeric field overflow, with catch flag set 
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','on',false)
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','on',false)
 GO
 
 
@@ -159,5 +159,5 @@ BEGIN CATCH
 END CATCH;
 GO
 
-SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_catch_unmapped_errors','off',false)
+SELECT SET_CONFIG('babelfishpg_tsql.catch_unmapped_errors','off',false)
 GO
