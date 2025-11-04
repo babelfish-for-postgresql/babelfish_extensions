@@ -1245,16 +1245,6 @@ define_custom_variables(void)
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
-	
-	/*  GUC Variable that defines the termination behaviour once unmapped error occured */
-	DefineCustomBoolVariable("babelfishpg_tsql.escape_hatch_catch_unmapped_errors",
-			                gettext_noop("disable termination once unmapped Error caughted"),
-			                NULL,
-			                &pltsql_disable_unmapped_error_termination,
-			                false,
-			                PGC_USERSET,
-			                GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-			                NULL, NULL, NULL);				
 
 	/* GUC to enable/disable the ownership chaining feature, by default enabled */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_ownership_chaining",
@@ -1265,6 +1255,16 @@ define_custom_variables(void)
 							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
+	
+	/*  GUC Variable that defines the termination behaviour once unmapped error occured */
+	DefineCustomBoolVariable("babelfishpg_tsql.escape_hatch_catch_unmapped_errors",
+			                gettext_noop("disable termination once unmapped Error caughted"),
+			                NULL,
+			                &pltsql_disable_unmapped_error_termination,
+			                false,
+			                PGC_USERSET,
+			                GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+			                NULL, NULL, NULL);
 }
 
 int			escape_hatch_storage_options = EH_IGNORE;
