@@ -280,191 +280,188 @@ GO
 
 
 
+-- ------------------------------------------------------ INSTEAD OF TRIGGERS TEST ---------------------------------------------
 
+-- /*
+-- * ------------------------------------------------------------------------------------
+-- *  INSTEAD OF Update  + update inside update trigger
+-- * ------------------------------------------------------------------------------------
+-- */
 
+-- -- Create table to capture OUTPUT results
+-- CREATE TABLE OutputCapture (
+--     TestCase NVARCHAR(50),
+--     ID INT,
+--     Name NVARCHAR(50),
+--     OldValue INT
+-- );
+-- GO
 
------------------------------------------------------- INSTEAD OF TRIGGERS TEST ---------------------------------------------
+-- -- 2.2.1 INSTEAD OF UPDATE trigger with OUTPUT - EPQ condition
+-- UPDATE EPQTest_InsteadOf_Update_Update
+-- SET Value = 1500
+-- OUTPUT 'InsteadOf_Update_Update', deleted.ID, deleted.Name, deleted.Value
+-- INTO OutputCapture (TestCase, ID, Name, OldValue)
+-- WHERE ID = 1;
+-- GO
 
-/*
-* ------------------------------------------------------------------------------------
-*  INSTEAD OF Update  + update inside update trigger
-* ------------------------------------------------------------------------------------
-*/
+-- -- Print OUTPUT results
+-- SELECT 'INSTEAD OF Update+Update OUTPUT' as TestPhase, * FROM OutputCapture;
+-- GO
 
--- Create table to capture OUTPUT results
-CREATE TABLE OutputCapture (
-    TestCase NVARCHAR(50),
-    ID INT,
-    Name NVARCHAR(50),
-    OldValue INT
-);
-GO
+-- -- Verify INSTEAD OF trigger updated the row
+-- SELECT 'INSTEAD OF Update+Update' as TestPhase, * FROM EPQTest_InsteadOf_Update_Update WHERE ID = 1;
+-- GO
 
--- 2.2.1 INSTEAD OF UPDATE trigger with OUTPUT - EPQ condition
-UPDATE EPQTest_InsteadOf_Update_Update
-SET Value = 1500
-OUTPUT 'InsteadOf_Update_Update', deleted.ID, deleted.Name, deleted.Value
-INTO OutputCapture (TestCase, ID, Name, OldValue)
-WHERE ID = 1;
-GO
+-- -- Clear OUTPUT capture
+-- delete from OutputCapture;
 
--- Print OUTPUT results
-SELECT 'INSTEAD OF Update+Update OUTPUT' as TestPhase, * FROM OutputCapture;
-GO
+-- /*
+-- * ------------------------------------------------------------------------------------
+-- *  INSTEAD OF Update  + delete inside update trigger
+-- * ------------------------------------------------------------------------------------
+-- */
 
--- Verify INSTEAD OF trigger updated the row
-SELECT 'INSTEAD OF Update+Update' as TestPhase, * FROM EPQTest_InsteadOf_Update_Update WHERE ID = 1;
-GO
+-- -- 2.2.2 INSTEAD OF UPDATE trigger that deletes with OUTPUT
+-- UPDATE EPQTest_InsteadOf_Update_Delete
+-- SET Value = 2000
+-- OUTPUT 'InsteadOf_Update_Delete', deleted.ID, deleted.Name, deleted.Value
+-- INTO OutputCapture (TestCase, ID, Name, OldValue)
+-- WHERE ID = 1;
+-- GO
 
--- Clear OUTPUT capture
-delete from OutputCapture;
+-- -- Print OUTPUT results
+-- SELECT 'INSTEAD OF Update+Delete OUTPUT' as TestPhase, * FROM OutputCapture;
+-- GO
 
-/*
-* ------------------------------------------------------------------------------------
-*  INSTEAD OF Update  + delete inside update trigger
-* ------------------------------------------------------------------------------------
-*/
+-- -- Clear OUTPUT capture
+-- DELETE FROM OutputCapture;
+-- GO
 
--- 2.2.2 INSTEAD OF UPDATE trigger that deletes with OUTPUT
-UPDATE EPQTest_InsteadOf_Update_Delete
-SET Value = 2000
-OUTPUT 'InsteadOf_Update_Delete', deleted.ID, deleted.Name, deleted.Value
-INTO OutputCapture (TestCase, ID, Name, OldValue)
-WHERE ID = 1;
-GO
+-- /*
+-- * ------------------------------------------------------------------------------------
+-- *  INSTEAD OF Delete  + delete inside delete trigger
+-- * ------------------------------------------------------------------------------------
+-- */
 
--- Print OUTPUT results
-SELECT 'INSTEAD OF Update+Delete OUTPUT' as TestPhase, * FROM OutputCapture;
-GO
+-- -- 2.2.3 INSTEAD OF DELETE trigger with cascading deletes
+-- DELETE FROM EPQTest_InsteadOf_Delete_Delete
+-- OUTPUT 'InsteadOf_Delete_Delete', deleted.ID, deleted.Name, deleted.Value
+-- INTO OutputCapture (TestCase, ID, Name, OldValue)
+-- WHERE ID = 2;
+-- GO
 
--- Clear OUTPUT capture
-DELETE FROM OutputCapture;
-GO
+-- -- Print OUTPUT results
+-- SELECT 'INSTEAD OF Delete+Delete OUTPUT' as TestPhase, * FROM OutputCapture;
+-- GO
 
-/*
-* ------------------------------------------------------------------------------------
-*  INSTEAD OF Delete  + delete inside delete trigger
-* ------------------------------------------------------------------------------------
-*/
+-- -- Verify cascading deletes occurred
+-- SELECT 'INSTEAD OF Delete+Delete' as TestPhase, COUNT(*) as RemainingRows FROM EPQTest_InsteadOf_Delete_Delete;
+-- GO
 
--- 2.2.3 INSTEAD OF DELETE trigger with cascading deletes
-DELETE FROM EPQTest_InsteadOf_Delete_Delete
-OUTPUT 'InsteadOf_Delete_Delete', deleted.ID, deleted.Name, deleted.Value
-INTO OutputCapture (TestCase, ID, Name, OldValue)
-WHERE ID = 2;
-GO
+-- -- Clear OUTPUT capture
+-- DELETE FROM OutputCapture;
+-- GO
 
--- Print OUTPUT results
-SELECT 'INSTEAD OF Delete+Delete OUTPUT' as TestPhase, * FROM OutputCapture;
-GO
+-- /*
+-- * ------------------------------------------------------------------------------------
+-- *  INSTEAD OF Delete  + update inside delete trigger
+-- * ------------------------------------------------------------------------------------
+-- */
 
--- Verify cascading deletes occurred
-SELECT 'INSTEAD OF Delete+Delete' as TestPhase, COUNT(*) as RemainingRows FROM EPQTest_InsteadOf_Delete_Delete;
-GO
+-- -- 2.2.4 INSTEAD OF DELETE trigger that updates instead of deleting
+-- DELETE FROM EPQTest_InsteadOf_Delete_Update
+-- OUTPUT 'InsteadOf_Delete_Update', deleted.ID, deleted.Name, deleted.Counter
+-- INTO OutputCapture (TestCase, ID, Name, OldValue)
+-- WHERE ID = 1;
+-- GO
 
--- Clear OUTPUT capture
-DELETE FROM OutputCapture;
-GO
+-- -- Print OUTPUT results
+-- SELECT 'INSTEAD OF Delete+Update OUTPUT' as TestPhase, * FROM OutputCapture;
+-- GO
 
-/*
-* ------------------------------------------------------------------------------------
-*  INSTEAD OF Delete  + update inside delete trigger
-* ------------------------------------------------------------------------------------
-*/
+-- -- Verify row was updated instead of deleted
+-- SELECT 'INSTEAD OF Delete+Update' as TestPhase, * FROM EPQTest_InsteadOf_Delete_Update WHERE ID = 1;
+-- GO
 
--- 2.2.4 INSTEAD OF DELETE trigger that updates instead of deleting
-DELETE FROM EPQTest_InsteadOf_Delete_Update
-OUTPUT 'InsteadOf_Delete_Update', deleted.ID, deleted.Name, deleted.Counter
-INTO OutputCapture (TestCase, ID, Name, OldValue)
-WHERE ID = 1;
-GO
+-- -- Clear OUTPUT capture
+-- DELETE FROM OutputCapture;
+-- GO
 
--- Print OUTPUT results
-SELECT 'INSTEAD OF Delete+Update OUTPUT' as TestPhase, * FROM OutputCapture;
-GO
+-- /*
+-- * ------------------------------------------------------------------------------------
+-- *  INSTEAD OF Insert  + delete inside insert trigger
+-- * ------------------------------------------------------------------------------------
+-- */
 
--- Verify row was updated instead of deleted
-SELECT 'INSTEAD OF Delete+Update' as TestPhase, * FROM EPQTest_InsteadOf_Delete_Update WHERE ID = 1;
-GO
+-- -- 2.2.5 Create table to capture OUTPUT results
+-- CREATE TABLE OutputCapture_insert (
+--     TestCase NVARCHAR(50),
+--     ID INT,
+--     Name NVARCHAR(50),
+--     OldValue INT,
+--     NewValue INT,
+--     Status NVARCHAR(50)
+-- );
+-- GO
 
--- Clear OUTPUT capture
-DELETE FROM OutputCapture;
-GO
+-- -- Insert some data first for delete scenario
+-- INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter) VALUES (1, 'Existing1', 50, 1);
+-- GO
 
-/*
-* ------------------------------------------------------------------------------------
-*  INSTEAD OF Insert  + delete inside insert trigger
-* ------------------------------------------------------------------------------------
-*/
+-- -- Test Case 34: INSTEAD OF INSERT trigger that deletes existing rows
+-- INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter, Status)
+-- OUTPUT 'InsteadOf_Insert_Delete', inserted.ID, inserted.Name, 0, inserted.Value, inserted.Status
+-- INTO OutputCapture_insert (TestCase, ID, Name, OldValue, NewValue, Status)
+-- VALUES (2, 'NewRow', 100, 2, 'Active');
+-- GO
 
--- 2.2.5 Create table to capture OUTPUT results
-CREATE TABLE OutputCapture_insert (
-    TestCase NVARCHAR(50),
-    ID INT,
-    Name NVARCHAR(50),
-    OldValue INT,
-    NewValue INT,
-    Status NVARCHAR(50)
-);
-GO
+-- -- Print OUTPUT results
+-- SELECT 'INSTEAD OF Insert+Delete OUTPUT' as TestPhase, * FROM OutputCapture_insert;
+-- GO
 
--- Insert some data first for delete scenario
-INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter) VALUES (1, 'Existing1', 50, 1);
-GO
+-- -- Verify existing row was deleted and new row inserted
+-- SELECT 'INSTEAD OF Insert+Delete' as TestPhase, COUNT(*) as TotalRows FROM EPQTest_InsteadOf_Insert_Delete;
+-- GO
 
--- Test Case 34: INSTEAD OF INSERT trigger that deletes existing rows
-INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter, Status)
-OUTPUT 'InsteadOf_Insert_Delete', inserted.ID, inserted.Name, 0, inserted.Value, inserted.Status
-INTO OutputCapture_insert (TestCase, ID, Name, OldValue, NewValue, Status)
-VALUES (2, 'NewRow', 100, 2, 'Active');
-GO
+-- SELECT * FROM EPQTest_InsteadOf_Insert_Delete ORDER BY ID;
+-- GO
 
--- Print OUTPUT results
-SELECT 'INSTEAD OF Insert+Delete OUTPUT' as TestPhase, * FROM OutputCapture_insert;
-GO
+-- delete from OutputCapture_insert;
+-- GO
 
--- Verify existing row was deleted and new row inserted
-SELECT 'INSTEAD OF Insert+Delete' as TestPhase, COUNT(*) as TotalRows FROM EPQTest_InsteadOf_Insert_Delete;
-GO
+-- /*
+-- * ------------------------------------------------------------------------------------
+-- *  INSTEAD OF Insert  + update inside insert trigger
+-- * ------------------------------------------------------------------------------------
+-- */
 
-SELECT * FROM EPQTest_InsteadOf_Insert_Delete ORDER BY ID;
-GO
+-- -- Insert some data first for update scenario
+-- INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter) VALUES (1, 'Existing1', 50, 1);
+-- GO
 
-delete from OutputCapture_insert;
-GO
+-- -- 2.2.6 INSTEAD OF INSERT trigger that updates existing rows
+-- INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
+-- OUTPUT 'InsteadOf_Insert_Update', inserted.ID, inserted.Name, 0, inserted.Value, inserted.Status
+-- INTO OutputCapture_insert (TestCase, ID, Name, OldValue, NewValue, Status)
+-- VALUES (2, 'NewRow', 200, 2, 'Active');
+-- GO
 
-/*
-* ------------------------------------------------------------------------------------
-*  INSTEAD OF Insert  + update inside insert trigger
-* ------------------------------------------------------------------------------------
-*/
+-- -- Print OUTPUT results
+-- SELECT 'INSTEAD OF Insert+Update OUTPUT' as TestPhase, * FROM OutputCapture_insert;
+-- GO
 
--- Insert some data first for update scenario
-INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter) VALUES (1, 'Existing1', 50, 1);
-GO
+-- -- Verify existing row was updated and new row inserted
+-- SELECT 'INSTEAD OF Insert+Update' as TestPhase, COUNT(*) as TotalRows FROM EPQTest_InsteadOf_Insert_Update;
+-- GO
 
--- 2.2.6 INSTEAD OF INSERT trigger that updates existing rows
-INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
-OUTPUT 'InsteadOf_Insert_Update', inserted.ID, inserted.Name, 0, inserted.Value, inserted.Status
-INTO OutputCapture_insert (TestCase, ID, Name, OldValue, NewValue, Status)
-VALUES (2, 'NewRow', 200, 2, 'Active');
-GO
+-- SELECT * FROM EPQTest_InsteadOf_Insert_Update ORDER BY ID;
+-- GO
 
--- Print OUTPUT results
-SELECT 'INSTEAD OF Insert+Update OUTPUT' as TestPhase, * FROM OutputCapture_insert;
-GO
-
--- Verify existing row was updated and new row inserted
-SELECT 'INSTEAD OF Insert+Update' as TestPhase, COUNT(*) as TotalRows FROM EPQTest_InsteadOf_Insert_Update;
-GO
-
-SELECT * FROM EPQTest_InsteadOf_Insert_Update ORDER BY ID;
-GO
-
--- Final cleanup of OUTPUT capture table
-DROP TABLE OutputCapture_insert;
-DROP TABLE OutputCapture;
-GO
+-- -- Final cleanup of OUTPUT capture table
+-- DROP TABLE OutputCapture_insert;
+-- DROP TABLE OutputCapture;
+-- GO
 
 
 -- /*

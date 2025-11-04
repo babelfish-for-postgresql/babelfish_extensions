@@ -348,230 +348,230 @@ GO
  *  ----------------------------   2.2 All below tests are INSTEAD OF TRIGGERS test with output clause. --------------------------------------------
  */
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.2.1 Scenerio -
- *  Update command with output clause
- *  INSTEAD OF trigger on update 
- *  Another update inside trigger updating same row
- * ------------------------------------------------------------------------------------
- */
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.2.1 Scenerio -
+--  *  Update command with output clause
+--  *  INSTEAD OF trigger on update 
+--  *  Another update inside trigger updating same row
+--  * ------------------------------------------------------------------------------------
+--  */
 
--- Setup EPQ test table for INSTEAD OF triggers
-CREATE TABLE EPQTest_InsteadOf_Update_Update (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
+-- -- Setup EPQ test table for INSTEAD OF triggers
+-- CREATE TABLE EPQTest_InsteadOf_Update_Update (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
 
--- Insert test data
-INSERT INTO EPQTest_InsteadOf_Update_Update (ID, Name, Value, Counter) VALUES 
-(1, 'Row1', 100, 1),
-(2, 'Row2', 200, 2),
-(3, 'Row3', 300, 3);
-GO
+-- -- Insert test data
+-- INSERT INTO EPQTest_InsteadOf_Update_Update (ID, Name, Value, Counter) VALUES 
+-- (1, 'Row1', 100, 1),
+-- (2, 'Row2', 200, 2),
+-- (3, 'Row3', 300, 3);
+-- GO
 
--- INSTEAD OF trigger that updates the same row
-CREATE TRIGGER tr_EPQTest_InsteadOf_Update_Update
-ON EPQTest_InsteadOf_Update_Update
-INSTEAD OF UPDATE
-AS
-BEGIN
-    UPDATE EPQTest_InsteadOf_Update_Update 
-    SET Value = i.Value + 10,
-        Counter = e.Counter + 1,
-        Status = 'Modified'
-    FROM EPQTest_InsteadOf_Update_Update e
-    INNER JOIN inserted i ON e.ID = i.ID;
-END;
-GO
+-- -- INSTEAD OF trigger that updates the same row
+-- CREATE TRIGGER tr_EPQTest_InsteadOf_Update_Update
+-- ON EPQTest_InsteadOf_Update_Update
+-- INSTEAD OF UPDATE
+-- AS
+-- BEGIN
+--     UPDATE EPQTest_InsteadOf_Update_Update 
+--     SET Value = i.Value + 10,
+--         Counter = e.Counter + 1,
+--         Status = 'Modified'
+--     FROM EPQTest_InsteadOf_Update_Update e
+--     INNER JOIN inserted i ON e.ID = i.ID;
+-- END;
+-- GO
 
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.2.2 Scenerio -
- *  Update command with output clause on view
- *  INSTEAD OF trigger on update 
- *  Delete inside trigger deleting same row
- * ------------------------------------------------------------------------------------
- */
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.2.2 Scenerio -
+--  *  Update command with output clause on view
+--  *  INSTEAD OF trigger on update 
+--  *  Delete inside trigger deleting same row
+--  * ------------------------------------------------------------------------------------
+--  */
 
--- Setup EPQ test table
-CREATE TABLE EPQTest_InsteadOf_Update_Delete (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_InsteadOf_Update_Delete (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
 
--- Insert test data
-INSERT INTO EPQTest_InsteadOf_Update_Delete (ID, Name, Value, Counter) VALUES 
-(1, 'Row1', 100, 1),
-(2, 'Row2', 200, 2),
-(3, 'Row3', 300, 3);
-GO
+-- -- Insert test data
+-- INSERT INTO EPQTest_InsteadOf_Update_Delete (ID, Name, Value, Counter) VALUES 
+-- (1, 'Row1', 100, 1),
+-- (2, 'Row2', 200, 2),
+-- (3, 'Row3', 300, 3);
+-- GO
 
--- INSTEAD OF trigger that deletes the row being updated
-CREATE TRIGGER tr_EPQTest_InsteadOf_Delete_OnUpdate
-ON EPQTest_InsteadOf_Update_Delete
-INSTEAD OF UPDATE
-AS
-BEGIN
-    DELETE FROM EPQTest_InsteadOf_Update_Delete
-    WHERE ID IN (SELECT ID FROM inserted);
-END;
-GO
+-- -- INSTEAD OF trigger that deletes the row being updated
+-- CREATE TRIGGER tr_EPQTest_InsteadOf_Delete_OnUpdate
+-- ON EPQTest_InsteadOf_Update_Delete
+-- INSTEAD OF UPDATE
+-- AS
+-- BEGIN
+--     DELETE FROM EPQTest_InsteadOf_Update_Delete
+--     WHERE ID IN (SELECT ID FROM inserted);
+-- END;
+-- GO
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.2.3 Scenerio -
- *  Delete command with output clause on view
- *  INSTEAD OF trigger on Delete 
- *  Delete inside trigger deleting same row
- * ------------------------------------------------------------------------------------
- */
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.2.3 Scenerio -
+--  *  Delete command with output clause on view
+--  *  INSTEAD OF trigger on Delete 
+--  *  Delete inside trigger deleting same row
+--  * ------------------------------------------------------------------------------------
+--  */
 
--- Setup EPQ test table
-CREATE TABLE EPQTest_InsteadOf_Delete_Delete (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_InsteadOf_Delete_Delete (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
 
--- Insert test data
-INSERT INTO EPQTest_InsteadOf_Delete_Delete (ID, Name, Value, Counter) VALUES 
-(1, 'Row1', 100, 1),
-(2, 'Row2', 200, 2),
-(3, 'Row3', 300, 3);
-GO
+-- -- Insert test data
+-- INSERT INTO EPQTest_InsteadOf_Delete_Delete (ID, Name, Value, Counter) VALUES 
+-- (1, 'Row1', 100, 1),
+-- (2, 'Row2', 200, 2),
+-- (3, 'Row3', 300, 3);
+-- GO
 
--- INSTEAD OF trigger that deletes additional rows during DELETE
-CREATE TRIGGER tr_EPQTest_InsteadOf_Delete_OnDelete
-ON EPQTest_InsteadOf_Delete_Delete
-INSTEAD OF DELETE
-AS
-BEGIN
-    DELETE FROM EPQTest_InsteadOf_Delete_Delete 
-    WHERE Value < (SELECT MIN(Value) FROM deleted) + 50;
+-- -- INSTEAD OF trigger that deletes additional rows during DELETE
+-- CREATE TRIGGER tr_EPQTest_InsteadOf_Delete_OnDelete
+-- ON EPQTest_InsteadOf_Delete_Delete
+-- INSTEAD OF DELETE
+-- AS
+-- BEGIN
+--     DELETE FROM EPQTest_InsteadOf_Delete_Delete 
+--     WHERE Value < (SELECT MIN(Value) FROM deleted) + 50;
     
-    DELETE FROM EPQTest_InsteadOf_Delete_Delete
-    WHERE ID IN (SELECT ID FROM deleted);
-END;
-GO
+--     DELETE FROM EPQTest_InsteadOf_Delete_Delete
+--     WHERE ID IN (SELECT ID FROM deleted);
+-- END;
+-- GO
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.2.4 Scenerio -
- *  Delete command with output clause on view
- *  INSTEAD OF trigger on Delete 
- *  Update inside trigger updating deleted row
- * ------------------------------------------------------------------------------------
- */
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.2.4 Scenerio -
+--  *  Delete command with output clause on view
+--  *  INSTEAD OF trigger on Delete 
+--  *  Update inside trigger updating deleted row
+--  * ------------------------------------------------------------------------------------
+--  */
 
--- Setup EPQ test table
-CREATE TABLE EPQTest_InsteadOf_Delete_Update (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_InsteadOf_Delete_Update (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
 
--- Insert test data
-INSERT INTO EPQTest_InsteadOf_Delete_Update (ID, Name, Value, Counter) VALUES
-(1, 'Row1', 100, 1),
-(2, 'Row2', 200, 2),
-(3, 'Row3', 300, 3);
-GO
+-- -- Insert test data
+-- INSERT INTO EPQTest_InsteadOf_Delete_Update (ID, Name, Value, Counter) VALUES
+-- (1, 'Row1', 100, 1),
+-- (2, 'Row2', 200, 2),
+-- (3, 'Row3', 300, 3);
+-- GO
 
--- INSTEAD OF DELETE trigger that updates instead of deleting
-CREATE TRIGGER tr_EPQTest_InsteadOf_Update_OnDelete
-ON EPQTest_InsteadOf_Delete_Update
-INSTEAD OF DELETE
-AS
-BEGIN
-    UPDATE EPQTest_InsteadOf_Delete_Update
-    SET Status = 'Marked_For_Delete', Counter = Counter + 1000
-    WHERE ID IN (SELECT ID FROM deleted);
-END;
-GO
+-- -- INSTEAD OF DELETE trigger that updates instead of deleting
+-- CREATE TRIGGER tr_EPQTest_InsteadOf_Update_OnDelete
+-- ON EPQTest_InsteadOf_Delete_Update
+-- INSTEAD OF DELETE
+-- AS
+-- BEGIN
+--     UPDATE EPQTest_InsteadOf_Delete_Update
+--     SET Status = 'Marked_For_Delete', Counter = Counter + 1000
+--     WHERE ID IN (SELECT ID FROM deleted);
+-- END;
+-- GO
 
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.2.5 Scenerio -
- *  Insert command with output clause on view
- *  INSTEAD OF trigger on Insert 
- *  Delete inside trigger deleting new inserted row
- * ------------------------------------------------------------------------------------
- */
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.2.5 Scenerio -
+--  *  Insert command with output clause on view
+--  *  INSTEAD OF trigger on Insert 
+--  *  Delete inside trigger deleting new inserted row
+--  * ------------------------------------------------------------------------------------
+--  */
 
--- Setup EPQ test table
-CREATE TABLE EPQTest_InsteadOf_Insert_Delete (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_InsteadOf_Insert_Delete (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
 
--- INSTEAD OF INSERT trigger that deletes existing rows
-CREATE TRIGGER tr_EPQTest_InsteadOf_Delete_OnInsert
-ON EPQTest_InsteadOf_Insert_Delete
-INSTEAD OF INSERT
-AS
-BEGIN
-    DELETE FROM EPQTest_InsteadOf_Insert_Delete 
-    WHERE Value < (SELECT MIN(Value) FROM inserted);
+-- -- INSTEAD OF INSERT trigger that deletes existing rows
+-- CREATE TRIGGER tr_EPQTest_InsteadOf_Delete_OnInsert
+-- ON EPQTest_InsteadOf_Insert_Delete
+-- INSTEAD OF INSERT
+-- AS
+-- BEGIN
+--     DELETE FROM EPQTest_InsteadOf_Insert_Delete 
+--     WHERE Value < (SELECT MIN(Value) FROM inserted);
     
-    INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter, Status)
-    SELECT ID, Name, Value, Counter, Status FROM inserted;
-END;
-GO
+--     INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter, Status)
+--     SELECT ID, Name, Value, Counter, Status FROM inserted;
+-- END;
+-- GO
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.2.6 Scenerio -
- *  Insert command with output clause on view
- *  INSTEAD OF trigger on Insert 
- *  Update inside trigger Updating new inserted row
- * ------------------------------------------------------------------------------------
- */
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.2.6 Scenerio -
+--  *  Insert command with output clause on view
+--  *  INSTEAD OF trigger on Insert 
+--  *  Update inside trigger Updating new inserted row
+--  * ------------------------------------------------------------------------------------
+--  */
 
--- Setup EPQ test table
-CREATE TABLE EPQTest_InsteadOf_Insert_Update (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_InsteadOf_Insert_Update (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
 
--- INSTEAD OF INSERT trigger that updates existing rows and inserts new ones
-CREATE TRIGGER tr_EPQTest_InsteadOf_Update_OnInsert
-ON EPQTest_InsteadOf_Insert_Update
-INSTEAD OF INSERT
-AS
-BEGIN
-    UPDATE EPQTest_InsteadOf_Insert_Update 
-    SET Status = 'Updated_By_Insert', Counter = Counter + 500
-    WHERE Value < (SELECT MAX(Value) FROM inserted);
+-- -- INSTEAD OF INSERT trigger that updates existing rows and inserts new ones
+-- CREATE TRIGGER tr_EPQTest_InsteadOf_Update_OnInsert
+-- ON EPQTest_InsteadOf_Insert_Update
+-- INSTEAD OF INSERT
+-- AS
+-- BEGIN
+--     UPDATE EPQTest_InsteadOf_Insert_Update 
+--     SET Status = 'Updated_By_Insert', Counter = Counter + 500
+--     WHERE Value < (SELECT MAX(Value) FROM inserted);
     
-    INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
-    SELECT ID, Name, Value, Counter, 'Inserted_Via_Trigger' FROM inserted;
-END;
-GO
+--     INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
+--     SELECT ID, Name, Value, Counter, 'Inserted_Via_Trigger' FROM inserted;
+-- END;
+-- GO
 
 
 -- /*
