@@ -659,6 +659,6 @@ cast_binary_to_string
 cast_string_to_binary
 test_conv_text_to_binary
 test_conv_text_to_string
-#babel_timezoneinfo#Commenting the test as a temporary fix to ticket BABEL 5370
+babel_timezoneinfo
 test_convert_to_binary
 cast_datetime_to_binary

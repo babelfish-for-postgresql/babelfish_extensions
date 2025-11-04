@@ -68,11 +68,6 @@ ignore#!#charindex_and_replace_CIAI_collations
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
 
-#This test case needs to be ignored temporarily for BABEL 5370 flaky test cases
-ignore#!#babel_timezoneinfo-vu-prepare
-ignore#!#babel_timezoneinfo-vu-verify
-ignore#!#babel_timezoneinfo-vu-cleanup
-
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
 ignore#!#BABEL-2934-vu-prepare

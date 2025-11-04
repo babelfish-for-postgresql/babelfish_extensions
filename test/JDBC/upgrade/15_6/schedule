@@ -595,4 +595,4 @@ cast_string_to_binary-before-15_16
 cast_binary_to_string-before-16_8
 test_conv_text_to_binary-before-16_8
 test_conv_text_to_string
-#babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370
+babel_timezoneinfo_before_17_7
