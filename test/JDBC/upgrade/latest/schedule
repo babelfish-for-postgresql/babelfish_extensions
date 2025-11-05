@@ -653,3 +653,4 @@ babel_string_to_money
 BABEL-4271
 sys-fn_varbintohexstr
 babel_binary
+comparison_op_index_scan

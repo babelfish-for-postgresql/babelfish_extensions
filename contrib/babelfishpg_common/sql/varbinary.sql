@@ -229,7 +229,9 @@ CREATE OPERATOR sys.= (
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_eq,
     COMMUTATOR = =,
-    RESTRICT = eqsel
+    RESTRICT = eqsel,
+    NEGATOR = <>,
+    JOIN = eqjoinsel
 );
 
 -- Support not equals
@@ -242,7 +244,10 @@ CREATE OPERATOR sys.<> (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_neq,
-    COMMUTATOR = <>
+    COMMUTATOR = <>,
+    RESTRICT = neqsel,
+    NEGATOR = =,
+    JOIN = neqjoinsel
 );
 
 -- Support greater than
@@ -255,7 +260,10 @@ CREATE OPERATOR sys.> (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_gt,
-    COMMUTATOR = <
+    COMMUTATOR = <,
+    RESTRICT = scalargtsel,
+    NEGATOR = <=,
+    JOIN = scalargtjoinsel
 );
 
 -- Support greater than equals
@@ -268,7 +276,10 @@ CREATE OPERATOR sys.>= (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_geq,
-    COMMUTATOR = <=
+    COMMUTATOR = <=,
+    RESTRICT = scalargesel,
+    NEGATOR = <,
+    JOIN = scalargejoinsel
 );
 
 -- Support less than
@@ -281,7 +292,10 @@ CREATE OPERATOR sys.< (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_lt,
-    COMMUTATOR = >
+    COMMUTATOR = >,
+    RESTRICT = scalarltsel,
+    NEGATOR = >=,
+    JOIN = scalarltjoinsel
 );
 
 -- Support less than equals
@@ -294,7 +308,10 @@ CREATE OPERATOR sys.<= (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_leq,
-    COMMUTATOR = >=
+    COMMUTATOR = >=,
+    RESTRICT = scalarlesel,
+    NEGATOR = >,
+    JOIN = scalarlejoinsel
 );
 
 

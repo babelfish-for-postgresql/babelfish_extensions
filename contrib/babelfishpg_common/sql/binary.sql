@@ -235,7 +235,9 @@ CREATE OPERATOR sys.= (
     RIGHTARG = sys.bbf_binary,
     FUNCTION = sys.binary_eq,
     COMMUTATOR = =,
-    RESTRICT = eqsel
+    RESTRICT = eqsel,
+    NEGATOR = <>,
+    JOIN = eqjoinsel
 );
 
 
@@ -248,7 +250,10 @@ CREATE OPERATOR sys.<> (
     LEFTARG = sys.bbf_binary,
     RIGHTARG = sys.bbf_binary,
     FUNCTION = sys.binary_neq,
-    COMMUTATOR = <>
+    COMMUTATOR = <>,
+    RESTRICT = neqsel,
+    NEGATOR = =,
+    JOIN = neqjoinsel
 );
 
 CREATE FUNCTION sys.binary_gt(leftarg sys.bbf_binary, rightarg sys.bbf_binary)
@@ -260,7 +265,10 @@ CREATE OPERATOR sys.> (
     LEFTARG = sys.bbf_binary,
     RIGHTARG = sys.bbf_binary,
     FUNCTION = sys.binary_gt,
-    COMMUTATOR = <
+    COMMUTATOR = <,
+    RESTRICT = scalargtsel,
+    NEGATOR = <=,
+    JOIN = scalargtjoinsel
 );
 
 CREATE FUNCTION sys.binary_geq(leftarg sys.bbf_binary, rightarg sys.bbf_binary)
@@ -272,7 +280,10 @@ CREATE OPERATOR sys.>= (
     LEFTARG = sys.bbf_binary,
     RIGHTARG = sys.bbf_binary,
     FUNCTION = sys.binary_geq,
-    COMMUTATOR = <=
+    COMMUTATOR = <=,
+    RESTRICT = scalargesel,
+    NEGATOR = <,
+    JOIN = scalargejoinsel
 );
 
 CREATE FUNCTION sys.binary_lt(leftarg sys.bbf_binary, rightarg sys.bbf_binary)
@@ -284,7 +295,10 @@ CREATE OPERATOR sys.< (
     LEFTARG = sys.bbf_binary,
     RIGHTARG = sys.bbf_binary,
     FUNCTION = sys.binary_lt,
-    COMMUTATOR = >
+    COMMUTATOR = >,
+    RESTRICT = scalarltsel,
+    NEGATOR = >=,
+    JOIN = scalarltjoinsel
 );
 
 CREATE FUNCTION sys.binary_leq(leftarg sys.bbf_binary, rightarg sys.bbf_binary)
@@ -296,7 +310,10 @@ CREATE OPERATOR sys.<= (
     LEFTARG = sys.bbf_binary,
     RIGHTARG = sys.bbf_binary,
     FUNCTION = sys.binary_leq,
-    COMMUTATOR = >=
+    COMMUTATOR = >=,
+    RESTRICT = scalarlesel,
+    NEGATOR = >,
+    JOIN = scalarlejoinsel
 );
 
 CREATE FUNCTION sys.bbf_binary_cmp(sys.bbf_binary, sys.bbf_binary)
@@ -328,12 +345,95 @@ CREATE OPERATOR sys.= (
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.binary_varbinary_eq,
     COMMUTATOR = =,
-    RESTRICT = eqsel
+    RESTRICT = eqsel,
+    NEGATOR = <>,
+    JOIN = eqjoinsel
+);
+
+CREATE FUNCTION sys.binary_varbinary_neq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_neq'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.<> (
+    LEFTARG = sys.bbf_binary,
+    RIGHTARG = sys.bbf_varbinary,
+    FUNCTION = sys.binary_varbinary_neq,
+    COMMUTATOR = <>,
+    RESTRICT = neqsel,
+    NEGATOR = =,
+    JOIN = neqjoinsel
+);
+
+CREATE FUNCTION sys.binary_varbinary_gt(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_gt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.> (
+    LEFTARG = sys.bbf_binary,
+    RIGHTARG = sys.bbf_varbinary,
+    FUNCTION = sys.binary_varbinary_gt,
+    COMMUTATOR = <,
+    RESTRICT = scalargtsel,
+    NEGATOR = <=,
+    JOIN = scalargtjoinsel
+);
+
+CREATE FUNCTION sys.binary_varbinary_geq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_geq'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.>= (
+    LEFTARG = sys.bbf_binary,
+    RIGHTARG = sys.bbf_varbinary,
+    FUNCTION = sys.binary_varbinary_geq,
+    COMMUTATOR = <=,
+    RESTRICT = scalargesel,
+    NEGATOR = <,
+    JOIN = scalargejoinsel
+);
+
+CREATE FUNCTION sys.binary_varbinary_lt(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_lt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.< (
+    LEFTARG = sys.bbf_binary,
+    RIGHTARG = sys.bbf_varbinary,
+    FUNCTION = sys.binary_varbinary_lt,
+    COMMUTATOR = >,
+    RESTRICT = scalarltsel,
+    NEGATOR = >=,
+    JOIN = scalarltjoinsel
+);
+
+CREATE FUNCTION sys.binary_varbinary_leq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_leq'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.<= (
+    LEFTARG = sys.bbf_binary,
+    RIGHTARG = sys.bbf_varbinary,
+    FUNCTION = sys.binary_varbinary_leq,
+    COMMUTATOR = >=,
+    RESTRICT = scalarlesel,
+    NEGATOR = >,
+    JOIN = scalarlejoinsel
 );
 
 alter OPERATOR family bbf_binary_ops USING btree add
     OPERATOR 3 sys.= (sys.bbf_binary, sys.bbf_varbinary),
     FUNCTION 1 sys.bbf_binary_varbinary_cmp(sys.bbf_binary, sys.bbf_varbinary);
+
+alter OPERATOR family bbf_binary_ops USING btree add
+    OPERATOR 1 sys.< (sys.bbf_binary, sys.bbf_varbinary),
+    OPERATOR 2 sys.<= (sys.bbf_binary, sys.bbf_varbinary),
+    OPERATOR 4 sys.>= (sys.bbf_binary, sys.bbf_varbinary),
+    OPERATOR 5 sys.> (sys.bbf_binary, sys.bbf_varbinary);
 
 CREATE OR REPLACE FUNCTION sys.varbinary_binary_eq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
 RETURNS boolean
@@ -350,7 +450,84 @@ CREATE OPERATOR sys.= (
     RIGHTARG = sys.bbf_binary,
     FUNCTION = sys.varbinary_binary_eq,
     COMMUTATOR = =,
-    RESTRICT = eqsel
+    RESTRICT = eqsel,
+    NEGATOR = <>,
+    JOIN = eqjoinsel
+);
+
+CREATE FUNCTION sys.varbinary_binary_neq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_neq'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.<> (
+    LEFTARG = sys.bbf_varbinary,
+    RIGHTARG = sys.bbf_binary,
+    FUNCTION = sys.varbinary_binary_neq,
+    COMMUTATOR = <>,
+    RESTRICT = neqsel,
+    NEGATOR = =,
+    JOIN = neqjoinsel
+);
+
+CREATE FUNCTION sys.varbinary_binary_gt(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_gt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.> (
+    LEFTARG = sys.bbf_varbinary,
+    RIGHTARG = sys.bbf_binary,
+    FUNCTION = sys.varbinary_binary_gt,
+    COMMUTATOR = <,
+    RESTRICT = scalargtsel,
+    NEGATOR = <=,
+    JOIN = scalargtjoinsel
+);
+
+CREATE FUNCTION sys.varbinary_binary_geq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_geq'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.>= (
+    LEFTARG = sys.bbf_varbinary,
+    RIGHTARG = sys.bbf_binary,
+    FUNCTION = sys.varbinary_binary_geq,
+    COMMUTATOR = <=,
+    RESTRICT = scalargesel,
+    NEGATOR = <,
+    JOIN = scalargejoinsel
+);
+
+CREATE FUNCTION sys.varbinary_binary_lt(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_lt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.< (
+    LEFTARG = sys.bbf_varbinary,
+    RIGHTARG = sys.bbf_binary,
+    FUNCTION = sys.varbinary_binary_lt,
+    COMMUTATOR = >,
+    RESTRICT = scalarltsel,
+    NEGATOR = >=,
+    JOIN = scalarltjoinsel
+);
+
+CREATE FUNCTION sys.varbinary_binary_leq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_leq'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.<= (
+    LEFTARG = sys.bbf_varbinary,
+    RIGHTARG = sys.bbf_binary,
+    FUNCTION = sys.varbinary_binary_leq,
+    COMMUTATOR = >=,
+    RESTRICT = scalarlesel,
+    NEGATOR = >,
+    JOIN = scalarlejoinsel
 );
 
 alter OPERATOR family bbf_varbinary_ops USING btree add
@@ -367,3 +544,10 @@ CREATE OPERATOR sys.+ (
     RIGHTARG = sys.bbf_binary,
     FUNCTION = sys.binaryadd
 );
+
+alter OPERATOR family bbf_varbinary_ops USING btree add
+    OPERATOR 1 sys.< (sys.bbf_varbinary, sys.bbf_binary),
+    OPERATOR 2 sys.<= (sys.bbf_varbinary, sys.bbf_binary),
+    OPERATOR 4 sys.>= (sys.bbf_varbinary, sys.bbf_binary),
+    OPERATOR 5 sys.> (sys.bbf_varbinary, sys.bbf_binary);
+
