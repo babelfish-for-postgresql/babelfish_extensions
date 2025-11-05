@@ -66,6 +66,7 @@ extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
 extern handle_constant_literals_hook_type handle_constant_literals_hook;
 extern set_common_typmod_case_expr_hook_type set_common_typmod_case_expr_hook;
+extern set_typmod_op_expr_hook_type set_typmod_op_expr_hook;
 
 extern bool babelfish_dump_restore;
 
@@ -3276,6 +3277,31 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	return max_typmods;
 }
 
+static Node*
+tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
+{
+		OpExpr				*op = (OpExpr *) OpExp;
+		char				*opname = get_opname(op->opno);
+
+		if (((*common_utility_plugin_ptr->is_tsql_binary_datatype) (op->opresulttype) && strncmp(opname, "+", 1) == 0))
+		{
+			int32	typmod1 = exprTypmod(lexpr),
+					typmod2 = exprTypmod(rexpr),
+					rettypmod = typmod1 + typmod2 - VARHDRSZ;
+
+			OpExp = coerce_to_target_type(pstate, OpExp,
+										 exprType(OpExp),
+										 op->opresulttype,
+										 rettypmod,
+										 COERCION_EXPLICIT,
+										 COERCE_EXPLICIT_CAST,
+										 -1);
+		}
+
+		pfree(opname);
+		return OpExp;
+}
+
 /* 
  * For CASE expression, this function will set the typmod to all the CASE branches from coerce_type_typmod().
  */
@@ -3333,6 +3359,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	select_common_typmod_hook = tsql_select_common_typmod_hook;
 	handle_constant_literals_hook = tsql_handle_constant_literals_hook;
 	set_common_typmod_case_expr_hook = tsql_set_common_typmod_case_expr_hook;
+	set_typmod_op_expr_hook = tsql_set_typmod_op_expr_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);
