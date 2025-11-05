@@ -72,19 +72,19 @@ Query Text: EXEC babel_3939_vu_prepare_p1
   Query Text: select count(*) from tab_binary where a > 0xBAADF00D
   ->  Aggregate
         ->  Seq Scan on tab_binary
-              Filter: ((a)::bbf_varbinary > '0xbaadf00d'::bbf_varbinary)
+              Filter: ((a)::bbf_binary > '0xbaadf00d'::bbf_varbinary)
   Query Text: select count(*) from tab_binary where a < 0xBAADF00D
   ->  Aggregate
         ->  Seq Scan on tab_binary
-              Filter: ((a)::bbf_varbinary < '0xbaadf00d'::bbf_varbinary)
+              Filter: ((a)::bbf_binary < '0xbaadf00d'::bbf_varbinary)
   Query Text: select count(*) from tab_binary where a >= 0xBAADF00D
   ->  Aggregate
         ->  Seq Scan on tab_binary
-              Filter: ((a)::bbf_varbinary >= '0xbaadf00d'::bbf_varbinary)
+              Filter: ((a)::bbf_binary >= '0xbaadf00d'::bbf_varbinary)
   Query Text: select count(*) from tab_binary where a <= 0xBAADF00D
   ->  Aggregate
         ->  Seq Scan on tab_binary
-              Filter: ((a)::bbf_varbinary <= '0xbaadf00d'::bbf_varbinary)
+              Filter: ((a)::bbf_binary <= '0xbaadf00d'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
@@ -106,16 +106,16 @@ Query Text: EXEC babel_3939_vu_prepare_p2
         Index Cond: ((a)::bbf_varbinary = '0xbaadf00d0000000000000000000000000000000000000000000000000000'::bbf_binary)
   Query Text: select * from tab_varbinary where a > cast(0xBAADF00D as  binary )
   ->  Seq Scan on tab_varbinary
-        Filter: ((a)::bbf_varbinary > '0xbaadf00d0000000000000000000000000000000000000000000000000000'::bbf_varbinary)
+        Filter: ((a)::bbf_varbinary > '0xbaadf00d0000000000000000000000000000000000000000000000000000'::bbf_binary)
   Query Text: select * from tab_varbinary where a < cast(0xBAADF00D as  binary )
   ->  Seq Scan on tab_varbinary
-        Filter: ((a)::bbf_varbinary < '0xbaadf00d0000000000000000000000000000000000000000000000000000'::bbf_varbinary)
+        Filter: ((a)::bbf_varbinary < '0xbaadf00d0000000000000000000000000000000000000000000000000000'::bbf_binary)
   Query Text: select * from tab_varbinary where a >= cast(0xBAADF00D as  binary )
   ->  Seq Scan on tab_varbinary
-        Filter: ((a)::bbf_varbinary >= '0xbaadf00d0000000000000000000000000000000000000000000000000000'::bbf_varbinary)
+        Filter: ((a)::bbf_varbinary >= '0xbaadf00d0000000000000000000000000000000000000000000000000000'::bbf_binary)
   Query Text: select * from tab_varbinary where a <= cast(0xBAADF00D as  binary )
   ->  Seq Scan on tab_varbinary
-        Filter: ((a)::bbf_varbinary <= '0xbaadf00d0000000000000000000000000000000000000000000000000000'::bbf_varbinary)
+        Filter: ((a)::bbf_varbinary <= '0xbaadf00d0000000000000000000000000000000000000000000000000000'::bbf_binary)
 ~~END~~
 
 ~~START~~

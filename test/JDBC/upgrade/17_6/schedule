@@ -654,3 +654,4 @@ ascii_function_before-17_7-or-16_11
 #babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370
 test_convert_to_binary-before-17_7-16_11
 cast_datetime_to_binary-before-17_7-16_11
+comparison_op_index_scan
