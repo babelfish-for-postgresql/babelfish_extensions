@@ -5197,7 +5197,7 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
 );
 
 CREATE OR REPLACE FUNCTION sys.string_split(IN input_string sys.VARCHAR, IN separator sys.VARCHAR, OUT value sys.VARCHAR)
-RETURNS SETOF sys.VARCHAR AS
+RETURNS SETOF sys.VARCHAR AS 
 $BODY$
 DECLARE
     vc_string sys.VARCHAR COLLATE "C";
