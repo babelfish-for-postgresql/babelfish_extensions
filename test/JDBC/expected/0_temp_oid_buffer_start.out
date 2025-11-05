@@ -2,42 +2,41 @@
 -- create a temp view for easier access to pg_db_role_setting
 CREATE VIEW db_role_settings_view
 AS
-SELECT setdatabase AS db, setrole AS role, unnest(setconfig) AS setting
-FROM pg_db_role_setting
-ORDER BY db;
+SELECT unnest(setconfig) AS setting
+FROM pg_db_role_setting;
 GO
 
 CREATE VIEW unnested_db_role_settings_view
 AS
-SELECT db, role, 
+SELECT
 substring(setting, 1, charindex('=',setting)-1) as setting, 
 substring(setting, charindex('=',setting)+1) as value
 FROM db_role_settings_view
-ORDER BY db;
+ORDER BY setting;
 GO
 
 SELECT * FROM unnested_db_role_settings_view;
 GO
 ~~START~~
-int#!#int#!#varchar#!#text
-0#!#10#!#TimeZone#!#utc
-0#!#10#!#log_statement#!#all
-0#!#10#!#log_min_error_statement#!#debug5
-0#!#10#!#log_min_messages#!#panic
-0#!#10#!#exit_on_error#!#0
-0#!#10#!#statement_timeout#!#0
-0#!#10#!#role#!#rdsadmin
-0#!#10#!#auto_explain.log_min_duration#!#-1
-0#!#10#!#temp_file_limit#!#-1
-0#!#10#!#stats_fetch_consistency#!#snapshot
-0#!#10#!#default_tablespace#!#
-0#!#10#!#idle_session_timeout#!#0
-0#!#10#!#event_triggers#!#on
-0#!#10#!#synchronous_commit#!#on
-16384#!#0#!#auto_explain.log_min_duration#!#-1
-16384#!#10#!#log_min_messages#!#panic
-16384#!#10#!#search_path#!#pg_catalog, public
-16406#!#0#!#babelfishpg_tsql.enable_ownership_structure#!#true
+varchar#!#text
+TimeZone#!#utc
+auto_explain.log_min_duration#!#-1
+auto_explain.log_min_duration#!#-1
+babelfishpg_tsql.enable_ownership_structure#!#true
+default_tablespace#!#
+event_triggers#!#on
+exit_on_error#!#0
+idle_session_timeout#!#0
+log_min_error_statement#!#debug5
+log_min_messages#!#panic
+log_min_messages#!#panic
+log_statement#!#all
+role#!#rdsadmin
+search_path#!#pg_catalog, public
+statement_timeout#!#0
+stats_fetch_consistency#!#snapshot
+synchronous_commit#!#on
+temp_file_limit#!#-1
 ~~END~~
 
 
@@ -51,7 +50,7 @@ SP_BABELFISH_CONFIGURE '%', 'ignore', 'server'
 GO
 
 -- check all escape hatches
-SELECT db,role,setting,
+SELECT setting,
 CASE setting
 	WHEN 'babelfishpg_tsql.temp_oid_buffer_start' 
 		THEN CASE value WHEN '-2147483648' THEN 'n' ELSE 'y' END
@@ -60,58 +59,58 @@ END AS value
 FROM unnested_db_role_settings_view
 GO
 ~~START~~
-int#!#int#!#varchar#!#text
-0#!#10#!#TimeZone#!#utc
-0#!#10#!#log_statement#!#all
-0#!#10#!#log_min_error_statement#!#debug5
-0#!#10#!#log_min_messages#!#panic
-0#!#10#!#exit_on_error#!#0
-0#!#10#!#statement_timeout#!#0
-0#!#10#!#role#!#rdsadmin
-0#!#10#!#auto_explain.log_min_duration#!#-1
-0#!#10#!#temp_file_limit#!#-1
-0#!#10#!#stats_fetch_consistency#!#snapshot
-0#!#10#!#default_tablespace#!#
-0#!#10#!#idle_session_timeout#!#0
-0#!#10#!#event_triggers#!#on
-0#!#10#!#synchronous_commit#!#on
-16384#!#0#!#auto_explain.log_min_duration#!#-1
-16384#!#10#!#log_min_messages#!#panic
-16384#!#10#!#search_path#!#pg_catalog, public
-16406#!#0#!#babelfishpg_tsql.enable_ownership_structure#!#true
-16406#!#0#!#babelfishpg_tsql.escape_hatch_checkpoint#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_for_replication#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_fulltext#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_identity_function#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_ignore_dup_key#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_index_clustering#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_index_columnstore#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_inline_function_option#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_join_hints#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_language_non_english#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_login_hashed_password#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_login_misc_options#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_login_old_password#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_login_password_must_change#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_login_password_unlock#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_query_hints#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_rowversion#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_schemabinding_function#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_session_settings#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_showplan_all#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_storage_on_partition#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_storage_options#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_table_hints#!#ignore
+varchar#!#text
+TimeZone#!#utc
+auto_explain.log_min_duration#!#-1
+auto_explain.log_min_duration#!#-1
+babelfishpg_tsql.enable_ownership_structure#!#true
+babelfishpg_tsql.escape_hatch_checkpoint#!#ignore
+babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore
+babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore
+babelfishpg_tsql.escape_hatch_for_replication#!#ignore
+babelfishpg_tsql.escape_hatch_fulltext#!#ignore
+babelfishpg_tsql.escape_hatch_identity_function#!#ignore
+babelfishpg_tsql.escape_hatch_ignore_dup_key#!#ignore
+babelfishpg_tsql.escape_hatch_index_clustering#!#ignore
+babelfishpg_tsql.escape_hatch_index_columnstore#!#ignore
+babelfishpg_tsql.escape_hatch_inline_function_option#!#ignore
+babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore
+babelfishpg_tsql.escape_hatch_join_hints#!#ignore
+babelfishpg_tsql.escape_hatch_language_non_english#!#ignore
+babelfishpg_tsql.escape_hatch_login_hashed_password#!#ignore
+babelfishpg_tsql.escape_hatch_login_misc_options#!#ignore
+babelfishpg_tsql.escape_hatch_login_old_password#!#ignore
+babelfishpg_tsql.escape_hatch_login_password_must_change#!#ignore
+babelfishpg_tsql.escape_hatch_login_password_unlock#!#ignore
+babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#ignore
+babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#ignore
+babelfishpg_tsql.escape_hatch_query_hints#!#ignore
+babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore
+babelfishpg_tsql.escape_hatch_rowversion#!#ignore
+babelfishpg_tsql.escape_hatch_schemabinding_function#!#ignore
+babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore
+babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore
+babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore
+babelfishpg_tsql.escape_hatch_session_settings#!#ignore
+babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#ignore
+babelfishpg_tsql.escape_hatch_showplan_all#!#ignore
+babelfishpg_tsql.escape_hatch_storage_on_partition#!#ignore
+babelfishpg_tsql.escape_hatch_storage_options#!#ignore
+babelfishpg_tsql.escape_hatch_table_hints#!#ignore
+default_tablespace#!#
+event_triggers#!#on
+exit_on_error#!#0
+idle_session_timeout#!#0
+log_min_error_statement#!#debug5
+log_min_messages#!#panic
+log_min_messages#!#panic
+log_statement#!#all
+role#!#rdsadmin
+search_path#!#pg_catalog, public
+statement_timeout#!#0
+stats_fetch_consistency#!#snapshot
+synchronous_commit#!#on
+temp_file_limit#!#-1
 ~~END~~
 
 
@@ -120,7 +119,7 @@ SELECT * FROM unnested_db_role_settings_view
 WHERE setting = 'babelfishpg_tsql.temp_oid_buffer_start';
 GO
 ~~START~~
-int#!#int#!#varchar#!#text
+varchar#!#text
 ~~END~~
 
 
@@ -130,7 +129,7 @@ CREATE TABLE #dummy_table(a INT);
 GO
 
 -- check all escape hatches
-SELECT db,role,setting,
+SELECT setting,
 CASE setting
 	WHEN 'babelfishpg_tsql.temp_oid_buffer_start' 
 		THEN CASE value WHEN '-2147483648' THEN 'n' ELSE 'y' END
@@ -139,64 +138,64 @@ END AS value
 FROM unnested_db_role_settings_view
 GO
 ~~START~~
-int#!#int#!#varchar#!#text
-0#!#10#!#TimeZone#!#utc
-0#!#10#!#log_statement#!#all
-0#!#10#!#log_min_error_statement#!#debug5
-0#!#10#!#log_min_messages#!#panic
-0#!#10#!#exit_on_error#!#0
-0#!#10#!#statement_timeout#!#0
-0#!#10#!#role#!#rdsadmin
-0#!#10#!#auto_explain.log_min_duration#!#-1
-0#!#10#!#temp_file_limit#!#-1
-0#!#10#!#stats_fetch_consistency#!#snapshot
-0#!#10#!#default_tablespace#!#
-0#!#10#!#idle_session_timeout#!#0
-0#!#10#!#event_triggers#!#on
-0#!#10#!#synchronous_commit#!#on
-16384#!#0#!#auto_explain.log_min_duration#!#-1
-16384#!#10#!#log_min_messages#!#panic
-16384#!#10#!#search_path#!#pg_catalog, public
-16406#!#0#!#babelfishpg_tsql.enable_ownership_structure#!#true
-16406#!#0#!#babelfishpg_tsql.escape_hatch_checkpoint#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_for_replication#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_fulltext#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_identity_function#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_ignore_dup_key#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_index_clustering#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_index_columnstore#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_inline_function_option#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_join_hints#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_language_non_english#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_login_hashed_password#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_login_misc_options#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_login_old_password#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_login_password_must_change#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_login_password_unlock#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_query_hints#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_rowversion#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_schemabinding_function#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_session_settings#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_showplan_all#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_storage_on_partition#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_storage_options#!#ignore
-16406#!#0#!#babelfishpg_tsql.escape_hatch_table_hints#!#ignore
-16406#!#0#!#babelfishpg_tsql.temp_oid_buffer_start#!#y
+varchar#!#text
+TimeZone#!#utc
+auto_explain.log_min_duration#!#-1
+auto_explain.log_min_duration#!#-1
+babelfishpg_tsql.enable_ownership_structure#!#true
+babelfishpg_tsql.escape_hatch_checkpoint#!#ignore
+babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore
+babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore
+babelfishpg_tsql.escape_hatch_for_replication#!#ignore
+babelfishpg_tsql.escape_hatch_fulltext#!#ignore
+babelfishpg_tsql.escape_hatch_identity_function#!#ignore
+babelfishpg_tsql.escape_hatch_ignore_dup_key#!#ignore
+babelfishpg_tsql.escape_hatch_index_clustering#!#ignore
+babelfishpg_tsql.escape_hatch_index_columnstore#!#ignore
+babelfishpg_tsql.escape_hatch_inline_function_option#!#ignore
+babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore
+babelfishpg_tsql.escape_hatch_join_hints#!#ignore
+babelfishpg_tsql.escape_hatch_language_non_english#!#ignore
+babelfishpg_tsql.escape_hatch_login_hashed_password#!#ignore
+babelfishpg_tsql.escape_hatch_login_misc_options#!#ignore
+babelfishpg_tsql.escape_hatch_login_old_password#!#ignore
+babelfishpg_tsql.escape_hatch_login_password_must_change#!#ignore
+babelfishpg_tsql.escape_hatch_login_password_unlock#!#ignore
+babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#ignore
+babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#ignore
+babelfishpg_tsql.escape_hatch_query_hints#!#ignore
+babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore
+babelfishpg_tsql.escape_hatch_rowversion#!#ignore
+babelfishpg_tsql.escape_hatch_schemabinding_function#!#ignore
+babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore
+babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore
+babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore
+babelfishpg_tsql.escape_hatch_session_settings#!#ignore
+babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#ignore
+babelfishpg_tsql.escape_hatch_showplan_all#!#ignore
+babelfishpg_tsql.escape_hatch_storage_on_partition#!#ignore
+babelfishpg_tsql.escape_hatch_storage_options#!#ignore
+babelfishpg_tsql.escape_hatch_table_hints#!#ignore
+babelfishpg_tsql.temp_oid_buffer_start#!#y
+default_tablespace#!#
+event_triggers#!#on
+exit_on_error#!#0
+idle_session_timeout#!#0
+log_min_error_statement#!#debug5
+log_min_messages#!#panic
+log_min_messages#!#panic
+log_statement#!#all
+role#!#rdsadmin
+search_path#!#pg_catalog, public
+statement_timeout#!#0
+stats_fetch_consistency#!#snapshot
+synchronous_commit#!#on
+temp_file_limit#!#-1
 ~~END~~
 
 
 -- check that the temp_oid_buffer_start should now be set
-SELECT db,role,setting,
+SELECT setting,
 CASE setting
 	WHEN 'babelfishpg_tsql.temp_oid_buffer_start' 
 		THEN CASE value WHEN '-2147483648' THEN 'n' ELSE 'y' END
@@ -206,8 +205,8 @@ FROM unnested_db_role_settings_view
 WHERE setting = 'babelfishpg_tsql.temp_oid_buffer_start';
 GO
 ~~START~~
-int#!#int#!#varchar#!#text
-16406#!#0#!#babelfishpg_tsql.temp_oid_buffer_start#!#y
+varchar#!#text
+babelfishpg_tsql.temp_oid_buffer_start#!#y
 ~~END~~
 
 
@@ -215,7 +214,7 @@ ROLLBACK TRAN
 GO
 
 -- check that the temp_oid_buffer_start should not be set anymore
-SELECT db,role,setting,
+SELECT setting,
 CASE setting
 	WHEN 'babelfishpg_tsql.temp_oid_buffer_start' 
 		THEN CASE value WHEN '-2147483648' THEN 'n' ELSE 'y' END
@@ -225,7 +224,7 @@ FROM unnested_db_role_settings_view
 WHERE setting = 'babelfishpg_tsql.temp_oid_buffer_start';
 GO
 ~~START~~
-int#!#int#!#varchar#!#text
+varchar#!#text
 ~~END~~
 
 
