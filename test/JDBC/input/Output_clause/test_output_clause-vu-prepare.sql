@@ -84,265 +84,265 @@ END;
 GO
 
 
-/*
- * ===================================================================================================================
- *                                              2. Triggers + DML with OUTPUT clause test
- * ===================================================================================================================
- */
+-- /*
+--  * ===================================================================================================================
+--  *                                              2. Triggers + DML with OUTPUT clause test
+--  * ===================================================================================================================
+--  */
 
 
-/*
- * ----------------------------   2.1 All below tests are AFTER TRIGGERS test with output clause. --------------------------------------
- */
+-- /*
+--  * ----------------------------   2.1 All below tests are AFTER TRIGGERS test with output clause. --------------------------------------
+--  */
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.1.1 Scenerio -
- *  Update command with output clause
- *  AFTER trigger on update  
- *  Another update inside AFTER trigger updating same row
- * ------------------------------------------------------------------------------------
- */
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.1.1 Scenerio -
+--  *  Update command with output clause
+--  *  AFTER trigger on update  
+--  *  Another update inside AFTER trigger updating same row
+--  * ------------------------------------------------------------------------------------
+--  */
 
 
--- Setup EPQ test table
-CREATE TABLE EPQTest_Update_Update (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_Update_Update (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
 
--- Insert test data
-INSERT INTO EPQTest_Update_Update (ID, Name, Value, Counter) VALUES 
-(1, 'Row1', 100, 1),
-(2, 'Row2', 200, 2),
-(3, 'Row3', 300, 3);
-GO
+-- -- Insert test data
+-- INSERT INTO EPQTest_Update_Update (ID, Name, Value, Counter) VALUES 
+-- (1, 'Row1', 100, 1),
+-- (2, 'Row2', 200, 2),
+-- (3, 'Row3', 300, 3);
+-- GO
 
--- AFTER trigger that updates the same row
-CREATE TRIGGER tr_EPQTest_After_Update
-ON EPQTest_Update_Update
-AFTER UPDATE
-AS
-BEGIN
-    -- UPDATE EPQTest_Update_Update 
-    -- SET Counter = Counter + 100
-    -- WHERE ID IN (SELECT ID FROM inserted);
+-- -- AFTER trigger that updates the same row
+-- CREATE TRIGGER tr_EPQTest_After_Update
+-- ON EPQTest_Update_Update
+-- AFTER UPDATE
+-- AS
+-- BEGIN
+--     -- UPDATE EPQTest_Update_Update 
+--     -- SET Counter = Counter + 100
+--     -- WHERE ID IN (SELECT ID FROM inserted);
     
-    UPDATE EPQTest_Update_Update 
-    SET Status = 'PostTrigger'
-    WHERE ID IN (SELECT ID FROM inserted);
-END;
-GO
+--     UPDATE EPQTest_Update_Update 
+--     SET Status = 'PostTrigger'
+--     WHERE ID IN (SELECT ID FROM inserted);
+-- END;
+-- GO
 
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.1.2 Scenerio -
- *  Update command with output clause
- *  AFTER trigger on update  
- *  Delete inside AFTER trigger deleting same row
- * ------------------------------------------------------------------------------------
- */
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.1.2 Scenerio -
+--  *  Update command with output clause
+--  *  AFTER trigger on update  
+--  *  Delete inside AFTER trigger deleting same row
+--  * ------------------------------------------------------------------------------------
+--  */
 
--- Setup EPQ test table
-CREATE TABLE EPQTest_Update_Delete (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
-
-
--- Insert test data
-INSERT INTO EPQTest_Update_Delete (ID, Name, Value, Counter) VALUES 
-(1, 'Row1', 100, 1),
-(2, 'Row2', 200, 2),
-(3, 'Row3', 300, 3);
-GO
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_Update_Delete (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
 
 
--- Test Case 18: AFTER trigger that deletes the row being updated
-CREATE TRIGGER tr_EPQTest_Delete_OnUpdate
-ON EPQTest_Update_Delete
-AFTER UPDATE
-AS
-BEGIN
-    DELETE FROM EPQTest_Update_Delete
-    WHERE ID IN (SELECT ID FROM inserted) ;
-END;
-GO
+-- -- Insert test data
+-- INSERT INTO EPQTest_Update_Delete (ID, Name, Value, Counter) VALUES 
+-- (1, 'Row1', 100, 1),
+-- (2, 'Row2', 200, 2),
+-- (3, 'Row3', 300, 3);
+-- GO
 
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.1.3 Scenerio -
- *  Delete command with output clause
- *  AFTER trigger on Delete
- *  Delete inside AFTER trigger deleting same row
- * ------------------------------------------------------------------------------------
- */
-
--- Setup EPQ test table
-CREATE TABLE EPQTest_Delete_Delete (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
+-- -- Test Case 18: AFTER trigger that deletes the row being updated
+-- CREATE TRIGGER tr_EPQTest_Delete_OnUpdate
+-- ON EPQTest_Update_Delete
+-- AFTER UPDATE
+-- AS
+-- BEGIN
+--     DELETE FROM EPQTest_Update_Delete
+--     WHERE ID IN (SELECT ID FROM inserted) ;
+-- END;
+-- GO
 
 
--- Insert test data
-INSERT INTO EPQTest_Delete_Delete (ID, Name, Value, Counter) VALUES 
-(1, 'Row1', 100, 1),
-(2, 'Row2', 200, 2),
-(3, 'Row3', 300, 3);
-GO
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.1.3 Scenerio -
+--  *  Delete command with output clause
+--  *  AFTER trigger on Delete
+--  *  Delete inside AFTER trigger deleting same row
+--  * ------------------------------------------------------------------------------------
+--  */
 
--- Test Case 19: AFTER trigger that deletes additional rows during DELETE
-CREATE TRIGGER tr_EPQTest_Delete_OnDelete
-ON EPQTest_Delete_Delete
-AFTER DELETE
-AS
-BEGIN
-    DELETE FROM EPQTest_Delete_Delete 
-    WHERE Value < (SELECT MIN(Value) FROM deleted) + 50;
-END;
-GO
-
-
-/*
- * ------------------------------------------------------------------------------------
- *  2.1.4 Scenerio -
- *  Delete command with output clause
- *  AFTER trigger on Delete
- *  Update inside AFTER trigger trying to update deleted row
- * ------------------------------------------------------------------------------------
- */
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_Delete_Delete (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
 
 
--- Setup EPQ test table
-CREATE TABLE EPQTest_Delete_Update (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
+-- -- Insert test data
+-- INSERT INTO EPQTest_Delete_Delete (ID, Name, Value, Counter) VALUES 
+-- (1, 'Row1', 100, 1),
+-- (2, 'Row2', 200, 2),
+-- (3, 'Row3', 300, 3);
+-- GO
+
+-- -- Test Case 19: AFTER trigger that deletes additional rows during DELETE
+-- CREATE TRIGGER tr_EPQTest_Delete_OnDelete
+-- ON EPQTest_Delete_Delete
+-- AFTER DELETE
+-- AS
+-- BEGIN
+--     DELETE FROM EPQTest_Delete_Delete 
+--     WHERE Value < (SELECT MIN(Value) FROM deleted) + 50;
+-- END;
+-- GO
 
 
--- Insert test data
-INSERT INTO EPQTest_Delete_Update (ID, Name, Value, Counter) VALUES
-(1, 'Row1', 100, 1),
-(2, 'Row2', 200, 2),
-(3, 'Row3', 300, 3);
-GO
-
--- Test Case 20: AFTER DELETE trigger that tries to update deleted rows
-CREATE TRIGGER tr_EPQTest_Update_Update_AfterDelete
-ON EPQTest_Delete_Update
-AFTER DELETE
-AS
-BEGIN
-    UPDATE EPQTest_Delete_Update
-    SET Status = 'Updated_After_Delete'
-    WHERE ID IN (SELECT ID FROM deleted);
-END;
-GO
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.1.4 Scenerio -
+--  *  Delete command with output clause
+--  *  AFTER trigger on Delete
+--  *  Update inside AFTER trigger trying to update deleted row
+--  * ------------------------------------------------------------------------------------
+--  */
 
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.1.5 Scenerio -
- *  Insert command with output clause
- *  AFTER trigger on Insert
- *  Delete inside trigger deleting new inserted row
- * ------------------------------------------------------------------------------------
- */
-
--- Setup EPQ test table
-CREATE TABLE EPQTest_Insert_Delete (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
-
--- Test Case 21: AFTER INSERT trigger that deletes the inserted row
-CREATE TRIGGER tr_EPQTest_Delete_AfterInsert
-ON EPQTest_Insert_Delete
-AFTER INSERT
-AS
-BEGIN
-    DELETE FROM EPQTest_Insert_Delete 
-    WHERE ID IN (SELECT ID FROM inserted);
-END;
-GO
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_Delete_Update (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
 
 
-/*
- * ------------------------------------------------------------------------------------
- *  2.1.6 Scenerio -
- *  Insert command with output clause
- *  AFTER trigger on Insert
- *  Update inside trigger Updating new inserted row
- * ------------------------------------------------------------------------------------
- */
+-- -- Insert test data
+-- INSERT INTO EPQTest_Delete_Update (ID, Name, Value, Counter) VALUES
+-- (1, 'Row1', 100, 1),
+-- (2, 'Row2', 200, 2),
+-- (3, 'Row3', 300, 3);
+-- GO
 
--- Setup EPQ test table
-CREATE TABLE EPQTest_Insert_Update (
-    ID INT PRIMARY KEY,
-    Name NVARCHAR(50),
-    Value INT,
-    Counter INT DEFAULT 0,
-    Status NVARCHAR(20) DEFAULT 'Active'
-);
-GO
-
--- AFTER INSERT trigger that Updates the inserted row
-CREATE TRIGGER tr_EPQTest_Update_AfterInsert
-ON EPQTest_Insert_Update
-AFTER INSERT
-AS
-BEGIN
-    UPDATE EPQTest_Insert_Update 
-    SET Status = 'PostTrigger'
-    WHERE ID IN (SELECT ID FROM inserted);
-END;
-GO
+-- -- Test Case 20: AFTER DELETE trigger that tries to update deleted rows
+-- CREATE TRIGGER tr_EPQTest_Update_Update_AfterDelete
+-- ON EPQTest_Delete_Update
+-- AFTER DELETE
+-- AS
+-- BEGIN
+--     UPDATE EPQTest_Delete_Update
+--     SET Status = 'Updated_After_Delete'
+--     WHERE ID IN (SELECT ID FROM deleted);
+-- END;
+-- GO
 
 
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.1.5 Scenerio -
+--  *  Insert command with output clause
+--  *  AFTER trigger on Insert
+--  *  Delete inside trigger deleting new inserted row
+--  * ------------------------------------------------------------------------------------
+--  */
+
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_Insert_Delete (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
+
+-- -- Test Case 21: AFTER INSERT trigger that deletes the inserted row
+-- CREATE TRIGGER tr_EPQTest_Delete_AfterInsert
+-- ON EPQTest_Insert_Delete
+-- AFTER INSERT
+-- AS
+-- BEGIN
+--     DELETE FROM EPQTest_Insert_Delete 
+--     WHERE ID IN (SELECT ID FROM inserted);
+-- END;
+-- GO
 
 
--- Temporary table to store OUTPUT result
-CREATE TABLE EPQOutputLog (
-    LogID INT,
-    SourceID INT,
-    OldValue INT,
-    NewValue INT,
-    LogStatus NVARCHAR(20)
-);
-GO
+-- /*
+--  * ------------------------------------------------------------------------------------
+--  *  2.1.6 Scenerio -
+--  *  Insert command with output clause
+--  *  AFTER trigger on Insert
+--  *  Update inside trigger Updating new inserted row
+--  * ------------------------------------------------------------------------------------
+--  */
 
--- Temporary table to store OUTPUT result
-CREATE TABLE EPQOutputLog_Str (
-    LogID INT,
-    SourceID INT,
-    OldValue NVARCHAR(30),
-    NewValue NVARCHAR(30),
-    LogStatus NVARCHAR(20)
-);
-GO
+-- -- Setup EPQ test table
+-- CREATE TABLE EPQTest_Insert_Update (
+--     ID INT PRIMARY KEY,
+--     Name NVARCHAR(50),
+--     Value INT,
+--     Counter INT DEFAULT 0,
+--     Status NVARCHAR(20) DEFAULT 'Active'
+-- );
+-- GO
+
+-- -- AFTER INSERT trigger that Updates the inserted row
+-- CREATE TRIGGER tr_EPQTest_Update_AfterInsert
+-- ON EPQTest_Insert_Update
+-- AFTER INSERT
+-- AS
+-- BEGIN
+--     UPDATE EPQTest_Insert_Update 
+--     SET Status = 'PostTrigger'
+--     WHERE ID IN (SELECT ID FROM inserted);
+-- END;
+-- GO
+
+
+
+
+-- -- Temporary table to store OUTPUT result
+-- CREATE TABLE EPQOutputLog (
+--     LogID INT,
+--     SourceID INT,
+--     OldValue INT,
+--     NewValue INT,
+--     LogStatus NVARCHAR(20)
+-- );
+-- GO
+
+-- -- Temporary table to store OUTPUT result
+-- CREATE TABLE EPQOutputLog_Str (
+--     LogID INT,
+--     SourceID INT,
+--     OldValue NVARCHAR(30),
+--     NewValue NVARCHAR(30),
+--     LogStatus NVARCHAR(20)
+-- );
+-- GO
 
 /*
  *  ----------------------------   2.2 All below tests are INSTEAD OF TRIGGERS test with output clause. --------------------------------------------

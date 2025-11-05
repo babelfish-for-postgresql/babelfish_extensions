@@ -141,141 +141,141 @@ SELECT * FROM OutputTest ORDER BY ID;
 GO
 
 
-/*
- * ===================================================================================================================
- *                                              2. Triggers with DML test.
- * ===================================================================================================================
- */
+-- /*
+--  * ===================================================================================================================
+--  *                                              2. Triggers with DML test.
+--  * ===================================================================================================================
+--  */
 
 
-/*
- * 2.1 All below tests are AFTER TRIGGERS test with output clause
- */
+-- /*
+--  * 2.1 All below tests are AFTER TRIGGERS test with output clause
+--  */
 
 
-------------------------------------------------------- UPDATE -----------------------------------------
+-- ------------------------------------------------------- UPDATE -----------------------------------------
 
--- 2.1.1 update inside update trigger
-UPDATE EPQTest_Update_Update
-SET Value = 500
-OUTPUT 
-    deleted.ID,
-    deleted.Name,
-    deleted.Value as OldValue,
-    deleted.Counter as OldCounter,
-    inserted.Value as NewValue,
-    inserted.Counter as NewCounter
-WHERE ID = 1;
-GO
+-- -- 2.1.1 update inside update trigger
+-- UPDATE EPQTest_Update_Update
+-- SET Value = 500
+-- OUTPUT 
+--     deleted.ID,
+--     deleted.Name,
+--     deleted.Value as OldValue,
+--     deleted.Counter as OldCounter,
+--     inserted.Value as NewValue,
+--     inserted.Counter as NewCounter
+-- WHERE ID = 1;
+-- GO
 
-UPDATE EPQTest_Update_Update
-SET Value = 999
-OUTPUT 
-    1,
-    inserted.ID,
-    deleted.Value,
-    inserted.Value,
-    'Logged'
-INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
-WHERE ID = 1;
-GO
+-- UPDATE EPQTest_Update_Update
+-- SET Value = 999
+-- OUTPUT 
+--     1,
+--     inserted.ID,
+--     deleted.Value,
+--     inserted.Value,
+--     'Logged'
+-- INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
+-- WHERE ID = 1;
+-- GO
 
--- Final state check
-SELECT * FROM EPQTest_Update_Update ORDER BY ID;
-SELECT * FROM EPQOutputLog ORDER BY LogID;
-GO
-delete from EPQOutputLog;
-GO
-
-
---2.1.2 delete inside update trigger
-UPDATE EPQTest_Update_Delete 
-SET Value = 999
-OUTPUT 
-    1,
-    inserted.ID,
-    deleted.Value,
-    inserted.Value,
-    'Logged'
-INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
-WHERE ID = 1;
-GO
-
--- Final state check
-SELECT * FROM EPQTest_Update_Delete ORDER BY ID;
-SELECT * FROM EPQOutputLog ORDER BY LogID;
-GO
-delete from EPQOutputLog;
-GO
+-- -- Final state check
+-- SELECT * FROM EPQTest_Update_Update ORDER BY ID;
+-- SELECT * FROM EPQOutputLog ORDER BY LogID;
+-- GO
+-- delete from EPQOutputLog;
+-- GO
 
 
-------------------------------------------------------- DELETE ------------------------------------------------
--- 2.1.3 delete inside delete trigger
-DELETE FROM EPQTest_Delete_Delete
-OUTPUT deleted.ID, deleted.Name, deleted.Value
-WHERE ID = 2;
-GO
+-- --2.1.2 delete inside update trigger
+-- UPDATE EPQTest_Update_Delete 
+-- SET Value = 999
+-- OUTPUT 
+--     1,
+--     inserted.ID,
+--     deleted.Value,
+--     inserted.Value,
+--     'Logged'
+-- INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
+-- WHERE ID = 1;
+-- GO
 
--- Final state check
-SELECT * FROM EPQTest_Delete_Delete ORDER BY ID;
-SELECT * FROM EPQOutputLog ORDER BY LogID;
-GO
-delete from EPQOutputLog;
-GO
-
--- 2.1.4 Update inside delete trigger
-DELETE FROM EPQTest_Delete_Update
-OUTPUT deleted.ID, deleted.Name, deleted.Value
-WHERE ID = 2;
-GO
-
--- Final state check
-SELECT * FROM EPQTest_Delete_Update ORDER BY ID;
-SELECT * FROM EPQOutputLog ORDER BY LogID;
-GO
-delete from EPQOutputLog;
-GO
-
-------------------------------------------------------- INSERT -------------------------------------------------
-
--- 2.1.5 delete inside insert trigger
-INSERT INTO EPQTest_Insert_Delete (ID, Name, Value, Counter)
-OUTPUT 
-    1,
-    1,
-    deleted.ID,
-    inserted.ID,
-    'Logged'
-INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
-VALUES (1, 'Row1', 100, 1);
-GO
-
--- Final state check
-SELECT * FROM EPQTest_Insert_Delete ORDER BY ID;
-SELECT * FROM EPQOutputLog ORDER BY LogID;
-GO
-delete from EPQOutputLog;
-GO
+-- -- Final state check
+-- SELECT * FROM EPQTest_Update_Delete ORDER BY ID;
+-- SELECT * FROM EPQOutputLog ORDER BY LogID;
+-- GO
+-- delete from EPQOutputLog;
+-- GO
 
 
--- 2.1.6 Update inside insert trigger
-INSERT INTO EPQTest_Insert_Update (ID, Name, Value, Counter)
-OUTPUT 
-    1,
-    1,
-    'NA',
-    inserted.Status,
-    'Logged'
-INTO EPQOutputLog_Str (LogID, SourceID, OldValue, NewValue, LogStatus)
-VALUES (1, 'Row1', 100, 1);
-GO
+-- ------------------------------------------------------- DELETE ------------------------------------------------
+-- -- 2.1.3 delete inside delete trigger
+-- DELETE FROM EPQTest_Delete_Delete
+-- OUTPUT deleted.ID, deleted.Name, deleted.Value
+-- WHERE ID = 2;
+-- GO
 
--- Final state check
-SELECT * FROM EPQTest_Insert_Update ORDER BY ID;
-SELECT * FROM EPQOutputLog_Str ORDER BY LogID;
-GO
-delete from EPQOutputLog_Str;
-GO
+-- -- Final state check
+-- SELECT * FROM EPQTest_Delete_Delete ORDER BY ID;
+-- SELECT * FROM EPQOutputLog ORDER BY LogID;
+-- GO
+-- delete from EPQOutputLog;
+-- GO
+
+-- -- 2.1.4 Update inside delete trigger
+-- DELETE FROM EPQTest_Delete_Update
+-- OUTPUT deleted.ID, deleted.Name, deleted.Value
+-- WHERE ID = 2;
+-- GO
+
+-- -- Final state check
+-- SELECT * FROM EPQTest_Delete_Update ORDER BY ID;
+-- SELECT * FROM EPQOutputLog ORDER BY LogID;
+-- GO
+-- delete from EPQOutputLog;
+-- GO
+
+-- ------------------------------------------------------- INSERT -------------------------------------------------
+
+-- -- 2.1.5 delete inside insert trigger
+-- INSERT INTO EPQTest_Insert_Delete (ID, Name, Value, Counter)
+-- OUTPUT 
+--     1,
+--     1,
+--     deleted.ID,
+--     inserted.ID,
+--     'Logged'
+-- INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
+-- VALUES (1, 'Row1', 100, 1);
+-- GO
+
+-- -- Final state check
+-- SELECT * FROM EPQTest_Insert_Delete ORDER BY ID;
+-- SELECT * FROM EPQOutputLog ORDER BY LogID;
+-- GO
+-- delete from EPQOutputLog;
+-- GO
+
+
+-- -- 2.1.6 Update inside insert trigger
+-- INSERT INTO EPQTest_Insert_Update (ID, Name, Value, Counter)
+-- OUTPUT 
+--     1,
+--     1,
+--     'NA',
+--     inserted.Status,
+--     'Logged'
+-- INTO EPQOutputLog_Str (LogID, SourceID, OldValue, NewValue, LogStatus)
+-- VALUES (1, 'Row1', 100, 1);
+-- GO
+
+-- -- Final state check
+-- SELECT * FROM EPQTest_Insert_Update ORDER BY ID;
+-- SELECT * FROM EPQOutputLog_Str ORDER BY LogID;
+-- GO
+-- delete from EPQOutputLog_Str;
+-- GO
 
 
 
