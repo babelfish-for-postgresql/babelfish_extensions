@@ -32,58 +32,10 @@ CREATE TABLE OutputLog (
 );
 GO
 
--- Dependent objects setup
-CREATE VIEW OutputTestView AS
-SELECT ID, Name, Value, Status FROM OutputTest WHERE Status = 'Active';
-GO
 
-CREATE TABLE TriggerLog (
-    LogID INT,
-    TriggerType NVARCHAR(20),
-    TableName NVARCHAR(50),
-    RecordID INT
-);
-GO
 
--- Triggers for testing OUTPUT with trigger interaction
-CREATE TRIGGER tr_OutputTest_Insert
-ON OutputTest
-AFTER INSERT
-AS
-BEGIN
-    INSERT INTO TriggerLog (LogID, TriggerType, TableName, RecordID)
-    SELECT inserted.ID + 1000, 'AFTER_INSERT', 'OutputTest', inserted.ID FROM inserted;
-END;
-GO
 
-CREATE TRIGGER tr_OutputTest_Update
-ON OutputTest
-AFTER UPDATE
-AS
-BEGIN
-    INSERT INTO TriggerLog (LogID, TriggerType, TableName, RecordID)
-    SELECT inserted.ID + 2000, 'AFTER_UPDATE', 'OutputTest', inserted.ID FROM inserted;
-    
-    -- -- Trigger updates THE SAME ROW with OUTPUT clause - creates complex EPQ scenario
-    -- IF UPDATE(Value) AND NOT UPDATE(Status)
-    -- BEGIN
-    --     UPDATE OutputTest 
-    --     SET Status = 'Trigger_Modified', Value = Value + 1000
-    --     OUTPUT 'SAME_ROW_UPD', deleted.Value, inserted.Value, inserted.Status INTO OutputLog (LogID, Operation, ID, Name, Value)
-    --     WHERE ID IN (SELECT ID FROM inserted);
-    -- END;
-END;
-GO
 
-CREATE TRIGGER tr_OutputTest_Delete
-ON OutputTest
-AFTER DELETE
-AS
-BEGIN
-    INSERT INTO TriggerLog (LogID, TriggerType, TableName, RecordID)
-    SELECT deleted.ID + 3000, 'AFTER_DELETE', 'OutputTest', deleted.ID FROM deleted;
-END;
-GO
 
 
 
