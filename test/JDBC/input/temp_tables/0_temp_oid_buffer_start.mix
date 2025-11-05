@@ -2,18 +2,17 @@
 -- tsql
 CREATE VIEW db_role_settings_view
 AS
-SELECT setdatabase AS db, setrole AS role, unnest(setconfig) AS setting
-FROM pg_db_role_setting
-ORDER BY db;
+SELECT unnest(setconfig) AS setting
+FROM pg_db_role_setting;
 GO
 
 CREATE VIEW unnested_db_role_settings_view
 AS
-SELECT db, role, 
+SELECT
 substring(setting, 1, charindex('=',setting)-1) as setting, 
 substring(setting, charindex('=',setting)+1) as value
 FROM db_role_settings_view
-ORDER BY db;
+ORDER BY setting;
 GO
 
 SELECT * FROM unnested_db_role_settings_view;
@@ -29,7 +28,7 @@ SP_BABELFISH_CONFIGURE '%', 'ignore', 'server'
 GO
 
 -- check all escape hatches
-SELECT db,role,setting,
+SELECT setting,
 CASE setting
 	WHEN 'babelfishpg_tsql.temp_oid_buffer_start' 
 		THEN CASE value WHEN '-2147483648' THEN 'n' ELSE 'y' END
@@ -49,7 +48,7 @@ CREATE TABLE #dummy_table(a INT);
 GO
 
 -- check all escape hatches
-SELECT db,role,setting,
+SELECT setting,
 CASE setting
 	WHEN 'babelfishpg_tsql.temp_oid_buffer_start' 
 		THEN CASE value WHEN '-2147483648' THEN 'n' ELSE 'y' END
@@ -59,7 +58,7 @@ FROM unnested_db_role_settings_view
 GO
 
 -- check that the temp_oid_buffer_start should now be set
-SELECT db,role,setting,
+SELECT setting,
 CASE setting
 	WHEN 'babelfishpg_tsql.temp_oid_buffer_start' 
 		THEN CASE value WHEN '-2147483648' THEN 'n' ELSE 'y' END
@@ -73,7 +72,7 @@ ROLLBACK TRAN
 GO
 
 -- check that the temp_oid_buffer_start should not be set anymore
-SELECT db,role,setting,
+SELECT setting,
 CASE setting
 	WHEN 'babelfishpg_tsql.temp_oid_buffer_start' 
 		THEN CASE value WHEN '-2147483648' THEN 'n' ELSE 'y' END
