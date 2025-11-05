@@ -26,6 +26,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_clause.h"
 #include "src/collation.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
@@ -66,6 +67,7 @@ extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
 extern handle_constant_literals_hook_type handle_constant_literals_hook;
 extern set_common_typmod_case_expr_hook_type set_common_typmod_case_expr_hook;
+extern resolve_unknwon_literal_hook_type resolve_unknwon_literal_hook;
 
 extern bool babelfish_dump_restore;
 
@@ -83,6 +85,7 @@ static bool is_tsql_numeric_fixeddecimal(Oid oid);
 static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
 static int32 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type);
+static Node* tsql_resolve_unknwon_literal_hook(ParseState *pstate, Node *expr, Oid *restype);
 
 #define TINYINT_PRECISION_RADIX 	3
 #define SMALLINT_PRECISION_RADIX 	5
@@ -533,6 +536,9 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	Oid			typeIds[2] = {sourceTypeId, targetTypeId};
 	Oid			UDT_sourceBaseType = InvalidOid;
 	Oid			UDT_targetBaseType = InvalidOid;
+
+	if (sourceTypeId == UNKNOWNOID)
+		return COERCION_PATH_COERCEVIAIO;
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -3340,6 +3346,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	select_common_typmod_hook = tsql_select_common_typmod_hook;
 	handle_constant_literals_hook = tsql_handle_constant_literals_hook;
 	set_common_typmod_case_expr_hook = tsql_set_common_typmod_case_expr_hook;
+	resolve_unknwon_literal_hook = tsql_resolve_unknwon_literal_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);
@@ -3713,4 +3720,39 @@ pltsql_bpchar_name(PG_FUNCTION_ARGS)
 	memcpy(NameStr(*result), s_data, len);
 
 	PG_RETURN_NAME(result);
+}
+
+/*
+ * Resolves type of string literal to sys.varchar. And for other expr 
+ * with type UNKNOWNOID we will keep its type as it is, to avoid getting 
+ * incorrect results during common type selection.
+ */
+static Node*
+tsql_resolve_unknwon_literal_hook(ParseState *pstate, Node *expr, Oid *restype)
+{
+	if (pstate->p_resolve_unknowns)
+	{
+		expr = coerce_type(pstate, (Node *) expr,
+												*restype, TEXTOID, -1,
+												COERCION_IMPLICIT,
+												COERCE_IMPLICIT_CAST,
+												-1);
+		*restype = TEXTOID;
+	}
+	else if (is_tsql_str_const(expr, UNKNOWNOID))
+	{
+		Oid		sys_varcharoid = get_sys_varcharoid();
+		int32	typmod = strlen(DatumGetCString(((Const *) expr)->constvalue)) + VARHDRSZ;
+
+		expr = coerce_to_target_type(pstate, (Node *) expr,
+													*restype, sys_varcharoid, typmod,
+													COERCION_IMPLICIT,
+													COERCE_IMPLICIT_CAST,
+													-1);
+		*restype = sys_varcharoid;
+	}
+	else
+		*restype = TEXTOID;
+
+	return expr;
 }
