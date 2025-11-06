@@ -3,6 +3,9 @@
 SELECT set_config('enable_bitmapscan', 'off', false);
 GO
 
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
 -- psql
 ANALYZE master_dbo.BABEL_6098_binary_test;
 GO
@@ -1151,7 +1154,7 @@ GO
 SET BABELFISH_SHOWPLAN_ALL OFF;
 GO
 
-SET BABELFISH_SHOWPLAN_ALL OFF;
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false);
 GO
 
 SELECT set_config('enable_bitmapscan', 'on', false);
