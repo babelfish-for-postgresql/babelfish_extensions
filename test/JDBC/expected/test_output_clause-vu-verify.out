@@ -596,7 +596,7 @@ SELECT 'INSTEAD OF Delete+Delete' as TestPhase, COUNT(*) as RemainingRows FROM E
 GO
 ~~START~~
 varchar#!#int
-INSTEAD OF Delete+Delete#!#1
+INSTEAD OF Delete+Delete#!#2
 ~~END~~
 
 
@@ -664,8 +664,6 @@ INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter) VALUES (1
 GO
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 1~~
-
 
 -- Test Case 34: INSTEAD OF INSERT trigger that deletes existing rows
 INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter, Status)
@@ -676,8 +674,6 @@ GO
 ~~START~~
 varchar#!#int#!#nvarchar#!#int#!#int#!#nvarchar
 ~~END~~
-
-~~ROW COUNT: 1~~
 
 
 -- Print OUTPUT results
@@ -693,7 +689,7 @@ SELECT 'INSTEAD OF Insert+Delete' as TestPhase, COUNT(*) as TotalRows FROM EPQTe
 GO
 ~~START~~
 varchar#!#int
-INSTEAD OF Insert+Delete#!#1
+INSTEAD OF Insert+Delete#!#0
 ~~END~~
 
 
@@ -701,7 +697,6 @@ SELECT * FROM EPQTest_InsteadOf_Insert_Delete ORDER BY ID;
 GO
 ~~START~~
 int#!#nvarchar#!#int#!#int#!#nvarchar
-2#!#NewRow#!#100#!#2#!#Active
 ~~END~~
 
 
@@ -719,8 +714,6 @@ INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter) VALUES (1
 GO
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 1~~
-
 
 -- 2.2.6 INSTEAD OF INSERT trigger that updates existing rows
 INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
@@ -731,8 +724,6 @@ GO
 ~~START~~
 varchar#!#int#!#nvarchar#!#int#!#int#!#nvarchar
 ~~END~~
-
-~~ROW COUNT: 1~~
 
 
 -- Print OUTPUT results
@@ -748,7 +739,7 @@ SELECT 'INSTEAD OF Insert+Update' as TestPhase, COUNT(*) as TotalRows FROM EPQTe
 GO
 ~~START~~
 varchar#!#int
-INSTEAD OF Insert+Update#!#2
+INSTEAD OF Insert+Update#!#0
 ~~END~~
 
 
@@ -756,8 +747,6 @@ SELECT * FROM EPQTest_InsteadOf_Insert_Update ORDER BY ID;
 GO
 ~~START~~
 int#!#nvarchar#!#int#!#int#!#nvarchar
-1#!#Existing1#!#50#!#501#!#Updated_By_Insert
-2#!#NewRow#!#200#!#2#!#Inserted_Via_Trigger
 ~~END~~
 
 

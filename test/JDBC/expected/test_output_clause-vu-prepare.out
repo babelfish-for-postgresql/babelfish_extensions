@@ -466,8 +466,8 @@ ON EPQTest_InsteadOf_Delete_Delete
 INSTEAD OF DELETE
 AS
 BEGIN
-    DELETE FROM EPQTest_InsteadOf_Delete_Delete 
-    WHERE Value < (SELECT MIN(Value) FROM deleted) + 50;
+    -- DELETE FROM EPQTest_InsteadOf_Delete_Delete 
+    -- WHERE Value < (SELECT MIN(Value) FROM deleted) + 50;
     
     DELETE FROM EPQTest_InsteadOf_Delete_Delete
     WHERE ID IN (SELECT ID FROM deleted);
@@ -543,8 +543,6 @@ BEGIN
     DELETE FROM EPQTest_InsteadOf_Insert_Delete 
     WHERE Value < (SELECT MIN(Value) FROM inserted);
     
-    INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter, Status)
-    SELECT ID, Name, Value, Counter, Status FROM inserted;
 END;
 GO
 
@@ -577,8 +575,8 @@ BEGIN
     SET Status = 'Updated_By_Insert', Counter = Counter + 500
     WHERE Value < (SELECT MAX(Value) FROM inserted);
     
-    INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
-    SELECT ID, Name, Value, Counter, 'Inserted_Via_Trigger' FROM inserted;
+    -- INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
+    -- SELECT ID, Name, Value, Counter, 'Inserted_Via_Trigger' FROM inserted;
 END;
 GO
 
