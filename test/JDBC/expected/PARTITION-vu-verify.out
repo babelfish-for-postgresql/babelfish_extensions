@@ -2430,7 +2430,6 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_binary_table WHERE Id >= 0x0000 AND Id < 0x0400
-Append
 Index Scan using "3a3cd2fe373a5dc4b9281d49f7960143_partition_1_id_idx" on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table
   Index Cond: (((id)::bbf_binary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_binary < '0x0400'::bbf_varbinary))
 ~~END~~
