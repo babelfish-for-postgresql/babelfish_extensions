@@ -266,7 +266,7 @@ OUTPUT
     'NA',
     inserted.Status,
     'Logged'
-INTO EPQOutputLog_Str (LogID, SourceID, OldValue, NewValue, LogStatus)
+-- INTO EPQOutputLog_Str (LogID, SourceID, OldValue, NewValue, LogStatus)
 VALUES (1, 'Row1', 100, 1);
 GO
 

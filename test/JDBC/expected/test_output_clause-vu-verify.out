@@ -459,12 +459,13 @@ OUTPUT
     'NA',
     inserted.Status,
     'Logged'
-INTO EPQOutputLog_Str (LogID, SourceID, OldValue, NewValue, LogStatus)
+-- INTO EPQOutputLog_Str (LogID, SourceID, OldValue, NewValue, LogStatus)
 VALUES (1, 'Row1', 100, 1);
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
+~~START~~
+int#!#int#!#varchar#!#nvarchar#!#varchar
+1#!#1#!#NA#!#Active#!#Logged
+~~END~~
 
 
 -- Final state check
@@ -478,13 +479,10 @@ int#!#nvarchar#!#int#!#int#!#nvarchar
 
 ~~START~~
 int#!#int#!#nvarchar#!#nvarchar#!#nvarchar
-1#!#1#!#NA#!#Active#!#Logged
 ~~END~~
 
 delete from EPQOutputLog_Str;
 GO
-~~ROW COUNT: 1~~
-
 
 
 
