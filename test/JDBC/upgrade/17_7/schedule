@@ -657,4 +657,4 @@ Select_top_N_percent
 ascii_function
 test_convert_to_binary
 cast_datetime_to_binary
-comparison_op_index_scan
+comparison_op_index_scan-before-17_8-or-16_12
