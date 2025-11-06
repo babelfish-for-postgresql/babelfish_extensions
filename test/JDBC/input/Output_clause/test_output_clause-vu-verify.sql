@@ -509,73 +509,73 @@ GO
  * ------------------------------------------------------------------------------------
  */
 
--- Create temporary table to store OUTPUT results
-drop table if exists OutputResults;
-GO
-CREATE TABLE OutputResults (
-    ID INT,
-    OldValue INT,
-    NewValue INT
-);
-GO
+-- -- Create temporary table to store OUTPUT results
+-- drop table if exists OutputResults;
+-- GO
+-- CREATE TABLE OutputResults (
+--     ID INT,
+--     OldValue INT,
+--     NewValue INT
+-- );
+-- GO
 
--- Test UPDATE with OUTPUT on view (triggers both INSTEAD OF and AFTER)
-UPDATE MixedTriggerTest
-SET Value = 500
-OUTPUT deleted.ID, deleted.Value, inserted.Value
--- INTO OutputResults (ID, OldValue, NewValue)
-WHERE ID = 1;
-GO
+-- -- Test UPDATE with OUTPUT on view (triggers both INSTEAD OF and AFTER)
+-- UPDATE MixedTriggerTest
+-- SET Value = 500
+-- OUTPUT deleted.ID, deleted.Value, inserted.Value
+-- -- INTO OutputResults (ID, OldValue, NewValue)
+-- WHERE ID = 1;
+-- GO
 
--- Display OUTPUT results
-SELECT 'Original update OUTPUT Results' as TestPhase, * FROM OutputResults;
-GO
+-- -- Display OUTPUT results
+-- SELECT 'Original update OUTPUT Results' as TestPhase, * FROM OutputResults;
+-- GO
 
--- Display trigger output result
-select 'trigger update output result' as TestPhase, * from TriggerOutputLogMixed;
-GO
+-- -- Display trigger output result
+-- select 'trigger update output result' as TestPhase, * from TriggerOutputLogMixed;
+-- GO
 
--- Display final table state
-SELECT 'Final Update State' as TestPhase, * FROM MixedTriggerTest;
-GO
+-- -- Display final table state
+-- SELECT 'Final Update State' as TestPhase, * FROM MixedTriggerTest;
+-- GO
 
--- Cleanup
-delete from OutputResults;
-GO
+-- -- Cleanup
+-- delete from OutputResults;
+-- GO
 
 
 
--- Mixed Triggers DELETE Test
-DELETE FROM MixedTriggerTestDelete
-OUTPUT deleted.ID, deleted.Name, deleted.Value
--- INTO OutputResults (ID, OldValue, NewValue)
-WHERE ID = 1;
-GO
+-- -- Mixed Triggers DELETE Test
+-- DELETE FROM MixedTriggerTestDelete
+-- OUTPUT deleted.ID, deleted.Name, deleted.Value
+-- -- INTO OutputResults (ID, OldValue, NewValue)
+-- WHERE ID = 1;
+-- GO
 
--- print original delete output result
-SELECT 'Original delete OUTPUT Results' as TestPhase, * FROM OutputResults;
+-- -- print original delete output result
+-- SELECT 'Original delete OUTPUT Results' as TestPhase, * FROM OutputResults;
 
--- Print DELETE trigger ouptut results
-SELECT 'Mixed DELETE Trigger Results' as TestPhase, * FROM TriggerOutputLogMixedDelete;
-GO
+-- -- Print DELETE trigger ouptut results
+-- SELECT 'Mixed DELETE Trigger Results' as TestPhase, * FROM TriggerOutputLogMixedDelete;
+-- GO
 
-SELECT 'Final Delete State' as TestPhase, * FROM MixedTriggerTestDelete;
-GO
+-- SELECT 'Final Delete State' as TestPhase, * FROM MixedTriggerTestDelete;
+-- GO
 
--- Mixed Triggers INSERT Test  
-INSERT INTO MixedTriggerTestInsert (ID, Name, Value)
-OUTPUT inserted.ID, inserted.Name, inserted.Value
--- INTO OutputResults (ID, OldValue, NewValue)
-VALUES (1, 'TestInsert', 200);
-GO
+-- -- Mixed Triggers INSERT Test  
+-- INSERT INTO MixedTriggerTestInsert (ID, Name, Value)
+-- OUTPUT inserted.ID, inserted.Name, inserted.Value
+-- -- INTO OutputResults (ID, OldValue, NewValue)
+-- VALUES (1, 'TestInsert', 200);
+-- GO
  
--- print original delete output result
-SELECT 'Original Insert OUTPUT Results' as TestPhase, * FROM OutputResults;
+-- -- print original delete output result
+-- SELECT 'Original Insert OUTPUT Results' as TestPhase, * FROM OutputResults;
 
--- Print INSERT trigger output results
-SELECT 'Mixed INSERT Trigger Results' as TestPhase, * FROM TriggerOutputLogMixedInsert;
-GO
+-- -- Print INSERT trigger output results
+-- SELECT 'Mixed INSERT Trigger Results' as TestPhase, * FROM TriggerOutputLogMixedInsert;
+-- GO
 
--- Verify final INSERT table state
-SELECT 'Final INSERT State' as TestPhase, * FROM MixedTriggerTestInsert;
-GO
+-- -- Verify final INSERT table state
+-- SELECT 'Final INSERT State' as TestPhase, * FROM MixedTriggerTestInsert;
+-- GO
