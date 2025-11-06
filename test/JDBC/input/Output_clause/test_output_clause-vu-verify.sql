@@ -23,24 +23,24 @@ OUTPUT deleted.ID, deleted.Name, deleted.Value
 WHERE ID = 2;
 GO
 
--- -- Test Case 4: INSERT with OUTPUT INTO
--- INSERT INTO OutputTest (ID, Name, Value)
--- OUTPUT 1, 'INSERT', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
--- VALUES (5, 'LoggedTest', 500);
--- GO
+-- Test Case 4: INSERT with OUTPUT INTO
+INSERT INTO OutputTest (ID, Name, Value)
+OUTPUT 1, 'INSERT', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
+VALUES (5, 'LoggedTest', 500);
+GO
 
--- -- Test Case 5: UPDATE with OUTPUT INTO
--- UPDATE OutputTest
--- SET Status = 'Updated'
--- OUTPUT 2, 'UPDATE', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
--- WHERE ID = 3;
--- GO
+-- Test Case 5: UPDATE with OUTPUT INTO
+UPDATE OutputTest
+SET Status = 'Updated'
+OUTPUT 2, 'UPDATE', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
+WHERE ID = 3;
+GO
 
--- -- Test Case 6: DELETE with OUTPUT INTO
--- DELETE FROM OutputTest
--- OUTPUT 3, 'DELETE', deleted.ID, deleted.Name, deleted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
--- WHERE Name = 'LoggedTest';
--- GO
+-- Test Case 6: DELETE with OUTPUT INTO
+DELETE FROM OutputTest
+OUTPUT 3, 'DELETE', deleted.ID, deleted.Name, deleted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
+WHERE Name = 'LoggedTest';
+GO
 
 -- Test Case 7: Multiple row UPDATE with OUTPUT
 UPDATE OutputTest
@@ -88,16 +88,16 @@ WHERE Name = 'TriggerTest1';
 GO
 
 -- Test Case 14: Multiple operations with triggers and OUTPUT INTO
--- INSERT INTO OutputTest (ID, Name, Value)
--- OUTPUT 4, 'MULTI_OP', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
--- VALUES (9, 'MultiOp1', 800), (10, 'MultiOp2', 900);
--- GO
+INSERT INTO OutputTest (ID, Name, Value)
+OUTPUT 4, 'MULTI_OP', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
+VALUES (9, 'MultiOp1', 800), (10, 'MultiOp2', 900);
+GO
 
--- UPDATE OutputTest
--- SET Status = 'Batch_Updated'
--- OUTPUT 5, 'BATCH_UPD', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
--- WHERE Name LIKE 'MultiOp%';
--- GO
+UPDATE OutputTest
+SET Status = 'Batch_Updated'
+OUTPUT 5, 'BATCH_UPD', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
+WHERE Name LIKE 'MultiOp%';
+GO
 
 -- Test Case 15: OUTPUT with trigger execution order validation
 INSERT INTO OutputTest (ID, Name, Value)
@@ -176,7 +176,7 @@ OUTPUT
     deleted.Value,
     inserted.Value,
     'Logged'
--- INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
+INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
 WHERE ID = 1;
 GO
 
@@ -197,7 +197,7 @@ OUTPUT
     deleted.Value,
     inserted.Value,
     'Logged'
--- INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
+INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
 WHERE ID = 1;
 GO
 
@@ -246,7 +246,7 @@ OUTPUT
     deleted.ID,
     inserted.ID,
     'Logged'
--- INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
+INTO EPQOutputLog (LogID, SourceID, OldValue, NewValue, LogStatus)
 VALUES (1, 'Row1', 100, 1);
 GO
 
@@ -266,7 +266,7 @@ OUTPUT
     'NA',
     inserted.Status,
     'Logged'
--- INTO EPQOutputLog_Str (LogID, SourceID, OldValue, NewValue, LogStatus)
+INTO EPQOutputLog_Str (LogID, SourceID, OldValue, NewValue, LogStatus)
 VALUES (1, 'Row1', 100, 1);
 GO
 
@@ -301,7 +301,7 @@ GO
 UPDATE EPQTest_InsteadOf_Update_Update
 SET Value = 1500
 OUTPUT 'InsteadOf_Update_Update', deleted.ID, deleted.Name, deleted.Value
--- INTO OutputCapture (TestCase, ID, Name, OldValue)
+INTO OutputCapture (TestCase, ID, Name, OldValue)
 WHERE ID = 1;
 GO
 
@@ -326,7 +326,7 @@ delete from OutputCapture;
 UPDATE EPQTest_InsteadOf_Update_Delete
 SET Value = 2000
 OUTPUT 'InsteadOf_Update_Delete', deleted.ID, deleted.Name, deleted.Value
--- INTO OutputCapture (TestCase, ID, Name, OldValue)
+INTO OutputCapture (TestCase, ID, Name, OldValue)
 WHERE ID = 1;
 GO
 
@@ -347,7 +347,7 @@ GO
 -- 2.2.3 INSTEAD OF DELETE trigger with cascading deletes
 DELETE FROM EPQTest_InsteadOf_Delete_Delete
 OUTPUT 'InsteadOf_Delete_Delete', deleted.ID, deleted.Name, deleted.Value
--- INTO OutputCapture (TestCase, ID, Name, OldValue)
+INTO OutputCapture (TestCase, ID, Name, OldValue)
 WHERE ID = 2;
 GO
 
@@ -372,7 +372,7 @@ GO
 -- 2.2.4 INSTEAD OF DELETE trigger that updates instead of deleting
 DELETE FROM EPQTest_InsteadOf_Delete_Update
 OUTPUT 'InsteadOf_Delete_Update', deleted.ID, deleted.Name, deleted.Counter
--- INTO OutputCapture (TestCase, ID, Name, OldValue)
+INTO OutputCapture (TestCase, ID, Name, OldValue)
 WHERE ID = 1;
 GO
 
@@ -412,7 +412,7 @@ GO
 -- Test Case 34: INSTEAD OF INSERT trigger that deletes existing rows
 INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter, Status)
 OUTPUT 'InsteadOf_Insert_Delete', inserted.ID, inserted.Name, 0, inserted.Value, inserted.Status
--- INTO OutputCapture_insert (TestCase, ID, Name, OldValue, NewValue, Status)
+INTO OutputCapture_insert (TestCase, ID, Name, OldValue, NewValue, Status)
 VALUES (2, 'NewRow', 100, 2, 'Active');
 GO
 
@@ -443,7 +443,7 @@ GO
 -- 2.2.6 INSTEAD OF INSERT trigger that updates existing rows
 INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
 OUTPUT 'InsteadOf_Insert_Update', inserted.ID, inserted.Name, 0, inserted.Value, inserted.Status
--- INTO OutputCapture_insert (TestCase, ID, Name, OldValue, NewValue, Status)
+INTO OutputCapture_insert (TestCase, ID, Name, OldValue, NewValue, Status)
 VALUES (2, 'NewRow', 200, 2, 'Active');
 GO
 
@@ -462,120 +462,3 @@ GO
 DROP TABLE OutputCapture_insert;
 DROP TABLE OutputCapture;
 GO
-
-
-/*
-* ------------------------------------------------------------------------------------
-*  2.3 Delete and Update Trigger Deadlock - EPQ Test Case
-*  
-*  Scenario:
-*  1. UPDATE command with OUTPUT clause on row ID=1
-*  2. UPDATE trigger fires and DELETES the same row (ID=1)
-*  3. DELETE trigger fires and tries to UPDATE the deleted row (ID=1)
-*  4. Creates circular dependency: UPDATE -> DELETE -> UPDATE (same row)
-*  5. OUTPUT clause references row data that gets deleted mid-operation
-*  
-*  Expected Output:  Should give table values without any change
-*
-*. Actual Output: Crashing
-* ------------------------------------------------------------------------------------
-*/
-
--- -- Below test case are in comments as they are crashing
--- -- Test UPDATE with OUTPUT that triggers the deadlock cycle
--- UPDATE EPQTest_Delete_Update_deadlock
--- SET Value = 999
--- OUTPUT deleted.ID, deleted.Value as OldValue, inserted.Value as NewValue
--- WHERE ID = 1;
--- GO
-
--- -- Check final state
--- SELECT * FROM EPQTest_Delete_Update_deadlock ORDER BY ID;
--- GO
-
-
-
-/*
- * ------------------------------------------------------------------------------------
- *  2.4 Mixed Triggers Scenerio
- *  
- *  Scenario:
- *  1. UPDATE command with OUTPUT clause on row ID=1
- *  2. After trigger and Instead of trigger both present
- *  
- *  Expected Output:  Should give updated value
- *
- *. Actual Output: giving before update value
- * ------------------------------------------------------------------------------------
- */
-
--- -- Create temporary table to store OUTPUT results
--- drop table if exists OutputResults;
--- GO
--- CREATE TABLE OutputResults (
---     ID INT,
---     OldValue INT,
---     NewValue INT
--- );
--- GO
-
--- -- Test UPDATE with OUTPUT on view (triggers both INSTEAD OF and AFTER)
--- UPDATE MixedTriggerTest
--- SET Value = 500
--- OUTPUT deleted.ID, deleted.Value, inserted.Value
--- -- INTO OutputResults (ID, OldValue, NewValue)
--- WHERE ID = 1;
--- GO
-
--- -- Display OUTPUT results
--- SELECT 'Original update OUTPUT Results' as TestPhase, * FROM OutputResults;
--- GO
-
--- -- Display trigger output result
--- select 'trigger update output result' as TestPhase, * from TriggerOutputLogMixed;
--- GO
-
--- -- Display final table state
--- SELECT 'Final Update State' as TestPhase, * FROM MixedTriggerTest;
--- GO
-
--- -- Cleanup
--- delete from OutputResults;
--- GO
-
-
-
--- -- Mixed Triggers DELETE Test
--- DELETE FROM MixedTriggerTestDelete
--- OUTPUT deleted.ID, deleted.Name, deleted.Value
--- -- INTO OutputResults (ID, OldValue, NewValue)
--- WHERE ID = 1;
--- GO
-
--- -- print original delete output result
--- SELECT 'Original delete OUTPUT Results' as TestPhase, * FROM OutputResults;
-
--- -- Print DELETE trigger ouptut results
--- SELECT 'Mixed DELETE Trigger Results' as TestPhase, * FROM TriggerOutputLogMixedDelete;
--- GO
-
--- SELECT 'Final Delete State' as TestPhase, * FROM MixedTriggerTestDelete;
--- GO
-
--- -- Mixed Triggers INSERT Test  
--- INSERT INTO MixedTriggerTestInsert (ID, Name, Value)
--- OUTPUT inserted.ID, inserted.Name, inserted.Value
--- -- INTO OutputResults (ID, OldValue, NewValue)
--- VALUES (1, 'TestInsert', 200);
--- GO
- 
--- -- print original delete output result
--- SELECT 'Original Insert OUTPUT Results' as TestPhase, * FROM OutputResults;
-
--- -- Print INSERT trigger output results
--- SELECT 'Mixed INSERT Trigger Results' as TestPhase, * FROM TriggerOutputLogMixedInsert;
--- GO
-
--- -- Verify final INSERT table state
--- SELECT 'Final INSERT State' as TestPhase, * FROM MixedTriggerTestInsert;
--- GO

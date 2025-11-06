@@ -1,5 +1,5 @@
 
-/*
+*
  * ===================================================================================================================
  *                                              1. Basic Output clause test
  * ===================================================================================================================
@@ -12,6 +12,10 @@ CREATE TABLE OutputTest (
     Status NVARCHAR(20) DEFAULT 'Active'
 );
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '*' at line 1 and character position 0)~~
+
 
 -- Insert test data
 INSERT INTO OutputTest (ID, Name, Value) VALUES 
@@ -19,7 +23,9 @@ INSERT INTO OutputTest (ID, Name, Value) VALUES
 (2, 'Test2', 200),
 (3, 'Test3', 300);
 GO
-~~ROW COUNT: 3~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "outputtest" does not exist)~~
 
 
 -- Table for OUTPUT INTO testing
@@ -36,6 +42,10 @@ GO
 CREATE VIEW OutputTestView AS
 SELECT ID, Name, Value, Status FROM OutputTest WHERE Status = 'Active';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "outputtest" does not exist)~~
+
 
 CREATE TABLE TriggerLog (
     LogID INT,
@@ -55,6 +65,10 @@ BEGIN
     SELECT inserted.ID + 1000, 'AFTER_INSERT', 'OutputTest', inserted.ID FROM inserted;
 END;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "outputtest" does not exist)~~
+
 
 CREATE TRIGGER tr_OutputTest_Update
 ON OutputTest
@@ -65,6 +79,10 @@ BEGIN
     SELECT inserted.ID + 2000, 'AFTER_UPDATE', 'OutputTest', inserted.ID FROM inserted;
 END;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "outputtest" does not exist)~~
+
 
 CREATE TRIGGER tr_OutputTest_Delete
 ON OutputTest
@@ -75,6 +93,10 @@ BEGIN
     SELECT deleted.ID + 3000, 'AFTER_DELETE', 'OutputTest', deleted.ID FROM deleted;
 END;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "outputtest" does not exist)~~
+
 
 
 
@@ -117,6 +139,7 @@ GO
 ~~ROW COUNT: 3~~
 
 
+
 -- AFTER trigger that updates the same row
 CREATE TRIGGER tr_EPQTest_After_Update
 ON EPQTest_Update_Update
@@ -126,7 +149,6 @@ BEGIN
     -- UPDATE EPQTest_Update_Update 
     -- SET Counter = Counter + 100
     -- WHERE ID IN (SELECT ID FROM inserted);
-    
     UPDATE EPQTest_Update_Update 
     SET Status = 'PostTrigger'
     WHERE ID IN (SELECT ID FROM inserted);
@@ -460,15 +482,15 @@ GO
 ~~ROW COUNT: 3~~
 
 
+
 -- INSTEAD OF trigger that deletes additional rows during DELETE
 CREATE TRIGGER tr_EPQTest_InsteadOf_Delete_OnDelete
 ON EPQTest_InsteadOf_Delete_Delete
 INSTEAD OF DELETE
 AS
 BEGIN
-    -- DELETE FROM EPQTest_InsteadOf_Delete_Delete 
-    -- WHERE Value < (SELECT MIN(Value) FROM deleted) + 50;
-    
+    DELETE FROM EPQTest_InsteadOf_Delete_Delete 
+    WHERE Value < (SELECT MIN(Value) FROM deleted) + 50;
     DELETE FROM EPQTest_InsteadOf_Delete_Delete
     WHERE ID IN (SELECT ID FROM deleted);
 END;
@@ -534,6 +556,7 @@ CREATE TABLE EPQTest_InsteadOf_Insert_Delete (
 );
 GO
 
+
 -- INSTEAD OF INSERT trigger that deletes existing rows
 CREATE TRIGGER tr_EPQTest_InsteadOf_Delete_OnInsert
 ON EPQTest_InsteadOf_Insert_Delete
@@ -542,7 +565,8 @@ AS
 BEGIN
     DELETE FROM EPQTest_InsteadOf_Insert_Delete 
     WHERE Value < (SELECT MIN(Value) FROM inserted);
-    
+    INSERT INTO EPQTest_InsteadOf_Insert_Delete (ID, Name, Value, Counter, Status)
+    SELECT ID, Name, Value, Counter, Status FROM inserted;
 END;
 GO
 
@@ -565,6 +589,7 @@ CREATE TABLE EPQTest_InsteadOf_Insert_Update (
 );
 GO
 
+
 -- INSTEAD OF INSERT trigger that updates existing rows and inserts new ones
 CREATE TRIGGER tr_EPQTest_InsteadOf_Update_OnInsert
 ON EPQTest_InsteadOf_Insert_Update
@@ -574,33 +599,7 @@ BEGIN
     UPDATE EPQTest_InsteadOf_Insert_Update 
     SET Status = 'Updated_By_Insert', Counter = Counter + 500
     WHERE Value < (SELECT MAX(Value) FROM inserted);
-    
-    -- INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
-    -- SELECT ID, Name, Value, Counter, 'Inserted_Via_Trigger' FROM inserted;
+    INSERT INTO EPQTest_InsteadOf_Insert_Update (ID, Name, Value, Counter, Status)
+    SELECT ID, Name, Value, Counter, 'Inserted_Via_Trigger' FROM inserted;
 END;
 GO
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
