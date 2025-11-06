@@ -26,6 +26,7 @@ static void load_functions();
 #define MAX_DIMENSION_FLAG 4
 #define POINT_TYPE     1  /* Identifier for Point geometry type */
 #define LINE_TYPE      2  /* Identifier for Linestring geometry type */
+#define POLYGON_TYPE   3  /* Identifier for Polygon geometry type */
 
 #define DEFAULT_GEOGRAPHY_SRID 4326
 #define DEFAULT_GEOMETRY_SRID  0
@@ -110,6 +111,7 @@ static void load_functions();
 #define EMPTY_Binary_SIZE      9   /* Size of empty representation in binary */
 #define EMPTY_POINT_Binary   "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty point */
 #define EMPTY_LINE_Binary    "\x01\x02\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty linestring */
+#define EMPTY_POLYGON_Binary "\x01\x03\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty polygon */
 /* 
  * Global array representing NaN coordinate value in IEEE 754 format
  * Used for empty point detection and creation
@@ -259,7 +261,8 @@ static void
 check_geom_type(const char *geom_type)
 {
     if (strcmp(geom_type, "ST_Point") != 0 &&
-        strcmp(geom_type, "ST_LineString") != 0 )
+        strcmp(geom_type, "ST_LineString") != 0 &&
+        strcmp(geom_type, "ST_Polygon") != 0)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -351,6 +354,15 @@ static st_pointn_t st_pointn_p;
 typedef Datum (*st_isvalid_t)(PG_FUNCTION_ARGS);
 static st_isvalid_t st_isvalid_p;
 
+typedef Datum (*st_exteriorring_t)(PG_FUNCTION_ARGS);
+static st_exteriorring_t st_exteriorring_p;
+
+typedef Datum (*st_interiorringn_t)(PG_FUNCTION_ARGS);
+static st_interiorringn_t st_interiorringn_p;
+
+typedef Datum (*st_numinteriorrings_t)(PG_FUNCTION_ARGS);
+static st_numinteriorrings_t st_numinteriorrings_p;
+
 static void validate_geography_latitude(Datum geom_datum, bool is_flipped);
 
 PG_FUNCTION_INFO_V1(geometry_in);
@@ -395,6 +407,9 @@ load_functions()
         st_npoints_p = (st_npoints_t) load_external_function("$libdir/postgis-3", "LWGEOM_npoints", true, NULL);
         st_pointn_p = (st_pointn_t) load_external_function("$libdir/postgis-3", "LWGEOM_pointn_linestring", true, NULL);
         st_isvalid_p = (st_isvalid_t) load_external_function("$libdir/postgis-3", "isvalid", true, NULL); 
+        st_exteriorring_p = (st_exteriorring_t) load_external_function("$libdir/postgis-3", "LWGEOM_exteriorring_polygon", true, NULL);
+        st_interiorringn_p = (st_interiorringn_t) load_external_function("$libdir/postgis-3", "LWGEOM_interiorringn_polygon", true, NULL);
+        st_numinteriorrings_p = (st_numinteriorrings_t) load_external_function("$libdir/postgis-3", "LWGEOM_numinteriorrings_polygon", true, NULL); 
     }
 }
 
@@ -516,6 +531,65 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
                 UpdateFunctionCallInfo(fcinfo_local, 1, point);
                 prev_lat = lat;
                 prev_lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
+            }
+        }
+    }
+    else if (strcmp(geom_type, "ST_Polygon") == 0)
+    {
+        Datum exterior_ring;
+        int num_interior_rings;
+        Datum interior_ring;
+        int ring_idx;
+        
+        /* Validate exterior ring */
+        UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
+        exterior_ring = st_exteriorring_p(fcinfo_local);
+        
+        UpdateFunctionCallInfo(fcinfo_local, 1, exterior_ring);
+        npoints = DatumGetInt32(st_npoints_p(fcinfo_local));
+        
+        for (i = 1; i <= npoints; i++)
+        {
+            UpdateFunctionCallInfo(fcinfo_local, 2, exterior_ring, Int32GetDatum(i));
+            point = st_pointn_p(fcinfo_local);
+            
+            UpdateFunctionCallInfo(fcinfo_local, 1, point);
+            lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
+            
+            if (lat < -90.0 || lat > 90.0)
+            {
+                ereport(ERROR,
+                    (errcode(ERRCODE_DATA_EXCEPTION),
+                     errmsg("Latitude values must be between -90 and 90 degrees")));
+            }
+        }
+        
+        /* Validate interior rings */
+        UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
+        num_interior_rings = DatumGetInt32(st_numinteriorrings_p(fcinfo_local));
+        
+        for (ring_idx = 1; ring_idx <= num_interior_rings; ring_idx++)
+        {
+            UpdateFunctionCallInfo(fcinfo_local, 2, flipped_geom, Int32GetDatum(ring_idx));
+            interior_ring = st_interiorringn_p(fcinfo_local);
+            
+            UpdateFunctionCallInfo(fcinfo_local, 1, interior_ring);
+            npoints = DatumGetInt32(st_npoints_p(fcinfo_local));
+            
+            for (i = 1; i <= npoints; i++)
+            {
+                UpdateFunctionCallInfo(fcinfo_local, 2, interior_ring, Int32GetDatum(i));
+                point = st_pointn_p(fcinfo_local);
+                
+                UpdateFunctionCallInfo(fcinfo_local, 1, point);
+                lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
+                
+                if (lat < -90.0 || lat > 90.0)
+                {
+                    ereport(ERROR,
+                        (errcode(ERRCODE_DATA_EXCEPTION),
+                         errmsg("Latitude values must be between -90 and 90 degrees")));
+                }
             }
         }
     }
@@ -1655,7 +1729,7 @@ validate_geom_type(const GeoDataInfo *geom_data)
         return false;
         
     geom_type = geom_data->byte_data[GEOM_TYPE_POS_POSTGIS];
-    return (geom_type == POINT_TYPE || geom_type == LINE_TYPE) &&
+    return (geom_type == POINT_TYPE || geom_type == LINE_TYPE || geom_type == POLYGON_TYPE) &&
            geom_data->byte_data[GEOM_TYPE_POS_POSTGIS+1] == 0x00 && 
            geom_data->byte_data[GEOM_TYPE_POS_POSTGIS+2] == 0x00;
 }
@@ -1693,6 +1767,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                             (geom_data->npoints > 2 ? INVALID_2DLINE_MP : INVALID_2DLINE_2P);
                         geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
                         break;
+                    case POLYGON_TYPE:
+                        geom_data->geom_type = 0x00;
+                        geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
+                        break;
                 }
             }
             break;
@@ -1708,6 +1786,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->geom_type = geom_data->is_valid ? 
                         (geom_data->npoints > 2 ? VALID_3DLINE_MP : VALID_3DLINE_2P) :
                         (geom_data->npoints > 2 ? INVALID_3DLINE_MP : INVALID_3DLINE_2P);
+                    geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
+                    break;
+                case POLYGON_TYPE:
+                    geom_data->geom_type = 0x01;
                     geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
                     break;
             }
@@ -1726,6 +1808,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                         (geom_data->npoints > 2 ? INVALID_3DMLINE_MP : INVALID_3DMLINE_2P);
                     geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
                     break;
+                case POLYGON_TYPE:
+                    geom_data->geom_type = 0x03;
+                    geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
+                    break;
             }
             break;
         case POSTGIS_DIM_XYM:
@@ -1740,6 +1826,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->geom_type = geom_data->is_valid ? 
                         (geom_data->npoints > 2 ? VALID_2DMLINE_MP : VALID_2DMLINE_2P) :
                         (geom_data->npoints > 2 ? INVALID_2DMLINE_MP : INVALID_2DMLINE_2P);
+                    geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
+                    break;
+                case POLYGON_TYPE:
+                    geom_data->geom_type = 0x02;
                     geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
                     break;
             }
@@ -1852,6 +1942,142 @@ handle_linestring_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *r
     return result;
 }
 
+static bytea*
+handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *result, bool is_geography)
+{
+    int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+    uint8 *src_start = geom_data->byte_data + offset;
+    uint8 *dst = (geom_data->npoints > 2) ? result_data + HEADER_SIZE + NPOINTS_SIZE : result_data + HEADER_SIZE;
+    
+    uint8 dim_mask = geom_data->srid_flag & DIMENSION_MASK;
+    bool has_z = (dim_mask == POSTGIS_DIM_XYZ || dim_mask == POSTGIS_DIM_XYZM);
+    bool has_m = (dim_mask == POSTGIS_DIM_XYM || dim_mask == POSTGIS_DIM_XYZM);
+    
+    int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
+    int num_rings = *(int32*)src_start;
+    int ring_idx;
+    int total_points_copied = 0;
+    int z_points_copied = 0;
+    int m_points_copied = 0;
+    int z_offset;
+    uint8 *src;
+    
+    /* First pass: copy all XY coordinates from all rings */
+    src = src_start + sizeof(int32);
+    for (ring_idx = 0; ring_idx < num_rings; ring_idx++)
+    {
+        int ring_npoints = *(int32*)src;
+        src += sizeof(int32);
+        
+        copy_xy_coords(dst + (total_points_copied * COORD_SIZE * 2), src, ring_npoints, stride);
+        
+        src += ring_npoints * stride;
+        total_points_copied += ring_npoints;
+    }
+    
+    /* Second pass: copy all Z coordinates from all rings */
+    if (has_z)
+    {
+        src = src_start + sizeof(int32);
+        z_points_copied = 0;
+        for (ring_idx = 0; ring_idx < num_rings; ring_idx++)
+        {
+            int ring_npoints = *(int32*)src;
+            src += sizeof(int32);
+            
+            /* Reuse copy_z_coords by adjusting destination offset:
+             * - copy_z_coords adds (npoints * COORD_SIZE * 2) internally for linestrings
+             * - We subtract (ring_npoints * COORD_SIZE * 2) to cancel that offset
+             * - Then add our polygon-specific offset (z_points_copied * COORD_SIZE) */
+            copy_z_coords(dst + (total_points_copied * COORD_SIZE * 2) - (ring_npoints * COORD_SIZE * 2) + (z_points_copied * COORD_SIZE), src, ring_npoints, stride);
+            
+            src += ring_npoints * stride;
+            z_points_copied += ring_npoints;
+        }
+    }
+    
+    /* Third pass: copy all M coordinates from all rings */
+    if (has_m)
+    {
+        src = src_start + sizeof(int32);
+        m_points_copied = 0;
+        z_offset = has_z ? total_points_copied * COORD_SIZE : 0;
+        for (ring_idx = 0; ring_idx < num_rings; ring_idx++)
+        {
+            int ring_npoints = *(int32*)src;
+            src += sizeof(int32);
+            
+            /* Reuse copy_m_coords by adjusting destination offset:
+             * - copy_m_coords adds (npoints * COORD_SIZE * 2) + z_offset internally for linestrings
+             * - We subtract (ring_npoints * COORD_SIZE * 2) to cancel XY offset
+             * - We subtract (has_z ? ring_npoints * COORD_SIZE : 0) to cancel Z offset
+             * - Then add our polygon-specific offset (m_points_copied * COORD_SIZE) */
+            copy_m_coords(dst + (total_points_copied * COORD_SIZE * 2) + z_offset - (ring_npoints * COORD_SIZE * 2) - (has_z ? ring_npoints * COORD_SIZE : 0) + (m_points_copied * COORD_SIZE), src, ring_npoints, stride, has_z);
+            
+            src += ring_npoints * stride;
+            m_points_copied += ring_npoints;
+        }
+    }
+    
+    /* Calculate final position after all coordinates */
+    {
+        uint8 *metadata_pos;
+        uint8 polygon_suffix[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
+        uint8 *ring_counts_pos;
+        int cumulative_points = 0;
+        
+        metadata_pos = dst + (total_points_copied * COORD_SIZE * 2) + (has_z ? total_points_copied * COORD_SIZE : 0) + (has_m ? total_points_copied * COORD_SIZE : 0);
+        
+        /* Add number of rings */
+        memcpy(metadata_pos, &num_rings, sizeof(int32));
+        metadata_pos += sizeof(int32);
+        
+        /* Add 6 bytes representing value 2 followed by 5 zero bytes */
+        memcpy(metadata_pos, polygon_suffix, 6);
+        metadata_pos += 6;
+        
+        /* Add cumulative ring point counts */
+        ring_counts_pos = metadata_pos;
+        
+        src = src_start + sizeof(int32);
+        for (ring_idx = 0; ring_idx < num_rings - 1; ring_idx++)
+        {
+            int ring_npoints = *(int32*)src;
+            src += sizeof(int32) + ring_npoints * stride;
+            cumulative_points += ring_npoints;
+            
+            // if (num_rings == 1 || (num_rings == 2 && ring_idx == 1))
+            // {
+            //     /* Single ring or second ring of two rings: 4 bytes */
+            //     memcpy(ring_counts_pos, &cumulative_points, sizeof(int32));
+            //     ring_counts_pos += sizeof(int32);
+            // }
+            if (ring_idx == num_rings - 2)
+            {
+                /* Last ring of 3+ rings: 4 bytes */
+                memcpy(ring_counts_pos, &cumulative_points, sizeof(int32));
+                ring_counts_pos += sizeof(int32);
+            }
+            else
+            {
+                /* Other rings: 5 bytes (4 bytes + 1 zero byte) */
+                memcpy(ring_counts_pos, &cumulative_points, sizeof(int32));
+                ring_counts_pos[4] = 0x00;
+                ring_counts_pos += 5;
+            }
+        }
+
+            /* Add 13-byte polygon ending suffix */
+        {
+            uint8 polygon_ending[13] = {0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x03};
+            memcpy(ring_counts_pos, polygon_ending, 13);
+        }
+
+    }
+    
+    return result;
+}
+
 /* Step 4: Construct final binary representation */
 static bytea* 
 construct_result_bytea(GeoDataInfo *geom_data, bool is_geography) 
@@ -1862,8 +2088,20 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     
     /* Calculate total size needed for result bytea */
     total_size = SRID_SIZE + GEOM_TYPE_SIZE + geom_data->coord_size;
+
     if (geom_data->npoints > 2 && geom_data->postgis_geom_type == LINE_TYPE)
         total_size += NPOINTS_SIZE + sizeof(line_end_metadata);
+
+    if (geom_data->postgis_geom_type == POLYGON_TYPE && !geom_data->is_empty)
+    {
+        /* For polygon, calculate additional bytes needed */
+        int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+        int num_rings = *(int32*)(geom_data->byte_data + offset);
+        total_size += NPOINTS_SIZE + 4;  /* Ring count (4 bytes) */
+        total_size += 6;             /* Polygon suffix (6 bytes) */
+        total_size +=(num_rings - 2) * 5 + 4;  /* Cumulative counts: (n-1)*5 + 4 bytes, or just 4 if only 1 ring */
+        total_size += 13;  
+    }
     
     /* Allocate and initialize result bytea */
     result = (bytea *) palloc(VARHDRSZ + total_size);
@@ -1901,6 +2139,10 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
                 if (geom_data->npoints > 2)
                     memcpy(result_data + HEADER_SIZE, &geom_data->npoints, NPOINTS_SIZE);
                 return handle_linestring_type_data(geom_data, result_data, result, is_geography);
+            case POLYGON_TYPE:
+                if (geom_data->npoints > 2)
+                    memcpy(result_data + HEADER_SIZE, &geom_data->npoints, NPOINTS_SIZE);
+                return handle_polygon_type_data(geom_data, result_data, result, is_geography);
         }
     }
     
@@ -2047,6 +2289,11 @@ st_as_binary_common(Datum input, bool is_geography)
         {
             /* Copy empty linestring WKB pattern */
             memcpy(VARDATA(empty_geom), EMPTY_LINE_Binary, EMPTY_Binary_SIZE);
+        }
+        else if (strcmp(geom_type, "ST_Polygon" ) == 0) 
+        {
+            /* Copy empty linestring WKB pattern */
+            memcpy(VARDATA(empty_geom), EMPTY_POLYGON_Binary, EMPTY_Binary_SIZE);
         }
         
         /* Free allocated memory and return the empty WKB */

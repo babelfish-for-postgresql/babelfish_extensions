@@ -27,6 +27,14 @@ typedef struct
     int capacity;       
 } PointArray;
 
+/* Dynamic array to store multiple rings (for polygons) */
+typedef struct 
+{
+    PointArray **rings;
+    int count;
+    int capacity;
+} PointArrayList;
+
 /* Enum for different dimension types */
 typedef enum 
 { 
@@ -46,6 +54,7 @@ extern void geo_scanner_finish(void);
 extern char *geo_yytext;
 
 text* geo_wkt_rewrite(text* input_text);
+
 /* Function to create a POINT structure */
 POINT create_point(double x, double y, double z, double m, int has_z, int has_m);
 
@@ -61,6 +70,15 @@ void transform_points(PointArray *pa, DimensionType type);
 char* rewrite_linestring_query(PointArray *pa);
 char* rewrite_dim_linestring_query(PointArray *pa);
 DimensionType determine_linestring_type(PointArray *pa);
+
+/* PointArrayList management and Polygon WKT conversion functions */
+void init_point_array_list(PointArrayList *pal);
+void resize_point_array_list(PointArrayList *pal);
+void add_ring(PointArrayList *pal, PointArray *ring);
+void transform_polygon_points(PointArrayList *pal, DimensionType type);
+char* rewrite_polygon_query(PointArrayList *pal);
+char* rewrite_dim_polygon_query(PointArrayList *pal);
+DimensionType determine_polygon_type(PointArrayList *pal);
 
 #endif /* GEO_DATA_H */
 

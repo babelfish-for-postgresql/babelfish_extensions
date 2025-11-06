@@ -472,3 +472,213 @@ rewrite_dim_linestring_query(PointArray *pa)
     
     return output.data;
 }
+
+
+/*
+ * Initialize a PointArrayList structure
+ */
+void 
+init_point_array_list(PointArrayList *pal) 
+{
+    pal->capacity = 8;
+    pal->rings = palloc(pal->capacity * sizeof(PointArray*));
+    pal->count = 0;
+}
+
+/*
+ * Resize a PointArrayList when it reaches capacity
+ */
+void 
+resize_point_array_list(PointArrayList *pal) 
+{
+    if (pal->count >= pal->capacity) 
+    {
+        pal->capacity *= 2;
+        pal->rings = repalloc(pal->rings, pal->capacity * sizeof(PointArray*));
+    }
+}
+
+/*
+ * Add a ring (PointArray) to the PointArrayList
+ */
+void 
+add_ring(PointArrayList *pal, PointArray *ring) 
+{
+    resize_point_array_list(pal);
+    pal->rings[pal->count++] = ring;
+}
+
+/*
+ * Determine the appropriate polygon type by examining all rings
+ */
+DimensionType
+determine_polygon_type(PointArrayList *pal)
+{
+    bool has_z = false, 
+         has_m = false;
+    
+    for (int ring_idx = 0; ring_idx < pal->count; ring_idx++)
+    {
+        DimensionType ring_type = determine_linestring_type(pal->rings[ring_idx]);
+        
+        if (ring_type == Z)
+            has_z = true;
+        if (ring_type == M)
+            has_m = true;
+        if (ring_type == ZM || (has_z && has_m)) 
+            return ZM;
+    }
+    
+    if (has_m) return M;
+    if (has_z) return Z;
+    return XY;
+}
+
+/*
+ * Transform all points in all rings of a polygon to conform to the specified type
+ */
+void
+transform_polygon_points(PointArrayList *pal, DimensionType type)
+{
+    if (type == XY)
+        return;
+        
+    for (int ring_idx = 0; ring_idx < pal->count; ring_idx++)
+    {
+        transform_points(pal->rings[ring_idx], type);
+    }
+}
+
+/*
+ * Converts a PointArrayList to a PostGIS-compatible POLYGON WKT representation
+ */
+char* 
+rewrite_polygon_query(PointArrayList *pal) 
+{
+    StringInfoData output;
+    DimensionType type;
+
+    if (!pal || pal->count == 0) 
+        return NULL;
+
+    initStringInfo(&output);
+    
+    /* Determine type from all rings */
+    type = determine_polygon_type(pal);
+    
+    appendStringInfoString(&output, "POLYGON");
+    
+    if (type == M) 
+        appendStringInfoString(&output, " M");
+
+    appendStringInfoChar(&output, '(');
+    
+    /* Transform all points in all rings to conform to the determined type */
+    transform_polygon_points(pal, type);
+
+    for (int ring_idx = 0; ring_idx < pal->count; ring_idx++) 
+    {
+        PointArray *pa = pal->rings[ring_idx];
+        
+        appendStringInfoChar(&output, '(');
+        
+        for (int i = 0; i < pa->count; i++) 
+        {
+            POINT p = pa->points[i];
+            appendStringInfo(&output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
+
+            if (FLAGS_GET_Z(p.flags)) 
+                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
+            if (FLAGS_GET_M(p.flags)) 
+                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
+
+            if (i < pa->count - 1) 
+                appendStringInfoString(&output, ", ");
+        }
+        
+        appendStringInfoChar(&output, ')');
+        
+        if (ring_idx < pal->count - 1) 
+            appendStringInfoString(&output, ", ");
+            
+        pfree(pa->points);
+        pfree(pa);
+    }
+
+    appendStringInfoChar(&output, ')');
+    
+    pfree(pal->rings);
+    pfree(pal);
+    
+    return output.data;
+}
+
+/*
+ * Converts a PointArrayList to a T-SQL compatible POLYGON WKT representation
+ */
+char* 
+rewrite_dim_polygon_query(PointArrayList *pal) 
+{
+    StringInfoData output;
+
+    if (!pal || pal->count == 0) 
+        return NULL;
+
+    initStringInfo(&output);
+    appendStringInfoString(&output, "POLYGON(");
+
+    for (int ring_idx = 0; ring_idx < pal->count; ring_idx++) 
+    {
+        PointArray *pa = pal->rings[ring_idx];
+        
+        appendStringInfoChar(&output, '(');
+        
+        for (int i = 0; i < pa->count; i++) 
+        {
+            POINT p = pa->points[i];
+            appendStringInfo(&output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
+            
+            if (FLAGS_GET_Z(p.flags) && FLAGS_GET_M(p.flags)) 
+            {
+                if (!isnan(p.z) && !isnan(p.m)) 
+                {
+                    appendStringInfo(&output, " %s %s", FLOAT8_TO_CSTRING(p.z), FLOAT8_TO_CSTRING(p.m));
+                }
+                else if (!isnan(p.z)) 
+                {
+                    appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
+                }
+                else if (!isnan(p.m)) 
+                {
+                    appendStringInfo(&output, " NULL %s", FLOAT8_TO_CSTRING(p.m));
+                }
+            }
+            else if (FLAGS_GET_Z(p.flags) && !isnan(p.z)) 
+            {
+                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
+            }
+            else if (FLAGS_GET_M(p.flags) && !isnan(p.m)) 
+            {
+                appendStringInfo(&output, " NULL %s", FLOAT8_TO_CSTRING(p.m));
+            }
+
+            if (i < pa->count - 1) 
+                appendStringInfoString(&output, ", ");
+        }
+        
+        appendStringInfoChar(&output, ')');
+        
+        if (ring_idx < pal->count - 1) 
+            appendStringInfoString(&output, ", ");
+            
+        pfree(pa->points);
+        pfree(pa);
+    }
+
+    appendStringInfoChar(&output, ')');
+    
+    pfree(pal->rings);
+    pfree(pal);
+    
+    return output.data;
+}
