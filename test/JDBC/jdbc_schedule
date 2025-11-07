@@ -549,6 +549,15 @@ ignore#!#concat_ws-before-15_9-or-16_5-vu-cleanup
 ignore#!#concat_ws-before-15_5-or-14_10-vu-prepare
 ignore#!#concat_ws-before-15_5-or-14_10-vu-verify
 ignore#!#concat_ws-before-15_5-or-14_10-vu-cleanup
+ignore#!#replace-before-18_1-vu-prepare
+ignore#!#replace-before-18_1-vu-verify
+ignore#!#replace-before-18_1-vu-cleanup
+ignore#!#string_agg-before-18_1-vu-prepare
+ignore#!#string_agg-before-18_1-vu-verify
+ignore#!#string_agg-before-18_1-vu-cleanup
+ignore#!#translate-before-18_1-vu-prepare
+ignore#!#translate-before-18_1-vu-verify
+ignore#!#translate-before-18_1-vu-cleanup
 ignore#!#xml_exist-before-16_5-vu-prepare
 ignore#!#xml_exist-before-16_5-vu-verify
 ignore#!#xml_exist-before-16_5-vu-cleanup
