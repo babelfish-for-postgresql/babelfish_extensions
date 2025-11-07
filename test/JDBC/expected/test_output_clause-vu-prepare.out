@@ -1,5 +1,5 @@
 
-*
+/*
  * ===================================================================================================================
  *                                              1. Basic Output clause test
  * ===================================================================================================================
@@ -12,10 +12,6 @@ CREATE TABLE OutputTest (
     Status NVARCHAR(20) DEFAULT 'Active'
 );
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '*' at line 1 and character position 0)~~
-
 
 -- Insert test data
 INSERT INTO OutputTest (ID, Name, Value) VALUES 
@@ -23,9 +19,7 @@ INSERT INTO OutputTest (ID, Name, Value) VALUES
 (2, 'Test2', 200),
 (3, 'Test3', 300);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "outputtest" does not exist)~~
+~~ROW COUNT: 3~~
 
 
 -- Table for OUTPUT INTO testing
@@ -42,10 +36,6 @@ GO
 CREATE VIEW OutputTestView AS
 SELECT ID, Name, Value, Status FROM OutputTest WHERE Status = 'Active';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "outputtest" does not exist)~~
-
 
 CREATE TABLE TriggerLog (
     LogID INT,
@@ -65,10 +55,6 @@ BEGIN
     SELECT inserted.ID + 1000, 'AFTER_INSERT', 'OutputTest', inserted.ID FROM inserted;
 END;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "outputtest" does not exist)~~
-
 
 CREATE TRIGGER tr_OutputTest_Update
 ON OutputTest
@@ -79,10 +65,6 @@ BEGIN
     SELECT inserted.ID + 2000, 'AFTER_UPDATE', 'OutputTest', inserted.ID FROM inserted;
 END;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "outputtest" does not exist)~~
-
 
 CREATE TRIGGER tr_OutputTest_Delete
 ON OutputTest
@@ -93,10 +75,6 @@ BEGIN
     SELECT deleted.ID + 3000, 'AFTER_DELETE', 'OutputTest', deleted.ID FROM deleted;
 END;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "outputtest" does not exist)~~
-
 
 
 
