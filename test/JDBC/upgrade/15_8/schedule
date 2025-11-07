@@ -531,7 +531,7 @@ ltrim
 rtrim
 left
 right
-translate
+translate-before-18_1
 substring
 reverse
 stuff
@@ -541,7 +541,7 @@ getdate-before-15_9-or-16_5
 concat-before-15_9-or-16_5
 concat_ws-before-15_9-or-16_5
 space
-replace
+replace-before-18_1
 alter-procedure-15_8-or-16_4
 binary-datatype-operators
 BABEL-5059_before_16_5
