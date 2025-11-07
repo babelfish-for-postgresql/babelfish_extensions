@@ -368,3 +368,142 @@ GO
 SELECT STRING_ESCAPE('lorem ipsum dolor amet	
 consectetur adipiscing elit', 'json')
 GO
+
+SELECT value
+FROM STRING_SPLIT('a,b,c', ',');
+GO
+
+SELECT value
+FROM STRING_SPLIT('a,,b', ',');
+GO
+
+SELECT value
+FROM STRING_SPLIT(NULL, ',');
+GO
+
+SELECT value
+FROM STRING_SPLIT('apple banana cherry', ' ');
+GO
+
+SELECT value
+FROM STRING_SPLIT('a--b--c', '--');
+GO
+
+SELECT value
+FROM STRING_SPLIT(N'α,β,γ', N',');
+GO
+
+SELECT value
+FROM STRING_SPLIT(N'Hello,世界,😊', N',');
+GO
+
+SELECT value
+FROM STRING_SPLIT(N'one two 三', N' ');
+GO
+
+SELECT value, ordinal
+FROM STRING_SPLIT('x|y|z', '|', 1);
+GO
+
+SELECT value
+FROM STRING_SPLIT('x|y|z', '|', 0);
+GO
+
+
+SELECT value
+FROM STRING_SPLIT('a,b,c', '');
+GO
+
+SELECT value
+FROM STRING_SPLIT('1|2|3', '|');
+GO
+
+SELECT value
+FROM STRING_SPLIT('b,a,c', ',')
+ORDER BY value ASC;
+GO
+
+SELECT value
+FROM STRING_SPLIT('a,b,', ',');
+GO
+
+SELECT CAST(value as nvarchar)
+FROM STRING_SPLIT(N'Hello,世界,😊', N',');
+GO
+
+SELECT value
+FROM STRING_SPLIT(CAST('X|Y|Z' AS char(10)), '|');
+GO
+
+SELECT value
+FROM STRING_SPLIT(CAST(N'Ω|Φ|Ψ' AS nchar(10)), N'|');
+GO
+
+SELECT value
+FROM STRING_SPLIT('a,b,c', NULL);
+GO
+
+SELECT value
+FROM STRING_SPLIT('a  b  c', '  ');
+GO
+
+SELECT COUNT(*)
+FROM STRING_SPLIT(REPLICATE('a,', 10000), ',');
+GO
+
+SELECT value
+FROM STRING_SPLIT(N'a😊b😊c', N'😊');
+GO
+
+SELECT value
+FROM STRING_SPLIT('a,b,c', ',');
+GO
+
+SELECT value
+FROM STRING_SPLIT('a,b,c', cast(',' as NVARCHAR));
+GO
+
+SELECT value
+FROM STRING_SPLIT(N'a,b,c', N',');
+GO
+
+SELECT value
+FROM STRING_SPLIT(N'a,b,c', ',');
+GO
+
+SELECT value
+FROM STRING_SPLIT(cast('a' as CHAR), cast(',' as CHAR(1)));
+GO
+
+SELECT value
+FROM STRING_SPLIT('a', cast(',' as NVARCHAR));
+GO
+
+SELECT value
+FROM STRING_SPLIT(cast('a,b,c' as CHAR), cast(',' as NCHAR(1)));
+GO
+
+SELECT value
+FROM STRING_SPLIT(cast('a,b,c' as NCHAR), cast(',' as CHAR(1)));
+GO
+
+SELECT value
+FROM STRING_SPLIT(cast(N'a,b,c' as NVARCHAR), cast(',' as CHAR(1)));
+GO
+
+SELECT value
+FROM STRING_SPLIT(cast('a,b,c' as VARCHAR), cast(',' as NCHAR(1)));
+GO
+
+SELECT value FROM STRING_SPLIT(123, ',');
+GO
+
+SELECT value FROM STRING_SPLIT(123.45, ',');
+GO
+
+SELECT value FROM STRING_SPLIT(CAST('20231005' AS DATETIME), ',');
+GO
+
+SELECT value FROM STRING_SPLIT(0x48656C6C6F, ',');
+GO
+

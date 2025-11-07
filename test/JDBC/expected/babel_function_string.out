@@ -834,3 +834,357 @@ lorem ipsum dolor amet\t\nconsectetur adipiscing elit
 DROP table t1, t2, t3
 GO
 
+SELECT value
+FROM STRING_SPLIT('a,b,c', ',');
+GO
+~~START~~
+varchar
+a
+b
+c
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT('a,,b', ',');
+GO
+~~START~~
+varchar
+a
+
+b
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(NULL, ',');
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT('apple banana cherry', ' ');
+GO
+~~START~~
+varchar
+apple
+banana
+cherry
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT('a--b--c', '--');
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid separator: --)~~
+
+
+SELECT value
+FROM STRING_SPLIT(N'α,β,γ', N',');
+GO
+~~START~~
+nvarchar
+α
+β
+γ
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(N'Hello,世界,😊', N',');
+GO
+~~START~~
+nvarchar
+Hello
+世界
+😊
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(N'one two 三', N' ');
+GO
+~~START~~
+nvarchar
+one
+two
+三
+~~END~~
+
+
+SELECT value, ordinal
+FROM STRING_SPLIT('x|y|z', '|', 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string_split function requires 2 arguments)~~
+
+
+SELECT value
+FROM STRING_SPLIT('x|y|z', '|', 0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string_split function requires 2 arguments)~~
+
+
+
+SELECT value
+FROM STRING_SPLIT('a,b,c', '');
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid separator: )~~
+
+
+SELECT value
+FROM STRING_SPLIT('1|2|3', '|');
+GO
+~~START~~
+varchar
+1
+2
+3
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT('b,a,c', ',')
+ORDER BY value ASC;
+GO
+~~START~~
+varchar
+a
+b
+c
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT('a,b,', ',');
+GO
+~~START~~
+varchar
+a
+b
+
+~~END~~
+
+
+SELECT CAST(value as nvarchar)
+FROM STRING_SPLIT(N'Hello,世界,😊', N',');
+GO
+~~START~~
+nvarchar
+Hello
+世界
+😊
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(CAST('X|Y|Z' AS char(10)), '|');
+GO
+~~START~~
+varchar
+X
+Y
+Z     
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(CAST(N'Ω|Φ|Ψ' AS nchar(10)), N'|');
+GO
+~~START~~
+nvarchar
+Ω
+Φ
+Ψ     
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT('a,b,c', NULL);
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT('a  b  c', '  ');
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid separator:   )~~
+
+
+SELECT COUNT(*)
+FROM STRING_SPLIT(REPLICATE('a,', 10000), ',');
+GO
+~~START~~
+int
+10001
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(N'a😊b😊c', N'😊');
+GO
+~~START~~
+nvarchar
+a
+b
+c
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT('a,b,c', ',');
+GO
+~~START~~
+varchar
+a
+b
+c
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT('a,b,c', cast(',' as NVARCHAR));
+GO
+~~START~~
+nvarchar
+a
+b
+c
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(N'a,b,c', N',');
+GO
+~~START~~
+nvarchar
+a
+b
+c
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(N'a,b,c', ',');
+GO
+~~START~~
+nvarchar
+a
+b
+c
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(cast('a' as CHAR), cast(',' as CHAR(1)));
+GO
+~~START~~
+varchar
+a                             
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT('a', cast(',' as NVARCHAR));
+GO
+~~START~~
+nvarchar
+a
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(cast('a,b,c' as CHAR), cast(',' as NCHAR(1)));
+GO
+~~START~~
+nvarchar
+a
+b
+c                         
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(cast('a,b,c' as NCHAR), cast(',' as CHAR(1)));
+GO
+~~START~~
+nvarchar
+a
+b
+c                         
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(cast(N'a,b,c' as NVARCHAR), cast(',' as CHAR(1)));
+GO
+~~START~~
+nvarchar
+a
+b
+c
+~~END~~
+
+
+SELECT value
+FROM STRING_SPLIT(cast('a,b,c' as VARCHAR), cast(',' as NCHAR(1)));
+GO
+~~START~~
+nvarchar
+a
+b
+c
+~~END~~
+
+
+SELECT value FROM STRING_SPLIT(123, ',');
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+SELECT value FROM STRING_SPLIT(123.45, ',');
+GO
+~~START~~
+varchar
+123.45
+~~END~~
+
+
+SELECT value FROM STRING_SPLIT(CAST('20231005' AS DATETIME), ',');
+GO
+~~START~~
+varchar
+2023-10-05 00:00:00
+~~END~~
+
+
+SELECT value FROM STRING_SPLIT(0x48656C6C6F, ',');
+GO
+~~START~~
+varchar
+Hello
+~~END~~
+
+
