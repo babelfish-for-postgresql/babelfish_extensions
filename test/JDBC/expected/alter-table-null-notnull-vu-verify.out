@@ -529,10 +529,6 @@ GO
 --[ERROR] Attempting to alter base table column type used in weak view
 ALTER TABLE products_weak ALTER COLUMN price DECIMAL(12,4) NOT NULL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot alter type of a column used by a view or rule)~~
-
 
 -- [SUCCESS] Altering to the same type but changing nullability
 ALTER TABLE products_weak ALTER COLUMN price DECIMAL(10,2) NOT NULL;

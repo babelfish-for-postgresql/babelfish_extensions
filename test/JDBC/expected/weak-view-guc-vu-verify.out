@@ -91,7 +91,7 @@ int#!#int
 SELECT * FROM V2;
 GO
 ~~START~~
-int
+int#!#int
 ~~END~~
 
 

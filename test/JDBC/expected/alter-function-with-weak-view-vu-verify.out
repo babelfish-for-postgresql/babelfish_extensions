@@ -434,9 +434,9 @@ GO
 SELECT * FROM dbo.high_value_orders
 GO
 ~~START~~
-int#!#numeric#!#varchar#!#varchar
-3#!#500.00000000#!#Regular#!#Electronics
-4#!#1000.00000000#!#Premium#!#Furniture
+int#!#numeric#!#varchar#!#varchar#!#varchar
+3#!#500.00000000#!#Regular#!#Electronics#!#High
+4#!#1000.00000000#!#Premium#!#Furniture#!#Very High
 ~~END~~
 
 SELECT * FROM dbo.high_value_orders -- Should now include value_category
@@ -492,10 +492,10 @@ GO
 SELECT * FROM dbo.category_summaries
 GO
 ~~START~~
-varchar#!#int#!#numeric#!#numeric
-Electronics#!#2#!#600.00#!#300.00
-Books#!#1#!#200.00#!#200.00
-Furniture#!#1#!#1000.00#!#1000.00
+varchar#!#int#!#numeric#!#numeric#!#numeric
+Electronics#!#2#!#600.00#!#300.00#!#500.00
+Books#!#1#!#200.00#!#200.00#!#200.00
+Furniture#!#1#!#1000.00#!#1000.00#!#1000.00
 ~~END~~
 
 SELECT * FROM dbo.category_summaries -- Should now include max_amount
