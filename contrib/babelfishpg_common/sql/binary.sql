@@ -374,7 +374,7 @@ CREATE OPERATOR sys.> (
     LEFTARG = sys.bbf_binary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.binary_varbinary_gt,
-    COMMUTATOR = OPERATOR(sys.<),
+    COMMUTATOR = <,
     RESTRICT = scalargtsel,
     NEGATOR = <=,
     JOIN = scalargtjoinsel
@@ -404,7 +404,7 @@ CREATE OPERATOR sys.< (
     LEFTARG = sys.bbf_binary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.binary_varbinary_lt,
-    COMMUTATOR = OPERATOR(sys.>),
+    COMMUTATOR = >,
     RESTRICT = scalarltsel,
     NEGATOR = >=,
     JOIN = scalarltjoinsel
