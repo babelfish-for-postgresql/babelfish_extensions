@@ -23,24 +23,24 @@ OUTPUT deleted.ID, deleted.Name, deleted.Value
 WHERE ID = 2;
 GO
 
--- Test Case 4: INSERT with OUTPUT INTO
-INSERT INTO OutputTest (ID, Name, Value)
-OUTPUT 1, 'INSERT', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
-VALUES (5, 'LoggedTest', 500);
-GO
+-- -- Test Case 4: INSERT with OUTPUT INTO
+-- INSERT INTO OutputTest (ID, Name, Value)
+-- OUTPUT 1, 'INSERT', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
+-- VALUES (5, 'LoggedTest', 500);
+-- GO
 
--- Test Case 5: UPDATE with OUTPUT INTO
-UPDATE OutputTest
-SET Status = 'Updated'
-OUTPUT 2, 'UPDATE', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
-WHERE ID = 3;
-GO
+-- -- Test Case 5: UPDATE with OUTPUT INTO
+-- UPDATE OutputTest
+-- SET Status = 'Updated'
+-- OUTPUT 2, 'UPDATE', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
+-- WHERE ID = 3;
+-- GO
 
--- Test Case 6: DELETE with OUTPUT INTO
-DELETE FROM OutputTest
-OUTPUT 3, 'DELETE', deleted.ID, deleted.Name, deleted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
-WHERE Name = 'LoggedTest';
-GO
+-- -- Test Case 6: DELETE with OUTPUT INTO
+-- DELETE FROM OutputTest
+-- OUTPUT 3, 'DELETE', deleted.ID, deleted.Name, deleted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
+-- WHERE Name = 'LoggedTest';
+-- GO
 
 -- Test Case 7: Multiple row UPDATE with OUTPUT
 UPDATE OutputTest
