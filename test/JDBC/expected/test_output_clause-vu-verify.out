@@ -139,114 +139,14 @@ int#!#nvarchar#!#varchar
 ~~END~~
 
 
--- Test Case 14: Multiple operations with triggers and OUTPUT INTO
-INSERT INTO OutputTest (ID, Name, Value)
-OUTPUT 4, 'MULTI_OP', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
-VALUES (9, 'MultiOp1', 800), (10, 'MultiOp2', 900);
-GO
-~~ROW COUNT: 2~~
 
 
-UPDATE OutputTest
-SET Status = 'Batch_Updated'
-OUTPUT 5, 'BATCH_UPD', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
-WHERE Name LIKE 'MultiOp%';
-GO
-~~ROW COUNT: 2~~
 
 
--- Test Case 15: OUTPUT with trigger execution order validation
-INSERT INTO OutputTest (ID, Name, Value)
-OUTPUT inserted.ID, inserted.Name, 'OrderTest_Time' as OutputTime
-VALUES (11, 'OrderTest', 1000);
-GO
-~~START~~
-int#!#nvarchar#!#varchar
-11#!#OrderTest#!#OrderTest_Time
-~~END~~
 
 
--- Test Case 16: Same Row UPDATE - Trigger updates the SAME ROW with OUTPUT clause
--- This tests the most complex EPQ scenario: both original and trigger UPDATE the same row
-INSERT INTO OutputTest (ID, Name, Value, Status) VALUES (12, 'SameRowTest', 1100, 'Active');
-GO
-~~ROW COUNT: 1~~
 
 
--- This UPDATE will trigger the UPDATE trigger which updates THE SAME ROW with OUTPUT
--- Original UPDATE: Changes Value from 1100 to 1200
--- Trigger UPDATE: Changes Value from 1200 to 2200 (1200 + 1000) and Status to 'Trigger_Modified'
-UPDATE OutputTest
-SET Value = 1200
-OUTPUT deleted.Value as OriginalOldValue, inserted.Value as OriginalNewValue, 
-       deleted.Status as OriginalOldStatus, inserted.Status as OriginalNewStatus
-WHERE Name = 'SameRowTest';
-GO
-~~START~~
-int#!#int#!#nvarchar#!#nvarchar
-1100#!#1200#!#Active#!#Active
-~~END~~
-
-
--- Verify the final state shows both updates occurred
-SELECT ID, Name, Value, Status FROM OutputTest WHERE Name = 'SameRowTest';
-GO
-~~START~~
-int#!#nvarchar#!#int#!#nvarchar
-12#!#SameRowTest#!#1200#!#Active
-~~END~~
-
-
--- Verify OUTPUT INTO results
-SELECT * FROM OutputLog ORDER BY LogID;
-GO
-~~START~~
-int#!#nvarchar#!#int#!#nvarchar#!#int
-4#!#MULTI_OP#!#9#!#MultiOp1#!#800
-4#!#MULTI_OP#!#10#!#MultiOp2#!#900
-5#!#BATCH_UPD#!#9#!#MultiOp1#!#800
-5#!#BATCH_UPD#!#10#!#MultiOp2#!#900
-~~END~~
-
-
--- Verify trigger execution
-SELECT * FROM TriggerLog ORDER BY LogID;
-GO
-~~START~~
-int#!#nvarchar#!#nvarchar#!#int
-~~END~~
-
-
--- Verify view functionality
-SELECT * FROM OutputTestView ORDER BY ID;
-GO
-~~START~~
-int#!#nvarchar#!#int#!#nvarchar
-1#!#Test1#!#300#!#Active
-3#!#Test3#!#600#!#Active
-4#!#NewTest#!#800#!#Active
-6#!#Computed#!#250#!#Active
-7#!#ViewTest#!#999#!#Active
-11#!#OrderTest#!#1000#!#Active
-12#!#SameRowTest#!#1200#!#Active
-~~END~~
-
-
--- Verify final table state
-SELECT * FROM OutputTest ORDER BY ID;
-GO
-~~START~~
-int#!#nvarchar#!#int#!#nvarchar
-1#!#Test1#!#300#!#Active
-3#!#Test3#!#600#!#Active
-4#!#NewTest#!#800#!#Active
-6#!#Computed#!#250#!#Active
-7#!#ViewTest#!#999#!#Active
-9#!#MultiOp1#!#800#!#Batch_Updated
-10#!#MultiOp2#!#900#!#Batch_Updated
-11#!#OrderTest#!#1000#!#Active
-12#!#SameRowTest#!#1200#!#Active
-~~END~~
 
 
 

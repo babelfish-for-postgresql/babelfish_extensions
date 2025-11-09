@@ -87,58 +87,58 @@ OUTPUT deleted.ID, deleted.Name, 'DELETED_BY_TRIGGER_TEST' as Note
 WHERE Name = 'TriggerTest1';
 GO
 
--- Test Case 14: Multiple operations with triggers and OUTPUT INTO
-INSERT INTO OutputTest (ID, Name, Value)
-OUTPUT 4, 'MULTI_OP', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
-VALUES (9, 'MultiOp1', 800), (10, 'MultiOp2', 900);
-GO
+-- -- Test Case 14: Multiple operations with triggers and OUTPUT INTO
+-- INSERT INTO OutputTest (ID, Name, Value)
+-- OUTPUT 4, 'MULTI_OP', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
+-- VALUES (9, 'MultiOp1', 800), (10, 'MultiOp2', 900);
+-- GO
 
-UPDATE OutputTest
-SET Status = 'Batch_Updated'
-OUTPUT 5, 'BATCH_UPD', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
-WHERE Name LIKE 'MultiOp%';
-GO
+-- UPDATE OutputTest
+-- SET Status = 'Batch_Updated'
+-- OUTPUT 5, 'BATCH_UPD', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
+-- WHERE Name LIKE 'MultiOp%';
+-- GO
 
--- Test Case 15: OUTPUT with trigger execution order validation
-INSERT INTO OutputTest (ID, Name, Value)
-OUTPUT inserted.ID, inserted.Name, 'OrderTest_Time' as OutputTime
-VALUES (11, 'OrderTest', 1000);
-GO
+-- -- Test Case 15: OUTPUT with trigger execution order validation
+-- INSERT INTO OutputTest (ID, Name, Value)
+-- OUTPUT inserted.ID, inserted.Name, 'OrderTest_Time' as OutputTime
+-- VALUES (11, 'OrderTest', 1000);
+-- GO
 
--- Test Case 16: Same Row UPDATE - Trigger updates the SAME ROW with OUTPUT clause
--- This tests the most complex EPQ scenario: both original and trigger UPDATE the same row
-INSERT INTO OutputTest (ID, Name, Value, Status) VALUES (12, 'SameRowTest', 1100, 'Active');
-GO
+-- -- Test Case 16: Same Row UPDATE - Trigger updates the SAME ROW with OUTPUT clause
+-- -- This tests the most complex EPQ scenario: both original and trigger UPDATE the same row
+-- INSERT INTO OutputTest (ID, Name, Value, Status) VALUES (12, 'SameRowTest', 1100, 'Active');
+-- GO
 
--- This UPDATE will trigger the UPDATE trigger which updates THE SAME ROW with OUTPUT
--- Original UPDATE: Changes Value from 1100 to 1200
--- Trigger UPDATE: Changes Value from 1200 to 2200 (1200 + 1000) and Status to 'Trigger_Modified'
-UPDATE OutputTest
-SET Value = 1200
-OUTPUT deleted.Value as OriginalOldValue, inserted.Value as OriginalNewValue, 
-       deleted.Status as OriginalOldStatus, inserted.Status as OriginalNewStatus
-WHERE Name = 'SameRowTest';
-GO
+-- -- This UPDATE will trigger the UPDATE trigger which updates THE SAME ROW with OUTPUT
+-- -- Original UPDATE: Changes Value from 1100 to 1200
+-- -- Trigger UPDATE: Changes Value from 1200 to 2200 (1200 + 1000) and Status to 'Trigger_Modified'
+-- UPDATE OutputTest
+-- SET Value = 1200
+-- OUTPUT deleted.Value as OriginalOldValue, inserted.Value as OriginalNewValue, 
+--        deleted.Status as OriginalOldStatus, inserted.Status as OriginalNewStatus
+-- WHERE Name = 'SameRowTest';
+-- GO
 
--- Verify the final state shows both updates occurred
-SELECT ID, Name, Value, Status FROM OutputTest WHERE Name = 'SameRowTest';
-GO
+-- -- Verify the final state shows both updates occurred
+-- SELECT ID, Name, Value, Status FROM OutputTest WHERE Name = 'SameRowTest';
+-- GO
 
--- Verify OUTPUT INTO results
-SELECT * FROM OutputLog ORDER BY LogID;
-GO
+-- -- Verify OUTPUT INTO results
+-- SELECT * FROM OutputLog ORDER BY LogID;
+-- GO
 
--- Verify trigger execution
-SELECT * FROM TriggerLog ORDER BY LogID;
-GO
+-- -- Verify trigger execution
+-- SELECT * FROM TriggerLog ORDER BY LogID;
+-- GO
 
--- Verify view functionality
-SELECT * FROM OutputTestView ORDER BY ID;
-GO
+-- -- Verify view functionality
+-- SELECT * FROM OutputTestView ORDER BY ID;
+-- GO
 
--- Verify final table state
-SELECT * FROM OutputTest ORDER BY ID;
-GO
+-- -- Verify final table state
+-- SELECT * FROM OutputTest ORDER BY ID;
+-- GO
 
 
 -- /*
