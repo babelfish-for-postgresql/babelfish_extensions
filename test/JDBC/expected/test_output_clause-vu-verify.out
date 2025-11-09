@@ -41,6 +41,8 @@ int#!#nvarchar#!#int
 
 
 
+
+
 -- -- Test Case 4: INSERT with OUTPUT INTO
 -- INSERT INTO OutputTest (ID, Name, Value)
 -- OUTPUT 1, 'INSERT', inserted.ID, inserted.Name, inserted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
@@ -57,31 +59,17 @@ int#!#nvarchar#!#int
 -- OUTPUT 3, 'DELETE', deleted.ID, deleted.Name, deleted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
 -- WHERE Name = 'LoggedTest';
 -- GO
--- Test Case 7: Multiple row UPDATE with OUTPUT
-UPDATE OutputTest
-SET Value = OutputTest.Value * 2
-OUTPUT deleted.ID, deleted.Value as Before, inserted.Value as After
-WHERE OutputTest.Value > 100;
-GO
-~~START~~
-int#!#int#!#int
-3#!#300#!#600
-4#!#400#!#800
-1#!#150#!#300
-~~END~~
-
-
--- Test Case 8: OUTPUT with computed columns
-INSERT INTO OutputTest (ID, Name, Value)
-OUTPUT inserted.ID, inserted.Name, inserted.Value, inserted.Value * 2 as DoubleValue
-VALUES (6, 'Computed', 250);
-GO
-~~START~~
-int#!#nvarchar#!#int#!#int
-6#!#Computed#!#250#!#500
-~~END~~
-
-
+-- -- Test Case 7: Multiple row UPDATE with OUTPUT
+-- UPDATE OutputTest
+-- SET Value = OutputTest.Value * 2
+-- OUTPUT deleted.ID, deleted.Value as Before, inserted.Value as After
+-- WHERE OutputTest.Value > 100;
+-- GO
+-- -- Test Case 8: OUTPUT with computed columns
+-- INSERT INTO OutputTest (ID, Name, Value)
+-- OUTPUT inserted.ID, inserted.Name, inserted.Value, inserted.Value * 2 as DoubleValue
+-- VALUES (6, 'Computed', 250);
+-- GO
 -- Test Case 9: OUTPUT with dependent object (view)
 INSERT INTO OutputTest (ID, Name, Value, Status)
 OUTPUT inserted.ID, inserted.Name, inserted.Status

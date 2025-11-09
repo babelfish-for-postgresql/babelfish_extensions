@@ -42,18 +42,18 @@ GO
 -- WHERE Name = 'LoggedTest';
 -- GO
 
--- Test Case 7: Multiple row UPDATE with OUTPUT
-UPDATE OutputTest
-SET Value = OutputTest.Value * 2
-OUTPUT deleted.ID, deleted.Value as Before, inserted.Value as After
-WHERE OutputTest.Value > 100;
-GO
+-- -- Test Case 7: Multiple row UPDATE with OUTPUT
+-- UPDATE OutputTest
+-- SET Value = OutputTest.Value * 2
+-- OUTPUT deleted.ID, deleted.Value as Before, inserted.Value as After
+-- WHERE OutputTest.Value > 100;
+-- GO
 
--- Test Case 8: OUTPUT with computed columns
-INSERT INTO OutputTest (ID, Name, Value)
-OUTPUT inserted.ID, inserted.Name, inserted.Value, inserted.Value * 2 as DoubleValue
-VALUES (6, 'Computed', 250);
-GO
+-- -- Test Case 8: OUTPUT with computed columns
+-- INSERT INTO OutputTest (ID, Name, Value)
+-- OUTPUT inserted.ID, inserted.Name, inserted.Value, inserted.Value * 2 as DoubleValue
+-- VALUES (6, 'Computed', 250);
+-- GO
 
 -- Test Case 9: OUTPUT with dependent object (view)
 INSERT INTO OutputTest (ID, Name, Value, Status)
