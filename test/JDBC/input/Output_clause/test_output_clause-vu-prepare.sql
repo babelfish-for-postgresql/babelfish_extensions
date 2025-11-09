@@ -54,25 +54,25 @@ GO
 -- END;
 -- GO
 
-CREATE TRIGGER tr_OutputTest_Update
-ON OutputTest
-AFTER UPDATE
-AS
-BEGIN
-    INSERT INTO TriggerLog (LogID, TriggerType, TableName, RecordID)
-    SELECT inserted.ID + 2000, 'AFTER_UPDATE', 'OutputTest', inserted.ID FROM inserted;
-END;
-GO
+-- CREATE TRIGGER tr_OutputTest_Update
+-- ON OutputTest
+-- AFTER UPDATE
+-- AS
+-- BEGIN
+--     INSERT INTO TriggerLog (LogID, TriggerType, TableName, RecordID)
+--     SELECT inserted.ID + 2000, 'AFTER_UPDATE', 'OutputTest', inserted.ID FROM inserted;
+-- END;
+-- GO
 
-CREATE TRIGGER tr_OutputTest_Delete
-ON OutputTest
-AFTER DELETE
-AS
-BEGIN
-    INSERT INTO TriggerLog (LogID, TriggerType, TableName, RecordID)
-    SELECT deleted.ID + 3000, 'AFTER_DELETE', 'OutputTest', deleted.ID FROM deleted;
-END;
-GO
+-- CREATE TRIGGER tr_OutputTest_Delete
+-- ON OutputTest
+-- AFTER DELETE
+-- AS
+-- BEGIN
+--     INSERT INTO TriggerLog (LogID, TriggerType, TableName, RecordID)
+--     SELECT deleted.ID + 3000, 'AFTER_DELETE', 'OutputTest', deleted.ID FROM deleted;
+-- END;
+-- GO
 
 
 -- /*

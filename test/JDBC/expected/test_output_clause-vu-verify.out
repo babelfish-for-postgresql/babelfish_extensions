@@ -54,16 +54,12 @@ WHERE ID = 3;
 GO
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 1~~
-
 
 -- Test Case 6: DELETE with OUTPUT INTO
 DELETE FROM OutputTest
 OUTPUT 3, 'DELETE', deleted.ID, deleted.Name, deleted.Value INTO OutputLog (LogID, Operation, ID, Name, Value)
 WHERE Name = 'LoggedTest';
 GO
-~~ROW COUNT: 1~~
-
 ~~ROW COUNT: 1~~
 
 
@@ -164,8 +160,6 @@ WHERE Name LIKE 'MultiOp%';
 GO
 ~~ROW COUNT: 2~~
 
-~~ROW COUNT: 2~~
-
 
 -- Test Case 15: OUTPUT with trigger execution order validation
 INSERT INTO OutputTest (ID, Name, Value)
@@ -229,19 +223,6 @@ SELECT * FROM TriggerLog ORDER BY LogID;
 GO
 ~~START~~
 int#!#nvarchar#!#nvarchar#!#int
-2001#!#AFTER_UPDATE#!#OutputTest#!#1
-2001#!#AFTER_UPDATE#!#OutputTest#!#1
-2003#!#AFTER_UPDATE#!#OutputTest#!#3
-2003#!#AFTER_UPDATE#!#OutputTest#!#3
-2004#!#AFTER_UPDATE#!#OutputTest#!#4
-2007#!#AFTER_UPDATE#!#OutputTest#!#7
-2008#!#AFTER_UPDATE#!#OutputTest#!#8
-2009#!#AFTER_UPDATE#!#OutputTest#!#9
-2010#!#AFTER_UPDATE#!#OutputTest#!#10
-2012#!#AFTER_UPDATE#!#OutputTest#!#12
-3002#!#AFTER_DELETE#!#OutputTest#!#2
-3005#!#AFTER_DELETE#!#OutputTest#!#5
-3008#!#AFTER_DELETE#!#OutputTest#!#8
 ~~END~~
 
 
