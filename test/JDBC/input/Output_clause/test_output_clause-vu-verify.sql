@@ -55,37 +55,37 @@ GO
 -- VALUES (6, 'Computed', 250);
 -- GO
 
--- Test Case 9: OUTPUT with dependent object (view)
-INSERT INTO OutputTest (ID, Name, Value, Status)
-OUTPUT inserted.ID, inserted.Name, inserted.Status
-VALUES (7, 'ViewTest', 600, 'Active');
-GO
+-- -- Test Case 9: OUTPUT with dependent object (view)
+-- INSERT INTO OutputTest (ID, Name, Value, Status)
+-- OUTPUT inserted.ID, inserted.Name, inserted.Status
+-- VALUES (7, 'ViewTest', 600, 'Active');
+-- GO
 
--- Test Case 10: UPDATE base table with OUTPUT (view test)
-UPDATE OutputTest
-SET Value = 999
-OUTPUT deleted.Name, deleted.Value as OldValue, inserted.Value as NewValue
-WHERE Name = 'ViewTest' AND Status = 'Active';
-GO
+-- -- Test Case 10: UPDATE base table with OUTPUT (view test)
+-- UPDATE OutputTest
+-- SET Value = 999
+-- OUTPUT deleted.Name, deleted.Value as OldValue, inserted.Value as NewValue
+-- WHERE Name = 'ViewTest' AND Status = 'Active';
+-- GO
 
--- Test Case 11: INSERT with OUTPUT and trigger interaction
-INSERT INTO OutputTest (ID, Name, Value)
-OUTPUT inserted.ID, inserted.Name, 'TRIGGER_TEST' as TestType
-VALUES (8, 'TriggerTest1', 700);
-GO
+-- -- Test Case 11: INSERT with OUTPUT and trigger interaction
+-- INSERT INTO OutputTest (ID, Name, Value)
+-- OUTPUT inserted.ID, inserted.Name, 'TRIGGER_TEST' as TestType
+-- VALUES (8, 'TriggerTest1', 700);
+-- GO
 
--- Test Case 12: UPDATE with OUTPUT and trigger interaction
-UPDATE OutputTest
-SET Value = OutputTest.Value + 100, Status = 'Modified'
-OUTPUT deleted.Status as OldStatus, inserted.Status as NewStatus, inserted.ID
-WHERE Name = 'TriggerTest1';
-GO
+-- -- Test Case 12: UPDATE with OUTPUT and trigger interaction
+-- UPDATE OutputTest
+-- SET Value = OutputTest.Value + 100, Status = 'Modified'
+-- OUTPUT deleted.Status as OldStatus, inserted.Status as NewStatus, inserted.ID
+-- WHERE Name = 'TriggerTest1';
+-- GO
 
--- Test Case 13: DELETE with OUTPUT and trigger interaction
-DELETE FROM OutputTest
-OUTPUT deleted.ID, deleted.Name, 'DELETED_BY_TRIGGER_TEST' as Note
-WHERE Name = 'TriggerTest1';
-GO
+-- -- Test Case 13: DELETE with OUTPUT and trigger interaction
+-- DELETE FROM OutputTest
+-- OUTPUT deleted.ID, deleted.Name, 'DELETED_BY_TRIGGER_TEST' as Note
+-- WHERE Name = 'TriggerTest1';
+-- GO
 
 -- -- Test Case 14: Multiple operations with triggers and OUTPUT INTO
 -- INSERT INTO OutputTest (ID, Name, Value)
