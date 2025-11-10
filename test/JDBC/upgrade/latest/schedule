@@ -584,3 +584,5 @@ babel_test_numeric_int8_oper
 babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper
 babel_numeric_smallmoney_oper
+test_output_clause
+update_with_var
