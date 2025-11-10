@@ -1,0 +1,292 @@
+-- Create schema for update_with_var tests
+CREATE SCHEMA jira_babel_update_with_var_assign;
+GO
+
+CREATE TABLE jira_babel_update_with_var_assign.test_int (id INT, val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_int VALUES (1, 10), (2, 20), (3, 30);
+GO
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_str (id INT, name VARCHAR(50));
+INSERT INTO jira_babel_update_with_var_assign.test_str VALUES (1, 'A'), (2, 'B'), (3, 'C');
+GO
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_multi (id INT, val INT, name VARCHAR(20));
+INSERT INTO jira_babel_update_with_var_assign.test_multi VALUES (1, 100, 'First'), (2, 200, 'Second'), (3, 300, 'Third');
+GO
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_where (id INT, val INT, status VARCHAR(10));
+INSERT INTO jira_babel_update_with_var_assign.test_where VALUES (1, 10, 'active'), (2, 20, 'inactive'), (3, 30, 'active'), (4, 40, 'inactive');
+GO
+~~ROW COUNT: 4~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_null (id INT, val INT, name VARCHAR(20));
+INSERT INTO jira_babel_update_with_var_assign.test_null VALUES (1, 10, 'A'), (2, NULL, 'B'), (3, 30, NULL), (4, 40, 'D');
+GO
+~~ROW COUNT: 4~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_empty (id INT, val INT);
+GO
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_single (id INT, val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_single VALUES (1, 50);
+GO
+~~ROW COUNT: 1~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_numeric (
+    id INT, 
+    int_val INT, 
+    decimal_val DECIMAL(10,2), 
+    float_val FLOAT,
+    bigint_val BIGINT
+);
+INSERT INTO jira_babel_update_with_var_assign.test_numeric VALUES 
+    (1, 10, 10.5, 10.25, 1000000000),
+    (2, 20, 20.5, 20.25, 2000000000);
+GO
+~~ROW COUNT: 2~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_math (id INT, val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_math VALUES (1, 2), (2, 3), (3, 4);
+GO
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_col_assign (id INT, val INT, running_total INT);
+INSERT INTO jira_babel_update_with_var_assign.test_col_assign VALUES (1, 10, 0), (2, 20, 0), (3, 30, 0);
+GO
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_main (id INT, val INT);
+CREATE TABLE jira_babel_update_with_var_assign.test_lookup (id INT, multiplier INT);
+INSERT INTO jira_babel_update_with_var_assign.test_main VALUES (1, 10), (2, 20), (3, 30);
+INSERT INTO jira_babel_update_with_var_assign.test_lookup VALUES (1, 2), (2, 3), (3, 4);
+GO
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_large (id INT, val INT);
+GO
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_str_complex (id INT, prefix VARCHAR(10), suffix VARCHAR(10));
+INSERT INTO jira_babel_update_with_var_assign.test_str_complex VALUES (1, 'A', 'X'), (2, 'B', 'Y'), (3, 'C', 'Z');
+GO
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_case (id INT, val INT, category VARCHAR(10));
+INSERT INTO jira_babel_update_with_var_assign.test_case VALUES (1, 10, 'A'), (2, 20, 'B'), (3, 30, 'A'), (4, 40, 'B');
+GO
+~~ROW COUNT: 4~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_counter (id INT, val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_counter VALUES (1, 100), (2, 200), (3, 300);
+GO
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_init (id INT, val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_init VALUES (1, 5), (2, 10), (3, 15);
+GO
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_self (id INT, val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_self VALUES (1, 10), (2, 20), (3, 30);
+GO
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_datetime (id INT, days_to_add INT);
+INSERT INTO jira_babel_update_with_var_assign.test_datetime VALUES (1, 1), (2, 2), (3, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_tran (id INT, val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_tran VALUES (1, 10), (2, 20);
+GO
+~~ROW COUNT: 2~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_top (id INT, val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_top VALUES (1, 10), (2, 20), (3, 30), (4, 40);
+GO
+~~ROW COUNT: 4~~
+
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_convert (id INT, int_val INT, str_val VARCHAR(20));
+INSERT INTO jira_babel_update_with_var_assign.test_convert VALUES (1, 100, '50'), (2, 200, '75');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_nested (id INT, val INT);
+GO
+
+CREATE TABLE jira_babel_update_with_var_assign.test_other (id INT);
+GO
+
+INSERT INTO jira_babel_update_with_var_assign.test_nested VALUES (1, 10), (2, 20);
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO jira_babel_update_with_var_assign.test_other VALUES (1), (1), (2);
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_dynamic (val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_dynamic VALUES (5), (15), (25);
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_mixed_types (val INT, int_col INT, nvarchar_col NVARCHAR(10), float_col FLOAT);
+INSERT INTO jira_babel_update_with_var_assign.test_mixed_types VALUES (1, 10, N'A', 1.5), (2, 20, N'B', 2.5);
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_coalesce (val INT, nullable_col VARCHAR(50));
+INSERT INTO jira_babel_update_with_var_assign.test_coalesce VALUES (1, NULL), (2, 'First'), (3, 'Second');
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_output (val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_output VALUES (10), (20);
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_running_max (val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_running_max VALUES (5), (15), (10), (25), (20);
+GO
+~~ROW COUNT: 5~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_cross_db (val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_cross_db VALUES (10), (20);
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_target (id INT, val INT);
+GO
+CREATE TABLE jira_babel_update_with_var_assign.test_source (id INT, val INT);
+GO
+INSERT INTO jira_babel_update_with_var_assign.test_target VALUES (1, 100);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO jira_babel_update_with_var_assign.test_source VALUES (1, 200), (2, 300);
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE FUNCTION jira_babel_update_with_var_assign.custom_function(@val INT) RETURNS INT
+AS BEGIN
+    RETURN @val * 2;
+END;
+GO
+
+CREATE TABLE jira_babel_update_with_var_assign.test_udf (val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_udf VALUES (5), (10);
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_concurrent (val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_concurrent VALUES (1), (2), (3), (4), (5);
+GO
+~~ROW COUNT: 5~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_overflow (val TINYINT);
+INSERT INTO jira_babel_update_with_var_assign.test_overflow VALUES (1), (2), (3);
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_unicode (name VARCHAR(10), unicode_col NVARCHAR(10));
+INSERT INTO jira_babel_update_with_var_assign.test_unicode VALUES ('A', N'α'), ('B', N'β');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_computed (base_val INT, computed_col AS (base_val * 2));
+INSERT INTO jira_babel_update_with_var_assign.test_computed (base_val) VALUES (10), (20);
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_recursive (id INT, val INT, parent_id INT, processed BIT DEFAULT 0);
+INSERT INTO jira_babel_update_with_var_assign.test_recursive VALUES (1, 10, NULL, 0), (2, 20, 1, 0), (3, 30, 1, 0);
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_division (val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_division VALUES (0), (2), (4);
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_truncation (name VARCHAR(20));
+INSERT INTO jira_babel_update_with_var_assign.test_truncation VALUES ('VeryLongName1'), ('VeryLongName2');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_identity (id INT IDENTITY(1,1), name VARCHAR(10));
+INSERT INTO jira_babel_update_with_var_assign.test_identity (name) VALUES ('A'), ('B');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_large_string (val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_large_string VALUES (1), (2);
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE jira_babel_update_with_var_assign.test_complex_expr (val INT);
+INSERT INTO jira_babel_update_with_var_assign.test_complex_expr VALUES (2), (3), (4);
+GO
+~~ROW COUNT: 3~~
+
