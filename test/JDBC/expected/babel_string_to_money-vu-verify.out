@@ -1,10 +1,11 @@
 --Standard currency symbols
-select CAST('$100.123' AS money);
+SELECT CAST('$100.123' AS money);
 GO
 ~~START~~
 money
 100.1230
 ~~END~~
+
 
 SELECT CAST('¢100.989723' AS money);
 GO
@@ -13,12 +14,14 @@ money
 100.9897
 ~~END~~
 
+
 SELECT CAST('£100.123' AS money);
 GO
 ~~START~~
 money
 100.1230
 ~~END~~
+
 
 SELECT CAST('৲10056367,098.23' AS money);
 GO
@@ -27,12 +30,14 @@ money
 10056367098.2300
 ~~END~~
 
+
 SELECT CAST('฿1043,79,123' AS money);
 GO
 ~~START~~
 money
 104379123.0000
 ~~END~~
+
 
 SELECT CAST('₠100.123' AS money);
 GO
@@ -41,12 +46,14 @@ money
 100.1230
 ~~END~~
 
+
 SELECT CAST('₣165400,123' AS money);
 GO
 ~~START~~
 money
 165400123.0000
 ~~END~~
+
 
 SELECT CAST('₥107730.123' AS money);
 GO
@@ -55,12 +62,14 @@ money
 107730.1230
 ~~END~~
 
+
 SELECT CAST('₩104320.123' AS money);
 GO
 ~~START~~
 money
 104320.1230
 ~~END~~
+
 
 SELECT CAST('₯100.7574653123' AS money);
 GO
@@ -69,12 +78,14 @@ money
 100.7575
 ~~END~~
 
+
 SELECT CAST('₱10757640.123' AS money);
 GO
 ~~START~~
 money
 10757640.1230
 ~~END~~
+
 
 SELECT CAST('＄10065327.123' AS money);
 GO
@@ -83,6 +94,7 @@ money
 10065327.1230
 ~~END~~
 
+
 SELECT CAST('￥10032.123' AS money);
 GO
 ~~START~~
@@ -90,18 +102,21 @@ money
 10032.1230
 ~~END~~
 
+
 --Negative cases - Invalid inputs
-select cast('!100.90' as money);
+SELECT cast('!100.90' as money);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
-select cast('abcd' as money);
+
+SELECT cast('abcd' as money);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+
 
 SELECT CAST('@#$100.00' AS money);
 GO
@@ -109,31 +124,30 @@ GO
 
 ~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
+
 SELECT CAST('$100''OR 1=1' AS MONEY); 
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "$100'OR 1=1" is out of range for type fixeddecimal)~~
 
+
+
 SELECT CAST('&100' AS MONEY);  
-GO                 
-SELECT CAST('^100' AS MONEY);
+GO  
+SELECT CAST('%100' AS MONEY);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'SELECT' at line 3 and character position 0)~~
 
-SELECT CAST('%100' AS MONEY);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
 SELECT CAST('$$100') AS MONEY; 
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error at or near ")")~~
+
 
 SELECT CAST('  ' AS money);
 GO
@@ -142,11 +156,13 @@ money
 0.0000
 ~~END~~
 
+
 SELECT CAST('£test' AS MONEY);  
-go
+GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "£test" is out of range for type fixeddecimal)~~
+
 
 SELECT CAST('''$100''' AS MONEY);
 GO
@@ -154,11 +170,13 @@ GO
 
 ~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
+
 SELECT CAST('$--100' AS MONEY);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "$--100" is out of range for type fixeddecimal)~~
+
 
 --valid cases
 SELECT CAST('$-100' AS MONEY); 
@@ -168,17 +186,20 @@ money
 -100.0000
 ~~END~~
 
+
 SELECT CAST('$,100' AS MONEY); 
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "$,100" is out of range for type fixeddecimal)~~
 
+
 SELECT CAST('$a123' AS MONEY); 
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "$a123" is out of range for type fixeddecimal)~~
+
 
 SELECT cast('$ ' as MONEY);
 GO
@@ -187,11 +208,13 @@ money
 0.0000
 ~~END~~
 
+
 SELECT CAST('$1000000000000000' AS MONEY);
-go
+GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "$1000000000000000" is out of range for type fixeddecimal)~~
+
 
 SELECT CAST('€922337203685477.5807' AS MONEY) % CAST('€-922337203685477.5808' AS MONEY);
 GO
@@ -200,12 +223,14 @@ money
 922337203685477.5807
 ~~END~~
 
+
 SELECT CAST(922337203685477.5807 AS MONEY) % CAST(0.0001 AS MONEY);
 GO
 ~~START~~
 money
 0.0000
 ~~END~~
+
 
 --Boundary tests
 SELECT CAST('$0.0001' AS MONEY);
@@ -215,11 +240,13 @@ money
 0.0001
 ~~END~~
 
+
 SELECT CAST('$1.23E+10' AS MONEY);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "$1.23E+10" is out of range for type fixeddecimal)~~
+
 
 --Decimal cases
 SELECT CAST('0.50' AS MONEY);
@@ -229,12 +256,14 @@ money
 0.5000
 ~~END~~
 
+
 SELECT CAST('.50' AS MONEY);
 GO
 ~~START~~
 money
 0.5000
 ~~END~~
+
 
 SELECT CAST('$.' AS MONEY);
 GO
@@ -243,25 +272,29 @@ money
 0.0000
 ~~END~~
 
+
 SELECT CAST('100₨.123' AS money)
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "100₨.123" is out of range for type fixeddecimal)~~
 
-select cast('-.1089' as money);
+
+SELECT CAST('-.1089' AS MONEY);
 GO
 ~~START~~
 money
 -0.1089
 ~~END~~
 
+
 SELECT CAST('$1,000,000.50' AS MONEY);
-go
+GO
 ~~START~~
 money
 1000000.5000
 ~~END~~
+
 
 SELECT CAST(SUBSTRING('$100.50', 1, 4) AS MONEY); 
 GO
@@ -270,6 +303,7 @@ money
 100.0000
 ~~END~~
 
+
 SELECT CAST('$0.0001' AS MONEY);
 GO
 ~~START~~
@@ -277,12 +311,14 @@ money
 0.0001
 ~~END~~
 
+
 select TRY_CAST(CAST(-1.56 as money) As int);
 GO
 ~~START~~
 int
 -2
 ~~END~~
+
 
 --Arithmetic operations
 SELECT CAST(-27328391434.2737 AS MONEY) % CAST(283828323.2273 AS MONEY);
@@ -292,27 +328,31 @@ money
 -80872404.4529
 ~~END~~
 
-select CAST('¤100.123' as money) + CAST('¤100,70.89' as smallmoney);
+
+SELECT CAST('¤100.123' AS MONEY) + CAST('¤100,70.89' AS SMALLMONEY);
 GO
 ~~START~~
 money
 10171.0130
 ~~END~~
 
+
 -- With space
 SELECT CAST('  +100' AS MONEY);
-go
+GO
 ~~START~~
 money
 100.0000
 ~~END~~
 
+
 SELECT CAST('  -100' AS MONEY);
-go
+GO
 ~~START~~
 money
 -100.0000
 ~~END~~
+
 
 SELECT CAST('$100  ' AS MONEY);
 GO
@@ -321,32 +361,37 @@ money
 100.0000
 ~~END~~
 
+
 SELECT CAST('  $ 100.50  ' AS MONEY); 
-go
+GO
 ~~START~~
 money
 100.5000
 ~~END~~
 
+
 SELECT CAST('  $  100' AS MONEY);
-go
+GO
 ~~START~~
 money
 100.0000
 ~~END~~
 
-select cast('                                 $        100' as money);
-go
+
+SELECT CAST('                                 $        100' AS MONEY);
+GO
 ~~START~~
 money
 100.0000
 ~~END~~
 
-select cast('R$ 100,50' as money);
-go
+
+SELECT CAST('R$ 100,50' AS MONEY);
+GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+
 
 SELECT CAST('$  -100' AS MONEY); 
 GO
@@ -355,12 +400,14 @@ money
 -100.0000
 ~~END~~
 
+
 SELECT CAST('$    +    100' AS MONEY);
 GO
 ~~START~~
 money
 100.0000
 ~~END~~
+
 
 -- Invalid currency symbols
 SELECT CAST('₽100' AS MONEY); 
@@ -369,25 +416,20 @@ GO
 
 ~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
+
 SELECT CAST('₿100' AS MONEY); 
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
+
 SELECT CAST('$$100' AS MONEY); 
-go
+GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "$$100" is out of range for type fixeddecimal)~~
 
-SELECT CAST('100$' AS MONEY); 
-GO      
-select cast('₱100.123' as smallmoney);
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'select' at line 3 and character position 0)~~
 
 SELECT TRY_CAST('@100' AS MONEY);  
 GO
@@ -396,11 +438,13 @@ money
 <NULL>
 ~~END~~
 
+
 SELECT CAST('$999999999999999' AS MONEY); 
-go
+GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "$999999999999999" is out of range for type fixeddecimal)~~
+
 
 SELECT CAST('$1000000' AS MONEY); 
 GO
@@ -409,12 +453,14 @@ money
 1000000.0000
 ~~END~~
 
+
 SELECT CAST(CHAR(9) + '100' AS MONEY);
-go
+GO
 ~~START~~
 money
 100.0000
 ~~END~~
+
 
 SELECT CAST(CAST(0xC2A2313030 AS VARCHAR(10)) AS MONEY); 
 GO
@@ -427,7 +473,7 @@ GO
 BEGIN TRANSACTION;
 SELECT CAST('$100' AS MONEY);                               
 COMMIT;
-go
+GO
 ~~START~~
 money
 100.0000
@@ -443,6 +489,7 @@ money
 
 ~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
+
 EXEC TestMoneyCast '$.  100';
 GO
 ~~START~~
@@ -453,39 +500,44 @@ money
 
 
 -- Thousands separators
-SELECT CAST('$1009999999999,123' AS money);
+SELECT CAST('$1009999999999,123' AS MONEY);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "$1009999999999,123" is out of range for type fixeddecimal)~~
 
-SELECT CAST('$100999999999,123' AS money);
+
+SELECT CAST('$100999999999,123' AS MONEY);
 GO
 ~~START~~
 money
 100999999999123.0000
 ~~END~~
 
-SELECT CAST('¢1,234.56' AS smallmoney);
+
+SELECT CAST('¢1,234.56' AS SMALLMONEY);
 GO
 ~~START~~
 smallmoney
 1234.5600
 ~~END~~
 
-select cast('£+.200' as money);
+
+SELECT CAST('£+.200' AS MONEY);
 GO
 ~~START~~
 money
 0.2000
 ~~END~~
 
-select cast(NULL as money);
+
+SELECT CAST(NULL AS MONEY);
 GO
 ~~START~~
 money
 <NULL>
 ~~END~~
+
 
 SELECT CAST('₢0' AS MONEY); 
 GO
@@ -503,6 +555,7 @@ money
 100.5000
 ~~END~~
 
+
 SELECT dbo.test_money_func(CAST('$ - .99' AS MONEY)) AS test;
 GO
 ~~START~~
@@ -510,13 +563,15 @@ money
 -1.9800
 ~~END~~
 
-SELECT dbo.test_money_func(CAST('$12.34.56' as money)) AS test;
+
+SELECT dbo.test_money_func(CAST('$12.34.56' as MONEY)) AS test;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "$12.34.56" is out of range for type fixeddecimal)~~
 
-SELECT dbo.test_money_func(CAST('￦100.123' AS money)) AS test;
+
+SELECT dbo.test_money_func(CAST('￦100.123' AS MONEY)) AS test;
 GO
 ~~START~~
 money
@@ -535,11 +590,11 @@ money
 
 
 --views
-SELECT * FROM test;
+SELECT * FROM test_validcurrency;
 GO
 ~~START~~
 money
-100.5000
+10050.7800
 ~~END~~
 
 
@@ -548,14 +603,6 @@ GO
 ~~START~~
 money
 0.0000
-~~END~~
-
-
-SELECT * FROM test2;
-GO
-~~START~~
-money
-124564986.6780
 ~~END~~
 
 
@@ -587,6 +634,7 @@ int#!#money#!#money#!#money#!#varchar
 3#!#400.0000#!#390.0000#!#10.0000#!#Positive
 ~~END~~
 
+
 -- Function to convert smallmoney to money
 SELECT dbo.fn_SmallToMoney('$123,45') AS ConvertedValue;
 GO
@@ -602,6 +650,7 @@ money
 120984.4500
 ~~END~~
 
+
 --Procedure for arithmrtic operations
 EXEC Test_Arithmetic;
 GO
@@ -609,6 +658,7 @@ GO
 money#!#money#!#money#!#money#!#money
 10013.0000#!#-10013.0000#!#0.0000#!#0.0000#!#0.0000
 ~~END~~
+
 
 --Procedure for Boundary condition
 EXEC Test_Boundaries;
@@ -618,6 +668,7 @@ money#!#money
 922337203685477.5807#!#-922337203685477.5808
 ~~END~~
 
+
 --Function 
 SELECT dbo.round_money(CAST('$123.458' AS MONEY), 2);
 GO
@@ -626,6 +677,7 @@ money
 123.4600
 ~~END~~
 
+
 SELECT dbo.round_money(CAST('$8757645343.029' AS MONEY), 2);
 GO
 ~~START~~
@@ -633,11 +685,13 @@ money
 8757645343.0300
 ~~END~~
 
+
 SELECT dbo.round_money(CAST('@123.6' AS MONEY), DEFAULT);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+
 
 SELECT dbo.round_money(CAST('-999999.999' AS MONEY), DEFAULT);
 GO

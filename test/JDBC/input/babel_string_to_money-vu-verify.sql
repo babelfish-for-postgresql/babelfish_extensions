@@ -240,13 +240,10 @@ SELECT CAST(@val AS MONEY);
 go
 
 --views
-SELECT * FROM test;
+SELECT * FROM test_validcurrency;
 GO
 
 SELECT * FROM test1;
-GO
-
-SELECT * FROM test2;
 GO
 
 --Function

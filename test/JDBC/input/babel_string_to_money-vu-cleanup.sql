@@ -4,13 +4,10 @@ GO
 DROP FUNCTION IF EXISTS test_money_func;
 GO
 
-DROP VIEW IF EXISTS test;
+DROP VIEW test_validcurrency;
 GO
 
-DROP VIEW IF EXISTS test1;
-GO
-
-DROP VIEW IF EXISTS test2;
+DROP VIEW test1;
 GO
 
 DROP FUNCTION IF EXISTS money_func;
