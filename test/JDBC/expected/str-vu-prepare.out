@@ -1,3 +1,4 @@
+
 CREATE FUNCTION str_vu_prepare_f1
 (
     @x   float,
@@ -10,10 +11,6 @@ BEGIN
     RETURN STR(@x, @len, @dec);
 END
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: Function 'str_vu_prepare_f1' already exists with the same name)~~
-
 
 CREATE FUNCTION str_vu_prepare_f2
 (
@@ -38,10 +35,6 @@ RETURN
     ) AS v(val)
 );
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: Function 'str_vu_prepare_f2' already exists with the same name)~~
-
 
 CREATE VIEW str_vu_prepare_v1 AS (
     SELECT 
