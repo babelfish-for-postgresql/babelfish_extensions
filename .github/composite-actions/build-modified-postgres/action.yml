@@ -57,6 +57,11 @@ runs:
         engine_version="${{ inputs.engine_version }}"
         if [[ "$engine_version" != "source.latest" && "$engine_version" != "target.latest" ]] && 
           ( version_le "$engine_version" "14.17" || ( [[ "${engine_version%%.*}" == "15" ]] && version_le "$engine_version" "15.12" ) ); then
+
+          # Install gcc-9 as it is removed from ubuntu22.04
+          sudo apt-get update
+          sudo apt-get install g++-9 -y
+
           export CC='ccache gcc-9'
         else
           export CC='ccache gcc'

@@ -56,7 +56,7 @@ runs:
       if: always() && steps.setup-new-version.outcome == 'success'
       uses: ./.github/composite-actions/build-modified-postgres
       with:
-        engine_branch: BABEL_4_X_DEV__PG_16_X
+        engine_branch: BABEL_4_6_STABLE__PG_16_9
         install_dir: psqllatest
 
     - name: Dump and restore database
