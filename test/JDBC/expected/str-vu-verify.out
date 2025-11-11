@@ -157,6 +157,14 @@ varchar#!#varchar#!#varchar
 ~~END~~
 
 
+SELECT * FROM str_vu_prepare_v20
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+ 2.000#!# 4.000#!# -1000#!#    123.36
+~~END~~
+
+
 EXEC str_vu_prepare_p1
 GO
 ~~START~~
@@ -322,5 +330,47 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar
 10000.00#!#***#!#*******
+~~END~~
+
+
+EXEC str_vu_prepare_p20
+GO
+~~START~~
+bigint#!#float#!#varchar
+1#!#1.9999#!# 2.000
+2#!#3.9999#!# 4.000
+3#!#-999.9#!#-999.9
+4#!#0.9995#!# 1.000
+5#!#123.355#!#123.36
+6#!#1234.5678#!#1234.6
+~~END~~
+
+
+EXEC str_vu_prepare_p21
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+[  0.1234567890123460]#!#[0.1234567890123460]#!#1234.568#!# -1000
+~~END~~
+
+
+SELECT str_vu_prepare_f1(1.9999, 6, 3)
+GO
+~~START~~
+varchar
+ 2.000
+~~END~~
+
+
+SELECT str_vu_prepare_f2(10,2)
+GO
+~~START~~
+varchar
+(1,1.9999,"      2.00")
+(2,3.9999,"      4.00")
+(3,-999.9,"   -999.90")
+(4,0.9995,"      1.00")
+(5,123.355,"    123.36")
+(6,1234.5678,"   1234.57")
 ~~END~~
 

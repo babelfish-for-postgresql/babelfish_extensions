@@ -70,6 +70,9 @@ GO
 SELECT * FROM str_vu_prepare_v19
 GO
 
+SELECT * FROM str_vu_prepare_v20
+GO
+
 EXEC str_vu_prepare_p1
 GO
 
@@ -145,4 +148,16 @@ GO
 
 -- when there's one extra digit from carried over, go with the length and decimal constraint before rounding
 EXEC str_vu_prepare_p19
+GO
+
+EXEC str_vu_prepare_p20
+GO
+
+EXEC str_vu_prepare_p21
+GO
+
+SELECT str_vu_prepare_f1(1.9999, 6, 3)
+GO
+
+SELECT str_vu_prepare_f2(10,2)
 GO

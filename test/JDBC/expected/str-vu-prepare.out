@@ -1,3 +1,48 @@
+CREATE FUNCTION str_vu_prepare_f1
+(
+    @x   float,
+    @len int,
+    @dec int
+)
+RETURNS varchar(8000)
+AS
+BEGIN
+    RETURN STR(@x, @len, @dec);
+END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'str_vu_prepare_f1' already exists with the same name)~~
+
+
+CREATE FUNCTION str_vu_prepare_f2
+(
+    @len int,
+    @dec int
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY (SELECT 1)) AS id,
+        v.val,
+        STR(v.val, @len, @dec) AS formatted
+    FROM (VALUES
+          (CAST(  1.9999 AS float)),  -- carry --> ' 2.000'
+          (CAST(  3.9999 AS float)),  -- carry --> ' 4.000'
+          (CAST( -999.9  AS float)),  -- dec=0 negatif --> ' -1000'
+          (CAST(  0.9995 AS float)),  -- boundary --> ' 1.000'
+          (CAST(123.355  AS float)),  -- typical rounding
+          (CAST(1234.5678 AS float))  -- length/decimal squeeze
+    ) AS v(val)
+);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'str_vu_prepare_f2' already exists with the same name)~~
+
+
 CREATE VIEW str_vu_prepare_v1 AS (
     SELECT 
         STR(1234.56, 8, 2) AS res1,
@@ -231,6 +276,16 @@ CREATE VIEW str_vu_prepare_v19 AS (
         STR(999.99, 3, 1) AS res2,
         STR(9999.998, 7, 2) AS res3
     );
+GO
+
+CREATE VIEW str_vu_prepare_v20 AS
+(
+    SELECT 
+        str_vu_prepare_f1( 1.9999 , 6 , 3) AS udf_cr1,         -- ' 2.000'
+        str_vu_prepare_f1( 3.9999 , 6 , 3) AS udf_cr2,         -- ' 4.000'
+        str_vu_prepare_f1(-999.9  , 6 , 0) AS udf_neg_round0,  -- ' -1000'
+        str_vu_prepare_f1(123.355 ,10 , 2) AS udf_round_basic  -- '    123.36'
+);
 GO
 
 CREATE PROCEDURE str_vu_prepare_p1 AS 
@@ -484,5 +539,26 @@ BEGIN
         STR(9999.995, 8, 2) AS res1,
         STR(999.99, 3, 1) AS res2,
         STR(9999.998, 7, 2) AS res3;
+END
+GO
+
+CREATE PROCEDURE str_vu_prepare_p20
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT * FROM dbo.str_vu_prepare_f2(6,3);  -- carry/rounding
+END
+GO
+
+
+CREATE PROCEDURE str_vu_prepare_p21
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT 
+        '[' + str_vu_prepare_f1(0.123456789012345678, 20, 20) + ']' AS pad1,
+        '[' + str_vu_prepare_f1(0.123456789012345678, 18, 20) + ']' AS pad2,
+        str_vu_prepare_f1(1234.5678, 8, 4)   AS squeeze1,    -- '1234.568'
+        str_vu_prepare_f1(-999.9,     6, 0)  AS neg_round0;  -- ' -1000'
 END
 GO
