@@ -1,0 +1,71 @@
+SELECT * FROM sys_str_vu_prepare_v1
+GO
+~~START~~
+varchar
+    123.36
+~~END~~
+
+
+SELECT * FROM sys_str_vu_prepare_v2
+GO
+~~START~~
+varchar
+       123
+~~END~~
+
+
+SELECT * FROM sys_str_vu_prepare_v3
+GO
+~~START~~
+varchar
+       123
+~~END~~
+
+
+EXEC sys_str_vu_prepare_p1
+GO
+~~START~~
+varchar
+    123.36
+~~END~~
+
+ 
+EXEC sys_str_vu_prepare_p2
+GO
+~~START~~
+varchar
+       123
+~~END~~
+
+
+EXEC sys_str_vu_prepare_p3
+GO
+~~START~~
+varchar
+       123
+~~END~~
+
+
+SELECT sys_str_vu_prepare_f1()
+GO
+~~START~~
+varchar
+ 
+~~END~~
+
+ 
+SELECT sys_str_vu_prepare_f2()
+GO
+~~START~~
+varchar
+ 
+~~END~~
+
+
+SELECT sys_str_vu_prepare_f3()
+GO
+~~START~~
+varchar
+ 
+~~END~~
+
