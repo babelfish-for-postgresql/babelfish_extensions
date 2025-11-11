@@ -161,6 +161,15 @@ runs:
         # Create and initialise Babelfish extensions in the new server to perform restore.
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -v migration_mode=${{inputs.migration_mode}} -v tsql_port="1433" -f .github/scripts/create_extension.sql
 
+        # Increase max_locks_per_transaction to 128 BEFORE restore to prevent out of shared memory errors
+        echo 'Setting max_locks_per_transaction to 128 before restore...'
+        sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "ALTER SYSTEM SET max_locks_per_transaction = 128;"
+        
+        # Restart PostgreSQL server to apply the change (max_locks_per_transaction requires restart)
+        ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_new_dir }}/data stop
+        ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile start
+        echo 'max_locks_per_transaction set to 128 and server restarted. Ready for restore.'
+        
         if [[ ${{ inputs.database_level }} == false ]];then
           echo "Starting to restore whole Babelfish physical database"
           if [[ '${{ inputs.type }}' == 'full' ]];then
