@@ -351,3 +351,6 @@ AS 'babelfishpg_tsql', 'sp_xml_removedocument'
 LANGUAGE C;
 
 GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument( IN INTEGER ) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.persist_temp_oid_buffer_start()
+AS 'babelfishpg_tsql', 'persist_temp_oid_buffer_start_internal' LANGUAGE C;
