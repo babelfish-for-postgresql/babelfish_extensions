@@ -53,6 +53,7 @@
 #define SYSNAME_TYPMOD 128
 #define NCHAR_MAX_TYPMOD 4000
 #define BPCHAR_MAX_TYPMOD 8000
+#define MAX_BINARY_SIZE 8000
 
 #define TDS_MAX_NUM_PRECISION 38
 
@@ -3288,6 +3289,9 @@ tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node*
 			int32	typmod1 = exprTypmod(lexpr),
 					typmod2 = exprTypmod(rexpr),
 					rettypmod = typmod1 + typmod2 - VARHDRSZ;
+
+			if (rettypmod > MAX_BINARY_SIZE + VARHDRSZ)
+					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
 
 			OpExp = coerce_to_target_type(pstate, OpExp,
 										 exprType(OpExp),
