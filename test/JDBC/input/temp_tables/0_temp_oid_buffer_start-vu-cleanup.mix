@@ -1,0 +1,3 @@
+-- tsql
+DROP VIEW db_role_settings_view 
+GO
