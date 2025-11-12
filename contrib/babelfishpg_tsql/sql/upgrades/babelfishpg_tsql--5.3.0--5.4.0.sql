@@ -633,3 +633,79 @@ FROM pg_catalog.pg_timezone_names
 WHERE sys.pltsql_timezone_mapping_pg_to_windows(name) IS NOT NULL
 ORDER BY name;
 GRANT SELECT ON sys.time_zone_info TO PUBLIC;
+
+
+CREATE OR REPLACE PROCEDURE sys.persist_temp_oid_buffer_start()
+AS 'babelfishpg_tsql', 'persist_temp_oid_buffer_start_internal' LANGUAGE C;
+
+-- initialize the temp_oid_buffer_start during upgrade
+-- this is idempotent; if there is already a persisted value
+-- for temp_oid_buffer_start, it will not do anything
+CALL sys.persist_temp_oid_buffer_start();
+
+-- The items in initialize_babel_extras procedure need to be initialized or created 
+-- during babelfish initialization. They depend on the core babelfish to be initialized first.
+CREATE OR REPLACE PROCEDURE initialize_babel_extras()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  CREATE OR REPLACE PROCEDURE sys.create_xp_qv_in_master_dbo()
+  LANGUAGE C
+  AS 'babelfishpg_tsql', 'create_xp_qv_in_master_dbo_internal';
+
+  CREATE OR REPLACE PROCEDURE sys.create_xp_instance_regread_in_master_dbo()
+  LANGUAGE C
+  AS 'babelfishpg_tsql', 'create_xp_instance_regread_in_master_dbo_internal';
+
+  CALL sys.create_xp_qv_in_master_dbo();
+  ALTER PROCEDURE master_dbo.xp_qv OWNER TO sysadmin;
+  DROP PROCEDURE sys.create_xp_qv_in_master_dbo;
+
+  CALL sys.create_xp_instance_regread_in_master_dbo();
+  ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), int) OWNER TO sysadmin;
+  ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), sys.nvarchar(512)) OWNER TO sysadmin;
+  DROP PROCEDURE sys.create_xp_instance_regread_in_master_dbo;
+
+  CREATE OR REPLACE VIEW msdb_dbo.syspolicy_system_health_state
+  AS
+    SELECT 
+      CAST(0 as BIGINT) AS health_state_id,
+      CAST(0 as INT) AS policy_id,
+      CAST(NULL AS sys.DATETIME) AS last_run_date,
+      CAST('' AS sys.NVARCHAR(400)) AS target_query_expression_with_id,
+      CAST('' AS sys.NVARCHAR) AS target_query_expression,
+      CAST(1 as sys.BIT) AS result
+    WHERE FALSE;
+  GRANT SELECT ON msdb_dbo.syspolicy_system_health_state TO PUBLIC;
+  ALTER VIEW msdb_dbo.syspolicy_system_health_state OWNER TO sysadmin;
+
+  CREATE OR REPLACE FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled()
+  RETURNS INTEGER
+  AS 
+  $fn_body$    
+    SELECT 0;
+  $fn_body$
+  LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+  ALTER FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled() OWNER TO sysadmin;
+
+  CREATE OR REPLACE VIEW msdb_dbo.syspolicy_configuration
+  AS
+    SELECT CAST(t.name AS sys.sysname), CAST(t.current_value AS sys.sql_variant) FROM
+    (
+      VALUES
+      ('Enabled', CAST(0 AS int)),
+      ('HistoryRetentionInDays', CAST(0 AS int)),
+      ('LogOnSuccess', CAST(0 AS int))
+    )t (name, current_value);
+  GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
+  ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
+
+  -- let sysadmin only to update babelfish_domain_mapping
+  GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
+
+  -- initialize the temp_oid_buffer_start during bbf initialization
+  -- this is idempotent; if there is already a persisted value
+  -- for temp_oid_buffer_start, it will not do anything
+  CALL sys.persist_temp_oid_buffer_start();
+END
+$$;

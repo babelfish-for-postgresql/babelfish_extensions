@@ -292,6 +292,7 @@ static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
 static bool verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config);
+PG_FUNCTION_INFO_V1(persist_temp_oid_buffer_start_internal);
 
 /*********************************************************
  * 			Weak Binding Views Related Declarations
@@ -973,6 +974,92 @@ pltsql_GetNewTempObjectId()
 	nextTempOid++;
 
 	return result;
+}
+
+Datum
+persist_temp_oid_buffer_start_internal(PG_FUNCTION_ARGS)
+{
+	/*
+	 * If we are not rdsadmin, we will not proceed.
+	 * persistence of temp_oid_buffer_start now happens during bbf 
+	 * initialization and upgrades by rdsadmin
+	 */
+	if (!superuser())
+		ereport(ERROR,
+                (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+                 (errmsg("must be superuser to use this function"))));
+
+	/* safety check, we should never get here during persisting in a Hot standby */
+	if (RecoveryInProgress())
+		elog(ERROR, "temp oid initialization cannot happen during recovery");
+	
+	/*
+	 * If temp_oid_buffer_start is already persisted, it will be loaded as GUC and
+	 * BUFFER_START_TO_OID will be valid. In such case, we can skip persisting and
+	 * simply return.
+	 */
+	if (OidIsValid(BUFFER_START_TO_OID))
+		PG_RETURN_BOOL(true);
+
+	/*
+	 * temp_oid_buffer_size = 0 would indicate that the feature is 
+	 * disabled, so persisting oid start is triggered from an upgrade.
+	 * 
+	 * This is unlikely because if temp_oid_buffer_size = 0, this should mean that 
+	 * the operator did this for the cluster in case of temp table related issue, 
+	 * which should also mean that the oid_start is persisted in that cluster.
+	 *
+	 * If an upgrade fails at this point, it means that they also don't have 
+	 * temp_oid_buffer_start in pg_db_role_setting, which might be a corruption
+	 * because temp_oid_buffer_start is a SUSET GUC. 
+	 * In this case, the operator will need to manually set the temp_oid_buffer_size
+	 * to its default value by performing ALTER DATABASE ... SET TO DEFAULT and 
+	 * retry the wf.
+	 * 
+	 * This will be harmless because temp_oid_buffer_start will be equal to nextOid
+	 * anyway.
+	 */
+	if (temp_oid_buffer_size <= 0)
+		ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 (errmsg("temp oid initialization cannot be triggered when buffer size is 0."))));
+
+	/*
+	 * This means tempOidStart was changed but the GUC temp_oid_buffer_start was not
+	 * changed/persisted. We should avoid moving forward and error out to avoid persisting 
+	 * incorrect start.
+	 *
+	 * If a create/upgrade fails at this point, it means the the GUC value was not persisted
+	 * in the catalog. 
+	 * In this case, for mitigation, the operator can call the persist_temp_oid_buffer_start
+	 * procedure again.
+	 */
+	if (OidIsValid(TransamVariables->tempOidStart) && !OidIsValid(BUFFER_START_TO_OID))
+		ereport(ERROR,
+                (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+                 (errmsg("tempOidStart is already set in shmem. temp oid initialization cannot be done."))));
+
+	/*
+	 * In order to persist the setting, we can simply call pltsql_GetNewTempObjectId.
+	 * If during upgrade, we find that the temp_oid_buffer_start is already persisted,
+	 * then pltsql_GetNewTempObjectId will not try to persist it again.
+	 *
+	 * If the persistence fails, then temp_oid_buffer_start is initialized to INT_MIN
+	 */
+	pltsql_GetNewTempObjectId();
+
+	/*
+	 * This means that the persistence of temp_oid_buffer_start failed
+	 *
+	 * If a create/upgrade fails at this point, it means the the GUC value was not persisted
+	 * in the catalog. 
+	 * In this case, for mitigation, the operator can call the persist_temp_oid_buffer_start
+	 * procedure again.
+	 */
+	if (!OidIsValid(BUFFER_START_TO_OID))
+		elog(ERROR, "unable to persist temp_oid_buffer_start in pg_db_role_setting");
+
+	PG_RETURN_BOOL(true);
 }
 
 Oid
@@ -5167,82 +5254,59 @@ pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
  * To properly persist a new value of babelfishpg_tsql.temp_oid_buffer_start, we must set it
  * in pg_db_role_setting, as it would in an ALTER DATABASE ... SET ... command.
  *
+ * This persistence can only be done as rdsadmin, because temp_oid_buffer_start is SUSET GUC.
+ * And any error in this function means failure during babelfish initialization or upgrade.
+ *
  * Returns true on success.
  */
-static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
+static bool
+set_and_persist_temp_oid_buffer_start(Oid new_oid)
 {
 	const char  *babelfish_db_name = NULL;
 	char        *config_name = "babelfishpg_tsql.temp_oid_buffer_start";
 	char        *altdbstmt;
-	Oid         babelfish_db_id = InvalidOid;
 	int         translated_oid = OID_TO_BUFFER_START(new_oid);
 	List        *parsetree_list;
 	Node        *stmt;
 	PlannedStmt *wrapper;
-	Oid         save_userid;
-	int         save_sec_context;
-	HeapTuple   dbtup;
-	Oid         bbf_db_owner;
 
 	babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
 	if (!babelfish_db_name)
 		return false;
 
-	babelfish_db_id = get_database_oid(babelfish_db_name, true);
-
-	if (!OidIsValid(babelfish_db_id))
-		return false;
-
-	dbtup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(babelfish_db_id));
-	if (!HeapTupleIsValid(dbtup))
-		return false;
-
-	bbf_db_owner = ((Form_pg_database) GETSTRUCT(dbtup))->datdba;
 	altdbstmt = psprintf("ALTER DATABASE %s SET %s = %d", babelfish_db_name, config_name, translated_oid);
 	parsetree_list = raw_parser(altdbstmt, RAW_PARSE_DEFAULT);
 	if (list_length(parsetree_list) != 1)
 	{
-		elog(WARNING, "Implicit VariablSet stmt during temp OID buffer initialization is incorrect or corrupt");
+		elog(WARNING, "Implicit VariableSet stmt during temp OID buffer initialization is incorrect or corrupt");
 		return false;
 	}
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
 	if (!verify_stmt_alterdatabaseset(stmt,babelfish_db_name,config_name))
 	{
-		elog(WARNING, "Implicit VariablSet stmt during temp OID buffer initialization is incorrect or corrupt");
+		elog(WARNING, "Implicit VariableSet stmt during temp OID buffer initialization is incorrect or corrupt");
 		return false;
 	}
 
-	ReleaseSysCache(dbtup);
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(altdbstmt);
 
-	PG_TRY();
-	{
-		/* Run the built query */
-		/* need to make a wrapper PlannedStmt */
-		wrapper = makeNode(PlannedStmt);
-		wrapper->commandType = CMD_UTILITY;
-		wrapper->canSetTag = false;
-		wrapper->utilityStmt = stmt;
-		wrapper->stmt_location = 0;
-		wrapper->stmt_len = strlen(altdbstmt);
+	ProcessUtility(wrapper,
+				altdbstmt,
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+	CommandCounterIncrement();
 
-		SetUserIdAndSecContext(bbf_db_owner, save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-
-		ProcessUtility(wrapper,
-					altdbstmt,
-					false,
-					PROCESS_UTILITY_SUBCOMMAND,
-					NULL,
-					NULL,
-					None_Receiver,
-					NULL);
-		CommandCounterIncrement();
-	}
-	PG_FINALLY();
-	{
-		SetUserIdAndSecContext(save_userid, save_sec_context);
-	}
-	PG_END_TRY();
 	temp_oid_buffer_start = translated_oid;
 
 	return true;

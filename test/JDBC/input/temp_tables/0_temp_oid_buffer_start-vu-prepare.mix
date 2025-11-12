@@ -1,0 +1,6 @@
+-- tsql
+CREATE VIEW db_role_settings_view 
+AS
+SELECT unnest(setconfig) AS setting
+FROM pg_db_role_setting;
+GO
