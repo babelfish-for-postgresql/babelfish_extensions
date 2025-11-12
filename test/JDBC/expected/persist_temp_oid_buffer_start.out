@@ -1,0 +1,16 @@
+-- psql
+CALL sys.persist_temp_oid_buffer_start()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be superuser to use this function
+    Server SQLState: 42501)~~
+
+
+-- tsql
+EXEC sys.persist_temp_oid_buffer_start
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be superuser to use this function)~~
+
