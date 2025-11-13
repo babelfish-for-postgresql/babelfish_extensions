@@ -3290,6 +3290,12 @@ tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node*
 					typmod2 = exprTypmod(rexpr),
 					rettypmod = typmod1 + typmod2 - VARHDRSZ;
 
+			if (typmod1 == -1 || typmod2 == -1)
+			{
+				pfree(opname);
+				return OpExp;
+			}
+
 			if (rettypmod > MAX_BINARY_SIZE + VARHDRSZ)
 					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
 
