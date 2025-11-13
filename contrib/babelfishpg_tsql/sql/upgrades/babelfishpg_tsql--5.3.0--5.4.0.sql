@@ -638,8 +638,6 @@ GRANT SELECT ON sys.time_zone_info TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.persist_temp_oid_buffer_start()
 AS 'babelfishpg_tsql', 'persist_temp_oid_buffer_start_internal' LANGUAGE C;
 
-LOAD 'babelfishpg_tsql';
-
 -- initialize the temp_oid_buffer_start during upgrade
 -- this is idempotent; if there is already a persisted value
 -- for temp_oid_buffer_start, it will not do anything

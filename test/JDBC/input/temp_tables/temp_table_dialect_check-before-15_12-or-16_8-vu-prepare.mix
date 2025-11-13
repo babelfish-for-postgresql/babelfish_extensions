@@ -51,3 +51,7 @@ GO
 SELECT COUNT(REPLACE(Description, '55', '44')) FROM #tmpGoodsInfo;
 GO
 -- terminate-tsql-conn
+
+-- psql
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.temp_oid_buffer_size = 65536;
+GO
