@@ -1,4 +1,4 @@
--- sla 20000
+-- sla 40000
 exec sys_columns_dep_vu_prepare_p1
 go
 
