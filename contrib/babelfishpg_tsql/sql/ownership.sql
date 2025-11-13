@@ -182,7 +182,7 @@ BEGIN
   GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
 
   -- initialize the temp_oid_buffer_start during bbf initialization
-  -- this is idempotent; if there's already a persisted value
+  -- this is idempotent; if there is already a persisted value
   -- for temp_oid_buffer_start, it will not do anything
   CALL sys.persist_temp_oid_buffer_start();
 END
