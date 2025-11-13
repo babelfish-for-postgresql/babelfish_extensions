@@ -702,7 +702,7 @@ select
 into avg_t from BABEL_6081_t1 group by id
 go
 
-select COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE from information_schema.columns where table_name = 'avg_t';
+select COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE from information_schema.columns where table_name = 'avg_t' ORDER BY COLUMN_NAME;
 go
 
 drop table BABEL_6081_t1
