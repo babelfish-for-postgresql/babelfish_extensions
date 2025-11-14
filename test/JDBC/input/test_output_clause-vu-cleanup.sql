@@ -1,0 +1,180 @@
+-- Drop all INSTEAD OF triggers first
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Update_Update;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Delete_OnUpdate;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Delete_OnDelete;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Update_OnDelete;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Delete_OnInsert;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_InsteadOf_Update_OnInsert;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_InsteadOf_Mixed;
+GO
+ 
+-- Drop all AFTER triggers
+DROP TRIGGER IF EXISTS tr_OutputTest_Insert;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_OutputTest_Update;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_OutputTest_Delete;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_After_Update;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_Delete_OnUpdate;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_Delete_OnDelete;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_Update_Update_AfterDelete;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_Delete_AfterInsert;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_EPQTest_Update_AfterInsert;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_Update_Delete_Deadlock;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_Delete_Update_Deadlock;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_After_Mixed;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_InsteadOf_MixedDelete;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_After_MixedDelete;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_InsteadOf_MixedInsert;
+GO
+ 
+DROP TRIGGER IF EXISTS tr_After_MixedInsert;
+GO
+ 
+-- Drop all views
+DROP VIEW IF EXISTS OutputTestView;
+GO
+ 
+DROP VIEW IF EXISTS EPQView_Update_Update;
+GO
+ 
+DROP VIEW IF EXISTS EPQView_Update_Delete;
+GO
+ 
+DROP VIEW IF EXISTS EPQView_Delete_Delete;
+GO
+ 
+DROP VIEW IF EXISTS EPQView_Delete_Update;
+GO
+ 
+DROP VIEW IF EXISTS EPQView_Insert_Delete;
+GO
+ 
+DROP VIEW IF EXISTS EPQView_Insert_Update;
+GO
+ 
+DROP VIEW IF EXISTS MixedTriggerViewDelete;
+GO
+ 
+DROP VIEW IF EXISTS MixedTriggerViewInsert;
+GO
+ 
+-- Drop all tables
+DROP TABLE IF EXISTS OutputTest;
+GO
+ 
+DROP TABLE IF EXISTS OutputLog;
+GO
+ 
+DROP TABLE IF EXISTS TriggerLog;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_Update_Update;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_Update_Delete;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_Delete_Delete;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_Delete_Update;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_Insert_Delete;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_Insert_Update;
+GO
+ 
+DROP TABLE IF EXISTS EPQOutputLog;
+GO
+ 
+DROP TABLE IF EXISTS EPQOutputLog_Str;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Update_Update;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Update_Delete;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Delete_Delete;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Delete_Update;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Insert_Delete;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_InsteadOf_Insert_Update;
+GO
+ 
+DROP TABLE IF EXISTS EPQTest_Delete_Update_deadlock;
+GO
+ 
+DROP TABLE IF EXISTS MixedTriggerTest;
+GO
+ 
+DROP TABLE IF EXISTS TriggerOutputLogMixed;
+GO
+ 
+DROP TABLE IF EXISTS MixedTriggerTestDelete;
+GO
+ 
+DROP TABLE IF EXISTS TriggerOutputLogMixedDelete;
+GO
+ 
+DROP TABLE IF EXISTS MixedTriggerTestInsert;
+GO
+ 
+DROP TABLE IF EXISTS TriggerOutputLogMixedInsert;
+GO
+ 
+DROP TABLE IF EXISTS OutputCapture;
+GO
+ 
+DROP TABLE IF EXISTS TriggerOutputLogMixed;
+GO
+
+DROP TABLE IF EXISTS outputresults;
+GO
