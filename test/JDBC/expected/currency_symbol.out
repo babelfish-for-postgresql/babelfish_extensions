@@ -712,74 +712,65 @@ money
 -- Indian Rupee
 select CAST('₹100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
 -- Bitcoin
 select CAST('₿100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
 -- gujarati rupee
 select CAST('૱100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
 -- tamil rupee
 select CAST('௹100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
 -- Azerbaijani manat
 select CAST('₼100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
 -- SPESMILO
 select CAST('₷100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
 -- AUSTRAL
 select CAST('₳100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
 -- GUARANI
 select CAST('₲100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
 -- Lari
 select CAST('₾100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
 
 
 -- Currency Symbols as a datatype 

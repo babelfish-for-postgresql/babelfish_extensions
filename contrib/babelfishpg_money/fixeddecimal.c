@@ -529,7 +529,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 		}
 		else
 		{
-			/* 
+			   /* 
 				* Rejects invalid characters when no currency symbol is present.
 				* Only digits, signs, decimal points, or spaces are allowed.
 				*/
@@ -541,8 +541,9 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 				!isspace((unsigned char) *ptr))
 			{
 				ereturn(escontext, (Datum) 0,
-						(errcode(ERRCODE_INVALID_CHARACTER_VALUE_FOR_CAST),
-							errmsg("Cannot convert a char value to money. The char value has incorrect syntax.")));
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						errmsg("invalid characters found: cannot cast value \"%s\" to money",
+							str)));							
 			}
 		}
 	}

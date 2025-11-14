@@ -106,23 +106,23 @@ money
 --Negative cases - Invalid inputs
 SELECT cast('!100.90' as money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "!100.90" to money)~~
 
 
 SELECT cast('abcd' as money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "abcd" to money)~~
 
 
 SELECT CAST('@#$100.00' AS money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "@#$100.00" to money)~~
 
 
 SELECT CAST('$100''OR 1=1' AS MONEY); 
@@ -166,9 +166,9 @@ GO
 
 SELECT CAST('''$100''' AS MONEY);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "'$100'" to money)~~
 
 
 SELECT CAST('$--100' AS MONEY);
@@ -388,9 +388,9 @@ money
 
 SELECT CAST('R$ 100,50' AS MONEY);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "R$ 100,50" to money)~~
 
 
 SELECT CAST('$  -100' AS MONEY); 
@@ -412,16 +412,16 @@ money
 -- Invalid currency symbols
 SELECT CAST('₽100' AS MONEY); 
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₽100" to money)~~
 
 
 SELECT CAST('₿100' AS MONEY); 
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₿100" to money)~~
 
 
 SELECT CAST('$$100' AS MONEY); 
@@ -464,9 +464,9 @@ money
 
 SELECT CAST(CAST(0xC2A2313030 AS VARCHAR(10)) AS MONEY); 
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "Â¢100" to money)~~
 
 
 --Test currency symbol with Transaction 
@@ -485,9 +485,9 @@ EXEC TestMoneyCast '₸100';   --Tenge currency symbol
 GO
 ~~START~~
 money
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₸100" to money)~~
 
 
 EXEC TestMoneyCast '$.  100';
@@ -688,9 +688,9 @@ money
 
 SELECT dbo.round_money(CAST('@123.6' AS MONEY), DEFAULT);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "@123.6" to money)~~
 
 
 SELECT dbo.round_money(CAST('-999999.999' AS MONEY), DEFAULT);
