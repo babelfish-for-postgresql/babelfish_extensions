@@ -712,65 +712,65 @@ money
 -- Indian Rupee
 select CAST('₹100.123' AS money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₹100.123" to money)~~
 
 -- Bitcoin
 select CAST('₿100.123' AS money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₿100.123" to money)~~
 
 -- gujarati rupee
 select CAST('૱100.123' AS money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "૱100.123" to money)~~
 
 -- tamil rupee
 select CAST('௹100.123' AS money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "௹100.123" to money)~~
 
 -- Azerbaijani manat
 select CAST('₼100.123' AS money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₼100.123" to money)~~
 
 -- SPESMILO
 select CAST('₷100.123' AS money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₷100.123" to money)~~
 
 -- AUSTRAL
 select CAST('₳100.123' AS money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₳100.123" to money)~~
 
 -- GUARANI
 select CAST('₲100.123' AS money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₲100.123" to money)~~
 
 -- Lari
 select CAST('₾100.123' AS money);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: Cannot convert a char value to money. The char value has incorrect syntax.)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₾100.123" to money)~~
 
 
 -- Currency Symbols as a datatype 
