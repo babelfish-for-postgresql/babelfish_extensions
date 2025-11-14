@@ -992,6 +992,15 @@ persist_temp_oid_buffer_start_internal(PG_FUNCTION_ARGS)
 	if (RecoveryInProgress())
 		elog(ERROR, "temp oid initialization cannot happen during recovery");	
 
+
+	/*
+	 * If temp_oid_buffer_start is already persisted, it will be loaded as GUC and
+	 * BUFFER_START_TO_OID will be valid. In such case, we can skip persisting and
+	 * simply return.
+	 */
+	if (OidIsValid(BUFFER_START_TO_OID))
+		PG_RETURN_BOOL(true);
+
 	/*
 	 * temp_oid_buffer_size = 0 would indicate that the feature is 
 	 * disabled, so persisting oid start is triggered from an upgrade.
