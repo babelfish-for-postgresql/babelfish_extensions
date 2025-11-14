@@ -3283,8 +3283,14 @@ tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node*
 {
 		OpExpr				*op = (OpExpr *) OpExp;
 		char				*opname = get_opname(op->opno);
+		Oid					lopr,
+							ropr;
 
-		if (((*common_utility_plugin_ptr->is_tsql_binary_datatype) (op->opresulttype) && strncmp(opname, "+", 1) == 0))
+		/* Calculate Oid of left and right operand */
+		op_input_types(op->opno, &lopr, &ropr);
+		if (strncmp(opname, "+", 1) == 0 &&
+			(*common_utility_plugin_ptr->is_tsql_binary_datatype) (lopr) &&
+			(*common_utility_plugin_ptr->is_tsql_binary_datatype) (ropr))
 		{
 			int32	typmod1 = exprTypmod(lexpr),
 					typmod2 = exprTypmod(rexpr),
@@ -3296,6 +3302,11 @@ tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node*
 				return OpExp;
 			}
 
+			/* 
+			 * If resultant typmod is greater
+			 * then MAX_BINARY_SIZE then resultant
+			 * typmod is set to MAX_BINARY_SIZE
+			 */
 			if (rettypmod > MAX_BINARY_SIZE + VARHDRSZ)
 					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
 
