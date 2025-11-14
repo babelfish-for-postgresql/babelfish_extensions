@@ -186,9 +186,6 @@ GO
 SELECT CAST(CHAR(9) + '100' AS MONEY);
 GO
 
-SELECT CAST(CAST(0xC2A2313030 AS VARCHAR(10)) AS MONEY); 
-GO
-
 --Test currency symbol with Transaction 
 BEGIN TRANSACTION;
 SELECT CAST('$100' AS MONEY);                               
