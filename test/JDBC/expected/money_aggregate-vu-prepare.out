@@ -283,7 +283,7 @@ INSERT INTO CurrencyMoneyTable (Amount) VALUES
 GO
 ~~ERROR (Code: 293)~~
 
-~~ERROR (Message: invalid characters found: cannot cast value "CHF 175.25" to money)~~
+~~ERROR (Message: invalid characters found: cannot cast value "₹250.50" to money)~~
 
 
 -- Test different aggregations with currency symbols
