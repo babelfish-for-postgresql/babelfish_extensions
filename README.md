@@ -1,4 +1,3 @@
-for dummy PR
 ## Babelfish for PostgreSQL
 
 [![Build Status](https://github.com/babelfish-for-postgresql/babelfish_extensions/workflows/CI/badge.svg)](https://github.com/babelfish-for-postgresql/babelfish_extensions/actions?query=workflow%3A%22CI%22)
