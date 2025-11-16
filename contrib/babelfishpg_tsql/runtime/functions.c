@@ -215,6 +215,7 @@ void	   *get_language(void);
 void	   *get_host_id(void);
 
 Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
+static int 	checkWhitespaceType(const char *str);
 static HTAB *load_categories_hash(const char *sourcetext, MemoryContext per_query_ctx);
 static Tuplestorestate *get_bbf_pivot_tuplestore(const char 	*sourcetext,
 												 const char 	*funcName,
@@ -2294,6 +2295,64 @@ search_partition(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
+/* 
+ * Check whitespace type in string
+ * Returns:
+ *   1  - Contains only special whitespace (\t, \n, \v, \f, \r)
+ *   0  - Empty string or contains only spaces
+ *   -1 - Contains other characters (needs numeric conversion)
+ */
+static int
+checkWhitespaceType(const char *str)
+{
+	size_t i;
+	size_t len;
+	bool has_special_ws = false;
+	bool has_other_char = false;
+
+	if (!str)
+		return 0;
+
+	len = strlen(str);
+	if (len == 0)
+		return 0;
+
+	for (i = 0; i < len; i++)
+	{
+		if (str[i] == '\b')
+		{
+			return 0;
+		}
+		if (str[i] == '\t' || str[i] == '\n' || str[i] == '\v' || 
+		    str[i] == '\f' || str[i] == '\r')
+		{
+			has_special_ws = true;
+		}
+		else if (str[i] == ' ')
+		{
+			/* Space character - continue checking */
+			continue;
+		}
+		else
+		{
+			/* Found non-whitespace or non-special character */
+			has_other_char = true;
+			break;
+		}
+	}
+
+	/* If found other characters, needs numeric conversion */
+	if (has_other_char)
+		return -1;
+
+	/* If found special whitespace, return 1 */
+	if (has_special_ws)
+		return 1;
+
+	/* Only spaces or empty - return 0 */
+	return 0;
+}
+
 /*
  * Structure to cache metadata needed in isnumeric().
  */
@@ -2323,6 +2382,7 @@ isnumeric(PG_FUNCTION_ARGS)
 	Oid		argtypeid;
 	Oid		numeric_typiofunc;
 	Oid		money_typiofunc;
+	int		ws_check;
 	char		*value_str;
 	bool		result = false;
 	Datum		converted;
@@ -2369,9 +2429,18 @@ isnumeric(PG_FUNCTION_ARGS)
 		value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
 	}
 
-	/* Handling empty string. */
-	if ((*common_utility_plugin_ptr->isEmptyOrWhitespace)(value_str))
+	/* Check whitespace type */
+	ws_check = checkWhitespaceType(value_str);
+	
+	if (ws_check == 1)
 	{
+		/* Contains only special whitespace - return 1 */
+		pfree(value_str);
+		PG_RETURN_INT32(1);
+	}
+	else if (ws_check == 0)
+	{
+		/* Empty or only spaces - return 0 */
 		pfree(value_str);
 		PG_RETURN_INT32(0);
 	}
