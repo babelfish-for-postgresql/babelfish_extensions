@@ -1009,20 +1009,12 @@ persist_temp_oid_buffer_start_internal(PG_FUNCTION_ARGS)
 	 * the operator did this for the cluster in case of temp table related issue, 
 	 * which should also mean that the oid_start is persisted in that cluster.
 	 *
-	 * If an upgrade fails at this point, it means that they also don't have 
-	 * temp_oid_buffer_start in pg_db_role_setting, which might be a corruption
-	 * because temp_oid_buffer_start is a SUSET GUC. 
-	 * In this case, the operator will need to manually set the temp_oid_buffer_size
-	 * to its default value by performing ALTER DATABASE ... SET TO DEFAULT and 
-	 * retry the wf.
-	 * 
-	 * This will be harmless because temp_oid_buffer_start will be equal to nextOid
-	 * anyway.
+	 * If an upgrade fails at this point, it means that temp tables weren't used
+	 * but temp_oid_buffer was disabled. Since this case is theoretically possible
+	 * we will not fail the upgrade here, and simply return.
 	 */
 	if (temp_oid_buffer_size <= 0)
-		ereport(ERROR,
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 (errmsg("temp oid initialization cannot be triggered when buffer size is 0."))));
+		PG_RETURN_BOOL(true);
 
 	/*
 	 * This means tempOidStart was changed but the GUC temp_oid_buffer_start was not
