@@ -1011,9 +1011,7 @@ persist_temp_oid_buffer_start_internal(PG_FUNCTION_ARGS)
 	 * in that cluster.
 	 */
 	if (temp_oid_buffer_size <= 0)
-		ereport(ERROR,
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 (errmsg("temp oid initialization cannot be triggered when buffer size is 0."))));
+		PG_RETURN_BOOL(true);
 
 	/*
 	 * This means tempOidStart was changed but the GUC temp_oid_buffer_start was not
