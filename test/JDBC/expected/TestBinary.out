@@ -3750,7 +3750,7 @@ SELECT 'NVARCHAR to VARBINARY(10)' AS Test,
 GO
 ~~START~~
 varchar#!#varbinary#!#int
-NVARCHAR to VARBINARY(10)#!#3F3F#!#2
+NVARCHAR to VARBINARY(10)#!#4B6DD58B#!#4
 ~~END~~
 
 
@@ -3780,7 +3780,7 @@ SELECT 'NVARCHAR to VARBINARY(10)' AS Test,
 GO
 ~~START~~
 varchar#!#varbinary#!#int
-NVARCHAR to VARBINARY(10)#!#3F3F#!#2
+NVARCHAR to VARBINARY(10)#!#4B6D#!#4
 ~~END~~
 
 

@@ -207,6 +207,96 @@ END; $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_varchar(IN typename TEXT, IN arg ANYELEMENT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+	BEGIN
+		CASE pg_typeof(arg)
+		WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
+			IF lower(typename) LIKE 'nvarchar%' THEN
+				RETURN (sys.varbinarysysnvarchar(arg, -1, true));
+			ELSE
+				RETURN CAST(arg AS sys.VARCHAR);
+			END IF;
+		WHEN 'sys.binary'::regtype THEN
+			IF lower(typename) LIKE 'nvarchar%' THEN
+				RETURN (sys.binarysysnvarchar(arg, -1, true));
+			ELSE
+				RETURN CAST(arg AS sys.VARCHAR);
+			END IF;
+		ELSE
+			RETURN CAST(arg AS sys.VARCHAR);
+		END CASE;
+	EXCEPTION
+		WHEN OTHERS THEN
+			RETURN NULL;
+	END;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_varchar(IN typename TEXT, IN arg TEXT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+	BEGIN
+		RETURN CAST(arg AS sys.VARCHAR);
+	EXCEPTION
+		WHEN OTHERS THEN
+			RETURN NULL;
+	END;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_varbinary(IN arg ANYELEMENT)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+	BEGIN
+		CASE pg_typeof(arg)
+		WHEN 'sys.nvarchar'::regtype THEN
+			RETURN sys.nvarcharvarbinary(arg, -1, true);
+		WHEN 'sys.nchar'::regtype THEN
+			RETURN sys.ncharvarbinary(arg, -1, true);
+		ELSE
+			RETURN CAST(arg AS sys.varbinary);
+		END CASE;
+	EXCEPTION
+		WHEN OTHERS THEN
+			RETURN NULL;
+	END;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_varbinary(IN arg TEXT)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+	BEGIN
+		RETURN CAST(arg AS sys.varbinary);
+	EXCEPTION
+		WHEN OTHERS THEN
+			RETURN NULL;
+	END;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
 RETURNS ANYELEMENT
 AS $BODY$ BEGIN
