@@ -2687,7 +2687,41 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 				break;
 		}
 
-		if (i == -1)
+		if ((*common_utility_plugin_ptr->is_tsql_binary_datatype) (baseTypeId) ||
+			(*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (baseTypeId) ||
+			(*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (baseTypeId))
+		{
+			/*
+			 * binary datatype should be passed in client encoding
+			 * when explicit cast is called
+			 */
+
+			TypeName 	*varcharTypeName = makeTypeNameFromNameList(list_make2(makeString("sys"),
+																	makeString("varchar")));
+			Node 		*result;
+			Const 		*tempcon;
+
+			typenameTypeIdAndMod(NULL, (const TypeName *)varcharTypeName, &baseTypeId, &baseTypeMod);
+
+			tempcon = makeConst(baseTypeId, -1,
+								tsql_get_database_or_server_collation_oid_internal(false),
+								-1, PointerGetDatum(cstring_to_text(value)),
+								false, false);
+
+			result = coerce_to_target_type(NULL, (Node *) tempcon, baseTypeId,
+										   targetTypeId, targetTypeMod,
+										   COERCION_EXPLICIT,
+										   COERCE_EXPLICIT_CAST,
+										   location);
+			
+			if (varcharTypeName)
+				pfree(varcharTypeName);
+
+			ReleaseSysCache(baseType);
+			
+			return result;
+		}
+		else if (i == -1)
 		{
 			/*
 			 * i == 1 means the value does not contain any characters but
@@ -2803,38 +2837,6 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 				default:
 					newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
 			}
-		}
-		else if ((*common_utility_plugin_ptr->is_tsql_binary_datatype) (baseTypeId) ||
-				 (*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (baseTypeId) ||
-				 (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (baseTypeId))
-		{
-			/*
-			 * binary datatype should be passed in client encoding
-			 * when explicit cast is called
-			 */
-
-			TypeName 	*varcharTypeName = makeTypeNameFromNameList(list_make2(makeString("sys"),
-																	makeString("varchar")));
-			Node 		*result;
-			Const 		*tempcon;
-
-			typenameTypeIdAndMod(NULL, (const TypeName *)varcharTypeName, &baseTypeId, &baseTypeMod);
-
-			tempcon = makeConst(baseTypeId, -1,
-								tsql_get_database_or_server_collation_oid_internal(false),
-								-1, PointerGetDatum(cstring_to_text(value)),
-								false, false);
-
-			result = coerce_to_target_type(NULL, (Node *) tempcon, baseTypeId,
-										   targetTypeId, targetTypeMod,
-										   COERCION_EXPLICIT,
-										   COERCE_EXPLICIT_CAST,
-										   location);
-			
-			pfree(varcharTypeName);
-			ReleaseSysCache(baseType);
-			
-			return result;
 		}
 		else
 		{
