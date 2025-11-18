@@ -648,3 +648,4 @@ ascii_function
 Select_top_N_percent
 test_convert_to_binary
 cast_datetime_to_binary
+BABEL-4271
