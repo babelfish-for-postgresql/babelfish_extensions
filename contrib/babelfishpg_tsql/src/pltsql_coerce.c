@@ -176,12 +176,14 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "bbf_binary", "varbinarybinary", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "nvarchar", "varbinarysysnvarchar", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "nchar", "varbinarysysnchar", 'i', 'f'},
 /*  binary     {only allow to cast to integral data type) */
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int8", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int4", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int2", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "rowversion", "binaryrowversion", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "nvarchar", "binarysysnvarchar", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "nchar", "binarysysnchar", 'i', 'f'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_binary", "sys", "bbf_varbinary", NULL, 'i', 'b'},
 /*  rowversion */
 	{PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int8", NULL, 'i', 'f'},
@@ -279,6 +281,8 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_varbinary", "nvarcharvarbinary", 'a', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_binary", "nvarcharbinary", 'a', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nchar", "sys", "bbf_varbinary", "ncharvarbinary", 'a', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nchar", "sys", "bbf_binary", "ncharbinary", 'a', 'f'},
 /*  fixeddecimal */
 	{PG_CAST_ENTRY, "sys", "fixeddecimal", "pg_catalog", "bpchar", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "fixeddecimal", "sys", "bpchar", NULL, 'i', 'f'},
@@ -577,25 +581,26 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	/* Check if the UDT's base type is nvarchar or varbinary.
 	 * If so, use the immediate base type for further processing.
 	 */
-	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || is_tsql_binary_family_datatype(UDT_sourceBaseType)))
+	if(UDT_sourceBaseType != InvalidOid && (is_tsql_nchar_or_nvarchar_datatype(UDT_sourceBaseType) || is_tsql_binary_family_datatype(UDT_sourceBaseType)))
 	{
 		typeIds[0] = UDT_sourceBaseType;
 		sourceTypeId = UDT_sourceBaseType;
 	}
 
-	if(UDT_targetBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_targetBaseType) || is_tsql_binary_family_datatype(UDT_targetBaseType)))
+	if(UDT_targetBaseType != InvalidOid && (is_tsql_nchar_or_nvarchar_datatype(UDT_targetBaseType) || is_tsql_binary_family_datatype(UDT_targetBaseType)))
 	{
 		typeIds[1] = UDT_targetBaseType;
 		targetTypeId = UDT_targetBaseType;
 	}
 
 	/* We've found VARBINARY To NVARCHAR casting */
-	if (is_tsql_binary_family_datatype(typeIds[0]) && (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[1]))
+	if (is_tsql_binary_family_datatype(typeIds[0]) && is_tsql_nchar_or_nvarchar_datatype(typeIds[1]))
 		isVarbinaryToNvarchar = true;
 
 	/* We've found NVARCHAR TO (bbf)(VAR)BINARY casting */
-	if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[0]) && is_tsql_binary_family_datatype(typeIds[1]))
+	if (is_tsql_nchar_or_nvarchar_datatype(typeIds[0]) && is_tsql_binary_family_datatype(typeIds[1]))
 		isNvarchartoVarbinary = true;
+
 
 	/* Perhaps the types are domains; if so, look at their base types */
 	if (!isSqlVariantCast)
