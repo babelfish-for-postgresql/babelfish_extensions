@@ -496,3 +496,4 @@ cast_string_to_binary-before-16_8
 cast_binary_to_string-before-16_8
 test_conv_text_to_binary-before-15_5
 test_conv_text_to_string-before-14_21
+BABEL-4271
