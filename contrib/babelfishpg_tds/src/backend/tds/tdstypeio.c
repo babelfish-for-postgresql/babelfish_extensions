@@ -3851,16 +3851,13 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 										 * given encoding. */
 		char	   *destBuf = NULL;
 
-		dataLen -= VARHDRSZ;
+		dataLen = VARSIZE_ANY_EXHDR(VARDATA_ANY(vlena) + variantHeaderLen);
 		if (variantBaseType == VARIANT_TYPE_NCHAR ||
 			variantBaseType == VARIANT_TYPE_NVARCHAR)
 		{
 			initStringInfo(&strbuf);
-			if(dataLen > 0)
-			{
-				TdsUTF8toUTF16StringInfo(&strbuf, buf + VARHDRSZ, dataLen);
-				actualDataLen = strbuf.len;
-			}
+			TdsUTF8toUTF16StringInfo(&strbuf, VARDATA_ANY(VARDATA_ANY(vlena) + variantHeaderLen), dataLen);
+			actualDataLen = strbuf.len;
 		}
 		else
 		{
