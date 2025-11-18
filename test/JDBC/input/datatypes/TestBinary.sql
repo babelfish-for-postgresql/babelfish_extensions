@@ -3047,3 +3047,23 @@ SELECT 'Leading Zeros Sort',
     CAST(0x1000 AS VARBINARY(4))
 ORDER BY BinaryValue;
 GO
+
+
+-- Empty string casting to binary/varbinary
+select cast(CAST('0x00' AS BINARY) as varbinary)
+GO
+
+select cast(CAST(0x00 AS BINARY) as varbinary)
+GO
+
+select CAST('' AS BINARY(10))
+go
+
+select cast(CAST('' AS BINARY(10)) as varbinary(10))
+go
+
+select cast(CAST('' AS BINARY) as varbinary)
+go
+
+select cast(CAST('' AS varbinary) as BINARY)
+go
