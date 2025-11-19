@@ -363,7 +363,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (0x62696E6172795F737472696E675F74657374);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -373,7 +373,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (SELECT 0x62696E6172795F737472696E675F74657374);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -383,7 +383,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (0x62);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -393,7 +393,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (SELECT 0x62);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -403,7 +403,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (0x);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -413,7 +413,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (SELECT 0x);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -423,7 +423,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (CAST(0x74657374 AS BINARY(10)));
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -433,7 +433,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (SELECT CAST(0x74657374 AS BINARY(10)));
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -443,7 +443,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (CAST(0x62696E617279 AS VARBINARY(20)));
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -453,7 +453,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (SELECT CAST(0x62696E617279 AS VARBINARY(20)));
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -463,7 +463,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (CAST(0x737472 AS BINARY(10)));
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -473,7 +473,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (SELECT CAST(0x737472 AS BINARY(10)));
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -483,7 +483,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (CAST(0x78 AS BINARY(8000)));
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -493,7 +493,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (SELECT CAST(0x78 AS BINARY(8000)));
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -503,7 +503,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (0x737472696E67);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -513,7 +513,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (SELECT 0x737472696E67);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -523,7 +523,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (0x746573745F6461746100);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -533,7 +533,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (SELECT 0x746573745F6461746100);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -543,7 +543,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (0x42494E4152595F54455354);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
@@ -553,7 +553,7 @@ GO
 ----------------------------------------------------
 DECLARE @result_sql_variant sql_variant;
 SET @result_sql_variant = (SELECT 0x42494E4152595F54455354);
-SELECT @result_sql_variant AS Result,
+SELECT CAST(@result_sql_variant AS VARBINARY(MAX)) AS Result,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
        SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
 GO
