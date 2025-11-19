@@ -1,0 +1,839 @@
+----------------------------------------------------
+-- 1. Direct initialization with varchar
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = ('Hello World');
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Hello World#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 2. Query initialization with varchar
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT 'Hello World');
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Hello World#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 3. Direct initialization with unicode (nvarchar)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (N'Hello World😀');
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Hello World😀#!#nvarchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 4. Query initialization with unicode (nvarchar)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT N'Hello World😀');
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Hello World😀#!#nvarchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 5. Direct initialization with numeric string
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = ('12345');
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+12345#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 6. Query initialization with numeric string
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT '12345');
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+12345#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 7. Direct initialization with empty string
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = ('');
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 8. Query initialization with empty string
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT '');
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 9. Direct initialization with explicit cast
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST('Explicit Cast' AS VARCHAR(50)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Explicit Cast#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 10. Query initialization with explicit cast
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST('Explicit Cast' AS VARCHAR(50)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Explicit Cast#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 11. Direct initialization with numeric conversion
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST(123.45 AS VARCHAR(20)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+123.45#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 12. Query initialization with numeric conversion
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST(123.45 AS VARCHAR(20)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+123.45#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 13. Direct initialization with CONCAT
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = ('Prefix-' + 'Value' + '-Suffix');
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Prefix-Value-Suffix#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 14. Query initialization with CONCAT
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT 'Prefix-' + 'Value' + '-Suffix');
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Prefix-Value-Suffix#!#varchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 15. Direct initialization with NULL
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (NULL);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+----------------------------------------------------
+-- 16. Query initialization with NULL
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT NULL);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+----------------------------------------------------
+-- 17. Direct initialization with char (fixed length)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST('Test' AS CHAR(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Test      #!#char#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 18. Query initialization with char (fixed length)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST('Test' AS CHAR(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Test      #!#char#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 19. Direct initialization with nchar (unicode fixed length)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST(N'Test' AS NCHAR(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Test      #!#nchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 20. Query initialization with nchar (unicode fixed length)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST(N'Test' AS NCHAR(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Test      #!#nchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 21. Direct initialization with char padding (trailing spaces)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST('A' AS CHAR(5)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+A    #!#char#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 22. Query initialization with char padding (trailing spaces)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST('A' AS CHAR(5)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+A    #!#char#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 23. Direct initialization with nchar padding (unicode trailing spaces)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST(N'İ' AS NCHAR(5)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+İ    #!#nchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 24. Query initialization with nchar padding (unicode trailing spaces)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST(N'İ' AS NCHAR(5)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+İ    #!#nchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 25. Direct initialization with max length char
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST('X' AS CHAR(8000)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+X                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               #!#char#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 26. Query initialization with max length char
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST('X' AS CHAR(8000)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+X                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               #!#char#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 27. Direct initialization with max length nchar
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST(N'Y' AS NCHAR(4000)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Y                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               #!#nchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 28. Query initialization with max length nchar
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST(N'Y' AS NCHAR(4000)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Y                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               #!#nchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 29. Direct initialization with char(1) minimum size
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST('Z' AS CHAR(1)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Z#!#char#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 30. Query initialization with char(1) minimum size
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST('Z' AS CHAR(1)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Z#!#char#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 31. Direct initialization with nchar(1) minimum size
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST(N'Ş' AS NCHAR(1)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Ş#!#nchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 32. Query initialization with nchar(1) minimum size
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST(N'Ş' AS NCHAR(1)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+Ş#!#nchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 33. Direct initialization with char containing spaces
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST('A B C' AS CHAR(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+A B C     #!#char#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 34. Query initialization with char containing spaces
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST('A B C' AS CHAR(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+A B C     #!#char#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 35. Direct initialization with nchar containing unicode spaces
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST(N'A B C' AS NCHAR(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+A B C     #!#nchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 36. Query initialization with nchar containing unicode spaces
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST(N'A B C' AS NCHAR(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+A B C     #!#nchar#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 37. Direct initialization with binary string from 'binary_string_test'
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (0x62696E6172795F737472696E675F74657374);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@5b04476e#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 38. Query initialization with binary string from 'binary_string_test'
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT 0x62696E6172795F737472696E675F74657374);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@5ad10c1a#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 39. Direct initialization with short binary from 'b' (1 byte)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (0x62);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@6bb75258#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 40. Query initialization with short binary from 'b' (1 byte)
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT 0x62);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@c260bdc#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 41. Direct initialization with empty binary
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (0x);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@75e01201#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 42. Query initialization with empty binary
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT 0x);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@2783717b#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 43. Direct initialization with CAST to BINARY from 'test'
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST(0x74657374 AS BINARY(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@76f7d241#!#binary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 44. Query initialization with CAST to BINARY from 'test'
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST(0x74657374 AS BINARY(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@4a335fa8#!#binary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 45. Direct initialization with CAST to VARBINARY from 'binary'
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST(0x62696E617279 AS VARBINARY(20)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@3f363cf5#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 46. Query initialization with CAST to VARBINARY from 'binary'
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST(0x62696E617279 AS VARBINARY(20)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@3829ac1#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 47. Direct initialization with BINARY padding from 'str'
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST(0x737472 AS BINARY(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@4baf352a#!#binary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 48. Query initialization with BINARY padding from 'str'
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST(0x737472 AS BINARY(10)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@1bb1fde8#!#binary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 49. Direct initialization with max length BINARY from 'x'
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (CAST(0x78 AS BINARY(8000)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@15eebbff#!#binary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 50. Query initialization with max length BINARY from 'x'
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT CAST(0x78 AS BINARY(8000)));
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@22d6f11#!#binary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 51. Direct initialization with 'string' binary pattern
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (0x737472696E67);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@30990c1b#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 52. Query initialization with 'string' binary pattern
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT 0x737472696E67);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@2453f95d#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 53. Direct initialization with 'test_data' zeros ending
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (0x746573745F6461746100);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@44828f6b#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 54. Query initialization with 'test_data' zeros ending
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT 0x746573745F6461746100);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@2dbe250d#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 55. Direct initialization with 'BINARY_TEST' in hex
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (0x42494E4152595F54455354);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@553f1d75#!#varbinary#!#65535
+~~END~~
+
+
+----------------------------------------------------
+-- 56. Query initialization with 'BINARY_TEST' in hex
+----------------------------------------------------
+DECLARE @result_sql_variant sql_variant;
+SET @result_sql_variant = (SELECT 0x42494E4152595F54455354);
+SELECT @result_sql_variant AS Result,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'BaseType') AS BaseType,
+       SQL_VARIANT_PROPERTY(@result_sql_variant, 'MaxLength') AS MaxLength;
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant
+[B@6e1d8f9e#!#varbinary#!#65535
+~~END~~
+
