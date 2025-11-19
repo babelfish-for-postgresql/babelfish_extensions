@@ -149,29 +149,23 @@ int
 SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e),
        datalength(f),datalength(g),datalength(h),datalength(i) FROM babel_function_string_vu_prepare_1
 GO
-~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-10#!#3#!#3#!#10#!#3#!#3#!#10#!#3#!#3
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_function_string_vu_prepare_1" does not exist)~~
 
 
 SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e), datalength(f),datalength(g),datalength(h),datalength(i) FROM babel_function_string_vu_prepare_2
 GO
-~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-4#!#8#!#1#!#2#!#1#!#5#!#5#!#8#!#4
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_function_string_vu_prepare_2" does not exist)~~
 
 
 SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e), datalength(f),datalength(g),datalength(h) FROM babel_function_string_vu_prepare_3
 GO
-~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-4#!#8#!#3#!#8#!#8#!#4#!#5#!#16
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_function_string_vu_prepare_3" does not exist)~~
 
 
 -- test quotename function
@@ -991,8 +985,12 @@ lorem ipsum dolor amet\t\nconsectetur adipiscing elit
 ~~END~~
 
 
+----------------------------------------------------
+-- 1. Basic split with comma separator
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('a,b,c', ',');
+-- Expected: a | b | c
 GO
 ~~START~~
 varchar
@@ -1002,8 +1000,12 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 2. Empty substrings with consecutive delimiters
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('a,,b', ',');
+-- Expected: a | (empty) | b
 GO
 ~~START~~
 varchar
@@ -1013,16 +1015,24 @@ b
 ~~END~~
 
 
+----------------------------------------------------
+-- 3. NULL input string
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(NULL, ',');
+-- Expected: Empty result set
 GO
 ~~START~~
 varchar
 ~~END~~
 
 
+----------------------------------------------------
+-- 4. Space as separator
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('apple banana cherry', ' ');
+-- Expected: apple | banana | cherry
 GO
 ~~START~~
 varchar
@@ -1032,8 +1042,12 @@ cherry
 ~~END~~
 
 
+----------------------------------------------------
+-- 5. Separator is more than 1 character (Invalid)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('a--b--c', '--');
+-- Expected: ERROR (Invalid separator length)
 GO
 ~~START~~
 varchar
@@ -1042,8 +1056,12 @@ varchar
 ~~ERROR (Message: Invalid separator: --)~~
 
 
+----------------------------------------------------
+-- 6. Unicode input with nvarchar
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(N'α,β,γ', N',');
+-- Expected: α | β | γ
 GO
 ~~START~~
 nvarchar
@@ -1053,8 +1071,12 @@ nvarchar
 ~~END~~
 
 
+----------------------------------------------------
+-- 7. Mixed ASCII + Unicode
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(N'Hello,世界,😊', N',');
+-- Expected: Hello | 世界 | 😊
 GO
 ~~START~~
 nvarchar
@@ -1064,8 +1086,12 @@ Hello
 ~~END~~
 
 
+----------------------------------------------------
+-- 8. Separator as space in Unicode string
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(N'one two 三', N' ');
+-- Expected: one | two | 三
 GO
 ~~START~~
 nvarchar
@@ -1075,25 +1101,41 @@ two
 ~~END~~
 
 
+----------------------------------------------------
+-- 9. enable_ordinal = 1 (SQL Server feature)
+----------------------------------------------------
 SELECT value, ordinal
 FROM STRING_SPLIT('x|y|z', '|', 1);
+-- Expected (SQL Server 2022+): value | ordinal
+-- x | 1
+-- y | 2
+-- z | 3
+-- Babelfish: Should FAIL (function not supported)
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The string_split function requires 2 arguments)~~
 
 
+----------------------------------------------------
+-- 10. enable_ordinal = 0 (Ignored in SQL Server)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('x|y|z', '|', 0);
+-- Expected: x | y | z
+-- Babelfish: FAIL (function signature mismatch)
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The string_split function requires 2 arguments)~~
 
 
-
+----------------------------------------------------
+-- 11. Check behavior with empty separator (Invalid)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('a,b,c', '');
+-- Expected: ERROR (Separator length must be 1)
 GO
 ~~START~~
 varchar
@@ -1102,8 +1144,12 @@ varchar
 ~~ERROR (Message: Invalid separator: )~~
 
 
+----------------------------------------------------
+-- 12. Split numeric string
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('1|2|3', '|');
+-- Expected: 1 | 2 | 3
 GO
 ~~START~~
 varchar
@@ -1113,9 +1159,13 @@ varchar
 ~~END~~
 
 
+----------------------------------------------------
+-- 13. Test ordering guarantee (SQL Server doesn't guarantee)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('b,a,c', ',')
 ORDER BY value ASC;
+-- Expected: a | b | c (after ORDER BY)
 GO
 ~~START~~
 varchar
@@ -1125,8 +1175,12 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 14. Test with trailing delimiters
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('a,b,', ',');
+-- Expected: a | b | (empty)
 GO
 ~~START~~
 varchar
@@ -1136,8 +1190,12 @@ b
 ~~END~~
 
 
+----------------------------------------------------
+-- 15. Mixed ASCII + Unicode with explicit nvarchar cast
+----------------------------------------------------
 SELECT CAST(value as nvarchar)
 FROM STRING_SPLIT(N'Hello,世界,😊', N',');
+-- Expected: Hello | 世界 | 😊
 GO
 ~~START~~
 nvarchar
@@ -1147,8 +1205,12 @@ Hello
 ~~END~~
 
 
+----------------------------------------------------
+-- 16. Input as char(10)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(CAST('X|Y|Z' AS char(10)), '|');
+-- Expected: X | Y | Z (with padding stripped)
 GO
 ~~START~~
 varchar
@@ -1158,8 +1220,12 @@ Z
 ~~END~~
 
 
+----------------------------------------------------
+-- 17. Input as nchar(10)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(CAST(N'Ω|Φ|Ψ' AS nchar(10)), N'|');
+-- Expected: Ω | Φ | Ψ (with padding stripped)
 GO
 ~~START~~
 nvarchar
@@ -1169,16 +1235,24 @@ nvarchar
 ~~END~~
 
 
+----------------------------------------------------
+-- 18. Separator as NULL (Invalid)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('a,b,c', NULL);
+-- Expected: ERROR (Invalid separator)
 GO
 ~~START~~
 varchar
 ~~END~~
 
 
+----------------------------------------------------
+-- 19. Separator with multiple spaces (Invalid)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('a  b  c', '  ');
+-- Expected: ERROR (Separator length must be 1)
 GO
 ~~START~~
 varchar
@@ -1187,8 +1261,12 @@ varchar
 ~~ERROR (Message: Invalid separator:   )~~
 
 
+----------------------------------------------------
+-- 20. Very large input string (varchar(max))
+----------------------------------------------------
 SELECT COUNT(*)
 FROM STRING_SPLIT(REPLICATE('a,', 10000), ',');
+-- Expected: 10001 rows (last one empty)
 GO
 ~~START~~
 int
@@ -1196,8 +1274,12 @@ int
 ~~END~~
 
 
+----------------------------------------------------
+-- 21. Separator is a Unicode emoji (valid if single character)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(N'a😊b😊c', N'😊');
+-- Expected: a | b | c
 GO
 ~~START~~
 nvarchar
@@ -1207,8 +1289,12 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 22. VARCHAR-VARCHAR input (Expect varchar)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('a,b,c', ',');
+-- Expected: a | b | c
 GO
 ~~START~~
 varchar
@@ -1218,8 +1304,12 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 23. VARCHAR-NVARCHAR input (Expect nvarchar)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('a,b,c', cast(',' as NVARCHAR));
+-- Expected: a | b | c
 GO
 ~~START~~
 nvarchar
@@ -1229,8 +1319,12 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 24. NVARCHAR-NVARCHAR input (Expect nvarchar)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(N'a,b,c', N',');
+-- Expected: a | b | c
 GO
 ~~START~~
 nvarchar
@@ -1240,8 +1334,12 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 25. NVARCHAR-VARCHAR input (Expect nvarchar)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(N'a,b,c', ',');
+-- Expected: a | b | c
 GO
 ~~START~~
 nvarchar
@@ -1251,8 +1349,12 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 26. CHAR-CHAR input (Expect varchar)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(cast('a' as CHAR), cast(',' as CHAR(1)));
+-- Expected: a
 GO
 ~~START~~
 varchar
@@ -1260,8 +1362,12 @@ a
 ~~END~~
 
 
+----------------------------------------------------
+-- 27. CHAR-NVARCHAR input (Expect nvarchar)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT('a', cast(',' as NVARCHAR));
+-- Expected: a
 GO
 ~~START~~
 nvarchar
@@ -1269,8 +1375,12 @@ a
 ~~END~~
 
 
+----------------------------------------------------
+-- 28. CHAR-NCHAR input (Expect nvarchar)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(cast('a,b,c' as CHAR), cast(',' as NCHAR(1)));
+-- Expected: a | b | c
 GO
 ~~START~~
 nvarchar
@@ -1280,8 +1390,12 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 29. NCHAR-CHAR input (Expect nvarchar)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(cast('a,b,c' as NCHAR), cast(',' as CHAR(1)));
+-- Expected: a | b | c
 GO
 ~~START~~
 nvarchar
@@ -1291,8 +1405,12 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 30. NVARCHAR-CHAR input (Expect nvarchar)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(cast(N'a,b,c' as NVARCHAR), cast(',' as CHAR(1)));
+-- Expected: a | b | c
 GO
 ~~START~~
 nvarchar
@@ -1302,8 +1420,12 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 31. VARCHAR-NCHAR input (Expect nvarchar)
+----------------------------------------------------
 SELECT value
 FROM STRING_SPLIT(cast('a,b,c' as VARCHAR), cast(',' as NCHAR(1)));
+-- Expected: a | b | c
 GO
 ~~START~~
 nvarchar
@@ -1313,7 +1435,11 @@ c
 ~~END~~
 
 
+----------------------------------------------------
+-- 32. Arbitrary input: INT (Expect error)
+----------------------------------------------------
 SELECT value FROM STRING_SPLIT(123, ',');
+-- Expected: ERROR(Argument data type integer is invalid for argument 1 of string_split function.)
 GO
 ~~START~~
 varchar
@@ -1321,7 +1447,11 @@ varchar
 ~~END~~
 
 
+----------------------------------------------------
+-- 33. Arbitrary input: DECIMAL (Expect error)
+----------------------------------------------------
 SELECT value FROM STRING_SPLIT(123.45, ',');
+-- Expected: ERROR(Argument data type numeric is invalid for argument 1 of string_split function.)
 GO
 ~~START~~
 varchar
@@ -1329,7 +1459,11 @@ varchar
 ~~END~~
 
 
+----------------------------------------------------
+-- 34. Arbitrary input: DATETIME (Expect error)
+----------------------------------------------------
 SELECT value FROM STRING_SPLIT(CAST('20231005' AS DATETIME), ',');
+-- Expected: ERROR(Argument data type datetime is invalid for argument 1 of string_split function.)
 GO
 ~~START~~
 varchar
@@ -1337,7 +1471,11 @@ varchar
 ~~END~~
 
 
+----------------------------------------------------
+-- 35. Arbitrary input: VARBINARY (Expect error)
+----------------------------------------------------
 SELECT value FROM STRING_SPLIT(0x48656C6C6F, ',');
+-- Expected: ERROR(Argument data type varbinary is invalid for argument 1 of string_split function.)
 GO
 ~~START~~
 varchar
