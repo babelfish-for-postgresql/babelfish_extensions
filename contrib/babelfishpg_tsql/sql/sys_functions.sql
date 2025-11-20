@@ -5196,6 +5196,7 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
     PARALLEL = SAFE
 );
 
+
 CREATE OR REPLACE FUNCTION sys.string_split(IN input_string sys.VARCHAR, IN separator sys.VARCHAR, OUT value sys.VARCHAR)
 RETURNS SETOF sys.VARCHAR AS
 $BODY$
@@ -5215,8 +5216,7 @@ BEGIN
 END
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
- 
- 
+
 CREATE OR REPLACE FUNCTION sys.string_split(IN input_string sys.NVARCHAR, IN separator sys.NVARCHAR, OUT value sys.NVARCHAR)
 RETURNS SETOF sys.NVARCHAR AS
 $BODY$
@@ -5236,6 +5236,7 @@ BEGIN
 END
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
 
 /* Helper function to update local variables dynamically during execution */
 CREATE OR REPLACE FUNCTION sys.pltsql_assign_var(dno INT, val ANYELEMENT)
