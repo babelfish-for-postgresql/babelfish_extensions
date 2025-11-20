@@ -149,23 +149,29 @@ int
 SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e),
        datalength(f),datalength(g),datalength(h),datalength(i) FROM babel_function_string_vu_prepare_1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_function_string_vu_prepare_1" does not exist)~~
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+10#!#3#!#3#!#10#!#3#!#3#!#10#!#3#!#3
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e), datalength(f),datalength(g),datalength(h),datalength(i) FROM babel_function_string_vu_prepare_2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_function_string_vu_prepare_2" does not exist)~~
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+4#!#8#!#1#!#2#!#1#!#5#!#5#!#8#!#4
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e), datalength(f),datalength(g),datalength(h) FROM babel_function_string_vu_prepare_3
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_function_string_vu_prepare_3" does not exist)~~
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+4#!#8#!#3#!#8#!#8#!#4#!#5#!#16
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 -- test quotename function
