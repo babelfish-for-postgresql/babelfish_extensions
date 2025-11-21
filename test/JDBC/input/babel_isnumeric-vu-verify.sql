@@ -325,12 +325,14 @@ select isnumeric(N'123')
 go
 
 -- binary/varbinary
+-- Fix with BABEL-6101
 select isnumeric(cast('' as binary))
 go
 
 select isnumeric(cast('' as varbinary))
 go
- 
+
+-- Fix with BABEL-6101 
 select isnumeric(cast('' as binary(1)))
 go
 
@@ -397,6 +399,7 @@ select isnumeric(cast(1234567812345678123456781234567812345678 as text))
 go
 
 -- misc tests
+-- Fix with BABEL-6101
 select isnumeric(cast(24 as varbinary))
 Go
 

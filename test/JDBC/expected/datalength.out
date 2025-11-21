@@ -377,6 +377,68 @@ int#!#int#!#int#!#int
 ~~END~~
 
 
+-- empty string 
+SELECT  
+    DATALENGTH(CAST('' AS BINARY(10))) as binary_10,  
+    DATALENGTH(CAST('' AS BINARY)) as binary_default, 
+    DATALENGTH(CAST(0x00 AS BINARY)) as binary_0_default, 
+    DATALENGTH(CAST('0x00' AS BINARY)) as binary_str0_default, 
+    DATALENGTH(CAST('  ' AS BINARY(10))) as binary_space_10,  
+    DATALENGTH(CAST('  ' AS BINARY)) as binary__space_default, 
+    DATALENGTH(CAST('' AS VARBINARY(10))) as varbinary_10,  
+    DATALENGTH(CAST('' AS VARBINARY)) as varbinary_default  
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+10#!#30#!#30#!#30#!#10#!#30#!#0#!#0
+~~END~~
+
+
+-- NULL testing
+SELECT  
+    DATALENGTH(CAST(NULL AS BINARY(10))) as binary_10,  
+    DATALENGTH(CAST(NULL AS BINARY)) as binary_default, 
+    DATALENGTH(CAST('NULL' AS BINARY)) as binary_str0_default,  
+    DATALENGTH(CAST(' NULL  ' AS BINARY)) as binary_space_default,
+    DATALENGTH(CAST(NULL AS VARBINARY(10))) as varbinary_10,  
+    DATALENGTH(CAST(NULL AS VARBINARY)) as varbinary_default,
+    DATALENGTH(CAST('NULL' AS VARBINARY)) as varbinary_str_default,
+    DATALENGTH(CAST(' NULL ' AS VARBINARY)) as varbinary_space_default   
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+<NULL>#!#<NULL>#!#30#!#30#!#<NULL>#!#<NULL>#!#4#!#6
+~~END~~
+
+
+-- binary to varbinary, empty string
+select 
+    DATALENGTH(CAST(CAST(0x00 AS BINARY) as varbinary)),
+    DATALENGTH(cast(CAST('0x00' AS BINARY) as varbinary)),
+    DATALENGTH(cast(CAST('' AS BINARY(10)) as varbinary(10))),
+    DATALENGTH(cast(CAST('' AS BINARY(10)) as varbinary(max))),
+    DATALENGTH(cast(CAST('' AS BINARY) as varbinary))
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+30#!#30#!#10#!#10#!#30
+~~END~~
+
+
+-- varbinary to binary, empty string
+select 
+    DATALENGTH(CAST(CAST(0x00 AS varbinary) as BINARY)),
+    DATALENGTH(cast(CAST('0x00' AS varbinary) as BINARY)),
+    DATALENGTH(cast(CAST('' AS varbinary(10)) as BINARY(10))),
+    DATALENGTH(cast(CAST('' AS varbinary(max)) as BINARY(10))),
+    DATALENGTH(cast(CAST('' AS varbinary) as BINARY))
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+30#!#30#!#10#!#10#!#30
+~~END~~
+
+
 -- 7. Other Data Types
 SELECT 
     DATALENGTH(CAST(1 AS BIT)) AS Bit_Length,
@@ -389,6 +451,65 @@ int#!#int#!#int#!#int
 1#!#16#!#4#!#17
 ~~END~~
 
+
+-- rowversion, no regression
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+GO
+
+select datalength(cast(cast('a' as rowversion) as varchar))
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datalength(cast('' as rowversion))
+GO
+~~START~~
+int
+12
+~~END~~
+
+select datalength(cast(cast('' as rowversion) as varchar))
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datalength(cast(NULL as rowversion))
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select datalength(cast(cast('NULL' as rowversion) as varchar))
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+-- timestamp, no regression
+select 
+    datalength(cast('' as TIMESTAMP)),
+    datalength(cast(' ' as TIMESTAMP)),
+    datalength(cast(cast('' as TIMESTAMP) as varbinary)),
+    datalength(cast(NULL as TIMESTAMP)),
+    datalength(cast('NULL' as TIMESTAMP)),
+    datalength(cast('NULL ' as TIMESTAMP)),
+    datalength(cast(cast('NULL' as TIMESTAMP) as varbinary))
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int
+12#!#12#!#8#!#<NULL>#!#12#!#12#!#8
+~~END~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+GO
 
 -- 8. NULL Values
 SELECT 
@@ -2474,12 +2595,11 @@ int
 ~~END~~
 
 
--- FIX with BABEL-5610
 select datalength(CAST('' AS BINARY(10)))
 go
 ~~START~~
 int
-0
+10
 ~~END~~
 
 
@@ -2487,7 +2607,7 @@ select datalength(CAST('' AS BINARY))
 GO
 ~~START~~
 int
-0
+30
 ~~END~~
 
 
