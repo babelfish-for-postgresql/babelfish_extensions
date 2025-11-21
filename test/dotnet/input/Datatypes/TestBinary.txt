@@ -26,3 +26,15 @@ DROP TABLE BINARY_dt
 #insert into IMAGE_dt VALUES (NULL);
 #SELECT * FROM IMAGE_dt
 #DROP TABLE IMAGE_dt
+
+CREATE TABLE BINARY_dt(a BINARY(8));
+#inserting random values
+INSERT INTO BINARY_dt(a) values (0x65666768);
+prepst#!# INSERT INTO BINARY_dt(a) values(@a) #!#binary|-|a|-|abcdefgh
+prepst#!#exec#!#binary|-|a|-|abcdefgh
+
+prepst#!# select 'foo' where @a is not null #!#binary|-|a|-|abcdefgh
+prepst#!#exec#!#binary|-|a|-|abcdefgh
+
+SELECT * FROM BINARY_dt
+DROP TABLE BINARY_dt
