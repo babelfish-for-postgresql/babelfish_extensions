@@ -238,7 +238,7 @@ static const char *valid_currency_symbols[] = {
     "\xEF\xBF\xA6",        /* fullwidth_won */
 };
 
-static const int num_currency_symbols = sizeof(valid_currency_symbols) / sizeof(valid_currency_symbols[0]);
+#define NUM_CURRENCY_SYMBOLS (sizeof(valid_currency_symbols) / sizeof(valid_currency_symbols[0]))
 
 /*
  * Checks if the string starts with a valid currency symbol
@@ -250,7 +250,7 @@ is_valid_currency_symbol(const char *ptr)
     if (ptr == NULL)
         return 0;
     
-    for (i = 0; i < num_currency_symbols; i++)
+    for (i = 0; i < NUM_CURRENCY_SYMBOLS; i++)
     {
         const char *symbol = valid_currency_symbols[i];
         size_t symbol_len = strlen(symbol);
