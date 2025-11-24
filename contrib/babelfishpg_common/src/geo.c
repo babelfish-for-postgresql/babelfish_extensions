@@ -254,7 +254,7 @@ add_point(PointArray *pa, POINT p)
  * - XY: Points with only X and Y coordinates (2D)
  */
 DimensionType 
-determine_linestring_type(PointArray *pa) 
+determine_ptarray_type(PointArray *pa) 
 {
     bool has_z = false, 
          has_m = false;
@@ -349,7 +349,7 @@ rewrite_linestring_query(PointArray *pa)
     initStringInfo(&output);
     
     /* Determine the appropriate type based on point dimensions */
-    type = determine_linestring_type(pa);
+    type = determine_ptarray_type(pa);
     
     /* Start with LINESTRING keyword and appropriate dimension indicator */
     appendStringInfoString(&output, "LINESTRING ");
@@ -512,14 +512,14 @@ add_ring(PointArrayList *pal, PointArray *ring)
  * Determine the appropriate polygon type by examining all rings
  */
 DimensionType
-determine_polygon_type(PointArrayList *pal)
+determine_ring_type(PointArrayList *pal)
 {
     bool has_z = false, 
          has_m = false;
     
     for (int ring_idx = 0; ring_idx < pal->count; ring_idx++)
     {
-        DimensionType ring_type = determine_linestring_type(pal->rings[ring_idx]);
+        DimensionType ring_type = determine_ptarray_type(pal->rings[ring_idx]);
         
         if (ring_type == Z)
             has_z = true;
@@ -564,7 +564,7 @@ rewrite_polygon_query(PointArrayList *pal)
     initStringInfo(&output);
     
     /* Determine type from all rings */
-    type = determine_polygon_type(pal);
+    type = determine_ring_type(pal);
     
     appendStringInfoString(&output, "POLYGON");
     
