@@ -1888,16 +1888,21 @@ varbinary
 
 select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2)) union select cast(N'a' as NCHAR(10));  
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type "nchar" to varbinary)~~
+~~START~~
+nchar
+a         
+         
+਀         
+~~END~~
 
 
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15)) UNION select cast(10 as varbinary(2));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type varbinary to "nchar")~~
+~~START~~
+nchar
+ΘЖऌฒ           
+਀              
+~~END~~
 
 
 SELECT CAST(1 as BIT) UNION SELECT cast(N'ab' as NCHAR(10)) UNION SELECT CAST('bar' as CHAR(10));

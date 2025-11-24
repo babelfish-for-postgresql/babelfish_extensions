@@ -1,0 +1,301 @@
+CREATE SCHEMA test_str_bin_conversion;
+GO
+
+CREATE TABLE test_str_bin_conversion.string_to_varbinary_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    c CHAR(13),
+    n NCHAR(13),
+    v VARCHAR(13),
+    nv NVARCHAR(13)
+);
+GO
+ 
+-- Insert diverse and edge case strings
+INSERT INTO test_str_bin_conversion.string_to_varbinary_test (c, n, v, nv) VALUES
+('Hello, World!', N'Hello, World!', 'Hello, World!', N'Hello, World!'),
+('abc', N'abc', 'abc', N'abc'),
+('1234567890123', N'1234567890123', '1234567890123', N'1234567890123'),
+('é', N'é', 'é', N'é'),
+('', N'', '', N''),                  -- Empty
+(' ', N' ', ' ', N' '),              -- Space
+('😀', N'😀', '😀', N'😀'),         -- Emoji
+('中文', N'中文', '中文', N'中文'),  -- Chinese characters
+('ÿ', N'ÿ', 'ÿ', N'ÿ'),              -- Latin-1 extended
+('A', N'A', 'A', N'A'),
+('Z', N'Z', 'Z', N'Z'),
+('a', N'a', 'a', N'a'),
+('z', N'z', 'z', N'z'),
+('...', N'...', '...', N'...'),
+('DEADBEEF', N'DEADBEEF', 'DEADBEEF', N'DEADBEEF'),
+('CAFEBABE', N'CAFEBABE', 'CAFEBABE', N'CAFEBABE'),
+('𝄞', N'𝄞', '𝄞', N'𝄞'),             -- Musical symbol (surrogate pair)
+(REPLICATE('A',13), REPLICATE(N'A',13), REPLICATE('A',13), REPLICATE(N'A',13)),
+(REPLICATE(' ',13), REPLICATE(N' ',13), REPLICATE(' ',13), REPLICATE(N' ',13)),
+('0123456789', N'0123456789', '0123456789', N'0123456789'),
+('...', N'...', '...', N'...'),
+('𝕬𝕭𝕮', N'𝕬𝕭𝕮', '𝕬𝕭𝕮', N'𝕬𝕭𝕮'), -- Gothic math bold
+('foo\nbar', N'foo'+NCHAR(10)+'bar', 'foo\nbar', N'foo'+NCHAR(10)+'bar'), -- With newline
+('tab'+CHAR(9)+'end', N'tab'+NCHAR(9)+'end', 'tab'+CHAR(9)+'end', N'tab'+NCHAR(9)+'end') -- With tab
+;
+GO
+~~ROW COUNT: 24~~
+
+
+INSERT INTO test_str_bin_conversion.string_to_varbinary_test (c, n, v, nv) VALUES
+(CHAR(0), NCHAR(0), CHAR(0), NCHAR(0)) -- Null character
+;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: null character not permitted)~~
+
+
+INSERT INTO test_str_bin_conversion.string_to_varbinary_test (c, n, v, nv) VALUES
+('TES'+CHAR(0)+'T', N'TES'+NCHAR(0)+'T', 'TES'+CHAR(0)+'T', N'TES'+NCHAR(0)+'T'); -- Null in middle
+;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: null character not permitted)~~
+
+
+----------------------
+-- CONVERSION TESTS --
+----------------------
+-- CAST
+CREATE VIEW test_str_bin_conversion.v_varbinary_cast
+AS
+	SELECT id,
+		CAST(c AS VARBINARY(20)) AS s_char13,
+		CAST(v AS VARBINARY(20)) AS s_varchar13,
+		CAST(n AS VARBINARY(20)) AS s_nchar13,
+		CAST(nv AS VARBINARY(20)) AS s_nvarchar13
+	FROM test_str_bin_conversion.string_to_varbinary_test;
+GO
+
+CREATE VIEW test_str_bin_conversion.v_binary_cast
+AS
+	SELECT id,
+		CAST(c AS BINARY(20)) AS s_char13,
+		CAST(v AS BINARY(20)) AS s_varchar13,
+		CAST(n AS BINARY(20)) AS s_nchar13,
+		CAST(nv AS BINARY(20)) AS s_nvarchar13
+	FROM test_str_bin_conversion.string_to_varbinary_test;
+GO
+
+-- TRY_CAST
+CREATE PROCEDURE test_str_bin_conversion.p_varbinary_try_cast
+AS
+BEGIN
+	SELECT id,
+		TRY_CAST(c AS VARBINARY(20)) AS s_char13,
+		TRY_CAST(v AS VARBINARY(20)) AS s_varchar13,
+		TRY_CAST(n AS VARBINARY(20)) AS s_nchar13,
+		TRY_CAST(nv AS VARBINARY(20)) AS s_nvarchar13
+	FROM test_str_bin_conversion.string_to_varbinary_test;
+END
+GO
+
+CREATE PROCEDURE test_str_bin_conversion.p_binary_try_cast
+AS
+BEGIN
+	SELECT id,
+		TRY_CAST(c AS BINARY(20)) AS s_char13,
+		TRY_CAST(v AS BINARY(20)) AS s_varchar13,
+		TRY_CAST(n AS BINARY(20)) AS s_nchar13,
+		TRY_CAST(nv AS BINARY(20)) AS s_nvarchar13
+	FROM test_str_bin_conversion.string_to_varbinary_test;
+END
+GO
+
+-- CONVERT
+CREATE VIEW test_str_bin_conversion.v_varbinary_convert
+AS
+	SELECT id,
+		CONVERT(VARBINARY(20), c) AS s_char13,
+		CONVERT(VARBINARY(20), v) AS s_varchar13,
+		CONVERT(VARBINARY(20), n) AS s_nchar13,
+		CONVERT(VARBINARY(20), nv) AS s_nvarchar13
+	FROM test_str_bin_conversion.string_to_varbinary_test;
+GO
+
+CREATE VIEW test_str_bin_conversion.v_binary_convert
+AS
+	SELECT id,
+		CONVERT(BINARY(20), c) AS s_char13,
+		CONVERT(BINARY(20), v) AS s_varchar13,
+		CONVERT(BINARY(20), n) AS s_nchar13,
+		CONVERT(BINARY(20), nv) AS s_nvarchar13
+	FROM test_str_bin_conversion.string_to_varbinary_test;
+GO
+
+-- TRY_CONVERT
+CREATE PROCEDURE test_str_bin_conversion.p_varbinary_try_convert
+AS
+BEGIN
+	SELECT id,
+		TRY_CONVERT(VARBINARY(20), c) AS s_char13,
+		TRY_CONVERT(VARBINARY(20), v) AS s_varchar13,
+		TRY_CONVERT(VARBINARY(20), n) AS s_nchar13,
+		TRY_CONVERT(VARBINARY(20), nv) AS s_nvarchar13
+	FROM test_str_bin_conversion.string_to_varbinary_test;
+END
+GO
+
+CREATE PROCEDURE test_str_bin_conversion.p_binary_try_convert
+AS
+BEGIN
+	SELECT id,
+		TRY_CONVERT(BINARY(20), c) AS s_char13,
+		TRY_CONVERT(BINARY(20), v) AS s_varchar13,
+		TRY_CONVERT(BINARY(20), n) AS s_nchar13,
+		TRY_CONVERT(BINARY(20), nv) AS s_nvarchar13
+	FROM test_str_bin_conversion.string_to_varbinary_test;
+END
+GO
+
+
+
+CREATE FUNCTION test_str_bin_conversion.f_s2vb_nvarchar_emoji()
+RETURNS @Result TABLE
+(
+    src_value      NVARCHAR(13)  NULL,
+    vb_value       VARBINARY(20) NULL,
+    src_char_len   INT           NULL,
+    src_byte_len   INT           NULL,
+    vb_byte_len    INT           NULL
+)
+AS
+BEGIN
+    DECLARE @s NVARCHAR(13) = N'😀';
+    INSERT INTO @Result
+    SELECT
+        @s,
+        CAST(@s AS VARBINARY(20)),
+        LEN(@s),                 -- 1 character
+        DATALENGTH(@s),          -- 4 bytes (surrogate pair)
+        DATALENGTH(CAST(@s AS VARBINARY(20)));
+    RETURN;
+END;
+GO
+
+
+
+CREATE FUNCTION test_str_bin_conversion.f_s2vb_char13_spaces()
+RETURNS @Result TABLE
+(
+    src_value      CHAR(13)      NULL,
+    vb_value       VARBINARY(20) NULL,
+    src_char_len   INT           NULL,
+    src_byte_len   INT           NULL,
+    vb_byte_len    INT           NULL
+)
+AS
+BEGIN
+    DECLARE @s CHAR(13) = REPLICATE(' ', 13);
+    INSERT INTO @Result
+    SELECT
+        @s,
+        CAST(@s AS VARBINARY(20)),
+        LEN(@s),                 -- LEN ignores trailing spaces -> 0
+        DATALENGTH(@s),          -- 13 bytes stored
+        DATALENGTH(CAST(@s AS VARBINARY(20)));
+    RETURN;
+END;
+GO
+
+
+
+CREATE FUNCTION test_str_bin_conversion.f_s2bin_nchar13_bin32()
+RETURNS @Result TABLE
+(
+    src_value      NCHAR(13)   NULL,
+    bin_value      BINARY(32)  NULL,
+    src_byte_len   INT         NULL,
+    bin_byte_len   INT         NULL
+)
+AS
+BEGIN
+    DECLARE @s NCHAR(13) = N'Hello, World!';
+    INSERT INTO @Result
+    SELECT
+        @s,
+        CAST(@s AS BINARY(32)),
+        DATALENGTH(@s),                 -- 13 bytes
+        DATALENGTH(CAST(@s AS BINARY(32)));  -- expect 32
+    RETURN;
+END;
+GO
+
+
+
+CREATE FUNCTION test_str_bin_conversion.f_s2bin_varchar_overflow8()
+RETURNS @Result TABLE
+(
+    src_value      VARCHAR(13) NULL,
+    bin_value      BINARY(8)   NULL,
+    src_byte_len   INT         NULL,
+    bin_byte_len   INT         NULL
+)
+AS
+BEGIN
+    DECLARE @s VARCHAR(13) = '1234567890123';   -- 13 ASCII chars
+    INSERT INTO @Result
+    SELECT
+        @s,
+        CAST(@s AS BINARY(8)),                  -- truncates/pads to 8 bytes
+        DATALENGTH(@s),                         -- 13 bytes
+        DATALENGTH(CAST(@s AS BINARY(8)));      --  expect 8
+    RETURN;
+END;
+GO
+
+
+
+CREATE FUNCTION test_str_bin_conversion.f_s2bin_nvarchar_overflow3()
+RETURNS @Result TABLE
+(
+    src_value      NVARCHAR(13) NULL,
+    bin_value      BINARY(3)    NULL,
+    src_byte_len   INT          NULL,
+    bin_byte_len   INT          NULL
+)
+AS
+BEGIN
+    DECLARE @s NVARCHAR(13) = N'😀';        -- 4 bytes in NVARCHAR storage
+    INSERT INTO @Result
+    SELECT
+        @s,
+        CAST(@s AS BINARY(3)),              -- will truncate to 3 bytes
+        DATALENGTH(@s),                     -- 4 bytes
+        DATALENGTH(CAST(@s AS BINARY(3)));  -- expect 3
+    RETURN;
+END;
+GO
+
+
+
+CREATE FUNCTION test_str_bin_conversion.f_s2bin_try_compare()
+RETURNS @Result TABLE
+(
+    src_value        NVARCHAR(13) NULL,
+    try_cast_bin4    BINARY(4)    NULL,
+    try_convert_bin4 BINARY(4)    NULL,
+    cast_bytes       INT          NULL,
+    tcast_bytes      INT          NULL,
+    tconv_bytes      INT          NULL
+)
+AS
+BEGIN
+    DECLARE @s NVARCHAR(13) = N'中文';
+    INSERT INTO @Result
+    SELECT
+        @s,
+        TRY_CAST(@s AS BINARY(4)),
+        TRY_CONVERT(BINARY(4), @s),
+        DATALENGTH(CAST(@s AS VARBINARY(20))),  -- expect 4
+        DATALENGTH(TRY_CAST(@s AS BINARY(4))),  -- expect 4
+        DATALENGTH(TRY_CONVERT(BINARY(4), @s)); -- expect 4
+    RETURN;
+END;
+GO

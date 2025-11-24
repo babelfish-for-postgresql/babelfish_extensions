@@ -555,7 +555,7 @@ babel_726-before-16_10-or-17_6
 BABEL-3401
 BABEL-3820
 stuff
-PARTITION
+PARTITION-before-17_7
 BABEL-5071
 string_agg_within-16_4
 reverse
@@ -621,4 +621,8 @@ alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 ascii_function_before-17_7-or-16_11
-#babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370
+cast_string_to_binary-before-16_8
+cast_binary_to_string-before-16_8
+test_conv_text_to_string
+test_conv_text_to_binary-before-16_8
+babel_timezoneinfo_before_17_7
