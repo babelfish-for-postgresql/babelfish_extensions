@@ -3874,7 +3874,7 @@ bif_other
     | STRING_AGG LR_BRACKET expr=expression COMMA separator=expression RR_BRACKET (WITHIN GROUP LR_BRACKET order_by_clause RR_BRACKET )?  #STRING_AGG    
     | STRING_SPLIT LR_BRACKET string_expr=expression COMMA separator=expression RR_BRACKET  #STRING_SPLIT
     ;
-     
+    
 // ODBC scalar functions/literals are called 'escape sequences' in the docs 
 odbc_scalar_function
     : L_CURLY FN odbc_scalar_function_name R_CURLY
