@@ -1918,7 +1918,7 @@ SELECT cast(17 as varbinary(2))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 
 SELECT 'foo'
@@ -1938,7 +1938,7 @@ ORDER BY 1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 
 SELECT 'foo'
