@@ -2373,14 +2373,14 @@ tsql_stmtmulti:	tsql_stmtmulti ';' tsql_stmt
 						updateRawStmtEnd(llast_node(RawStmt, $1), @2);
 					}
 					if ($3 != NULL)
-						$$ = lappend($1, makeRawStmt($3, @2 + 1));
+						$$ = lappend($1, makeRawStmt($3, @3));
 					else
 						$$ = $1;
 				}
 			| tsql_stmt
 				{
 					if ($1 != NULL)
-						$$ = list_make1(makeRawStmt($1, 0));
+						$$ = list_make1(makeRawStmt($1, @1));
 					else
 						$$ = NIL;
 				}
@@ -4590,6 +4590,7 @@ tsql_VariableSetStmt:
 					n->name = psprintf("babelfishpg_tsql.%s", $2);
 					n->args = list_make1($3);
 					n->is_local = false;
+					n->location = @3;
 					$$ = (Node *) n;
 				}
 			| SET LANGUAGE var_value
@@ -4601,6 +4602,7 @@ tsql_VariableSetStmt:
 
 					n->args = list_make1($3);
 					n->is_local = false;
+					n->location = @3;
 					$$ = (Node *) n;
 				}
 			| SET tsql_TranKeyword tsql_IsolationLevel
@@ -4609,6 +4611,7 @@ tsql_VariableSetStmt:
 					n->kind = VAR_SET_MULTI;
 					n->name = "SESSION CHARACTERISTICS";
 					n->args = $3;
+					n->location = @3;
 					$$ = (Node *) n;
 				}
 			| SET TSQL_IDENTITY_INSERT qualified_name opt_boolean_or_string
@@ -4658,6 +4661,7 @@ tsql_VariableSetStmt:
 							parser_errposition(@4)));
 
                                         n->is_local = false;
+					n->location = @3;
 					$$ = (Node *) n;
 				}
 			| SET TSQL_ALLOW_SNAPSHOT_ISOLATION opt_boolean_or_string
