@@ -6051,8 +6051,8 @@ BEGIN
        (p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
        (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
        (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
-       (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
-       (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision))
+       (p_fractions::INT NOT BETWEEN 0 AND 9999999) OR
+       (p_fractions::INT != 0 AND char_length(v_fractions) > p_precision))
    THEN
       RAISE invalid_datetime_format;
    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
