@@ -86,6 +86,8 @@ typedef DBPROCESS * LinkedServerProcess;
 #define LINKED_SERVER_RESULTS(process)			dbresults(process)
 #define LINKED_SERVER_NUM_COLS(process)			dbnumcols(process)
 #define LINKED_SERVER_NEXT_ROW(process)			dbnextrow(process)
+#define LINKED_SERVER_CANCEL(process)			dbcancel(process)
+#define LINKED_SERVER_CLOSE(process)			dbclose(process)
 #define LINKED_SERVER_EXIT(void)			dbexit(void)
 #define LINKED_SERVER_DATA(process, index)		dbdata(process, index)
 #define LINKED_SERVER_DATA_LEN(process, index)		dbdatlen(process, index)
@@ -103,6 +105,13 @@ typedef DBPROCESS * LinkedServerProcess;
 #define LINKED_SERVER_SET_DBNAME(login, dbname)		DBSETLDBNAME(login, dbname)
 #define LINKED_SERVER_SET_QUERY_TIMEOUT(timeout) 	dbsettime(timeout)
 #define LINKED_SERVER_SET_CONNECT_TIMEOUT(timeout) dbsetlogintime(timeout)
+
+/* RPC (Remote Procedure Call) macros for secure parameter binding */
+#define LINKED_SERVER_RPC_INIT(process, procname)	dbrpcinit(process, procname, 0)
+#define LINKED_SERVER_RPC_PARAM(process, name, status, type, maxlen, datalen, value) \
+					dbrpcparam(process, name, status, type, maxlen, datalen, value)
+#define LINKED_SERVER_RPC_SEND(process)		dbrpcsend(process)
+#define LINKED_SERVER_RPC_EXEC(process)			dbsqlok(process)
 
 #define LS_NTBSTRINGBING	NTBSTRINGBIND
 #define	LS_INTBIND		INTBIND
@@ -126,6 +135,8 @@ typedef int *LinkedServerProcess;
 #define LINKED_SERVER_RESULTS(process)			((void)0)
 #define LINKED_SERVER_NUM_COLS(process)			((void)0)
 #define LINKED_SERVER_NEXT_ROW(process)			((void)0)
+#define LINKED_SERVER_CANCEL(process)			((void)0)
+#define LINKED_SERVER_CLOSE(process)			((void)0)
 #define LINKED_SERVER_EXIT(void)			((void)0)
 #define LINKED_SERVER_DATA(process, index)		((void)0)
 #define LINKED_SERVER_DATA_LEN(process, index)		((void)0)
@@ -150,4 +161,29 @@ typedef int *LinkedServerProcess;
 #define LS_BYTE			unsigned char
 #define LS_TYPEINFO		int
 
+#endif
+
+/* Debug macros */
+#define LINKED_SERVER_DEBUG(...)	elog(DEBUG1, __VA_ARGS__)
+#define LINKED_SERVER_DEBUG_FINER(...)	elog(DEBUG2, __VA_ARGS__)
+
+/* Function declarations */
+#ifdef ENABLE_TDS_LIB
+extern void linked_server_establish_connection(char *servername, LinkedServerProcess *lsproc, bool isTesting);
+extern int tdsTypeStrToTypeId(char *datatype);
+extern Oid tdsTypeToOid(int datatype);
+extern int tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
+extern Datum getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
+
+/* Helper functions for RPC parameter binding (used by pl_exec-2.c) */
+extern int get_tds_type_from_pg_oid(Oid pgtype);
+extern void convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnull,
+									   void **data_out, DBINT *len_out);
+
+/* SELECT-only validation for remote procedures */
+extern void validate_procedure_select_only(LinkedServerProcess lsproc,
+										   const char *server_name,
+										   const char *database_name,
+										   const char *schema_name,
+										   const char *procedure_name);
 #endif

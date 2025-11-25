@@ -2,6 +2,7 @@
 #include "pltsql-2.h"
 
 #include "funcapi.h"
+#include "tsearch/ts_locale.h"
 
 #include "access/table.h"
 #include "access/attmap.h"
@@ -11,6 +12,8 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "commands/proclang.h"
+#include "executor/executor.h"
+#include "executor/tuptable.h"
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
@@ -32,6 +35,7 @@
 #include "parser/parse_oper.h"
 #include "src/include/lib/qunique.h"
 #include "utils/varlena.h"
+#include "linked_servers.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
@@ -826,6 +830,408 @@ exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt
 	return rc;
 }
 
+#ifdef ENABLE_TDS_LIB
+/*
+ * Execute a remote stored procedure using TDS RPC parameter binding.
+ * This uses proper parameter binding instead of string concatenation
+ * to prevent SQL injection vulnerabilities.
+ */
+static int
+execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
+{
+	LinkedServerProcess lsproc = NULL;
+	LinkedServerProcess validation_lsproc = NULL;  /* Separate connection for validation to avoid TDS error 20019 */
+	LINKED_SERVER_RETCODE erc;
+	char *full_proc_name;
+	int colcount = 0;
+	int rowcount = 0;
+	TupleDesc tupdesc = NULL;
+	Tuplestorestate *tupstore = NULL;
+	Portal portal = NULL;
+	DestReceiver *receiver = NULL;
+	QueryCompletion qc;
+	uint64 processed = 0;
+	ListCell *lc;
+	
+	/* Build the full procedure name: database.schema.procedure */
+	full_proc_name = psprintf("%s.%s.%s",
+							 stmt->db_name ? stmt->db_name : "master",
+							 stmt->schema_name ? stmt->schema_name : "dbo",
+							 stmt->proc_name);
+	
+	elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Executing procedure: %s", full_proc_name);
+	
+	PG_TRY();
+	{
+		/* 
+		 * PHASE 1: Validate procedure definition using SQL query
+		 * Use complete connection lifecycle: open → query → close
+		 * CRITICAL: Use separate connection variable to avoid contaminating RPC connection
+		 */
+		{
+			LINKED_SERVER_RETCODE erc_val;
+			StringInfoData validation_query;
+			char *definition = NULL;
+			char *def_lower = NULL;
+			int colcount_val = 0;
+			
+			elog(LOG, "SELECT-only validation: Opening connection for validation query");
+			
+			/* Open connection for validation - use dedicated variable */
+			linked_server_establish_connection(stmt->server_name, &validation_lsproc, false);
+			
+			/* Build query to fetch procedure definition */
+			initStringInfo(&validation_query);
+			appendStringInfo(&validation_query,
+				"SELECT m.definition "
+				"FROM %s.sys.sql_modules m "
+				"JOIN %s.sys.objects o ON m.object_id = o.object_id "
+				"WHERE o.name = N'%s' AND SCHEMA_NAME(o.schema_id) = N'%s' AND o.type IN ('P', 'PC')",
+				stmt->db_name ? stmt->db_name : "master",
+				stmt->db_name ? stmt->db_name : "master",
+				stmt->proc_name,
+				stmt->schema_name ? stmt->schema_name : "dbo");
+			
+			elog(LOG, "SELECT-only validation: Fetching procedure definition");
+			
+			/* Execute validation query */
+			if (LINKED_SERVER_PUT_CMD(validation_lsproc, validation_query.data) != SUCCEED)
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						 errmsg("Failed to send validation query")));
+			
+			if (LINKED_SERVER_EXEC_QUERY(validation_lsproc) == FAIL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						 errmsg("Failed to execute validation query")));
+			
+			/* Get results */
+			if ((erc_val = LINKED_SERVER_RESULTS(validation_lsproc)) == FAIL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						 errmsg("Failed to get validation query results")));
+			
+			colcount_val = LINKED_SERVER_NUM_COLS(validation_lsproc);
+			
+			if (colcount_val > 0)
+			{
+				char bind_definition[65536] = {0x00};
+				
+				if (LINKED_SERVER_BIND_VAR(validation_lsproc, 1, LS_NTBSTRINGBING, sizeof(bind_definition), (LS_BYTE *)bind_definition) != SUCCEED)
+					ereport(ERROR,
+							(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+							 errmsg("Failed to bind definition column")));
+				
+				/* CRITICAL: Must exhaust ALL rows in current result set before calling dbresults() again */
+				if (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
+				{
+					if (bind_definition[0] != '\0')
+						definition = pstrdup(bind_definition);  /* Last row wins */
+				}
+			}
+			else
+			{
+				/* No columns, but still must exhaust rows before next result set */
+				while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
+					;
+			}
+			
+			/* Consume remaining result sets */
+			while (LINKED_SERVER_RESULTS(validation_lsproc) != NO_MORE_RESULTS)
+			{
+				while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
+					;
+			}
+			
+			/* Close validation connection - critical for clean state */
+			elog(LOG, "SELECT-only validation: Closing validation connection");
+			LINKED_SERVER_CANCEL(validation_lsproc);  /* Cancel pending operations before close */
+			LINKED_SERVER_CLOSE(validation_lsproc);
+			validation_lsproc = NULL;  /* Mark validation connection as closed */
+			
+			/* Validate definition */
+			if (definition == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("Could not fetch definition for procedure %s", full_proc_name)));
+			
+			elog(LOG, "SELECT-only validation: Analyzing definition (%zu bytes)", strlen(definition));
+			
+			def_lower = lowerstr(definition);
+			
+			/* Check for forbidden operations */
+			if (strstr(def_lower, "insert into") != NULL || strstr(def_lower, "insert ") != NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("Remote procedure contains INSERT statement"),
+						 errhint("Only SELECT statements allowed")));
+			
+			if (strstr(def_lower, "update ") != NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("Remote procedure contains UPDATE statement"),
+						 errhint("Only SELECT statements allowed")));
+			
+			if (strstr(def_lower, "delete from") != NULL || strstr(def_lower, "delete ") != NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("Remote procedure contains DELETE statement"),
+						 errhint("Only SELECT statements allowed")));
+			
+			if (strstr(def_lower, "create table") != NULL || strstr(def_lower, "drop table") != NULL ||
+				strstr(def_lower, "alter table") != NULL || strstr(def_lower, "truncate table") != NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("Remote procedure contains DDL statement"),
+						 errhint("Only SELECT statements allowed")));
+			
+			if (strstr(def_lower, "exec(") != NULL || strstr(def_lower, "sp_executesql") != NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("Remote procedure contains dynamic SQL"),
+						 errhint("Dynamic SQL cannot be validated")));
+			
+			elog(LOG, "SELECT-only validation: Procedure passed validation");
+			
+			pfree(def_lower);
+			pfree(definition);
+			pfree(validation_query.data);
+		}
+		
+		/*
+		 * PHASE 2: Open fresh TDS connection for RPC execution
+		 * Clean connection with no SQL query history
+		 */
+		Assert(lsproc == NULL);  /* Sanity check - RPC connection must be clean */
+		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Opening fresh connection for RPC");
+		linked_server_establish_connection(stmt->server_name, &lsproc, false);
+
+		/* Initialize RPC call on clean connection */
+		if (LINKED_SERVER_RPC_INIT(lsproc, full_proc_name) != SUCCEED)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to initialize RPC call for procedure %s", full_proc_name)));
+		
+		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - RPC call initialized, binding parameters");
+		
+		/* Bind each parameter */
+		foreach(lc, stmt->params)
+		{
+			tsql_exec_param *p = (tsql_exec_param *) lfirst(lc);
+			Datum val;
+			bool isnull;
+			Oid valtype;
+			int32 valtypmod;
+			int tds_type;
+			void *param_data = NULL;
+			DBINT param_len = 0;
+			BYTE param_status = 0;
+			
+			/* Evaluate parameter expression */
+			val = exec_eval_expr(estate, p->expr, &isnull, &valtype, &valtypmod);
+			
+			/* Get TDS type for this parameter */
+			tds_type = get_tds_type_from_pg_oid(valtype);
+			
+			/* Convert Datum to raw bytes */
+			convert_datum_to_tds_bytes(val, valtype, valtypmod, isnull, 
+									   &param_data, &param_len);
+			
+			/* Determine parameter status flags */
+			if (p->mode == FUNC_PARAM_OUT || p->mode == FUNC_PARAM_INOUT)
+				param_status = DBRPCRETURN;
+			
+			elog(DEBUG1, "DEBUG_LINKED_SERVER: (RPC) - Binding parameter: name=%s, type=%d, len=%d, isnull=%d",
+				 p->name ? p->name : "(positional)", tds_type, param_len, isnull);
+			
+			/* Bind the parameter */
+			if (LINKED_SERVER_RPC_PARAM(lsproc,
+										p->name,        /* parameter name (can be NULL for positional) */
+										param_status,   /* status flags */
+										tds_type,       /* TDS data type */
+										-1,            /* maxlen (-1 = use default) */
+										param_len,      /* actual data length */
+										(BYTE *)param_data) != SUCCEED)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						 errmsg("Failed to bind parameter %s for procedure %s",
+								p->name ? p->name : "(unnamed)", full_proc_name)));
+			}
+			
+			/* Free parameter data buffer */
+			if (param_data)
+				pfree(param_data);
+		}
+		
+		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - All parameters bound, sending RPC call");
+		
+		/* Send the RPC call */
+		if (LINKED_SERVER_RPC_SEND(lsproc) != SUCCEED)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to send RPC call for procedure %s", full_proc_name)));
+		
+		/* Execute the RPC */
+		if (LINKED_SERVER_RPC_EXEC(lsproc) == FAIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to execute remote procedure %s", full_proc_name)));
+		
+		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Remote procedure executed successfully");
+		
+		/* Get first result set (procedures may return multiple result sets) */
+		if ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
+		{
+			if (erc == FAIL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						 errmsg("Failed to get results from remote procedure")));
+			
+			colcount = LINKED_SERVER_NUM_COLS(lsproc);
+			
+			if (colcount > 0)
+			{
+				int i;
+				void *val[MAX_COLS_SELECT];
+				
+				/* Procedure returned a result set */
+				elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Result set with %d columns", colcount);
+				
+				/* Build TupleDesc from column metadata */
+				tupdesc = CreateTemplateTupleDesc(colcount);
+				
+				for (i = 0; i < colcount; i++)
+				{
+					Oid tdsTypeOid;
+					int coltype = LINKED_SERVER_COL_TYPE(lsproc, i + 1);
+					char *colname = LINKED_SERVER_COL_NAME(lsproc, i + 1);
+					int collen = LINKED_SERVER_COL_LEN(lsproc, i + 1);
+					LS_TYPEINFO *typinfo = LINKED_SERVER_COL_TYPEINFO(lsproc, i + 1);
+					
+					tdsTypeOid = tdsTypeToOid(coltype);
+					
+					TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname, tdsTypeOid,
+									 tdsTypeTypmod(coltype, collen, false, typinfo->precision, typinfo->scale), 0);
+				}
+				tupdesc = BlessTupleDesc(tupdesc);
+				
+				/* Create tuplestore to accumulate results */
+				tupstore = tuplestore_begin_heap(true, false, work_mem);
+				
+				/* Fetch all rows from TDS and store in tuplestore */
+				while (LINKED_SERVER_NEXT_ROW(lsproc) != NO_MORE_ROWS)
+				{
+					Datum *values = (Datum *) palloc0(sizeof(Datum) * colcount);
+					bool *nulls = (bool *) palloc0(sizeof(bool) * colcount);
+					
+					for (i = 0; i < colcount; i++)
+					{
+						int coltype = LINKED_SERVER_COL_TYPE(lsproc, i + 1);
+						int datalen = LINKED_SERVER_DATA_LEN(lsproc, i + 1);
+						
+						val[i] = LINKED_SERVER_DATA(lsproc, i + 1);
+						
+						if (val[i] == NULL)
+							nulls[i] = true;
+						else
+							values[i] = getDatumFromBytePtr(lsproc, val[i], coltype, datalen);
+					}
+					
+					/* Add row to tuplestore */
+					tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+					
+					rowcount++;
+					
+					pfree(values);
+					pfree(nulls);
+				}
+				
+				elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Fetched %d rows", rowcount);
+				
+				/* Finalize tuplestore */
+				tuplestore_donestoring(tupstore);
+				
+				/* Push active snapshot for SPI operations */
+				PushActiveSnapshot(GetTransactionSnapshot());
+				
+				/* Create a Portal to wrap the tuplestore for sending to client */
+				portal = SPI_cursor_open_with_args(NULL, "SELECT 1", 0, NULL, NULL, NULL, true, 0);
+				if (portal == NULL)
+				{
+					PopActiveSnapshot();
+					elog(ERROR, "could not create portal for remote procedure results");
+				}
+				
+				/* Replace portal's tuple source with our tuplestore */
+				portal->holdStore = tupstore;
+				portal->tupDesc = tupdesc;
+				
+				/* Send results to client via Portal */
+				receiver = CreateDestReceiver(DestRemote);
+				SetRemoteDestReceiverParams(receiver, portal);
+				
+				if (PortalRun(portal,
+							  FETCH_ALL,
+							  true,
+							  true,
+							  receiver,
+							  receiver,
+							  &qc))
+					processed = portal->portalPos;
+				
+				elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Sent %d rows to client", (int)processed);
+				
+				receiver->rDestroy(receiver);
+				
+				/* Clear holdStore to prevent Portal from trying to free it */
+				portal->holdStore = NULL;
+				
+				SPI_cursor_close(portal);
+				
+				/* Pop active snapshot */
+				PopActiveSnapshot();
+				
+				/* Manually clean up tuplestore */
+				tuplestore_end(tupstore);
+			}
+		}
+		
+		/* Set row count and found status */
+		exec_set_rowcount(rowcount);
+		exec_set_found(estate, rowcount != 0);
+		
+		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Remote procedure execution completed successfully");
+	}
+	PG_FINALLY();
+	{
+		/* Clean up validation connection if error occurred during validation */
+		if (validation_lsproc)
+		{
+			elog(LOG, "DEBUG_LINKED_SERVER: (CLEANUP) - Closing validation connection");
+			LINKED_SERVER_CANCEL(validation_lsproc);
+			LINKED_SERVER_CLOSE(validation_lsproc);
+			validation_lsproc = NULL;
+		}
+		
+		/* Clean up RPC connection if error occurred during RPC */
+		if (lsproc)
+		{
+			elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Closing connection");
+			LINKED_SERVER_CANCEL(lsproc);
+			LINKED_SERVER_CLOSE(lsproc);
+			lsproc = NULL;
+		}
+		
+		if (full_proc_name)
+			pfree(full_proc_name);
+	}
+	PG_END_TRY();
+	
+	return PLTSQL_RC_OK;
+}
+#endif
+
 /*
  * Execute an EXEC statement (equivalent to CALL)
  */
@@ -842,6 +1248,63 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	/* whether procedure was created WITH RECOMPILE */
 	bool created_with_recompile = false;		
+
+	/*
+	 * Check if this is a remote procedure call via linked server.
+	 * If server_name is set, this is a 4-part name like: server.db.schema.proc
+	 */
+	elog(LOG, "DEBUG_REMOTE_EXEC: Checking server_name - value: %s, db_name: %s, schema_name: %s, proc_name: %s",
+		 stmt->server_name ? stmt->server_name : "NULL",
+		 stmt->db_name ? stmt->db_name : "NULL",
+		 stmt->schema_name ? stmt->schema_name : "NULL",
+		 stmt->proc_name ? stmt->proc_name : "NULL");
+	
+	if (stmt->server_name != NULL)
+	{
+		/* Check if linked servers are enabled */
+		if (!pltsql_enable_linked_servers)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Linked servers are not enabled")));
+		
+		/* Check if RPC out option is enabled for this server */
+		if (!get_rpc_out_option(stmt->server_name))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("RPC out is not enabled for server '%s'. Use sp_serveroption to enable it.", 
+							stmt->server_name),
+					 errhint("Execute: EXEC sp_serveroption '%s', 'rpc out', 'true'", 
+							 stmt->server_name)));
+		
+		elog(LOG, "DEBUG_REMOTE_EXEC: RPC out is enabled, proceeding with remote execution for server: %s", stmt->server_name);
+		
+		/* Execute remote procedure using secure TDS RPC parameter binding */
+#ifdef ENABLE_TDS_LIB
+		{
+			int remote_rc;
+			
+			remote_rc = execute_remote_procedure_rpc(estate, stmt);
+			
+			/* Handle return code if specified */
+			if (stmt->return_code_dno >= 0)
+			{
+				PLtsql_var *return_code = (PLtsql_var *) estate->datums[stmt->return_code_dno];
+				/* Set return code to 0 (success) for now */
+				exec_assign_value(estate, (PLtsql_datum *) return_code, Int32GetDatum(0), false, INT4OID, 0);
+			}
+			
+			return remote_rc;
+		}
+#else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+				 errmsg("Remote procedure execution requires TDS client library. "
+						"Recompile with ENABLE_TDS_LIB flag.")));
+		return PLTSQL_RC_OK;  /* Unreachable but keeps compiler happy */
+#endif
+	}
+	
+	elog(LOG, "DEBUG_REMOTE_EXEC: Taking LOCAL execution path (server_name is NULL)");
 
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection

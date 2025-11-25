@@ -95,9 +95,9 @@ PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)
 PG_CXXFLAGS += -std=c++17
 PG_CFLAGS += -g -Werror -Wfloat-conversion
 PG_CFLAGS += -fstack-protector-strong
-PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR -Wfloat-conversion
+PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR -DENABLE_TDS_LIB -Wfloat-conversion
 
-SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto $(ICU_LIBS)
+SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto $(ICU_LIBS) -lsybdb
 
 UPGRADES = $(patsubst sql/upgrades/%.sql,sql/%.sql,$(wildcard sql/upgrades/*.sql))
 

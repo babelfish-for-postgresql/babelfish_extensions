@@ -6,7 +6,9 @@
 #include "libpq/pqformat.h"
 #include "tsearch/ts_locale.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "miscadmin.h"
+#include "catalog/pg_type.h"
 
 #include "pltsql.h"
 #include "linked_servers.h"
@@ -732,7 +734,7 @@ ValidateLinkedServerDataSource(char *data_src)
 				 errmsg("Only fully qualified domain name or IP address are allowed as data source")));
 }
 
-static void
+void
 linked_server_establish_connection(char *servername, LinkedServerProcess * lsproc, bool isTesting)
 {
 	/* Get the foreign server and user mapping */
@@ -745,6 +747,11 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	char	*database = NULL;
 	int	query_timeout = 0;
 	int	connect_timeout = 0;
+
+	/* LOG: Function entry with context - proves this function was called */
+	elog(LOG, "DEBUG_LINKED_SERVER: linked_server_establish_connection() called for server: %s (context: %s)", 
+	     servername ? servername : "NULL",
+	     isTesting ? "connection testing" : "remote procedure/query execution");
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -762,6 +769,9 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 errmsg("Error fetching foreign server with servername '%s'", servername)
 					 ));
 
+		/* LOG: Foreign server retrieved successfully */
+		elog(LOG, "DEBUG_LINKED_SERVER: Retrieved foreign server configuration for: %s", servername);
+
 		mapping = GetUserMapping(GetUserId(), server->serverid);
 
 		if (mapping == NULL)
@@ -770,11 +780,17 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 errmsg("Error fetching user mapping with servername '%s'", servername)
 					 ));
 
+		/* LOG: User mapping retrieved successfully */
+		elog(LOG, "DEBUG_LINKED_SERVER: Retrieved user mapping for server: %s", servername);
+
 		if (LINKED_SERVER_INIT() == FAIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Failed to initialize TDS client library environment")
 					 ));
+
+		/* LOG: TDS library initialization successful */
+		elog(LOG, "DEBUG_LINKED_SERVER: TDS client library initialized successfully");
 
 		LINKED_SERVER_ERR_HANDLE(linked_server_err_handler);
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
@@ -846,13 +862,26 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 			LINKED_SERVER_SET_CONNECT_TIMEOUT(connect_timeout);
 		}
 
+		/* LOG: Connection parameters configured */
+		elog(LOG, "DEBUG_LINKED_SERVER: Connection parameters - data_source: %s, database: %s, connect_timeout: %d, query_timeout: %d",
+		     data_src ? data_src : "NULL", 
+		     database ? database : "(none)", 
+		     connect_timeout, 
+		     query_timeout);
+
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
+		
+		/* LOG: Initiating TDS connection */
+		elog(LOG, "DEBUG_LINKED_SERVER: Initiating TDS connection to remote server");
 
 		*lsproc = LINKED_SERVER_OPEN(login, data_src);
 		if (!(*lsproc))
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Unable to connect to \"%s\"", data_src)));
+
+		/* LOG: Connection successful */
+		elog(LOG, "DEBUG_LINKED_SERVER: TDS connection established successfully to: %s", data_src);
 
 		LINKED_SERVER_FREELOGIN(login);
 
@@ -862,11 +891,19 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		}
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connected to remote server");
+		
+		/* LOG: Connection ready */
+		elog(LOG, "DEBUG_LINKED_SERVER: Connection ready for query execution");
 	}
 	PG_CATCH();
 	{
 		HOLD_INTERRUPTS();
 		LINKED_SERVER_DEBUG("LINKED SERVER: Failed to establish connection to remote server due to error");
+		
+		/* LOG: Connection failed */
+		elog(LOG, "DEBUG_LINKED_SERVER: Failed to establish connection to server: %s", 
+		     servername ? servername : "NULL");
+		
 		RESUME_INTERRUPTS();
 
 		PG_RE_THROW();
@@ -925,12 +962,18 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Executing query against remote server");
 
+		/* LOG: Metadata query execution starting */
+		elog(LOG, "DEBUG_LINKED_SERVER: Executing metadata query (sp_describe_first_result_set) on remote server");
+
 		/* Execute the query on remote server */
 		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("error executing query \"%s\" against remote server", buf.data)
 					 ));
+
+		/* LOG: Metadata query execution successful */
+		elog(LOG, "DEBUG_LINKED_SERVER: Metadata query executed successfully");
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Begin fetching results from remote server");
 
@@ -1092,6 +1135,9 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 					}
 
 					*tupdesc = BlessTupleDesc(*tupdesc);
+					
+					/* LOG: Metadata retrieval complete */
+					elog(LOG, "DEBUG_LINKED_SERVER: Metadata retrieval complete - %d columns described", numrows);
 				}
 				else
 				{
@@ -1126,8 +1172,9 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 	{
 		if (lsproc)
 		{
-			LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Closing connections to remote server");
-			LINKED_SERVER_EXIT();
+			LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Closing connection to remote server");
+			LINKED_SERVER_CANCEL(lsproc);
+			LINKED_SERVER_CLOSE(lsproc);
 		}
 	}
 	PG_END_TRY();
@@ -1168,6 +1215,9 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Executing query against remote server");
 
+		/* LOG: Query execution starting */
+		elog(LOG, "DEBUG_LINKED_SERVER: Executing query on remote server");
+
 		/* Execute the query on remote server */
 		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
 		{
@@ -1184,7 +1234,10 @@ openquery_imp(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("error executing query \"%s\" against remote server", query)
 					 ));
-		}		
+		}
+
+		/* LOG: Query execution successful */
+		elog(LOG, "DEBUG_LINKED_SERVER: Query executed successfully on remote server");
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Begin fetching results from remote server");
 
@@ -1297,16 +1350,23 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 				LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Finished fetching results. Fetched %d rows", rowcount);
 
+				/* LOG: Result set summary */
+				elog(LOG, "DEBUG_LINKED_SERVER: Result set retrieved - %d columns, %d rows", colcount, rowcount);
+
 				tuplestore_donestoring(tupstore);
 			}
 		}
+		
+		/* LOG: Query completed with results */
+		elog(LOG, "DEBUG_LINKED_SERVER: Query completed successfully");
 	}
 	PG_FINALLY();
 	{
 		if (lsproc)
 		{
-			LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Closing connections to remote server");
-			LINKED_SERVER_EXIT();
+			LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Closing connection to remote server");
+			LINKED_SERVER_CANCEL(lsproc);
+			LINKED_SERVER_CLOSE(lsproc);
 		}
 
 		if (query)
@@ -1315,6 +1375,420 @@ openquery_imp(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	return (Datum) 0;
+}
+
+/*
+ * Map PostgreSQL/Babelfish type OID to TDS type for RPC parameter binding
+ */
+int
+get_tds_type_from_pg_oid(Oid pgtype)
+{
+	/* First check for Babelfish-specific types */
+	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
+	{
+		Oid varchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varchar");
+		Oid nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nvarchar");
+		Oid char_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("char");
+		Oid nchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nchar");
+		Oid int_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("int");
+		Oid bigint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bigint");
+		Oid tinyint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("tinyint");
+		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
+		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
+		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
+		
+		if (pgtype == varchar_oid)
+			return SYBVARCHAR;
+		else if (pgtype == nvarchar_oid)
+			return SYBVARCHAR;
+		else if (pgtype == char_oid)
+			return SYBCHAR;
+		else if (pgtype == nchar_oid)
+			return SYBCHAR;
+		else if (pgtype == int_oid)
+			return SYBINT4;
+		else if (pgtype == bigint_oid)
+			return SYBINT8;
+		else if (pgtype == tinyint_oid)
+			return SYBINT1;
+		else if (pgtype == datetime_oid)
+			return SYBDATETIME;
+		else if (pgtype == smalldatetime_oid)
+			return SYBDATETIME4;
+		else if (pgtype == datetime2_oid)
+			return SYBMSDATETIME2;
+	}
+	
+	/* Then check standard PostgreSQL types */
+	switch (pgtype)
+	{
+		case INT2OID:
+			return SYBINT2;
+		case INT4OID:
+			return SYBINT4;
+		case INT8OID:
+			return SYBINT8;
+		case FLOAT4OID:
+			return SYBREAL;
+		case FLOAT8OID:
+			return SYBFLT8;
+		case NUMERICOID:
+			return SYBNUMERIC;
+		case BOOLOID:
+			return SYBBIT;
+		case TEXTOID:
+			return SYBTEXT;
+		case VARCHAROID:
+			return SYBVARCHAR;
+		case BPCHAROID:
+			return SYBCHAR;
+		case DATEOID:
+			return SYBMSDATE;
+		case TIMEOID:
+			return SYBMSTIME;
+		case TIMESTAMPOID:
+			return SYBDATETIME;
+		case BYTEAOID:
+			return SYBVARBINARY;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("PostgreSQL type OID %u is not supported for remote procedure parameters", pgtype)));
+	}
+	
+	return 0;  /* Should not reach here */
+}
+
+/*
+ * Convert a Datum value to raw bytes suitable for TDS RPC parameter binding
+ * Returns palloc'd buffer containing the data
+ */
+void
+convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnull,
+						   void **data_out, DBINT *len_out)
+{
+	if (isnull)
+	{
+		*data_out = NULL;
+		*len_out = 0;
+		return;
+	}
+	
+	/* Check for Babelfish-specific string types first */
+	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
+	{
+		Oid varchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varchar");
+		Oid nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nvarchar");
+		Oid char_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("char");
+		Oid nchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nchar");
+		
+		if (valtype == varchar_oid || valtype == nvarchar_oid || 
+		    valtype == char_oid || valtype == nchar_oid)
+		{
+			char *str = TextDatumGetCString(value);
+			*len_out = strlen(str);  /* Do NOT include null terminator - causes UTF-16 conversion error */
+			*data_out = palloc(*len_out);
+			memcpy(*data_out, str, *len_out);
+			pfree(str);
+			return;
+		}
+	}
+	
+	switch (valtype)
+	{
+		case BOOLOID:
+			{
+				*len_out = sizeof(DBBOOL);
+				*data_out = palloc(*len_out);
+				*((DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
+			}
+			break;
+			
+		case INT2OID:
+			{
+				*len_out = sizeof(DBSMALLINT);
+				*data_out = palloc(*len_out);
+				*((DBSMALLINT *)*data_out) = DatumGetInt16(value);
+			}
+			break;
+			
+		case INT4OID:
+			{
+				*len_out = sizeof(DBINT);
+				*data_out = palloc(*len_out);
+				*((DBINT *)*data_out) = DatumGetInt32(value);
+			}
+			break;
+			
+		case INT8OID:
+			{
+				*len_out = sizeof(int64);
+				*data_out = palloc(*len_out);
+				*((int64 *)*data_out) = DatumGetInt64(value);
+			}
+			break;
+			
+		case FLOAT4OID:
+			{
+				*len_out = sizeof(DBREAL);
+				*data_out = palloc(*len_out);
+				*((DBREAL *)*data_out) = DatumGetFloat4(value);
+			}
+			break;
+			
+		case FLOAT8OID:
+			{
+				*len_out = sizeof(DBFLT8);
+				*data_out = palloc(*len_out);
+				*((DBFLT8 *)*data_out) = DatumGetFloat8(value);
+			}
+			break;
+			
+	case TEXTOID:
+	case VARCHAROID:
+	case BPCHAROID:
+		{
+			char *str = TextDatumGetCString(value);
+			*len_out = strlen(str);  /* Do NOT include null terminator - causes UTF-16 conversion error */
+			*data_out = palloc(*len_out);
+			memcpy(*data_out, str, *len_out);
+			pfree(str);
+		}
+		break;
+			
+		case BYTEAOID:
+			{
+				bytea *bytes = DatumGetByteaPP(value);
+				*len_out = VARSIZE_ANY_EXHDR(bytes);
+				*data_out = palloc(*len_out);
+				memcpy(*data_out, VARDATA_ANY(bytes), *len_out);
+			}
+			break;
+			
+		default:
+			/* For other types, convert to string representation */
+			{
+				Oid typoutput;
+				bool typIsVarlena;
+				char *str;
+				
+				getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
+				str = OidOutputFunctionCall(typoutput, value);
+				*len_out = strlen(str);  /* Do NOT include null terminator - causes UTF-16 conversion error */
+				*data_out = palloc(*len_out);
+				memcpy(*data_out, str, *len_out);
+				pfree(str);
+			}
+			break;
+	}
+}
+
+/*
+ * Validate that a remote stored procedure contains only SELECT statements.
+ * This function fetches the procedure definition from the remote server and
+ * performs static analysis to detect forbidden DML/DDL statements.
+ *
+ * Throws ERROR if the procedure contains non-SELECT statements.
+ */
+void
+validate_procedure_select_only(LinkedServerProcess lsproc,
+							   const char *server_name,
+							   const char *database_name,
+							   const char *schema_name,
+							   const char *procedure_name)
+{
+	LINKED_SERVER_RETCODE erc;
+	StringInfoData query;
+	char *definition = NULL;
+	char *def_lower = NULL;
+	int colcount = 0;
+	LinkedServerProcess validation_lsproc = NULL;
+	
+	/*
+	 * Use a separate TDS connection for validation to avoid mixing SQL queries
+	 * and RPC operations on the same connection, which causes FreeTDS error 20019.
+	 * The main lsproc will remain clean for RPC execution.
+	 */
+	PG_TRY();
+	{
+		/* Establish separate connection for validation query */
+		linked_server_establish_connection((char *)server_name, &validation_lsproc, false);
+		
+		/* Build query to fetch procedure definition from sys.sql_modules */
+		initStringInfo(&query);
+		appendStringInfo(&query,
+			"SELECT m.definition "
+			"FROM %s.sys.sql_modules m "
+			"JOIN %s.sys.objects o ON m.object_id = o.object_id "
+			"WHERE o.name = N'%s' AND SCHEMA_NAME(o.schema_id) = N'%s' AND o.type IN ('P', 'PC')",
+			database_name, database_name, procedure_name, schema_name);
+		
+		elog(LOG, "SELECT-only validation: Fetching definition for procedure %s.%s.%s.%s",
+			 server_name, database_name, schema_name, procedure_name);
+		
+		/* Execute query to fetch procedure definition */
+		if (LINKED_SERVER_PUT_CMD(validation_lsproc, query.data) != SUCCEED)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to send query to fetch procedure definition for %s", procedure_name)));
+		
+		if (LINKED_SERVER_EXEC_QUERY(validation_lsproc) == FAIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to execute query to fetch procedure definition for %s", procedure_name)));
+		
+		/* Get results */
+		if ((erc = LINKED_SERVER_RESULTS(validation_lsproc)) == FAIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to get results from procedure definition query")));
+		
+		colcount = LINKED_SERVER_NUM_COLS(validation_lsproc);
+		
+		if (colcount > 0)
+		{
+			char bind_definition[65536] = {0x00};  /* Large buffer for procedure body */
+			
+			/* Bind the definition column */
+			if (LINKED_SERVER_BIND_VAR(validation_lsproc, 1, LS_NTBSTRINGBING, sizeof(bind_definition), (LS_BYTE *)bind_definition) != SUCCEED)
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						 errmsg("Failed to bind procedure definition column")));
+			
+			/* Fetch the row */
+			if (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
+			{
+				if (bind_definition[0] != '\0')
+					definition = pstrdup(bind_definition);
+			}
+		}
+		
+		/* Consume any remaining results */
+		while (LINKED_SERVER_RESULTS(validation_lsproc) != NO_MORE_RESULTS)
+		{
+			while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
+				;
+		}
+	}
+	PG_FINALLY();
+	{
+		/* Close validation connection */
+		if (validation_lsproc)
+		{
+			elog(LOG, "SELECT-only validation: Closing validation connection");
+			LINKED_SERVER_CANCEL(validation_lsproc);
+			LINKED_SERVER_CLOSE(validation_lsproc);
+		}
+	}
+	PG_END_TRY();
+	
+	if (definition == NULL)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("Could not fetch definition for remote procedure %s.%s.%s.%s",
+						server_name, database_name, schema_name, procedure_name),
+				 errhint("Ensure the procedure exists and you have permission to view its definition")));
+	}
+	
+	elog(LOG, "SELECT-only validation: Analyzing procedure definition for %s (length: %zu bytes)",
+		 procedure_name, strlen(definition));
+	
+	/* Perform static analysis - case-insensitive search for forbidden keywords */
+	def_lower = lowerstr(definition);
+	
+	/* Check for DML operations */
+	if (strstr(def_lower, "insert into") != NULL || strstr(def_lower, "insert ") != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains INSERT statement"),
+				 errdetail("Procedure %s.%s.%s.%s contains INSERT operation which is not allowed",
+						   server_name, database_name, schema_name, procedure_name),
+				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
+	
+	if (strstr(def_lower, "update ") != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains UPDATE statement"),
+				 errdetail("Procedure %s.%s.%s.%s contains UPDATE operation which is not allowed",
+						   server_name, database_name, schema_name, procedure_name),
+				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
+	
+	if (strstr(def_lower, "delete from") != NULL || strstr(def_lower, "delete ") != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains DELETE statement"),
+				 errdetail("Procedure %s.%s.%s.%s contains DELETE operation which is not allowed",
+						   server_name, database_name, schema_name, procedure_name),
+				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
+	
+	if (strstr(def_lower, "merge into") != NULL || strstr(def_lower, "merge ") != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains MERGE statement"),
+				 errdetail("Procedure %s.%s.%s.%s contains MERGE operation which is not allowed",
+						   server_name, database_name, schema_name, procedure_name),
+				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
+	
+	/* Check for DDL operations */
+	if (strstr(def_lower, "create table") != NULL || strstr(def_lower, "create view") != NULL ||
+		strstr(def_lower, "create procedure") != NULL || strstr(def_lower, "create function") != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains CREATE statement"),
+				 errdetail("Procedure %s.%s.%s.%s contains CREATE operation which is not allowed",
+						   server_name, database_name, schema_name, procedure_name),
+				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
+	
+	if (strstr(def_lower, "drop table") != NULL || strstr(def_lower, "drop view") != NULL ||
+		strstr(def_lower, "drop procedure") != NULL || strstr(def_lower, "drop function") != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains DROP statement"),
+				 errdetail("Procedure %s.%s.%s.%s contains DROP operation which is not allowed",
+						   server_name, database_name, schema_name, procedure_name),
+				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
+	
+	if (strstr(def_lower, "alter table") != NULL || strstr(def_lower, "alter view") != NULL ||
+		strstr(def_lower, "alter procedure") != NULL || strstr(def_lower, "alter function") != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains ALTER statement"),
+				 errdetail("Procedure %s.%s.%s.%s contains ALTER operation which is not allowed",
+						   server_name, database_name, schema_name, procedure_name),
+				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
+	
+	if (strstr(def_lower, "truncate table") != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains TRUNCATE statement"),
+				 errdetail("Procedure %s.%s.%s.%s contains TRUNCATE operation which is not allowed",
+						   server_name, database_name, schema_name, procedure_name),
+				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
+	
+	/* Check for dynamic SQL - high risk for bypassing validation */
+	if (strstr(def_lower, "exec(") != NULL || strstr(def_lower, "execute(") != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains dynamic SQL execution"),
+				 errdetail("Procedure %s.%s.%s.%s uses EXEC() or EXECUTE() which is not allowed",
+						   server_name, database_name, schema_name, procedure_name),
+				 errhint("Dynamic SQL cannot be validated and is not allowed for linked server execution")));
+	
+	if (strstr(def_lower, "sp_executesql") != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains dynamic SQL execution"),
+				 errdetail("Procedure %s.%s.%s.%s uses sp_executesql which is not allowed",
+						   server_name, database_name, schema_name, procedure_name),
+				 errhint("Dynamic SQL cannot be validated and is not allowed for linked server execution")));
+	
+	elog(LOG, "SELECT-only validation: Procedure %s passed validation checks", procedure_name);
+	
+	/* Clean up */
+	pfree(def_lower);
+	pfree(definition);
+	pfree(query.data);
 }
 
 #endif
@@ -1363,8 +1837,9 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 	{
 		if (lsproc)
 		{
-			LINKED_SERVER_DEBUG("LINKED SERVER: (CONNECTION TEST) - Closing connections to remote server");
-			LINKED_SERVER_EXIT();
+			LINKED_SERVER_DEBUG("LINKED SERVER: (CONNECTION TEST) - Closing connection to remote server");
+			LINKED_SERVER_CANCEL(lsproc);
+			LINKED_SERVER_CLOSE(lsproc);
 		}
 	}
 	PG_END_TRY();
@@ -1377,4 +1852,3 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 
 }
-

@@ -6955,6 +6955,8 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		}
 	}
 	
+	std::string server_name;
+	
 	if (ctx_name) 
 	{
 		// Get the name of procedure being executed, and split up in parts
@@ -6964,6 +6966,11 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		
 		// Original position of the name
 		namePos = ctx_name->start->getStartIndex();		
+		
+		if (ctx_name->server)
+		{
+			server_name = stripQuoteFromId(ctx_name->server);
+		}
 		
 		if (ctx_name->database)
 		{
@@ -7042,6 +7049,12 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	result->exec_with_recompile = exec_with_recompile;	
 
 	// Handle name parts
+	if (!server_name.empty())
+	{
+		elog(DEBUG1, "DEBUG_PARSER: Setting result->server_name to: %s", server_name.c_str());
+		result->server_name = pstrdup(downcase_truncate_identifier(server_name.c_str(), server_name.length(), true));
+		elog(DEBUG1, "DEBUG_PARSER: result->server_name set to: %s", result->server_name);
+	}
 	if (!proc_name.empty())
 	{
 		result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
