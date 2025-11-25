@@ -8840,35 +8840,27 @@ GO
 
 SELECT CAST('2023-06-16 12:34:56.1234567' AS DATETIME2) - CAST('1' AS CHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567' AS DATETIME2) - CAST('1' AS VARCHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567' AS DATETIME2) - CAST('1' AS NCHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567' AS DATETIME2) - CAST('1' AS NVARCHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567' AS DATETIME2) - CAST('2023-06-16' AS DATE);
 GO
@@ -9044,35 +9036,27 @@ GO
 
 SELECT CAST('1' AS CHAR(10)) - CAST('2023-06-16 12:34:56.1234567' AS DATETIME2);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('1' AS VARCHAR(10)) - CAST('2023-06-16 12:34:56.1234567' AS DATETIME2);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('1' AS NCHAR(10)) - CAST('2023-06-16 12:34:56.1234567' AS DATETIME2);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('1' AS NVARCHAR(10)) - CAST('2023-06-16 12:34:56.1234567' AS DATETIME2);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('2023-06-16' AS DATE) - CAST('2023-06-16 12:34:56.1234567' AS DATETIME2);
 GO

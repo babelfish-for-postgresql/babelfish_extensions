@@ -28,6 +28,7 @@ static void CheckDatetimeoffsetRange(const tsql_datetimeoffset *df, Node *escont
 static int	datetimeoffset_cmp_internal(tsql_datetimeoffset *df1, tsql_datetimeoffset *df2);
 static void datetimeoffset_timestamp_internal(const tsql_datetimeoffset *df, Timestamp *time);
 static void EncodeDatetimeoffsetTimezone(char *str, int tz, int style);
+static Datum datetimeoffset_in_str(char *str, int32 typmod, Node *escontext);
 
 PG_FUNCTION_INFO_V1(datetimeoffset_in);
 PG_FUNCTION_INFO_V1(datetimeoffset_out);
@@ -66,27 +67,22 @@ PG_FUNCTION_INFO_V1(datetimeoffset_datetime);
 PG_FUNCTION_INFO_V1(datetime2_datetimeoffset);
 PG_FUNCTION_INFO_V1(datetimeoffset_datetime2);
 PG_FUNCTION_INFO_V1(datetimeoffset_scale);
+PG_FUNCTION_INFO_V1(char_datetimeoffset);
+PG_FUNCTION_INFO_V1(varchar_datetimeoffset);
 
 PG_FUNCTION_INFO_V1(get_datetimeoffset_tzoffset_internal);
 PG_FUNCTION_INFO_V1(dateadd_datetimeoffset);
 
 #define DTK_NANO 32
 
-
-/* datetimeoffset_in()
+/* datetimeoffset_in_str()
  * Convert a string to internal form.
  * Most parts of this functions is same as timestamptz_in(),
  * but we store the timezone in a seperate int16 variable.
  */
-Datum
-datetimeoffset_in(PG_FUNCTION_ARGS)
+static Datum
+datetimeoffset_in_str(char *str, int32 typmod, Node *escontext)
 {
-	char	   *str = PG_GETARG_CSTRING(0);
-
-#ifdef NOT_USED
-	Oid			typelem = PG_GETARG_OID(1);
-#endif
-	int32		typmod = PG_GETARG_INT32(2);
 	tsql_datetimeoffset *datetimeoffset;
 	Timestamp	tsql_ts;
 	fsec_t		fsec;
@@ -158,7 +154,7 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 		dterr = 0;
 	}
 	if (dterr != 0)
-		DateTimeParseError(dterr, &extra, str, "timestamp with time zone", fcinfo->context);
+		DateTimeParseError(dterr, &extra, str, "timestamp with time zone", escontext);
 
 	/*
 	 * When time zone offset it not specified in input string
@@ -202,10 +198,29 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	if (datetimeoffset->tsql_ts == DATETIMEOFFSET_MAX)
 		datetimeoffset->tsql_ts = DATETIMEOFFSET_MAX - 1;
 
-	CheckDatetimeoffsetRange(datetimeoffset, fcinfo->context);
+	CheckDatetimeoffsetRange(datetimeoffset, escontext);
 
 	PG_RETURN_DATETIMEOFFSET(datetimeoffset);
 }
+
+/* datetimeoffset_in()
+ * Convert a string to internal form.
+ * Most parts of this functions is same as timestamptz_in(),
+ * but we store the timezone in a seperate int16 variable.
+ */
+Datum
+datetimeoffset_in(PG_FUNCTION_ARGS)
+{
+	char	   *str = PG_GETARG_CSTRING(0);
+
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
+
+	return datetimeoffset_in_str(str, typmod, fcinfo->context);
+}
+
 
 /* datetimeoffset_out()
  * Convert datetimeoffset to external form.
@@ -1016,4 +1031,30 @@ dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
 	PG_END_TRY();
 
 	PG_RETURN_DATETIMEOFFSET(result);
+}
+
+/*
+ * varchar_datetimeoffset()
+ * Convert a varchar to datetimeoffset
+ */
+Datum
+varchar_datetimeoffset(PG_FUNCTION_ARGS)
+{
+	Datum		txt = PG_GETARG_DATUM(0);
+	char	   *str = TextDatumGetCString(txt);
+
+	return datetimeoffset_in_str(str, MAX_TIMESTAMP_PRECISION, fcinfo->context);
+}
+
+/*
+ * char_datetimeoffset()
+ * Convert a CHAR to datetimeoffset
+ */
+Datum
+char_datetimeoffset(PG_FUNCTION_ARGS)
+{
+	Datum		txt = PG_GETARG_DATUM(0);
+	char	   *str = TextDatumGetCString(txt);
+
+	return datetimeoffset_in_str(str, MAX_TIMESTAMP_PRECISION, fcinfo->context);
 }

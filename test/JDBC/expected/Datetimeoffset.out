@@ -2523,135 +2523,154 @@ GO
 -- char
 SELECT dbo.TestDateTimeOffsetFunction(CAST('2023-06-16 14:30:20 +01:00' AS char));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:20.0000000 +01:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('2023-06-16 14:30:20.1234567 +01:00' AS char));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:20.1234570 +00:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('2023-06-16 14:30 +01:00' AS char));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:00.0000000 +01:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('invalid' AS char));
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: invalid input syntax for type timestamp with time zone: "invalid                       ")~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST(NULL AS char));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('' AS char));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+1900-01-01 00:00:00.0000000 +00:00
+~~END~~
 
 
 -- varchar
 SELECT dbo.TestDateTimeOffsetFunction(CAST('9999-12-31 23:59:59.9999999 +14:00' AS varchar));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.9999990 +01:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('2023-06-16 14:30:20 +01:00' AS varchar));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:20.0000000 +01:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('2023-06-16 14:30 +01:00' AS varchar));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:00.0000000 +01:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('2023-06-16 2:30 PM +01:00' AS varchar));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:00.0000000 +01:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('invalid' AS varchar));
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: invalid input syntax for type timestamp with time zone: "invalid")~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST(NULL AS varchar));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('' AS varchar));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+1900-01-01 00:00:00.0000000 +00:00
+~~END~~
 
 
 -- nchar
 SELECT dbo.TestDateTimeOffsetFunction(CAST(N'2023-06-16 14:30:20 +01:00' AS NCHAR));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:20.0000000 +01:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST(N'2023-06-16 14:30 +01:00' AS NCHAR));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:00.0000000 +01:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST(N'0001-01-01 00:00:00 +00:00' AS NCHAR));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+0001-01-01 00:00:00.0000000 +00:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST(NULL AS nchar));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST(N'' AS nchar));
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+1900-01-01 00:00:00.0000000 +00:00
+~~END~~
 
 
 -- nvarchar
 SELECT dbo.TestDateTimeOffsetFunction(N'2023-06-16 14:30:20 +01:00');
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:20.0000000 +01:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(N'2023-06-16 14:30:20.1234567 +01:00');
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:20.1234570 +01:00
+~~END~~
 
 SELECT dbo.TestDateTimeOffsetFunction(N'2023-06-16 2:30 PM +01:00');
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.testdatetimeoffsetfunction is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+datetimeoffset
+2023-06-16 14:30:00.0000000 +01:00
+~~END~~
 
 
 -- time
@@ -3069,9 +3088,7 @@ BEGIN CATCH
     EXEC InsertDateTimeOffsetTestResult 'UNION', 'Implicit conversion in UNION', 'Multiple datetime types', NULL, 0;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type datetime: "2023-06-20 14:30:00 -07:00")~~
+~~ROW COUNT: 1~~
 
 
 -- 2. UNION ALL
@@ -3126,9 +3143,7 @@ BEGIN CATCH
     EXEC InsertDateTimeOffsetTestResult 'COALESCE', 'Implicit conversion in COALESCE', 'Multiple datetime types', NULL, 0;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type character varying to datetimeoffset)~~
+~~ROW COUNT: 1~~
 
 
 -- 6. EXCEPT
@@ -3220,13 +3235,15 @@ SELECT * FROM DateTimeOffsetImplicitConversionTest ORDER BY ID;
 GO
 ~~START~~
 int#!#nvarchar#!#nvarchar#!#nvarchar#!#datetimeoffset#!#bit
-1#!#UNION ALL#!#Implicit conversion in UNION ALL#!#Multiple datetime types#!#2023-06-20 12:34:56.7890000 +01:00#!#1
-2#!#CASE#!#Implicit conversion in CASE#!#Multiple datetime types#!#2023-06-20 15:45:30.1230000 +00:00#!#1
-3#!#EXCEPT#!#Implicit conversion in EXCEPT#!#DATETIMEOFFSET and String#!#2023-06-20 12:34:56.7890000 +01:00#!#1
-4#!#VALUES#!#Implicit conversion in VALUES#!#Multiple datetime types#!#2023-06-20 12:34:56.7890000 +01:00#!#1
-5#!#ISNULL#!#Implicit conversion in ISNULL#!#NULL and String#!#2023-06-20 14:30:00.0000000 -07:00#!#1
-6#!#Offset Formats#!#Different offset format conversions#!#Various offset formats#!#2023-06-20 12:34:56.7890120 +01:00#!#1
-7#!#DTO Edge Cases#!#Edge case datetime offset values#!#Edge values#!#0001-01-01 00:00:00.0000000 +00:00#!#1
+1#!#UNION#!#Implicit conversion in UNION#!#Multiple datetime types#!#2023-06-20 15:45:30.1230000 +00:00#!#1
+2#!#UNION ALL#!#Implicit conversion in UNION ALL#!#Multiple datetime types#!#2023-06-20 12:34:56.7890000 +01:00#!#1
+3#!#CASE#!#Implicit conversion in CASE#!#Multiple datetime types#!#2023-06-20 15:45:30.1230000 +00:00#!#1
+4#!#COALESCE#!#Implicit conversion in COALESCE#!#Multiple datetime types#!#2023-06-20 12:34:56.7890000 +01:00#!#1
+5#!#EXCEPT#!#Implicit conversion in EXCEPT#!#DATETIMEOFFSET and String#!#2023-06-20 12:34:56.7890000 +01:00#!#1
+6#!#VALUES#!#Implicit conversion in VALUES#!#Multiple datetime types#!#2023-06-20 12:34:56.7890000 +01:00#!#1
+7#!#ISNULL#!#Implicit conversion in ISNULL#!#NULL and String#!#2023-06-20 14:30:00.0000000 -07:00#!#1
+8#!#Offset Formats#!#Different offset format conversions#!#Various offset formats#!#2023-06-20 12:34:56.7890120 +01:00#!#1
+9#!#DTO Edge Cases#!#Edge case datetime offset values#!#Edge values#!#0001-01-01 00:00:00.0000000 +00:00#!#1
 ~~END~~
 
 
@@ -6109,7 +6126,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) <>
 GO
 ~~START~~
 varchar
-Not Equal
+Equal
 ~~END~~
 
 
@@ -6117,7 +6134,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) <>
 GO
 ~~START~~
 varchar
-Not Equal
+Equal
 ~~END~~
 
 
@@ -6125,7 +6142,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) <>
 GO
 ~~START~~
 varchar
-Not Equal
+Equal
 ~~END~~
 
 
@@ -6133,7 +6150,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) <>
 GO
 ~~START~~
 varchar
-Not Equal
+Equal
 ~~END~~
 
 
@@ -6341,7 +6358,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS char(34)) <> CAST(
 GO
 ~~START~~
 varchar
-Not Equal
+Equal
 ~~END~~
 
 
@@ -6349,7 +6366,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS varchar(34)) <> CA
 GO
 ~~START~~
 varchar
-Not Equal
+Equal
 ~~END~~
 
 
@@ -6357,7 +6374,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS nchar(34)) <> CAST
 GO
 ~~START~~
 varchar
-Not Equal
+Equal
 ~~END~~
 
 
@@ -6365,7 +6382,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS nvarchar(34)) <> C
 GO
 ~~START~~
 varchar
-Not Equal
+Equal
 ~~END~~
 
 
@@ -6824,7 +6841,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS char(34)) < CAST('
 GO
 ~~START~~
 varchar
-Less Than
+Not Less Than
 ~~END~~
 
 
@@ -6832,7 +6849,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS varchar(34)) < CAS
 GO
 ~~START~~
 varchar
-Less Than
+Not Less Than
 ~~END~~
 
 
@@ -6840,7 +6857,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS nchar(34)) < CAST(
 GO
 ~~START~~
 varchar
-Less Than
+Not Less Than
 ~~END~~
 
 
@@ -6848,7 +6865,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS nvarchar(34)) < CA
 GO
 ~~START~~
 varchar
-Less Than
+Not Less Than
 ~~END~~
 
 
@@ -7068,7 +7085,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) <=
 GO
 ~~START~~
 varchar
-Greater Than
+Less Than or Equal
 ~~END~~
 
 
@@ -7076,7 +7093,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) <=
 GO
 ~~START~~
 varchar
-Greater Than
+Less Than or Equal
 ~~END~~
 
 
@@ -7084,7 +7101,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) <=
 GO
 ~~START~~
 varchar
-Greater Than
+Less Than or Equal
 ~~END~~
 
 
@@ -7092,7 +7109,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) <=
 GO
 ~~START~~
 varchar
-Greater Than
+Less Than or Equal
 ~~END~~
 
 
@@ -7532,7 +7549,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) > 
 GO
 ~~START~~
 varchar
-Greater Than
+Not Greater Than
 ~~END~~
 
 
@@ -7540,7 +7557,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) > 
 GO
 ~~START~~
 varchar
-Greater Than
+Not Greater Than
 ~~END~~
 
 
@@ -7548,7 +7565,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) > 
 GO
 ~~START~~
 varchar
-Greater Than
+Not Greater Than
 ~~END~~
 
 
@@ -7556,7 +7573,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) > 
 GO
 ~~START~~
 varchar
-Greater Than
+Not Greater Than
 ~~END~~
 
 
@@ -8237,7 +8254,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS char(34)) >= CAST(
 GO
 ~~START~~
 varchar
-Less Than
+Greater Than or Equal
 ~~END~~
 
 
@@ -8245,7 +8262,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS varchar(34)) >= CA
 GO
 ~~START~~
 varchar
-Less Than
+Greater Than or Equal
 ~~END~~
 
 
@@ -8253,7 +8270,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS nchar(34)) >= CAST
 GO
 ~~START~~
 varchar
-Less Than
+Greater Than or Equal
 ~~END~~
 
 
@@ -8261,7 +8278,7 @@ SELECT CASE WHEN CAST('2023-06-16 12:34:56.1234567 +01:00' AS nvarchar(34)) >= C
 GO
 ~~START~~
 varchar
-Less Than
+Greater Than or Equal
 ~~END~~
 
 
@@ -9210,35 +9227,27 @@ GO
 
 SELECT CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) - CAST('1' AS CHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) - CAST('1' AS VARCHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) - CAST('1' AS NCHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) - CAST('1' AS NVARCHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) - CAST('2023-06-16' AS DATE);
 GO
@@ -9414,35 +9423,27 @@ GO
 
 SELECT CAST('1' AS CHAR(10)) - CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('1' AS VARCHAR(10)) - CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('1' AS NCHAR(10)) - CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('1' AS NVARCHAR(10)) - CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('2023-06-16' AS DATE) - CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET);
 GO
@@ -10628,9 +10629,21 @@ SELECT
     Description
 FROM DateTimeOffsetExpressionTest;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type character varying to datetimeoffset)~~
+~~START~~
+int#!#datetimeoffset#!#nvarchar
+1#!#2023-01-01 00:00:00.0000000 +00:00#!#UTC Midnight
+2#!#2023-01-01 06:00:00.0000000 -08:00#!#PST Morning
+3#!#2023-01-01 09:30:00.0000000 -05:00#!#EST Morning Break
+4#!#2023-01-01 12:00:00.0000000 +00:00#!#UTC Noon
+5#!#2023-01-01 13:30:00.0000000 +01:00#!#CET Afternoon Break
+6#!#2023-01-01 15:45:30.1234570 +02:00#!#EET Late Afternoon
+7#!#2023-01-01 17:30:00.0000000 +05:30#!#IST End of Day
+8#!#2023-01-01 18:15:00.0000000 +08:00#!#CST Evening
+9#!#2023-01-01 20:00:00.0000000 +09:00#!#JST Night
+10#!#2023-01-01 21:30:45.9876540 +10:00#!#AEST Late Night
+11#!#2023-01-01 22:45:00.0000000 +11:00#!#AEDT Late Night
+12#!#2023-01-02 00:00:00.0000000 +12:00#!#NZST Almost Midnight
+~~END~~
 
 
 -- NULLIF operations with timezone consideration
