@@ -8070,10 +8070,10 @@ GO
 SELECT CAST('1' AS CHAR(10)) - CAST('2023-06-16' AS DATE);
 GO
 ~~START~~
-datetime
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('1' AS VARCHAR(10)) - CAST('2023-06-16' AS DATE);
 GO
@@ -8084,10 +8084,10 @@ GO
 SELECT CAST('1' AS NCHAR(10)) - CAST('2023-06-16' AS DATE);
 GO
 ~~START~~
-datetime
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('1' AS NVARCHAR(10)) - CAST('2023-06-16' AS DATE);
 GO
