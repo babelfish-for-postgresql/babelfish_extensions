@@ -4797,9 +4797,10 @@ SELECT
         ELSE 'FAIL: Incorrect return type'
     END AS ReturnTypeTest;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error while trying to cast to SMALLINT data type.)~~
+~~START~~
+varchar
+PASS: DATETIME2FROMPARTS returns datetime2
+~~END~~
 
 
 -- Test 2: Testing with NULL values
@@ -4969,7 +4970,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error while trying to cast to SMALLINT data type.)~~
+~~ERROR (Message: Specified scale 8 is invalid.)~~
 
 
 -- Test 5: Testing fraction digits vs precision
@@ -4984,7 +4985,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error while trying to cast to SMALLINT data type.)~~
+~~ERROR (Message: Cannot construct data type DATETIME2, some of the arguments have values which are not valid.)~~
 
 
 -- Test 6: Testing valid date creation
@@ -4997,9 +4998,10 @@ SELECT
         ELSE 'FAIL: Date components do not match input'
     END AS ComponentsMatchTest;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error while trying to cast to SMALLINT data type.)~~
+~~START~~
+varchar
+FAIL: Date components do not match input
+~~END~~
 
 
 -- Test 7: Testing leap year handling
@@ -5013,7 +5015,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error while trying to cast to SMALLINT data type.)~~
+~~ERROR (Message: date field value out of range: 2023-02-29)~~
 
 
 SELECT 
@@ -5025,9 +5027,10 @@ SELECT
         ELSE 'FAIL: Leap year date issue'
     END AS LeapYearTest2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error while trying to cast to SMALLINT data type.)~~
+~~START~~
+varchar
+PASS: Leap year date accepted correctly
+~~END~~
 
 
 -- Test 8: Testing precision handling
@@ -5064,9 +5067,8 @@ SELECT
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error while trying to cast to SMALLINT data type.)~~
+PASS: Function accepts various numeric datatypes
+~~END~~
 
 
 -- Test 10: Testing with GROUP BY, HAVING, ORDER BY, SELECT list
@@ -5124,9 +5126,21 @@ GO
 ~~START~~
 int#!#datetime2#!#varchar
 1#!#2020-01-01 09:00:00.0000000#!#PASS
-~~ERROR (Code: 33557097)~~
+2#!#2021-06-15 12:30:45.1234560#!#PASS
+3#!#2023-01-01 00:00:00.0000000#!#PASS
+~~END~~
 
-~~ERROR (Message: Error while trying to cast to SMALLINT data type.)~~
+~~START~~
+varchar
+PASS: ORDER BY works correctly
+~~END~~
+
+~~START~~
+int#!#int#!#varchar
+2020#!#1#!#PASS: GROUP BY works correctly
+2023#!#1#!#PASS: GROUP BY works correctly
+2021#!#1#!#PASS: GROUP BY works correctly
+~~END~~
 
 
 DROP TABLE #TestDates;
@@ -5228,9 +5242,8 @@ GO
 
 ~~START~~
 varchar#!#varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error while trying to cast to SMALLINT data type.)~~
+PASS: MIN function works with constructed dates#!#FAIL: MAX function issue
+~~END~~
 
 
 DROP TABLE #DateComponents;
