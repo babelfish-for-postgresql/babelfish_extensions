@@ -994,7 +994,6 @@ STOPPED:                                         S T O P P E D;
 STOP_ON_ERROR:                                   S T O P  UNDERLINE  O N  UNDERLINE  E R R O R;
 STPOINTFROMTEXT:                                 'STPointFromText';
 STRING_AGG:                                      S T R I N G  UNDERLINE  A G G;
-STRING_SPLIT:                                    S T R I N G  UNDERLINE  S P L I T;
 STRING_DELIMITER:                                S T R I N G  UNDERLINE  D E L I M I T E R;
 STSRID:                                          'STSrid';
 STSRID_DOUBLE_QUOTE:                             ["] STSRID ["] {pltsql_quoted_identifier == true}?;
