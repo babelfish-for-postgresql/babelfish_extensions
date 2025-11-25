@@ -4300,6 +4300,18 @@ END;
 $$ 
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexstr(expression sys.varbinary)
+RETURNS sys.nvarchar AS 
+$$ 
+BEGIN 
+    IF sys.len(expression) = 0 THEN
+        RETURN NULL;
+    END IF;
+    RETURN pg_catalog.lower(expression::TEXT);
+END;
+$$ 
+LANGUAGE plpgsql IMMUTABLE STRICT;
+
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,
     property SYS.VARCHAR

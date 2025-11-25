@@ -11,6 +11,17 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexstr(expression sys.varbinary)
+RETURNS sys.nvarchar AS 
+$$ 
+BEGIN 
+    IF sys.len(expression) = 0 THEN
+        RETURN NULL;
+    END IF;
+    RETURN pg_catalog.lower(expression::PG_CATALOG.TEXT);
+END;
+$$ 
+LANGUAGE plpgsql IMMUTABLE STRICT;
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
