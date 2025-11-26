@@ -70,142 +70,50 @@ DROP TABLE  VarbinaryAsgeometrypolygon
 
 
 DROP VIEW DimOfgeographypolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "dimofgeographypolygon" does not exist)~~
-
 
 DROP VIEW AreaOfgeographypolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "areaofgeographypolygon" does not exist)~~
-
 
 DROP VIEW TextFromgeographypolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "textfromgeographypolygon" does not exist)~~
-
 
 DROP VIEW BinaryFromgeographypolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "binaryfromgeographypolygon" does not exist)~~
-
 
 DROP VIEW SridFromgeographypolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "sridfromgeographypolygon" does not exist)~~
-
 
 DROP VIEW Emptygeographypolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "emptygeographypolygon" does not exist)~~
-
 
 DROP VIEW Validgeographypolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "validgeographypolygon" does not exist)~~
-
 
 DROP VIEW Closedgeographypolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "closedgeographypolygon" does not exist)~~
-
 
 DROP VIEW DisjointTempGeogpolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "disjointtempgeogpolygon" does not exist)~~
-
 
 DROP VIEW DistanceTempGeogpolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "distancetempgeogpolygon" does not exist)~~
-
 
 DROP VIEW IntersectsTempGeogpolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "intersectstempgeogpolygon" does not exist)~~
-
 
 DROP VIEW ContainTempGeogpolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "containtempgeogpolygon" does not exist)~~
-
 
 DROP VIEW EqualsTempGeogpolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "equalstempgeogpolygon" does not exist)~~
-
 
 DROP VIEW DisjointTempGeogpolysr
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "disjointtempgeogpolysr" does not exist)~~
-
 
 DROP VIEW DistanceTempGeogpolysr
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "distancetempgeogpolysr" does not exist)~~
-
 
 DROP VIEW IntersectsTempGeogpolysr
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "intersectstempgeogpolysr" does not exist)~~
-
 
 DROP VIEW EqualsTempGeogpolysr
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "equalstempgeogpolysr" does not exist)~~
-
 
 DROP VIEW ContainTempGeogpolysr
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "containtempgeogpolysr" does not exist)~~
-
 
 DROP VIEW equals_opgeogpolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "equals_opgeogpolygon" does not exist)~~
-
 
 DROP VIEW notequal_opgeogpolygon
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "notequal_opgeogpolygon" does not exist)~~
-
 
 DROP VIEW equals_opgeogpolysr
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "equals_opgeogpolysr" does not exist)~~
-
 
 DROP VIEW notequal_opgeogpolysr
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "notequal_opgeogpolysr" does not exist)~~
-
 
 DROP VIEW PolygonGeogFromText
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "polygongeogfromtext" does not exist)~~
-
 
 DROP VIEW PolygonGeomFromText
 
@@ -228,4 +136,4 @@ DROP TABLE GEOSPATIALPOLYGONGEOG_INVALID_dt
 
 DROP TABLE geospatialpointxgeog_polysr
 
-DROP TABLE GEOSPATIALPOLYGEOG_dt
+DROP TABLE GEOSPATIALPOLYGONGEOG_dt

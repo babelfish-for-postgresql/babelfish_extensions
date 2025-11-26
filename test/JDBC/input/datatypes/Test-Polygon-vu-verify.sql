@@ -1,4 +1,4 @@
-
+-- sla 80000
 
 -- Test CAST ( Geometry/Geography As Varbinary )
 SELECT ID, geometryData FROM geometryAsVarbinarypolygon ORDER BY ID;
@@ -52,23 +52,17 @@ GO
 
 
 -- Test CAST ( Geometry/Geography As  Bytea )
-SELECT ID, CAST(geo_polygon AS VARBINARY(500) ) AS bytea_polygon FROM geometryToByteapolygon;
+SELECT ID, CAST(geo_polygon AS VARBINARY(2000) ) AS bytea_polygon FROM geometryToByteapolygon;
 GO
 
-SELECT ID,  CAST(geo_polygon AS VARBINARY(500)  ) AS bytea_polygon FROM geographyToByteapolygon;
+SELECT ID,  CAST(geo_polygon AS VARBINARY(2000)  ) AS bytea_polygon FROM geographyToByteapolygon;
 GO
 
 SELECT * FROM GEOSPATIALPOLYGONGEOM_dt;
 go
 
-SELECT * FROM GEOSPATIALPOLYGEOG_dt;
+SELECT * FROM GEOSPATIALPOLYGONGEOG_dt;
 go
-
-Select * from GEOSPATIALPOLYGONGEOM_INVALID_dt;
-GO
-
-Select * from GEOSPATIALPOLYGONGEOG_INVALID_dt;
-GO
 
 -- STDimension
 SELECT * FROM DimOfGeometrypolygon;

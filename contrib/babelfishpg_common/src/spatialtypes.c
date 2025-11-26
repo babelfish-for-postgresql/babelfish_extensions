@@ -2023,6 +2023,7 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
     {
         uint8 *metadata_pos;
         uint8 polygon_suffix[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
+        uint8 polygon_suffix2[5] = {0x02, 0x00, 0x00, 0x00, 0x00};
         uint8 *ring_counts_pos;
         int cumulative_points = 0;
         
@@ -2033,8 +2034,17 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
         metadata_pos += sizeof(int32);
         
         /* Add 6 bytes representing value 2 followed by 5 zero bytes */
-        memcpy(metadata_pos, polygon_suffix, 6);
-        metadata_pos += 6;
+
+        if (num_rings == 1)
+        {
+            memcpy(metadata_pos, polygon_suffix2, 5);
+            metadata_pos += 5;
+        }
+        else if (num_rings > 1)
+        {
+            memcpy(metadata_pos, polygon_suffix, 6);
+            metadata_pos += 6;
+        }
         
         /* Add cumulative ring point counts */
         ring_counts_pos = metadata_pos;
@@ -2098,8 +2108,9 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
         int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
         int num_rings = *(int32*)(geom_data->byte_data + offset);
         total_size += NPOINTS_SIZE + 4;  /* Ring count (4 bytes) */
-        total_size += 6;             /* Polygon suffix (6 bytes) */
-        total_size +=(num_rings - 2) * 5 + 4;  /* Cumulative counts: (n-1)*5 + 4 bytes, or just 4 if only 1 ring */
+        total_size += (num_rings > 1 ) ? 6 : 5;             /* Polygon suffix (6 bytes) */
+        if (num_rings > 1)
+            total_size +=(num_rings - 2) * 5 + 4;  /* Cumulative counts: (n-1)*5 + 4 bytes, or just 4 if only 1 ring */
         total_size += 13;  
     }
     
