@@ -537,6 +537,9 @@ public class TestQueryFile {
         if (inputFileName.equals("temp_table_jdbc")) {
             JDBCTempTable.runTest(bw, logger);
             sla = defaultSLA*1000000L * 2; /* Increase SLA to avoid flakiness */
+        } else if (inputFileName.equals("babel_output_clause_concurrency_test")) {
+            BabelOutputClauseConcurrencyTest.runTest(bw, logger);
+            sla = defaultSLA*1000000L * 3; /* Increase SLA for concurrency test */
         } else {
             batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
         }

@@ -519,13 +519,13 @@ select coalesce(a25, a26) from babel_726_t1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: COALESCE could not convert type varbinary to bpchar)~~
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
 
 select coalesce(a26, a25) from babel_726_t1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: COALESCE could not convert type varbinary to bpchar)~~
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
 
 
 -- varbinary and binary

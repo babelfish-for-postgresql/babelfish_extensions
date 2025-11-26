@@ -10,6 +10,55 @@
 
 all
 
+# These tests are ignored since latest changes with UTF-16<->binary conversion
+# They show the previous behavior of the conversion functions
+# and are not relevant to the current implementation.
+ignore#!#BABEL-2736-before-17_7-vu-prepare
+ignore#!#BABEL-2736-before-17_7-vu-verify
+ignore#!#BABEL-2736-before-17_7-vu-cleanup
+ignore#!#PARTITION-before-17_7-vu-prepare
+ignore#!#PARTITION-before-17_7-vu-verify
+ignore#!#PARTITION-before-17_7-vu-cleanup
+ignore#!#cast_string_to_binary-before-15_16-vu-prepare
+ignore#!#cast_string_to_binary-before-15_16-vu-verify
+ignore#!#cast_string_to_binary-before-15_16-vu-cleanup
+ignore#!#cast_string_to_binary-before-16_8-vu-prepare
+ignore#!#cast_string_to_binary-before-16_8-vu-verify
+ignore#!#cast_string_to_binary-before-16_8-vu-cleanup
+ignore#!#cast_string_to_binary-before-17_7-vu-prepare
+ignore#!#cast_string_to_binary-before-17_7-vu-verify
+ignore#!#cast_string_to_binary-before-17_7-vu-cleanup
+
+ignore#!#cast_binary_to_string-before-15_2-vu-prepare
+ignore#!#cast_binary_to_string-before-15_2-vu-verify
+ignore#!#cast_binary_to_string-before-15_2-vu-cleanup
+ignore#!#cast_binary_to_string-before-16_1-vu-prepare
+ignore#!#cast_binary_to_string-before-16_1-vu-verify
+ignore#!#cast_binary_to_string-before-16_1-vu-cleanup
+ignore#!#cast_binary_to_string-before-16_8-vu-prepare
+ignore#!#cast_binary_to_string-before-16_8-vu-verify
+ignore#!#cast_binary_to_string-before-16_8-vu-cleanup
+ignore#!#cast_binary_to_string-before-17_7-vu-prepare
+ignore#!#cast_binary_to_string-before-17_7-vu-verify
+ignore#!#cast_binary_to_string-before-17_7-vu-cleanup
+
+ignore#!#test_conv_text_to_binary-before-15_5-vu-prepare
+ignore#!#test_conv_text_to_binary-before-15_5-vu-verify
+ignore#!#test_conv_text_to_binary-before-15_5-vu-cleanup
+ignore#!#test_conv_text_to_binary-before-16_8-vu-prepare
+ignore#!#test_conv_text_to_binary-before-16_8-vu-verify
+ignore#!#test_conv_text_to_binary-before-16_8-vu-cleanup
+ignore#!#test_conv_text_to_binary-before-17_7-vu-prepare
+ignore#!#test_conv_text_to_binary-before-17_7-vu-verify
+ignore#!#test_conv_text_to_binary-before-17_7-vu-cleanup
+
+ignore#!#test_conv_text_to_string-before-14_21-vu-prepare
+ignore#!#test_conv_text_to_string-before-14_21-vu-verify
+ignore#!#test_conv_text_to_string-before-14_21-vu-cleanup
+ignore#!#test_conv_text_to_string-before-15_2-vu-prepare
+ignore#!#test_conv_text_to_string-before-15_2-vu-verify
+ignore#!#test_conv_text_to_string-before-15_2-vu-cleanup
+
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
 
