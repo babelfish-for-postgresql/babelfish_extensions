@@ -67,7 +67,7 @@ extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
 extern handle_constant_literals_hook_type handle_constant_literals_hook;
 extern set_common_typmod_case_expr_hook_type set_common_typmod_case_expr_hook;
-extern set_typmod_op_expr_hook_type set_typmod_op_expr_hook;
+extern set_expr_typmod_hook_type set_expr_typmod_hook;
 
 extern bool babelfish_dump_restore;
 
@@ -85,6 +85,7 @@ static bool is_tsql_numeric_fixeddecimal(Oid oid);
 static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
 static int32 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type);
+static Node *tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr);
 
 #define TINYINT_PRECISION_RADIX 	3
 #define SMALLINT_PRECISION_RADIX 	5
@@ -3279,6 +3280,43 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 }
 
 static Node*
+tsql_set_expr_typmod_hook(ParseState *pstate, Node *expr)
+{
+	if (expr == NULL)
+		return NULL;
+
+	switch (nodeTag(expr))
+	{
+		case T_OpExpr:
+		{
+			OpExpr		*op = (OpExpr *) expr;
+
+			if (list_length(op->args) == 2)
+			{
+				Node		*lexpr,
+							*rexpr;
+				lexpr = linitial(op->args);
+				rexpr = lsecond(op->args);
+
+				while (lexpr && IsA(lexpr, RelabelType))
+					lexpr = (Node *) ((RelabelType *) lexpr)->arg;
+
+				while (rexpr && IsA(rexpr, RelabelType))
+					rexpr = (Node *) ((RelabelType *) rexpr)->arg;
+
+				expr = tsql_set_typmod_op_expr_hook(pstate, expr, lexpr, rexpr);
+			}
+			break;
+		}
+
+		default:
+			break;
+	}
+
+	return expr;
+}
+
+static Node*
 tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
 {
 		OpExpr				*op = (OpExpr *) OpExp;
@@ -3380,7 +3418,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	select_common_typmod_hook = tsql_select_common_typmod_hook;
 	handle_constant_literals_hook = tsql_handle_constant_literals_hook;
 	set_common_typmod_case_expr_hook = tsql_set_common_typmod_case_expr_hook;
-	set_typmod_op_expr_hook = tsql_set_typmod_op_expr_hook;
+	set_expr_typmod_hook = tsql_set_expr_typmod_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);
