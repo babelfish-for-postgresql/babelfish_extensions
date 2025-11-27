@@ -5000,7 +5000,7 @@ SELECT
 GO
 ~~START~~
 varchar
-FAIL: Date components do not match input
+PASS: Date components match input
 ~~END~~
 
 
@@ -5127,7 +5127,7 @@ GO
 int#!#datetime2#!#varchar
 1#!#2020-01-01 09:00:00.0000000#!#PASS
 2#!#2021-06-15 12:30:45.1234560#!#PASS
-3#!#2023-01-01 00:00:00.0000000#!#PASS
+3#!#2022-12-31 23:59:59.9999990#!#PASS
 ~~END~~
 
 ~~START~~
@@ -5137,8 +5137,8 @@ PASS: ORDER BY works correctly
 
 ~~START~~
 int#!#int#!#varchar
+2022#!#1#!#PASS: GROUP BY works correctly
 2020#!#1#!#PASS: GROUP BY works correctly
-2023#!#1#!#PASS: GROUP BY works correctly
 2021#!#1#!#PASS: GROUP BY works correctly
 ~~END~~
 
@@ -5242,7 +5242,7 @@ GO
 
 ~~START~~
 varchar#!#varchar
-PASS: MIN function works with constructed dates#!#FAIL: MAX function issue
+PASS: MIN function works with constructed dates#!#PASS: MAX function works with constructed dates
 ~~END~~
 
 
