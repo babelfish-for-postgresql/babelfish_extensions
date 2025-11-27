@@ -1348,9 +1348,9 @@ AS
 $BODY$
 BEGIN
 	IF try THEN
-	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
+	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style, p_style_specified);
     ELSE
-	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style, p_style_specified);
     END IF;
 END;
 $BODY$
