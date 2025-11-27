@@ -599,7 +599,7 @@ db_securityadmin
 BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
-BABEL-2736
+BABEL-2736-before-17_7-16_11
 cast_nvarchar_test
 datareader_datawriter
 db_owner
@@ -626,7 +626,7 @@ test_constraint_like
 test_like_index
 unpivot
 forjson-escape
-round_return_type_test
+round_return_type_test-before-16_11-or-17_7
 alter-view
 test_conv_int_to_varbinary_binary
 babel_varbinary
@@ -651,3 +651,12 @@ alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 ascii_function_before-17_7-or-16_11
+cast_string_to_binary-before-17_7
+cast_binary_to_string-before-17_7
+test_conv_text_to_binary-before-17_7
+test_conv_text_to_string
+babel_timezoneinfo_before_17_7
+test_convert_to_binary-before-17_7-16_11
+cast_datetime_to_binary-before-17_7-16_11
+BABEL-4271
+0_temp_oid_buffer_start

@@ -560,17 +560,39 @@ CREATE OR REPLACE FUNCTION sys.HasM(geog sys.GEOGRAPHY)
 
 -- Z
 -- Returns the Z coordinate value for a point geography instance
-CREATE OR REPLACE FUNCTION sys.Z(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.Z(geom sys.GEOGRAPHY)
 	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_z_point'
-	LANGUAGE 'c' IMMUTABLE STRICT;
+	AS $$
+    DECLARE
+        Geomtype text;
+    BEGIN
+		Geomtype := ST_GeometryType(geom); 
+
+        IF Geomtype = 'ST_Point' THEN
+            RETURN sys.Z_helper(geom);
+        ELSE
+			RETURN NULL;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT;
   
 -- M
 -- Returns the M coordinate value (measure) for a point geography instance
-CREATE OR REPLACE FUNCTION sys.M(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.M(geom sys.GEOGRAPHY)
 	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_m_point'
-	LANGUAGE 'c' IMMUTABLE STRICT;
+	AS $$
+    DECLARE
+        Geomtype text;
+    BEGIN
+		Geomtype := ST_GeometryType(geom); 
+
+        IF Geomtype = 'ST_Point' THEN
+            RETURN sys.M_helper(geom);
+        ELSE
+			RETURN NULL;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
@@ -647,3 +669,13 @@ CREATE OR REPLACE FUNCTION sys.STArea_helper(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','ST_Area'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Z_helper(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_z_point'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.M_helper(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_m_point'
+	LANGUAGE 'c' IMMUTABLE STRICT;

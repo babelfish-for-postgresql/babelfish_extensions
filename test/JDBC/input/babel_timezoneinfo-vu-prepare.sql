@@ -1,0 +1,104 @@
+--Test case to print specific Timezone
+CREATE VIEW dbo.vw_UTC
+AS
+    SELECT 
+        name AS timezone_name,
+        current_utc_offset AS utc_offset
+    FROM sys.time_zone_info
+    WHERE name = 'UTC'
+GO
+--Test case to print IST
+CREATE VIEW v_test AS
+SELECT name FROM sys.time_zone_info 
+WHERE name = 'India Standard Time';
+GO
+--Function that returns UTC zones with their offset
+CREATE FUNCTION dbo.fn_GetUTCZonesWithOffset()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        name,
+        current_utc_offset,
+        CASE 
+            WHEN name = 'UTC' THEN 0  
+            WHEN name LIKE 'UTC-%%' THEN 
+                CAST(SUBSTRING(name, 5, 2) AS INT) + 100 
+            WHEN name LIKE 'UTC+%%' THEN 
+                CAST(SUBSTRING(name, 5, 2) AS INT)  
+        END as sort_order
+    FROM sys.time_zone_info
+    WHERE name LIKE '%UTC%'
+);
+GO
+--Function to count the timezones
+CREATE VIEW dbo.vw_TimeZoneCount
+AS
+    SELECT COUNT(*) as total_time_zones
+    FROM sys.time_zone_info;
+GO
+-- This function validates whether a specific timezone has the expected UTC offsets during both DST and non-DST periods
+CREATE FUNCTION test_timezone_offset
+(
+    @timezone nvarchar(128),
+    @expected_dst_offset nvarchar(12),
+    @expected_non_dst_offset nvarchar(12)
+)
+RETURNS VARCHAR(10)
+AS
+BEGIN
+    RETURN CASE 
+        WHEN EXISTS (
+            SELECT 1
+            FROM sys.time_zone_info
+            WHERE name = @timezone
+            AND (
+                (is_currently_dst = 1 AND current_utc_offset = @expected_dst_offset)
+                OR
+                (is_currently_dst = 0 AND current_utc_offset = @expected_non_dst_offset)
+            )
+        ) THEN 'PASSED'
+        ELSE 'FAIL'
+    END
+END;
+GO
+--Test case to validate if timezone exists
+CREATE PROCEDURE sp_ValidateTimeZoneData
+    @timezone NVARCHAR(128)   
+AS
+BEGIN
+    DECLARE @count INT;
+    SELECT @count = COUNT(*)
+    FROM sys.time_zone_info
+    WHERE name = @timezone;
+    -- If count is 0, zone doesn't exist (Invalid)
+    -- If count is > 0, zone exists (Valid)
+    IF @count = 0
+        SELECT 'Invalid' as validation_result, @timezone as zone_name;
+    ELSE
+        SELECT 'Valid' as validation_result, @timezone as zone_name;
+END;
+GO
+--Test to validate the utc offset format
+CREATE FUNCTION dbo.validate_utc_offset
+(
+    @offset nvarchar(12)
+)
+RETURNS varchar(50)
+AS
+BEGIN
+    RETURN
+        CASE
+            WHEN @offset IS NULL THEN 'INVALID: Null input'
+            WHEN LEN(@offset) = 0 THEN 'INVALID: Empty string'
+            WHEN @offset NOT LIKE '[+-][0-1][0-9]:[0-5][0-9]' THEN 'INVALID: Wrong format'
+            WHEN CAST(SUBSTRING(@offset, 2, 2) AS INT) > 14 THEN 'INVALID: Hours > 14'
+            WHEN NOT EXISTS (
+                SELECT 1 FROM sys.time_zone_info 
+                WHERE current_utc_offset = @offset
+            ) THEN 'INVALID: Not a Windows timezone offset'
+            ELSE 'VALID'
+        END;
+END;
+GO

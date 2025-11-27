@@ -209,6 +209,33 @@ GO
 SELECT geography::Point(90, NULL, 4326);
 GO
 
+SELECT CAST('POINT(1.2.3 4)' AS geometry);
+GO
+
+SELECT CAST(CAST('POINT(1.2.3 4)' AS CHAR(100)) AS geometry);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.2.3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1..3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.3.4.3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.3.. 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText(0x504F494E542831203129, 4326);
+GO
+
+SELECT geometry::STGeomFromText(0x50004F0049004E0054002800300020003, 0);
+GO
+
+SELECT geometry::STGeomFromText(0x50004F0049004E00540028003000200030002900, 0);
+GO
+
 -- Test with zero values
 SELECT geometry::STGeomFromText('POINT(0 0)', 4326);
 GO

@@ -561,7 +561,7 @@ babel_726
 BABEL-3401
 BABEL-3820
 stuff
-PARTITION
+PARTITION-before-17_7
 BABEL-5071
 string_agg_within
 reverse
@@ -584,7 +584,7 @@ BABEL-5129
 BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
-BABEL-2736
+BABEL-2736-before-17_7
 securityadmin_role
 db_accessadmin
 datareader_datawriter
@@ -633,3 +633,10 @@ alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 ascii_function
+cast_string_to_binary-before-17_7
+cast_binary_to_string-before-17_7
+test_conv_text_to_binary-before-17_7
+test_conv_text_to_string
+test_convert_to_binary
+cast_datetime_to_binary
+BABEL-4271

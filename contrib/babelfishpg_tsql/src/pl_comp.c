@@ -325,7 +325,7 @@ do_compile(FunctionCallInfo fcinfo,
 
 	/* Special handling is needed for Multi-Statement Table-Valued Functions. */
 	int			tbl_dno = -1;	/* dno of the output table variable */
-	char	   *tbl_typ = NULL; /* Name of the output table variable's type */
+	char	   *tbl_typ = NULL;	/* Name of the output table variable's type */
 	int		   *typmods = NULL; /* typmod of each argument if available */
 	CompileContext *cmpl_ctx = create_compile_context();
 
@@ -534,19 +534,13 @@ do_compile(FunctionCallInfo fcinfo,
 				 */
 				if (function->is_mstvf)
 				{
-					/* 
-					 * For a user-defined @@var or @var# name,
-					 * delimit with square brackets
-					 */
-					char *typname_fmt = "%s.\"%s\"";
-					if (!is_tsql_atatuservar(argdtype->typname))
-						typname_fmt = pstrdup("%s.%s");
+					char *typname_fmt = pstrdup("%s.%s");
 
 					tbl_dno = argvariable->dno;
 					tbl_typ = psprintf(typname_fmt,
-									   get_namespace_name(
-														  get_rel_namespace(get_typ_typrelid(argtypeid))),
-									   argdtype->typname);
+									  quote_identifier(get_namespace_name(
+														  get_rel_namespace(get_typ_typrelid(argtypeid)))),
+									  quote_identifier(argdtype->typname));				  
 				}
 
 				if (argvariable->dtype == PLTSQL_DTYPE_VAR)

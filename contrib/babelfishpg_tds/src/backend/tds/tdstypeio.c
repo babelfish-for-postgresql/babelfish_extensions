@@ -3851,12 +3851,12 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 										 * given encoding. */
 		char	   *destBuf = NULL;
 
-		dataLen -= VARHDRSZ;
+		dataLen = VARSIZE_ANY_EXHDR(buf);
 		if (variantBaseType == VARIANT_TYPE_NCHAR ||
 			variantBaseType == VARIANT_TYPE_NVARCHAR)
 		{
 			initStringInfo(&strbuf);
-			TdsUTF8toUTF16StringInfo(&strbuf, buf + VARHDRSZ, dataLen);
+			TdsUTF8toUTF16StringInfo(&strbuf, VARDATA_ANY(buf), dataLen);
 			actualDataLen = strbuf.len;
 		}
 		else
@@ -3866,7 +3866,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			 * sql_variant sender for char class basetypes
 			 */
 			if (dataLen > 0)
-				destBuf = TdsEncodingConversion(buf + VARHDRSZ, dataLen, PG_UTF8, PG_WIN1252, &actualDataLen);
+				destBuf = TdsEncodingConversion(VARDATA_ANY(buf), dataLen, PG_UTF8, PG_WIN1252, &actualDataLen);
 			else
 				/* We can not assume that buf would be NULL terminated. */
 				actualDataLen = 0;
@@ -3908,14 +3908,14 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
 		 * dataLen(2B) + data(dataLen)
 		 */
-		dataLen = dataLen - VARHDRSZ;
+		dataLen = VARSIZE_ANY_EXHDR(buf);
 		totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES;
 
 		rc = TdsPutUInt32LE(totalLen);
 		rc |= TdsPutInt8(variantBaseType);
 		rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_BIN_DATATYPES);
 		rc |= TdsPutUInt16LE(maxLen);
-		rc |= TdsPutbytes(buf + VARHDRSZ, dataLen);
+		rc |= TdsPutbytes(VARDATA_ANY(buf), dataLen);
 	}
 	else if (isBaseDec)
 	{
