@@ -628,6 +628,8 @@ ignore#!#test_conv_float_to_varchar_char_before_17_4-vu-prepare
 ignore#!#test_conv_float_to_varchar_char_before_17_4-vu-verify
 ignore#!#test_conv_float_to_varchar_char_before_17_4-vu-cleanup
 
+ignore#!#persist_temp_oid_buffer_start
+
 # These tests are meant for upgrade scenario prior to 17_5 or 16_9 release
 ignore#!#test_constraint_like-17-4-or-16-8-vu-prepare
 ignore#!#test_constraint_like-17-4-or-16-8-vu-verify
