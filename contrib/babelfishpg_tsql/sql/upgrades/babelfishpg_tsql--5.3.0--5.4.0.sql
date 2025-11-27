@@ -51,6 +51,126 @@ $$;
 
 DROP FUNCTION sys.babelfish_update_server_collation_name();
 
+-- Binary conversion helper functions
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_binary(IN typmod INTEGER,
+                                                               IN arg anyelement,
+                                                               IN try BOOL,
+                                                               IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.binary
+AS
+$BODY$
+DECLARE result sys.binary;
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_to_binary(typmod, arg, p_style);
+    ELSE
+        IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+            RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
+        ELSE
+            IF typmod = -1 THEN
+                RETURN CAST(arg as sys.binary);
+            ELSE
+                EXECUTE format('SELECT CAST($1 as sys.binary(%s))', typmod) INTO result USING arg;
+                RETURN result;
+            END IF;
+        END IF;
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_binary(IN typmod INTEGER,
+                                                               IN arg sys.VARCHAR,
+                                                               IN try BOOL,
+                                                               IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.binary
+AS
+$BODY$
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_string_to_binary(arg, p_style);
+    ELSE
+        RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_binary(IN arg sys.VARCHAR,
+                                                                   IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.binary
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_binary(IN typmod INTEGER,
+                                                            IN arg anyelement,
+                                                            IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.binary
+AS
+$BODY$
+DECLARE result sys.binary;
+BEGIN
+    IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+        RETURN sys.babelfish_conv_string_to_binary(arg, p_style);
+    ELSE
+        IF typmod = -1 THEN
+            RETURN CAST(arg as sys.binary);
+        ELSE
+            EXECUTE format('SELECT CAST($1 as sys.binary(%s))', typmod) INTO result USING arg;
+            RETURN result;
+        END IF;
+    END IF;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_binary(IN input_value sys.VARCHAR, IN style NUMERIC DEFAULT 0)
+RETURNS sys.binary
+AS
+$BODY$
+DECLARE
+    result bytea;
+BEGIN
+    IF style = 0 THEN
+        RETURN CAST(input_value AS sys.binary);
+    ELSIF style = 1 THEN
+        IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
+            result := decode(substring(input_value from 3), 'hex');
+        ELSE
+            RAISE EXCEPTION 'Error converting data type varchar to binary.';
+        END IF;
+    ELSIF style = 2 THEN
+        IF PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" THEN
+            RAISE EXCEPTION 'Error converting data type varchar to binary.';
+        ELSE
+            result := decode(input_value, 'hex');
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'The style % is not supported for conversions from varchar to binary.', style;
+    END IF;
+
+    RETURN CAST(result AS sys.binary);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+STRICT;
+
 -- reset babelfishpg_tsql.restored_server_collation_name GUC
 do
 language plpgsql
@@ -205,13 +325,13 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_sp_xml_r
 
 CREATE OR REPLACE PROCEDURE sys.sp_xml_preparedocument(
     INOUT "@hdoc"  INTEGER,                 
-    IN "@xmltext" sys.VARCHAR DEFAULT NULL,    
-    IN "@xpath_namespaces" sys.VARCHAR DEFAULT NULL 
+    IN "@xmltext" XML DEFAULT NULL,    
+    IN "@xpath_namespaces" XML DEFAULT NULL 
 ) 
 AS 'babelfishpg_tsql', 'sp_xml_preparedocument'
 LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.sp_xml_preparedocument(
-	INOUT INTEGER, IN sys.varchar, IN sys.varchar
+	INOUT INTEGER, IN XML, IN XML
 ) TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_xml_removedocument(
@@ -307,6 +427,173 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_openxml_deprecated_in_5_4_0');
 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    IF (SELECT count(*) FROM pg_proc as p where p.pronamespace = 'sys'::regnamespace::oid AND p.proname = 'round' AND p.pronargs = 2 AND p.proargtypes[0] = 'pg_catalog.numeric'::regtype AND p.proargtypes[1] = 'integer'::regtype AND p.prorettype = 'sys.decimal'::regtype) = 0 THEN
+        ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) 
+        RENAME TO bbf_numeric_round_deprecated_5_4_0;
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_round_deprecated_5_4_0');
+    END IF;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    IF (SELECT count(*) FROM pg_proc as p where p.pronamespace = 'sys'::regnamespace::oid AND p.proname = 'round' AND p.pronargs = 3 AND p.proargtypes[0] = 'pg_catalog.numeric'::regtype AND p.proargtypes[1] = 'integer'::regtype AND p.proargtypes[2] = 'integer'::regtype AND p.prorettype = 'sys.decimal'::regtype) = 0 THEN
+        ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) 
+        RENAME TO bbf_numeric_trunc_deprecated_5_4_0;
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_trunc_deprecated_5_4_0');
+    END IF;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER)
+RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_round' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER)
+RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_trunc' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number INTEGER, length INTEGER)
+RETURNS sys.INT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number INTEGER, length INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number INTEGER, length INTEGER, function INTEGER)
+RETURNS sys.INT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number INTEGER, length INTEGER, function INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.BIGINT, length INTEGER)
+RETURNS sys.BIGINT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.BIGINT, length INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.BIGINT, length INTEGER, function INTEGER)
+RETURNS sys.BIGINT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.BIGINT, length INTEGER, function INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.fixeddecimal, length INTEGER)
+RETURNS sys.money
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.fixeddecimal, length INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.fixeddecimal, length INTEGER, function INTEGER)
+RETURNS sys.money
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.fixeddecimal, length INTEGER, function INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.float, length INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.float, length INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.float, length INTEGER, function INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.float, length INTEGER, function INTEGER) TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.dm_os_sys_info 
+AS SELECT 
+  CAST(0 AS BIGINT) AS cpu_ticks,
+  CAST(ROUND(CAST(EXTRACT(EPOCH FROM NOW()) AS NUMERIC(38,0)) * 1000.0, 0) AS BIGINT) AS ms_ticks, 
+  CAST(0 AS INT) AS cpu_count,
+  CAST(0 AS INT) AS hyperthread_ratio,
+  CAST(0 AS BIGINT) AS physical_memory_kb,
+  CAST(0 AS BIGINT) AS virtual_memory_kb,
+  CAST(0 AS BIGINT) AS committed_kb,
+  CAST(0 AS BIGINT) AS committed_target_kb,
+  CAST(0 AS BIGINT) AS visible_target_kb,
+  CAST(0 AS INT) AS stack_size_in_bytes,
+  CAST(0 AS BIGINT) AS os_quantum,
+  CAST(0 AS INT) AS os_error_mode,
+  CAST(0 AS INT) AS os_priority_class,
+  CAST(0 AS INT) AS max_workers_count,
+  CAST(0 AS INT) AS scheduler_count,
+  CAST(0 AS INT) AS scheduler_total_count,
+  CAST(0 AS INT) AS deadlock_monitor_serial_number,
+  CAST(ROUND(CAST(EXTRACT(EPOCH FROM pg_postmaster_start_time()) AS NUMERIC(38,0)) * 1000.0, 0) AS BIGINT) AS sqlserver_start_time_ms_ticks, 
+  CAST(pg_postmaster_start_time() AS sys.DATETIME) AS sqlserver_start_time,
+  CAST(0 AS INT) AS affinity_type,
+  CAST(NULL AS sys.NVARCHAR(60)) AS affinity_type_desc,
+  CAST(0 AS BIGINT) AS process_kernel_time_ms,
+  CAST(0 AS BIGINT) AS process_user_time_ms,
+  CAST(0 AS INT) AS time_source,
+  CAST(NULL AS sys.NVARCHAR(60)) AS time_source_desc,
+  CAST(0 AS INT) AS virtual_machine_type,
+  CAST('NONE' AS sys.NVARCHAR(60)) AS virtual_machine_type_desc,
+  CAST(0 AS INT) AS softnuma_configuration,
+  CAST('OFF' AS sys.NVARCHAR(60)) AS softnuma_configuration_desc,
+  CAST(NULL AS sys.NVARCHAR(3072)) AS process_physical_affinity,
+  CAST(0 AS INT) AS sql_memory_model,
+  CAST(NULL AS sys.NVARCHAR(60)) AS sql_memory_model_desc,
+  CAST(0 AS INT) AS socket_count,
+  CAST(0 AS INT) AS cores_per_socket,
+  CAST(0 AS INT) AS numa_node_count,
+  CAST(0 AS INT) AS container_type,
+  CAST(NULL AS sys.NVARCHAR(60)) AS container_type_desc;
+GRANT SELECT ON sys.dm_os_sys_info TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
@@ -315,3 +602,110 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+create or replace function sys.pltsql_timezone_mapping_pg_to_windows(IN tmz text) returns text
+AS 'babelfishpg_tsql', 'pltsql_timezone_mapping_pg_to_windows'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE VIEW sys.time_zone_info AS
+SELECT 
+    -- Mapping PostgreSQL timezone names to Windows format names
+    CAST(pg_catalog.initcap(sys.pltsql_timezone_mapping_pg_to_windows(name)) AS sys.nvarchar(128))
+    AS name,
+    CAST(
+      CASE 
+          WHEN utc_offset < INTERVAL '00:00:00' THEN 
+              '-' || pg_catalog.RIGHT('0' || CAST(pg_catalog.ABS(EXTRACT(HOUR FROM utc_offset)) AS VARCHAR(2)), 2) || ':' ||
+              pg_catalog.RIGHT('0' || CAST(pg_catalog.ABS(EXTRACT(MINUTE FROM utc_offset)) AS VARCHAR(2)), 2)
+          ELSE 
+              '+' || pg_catalog.RIGHT('0' || CAST(EXTRACT(HOUR FROM utc_offset) AS VARCHAR(2)), 2) || ':' || 
+              pg_catalog.RIGHT('0' || CAST(EXTRACT(MINUTE FROM utc_offset) AS VARCHAR(2)), 2)
+      END AS sys.NVARCHAR(12)
+    ) AS current_utc_offset,
+    -- Converting boolean is_dst to bit (0/1)
+    CAST(
+        CASE 
+            WHEN is_dst = true THEN 1
+            ELSE 0
+        END AS sys.BIT
+    ) AS is_currently_dst
+FROM pg_catalog.pg_timezone_names
+WHERE sys.pltsql_timezone_mapping_pg_to_windows(name) IS NOT NULL
+ORDER BY name;
+GRANT SELECT ON sys.time_zone_info TO PUBLIC;
+
+
+CREATE OR REPLACE PROCEDURE sys.persist_temp_oid_buffer_start()
+AS 'babelfishpg_tsql', 'persist_temp_oid_buffer_start_internal' LANGUAGE C;
+
+-- initialize the temp_oid_buffer_start during upgrade
+-- this is idempotent; if there is already a persisted value
+-- for temp_oid_buffer_start, it will not do anything
+CALL sys.persist_temp_oid_buffer_start();
+
+-- The items in initialize_babel_extras procedure need to be initialized or created 
+-- during babelfish initialization. They depend on the core babelfish to be initialized first.
+CREATE OR REPLACE PROCEDURE initialize_babel_extras()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  CREATE OR REPLACE PROCEDURE sys.create_xp_qv_in_master_dbo()
+  LANGUAGE C
+  AS 'babelfishpg_tsql', 'create_xp_qv_in_master_dbo_internal';
+
+  CREATE OR REPLACE PROCEDURE sys.create_xp_instance_regread_in_master_dbo()
+  LANGUAGE C
+  AS 'babelfishpg_tsql', 'create_xp_instance_regread_in_master_dbo_internal';
+
+  CALL sys.create_xp_qv_in_master_dbo();
+  ALTER PROCEDURE master_dbo.xp_qv OWNER TO sysadmin;
+  DROP PROCEDURE sys.create_xp_qv_in_master_dbo;
+
+  CALL sys.create_xp_instance_regread_in_master_dbo();
+  ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), int) OWNER TO sysadmin;
+  ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), sys.nvarchar(512)) OWNER TO sysadmin;
+  DROP PROCEDURE sys.create_xp_instance_regread_in_master_dbo;
+
+  CREATE OR REPLACE VIEW msdb_dbo.syspolicy_system_health_state
+  AS
+    SELECT 
+      CAST(0 as BIGINT) AS health_state_id,
+      CAST(0 as INT) AS policy_id,
+      CAST(NULL AS sys.DATETIME) AS last_run_date,
+      CAST('' AS sys.NVARCHAR(400)) AS target_query_expression_with_id,
+      CAST('' AS sys.NVARCHAR) AS target_query_expression,
+      CAST(1 as sys.BIT) AS result
+    WHERE FALSE;
+  GRANT SELECT ON msdb_dbo.syspolicy_system_health_state TO PUBLIC;
+  ALTER VIEW msdb_dbo.syspolicy_system_health_state OWNER TO sysadmin;
+
+  CREATE OR REPLACE FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled()
+  RETURNS INTEGER
+  AS 
+  $fn_body$    
+    SELECT 0;
+  $fn_body$
+  LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+  ALTER FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled() OWNER TO sysadmin;
+
+  CREATE OR REPLACE VIEW msdb_dbo.syspolicy_configuration
+  AS
+    SELECT CAST(t.name AS sys.sysname), CAST(t.current_value AS sys.sql_variant) FROM
+    (
+      VALUES
+      ('Enabled', CAST(0 AS int)),
+      ('HistoryRetentionInDays', CAST(0 AS int)),
+      ('LogOnSuccess', CAST(0 AS int))
+    )t (name, current_value);
+  GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
+  ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
+
+  -- let sysadmin only to update babelfish_domain_mapping
+  GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
+
+  -- initialize the temp_oid_buffer_start during bbf initialization
+  -- this is idempotent; if there is already a persisted value
+  -- for temp_oid_buffer_start, it will not do anything
+  CALL sys.persist_temp_oid_buffer_start();
+END
+$$;

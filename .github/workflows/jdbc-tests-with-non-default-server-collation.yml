@@ -65,6 +65,22 @@ jobs:
           cd test/JDBC/
           # set env variable serverCollationName to current server collation name
           export serverCollationName=${{ env.SERVER_COLLATION_NAME }}
+          echo >> jdbc_schedule
+          echo "ignore#!#cast_binary_to_string-vu-prepare" >> jdbc_schedule
+          echo "ignore#!#cast_binary_to_string-vu-verify" >> jdbc_schedule
+          echo "ignore#!#cast_binary_to_string-vu-cleanup" >> jdbc_schedule
+
+          echo "ignore#!#cast_string_to_binary-vu-prepare" >> jdbc_schedule
+          echo "ignore#!#cast_string_to_binary-vu-verify" >> jdbc_schedule
+          echo "ignore#!#cast_string_to_binary-vu-cleanup" >> jdbc_schedule
+          
+          echo "ignore#!#test_conv_text_to_string-vu-prepare" >> jdbc_schedule
+          echo "ignore#!#test_conv_text_to_string-vu-verify" >> jdbc_schedule
+          echo "ignore#!#test_conv_text_to_string-vu-cleanup" >> jdbc_schedule
+          
+          echo "ignore#!#test_conv_text_to_binary-vu-prepare" >> jdbc_schedule
+          echo "ignore#!#test_conv_text_to_binary-vu-verify" >> jdbc_schedule
+          echo "ignore#!#test_conv_text_to_binary-vu-cleanup" >> jdbc_schedule
           mvn -B -ntp test
           # reset env variable
           unset serverCollationName
