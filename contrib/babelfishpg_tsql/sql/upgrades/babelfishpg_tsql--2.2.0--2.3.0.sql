@@ -6061,7 +6061,7 @@ BEGIN
 
    v_calc_seconds := pg_catalog.format('%s.%s',
                             floor(p_seconds)::SMALLINT,
-                            substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+                            substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, LEAST(v_precision, 6)))::NUMERIC;
 
    RETURN make_timestamp(floor(p_year)::SMALLINT,
                          floor(p_month)::SMALLINT,
