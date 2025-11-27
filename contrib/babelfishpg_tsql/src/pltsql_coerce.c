@@ -3297,8 +3297,8 @@ tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node*
 		lopr = exprType(lexpr);
 		ropr = exprType(rexpr);
 		if (strncmp(opname, "+", 1) == 0 &&
-			(*common_utility_plugin_ptr->is_tsql_binary_datatype) (lopr) &&
-			(*common_utility_plugin_ptr->is_tsql_binary_datatype) (ropr))
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (lopr) &&
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (ropr))
 		{
 			int32	typmod1 = exprTypmod(lexpr),
 					typmod2 = exprTypmod(rexpr),
