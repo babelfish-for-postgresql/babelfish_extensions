@@ -1288,7 +1288,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type DATE to character varying(50).)~~
+~~ERROR (Message: operator is not unique: numeric + integer)~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 131) AS HijriTime_Style_131 FROM convert_source_udt_t1;  -- 30 Rabi' al-Thani 1445 09:01:23:123AM
 GO
@@ -4891,7 +4891,7 @@ FROM convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500                                           #!#123.45
+123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
 ~~END~~
 
 

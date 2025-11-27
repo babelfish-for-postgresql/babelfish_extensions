@@ -399,25 +399,10 @@ LANGUAGE plpgsql
 IMMUTABLE
 STRICT;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC)
-    RENAME TO babelfish_conv_to_varchar_deprecated_in_5_5_0;
-EXCEPTION
-    WHEN undefined_function THEN
-        GET STACKED DIAGNOSTICS
-        exception_message = MESSAGE_TEXT;
-        RAISE WARNING '%', exception_message;
-END;
-$$;
-
 -- conversion to varchar
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
-														IN p_style NUMERIC DEFAULT -1,
-                                                        IN p_style_specified BOOLEAN DEFAULT FALSE)
+														IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.VARCHAR
 AS
 $BODY$
@@ -428,31 +413,31 @@ BEGIN
 
 	CASE pg_typeof(arg)
 	WHEN 'date'::regtype THEN
-		IF NOT p_style_specified THEN
+		IF v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
 		ELSE
 			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
 		END IF;
 	WHEN 'time'::regtype THEN
-		IF NOT p_style_specified THEN
+		IF v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
 		ELSE
 			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
 		END IF;
 	WHEN 'sys.datetime'::regtype THEN
-		IF NOT p_style_specified THEN
+		IF v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
 		ELSE
 			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
 		END IF;
 	WHEN 'float'::regtype THEN
-		IF NOT p_style_specified THEN
+		IF v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
 		ELSE
 			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
 		END IF;
 	WHEN 'sys.money'::regtype THEN
-		IF NOT p_style_specified THEN
+		IF v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
 		ELSE
 			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
@@ -469,12 +454,6 @@ BEGIN
 		ELSE
 			RETURN CAST(arg AS sys.VARCHAR);
 		END IF;
-    WHEN 'sys.smallmoney'::regtype THEN 
-        IF NOT p_style_specified THEN
-            RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4));
-        ELSE
-            RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4), p_style);
-        END IF;
 	ELSE
 		RETURN CAST(arg AS sys.VARCHAR);
 	END CASE;
@@ -482,8 +461,6 @@ END;
 $BODY$
 LANGUAGE plpgsql
 STABLE;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_deprecated_in_5_5_0');
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_varchar(IN typename TEXT, IN arg ANYELEMENT)
 RETURNS sys.VARCHAR
@@ -1431,6 +1408,92 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
+    ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC)
+    RENAME TO babelfish_conv_to_varchar_deprecated_in_5_5_0;
+EXCEPTION
+    WHEN undefined_function THEN
+        GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+        RAISE WARNING '%', exception_message;
+END;
+$$;
+
+-- conversion to varchar
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
+														IN arg anyelement,
+														IN p_style NUMERIC DEFAULT -1,
+                                                        IN p_style_specified BOOLEAN DEFAULT FALSE)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+BEGIN
+	v_style := floor(p_style)::SMALLINT;
+
+	CASE pg_typeof(arg)
+	WHEN 'date'::regtype THEN
+		IF NOT p_style_specified THEN
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'time'::regtype THEN
+		IF NOT p_style_specified THEN
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
+		END IF;
+	WHEN 'sys.datetime'::regtype THEN
+		IF NOT p_style_specified THEN
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
+		ELSE
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+		END IF;
+	WHEN 'float'::regtype THEN
+		IF NOT p_style_specified THEN
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'sys.money'::regtype THEN
+		IF NOT p_style_specified THEN
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
+		ELSE
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
+		END IF;
+	WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
+		IF lower(typename) LIKE 'nvarchar%' THEN
+			RETURN (sys.varbinarysysnvarchar(arg, -1, true));
+		ELSE
+			RETURN CAST(arg AS sys.VARCHAR);
+		END IF;
+	WHEN 'sys.binary'::regtype THEN
+		IF lower(typename) LIKE 'nvarchar%' THEN
+			RETURN (sys.binarysysnvarchar(arg, -1, true));
+		ELSE
+			RETURN CAST(arg AS sys.VARCHAR);
+		END IF;
+    WHEN 'sys.smallmoney'::regtype THEN 
+        IF NOT p_style_specified THEN
+            RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4));
+        ELSE
+            RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4), p_style);
+        END IF;
+	ELSE
+		RETURN CAST(arg AS sys.VARCHAR);
+	END CASE;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_deprecated_in_5_5_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
     ALTER FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT, IN p_moneyval NUMERIC, IN p_style NUMERIC)
     RENAME TO babelfish_try_conv_money_to_string_deprecated_in_5_5_0;
 EXCEPTION
@@ -1473,7 +1536,7 @@ BEGIN
 		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
 		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
 	ELSIF (v_style = 2 OR v_style = 126) THEN
-		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
 		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
 	ELSE
      -- Default format for all other style numbers
@@ -1551,12 +1614,6 @@ RETURNS NULL ON NULL INPUT;
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
--- Please add your SQLs here
-/*
- * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
- * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
- * final behaviour.
- */
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

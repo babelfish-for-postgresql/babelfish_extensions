@@ -4867,7 +4867,7 @@ GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
 123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
- ~~END~~
+~~END~~
 
 
 -- Style 126
@@ -4893,7 +4893,7 @@ GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
 123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
- ~~END~~
+~~END~~
 
 
 
