@@ -637,4 +637,4 @@ view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 ascii_function_before-17_7-or-16_11
 #babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370
-babel_convert_with_style
+babel_convert_with_style_before_17_8-or-16_12
