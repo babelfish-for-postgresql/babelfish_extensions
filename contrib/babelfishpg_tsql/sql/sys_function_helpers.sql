@@ -10840,7 +10840,6 @@ BEGIN
 		ELSE
 			RETURN CAST(arg AS sys.VARCHAR);
 		END IF;
-		END IF;
     WHEN 'sys.smallmoney'::regtype THEN 
         IF NOT p_style_specified THEN
             RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4));
