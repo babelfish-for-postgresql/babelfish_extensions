@@ -67,7 +67,7 @@ extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
 extern handle_constant_literals_hook_type handle_constant_literals_hook;
 extern set_common_typmod_case_expr_hook_type set_common_typmod_case_expr_hook;
-extern set_expr_typmod_hook_type set_expr_typmod_hook;
+extern post_transform_expr_recurse_hook_type post_transform_expr_recurse_hook;
 
 extern bool babelfish_dump_restore;
 
@@ -85,7 +85,6 @@ static bool is_tsql_numeric_fixeddecimal(Oid oid);
 static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
 static int32 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type);
-static Node *tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr);
 
 #define TINYINT_PRECISION_RADIX 	3
 #define SMALLINT_PRECISION_RADIX 	5
@@ -3287,10 +3286,54 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 }
 
 static Node*
-tsql_set_expr_typmod_hook(ParseState *pstate, Node *expr)
+tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
 {
-	if (expr == NULL)
-		return NULL;
+		OpExpr				*op = (OpExpr *) OpExp;
+		char				*opname = get_opname(op->opno);
+		Oid					lopr,
+							ropr;
+
+		/* Calculate Oid of left and right operand */
+		lopr = exprType(lexpr);
+		ropr = exprType(rexpr);
+		if (strncmp(opname, "+", 1) == 0 &&
+			(*common_utility_plugin_ptr->is_tsql_binary_datatype) (lopr) &&
+			(*common_utility_plugin_ptr->is_tsql_binary_datatype) (ropr))
+		{
+			int32	typmod1 = exprTypmod(lexpr),
+					typmod2 = exprTypmod(rexpr),
+					rettypmod = typmod1 + typmod2 - VARHDRSZ;
+
+			if (typmod1 == -1 || typmod2 == -1)
+			{
+				pfree(opname);
+				return OpExp;
+			}
+
+			/* 
+			 * If resultant typmod is greater then MAX_BINARY_SIZE then resultant typmod is
+			 * set typmod is set to MAX_BINARY_SIZE
+			 */
+			if (rettypmod > MAX_BINARY_SIZE + VARHDRSZ)
+					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
+
+			OpExp = coerce_to_target_type(pstate, OpExp,
+										 exprType(OpExp),
+										 op->opresulttype,
+										 rettypmod,
+										 COERCION_EXPLICIT,
+										 COERCE_EXPLICIT_CAST,
+										 -1);
+		}
+
+		pfree(opname);
+		return OpExp;
+}
+
+static Node*
+tsql_post_transform_expr_recurse_hook(ParseState *pstate, Node *expr)
+{
+	Assert(expr);
 
 	switch (nodeTag(expr))
 	{
@@ -3305,6 +3348,11 @@ tsql_set_expr_typmod_hook(ParseState *pstate, Node *expr)
 				lexpr = linitial(op->args);
 				rexpr = lsecond(op->args);
 
+				/* 
+				 * Unwrap RelabelType nodes created by domain types. Domain types generate
+				 * RelabelType with typmod = -1, so we need to look through to the underlying
+				 * expression to get the actual typmod value.
+				 */
 				while (lexpr && IsA(lexpr, RelabelType))
 					lexpr = (Node *) ((RelabelType *) lexpr)->arg;
 
@@ -3321,51 +3369,6 @@ tsql_set_expr_typmod_hook(ParseState *pstate, Node *expr)
 	}
 
 	return expr;
-}
-
-static Node*
-tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
-{
-		OpExpr				*op = (OpExpr *) OpExp;
-		char				*opname = get_opname(op->opno);
-		Oid					lopr,
-							ropr;
-
-		/* Calculate Oid of left and right operand */
-		op_input_types(op->opno, &lopr, &ropr);
-		if (strncmp(opname, "+", 1) == 0 &&
-			(*common_utility_plugin_ptr->is_tsql_binary_datatype) (lopr) &&
-			(*common_utility_plugin_ptr->is_tsql_binary_datatype) (ropr))
-		{
-			int32	typmod1 = exprTypmod(lexpr),
-					typmod2 = exprTypmod(rexpr),
-					rettypmod = typmod1 + typmod2 - VARHDRSZ;
-
-			if (typmod1 == -1 || typmod2 == -1)
-			{
-				pfree(opname);
-				return OpExp;
-			}
-
-			/* 
-			 * If resultant typmod is greater
-			 * then MAX_BINARY_SIZE then resultant
-			 * typmod is set to MAX_BINARY_SIZE
-			 */
-			if (rettypmod > MAX_BINARY_SIZE + VARHDRSZ)
-					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
-
-			OpExp = coerce_to_target_type(pstate, OpExp,
-										 exprType(OpExp),
-										 op->opresulttype,
-										 rettypmod,
-										 COERCION_EXPLICIT,
-										 COERCE_EXPLICIT_CAST,
-										 -1);
-		}
-
-		pfree(opname);
-		return OpExp;
 }
 
 /* 
@@ -3425,7 +3428,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	select_common_typmod_hook = tsql_select_common_typmod_hook;
 	handle_constant_literals_hook = tsql_handle_constant_literals_hook;
 	set_common_typmod_case_expr_hook = tsql_set_common_typmod_case_expr_hook;
-	set_expr_typmod_hook = tsql_set_expr_typmod_hook;
+	post_transform_expr_recurse_hook = tsql_post_transform_expr_recurse_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);
