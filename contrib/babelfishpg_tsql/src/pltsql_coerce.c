@@ -3286,7 +3286,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 }
 
 static Node*
-tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
+tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
 {
 		OpExpr				*op = (OpExpr *) OpExp;
 		char				*opname = get_opname(op->opno);
@@ -3333,6 +3333,10 @@ tsql_set_typmod_op_expr_hook(ParseState *pstate, Node *OpExp, Node *lexpr, Node*
 static Node*
 tsql_post_transform_expr_recurse_hook(ParseState *pstate, Node *expr)
 {
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return expr;
+
 	Assert(expr);
 
 	switch (nodeTag(expr))
@@ -3359,7 +3363,7 @@ tsql_post_transform_expr_recurse_hook(ParseState *pstate, Node *expr)
 				while (rexpr && IsA(rexpr, RelabelType))
 					rexpr = (Node *) ((RelabelType *) rexpr)->arg;
 
-				expr = tsql_set_typmod_op_expr_hook(pstate, expr, lexpr, rexpr);
+				expr = tsql_set_typmod_op_expr(pstate, expr, lexpr, rexpr);
 			}
 			break;
 		}
