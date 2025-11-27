@@ -328,6 +328,14 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (SYS.DATETIME AS sys.bbf_varbinary)
 WITH FUNCTION sys.datetime2varbinary(SYS.DATETIME, integer, boolean) AS ASSIGNMENT;
 
+CREATE OR REPLACE FUNCTION sys.datetime2binary(SYS.DATETIME, integer, boolean)
+RETURNS sys.bbf_binary
+AS 'babelfishpg_common', 'datetime_binary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (SYS.DATETIME AS sys.bbf_binary)
+WITH FUNCTION sys.datetime2binary(SYS.DATETIME, integer, boolean) AS ASSIGNMENT;
+
 CREATE OR REPLACE FUNCTION sys.timestamptz2datetime(TIMESTAMPTZ)
 RETURNS DATETIME
 AS 'babelfishpg_common', 'timestamptz_datetime'

@@ -575,7 +575,7 @@ SELECT
 GO
 ~~START~~
 binary#!#varbinary#!#ntext#!#nvarchar#!#nchar#!#char#!#varchar
-5465737420537472696E6720E6B58BE8AF9520F0#!#5465737420537472696E6720E6B58BE8AF9520F0#!#Test String 测试 🙂🙂🙂🙂                               #!#Test String 测试 🙂🙂🙂🙂                           #!#Test String 测试 🙂🙂🙂🙂                           #!#Test String 测试 ????                             #!#Test String 测试 ????                             
+5400650073007400200053007400720069006E00#!#5400650073007400200053007400720069006E00#!#Test String 测试 🙂🙂🙂🙂                               #!#Test String 测试 🙂🙂🙂🙂                           #!#Test String 测试 🙂🙂🙂🙂                           #!#Test String 测试 ????                             #!#Test String 测试 ????                             
 ~~END~~
 
 
@@ -1776,7 +1776,7 @@ SELECT
 GO
 ~~START~~
 nchar#!#nvarchar#!#char#!#varchar#!#binary#!#varbinary#!#nchar#!#nvarchar#!#int
-Test String 测试 🙂🌸🎌🗾       #!#Test String 测试 🙂🌸🎌🗾       #!#Test String 测试 ????         #!#Test String 测试 ????         #!#5465737420537472696E#!#5465737420537472696E#!#0x5465737420537472696e        #!#敔瑳匠牴湩#!#19
+Test String 测试 🙂🌸🎌🗾       #!#Test String 测试 🙂🌸🎌🗾       #!#Test String 测试 ????         #!#Test String 测试 ????         #!#54006500730074002000#!#54006500730074002000#!#Test                          #!#Test #!#19
 ~~END~~
 
 

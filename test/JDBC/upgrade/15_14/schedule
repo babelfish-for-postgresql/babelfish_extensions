@@ -556,7 +556,7 @@ BABEL-CASE_EXPR
 datareader_datawriter
 db_ddladmin
 BABEL-5186
-BABEL-2736
+BABEL-2736-before-17_7-16_11
 smalldatetime_date_cmp
 cast_nvarchar_test_before_16_5
 test_conv_string_to_date-before-17_4
@@ -598,5 +598,12 @@ alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 ascii_function_before-17_7-or-16_11
-#babel_timezoneinfo_before_17_7#Commenting the test as a temporary fix to ticket BABEL 5370
+cast_string_to_binary-before-15_16
+cast_binary_to_string-before-16_8
+test_conv_text_to_binary-before-16_8
+test_conv_text_to_string
+babel_timezoneinfo_before_17_7
+test_convert_to_binary-before-17_7-16_11
+cast_datetime_to_binary-before-17_7-16_11
+BABEL-4271
 babel_convert_with_style_before_17_8-or-16_12

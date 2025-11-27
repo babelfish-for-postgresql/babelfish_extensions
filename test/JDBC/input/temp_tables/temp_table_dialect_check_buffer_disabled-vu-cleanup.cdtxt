@@ -1,0 +1,4 @@
+include#!#input/temp_tables/temp_table_dialect_check-vu-cleanup.mix
+
+-- psql
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.temp_oid_buffer_size = 65536;
