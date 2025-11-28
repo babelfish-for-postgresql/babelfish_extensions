@@ -8310,8 +8310,8 @@ tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexp
 			}
 
 			/* 
-			 * If resultant typmod is greater then MAX_BINARY_SIZE then resultant typmod is
-			 * set typmod is set to MAX_BINARY_SIZE
+			 * T-SQL limits the resultant binary value to MAX_BINARY_SIZE when concatenating
+			 * binary types with finite typmod
 			 */
 			if (rettypmod > MAX_BINARY_SIZE + VARHDRSZ)
 					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
