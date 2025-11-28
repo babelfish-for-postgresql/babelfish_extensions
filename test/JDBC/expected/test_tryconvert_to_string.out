@@ -296,7 +296,7 @@ SELECT TRY_CONVERT(CHAR(20), FloatCol), TRY_CONVERT(VARCHAR(20), FloatCol), TRY_
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-123.45              #!#123.45              #!#123.45              #!#123.45              #!#123.45#!#123.45
+123.45              #!#123.45              #!#123.45              #!#123.45#!#123.45#!#123.45
 ~~END~~
 
 
@@ -574,7 +574,7 @@ SELECT TRY_CONVERT(CHAR(20), BinaryCol), TRY_CONVERT(VARCHAR(20), BinaryCol), TR
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x41424344450000000000#!#0x41424344450000000000
+ABCDE               #!#ABCDE#!#䉁䑃E                 #!#䉁䑃E#!#0x41424344450000000000#!#0x41424344450000000000
 ~~END~~
 
 
@@ -582,7 +582,7 @@ SELECT TRY_CONVERT(CHAR(20), VarbinaryCol), TRY_CONVERT(VARCHAR(20), VarbinaryCo
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x4142434445#!#0x4142434445
+ABCDE               #!#ABCDE#!#䉁䑃E                 #!#䉁䑃E#!#0x4142434445#!#0x4142434445
 ~~END~~
 
 
@@ -4432,7 +4432,7 @@ FROM try_convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-123.45                                            #!#123.45                                            #!#123.45                                            #!#123.45                                            
+123.45                                            #!#123.45                                            #!#123.45                                            #!#123.45
 ~~END~~
 
 SELECT
@@ -4458,7 +4458,7 @@ FROM try_convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-1.2345000e+02                                     #!#1.2345000e+02                                     #!#1.2345000e+02                                     #!#1.2345000e+02                                     
+1.2345000e+02                                     #!#1.2345000e+02                                     #!#1.2345000e+02                                     #!#1.2345000e+02
 ~~END~~
 
 SELECT
@@ -4484,7 +4484,7 @@ FROM try_convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-1.234500000000000e+02                             #!#1.234500000000000e+02                             #!#1.234500000000000e+02                             #!#1.234500000000000e+02                             
+1.234500000000000e+02                             #!#1.234500000000000e+02                             #!#1.234500000000000e+02                             #!#1.234500000000000e+02
 ~~END~~
 
 SELECT
@@ -4510,7 +4510,7 @@ FROM try_convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-1.2345000000000000e+02                            #!#1.2345000000000000e+02                            #!#1.2345000000000000e+02                            #!#1.2345000000000000e+02                            
+1.2345000000000000e+02                            #!#1.2345000000000000e+02                            #!#1.2345000000000000e+02                            #!#1.2345000000000000e+02
 ~~END~~
 
 SELECT
@@ -5134,12 +5134,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5152,12 +5152,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5190,12 +5190,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5208,12 +5208,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5246,12 +5246,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5264,12 +5264,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5303,12 +5303,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5321,12 +5321,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5359,12 +5359,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5377,12 +5377,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5415,12 +5415,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5433,12 +5433,12 @@ FROM try_convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
-ÿÿÿÿ                #!#ÿÿÿÿ#!#ÿÿÿÿ                #!#ÿÿÿÿ
-SQL                 #!#SQL#!#SQL                 #!#SQL
-ABÿ                 #!#ABÿ#!#ABÿ                 #!#ABÿ
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
+ÿÿÿÿ                #!#ÿÿÿÿ#!#￿￿                  #!#￿￿
+SQL                 #!#SQL#!#兓L                  #!#兓L
+ABÿ                 #!#ABÿ#!#䉁ÿ                  #!#䉁ÿ
 ~~END~~
 
 SELECT
@@ -5646,7 +5646,7 @@ SELECT * FROM try_convert_view_decimals
 GO
 ~~START~~
 char#!#char#!#char#!#char#!#char#!#char#!#varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
-123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45#!#123.45#!#123.4500#!#123.45                        #!#123.45
+123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45#!#123.45#!#123.4500#!#123.45#!#123.45
 ~~END~~
 
 SELECT * FROM try_convert_view_datetimes

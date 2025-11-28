@@ -169,7 +169,7 @@ runs:
         ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_new_dir }}/data stop
         ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile start
         echo 'max_locks_per_transaction set to 128 and server restarted. Ready for restore.'
-        
+
         if [[ ${{ inputs.database_level }} == false ]];then
           echo "Starting to restore whole Babelfish physical database"
           if [[ '${{ inputs.type }}' == 'full' ]];then
