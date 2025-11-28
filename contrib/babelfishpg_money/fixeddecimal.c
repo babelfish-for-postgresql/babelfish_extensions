@@ -488,6 +488,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	int			vscale = 0;
 	bool		has_seen_sign = false;
 	Node		*escontext = (*fcinfo)->context;
+	size_t		currency_symbol_len; 
 
 	/*
 	 * Do our own scan, rather than relying on sscanf which might be broken
@@ -519,34 +520,32 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	/* skip leading spaces */
 	while (isspace((unsigned char) *ptr))
 		ptr++;
+	
+	currency_symbol_len = is_valid_currency_symbol(ptr);
+	if (currency_symbol_len > 0)
 	{
-		size_t currency_symbol_len = is_valid_currency_symbol(ptr);
-		if (currency_symbol_len > 0)
+		ptr += currency_symbol_len;
+	}
+	else
+	{
+			/* 
+			* Rejects invalid characters when no currency symbol is present.
+			* Only digits, signs, decimal points, or spaces are allowed.
+			*/
+		if (*ptr != '\0' && 
+			!isdigit((unsigned char) *ptr) && 
+			*ptr != '.' && 
+			*ptr != '-' && 
+			*ptr != '+' &&
+			!isspace((unsigned char) *ptr))
 		{
-			ptr += currency_symbol_len;
-			while (isspace((unsigned char) *ptr))
-				ptr++;
-		}
-		else
-		{
-			   /* 
-				* Rejects invalid characters when no currency symbol is present.
-				* Only digits, signs, decimal points, or spaces are allowed.
-				*/
-			if (*ptr != '\0' && 
-				!isdigit((unsigned char) *ptr) && 
-				*ptr != '.' && 
-				*ptr != '-' && 
-				*ptr != '+' &&
-				!isspace((unsigned char) *ptr))
-			{
-				ereturn(escontext, (Datum) 0,
-						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						errmsg("invalid characters found: cannot cast value \"%s\" to money",
-							str)));							
-			}
+			ereturn(escontext, (Datum) 0,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					errmsg("invalid characters found: cannot cast value \"%s\" to money",
+						str)));							
 		}
 	}
+	
 
 	/* skip leading spaces */
 	while (isspace((unsigned char) *ptr))

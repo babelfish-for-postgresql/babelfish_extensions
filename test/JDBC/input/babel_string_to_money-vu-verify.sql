@@ -72,6 +72,12 @@ GO
 SELECT CAST('$--100' AS MONEY);
 GO
 
+SELECT CAST('$₹300' AS MONEY);
+GO
+
+SELECT CAST('¢₹40,00.07' AS MONEY);
+GO
+
 --valid cases
 SELECT CAST('$-100' AS MONEY); 
 GO
@@ -127,6 +133,9 @@ SELECT CAST('$0.0001' AS MONEY);
 GO
 
 select TRY_CAST(CAST(-1.56 as money) As int);
+GO
+
+SELECT CAST('$1,000.000.50' AS MONEY);
 GO
 
 --Arithmetic operations

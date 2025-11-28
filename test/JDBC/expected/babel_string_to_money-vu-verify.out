@@ -178,6 +178,20 @@ GO
 ~~ERROR (Message: value "$--100" is out of range for type fixeddecimal)~~
 
 
+SELECT CAST('$₹300' AS MONEY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "$₹300" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST('¢₹40,00.07' AS MONEY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "¢₹40,00.07" is out of range for type fixeddecimal)~~
+
+
 --valid cases
 SELECT CAST('$-100' AS MONEY); 
 GO
@@ -318,6 +332,13 @@ GO
 int
 -2
 ~~END~~
+
+
+SELECT CAST('$1,000.000.50' AS MONEY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "$1,000.000.50" is out of range for type fixeddecimal)~~
 
 
 --Arithmetic operations
