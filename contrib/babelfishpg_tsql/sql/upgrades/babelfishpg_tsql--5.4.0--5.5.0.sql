@@ -1536,7 +1536,7 @@ BEGIN
 		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
 		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
 	ELSIF (v_style = 2 OR v_style = 126) THEN
-		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
 		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
 	ELSE
      -- Default format for all other style numbers
