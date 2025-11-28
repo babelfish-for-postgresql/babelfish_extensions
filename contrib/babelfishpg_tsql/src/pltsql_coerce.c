@@ -53,7 +53,6 @@
 #define SYSNAME_TYPMOD 128
 #define NCHAR_MAX_TYPMOD 4000
 #define BPCHAR_MAX_TYPMOD 8000
-#define MAX_BINARY_SIZE 8000
 
 #define TDS_MAX_NUM_PRECISION 38
 
@@ -67,7 +66,6 @@ extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
 extern handle_constant_literals_hook_type handle_constant_literals_hook;
 extern set_common_typmod_case_expr_hook_type set_common_typmod_case_expr_hook;
-extern post_transform_expr_recurse_hook_type post_transform_expr_recurse_hook;
 
 extern bool babelfish_dump_restore;
 
@@ -3285,96 +3283,6 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	return max_typmods;
 }
 
-static Node*
-tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
-{
-		OpExpr				*op = (OpExpr *) OpExp;
-		char				*opname = get_opname(op->opno);
-		Oid					lopr,
-							ropr;
-
-		/* Calculate Oid of left and right operand */
-		lopr = exprType(lexpr);
-		ropr = exprType(rexpr);
-		if (strncmp(opname, "+", 1) == 0 &&
-			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (lopr) &&
-			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (ropr))
-		{
-			int32	typmod1 = exprTypmod(lexpr),
-					typmod2 = exprTypmod(rexpr),
-					rettypmod = typmod1 + typmod2 - VARHDRSZ;
-
-			if (typmod1 == -1 || typmod2 == -1)
-			{
-				pfree(opname);
-				return OpExp;
-			}
-
-			/* 
-			 * If resultant typmod is greater then MAX_BINARY_SIZE then resultant typmod is
-			 * set typmod is set to MAX_BINARY_SIZE
-			 */
-			if (rettypmod > MAX_BINARY_SIZE + VARHDRSZ)
-					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
-
-			OpExp = coerce_to_target_type(pstate, OpExp,
-										 exprType(OpExp),
-										 op->opresulttype,
-										 rettypmod,
-										 COERCION_EXPLICIT,
-										 COERCE_EXPLICIT_CAST,
-										 -1);
-		}
-
-		pfree(opname);
-		return OpExp;
-}
-
-static Node*
-tsql_post_transform_expr_recurse_hook(ParseState *pstate, Node *expr)
-{
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return expr;
-
-	Assert(expr);
-
-	switch (nodeTag(expr))
-	{
-		case T_OpExpr:
-		{
-			OpExpr		*op = (OpExpr *) expr;
-
-			if (list_length(op->args) == 2)
-			{
-				Node		*lexpr,
-							*rexpr;
-				lexpr = linitial(op->args);
-				rexpr = lsecond(op->args);
-
-				/* 
-				 * Unwrap RelabelType nodes created by domain types. Domain types generate
-				 * RelabelType with typmod = -1, so we need to look through to the underlying
-				 * expression to get the actual typmod value.
-				 */
-				while (lexpr && IsA(lexpr, RelabelType))
-					lexpr = (Node *) ((RelabelType *) lexpr)->arg;
-
-				while (rexpr && IsA(rexpr, RelabelType))
-					rexpr = (Node *) ((RelabelType *) rexpr)->arg;
-
-				expr = tsql_set_typmod_op_expr(pstate, expr, lexpr, rexpr);
-			}
-			break;
-		}
-
-		default:
-			break;
-	}
-
-	return expr;
-}
-
 /* 
  * For CASE expression, this function will set the typmod to all the CASE branches from coerce_type_typmod().
  */
@@ -3432,7 +3340,6 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	select_common_typmod_hook = tsql_select_common_typmod_hook;
 	handle_constant_literals_hook = tsql_handle_constant_literals_hook;
 	set_common_typmod_case_expr_hook = tsql_set_common_typmod_case_expr_hook;
-	post_transform_expr_recurse_hook = tsql_post_transform_expr_recurse_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);
