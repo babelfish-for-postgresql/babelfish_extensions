@@ -125,28 +125,25 @@ GO
 ~~ERROR (Message: invalid characters found: cannot cast value "@#$100.00" to money)~~
 
 
-SELECT CAST('$100''OR 1=1' AS MONEY); 
+SELECT CAST('OR''1=1''$100' AS MONEY);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: value "$100'OR 1=1" is out of range for type fixeddecimal)~~
-
+~~ERROR (Message: invalid characters found: cannot cast value "OR'1=1'$100" to money)~~
 
 
 SELECT CAST('&100' AS MONEY);  
-GO  
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "&100" to money)~~
+
+
 SELECT CAST('%100' AS MONEY);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: syntax error near 'SELECT' at line 3 and character position 0)~~
-
-
-SELECT CAST('$$100') AS MONEY; 
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ")")~~
+~~ERROR (Message: invalid characters found: cannot cast value "%100" to money)~~
 
 
 SELECT CAST('  ' AS money);

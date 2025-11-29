@@ -705,7 +705,6 @@ money
 
 
 
--- TODO: fix BABEL-704
 -- Note: inside qoute it will treat any character as a currency symbol
 -- if character is not a letter, digit and not equal to '+', '-', '.', '\0' 
 -- Unsupported currency symbol by SQL it should throw error with BABEL
