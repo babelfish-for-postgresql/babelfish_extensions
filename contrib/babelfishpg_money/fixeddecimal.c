@@ -526,27 +526,25 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	{
 		ptr += currency_symbol_len;
 	}
+	/* skip leading spaces */
+	while (isspace((unsigned char) *ptr))
+		ptr++;
 	
 	/* 
-	* Rejects invalid characters when no currency symbol is present.
-	* Only digits, signs, decimal points, or spaces are allowed.
-	*/
+	 * Rejects invalid characters when no currency symbol is present.
+	 * Only digits, signs, decimal points, or spaces are allowed.
+	 */
 	if (*ptr != '\0' && 
 		!isdigit((unsigned char) *ptr) && 
 		*ptr != '.' && 
 		*ptr != '-' && 
-		*ptr != '+' &&
-		!isspace((unsigned char) *ptr))
+		*ptr != '+')
 	{
 		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				errmsg("invalid characters found: cannot cast value \"%s\" to money",
 					str)));							
 	}
-
-	/* skip leading spaces */
-	while (isspace((unsigned char) *ptr))
-		ptr++;
 
 	/*
 	 * Handle sign again. This is needed so that a sign after the currency
