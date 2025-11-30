@@ -526,26 +526,23 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	{
 		ptr += currency_symbol_len;
 	}
-	else
-	{
-			/* 
-			* Rejects invalid characters when no currency symbol is present.
-			* Only digits, signs, decimal points, or spaces are allowed.
-			*/
-		if (*ptr != '\0' && 
-			!isdigit((unsigned char) *ptr) && 
-			*ptr != '.' && 
-			*ptr != '-' && 
-			*ptr != '+' &&
-			!isspace((unsigned char) *ptr))
-		{
-			ereturn(escontext, (Datum) 0,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("invalid characters found: cannot cast value \"%s\" to money",
-						str)));							
-		}
-	}
 	
+	/* 
+	* Rejects invalid characters when no currency symbol is present.
+	* Only digits, signs, decimal points, or spaces are allowed.
+	*/
+	if (*ptr != '\0' && 
+		!isdigit((unsigned char) *ptr) && 
+		*ptr != '.' && 
+		*ptr != '-' && 
+		*ptr != '+' &&
+		!isspace((unsigned char) *ptr))
+	{
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("invalid characters found: cannot cast value \"%s\" to money",
+					str)));							
+	}
 
 	/* skip leading spaces */
 	while (isspace((unsigned char) *ptr))

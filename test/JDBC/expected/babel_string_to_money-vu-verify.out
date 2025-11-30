@@ -156,9 +156,9 @@ money
 
 SELECT CAST('£test' AS MONEY);  
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: value "£test" is out of range for type fixeddecimal)~~
+~~ERROR (Message: invalid characters found: cannot cast value "£test" to money)~~
 
 
 SELECT CAST('''$100''' AS MONEY);
@@ -177,16 +177,16 @@ GO
 
 SELECT CAST('$₹300' AS MONEY);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: value "$₹300" is out of range for type fixeddecimal)~~
+~~ERROR (Message: invalid characters found: cannot cast value "$₹300" to money)~~
 
 
 SELECT CAST('¢₹40,00.07' AS MONEY);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: value "¢₹40,00.07" is out of range for type fixeddecimal)~~
+~~ERROR (Message: invalid characters found: cannot cast value "¢₹40,00.07" to money)~~
 
 
 --valid cases
@@ -200,16 +200,16 @@ money
 
 SELECT CAST('$,100' AS MONEY); 
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: value "$,100" is out of range for type fixeddecimal)~~
+~~ERROR (Message: invalid characters found: cannot cast value "$,100" to money)~~
 
 
 SELECT CAST('$a123' AS MONEY); 
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: value "$a123" is out of range for type fixeddecimal)~~
+~~ERROR (Message: invalid characters found: cannot cast value "$a123" to money)~~
 
 
 SELECT cast('$ ' as MONEY);
@@ -444,9 +444,9 @@ GO
 
 SELECT CAST('$$100' AS MONEY); 
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 293)~~
 
-~~ERROR (Message: value "$$100" is out of range for type fixeddecimal)~~
+~~ERROR (Message: invalid characters found: cannot cast value "$$100" to money)~~
 
 
 SELECT TRY_CAST('@100' AS MONEY);  
