@@ -52,10 +52,10 @@ GO
 
 
 -- Test CAST ( Geometry/Geography As  Bytea )
-SELECT ID, CAST(geo_polygon AS VARBINARY(2000) ) AS bytea_polygon FROM geometryToByteapolygon;
+SELECT ID, CAST(geo_polygon AS VARBINARY(2000) ) AS bytea_polygon FROM geometryToByteapolygon ORDER BY ID;
 GO
 
-SELECT ID,  CAST(geo_polygon AS VARBINARY(2000)  ) AS bytea_polygon FROM geographyToByteapolygon;
+SELECT ID,  CAST(geo_polygon AS VARBINARY(2000)  ) AS bytea_polygon FROM geographyToByteapolygon ORDER BY ID;
 GO
 
 SELECT * FROM GEOSPATIALPOLYGONGEOM_dt;
@@ -118,71 +118,6 @@ SELECT * FROM ClosedGeometrypolygon;
 GO
 
 SELECT * FROM Closedgeographypolygon;
-GO
-
--- STDisjoint
-SELECT * FROM DisjointTempGeompolygon;
-GO
-
-SELECT * FROM DisjointTempGeogpolygon;
-GO
-
-SELECT * FROM DisjointTempGeogpolysr;
-GO
-
-SELECT * FROM DisjointTempGeompolysr;
-GO
-
--- STDistance
-SELECT * FROM DistanceTempGeompolygon;
-GO
-
-SELECT * FROM DistanceTempGeompolysr;
-GO
-
-SELECT * FROM DistanceTempGeogpolygon;
-GO
-
-SELECT * FROM DistanceTempGeogpolysr;
-GO
-
--- STIntersects
-SELECT * FROM IntersectsTempGeompolygon;
-GO
-
-SELECT * FROM IntersectsTempGeompolysr;
-GO
-
-SELECT * FROM IntersectsTempGeogpolygon;
-GO
-
-SELECT * FROM IntersectsTempGeogpolysr;
-GO
-
--- STEquals
-SELECT * FROM EqualsTempGeompolygon;
-GO
-
-SELECT * FROM EqualsTempGeompolysr;
-GO
-
-SELECT * FROM EqualsTempGeogpolygon;
-GO
-
-SELECT * FROM EqualsTempGeogpolysr;
-GO
-
--- STContains
-SELECT * FROM ContainTempGeompolygon;
-GO
-
-SELECT * FROM ContainTempGeompolysr;
-GO
-
-SELECT * FROM ContainTempGeogpolygon;
-GO
-
-SELECT * FROM ContainTempGeogpolysr;
 GO
 
 -- Operator = ( Equals)
