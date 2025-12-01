@@ -78,6 +78,11 @@ static void load_functions();
 #define VALID_3DLINE_MP     0x05  /* Valid 3D linestring with multiple points */
 #define VALID_2DMLINE_MP    0x06  /* Valid 2D linestring with M dimension and multiple points */
 #define VALID_3DMLINE_MP    0x07  /* Valid 3D linestring with M dimension and multiple points */
+#define POLYGON_2D          0x00  /* 2D Polygon */
+#define POLYGON_3D          0x01  /* 3D Polygon */
+#define POLYGON_2DM         0x02  /* 2DM Polygon */
+#define POLYGON_3DM         0x03  /* 3DM Polygon */
+
 
 /* Line geometry validation constants for two-point (2P) linestrings */
 #define INVALID_2DLINE_2P  0x10   /* Invalid 2D linestring with exactly 2 points */
@@ -536,26 +541,34 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
     }
     else if (strcmp(geom_type, "ST_Polygon") == 0)
     {
-        Datum exterior_ring;
-        int num_interior_rings;
-        Datum interior_ring;
-        int ring_idx;
+        Datum exterior_ring,
+              interior_ring;
+        int num_interior_rings,
+            ring_idx;
         
-        /* Validate exterior ring */
+        /* 
+         * Validate exterior ring of the polygon
+         * Extract the outer boundary ring and check all its points
+         */
         UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
         exterior_ring = st_exteriorring_p(fcinfo_local);
         
+        /* Get total number of points in the exterior ring */
         UpdateFunctionCallInfo(fcinfo_local, 1, exterior_ring);
         npoints = DatumGetInt32(st_npoints_p(fcinfo_local));
         
+        /* Check each point in the exterior ring for valid latitude */
         for (i = 1; i <= npoints; i++)
         {
+            /* Extract the i-th point from the exterior ring */
             UpdateFunctionCallInfo(fcinfo_local, 2, exterior_ring, Int32GetDatum(i));
             point = st_pointn_p(fcinfo_local);
             
+            /* Get latitude value (x coordinate after flipping) */
             UpdateFunctionCallInfo(fcinfo_local, 1, point);
             lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
             
+            /* Validate latitude is within -90 to 90 degrees range */
             if (lat < -90.0 || lat > 90.0)
             {
                 ereport(ERROR,
@@ -564,26 +577,36 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
             }
         }
         
-        /* Validate interior rings */
+        /* 
+         * Validate interior rings (holes) of the polygon
+         * Each interior ring represents a hole within the polygon
+         */
         UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
         num_interior_rings = DatumGetInt32(st_numinteriorrings_p(fcinfo_local));
         
+        /* Iterate through each interior ring */
         for (ring_idx = 1; ring_idx <= num_interior_rings; ring_idx++)
         {
+            /* Extract the ring_idx-th interior ring */
             UpdateFunctionCallInfo(fcinfo_local, 2, flipped_geom, Int32GetDatum(ring_idx));
             interior_ring = st_interiorringn_p(fcinfo_local);
             
+            /* Get total number of points in this interior ring */
             UpdateFunctionCallInfo(fcinfo_local, 1, interior_ring);
             npoints = DatumGetInt32(st_npoints_p(fcinfo_local));
             
+            /* Check each point in the interior ring for valid latitude */
             for (i = 1; i <= npoints; i++)
             {
+                /* Extract the i-th point from the interior ring */
                 UpdateFunctionCallInfo(fcinfo_local, 2, interior_ring, Int32GetDatum(i));
                 point = st_pointn_p(fcinfo_local);
                 
+                /* Get latitude value (x coordinate after flipping) */
                 UpdateFunctionCallInfo(fcinfo_local, 1, point);
                 lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
                 
+                /* Validate latitude is within -90 to 90 degrees range */
                 if (lat < -90.0 || lat > 90.0)
                 {
                     ereport(ERROR,
@@ -1768,7 +1791,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                         geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
                         break;
                     case POLYGON_TYPE:
-                        geom_data->geom_type = 0x00;
+                        geom_data->geom_type = POLYGON_2D;
                         geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
                         break;
                 }
@@ -1789,7 +1812,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
                     break;
                 case POLYGON_TYPE:
-                    geom_data->geom_type = 0x01;
+                    geom_data->geom_type = POLYGON_3D;
                     geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
                     break;
             }
@@ -1809,7 +1832,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
                     break;
                 case POLYGON_TYPE:
-                    geom_data->geom_type = 0x03;
+                    geom_data->geom_type = POLYGON_3DM;
                     geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
                     break;
             }
@@ -1829,7 +1852,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
                     break;
                 case POLYGON_TYPE:
-                    geom_data->geom_type = 0x02;
+                    geom_data->geom_type = POLYGON_2DM;
                     geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
                     break;
             }
@@ -1946,21 +1969,22 @@ static bytea*
 handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *result, bool is_geography)
 {
     int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
-    uint8 *src_start = geom_data->byte_data + offset;
-    uint8 *dst = (geom_data->npoints > 2) ? result_data + HEADER_SIZE + NPOINTS_SIZE : result_data + HEADER_SIZE;
+
+    uint8 *src_start = geom_data->byte_data + offset,
+          *dst = (geom_data->npoints > 2) ? result_data + HEADER_SIZE + NPOINTS_SIZE : result_data + HEADER_SIZE,
+          dim_mask = geom_data->srid_flag & DIMENSION_MASK,
+          *src;
+
+    bool has_z = (dim_mask == POSTGIS_DIM_XYZ || dim_mask == POSTGIS_DIM_XYZM),
+         has_m = (dim_mask == POSTGIS_DIM_XYM || dim_mask == POSTGIS_DIM_XYZM);
     
-    uint8 dim_mask = geom_data->srid_flag & DIMENSION_MASK;
-    bool has_z = (dim_mask == POSTGIS_DIM_XYZ || dim_mask == POSTGIS_DIM_XYZM);
-    bool has_m = (dim_mask == POSTGIS_DIM_XYM || dim_mask == POSTGIS_DIM_XYZM);
-    
-    int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
-    int num_rings = *(int32*)src_start;
-    int ring_idx;
-    int total_points_copied = 0;
-    int z_points_copied = 0;
-    int m_points_copied = 0;
-    int z_offset;
-    uint8 *src;
+    int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0),
+        num_rings = *(int32*)src_start,
+        ring_idx,
+        total_points_copied = 0,
+        z_points_copied = 0,
+        m_points_copied = 0,
+        z_offset;
     
     /* First pass: copy all XY coordinates from all rings */
     src = src_start + sizeof(int32);
@@ -2021,10 +2045,11 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
     
     /* Calculate final position after all coordinates */
     {
-        uint8 *metadata_pos;
-        uint8 polygon_suffix[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
-        uint8 polygon_suffix2[5] = {0x02, 0x00, 0x00, 0x00, 0x00};
-        uint8 *ring_counts_pos;
+        uint8 *metadata_pos,
+              polygon_suffix[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x00},
+              polygon_suffix2[5] = {0x02, 0x00, 0x00, 0x00, 0x00},
+              *ring_counts_pos,
+              polygon_ending[13] = {0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x03};
         int cumulative_points = 0;
         
         metadata_pos = dst + (total_points_copied * COORD_SIZE * 2) + (has_z ? total_points_copied * COORD_SIZE : 0) + (has_m ? total_points_copied * COORD_SIZE : 0);
@@ -2033,8 +2058,7 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
         memcpy(metadata_pos, &num_rings, sizeof(int32));
         metadata_pos += sizeof(int32);
         
-        /* Add 6 bytes representing value 2 followed by 5 zero bytes */
-
+        /* Add 6 bytes representing value 2 followed by 4 zero bytes for single ring polygon and followed by 5 zero bytes for  multi-ring polygon */
         if (num_rings == 1)
         {
             memcpy(metadata_pos, polygon_suffix2, 5);
@@ -2056,12 +2080,6 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
             src += sizeof(int32) + ring_npoints * stride;
             cumulative_points += ring_npoints;
             
-            // if (num_rings == 1 || (num_rings == 2 && ring_idx == 1))
-            // {
-            //     /* Single ring or second ring of two rings: 4 bytes */
-            //     memcpy(ring_counts_pos, &cumulative_points, sizeof(int32));
-            //     ring_counts_pos += sizeof(int32);
-            // }
             if (ring_idx == num_rings - 2)
             {
                 /* Last ring of 3+ rings: 4 bytes */
@@ -2077,11 +2095,8 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
             }
         }
 
-            /* Add 13-byte polygon ending suffix */
-        {
-            uint8 polygon_ending[13] = {0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x03};
-            memcpy(ring_counts_pos, polygon_ending, 13);
-        }
+        /* Add 13-byte polygon ending suffix */        
+        memcpy(ring_counts_pos, polygon_ending, 13);
 
     }
     
