@@ -1962,8 +1962,6 @@ datetimeoffset
 
 SELECT CAST(CAST('invalid' AS char) AS DATETIMEOFFSET);
 GO
-~~START~~
-datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type timestamp with time zone: "invalid                       ")~~
@@ -2014,8 +2012,6 @@ datetimeoffset
 
 SELECT CAST(CAST('invalid' AS varchar) AS DATETIMEOFFSET);
 GO
-~~START~~
-datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type timestamp with time zone: "invalid")~~
@@ -2096,8 +2092,6 @@ datetimeoffset
 
 SELECT CAST(N'invalid' AS DATETIMEOFFSET);
 GO
-~~START~~
-datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type timestamp with time zone: "invalid")~~
@@ -2550,8 +2544,6 @@ datetimeoffset
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('invalid' AS char));
 GO
-~~START~~
-datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type timestamp with time zone: "invalid                       ")~~
@@ -2602,8 +2594,6 @@ datetimeoffset
 
 SELECT dbo.TestDateTimeOffsetFunction(CAST('invalid' AS varchar));
 GO
-~~START~~
-datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type timestamp with time zone: "invalid")~~
@@ -8499,32 +8489,24 @@ GO
 
 SELECT CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) - CAST('1' AS CHAR(10));
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) - CAST('1' AS VARCHAR(10));
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) - CAST('1' AS NCHAR(10));
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET) - CAST('1' AS NVARCHAR(10));
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
@@ -8703,32 +8685,24 @@ GO
 
 SELECT CAST('1' AS CHAR(10)) - CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET);
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('1' AS VARCHAR(10)) - CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET);
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('1' AS NCHAR(10)) - CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET);
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('1' AS NVARCHAR(10)) - CAST('2023-06-16 12:34:56.1234567 +01:00' AS DATETIMEOFFSET);
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
