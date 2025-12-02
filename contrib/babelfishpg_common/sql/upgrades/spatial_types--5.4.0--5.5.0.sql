@@ -18,7 +18,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPolyFromText(sys.NVARCHAR,srid intege
 		Geomtype = (SELECT sys.ST_GeometryType(geom));
 
 		IF Geomtype = 'ST_Polygon' THEN
-				RETURN geom;
+			RETURN geom;
 		ELSE
 			RAISE EXCEPTION 'Expected "POLYGON" at Position 1. The input has %', $1;
 		END IF;

@@ -50,6 +50,9 @@ static void load_functions();
 #define EMPTY_POINT_TYPE_LASTBYTE    0x01    /* Type identifier for empty point */
 #define EMPTY_LINE_TYPE_LASTBYTE     0x02    /* Type identifier for empty linestring */
 #define NPOINTS_SIZE                 4       /* Size of no. of points data (4 bytes ) */
+#define RING_COUNT                   4       /* No. of rings in a polygon */
+#define CUMULATIVE_RING_COUNT_SIZE         5       /* Size for intermediate cumulative ring counts (4 bytes + 1 zero) */
+#define FINAL_CUMULATIVE_RING_COUNT_SIZE   4       /* Size for final cumulative ring count (4 bytes only) */
 
 #define SRID_FLAG_POS     4     /* Position of SRID flag in binary data */
 #define SRID_MASK         0x20  /* Bitmask for SRID presence flag */
@@ -197,6 +200,23 @@ line_end_metadata[] = {
     0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
     0x00, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
     0xff, 0x00, 0x00, 0x00, 0x00, 0x02
+};
+
+static const uint8 
+polygon_end_metadata[] = {
+    0x01, 0x00, 0x00, 0x00,
+    0xff, 0xff, 0xff, 0xff, 
+    0x00, 0x00, 0x00, 0x00, 0x03
+};
+
+static const uint8 
+poly_identifier_multiring[] = {
+    0x02, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+static const uint8 
+poly_identifier_singlering[] = {
+    0x02, 0x00, 0x00, 0x00, 0x00
 };
 
 /* NAN format used by TSQL */
@@ -1973,13 +1993,14 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
     uint8 *src_start = geom_data->byte_data + offset,
           *dst = (geom_data->npoints > 2) ? result_data + HEADER_SIZE + NPOINTS_SIZE : result_data + HEADER_SIZE,
           dim_mask = geom_data->srid_flag & DIMENSION_MASK,
-          *src;
+          *src = src_start + sizeof(int32);
 
     bool has_z = (dim_mask == POSTGIS_DIM_XYZ || dim_mask == POSTGIS_DIM_XYZM),
          has_m = (dim_mask == POSTGIS_DIM_XYM || dim_mask == POSTGIS_DIM_XYZM);
     
     int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0),
         num_rings = *(int32*)src_start,
+        ring_npoints = *(int32*)src,
         ring_idx,
         total_points_copied = 0,
         z_points_copied = 0,
@@ -1987,10 +2008,9 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
         z_offset;
     
     /* First pass: copy all XY coordinates from all rings */
-    src = src_start + sizeof(int32);
     for (ring_idx = 0; ring_idx < num_rings; ring_idx++)
     {
-        int ring_npoints = *(int32*)src;
+        ring_npoints = *(int32*)src;
         src += sizeof(int32);
         
         copy_xy_coords(dst + (total_points_copied * COORD_SIZE * 2), src, ring_npoints, stride);
@@ -2003,10 +2023,9 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
     if (has_z)
     {
         src = src_start + sizeof(int32);
-        z_points_copied = 0;
         for (ring_idx = 0; ring_idx < num_rings; ring_idx++)
         {
-            int ring_npoints = *(int32*)src;
+            ring_npoints = *(int32*)src;
             src += sizeof(int32);
             
             /* Reuse copy_z_coords by adjusting destination offset:
@@ -2024,11 +2043,10 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
     if (has_m)
     {
         src = src_start + sizeof(int32);
-        m_points_copied = 0;
         z_offset = has_z ? total_points_copied * COORD_SIZE : 0;
         for (ring_idx = 0; ring_idx < num_rings; ring_idx++)
         {
-            int ring_npoints = *(int32*)src;
+            ring_npoints = *(int32*)src;
             src += sizeof(int32);
             
             /* Reuse copy_m_coords by adjusting destination offset:
@@ -2046,10 +2064,7 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
     /* Calculate final position after all coordinates */
     {
         uint8 *metadata_pos,
-              polygon_suffix[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x00},
-              polygon_suffix2[5] = {0x02, 0x00, 0x00, 0x00, 0x00},
-              *ring_counts_pos,
-              polygon_ending[13] = {0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x03};
+              *ring_counts_pos;
         int cumulative_points = 0;
         
         metadata_pos = dst + (total_points_copied * COORD_SIZE * 2) + (has_z ? total_points_copied * COORD_SIZE : 0) + (has_m ? total_points_copied * COORD_SIZE : 0);
@@ -2061,13 +2076,13 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
         /* Add 6 bytes representing value 2 followed by 4 zero bytes for single ring polygon and followed by 5 zero bytes for  multi-ring polygon */
         if (num_rings == 1)
         {
-            memcpy(metadata_pos, polygon_suffix2, 5);
-            metadata_pos += 5;
+            memcpy(metadata_pos, poly_identifier_singlering, 5);
+            metadata_pos += sizeof(poly_identifier_singlering);
         }
         else if (num_rings > 1)
         {
-            memcpy(metadata_pos, polygon_suffix, 6);
-            metadata_pos += 6;
+            memcpy(metadata_pos, poly_identifier_multiring, 6);
+            metadata_pos += sizeof(poly_identifier_multiring);
         }
         
         /* Add cumulative ring point counts */
@@ -2076,7 +2091,7 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
         src = src_start + sizeof(int32);
         for (ring_idx = 0; ring_idx < num_rings - 1; ring_idx++)
         {
-            int ring_npoints = *(int32*)src;
+            ring_npoints = *(int32*)src;
             src += sizeof(int32) + ring_npoints * stride;
             cumulative_points += ring_npoints;
             
@@ -2084,19 +2099,19 @@ handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *resu
             {
                 /* Last ring of 3+ rings: 4 bytes */
                 memcpy(ring_counts_pos, &cumulative_points, sizeof(int32));
-                ring_counts_pos += sizeof(int32);
+                ring_counts_pos += FINAL_CUMULATIVE_RING_COUNT_SIZE;
             }
             else
             {
                 /* Other rings: 5 bytes (4 bytes + 1 zero byte) */
                 memcpy(ring_counts_pos, &cumulative_points, sizeof(int32));
                 ring_counts_pos[4] = 0x00;
-                ring_counts_pos += 5;
+                ring_counts_pos += CUMULATIVE_RING_COUNT_SIZE;
             }
         }
 
         /* Add 13-byte polygon ending suffix */        
-        memcpy(ring_counts_pos, polygon_ending, 13);
+        memcpy(ring_counts_pos, polygon_end_metadata, sizeof(polygon_end_metadata));
 
     }
     
@@ -2120,13 +2135,17 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     if (geom_data->postgis_geom_type == POLYGON_TYPE && !geom_data->is_empty)
     {
         /* For polygon, calculate additional bytes needed */
-        int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
-        int num_rings = *(int32*)(geom_data->byte_data + offset);
-        total_size += NPOINTS_SIZE + 4;  /* Ring count (4 bytes) */
-        total_size += (num_rings > 1 ) ? 6 : 5;             /* Polygon suffix (6 bytes) */
-        if (num_rings > 1)
-            total_size +=(num_rings - 2) * 5 + 4;  /* Cumulative counts: (n-1)*5 + 4 bytes, or just 4 if only 1 ring */
-        total_size += 13;  
+        int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID,
+            num_rings = *(int32*)(geom_data->byte_data + offset);
+
+        total_size += NPOINTS_SIZE + RING_COUNT;          /* Ring count (4 bytes) */
+
+        if (num_rings > 1) 
+            total_size += sizeof(poly_identifier_multiring) + (num_rings - 2) * CUMULATIVE_RING_COUNT_SIZE + FINAL_CUMULATIVE_RING_COUNT_SIZE;  /* Cumulative counts: 6 + (n-2)*5 + 4 bytes, or just 5 if only 1 ring */
+        else
+            total_size += sizeof(poly_identifier_singlering);                           /* Single ring polygon suffix */
+
+        total_size += sizeof(polygon_end_metadata);  
     }
     
     /* Allocate and initialize result bytea */
@@ -2166,8 +2185,7 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
                     memcpy(result_data + HEADER_SIZE, &geom_data->npoints, NPOINTS_SIZE);
                 return handle_linestring_type_data(geom_data, result_data, result, is_geography);
             case POLYGON_TYPE:
-                if (geom_data->npoints > 2)
-                    memcpy(result_data + HEADER_SIZE, &geom_data->npoints, NPOINTS_SIZE);
+                memcpy(result_data + HEADER_SIZE, &geom_data->npoints, NPOINTS_SIZE);
                 return handle_polygon_type_data(geom_data, result_data, result, is_geography);
         }
     }
