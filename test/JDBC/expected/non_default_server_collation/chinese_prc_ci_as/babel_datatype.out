@@ -388,10 +388,9 @@ money
 -- Test unsupoorted currency symbol
 select CAST('￩100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "￩100.123" to money)~~
 
 
 -- Test that space is allowed between currency symbol and number, this is
