@@ -8292,6 +8292,9 @@ tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexp
 		Oid					lopr,
 							ropr;
 
+		if (opname == NULL)
+			return OpExp;
+
 		/* Calculate Oid of left and right operand */
 		lopr = exprType(lexpr);
 		ropr = exprType(rexpr);
