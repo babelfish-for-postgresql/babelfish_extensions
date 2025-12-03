@@ -197,6 +197,69 @@ typedef struct FixedDecimalAggState
 	int64		sumX;			/* sum of processed numbers */
 } FixedDecimalAggState;
 
+/* 
+ * NOTE: Keep this currency symbol list synchronized with the scan-tsql-decl.l file.
+ * Currency symbols supported by TSQL
+ */
+static const char *valid_currency_symbols[] = {
+    "$",                    /* dollar */
+    "\xC2\xA2",            /* cent */
+    "\xC2\xA4",            /* currency */
+    "\xC2\xA3",            /* pound */
+    "\xC2\xA5",            /* yen */
+    "\xE0\xA7\xB2",        /* bengali_rupee_mark */
+    "\xE0\xA7\xB3",        /* bengali_rupee_sign */
+    "\xE0\xB8\xBF",        /* thai_baht */
+    "\xE1\x9F\x9B",        /* khmer_riel */
+    "\xE2\x82\xA0",        /* euro_currency */
+    "\xE2\x82\xA1",        /* colon_sign */
+    "\xE2\x82\xA2",        /* cruzeiro */
+    "\xE2\x82\xA3",        /* franc */
+    "\xE2\x82\xA4",        /* lira */
+    "\xE2\x82\xA5",        /* mill */
+    "\xE2\x82\xA6",        /* naira */
+    "\xE2\x82\xA7",        /* peseta */
+    "\xE2\x82\xA8",        /* rupee */
+    "\xE2\x82\xA9",        /* won */
+    "\xE2\x82\xAA",        /* new_sheqel */
+    "\xE2\x82\xAB",        /* dong */
+    "\xE2\x82\xAC",        /* euro */
+    "\xE2\x82\xAD",        /* kip */
+    "\xE2\x82\xAE",        /* tugrik */
+    "\xE2\x82\xAF",        /* drachma */
+    "\xE2\x82\xB0",        /* german_penny */
+    "\xE2\x82\xB1",        /* peso */
+    "\xEF\xB7\xBC",        /* rial */
+    "\xEF\xB9\xA9",        /* small_dollar */
+    "\xEF\xBC\x84",        /* fullwidth_dollar */
+    "\xEF\xBF\xA0",        /* fullwidth_cent */
+    "\xEF\xBF\xA1",        /* fullwidth_pound */
+    "\xEF\xBF\xA5",        /* fullwidth_yen */
+    "\xEF\xBF\xA6",        /* fullwidth_won */
+};
+
+#define NUM_CURRENCY_SYMBOLS (sizeof(valid_currency_symbols) / sizeof(valid_currency_symbols[0]))
+
+/*
+ * Checks if the string starts with a valid currency symbol
+ */
+static size_t
+is_valid_currency_symbol(const char *ptr)
+{
+    int i;
+    if (ptr == NULL)
+        return 0;
+    
+    for (i = 0; i < NUM_CURRENCY_SYMBOLS; i++)
+    {
+        const char *symbol = valid_currency_symbols[i];
+        size_t symbol_len = strlen(symbol);
+        if (strncmp(ptr, symbol, symbol_len) == 0)
+            return symbol_len;
+    }
+    return 0;
+}
+
 static char *pg_int64tostr(char *str, int64 value);
 static char *pg_int64tostr_zeropad(char *str, int64 value, int64 padding);
 static bool apply_typmod(int64 value, int32 typmod, int precision, int scale, FunctionCallInfo *fcinfo);
@@ -425,6 +488,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	int			vscale = 0;
 	bool		has_seen_sign = false;
 	Node		*escontext = (*fcinfo)->context;
+	size_t		currency_symbol_len; 
 
 	/*
 	 * Do our own scan, rather than relying on sscanf which might be broken
@@ -456,32 +520,31 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	/* skip leading spaces */
 	while (isspace((unsigned char) *ptr))
 		ptr++;
-
-	/* skip currency symbol bytes */
-	while (!isdigit((unsigned char) *ptr) &&
-		   (unsigned int) *ptr != '.' &&
-		   (unsigned int) *ptr != '-' &&
-		   (unsigned int) *ptr != '+' &&
-		   (unsigned int) *ptr != ' ' &&
-		   (unsigned int) *ptr != '\0')
+	
+	currency_symbol_len = is_valid_currency_symbol(ptr);
+	if (currency_symbol_len > 0)
 	{
-		/*
-		 * Current workaround for BABEL-704 - this will accept multiple
-		 * currency symbols until BABEL-704 is fixed
-		 */
-		if ((*ptr >= 'a' && *ptr <= 'z') || (*ptr >= 'A' && *ptr <= 'Z'))
-		{
-			ereturn(escontext, (Datum) 0,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("invalid characters found: cannot cast value \"%s\" to money",
-							str)));
-		}
-		ptr++;
+		ptr += currency_symbol_len;
 	}
-
 	/* skip leading spaces */
 	while (isspace((unsigned char) *ptr))
 		ptr++;
+	
+	/* 
+	 * Rejects invalid characters when no currency symbol is present.
+	 * Only digits, signs, decimal points, or spaces are allowed.
+	 */
+	if (*ptr != '\0' && 
+		!isdigit((unsigned char) *ptr) && 
+		*ptr != '.' && 
+		*ptr != '-' && 
+		*ptr != '+')
+	{
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("invalid characters found: cannot cast value \"%s\" to money",
+					str)));							
+	}
 
 	/*
 	 * Handle sign again. This is needed so that a sign after the currency
