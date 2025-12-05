@@ -4366,7 +4366,7 @@ BEGIN
     IF sys.len(expression) = 0 THEN
         RETURN NULL;
     END IF;
-    RETURN pg_catalog.lower(expression::TEXT);
+    RETURN pg_catalog.lower(expression::PG_CATALOG.TEXT);
 END;
 $$ 
 LANGUAGE plpgsql IMMUTABLE STRICT;
