@@ -84,7 +84,7 @@ DATA_built = \
 
 # Get Postgres version, as well as major (9.4, etc) version. Remove '.' from MAJORVER.
 VERSION 	 = $(shell $(PG_CONFIG) --version | awk '{print $$2}' | sed -e 's/devel$$//')
-MAJORVER 	 = $(shell echo $(VERSION) | cut -d . -f1,2 | tr -d .)
+MAJORVER 	 = $(shell echo $(VERSION) | sed 's/[^0-9.].*$$//' | cut -d . -f1,2 | tr -d .)
 
 # Function for testing a condition
 test		 = $(shell test $(1) $(2) $(3) && echo yes || echo no)
