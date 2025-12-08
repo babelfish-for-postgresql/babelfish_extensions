@@ -230,7 +230,7 @@ src/backend_parser/scan-backend.l: $(PG_SRC)/src/backend/parser/scan.l $(BEPARSE
 
 src/backend_parser/scan-backend.c: FLEXFLAGS = -CF -p -p
 src/backend_parser/scan-backend.c: FLEX_NO_BACKUP=yes
-src/backend_parser/scan-backend.c: FLEX_FIX_WARNING=yes
+# src/backend_parser/scan-backend.c: FLEX_FIX_WARNING=yes
 
 ifneq ("$(wildcard $(FLEX))","")
 	FLEX_EXEC := $(FLEX)
@@ -241,7 +241,7 @@ endif
 src/backend_parser/scan-backend.c: src/backend_parser/scan-backend.l
 	$(FLEX_EXEC) $(if $(FLEX_NO_BACKUP),-b) $(FLEXFLAGS) -o'$@' $<
 	@$(if $(FLEX_NO_BACKUP),if [ `wc -l <lex.backup` -eq 1 ]; then rm lex.backup; else echo "Scanner requires backup; see lex.backup." 1>&2;     exit 1; fi)
-	$(if $(FLEX_FIX_WARNING),$(PERL) $(TOOLSDIR)/fix-old-flex-code.pl '$@')
+#	$(if $(FLEX_FIX_WARNING),$(PERL) $(TOOLSDIR)/fix-old-flex-code.pl '$@')
 
 # Force these dependencies to be known even without dependency info built:
 src/backend_parser/gram-backend.o src/backend_parser/scan-backend.o src/backend_parser/parser.o: src/backend_parser/gram-backend.h
