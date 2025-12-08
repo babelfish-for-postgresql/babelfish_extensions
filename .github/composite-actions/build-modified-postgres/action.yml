@@ -142,10 +142,18 @@ runs:
           export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH
           make
           make install
-        elif [[ ${{inputs.engine_branch}} != *"__PG_13_"* ]]; then
+        elif [[ ${{inputs.engine_branch}} == *"__PG_17_"* ]]; then
           cd ../..
           rm -rf pg_hint_plan
           git clone --depth 1 --branch REL17_1_7_0 https://github.com/ossc-db/pg_hint_plan.git
+          cd pg_hint_plan
+          export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH
+          make
+          make install
+        elif [[ ${{inputs.engine_branch}} != *"__PG_13_"* ]]; then
+          cd ../..
+          rm -rf pg_hint_plan
+          git clone --depth 1 --branch REL18_1_8_0 https://github.com/ossc-db/pg_hint_plan.git
           cd pg_hint_plan
           export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH
           make
