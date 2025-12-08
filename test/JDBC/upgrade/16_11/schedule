@@ -639,5 +639,5 @@ test_conv_text_to_binary-before-17_7
 test_conv_text_to_string
 test_convert_to_binary
 cast_datetime_to_binary
-BABEL-4271
+babel_string_to_money
 comparison_op_index_scan-before-17_8-or-16_12

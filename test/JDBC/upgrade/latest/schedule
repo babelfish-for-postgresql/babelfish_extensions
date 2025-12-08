@@ -662,6 +662,7 @@ test_conv_text_to_string
 babel_timezoneinfo
 test_convert_to_binary
 cast_datetime_to_binary
+babel_string_to_money
 test_output_clause
 update_with_var
 BABEL-4271
