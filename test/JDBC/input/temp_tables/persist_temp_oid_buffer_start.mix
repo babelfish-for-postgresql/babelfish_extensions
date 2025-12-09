@@ -1,0 +1,7 @@
+-- psql
+CALL sys.persist_temp_oid_buffer_start()
+GO
+
+-- tsql
+EXEC sys.persist_temp_oid_buffer_start
+GO
