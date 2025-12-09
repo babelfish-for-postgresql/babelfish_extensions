@@ -332,6 +332,64 @@ transform_points(PointArray *pa, DimensionType type)
 }
 
 /*
+ * Format  T-SQL  point coordinates to PostGIS compatible point coordinates
+ */
+static void
+format_tsql_point_coordinates(StringInfoData *output, POINT p)
+{
+    /* X and Y coordinates are always included */
+    appendStringInfo(output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
+
+    /* Add Z and M coordinates based on flags */
+    if (FLAGS_GET_Z(p.flags)) 
+        appendStringInfo(output, " %s", FLOAT8_TO_CSTRING(p.z));
+    if (FLAGS_GET_M(p.flags)) 
+        appendStringInfo(output, " %s", FLOAT8_TO_CSTRING(p.m));
+}
+
+/*
+ * Format PostGIS point coordinates to T-SQL compatible point coordinates
+ */
+static void
+format_postgis_point_coordinates(StringInfoData *output, POINT p)
+{
+    /* X and Y coordinates are always included */
+    appendStringInfo(output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
+    
+    /* Format Z and M values based on flags and NaN status */
+    if (FLAGS_GET_Z(p.flags) && FLAGS_GET_M(p.flags)) 
+    {
+        /* Point has both Z and M flags */
+        if (!isnan(p.z) && !isnan(p.m)) 
+        {
+            /* Both Z and M are not NaN */
+            appendStringInfo(output, " %s %s", FLOAT8_TO_CSTRING(p.z), FLOAT8_TO_CSTRING(p.m));
+        }
+        else if (!isnan(p.z)) 
+        {
+            /* Only Z is not NaN */
+            appendStringInfo(output, " %s", FLOAT8_TO_CSTRING(p.z));
+        }
+        else if (!isnan(p.m)) 
+        {
+            /* Only M is not NaN */
+            appendStringInfo(output, " NULL %s", FLOAT8_TO_CSTRING(p.m));
+        }
+        /* If both are NaN, print nothing */
+    }
+    else if (FLAGS_GET_Z(p.flags) && !isnan(p.z)) 
+    {
+        /* Point has only Z flag and Z is not NaN */
+        appendStringInfo(output, " %s", FLOAT8_TO_CSTRING(p.z));
+    }
+    else if (FLAGS_GET_M(p.flags) && !isnan(p.m)) 
+    {
+        /* Point has only M flag and M is not NaN */
+        appendStringInfo(output, " NULL %s", FLOAT8_TO_CSTRING(p.m));
+    }
+}
+
+/*
  * Converts a PointArray to a PostGIS-compatible LINESTRING WKT representation
  * Determines the appropriate dimension type (Z, M, ZM, etc.) based on the points,
  * transforms points to conform to that type, and generates a properly formatted
@@ -371,14 +429,7 @@ rewrite_linestring_query(PointArray *pa)
     for (int i = 0; i < pa->count; i++) 
     {
         POINT p = pa->points[i];
-        /* X and Y coordinates are always included */
-        appendStringInfo(&output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
-
-        /* Add Z and M coordinates based on flags */
-        if (FLAGS_GET_Z(p.flags)) 
-            appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
-        if (FLAGS_GET_M(p.flags)) 
-            appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
+        format_tsql_point_coordinates(&output, p);
 
         /* Add comma between points, except after the last point */
         if (i < pa->count - 1) 
@@ -419,44 +470,7 @@ rewrite_dim_linestring_query(PointArray *pa)
     for (int i = 0; i < pa->count; i++) 
     {
         POINT p = pa->points[i];
-
-        /* X and Y coordinates are always included */
-        appendStringInfo(&output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
-        
-        /* Format Z and M values based on flags and NaN status */
-        if (FLAGS_GET_Z(p.flags) && FLAGS_GET_M(p.flags)) 
-        {
-            /* Point has both Z and M flags */
-            if (!isnan(p.z) && !isnan(p.m)) 
-            {
-                /* Both Z and M are not NaN */
-                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
-                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
-            }
-            else if (!isnan(p.z)) 
-            {
-                /* Only Z is not NaN */
-                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
-            }
-            else if (!isnan(p.m)) 
-            {
-                /* Only M is not NaN */
-                appendStringInfoString(&output, " NULL");
-                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
-            }
-            /* If both are NaN, print nothing */
-        }
-        else if (FLAGS_GET_Z(p.flags) && !isnan(p.z)) 
-        {
-            /* Point has only Z flag and Z is not NaN */
-            appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
-        }
-        else if (FLAGS_GET_M(p.flags) && !isnan(p.m)) 
-        {
-            /* Point has only M flag and M is not NaN */
-            appendStringInfoString(&output, " NULL");
-            appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
-        }
+        format_postgis_point_coordinates(&output, p);
 
         /* Add comma between points, except after the last point */
         if (i < pa->count - 1) 
@@ -585,12 +599,7 @@ rewrite_polygon_query(PointArrayList *pal)
         for (int i = 0; i < pa->count; i++) 
         {
             POINT p = pa->points[i];
-            appendStringInfo(&output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
-
-            if (FLAGS_GET_Z(p.flags)) 
-                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
-            if (FLAGS_GET_M(p.flags)) 
-                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.m));
+            format_tsql_point_coordinates(&output, p);
 
             if (i < pa->count - 1) 
                 appendStringInfoString(&output, ", ");
@@ -636,31 +645,7 @@ rewrite_dim_polygon_query(PointArrayList *pal)
         for (int i = 0; i < pa->count; i++) 
         {
             POINT p = pa->points[i];
-            appendStringInfo(&output, "%s %s", FLOAT8_TO_CSTRING(p.x), FLOAT8_TO_CSTRING(p.y));
-            
-            if (FLAGS_GET_Z(p.flags) && FLAGS_GET_M(p.flags)) 
-            {
-                if (!isnan(p.z) && !isnan(p.m)) 
-                {
-                    appendStringInfo(&output, " %s %s", FLOAT8_TO_CSTRING(p.z), FLOAT8_TO_CSTRING(p.m));
-                }
-                else if (!isnan(p.z)) 
-                {
-                    appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
-                }
-                else if (!isnan(p.m)) 
-                {
-                    appendStringInfo(&output, " NULL %s", FLOAT8_TO_CSTRING(p.m));
-                }
-            }
-            else if (FLAGS_GET_Z(p.flags) && !isnan(p.z)) 
-            {
-                appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(p.z));
-            }
-            else if (FLAGS_GET_M(p.flags) && !isnan(p.m)) 
-            {
-                appendStringInfo(&output, " NULL %s", FLOAT8_TO_CSTRING(p.m));
-            }
+            format_postgis_point_coordinates(&output, p);
 
             if (i < pa->count - 1) 
                 appendStringInfoString(&output, ", ");
