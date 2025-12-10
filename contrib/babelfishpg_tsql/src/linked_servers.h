@@ -113,6 +113,13 @@ typedef DBPROCESS * LinkedServerProcess;
 #define LINKED_SERVER_RPC_SEND(process)		dbrpcsend(process)
 #define LINKED_SERVER_RPC_EXEC(process)			dbsqlok(process)
 
+/* RPC OUTPUT parameter retrieval macros */
+#define LINKED_SERVER_NUM_RETS(process)			dbnumrets(process)
+#define LINKED_SERVER_RET_NAME(process, retnum)		dbretname(process, retnum)
+#define LINKED_SERVER_RET_DATA(process, retnum)		dbretdata(process, retnum)
+#define LINKED_SERVER_RET_LEN(process, retnum)		dbretlen(process, retnum)
+#define LINKED_SERVER_RET_TYPE(process, retnum)		dbrettype(process, retnum)
+
 #define LS_NTBSTRINGBING	NTBSTRINGBIND
 #define	LS_INTBIND		INTBIND
 

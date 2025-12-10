@@ -47,6 +47,7 @@ char	   *pltsql_language = NULL;
 char	   *pltsql_psql_logical_babelfish_db_name = NULL;
 int			pltsql_lock_timeout = -1;
 bool		pltsql_enable_linked_servers = true;
+bool		pltsql_enable_remote_proc_exec = false;
 bool		pltsql_enable_ownership_chaining = true;
 bool		pltsql_allow_windows_login = true;
 bool		pltsql_allow_fulltext_parser = false;
@@ -1253,6 +1254,15 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_enable_linked_servers,
 							 true,
+							 PGC_SUSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_remote_proc_exec",
+							 gettext_noop("Enables remote procedure execution via four-part names (EXEC server.db.schema.proc)"),
+							 NULL,
+							 &pltsql_enable_remote_proc_exec,
+							 false,
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);

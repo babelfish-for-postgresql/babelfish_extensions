@@ -24,6 +24,13 @@
 #define LINKED_SERVER_DEBUG(...)	elog(DEBUG1, __VA_ARGS__)
 #define LINKED_SERVER_DEBUG_FINER(...)	elog(DEBUG2, __VA_ARGS__)
 
+/*
+ * Note: UTF-8 to UTF-16 LE conversion is not needed here because FreeTDS
+ * handles the character encoding internally when we use XSYBNVARCHAR/XSYBNCHAR
+ * types. We send UTF-8 data and FreeTDS converts it to UTF-16 LE as needed
+ * for the TDS protocol wire format.
+ */
+
 PG_FUNCTION_INFO_V1(openquery_internal);
 PG_FUNCTION_INFO_V1(sp_testlinkedserver_internal);
 
@@ -1396,15 +1403,21 @@ get_tds_type_from_pg_oid(Oid pgtype)
 		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
 		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
 		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
+		Oid float_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("float");
+		Oid real_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("real");
+		Oid varbinary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varbinary");
+		Oid binary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary");
+		Oid uniqueidentifier_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("uniqueidentifier");
+		Oid bit_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bit");
 		
 		if (pgtype == varchar_oid)
 			return SYBVARCHAR;
 		else if (pgtype == nvarchar_oid)
-			return SYBVARCHAR;
+			return XSYBNVARCHAR;  /* Unicode type - use UTF-16 LE encoding (type 231) */
 		else if (pgtype == char_oid)
 			return SYBCHAR;
 		else if (pgtype == nchar_oid)
-			return SYBCHAR;
+			return XSYBNCHAR;    /* Unicode type - use UTF-16 LE encoding (type 239) */
 		else if (pgtype == int_oid)
 			return SYBINT4;
 		else if (pgtype == bigint_oid)
@@ -1417,6 +1430,53 @@ get_tds_type_from_pg_oid(Oid pgtype)
 			return SYBDATETIME4;
 		else if (pgtype == datetime2_oid)
 			return SYBMSDATETIME2;
+		else if (pgtype == float_oid)
+			return SYBFLT8;
+		else if (pgtype == real_oid)
+			return SYBREAL;
+		else if (pgtype == varbinary_oid)
+			return SYBVARBINARY;
+		else if (pgtype == binary_oid)
+			return SYBBINARY;
+		else if (pgtype == uniqueidentifier_oid)
+			return SYBUNIQUE;
+		else if (pgtype == bit_oid)
+			return SYBBIT;
+	}
+	
+	/* Check for Babelfish DECIMAL/NUMERIC types */
+	/* Send as VARCHAR since proper DBNUMERIC binary format is complex */
+	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
+	{
+		Oid numeric_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("numeric");
+		Oid decimal_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("decimal");
+		if (pgtype == numeric_oid || pgtype == decimal_oid)
+			return SYBVARCHAR;  /* Send as string, server will convert */
+	}
+	
+	/* Check for Babelfish MONEY/SMALLMONEY types */
+	/* Send as VARCHAR since proper DBNUMERIC binary format is complex */
+	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
+	{
+		Oid money_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
+		Oid smallmoney_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
+		if (pgtype == money_oid || pgtype == smallmoney_oid)
+			return SYBVARCHAR;  /* Send as string, server will convert */
+	}
+	
+	/* Check for Babelfish DateTime types - send as string for simplicity */
+	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
+	{
+		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
+		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
+		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
+		Oid datetimeoffset_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
+		Oid time_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("time");
+		
+		if (pgtype == datetime_oid || pgtype == datetime2_oid || 
+		    pgtype == smalldatetime_oid || pgtype == datetimeoffset_oid ||
+		    pgtype == time_oid)
+			return SYBVARCHAR;  /* Send as ISO string, server will parse */
 	}
 	
 	/* Then check standard PostgreSQL types */
@@ -1433,7 +1493,7 @@ get_tds_type_from_pg_oid(Oid pgtype)
 		case FLOAT8OID:
 			return SYBFLT8;
 		case NUMERICOID:
-			return SYBNUMERIC;
+			return SYBVARCHAR;  /* Send as string, server will convert */
 		case BOOLOID:
 			return SYBBIT;
 		case TEXTOID:
@@ -1474,19 +1534,150 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		return;
 	}
 	
-	/* Check for Babelfish-specific string types first */
+	/* Check for Babelfish-specific types first */
 	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
 	{
 		Oid varchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varchar");
 		Oid nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nvarchar");
 		Oid char_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("char");
 		Oid nchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nchar");
+		Oid float_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("float");
+		Oid real_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("real");
+		Oid varbinary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varbinary");
+		Oid binary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary");
+		Oid bit_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bit");
 		
-		if (valtype == varchar_oid || valtype == nvarchar_oid || 
-		    valtype == char_oid || valtype == nchar_oid)
+		/*
+		 * NVARCHAR and NCHAR - Send as UTF-8
+		 * FreeTDS has encoding issues with UTF-16 data passed via dbrpcparam.
+		 * When we pass pre-converted UTF-16, FreeTDS tries to re-encode it.
+		 * The server will handle UTF-8 to Unicode conversion internally.
+		 */
+		if (valtype == nvarchar_oid || valtype == nchar_oid)
 		{
 			char *str = TextDatumGetCString(value);
-			*len_out = strlen(str);  /* Do NOT include null terminator - causes UTF-16 conversion error */
+			*len_out = strlen(str);
+			*data_out = palloc(*len_out);
+			memcpy(*data_out, str, *len_out);
+			pfree(str);
+			return;
+		}
+		
+		/* VARCHAR and CHAR - Keep as UTF-8 */
+		if (valtype == varchar_oid || valtype == char_oid)
+		{
+			char *str = TextDatumGetCString(value);
+			*len_out = strlen(str);
+			*data_out = palloc(*len_out);
+			memcpy(*data_out, str, *len_out);
+			pfree(str);
+			return;
+		}
+		
+		/* Babelfish FLOAT (8 bytes) */
+		if (valtype == float_oid)
+		{
+			*len_out = sizeof(DBFLT8);
+			*data_out = palloc(*len_out);
+			*((DBFLT8 *)*data_out) = DatumGetFloat8(value);
+			return;
+		}
+		
+		/* Babelfish REAL (4 bytes) */
+		if (valtype == real_oid)
+		{
+			*len_out = sizeof(DBREAL);
+			*data_out = palloc(*len_out);
+			*((DBREAL *)*data_out) = DatumGetFloat4(value);
+			return;
+		}
+		
+		/* Babelfish BIT */
+		if (valtype == bit_oid)
+		{
+			*len_out = sizeof(DBBOOL);
+			*data_out = palloc(*len_out);
+			*((DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
+			return;
+		}
+		
+		/* Babelfish VARBINARY/BINARY */
+		if (valtype == varbinary_oid || valtype == binary_oid)
+		{
+			bytea *bytes = DatumGetByteaPP(value);
+			*len_out = VARSIZE_ANY_EXHDR(bytes);
+			*data_out = palloc(*len_out);
+			memcpy(*data_out, VARDATA_ANY(bytes), *len_out);
+			return;
+		}
+	}
+	
+	/* Check for Babelfish numeric/decimal types */
+	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
+	{
+		Oid numeric_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("numeric");
+		Oid decimal_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("decimal");
+		if (valtype == numeric_oid || valtype == decimal_oid)
+		{
+			/* Convert Babelfish NUMERIC/DECIMAL to string for sending */
+			/* Server will parse and convert to the appropriate type */
+			Oid typoutput;
+			bool typIsVarlena;
+			char *str;
+			
+			getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
+			str = OidOutputFunctionCall(typoutput, value);
+			*len_out = strlen(str);
+			*data_out = palloc(*len_out);
+			memcpy(*data_out, str, *len_out);
+			pfree(str);
+			return;
+		}
+	}
+	
+	/* Check for Babelfish MONEY/SMALLMONEY types */
+	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
+	{
+		Oid money_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
+		Oid smallmoney_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
+		if (valtype == money_oid || valtype == smallmoney_oid)
+		{
+			/* Convert Babelfish MONEY/SMALLMONEY to string for sending */
+			Oid typoutput;
+			bool typIsVarlena;
+			char *str;
+			
+			getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
+			str = OidOutputFunctionCall(typoutput, value);
+			*len_out = strlen(str);
+			*data_out = palloc(*len_out);
+			memcpy(*data_out, str, *len_out);
+			pfree(str);
+			return;
+		}
+	}
+	
+	/* Check for Babelfish DateTime types - send as string */
+	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
+	{
+		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
+		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
+		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
+		Oid datetimeoffset_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
+		Oid time_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("time");
+		
+		if (valtype == datetime_oid || valtype == datetime2_oid || 
+		    valtype == smalldatetime_oid || valtype == datetimeoffset_oid ||
+		    valtype == time_oid)
+		{
+			/* Convert DateTime types to ISO string format */
+			Oid typoutput;
+			bool typIsVarlena;
+			char *str;
+			
+			getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
+			str = OidOutputFunctionCall(typoutput, value);
+			*len_out = strlen(str);
 			*data_out = palloc(*len_out);
 			memcpy(*data_out, str, *len_out);
 			pfree(str);
@@ -1647,19 +1838,23 @@ validate_procedure_select_only(LinkedServerProcess lsproc,
 		
 		if (colcount > 0)
 		{
-			char bind_definition[65536] = {0x00};  /* Large buffer for procedure body */
-			
-			/* Bind the definition column */
-			if (LINKED_SERVER_BIND_VAR(validation_lsproc, 1, LS_NTBSTRINGBING, sizeof(bind_definition), (LS_BYTE *)bind_definition) != SUCCEED)
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("Failed to bind procedure definition column")));
-			
-			/* Fetch the row */
+			/*
+			 * Fetch data directly without buffer binding to handle nvarchar(max) columns.
+			 * This approach matches the pattern used in openquery_imp() and allows
+			 * FreeTDS to provide the actual data length, avoiding truncation.
+			 */
 			if (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
 			{
-				if (bind_definition[0] != '\0')
-					definition = pstrdup(bind_definition);
+				void *data = LINKED_SERVER_DATA(validation_lsproc, 1);
+				int data_len = LINKED_SERVER_DATA_LEN(validation_lsproc, 1);
+				
+				if (data && data_len > 0)
+				{
+					/* Allocate exactly the size needed based on actual data length */
+					definition = (char *)palloc(data_len + 1);
+					memcpy(definition, data, data_len);
+					definition[data_len] = '\0';
+				}
 			}
 		}
 		
