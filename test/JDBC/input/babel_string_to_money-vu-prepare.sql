@@ -1,0 +1,108 @@
+--Procedure
+CREATE PROCEDURE TestMoneyCast(@input VARCHAR(20))
+AS
+BEGIN
+    SELECT CAST(@input AS MONEY);                          
+END;
+GO
+
+--Function 
+CREATE FUNCTION test_money_func(@amount MONEY)
+RETURNS MONEY
+AS
+BEGIN
+    RETURN @amount * 2;
+END;
+GO
+
+--Views
+CREATE VIEW test_validcurrency AS SELECT CAST('$10050.78' AS MONEY) AS Amount;
+GO
+
+CREATE VIEW test1 AS SELECT CAST('$ ' AS MONEY) AS Amount;
+GO
+
+--Function
+CREATE FUNCTION money_func()
+RETURNS @test TABLE(
+    a MONEY, b MONEY, c MONEY, d MONEY
+)
+AS
+BEGIN
+    INSERT INTO @test
+    SELECT 
+        CAST('$123.45' AS MONEY),
+        CAST('$-123.45' AS MONEY),
+        CAST(NULL AS MONEY),
+        CAST('$+.657' AS MONEY);
+      
+    RETURN;
+END;
+GO
+
+CREATE TABLE transactions (
+    id INT,
+    debit MONEY,
+    credit MONEY,
+    balance MONEY,
+    transaction_date DATE,
+    amount MONEY
+);
+GO
+
+--insert data with dates
+INSERT INTO transactions VALUES
+(1, '$100.00', '€95.00', '$5.00', '2024-01-15', '$1500.00'),
+(2, '£75.50', '$80.00', '-$4.50', '2024-01-20', '$500.00'),
+(3, '$400.00', '$390.00', '$10.00', '2024-03-15', '$900.00');
+GO
+
+--Function to convert smallmoney to money
+CREATE FUNCTION fn_SmallToMoney(@small SMALLMONEY)
+RETURNS MONEY
+AS
+BEGIN
+    DECLARE @money MONEY;
+    SET @money = CAST(@small AS MONEY);
+    RETURN @money;
+END;
+GO
+
+--Procedure
+CREATE PROCEDURE Test_Arithmetic
+AS
+BEGIN
+    DECLARE @a MONEY = '$00000';
+    DECLARE @b MONEY = '¤10,0,13';
+    
+    SELECT 
+        @a + @b AS Addition,
+        @a - @b AS Subtraction,
+        @a * 2 AS Multiplication,
+        @a / @b AS Division,
+        @a % @b AS Modulo;
+END;
+GO
+--Procedure to test boundary values
+CREATE PROCEDURE Test_Boundaries
+AS
+BEGIN
+    DECLARE @maxMoney MONEY = 922337203685477.5807;
+    DECLARE @minMoney MONEY = -922337203685477.5808;
+    
+    SELECT 
+        @maxMoney AS MaxMoney,
+        @minMoney AS MinMoney
+END;
+GO
+--Function to round off money
+CREATE FUNCTION round_money(
+    @amount MONEY,
+    @decimals INT = 2
+)
+RETURNS MONEY
+AS
+BEGIN
+    RETURN ROUND(@amount, @decimals);
+END;
+GO
