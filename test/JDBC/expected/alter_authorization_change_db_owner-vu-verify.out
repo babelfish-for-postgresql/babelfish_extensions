@@ -1183,6 +1183,40 @@ go
 -- go
 use master
 go
+create database alter_auth_db
+go
+alter authorization on database::alter_auth_db TO bbf_role_admin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+alter authorization on database::alter_auth_db TO securityadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+alter authorization on database::alter_auth_db TO sysadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+alter authorization on database::alter_auth_db TO dbcreator
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+alter authorization on database::alter_auth_db TO master_db_datareader
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'master_db_datareader', because it does not exist or you do not have permission.)~~
+
+drop database alter_auth_db
+go
 drop database DB64long_0123456789012345678901234567890123456789012345678901234
 go
 
