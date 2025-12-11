@@ -47,4 +47,3 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPolyFromText(sys.NVARCHAR,srid integ
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
-    
