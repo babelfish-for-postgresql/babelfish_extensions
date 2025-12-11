@@ -732,7 +732,7 @@ is_login_name(char *rolname)
 {
 	Relation	relation;
 	bool		is_login = true;
-	ScanKeyData scanKey[2];
+	ScanKeyData scanKey;
 	SysScanDesc scan;
 	HeapTuple	tuple;
 	NameData   *login;
@@ -741,18 +741,14 @@ is_login_name(char *rolname)
 
 	login = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(login->data, NAMEDATALEN, "%s", rolname);
-	ScanKeyInit(&scanKey[0],
+	ScanKeyInit(&scanKey,
 				Anum_bbf_authid_login_ext_rolname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				NameGetDatum(login));
-	ScanKeyInit(&scanKey[1],
-				Anum_bbf_authid_login_ext_is_fixed_role,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(0));
 
 	scan = systable_beginscan(relation,
 							  get_authid_login_ext_idx_oid(),
-							  true, NULL, 2, scanKey);
+							  true, NULL, 1, &scanKey);
 
 	tuple = systable_getnext(scan);
 
