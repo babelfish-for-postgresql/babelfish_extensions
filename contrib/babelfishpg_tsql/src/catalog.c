@@ -727,6 +727,9 @@ is_login(Oid role_oid)
 	return is_login;
 }
 
+/*
+ * Returns true if it is a Babelfish login name.
+ */
 bool
 is_login_name(char *rolname)
 {
@@ -736,6 +739,14 @@ is_login_name(char *rolname)
 	SysScanDesc scan;
 	HeapTuple	tuple;
 	NameData   *login;
+
+	/* Return false if the role is 'bbf_role_admin' - it is an internal Babelfish role. */
+	if (strlen(rolname) == 14 && strncmp(rolname, "bbf_role_admin", 14) == 0)
+		return false;
+
+	/* Return false if it's a Babelfish fixed server role. */
+	if (IS_BBF_FIXED_SERVER_ROLE(rolname))
+		return false;
 
 	relation = table_open(get_authid_login_ext_oid(), AccessShareLock);
 

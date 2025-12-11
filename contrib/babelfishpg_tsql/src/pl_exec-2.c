@@ -4034,7 +4034,7 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 	}
 
 	/* Verify new owner exists as a login. */
-	if (get_role_oid(stmt->new_owner_name, true) == InvalidOid)
+	if (!is_login_name(stmt->new_owner_name))
 	{
 		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));
