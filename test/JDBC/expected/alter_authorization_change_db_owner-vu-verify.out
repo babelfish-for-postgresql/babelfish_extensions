@@ -1183,6 +1183,8 @@ go
 -- go
 use master
 go
+drop database DB64long_0123456789012345678901234567890123456789012345678901234
+go
 create database alter_auth_db
 go
 alter authorization on database::alter_auth_db TO bbf_role_admin
@@ -1216,8 +1218,6 @@ go
 ~~ERROR (Message: Cannot find the principal 'master_db_datareader', because it does not exist or you do not have permission.)~~
 
 drop database alter_auth_db
-go
-drop database DB64long_0123456789012345678901234567890123456789012345678901234
 go
 
 
