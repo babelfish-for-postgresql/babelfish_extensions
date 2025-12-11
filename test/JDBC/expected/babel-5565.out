@@ -1,0 +1,54 @@
+-- tsql
+create login l2 with PASSWORD = '123';
+go
+
+create user l2;
+go
+
+CREATE LOGIN l1 WITH PASSWORD = '123';
+go
+
+use master;
+go
+
+create user l1;
+go
+
+use tempdb;
+go
+
+create user l1;
+go
+
+use msdb;
+go
+
+create user l1;
+go
+
+-- psql user=l2 password=123
+drop user l1;
+go
+
+-- tsql
+-- drop users and logins
+use master;
+go
+
+drop user l1;
+go
+
+use tempdb;
+go
+
+drop user l1;
+go
+
+use msdb;
+go
+
+drop user l1;
+go
+
+drop login l1;
+go

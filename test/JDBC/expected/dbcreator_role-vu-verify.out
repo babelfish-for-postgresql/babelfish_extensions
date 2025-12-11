@@ -95,7 +95,7 @@ create login dbcreator with password = '123'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The Server principal 'dbcreator' already exists)~~
+~~ERROR (Message: Cannot create database principal "dbcreator" as there already exists a Babelfish internal role with the same name)~~
 
 
 -- terminate-tsql-conn

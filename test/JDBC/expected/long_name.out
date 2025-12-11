@@ -1,0 +1,31 @@
+create database babel_5135_longdb_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+go
+
+use babel_5135_longdb_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+go
+
+CREATE PROC babelfish_inconsistent_metadata_vu_prepare_proc
+AS
+SELECT object_type, schema_name, object_name
+FROM sys.babelfish_inconsistent_metadata()
+GO
+
+exec babelfish_inconsistent_metadata_vu_prepare_proc
+go
+
+drop proc babelfish_inconsistent_metadata_vu_prepare_proc
+go
+
+select name from sys.babelfish_sysdatabases;
+go
+
+select rolname from babelfish_authid_user_ext;
+go
+
+use master
+go
+
+drop database babel_5135_longdb_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+go
+
+
