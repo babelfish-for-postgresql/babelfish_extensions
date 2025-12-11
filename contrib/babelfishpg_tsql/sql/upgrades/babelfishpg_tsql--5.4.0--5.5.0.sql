@@ -552,14 +552,14 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year NUMERIC,
-                                                                IN p_month NUMERIC,
-                                                                IN p_day NUMERIC,
-                                                                IN p_hour NUMERIC,
-                                                                IN p_minute NUMERIC,
-                                                                IN p_seconds NUMERIC,
-                                                                IN p_fractions NUMERIC,
-                                                                IN p_precision NUMERIC)
+CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year INT,
+                                                                IN p_month INT,
+                                                                IN p_day INT,
+                                                                IN p_hour INT,
+                                                                IN p_minute INT,
+                                                                IN p_seconds INT,
+                                                                IN p_fractions INT,
+                                                                IN p_precision INT)
 RETURNS sys.DATETIME2
 AS
 $BODY$
@@ -571,6 +571,19 @@ DECLARE
    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
    v_string pg_catalog.text;
 BEGIN
+   IF p_precision IS NULL THEN
+      RAISE invalid_parameter_value USING 
+         MESSAGE := 'Precision argument cannot be null.',
+         DETAIL := 'The precision parameter is mandatory for DATETIME2.',
+         HINT := 'Provide a valid precision value between 0 and 7.';
+   END IF;
+
+   IF p_year IS NULL OR p_month IS NULL OR p_day IS NULL OR 
+      p_hour IS NULL OR p_minute IS NULL OR p_seconds IS NULL OR 
+      p_fractions IS NULL THEN
+      RETURN NULL;
+   END IF;
+
    v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
    v_precision := p_precision::SMALLINT;
 
@@ -631,8 +644,50 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-IMMUTABLE
-RETURNS NULL ON NULL INPUT;
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year TEXT,
+                                                                IN p_month TEXT,
+                                                                IN p_day TEXT,
+                                                                IN p_hour TEXT,
+                                                                IN p_minute TEXT,
+                                                                IN p_seconds TEXT,
+                                                                IN p_fractions TEXT,
+                                                                IN p_precision TEXT)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_err_message VARCHAR;
+BEGIN
+    IF p_precision IS NULL THEN
+        RAISE invalid_parameter_value USING 
+            MESSAGE := 'Precision argument cannot be null.',
+            DETAIL := 'The precision parameter is mandatory for DATETIME2.',
+            HINT := 'Provide a valid precision value between 0 and 7.';
+    END IF;
+
+    IF p_year IS NULL OR p_month IS NULL OR p_day IS NULL OR 
+       p_hour IS NULL OR p_minute IS NULL OR p_seconds IS NULL OR 
+       p_fractions IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN sys.datetime2fromparts(p_year::INT, p_month::INT, p_day::INT,
+                                                p_hour::INT, p_minute::INT, p_seconds::INT,
+                                                p_fractions::INT, p_precision::INT);
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'numeric\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+                    DETAIL := 'Supplied string value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -461,7 +461,6 @@ DECLARE
    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
    v_string pg_catalog.text;
 BEGIN
-   -- Check if precision is null (mandatory parameter)
    IF p_precision IS NULL THEN
       RAISE invalid_parameter_value USING 
          MESSAGE := 'Precision argument cannot be null.',
@@ -469,7 +468,6 @@ BEGIN
          HINT := 'Provide a valid precision value between 0 and 7.';
    END IF;
 
-   -- Return null if any other parameter is null
    IF p_year IS NULL OR p_month IS NULL OR p_day IS NULL OR 
       p_hour IS NULL OR p_minute IS NULL OR p_seconds IS NULL OR 
       p_fractions IS NULL THEN
@@ -703,7 +701,6 @@ $BODY$
 DECLARE
     v_err_message VARCHAR;
 BEGIN
-    -- Check if precision is null (mandatory parameter)
     IF p_precision IS NULL THEN
         RAISE invalid_parameter_value USING 
             MESSAGE := 'Precision argument cannot be null.',
@@ -711,7 +708,6 @@ BEGIN
             HINT := 'Provide a valid precision value between 0 and 7.';
     END IF;
 
-    -- Return null if any other parameter is null
     IF p_year IS NULL OR p_month IS NULL OR p_day IS NULL OR 
        p_hour IS NULL OR p_minute IS NULL OR p_seconds IS NULL OR 
        p_fractions IS NULL THEN
