@@ -705,81 +705,71 @@ money
 
 
 
--- TODO: fix BABEL-704
 -- Note: inside qoute it will treat any character as a currency symbol
 -- if character is not a letter, digit and not equal to '+', '-', '.', '\0' 
 -- Unsupported currency symbol by SQL it should throw error with BABEL
 -- Indian Rupee
 select CAST('₹100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "₹100.123" to money)~~
 
 -- Bitcoin
 select CAST('₿100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "₿100.123" to money)~~
 
 -- gujarati rupee
 select CAST('૱100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "૱100.123" to money)~~
 
 -- tamil rupee
 select CAST('௹100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "௹100.123" to money)~~
 
 -- Azerbaijani manat
 select CAST('₼100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "₼100.123" to money)~~
 
 -- SPESMILO
 select CAST('₷100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "₷100.123" to money)~~
 
 -- AUSTRAL
 select CAST('₳100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "₳100.123" to money)~~
 
 -- GUARANI
 select CAST('₲100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "₲100.123" to money)~~
 
 -- Lari
 select CAST('₾100.123' AS money);
 GO
-~~START~~
-money
-100.1230
-~~END~~
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "₾100.123" to money)~~
 
 
 -- Currency Symbols as a datatype 

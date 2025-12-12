@@ -648,5 +648,5 @@ ascii_function
 Select_top_N_percent
 test_convert_to_binary
 cast_datetime_to_binary
-BABEL-4271
+babel_string_to_money
 babel_binary-before-17_7-or-16_11
