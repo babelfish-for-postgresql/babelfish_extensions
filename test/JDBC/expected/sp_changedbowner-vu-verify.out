@@ -801,6 +801,12 @@ go
 
 ~~ERROR (Message: Cannot find the principal 'sp_changedbowner_r1', because it does not exist or you do not have permission.)~~
 
+exec sp_changedbowner 'sp_changedbowner_db_sp_changedbowner_r1'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'sp_changedbowner_db_sp_changedbowner_r1', because it does not exist or you do not have permission.)~~
+
 drop role sp_changedbowner_r1
 go
 use master

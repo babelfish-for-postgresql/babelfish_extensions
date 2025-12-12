@@ -445,6 +445,8 @@ exec sp_changedbowner 'master_db_datareader'
 go
 exec sp_changedbowner 'sp_changedbowner_r1'
 go
+exec sp_changedbowner 'sp_changedbowner_db_sp_changedbowner_r1'
+go
 drop role sp_changedbowner_r1
 go
 use master

@@ -712,6 +712,8 @@ alter authorization on database::alter_auth_db TO master_db_datareader
 go
 alter authorization on database::alter_auth_db TO alter_auth_r1
 go
+alter authorization on database::alter_auth_db TO master_alter_auth_r1
+go
 drop role alter_auth_r1
 go
 drop database alter_auth_db

@@ -1256,6 +1256,12 @@ go
 
 ~~ERROR (Message: Cannot find the principal 'alter_auth_r1', because it does not exist or you do not have permission.)~~
 
+alter authorization on database::alter_auth_db TO master_alter_auth_r1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'master_alter_auth_r1', because it does not exist or you do not have permission.)~~
+
 drop role alter_auth_r1
 go
 drop database alter_auth_db
