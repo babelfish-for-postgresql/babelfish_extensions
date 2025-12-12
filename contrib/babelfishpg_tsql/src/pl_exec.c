@@ -498,6 +498,14 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 static void
 setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 
+/* Helper function to get procedure body from pg_proc catalog */
+static char *
+get_procedure_body_from_catalog(Oid proc_oid);
+
+/* Helper function to transform procedure body for INSERT EXEC */
+static char *
+transform_procedure_body_for_insert_exec(const char *proc_body, const char *target_table);
+
 static bool	called_for_tsql_itvf_function = false;
 bool  		called_for_tsql_itvf_func(void);
 
@@ -4907,6 +4915,72 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			setup_procedure_output_target_for_insert_exec(estate, stmt);
 		}
 
+		/* Handle INSERT EXEC procedure body replacement */
+		if (stmt->insert_exec)
+		{
+			CachedPlanSource *cachedPlanSource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
+			Node *node = linitial_node(Query, cachedPlanSource->query_list)->utilityStmt;
+			
+			if (node && IsA(node, CallStmt))
+			{
+				FuncExpr *funcexpr = ((CallStmt *) node)->funcexpr;
+				char *proc_body = get_procedure_body_from_catalog(funcexpr->funcid);
+				
+				if (proc_body)
+				{
+					/* Get target table name from INSERT statement plan */
+					char *target_table = "insert_exec_table"; /* fallback */
+					CachedPlan *plan_cp;
+					char *transformed_body;
+					
+					plan_cp = SPI_plan_get_cached_plan(expr->plan);
+					
+					if (plan_cp && list_length(plan_cp->stmt_list) > 0)
+					{
+						PlannedStmt *ps = (PlannedStmt *) linitial(plan_cp->stmt_list);
+						if (ps->commandType == CMD_INSERT && ps->rtable && list_length(ps->resultRelations) > 0)
+						{
+							Index result_rel_idx = linitial_int(ps->resultRelations);
+							RangeTblEntry *rte = (RangeTblEntry *) list_nth(ps->rtable, result_rel_idx - 1);
+							if (rte && rte->rtekind == RTE_RELATION)
+							{
+								target_table = get_rel_name(rte->relid);
+							}
+						}
+						ReleaseCachedPlan(plan_cp, CurrentResourceOwner);
+					}
+					
+					/* Transform procedure body: convert SELECT/OUTPUT to INSERT INTO target_table */
+					transformed_body = transform_procedure_body_for_insert_exec(proc_body, target_table);
+					if (transformed_body)
+					{
+						stmt->sqlstmt->query = pstrdup(transformed_body);
+						pfree(transformed_body);
+					}
+					else
+					{
+						/* Fallback: use original procedure body */
+						stmt->sqlstmt->query = pstrdup(proc_body);
+					}
+					
+					if (stmt->sqlstmt->query != proc_body) /* Only if we modified the query */
+					{
+						/* Free the plan to force re-preparation with new query */
+						if (expr->plan)
+						{
+							SPI_freeplan(expr->plan);
+							expr->plan = NULL;
+						}
+						
+						/* Re-prepare the statement with the new query */
+						prepare_stmt_execsql(estate, estate->func, stmt, true);
+					}
+					
+					pfree(proc_body);
+				}
+			}
+		}
+
 		/*
 		 * Check whether the statement is an INSERT/DELETE with RETURNING
 		 */
@@ -5104,10 +5178,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		}
 
 		/* Update the output parameter */
-		if (stmt->insert_exec && stmt->target && execute_call_insert_exec_retval != (Datum) 0)
-		{
-			exec_move_row_from_datum(estate, stmt->target, execute_call_insert_exec_retval);
-		}
+		// if (stmt->insert_exec && stmt->target && execute_call_insert_exec_retval != (Datum) 0)
+		// {
+		// 	exec_move_row_from_datum(estate, stmt->target, execute_call_insert_exec_retval);
+		// }
 
 		if (enable_txn_in_triggers)
 		{
@@ -10537,6 +10611,40 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 	PG_END_TRY();
 }
 
+/* ----------
+ * get_procedure_body_from_catalog		Retrieve procedure body from pg_proc catalog
+ * ----------
+ */
+static char *
+get_procedure_body_from_catalog(Oid proc_oid)
+{
+	HeapTuple	proc_tuple;
+	Datum		prosrc_datum;
+	bool		isnull;
+	char	   *proc_body;
+
+	/* Look up the procedure in pg_proc */
+	proc_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_oid));
+	if (!HeapTupleIsValid(proc_tuple))
+		return NULL;	/* Procedure not found */
+
+
+	/* Get the procedure source code (prosrc) */
+	prosrc_datum = SysCacheGetAttr(PROCOID, proc_tuple, Anum_pg_proc_prosrc, &isnull);
+
+	if (isnull)
+	{
+		ReleaseSysCache(proc_tuple);
+		return NULL;	/* No source code available */
+	}
+
+	/* Convert to C string and make a copy */
+	proc_body = pstrdup(TextDatumGetCString(prosrc_datum));
+
+	ReleaseSysCache(proc_tuple);
+	return proc_body;
+}
+
 PG_FUNCTION_INFO_V1(pltsql_assign_var);
 
 /*
@@ -10581,4 +10689,212 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_DATUM(data);
+}
+
+/*
+ * Transform procedure body for INSERT EXEC by converting SELECT/OUTPUT statements
+ * to INSERT INTO target_table
+ */
+static char *
+transform_procedure_body_for_insert_exec(const char *proc_body, const char *target_table)
+{
+	StringInfoData result;
+	const char *p = proc_body;
+	const char *stmt_start;
+	bool in_single_quote = false;
+	bool in_double_quote = false;
+	
+	if (!proc_body || !target_table)
+		return NULL;
+	
+	initStringInfo(&result);
+	
+	/* Process each statement in the procedure body */
+	stmt_start = p;
+	while (*p)
+	{
+		if (*p == '\'' && !in_double_quote)
+		{
+			in_single_quote = !in_single_quote;
+		}
+		else if (*p == '"' && !in_single_quote)
+		{
+			in_double_quote = !in_double_quote;
+		}
+		else if (*p == ';' && !in_single_quote && !in_double_quote)
+		{
+			/* Found end of statement */
+			char *stmt = pnstrdup(stmt_start, p - stmt_start);
+			char *trimmed_stmt;
+			
+			/* Trim whitespace */
+			trimmed_stmt = stmt;
+			while (*trimmed_stmt && isspace((unsigned char)*trimmed_stmt))
+				trimmed_stmt++;
+			if (*trimmed_stmt)
+			{
+				char *end = trimmed_stmt + strlen(trimmed_stmt) - 1;
+				while (end > trimmed_stmt && isspace((unsigned char)*end))
+					*end-- = '\0';
+			}
+			
+			/* Check if this is a SELECT or DML with OUTPUT clause */
+			if (strncasecmp(trimmed_stmt, "SELECT", 6) == 0)
+			{
+				/* Skip transformation if statement references temp tables */
+				if (strstr(trimmed_stmt, "#") != NULL)
+					appendStringInfo(&result, "%s;", trimmed_stmt);
+				else
+					appendStringInfo(&result, "INSERT INTO %s %s;", target_table, trimmed_stmt);
+			}
+			else if (strstr(trimmed_stmt, "OUTPUT") != NULL && 
+					 (strncasecmp(trimmed_stmt, "INSERT", 6) == 0 || 
+					  strncasecmp(trimmed_stmt, "UPDATE", 6) == 0 || 
+					  strncasecmp(trimmed_stmt, "DELETE", 6) == 0) &&
+					 strstr(trimmed_stmt, "#") == NULL)
+			{
+				/* Redirect OUTPUT clause to target_table */
+				char *output_pos = strcasestr(trimmed_stmt, "OUTPUT");
+				char *into_pos = strcasestr(output_pos, "INTO");
+				
+				if (into_pos)
+				{
+					/* Replace existing INTO target with target_table */
+					char *after_into = into_pos + 4;
+					while (*after_into && isspace((unsigned char)*after_into))
+						after_into++;
+					/* Skip existing table name */
+					while (*after_into && !isspace((unsigned char)*after_into))
+						after_into++;
+					
+					*into_pos = '\0';
+					appendStringInfo(&result, "%s INTO %s %s;", trimmed_stmt, target_table, after_into);
+				}
+				else
+				{
+					/* Add INTO target_table to OUTPUT clause */
+					char *after_output = output_pos + 6; /* Skip "OUTPUT" */
+					char *values_pos;
+					while (*after_output && isspace((unsigned char)*after_output))
+						after_output++;
+					/* Find end of OUTPUT columns */
+					values_pos = strcasestr(after_output, "VALUES");
+					if (!values_pos)
+						values_pos = strcasestr(after_output, "SET");
+					if (!values_pos)
+						values_pos = strcasestr(after_output, "FROM");
+					
+					if (values_pos)
+					{
+						char saved_char = *values_pos;
+						*values_pos = '\0';
+						appendStringInfo(&result, "%s INTO %s ", trimmed_stmt, target_table);
+						*values_pos = saved_char;
+						appendStringInfo(&result, "%s;", values_pos);
+					}
+					else
+					{
+						appendStringInfo(&result, "%s INTO %s;", trimmed_stmt, target_table);
+					}
+				}
+			}
+			else if (*trimmed_stmt)
+			{
+				appendStringInfo(&result, "%s;", trimmed_stmt);
+			}
+			
+			pfree(stmt);
+			stmt_start = p + 1;
+		}
+		p++;
+	}
+	
+	/* Handle the last statement if no trailing semicolon */
+	if (stmt_start < p)
+	{
+		char *stmt = pnstrdup(stmt_start, p - stmt_start);
+		char *trimmed_stmt;
+		
+		/* Trim whitespace */
+		trimmed_stmt = stmt;
+		while (*trimmed_stmt && isspace((unsigned char)*trimmed_stmt))
+			trimmed_stmt++;
+		if (*trimmed_stmt)
+		{
+			char *end = trimmed_stmt + strlen(trimmed_stmt) - 1;
+			while (end > trimmed_stmt && isspace((unsigned char)*end))
+				*end-- = '\0';
+		}
+		
+		if (*trimmed_stmt)
+		{
+			if (strncasecmp(trimmed_stmt, "SELECT", 6) == 0)
+			{
+				/* Skip transformation if statement references temp tables */
+				if (strstr(trimmed_stmt, "#") != NULL)
+					appendStringInfo(&result, "%s", trimmed_stmt);
+				else
+					appendStringInfo(&result, "INSERT INTO %s %s", target_table, trimmed_stmt);
+			}
+			else if (strstr(trimmed_stmt, "OUTPUT") != NULL && 
+					 (strncasecmp(trimmed_stmt, "INSERT", 6) == 0 || 
+					  strncasecmp(trimmed_stmt, "UPDATE", 6) == 0 || 
+					  strncasecmp(trimmed_stmt, "DELETE", 6) == 0) &&
+					 strstr(trimmed_stmt, "#") == NULL)
+			{
+				/* Redirect OUTPUT clause to target_table */
+				char *output_pos = strcasestr(trimmed_stmt, "OUTPUT");
+				char *into_pos = strcasestr(output_pos, "INTO");
+				
+				if (into_pos)
+				{
+					/* Replace existing INTO target with target_table */
+					char *after_into = into_pos + 4;
+					while (*after_into && isspace((unsigned char)*after_into))
+						after_into++;
+					/* Skip existing table name */
+					while (*after_into && !isspace((unsigned char)*after_into))
+						after_into++;
+					
+					*into_pos = '\0';
+					appendStringInfo(&result, "%s INTO %s %s", trimmed_stmt, target_table, after_into);
+				}
+				else
+				{
+					/* Add INTO target_table to OUTPUT clause */
+					char *after_output = output_pos + 6; /* Skip "OUTPUT" */
+					char *values_pos;
+					while (*after_output && isspace((unsigned char)*after_output))
+						after_output++;
+					/* Find end of OUTPUT columns */
+					values_pos = strcasestr(after_output, "VALUES");
+					if (!values_pos)
+						values_pos = strcasestr(after_output, "SET");
+					if (!values_pos)
+						values_pos = strcasestr(after_output, "FROM");
+					
+					if (values_pos)
+					{
+						char saved_char = *values_pos;
+						*values_pos = '\0';
+						appendStringInfo(&result, "%s INTO %s ", trimmed_stmt, target_table);
+						*values_pos = saved_char;
+						appendStringInfo(&result, "%s", values_pos);
+					}
+					else
+					{
+						appendStringInfo(&result, "%s INTO %s", trimmed_stmt, target_table);
+					}
+				}
+			}
+			else
+			{
+				appendStringInfo(&result, "%s", trimmed_stmt);
+			}
+		}
+		
+		pfree(stmt);
+	}
+	
+	return result.data;
 }
