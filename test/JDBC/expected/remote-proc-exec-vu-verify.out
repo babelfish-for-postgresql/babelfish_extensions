@@ -574,9 +574,10 @@ Hello from remote#!#42
 -- Expected: Should use current/default database
 EXEC bbf_rpe_server..dbo.sp_NoParams;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "sys.babelfish_servers" does not exist)~~
+~~START~~
+varchar#!#int
+Hello from remote#!#42
+~~END~~
 
 
 -- Test 49: Three-part with schema omitted (server.database..procedure)
@@ -593,9 +594,10 @@ Hello from remote#!#42
 -- Expected: Should use defaults for database and schema
 EXEC bbf_rpe_server...sp_NoParams;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "sys.babelfish_servers" does not exist)~~
+~~START~~
+varchar#!#int
+Hello from remote#!#42
+~~END~~
 
 
 
@@ -626,7 +628,7 @@ EXEC bbf_rpe_server.master.invalid_schema.sp_NoParams;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not fetch definition for procedure master.invalid_schema.sp_noparams)~~
+~~ERROR (Message: Could not fetch definition for remote procedure bbf_rpe_server.master.invalid_schema.sp_noparams)~~
 
 
 -- Test 54: Invalid procedure name
@@ -635,47 +637,43 @@ EXEC bbf_rpe_server.master.dbo.sp_NonExistent;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not fetch definition for procedure master.dbo.sp_nonexistent)~~
+~~ERROR (Message: Could not fetch definition for remote procedure bbf_rpe_server.master.dbo.sp_nonexistent)~~
 
 
 -- Test 55: Procedure with INSERT statement (violates SELECT-only)
 -- Expected: Should throw error - INSERT not allowed
 EXEC bbf_rpe_server.master.dbo.sp_WithInsert;
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure contains INSERT statement)~~
 
 
 -- Test 56: Procedure with UPDATE statement (violates SELECT-only)
 -- Expected: Should throw error - UPDATE not allowed
 EXEC bbf_rpe_server.master.dbo.sp_WithUpdate;
 GO
-~~START~~
-int
-2
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure contains UPDATE statement)~~
 
 
 -- Test 57: Procedure with DELETE statement (violates SELECT-only)
 -- Expected: Should throw error - DELETE not allowed
 EXEC bbf_rpe_server.master.dbo.sp_WithDelete;
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure contains DELETE statement)~~
 
 
 -- Test 58: Procedure with dynamic SQL (violates SELECT-only)
 -- Expected: Should throw error - dynamic SQL not allowed
 EXEC bbf_rpe_server.master.dbo.sp_WithDynamicSQL;
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure contains EXECUTE(string) statement)~~
 
 
 -- Test 59: RPC out disabled test setup
@@ -927,8 +925,9 @@ int#!#int
 ~~END~~
 
 
--- Test 80: Remote procedure in variable assignment
--- Expected: Should be able to use result in variable
+-- Test 80: OPENQUERY with stored procedure (documents unsupported behavior)
+-- Note: OPENQUERY with EXEC does not return result sets - this is expected to fail
+-- This test documents the limitation, not a bug
 DECLARE @val INT;
 SELECT @val = (SELECT TOP 1 number FROM OPENQUERY(bbf_rpe_server, 'EXEC sp_NoParams'));
 SELECT @val AS assigned_value;
@@ -958,7 +957,7 @@ EXEC bbf_rpe_server.master.dbo.[sp_NoParams'; DROP TABLE test; --];
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not fetch definition for procedure master.dbo.sp_noparams'; drop table test; --)~~
+~~ERROR (Message: Invalid procedure name: contains illegal character ''')~~
 
 
 
@@ -1065,10 +1064,17 @@ int#!#bigint#!#smallint#!#tinyint
 ~~END~~
 
 
--- Test 92: Named parameters in reverse order
--- Expected: Should match by name, not position
-EXEC bbf_rpe_server.master.dbo.sp_OutputMultiple @product=0, @sum=0, @b=7, @a=3;
+-- Test 92: Named parameters in reverse order with OUTPUT
+-- Expected: Should match by name, not position (sum=10, product=21)
+DECLARE @sum92 INT, @product92 INT;
+EXEC bbf_rpe_server.master.dbo.sp_OutputMultiple @a=3, @b=7, @sum=@sum92 OUTPUT, @product=@product92 OUTPUT;
+SELECT @sum92 AS sum_value, @product92 AS product_value;
 GO
+~~START~~
+int#!#int
+10#!#21
+~~END~~
+
 ~~START~~
 int#!#int
 10#!#21

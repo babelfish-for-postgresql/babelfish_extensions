@@ -67,6 +67,13 @@ extern "C"
 
 	void report_antlr_error(ANTLR_result result);
 
+	void validate_remote_procedure_select_only_antlr(
+		const char *definition,
+		const char *server_name,
+		const char *database_name,
+		const char *schema_name,
+		const char *procedure_name);
+
 	extern PLtsql_type *parse_datatype(const char *string, int location);
 	extern bool is_tsql_text_ntext_or_image_datatype(Oid oid);
 
@@ -847,6 +854,114 @@ clear_tables_info()
  * mutators will be deprecated and existing query rewriting logics in tsqlBuilder
  * will be also moved. tsqlBuilder will focus on create Pltsql_stmt_* only.
  */
+
+////////////////////////////////////////////////////////////////////////////////
+// Remote Procedure SELECT-only Validator
+////////////////////////////////////////////////////////////////////////////////
+class RemoteProcedureSelectOnlyValidator : public TSqlParserBaseVisitor
+{
+private:
+	bool has_forbidden_statement;
+	std::string forbidden_statement_type;
+	std::pair<int,int> error_location;
+	
+public:
+	explicit RemoteProcedureSelectOnlyValidator() 
+		: has_forbidden_statement(false), forbidden_statement_type(""), error_location(0, 0) {}
+	
+	// Block INSERT
+	antlrcpp::Any visitInsert_statement(TSqlParser::Insert_statementContext *ctx) override {
+		has_forbidden_statement = true;
+		forbidden_statement_type = "INSERT";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+	
+	// Block UPDATE
+	antlrcpp::Any visitUpdate_statement(TSqlParser::Update_statementContext *ctx) override {
+		has_forbidden_statement = true;
+		forbidden_statement_type = "UPDATE";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+	
+	// Block DELETE
+	antlrcpp::Any visitDelete_statement(TSqlParser::Delete_statementContext *ctx) override {
+		has_forbidden_statement = true;
+		forbidden_statement_type = "DELETE";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+	
+	// Block MERGE
+	antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override {
+		has_forbidden_statement = true;
+		forbidden_statement_type = "MERGE";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+	
+	// Block ALL CREATE TABLE (including temp tables)
+	antlrcpp::Any visitCreate_table(TSqlParser::Create_tableContext *ctx) override {
+		has_forbidden_statement = true;
+		forbidden_statement_type = "CREATE TABLE";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+	
+	// Block DDL statements
+	antlrcpp::Any visitDdl_statement(TSqlParser::Ddl_statementContext *ctx) override {
+		if (ctx->drop_table() || ctx->drop_view() || ctx->drop_procedure() ||
+			ctx->drop_function() || ctx->alter_table() || ctx->alter_database() ||
+			ctx->truncate_table() || ctx->alter_index() || ctx->drop_index()) {
+			has_forbidden_statement = true;
+			forbidden_statement_type = "DDL";
+			error_location = getLineAndPos(ctx);
+			return nullptr;
+		}
+		return visitChildren(ctx);
+	}
+	
+	// Block dynamic SQL: EXEC('string') and sp_executesql
+	antlrcpp::Any visitExecute_statement(TSqlParser::Execute_statementContext *ctx) override {
+		if (ctx->execute_body() && ctx->execute_body()->LR_BRACKET()) {
+			// EXEC(@var) or EXEC('string')
+			has_forbidden_statement = true;
+			forbidden_statement_type = "EXECUTE(string)";
+			error_location = getLineAndPos(ctx);
+			return nullptr;
+		}
+		
+		// Check if executing sp_executesql or other dynamic SQL procedures
+		if (ctx->execute_body() && ctx->execute_body()->func_proc_name_server_database_schema()) {
+			auto func_ctx = ctx->execute_body()->func_proc_name_server_database_schema();
+			if (func_ctx->procedure) {
+				std::string proc_name = stripQuoteFromId(func_ctx->procedure);
+				
+				// Block dynamic SQL procedures
+				if (string_matches(proc_name.c_str(), "sp_executesql") ||
+				    string_matches(proc_name.c_str(), "sp_execute") ||
+				    string_matches(proc_name.c_str(), "sp_prepexec") ||
+				    string_matches(proc_name.c_str(), "sp_cursorprepexec") ||
+				    string_matches(proc_name.c_str(), "sp_prepare") ||
+				    string_matches(proc_name.c_str(), "sp_cursorprepare")) {
+					has_forbidden_statement = true;
+					forbidden_statement_type = "EXECUTE(string)";
+					error_location = getLineAndPos(ctx);
+					return nullptr;
+				}
+			}
+		}
+		
+		// Allow EXEC proc_name - continue visiting
+		return visitChildren(ctx);
+	}
+	
+	// Check if validation failed
+	bool hasForbiddenStatement() const { return has_forbidden_statement; }
+	const char* getStatementType() const { return forbidden_statement_type.c_str(); }
+	std::pair<int,int> getLocation() const { return error_location; }
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // tsql Common Mutator
@@ -4129,6 +4244,54 @@ void report_antlr_error(ANTLR_result r)
 }
 
 #pragma GCC diagnostic pop
+
+void
+validate_remote_procedure_select_only_antlr(
+	const char *definition,
+	const char *server_name,
+	const char *database_name,
+	const char *schema_name,
+	const char *procedure_name)
+{
+	try {
+		// Parse T-SQL procedure body using ANTLR
+		MyInputStream stream(definition);
+		TSqlLexer lexer(&stream);
+		CommonTokenStream tokens(&lexer);
+		TSqlParser parser(&tokens);
+		
+		// Parse as T-SQL batch
+		tree::ParseTree *tree = parser.tsql_file();
+		
+		// Validate with our SELECT-only visitor
+		RemoteProcedureSelectOnlyValidator validator;
+		validator.visit(tree);
+		
+		// Throw error if forbidden statements found
+		if (validator.hasForbiddenStatement()) {
+			ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains %s statement", 
+						validator.getStatementType()),
+				 errdetail("Procedure %s.%s.%s.%s contains %s operation which is not allowed",
+						  server_name, database_name, schema_name, procedure_name,
+						  validator.getStatementType()),
+				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
+		}
+	}
+	catch (PGErrorWrapperException &e) {
+		ereport(ERROR,
+			(errcode(e.get_errcode()),
+			 errmsg("%s", e.get_errmsg())));
+	}
+	catch (...) {
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Failed to parse remote procedure %s.%s.%s.%s definition",
+					server_name, database_name, schema_name, procedure_name)));
+	}
+}
+
 } // extern "C"
 
 template <class T>

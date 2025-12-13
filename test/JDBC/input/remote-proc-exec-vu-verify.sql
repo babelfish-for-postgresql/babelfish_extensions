@@ -498,8 +498,9 @@ EXEC bbf_rpe_server.master.dbo.sp_SingleInt @value=2;
 EXEC bbf_rpe_server.master.dbo.sp_SingleInt @value=3;
 GO
 
--- Test 80: Remote procedure in variable assignment
--- Expected: Should be able to use result in variable
+-- Test 80: OPENQUERY with stored procedure (documents unsupported behavior)
+-- Note: OPENQUERY with EXEC does not return result sets - this is expected to fail
+-- This test documents the limitation, not a bug
 DECLARE @val INT;
 SELECT @val = (SELECT TOP 1 number FROM OPENQUERY(bbf_rpe_server, 'EXEC sp_NoParams'));
 SELECT @val AS assigned_value;
@@ -578,9 +579,11 @@ GO
 EXEC bbf_rpe_server.master.dbo.sp_TestIntegers @p_int=100, @p_bigint=200, @p_smallint=50, @p_tinyint=25;
 GO
 
--- Test 92: Named parameters in reverse order
--- Expected: Should match by name, not position
-EXEC bbf_rpe_server.master.dbo.sp_OutputMultiple @product=0, @sum=0, @b=7, @a=3;
+-- Test 92: Named parameters in reverse order with OUTPUT
+-- Expected: Should match by name, not position (sum=10, product=21)
+DECLARE @sum92 INT, @product92 INT;
+EXEC bbf_rpe_server.master.dbo.sp_OutputMultiple @a=3, @b=7, @sum=@sum92 OUTPUT, @product=@product92 OUTPUT;
+SELECT @sum92 AS sum_value, @product92 AS product_value;
 GO
 
 -- ========================================

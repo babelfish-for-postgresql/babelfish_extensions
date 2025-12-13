@@ -832,94 +832,37 @@ exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt
 }
 
 #ifdef ENABLE_TDS_LIB
+
 /*
- * Validate remote procedure definition using PostgreSQL parser.
- * Parse the procedure body and check for forbidden statement types.
- * This uses a simple direct check of statement nodes rather than tree walking.
+ * Validate SQL identifier to prevent SQL injection attacks.
+ * Checks for dangerous characters and validates identifier length.
  */
-static bool
-validate_procedure_with_parser(const char *definition, const char *proc_name)
+static void
+validate_sql_identifier(const char *identifier, const char *context)
 {
-	List	   *parse_tree;
-	ListCell   *lc;
+	const char *p;
 	
-	/* Parse T-SQL procedure definition using raw_parser */
-	PG_TRY();
+	if (!identifier || *identifier == '\0')
+		return;  /* NULL or empty is acceptable (will use defaults) */
+	
+	/* Check for SQL injection characters */
+	for (p = identifier; *p; p++)
 	{
-		parse_tree = raw_parser(definition, RAW_PARSE_DEFAULT);
+		/* Reject dangerous characters that could enable SQL injection */
+		if (*p == '\'' || *p == ';' || *p == '-' || *p == '/' || *p == '*' || *p == '\\')
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("Invalid %s: contains illegal character '%c'", 
+							context, *p),
+					 errhint("Identifiers cannot contain quotes, semicolons, dashes, or comment characters.")));
 	}
-	PG_CATCH();
-	{
-		FlushErrorState();
+	
+	/* Check length (T-SQL identifier max = 128 characters) */
+	if (strlen(identifier) > 128)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Cannot parse procedure %s definition", proc_name)));
-	}
-	PG_END_TRY();
-	
-	/* Check each statement in the parse tree */
-	foreach(lc, parse_tree)
-	{
-		RawStmt *raw_stmt = lfirst_node(RawStmt, lc);
-		Node *stmt = raw_stmt->stmt;
-		
-		/* Skip CreateFunctionStmt - this is the procedure wrapper itself */
-		if (IsA(stmt, CreateFunctionStmt))
-			continue;
-		
-		/* Check for CREATE TABLE - allow temp tables only */
-		if (IsA(stmt, CreateStmt))
-		{
-			CreateStmt *create = (CreateStmt *) stmt;
-			
-			/* Allow temporary tables (#temp) - they start with # */
-			if (create->relation &&
-				create->relation->relname &&
-				create->relation->relname[0] != '#')
-			{
-				/* Permanent table - forbidden */
-				ereport(ERROR,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("Remote procedure %s contains forbidden CREATE TABLE statement", proc_name),
-						 errhint("Only SELECT statements and temporary tables allowed")));
-			}
-			/* Temp table is OK, continue */
-			continue;
-		}
-		
-		/* Check for forbidden DML statements */
-		if (IsA(stmt, InsertStmt) ||
-			IsA(stmt, UpdateStmt) ||
-			IsA(stmt, DeleteStmt) ||
-			IsA(stmt, TruncateStmt))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("Remote procedure %s contains forbidden DML statement", proc_name),
-					 errhint("Only SELECT statements allowed")));
-		}
-		
-		/* Check for forbidden DDL statements */
-		if (IsA(stmt, DropStmt) ||
-			IsA(stmt, AlterTableStmt))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("Remote procedure %s contains forbidden DDL statement", proc_name),
-					 errhint("Only SELECT statements allowed")));
-		}
-		
-		/* Check for EXEC/EXECUTE (dynamic SQL) */
-		if (IsA(stmt, ExecuteStmt))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("Remote procedure %s contains dynamic SQL (EXECUTE)", proc_name),
-					 errhint("Dynamic SQL is not allowed in remote procedures")));
-		}
-	}
-	
-	return true;
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("Invalid %s: identifier exceeds maximum length of 128 characters", 
+						context)));
 }
 
 /*
@@ -934,7 +877,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	LinkedServerProcess validation_lsproc = NULL;  /* Separate connection for validation to avoid TDS error 20019 */
 	LINKED_SERVER_RETCODE erc;
 	char *full_proc_name;
-	char *default_db = NULL;
 	int colcount = 0;
 	int rowcount = 0;
 	TupleDesc tupdesc = NULL;
@@ -946,235 +888,54 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	ListCell *lc;
 	List *param_data_buffers = NIL;  /* Track parameter buffers for deferred cleanup */
 	
-	/* SECURITY FIX: Look up default database from linked server configuration */
-	if (!stmt->db_name)
-	{
-		/* Need to query linked server configuration for default database */
-		SPIPlanPtr plan;
-		Oid argtypes[1] = {TEXTOID};
-		Datum values[1];
-		char nulls[1] = {' '};
-		int ret;
-		bool isnull;
-		char *data_source;
-		char *db_start;
-		char *db_end;
-		
-		SPI_connect();
-		
-		/* Query babelfish_servers catalog for data_source */
-		plan = SPI_prepare("SELECT data_source FROM sys.babelfish_servers WHERE name = $1", 
-						   1, argtypes);
-		if (plan == NULL)
-			elog(ERROR, "Failed to prepare default database lookup");
-		
-		values[0] = CStringGetTextDatum(stmt->server_name);
-		
-		ret = SPI_execute_plan(plan, values, nulls, true, 0);
-		if (ret == SPI_OK_SELECT && SPI_processed == 1)
-		{
-			data_source = TextDatumGetCString(SPI_getbinval(SPI_tuptable->vals[0],
-															 SPI_tuptable->tupdesc,
-															 1, &isnull));
-			/* Parse data_source connection string for 'Database=' or 'Initial Catalog=' */
-			if (data_source && !isnull)
-			{
-				db_start = strstr(data_source, "Database=");
-				if (!db_start)
-					db_start = strstr(data_source, "Initial Catalog=");
-				
-				if (db_start)
-				{
-					db_start = strchr(db_start, '=') + 1;
-					db_end = strchr(db_start, ';');
-					if (db_end)
-						default_db = pnstrdup(db_start, db_end - db_start);
-					else
-						default_db = pstrdup(db_start);
-				}
-			}
-		}
-		
-		SPI_freetuptable(SPI_tuptable);
-		SPI_freeplan(plan);
-		SPI_finish();
-	}
+	/*
+	 * Validate all identifiers before using them to prevent SQL injection attacks.
+	 * This must happen BEFORE constructing the full procedure name or making any SQL queries.
+	 */
+	validate_sql_identifier(stmt->proc_name, "procedure name");
+	validate_sql_identifier(stmt->schema_name, "schema name");
+	validate_sql_identifier(stmt->db_name, "database name");
 	
-	/* Build the full procedure name: database.schema.procedure */
-	/* Use configured default DB, or fall back to 'master' if not configured */
+	/*
+	 * Build the full procedure name: database.schema.procedure
+	 * 
+	 * Database context is handled by linked_server_establish_connection():
+	 * - The database is configured when creating the linked server via sp_addlinkedserver
+	 * - It's stored in pg_foreign_server.srvoptions as 'database=<dbname>'
+	 * - linked_server_establish_connection() extracts it and calls LINKED_SERVER_SET_DBNAME()
+	 * - The TDS connection is established with the correct database context
+	 * 
+	 * This matches the existing OPENQUERY implementation which also relies on
+	 * linked_server_establish_connection() for database context.
+	 */
 	full_proc_name = psprintf("%s.%s.%s",
-							 stmt->db_name ? stmt->db_name : (default_db ? default_db : "master"),
+							 stmt->db_name ? stmt->db_name : get_cur_db_name(),
 							 stmt->schema_name ? stmt->schema_name : "dbo",
 							 stmt->proc_name);
-	
-	if (default_db)
-		pfree(default_db);
 	
 	elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Executing procedure: %s", full_proc_name);
 	
 	PG_TRY();
 	{
-		/* 
-		 * PHASE 1: Validate procedure definition using SQL query with sp_executesql
-		 * Use complete connection lifecycle: open → query → close
-		 * CRITICAL: Use separate connection variable to avoid contaminating RPC connection
-		 * SECURITY: Use sp_executesql with parameter binding to prevent SQL injection
+		/*
+		 * PHASE 1: Validate procedure contains only SELECT statements
+		 * This will establish a temporary connection, fetch the definition, validate it, and close
 		 */
-		{
-			LINKED_SERVER_RETCODE erc_val;
-			char *proc_name_param = stmt->proc_name;
-			char *schema_name_param = stmt->schema_name ? stmt->schema_name : "dbo";
-		char *db_name_to_use = stmt->db_name ? stmt->db_name : get_cur_db_name();
-		StringInfoData query_template;
-			StringInfoData param_defs;
-			char *definition = NULL;
-			int colcount_val = 0;
-			
-			elog(LOG, "SELECT-only validation: Opening connection for validation query");
-			
-			/* Open connection for validation - use dedicated variable */
-			linked_server_establish_connection(stmt->server_name, &validation_lsproc, false);
-			
-			/* Build query template with @parameter placeholders */
-			initStringInfo(&query_template);
-			appendStringInfo(&query_template,
-				"SELECT m.definition "
-				"FROM %s.sys.sql_modules m "
-				"JOIN %s.sys.objects o ON m.object_id = o.object_id "
-				"WHERE o.name = @proc_name AND SCHEMA_NAME(o.schema_id) = @schema_name "
-				"AND o.type IN ('P', 'PC')",
-				db_name_to_use, db_name_to_use);
-			
-			/* Parameter definitions for sp_executesql */
-			initStringInfo(&param_defs);
-			appendStringInfoString(&param_defs, "@proc_name VARCHAR(128), @schema_name VARCHAR(128)");
-			
-			elog(LOG, "SELECT-only validation: Fetching procedure definition using sp_executesql");
-			
-			/* Initialize RPC to sp_executesql */
-			if (LINKED_SERVER_RPC_INIT(validation_lsproc, "sp_executesql") != SUCCEED)
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("Failed to initialize sp_executesql")));
-			
-			/* Bind @stmt parameter (the query template) */
-			if (LINKED_SERVER_RPC_PARAM(validation_lsproc, "@stmt", 0, SYBVARCHAR, -1,
-										 query_template.len, (BYTE *)query_template.data) != SUCCEED)
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("Failed to bind query template")));
-			
-			/* Bind @params parameter (parameter definitions) */
-			if (LINKED_SERVER_RPC_PARAM(validation_lsproc, "@params", 0, SYBVARCHAR, -1,
-										 param_defs.len, (BYTE *)param_defs.data) != SUCCEED)
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("Failed to bind parameter definitions")));
-			
-			/* Bind @proc_name parameter value */
-			if (LINKED_SERVER_RPC_PARAM(validation_lsproc, "@proc_name", 0, SYBVARCHAR, -1,
-										 strlen(proc_name_param), (BYTE *)proc_name_param) != SUCCEED)
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("Failed to bind proc_name")));
-			
-			/* Bind @schema_name parameter value */
-			if (LINKED_SERVER_RPC_PARAM(validation_lsproc, "@schema_name", 0, SYBVARCHAR, -1,
-										 strlen(schema_name_param), (BYTE *)schema_name_param) != SUCCEED)
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("Failed to bind schema_name")));
-			
-			/* Send and execute */
-			if (LINKED_SERVER_RPC_SEND(validation_lsproc) != SUCCEED)
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("Failed to send sp_executesql")));
-			
-			if (LINKED_SERVER_RPC_EXEC(validation_lsproc) == FAIL)
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("Failed to execute sp_executesql")));
-			
-			/* Get results */
-			if ((erc_val = LINKED_SERVER_RESULTS(validation_lsproc)) == FAIL)
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("Failed to get results")));
-			
-			colcount_val = LINKED_SERVER_NUM_COLS(validation_lsproc);
-			
-			if (colcount_val > 0)
-			{
-				/* SECURITY FIX: Use dynamic buffer allocation to prevent buffer overflow */
-				StringInfoData definition_buf;
-				int chunk_size = 8192;  /* Read in 8KB chunks */
-				char chunk_buffer[8192];
-				
-				initStringInfo(&definition_buf);
-				
-				/* Bind for chunked reading */
-				if (LINKED_SERVER_BIND_VAR(validation_lsproc, 1, LS_NTBSTRINGBING, 
-											chunk_size, (LS_BYTE *)chunk_buffer) != SUCCEED)
-					ereport(ERROR,
-							(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-							 errmsg("Failed to bind definition column")));
-				
-				/* CRITICAL: Must exhaust ALL rows in current result set before calling dbresults() again */
-				/* Read ALL rows and accumulate in StringInfo which automatically grows as needed */
-				while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
-				{
-					int bytes_read = LINKED_SERVER_DATA_LEN(validation_lsproc, 1);
-					if (bytes_read > 0 && chunk_buffer[0] != '\0')
-					{
-						/* StringInfo automatically grows as needed */
-						appendBinaryStringInfo(&definition_buf, chunk_buffer, bytes_read);
-					}
-				}
-				
-				/* Get final string */
-				if (definition_buf.len > 0)
-					definition = pstrdup(definition_buf.data);
-				
-				pfree(definition_buf.data);
-			}
-			else
-			{
-				/* No columns, but still must exhaust rows before next result set */
-				while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
-					;
-			}
-			
-			/* Consume remaining result sets */
-			while (LINKED_SERVER_RESULTS(validation_lsproc) != NO_MORE_RESULTS)
-			{
-				while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
-					;
-			}
-			
-			/* Close validation connection - critical for clean state */
-			elog(LOG, "SELECT-only validation: Closing validation connection");
-			LINKED_SERVER_CANCEL(validation_lsproc);  /* Cancel pending operations before close */
-			LINKED_SERVER_CLOSE(validation_lsproc);
-			validation_lsproc = NULL;  /* Mark validation connection as closed */
-			
-			/* Validate definition */
-			if (definition == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("Could not fetch definition for procedure %s", full_proc_name)));
-			
-			elog(LOG, "Parser validation: Analyzing procedure %s", full_proc_name);
-			
-			/* Use parser-based validation instead of string matching */
-			validate_procedure_with_parser(definition, full_proc_name);
-			
-			elog(LOG, "Parser validation: Procedure %s passed", full_proc_name);
-			
-			pfree(definition);
-			pfree(query_template.data);
-			pfree(param_defs.data);
-		}
+		elog(LOG, "SELECT-only validation: Validating procedure %s", full_proc_name);
+		
+		/* Temporarily establish connection just for validation */
+		linked_server_establish_connection(stmt->server_name, &validation_lsproc, false);
+		
+		/* Call the ANTLR-based validation function from linked_servers.c */
+		validate_procedure_select_only(stmt->server_name,
+									   stmt->db_name ? stmt->db_name : get_cur_db_name(),
+									   stmt->schema_name ? stmt->schema_name : "dbo",
+									   stmt->proc_name);
+		
+		/* Validation connection has been closed internally - mark as cleaned up */
+		validation_lsproc = NULL;
+		
+		elog(LOG, "SELECT-only validation: Procedure %s passed validation", full_proc_name);
 		
 		/*
 		 * PHASE 2: Open fresh TDS connection for RPC execution

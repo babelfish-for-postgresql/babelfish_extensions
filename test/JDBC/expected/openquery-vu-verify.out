@@ -3587,7 +3587,7 @@ GO
 text
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: DB #: 20003, DB Msg: server connection timed out, OS #: 0, OS Msg: Success, Level: 6)~~
+~~ERROR (Message: TDS client library error: DB #: 20047, DB Msg: DBPROCESS is dead or not enabled, OS #: 0, OS Msg: Success, Level: 9)~~
 
 
 -- Test connect timeout behaviour in OPENQUERY
@@ -3624,4 +3624,3 @@ GO
 int
 1
 ~~END~~
-

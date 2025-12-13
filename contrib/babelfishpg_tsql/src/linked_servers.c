@@ -869,8 +869,8 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 			LINKED_SERVER_SET_CONNECT_TIMEOUT(connect_timeout);
 		}
 
-		/* LOG: Connection parameters configured */
-		elog(LOG, "DEBUG_LINKED_SERVER: Connection parameters - data_source: %s, database: %s, connect_timeout: %d, query_timeout: %d",
+		/* LOG: Connection parameters configured - using DEBUG1 for sensitive data_src (server URL/IP) */
+		elog(DEBUG1, "DEBUG_LINKED_SERVER: Connection parameters - data_source: %s, database: %s, connect_timeout: %d, query_timeout: %d",
 		     data_src ? data_src : "NULL", 
 		     database ? database : "(none)", 
 		     connect_timeout, 
@@ -887,8 +887,8 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Unable to connect to \"%s\"", data_src)));
 
-		/* LOG: Connection successful */
-		elog(LOG, "DEBUG_LINKED_SERVER: TDS connection established successfully to: %s", data_src);
+		/* LOG: Connection successful - using DEBUG1 for sensitive data_src (server URL/IP) */
+		elog(DEBUG1, "DEBUG_LINKED_SERVER: TDS connection established successfully to: %s", data_src);
 
 		LINKED_SERVER_FREELOGIN(login);
 
@@ -1782,8 +1782,7 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
  * Throws ERROR if the procedure contains non-SELECT statements.
  */
 void
-validate_procedure_select_only(LinkedServerProcess lsproc,
-							   const char *server_name,
+validate_procedure_select_only(const char *server_name,
 							   const char *database_name,
 							   const char *schema_name,
 							   const char *procedure_name)
@@ -1791,7 +1790,6 @@ validate_procedure_select_only(LinkedServerProcess lsproc,
 	LINKED_SERVER_RETCODE erc;
 	StringInfoData query;
 	char *definition = NULL;
-	char *def_lower = NULL;
 	int colcount = 0;
 	LinkedServerProcess validation_lsproc = NULL;
 	
@@ -1856,9 +1854,13 @@ validate_procedure_select_only(LinkedServerProcess lsproc,
 					definition[data_len] = '\0';
 				}
 			}
+			
+			/* CRITICAL: Consume remaining rows from THIS result set before moving to next */
+			while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
+				;
 		}
 		
-		/* Consume any remaining results */
+		/* Consume any remaining result SETS */
 		while (LINKED_SERVER_RESULTS(validation_lsproc) != NO_MORE_RESULTS)
 		{
 			while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
@@ -1889,99 +1891,17 @@ validate_procedure_select_only(LinkedServerProcess lsproc,
 	elog(LOG, "SELECT-only validation: Analyzing procedure definition for %s (length: %zu bytes)",
 		 procedure_name, strlen(definition));
 	
-	/* Perform static analysis - case-insensitive search for forbidden keywords */
-	def_lower = lowerstr(definition);
+	/* Use ANTLR parser for accurate T-SQL validation */
+	validate_remote_procedure_select_only_antlr(
+		definition,
+		server_name,
+		database_name,
+		schema_name,
+		procedure_name);
 	
-	/* Check for DML operations */
-	if (strstr(def_lower, "insert into") != NULL || strstr(def_lower, "insert ") != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Remote procedure contains INSERT statement"),
-				 errdetail("Procedure %s.%s.%s.%s contains INSERT operation which is not allowed",
-						   server_name, database_name, schema_name, procedure_name),
-				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
-	
-	if (strstr(def_lower, "update ") != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Remote procedure contains UPDATE statement"),
-				 errdetail("Procedure %s.%s.%s.%s contains UPDATE operation which is not allowed",
-						   server_name, database_name, schema_name, procedure_name),
-				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
-	
-	if (strstr(def_lower, "delete from") != NULL || strstr(def_lower, "delete ") != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Remote procedure contains DELETE statement"),
-				 errdetail("Procedure %s.%s.%s.%s contains DELETE operation which is not allowed",
-						   server_name, database_name, schema_name, procedure_name),
-				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
-	
-	if (strstr(def_lower, "merge into") != NULL || strstr(def_lower, "merge ") != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Remote procedure contains MERGE statement"),
-				 errdetail("Procedure %s.%s.%s.%s contains MERGE operation which is not allowed",
-						   server_name, database_name, schema_name, procedure_name),
-				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
-	
-	/* Check for DDL operations */
-	if (strstr(def_lower, "create table") != NULL || strstr(def_lower, "create view") != NULL ||
-		strstr(def_lower, "create procedure") != NULL || strstr(def_lower, "create function") != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Remote procedure contains CREATE statement"),
-				 errdetail("Procedure %s.%s.%s.%s contains CREATE operation which is not allowed",
-						   server_name, database_name, schema_name, procedure_name),
-				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
-	
-	if (strstr(def_lower, "drop table") != NULL || strstr(def_lower, "drop view") != NULL ||
-		strstr(def_lower, "drop procedure") != NULL || strstr(def_lower, "drop function") != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Remote procedure contains DROP statement"),
-				 errdetail("Procedure %s.%s.%s.%s contains DROP operation which is not allowed",
-						   server_name, database_name, schema_name, procedure_name),
-				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
-	
-	if (strstr(def_lower, "alter table") != NULL || strstr(def_lower, "alter view") != NULL ||
-		strstr(def_lower, "alter procedure") != NULL || strstr(def_lower, "alter function") != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Remote procedure contains ALTER statement"),
-				 errdetail("Procedure %s.%s.%s.%s contains ALTER operation which is not allowed",
-						   server_name, database_name, schema_name, procedure_name),
-				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
-	
-	if (strstr(def_lower, "truncate table") != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Remote procedure contains TRUNCATE statement"),
-				 errdetail("Procedure %s.%s.%s.%s contains TRUNCATE operation which is not allowed",
-						   server_name, database_name, schema_name, procedure_name),
-				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
-	
-	/* Check for dynamic SQL - high risk for bypassing validation */
-	if (strstr(def_lower, "exec(") != NULL || strstr(def_lower, "execute(") != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Remote procedure contains dynamic SQL execution"),
-				 errdetail("Procedure %s.%s.%s.%s uses EXEC() or EXECUTE() which is not allowed",
-						   server_name, database_name, schema_name, procedure_name),
-				 errhint("Dynamic SQL cannot be validated and is not allowed for linked server execution")));
-	
-	if (strstr(def_lower, "sp_executesql") != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Remote procedure contains dynamic SQL execution"),
-				 errdetail("Procedure %s.%s.%s.%s uses sp_executesql which is not allowed",
-						   server_name, database_name, schema_name, procedure_name),
-				 errhint("Dynamic SQL cannot be validated and is not allowed for linked server execution")));
-	
-	elog(LOG, "SELECT-only validation: Procedure %s passed validation checks", procedure_name);
+	elog(LOG, "SELECT-only validation: Procedure %s passed ANTLR validation checks", procedure_name);
 	
 	/* Clean up */
-	pfree(def_lower);
 	pfree(definition);
 	pfree(query.data);
 }

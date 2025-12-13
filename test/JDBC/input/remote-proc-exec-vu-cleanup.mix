@@ -43,5 +43,8 @@ GO
 
 -- psql
 -- Drop tds_fdw extension
+-- Suppress cascade warnings for cleanup
+SET client_min_messages TO 'error';
 DROP EXTENSION IF EXISTS tds_fdw CASCADE;
+SET client_min_messages TO 'notice';
 GO

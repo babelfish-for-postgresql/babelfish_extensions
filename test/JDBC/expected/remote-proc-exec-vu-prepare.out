@@ -1,9 +1,53 @@
 -- psql
+
 -- Create tds_fdw extension for linked server support
+-- Suppress warnings for idempotent CREATE EXTENSION
+SET client_min_messages TO 'error';
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
+SET client_min_messages TO 'notice';
+-- Enable remote procedure execution for testing (database-level GUC)
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.enable_remote_proc_exec = true;
 GO
 
 -- tsql
+-- Clean up any existing test procedures from previous runs to ensure consistent test state
+DROP PROCEDURE IF EXISTS dbo.sp_NoParams;
+DROP PROCEDURE IF EXISTS dbo.sp_SingleInt;
+DROP PROCEDURE IF EXISTS dbo.sp_TestIntegers;
+DROP PROCEDURE IF EXISTS dbo.sp_TestFloat;
+DROP PROCEDURE IF EXISTS dbo.sp_TestDecimal;
+DROP PROCEDURE IF EXISTS dbo.sp_TestMoney;
+DROP PROCEDURE IF EXISTS dbo.sp_TestVarchar;
+DROP PROCEDURE IF EXISTS dbo.sp_TestNvarchar;
+DROP PROCEDURE IF EXISTS dbo.sp_TestChar;
+DROP PROCEDURE IF EXISTS dbo.sp_TestBit;
+DROP PROCEDURE IF EXISTS dbo.sp_TestBinary;
+DROP PROCEDURE IF EXISTS dbo.sp_TestUUID;
+DROP PROCEDURE IF EXISTS dbo.sp_TestDate;
+DROP PROCEDURE IF EXISTS dbo.sp_TestDateTime;
+DROP PROCEDURE IF EXISTS dbo.sp_TestTime;
+DROP PROCEDURE IF EXISTS dbo.sp_OutputSingle;
+DROP PROCEDURE IF EXISTS dbo.sp_OutputMultiple;
+DROP PROCEDURE IF EXISTS dbo.sp_OutputNoResult;
+DROP PROCEDURE IF EXISTS dbo.sp_InOut;
+DROP PROCEDURE IF EXISTS dbo.sp_MultiRow;
+DROP PROCEDURE IF EXISTS dbo.sp_MixedTypes;
+DROP PROCEDURE IF EXISTS dbo.sp_EmptyResult;
+DROP PROCEDURE IF EXISTS dbo.sp_NullValues;
+DROP PROCEDURE IF EXISTS dbo.sp_ConditionalLogic;
+DROP PROCEDURE IF EXISTS dbo.sp_FilterByParam;
+DROP PROCEDURE IF EXISTS dbo.sp_CombinedIO;
+DROP PROCEDURE IF EXISTS dbo.sp_OnlySelect;
+DROP PROCEDURE IF EXISTS dbo.sp_WithInsert;
+DROP PROCEDURE IF EXISTS dbo.sp_WithUpdate;
+DROP PROCEDURE IF EXISTS dbo.sp_WithDelete;
+DROP PROCEDURE IF EXISTS dbo.sp_WithDynamicSQL;
+DROP PROCEDURE IF EXISTS dbo.sp_NullableParam;
+DROP PROCEDURE IF EXISTS dbo.sp_LargeString;
+DROP PROCEDURE IF EXISTS dbo.sp_ReturnCode;
+DROP PROCEDURE IF EXISTS dbo.sp_WithError;
+GO
+
 -- Create linked server for remote procedure execution tests
 EXEC sp_addlinkedserver @server = N'bbf_rpe_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master';
 GO

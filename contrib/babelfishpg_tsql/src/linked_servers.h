@@ -188,9 +188,16 @@ extern void convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod
 									   void **data_out, DBINT *len_out);
 
 /* SELECT-only validation for remote procedures */
-extern void validate_procedure_select_only(LinkedServerProcess lsproc,
-										   const char *server_name,
+extern void validate_procedure_select_only(const char *server_name,
 										   const char *database_name,
 										   const char *schema_name,
 										   const char *procedure_name);
+
+/* ANTLR-based SELECT-only validation */
+extern void validate_remote_procedure_select_only_antlr(
+	const char *definition,
+	const char *server_name,
+	const char *database_name,
+	const char *schema_name,
+	const char *procedure_name);
 #endif
