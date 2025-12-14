@@ -2095,6 +2095,8 @@ extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
 extern uint64 execute_bulk_load_insert(int ncol, int nrow,
 									   Datum *Values, bool *Nulls);
+extern void restrict_alter_owner_stmt(AlterOwnerStmt *stmt);
+extern void restrict_alter_table_stmt(AlterTableStmt *stmt);
 
 /*
  * Functions in pl_exec.c

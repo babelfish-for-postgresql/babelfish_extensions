@@ -3093,3 +3093,102 @@ is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 	}
 	return (OidIsValid(immediate_parent_func) && (get_func_owner(immediate_parent_func) == objectOwnerId));
 }
+
+/*
+ * restrict_alter_owner_stmt
+ * Blocks ALTER OWNER statements from PG dialect on TSQL objects.
+ * Extracts schema name from the statement and checks if it belongs to Babelfish.
+ */
+void
+restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
+{
+    char *schema_name = NULL;
+    Oid schema_oid = InvalidOid;
+    
+    /* Extract schema based on object type */
+    switch (stmt->objectType)
+    {
+        case OBJECT_FUNCTION:
+        case OBJECT_PROCEDURE:
+		{
+			ObjectWithArgs *owa = (ObjectWithArgs *) stmt->object;
+			if (list_length(owa->objname) > 1)
+				schema_name = strVal(linitial(owa->objname));
+			break;
+		}
+        case OBJECT_SCHEMA:
+		{
+			String *str = (String *) stmt->object;
+			schema_name = strVal(str);
+			break;
+		}
+		case OBJECT_TYPE:
+		{
+			TypeName *tn = (TypeName *) stmt->object;
+			if (list_length(tn->names) > 1)
+				schema_name = strVal(linitial(tn->names));
+			break;
+		}
+        default:
+            return; /* Allow other object types */
+    }
+    
+    /* Get schema OID if we have schema name */
+    if (schema_name)
+        schema_oid = get_namespace_oid(schema_name, true);
+    else if (OidIsValid(schema_oid))
+        schema_name = get_namespace_name(schema_oid);
+    
+    /* Check if it's a Babelfish schema */
+    if (schema_name && physical_schema_name_exists(schema_name))
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                 errmsg("ALTER OWNER is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
+    }
+}
+
+/*
+ * restrict_alter_table_stmt  
+ * Blocks ALTER TABLE statements from PG dialect on TSQL objects.
+ * Extracts schema name from the table relation and checks if it belongs to Babelfish.
+ */
+void
+restrict_alter_table_stmt(AlterTableStmt *stmt)
+{
+    char *schema_name = NULL;
+    Oid schema_oid = InvalidOid;
+    ListCell *lcmd;
+    
+    /* Check if any command is AT_ChangeOwner */
+    foreach(lcmd, stmt->cmds)
+    {
+        AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+        if (cmd->subtype != AT_ChangeOwner)
+            continue;
+            
+        /* Extract schema from RangeVar */
+        if (stmt->relation)
+        {
+            if (stmt->relation->schemaname)
+                schema_name = stmt->relation->schemaname;
+            else
+                schema_oid = RangeVarGetRelid(stmt->relation, NoLock, true);
+        }
+        
+        /* Get schema OID if we have schema name */
+        if (schema_name)
+            schema_oid = get_namespace_oid(schema_name, true);
+        else if (OidIsValid(schema_oid))
+            schema_name = get_namespace_name(schema_oid);
+        
+        /* Check if it's a Babelfish schema */
+        if (schema_name && physical_schema_name_exists(schema_name))
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("ALTER TABLE is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
+        }
+        break;
+    }
+}
