@@ -418,13 +418,6 @@ int
 SET client_min_messages = 'error';
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: extension "tds_fdw" is not available
-  Detail: Could not open extension control file "/local/home/lshalini/pg15new/postgres/share/extension/tds_fdw.control": No such file or directory.
-  Hint: The extension must first be installed on the system where PostgreSQL is running.
-    Server SQLState: 0A000)~~
-
 
 -- securityadmin should not have membership in database guest role
 SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'securityadmin'::regrole;
@@ -438,25 +431,13 @@ regrole#!#regrole
 -- Add localhost as linked server
 EXEC sp_addlinkedserver  @server = N'server_4229', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: foreign-data wrapper "tds_fdw" does not exist)~~
-
 
 EXEC sp_addlinkedserver  'Accounts'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: foreign-data wrapper "tds_fdw" does not exist)~~
-
 
 -- Add jdbc_user as linked server login
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'server_4229', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: server "server_4229" does not exist)~~
-
 
 drop database securityadmin_db1
 go
@@ -466,17 +447,9 @@ go
 -- tsql user=securityadmin_login1 password=123
 EXEC sp_addlinkedsrvlogin 'Accounts', 'False'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: server "accounts" does not exist)~~
-
 
 EXEC sp_droplinkedsrvlogin 'Accounts', NULL
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: server "accounts" does not exist)~~
-
 
 -- inside procedure
 exec securityadmin_create_login_p1
@@ -1675,17 +1648,9 @@ GO
 -- tsql
 EXEC sp_dropserver 'server_4229', 'droplogins'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: server "server_4229" does not exist)~~
-
 
 EXEC sp_dropserver 'Accounts', 'droplogins'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: server "accounts" does not exist)~~
-
 
 -- terminate-tsql-conn
 
@@ -1703,13 +1668,6 @@ END IF;
 END
 $$
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: extension "tds_fdw" does not exist
-  Where: SQL statement "DROP EXTENSION tds_fdw CASCADE"
-PL/pgSQL function inline_code_block line 5 at SQL statement
-    Server SQLState: 42704)~~
-
 
 -- psql
 -- Need to terminate active session before cleaning up the login
