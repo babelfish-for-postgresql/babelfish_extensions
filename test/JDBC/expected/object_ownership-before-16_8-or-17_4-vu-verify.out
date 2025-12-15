@@ -296,8 +296,8 @@ SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
 ~~END~~
 
 
-/*** EXECUTES THE ALTER STATEMENTS ***/
 -- psql
+/*** EXECUTES THE ALTER STATEMENTS ***/
 -- Set the respective GUCs to allow ALTER .. OWNER .. on TSQL objects via PG endpoint.
 SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
 SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
