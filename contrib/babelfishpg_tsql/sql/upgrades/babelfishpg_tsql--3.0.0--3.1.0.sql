@@ -818,7 +818,9 @@ CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedserver( IN "@server" sys.sysn
 AS 'babelfishpg_tsql', 'sp_addlinkedserver_internal'
 LANGUAGE C;
 
+EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = true';
 ALTER PROCEDURE master_dbo.sp_addlinkedserver OWNER TO sysadmin;
+EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = false';
 
 CREATE OR REPLACE VIEW sys.servers
 AS
@@ -1359,7 +1361,9 @@ CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedsrvlogin( IN "@rmtsrvname" sy
 AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
 LANGUAGE C;
 
+EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = true';
 ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
+EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = false';
 
 CREATE OR REPLACE VIEW sys.linked_logins
 AS
@@ -1456,7 +1460,9 @@ CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" s
 AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
 LANGUAGE C;
 
+EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = true';
 ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
+EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = false';
 
 -- Add one column to store definition of the function in the table.
 SET allow_system_table_mods = on;
@@ -2053,7 +2059,9 @@ CREATE OR REPLACE PROCEDURE master_dbo.sp_dropserver( IN "@server" sys.sysname,
 AS 'babelfishpg_tsql', 'sp_dropserver_internal'
 LANGUAGE C;
 
+EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = true';
 ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
+EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = false';
 
 
 create or replace view sys.all_views as
