@@ -8,7 +8,7 @@ jobs:
   run-babelfish-jdbc-tests-with-pg-audit:
     strategy:
       matrix:
-        extension_branch: [BABEL_4_X_DEV,BABEL_5_X_DEV]
+        extension_branch: [BABEL_4_X_DEV,${{ github.head_ref }}]
 
     env:
       INSTALL_DIR: psql
