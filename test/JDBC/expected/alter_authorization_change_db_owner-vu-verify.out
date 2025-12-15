@@ -1181,9 +1181,90 @@ go
 -- go
 -- use master
 -- go
+-- When new owner is an internal role, user-defined role, database principal or server principal - Error out.
 use master
 go
 drop database DB64long_0123456789012345678901234567890123456789012345678901234
+go
+create role alter_auth_r1
+go
+create database alter_auth_db
+go
+alter authorization on database::alter_auth_db TO bbf_role_admin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+alter authorization on database::alter_auth_db TO securityadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+alter authorization on database::alter_auth_db TO sysadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+alter authorization on database::alter_auth_db TO dbcreator
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+alter authorization on database::alter_auth_db TO db_datareader
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'db_datareader', because it does not exist or you do not have permission.)~~
+
+alter authorization on database::alter_auth_db TO db_datawriter
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'db_datawriter', because it does not exist or you do not have permission.)~~
+
+alter authorization on database::alter_auth_db TO db_ddladmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'db_ddladmin', because it does not exist or you do not have permission.)~~
+
+alter authorization on database::alter_auth_db TO dbo
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'dbo', because it does not exist or you do not have permission.)~~
+
+alter authorization on database::alter_auth_db TO db_owner
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'db_owner', because it does not exist or you do not have permission.)~~
+
+alter authorization on database::alter_auth_db TO master_db_datareader
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'master_db_datareader', because it does not exist or you do not have permission.)~~
+
+alter authorization on database::alter_auth_db TO alter_auth_r1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'alter_auth_r1', because it does not exist or you do not have permission.)~~
+
+alter authorization on database::alter_auth_db TO master_alter_auth_r1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'master_alter_auth_r1', because it does not exist or you do not have permission.)~~
+
+drop role alter_auth_r1
+go
+drop database alter_auth_db
 go
 
 
