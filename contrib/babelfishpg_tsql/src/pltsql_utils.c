@@ -3144,7 +3144,7 @@ restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("ALTER OWNER is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
+                 errmsg("ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
     }
 }
 
@@ -3160,6 +3160,10 @@ restrict_alter_table_stmt(AlterTableStmt *stmt)
     Oid schema_oid = InvalidOid;
     ListCell *lcmd;
     
+    /* Skip if this is ALTER VIEW - handled with babelfishpg_tsql.enable_create_alter_view_from_pg */
+    if (stmt->objtype == OBJECT_VIEW)
+        return;
+
     /* Check if any command is AT_ChangeOwner */
     foreach(lcmd, stmt->cmds)
     {
@@ -3187,7 +3191,7 @@ restrict_alter_table_stmt(AlterTableStmt *stmt)
         {
             ereport(ERROR,
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("ALTER TABLE is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
+                     errmsg("ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
         }
         break;
     }

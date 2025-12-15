@@ -741,9 +741,29 @@ GO
 -- psql
 -- Test cases if user tries to enable/disable trigger <schema-1>.<trigger-1> on table <schema-2>.<table-1> 
 -- if both schemas have tables with same name and each table have trigger with same trigger name
+-- ALTER .. OWNER .. on TSQL objects are blocked.
+ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_babel_3326_u1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+ALTER TABLE master_db.babel_3326_Employees OWNER TO master_babel_3326_u1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+-- Set the GUC babelfishpg_tsql.enable_alter_owner_from_pg to allow ALTER .. OWNER ..
+SET babelfishpg_tsql.enable_alter_owner_from_pg to true;
+GO
 ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_babel_3326_u1;
 GO
 ALTER TABLE master_db.babel_3326_Employees OWNER TO master_babel_3326_u1;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg to false;
 GO
 
 -- tsql user=babel_3326_u1 password=12345678
@@ -884,7 +904,26 @@ GO
 -- psql
 ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_dbo;
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
 ALTER TABLE master_db.babel_3326_Employees OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+-- Set the GUC babelfishpg_tsql.enable_alter_owner_from_pg to allow ALTER .. OWNER .. from PG
+SET babelfishpg_tsql.enable_alter_owner_from_pg to true;
+GO
+ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_dbo;
+GO
+ALTER TABLE master_db.babel_3326_Employees OWNER TO master_dbo;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg to false;
 GO
 
 
