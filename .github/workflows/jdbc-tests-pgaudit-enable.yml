@@ -8,7 +8,7 @@ jobs:
   run-babelfish-jdbc-tests-with-pg-audit:
     strategy:
       matrix:
-        extension_branch: [BABEL_4_X_DEV, "${{ github.head_ref }}"]
+        extension_branch: [latest]
 
     env:
       INSTALL_DIR: psql
@@ -83,7 +83,7 @@ jobs:
           cd ~
           rm -rf pgaudit
           # Determine PgAudit version based on Babelfish branch
-          if [[ "${{ matrix.extension_branch }}" == 'BABEL_5_X_DEV' ]]; then
+          if [[ "${{ matrix.extension_branch }}" == 'latest' ]]; then
             git clone --depth 1 --branch REL_17_STABLE https://github.com/pgaudit/pgaudit.git
             cd pgaudit
             # Apply patch to fix BABEL-4600
