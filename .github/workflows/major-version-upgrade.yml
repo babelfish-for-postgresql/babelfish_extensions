@@ -179,7 +179,7 @@ jobs:
         if: always() && steps.build-postgis-extension.outcome == 'success'
         run: |
           cd ~
-          ~/${{env.NEW_INSTALL_DIR}}/bin/initdb -D ~/${{env.NEW_INSTALL_DIR}}/data
+          ~/${{env.NEW_INSTALL_DIR}}/bin/initdb --no-data-checksums -D ~/${{env.NEW_INSTALL_DIR}}/data
           cd ~/${{env.NEW_INSTALL_DIR}}/data
           sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
           sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf

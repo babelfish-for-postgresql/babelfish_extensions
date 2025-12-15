@@ -2431,7 +2431,7 @@ exec_stmt_call(PLtsql_execstate *estate, PLtsql_stmt_call *stmt)
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	volatile bool pushed_active_snap = false;
-	volatile int rc;
+	volatile int rc = 0;
 	SPIExecuteOptions options;
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
