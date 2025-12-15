@@ -1,0 +1,11 @@
+--- a/pgaudit.c
++++ b/pgaudit.c
+@@ -1529,7 +1529,7 @@ pgaudit_ExecutorCheckPerms_hook(List *rangeTabls,
+                 auditEventStack->auditEvent.permInfos = permInfos;
+             }
+         }
+-        else
++        else if (auditEventStack != NULL)
+         {
+             STACK_NOT_EMPTY();
+             log_select_dml(auditOid, rangeTabls, permInfos);
