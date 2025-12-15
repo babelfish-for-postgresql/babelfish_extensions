@@ -3534,7 +3534,6 @@ int
 1
 ~~END~~
 
-
 -- execute query that returns 2 result sets. We should only return the first
 SELECT * FROM OPENQUERY(bbf_server, 'select 123; select 456')
 GO

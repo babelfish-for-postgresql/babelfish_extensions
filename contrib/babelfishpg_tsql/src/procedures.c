@@ -2753,6 +2753,10 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 
 	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
+	/* Open the relation early so we can check natts throughout the function */
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),RowExclusiveLock);
+	bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
+
 	/* need not check for optname and optvalue when isInsert = true */
 	if(isInsert)
 	{
@@ -2769,9 +2773,15 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 			}
 			else if(strlen(srvOptions_optname[i]) == 7 && strncmp(srvOptions_optname[i], "rpc out", 7) == 0)
 			{
-				/* Handle rpc out as boolean: "true" or "false" */
-				bool rpc_out_enabled = (strcmp(srvOptions_optvalue[i], "true") == 0);
-				new_record[Anum_bbf_servers_def_rpc_out - 1] = BoolGetDatum(rpc_out_enabled);
+				/* 
+				 * Handle rpc out as boolean: "true" or "false"
+				 * Only set this if the catalog table has been upgraded to include the rpc_out column
+				 */
+				if (bbf_servers_def_rel_dsc->natts >= Anum_bbf_servers_def_rpc_out)
+				{
+					bool rpc_out_enabled = (strcmp(srvOptions_optvalue[i], "true") == 0);
+					new_record[Anum_bbf_servers_def_rpc_out - 1] = BoolGetDatum(rpc_out_enabled);
+				}
 			}
 		}
 	}
@@ -2817,6 +2827,14 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 		{
 			bool rpc_out_enabled;
 
+			/* Check if the catalog table has been upgraded to include the rpc_out column */
+			if (bbf_servers_def_rel_dsc->natts < Anum_bbf_servers_def_rpc_out)
+			{
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("The 'rpc out' option is not available. The catalog needs to be upgraded.")));
+			}
+
 			/* Validate rpc out value: must be "true" or "false" (case-insensitive) */
 			if (strlen(optvalue) == 0)
 				ereport(ERROR,
@@ -2842,9 +2860,6 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 				 errmsg("Invalid option provided for sp_serveroption")));
 		}
 	}
-
-	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),RowExclusiveLock);
-	bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
 
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
@@ -2873,7 +2888,12 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 					errmsg("The server '%s' does not exist. Use sp_linkedservers to show available servers.", servername)));
 		}
 
-		for(int i = 1; i < BBF_SERVERS_DEF_NUM_COLS; i++)
+		/* 
+		 * Copy existing values for columns that are not being updated.
+		 * Limit the loop to the actual number of columns in the table to handle
+		 * pre-upgrade catalogs that may have fewer columns.
+		 */
+		for(int i = 1; i < BBF_SERVERS_DEF_NUM_COLS && i < bbf_servers_def_rel_dsc->natts; i++)
 		{
 			if(!new_record_repl[i])
 			{

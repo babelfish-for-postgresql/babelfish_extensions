@@ -1227,8 +1227,6 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The value function requires 2 argument(s).)~~
-
-
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.value('(/artists/artist/@name)[1]', 1)
 GO
