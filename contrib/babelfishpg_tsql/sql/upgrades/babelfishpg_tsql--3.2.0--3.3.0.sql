@@ -183,9 +183,9 @@ CREATE OR REPLACE PROCEDURE master_dbo.sp_testlinkedserver( IN "@servername" sys
 AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal'
 LANGUAGE C;
 
-EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = true';
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
 ALTER PROCEDURE master_dbo.sp_testlinkedserver OWNER TO sysadmin;
-EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = false';
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
 
 CREATE OR REPLACE PROCEDURE sys.sp_enum_oledb_providers()
 AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal' LANGUAGE C;
@@ -195,9 +195,9 @@ CREATE OR REPLACE PROCEDURE master_dbo.sp_enum_oledb_providers()
 AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal'
 LANGUAGE C;
 
-EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = true';
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
 ALTER PROCEDURE master_dbo.sp_enum_oledb_providers OWNER TO sysadmin;
-EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = false';
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
 
 create or replace view sys.shipped_objects_not_in_sys AS
 -- This portion of view retrieves information on objects that reside in a schema in one specfic database.

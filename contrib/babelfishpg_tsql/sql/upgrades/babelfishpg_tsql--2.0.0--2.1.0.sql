@@ -3660,10 +3660,10 @@ LANGUAGE C
 AS 'babelfishpg_tsql', 'create_xp_instance_regread_in_master_dbo_internal';
 
 CALL sys.create_xp_instance_regread_in_master_dbo();
-EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = true';
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
 ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), int) OWNER TO sysadmin;
 ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), sys.nvarchar(512)) OWNER TO sysadmin;
-EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = false';
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
 ALTER PROCEDURE sys.create_xp_instance_regread_in_master_dbo RENAME TO create_xp_instance_regread_in_master_dbo_deprecated_2_1;
 CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'create_xp_instance_regread_in_master_dbo_deprecated_2_1');
 
