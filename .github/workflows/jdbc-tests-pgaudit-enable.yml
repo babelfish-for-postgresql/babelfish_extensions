@@ -85,14 +85,14 @@ jobs:
           if [[ "${{ matrix.extension_branch }}" == 'BABEL_5_X_DEV' ]]; then
             git clone --depth 1 --branch REL_17_STABLE https://github.com/pgaudit/pgaudit.git
             cd pgaudit
-            # adding the patch to fix BABEL-4600 to test in Github
-            sed -i '1517 s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
+            # Apply patch to fix BABEL-4600
+            patch -p1 < ${{ github.workspace }}/.github/scripts/pgaudit_executor_hook_null_check.patch
             make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
           elif [[ "${{ matrix.extension_branch }}" == 'BABEL_4_X_DEV' ]]; then
             git clone --depth 1 --branch REL_16_STABLE https://github.com/pgaudit/pgaudit.git
             cd pgaudit
-            # adding the patch to fix BABEL-4600 to test in Github
-            sed -i '1452 s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
+            # Apply patch to fix BABEL-4600
+            patch -p1 < ${{ github.workspace }}/.github/scripts/pgaudit_executor_hook_null_check.patch
             make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
           else
             echo "Unsupported branch: ${{ matrix.extension_branch }}"
