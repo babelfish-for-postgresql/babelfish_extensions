@@ -1,14 +1,13 @@
 name: JDBC Tests With PG AUDIT Enable
-# on:
-#   schedule:
-#     - cron: '0 0 * * *'  # runs every midnight
-on: [push, pull_request]
+on:
+  schedule:
+    - cron: '0 0 * * *'  # runs every midnight
 
 jobs:
   run-babelfish-jdbc-tests-with-pg-audit:
     strategy:
       matrix:
-        extension_branch: [latest]
+        extension_branch: [BABEL_4_X_DEV,BABEL_5_X_DEV]
 
     env:
       INSTALL_DIR: psql
@@ -83,18 +82,16 @@ jobs:
           cd ~
           rm -rf pgaudit
           # Determine PgAudit version based on Babelfish branch
-          if [[ "${{ matrix.extension_branch }}" == 'latest' ]]; then
+          if [[ "${{ matrix.extension_branch }}" == 'BABEL_5_X_DEV' ]]; then
             git clone --depth 1 --branch REL_17_STABLE https://github.com/pgaudit/pgaudit.git
             cd pgaudit
             # Apply patch to fix BABEL-4600
-            ls -la ${{ github.workspace }}/.github/scripts/
             patch -p1 < ${{ github.workspace }}/.github/scripts/pgaudit_executor_hook_null_check.patch
             make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
           elif [[ "${{ matrix.extension_branch }}" == 'BABEL_4_X_DEV' ]]; then
             git clone --depth 1 --branch REL_16_STABLE https://github.com/pgaudit/pgaudit.git
             cd pgaudit
             # Apply patch to fix BABEL-4600
-            ls -la ${{ github.workspace }}/.github/scripts/
             patch -p1 < ${{ github.workspace }}/.github/scripts/pgaudit_executor_hook_null_check.patch
             make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
           else
