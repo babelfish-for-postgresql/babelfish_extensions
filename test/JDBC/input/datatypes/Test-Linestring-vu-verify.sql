@@ -1,4 +1,4 @@
--- sla 240000
+-- sla 300000
 
 -- STGeomFromText and STLineFromText tests with different SRIDs
 
