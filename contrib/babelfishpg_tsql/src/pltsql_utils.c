@@ -3132,9 +3132,9 @@ restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
 		}
 		case OBJECT_TYPE:
 		{
-			TypeName *tn = (TypeName *) stmt->object;
-			if (list_length(tn->names) > 1)
-				schema_name = strVal(linitial(tn->names));
+			List *names = (List *) stmt->object;
+			if (names && list_length(names) > 1)
+				schema_name = strVal(linitial(names));
 			break;
 		}
         default:
