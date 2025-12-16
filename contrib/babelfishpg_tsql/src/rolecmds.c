@@ -150,7 +150,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 
 	if (IS_BBF_FIXED_SERVER_ROLE(stmt->role))
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
-	else if (strcmp(stmt->role, "bbf_role_admin") == 0)
+	else if (IS_ROLENAME_BABELFISHROLEADMIN(stmt->role))
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("Z");
 	else if (from_windows)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("U");
@@ -711,7 +711,7 @@ Oid
 get_bbf_role_admin_oid(void)
 {
 	if (!OidIsValid(bbf_admin_oid))
-		bbf_admin_oid = get_role_oid("bbf_role_admin", false);
+		bbf_admin_oid = get_role_oid(BABELFISH_ROLEADMIN, false);
 	return bbf_admin_oid;
 }
 
@@ -1113,7 +1113,7 @@ drop_all_logins(PG_FUNCTION_ARGS)
 		 * Remove SA from authid_login_ext now but do not add it to the list
 		 * because we don't want to remove the corresponding PG role.
 		 */
-		if (role_is_sa(get_role_oid(rolname, false)) || (strcmp(rolname, "bbf_role_admin") == 0)
+		if (role_is_sa(get_role_oid(rolname, false)) || IS_ROLENAME_BABELFISHROLEADMIN(rolname)
 									|| IS_BBF_FIXED_SERVER_ROLE(rolname))
 			CatalogTupleDelete(bbf_authid_login_ext_rel, &tuple->t_self);
 		else
@@ -1390,7 +1390,7 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 			SetUserIdAndSecContext(save_userid, save_sec_context);
 		}
 		PG_END_TRY();
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), BABELFISH_ROLEADMIN, false); /* revoke even membership granted by bbf_role_admin */
 		pfree(db_name);
 	}
 
@@ -1586,7 +1586,7 @@ revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
 
 				char *db_name = TextDatumGetCString(name);
 				grant_revoke_role_to_login(login, get_guest_role_name(db_name), NULL, false);
-				grant_revoke_role_to_login(login, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+				grant_revoke_role_to_login(login, get_guest_role_name(db_name), BABELFISH_ROLEADMIN, false); /* revoke even membership granted by bbf_role_admin */
 				pfree(db_name);
 			}
 		}
@@ -1753,7 +1753,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 		{
 			/* First revoke this user from old login as the user is being mapped to a new login. */
 			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, NULL, false);
-			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, "bbf_role_admin", false);
+			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, BABELFISH_ROLEADMIN, false);
 			/* Now grant guest user to old login as it's mapped user is being removed. */
 			grant_revoke_role_to_login(old_login_name, get_guest_role_name(get_cur_db_name()), NULL, true);
 		}
@@ -1776,7 +1776,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 			SetUserIdAndSecContext(save_userid, save_sec_context);
 		}
 		PG_END_TRY();
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), BABELFISH_ROLEADMIN, false); /* revoke even membership granted by bbf_role_admin */
 	}
 
 	if (new_user_name)

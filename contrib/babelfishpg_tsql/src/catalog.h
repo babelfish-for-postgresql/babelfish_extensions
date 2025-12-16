@@ -326,6 +326,7 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define BABELFISH_SECURITYADMIN "securityadmin"
 #define BABELFISH_SYSADMIN "sysadmin"
 #define BABELFISH_DBCREATOR "dbcreator"
+#define BABELFISH_ROLEADMIN "bbf_role_admin"
 #define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
 #define ALL_PERMISSIONS_ON_RELATION 47 /* last 6 bits as 101111 represents ALL privileges on a relation. */
 #define ALL_PERMISSIONS_ON_FUNCTION 128 /* last 8 bits as 10000000 represents ALL privileges on a procedure/function. */
@@ -345,6 +346,11 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define IS_ROLENAME_SECURITYADMIN(rolname) \
 	(strlen(rolname) == 13 && \
 	strncmp(rolname, BABELFISH_SECURITYADMIN, 13) == 0)
+
+/* check if rolename is bbf_role_admin */
+#define IS_ROLENAME_BABELFISHROLEADMIN(rolname) \
+	(strlen(rolname) == 14 && \
+	strncmp(rolname, BABELFISH_ROLEADMIN, 14) == 0)
 
 /* check if rolename is dbcreator */
 #define IS_ROLENAME_DBCREATOR(rolname) \

@@ -76,7 +76,7 @@ runs:
     - name: Build vector Extension
       run: |
         cd ..
-        export VECTOR_VERSION="0.7.2"
+        export VECTOR_VERSION="0.8.1"
         sudo apt-get install wget
         wget https://github.com/pgvector/pgvector/archive/refs/tags/v${VECTOR_VERSION}.tar.gz 
         tar -xvzf v${VECTOR_VERSION}.tar.gz
@@ -218,6 +218,19 @@ runs:
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           sed -i "s/\b$filename[ ]*\b$/$filename-vu-prepare/g" upgrade/$base_dir/schedule
         done
+
+        # Skip tests below in non-default server collation since it is unnecessary
+        if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
+          sed -i "/cast_binary_to_string-before-15_2\>/d" upgrade/$base_dir/schedule
+          sed -i "/cast_string_to_binary-before-16_8\>/d" upgrade/$base_dir/schedule
+          sed -i "/test_conv_text_to_binary-before-16_8\>/d" upgrade/$base_dir/schedule
+          sed -i "/test_conv_text_to_binary-before-15_5\>/d" upgrade/$base_dir/schedule
+          sed -i "/test_conv_text_to_string-before-15_2\>/d" upgrade/$base_dir/schedule
+          sed -i "/cast_binary_to_string-before-16_8\>/d" upgrade/$base_dir/schedule
+          sed -i "/cast_string_to_binary-before-15_16\>/d" upgrade/$base_dir/schedule
+          sed -i "/test_conv_text_to_string\>/d" upgrade/$base_dir/schedule
+        fi
+        
         export scheduleFile=upgrade/$base_dir/schedule
         mvn -B -ntp test
       shell: bash
