@@ -59,6 +59,7 @@ static bool handle_drop_role(DropRoleStmt *drop_role_stmt);
 static bool handle_rename(RenameStmt *rename_stmt);
 static bool handle_alter_role(AlterRoleStmt* alter_role_stmt);
 static bool handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt);
+static bool handle_grant_role(GrantRoleStmt *grant_stmt);
 
 /* Drop database handler */
 static bool handle_dropdb(DropdbStmt *dropdb_stmt);
@@ -713,6 +714,9 @@ tdsutils_ProcessUtility(PlannedStmt *pstmt,
 		case T_AlterRoleSetStmt:
 			handle_result = handle_alter_role_set((AlterRoleSetStmt*)parsetree);
 			break;
+		case T_GrantRoleStmt:
+			handle_result = handle_grant_role((GrantRoleStmt *) parsetree);
+			break;
 		default:
 			break;
 	}
@@ -1162,6 +1166,51 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
      */
     pfree(name);
     return true;
+}
+
+/*
+ * handle_grant_role
+ *
+ * Handles GRANT/REVOKE ROLE TO/FROM ROLE.
+ *
+ * Returns: true - We're not attempting to modify something we shouldn't have access to. Normal security checks.
+ *          false - We've reported an error and should not continue executing this call.
+ */
+static bool
+handle_grant_role(GrantRoleStmt *grant_stmt)
+{
+	ListCell *item;
+
+	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
+		return true;
+
+	/* Restrict roles to added as a member of bbf_role_admin */
+	foreach(item, grant_stmt->granted_roles)
+	{
+		AccessPriv *priv = (AccessPriv *) lfirst(item);
+		char	   *rolename = priv->priv_name;
+		Oid			roleid;
+
+		if (rolename == NULL)
+			continue;
+
+		roleid = get_role_oid(rolename, false);
+		if (OidIsValid(roleid) && is_babelfish_role(rolename))
+			check_babelfish_alterrole_restictions(false);
+	}
+
+	/* Restrict grant to/from bbf_role_admin role */
+	foreach(item, grant_stmt->grantee_roles)
+	{
+		RoleSpec   *rolespec = lfirst_node(RoleSpec, item);
+		Oid			roleid;
+
+		roleid = get_rolespec_oid(rolespec, false);
+		if (OidIsValid(roleid) && is_babelfish_role(rolespec->rolename))
+			check_babelfish_alterrole_restictions(false);
+	}
+
+	return true;
 }
 
 /*
