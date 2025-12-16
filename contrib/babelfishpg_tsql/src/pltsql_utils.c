@@ -3097,15 +3097,16 @@ is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 /*
  * restrict_alter_owner_stmt
  * Blocks ALTER OWNER statements from PG dialect on TSQL objects.
- * Extracts schema name from the statement and checks if it belongs to Babelfish.
+ * Allows ALTER OWNER for specific shipped objects only when new owner is sysadmin.
  */
 void
 restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
 {
     char *schema_name = NULL;
+    char *object_name = NULL;
     Oid schema_oid = InvalidOid;
     
-    /* Extract schema based on object type */
+    /* Extract schema and object name based on object type */
     switch (stmt->objectType)
     {
         case OBJECT_FUNCTION:
@@ -3113,7 +3114,14 @@ restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
 		{
 			ObjectWithArgs *owa = (ObjectWithArgs *) stmt->object;
 			if (list_length(owa->objname) > 1)
+			{
 				schema_name = strVal(linitial(owa->objname));
+				object_name = strVal(lsecond(owa->objname));
+			}
+			else if (list_length(owa->objname) == 1)
+			{
+				object_name = strVal(linitial(owa->objname));
+			}
 			break;
 		}
         case OBJECT_SCHEMA:
@@ -3142,9 +3150,32 @@ restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
     /* Check if it's a Babelfish schema */
     if (schema_name && physical_schema_name_exists(schema_name))
     {
+        /* Check if this is a shipped function being changed to sysadmin */
+        if (object_name && stmt->objectType == OBJECT_FUNCTION &&
+            is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_SCALAR_FUNCTION, schema_oid))
+        {
+            /* Check if new owner is sysadmin */
+            if (stmt->newowner && stmt->newowner->rolename &&
+                strcmp(stmt->newowner->rolename, "sysadmin") == 0)
+            {
+                return; /* Allow ALTER OWNER to sysadmin for shipped objects */
+            }
+        }
+		/* Check if this is a shipped stored procedure being changed to sysadmin */
+        else if (object_name && stmt->objectType == OBJECT_PROCEDURE &&
+                 is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_STORED_PROCEDURE, schema_oid))
+        {
+            /* Check if new owner is sysadmin */
+            if (stmt->newowner && stmt->newowner->rolename &&
+                strcmp(stmt->newowner->rolename, "sysadmin") == 0)
+            {
+                return; /* Allow ALTER OWNER to sysadmin for shipped objects */
+            }
+        }
+        
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
+                 errmsg("ALTER OWNER is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
     }
 }
 

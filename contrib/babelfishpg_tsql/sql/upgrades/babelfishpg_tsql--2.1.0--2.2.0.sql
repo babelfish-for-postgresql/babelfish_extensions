@@ -1014,9 +1014,7 @@ $fn_body$
     SELECT 0;
 $fn_body$
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
-SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
 ALTER FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled() OWNER TO sysadmin;
-SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
 
 CREATE OR REPLACE VIEW msdb_dbo.syspolicy_configuration
 AS

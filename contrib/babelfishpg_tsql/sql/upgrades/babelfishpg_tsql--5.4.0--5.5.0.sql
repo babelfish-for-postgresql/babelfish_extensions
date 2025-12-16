@@ -558,7 +558,6 @@ CREATE OR REPLACE PROCEDURE initialize_babel_extras()
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = true';
   CREATE OR REPLACE PROCEDURE sys.create_xp_qv_in_master_dbo()
   LANGUAGE C
   AS 'babelfishpg_tsql', 'create_xp_qv_in_master_dbo_internal';
@@ -617,7 +616,6 @@ BEGIN
   -- this is idempotent; if there is already a persisted value
   -- for temp_oid_buffer_start, it will not do anything
   CALL sys.persist_temp_oid_buffer_start();
-  EXECUTE 'SET babelfishpg_tsql.enable_alter_owner_from_pg = false';
 END
 $$;
 

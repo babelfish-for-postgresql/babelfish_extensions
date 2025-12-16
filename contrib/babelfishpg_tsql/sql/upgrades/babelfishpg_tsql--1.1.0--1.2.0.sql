@@ -3712,9 +3712,7 @@ CREATE OR REPLACE PROCEDURE sys.create_xp_qv_in_master_dbo()
   AS 'babelfishpg_tsql', 'create_xp_qv_in_master_dbo_internal';
 
 CALL sys.create_xp_qv_in_master_dbo();
-SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
 ALTER PROCEDURE master_dbo.xp_qv OWNER TO sysadmin;
-SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
 DROP PROCEDURE sys.create_xp_qv_in_master_dbo;
 
 CREATE OR REPLACE FUNCTION sys.servicename()
