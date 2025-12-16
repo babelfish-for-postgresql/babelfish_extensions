@@ -726,6 +726,95 @@ drop database DB64long_0123456789012345678901234567890123456789012345678901234
 go
 
 -- tsql
+-- When new owner is an internal role, user-defined role, database principal or server principal - Error out.
+use master
+go
+create database sp_changedbowner_db
+go
+use sp_changedbowner_db
+go
+create role sp_changedbowner_r1
+go
+exec sp_changedbowner 'bbf_role_admin'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+exec sp_changedbowner 'securityadmin'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+exec sp_changedbowner 'sysadmin'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+exec sp_changedbowner 'dbcreator'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.)~~
+
+exec sp_changedbowner 'db_datareader'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'db_datareader', because it does not exist or you do not have permission.)~~
+
+exec sp_changedbowner 'db_datawriter'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'db_datawriter', because it does not exist or you do not have permission.)~~
+
+exec sp_changedbowner 'db_ddladmin'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'db_ddladmin', because it does not exist or you do not have permission.)~~
+
+exec sp_changedbowner 'dbo'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'dbo', because it does not exist or you do not have permission.)~~
+
+exec sp_changedbowner 'db_owner'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'db_owner', because it does not exist or you do not have permission.)~~
+
+exec sp_changedbowner 'master_db_datareader'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'master_db_datareader', because it does not exist or you do not have permission.)~~
+
+exec sp_changedbowner 'sp_changedbowner_r1'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'sp_changedbowner_r1', because it does not exist or you do not have permission.)~~
+
+exec sp_changedbowner 'sp_changedbowner_db_sp_changedbowner_r1'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'sp_changedbowner_db_sp_changedbowner_r1', because it does not exist or you do not have permission.)~~
+
+drop role sp_changedbowner_r1
+go
+use master
+go
+drop database sp_changedbowner_db
+go
+
+-- tsql
 use master
 go
 set nocount on
