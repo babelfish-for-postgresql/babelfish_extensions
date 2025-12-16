@@ -964,9 +964,7 @@ is_babelfish_role(const char *role)
 		const char *parent_role_name = GetUserNameFromId(parent_role_oid, false);
 
 		/* Check if the parent role is a Babelfish role */
-		if (is_member_of_role(sysadmin_oid, parent_role_oid) ||
-			is_member_of_role(securityadmin, parent_role_oid) ||
-			is_member_of_role(dbcreator, parent_role_oid))
+		if (is_member_of_role(sysadmin_oid, parent_role_oid))
 		{
 			is_babelfish_login = true;
 			break;
