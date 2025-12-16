@@ -714,7 +714,3 @@ ignore#!#test_convert_to_binary-before-17_7-16_11-vu-cleanup
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-prepare
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
-
-ignore#!#babel_convert_with_style-before_17_8-or-16_12-vu-prepare
-ignore#!#babel_convert_with_style-before_17_8-or-16_12-vu-verify
-ignore#!#babel_convert_with_style-before_17_8-or-16_12-vu-cleanup
