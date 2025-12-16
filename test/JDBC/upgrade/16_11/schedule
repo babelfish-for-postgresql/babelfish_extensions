@@ -641,4 +641,4 @@ test_convert_to_binary
 cast_datetime_to_binary
 babel_string_to_money
 BABEL-4271
-babel_convert_with_style-before_17_8-or-16_12
+babel_convert_with_style
