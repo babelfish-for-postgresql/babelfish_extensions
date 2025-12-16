@@ -552,6 +552,42 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
+DECLARE
+    arg_datatype TEXT;
+    basetype OID;
+BEGIN
+    arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(startdate)::oid);
+    -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(startdate)::oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    IF ((arg_datatype IS NULL AND pg_typeof(startdate) = 'time'::regtype) OR arg_datatype = 'time') THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 0);
+    END IF;
+    IF ((arg_datatype IS NULL AND pg_typeof(startdate) = 'date'::regtype) OR arg_datatype = 'date') THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 1);
+    END IF;
+    IF ((arg_datatype IS NULL AND pg_typeof(startdate) = 'sys.smalldatetime'::regtype) OR arg_datatype = 'smalldatetime') THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 2);
+    END IF;
+    IF ((arg_datatype IS NULL AND (pg_typeof(startdate) = 'sys.datetime'::regtype OR pg_typeof(startdate) = 'timestamp'::regtype)) OR (arg_datatype = 'datetime' OR arg_datatype = 'timestamp')) THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
+    END IF;
+    IF ((arg_datatype IS NULL AND pg_typeof(startdate) = 'sys.datetime2'::regtype) OR arg_datatype = 'datetime2') THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 4);
+    END IF;
+    IF ((arg_datatype IS NULL AND pg_typeof(startdate) = 'sys.datetimeoffset'::regtype) OR arg_datatype = 'datetimeoffset') THEN
+        return sys.dateadd_internal_df(datepart, num, startdate);
+    END IF;
+    RAISE EXCEPTION 'Conversion failed when converting date and/or time from %.', pg_typeof(startdate);
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE parallel safe;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

@@ -2132,9 +2132,11 @@ FROM UDDTSmallDateTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#smalldatetime#!#smalldatetime#!#int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: control reached end of function without RETURN)~~
+1#!#2023-06-16 15:30:00.0#!#2023-06-16 15:00:00.0#!#64666230
+2#!#2023-06-17 10:15:00.0#!#2023-06-17 09:45:00.0#!#40939065
+3#!#2023-06-18 19:45:00.0#!#2023-06-18 19:15:00.0#!#12340485
+4#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 -- 8. Test constraints with time components
@@ -2180,9 +2182,8 @@ EXEC TestUDDTSmallDateTimeProc
 GO
 ~~START~~
 smalldatetime#!#smalldatetime#!#int#!#smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: control reached end of function without RETURN)~~
+2023-06-16 14:30:00.0#!#1900-07-04 12:00:00.0#!#64666230#!#2023-06-16 15:30:00.0
+~~END~~
 
 
 
