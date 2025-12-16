@@ -10799,31 +10799,31 @@ BEGIN
 
 	CASE pg_typeof(arg)
 	WHEN 'date'::regtype THEN
-		IF NOT p_style_specified THEN
+		IF NOT p_style_specified AND v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
 		ELSE
 			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
 		END IF;
 	WHEN 'time'::regtype THEN
-		IF NOT p_style_specified THEN
+		IF NOT p_style_specified AND v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
 		ELSE
 			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
 		END IF;
 	WHEN 'sys.datetime'::regtype THEN
-		IF NOT p_style_specified THEN
+		IF NOT p_style_specified AND v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
 		ELSE
 			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
 		END IF;
 	WHEN 'float'::regtype THEN
-		IF NOT p_style_specified THEN
+		IF NOT p_style_specified AND v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
 		ELSE
 			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
 		END IF;
 	WHEN 'sys.money'::regtype THEN
-		IF NOT p_style_specified THEN
+		IF NOT p_style_specified AND v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
 		ELSE
 			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
@@ -10841,7 +10841,7 @@ BEGIN
 			RETURN CAST(arg AS sys.VARCHAR);
 		END IF;
     WHEN 'sys.smallmoney'::regtype THEN 
-        IF NOT p_style_specified THEN
+        IF NOT p_style_specified AND v_style = -1 THEN
             RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4));
         ELSE
             RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4), p_style);
