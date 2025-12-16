@@ -126,6 +126,46 @@ typedef DBPROCESS * LinkedServerProcess;
 #define LS_BYTE			BYTE
 #define LS_TYPEINFO		DBTYPEINFO
 
+/* ====================================================================
+ * TDS Type Abstraction Layer
+ * These macros wrap FreeTDS type constants to allow for potential
+ * future migration to alternative TDS client libraries.
+ * ==================================================================== */
+
+/* RPC Parameter Types - used in get_tds_type_from_pg_oid() */
+#define LS_TYPE_VARCHAR      SYBVARCHAR
+#define LS_TYPE_NVARCHAR     XSYBNVARCHAR
+#define LS_TYPE_CHAR         SYBCHAR
+#define LS_TYPE_NCHAR        XSYBNCHAR
+#define LS_TYPE_TEXT         SYBTEXT
+#define LS_TYPE_NTEXT        SYBNTEXT
+#define LS_TYPE_INT1         SYBINT1
+#define LS_TYPE_INT2         SYBINT2
+#define LS_TYPE_INT4         SYBINT4
+#define LS_TYPE_INT8         SYBINT8
+#define LS_TYPE_FLOAT        SYBFLT8
+#define LS_TYPE_REAL         SYBREAL
+#define LS_TYPE_BIT          SYBBIT
+#define LS_TYPE_DATETIME     SYBDATETIME
+#define LS_TYPE_DATETIME4    SYBDATETIME4
+#define LS_TYPE_DATETIME2    SYBMSDATETIME2
+#define LS_TYPE_DATE         SYBMSDATE
+#define LS_TYPE_TIME         SYBMSTIME
+#define LS_TYPE_NUMERIC      SYBNUMERIC
+#define LS_TYPE_DECIMAL      SYBDECIMAL
+#define LS_TYPE_VARBINARY    SYBVARBINARY
+#define LS_TYPE_BINARY       SYBBINARY
+#define LS_TYPE_UNIQUE       SYBUNIQUE
+#define LS_TYPE_DATETIMEOFFSET SYBMSDATETIMEOFFSET
+
+/* FreeTDS data types used in dbrpcparam and type conversions */
+#define LS_DBFLT8            DBFLT8
+#define LS_DBREAL            DBREAL
+#define LS_DBINT             DBINT
+#define LS_DBSMALLINT        DBSMALLINT
+#define LS_DBBOOL            DBBOOL
+#define LS_DBDATETIME        DBDATETIME
+
 #else
 typedef int *LinkedServerLogin;
 typedef int *LinkedServerProcess;

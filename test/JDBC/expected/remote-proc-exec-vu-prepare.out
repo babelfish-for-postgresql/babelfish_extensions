@@ -1,15 +1,9 @@
 -- psql
-
-
 -- Create tds_fdw extension for linked server support
 -- Suppress warnings for idempotent CREATE EXTENSION
 SET client_min_messages TO 'error';
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
 SET client_min_messages TO 'notice';
--- Enable remote procedure execution for testing (database-level GUC)
-ALTER DATABASE babelfish_db SET babelfishpg_tsql.enable_remote_proc_exec = true;
--- IMPORTANT: Also set for current session since ALTER DATABASE only affects new connections
-SET babelfishpg_tsql.enable_remote_proc_exec = true;
 GO
 
 -- tsql

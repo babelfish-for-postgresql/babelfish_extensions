@@ -9613,7 +9613,30 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	/* Handles rewrite of geospatial function calls */
 	if (ctx->spatial_proc_name_server_database_schema())
 	{
-		if (ctx->spatial_proc_name_server_database_schema()->schema) throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+		/*
+		 * Check if this is an XML method call (db.table.xmlcolumn.exist, .value, .query, .nodes, .modify)
+		 * XML methods are 4-part names but NOT remote procedure calls, so don't throw error for them.
+		 */
+		if (ctx->spatial_proc_name_server_database_schema()->schema) 
+		{
+			std::string method_name;
+			if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg())
+				method_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
+			else if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg())
+				method_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg());
+			else if (ctx->spatial_proc_name_server_database_schema()->column)
+				method_name = stripQuoteFromId(ctx->spatial_proc_name_server_database_schema()->column);
+			
+			/* Check if this is an XML method - if not, it's a remote procedure call */
+			bool is_xml_method = (pg_strcasecmp(method_name.c_str(), "exist") == 0) ||
+			                     (pg_strcasecmp(method_name.c_str(), "value") == 0) ||
+			                     (pg_strcasecmp(method_name.c_str(), "query") == 0) ||
+			                     (pg_strcasecmp(method_name.c_str(), "nodes") == 0) ||
+			                     (pg_strcasecmp(method_name.c_str(), "modify") == 0);
+			
+			if (!is_xml_method)
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+		}
 
 		/* This if-elseIf clause rewrites the query in case of geospatial function calls */
 		if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg() && ctx->function_arg_list())

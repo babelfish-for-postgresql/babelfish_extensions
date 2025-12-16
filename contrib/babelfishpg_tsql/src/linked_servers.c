@@ -1411,37 +1411,37 @@ get_tds_type_from_pg_oid(Oid pgtype)
 		Oid bit_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bit");
 		
 		if (pgtype == varchar_oid)
-			return SYBVARCHAR;
+			return LS_TYPE_VARCHAR;
 		else if (pgtype == nvarchar_oid)
-			return XSYBNVARCHAR;  /* Unicode type - use UTF-16 LE encoding (type 231) */
+			return LS_TYPE_NVARCHAR;  /* Unicode type - use UTF-16 LE encoding (type 231) */
 		else if (pgtype == char_oid)
-			return SYBCHAR;
+			return LS_TYPE_CHAR;
 		else if (pgtype == nchar_oid)
-			return XSYBNCHAR;    /* Unicode type - use UTF-16 LE encoding (type 239) */
+			return LS_TYPE_NCHAR;    /* Unicode type - use UTF-16 LE encoding (type 239) */
 		else if (pgtype == int_oid)
-			return SYBINT4;
+			return LS_TYPE_INT4;
 		else if (pgtype == bigint_oid)
-			return SYBINT8;
+			return LS_TYPE_INT8;
 		else if (pgtype == tinyint_oid)
-			return SYBINT1;
+			return LS_TYPE_INT1;
 		else if (pgtype == datetime_oid)
-			return SYBDATETIME;
+			return LS_TYPE_DATETIME;
 		else if (pgtype == smalldatetime_oid)
-			return SYBDATETIME4;
+			return LS_TYPE_DATETIME4;
 		else if (pgtype == datetime2_oid)
-			return SYBMSDATETIME2;
+			return LS_TYPE_DATETIME2;
 		else if (pgtype == float_oid)
-			return SYBFLT8;
+			return LS_TYPE_FLOAT;
 		else if (pgtype == real_oid)
-			return SYBREAL;
+			return LS_TYPE_REAL;
 		else if (pgtype == varbinary_oid)
-			return SYBVARBINARY;
+			return LS_TYPE_VARBINARY;
 		else if (pgtype == binary_oid)
-			return SYBBINARY;
+			return LS_TYPE_BINARY;
 		else if (pgtype == uniqueidentifier_oid)
-			return SYBUNIQUE;
+			return LS_TYPE_UNIQUE;
 		else if (pgtype == bit_oid)
-			return SYBBIT;
+			return LS_TYPE_BIT;
 	}
 	
 	/* Check for Babelfish DECIMAL/NUMERIC types */
@@ -1451,7 +1451,7 @@ get_tds_type_from_pg_oid(Oid pgtype)
 		Oid numeric_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("numeric");
 		Oid decimal_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("decimal");
 		if (pgtype == numeric_oid || pgtype == decimal_oid)
-			return SYBVARCHAR;  /* Send as string, server will convert */
+			return LS_TYPE_VARCHAR;  /* Send as string, server will convert */
 	}
 	
 	/* Check for Babelfish MONEY/SMALLMONEY types */
@@ -1461,7 +1461,7 @@ get_tds_type_from_pg_oid(Oid pgtype)
 		Oid money_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
 		Oid smallmoney_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
 		if (pgtype == money_oid || pgtype == smallmoney_oid)
-			return SYBVARCHAR;  /* Send as string, server will convert */
+			return LS_TYPE_VARCHAR;  /* Send as string, server will convert */
 	}
 	
 	/* Check for Babelfish DateTime types - send as string for simplicity */
@@ -1476,40 +1476,40 @@ get_tds_type_from_pg_oid(Oid pgtype)
 		if (pgtype == datetime_oid || pgtype == datetime2_oid || 
 		    pgtype == smalldatetime_oid || pgtype == datetimeoffset_oid ||
 		    pgtype == time_oid)
-			return SYBVARCHAR;  /* Send as ISO string, server will parse */
+			return LS_TYPE_VARCHAR;  /* Send as ISO string, server will parse */
 	}
 	
 	/* Then check standard PostgreSQL types */
 	switch (pgtype)
 	{
 		case INT2OID:
-			return SYBINT2;
+			return LS_TYPE_INT2;
 		case INT4OID:
-			return SYBINT4;
+			return LS_TYPE_INT4;
 		case INT8OID:
-			return SYBINT8;
+			return LS_TYPE_INT8;
 		case FLOAT4OID:
-			return SYBREAL;
+			return LS_TYPE_REAL;
 		case FLOAT8OID:
-			return SYBFLT8;
+			return LS_TYPE_FLOAT;
 		case NUMERICOID:
-			return SYBVARCHAR;  /* Send as string, server will convert */
+			return LS_TYPE_VARCHAR;  /* Send as string, server will convert */
 		case BOOLOID:
-			return SYBBIT;
+			return LS_TYPE_BIT;
 		case TEXTOID:
-			return SYBTEXT;
+			return LS_TYPE_TEXT;
 		case VARCHAROID:
-			return SYBVARCHAR;
+			return LS_TYPE_VARCHAR;
 		case BPCHAROID:
-			return SYBCHAR;
+			return LS_TYPE_CHAR;
 		case DATEOID:
-			return SYBMSDATE;
+			return LS_TYPE_DATE;
 		case TIMEOID:
-			return SYBMSTIME;
+			return LS_TYPE_TIME;
 		case TIMESTAMPOID:
-			return SYBDATETIME;
+			return LS_TYPE_DATETIME;
 		case BYTEAOID:
-			return SYBVARBINARY;
+			return LS_TYPE_VARBINARY;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1577,27 +1577,27 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		/* Babelfish FLOAT (8 bytes) */
 		if (valtype == float_oid)
 		{
-			*len_out = sizeof(DBFLT8);
+			*len_out = sizeof(LS_DBFLT8);
 			*data_out = palloc(*len_out);
-			*((DBFLT8 *)*data_out) = DatumGetFloat8(value);
+			*((LS_DBFLT8 *)*data_out) = DatumGetFloat8(value);
 			return;
 		}
 		
 		/* Babelfish REAL (4 bytes) */
 		if (valtype == real_oid)
 		{
-			*len_out = sizeof(DBREAL);
+			*len_out = sizeof(LS_DBREAL);
 			*data_out = palloc(*len_out);
-			*((DBREAL *)*data_out) = DatumGetFloat4(value);
+			*((LS_DBREAL *)*data_out) = DatumGetFloat4(value);
 			return;
 		}
 		
 		/* Babelfish BIT */
 		if (valtype == bit_oid)
 		{
-			*len_out = sizeof(DBBOOL);
+			*len_out = sizeof(LS_DBBOOL);
 			*data_out = palloc(*len_out);
-			*((DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
+			*((LS_DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
 			return;
 		}
 		
@@ -1689,25 +1689,25 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 	{
 		case BOOLOID:
 			{
-				*len_out = sizeof(DBBOOL);
+				*len_out = sizeof(LS_DBBOOL);
 				*data_out = palloc(*len_out);
-				*((DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
+				*((LS_DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
 			}
 			break;
 			
 		case INT2OID:
 			{
-				*len_out = sizeof(DBSMALLINT);
+				*len_out = sizeof(LS_DBSMALLINT);
 				*data_out = palloc(*len_out);
-				*((DBSMALLINT *)*data_out) = DatumGetInt16(value);
+				*((LS_DBSMALLINT *)*data_out) = DatumGetInt16(value);
 			}
 			break;
 			
 		case INT4OID:
 			{
-				*len_out = sizeof(DBINT);
+				*len_out = sizeof(LS_DBINT);
 				*data_out = palloc(*len_out);
-				*((DBINT *)*data_out) = DatumGetInt32(value);
+				*((LS_DBINT *)*data_out) = DatumGetInt32(value);
 			}
 			break;
 			
@@ -1721,17 +1721,17 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 			
 		case FLOAT4OID:
 			{
-				*len_out = sizeof(DBREAL);
+				*len_out = sizeof(LS_DBREAL);
 				*data_out = palloc(*len_out);
-				*((DBREAL *)*data_out) = DatumGetFloat4(value);
+				*((LS_DBREAL *)*data_out) = DatumGetFloat4(value);
 			}
 			break;
 			
 		case FLOAT8OID:
 			{
-				*len_out = sizeof(DBFLT8);
+				*len_out = sizeof(LS_DBFLT8);
 				*data_out = palloc(*len_out);
-				*((DBFLT8 *)*data_out) = DatumGetFloat8(value);
+				*((LS_DBFLT8 *)*data_out) = DatumGetFloat8(value);
 			}
 			break;
 			
@@ -1881,6 +1881,8 @@ validate_procedure_select_only(const char *server_name,
 	
 	if (definition == NULL)
 	{
+		if (query.data)
+			pfree(query.data);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("Could not fetch definition for remote procedure %s.%s.%s.%s",
@@ -1891,17 +1893,35 @@ validate_procedure_select_only(const char *server_name,
 	elog(LOG, "SELECT-only validation: Analyzing procedure definition for %s (length: %zu bytes)",
 		 procedure_name, strlen(definition));
 	
-	/* Use ANTLR parser for accurate T-SQL validation */
-	validate_remote_procedure_select_only_antlr(
-		definition,
-		server_name,
-		database_name,
-		schema_name,
-		procedure_name);
+	/* 
+	 * Wrap validation in PG_TRY/CATCH to ensure proper cleanup if validation fails.
+	 * If validate_remote_procedure_select_only_antlr() throws an error, we need to
+	 * free the allocated memory before re-throwing.
+	 */
+	PG_TRY();
+	{
+		/* Use ANTLR parser for accurate T-SQL validation */
+		validate_remote_procedure_select_only_antlr(
+			definition,
+			server_name,
+			database_name,
+			schema_name,
+			procedure_name);
+		
+		elog(LOG, "SELECT-only validation: Procedure %s passed ANTLR validation checks", procedure_name);
+	}
+	PG_CATCH();
+	{
+		/* Clean up allocated memory before re-throwing the error */
+		if (definition)
+			pfree(definition);
+		if (query.data)
+			pfree(query.data);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 	
-	elog(LOG, "SELECT-only validation: Procedure %s passed ANTLR validation checks", procedure_name);
-	
-	/* Clean up */
+	/* Clean up on successful validation */
 	pfree(definition);
 	pfree(query.data);
 }

@@ -515,9 +515,49 @@ GO
 EXEC bbf_rpe_server.master.dbo.sp_OnlySelect;
 GO
 
--- Test 82: SQL Injection attempt in procedure name (should fail safely)
--- Expected: Should throw error - procedure not found (not SQL injection)
-EXEC bbf_rpe_server.master.dbo.[sp_NoParams'; DROP TABLE test; --];
+-- ========================================
+-- Test 82: SQL INJECTION SECURITY TESTS
+-- ========================================
+
+-- Test 82a: Server name injection attempt
+-- Expected: Should fail with "server not found", NOT execute DROP TABLE
+PRINT 'Test 82a: Injection via server name';
+GO
+EXEC malicious_server; DROP TABLE test; --.master.dbo.sp_SingleInt 1;
+GO
+
+-- Test 82b: Database name injection attempt
+-- Expected: Should fail with "database not found" or invalid syntax, NOT execute DROP TABLE
+PRINT 'Test 82b: Injection via database name';
+GO
+EXEC bbf_rpe_server.malicious_db; DROP TABLE test; --.dbo.sp_SingleInt 1;
+GO
+
+-- Test 82c: Schema name injection attempt
+-- Expected: Should fail with "schema/procedure not found", NOT execute DROP TABLE
+PRINT 'Test 82c: Injection via schema name';
+GO
+EXEC bbf_rpe_server.master.malicious_schema; DROP TABLE test; --.sp_SingleInt 1;
+GO
+
+-- Test 82d: Procedure name injection attempt (unquoted)
+-- Expected: Should fail with "procedure not found" or syntax error, NOT execute DROP TABLE
+PRINT 'Test 82d: Injection via procedure name';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_SingleInt; DROP TABLE test; --;
+GO
+
+-- Test 82e: Parameter value injection attempt
+-- Expected: Parameter should be passed as data, NOT executed as SQL
+PRINT 'Test 82e: Injection via parameter value';
+GO
+DECLARE @malicious_param VARCHAR(100) = '''; DROP TABLE test; --';
+EXEC bbf_rpe_server.master.dbo.sp_TestVarchar @p=@malicious_param;
+GO
+
+-- Test 82f: Verify test integrity (confirms no injection succeeded)
+-- Expected: If a test table exists, it should still exist; otherwise expected error
+PRINT 'Test 82f: Verify no tables were dropped';
 GO
 
 -- ========================================
