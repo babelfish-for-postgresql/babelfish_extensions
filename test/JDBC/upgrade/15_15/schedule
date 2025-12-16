@@ -602,3 +602,4 @@ babel_timezoneinfo_before_17_7
 test_convert_to_binary-before-17_7-16_11
 cast_datetime_to_binary-before-17_7-16_11
 BABEL-4271
+BABEL-1664

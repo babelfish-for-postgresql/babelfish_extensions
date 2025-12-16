@@ -1104,6 +1104,90 @@ timestamptz_datetime(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
+/*
+ * tsql_ultostr_blankpad
+ *		Similar to pg_ultostr_zeropad, instead of zero, used whitespace.
+ *      Converts 'value' into a decimal string representation stored at 'str'.
+ *		'minwidth' specifies the minimum width of the result; any extra space
+ *		is filled up by prefixing the number with whitespace.
+ *
+ * Returns the ending address of the string result (the last character written
+ * plus 1).  Note that no NUL terminator is written.
+ *
+ * The intended use-case for this function is to build strings that contain
+ * multiple individual numbers, for example:
+ *
+ *	str = tsql_ultostr_blankpad(str, hours, 2);
+ *	*str++ = ':';
+ *	str = tsql_ultostr_blankpad(str, mins, 2);
+ *	*str++ = ':';
+ *	str = tsql_ultostr_blankpad(str, secs, 2);
+ *	*str = '\0';
+ *
+ * Note: Caller must ensure that 'str' points to enough memory to hold the
+ * result.
+ */
+static char *
+tsql_ultostr_blankpad(char *str, uint32 value, int32 minwidth)
+{
+	int			len;
+
+	Assert(minwidth > 0);
+
+	len = pg_ultoa_n(value, str);
+	if (len >= minwidth)
+		return str + len;
+
+	memmove(str + minwidth - len, str, len);
+	memset(str, ' ', minwidth - len);
+	return str + minwidth;
+}
+
+/* 
+ * TsqlEncodeDateTime()
+ * Encode datetime/smalldatetime to string with default format "mon dd yyyy hh:miAM (or PM)"
+ */
+void
+TsqlEncodeDateTime(struct pg_tm *tm, fsec_t fsec, char *str)
+{
+	int p_hour;
+
+	/*
+	 * TODO: BABEL-6258, Add logic to use locale-specific month names
+	 * based on language, when SET LANGUAGE is supported.
+	 * 
+	 * Currently we only support US_ENGLISH as the language,
+	 * so we don't need to worry about the locale-specific
+	 * month names. 
+	 */
+	memcpy(str, months[tm->tm_mon - 1], 3);
+	str += 3;
+	*str++ = ' ';
+	str = tsql_ultostr_blankpad(str, tm->tm_mday, 2);
+	*str++ = ' ';
+	str = tsql_ultostr_blankpad(str, tm->tm_year, 4);
+	*str++ = ' ';
+	if (tm->tm_hour == 0)
+		p_hour = 12;
+	else if (tm->tm_hour > 12)
+		p_hour = tm->tm_hour - 12;
+	else
+		p_hour = tm->tm_hour;
+	str = tsql_ultostr_blankpad(str, p_hour, 2);
+	*str++ = ':';
+	str = pg_ultostr_zeropad(str, tm->tm_min, 2);
+	if (tm->tm_hour >= 12)
+	{
+		memcpy(str, "PM", 2);
+	}
+	else
+	{
+		memcpy(str, "AM", 2);
+	}
+	str+=2;
+	*str = '\0';
+}
+
 /* datetime_varchar()
  * Convert a datetime to varchar.
  */
@@ -1124,7 +1208,7 @@ datetime_varchar(PG_FUNCTION_ARGS)
 	{
 		/* round fractional seconds to datetime precision */
 		fsec = DTROUND(fsec);
-		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf);
+		TsqlEncodeDateTime(tm, fsec, buf);
 	}
 	else
 		ereport(ERROR,
@@ -1168,7 +1252,7 @@ datetime_char(PG_FUNCTION_ARGS)
 	{
 		/* round fractional seconds to datetime precision */
 		fsec = DTROUND(fsec);
-		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf);
+		TsqlEncodeDateTime(tm, fsec, buf);
 	}
 	else
 		ereport(ERROR,
