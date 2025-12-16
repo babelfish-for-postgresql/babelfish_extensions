@@ -261,12 +261,12 @@ SELECT LOWER(@datetime)
 GO
 ~~START~~
 varchar
-2016-12-21 00:00:00
+DEC 21 2016 12:00AM
 ~~END~~
 
 ~~START~~
 varchar
-2016-12-21 00:00:00
+dec 21 2016 12:00am
 ~~END~~
 
 
@@ -277,12 +277,12 @@ SELECT LOWER(@smalldatetime)
 GO
 ~~START~~
 varchar
-1955-12-13 12:43:00
+DEC 13 1955 12:43PM
 ~~END~~
 
 ~~START~~
 varchar
-1955-12-13 12:43:00
+dec 13 1955 12:43pm
 ~~END~~
 
 

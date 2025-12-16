@@ -1,51 +1,46 @@
 -- Functional tests with different edge cases
 SELECT CAST(CAST('2016-12-12 12:12:12.123' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2016-12-12 12:12:12.12345678' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM#!#2016-12-12 12:12:12.1234570
+varchar#!#varchar
+Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM
 ~~END~~
 
 
 SELECT CAST(CAST('2001-5-20 12:12:12.123' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2001-5-20 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2001-5-20 12:12:12.1234567' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2001-5-20 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-May 20 2001 12:12PM#!#May 20 2001 12:12PM#!#2001-05-20 12:12:12.1234570
+varchar#!#varchar
+May 20 2001 12:12PM#!#May 20 2001 12:12PM
 ~~END~~
 
 
 SELECT CAST(CAST('2001-7-29 12:12:12.123' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2001-7-29 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2001-7-29 12:12:12.1234567' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2001-7-29 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Jul 29 2001 12:12PM#!#Jul 29 2001 12:12PM#!#2001-07-29 12:12:12.1234570
+varchar#!#varchar
+Jul 29 2001 12:12PM#!#Jul 29 2001 12:12PM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-1 12:12:12.123' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2016-12-1 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2016-12-1 12:12:12.1234567' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2016-12-1 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec  1 2016 12:12PM#!#Dec  1 2016 12:12PM#!#2016-12-01 12:12:12.1234570
+varchar#!#varchar
+Dec  1 2016 12:12PM#!#Dec  1 2016 12:12PM
 ~~END~~
 
 
 SELECT CAST(CAST('12-2-1 12:12:12.123' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('12-2-1 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('12-2-1 12:12:12.1234567' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('12-2-1 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec  2 2001 12:12PM#!#Dec  2 2001 12:12PM#!#2001-12-02 12:12:12.1234570
+varchar#!#varchar
+Dec  2 2001 12:12PM#!#Dec  2 2001 12:12PM
 ~~END~~
 
 
@@ -57,153 +52,131 @@ GO
 ~~ERROR (Message: data out of range for datetime)~~
 
 
-SELECT CAST(CAST('0012-2-1 12:12:12.1234567' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
-GO
-~~START~~
-varchar
-0012-02-01 12:12:12.1234570
-~~END~~
-
-
 SELECT CAST(CAST('2016-12-12 1:1:1.123' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2016-12-12 1:1:1.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2016-12-12 1:1:1.1234567' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2016-12-12 1:1:1.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 12 2016  1:01AM#!#Dec 12 2016  1:01AM#!#2016-12-12 01:01:01.1234570
+varchar#!#varchar
+Dec 12 2016  1:01AM#!#Dec 12 2016  1:01AM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 15:7:1.123' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2016-12-12 15:7:1.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2016-12-12 15:7:1.1234567' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2016-12-12 15:7:1.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 12 2016  3:07PM#!#Dec 12 2016  3:07PM#!#2016-12-12 15:07:01.1234570
+varchar#!#varchar
+Dec 12 2016  3:07PM#!#Dec 12 2016  3:07PM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 24:0:0' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2016-12-12 24:0:0' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2016-12-12 24:0:0' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2016-12-12 24:0:0' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 13 2016 12:00AM#!#Dec 13 2016 12:00AM#!#2016-12-13 00:00:00.0000000
+varchar#!#varchar
+Dec 13 2016 12:00AM#!#Dec 13 2016 12:00AM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 23:59:59.999' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2016-12-12 23:59:59.999' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2016-12-12 23:59:59.9999999' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2016-12-12 23:59:59.999' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 13 2016 12:00AM#!#Dec 13 2016 12:00AM#!#2016-12-13 00:00:00.0000000
+varchar#!#varchar
+Dec 13 2016 12:00AM#!#Dec 13 2016 12:00AM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 0:7:1.123' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2016-12-12 0:7:1.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2016-12-12 0:7:1.1234567' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2016-12-12 0:7:1.123' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 12 2016 12:07AM#!#Dec 12 2016 12:07AM#!#2016-12-12 00:07:01.1234570
+varchar#!#varchar
+Dec 12 2016 12:07AM#!#Dec 12 2016 12:07AM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 0:0:0' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2016-12-12 0:0:0' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2016-12-12 0:0:0' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2016-12-12 0:0:0' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 12 2016 12:00AM#!#Dec 12 2016 12:00AM#!#2016-12-12 00:00:00.0000000
+varchar#!#varchar
+Dec 12 2016 12:00AM#!#Dec 12 2016 12:00AM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 12:12:12.1' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2016-12-12 12:12:12.1' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2016-12-12 12:12:12.1' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2016-12-12 12:12:12.1' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM#!#2016-12-12 12:12:12.1000000
+varchar#!#varchar
+Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 12:12:12.12' AS DATETIME) AS VARCHAR(100)) AS dt_varchar,
-       CAST(CAST('2016-12-12 12:12:12.12' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar,
-       CAST(CAST('2016-12-12 12:12:12.12345' AS DATETIME2) AS VARCHAR(100)) AS dt2_varchar;
+       CAST(CAST('2016-12-12 12:12:12.12' AS SMALLDATETIME) AS VARCHAR(100)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM#!#2016-12-12 12:12:12.1234500
+varchar#!#varchar
+Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM
 ~~END~~
 
 
 -- varchar typmod less than the converted string size
 SELECT CAST(CAST('2016-12-12 12:12:12.123' AS DATETIME) AS VARCHAR(15)) AS dt_varchar,
-       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(15)) AS sdt_varchar,
-       CAST(CAST('2016-12-12 12:12:12.12345678' AS DATETIME2) AS VARCHAR(15)) AS dt2_varchar;
+       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS VARCHAR(15)) AS sdt_varchar;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 12 2016 12:#!#Dec 12 2016 12:#!#2016-12-12 12:1
+varchar#!#varchar
+Dec 12 2016 12:#!#Dec 12 2016 12:
 ~~END~~
 
 
 -- test with casting to char
 SELECT CAST(CAST('2016-12-12 12:12:12.123' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2016-12-12 12:12:12.12345678' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 #!#2016-12-12 12:12:12.1234570                                                                         
+char#!#char
+Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2001-5-20 12:12:12.123' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2001-5-20 12:12:12.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2001-5-20 12:12:12.1234567' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2001-5-20 12:12:12.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-May 20 2001 12:12PM                                                                                 #!#May 20 2001 12:12PM                                                                                 #!#2001-05-20 12:12:12.1234570                                                                         
+char#!#char
+May 20 2001 12:12PM                                                                                 #!#May 20 2001 12:12PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2001-7-29 12:12:12.123' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2001-7-29 12:12:12.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2001-7-29 12:12:12.1234567' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2001-7-29 12:12:12.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Jul 29 2001 12:12PM                                                                                 #!#Jul 29 2001 12:12PM                                                                                 #!#2001-07-29 12:12:12.1234570                                                                         
+char#!#char
+Jul 29 2001 12:12PM                                                                                 #!#Jul 29 2001 12:12PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-1 12:12:12.123' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2016-12-1 12:12:12.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2016-12-1 12:12:12.1234567' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2016-12-1 12:12:12.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec  1 2016 12:12PM                                                                                 #!#Dec  1 2016 12:12PM                                                                                 #!#2016-12-01 12:12:12.1234570                                                                         
+char#!#char
+Dec  1 2016 12:12PM                                                                                 #!#Dec  1 2016 12:12PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('12-2-1 12:12:12.123' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('12-2-1 12:12:12.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('12-2-1 12:12:12.1234567' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('12-2-1 12:12:12.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec  2 2001 12:12PM                                                                                 #!#Dec  2 2001 12:12PM                                                                                 #!#2001-12-02 12:12:12.1234570                                                                         
+char#!#char
+Dec  2 2001 12:12PM                                                                                 #!#Dec  2 2001 12:12PM                                                                                 
 ~~END~~
 
 
@@ -215,153 +188,131 @@ GO
 ~~ERROR (Message: data out of range for datetime)~~
 
 
-SELECT CAST(CAST('0012-2-1 12:12:12.1234567' AS DATETIME2) AS CHAR(100)) AS dt2_char;
-GO
-~~START~~
-char
-0012-02-01 12:12:12.1234570                                                                         
-~~END~~
-
-
 SELECT CAST(CAST('2016-12-12 1:1:1.123' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2016-12-12 1:1:1.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2016-12-12 1:1:1.1234567' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2016-12-12 1:1:1.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec 12 2016  1:01AM                                                                                 #!#Dec 12 2016  1:01AM                                                                                 #!#2016-12-12 01:01:01.1234570                                                                         
+char#!#char
+Dec 12 2016  1:01AM                                                                                 #!#Dec 12 2016  1:01AM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 15:7:1.123' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2016-12-12 15:7:1.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2016-12-12 15:7:1.1234567' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2016-12-12 15:7:1.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec 12 2016  3:07PM                                                                                 #!#Dec 12 2016  3:07PM                                                                                 #!#2016-12-12 15:07:01.1234570                                                                         
+char#!#char
+Dec 12 2016  3:07PM                                                                                 #!#Dec 12 2016  3:07PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 24:0:0' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2016-12-12 24:0:0' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2016-12-12 24:0:0' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2016-12-12 24:0:0' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec 13 2016 12:00AM                                                                                 #!#Dec 13 2016 12:00AM                                                                                 #!#2016-12-13 00:00:00.0000000                                                                         
+char#!#char
+Dec 13 2016 12:00AM                                                                                 #!#Dec 13 2016 12:00AM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 23:59:59.999' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2016-12-12 23:59:59.999' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2016-12-12 23:59:59.9999999' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2016-12-12 23:59:59.999' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec 13 2016 12:00AM                                                                                 #!#Dec 13 2016 12:00AM                                                                                 #!#2016-12-13 00:00:00.0000000                                                                         
+char#!#char
+Dec 13 2016 12:00AM                                                                                 #!#Dec 13 2016 12:00AM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 0:7:1.123' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2016-12-12 0:7:1.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2016-12-12 0:7:1.1234567' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2016-12-12 0:7:1.123' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec 12 2016 12:07AM                                                                                 #!#Dec 12 2016 12:07AM                                                                                 #!#2016-12-12 00:07:01.1234570                                                                         
+char#!#char
+Dec 12 2016 12:07AM                                                                                 #!#Dec 12 2016 12:07AM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 0:0:0' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2016-12-12 0:0:0' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2016-12-12 0:0:0' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2016-12-12 0:0:0' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec 12 2016 12:00AM                                                                                 #!#Dec 12 2016 12:00AM                                                                                 #!#2016-12-12 00:00:00.0000000                                                                         
+char#!#char
+Dec 12 2016 12:00AM                                                                                 #!#Dec 12 2016 12:00AM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 12:12:12.1' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2016-12-12 12:12:12.1' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2016-12-12 12:12:12.1' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2016-12-12 12:12:12.1' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 #!#2016-12-12 12:12:12.1000000                                                                         
+char#!#char
+Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 12:12:12.12' AS DATETIME) AS CHAR(100)) AS dt_char,
-       CAST(CAST('2016-12-12 12:12:12.12' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char,
-       CAST(CAST('2016-12-12 12:12:12.12345' AS DATETIME2) AS CHAR(100)) AS dt2_char;
+       CAST(CAST('2016-12-12 12:12:12.12' AS SMALLDATETIME) AS CHAR(100)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 #!#2016-12-12 12:12:12.1234500                                                                         
+char#!#char
+Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 
 ~~END~~
 
 
 -- char typmod less than the converted string size
 SELECT CAST(CAST('2016-12-12 12:12:12.123' AS DATETIME) AS CHAR(15)) AS dt_char,
-       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS CHAR(15)) AS sdt_char,
-       CAST(CAST('2016-12-12 12:12:12.12345678' AS DATETIME2) AS CHAR(15)) AS dt2_char;
+       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS CHAR(15)) AS sdt_char;
 GO
 ~~START~~
-char#!#char#!#char
-Dec 12 2016 12:#!#Dec 12 2016 12:#!#2016-12-12 12:1
+char#!#char
+Dec 12 2016 12:#!#Dec 12 2016 12:
 ~~END~~
 
 
 -- test with casting to nvarchar
 SELECT CAST(CAST('2016-12-12 12:12:12.123' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-12 12:12:12.12345678' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM#!#2016-12-12 12:12:12.1234570
+nvarchar#!#nvarchar
+Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM
 ~~END~~
 
 
 SELECT CAST(CAST('2001-5-20 12:12:12.123' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2001-5-20 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2001-5-20 12:12:12.1234567' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2001-5-20 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-May 20 2001 12:12PM#!#May 20 2001 12:12PM#!#2001-05-20 12:12:12.1234570
+nvarchar#!#nvarchar
+May 20 2001 12:12PM#!#May 20 2001 12:12PM
 ~~END~~
 
 
 SELECT CAST(CAST('2001-7-29 12:12:12.123' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2001-7-29 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2001-7-29 12:12:12.1234567' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2001-7-29 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Jul 29 2001 12:12PM#!#Jul 29 2001 12:12PM#!#2001-07-29 12:12:12.1234570
+nvarchar#!#nvarchar
+Jul 29 2001 12:12PM#!#Jul 29 2001 12:12PM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-1 12:12:12.123' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2016-12-1 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-1 12:12:12.1234567' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-1 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec  1 2016 12:12PM#!#Dec  1 2016 12:12PM#!#2016-12-01 12:12:12.1234570
+nvarchar#!#nvarchar
+Dec  1 2016 12:12PM#!#Dec  1 2016 12:12PM
 ~~END~~
 
 
 SELECT CAST(CAST('12-2-1 12:12:12.123' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('12-2-1 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('12-2-1 12:12:12.1234567' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('12-2-1 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec  2 2001 12:12PM#!#Dec  2 2001 12:12PM#!#2001-12-02 12:12:12.1234570
+nvarchar#!#nvarchar
+Dec  2 2001 12:12PM#!#Dec  2 2001 12:12PM
 ~~END~~
 
 
@@ -373,153 +324,131 @@ GO
 ~~ERROR (Message: data out of range for datetime)~~
 
 
-SELECT CAST(CAST('0012-2-1 12:12:12.1234567' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
-GO
-~~START~~
-nvarchar
-0012-02-01 12:12:12.1234570
-~~END~~
-
-
 SELECT CAST(CAST('2016-12-12 1:1:1.123' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2016-12-12 1:1:1.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-12 1:1:1.1234567' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-12 1:1:1.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec 12 2016  1:01AM#!#Dec 12 2016  1:01AM#!#2016-12-12 01:01:01.1234570
+nvarchar#!#nvarchar
+Dec 12 2016  1:01AM#!#Dec 12 2016  1:01AM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 15:7:1.123' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2016-12-12 15:7:1.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-12 15:7:1.1234567' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-12 15:7:1.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec 12 2016  3:07PM#!#Dec 12 2016  3:07PM#!#2016-12-12 15:07:01.1234570
+nvarchar#!#nvarchar
+Dec 12 2016  3:07PM#!#Dec 12 2016  3:07PM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 24:0:0' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2016-12-12 24:0:0' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-12 24:0:0' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-12 24:0:0' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec 13 2016 12:00AM#!#Dec 13 2016 12:00AM#!#2016-12-13 00:00:00.0000000
+nvarchar#!#nvarchar
+Dec 13 2016 12:00AM#!#Dec 13 2016 12:00AM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 23:59:59.999' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2016-12-12 23:59:59.999' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-12 23:59:59.9999999' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-12 23:59:59.999' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec 13 2016 12:00AM#!#Dec 13 2016 12:00AM#!#2016-12-13 00:00:00.0000000
+nvarchar#!#nvarchar
+Dec 13 2016 12:00AM#!#Dec 13 2016 12:00AM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 0:7:1.123' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2016-12-12 0:7:1.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-12 0:7:1.1234567' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-12 0:7:1.123' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec 12 2016 12:07AM#!#Dec 12 2016 12:07AM#!#2016-12-12 00:07:01.1234570
+nvarchar#!#nvarchar
+Dec 12 2016 12:07AM#!#Dec 12 2016 12:07AM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 0:0:0' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2016-12-12 0:0:0' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-12 0:0:0' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-12 0:0:0' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec 12 2016 12:00AM#!#Dec 12 2016 12:00AM#!#2016-12-12 00:00:00.0000000
+nvarchar#!#nvarchar
+Dec 12 2016 12:00AM#!#Dec 12 2016 12:00AM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 12:12:12.1' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2016-12-12 12:12:12.1' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-12 12:12:12.1' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-12 12:12:12.1' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM#!#2016-12-12 12:12:12.1000000
+nvarchar#!#nvarchar
+Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 12:12:12.12' AS DATETIME) AS NVARCHAR(100)) AS dt_nvarchar,
-       CAST(CAST('2016-12-12 12:12:12.12' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-12 12:12:12.12345' AS DATETIME2) AS NVARCHAR(100)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-12 12:12:12.12' AS SMALLDATETIME) AS NVARCHAR(100)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM#!#2016-12-12 12:12:12.1234500
+nvarchar#!#nvarchar
+Dec 12 2016 12:12PM#!#Dec 12 2016 12:12PM
 ~~END~~
 
 
 -- nvarchar typmod less than the converted string size
 SELECT CAST(CAST('2016-12-12 12:12:12.123' AS DATETIME) AS NVARCHAR(15)) AS dt_nvarchar,
-       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(15)) AS sdt_nvarchar,
-       CAST(CAST('2016-12-12 12:12:12.12345678' AS DATETIME2) AS NVARCHAR(15)) AS dt2_nvarchar;
+       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS NVARCHAR(15)) AS sdt_nvarchar;
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-Dec 12 2016 12:#!#Dec 12 2016 12:#!#2016-12-12 12:1
+nvarchar#!#nvarchar
+Dec 12 2016 12:#!#Dec 12 2016 12:
 ~~END~~
 
 
 -- test with casting to nchar
 SELECT CAST(CAST('2016-12-12 12:12:12.123' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2016-12-12 12:12:12.12345678' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 #!#2016-12-12 12:12:12.1234570                                                                         
+nchar#!#nchar
+Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2001-5-20 12:12:12.123' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2001-5-20 12:12:12.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2001-5-20 12:12:12.1234567' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2001-5-20 12:12:12.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-May 20 2001 12:12PM                                                                                 #!#May 20 2001 12:12PM                                                                                 #!#2001-05-20 12:12:12.1234570                                                                         
+nchar#!#nchar
+May 20 2001 12:12PM                                                                                 #!#May 20 2001 12:12PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2001-7-29 12:12:12.123' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2001-7-29 12:12:12.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2001-7-29 12:12:12.1234567' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2001-7-29 12:12:12.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Jul 29 2001 12:12PM                                                                                 #!#Jul 29 2001 12:12PM                                                                                 #!#2001-07-29 12:12:12.1234570                                                                         
+nchar#!#nchar
+Jul 29 2001 12:12PM                                                                                 #!#Jul 29 2001 12:12PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-1 12:12:12.123' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2016-12-1 12:12:12.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2016-12-1 12:12:12.1234567' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2016-12-1 12:12:12.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec  1 2016 12:12PM                                                                                 #!#Dec  1 2016 12:12PM                                                                                 #!#2016-12-01 12:12:12.1234570                                                                         
+nchar#!#nchar
+Dec  1 2016 12:12PM                                                                                 #!#Dec  1 2016 12:12PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('12-2-1 12:12:12.123' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('12-2-1 12:12:12.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('12-2-1 12:12:12.1234567' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('12-2-1 12:12:12.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec  2 2001 12:12PM                                                                                 #!#Dec  2 2001 12:12PM                                                                                 #!#2001-12-02 12:12:12.1234570                                                                         
+nchar#!#nchar
+Dec  2 2001 12:12PM                                                                                 #!#Dec  2 2001 12:12PM                                                                                 
 ~~END~~
 
 
@@ -531,153 +460,131 @@ GO
 ~~ERROR (Message: data out of range for datetime)~~
 
 
-SELECT CAST(CAST('0012-2-1 12:12:12.1234567' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
-GO
-~~START~~
-nchar
-0012-02-01 12:12:12.1234570                                                                         
-~~END~~
-
-
 SELECT CAST(CAST('2016-12-12 1:1:1.123' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2016-12-12 1:1:1.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2016-12-12 1:1:1.1234567' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2016-12-12 1:1:1.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec 12 2016  1:01AM                                                                                 #!#Dec 12 2016  1:01AM                                                                                 #!#2016-12-12 01:01:01.1234570                                                                         
+nchar#!#nchar
+Dec 12 2016  1:01AM                                                                                 #!#Dec 12 2016  1:01AM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 15:7:1.123' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2016-12-12 15:7:1.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2016-12-12 15:7:1.1234567' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2016-12-12 15:7:1.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec 12 2016  3:07PM                                                                                 #!#Dec 12 2016  3:07PM                                                                                 #!#2016-12-12 15:07:01.1234570                                                                         
+nchar#!#nchar
+Dec 12 2016  3:07PM                                                                                 #!#Dec 12 2016  3:07PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 24:0:0' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2016-12-12 24:0:0' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2016-12-12 24:0:0' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2016-12-12 24:0:0' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec 13 2016 12:00AM                                                                                 #!#Dec 13 2016 12:00AM                                                                                 #!#2016-12-13 00:00:00.0000000                                                                         
+nchar#!#nchar
+Dec 13 2016 12:00AM                                                                                 #!#Dec 13 2016 12:00AM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 23:59:59.999' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2016-12-12 23:59:59.999' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2016-12-12 23:59:59.9999999' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2016-12-12 23:59:59.999' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec 13 2016 12:00AM                                                                                 #!#Dec 13 2016 12:00AM                                                                                 #!#2016-12-13 00:00:00.0000000                                                                         
+nchar#!#nchar
+Dec 13 2016 12:00AM                                                                                 #!#Dec 13 2016 12:00AM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 0:7:1.123' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2016-12-12 0:7:1.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2016-12-12 0:7:1.1234567' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2016-12-12 0:7:1.123' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec 12 2016 12:07AM                                                                                 #!#Dec 12 2016 12:07AM                                                                                 #!#2016-12-12 00:07:01.1234570                                                                         
+nchar#!#nchar
+Dec 12 2016 12:07AM                                                                                 #!#Dec 12 2016 12:07AM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 0:0:0' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2016-12-12 0:0:0' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2016-12-12 0:0:0' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2016-12-12 0:0:0' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec 12 2016 12:00AM                                                                                 #!#Dec 12 2016 12:00AM                                                                                 #!#2016-12-12 00:00:00.0000000                                                                         
+nchar#!#nchar
+Dec 12 2016 12:00AM                                                                                 #!#Dec 12 2016 12:00AM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 12:12:12.1' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2016-12-12 12:12:12.1' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2016-12-12 12:12:12.1' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2016-12-12 12:12:12.1' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 #!#2016-12-12 12:12:12.1000000                                                                         
+nchar#!#nchar
+Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 
 ~~END~~
 
 
 SELECT CAST(CAST('2016-12-12 12:12:12.12' AS DATETIME) AS NCHAR(100)) AS dt_nchar,
-       CAST(CAST('2016-12-12 12:12:12.12' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar,
-       CAST(CAST('2016-12-12 12:12:12.12345' AS DATETIME2) AS NCHAR(100)) AS dt2_nchar;
+       CAST(CAST('2016-12-12 12:12:12.12' AS SMALLDATETIME) AS NCHAR(100)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 #!#2016-12-12 12:12:12.1234500                                                                         
+nchar#!#nchar
+Dec 12 2016 12:12PM                                                                                 #!#Dec 12 2016 12:12PM                                                                                 
 ~~END~~
 
 
 -- nchar typmod less than the converted string size
 SELECT CAST(CAST('2016-12-12 12:12:12.123' AS DATETIME) AS NCHAR(15)) AS dt_nchar,
-       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS NCHAR(15)) AS sdt_nchar,
-       CAST(CAST('2016-12-12 12:12:12.12345678' AS DATETIME2) AS NCHAR(15)) AS dt2_nchar;
+       CAST(CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS NCHAR(15)) AS sdt_nchar;
 GO
 ~~START~~
-nchar#!#nchar#!#nchar
-Dec 12 2016 12:#!#Dec 12 2016 12:#!#2016-12-12 12:1
+nchar#!#nchar
+Dec 12 2016 12:#!#Dec 12 2016 12:
 ~~END~~
 
 
 -- DATETIME, DATETIME2, SMALLDATETIME is retrived directly
 SELECT CAST('2016-12-12 12:12:12.123' AS DATETIME) AS dt,
-       CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS sdt,
-       CAST('2016-12-12 12:12:12.12345678' AS DATETIME2) AS dt2;
+       CAST('2016-12-12 12:12:12.123' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2016-12-12 12:12:12.123#!#2016-12-12 12:12:00.0#!#2016-12-12 12:12:12.1234570
+datetime#!#smalldatetime
+2016-12-12 12:12:12.123#!#2016-12-12 12:12:00.0
 ~~END~~
 
 
 SELECT CAST('2001-5-20 12:12:12.123' AS DATETIME) AS dt,
-       CAST('2001-5-20 12:12:12.123' AS SMALLDATETIME) AS sdt,
-       CAST('2001-5-20 12:12:12.1234567' AS DATETIME2) AS dt2;
+       CAST('2001-5-20 12:12:12.123' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2001-05-20 12:12:12.123#!#2001-05-20 12:12:00.0#!#2001-05-20 12:12:12.1234570
+datetime#!#smalldatetime
+2001-05-20 12:12:12.123#!#2001-05-20 12:12:00.0
 ~~END~~
 
 
 SELECT CAST('2001-7-29 12:12:12.123' AS DATETIME) AS dt,
-       CAST('2001-7-29 12:12:12.123' AS SMALLDATETIME) AS sdt,
-       CAST('2001-7-29 12:12:12.1234567' AS DATETIME2) AS dt2;
+       CAST('2001-7-29 12:12:12.123' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2001-07-29 12:12:12.123#!#2001-07-29 12:12:00.0#!#2001-07-29 12:12:12.1234570
+datetime#!#smalldatetime
+2001-07-29 12:12:12.123#!#2001-07-29 12:12:00.0
 ~~END~~
 
 
 SELECT CAST('2016-12-1 12:12:12.123' AS DATETIME) AS dt,
-       CAST('2016-12-1 12:12:12.123' AS SMALLDATETIME) AS sdt,
-       CAST('2016-12-1 12:12:12.1234567' AS DATETIME2) AS dt2;
+       CAST('2016-12-1 12:12:12.123' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2016-12-01 12:12:12.123#!#2016-12-01 12:12:00.0#!#2016-12-01 12:12:12.1234570
+datetime#!#smalldatetime
+2016-12-01 12:12:12.123#!#2016-12-01 12:12:00.0
 ~~END~~
 
 
 SELECT CAST('12-2-1 12:12:12.123' AS DATETIME) AS dt,
-       CAST('12-2-1 12:12:12.123' AS SMALLDATETIME) AS sdt,
-       CAST('12-2-1 12:12:12.1234567' AS DATETIME2) AS dt2;
+       CAST('12-2-1 12:12:12.123' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2001-12-02 12:12:12.123#!#2001-12-02 12:12:00.0#!#2001-12-02 12:12:12.1234570
+datetime#!#smalldatetime
+2001-12-02 12:12:12.123#!#2001-12-02 12:12:00.0
 ~~END~~
 
 
@@ -689,91 +596,75 @@ GO
 ~~ERROR (Message: data out of range for datetime)~~
 
 
-SELECT CAST('0012-2-1 12:12:12.1234567' AS DATETIME2) AS dt2;
-GO
-~~START~~
-datetime2
-0012-02-01 12:12:12.1234570
-~~END~~
-
-
 SELECT CAST('2016-12-12 1:1:1.123' AS DATETIME) AS dt,
-       CAST('2016-12-12 1:1:1.123' AS SMALLDATETIME) AS sdt,
-       CAST('2016-12-12 1:1:1.1234567' AS DATETIME2) AS dt2;
+       CAST('2016-12-12 1:1:1.123' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2016-12-12 01:01:01.123#!#2016-12-12 01:01:00.0#!#2016-12-12 01:01:01.1234570
+datetime#!#smalldatetime
+2016-12-12 01:01:01.123#!#2016-12-12 01:01:00.0
 ~~END~~
 
 
 SELECT CAST('2016-12-12 15:7:1.123' AS DATETIME) AS dt,
-       CAST('2016-12-12 15:7:1.123' AS SMALLDATETIME) AS sdt,
-       CAST('2016-12-12 15:7:1.1234567' AS DATETIME2) AS dt2;
+       CAST('2016-12-12 15:7:1.123' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2016-12-12 15:07:01.123#!#2016-12-12 15:07:00.0#!#2016-12-12 15:07:01.1234570
+datetime#!#smalldatetime
+2016-12-12 15:07:01.123#!#2016-12-12 15:07:00.0
 ~~END~~
 
 
 SELECT CAST('2016-12-12 24:0:0' AS DATETIME) AS dt,
-       CAST('2016-12-12 24:0:0' AS SMALLDATETIME) AS sdt,
-       CAST('2016-12-12 24:0:0' AS DATETIME2) AS dt2;
+       CAST('2016-12-12 24:0:0' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2016-12-13 00:00:00.0#!#2016-12-13 00:00:00.0#!#2016-12-13 00:00:00.0000000
+datetime#!#smalldatetime
+2016-12-13 00:00:00.0#!#2016-12-13 00:00:00.0
 ~~END~~
 
 
 SELECT CAST('2016-12-12 23:59:59.999' AS DATETIME) AS dt,
-       CAST('2016-12-12 23:59:59.999' AS SMALLDATETIME) AS sdt,
-       CAST('2016-12-12 23:59:59.9999999' AS DATETIME2) AS dt2;
+       CAST('2016-12-12 23:59:59.999' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2016-12-13 00:00:00.0#!#2016-12-13 00:00:00.0#!#2016-12-13 00:00:00.0000000
+datetime#!#smalldatetime
+2016-12-13 00:00:00.0#!#2016-12-13 00:00:00.0
 ~~END~~
 
 
 SELECT CAST('2016-12-12 0:7:1.123' AS DATETIME) AS dt,
-       CAST('2016-12-12 0:7:1.123' AS SMALLDATETIME) AS sdt,
-       CAST('2016-12-12 0:7:1.1234567' AS DATETIME2) AS dt2;
+       CAST('2016-12-12 0:7:1.123' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2016-12-12 00:07:01.123#!#2016-12-12 00:07:00.0#!#2016-12-12 00:07:01.1234570
+datetime#!#smalldatetime
+2016-12-12 00:07:01.123#!#2016-12-12 00:07:00.0
 ~~END~~
 
 
 SELECT CAST('2016-12-12 0:0:0' AS DATETIME) AS dt,
-       CAST('2016-12-12 0:0:0' AS SMALLDATETIME) AS sdt,
-       CAST('2016-12-12 0:0:0' AS DATETIME2) AS dt2;
+       CAST('2016-12-12 0:0:0' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2016-12-12 00:00:00.0#!#2016-12-12 00:00:00.0#!#2016-12-12 00:00:00.0000000
+datetime#!#smalldatetime
+2016-12-12 00:00:00.0#!#2016-12-12 00:00:00.0
 ~~END~~
 
 
 SELECT CAST('2016-12-12 12:12:12.1' AS DATETIME) AS dt,
-       CAST('2016-12-12 12:12:12.1' AS SMALLDATETIME) AS sdt,
-       CAST('2016-12-12 12:12:12.1' AS DATETIME2) AS dt2;
+       CAST('2016-12-12 12:12:12.1' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2016-12-12 12:12:12.1#!#2016-12-12 12:12:00.0#!#2016-12-12 12:12:12.1000000
+datetime#!#smalldatetime
+2016-12-12 12:12:12.1#!#2016-12-12 12:12:00.0
 ~~END~~
 
 
 SELECT CAST('2016-12-12 12:12:12.12' AS DATETIME) AS dt,
-       CAST('2016-12-12 12:12:12.12' AS SMALLDATETIME) AS sdt,
-       CAST('2016-12-12 12:12:12.12345' AS DATETIME2) AS dt2;
+       CAST('2016-12-12 12:12:12.12' AS SMALLDATETIME) AS sdt;
 GO
 ~~START~~
-datetime#!#smalldatetime#!#datetime2
-2016-12-12 12:12:12.12#!#2016-12-12 12:12:00.0#!#2016-12-12 12:12:12.1234500
+datetime#!#smalldatetime
+2016-12-12 12:12:12.12#!#2016-12-12 12:12:00.0
 ~~END~~
 
 
@@ -786,15 +677,14 @@ datetime#!#smalldatetime#!#datetime2
 -- hence output of following tests for other language will differ. 
 -- Default DATEFORMAT and LANGUAGE
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -802,15 +692,14 @@ SET DATEFORMAT mdy;
 GO
 -- DATEFORMAT mdy
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -818,15 +707,14 @@ SET DATEFORMAT dmy;
 GO
 -- DATEFORMAT dmy
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -834,15 +722,14 @@ SET DATEFORMAT ymd;
 GO
 -- DATEFORMAT ymd
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -850,15 +737,14 @@ SET DATEFORMAT ydm;
 GO
 -- DATEFORMAT ydm
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -866,15 +752,14 @@ SET DATEFORMAT myd;
 GO
 -- DATEFORMAT myd
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -882,15 +767,14 @@ SET DATEFORMAT dym;
 GO
 -- DATEFORMAT dym
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -898,15 +782,14 @@ SET LANGUAGE us_english;
 GO
 -- LANGUAGE us_english
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -914,15 +797,14 @@ SET LANGUAGE Deutsch;
 GO
 -- LANGUAGE Deutsch
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -930,15 +812,14 @@ SET LANGUAGE Français;
 GO
 -- LANGUAGE Français
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -946,15 +827,14 @@ SET LANGUAGE Español;
 GO
 -- LANGUAGE Español
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -963,15 +843,14 @@ SET DATEFORMAT dmy;
 GO
 -- LANGUAGE Deutsch + DATEFORMAT dmy
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -980,15 +859,14 @@ SET DATEFORMAT ymd;
 GO
 -- LANGUAGE Français + DATEFORMAT ymd
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 
@@ -996,15 +874,14 @@ SET LANGUAGE SLOVENČINA;
 GO
 -- LANGUAGE SLOVENČINA
 SELECT CAST(dt AS VARCHAR(50)) AS dt_varchar, 
-       CAST(dt2 AS VARCHAR(50)) AS dt2_varchar, 
        CAST(sdt AS VARCHAR(50)) AS sdt_varchar 
 FROM babel_1664_vu_prepare_t1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar
-Dec 25 2023  2:30PM#!#2023-12-25 14:30:45.1234560#!#Dec 25 2023  2:31PM
-Jan 15 2023  9:15AM#!#2023-01-15 09:15:30.9876540#!#Jan 15 2023  9:16AM
-Jul  1 2023 12:00AM#!#2023-06-30 23:59:59.9999990#!#Jul  1 2023 12:00AM
+varchar#!#varchar
+Dec 25 2023  2:30PM#!#Dec 25 2023  2:31PM
+Jan 15 2023  9:15AM#!#Jan 15 2023  9:16AM
+Jul  1 2023 12:00AM#!#Jul  1 2023 12:00AM
 ~~END~~
 
 

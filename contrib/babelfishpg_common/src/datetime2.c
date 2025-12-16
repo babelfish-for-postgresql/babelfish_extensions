@@ -582,41 +582,6 @@ datetime2_scale(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
-/* 
- * TsqlEncodeDateTime2()
- * Encode datetime2 to string with default format "yyyy-MM-dd HH:mm:ss.fffffff"
- */
-static void
-TsqlEncodeDateTime2(struct pg_tm *tm, fsec_t fsec, char *str)
-{
-	int len;
-
-	str = pg_ultostr_zeropad(str, tm->tm_year, 4);
-	*str++ = '-';
-	str = pg_ultostr_zeropad(str, tm->tm_mon, 2);
-	*str++ = '-';
-	str = pg_ultostr_zeropad(str, tm->tm_mday, 2);
-	*str++ = ' ';
-	str = pg_ultostr_zeropad(str, tm->tm_hour, 2);
-	*str++ = ':';
-	str = pg_ultostr_zeropad(str, tm->tm_min, 2);
-	*str++ = ':';
-	str = pg_ultostr_zeropad(str, tm->tm_sec, 2);
-	*str++ = '.';
-	/* 
-	 * Assuming tm and fsec are as per valid DATETIME2 boundaries. 
-	 * So fsec len is always less than or equal to MAX_DATETIME2_PRECISION
-	 */
-	len = pg_ultoa_n(fsec, str);
-	str += len;
-	while(len < MAX_DATETIME2_PRECISION)
-	{
-		*str++ = '0';
-		len++;
-	}
-	*str = '\0';
-}
-
 /* datetime2_varchar()
  * Convert a datetime2 to varchar.
  * The function is the same as timestamp_out() except the return type is a VARCHAR Datum.
@@ -635,7 +600,7 @@ datetime2_varchar(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
-		TsqlEncodeDateTime2(tm, fsec, buf);
+		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf);
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -676,7 +641,7 @@ datetime2_char(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
-		TsqlEncodeDateTime2(tm, fsec, buf);
+		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf);
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
