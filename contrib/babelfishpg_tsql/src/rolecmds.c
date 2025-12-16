@@ -847,7 +847,7 @@ user_name(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(tuple))
 	{
 		systable_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		table_close(bbf_authid_user_ext_rel, AccessShareLock);
 		PG_RETURN_NULL();
 	}
 
