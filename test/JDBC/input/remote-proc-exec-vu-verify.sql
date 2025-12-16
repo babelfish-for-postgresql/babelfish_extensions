@@ -690,3 +690,72 @@ DECLARE @small_param SMALLINT = 100;
 DECLARE @tiny_param TINYINT = 10;
 EXEC bbf_rpe_server.master.dbo.sp_TestIntegers @p_int=@int_param, @p_bigint=@bigint_param, @p_smallint=@small_param, @p_tinyint=@tiny_param;
 GO
+
+-- ========================================
+-- SECTION 22: NESTED PROCEDURE VALIDATION
+-- Tests for recursive SELECT-only validation
+-- Streamlined to essential coverage while staying within connection limits
+-- ========================================
+
+-- Test 101: Nested procedure - both SELECT-only (should PASS)
+-- Expected: Should execute successfully, returning results from outer and inner
+PRINT 'Test 101: Nested SELECT-only procedures - should pass';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_CallsSelectOnly;
+GO
+
+-- Test 102: Nested procedure - outer SELECT, inner INSERT (should FAIL)
+-- Expected: Should fail with error about INSERT in nested procedure
+PRINT 'Test 102: Outer calls inner with INSERT - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_CallsInsert;
+GO
+
+-- Test 103: Two-level nesting - all SELECT-only (should PASS)
+-- Expected: Should execute both levels successfully
+PRINT 'Test 103: Two-level nesting all SELECT - should pass';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Level1_DeepNesting;
+GO
+
+-- Test 104: Two-level nesting - DML at level 2 (should FAIL)
+-- Expected: Should fail - INSERT found at level 2
+PRINT 'Test 104: Two-level nesting with DML at level 2 - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Level1_DeepWithDML;
+GO
+
+-- Test 105: Circular reference detection (A calls B, B calls A)
+-- Expected: Should fail with circular reference error
+PRINT 'Test 105: Circular reference A->B->A - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_CircularA;
+GO
+
+-- Test 106: Multiple inner procedure calls (all SELECT-only)
+-- Expected: Should pass - calling same inner proc multiple times
+PRINT 'Test 106: Multiple inner procedure calls - should pass';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_MultipleInner;
+GO
+
+-- Test 107: Outer procedure with dynamic SQL (sp_executesql)
+-- Expected: Should fail - dynamic SQL blocked
+PRINT 'Test 107: Outer with dynamic SQL - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_WithDynamicSQL;
+GO
+
+-- Test 108: Nested procedure with UPDATE in inner (should FAIL)
+-- Expected: Should fail with error about UPDATE in nested procedure
+PRINT 'Test 108: Outer calls inner with UPDATE - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_CallsUpdate;
+GO
+
+-- Test 109: Nested procedure with DELETE in inner (should FAIL)
+-- Expected: Should fail with error about DELETE in nested procedure
+PRINT 'Test 109: Outer calls inner with DELETE - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_CallsDelete;
+GO

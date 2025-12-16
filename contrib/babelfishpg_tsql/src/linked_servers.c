@@ -56,45 +56,72 @@ Oid		tdsTypeToOid(int datatype);
 int		tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
 Datum		getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
 static bool 	isQueryTimeout;
+static char *format_tds_error_for_user(int error_code, int severity, const char *error_msg);
+
+/*
+ * Format TDS error messages into user-friendly text
+ * Strips internal TDS details and presents clean error messages
+ */
+static char *
+format_tds_error_for_user(int error_code, int severity, const char *error_msg)
+{
+	StringInfoData buf;
+	const char *clean_msg = error_msg;
+	
+	initStringInfo(&buf);
+	
+	/* Format based on common error codes */
+	switch (error_code)
+	{
+		case 201:  /* Missing or invalid parameter */
+			appendStringInfo(&buf, "Procedure parameter error: %s", clean_msg);
+			break;
+			
+		case 911:  /* Database not found */
+			appendStringInfo(&buf, "Remote database not found: %s", clean_msg);
+			break;
+			
+		case 2812: /* Procedure not found */
+		case 2571: /* User lacks permission */
+			appendStringInfo(&buf, "Remote server error: %s", clean_msg);
+			break;
+			
+		case 50000: /* User-defined RAISERROR */
+			/* For user errors, just pass through the message */
+			appendStringInfo(&buf, "%s", clean_msg);
+			break;
+			
+		default:
+			/* For unknown errors, provide generic wrapper */
+			if (severity > 10)
+				appendStringInfo(&buf, "Remote server error: %s", clean_msg);
+			else
+				appendStringInfo(&buf, "%s", clean_msg);
+			break;
+	}
+	
+	return buf.data;
+}
 
 static int
 linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
 {
-	StringInfoData buf;
-
-	initStringInfo(&buf);
-
 	/*
 	 * If error severity is greater than 10, we interpret it as a T-SQL error;
-	 * otheriwse, a T-SQL info
+	 * otherwise, a T-SQL info
 	 */
-	appendStringInfo(
-					 &buf,
-					 "TDS client library %s: Msg #: %i, Msg state: %i, ",
-					 severity > 10 ? "error" : "info",
-					 error_code,
-					 state
-		);
-
-	if (error_msg)
-		appendStringInfo(&buf, "Msg: %s, ", error_msg);
-
-	if (svr_name)
-		appendStringInfo(&buf, "Server: %s, ", svr_name);
-
-	if (proc_name)
-		appendStringInfo(&buf, "Process: %s, ", proc_name);
-
-	appendStringInfo(&buf, "Line: %i, Level: %i", line, severity);
-
 	if (severity > 10)
+	{
+		char *formatted_msg = format_tds_error_for_user(error_code, severity, error_msg);
+		
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-				 errmsg("%s", buf.data)));
+				 errmsg("%s", formatted_msg)));
+	}
 	else
 	{
 		/*
-		 * We delibrately don't call the TDS report warning/info function here
+		 * We deliberately don't call the TDS report warning/info function here
 		 * because in doing so, it spews a lot of messages client side like
 		 * for database change, language change for every single connection
 		 * made to a remote server. Thus, we just log those events in the PG
@@ -104,8 +131,11 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 		 *
 		 * TODO: Distinguish between WARNING and INFO
 		 */
-		ereport(INFO,
-				(errmsg("%s", buf.data)));
+		if (error_msg)
+		{
+			ereport(INFO,
+					(errmsg("Remote server info: %s", error_msg)));
+		}
 	}
 
 	return 0;
@@ -1403,6 +1433,7 @@ get_tds_type_from_pg_oid(Oid pgtype)
 		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
 		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
 		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
+		Oid date_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("date");
 		Oid float_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("float");
 		Oid real_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("real");
 		Oid varbinary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varbinary");
@@ -1424,12 +1455,8 @@ get_tds_type_from_pg_oid(Oid pgtype)
 			return LS_TYPE_INT8;
 		else if (pgtype == tinyint_oid)
 			return LS_TYPE_INT1;
-		else if (pgtype == datetime_oid)
-			return LS_TYPE_DATETIME;
-		else if (pgtype == smalldatetime_oid)
-			return LS_TYPE_DATETIME4;
-		else if (pgtype == datetime2_oid)
-			return LS_TYPE_DATETIME2;
+		else if (pgtype == datetime_oid || pgtype == smalldatetime_oid || pgtype == datetime2_oid || pgtype == date_oid)
+			return LS_TYPE_VARCHAR;  /* Send as ISO string, server will parse */
 		else if (pgtype == float_oid)
 			return LS_TYPE_FLOAT;
 		else if (pgtype == real_oid)
@@ -1439,7 +1466,7 @@ get_tds_type_from_pg_oid(Oid pgtype)
 		else if (pgtype == binary_oid)
 			return LS_TYPE_BINARY;
 		else if (pgtype == uniqueidentifier_oid)
-			return LS_TYPE_UNIQUE;
+			return LS_TYPE_VARCHAR;  /* Send as string (GUID format), server will parse */
 		else if (pgtype == bit_oid)
 			return LS_TYPE_BIT;
 	}
@@ -1465,17 +1492,13 @@ get_tds_type_from_pg_oid(Oid pgtype)
 	}
 	
 	/* Check for Babelfish DateTime types - send as string for simplicity */
+	/* Note: datetime, datetime2, smalldatetime already handled above in first block */
 	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
 	{
-		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
-		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
-		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
 		Oid datetimeoffset_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
 		Oid time_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("time");
 		
-		if (pgtype == datetime_oid || pgtype == datetime2_oid || 
-		    pgtype == smalldatetime_oid || pgtype == datetimeoffset_oid ||
-		    pgtype == time_oid)
+		if (pgtype == datetimeoffset_oid || pgtype == time_oid)
 			return LS_TYPE_VARCHAR;  /* Send as ISO string, server will parse */
 	}
 	
@@ -1502,10 +1525,10 @@ get_tds_type_from_pg_oid(Oid pgtype)
 			return LS_TYPE_VARCHAR;
 		case BPCHAROID:
 			return LS_TYPE_CHAR;
-		case DATEOID:
-			return LS_TYPE_DATE;
-		case TIMEOID:
-			return LS_TYPE_TIME;
+	case DATEOID:
+		return LS_TYPE_VARCHAR;  /* Send as ISO string, server will parse */
+	case TIMEOID:
+		return LS_TYPE_VARCHAR;  /* Send as ISO string, server will parse */
 		case TIMESTAMPOID:
 			return LS_TYPE_DATETIME;
 		case BYTEAOID:
@@ -1546,6 +1569,7 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		Oid varbinary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varbinary");
 		Oid binary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary");
 		Oid bit_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bit");
+		Oid tinyint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("tinyint");
 		
 		/*
 		 * NVARCHAR and NCHAR - Send as UTF-8
@@ -1598,6 +1622,16 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 			*len_out = sizeof(LS_DBBOOL);
 			*data_out = palloc(*len_out);
 			*((LS_DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
+			return;
+		}
+		
+		/* Babelfish TINYINT (unsigned 0-255, stored internally as int2) */
+		if (valtype == tinyint_oid)
+		{
+			*len_out = sizeof(unsigned char);  /* 1 byte for TINYINT */
+			*data_out = palloc(*len_out);
+			/* Babelfish TINYINT is stored as int16 internally, extract unsigned byte */
+			*((unsigned char *)*data_out) = (unsigned char) DatumGetInt16(value);
 			return;
 		}
 		
@@ -1663,12 +1697,13 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
 		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
 		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
+		Oid date_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("date");
 		Oid datetimeoffset_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
 		Oid time_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("time");
 		
 		if (valtype == datetime_oid || valtype == datetime2_oid || 
-		    valtype == smalldatetime_oid || valtype == datetimeoffset_oid ||
-		    valtype == time_oid)
+		    valtype == smalldatetime_oid || valtype == date_oid ||
+		    valtype == datetimeoffset_oid || valtype == time_oid)
 		{
 			/* Convert DateTime types to ISO string format */
 			Oid typoutput;
@@ -1775,28 +1810,275 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 }
 
 /*
- * Validate that a remote stored procedure contains only SELECT statements.
- * This function fetches the procedure definition from the remote server and
- * performs static analysis to detect forbidden DML/DDL statements.
- *
- * Throws ERROR if the procedure contains non-SELECT statements.
+ * Helper function to compare two procedure references for equality
  */
-void
-validate_procedure_select_only(const char *server_name,
-							   const char *database_name,
-							   const char *schema_name,
-							   const char *procedure_name)
+static bool
+match_procedure_reference(const char *s1, const char *d1, const char *sc1, const char *p1,
+						 const char *s2, const char *d2, const char *sc2, const char *p2)
+{
+	/* Server name comparison (case-insensitive, NULL means current server) */
+	if (s1 && s2)
+	{
+		if (pg_strcasecmp(s1, s2) != 0)
+			return false;
+	}
+	else if (s1 || s2)
+	{
+		/* One is NULL, one is not - treat as different unless explicitly same server */
+		return false;
+	}
+	
+	/* Database name comparison (case-insensitive) */
+	if (d1 && d2)
+	{
+		if (pg_strcasecmp(d1, d2) != 0)
+			return false;
+	}
+	else if (d1 || d2)
+		return false;
+	
+	/* Schema name comparison (case-insensitive) */
+	if (sc1 && sc2)
+	{
+		if (pg_strcasecmp(sc1, sc2) != 0)
+			return false;
+	}
+	else if (sc1 || sc2)
+		return false;
+	
+	/* Procedure name comparison (case-insensitive, required) */
+	if (!p1 || !p2)
+		return false;
+	
+	return pg_strcasecmp(p1, p2) == 0;
+}
+
+/*
+ * Check if a procedure reference exists in the visited list (circular reference detection)
+ */
+static bool
+is_circular_reference(List *visited_procs,
+					 const char *server_name,
+					 const char *database_name,
+					 const char *schema_name,
+					 const char *procedure_name)
+{
+	ListCell *cell;
+	
+	foreach(cell, visited_procs)
+	{
+		NestedProcedureInfo *visited = (NestedProcedureInfo *) lfirst(cell);
+		
+		if (match_procedure_reference(
+				visited->server_name, visited->database_name,
+				visited->schema_name, visited->procedure_name,
+				server_name, database_name, schema_name, procedure_name))
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+/*
+ * Extract nested EXEC/EXECUTE procedure calls from T-SQL definition
+ * Uses split_object_name() to parse multi-part names
+ * Returns List of NestedProcedureInfo structures
+ */
+static List *
+extract_nested_procedure_calls(const char *definition)
+{
+	List *procedures = NIL;
+	const char *ptr = definition;
+	const char *exec_kw;
+	NestedProcedureInfo *info;  /* C90: declare at top of function */
+	
+	if (!definition || strlen(definition) == 0)
+		return NIL;
+	
+	/* Scan for EXEC or EXECUTE keywords */
+	while ((exec_kw = strstr(ptr, "EXEC")) != NULL)
+	{
+		const char *proc_start;
+		const char *proc_end;
+		char *proc_name_str;
+		char **parts;
+		bool is_dynamic_sql = false;
+		
+		/* Check if it's "EXECUTE" (longer form) */
+		if (strncmp(exec_kw, "EXECUTE", 7) == 0 && isspace(exec_kw[7]))
+			proc_start = exec_kw + 7;
+		else if (strncmp(exec_kw, "EXEC", 4) == 0 && isspace(exec_kw[4]))
+			proc_start = exec_kw + 4;
+		else
+		{
+			/* Not a keyword match, continue */
+			ptr = exec_kw + 4;
+			continue;
+		}
+		
+		/* Skip whitespace */
+		while (*proc_start && isspace(*proc_start))
+			proc_start++;
+		
+		/* Check for dynamic SQL: EXEC('string') or EXEC @var */
+		if (*proc_start == '(' || *proc_start == '@')
+		{
+			ptr = proc_start;
+			continue;
+		}
+		
+		/* Find end of procedure name (space, newline, semicolon, or open paren) */
+		proc_end = proc_start;
+		while (*proc_end && !isspace(*proc_end) && 
+		       *proc_end != ';' && *proc_end != '(' && *proc_end != '\n')
+		{
+			proc_end++;
+		}
+		
+		/* Extract procedure name */
+		if (proc_end > proc_start)
+		{
+			proc_name_str = pnstrdup(proc_start, proc_end - proc_start);
+			
+			/* Skip system procedures that don't need validation */
+			if (strncasecmp(proc_name_str, "sp_executesql", 13) == 0 ||
+			    strncasecmp(proc_name_str, "sp_execute", 10) == 0 ||
+			    strncasecmp(proc_name_str, "sp_prepexec", 11) == 0 ||
+			    strncasecmp(proc_name_str, "sp_prepare", 10) == 0)
+			{
+				is_dynamic_sql = true;
+			}
+			
+			if (!is_dynamic_sql)
+			{
+				/* Use existing split_object_name() utility */
+				parts = split_object_name(proc_name_str);
+				
+				/* Create NestedProcedureInfo */
+				info = (NestedProcedureInfo *) palloc(sizeof(NestedProcedureInfo));
+				
+				/* split_object_name returns [server, database, schema, object] */
+				info->server_name = (strlen(parts[0]) > 0) ? pstrdup(parts[0]) : NULL;
+				info->database_name = (strlen(parts[1]) > 0) ? pstrdup(parts[1]) : NULL;
+				info->schema_name = (strlen(parts[2]) > 0) ? pstrdup(parts[2]) : NULL;
+				info->procedure_name = pstrdup(parts[3]);
+				
+				/* Free the parts array */
+				for (int i = 0; i < 4; i++)
+					pfree(parts[i]);
+				pfree(parts);
+				
+				procedures = lappend(procedures, info);
+			}
+			
+			pfree(proc_name_str);
+		}
+		
+		ptr = proc_end;
+	}
+	
+	return procedures;
+}
+
+/*
+ * Check if a procedure has already been validated (skip redundant validation)
+ * Uses the same match logic as is_circular_reference but for validated list
+ */
+static bool
+is_already_validated(List *validated_procs,
+					const char *server_name,
+					const char *database_name,
+					const char *schema_name,
+					const char *procedure_name)
+{
+	ListCell *cell;
+	
+	foreach(cell, validated_procs)
+	{
+		NestedProcedureInfo *validated = (NestedProcedureInfo *) lfirst(cell);
+		
+		if (match_procedure_reference(
+				validated->server_name, validated->database_name,
+				validated->schema_name, validated->procedure_name,
+				server_name, database_name, schema_name, procedure_name))
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+/*
+ * Recursively validate a remote procedure and all its nested procedure calls
+ * 
+ * visited_procs: Per-branch list for circular reference detection (sees ancestors only)
+ * validated_procs_ptr: Global list to avoid redundant re-validation (pointer for modification)
+ */
+static void
+validate_remote_procedure_recursive(const char *server_name,
+								   const char *database_name,
+								   const char *schema_name,
+								   const char *procedure_name,
+								   int depth,
+								   List *visited_procs,
+								   List **validated_procs_ptr)
 {
 	LINKED_SERVER_RETCODE erc;
 	StringInfoData query;
 	char *definition = NULL;
 	int colcount = 0;
 	LinkedServerProcess validation_lsproc = NULL;
+	List *nested_calls = NIL;
+	ListCell *cell;
+	NestedProcedureInfo *current;  /* C90: declare at top of function */
+	
+	/* Check recursion depth limit (matches pl_exec.c MAX_EXEC_DEPTH_LIMIT) */
+	if (depth > 32)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("Maximum recursion depth (32) exceeded while validating remote procedure %s.%s.%s.%s",
+						server_name, database_name, schema_name, procedure_name),
+				 errhint("Check for circular procedure references or excessive nesting")));
+	}
+	
+	/* Check for circular reference (in current call stack) */
+	if (is_circular_reference(visited_procs, server_name, database_name, schema_name, procedure_name))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_RECURSION),
+				 errmsg("Circular procedure reference detected: %s.%s.%s.%s",
+						server_name, database_name, schema_name, procedure_name),
+				 errhint("Procedure calls itself directly or indirectly")));
+	}
+	
+	/* Skip if already validated (avoid redundant connections) */
+	if (is_already_validated(*validated_procs_ptr, server_name, database_name, schema_name, procedure_name))
+	{
+		elog(LOG, "SELECT-only validation: Skipping %s.%s.%s.%s - already validated",
+		     server_name, database_name, schema_name, procedure_name);
+		return;
+	}
+	
+	/* Add current procedure to both lists */
+	current = (NestedProcedureInfo *) palloc(sizeof(NestedProcedureInfo));
+	current->server_name = server_name ? pstrdup(server_name) : NULL;
+	current->database_name = database_name ? pstrdup(database_name) : NULL;
+	current->schema_name = schema_name ? pstrdup(schema_name) : NULL;
+	current->procedure_name = pstrdup(procedure_name);
+	
+	/* Add to visited (per-branch) for circular detection */
+	visited_procs = lappend(visited_procs, current);
+	
+	/* Add to validated (global) to prevent re-validation */
+	*validated_procs_ptr = lappend(*validated_procs_ptr, current);
 	
 	/*
-	 * Use a separate TDS connection for validation to avoid mixing SQL queries
-	 * and RPC operations on the same connection, which causes FreeTDS error 20019.
-	 * The main lsproc will remain clean for RPC execution.
+	 * Fetch procedure definition from remote server
+	 * (Reusing existing pattern from current implementation)
 	 */
 	PG_TRY();
 	{
@@ -1812,10 +2094,10 @@ validate_procedure_select_only(const char *server_name,
 			"WHERE o.name = N'%s' AND SCHEMA_NAME(o.schema_id) = N'%s' AND o.type IN ('P', 'PC')",
 			database_name, database_name, procedure_name, schema_name);
 		
-		elog(LOG, "SELECT-only validation: Fetching definition for procedure %s.%s.%s.%s",
-			 server_name, database_name, schema_name, procedure_name);
+		elog(LOG, "SELECT-only validation: Fetching definition for procedure %s.%s.%s.%s (depth=%d)",
+			 server_name, database_name, schema_name, procedure_name, depth);
 		
-		/* Execute query to fetch procedure definition */
+		/* Execute query */
 		if (LINKED_SERVER_PUT_CMD(validation_lsproc, query.data) != SUCCEED)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -1836,11 +2118,7 @@ validate_procedure_select_only(const char *server_name,
 		
 		if (colcount > 0)
 		{
-			/*
-			 * Fetch data directly without buffer binding to handle nvarchar(max) columns.
-			 * This approach matches the pattern used in openquery_imp() and allows
-			 * FreeTDS to provide the actual data length, avoiding truncation.
-			 */
+			/* Fetch definition without buffer binding (handles nvarchar(max)) */
 			if (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
 			{
 				void *data = LINKED_SERVER_DATA(validation_lsproc, 1);
@@ -1848,19 +2126,18 @@ validate_procedure_select_only(const char *server_name,
 				
 				if (data && data_len > 0)
 				{
-					/* Allocate exactly the size needed based on actual data length */
 					definition = (char *)palloc(data_len + 1);
 					memcpy(definition, data, data_len);
 					definition[data_len] = '\0';
 				}
 			}
 			
-			/* CRITICAL: Consume remaining rows from THIS result set before moving to next */
+			/* Consume remaining rows */
 			while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
 				;
 		}
 		
-		/* Consume any remaining result SETS */
+		/* Consume remaining result sets */
 		while (LINKED_SERVER_RESULTS(validation_lsproc) != NO_MORE_RESULTS)
 		{
 			while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
@@ -1890,17 +2167,12 @@ validate_procedure_select_only(const char *server_name,
 				 errhint("Ensure the procedure exists and you have permission to view its definition")));
 	}
 	
-	elog(LOG, "SELECT-only validation: Analyzing procedure definition for %s (length: %zu bytes)",
-		 procedure_name, strlen(definition));
+	elog(LOG, "SELECT-only validation: Analyzing procedure definition for %s (length: %zu bytes, depth=%d)",
+		 procedure_name, strlen(definition), depth);
 	
-	/* 
-	 * Wrap validation in PG_TRY/CATCH to ensure proper cleanup if validation fails.
-	 * If validate_remote_procedure_select_only_antlr() throws an error, we need to
-	 * free the allocated memory before re-throwing.
-	 */
+	/* Validate this procedure with ANTLR (SELECT-only check) */
 	PG_TRY();
 	{
-		/* Use ANTLR parser for accurate T-SQL validation */
 		validate_remote_procedure_select_only_antlr(
 			definition,
 			server_name,
@@ -1908,11 +2180,12 @@ validate_procedure_select_only(const char *server_name,
 			schema_name,
 			procedure_name);
 		
-		elog(LOG, "SELECT-only validation: Procedure %s passed ANTLR validation checks", procedure_name);
+		elog(LOG, "SELECT-only validation: Procedure %s passed ANTLR validation at depth %d", 
+		     procedure_name, depth);
 	}
 	PG_CATCH();
 	{
-		/* Clean up allocated memory before re-throwing the error */
+		/* Clean up before re-throwing */
 		if (definition)
 			pfree(definition);
 		if (query.data)
@@ -1921,9 +2194,92 @@ validate_procedure_select_only(const char *server_name,
 	}
 	PG_END_TRY();
 	
-	/* Clean up on successful validation */
+	/* Extract nested procedure calls using C string parser */
+	nested_calls = extract_nested_procedure_calls(definition);
+	
+	elog(LOG, "SELECT-only validation: Found %d nested procedure calls in %s",
+	     list_length(nested_calls), procedure_name);
+	
+	/* Recursively validate each nested procedure */
+	foreach(cell, nested_calls)
+	{
+		NestedProcedureInfo *nested = (NestedProcedureInfo *) lfirst(cell);
+		List *child_visited;  /* Fresh copy for each child to prevent false circular detection */
+		
+		/* Inherit parent values for unspecified parts */
+		const char *nested_server = nested->server_name ? nested->server_name : server_name;
+		const char *nested_db = nested->database_name ? nested->database_name : database_name;
+		const char *nested_schema = nested->schema_name ? nested->schema_name : schema_name;
+		
+		elog(LOG, "SELECT-only validation: Recursively validating nested procedure %s.%s.%s.%s (depth=%d)",
+		     nested_server, nested_db, nested_schema, nested->procedure_name, depth + 1);
+		
+		/*
+		 * Create a copy of visited_procs for each child branch.
+		 * This prevents false circular reference detection when the same procedure
+		 * is called multiple times by the same parent (e.g., EXEC sp_A; EXEC sp_A;).
+		 * Each branch should only see its ancestors, not its siblings.
+		 */
+		child_visited = list_copy(visited_procs);
+		
+		/* Recursive call with the isolated copy but shared validated list */
+		validate_remote_procedure_recursive(
+			nested_server,
+			nested_db,
+			nested_schema,
+			nested->procedure_name,
+			depth + 1,
+			child_visited,
+			validated_procs_ptr);
+		
+		/* Free the copy (contents are shallow but that's OK since we don't modify entries) */
+		list_free(child_visited);
+	}
+	
+	/* Clean up */
 	pfree(definition);
 	pfree(query.data);
+	list_free_deep(nested_calls);
+}
+
+/*
+ * Validate that a remote stored procedure contains only SELECT statements.
+ * This function fetches the procedure definition from the remote server and
+ * performs static analysis to detect forbidden DML/DDL statements.
+ * 
+ * This is the entry point that initiates recursive validation of the procedure
+ * and all nested procedure calls.
+ *
+ * Throws ERROR if the procedure or any nested procedures contain non-SELECT statements.
+ */
+void
+validate_procedure_select_only(const char *server_name,
+							   const char *database_name,
+							   const char *schema_name,
+							   const char *procedure_name)
+{
+	List *visited_procs = NIL;   /* Per-branch list for circular detection */
+	List *validated_procs = NIL; /* Global list to skip redundant validation */
+	
+	elog(LOG, "SELECT-only validation: Starting recursive validation for %s.%s.%s.%s",
+		 server_name, database_name, schema_name, procedure_name);
+	
+	/* Start recursive validation at depth 0 with empty lists */
+	validate_remote_procedure_recursive(
+		server_name,
+		database_name,
+		schema_name,
+		procedure_name,
+		0,
+		visited_procs,
+		&validated_procs);
+	
+	/* Clean up both lists */
+	list_free_deep(visited_procs);
+	list_free_deep(validated_procs);
+	
+	elog(LOG, "SELECT-only validation: Completed recursive validation for %s.%s.%s.%s",
+		 server_name, database_name, schema_name, procedure_name);
 }
 
 #endif

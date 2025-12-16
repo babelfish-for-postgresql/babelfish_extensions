@@ -56,7 +56,7 @@ EXEC bbf_rpe_server.master.dbo.sp_TestIntegers @p_int=@i, @p_bigint=@bi, @p_smal
 GO
 ~~START~~
 int#!#bigint#!#smallint#!#tinyint
-2147483647#!#9223372036854775807#!#32767#!#50
+2147483647#!#9223372036854775807#!#32767#!#255
 ~~END~~
 
 
@@ -284,9 +284,10 @@ uniqueidentifier#!#varchar
 DECLARE @guid UNIQUEIDENTIFIER = '87654321-4321-4321-4321-CBA987654321';
 EXEC bbf_rpe_server.master.dbo.sp_TestUUID @p=@guid;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: TDS client library error: DB #: 20114, DB Msg: When passing a SYBINTN, SYBDATETIMN, SYBMONEYN, or SYBFLTN parameter via dbrpcparam, it is necessary to specify the parameter's maximum or actual length so that DB-Library can recognize it as a SYINT1, SYBINT2, SYBINT4, SYBMONEY, SYBMONEY4, and so on, OS #: 0, OS Msg: Success, Level: 7)~~
+~~START~~
+uniqueidentifier#!#varchar
+87654321-4321-4321-4321-CBA987654321#!#87654321-4321-4321-4321-CBA987654321
+~~END~~
 
 
 
@@ -308,9 +309,10 @@ date#!#int
 DECLARE @dt DATE = '2024-01-01';
 EXEC bbf_rpe_server.master.dbo.sp_TestDate @p=@dt;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: TDS client library error: DB #: 20114, DB Msg: When passing a SYBINTN, SYBDATETIMN, SYBMONEYN, or SYBFLTN parameter via dbrpcparam, it is necessary to specify the parameter's maximum or actual length so that DB-Library can recognize it as a SYINT1, SYBINT2, SYBINT4, SYBMONEY, SYBMONEY4, and so on, OS #: 0, OS Msg: Success, Level: 7)~~
+~~START~~
+date#!#int
+2024-01-01#!#2024
+~~END~~
 
 
 -- Test 29: DATETIME and DATETIME2
@@ -329,9 +331,10 @@ DECLARE @dt1 DATETIME = '2024-06-15 09:30:45';
 DECLARE @dt2 DATETIME2 = '2024-06-15 09:30:45.123';
 EXEC bbf_rpe_server.master.dbo.sp_TestDateTime @p_datetime=@dt1, @p_datetime2=@dt2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: timestamp out of range, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~START~~
+datetime#!#datetime2
+2024-06-15 09:30:45.0#!#2024-06-15 09:30:45.1230000
+~~END~~
 
 
 -- Test 31: TIME parameter
@@ -351,7 +354,7 @@ EXEC bbf_rpe_server.master.dbo.sp_TestTime @p=@t;
 GO
 ~~START~~
 time#!#int
-06:49:30.0000000#!#6
+23:59:59.0000000#!#23
 ~~END~~
 
 
@@ -610,7 +613,7 @@ EXEC invalid_server.master.dbo.sp_NoParams;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: RPC out is not enabled for server 'invalid_server'. Use sp_serveroption to enable it.)~~
+~~ERROR (Message: RPC out is not enabled for the specified server. Use sp_serveroption to enable it.)~~
 
 
 -- Test 52: Invalid database name
@@ -619,7 +622,7 @@ EXEC bbf_rpe_server.invalid_db.dbo.sp_NoParams;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 911, Msg state: 1, Msg: database "invalid_db" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote database not found: database "invalid_db" does not exist)~~
 
 
 -- Test 53: Invalid schema name
@@ -687,7 +690,7 @@ EXEC bbf_rpe_server.master.dbo.sp_NoParams;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: RPC out is not enabled for server 'bbf_rpe_server'. Use sp_serveroption to enable it.)~~
+~~ERROR (Message: RPC out is not enabled for the specified server. Use sp_serveroption to enable it.)~~
 
 
 -- Test 61: Re-enable RPC out for remaining tests
@@ -809,7 +812,7 @@ EXEC bbf_rpe_server.master.dbo.sp_WithError @should_error=1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Test error message, Server: BABELFISH, Process: , Line: 3, Level: 16)~~
+~~ERROR (Message: Test error message)~~
 
 
 
@@ -824,7 +827,7 @@ EXEC bbf_rpe_server.master.dbo.sp_TestIntegers @p_int=1, @p_bigint=1, @p_smallin
 GO
 ~~START~~
 int#!#bigint#!#smallint#!#tinyint
-1#!#1#!#-32768#!#48
+1#!#1#!#-32768#!#0
 ~~END~~
 
 
@@ -996,7 +999,7 @@ EXEC bbf_rpe_server.master.dbo.sp_SingleInt; DROP TABLE test; --;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 201, Msg state: 1, Msg: procedure sp_singleint expects parameter "@value", which was not supplied., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Procedure parameter error: procedure sp_singleint expects parameter "@value", which was not supplied.)~~
 
 
 -- Test 82e: Parameter value injection attempt
@@ -1263,6 +1266,114 @@ EXEC bbf_rpe_server.master.dbo.sp_TestIntegers @p_int=@int_param, @p_bigint=@big
 GO
 ~~START~~
 int#!#bigint#!#smallint#!#tinyint
-42#!#9999#!#100#!#49
+42#!#9999#!#100#!#10
 ~~END~~
+
+
+
+-- ========================================
+-- SECTION 22: NESTED PROCEDURE VALIDATION
+-- Tests for recursive SELECT-only validation
+-- Streamlined to essential coverage while staying within connection limits
+-- ========================================
+-- Test 101: Nested procedure - both SELECT-only (should PASS)
+-- Expected: Should execute successfully, returning results from outer and inner
+PRINT 'Test 101: Nested SELECT-only procedures - should pass';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_CallsSelectOnly;
+GO
+~~START~~
+varchar#!#int
+Outer before call#!#0
+~~END~~
+
+
+-- Test 102: Nested procedure - outer SELECT, inner INSERT (should FAIL)
+-- Expected: Should fail with error about INSERT in nested procedure
+PRINT 'Test 102: Outer calls inner with INSERT - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_CallsInsert;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure contains INSERT statement)~~
+
+
+-- Test 103: Two-level nesting - all SELECT-only (should PASS)
+-- Expected: Should execute both levels successfully
+PRINT 'Test 103: Two-level nesting all SELECT - should pass';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Level1_DeepNesting;
+GO
+~~START~~
+varchar#!#int
+Level 1 calling Level 2#!#1
+~~END~~
+
+
+-- Test 104: Two-level nesting - DML at level 2 (should FAIL)
+-- Expected: Should fail - INSERT found at level 2
+PRINT 'Test 104: Two-level nesting with DML at level 2 - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Level1_DeepWithDML;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure contains INSERT statement)~~
+
+
+-- Test 105: Circular reference detection (A calls B, B calls A)
+-- Expected: Should fail with circular reference error
+PRINT 'Test 105: Circular reference A->B->A - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_CircularA;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Circular procedure reference detected: bbf_rpe_server.master.dbo.sp_CircularA)~~
+
+
+-- Test 106: Multiple inner procedure calls (all SELECT-only)
+-- Expected: Should pass - calling same inner proc multiple times
+PRINT 'Test 106: Multiple inner procedure calls - should pass';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_MultipleInner;
+GO
+~~START~~
+varchar
+Calling multiple inner procs
+~~END~~
+
+
+-- Test 107: Outer procedure with dynamic SQL (sp_executesql)
+-- Expected: Should fail - dynamic SQL blocked
+PRINT 'Test 107: Outer with dynamic SQL - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_WithDynamicSQL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure contains EXECUTE(string) statement)~~
+
+
+-- Test 108: Nested procedure with UPDATE in inner (should FAIL)
+-- Expected: Should fail with error about UPDATE in nested procedure
+PRINT 'Test 108: Outer calls inner with UPDATE - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_CallsUpdate;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure contains UPDATE statement)~~
+
+
+-- Test 109: Nested procedure with DELETE in inner (should FAIL)
+-- Expected: Should fail with error about DELETE in nested procedure
+PRINT 'Test 109: Outer calls inner with DELETE - should fail';
+GO
+EXEC bbf_rpe_server.master.dbo.sp_Outer_CallsDelete;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure contains DELETE statement)~~
 

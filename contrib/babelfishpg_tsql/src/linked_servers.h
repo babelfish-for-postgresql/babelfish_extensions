@@ -227,6 +227,15 @@ extern int get_tds_type_from_pg_oid(Oid pgtype);
 extern void convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnull,
 									   void **data_out, DBINT *len_out);
 
+/* Structure for tracking nested procedure calls found during validation */
+typedef struct NestedProcedureInfo
+{
+	char *server_name;      /* NULL if same server as parent */
+	char *database_name;    /* NULL if current database */
+	char *schema_name;      /* NULL if default schema */
+	char *procedure_name;   /* Required */
+} NestedProcedureInfo;
+
 /* SELECT-only validation for remote procedures */
 extern void validate_procedure_select_only(const char *server_name,
 										   const char *database_name,

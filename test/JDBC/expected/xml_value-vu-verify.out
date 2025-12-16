@@ -1067,9 +1067,10 @@ John Doe
 
 SELECT dbo.babel_5223_xml_value_t1.XmlColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_t1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: improper qualified name (too many dotted names): bo.babel_5223_xml_value_t1.xmlcolumn.value)~~
+~~START~~
+varchar
+John Doe
+~~END~~
 
 
 SELECT Id, XmlColumn.value('(/Root/Child1)[1]', 'varchar(100)') AS Result

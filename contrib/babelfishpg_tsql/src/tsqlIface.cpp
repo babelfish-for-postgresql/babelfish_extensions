@@ -48,11 +48,16 @@ extern "C" {
 #include "utils/builtins.h"
 
 #include "guc.h"
+#include "linked_servers.h"
 
 #endif
 
 #ifdef LOG // maybe already defined in elog.h, which is conflicted with grammar token LOG
 #undef LOG
+#endif
+
+#ifdef ON
+#undef ON  // sybdb.h (FreeTDS) defines ON as a macro, conflicts with ANTLR grammar token ON
 #endif
 }
 #pragma GCC diagnostic pop
@@ -865,6 +870,15 @@ private:
 	std::string forbidden_statement_type;
 	std::pair<int,int> error_location;
 	
+	/* Track nested procedure calls for recursive validation */
+	struct NestedProcInfo {
+		std::string server_name;
+		std::string database_name;
+		std::string schema_name;
+		std::string procedure_name;
+	};
+	std::vector<NestedProcInfo> nested_procedures;
+	
 public:
 	explicit RemoteProcedureSelectOnlyValidator() 
 		: has_forbidden_statement(false), forbidden_statement_type(""), error_location(0, 0) {}
@@ -923,6 +937,7 @@ public:
 	}
 	
 	// Block dynamic SQL: EXEC('string') and sp_executesql
+	// Also track nested procedure calls for recursive validation
 	antlrcpp::Any visitExecute_statement(TSqlParser::Execute_statementContext *ctx) override {
 		if (ctx->execute_body() && ctx->execute_body()->LR_BRACKET()) {
 			// EXEC(@var) or EXEC('string')
@@ -933,6 +948,7 @@ public:
 		}
 		
 		// Check if executing sp_executesql or other dynamic SQL procedures
+		// Also extract nested procedure calls for recursive validation
 		if (ctx->execute_body() && ctx->execute_body()->func_proc_name_server_database_schema()) {
 			auto func_ctx = ctx->execute_body()->func_proc_name_server_database_schema();
 			if (func_ctx->procedure) {
@@ -950,6 +966,18 @@ public:
 					error_location = getLineAndPos(ctx);
 					return nullptr;
 				}
+				
+				// Extract nested procedure call for recursive validation
+				NestedProcInfo info;
+				if (func_ctx->server)
+					info.server_name = stripQuoteFromId(func_ctx->server);
+				if (func_ctx->database)
+					info.database_name = stripQuoteFromId(func_ctx->database);
+				if (func_ctx->schema)
+					info.schema_name = stripQuoteFromId(func_ctx->schema);
+				info.procedure_name = proc_name;
+				
+				nested_procedures.push_back(info);
 			}
 		}
 		
@@ -961,6 +989,11 @@ public:
 	bool hasForbiddenStatement() const { return has_forbidden_statement; }
 	const char* getStatementType() const { return forbidden_statement_type.c_str(); }
 	std::pair<int,int> getLocation() const { return error_location; }
+	
+	// Accessor for nested procedures
+	const std::vector<NestedProcInfo>& getNestedProcedures() const { 
+		return nested_procedures; 
+	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////

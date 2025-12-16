@@ -338,3 +338,160 @@ AS BEGIN
         SELECT 'Success' AS result;
 END;
 GO
+
+
+-- ========================================
+-- NESTED PROCEDURE VALIDATION TESTS
+-- Tests for recursive SELECT-only validation
+-- ========================================
+-- Inner procedure: SELECT only (should pass validation)
+CREATE PROCEDURE sp_Inner_SelectOnly
+AS BEGIN
+    SELECT 'Inner procedure SELECT only' AS message, 1 AS level;
+END;
+GO
+
+-- Inner procedure: Contains INSERT (should fail validation when called)
+CREATE PROCEDURE sp_Inner_WithInsert
+AS BEGIN
+    CREATE TABLE #temp_inner (id INT);
+    INSERT INTO #temp_inner VALUES (1);
+    SELECT * FROM #temp_inner;
+END;
+GO
+
+-- Inner procedure: Contains UPDATE (should fail validation when called)
+CREATE PROCEDURE sp_Inner_WithUpdate
+AS BEGIN
+    CREATE TABLE #temp_upd (id INT);
+    INSERT INTO #temp_upd VALUES (1);
+    UPDATE #temp_upd SET id = 2;
+    SELECT * FROM #temp_upd;
+END;
+GO
+
+-- Inner procedure: Contains DELETE (should fail validation when called)
+CREATE PROCEDURE sp_Inner_WithDelete
+AS BEGIN
+    CREATE TABLE #temp_del (id INT);
+    INSERT INTO #temp_del VALUES (1);
+    DELETE FROM #temp_del;
+    SELECT COUNT(*) AS cnt FROM #temp_del;
+END;
+GO
+
+-- Outer procedure: Calls SELECT-only inner (should pass)
+CREATE PROCEDURE sp_Outer_CallsSelectOnly
+AS BEGIN
+    SELECT 'Outer before call' AS message, 0 AS level;
+    EXEC sp_Inner_SelectOnly;
+    SELECT 'Outer after call' AS message, 0 AS level;
+END;
+GO
+
+-- Outer procedure: Calls inner with INSERT (should fail recursive validation)
+CREATE PROCEDURE sp_Outer_CallsInsert
+AS BEGIN
+    SELECT 'Outer SELECT only' AS message;
+    EXEC sp_Inner_WithInsert;
+END;
+GO
+
+-- Outer procedure: Calls inner with UPDATE (should fail recursive validation)
+CREATE PROCEDURE sp_Outer_CallsUpdate
+AS BEGIN
+    SELECT 'Outer SELECT only' AS message;
+    EXEC sp_Inner_WithUpdate;
+END;
+GO
+
+-- Outer procedure: Calls inner with DELETE (should fail recursive validation)
+CREATE PROCEDURE sp_Outer_CallsDelete
+AS BEGIN
+    SELECT 'Outer SELECT only' AS message;
+    EXEC sp_Inner_WithDelete;
+END;
+GO
+
+-- Level 3 procedure: Deep nesting SELECT-only
+CREATE PROCEDURE sp_Level3_SelectOnly
+AS BEGIN
+    SELECT 'Level 3 SELECT only' AS message, 3 AS level;
+END;
+GO
+
+-- Level 2 procedure: Calls Level 3 SELECT-only
+CREATE PROCEDURE sp_Level2_CallsLevel3
+AS BEGIN
+    SELECT 'Level 2 calling Level 3' AS message, 2 AS level;
+    EXEC sp_Level3_SelectOnly;
+END;
+GO
+
+-- Level 1 procedure: Calls Level 2 which calls Level 3 (deep nesting, all SELECT)
+CREATE PROCEDURE sp_Level1_DeepNesting
+AS BEGIN
+    SELECT 'Level 1 calling Level 2' AS message, 1 AS level;
+    EXEC sp_Level2_CallsLevel3;
+END;
+GO
+
+-- Level 3 procedure: Contains DML (for deep nesting failure test)
+CREATE PROCEDURE sp_Level3_WithDML
+AS BEGIN
+    CREATE TABLE #temp3 (val INT);
+    INSERT INTO #temp3 VALUES (999);
+    SELECT * FROM #temp3;
+END;
+GO
+
+-- Level 2 procedure: Calls Level 3 with DML
+CREATE PROCEDURE sp_Level2_CallsDML
+AS BEGIN
+    SELECT 'Level 2 SELECT only' AS message, 2 AS level;
+    EXEC sp_Level3_WithDML;
+END;
+GO
+
+-- Level 1 procedure: Deep nesting with DML at bottom (should fail)
+CREATE PROCEDURE sp_Level1_DeepWithDML
+AS BEGIN
+    SELECT 'Level 1 SELECT only' AS message, 1 AS level;
+    EXEC sp_Level2_CallsDML;
+END;
+GO
+
+-- Circular reference test: Proc A calls Proc B
+CREATE PROCEDURE sp_CircularA
+AS BEGIN
+    SELECT 'Circular A' AS message;
+    EXEC sp_CircularB;
+END;
+GO
+
+-- Circular reference test: Proc B calls Proc A (creates cycle)
+CREATE PROCEDURE sp_CircularB
+AS BEGIN
+    SELECT 'Circular B' AS message;
+    EXEC sp_CircularA;
+END;
+GO
+
+-- Outer procedure that calls multiple inner procedures (mixed)
+CREATE PROCEDURE sp_Outer_MultipleInner
+AS BEGIN
+    SELECT 'Calling multiple inner procs' AS message;
+    EXEC sp_Inner_SelectOnly;
+    EXEC sp_Inner_SelectOnly;
+END;
+GO
+
+-- Outer procedure with dynamic SQL call (tests sp_executesql skip)
+CREATE PROCEDURE sp_Outer_WithDynamicSQL
+AS BEGIN
+    SELECT 'Before dynamic SQL' AS message;
+    DECLARE @sql NVARCHAR(100) = N'SELECT 1 AS dynamic_result';
+    EXEC sp_executesql @sql;
+    SELECT 'After dynamic SQL' AS message;
+END;
+GO

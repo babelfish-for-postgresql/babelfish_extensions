@@ -37,6 +37,27 @@ DROP PROCEDURE IF EXISTS sp_ReturnCode;
 DROP PROCEDURE IF EXISTS sp_WithError;
 GO
 
+-- Drop nested procedure test procedures
+DROP PROCEDURE IF EXISTS sp_Inner_SelectOnly;
+DROP PROCEDURE IF EXISTS sp_Inner_WithInsert;
+DROP PROCEDURE IF EXISTS sp_Inner_WithUpdate;
+DROP PROCEDURE IF EXISTS sp_Inner_WithDelete;
+DROP PROCEDURE IF EXISTS sp_Outer_CallsSelectOnly;
+DROP PROCEDURE IF EXISTS sp_Outer_CallsInsert;
+DROP PROCEDURE IF EXISTS sp_Outer_CallsUpdate;
+DROP PROCEDURE IF EXISTS sp_Outer_CallsDelete;
+DROP PROCEDURE IF EXISTS sp_Level3_SelectOnly;
+DROP PROCEDURE IF EXISTS sp_Level2_CallsLevel3;
+DROP PROCEDURE IF EXISTS sp_Level1_DeepNesting;
+DROP PROCEDURE IF EXISTS sp_Level3_WithDML;
+DROP PROCEDURE IF EXISTS sp_Level2_CallsDML;
+DROP PROCEDURE IF EXISTS sp_Level1_DeepWithDML;
+DROP PROCEDURE IF EXISTS sp_CircularA;
+DROP PROCEDURE IF EXISTS sp_CircularB;
+DROP PROCEDURE IF EXISTS sp_Outer_MultipleInner;
+DROP PROCEDURE IF EXISTS sp_Outer_WithDynamicSQL;
+GO
+
 -- Drop linked server and login mapping
 EXEC sp_dropserver 'bbf_rpe_server', 'droplogins';
 GO

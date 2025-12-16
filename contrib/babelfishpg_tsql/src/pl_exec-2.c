@@ -965,6 +965,7 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			void *param_data = NULL;
 			DBINT param_len = 0;
 			BYTE param_status = 0;
+			DBINT maxlen;  /* FreeTDS maxlen for nullable types */
 			
 			/* Evaluate parameter expression */
 			val = exec_eval_expr(estate, p->expr, &isnull, &valtype, &valtypmod);
@@ -984,9 +985,26 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			if (p->mode == FUNC_PARAM_OUT || p->mode == FUNC_PARAM_INOUT)
 				param_status = DBRPCRETURN;
 			
+			/*
+			 * Determine proper maxlen for FreeTDS.
+			 * Only set explicit maxlen for types that require it.
+			 * FreeTDS handles INT/DATETIME maxlen automatically based on nullability.
+			 */
+			maxlen = -1;  /* Default for most types */
+			
+			switch (tds_type) {
+				case LS_TYPE_UNIQUE:      /* UNIQUEIDENTIFIER - Always 16 bytes */
+					maxlen = 16;
+					break;
+				/* All other types: Use -1 (let FreeTDS handle it) */
+				default:
+					maxlen = -1;
+					break;
+			}
+			
 			/* DEBUG: Log parameter details before dbrpcparam call */
-			elog(LOG, "DEBUG_RPC_PARAM: Binding parameter: name=%s, tds_type=%d, len=%d, isnull=%d",
-				 p->name ? p->name : "(positional)", tds_type, param_len, isnull);
+			elog(LOG, "DEBUG_RPC_PARAM: Binding parameter: name=%s, tds_type=%d, maxlen=%d, len=%d, isnull=%d",
+				 p->name ? p->name : "(positional)", tds_type, maxlen, param_len, isnull);
 			
 			/* Log first bytes if data present */
 			if (param_data && param_len > 0)
@@ -1007,7 +1025,7 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 										p->name,        /* parameter name (can be NULL for positional) */
 										param_status,   /* status flags */
 										tds_type,       /* TDS data type */
-										-1,            /* maxlen (-1 = use default) */
+										maxlen,         /* maxlen (calculated based on type) */
 										param_len,      /* actual data length */
 										(BYTE *)param_data) != SUCCEED)
 			{
@@ -1374,8 +1392,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		if (!get_rpc_out_option(stmt->server_name))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("RPC out is not enabled for server '%s'. Use sp_serveroption to enable it.", 
-							stmt->server_name),
+					 errmsg("RPC out is not enabled for the specified server. Use sp_serveroption to enable it."),
 					 errhint("Execute: EXEC sp_serveroption '%s', 'rpc out', 'true'", 
 							 stmt->server_name)));
 		
