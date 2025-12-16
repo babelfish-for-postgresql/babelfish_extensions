@@ -71,6 +71,36 @@
 #define TSQL_MONEY_TYPMOD ((MONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
 #define TSQL_SMALLMONEY_TYPMOD ((SMALLMONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
 #define TSQL_EXPLICIT_NULLABILITY_MARKER "tsql_explicit_nullability"
+typedef enum
+{
+	OBJECT_TYPE_AGGREGATE_FUNCTION,
+	OBJECT_TYPE_CHECK_CONSTRAINT,
+	OBJECT_TYPE_DEFAULT_CONSTRAINT,
+	OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT,
+	OBJECT_TYPE_TSQL_SCALAR_FUNCTION,
+	OBJECT_TYPE_ASSEMBLY_SCALAR_FUNCTION,
+	OBJECT_TYPE_ASSEMBLY_TABLE_VALUED_FUNCTION,
+	OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION,
+	OBJECT_TYPE_INTERNAL_TABLE,
+	OBJECT_TYPE_TSQL_STORED_PROCEDURE,
+	OBJECT_TYPE_ASSEMBLY_STORED_PROCEDURE,
+	OBJECT_TYPE_PLAN_GUIDE,
+	OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT,
+	OBJECT_TYPE_RULE,
+	OBJECT_TYPE_REPLICATION_FILTER_PROCEDURE,
+	OBJECT_TYPE_SYSTEM_BASE_TABLE,
+	OBJECT_TYPE_SYNONYM,
+	OBJECT_TYPE_SEQUENCE_OBJECT,
+	OBJECT_TYPE_SERVICE_QUEUE,
+	OBJECT_TYPE_ASSEMBLY_DML_TRIGGER,
+	OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION,
+	OBJECT_TYPE_TSQL_DML_TRIGGER,
+	OBJECT_TYPE_TABLE_TYPE,
+	OBJECT_TYPE_TABLE,
+	OBJECT_TYPE_UNIQUE_CONSTRAINT,
+	OBJECT_TYPE_VIEW,
+	OBJECT_TYPE_EXTENDED_STORED_PROCEDURE
+} ObjectPropertyType;
 
 /*
  * Compiler's namespace item types
@@ -2095,6 +2125,8 @@ extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
 extern uint64 execute_bulk_load_insert(int ncol, int nrow,
 									   Datum *Values, bool *Nulls);
+extern void restrict_alter_owner_stmt(AlterOwnerStmt *stmt);
+extern void restrict_alter_table_stmt(AlterTableStmt *stmt);
 
 /*
  * Functions in pl_exec.c
@@ -2279,6 +2311,7 @@ extern Oid get_func_owner(Oid funcid);
 extern bool is_valid_func_ownership_chain(void *expr, Oid objectOwnerId);
 extern Oid get_current_func_oid(void);
 extern bool is_xml_value_typearg_valid(Oid Oid);
+extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
 
 typedef struct
 {

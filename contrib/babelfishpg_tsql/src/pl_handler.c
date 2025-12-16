@@ -2874,6 +2874,31 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 	}
 
+	/*
+	 * Block ALTER .. OWNER TO .. statements from PG dialect
+	 * executed on TSQL objects.
+	 */
+	if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_alter_owner_from_pg)
+	{
+		switch (nodeTag(parsetree))
+		{
+			case T_AlterOwnerStmt:
+			{
+				AlterOwnerStmt *stmt = (AlterOwnerStmt *) parsetree;
+				restrict_alter_owner_stmt(stmt);
+				break;
+			}
+			case T_AlterTableStmt:
+			{
+				AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
+				restrict_alter_table_stmt(stmt);
+				break;
+			}
+			default:
+				break;
+		}
+	}
+
 	switch (nodeTag(parsetree))
 	{
 		case T_AlterFunctionStmt:
