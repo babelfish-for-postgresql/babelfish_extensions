@@ -1632,7 +1632,7 @@ handle_polygon_coordinates(GeometryData *geom_data, uint8 *result_data)
             offset = 0,
             n = geom_data->ring_count[0],
             start_point = 0;
-    uint8_t *src = geom_data->input_data + HEADER_SIZE + (geom_data->has_npoints_data ? NPOINTS_SIZE : 0);
+    uint8_t *src = geom_data->input_data + HEADER_SIZE + (geom_data->has_npoints_data ? NPOINTS_SIZE : 0),
             *dst = result_data + POSTGIS_HEADER_SIZE + SRID_SIZE + NPOINTS_SIZE;
     
     /* Write ring_count[0] in first 4 bytes */
