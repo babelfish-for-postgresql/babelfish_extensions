@@ -216,6 +216,7 @@ dateadd
 datename_tzoffset-before-16_10-or-17_6
 datepart
 datetime2fromparts-after-15-2
+datetime2fromparts-before-17_7
 forjson
 forjson-datatypes
 forjson-subquery

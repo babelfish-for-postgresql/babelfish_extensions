@@ -1,0 +1,411 @@
+-- sla 100000
+-- DATETIME2FROMPARTS Function Tests
+-- [BABEL-1627, 2827] Support DATETIME2FROMPARTS Transact-SQL function
+-- This file contains comprehensive tests for the DATETIME2FROMPARTS function
+-- including tests for high fraction values (>32767) after smallint bug fix
+
+-- Test 1: Testing return datatype of DATETIME2FROMPARTS
+SELECT
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(CAST(DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 123456, 7) AS sql_variant), 'BaseType') = 'datetime2' 
+        THEN 'PASS: DATETIME2FROMPARTS returns datetime2'
+        ELSE 'FAIL: Incorrect return type'
+    END AS ReturnTypeTest;
+GO
+
+-- Test 2: Testing with NULL values
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(NULL, 1, 1, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted NULL year' AS NullYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected NULL year' AS NullYearTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, NULL, 1, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted NULL month' AS NullMonthTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected NULL month' AS NullMonthTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, NULL, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted NULL day' AS NullDayTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected NULL day' AS NullDayTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, NULL, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted NULL hour' AS NullHourTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected NULL hour' AS NullHourTest;
+END CATCH
+GO
+
+-- Test 3: Testing with out of range parameters
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(10000, 1, 1, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid year (>9999)' AS InvalidYearTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid year (>9999)' AS InvalidYearTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 13, 1, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid month (>12)' AS InvalidMonthTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid month (>12)' AS InvalidMonthTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 32, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid day (>31)' AS InvalidDayTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid day (>31)' AS InvalidDayTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, 24, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid hour (>23)' AS InvalidHourTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid hour (>23)' AS InvalidHourTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, 12, 60, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid minute (>59)' AS InvalidMinuteTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid minute (>59)' AS InvalidMinuteTest;
+END CATCH
+GO
+
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 60, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid seconds (>59)' AS InvalidSecondsTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid seconds (>59)' AS InvalidSecondsTest;
+END CATCH
+GO
+
+-- Test 4: Testing precision parameter
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 123456, 8);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted invalid precision (>7)' AS InvalidPrecisionTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected invalid precision (>7)' AS InvalidPrecisionTest;
+END CATCH
+GO
+
+-- Test 5: Testing fraction digits vs precision
+BEGIN TRY
+    -- Using 1234567 (7 digits) with precision 6 should fail
+    SELECT DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 1234567, 6);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted fractions beyond specified precision' AS FractionPrecisionTest;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected fractions beyond specified precision' AS FractionPrecisionTest;
+END CATCH
+GO
+
+-- Test 6: Testing valid date creation
+SELECT 
+    CASE 
+        WHEN YEAR(DATETIME2FROMPARTS(2023, 2, 28, 23, 59, 59, 9999999, 7)) = 2023
+             AND MONTH(DATETIME2FROMPARTS(2023, 2, 28, 23, 59, 59, 9999999, 7)) = 2
+             AND DAY(DATETIME2FROMPARTS(2023, 2, 28, 23, 59, 59, 9999999, 7)) = 28
+        THEN 'PASS: Date components match input'
+        ELSE 'FAIL: Date components do not match input'
+    END AS ComponentsMatchTest;
+GO
+
+-- Test 7: Testing leap year handling
+BEGIN TRY
+    SELECT DATETIME2FROMPARTS(2023, 2, 29, 12, 30, 45, 123456, 7);
+    SELECT 'FAIL: DATETIME2FROMPARTS accepted Feb 29 in non-leap year' AS LeapYearTest1;
+END TRY
+BEGIN CATCH
+    SELECT 'PASS: DATETIME2FROMPARTS rejected Feb 29 in non-leap year' AS LeapYearTest1;
+END CATCH
+GO
+
+SELECT 
+    CASE 
+        WHEN YEAR(DATETIME2FROMPARTS(2024, 2, 29, 12, 30, 45, 123456, 7)) = 2024
+             AND MONTH(DATETIME2FROMPARTS(2024, 2, 29, 12, 30, 45, 123456, 7)) = 2
+             AND DAY(DATETIME2FROMPARTS(2024, 2, 29, 12, 30, 45, 123456, 7)) = 29
+        THEN 'PASS: Leap year date accepted correctly'
+        ELSE 'FAIL: Leap year date issue'
+    END AS LeapYearTest2;
+GO
+
+-- Test 8: Testing precision handling
+SELECT 
+    CASE 
+        WHEN CAST(DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 123, 3) AS VARCHAR(30)) LIKE '%123%'
+             AND CAST(DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 0, 0) AS VARCHAR(30)) NOT LIKE '%.%'
+        THEN 'PASS: Precision handling works correctly'
+        ELSE 'FAIL: Precision handling issue'
+    END AS PrecisionHandlingTest;
+GO
+
+-- Test 9: Testing with various datatypes for parameters
+DECLARE @Year INT = 2023;
+DECLARE @Month TINYINT = 1;
+DECLARE @Day SMALLINT = 15;
+DECLARE @Hour BIGINT = 14;
+DECLARE @Minute DECIMAL(2,0) = 35;
+DECLARE @Seconds NUMERIC(2,0) = 42;
+DECLARE @Fractions INT = 123456;
+DECLARE @Precision TINYINT = 6;
+
+SELECT 
+    CASE 
+        WHEN DATETIME2FROMPARTS(@Year, @Month, @Day, @Hour, @Minute, @Seconds, @Fractions, @Precision) IS NOT NULL
+        THEN 'PASS: Function accepts various numeric datatypes'
+        ELSE 'FAIL: Issue with datatype acceptance'
+    END AS ParameterDatatypeTest;
+GO
+
+-- Test 10: Testing with GROUP BY, HAVING, ORDER BY, SELECT list
+CREATE TABLE #TestDates (
+    ID INT PRIMARY KEY,
+    Year INT,
+    Month INT,
+    Day INT,
+    Hour INT,
+    Minute INT,
+    Second INT,
+    Fraction INT,
+    Precision INT
+);
+GO
+
+INSERT INTO #TestDates VALUES
+(1, 2020, 1, 1, 9, 0, 0, 0, 0),
+(2, 2021, 6, 15, 12, 30, 45, 123456, 6),
+(3, 2022, 12, 31, 23, 59, 59, 9999999, 7);
+
+-- Test with SELECT list
+SELECT 
+    ID,
+    DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision) AS ConstructedDateTime,
+    CASE 
+        WHEN DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision) IS NOT NULL
+        THEN 'PASS'
+        ELSE 'FAIL'
+    END AS SelectListTest
+FROM #TestDates;
+
+-- Test with ORDER BY
+SELECT TOP 1
+    CASE 
+        WHEN ID = 1 THEN 'PASS: ORDER BY works correctly'
+        ELSE 'FAIL: ORDER BY issue'
+    END AS OrderByTest
+FROM #TestDates
+ORDER BY DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision);
+
+-- Test with GROUP BY
+SELECT 
+    YEAR(DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision)) AS YearGroup,
+    COUNT(*) AS Count,
+    CASE
+        WHEN COUNT(*) = 1 THEN 'PASS: GROUP BY works correctly'
+        ELSE 'FAIL: GROUP BY issue'
+    END AS GroupByTest
+FROM #TestDates
+GROUP BY YEAR(DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision));
+GO
+
+DROP TABLE #TestDates;
+GO
+
+-- Test 11: Testing JOIN operations with the function
+CREATE TABLE #Orders (
+    OrderID INT PRIMARY KEY,
+    OrderYear INT,
+    OrderMonth INT,
+    OrderDay INT,
+    OrderHour INT,
+    OrderMinute INT,
+    OrderSecond INT
+);
+GO
+
+CREATE TABLE #Shipments (
+    ShipmentID INT PRIMARY KEY,
+    OrderID INT,
+    ShipYear INT,
+    ShipMonth INT,
+    ShipDay INT,
+    ShipHour INT,
+    ShipMinute INT,
+    ShipSecond INT
+);
+GO
+
+INSERT INTO #Orders VALUES
+(1, 2023, 1, 15, 10, 30, 0),
+(2, 2023, 2, 20, 14, 45, 30),
+(3, 2023, 3, 25, 16, 15, 45);
+
+INSERT INTO #Shipments VALUES
+(101, 1, 2023, 1, 16, 9, 0, 0),
+(102, 2, 2023, 2, 22, 8, 30, 0),
+(103, 3, 2023, 3, 27, 11, 45, 30);
+
+-- Test INNER JOIN
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 3 THEN 'PASS: JOIN with constructed dates works'
+        ELSE 'FAIL: JOIN issue'
+    END AS JoinTest
+FROM #Orders o
+JOIN #Shipments s ON o.OrderID = s.OrderID
+WHERE DATETIME2FROMPARTS(s.ShipYear, s.ShipMonth, s.ShipDay, s.ShipHour, s.ShipMinute, s.ShipSecond, 0, 0) >
+      DATETIME2FROMPARTS(o.OrderYear, o.OrderMonth, o.OrderDay, o.OrderHour, o.OrderMinute, o.OrderSecond, 0, 0);
+GO
+
+DROP TABLE #Orders;
+GO
+DROP TABLE #Shipments;
+GO
+
+-- Test 12: Test MIN/MAX aggregate functions
+CREATE TABLE #DateComponents (
+    ID INT PRIMARY KEY,
+    Year INT,
+    Month INT,
+    Day INT,
+    Hour INT,
+    Minute INT,
+    Second INT,
+    Fraction INT,
+    Precision INT
+);
+GO
+
+INSERT INTO #DateComponents VALUES
+(1, 2021, 1, 1, 0, 0, 0, 0, 0),
+(2, 2022, 6, 15, 12, 30, 45, 123456, 6),
+(3, 2023, 12, 31, 23, 59, 59, 9999999, 7);
+
+SELECT 
+    CASE 
+        WHEN YEAR(MIN(DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision))) = 2021
+        THEN 'PASS: MIN function works with constructed dates'
+        ELSE 'FAIL: MIN function issue'
+    END AS MinFunctionTest,
+    CASE 
+        WHEN YEAR(MAX(DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision))) = 2023
+        THEN 'PASS: MAX function works with constructed dates'
+        ELSE 'FAIL: MAX function issue'
+    END AS MaxFunctionTest
+FROM #DateComponents;
+GO
+
+DROP TABLE #DateComponents;
+GO
+
+-- Test 13: Testing high fraction values (>32767) - Bug fix for smallint limit
+-- These tests specifically validate the fix for fractions parameter being cast to smallint
+
+-- Test fractions at smallint boundary (32767)
+SELECT DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 32767, 5) AS smallint_max_32767;
+GO
+
+-- Test fractions just above smallint max (32768)
+SELECT DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 32768, 5) AS above_smallint_32768;
+GO
+
+-- Test fractions = 100000
+SELECT DATETIME2FROMPARTS(2023, 6, 15, 12, 30, 45, 100000, 6) AS fractions_100000;
+GO
+
+-- Test fractions = 500000
+SELECT DATETIME2FROMPARTS(2023, 6, 15, 12, 30, 45, 500000, 6) AS fractions_500000;
+GO
+
+-- Test fractions = 999999 (max for precision 6)
+SELECT DATETIME2FROMPARTS(2023, 6, 15, 12, 30, 45, 999999, 6) AS fractions_999999;
+GO
+
+-- Test fractions = 1234567 (7 digits)
+SELECT DATETIME2FROMPARTS(2023, 6, 15, 12, 30, 45, 1234567, 7) AS fractions_1234567;
+GO
+
+-- Test fractions = 9999999 (max for precision 7)
+SELECT DATETIME2FROMPARTS(2023, 12, 31, 23, 59, 59, 9999999, 7) AS fractions_9999999_max;
+GO
+
+-- Test 14: Validate high fraction values produce correct datetime2 values
+SELECT 
+    DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 9999999, 7) AS dt,
+    CAST(DATETIME2FROMPARTS(2023, 1, 1, 12, 30, 45, 9999999, 7) AS VARCHAR(30)) AS dt_string;
+GO
+
+-- Test 15: Test that high fractions work in table operations
+CREATE TABLE #HighFractionTest (
+    ID INT PRIMARY KEY,
+    Year INT,
+    Month INT,
+    Day INT,
+    Hour INT,
+    Minute INT,
+    Second INT,
+    Fraction INT,
+    Precision INT
+);
+GO
+
+INSERT INTO #HighFractionTest VALUES
+(1, 2023, 1, 1, 12, 0, 0, 32767, 5),   -- max smallint
+(2, 2023, 1, 1, 12, 0, 0, 32768, 5),   -- above smallint
+(3, 2023, 1, 1, 12, 0, 0, 100000, 6),  -- 100k
+(4, 2023, 1, 1, 12, 0, 0, 999999, 6),  -- max precision 6
+(5, 2023, 1, 1, 12, 0, 0, 9999999, 7); -- max precision 7
+
+SELECT 
+    ID,
+    Fraction,
+    DATETIME2FROMPARTS(Year, Month, Day, Hour, Minute, Second, Fraction, Precision) AS ConstructedDateTime
+FROM #HighFractionTest
+ORDER BY ID;
+GO
+
+DROP TABLE #HighFractionTest;
+GO
+
+-- Test 16: Test boundary cases for different precisions
+SELECT 
+    DATETIME2FROMPARTS(2023, 1, 1, 12, 0, 0, 0, 0) AS precision_0_frac_0,
+    DATETIME2FROMPARTS(2023, 1, 1, 12, 0, 0, 9, 1) AS precision_1_frac_9,
+    DATETIME2FROMPARTS(2023, 1, 1, 12, 0, 0, 99, 2) AS precision_2_frac_99,
+    DATETIME2FROMPARTS(2023, 1, 1, 12, 0, 0, 999, 3) AS precision_3_frac_999;
+GO
+
+SELECT 
+    DATETIME2FROMPARTS(2023, 1, 1, 12, 0, 0, 9999, 4) AS precision_4_frac_9999,
+    DATETIME2FROMPARTS(2023, 1, 1, 12, 0, 0, 99999, 5) AS precision_5_frac_99999,
+    DATETIME2FROMPARTS(2023, 1, 1, 12, 0, 0, 999999, 6) AS precision_6_frac_999999,
+    DATETIME2FROMPARTS(2023, 1, 1, 12, 0, 0, 9999999, 7) AS precision_7_frac_9999999;
+GO

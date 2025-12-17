@@ -271,6 +271,9 @@ ignore#!#datediff_internal_date-before-14_10-or-15_5-vu-cleanup
 ignore#!#datetime2fromparts-vu-prepare
 ignore#!#datetime2fromparts-vu-verify
 ignore#!#datetime2fromparts-vu-cleanup
+ignore#!#datetime2fromparts-before-17_7-vu-prepare
+ignore#!#datetime2fromparts-before-17_7-vu-verify
+ignore#!#datetime2fromparts-before-17_7-vu-cleanup
 ignore#!#babel_smalldatetime_before_15-5
 
 # These tests are meant for only upgrade

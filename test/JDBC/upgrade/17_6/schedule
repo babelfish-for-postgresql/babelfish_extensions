@@ -216,6 +216,7 @@ dateadd
 datename_tzoffset
 datepart
 datetime2fromparts-after-15-2
+datetime2fromparts-before-17_7
 fk_trigger_temp
 forjson
 forjson-datatypes
