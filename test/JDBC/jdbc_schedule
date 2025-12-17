@@ -10,9 +10,10 @@
 
 all
 
-# FIX ME: TestHalfvecDatatype is crashing while creating index.
-# Ignoring to Unblock Dev branches. Will be fixed with jira: BABEL-6260
+# FIX ME: Crash in vector extension. Ignoring to Unblock Dev
+# branches. Will be fixed with jira: BABEL-6260
 ignore#!#TestHalfvecDatatype
+ignore#!#TestSparsevecDatatype
 
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
