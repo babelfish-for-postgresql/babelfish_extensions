@@ -1310,15 +1310,15 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 					SetColMetadataForFixedType(col, TDS_TYPE_FLOAT, TDS_MAXLEN_FLOAT8);
 				break;
 			case TDS_SEND_CHAR:
-				if (atttypmod == -1 && tle != NULL)
-					atttypmod = TdsGetGenericTypmod((Node *) tle->expr);
+				// if (atttypmod == -1 && tle != NULL)
+				// 	atttypmod = TdsGetGenericTypmod((Node *) tle->expr);
 
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_CHAR,
 												att->attcollation, (atttypmod - 4));
 				break;
 			case TDS_SEND_NCHAR:
-				if (atttypmod == -1 && tle != NULL)
-					atttypmod = TdsGetGenericTypmod((Node *) tle->expr);
+				// if (atttypmod == -1 && tle != NULL)
+				// 	atttypmod = TdsGetGenericTypmod((Node *) tle->expr);
 
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NCHAR,
 												att->attcollation, (atttypmod - 4) * 2);
