@@ -451,12 +451,14 @@ CREATE OPERATOR sys.<= (
 );
 
 alter OPERATOR family bbf_binary_ops USING btree add
+    OPERATOR 3 sys.= (sys.bbf_binary, sys.bbf_varbinary),
+    FUNCTION 1 sys.bbf_binary_varbinary_cmp(sys.bbf_binary, sys.bbf_varbinary);
+
+alter OPERATOR family bbf_binary_ops USING btree add
     OPERATOR 1 sys.< (sys.bbf_binary, sys.bbf_varbinary),
     OPERATOR 2 sys.<= (sys.bbf_binary, sys.bbf_varbinary),
-    OPERATOR 3 sys.= (sys.bbf_binary, sys.bbf_varbinary),
     OPERATOR 4 sys.>= (sys.bbf_binary, sys.bbf_varbinary),
-    OPERATOR 5 sys.> (sys.bbf_binary, sys.bbf_varbinary),
-    FUNCTION 1 sys.bbf_binary_varbinary_cmp(sys.bbf_binary, sys.bbf_varbinary);
+    OPERATOR 5 sys.> (sys.bbf_binary, sys.bbf_varbinary);
 
 CREATE OR REPLACE FUNCTION sys.varbinary_binary_eq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
 RETURNS boolean
@@ -554,9 +556,12 @@ CREATE OPERATOR sys.<= (
 );
 
 alter OPERATOR family bbf_varbinary_ops USING btree add
+    OPERATOR 3 sys.= (sys.bbf_varbinary, sys.bbf_binary),
+    FUNCTION 1 sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary);
+
+alter OPERATOR family bbf_varbinary_ops USING btree add
     OPERATOR 1 sys.< (sys.bbf_varbinary, sys.bbf_binary),
     OPERATOR 2 sys.<= (sys.bbf_varbinary, sys.bbf_binary),
-    OPERATOR 3 sys.= (sys.bbf_varbinary, sys.bbf_binary),
     OPERATOR 4 sys.>= (sys.bbf_varbinary, sys.bbf_binary),
-    OPERATOR 5 sys.> (sys.bbf_varbinary, sys.bbf_binary),
-    FUNCTION 1 sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary);
+    OPERATOR 5 sys.> (sys.bbf_varbinary, sys.bbf_binary);
+
