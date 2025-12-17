@@ -3102,52 +3102,49 @@ is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 void
 restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
 {
-    Oid		schema_oid = InvalidOid;
-    char	*schema_name = NULL;
-    char	*object_name = NULL;
+    Oid			schema_oid = InvalidOid;
+    char		*schema_name = NULL;
+    char		*object_name = NULL;
+    ObjectAddress	address;
+    Relation		relation = NULL;
+    Node			*object = stmt->object;
 
     /* Only handle specific object types */
     if (stmt->objectType != OBJECT_TYPE && stmt->objectType != OBJECT_SCHEMA &&
         stmt->objectType != OBJECT_FUNCTION && stmt->objectType != OBJECT_PROCEDURE)
         return;
-
-    if (stmt->objectType == OBJECT_TYPE)
+    
+    /* For OBJECT_TYPE, convert List to TypeName if needed */
+    if (stmt->objectType == OBJECT_TYPE && IsA(stmt->object, List))
     {
-        List *names = (List *) stmt->object;
-        if (names && list_length(names) > 1)
-            schema_name = pstrdup(strVal(linitial(names)));
+        TypeName *typename = makeTypeNameFromNameList((List *) stmt->object);
+        object = (Node *) typename;
+    }
+    
+    /* Get object address to determine schema */
+    address = get_object_address(stmt->objectType, object, &relation, AccessShareLock, false);
+    
+    if (stmt->objectType == OBJECT_SCHEMA)
+    {
+		/* For schema objects, the object itself is the schema */
+        schema_oid = address.objectId;
     }
     else
     {
-        ObjectAddress	address;
-        Relation		relation = NULL;
-        
-        /* Get object address */
-        address = get_object_address(stmt->objectType, stmt->object, &relation, AccessShareLock, false);
-        
-        /* Get schema OID from the object */
-        if (stmt->objectType == OBJECT_SCHEMA)
-        {
-            /* For schema objects, the object itself is the schema */
-            schema_oid = address.objectId;
-        }
-        else
-        {
-            /* For other objects, get their containing schema */
-            schema_oid = get_object_namespace(&address);
-        }
-        
-        if (!OidIsValid(schema_oid))
-        {
-            if (relation)
-                RelationClose(relation);
-            return;
-        }
-
-        schema_name = get_namespace_name(schema_oid);
-        if (relation)
-            RelationClose(relation);
+		/* For other objects, get their containing schema */
+        schema_oid = get_object_namespace(&address);
     }
+
+	if (!OidIsValid(schema_oid))
+	{
+		if (relation)
+			RelationClose(relation);
+		return;
+	}
+    
+    schema_name = get_namespace_name(schema_oid);
+    if (relation)
+        RelationClose(relation);
     
     if (!schema_name)
         return;
