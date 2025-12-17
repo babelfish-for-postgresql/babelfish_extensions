@@ -1,7 +1,7 @@
 CREATE TABLE POLYGEOM_dt(location GEOMETRY);
 prepst#!#INSERT INTO POLYGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|POLYGON ((1 4, 1 2, 2 2, 1 4)):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON EMPTY:4326
-prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1,4 5, 6 7, 1 1)):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON Z ((1 1 2, 1 2 3, 2 2 4, 1 1 2)):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON M ((1 1 2, 1 2 3, 2 2 4, 1 1 2)):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ZM ((1 1 2 4, 1 2 3 5, 2 2 4 6, 1 1 2 7)):4326
@@ -21,7 +21,7 @@ prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ZM ((1 1 2 4, 1 2 3 5, 2 2 4 6, 1 
 CREATE TABLE POLYGEOG_dt(location GEOGRAPHY);
 prepst#!#INSERT INTO POLYGEOG_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|POLYGON ((1 4, 1 2, 2 2, 1 4)):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON EMPTY:4326
-prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1,4 5, 6 7, 1 1)):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON Z ((1 1 2, 1 2 3, 2 2 4, 1 1 2)):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON M ((1 1 2, 1 2 3, 2 2 4, 1 1 2)):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ZM ((1 1 2 4, 1 2 3 5, 2 2 4 6, 1 1 2 7)):4326
@@ -40,14 +40,16 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ZM ((1 1 2 4, 1 2 3 5, 2 2 4 6, 1
 
 INSERT INTO POLYGEOM_dt(location) values(geometry::STGeomFromText('POLYGON((1 1 NULL, 1 2 3, 2 2 4, 1 1 NULL))', 4326))
 INSERT INTO POLYGEOM_dt(location) values(geometry::STGeomFromText('POLYGON((0 0, 2 0, 4 1, 5 2, 6 4, 6 6, 5 8, 4 9, 2 10, 0 10, -1 8, -1 2, 0 0),(2 2, 3 2, 3 3, 2 3, 2 2))', 4326))
-INSERT INTO POLYGEOM_dt(location) values(geometry::STPolyFromText('POLYGON((1 2, 3 5, 6, 1 2))', 4326))
-INSERT INTO POLYGEOM_dt(location) values(geometry::STPolyFromText('POLYGON EMPTY', 4326))
+INSERT INTO POLYGEOM_dt(location) values(geometry::STGeomFromText('POLYGON((1 2, 3 5, 6, 1 2))', 4326))
+INSERT INTO POLYGEOM_dt(location) values(geometry::STGeomFromText('POLYGON EMPTY', 4326))
 
 INSERT INTO POLYGEOG_dt(location) values(geography::STGeomFromText('POLYGON((1 1 NULL, 1 2 3, 2 2 4, 1 1 NULL))', 4326))
 INSERT INTO POLYGEOG_dt(location) values(geography::STGeomFromText('POLYGON((0 0, 2 0, 4 1, 5 2, 6 4, 6 6, 5 8, 4 9, 2 10, 0 10, -1 8, -1 2, 0 0),(2 2, 3 2, 3 3, 2 3, 2 2))', 4326))
-INSERT INTO POLYGEOG_dt(location) values(geography::STPolyFromText('POLYGON((1 2, 3 5, 6, 1 2))', 4326))
-INSERT INTO POLYGEOG_dt(location) values(geography::STPolyFromText('POLYGON EMPTY', 4326))
+INSERT INTO POLYGEOG_dt(location) values(geography::STGeomFromText('POLYGON((1 2, 3 5, 6, 1 2))', 4326))
+INSERT INTO POLYGEOG_dt(location) values(geography::STGeomFromText('POLYGON EMPTY', 4326))
 
+SELECT * FROM  POLYGEOM_dt;
+SELECT * FROM  POLYGEOG_dt;
 
 CREATE TABLE POLYGON_EMP_dt(geom GEOMETRY, geog GEOGRAPHY);
 prepst#!#INSERT INTO POLYGON_EMP_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|POLYGON EMPTY:4326

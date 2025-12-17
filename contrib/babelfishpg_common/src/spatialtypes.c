@@ -167,8 +167,8 @@ typedef struct
     uint8    dimension_flag;
     bool     isNaN;
     bool     has_npoints_data;
-    uint32_t *values;        /* Dynamic array to store no. of points in each ring in polygon */
-    uint32_t values_size;    /* Size of the values array */
+    uint32_t *ring_count;        /* Dynamic array to store no. of points in each ring in polygon */
+    uint32_t ring_count_size;    /* Size of the ring_count array */
 } GeometryData;
 
 /* Helper structure for geometry to bytea conversion */
@@ -1222,8 +1222,8 @@ initialize_geometry_data(bytea *input)
     geom_data->dimension_flag = 0;
     geom_data->isNaN = false;
     /* Initialize dynamic values array */
-    geom_data->values_size = 256;  /* Initial size */
-    geom_data->values = palloc0(geom_data->values_size * sizeof(uint32_t));
+    geom_data->ring_count_size = 8;  /* Initial size */
+    geom_data->ring_count = palloc0(geom_data->ring_count_size * sizeof(uint32_t));
     
     return geom_data;
 }
@@ -1441,9 +1441,9 @@ validate_geography_latitude_bytes(GeometryData *geom_data)
 static uint32_t
 calculate_polygon_size(GeometryData *geom_data)
 {
-    uint32_t n = geom_data->values[0];  /* Number of rings */
-    uint32_t tsql_metadata_size = 22 + (n-1)*5;  /* Size of trailing metadata: 22 base + 5 bytes per extra ring */
-    uint32_t posgis_ring_headers = 4 * (n+1);  /* Size of ring headers: 4 bytes for ring count + 4 bytes per ring */
+    uint32_t n = geom_data->ring_count[0],       /* Number of rings */
+             tsql_metadata_size = 22 + (n-1)*5,  /* Size of trailing metadata: 22 base + 5 bytes per extra ring */
+             posgis_ring_headers = 4 * (n+1);    /* Size of ring headers: 4 bytes for ring count + 4 bytes per ring */
     
     /* Calculate result size by subtracting tsql's header and metadata sizes and adding postgis's headers and metadata */
     return geom_data->input_len - GEOM_TYPE_SIZE + POSTGIS_HEADER_SIZE - tsql_metadata_size + posgis_ring_headers;
@@ -1495,33 +1495,33 @@ copy_coordinates_with_dimensions(uint8_t *src, uint8_t *dst, uint32_t npoints, u
     }
 }
 
-/* Ensure values array has sufficient capacity, resize if needed */
+/* Ensure ringcount array has sufficient capacity, resize if needed */
 static void
-ensure_values_capacity(GeometryData *geom_data, uint32_t required_size)
+ensure_ringcount_capacity(GeometryData *geom_data, uint32_t required_size)
 {
-    if (required_size >= geom_data->values_size) {
-        geom_data->values_size = required_size * 2;  /* Double the size */
-        geom_data->values = repalloc(geom_data->values, geom_data->values_size * sizeof(uint32_t));
+    if (required_size >= geom_data->ring_count_size) 
+    {
+        geom_data->ring_count_size = required_size * 2;  /* Double the size */
+        geom_data->ring_count = repalloc(geom_data->ring_count, geom_data->ring_count_size * sizeof(uint32_t));
     }
 }
 
-/* Check if trailing 22 bytes match line_end_metadata */
+/* Check if trailing bytes of a geometry match the T-SQL's pattern and  determine the geometry type */
 static void
-check_line_end_metadata(GeometryData *geom_data)
+check_geom_end_metadata(GeometryData *geom_data)
 {
-    bool has_z = geom_data->dimension_flag == DIM_FLAG_3DM || geom_data->dimension_flag == DIM_FLAG_3D;
-    bool has_m = geom_data->dimension_flag == DIM_FLAG_3DM || geom_data->dimension_flag == DIM_FLAG_2DM;
-    uint32_t npoints = geom_data->has_npoints_data ? geom_data->npoints : 2;
-    uint8_t *src = geom_data->input_data + HEADER_SIZE + (geom_data->has_npoints_data ? NPOINTS_SIZE : 0);
-    uint32_t coord_data_size = npoints * (COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0));
-    uint8_t *metadata = src + coord_data_size;
-    uint32_t val, n, i;
-    uint32_t offset = 0;
+    bool has_z = geom_data->dimension_flag == DIM_FLAG_3DM || geom_data->dimension_flag == DIM_FLAG_3D,
+         has_m = geom_data->dimension_flag == DIM_FLAG_3DM || geom_data->dimension_flag == DIM_FLAG_2DM;
+    uint32_t npoints = geom_data->has_npoints_data ? geom_data->npoints : 2,
+            coord_data_size = npoints * (COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0)),
+            val, n, i,offset = 0;
+    uint8_t *src = geom_data->input_data + HEADER_SIZE + (geom_data->has_npoints_data ? NPOINTS_SIZE : 0),
+            *metadata = src + coord_data_size;
     
     /* Check first 4 bytes and store as n */
     memcpy(&n, metadata, 4);
-    ensure_values_capacity(geom_data, n);
-    geom_data->values[0] = n;
+    ensure_ringcount_capacity(geom_data, n);
+    geom_data->ring_count[0] = n;
     if (n < 1) THROW_VARBINARY_CONVERSION_ERROR();
     offset += 4;
     
@@ -1556,8 +1556,8 @@ check_line_end_metadata(GeometryData *geom_data)
         for (i = 1; i < n; i++) 
         {
             memcpy(&val, metadata + offset, 4);
-            ensure_values_capacity(geom_data, i);
-            geom_data->values[i] = val;
+            ensure_ringcount_capacity(geom_data, i);
+            geom_data->ring_count[i] = val;
             if (i == n - 1) 
             {
                 offset += 4; /* Last iteration: 4 bytes */
@@ -1595,10 +1595,9 @@ check_line_end_metadata(GeometryData *geom_data)
 static void
 copy_polygon_ring_coordinates(uint8_t *src, uint8_t *dst, uint32_t total_points, uint32_t start_point, uint32_t ring_points, uint32_t dimension_flag)
 {
-    bool has_z = dimension_flag == DIM_FLAG_3DM || dimension_flag == DIM_FLAG_3D;
-    bool has_m = dimension_flag == DIM_FLAG_3DM || dimension_flag == DIM_FLAG_2DM;
-    uint32_t i;
-    uint32_t dst_offset = 0;
+    bool has_z = dimension_flag == DIM_FLAG_3DM || dimension_flag == DIM_FLAG_3D,
+         has_m = dimension_flag == DIM_FLAG_3DM || dimension_flag == DIM_FLAG_2DM;
+    uint32_t i, dst_offset = 0;
     
     for (i = 0; i < ring_points; i++) 
     {
@@ -1628,18 +1627,18 @@ copy_polygon_ring_coordinates(uint8_t *src, uint8_t *dst, uint32_t total_points,
 static void
 handle_polygon_coordinates(GeometryData *geom_data, uint8 *result_data)
 {
-    uint32_t npoints = geom_data->has_npoints_data ? geom_data->npoints : 2;
+    uint32_t npoints = geom_data->has_npoints_data ? geom_data->npoints : 2,
+            i,
+            offset = 0,
+            n = geom_data->ring_count[0],
+            start_point = 0;
     uint8_t *src = geom_data->input_data + HEADER_SIZE + (geom_data->has_npoints_data ? NPOINTS_SIZE : 0);
-    uint8_t *dst = result_data + POSTGIS_HEADER_SIZE + SRID_SIZE + NPOINTS_SIZE;
-    uint32_t i;
-    uint32_t offset = 0;
-    uint32_t n = geom_data->values[0];
-    uint32_t start_point = 0;
+            *dst = result_data + POSTGIS_HEADER_SIZE + SRID_SIZE + NPOINTS_SIZE;
     
-    /* Write values[0] in first 4 bytes */
-    memcpy(result_data + POSTGIS_HEADER_SIZE + SRID_SIZE, &geom_data->values[0], 4);
+    /* Write ring_count[0] in first 4 bytes */
+    memcpy(result_data + POSTGIS_HEADER_SIZE + SRID_SIZE, &geom_data->ring_count[0], 4);
     
-    /* Loop through remaining values */
+    /* Loop through remaining ring_count */
     for (i = 0; i < n; i++) 
     {
         uint32_t ring_points;
@@ -1647,11 +1646,11 @@ handle_polygon_coordinates(GeometryData *geom_data, uint8 *result_data)
         if (n == 1) 
             ring_points = npoints;
         else if (i == 0) 
-            ring_points = geom_data->values[1];
+            ring_points = geom_data->ring_count[1];
         else if (i == n - 1) 
-            ring_points = npoints - geom_data->values[i];
+            ring_points = npoints - geom_data->ring_count[i];
         else
-            ring_points = geom_data->values[i + 1] - geom_data->values[i];
+            ring_points = geom_data->ring_count[i + 1] - geom_data->ring_count[i];
         
         /* Write ring points in next 4 bytes */
         memcpy(dst + offset, &ring_points, 4);
@@ -1719,7 +1718,7 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
     else
     {
         if (geom_data->has_npoints_data)
-            check_line_end_metadata(geom_data);
+            check_geom_end_metadata(geom_data);
 
         if (geom_data->has_npoints_data && geom_data->geom_type1 == LINE_TYPE && geom_data->geom_type2 == LINE_TYPE)
         {

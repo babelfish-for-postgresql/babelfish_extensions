@@ -3571,3 +3571,72 @@ INSERT INTO geographyToByteapolygon (ID, geo_polygon) VALUES (59, geography::STG
 INSERT INTO geographyToByteapolygon (ID, geo_polygon) VALUES (60, geography::STGeomFromText('POLYGON EMPTY', 4326));
 ~~ROW COUNT: 1~~
 
+
+#Tests for Geometry type Prepared Statements
+
+CREATE TABLE GEOSPATIAL_POLYGEOMRCV_dt (location geometry)
+
+prepst#!#INSERT INTO GEOSPATIAL_POLYGEOMRCV_dt(location) values(?) #!#GEOMETRY|-|location|-|POLYGON ((1 4, 1 2, 2 2, 1 4)):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON EMPTY:4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1,4 5, 6 7, 1 1)):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1 2, 1 2 3, 2 2 4, 1 1 2)):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1 2, 1 2  NULL 3, 2 2 4, 1 1 NULL 2)):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1 2 4, 1 2 3 5, 2 2 4 6, 1 1 2 7)):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1),(0 0, 10 0, 10 10, 0 10, 0 0)):4326
+~~ROW COUNT: 1~~
+
+#next seven lines are not allowed
+#prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):1000000000
+#prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):-1
+#prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):<NULL>
+#prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):10000000003
+#prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):4326
+#prepst#!#exec#!#GEOMETRY|-|location|-|POLYGON:4326
+#prepst#!#exec#!#GEOMETRY|-|location|-|<NULL>:4326
+
+
+#Tests for geography type Prepared Statements
+
+CREATE TABLE GEOSPATIAL_POLYGEOGRCV_dt (location geography)
+
+prepst#!#INSERT INTO GEOSPATIAL_POLYGEOGRCV_dt(location) values(?) #!#GEOGRAPHY|-|location|-|POLYGON ((1 4, 1 2, 2 2, 1 4)):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON EMPTY:4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1,4 5, 6 7, 1 1)):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1 2, 1 2 3, 2 2 4, 1 1 2)):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1 NULL 2, 1 2 3, 2 2 NULL 4, 1 1 2)):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1 2 4, 1 2 3 5, 2 2 4 6, 1 1 2 7)):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1),(0 0, 10 0, 10 10, 0 10, 0 0)):4326
+~~ROW COUNT: 1~~
+
+#next seven lines are not allowed
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1,4 5, 6 7, 1 1)):1000000000
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):-1
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):<NULL>
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):10000000003
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON ((1 1, 1 2, 2 2, 1 1)):4326
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|POLYGON:4326
+#prepst#!#exec#!#GEOGRAPHY|-|location|-|<NULL>:4326
