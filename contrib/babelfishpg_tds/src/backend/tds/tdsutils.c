@@ -1208,6 +1208,10 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
 		return true;
 
+	/* Allow grant operations when called by superuser (e.g., during initialize_babelfish) */
+	if (superuser())
+		return true;
+
 	/* Restrict roles to added as a member of babelfish roles */
 	foreach(item, grant_stmt->granted_roles)
 	{
