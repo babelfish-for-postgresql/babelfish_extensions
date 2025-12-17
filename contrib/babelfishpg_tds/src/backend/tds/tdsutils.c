@@ -1250,8 +1250,8 @@ have_createdb_privilege(void)
 	bool		result = false;
 	HeapTuple	utup;
 
-	/* Superusers can always do everything */
-	if (superuser())
+	/* Allow grant operations when session user is superuser (e.g., during initialize_babelfish) */
+	if (superuser_arg(GetSessionUserId()))
 		return true;
 
 	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetUserId()));
