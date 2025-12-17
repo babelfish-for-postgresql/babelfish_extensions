@@ -12,6 +12,7 @@ static int      scanbuflen;
     double val;
     POINT coordinatevalue;
     PointArray* pointarray;
+    PointArrayList* pointarraylist;
 }
 
 %token <val> DOUBLE_TOK
@@ -24,7 +25,8 @@ static int      scanbuflen;
 
 %type <coordinatevalue> coordinate coordz coordm coordzm
 %type <pointarray> ptarray ptarraym ptarrayzm ptarrayz
-%type <str> geospatial_query point_query linestring_query 
+%type <pointarraylist> ringlist ringlistm ringlistz ringlistzm
+%type <str> geospatial_query point_query linestring_query polygon_query 
 
 %start geospatial_query
 %define api.prefix {geo_yy}
@@ -36,6 +38,7 @@ static int      scanbuflen;
 geospatial_query:
     linestring_query { $$ = $1; *result = $$;  }
     | point_query { $$ = $1; *result = $$;  }
+    | polygon_query { $$ = $1; *result = $$;  }
     ;
 
 point_query:
@@ -62,6 +65,19 @@ linestring_query:
         { $$ = rewrite_dim_linestring_query($4); }
     | LINESTRING_TOK ZM_TOK LPAREN ptarrayzm RPAREN
         { $$ = rewrite_dim_linestring_query($4); }
+    ;
+
+polygon_query:
+    POLYGON_TOK LPAREN ringlist RPAREN
+        { $$ = rewrite_polygon_query($3); }
+    | POLYGON_TOK EMPTY_TOK
+        { $$ = strdup("POLYGON EMPTY"); }
+    | POLYGON_TOK Z_TOK LPAREN ringlistz RPAREN
+        { $$ = rewrite_dim_polygon_query($4); }
+    | POLYGON_TOK M_TOK LPAREN ringlistm RPAREN
+        { $$ = rewrite_dim_polygon_query($4); }
+    | POLYGON_TOK ZM_TOK LPAREN ringlistzm RPAREN
+        { $$ = rewrite_dim_polygon_query($4); }
     ;
     
 ptarray:
@@ -124,7 +140,65 @@ ptarrayzm:
         }
     ;
 
+ringlist:
+    ringlist COMMA_TOK LPAREN ptarray RPAREN
+        {
+            add_ring($1, $4);
+            $$ = $1;
+        }
+    | LPAREN ptarray RPAREN
+        {
+            PointArrayList *pal = palloc(sizeof(PointArrayList));
+            init_point_array_list(pal);
+            add_ring(pal, $2);
+            $$ = pal;
+        }
+    ;
 
+ringlistm:
+    ringlistm COMMA_TOK LPAREN ptarraym RPAREN
+        {
+            add_ring($1, $4);
+            $$ = $1;
+        }
+    | LPAREN ptarraym RPAREN
+        {
+            PointArrayList *pal = palloc(sizeof(PointArrayList));
+            init_point_array_list(pal);
+            add_ring(pal, $2);
+            $$ = pal;
+        }
+    ;
+
+ringlistz:
+    ringlistz COMMA_TOK LPAREN ptarrayz RPAREN
+        {
+            add_ring($1, $4);
+            $$ = $1;
+        }
+    | LPAREN ptarrayz RPAREN
+        {
+            PointArrayList *pal = palloc(sizeof(PointArrayList));
+            init_point_array_list(pal);
+            add_ring(pal, $2);
+            $$ = pal;
+        }
+    ;
+
+ringlistzm:
+    ringlistzm COMMA_TOK LPAREN ptarrayzm RPAREN
+        {
+            add_ring($1, $4);
+            $$ = $1;
+        }
+    | LPAREN ptarrayzm RPAREN
+        {
+            PointArrayList *pal = palloc(sizeof(PointArrayList));
+            init_point_array_list(pal);
+            add_ring(pal, $2);
+            $$ = pal;
+        }
+    ;
 
 coordz:
     DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK

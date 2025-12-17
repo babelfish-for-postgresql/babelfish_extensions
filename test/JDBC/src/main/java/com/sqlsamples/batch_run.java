@@ -27,8 +27,10 @@ public class batch_run {
 
         if (testFilePath.contains(".mix")) {
             isCrossDialectFile = true;
-            isSQLFile = true;		        // we want to treat GO as a batch separator in this case
-        }
+            isSQLFile = true;		//we want to treat GO as a batch separator in this case
+        } else if (testFilePath.contains(".cdtxt")) {
+			isCrossDialectFile = true;
+		}
 
         // initializing objects
         JDBCAuthentication jdbcAuthentication = new JDBCAuthentication();

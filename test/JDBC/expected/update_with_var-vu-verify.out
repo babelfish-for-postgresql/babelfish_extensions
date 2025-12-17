@@ -1,0 +1,2817 @@
+
+/*
+ *  ------------------------------------------------  Test case Description ------------------------------------------------
+ *
+ * |  #  |                    Test Case                     |        Type         |                    Remark                     |
+ * |-----|--------------------------------------------------|---------------------|-----------------------------------------------|
+ * |  1  | Basic variable assignment with UPDATE            | Basic               | Tests @sum accumulation with UPDATE          |
+ * |  2  | Multiple variables in single UPDATE              | Multi-Variable      | Tests @sum, @concat, @count simultaneously   |
+ * |  3  | Variable assignment with WHERE clause            | Filtering           | Tests conditional variable updates            |
+ * |  4  | NULL value handling in variables                 | NULL Handling       | Tests ISNULL with numeric and string vars    |
+ * |  5  | Empty table variable assignment                  | Edge Case           | Tests variables remain unchanged on empty set |
+ * |  6  | Numeric data types (DECIMAL, FLOAT, BIGINT)      | Data Types          | Tests various numeric type accumulations      |
+ * |  7  | Mathematical operations in variables             | Math Operations     | Tests *, -, + operations in variable assign  |
+ * |  8  | Variable used to update column values            | Column Update       | Tests running totals with column assignment   |
+ * |  9  | Variable assignment with JOINs                   | JOIN Operations     | Tests variables with multi-table operations   |
+ * | 10  | Large dataset variable processing                | Performance         | Tests 1000 row variable accumulation         |
+ * | 11  | Complex string operations                        | String Processing   | Tests string concatenation with formatting    |
+ * | 12  | CASE expressions in variable assignment          | Conditional Logic   | Tests conditional variable updates with CASE  |
+ * | 13  | Row counting with variables                      | Counting            | Tests row counter incrementation              |
+ * | 14  | Variables with initial values                    | Initialization      | Tests non-zero starting values               |
+ * | 15  | Self-referencing variable updates                | Complex Logic       | Tests variables affecting same UPDATE         |
+ * | 16  | DateTime operations with variables               | DateTime            | Tests date calculations in variables          |
+ * | 17  | Transaction rollback with variables              | Transaction         | Tests variable persistence across rollback    |
+ * | 18  | TOP clause with variable assignment              | Limited Processing  | Tests variables with row limiting             |
+ * | 19  | Type conversion in variable assignment           | Type Conversion     | Tests CAST operations in variable updates     |
+ * | 20  | Subqueries in variable assignment                | Subquery            | Tests nested queries with variables           |
+ * | 21  | Dynamic WHERE with variables                     | Dynamic Logic       | Tests variables in WHERE of same UPDATE      |
+ * | 22  | Mixed data types in single UPDATE                | Multi-Type          | Tests INT, NVARCHAR, FLOAT vars together     |
+ * | 23  | COALESCE/ISNULL with variables                   | NULL Functions      | Tests NULL handling functions with variables  |
+ * | 24  | Running maximum with variables                   | Aggregate Logic     | Tests MAX calculation with variables          |
+ */
+-- Test UPDATE
+DECLARE @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_int SET val = val, @sum = @sum + val;
+SELECT @sum AS result; -- Expected: 60
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+60
+~~END~~
+
+
+-- Test SELECT
+DECLARE @sum2 INT = 0;
+SELECT @sum2 = @sum2 + val FROM jira_babel_update_with_var_assign.test_int;
+SELECT @sum2 AS result; -- Expected: 60
+GO
+~~START~~
+int
+60
+~~END~~
+
+
+-- Test UPDATE
+DECLARE @concat VARCHAR(200) = '';
+UPDATE jira_babel_update_with_var_assign.test_str SET name = name, @concat = @concat + name;
+SELECT @concat AS result; -- Expected: 'ABC'
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar
+ABC
+~~END~~
+
+
+-- Test with delimiter
+DECLARE @concat2 VARCHAR(200) = '';
+UPDATE jira_babel_1290.test_str SET name = name, @concat2 = @concat2 + CASE WHEN @concat2 = '' THEN '' ELSE ',' END + name;
+SELECT @concat2 AS result; -- Expected: ',A,B,C' or similar
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "jira_babel_1290" does not exist)~~
+
+
+-- Test UPDATE with multiple variables
+DECLARE @sum INT = 0, @concat VARCHAR(200) = '', @count INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_multi 
+SET val = val, 
+    @sum = @sum + val, 
+    @concat = @concat + name + '|',
+    @count = @count + 1;
+SELECT @sum AS sum_result, @concat AS concat_result, @count AS count_result;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#varchar#!#int
+600#!#First|Second|Third|#!#3
+~~END~~
+
+
+
+
+-- Expected: sum=600, concat='First|Second|Third|', count=3
+-- Test UPDATE with WHERE
+DECLARE @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_where SET val = val, @sum = @sum + val WHERE status = 'active';
+SELECT @sum AS result; -- Expected: 40 (10+30)
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+40
+~~END~~
+
+
+-- Test SELECT with WHERE
+DECLARE @sum2 INT = 0;
+SELECT @sum2 = @sum2 + val FROM jira_babel_update_with_var_assign.test_where WHERE status = 'inactive';
+SELECT @sum2 AS result; -- Expected: 60 (20+40)
+GO
+~~START~~
+int
+60
+~~END~~
+
+
+-- Test with NULL values in numeric column
+DECLARE @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_null SET val = val, @sum = @sum + ISNULL(val, 0);
+SELECT @sum AS result; -- Expected: 80
+GO
+~~ROW COUNT: 4~~
+
+~~START~~
+int
+80
+~~END~~
+
+
+-- Test with NULL values in string column
+DECLARE @concat VARCHAR(200) = '';
+UPDATE jira_babel_update_with_var_assign.test_null SET name = name, @concat = @concat + ISNULL(name, '');
+SELECT @concat AS result; -- Expected: 'ABD'
+GO
+~~ROW COUNT: 4~~
+
+~~START~~
+varchar
+ABD
+~~END~~
+
+
+-- Test UPDATE on empty table
+DECLARE @sum INT = 100;
+UPDATE jira_babel_update_with_var_assign.test_empty SET val = val, @sum = @sum + val;
+SELECT @sum AS result; -- Expected: 100 (unchanged)
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+-- Test SELECT on empty table
+DECLARE @sum2 INT = 100;
+SELECT @sum2 = @sum2 + val FROM jira_babel_update_with_var_assign.test_empty;
+SELECT @sum2 AS result; -- Expected: 100 (unchanged)
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+-- Test UPDATE
+DECLARE @sum INT = 10;
+UPDATE jira_babel_update_with_var_assign.test_single SET val = val, @sum = @sum + val;
+SELECT @sum AS result; -- Expected: 60
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+60
+~~END~~
+
+
+
+-- Test with DECIMAL
+DECLARE @dec_sum DECIMAL(10,2) = 0;
+UPDATE jira_babel_update_with_var_assign.test_numeric SET int_val = int_val, @dec_sum = @dec_sum + decimal_val;
+SELECT @dec_sum AS result; -- Expected: 31.00
+-- Test with FLOAT
+DECLARE @float_sum FLOAT = 0;
+UPDATE jira_babel_update_with_var_assign.test_numeric SET int_val = int_val, @float_sum = @float_sum + float_val;
+SELECT @float_sum AS result; -- Expected: 30.5
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+numeric
+31.00
+~~END~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+float
+30.5
+~~END~~
+
+
+-- Test with BIGINT
+DECLARE @bigint_sum BIGINT = 0;
+UPDATE jira_babel_update_with_var_assign.test_numeric SET int_val = int_val, @bigint_sum = @bigint_sum + bigint_val;
+SELECT @bigint_sum AS result; -- Expected: 3000000000
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+bigint
+3000000000
+~~END~~
+
+
+
+
+-- Test multiplication
+DECLARE @product INT = 1;
+UPDATE jira_babel_update_with_var_assign.test_math SET val = val, @product = @product * val;
+SELECT @product AS result; -- Expected: 24 (1*2*3*4)
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+24
+~~END~~
+
+
+-- Test subtraction
+DECLARE @diff INT = 100;
+UPDATE jira_babel_update_with_var_assign.test_math SET val = val, @diff = @diff - val;
+SELECT @diff AS result; -- Expected: 91 (100-2-3-4)
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+91
+~~END~~
+
+
+-- Test mixed operations
+DECLARE @mixed INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_math SET val = val, @mixed = @mixed + val * 2;
+SELECT @mixed AS result; -- Expected: 18 (2*2 + 3*2 + 4*2)
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+18
+~~END~~
+
+
+-- Test UPDATE where variable is used to update column
+DECLARE @running INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_col_assign 
+SET @running = @running + val, 
+    running_total = @running;
+SELECT * FROM jira_babel_update_with_var_assign.test_col_assign ORDER BY id;
+-- Expected: rows with running_total showing cumulative sum
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#int#!#int
+1#!#10#!#0
+2#!#20#!#10
+3#!#30#!#30
+~~END~~
+
+
+-- Test UPDATE with JOIN
+DECLARE @sum INT = 0;
+UPDATE m 
+SET m.val = m.val, 
+    @sum = @sum + m.val * l.multiplier
+FROM jira_babel_update_with_var_assign.test_main m
+INNER JOIN jira_babel_update_with_var_assign.test_lookup l ON m.id = l.id;
+SELECT @sum AS result; -- Expected: 200 (10*2 + 20*3 + 30*4)
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+200
+~~END~~
+
+
+-- Test SELECT with JOIN
+DECLARE @sum2 INT = 0;
+SELECT @sum2 = @sum2 + m.val * l.multiplier
+FROM jira_babel_update_with_var_assign.test_main m
+INNER JOIN jira_babel_update_with_var_assign.test_lookup l ON m.id = l.id;
+SELECT @sum2 AS result; -- Expected: 200
+GO
+~~START~~
+int
+200
+~~END~~
+
+
+-- Insert 1000 rows
+DECLARE @i INT = 1;
+WHILE @i <= 1000
+BEGIN
+    INSERT INTO jira_babel_update_with_var_assign.test_large VALUES (@i, @i);
+    SET @i = @i + 1;
+END
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Test UPDATE
+DECLARE @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_large SET val = val, @sum = @sum + val;
+SELECT @sum AS result; -- Expected: 500500 (sum of 1 to 1000)
+GO
+~~ROW COUNT: 1000~~
+
+~~START~~
+int
+500500
+~~END~~
+
+
+-- Test SELECT
+DECLARE @sum2 INT = 0;
+SELECT @sum2 = @sum2 + val FROM jira_babel_update_with_var_assign.test_large;
+SELECT @sum2 AS result; -- Expected: 500500
+GO
+~~START~~
+int
+500500
+~~END~~
+
+
+-- Test complex string concatenation
+DECLARE @result VARCHAR(200) = '';
+UPDATE jira_babel_update_with_var_assign.test_str_complex 
+SET prefix = prefix, 
+    @result = @result + '[' + prefix + '-' + suffix + ']';
+SELECT @result AS result; -- Expected: '[A-X][B-Y][C-Z]'
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar
+[A-X][B-Y][C-Z]
+~~END~~
+
+
+-- Test UPDATE with CASE
+DECLARE @sum_a INT = 0, @sum_b INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_case 
+SET val = val,
+    @sum_a = CASE WHEN category = 'A' THEN @sum_a + val ELSE @sum_a END,
+    @sum_b = CASE WHEN category = 'B' THEN @sum_b + val ELSE @sum_b END;
+SELECT @sum_a AS sum_a, @sum_b AS sum_b; -- Expected: sum_a=40, sum_b=60
+GO
+~~ROW COUNT: 4~~
+
+~~START~~
+int#!#int
+40#!#60
+~~END~~
+
+
+-- Test row counter
+DECLARE @counter INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_counter SET val = val, @counter = @counter + 1;
+SELECT @counter AS result; -- Expected: 3
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+-- Test with initial non-zero value
+DECLARE @sum INT = 100;
+UPDATE jira_babel_update_with_var_assign.test_init SET val = val, @sum = @sum + val;
+SELECT @sum AS result; -- Expected: 130 (100+5+10+15)
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+130
+~~END~~
+
+
+-- Test with initial string
+DECLARE @str VARCHAR(100) = 'START:';
+UPDATE jira_babel_update_with_var_assign.test_init SET val = val, @str = @str + CAST(val AS VARCHAR(10)) + ',';
+SELECT @str AS result; -- Expected: 'START:5,10,15,'
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar
+START:5,10,15,
+~~END~~
+
+
+-- Test where variable affects the update
+DECLARE @prev INT = 0, @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_self 
+SET @sum = @sum + val,
+    val = val + @prev,
+    @prev = val;
+SELECT @sum AS sum_result, @prev AS prev_result;
+SELECT * FROM jira_babel_update_with_var_assign.test_self ORDER BY id;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#int
+100#!#60
+~~END~~
+
+~~START~~
+int#!#int
+1#!#10
+2#!#30
+3#!#60
+~~END~~
+
+
+-- Test with datetime
+DECLARE @date DATETIME = '2024-01-01', @total_days INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_datetime 
+SET days_to_add = days_to_add, 
+    @total_days = @total_days + days_to_add;
+SELECT @total_days AS result; -- Expected: 6
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+6
+~~END~~
+
+
+BEGIN TRANSACTION;
+    DECLARE @sum INT = 0;
+    UPDATE jira_babel_update_with_var_assign.test_tran SET val = val, @sum = @sum + val;
+    SELECT @sum AS result; -- Expected: 30
+ROLLBACK TRANSACTION;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+30
+~~END~~
+
+
+-- Verify rollback doesn't affect variable
+DECLARE @sum2 INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_tran SET val = val, @sum2 = @sum2 + val;
+SELECT @sum2 AS result; -- Expected: 30 (data unchanged by rollback)
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+30
+~~END~~
+
+
+-- Test UPDATE with TOP
+DECLARE @sum INT = 0;
+UPDATE TOP(2) jira_babel_update_with_var_assign.test_top SET val = val, @sum = @sum + val;
+SELECT @sum AS result; -- Expected: Sum of first 2 rows processed
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+30
+~~END~~
+
+
+-- Test conversion during accumulation
+DECLARE @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_convert 
+SET int_val = int_val, 
+    @sum = @sum + int_val + CAST(str_val AS INT);
+SELECT @sum AS result; -- Expected: 425 (100+50+200+75)
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+425
+~~END~~
+
+
+-- Nested subqueries with variables
+DECLARE @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_nested 
+SET val = val, 
+    @sum = @sum + (SELECT COUNT(*) FROM jira_babel_update_with_var_assign.test_other WHERE jira_babel_update_with_var_assign.test_other.id = jira_babel_update_with_var_assign.test_nested.id);
+SELECT @sum AS result;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+-- Variable used in WHERE clause of same UPDATE
+DECLARE @threshold INT = 10;
+UPDATE jira_babel_update_with_var_assign.test_dynamic 
+SET val = val, 
+    @threshold = @threshold + 5
+WHERE val > @threshold;
+SELECT @threshold AS result;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+20
+~~END~~
+
+
+-- Multiple variables with different data types in single UPDATE
+DECLARE @int_sum INT = 0, @str_concat NVARCHAR(100) = N'', @float_avg FLOAT = 0, @count INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_mixed_types 
+SET val = val,
+    @int_sum = @int_sum + int_col,
+    @str_concat = @str_concat + nvarchar_col + N'|',
+    @float_avg = (@float_avg * @count + float_col) / (@count + 1),
+    @count = @count + 1;
+SELECT @int_sum, @str_concat, @float_avg, @count;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#nvarchar#!#float#!#int
+30#!#A|B|#!#2.0#!#2
+~~END~~
+
+
+-- Variable assignment with COALESCE/ISNULL
+DECLARE @first_non_null VARCHAR(50) = NULL;
+UPDATE jira_babel_update_with_var_assign.test_coalesce 
+SET val = val,
+    @first_non_null = COALESCE(@first_non_null, nullable_col);
+SELECT @first_non_null AS result;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar
+First
+~~END~~
+
+
+-- Variable assignment with aggregate functions
+DECLARE @max_so_far INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_running_max 
+SET val = val,
+    @max_so_far = CASE WHEN val > @max_so_far THEN val ELSE @max_so_far END;
+SELECT @max_so_far AS result;
+GO
+~~ROW COUNT: 5~~
+
+~~START~~
+int
+25
+~~END~~
+
+
+-- Cross-database UPDATE with variables (if applicable)
+CREATE DATABASE test;
+USE test;
+DECLARE @sum INT = 0;
+UPDATE master.dbo.jira_babel_update_with_var_assign.test_cross_db 
+SET val = val, 
+    @sum = @sum + val;
+SELECT @sum AS result;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: UPDATE on a 4-part object name is not yet supported in Babelfish)~~
+
+
+use master
+GO
+
+
+
+
+-- UPDATE with MERGE-like behavior using variables
+DECLARE @inserted_count INT = 0, @updated_count INT = 0;
+UPDATE target 
+SET target.val = source.val,
+    @updated_count = @updated_count + 1
+FROM jira_babel_update_with_var_assign.test_target target
+INNER JOIN jira_babel_update_with_var_assign.test_source source ON target.id = source.id;
+INSERT INTO jira_babel_update_with_var_assign.test_target (id, val)
+SELECT id, val FROM jira_babel_update_with_var_assign.test_source 
+WHERE id NOT IN (SELECT id FROM jira_babel_update_with_var_assign.test_target);
+SET @inserted_count = @@ROWCOUNT;
+SELECT @updated_count, @inserted_count;
+-- Variable with user-defined functions
+DECLARE @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_udf 
+SET val = val,
+    @sum = @sum + jira_babel_update_with_var_assign.custom_function(val);
+SELECT @sum AS result;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+30
+~~END~~
+
+
+-- Concurrent variable updates
+DECLARE @counter1 INT = 0, @counter2 INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_concurrent 
+SET val = val,
+    @counter1 = @counter1 + CASE WHEN val % 2 = 0 THEN 1 ELSE 0 END,
+    @counter2 = @counter2 + CASE WHEN val % 2 = 1 THEN 1 ELSE 0 END;
+SELECT @counter1 AS even_count, @counter2 AS odd_count;
+GO
+~~ROW COUNT: 5~~
+
+~~START~~
+int#!#int
+2#!#3
+~~END~~
+
+
+-- Variable overflow scenarios
+DECLARE @tiny TINYINT = 250;
+UPDATE jira_babel_update_with_var_assign.test_overflow 
+SET val = val,
+    @tiny = @tiny + val;
+SELECT @tiny AS result;
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+~~START~~
+tinyint
+253
+~~END~~
+
+
+-- Unicode string concatenation
+DECLARE @unicode NVARCHAR(100) = N'';
+UPDATE jira_babel_update_with_var_assign.test_unicode 
+SET name = name,
+    @unicode = @unicode + unicode_col + N'→';
+SELECT @unicode AS result;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+nvarchar
+α→β→
+~~END~~
+
+
+-- Variable assignment with computed columns
+DECLARE @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_computed 
+SET base_val = base_val,
+    @sum = @sum + computed_col;
+SELECT @sum AS result;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+60
+~~END~~
+
+
+
+
+
+
+-- Recursive CTE with UPDATE and variables
+DECLARE @total_levels INT = 0;
+WITH recursive_cte AS (
+    SELECT id, val, 1 as level 
+    FROM jira_babel_update_with_var_assign.test_recursive 
+    WHERE parent_id IS NULL
+    UNION ALL
+    SELECT t.id, t.val, r.level + 1 
+    FROM jira_babel_update_with_var_assign.test_recursive t
+    INNER JOIN recursive_cte r ON t.parent_id = r.id
+)
+UPDATE t
+SET processed = 1,
+    @total_levels = @total_levels + ISNULL(r.level, 0)
+FROM jira_babel_update_with_var_assign.test_recursive t
+LEFT JOIN recursive_cte r ON t.id = r.id;
+SELECT @total_levels AS total_accumulated_levels;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+5
+~~END~~
+
+SELECT * FROM jira_babel_update_with_var_assign.test_recursive ORDER BY id;
+GO
+~~START~~
+int#!#int#!#int#!#bit
+1#!#10#!#<NULL>#!#1
+2#!#20#!#1#!#1
+3#!#30#!#1#!#1
+~~END~~
+
+
+----------------------------------------------------------------------------------------------------------------------
+-- These tests are error cases that differ compared to sql server output
+----------------------------------------------------------------------------------------------------------------------
+-- trigger scenarios
+CREATE TABLE jira_babel_update_with_var_assign.simple_test (id INT, val INT);
+INSERT INTO jira_babel_update_with_var_assign.simple_test VALUES (1, 10), (2, 20);
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TRIGGER trg_simple_test ON jira_babel_update_with_var_assign.simple_test
+AFTER UPDATE AS
+BEGIN
+    INSERT INTO jira_babel_update_with_var_assign.simple_test VALUES (99, 99);
+END;
+GO
+
+DECLARE @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.simple_test SET val = val, @sum = @sum + val;
+SELECT @sum AS result;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: portal snapshots (1) did not account for all active snapshots (2))~~
+
+
+DROP TRIGGER IF EXISTS trg_simple_test;
+DROP TABLE jira_babel_update_with_var_assign.simple_test;
+GO
+
+
+CREATE TABLE jira_babel_update_with_var_assign.minimal_test (val INT);
+INSERT INTO jira_babel_update_with_var_assign.minimal_test VALUES (5);
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TRIGGER trg_minimal ON jira_babel_update_with_var_assign.minimal_test
+AFTER UPDATE AS BEGIN
+    SELECT 1;
+END;
+GO
+
+DECLARE @result INT = 0;
+UPDATE jira_babel_update_with_var_assign.minimal_test SET val = val, @result = @result + val;
+SELECT @result;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ERROR (Code: 3609)~~
+
+~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
+
+
+DROP TRIGGER IF EXISTS trg_minimal;
+DROP TABLE jira_babel_update_with_var_assign.minimal_test;
+GO
+
+-- UPDATE with OUTPUT clause and variables
+DECLARE @sum INT = 0;
+UPDATE jira_babel_update_with_var_assign.test_output 
+SET val = val * 2,
+    @sum = @sum + val
+OUTPUT inserted.val, deleted.val;
+SELECT @sum AS accumulated_original_values;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "RETURNING")~~
+

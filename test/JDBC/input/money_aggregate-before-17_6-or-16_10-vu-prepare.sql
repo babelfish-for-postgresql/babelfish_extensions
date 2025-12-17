@@ -258,7 +258,7 @@ INSERT INTO CurrencyMoneyTable (Amount) VALUES
 ('£200.75'),
 ('€150.25'),
 ('¥300.00'),
-('₹250.50'),
+('¢250.50'),
 ('CHF 175.25');
 GO
 

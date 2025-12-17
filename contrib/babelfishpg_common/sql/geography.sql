@@ -295,6 +295,29 @@ CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR,srid integ
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.Geography__STPolyFromText(sys.NVARCHAR,srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOGRAPHY;
+	BEGIN
+		IF $2 IS NULL THEN
+			RAISE EXCEPTION '''geography::STPolyFromText'' failed because parameter 2 is not allowed to be null.';
+		ELSIF $1 IS NULL THEN
+			RETURN NULL;
+		END IF;
+		geom = (SELECT sys.geogfromtext_helper($1::text, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_Polygon' THEN
+			RETURN geom;
+		ELSE
+			RAISE EXCEPTION 'Expected "POLYGON" at Position 1. The input has %', $1;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOGRAPHY)
 	RETURNS text
 	AS '$libdir/postgis-3', 'geometry_geometrytype'
@@ -560,17 +583,39 @@ CREATE OR REPLACE FUNCTION sys.HasM(geog sys.GEOGRAPHY)
 
 -- Z
 -- Returns the Z coordinate value for a point geography instance
-CREATE OR REPLACE FUNCTION sys.Z(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.Z(geom sys.GEOGRAPHY)
 	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_z_point'
-	LANGUAGE 'c' IMMUTABLE STRICT;
+	AS $$
+    DECLARE
+        Geomtype text;
+    BEGIN
+		Geomtype := ST_GeometryType(geom); 
+
+        IF Geomtype = 'ST_Point' THEN
+            RETURN sys.Z_helper(geom);
+        ELSE
+			RETURN NULL;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT;
   
 -- M
 -- Returns the M coordinate value (measure) for a point geography instance
-CREATE OR REPLACE FUNCTION sys.M(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.M(geom sys.GEOGRAPHY)
 	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_m_point'
-	LANGUAGE 'c' IMMUTABLE STRICT;
+	AS $$
+    DECLARE
+        Geomtype text;
+    BEGIN
+		Geomtype := ST_GeometryType(geom); 
+
+        IF Geomtype = 'ST_Point' THEN
+            RETURN sys.M_helper(geom);
+        ELSE
+			RETURN NULL;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
@@ -647,3 +692,13 @@ CREATE OR REPLACE FUNCTION sys.STArea_helper(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','ST_Area'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Z_helper(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_z_point'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.M_helper(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_m_point'
+	LANGUAGE 'c' IMMUTABLE STRICT;

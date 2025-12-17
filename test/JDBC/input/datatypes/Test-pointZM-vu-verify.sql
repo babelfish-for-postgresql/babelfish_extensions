@@ -209,6 +209,33 @@ GO
 SELECT geography::Point(90, NULL, 4326);
 GO
 
+SELECT CAST('POINT(1.2.3 4)' AS geometry);
+GO
+
+SELECT CAST(CAST('POINT(1.2.3 4)' AS CHAR(100)) AS geometry);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.2.3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1..3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.3.4.3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.3.. 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText(0x504F494E542831203129, 4326);
+GO
+
+SELECT geometry::STGeomFromText(0x50004F0049004E0054002800300020003, 0);
+GO
+
+SELECT geometry::STGeomFromText(0x50004F0049004E00540028003000200030002900, 0);
+GO
+
 -- Test with zero values
 SELECT geometry::STGeomFromText('POINT(0 0)', 4326);
 GO
@@ -442,13 +469,6 @@ GO
 
 -- Test with unsupported geometry instances (these should raise errors)
 -- TODO: Update these tests as we implement support for each geometry instance
-
--- POLYGON
-SELECT geometry::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 4326);
-GO
-
-SELECT geography::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 4326);
-GO
 
 -- CIRCULARSTRING
 SELECT geometry::STGeomFromText('CIRCULARSTRING(0 0, 1 1, 2 0)', 4326);

@@ -7,3 +7,19 @@
 
 
 #Q#DROP TABLE BINARY_dt
+#Q#CREATE TABLE BINARY_dt(a BINARY(8));
+#Q#INSERT INTO BINARY_dt(a) values (0x65666768);
+#Q# INSERT INTO BINARY_dt(a) values(@a) 
+#Q# INSERT INTO BINARY_dt(a) values(@a) 
+#Q# select 'foo' where @a is not null 
+#D#varchar
+foo
+#Q# select 'foo' where @a is not null 
+#D#varchar
+foo
+#Q#SELECT * FROM BINARY_dt
+#D#binary
+1011021031040000
+979899100101102103104
+979899100101102103104
+#Q#DROP TABLE BINARY_dt
