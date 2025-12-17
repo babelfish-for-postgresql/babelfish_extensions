@@ -188,6 +188,7 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 											   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char *name);
+static void validate_sys_schema_permissions(List *funcname);
 
 static void bbf_ExecDropStmt(DropStmt *stmt);
 
@@ -5027,40 +5028,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_CreateFunctionStmt:
 			{
-				CreateFunctionStmt 		*stmt = (CreateFunctionStmt *)parsetree;
-
-				/* Check if non-superuser is trying to create procedure in babelfish sys schemas */
-				if (!superuser())
-				{
-					char *schemaname = NULL;
-					char *objname = NULL;
-					
-					/* Extract schema name from function name */
-					DeconstructQualifiedName(stmt->funcname, &schemaname, &objname);
-
-					if (schemaname && pg_strcasecmp(schemaname, "sys") == 0)
-    				{
-						Oid funcoid = LookupFuncName(stmt->funcname, 0, NULL, true);
-						if (OidIsValid(funcoid))
-						{
-							HeapTuple tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
-							if (HeapTupleIsValid(tuple))
-							{
-								Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
-
-								/* Check if the function is owned by bootstrap superuser */
-								if (procform->proowner ==  10)
-								{
-									ReleaseSysCache(tuple);
-									ereport(ERROR,
-											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-											errmsg("cannot modify procedures owned by rdsadmin in sys schema")));
-								}
-								ReleaseSysCache(tuple);
-							}
-						}
-					}
-				}
+				CreateFunctionStmt *stmt = (CreateFunctionStmt *) parsetree;
+        		validate_sys_schema_permissions(stmt->funcname);
 				break;
 			}
 		case T_VariableSetStmt:
@@ -5448,6 +5417,27 @@ call_prev_ProcessUtility(PlannedStmt *pstmt,
 	else
 		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 								queryEnv, dest, qc);
+}
+
+static void
+validate_sys_schema_permissions(List *funcname)
+{
+	char *objname = NULL;
+    Oid schemaOid;
+    Oid sysSchemaOid;
+
+    if (superuser())
+        return;
+        
+    schemaOid = QualifiedNameGetCreationNamespace(funcname, &objname);
+    sysSchemaOid = get_namespace_oid("sys", true);
+    
+    if (OidIsValid(sysSchemaOid) && schemaOid == sysSchemaOid)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+                errmsg("permission denied to modify procedures in sys schema")));
+    }
 }
 
 /*

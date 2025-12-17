@@ -60,6 +60,7 @@ GO
     Server SQLState: 0A000)~~
 
 -- tsql user=jdbc_user password=12345678
+  
 -- setup
 CREATE LOGIN l1 WITH PASSWORD = '12345678';
 GO
@@ -73,7 +74,7 @@ END; $$ LANGUAGE plpgsql;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied for schema sys
+~~ERROR (Message: ERROR: permission denied to modify procedures in sys schema
     Server SQLState: 42501)~~
 
 -- terminate-psql-conn user=l1 password=12345678
