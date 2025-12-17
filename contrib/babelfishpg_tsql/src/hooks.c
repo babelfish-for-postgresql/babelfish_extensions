@@ -2593,10 +2593,11 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			original_name = extract_identifier(colname_start, NULL);
 			actual_alias_len = strlen(original_name);
 
-			/* Maximum alias_len can be 63 after truncation. If alias_len is smaller than actual_alias_len,
+			/* 
+			 * alias_len will be 63 (i.e. NAMEDATALEN-1) after truncation. If alias_len is smaller than actual_alias_len,
 			 * this means Identifier is truncated and it's last 32 bytes would be MD5 hash.
 			 */
-			if(actual_alias_len > alias_len)
+			if(actual_alias_len > alias_len && alias_len == (NAMEDATALEN-1))
 			{
 				/* First 32 characters of original_name are assigned to alias. */
 				/* cppcheck-suppress invalidFunctionArg */
@@ -2611,7 +2612,15 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			}
 			else	/* Identifier is not truncated. */
 			{
-				memcpy(alias, original_name, actual_alias_len);
+				if (actual_alias_len == alias_len)  /* Identifier is neither truncated nor replaced. */
+					memcpy(alias, original_name, actual_alias_len);
+				else
+				{
+					/* Identifier is not truncated but replaced; i.e. "Character" -> "bpchar" */
+					pfree(alias);
+					alias = palloc0(Min(NAMEDATALEN-1, actual_alias_len) + 1);
+					memcpy(alias, original_name, Min(NAMEDATALEN-1, actual_alias_len));
+				}				
 			}
 			res->name = alias;
 		}
