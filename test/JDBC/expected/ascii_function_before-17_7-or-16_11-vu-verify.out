@@ -728,7 +728,7 @@ SELECT ASCII(@inputString);
 GO
 ~~START~~
 int
-50
+68
 ~~END~~
 
 
@@ -737,7 +737,7 @@ SELECT ASCII(@inputString);
 GO
 ~~START~~
 int
-49
+68
 ~~END~~
 
 
@@ -1066,7 +1066,7 @@ FROM ascii_function_UDT_test;
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int#!#int
-1#!#50#!#50#!#50#!#49#!#50#!#50
+1#!#74#!#74#!#50#!#49#!#50#!#50
 2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
