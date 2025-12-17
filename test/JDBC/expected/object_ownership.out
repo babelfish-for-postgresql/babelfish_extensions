@@ -1107,6 +1107,13 @@ GO
 ~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
     Server SQLState: 0A000)~~
 
+ALTER SCHEMA master_dbo OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
 
 -- tsql
 use master;

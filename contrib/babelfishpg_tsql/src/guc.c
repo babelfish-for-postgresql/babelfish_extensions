@@ -1129,7 +1129,7 @@ define_custom_variables(void)
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 	/*
-	 * Block ALTER .. OWNER .. from PG endpoint
+	 * Block ALTER .. OWNER .. from PG endpoint executed on TSQL objects.
 	 */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_alter_owner_from_pg",
 							 gettext_noop("Enables blocked ALTER .. OWNER .. statements from PG endpoint"),

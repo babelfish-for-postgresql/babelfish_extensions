@@ -3096,87 +3096,101 @@ is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 
 /*
  * restrict_alter_owner_stmt
- * Blocks ALTER OWNER statements from PG dialect on TSQL objects.
+ * Blocks ALTER OWNER statements from PG endpoint on TSQL objects.
  * Allows ALTER OWNER for specific shipped objects only when new owner is sysadmin.
  */
 void
 restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
 {
-    char *schema_name = NULL;
-    char *object_name = NULL;
-    Oid schema_oid = InvalidOid;
+    Oid		schema_oid = InvalidOid;
+    char	*schema_name = NULL;
+    char	*object_name = NULL;
 
-    /* Extract schema and object name based on object type */
-    switch (stmt->objectType)
+    /* Only handle specific object types */
+    if (stmt->objectType != OBJECT_TYPE && stmt->objectType != OBJECT_SCHEMA &&
+        stmt->objectType != OBJECT_FUNCTION && stmt->objectType != OBJECT_PROCEDURE)
+        return;
+
+    if (stmt->objectType == OBJECT_TYPE)
     {
-        case OBJECT_FUNCTION:
-        case OBJECT_PROCEDURE:
-		{
-			ObjectWithArgs *owa = (ObjectWithArgs *) stmt->object;
-			if (list_length(owa->objname) > 1)
-			{
-				schema_name = strVal(linitial(owa->objname));
-				object_name = strVal(lsecond(owa->objname));
-			}
-			else if (list_length(owa->objname) == 1)
-			{
-				object_name = strVal(linitial(owa->objname));
-			}
-			break;
-		}
-        case OBJECT_SCHEMA:
-		{
-			String *str = (String *) stmt->object;
-			schema_name = strVal(str);
-			break;
-		}
-		case OBJECT_TYPE:
-		{
-			List *names = (List *) stmt->object;
-			if (names && list_length(names) > 1)
-				schema_name = strVal(linitial(names));
-			break;
-		}
-        default:
-            return; /* Allow other object types */
+        List *names = (List *) stmt->object;
+        if (names && list_length(names) > 1)
+            schema_name = pstrdup(strVal(linitial(names)));
     }
+    else
+    {
+        ObjectAddress	address;
+        Relation		relation = NULL;
+        
+        /* Get object address */
+        address = get_object_address(stmt->objectType, stmt->object, &relation, AccessShareLock, false);
+        
+        /* Get schema OID from the object */
+        if (stmt->objectType == OBJECT_SCHEMA)
+        {
+            /* For schema objects, the object itself is the schema */
+            schema_oid = address.objectId;
+        }
+        else
+        {
+            /* For other objects, get their containing schema */
+            schema_oid = get_object_namespace(&address);
+        }
+        
+        if (!OidIsValid(schema_oid))
+        {
+            if (relation)
+                RelationClose(relation);
+            return;
+        }
 
-    /* Get schema OID if we have schema name */
-    if (schema_name)
-        schema_oid = get_namespace_oid(schema_name, true);
-    else if (OidIsValid(schema_oid))
         schema_name = get_namespace_name(schema_oid);
+        if (relation)
+            RelationClose(relation);
+    }
+    
+    if (!schema_name)
+        return;
 
     /* Check if it's a Babelfish schema */
-    if (schema_name && physical_schema_name_exists(schema_name))
+    if (physical_schema_name_exists(schema_name))
     {
-        /* Check if this is a shipped function being changed to sysadmin */
-        if (object_name && stmt->objectType == OBJECT_FUNCTION &&
-            is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_SCALAR_FUNCTION, schema_oid))
+        /* Extract object name for MS shipped check (only for functions/procedures) */
+        if (stmt->objectType == OBJECT_FUNCTION || stmt->objectType == OBJECT_PROCEDURE)
         {
-            /* Check if new owner is sysadmin */
-            if (stmt->newowner && stmt->newowner->rolename &&
+            ObjectWithArgs *owa = (ObjectWithArgs *) stmt->object;
+            if (list_length(owa->objname) >= 1)
+                object_name = strVal(llast(owa->objname));
+
+            /*
+             * Special handling for MS shipped system objects - system functions/procedures
+             * created in dbo schemas, unlike other system objects. We allow changing their
+             * ownership to 'sysadmin' as part of internal SQL and upgrade scripts.
+             * One instance: 'ALTER PROCEDURE master_dbo.xp_qv OWNER TO sysadmin;'
+             * We should allow these ALTER OWNER statements for shipped objects.
+             */
+            if (object_name && stmt->newowner && stmt->newowner->rolename &&
                 strcmp(stmt->newowner->rolename, "sysadmin") == 0)
             {
-                return; /* Allow ALTER OWNER to sysadmin for shipped objects */
-            }
-        }
-		/* Check if this is a shipped stored procedure being changed to sysadmin */
-        else if (object_name && stmt->objectType == OBJECT_PROCEDURE &&
-                 is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_STORED_PROCEDURE, schema_oid))
-        {
-            /* Check if new owner is sysadmin */
-            if (stmt->newowner && stmt->newowner->rolename &&
-                strcmp(stmt->newowner->rolename, "sysadmin") == 0)
-            {
-                return; /* Allow ALTER OWNER to sysadmin for shipped objects */
+                if ((stmt->objectType == OBJECT_FUNCTION &&
+                     is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_SCALAR_FUNCTION, schema_oid)) ||
+                    (stmt->objectType == OBJECT_PROCEDURE &&
+                     is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_STORED_PROCEDURE, schema_oid)))
+                {
+                    pfree(schema_name);
+                    return; /* Allow ALTER OWNER to sysadmin for shipped objects */
+                }
             }
         }
 
+        pfree(schema_name);
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                  errmsg("ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
     }
+
+    if (schema_name)
+        pfree(schema_name);
 }
 
 /*
@@ -3195,27 +3209,25 @@ restrict_alter_table_stmt(AlterTableStmt *stmt)
     if (stmt->objtype == OBJECT_VIEW)
         return;
 
+    /* Extract schema from RangeVar */
+    if (stmt->relation)
+    {
+        if (stmt->relation->schemaname)
+            schema_name = stmt->relation->schemaname;
+        else
+        {
+            schema_oid = RangeVarGetRelid(stmt->relation, NoLock, true);
+            if (OidIsValid(schema_oid))
+                schema_name = get_namespace_name(schema_oid);
+        }
+    }
+
     /* Check if any command is AT_ChangeOwner */
     foreach(lcmd, stmt->cmds)
     {
         AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
         if (cmd->subtype != AT_ChangeOwner)
             continue;
-
-        /* Extract schema from RangeVar */
-        if (stmt->relation)
-        {
-            if (stmt->relation->schemaname)
-                schema_name = stmt->relation->schemaname;
-            else
-                schema_oid = RangeVarGetRelid(stmt->relation, NoLock, true);
-        }
-
-        /* Get schema OID if we have schema name */
-        if (schema_name)
-            schema_oid = get_namespace_oid(schema_name, true);
-        else if (OidIsValid(schema_oid))
-            schema_name = get_namespace_name(schema_oid);
 
         /* Check if it's a Babelfish schema */
         if (schema_name && physical_schema_name_exists(schema_name))

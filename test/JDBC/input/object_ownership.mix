@@ -641,6 +641,8 @@ ALTER TYPE master_dbo.type1 OWNER TO master_dbo;
 GO
 ALTER TYPE master_dbo.ttype1 OWNER TO master_dbo;
 GO
+ALTER SCHEMA master_dbo OWNER TO master_dbo;
+GO
 
 -- tsql
 use master;
