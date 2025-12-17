@@ -130,7 +130,7 @@ CREATE VIEW equals_opgeompolysr AS SELECT p1.location AS point FROM GEOSPATIALPO
 
 CREATE VIEW notequal_opgeompolysr AS SELECT p1.location AS point FROM GEOSPATIALPOLYGONGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_polysr p2 WHERE p1.location <> p2.location ORDER BY p1.id;
 
-CREATE VIEW PolygonGeomFromText AS SELECT geometry::STGeomFromText('POLYGON((3 5, 2 4, 3 5, 3 5))', 4326) AS geom1, geometry::STGeomFromText('POLYGON((1 3, 5 7, 4 5, 1 3))', 4326) AS geom2;
+CREATE VIEW PolygonGeomFromText AS SELECT geometry::STPolyFromText('POLYGON((3 5, 2 4, 3 5, 3 5))', 4326) AS geom1, geometry::STPolyFromText('POLYGON((1 3, 5 7, 4 5, 1 3))', 4326) AS geom2;
 
 
 CREATE TABLE geometryAsVarbinarypolygon ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARBINARY(2000) );
@@ -816,7 +816,7 @@ CREATE VIEW equals_opgeogpolysr AS SELECT p1.location AS point FROM GEOSPATIALPO
 
 CREATE VIEW notequal_opgeogpolysr AS SELECT p1.location AS point FROM GEOSPATIALPOLYGONGEOG_dt p1 CROSS JOIN geospatialpointxgeog_polysr p2 WHERE p1.location <> p2.location ORDER BY p1.id;
 
-CREATE VIEW PolygonGeogFromText AS SELECT geography::STGeomFromText('POLYGON((3 5, 2 4, 3 5, 3 5))', 4326) AS geom1, geography::STGeomFromText('POLYGON((1 3, 5 7, 4 5, 1 3))', 4326) AS geom2;
+CREATE VIEW PolygonGeogFromText AS SELECT geography::STPolyFromText('POLYGON((3 5, 2 4, 3 5, 3 5))', 4326) AS geom1, geography::STPolyFromText('POLYGON((1 3, 5 7, 4 5, 1 3))', 4326) AS geom2;
 
 
 
