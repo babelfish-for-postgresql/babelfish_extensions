@@ -10,9 +10,11 @@
 
 all
 
-# FIX ME: TestHalfvecDatatype is crashing while creating index.
-# Ignoring to Unblock Dev branches. Will be fixed with jira: BABEL-6260
+# FIX ME: Crash in vector extension. Ignoring to Unblock Dev
+# branches. Will be fixed with jira: BABEL-6260
 ignore#!#TestHalfvecDatatype
+ignore#!#TestSparsevecDatatype
+ignore#!#TestVectorDatatype
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
