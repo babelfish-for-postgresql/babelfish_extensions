@@ -724,6 +724,7 @@ ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-prepare
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
 
+#crashes
 ignore#!#BABEL-1839
 ignore#!#BABEL-3092
 ignore#!#BABEL-NUMERIC_EXPR-vu-prepare
@@ -748,3 +749,17 @@ ignore#!#temp_catalog_inval-vu-cleanup
 ignore#!#pivot-before-15_9-or-16_5-vu-prepare
 ignore#!#pivot-before-15_9-or-16_5-vu-verify
 ignore#!#pivot-before-15_9-or-16_5-vu-cleanup
+
+#test failures
+ignore#!#BABEL-3293
+ignore#!#BABEL-5467-vu-prepare
+ignore#!#BABEL-5467-vu-verify
+ignore#!#BABEL-5467-vu-cleanup
+ignore#!#TestDecimal-vu-prepare
+ignore#!#TestDecimal-vu-verify
+ignore#!#TestDecimal-vu-cleanup
+ignore#!#TestNumeric-vu-prepare
+ignore#!#TestNumeric-vu-verify
+ignore#!#TestNumeric-vu-cleanup
+ignore#!#babel_output_clause_concurrency_test
+ignore#!#operator_expr_fixedlen

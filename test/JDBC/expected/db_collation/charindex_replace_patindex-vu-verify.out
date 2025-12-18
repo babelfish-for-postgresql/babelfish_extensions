@@ -168,8 +168,9 @@ abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t1 WHERE [replaced] = sys.replace('abc?è?ÈdedEDEabcd', 'de', '##')
-Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
+Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2.00 loops=1)
   Index Cond: ((replaced)::"varchar" = 'abc##########abcd'::"varchar")
+  Index Searches: 1
 ~~END~~
 
 SELECT * FROM babel_5144_t1 WHERE [charIndex] = (SELECT id FROM #table_5144_result_store);
@@ -183,10 +184,12 @@ abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t1 WHERE [charIndex] = (SELECT id FROM #table_5144_result_store)
-Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
+Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2.00 loops=1)
   Index Cond: (charindex = (InitPlan 1).col1)
+  Index Searches: 1
   InitPlan 1
-    ->  Seq Scan on "#table_5144_result_store" (actual rows=1 loops=1)
+    ->  Seq Scan on "#table_5144_result_store" (actual rows=1.00 loops=1)
+          Disabled: true
 ~~END~~
 
 SELECT * FROM babel_5144_t1 WHERE [patindex] = sys.patindex('%de%', 'abcḍèĎÈdedEDEabcd');
@@ -200,8 +203,9 @@ abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t1 WHERE [patindex] = sys.patindex('%de%', 'abc?è?ÈdedEDEabcd')
-Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
+Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2.00 loops=1)
   Index Cond: (patindex = '4'::bigint)
+  Index Searches: 1
 ~~END~~
 
 SELECT * FROM babel_5144_t3 WHERE [replaced] = sys.replace('abcḍèĎÈdedEDEabcd', 'de', '##');
@@ -215,8 +219,9 @@ abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t3 WHERE [replaced] = sys.replace('abc?è?ÈdedEDEabcd', 'de', '##')
-Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
+Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2.00 loops=1)
   Index Cond: ((replaced)::"varchar" = 'abc##########abcd'::"varchar")
+  Index Searches: 1
 ~~END~~
 
 SELECT * FROM babel_5144_t3 WHERE [charIndex] = (SELECT id FROM #table_5144_result_store);
@@ -230,10 +235,12 @@ abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t3 WHERE [charIndex] = (SELECT id FROM #table_5144_result_store)
-Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
+Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2.00 loops=1)
   Index Cond: (charindex = (InitPlan 1).col1)
+  Index Searches: 1
   InitPlan 1
-    ->  Seq Scan on "#table_5144_result_store" (actual rows=1 loops=1)
+    ->  Seq Scan on "#table_5144_result_store" (actual rows=1.00 loops=1)
+          Disabled: true
 ~~END~~
 
 SELECT * FROM babel_5144_t3 WHERE [patindex] = sys.patindex('%de%', 'abcḍèĎÈdedEDEabcd');
@@ -247,8 +254,9 @@ abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t3 WHERE [patindex] = sys.patindex('%de%', 'abc?è?ÈdedEDEabcd')
-Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
+Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2.00 loops=1)
   Index Cond: (patindex = '4'::bigint)
+  Index Searches: 1
 ~~END~~
 
 

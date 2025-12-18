@@ -412,12 +412,12 @@ text
 Query Text: SELECT count(*)
 FROM babel_isnumeric_test
 WHERE isnumeric(val) = 1
-Finalize Aggregate (actual rows=1 loops=1)
-  ->  Gather (actual rows=5 loops=1)
+Finalize Aggregate (actual rows=1.00 loops=1)
+  ->  Gather (actual rows=5.00 loops=1)
         Workers Planned: 4
         Workers Launched: 4
-        ->  Partial Aggregate (actual rows=1 loops=5)
-              ->  Parallel Seq Scan on babel_isnumeric_test (actual rows=800 loops=5)
+        ->  Partial Aggregate (actual rows=1.00 loops=5)
+              ->  Parallel Seq Scan on babel_isnumeric_test (actual rows=800.00 loops=5)
                     Filter: (isnumeric(val) = 1)
                     Rows Removed by Filter: 400
 ~~END~~
