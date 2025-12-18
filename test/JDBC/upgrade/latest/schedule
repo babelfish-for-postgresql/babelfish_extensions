@@ -668,3 +668,4 @@ update_with_var
 BABEL-4271
 Test-Linestring
 Test-Polygon
+sys-fn_varbintohexstr
