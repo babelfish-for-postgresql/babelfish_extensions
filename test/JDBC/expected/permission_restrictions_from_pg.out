@@ -44,7 +44,7 @@ grant sysadmin to permission_restrictions_tsql_login;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -62,7 +62,7 @@ grant sysadmin to permission_restrictions_psql_user;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -101,10 +101,10 @@ go
     Server SQLState: 42501)~~
 
 
+
 -- TODO: BABEL-5565
 -- drop user permission_restrictions_tsql_login2;
 -- go
-
 drop user permission_restrictions_tsql_login3;
 go
 ~~ERROR (Code: 0)~~
@@ -136,7 +136,7 @@ grant sysadmin to permission_restrictions_tsql_login;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -154,7 +154,7 @@ grant sysadmin to permission_restrictions_psql_user;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -207,10 +207,10 @@ go
     Server SQLState: 42501)~~
 
 
+
 -- TODO: BABEL-5565
 -- drop user permission_restrictions_tsql_login2;
 -- go
-
 drop user permission_restrictions_tsql_login3;
 go
 ~~ERROR (Code: 0)~~
