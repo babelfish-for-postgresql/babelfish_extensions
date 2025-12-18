@@ -797,9 +797,10 @@ select * from master_dbo.onek2 where unique2 = 11 and stringu1 = 'ATAAAA' COLLAT
 GO
 ~~START~~
 text
-Seq Scan on onek2 (actual rows=1 loops=1)
+Seq Scan on onek2 (actual rows=1.00 loops=1)
   Filter: ((unique2 = 11) AND (stringu1 = 'ATAAAA'::name))
   Rows Removed by Filter: 999
+  Buffers: shared hit=35
 ~~END~~
 
 explain (costs off)

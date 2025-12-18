@@ -82,11 +82,11 @@ int
 ~~START~~
 text
 Query Text: select 1
-Gather (actual rows=1 loops=1)
+Gather (actual rows=1.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 set statistics profile off;

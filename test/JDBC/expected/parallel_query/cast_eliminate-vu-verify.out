@@ -118,11 +118,8 @@ Gather
   Single Copy: true
   ->  Bitmap Heap Scan on cast_eliminate
         Recheck Cond: ((roid = 1) OR (roid = 2))
-        ->  BitmapOr
-              ->  Bitmap Index Scan on cast_eliminate_pkey
-                    Index Cond: (roid = 1)
-              ->  Bitmap Index Scan on cast_eliminate_pkey
-                    Index Cond: (roid = 2)
+        ->  Bitmap Index Scan on cast_eliminate_pkey
+              Index Cond: (roid = ANY ('{1,2}'::integer[]))
 ~~END~~
 
 
@@ -338,19 +335,17 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE (CAST(CAST(ROID AS BIGINT) AS BIGINT) = 3 OR CAST(CAST(ROID AS INT) AS BIGINT) = 2147483647) AND CAST(CAST(s_int AS INT) AS BIGINT) != 32767
-Gather (actual rows=1 loops=1)
+Gather (actual rows=1.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on cast_eliminate (actual rows=1 loops=1)
+  ->  Bitmap Heap Scan on cast_eliminate (actual rows=1.00 loops=1)
         Recheck Cond: ((roid = 3) OR (roid = 2147483647))
         Filter: (((s_int)::integer)::bigint <> 32767)
         Rows Removed by Filter: 1
-        ->  BitmapOr (actual rows=0 loops=1)
-              ->  Bitmap Index Scan on cast_eliminate_pkey (actual rows=1 loops=1)
-                    Index Cond: (roid = 3)
-              ->  Bitmap Index Scan on cast_eliminate_pkey (actual rows=1 loops=1)
-                    Index Cond: (roid = 2147483647)
+        ->  Bitmap Index Scan on cast_eliminate_pkey (actual rows=2.00 loops=1)
+              Index Cond: (roid = ANY ('{3,2147483647}'::integer[]))
+              Index Searches: 1
 ~~END~~
 
 
@@ -364,10 +359,10 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE CAST(CAST(s_int AS INT) AS BIGINT) >= 2394 AND CAST(CAST(ROID AS BIGINT) AS SMALLINT) >= 3
-Gather (actual rows=1 loops=1)
+Gather (actual rows=1.00 loops=1)
   Workers Planned: 3
   Workers Launched: 3
-  ->  Parallel Seq Scan on cast_eliminate (actual rows=0 loops=4)
+  ->  Parallel Seq Scan on cast_eliminate (actual rows=0.25 loops=4)
         Filter: ((s_int >= 2394) AND (((roid)::bigint)::smallint >= 3))
         Rows Removed by Filter: 1
 ~~END~~
@@ -383,10 +378,10 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE -32768 = CAST(s_int AS INT)
-Gather (actual rows=1 loops=1)
+Gather (actual rows=1.00 loops=1)
   Workers Planned: 3
   Workers Launched: 3
-  ->  Parallel Seq Scan on cast_eliminate (actual rows=0 loops=4)
+  ->  Parallel Seq Scan on cast_eliminate (actual rows=0.25 loops=4)
         Filter: ('-32768'::integer = s_int)
         Rows Removed by Filter: 1
 ~~END~~
@@ -402,10 +397,10 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE -32768 = CAST(CAST(s_int AS INT) AS BIGINT)
-Gather (actual rows=1 loops=1)
+Gather (actual rows=1.00 loops=1)
   Workers Planned: 3
   Workers Launched: 3
-  ->  Parallel Seq Scan on cast_eliminate (actual rows=0 loops=4)
+  ->  Parallel Seq Scan on cast_eliminate (actual rows=0.25 loops=4)
         Filter: ('-32768'::integer = s_int)
         Rows Removed by Filter: 1
 ~~END~~
@@ -425,10 +420,10 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE -32768 < CAST(CAST(s_int AS INT) AS BIGINT) OR CAST(ROID AS BIGINT) = -2147483648
-Gather (actual rows=5 loops=1)
+Gather (actual rows=5.00 loops=1)
   Workers Planned: 3
   Workers Launched: 3
-  ->  Parallel Seq Scan on cast_eliminate (actual rows=1 loops=4)
+  ->  Parallel Seq Scan on cast_eliminate (actual rows=1.25 loops=4)
         Filter: (('-32768'::integer < s_int) OR (roid = '-2147483648'::integer))
 ~~END~~
 
@@ -442,10 +437,10 @@ int#!#smallint#!#bigint
 ~~START~~
 text
 Query Text: SELECT * FROM cast_eliminate WHERE -9223372036854775808 = CAST(s_int AS BIGINT)
-Gather (actual rows=0 loops=1)
+Gather (actual rows=0.00 loops=1)
   Workers Planned: 3
   Workers Launched: 3
-  ->  Parallel Seq Scan on cast_eliminate (actual rows=0 loops=4)
+  ->  Parallel Seq Scan on cast_eliminate (actual rows=0.00 loops=4)
         Filter: ('-9223372036854775808'::bigint = s_int)
         Rows Removed by Filter: 1
 ~~END~~

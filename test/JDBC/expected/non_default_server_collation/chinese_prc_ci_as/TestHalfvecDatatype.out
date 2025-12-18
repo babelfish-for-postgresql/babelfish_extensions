@@ -948,7 +948,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec);
@@ -964,8 +964,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
   Order By: (val <-> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -979,11 +980,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <-> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
         Order By: (val <-> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -997,8 +999,9 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM halfvec_table
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Seq Scan on halfvec_table (actual rows=5.00 loops=1)
+        Disabled: true
 ~~END~~
 
 
@@ -1014,8 +1017,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0.00 loops=1)
   Order By: (val <-> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -1057,7 +1061,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec);
@@ -1073,8 +1077,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
   Order By: (val <#> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -1088,11 +1093,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <#> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
         Order By: (val <#> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -1134,7 +1140,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec);
@@ -1149,8 +1155,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
   Order By: (val <=> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -1164,9 +1171,10 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> CAST('[0,0,0]' AS halfvec) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
         Order By: (val <=> '[0,0,0]'::halfvec)
+        Index Searches: 0
 ~~END~~
 
 
@@ -1180,11 +1188,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
         Order By: (val <=> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -1226,7 +1235,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <+> CAST('[3,3,3]' AS halfvec);
@@ -1242,8 +1251,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <+> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
   Order By: (val <+> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -1257,11 +1267,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <+> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
         Order By: (val <+> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -1303,7 +1314,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec);
@@ -1319,8 +1330,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
   Order By: (val <-> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -1334,11 +1346,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <-> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
         Order By: (val <-> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -1352,8 +1365,9 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM halfvec_table
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Seq Scan on halfvec_table (actual rows=5.00 loops=1)
+        Disabled: true
 ~~END~~
 
 
@@ -1369,8 +1383,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0.00 loops=1)
   Order By: (val <-> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -1416,7 +1431,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec);
@@ -1433,10 +1448,11 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Sort (actual rows=5 loops=1)
+Sort (actual rows=5.00 loops=1)
   Sort Key: ((val <#> '[3,3,3]'::halfvec))
   Sort Method: quicksort  Memory: 25kB
-  ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
+  ->  Seq Scan on halfvec_table (actual rows=5.00 loops=1)
+        Disabled: true
 ~~END~~
 
 
@@ -1450,13 +1466,14 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <#> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Sort (actual rows=5 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Sort (actual rows=5.00 loops=1)
         Sort Key: ((halfvec_table.val <#> (InitPlan 1).col1))
         Sort Method: quicksort  Memory: 25kB
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
-        ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
+        ->  Seq Scan on halfvec_table (actual rows=5.00 loops=1)
+              Disabled: true
 ~~END~~
 
 
@@ -1498,7 +1515,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec);
@@ -1513,8 +1530,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
   Order By: (val <=> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -1528,9 +1546,10 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> CAST('[0,0,0]' AS halfvec) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
         Order By: (val <=> '[0,0,0]'::halfvec)
+        Index Searches: 0
 ~~END~~
 
 
@@ -1544,11 +1563,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
         Order By: (val <=> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -2688,7 +2708,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec);
@@ -2704,8 +2724,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
   Order By: (val <-> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -2719,11 +2740,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <-> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
         Order By: (val <-> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -2737,8 +2759,9 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM halfvec_table
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Seq Scan on halfvec_table (actual rows=5.00 loops=1)
+        Disabled: true
 ~~END~~
 
 
@@ -2754,8 +2777,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0.00 loops=1)
   Order By: (val <-> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -2797,7 +2821,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec);
@@ -2813,8 +2837,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
   Order By: (val <#> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -2828,11 +2853,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <#> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
         Order By: (val <#> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -2874,7 +2900,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec);
@@ -2889,8 +2915,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
   Order By: (val <=> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -2904,9 +2931,10 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> CAST('[0,0,0]' AS halfvec) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
         Order By: (val <=> '[0,0,0]'::halfvec)
+        Index Searches: 0
 ~~END~~
 
 
@@ -2920,11 +2948,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
         Order By: (val <=> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -2966,7 +2995,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <+> CAST('[3,3,3]' AS halfvec);
@@ -2982,8 +3011,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <+> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
   Order By: (val <+> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -2997,11 +3027,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <+> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
         Order By: (val <+> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -3043,7 +3074,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec);
@@ -3059,8 +3090,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
   Order By: (val <-> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -3074,11 +3106,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <-> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4.00 loops=1)
         Order By: (val <-> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 
@@ -3092,8 +3125,9 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM halfvec_table
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Seq Scan on halfvec_table (actual rows=5.00 loops=1)
+        Disabled: true
 ~~END~~
 
 
@@ -3109,8 +3143,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0.00 loops=1)
   Order By: (val <-> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -3156,7 +3191,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec);
@@ -3173,10 +3208,11 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Sort (actual rows=5 loops=1)
+Sort (actual rows=5.00 loops=1)
   Sort Key: ((val <#> '[3,3,3]'::halfvec))
   Sort Method: quicksort  Memory: 25kB
-  ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
+  ->  Seq Scan on halfvec_table (actual rows=5.00 loops=1)
+        Disabled: true
 ~~END~~
 
 
@@ -3190,13 +3226,14 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <#> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Sort (actual rows=5 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Sort (actual rows=5.00 loops=1)
         Sort Key: ((halfvec_table.val <#> (InitPlan 1).col1))
         Sort Method: quicksort  Memory: 25kB
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
-        ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
+        ->  Seq Scan on halfvec_table (actual rows=5.00 loops=1)
+              Disabled: true
 ~~END~~
 
 
@@ -3238,7 +3275,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec);
@@ -3253,8 +3290,9 @@ varchar
 ~~START~~
 text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec) NULLS LAST
-Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
   Order By: (val <=> '[3,3,3]'::halfvec)
+  Index Searches: 0
 ~~END~~
 
 
@@ -3268,9 +3306,10 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> CAST('[0,0,0]' AS halfvec) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
         Order By: (val <=> '[0,0,0]'::halfvec)
+        Index Searches: 0
 ~~END~~
 
 
@@ -3284,11 +3323,12 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3.00 loops=1)
         Order By: (val <=> (InitPlan 1).col1)
+        Index Searches: 0
         InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+          ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 

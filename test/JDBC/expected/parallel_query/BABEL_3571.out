@@ -191,7 +191,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 ~~START~~
@@ -202,7 +202,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM babel_3571_1 ORDER BY id1
@@ -219,11 +219,12 @@ int#!#varchar#!#varbinary
 ~~START~~
 text
 Query Text: SELECT * FROM babel_3571_1 ORDER BY id1
-Gather (actual rows=5 loops=1)
+Gather (actual rows=5.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5 loops=1)
+  ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5.00 loops=1)
+        Index Searches: 1
 ~~END~~
 
 SELECT * FROM babel_3571_2 ORDER BY id1
@@ -240,11 +241,12 @@ int#!#varchar#!#varbinary
 ~~START~~
 text
 Query Text: SELECT * FROM babel_3571_2 ORDER BY id1
-Gather (actual rows=5 loops=1)
+Gather (actual rows=5.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Index Scan using babel_3571_2_id1_id2_key on babel_3571_2 (actual rows=5 loops=1)
+  ->  Index Scan using babel_3571_2_id1_id2_key on babel_3571_2 (actual rows=5.00 loops=1)
+        Index Searches: 1
 ~~END~~
 
 SELECT * FROM babel_3571_3 ORDER BY id1
@@ -261,11 +263,12 @@ int#!#varchar#!#varbinary
 ~~START~~
 text
 Query Text: SELECT * FROM babel_3571_3 ORDER BY id1
-Gather (actual rows=5 loops=1)
+Gather (actual rows=5.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Index Scan using babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce on babel_3571_3 (actual rows=5 loops=1)
+  ->  Index Scan using babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce on babel_3571_3 (actual rows=5.00 loops=1)
+        Index Searches: 1
 ~~END~~
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -451,7 +454,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 ~~START~~
@@ -462,7 +465,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM babel_3571_1 ORDER BY id1
@@ -479,11 +482,12 @@ int#!#varchar#!#varbinary
 ~~START~~
 text
 Query Text: SELECT * FROM babel_3571_1 ORDER BY id1
-Gather (actual rows=5 loops=1)
+Gather (actual rows=5.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5 loops=1)
+  ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5.00 loops=1)
+        Index Searches: 1
 ~~END~~
 
 SELECT * FROM babel_3571_2 ORDER BY id1
@@ -500,11 +504,12 @@ int#!#varchar#!#varbinary
 ~~START~~
 text
 Query Text: SELECT * FROM babel_3571_2 ORDER BY id1
-Gather (actual rows=5 loops=1)
+Gather (actual rows=5.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Index Scan using babel_3571_2_id1_id2_key on babel_3571_2 (actual rows=5 loops=1)
+  ->  Index Scan using babel_3571_2_id1_id2_key on babel_3571_2 (actual rows=5.00 loops=1)
+        Index Searches: 1
 ~~END~~
 
 SELECT * FROM babel_3571_3 ORDER BY id1
@@ -522,11 +527,12 @@ int#!#varchar#!#varbinary
 ~~START~~
 text
 Query Text: SELECT * FROM babel_3571_3 ORDER BY id1
-Gather (actual rows=6 loops=1)
+Gather (actual rows=6.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Index Scan Backward using babel_3571_3_unique_idx on babel_3571_3 (actual rows=6 loops=1)
+  ->  Index Scan Backward using babel_3571_3_unique_idx on babel_3571_3 (actual rows=6.00 loops=1)
+        Index Searches: 1
 ~~END~~
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -760,7 +766,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 ~~START~~
@@ -771,7 +777,7 @@ off
 ~~START~~
 text
 Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
-Result (actual rows=1 loops=1)
+Result (actual rows=1.00 loops=1)
 ~~END~~
 
 SELECT * FROM babel_3571_1 ORDER BY id1
@@ -788,11 +794,12 @@ int#!#int
 ~~START~~
 text
 Query Text: SELECT * FROM babel_3571_1 ORDER BY id1
-Gather (actual rows=5 loops=1)
+Gather (actual rows=5.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5 loops=1)
+  ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5.00 loops=1)
+        Index Searches: 1
 ~~END~~
 
 SELECT * FROM babel_3571_2 ORDER BY id1
@@ -809,11 +816,12 @@ int#!#int
 ~~START~~
 text
 Query Text: SELECT * FROM babel_3571_2 ORDER BY id1
-Gather (actual rows=5 loops=1)
+Gather (actual rows=5.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Index Scan using babel_3571_2_id1_key on babel_3571_2 (actual rows=5 loops=1)
+  ->  Index Scan using babel_3571_2_id1_key on babel_3571_2 (actual rows=5.00 loops=1)
+        Index Searches: 1
 ~~END~~
 
 SELECT * FROM babel_3571_3 ORDER BY id1
@@ -830,11 +838,12 @@ int#!#int
 ~~START~~
 text
 Query Text: SELECT * FROM babel_3571_3 ORDER BY id1
-Gather (actual rows=5 loops=1)
+Gather (actual rows=5.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  Index Scan using babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce on babel_3571_3 (actual rows=5 loops=1)
+  ->  Index Scan using babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce on babel_3571_3 (actual rows=5.00 loops=1)
+        Index Searches: 1
 ~~END~~
 
 SET BABELFISH_STATISTICS PROFILE OFF;

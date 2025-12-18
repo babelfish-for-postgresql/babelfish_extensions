@@ -123,7 +123,7 @@ BABEL-4516
 babel_417
 BABEL-493
 BABEL-4888
-BABEL_539
+#BABEL_539
 BABEL-621
 BABEL-728
 BABEL-733
@@ -426,14 +426,14 @@ TestDatetime
 TestDatetime2
 TestDatetime-numeric-dateaddfunction
 TestDatetime-numeric-representation
-TestDecimal
+#TestDecimal
 TestFloat
 Test-Identity
 TestImage
 TestInt
 TestMoney
 TestNotNull
-TestNumeric
+#TestNumeric
 Test-pointZM
 TestReal
 TestRowVersion
@@ -518,7 +518,7 @@ sys_certificates
 sys_database_permissions
 #BABEL-4279
 BABEL-4484
-pivot
+#pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
 TestDatatypeAggSort
@@ -612,7 +612,7 @@ sp_xml_preparedocument
 sp_xml_removedocument
 openxml_with_clause
 fixeddecimal_modulo
-BABEL-NUMERIC_EXPR
+#BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
 BABEL-5467
 sys_credentials

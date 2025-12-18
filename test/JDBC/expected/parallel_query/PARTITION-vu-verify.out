@@ -1798,7 +1798,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.768 ms
+Babelfish T-SQL Batch Parsing Time: 0.291 ms
 ~~END~~
 
 
@@ -1820,7 +1820,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.126 ms
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
 ~~END~~
 
 
@@ -1841,7 +1841,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.105 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -1862,7 +1862,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.136 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -1884,7 +1884,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.079 ms
 ~~END~~
 
 
@@ -1906,7 +1906,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
 ~~END~~
 
 
@@ -1927,7 +1927,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
 ~~END~~
 
 
@@ -1948,7 +1948,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.108 ms
 ~~END~~
 
 
@@ -1969,7 +1969,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.100 ms
 ~~END~~
 
 
@@ -1990,7 +1990,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.138 ms
 ~~END~~
 
 
@@ -2011,7 +2011,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
 ~~END~~
 
 
@@ -2032,7 +2032,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -2056,7 +2056,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.080 ms
 ~~END~~
 
 
@@ -2079,7 +2079,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -2102,7 +2102,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.101 ms
 ~~END~~
 
 
@@ -2126,7 +2126,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -2148,7 +2148,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -2170,7 +2170,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
 ~~END~~
 
 
@@ -2191,7 +2191,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.103 ms
 ~~END~~
 
 
@@ -2233,7 +2233,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 11.344 ms
+Babelfish T-SQL Batch Parsing Time: 3.803 ms
 ~~END~~
 
 
@@ -2251,7 +2251,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
+Babelfish T-SQL Batch Parsing Time: 0.128 ms
 ~~END~~
 
 
@@ -2269,7 +2269,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.534 ms
+Babelfish T-SQL Batch Parsing Time: 2.734 ms
 ~~END~~
 
 
@@ -2287,7 +2287,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.169 ms
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
 ~~END~~
 
 
@@ -2305,7 +2305,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.750 ms
+Babelfish T-SQL Batch Parsing Time: 2.345 ms
 ~~END~~
 
 
@@ -2323,7 +2323,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.169 ms
+Babelfish T-SQL Batch Parsing Time: 0.155 ms
 ~~END~~
 
 
@@ -2344,7 +2344,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.230 ms
+Babelfish T-SQL Batch Parsing Time: 0.158 ms
 ~~END~~
 
 
@@ -2365,7 +2365,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.162 ms
+Babelfish T-SQL Batch Parsing Time: 0.146 ms
 ~~END~~
 
 
@@ -2383,7 +2383,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.192 ms
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
 ~~END~~
 
 
@@ -2401,7 +2401,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -2419,7 +2419,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -2437,7 +2437,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -2455,7 +2455,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.174 ms
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
 ~~END~~
 
 
@@ -2473,7 +2473,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.166 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -2491,7 +2491,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.170 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -2503,27 +2503,35 @@ Query Text: SELECT * FROM partition_vu_prepare_nchar_table WHERE Id >= N'A' AND 
 Gather
   Workers Planned: 4
   ->  Parallel Append
-        ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_3 partition_vu_prepare_nchar_table_3
-              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
-        ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_5 partition_vu_prepare_nchar_table_5
-              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
-        ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_7 partition_vu_prepare_nchar_table_7
-              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
         ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_1 partition_vu_prepare_nchar_table_1
+              Disabled: true
               Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
         ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_2 partition_vu_prepare_nchar_table_2
+              Disabled: true
               Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
         ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_4 partition_vu_prepare_nchar_table_4
+              Disabled: true
               Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
         ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_6 partition_vu_prepare_nchar_table_6
+              Disabled: true
               Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
         ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_0 partition_vu_prepare_nchar_table_8
+              Disabled: true
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_3 partition_vu_prepare_nchar_table_3
+              Disabled: true
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_5 partition_vu_prepare_nchar_table_5
+              Disabled: true
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_7 partition_vu_prepare_nchar_table_7
+              Disabled: true
               Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 
@@ -2537,20 +2545,25 @@ Gather
   Single Copy: true
   ->  Append
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table_1
+              Disabled: true
               Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_2" partition_vu_prepare_binary_table_2
+              Disabled: true
               Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_3" partition_vu_prepare_binary_table_3
+              Disabled: true
               Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_4" partition_vu_prepare_binary_table_4
+              Disabled: true
               Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_0" partition_vu_prepare_binary_table_5
+              Disabled: true
               Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.912 ms
+Babelfish T-SQL Batch Parsing Time: 2.516 ms
 ~~END~~
 
 
@@ -2568,7 +2581,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.176 ms
+Babelfish T-SQL Batch Parsing Time: 0.147 ms
 ~~END~~
 
 
@@ -2586,7 +2599,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.198 ms
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
 ~~END~~
 
 

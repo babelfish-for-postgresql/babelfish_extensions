@@ -60,8 +60,8 @@ EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
 GO
 ~~START~~
 text
-ProjectSet (actual rows=3 loops=1)
-  ->  Result (actual rows=1 loops=1)
+ProjectSet (actual rows=3.00 loops=1)
+  ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 -- WITH NO DATA, passes.
@@ -92,8 +92,8 @@ EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
 GO
 ~~START~~
 text
-ProjectSet (actual rows=3 loops=1)
-  ->  Result (actual rows=1 loops=1)
+ProjectSet (actual rows=3.00 loops=1)
+  ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 -- EXECUTE and WITH NO DATA, passes.

@@ -799,12 +799,14 @@ select * from master_dbo.onek2 where unique2 = 11 and stringu1 = 'ATAAAA' COLLAT
 GO
 ~~START~~
 text
-Gather (actual rows=1 loops=1)
+Gather (actual rows=1.00 loops=1)
   Workers Planned: 4
   Workers Launched: 4
-  ->  Parallel Seq Scan on onek2 (actual rows=0 loops=5)
+  Buffers: shared hit=35
+  ->  Parallel Seq Scan on onek2 (actual rows=0.20 loops=5)
         Filter: ((unique2 = 11) AND (stringu1 = 'ATAAAA'::name))
         Rows Removed by Filter: 200
+        Buffers: shared hit=35
 ~~END~~
 
 explain (costs off)

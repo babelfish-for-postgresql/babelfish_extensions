@@ -60,12 +60,12 @@ EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
 GO
 ~~START~~
 text
-Gather (actual rows=3 loops=1)
+Gather (actual rows=3.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  ProjectSet (actual rows=3 loops=1)
-        ->  Result (actual rows=1 loops=1)
+  ->  ProjectSet (actual rows=3.00 loops=1)
+        ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 -- WITH NO DATA, passes.
@@ -100,12 +100,12 @@ EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
 GO
 ~~START~~
 text
-Gather (actual rows=3 loops=1)
+Gather (actual rows=3.00 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   Single Copy: true
-  ->  ProjectSet (actual rows=3 loops=1)
-        ->  Result (actual rows=1 loops=1)
+  ->  ProjectSet (actual rows=3.00 loops=1)
+        ->  Result (actual rows=1.00 loops=1)
 ~~END~~
 
 -- EXECUTE and WITH NO DATA, passes.

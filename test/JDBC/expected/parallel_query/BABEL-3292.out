@@ -62,7 +62,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 144.493 ms
+Babelfish T-SQL Batch Parsing Time: 6.721 ms
 ~~END~~
 
 
@@ -84,7 +84,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.517 ms
+Babelfish T-SQL Batch Parsing Time: 0.825 ms
 ~~END~~
 
 
@@ -102,7 +102,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.181 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -120,7 +120,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.650 ms
+Babelfish T-SQL Batch Parsing Time: 0.184 ms
 ~~END~~
 
 
@@ -138,7 +138,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.159 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -156,7 +156,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 27.991 ms
+Babelfish T-SQL Batch Parsing Time: 10.469 ms
 ~~END~~
 
 
@@ -174,7 +174,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.826 ms
+Babelfish T-SQL Batch Parsing Time: 2.262 ms
 ~~END~~
 
 
@@ -192,7 +192,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.461 ms
+Babelfish T-SQL Batch Parsing Time: 2.510 ms
 ~~END~~
 
 
@@ -210,7 +210,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 13.620 ms
+Babelfish T-SQL Batch Parsing Time: 4.941 ms
 ~~END~~
 
 
@@ -234,7 +234,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.292 ms
+Babelfish T-SQL Batch Parsing Time: 0.137 ms
 ~~END~~
 
 
@@ -253,7 +253,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.255 ms
+Babelfish T-SQL Batch Parsing Time: 0.146 ms
 ~~END~~
 
 
@@ -272,7 +272,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.354 ms
+Babelfish T-SQL Batch Parsing Time: 0.189 ms
 ~~END~~
 
 
@@ -291,7 +291,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.496 ms
+Babelfish T-SQL Batch Parsing Time: 0.260 ms
 ~~END~~
 
 
@@ -302,10 +302,9 @@ go
 text
 Query Text: select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1
 Gather
-  Workers Planned: 1
-  Single Copy: true
+  Workers Planned: 2
   ->  Nested Loop
-        ->  Bitmap Heap Scan on babel_3292_t1
+        ->  Parallel Bitmap Heap Scan on babel_3292_t1
               Recheck Cond: (b1 = 1)
               ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
                     Index Cond: (b1 = 1)
@@ -318,7 +317,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.709 ms
+Babelfish T-SQL Batch Parsing Time: 0.305 ms
 ~~END~~
 
 
@@ -340,7 +339,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.226 ms
+Babelfish T-SQL Batch Parsing Time: 0.132 ms
 ~~END~~
 
 
@@ -362,7 +361,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.218 ms
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
 ~~END~~
 
 
@@ -384,7 +383,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.504 ms
+Babelfish T-SQL Batch Parsing Time: 0.269 ms
 ~~END~~
 
 
@@ -406,7 +405,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.685 ms
+Babelfish T-SQL Batch Parsing Time: 0.306 ms
 ~~END~~
 
 
@@ -428,7 +427,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.717 ms
+Babelfish T-SQL Batch Parsing Time: 0.295 ms
 ~~END~~
 
 
@@ -447,7 +446,7 @@ Insert on babel_3292_t2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.042 ms
+Babelfish T-SQL Batch Parsing Time: 2.807 ms
 ~~END~~
 
 
@@ -463,7 +462,7 @@ Insert on babel_3292_t2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.188 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -479,7 +478,7 @@ Insert on babel_3292_t2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.205 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 
@@ -498,7 +497,7 @@ Update on babel_3292_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 35.888 ms
+Babelfish T-SQL Batch Parsing Time: 28.452 ms
 ~~END~~
 
 
@@ -514,7 +513,7 @@ Update on babel_3292_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.159 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -530,7 +529,7 @@ Update on babel_3292_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.171 ms
+Babelfish T-SQL Batch Parsing Time: 0.100 ms
 ~~END~~
 
 
@@ -549,7 +548,7 @@ Delete on babel_3292_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 47.016 ms
+Babelfish T-SQL Batch Parsing Time: 31.833 ms
 ~~END~~
 
 
@@ -565,7 +564,7 @@ Delete on babel_3292_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.294 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 
@@ -581,7 +580,7 @@ Delete on babel_3292_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.156 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -610,7 +609,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.558 ms
+Babelfish T-SQL Batch Parsing Time: 1.191 ms
 ~~END~~
 
 
@@ -636,7 +635,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.245 ms
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
 ~~END~~
 
 
@@ -662,7 +661,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.274 ms
+Babelfish T-SQL Batch Parsing Time: 0.148 ms
 ~~END~~
 
 
@@ -686,7 +685,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.258 ms
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
 ~~END~~
 
 
@@ -710,7 +709,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.279 ms
+Babelfish T-SQL Batch Parsing Time: 0.156 ms
 ~~END~~
 
 
@@ -734,7 +733,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 19.545 ms
+Babelfish T-SQL Batch Parsing Time: 8.435 ms
 ~~END~~
 
 
@@ -753,7 +752,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 12.904 ms
+Babelfish T-SQL Batch Parsing Time: 5.368 ms
 ~~END~~
 
 
@@ -772,7 +771,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.281 ms
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -791,7 +790,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.318 ms
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
 ~~END~~
 
 
@@ -815,7 +814,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.279 ms
+Babelfish T-SQL Batch Parsing Time: 0.153 ms
 ~~END~~
 
 
@@ -835,7 +834,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.291 ms
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 
@@ -898,7 +897,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 65.479 ms
+Babelfish T-SQL Batch Parsing Time: 22.208 ms
 ~~END~~
 
 
@@ -916,7 +915,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 47.152 ms
+Babelfish T-SQL Batch Parsing Time: 16.706 ms
 ~~END~~
 
 
@@ -934,7 +933,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 37.907 ms
+Babelfish T-SQL Batch Parsing Time: 14.402 ms
 ~~END~~
 
 
@@ -952,7 +951,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 24.023 ms
+Babelfish T-SQL Batch Parsing Time: 9.425 ms
 ~~END~~
 
 
@@ -971,7 +970,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 13.171 ms
+Babelfish T-SQL Batch Parsing Time: 4.388 ms
 ~~END~~
 
 
@@ -990,7 +989,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.273 ms
+Babelfish T-SQL Batch Parsing Time: 0.149 ms
 ~~END~~
 
 
@@ -1012,7 +1011,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.305 ms
+Babelfish T-SQL Batch Parsing Time: 0.421 ms
 ~~END~~
 
 
@@ -1034,7 +1033,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.032 ms
+Babelfish T-SQL Batch Parsing Time: 0.289 ms
 ~~END~~
 
 
@@ -1056,7 +1055,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 67.705 ms
+Babelfish T-SQL Batch Parsing Time: 25.565 ms
 ~~END~~
 
 
@@ -1078,7 +1077,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.120 ms
+Babelfish T-SQL Batch Parsing Time: 2.674 ms
 ~~END~~
 
 
@@ -1094,7 +1093,7 @@ Insert on babel_3292_t2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.974 ms
+Babelfish T-SQL Batch Parsing Time: 0.743 ms
 ~~END~~
 
 
@@ -1110,7 +1109,7 @@ Insert on babel_3292_t2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.257 ms
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 
@@ -1126,7 +1125,7 @@ Update on t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.181 ms
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
 ~~END~~
 
 
@@ -1142,7 +1141,7 @@ Update on t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.835 ms
+Babelfish T-SQL Batch Parsing Time: 0.319 ms
 ~~END~~
 
 
@@ -1158,7 +1157,7 @@ Delete on t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.221 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -1174,7 +1173,7 @@ Delete on t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.190 ms
+Babelfish T-SQL Batch Parsing Time: 0.103 ms
 ~~END~~
 
 
@@ -1198,7 +1197,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.281 ms
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -1222,7 +1221,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.301 ms
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 
@@ -1246,7 +1245,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.364 ms
+Babelfish T-SQL Batch Parsing Time: 0.184 ms
 ~~END~~
 
 
@@ -1270,7 +1269,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.333 ms
+Babelfish T-SQL Batch Parsing Time: 0.180 ms
 ~~END~~
 
 
