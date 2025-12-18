@@ -666,3 +666,4 @@ babel_string_to_money
 test_output_clause
 update_with_var
 BABEL-4271
+sys-fn_varbintohexstr
