@@ -10314,7 +10314,7 @@ AS
 $BODY$
 DECLARE result sys.varbinary;
 BEGIN
-    IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype, 'sys.varchar') THEN
+    IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype, 'sys.varchar'::regtype) THEN
         RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
     ELSE
         IF typmod = -1 THEN
