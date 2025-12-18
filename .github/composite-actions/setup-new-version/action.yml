@@ -17,6 +17,10 @@ inputs:
     description: 'Engine version'
     required: no
     default: 'target.latest'
+  base_version:
+    description: 'Base version for upgrade'
+    required: no
+    default: 'source.latest'
 
 runs:
   using: "composite"
@@ -78,8 +82,8 @@ runs:
       if: always() && steps.build-postgis-extension.outcome == 'success'
       run: |
         cd ~
-        # Check if this is target.latest version to determine initdb options
-        if [[ "${{ inputs.engine_version }}" == "target.latest" ]]; then
+        # Check if base version is not source.latest and new version is target.latest
+        if [[ "${{ inputs.base_version }}" != "source.latest" && "${{ inputs.engine_version }}" == "target.latest" ]]; then
             ~/${{ inputs.pg_new_dir }}/bin/initdb --no-data-checksums -D ~/${{ inputs.pg_new_dir }}/data
         else
             ~/${{ inputs.pg_new_dir }}/bin/initdb -D ~/${{ inputs.pg_new_dir }}/data

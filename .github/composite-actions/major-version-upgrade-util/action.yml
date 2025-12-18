@@ -30,6 +30,10 @@ inputs:
     description: 'Engine version'
     required: no
     default: 'target.latest'
+  base_version:
+    description: 'Base version for upgrade'
+    required: no
+    default: 'source.latest'
 
 runs:
   using: "composite"
@@ -44,6 +48,7 @@ runs:
         pg_new_dir: ${{ inputs.pg_new_dir }}
         antlr_version: ${{ inputs.antlr_version }}
         engine_version: ${{ inputs.engine_version }}
+        base_version: ${{ inputs.base_version }}
 
     - name: Run pg_upgrade
       id: run-pg_upgrade
