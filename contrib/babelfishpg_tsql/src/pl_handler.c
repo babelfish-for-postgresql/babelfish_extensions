@@ -3376,9 +3376,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				/*
 				 * Block ALTER .. OWNER TO .. statements from PG dialect
-				 * executed on TSQL objects.
+				 * executed on TSQL objects except superuser.
 				 */
-				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_alter_owner_from_pg)
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_alter_owner_from_pg && !superuser())
 				{
 					restrict_alter_table_stmt(atstmt);
 				}
@@ -3388,9 +3388,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				/*
 				 * Block ALTER .. OWNER TO .. statements from PG dialect
-				 * executed on TSQL objects.
+				 * executed on TSQL objects except superuser.
 				 */
-				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_alter_owner_from_pg)
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_alter_owner_from_pg && !superuser())
 				{
 					AlterOwnerStmt *stmt = (AlterOwnerStmt *) parsetree;
 					restrict_alter_owner_stmt(stmt);

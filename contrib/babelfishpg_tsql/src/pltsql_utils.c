@@ -3104,7 +3104,6 @@ restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
 {
     Oid			schema_oid = InvalidOid;
     char		*schema_name = NULL;
-    char		*object_name = NULL;
     ObjectAddress	address;
     Relation		relation = NULL;
     Node			*object = stmt->object;
@@ -3152,37 +3151,6 @@ restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
     /* Check if it's a Babelfish schema */
     if (physical_schema_name_exists(schema_name))
     {
-        /* Extract object name for MS shipped check (only for functions/procedures) */
-        if (stmt->objectType == OBJECT_FUNCTION || stmt->objectType == OBJECT_PROCEDURE)
-        {
-            ObjectWithArgs *owa = (ObjectWithArgs *) stmt->object;
-            if (list_length(owa->objname) >= 1)
-                object_name = strVal(llast(owa->objname));
-
-            /*
-             * Special handling for MS shipped system objects - system functions/procedures
-             * created in dbo schemas, unlike other system objects. We allow changing their
-             * ownership to 'sysadmin' as part of internal SQL and upgrade scripts.
-             * One instance: 'ALTER PROCEDURE master_dbo.xp_qv OWNER TO sysadmin;'
-             * We should allow these ALTER OWNER statements for shipped objects.
-             */
-			if (object_name && stmt->newowner)
-			{
-				Oid newowner_oid = get_rolespec_oid(stmt->newowner, false);
-				if (OidIsValid(newowner_oid) && newowner_oid == get_sysadmin_oid())
-				{
-					if ((stmt->objectType == OBJECT_FUNCTION &&
-						is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_SCALAR_FUNCTION, schema_oid)) ||
-						(stmt->objectType == OBJECT_PROCEDURE &&
-						is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_STORED_PROCEDURE, schema_oid)))
-					{
-						pfree(schema_name);
-						return; /* Allow ALTER OWNER to sysadmin for shipped objects */
-					}
-				}
-			}
-        }
-
         pfree(schema_name);
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

@@ -661,8 +661,8 @@ text
 ~~END~~
 
 
--- psql
--- Test changing ownership to master_dbo
+-- psql user=object_ownership_l1 password=123
+-- Test changing ownership to master_dbo as non-superuser
 -- ALTER .. OWNER .. should be blocked
 ALTER TABLE object_ownership_db_object_ownership_s2.t1 OWNER TO master_dbo;
 GO
@@ -914,6 +914,7 @@ go
 ~~START~~
 bool
 t
+t
 ~~END~~
 
 
@@ -997,8 +998,13 @@ go
 drop database object_ownership_db
 go
 
--- tsql
+-- psql
 -- Test ALTER .. OWNER .. on TSQL objects via PG endpoint
+-- Create a test login for non-superuser ALTER OWNER tests
+CREATE ROLE test_alter_owner_l1 WITH LOGIN PASSWORD '123';
+GO
+
+-- tsql
 use master;
 go
 
@@ -1030,8 +1036,8 @@ go
 create type ttype1 as table (id int);
 go
 
--- psql
--- Test ALTER OWNER on master database objects
+-- psql user=test_alter_owner_l1 password=123
+-- Test ALTER OWNER on master database objects as non-superuser
 ALTER TABLE master_dbo.t1 OWNER TO master_dbo;
 GO
 ~~ERROR (Code: 0)~~
@@ -1129,4 +1135,8 @@ go
 drop function f1;
 go
 drop sequence sq1;
+go
+
+-- psql
+drop user test_alter_owner_l1;
 go
