@@ -1252,7 +1252,7 @@ have_createdb_privilege(void)
 
 	/* Superusers can always do everything */
 	if (superuser())
-		true;
+		return true;
 
 	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetUserId()));
 	if (HeapTupleIsValid(utup))
