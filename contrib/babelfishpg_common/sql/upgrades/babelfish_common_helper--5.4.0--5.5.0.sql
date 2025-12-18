@@ -199,108 +199,7 @@ DO $$
 DECLARE 
     bbf_binary_ops_c INT := (SELECT * FROM get_bbf_binary_ops_count('bbf_binary_ops'));
 BEGIN
-    RAISE NOTICE 'bbf_binary_ops operator count: %', bbf_binary_ops_c;
-
-    IF bbf_binary_ops_c = 5 THEN
-        RAISE NOTICE 'Adding all cross-type operators to bbf_binary_ops (equality + comparison)';
-
-        CREATE OR REPLACE FUNCTION sys.binary_varbinary_eq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_eq'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.binary_varbinary_neq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_neq'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.binary_varbinary_lt(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_lt'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.binary_varbinary_leq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_leq'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.binary_varbinary_gt(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_gt'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.binary_varbinary_geq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_geq'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.bbf_binary_varbinary_cmp(sys.bbf_binary, sys.bbf_varbinary)
-        RETURNS int AS 'babelfishpg_common', 'varbinary_cmp'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OPERATOR sys.= (
-            LEFTARG = sys.bbf_binary,
-            RIGHTARG = sys.bbf_varbinary,
-            FUNCTION = sys.binary_varbinary_eq,
-            COMMUTATOR = =,
-            NEGATOR = <>,
-            RESTRICT = eqsel,
-            JOIN = eqjoinsel
-        );
-
-        CREATE OPERATOR sys.<> (
-            LEFTARG = sys.bbf_binary,
-            RIGHTARG = sys.bbf_varbinary,
-            FUNCTION = sys.binary_varbinary_neq,
-            COMMUTATOR = <>,
-            NEGATOR = =,
-            RESTRICT = neqsel,
-            JOIN = neqjoinsel
-        );
-
-        CREATE OPERATOR sys.< (
-            LEFTARG = sys.bbf_binary,
-            RIGHTARG = sys.bbf_varbinary,
-            FUNCTION = sys.binary_varbinary_lt,
-            COMMUTATOR = >,
-            NEGATOR = >=,
-            RESTRICT = scalarltsel,
-            JOIN = scalarltjoinsel
-        );
-
-        CREATE OPERATOR sys.<= (
-            LEFTARG = sys.bbf_binary,
-            RIGHTARG = sys.bbf_varbinary,
-            FUNCTION = sys.binary_varbinary_leq,
-            COMMUTATOR = >=,
-            NEGATOR = >,
-            RESTRICT = scalarlesel,
-            JOIN = scalarlejoinsel
-        );
-
-        CREATE OPERATOR sys.> (
-            LEFTARG = sys.bbf_binary,
-            RIGHTARG = sys.bbf_varbinary,
-            FUNCTION = sys.binary_varbinary_gt,
-            COMMUTATOR = <,
-            NEGATOR = <=,
-            RESTRICT = scalargtsel,
-            JOIN = scalargtjoinsel
-        );
-
-        CREATE OPERATOR sys.>= (
-            LEFTARG = sys.bbf_binary,
-            RIGHTARG = sys.bbf_varbinary,
-            FUNCTION = sys.binary_varbinary_geq,
-            COMMUTATOR = <=,
-            NEGATOR = <,
-            RESTRICT = scalargesel,
-            JOIN = scalargejoinsel
-        );
-
-        ALTER OPERATOR FAMILY bbf_binary_ops USING btree ADD
-            OPERATOR 1 sys.< (sys.bbf_binary, sys.bbf_varbinary),
-            OPERATOR 2 sys.<= (sys.bbf_binary, sys.bbf_varbinary),
-            OPERATOR 3 sys.= (sys.bbf_binary, sys.bbf_varbinary),
-            OPERATOR 4 sys.>= (sys.bbf_binary, sys.bbf_varbinary),
-            OPERATOR 5 sys.> (sys.bbf_binary, sys.bbf_varbinary),
-            FUNCTION 1 sys.bbf_binary_varbinary_cmp(sys.bbf_binary, sys.bbf_varbinary);
-
-    ELSIF bbf_binary_ops_c = 6 THEN
+    IF bbf_binary_ops_c = 6 THEN
         RAISE NOTICE 'Adding comparison operators to bbf_binary_ops (equality already exists)';
 
         CREATE OR REPLACE FUNCTION sys.binary_varbinary_neq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
@@ -380,7 +279,8 @@ BEGIN
             OPERATOR 5 sys.> (sys.bbf_binary, sys.bbf_varbinary);
 
     ELSIF bbf_binary_ops_c = 10 THEN
-        RAISE NOTICE 'All cross-type operators already installed in bbf_binary_ops';
+        -- All cross-type operators already installed
+        NULL;
 
     ELSE
         RAISE EXCEPTION 'Unexpected operator count in bbf_binary_ops: %', bbf_binary_ops_c;
@@ -393,109 +293,8 @@ DO $$
 DECLARE 
     bbf_varbinary_ops_c INT := (SELECT * FROM get_bbf_binary_ops_count('bbf_varbinary_ops'));
 BEGIN
-    RAISE NOTICE 'bbf_varbinary_ops operator count: %', bbf_varbinary_ops_c;
 
-    IF bbf_varbinary_ops_c = 5 THEN
-        RAISE NOTICE 'Adding all reverse cross-type operators to bbf_varbinary_ops';
-
-        CREATE OR REPLACE FUNCTION sys.varbinary_binary_eq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_eq'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.varbinary_binary_neq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_neq'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.varbinary_binary_lt(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_lt'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.varbinary_binary_leq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_leq'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.varbinary_binary_gt(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_gt'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.varbinary_binary_geq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
-        RETURNS boolean AS 'babelfishpg_common', 'varbinary_geq'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OR REPLACE FUNCTION sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary)
-        RETURNS int AS 'babelfishpg_common', 'varbinary_cmp'
-        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-        CREATE OPERATOR sys.= (
-            LEFTARG = sys.bbf_varbinary,
-            RIGHTARG = sys.bbf_binary,
-            FUNCTION = sys.varbinary_binary_eq,
-            COMMUTATOR = =,
-            NEGATOR = <>,
-            RESTRICT = eqsel,
-            JOIN = eqjoinsel
-        );
-
-        CREATE OPERATOR sys.<> (
-            LEFTARG = sys.bbf_varbinary,
-            RIGHTARG = sys.bbf_binary,
-            FUNCTION = sys.varbinary_binary_neq,
-            COMMUTATOR = <>,
-            NEGATOR = =,
-            RESTRICT = neqsel,
-            JOIN = neqjoinsel
-        );
-
-        CREATE OPERATOR sys.< (
-            LEFTARG = sys.bbf_varbinary,
-            RIGHTARG = sys.bbf_binary,
-            FUNCTION = sys.varbinary_binary_lt,
-            COMMUTATOR = >,
-            NEGATOR = >=,
-            RESTRICT = scalarltsel,
-            JOIN = scalarltjoinsel
-        );
-
-        CREATE OPERATOR sys.<= (
-            LEFTARG = sys.bbf_varbinary,
-            RIGHTARG = sys.bbf_binary,
-            FUNCTION = sys.varbinary_binary_leq,
-            COMMUTATOR = >=,
-            NEGATOR = >,
-            RESTRICT = scalarlesel,
-            JOIN = scalarlejoinsel
-        );
-
-        CREATE OPERATOR sys.> (
-            LEFTARG = sys.bbf_varbinary,
-            RIGHTARG = sys.bbf_binary,
-            FUNCTION = sys.varbinary_binary_gt,
-            COMMUTATOR = <,
-            NEGATOR = <=,
-            RESTRICT = scalargtsel,
-            JOIN = scalargtjoinsel
-        );
-
-        CREATE OPERATOR sys.>= (
-            LEFTARG = sys.bbf_varbinary,
-            RIGHTARG = sys.bbf_binary,
-            FUNCTION = sys.varbinary_binary_geq,
-            COMMUTATOR = <=,
-            NEGATOR = <,
-            RESTRICT = scalargesel,
-            JOIN = scalargejoinsel
-        );
-
-        ALTER OPERATOR FAMILY bbf_varbinary_ops USING btree ADD
-            OPERATOR 1 sys.< (sys.bbf_varbinary, sys.bbf_binary),
-            OPERATOR 2 sys.<= (sys.bbf_varbinary, sys.bbf_binary),
-            OPERATOR 3 sys.= (sys.bbf_varbinary, sys.bbf_binary),
-            OPERATOR 4 sys.>= (sys.bbf_varbinary, sys.bbf_binary),
-            OPERATOR 5 sys.> (sys.bbf_varbinary, sys.bbf_binary),
-            FUNCTION 1 sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary);
-
-    ELSIF bbf_varbinary_ops_c = 6 THEN
-        RAISE NOTICE 'Adding comparison operators to bbf_varbinary_ops (equality already exists)';
+    IF bbf_varbinary_ops_c = 6 THEN
 
         CREATE OR REPLACE FUNCTION sys.varbinary_binary_neq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
         RETURNS boolean AS 'babelfishpg_common', 'varbinary_neq'
@@ -574,7 +373,8 @@ BEGIN
             OPERATOR 5 sys.> (sys.bbf_varbinary, sys.bbf_binary);
 
     ELSIF bbf_varbinary_ops_c = 10 THEN
-        RAISE NOTICE 'All cross-type operators already installed in bbf_varbinary_ops';
+        -- All cross-type operators already installed
+        NULL;
 
     ELSE
         RAISE EXCEPTION 'Unexpected operator count in bbf_varbinary_ops: % (expected 5, 6, or 10)', bbf_varbinary_ops_c;
