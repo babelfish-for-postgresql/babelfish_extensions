@@ -3097,7 +3097,6 @@ is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
 /*
  * restrict_alter_owner_stmt
  * Blocks ALTER OWNER statements from PG endpoint on TSQL objects.
- * Allows ALTER OWNER for specific shipped objects only when new owner is sysadmin.
  */
 void
 restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
