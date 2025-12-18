@@ -1208,8 +1208,8 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
 		return true;
 
-	/* Allow grant operations when called by superuser (e.g., during initialize_babelfish) */
-	if (superuser())
+	/* Allow grant operations when session user is superuser (e.g., during initialize_babelfish) */
+	if (superuser_arg(GetSessionUserId()))
 		return true;
 
 	/* Restrict roles to added as a member of babelfish roles */
@@ -1250,9 +1250,9 @@ have_createdb_privilege(void)
 	bool		result = false;
 	HeapTuple	utup;
 
-	/* Allow grant operations when session user is superuser (e.g., during initialize_babelfish) */
-	if (superuser_arg(GetSessionUserId()))
-		return true;
+	/* Superusers can always do everything */
+	if (superuser())
+		true;
 
 	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetUserId()));
 	if (HeapTupleIsValid(utup))
