@@ -15,3 +15,12 @@ go
 
 drop procedure object_id_inner_proc
 go
+
+drop procedure p_truncate
+go
+
+drop procedure p_nested
+go
+
+drop procedure p_insert
+go

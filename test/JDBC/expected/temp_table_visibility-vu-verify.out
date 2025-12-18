@@ -49,3 +49,28 @@ int
 456
 ~~END~~
 
+
+SELECT * INTO #temptable FROM generate_series(1,100);
+GO
+EXEC p_nested
+GO
+~~ROW COUNT: 100~~
+
+~~START~~
+int
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+100
+~~END~~
+
+SELECT COUNT(*) FROM #temptable
+GO
+~~START~~
+int
+100
+~~END~~
+

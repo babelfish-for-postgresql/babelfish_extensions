@@ -50,3 +50,17 @@ create proc babel_4122_proc @tabname varchar(30) as
     end
 go
 
+CREATE PROC p_truncate AS TRUNCATE TABLE #temptable
+GO
+CREATE PROC p_nested AS 
+BEGIN
+	CREATE TABLE #temptable(a INT);
+	INSERT INTO #temptable VALUES (GENERATE_SERIES(1,100));
+	EXEC p_truncate
+	SELECT * FROM #temptable;
+	EXEC p_insert 100;
+	SELECT * FROM #temptable;
+END;
+GO
+CREATE PROC p_insert(@a INT) AS INSERT INTO #temptable VALUES (@a)
+GO

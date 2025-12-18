@@ -18,3 +18,10 @@ go
 
 exec babel_4122_proc '#t4122'
 go
+
+SELECT * INTO #temptable FROM generate_series(1,100);
+GO
+EXEC p_nested
+GO
+SELECT COUNT(*) FROM #temptable
+GO
