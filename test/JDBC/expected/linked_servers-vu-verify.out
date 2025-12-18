@@ -378,3 +378,4 @@ GO
 nvarchar#!#nvarchar#!#nvarchar
 TDS_FDW#!#{b4e3f6da-c847-4d8f-7e8a-be928019208c}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.4
 ~~END~~
+

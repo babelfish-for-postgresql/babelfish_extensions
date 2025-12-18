@@ -881,7 +881,7 @@ EXEC bbf_rpe_server.master.dbo.sp_TestNvarchar @p=@unicode;
 GO
 ~~START~~
 varchar#!#int
-Hello ?? ?????#!#14
+Hello 世界 ?????#!#14
 ~~END~~
 
 
@@ -988,7 +988,7 @@ EXEC bbf_rpe_server.master.malicious_schema; DROP TABLE test; --.sp_SingleInt 1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "bbf_rpe_server_master" does not exist)~~
+~~ERROR (Message: database "bbf_rpe_server" does not exist. Make sure that the name is entered correctly.)~~
 
 
 -- Test 82d: Procedure name injection attempt (unquoted)
@@ -1174,7 +1174,7 @@ EXEC bbf_rpe_server.master.dbo.sp_TestNvarchar @p=N'Test ★ ♥ ✓ ⚡';
 GO
 ~~START~~
 varchar#!#int
-Test ? ? ? ?#!#12
+Test ★ ? ? ?#!#12
 ~~END~~
 
 
@@ -1376,4 +1376,3 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Remote procedure contains DELETE statement)~~
-

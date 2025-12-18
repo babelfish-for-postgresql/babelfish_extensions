@@ -89,7 +89,7 @@ SELECT * FROM bbf_fpn_server.invalid_db.dbo.fpn_table
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: database "invalid_db" does not exist. Make sure that the name is entered correctly., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote server error: database "invalid_db" does not exist. Make sure that the name is entered correctly.)~~
 
 
 -- Invalid schema name (Should throw error)
@@ -97,7 +97,7 @@ SELECT * FROM bbf_fpn_server.master.invalid_schema.fpn_table
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "invalid_schema.fpn_table" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote server error: relation "invalid_schema.fpn_table" does not exist)~~
 
 
 -- Invalid object name (Should throw error)
@@ -105,7 +105,7 @@ SELECT * FROM bbf_fpn_server.master.dbo.invalid_fpn_table
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "dbo.invalid_fpn_table" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote server error: relation "dbo.invalid_fpn_table" does not exist)~~
 
 
 -- four part object is a procedure (Should throw error)
@@ -113,7 +113,7 @@ EXEC bbf_fpn_server.master.dbo.sp_linkedserver
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: RPC out is not enabled for the specified server. Use sp_serveroption to enable it.)~~
 
 
 -- INSERT should not work with four-part object name
@@ -406,7 +406,7 @@ GO
 varchar#!#int#!#int#!#varbinary#!#datetime#!#tinyint#!#varchar#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#tinyint#!#nvarchar#!#bit#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#uniqueidentifier#!#bit#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#uniqueidentifier#!#uniqueidentifier#!#int#!#smallint#!#nvarchar#!#int#!#nvarchar#!#bit#!#bit#!#smallint#!#tinyint#!#nvarchar#!#int#!#int#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#nvarchar#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 911, Msg state: 1, Msg: database "fpn_table') select * from openq8c86d09e50d4f800f5a8c351ddbe1b23" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote database not found: database "fpn_table') select * from openq8c86d09e50d4f800f5a8c351ddbe1b23" does not exist)~~
 
 
 select * from bbf_fpn_server."fpn_table'') select * from openquery(''bbf_fpn_server'', ''select * from master".sys.databases
@@ -415,7 +415,7 @@ GO
 varchar#!#int#!#int#!#varbinary#!#datetime#!#tinyint#!#varchar#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#tinyint#!#nvarchar#!#bit#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#uniqueidentifier#!#bit#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#uniqueidentifier#!#uniqueidentifier#!#int#!#smallint#!#nvarchar#!#int#!#nvarchar#!#bit#!#bit#!#smallint#!#tinyint#!#nvarchar#!#int#!#int#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#nvarchar#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 911, Msg state: 1, Msg: database "fpn_table') select * from openq8c86d09e50d4f800f5a8c351ddbe1b23" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote database not found: database "fpn_table') select * from openq8c86d09e50d4f800f5a8c351ddbe1b23" does not exist)~~
 
 
 -- SQL Injection in schema name
@@ -426,14 +426,14 @@ select * from bbf_fpn_server.master.[sys.tables'') select * from openquery(''bbf
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "master_sys.tables') select * fr465ba21cd478dfdbfd9c4c52873fc1ec.databases" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote server error: relation "master_sys.tables') select * fr465ba21cd478dfdbfd9c4c52873fc1ec.databases" does not exist)~~
 
 
 select * from bbf_fpn_server.master."sys.tables'') select * from openquery(''bbf_fpn_server'', ''select * from master.sys".databases
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "master_sys.tables') select * fr465ba21cd478dfdbfd9c4c52873fc1ec.databases" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote server error: relation "master_sys.tables') select * fr465ba21cd478dfdbfd9c4c52873fc1ec.databases" does not exist)~~
 
 
 -- SQL Injection in object name
@@ -444,14 +444,14 @@ select * from bbf_fpn_server.master.sys.[tables'') select * from openquery(''bbf
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "sys.tables') select * from openquer6fae7895a55a5b386bac33a1b4ac3386" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote server error: relation "sys.tables') select * from openquer6fae7895a55a5b386bac33a1b4ac3386" does not exist)~~
 
 
 select * from bbf_fpn_server.master.sys."tables'') select * from openquery(''bbf_fpn_server'', ''select * from master.sys.databases"
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "sys.tables') select * from openquer6fae7895a55a5b386bac33a1b4ac3386" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote server error: relation "sys.tables') select * from openquer6fae7895a55a5b386bac33a1b4ac3386" does not exist)~~
 
 
 DROP TABLE fpn_table_insert_into
