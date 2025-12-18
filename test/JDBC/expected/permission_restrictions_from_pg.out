@@ -2,6 +2,38 @@
 create login permission_restrictions_tsql_login with password = '123';
 go
 
+create login permission_restrictions_tsql_login1 with password = '123';
+go
+
+create user permission_restrictions_tsql_user1 for login permission_restrictions_tsql_login1;
+go
+
+-- create user for a login in master, tempdb and msdb
+create login permission_restrictions_tsql_login2 with password = '123';
+go
+
+create user permission_restrictions_tsql_login2;
+go
+
+use tempdb;
+go
+
+create user permission_restrictions_tsql_login2;
+go
+
+use msdb;
+go
+
+create user permission_restrictions_tsql_login2;
+go
+
+use master
+go
+
+-- create a login with no mapped user
+create login permission_restrictions_tsql_login3 with password = '123';
+go
+
 -- psql
 create user permission_restrictions_psql_user with password '123';
 go
@@ -12,7 +44,7 @@ grant sysadmin to permission_restrictions_tsql_login;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -30,7 +62,7 @@ grant sysadmin to permission_restrictions_psql_user;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -40,6 +72,52 @@ go
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: permission denied
+    Server SQLState: 42501)~~
+
+
+-- Grant on BBF role should not be allowed
+grant permission_restrictions_psql_user to master_permission_restrictions_tsql_user1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+grant permission_restrictions_tsql_login1 to permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- dropping of BBF users/logins should not be allowed
+drop user permission_restrictions_tsql_login1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+
+-- TODO: BABEL-5565
+-- drop user permission_restrictions_tsql_login2;
+-- go
+drop user permission_restrictions_tsql_login3;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+drop user master_permission_restrictions_tsql_user1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -58,7 +136,7 @@ grant sysadmin to permission_restrictions_tsql_login;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -76,7 +154,7 @@ grant sysadmin to permission_restrictions_psql_user;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -110,6 +188,44 @@ go
 -- user has sysadmin membership, alter user is allowed
 alter user permission_restrictions_psql_user1 with password '1234'
 go
+
+-- Grant on BBF role should not be allowed
+grant permission_restrictions_tsql_login1 to permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- dropping of BBF users/logins should not be allowed
+drop user permission_restrictions_tsql_login1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+
+-- TODO: BABEL-5565
+-- drop user permission_restrictions_tsql_login2;
+-- go
+drop user permission_restrictions_tsql_login3;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+drop user master_permission_restrictions_tsql_user1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
 
 -- user has sysadmin membership, drop user is allowed
 drop user permission_restrictions_psql_user1;
@@ -162,6 +278,57 @@ void
 ~~END~~
 
 
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'permission_restrictions_tsql_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'permission_restrictions_tsql_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+
+select pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
 -- tsql
+drop user permission_restrictions_tsql_user1;
+go
+
+drop user permission_restrictions_tsql_login2;
+go
+
+use tempdb
+go
+
+drop user permission_restrictions_tsql_login2;
+go
+
+use msdb
+go
+
+drop user permission_restrictions_tsql_login2;
+go
+
+drop login permission_restrictions_tsql_login1;
+go
+
+drop login permission_restrictions_tsql_login2;
+go
+
 drop login permission_restrictions_tsql_login
+go
+
+drop login permission_restrictions_tsql_login3;
 go
