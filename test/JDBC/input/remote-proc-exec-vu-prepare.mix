@@ -192,7 +192,8 @@ AS BEGIN
     UNION ALL SELECT 2, 'Bob', 30
     UNION ALL SELECT 3, 'Charlie', 35
     UNION ALL SELECT 4, 'Diana', 28
-    UNION ALL SELECT 5, 'Eve', 32;
+    UNION ALL SELECT 5, 'Eve', 32
+    ORDER BY id;
 END;
 GO
 
@@ -219,7 +220,8 @@ AS BEGIN
     SELECT 1 AS id, 'value' AS name, 100 AS amount
     UNION ALL SELECT 2, NULL, 200
     UNION ALL SELECT 3, 'another', NULL
-    UNION ALL SELECT 4, NULL, NULL;
+    UNION ALL SELECT 4, NULL, NULL
+    ORDER BY id;
 END;
 GO
 

@@ -1067,10 +1067,9 @@ John Doe
 
 SELECT dbo.babel_5223_xml_value_t1.XmlColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_t1
 GO
-~~START~~
-varchar
-John Doe
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: improper qualified name (too many dotted names): bo.babel_5223_xml_value_t1.xmlcolumn.value)~~
 
 
 SELECT Id, XmlColumn.value('(/Root/Child1)[1]', 'varchar(100)') AS Result
@@ -1228,6 +1227,8 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The value function requires 2 argument(s).)~~
+
+
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.value('(/artists/artist/@name)[1]', 1)
 GO
@@ -1350,6 +1351,8 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The value function requires 2 argument(s).)~~
+
+
 
 
 -- value function called on XML Query

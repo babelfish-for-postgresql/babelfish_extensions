@@ -330,8 +330,8 @@ initTsqlSyscache()
 bool
 IsPLtsqlExtendedCatalog(Oid relationId)
 {
-	/* Skip during Babelfish restore */
-	if (!babelfish_dump_restore && (relationId == sysdatabases_oid ||
+	/* Skip during Babelfish restore or extension creation/upgrade */
+	if (!babelfish_dump_restore && !creating_extension && (relationId == sysdatabases_oid ||
 		relationId == bbf_function_ext_oid || relationId == namespace_ext_oid ||
 		relationId == bbf_authid_login_ext_oid || relationId == bbf_authid_user_ext_oid ||
 		relationId == bbf_view_def_oid || relationId == bbf_servers_def_oid ||
