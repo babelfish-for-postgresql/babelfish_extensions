@@ -3528,7 +3528,7 @@ SELECT
   CAST(s.query_timeout as int) AS query_timeout,
   CAST(1 as sys.bit) AS is_linked,
   CAST(0 as sys.bit) AS is_remote_login_enabled,
-  CAST(0 as sys.bit) AS is_rpc_out_enabled,
+  CAST(COALESCE(s.rpc_out, false) as sys.bit) AS is_rpc_out_enabled,
   CAST(1 as sys.bit) AS is_data_access_enabled,
   CAST(0 as sys.bit) AS is_collation_compatible,
   CAST(1 as sys.bit) AS uses_remote_collation,

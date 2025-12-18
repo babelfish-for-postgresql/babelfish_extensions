@@ -3515,7 +3515,7 @@ GO
 int
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 8134, Msg state: 1, Msg: division by zero, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote server error: division by zero)~~
 
 
 -- Try executing a query that does not return a result set

@@ -318,7 +318,7 @@ EXEC sp_testlinkedserver 'test_server'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 911, Msg state: 1, Msg: database "maste" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Remote database not found: database "maste" does not exist)~~
 
 
 EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
@@ -378,4 +378,3 @@ GO
 nvarchar#!#nvarchar#!#nvarchar
 TDS_FDW#!#{b4e3f6da-c847-4d8f-7e8a-be928019208c}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.4
 ~~END~~
-
