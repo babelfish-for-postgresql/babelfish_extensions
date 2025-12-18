@@ -413,6 +413,47 @@ go
 drop database DB64long_0123456789012345678901234567890123456789012345678901234
 go
 
+-- When new owner is an internal role, user-defined role, database principal or server principal - Error out.
+-- tsql
+use master
+go
+create database sp_changedbowner_db
+go
+use sp_changedbowner_db
+go
+create role sp_changedbowner_r1
+go
+exec sp_changedbowner 'bbf_role_admin'
+go
+exec sp_changedbowner 'securityadmin'
+go
+exec sp_changedbowner 'sysadmin'
+go
+exec sp_changedbowner 'dbcreator'
+go
+exec sp_changedbowner 'db_datareader'
+go
+exec sp_changedbowner 'db_datawriter'
+go
+exec sp_changedbowner 'db_ddladmin'
+go
+exec sp_changedbowner 'dbo'
+go
+exec sp_changedbowner 'db_owner'
+go
+exec sp_changedbowner 'master_db_datareader'
+go
+exec sp_changedbowner 'sp_changedbowner_r1'
+go
+exec sp_changedbowner 'sp_changedbowner_db_sp_changedbowner_r1'
+go
+drop role sp_changedbowner_r1
+go
+use master
+go
+drop database sp_changedbowner_db
+go
+
 -- tsql
 use master
 go

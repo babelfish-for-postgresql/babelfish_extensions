@@ -268,7 +268,6 @@ GO
 select CAST('₨0' AS money);
 GO
 
--- TODO: fix BABEL-704
 -- Note: inside qoute it will treat any character as a currency symbol
 -- if character is not a letter, digit and not equal to '+', '-', '.', '\0' 
 

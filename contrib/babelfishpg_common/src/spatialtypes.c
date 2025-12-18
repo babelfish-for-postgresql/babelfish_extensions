@@ -26,6 +26,7 @@ static void load_functions();
 #define MAX_DIMENSION_FLAG 4
 #define POINT_TYPE     1  /* Identifier for Point geometry type */
 #define LINE_TYPE      2  /* Identifier for Linestring geometry type */
+#define POLYGON_TYPE   3  /* Identifier for Polygon geometry type */
 
 #define DEFAULT_GEOGRAPHY_SRID 4326
 #define DEFAULT_GEOMETRY_SRID  0
@@ -49,6 +50,9 @@ static void load_functions();
 #define EMPTY_POINT_TYPE_LASTBYTE    0x01    /* Type identifier for empty point */
 #define EMPTY_LINE_TYPE_LASTBYTE     0x02    /* Type identifier for empty linestring */
 #define NPOINTS_SIZE                 4       /* Size of no. of points data (4 bytes ) */
+#define RING_COUNT_BYTES                          4       /* No. of rings in a polygon denoted by 4 bytes data packet */
+#define CUMULATIVE_RING_COUNT_SIZE_BYTES          5       /* Size for intermediate cumulative ring counts (4 bytes + 1 zero) */
+#define FINAL_CUMULATIVE_RING_COUNT_SIZE_BYTES    4       /* Size for final cumulative ring count (4 bytes only) */
 
 #define SRID_FLAG_POS     4     /* Position of SRID flag in binary data */
 #define SRID_MASK         0x20  /* Bitmask for SRID presence flag */
@@ -77,6 +81,11 @@ static void load_functions();
 #define VALID_3DLINE_MP     0x05  /* Valid 3D linestring with multiple points */
 #define VALID_2DMLINE_MP    0x06  /* Valid 2D linestring with M dimension and multiple points */
 #define VALID_3DMLINE_MP    0x07  /* Valid 3D linestring with M dimension and multiple points */
+#define POLYGON_2D          0x00  /* 2D Polygon - XY dimensions*/
+#define POLYGON_3D          0x01  /* 3D Polygon - XYZ dimensions */
+#define POLYGON_2DM         0x02  /* 2DM Polygon -  XYM dimensions*/
+#define POLYGON_3DM         0x03  /* 3DM Polygon - XYZM dimensions*/
+
 
 /* Line geometry validation constants for two-point (2P) linestrings */
 #define INVALID_2DLINE_2P  0x10   /* Invalid 2D linestring with exactly 2 points */
@@ -110,6 +119,7 @@ static void load_functions();
 #define EMPTY_Binary_SIZE      9   /* Size of empty representation in binary */
 #define EMPTY_POINT_Binary   "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty point */
 #define EMPTY_LINE_Binary    "\x01\x02\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty linestring */
+#define EMPTY_POLYGON_Binary "\x01\x03\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty polygon */
 /* 
  * Global array representing NaN coordinate value in IEEE 754 format
  * Used for empty point detection and creation
@@ -181,15 +191,42 @@ EMPTY_COORD[] = {
 
 /* 
  * Trailing metadata appended to linestring instances with more than 2 points.
- * These 22 bytes are required by T-SQL's spatial format but their exact
- * meaning is unclear however they are constant for all linestring with >2 points 
- * and doesn't have any identified use case. The pattern only changes for different geometry types.
+ * Required by T-SQL's spatial format for linestring geometry type (0x02).
  */
 static const uint8 
 line_end_metadata[] = {
     0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
     0x00, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
     0xff, 0x00, 0x00, 0x00, 0x00, 0x02
+};
+
+/* 
+ * Trailing metadata appended to polygon instances.
+ * Required by T-SQL's spatial format for polygon geometry type (0x03).
+ */
+static const uint8 
+polygon_end_metadata[] = {
+    0x01, 0x00, 0x00, 0x00,
+    0xff, 0xff, 0xff, 0xff, 
+    0x00, 0x00, 0x00, 0x00, 0x03
+};
+
+/* 
+ * Identifier for multi-ring polygons in T-SQL spatial format.
+ * Used when polygon has multiple rings (exterior + interior rings).
+ */
+static const uint8 
+poly_identifier_multiring[] = {
+    0x02, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+/* 
+ * Identifier for single-ring polygons in T-SQL spatial format.
+ * Used when polygon has only one ring (exterior ring only).
+ */
+static const uint8 
+poly_identifier_singlering[] = {
+    0x02, 0x00, 0x00, 0x00, 0x00
 };
 
 /* NAN format used by TSQL */
@@ -259,7 +296,8 @@ static void
 check_geom_type(const char *geom_type)
 {
     if (strcmp(geom_type, "ST_Point") != 0 &&
-        strcmp(geom_type, "ST_LineString") != 0 )
+        strcmp(geom_type, "ST_LineString") != 0 &&
+        strcmp(geom_type, "ST_Polygon") != 0)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -351,6 +389,15 @@ static st_pointn_t st_pointn_p;
 typedef Datum (*st_isvalid_t)(PG_FUNCTION_ARGS);
 static st_isvalid_t st_isvalid_p;
 
+typedef Datum (*st_exteriorring_t)(PG_FUNCTION_ARGS);
+static st_exteriorring_t st_exteriorring_p;
+
+typedef Datum (*st_interiorringn_t)(PG_FUNCTION_ARGS);
+static st_interiorringn_t st_interiorringn_p;
+
+typedef Datum (*st_numinteriorrings_t)(PG_FUNCTION_ARGS);
+static st_numinteriorrings_t st_numinteriorrings_p;
+
 static void validate_geography_latitude(Datum geom_datum, bool is_flipped);
 
 PG_FUNCTION_INFO_V1(geometry_in);
@@ -395,6 +442,9 @@ load_functions()
         st_npoints_p = (st_npoints_t) load_external_function("$libdir/postgis-3", "LWGEOM_npoints", true, NULL);
         st_pointn_p = (st_pointn_t) load_external_function("$libdir/postgis-3", "LWGEOM_pointn_linestring", true, NULL);
         st_isvalid_p = (st_isvalid_t) load_external_function("$libdir/postgis-3", "isvalid", true, NULL); 
+        st_exteriorring_p = (st_exteriorring_t) load_external_function("$libdir/postgis-3", "LWGEOM_exteriorring_polygon", true, NULL);
+        st_interiorringn_p = (st_interiorringn_t) load_external_function("$libdir/postgis-3", "LWGEOM_interiorringn_polygon", true, NULL);
+        st_numinteriorrings_p = (st_numinteriorrings_t) load_external_function("$libdir/postgis-3", "LWGEOM_numinteriorrings_polygon", true, NULL); 
     }
 }
 
@@ -409,6 +459,60 @@ GetGeometryTypeName(FunctionCallInfoBaseData *fcinfo, Datum geom_datum)
     UpdateFunctionCallInfo(fcinfo, 1, geom_datum);
     geom_type = geometry_type_p(fcinfo);
     return text_to_cstring(DatumGetTextP(geom_type));
+}
+
+/*
+ * Validates that the given latitude value is within the valid range of -90 to 90 degrees.
+ * Throws an error if the latitude is outside this range.
+ */
+static void
+validate_latitude_range(double lat)
+{
+    if (lat < -90.0 || lat > 90.0)
+    {
+        ereport(ERROR,
+            (errcode(ERRCODE_DATA_EXCEPTION),
+             errmsg("Latitude values must be between -90 and 90 degrees")));
+    }
+}
+
+/*
+ * Check for antipodal points and update previous coordinates
+ */
+static void
+check_antipodal_points(FunctionCallInfoBaseData *fcinfo, Datum point, int point_index, 
+                      float8 *prev_lat, float8 *prev_lon)
+{
+    float8 lat, lon;
+    
+    /* Get latitude (x coordinate after flipping) */
+    UpdateFunctionCallInfo(fcinfo, 1, point);
+    lat = DatumGetFloat8(lwgeom_x_p(fcinfo));
+
+    /* Get longitude (y coordinate after flipping) */
+    UpdateFunctionCallInfo(fcinfo, 1, point);
+    lon = DatumGetFloat8(lwgeom_y_p(fcinfo));
+    
+    if (point_index > 1)
+    {  
+        /* Check for antipodal points */
+        if (fabs(fabs(lon - *prev_lon) - 180.0) < 0.1 || fabs(fabs(lat - *prev_lat) - 180.0) < 0.1)
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_DATA_EXCEPTION),
+                 errmsg("The specified input cannot be accepted because it contains an edge with antipodal points")));
+        }
+        
+        *prev_lat = lat;
+        *prev_lon = lon;
+    }
+    else
+    {
+        /* First point - initialize previous coordinates */
+        UpdateFunctionCallInfo(fcinfo, 1, point);
+        *prev_lat = lat;
+        *prev_lon = DatumGetFloat8(lwgeom_y_p(fcinfo));
+    }
 }
 
 /*
@@ -450,12 +554,7 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
         lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
         
         /* Validate latitude is within -90 to 90 degrees range */
-        if (lat < -90.0 || lat > 90.0) 
-        {
-            ereport(ERROR,
-                (errcode(ERRCODE_DATA_EXCEPTION),
-                 errmsg("Latitude values must be between -90 and 90 degrees")));
-        }
+        validate_latitude_range(lat);
     } 
     else if (strcmp(geom_type, "ST_LineString") == 0) 
     {
@@ -477,45 +576,81 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
             lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
             
             /* Validate latitude is within -90 to 90 degrees range */
-            if (lat < -90.0 || lat > 90.0)
-            {
-                ereport(ERROR,
-                    (errcode(ERRCODE_DATA_EXCEPTION),
-                     errmsg("Latitude values must be between -90 and 90 degrees")));
-            }
+            validate_latitude_range(lat);
             
-            /* Check for antipodal points (consecutive points 180 degrees apart) */
-            if (i > 1)
+            /* Check for antipodal points */
+            check_antipodal_points(fcinfo_local, point, i, &prev_lat, &prev_lon);
+        }
+    }
+    else if (strcmp(geom_type, "ST_Polygon") == 0)
+    {
+        Datum exterior_ring,
+              interior_ring;
+        int num_interior_rings,
+            ring_idx;
+        float8 prev_lat = 0, prev_lon = 0;
+        
+        /* 
+         * Validate exterior ring of the polygon
+         * Extract the outer boundary ring and check all its points
+         */
+        UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
+        exterior_ring = st_exteriorring_p(fcinfo_local);
+        
+        /* Get total number of points in the exterior ring */
+        UpdateFunctionCallInfo(fcinfo_local, 1, exterior_ring);
+        npoints = DatumGetInt32(st_npoints_p(fcinfo_local));
+        
+        /* Check each point in the exterior ring for valid latitude */
+        for (i = 1; i <= npoints; i++)
+        {
+            /* Extract the i-th point from the exterior ring */
+            UpdateFunctionCallInfo(fcinfo_local, 2, exterior_ring, Int32GetDatum(i));
+            point = st_pointn_p(fcinfo_local);
+            
+            /* Get latitude value (x coordinate after flipping) */
+            UpdateFunctionCallInfo(fcinfo_local, 1, point);
+            lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
+            
+            /* Validate latitude is within -90 to 90 degrees range */
+            validate_latitude_range(lat);
+            /* Check for antipodal points */
+            check_antipodal_points(fcinfo_local, point, i, &prev_lat, &prev_lon);
+        }
+        
+        /* 
+         * Validate interior rings (holes) of the polygon
+         * Each interior ring represents a hole within the polygon
+         */
+        UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
+        num_interior_rings = DatumGetInt32(st_numinteriorrings_p(fcinfo_local));
+        
+        /* Iterate through each interior ring */
+        for (ring_idx = 1; ring_idx <= num_interior_rings; ring_idx++)
+        {
+            /* Extract the ring_idx-th interior ring */
+            UpdateFunctionCallInfo(fcinfo_local, 2, flipped_geom, Int32GetDatum(ring_idx));
+            interior_ring = st_interiorringn_p(fcinfo_local);
+            
+            /* Get total number of points in this interior ring */
+            UpdateFunctionCallInfo(fcinfo_local, 1, interior_ring);
+            npoints = DatumGetInt32(st_npoints_p(fcinfo_local));
+            
+            /* Check each point in the interior ring for valid latitude */
+            for (i = 1; i <= npoints; i++)
             {
-                float8 lon;
-                /* Get longitude value (y coordinate after flipping) */
-                UpdateFunctionCallInfo(fcinfo_local, 1, point);
-                lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
+                /* Extract the i-th point from the interior ring */
+                UpdateFunctionCallInfo(fcinfo_local, 2, interior_ring, Int32GetDatum(i));
+                point = st_pointn_p(fcinfo_local);
                 
-                /* 
-                 * Detect antipodal points - two points are antipodal if:
-                 * 1. Their latitudes sum to zero (opposite signs, same magnitude)
-                 * 2. AND either:
-                 *    a. Their longitudes differ by exactly 180 degrees, OR
-                 *    b. Both points are near the poles (>89.999 degrees latitude)
-                 */
-                if (fabs(lat + prev_lat) < 1e-10 && (fabs(fabs(lon - prev_lon) - 180.0) < 1e-10 || (fabs(lat) > 89.999 && fabs(prev_lat) > 89.999)))
-                {
-                    ereport(ERROR,
-                        (errcode(ERRCODE_DATA_EXCEPTION),
-                         errmsg("The specified input cannot be accepted because it contains an edge with antipodal points")));
-                }
-                
-                /* Store current coordinates for next iteration */
-                prev_lat = lat;
-                prev_lon = lon;
-            }
-            else
-            {
-                /* First point - initialize previous coordinates for comparison */
+                /* Get latitude value (x coordinate after flipping) */
                 UpdateFunctionCallInfo(fcinfo_local, 1, point);
-                prev_lat = lat;
-                prev_lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
+                lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
+                
+                /* Validate latitude is within -90 to 90 degrees range */
+                validate_latitude_range(lat);
+                /* Check for antipodal points */
+                check_antipodal_points(fcinfo_local, point, i, &prev_lat, &prev_lon);
             }
         }
     }
@@ -848,12 +983,7 @@ geography_point(PG_FUNCTION_ARGS)
     }
 
     /* Validate latitude range */
-    if (lat < -90.0 || lat > 90.0)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Latitude values must be between -90 and 90 degrees")));
-    }
+    validate_latitude_range(lat);
 
     /* Create the point using helper function */
     UpdateFunctionCallInfo(fcinfo_local, 3,
@@ -1655,7 +1785,7 @@ validate_geom_type(const GeoDataInfo *geom_data)
         return false;
         
     geom_type = geom_data->byte_data[GEOM_TYPE_POS_POSTGIS];
-    return (geom_type == POINT_TYPE || geom_type == LINE_TYPE) &&
+    return (geom_type == POINT_TYPE || geom_type == LINE_TYPE || geom_type == POLYGON_TYPE) &&
            geom_data->byte_data[GEOM_TYPE_POS_POSTGIS+1] == 0x00 && 
            geom_data->byte_data[GEOM_TYPE_POS_POSTGIS+2] == 0x00;
 }
@@ -1693,6 +1823,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                             (geom_data->npoints > 2 ? INVALID_2DLINE_MP : INVALID_2DLINE_2P);
                         geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
                         break;
+                    case POLYGON_TYPE:
+                        geom_data->geom_type = POLYGON_2D;
+                        geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
+                        break;
                 }
             }
             break;
@@ -1708,6 +1842,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->geom_type = geom_data->is_valid ? 
                         (geom_data->npoints > 2 ? VALID_3DLINE_MP : VALID_3DLINE_2P) :
                         (geom_data->npoints > 2 ? INVALID_3DLINE_MP : INVALID_3DLINE_2P);
+                    geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
+                    break;
+                case POLYGON_TYPE:
+                    geom_data->geom_type = POLYGON_3D;
                     geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
                     break;
             }
@@ -1726,6 +1864,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                         (geom_data->npoints > 2 ? INVALID_3DMLINE_MP : INVALID_3DMLINE_2P);
                     geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
                     break;
+                case POLYGON_TYPE:
+                    geom_data->geom_type = POLYGON_3DM;
+                    geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
+                    break;
             }
             break;
         case POSTGIS_DIM_XYM:
@@ -1740,6 +1882,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->geom_type = geom_data->is_valid ? 
                         (geom_data->npoints > 2 ? VALID_2DMLINE_MP : VALID_2DMLINE_2P) :
                         (geom_data->npoints > 2 ? INVALID_2DMLINE_MP : INVALID_2DMLINE_2P);
+                    geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
+                    break;
+                case POLYGON_TYPE:
+                    geom_data->geom_type = POLYGON_2DM;
                     geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
                     break;
             }
@@ -1852,6 +1998,135 @@ handle_linestring_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *r
     return result;
 }
 
+static bytea*
+handle_polygon_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *result, bool is_geography)
+{
+    int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+
+    uint8 *src_start = geom_data->byte_data + offset,
+          *dst = (geom_data->npoints > 2) ? result_data + HEADER_SIZE + NPOINTS_SIZE : result_data + HEADER_SIZE,
+          dim_mask = geom_data->srid_flag & DIMENSION_MASK,
+          *src = src_start + sizeof(int32),
+          *metadata_pos,
+          *ring_counts_pos;
+
+    bool has_z = (dim_mask == POSTGIS_DIM_XYZ || dim_mask == POSTGIS_DIM_XYZM),
+         has_m = (dim_mask == POSTGIS_DIM_XYM || dim_mask == POSTGIS_DIM_XYZM);
+    
+    int stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0),
+        num_rings = *(int32*)src_start,
+        ring_npoints = *(int32*)src,
+        ring_idx,
+        total_points_copied = 0,
+        z_points_copied = 0,
+        m_points_copied = 0,
+        z_offset,
+        cumulative_points = 0;
+
+    /* First pass: copy all XY coordinates from all rings */
+    for (ring_idx = 0; ring_idx < num_rings; ring_idx++)
+    {
+        ring_npoints = *(int32*)src;
+        src += sizeof(int32);
+        
+        copy_xy_coords(dst + (total_points_copied * COORD_SIZE * 2), src, ring_npoints, stride);
+        
+        src += ring_npoints * stride;
+        total_points_copied += ring_npoints;
+    }
+    
+    /* Second pass: copy all Z coordinates from all rings */
+    if (has_z)
+    {
+        src = src_start + sizeof(int32);
+        for (ring_idx = 0; ring_idx < num_rings; ring_idx++)
+        {
+            ring_npoints = *(int32*)src;
+            src += sizeof(int32);
+            
+            /* Reuse copy_z_coords by adjusting destination offset:
+             * - copy_z_coords adds (npoints * COORD_SIZE * 2) internally for linestrings
+             * - We subtract (ring_npoints * COORD_SIZE * 2) to cancel that offset
+             * - Then add our polygon-specific offset (z_points_copied * COORD_SIZE) */
+            copy_z_coords(dst + (total_points_copied * COORD_SIZE * 2) - (ring_npoints * COORD_SIZE * 2) + (z_points_copied * COORD_SIZE), src, ring_npoints, stride);
+            
+            src += ring_npoints * stride;
+            z_points_copied += ring_npoints;
+        }
+    }
+    
+    /* Third pass: copy all M coordinates from all rings */
+    if (has_m)
+    {
+        src = src_start + sizeof(int32);
+        z_offset = has_z ? total_points_copied * COORD_SIZE : 0;
+        for (ring_idx = 0; ring_idx < num_rings; ring_idx++)
+        {
+            ring_npoints = *(int32*)src;
+            src += sizeof(int32);
+            
+            /* Reuse copy_m_coords by adjusting destination offset:
+             * - copy_m_coords adds (npoints * COORD_SIZE * 2) + z_offset internally for linestrings
+             * - We subtract (ring_npoints * COORD_SIZE * 2) to cancel XY offset
+             * - We subtract (has_z ? ring_npoints * COORD_SIZE : 0) to cancel Z offset
+             * - Then add our polygon-specific offset (m_points_copied * COORD_SIZE) */
+            copy_m_coords(dst + (total_points_copied * COORD_SIZE * 2) + z_offset - (ring_npoints * COORD_SIZE * 2) - (has_z ? ring_npoints * COORD_SIZE : 0) + (m_points_copied * COORD_SIZE), src, ring_npoints, stride, has_z);
+            
+            src += ring_npoints * stride;
+            m_points_copied += ring_npoints;
+        }
+    }
+    
+    /* Calculate final position after all coordinates */
+    metadata_pos = dst + (total_points_copied * COORD_SIZE * 2) + (has_z ? total_points_copied * COORD_SIZE : 0) + (has_m ? total_points_copied * COORD_SIZE : 0);
+    
+    /* Add number of rings */
+    memcpy(metadata_pos, &num_rings, sizeof(int32));
+    metadata_pos += sizeof(int32);
+    
+    /* Add 6 bytes representing value 2 followed by 4 zero bytes for single ring polygon and followed by 5 zero bytes for  multi-ring polygon */
+    if (num_rings == 1)
+    {
+        memcpy(metadata_pos, poly_identifier_singlering, 5);
+        metadata_pos += sizeof(poly_identifier_singlering);
+    }
+    else if (num_rings > 1)
+    {
+        memcpy(metadata_pos, poly_identifier_multiring, 6);
+        metadata_pos += sizeof(poly_identifier_multiring);
+    }
+    
+    /* Add cumulative ring point counts */
+    ring_counts_pos = metadata_pos;
+    
+    src = src_start + sizeof(int32);
+    for (ring_idx = 0; ring_idx < num_rings - 1; ring_idx++)
+    {
+        ring_npoints = *(int32*)src;
+        src += sizeof(int32) + ring_npoints * stride;
+        cumulative_points += ring_npoints;
+        
+        if (ring_idx == num_rings - 2)
+        {
+            /* Last ring of 3+ rings: 4 bytes */
+            memcpy(ring_counts_pos, &cumulative_points, sizeof(int32));
+            ring_counts_pos += FINAL_CUMULATIVE_RING_COUNT_SIZE_BYTES;
+        }
+        else
+        {
+            /* Other rings: 5 bytes (4 bytes + 1 zero byte) */
+            memcpy(ring_counts_pos, &cumulative_points, sizeof(int32));
+            ring_counts_pos[4] = 0x00;
+            ring_counts_pos += CUMULATIVE_RING_COUNT_SIZE_BYTES;
+        }
+    }
+
+    /* Add 13-byte polygon ending suffix */        
+    memcpy(ring_counts_pos, polygon_end_metadata, sizeof(polygon_end_metadata));
+    
+    return result;
+}
+
 /* Step 4: Construct final binary representation */
 static bytea* 
 construct_result_bytea(GeoDataInfo *geom_data, bool is_geography) 
@@ -1862,8 +2137,25 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     
     /* Calculate total size needed for result bytea */
     total_size = SRID_SIZE + GEOM_TYPE_SIZE + geom_data->coord_size;
+
     if (geom_data->npoints > 2 && geom_data->postgis_geom_type == LINE_TYPE)
         total_size += NPOINTS_SIZE + sizeof(line_end_metadata);
+
+    if (geom_data->postgis_geom_type == POLYGON_TYPE && !geom_data->is_empty)
+    {
+        /* For polygon, calculate additional bytes needed */
+        int offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID,
+            num_rings = *(int32*)(geom_data->byte_data + offset);
+
+        total_size += NPOINTS_SIZE + RING_COUNT_BYTES;          /* Ring count (4 bytes) */
+
+        if (num_rings > 1) 
+            total_size += sizeof(poly_identifier_multiring) + (num_rings - 2) * CUMULATIVE_RING_COUNT_SIZE_BYTES + FINAL_CUMULATIVE_RING_COUNT_SIZE_BYTES;  /* Cumulative counts: 6 + (n-2)*5 + 4 bytes, or just 5 if only 1 ring */
+        else
+            total_size += sizeof(poly_identifier_singlering);                           /* Single ring polygon suffix */
+
+        total_size += sizeof(polygon_end_metadata);  
+    }
     
     /* Allocate and initialize result bytea */
     result = (bytea *) palloc(VARHDRSZ + total_size);
@@ -1901,6 +2193,9 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
                 if (geom_data->npoints > 2)
                     memcpy(result_data + HEADER_SIZE, &geom_data->npoints, NPOINTS_SIZE);
                 return handle_linestring_type_data(geom_data, result_data, result, is_geography);
+            case POLYGON_TYPE:
+                memcpy(result_data + HEADER_SIZE, &geom_data->npoints, NPOINTS_SIZE);
+                return handle_polygon_type_data(geom_data, result_data, result, is_geography);
         }
     }
     
@@ -2047,6 +2342,11 @@ st_as_binary_common(Datum input, bool is_geography)
         {
             /* Copy empty linestring WKB pattern */
             memcpy(VARDATA(empty_geom), EMPTY_LINE_Binary, EMPTY_Binary_SIZE);
+        }
+        else if (strcmp(geom_type, "ST_Polygon" ) == 0) 
+        {
+            /* Copy empty linestring WKB pattern */
+            memcpy(VARDATA(empty_geom), EMPTY_POLYGON_Binary, EMPTY_Binary_SIZE);
         }
         
         /* Free allocated memory and return the empty WKB */

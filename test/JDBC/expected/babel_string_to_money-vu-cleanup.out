@@ -1,0 +1,29 @@
+DROP PROCEDURE IF EXISTS TestMoneyCast;
+GO
+
+DROP FUNCTION IF EXISTS test_money_func;
+GO
+
+DROP VIEW test_validcurrency;
+GO
+
+DROP VIEW test1;
+GO
+
+DROP FUNCTION IF EXISTS money_func;
+GO
+
+DROP TABLE IF EXISTS transactions;
+GO
+
+DROP FUNCTION IF EXISTS fn_SmallToMoney;
+GO
+
+DROP PROCEDURE IF EXISTS Test_Arithmetic;
+GO
+
+DROP PROCEDURE IF EXISTS Test_Boundaries;
+GO
+
+DROP FUNCTION IF EXISTS round_money;
+GO

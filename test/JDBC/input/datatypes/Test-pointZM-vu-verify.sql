@@ -470,13 +470,6 @@ GO
 -- Test with unsupported geometry instances (these should raise errors)
 -- TODO: Update these tests as we implement support for each geometry instance
 
--- POLYGON
-SELECT geometry::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 4326);
-GO
-
-SELECT geography::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 4326);
-GO
-
 -- CIRCULARSTRING
 SELECT geometry::STGeomFromText('CIRCULARSTRING(0 0, 1 1, 2 0)', 4326);
 GO
