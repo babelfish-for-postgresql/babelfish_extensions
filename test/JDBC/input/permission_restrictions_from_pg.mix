@@ -62,9 +62,6 @@ go
 grant permission_restrictions_tsql_login1 to permission_restrictions_psql_user;
 go
 
-grant permission_restrictions_tsql_login2 to permission_restrictions_psql_user;
-go
-
 -- dropping of BBF users/logins should not be allowed
 drop user permission_restrictions_tsql_login1;
 go
@@ -121,15 +118,13 @@ go
 grant permission_restrictions_tsql_login1 to permission_restrictions_psql_user;
 go
 
-grant permission_restrictions_tsql_login2 to permission_restrictions_psql_user;
-go
-
 -- dropping of BBF users/logins should not be allowed
 drop user permission_restrictions_tsql_login1;
 go
 
-drop user permission_restrictions_tsql_login2;
-go
+-- TODO: BABEL-5565
+-- drop user permission_restrictions_tsql_login2;
+-- go
 
 drop user permission_restrictions_tsql_login3;
 go

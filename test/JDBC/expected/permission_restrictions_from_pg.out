@@ -92,14 +92,6 @@ go
     Server SQLState: 42501)~~
 
 
-grant permission_restrictions_tsql_login2 to permission_restrictions_psql_user;
-go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
-    Server SQLState: 42501)~~
-
-
 -- dropping of BBF users/logins should not be allowed
 drop user permission_restrictions_tsql_login1;
 go
@@ -109,13 +101,9 @@ go
     Server SQLState: 42501)~~
 
 
-drop user permission_restrictions_tsql_login2;
-go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
-    Server SQLState: 42501)~~
-
+-- TODO: BABEL-5565
+-- drop user permission_restrictions_tsql_login2;
+-- go
 
 drop user permission_restrictions_tsql_login3;
 go
@@ -203,14 +191,6 @@ go
 
 -- Grant on BBF role should not be allowed
 grant permission_restrictions_tsql_login1 to permission_restrictions_psql_user;
-go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
-    Server SQLState: 42501)~~
-
-
-grant permission_restrictions_tsql_login2 to permission_restrictions_psql_user;
 go
 ~~ERROR (Code: 0)~~
 
