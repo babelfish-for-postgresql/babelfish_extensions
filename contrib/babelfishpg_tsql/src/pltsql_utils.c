@@ -3166,18 +3166,21 @@ restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
              * One instance: 'ALTER PROCEDURE master_dbo.xp_qv OWNER TO sysadmin;'
              * We should allow these ALTER OWNER statements for shipped objects.
              */
-            if (object_name && stmt->newowner && stmt->newowner->rolename &&
-                strcmp(stmt->newowner->rolename, "sysadmin") == 0)
-            {
-                if ((stmt->objectType == OBJECT_FUNCTION &&
-                     is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_SCALAR_FUNCTION, schema_oid)) ||
-                    (stmt->objectType == OBJECT_PROCEDURE &&
-                     is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_STORED_PROCEDURE, schema_oid)))
-                {
-                    pfree(schema_name);
-                    return; /* Allow ALTER OWNER to sysadmin for shipped objects */
-                }
-            }
+			if (object_name && stmt->newowner)
+			{
+				Oid newowner_oid = get_rolespec_oid(stmt->newowner, false);
+				if (OidIsValid(newowner_oid) && newowner_oid == get_sysadmin_oid())
+				{
+					if ((stmt->objectType == OBJECT_FUNCTION &&
+						is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_SCALAR_FUNCTION, schema_oid)) ||
+						(stmt->objectType == OBJECT_PROCEDURE &&
+						is_ms_shipped((char*)object_name, OBJECT_TYPE_TSQL_STORED_PROCEDURE, schema_oid)))
+					{
+						pfree(schema_name);
+						return; /* Allow ALTER OWNER to sysadmin for shipped objects */
+					}
+				}
+			}
         }
 
         pfree(schema_name);
@@ -3213,7 +3216,7 @@ restrict_alter_table_stmt(AlterTableStmt *stmt)
             schema_name = stmt->relation->schemaname;
         else
         {
-            schema_oid = RangeVarGetRelid(stmt->relation, NoLock, true);
+            schema_oid = RangeVarGetRelid(stmt->relation, AccessExclusiveLock, true);
             if (OidIsValid(schema_oid))
                 schema_name = get_namespace_name(schema_oid);
         }
