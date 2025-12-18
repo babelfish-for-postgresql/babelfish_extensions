@@ -931,9 +931,9 @@ is_babelfish_role(const char *role)
 	Oid			bbf_master_guest_oid;
 	Oid			bbf_tempdb_guest_oid;
 	Oid			bbf_msdb_guest_oid;
-	CatCList	*memlist;
-	int			i;
-	bool		is_babelfish_login = false;
+	// CatCList	*memlist;
+	// int			i;
+	// bool		is_babelfish_login = false;
 
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
@@ -953,25 +953,26 @@ is_babelfish_role(const char *role)
 		|| (OidIsValid(bbf_msdb_guest_oid) && is_member_of_role(role_oid, bbf_msdb_guest_oid)))
 		return true;
 
-	/* Check if it's a Babelfish login, if it's not a member of any guest role.*/
-	memlist = SearchSysCacheList1(AUTHMEMMEMROLE,
-								ObjectIdGetDatum(role_oid));
-	for (i = 0; i < memlist->n_members; i++)
-	{
-		HeapTuple   tup = &memlist->members[i]->tuple;
-		Form_pg_auth_members form = (Form_pg_auth_members) GETSTRUCT(tup);
-		Oid         parent_role_oid = form->roleid;
-		const char *parent_role_name = GetUserNameFromId(parent_role_oid, false);
+	// /* Check if it's a Babelfish login, if it's not a member of any guest role.*/
+	// memlist = SearchSysCacheList1(AUTHMEMMEMROLE,
+	// 							ObjectIdGetDatum(role_oid));
+	// for (i = 0; i < memlist->n_members; i++)
+	// {
+	// 	HeapTuple   tup = &memlist->members[i]->tuple;
+	// 	Form_pg_auth_members form = (Form_pg_auth_members) GETSTRUCT(tup);
+	// 	Oid         parent_role_oid = form->roleid;
+	// 	const char *parent_role_name = GetUserNameFromId(parent_role_oid, false);
 
-		/* Check if the parent role is a Babelfish role */
-		if (is_member_of_role(sysadmin_oid, parent_role_oid))
-		{
-			is_babelfish_login = true;
-			break;
-		}
-	}
-	ReleaseSysCacheList(memlist);
-	return is_babelfish_login;
+	// 	/* Check if the parent role is a Babelfish role */
+	// 	if (is_member_of_role(sysadmin_oid, parent_role_oid))
+	// 	{
+	// 		is_babelfish_login = true;
+	// 		break;
+	// 	}
+	// }
+	// ReleaseSysCacheList(memlist);
+	// return is_babelfish_login;
+	return false;
 }
 
 /*
