@@ -80,8 +80,7 @@ jobs:
 
       - name: Adding PgAudit Patch
         run: |
-          mkdir -p /tmp/babel_patch
-          cat > /tmp/babel_patch/pgaudit_executor_hook_null_check.patch << 'EOF'
+          cat > ~/pgaudit_executor_hook_null_check.patch << 'EOF'
           --- a/pgaudit.c
           +++ b/pgaudit.c
           @@ -1529,7 +1529,7 @@ pgaudit_ExecutorCheckPerms_hook(List *rangeTabls,
@@ -94,8 +93,6 @@ jobs:
                        STACK_NOT_EMPTY();
                        log_select_dml(auditOid, rangeTabls, permInfos);
           EOF
-          cp /tmp/babel_patch/pgaudit_executor_hook_null_check.patch ~/
-          rm -rf /tmp/babel_patch
         shell: bash
 
       - name: Build and Install PgAudit
