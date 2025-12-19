@@ -1441,9 +1441,9 @@ validate_geography_latitude_bytes(GeometryData *geom_data)
 static uint32_t
 calculate_polygon_size(GeometryData *geom_data)
 {
-    uint32_t n = geom_data->ring_count[0],       /* Number of rings */
-             tsql_metadata_size = 22 + (n-1)*5,  /* Size of trailing metadata: 22 base + 5 bytes per extra ring */
-             posgis_ring_headers = 4 * (n+1);    /* Size of ring headers: 4 bytes for ring count + 4 bytes per ring */
+    uint32_t nrings = geom_data->ring_count[0],       /* Number of rings */
+             tsql_metadata_size = 22 + (nrings - 1) * 5,  /* Size of trailing metadata: 22 base + 5 bytes per extra ring */
+             posgis_ring_headers = 4 * (nrings + 1);    /* Size of ring headers: 4 bytes for ring count + 4 bytes per ring */
     
     /* Calculate result size by subtracting tsql's header and metadata sizes and adding postgis's headers and metadata */
     return geom_data->input_len - GEOM_TYPE_SIZE + POSTGIS_HEADER_SIZE - tsql_metadata_size + posgis_ring_headers;
@@ -1514,28 +1514,38 @@ check_geom_end_metadata(GeometryData *geom_data)
          has_m = geom_data->dimension_flag == DIM_FLAG_3DM || geom_data->dimension_flag == DIM_FLAG_2DM;
     uint32_t npoints = geom_data->has_npoints_data ? geom_data->npoints : 2,
             coord_data_size = npoints * (COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0)),
-            val, n, i,offset = 0;
+            val, 
+            nrings, 
+            i,
+            offset = 0;
     uint8_t *src = geom_data->input_data + HEADER_SIZE + (geom_data->has_npoints_data ? NPOINTS_SIZE : 0),
             *metadata = src + coord_data_size;
     
-    /* Check first 4 bytes and store as n */
-    memcpy(&n, metadata, 4);
-    ensure_ringcount_capacity(geom_data, n);
-    geom_data->ring_count[0] = n;
-    if (n < 1) THROW_VARBINARY_CONVERSION_ERROR();
+    /* Check first 4 bytes and store as nrings */
+    memcpy(&nrings, metadata, 4);
+    ensure_ringcount_capacity(geom_data, nrings);
+    geom_data->ring_count[0] = nrings;
+
+    if (nrings < 1) 
+        THROW_VARBINARY_CONVERSION_ERROR();
     offset += 4;
     
-    if (n == 1) 
+    if (nrings == 1) 
     {
         /* Check next 4 bytes for type1 */
         memcpy(&val, metadata + offset, 4);
-        if (val == 1) geom_data->geom_type1 = LINE_TYPE;
-        else if (val == 2) geom_data->geom_type1 = POLYGON_TYPE;
-        else THROW_VARBINARY_CONVERSION_ERROR();
+
+        if (val == 1) 
+            geom_data->geom_type1 = LINE_TYPE;
+        else if (val == 2) 
+            geom_data->geom_type1 = POLYGON_TYPE;
+        else 
+            THROW_VARBINARY_CONVERSION_ERROR();
         offset += 4;
         
         /* Check next byte == 0 */
-        if (metadata[offset] != 0) THROW_VARBINARY_CONVERSION_ERROR();
+        if (metadata[offset] != 0) 
+            THROW_VARBINARY_CONVERSION_ERROR();
         offset += 1;
     } 
     else 
@@ -1543,29 +1553,34 @@ check_geom_end_metadata(GeometryData *geom_data)
         /* Check next 4 bytes == 2 */
         memcpy(&val, metadata + offset, 4);
         
-        if (val == 2) geom_data->geom_type1 = POLYGON_TYPE;
-        else THROW_VARBINARY_CONVERSION_ERROR();
+        if (val == 2) 
+            geom_data->geom_type1 = POLYGON_TYPE;
+        else 
+            THROW_VARBINARY_CONVERSION_ERROR();
 
         offset += 4;
         
         /* Check next 2 bytes == 0 */
-        if (metadata[offset] != 0 || metadata[offset + 1] != 0) THROW_VARBINARY_CONVERSION_ERROR();
+        if (metadata[offset] != 0 || metadata[offset + 1] != 0) 
+            THROW_VARBINARY_CONVERSION_ERROR();
         offset += 2;
         
-        /* Loop for 5*(n-2) + 4 bytes */
-        for (i = 1; i < n; i++) 
+        /* Loop for 5*(nrings-2) + 4 bytes */
+        for (i = 1; i < nrings; i++) 
         {
             memcpy(&val, metadata + offset, 4);
             ensure_ringcount_capacity(geom_data, i);
             geom_data->ring_count[i] = val;
-            if (i == n - 1) 
+
+            if (i == nrings - 1) 
             {
                 offset += 4; /* Last iteration: 4 bytes */
             } 
             else 
             {
                 offset += 4;
-                if (metadata[offset] != 0) THROW_VARBINARY_CONVERSION_ERROR(); /* Fifth byte must be zero */
+                if (metadata[offset] != 0) 
+                    THROW_VARBINARY_CONVERSION_ERROR(); /* Fifth byte must be zero */
                 offset += 1;
             }
         }
@@ -1573,22 +1588,27 @@ check_geom_end_metadata(GeometryData *geom_data)
     
     /* Check next 4 bytes == 1 */
     memcpy(&val, metadata + offset, 4);
-    if (val != 1) THROW_VARBINARY_CONVERSION_ERROR();
+    if (val != 1) 
+        THROW_VARBINARY_CONVERSION_ERROR();
     offset += 4;
     
     /* Check next 4 bytes == 0xFFFFFFFF */
     memcpy(&val, metadata + offset, 4);
-    if (val != 0xFFFFFFFF) THROW_VARBINARY_CONVERSION_ERROR();
+    if (val != 0xFFFFFFFF) 
+        THROW_VARBINARY_CONVERSION_ERROR();
     offset += 4;
     
     /* Check next 4 bytes == 0 */
     memcpy(&val, metadata + offset, 4);
-    if (val != 0) THROW_VARBINARY_CONVERSION_ERROR();
+    if (val != 0) 
+        THROW_VARBINARY_CONVERSION_ERROR();
     offset += 4;
     
     /* Check last byte for type2 */
-    if (metadata[offset] == 2) geom_data->geom_type2 = LINE_TYPE;
-    else if (metadata[offset] == 3) geom_data->geom_type2 = POLYGON_TYPE;
+    if (metadata[offset] == 2) 
+        geom_data->geom_type2 = LINE_TYPE;
+    else if (metadata[offset] == 3) 
+        geom_data->geom_type2 = POLYGON_TYPE;
 }
 
 /* Copy polygon ring coordinates from separated XYZ/M format to interleaved format */
@@ -1597,7 +1617,8 @@ copy_polygon_ring_coordinates(uint8_t *src, uint8_t *dst, uint32_t total_points,
 {
     bool has_z = dimension_flag == DIM_FLAG_3DM || dimension_flag == DIM_FLAG_3D,
          has_m = dimension_flag == DIM_FLAG_3DM || dimension_flag == DIM_FLAG_2DM;
-    uint32_t i, dst_offset = 0;
+    uint32_t i, 
+             dst_offset = 0;
     
     for (i = 0; i < ring_points; i++) 
     {
