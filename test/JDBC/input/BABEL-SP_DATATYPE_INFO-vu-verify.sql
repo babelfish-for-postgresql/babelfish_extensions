@@ -257,3 +257,106 @@ EXEC sp_datatype_info @data_type = -999
 go
 EXEC sp_datatype_info_100 @data_type = -999
 go
+
+-- Wrapper Procedures
+EXEC sp_datatype_info_100_vu_prepare_p1;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_p2 @data_type = 0;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_p3 @data_type = 0, @odbcver = 2;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_int_types;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_string_types;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_binary_types;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_datetime_types;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_decimal_types;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_float_types;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_special_types;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_odbcver;
+GO
+
+EXEC sp_datatype_info_100_vu_prepare_edge_cases;
+GO
+
+EXEC sp_datatype_info_vu_prepare_p1;
+GO
+
+EXEC sp_datatype_info_vu_prepare_p2 @data_type = 0;
+GO
+
+EXEC sp_datatype_info_vu_prepare_p3 @data_type = 0, @odbcver = 2;
+GO
+
+EXEC sp_datatype_info_vu_prepare_int_types;
+GO
+
+EXEC sp_datatype_info_vu_prepare_string_types;
+GO
+
+EXEC sp_datatype_info_vu_prepare_binary_types;
+GO
+
+EXEC sp_datatype_info_vu_prepare_datetime_types;
+GO
+
+EXEC sp_datatype_info_vu_prepare_decimal_types;
+GO
+
+EXEC sp_datatype_info_vu_prepare_float_types;
+GO
+
+EXEC sp_datatype_info_vu_prepare_special_types;
+GO
+
+EXEC sp_datatype_info_vu_prepare_odbcver;
+GO
+
+EXEC sp_datatype_info_vu_prepare_edge_cases;
+GO
+
+EXEC sys.sp_datatype_info_100;
+GO
+
+EXEC sys.sp_datatype_info_100 @data_type = 4;
+GO
+
+EXEC sys.sp_datatype_info_100 @data_type = 4, @odbcver = 2;
+GO
+
+EXEC sys.sp_datatype_info_100 0, 2;
+GO
+
+EXEC sys.sp_datatype_info_100 @odbcver = 2, @data_type = 4;
+GO
+
+EXEC sys.sp_datatype_info;
+GO
+
+EXEC sys.sp_datatype_info @data_type = 4;
+GO
+
+EXEC sys.sp_datatype_info @data_type = 4, @odbcver = 2;
+GO
+
+EXEC sys.sp_datatype_info 0, 2;
+GO
+
+EXEC sys.sp_datatype_info @odbcver = 2, @data_type = 4;
+GO

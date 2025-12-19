@@ -194,7 +194,7 @@ INSERT INTO sys.spt_datatype_info_table VALUES (N'datetime2', 93, 27, N'''', N''
 INSERT INTO sys.spt_datatype_info_table VALUES (N'datetime', 93, 23, N'''', N'''', NULL, 1, 0, 3, NULL, 0, NULL, N'datetime', 3, 3, 9, 3, NULL, NULL, 12, 16, 111, 'datetime');
 INSERT INTO sys.spt_datatype_info_table VALUES (N'smalldatetime', 93, 16, N'''', N'''', NULL, 1, 0, 3, NULL, 0, NULL, N'smalldatetime', 0, 0, 9, 3, NULL, NULL, 22, 16, 111, 'smalldatetime');
 
-CREATE OR REPLACE VIEW sys.sp_datatype_info_view_v2 AS 
+CREATE OR REPLACE VIEW sys.sp_datatype_info_view_version_2 AS 
 SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
        CAST(CREATE_PARAMS AS CHAR(20)) AS CREATE_PARAMS, 
        NULLABLE, CASE_SENSITIVE, SEARCHABLE,
@@ -204,10 +204,10 @@ SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
 FROM sys.sp_datatype_info_helper(2::smallint, false) 
 ORDER BY DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
 
-GRANT SELECT ON sys.sp_datatype_info_view_v2 TO PUBLIC;
+GRANT SELECT ON sys.sp_datatype_info_view_version_2 TO PUBLIC;
 
 
-CREATE OR REPLACE VIEW sys.sp_datatype_info_view_v3 AS 
+CREATE OR REPLACE VIEW sys.sp_datatype_info_view_version_3 AS 
 SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
        CAST(CREATE_PARAMS AS CHAR(20)) AS CREATE_PARAMS, 
        NULLABLE, CASE_SENSITIVE, SEARCHABLE,
@@ -217,7 +217,7 @@ SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
 FROM sys.sp_datatype_info_helper(3::smallint, false) 
 ORDER BY DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
 
-GRANT SELECT ON sys.sp_datatype_info_view_v3 TO PUBLIC;
+GRANT SELECT ON sys.sp_datatype_info_view_version_3 TO PUBLIC;
 
 
 CREATE OR REPLACE PROCEDURE sys.sp_datatype_info(
@@ -227,19 +227,19 @@ AS $$
 BEGIN
     IF @odbcver = 3
     BEGIN
-        SELECT * FROM sys.sp_datatype_info_view_v3
+        SELECT * FROM sys.sp_datatype_info_view_version_3
         WHERE @data_type = 0 OR DATA_TYPE = @data_type;
     END
     ELSE
     BEGIN
-        SELECT * FROM sys.sp_datatype_info_view_v2
+        SELECT * FROM sys.sp_datatype_info_view_version_2
         WHERE @data_type = 0 OR DATA_TYPE = @data_type;
     END
 END;
 $$
 LANGUAGE pltsql;
 
-CREATE OR REPLACE VIEW sys.sp_datatype_info_100_view_v2 AS 
+CREATE OR REPLACE VIEW sys.sp_datatype_info_100_view_version_2 AS 
 SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
        CAST(CREATE_PARAMS AS CHAR(20)) AS CREATE_PARAMS, 
        NULLABLE, CASE_SENSITIVE, SEARCHABLE,
@@ -249,10 +249,10 @@ SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
 FROM sys.sp_datatype_info_helper(2::smallint, true) 
 ORDER BY DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
 
-GRANT SELECT ON sys.sp_datatype_info_100_view_v2 TO PUBLIC;
+GRANT SELECT ON sys.sp_datatype_info_100_view_version_2 TO PUBLIC;
 
 
-CREATE OR REPLACE VIEW sys.sp_datatype_info_100_view_v3 AS 
+CREATE OR REPLACE VIEW sys.sp_datatype_info_100_view_version_3 AS 
 SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
        CAST(CREATE_PARAMS AS CHAR(20)) AS CREATE_PARAMS, 
        NULLABLE, CASE_SENSITIVE, SEARCHABLE,
@@ -262,7 +262,7 @@ SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
 FROM sys.sp_datatype_info_helper(3::smallint, true) 
 ORDER BY DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
 
-GRANT SELECT ON sys.sp_datatype_info_100_view_v3 TO PUBLIC;
+GRANT SELECT ON sys.sp_datatype_info_100_view_version_3 TO PUBLIC;
 
 
 CREATE OR REPLACE PROCEDURE sys.sp_datatype_info_100(
@@ -272,12 +272,12 @@ AS $$
 BEGIN
     IF @odbcver = 3
     BEGIN
-        SELECT * FROM sys.sp_datatype_info_100_view_v3
+        SELECT * FROM sys.sp_datatype_info_100_view_version_3
         WHERE @data_type = 0 OR DATA_TYPE = @data_type;
     END
     ELSE
     BEGIN
-        SELECT * FROM sys.sp_datatype_info_100_view_v2
+        SELECT * FROM sys.sp_datatype_info_100_view_version_2
         WHERE @data_type = 0 OR DATA_TYPE = @data_type;
     END
 END;

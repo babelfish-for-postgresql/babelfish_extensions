@@ -556,7 +556,7 @@ RETURNS NULL ON NULL INPUT;
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
-CREATE OR REPLACE VIEW sys.sp_datatype_info_view_v2 AS 
+CREATE OR REPLACE VIEW sys.sp_datatype_info_view_version_2 AS 
 SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
        CAST(CREATE_PARAMS AS CHAR(20)) AS CREATE_PARAMS, 
        NULLABLE, CASE_SENSITIVE, SEARCHABLE,
@@ -566,10 +566,10 @@ SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
 FROM sys.sp_datatype_info_helper(2::smallint, false) 
 ORDER BY DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
 
-GRANT SELECT ON sys.sp_datatype_info_view_v2 TO PUBLIC;
+GRANT SELECT ON sys.sp_datatype_info_view_version_2 TO PUBLIC;
 
 
-CREATE OR REPLACE VIEW sys.sp_datatype_info_view_v3 AS 
+CREATE OR REPLACE VIEW sys.sp_datatype_info_view_version_3 AS 
 SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
        CAST(CREATE_PARAMS AS CHAR(20)) AS CREATE_PARAMS, 
        NULLABLE, CASE_SENSITIVE, SEARCHABLE,
@@ -579,29 +579,29 @@ SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
 FROM sys.sp_datatype_info_helper(3::smallint, false) 
 ORDER BY DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
 
-GRANT SELECT ON sys.sp_datatype_info_view_v3 TO PUBLIC;
+GRANT SELECT ON sys.sp_datatype_info_view_version_3 TO PUBLIC;
 
 
 CREATE OR REPLACE PROCEDURE sys.sp_datatype_info(
-    IN "@data_type" integer DEFAULT 0, 
-    IN "@odbcver" smallint DEFAULT 2)
+    "@data_type" int = 0, 
+    "@odbcver" smallint = 2)
 AS $$
 BEGIN
     IF @odbcver = 3
     BEGIN
-        SELECT * FROM sys.sp_datatype_info_view_v3
+        SELECT * FROM sys.sp_datatype_info_view_version_3
         WHERE @data_type = 0 OR DATA_TYPE = @data_type;
     END
     ELSE
     BEGIN
-        SELECT * FROM sys.sp_datatype_info_view_v2
+        SELECT * FROM sys.sp_datatype_info_view_version_2
         WHERE @data_type = 0 OR DATA_TYPE = @data_type;
     END
 END;
 $$
 LANGUAGE pltsql;
 
-CREATE OR REPLACE VIEW sys.sp_datatype_info_100_view_v2 AS 
+CREATE OR REPLACE VIEW sys.sp_datatype_info_100_view_version_2 AS 
 SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
        CAST(CREATE_PARAMS AS CHAR(20)) AS CREATE_PARAMS, 
        NULLABLE, CASE_SENSITIVE, SEARCHABLE,
@@ -611,10 +611,10 @@ SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
 FROM sys.sp_datatype_info_helper(2::smallint, true) 
 ORDER BY DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
 
-GRANT SELECT ON sys.sp_datatype_info_100_view_v2 TO PUBLIC;
+GRANT SELECT ON sys.sp_datatype_info_100_view_version_2 TO PUBLIC;
 
 
-CREATE OR REPLACE VIEW sys.sp_datatype_info_100_view_v3 AS 
+CREATE OR REPLACE VIEW sys.sp_datatype_info_100_view_version_3 AS 
 SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
        CAST(CREATE_PARAMS AS CHAR(20)) AS CREATE_PARAMS, 
        NULLABLE, CASE_SENSITIVE, SEARCHABLE,
@@ -624,22 +624,22 @@ SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
 FROM sys.sp_datatype_info_helper(3::smallint, true) 
 ORDER BY DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
 
-GRANT SELECT ON sys.sp_datatype_info_100_view_v3 TO PUBLIC;
+GRANT SELECT ON sys.sp_datatype_info_100_view_version_3 TO PUBLIC;
 
 
 CREATE OR REPLACE PROCEDURE sys.sp_datatype_info_100(
-    IN "@data_type" integer DEFAULT 0, 
-    IN "@odbcver" smallint DEFAULT 2)
+    "@data_type" int = 0,
+    "@odbcver" smallint = 2)
 AS $$
 BEGIN
     IF @odbcver = 3
     BEGIN
-        SELECT * FROM sys.sp_datatype_info_100_view_v3
+        SELECT * FROM sys.sp_datatype_info_100_view_version_3
         WHERE @data_type = 0 OR DATA_TYPE = @data_type;
     END
     ELSE
     BEGIN
-        SELECT * FROM sys.sp_datatype_info_100_view_v2
+        SELECT * FROM sys.sp_datatype_info_100_view_version_2
         WHERE @data_type = 0 OR DATA_TYPE = @data_type;
     END
 END;
