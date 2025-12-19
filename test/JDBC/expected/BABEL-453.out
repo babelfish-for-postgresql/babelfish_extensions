@@ -132,7 +132,7 @@ INSERT INTO t453_varbin VALUES (@var);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Implicit conversion from data type bpchar to varbinary is not allowed. Use the CONVERT function to run this query.)~~
+~~ERROR (Message: Implicit conversion from data type char to varbinary is not allowed. Use the CONVERT function to run this query.)~~
 
 
 DECLARE @var VARCHAR(10) = 'ab';
