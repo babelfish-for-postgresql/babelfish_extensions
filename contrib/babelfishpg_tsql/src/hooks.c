@@ -105,6 +105,7 @@
 #endif							/* USE_LIBXML */
 
 #define TDS_NUMERIC_MAX_PRECISION	38
+#define MAX_BINARY_SIZE 8000
 
 /* Constants for UNPIVOT info list structure */
 #define UNPIVOT_TAG_INDEX           0  /* "UNPIVOT" string tag */
@@ -270,6 +271,7 @@ static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
+static Node* pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr);
 static Oid get_domain_typmodin(Type typ);
 static void pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf);
 #ifdef USE_LIBXML
@@ -343,6 +345,7 @@ static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static replace_pltsql_function_defaults_hook_type prev_replace_pltsql_function_defaults_hook = NULL;
 static exprTypmod_hook_type prev_exprTypmod_hook = NULL;
+static post_transform_expr_recurse_hook_type prev_post_transform_expr_recurse_hook = NULL;
 static pre_transform_openxml_columns_hook_type prev_pre_transform_openxml_columns_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
@@ -510,6 +513,9 @@ InstallExtendedHooks(void)
 
 	prev_exprTypmod_hook = exprTypmod_hook;
 	exprTypmod_hook = pltsql_exprTypmod;
+
+	prev_post_transform_expr_recurse_hook = post_transform_expr_recurse_hook;
+	post_transform_expr_recurse_hook = pltsql_post_transform_expr_recurse;
 
 	prev_pre_transform_openxml_columns_hook = pre_transform_openxml_columns_hook;
 	pre_transform_openxml_columns_hook = pre_transform_openxml_columns;
@@ -691,6 +697,7 @@ UninstallExtendedHooks(void)
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = prev_replace_pltsql_function_defaults_hook;
 	exprTypmod_hook = prev_exprTypmod_hook;
+	post_transform_expr_recurse_hook = prev_post_transform_expr_recurse_hook;
 	pre_transform_openxml_columns_hook = prev_pre_transform_openxml_columns_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
@@ -8275,4 +8282,97 @@ find_all_view_references(Node *node, List **view_oids)
 									find_view_references_walker,
 									(void *) &context,
 									QTW_EXAMINE_RTES_BEFORE);
+}
+
+static Node*
+tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
+{
+		OpExpr				*op = (OpExpr *) OpExp;
+		char				*opname = get_opname(op->opno);
+		Oid					lopr,
+							ropr;
+
+		if (opname == NULL)
+			return OpExp;
+
+		/* Calculate Oid of left and right operand */
+		lopr = exprType(lexpr);
+		ropr = exprType(rexpr);
+		if (strncmp(opname, "+", 1) == 0 &&
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (lopr) &&
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (ropr))
+		{
+			int32	typmod1 = exprTypmod(lexpr),
+					typmod2 = exprTypmod(rexpr),
+					rettypmod = typmod1 + typmod2 - VARHDRSZ;
+
+			if (typmod1 == -1 || typmod2 == -1)
+			{
+				pfree(opname);
+				return OpExp;
+			}
+
+			/* 
+			 * T-SQL limits the resultant binary value to MAX_BINARY_SIZE when concatenating
+			 * binary types with finite typmod
+			 */
+			if (rettypmod > MAX_BINARY_SIZE + VARHDRSZ)
+					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
+
+			OpExp = coerce_to_target_type(pstate, OpExp,
+										 exprType(OpExp),
+										 op->opresulttype,
+										 rettypmod,
+										 COERCION_EXPLICIT,
+										 COERCE_EXPLICIT_CAST,
+										 -1);
+		}
+
+		pfree(opname);
+		return OpExp;
+}
+
+static Node*
+pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
+{
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return expr;
+
+	Assert(expr);
+
+	switch (nodeTag(expr))
+	{
+		case T_OpExpr:
+		{
+			OpExpr		*op = (OpExpr *) expr;
+
+			if (list_length(op->args) == 2)
+			{
+				Node		*lexpr,
+							*rexpr;
+				lexpr = linitial(op->args);
+				rexpr = lsecond(op->args);
+
+				/* 
+				 * Unwrap RelabelType nodes created by domain types. Domain types generate
+				 * RelabelType with typmod = -1, so we need to look through to the underlying
+				 * expression to get the actual typmod value.
+				 */
+				while (lexpr && IsA(lexpr, RelabelType))
+					lexpr = (Node *) ((RelabelType *) lexpr)->arg;
+
+				while (rexpr && IsA(rexpr, RelabelType))
+					rexpr = (Node *) ((RelabelType *) rexpr)->arg;
+
+				expr = tsql_set_typmod_op_expr(pstate, expr, lexpr, rexpr);
+			}
+			break;
+		}
+
+		default:
+			break;
+	}
+
+	return expr;
 }
