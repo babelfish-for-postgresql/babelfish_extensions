@@ -2594,10 +2594,14 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			actual_alias_len = strlen(original_name);
 
 			/* 
-			 * alias_len will be 63 (i.e. NAMEDATALEN-1) after truncation. If alias_len is smaller than actual_alias_len,
-			 * this means Identifier is truncated and it's last 32 bytes would be MD5 hash.
+			 * Maximum alias_len can be 63 (i.e. NAMEDATALEN-1), 
+			 * and minimun alias_len can be 32 (MD5_HASH_LEN) after truncation. 
+			 * Identifier is truncated if 
+			 * (actual_alias_len >= NAMEDATALEN && actual_alias_len > alias_len && alias_len >= 32)
+			 * and it's last 32 bytes would be MD5 hash. 
+			 * So we only need to replace first (alias_len - MD5_HASH_LEN) bytes with its original name
 			 */
-			if(actual_alias_len > alias_len && alias_len == (NAMEDATALEN-1))
+			if(actual_alias_len >= NAMEDATALEN && actual_alias_len > alias_len && alias_len >= 32)
 			{
 				/* First 32 characters of original_name are assigned to alias. */
 				/* cppcheck-suppress invalidFunctionArg */
@@ -2620,7 +2624,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 					pfree(alias);
 					alias = palloc0(Min(NAMEDATALEN-1, actual_alias_len) + 1);
 					memcpy(alias, original_name, Min(NAMEDATALEN-1, actual_alias_len));
-				}				
+				}
 			}
 			res->name = alias;
 		}
