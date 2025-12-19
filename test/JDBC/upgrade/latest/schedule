@@ -667,3 +667,4 @@ test_output_clause
 update_with_var
 BABEL-4271
 BABEL-5788
+sys-fn_varbintohexstr
