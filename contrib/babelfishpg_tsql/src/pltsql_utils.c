@@ -3155,9 +3155,6 @@ restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                  errmsg("ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
     }
-
-    if (schema_name)
-        pfree(schema_name);
 }
 
 /*
@@ -3203,6 +3200,5 @@ restrict_alter_table_stmt(AlterTableStmt *stmt)
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                      errmsg("ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
         }
-        break;
     }
 }

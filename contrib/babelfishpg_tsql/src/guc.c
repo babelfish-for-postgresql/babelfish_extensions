@@ -1132,7 +1132,7 @@ define_custom_variables(void)
 	 * Block ALTER .. OWNER .. from PG endpoint executed on TSQL objects.
 	 */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_alter_owner_from_pg",
-							 gettext_noop("Enables blocked ALTER .. OWNER .. statements from PG endpoint"),
+							 gettext_noop("Enables blocked ALTER .. OWNER .. statements on TSQL objects from PG endpoint"),
 							 NULL,
 							 &pltsql_enable_alter_owner_from_pg,
 							 false,
