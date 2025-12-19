@@ -601,3 +601,4 @@ test_conv_text_to_string
 test_convert_to_binary-before-17_7-16_11
 cast_datetime_to_binary-before-17_7-16_11
 BABEL-4271
+babel_binary-before-17_7-or-16_11
