@@ -661,6 +661,109 @@ text
 ~~END~~
 
 
+-- psql user=object_ownership_l1 password=123
+-- Test changing ownership to master_dbo as non-superuser
+-- ALTER .. OWNER .. should be blocked
+ALTER TABLE object_ownership_db_object_ownership_s2.t1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_object_ownership_s2" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER VIEW object_ownership_db_object_ownership_s2.v1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_object_ownership_s2" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER FUNCTION object_ownership_db_object_ownership_s2.f1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_object_ownership_s2" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER PROCEDURE object_ownership_db_object_ownership_s2.p1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_object_ownership_s2" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER SEQUENCE object_ownership_db_object_ownership_s2.sq1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_object_ownership_s2" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER FUNCTION object_ownership_db_object_ownership_s2.tvf1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_object_ownership_s2" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER FUNCTION object_ownership_db_object_ownership_s2.mtvf1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_object_ownership_s2" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER TYPE object_ownership_db_object_ownership_s2.type1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_object_ownership_s2" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER TYPE object_ownership_db_object_ownership_s2.ttype1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_object_ownership_s2" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER TABLE object_ownership_db_guest.t OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_guest" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER VIEW object_ownership_db_guest.v OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_guest" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER FUNCTION object_ownership_db_guest.f OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_guest" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER PROCEDURE object_ownership_db_guest.p OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_guest" does not exist
+    Server SQLState: 3F000)~~
+
+ALTER SEQUENCE object_ownership_db_guest.sq OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "object_ownership_db_guest" does not exist
+    Server SQLState: 3F000)~~
+
+
+-- tsql
 /** DROP OBJECTS **/
 drop table guest.t;
 go
@@ -811,6 +914,7 @@ go
 ~~START~~
 bool
 t
+t
 ~~END~~
 
 
@@ -892,4 +996,147 @@ go
 drop login object_ownership_l4;
 go
 drop database object_ownership_db
+go
+
+-- psql
+-- Test ALTER .. OWNER .. on TSQL objects via PG endpoint
+-- Create a test login for non-superuser ALTER OWNER tests
+CREATE ROLE test_alter_owner_l1 WITH LOGIN PASSWORD '123';
+GO
+
+-- tsql
+use master;
+go
+
+-- Create test objects in master database (similar to object_ownership_s2 objects)
+create table t1(a int, b int);
+go
+create view v1 as select 1;
+go
+create proc p1 as select 2;
+go
+create function f1() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence sq1 start with 1 increment by 1;
+go
+create index idx1 on t1(a);
+go
+create trigger tr1 on t1 after insert as select 1;
+go
+create function tvf1() returns table as return (select '1' as col);
+go
+create function mtvf1()
+returns @result table([Id] int) AS
+begin
+    insert into @result values (1) return 
+end
+go
+create type type1 from sys.varchar(10);
+go
+create type ttype1 as table (id int);
+go
+
+-- psql user=test_alter_owner_l1 password=123
+-- Test ALTER OWNER on master database objects as non-superuser
+ALTER TABLE master_dbo.t1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+ALTER VIEW master_dbo.v1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+ALTER FUNCTION master_dbo.f1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+ALTER PROCEDURE master_dbo.p1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+ALTER SEQUENCE master_dbo.sq1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+ALTER FUNCTION master_dbo.tvf1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+ALTER FUNCTION master_dbo.mtvf1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+ALTER TYPE master_dbo.type1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+ALTER TYPE master_dbo.ttype1 OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+ALTER SCHEMA master_dbo OWNER TO master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
+
+-- tsql
+use master;
+go
+
+-- Drop the test objects
+drop index idx1 on t1;
+go
+drop trigger tr1;
+go
+drop function tvf1;
+go
+drop function mtvf1;
+go
+drop type type1;
+go
+drop type ttype1;
+go
+drop table t1;
+go
+drop view v1;
+go
+drop procedure p1;
+go
+drop function f1;
+go
+drop sequence sq1;
+go
+
+-- psql
+drop user test_alter_owner_l1;
 go
