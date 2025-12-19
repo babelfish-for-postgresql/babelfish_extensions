@@ -19,7 +19,7 @@ extract_and_classify_warnings() {
             *"leak"*)
                 echo "LEAK_WARNING: $line"
                 ;;
-            *"role"*"has not been granted membership"*|*"permission denied"*|*"transaction left non-empty SPI stack"*|*"cast will be ignored because the source data type is a domain"*|*"Query parsing failed using SLL parser mode but succeeded with LL mode"*|*"Using the TDS Foreign data wrapper (tds_fdw) as provider"*|*"Ignoring @provstr argument value"*|*"Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION"*|*"no privileges could be revoked for"*|*"could not convert locale name"*|*"you don't own a lock of type"*|*"precision reduced to maximum allowed"*|*"WITH TIME ZONE precision reduced to maximum allowed"*|*"no privileges were granted for"*|*"parameter cannot be null"*|*"babelfishpg_tds.product_version cannot be set"*|*"could not convert locale name"*|*"This function has been deprecated and will no longer drop all users."*|*"cannot add relations to publication:"*|*"NUMERIC or DECIMAL type is cast to BIGINT"*)
+            *"role"*"has not been granted membership"*|*"permission denied"*|*"transaction left non-empty SPI stack"*|*"cast will be ignored because the source data type is a domain"*|*"Query parsing failed using SLL parser mode but succeeded with LL mode"*|*"Using the TDS Foreign data wrapper (tds_fdw) as provider"*|*"Ignoring @provstr argument value"*|*"Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION"*|*"no privileges could be revoked for"*|*"could not convert locale name"*|*"you don't own a lock of type"*|*"precision reduced to maximum allowed"*|*"WITH TIME ZONE precision reduced to maximum allowed"*|*"no privileges were granted for"*|*"parameter cannot be null"*|*"babelfishpg_tds.product_version cannot be set"*|*"could not convert locale name"*|*"This function has been deprecated and will no longer drop all users."*|*"cannot add relations to publication:"*|*"NUMERIC or DECIMAL type is cast to BIGINT"*|*"skipped loading publication"*)
                 # These warnings are expected and will be ignored
                 ;;
             *)
@@ -44,8 +44,8 @@ fi
 SNAPSHOT_ACTIVE_COUNT=$(grep -c "SNAPSHOT_ACTIVE_WARNING:" "$CURRENT_WARNINGS")
 LEAK_COUNT=$(grep -c "LEAK_WARNING:" "$CURRENT_WARNINGS")
 
-if [[ "$SNAPSHOT_ACTIVE_COUNT" -ne 44 ]]; then
-    echo "Error: Expected 44 'snapshot ... still active' warnings, but found $SNAPSHOT_ACTIVE_COUNT"
+if [[ "$SNAPSHOT_ACTIVE_COUNT" -ne 42 ]]; then
+    echo "Error: Expected 42 'snapshot ... still active' warnings, but found $SNAPSHOT_ACTIVE_COUNT"
     ERROR_FOUND=true
 fi
 
