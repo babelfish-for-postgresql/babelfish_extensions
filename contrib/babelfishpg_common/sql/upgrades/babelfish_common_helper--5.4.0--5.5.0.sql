@@ -2,6 +2,9 @@
 ---- Include changes related to other datatypes except spatial types here ----
 ------------------------------------------------------------------------------
 
+-- complain if script is sourced in psql, rather than via ALTER EXTENSION
+\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO "5.5.0"" to load this file. \quit
+
 CREATE OR REPLACE FUNCTION sys.ncharvarbinary(sys.NCHAR, integer, boolean)
 RETURNS sys.BBF_VARBINARY
 AS 'babelfishpg_common', 'ncharvarbinary'
@@ -93,9 +96,6 @@ CREATE OR REPLACE FUNCTION sys.binarysysnchar(sys.BBF_BINARY, integer, boolean)
 RETURNS sys.NCHAR
 AS 'babelfishpg_common', 'varbinarynchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
--- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO "5.5.0"" to load this file. \quit
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
@@ -386,3 +386,19 @@ DROP FUNCTION get_bbf_binary_ops_count(varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+CREATE OR REPLACE FUNCTION sys.binaryadd(leftarg sys.BBF_BINARY, rightarg sys.BBF_BINARY)
+RETURNS sys.BBF_BINARY
+AS 'byteacat'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BBF_BINARY'::pg_catalog.regtype and oprright = 'sys.BBF_BINARY'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
+CREATE OPERATOR sys.+ (
+	LEFTARG    = sys.BBF_BINARY,
+	RIGHTARG   = sys.BBF_BINARY,
+	PROCEDURE  = sys.binaryadd
+);
+END IF;
+END $$;
