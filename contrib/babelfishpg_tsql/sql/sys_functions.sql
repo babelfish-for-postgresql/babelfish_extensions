@@ -2086,22 +2086,33 @@ BEGIN
         arg_datatype := sys.translate_pg_type_to_tsql(basetype);
     END IF;
 
-    IF ((arg_datatype IS NULL AND pg_typeof(startdate) = 'time'::regtype) OR arg_datatype = 'time') THEN
+    /*
+        Since the datatype of the argument is still NULL it means the datatype of the argument is not defined in TSQL
+        and is a PG supported datatype. So we check the pg type for the argument datatype validation.
+        We only support TIMESTAMP PG datatype over TDS endpoint, so we added a check for it.
+    */
+    IF arg_datatype IS NULL THEN
+        IF pg_typeof(startdate) = 'timestamp'::regtype THEN
+            return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
+        END IF;
+    END IF;
+
+    IF arg_datatype = 'time' THEN
         return sys.dateadd_internal_datetime(datepart, num, startdate, 0);
     END IF;
-    IF ((arg_datatype IS NULL AND pg_typeof(startdate) = 'date'::regtype) OR arg_datatype = 'date') THEN
+    IF arg_datatype = 'date' THEN
         return sys.dateadd_internal_datetime(datepart, num, startdate, 1);
     END IF;
-    IF ((arg_datatype IS NULL AND pg_typeof(startdate) = 'sys.smalldatetime'::regtype) OR arg_datatype = 'smalldatetime') THEN
+    IF arg_datatype = 'smalldatetime' THEN
         return sys.dateadd_internal_datetime(datepart, num, startdate, 2);
     END IF;
-    IF ((arg_datatype IS NULL AND (pg_typeof(startdate) = 'sys.datetime'::regtype OR pg_typeof(startdate) = 'timestamp'::regtype)) OR (arg_datatype = 'datetime' OR arg_datatype = 'timestamp')) THEN
+    IF (arg_datatype = 'datetime' OR arg_datatype = 'timestamp') THEN
         return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
     END IF;
-    IF ((arg_datatype IS NULL AND pg_typeof(startdate) = 'sys.datetime2'::regtype) OR arg_datatype = 'datetime2') THEN
+    IF arg_datatype = 'datetime2' THEN
         return sys.dateadd_internal_datetime(datepart, num, startdate, 4);
     END IF;
-    IF ((arg_datatype IS NULL AND pg_typeof(startdate) = 'sys.datetimeoffset'::regtype) OR arg_datatype = 'datetimeoffset') THEN
+    IF arg_datatype = 'datetimeoffset' THEN
         return sys.dateadd_internal_df(datepart, num, startdate);
     END IF;
     RAISE EXCEPTION 'Conversion failed when converting date and/or time from %.', pg_typeof(startdate);
