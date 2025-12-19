@@ -1148,7 +1148,7 @@ tsql_ultostr_blankpad(char *str, uint32 value, int32 minwidth)
  * Encode datetime/smalldatetime to string with default format "mon dd yyyy hh:miAM (or PM)"
  */
 void
-TsqlEncodeDateTime(struct pg_tm *tm, fsec_t fsec, char *str)
+TsqlEncodeDateTime(struct pg_tm *tm, char *str)
 {
 	int p_hour;
 
@@ -1176,14 +1176,7 @@ TsqlEncodeDateTime(struct pg_tm *tm, fsec_t fsec, char *str)
 	str = tsql_ultostr_blankpad(str, p_hour, 2);
 	*str++ = ':';
 	str = pg_ultostr_zeropad(str, tm->tm_min, 2);
-	if (tm->tm_hour >= 12)
-	{
-		memcpy(str, "PM", 2);
-	}
-	else
-	{
-		memcpy(str, "AM", 2);
-	}
+	memcpy(str, tm->tm_hour >= 12 ? "PM" : "AM", 2);
 	str+=2;
 	*str = '\0';
 }
@@ -1205,11 +1198,7 @@ datetime_varchar(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
-	{
-		/* round fractional seconds to datetime precision */
-		fsec = DTROUND(fsec);
-		TsqlEncodeDateTime(tm, fsec, buf);
-	}
+		TsqlEncodeDateTime(tm, buf);
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -1249,11 +1238,7 @@ datetime_char(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
-	{
-		/* round fractional seconds to datetime precision */
-		fsec = DTROUND(fsec);
-		TsqlEncodeDateTime(tm, fsec, buf);
-	}
+		TsqlEncodeDateTime(tm, buf);
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
