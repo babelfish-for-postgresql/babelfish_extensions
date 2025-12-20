@@ -381,3 +381,14 @@ CREATE OPERATOR sys.= (
 alter OPERATOR family bbf_varbinary_ops USING btree add
     OPERATOR 3 sys.= (sys.bbf_varbinary, sys.bbf_binary),
     FUNCTION 1 sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary);
+
+CREATE OR REPLACE FUNCTION sys.binaryadd(leftarg sys.BBF_BINARY, rightarg sys.BBF_BINARY)
+RETURNS sys.BBF_BINARY
+AS 'byteacat'
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG = sys.bbf_binary,
+    RIGHTARG = sys.bbf_binary,
+    FUNCTION = sys.binaryadd
+);
