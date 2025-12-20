@@ -24,3 +24,9 @@ go
 
 drop procedure p_insert
 go
+
+drop procedure p_alter_add_col
+go
+
+drop procedure p_nested_2
+go

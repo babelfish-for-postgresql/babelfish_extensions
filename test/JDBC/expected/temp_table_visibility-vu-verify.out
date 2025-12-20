@@ -58,13 +58,14 @@ GO
 
 ~~START~~
 int
+0
 ~~END~~
 
 ~~ROW COUNT: 1~~
 
 ~~START~~
 int
-100
+1
 ~~END~~
 
 SELECT COUNT(*) FROM #temptable
@@ -72,5 +73,52 @@ GO
 ~~START~~
 int
 100
+~~END~~
+
+EXEC p_nested_2
+GO
+~~ROW COUNT: 100~~
+
+~~START~~
+int
+200
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+201
+~~END~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~ROW COUNT: 100~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+bigint
+0
 ~~END~~
 

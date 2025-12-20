@@ -57,10 +57,27 @@ BEGIN
 	CREATE TABLE #temptable(a INT);
 	INSERT INTO #temptable VALUES (GENERATE_SERIES(1,100));
 	EXEC p_truncate
-	SELECT * FROM #temptable;
+	SELECT COUNT(*) FROM #temptable;
 	EXEC p_insert 100;
-	SELECT * FROM #temptable;
+	SELECT COUNT(*) FROM #temptable;
 END;
 GO
-CREATE PROC p_insert(@a INT) AS INSERT INTO #temptable VALUES (@a)
+CREATE PROC p_insert(@a INT) AS INSERT INTO #temptable VALUES (@a);
+GO
+CREATE PROC p_alter_add_col AS ALTER TABLE #temptable ADD newcol BIGINT DEFAULT 0;
+GO
+CREATE PROC p_nested_2 AS
+BEGIN
+	INSERT INTO #temptable VALUES (GENERATE_SERIES(1,100)); -- inserts 100 tuples
+	SELECT COUNT(*) FROM #temptable; 						-- shows 200 tuples
+	EXEC p_insert 101										-- inserts 1 tuple
+	SELECT COUNT(*) FROM #temptable;						-- shows 201 tuples
+	CREATE TABLE #temptable(a INT, b INT IDENTITY(1,1));	-- noOp; creates temp table
+	INSERT INTO #temptable(a) VALUES (1), (2);				-- inserts 2 tuple
+	SELECT COUNT(*) FROM #temptable;						-- shows 2 tuples
+	EXEC p_nested;
+	SELECT COUNT(*) FROM #temptable;						-- shows 2 tuples
+	EXEC p_alter_add_col									-- add newcol
+	SELECT SUM(newcol) FROM #temptable						-- returns 0 as sum
+END;
 GO

@@ -25,3 +25,5 @@ EXEC p_nested
 GO
 SELECT COUNT(*) FROM #temptable
 GO
+EXEC p_nested_2
+GO
