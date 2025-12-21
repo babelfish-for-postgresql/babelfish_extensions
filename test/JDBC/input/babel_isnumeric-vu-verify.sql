@@ -907,8 +907,10 @@ SELECT ISNUMERIC(CHAR(10) + '123');       -- newline + number
 GO
 SELECT ISNUMERIC('123 ');                 -- number + space
 GO
-SELECT ISNUMERIC('123' + CHAR(9));        -- number + tab
+SELECT ISNUMERIC('123' + CHAR(9));        -- number + tab, tsql 0, trailing whitespaces not allowed
 GO
+SELECT ISNUMERIC(char(9) + '123')         -- tab + number, tsql:1, leading whitespace is allowed
+go 
 SELECT ISNUMERIC(' ' + CHAR(9) + '123');  -- space + tab + number
 GO
 SELECT ISNUMERIC(CHAR(9) + CHAR(10) + '123');  -- tab + newline + number
@@ -919,6 +921,8 @@ SELECT ISNUMERIC(' 123 ');                -- space + number + space
 GO
 SELECT ISNUMERIC(CHAR(9) + '123' + CHAR(9));  -- tab + number + tab
 GO
+SELECT ISNUMERIC(CHAR(9) + '123' + CHAR(9)+ '123');
+go
 SELECT ISNUMERIC(' ' + CHAR(9) + '123' + CHAR(10) + ' ');  -- mixed whitespace around number
 GO
 
@@ -951,16 +955,10 @@ select isnumeric(char(160))
 select isnumeric(nchar(160))
 go
 
-CHAR_X08_BS:        '\u0008'      -> skip;   // backspace
-CHAR_X0B_VT:        '\u000b'      -> skip;   // vertical tab
-CHAR_X0C_FF:        '\u000c'      -> skip;   // form feed
-
-// https://en.wikipedia.org/wiki/Whitespace_character
 -- zero width space
 select isnumeric(char(8203))
 select isnumeric(nchar(8203))
 go
-
 
 -- narrow no-break space
 select isnumeric(char(8239))

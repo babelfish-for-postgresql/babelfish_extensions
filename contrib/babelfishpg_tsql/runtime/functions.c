@@ -2305,52 +2305,31 @@ search_partition(PG_FUNCTION_ARGS)
 static int
 checkWhitespaceType(const char *str)
 {
-	size_t i;
-	size_t len;
+	size_t i, len;
 	bool has_special_ws = false;
 	bool has_other_char = false;
 
-	if (!str)
-		return 0;
-
-	len = strlen(str);
-	if (len == 0)
+	if (!str || (len = strlen(str)) == 0)
 		return 0;
 
 	for (i = 0; i < len; i++)
 	{
-		if (str[i] == '\b')
-		{
+		char c = str[i];
+		
+		if (c == '\b')
 			return 0;
-		}
-		if (str[i] == '\t' || str[i] == '\n' || str[i] == '\v' || 
-		    str[i] == '\f' || str[i] == '\r')
+		
+		if (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r')
 		{
+			if (has_other_char)
+				return 0;
 			has_special_ws = true;
 		}
-		else if (str[i] == ' ')
-		{
-			/* Space character - continue checking */
-			continue;
-		}
-		else
-		{
-			/* Found non-whitespace or non-special character */
+		else if (c != ' ')
 			has_other_char = true;
-			break;
-		}
 	}
 
-	/* If found other characters, needs numeric conversion */
-	if (has_other_char)
-		return -1;
-
-	/* If found special whitespace, return 1 */
-	if (has_special_ws)
-		return 1;
-
-	/* Only spaces or empty - return 0 */
-	return 0;
+	return has_other_char ? -1 : (has_special_ws ? 1 : 0);
 }
 
 /*
