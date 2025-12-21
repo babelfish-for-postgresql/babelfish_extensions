@@ -1,0 +1,428 @@
+-- parallel_query_expected
+-- tsql
+
+select cast(cast(0x as binary(5)) + cast(0x as binary(3)) as binary(8)) as EmptyBinaryAddition
+GO
+
+select cast(cast(0x as binary(8000)) + cast(0x as binary(3)) as binary(8000)) as EmptyBinaryMaxAddition
+GO
+
+select cast(cast(0x as binary(8000)) + cast(0x as binary(3)) as binary(8000)) as EmptyBinaryMaxAddition2
+GO
+
+select cast(cast(0x as binary(5)) + cast(0x as binary(8000)) as binary(8000)) as EmptyBinaryAdditionMax
+GO
+
+select cast(cast(0x as binary(5)) + cast(0x as binary(8000)) as binary(80)) as EmptyBinaryAdditionMax2
+GO
+
+select cast(cast(0x123 as binary(5)) + cast(0x123 as binary(8)) as binary(13)) as FixedLengthAddition
+GO
+
+select cast(cast(0x123 as binary(8000)) + cast(0x123 as binary(8)) as binary(8000)) as MaxFixedLengthAddition
+GO
+
+select cast(cast(0x123 as binary(5)) + cast(0x123 as binary(8000)) as binary(8000)) as FixedMaxLengthAddition
+GO
+
+select cast(cast(0xFFFFFFFF as binary(10)) + cast(0xFFFFFFFF as binary(10)) as binary(20)) as LargeValueAddition
+GO
+
+select cast(cast(0xFFFFFFFF as binary(8000)) + cast(0xFFFFFFFF as binary(10)) as binary(8000)) as LargeValueMaxAddition
+GO
+
+select cast(cast(0xFFFFFFFF as binary(10)) + cast(0xFFFFFFFF as binary(8000)) as binary(8000)) as LargeValueAdditionMax
+GO
+
+select cast(cast(0x123 as binary(3)) + cast(0x45678 as binary(5)) as binary(8)) as DifferentLengthAddition 
+GO
+
+select cast(cast(0x123 as binary(8000)) + cast(0x45678 as binary(5)) as binary(8000)) as DifferentLengthMaxAddition
+GO
+
+select cast(cast(0x123 as binary(3)) + cast(0x45678 as binary(8000)) as binary(8000)) as DifferentLengthAdditionMax
+GO
+
+select cast(cast(NULL as binary(5)) + cast(NULL as binary(3)) as binary(8)) as NullAddition_Small
+GO
+
+select cast(cast(NULL as binary(8000)) + cast(NULL as binary(3)) as binary(8000)) as NullAddition_MaxSmall
+GO
+
+select cast(cast(NULL as binary(5)) + cast(NULL as binary(8000)) as binary(8000)) as NullAddition_SmallMax
+GO
+
+select cast(cast(NULL as binary(10)) + cast(0x as binary(5)) as binary(15)) as NullEmptyAddition_Regular
+GO
+
+select cast(cast(NULL as binary(8000)) + cast(0x as binary(5)) as binary(8000)) as NullEmptyAddition_MaxSmall
+GO
+
+select cast(cast(NULL as binary(10)) + cast(0x as binary(8000)) as binary(8000)) as NullEmptyAddition_RegularMax
+GO
+
+select cast(cast(NULL as binary(10)) + cast(0x12345 as binary(5)) as binary(15)) as NullValueAddition_Regular
+GO
+
+select cast(cast(NULL as binary(8000)) + cast(0x12345 as binary(5)) as binary(8000)) as NullValueAddition_MaxSmall
+GO
+
+select cast(cast(NULL as binary(10)) + cast(0x12345 as binary(8000)) as binary(8000)) as NullValueAddition_RegularMax
+GO
+
+select cast(cast(0x001 as binary(8001)) + cast(0x09 as binary(5)) as binary(8000)) as InvalidLength_ExceedMax
+GO
+
+select cast(cast(0x001 as binary(0)) + cast(0x09 as binary(5)) as binary(5)) as InvalidLength_Zero
+GO
+
+select cast(cast(0x001 as binary(-1)) + cast(0x09 as binary(5)) as binary(5)) as InvalidLength_Negative
+GO
+
+select cast(cast(0x as binary(5)) + cast(0x as varbinary(3)) as varbinary(8)) as EmptyBinaryVarbinaryAddition
+GO
+
+select cast(cast(0x as varbinary(3)) + cast(0x as binary(5)) as varbinary(8)) as EmptyVarbinaryBinaryAddition
+GO
+
+select cast(cast(0x as binary(8000)) + cast(0x as varbinary(max)) as varbinary(max)) as EmptyBinaryMaxVarbinaryMaxAddition
+GO
+
+select cast(cast(0x as varbinary(max)) + cast(0x as binary(8000)) as varbinary(max)) as EmptyVarbinaryMaxBinaryMaxAddition
+GO
+
+select cast(cast(0x123 as binary(5)) + cast(0x123 as varbinary(8)) as varbinary(13)) as FixedBinaryVarbinaryAddition
+GO
+
+select cast(cast(0x123 as varbinary(8)) + cast(0x123 as binary(5)) as varbinary(13)) as FixedVarbinaryBinaryAddition
+GO
+
+select cast(cast(0x123 as binary(8000)) + cast(0x123 as varbinary(max)) as varbinary(max)) as MaxBinaryVarbinaryMaxAddition
+GO
+
+select cast(cast(0x123 as varbinary(max)) + cast(0x123 as binary(8000)) as varbinary(max)) as VarbinaryMaxBinaryMaxAddition
+GO
+
+select cast(cast(0xFFFFFFFF as binary(10)) + cast(0xFFFFFFFF as varbinary(10)) as varbinary(20)) as LargeValueBinaryVarbinaryAddition
+GO
+
+select cast(cast(0xFFFFFFFF as varbinary(10)) + cast(0xFFFFFFFF as binary(10)) as varbinary(20)) as LargeValueVarbinaryBinaryAddition
+GO
+
+select cast(cast(0xFFFFFFFF as binary(8000)) + cast(0xFFFFFFFF as varbinary(max)) as varbinary(max)) as LargeValueBinaryMaxVarbinaryMaxAddition
+GO
+
+select cast(cast(0xFFFFFFFF as varbinary(max)) + cast(0xFFFFFFFF as binary(8000)) as varbinary(max)) as LargeValueVarbinaryMaxBinaryMaxAddition
+GO
+
+select cast(cast(0x123 as binary(3)) + cast(0x45678 as varbinary(5)) as varbinary(8)) as DifferentLengthBinaryVarbinaryAddition 
+GO
+
+select cast(cast(0x45678 as varbinary(5)) + cast(0x123 as binary(3)) as varbinary(8)) as DifferentLengthVarbinaryBinaryAddition
+GO
+
+select cast(cast(0x123 as binary(8000)) + cast(0x45678 as varbinary(max)) as varbinary(max)) as DifferentLengthBinaryMaxVarbinaryMaxAddition
+GO
+
+select cast(cast(0x45678 as varbinary(max)) + cast(0x123 as binary(8000)) as varbinary(max)) as DifferentLengthVarbinaryMaxBinaryMaxAddition
+GO
+
+select cast(cast(NULL as binary(5)) + cast(NULL as varbinary(3)) as varbinary(8)) as NullBinaryVarbinaryAddition_Small
+GO
+
+select cast(cast(NULL as varbinary(3)) + cast(NULL as binary(5)) as varbinary(8)) as NullVarbinaryBinaryAddition_Small
+GO
+
+select cast(cast(NULL as binary(8000)) + cast(NULL as varbinary(max)) as varbinary(max)) as NullBinaryVarbinaryAddition_Max
+GO
+
+select cast(cast(NULL as varbinary(max)) + cast(NULL as binary(8000)) as varbinary(max)) as NullVarbinaryBinaryAddition_Max
+GO
+
+select cast(cast(NULL as binary(10)) + cast(0x as varbinary(5)) as varbinary(15)) as NullBinaryEmptyVarbinaryAddition_Regular
+GO
+
+select cast(cast(0x as varbinary(5)) + cast(NULL as binary(10)) as varbinary(15)) as EmptyVarbinaryNullBinaryAddition_Regular
+GO
+
+select cast(cast(NULL as binary(8000)) + cast(0x as varbinary(max)) as varbinary(max)) as NullBinaryEmptyVarbinaryAddition_Max
+GO
+
+select cast(cast(0x as varbinary(max)) + cast(NULL as binary(8000)) as varbinary(max)) as EmptyVarbinaryNullBinaryAddition_Max
+GO
+
+select cast(cast(NULL as binary(10)) + cast(0x12345 as varbinary(5)) as varbinary(15)) as NullBinaryValueVarbinaryAddition_Regular
+GO
+
+select cast(cast(0x12345 as varbinary(5)) + cast(NULL as binary(10)) as varbinary(15)) as ValueVarbinaryNullBinaryAddition_Regular
+GO
+
+select cast(cast(NULL as binary(8000)) + cast(0x12345 as varbinary(max)) as varbinary(max)) as NullBinaryValueVarbinaryAddition_Max
+GO
+
+select cast(cast(0x12345 as varbinary(max)) + cast(NULL as binary(8000)) as varbinary(max)) as ValueVarbinaryNullBinaryAddition_Max
+GO
+
+-- Invalid cases
+select cast(cast(0x001 as binary(8001)) + cast(0x09 as varbinary(5)) as varbinary(8006)) as InvalidBinaryLengthVarbinaryAddition_ExceedMax
+GO
+
+select cast(cast(0x09 as varbinary(5)) + cast(0x001 as binary(8001)) as varbinary(8006)) as VarbinaryInvalidBinaryLengthAddition_ExceedMax
+GO
+
+select cast(cast(0x001 as binary(0)) + cast(0x09 as varbinary(5)) as varbinary(5)) as InvalidBinaryLengthVarbinaryAddition_Zero
+GO
+
+select cast(cast(0x09 as varbinary(5)) + cast(0x001 as binary(0)) as varbinary(5)) as VarbinaryInvalidBinaryLengthAddition_Zero
+GO
+
+select cast(cast(0x001 as binary(-1)) + cast(0x09 as varbinary(5)) as varbinary(5)) as InvalidBinaryLengthVarbinaryAddition_Negative
+GO
+
+select cast(cast(0x09 as varbinary(5)) + cast(0x001 as binary(-1)) as varbinary(5)) as VarbinaryInvalidBinaryLengthAddition_Negative
+GO
+
+-- Length tests
+select datalength(cast(cast(0x123 as binary(100)) + cast(0x456 as binary(100)) as binary(200))) as binary_result_len
+GO
+
+select datalength(cast(cast(0x123 as binary(100)) + cast(0x456 as varbinary(100)) as varbinary(200))) as mixed_result_len
+GO
+
+-- Multiple concatenations
+select cast(cast(0x12 as binary(2)) + cast(0x34 as binary(2)) + cast(0x56 as binary(2)) as binary(6))
+GO
+
+select cast(cast(0x12 as binary(2)) + cast(0x34 as varbinary(2)) + cast(0x56 as binary(2)) as varbinary(6))
+GO
+
+-- Issue
+select cast(0x123 as binary(3)) + cast(0x45678 as binary(5)) as BinaryConcatenation
+GO
+
+-- Issue
+declare @binary_val1 binary(5) = 0x4142434445 
+declare @binary_val2 binary(100) = 0x 
+select @binary_val1 + @binary_val2 as BinaryVariableAddition
+GO
+
+-- Issue
+declare @binary_val1 binary(8000) = 0x4142434445 
+declare @binary_val2 binary(100) = 0x 
+select @binary_val1 + @binary_val2 as BinaryVariableMaxAddition
+GO
+
+declare @binary_val1 binary(5) = 0x4142434445 
+declare @binary_val2 binary(100) = 0x 
+select @binary_val1, datalength(@binary_val1), @binary_val2, datalength(@binary_val2) 
+select cast(@binary_val1 + @binary_val2 as binary(10)) as BinaryVariableCastAddition
+GO
+
+
+declare @binary_val binary(5) = 0x4142434445 
+declare @varbinary_val varbinary(100) = 0x 
+select @binary_val + @varbinary_val as BinaryVarbinaryVariableAddition,
+       @varbinary_val + @binary_val as VarbinaryBinaryVariableAddition
+GO
+
+declare @binary_val binary(8000) = 0x4142434445 
+declare @varbinary_val varbinary(max) = 0x 
+select @binary_val + @varbinary_val as BinaryMaxVarbinaryMaxVariableAddition,
+       @varbinary_val + @binary_val as VarbinaryMaxBinaryMaxVariableAddition
+GO
+
+declare @binary_val binary(5) = 0x4142434445 
+declare @varbinary_val varbinary(100) = 0x 
+select @binary_val, datalength(@binary_val), @varbinary_val, datalength(@varbinary_val) 
+select cast(@binary_val + @varbinary_val as binary(10)) as BinaryVarbinaryVariableCastAddition,
+       cast(@varbinary_val + @binary_val as varbinary(10)) as VarbinaryBinaryVariableCastAddition
+GO
+
+-- UDT testing
+SELECT 
+    CAST(CAST(0x11 AS FIXEDLEN_BINARY) + CAST(0x22 AS FIXEDLEN_BINARY) AS BINARY(10)) AS FixedBinaryUDT_Test,
+    CAST(CAST(0x11 AS MAXLEN_BINARY) + CAST(0x22 AS MAXLEN_BINARY) AS BINARY(8000)) AS MaxBinaryUDT_Test,
+    CAST(CAST(0x11 AS FIXEDLEN_BINARY) + CAST(0x22 AS FIXEDLEN_VARBINARY) AS VARBINARY(10)) AS FixedMixedUDT_Test,
+    CAST(CAST(0x11 AS MAXLEN_BINARY) + CAST(0x22 AS MAXLEN_VARBINARY) AS VARBINARY(MAX)) AS MaxMixedUDT_Test;
+GO
+
+-- Test Tables
+SELECT * FROM BABEL_5597_binary_test_table;
+GO
+
+SELECT * FROM BABEL_5597_mixed_test_table;
+GO
+
+-- Test Views
+
+SELECT * FROM BABEL_5597_binary_test_view1;
+GO
+SELECT * FROM BABEL_5597_binary_test_view2;
+GO
+SELECT * FROM BABEL_5597_binary_test_view3;
+GO
+SELECT * FROM BABEL_5597_binary_test_view4;
+GO
+SELECT * FROM BABEL_5597_binary_test_view5;
+GO
+SELECT * FROM BABEL_5597_binary_test_view6;
+GO
+SELECT * FROM BABEL_5597_binary_test_view7;
+GO
+SELECT * FROM BABEL_5597_binary_test_view8;
+GO
+
+SELECT * FROM BABEL_5597_mixed_test_view1;
+GO
+SELECT * FROM BABEL_5597_mixed_test_view2;
+GO
+SELECT * FROM BABEL_5597_mixed_test_view3;
+GO
+SELECT * FROM BABEL_5597_mixed_test_view4;
+GO
+SELECT * FROM BABEL_5597_mixed_test_view5;
+GO
+SELECT * FROM BABEL_5597_mixed_test_view6;
+GO
+SELECT * FROM BABEL_5597_mixed_test_view7;
+GO
+SELECT * FROM BABEL_5597_mixed_test_view8;
+GO
+
+-- Test Functions (ISSUE in All functions)
+SELECT * FROM BABEL_5597_binary_test_func1();
+GO
+SELECT * FROM BABEL_5597_binary_test_func2();
+GO
+SELECT * FROM BABEL_5597_binary_test_func3();
+GO
+SELECT * FROM BABEL_5597_binary_test_func4();
+GO
+SELECT * FROM BABEL_5597_binary_test_func5();
+GO
+SELECT * FROM BABEL_5597_binary_test_func6();
+GO
+SELECT * FROM BABEL_5597_binary_test_func7();
+GO
+SELECT * FROM BABEL_5597_binary_test_func8();
+GO
+SELECT * FROM BABEL_5597_binary_test_func9(0x123, 0x456, 0x789);
+GO
+
+SELECT * FROM BABEL_5597_mixed_test_func1();
+GO
+SELECT * FROM BABEL_5597_mixed_test_func2();
+GO
+SELECT * FROM BABEL_5597_mixed_test_func3();
+GO
+SELECT * FROM BABEL_5597_mixed_test_func4();
+GO
+SELECT * FROM BABEL_5597_mixed_test_func5();
+GO
+SELECT * FROM BABEL_5597_mixed_test_func6();
+GO
+SELECT * FROM BABEL_5597_mixed_test_func7();
+GO
+SELECT * FROM BABEL_5597_mixed_test_func8();
+GO
+SELECT * FROM BABEL_5597_mixed_test_func9(0x123, 0x456, 0x789, 0xABC);
+GO
+
+-- Test Procedures
+EXEC BABEL_5597_binary_test_proc1;
+GO
+EXEC BABEL_5597_binary_test_proc2;
+GO
+EXEC BABEL_5597_binary_test_proc3;
+GO
+EXEC BABEL_5597_binary_test_proc4;
+GO
+-- Issue
+EXEC BABEL_5597_binary_test_proc5;
+GO
+-- Issue
+EXEC BABEL_5597_binary_test_proc6;
+GO
+-- Issue
+EXEC BABEL_5597_binary_test_proc7 
+    @max_input1=0x123, 
+    @fixed_input=0x456, 
+    @max_input2=0x789;
+GO
+
+EXEC BABEL_5597_mixed_test_proc1;
+GO
+EXEC BABEL_5597_mixed_test_proc2;
+GO
+EXEC BABEL_5597_mixed_test_proc3;
+GO
+EXEC BABEL_5597_mixed_test_proc4;
+GO
+EXEC BABEL_5597_mixed_test_proc5;
+GO
+EXEC BABEL_5597_mixed_test_proc6;
+GO
+EXEC BABEL_5597_mixed_test_proc7 
+    @binary_max=0x123, 
+    @binary_fixed=0x456, 
+    @varbinary_fixed=0x789, 
+    @varbinary_max=0xABC;
+GO
+
+-- psql
+ANALYZE master_dbo.BABEL_5597_binary_test;
+GO
+
+SET enable_seqscan = off;
+GO
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+
+-- Test query with execution plan
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT binary_col FROM BABEL_5597_binary_test WHERE binary_col = 0x0000000150;
+GO
+
+SELECT binary_col FROM BABEL_5597_binary_test 
+WHERE binary_col = cast(cast(0x00000001 as binary(4)) + cast(0x50 as binary(1)) as binary(5));
+GO
+
+SELECT binary_col FROM BABEL_5597_binary_test WHERE binary_col < 0x0000000100;
+GO
+
+SELECT binary_col FROM BABEL_5597_binary_test
+WHERE binary_col < cast(cast(0x00000001 as binary(4)) + cast(0x00 as binary(1)) as binary(5));
+GO
+
+SELECT binary_col FROM BABEL_5597_binary_test WHERE binary_col > 0x0000000100;
+GO
+
+SELECT binary_col FROM BABEL_5597_binary_test 
+WHERE binary_col > cast(cast(0x00000001 as binary(4)) + cast(0x00 as binary(1)) as binary(5));
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- Checking row counts to verify selectivity
+SELECT COUNT(*) FROM BABEL_5597_binary_test WHERE binary_col = 0x0000000100;
+GO
+SELECT COUNT(*) FROM BABEL_5597_binary_test 
+WHERE binary_col = cast(cast(0x00000000 as binary(4)) + cast(0x50 as binary(1)) as binary(5));
+GO
+
+SELECT COUNT(*) FROM BABEL_5597_binary_test WHERE binary_col < 0x0000000100;
+GO
+SELECT COUNT(*) FROM BABEL_5597_binary_test 
+WHERE binary_col < cast(cast(0x00000001 as binary(4)) + cast(0x00 as binary(1)) as binary(5));
+GO
+
+SELECT COUNT(*) FROM BABEL_5597_binary_test WHERE binary_col > 0x0000000100;
+GO
+SELECT COUNT(*) FROM BABEL_5597_binary_test 
+WHERE binary_col > cast(cast(0x00000001 as binary(4)) + cast(0x00 as binary(1)) as binary(5));
+GO

@@ -652,6 +652,7 @@ babel_assign_nchar
 alter-function-with-weak-view
 view_sec_setting
 alter-table-null-notnull
+babel_binary
 openxml_without_with_clause
 Select_top_N_percent
 ascii_function
