@@ -184,7 +184,7 @@ set (
 
 -- Adding cross operators support for comparison between binary and varbinary
 -- Helper function
-CREATE OR REPLACE FUNCTION get_bbf_binary_ops_count(opffamily varchar) 
+CREATE OR REPLACE FUNCTION sys.get_bbf_binary_ops_count(opffamily varchar) 
 RETURNS int AS $$
 BEGIN
     RETURN (SELECT count(*) FROM pg_am am, pg_opfamily opf, pg_amop amop 
@@ -197,7 +197,7 @@ $$ LANGUAGE plpgsql;
 -- Add cross-type operators for bbf_binary op bbf_varbinary
 DO $$
 DECLARE 
-    bbf_binary_ops_c INT := (SELECT * FROM get_bbf_binary_ops_count('bbf_binary_ops'));
+    bbf_binary_ops_c INT := (SELECT * FROM sys.get_bbf_binary_ops_count('bbf_binary_ops'));
 BEGIN
     IF bbf_binary_ops_c = 6 THEN
         RAISE NOTICE 'Adding comparison operators to bbf_binary_ops (equality already exists)';
@@ -291,7 +291,7 @@ $$ LANGUAGE plpgsql;
 -- Add cross-type operators for bbf_varbinary op bbf_binary
 DO $$
 DECLARE 
-    bbf_varbinary_ops_c INT := (SELECT * FROM get_bbf_binary_ops_count('bbf_varbinary_ops'));
+    bbf_varbinary_ops_c INT := (SELECT * FROM sys.get_bbf_binary_ops_count('bbf_varbinary_ops'));
 BEGIN
 
     IF bbf_varbinary_ops_c = 6 THEN
