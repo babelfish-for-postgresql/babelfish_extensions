@@ -728,6 +728,6 @@ ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 17_8 or 16_12 release
-TestDatatypeAggSort-before-16_12-or-17_8-vu-prepare
-TestDatatypeAggSort-before-16_12-or-17_8-vu-verify
-TestDatatypeAggSort-before-16_12-or-17_8-vu-cleanup
+ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-prepare
+ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-verify
+ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-cleanup
