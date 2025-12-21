@@ -1492,32 +1492,32 @@ ALTER schema master_securityadmin_scm1 owner to securityadmin;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
-    Server SQLState: 42501)~~
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
 
 
 ALTER table master_dbo.securityadmin_tb1 owner to securityadmin;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
-    Server SQLState: 42501)~~
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
 
 
 ALTER procedure master_dbo.securityadmin_proc1 owner to securityadmin;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
-    Server SQLState: 42501)~~
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
 
 
 ALTER function master_dbo.securityadmin_func1 owner to securityadmin;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
-    Server SQLState: 42501)~~
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
 
 
 -- psql

@@ -681,9 +681,42 @@ go
 -- go
 
 -- tsql
+-- When new owner is an internal role, user-defined role, database principal or server principal - Error out.
 use master
 go
 drop database DB64long_0123456789012345678901234567890123456789012345678901234
+go
+create role alter_auth_r1
+go
+create database alter_auth_db
+go
+alter authorization on database::alter_auth_db TO bbf_role_admin
+go
+alter authorization on database::alter_auth_db TO securityadmin
+go
+alter authorization on database::alter_auth_db TO sysadmin
+go
+alter authorization on database::alter_auth_db TO dbcreator
+go
+alter authorization on database::alter_auth_db TO db_datareader
+go
+alter authorization on database::alter_auth_db TO db_datawriter
+go
+alter authorization on database::alter_auth_db TO db_ddladmin
+go
+alter authorization on database::alter_auth_db TO dbo
+go
+alter authorization on database::alter_auth_db TO db_owner
+go
+alter authorization on database::alter_auth_db TO master_db_datareader
+go
+alter authorization on database::alter_auth_db TO alter_auth_r1
+go
+alter authorization on database::alter_auth_db TO master_alter_auth_r1
+go
+drop role alter_auth_r1
+go
+drop database alter_auth_db
 go
 
 

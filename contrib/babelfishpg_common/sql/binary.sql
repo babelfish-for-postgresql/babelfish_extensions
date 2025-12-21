@@ -79,6 +79,11 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (pg_catalog.VARCHAR AS sys.BBF_BINARY)
 WITH FUNCTION sys.varcharbinary (pg_catalog.VARCHAR, integer, boolean) AS ASSIGNMENT;
 
+CREATE OR REPLACE FUNCTION sys.ncharbinary(sys.NCHAR, integer, boolean)
+RETURNS sys.BBF_BINARY
+AS 'babelfishpg_common', 'ncharbinary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.bpcharbinary(pg_catalog.BPCHAR, integer, boolean)
 RETURNS sys.BBF_BINARY
 AS 'babelfishpg_common', 'bpcharbinary'
@@ -95,6 +100,26 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.BPCHAR AS sys.BBF_BINARY)
 WITH FUNCTION sys.bpcharbinary (sys.BPCHAR, integer, boolean) AS ASSIGNMENT;
 
+CREATE OR REPLACE FUNCTION sys.binarysysnchar(sys.BBF_BINARY, integer, boolean)
+RETURNS sys.NCHAR
+AS 'babelfishpg_common', 'varbinarynchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.binarysysbpchar(sys.BBF_BINARY, integer, boolean)
+RETURNS sys.BPCHAR
+AS 'babelfishpg_common', 'varbinarybpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.BBF_BINARY AS sys.BPCHAR)
+WITH FUNCTION sys.binarysysbpchar (sys.BBF_BINARY, integer, boolean) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.binarybpchar(sys.BBF_BINARY, integer, boolean)
+RETURNS pg_catalog.BPCHAR
+AS 'babelfishpg_common', 'varbinarybpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.BBF_BINARY AS pg_catalog.BPCHAR)
+WITH FUNCTION sys.binarybpchar (sys.BBF_BINARY, integer, boolean) AS IMPLICIT;
 
 CREATE OR REPLACE FUNCTION sys.binarysysvarchar(sys.BBF_BINARY, integer, boolean)
 RETURNS sys.VARCHAR
@@ -356,3 +381,14 @@ CREATE OPERATOR sys.= (
 alter OPERATOR family bbf_varbinary_ops USING btree add
     OPERATOR 3 sys.= (sys.bbf_varbinary, sys.bbf_binary),
     FUNCTION 1 sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary);
+
+CREATE OR REPLACE FUNCTION sys.binaryadd(leftarg sys.BBF_BINARY, rightarg sys.BBF_BINARY)
+RETURNS sys.BBF_BINARY
+AS 'byteacat'
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG = sys.bbf_binary,
+    RIGHTARG = sys.bbf_binary,
+    FUNCTION = sys.binaryadd
+);

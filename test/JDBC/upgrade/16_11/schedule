@@ -584,7 +584,7 @@ BABEL-5129
 BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
-BABEL-2736
+BABEL-2736-before-17_7
 securityadmin_role
 db_accessadmin
 datareader_datawriter
@@ -632,6 +632,12 @@ babel_assign_nchar
 alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
+babel_binary-before-17_7-or-16_11
 ascii_function
+cast_string_to_binary-before-17_7
+cast_binary_to_string-before-17_7
+test_conv_text_to_binary-before-17_7
+test_conv_text_to_string
 test_convert_to_binary
 cast_datetime_to_binary
+babel_string_to_money

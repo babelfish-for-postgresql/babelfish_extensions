@@ -16,6 +16,9 @@ on:
       commit_hash:
         required: false
 
+permissions:
+  contents: write
+
 jobs:
   create_tag:
     runs-on: ubuntu-22.04

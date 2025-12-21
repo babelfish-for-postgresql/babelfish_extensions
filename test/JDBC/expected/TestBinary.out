@@ -1075,7 +1075,7 @@ FROM BinaryCastingDemo;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#varbinary#!#binary#!#varbinary#!#int#!#int#!#int
-1#!#Empty string#!#VARCHAR#!##!#00000000000000000000#!##!#0#!#0#!#0
+1#!#Empty string#!#VARCHAR#!##!#00000000000000000000#!##!#0#!#10#!#0
 2#!#NULL value#!#VARCHAR#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 3#!#Simple text#!#VARCHAR#!#48656C6C6F#!#48656C6C6F0000000000#!#48656C6C6F#!#5#!#10#!#5
 4#!#Long text#!#VARCHAR#!#546869734973414C6F6E6754657874#!#546869734973414C6F6E#!#546869734973414C6F6E#!#15#!#10#!#10
@@ -2770,7 +2770,7 @@ ORDER BY TestID;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#varchar#!#varbinary#!#varbinary#!#varbinary#!#varchar#!#int
-1#!#BINARY(4) + BINARY(4)#!#BINARY(4)#!#BINARY(4)#!#12340000#!#56780000#!#0000000068AC0000#!#BINARY(8)#!#8
+1#!#BINARY(4) + BINARY(4)#!#BINARY(4)#!#BINARY(4)#!#12340000#!#56780000#!#1234000056780000#!#BINARY(8)#!#8
 2#!#VARBINARY(4) + VARBINARY(4)#!#VARBINARY(4)#!#VARBINARY(4)#!#1234#!#5678#!#12345678#!#VARBINARY(8)#!#4
 3#!#BINARY(4) + VARBINARY(4)#!#BINARY(4)#!#VARBINARY(4)#!#12340000#!#5678#!#123400005678#!#VARBINARY(8)#!#6
 4#!#VARBINARY(4) + BINARY(4)#!#VARBINARY(4)#!#BINARY(4)#!#1234#!#56780000#!#123456780000#!#VARBINARY(8)#!#6
@@ -2780,7 +2780,7 @@ int#!#varchar#!#varchar#!#varchar#!#varbinary#!#varbinary#!#varbinary#!#varchar#
 8#!#Empty VARBINARY + BINARY(4)#!#VARBINARY(4)#!#BINARY(4)#!##!#56780000#!#56780000#!#VARBINARY#!#4
 9#!#BINARY(4) + Empty VARBINARY#!#BINARY(4)#!#VARBINARY(4)#!#12340000#!##!#12340000#!#VARBINARY#!#4
 10#!#Empty VARBINARY + Empty VARBINARY#!#VARBINARY(4)#!#VARBINARY(4)#!##!##!##!#VARBINARY#!#0
-11#!#BINARY(2) + BINARY(4)#!#BINARY(2)#!#BINARY(4)#!#1200#!#56780000#!#0000000056781200#!#BINARY(6)#!#8
+11#!#BINARY(2) + BINARY(4)#!#BINARY(2)#!#BINARY(4)#!#1200#!#56780000#!#120056780000#!#BINARY(6)#!#6
 12#!#VARBINARY(2) + VARBINARY(4)#!#VARBINARY(2)#!#VARBINARY(4)#!#12#!#5678#!#125678#!#VARBINARY(6)#!#3
 ~~END~~
 
@@ -3750,7 +3750,7 @@ SELECT 'NVARCHAR to VARBINARY(10)' AS Test,
 GO
 ~~START~~
 varchar#!#varbinary#!#int
-NVARCHAR to VARBINARY(10)#!#3F3F#!#2
+NVARCHAR to VARBINARY(10)#!#4B6DD58B#!#4
 ~~END~~
 
 
@@ -3780,7 +3780,7 @@ SELECT 'NVARCHAR to VARBINARY(10)' AS Test,
 GO
 ~~START~~
 varchar#!#varbinary#!#int
-NVARCHAR to VARBINARY(10)#!#3F3F#!#2
+NVARCHAR to VARBINARY(10)#!#4B6D#!#4
 ~~END~~
 
 
@@ -4313,5 +4313,55 @@ varchar#!#varbinary
 Leading Zeros Sort#!#0001
 Leading Zeros Sort#!#0100
 Leading Zeros Sort#!#1000
+~~END~~
+
+
+
+-- Empty string casting to binary/varbinary
+select cast(CAST('0x00' AS BINARY) as varbinary)
+GO
+~~START~~
+varbinary
+307830300000000000000000000000000000000000000000000000000000
+~~END~~
+
+
+select cast(CAST(0x00 AS BINARY) as varbinary)
+GO
+~~START~~
+varbinary
+000000000000000000000000000000000000000000000000000000000000
+~~END~~
+
+
+select CAST('' AS BINARY(10))
+go
+~~START~~
+binary
+00000000000000000000
+~~END~~
+
+
+select cast(CAST('' AS BINARY(10)) as varbinary(10))
+go
+~~START~~
+varbinary
+00000000000000000000
+~~END~~
+
+
+select cast(CAST('' AS BINARY) as varbinary)
+go
+~~START~~
+varbinary
+000000000000000000000000000000000000000000000000000000000000
+~~END~~
+
+
+select cast(CAST('' AS varbinary) as BINARY)
+go
+~~START~~
+binary
+000000000000000000000000000000000000000000000000000000000000
 ~~END~~
 

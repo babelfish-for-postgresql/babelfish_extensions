@@ -17,6 +17,7 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef_d.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_depend.h"	/* Required in handle_bbf_view_binding_on_object_drop to access pg_rewrite dependencies */
 #include "catalog/pg_namespace.h"
@@ -104,6 +105,7 @@
 #endif							/* USE_LIBXML */
 
 #define TDS_NUMERIC_MAX_PRECISION	38
+#define MAX_BINARY_SIZE 8000
 
 /* Constants for UNPIVOT info list structure */
 #define UNPIVOT_TAG_INDEX           0  /* "UNPIVOT" string tag */
@@ -269,6 +271,7 @@ static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
+static Node* pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr);
 static Oid get_domain_typmodin(Type typ);
 static void pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf);
 #ifdef USE_LIBXML
@@ -290,6 +293,8 @@ static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNu
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
+static bool verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config);
+PG_FUNCTION_INFO_V1(persist_temp_oid_buffer_start_internal);
 
 /*********************************************************
  * 			Weak Binding Views Related Declarations
@@ -340,6 +345,7 @@ static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static replace_pltsql_function_defaults_hook_type prev_replace_pltsql_function_defaults_hook = NULL;
 static exprTypmod_hook_type prev_exprTypmod_hook = NULL;
+static post_transform_expr_recurse_hook_type prev_post_transform_expr_recurse_hook = NULL;
 static pre_transform_openxml_columns_hook_type prev_pre_transform_openxml_columns_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
@@ -507,6 +513,9 @@ InstallExtendedHooks(void)
 
 	prev_exprTypmod_hook = exprTypmod_hook;
 	exprTypmod_hook = pltsql_exprTypmod;
+
+	prev_post_transform_expr_recurse_hook = post_transform_expr_recurse_hook;
+	post_transform_expr_recurse_hook = pltsql_post_transform_expr_recurse;
 
 	prev_pre_transform_openxml_columns_hook = pre_transform_openxml_columns_hook;
 	pre_transform_openxml_columns_hook = pre_transform_openxml_columns;
@@ -688,6 +697,7 @@ UninstallExtendedHooks(void)
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = prev_replace_pltsql_function_defaults_hook;
 	exprTypmod_hook = prev_exprTypmod_hook;
+	post_transform_expr_recurse_hook = prev_post_transform_expr_recurse_hook;
 	pre_transform_openxml_columns_hook = prev_pre_transform_openxml_columns_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
@@ -971,6 +981,84 @@ pltsql_GetNewTempObjectId()
 	nextTempOid++;
 
 	return result;
+}
+
+Datum
+persist_temp_oid_buffer_start_internal(PG_FUNCTION_ARGS)
+{
+	/*
+	 * If we are not rdsadmin, we will not proceed.
+	 * persistence of temp_oid_buffer_start now happens during bbf 
+	 * initialization and upgrades by rdsadmin
+	 */
+	if (!superuser())
+		ereport(ERROR,
+                (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+                 (errmsg("must be superuser to use this function"))));
+
+	/* safety check, we should never get here during persisting in a Hot standby */
+	if (RecoveryInProgress())
+		elog(ERROR, "temp oid initialization cannot happen during recovery");
+	
+	/*
+	 * If temp_oid_buffer_start is already persisted, it will be loaded as GUC and
+	 * BUFFER_START_TO_OID will be valid. In such case, we can skip persisting and
+	 * simply return.
+	 */
+	if (OidIsValid(BUFFER_START_TO_OID))
+		PG_RETURN_BOOL(true);
+
+	/*
+	 * temp_oid_buffer_size = 0 would indicate that the feature is 
+	 * disabled, so persisting oid start is triggered from an upgrade.
+	 * 
+	 * This is unlikely because if temp_oid_buffer_size = 0, this should mean that 
+	 * the operator did this for the cluster in case of temp table related issue, 
+	 * which should also mean that the oid_start is persisted in that cluster.
+	 *
+	 * If an upgrade fails at this point, it means that temp tables weren't used
+	 * but temp_oid_buffer was disabled. Since this case is theoretically possible
+	 * we will not fail the upgrade here, and simply return.
+	 */
+	if (temp_oid_buffer_size <= 0)
+		PG_RETURN_BOOL(true);
+
+	/*
+	 * This means tempOidStart was changed but the GUC temp_oid_buffer_start was not
+	 * changed/persisted. We should avoid moving forward and error out to avoid persisting 
+	 * incorrect start.
+	 *
+	 * If a create/upgrade fails at this point, it means the the GUC value was not persisted
+	 * in the catalog. 
+	 * In this case, for mitigation, the operator can call the persist_temp_oid_buffer_start
+	 * procedure again.
+	 */
+	if (OidIsValid(TransamVariables->tempOidStart) && !OidIsValid(BUFFER_START_TO_OID))
+		ereport(ERROR,
+                (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+                 (errmsg("tempOidStart is already set in shmem. temp oid initialization cannot be done."))));
+
+	/*
+	 * In order to persist the setting, we can simply call pltsql_GetNewTempObjectId.
+	 * If during upgrade, we find that the temp_oid_buffer_start is already persisted,
+	 * then pltsql_GetNewTempObjectId will not try to persist it again.
+	 *
+	 * If the persistence fails, then temp_oid_buffer_start is initialized to INT_MIN
+	 */
+	pltsql_GetNewTempObjectId();
+
+	/*
+	 * This means that the persistence of temp_oid_buffer_start failed
+	 *
+	 * If a create/upgrade fails at this point, it means the the GUC value was not persisted
+	 * in the catalog. 
+	 * In this case, for mitigation, the operator can call the persist_temp_oid_buffer_start
+	 * procedure again.
+	 */
+	if (!OidIsValid(BUFFER_START_TO_OID))
+		elog(ERROR, "unable to persist temp_oid_buffer_start in pg_db_role_setting");
+
+	PG_RETURN_BOOL(true);
 }
 
 Oid
@@ -5162,84 +5250,77 @@ pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 }
 
 /*
- * To properly persist a new value of temp_oid_buffer_start, we must set it
- * in pg_settings, as it would in an ALTER DATABASE ... SET ... command.
+ * To properly persist a new value of babelfishpg_tsql.temp_oid_buffer_start, we must set it
+ * in pg_db_role_setting, as it would in an ALTER DATABASE ... SET ... command.
+ *
+ * This persistence can only be done as rdsadmin, because temp_oid_buffer_start is SUSET GUC.
+ * And any error in this function means failure during babelfish initialization or upgrade.
  *
  * Returns true on success.
  */
-static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
+static bool
+set_and_persist_temp_oid_buffer_start(Oid new_oid)
 {
-	HeapTuple	tuple, newtuple;
-	Relation	rel;
-	ScanKeyData scankey[2];
-	SysScanDesc scan;
-	const char *babelfish_db_name = NULL;
-	char 	   *new_oid_str = NULL;
-	Oid			babelfish_db_id = InvalidOid;
-	int 		translated_oid = OID_TO_BUFFER_START(new_oid);
-	Datum		repl_val[Natts_pg_db_role_setting];
-	bool		repl_null[Natts_pg_db_role_setting];
-	bool		repl_repl[Natts_pg_db_role_setting];
-	Datum		datum;
-	ArrayType  *a;
+	const char  *babelfish_db_name = NULL;
+	char        *config_name = "babelfishpg_tsql.temp_oid_buffer_start";
+	char        *altdbstmt;
+	int         translated_oid = OID_TO_BUFFER_START(new_oid);
+	List        *parsetree_list;
+	Node        *stmt;
+	PlannedStmt *wrapper;
 
 	babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
 	if (!babelfish_db_name)
 		return false;
 
-	babelfish_db_id = get_database_oid(babelfish_db_name, true);
-
-	if (!OidIsValid(babelfish_db_id))
+	altdbstmt = psprintf("ALTER DATABASE %s SET %s = %d", babelfish_db_name, config_name, translated_oid);
+	parsetree_list = raw_parser(altdbstmt, RAW_PARSE_DEFAULT);
+	if (list_length(parsetree_list) != 1)
+	{
+		elog(WARNING, "Implicit VariableSet stmt during temp OID buffer initialization is incorrect or corrupt");
 		return false;
-
-	new_oid_str = psprintf("%d", translated_oid);
-
-	rel = table_open(DbRoleSettingRelationId, RowExclusiveLock);
-	ScanKeyInit(&scankey[0],
-				Anum_pg_db_role_setting_setdatabase,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(babelfish_db_id));
-	ScanKeyInit(&scankey[1],
-				Anum_pg_db_role_setting_setrole,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(InvalidOid));
-	scan = systable_beginscan(rel, DbRoleSettingDatidRolidIndexId, true,
-							  NULL, 2, scankey);
-	tuple = systable_getnext(scan);
-
-	/* temp_oid_buffer_start has a default setting, so it should be there already. */
-	if (!HeapTupleIsValid(tuple))
+	}
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+	if (!verify_stmt_alterdatabaseset(stmt,babelfish_db_name,config_name))
+	{
+		elog(WARNING, "Implicit VariableSet stmt during temp OID buffer initialization is incorrect or corrupt");
 		return false;
+	}
 
-	memset(repl_repl, false, sizeof(repl_repl));
-	repl_repl[Anum_pg_db_role_setting_setconfig - 1] = true;
-	repl_null[Anum_pg_db_role_setting_setconfig - 1] = false;
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(altdbstmt);
 
-	Assert(strlen(new_oid_str) > 0);
-	datum = CStringGetTextDatum(psprintf("%s=%s", "babelfishpg_tsql.temp_oid_buffer_start", new_oid_str));
-	a = construct_array(&datum, 1,
-							TEXTOID,
-							-1, false, TYPALIGN_INT);
-
-	repl_val[Anum_pg_db_role_setting_setconfig - 1] =
-		PointerGetDatum(a);
-
-	newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
-									repl_val, repl_null, repl_repl);
-	
-	/*
-	 * During unit tests, this will crash if it's executed multiple times in the same transaction since
-	 * concurrent tuple updates are not allowed.
-	 */
-	if (!TEST_persist_temp_oid_buffer_start_disable_catalog_update)
-		CatalogTupleUpdate(rel, &tuple->t_self, newtuple);
-
-	systable_endscan(scan);
-
-	table_close(rel, RowExclusiveLock);
+	ProcessUtility(wrapper,
+				altdbstmt,
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+	CommandCounterIncrement();
 
 	temp_oid_buffer_start = translated_oid;
 
+	return true;
+}
+
+static bool
+verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config)
+{
+	AlterDatabaseSetStmt*	stmt = (AlterDatabaseSetStmt*) n;
+	VariableSetStmt* 		vsstmt = stmt->setstmt;
+	if (!stmt->dbname || strcmp(stmt->dbname, dbname) != 0)
+		return false;
+	if (!vsstmt || vsstmt->kind != VAR_SET_VALUE 
+		|| !vsstmt->name || strcmp(vsstmt->name, config) != 0)
+		return false;
 	return true;
 }
 
@@ -8201,4 +8282,97 @@ find_all_view_references(Node *node, List **view_oids)
 									find_view_references_walker,
 									(void *) &context,
 									QTW_EXAMINE_RTES_BEFORE);
+}
+
+static Node*
+tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
+{
+		OpExpr				*op = (OpExpr *) OpExp;
+		char				*opname = get_opname(op->opno);
+		Oid					lopr,
+							ropr;
+
+		if (opname == NULL)
+			return OpExp;
+
+		/* Calculate Oid of left and right operand */
+		lopr = exprType(lexpr);
+		ropr = exprType(rexpr);
+		if (strncmp(opname, "+", 1) == 0 &&
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (lopr) &&
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (ropr))
+		{
+			int32	typmod1 = exprTypmod(lexpr),
+					typmod2 = exprTypmod(rexpr),
+					rettypmod = typmod1 + typmod2 - VARHDRSZ;
+
+			if (typmod1 == -1 || typmod2 == -1)
+			{
+				pfree(opname);
+				return OpExp;
+			}
+
+			/* 
+			 * T-SQL limits the resultant binary value to MAX_BINARY_SIZE when concatenating
+			 * binary types with finite typmod
+			 */
+			if (rettypmod > MAX_BINARY_SIZE + VARHDRSZ)
+					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
+
+			OpExp = coerce_to_target_type(pstate, OpExp,
+										 exprType(OpExp),
+										 op->opresulttype,
+										 rettypmod,
+										 COERCION_EXPLICIT,
+										 COERCE_EXPLICIT_CAST,
+										 -1);
+		}
+
+		pfree(opname);
+		return OpExp;
+}
+
+static Node*
+pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
+{
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return expr;
+
+	Assert(expr);
+
+	switch (nodeTag(expr))
+	{
+		case T_OpExpr:
+		{
+			OpExpr		*op = (OpExpr *) expr;
+
+			if (list_length(op->args) == 2)
+			{
+				Node		*lexpr,
+							*rexpr;
+				lexpr = linitial(op->args);
+				rexpr = lsecond(op->args);
+
+				/* 
+				 * Unwrap RelabelType nodes created by domain types. Domain types generate
+				 * RelabelType with typmod = -1, so we need to look through to the underlying
+				 * expression to get the actual typmod value.
+				 */
+				while (lexpr && IsA(lexpr, RelabelType))
+					lexpr = (Node *) ((RelabelType *) lexpr)->arg;
+
+				while (rexpr && IsA(rexpr, RelabelType))
+					rexpr = (Node *) ((RelabelType *) rexpr)->arg;
+
+				expr = tsql_set_typmod_op_expr(pstate, expr, lexpr, rexpr);
+			}
+			break;
+		}
+
+		default:
+			break;
+	}
+
+	return expr;
 }
