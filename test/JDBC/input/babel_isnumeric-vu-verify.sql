@@ -944,3 +944,47 @@ select isnumeric('-\n1') -- TSQL: 0
 GO
 select isnumeric('-1\n') -- TSQL: 0
 GO
+
+
+-- non-breaking space
+select isnumeric(char(160))
+select isnumeric(nchar(160))
+go
+
+CHAR_X08_BS:        '\u0008'      -> skip;   // backspace
+CHAR_X0B_VT:        '\u000b'      -> skip;   // vertical tab
+CHAR_X0C_FF:        '\u000c'      -> skip;   // form feed
+
+// https://en.wikipedia.org/wiki/Whitespace_character
+-- zero width space
+select isnumeric(char(8203))
+select isnumeric(nchar(8203))
+go
+
+
+-- narrow no-break space
+select isnumeric(char(8239))
+select isnumeric(nchar(8239))
+go
+
+-- ideographic space
+select isnumeric(char(12288))
+select isnumeric(nchar(12288))
+select isnumeric(char(12288) + char(9))
+Go
+
+SELECT ISNUMERIC('\0') -- tsql 1
+go
+
+
+-- Unicode whitespace test cases
+
+-- Non-breaking space (U+00A0) - should behave like regular space
+SELECT ISNUMERIC(NCHAR(160));  -- non-breaking space alone
+GO
+SELECT ISNUMERIC(NCHAR(160) + '123');  -- non-breaking space + number
+GO
+SELECT ISNUMERIC('123' + NCHAR(160));  -- number + non-breaking space
+GO
+SELECT ISNUMERIC(NCHAR(160) + NCHAR(160));  -- multiple non-breaking spaces
+GO

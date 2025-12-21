@@ -1325,49 +1325,49 @@ SELECT ISNUMERIC(CHAR(1));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(2));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(3));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(4));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(5));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(6));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(7));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(8));    -- \b backspace
@@ -1416,126 +1416,126 @@ SELECT ISNUMERIC(CHAR(14));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(15));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(16));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(17));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(18));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(19));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(20));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(21));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(22));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(23));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(24));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(25));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(26));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(27));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(28));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(29));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(30));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(31));
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(32));   -- space
@@ -1549,21 +1549,21 @@ SELECT ISNUMERIC(CHAR(33));   -- !
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(34));   -- "
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(35));   -- #
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(36));   -- $
@@ -1577,42 +1577,42 @@ SELECT ISNUMERIC(CHAR(37));   -- %
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(38));   -- &
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(39));   -- '
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(40));   -- (
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(41));   -- )
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(42));   -- *
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(43));   -- +
@@ -1626,7 +1626,7 @@ SELECT ISNUMERIC(CHAR(44));   -- ,
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(45));   -- -
@@ -1647,7 +1647,7 @@ SELECT ISNUMERIC(CHAR(47));   -- /
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(48));   -- 0
@@ -1724,49 +1724,49 @@ SELECT ISNUMERIC(CHAR(58));   -- :
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(59));   -- ;
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(60));   -- <
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(61));   -- =
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(62));   -- >
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(63));   -- ?
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(64));   -- @
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(65));   -- A
@@ -1955,42 +1955,42 @@ SELECT ISNUMERIC(CHAR(91));   -- [
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(92));   -- \
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(93));   -- ]
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(94));   -- ^
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(95));   -- _
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(96));   -- `
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(97));   -- a
@@ -2179,35 +2179,35 @@ SELECT ISNUMERIC(CHAR(123));  -- {
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(124));  -- |
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(125));  -- }
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(126));  -- ~
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(127));  -- DEL
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 
@@ -2578,7 +2578,7 @@ select isnumeric(CHAR(160)) -- TSQL: 1
 go
 ~~START~~
 int
-1
+0
 ~~END~~
 
 
