@@ -7019,6 +7019,11 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 	if (!OidIsValid(expr_type))
 		return -1;
 
+	// if (expr_type == 17044)
+	// {
+	// 	result_typmod = 54;
+	// }
+
 	if (getBaseType(expr_type) == NUMERICOID)
 	{
 		bool        found_typmod;
@@ -8320,7 +8325,7 @@ tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexp
 					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
 
 			OpExp = coerce_to_target_type(pstate, OpExp,
-										 exprType(OpExp),
+										 exprType(OpExp), // same as  op->opresulttype
 										 op->opresulttype,
 										 rettypmod,
 										 COERCION_EXPLICIT,
@@ -8369,6 +8374,37 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 			}
 			break;
 		}
+		case T_Aggref:
+			{
+				Aggref		*aggref = (Aggref *) expr;
+				TargetEntry	*te;
+				Oid				expr_type;
+				int32			rettypmod = -1;
+
+				/* Handle MIN/MAX for char/nchar types to preserve typmod */
+				if ((aggref->aggtype == 16981 || aggref->aggtype == 17044) && 
+					(aggref->aggfnoid == 17050 || aggref->aggfnoid == 17049 ||  aggref->aggfnoid == 17042 ||  aggref->aggfnoid == 17041 )) // max and min for char and nchar
+				{
+					te = (TargetEntry *) linitial(aggref->args);
+					expr_type = exprType((Node *) te->expr);
+
+					/* Only process if input type matches aggregate type */
+					if (expr_type == 16981 || expr_type == 17044)
+					{
+						rettypmod = exprTypmod((Node *) te->expr);
+
+						/* Add relabel node with the found typmod */
+						expr = coerce_to_target_type(pstate, expr,
+												 exprType(expr),
+												 aggref->aggtype,
+												 rettypmod,
+												 COERCION_IMPLICIT,
+												 COERCE_IMPLICIT_CAST,
+												 -1);
+					}
+				}
+				break;
+			}
 
 		default:
 			break;
