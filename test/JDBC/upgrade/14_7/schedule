@@ -419,7 +419,7 @@ BABEL_4330-before-15_8-or-16_4
 AUTO_ANALYZE-before-15-5-or-14-10
 cast_eliminate
 order_by_offset_fetch_rows-before-15_6-or-16_2
-TestDatatypeAggSort
+TestDatatypeAggSort-before-16_12-or-17_8
 babel_index_nulls_order-before-15-5
 operator_binary_whitespace-before-15_6-or-16_2
 BABEL-2999
