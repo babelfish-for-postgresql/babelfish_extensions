@@ -7019,10 +7019,39 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 	if (!OidIsValid(expr_type))
 		return -1;
 
-	// if (expr_type == 17044)
-	// {
-	// 	result_typmod = 54;
-	// }
+	if (expr_type == 17044 || expr_type == 16981)
+	{
+		// result_typmod = 54;
+		switch (nodeTag(expr))
+		{
+			case T_Aggref:
+				{
+					Aggref		*aggref = (Aggref *) expr;
+					TargetEntry	*te;
+					// Oid				expr_type1;
+
+					/* Handle MIN/MAX for char/nchar types to preserve typmod */
+					// (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(aggref->aggtype)
+					//(*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(aggref->aggtype)
+					if ((aggref->aggtype == 16981 || aggref->aggtype == 17044) &&  
+						(aggref->aggfnoid == 17050 || aggref->aggfnoid == 17049 ||  aggref->aggfnoid == 17042 ||  aggref->aggfnoid == 17041 )) // max and min for char and nchar
+					{
+						te = (TargetEntry *) linitial(aggref->args);
+						// expr_type1 = exprType((Node *) te->expr);
+
+						/* Only process if input type matches aggregate type */
+						// if (expr_type == 16981 || expr_type == 17044)
+						// {
+						result_typmod = exprTypmod((Node *) te->expr);
+						// }
+					}
+					break;
+				}
+			default:
+				/* For all other node types, no special handling needed */
+				break;
+		}
+	}
 
 	if (getBaseType(expr_type) == NUMERICOID)
 	{
@@ -8374,37 +8403,39 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 			}
 			break;
 		}
-		case T_Aggref:
-			{
-				Aggref		*aggref = (Aggref *) expr;
-				TargetEntry	*te;
-				Oid				expr_type;
-				int32			rettypmod = -1;
+		// case T_Aggref:
+		// 	{
+		// 		Aggref		*aggref = (Aggref *) expr;
+		// 		TargetEntry	*te;
+		// 		Oid				expr_type;
+		// 		int32			rettypmod = -1;
 
-				/* Handle MIN/MAX for char/nchar types to preserve typmod */
-				if ((aggref->aggtype == 16981 || aggref->aggtype == 17044) && 
-					(aggref->aggfnoid == 17050 || aggref->aggfnoid == 17049 ||  aggref->aggfnoid == 17042 ||  aggref->aggfnoid == 17041 )) // max and min for char and nchar
-				{
-					te = (TargetEntry *) linitial(aggref->args);
-					expr_type = exprType((Node *) te->expr);
+		// 		/* Handle MIN/MAX for char/nchar types to preserve typmod */
+		// 		// (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(aggref->aggtype)
+		// 		//(*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(aggref->aggtype)
+		// 		if ((aggref->aggtype == 16981 || aggref->aggtype == 17044) &&  
+		// 			(aggref->aggfnoid == 17050 || aggref->aggfnoid == 17049 ||  aggref->aggfnoid == 17042 ||  aggref->aggfnoid == 17041 )) // max and min for char and nchar
+		// 		{
+		// 			te = (TargetEntry *) linitial(aggref->args);
+		// 			expr_type = exprType((Node *) te->expr);
 
-					/* Only process if input type matches aggregate type */
-					if (expr_type == 16981 || expr_type == 17044)
-					{
-						rettypmod = exprTypmod((Node *) te->expr);
+		// 			/* Only process if input type matches aggregate type */
+		// 			if (expr_type == 16981 || expr_type == 17044)
+		// 			{
+		// 				rettypmod = exprTypmod((Node *) te->expr);
 
-						/* Add relabel node with the found typmod */
-						expr = coerce_to_target_type(pstate, expr,
-												 exprType(expr),
-												 aggref->aggtype,
-												 rettypmod,
-												 COERCION_IMPLICIT,
-												 COERCE_IMPLICIT_CAST,
-												 -1);
-					}
-				}
-				break;
-			}
+		// 				/* Add relabel node with the found typmod */
+		// 				expr = coerce_to_target_type(pstate, expr,
+		// 										 exprType(expr),
+		// 										 aggref->aggtype,
+		// 										 rettypmod,
+		// 										 COERCION_IMPLICIT,
+		// 										 COERCE_IMPLICIT_CAST,
+		// 										 -1);
+		// 			}
+		// 		}
+		// 		break;
+		// 	}
 
 		default:
 			break;

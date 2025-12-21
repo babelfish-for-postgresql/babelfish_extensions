@@ -18,3 +18,7 @@ go
 
 drop TABLE SalesData
 go
+
+declare @abc nchar(50) = N'abc'
+select min( @abc)
+go
