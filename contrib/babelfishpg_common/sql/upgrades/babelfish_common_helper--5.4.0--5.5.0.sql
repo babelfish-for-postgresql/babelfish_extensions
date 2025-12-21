@@ -93,3 +93,19 @@ CREATE OR REPLACE FUNCTION sys.binarysysnchar(sys.BBF_BINARY, integer, boolean)
 RETURNS sys.NCHAR
 AS 'babelfishpg_common', 'varbinarynchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.binaryadd(leftarg sys.BBF_BINARY, rightarg sys.BBF_BINARY)
+RETURNS sys.BBF_BINARY
+AS 'byteacat'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BBF_BINARY'::pg_catalog.regtype and oprright = 'sys.BBF_BINARY'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '+' and oprresult != 0) THEN
+CREATE OPERATOR sys.+ (
+	LEFTARG    = sys.BBF_BINARY,
+	RIGHTARG   = sys.BBF_BINARY,
+	PROCEDURE  = sys.binaryadd
+);
+END IF;
+END $$;
