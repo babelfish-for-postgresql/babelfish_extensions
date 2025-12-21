@@ -385,6 +385,7 @@ GO
 -- if both schemas have tables with same name and each table have trigger with same trigger name
 
 -- psql
+-- ALTER .. OWNER .. on TSQL objects are blocked.
 ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_babel_3326_u1;
 GO
 ALTER TABLE master_db.babel_3326_Employees OWNER TO master_babel_3326_u1;
@@ -498,7 +499,6 @@ ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_dbo;
 GO
 ALTER TABLE master_db.babel_3326_Employees OWNER TO master_dbo;
 GO
-
 
 -- tsql user=jdbc_user password=12345678
 -- Test cases for behaviour of enable/disable of trigger in transactions
