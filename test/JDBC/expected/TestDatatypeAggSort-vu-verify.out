@@ -1,14 +1,16 @@
 SELECT * FROM TestDatatypeAggSort_vu_prepare_char_view_max
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+char
+xyz       
+~~END~~
 
 SELECT * FROM TestDatatypeAggSort_vu_prepare_char_view_min
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+char
+abc       
+~~END~~
 
 
 SELECT * FROM TestDatatypeAggSort_vu_prepare_varchar_view_max
@@ -105,15 +107,17 @@ min#!#abc       #!#abc#!#1900-01-01 00:00:00.0#!#1900-01-01 00:00:00.000000#!#19
 -- This is failing because of BABEL-4332
 SELECT MAX(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+char
+stu       
+~~END~~
 
 SELECT MIN(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+char
+abc       
+~~END~~
 
 
 SELECT MAX(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
