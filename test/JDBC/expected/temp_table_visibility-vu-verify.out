@@ -50,7 +50,7 @@ int
 ~~END~~
 
 
-SELECT * INTO #temptable FROM generate_series(1,100);
+SELECT * INTO #temptable5605 FROM generate_series(1,100);
 GO
 EXEC p_nested
 GO
@@ -68,7 +68,7 @@ int
 1
 ~~END~~
 
-SELECT COUNT(*) FROM #temptable
+SELECT COUNT(*) FROM #temptable5605
 GO
 ~~START~~
 int
@@ -121,4 +121,21 @@ int
 bigint
 0
 ~~END~~
+
+EXEC p_index_create
+GO
+~~START~~
+text
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
+#t4122
+#temptable5605
+~~END~~
+
+EXEC p_drop
+GO
+SELECT * FROM #temptable5605
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#temptable5605" does not exist)~~
 

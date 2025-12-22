@@ -30,3 +30,12 @@ go
 
 drop procedure p_nested_2
 go
+
+drop procedure p_index_create
+go
+
+drop procedure p_drop
+go
+
+drop view enr_view
+go

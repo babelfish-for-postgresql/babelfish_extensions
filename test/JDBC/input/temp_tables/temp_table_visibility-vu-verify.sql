@@ -19,11 +19,17 @@ go
 exec babel_4122_proc '#t4122'
 go
 
-SELECT * INTO #temptable FROM generate_series(1,100);
+SELECT * INTO #temptable5605 FROM generate_series(1,100);
 GO
 EXEC p_nested
 GO
-SELECT COUNT(*) FROM #temptable
+SELECT COUNT(*) FROM #temptable5605
 GO
 EXEC p_nested_2
+GO
+EXEC p_index_create
+GO
+EXEC p_drop
+GO
+SELECT * FROM #temptable5605
 GO
