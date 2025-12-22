@@ -627,7 +627,7 @@ babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper
 babel_numeric_smallmoney_oper
 mathematical_func_tests
-datetime_roundoff
+datetime_roundoff-before-17_8
 babel_assign_nchar
 alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
@@ -640,3 +640,4 @@ test_conv_text_to_string
 test_convert_to_binary
 cast_datetime_to_binary
 babel_string_to_money
+BABEL-1664
