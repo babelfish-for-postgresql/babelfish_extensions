@@ -192,7 +192,7 @@ SELECT
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-[123]#!#[2025-04-24 04:48:51.317]#!#[1.23]#!#<NULL>
+[123]#!#[Apr 24 2025  4:48AM]#!#[1.23]#!#<NULL>
 ~~END~~
 
 

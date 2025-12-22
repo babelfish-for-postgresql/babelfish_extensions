@@ -1,0 +1,11 @@
+CREATE TABLE babel_1664_vu_prepare_t1 (
+    dt DATETIME,
+    sdt SMALLDATETIME
+);
+GO
+
+INSERT INTO babel_1664_vu_prepare_t1 VALUES 
+    ('2023-12-25 14:30:45.123', '2023-12-25 14:31'),
+    ('2023-01-15 09:15:30.456', '2023-01-15 09:16'),
+    ('2023-06-30 23:59:59.999', '2023-07-01 00:00');
+GO

@@ -509,7 +509,7 @@ SELECT LEFT(@inputString, 3)
 GO
 ~~START~~
 varchar
-201
+Dec
 ~~END~~
 
 
@@ -518,7 +518,7 @@ SELECT LEFT(@inputString, 3)
 GO
 ~~START~~
 varchar
-195
+Dec
 ~~END~~
 
 
