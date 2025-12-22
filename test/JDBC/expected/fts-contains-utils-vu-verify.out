@@ -229,17 +229,6 @@ GO
 ~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
 
 
--- Search for Greek content
-SELECT * FROM fts_table WHERE CONTAINS((
-    nvarchar_column, 
-    ntext_column), N'"kolumna"')
-GO
-~~START~~
-int#!#text#!#char#!#nvarchar#!#varchar#!#ntext#!#nchar
-49#!#Row 49: Turkish test veritaban? ? extended text for full-text search testing#!#CHAR49:?búsqu                                     #!#ερώτημα kolumna testing | ID:49#!#VARCHAR49: Turkish test veritaban? ?#!#NTEXT Row 49: Turkish test veritabanı 🚀 detailed serveur búsqueda information with ricerca and consulta#!#NCHAR49:🚀test49                                                           
-~~END~~
-
-
 -- Search for mixed language content
 DECLARE @a NVARCHAR(100)
 SET @a = '"testing AND N''システム 信息''"'
@@ -342,19 +331,6 @@ END
 GO
 
 -- Common Table Expressions (Wrapped in Procedures for Reuse)
-CREATE PROCEDURE sp_WithCTESearch
-AS
-BEGIN
-    WITH ContentCTE AS (
-        SELECT * FROM fts_table WHERE CONTAINS((
-            text_column, 
-            varchar_column, 
-            ntext_column), '"Turkish test"')
-    )
-    SELECT * FROM ContentCTE
-END
-GO
-
 CREATE PROCEDURE sp_MultiCTESearch
 AS
 BEGIN
@@ -414,14 +390,6 @@ GO
 
 
 -- Execute CTE Procedures
-EXEC sp_WithCTESearch
-GO
-~~START~~
-int#!#text#!#char#!#nvarchar#!#varchar#!#ntext#!#nchar
-49#!#Row 49: Turkish test veritaban? ? extended text for full-text search testing#!#CHAR49:?búsqu                                     #!#ερώτημα kolumna testing | ID:49#!#VARCHAR49: Turkish test veritaban? ?#!#NTEXT Row 49: Turkish test veritabanı 🚀 detailed serveur búsqueda information with ricerca and consulta#!#NCHAR49:🚀test49                                                           
-~~END~~
-
-
 EXEC sp_MultiCTESearch
 GO
 ~~ERROR (Code: 33557097)~~

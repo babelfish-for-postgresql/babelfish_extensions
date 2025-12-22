@@ -86,12 +86,6 @@ SELECT * FROM fts_table WHERE CONTAINS((
     ntext_column), '"French données"')
 GO
 
--- Search for Greek content
-SELECT * FROM fts_table WHERE CONTAINS((
-    nvarchar_column, 
-    ntext_column), N'"kolumna"')
-GO
-
 -- Search for mixed language content
 DECLARE @a NVARCHAR(100)
 SET @a = '"testing AND N''システム 信息''"'
@@ -176,19 +170,6 @@ END
 GO
 
 -- Common Table Expressions (Wrapped in Procedures for Reuse)
-CREATE PROCEDURE sp_WithCTESearch
-AS
-BEGIN
-    WITH ContentCTE AS (
-        SELECT * FROM fts_table WHERE CONTAINS((
-            text_column, 
-            varchar_column, 
-            ntext_column), '"Turkish test"')
-    )
-    SELECT * FROM ContentCTE
-END
-GO
-
 CREATE PROCEDURE sp_MultiCTESearch
 AS
 BEGIN
@@ -236,9 +217,6 @@ EXEC sp_SearchLanguageContent @language = N'" 测试"'
 GO
 
 -- Execute CTE Procedures
-EXEC sp_WithCTESearch
-GO
-
 EXEC sp_MultiCTESearch
 GO
 

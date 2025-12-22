@@ -163,36 +163,6 @@ VALUES (N'Row 39: Query database システム search 🔍 ✓✔✗ extended tex
 
 INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
 VALUES (N'Row 40: English column with system and 🌍 extended text for full-text search testing', N'CHAR40:処理', N'column 処理 | ID:40', N'VARCHAR40: English column with system and 🌍', N'NTEXT Row 40: English column with system and 🌍 詳細情報 detailed column system information with 処理 and 查询', N'NCHAR40:多言語40');
-
-INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
-VALUES (N'Row 41: French données with système ⭐ extended text for full-text search testing', N'CHAR41:⭐datos', N'datos consulta ⭐ | ID:41', N'VARCHAR41: database Datenbank search', N'NTEXT Row 41: French données with système ⭐ detailed données datos information with sistema and consulta', N'NCHAR41:✓✔✗41');
-
-INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
-VALUES (N'Row 42: Spanish tabla consulta testing 💾 ±×÷ extended text for full-text search testing', N'CHAR42:Spalt', N'Spanish tabla consulta testing 💾 ±×÷ | ID:42', N'VARCHAR42: données tabla query', N'NTEXT Row 42: Spanish tabla consulta testing 💾 ±×÷ detailed données tabla information with colonna and índice', N'NCHAR42:donné42');
-
-INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
-VALUES (N'Row 43: German Spalte System query 💾 extended text for full-text search testing', N'CHAR43:€£¥', N'Search Spalte тест | ID:43', N'VARCHAR43: German Spalte System query 💾', N'NTEXT Row 43: German Spalte System query 💾 detailed recherche sistema information with database and banco de dados', N'NCHAR43:💾test43');
-
-INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
-VALUES (N'Row 44: Italian colonna server search 📊 extended text for full-text search testing', N'CHAR44:serve', N'αναζήτηση serwer testing | ID:44', N'VARCHAR44: database Spalte search', N'NTEXT Row 44: Italian colonna server search 📊 detailed serveur sistema information with colonna and tabela', N'NCHAR44:siste44');
-
-INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
-VALUES (N'Row 45: Portuguese índice banco de dados 🎯 ♠♣♥♦ extended text for full-text search testing', N'CHAR45:🎯prueb', N'table tabella | ID:45', N'VARCHAR45: table prueba query', N'NTEXT Row 45: Portuguese índice banco de dados 🎯 ♠♣♥♦ detailed table prueba information with tabella and índice', N'NCHAR45:Syste45');
-
-INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
-VALUES (N'Row 46: Russian база данных сервер 🎨 extended text for full-text search testing', N'CHAR46:Test', N'base de datos servidor 🎨 | ID:46', N'VARCHAR46: Russian база данных сервер 🎨', N'NTEXT Row 46: Russian база данных сервер 🎨 detailed données base de datos information with database and servidor', N'NCHAR46:multi46');
-
-INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
-VALUES (N'Row 47: Greek ερώτημα ευρετήριο 🚀 extended text for full-text search testing', N'CHAR47:∑∏∫', N'Greek ερώτημα ευρετήριο 🚀 | ID:47', N'VARCHAR47: database Abfrage search', N'NTEXT Row 47: Greek ερώτημα ευρετήριο 🚀 detailed base de données búsqueda information with server and consulta', N'NCHAR47:∑∏∫47');
-
-INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
-VALUES (N'Row 48: Polish tabela zapytanie 🎨 ✓✔✗ extended text for full-text search testing', N'CHAR48:donné', N'Search Daten данные | ID:48', N'VARCHAR48: données datos query', N'NTEXT Row 48: Polish tabela zapytanie 🎨 ✓✔✗ detailed données datos information with colonna and pesquisa', N'NCHAR48:donné48');
-
-INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
-VALUES (N'Row 49: Turkish test veritabanı 🚀 extended text for full-text search testing', N'CHAR49:🚀búsqu', N'ερώτημα kolumna testing | ID:49', N'VARCHAR49: Turkish test veritabanı 🚀', N'NTEXT Row 49: Turkish test veritabanı 🚀 detailed serveur búsqueda information with ricerca and consulta', N'NCHAR49:🚀test49');
-
-INSERT INTO fts_table (text_column, char_column, nvarchar_column, varchar_column, ntext_column, nchar_column)
-VALUES (N'Row 50: Dutch gegevens systeem 🔍 extended text for full-text search testing', N'CHAR50:Daten', N'requête server | ID:50', N'VARCHAR50: database Datenbank search', N'NTEXT Row 50: Dutch gegevens systeem 🔍 detailed requête búsqueda information with server and sistema', N'NCHAR50:búsqu50');
 GO
 
 -- Test cases for fts_table

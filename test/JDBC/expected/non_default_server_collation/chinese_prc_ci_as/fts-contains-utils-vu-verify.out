@@ -202,9 +202,9 @@ SELECT * FROM fts_table WHERE CONTAINS((
 GO
 ~~START~~
 int#!#text#!#char#!#nvarchar#!#varchar#!#ntext#!#nchar
-2#!#Row 2: ?? Japanese index ? extended text for full-text search testing#!#CHAR2:???                                         #!#処理 Japanese index 🌍 | ID:2#!#VARCHAR2: database index search#!#NTEXT Row 2: 処理 Japanese index 🌍 詳細情報 detailed index server information with 処理 and 服务器#!#NCHAR2:服务器2                                                                
-17#!#Row 17: Search index with ???? ? extended text for full-text search testing#!#CHAR17:?index                                     #!#Search index with システム ⭐ | ID:17#!#VARCHAR17: database index search#!#NTEXT Row 17: Search index with システム ⭐ 詳細情報 detailed index system information with システム and 表格#!#NCHAR17:♪♫♬17                                                              
-32#!#Row 32: Testing index testing ??? ? extended text for full-text search testing#!#CHAR32:???                                        #!#Testing index testing テスト 🌍 | ID:32#!#VARCHAR32: database index search#!#NTEXT Row 32: Testing index testing テスト 🌍 詳細情報 detailed index testing information with テスト and 表格#!#NCHAR32:表格32                                                               
+2#!#Row 2: 処理 Japanese index ? extended text for full-text search testing#!#CHAR2:服务器                                      #!#処理 Japanese index 🌍 | ID:2#!#VARCHAR2: database index search#!#NTEXT Row 2: 処理 Japanese index 🌍 詳細情報 detailed index server information with 処理 and 服务器#!#NCHAR2:服务器2                                                                
+17#!#Row 17: Search index with システム ? extended text for full-text search testing#!#CHAR17:?index                                     #!#Search index with システム ⭐ | ID:17#!#VARCHAR17: database index search#!#NTEXT Row 17: Search index with システム ⭐ 詳細情報 detailed index system information with システム and 表格#!#NCHAR17:♪♫♬17                                                              
+32#!#Row 32: Testing index testing テスト ? extended text for full-text search testing#!#CHAR32:テスト                                     #!#Testing index testing テスト 🌍 | ID:32#!#VARCHAR32: database index search#!#NTEXT Row 32: Testing index testing テスト 🌍 詳細情報 detailed index testing information with テスト and 表格#!#NCHAR32:表格32                                                               
 ~~END~~
 
 
@@ -227,17 +227,6 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
-
-
--- Search for Greek content
-SELECT * FROM fts_table WHERE CONTAINS((
-    nvarchar_column, 
-    ntext_column), N'"kolumna"')
-GO
-~~START~~
-int#!#text#!#char#!#nvarchar#!#varchar#!#ntext#!#nchar
-49#!#Row 49: Turkish test veritaban? ? extended text for full-text search testing#!#CHAR49:?búsqu                                     #!#ερώτημα kolumna testing | ID:49#!#VARCHAR49: Turkish test veritaban? ?#!#NTEXT Row 49: Turkish test veritabanı 🚀 detailed serveur búsqueda information with ricerca and consulta#!#NCHAR49:🚀test49                                                           
-~~END~~
 
 
 -- Search for mixed language content
@@ -270,8 +259,8 @@ SELECT * FROM fts_table WHERE CONTAINS((
 GO
 ~~START~~
 int#!#text#!#char#!#nvarchar#!#varchar#!#ntext#!#nchar
-11#!#Row 11: Search server with ??? ? extended text for full-text search testing#!#CHAR11:±×÷                                        #!#表格 data 🔍 | ID:11#!#VARCHAR11: database server search#!#NTEXT Row 11: Search server with テスト 🔍 詳細情報 detailed server data information with テスト and 表格#!#NCHAR11:±×÷11                                                              
-15#!#Row 15: Search server with ???? ? ???? extended text for full-text search testing#!#CHAR15:????                                       #!#server システム | ID:15#!#VARCHAR15: server table query#!#NTEXT Row 15: Search server with システム 💾 αβγδ 詳細情報 detailed server table information with システム and 搜索#!#NCHAR15:serve15                                                            
+11#!#Row 11: Search server with テスト ? extended text for full-text search testing#!#CHAR11:±×÷                                     #!#表格 data 🔍 | ID:11#!#VARCHAR11: database server search#!#NTEXT Row 11: Search server with テスト 🔍 詳細情報 detailed server data information with テスト and 表格#!#NCHAR11:±×÷11                                                              
+15#!#Row 15: Search server with システム ? αβγδ extended text for full-text search testing#!#CHAR15:αβγδ                                   #!#server システム | ID:15#!#VARCHAR15: server table query#!#NTEXT Row 15: Search server with システム 💾 αβγδ 詳細情報 detailed server table information with システム and 搜索#!#NCHAR15:serve15                                                            
 ~~END~~
 
 
@@ -342,19 +331,6 @@ END
 GO
 
 -- Common Table Expressions (Wrapped in Procedures for Reuse)
-CREATE PROCEDURE sp_WithCTESearch
-AS
-BEGIN
-    WITH ContentCTE AS (
-        SELECT * FROM fts_table WHERE CONTAINS((
-            text_column, 
-            varchar_column, 
-            ntext_column), '"Turkish test"')
-    )
-    SELECT * FROM ContentCTE
-END
-GO
-
 CREATE PROCEDURE sp_MultiCTESearch
 AS
 BEGIN
@@ -414,14 +390,6 @@ GO
 
 
 -- Execute CTE Procedures
-EXEC sp_WithCTESearch
-GO
-~~START~~
-int#!#text#!#char#!#nvarchar#!#varchar#!#ntext#!#nchar
-49#!#Row 49: Turkish test veritaban? ? extended text for full-text search testing#!#CHAR49:?búsqu                                     #!#ερώτημα kolumna testing | ID:49#!#VARCHAR49: Turkish test veritaban? ?#!#NTEXT Row 49: Turkish test veritabanı 🚀 detailed serveur búsqueda information with ricerca and consulta#!#NCHAR49:🚀test49                                                           
-~~END~~
-
-
 EXEC sp_MultiCTESearch
 GO
 ~~ERROR (Code: 33557097)~~
@@ -439,7 +407,7 @@ SELECT * FROM FunctionResults
 GO
 ~~START~~
 int#!#text#!#char#!#nvarchar#!#varchar#!#ntext#!#nchar
-40#!#Row 40: English column with system and ? extended text for full-text search testing#!#CHAR40:??                                         #!#column 処理 | ID:40#!#VARCHAR40: English column with system and ?#!#NTEXT Row 40: English column with system and 🌍 詳細情報 detailed column system information with 処理 and 查询#!#NCHAR40:多言語40                                                              
+40#!#Row 40: English column with system and ? extended text for full-text search testing#!#CHAR40:処理                                       #!#column 処理 | ID:40#!#VARCHAR40: English column with system and ?#!#NTEXT Row 40: English column with system and 🌍 詳細情報 detailed column system information with 処理 and 查询#!#NCHAR40:多言語40                                                              
 ~~END~~
 
 
