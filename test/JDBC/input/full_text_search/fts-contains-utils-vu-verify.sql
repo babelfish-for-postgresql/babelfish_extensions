@@ -59,159 +59,79 @@ go
 select sys.replace_special_chars_fts('one`two');
 go
 
--- 1. Search for Japanese content
+-- Search for other languages
 SELECT * FROM fts_table WHERE CONTAINS((
     nvarchar_column, 
     ntext_column, 
-    nchar_column), N'"日本語"')
+    nchar_column), N'"服务器"')
 GO
 
--- 2. Search for English phrase with special characters
+-- Search for English phrase
 SELECT * FROM fts_table WHERE CONTAINS((
     text_column, 
     varchar_column, 
-    ntext_column), '"Special Ch@r∆cters"')
+    ntext_column), '"index search"')
 GO
 
--- 3. Search for French text with diacritics
+-- Search for other language with english
 SELECT * FROM fts_table WHERE CONTAINS((
     nvarchar_column, 
-    ntext_column), '"Café très élégant"')
+    ntext_column), '"column with インデックス"')
 GO
 
--- 4. Search for Database related content
+-- Search for french text with diatrics
 SELECT * FROM fts_table WHERE CONTAINS((
     text_column, 
     varchar_column, 
-    ntext_column), '"Database Management"')
+    ntext_column), '"French données"')
 GO
 
--- 5. Search for Chinese content
+-- Search for Greek content
 SELECT * FROM fts_table WHERE CONTAINS((
     nvarchar_column, 
-    ntext_column), N'"中文"')
+    ntext_column), N'"kolumna"')
 GO
 
--- 6. Search for Programming related content
-SELECT * FROM fts_table WHERE CONTAINS((
-    text_column, 
-    varchar_column, 
-    ntext_column), '"Programming"')
-GO
-
--- 7. Search for mixed language content
+-- Search for mixed language content
+DECLARE @a NVARCHAR(100)
+SET @a = '"testing AND N''システム 信息''"'
 SELECT * FROM fts_table WHERE CONTAINS((
     nvarchar_column, 
-    ntext_column), '"English" AND "日本語"')
+    ntext_column), @a)
 GO
 
--- 8. Search for Welcome messages
+-- Search for text with special symbols
 SELECT * FROM fts_table WHERE CONTAINS((
     text_column, 
-    varchar_column, 
-    ntext_column), '"Welcome"')
+    varchar_column), '"sp$/df*"')
 GO
 
--- 9. Search for text with special symbols
+-- Search for multi case content
 SELECT * FROM fts_table WHERE CONTAINS((
-    text_column, 
-    varchar_column), '"§pëçï*"')
-GO
-
--- 10. Search for Japanese anime related content
-SELECT * FROM fts_table WHERE CONTAINS((
-    nvarchar_column, 
-    ntext_column), N'"アニメ*"')
-GO
-
--- 11. Search for multiple language combinations
-SELECT * FROM fts_table WHERE CONTAINS((
-    varchar_column, 
-    ntext_column), '"English" AND "Fran*"')
-GO
-
--- 12. Search for fixed-length content
-SELECT * FROM fts_table WHERE CONTAINS((
+    text_column,
     char_column, 
-    nchar_column), '"Fixed-length text"')
-GO
-
--- 13. Search for mixed case specific content
-SELECT * FROM fts_table WHERE CONTAINS((
-    text_column, 
-    varchar_column), '"TeXt"')
-GO
-
--- 14. Search for content with copyright symbol
-SELECT * FROM fts_table WHERE CONTAINS((
-    text_column, 
-    varchar_column), '"©"')
-GO
-
--- 15. Search for multi-word phrases
-SELECT * FROM fts_table WHERE CONTAINS((
-    nvarchar_column, 
-    ntext_column), '"Long text with múltiple läñguages"')
-GO
-
--- 16. Search for specific numbered content
-SELECT * FROM fts_table WHERE CONTAINS((
-    text_column, 
-    char_column, 
-    varchar_column), '"Sample text #1"')
-GO
-
--- 17. Search for unicode specific content
-SELECT * FROM fts_table WHERE CONTAINS((
-    nvarchar_column, 
-    ntext_column, 
-    nchar_column), '"üñíçødé"')
-GO
-
--- 18. Search for mixed language greetings
-SELECT * FROM fts_table WHERE CONTAINS((
-    nvarchar_column, 
-    ntext_column), '"Hello" OR "こんにちは"')
-GO
-
--- 19. Search for specific character combinations
-SELECT * FROM fts_table WHERE CONTAINS((
-    text_column, 
-    varchar_column, 
-    ntext_column), '"Ch@r"')
-GO
-
--- 20. Search for complex language patterns
-SELECT * FROM fts_table WHERE CONTAINS((
-    nvarchar_column, 
-    ntext_column), '"English-日本語" AND "中文-Français"')
+    nchar_column), '"Search SERVER wITh"')
 GO
 
 -- 21. Search for emojis
 SELECT * FROM fts_table WHERE CONTAINS((
     text_column, 
     nvarchar_column, 
-    ntext_column), N'🎈')
+    ntext_column), '"N''🔍'' OR N''📊''"')
 GO
 
--- Create Views
+-- Search on Views
 CREATE VIEW vw_JapaneseContent AS
 SELECT * FROM fts_table WHERE CONTAINS((
     nvarchar_column, 
     ntext_column, 
-    nchar_column), N'"日本語"')
+    nchar_column), N'"テスト"')
 GO
 
 CREATE VIEW vw_MultilingualContent AS
 SELECT * FROM fts_table WHERE CONTAINS((
     varchar_column, 
-    ntext_column), '"English" AND "França*"')
-GO
-
-CREATE VIEW vw_SpecialCharContent AS
-SELECT * FROM fts_table WHERE CONTAINS((
-    text_column, 
-    varchar_column), '"§pëçïål"')
+    ntext_column), '""Eng*"" AND N''"requête""''')
 GO
 
 -- Create Stored Procedures
@@ -263,7 +183,7 @@ BEGIN
         SELECT * FROM fts_table WHERE CONTAINS((
             text_column, 
             varchar_column, 
-            ntext_column), '"Database Management"')
+            ntext_column), '"Turkish test"')
     )
     SELECT * FROM ContentCTE
 END
@@ -275,7 +195,7 @@ BEGIN
     WITH JapaneseCTE AS (
         SELECT * FROM fts_table WHERE CONTAINS((
             nvarchar_column, 
-            ntext_column), N'"日本語"')
+            ntext_column), N'ευρετήριο')
     ),
     EnglishCTE AS (
         SELECT * FROM fts_table WHERE CONTAINS((
@@ -311,31 +231,8 @@ GO
 SELECT * FROM vw_MultilingualContent
 GO
 
-SELECT * FROM vw_SpecialCharContent
-GO
-
 -- Execute Stored Procedures
-EXEC sp_SearchLanguageContent @language = N'"日本語"'
-GO
-
-EXEC sp_SearchLanguageContent @language = '"English"'
-GO
-
-EXEC sp_SearchMultipleColumns 
-    @searchTerm = '"Database"',
-    @includeTextColumn = 1,
-    @includeNVarcharColumn = 1
-GO
-
-EXEC sp_SearchMultipleColumns 
-    @searchTerm = '"Programming"',
-    @includeTextColumn = 1,
-    @includeNVarcharColumn = 0
-GO
-
-EXEC sp_SearchMixedLanguages 
-    @language1 = '"English"',
-    @language2 = N'"日本語"'
+EXEC sp_SearchLanguageContent @language = N'" 测试"'
 GO
 
 -- Execute CTE Procedures
@@ -352,13 +249,6 @@ WITH FunctionResults AS (
     WHERE CONTAINS((varchar_column), '"English"')
 )
 SELECT * FROM FunctionResults 
-GO
-
--- Using View with Procedure
-SELECT v.* 
-FROM vw_JapaneseContent v
-INNER JOIN fn_SearchContent('"Programming"') f 
-ON v.id = f.id
 GO
 
 -- disable FULLTEXT
