@@ -1438,7 +1438,7 @@ SELECT 'Near-zero values' as test_case,
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
-Near-zero values#!#0.00#!#0.00#!#0.00#!#0.00
+Near-zero values#!#0.00#!#-0.00#!#0.00#!#-0.00
 ~~END~~
 
 
