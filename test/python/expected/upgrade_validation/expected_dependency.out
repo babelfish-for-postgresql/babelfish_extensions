@@ -987,6 +987,10 @@ View sys.servers
 View sys.shipped_objects_not_in_sys
 View sys.sp_column_privileges_view
 View sys.sp_columns_100_view
+View sys.sp_datatype_info_100_view_odbc_version_2
+View sys.sp_datatype_info_100_view_odbc_version_3
+View sys.sp_datatype_info_view_odbc_version_2
+View sys.sp_datatype_info_view_odbc_version_3
 View sys.sp_fkeys_view
 View sys.sp_pkeys_view
 View sys.sp_special_columns_view
