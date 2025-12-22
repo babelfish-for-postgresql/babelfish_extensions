@@ -682,6 +682,9 @@ ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-cleanup
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-prepare
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-verify
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-cleanup
+ignore#!#BABEL-1664-before-16_10-or-17_6-vu-prepare
+ignore#!#BABEL-1664-before-16_10-or-17_6-vu-verify
+ignore#!#BABEL-1664-before-16_10-or-17_6-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 17_7 or 16_11 release
 ignore#!#Test-pointZM_before_17_7-or-16_11-vu-prepare
@@ -732,3 +735,8 @@ ignore#!#temp_catalog_inval-vu-cleanup
 #test failures
 ignore#!#BABEL-3293
 ignore#!#babel_output_clause_concurrency_test
+
+# These tests are meant for upgrade scenario prior to 17_8 release
+ignore#!#datetime_roundoff-before-17_8-vu-prepare
+ignore#!#datetime_roundoff-before-17_8-vu-verify
+ignore#!#datetime_roundoff-before-17_8-vu-cleanup

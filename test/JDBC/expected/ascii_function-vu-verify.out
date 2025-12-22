@@ -721,14 +721,14 @@ int
 ~~END~~
 
 
--- Test ASCII with datetime  --> will give incorrect results in babelfish [BABEL-1664]
+-- Test ASCII with datetime 
 DECLARE @date date = '12-21-16';  
 DECLARE @inputString datetime = @date;
 SELECT ASCII(@inputString);
 GO
 ~~START~~
 int
-50
+68
 ~~END~~
 
 
@@ -737,7 +737,7 @@ SELECT ASCII(@inputString);
 GO
 ~~START~~
 int
-49
+68
 ~~END~~
 
 
@@ -1054,7 +1054,7 @@ int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 ~~END~~
 
 
--- Test ASCII with datetime UDTs --> will give incorrect results in babelfish [BABEL-1664]
+-- Test ASCII with datetime UDTs
 SELECT 
     ID,
     ASCII(CAST(datetime_col AS VARCHAR)) as datetime_ascii,
@@ -1067,7 +1067,7 @@ FROM ascii_function_UDT_test;
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int#!#int
-1#!#50#!#50#!#50#!#49#!#50#!#50
+1#!#74#!#74#!#50#!#49#!#50#!#50
 2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 

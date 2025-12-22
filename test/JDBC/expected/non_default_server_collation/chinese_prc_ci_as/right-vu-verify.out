@@ -598,7 +598,7 @@ SELECT RIGHT(@inputString, 3)
 GO
 ~~START~~
 varchar
-:00
+0AM
 ~~END~~
 
 
@@ -607,7 +607,7 @@ SELECT RIGHT(@inputString, 3)
 GO
 ~~START~~
 varchar
-:00
+3PM
 ~~END~~
 
 

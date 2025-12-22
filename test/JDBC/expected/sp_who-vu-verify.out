@@ -33,7 +33,7 @@ sp_babelfish_autoformat 't_sp_who'
 go
 ~~START~~
 varchar#!#varchar#!#varchar
-1#!#a#!#2023-02-01 11:12:13
+1#!#a#!#Feb  1 2023 11:12AM
 ~~END~~
 
 
@@ -46,8 +46,8 @@ sp_babelfish_autoformat 't_sp_who'
 go
 ~~START~~
 varchar#!#varchar#!#varchar
-        1#!#a#!#2023-02-01 11:12:13
-123456789#!#abcdefghijabcdefghijabcdefghij#!#2023-01-02 11:12:13
+        1#!#a#!#Feb  1 2023 11:12AM
+123456789#!#abcdefghijabcdefghijabcdefghij#!#Jan  2 2023 11:12AM
 ~~END~~
 
 
@@ -55,8 +55,8 @@ sp_babelfish_autoformat 't_sp_who', @orderby='order by a desc'
 go
 ~~START~~
 varchar#!#varchar#!#varchar
-123456789#!#abcdefghijabcdefghijabcdefghij#!#2023-01-02 11:12:13
-        1#!#a#!#2023-02-01 11:12:13
+123456789#!#abcdefghijabcdefghijabcdefghij#!#Jan  2 2023 11:12AM
+        1#!#a#!#Feb  1 2023 11:12AM
 ~~END~~
 
 
@@ -64,8 +64,8 @@ sp_babelfish_autoformat 't_sp_who', @orderby='order by a desc', @hiddencols='a'
 go
 ~~START~~
 varchar#!#varchar
-abcdefghijabcdefghijabcdefghij#!#2023-01-02 11:12:13
-a#!#2023-02-01 11:12:13
+abcdefghijabcdefghijabcdefghij#!#Jan  2 2023 11:12AM
+a#!#Feb  1 2023 11:12AM
 ~~END~~
 
 
@@ -184,8 +184,8 @@ sp_babelfish_autoformat 't_sp_who', @hiddencols='nosuchcolumn'
 go
 ~~START~~
 varchar#!#varchar#!#varchar
-        1#!#a#!#2023-02-01 11:12:13
-123456789#!#abcdefghijabcdefghijabcdefghij#!#2023-01-02 11:12:13
+        1#!#a#!#Feb  1 2023 11:12AM
+123456789#!#abcdefghijabcdefghijabcdefghij#!#Jan  2 2023 11:12AM
 ~~END~~
 
 
