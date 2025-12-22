@@ -2,9 +2,6 @@
 ---- Include changes related to other datatypes except spatial types here ----
 ------------------------------------------------------------------------------
 
--- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO "5.5.0"" to load this file. \quit
-
 CREATE OR REPLACE FUNCTION sys.ncharvarbinary(sys.NCHAR, integer, boolean)
 RETURNS sys.BBF_VARBINARY
 AS 'babelfishpg_common', 'ncharvarbinary'
@@ -96,8 +93,6 @@ CREATE OR REPLACE FUNCTION sys.binarysysnchar(sys.BBF_BINARY, integer, boolean)
 RETURNS sys.NCHAR
 AS 'babelfishpg_common', 'varbinarynchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
 -- Adding operator optimization clauses so that binary/varbinary incorporate index scans when necessary
 alter OPERATOR sys.= (sys.bbf_binary, sys.bbf_binary) 
@@ -280,7 +275,7 @@ BEGIN
 
     ELSIF bbf_binary_ops_c = 10 THEN
         -- All cross-type operators already installed
-        NULL;
+        RAISE NOTICE 'All operators of bbf_binary_ops are installed';
 
     ELSE
         RAISE EXCEPTION 'Unexpected operator count in bbf_binary_ops: %', bbf_binary_ops_c;
@@ -374,7 +369,7 @@ BEGIN
 
     ELSIF bbf_varbinary_ops_c = 10 THEN
         -- All cross-type operators already installed
-        NULL;
+        RAISE NOTICE 'All operators of bbf_varbinary_ops are installed';
 
     ELSE
         RAISE EXCEPTION 'Unexpected operator count in bbf_varbinary_ops: % (expected 5, 6, or 10)', bbf_varbinary_ops_c;
@@ -382,10 +377,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP FUNCTION get_bbf_binary_ops_count(varchar);
-
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+DROP FUNCTION sys.get_bbf_binary_ops_count(varchar);
 
 CREATE OR REPLACE FUNCTION sys.binaryadd(leftarg sys.BBF_BINARY, rightarg sys.BBF_BINARY)
 RETURNS sys.BBF_BINARY
