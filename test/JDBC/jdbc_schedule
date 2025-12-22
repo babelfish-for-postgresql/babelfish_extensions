@@ -588,6 +588,9 @@ ignore#!#datetime_roundoff-before-16_10-or-17_6-vu-cleanup
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-prepare
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-verify
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-cleanup
+ignore#!#BABEL-1664-before-16_10-or-17_6-vu-prepare
+ignore#!#BABEL-1664-before-16_10-or-17_6-vu-verify
+ignore#!#BABEL-1664-before-16_10-or-17_6-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 17_7 or 16_11 release
 ignore#!#Test-pointZM_before_17_7-or-16_11-vu-prepare
@@ -617,3 +620,8 @@ ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
 ignore#!#babel_timezoneinfo_before_17_7-vu-prepare
 ignore#!#babel_timezoneinfo_before_17_7-vu-verify
 ignore#!#babel_timezoneinfo_before_17_7-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to 17_8 or 16_12 release
+ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-prepare
+ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-verify
+ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
