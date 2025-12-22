@@ -668,4 +668,5 @@ test_output_clause
 update_with_var
 BABEL-4271
 comparison_op_index_scan
+BABEL-1664
 sys-fn_varbintohexstr
