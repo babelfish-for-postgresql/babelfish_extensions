@@ -77,6 +77,23 @@ jobs:
         with:
           wal_level: logical
 
+      - name: Adding PgAudit Patch
+        run: |
+          cat > ~/pgaudit_executor_hook_null_check.patch << 'EOF'
+          --- a/pgaudit.c
+          +++ b/pgaudit.c
+          @@ -1529,7 +1529,7 @@ pgaudit_ExecutorCheckPerms_hook(List *rangeTabls,
+                           auditEventStack->auditEvent.permInfos = permInfos;
+                       }
+                   }
+          -        else
+          +        else if (auditEventStack != NULL)
+                   {
+                       STACK_NOT_EMPTY();
+                       log_select_dml(auditOid, rangeTabls, permInfos);
+          EOF
+        shell: bash
+
       - name: Build and Install PgAudit
         run: |
           cd ~
@@ -86,13 +103,13 @@ jobs:
             git clone --depth 1 --branch REL_17_STABLE https://github.com/pgaudit/pgaudit.git
             cd pgaudit
             # Apply patch to fix BABEL-4600
-            patch -p1 < ${{ github.workspace }}/.github/scripts/pgaudit_executor_hook_null_check.patch
+            patch -p1 < ~/pgaudit_executor_hook_null_check.patch
             make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
           elif [[ "${{ matrix.extension_branch }}" == 'BABEL_4_X_DEV' ]]; then
             git clone --depth 1 --branch REL_16_STABLE https://github.com/pgaudit/pgaudit.git
             cd pgaudit
             # Apply patch to fix BABEL-4600
-            patch -p1 < ${{ github.workspace }}/.github/scripts/pgaudit_executor_hook_null_check.patch
+            patch -p1 < ~/pgaudit_executor_hook_null_check.patch
             make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
           else
             echo "Unsupported branch: ${{ matrix.extension_branch }}"
