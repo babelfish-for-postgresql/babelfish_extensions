@@ -1,0 +1,71 @@
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_p1;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_p2;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_p3;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_int_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_string_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_binary_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_datetime_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_decimal_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_float_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_special_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_odbcver;
+GO
+
+DROP PROCEDURE sp_datatype_info_100_vu_prepare_edge_cases;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_p1;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_p2;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_p3;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_int_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_string_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_binary_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_datetime_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_decimal_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_float_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_special_types;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_odbcver;
+GO
+
+DROP PROCEDURE sp_datatype_info_vu_prepare_edge_cases;
+GO
