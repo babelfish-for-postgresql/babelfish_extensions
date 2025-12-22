@@ -47,3 +47,893 @@ datetime#!#11#!#23#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime
 smalldatetime#!#11#!#16#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#smalldatetime#!#0#!#0#!#9#!#3#!#<NULL>#!#<NULL>#!#22
 ~~END~~
 
+
+
+-- PyODBC Driver Metadata Calls
+EXEC sp_datatype_info_100 @data_type = 12   -- varchar
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+EXEC sp_datatype_info_100 @data_type = -9   -- nvarchar, sysname
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+~~END~~
+
+
+EXEC sp_datatype_info_100 @data_type = -3   -- varbinary
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varbinary#!#-3#!#8000#!#0x#!#<NULL>#!#max length          #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#varbinary#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#<NULL>#!#4
+~~END~~
+
+
+EXEC sp_datatype_info_100 @data_type = 93   -- (may be empty - not in table)
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+
+
+-- Positive types - sp_datatype_info_100
+EXEC sp_datatype_info_100 @data_type = 1   -- char
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 2   -- numeric
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+numeric#!#2#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#numeric#!#0#!#38#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+numeric() identity#!#2#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#numeric() identity#!#0#!#0#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 3   -- decimal, money, smallmoney
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+decimal#!#3#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#decimal#!#0#!#38#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+money#!#3#!#19#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#money#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#11
+smallmoney#!#3#!#10#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#smallmoney#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#21
+decimal() identity#!#3#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#decimal() identity#!#0#!#0#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 4   -- int
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+int#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#int#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+int identity#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#int identity#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 5   -- smallint
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+smallint#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#smallint#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+smallint identity#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#smallint identity#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 6   -- float
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+float#!#6#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#float#!#<NULL>#!#<NULL>#!#6#!#<NULL>#!#2#!#<NULL>#!#8
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 7   -- real
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+real#!#7#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#real#!#<NULL>#!#<NULL>#!#7#!#<NULL>#!#2#!#<NULL>#!#23
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 9   -- date
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+date#!#9#!#10#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#date#!#<NULL>#!#0#!#9#!#1#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 11  -- datetime, datetime2, smalldatetime
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+datetime2#!#11#!#27#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime2#!#0#!#7#!#9#!#3#!#<NULL>#!#<NULL>#!#0
+datetime#!#11#!#23#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime#!#3#!#3#!#9#!#3#!#<NULL>#!#<NULL>#!#12
+smalldatetime#!#11#!#16#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#smalldatetime#!#0#!#0#!#9#!#3#!#<NULL>#!#<NULL>#!#22
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 12  -- varchar
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+
+-- Positive types - sp_datatype_info
+EXEC sp_datatype_info @data_type = 1   -- char
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_datatype_info @data_type = 2   -- numeric
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+numeric#!#2#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#numeric#!#0#!#38#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+numeric() identity#!#2#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#numeric() identity#!#0#!#0#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+~~END~~
+
+EXEC sp_datatype_info @data_type = 3   -- decimal, money, smallmoney
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+decimal#!#3#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#decimal#!#0#!#38#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+money#!#3#!#19#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#money#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#11
+smallmoney#!#3#!#10#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#smallmoney#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#21
+decimal() identity#!#3#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#decimal() identity#!#0#!#0#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+~~END~~
+
+EXEC sp_datatype_info @data_type = 4   -- int
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+int#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#int#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+int identity#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#int identity#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+~~END~~
+
+EXEC sp_datatype_info @data_type = 5   -- smallint
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+smallint#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#smallint#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+smallint identity#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#smallint identity#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+~~END~~
+
+EXEC sp_datatype_info @data_type = 6   -- float
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+float#!#6#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#float#!#<NULL>#!#<NULL>#!#6#!#<NULL>#!#2#!#<NULL>#!#8
+~~END~~
+
+EXEC sp_datatype_info @data_type = 7   -- real
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+real#!#7#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#real#!#<NULL>#!#<NULL>#!#7#!#<NULL>#!#2#!#<NULL>#!#23
+~~END~~
+
+EXEC sp_datatype_info @data_type = 9   -- date
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+EXEC sp_datatype_info @data_type = 11  -- datetime, datetime2, smalldatetime
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+datetime#!#11#!#23#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime#!#3#!#3#!#9#!#3#!#<NULL>#!#<NULL>#!#12
+smalldatetime#!#11#!#16#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#smalldatetime#!#0#!#0#!#9#!#3#!#<NULL>#!#<NULL>#!#22
+~~END~~
+
+EXEC sp_datatype_info @data_type = 12  -- varchar
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+
+-- Negative types - sp_datatype_info_100
+EXEC sp_datatype_info_100 @data_type = -1   -- text
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+text#!#-1#!#2147483647#!#'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#text#!#<NULL>#!#<NULL>#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#19
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -2   -- binary, timestamp
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+binary#!#-2#!#8000#!#0x#!#<NULL>#!#length              #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#binary#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#3
+timestamp#!#-2#!#8#!#0x#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#timestamp#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#80
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -3   -- varbinary
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varbinary#!#-3#!#8000#!#0x#!#<NULL>#!#max length          #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#varbinary#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#<NULL>#!#4
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -4   -- image
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+image#!#-4#!#2147483647#!#0x#!#<NULL>#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#image#!#<NULL>#!#<NULL>#!#-4#!#<NULL>#!#<NULL>#!#<NULL>#!#20
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -5   -- bigint
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+bigint#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#bigint#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+bigint identity#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#bigint identity#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -6   -- tinyint
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+tinyint#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#1#!#0#!#0#!#tinyint#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+tinyint identity#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#1#!#0#!#1#!#tinyint identity#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -7   -- bit
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+bit#!#-7#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#bit#!#0#!#0#!#-7#!#<NULL>#!#<NULL>#!#<NULL>#!#16
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -8   -- nchar
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+nchar#!#-8#!#4000#!#N'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nchar#!#<NULL>#!#<NULL>#!#-8#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -9   -- nvarchar, sysname
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -10  -- ntext
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+ntext#!#-10#!#1073741823#!#N'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#ntext#!#<NULL>#!#<NULL>#!#-10#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -11  -- uniqueidentifier
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+uniqueidentifier#!#-11#!#36#!#'#!#'#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#uniqueidentifier#!#<NULL>#!#<NULL>#!#-11#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+
+
+-- Negative types - sp_datatype_info
+EXEC sp_datatype_info @data_type = -1   -- text
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+text#!#-1#!#2147483647#!#'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#text#!#<NULL>#!#<NULL>#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#19
+~~END~~
+
+EXEC sp_datatype_info @data_type = -2   -- binary, timestamp
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+binary#!#-2#!#8000#!#0x#!#<NULL>#!#length              #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#binary#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#3
+timestamp#!#-2#!#8#!#0x#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#timestamp#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#80
+~~END~~
+
+EXEC sp_datatype_info @data_type = -3   -- varbinary
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varbinary#!#-3#!#8000#!#0x#!#<NULL>#!#max length          #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#varbinary#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#<NULL>#!#4
+~~END~~
+
+EXEC sp_datatype_info @data_type = -4   -- image
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+geometry#!#-4#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geometry#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geography#!#-4#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geography#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+image#!#-4#!#2147483647#!#0x#!#<NULL>#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#image#!#<NULL>#!#<NULL>#!#-4#!#<NULL>#!#<NULL>#!#<NULL>#!#20
+~~END~~
+
+EXEC sp_datatype_info @data_type = -5   -- bigint
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+bigint#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#bigint#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+bigint identity#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#bigint identity#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info @data_type = -6   -- tinyint
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+tinyint#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#1#!#0#!#0#!#tinyint#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+tinyint identity#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#1#!#0#!#1#!#tinyint identity#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+~~END~~
+
+EXEC sp_datatype_info @data_type = -7   -- bit
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+bit#!#-7#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#bit#!#0#!#0#!#-7#!#<NULL>#!#<NULL>#!#<NULL>#!#16
+~~END~~
+
+EXEC sp_datatype_info @data_type = -8   -- nchar
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+nchar#!#-8#!#4000#!#N'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nchar#!#<NULL>#!#<NULL>#!#-8#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info @data_type = -9   -- nvarchar, sysname
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+datetimeoffset#!#-9#!#34#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetimeoffset#!#0#!#7#!#-155#!#0#!#<NULL>#!#<NULL>#!#0
+time#!#-9#!#16#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#time#!#0#!#7#!#-154#!#0#!#<NULL>#!#<NULL>#!#0
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+date#!#-9#!#10#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#date#!#<NULL>#!#0#!#9#!#1#!#<NULL>#!#<NULL>#!#0
+datetime2#!#-9#!#27#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime2#!#0#!#7#!#9#!#3#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+~~END~~
+
+EXEC sp_datatype_info @data_type = -10  -- ntext
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+xml#!#-10#!#0#!#N'#!#'#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#xml#!#<NULL>#!#<NULL>#!#-152#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+ntext#!#-10#!#1073741823#!#N'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#ntext#!#<NULL>#!#<NULL>#!#-10#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info @data_type = -11  -- uniqueidentifier
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+uniqueidentifier#!#-11#!#36#!#'#!#'#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#uniqueidentifier#!#<NULL>#!#<NULL>#!#-11#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+
+
+-- Other types - sp_datatype_info_100
+EXEC sp_datatype_info_100 @data_type = -150  -- sql_variant
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+sql_variant#!#-150#!#8000#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#sql_variant#!#0#!#0#!#-150#!#<NULL>#!#10#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -151  -- geography, geometry
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+geometry#!#-151#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geometry#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geography#!#-151#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geography#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -152  -- xml
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+xml#!#-152#!#0#!#N'#!#'#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#xml#!#<NULL>#!#<NULL>#!#-152#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -154  -- time
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+time#!#-154#!#16#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#time#!#0#!#7#!#-154#!#0#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -155  -- datetimeoffset
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+datetimeoffset#!#-155#!#34#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetimeoffset#!#0#!#7#!#-155#!#0#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -2147483648  -- vector
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+vector#!#-2147483648#!#0#!#'#!#'#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#vector#!#<NULL>#!#<NULL>#!#-2147483648#!#<NULL>#!#<NULL>#!#<NULL>#!#-2147483648
+~~END~~
+
+
+
+-- Other types - sp_datatype_info
+EXEC sp_datatype_info @data_type = -150  -- sql_variant
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+sql_variant#!#-150#!#8000#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#sql_variant#!#0#!#0#!#-150#!#<NULL>#!#10#!#<NULL>#!#0
+~~END~~
+
+EXEC sp_datatype_info @data_type = -151  -- geography, geometry
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+EXEC sp_datatype_info @data_type = -152  -- xml
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+EXEC sp_datatype_info @data_type = -154  -- time
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+EXEC sp_datatype_info @data_type = -155  -- datetimeoffset
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+EXEC sp_datatype_info @data_type = -2147483648  -- vector
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+vector#!#-2147483648#!#0#!#'#!#'#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#vector#!#<NULL>#!#<NULL>#!#-2147483648#!#<NULL>#!#<NULL>#!#<NULL>#!#-2147483648
+~~END~~
+
+
+
+-- @odbcver parameter tests - sp_datatype_info_100
+EXEC sp_datatype_info_100 @data_type = 12, @odbcver = 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 12, @odbcver = 3
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -9, @odbcver = 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -9, @odbcver = 3
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+~~END~~
+
+
+
+-- @odbcver parameter tests - sp_datatype_info
+EXEC sp_datatype_info @data_type = 12, @odbcver = 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sp_datatype_info @data_type = 12, @odbcver = 3
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sp_datatype_info @data_type = -9, @odbcver = 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+datetimeoffset#!#-9#!#34#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetimeoffset#!#0#!#7#!#-155#!#0#!#<NULL>#!#<NULL>#!#0
+time#!#-9#!#16#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#time#!#0#!#7#!#-154#!#0#!#<NULL>#!#<NULL>#!#0
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+date#!#-9#!#10#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#date#!#<NULL>#!#0#!#9#!#1#!#<NULL>#!#<NULL>#!#0
+datetime2#!#-9#!#27#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime2#!#0#!#7#!#9#!#3#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+~~END~~
+
+EXEC sp_datatype_info @data_type = -9, @odbcver = 3
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+datetimeoffset#!#-9#!#34#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetimeoffset#!#0#!#7#!#-155#!#0#!#<NULL>#!#<NULL>#!#0
+time#!#-9#!#16#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#time#!#0#!#7#!#-154#!#0#!#<NULL>#!#<NULL>#!#0
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+date#!#-9#!#10#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#date#!#<NULL>#!#0#!#9#!#1#!#<NULL>#!#<NULL>#!#0
+datetime2#!#-9#!#27#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime2#!#0#!#7#!#9#!#3#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+~~END~~
+
+
+
+-- No parameters (return all data types)
+EXEC sp_datatype_info
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+vector#!#-2147483648#!#0#!#'#!#'#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#vector#!#<NULL>#!#<NULL>#!#-2147483648#!#<NULL>#!#<NULL>#!#<NULL>#!#-2147483648
+sql_variant#!#-150#!#8000#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#sql_variant#!#0#!#0#!#-150#!#<NULL>#!#10#!#<NULL>#!#0
+uniqueidentifier#!#-11#!#36#!#'#!#'#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#uniqueidentifier#!#<NULL>#!#<NULL>#!#-11#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+ntext#!#-10#!#1073741823#!#N'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#ntext#!#<NULL>#!#<NULL>#!#-10#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+xml#!#-10#!#0#!#N'#!#'#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#xml#!#<NULL>#!#<NULL>#!#-152#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+date#!#-9#!#10#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#date#!#<NULL>#!#0#!#9#!#1#!#<NULL>#!#<NULL>#!#0
+time#!#-9#!#16#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#time#!#0#!#7#!#-154#!#0#!#<NULL>#!#<NULL>#!#0
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+datetimeoffset#!#-9#!#34#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetimeoffset#!#0#!#7#!#-155#!#0#!#<NULL>#!#<NULL>#!#0
+datetime2#!#-9#!#27#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime2#!#0#!#7#!#9#!#3#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+nchar#!#-8#!#4000#!#N'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nchar#!#<NULL>#!#<NULL>#!#-8#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+bit#!#-7#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#bit#!#0#!#0#!#-7#!#<NULL>#!#<NULL>#!#<NULL>#!#16
+tinyint#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#1#!#0#!#0#!#tinyint#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+tinyint identity#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#1#!#0#!#1#!#tinyint identity#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+bigint#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#bigint#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+bigint identity#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#bigint identity#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+geography#!#-4#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geography#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geometry#!#-4#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geometry#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+image#!#-4#!#2147483647#!#0x#!#<NULL>#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#image#!#<NULL>#!#<NULL>#!#-4#!#<NULL>#!#<NULL>#!#<NULL>#!#20
+varbinary#!#-3#!#8000#!#0x#!#<NULL>#!#max length          #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#varbinary#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#<NULL>#!#4
+binary#!#-2#!#8000#!#0x#!#<NULL>#!#length              #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#binary#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#3
+timestamp#!#-2#!#8#!#0x#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#timestamp#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#80
+text#!#-1#!#2147483647#!#'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#text#!#<NULL>#!#<NULL>#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#19
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+numeric#!#2#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#numeric#!#0#!#38#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+numeric() identity#!#2#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#numeric() identity#!#0#!#0#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+decimal#!#3#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#decimal#!#0#!#38#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+money#!#3#!#19#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#money#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#11
+smallmoney#!#3#!#10#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#smallmoney#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#21
+decimal() identity#!#3#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#decimal() identity#!#0#!#0#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+int#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#int#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+int identity#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#int identity#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+smallint#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#smallint#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+smallint identity#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#smallint identity#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+float#!#6#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#float#!#<NULL>#!#<NULL>#!#6#!#<NULL>#!#2#!#<NULL>#!#8
+real#!#7#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#real#!#<NULL>#!#<NULL>#!#7#!#<NULL>#!#2#!#<NULL>#!#23
+datetime#!#11#!#23#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime#!#3#!#3#!#9#!#3#!#<NULL>#!#<NULL>#!#12
+smalldatetime#!#11#!#16#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#smalldatetime#!#0#!#0#!#9#!#3#!#<NULL>#!#<NULL>#!#22
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+EXEC sp_datatype_info_100
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+vector#!#-2147483648#!#0#!#'#!#'#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#vector#!#<NULL>#!#<NULL>#!#-2147483648#!#<NULL>#!#<NULL>#!#<NULL>#!#-2147483648
+datetimeoffset#!#-155#!#34#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetimeoffset#!#0#!#7#!#-155#!#0#!#<NULL>#!#<NULL>#!#0
+time#!#-154#!#16#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#time#!#0#!#7#!#-154#!#0#!#<NULL>#!#<NULL>#!#0
+xml#!#-152#!#0#!#N'#!#'#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#xml#!#<NULL>#!#<NULL>#!#-152#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geography#!#-151#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geography#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geometry#!#-151#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geometry#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+sql_variant#!#-150#!#8000#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#sql_variant#!#0#!#0#!#-150#!#<NULL>#!#10#!#<NULL>#!#0
+uniqueidentifier#!#-11#!#36#!#'#!#'#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#uniqueidentifier#!#<NULL>#!#<NULL>#!#-11#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+ntext#!#-10#!#1073741823#!#N'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#ntext#!#<NULL>#!#<NULL>#!#-10#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+nchar#!#-8#!#4000#!#N'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nchar#!#<NULL>#!#<NULL>#!#-8#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+bit#!#-7#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#bit#!#0#!#0#!#-7#!#<NULL>#!#<NULL>#!#<NULL>#!#16
+tinyint#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#1#!#0#!#0#!#tinyint#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+tinyint identity#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#1#!#0#!#1#!#tinyint identity#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+bigint#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#bigint#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+bigint identity#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#bigint identity#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+image#!#-4#!#2147483647#!#0x#!#<NULL>#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#image#!#<NULL>#!#<NULL>#!#-4#!#<NULL>#!#<NULL>#!#<NULL>#!#20
+varbinary#!#-3#!#8000#!#0x#!#<NULL>#!#max length          #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#varbinary#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#<NULL>#!#4
+binary#!#-2#!#8000#!#0x#!#<NULL>#!#length              #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#binary#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#3
+timestamp#!#-2#!#8#!#0x#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#timestamp#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#80
+text#!#-1#!#2147483647#!#'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#text#!#<NULL>#!#<NULL>#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#19
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+numeric#!#2#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#numeric#!#0#!#38#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+numeric() identity#!#2#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#numeric() identity#!#0#!#0#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+decimal#!#3#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#decimal#!#0#!#38#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+money#!#3#!#19#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#money#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#11
+smallmoney#!#3#!#10#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#smallmoney#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#21
+decimal() identity#!#3#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#decimal() identity#!#0#!#0#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+int#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#int#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+int identity#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#int identity#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+smallint#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#smallint#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+smallint identity#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#smallint identity#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+float#!#6#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#float#!#<NULL>#!#<NULL>#!#6#!#<NULL>#!#2#!#<NULL>#!#8
+real#!#7#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#real#!#<NULL>#!#<NULL>#!#7#!#<NULL>#!#2#!#<NULL>#!#23
+date#!#9#!#10#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#date#!#<NULL>#!#0#!#9#!#1#!#<NULL>#!#<NULL>#!#0
+datetime2#!#11#!#27#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime2#!#0#!#7#!#9#!#3#!#<NULL>#!#<NULL>#!#0
+datetime#!#11#!#23#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime#!#3#!#3#!#9#!#3#!#<NULL>#!#<NULL>#!#12
+smalldatetime#!#11#!#16#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#smalldatetime#!#0#!#0#!#9#!#3#!#<NULL>#!#<NULL>#!#22
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+
+-- NULL parameter handling
+EXEC sp_datatype_info @data_type = NULL
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = NULL
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+
+
+-- Positional parameters
+EXEC sp_datatype_info 1
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_datatype_info_100 1
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+~~END~~
+
+
+EXEC sp_datatype_info 12
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sp_datatype_info_100 12
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+EXEC sp_datatype_info 12, 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sp_datatype_info_100 12, 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+EXEC sp_datatype_info 12, 3
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sp_datatype_info_100 12, 3
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+
+-- Mixed positional and named parameters
+EXEC sp_datatype_info 12, @odbcver = 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sp_datatype_info_100 12, @odbcver = 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+EXEC sp_datatype_info 12, @odbcver = 3
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sp_datatype_info_100 12, @odbcver = 3
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+
+-- Fully qualified name (sys schema)
+EXEC sys.sp_datatype_info @data_type = 12
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sys.sp_datatype_info_100 @data_type = 12
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+EXEC sys.sp_datatype_info 12, @odbcver = 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sys.sp_datatype_info_100 12, @odbcver = 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+
+-- Invalid/Edge cases
+-- Return all types (data_type = 0)
+EXEC sp_datatype_info @data_type = 0
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+vector#!#-2147483648#!#0#!#'#!#'#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#vector#!#<NULL>#!#<NULL>#!#-2147483648#!#<NULL>#!#<NULL>#!#<NULL>#!#-2147483648
+sql_variant#!#-150#!#8000#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#sql_variant#!#0#!#0#!#-150#!#<NULL>#!#10#!#<NULL>#!#0
+uniqueidentifier#!#-11#!#36#!#'#!#'#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#uniqueidentifier#!#<NULL>#!#<NULL>#!#-11#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+ntext#!#-10#!#1073741823#!#N'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#ntext#!#<NULL>#!#<NULL>#!#-10#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+xml#!#-10#!#0#!#N'#!#'#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#xml#!#<NULL>#!#<NULL>#!#-152#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+date#!#-9#!#10#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#date#!#<NULL>#!#0#!#9#!#1#!#<NULL>#!#<NULL>#!#0
+time#!#-9#!#16#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#time#!#0#!#7#!#-154#!#0#!#<NULL>#!#<NULL>#!#0
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+datetimeoffset#!#-9#!#34#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetimeoffset#!#0#!#7#!#-155#!#0#!#<NULL>#!#<NULL>#!#0
+datetime2#!#-9#!#27#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime2#!#0#!#7#!#9#!#3#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+nchar#!#-8#!#4000#!#N'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nchar#!#<NULL>#!#<NULL>#!#-8#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+bit#!#-7#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#bit#!#0#!#0#!#-7#!#<NULL>#!#<NULL>#!#<NULL>#!#16
+tinyint#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#1#!#0#!#0#!#tinyint#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+tinyint identity#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#1#!#0#!#1#!#tinyint identity#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+bigint#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#bigint#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+bigint identity#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#bigint identity#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+geography#!#-4#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geography#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geometry#!#-4#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geometry#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+image#!#-4#!#2147483647#!#0x#!#<NULL>#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#image#!#<NULL>#!#<NULL>#!#-4#!#<NULL>#!#<NULL>#!#<NULL>#!#20
+varbinary#!#-3#!#8000#!#0x#!#<NULL>#!#max length          #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#varbinary#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#<NULL>#!#4
+binary#!#-2#!#8000#!#0x#!#<NULL>#!#length              #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#binary#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#3
+timestamp#!#-2#!#8#!#0x#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#timestamp#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#80
+text#!#-1#!#2147483647#!#'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#text#!#<NULL>#!#<NULL>#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#19
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+numeric#!#2#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#numeric#!#0#!#38#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+numeric() identity#!#2#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#numeric() identity#!#0#!#0#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+decimal#!#3#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#decimal#!#0#!#38#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+money#!#3#!#19#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#money#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#11
+smallmoney#!#3#!#10#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#smallmoney#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#21
+decimal() identity#!#3#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#decimal() identity#!#0#!#0#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+int#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#int#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+int identity#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#int identity#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+smallint#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#smallint#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+smallint identity#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#smallint identity#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+float#!#6#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#float#!#<NULL>#!#<NULL>#!#6#!#<NULL>#!#2#!#<NULL>#!#8
+real#!#7#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#real#!#<NULL>#!#<NULL>#!#7#!#<NULL>#!#2#!#<NULL>#!#23
+datetime#!#11#!#23#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime#!#3#!#3#!#9#!#3#!#<NULL>#!#<NULL>#!#12
+smalldatetime#!#11#!#16#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#smalldatetime#!#0#!#0#!#9#!#3#!#<NULL>#!#<NULL>#!#22
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 0
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+vector#!#-2147483648#!#0#!#'#!#'#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#vector#!#<NULL>#!#<NULL>#!#-2147483648#!#<NULL>#!#<NULL>#!#<NULL>#!#-2147483648
+datetimeoffset#!#-155#!#34#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetimeoffset#!#0#!#7#!#-155#!#0#!#<NULL>#!#<NULL>#!#0
+time#!#-154#!#16#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#time#!#0#!#7#!#-154#!#0#!#<NULL>#!#<NULL>#!#0
+xml#!#-152#!#0#!#N'#!#'#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#xml#!#<NULL>#!#<NULL>#!#-152#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geography#!#-151#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geography#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geometry#!#-151#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geometry#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+sql_variant#!#-150#!#8000#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#sql_variant#!#0#!#0#!#-150#!#<NULL>#!#10#!#<NULL>#!#0
+uniqueidentifier#!#-11#!#36#!#'#!#'#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#uniqueidentifier#!#<NULL>#!#<NULL>#!#-11#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+ntext#!#-10#!#1073741823#!#N'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#ntext#!#<NULL>#!#<NULL>#!#-10#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+nchar#!#-8#!#4000#!#N'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nchar#!#<NULL>#!#<NULL>#!#-8#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+bit#!#-7#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#bit#!#0#!#0#!#-7#!#<NULL>#!#<NULL>#!#<NULL>#!#16
+tinyint#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#1#!#0#!#0#!#tinyint#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+tinyint identity#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#1#!#0#!#1#!#tinyint identity#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+bigint#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#bigint#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+bigint identity#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#bigint identity#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+image#!#-4#!#2147483647#!#0x#!#<NULL>#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#image#!#<NULL>#!#<NULL>#!#-4#!#<NULL>#!#<NULL>#!#<NULL>#!#20
+varbinary#!#-3#!#8000#!#0x#!#<NULL>#!#max length          #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#varbinary#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#<NULL>#!#4
+binary#!#-2#!#8000#!#0x#!#<NULL>#!#length              #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#binary#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#3
+timestamp#!#-2#!#8#!#0x#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#timestamp#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#80
+text#!#-1#!#2147483647#!#'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#text#!#<NULL>#!#<NULL>#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#19
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+numeric#!#2#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#numeric#!#0#!#38#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+numeric() identity#!#2#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#numeric() identity#!#0#!#0#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+decimal#!#3#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#decimal#!#0#!#38#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+money#!#3#!#19#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#money#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#11
+smallmoney#!#3#!#10#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#smallmoney#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#21
+decimal() identity#!#3#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#decimal() identity#!#0#!#0#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+int#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#int#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+int identity#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#int identity#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+smallint#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#smallint#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+smallint identity#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#smallint identity#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+float#!#6#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#float#!#<NULL>#!#<NULL>#!#6#!#<NULL>#!#2#!#<NULL>#!#8
+real#!#7#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#real#!#<NULL>#!#<NULL>#!#7#!#<NULL>#!#2#!#<NULL>#!#23
+date#!#9#!#10#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#date#!#<NULL>#!#0#!#9#!#1#!#<NULL>#!#<NULL>#!#0
+datetime2#!#11#!#27#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime2#!#0#!#7#!#9#!#3#!#<NULL>#!#<NULL>#!#0
+datetime#!#11#!#23#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime#!#3#!#3#!#9#!#3#!#<NULL>#!#<NULL>#!#12
+smalldatetime#!#11#!#16#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#smalldatetime#!#0#!#0#!#9#!#3#!#<NULL>#!#<NULL>#!#22
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+~~END~~
+
+
+-- Non-existent data type
+EXEC sp_datatype_info @data_type = 999
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = 999
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+
+EXEC sp_datatype_info @data_type = -999
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+EXEC sp_datatype_info_100 @data_type = -999
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
