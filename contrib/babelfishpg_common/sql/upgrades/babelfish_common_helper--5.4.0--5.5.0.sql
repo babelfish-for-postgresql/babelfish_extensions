@@ -195,7 +195,6 @@ DECLARE
     bbf_binary_ops_c INT := (SELECT * FROM sys.get_bbf_binary_ops_count('bbf_binary_ops'));
 BEGIN
     IF bbf_binary_ops_c = 6 THEN
-        RAISE NOTICE 'Adding comparison operators to bbf_binary_ops (equality already exists)';
 
         CREATE OR REPLACE FUNCTION sys.binary_varbinary_neq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
         RETURNS boolean AS 'babelfishpg_common', 'varbinary_neq'
