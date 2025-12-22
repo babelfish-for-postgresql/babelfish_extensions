@@ -1109,7 +1109,7 @@ SELECT babel_datetime_vu_function1(0x0000B02200EF28C1)
 GO
 ~~START~~
 varchar
-2023-06-15 14:30:45.123
+Jun 15 2023  2:30PM
 ~~END~~
 
 

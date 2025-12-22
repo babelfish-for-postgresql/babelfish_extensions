@@ -194,7 +194,7 @@ DECLARE @inputString date = '2016-12-21';
 SELECT ASCII(@inputString);
 GO
 
--- Test ASCII with datetime  --> will give incorrect results in babelfish [BABEL-1664]
+-- Test ASCII with datetime 
 DECLARE @date date = '12-21-16';  
 DECLARE @inputString datetime = @date;
 SELECT ASCII(@inputString);
@@ -356,7 +356,7 @@ SELECT
 FROM ascii_function_UDT_test;
 GO
 
--- Test ASCII with datetime UDTs --> will give incorrect results in babelfish [BABEL-1664]
+-- Test ASCII with datetime UDTs
 SELECT 
     ID,
     ASCII(CAST(datetime_col AS VARCHAR)) as datetime_ascii,

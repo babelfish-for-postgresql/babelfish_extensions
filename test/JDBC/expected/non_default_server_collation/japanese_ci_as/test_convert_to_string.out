@@ -289,7 +289,7 @@ SELECT CONVERT(CHAR(20), FloatCol), CONVERT(VARCHAR(20), FloatCol), CONVERT(NCHA
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-123.45              #!#123.45              #!#123.45              #!#123.45              #!#123.45#!#123.45
+123.45              #!#123.45              #!#123.45              #!#123.45#!#123.45#!#123.45
 ~~END~~
 
 
@@ -403,7 +403,7 @@ SELECT CONVERT(CHAR(30), SmalldatetimeCol), CONVERT(VARCHAR(30), SmalldatetimeCo
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
+Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
 ~~END~~
 
 
@@ -420,7 +420,7 @@ SELECT CONVERT(CHAR(30), DatetimeCol), CONVERT(VARCHAR(30), DatetimeCol), CONVER
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:56           #!#2024-01-15 12:34:56#!#2024-01-15 12:34:56           #!#2024-01-15 12:34:56#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
+Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
 ~~END~~
 
 
@@ -452,7 +452,7 @@ SELECT CONVERT(CHAR(30), SmalldatetimeCol), CONVERT(VARCHAR(30), SmalldatetimeCo
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
+Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
 ~~END~~
 
 
@@ -567,7 +567,7 @@ SELECT CONVERT(CHAR(20), BinaryCol), CONVERT(VARCHAR(20), BinaryCol), CONVERT(NC
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x41424344450000000000#!#0x41424344450000000000
+ABCDE               #!#ABCDE#!#䉁䑃E                 #!#䉁䑃E#!#0x41424344450000000000#!#0x41424344450000000000
 ~~END~~
 
 
@@ -575,7 +575,7 @@ SELECT CONVERT(CHAR(20), VarbinaryCol), CONVERT(VARCHAR(20), VarbinaryCol), CONV
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x4142434445#!#0x4142434445
+ABCDE               #!#ABCDE#!#䉁䑃E                 #!#䉁䑃E#!#0x4142434445#!#0x4142434445
 ~~END~~
 
 
@@ -695,14 +695,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 0) AS Default_Style_0 FROM convert_sour
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 100) AS Default_Style_100 FROM convert_source_udt_t1;  -- Nov 15 2023  9:01AM
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -725,14 +725,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 1) AS US_Style_1 FROM convert_source_ud
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 101) AS US_Style_101 FROM convert_source_udt_t1;   -- 11/15/2023
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -755,14 +755,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 2) AS ANSI_Style_2 FROM convert_source_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 102) AS ANSI_Style_102 FROM convert_source_udt_t1;   -- 2023.11.15
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -785,14 +785,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 3) AS British_Style_3 FROM convert_sour
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 103) AS British_Style_103 FROM convert_source_udt_t1;   -- 15/11/2023
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -801,28 +801,28 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 4) AS German_Style_4 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 104) AS German_Style_104 FROM convert_source_udt_t1;   -- 15.11.2023
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 4) AS German_Style_4 FROM convert_source_udt_t1;   -- 15.11.23
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 104) AS German_Style_104 FROM convert_source_udt_t1;   -- 15.11.2023
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -845,14 +845,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 5) AS Italian_Style_5 FROM convert_sour
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 105) AS Italian_Style_105 FROM convert_source_udt_t1;   -- 15-11-2023
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -875,14 +875,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 6) AS Style_6 FROM convert_source_udt_t
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 106) AS Style_106 FROM convert_source_udt_t1;   -- 15 Nov 2023
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -905,14 +905,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 7) AS Style_7 FROM convert_source_udt_t
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 107) AS Style_107 FROM convert_source_udt_t1;   -- Nov 15, 2023
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -935,14 +935,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 8) AS Time_Style_8 FROM convert_source_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 108) AS Time_Style_108 FROM convert_source_udt_t1;   -- 09:01:23
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -965,14 +965,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 9) AS Style_9 FROM convert_source_udt_t
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 109) AS Style_109 FROM convert_source_udt_t1;   -- Nov 15 2023  9:01:23:123AM
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -995,14 +995,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 10) AS Style_10 FROM convert_source_udt
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 110) AS Style_110 FROM convert_source_udt_t1;  -- 11-15-2023
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1025,14 +1025,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 11) AS Style_11 FROM convert_source_udt
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 111) AS Style_111 FROM convert_source_udt_t1;  -- 2023/11/15
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1055,14 +1055,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 12) AS Style_12 FROM convert_source_udt
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 112) AS Style_112 FROM convert_source_udt_t1;  -- 20231115
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1085,14 +1085,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 13) AS Style_13 FROM convert_source_udt
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 113) AS Style_113 FROM convert_source_udt_t1;  -- 15 Nov 2023 09:01:23:123
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1115,14 +1115,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 14) AS Style_14 FROM convert_source_udt
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 114) AS Style_114 FROM convert_source_udt_t1;  -- 09:01:23:123
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1145,14 +1145,14 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 20) AS Style_20 FROM convert_source_udt
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 120) AS Style_120 FROM convert_source_udt_t1;  -- 2023-11-15 09:01:23
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1182,21 +1182,21 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 21) AS Style_21 FROM convert_source_udt
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 25) AS Style_25 FROM convert_source_udt_t1;    -- 2023-11-15 09:01:23.123
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 121) AS Style_121 FROM convert_source_udt_t1;  -- 2023-11-15 09:01:23.123
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1212,7 +1212,7 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 22) AS Style_22 FROM convert_source_udt
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1228,7 +1228,7 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 23) AS Style_23 FROM convert_source_udt
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1244,7 +1244,7 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 126) AS ISO8601_Style_126 FROM convert_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1260,7 +1260,7 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 127) AS ISO8601TZ_Style_127 FROM conver
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1276,7 +1276,7 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 130) AS Hijri_Style_130 FROM convert_so
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1292,7 +1292,7 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 131) AS HijriTime_Style_131 FROM conver
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:56
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1302,14 +1302,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 0) AS Default_Style_0 FROM convert
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 100) AS Default_Style_100 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- US (1 or 101)
@@ -1317,14 +1317,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 1) AS US_Style_1 FROM convert_sour
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 101) AS US_Style_101 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- ANSI (2 or 102)
@@ -1332,14 +1332,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 2) AS ANSI_Style_2 FROM convert_so
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 102) AS ANSI_Style_102 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- British/French (3 or 103)
@@ -1347,14 +1347,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 3) AS British_Style_3 FROM convert
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 103) AS British_Style_103 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- German (4 or 104)
@@ -1362,14 +1362,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 4) AS German_Style_4 FROM convert_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 104) AS German_Style_104 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- Italian (5 or 105)
@@ -1377,14 +1377,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 5) AS Italian_Style_5 FROM convert
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 105) AS Italian_Style_105 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- dd mon yyyy (6 or 106)
@@ -1392,14 +1392,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 6) AS Style_6 FROM convert_source_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 106) AS Style_106 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- mon dd, yyyy (7 or 107)
@@ -1407,14 +1407,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 7) AS Style_7 FROM convert_source_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 107) AS Style_107 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- HH:mm:ss (8 or 108)
@@ -1422,14 +1422,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 8) AS Time_Style_8 FROM convert_so
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 108) AS Time_Style_108 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
@@ -1437,14 +1437,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 9) AS Style_9 FROM convert_source_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 109) AS Style_109 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- mm-dd-yy (10 or 110)
@@ -1452,14 +1452,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 10) AS Style_10 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 110) AS Style_110 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- yy/mm/dd (11 or 111)
@@ -1467,14 +1467,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 11) AS Style_11 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 111) AS Style_111 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- yyyymmdd (12 or 112)
@@ -1482,14 +1482,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 12) AS Style_12 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 112) AS Style_112 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- dd mon yyyy HH:mm:ss:mmm (13 or 113)
@@ -1497,14 +1497,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 13) AS Style_13 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 113) AS Style_113 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- HH:mm:ss:mmm (14 or 114)
@@ -1512,14 +1512,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 14) AS Style_14 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 114) AS Style_114 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- yyyy-mm-dd HH:mm:ss (20 or 120)
@@ -1527,14 +1527,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 20) AS Style_20 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 120) AS Style_120 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
@@ -1542,21 +1542,21 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 21) AS Style_21 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 25) AS Style_25 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 121) AS Style_121 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- Style 22: MM/DD/YY HH:MM:SS
@@ -1564,7 +1564,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 22) AS Style_22 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- Style 23: YYYY-MM-DD
@@ -1572,7 +1572,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 23) AS Style_23 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- ISO8601 (126)
@@ -1580,7 +1580,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 126) AS ISO8601_Style_126 FROM con
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- ISO8601 with timezone (127)
@@ -1588,7 +1588,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 127) AS ISO8601TZ_Style_127 FROM c
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- Hijri (130)
@@ -1596,7 +1596,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 130) AS Hijri_Style_130 FROM conve
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- Hijri with time (131)
@@ -1604,7 +1604,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 131) AS HijriTime_Style_131 FROM c
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -1613,14 +1613,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 0) AS Default_Style_0 FROM convert
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 100) AS Default_Style_100 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- US (1 or 101)
@@ -1628,14 +1628,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 1) AS US_Style_1 FROM convert_sour
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 101) AS US_Style_101 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- ANSI (2 or 102)
@@ -1643,14 +1643,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 2) AS ANSI_Style_2 FROM convert_so
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 102) AS ANSI_Style_102 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- British/French (3 or 103)
@@ -1658,14 +1658,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 3) AS British_Style_3 FROM convert
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 103) AS British_Style_103 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- German (4 or 104)
@@ -1673,14 +1673,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 4) AS German_Style_4 FROM convert_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 104) AS German_Style_104 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- Italian (5 or 105)
@@ -1688,14 +1688,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 5) AS Italian_Style_5 FROM convert
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 105) AS Italian_Style_105 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- dd mon yyyy (6 or 106)
@@ -1703,14 +1703,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 6) AS Style_6 FROM convert_source_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 106) AS Style_106 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- mon dd, yyyy (7 or 107)
@@ -1718,14 +1718,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 7) AS Style_7 FROM convert_source_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 107) AS Style_107 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- HH:mm:ss (8 or 108)
@@ -1733,14 +1733,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 8) AS Time_Style_8 FROM convert_so
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 108) AS Time_Style_108 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
@@ -1748,14 +1748,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 9) AS Style_9 FROM convert_source_
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 109) AS Style_109 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- mm-dd-yy (10 or 110)
@@ -1763,14 +1763,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 10) AS Style_10 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 110) AS Style_110 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- yy/mm/dd (11 or 111)
@@ -1778,14 +1778,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 11) AS Style_11 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 111) AS Style_111 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- yyyymmdd (12 or 112)
@@ -1793,14 +1793,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 12) AS Style_12 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 112) AS Style_112 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- dd mon yyyy HH:mm:ss:mmm (13 or 113)
@@ -1808,14 +1808,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 13) AS Style_13 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 113) AS Style_113 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- HH:mm:ss:mmm (14 or 114)
@@ -1823,14 +1823,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 14) AS Style_14 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 114) AS Style_114 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- yyyy-mm-dd HH:mm:ss (20 or 120)
@@ -1838,14 +1838,14 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 20) AS Style_20 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 120) AS Style_120 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- yyyy-mm-dd HH:mm:ss.mmm (21 or 25 or 121)
@@ -1853,21 +1853,21 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 21) AS Style_21 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 25) AS Style_25 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 121) AS Style_121 FROM convert_source_udt_t1;
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- Style 22: MM/DD/YY HH:MM:SS
@@ -1875,7 +1875,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 22) AS Style_22 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- Style 23: YYYY-MM-DD
@@ -1883,7 +1883,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 23) AS Style_23 FROM convert_sourc
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- ISO8601 (126)
@@ -1891,7 +1891,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 126) AS ISO8601_Style_126 FROM con
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- ISO8601 with timezone (127)
@@ -1899,7 +1899,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 127) AS ISO8601TZ_Style_127 FROM c
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- Hijri (130)
@@ -1907,7 +1907,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 130) AS Hijri_Style_130 FROM conve
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 -- Hijri with time (131)
@@ -1915,7 +1915,7 @@ SELECT CONVERT(VARCHAR(50), SmallDatetimeCol, 131) AS HijriTime_Style_131 FROM c
 GO
 ~~START~~
 varchar
-2024-01-15 12:34:00
+Jan 15 2024 12:34PM
 ~~END~~
 
 
@@ -4425,7 +4425,7 @@ FROM convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-123.45                                            #!#123.45                                            #!#123.45                                            #!#123.45                                            
+123.45                                            #!#123.45                                            #!#123.45                                            #!#123.45
 ~~END~~
 
 SELECT
@@ -4451,7 +4451,7 @@ FROM convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-1.2345000e+02                                     #!#1.2345000e+02                                     #!#1.2345000e+02                                     #!#1.2345000e+02                                     
+1.2345000e+02                                     #!#1.2345000e+02                                     #!#1.2345000e+02                                     #!#1.2345000e+02
 ~~END~~
 
 SELECT
@@ -4477,7 +4477,7 @@ FROM convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-1.234500000000000e+02                             #!#1.234500000000000e+02                             #!#1.234500000000000e+02                             #!#1.234500000000000e+02                             
+1.234500000000000e+02                             #!#1.234500000000000e+02                             #!#1.234500000000000e+02                             #!#1.234500000000000e+02
 ~~END~~
 
 SELECT
@@ -4503,7 +4503,7 @@ FROM convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-1.2345000000000000e+02                            #!#1.2345000000000000e+02                            #!#1.2345000000000000e+02                            #!#1.2345000000000000e+02                            
+1.2345000000000000e+02                            #!#1.2345000000000000e+02                            #!#1.2345000000000000e+02                            #!#1.2345000000000000e+02
 ~~END~~
 
 SELECT
@@ -5130,9 +5130,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5147,9 +5147,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5183,9 +5183,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5200,9 +5200,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5236,9 +5236,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5253,9 +5253,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5290,9 +5290,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5307,9 +5307,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5343,9 +5343,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5360,9 +5360,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5396,9 +5396,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5413,9 +5413,9 @@ FROM convert_binary_source;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-ABCD                #!#ABCD#!#ABCD                #!#ABCD
+ABCD                #!#ABCD#!#䉁䑃                  #!#䉁䑃
                     #!##!#                    #!#
-ABC                 #!#ABC#!#ABC                 #!#ABC
+ABC                 #!#ABC#!#䉁C                  #!#䉁C
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "SJIS": 0xff 0xff)~~
@@ -5622,7 +5622,7 @@ SELECT * FROM convert_view_decimals
 GO
 ~~START~~
 char#!#char#!#char#!#char#!#char#!#char#!#varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
-123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45#!#123.45#!#123.4500#!#123.45                        #!#123.45
+123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45                        #!#123.45#!#123.45#!#123.4500#!#123.45#!#123.45
 ~~END~~
 
 SELECT * FROM convert_view_datetimes

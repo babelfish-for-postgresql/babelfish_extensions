@@ -969,7 +969,7 @@ SELECT babel_5059_f27(CAST('2024-10-14 15:30:00' AS SMALLDATETIME));
 GO
 ~~START~~
 varchar
-2
+O
 ~~END~~
 
 
