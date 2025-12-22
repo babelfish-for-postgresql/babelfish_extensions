@@ -629,7 +629,7 @@ babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper
 babel_numeric_smallmoney_oper
 mathematical_func_tests-before-17_7-or-16_11
-datetime_roundoff
+datetime_roundoff-before-17_8
 babel_assign_nchar
 alter-function-with-weak-view
 view_sec_setting_before_17_6-or-16_10
@@ -644,3 +644,4 @@ babel_timezoneinfo_before_17_7
 test_convert_to_binary-before-17_7-16_11
 cast_datetime_to_binary-before-17_7-16_11
 BABEL-4271
+BABEL-1664
