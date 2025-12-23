@@ -829,7 +829,7 @@ user_name(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 
 	/* Search and obtain the tuple on the role name */
 	physical_user_name = (NameData *) palloc0(NAMEDATALEN);
@@ -847,7 +847,7 @@ user_name(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(tuple))
 	{
 		systable_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		table_close(bbf_authid_user_ext_rel, AccessShareLock);
 		PG_RETURN_NULL();
 	}
 
@@ -858,7 +858,7 @@ user_name(PG_FUNCTION_ARGS)
 	user = pstrdup(TextDatumGetCString(datum));
 
 	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 
 	PG_RETURN_TEXT_P(cstring_to_text(user));
 }
@@ -2340,7 +2340,7 @@ has_user_in_db(const char *login, char **db_name)
 
 	/* open the table to scane */
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 
 	/* change the target name to NameData for search */
 	login_name = (NameData *) palloc0(NAMEDATALEN);
@@ -2364,11 +2364,11 @@ has_user_in_db(const char *login, char **db_name)
 		*db_name = pstrdup(TextDatumGetCString(name));
 
 		table_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		table_close(bbf_authid_user_ext_rel, AccessShareLock);
 		return true;
 	}
 	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 
 	return false;
 }
@@ -2391,7 +2391,7 @@ get_fully_qualified_domain_name(char *netbios_domain)
 	HeapTuple	tuple;
 	char	   *fq_domain_name;
 
-	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowShareLock);
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), AccessShareLock);
 
 	dsc = RelationGetDescr(bbf_domain_mapping_rel);
 
@@ -2443,7 +2443,7 @@ get_fully_qualified_domain_name(char *netbios_domain)
 	}
 
 	systable_endscan(scan);
-	table_close(bbf_domain_mapping_rel, RowShareLock);
+	table_close(bbf_domain_mapping_rel, AccessShareLock);
 
 	return fq_domain_name;
 }
