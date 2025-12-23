@@ -39,3 +39,95 @@ GO
 
 CALL sys.bbf_remove_createrole_from_logins();
 GO
+  
+-- psql
+-- setup
+CREATE ROLE test_regular_user WITH LOGIN PASSWORD '12345678';
+GO
+
+GRANT jdbc_user TO test_regular_user;
+GO
+
+-- Test superuser permissions first
+CREATE OR REPLACE PROCEDURE sys.test_sys_proc_creation()
+AS $$
+BEGIN 
+    RAISE NOTICE 'rewrite babel sys procedure';
+END; $$ LANGUAGE plpgsql;
+GO
+
+CALL sys.test_sys_proc_creation();
+GO
+
+CREATE FUNCTION sys.test_sys_function_creation()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RAISE NOTICE 'Create babel sys function';
+END;
+$$;
+GO
+
+SELECT sys.test_sys_function_creation();
+GO
+
+-- psql user=test_regular_user password=12345678
+-- Verify current user is not superuser initially
+SELECT current_user, session_user;
+GO
+
+-- Test 1: CREATE PROCEDURE should fail
+CREATE OR REPLACE PROCEDURE sys.test_regular_proc()
+AS $$
+BEGIN 
+    RAISE NOTICE 'This should fail';
+END; $$ LANGUAGE plpgsql;
+GO
+
+-- Test 2: CREATE FUNCTION should fail  
+CREATE FUNCTION sys.test_regular_function()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RAISE NOTICE 'This should fail';
+END;
+$$;
+GO
+
+-- Test 3: Role switching scenario
+SET ROLE jdbc_user;
+GO
+
+SELECT current_user, session_user;
+GO
+
+-- Test after role switch - should still fail
+CREATE OR REPLACE FUNCTION sys.test_after_role_switch()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RAISE NOTICE 'Function created after role switch';
+END;
+$$;
+GO
+
+RESET ROLE;
+GO
+-- terminate-psql-conn user=test_regular_user password=12345678
+
+-- Clean up
+-- psql
+REVOKE jdbc_user FROM test_regular_user;
+GO
+
+DROP PROCEDURE IF EXISTS sys.test_sys_proc_creation;
+GO
+
+DROP FUNCTION IF EXISTS sys.test_sys_function_creation;
+GO
+
+DROP ROLE test_regular_user;
+GO
