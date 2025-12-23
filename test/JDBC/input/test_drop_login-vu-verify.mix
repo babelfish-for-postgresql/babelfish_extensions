@@ -1,4 +1,17 @@
 -- tsql
+use master
+go
+create login l1_owner with password = '123'
+go
+ALTER SERVER ROLE sysadmin ADD MEMBER l1_owner
+go
+
+-- tsql user=l1_owner password=123
+create database l1_owner_db
+go
+-- terminate-tsql-conn user=l1_owner password=123
+
+-- tsql
 -- reset login password
 ALTER LOGIN babel_5127_test_sysadmin WITH PASSWORD = 'abc';
 GO
@@ -51,6 +64,88 @@ GO
 
 DROP ROLE [public];
 GO
+
+-- tsql
+-- should throw error
+use master
+go
+drop login l1_owner
+go
+
+-- tsql user=l1_owner password=123
+drop database l1_owner_db
+go
+-- terminate-tsql-conn user=l1_owner password=123
+
+-- tsql
+drop login l1_owner
+go
+
+-- tsql
+use master 
+go
+create login login_owner with password='123'
+go
+create database db_owner;
+go
+ALTER AUTHORIZATION on database::db_owner TO login_owner
+go
+-- should throw error
+drop login login_owner
+go
+drop database db_owner
+go
+-- should drop successfully
+drop login login_owner
+go
+
+CREATE LOGIN txn_login1 WITH PASSWORD = '123'
+go
+CREATE LOGIN txn_login2 WITH PASSWORD = '123'
+go
+ALTER SERVER ROLE sysadmin ADD MEMBER txn_login1
+go
+ALTER SERVER ROLE sysadmin ADD MEMBER txn_login2
+go
+CREATE DATABASE test_concurrent_db
+go
+create login txn_login with password='123';
+go
+
+-- tsql user=txn_login1 password=123
+SELECT set_config('babelfishpg_tsql.isolation_level_repeatable_read','pg_isolation',false);
+go
+
+BEGIN TRAN
+GO
+set transaction isolation level repeatable read;
+go
+SELECT name, suser_sname(owner_sid) FROM sys.databases WHERE name = 'test_concurrent_db'
+
+-- tsql user=txn_login2 password=123
+ALTER AUTHORIZATION ON DATABASE::test_concurrent_db TO txn_login
+go
+-- terminate-tsql-conn user=txn_login2 password=123
+
+-- tsql user=txn_login1 password=123
+SELECT name, suser_sname(owner_sid) FROM sys.databases WHERE name = 'test_concurrent_db'
+drop login txn_login;
+commit;
+go
+
+-- terminate-tsql-conn user=txn_login1 password=123
+
+-- tsql 
+drop login txn_login1;
+go
+drop login txn_login2;
+go
+drop database test_concurrent_db;
+go
+
+drop login txn_login;
+go
+
 
 -- psql
 -- Need to terminate active session before cleaning up the login
