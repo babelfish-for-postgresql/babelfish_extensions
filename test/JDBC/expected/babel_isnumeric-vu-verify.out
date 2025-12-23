@@ -2733,3 +2733,175 @@ int
 0
 ~~END~~
 
+
+-- Test casting numeric strings with special whitespace to numeric
+SELECT ISNUMERIC(CAST(CHAR(8) AS NUMERIC));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
+
+SELECT ISNUMERIC(CAST(CHAR(9) AS NUMERIC(18,5)));  -- tab
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "	")~~
+
+SELECT ISNUMERIC(CAST(CHAR(10) AS NUMERIC));  -- newline
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "
+")~~
+
+SELECT ISNUMERIC(CAST(CHAR(11) AS NUMERIC)); -- vertical tab
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
+
+SELECT ISNUMERIC(CAST(CHAR(12) AS NUMERIC));  -- form feed
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
+
+SELECT ISNUMERIC(CAST(CHAR(13) AS NUMERIC));  -- carriage return
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
+
+SELECT ISNUMERIC(CAST(CHAR(9) + CHAR(10) AS NUMERIC));  -- tab + newline
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "	
+")~~
+
+SELECT ISNUMERIC(CAST(CHAR(13) + CHAR(10) AS NUMERIC));  -- CRLF
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "
+")~~
+
+SELECT ISNUMERIC(CAST(CHAR(9) + CHAR(13) AS NUMERIC));  -- tab + CR
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "	")~~
+
+SELECT ISNUMERIC(CAST((CHAR(9) + cast('123' as numeric)) AS NUMERIC(18,5)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "	")~~
+
+SELECT ISNUMERIC(CAST((CHAR(10) + cast('123' as numeric)) AS NUMERIC(18,5)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "
+")~~
+
+SELECT ISNUMERIC(CAST((CHAR(11) + cast('123' as numeric)) AS NUMERIC(18,5)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
+
+SELECT ISNUMERIC(CAST((CHAR(12) + cast('123' as numeric)) AS NUMERIC(18,5)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
+
+SELECT ISNUMERIC(CAST((CHAR(13) + cast('123' as numeric)) AS NUMERIC(18,5)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
+
+SELECT ISNUMERIC(CAST((CAST('123' as numeric) + CHAR(9)) AS NUMERIC(18,5)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "	")~~
+
+SELECT ISNUMERIC(CAST((CAST('123' as numeric) + CHAR(10)) AS NUMERIC(18,5)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "
+")~~
+
+SELECT ISNUMERIC(CAST((CAST('123' as numeric) + CHAR(11)) AS NUMERIC(18,5)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
+
+SELECT ISNUMERIC(CAST((CAST('123' as numeric) + CHAR(12)) AS NUMERIC(18,5)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
+
+SELECT ISNUMERIC(CAST((CAST('123' as numeric) + CHAR(13)) AS NUMERIC(18,5)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
+
+SELECT ISNUMERIC(CAST((123 + CHAR(9)) AS NUMERIC(18,5)));  -- tab
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "	")~~
+
+SELECT ISNUMERIC(CAST((123 + CHAR(10)) AS NUMERIC(18,5)));  -- tab
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "
+")~~
+
+SELECT ISNUMERIC(CAST((123 + CHAR(11)) AS NUMERIC(18,5)));  -- tab
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "")~~
+
+SELECT ISNUMERIC(CAST((123 + CHAR(12)) AS NUMERIC(18,5)));  -- tab
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "")~~
+
+SELECT ISNUMERIC(CAST((123 + CHAR(13)) AS NUMERIC(18,5)));  -- tab
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "")~~
+
+SELECT ISNUMERIC(CAST('123  ' as numeric)) -- numeric + tab
+Go
+~~START~~
+int
+1
+~~END~~
+
+SELECT ISNUMERIC(CAST(' 123' as numeric)) -- tab +numeric
+Go
+~~START~~
+int
+1
+~~END~~
+

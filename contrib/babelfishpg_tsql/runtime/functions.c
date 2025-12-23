@@ -215,7 +215,6 @@ void	   *get_language(void);
 void	   *get_host_id(void);
 
 Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
-static int 	checkWhitespaceType(const char *str);
 static HTAB *load_categories_hash(const char *sourcetext, MemoryContext per_query_ctx);
 static Tuplestorestate *get_bbf_pivot_tuplestore(const char 	*sourcetext,
 												 const char 	*funcName,
