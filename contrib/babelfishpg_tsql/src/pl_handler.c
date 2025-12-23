@@ -4488,6 +4488,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							ereport(ERROR,
 									(errcode(ERRCODE_OBJECT_IN_USE),
 									 errmsg("Could not drop login '%s' as the user is currently logged in.", role_name)));
+														
+						if (is_database_owner(role_oid))
+							ereport(ERROR,
+									(errcode(ERRCODE_OBJECT_IN_USE),
+									 errmsg("Login '%s' owns one or more database(s). Change the owner of the database(s) before dropping the login.", role_name)));
 					}
 
 					/*
