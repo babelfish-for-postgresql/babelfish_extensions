@@ -124,7 +124,7 @@ END; $$ LANGUAGE plpgsql;
 GO
 ~~ERROR (Code: 0)~~
 
-+~~ERROR (Message: ERROR: permission denied to create or modify objects in sys schema
+~~ERROR (Message: ERROR: permission denied to create or modify objects in sys schema
     Server SQLState: 42501)~~
 
 
@@ -140,7 +140,7 @@ $$;
 GO
 ~~ERROR (Code: 0)~~
 
-+~~ERROR (Message: ERROR: permission denied to create or modify objects in sys schema
+~~ERROR (Message: ERROR: permission denied to create or modify objects in sys schema
     Server SQLState: 42501)~~
 
 
@@ -168,7 +168,7 @@ $$;
 GO
 ~~ERROR (Code: 0)~~
 
-+~~ERROR (Message: ERROR: permission denied to create or modify objects in sys schema
+~~ERROR (Message: ERROR: permission denied to create or modify objects in sys schema
     Server SQLState: 42501)~~
 
 
