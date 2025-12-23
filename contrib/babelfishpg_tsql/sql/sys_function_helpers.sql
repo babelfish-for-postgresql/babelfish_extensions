@@ -10968,12 +10968,12 @@ BEGIN
 		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
 	ELSE
      -- Default format for all other style numbers
-		v_result := pg_catalog.btrim(to_char(v_moneyval, '999,999,999,999,990.00'));
+		v_result := pg_catalog.btrim(to_char(v_moneyval, '999,999,999,999,990.99'));
 	END IF;
     -- Check if result has correct sign
-    IF (v_moneysign::SMALLINT = -1 AND left(ltrim(v_result), 1) != '-') THEN
+    IF (v_moneysign::SMALLINT = -1 AND left(ltrim(v_result), 1) COLLATE "C" != '-' COLLATE "C") THEN
         v_result := '-' || ltrim(v_result);
-    ELSIF (v_moneysign::SMALLINT != -1 AND left(ltrim(v_result), 1) = '-') THEN
+    ELSIF (v_moneysign::SMALLINT != -1 AND left(ltrim(v_result), 1) COLLATE "C" != '-' COLLATE "C") THEN
         v_result := ltrim(v_result, '-');
     END IF;
 
@@ -11025,12 +11025,12 @@ BEGIN
 		v_result := pg_catalog.btrim(to_char(v_smallmoneyval, v_format));
 	ELSE
      -- Default format for all other style numbers (style 1 uses comma formatting)
-		v_result := pg_catalog.btrim(to_char(p_smallmoneyval, '999,990.00'));
+		v_result := pg_catalog.btrim(to_char(v_smallmoneyval, '999,990.99'));
 	END IF;
      -- Check if result has correct sign
-    IF (v_smallmoneysign::SMALLINT = -1 AND left(ltrim(v_result), 1) != '-') THEN
+    IF (v_smallmoneysign::SMALLINT = -1 AND left(ltrim(v_result), 1) COLLATE "C" != '-' COLLATE "C") THEN
         v_result := '-' || ltrim(v_result);
-    ELSIF (v_smallmoneysign::SMALLINT != -1 AND left(ltrim(v_result), 1) = '-') THEN
+    ELSIF (v_smallmoneysign::SMALLINT != -1 AND left(ltrim(v_result), 1) COLLATE "C" = '-' COLLATE "C") THEN
         v_result := ltrim(v_result, '-');
     END IF;
 
