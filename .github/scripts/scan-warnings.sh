@@ -44,8 +44,8 @@ fi
 SNAPSHOT_ACTIVE_COUNT=$(grep -c "SNAPSHOT_ACTIVE_WARNING:" "$CURRENT_WARNINGS")
 LEAK_COUNT=$(grep -c "LEAK_WARNING:" "$CURRENT_WARNINGS")
 
-if [[ "$SNAPSHOT_ACTIVE_COUNT" -ne 42 ]]; then
-    echo "Error: Expected 42 'snapshot ... still active' warnings, but found $SNAPSHOT_ACTIVE_COUNT"
+if [[ "$SNAPSHOT_ACTIVE_COUNT" -ne 44 ]]; then
+    echo "Error: Expected 44 'snapshot ... still active' warnings, but found $SNAPSHOT_ACTIVE_COUNT"
     ERROR_FOUND=true
 fi
 
