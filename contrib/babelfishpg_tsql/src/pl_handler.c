@@ -5426,7 +5426,7 @@ validate_sys_schema_permissions(List *funcname)
     Oid schemaOid;
     Oid sysSchemaOid;
 
-    if (superuser())
+    if (superuser_arg(GetSessionUserId()))
         return;
         
     schemaOid = QualifiedNameGetCreationNamespace(funcname, &objname);
@@ -5436,7 +5436,7 @@ validate_sys_schema_permissions(List *funcname)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-                errmsg("permission denied to modify procedures in sys schema")));
+                errmsg("permission denied to create or modify objects in sys schema")));
     }
 }
 
