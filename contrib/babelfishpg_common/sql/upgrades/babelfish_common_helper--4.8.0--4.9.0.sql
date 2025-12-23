@@ -5,83 +5,71 @@
 -- Adding operator optimization clauses so that binary/varbinary incorporate index scans when necessary
 alter OPERATOR sys.= (sys.bbf_binary, sys.bbf_binary) 
 set (
-    NEGATOR = <>,
     JOIN = eqjoinsel
 );
 
 alter OPERATOR sys.= (sys.bbf_varbinary, sys.bbf_varbinary) 
 set (
-    NEGATOR = <>,
     JOIN = eqjoinsel
 );
 
 alter OPERATOR sys.<> (sys.bbf_binary, sys.bbf_binary) 
 set (
     RESTRICT = neqsel,
-    NEGATOR = =,
     JOIN = neqjoinsel
 );
 
 alter OPERATOR sys.<> (sys.bbf_varbinary, sys.bbf_varbinary) 
 set (
     RESTRICT = neqsel,
-    NEGATOR = =,
     JOIN = neqjoinsel
 );
 
 alter OPERATOR sys.> (sys.bbf_binary, sys.bbf_binary) 
 set (
     RESTRICT = scalargtsel,
-    NEGATOR = <=,
     JOIN = scalargtjoinsel
 );
 
 alter OPERATOR sys.> (sys.bbf_varbinary, sys.bbf_varbinary) 
 set (
     RESTRICT = scalargtsel,
-    NEGATOR = <=,
     JOIN = scalargtjoinsel
 );
 
 alter OPERATOR sys.>= (sys.bbf_binary, sys.bbf_binary) 
 set (
     RESTRICT = scalargesel,
-    NEGATOR = <,
     JOIN = scalargejoinsel
 );
 
 alter OPERATOR sys.>= (sys.bbf_varbinary, sys.bbf_varbinary) 
 set (
     RESTRICT = scalargesel,
-    NEGATOR = <,
     JOIN = scalargejoinsel
 );
 
 alter OPERATOR sys.< (sys.bbf_binary, sys.bbf_binary) 
 set (
     RESTRICT = scalarltsel,
-    NEGATOR = >=,
     JOIN = scalarltjoinsel
 );
 
 alter OPERATOR sys.< (sys.bbf_varbinary, sys.bbf_varbinary) 
 set (
     RESTRICT = scalarltsel,
-    NEGATOR = >=,
     JOIN = scalarltjoinsel
 );
 
 alter OPERATOR sys.<= (sys.bbf_binary, sys.bbf_binary) 
 set (
     RESTRICT = scalarlesel,
-    NEGATOR = >,
     JOIN = scalarlejoinsel
 );
 
 alter OPERATOR sys.<= (sys.bbf_varbinary, sys.bbf_varbinary) 
 set (
     RESTRICT = scalarlesel,
-    NEGATOR = >,
     JOIN = scalarlejoinsel
 );
 
@@ -129,7 +117,6 @@ BEGIN
             RIGHTARG = sys.bbf_varbinary,
             FUNCTION = sys.binary_varbinary_neq,
             COMMUTATOR = <>,
-            NEGATOR = =,
             RESTRICT = neqsel,
             JOIN = neqjoinsel
         );
@@ -139,7 +126,6 @@ BEGIN
             RIGHTARG = sys.bbf_varbinary,
             FUNCTION = sys.binary_varbinary_lt,
             COMMUTATOR = >,
-            NEGATOR = >=,
             RESTRICT = scalarltsel,
             JOIN = scalarltjoinsel
         );
@@ -149,7 +135,6 @@ BEGIN
             RIGHTARG = sys.bbf_varbinary,
             FUNCTION = sys.binary_varbinary_leq,
             COMMUTATOR = >=,
-            NEGATOR = >,
             RESTRICT = scalarlesel,
             JOIN = scalarlejoinsel
         );
@@ -159,7 +144,6 @@ BEGIN
             RIGHTARG = sys.bbf_varbinary,
             FUNCTION = sys.binary_varbinary_gt,
             COMMUTATOR = <,
-            NEGATOR = <=,
             RESTRICT = scalargtsel,
             JOIN = scalargtjoinsel
         );
@@ -169,7 +153,6 @@ BEGIN
             RIGHTARG = sys.bbf_varbinary,
             FUNCTION = sys.binary_varbinary_geq,
             COMMUTATOR = <=,
-            NEGATOR = <,
             RESTRICT = scalargesel,
             JOIN = scalargejoinsel
         );
@@ -223,7 +206,6 @@ BEGIN
             RIGHTARG = sys.bbf_binary,
             FUNCTION = sys.varbinary_binary_neq,
             COMMUTATOR = <>,
-            NEGATOR = =,
             RESTRICT = neqsel,
             JOIN = neqjoinsel
         );
@@ -233,7 +215,6 @@ BEGIN
             RIGHTARG = sys.bbf_binary,
             FUNCTION = sys.varbinary_binary_lt,
             COMMUTATOR = >,
-            NEGATOR = >=,
             RESTRICT = scalarltsel,
             JOIN = scalarltjoinsel
         );
@@ -243,7 +224,6 @@ BEGIN
             RIGHTARG = sys.bbf_binary,
             FUNCTION = sys.varbinary_binary_leq,
             COMMUTATOR = >=,
-            NEGATOR = >,
             RESTRICT = scalarlesel,
             JOIN = scalarlejoinsel
         );
@@ -253,7 +233,6 @@ BEGIN
             RIGHTARG = sys.bbf_binary,
             FUNCTION = sys.varbinary_binary_gt,
             COMMUTATOR = <,
-            NEGATOR = <=,
             RESTRICT = scalargtsel,
             JOIN = scalargtjoinsel
         );
@@ -263,7 +242,6 @@ BEGIN
             RIGHTARG = sys.bbf_binary,
             FUNCTION = sys.varbinary_binary_geq,
             COMMUTATOR = <=,
-            NEGATOR = <,
             RESTRICT = scalargesel,
             JOIN = scalargejoinsel
         );
