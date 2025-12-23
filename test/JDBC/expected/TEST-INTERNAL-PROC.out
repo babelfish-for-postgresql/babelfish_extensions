@@ -59,3 +59,133 @@ GO
 ~~ERROR (Message: ERROR: remove_createrole_from_logins() can only be called from an SQL script executed by CREATE/ALTER EXTENSION
     Server SQLState: 0A000)~~
 
+-- psql
+  
+-- setup
+CREATE ROLE test_regular_user WITH LOGIN PASSWORD '12345678';
+GO
+
+GRANT jdbc_user TO test_regular_user;
+GO
+
+-- Test superuser permissions first
+CREATE OR REPLACE PROCEDURE sys.test_sys_proc_creation()
+AS $$
+BEGIN 
+    RAISE NOTICE 'rewrite babel sys procedure';
+END; $$ LANGUAGE plpgsql;
+GO
+
+CALL sys.test_sys_proc_creation();
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: rewrite babel sys procedure  Server SQLState: 00000)~~
+
+
+CREATE FUNCTION sys.test_sys_function_creation()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RAISE NOTICE 'Create babel sys function';
+END;
+$$;
+GO
+
+SELECT sys.test_sys_function_creation();
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Create babel sys function  Server SQLState: 00000)~~
+
+~~START~~
+void
+
+~~END~~
+
+
+-- psql user=test_regular_user password=12345678
+-- Verify current user is not superuser initially
+SELECT current_user, session_user;
+GO
+~~START~~
+name#!#name
+test_regular_user#!#test_regular_user
+~~END~~
+
+
+-- Test 1: CREATE PROCEDURE should fail
+CREATE OR REPLACE PROCEDURE sys.test_regular_proc()
+AS $$
+BEGIN 
+    RAISE NOTICE 'This should fail';
+END; $$ LANGUAGE plpgsql;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to create or modify objects in sys schema
+    Server SQLState: 42501)~~
+
+
+-- Test 2: CREATE FUNCTION should fail  
+CREATE FUNCTION sys.test_regular_function()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RAISE NOTICE 'This should fail';
+END;
+$$;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to create or modify objects in sys schema
+    Server SQLState: 42501)~~
+
+
+-- Test 3: Role switching scenario
+SET ROLE jdbc_user;
+GO
+
+SELECT current_user, session_user;
+GO
+~~START~~
+name#!#name
+jdbc_user#!#test_regular_user
+~~END~~
+
+
+-- Test after role switch - should still fail
+CREATE OR REPLACE FUNCTION sys.test_after_role_switch()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RAISE NOTICE 'Function created after role switch';
+END;
+$$;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to create or modify objects in sys schema
+    Server SQLState: 42501)~~
+
+
+RESET ROLE;
+GO
+-- terminate-psql-conn user=test_regular_user password=12345678
+
+-- psql
+-- Clean up
+REVOKE jdbc_user FROM test_regular_user;
+GO
+
+DROP PROCEDURE IF EXISTS sys.test_sys_proc_creation;
+GO
+
+DROP FUNCTION IF EXISTS sys.test_sys_function_creation;
+GO
+
+DROP ROLE test_regular_user;
+GO
