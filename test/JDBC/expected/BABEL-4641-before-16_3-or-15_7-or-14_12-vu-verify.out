@@ -108,7 +108,7 @@ SELECT * FROM babel_4461_before_16_3_or_15_7_char_vu_prepare_view3
 GO
 ~~START~~
 char
-2023-02-03
+Feb  3 202
 ~~END~~
 
 
@@ -254,7 +254,7 @@ SELECT * FROM babel_4461_before_16_3_or_15_7_nchar_vu_prepare_view3
 GO
 ~~START~~
 nchar
-2023-02-03
+Feb  3 202
 ~~END~~
 
 

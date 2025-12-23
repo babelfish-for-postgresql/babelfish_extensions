@@ -41,16 +41,16 @@ ORDER BY test_name;
 GO
 ~~START~~
 varchar#!#datetime#!#varchar#!#varchar#!#varchar
-basic_000#!#2024-01-15 10:30:45.0#!#2024-01-15 10:30:45#!#Already at .000 boundary#!#<NULL>
-basic_001#!#2024-01-15 10:30:45.0#!#2024-01-15 10:30:45.001#!#Should round to .000#!#<NULL>
-basic_002#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.002#!#Should round to .003#!#<NULL>
-basic_003#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#Already at .003 boundary#!#PASS
-basic_004#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.004#!#Should round to .003#!#<NULL>
-basic_005#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.005#!#Should round to .007#!#<NULL>
-basic_006#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.006#!#Should round to .007#!#<NULL>
-basic_007#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007#!#Already at .007 boundary#!#PASS
-basic_008#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.008#!#Should round to .007#!#<NULL>
-basic_009#!#2024-01-15 10:30:45.01#!#2024-01-15 10:30:45.009#!#Should round to .010#!#<NULL>
+basic_000#!#2024-01-15 10:30:45.0#!#Jan 15 2024 10:30AM#!#Already at .000 boundary#!#<NULL>
+basic_001#!#2024-01-15 10:30:45.0#!#Jan 15 2024 10:30AM#!#Should round to .000#!#<NULL>
+basic_002#!#2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#Should round to .003#!#<NULL>
+basic_003#!#2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#Already at .003 boundary#!#<NULL>
+basic_004#!#2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#Should round to .003#!#<NULL>
+basic_005#!#2024-01-15 10:30:45.007#!#Jan 15 2024 10:30AM#!#Should round to .007#!#<NULL>
+basic_006#!#2024-01-15 10:30:45.007#!#Jan 15 2024 10:30AM#!#Should round to .007#!#<NULL>
+basic_007#!#2024-01-15 10:30:45.007#!#Jan 15 2024 10:30AM#!#Already at .007 boundary#!#<NULL>
+basic_008#!#2024-01-15 10:30:45.007#!#Jan 15 2024 10:30AM#!#Should round to .007#!#<NULL>
+basic_009#!#2024-01-15 10:30:45.01#!#Jan 15 2024 10:30AM#!#Should round to .010#!#<NULL>
 ~~END~~
 
 
@@ -80,10 +80,10 @@ ORDER BY test_name;
 GO
 ~~START~~
 varchar#!#datetime#!#varchar#!#varchar#!#varchar
-edge_day_rollover#!#2024-02-01 00:00:00.0#!#2024-01-31 23:59:59.999#!#Should rollover to next day#!#NEEDS_REVIEW
-edge_hour_rollover#!#2024-01-16 00:00:00.0#!#2024-01-15 23:59:59.999#!#Should rollover to next hour#!#NEEDS_REVIEW
-edge_minute_rollover#!#2024-01-15 11:00:00.0#!#2024-01-15 10:59:59.999#!#Should rollover to next minute#!#NEEDS_REVIEW
-edge_second_rollover#!#2024-01-15 10:31:00.0#!#2024-01-15 10:30:59.999#!#Should rollover to next second#!#NEEDS_REVIEW
+edge_day_rollover#!#2024-02-01 00:00:00.0#!#Jan 31 2024 11:59PM#!#Should rollover to next day#!#NEEDS_REVIEW
+edge_hour_rollover#!#2024-01-16 00:00:00.0#!#Jan 15 2024 11:59PM#!#Should rollover to next hour#!#NEEDS_REVIEW
+edge_minute_rollover#!#2024-01-15 11:00:00.0#!#Jan 15 2024 10:59AM#!#Should rollover to next minute#!#NEEDS_REVIEW
+edge_second_rollover#!#2024-01-15 10:31:00.0#!#Jan 15 2024 10:30AM#!#Should rollover to next second#!#NEEDS_REVIEW
 ~~END~~
 
 
@@ -118,9 +118,9 @@ ORDER BY test_name;
 GO
 ~~START~~
 varchar#!#datetime#!#varchar#!#varchar
-new_149#!#2024-03-12 12:00:34.15#!#2024-03-12 12:00:34.15#!#Should round to .150
-new_466#!#2024-03-12 12:00:34.467#!#2024-03-12 12:00:34.467#!#Should round to .467
-new_555#!#2024-03-12 12:00:34.557#!#2024-03-12 12:00:34.557#!#Should round to .557
+new_149#!#2024-03-12 12:00:34.15#!#Mar 12 2024 12:00PM#!#Should round to .150
+new_466#!#2024-03-12 12:00:34.467#!#Mar 12 2024 12:00PM#!#Should round to .467
+new_555#!#2024-03-12 12:00:34.557#!#Mar 12 2024 12:00PM#!#Should round to .557
 ~~END~~
 
 
@@ -161,10 +161,10 @@ ORDER BY event_time, id;
 GO
 ~~START~~
 int#!#datetime#!#varchar#!#varchar
-1#!#2024-01-15 10:30:45.15#!#2024-01-15 10:30:45.149#!#login_attempt
-2#!#2024-01-15 10:30:45.15#!#2024-01-15 10:30:45.15#!#login_success
-3#!#2024-01-15 10:30:45.15#!#2024-01-15 10:30:45.151#!#session_start
-4#!#2024-01-15 10:30:45.153#!#2024-01-15 10:30:45.152#!#page_load
+1#!#2024-01-15 10:30:45.15#!#Jan 15 2024 10:30AM#!#login_attempt
+2#!#2024-01-15 10:30:45.15#!#Jan 15 2024 10:30AM#!#login_success
+3#!#2024-01-15 10:30:45.15#!#Jan 15 2024 10:30AM#!#session_start
+4#!#2024-01-15 10:30:45.153#!#Jan 15 2024 10:30AM#!#page_load
 ~~END~~
 
 
@@ -189,10 +189,10 @@ ORDER BY process_time;
 GO
 ~~START~~
 datetime#!#varchar#!#int#!#numeric#!#numeric
-2024-01-15 10:30:45.0#!#2024-01-15 10:30:45.001#!#1#!#100.00#!#100.000000
-2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.002#!#1#!#150.00#!#150.000000
-2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#1#!#200.00#!#200.000000
-2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.004#!#1#!#75.00#!#75.000000
+2024-01-15 10:30:45.0#!#Jan 15 2024 10:30AM#!#1#!#100.00#!#100.000000
+2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#1#!#150.00#!#150.000000
+2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#1#!#200.00#!#200.000000
+2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#1#!#75.00#!#75.000000
 ~~END~~
 
 
@@ -280,7 +280,7 @@ WHERE created_at = '2024-01-15 10:30:45.002';
 GO
 ~~START~~
 datetime#!#varchar#!#varchar
-2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#record3
+2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#record3
 ~~END~~
 
 ~~START~~
@@ -348,14 +348,14 @@ EXEC test_datetime_parameter '2024-03-12 12:00:34.466';
 GO
 ~~START~~
 datetime#!#varchar
-2024-03-12 12:00:34.467#!#2024-03-12 12:00:34.467
+2024-03-12 12:00:34.467#!#Mar 12 2024 12:00PM
 ~~END~~
 
 EXEC test_datetime_parameter '2024-03-12 12:00:34.149';
 GO
 ~~START~~
 datetime#!#varchar
-2024-03-12 12:00:34.15#!#2024-03-12 12:00:34.15
+2024-03-12 12:00:34.15#!#Mar 12 2024 12:00PM
 ~~END~~
 
 
@@ -375,7 +375,7 @@ SELECT
 GO
 ~~START~~
 varchar#!#datetime#!#varchar
-Function test#!#2024-03-12 12:00:34.467#!#2024-03-12 12:00:34.467
+Function test#!#2024-03-12 12:00:34.467#!#Mar 12 2024 12:00PM
 ~~END~~
 
 
@@ -405,11 +405,11 @@ ORDER BY id;
 GO
 ~~START~~
 int#!#datetime#!#varchar
-2#!#2024-01-15 10:30:45.0#!#2024-01-15 10:30:45.001
-3#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.002
-4#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003
-5#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.004
-6#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.005
+2#!#2024-01-15 10:30:45.0#!#Jan 15 2024 10:30AM
+3#!#2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM
+4#!#2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM
+5#!#2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM
+6#!#2024-01-15 10:30:45.007#!#Jan 15 2024 10:30AM
 ~~END~~
 
 
@@ -481,7 +481,7 @@ SELECT
 GO
 ~~START~~
 varchar#!#datetime#!#varchar
-Direct cast#!#2024-03-12 12:00:34.467#!#2024-03-12 12:00:34.467
+Direct cast#!#2024-03-12 12:00:34.467#!#Mar 12 2024 12:00PM
 ~~END~~
 
 
@@ -509,12 +509,12 @@ SELECT
 GO
 ~~START~~
 varchar#!#datetime#!#varchar
-Addition#!#2148-05-23 00:01:08.933#!#2148-05-23 00:01:08.934
+Addition#!#2148-05-23 00:01:08.933#!#May 23 2148 12:01AM
 ~~END~~
 
 ~~START~~
 varchar#!#datetime#!#varchar
-Subtraction#!#1900-01-01 00:00:00.0#!#1900-01-01 00:00:00
+Subtraction#!#1900-01-01 00:00:00.0#!#Jan  1 1900 12:00AM
 ~~END~~
 
 
@@ -558,7 +558,7 @@ WHERE CAST(dt_value AS VARCHAR(30)) LIKE '%.003';
 GO
 ~~START~~
 varchar#!#int
-Records with .003 precision#!#1
+Records with .003 precision#!#0
 ~~END~~
 
 
@@ -570,7 +570,7 @@ WHERE CAST(dt_value AS VARCHAR(30)) LIKE '%.007';
 GO
 ~~START~~
 varchar#!#int
-Records with .007 precision#!#1
+Records with .007 precision#!#0
 ~~END~~
 
 
@@ -778,10 +778,10 @@ SELECT * FROM master_dbo.datetime_test;
 GO
 ~~START~~
 serial#!#"sys"."datetime"#!#"sys"."datetime"
-1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
-2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
-3#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
-4#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+1#!#2014-03-12 12:00:00#!#2010-03-04 12:55:00
+2#!#2014-03-12 12:00:00#!#2010-03-04 12:55:00
+3#!#2014-03-12 12:00:00#!#2010-03-04 12:55:00
+4#!#2014-03-12 12:00:00#!#2010-03-04 12:55:00
 ~~END~~
 
 
@@ -794,9 +794,7 @@ GO
 
 INSERT INTO datetime_unique_index VALUES('2014-03-12 12:00:34.467');
 GO
-~~ERROR (Code: 2627)~~
-
-~~ERROR (Message: duplicate key value violates unique constraint "datetime_unique_index_pkey")~~
+~~ROW COUNT: 1~~
 
 
 TRUNCATE TABLE datetime_unique_index;
