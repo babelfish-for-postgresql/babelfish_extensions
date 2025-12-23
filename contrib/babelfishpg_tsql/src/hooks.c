@@ -7616,7 +7616,7 @@ bbf_view_set_broken(Oid viewOid, bool mark_broken)
 	
 	if (!HeapTupleIsValid(tuple))
 	{
-		table_close(brel, RowExclusiveLock);
+		table_close(brel, AccessShareLock);
 		return false;
 	}
 	values_datum = heap_getattr(tuple, Anum_bbf_view_def_flag_values,
@@ -7624,7 +7624,7 @@ bbf_view_set_broken(Oid viewOid, bool mark_broken)
 	if (isnull)
 	{
 		heap_freetuple(tuple);
-		table_close(brel, RowExclusiveLock);
+		table_close(brel, AccessShareLock);
 		return false;
 	}
 	
@@ -7654,7 +7654,7 @@ bbf_view_set_broken(Oid viewOid, bool mark_broken)
 	if (is_broken == mark_broken)
 	{
 		heap_freetuple(tuple);
-		table_close(brel, RowExclusiveLock);
+		table_close(brel, AccessShareLock);
 		return false;
 	}
 	
