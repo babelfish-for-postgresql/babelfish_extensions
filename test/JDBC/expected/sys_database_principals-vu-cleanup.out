@@ -25,8 +25,8 @@ GO
 drop function sys_database_principals_another_func
 GO
 
-drop login login_without_any_permissions;
+drop database if exists sys_database_principals_vu_db_another
 GO
 
-drop database if exists sys_database_principals_vu_db_another
+drop login login_without_any_permissions;
 GO

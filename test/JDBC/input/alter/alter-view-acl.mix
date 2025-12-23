@@ -420,9 +420,8 @@ WHERE sys.suser_name(usesysid) IN ('view_owner_login', 'view_user_login')
 GO
 
 -- tsql
+DROP database view_perm_db;
+go
 DROP LOGIN view_owner_login;
 DROP LOGIN view_user_login;
 GO
-
-DROP database view_perm_db;
-go
