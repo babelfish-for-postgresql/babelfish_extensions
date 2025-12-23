@@ -438,20 +438,17 @@ Go
 SET QUOTED_IDENTIFIER OFF;
 GO
 
-USE PartitionDb;
-GO
-
-DROP LOGIN partition_l1;
-GO
+USE master
+go
 
 DROP LOGIN partition_l2
 GO
 
-USE master
-go
-
 DROP DATABASE PartitionDb
 go
+
+DROP LOGIN partition_l1;
+GO
 
 DROP TABLE partition_float_real_partitioned_test;
 DROP TABLE partition_float_real_partitioned_computed_test;
