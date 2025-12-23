@@ -725,12 +725,9 @@ ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
 
 #crashes
-ignore#!#BABEL-1839
-ignore#!#BABEL-3092
 ignore#!#BABEL-NUMERIC_EXPR-vu-prepare
 ignore#!#BABEL-NUMERIC_EXPR-vu-verify
 ignore#!#BABEL-NUMERIC_EXPR-vu-cleanup
-ignore#!#BABEL-UNSUPPORTED
 ignore#!#BABEL_539-vu-prepare
 ignore#!#BABEL_539-vu-verify
 ignore#!#BABEL_539-vu-cleanup
