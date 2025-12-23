@@ -906,7 +906,7 @@ fn_listextendedproperty(PG_FUNCTION_ARGS)
 	}
 
 	systable_endscan(scan);
-	table_close(rel, RowExclusiveLock);
+	table_close(rel, AccessShareLock);
 
 	/* clean up and return the tuplestore */
 	tuplestore_donestoring(tupstore);

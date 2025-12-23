@@ -980,7 +980,7 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 		return NULL;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 
 	login_name = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(login_name->data, NAMEDATALEN, "%s", login);
@@ -1012,7 +1012,7 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 	}
 
 	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 
 	return user_name;
 }
@@ -1065,7 +1065,7 @@ get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_o
 		return NULL;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 
 	ScanKeyInit(&key,
 				Anum_bbf_authid_user_ext_database_name,
@@ -1100,7 +1100,7 @@ get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_o
 	}
 
 	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 
 	return db_users_list;
 }
@@ -1399,7 +1399,7 @@ get_timeout_from_server_name(char *servername, int attnum)
 	int		timeout = 0;
 
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 
 	ScanKeyInit(&key,
 				Anum_bbf_servers_def_servername,
@@ -1419,7 +1419,7 @@ get_timeout_from_server_name(char *servername, int attnum)
 	}
 
 	table_endscan(scan);
-	table_close(bbf_servers_def_rel, RowExclusiveLock);
+	table_close(bbf_servers_def_rel, AccessShareLock);
 	return timeout;
 }
 
@@ -3070,7 +3070,7 @@ guest_has_dbaccess(const char *db_name)
 	bool		has_access = false;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 	ScanKeyInit(&key[0],
 				Anum_bbf_authid_user_ext_orig_username,
 				BTEqualStrategyNumber, F_TEXTEQ,
@@ -3091,7 +3091,7 @@ guest_has_dbaccess(const char *db_name)
 		has_access = true;
 
 	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 	return has_access;
 }
 
@@ -3316,7 +3316,7 @@ get_db_owner_role_name(const char *dbname)
 	char	   *db_owner_role = NULL;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 	ScanKeyInit(&key[0],
 				Anum_bbf_authid_user_ext_orig_username,
 				BTEqualStrategyNumber, F_TEXTEQ,
@@ -3337,7 +3337,7 @@ get_db_owner_role_name(const char *dbname)
 	}
 
 	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 	return db_owner_role;
 }
 

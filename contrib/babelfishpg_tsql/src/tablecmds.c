@@ -219,7 +219,7 @@ pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum)
 	 * TSQL: Find everything that depends on the column.  If we can find a
 	 * computed column dependent on this column, will throw an error.
 	 */
-	depRel = table_open(DependRelationId, RowExclusiveLock);
+	depRel = table_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
@@ -276,7 +276,7 @@ pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum)
 
 	systable_endscan(scan);
 
-	table_close(depRel, RowExclusiveLock);
+	table_close(depRel, AccessShareLock);
 
 	/* Delete extended property as well */
 
