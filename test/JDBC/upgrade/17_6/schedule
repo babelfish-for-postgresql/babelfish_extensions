@@ -662,5 +662,6 @@ cast_datetime_to_binary-before-17_7-16_11
 BABEL-4271
 babel_string_to_money
 0_temp_oid_buffer_start
+BABEL-5788
 BABEL-1664
 babel_convert_with_style

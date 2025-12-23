@@ -607,5 +607,6 @@ test_conv_text_to_binary-before-16_8
 test_conv_text_to_string
 babel_timezoneinfo_before_17_7
 babel_string_to_money
+BABEL-5788
 BABEL-1664-before-16_10-or-17_6
 babel_convert_with_style

@@ -664,5 +664,6 @@ test_convert_to_binary
 cast_datetime_to_binary
 BABEL-4271
 0_temp_oid_buffer_start
+BABEL-5788
 BABEL-1664
 babel_convert_with_style
