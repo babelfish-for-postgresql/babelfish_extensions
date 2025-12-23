@@ -529,22 +529,59 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	/* skip leading spaces */
 	while (isspace((unsigned char) *ptr))
 		ptr++;
-	
-	/* 
-	 * Rejects invalid characters when no currency symbol is present.
-	 * Only digits, signs, decimal points, or spaces are allowed.
-	 */
-	if (*ptr != '\0' && 
-		!isdigit((unsigned char) *ptr) && 
-		*ptr != '.' && 
-		*ptr != '-' && 
-		*ptr != '+')
+
+	while (*ptr != '\0' &&
+       !isdigit((unsigned char) *ptr) &&
+       *ptr != '.' &&
+       *ptr != '-' &&
+       *ptr != '+')
+	{
+		unsigned char c = (unsigned char) *ptr;
+		
+		/* Skip ASCII whitespace */
+		if (isspace(c))
+		{
+			ptr++;
+			continue;
+		}
+		
+		/* Skip comma (thousand separator) and backslash */
+		if (c == ',' || c == '\\')
+		{
+			ptr++;
+			continue;
+		}
+		
+		/* Skip UTF-8 non-breaking space: 0xC2 0xA0 */
+		if (c == 0xC2 && (unsigned char) ptr[1] == 0xA0)
+		{
+			ptr += 2;
+			continue;
+		}
+		
+		/* Reject multiple currency symbols */
+		if (is_valid_currency_symbol(ptr) > 0)
+		{
+			ereturn(escontext, (Datum) 0,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					errmsg("invalid characters found: cannot cast value \"%s\" to money",
+							str)));
+		}
+		
+		/* Reject alphabets and any other character */
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("invalid characters found: cannot cast value \"%s\" to money",
+						str)));
+	}
+	if (str[0] == '\0')
 	{
 		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				errmsg("invalid characters found: cannot cast value \"%s\" to money",
-					str)));							
+						str)));
 	}
+
 
 	/*
 	 * Handle sign again. This is needed so that a sign after the currency
@@ -657,9 +694,24 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 			ptr++, vscale++;
 	}
 
-	/* consume any remaining space chars */
-	while (isspace((unsigned char) *ptr))
-		ptr++;
+	while (*ptr != '\0')
+    {
+        unsigned char c = (unsigned char) *ptr;
+        
+        if (isspace(c) || c == ',' || c == '\\')
+        {
+            ptr++;
+            continue;
+        }
+        
+        if (c == 0xC2 && (unsigned char) ptr[1] == 0xA0)
+        {
+            ptr += 2;
+            continue;
+        }
+        
+        break;
+    }
 
 	if (*ptr != '\0')
 		ereturn(escontext, (Datum) 0,

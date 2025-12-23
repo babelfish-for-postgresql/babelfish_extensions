@@ -1,0 +1,1010 @@
+SELECT CAST('\0' AS MONEY);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(NCHAR(8364) AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(72) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "H" to money)~~
+
+SELECT CAST(CHAR(73) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "I" to money)~~
+
+SELECT CAST(CHAR(74) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "J" to money)~~
+
+SELECT CAST(CHAR(75) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "K" to money)~~
+
+SELECT CAST(CHAR(76) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "L" to money)~~
+
+SELECT CAST(CHAR(77) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "M" to money)~~
+
+SELECT CAST(CHAR(78) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "N" to money)~~
+
+SELECT CAST(CHAR(79) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "O" to money)~~
+
+SELECT CAST(CHAR(80) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "P" to money)~~
+
+SELECT CAST(CHAR(81) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Q" to money)~~
+
+SELECT CAST(CHAR(82) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "R" to money)~~
+
+SELECT CAST(CHAR(83) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "S" to money)~~
+
+SELECT CAST(CHAR(84) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "T" to money)~~
+
+SELECT CAST(CHAR(85) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "U" to money)~~
+
+SELECT CAST(CHAR(86) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "V" to money)~~
+
+SELECT CAST(CHAR(87) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "W" to money)~~
+
+SELECT CAST(CHAR(88) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "X" to money)~~
+
+SELECT CAST(CHAR(89) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Y" to money)~~
+
+SELECT CAST(CHAR(90) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Z" to money)~~
+
+SELECT CAST(CHAR(91) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "[" to money)~~
+
+SELECT CAST(CHAR(93) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "]" to money)~~
+
+SELECT CAST(CHAR(94) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "^" to money)~~
+
+SELECT CAST(CHAR(95) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "_" to money)~~
+
+SELECT CAST(CHAR(96) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "`" to money)~~
+
+SELECT CAST(CHAR(97) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "a" to money)~~
+
+SELECT CAST(CHAR(98) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "b" to money)~~
+
+SELECT CAST(CHAR(99) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "c" to money)~~
+
+SELECT CAST(CHAR(100) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "d" to money)~~
+
+SELECT CAST(CHAR(101) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "e" to money)~~
+
+SELECT CAST(CHAR(102) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "f" to money)~~
+
+SELECT CAST(CHAR(103) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "g" to money)~~
+
+SELECT CAST(CHAR(104) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "h" to money)~~
+
+SELECT CAST(CHAR(105) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "i" to money)~~
+
+SELECT CAST(CHAR(106) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "j" to money)~~
+
+SELECT CAST(CHAR(107) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "k" to money)~~
+
+SELECT CAST(CHAR(108) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "l" to money)~~
+
+SELECT CAST(CHAR(109) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "m" to money)~~
+
+SELECT CAST(CHAR(110) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "n" to money)~~
+
+SELECT CAST(CHAR(111) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "o" to money)~~
+
+SELECT CAST(CHAR(112) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "p" to money)~~
+
+SELECT CAST(CHAR(113) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "q" to money)~~
+
+SELECT CAST(CHAR(114) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "r" to money)~~
+
+SELECT CAST(CHAR(115) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "s" to money)~~
+
+SELECT CAST(CHAR(116) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "t" to money)~~
+
+SELECT CAST(CHAR(117) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "u" to money)~~
+
+SELECT CAST(CHAR(118) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "v" to money)~~
+
+SELECT CAST(CHAR(119) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "w" to money)~~
+
+SELECT CAST(CHAR(120) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "x" to money)~~
+
+SELECT CAST(CHAR(121) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "y" to money)~~
+
+SELECT CAST(CHAR(122) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "z" to money)~~
+
+SELECT CAST(CHAR(123) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "{" to money)~~
+
+SELECT CAST(CHAR(124) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "|" to money)~~
+
+SELECT CAST(CHAR(125) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "}" to money)~~
+
+SELECT CAST(CHAR(126) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "~" to money)~~
+
+SELECT CAST(CHAR(127) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(129) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(130) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(131) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(132) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(133) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(134) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(135) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(136) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(137) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(138) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(139) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(140) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(142) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(145) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(146) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(147) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(148) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(149) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(150) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(151) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(152) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(153) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(154) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(155) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(156) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(158) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(159) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "" to money)~~
+
+SELECT CAST(CHAR(161) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¡" to money)~~
+
+SELECT CAST(CHAR(164) AS MONEY);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(166) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¦" to money)~~
+
+SELECT CAST(CHAR(167) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "§" to money)~~
+
+SELECT CAST(CHAR(168) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¨" to money)~~
+
+SELECT CAST(CHAR(169) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "©" to money)~~
+
+SELECT CAST(CHAR(170) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ª" to money)~~
+
+SELECT CAST(CHAR(171) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "«" to money)~~
+
+SELECT CAST(CHAR(172) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¬" to money)~~
+
+SELECT CAST(CHAR(173) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "­" to money)~~
+
+SELECT CAST(CHAR(174) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "®" to money)~~
+
+SELECT CAST(CHAR(175) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¯" to money)~~
+
+SELECT CAST(CHAR(176) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "°" to money)~~
+
+SELECT CAST(CHAR(177) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "±" to money)~~
+
+SELECT CAST(CHAR(178) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "²" to money)~~
+
+SELECT CAST(CHAR(179) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "³" to money)~~
+
+SELECT CAST(CHAR(180) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "´" to money)~~
+
+SELECT CAST(CHAR(181) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "µ" to money)~~
+
+SELECT CAST(CHAR(182) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¶" to money)~~
+
+SELECT CAST(CHAR(183) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "·" to money)~~
+
+SELECT CAST(CHAR(184) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¸" to money)~~
+
+SELECT CAST(CHAR(185) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¹" to money)~~
+
+SELECT CAST(CHAR(186) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "º" to money)~~
+
+SELECT CAST(CHAR(187) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "»" to money)~~
+
+SELECT CAST(CHAR(188) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¼" to money)~~
+
+SELECT CAST(CHAR(189) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "½" to money)~~
+
+SELECT CAST(CHAR(190) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¾" to money)~~
+
+SELECT CAST(CHAR(191) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "¿" to money)~~
+
+SELECT CAST(CHAR(192) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "À" to money)~~
+
+SELECT CAST(CHAR(193) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Á" to money)~~
+
+SELECT CAST(CHAR(194) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Â" to money)~~
+
+SELECT CAST(CHAR(195) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ã" to money)~~
+
+SELECT CAST(CHAR(196) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ä" to money)~~
+
+SELECT CAST(CHAR(197) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Å" to money)~~
+
+SELECT CAST(CHAR(198) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Æ" to money)~~
+
+SELECT CAST(CHAR(199) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ç" to money)~~
+
+SELECT CAST(CHAR(200) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "È" to money)~~
+
+SELECT CAST(CHAR(201) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "É" to money)~~
+
+SELECT CAST(CHAR(202) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ê" to money)~~
+
+SELECT CAST(CHAR(203) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ë" to money)~~
+
+SELECT CAST(CHAR(204) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ì" to money)~~
+
+SELECT CAST(CHAR(205) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Í" to money)~~
+
+SELECT CAST(CHAR(206) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Î" to money)~~
+
+SELECT CAST(CHAR(207) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ï" to money)~~
+
+SELECT CAST(CHAR(208) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ð" to money)~~
+
+SELECT CAST(CHAR(209) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ñ" to money)~~
+
+SELECT CAST(CHAR(210) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ò" to money)~~
+
+SELECT CAST(CHAR(211) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ó" to money)~~
+
+SELECT CAST(CHAR(212) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ô" to money)~~
+
+SELECT CAST(CHAR(213) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Õ" to money)~~
+
+SELECT CAST(CHAR(214) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ö" to money)~~
+
+SELECT CAST(CHAR(215) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "×" to money)~~
+
+SELECT CAST(CHAR(216) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ø" to money)~~
+
+SELECT CAST(CHAR(217) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ù" to money)~~
+
+SELECT CAST(CHAR(218) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ú" to money)~~
+
+SELECT CAST(CHAR(219) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Û" to money)~~
+
+SELECT CAST(CHAR(220) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ü" to money)~~
+
+SELECT CAST(CHAR(221) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Ý" to money)~~
+
+SELECT CAST(CHAR(222) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "Þ" to money)~~
+
+SELECT CAST(CHAR(223) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ß" to money)~~
+
+SELECT CAST(CHAR(224) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "à" to money)~~
+
+SELECT CAST(CHAR(225) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "á" to money)~~
+
+SELECT CAST(CHAR(226) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "â" to money)~~
+
+SELECT CAST(CHAR(227) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ã" to money)~~
+
+SELECT CAST(CHAR(228) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ä" to money)~~
+
+SELECT CAST(CHAR(229) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "å" to money)~~
+
+SELECT CAST(CHAR(230) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "æ" to money)~~
+
+SELECT CAST(CHAR(231) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ç" to money)~~
+
+SELECT CAST(CHAR(232) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "è" to money)~~
+
+SELECT CAST(CHAR(241) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ñ" to money)~~
+
+SELECT CAST(CHAR(242) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ò" to money)~~
+
+SELECT CAST(CHAR(243) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ó" to money)~~
+
+SELECT CAST(CHAR(244) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ô" to money)~~
+
+SELECT CAST(CHAR(245) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "õ" to money)~~
+
+SELECT CAST(CHAR(246) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ö" to money)~~
+
+SELECT CAST(CHAR(247) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "÷" to money)~~
+
+SELECT CAST(CHAR(248) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ø" to money)~~
+
+SELECT CAST(CHAR(249) AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "ù" to money)~~
+
+
+SELECT * FROM dbo.fn_tests_moneydecl();
+GO
+~~START~~
+money#!#money
+0.0000#!#0.0000
+~~END~~
+
+
+SELECT * FROM dbo.vw_test_money_whitespace;
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money
+0.0000#!#0.0000#!#0.0000#!#0.0000#!#0.0000
+~~END~~
+
+
+EXEC dbo.sp_test_money_special;
+GO
+~~START~~
+varchar#!#money
+comma#!#0.0000
+backslash#!#0.0000
+backslash_zero#!#0.0000
+plus#!#0.0000
+~~END~~
+
+
+SELECT * FROM dbo.vw_test_money_currency;
+GO
+~~START~~
+money#!#money#!#money#!#money
+0.0000#!#0.0000#!#0.0000#!#0.0000
+~~END~~
+
