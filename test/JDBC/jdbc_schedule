@@ -725,19 +725,9 @@ ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
 
 #crashes
-ignore#!#BABEL_539-vu-prepare
-ignore#!#BABEL_539-vu-verify
-ignore#!#BABEL_539-vu-cleanup
-ignore#!#pivot-vu-prepare
-ignore#!#pivot-vu-verify
-ignore#!#pivot-vu-cleanup
-ignore#!#select_into-identity-notnull
 ignore#!#temp_catalog_inval-vu-prepare
 ignore#!#temp_catalog_inval-vu-verify
 ignore#!#temp_catalog_inval-vu-cleanup
-ignore#!#pivot-before-15_9-or-16_5-vu-prepare
-ignore#!#pivot-before-15_9-or-16_5-vu-verify
-ignore#!#pivot-before-15_9-or-16_5-vu-cleanup
 
 #test failures
 ignore#!#BABEL-3293
