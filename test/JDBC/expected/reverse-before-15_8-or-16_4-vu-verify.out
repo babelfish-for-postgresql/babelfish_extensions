@@ -366,7 +366,7 @@ SELECT reverse(@inputString)
 GO
 ~~START~~
 varchar
-00:00:00 12-21-6102
+MA00:21 6102 12 ceD
 ~~END~~
 
 
@@ -375,7 +375,7 @@ SELECT reverse(@inputString)
 GO
 ~~START~~
 varchar
-00:34:21 31-21-5591
+MP34:21 5591 31 ceD
 ~~END~~
 
 

@@ -2223,7 +2223,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-2016-06-21 00:00:00
+Dec 21 2016 06:00AM
 ~~END~~
 
 
@@ -2233,7 +2233,7 @@ SELECT replace(@inputString, @inputString, @inputString)
 GO
 ~~START~~
 varchar
-2016-12-21 00:00:00
+Dec 21 2016 12:00AM
 ~~END~~
 
 
@@ -2253,7 +2253,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-2016-12-21 00:00:00
+Dec 21 2016 12:00AM
 ~~END~~
 
 
@@ -2262,7 +2262,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-1955-06-13 06:43:00
+Dec 13 1955 06:43PM
 ~~END~~
 
 
@@ -2280,7 +2280,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-2016-12-21 12:43:00
+Dec 21 2016 12:43PM
 ~~END~~
 
 
@@ -2289,7 +2289,7 @@ SELECT replace(@inputString, @inputString, @inputString)
 GO
 ~~START~~
 varchar
-1955-12-13 12:43:00
+Dec 13 1955 12:43PM
 ~~END~~
 
 
