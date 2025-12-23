@@ -101,5 +101,6 @@ static const char *const time_regexes[] = {
 
 extern bool check_regex_for_text_month(char *str, DateTimeContext context);
 extern char* clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context);
+extern void  TsqlEncodeDateTime(struct pg_tm *tm, char *str);
 
 #endif							/* PLTSQL_DATETIME_H */

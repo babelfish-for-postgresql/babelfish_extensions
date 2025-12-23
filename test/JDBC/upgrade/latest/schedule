@@ -652,6 +652,7 @@ babel_assign_nchar
 alter-function-with-weak-view
 view_sec_setting
 alter-table-null-notnull
+babel_binary
 openxml_without_with_clause
 Select_top_N_percent
 ascii_function
@@ -666,4 +667,8 @@ babel_string_to_money
 test_output_clause
 update_with_var
 BABEL-4271
+Test-Linestring
+Test-Polygon
+BABEL-5788
+BABEL-1664
 sys-fn_varbintohexstr

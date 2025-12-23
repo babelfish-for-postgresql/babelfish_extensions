@@ -867,7 +867,7 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("Implicit conversion from data type bpchar to "
+				 errmsg("Implicit conversion from data type char to "
 						"varbinary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
@@ -888,7 +888,7 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 
 		ereport(ERROR,
 			   (errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("Failed to convert from data type bpchar to varbinary, %s",
+				errmsg("Failed to convert from data type char to varbinary, %s",
 					   errorData->message)));
 	}
 	PG_END_TRY();
@@ -1541,7 +1541,7 @@ bpcharrowversion(PG_FUNCTION_ARGS)
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("Implicit conversion from data type bpchar to "
+				 errmsg("Implicit conversion from data type char to "
 						"rowversion is not allowed. Use the CONVERT function "
 						"to run this query.")));
 

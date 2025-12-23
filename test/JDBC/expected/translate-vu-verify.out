@@ -2380,7 +2380,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~START~~
 varchar
-6006-06-60 00:00:00
+Dec 60 6006 06:00AM
 ~~END~~
 
 
@@ -2390,7 +2390,7 @@ SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
 ~~START~~
 varchar
-2016-12-21 00:00:00
+Dec 21 2016 12:00AM
 ~~END~~
 
 
@@ -2421,7 +2421,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~START~~
 varchar
-0955-06-03 06:43:00
+Dec 03 0955 06:43PM
 ~~END~~
 
 
@@ -2440,7 +2440,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~START~~
 varchar
-2016-12-21 12:43:10
+Dec 2cD2Dc6cD2:42ce
 ~~END~~
 
 
@@ -2449,7 +2449,7 @@ SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
 ~~START~~
 varchar
-1955-12-13 12:43:00
+Dec 13 1955 12:43PM
 ~~END~~
 
 

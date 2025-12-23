@@ -51,10 +51,6 @@ GO
 drop user if exists userof_testloginwithsecurityadmin2
 GO
 
-drop user [userof@sp$chars*logins];
-drop login [sp_help@logins$with%sp*chars];
-GO
-
 -- creating login and user of longer lengths
 declare @loginname sys.sysname = cast(repeat('a', 63) as sysname);
 declare @username sys.sysname = cast(repeat('b', 63) as sysname);
@@ -76,12 +72,6 @@ drop user if exists u_justanotherloginwithsecad
 drop login justanotherloginwithsecad
 GO
 
-drop login sp_helplogin_loginwithdifferentdefaultdb;
-GO
-
-drop login sp_helplogin_loginownerofdb;
-GO
-
 drop database sp_helplogins_db1;
 GO
 
@@ -89,4 +79,14 @@ drop database sp_helplogins_db2;
 GO
 
 drop database sp_helplogins_db3;
+GO
+
+drop user [userof@sp$chars*logins];
+drop login [sp_help@logins$with%sp*chars];
+GO
+
+drop login sp_helplogin_loginwithdifferentdefaultdb;
+GO
+
+drop login sp_helplogin_loginownerofdb;
 GO

@@ -17,7 +17,7 @@ DECLARE @a varbinary(10); SET @a = CAST('21' AS char(10)); SELECT @a
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Implicit conversion from data type bpchar to varbinary is not allowed. Use the CONVERT function to run this query.)~~
+~~ERROR (Message: Implicit conversion from data type char to varbinary is not allowed. Use the CONVERT function to run this query.)~~
 
 
 DECLARE @a varbinary(10); SET @a = CAST('21' AS varchar(10)); SELECT @a
