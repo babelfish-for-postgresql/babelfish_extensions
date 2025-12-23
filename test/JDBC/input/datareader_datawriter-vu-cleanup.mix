@@ -115,14 +115,14 @@ go
 drop user db_roles_u2;
 go
 
-drop login db_roles_l1;
-go
-
-drop login db_roles_l2;
-go
-
 use master;
 go
 
 drop database db_roles_db1;
+go
+
+drop login db_roles_l1;
+go
+
+drop login db_roles_l2;
 go
