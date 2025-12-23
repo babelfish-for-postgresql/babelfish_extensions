@@ -552,7 +552,6 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 			continue;
 		}
 		
-		/* Skip UTF-8 non-breaking space: 0xC2 0xA0 */
 		if (c == 0xC2 && (unsigned char) ptr[1] == 0xA0)
 		{
 			ptr += 2;
@@ -574,14 +573,6 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 				errmsg("invalid characters found: cannot cast value \"%s\" to money",
 						str)));
 	}
-	if (str[0] == '\0')
-	{
-		ereturn(escontext, (Datum) 0,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("invalid characters found: cannot cast value \"%s\" to money",
-						str)));
-	}
-
 
 	/*
 	 * Handle sign again. This is needed so that a sign after the currency
