@@ -416,13 +416,13 @@ void
 
 
 -- tsql
+drop database restrict_user_db1
+go
+
 drop login no_priv_login2
 go
 
 drop login no_priv_login3
-go
-
-drop database restrict_user_db1
 go
 
 drop user u1

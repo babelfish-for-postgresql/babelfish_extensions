@@ -1114,9 +1114,6 @@ go
 drop login db_roles_l2;
 go
 
-drop login db_roles_l3;
-go
-
 drop login db_roles_l4;
 go
 
@@ -1124,4 +1121,7 @@ drop login db_roles_l5;
 go
 
 drop database db_roles_db1;
+go
+
+drop login db_roles_l3;
 go
