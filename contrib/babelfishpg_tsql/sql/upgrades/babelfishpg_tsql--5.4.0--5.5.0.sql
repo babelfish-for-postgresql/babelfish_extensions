@@ -564,11 +564,10 @@ BEGIN
         arg_datatype := sys.translate_pg_type_to_tsql(basetype);
     END IF;
 
-    /*
-        Since the datatype of the argument is still NULL it means the datatype of the argument is not defined in TSQL
-        and is a PG supported datatype. So we check the pg type for the argument datatype validation.
-        We only support TIMESTAMP PG datatype over TDS endpoint, so we added a check for it.
-    */
+    -- Since the datatype of the argument is still NULL it means the datatype of the argument is not defined in TSQL and is a PG supported datatype. 
+    -- So we check the pg type for the argument datatype validation.
+    -- We only support TIMESTAMP PG datatype over TDS endpoint, so we added a check for it.
+    
     IF arg_datatype IS NULL THEN
         IF pg_typeof(startdate) = 'timestamp'::regtype THEN
             return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
@@ -598,6 +597,7 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE parallel safe;
+
 CREATE OR REPLACE FUNCTION sys.fn_varbintohexstr(expression sys.varbinary)
 RETURNS sys.nvarchar AS 
 $$ 
