@@ -306,14 +306,14 @@ select cast(cast('01-01-2012' as datetime) as varchar(10));
 GO
 ~~START~~
 varchar
-2012-01-01
+Jan  1 201
 ~~END~~
 
 select cast(cast('01-01-2012' as datetime) as varchar(5));
 GO
 ~~START~~
 varchar
-2012-
+Jan  
 ~~END~~
 
 
@@ -321,14 +321,14 @@ select cast(cast('01-01-2012' as datetime) as nvarchar(10));
 GO
 ~~START~~
 nvarchar
-2012-01-01
+Jan  1 201
 ~~END~~
 
 select cast(cast('01-01-2012' as datetime) as nvarchar(5));
 GO
 ~~START~~
 nvarchar
-2012-
+Jan  
 ~~END~~
 
 
@@ -336,14 +336,14 @@ select cast(cast('01-01-2012' as datetime) as char(10));
 GO
 ~~START~~
 char
-2012-01-01
+Jan  1 201
 ~~END~~
 
 select cast(cast('01-01-2012' as datetime) as char(5));
 GO
 ~~START~~
 char
-2012-
+Jan  
 ~~END~~
 
 
@@ -351,14 +351,14 @@ select cast(cast('01-01-2012' as datetime) as nchar(10));
 GO
 ~~START~~
 nchar
-2012-01-01
+Jan  1 201
 ~~END~~
 
 select cast(cast('01-01-2012' as datetime) as nchar(5));
 GO
 ~~START~~
 nchar
-2012-
+Jan  
 ~~END~~
 
 
@@ -492,14 +492,14 @@ select cast(cast('01-01-2012' as smalldatetime) as varchar(10));
 GO
 ~~START~~
 varchar
-2012-01-01
+Jan  1 201
 ~~END~~
 
 select cast(cast('01-01-2012' as smalldatetime) as varchar(5));
 GO
 ~~START~~
 varchar
-2012-
+Jan  
 ~~END~~
 
 
@@ -507,14 +507,14 @@ select cast(cast('01-01-2012' as smalldatetime) as nvarchar(10));
 GO
 ~~START~~
 nvarchar
-2012-01-01
+Jan  1 201
 ~~END~~
 
 select cast(cast('01-01-2012' as smalldatetime) as nvarchar(5));
 GO
 ~~START~~
 nvarchar
-2012-
+Jan  
 ~~END~~
 
 
@@ -522,14 +522,14 @@ select cast(cast('01-01-2012' as smalldatetime) as char(10));
 GO
 ~~START~~
 char
-2012-01-01
+Jan  1 201
 ~~END~~
 
 select cast(cast('01-01-2012' as smalldatetime) as char(5));
 GO
 ~~START~~
 char
-2012-
+Jan  
 ~~END~~
 
 
@@ -537,14 +537,14 @@ select cast(cast('01-01-2012' as smalldatetime) as nchar(10));
 GO
 ~~START~~
 nchar
-2012-01-01
+Jan  1 201
 ~~END~~
 
 select cast(cast('01-01-2012' as smalldatetime) as nchar(5));
 GO
 ~~START~~
 nchar
-2012-
+Jan  
 ~~END~~
 
 

@@ -838,7 +838,7 @@ SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
 varchar
-6
+ 
 ~~END~~
 
 
@@ -847,7 +847,7 @@ SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
 varchar
-5
+ 
 ~~END~~
 
 

@@ -1363,7 +1363,7 @@ SELECT TRIM(@inputString)
 GO
 ~~START~~
 varchar
-2016-12-21 00:00:00
+Dec 21 2016 12:00AM
 ~~END~~
 
 
@@ -1373,7 +1373,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~START~~
 varchar
-016-12-21 00:00:00
+Dec 21 2016 12:00AM
 ~~END~~
 
 
@@ -1392,7 +1392,7 @@ SELECT TRIM(@inputString)
 GO
 ~~START~~
 varchar
-1955-12-13 12:43:00
+Dec 13 1955 12:43PM
 ~~END~~
 
 
@@ -1401,7 +1401,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~START~~
 varchar
-955-12-13 12:43:00
+Dec 13 1955 12:43PM
 ~~END~~
 
 
