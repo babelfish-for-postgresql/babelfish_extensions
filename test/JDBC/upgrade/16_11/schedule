@@ -639,7 +639,7 @@ colon_colon_methods
 babel_numeric_fixeddecimal_oper
 babel_numeric_money_oper
 babel_numeric_smallmoney_oper
-datetime_roundoff
+datetime_roundoff-before-17_8-or-16_12
 babel_assign_nchar
 alter-function-with-weak-view
 mathematical_func_tests
@@ -651,3 +651,4 @@ cast_datetime_to_binary
 babel_string_to_money
 babel_binary-before-17_7-or-16_11
 BABEL-5788
+BABEL-1664

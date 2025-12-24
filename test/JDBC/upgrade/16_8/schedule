@@ -628,3 +628,4 @@ test_convert_to_binary-before-17_7-16_11
 babel_string_to_money
 babel_binary-before-17_5-or-16_9
 BABEL-5788
+BABEL-1664-before-16_10-or-17_6

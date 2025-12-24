@@ -652,5 +652,8 @@ cast_datetime_to_binary
 babel_string_to_money
 BABEL-4271
 BABEL-5788
+BABEL-1664
 sys-fn_varbintohexstr
 babel_binary
+test_output_clause
+update_with_var

@@ -7095,12 +7095,12 @@ bbf_view_set_broken(Oid viewOid, bool mark_broken)
 	bool 		is_broken;
 	bool 		updated = false;
 	
-	brel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
+	brel = table_open(get_bbf_view_def_oid(), AccessShareLock);
 	tuple = search_bbf_view_def(brel, viewOid);
 	
 	if (!HeapTupleIsValid(tuple))
 	{
-		table_close(brel, RowExclusiveLock);
+		table_close(brel, AccessShareLock);
 		return false;
 	}
 	values_datum = heap_getattr(tuple, Anum_bbf_view_def_flag_values,
@@ -7108,7 +7108,7 @@ bbf_view_set_broken(Oid viewOid, bool mark_broken)
 	if (isnull)
 	{
 		heap_freetuple(tuple);
-		table_close(brel, RowExclusiveLock);
+		table_close(brel, AccessShareLock);
 		return false;
 	}
 	
@@ -7138,7 +7138,7 @@ bbf_view_set_broken(Oid viewOid, bool mark_broken)
 	if (is_broken == mark_broken)
 	{
 		heap_freetuple(tuple);
-		table_close(brel, RowExclusiveLock);
+		table_close(brel, AccessShareLock);
 		return false;
 	}
 	
@@ -7149,7 +7149,7 @@ bbf_view_set_broken(Oid viewOid, bool mark_broken)
 		updated = update_bbf_view_flags(viewOid, 0, BBF_VIEW_DEF_FLAG_IS_BROKEN, true);
 	
 	heap_freetuple(tuple);
-	table_close(brel, RowExclusiveLock);
+	table_close(brel, AccessShareLock);
 	return updated;
 }
 
