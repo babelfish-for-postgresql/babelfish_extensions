@@ -737,8 +737,8 @@ GO
 ~~START~~
 text
 Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
-  Index Cond: (varbinary_col > '0x01230123'::bbf_varbinary)
+Seq Scan on babel_varbinary_test_table2
+  Filter: ((varbinary_col)::bbf_varbinary > '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
@@ -771,12 +771,9 @@ GO
 ~~START~~
 text
 Query Text: select count(*) from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Finalize Aggregate
-  ->  Gather
-        Workers Planned: 2
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_varbinary_test_table2
-                    Filter: ((varbinary_col)::bbf_varbinary < '0x01230123'::bbf_varbinary)
+Aggregate
+  ->  Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
+        Index Cond: (varbinary_col < '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~

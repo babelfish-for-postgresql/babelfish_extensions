@@ -317,6 +317,9 @@ ignore#!#sys-all_sql_modules-before-15_7-or-16_2-dep-vu-cleanup
 ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-prepare
 ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-verify
 ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-cleanup
+ignore#!#comparison_op_index_scan-before-15_2-or-14_7-vu-prepare
+ignore#!#comparison_op_index_scan-before-15_2-or-14_7-vu-verify
+ignore#!#comparison_op_index_scan-before-15_2-or-14_7-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_8 or 15_3 release
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare
@@ -375,6 +378,9 @@ ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-cleanup
 ignore#!#BABEL-621-after-14_12-before-15-vu-prepare
 ignore#!#BABEL-621-after-14_12-before-15-vu-verify
 ignore#!#BABEL-621-after-14_12-before-15-vu-cleanup
+ignore#!#comparison_op_index_scan-before-15_6-or-14_11-vu-prepare
+ignore#!#comparison_op_index_scan-before-15_6-or-14_11-vu-verify
+ignore#!#comparison_op_index_scan-before-15_6-or-14_11-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
 ignore#!#sys-host_name-before-15_8-or-16_4-vu-prepare
@@ -729,7 +735,9 @@ ignore#!#test_convert_to_binary-before-17_7-16_11-vu-cleanup
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-prepare
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
-
+ignore#!#comparison_op_index_scan-before-17_8-or-16_12-vu-prepare
+ignore#!#comparison_op_index_scan-before-17_8-or-16_12-vu-verify
+ignore#!#comparison_op_index_scan-before-17_8-or-16_12-vu-cleanup
 # These tests are meant for upgrade scenario prior to 17_8 release
 ignore#!#datetime_roundoff-before-17_8-vu-prepare
 ignore#!#datetime_roundoff-before-17_8-vu-verify
