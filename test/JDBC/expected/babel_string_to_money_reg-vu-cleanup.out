@@ -12,3 +12,6 @@ GO
 
 DROP FUNCTION IF EXISTS dbo.fn_money_chars;
 GO
+
+DROP PROCEDURE IF EXISTS dbo.sp_test_money_digits;
+GO

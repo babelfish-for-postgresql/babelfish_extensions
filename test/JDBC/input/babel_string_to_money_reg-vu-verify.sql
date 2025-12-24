@@ -1,7 +1,33 @@
+--Valid cases
 SELECT CAST('\0' AS MONEY);
 GO
-SELECT CAST(NCHAR(8364) AS money);
+SELECT CAST(NCHAR(8364) AS money);           -- Euro sign
 GO
+SELECT CAST(CHAR(11) AS MONEY);              --Vertical tab
+GO
+SELECT CAST(CHAR(12) AS MONEY);              -- Form feed
+GO
+SELECT CAST(CHAR(32) AS MONEY);              -- Space
+GO
+SELECT CAST(CHAR(43) AS MONEY);              -- Plus
+GO
+SELECT CAST(CHAR(44) AS MONEY);              -- Comma 
+GO
+SELECT CAST(CHAR(45) AS MONEY);              -- Hyphen-minus
+GO
+SELECT CAST(CHAR(46) AS MONEY);              -- Dot
+GO
+SELECT CAST(CHAR(48) AS MONEY);              -- Zero
+GO
+SELECT CAST(CHAR(162) AS MONEY);             -- Cent sign
+GO
+SELECT CAST(CHAR(163) AS MONEY);             -- Pound sign
+GO
+SELECT CAST(CHAR(164) AS MONEY);             -- Currency sign
+GO
+SELECT CAST(CHAR(165) AS MONEY);             -- Yen sign
+GO
+--Invalid cases
 SELECT CAST(CHAR(72) AS MONEY);
 GO
 SELECT CAST(CHAR(73) AS MONEY);
@@ -168,8 +194,6 @@ SELECT CAST(CHAR(159) AS MONEY);
 GO
 SELECT CAST(CHAR(161) AS MONEY);
 GO
-SELECT CAST(CHAR(164) AS MONEY);
-GO
 SELECT CAST(CHAR(166) AS MONEY);
 GO
 SELECT CAST(CHAR(167) AS MONEY);
@@ -333,4 +357,7 @@ EXEC dbo.sp_test_money_special;
 GO
 
 SELECT * FROM dbo.vw_test_money_currency;
+GO
+
+EXEC dbo.sp_test_money_digits;
 GO

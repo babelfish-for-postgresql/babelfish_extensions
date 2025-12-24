@@ -1,3 +1,4 @@
+--Valid cases
 SELECT CAST('\0' AS MONEY);
 GO
 ~~START~~
@@ -5,13 +6,98 @@ money
 0.0000
 ~~END~~
 
-SELECT CAST(NCHAR(8364) AS money);
+SELECT CAST(NCHAR(8364) AS money);           -- Euro sign
 GO
 ~~START~~
 money
 0.0000
 ~~END~~
 
+SELECT CAST(CHAR(11) AS MONEY);              --Vertical tab
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(12) AS MONEY);              -- Form feed
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(32) AS MONEY);              -- Space
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(43) AS MONEY);              -- Plus
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(44) AS MONEY);              -- Comma 
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(45) AS MONEY);              -- Hyphen-minus
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(46) AS MONEY);              -- Dot
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(48) AS MONEY);              -- Zero
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(162) AS MONEY);             -- Cent sign
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(163) AS MONEY);             -- Pound sign
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(164) AS MONEY);             -- Currency sign
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT CAST(CHAR(165) AS MONEY);             -- Yen sign
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+--Invalid cases
 SELECT CAST(CHAR(72) AS MONEY);
 GO
 ~~ERROR (Code: 293)~~
@@ -510,13 +596,6 @@ GO
 
 ~~ERROR (Message: invalid characters found: cannot cast value "¡" to money)~~
 
-SELECT CAST(CHAR(164) AS MONEY);
-GO
-~~START~~
-money
-0.0000
-~~END~~
-
 SELECT CAST(CHAR(166) AS MONEY);
 GO
 ~~ERROR (Code: 293)~~
@@ -992,12 +1071,14 @@ money#!#money#!#money#!#money#!#money
 
 EXEC dbo.sp_test_money_special;
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 ~~START~~
 varchar#!#money
 comma#!#0.0000
 backslash#!#0.0000
-backslash_zero#!#0.0000
-plus#!#0.0000
 ~~END~~
 
 
@@ -1006,5 +1087,22 @@ GO
 ~~START~~
 money#!#money#!#money#!#money
 0.0000#!#0.0000#!#0.0000#!#0.0000
+~~END~~
+
+
+EXEC dbo.sp_test_money_digits;
+GO
+~~START~~
+varchar#!#money
+char_48 (0)#!#0.0000
+char_49 (1)#!#1.0000
+char_50 (2)#!#2.0000
+char_51 (3)#!#3.0000
+char_52 (4)#!#4.0000
+char_53 (5)#!#5.0000
+char_54 (6)#!#6.0000
+char_55 (7)#!#7.0000
+char_56 (8)#!#8.0000
+char_57 (9)#!#9.0000
 ~~END~~
 

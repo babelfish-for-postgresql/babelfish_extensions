@@ -21,11 +21,18 @@ GO
 CREATE PROCEDURE dbo.sp_test_money_special
 AS
 BEGIN
-    DECLARE @c money=CHAR(44), @b money=CHAR(92), @z money='\0', @e money=CHAR(43);
-    SELECT 'comma' AS name, @c AS val UNION ALL
-    SELECT 'backslash', @b UNION ALL
-    SELECT 'backslash_zero', @z UNION ALL
-    SELECT 'plus', @e;
+    DECLARE @c money = CHAR(44), @b money = CHAR(92);
+    
+    DECLARE @results TABLE (
+        id INT,
+        name VARCHAR(20),
+        val money
+    );
+    
+    INSERT INTO @results (id, name, val) VALUES (1, 'comma', @c);
+    INSERT INTO @results (id, name, val) VALUES (2, 'backslash', @b);
+    
+    SELECT name, val FROM @results ORDER BY id;
 END;
 GO
 
@@ -46,4 +53,23 @@ RETURN (
         CAST(CHAR(44) AS money) AS comma,
         CAST(CHAR(49) AS money) AS one
 );
+GO
+
+CREATE PROCEDURE dbo.sp_test_money_digits
+AS
+BEGIN
+    SELECT name, val FROM (
+        SELECT 1 AS seq, 'char_48 (0)' AS name, CAST(CHAR(48) AS money) AS val UNION ALL
+        SELECT 2, 'char_49 (1)', CAST(CHAR(49) AS money) UNION ALL
+        SELECT 3, 'char_50 (2)', CAST(CHAR(50) AS money) UNION ALL
+        SELECT 4, 'char_51 (3)', CAST(CHAR(51) AS money) UNION ALL
+        SELECT 5, 'char_52 (4)', CAST(CHAR(52) AS money) UNION ALL
+        SELECT 6, 'char_53 (5)', CAST(CHAR(53) AS money) UNION ALL
+        SELECT 7, 'char_54 (6)', CAST(CHAR(54) AS money) UNION ALL
+        SELECT 8, 'char_55 (7)', CAST(CHAR(55) AS money) UNION ALL
+        SELECT 9, 'char_56 (8)', CAST(CHAR(56) AS money) UNION ALL
+        SELECT 10, 'char_57 (9)', CAST(CHAR(57) AS money)
+    ) AS results
+    ORDER BY seq;
+END;
 GO

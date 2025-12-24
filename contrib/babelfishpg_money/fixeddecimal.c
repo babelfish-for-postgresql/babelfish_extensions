@@ -558,15 +558,6 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 			continue;
 		}
 		
-		/* Reject multiple currency symbols */
-		if (is_valid_currency_symbol(ptr) > 0)
-		{
-			ereturn(escontext, (Datum) 0,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("invalid characters found: cannot cast value \"%s\" to money",
-							str)));
-		}
-		
 		/* Reject alphabets and any other character */
 		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
