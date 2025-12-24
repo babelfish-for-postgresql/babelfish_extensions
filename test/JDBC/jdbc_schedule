@@ -736,7 +736,7 @@ ignore#!#temp_catalog_inval-vu-cleanup
 ignore#!#BABEL-3293
 ignore#!#babel_output_clause_concurrency_test
 
-# These tests are meant for upgrade scenario prior to 17_8 release
-ignore#!#datetime_roundoff-before-17_8-vu-prepare
-ignore#!#datetime_roundoff-before-17_8-vu-verify
-ignore#!#datetime_roundoff-before-17_8-vu-cleanup
+# These tests are meant for upgrade scenario prior to 17_8 or 16_12 release
+ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-prepare
+ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-verify
+ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
