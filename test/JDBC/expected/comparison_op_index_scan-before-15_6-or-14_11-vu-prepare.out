@@ -1,0 +1,482 @@
+-- Create test table for BINARY type
+CREATE TABLE BABEL_6098_binary_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    binary_col BINARY(10)
+);
+GO
+
+-- Create test table for VARBINARY type
+CREATE TABLE BABEL_6098_varbinary_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    varbinary_col VARBINARY(10)
+);
+GO
+
+-- Create table for cross-type testing
+CREATE TABLE BABEL_6098_mixed_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    binary_col BINARY(10),
+    varbinary_col VARBINARY(10)
+);
+GO
+
+INSERT INTO BABEL_6098_binary_test (binary_col) 
+    SELECT CAST(0x01 AS BINARY(10)) FROM generate_series(1, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO BABEL_6098_binary_test (binary_col) 
+    SELECT CAST(0x05 AS BINARY(10)) FROM generate_series(1, 10000);
+GO
+~~ROW COUNT: 10000~~
+
+
+INSERT INTO BABEL_6098_binary_test (binary_col) 
+    SELECT CAST(0x09 AS BINARY(10)) FROM generate_series(1, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+-- Insert data for VARBINARY with same distribution
+INSERT INTO BABEL_6098_varbinary_test (varbinary_col) 
+    SELECT CAST(0x01 AS VARBINARY(10)) FROM generate_series(1, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO BABEL_6098_varbinary_test (varbinary_col) 
+    SELECT CAST(0x05 AS VARBINARY(10)) FROM generate_series(1, 10000);
+GO
+~~ROW COUNT: 10000~~
+
+
+INSERT INTO BABEL_6098_varbinary_test (varbinary_col) 
+    SELECT CAST(0x09 AS VARBINARY(10)) FROM generate_series(1, 3);;
+GO
+~~ROW COUNT: 3~~
+
+
+-- Insert mixed data
+INSERT INTO BABEL_6098_mixed_test (binary_col, varbinary_col)
+SELECT CAST(0x01 AS BINARY(10)), CAST(0x01 AS VARBINARY(10)) FROM generate_series(1, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO BABEL_6098_mixed_test (binary_col, varbinary_col)
+SELECT CAST(0x05 AS BINARY(10)), CAST(0x05 AS VARBINARY(10)) FROM generate_series(1, 10000);
+GO
+~~ROW COUNT: 10000~~
+
+
+INSERT INTO BABEL_6098_mixed_test (binary_col, varbinary_col)
+    SELECT CAST(0x09 AS BINARY(10)), CAST(0x09 AS VARBINARY(10)) FROM generate_series(1, 10000);
+GO
+~~ROW COUNT: 10000~~
+
+
+-- Create indexes
+CREATE INDEX BABEL_6098_idx_binary ON BABEL_6098_binary_test(binary_col);
+GO
+
+CREATE INDEX BABEL_6098_idx_varbinary ON BABEL_6098_varbinary_test(varbinary_col);
+GO
+
+CREATE INDEX BABEL_6098_idx_mixed_binary ON BABEL_6098_mixed_test(binary_col);
+CREATE INDEX BABEL_6098_idx_mixed_varbinary ON BABEL_6098_mixed_test(varbinary_col);
+GO
+
+
+-- VIEWS: SAME-TYPE BINARY OPERATORS
+-- Highly selective queries
+CREATE VIEW BABEL_6098_binary_selective_view AS
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col = CAST(0x01 AS BINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col <> CAST(0x01 AS BINARY(10)) AND binary_col = CAST(0x02 AS BINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col < CAST(0x02 AS BINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col <= CAST(0x01 AS BINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col > CAST(0x08 AS BINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col >= CAST(0x09 AS BINARY(10));
+GO
+
+-- Non-selective queries
+CREATE VIEW BABEL_6098_binary_non_selective_view AS
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col >= CAST(0x01 AS BINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col <> CAST(0xFF AS BINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col < CAST(0x0A AS BINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col <= CAST(0x09 AS BINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col > CAST(0x00 AS BINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col = CAST(0x05 AS BINARY(10)) OR binary_col >= CAST(0x01 AS BINARY(10));
+GO
+
+
+-- VIEWS: SAME-TYPE VARBINARY OPERATORS
+-- Highly selective queries
+CREATE VIEW BABEL_6098_varbinary_selective_view AS
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col = CAST(0x01 AS VARBINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col <> CAST(0x01 AS VARBINARY(10)) AND varbinary_col = CAST(0x02 AS VARBINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col < CAST(0x02 AS VARBINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col <= CAST(0x01 AS VARBINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col > CAST(0x08 AS VARBINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col >= CAST(0x09 AS VARBINARY(10));
+GO
+
+-- Non-selective queries
+CREATE VIEW BABEL_6098_varbinary_non_selective_view AS
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col >= CAST(0x01 AS VARBINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col <> CAST(0xFF AS VARBINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col < CAST(0x0A AS VARBINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col <= CAST(0x09 AS VARBINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col > CAST(0x00 AS VARBINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col = CAST(0x05 AS VARBINARY(10)) OR varbinary_col >= CAST(0x01 AS VARBINARY(10));
+GO
+
+
+-- VIEWS: CROSS-TYPE OPERATORS (BINARY col, VARBINARY literal)
+-- Highly selective queries
+CREATE VIEW BABEL_6098_cross_selective_view AS
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col = CAST(0x01 AS VARBINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col <> CAST(0x01 AS VARBINARY(10)) AND binary_col = CAST(0x02 AS VARBINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col < CAST(0x02 AS VARBINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col <= CAST(0x01 AS VARBINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col > CAST(0x08 AS VARBINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col >= CAST(0x09 AS VARBINARY(10));
+GO
+
+-- Non-selective queries
+CREATE VIEW BABEL_6098_cross_non_selective_view AS
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col >= CAST(0x01 AS VARBINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col <> CAST(0xFF AS VARBINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col < CAST(0x0A AS VARBINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col <= CAST(0x09 AS VARBINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col > CAST(0x00 AS VARBINARY(10))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE binary_col = CAST(0x05 AS VARBINARY(10)) OR binary_col >= CAST(0x01 AS VARBINARY(10));
+GO
+
+
+-- VIEWS: REVERSE CROSS-TYPE OPERATORS (VARBINARY col, BINARY literal)
+-- Highly selective queries
+CREATE VIEW BABEL_6098_reverse_selective_view AS
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col = CAST(0x01 AS BINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col <> CAST(0x01 AS BINARY(10)) AND varbinary_col = CAST(0x02 AS BINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col < CAST(0x02 AS BINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col <= CAST(0x01 AS BINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col > CAST(0x08 AS BINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col >= CAST(0x09 AS BINARY(10));
+GO
+
+-- Non-selective queries
+CREATE VIEW BABEL_6098_reverse_non_selective_view AS
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col >= CAST(0x01 AS BINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col <> CAST(0xFF AS BINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col < CAST(0x0A AS BINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col <= CAST(0x09 AS BINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col > CAST(0x00 AS BINARY(10))
+UNION ALL
+SELECT varbinary_col FROM BABEL_6098_varbinary_test WHERE varbinary_col = CAST(0x05 AS BINARY(10)) OR varbinary_col >= CAST(0x01 AS BINARY(10));
+GO
+
+
+-- VIEWS: JOIN OPERATIONS
+-- Selective join with all operators
+CREATE VIEW BABEL_6098_join_selective_view AS
+SELECT t1.binary_col, t2.varbinary_col FROM BABEL_6098_binary_test t1
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col = t2.varbinary_col
+WHERE t1.binary_col = CAST(0x01 AS BINARY(10))
+UNION ALL
+SELECT t1.binary_col, t2.varbinary_col FROM BABEL_6098_binary_test t1
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col <> t2.varbinary_col
+WHERE t1.binary_col = CAST(0x01 AS BINARY(10)) AND t2.varbinary_col = CAST(0x02 AS VARBINARY(10))
+UNION ALL
+SELECT t1.binary_col, t2.varbinary_col FROM BABEL_6098_binary_test t1
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col < t2.varbinary_col
+WHERE t1.binary_col = CAST(0x01 AS BINARY(10))
+UNION ALL
+SELECT t1.binary_col, t2.varbinary_col FROM BABEL_6098_binary_test t1
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col <= t2.varbinary_col
+WHERE t1.binary_col = CAST(0x01 AS BINARY(10))
+UNION ALL
+SELECT t1.binary_col, t2.varbinary_col FROM BABEL_6098_binary_test t1
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col > t2.varbinary_col
+WHERE t1.binary_col = CAST(0x09 AS BINARY(10))
+UNION ALL
+SELECT t1.binary_col, t2.varbinary_col FROM BABEL_6098_binary_test t1
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col >= t2.varbinary_col
+WHERE t1.binary_col = CAST(0x09 AS BINARY(10));
+GO
+
+
+-- VIEWS: COLUMN-TO-COLUMN COMPARISONS
+CREATE VIEW BABEL_6098_col_to_col_view AS
+SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test WHERE binary_col = varbinary_col
+UNION ALL
+SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test WHERE binary_col <> varbinary_col
+UNION ALL
+SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test WHERE binary_col < varbinary_col
+UNION ALL
+SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test WHERE binary_col <= varbinary_col
+UNION ALL
+SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test WHERE binary_col > varbinary_col
+UNION ALL
+SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test WHERE binary_col >= varbinary_col;
+GO
+
+
+-- VIEWS: NEGATION OPERATORS
+CREATE VIEW BABEL_6098_negation_view AS
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col = CAST(0x05 AS BINARY(10)))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col <> CAST(0x05 AS BINARY(10)))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col < CAST(0x05 AS BINARY(10)))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col <= CAST(0x05 AS BINARY(10)))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col > CAST(0x05 AS BINARY(10)))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col >= CAST(0x05 AS BINARY(10)));
+GO
+
+
+-- VIEWS: CROSS-TYPE NEGATION
+CREATE VIEW BABEL_6098_cross_negation_view AS
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col = CAST(0x05 AS VARBINARY(10)))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col <> CAST(0x05 AS VARBINARY(10)))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col < CAST(0x05 AS VARBINARY(10)))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col <= CAST(0x05 AS VARBINARY(10)))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col > CAST(0x05 AS VARBINARY(10)))
+UNION ALL
+SELECT binary_col FROM BABEL_6098_binary_test WHERE NOT (binary_col >= CAST(0x05 AS VARBINARY(10)));
+GO
+
+
+-- PROCEDURES: SAME-TYPE BINARY OPERATORS
+-- Highly selective operations
+CREATE PROCEDURE BABEL_6098_binary_selective_proc
+    @value BINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as equal_count FROM BABEL_6098_binary_test WHERE binary_col = @value;
+    SELECT COUNT(*) as not_equal_count FROM BABEL_6098_binary_test WHERE binary_col <> @value AND binary_col = CAST(0x02 AS BINARY(10));
+    SELECT COUNT(*) as lt_count FROM BABEL_6098_binary_test WHERE binary_col < @value;
+    SELECT COUNT(*) as lte_count FROM BABEL_6098_binary_test WHERE binary_col <= @value;
+END;
+GO
+
+-- Non-selective operations
+CREATE PROCEDURE BABEL_6098_binary_non_selective_proc
+    @value BINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as equal_count FROM BABEL_6098_binary_test WHERE binary_col = @value OR binary_col >= CAST(0x01 AS BINARY(10));
+    SELECT COUNT(*) as not_equal_count FROM BABEL_6098_binary_test WHERE binary_col <> @value;
+    SELECT COUNT(*) as lt_count FROM BABEL_6098_binary_test WHERE binary_col < CAST(0x0A AS BINARY(10));
+    SELECT COUNT(*) as lte_count FROM BABEL_6098_binary_test WHERE binary_col <= CAST(0x09 AS BINARY(10));
+    SELECT COUNT(*) as gt_count FROM BABEL_6098_binary_test WHERE binary_col > CAST(0x00 AS BINARY(10));
+    SELECT COUNT(*) as gte_count FROM BABEL_6098_binary_test WHERE binary_col >= @value;
+END;
+GO
+
+
+-- PROCEDURES: SAME-TYPE VARBINARY OPERATORS
+-- Highly selective operations
+CREATE PROCEDURE BABEL_6098_varbinary_selective_proc
+    @value VARBINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col = @value;
+    SELECT COUNT(*) as not_equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <> @value AND varbinary_col = CAST(0x02 AS VARBINARY(10));
+    SELECT COUNT(*) as lt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col < @value;
+    SELECT COUNT(*) as lte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <= @value;
+END;
+GO
+
+-- Non-selective operations
+CREATE PROCEDURE BABEL_6098_varbinary_non_selective_proc
+    @value VARBINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col = @value OR varbinary_col >= CAST(0x01 AS VARBINARY(10));
+    SELECT COUNT(*) as not_equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <> @value;
+    SELECT COUNT(*) as lt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col < CAST(0x0A AS VARBINARY(10));
+    SELECT COUNT(*) as lte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <= CAST(0x09 AS VARBINARY(10));
+    SELECT COUNT(*) as gt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col > CAST(0x00 AS VARBINARY(10));
+    SELECT COUNT(*) as gte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col >= @value;
+END;
+GO
+
+
+-- PROCEDURES: CROSS-TYPE OPERATORS
+-- Highly selective operations
+CREATE PROCEDURE BABEL_6098_cross_selective_proc
+    @value VARBINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as equal_count FROM BABEL_6098_binary_test WHERE binary_col = @value;
+    SELECT COUNT(*) as not_equal_count FROM BABEL_6098_binary_test WHERE binary_col <> @value AND binary_col = CAST(0x02 AS BINARY(10));
+    SELECT COUNT(*) as lt_count FROM BABEL_6098_binary_test WHERE binary_col < @value;
+    SELECT COUNT(*) as lte_count FROM BABEL_6098_binary_test WHERE binary_col <= @value;
+END;
+GO
+
+-- Non-selective operations
+CREATE PROCEDURE BABEL_6098_cross_non_selective_proc
+    @value VARBINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as equal_count FROM BABEL_6098_binary_test WHERE binary_col = CAST(0x05 AS BINARY(10)) OR binary_col >= @value;
+    SELECT COUNT(*) as not_equal_count FROM BABEL_6098_binary_test WHERE binary_col <> @value;
+    SELECT COUNT(*) as lt_count FROM BABEL_6098_binary_test WHERE binary_col < CAST(0x0A AS VARBINARY(10));
+    SELECT COUNT(*) as lte_count FROM BABEL_6098_binary_test WHERE binary_col <= CAST(0x09 AS VARBINARY(10));
+    SELECT COUNT(*) as gt_count FROM BABEL_6098_binary_test WHERE binary_col > CAST(0x00 AS VARBINARY(10));
+    SELECT COUNT(*) as gte_count FROM BABEL_6098_binary_test WHERE binary_col >= @value;
+END;
+GO
+
+
+-- PROCEDURES: REVERSE CROSS-TYPE OPERATORS
+-- Highly selective operations
+CREATE PROCEDURE BABEL_6098_reverse_selective_proc
+    @value BINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col = @value;
+    SELECT COUNT(*) as not_equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <> @value AND varbinary_col = CAST(0x02 AS VARBINARY(10));
+    SELECT COUNT(*) as lt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col < @value;
+    SELECT COUNT(*) as lte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <= @value;
+END;
+GO
+
+-- Non-selective operations
+CREATE PROCEDURE BABEL_6098_reverse_non_selective_proc
+    @value BINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col = CAST(0x05 AS VARBINARY(10)) OR varbinary_col >= @value;
+    SELECT COUNT(*) as not_equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <> @value;
+    SELECT COUNT(*) as lt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col < CAST(0x0A AS BINARY(10));
+    SELECT COUNT(*) as lte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <= CAST(0x09 AS BINARY(10));
+    SELECT COUNT(*) as gt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col > CAST(0x00 AS BINARY(10));
+    SELECT COUNT(*) as gte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col >= @value;
+END;
+GO
+
+
+-- PROCEDURES: JOIN OPERATIONS
+-- Selective join operations
+CREATE PROCEDURE BABEL_6098_join_selective_proc
+    @value BINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as eq_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col = t2.varbinary_col
+    WHERE t1.binary_col = @value;
+    
+    SELECT COUNT(*) as ne_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col <> t2.varbinary_col
+    WHERE t1.binary_col = @value AND t2.varbinary_col = CAST(0x02 AS VARBINARY(10));
+    
+    SELECT COUNT(*) as lt_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col < t2.varbinary_col
+    WHERE t1.binary_col = @value;
+    
+    SELECT COUNT(*) as lte_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col <= t2.varbinary_col
+    WHERE t1.binary_col = @value;
+    
+    SELECT COUNT(*) as gt_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col > t2.varbinary_col
+    WHERE t1.binary_col = @value;
+    
+    SELECT COUNT(*) as gte_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col >= t2.varbinary_col
+    WHERE t1.binary_col = @value;
+END;
+GO
+
+
+-- PROCEDURES: COLUMN-TO-COLUMN COMPARISONS
+CREATE PROCEDURE BABEL_6098_col_to_col_proc
+AS
+BEGIN
+    SELECT COUNT(*) as equal FROM BABEL_6098_mixed_test WHERE binary_col = varbinary_col;
+    SELECT COUNT(*) as not_equal FROM BABEL_6098_mixed_test WHERE binary_col <> varbinary_col;
+    SELECT COUNT(*) as lt FROM BABEL_6098_mixed_test WHERE binary_col < varbinary_col;
+    SELECT COUNT(*) as lte FROM BABEL_6098_mixed_test WHERE binary_col <= varbinary_col;
+    SELECT COUNT(*) as gt FROM BABEL_6098_mixed_test WHERE binary_col > varbinary_col;
+    SELECT COUNT(*) as gte FROM BABEL_6098_mixed_test WHERE binary_col >= varbinary_col;
+END;
+GO
+
+
+-- PROCEDURES: NEGATION OPERATORS
+-- Same-type negation
+CREATE PROCEDURE BABEL_6098_negation_proc
+    @value BINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as not_eq FROM BABEL_6098_binary_test WHERE NOT (binary_col = @value);
+    SELECT COUNT(*) as not_ne FROM BABEL_6098_binary_test WHERE NOT (binary_col <> @value);
+    SELECT COUNT(*) as not_lt FROM BABEL_6098_binary_test WHERE NOT (binary_col < @value);
+    SELECT COUNT(*) as not_lte FROM BABEL_6098_binary_test WHERE NOT (binary_col <= @value);
+    SELECT COUNT(*) as not_gt FROM BABEL_6098_binary_test WHERE NOT (binary_col > @value);
+    SELECT COUNT(*) as not_gte FROM BABEL_6098_binary_test WHERE NOT (binary_col >= @value);
+END;
+GO
+
+-- Cross-type negation
+CREATE PROCEDURE BABEL_6098_cross_negation_proc
+    @value VARBINARY(10)
+AS
+BEGIN
+    SELECT COUNT(*) as not_eq FROM BABEL_6098_binary_test WHERE NOT (binary_col = @value);
+    SELECT COUNT(*) as not_ne FROM BABEL_6098_binary_test WHERE NOT (binary_col <> @value);
+    SELECT COUNT(*) as not_lt FROM BABEL_6098_binary_test WHERE NOT (binary_col < @value);
+    SELECT COUNT(*) as not_lte FROM BABEL_6098_binary_test WHERE NOT (binary_col <= @value);
+    SELECT COUNT(*) as not_gt FROM BABEL_6098_binary_test WHERE NOT (binary_col > @value);
+    SELECT COUNT(*) as not_gte FROM BABEL_6098_binary_test WHERE NOT (binary_col >= @value);
+END;
+GO

@@ -1,0 +1,3504 @@
+-- tsql
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+-- psql
+ANALYZE master_dbo.BABEL_6098_binary_test;
+GO
+ANALYZE master_dbo.BABEL_6098_varbinary_test;
+GO
+ANALYZE master_dbo.BABEL_6098_mixed_test;
+GO
+
+-- tsql
+-- FOR SAME-TYPE BINARY OPERATORS
+-- Equality operator
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Not equal operator
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col <> CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- Less than operator
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x02 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Less than or equal operator
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Greater than operator
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col > CAST(0x08 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Greater than or equal operator
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x09 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- BETWEEN operator
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col BETWEEN CAST(0x01 AS BINARY(10)) AND CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Range query using AND
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x01 AS BINARY(10)) AND binary_col <= CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+
+-- EXECUTION PLAN VERIFICATION
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- Equality - highly selective 
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col = CAST(0x01 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.200 ms
+~~END~~
+
+
+-- Less than - highly selective 
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x02 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x02 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: (binary_col < '0x02000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
+~~END~~
+
+
+-- Less than or equal - highly selective 
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x01 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: (binary_col <= '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
+~~END~~
+
+
+-- Greater than - highly selective 
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col > CAST(0x08 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col > CAST(0x08 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: (binary_col > '0x08000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
+~~END~~
+
+
+-- Greater than or equal - non-selective (10003/10006 = 99.97%)
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x01 AS [BINARY](10))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary >= '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.158 ms
+~~END~~
+
+
+-- BETWEEN - highly selective 
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col BETWEEN CAST(0x01 AS BINARY(10)) AND CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col BETWEEN CAST(0x01 AS [BINARY](10)) AND CAST(0x01 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: ((binary_col >= '0x01000000000000000000'::bbf_binary) AND (binary_col <= '0x01000000000000000000'::bbf_binary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
+~~END~~
+
+
+-- COUNT(*) with highly selective condition
+SELECT COUNT(*) FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x01 AS [BINARY](10))
+Aggregate
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+        Index Cond: (binary_col <= '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- FOR SAME-TYPE VARBINARY OPERATORS
+-- Equality operator
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col = CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Not equal operator
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <> CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- Less than operator
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col < CAST(0x02 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Less than or equal operator
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Greater than operator
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col > CAST(0x08 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Greater than or equal operator
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x09 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+
+-- EXECUTION PLAN VERIFICATION
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- Equality - highly selective
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col = CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col = CAST(0x01 AS VARBINARY(10))
+Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+  Index Cond: (varbinary_col = '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
+~~END~~
+
+
+-- Less than - highly selective
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col < CAST(0x02 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col < CAST(0x02 AS VARBINARY(10))
+Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+  Index Cond: (varbinary_col < '0x02'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.134 ms
+~~END~~
+
+
+-- Less than or equal - highly selective
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x01 AS VARBINARY(10))
+Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+  Index Cond: (varbinary_col <= '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
+~~END~~
+
+
+-- Greater than - highly selective
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col > CAST(0x08 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col > CAST(0x08 AS VARBINARY(10))
+Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+  Index Cond: (varbinary_col > '0x08'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
+~~END~~
+
+
+-- Greater than or equal - non-selective
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x01 AS VARBINARY(10))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary >= '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
+~~END~~
+
+
+-- COUNT(*) with highly selective condition
+SELECT COUNT(*) FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x01 AS VARBINARY(10))
+Aggregate
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+        Index Cond: (varbinary_col <= '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.137 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- FOR CROSS-TYPE OPERATORS (BINARY = VARBINARY)
+-- Equality with cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col = CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Not equal with cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col <> CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- Less than with cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x02 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Less than or equal with cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Greater than with cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col > CAST(0x08 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Greater than or equal with cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x09 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- BETWEEN with cross-type bounds
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col BETWEEN CAST(0x01 AS VARBINARY(10)) AND CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+
+-- EXECUTION PLAN VERIFICATION
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- Cross-type equality: BINARY = VARBINARY (highly selective)
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col = CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col = CAST(0x01 AS VARBINARY(10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: (binary_col = '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
+~~END~~
+
+
+-- Cross-type less than: BINARY < VARBINARY (highly selective)
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x02 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x02 AS VARBINARY(10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: (binary_col < '0x02'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
+~~END~~
+
+
+-- Cross-type less than or equal: BINARY <= VARBINARY (highly selective)
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x01 AS VARBINARY(10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: (binary_col <= '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
+~~END~~
+
+
+-- Cross-type greater than: BINARY > VARBINARY (highly selective)
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col > CAST(0x08 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col > CAST(0x08 AS VARBINARY(10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: (binary_col > '0x08'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
+~~END~~
+
+
+-- Cross-type greater than or equal: BINARY >= VARBINARY (non-selective)
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x01 AS VARBINARY(10))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary >= '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
+~~END~~
+
+
+-- Cross-type BETWEEN (highly selective)
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col BETWEEN CAST(0x01 AS VARBINARY(10)) AND CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col BETWEEN CAST(0x01 AS VARBINARY(10)) AND CAST(0x01 AS VARBINARY(10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: ((binary_col >= '0x01'::bbf_varbinary) AND (binary_col <= '0x01'::bbf_varbinary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
+
+-- COUNT(*) with cross-type highly selective condition
+SELECT COUNT(*) FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x01 AS VARBINARY(10))
+Aggregate
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+        Index Cond: (binary_col <= '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- FOR CROSS-TYPE OPERATORS (VARBINARY = BINARY)
+-- Equality with reverse cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Not equal with reverse cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <> CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- Less than with reverse cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col < CAST(0x02 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Less than or equal with reverse cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Greater than with reverse cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col > CAST(0x08 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Greater than or equal with reverse cross-type comparison
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x09 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+
+-- EXECUTION PLAN VERIFICATION
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- Cross-type equality: VARBINARY = BINARY (highly selective)
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col = CAST(0x01 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+  Index Cond: (varbinary_col = '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
+~~END~~
+
+
+-- Cross-type less than: VARBINARY < BINARY (highly selective)
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col < CAST(0x02 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col < CAST(0x02 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+  Index Cond: (varbinary_col < '0x02000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
+~~END~~
+
+
+-- Cross-type less than or equal: VARBINARY <= BINARY (highly selective)
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x01 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+  Index Cond: (varbinary_col <= '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
+~~END~~
+
+
+-- Cross-type greater than: VARBINARY > BINARY (highly selective)
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col > CAST(0x08 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col > CAST(0x08 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+  Index Cond: (varbinary_col > '0x08000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
+~~END~~
+
+
+-- Cross-type greater than or equal: VARBINARY >= BINARY (non-selective)
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x01 AS [BINARY](10))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary >= '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
+~~END~~
+
+
+-- COUNT(*) with cross-type highly selective condition
+SELECT COUNT(*) FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x01 AS [BINARY](10))
+Aggregate
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+        Index Cond: (varbinary_col <= '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.145 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- FOR JOIN OPERATIONS AND MIXED TABLE TESTS
+-- Cross-type join with range condition
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test t1 
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col < t2.varbinary_col 
+WHERE t1.binary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+int
+30009
+~~END~~
+
+
+-- Column-to-column equality: BINARY = VARBINARY
+SELECT COUNT(*) as result FROM BABEL_6098_mixed_test 
+WHERE binary_col = varbinary_col;
+GO
+~~START~~
+int
+20003
+~~END~~
+
+
+-- Column-to-column less than: BINARY < VARBINARY
+SELECT COUNT(*) as result FROM BABEL_6098_mixed_test 
+WHERE binary_col < varbinary_col;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Column-to-column greater than: BINARY > VARBINARY
+SELECT COUNT(*) as result FROM BABEL_6098_mixed_test 
+WHERE binary_col > varbinary_col;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Column-to-column less than or equal: BINARY <= VARBINARY
+SELECT COUNT(*) as result FROM BABEL_6098_mixed_test 
+WHERE binary_col <= varbinary_col;
+GO
+~~START~~
+int
+20003
+~~END~~
+
+
+-- Mixed table: BINARY column with BINARY literal
+SELECT COUNT(*) as result FROM BABEL_6098_mixed_test
+WHERE binary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Mixed table: BINARY column with VARBINARY literal (cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_mixed_test
+WHERE binary_col = CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Mixed table: VARBINARY column with VARBINARY literal
+SELECT COUNT(*) as result FROM BABEL_6098_mixed_test
+WHERE varbinary_col = CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Mixed table: VARBINARY column with BINARY literal (cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_mixed_test
+WHERE varbinary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Mixed table: Complex condition with both columns
+SELECT COUNT(*) as result FROM BABEL_6098_mixed_test
+WHERE binary_col = CAST(0x01 AS BINARY(10)) 
+  AND varbinary_col = CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+
+-- EXECUTION PLAN VERIFICATION
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- Self join
+SELECT t1.binary_col FROM BABEL_6098_binary_test t1 
+INNER JOIN BABEL_6098_binary_test t2 ON t1.binary_col = t2.binary_col
+WHERE t1.binary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT t1.binary_col FROM BABEL_6098_binary_test t1 
+INNER JOIN BABEL_6098_binary_test t2 ON t1.binary_col = t2.binary_col
+WHERE t1.binary_col = CAST(0x01 AS [BINARY](10))
+Nested Loop
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+        Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t2
+        Index Cond: (binary_col = (t1.binary_col)::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.849 ms
+~~END~~
+
+
+-- Cross-type join with equality 
+SELECT t1.binary_col FROM BABEL_6098_binary_test t1 
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col = t2.varbinary_col
+WHERE t1.binary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT t1.binary_col FROM BABEL_6098_binary_test t1 
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col = t2.varbinary_col
+WHERE t1.binary_col = CAST(0x01 AS [BINARY](10))
+Nested Loop
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+        Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
+        Index Cond: (varbinary_col = (t1.binary_col)::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
+~~END~~
+
+
+-- Cross-type join with range condition
+SELECT t1.binary_col FROM BABEL_6098_binary_test t1 
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col < t2.varbinary_col 
+WHERE t1.binary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT t1.binary_col FROM BABEL_6098_binary_test t1 
+INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col < t2.varbinary_col 
+WHERE t1.binary_col = CAST(0x01 AS [BINARY](10))
+Nested Loop
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+        Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
+        Index Cond: (varbinary_col > (t1.binary_col)::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
+~~END~~
+
+
+-- Column-to-column equality in mixed table
+SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test 
+WHERE binary_col = varbinary_col;
+GO
+~~START~~
+text
+Query Text: SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test 
+WHERE binary_col = varbinary_col
+Seq Scan on babel_6098_mixed_test
+  Filter: ((binary_col)::bbf_binary = (varbinary_col)::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.892 ms
+~~END~~
+
+
+-- Column-to-column range comparison in mixed table
+SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test 
+WHERE binary_col < varbinary_col;
+GO
+~~START~~
+text
+Query Text: SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test 
+WHERE binary_col < varbinary_col
+Seq Scan on babel_6098_mixed_test
+  Filter: ((binary_col)::bbf_binary < (varbinary_col)::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
+~~END~~
+
+
+-- Mixed table: BINARY column with VARBINARY literal (highly selective)
+SELECT binary_col FROM BABEL_6098_mixed_test
+WHERE binary_col = CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_mixed_test
+WHERE binary_col = CAST(0x01 AS VARBINARY(10))
+Index Only Scan using babel_6098_idx_mixed_binarybabe03e7d5ff77da366ad38d255e3adc977d on babel_6098_mixed_test
+  Index Cond: (binary_col = '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
+~~END~~
+
+
+-- Mixed table: VARBINARY column with BINARY literal (highly selective)
+SELECT varbinary_col FROM BABEL_6098_mixed_test
+WHERE varbinary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_mixed_test
+WHERE varbinary_col = CAST(0x01 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_mixed_varbinaryb75090af34be5800d6545cc141cc864fd on babel_6098_mixed_test
+  Index Cond: (varbinary_col = '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
+~~END~~
+
+
+-- Mixed table: Both columns with cross-type conditions
+SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test
+WHERE binary_col = CAST(0x01 AS BINARY(10)) 
+  AND varbinary_col = CAST(0x01 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test
+WHERE binary_col = CAST(0x01 AS [BINARY](10)) 
+  AND varbinary_col = CAST(0x01 AS VARBINARY(10))
+Index Scan using babel_6098_idx_mixed_varbinaryb75090af34be5800d6545cc141cc864fd on babel_6098_mixed_test
+  Index Cond: ((varbinary_col)::bbf_varbinary = '0x01'::bbf_varbinary)
+  Filter: ((binary_col)::bbf_binary = '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
+~~END~~
+
+
+-- Mixed table: Column-to-column with additional filter (highly selective)
+SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test
+WHERE binary_col = varbinary_col
+  AND binary_col = CAST(0x01 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col, varbinary_col FROM BABEL_6098_mixed_test
+WHERE binary_col = varbinary_col
+  AND binary_col = CAST(0x01 AS [BINARY](10))
+Index Scan using babel_6098_idx_mixed_binarybabe03e7d5ff77da366ad38d255e3adc977d on babel_6098_mixed_test
+  Index Cond: ((binary_col)::bbf_binary = '0x01000000000000000000'::bbf_binary)
+  Filter: ((binary_col)::bbf_binary = (varbinary_col)::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.217 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+
+-- Testing that NOT (operator1) transforms to operator2
+-- For SAME-TYPE BINARY OPERATORS
+-- = and <> are negators
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col = CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col <> CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- <> and = are negators
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col <> CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col = CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+-- < and >= are negators
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col < CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+-- <= and > are negators
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col <= CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col > CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- > and <= are negators
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col > CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+-- >= and < are negators
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col >= CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- EXECUTION PLAN VERIFICATION
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- Verifying NOT (=) transforms to <> 
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col = CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col = CAST(0x05 AS [BINARY](10)))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary <> '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
+~~END~~
+
+
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <> CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <> CAST(0x05 AS [BINARY](10))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary <> '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
+~~END~~
+
+
+-- Verifying NOT (<) transforms to >=
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col < CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col < CAST(0x05 AS [BINARY](10)))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary >= '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.146 ms
+~~END~~
+
+
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x05 AS [BINARY](10))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary >= '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
+~~END~~
+
+
+-- Verifying NOT (>) transforms to <=
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col > CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col > CAST(0x05 AS [BINARY](10)))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary <= '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
+~~END~~
+
+
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x05 AS [BINARY](10))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary <= '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.135 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- FOR SAME-TYPE VARBINARY OPERATORS
+-- = and <> are negators
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col = CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <> CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- <> and = are negators
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col <> CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col = CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+-- < and >= are negators
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col < CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+-- <= and > are negators
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col <= CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col > CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- > and <= are negators
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col > CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+-- >= and < are negators
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col >= CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col < CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- EXECUTION PLAN VERIFICATION
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- Verifying NOT (=) transforms to <>
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col = CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col = CAST(0x05 AS VARBINARY(10)))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary <> '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
+~~END~~
+
+
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <> CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <> CAST(0x05 AS VARBINARY(10))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary <> '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
+~~END~~
+
+
+-- Verifying NOT (<) transforms to >=
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col < CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col < CAST(0x05 AS VARBINARY(10)))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary >= '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
+~~END~~
+
+
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x05 AS VARBINARY(10))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary >= '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
+~~END~~
+
+
+-- Verifying NOT (>) transforms to <=
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col > CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col > CAST(0x05 AS VARBINARY(10)))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary <= '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
+~~END~~
+
+
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x05 AS VARBINARY(10))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary <= '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- FOR CROSS-TYPE (BINARY op VARBINARY)
+-- = and <> are negators (cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col = CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col <> CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- <> and = are negators (cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col <> CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col = CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+-- < and >= are negators (cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col < CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+-- <= and > are negators (cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col <= CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col > CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- > and <= are negators (cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col > CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+-- >= and < are negators (cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col >= CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- EXECUTION PLAN VERIFICATION
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- Verifying NOT (=) transforms to <> (cross-type)
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col = CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col = CAST(0x05 AS VARBINARY(10)))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary <> '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
+~~END~~
+
+
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <> CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <> CAST(0x05 AS VARBINARY(10))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary <> '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
+~~END~~
+
+
+-- Verifying NOT (<) transforms to >= (cross-type)
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col < CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col < CAST(0x05 AS VARBINARY(10)))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary >= '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
+~~END~~
+
+
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col >= CAST(0x05 AS VARBINARY(10))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary >= '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.131 ms
+~~END~~
+
+
+-- Verifying NOT (>) transforms to <= (cross-type)
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col > CAST(0x05 AS VARBINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col > CAST(0x05 AS VARBINARY(10)))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary <= '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
+~~END~~
+
+
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x05 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x05 AS VARBINARY(10))
+Seq Scan on babel_6098_binary_test
+  Filter: ((binary_col)::bbf_binary <= '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- FOR CROSS-TYPE (VARBINARY op BINARY)
+-- = and <> are negators (reverse cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col = CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <> CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- <> and = are negators (reverse cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col <> CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col = CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+-- < and >= are negators (reverse cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col < CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+-- <= and > are negators (reverse cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col <= CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col > CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- > and <= are negators (reverse cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col > CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+10003
+~~END~~
+
+
+-- >= and < are negators (reverse cross-type)
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col >= CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col < CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- EXECUTION PLAN VERIFICATION FOR SECTION 4
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- Verifying NOT (=) transforms to <> (reverse cross-type)
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col = CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col = CAST(0x05 AS [BINARY](10)))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary <> '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
+~~END~~
+
+
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <> CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <> CAST(0x05 AS [BINARY](10))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary <> '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
+~~END~~
+
+
+-- Verifying NOT (<) transforms to >= (reverse cross-type)
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col < CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col < CAST(0x05 AS [BINARY](10)))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary >= '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
+~~END~~
+
+
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col >= CAST(0x05 AS [BINARY](10))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary >= '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
+~~END~~
+
+
+-- Verifying NOT (>) transforms to <= (reverse cross-type)
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col > CAST(0x05 AS BINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE NOT (varbinary_col > CAST(0x05 AS [BINARY](10)))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary <= '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.135 ms
+~~END~~
+
+
+SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x05 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT varbinary_col FROM BABEL_6098_varbinary_test 
+WHERE varbinary_col <= CAST(0x05 AS [BINARY](10))
+Seq Scan on babel_6098_varbinary_test
+  Filter: ((varbinary_col)::bbf_varbinary <= '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- OTHER NEGATION TESTS
+-- Multiple conditions with NOT
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col > CAST(0x03 AS BINARY(10)) OR binary_col < CAST(0x02 AS BINARY(10)));
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Equivalent to: binary_col <= 0x03 AND binary_col >= 0x02
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x03 AS BINARY(10)) AND binary_col >= CAST(0x02 AS BINARY(10));
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Cross-type negation with conditions
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col >= CAST(0x08 AS VARBINARY(10)) OR binary_col <= CAST(0x02 AS VARBINARY(10)));
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+-- Equivalent to: binary_col < 0x08 AND binary_col > 0x02
+SELECT COUNT(*) as result FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x08 AS VARBINARY(10)) AND binary_col > CAST(0x02 AS VARBINARY(10));
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+-- EXECUTION PLAN VERIFICATION
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col > CAST(0x03 AS BINARY(10)) OR binary_col < CAST(0x02 AS BINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col > CAST(0x03 AS [BINARY](10)) OR binary_col < CAST(0x02 AS [BINARY](10)))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: ((binary_col <= '0x03000000000000000000'::bbf_binary) AND (binary_col >= '0x02000000000000000000'::bbf_binary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.151 ms
+~~END~~
+
+
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x03 AS BINARY(10)) AND binary_col >= CAST(0x02 AS BINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col <= CAST(0x03 AS [BINARY](10)) AND binary_col >= CAST(0x02 AS [BINARY](10))
+Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+  Index Cond: ((binary_col <= '0x03000000000000000000'::bbf_binary) AND (binary_col >= '0x02000000000000000000'::bbf_binary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
+~~END~~
+
+
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col >= CAST(0x08 AS VARBINARY(10)) OR binary_col <= CAST(0x02 AS VARBINARY(10)));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE NOT (binary_col >= CAST(0x08 AS VARBINARY(10)) OR binary_col <= CAST(0x02 AS VARBINARY(10)))
+Seq Scan on babel_6098_binary_test
+  Filter: (((binary_col)::bbf_binary < '0x08'::bbf_varbinary) AND ((binary_col)::bbf_binary > '0x02'::bbf_varbinary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
+~~END~~
+
+
+SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x08 AS VARBINARY(10)) AND binary_col > CAST(0x02 AS VARBINARY(10));
+GO
+~~START~~
+text
+Query Text: SELECT binary_col FROM BABEL_6098_binary_test 
+WHERE binary_col < CAST(0x08 AS VARBINARY(10)) AND binary_col > CAST(0x02 AS VARBINARY(10))
+Seq Scan on babel_6098_binary_test
+  Filter: (((binary_col)::bbf_binary < '0x08'::bbf_varbinary) AND ((binary_col)::bbf_binary > '0x02'::bbf_varbinary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST SAME-TYPE BINARY VIEWS
+SELECT COUNT(*) as result FROM BABEL_6098_binary_selective_view;
+GO
+~~START~~
+int
+15
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_binary_non_selective_view;
+GO
+~~START~~
+int
+60036
+~~END~~
+
+
+-- EXECUTION PLANS FOR SAME-TYPE BINARY VIEWS
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT * FROM BABEL_6098_binary_selective_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_binary_selective_view
+Append
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+        Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_1
+        Index Cond: (binary_col = '0x02000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_2
+        Index Cond: (binary_col < '0x02000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_3
+        Index Cond: (binary_col <= '0x01000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_4
+        Index Cond: (binary_col > '0x08000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_5
+        Index Cond: (binary_col >= '0x09000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.377 ms
+~~END~~
+
+
+SELECT * FROM BABEL_6098_binary_non_selective_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_binary_non_selective_view
+Append
+  ->  Seq Scan on babel_6098_binary_test
+        Filter: ((binary_col)::bbf_binary >= '0x01000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_1
+        Filter: ((binary_col)::bbf_binary <> '0xff000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_2
+        Filter: ((binary_col)::bbf_binary < '0x0a000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_3
+        Filter: ((binary_col)::bbf_binary <= '0x09000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_4
+        Filter: ((binary_col)::bbf_binary > '0x00000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_5
+        Filter: (((binary_col)::bbf_binary = '0x05000000000000000000'::bbf_binary) OR ((binary_col)::bbf_binary >= '0x01000000000000000000'::bbf_binary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.059 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST SAME-TYPE VARBINARY VIEWS
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_selective_view;
+GO
+~~START~~
+int
+15
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_varbinary_non_selective_view;
+GO
+~~START~~
+int
+60036
+~~END~~
+
+
+-- EXECUTION PLANS FOR SAME-TYPE VARBINARY VIEWS
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT * FROM BABEL_6098_varbinary_selective_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_varbinary_selective_view
+Append
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+        Index Cond: (varbinary_col = '0x01'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test babel_6098_varbinary_test_1
+        Index Cond: (varbinary_col = '0x02'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test babel_6098_varbinary_test_2
+        Index Cond: (varbinary_col < '0x02'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test babel_6098_varbinary_test_3
+        Index Cond: (varbinary_col <= '0x01'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test babel_6098_varbinary_test_4
+        Index Cond: (varbinary_col > '0x08'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test babel_6098_varbinary_test_5
+        Index Cond: (varbinary_col >= '0x09'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.070 ms
+~~END~~
+
+
+SELECT * FROM BABEL_6098_varbinary_non_selective_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_varbinary_non_selective_view
+Append
+  ->  Seq Scan on babel_6098_varbinary_test
+        Filter: ((varbinary_col)::bbf_varbinary >= '0x01'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_varbinary_test babel_6098_varbinary_test_1
+        Filter: ((varbinary_col)::bbf_varbinary <> '0xff'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_varbinary_test babel_6098_varbinary_test_2
+        Filter: ((varbinary_col)::bbf_varbinary < '0x0a'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_varbinary_test babel_6098_varbinary_test_3
+        Filter: ((varbinary_col)::bbf_varbinary <= '0x09'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_varbinary_test babel_6098_varbinary_test_4
+        Filter: ((varbinary_col)::bbf_varbinary > '0x00'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_varbinary_test babel_6098_varbinary_test_5
+        Filter: (((varbinary_col)::bbf_varbinary = '0x05'::bbf_varbinary) OR ((varbinary_col)::bbf_varbinary >= '0x01'::bbf_varbinary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.059 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST CROSS-TYPE VIEWS
+SELECT COUNT(*) as result FROM BABEL_6098_cross_selective_view;
+GO
+~~START~~
+int
+15
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_cross_non_selective_view;
+GO
+~~START~~
+int
+60036
+~~END~~
+
+
+-- EXECUTION PLANS FOR CROSS-TYPE VIEWS
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT * FROM BABEL_6098_cross_selective_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_cross_selective_view
+Append
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+        Index Cond: (binary_col = '0x01'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_1
+        Index Cond: (binary_col = '0x02'::bbf_varbinary)
+        Filter: ((binary_col)::bbf_binary <> '0x01'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_2
+        Index Cond: (binary_col < '0x02'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_3
+        Index Cond: (binary_col <= '0x01'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_4
+        Index Cond: (binary_col > '0x08'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_5
+        Index Cond: (binary_col >= '0x09'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.070 ms
+~~END~~
+
+
+SELECT * FROM BABEL_6098_cross_non_selective_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_cross_non_selective_view
+Append
+  ->  Seq Scan on babel_6098_binary_test
+        Filter: ((binary_col)::bbf_binary >= '0x01'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_1
+        Filter: ((binary_col)::bbf_binary <> '0xff'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_2
+        Filter: ((binary_col)::bbf_binary < '0x0a'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_3
+        Filter: ((binary_col)::bbf_binary <= '0x09'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_4
+        Filter: ((binary_col)::bbf_binary > '0x00'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_5
+        Filter: (((binary_col)::bbf_binary = '0x05'::bbf_varbinary) OR ((binary_col)::bbf_binary >= '0x01'::bbf_varbinary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.059 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST REVERSE CROSS-TYPE VIEWS
+SELECT COUNT(*) as result FROM BABEL_6098_reverse_selective_view;
+GO
+~~START~~
+int
+15
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_reverse_non_selective_view;
+GO
+~~START~~
+int
+60036
+~~END~~
+
+
+-- EXECUTION PLANS FOR REVERSE CROSS-TYPE VIEWS
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT * FROM BABEL_6098_reverse_selective_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_reverse_selective_view
+Append
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+        Index Cond: (varbinary_col = '0x01000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test babel_6098_varbinary_test_1
+        Index Cond: (varbinary_col = '0x02000000000000000000'::bbf_binary)
+        Filter: ((varbinary_col)::bbf_varbinary <> '0x01000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test babel_6098_varbinary_test_2
+        Index Cond: (varbinary_col < '0x02000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test babel_6098_varbinary_test_3
+        Index Cond: (varbinary_col <= '0x01000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test babel_6098_varbinary_test_4
+        Index Cond: (varbinary_col > '0x08000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test babel_6098_varbinary_test_5
+        Index Cond: (varbinary_col >= '0x09000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.058 ms
+~~END~~
+
+
+SELECT * FROM BABEL_6098_reverse_non_selective_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_reverse_non_selective_view
+Append
+  ->  Seq Scan on babel_6098_varbinary_test
+        Filter: ((varbinary_col)::bbf_varbinary >= '0x01000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_varbinary_test babel_6098_varbinary_test_1
+        Filter: ((varbinary_col)::bbf_varbinary <> '0xff000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_varbinary_test babel_6098_varbinary_test_2
+        Filter: ((varbinary_col)::bbf_varbinary < '0x0a000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_varbinary_test babel_6098_varbinary_test_3
+        Filter: ((varbinary_col)::bbf_varbinary <= '0x09000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_varbinary_test babel_6098_varbinary_test_4
+        Filter: ((varbinary_col)::bbf_varbinary > '0x00000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_varbinary_test babel_6098_varbinary_test_5
+        Filter: (((varbinary_col)::bbf_varbinary = '0x05000000000000000000'::bbf_binary) OR ((varbinary_col)::bbf_varbinary >= '0x01000000000000000000'::bbf_binary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.060 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST JOIN VIEWS
+SELECT COUNT(*) as result FROM BABEL_6098_join_selective_view;
+GO
+~~START~~
+int
+120063
+~~END~~
+
+
+-- EXECUTION PLANS FOR JOIN VIEWS
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT * FROM BABEL_6098_join_selective_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_join_selective_view
+Append
+  ->  Nested Loop
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+              Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
+              Index Cond: (varbinary_col = (t1.binary_col)::bbf_binary)
+  ->  Nested Loop
+        Join Filter: ((t1_1.binary_col)::bbf_binary <> (t2_1.varbinary_col)::bbf_varbinary)
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2_1
+              Index Cond: (varbinary_col = '0x02'::bbf_varbinary)
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_1
+              Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+  ->  Nested Loop
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_2
+              Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2_2
+              Index Cond: (varbinary_col > (t1_2.binary_col)::bbf_binary)
+  ->  Nested Loop
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_3
+              Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2_3
+              Index Cond: (varbinary_col >= (t1_3.binary_col)::bbf_binary)
+  ->  Nested Loop
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_4
+              Index Cond: (binary_col = '0x09000000000000000000'::bbf_binary)
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2_4
+              Index Cond: (varbinary_col < (t1_4.binary_col)::bbf_binary)
+  ->  Nested Loop
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_5
+              Index Cond: (binary_col = '0x09000000000000000000'::bbf_binary)
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2_5
+              Index Cond: (varbinary_col <= (t1_5.binary_col)::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.060 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST COLUMN-TO-COLUMN VIEW
+SELECT COUNT(*) as result FROM BABEL_6098_col_to_col_view;
+GO
+~~START~~
+int
+60009
+~~END~~
+
+
+-- EXECUTION PLANS FOR COLUMN-TO-COLUMN VIEW
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT * FROM BABEL_6098_col_to_col_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_col_to_col_view
+Append
+  ->  Seq Scan on babel_6098_mixed_test
+        Filter: ((binary_col)::bbf_binary = (varbinary_col)::bbf_varbinary)
+  ->  Seq Scan on babel_6098_mixed_test babel_6098_mixed_test_1
+        Filter: ((binary_col)::bbf_binary <> (varbinary_col)::bbf_varbinary)
+  ->  Seq Scan on babel_6098_mixed_test babel_6098_mixed_test_2
+        Filter: ((binary_col)::bbf_binary < (varbinary_col)::bbf_varbinary)
+  ->  Seq Scan on babel_6098_mixed_test babel_6098_mixed_test_3
+        Filter: ((binary_col)::bbf_binary <= (varbinary_col)::bbf_varbinary)
+  ->  Seq Scan on babel_6098_mixed_test babel_6098_mixed_test_4
+        Filter: ((binary_col)::bbf_binary > (varbinary_col)::bbf_varbinary)
+  ->  Seq Scan on babel_6098_mixed_test babel_6098_mixed_test_5
+        Filter: ((binary_col)::bbf_binary >= (varbinary_col)::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST NEGATION VIEWS
+SELECT COUNT(*) as result FROM BABEL_6098_negation_view;
+GO
+~~START~~
+int
+30018
+~~END~~
+
+
+SELECT COUNT(*) as result FROM BABEL_6098_cross_negation_view;
+GO
+~~START~~
+int
+30018
+~~END~~
+
+
+-- EXECUTION PLANS FOR NEGATION VIEWS
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT * FROM BABEL_6098_negation_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_negation_view
+Append
+  ->  Seq Scan on babel_6098_binary_test
+        Filter: ((binary_col)::bbf_binary <> '0x05000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_1
+        Filter: ((binary_col)::bbf_binary = '0x05000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_2
+        Filter: ((binary_col)::bbf_binary >= '0x05000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_3
+        Index Cond: (binary_col > '0x05000000000000000000'::bbf_binary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_4
+        Filter: ((binary_col)::bbf_binary <= '0x05000000000000000000'::bbf_binary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_5
+        Index Cond: (binary_col < '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.063 ms
+~~END~~
+
+
+SELECT * FROM BABEL_6098_cross_negation_view;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM BABEL_6098_cross_negation_view
+Append
+  ->  Seq Scan on babel_6098_binary_test
+        Filter: ((binary_col)::bbf_binary <> '0x05'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_1
+        Filter: ((binary_col)::bbf_binary = '0x05'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_2
+        Filter: ((binary_col)::bbf_binary >= '0x05'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_3
+        Index Cond: (binary_col > '0x05'::bbf_varbinary)
+  ->  Seq Scan on babel_6098_binary_test babel_6098_binary_test_4
+        Filter: ((binary_col)::bbf_binary <= '0x05'::bbf_varbinary)
+  ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test babel_6098_binary_test_5
+        Index Cond: (binary_col < '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.063 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST SAME-TYPE BINARY PROCEDURES
+EXEC BABEL_6098_binary_selective_proc @value = 0x01;
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+EXEC BABEL_6098_binary_non_selective_proc @value = 0x01;
+GO
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10003
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+
+-- EXECUTION PLANS FOR SAME-TYPE BINARY PROCEDURES
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+EXEC BABEL_6098_binary_selective_proc @value = 0x01;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_binary_selective_proc @value = 0x01
+  Query Text: SELECT COUNT(*) as equal_count FROM BABEL_6098_binary_test WHERE binary_col = "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as not_equal_count FROM BABEL_6098_binary_test WHERE binary_col <> "@value" AND binary_col = CAST(0x02 AS  BINARY (10))
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col = '0x02000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as lt_count FROM BABEL_6098_binary_test WHERE binary_col < "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col < '0x01000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as lte_count FROM BABEL_6098_binary_test WHERE binary_col <= "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col <= '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.065 ms
+~~END~~
+
+
+EXEC BABEL_6098_binary_non_selective_proc @value = 0x01;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_binary_non_selective_proc @value = 0x01
+  Query Text: SELECT COUNT(*) as equal_count FROM BABEL_6098_binary_test WHERE binary_col = "@value" OR binary_col >= CAST(0x01 AS  BINARY (10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: (((binary_col)::bbf_binary = '0x01000000000000000000'::bbf_binary) OR ((binary_col)::bbf_binary >= '0x01000000000000000000'::bbf_binary))
+  Query Text: SELECT COUNT(*) as not_equal_count FROM BABEL_6098_binary_test WHERE binary_col <> "@value"
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary <> '0x01000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as lt_count FROM BABEL_6098_binary_test WHERE binary_col < CAST(0x0A AS  BINARY (10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary < '0x0a000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as lte_count FROM BABEL_6098_binary_test WHERE binary_col <= CAST(0x09 AS  BINARY (10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary <= '0x09000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as gt_count FROM BABEL_6098_binary_test WHERE binary_col > CAST(0x00 AS  BINARY (10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary > '0x00000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as gte_count FROM BABEL_6098_binary_test WHERE binary_col >= "@value"
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary >= '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.061 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST SAME-TYPE VARBINARY PROCEDURES
+EXEC BABEL_6098_varbinary_selective_proc @value = 0x01;
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+EXEC BABEL_6098_varbinary_non_selective_proc @value = 0x01;
+GO
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10003
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+
+-- EXECUTION PLANS FOR SAME-TYPE VARBINARY PROCEDURES
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+EXEC BABEL_6098_varbinary_selective_proc @value = 0x01;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_varbinary_selective_proc @value = 0x01
+  Query Text: SELECT COUNT(*) as equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col = "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+              Index Cond: (varbinary_col = '0x01'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as not_equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <> "@value" AND varbinary_col = CAST(0x02 AS VARBINARY(10))
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+              Index Cond: (varbinary_col = '0x02'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as lt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col < "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+              Index Cond: (varbinary_col < '0x01'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as lte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <= "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+              Index Cond: (varbinary_col <= '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
+~~END~~
+
+
+EXEC BABEL_6098_varbinary_non_selective_proc @value = 0x01;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_varbinary_non_selective_proc @value = 0x01
+  Query Text: SELECT COUNT(*) as equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col = "@value" OR varbinary_col >= CAST(0x01 AS VARBINARY(10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: (((varbinary_col)::bbf_varbinary = '0x01'::bbf_varbinary) OR ((varbinary_col)::bbf_varbinary >= '0x01'::bbf_varbinary))
+  Query Text: SELECT COUNT(*) as not_equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <> "@value"
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: ((varbinary_col)::bbf_varbinary <> '0x01'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as lt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col < CAST(0x0A AS VARBINARY(10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: ((varbinary_col)::bbf_varbinary < '0x0a'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as lte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <= CAST(0x09 AS VARBINARY(10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: ((varbinary_col)::bbf_varbinary <= '0x09'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as gt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col > CAST(0x00 AS VARBINARY(10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: ((varbinary_col)::bbf_varbinary > '0x00'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as gte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col >= "@value"
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: ((varbinary_col)::bbf_varbinary >= '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.060 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST CROSS-TYPE PROCEDURES
+EXEC BABEL_6098_cross_selective_proc @value = 0x01;
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+EXEC BABEL_6098_cross_non_selective_proc @value = 0x01;
+GO
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10003
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+
+-- EXECUTION PLANS FOR CROSS-TYPE PROCEDURES
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+EXEC BABEL_6098_cross_selective_proc @value = 0x01;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_cross_selective_proc @value = 0x01
+  Query Text: SELECT COUNT(*) as equal_count FROM BABEL_6098_binary_test WHERE binary_col = "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col = '0x01'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as not_equal_count FROM BABEL_6098_binary_test WHERE binary_col <> "@value" AND binary_col = CAST(0x02 AS  BINARY (10))
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col = '0x02000000000000000000'::bbf_binary)
+              Filter: ((binary_col)::bbf_binary <> '0x01'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as lt_count FROM BABEL_6098_binary_test WHERE binary_col < "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col < '0x01'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as lte_count FROM BABEL_6098_binary_test WHERE binary_col <= "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col <= '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
+~~END~~
+
+
+EXEC BABEL_6098_cross_non_selective_proc @value = 0x01;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_cross_non_selective_proc @value = 0x01
+  Query Text: SELECT COUNT(*) as equal_count FROM BABEL_6098_binary_test WHERE binary_col = CAST(0x05 AS  BINARY (10)) OR binary_col >= "@value"
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: (((binary_col)::bbf_binary = '0x05000000000000000000'::bbf_binary) OR ((binary_col)::bbf_binary >= '0x01'::bbf_varbinary))
+  Query Text: SELECT COUNT(*) as not_equal_count FROM BABEL_6098_binary_test WHERE binary_col <> "@value"
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary <> '0x01'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as lt_count FROM BABEL_6098_binary_test WHERE binary_col < CAST(0x0A AS VARBINARY(10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary < '0x0a'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as lte_count FROM BABEL_6098_binary_test WHERE binary_col <= CAST(0x09 AS VARBINARY(10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary <= '0x09'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as gt_count FROM BABEL_6098_binary_test WHERE binary_col > CAST(0x00 AS VARBINARY(10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary > '0x00'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as gte_count FROM BABEL_6098_binary_test WHERE binary_col >= "@value"
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary >= '0x01'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.061 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST REVERSE CROSS-TYPE PROCEDURES
+EXEC BABEL_6098_reverse_selective_proc @value = 0x01;
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+EXEC BABEL_6098_reverse_non_selective_proc @value = 0x01;
+GO
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10003
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+~~START~~
+int
+10006
+~~END~~
+
+
+-- EXECUTION PLANS FOR REVERSE CROSS-TYPE PROCEDURES
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+EXEC BABEL_6098_reverse_selective_proc @value = 0x01;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_reverse_selective_proc @value = 0x01
+  Query Text: SELECT COUNT(*) as equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col = "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+              Index Cond: (varbinary_col = '0x01000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as not_equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <> "@value" AND varbinary_col = CAST(0x02 AS VARBINARY(10))
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+              Index Cond: (varbinary_col = '0x02'::bbf_varbinary)
+              Filter: ((varbinary_col)::bbf_varbinary <> '0x01000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as lt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col < "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+              Index Cond: (varbinary_col < '0x01000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as lte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <= "@value"
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test
+              Index Cond: (varbinary_col <= '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.060 ms
+~~END~~
+
+
+EXEC BABEL_6098_reverse_non_selective_proc @value = 0x01;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_reverse_non_selective_proc @value = 0x01
+  Query Text: SELECT COUNT(*) as equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col = CAST(0x05 AS VARBINARY(10)) OR varbinary_col >= "@value"
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: (((varbinary_col)::bbf_varbinary = '0x05'::bbf_varbinary) OR ((varbinary_col)::bbf_varbinary >= '0x01000000000000000000'::bbf_binary))
+  Query Text: SELECT COUNT(*) as not_equal_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <> "@value"
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: ((varbinary_col)::bbf_varbinary <> '0x01000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as lt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col < CAST(0x0A AS  BINARY (10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: ((varbinary_col)::bbf_varbinary < '0x0a000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as lte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col <= CAST(0x09 AS  BINARY (10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: ((varbinary_col)::bbf_varbinary <= '0x09000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as gt_count FROM BABEL_6098_varbinary_test WHERE varbinary_col > CAST(0x00 AS  BINARY (10))
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: ((varbinary_col)::bbf_varbinary > '0x00000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as gte_count FROM BABEL_6098_varbinary_test WHERE varbinary_col >= "@value"
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_varbinary_test
+              Filter: ((varbinary_col)::bbf_varbinary >= '0x01000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.073 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST JOIN PROCEDURES
+EXEC BABEL_6098_join_selective_proc @value = 0x01;
+GO
+~~START~~
+int
+9
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+30009
+~~END~~
+
+~~START~~
+int
+30018
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+9
+~~END~~
+
+
+-- EXECUTION PLANS FOR JOIN PROCEDURES
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+EXEC BABEL_6098_join_selective_proc @value = 0x01;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_join_selective_proc @value = 0x01
+  Query Text: SELECT COUNT(*) as eq_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col = t2.varbinary_col
+    WHERE t1.binary_col = "@value"
+  ->  Aggregate
+        ->  Nested Loop
+              ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
+                    Index Cond: (varbinary_col = (t1.binary_col)::bbf_binary)
+  Query Text: SELECT COUNT(*) as ne_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col <> t2.varbinary_col
+    WHERE t1.binary_col = "@value" AND t2.varbinary_col = CAST(0x02 AS VARBINARY(10))
+  ->  Aggregate
+        ->  Nested Loop
+              Join Filter: ((t1.binary_col)::bbf_binary <> (t2.varbinary_col)::bbf_varbinary)
+              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
+                    Index Cond: (varbinary_col = '0x02'::bbf_varbinary)
+              ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as lt_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col < t2.varbinary_col
+    WHERE t1.binary_col = "@value"
+  ->  Aggregate
+        ->  Nested Loop
+              ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
+                    Index Cond: (varbinary_col > (t1.binary_col)::bbf_binary)
+  Query Text: SELECT COUNT(*) as lte_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col <= t2.varbinary_col
+    WHERE t1.binary_col = "@value"
+  ->  Aggregate
+        ->  Nested Loop
+              ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
+                    Index Cond: (varbinary_col >= (t1.binary_col)::bbf_binary)
+  Query Text: SELECT COUNT(*) as gt_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col > t2.varbinary_col
+    WHERE t1.binary_col = "@value"
+  ->  Aggregate
+        ->  Nested Loop
+              ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
+                    Index Cond: (varbinary_col < (t1.binary_col)::bbf_binary)
+  Query Text: SELECT COUNT(*) as gte_join FROM BABEL_6098_binary_test t1
+    INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col >= t2.varbinary_col
+    WHERE t1.binary_col = "@value"
+  ->  Aggregate
+        ->  Nested Loop
+              ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
+                    Index Cond: (varbinary_col <= (t1.binary_col)::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.063 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST COLUMN-TO-COLUMN PROCEDURE
+EXEC BABEL_6098_col_to_col_proc;
+GO
+~~START~~
+int
+20003
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+20003
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+20003
+~~END~~
+
+
+-- EXECUTION PLANS FOR COLUMN-TO-COLUMN PROCEDURE
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+EXEC BABEL_6098_col_to_col_proc;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_col_to_col_proc
+  Query Text: SELECT COUNT(*) as equal FROM BABEL_6098_mixed_test WHERE binary_col = varbinary_col
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_mixed_test
+              Filter: ((binary_col)::bbf_binary = (varbinary_col)::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as not_equal FROM BABEL_6098_mixed_test WHERE binary_col <> varbinary_col
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_mixed_test
+              Filter: ((binary_col)::bbf_binary <> (varbinary_col)::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as lt FROM BABEL_6098_mixed_test WHERE binary_col < varbinary_col
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_mixed_test
+              Filter: ((binary_col)::bbf_binary < (varbinary_col)::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as lte FROM BABEL_6098_mixed_test WHERE binary_col <= varbinary_col
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_mixed_test
+              Filter: ((binary_col)::bbf_binary <= (varbinary_col)::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as gt FROM BABEL_6098_mixed_test WHERE binary_col > varbinary_col
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_mixed_test
+              Filter: ((binary_col)::bbf_binary > (varbinary_col)::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as gte FROM BABEL_6098_mixed_test WHERE binary_col >= varbinary_col
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_mixed_test
+              Filter: ((binary_col)::bbf_binary >= (varbinary_col)::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.046 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- TEST NEGATION PROCEDURES
+EXEC BABEL_6098_negation_proc @value = 0x05;
+GO
+~~START~~
+int
+6
+~~END~~
+
+~~START~~
+int
+10000
+~~END~~
+
+~~START~~
+int
+10003
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+10003
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+EXEC BABEL_6098_cross_negation_proc @value = 0x05;
+GO
+~~START~~
+int
+6
+~~END~~
+
+~~START~~
+int
+10000
+~~END~~
+
+~~START~~
+int
+10003
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+10003
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+-- EXECUTION PLANS FOR NEGATION PROCEDURES
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+EXEC BABEL_6098_negation_proc @value = 0x05;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_negation_proc @value = 0x05
+  Query Text: SELECT COUNT(*) as not_eq FROM BABEL_6098_binary_test WHERE NOT (binary_col = "@value")
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary <> '0x05000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as not_ne FROM BABEL_6098_binary_test WHERE NOT (binary_col <> "@value")
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary = '0x05000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as not_lt FROM BABEL_6098_binary_test WHERE NOT (binary_col < "@value")
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary >= '0x05000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as not_lte FROM BABEL_6098_binary_test WHERE NOT (binary_col <= "@value")
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col > '0x05000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as not_gt FROM BABEL_6098_binary_test WHERE NOT (binary_col > "@value")
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary <= '0x05000000000000000000'::bbf_binary)
+  Query Text: SELECT COUNT(*) as not_gte FROM BABEL_6098_binary_test WHERE NOT (binary_col >= "@value")
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col < '0x05000000000000000000'::bbf_binary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
+~~END~~
+
+
+EXEC BABEL_6098_cross_negation_proc @value = 0x05;
+GO
+~~START~~
+text
+Query Text: EXEC BABEL_6098_cross_negation_proc @value = 0x05
+  Query Text: SELECT COUNT(*) as not_eq FROM BABEL_6098_binary_test WHERE NOT (binary_col = "@value")
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary <> '0x05'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as not_ne FROM BABEL_6098_binary_test WHERE NOT (binary_col <> "@value")
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary = '0x05'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as not_lt FROM BABEL_6098_binary_test WHERE NOT (binary_col < "@value")
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary >= '0x05'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as not_lte FROM BABEL_6098_binary_test WHERE NOT (binary_col <= "@value")
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col > '0x05'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as not_gt FROM BABEL_6098_binary_test WHERE NOT (binary_col > "@value")
+  ->  Aggregate
+        ->  Seq Scan on babel_6098_binary_test
+              Filter: ((binary_col)::bbf_binary <= '0x05'::bbf_varbinary)
+  Query Text: SELECT COUNT(*) as not_gte FROM BABEL_6098_binary_test WHERE NOT (binary_col >= "@value")
+  ->  Aggregate
+        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test
+              Index Cond: (binary_col < '0x05'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.060 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
