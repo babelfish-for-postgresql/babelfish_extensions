@@ -2287,6 +2287,45 @@ is_active_login(Oid role_oid)
 }
 
 /*
+ * To check if given role is owner of any database.
+ * If login found to be owner of any database then return true else false.
+ */
+bool
+is_database_owner(Oid role_oid)
+{
+	Relation		db_rel;
+	TableScanDesc	scan;
+	HeapTuple		tuple;
+	bool			is_null;
+	char			*role_name;
+	bool			is_owner = false;
+
+	/* get the role name from oid */
+	role_name = GetUserNameFromId(role_oid, false);
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Datum owner_datum = heap_getattr(tuple, Anum_sysdatabases_owner,
+										 db_rel->rd_att, &is_null);
+
+		if (!is_null && strcmp(role_name, DatumGetCString(owner_datum)) == 0)
+		{
+			is_owner = true;
+			break;
+		}
+	}
+
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+
+	return is_owner;
+}
+
+
+/*
  * To check if given login is already a user in one of the databases
  */
 static bool
