@@ -2398,7 +2398,7 @@ SELECT CAST(DatetimeCol AS CHAR(30)), CAST(DatetimeCol AS VARCHAR(30)), CAST(Dat
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:56           #!#2024-01-15 12:34:56#!#2024-01-15 12:34:56           #!#2024-01-15 12:34:56#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
+Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
 ~~END~~
 
 
@@ -2430,7 +2430,7 @@ SELECT CAST(SmalldatetimeCol AS CHAR(30)), CAST(SmalldatetimeCol AS VARCHAR(30))
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
+Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
 ~~END~~
 
 
@@ -2496,7 +2496,7 @@ SELECT CAST(BinaryCol AS CHAR(20)), CAST(BinaryCol AS VARCHAR(20)), CAST(BinaryC
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-0x414243444500000000#!#ABCDE#!#0x414243444500000000#!#䉁䑃E#!#0x41424344450000000000#!#0x41424344450000000000
+ABCDE               #!#ABCDE#!#䉁䑃E                 #!#䉁䑃E#!#0x41424344450000000000#!#0x41424344450000000000
 ~~END~~
 
 
@@ -2504,7 +2504,7 @@ SELECT CAST(VarbinaryCol AS CHAR(20)), CAST(VarbinaryCol AS VARCHAR(20)), CAST(V
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-0x4142434445        #!#ABCDE#!#0x4142434445        #!#䉁䑃E#!#0x4142434445#!#0x4142434445
+ABCDE               #!#ABCDE#!#䉁䑃E                 #!#䉁䑃E#!#0x4142434445#!#0x4142434445
 ~~END~~
 
 
@@ -2512,7 +2512,7 @@ SELECT CAST(ImageCol AS CHAR(20)), CAST(ImageCol AS VARCHAR(20)), CAST(ImageCol 
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-0x4142434445        #!#ABCDE#!#0x4142434445        #!#ABCDE#!#0x4142434445#!#0x4142434445
+ABCDE               #!#ABCDE#!#ABCDE               #!#ABCDE#!#0x4142434445#!#0x4142434445
 ~~END~~
 
 
@@ -2717,7 +2717,7 @@ SELECT TRY_CAST(MoneyCol AS VARCHAR(20)), TRY_CAST(MoneyCol AS NVARCHAR(20)), TR
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-123.4500#!#123.4500#!#123.4500#!#123.4500
+123.45#!#123.45#!#123.4500#!#123.4500
 ~~END~~
 
 
@@ -2725,7 +2725,7 @@ SELECT TRY_CAST(SmallmoneyCol AS VARCHAR(20)), TRY_CAST(SmallmoneyCol AS NVARCHA
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-123.4500#!#123.4500#!#123.4500#!#123.4500
+123.45#!#123.45#!#123.4500#!#123.4500
 ~~END~~
 
 
@@ -2734,7 +2734,7 @@ SELECT TRY_CAST(DatetimeCol AS VARCHAR(30)), TRY_CAST(DatetimeCol AS NVARCHAR(30
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:56#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
+Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
 ~~END~~
 
 
@@ -2766,7 +2766,7 @@ SELECT TRY_CAST(SmalldatetimeCol AS VARCHAR(30)), TRY_CAST(SmalldatetimeCol AS N
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:00#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
+Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
 ~~END~~
 
 
@@ -2832,7 +2832,7 @@ SELECT TRY_CAST(BinaryCol AS VARCHAR(20)), TRY_CAST(BinaryCol AS NVARCHAR(20)), 
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-0x414243444500000000#!#0x414243444500000000#!#0x41424344450000000000#!#0x41424344450000000000
+ABCDE#!#䉁䑃E#!#0x41424344450000000000#!#0x41424344450000000000
 ~~END~~
 
 
@@ -2840,7 +2840,7 @@ SELECT TRY_CAST(VarbinaryCol AS VARCHAR(20)), TRY_CAST(VarbinaryCol AS NVARCHAR(
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-0x4142434445#!#0x4142434445#!#0x4142434445#!#0x4142434445
+ABCDE#!#䉁䑃E#!#0x4142434445#!#0x4142434445
 ~~END~~
 
 
@@ -2848,7 +2848,7 @@ SELECT TRY_CAST(ImageCol AS VARCHAR(20)), TRY_CAST(ImageCol AS NVARCHAR(20)), TR
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-0x4142434445#!#0x4142434445#!#0x4142434445#!#0x4142434445
+ABCDE#!#ABCDE#!#0x4142434445#!#0x4142434445
 ~~END~~
 
 
@@ -2963,8 +2963,8 @@ FROM cast_convert_test;
 GO
 ~~START~~
 int#!#datetime#!#varchar#!#varchar
-1#!#2024-01-15 14:30:00.0#!#2024-01-15 14:30:00#!#15/01/2024
-2#!#2024-02-20 09:15:00.0#!#2024-02-20 09:15:00#!#20/02/2024
+1#!#2024-01-15 14:30:00.0#!#Jan 15 2024  2:30PM#!#15/01/2024
+2#!#2024-02-20 09:15:00.0#!#Feb 20 2024  9:15AM#!#20/02/2024
 3#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -3652,7 +3652,7 @@ SELECT dbo.implicit_cast_to_varchar(DateTimeCol) FROM ImplicitToStringTest
 GO
 ~~START~~
 varchar
-2024-01-15 14:30:00
+Jan 15 2024  2:30PM
 ~~END~~
 
 SELECT dbo.implicit_cast_to_nchar(DateTimeCol) FROM ImplicitToStringTest
@@ -3665,7 +3665,7 @@ SELECT dbo.implicit_cast_to_nvarchar(DateTimeCol) FROM ImplicitToStringTest
 GO
 ~~START~~
 nvarchar
-2024-01-15 14:30:00
+Jan 15 2024  2:30PM
 ~~END~~
 
 SELECT dbo.implicit_cast_to_text(DateTimeCol) FROM ImplicitToStringTest
@@ -3693,7 +3693,7 @@ SELECT dbo.implicit_cast_to_varchar(SmallDateTimeCol) FROM ImplicitToStringTest
 GO
 ~~START~~
 varchar
-2024-01-15 14:30:00
+Jan 15 2024  2:30PM
 ~~END~~
 
 SELECT dbo.implicit_cast_to_nchar(SmallDateTimeCol) FROM ImplicitToStringTest
@@ -3706,7 +3706,7 @@ SELECT dbo.implicit_cast_to_nvarchar(SmallDateTimeCol) FROM ImplicitToStringTest
 GO
 ~~START~~
 nvarchar
-2024-01-15 14:30:00
+Jan 15 2024  2:30PM
 ~~END~~
 
 SELECT dbo.implicit_cast_to_text(SmallDateTimeCol) FROM ImplicitToStringTest
@@ -3891,9 +3891,10 @@ varchar
 -- Binary Types
 SELECT dbo.implicit_cast_to_char(BinaryCol) FROM ImplicitToStringTest
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.implicit_cast_to_char is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+char
+ABC                                               
+~~END~~
 
 SELECT dbo.implicit_cast_to_varchar(BinaryCol) FROM ImplicitToStringTest
 GO
@@ -3904,9 +3905,10 @@ ABC
 
 SELECT dbo.implicit_cast_to_nchar(BinaryCol) FROM ImplicitToStringTest
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.implicit_cast_to_nchar is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+nchar
+䉁C                                                
+~~END~~
 
 SELECT dbo.implicit_cast_to_nvarchar(BinaryCol) FROM ImplicitToStringTest
 GO
@@ -3932,9 +3934,10 @@ varchar
 
 SELECT dbo.implicit_cast_to_char(VarBinaryCol) FROM ImplicitToStringTest
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.implicit_cast_to_char is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+char
+ABC                                               
+~~END~~
 
 SELECT dbo.implicit_cast_to_varchar(VarBinaryCol) FROM ImplicitToStringTest
 GO
@@ -3945,9 +3948,10 @@ ABC
 
 SELECT dbo.implicit_cast_to_nchar(VarBinaryCol) FROM ImplicitToStringTest
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.implicit_cast_to_nchar is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+nchar
+䉁C                                                
+~~END~~
 
 SELECT dbo.implicit_cast_to_nvarchar(VarBinaryCol) FROM ImplicitToStringTest
 GO
@@ -3973,9 +3977,10 @@ varchar
 
 SELECT dbo.implicit_cast_to_char(ImageCol) FROM ImplicitToStringTest
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.implicit_cast_to_char is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+char
+ABC                                               
+~~END~~
 
 SELECT dbo.implicit_cast_to_varchar(ImageCol) FROM ImplicitToStringTest
 GO
@@ -3986,9 +3991,10 @@ ABC
 
 SELECT dbo.implicit_cast_to_nchar(ImageCol) FROM ImplicitToStringTest
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function master_dbo.implicit_cast_to_nchar is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+nchar
+ABC                                               
+~~END~~
 
 SELECT dbo.implicit_cast_to_nvarchar(ImageCol) FROM ImplicitToStringTest
 GO
@@ -4481,9 +4487,11 @@ UNION
 SELECT CAST(0x414243 AS VARBINARY(50))  -- VARBINARY(50)
 ORDER BY Result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type "binary" to bpchar)~~
+~~START~~
+char
+ABC                                               
+String                                            
+~~END~~
 
 
 SELECT CAST(N'Unicode' AS NCHAR(20)) AS Result
@@ -4493,9 +4501,11 @@ UNION
 SELECT CAST(0x414243 AS VARBINARY(50))  -- VARBINARY(50)
 ORDER BY Result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type "binary" to "nchar")~~
+~~START~~
+nchar
+Unicode                                           
+䉁C                                                
+~~END~~
 
 
 SELECT CAST('Text' AS TEXT) AS Result
@@ -4527,9 +4537,10 @@ SELECT
         ELSE CAST(0x414243 AS BINARY(10))  -- BINARY(10)
     END AS CaseResult_2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to varbinary)~~
+~~START~~
+char#!#text
+Fixed String                                      #!#Unicode
+~~END~~
 
 
 -- Test 3: COALESCE with different string and binary types
@@ -4546,9 +4557,10 @@ SELECT
         CAST(0x414243 AS BINARY(10))  -- BINARY(10)
     ) AS CoalesceResult_2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type "binary" to bpchar)~~
+~~START~~
+char#!#ntext
+Fixed               #!#Unicode
+~~END~~
 
 
 -- Test 4: Testing VARCHAR with different typmods
@@ -4636,9 +4648,9 @@ INTERSECT
 SELECT CAST(0x414243 AS VARBINARY(50))  -- VARBINARY(50)
 ORDER BY Result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: INTERSECT could not convert type "binary" to bpchar)~~
+~~START~~
+char
+~~END~~
 
 
 -- Test 8: EXCEPT with string and binary types

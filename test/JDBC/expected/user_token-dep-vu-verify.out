@@ -172,11 +172,11 @@ drop user u_user_token_with_all_priv
 drop login user_token_with_all_priv
 GO
 
-drop login user_token_login_is_dbo
-GO
-
 drop role testrole;
 GO
 
 drop database user_token_test_db;
+GO
+
+drop login user_token_login_is_dbo
 GO

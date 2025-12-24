@@ -68,7 +68,7 @@ SELECT LEN(CAST(@d AS VARCHAR(30)));
 GO
 ~~START~~
 int
-23
+19
 ~~END~~
 
 DECLARE @d DATETIME = '  2023-06-15  ';
@@ -84,7 +84,7 @@ SELECT LEN(CAST(@d AS VARCHAR(30)));
 GO
 ~~START~~
 int
-22
+19
 ~~END~~
 
 

@@ -321,7 +321,7 @@ smalldatetime_varchar(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
-		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf);
+		TsqlEncodeDateTime(tm, buf);
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -362,7 +362,7 @@ smalldatetime_char(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
-		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf);
+		TsqlEncodeDateTime(tm, buf);
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),

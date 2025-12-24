@@ -2793,7 +2793,7 @@ object_name(PG_FUNCTION_ARGS)
 	 * search in list of ENRs registered in the current query environment by
 	 * object_id
 	 */
-	enr = GetENRTempTableWithOid(object_id);
+	enr = GetENRTempTableWithOid(object_id, false);
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
 		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(enr->md.name));
@@ -4336,7 +4336,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 					SysScanDesc scan;
 					HeapTuple	tup;
 
-					depRel = table_open(DependRelationId, RowExclusiveLock);
+					depRel = table_open(DependRelationId, AccessShareLock);
 
 					ScanKeyInit(&key[0],
 								Anum_pg_depend_objid,
@@ -4360,7 +4360,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 					systable_endscan(scan);
 
-					table_close(depRel, RowExclusiveLock);
+					table_close(depRel, AccessShareLock);
 				}
 				ReleaseSysCache(tp);
 			}
@@ -4470,7 +4470,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_UPDATE) &&
 				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_REFERENCES))
 			{
-				attrRel = table_open(AttributeRelationId, RowExclusiveLock);
+				attrRel = table_open(AttributeRelationId, AccessShareLock);
 
 				ScanKeyInit(&key[0],
 							Anum_pg_attribute_attrelid,
@@ -4499,7 +4499,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 				systable_endscan(scan);
 
-				table_close(attrRel, RowExclusiveLock);
+				table_close(attrRel, AccessShareLock);
 			}
 
 		}
@@ -4822,7 +4822,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type != OBJECT_TYPE_TABLE)
 			PG_RETURN_INT32(0);
 
-		indRel = table_open(IndexRelationId, RowExclusiveLock);
+		indRel = table_open(IndexRelationId, AccessShareLock);
 
 		ScanKeyInit(&key,
 				Anum_pg_index_indrelid,
@@ -4835,13 +4835,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (HeapTupleIsValid(tup = systable_getnext(scan)))
 		{
 			systable_endscan(scan);
-			table_close(indRel, RowExclusiveLock);
+			table_close(indRel, AccessShareLock);
 			pfree(property);
 			PG_RETURN_INT32(1);
 		}
 
 		systable_endscan(scan);
-		table_close(indRel, RowExclusiveLock);
+		table_close(indRel, AccessShareLock);
 		pfree(property);
 
 		PG_RETURN_INT32(0);

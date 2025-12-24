@@ -8,6 +8,16 @@ AS
     end
 go
 
+CREATE VIEW enr_view AS
+    SELECT
+        CASE
+            WHEN relname LIKE '#pg_toast%' AND relname LIKE '%index%' THEN '#pg_toast_#oid_masked#_index'
+            WHEN relname LIKE '#pg_toast%' THEN '#pg_toast_#oid_masked#'
+            ELSE relname
+        END AS relname
+    FROM sys.babelfish_get_enr_list()
+GO
+
 CREATE PROCEDURE object_id_outer_proc
 AS
     CREATE TABLE #tmp(i INT)    
@@ -50,3 +60,43 @@ create proc babel_4122_proc @tabname varchar(30) as
     end
 go
 
+CREATE PROC p_truncate AS TRUNCATE TABLE #temptable5605
+GO
+CREATE PROC p_nested AS 
+BEGIN
+	CREATE TABLE #temptable5605(a INT);
+	INSERT INTO #temptable5605 VALUES (GENERATE_SERIES(1,100));
+	EXEC p_truncate
+	SELECT COUNT(*) FROM #temptable5605;
+	EXEC p_insert 100;
+	SELECT COUNT(*) FROM #temptable5605;
+END;
+GO
+CREATE PROC p_insert(@a INT) AS INSERT INTO #temptable5605 VALUES (@a);
+GO
+CREATE PROC p_alter_add_col AS ALTER TABLE #temptable5605 ADD newcol BIGINT DEFAULT 0;
+GO
+CREATE PROC p_nested_2 AS
+BEGIN
+	INSERT INTO #temptable5605 VALUES (GENERATE_SERIES(1,100)); -- inserts 100 tuples
+	SELECT COUNT(*) FROM #temptable5605; 						-- shows 200 tuples
+	EXEC p_insert 101										-- inserts 1 tuple
+	SELECT COUNT(*) FROM #temptable5605;						-- shows 201 tuples
+	CREATE TABLE #temptable5605(a INT, b INT IDENTITY(1,1));	-- noOp; creates temp table
+	INSERT INTO #temptable5605(a) VALUES (1), (2);				-- inserts 2 tuple
+	SELECT COUNT(*) FROM #temptable5605;						-- shows 2 tuples
+	EXEC p_nested;
+	SELECT COUNT(*) FROM #temptable5605;						-- shows 2 tuples
+	EXEC p_alter_add_col									-- add newcol
+	SELECT SUM(newcol) FROM #temptable5605						-- returns 0 as sum
+END;
+GO
+CREATE PROC p_drop AS DROP TABLE #temptable5605;
+GO
+CREATE PROC p_index_create
+AS 
+BEGIN
+	CREATE INDEX idx ON #temptable5605(generate_series);
+	SELECT * FROM enr_view;
+END;
+GO
