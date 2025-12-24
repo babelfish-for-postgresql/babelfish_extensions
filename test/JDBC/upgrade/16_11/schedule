@@ -650,4 +650,5 @@ test_convert_to_binary
 cast_datetime_to_binary
 babel_string_to_money
 babel_binary-before-17_7-or-16_11
+BABEL-5788
 BABEL-1664
