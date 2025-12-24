@@ -1311,9 +1311,10 @@ GO
 text
 Query Text: SELECT binary_col FROM BABEL_5597_binary_test WHERE binary_col < 0x0000000100
 Gather
-  Workers Planned: 4
-  ->  Parallel Seq Scan on babel_5597_binary_test
-        Filter: ((binary_col)::bbf_varbinary < '0x0000000100'::bbf_varbinary)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05 on babel_5597_binary_test
+        Index Cond: (binary_col < '0x0000000100'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
@@ -1330,9 +1331,10 @@ text
 Query Text: SELECT binary_col FROM BABEL_5597_binary_test
 WHERE binary_col < cast(cast(0x00000001 as [binary](4)) + cast(0x00 as [binary](1)) as [binary](5))
 Gather
-  Workers Planned: 4
-  ->  Parallel Seq Scan on babel_5597_binary_test
-        Filter: ((binary_col)::bbf_binary < '0x0000000100'::bbf_binary)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05 on babel_5597_binary_test
+        Index Cond: (binary_col < '0x0000000100'::bbf_binary)
 ~~END~~
 
 ~~START~~
@@ -1347,9 +1349,10 @@ GO
 text
 Query Text: SELECT binary_col FROM BABEL_5597_binary_test WHERE binary_col > 0x0000000100
 Gather
-  Workers Planned: 4
-  ->  Parallel Seq Scan on babel_5597_binary_test
-        Filter: ((binary_col)::bbf_varbinary > '0x0000000100'::bbf_varbinary)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05 on babel_5597_binary_test
+        Index Cond: (binary_col > '0x0000000100'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
@@ -1366,9 +1369,10 @@ text
 Query Text: SELECT binary_col FROM BABEL_5597_binary_test 
 WHERE binary_col > cast(cast(0x00000001 as [binary](4)) + cast(0x00 as [binary](1)) as [binary](5))
 Gather
-  Workers Planned: 4
-  ->  Parallel Seq Scan on babel_5597_binary_test
-        Filter: ((binary_col)::bbf_binary > '0x0000000100'::bbf_binary)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using babel_5597_binary_indbabel_559723a5cb206f3e439c2af4a63931802a05 on babel_5597_binary_test
+        Index Cond: (binary_col > '0x0000000100'::bbf_binary)
 ~~END~~
 
 ~~START~~
