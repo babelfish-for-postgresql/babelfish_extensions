@@ -757,7 +757,5 @@ ignore#!#temp_catalog_inval-vu-prepare
 ignore#!#temp_catalog_inval-vu-verify
 ignore#!#temp_catalog_inval-vu-cleanup
 
-#test failures
-ignore#!#BABEL-3293
 # TODO: BABEL-6276
 ignore#!#babel_output_clause_concurrency_test
