@@ -39,6 +39,14 @@ on
 ~~END~~
 
 
+select set_config('enable_self_join_elimination', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+
 set babelfish_showplan_all on
 go
 
@@ -67,7 +75,7 @@ Hash Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 173.805 ms
+Babelfish T-SQL Batch Parsing Time: 7.169 ms
 ~~END~~
 
 
@@ -98,7 +106,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.835 ms
+Babelfish T-SQL Batch Parsing Time: 0.318 ms
 ~~END~~
 
 
@@ -125,7 +133,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 26.015 ms
+Babelfish T-SQL Batch Parsing Time: 10.194 ms
 ~~END~~
 
 
@@ -149,7 +157,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 43.074 ms
+Babelfish T-SQL Batch Parsing Time: 16.044 ms
 ~~END~~
 
 
@@ -173,7 +181,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.532 ms
+Babelfish T-SQL Batch Parsing Time: 0.294 ms
 ~~END~~
 
 
@@ -193,7 +201,7 @@ Hash Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.710 ms
+Babelfish T-SQL Batch Parsing Time: 0.896 ms
 ~~END~~
 
 
@@ -223,7 +231,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.698 ms
+Babelfish T-SQL Batch Parsing Time: 0.261 ms
 ~~END~~
 
 
@@ -233,6 +241,7 @@ go
 text
 Query Text: select/*+ mergejoin(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ * from babel_3293_t1 left outer       join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.a1 = babel_3293_t3.a3
 Nested Loop
+  Disabled: true
   ->  Merge Left Join
         Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
         ->  Index Scan using babel_3293_t1_pkey on babel_3293_t1
@@ -243,7 +252,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.987 ms
+Babelfish T-SQL Batch Parsing Time: 0.341 ms
 ~~END~~
 
 
@@ -253,6 +262,8 @@ go
 text
 Query Text: select/*+ mergejoin(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ * from babel_3293_t1 left outer       join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3  where b1 = 1 and b2 = 1 and b3 = 1
 Nested Loop
+  Disabled: true
+  Join Filter: (babel_3293_t1.a1 = babel_3293_t3.a3)
   ->  Merge Join
         Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
         ->  Sort
@@ -268,13 +279,13 @@ Nested Loop
                     ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
                           Index Cond: (b2 = 1)
   ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
-        Index Cond: (a3 = babel_3293_t1.a1)
+        Index Cond: (a3 = babel_3293_t2.a2)
         Filter: (b3 = 1)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.324 ms
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
 ~~END~~
 
 
@@ -306,7 +317,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.601 ms
+Babelfish T-SQL Batch Parsing Time: 0.204 ms
 ~~END~~
 
 
@@ -335,7 +346,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.372 ms
+Babelfish T-SQL Batch Parsing Time: 0.186 ms
 ~~END~~
 
 
@@ -367,7 +378,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.319 ms
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
 ~~END~~
 
 
@@ -399,7 +410,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 13.399 ms
+Babelfish T-SQL Batch Parsing Time: 4.944 ms
 ~~END~~
 
 
@@ -419,7 +430,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.392 ms
+Babelfish T-SQL Batch Parsing Time: 2.692 ms
 ~~END~~
 
 
@@ -439,7 +450,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.727 ms
+Babelfish T-SQL Batch Parsing Time: 0.294 ms
 ~~END~~
 
 
@@ -460,7 +471,7 @@ Hash Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.304 ms
+Babelfish T-SQL Batch Parsing Time: 0.164 ms
 ~~END~~
 
 
@@ -492,7 +503,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.720 ms
+Babelfish T-SQL Batch Parsing Time: 0.340 ms
 ~~END~~
 
 
@@ -517,7 +528,7 @@ Hash Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.984 ms
+Babelfish T-SQL Batch Parsing Time: 2.413 ms
 ~~END~~
 
 
@@ -544,7 +555,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.261 ms
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
 ~~END~~
 
 
@@ -568,7 +579,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.253 ms
+Babelfish T-SQL Batch Parsing Time: 0.135 ms
 ~~END~~
 
 
@@ -601,7 +612,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.312 ms
+Babelfish T-SQL Batch Parsing Time: 0.164 ms
 ~~END~~
 
 
@@ -634,7 +645,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.313 ms
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 
@@ -660,7 +671,7 @@ Hash Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.182 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 
@@ -677,7 +688,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.258 ms
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
 ~~END~~
 
 
@@ -723,7 +734,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.317 ms
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 
@@ -744,7 +755,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.311 ms
+Babelfish T-SQL Batch Parsing Time: 0.166 ms
 ~~END~~
 
 
@@ -767,7 +778,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 17.183 ms
+Babelfish T-SQL Batch Parsing Time: 6.405 ms
 ~~END~~
 
 
@@ -787,7 +798,7 @@ Nested Loop
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.716 ms
+Babelfish T-SQL Batch Parsing Time: 0.299 ms
 ~~END~~
 
 
@@ -808,7 +819,7 @@ Hash Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 56.443 ms
+Babelfish T-SQL Batch Parsing Time: 18.637 ms
 ~~END~~
 
 
@@ -834,7 +845,7 @@ Hash Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 71.672 ms
+Babelfish T-SQL Batch Parsing Time: 23.704 ms
 ~~END~~
 
 
@@ -863,7 +874,7 @@ Hash Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.342 ms
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
 ~~END~~
 
 
@@ -891,7 +902,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.414 ms
+Babelfish T-SQL Batch Parsing Time: 0.195 ms
 ~~END~~
 
 
@@ -918,7 +929,7 @@ Update on babel_3293_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 37.025 ms
+Babelfish T-SQL Batch Parsing Time: 28.566 ms
 ~~END~~
 
 
@@ -946,7 +957,7 @@ Update on babel_3293_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.254 ms
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 
@@ -972,7 +983,7 @@ Update on babel_3293_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.467 ms
+Babelfish T-SQL Batch Parsing Time: 0.203 ms
 ~~END~~
 
 
@@ -998,7 +1009,7 @@ Delete on babel_3293_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 43.809 ms
+Babelfish T-SQL Batch Parsing Time: 30.300 ms
 ~~END~~
 
 
@@ -1026,7 +1037,7 @@ Delete on babel_3293_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.227 ms
+Babelfish T-SQL Batch Parsing Time: 0.284 ms
 ~~END~~
 
 
@@ -1052,7 +1063,7 @@ Delete on babel_3293_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.272 ms
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -1129,7 +1140,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 150.486 ms
+Babelfish T-SQL Batch Parsing Time: 45.228 ms
 ~~END~~
 
 
@@ -1149,7 +1160,7 @@ Hash Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 18.476 ms
+Babelfish T-SQL Batch Parsing Time: 6.537 ms
 ~~END~~
 
 
@@ -1172,7 +1183,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.927 ms
+Babelfish T-SQL Batch Parsing Time: 3.896 ms
 ~~END~~
 
 
@@ -1197,7 +1208,7 @@ Merge Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.637 ms
+Babelfish T-SQL Batch Parsing Time: 0.217 ms
 ~~END~~
 
 
@@ -1219,7 +1230,7 @@ Merge Left Join
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 32.244 ms
+Babelfish T-SQL Batch Parsing Time: 9.346 ms
 ~~END~~
 
 
