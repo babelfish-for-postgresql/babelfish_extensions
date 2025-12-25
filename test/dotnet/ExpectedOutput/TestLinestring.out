@@ -1,0 +1,213 @@
+#Q#CREATE TABLE LINEGEOM_dt(location GEOMETRY);
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(@location) 
+#Q#CREATE TABLE LINEGEOG_dt(location GEOGRAPHY);
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOG_dt(location) values(@location) 
+#Q#INSERT INTO LINEGEOM_dt(location) values(geometry::STGeomFromText('LINESTRING (1 2 NULL 4, 3 4  NULL 4)', 4326))
+#Q#INSERT INTO LINEGEOM_dt(location) values(geometry::STGeomFromText('LINESTRING (1 2 4 7, 3 4 4 8, 6 6 8 9)', 4326))
+#Q#INSERT INTO LINEGEOM_dt(location) values(geometry::STLineFromText('LINESTRING (1 2 4, 3 4 4)', 4326))
+#Q#INSERT INTO LINEGEOM_dt(location) values(geometry::STLineFromText('LINESTRING (1 2, 3 4, 5 4)', 4326))
+#Q#INSERT INTO LINEGEOM_dt(location) values(geometry::STLineFromText('LINESTRING EMPTY', 4326))
+#Q#INSERT INTO LINEGEOG_dt(location) values(geography::STGeomFromText('LINESTRING (1 2 NULL 4, 3 4 NULL 8)', 4326))
+#Q#INSERT INTO LINEGEOG_dt(location) values(geography::STGeomFromText('LINESTRING (1 2 4 3, 5 6 8 2, 6 3 4 4)', 4326))
+#Q#INSERT INTO LINEGEOG_dt(location) values(geography::STLineFromText('LINESTRING (1 2 4, 3 4 4)', 4326))
+#Q#INSERT INTO LINEGEOG_dt(location) values(geography::STLineFromText('LINESTRING (1 2 , 4 6)', 4326))
+#Q#INSERT INTO LINEGEOG_dt(location) values(geography::STLineFromText('LINESTRING EMPTY', 4326))
+#Q#CREATE TABLE LINE_dt(geom GEOMETRY, geog GEOGRAPHY);
+#Q#INSERT INTO LINE_dt(geom) values(@geom) 
+#Q#INSERT INTO LINE_dt(geom) values(@geom) 
+#Q#INSERT INTO LINE_dt(geom) values(@geom) 
+#Q#INSERT INTO LINE_dt(geom) values(@geom) 
+#Q#INSERT INTO LINE_dt(geom) values(@geom) 
+#Q#INSERT INTO LINE_dt(geog) values(@geog) 
+#Q#INSERT INTO LINE_dt(geog) values(@geog) 
+#Q#INSERT INTO LINE_dt(geog) values(@geog) 
+#Q#INSERT INTO LINE_dt(geog) values(@geog) 
+#Q#INSERT INTO LINE_dt(geog) values(@geog) 
+#Q#SELECT * FROM  LINEGEOM_dt;
+#D#master.sys.geometry
+LINESTRING (1 2, 1 2)
+LINESTRING EMPTY
+LINESTRING (1 2, 3 4)
+LINESTRING (1 2, 3 4, 2 5, 4 6)
+LINESTRING (1 2 3 4, 3 4 4 5)
+LINESTRING (1 2 3 4, 3 4 4 5, 2 4 3 4, 4 5 6 7)
+LINESTRING (1 2 NULL 4, 3 4 NULL 4)
+LINESTRING (1 2 NULL 4, 3 4 NULL 4, 2 4 NULL 5, 6 8 NULL 9)
+LINESTRING (1 3 3, 5 7 4, 4 5 7)
+LINESTRING (1 3 3, 5 7 4)
+LINESTRING (1 3 3, 5 7 4, 4 5 7)
+LINESTRING (1 3 3, 5 7 4)
+LINESTRING (1 3 2, 5 7 6, 4 5)
+LINESTRING (4 5 2, 1 1 3, 2 2 5, 3 3 2, 4 4 4, 5 5, 6 6 5, 7 7, 8 8, 9 9 4, 10 10 4)
+LINESTRING (1 2 NULL 4, 3 4 NULL 4)
+LINESTRING (1 2 4 7, 3 4 4 8, 6 6 8 9)
+LINESTRING (1 2 4, 3 4 4)
+LINESTRING (1 2, 3 4, 5 4)
+LINESTRING EMPTY
+#Q#SELECT * FROM  LINEGEOG_dt;
+#D#master.sys.geography
+LINESTRING (1 2, 1 2)
+LINESTRING EMPTY
+LINESTRING (1 2, 3 4)
+LINESTRING (1 2, 3 4, 2 5, 4 6)
+LINESTRING (1 2 3 4, 3 4 4 5)
+LINESTRING (1 2 3 4, 3 4 4 5, 2 4 3 4, 4 5 6 7)
+LINESTRING (1 2 NULL 4, 3 4 NULL 4)
+LINESTRING (1 2 NULL 4, 3 4 NULL 4, 2 4 NULL 5, 6 8 NULL 9)
+LINESTRING (1 3 3, 5 7 4, 4 5 7)
+LINESTRING (1 3 3, 5 7 4)
+LINESTRING (1 3 3, 5 7 4, 4 5 7)
+LINESTRING (1 3 3, 5 7 4)
+LINESTRING (1 3 2, 5 7 6, 4 5)
+LINESTRING (4 5 2, 1 1 3, 2 2 5, 3 3 2, 4 4 4, 5 5, 6 6 5, 7 7, 8 8, 9 9 4, 10 10 4)
+LINESTRING (1 2 NULL 4, 3 4 NULL 8)
+LINESTRING (1 2 4 3, 5 6 8 2, 6 3 4 4)
+LINESTRING (1 2 4, 3 4 4)
+LINESTRING (1 2, 4 6)
+LINESTRING EMPTY
+#Q#SELECT * FROM  LINE_dt;
+#D#master.sys.geometry#!#master.sys.geography
+LINESTRING (1 2 3 4, 3 4 4 5, 2 4 3 4, 4 5 6 7)#!#
+LINESTRING (1 2 NULL 4, 3 4 NULL 4)#!#
+LINESTRING (1 3 3, 5 7 4, 4 5 7)#!#
+LINESTRING (1 2, 3 4)#!#
+LINESTRING EMPTY#!#
+#!#LINESTRING (1 2 3 4, 3 4 4 5, 2 4 3 4, 4 5 6 7)
+#!#LINESTRING (1 2 NULL 4, 3 4 NULL 4)
+#!#LINESTRING (1 3 3, 5 7 4, 4 5 7)
+#!#LINESTRING (1 2, 3 4)
+#!#LINESTRING EMPTY
+#Q#SELECT geom.STAsText(), geog.STAsText() FROM LINE_dt;
+#D#nvarchar#!#nvarchar
+LINESTRING(1 2,3 4,2 4,4 5)#!#
+LINESTRING(1 2,3 4)#!#
+LINESTRING(1 3,5 7,4 5)#!#
+LINESTRING(1 2,3 4)#!#
+LINESTRING EMPTY#!#
+#!#LINESTRING(1 2,3 4,2 4,4 5)
+#!#LINESTRING(1 2,3 4)
+#!#LINESTRING(1 3,5 7,4 5)
+#!#LINESTRING(1 2,3 4)
+#!#LINESTRING EMPTY
+#Q#SELECT geom.STDimension(), geog.STDimension() FROM LINE_dt;
+#D#int#!#int
+1#!#
+1#!#
+1#!#
+1#!#
+-1#!#
+#!#1
+#!#1
+#!#1
+#!#1
+#!#-1
+#Q#SELECT geom.STIsClosed(), geog.STIsClosed() FROM LINE_dt;
+#D#bit#!#bit
+False#!#
+False#!#
+False#!#
+False#!#
+False#!#
+#!#False
+#!#False
+#!#False
+#!#False
+#!#False
+#Q#SELECT geom.STIsValid(), geog.STIsValid() FROM LINE_dt;
+#D#bit#!#bit
+True#!#
+True#!#
+True#!#
+True#!#
+True#!#
+#!#True
+#!#True
+#!#True
+#!#True
+#!#True
+#Q#SELECT geom.STArea(), geog.STArea() FROM LINE_dt;
+#D#float#!#float
+0#!#
+0#!#
+0#!#
+0#!#
+0#!#
+#!#0
+#!#0
+#!#0
+#!#0
+#!#0
+#Q#CREATE TABLE LINE_EMP_dt(geom GEOMETRY, geog GEOGRAPHY);
+#Q#INSERT INTO LINE_EMP_dt(geom) values(@geom) 
+#Q#INSERT INTO LINE_EMP_dt(geog) values(@geog) 
+#Q#INSERT INTO LINE_EMP_dt(geom) values(@geom) 
+#Q#INSERT INTO LINE_EMP_dt(geog) values(@geog) 
+#Q#SELECT geom.STAsText(), geog.STAsText() FROM LINE_EMP_dt;
+#D#nvarchar#!#nvarchar
+LINESTRING EMPTY#!#
+#!#LINESTRING EMPTY
+LINESTRING EMPTY#!#
+#!#LINESTRING EMPTY
+#Q#SELECT geom.STDimension(), geog.STDimension() FROM LINE_EMP_dt;
+#D#int#!#int
+-1#!#
+#!#-1
+-1#!#
+#!#-1
+#Q#SELECT geom.STIsClosed(), geog.STIsClosed() FROM LINE_EMP_dt;
+#D#bit#!#bit
+False#!#
+#!#False
+False#!#
+#!#False
+#Q#SELECT geom.STIsValid(), geog.STIsValid() FROM LINE_EMP_dt;
+#D#bit#!#bit
+True#!#
+#!#True
+True#!#
+#!#True
+#Q#SELECT geom.STAsBinary(), geog.STAsBinary() FROM LINE_EMP_dt;
+#D#varbinary#!#varbinary
+120000000#!#
+
+120000000
+120000000#!#
+
+
+120000000
+#Q#SELECT geom.STArea(), geog.STArea() FROM LINE_EMP_dt;
+#D#float#!#float
+0#!#
+#!#0
+0#!#
+#!#0
+#Q#DROP TABLE IF EXISTS LINEGEOM_dt;
+#Q#DROP TABLE IF EXISTS LINEGEOG_dt;
+#Q#DROP TABLE IF EXISTS LINE_dt;
+#Q#DROP TABLE IF EXISTS LINE_EMP_dt;

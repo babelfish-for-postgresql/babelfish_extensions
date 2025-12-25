@@ -105,6 +105,10 @@ go
 
 /*** EXECUTES THE ALTER STATEMENTS ***/
 -- psql
+-- Set the respective GUCs to allow ALTER .. OWNER .. on TSQL objects via PG endpoint.
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
+GO
 ALTER TABLE object_ownership_db_object_ownership_s2."2bc43500e5a904447227cb4121181c74_partition_0" OWNER TO object_ownership_db_object_ownership_u1;
 ALTER TABLE object_ownership_db_object_ownership_s2."2bc43500e5a904447227cb4121181c74_partition_1" OWNER TO object_ownership_db_object_ownership_u1;
 ALTER TABLE object_ownership_db_object_ownership_s2."2bc43500e5a904447227cb4121181c74_partition_2" OWNER TO object_ownership_db_object_ownership_u1;
@@ -114,9 +118,7 @@ ALTER PROCEDURE object_ownership_db_object_ownership_s2.old_p OWNER TO object_ow
 ALTER SEQUENCE object_ownership_db_object_ownership_s2.old_sq OWNER TO object_ownership_db_object_ownership_u1;
 ALTER TABLE object_ownership_db_object_ownership_s2.old_t OWNER TO object_ownership_db_object_ownership_u1;
 ALTER SEQUENCE object_ownership_db_object_ownership_s2.old_t_id_seq OWNER TO object_ownership_db_object_ownership_u1;
-SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
 ALTER VIEW object_ownership_db_object_ownership_s2.old_v OWNER TO object_ownership_db_object_ownership_u1;
-SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
 ALTER TABLE object_ownership_db_object_ownership_s2.pt2 OWNER TO object_ownership_db_object_ownership_u1;
 ALTER SEQUENCE object_ownership_db_object_ownership_s2.pt2_saleid_seq OWNER TO object_ownership_db_object_ownership_u1;
 ALTER FUNCTION object_ownership_db_object_ownership_s3.old_f OWNER TO object_ownership_db_object_ownership_r1;
@@ -138,11 +140,9 @@ ALTER FUNCTION object_ownership_db_object_ownership_s3.old_tvf OWNER TO object_o
 ALTER FUNCTION object_ownership_db_object_ownership_s3.old_tvf1 OWNER TO object_ownership_db_object_ownership_r1;
 ALTER TYPE object_ownership_db_object_ownership_s3.old_type OWNER TO object_ownership_db_object_ownership_r1;
 ALTER TYPE object_ownership_db_object_ownership_s3.old_type1 OWNER TO object_ownership_db_object_ownership_r1;
-SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
 ALTER VIEW object_ownership_db_object_ownership_s3.old_v OWNER TO object_ownership_db_object_ownership_r1;
-SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
-SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
 ALTER VIEW object_ownership_db_object_ownership_s3.old_v1 OWNER TO object_ownership_db_object_ownership_r1;
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
 SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
 GO
 

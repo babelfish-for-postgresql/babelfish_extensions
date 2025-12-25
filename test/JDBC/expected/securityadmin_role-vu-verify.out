@@ -33,6 +33,8 @@ TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
 GO
 
 -- sp_helpsrvrolemember
+SET NOCOUNT ON
+GO
 INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
 GO
 
@@ -616,10 +618,10 @@ TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
 GO
 
 -- sp_helpsrvrolemember
+SET NOCOUNT ON
+GO
 INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM sadm_sp_helpsrvrolemember_tbl where MemberName like '%securityadmin%'
 GO
@@ -1490,32 +1492,32 @@ ALTER schema master_securityadmin_scm1 owner to securityadmin;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
-    Server SQLState: 42501)~~
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
 
 
 ALTER table master_dbo.securityadmin_tb1 owner to securityadmin;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
-    Server SQLState: 42501)~~
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
 
 
 ALTER procedure master_dbo.securityadmin_proc1 owner to securityadmin;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
-    Server SQLState: 42501)~~
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
 
 
 ALTER function master_dbo.securityadmin_func1 owner to securityadmin;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
-    Server SQLState: 42501)~~
+~~ERROR (Message: ERROR: ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.
+    Server SQLState: 0A000)~~
 
 
 -- psql

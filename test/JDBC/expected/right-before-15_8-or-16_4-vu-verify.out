@@ -276,7 +276,7 @@ SELECT '|' + RIGHT(@inputString, 8) + '|'
 GO
 ~~START~~
 nvarchar
-|ghi??   |
+|ghi🙂🙂   |
 ~~END~~
 
 
@@ -285,7 +285,7 @@ SELECT '|' + RIGHT(@inputString, 13) + '|'
 GO
 ~~START~~
 nvarchar
-|·???         |
+|·拉莫斯         |
 ~~END~~
 
 
@@ -294,7 +294,7 @@ SELECT '|' + RIGHT(@inputString, 50) + '|'
 GO
 ~~START~~
 nvarchar
-|abc?defghi??   |
+|abc🙂defghi🙂🙂   |
 ~~END~~
 
 
@@ -480,7 +480,7 @@ SELECT RIGHT(@inputString, 3)
 GO
 ~~START~~
 varchar
-:00
+0AM
 ~~END~~
 
 
@@ -489,7 +489,7 @@ SELECT RIGHT(@inputString, 3)
 GO
 ~~START~~
 varchar
-:00
+3PM
 ~~END~~
 
 

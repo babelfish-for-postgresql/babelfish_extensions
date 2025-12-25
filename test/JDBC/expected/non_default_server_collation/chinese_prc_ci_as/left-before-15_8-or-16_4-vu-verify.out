@@ -305,7 +305,7 @@ SELECT '|' + LEFT(@inputString, 5) + '|'
 GO
 ~~START~~
 nvarchar
-|abc?d|
+|abc🙂d|
 ~~END~~
 
 
@@ -323,7 +323,7 @@ SELECT '|' + LEFT(@inputString, 50) + '|'
 GO
 ~~START~~
 nvarchar
-|abc?defghi??             |
+|abc🙂defghi🙂🙂             |
 ~~END~~
 
 
@@ -509,7 +509,7 @@ SELECT LEFT(@inputString, 3)
 GO
 ~~START~~
 varchar
-201
+Dec
 ~~END~~
 
 
@@ -518,7 +518,7 @@ SELECT LEFT(@inputString, 3)
 GO
 ~~START~~
 varchar
-195
+Dec
 ~~END~~
 
 

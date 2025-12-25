@@ -174,7 +174,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcxyz??wuytgdy?            efghi??             
+abcxyz🙂🙂wuytgdy🙂            efghi??             
 ~~END~~
 
 DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
@@ -268,7 +268,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比??拉?比                    斯               
+比??拉·比                      斯             
 ~~END~~
 
 DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
@@ -362,7 +362,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??拉?比                    斯               
+比??拉·比                      斯             
 ~~END~~
 
 DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
@@ -458,7 +458,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcxyz??wuytgdy?            efghi🙂🙂
+abcxyz🙂🙂wuytgdy🙂            efghi🙂🙂
 ~~END~~
 
 DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
@@ -559,7 +559,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比尔·拉?比                    斯
+比尔·拉·比                      斯
 ~~END~~
 
 DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
@@ -660,7 +660,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比尔·拉?比                    斯
+比尔·拉·比                      斯
 ~~END~~
 
 DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
@@ -940,7 +940,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcxyz??wuytgdy?            efghi??             
+abcxyz??wuytgdy?            efghi🙂🙂             
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
@@ -949,7 +949,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcxyz??wuytgdy?            efghi??             
+abcxyz🙂🙂wuytgdy🙂            efghi🙂🙂             
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
@@ -958,7 +958,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcxyz🙂🙂wuytgdy🙂efghi??             
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂             
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
@@ -967,7 +967,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcxyz🙂🙂wuytgdy🙂efghi??             
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂             
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
@@ -976,7 +976,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcefefghi??             
+abc晥efghi🙂🙂             
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
@@ -985,7 +985,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcefefghi??             
+abc晥efghi🙂🙂             
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
@@ -993,7 +993,7 @@ SELECT stuff(@inputString, 4, 2, 'xyz🙂🙂wuytgdy🙂')
 GO
 ~~START~~
 nvarchar
-abcxyz🙂🙂wuytgdy🙂efghi??             
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂             
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
@@ -1034,7 +1034,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比??拉?比                    斯               
+比尔·拉?比                    斯             
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1043,7 +1043,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比??拉?比                    斯               
+比尔·拉·比                      斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1052,7 +1052,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比??拉·比斯               
+比尔·拉·比斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1061,7 +1061,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比??拉·比斯               
+比尔·拉·比斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1070,7 +1070,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比??ef斯               
+比尔·晥斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1079,7 +1079,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比??ef斯               
+比尔·晥斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1087,7 +1087,7 @@ SELECT stuff(@inputString, 4, 2, '拉·比')
 GO
 ~~START~~
 nvarchar
-比??拉·比斯               
+比尔·拉·比斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1128,7 +1128,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??拉?比                    斯               
+比尔·拉?比                    斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1137,7 +1137,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??拉?比                    斯               
+比尔·拉·比                      斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1146,7 +1146,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??拉·比斯               
+比尔·拉·比斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1155,7 +1155,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??拉·比斯               
+比尔·拉·比斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1164,7 +1164,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??ef斯               
+比尔·晥斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1173,7 +1173,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??ef斯               
+比尔·晥斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1181,7 +1181,7 @@ SELECT stuff(@inputString, 4, 2, '拉·比') COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??拉·比斯               
+比尔·拉·比斯                   
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -1243,7 +1243,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcxyz??wuytgdy?            efghi🙂🙂
+abcxyz🙂🙂wuytgdy🙂            efghi🙂🙂
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
@@ -1270,7 +1270,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcefefghi🙂🙂
+abc晥efghi🙂🙂
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
@@ -1279,7 +1279,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-abcefefghi🙂🙂
+abc晥efghi🙂🙂
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
@@ -1328,7 +1328,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比尔·拉?比                    斯
+比尔·拉·比                   斯
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
@@ -1337,7 +1337,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比尔·拉?比                    斯
+比尔·拉·比                      斯
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
@@ -1364,7 +1364,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比尔·ef斯
+比尔·晥斯
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
@@ -1373,7 +1373,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString)
 GO
 ~~START~~
 nvarchar
-比尔·ef斯
+比尔·晥斯
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
@@ -1422,7 +1422,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比尔·拉?比                    斯
+比尔·拉·比                   斯
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
@@ -1431,7 +1431,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比尔·拉?比                    斯
+比尔·拉·比                      斯
 ~~END~~
 
 DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'

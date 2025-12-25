@@ -9961,9 +9961,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(0x123456 AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_binary)~~
+~~START~~
+char
+4V                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -9971,9 +9972,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(0x123456 AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_binary)~~
+~~START~~
+nchar
+㐒V                                                                                                  
+~~END~~
 
 
 SELECT CASE 1
@@ -10014,9 +10016,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(0x123456 AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_binary)~~
+~~START~~
+char
+4V                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -10024,9 +10027,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(0x123456 AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_binary)~~
+~~START~~
+nchar
+㐒V                                                                                                  
+~~END~~
 
 
 SELECT CASE 1
@@ -10139,9 +10143,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_binary)~~
+~~START~~
+char
+4V                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -10149,9 +10154,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_binary)~~
+~~START~~
+nchar
+㐒V                                                                                                  
+~~END~~
 
 
 SELECT CASE 1
@@ -10192,9 +10198,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_binary)~~
+~~START~~
+char
+4V                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -10202,9 +10209,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_binary)~~
+~~START~~
+nchar
+㐒V                                                                                                  
+~~END~~
 
 
 SELECT CASE 1
@@ -10245,9 +10253,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_binary)~~
+~~START~~
+char
+4V                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -10255,9 +10264,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_binary)~~
+~~START~~
+nchar
+㐒V                                                                                                  
+~~END~~
 
 
 SELECT CASE 1
@@ -10298,9 +10308,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_binary)~~
+~~START~~
+char
+char1                                                                                               
+~~END~~
 
 
 SELECT CASE 2
@@ -10308,9 +10319,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_binary)~~
+~~START~~
+nchar
+char1                                                                                               
+~~END~~
 
 
 SELECT CASE 2
@@ -10351,9 +10363,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_binary)~~
+~~START~~
+char
+????? ??????? - ??????                                                                              
+~~END~~
 
 
 SELECT CASE 2
@@ -10361,9 +10374,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_binary)~~
+~~START~~
+nchar
+بطاقة التسجيل - قياسية                                                                              
+~~END~~
 
 
 SELECT CASE 2
@@ -10404,9 +10418,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_binary)~~
+~~START~~
+char
+登録カード–標準                                                                                    
+~~END~~
 
 
 SELECT CASE 2
@@ -10414,9 +10429,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_binary)~~
+~~START~~
+nchar
+登録カード–標準                                                                                            
+~~END~~
 
 
 SELECT CASE 2
@@ -10469,9 +10485,10 @@ SELECT CASE 1
    WHEN 3 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+char
+abc                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -10480,9 +10497,10 @@ SELECT CASE 1
    WHEN 3 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+nchar
+abc                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -10537,9 +10555,10 @@ SELECT CASE 2
    WHEN 3 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+char
+4V                                                                                                 
+~~END~~
 
 
 SELECT CASE 2
@@ -10548,9 +10567,10 @@ SELECT CASE 2
    WHEN 3 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+nchar
+㐒V                                                                                                  
+~~END~~
 
 
 SELECT CASE 2
@@ -10671,9 +10691,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_varbinary)~~
+~~START~~
+char
+4V                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -10681,9 +10702,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_varbinary)~~
+~~START~~
+nchar
+㐒V                                                                                                  
+~~END~~
 
 
 SELECT CASE 1
@@ -10724,9 +10746,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_varbinary)~~
+~~START~~
+char
+4V                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -10734,9 +10757,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_varbinary)~~
+~~START~~
+nchar
+㐒V                                                                                                  
+~~END~~
 
 
 SELECT CASE 1
@@ -10777,9 +10801,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_varbinary)~~
+~~START~~
+char
+4V                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -10787,9 +10812,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_varbinary)~~
+~~START~~
+nchar
+㐒V                                                                                                  
+~~END~~
 
 
 SELECT CASE 1
@@ -10830,9 +10856,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_varbinary)~~
+~~START~~
+char
+char1                                                                                               
+~~END~~
 
 
 SELECT CASE 2
@@ -10840,9 +10867,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_varbinary)~~
+~~START~~
+nchar
+char1                                                                                               
+~~END~~
 
 
 SELECT CASE 2
@@ -10883,9 +10911,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_varbinary)~~
+~~START~~
+char
+????? ??????? - ??????                                                                              
+~~END~~
 
 
 SELECT CASE 2
@@ -10893,9 +10922,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_varbinary)~~
+~~START~~
+nchar
+بطاقة التسجيل - قياسية                                                                              
+~~END~~
 
 
 SELECT CASE 2
@@ -10936,9 +10966,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type bpchar to bbf_varbinary)~~
+~~START~~
+char
+登録カード–標準                                                                                    
+~~END~~
 
 
 SELECT CASE 2
@@ -10946,9 +10977,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "nchar" to bbf_varbinary)~~
+~~START~~
+nchar
+登録カード–標準                                                                                            
+~~END~~
 
 
 SELECT CASE 2
@@ -11001,9 +11033,10 @@ SELECT CASE 1
    WHEN 3 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+char
+abc                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -11012,9 +11045,10 @@ SELECT CASE 1
    WHEN 3 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+nchar
+abc                                                                                                 
+~~END~~
 
 
 SELECT CASE 1
@@ -11069,9 +11103,10 @@ SELECT CASE 2
    WHEN 3 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+char
+4V                                                                                                 
+~~END~~
 
 
 SELECT CASE 2
@@ -11080,9 +11115,10 @@ SELECT CASE 2
    WHEN 3 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+nchar
+㐒V                                                                                                  
+~~END~~
 
 
 SELECT CASE 2
@@ -14456,7 +14492,7 @@ GO
 ~~START~~
 numeric
 12345678901234567890123456789012.3
-123456789012345678901234567890123456.7
+123456789012345678901234567890123456.8
 1234567890123456789012345678901234567.8
 ~~END~~
 
@@ -14652,5 +14688,35 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
 babel_5341_v6#!#RESULT#!#numeric#!#38#!#38
+~~END~~
+
+
+SELECT CAST(
+   GetDecimalValue_BABEL_5980() 
+   /
+   (CASE WHEN 1<0
+      THEN cast(1 as decimal(24,6))
+      ELSE datediff(dd, '2000-01-01', '2023-12-31')
+   END)
+   AS DECIMAL(24,6)) AS Result;
+GO
+~~START~~
+numeric
+14.085125
+~~END~~
+
+
+SELECT CAST(
+   GetDecimalValue_BABEL_5980() 
+   /
+   (CASE WHEN 1<0
+      THEN 1
+      ELSE datediff(dd, '2000-01-01', '2023-12-31')
+   END)
+   AS DECIMAL(24,6)) AS Result;
+GO
+~~START~~
+numeric
+14.085125
 ~~END~~
 

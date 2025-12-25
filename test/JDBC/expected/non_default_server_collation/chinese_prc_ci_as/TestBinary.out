@@ -1075,7 +1075,7 @@ FROM BinaryCastingDemo;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#varbinary#!#binary#!#varbinary#!#int#!#int#!#int
-1#!#Empty string#!#VARCHAR#!##!#00000000000000000000#!##!#0#!#0#!#0
+1#!#Empty string#!#VARCHAR#!##!#00000000000000000000#!##!#0#!#10#!#0
 2#!#NULL value#!#VARCHAR#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 3#!#Simple text#!#VARCHAR#!#48656C6C6F#!#48656C6C6F0000000000#!#48656C6C6F#!#5#!#10#!#5
 4#!#Long text#!#VARCHAR#!#546869734973414C6F6E6754657874#!#546869734973414C6F6E#!#546869734973414C6F6E#!#15#!#10#!#10
@@ -2043,9 +2043,12 @@ varchar
 Binary vs DateTime Comparisons
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type datetime to varbinary)~~
+~~START~~
+varchar#!#varchar
+Binary < Later DateTime#!#True
+Binary = DateTime#!#False
+Binary > Earlier DateTime#!#True
+~~END~~
 
 
 
@@ -2767,7 +2770,7 @@ ORDER BY TestID;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#varchar#!#varbinary#!#varbinary#!#varbinary#!#varchar#!#int
-1#!#BINARY(4) + BINARY(4)#!#BINARY(4)#!#BINARY(4)#!#12340000#!#56780000#!#0000000068AC0000#!#BINARY(8)#!#8
+1#!#BINARY(4) + BINARY(4)#!#BINARY(4)#!#BINARY(4)#!#12340000#!#56780000#!#1234000056780000#!#BINARY(8)#!#8
 2#!#VARBINARY(4) + VARBINARY(4)#!#VARBINARY(4)#!#VARBINARY(4)#!#1234#!#5678#!#12345678#!#VARBINARY(8)#!#4
 3#!#BINARY(4) + VARBINARY(4)#!#BINARY(4)#!#VARBINARY(4)#!#12340000#!#5678#!#123400005678#!#VARBINARY(8)#!#6
 4#!#VARBINARY(4) + BINARY(4)#!#VARBINARY(4)#!#BINARY(4)#!#1234#!#56780000#!#123456780000#!#VARBINARY(8)#!#6
@@ -2777,7 +2780,7 @@ int#!#varchar#!#varchar#!#varchar#!#varbinary#!#varbinary#!#varbinary#!#varchar#
 8#!#Empty VARBINARY + BINARY(4)#!#VARBINARY(4)#!#BINARY(4)#!##!#56780000#!#56780000#!#VARBINARY#!#4
 9#!#BINARY(4) + Empty VARBINARY#!#BINARY(4)#!#VARBINARY(4)#!#12340000#!##!#12340000#!#VARBINARY#!#4
 10#!#Empty VARBINARY + Empty VARBINARY#!#VARBINARY(4)#!#VARBINARY(4)#!##!##!##!#VARBINARY#!#0
-11#!#BINARY(2) + BINARY(4)#!#BINARY(2)#!#BINARY(4)#!#1200#!#56780000#!#0000000056781200#!#BINARY(6)#!#8
+11#!#BINARY(2) + BINARY(4)#!#BINARY(2)#!#BINARY(4)#!#1200#!#56780000#!#120056780000#!#BINARY(6)#!#6
 12#!#VARBINARY(2) + VARBINARY(4)#!#VARBINARY(2)#!#VARBINARY(4)#!#12#!#5678#!#125678#!#VARBINARY(6)#!#3
 ~~END~~
 
@@ -2860,9 +2863,7 @@ INSERT INTO BinaryFunctionTests VALUES
  CAST((SELECT MIN(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARBINARY(100)),
  'MIN');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type datetime to varbinary)~~
+~~ROW COUNT: 2~~
 
 
 -- 2. String/Binary Functions
@@ -2948,13 +2949,15 @@ ORDER BY TestID;
 GO
 ~~START~~
 int#!#varchar#!#varbinary#!#varbinary#!#varchar
-1#!#DATALENGTH#!#1234#!#00000002#!#DATALENGTH
-2#!#LEN#!#1234#!#00000002#!#LEN
-3#!#SUBSTRING#!#123456#!#3456#!#SUBSTRING
-4#!#LEFT#!#123456#!#1234#!#LEFT
-5#!#RIGHT#!#123456#!#3456#!#RIGHT
-6#!#HASHBYTES SHA2_256#!#54657374#!#532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25#!#HASHBYTES
-7#!#AVG Function#!#1234#!#00000012#!#AVG
+1#!#MAX Function#!#1234#!#0000000000001234#!#MAX
+2#!#MIN Function#!#1234#!#0000000000001234#!#MIN
+3#!#DATALENGTH#!#1234#!#00000002#!#DATALENGTH
+4#!#LEN#!#1234#!#00000002#!#LEN
+5#!#SUBSTRING#!#123456#!#3456#!#SUBSTRING
+6#!#LEFT#!#123456#!#1234#!#LEFT
+7#!#RIGHT#!#123456#!#3456#!#RIGHT
+8#!#HASHBYTES SHA2_256#!#54657374#!#532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25#!#HASHBYTES
+9#!#AVG Function#!#1234#!#00000012#!#AVG
 ~~END~~
 
 
@@ -3747,7 +3750,7 @@ SELECT 'NVARCHAR to VARBINARY(10)' AS Test,
 GO
 ~~START~~
 varchar#!#varbinary#!#int
-NVARCHAR to VARBINARY(10)#!#B2E2CAD4#!#4
+NVARCHAR to VARBINARY(10)#!#4B6DD58B#!#4
 ~~END~~
 
 
@@ -3777,7 +3780,7 @@ SELECT 'NVARCHAR to VARBINARY(10)' AS Test,
 GO
 ~~START~~
 varchar#!#varbinary#!#int
-NVARCHAR to VARBINARY(10)#!#B2E2#!#4
+NVARCHAR to VARBINARY(10)#!#4B6D#!#4
 ~~END~~
 
 
@@ -3815,9 +3818,10 @@ SELECT 'DATETIME to BINARY(8)' AS Test,
     CONVERT(BINARY(8), CAST('2024-01-15' AS DATETIME)) AS ConvertedValue,
     DATALENGTH(CONVERT(BINARY(8), '2024-01-15')) AS Length;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type datetime to varbinary)~~
+~~START~~
+varchar#!#binary#!#int
+DATETIME to BINARY(8)#!#0000B0F800000000#!#8
+~~END~~
 
 
 SELECT 'DATE to VARBINARY(6)' AS Test,
@@ -3983,7 +3987,7 @@ SELECT 'Style 1 - To BINARY' AS Test,
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 SELECT 'Style 1 - To VARBINARY(MAX)' AS Test,
@@ -4022,7 +4026,7 @@ SELECT 'Style 1 - Short to Long' AS Test,
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+~~ERROR (Message: Error converting data type varchar to binary.)~~
 
 
 SELECT 'Style 1 - Long to Short' AS Test,
@@ -4309,5 +4313,55 @@ varchar#!#varbinary
 Leading Zeros Sort#!#0001
 Leading Zeros Sort#!#0100
 Leading Zeros Sort#!#1000
+~~END~~
+
+
+
+-- Empty string casting to binary/varbinary
+select cast(CAST('0x00' AS BINARY) as varbinary)
+GO
+~~START~~
+varbinary
+307830300000000000000000000000000000000000000000000000000000
+~~END~~
+
+
+select cast(CAST(0x00 AS BINARY) as varbinary)
+GO
+~~START~~
+varbinary
+000000000000000000000000000000000000000000000000000000000000
+~~END~~
+
+
+select CAST('' AS BINARY(10))
+go
+~~START~~
+binary
+00000000000000000000
+~~END~~
+
+
+select cast(CAST('' AS BINARY(10)) as varbinary(10))
+go
+~~START~~
+varbinary
+00000000000000000000
+~~END~~
+
+
+select cast(CAST('' AS BINARY) as varbinary)
+go
+~~START~~
+varbinary
+000000000000000000000000000000000000000000000000000000000000
+~~END~~
+
+
+select cast(CAST('' AS varbinary) as BINARY)
+go
+~~START~~
+binary
+000000000000000000000000000000000000000000000000000000000000
 ~~END~~
 

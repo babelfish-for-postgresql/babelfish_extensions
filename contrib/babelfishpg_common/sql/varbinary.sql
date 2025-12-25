@@ -108,6 +108,11 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.BPCHAR AS sys.BBF_VARBINARY)
 WITH FUNCTION sys.bpcharvarbinary (sys.BPCHAR, integer, boolean) AS ASSIGNMENT;
 
+CREATE OR REPLACE FUNCTION sys.ncharvarbinary(sys.NCHAR, integer, boolean)
+RETURNS sys.BBF_VARBINARY
+AS 'babelfishpg_common', 'ncharvarbinary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.varbinarysysvarchar(sys.BBF_VARBINARY, integer, boolean)
 RETURNS sys.VARCHAR
 AS 'babelfishpg_common', 'varbinaryvarchar'
@@ -128,6 +133,27 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.BBF_VARBINARY AS pg_catalog.VARCHAR)
 WITH FUNCTION sys.varbinaryvarchar (sys.BBF_VARBINARY, integer, boolean) AS ASSIGNMENT;
+
+CREATE OR REPLACE FUNCTION sys.varbinarysysbpchar(sys.BBF_VARBINARY, integer, boolean)
+RETURNS sys.BPCHAR
+AS 'babelfishpg_common', 'varbinarybpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+ 
+CREATE CAST (sys.BBF_VARBINARY AS sys.BPCHAR)
+WITH FUNCTION sys.varbinarysysbpchar (sys.BBF_VARBINARY, integer, boolean) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.varbinarybpchar(sys.BBF_VARBINARY, integer, boolean)
+RETURNS pg_catalog.BPCHAR
+AS 'babelfishpg_common', 'varbinarybpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+ 
+CREATE CAST (sys.BBF_VARBINARY AS pg_catalog.BPCHAR)
+WITH FUNCTION sys.varbinarybpchar (sys.BBF_VARBINARY, integer, boolean) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.varbinarysysnchar(sys.BBF_VARBINARY, integer, boolean)
+RETURNS sys.NCHAR
+AS 'babelfishpg_common', 'varbinarynchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.int2varbinary(INT2, integer, boolean)
 RETURNS sys.BBF_VARBINARY
@@ -229,7 +255,9 @@ CREATE OPERATOR sys.= (
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_eq,
     COMMUTATOR = =,
-    RESTRICT = eqsel
+    RESTRICT = eqsel,
+    NEGATOR = <>,
+    JOIN = eqjoinsel
 );
 
 -- Support not equals
@@ -242,7 +270,10 @@ CREATE OPERATOR sys.<> (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_neq,
-    COMMUTATOR = <>
+    COMMUTATOR = <>,
+    RESTRICT = neqsel,
+    NEGATOR = =,
+    JOIN = neqjoinsel
 );
 
 -- Support greater than
@@ -255,7 +286,10 @@ CREATE OPERATOR sys.> (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_gt,
-    COMMUTATOR = <
+    COMMUTATOR = <,
+    RESTRICT = scalargtsel,
+    NEGATOR = <=,
+    JOIN = scalargtjoinsel
 );
 
 -- Support greater than equals
@@ -268,7 +302,10 @@ CREATE OPERATOR sys.>= (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_geq,
-    COMMUTATOR = <=
+    COMMUTATOR = <=,
+    RESTRICT = scalargesel,
+    NEGATOR = <,
+    JOIN = scalargejoinsel
 );
 
 -- Support less than
@@ -281,7 +318,10 @@ CREATE OPERATOR sys.< (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_lt,
-    COMMUTATOR = >
+    COMMUTATOR = >,
+    RESTRICT = scalarltsel,
+    NEGATOR = >=,
+    JOIN = scalarltjoinsel
 );
 
 -- Support less than equals
@@ -294,7 +334,10 @@ CREATE OPERATOR sys.<= (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_leq,
-    COMMUTATOR = >=
+    COMMUTATOR = >=,
+    RESTRICT = scalarlesel,
+    NEGATOR = >,
+    JOIN = scalarlejoinsel
 );
 
 

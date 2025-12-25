@@ -17,15 +17,19 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef_d.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_db_role_setting.h"
+#include "catalog/pg_depend.h"	/* Required in handle_bbf_view_binding_on_object_drop to access pg_rewrite dependencies */
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_rewrite.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/copy.h"
+#include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
 #include "commands/extension.h"
@@ -61,11 +65,13 @@
 #include "parser/scansup.h"
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
+#include "rewrite/rewriteSupport.h"
 #include "storage/lock.h"
 #include "storage/sinvaladt.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
@@ -79,6 +85,7 @@
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
+#include "pltsql_permissions.h"
 #include "pl_explain.h"
 #include "catalog.h"
 #include "dbcmds.h"
@@ -88,8 +95,17 @@
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
 #include "bbf_parallel_query.h"
+#include "extendedproperty.h"
+#include "utils/xml.h"
+
+#ifdef USE_LIBXML
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+#endif							/* USE_LIBXML */
 
 #define TDS_NUMERIC_MAX_PRECISION	38
+#define MAX_BINARY_SIZE 8000
 
 /* Constants for UNPIVOT info list structure */
 #define UNPIVOT_TAG_INDEX           0  /* "UNPIVOT" string tag */
@@ -111,6 +127,7 @@ typedef enum PltsqlInitPrivsOptions
 	DISCARD_INIT_PRIVS,
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
+
 
 /*****************************************
  * 			General Hooks
@@ -168,7 +185,12 @@ static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 static void transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt);
 static bool transform_unpivot_clause_recursive(Node **node, List **measure_cols, List **unpivot_src_cols);
+static void transform_tsql_select_statement(ParseState *pstate, SelectStmt *stmt);
+static void transform_percent_clause(ParseState *pstate, SelectStmt *stmt);
+static SelectStmt *handle_group_by_percent_count(SelectStmt *stmt);
 static List* filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **source_cols);
+static bool repair_broken_views(Query *parsetree);
+
 /*****************************************
  * 			Commands Hooks
  *****************************************/
@@ -217,7 +239,7 @@ extern bool called_for_tsql_itvf_func();
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
-static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
+static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr);
 static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
 static bool pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan);
 
@@ -249,7 +271,12 @@ static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
+static Node* pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr);
 static Oid get_domain_typmodin(Type typ);
+static void pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf);
+#ifdef USE_LIBXML
+static void openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str);
+#endif
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -266,6 +293,21 @@ static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNu
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
+static bool verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config);
+PG_FUNCTION_INFO_V1(persist_temp_oid_buffer_start_internal);
+
+/*********************************************************
+ * 			Weak Binding Views Related Declarations
+ *********************************************************/
+static bool bbf_view_is_broken(Oid viewOid);
+static char *bbf_view_get_definition(Oid viewOid);
+static bool bbf_view_set_broken(Oid viewOid, bool mark_broken);
+static void find_all_view_references(Node *node, List **view_oids);
+static Query *create_dummy_view_query_for_broken_view(Oid viewOid);
+static bool repair_broken_view_recursive(Oid viewOid, List *visitedViews);
+static bool is_dummy_view(Oid viewOid);
+static bool update_bbf_view_flags(Oid viewOid, uint64 flags_to_set, uint64 flags_to_clear, bool update_validity);
+static Oid get_view_oid_from_rule(Oid ruleOid);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -303,6 +345,8 @@ static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static replace_pltsql_function_defaults_hook_type prev_replace_pltsql_function_defaults_hook = NULL;
 static exprTypmod_hook_type prev_exprTypmod_hook = NULL;
+static post_transform_expr_recurse_hook_type prev_post_transform_expr_recurse_hook = NULL;
+static pre_transform_openxml_columns_hook_type prev_pre_transform_openxml_columns_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
@@ -322,7 +366,7 @@ static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
-static transform_unpivot_clause_hook_type pre_transform_unpivot_clause_hook = NULL;
+static transform_tsql_select_stmt_hook_type pre_transform_tsql_select_stmt_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static called_for_tsql_itvf_func_hook_type prev_called_for_tsql_itvf_func_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
@@ -335,8 +379,12 @@ static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
+static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
+#ifdef USE_LIBXML
+static openxml_set_namespaces_hook_type prev_openxml_set_namespaces_hook = NULL;
+#endif
 
 /*****************************************
  * 			Install / Uninstall
@@ -466,6 +514,17 @@ InstallExtendedHooks(void)
 	prev_exprTypmod_hook = exprTypmod_hook;
 	exprTypmod_hook = pltsql_exprTypmod;
 
+	prev_post_transform_expr_recurse_hook = post_transform_expr_recurse_hook;
+	post_transform_expr_recurse_hook = pltsql_post_transform_expr_recurse;
+
+	prev_pre_transform_openxml_columns_hook = pre_transform_openxml_columns_hook;
+	pre_transform_openxml_columns_hook = pre_transform_openxml_columns;
+
+	#ifdef USE_LIBXML
+	prev_openxml_set_namespaces_hook = openxml_set_namespaces_hook;
+	openxml_set_namespaces_hook = openxml_set_namespaces;
+	#endif
+
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
 
@@ -523,8 +582,8 @@ InstallExtendedHooks(void)
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
 	transform_pivot_clause_hook = transform_pivot_clause;
 
-	pre_transform_unpivot_clause_hook = transform_unpivot_clause_hook;
-	transform_unpivot_clause_hook = transform_unpivot_clause;
+	pre_transform_tsql_select_stmt_hook = transform_tsql_select_stmt_hook;
+	transform_tsql_select_stmt_hook = transform_tsql_select_statement;
 
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
@@ -589,6 +648,13 @@ InstallExtendedHooks(void)
 	ExecCheckOneRelPerms_hook = bbf_ExecCheckOneRelPerms;
 
 	get_domain_typmodin_hook = get_domain_typmodin;
+
+	prev_pre_QueryRewrite_hook = pre_QueryRewrite_hook;
+	pre_QueryRewrite_hook = repair_broken_views;
+
+	walk_view_rule_hook = mark_nodes_inside_view;
+
+	handle_target_view_hook = tsql_handle_target_view_hook;
 }
 
 void
@@ -631,6 +697,8 @@ UninstallExtendedHooks(void)
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = prev_replace_pltsql_function_defaults_hook;
 	exprTypmod_hook = prev_exprTypmod_hook;
+	post_transform_expr_recurse_hook = prev_post_transform_expr_recurse_hook;
+	pre_transform_openxml_columns_hook = prev_pre_transform_openxml_columns_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
@@ -651,7 +719,7 @@ UninstallExtendedHooks(void)
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	get_bbf_admin_oid_hook = prev_get_bbf_admin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
-	transform_unpivot_clause_hook = pre_transform_unpivot_clause_hook;
+	transform_tsql_select_stmt_hook = pre_transform_tsql_select_stmt_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
@@ -664,6 +732,10 @@ UninstallExtendedHooks(void)
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
+	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
+	#ifdef USE_LIBXML
+	openxml_set_namespaces_hook = prev_openxml_set_namespaces_hook;
+	#endif
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -676,6 +748,8 @@ UninstallExtendedHooks(void)
 	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
 	ExecCheckOneRelPerms_hook = NULL;
 	get_domain_typmodin_hook = NULL;
+	walk_view_rule_hook = NULL;
+	handle_target_view_hook = NULL;
 }
 
 /*****************************************
@@ -818,15 +892,31 @@ pltsql_GetNewTempObjectId()
 				TransamVariables->oidCount -= temp_oid_buffer_size;
 
 			/*
-			 * If TransamVariables->nextOid is below FirstNormalObjectId then we can start at FirstNormalObjectId here and
+			 * If TransamVariables->nextOid is below FirstNormalObjectId then 
+			 * we can start at FirstNormalObjectId here and
 			 * GetNewObjectId will return the right value on the next call.  
 			 */
 			if (tempOidStart < FirstNormalObjectId)
+			{
+				/* 
+				 * This situation should not be reached in an ideal state 
+				 * since oid < FirstNormalObjectId is during bootstrapping
+				 * or when the regular oid has also gone into a wraparound.
+				 * However, if it does we simply start from FirstNormalObjectId 
+				 */
+				elog(LOG, "TransamVariables->nextOid is below FirstNormalObjectId");
 				tempOidStart = FirstNormalObjectId;
+			}
 
 			/* If the OID range would wraparound, start from beginning instead. */
 			if (tempOidStart + temp_oid_buffer_size < tempOidStart)
 			{
+				/* Raise a notice */
+				elog(LOG, "Temp OID range wraparound reached while trying to allocate OIDs for tsql temp objects. This will lead to nextOid being assigned < FirstNormalObjectId");
+
+				/* Dump essential values like oid start and temp oid buffer size */
+				elog(LOG, "tempOidStart: %u, buffer_size: %u", tempOidStart, temp_oid_buffer_size);
+
 				tempOidStart = FirstNormalObjectId;
 
 				/* As in GetNewObjectId - wraparound in standalone mode (unlikely but possible) */
@@ -893,6 +983,84 @@ pltsql_GetNewTempObjectId()
 	return result;
 }
 
+Datum
+persist_temp_oid_buffer_start_internal(PG_FUNCTION_ARGS)
+{
+	/*
+	 * If we are not rdsadmin, we will not proceed.
+	 * persistence of temp_oid_buffer_start now happens during bbf 
+	 * initialization and upgrades by rdsadmin
+	 */
+	if (!superuser())
+		ereport(ERROR,
+                (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+                 (errmsg("must be superuser to use this function"))));
+
+	/* safety check, we should never get here during persisting in a Hot standby */
+	if (RecoveryInProgress())
+		elog(ERROR, "temp oid initialization cannot happen during recovery");
+	
+	/*
+	 * If temp_oid_buffer_start is already persisted, it will be loaded as GUC and
+	 * BUFFER_START_TO_OID will be valid. In such case, we can skip persisting and
+	 * simply return.
+	 */
+	if (OidIsValid(BUFFER_START_TO_OID))
+		PG_RETURN_BOOL(true);
+
+	/*
+	 * temp_oid_buffer_size = 0 would indicate that the feature is 
+	 * disabled, so persisting oid start is triggered from an upgrade.
+	 * 
+	 * This is unlikely because if temp_oid_buffer_size = 0, this should mean that 
+	 * the operator did this for the cluster in case of temp table related issue, 
+	 * which should also mean that the oid_start is persisted in that cluster.
+	 *
+	 * If an upgrade fails at this point, it means that temp tables weren't used
+	 * but temp_oid_buffer was disabled. Since this case is theoretically possible
+	 * we will not fail the upgrade here, and simply return.
+	 */
+	if (temp_oid_buffer_size <= 0)
+		PG_RETURN_BOOL(true);
+
+	/*
+	 * This means tempOidStart was changed but the GUC temp_oid_buffer_start was not
+	 * changed/persisted. We should avoid moving forward and error out to avoid persisting 
+	 * incorrect start.
+	 *
+	 * If a create/upgrade fails at this point, it means the the GUC value was not persisted
+	 * in the catalog. 
+	 * In this case, for mitigation, the operator can call the persist_temp_oid_buffer_start
+	 * procedure again.
+	 */
+	if (OidIsValid(TransamVariables->tempOidStart) && !OidIsValid(BUFFER_START_TO_OID))
+		ereport(ERROR,
+                (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+                 (errmsg("tempOidStart is already set in shmem. temp oid initialization cannot be done."))));
+
+	/*
+	 * In order to persist the setting, we can simply call pltsql_GetNewTempObjectId.
+	 * If during upgrade, we find that the temp_oid_buffer_start is already persisted,
+	 * then pltsql_GetNewTempObjectId will not try to persist it again.
+	 *
+	 * If the persistence fails, then temp_oid_buffer_start is initialized to INT_MIN
+	 */
+	pltsql_GetNewTempObjectId();
+
+	/*
+	 * This means that the persistence of temp_oid_buffer_start failed
+	 *
+	 * If a create/upgrade fails at this point, it means the the GUC value was not persisted
+	 * in the catalog. 
+	 * In this case, for mitigation, the operator can call the persist_temp_oid_buffer_start
+	 * procedure again.
+	 */
+	if (!OidIsValid(BUFFER_START_TO_OID))
+		elog(ERROR, "unable to persist temp_oid_buffer_start in pg_db_role_setting");
+
+	PG_RETURN_BOOL(true);
+}
+
 Oid
 pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 {
@@ -919,10 +1087,23 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	 */
 	Assert(temp_oid_buffer_size > 0);
 
+	/*
+	 * debug level logs when trying to generate a new temp object oid from the given catalog.
+	 */
+	elog(DEBUG1, "Generating new oid for tsql temp object from system catalog with oid: %u and relfilenode: %u", relation->rd_id, relation->rd_rel->relfilenode);
+
 	/* Generate new OIDs until we find one not in the table */
 	do
 	{
 		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * We do not expect a lot of collision, so this log should be fine
+		 */
+		if (retries > 0)
+		{
+			elog(LOG, "There is a collision with oid %u when determing oid for a temp object from system catalog with oid: %u", newOid, relation->rd_id);
+		}
 
 		newOid = pltsql_GetNewTempObjectId();
 
@@ -953,7 +1134,7 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 }
 
 static AclResult
-pltsql_ExecFuncProc_AclCheck(Oid funcid)
+pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 {
 	Oid userid = GetUserId();
 
@@ -978,13 +1159,33 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid)
 			 */
 			if (nspname != NULL && !is_shared_schema(nspname) &&
 				!is_schema_from_db(schema_id, get_cur_db_id()))
+			{
 				userid = GetSessionUserId();
+			}
+			else
+			{
+				/* If user already has the permission then return */
+				if (object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE) == ACLCHECK_OK)
+					return ACLCHECK_OK;
+				/*
+				 * Ownership Chaining Logic for object references inside function/procedures.
+				 * Only applicable for same-db ownership chaining cases.
+				 * check if we have ownership chaining enabled.
+				 */
+				if (pltsql_enable_ownership_chaining && IsA(expr, FuncExpr) && OidIsValid(get_current_func_oid()) &&
+				   is_valid_func_ownership_chain(expr, get_func_owner(((FuncExpr *)expr)->funcid)))
+				{
+					if (nspname)
+						pfree(nspname);
+					return ACLCHECK_OK;
+				}
+			}
 			if (nspname)
 				pfree(nspname);
 		}
 	}
 	else if (prev_ExecFuncProc_AclCheck_hook)
-		return prev_ExecFuncProc_AclCheck_hook(funcid);
+		return prev_ExecFuncProc_AclCheck_hook(funcid, expr);
 
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }
@@ -1051,7 +1252,9 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 					 */
 					if (nspname != NULL && !is_shared_schema(nspname))
 					{
-						if (OidIsValid(perminfo->checkAsUser))
+						Oid relOwner = get_rel_owner(relOid);
+
+						if (OidIsValid(perminfo->checkAsUser) && !isTempNamespace(schema_id))
 						{
 							Oid loginId = get_login_for_user(perminfo->checkAsUser, nspname);
 							if (OidIsValid(loginId))
@@ -1059,6 +1262,10 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 						}
 						else
 							perminfo->checkAsUser = GetSessionUserId();
+						if (pltsql_enable_ownership_chaining && is_valid_func_ownership_chain(perminfo, relOwner))
+						{
+							perminfo->checkAsUser = relOwner;
+						}
 					}
 					if (nspname)
 						pfree(nspname);
@@ -1517,6 +1724,7 @@ post_transform_delete(ParseState *pstate, DeleteStmt *stmt, Query *query)
 {
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
+
 
 	/* Handle DELETE TOP */
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
@@ -2392,11 +2600,18 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			original_name = extract_identifier(colname_start, NULL);
 			actual_alias_len = strlen(original_name);
 
-			/* Maximum alias_len can be 63 after truncation. If alias_len is smaller than actual_alias_len,
-			 * this means Identifier is truncated and it's last 32 bytes would be MD5 hash.
+			/* 
+			 * Maximum alias_len can be 63 (i.e. NAMEDATALEN-1), 
+			 * and minimun alias_len can be 32 (MD5_HASH_LEN) after truncation. 
+			 * Identifier is truncated if actual_alias_len is more than NAMEDATALEN
+			 * and it's last 32 bytes would be MD5 hash. So we only need to replace 
+			 * first (alias_len - MD5_HASH_LEN) bytes with its original name
 			 */
-			if(actual_alias_len > alias_len)
+			if (actual_alias_len >= NAMEDATALEN)
 			{
+				/* Sanity checks */
+				Assert(actual_alias_len > alias_len && alias_len >= 32);
+
 				/* First 32 characters of original_name are assigned to alias. */
 				/* cppcheck-suppress invalidFunctionArg */
 				memcpy(alias, original_name, (alias_len - 32));
@@ -2408,9 +2623,20 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 
 				alias[alias_len] = '\0';
 			}
-			else	/* Identifier is not truncated. */
+			else
 			{
-				memcpy(alias, original_name, actual_alias_len);
+				/* 
+				 * Identifier is not truncated, but might have been 
+				 * replaced (i.e. "Character" -> "bpchar") in some cases.
+				 */
+				if (actual_alias_len == alias_len)
+					memcpy(alias, original_name, actual_alias_len);
+				else
+				{
+					pfree(alias);
+					alias = palloc0(Min(NAMEDATALEN-1, actual_alias_len) + 1);
+					memcpy(alias, original_name, Min(NAMEDATALEN-1, actual_alias_len));
+				}
 			}
 			res->name = alias;
 		}
@@ -3132,11 +3358,44 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 		(*prev_object_access_hook) (access, classId, objectId, subId, arg);
 
 	if (access == OAT_DROP && classId == RelationRelationId)
+	{	
+		char relkind;
+		relkind = get_rel_relkind(objectId);
+
 		pltsql_drop_view_definition(objectId);
+		
+		/* Handle view dependencies for tables and views */
+		if (sql_dialect == SQL_DIALECT_TSQL && IS_TDS_CONN() &&
+			(relkind == RELKIND_RELATION || relkind == RELKIND_VIEW))
+		{
+			ObjectAddress obj;
 
+			obj.classId = RelationRelationId;
+			obj.objectId = objectId;
+			obj.objectSubId = subId;
+
+			/* Call view dependency handling function */
+			handle_bbf_view_binding_on_object_drop(&obj, false);
+		}
+	}
 	if (access == OAT_DROP && classId == ProcedureRelationId)
-		pltsql_drop_func_default_positions(objectId);
+	{
+		if(subId != -1)
+			pltsql_drop_func_default_positions(objectId);
 
+		/* Handle view dependencies for functions */
+		if (sql_dialect == SQL_DIALECT_TSQL && IS_TDS_CONN() && subId == -1)
+		{
+			ObjectAddress obj;
+			
+			obj.classId = ProcedureRelationId;
+			obj.objectId = objectId;
+			obj.objectSubId = 0;
+			
+			/* Call view dependency handling for functions */
+			handle_bbf_view_binding_on_object_drop(&obj, false);
+		}
+	}
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
@@ -3390,6 +3649,7 @@ pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+
 	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
 											EXPR_KIND_LIMIT, "LIMIT",
 											LIMIT_OPTION_COUNT);
@@ -3421,6 +3681,13 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	char	   *physical_schemaname;
 	const char *logical_schemaname;
 	char	   *original_query = get_original_query_string();
+	bool        is_strong_view;
+
+	is_strong_view = false;
+	if (pltsql_weak_view_binding)
+		is_strong_view = get_is_schemabinding_view();
+	else
+		is_strong_view = true;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -3490,6 +3757,13 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	flag_validity |= BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4;
 	flag_values |= BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4;
 
+	/* Set the strong/weak view flag */
+	if (!is_strong_view)
+	{
+		flag_validity |= BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW;
+		flag_values |= BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW;
+	}
+	
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = CStringGetTextDatum(logical_schemaname);
 	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
@@ -3566,8 +3840,7 @@ pltsql_drop_view_definition(Oid objectId)
 
 	/* Fetch the relation */
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
-
-	scantup = search_bbf_view_def(bbf_view_def_rel, dbid, logical_schemaname, objectname);
+	scantup = search_bbf_view_def(bbf_view_def_rel, objectId);
 
 	if (HeapTupleIsValid(scantup))
 	{
@@ -4811,11 +5084,71 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 	return argsprinted;
 }
 
+/*
+ * update_rte_perms_info_walker
+ *		Recursively scan a query or expression tree and set the checkAsUser
+ *		field to corresponding TSQL login in RTEPermissionInfos of view RTEs of Query.
+ */
+static bool
+update_rte_perms_info_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Query))
+	{
+		ListCell   *l;
+		Query	*qry = (Query *) node;
+
+		foreach(l, qry->rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+
+			if (rte->perminfoindex != 0 && get_rel_relkind(rte->relid) == RELKIND_VIEW)
+			{
+				Oid nspid = get_rel_namespace(rte->relid);
+
+				if (OidIsValid(nspid))
+				{
+					char *physical_schemaname = NULL;
+					RTEPermissionInfo *perminfo = NULL;
+
+					physical_schemaname = get_namespace_name(nspid);
+					perminfo = getRTEPermissionInfo(qry->rteperminfos, rte);
+
+					if (physical_schemaname && !is_shared_schema(physical_schemaname))
+					{
+ 						Oid relOwner = get_rel_owner(rte->relid);
+  		  
+  		 				if (pltsql_enable_ownership_chaining && is_valid_func_ownership_chain(perminfo, relOwner))
+  		 					perminfo->checkAsUser = relOwner;
+  		 				else if (OidIsValid(perminfo->checkAsUser))
+						{
+							Oid loginId = get_login_for_user(perminfo->checkAsUser, physical_schemaname);
+							if (OidIsValid(loginId))
+								perminfo->checkAsUser = loginId;
+						}
+						else
+							perminfo->checkAsUser = GetSessionUserId();
+					}
+					if (physical_schemaname)
+						pfree(physical_schemaname);
+				}
+			}
+		}
+		return query_tree_walker(qry, update_rte_perms_info_walker, NULL, 0);
+	}
+	return expression_tree_walker(node, update_rte_perms_info_walker, NULL);
+}
+
 static PlannedStmt *
 pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 {
 	PlannedStmt *plan;
 	PLtsql_execstate *estate = NULL;
+
+	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
+		update_rte_perms_info_walker((Node *) parse, NULL);
 
 	if (pltsql_explain_analyze)
 	{
@@ -4935,84 +5268,77 @@ pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 }
 
 /*
- * To properly persist a new value of temp_oid_buffer_start, we must set it
- * in pg_settings, as it would in an ALTER DATABASE ... SET ... command.
+ * To properly persist a new value of babelfishpg_tsql.temp_oid_buffer_start, we must set it
+ * in pg_db_role_setting, as it would in an ALTER DATABASE ... SET ... command.
+ *
+ * This persistence can only be done as rdsadmin, because temp_oid_buffer_start is SUSET GUC.
+ * And any error in this function means failure during babelfish initialization or upgrade.
  *
  * Returns true on success.
  */
-static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
+static bool
+set_and_persist_temp_oid_buffer_start(Oid new_oid)
 {
-	HeapTuple	tuple, newtuple;
-	Relation	rel;
-	ScanKeyData scankey[2];
-	SysScanDesc scan;
-	const char *babelfish_db_name = NULL;
-	char 	   *new_oid_str = NULL;
-	Oid			babelfish_db_id = InvalidOid;
-	int 		translated_oid = OID_TO_BUFFER_START(new_oid);
-	Datum		repl_val[Natts_pg_db_role_setting];
-	bool		repl_null[Natts_pg_db_role_setting];
-	bool		repl_repl[Natts_pg_db_role_setting];
-	Datum		datum;
-	ArrayType  *a;
+	const char  *babelfish_db_name = NULL;
+	char        *config_name = "babelfishpg_tsql.temp_oid_buffer_start";
+	char        *altdbstmt;
+	int         translated_oid = OID_TO_BUFFER_START(new_oid);
+	List        *parsetree_list;
+	Node        *stmt;
+	PlannedStmt *wrapper;
 
 	babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
 	if (!babelfish_db_name)
 		return false;
 
-	babelfish_db_id = get_database_oid(babelfish_db_name, true);
-
-	if (!OidIsValid(babelfish_db_id))
+	altdbstmt = psprintf("ALTER DATABASE %s SET %s = %d", babelfish_db_name, config_name, translated_oid);
+	parsetree_list = raw_parser(altdbstmt, RAW_PARSE_DEFAULT);
+	if (list_length(parsetree_list) != 1)
+	{
+		elog(WARNING, "Implicit VariableSet stmt during temp OID buffer initialization is incorrect or corrupt");
 		return false;
-
-	new_oid_str = psprintf("%d", translated_oid);
-
-	rel = table_open(DbRoleSettingRelationId, RowExclusiveLock);
-	ScanKeyInit(&scankey[0],
-				Anum_pg_db_role_setting_setdatabase,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(babelfish_db_id));
-	ScanKeyInit(&scankey[1],
-				Anum_pg_db_role_setting_setrole,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(InvalidOid));
-	scan = systable_beginscan(rel, DbRoleSettingDatidRolidIndexId, true,
-							  NULL, 2, scankey);
-	tuple = systable_getnext(scan);
-
-	/* temp_oid_buffer_start has a default setting, so it should be there already. */
-	if (!HeapTupleIsValid(tuple))
+	}
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+	if (!verify_stmt_alterdatabaseset(stmt,babelfish_db_name,config_name))
+	{
+		elog(WARNING, "Implicit VariableSet stmt during temp OID buffer initialization is incorrect or corrupt");
 		return false;
+	}
 
-	memset(repl_repl, false, sizeof(repl_repl));
-	repl_repl[Anum_pg_db_role_setting_setconfig - 1] = true;
-	repl_null[Anum_pg_db_role_setting_setconfig - 1] = false;
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(altdbstmt);
 
-	Assert(strlen(new_oid_str) > 0);
-	datum = CStringGetTextDatum(psprintf("%s=%s", "babelfishpg_tsql.temp_oid_buffer_start", new_oid_str));
-	a = construct_array(&datum, 1,
-							TEXTOID,
-							-1, false, TYPALIGN_INT);
-
-	repl_val[Anum_pg_db_role_setting_setconfig - 1] =
-		PointerGetDatum(a);
-
-	newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
-									repl_val, repl_null, repl_repl);
-	
-	/*
-	 * During unit tests, this will crash if it's executed multiple times in the same transaction since
-	 * concurrent tuple updates are not allowed.
-	 */
-	if (!TEST_persist_temp_oid_buffer_start_disable_catalog_update)
-		CatalogTupleUpdate(rel, &tuple->t_self, newtuple);
-
-	systable_endscan(scan);
-
-	table_close(rel, RowExclusiveLock);
+	ProcessUtility(wrapper,
+				altdbstmt,
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+	CommandCounterIncrement();
 
 	temp_oid_buffer_start = translated_oid;
 
+	return true;
+}
+
+static bool
+verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config)
+{
+	AlterDatabaseSetStmt*	stmt = (AlterDatabaseSetStmt*) n;
+	VariableSetStmt* 		vsstmt = stmt->setstmt;
+	if (!stmt->dbname || strcmp(stmt->dbname, dbname) != 0)
+		return false;
+	if (!vsstmt || vsstmt->kind != VAR_SET_VALUE 
+		|| !vsstmt->name || strcmp(vsstmt->name, config) != 0)
+		return false;
 	return true;
 }
 
@@ -5025,7 +5351,7 @@ pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg)
 static EphemeralNamedRelation
 pltsql_get_tsql_enr_from_oid(const Oid oid)
 {
-	return temp_oid_buffer_size > 0 ? GetENRTempTableWithOid(oid) : NULL;
+	return temp_oid_buffer_size > 0 ? GetENRTempTableWithOid(oid, true) : NULL;
 }
 
 /*
@@ -5458,6 +5784,214 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 							  COERCE_EXPLICIT_CALL, 
 							  -1);
 	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
+}
+
+/*
+ * Handle GROUP BY case for PERCENT clause transformation
+ *
+ * Creates a subquery to count distinct groups since PostgreSQL doesn't support
+ * COUNT(DISTINCT col1, col2, ...) with multiple columns.
+ *
+ * Transforms the input statement to select only GROUP BY columns, then wraps it
+ * in an outer COUNT(*) query to get the total number of distinct groups.
+ *
+ * Example: SELECT col1, col2 FROM table GROUP BY col1, col2 HAVING condition
+ * Becomes: SELECT COUNT(*) FROM (SELECT col1, col2 FROM table GROUP BY col1, col2 HAVING condition) AS grouped_data
+ */
+static SelectStmt *
+handle_group_by_percent_count(SelectStmt *groupbySelectStmt)
+{
+    /* For GROUP BY queries, we need to count the number of groups */
+    SelectStmt        *outerCountStmt = makeNode(SelectStmt);
+    RangeSubselect    *subselect      = makeNode(RangeSubselect);
+    FuncCall          *countFunc;         /* COUNT function for total rows */
+    ResTarget         *countTarget;       /* Target entry for COUNT result */
+    ListCell          *lc;
+    
+    /* Keep only GROUP BY columns in target list */
+    groupbySelectStmt->targetList = NIL;
+    foreach(lc, groupbySelectStmt->groupClause)
+    {
+        ResTarget *rt = makeNode(ResTarget);
+        rt->name = NULL;
+        rt->indirection = NIL;
+        rt->val = copyObject(lfirst(lc));
+        rt->location = -1;
+        groupbySelectStmt->targetList = lappend(groupbySelectStmt->targetList, rt);
+    }
+    
+    /* Wrap in another COUNT(*) query */
+    subselect->subquery = (Node *) groupbySelectStmt;
+    subselect->alias = makeAlias("grouped_data", NIL);
+    
+    outerCountStmt->fromClause = list_make1(subselect);
+    
+    /* Create COUNT(*) for outer query */
+    countFunc = makeNode(FuncCall);
+    countFunc->funcname = list_make1(makeString("count"));
+    countFunc->args = NIL;
+    countFunc->agg_star = true;
+    countFunc->agg_distinct = false;
+    countFunc->location = -1;
+    
+    countTarget = makeNode(ResTarget);
+    countTarget->name = NULL;
+    countTarget->indirection = NIL;
+    countTarget->val = (Node *) countFunc;
+    countTarget->location = -1;
+    
+    outerCountStmt->targetList = list_make1(countTarget);
+    
+    return outerCountStmt;
+}
+
+/*
+ * Common hook to transform TSQL unpivot and TOP N Percent
+ */
+static void
+transform_tsql_select_statement(ParseState *pstate, SelectStmt *stmt)
+{
+	transform_percent_clause(pstate, stmt);
+	transform_unpivot_clause(pstate, stmt);
+}
+
+/*
+ * Transform T-SQL PERCENT clause in SELECT statements
+ *
+ * Converts "SELECT TOP N PERCENT ..." to "SELECT TOP CEIL((COUNT(*) * N) / 100) ..."
+ * by replacing the limitCount with a calculated expression based on total row count.
+ *
+ * For GROUP BY queries, uses subquery approach to count distinct groups: 
+ * SELECT COUNT(*) FROM (SELECT group_cols FROM table GROUP BY group_cols) AS grouped_data
+ * Function : handle_group_by_percent_count(SelectStmt *groupbySelectStmt) 
+ *
+ * For regular queries, uses simple COUNT(*) from the table.
+ */
+static void 
+transform_percent_clause(ParseState *pstate, SelectStmt *stmt)
+{
+    /* To create inner select count(*) from t for percent */
+    SelectStmt    *totalCountSelectStmt; 
+    
+    /* Variables for building percentage calculation expression */
+    SubLink       *countSublink;     /* Subquery link for wrap select COUNT(*).. */
+    A_Expr        *mulExpr;          /* to multiply N*(select count(*)..) */
+    A_Expr        *divExpr;          /* Division expression to divide by 100 */
+    A_Const       *intConst;         /* Integer constant (100) */
+    FuncCall      *ceilFunc;         /* CEIL function for rounding */
+    
+    /* Check whether TSQL and limit value present */
+	if (sql_dialect != SQL_DIALECT_TSQL || stmt->limitCount == NULL)
+        return;
+    
+    if (stmt->limitOption != LIMIT_OPTION_PERCENT)
+        return;
+    else
+        stmt->limitOption = LIMIT_OPTION_COUNT;
+
+    /* Add validation check for percentage value > 100 */
+    if (IsA(stmt->limitCount, A_Const))
+    {
+        A_Const *const_val = (A_Const *) stmt->limitCount;
+        if (const_val->val.ival.type == T_Integer)
+        {
+            int percent_val = const_val->val.ival.ival;
+            if (percent_val > 100)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("Percent values must be between 0 and 100.")));
+        }
+        else if (const_val->val.fval.type == T_Float)
+        {
+            float8 percent_val = strtod(const_val->val.fval.fval, NULL);
+            if (percent_val > 100.0)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("Percent values must be between 0 and 100.")));
+        }
+    }
+
+    /* Make a deep copy of the statement for the COUNT query */
+    totalCountSelectStmt = (SelectStmt *) copyObject(stmt);
+    
+    /* Clear limit, offset, and sorting from the copy */
+    totalCountSelectStmt->limitCount = NULL;
+    totalCountSelectStmt->limitOffset = NULL;
+    totalCountSelectStmt->sortClause = NIL;
+    
+    /* 
+    * Since group by with (count(*) in targetList) doesn't return single record 
+    * Hence We will rewrite the totalCountSelectStmt query as - 
+    * select count(*) from (select group_by_columns from t group by col1, col2, ...) as t
+    * instead of (select count(*) from t)
+    */
+    if (stmt->groupClause != NIL)
+    {
+        totalCountSelectStmt = handle_group_by_percent_count(totalCountSelectStmt);
+    }
+    else
+    {
+        FuncCall      *countFunc;       /* COUNT function for total rows */
+        ResTarget     *countTarget;     /* Target entry for COUNT result */
+
+        /* Regular query without GROUP BY - use COUNT(*) */
+        countFunc = makeNode(FuncCall);
+        countFunc->funcname = list_make1(makeString("count"));
+        countFunc->args = NIL;
+        countFunc->agg_star = true;
+        countFunc->agg_distinct = false;
+        countFunc->location = -1;
+        
+        countTarget = makeNode(ResTarget);
+        countTarget->name = NULL;
+        countTarget->indirection = NIL;
+        countTarget->val = (Node *) countFunc;
+        countTarget->location = -1;
+        
+        totalCountSelectStmt->targetList = list_make1(countTarget);
+    }
+	
+	/* Create subquery node to store transformed select count(*).. query */
+	countSublink = makeNode(SubLink);
+	countSublink->subLinkType = EXPR_SUBLINK;
+	countSublink->subselect = (Node *) totalCountSelectStmt;
+	countSublink->location = -1;
+	
+	/* Create multiplication: (COUNT(*) * limitCount) */
+	mulExpr = makeNode(A_Expr);
+	mulExpr->kind = AEXPR_OP;
+	mulExpr->name = list_make1(makeString("*"));
+	mulExpr->lexpr = (Node *) countSublink;
+	mulExpr->rexpr = stmt->limitCount;
+	mulExpr->location = -1;
+	
+	/* Create division: ((COUNT(*) * limitCount) / 100) */
+	divExpr = makeNode(A_Expr);
+	divExpr->kind = AEXPR_OP;
+	divExpr->name = list_make1(makeString("/"));
+	divExpr->lexpr = (Node *) mulExpr;
+	
+	/* Create A_Const for float 100.0 to ensure floating-point division */
+	intConst = makeNode(A_Const);
+	intConst->val.fval.type = T_Float;
+	intConst->val.fval.fval = pstrdup("100.0");
+	intConst->isnull = false;
+	intConst->location = -1;
+	
+	divExpr->rexpr = (Node *) intConst;
+	divExpr->location = -1;
+
+	/* Create CEIL function call-  ceil (((COUNT(*) * limitCount) / 100))  */
+    ceilFunc = makeNode(FuncCall);
+    ceilFunc->funcname = list_make1(makeString("ceil"));
+    ceilFunc->args = list_make1(divExpr);  // Add the division expression as argument
+    ceilFunc->agg_star = false;
+    ceilFunc->agg_distinct = false;
+    ceilFunc->location = -1;
+
+    /* Replace the original limitCount with CEIL function */
+    stmt->limitCount = (Node *) ceilFunc;
+
 }
 
 /*
@@ -6527,6 +7061,242 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 }
 
 /*
+ * fetch_table_schema - Extract column metadata from a table for OPENXML processing
+ *
+ * This function retrieves column definitions from an existing table and transforms
+ * them into RangeTableFuncCol nodes with appropriate XPath expressions. It handles
+ * column name, type information, and creates expressions using tsql_openxml_get_colpattern function.
+ * 
+ * Parameters:
+ *   relation - The table to extract schema information from
+ *   flag - The OPENXML flag parameter that controls XML mapping behavior
+ *
+ * Returns:
+ *   List of RangeTableFuncCol nodes representing the table's columns
+ */
+static List *
+fetch_table_schema(RangeVar *relation, Node *flag)
+{
+	List *columns = NIL;
+	
+	if (relation != NULL)
+	{
+		Relation    rel;
+		ScanKeyData skey[1];
+		SysScanDesc scan;
+		HeapTuple   tuple;
+		Relation    attrel;
+		
+		/* Open the relation to get its schema */
+		rel = relation_openrv(relation, AccessShareLock);
+		
+		if (rel == NULL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("table \"%s\" does not exist", 
+							relation->relname)));
+		}
+		
+		/* Open pg_attribute catalog */
+		attrel = table_open(AttributeRelationId, AccessShareLock);
+		
+		/* Set up scan key for this relation */
+		ScanKeyInit(&skey[0],
+					Anum_pg_attribute_attrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(RelationGetRelid(rel)));
+		
+		scan = systable_beginscan(attrel, AttributeRelidNumIndexId, true,
+								  NULL, 1, skey);
+		
+		/* Process each column */
+		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+		{
+			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+			RangeTableFuncCol *fc;
+			char *colname;
+			ArrayType *attoptions;
+			Datum datum;
+			bool isnull;
+			
+			/* Skip dropped columns, system columns and identity columns */
+			if (att->attisdropped || att->attnum <= 0 || att->attidentity)
+				continue;
+			
+			/* Get original column name from attoptions */
+			datum = heap_getattr(tuple, Anum_pg_attribute_attoptions,
+								 RelationGetDescr(attrel), &isnull);
+			
+			if (!isnull)
+			{
+				attoptions = DatumGetArrayTypeP(datum);
+				colname = get_value_by_name_from_array(attoptions, ATTOPTION_BBF_ORIGINAL_NAME);
+			}
+			else
+			{
+				colname = pstrdup(NameStr(att->attname));
+			}
+			
+			/* Create a column definition */
+			fc = makeNode(RangeTableFuncCol);
+			fc->colname = pstrdup(colname);
+			
+			/* Create a TypeName node for the column type */
+			fc->typeName = makeTypeNameFromOid(att->atttypid, att->atttypmod);
+			
+			/* Set the column expression to the generated XPath */
+			fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), list_make2(makeStringConst(colname, -1), flag), COERCE_EXPLICIT_CALL, -1);
+			fc->coldefexpr = NULL;
+			fc->location = -1;
+			
+			columns = lappend(columns, fc);
+		}
+		
+		systable_endscan(scan);
+		table_close(attrel, AccessShareLock);
+		relation_close(rel, AccessShareLock);
+	}
+
+	return columns;
+}
+
+/*
+ * pre_transform_openxml_columns - Transform OPENXML syntax to XMLTABLE-compatible format
+ *
+ * This hook function converts TSQL OPENXML syntax into PostgreSQL XMLTABLE format
+ * by transforming the RangeTableFunc structure. It extracts the document handle
+ * and flag from the namespaces list, creates a document expression using
+ * tsql_openxml_get_xmldoc, and generates appropriate XPath column expressions
+ * using tsql_openxml_get_colpattern for TSQL compatibility.
+ */
+static void
+pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
+{
+	Node       *tsql_docid_node;
+	Node       *tsql_flag;
+	RangeVar   *table_ref;
+	ResTarget  *res = makeNode(ResTarget);
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	tsql_docid_node = rtf->docexpr;
+	tsql_flag = linitial(rtf->namespaces);
+
+	rtf->namespaces = NIL;
+	rtf->docexpr = NULL;
+
+	/* Storing doc_id in the rtf->namespaces field */
+	res->name = pstrdup("openxml_doc_id");
+	res->name_location = -1;
+	res->indirection = NIL;
+	res->val = tsql_docid_node;
+	res->location = -1;
+	rtf->namespaces = list_make1(res);
+
+	/* 
+	 * Set the document expression to retrieve the XML document using the document handle.
+	 * This creates a function call to tsql_openxml_get_xmldoc which retrieves the  previously
+	 * prepared XML document based on the document ID from sp_xml_preparedocument.
+	 */
+	rtf->docexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_xmldoc")), list_make1(tsql_docid_node), COERCE_EXPLICIT_CALL, -1);
+
+	if (rtf->columns != NIL)
+	{
+		Node  *first_col = linitial(rtf->columns);
+		
+		/* Check if we have exactly one column and it's a table reference */
+		if (list_length(rtf->columns) == 1 && IsA(first_col, RangeVar))
+		{
+			table_ref = (RangeVar *) first_col;
+			/* Fetch the table schema and generate column definitions with appropriate XPath expressions */
+			rtf->columns = fetch_table_schema(table_ref, tsql_flag);
+		}
+		else
+		{
+			ListCell *lc;
+			
+			foreach(lc, rtf->columns)
+			{
+				RangeTableFuncCol *fc = (RangeTableFuncCol *) lfirst(lc);
+
+				/* If no column expression is provided, generate one based on the flag */
+				if(fc->colexpr == NULL && tsql_flag != NULL)
+				{
+					/* 
+					 * To get original column name, utilize location of ColumnDef and query string. 
+					 * For colexpr, we need orignal name of columns (no downcase or uppercase) 
+					 */
+					const char *column_name_start = pstate->p_sourcetext + fc->location;
+					char	   *original_name = extract_identifier(column_name_start, NULL);
+
+					if (original_name == NULL)
+						original_name = fc->colname;
+					/*
+					 * Create an XPath expression for the column using tsql_openxml_get_colpattern.
+					 * This builds a function call to generate the appropriate XPath pattern
+					 * based on the column name and the OPENXML flag parameter
+					 */
+					fc->colexpr = (Node *) makeFuncCall(list_make2(makeString("sys"), makeString("tsql_openxml_get_colpattern")), list_make2(makeStringConst(original_name, -1), tsql_flag), COERCE_EXPLICIT_CALL, -1);
+				}
+			}
+		}
+	}
+}
+
+#ifdef USE_LIBXML
+static void
+openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str)
+{
+	int	               doc_id;
+	xmltype	              *ns_data;
+	char	             **ns_names;
+	char	             **ns_uris;
+	int                    ns_count;
+
+	/*
+	 * We will reach here in only two cases, Either when using function XMLTable or OPENXML. 
+	 * And since XMLTable syntax is not supported by ANTLR, single dialect check is enough
+	 * to identify that this is for OPENXML.
+	 */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	doc_id = pg_strtoint32(doc_id_str);
+	get_xml_data_and_namespace_data(doc_id, NULL, &ns_data);
+	if (ns_data == NULL)
+		return;
+
+	extract_namespaces_from_xml(ns_data, &ns_names, &ns_uris, &ns_count);
+
+	/* register namespaces, if any */
+	if (ns_count > 0)
+	{
+		for (int i = 0; i < ns_count; i++)
+		{
+			char	*ns_name;
+			char	*ns_uri;
+
+			if (ns_names[i] == NULL || ns_uris[i] == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("neither namespace name nor URI may be null")));
+
+			ns_name = ns_names[i];
+			ns_uri = ns_uris[i];
+
+			if (xmlXPathRegisterNs(xpathctx,
+								   pg_xmlCharStrndup_wrapper(ns_name, strlen(ns_name)),
+								   pg_xmlCharStrndup_wrapper(ns_uri, strlen(ns_uri))) != 0)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_DATA_EXCEPTION,
+							"could not set XML namespace");
+		}
+	}
+}
+#endif
+
+/*
  * pltsql_ExecUpdateResultTypeTL
  *
  * Update typmod of all the entries of a previously initialized tuple descriptor, 
@@ -6617,4 +7387,1010 @@ get_domain_typmodin(Type typ)
 		ReleaseSysCache(tup);
 	}
 	return typmodin;
+}
+
+/*
+ * Get the OID of a view from its rule
+ *
+ * This function looks up a rule in pg_rewrite and returns the OID of the
+ * view that the rule belongs to (from the ev_class field).
+ *
+ * Parameters:
+ * - ruleOid: OID of the rule
+ * - pg_rewrite_rel: Open relation handle for pg_rewrite
+ *
+ * Returns:
+ * - The OID of the view if found
+ * - InvalidOid if the rule wasn't found or doesn't belong to a view
+ */
+static Oid
+get_view_oid_from_rule(Oid ruleOid)
+{
+	ScanKeyData 	key[1];
+	SysScanDesc 	scan;
+	HeapTuple 		tuple;
+	Relation 		pg_rewrite_rel;
+	Form_pg_rewrite rule_form;
+	Oid 			viewOid = InvalidOid;
+
+	pg_rewrite_rel = table_open(RewriteRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_rewrite_oid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(ruleOid));
+				
+	scan = systable_beginscan(pg_rewrite_rel, RewriteOidIndexId, true,
+							NULL, 1, key);
+							
+	tuple = systable_getnext(scan);
+	
+	if (!HeapTupleIsValid(tuple))
+	{
+		elog(ERROR, "cache lookup failed for rule with OID %u", ruleOid);
+	}
+	rule_form = (Form_pg_rewrite) GETSTRUCT(tuple);
+	viewOid = rule_form->ev_class;
+	
+	systable_endscan(scan);
+	table_close(pg_rewrite_rel, AccessShareLock);
+	return viewOid;
+}
+
+/*
+ * Update a view's flags in its babelfish_view_def tuple
+ *
+ * Parameters:
+ * - tuple: The view definition tuple
+ * - rel: The relation descriptor for babelfish_view_def
+ * - flags_to_set: Flags to set (OR with existing flags)
+ * - flags_to_clear: Flags to clear (AND NOT with existing flags)
+ * - update_validity: If true, update flag_validity as well
+ *
+ * Returns:
+ * - The updated tuple (caller must free)
+ * - NULL if the update failed
+ */
+static bool
+update_bbf_view_flags(Oid viewOid, uint64 flags_to_set, uint64 flags_to_clear, bool update_validity)
+{
+	HeapTuple 	tuple, newtup;
+	Relation 	brel;
+	Datum 		values_datum, 
+				validity_datum;
+	uint64 		flag_values, 
+				flag_validity;
+	bool 		isnull;
+	bool 		updated = false;
+
+	Datum 		values[BBF_VIEW_DEF_NUM_COLS];
+	bool 		nulls[BBF_VIEW_DEF_NUM_COLS];
+	bool 		replaces[BBF_VIEW_DEF_NUM_COLS];
+	
+	brel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
+	tuple = search_bbf_view_def(brel, viewOid);
+	
+	if (!HeapTupleIsValid(tuple))
+	{
+		table_close(brel, RowExclusiveLock);
+		return false;
+	}
+		
+	values_datum = heap_getattr(tuple, Anum_bbf_view_def_flag_values,
+							RelationGetDescr(brel), &isnull);
+	if (isnull)
+	{
+		heap_freetuple(tuple);
+		table_close(brel, RowExclusiveLock);
+		return false;
+	}
+		
+	flag_values = DatumGetUInt64(values_datum);
+	flag_values = (flag_values | flags_to_set) & ~flags_to_clear;
+	
+	validity_datum = heap_getattr(tuple, Anum_bbf_view_def_flag_validity,
+							RelationGetDescr(brel), &isnull);
+	flag_validity = DatumGetUInt64(validity_datum);
+
+	if (update_validity)
+		flag_validity = (flag_validity | flags_to_set) & ~flags_to_clear;
+	
+	memset(values, 0, sizeof(values));
+	memset(nulls, false, sizeof(nulls));
+	memset(replaces, false, sizeof(replaces));
+	
+	replaces[Anum_bbf_view_def_flag_values - 1] = true;
+	values[Anum_bbf_view_def_flag_values - 1] = UInt64GetDatum(flag_values);
+	
+	if (update_validity)
+	{
+		replaces[Anum_bbf_view_def_flag_validity - 1] = true;
+		values[Anum_bbf_view_def_flag_validity - 1] = UInt64GetDatum(flag_validity);
+	}
+	
+	newtup = heap_modify_tuple(tuple, RelationGetDescr(brel),
+							values, nulls, replaces);
+							
+	if (newtup)
+	{
+		CatalogTupleUpdate(brel, &tuple->t_self, newtup);
+		heap_freetuple(newtup);
+		updated = true;
+	}
+	
+	heap_freetuple(tuple);
+	table_close(brel, RowExclusiveLock);
+	Assert(newtup);
+	
+	return updated;
+}
+
+/*
+ * Check if a view is marked as broken in babelfish_view_def
+ */
+static bool
+bbf_view_is_broken(Oid viewOid)
+{
+	HeapTuple 	tuple;
+	Relation 	brel;
+	bool 		is_broken = false;
+
+	brel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
+	tuple = search_bbf_view_def(brel, viewOid);
+
+	if (HeapTupleIsValid(tuple))
+	{
+		bool 	isnull;
+		Datum 	values_datum, 
+				validity_datum;
+		
+		values_datum = heap_getattr(tuple, Anum_bbf_view_def_flag_values,
+								RelationGetDescr(brel), &isnull);
+		validity_datum = heap_getattr(tuple, Anum_bbf_view_def_flag_validity,
+								RelationGetDescr(brel), &isnull);
+								
+		if (!isnull)
+		{
+			uint64 flag_values = DatumGetUInt64(values_datum);
+			uint64 flag_validity = DatumGetUInt64(validity_datum);
+			
+			is_broken = ((flag_values & BBF_VIEW_DEF_FLAG_IS_BROKEN) != 0) &&
+					((flag_validity & BBF_VIEW_DEF_FLAG_IS_BROKEN) != 0);
+		}
+		
+		heap_freetuple(tuple);
+	}
+	table_close(brel, AccessShareLock);
+	return is_broken;
+}
+
+/*
+ * Get the definition text of a view from babelfish_view_def
+ */
+static char *
+bbf_view_get_definition(Oid viewOid)
+{
+	HeapTuple 	tuple;
+	Relation 	brel;
+	char 		*definition = NULL;
+
+	brel = table_open(get_bbf_view_def_oid(), AccessShareLock);	
+	tuple = search_bbf_view_def(brel, viewOid);
+
+	if (HeapTupleIsValid(tuple))
+	{
+		bool 	isnull;
+		Datum 	def_datum;
+		
+		def_datum = heap_getattr(tuple, Anum_bbf_view_def_definition,
+							RelationGetDescr(brel), &isnull);
+							
+		if (!isnull)
+			definition = TextDatumGetCString(def_datum);
+		
+		heap_freetuple(tuple);
+	}
+	table_close(brel, AccessShareLock);
+	return definition;
+}
+
+/*
+ * Mark a view as broken or not broken in babelfish_view_def
+ */
+static bool
+bbf_view_set_broken(Oid viewOid, bool mark_broken)
+{
+	Relation 	brel;
+	HeapTuple 	tuple;
+	Datum 		values_datum, 
+				validity_datum;
+	uint64 		flag_values, 
+				flag_validity;
+	bool 		isnull;
+	bool 		is_weak_view;
+	bool 		is_broken;
+	bool 		updated = false;
+	
+	brel = table_open(get_bbf_view_def_oid(), AccessShareLock);
+	tuple = search_bbf_view_def(brel, viewOid);
+	
+	if (!HeapTupleIsValid(tuple))
+	{
+		table_close(brel, AccessShareLock);
+		return false;
+	}
+	values_datum = heap_getattr(tuple, Anum_bbf_view_def_flag_values,
+							RelationGetDescr(brel), &isnull);
+	if (isnull)
+	{
+		heap_freetuple(tuple);
+		table_close(brel, AccessShareLock);
+		return false;
+	}
+	
+	validity_datum = heap_getattr(tuple, Anum_bbf_view_def_flag_validity,
+							RelationGetDescr(brel), &isnull);
+	
+	flag_values = DatumGetUInt64(values_datum);
+	flag_validity = DatumGetUInt64(validity_datum);
+	
+	/* Check if view is weak-bound */
+	is_weak_view = (flag_values & BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW) != 0 &&
+				(flag_validity & BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW) != 0;
+	
+	/* Cannot mark a strong-bound view as broken */
+	if (mark_broken && !is_weak_view)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+				errmsg("cannot mark schema-bound view as broken"),
+				errdetail("View %s uses strong binding", get_rel_name(viewOid))));
+	}
+	
+	/* Check if current broken status already matches requested status */
+	is_broken = (flag_values & BBF_VIEW_DEF_FLAG_IS_BROKEN) != 0 &&
+					(flag_validity & BBF_VIEW_DEF_FLAG_IS_BROKEN) != 0;
+					
+	if (is_broken == mark_broken)
+	{
+		heap_freetuple(tuple);
+		table_close(brel, AccessShareLock);
+		return false;
+	}
+	
+	/* Update the flags */
+	if (mark_broken)
+		updated = update_bbf_view_flags(viewOid, BBF_VIEW_DEF_FLAG_IS_BROKEN, 0, true);
+	else
+		updated = update_bbf_view_flags(viewOid, 0, BBF_VIEW_DEF_FLAG_IS_BROKEN, true);
+	
+	heap_freetuple(tuple);
+	table_close(brel, AccessShareLock);
+	return updated;
+}
+
+/*
+ * Checks if a view is a dummy view created during object drop processing
+ *
+ * A dummy view has a specific structure:
+ * - SELECT command type
+ * - Empty FROM clause (no tables referenced)
+ * - No WHERE clause
+ * - Target list contains only constants
+ *
+ * Parameters:
+ * - viewOid: OID of the view to check
+ *
+ * Returns:
+ * - true if the view is a dummy view, false otherwise
+ */
+static bool
+is_dummy_view(Oid viewOid)
+{
+	Relation 	viewRel;
+	Query 		*viewQuery = NULL;
+	bool 		is_dummy = false;
+	ListCell 	*lc;
+
+	viewRel = relation_open(viewOid, AccessShareLock);
+	viewQuery = get_view_query(viewRel);
+
+	if (viewQuery->commandType == CMD_SELECT &&
+			viewQuery->jointree &&
+			list_length(viewQuery->jointree->fromlist) == 0)
+	{
+		is_dummy = true;	
+		foreach(lc, viewQuery->targetList)
+		{
+			TargetEntry *te = (TargetEntry *) lfirst(lc);
+			if (te->resjunk || !IsA(te->expr, Const) || !((Const *) (te->expr))->constisnull)
+			{
+				is_dummy = false;
+				break;
+			}
+		}
+	}
+	relation_close(viewRel, AccessShareLock);
+	return is_dummy;
+}
+
+/*
+ * Repair a broken view and all views it depend on
+ *
+ * This function repairs a view that has become broken due to underlying objects
+ * being dropped and recreated. It works by:
+ * 1. Retrieving the original view definition from babelfish_view_def
+ * 2. Parsing and analyzing this definition to create a new query tree
+ * 3. Recursively repairing any views that this view depends on
+ * 4. Updating the view's rule in pg_rewrite with the new query tree
+ *
+ * Parameters:
+ * - viewOid: OID of the view to repair
+ * - visitedViews: List of view OIDs already visited (to prevent infinite recursion)
+ *
+ * Returns:
+ * - true if the view was successfully repaired, false otherwise
+ */
+static bool
+repair_broken_view_recursive(Oid viewOid, List *visitedViews)
+{
+	int16 			logical_dbid;
+	List 			*parsetree_list;
+	RawStmt 		*rawstmt;
+	ViewStmt 		*viewStmt;
+	Query 			*query = NULL;
+	Query 			*currentQuery = NULL;
+	bool 			repaired = false;
+	bool 			snapshot_registered = false;
+	char 			*schema_name = NULL; 
+	char 			*viewdef = NULL;
+	char 			*orig_db_name;
+	List 			*referenced_views = NIL;
+	ListCell 		*lc, 
+					*lc1;
+	RangeVar 		*rangevar;
+	ObjectAddress 	address;
+	Relation 		viewRel;
+	ANTLR_result 	result;
+	PLtsql_stmt_execsql *stmt_sql = NULL;
+
+	/* Check if we've already visited this view to avoid infinite recursion */
+	if (list_member_oid(visitedViews, viewOid))
+		return true;
+
+	visitedViews = lappend_oid(visitedViews, viewOid);
+    
+	/* Check if the view is a dummy view and do repair */
+	if (is_dummy_view(viewOid) && bbf_view_is_broken(viewOid))
+	{	
+		if (!ActiveSnapshotSet())
+		{
+			PushActiveSnapshot(GetTransactionSnapshot());
+			snapshot_registered = true;
+		}
+		viewdef = bbf_view_get_definition(viewOid);
+		
+		/* This should never happen */
+		if (viewdef == NULL)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("view with OID %u does not have a definition in babelfish_view_def", viewOid)));
+		}
+
+		/* We require view definition to be parsed by antlr parser first because it
+		 * may happen that this definition may contain "WITH SCHEMABINDING" clause which is not 
+		 * supported in bison parser. The antlr parser processes this clause correctly (by ignoring it), 
+		 * allowing us to avoid syntax errors when parsing T-SQL view definitions 
+		 */
+		result = antlr_parser_cpp(viewdef);
+
+		if(!(result.success && pltsql_parse_result && pltsql_parse_result->body))
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("could not parse view definition for view OID %u", viewOid)));
+		}
+
+		/* Extract the SQL statement from the ANTLR parser result */
+		foreach(lc1, pltsql_parse_result->body)
+		{
+			PLtsql_stmt *s = (PLtsql_stmt *) lfirst(lc1);
+			if (s->cmd_type == PLTSQL_STMT_EXECSQL)
+			{
+				stmt_sql = (PLtsql_stmt_execsql *) s;
+				break;
+			}
+		}
+		if (stmt_sql && stmt_sql->sqlstmt)
+		{
+			/* Use the rewritten SQL statement from ANTLR to parse */
+			parsetree_list = raw_parser(stmt_sql->sqlstmt->query, RAW_PARSE_DEFAULT);
+		}
+		else
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("could not find SQL statement in view definition for view OID %u", viewOid)));
+		}
+
+		rawstmt = (RawStmt *) linitial(parsetree_list);
+		viewStmt = (ViewStmt *) rawstmt->stmt;
+		if (viewStmt->query == NULL)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("view definition for view OID %u does not contain a select query", viewOid)));
+		}
+
+		orig_db_name = get_cur_db_name();
+		PG_TRY();
+		{
+			Oid 	schema_id;
+			schema_id = get_rel_namespace(viewOid);
+			schema_name = get_namespace_name(schema_id);
+			logical_dbid = get_dbid_from_physical_schema_name(schema_name, true);
+			set_cur_user_db_and_path(get_db_name(logical_dbid), true);
+			
+			/* Transform the query into a Query structure */
+			rawstmt = makeNode(RawStmt);
+			rawstmt->stmt = viewStmt->query;
+			rawstmt->stmt_location = -1;
+			rawstmt->stmt_len = 0;
+			
+			query = parse_analyze_fixedparams(rawstmt, stmt_sql->sqlstmt->query, NULL, 0, NULL);
+		}
+		PG_FINALLY();
+		{
+			set_cur_user_db_and_path(orig_db_name, true);
+			pfree(orig_db_name);
+		}
+		PG_END_TRY();
+		
+		if (query!= NULL && query->commandType == CMD_SELECT)
+		{
+			rangevar = copyObject(viewStmt->view);
+			rangevar->schemaname = schema_name;
+			address = bbf_define_virtual_relation(rangevar, query->targetList, true, viewStmt->options, query);
+
+			if (OidIsValid(address.objectId))
+			{
+				/* Unset broken flag as the view is now repaired in babelfish_view_def */
+				repaired = bbf_view_set_broken(viewOid, false);
+			}	
+		}
+		else
+			repaired = false; 
+		pfree(viewdef);
+		if (snapshot_registered)
+			PopActiveSnapshot();
+	}
+	viewRel = relation_open(viewOid, AccessShareLock);
+
+	currentQuery = get_view_query(viewRel);
+	if (currentQuery)
+	{
+		find_all_view_references((Node *) currentQuery, &referenced_views);
+
+		foreach(lc, referenced_views)
+		{
+			Oid referenced_view_oid = lfirst_oid(lc);
+			/* This will detect circular dependencies and repair broken views */
+			if (repair_broken_view_recursive(referenced_view_oid, visitedViews))
+				repaired = true;
+		}
+	}
+	relation_close(viewRel, AccessShareLock);
+
+	if (repaired)
+		CommandCounterIncrement();
+	return repaired;
+}
+
+/*
+ * View repair hook implementation
+ *
+ * This function is called during query rewrite when a view is accessed.
+ * It checks if any views in the query needs repair (have dummy query trees) and repairs them
+ * using the original definition stored in babelfish_view_def.
+ *
+ * The hook works by:
+ * 1. Finding all views referenced in the query, including those in subqueries and sublinks
+ * 2. Attempting to repair each view by calling repair_broken_view_recursive
+ * 3. Returning true if any views were repaired, false otherwise
+ *
+ * Parameters:
+ * - parsetree: The query tree being processed
+ *
+ * Returns:
+ * - true if any views were repaired, false otherwise
+ */
+static bool
+repair_broken_views(Query *parsetree)
+{
+	ListCell 	*lc;
+	List 		*visitedViews = NIL;
+	List 		*view_oids = NIL;
+	bool 		repaired = false;
+	
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return false;
+
+	/* Find all views referenced in the query, including those in subqueries and sublinks */
+	find_all_view_references((Node *)parsetree, &view_oids);
+
+	foreach(lc, view_oids)
+	{
+		if (repair_broken_view_recursive(lfirst_oid(lc), visitedViews))
+			repaired = true;
+	}
+	return repaired;
+}
+
+/*
+ * create_dummy_view_query
+ *
+ * Create a dummy Query node that returns NULL values for all columns
+ * in the specified relation. This is used to create placeholder views
+ * when an underlying table, view or function is dropped.
+ *
+ * Parameters:
+ *   viewOid - OID of the view for which to create a dummy query
+ *
+ * Returns:
+ *   A Query node with NULL constants for each column of the original view
+ */
+static Query *
+create_dummy_view_query_for_broken_view(Oid viewOid)
+{
+	Relation 	viewRel;
+	TupleDesc 	tupdesc;
+	Query 		*dummyQuery;
+	List 		*targetList = NIL;
+	int 		i;
+	FuncExpr	*funcExpr;
+	OpExpr 		*opExpr;
+	Oid 		funcoid;
+	Oid 		opoid;
+	Const 		*constExpr;
+	List 		*opname;
+	List 		*funcname;
+	
+	viewRel = relation_open(viewOid, AccessShareLock);
+	tupdesc = RelationGetDescr(viewRel);
+
+	/* Create a dummy Query node that returns NULL values for all columns */
+	dummyQuery = makeNode(Query);
+	dummyQuery->commandType = CMD_SELECT;
+	dummyQuery->querySource = QSRC_ORIGINAL;
+	dummyQuery->canSetTag = true;
+	/* empty jointree */
+	dummyQuery->jointree = makeNode(FromExpr);
+	
+	/* Build target list with NULL constants for each column */
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		TargetEntry *te;
+		Const *nullconst;
+
+		/* Create a NULL constant of the appropriate type */
+		nullconst = makeNullConst(
+			att->atttypid,
+			att->atttypmod,
+			att->attcollation);
+
+		/* Create a target entry with the original column name */
+		te = makeTargetEntry((Expr *) nullconst,
+							i + 1,
+							pstrdup(NameStr(att->attname)),
+							false);
+							
+		targetList = lappend(targetList, te);
+	}
+	dummyQuery->targetList = targetList;
+
+	/* This WHERE clause serves as an additional safety mechanism to ensure
+	 * broken views fail explicitly even if user somehow bypass the primary
+	 * view repair mechanism. While the view repair process should typically
+	 * fail earlier, this acts as extra check against accessing broken views. 
+	 */
+
+	funcname = list_make2(makeString("sys"), makeString("babelfish_broken_view_function"));
+	funcoid = LookupFuncName(funcname, 0, NULL, false);
+	if (OidIsValid(funcoid))
+	{
+		/* Create a function expression */
+		funcExpr =	makeFuncExpr(funcoid,
+								 INT4OID,
+								 NIL,
+								 InvalidOid,
+								 InvalidOid,
+								 COERCE_EXPLICIT_CALL);
+		
+		/* Create a constant for "1" */
+		constExpr = makeConst(INT4OID,
+							  -1,
+							  InvalidOid,
+							  sizeof(int32),
+							  Int32GetDatum(1),
+							  false,
+							  true);
+							
+		opname = list_make1(makeString("="));
+		opoid = LookupOperName(NULL, opname, INT4OID, INT4OID, false, -1);
+		list_free_deep(opname);
+		opname = NIL;
+		
+		/* Create operator expression for func() = 1 */
+		if (OidIsValid(opoid))
+		{
+			opExpr = makeNode(OpExpr);
+			opExpr->opno = opoid;
+			opExpr->opfuncid = get_opcode(opoid);
+			opExpr->opresulttype = BOOLOID;
+			opExpr->opretset = false;
+			opExpr->opcollid = InvalidOid;
+			opExpr->inputcollid = InvalidOid;
+			opExpr->args = list_make2(funcExpr, constExpr);
+			
+			/* Adding WHERE clause to the dummy query */
+			dummyQuery->jointree->quals = (Node *) opExpr;
+		}
+	}
+	relation_close(viewRel, AccessShareLock);
+	
+	return dummyQuery;
+}
+
+/*
+ * Handle view dependencies during object drop or alter operations.
+ * This function manages the behavior of dependent views when their referenced objects
+ * (tables, views, functions) are being dropped or altered.
+ *
+ * The function implements different behaviors based on the operation type:
+ *
+ * For DROP operations:
+ * - Identifies all views that directly depend on the dropped object
+ * - For weak views: marks them as broken and creates dummy view definitions
+ * - For strong views: the drop will be prevented through postgresql
+ *
+ * For ALTER VIEW operations (DROP + CREATE):
+ * - converts all dependent views to weak binding and marks them broken when 
+ * babelfishpg_tsql.weak_view_binding is enabled
+ *
+ * View Binding Modes:
+ * - Strong binding (WITH SCHEMABINDING): Views have strict dependencies, prevent drops
+ * - Weak binding: Views can become "broken" when references are dropped, allowing
+ *   the operation to proceed while maintaining view metadata for potential repair
+ *
+ * Broken Views:
+ * When a view is marked as broken, a dummy query is created that returns NULL values
+ * for all columns, maintaining the view's structure while indicating the dependency
+ * failure. These views can potentially be repaired later if the dependencies are restored.
+ *
+ * Parameters:
+ * - droppedObject: ObjectAddress of the object being dropped/altered
+ * - depRel: Open relation handle for pg_depend
+ * - stmt: ViewStmt for ALTER VIEW operations, NULL for DROP operations
+ *
+ * Returns:
+ * - true: Operation can proceed (dependencies handled appropriately)
+ * - false: Should not occur with current logic (kept for compatibility)
+ *
+ * Note: This function only operates in T-SQL dialect with TDS connections.
+ * For other dialects, it returns false immediately without processing.
+ */
+
+bool
+handle_bbf_view_binding_on_object_drop(const ObjectAddress *droppedObject, bool is_alter_view)
+{
+	ScanKeyData 	key[3];
+	SysScanDesc 	scan;
+	HeapTuple 		tup;
+	Relation 		depRel;
+	List 			*processed_views = NIL;
+	Oid 			viewOid = InvalidOid;
+	bool 			is_weak_view = false;
+	bool 			processed = true;
+	bool 			updated;
+	int				nkeys = 2;
+	
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return false;
+	
+	depRel = table_open(DependRelationId, AccessShareLock);
+	
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(droppedObject->classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(droppedObject->objectId));
+	if (droppedObject->objectSubId)
+	{
+		ScanKeyInit(&key[2],
+					Anum_pg_depend_refobjsubid,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(droppedObject->objectSubId));
+		nkeys = 3;
+	}
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+								NULL, nkeys, key);
+	
+	/* Loop over all the direct dependents */
+	while ((tup = systable_getnext(scan)) != NULL)
+	{
+		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+		
+		/* Only handle entries for pg_rewrite rules with NORMAL dependency */
+		if (depform->classid != RewriteRelationId || depform->deptype != DEPENDENCY_NORMAL)
+			continue;
+		
+		viewOid = get_view_oid_from_rule(depform->objid);
+		
+		if (OidIsValid(viewOid) && !list_member_oid(processed_views, viewOid))
+		{
+			processed_views = lappend_oid(processed_views, viewOid);
+			
+			/* DROP operation: if dependent is weak view, mark broken */
+			is_weak_view = false;
+			if (check_is_tsql_view(viewOid, &is_weak_view) && is_weak_view)
+			{
+				/* Mark view as broken */
+				updated = bbf_view_set_broken(viewOid, true);
+				
+				/* If the view was successfully marked as broken, create a dummy query */
+				if (updated)
+				{
+					Query *dummyQuery = create_dummy_view_query_for_broken_view(viewOid);
+					StoreViewQuery(viewOid, dummyQuery, true);
+				}
+				CommandCounterIncrement();
+			}
+			else if (is_alter_view && pltsql_weak_view_binding)
+			{
+				/* ALTER operation: mark weak & broken */
+				update_bbf_view_flags(viewOid, BBF_VIEW_DEF_FLAG_IS_WEAK_VIEW, 0, true);
+				CommandCounterIncrement();
+				
+				updated = bbf_view_set_broken(viewOid, true);
+				
+				/* If the view was successfully marked as broken, create a dummy query */
+				if (updated)
+				{
+					Query *dummyQuery = create_dummy_view_query_for_broken_view(viewOid);
+					StoreViewQuery(viewOid, dummyQuery, true);
+				}
+			}
+			else
+			{
+				processed = false;
+				break;
+			}
+		}
+	}
+	systable_endscan(scan);
+	table_close(depRel, AccessShareLock);
+	list_free(processed_views);
+	CommandCounterIncrement();	
+	return processed;
+}
+
+/*
+ * Check if a schema-bound view references any non-schema-bound views
+ *
+ * This function is called during view creation to enforce the SQL Server rule
+ * that schema-bound views cannot reference non-schema-bound views. It finds
+ * all views referenced in the query (including those in subqueries and sublinks)
+ * and checks if any of them are weak (non-schema-bound) views.
+ *
+ * The function works by:
+ * 1. Finding all views referenced in the query
+ * 2. Checking each view to see if it's a weak view
+ * 3. Throwing an error if any weak views are found
+ *
+ * Parameters:
+ * - viewParse: The query tree for the view being created
+ *
+ * Returns:
+ * - true if no weak view dependencies are found
+ * - false if weak view dependencies are found (after throwing an error)
+ */
+bool
+check_view_binding_dependencies(Query *viewParse)
+{
+	List 		*referenced_views = NIL;
+	ListCell 	*lc;
+	bool	 	is_strong_view = get_is_schemabinding_view();
+
+	if(sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return true;
+
+	if (pltsql_weak_view_binding && !is_strong_view)
+		return true;
+
+	/* Find all view referenced in the query, including those in subqueries*/
+	find_all_view_references((Node *) viewParse, &referenced_views);
+	
+	foreach(lc, referenced_views)
+	{
+		Oid 	viewOid = lfirst_oid(lc);
+		bool 	is_weak_view = false;
+		
+		/* check if view is weakly schema bound */
+		if (check_is_tsql_view(viewOid, &is_weak_view) && is_weak_view)
+		{
+			/* Found a weak view dependency - this is not allowed for schema-bound views */				
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot create schema-bound view that references a non-schema-bound view"),
+					errdetail("Schema-bound views cannot reference non-schema-bound views.")));
+			return false;
+		}
+	}
+	list_free(referenced_views);
+	return true;
+}
+
+/*
+ * Find all view references in a query, including those in subqueries and sublinks
+ */
+typedef struct
+{
+	List	**view_oids;
+} find_view_dependencies_context;
+
+static bool
+find_view_references_walker(Node *node, find_view_dependencies_context *context)
+{
+	if (node == NULL)
+		return false;
+	
+	if (IsA(node, RangeTblEntry))
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) node;
+		
+		/* Check for views in regular relations */
+		if (rte->rtekind == RTE_RELATION && get_rel_relkind(rte->relid) == RELKIND_VIEW)
+		{
+			if (!list_member_oid(*(context->view_oids), rte->relid))
+				*(context->view_oids) = lappend_oid(*(context->view_oids), rte->relid);
+		}
+
+		if (rte->rtekind == RTE_SUBQUERY && rte->subquery)
+		{
+			if (find_view_references_walker((Node *)rte->subquery, context))
+				return true;
+		}
+		/* We've handled the RangeTblEntry, so don't pass it to expression_tree_walker */
+		return false;
+	}
+	
+	if (IsA(node, Query))
+	{
+		return query_tree_walker((Query *) node, 
+								find_view_references_walker,
+								(void *) context,
+								QTW_EXAMINE_RTES_BEFORE);
+	}
+	return expression_tree_walker(node, find_view_references_walker,
+								  (void *) context);
+}
+
+/*
+ * Find all view references in a query tree
+ *
+ * This function identifies all views that are referenced in the given query,
+ * including those in subqueries and sublinks (like EXISTS clauses).
+ *
+ * Parameters:
+ * - node: The query tree or expression to search for view references
+ * - view_oids: Pointer to a list where view OIDs will be collected
+ */
+void
+find_all_view_references(Node *node, List **view_oids)
+{
+	find_view_dependencies_context context;
+	context.view_oids = view_oids;
+
+	query_or_expression_tree_walker(node,
+									find_view_references_walker,
+									(void *) &context,
+									QTW_EXAMINE_RTES_BEFORE);
+}
+
+static Node*
+tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
+{
+		OpExpr				*op = (OpExpr *) OpExp;
+		char				*opname = get_opname(op->opno);
+		Oid					lopr,
+							ropr;
+
+		if (opname == NULL)
+			return OpExp;
+
+		/* Calculate Oid of left and right operand */
+		lopr = exprType(lexpr);
+		ropr = exprType(rexpr);
+		if (strncmp(opname, "+", 1) == 0 &&
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (lopr) &&
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (ropr))
+		{
+			int32	typmod1 = exprTypmod(lexpr),
+					typmod2 = exprTypmod(rexpr),
+					rettypmod = typmod1 + typmod2 - VARHDRSZ;
+
+			if (typmod1 == -1 || typmod2 == -1)
+			{
+				pfree(opname);
+				return OpExp;
+			}
+
+			/* 
+			 * T-SQL limits the resultant binary value to MAX_BINARY_SIZE when concatenating
+			 * binary types with finite typmod
+			 */
+			if (rettypmod > MAX_BINARY_SIZE + VARHDRSZ)
+					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
+
+			OpExp = coerce_to_target_type(pstate, OpExp,
+										 exprType(OpExp),
+										 op->opresulttype,
+										 rettypmod,
+										 COERCION_EXPLICIT,
+										 COERCE_EXPLICIT_CAST,
+										 -1);
+		}
+
+		pfree(opname);
+		return OpExp;
+}
+
+static Node*
+pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
+{
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return expr;
+
+	Assert(expr);
+
+	switch (nodeTag(expr))
+	{
+		case T_OpExpr:
+		{
+			OpExpr		*op = (OpExpr *) expr;
+
+			if (list_length(op->args) == 2)
+			{
+				Node		*lexpr,
+							*rexpr;
+				lexpr = linitial(op->args);
+				rexpr = lsecond(op->args);
+
+				/* 
+				 * Unwrap RelabelType nodes created by domain types. Domain types generate
+				 * RelabelType with typmod = -1, so we need to look through to the underlying
+				 * expression to get the actual typmod value.
+				 */
+				while (lexpr && IsA(lexpr, RelabelType))
+					lexpr = (Node *) ((RelabelType *) lexpr)->arg;
+
+				while (rexpr && IsA(rexpr, RelabelType))
+					rexpr = (Node *) ((RelabelType *) rexpr)->arg;
+
+				expr = tsql_set_typmod_op_expr(pstate, expr, lexpr, rexpr);
+			}
+			break;
+		}
+
+		default:
+			break;
+	}
+
+	return expr;
 }

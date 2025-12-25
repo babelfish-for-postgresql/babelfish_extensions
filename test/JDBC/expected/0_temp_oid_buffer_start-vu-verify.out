@@ -1,0 +1,15 @@
+-- tsql
+SELECT
+substring(setting, 1, charindex('=',setting)-1) as setting, 
+CASE
+	WHEN substring(setting, charindex('=',setting)+1) <> '-2147483648' THEN 'ok'
+	ELSE 'not ok'
+END as isOK
+FROM db_role_settings_view
+WHERE setting like '%babelfishpg_tsql.temp_oid_buffer_start%'
+GO
+~~START~~
+varchar#!#varchar
+babelfishpg_tsql.temp_oid_buffer_start#!#ok
+~~END~~
+

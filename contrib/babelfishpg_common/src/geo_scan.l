@@ -20,9 +20,9 @@ static YY_BUFFER_STATE scanbufhandle;
 %%
 
 POINT                 { return POINT_TOK; }
-LINESTRING            { yyerror(NULL, "LINESTRING is not supported"); return LINESTRING_TOK; }
+LINESTRING            { return LINESTRING_TOK; }
+POLYGON               { return POLYGON_TOK; }
 CIRCULARSTRING        { yyerror(NULL, "CIRCULARSTRING is not supported"); return CIRCULARSTRING_TOK; }
-POLYGON               { yyerror(NULL, "POLYGON is not supported");  return POLYGON_TOK; }
 MULTIPOINT            { yyerror(NULL, "MULTIPOINT is not supported");  return MPOINT_TOK; }
 MULTILINESTRING       { yyerror(NULL, "MULTILINESTRING is not supported"); return MLINESTRING_TOK; }
 MULTIPOLYGON          { yyerror(NULL, "MULTIPOLYGON is not supported");  return MPOLYGON_TOK; }
@@ -35,7 +35,9 @@ POLYHEDRALSURFACE     { yyerror(NULL, "Invalid Geometry");  return POLYHEDRALSUR
 TRIANGLE              { yyerror(NULL, "Invalid Geometry");  return TRIANGLE_TOK; }
 TIN                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
 
-[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)? {
+[+-]?[0-9]*\.[0-9]*\.[0-9]* { yyerror(NULL, "Invalid number format"); }
+
+[+-]?([0-9]+\.[0-9]+|[0-9]+|\.[0-9]+)([eE][-+]?[0-9]+)? {
     double val = atof(yytext);
     yylval.val = val;
     return DOUBLE_TOK;
@@ -49,6 +51,7 @@ TIN                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
 NULL             { return NULL_TOK; }
 [ \t\n\r]+EMPTY  { return EMPTY_TOK; }
 
+,          { return COMMA_TOK;}
 \(         { return LPAREN; }
 \)         { return RPAREN; }
 
@@ -58,7 +61,7 @@ ZM         { return ZM_TOK; }
 
 [ \t\n\r]+    { /* Ignore whitespace */ }
 
-.           { return yytext[0]; }
+.           { yyerror(NULL, "Invalid geometry"); }
 
 %%
 

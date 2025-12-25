@@ -32,6 +32,12 @@
 #define END_DATETIME	INT64CONST(252455615999999000)
 /* TSQL default datetime: 1900-01-01 00:00:00.000 */
 #define TSQL_DEFAULT_DATETIME	INT64CONST(-3155673600000000)
+/* 
+ * DATEPART_MIN_VALUE :
+ * minimun number of days possible i.e difference
+ * between 1753-01-01 and 1900-01-01
+ */
+#define DATEPART_MIN_VALUE	INT64CONST(-53690)
 
 extern Timestamp initializeToDefaultDatetime(void);
 extern DateADT initializeToDefaultDate(void);
@@ -47,6 +53,9 @@ extern char* datetypeName(int num);
 
 extern bool int64_multiply_add(int64 val, int64 multiplier, int64 *sum);
 extern bool int32_multiply_add(int32 val, int32 multiplier, int32 *sum);
+
+extern Timestamp roundoff_datetime(Timestamp timestamp);
+extern void UpdateToNextDayHelper(struct pg_tm *tm);
 
 /* Range-check a datetime */
 #define IS_VALID_DATETIME(t)  (MIN_DATETIME <= (t) && (t) < END_DATETIME)
@@ -92,5 +101,6 @@ static const char *const time_regexes[] = {
 
 extern bool check_regex_for_text_month(char *str, DateTimeContext context);
 extern char* clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context);
+extern void  TsqlEncodeDateTime(struct pg_tm *tm, char *str);
 
 #endif							/* PLTSQL_DATETIME_H */

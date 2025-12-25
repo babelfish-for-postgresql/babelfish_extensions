@@ -1,0 +1,1565 @@
+-- INTEGER Types
+SELECT SQRT(144);
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT SQRT(0);
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SQRT(-144);
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT SQRT(2147483647);
+GO
+~~START~~
+float
+46340.950001051984
+~~END~~
+
+SELECT SQRT(9223372036854775807);
+GO
+~~START~~
+float
+3.03700049997605E9
+~~END~~
+
+SELECT SQRT(32767);
+GO
+~~START~~
+float
+181.01657382681842
+~~END~~
+
+SELECT SQRT(255);
+GO
+~~START~~
+float
+15.968719422671311
+~~END~~
+
+SELECT SQRT(9223372036854775808);
+GO
+~~START~~
+float
+3.03700049997605E9
+~~END~~
+
+SELECT SQRT(CAST(2147483647 AS INT));
+GO
+~~START~~
+float
+46340.950001051984
+~~END~~
+
+SELECT SQRT(CAST(2147483648 AS INT));
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+SELECT SQRT(CAST(9223372036854775807 AS BIGINT));
+GO
+~~START~~
+float
+3.03700049997605E9
+~~END~~
+
+SELECT SQRT(CAST(9223372036854775808 AS BIGINT));
+GO
+~~START~~
+float
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+SELECT SQRT(CAST(32767 AS SMALLINT));
+GO
+~~START~~
+float
+181.01657382681842
+~~END~~
+
+SELECT SQRT(CAST(32768 AS SMALLINT));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+SELECT SQRT(CAST(255 AS TINYINT));
+GO
+~~START~~
+float
+15.968719422671311
+~~END~~
+
+SELECT SQRT(CAST(256 AS TINYINT));
+GO
+~~START~~
+float
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+-- Numeric/Decimal
+SELECT SQRT(144.00);
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT SQRT(0.00);
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SQRT(-144.00);
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT SQRT(NULL);
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT SQRT(9999999999.99);
+GO
+~~START~~
+float
+99999.99999995
+~~END~~
+
+SELECT SQRT(0.0001);
+GO
+~~START~~
+float
+0.01
+~~END~~
+
+SELECT SQRT(12.25);
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT SQRT(9999999999999999999999999999999999999.99);
+GO
+~~START~~
+float
+3.1622776601683794E18
+~~END~~
+
+SELECT SQRT(CAST(99999999999999999999999999999999999999.99 AS NUMERIC(38,2)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+-- BIT
+SELECT SQRT(CAST(1 AS BIT));
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+SELECT SQRT(CAST(0 AS BIT));
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SQRT(CAST(NULL AS BIT));
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+-- MONEY
+SELECT SQRT(CAST(144.00 AS MONEY));
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT SQRT(CAST(0.00 AS MONEY));
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SQRT(CAST(-144.00 AS MONEY));
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT SQRT(CAST(NULL AS MONEY));
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT SQRT(CAST(0.0001 AS MONEY));
+GO
+~~START~~
+float
+0.01
+~~END~~
+
+SELECT SQRT(CAST(12.25 AS MONEY));
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT SQRT(CAST(922337203685477.5807 AS MONEY));
+GO
+~~START~~
+float
+3.0370004999760497E7
+~~END~~
+
+SELECT SQRT(CAST(922337203685477.581 AS MONEY));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685477.581" is out of range for type fixeddecimal)~~
+
+
+-- SMALLMONEY
+SELECT SQRT(CAST(144.00 AS SMALLMONEY));
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT SQRT(CAST(0.00 AS SMALLMONEY));
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SQRT(CAST(-144.00 AS SMALLMONEY));
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT SQRT(CAST(NULL AS SMALLMONEY));
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT SQRT(CAST(214748.3647 AS SMALLMONEY));
+GO
+~~START~~
+float
+463.4095000105199
+~~END~~
+
+SELECT SQRT(CAST(0.0001 AS SMALLMONEY));
+GO
+~~START~~
+float
+0.01
+~~END~~
+
+SELECT SQRT(CAST(12.25 AS SMALLMONEY));
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT SQRT(CAST(214748.365 AS SMALLMONEY));
+GO
+~~START~~
+float
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- FLOAT
+SELECT SQRT(CAST(144.00 AS FLOAT));
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT SQRT(CAST(0.00 AS FLOAT));
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SQRT(CAST(-144.00 AS FLOAT));
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT SQRT(CAST(NULL AS FLOAT));
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT SQRT(CAST(1.79E+308 AS FLOAT));
+GO
+~~START~~
+float
+1.3379088160259651E154
+~~END~~
+
+SELECT SQRT(CAST(2.23E-308 AS FLOAT));
+GO
+~~START~~
+float
+1.493318452306808E-154
+~~END~~
+
+SELECT SQRT(CAST(12.25 AS FLOAT));
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT SQRT(CAST(1.79769E+308 AS FLOAT));
+GO
+~~START~~
+float
+1.3407796239501852E154
+~~END~~
+
+SELECT SQRT(CAST(2.22507E-308 AS FLOAT));  
+GO
+~~START~~
+float
+1.4916668528863942E-154
+~~END~~
+
+SELECT SQRT(CAST(1.79E+309 AS FLOAT));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" is out of range for type double precision)~~
+
+SELECT SQRT(CAST(2.22E-308 AS FLOAT));
+GO
+~~START~~
+float
+1.489966442575134E-154
+~~END~~
+
+
+-- REAL
+SELECT SQRT(CAST(144.00 AS REAL));
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT SQRT(CAST(0.00 AS REAL));
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SQRT(CAST(-144.00 AS REAL));
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT SQRT(CAST(NULL AS REAL));
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT SQRT(CAST(3.40E+38 AS REAL));
+GO
+~~START~~
+float
+1.8439088784818962E19
+~~END~~
+
+SELECT SQRT(CAST(1.18E-38 AS REAL));
+GO
+~~START~~
+float
+1.086278024160772E-19
+~~END~~
+
+SELECT SQRT(CAST(12.25 AS REAL));
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT SQRT(CAST(3.40282E+38 AS REAL));
+GO
+~~START~~
+float
+1.8446734178102247E19
+~~END~~
+
+SELECT SQRT(CAST(1.17549E-38 AS REAL));
+GO
+~~START~~
+float
+1.0842001691556076E-19
+~~END~~
+
+SELECT SQRT(CAST(3.41E+38 AS REAL));
+GO
+~~ERROR (Code: 232)~~
+
+~~ERROR (Message: "341000000000000000000000000000000000000" is out of range for type real)~~
+
+SELECT SQRT(CAST(1.17E-38 AS REAL));
+GO
+~~START~~
+float
+1.0816653824882797E-19
+~~END~~
+
+
+-- Character Types
+SELECT SQRT('144');
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT SQRT('0');
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SQRT('-144');
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT SQRT('ABC');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "ABC")~~
+
+SELECT SQRT('12.25');
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT SQRT(N'144');
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT SQRT(N'12.25');
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+
+-- Tables
+SELECT SQRT(numeric_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+99999.99999995
+0.1
+3.5
+~~END~~
+
+SELECT SQRT(numeric_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(decimal_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+99999.99999995
+0.1
+3.5
+~~END~~
+
+SELECT SQRT(decimal_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(bigint_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+3.03700049997605E9
+1.0
+<NULL>
+~~END~~
+
+SELECT SQRT(bigint_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(int_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+46340.950001051984
+1.0
+<NULL>
+~~END~~
+
+SELECT SQRT(int_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(smallint_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+181.01657382681842
+1.0
+<NULL>
+~~END~~
+
+SELECT SQRT(smallint_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(tinyint_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+15.968719422671311
+1.0
+<NULL>
+~~END~~
+
+SELECT SQRT(tinyint_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(money_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+3.0370004999760497E7
+0.01
+3.5
+~~END~~
+
+SELECT SQRT(money_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(smallmoney_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+463.4095000105199
+0.01
+3.5
+~~END~~
+
+SELECT SQRT(smallmoney_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(bit_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+1.0
+0.0
+<NULL>
+<NULL>
+1.0
+0.0
+<NULL>
+~~END~~
+
+SELECT SQRT(bit_val) FROM BABEL_5672_sqrt_exact_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT SQRT(float_val) FROM BABEL_5672_sqrt_approximate_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+1.3379088160259651E154
+1.493318452306808E-154
+3.5
+1.4916668528863942E-154
+~~END~~
+
+SELECT SQRT(float_val) FROM BABEL_5672_sqrt_approximate_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(real_val) FROM BABEL_5672_sqrt_approximate_numeric_table WHERE id != 8;
+GO
+~~START~~
+float
+12.0
+0.0
+1.4142135623730951
+<NULL>
+1.8439088784818962E19
+1.086278024160772E-19
+3.5
+1.0842001691556076E-19
+~~END~~
+
+SELECT SQRT(real_val) FROM BABEL_5672_sqrt_approximate_numeric_table WHERE id = 8;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+
+SELECT SQRT(char_val) FROM BABEL_5672_sqrt_char_table WHERE id != 4;
+GO
+~~START~~
+float
+12.0
+0.0
+<NULL>
+0.0
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1.79E+309" is out of range for type double precision)~~
+
+SELECT SQRT(char_val) FROM BABEL_5672_sqrt_char_table WHERE id = 4;
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "ABC       ")~~
+
+
+SELECT SQRT(varchar_val) FROM BABEL_5672_sqrt_char_table WHERE id != 4;
+GO
+~~START~~
+float
+12.0
+0.0
+<NULL>
+0.0
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1.79E+309" is out of range for type double precision)~~
+
+SELECT SQRT(varchar_val) FROM BABEL_5672_sqrt_char_table WHERE id = 4;
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "ABC")~~
+
+
+SELECT SQRT(nchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id != 4;
+GO
+~~START~~
+float
+12.0
+0.0
+<NULL>
+0.0
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1.79E+309" is out of range for type double precision)~~
+
+SELECT SQRT(nchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id = 4;
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "ABC       ")~~
+
+
+SELECT SQRT(nvarchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id != 4;
+GO
+~~START~~
+float
+12.0
+0.0
+<NULL>
+0.0
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1.79E+309" is out of range for type double precision)~~
+
+SELECT SQRT(nvarchar_val) FROM BABEL_5672_sqrt_unicode_table WHERE id = 4;
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "ABC")~~
+
+
+-- Views
+SELECT * FROM BABEL_5672_sqrt_numeric;
+GO
+~~START~~
+numeric
+12.000000000000000
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_numeric_zero;
+GO
+~~START~~
+numeric
+0E-15
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_numeric_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_numeric_null;
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_numeric_max;
+GO
+~~START~~
+numeric
+10000000000000000000
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_numeric_min;
+GO
+~~START~~
+numeric
+3.162277660168379332E-19
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_numeric_overflow1;
+GO
+~~START~~
+numeric
+10000000000000000000.00
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_numeric_overflow2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+SELECT * FROM BABEL_5672_sqrt_decimal;
+GO
+~~START~~
+numeric
+12.000000000000000
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_decimal_zero;
+GO
+~~START~~
+numeric
+0E-15
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_decimal_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_decimal_null;
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_decimal_max;
+GO
+~~START~~
+numeric
+10000000000000000000
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_decimal_min;
+GO
+~~START~~
+numeric
+3.162277660168379332E-19
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_decimal_overflow1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+SELECT * FROM BABEL_5672_sqrt_decimal_overflow2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+SELECT * FROM BABEL_5672_sqrt_bit;
+GO
+~~START~~
+numeric
+1.000000000000000
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_bit_zero;
+GO
+~~START~~
+numeric
+0E-15
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_bit_null;
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+SELECT * FROM BABEL_5672_sqrt_int;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_int_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_int_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_int_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_int_max;
+GO
+~~START~~
+float
+46340.950001051984
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_int_min;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_int_overflow;
+GO
+~~START~~
+float
+46340.95001184158
+~~END~~
+
+
+SELECT * FROM BABEL_5672_sqrt_bigint;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_bigint_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_bigint_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_bigint_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_bigint_max;
+GO
+~~START~~
+float
+3.03700049997605E9
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_bigint_min;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_bigint_overflow;
+GO
+~~START~~
+numeric
+3037000499.9760497
+~~END~~
+
+
+SELECT * FROM BABEL_5672_sqrt_smallint;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_smallint_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_smallint_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_smallint_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_smallint_max;
+GO
+~~START~~
+float
+181.01657382681842
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_smallint_min;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_smallint_overflow;
+GO
+~~START~~
+float
+181.01933598375618
+~~END~~
+
+
+SELECT * FROM BABEL_5672_sqrt_tinyint;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_tinyint_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_tinyint_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_tinyint_max;
+GO
+~~START~~
+float
+15.968719422671311
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_tinyint_min;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_tinyint_overflow;
+GO
+~~START~~
+float
+16.0
+~~END~~
+
+
+SELECT * FROM BABEL_5672_sqrt_float;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_float_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_float_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_float_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_float_max;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+SELECT * FROM BABEL_5672_sqrt_float_min;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+SELECT * FROM BABEL_5672_sqrt_float_overflow;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+SELECT * FROM BABEL_5672_sqrt_float_underflow;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+SELECT * FROM BABEL_5672_sqrt_real;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_real_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_real_negative;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_real_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_real_max;
+GO
+~~START~~
+numeric
+18439088914585774620
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_real_min;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+SELECT * FROM BABEL_5672_sqrt_real_overflow;
+GO
+~~START~~
+numeric
+18466185312619387878
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_real_underflow;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+SELECT * FROM BABEL_5672_sqrt_money;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_money_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_money_negative;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_money_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_money_max;
+GO
+~~START~~
+float
+3.0370004999760497E7
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_money_min;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_money_overflow;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685477.5808" is out of range for type fixeddecimal)~~
+
+
+SELECT * FROM BABEL_5672_sqrt_smallmoney;
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_smallmoney_zero;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_smallmoney_negative;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_smallmoney_null;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_smallmoney_max;
+GO
+~~START~~
+float
+463.4095000105199
+~~END~~
+
+SELECT * FROM BABEL_5672_sqrt_smallmoney_min;
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT * FROM BABEL_5672_sqrt_smallmoney_overflow;
+GO
+~~START~~
+float
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- Functions
+SELECT BABEL_5672_sqrt_test_numeric();
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT BABEL_5672_sqrt_test_numeric_zero();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT BABEL_5672_sqrt_test_numeric_negative();
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT BABEL_5672_sqrt_test_numeric_null();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT BABEL_5672_sqrt_test_numeric_overflow();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+SELECT BABEL_5672_sqrt_test_decimal();
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT BABEL_5672_sqrt_test_decimal_zero();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT BABEL_5672_sqrt_test_decimal_negative();
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT BABEL_5672_sqrt_test_decimal_null();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT BABEL_5672_sqrt_test_decimal_overflow();
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+SELECT BABEL_5672_sqrt_test_bit();
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+SELECT BABEL_5672_sqrt_test_bit_zero();
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT BABEL_5672_sqrt_test_bit_null();
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+-- Procedures
+EXEC BABEL_5672_sqrt_test_numeric_proc;
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+EXEC BABEL_5672_sqrt_test_numeric_zero_proc;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+EXEC BABEL_5672_sqrt_test_numeric_negative_proc;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+EXEC BABEL_5672_sqrt_test_numeric_null_proc;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+EXEC BABEL_5672_sqrt_test_numeric_overflow_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+EXEC BABEL_5672_sqrt_test_decimal_proc;
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+EXEC BABEL_5672_sqrt_test_decimal_zero_proc;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+EXEC BABEL_5672_sqrt_test_decimal_negative_proc;
+GO
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+EXEC BABEL_5672_sqrt_test_decimal_null_proc;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+EXEC BABEL_5672_sqrt_test_decimal_overflow_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+EXEC BABEL_5672_sqrt_test_bit_proc;
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+EXEC BABEL_5672_sqrt_test_bit_zero_proc;
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+EXEC BABEL_5672_sqrt_test_bit_null_proc;
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+

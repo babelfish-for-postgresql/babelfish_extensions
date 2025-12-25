@@ -1,0 +1,28 @@
+-- tsql
+SET NOCOUNT ON
+GO
+
+DROP TABLE IF EXISTS #tmpGoodsInfo;
+GO
+
+SELECT Description INTO #tmpGoodsInfo FROM dbo.fakeGoodsInfo;
+GO
+
+SELECT * FROM enr_view;
+GO
+~~START~~
+text
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+#tmpgoodsinfo
+~~END~~
+
+
+SELECT COUNT(REPLACE(Description, '55', '44')) FROM #tmpGoodsInfo;
+GO
+~~START~~
+int
+2
+~~END~~
+
+-- terminate-tsql-conn

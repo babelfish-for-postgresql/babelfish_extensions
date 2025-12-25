@@ -520,7 +520,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 nvarchar
-?d
+🙂d
 ~~END~~
 
 ~~START~~
@@ -838,7 +838,7 @@ SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
 varchar
-6
+ 
 ~~END~~
 
 
@@ -847,7 +847,7 @@ SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
 varchar
-5
+ 
 ~~END~~
 
 

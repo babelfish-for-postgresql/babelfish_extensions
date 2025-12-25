@@ -20,6 +20,7 @@
 #include "typecode.h"
 #include "varchar.h"
 #include "datetimeoffset.h"
+#include "spatialtypes.h"
 
 common_utility_plugin common_utility_plugin_var = {NULL};
 static common_utility_plugin *get_common_utility_plugin(void);
@@ -195,6 +196,14 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_tinyint_datatype = &is_tsql_tinyint_datatype;
 		common_utility_plugin_var.is_tsql_money_datatype = &is_tsql_money_datatype;
 		common_utility_plugin_var.is_tsql_smallmoney_datatype = &is_tsql_smallmoney_datatype;
+		common_utility_plugin_var.is_tsql_vector_datatype = &is_tsql_vector_datatype;
+		common_utility_plugin_var.is_tsql_sparsevec_datatype = &is_tsql_sparsevec_datatype;
+		common_utility_plugin_var.is_tsql_halfvec_datatype = &is_tsql_halfvec_datatype;
+		common_utility_plugin_var.handle_type_and_collation = &handle_type_and_collation;
+
+		/* FIX ME: Remove is_tsql_int_datatype and is_tsql_bigint_datatype once BABEL-5955 is fixed */
+		common_utility_plugin_var.is_tsql_int_datatype = &is_tsql_int_datatype;
+		common_utility_plugin_var.is_tsql_bigint_datatype = &is_tsql_bigint_datatype;
 		
 		common_utility_plugin_var.datetime_in_str = &datetime_in_str;
 		common_utility_plugin_var.datetime2sqlvariant = &datetime2sqlvariant;
@@ -218,6 +227,15 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.tsql_numeric_get_typmod = &tsql_numeric_get_typmod;
 		common_utility_plugin_var.initializeToDefaultDate = &initializeToDefaultDate;
 		common_utility_plugin_var.initializeToDefaultTime = &initializeToDefaultTime;
+		common_utility_plugin_var.roundoff_datetime = &roundoff_datetime;
+		common_utility_plugin_var.UpdateToNextDayHelper = &UpdateToNextDayHelper;
+		common_utility_plugin_var.isEmptyOrWhitespace = &isEmptyOrWhitespace;
+	#ifdef ENABLE_SPATIAL_TYPES
+		common_utility_plugin_var.bytea_from_geometry = &bytea_from_geometry;
+		common_utility_plugin_var.bytea_from_geography = &bytea_from_geography;
+		common_utility_plugin_var.geometry_from_bytea = &geometry_from_bytea;
+		common_utility_plugin_var.geography_from_bytea = &geography_from_bytea;
+	#endif
 	}
 	return &common_utility_plugin_var;
 }

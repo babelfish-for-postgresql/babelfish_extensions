@@ -25,6 +25,7 @@
 #include "rolecmds.h"
 #include "pl_explain.h"
 #include "pltsql.h"
+#include "pltsql_permissions.h"
 #include "rolecmds.h"
 #include "session.h"
 #include "parser/scansup.h"
@@ -984,6 +985,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 				funcexpr = ((CallStmt *) node)->funcexpr;
 			}
+
+			/* Mark the procedure outside the view since procedure can never be called inside a view */
+			funcexpr->insideView = PNODE_OUTSIDE_VIEW;
 
 			func_tuple = SearchSysCache1(PROCOID,
 										 ObjectIdGetDatum(funcexpr->funcid));
@@ -3991,7 +3995,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		else
 		{
 			/* For REVOKE statement, update privileges in the catalog. */
-			if (privilege_exists_in_bbf_schema_permissions(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname, OBJ_SCHEMA))
+			if (privilege_exists_in_bbf_schema_permissions(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname, OBJ_SCHEMA, INVALID_PERMISSION))
 			{
 				/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
 				for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
@@ -4029,8 +4033,15 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 						errmsg("Cannot find the database '%s', because it does not exist or you do not have permission.", stmt->db_name)));
 	}
 
+	/* Throw error if it's a Babelfish fixed server role or "bbf_role_admin". */
+	if (IS_BBF_FIXED_SERVER_ROLE(stmt->new_owner_name) || IS_ROLENAME_BABELFISHROLEADMIN(stmt->new_owner_name))
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("An entity of type database cannot be owned by a role, a group, an approle, or by principals mapped to certificates or asymmetric keys.")));
+	}
+
 	/* Verify new owner exists as a login. */
-	if (get_role_oid(stmt->new_owner_name, true) == InvalidOid)
+	if (!is_login_name(stmt->new_owner_name))
 	{
 		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));

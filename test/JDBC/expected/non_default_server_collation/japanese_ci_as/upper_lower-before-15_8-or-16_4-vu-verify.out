@@ -244,16 +244,15 @@ select '|' + LOWER(@string1) + '|'
 GO
 ~~START~~
 nvarchar
-|比??拉                        |
+|比尔·拉                          |
 ~~END~~
 
 ~~START~~
 nvarchar
-|比??拉                        |
+|比尔·拉                          |
 ~~END~~
 
 
--- different result from TSQL, should be fixed under BABEL-1664
 DECLARE @date date = '12-21-16';  
 DECLARE @datetime datetime = @date; 
 SELECT UPPER(@datetime)
@@ -270,7 +269,6 @@ varchar
 ~~END~~
 
 
--- different result from TSQL, should be fixed under BABEL-1664
 DECLARE @smalldatetime smalldatetime = '1955-12-13 12:43:10';
 SELECT UPPER(@smalldatetime)
 SELECT LOWER(@smalldatetime)

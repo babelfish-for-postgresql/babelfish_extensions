@@ -67,14 +67,12 @@ select '|' + UPPER(@string1) + '|'
 select '|' + LOWER(@string1) + '|'
 GO
 
--- different result from TSQL, should be fixed under BABEL-1664
 DECLARE @date date = '12-21-16';  
 DECLARE @datetime datetime = @date; 
 SELECT UPPER(@datetime)
 SELECT LOWER(@datetime)
 GO
 
--- different result from TSQL, should be fixed under BABEL-1664
 DECLARE @smalldatetime smalldatetime = '1955-12-13 12:43:10';
 SELECT UPPER(@smalldatetime)
 SELECT LOWER(@smalldatetime)

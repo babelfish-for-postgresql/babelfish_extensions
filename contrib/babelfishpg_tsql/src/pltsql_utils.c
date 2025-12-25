@@ -14,6 +14,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "pltsql.h"
+#include "pltsql_permissions.h"
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
@@ -1232,6 +1233,34 @@ is_tsql_text_ntext_or_image_datatype(Oid oid)
 	return (*common_utility_plugin_ptr->is_tsql_text_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_ntext_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_image_datatype) (oid);
+}
+
+bool
+is_xml_value_typearg_valid(Oid typeid)
+{
+	Oid			 base_typeid = InvalidOid;
+
+	base_typeid = get_immediate_base_type_of_UDT_internal(typeid);
+	if (OidIsValid(base_typeid))
+		typeid = base_typeid;
+
+	return (typeid == XMLOID
+			|| (*common_utility_plugin_ptr->is_tsql_image_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_text_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_geography_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_vector_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_sparsevec_datatype) (typeid)
+			|| (*common_utility_plugin_ptr->is_tsql_halfvec_datatype) (typeid));
+}
+
+bool
+ is_tsql_geometry_or_geography_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_geometry_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_geography_datatype) (oid);
 }
 
 /*
@@ -2684,6 +2713,14 @@ string_to_privilege(const char *privname)
 		return ACL_REFERENCES;
 	if (strcmp(privname, "execute") == 0)
 		return ACL_EXECUTE;
+	if (strcmp(privname, "truncate") == 0)
+		return ACL_TRUNCATE;
+	if (strcmp(privname, "maintain") == 0)
+		return ACL_MAINTAIN;
+	if (strcmp(privname, "trigger") == 0)
+		return ACL_TRIGGER;
+	if (strcmp(privname, "usage") == 0)
+		return ACL_USAGE;
 	else
 		return 0;
 }
@@ -2954,4 +2991,214 @@ downcase_truncate_split_object_name(char *four_part_object_name, char **server_n
 		*schema_name = temp_schema_name;
 	if (object_name != NULL)
 		*object_name = temp_object_name;
+}
+
+/*
+ * Get owner OID for a relation
+ */
+Oid
+get_rel_owner(Oid relid)
+{
+    HeapTuple   tuple;
+    Oid         owner;
+
+	Assert(OidIsValid(relid)); 
+
+    /* Get relation tuple from pg_class */
+    tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+    if (!HeapTupleIsValid(tuple))
+        elog(ERROR, "cache lookup failed for relation %u", relid);
+
+    /* Get owner from tuple */
+    owner = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
+
+    /* Release tuple */
+    ReleaseSysCache(tuple);
+
+    return owner;
+}
+
+/*
+ * Get owner OID for a function
+ */
+Oid
+get_func_owner(Oid funcid)
+{
+	HeapTuple	tp;
+
+	Assert(OidIsValid(funcid));  
+
+	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_proc functup = (Form_pg_proc) GETSTRUCT(tp);
+		Oid			result;
+
+		result = functup->proowner;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+
+/*
+ * Retuns function oid which is cached at the start of every function/proc call
+ * only if we are currently in function/proc execution
+ */
+Oid
+get_current_func_oid(void)
+{
+	if (!pltsql_support_tsql_transactions())
+		return InvalidOid;
+
+	/*
+	* Fetch the top procedure excution state from execution state call stack
+	* and get the owner of that procedure. Top entry in stack will have
+	* fn_oid and fn_owner value set.
+	*/
+	if (!exec_state_call_stack ||
+		!exec_state_call_stack->estate ||
+		!exec_state_call_stack->estate->func)
+		return InvalidOid;
+
+	return exec_state_call_stack->estate->func->fn_oid;
+}
+
+extern bool
+is_valid_func_ownership_chain(void *expr, Oid objectOwnerId)
+{
+	Oid immediate_parent_func = InvalidOid;
+
+	if (!pltsql_enable_ownership_chaining)
+		return false;
+
+	Assert(OidIsValid(objectOwnerId)); 
+
+	if (IsA(expr, FuncExpr))
+	{
+		FuncExpr *fexpr = (FuncExpr *)expr;
+		if (fexpr->insideView == PNODE_OUTSIDE_VIEW)
+		{
+			immediate_parent_func = get_current_func_oid();
+		}
+	}
+	else if (IsA(expr, RTEPermissionInfo))
+	{
+		RTEPermissionInfo *perminfo = (RTEPermissionInfo *)expr;
+		if (perminfo->insideView == PNODE_OUTSIDE_VIEW)
+		{
+			immediate_parent_func = get_current_func_oid();
+		}
+	}
+	return (OidIsValid(immediate_parent_func) && (get_func_owner(immediate_parent_func) == objectOwnerId));
+}
+
+/*
+ * restrict_alter_owner_stmt
+ * Blocks ALTER OWNER statements from PG endpoint on TSQL objects.
+ */
+void
+restrict_alter_owner_stmt(AlterOwnerStmt *stmt)
+{
+    Oid			schema_oid = InvalidOid;
+    char		*schema_name = NULL;
+    ObjectAddress	address;
+    Relation		relation = NULL;
+    Node			*object = stmt->object;
+
+    /* Only handle specific object types */
+    if (stmt->objectType != OBJECT_TYPE && stmt->objectType != OBJECT_SCHEMA &&
+        stmt->objectType != OBJECT_FUNCTION && stmt->objectType != OBJECT_PROCEDURE)
+        return;
+    
+    /* For OBJECT_TYPE, convert List to TypeName if needed */
+    if (stmt->objectType == OBJECT_TYPE && IsA(stmt->object, List))
+    {
+        TypeName *typename = makeTypeNameFromNameList((List *) stmt->object);
+        object = (Node *) typename;
+    }
+    
+    /* Get object address to determine schema */
+    address = get_object_address(stmt->objectType, object, &relation, AccessShareLock, false);
+    
+    if (stmt->objectType == OBJECT_SCHEMA)
+    {
+		/* For schema objects, the object itself is the schema */
+        schema_oid = address.objectId;
+    }
+    else
+    {
+		/* For other objects, get their containing schema */
+        schema_oid = get_object_namespace(&address);
+    }
+
+	if (!OidIsValid(schema_oid))
+	{
+		if (relation)
+			RelationClose(relation);
+		return;
+	}
+    
+    schema_name = get_namespace_name(schema_oid);
+    if (relation)
+        RelationClose(relation);
+    
+    if (!schema_name)
+        return;
+
+    /* Check if it's a Babelfish schema */
+    if (physical_schema_name_exists(schema_name))
+    {
+        pfree(schema_name);
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                 errmsg("ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
+    }
+}
+
+/*
+ * restrict_alter_table_stmt  
+ * Blocks ALTER TABLE statements from PG dialect on TSQL objects.
+ * Extracts schema name from the table relation and checks if it belongs to Babelfish.
+ */
+void
+restrict_alter_table_stmt(AlterTableStmt *stmt)
+{
+    char *schema_name = NULL;
+    Oid schema_oid = InvalidOid;
+    ListCell *lcmd;
+
+    /* Skip if this is ALTER VIEW - handled with babelfishpg_tsql.enable_create_alter_view_from_pg */
+    if (stmt->objtype == OBJECT_VIEW)
+        return;
+
+    /* Extract schema from RangeVar */
+    if (stmt->relation)
+    {
+        if (stmt->relation->schemaname)
+            schema_name = stmt->relation->schemaname;
+        else
+        {
+            schema_oid = RangeVarGetRelid(stmt->relation, AccessExclusiveLock, true);
+            if (OidIsValid(schema_oid))
+                schema_name = get_namespace_name(schema_oid);
+        }
+    }
+
+    /* Check if any command is AT_ChangeOwner */
+    foreach(lcmd, stmt->cmds)
+    {
+        AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+        if (cmd->subtype != AT_ChangeOwner)
+            continue;
+
+        /* Check if it's a Babelfish schema */
+        if (schema_name && physical_schema_name_exists(schema_name))
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
+        }
+    }
 }

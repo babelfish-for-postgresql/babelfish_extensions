@@ -4,12 +4,12 @@ SELECT STAsText(@point);
 SELECT @point.STAsText();
 Go
 ~~START~~
-text
+nvarchar
 POINT(-122.349 47.651)
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 POINT(-122.349 47.651)
 ~~END~~
 
@@ -21,17 +21,17 @@ SELECT @point.STAsText();
 SELECT @point . STAsText ( );
 Go
 ~~START~~
-text
+nvarchar
 POINT(22.349 -47.651)
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 POINT(22.349 -47.651)
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 POINT(22.349 -47.651)
 ~~END~~
 
@@ -163,7 +163,7 @@ SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 select geometry::Point(@STX.STX, @STX.STY, 4326).STAsText(), geometry::Point(@STX.STX, @STX.STY, 4326).STAsBinary(), geometry::Point(@STX.STX, @STX.STY, 4326).STDistance(geometry::Point(@STX.STX, @STX.STY, 4326));
 go
 ~~START~~
-text#!#varbinary#!#float
+nvarchar#!#varbinary#!#float
 POINT(-122.349 47.651)#!#01010000007593180456965EC017D9CEF753D34740#!#0.0
 ~~END~~
 
@@ -192,7 +192,7 @@ float
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 <NULL>
 ~~END~~
 
@@ -738,7 +738,7 @@ float
 SELECT location.STAsText() from SPATIALPOINTGEOM_dt ORDER BY location.STX;
 GO
 ~~START~~
-text
+nvarchar
 <NULL>
 POINT(-720.345 45.1234)
 POINT(-122.349 47.651)
@@ -2098,12 +2098,12 @@ SELECT STAsText(@point);
 SELECT @point.STAsText();
 Go
 ~~START~~
-text
+nvarchar
 POINT(-122.349 47.651)
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 POINT(-122.349 47.651)
 ~~END~~
 
@@ -2114,12 +2114,12 @@ SELECT STAsText(@point);
 SELECT @point.STAsText();
 Go
 ~~START~~
-text
+nvarchar
 POINT(-47.651 22.349)
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 POINT(-47.651 22.349)
 ~~END~~
 
@@ -2219,7 +2219,7 @@ SET @Lat = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
 select geography::Point(@Lat.Long, @Lat.Lat, 4326).STAsText(), geography::Point(@Lat.Long, @Lat.Lat, 4326).STAsBinary(), geography::Point(@Lat.Long, @Lat.Lat, 4326).STDistance(geography::Point(@Lat.Long, @Lat.Lat, 4326));
 go
 ~~START~~
-text#!#varbinary#!#float
+nvarchar#!#varbinary#!#float
 POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0#!#0.0
 ~~END~~
 
@@ -2309,7 +2309,7 @@ select a.STAsText()
 				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.Lat >= y.location.Long ORDER BY x.a.Lat;
 go
 ~~START~~
-text
+nvarchar
 POINT(-91 -35)
 POINT(-91 -35)
 POINT(-91 -35)
@@ -2404,7 +2404,7 @@ select f.STAsText()
                 from testspatial_tvf(1) f inner join SPATIALPOINTGEOG_dt t on f.location.Lat >= t.location.Long ORDER BY f.location.Lat;
 go
 ~~START~~
-text
+nvarchar
 POINT(-91 -35)
 POINT(-91 -35)
 POINT(-91 -35)
@@ -2518,7 +2518,7 @@ float
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 <NULL>
 ~~END~~
 
@@ -3010,7 +3010,7 @@ float
 SELECT location.STAsText() from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 ~~START~~
-text
+nvarchar
 <NULL>
 POINT(-91 -35)
 POINT(47.651 -22.349)

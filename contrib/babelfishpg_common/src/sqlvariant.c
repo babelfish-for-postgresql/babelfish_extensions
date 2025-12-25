@@ -51,6 +51,7 @@
 #include "typecode.h"
 #include "numeric.h"
 #include "sqlvariant.h"
+#include "datetime.h"
 
 /*  Function Registeration  */
 PG_FUNCTION_INFO_V1(sqlvariantin);
@@ -948,6 +949,10 @@ PG_FUNCTION_INFO_V1(sqlvariant2uniqueidentifier);
  * if we does not apply typmod during type cast.
  * However, it may be faster may be if we apply typmod
  * directly during type cast.
+ * This function is strictly used for casting of
+ * sql_variant to datetime and smalldatetime.
+ * If this function is needed elsewhere, be mindful
+ * of the rounding off logic for datetime
 */
 Datum
 sqlvariant2timestamp(PG_FUNCTION_ARGS)
@@ -956,7 +961,8 @@ sqlvariant2timestamp(PG_FUNCTION_ARGS)
 	Oid			coll = PG_GET_COLLATION();
 	Timestamp	result;
 
-	result = DatumGetTimestamp(gen_type_datum_from_sqlvariant_bytea(sv, DATETIME_T, -1, coll));
+	// roundoff logic only affects datetime and NOT smalldatetime as smalldatetime has always zero second without any fractional part
+	result = roundoff_datetime(DatumGetTimestamp(gen_type_datum_from_sqlvariant_bytea(sv, DATETIME_T, -1, coll)));
 
 	PG_RETURN_TIMESTAMP(result);
 }

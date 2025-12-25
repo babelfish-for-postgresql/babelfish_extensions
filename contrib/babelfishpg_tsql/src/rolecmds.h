@@ -79,6 +79,7 @@ extern void add_to_bbf_authid_user_ext(const char *user_name,
 extern void drop_related_bbf_users(List *db_users);
 extern void alter_bbf_authid_user_ext(AlterRoleStmt *stmt);
 extern bool is_active_login(Oid role_oid);
+extern bool is_database_owner(Oid role_oid);
 extern char *convertToUPN(char *input);
 extern bool windows_login_contains_invalid_chars(char *input);
 extern bool windows_domain_contains_invalid_chars(char *input);
@@ -90,5 +91,6 @@ extern void exec_alter_dbowner_subcmds(GrantRoleStmt *stmt);
 extern bool is_grantee_role_db_owner(GrantRoleStmt *stmt);
 extern void change_object_owner_if_db_owner(void);
 extern char* get_obj_role(const char *rolname);
+extern void bbf_shdep_drop_owned_dependent_acl(Oid roleoids, DropBehavior behavior);
 
 #endif

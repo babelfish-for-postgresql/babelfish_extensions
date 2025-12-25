@@ -49,6 +49,7 @@
 #include "utils/queryenvironment.h"
 #include "utils/float.h"
 #include "utils/xid8.h"
+#include "utils/xml.h"
 #include <math.h>
 
 #include "../src/babelfish_version.h"
@@ -72,6 +73,12 @@
 #include "catalog/pg_constraint.h"
 #include "parser/parse_oper.h"
 
+#ifdef USE_LIBXML
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+#endif							/* USE_LIBXML */
+
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
 #define SYSVARCHAR_MAX_LENGTH 4000
@@ -80,6 +87,7 @@
 #define DATEPART_MIN_VALUE -53690               	/* minimun value for datepart general_integer_datatype */
 #define DATEPART_SMALLMONEY_MAX_VALUE 214748.3647	/* maximum value for datepart smallmoney */
 #define DATEPART_SMALLMONEY_MIN_VALUE -53690		/* minimum value for datepart smallmoney */
+#define TSQL_OPENXML_EDGE_TABLE_COLS 9
 
 typedef enum
 {
@@ -129,6 +137,7 @@ PG_FUNCTION_INFO_V1(xact_state);
 PG_FUNCTION_INFO_V1(get_enr_list);
 PG_FUNCTION_INFO_V1(tsql_random);
 PG_FUNCTION_INFO_V1(timezone_mapping);
+PG_FUNCTION_INFO_V1(pltsql_timezone_mapping_pg_to_windows);
 PG_FUNCTION_INFO_V1(is_member);
 PG_FUNCTION_INFO_V1(schema_id);
 PG_FUNCTION_INFO_V1(schema_name);
@@ -197,6 +206,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_money);
 PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 PG_FUNCTION_INFO_V1(replace_special_chars_fts);
 PG_FUNCTION_INFO_V1(isnumeric);
+PG_FUNCTION_INFO_V1(openxml_simple);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -234,6 +244,39 @@ extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern char *replace_special_chars_fts_impl(char *input_str);
+
+#ifdef USE_LIBXML
+HTAB	     *ht_xmlNode2Id = NULL;
+static bool   inited_ht_xmlNode2Id = false;
+
+typedef struct ht_xmlNode2Id_entry
+{
+	xmlNode           *key;
+	long long int      id;
+} ht_xmlNode2Id_entry_t;
+
+/* This came from backend/utils/adt/xml.c */
+struct PgXmlErrorContext
+{
+	int			magic;
+	/* strictness argument passed to pg_xml_init */
+	PgXmlStrictness strictness;
+	/* current error status and accumulated message, if any */
+	bool		err_occurred;
+	StringInfoData err_buf;
+	/* previous libxml error handling state (saved by pg_xml_init) */
+	xmlStructuredErrorFunc saved_errfunc;
+	void	   *saved_errcxt;
+	/* previous libxml entity handler (saved by pg_xml_init) */
+	xmlExternalEntityLoader saved_entityfunc;
+};
+#endif							/* USE_LIBXML */
+
+#define NO_XML_SUPPORT() \
+	ereport(ERROR, \
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
+			 errmsg("unsupported XML feature"), \
+			 errdetail("This functionality requires the server to be built with libxml support.")))
 
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
@@ -947,9 +990,19 @@ Datum sysutcdatetime(PG_FUNCTION_ARGS)
 
 Datum getutcdate(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_DATUM(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
-                                                            TimestampTzGetDatum(GetCurrentStatementStartTimestamp()))));
-    
+	Datum utc_time;
+    Timestamp rounded_time;
+
+	/* First get UTC time */
+    utc_time = DirectFunctionCall2(timestamptz_zone,
+									CStringGetTextDatum("UTC"),
+									TimestampTzGetDatum(GetCurrentStatementStartTimestamp()));
+
+	/* Convert Datum to Timestamp for roundoff_datetime */
+	rounded_time = (*common_utility_plugin_ptr->roundoff_datetime)(DatumGetTimestamp(utc_time));
+
+	/* Convert back to Datum and return */
+	PG_RETURN_TIMESTAMP(rounded_time);
 }
 
 Datum getdate_internal(PG_FUNCTION_ARGS)
@@ -1036,33 +1089,102 @@ pgerror(PG_FUNCTION_ARGS)
 	PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input) ((error_sqlstate), strlen(error_sqlstate), -1));
 }
 
+/*
+ * Structure to cache metadata needed in datalength().
+ */
+typedef struct DatalengthIOData
+{
+	Oid			argtypeid;
+	int			typlen;
+} DatalengthIOData;
 
-/* returns data length of one Datum
- * this function is very similar to pg_column_size, but returns untoasted data without header sizes for bytea objects
-*/
+/* 
+ * datalength()
+ * 	Returns data length of one Datum.
+ * 	This function is very similar to pg_column_size, but returns 
+ * 	untoasted data without header sizes for bytea objects
+ */
 Datum
 datalength(PG_FUNCTION_ARGS)
 {
 	Datum		value = PG_GETARG_DATUM(0);
 	int32 result;
 	int			typlen;
+	DatalengthIOData *my_extra;
+	Oid			argtypeid;
 
-	/* On first call, get the input type's typlen, and save at *fn_extra */
-	if (fcinfo->flinfo->fn_extra == NULL)
+	my_extra = (DatalengthIOData *) fcinfo->flinfo->fn_extra;
+
+	/* On first call, get the input type's oid and typlen, and save at *fn_extra */
+	if (my_extra == NULL)
 	{
+		Oid			immediate_base_type;
 		/* Lookup the datatype of the supplied argument */
-		Oid			argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+		argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+		
+		/* UDT Handling. */
+		immediate_base_type = get_immediate_base_type_of_UDT_internal(argtypeid);
+		if (OidIsValid(immediate_base_type))
+		{
+			argtypeid = immediate_base_type;
+		}
 
 		typlen = get_typlen(argtypeid);
 		if (typlen == 0)		/* should not happen */
 			elog(ERROR, "cache lookup failed for type %u", argtypeid);
 
-		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													  sizeof(int));
-		*((int *) fcinfo->flinfo->fn_extra) = typlen;
+		my_extra = (DatalengthIOData *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+														  sizeof(DatalengthIOData));
+		my_extra->argtypeid = argtypeid;
+		my_extra->typlen = typlen;
 	}
 	else
-		typlen = *((int *) fcinfo->flinfo->fn_extra);
+	{
+		argtypeid = my_extra->argtypeid;
+		typlen = my_extra->typlen;
+	}
+
+	/* Handling fixed storage size datatypes. */
+	if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(argtypeid))
+	{
+		PG_RETURN_INT32(1);
+	}
+	else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(argtypeid) || 
+			 (*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(argtypeid))
+	{
+		PG_RETURN_INT32(4);
+	}
+	else if (argtypeid == DATEOID)
+	{
+		PG_RETURN_INT32(3);
+	}
+	else if (argtypeid == TIMEOID)
+	{
+		PG_RETURN_INT32(5);
+	}
+	else if (is_numeric_datatype(argtypeid))
+	{
+		Numeric result_numeric_val = DatumGetNumeric(value);
+		int32 val_typmod = (*common_utility_plugin_ptr->tsql_numeric_get_typmod)(result_numeric_val);
+		int32 val_precision = ((val_typmod - VARHDRSZ) >> 16) & 0xffff;
+
+		if (1 <= val_precision && val_precision <= 9)
+		{
+			PG_RETURN_INT32(5);
+		}
+		else if (10 <= val_precision && val_precision <= 19)
+		{
+			PG_RETURN_INT32(9);
+		}
+		else if (20 <= val_precision && val_precision <= 28)
+		{
+			PG_RETURN_INT32(13);
+		}
+		else if (29 <= val_precision && val_precision <= 38)
+		{
+			PG_RETURN_INT32(17);
+		}
+	}
 
 	if (typlen == -1)
 	{
@@ -1243,6 +1365,28 @@ timezone_mapping(PG_FUNCTION_ARGS)
 		}
 	}
 	PG_RETURN_VARCHAR_P(result);
+}
+
+/*
+ * The pltsql_timezone_mapping_pg_to_windows() is used for fetching Windows name of standard timezone from PostgreSQL timezone name
+ */
+Datum
+pltsql_timezone_mapping_pg_to_windows(PG_FUNCTION_ARGS)
+{
+	char *pgtmz = text_to_cstring(PG_GETARG_TEXT_P(0));
+	int len = (sizeof(win32_tzmap) / sizeof(*(win32_tzmap)));
+	for(int i=0;i<len;i++)
+	{
+		if(pg_strcasecmp(win32_tzmap[i].pgtzname,pgtmz) == 0)
+		{
+			if (pgtmz)
+				pfree(pgtmz);
+			PG_RETURN_TEXT_P(cstring_to_text(win32_tzmap[i].stdname));
+		}
+	}
+	if (pgtmz)
+		pfree(pgtmz);
+	PG_RETURN_NULL();
 }
 
 Datum
@@ -2212,6 +2356,26 @@ isnumeric(PG_FUNCTION_ARGS)
 			PG_RETURN_INT32(1);
 	}
 
+	/* Get the string representation from input datum. */
+	if (argtypeid == TEXTOID)
+	{
+		value_str = text_to_cstring(PG_GETARG_TEXT_P(0));
+	}
+	else
+	{
+		Oid typoutput;
+		bool typisvarlena;
+		getTypeOutputInfo(argtypeid, &typoutput, &typisvarlena);
+		value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
+	}
+
+	/* Handling empty string. */
+	if ((*common_utility_plugin_ptr->isEmptyOrWhitespace)(value_str))
+	{
+		pfree(value_str);
+		PG_RETURN_INT32(0);
+	}
+
 	/* Get or initialize the cached data. */
 	my_extra = (IsNumericIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
@@ -2241,19 +2405,6 @@ isnumeric(PG_FUNCTION_ARGS)
 		fmgr_info_cxt(numeric_typiofunc,
 					&my_extra->numeric_inputproc,
 					fcinfo->flinfo->fn_mcxt);
-	}
-
-	/* Get the string representation from input datum. */
-	if (argtypeid == TEXTOID)
-	{
-		value_str = text_to_cstring(PG_GETARG_TEXT_P(0));
-	}
-	else
-	{
-		Oid typoutput;
-		bool typisvarlena;
-		getTypeOutputInfo(argtypeid, &typoutput, &typisvarlena);
-		value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
 	}
 
 	/* Try to perform the conversion to numeric. */
@@ -2642,7 +2793,7 @@ object_name(PG_FUNCTION_ARGS)
 	 * search in list of ENRs registered in the current query environment by
 	 * object_id
 	 */
-	enr = GetENRTempTableWithOid(object_id);
+	enr = GetENRTempTableWithOid(object_id, false);
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
 		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(enr->md.name));
@@ -4185,7 +4336,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 					SysScanDesc scan;
 					HeapTuple	tup;
 
-					depRel = table_open(DependRelationId, RowExclusiveLock);
+					depRel = table_open(DependRelationId, AccessShareLock);
 
 					ScanKeyInit(&key[0],
 								Anum_pg_depend_objid,
@@ -4209,7 +4360,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 					systable_endscan(scan);
 
-					table_close(depRel, RowExclusiveLock);
+					table_close(depRel, AccessShareLock);
 				}
 				ReleaseSysCache(tp);
 			}
@@ -4319,7 +4470,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_UPDATE) &&
 				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_REFERENCES))
 			{
-				attrRel = table_open(AttributeRelationId, RowExclusiveLock);
+				attrRel = table_open(AttributeRelationId, AccessShareLock);
 
 				ScanKeyInit(&key[0],
 							Anum_pg_attribute_attrelid,
@@ -4348,7 +4499,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 				systable_endscan(scan);
 
-				table_close(attrRel, RowExclusiveLock);
+				table_close(attrRel, AccessShareLock);
 			}
 
 		}
@@ -4481,8 +4632,14 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		 */
 		if (pg_strcasecmp(property, "isschemabound") == 0)
 		{
+			bool is_weak_view = false;
+			bool is_view = (type == OBJECT_TYPE_VIEW);
+
+			if (is_view)
+				check_is_tsql_view(object_id, &is_weak_view);
+
 			pfree(property);
-			PG_RETURN_INT32(0);
+			PG_RETURN_INT32(is_view ? ((int) !is_weak_view) : 0);
 		}
 		/*
 		 * For ExecIsQuotedIdentOn and ExecIsAnsiNullsOn, we hardcoded it to 1
@@ -4665,7 +4822,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type != OBJECT_TYPE_TABLE)
 			PG_RETURN_INT32(0);
 
-		indRel = table_open(IndexRelationId, RowExclusiveLock);
+		indRel = table_open(IndexRelationId, AccessShareLock);
 
 		ScanKeyInit(&key,
 				Anum_pg_index_indrelid,
@@ -4678,13 +4835,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (HeapTupleIsValid(tup = systable_getnext(scan)))
 		{
 			systable_endscan(scan);
-			table_close(indRel, RowExclusiveLock);
+			table_close(indRel, AccessShareLock);
 			pfree(property);
 			PG_RETURN_INT32(1);
 		}
 
 		systable_endscan(scan);
-		table_close(indRel, RowExclusiveLock);
+		table_close(indRel, AccessShareLock);
 		pfree(property);
 
 		PG_RETURN_INT32(0);
@@ -5107,3 +5264,786 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 
 	return tupstore;
 }
+
+#ifdef USE_LIBXML
+/*
+ * extract_namespaces_from_xml
+ * 		Extracts namespace names and URIs from root node of the given XML data.
+ *
+ * Note: The extracted names and URIs are stored in ns_names and ns_uris respectively.
+ * The count of extracted namespaces is stored in ns_count. If no namespaces are found, 
+ * ns_names and ns_uris are set to NULL and ns_count to 0.
+ */
+void
+extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count)
+{
+    xmlDocPtr	doc;
+    xmlNode    *root;
+    int         index;
+
+	/* Unlikely, just a sanity check */
+	if (ns_names == NULL || ns_uris == NULL || ns_count == NULL)
+		return;
+
+	*ns_names = NULL;
+	*ns_uris = NULL;
+	*ns_count = 0;
+
+	if (ns_data == NULL)
+		return;
+
+	doc = xml_parse_wrapper(ns_data, XMLOPTION_DOCUMENT, false, GetDatabaseEncoding(), NULL, NULL, NULL);
+
+    if (doc == NULL)
+		return;
+
+	/*
+	 * Get namespace declaration count
+	 */
+	root = xmlDocGetRootElement(doc);
+    for (xmlNs *cur = root->nsDef; cur != NULL; cur = cur->next)
+	{
+		if (cur->prefix)	// Ignore default namespace declaration
+		{
+			(*ns_count)++;
+		}
+	}
+    
+    if (*ns_count == 0)
+    {
+        if (doc)
+            xmlFreeDoc(doc);
+        return;
+    }
+
+	/*
+	 * Allocate memory for namespace names and URIs
+	 */
+	*ns_names = (char **) palloc0((*ns_count) * sizeof(char *));
+    *ns_uris = (char **) palloc0((*ns_count) * sizeof(char *));
+
+	/*
+	 * Store namespace names and URIs in ns_names and ns_uris
+	 */
+    index = 0;
+    for (xmlNs *cur = root->nsDef; cur != NULL && index < *ns_count; cur = cur->next)
+    {
+        if (cur->prefix)
+        {
+            (*ns_names)[index] = (char *) pstrdup((const char *) cur->prefix);
+            (*ns_uris)[index] = cur->href ? (char *) pstrdup((const char *) cur->href) : NULL;
+			index++;
+        }
+    }
+
+    if (doc)
+		xmlFreeDoc(doc);
+}
+
+
+/*
+ * init_xml_handles_htab
+ * 		Initializes the hash table to map xmlNodePtr to unique IDs.
+ */
+static void
+init_xml_handles_htab(long long int nelem)
+{
+	HASHCTL		hashCtl;
+
+	if (ht_xmlNode2Id == NULL)	/* create hash table */
+	{
+		MemSet(&hashCtl, 0, sizeof(hashCtl));
+		hashCtl.keysize = sizeof(xmlNodePtr);
+		hashCtl.entrysize = sizeof(ht_xmlNode2Id_entry_t);
+		hashCtl.hcxt = CurrentMemoryContext;
+		ht_xmlNode2Id = hash_create("Xml Node pointer to id Mapping",
+									  nelem,
+									  &hashCtl,
+									  HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
+	}
+
+	/* mark the hash table initialised */
+	inited_ht_xmlNode2Id = true;
+}
+
+/*
+ * destroy_xml_handles_htab
+ * 		Destroys the hash table and frees associated memory.
+ */
+static void
+destroy_xml_handles_htab()
+{
+	if (ht_xmlNode2Id != NULL)
+	{
+		hash_destroy(ht_xmlNode2Id);
+		ht_xmlNode2Id = NULL;
+	}
+	inited_ht_xmlNode2Id = false;
+}
+
+/*
+ * populate_xml_nodes 
+ * 		Recursively traverse the XML tree and populate xml_nodes_list
+ */
+static void 
+populate_xml_nodes(xmlNode *node, DynaVec *xml_nodes_list)
+{
+	/* Sanity Check */
+	if (node == NULL)
+		return;
+
+	if (node->type == XML_TEXT_NODE && xmlIsBlankNode(node))
+		return;  // skip whitespace-only text node
+
+	/*
+	 * Add the current node to the list if it is not a Document node.
+	 * Document node is not added to the list as it is not required for OpenXML processing.
+	 */
+	if (node->type != XML_DOCUMENT_NODE)
+		vec_push_back(xml_nodes_list, &node);
+
+	if (node->type == XML_ELEMENT_NODE)
+	{
+		xmlNs *ns = NULL;
+		xmlAttr *attr = NULL;
+
+		/*
+		 * For each of the namespace declaration in the node, create a new attribute.
+		 */
+		for (xmlNs *cur = node->nsDef; cur != NULL; cur = cur->next)
+		{
+			ns = xmlNewNs(NULL, NULL, BAD_CAST "xmlns");
+			
+			/* Unlikely, Just a sanity check */
+			if (ns == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("could not process XML document.")));
+
+			if (cur->prefix == NULL)	// Default namespace declaration
+				attr = xmlNewNsProp(node, ns, BAD_CAST "xmlns", BAD_CAST cur->href);
+			else
+				attr = xmlNewNsProp(node, ns, BAD_CAST cur->prefix, BAD_CAST cur->href);
+			
+			/* Unlikely, Just a sanity check */
+			if (attr == NULL)
+				ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("could not process XML document.")));
+		}
+
+		for (xmlAttr *cur = node->properties; cur != NULL; cur = cur->next)
+		{
+			populate_xml_nodes((xmlNode *) cur, xml_nodes_list);
+		}
+	}
+
+	for (xmlNodePtr cur = node->children; cur != NULL; cur = cur->next)
+	{
+		populate_xml_nodes(cur, xml_nodes_list);
+	}
+}
+
+/*
+ * assign_ids
+ *  	For the given XML Document node, prepares a hash table 
+ *  	which stores the mapping of each xmlNodePtr to a unique ID.
+ */
+static void
+assign_ids(xmlDoc *doc)
+{
+	size_t                 xml_nodes_list_size;
+	size_t                 i;
+	long long int          counter;
+	xmlNode               *root = xmlDocGetRootElement(doc);
+	DynaVec				  *xml_nodes_list = NULL;
+
+	/*
+	 * Create a temporary list of all XML nodes in the document.
+	 */
+	xml_nodes_list = create_vector(sizeof(xmlNodePtr));
+	populate_xml_nodes((xmlNodePtr) doc, xml_nodes_list);
+	xml_nodes_list_size = vec_size(xml_nodes_list);
+
+	init_xml_handles_htab(xml_nodes_list_size);
+
+	/*
+	 * For each node in the list, if it is not already in the hash table,
+	 * assign it a unique ID and add it to the hash table. The root node
+	 * is assigned ID 0. Counter is used to generate unique IDs.
+	 */
+	counter = 1;
+	for (i = 1; i <= xml_nodes_list_size; i++)
+	{
+		ht_xmlNode2Id_entry_t *entry;
+		bool                   found = false;
+		xmlNode              **cur = (xmlNode **) vec_at(xml_nodes_list, i-1);
+
+		entry = hash_search(ht_xmlNode2Id, cur, HASH_ENTER, &found);
+		if (!found)
+		{
+			entry->id = (*cur == root) ? 0 : counter;
+			counter++;
+		}
+	}
+
+	/*
+	 * Free the temporary list of XML nodes as it is no longer needed.
+	 */
+	destroy_vector(xml_nodes_list);
+	xml_nodes_list = NULL;
+}
+
+/*
+ * lookup_xmlNode_id
+ *  	Returns the unique ID for a given xmlNodePtr from the hash table. 
+ * 		If the node is not found in the hash table, it returns -1.
+ */
+static long long int
+lookup_xmlNode_id(xmlNode *key)
+{
+	ht_xmlNode2Id_entry_t *hinfo;
+	bool		found;
+
+	if (key == NULL)
+		return -1;
+
+	hinfo = (ht_xmlNode2Id_entry_t *) hash_search(ht_xmlNode2Id,
+												  &key,
+												  HASH_FIND,
+												  &found);
+	if (!found)
+		return -1;
+
+	return hinfo->id;
+}
+
+/*
+ * add_node_details 
+ *		 Add details of given xmlNodePtr to the tuplestore. It also recursively add 
+ *  	 details of its attribute nodes (properties) and child nodes to the tuplestore.
+ */
+static void
+add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, Bitmapset **xml_visited_nodes_set)
+{
+	Datum	         values[TSQL_OPENXML_EDGE_TABLE_COLS];
+	bool             nulls[TSQL_OPENXML_EDGE_TABLE_COLS];
+	long long int    node_id;
+
+	if (node->type == XML_TEXT_NODE && xmlIsBlankNode(node))
+		return;  // skip whitespace-only text node
+
+	/*
+	 * OPENXML only returns details of Element, Text, CDATA Section, Comment, Processing Instruction and Attribute nodes.
+	 */
+	if (node->type == XML_ELEMENT_NODE 
+		|| node->type == XML_ATTRIBUTE_NODE 
+		|| node->type == XML_TEXT_NODE 
+		|| node->type == XML_CDATA_SECTION_NODE 
+		|| node->type == XML_COMMENT_NODE 
+		|| node->type == XML_PI_NODE)
+	{
+		/*
+		 * Initialize all values to NULL and nulls to true
+		 */
+		memset(values, 0, sizeof(values));
+		memset(nulls, true, sizeof(nulls));
+
+		node_id = lookup_xmlNode_id(node);
+		if (node_id != -1)
+		{
+			nulls[0] = false;
+			values[0] = Int64GetDatum(node_id);
+		}
+
+		node_id = lookup_xmlNode_id(node->parent);
+		if (node_id != -1)
+		{
+			nulls[1] = false;
+			values[1] = Int64GetDatum(node_id);
+		}
+
+		nulls[2] = false;
+		values[2] = Int32GetDatum(node->type);
+
+		if (node->type == XML_TEXT_NODE)
+		{
+			nulls[3] = false;
+			values[3] = PointerGetDatum((VarChar *) cstring_to_text("#text"));
+		}
+		else if (node->type == XML_CDATA_SECTION_NODE)
+		{
+			nulls[3] = false;
+			values[3] = PointerGetDatum((VarChar *) cstring_to_text("#cdata-section"));
+		}
+		else if (node->type == XML_COMMENT_NODE)
+		{
+			nulls[3] = false;
+			values[3] = PointerGetDatum((VarChar *) cstring_to_text("#comment"));
+		}
+		else
+		{
+			if (node->name != NULL)
+			{
+				nulls[3] = false;
+				values[3] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->name));
+			}
+		}
+
+		if (node->ns != NULL)
+		{
+			if (node->ns->prefix != NULL)
+			{
+				nulls[4] = false;
+				values[4] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->ns->prefix));
+			}
+
+			if (node->ns->href != NULL)
+			{
+				nulls[5] = false;
+				values[5] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->ns->href));
+			}
+		}
+
+		/*
+		 * datatype column of openxml edge table refers Attribute-type, hence it is only applicable for Attribute nodes.
+		 * Following block fetches the attribute type from DTD if available and sets the value accordingly.
+		 * If DTD is not available or attribute type is not defined in DTD, datatype column is kept NULL.
+		 */
+		if (node->type == XML_ATTRIBUTE_NODE)
+		{
+			xmlDtdPtr dtd = xmlGetIntSubset(node->doc);
+			xmlAttributePtr attr_def = NULL;
+
+			if (dtd != NULL)
+			{
+				/*
+				 * Its Unlikely that node->parent is NULL, Just a sanity check
+				 */
+				if (node->parent != NULL)
+					attr_def = xmlGetDtdAttrDesc(dtd, node->parent->name, node->name);
+
+				if (attr_def != NULL)
+				{
+					switch (attr_def->atype)
+					{
+						case XML_ATTRIBUTE_CDATA:
+							nulls[6] = false;
+							values[6] = PointerGetDatum((VarChar *) cstring_to_text("string"));
+							break;
+						case XML_ATTRIBUTE_ID:
+							nulls[6] = false;
+							values[6] = PointerGetDatum((VarChar *) cstring_to_text("id"));
+							break;
+						case XML_ATTRIBUTE_IDREF:
+							nulls[6] = false;
+							values[6] = PointerGetDatum((VarChar *) cstring_to_text("idref"));
+							break;
+						case XML_ATTRIBUTE_IDREFS:
+							nulls[6] = false;
+							values[6] = PointerGetDatum((VarChar *) cstring_to_text("idrefs"));
+							break;
+						case XML_ATTRIBUTE_ENTITY:
+							nulls[6] = false;
+							values[6] = PointerGetDatum((VarChar *) cstring_to_text("entity"));
+							break;
+						case XML_ATTRIBUTE_ENTITIES:
+							nulls[6] = false;
+							values[6] = PointerGetDatum((VarChar *) cstring_to_text("entities"));
+							break;
+						case XML_ATTRIBUTE_NMTOKEN:
+							nulls[6] = false;
+							values[6] = PointerGetDatum((VarChar *) cstring_to_text("nmtoken"));
+							break;
+						case XML_ATTRIBUTE_NMTOKENS:
+							nulls[6] = false;
+							values[6] = PointerGetDatum((VarChar *) cstring_to_text("nmtokens"));
+							break;
+						case XML_ATTRIBUTE_ENUMERATION:
+							nulls[6] = false;
+							values[6] = PointerGetDatum((VarChar *) cstring_to_text("enumeration"));
+							break;
+						case XML_ATTRIBUTE_NOTATION:
+							nulls[6] = false;
+							values[6] = PointerGetDatum((VarChar *) cstring_to_text("notation"));
+							break;
+						default:
+							break;
+					}
+				}				
+			}
+		}
+
+		/*
+		 * For attribute node prev and content are not applicable. So we should keep them NULL.
+		 */
+		if (node->type != XML_ATTRIBUTE_NODE)
+		{
+			if (node->prev != NULL)
+			{
+				xmlNodePtr cur = node->prev;
+
+				while (cur != NULL && cur->type == XML_TEXT_NODE && xmlIsBlankNode(cur))
+					cur = cur->prev;
+
+				node_id = lookup_xmlNode_id(cur);
+				if (node_id != -1)
+				{
+					nulls[7] = false;
+					values[7] = Int64GetDatum(node_id);
+				}
+			}
+
+			if (node->content != NULL)
+			{
+				char *ptr = (char *) node->content;
+
+				/* for content, trim leading and trailing spaces */
+				while (isspace((char) *ptr))
+					ptr++;
+
+				remove_trailing_spaces(ptr);
+
+				nulls[8] = false;
+				values[8] = PointerGetDatum(cstring_to_text((const char *) ptr));
+			}
+		}
+
+		if (!nulls[0] && !bms_is_member(DatumGetInt64(values[0]), *xml_visited_nodes_set))
+		{
+			tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+			*xml_visited_nodes_set = bms_add_member(*xml_visited_nodes_set, DatumGetInt64(values[0]));
+		}
+		else
+		{
+			/* This node is already visited, no need of further processing. */
+			return;
+		}
+	}
+
+	if (node->type == XML_ELEMENT_NODE)
+	{
+		for (xmlAttr *cur = node->properties; cur != NULL; cur = cur->next)
+		{
+			add_node_details(tupstore, tupdesc, (xmlNodePtr) cur, xml_visited_nodes_set);
+		}
+	}
+
+	for (xmlNodePtr cur = node->children; cur != NULL; cur = cur->next)
+	{
+		add_node_details(tupstore, tupdesc, cur, xml_visited_nodes_set);		
+	}
+}
+#endif							/* USE_LIBXML */
+
+/*
+ * prepare_tupledesc_tuplestore_for_openxml
+ *		Prepare the tuple descriptor and tuplestore for OPENXML function without WITH clause.
+ */
+static void
+prepare_tupledesc_tuplestore_for_openxml(ReturnSetInfo *rsinfo, TupleDesc *tupdesc, Tuplestorestate **tupstore)
+{
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	Oid           bigint_oid, int_oid, nvarchar_oid, ntext_oid;
+
+	/* Unlikely, just a sanity check */
+	if (tupdesc == NULL || tupstore == NULL)
+		return;
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
+
+	bigint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bigint");
+	int_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("int");
+	nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+	ntext_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("ntext");
+
+	/* build tupdesc for result tuples. */
+	*tupdesc = CreateTemplateTupleDesc(TSQL_OPENXML_EDGE_TABLE_COLS);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 1, "id", bigint_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 2, "parentid", bigint_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 3, "nodetype", int_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 4, "localname", nvarchar_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 5, "prefix", nvarchar_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 6, "namespaceuri", nvarchar_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 7, "datatype", nvarchar_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 8, "prev", bigint_oid, -1, 0);
+	TupleDescInitEntry(*tupdesc, (AttrNumber) 9, "text", ntext_oid, -1, 0);
+	*tupdesc = BlessTupleDesc(*tupdesc);
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	*tupstore = tuplestore_begin_heap(true, false, work_mem);
+
+	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
+ * openxml_simple
+ *		Implementation of T-SQL OPENXML function without WITH clause.
+ *
+ * This function takes an XML document identified by an integer handle,
+ * an XPath expression, and returns a rowset representing the XML nodes
+ * that match the XPath expression. The rowset is structured according to
+ * the OPENXML edge table format, which includes columns for node ID,
+ * parent ID, node type, local name, prefix, namespace URI, datatype,
+ * previous sibling ID, and text content.
+ *
+ * The function retrieves the XML document and any associated namespace
+ * declarations using the provided handle. It then parses the XML document,
+ * applies the XPath expression to select nodes, and constructs a tuplestore
+ * containing the details of each selected node and its attributes.
+ *
+ * The function returns a set of rows, each representing an XML node in the
+ * specified format. If no nodes match the XPath expression, an empty set is
+ * returned.
+ */
+Datum
+openxml_simple(PG_FUNCTION_ARGS)
+{
+#ifdef USE_LIBXML
+    int              document_id = PG_GETARG_INT32(0);
+    text            *xpath_expr_text;
+#ifdef NOT_USED
+	int              flags = PG_GETARG_INT32(2);
+#endif
+    xmltype         *xmldata = NULL;
+    xmltype         *ns_data = NULL;
+    char           **ns_names;
+    char           **ns_uris;
+	int              ns_count;
+	char            *datastr;
+	int              len;
+	int              xpath_len;
+	xmlChar         *string;
+	xmlChar         *xpath_expr;
+	size_t           xmldecl_len = 0;
+	int 			 res_code;
+
+	TupleDesc        tupdesc;
+	Tuplestorestate *tupstore;
+	ReturnSetInfo   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+
+	PgXmlErrorContext *xmlerrcxt;
+	volatile xmlParserCtxtPtr ctxt = NULL;
+	volatile xmlDocPtr doc = NULL;
+	volatile xmlXPathContextPtr xpathctx = NULL;
+	volatile xmlXPathCompExprPtr xpathcomp = NULL;
+	volatile xmlXPathObjectPtr xpathobj = NULL;
+
+	/*
+	 * Prepare tuple descriptor and tuplestore for returning the result set.
+	 */
+	prepare_tupledesc_tuplestore_for_openxml(rsinfo, &tupdesc, &tupstore);
+
+	if (PG_ARGISNULL(1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("XPath expression cannot be null")));
+
+	xpath_expr_text = PG_GETARG_TEXT_PP(1);
+	xpath_len = VARSIZE_ANY_EXHDR(xpath_expr_text);
+	if (xpath_len == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				errmsg("empty XPath expression")));
+
+    /*
+     * Using document_id fetch the xml document and namespaces list from 
+     * xml_handle_temp_table which is used to store the xml handles created
+     * using sp_xml_preparedocument.
+     */
+    get_xml_data_and_namespace_data(document_id, &xmldata, &ns_data);
+
+	if (xmldata == NULL)
+		goto done;
+
+    extract_namespaces_from_xml(ns_data, &ns_names, &ns_uris, &ns_count);
+
+	datastr = VARDATA_ANY(xmldata);
+	len = VARSIZE_ANY_EXHDR(xmldata);
+
+	string = pg_xmlCharStrndup_wrapper(datastr, len);
+	xpath_expr = pg_xmlCharStrndup_wrapper(VARDATA_ANY(xpath_expr_text), xpath_len);
+
+	res_code = parse_xml_decl_wrapper((xmlChar *) string, &xmldecl_len, NULL, NULL, NULL);
+	if (res_code != 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_XML_CONTENT),
+					errmsg("Invalid XML declaration")));
+	}
+
+	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
+
+	PG_TRY();
+	{
+		xmlInitParser();
+
+		ctxt = xmlNewParserCtxt();
+		if (ctxt == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+						"could not allocate parser context");
+		doc = xmlCtxtReadMemory(ctxt, (char *) string + xmldecl_len,
+								len - xmldecl_len, NULL, NULL, XML_PARSE_NOBLANKS | XML_PARSE_DTDATTR);
+		if (doc == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+						"could not parse XML document");
+		xpathctx = xmlXPathNewContext(doc);
+		if (xpathctx == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+						"could not allocate XPath context");
+		xpathctx->node = (xmlNodePtr) doc;
+
+		/* Initialize the hash table to store xml node pointer to id mapping */
+		assign_ids(doc);
+
+		/* register namespaces, if any */
+		if (ns_count > 0)
+		{
+			for (int i = 0; i < ns_count; i++)
+			{
+				char	   *ns_name;
+				char	   *ns_uri;
+
+				if (ns_names[i] == NULL || ns_uris[i] == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							errmsg("neither namespace name nor URI may be null")));
+				ns_name = ns_names[i];
+				ns_uri = ns_uris[i];
+				if (xmlXPathRegisterNs(xpathctx,
+									(xmlChar *) ns_name,
+									(xmlChar *) ns_uri) != 0)
+					ereport(ERROR,
+							(errmsg("could not register XML namespace with name \"%s\" and URI \"%s\"",
+									ns_name, ns_uri)));
+			}
+		}
+
+		xpathcomp = xmlXPathCtxtCompile(xpathctx, xpath_expr);
+		if (xpathcomp == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
+						"invalid XPath expression");
+
+		xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
+		if (xpathobj == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not create XPath object");
+
+		if (xpathobj->type == XPATH_NODESET)
+		{
+			if (xpathobj->nodesetval != NULL)
+			{
+				xmlNodePtr	node;
+				int			num_rows;
+				Bitmapset  *xml_visited_nodes_set = NULL;
+				
+				num_rows = xpathobj->nodesetval->nodeNr;
+				for (int i = 0; i < num_rows; i++)
+				{
+					node = xpathobj->nodesetval->nodeTab[i];
+					add_node_details(tupstore, tupdesc, node, &xml_visited_nodes_set);
+				}
+				bms_free(xml_visited_nodes_set);
+				xml_visited_nodes_set = NULL;
+			}
+		}
+	}
+	PG_CATCH();
+	{
+		/* Destroy the hash table that used to store xml node pointer to id mapping */
+		destroy_xml_handles_htab();
+
+		if (xpathobj)
+			xmlXPathFreeObject(xpathobj);
+		if (xpathcomp)
+			xmlXPathFreeCompExpr(xpathcomp);
+		if (xpathctx)
+			xmlXPathFreeContext(xpathctx);
+		if (doc)
+			xmlFreeDoc(doc);
+		if (ctxt)
+			xmlFreeParserCtxt(ctxt);
+
+		/*
+		 * ns_count > 0, should be sufficient here, other checks are just sanity 
+		 * checks which are unlikely to be NULLs if ns_count > 0  
+		 */
+		if (ns_count > 0 && ns_names != NULL && ns_uris != NULL)
+		{
+			for (int i = 0; i < ns_count; i++)
+			{
+				xpfree(ns_names[i]);
+				xpfree(ns_uris[i]);
+			}
+			xpfree(ns_names);
+			xpfree(ns_uris);
+		}
+
+		xpfree(string);
+		xpfree(xpath_expr);
+
+		pg_xml_done(xmlerrcxt, true);
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	/* Destroy the hash table that used to store xml node pointer to id mapping */
+	destroy_xml_handles_htab();
+	if (xpathobj)
+		xmlXPathFreeObject(xpathobj);
+	if (xpathcomp)
+		xmlXPathFreeCompExpr(xpathcomp);
+	if (xpathctx)
+		xmlXPathFreeContext(xpathctx);
+	if (doc)
+		xmlFreeDoc(doc);
+	if (ctxt)
+		xmlFreeParserCtxt(ctxt);
+
+	/*
+	 * ns_count > 0, should be sufficient here, other checks are just sanity 
+	 * checks which are unlikely to be NULLs if ns_count > 0  
+	 */
+	if (ns_count > 0 && ns_names != NULL && ns_uris != NULL)
+	{
+		for (int i = 0; i < ns_count; i++)
+		{
+			xpfree(ns_names[i]);
+			xpfree(ns_uris[i]);
+		}
+		xpfree(ns_names);
+		xpfree(ns_uris);
+	}
+
+	xpfree(string);
+	xpfree(xpath_expr);
+
+	pg_xml_done(xmlerrcxt, false);
+
+done:
+	/* return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	PG_RETURN_NULL();
+#else
+	NO_XML_SUPPORT();
+#endif							/* USE_LIBXML */
+}
+

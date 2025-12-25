@@ -209,6 +209,33 @@ GO
 SELECT geography::Point(90, NULL, 4326);
 GO
 
+SELECT CAST('POINT(1.2.3 4)' AS geometry);
+GO
+
+SELECT CAST(CAST('POINT(1.2.3 4)' AS CHAR(100)) AS geometry);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.2.3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1..3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.3.4.3 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.3.. 4)', 4326);
+GO
+
+SELECT geometry::STGeomFromText(0x504F494E542831203129, 4326);
+GO
+
+SELECT geometry::STGeomFromText(0x50004F0049004E0054002800300020003, 0);
+GO
+
+SELECT geometry::STGeomFromText(0x50004F0049004E00540028003000200030002900, 0);
+GO
+
 -- Test with zero values
 SELECT geometry::STGeomFromText('POINT(0 0)', 4326);
 GO
@@ -359,19 +386,6 @@ GO
 SELECT geography::STPointFromText('POINT(45 90)', NULL);
 GO
 
--- Tests for common error handling
-SELECT geometry::STPointFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
-GO
-
-SELECT geography::STPointFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
-GO
-
-SELECT geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
-GO
-
-SELECT geography::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
-GO
-
 -- Input length is less than 22 bytes
 SELECT CAST(0xE6100000010C000000000000F03F0000000000040 as geometry)
 GO
@@ -379,13 +393,7 @@ GO
 SELECT CAST(0xE6100000010C000000000000F03F0000000000040 as geography)
 GO
 
--- Test with Invalid flags
-SELECT CAST(0xE61000000105000000000000F03F0000000000000040 as geometry)
-GO
-
-SELECT CAST(0xE61000000105000000000000F03F0000000000000040 as geography)
-GO
-
+-- Test with Invalid bytes
 SELECT CAST(0xE61000000104000000000000F03F0000000000000040 as geometry)
 GO
 
@@ -461,20 +469,6 @@ GO
 
 -- Test with unsupported geometry instances (these should raise errors)
 -- TODO: Update these tests as we implement support for each geometry instance
-
--- LINESTRING
-SELECT geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
-GO
-
-SELECT geography::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
-GO
-
--- POLYGON
-SELECT geometry::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 4326);
-GO
-
-SELECT geography::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 4326);
-GO
 
 -- CIRCULARSTRING
 SELECT geometry::STGeomFromText('CIRCULARSTRING(0 0, 1 1, 2 0)', 4326);

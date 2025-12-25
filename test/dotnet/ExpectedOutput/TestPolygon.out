@@ -1,0 +1,109 @@
+#Q#CREATE TABLE POLYGEOM_dt(location GEOMETRY);
+#Q#INSERT INTO POLYGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOM_dt(location) values(@location) 
+#Q#CREATE TABLE POLYGEOG_dt(location GEOGRAPHY);
+#Q#INSERT INTO POLYGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POLYGEOM_dt(location) values(geometry::STGeomFromText('POLYGON((1 1 NULL, 1 2 3, 2 2 4, 1 1 NULL))', 4326))
+#Q#INSERT INTO POLYGEOM_dt(location) values(geometry::STGeomFromText('POLYGON((0 0, 2 0, 4 1, 5 2, 6 4, 6 6, 5 8, 4 9, 2 10, 0 10, -1 8, -1 2, 0 0),(2 2, 3 2, 3 3, 2 3, 2 2))', 4326))
+#Q#INSERT INTO POLYGEOM_dt(location) values(geometry::STGeomFromText('POLYGON((1 2, 3 5, 6, 1 2))', 4326))
+#E#Invalid geometry
+#Q#INSERT INTO POLYGEOM_dt(location) values(geometry::STGeomFromText('POLYGON EMPTY', 4326))
+#Q#INSERT INTO POLYGEOG_dt(location) values(geography::STGeomFromText('POLYGON((1 1 NULL, 1 2 3, 2 2 4, 1 1 NULL))', 4326))
+#Q#INSERT INTO POLYGEOG_dt(location) values(geography::STGeomFromText('POLYGON((0 0, 2 0, 4 1, 5 2, 6 4, 6 6, 5 8, 4 9, 2 10, 0 10, -1 8, -1 2, 0 0),(2 2, 3 2, 3 3, 2 3, 2 2))', 4326))
+#Q#INSERT INTO POLYGEOG_dt(location) values(geography::STGeomFromText('POLYGON((1 2, 3 5, 6, 1 2))', 4326))
+#E#Invalid geometry
+#Q#INSERT INTO POLYGEOG_dt(location) values(geography::STGeomFromText('POLYGON EMPTY', 4326))
+#Q#SELECT * FROM  POLYGEOM_dt;
+#D#master.sys.geometry
+LINESTRING (1 4, 1 2, 2 2, 1 4)
+POLYGON EMPTY
+LINESTRING (1 1, 4 5, 6 7, 1 1)
+POLYGON ((1 1 2, 1 2 3, 2 2 4, 1 1 2))
+POLYGON ((1 1 NULL 2, 1 2 NULL 3, 2 2 NULL 4, 1 1 NULL 2))
+POLYGON ((1 1 2 4, 1 2 3 5, 2 2 4 6, 1 1 2 7))
+POLYGON ((1 1, 1 2, 2 2, 1 1), (0 0, 10 0, 10 10, 0 10, 0 0))
+POLYGON ((1 1 2, 1 2 3, 2 2 4, 1 1 2), (0 0 5, 10 0 6, 10 10 6, 0 10 6, 0 0 2))
+POLYGON ((1 1 NULL 2, 1 2 NULL 3, 2 2 NULL 4, 1 1 NULL 2), (0 0 NULL 5, 10 0 NULL 6, 10 10 NULL 6, 0 10 NULL 6, 0 0 NULL 2))
+POLYGON ((1 1 2 4, 1 2 3 5, 2 2 4 6, 1 1 2 7), (0 0 5 6, 10 0 6 4, 10 10 6 4, 0 10 6 5, 0 0 2 6))
+POLYGON ((1 1, 1 2 3, 2 2 4, 1 1))
+POLYGON ((0 0, 2 0, 4 1, 5 2, 6 4, 6 6, 5 8, 4 9, 2 10, 0 10, -1 8, -1 2, 0 0), (2 2, 3 2, 3 3, 2 3, 2 2))
+POLYGON EMPTY
+#Q#SELECT * FROM  POLYGEOG_dt;
+#D#master.sys.geography
+LINESTRING (1 4, 1 2, 2 2, 1 4)
+POLYGON EMPTY
+POLYGON EMPTY
+POLYGON EMPTY
+POLYGON EMPTY
+POLYGON EMPTY
+POLYGON EMPTY
+POLYGON EMPTY
+POLYGON EMPTY
+POLYGON EMPTY
+POLYGON ((1 1, 1 2 3, 2 2 4, 1 1))
+POLYGON ((0 0, 2 0, 4 1, 5 2, 6 4, 6 6, 5 8, 4 9, 2 10, 0 10, -1 8, -1 2, 0 0), (2 2, 3 2, 3 3, 2 3, 2 2))
+POLYGON EMPTY
+#Q#CREATE TABLE POLYGON_EMP_dt(geom GEOMETRY, geog GEOGRAPHY);
+#Q#INSERT INTO POLYGON_EMP_dt(geom) values(@geom) 
+#Q#INSERT INTO POLYGON_EMP_dt(geog) values(@geog) 
+#Q#INSERT INTO POLYGON_EMP_dt(geom) values(@geom) 
+#Q#INSERT INTO POLYGON_EMP_dt(geog) values(@geog) 
+#Q#SELECT geom.STAsText(), geog.STAsText() FROM POLYGON_EMP_dt;
+#D#nvarchar#!#nvarchar
+POLYGON EMPTY#!#
+#!#POLYGON EMPTY
+POLYGON EMPTY#!#
+#!#POLYGON EMPTY
+#Q#SELECT geom.STDimension(), geog.STDimension() FROM POLYGON_EMP_dt;
+#D#int#!#int
+-1#!#
+#!#-1
+-1#!#
+#!#-1
+#Q#SELECT geom.STIsClosed(), geog.STIsClosed() FROM POLYGON_EMP_dt;
+#D#bit#!#bit
+False#!#
+#!#False
+False#!#
+#!#False
+#Q#SELECT geom.STIsValid(), geog.STIsValid() FROM POLYGON_EMP_dt;
+#D#bit#!#bit
+True#!#
+#!#True
+True#!#
+#!#True
+#Q#SELECT geom.STAsBinary(), geog.STAsBinary() FROM POLYGON_EMP_dt;
+#D#varbinary#!#varbinary
+130000000#!#
+
+130000000
+130000000#!#
+
+
+130000000
+#Q#SELECT geom.STArea(), geog.STArea() FROM POLYGON_EMP_dt;
+#D#float#!#float
+0#!#
+#!#0
+0#!#
+#!#0
+#Q#DROP TABLE IF EXISTS POLYGEOM_dt;
+#Q#DROP TABLE IF EXISTS POLYGEOG_dt;
+#Q#DROP TABLE IF EXISTS POLYGON_EMP_dt;

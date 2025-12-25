@@ -76,7 +76,7 @@ runs:
     - name: Build vector Extension
       run: |
         cd ..
-        export VECTOR_VERSION="0.7.2"
+        export VECTOR_VERSION="0.8.1"
         sudo apt-get install wget
         wget https://github.com/pgvector/pgvector/archive/refs/tags/v${VECTOR_VERSION}.tar.gz 
         tar -xvzf v${VECTOR_VERSION}.tar.gz
@@ -96,18 +96,18 @@ runs:
         retries=0
         until [ $retries -ge $max_retries ]
         do
-          wget http://postgis.net/stuff/postgis-3.5.0.tar.gz && break
+          wget http://postgis.net/stuff/postgis-3.5.1.tar.gz && break
           retries=$((retries+1))
         done
-        tar -xvzf postgis-3.5.0.tar.gz
+        tar -xvzf postgis-3.5.1.tar.gz
         retries1=0
         until [ $retries1 -ge $max_retries ]
         do
-          wget https://download.osgeo.org/proj/proj-9.2.1.tar.gz && break
+          wget https://download.osgeo.org/proj/proj-9.5.0.tar.gz && break
           retries1=$((retries1+1))
         done
-        tar -xvzf proj-9.2.1.tar.gz
-        cd proj-9.2.1
+        tar -xvzf proj-9.5.0.tar.gz
+        cd proj-9.5.0
         if [ ! -d "build" ]; then
           mkdir build
         fi
@@ -115,7 +115,7 @@ runs:
         cmake -DCMAKE_INSTALL_LIBDIR="lib/x86_64-linux-gnu" -DCMAKE_INSTALL_PREFIX="/usr" ..
         cmake --build .
         sudo cmake --build . --target install
-        cd ../../postgis-3.5.0
+        cd ../../postgis-3.5.1
         ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/${{ inputs.install_dir }}/bin/pg_config
         make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
         sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
@@ -218,6 +218,19 @@ runs:
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           sed -i "s/\b$filename[ ]*\b$/$filename-vu-prepare/g" upgrade/$base_dir/schedule
         done
+
+        # Skip tests below in non-default server collation since it is unnecessary
+        if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
+          sed -i "/cast_binary_to_string-before-15_2\>/d" upgrade/$base_dir/schedule
+          sed -i "/cast_string_to_binary-before-16_8\>/d" upgrade/$base_dir/schedule
+          sed -i "/test_conv_text_to_binary-before-16_8\>/d" upgrade/$base_dir/schedule
+          sed -i "/test_conv_text_to_binary-before-15_5\>/d" upgrade/$base_dir/schedule
+          sed -i "/test_conv_text_to_string-before-15_2\>/d" upgrade/$base_dir/schedule
+          sed -i "/cast_binary_to_string-before-16_8\>/d" upgrade/$base_dir/schedule
+          sed -i "/cast_string_to_binary-before-15_16\>/d" upgrade/$base_dir/schedule
+          sed -i "/test_conv_text_to_string\>/d" upgrade/$base_dir/schedule
+        fi
+        
         export scheduleFile=upgrade/$base_dir/schedule
         mvn -B -ntp test
       shell: bash

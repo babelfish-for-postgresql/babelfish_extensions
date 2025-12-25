@@ -612,7 +612,6 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	char        *dbo_role;
 	NameData    default_collation;
 	NameData    owner_namedata;
-	int         stmt_number = 0;
 	int         save_sec_context;
 	bool        is_set_userid = false;
 	Oid         save_userid;
@@ -753,11 +752,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			stmt_number++;
-			if (list_length(parsetree_list) - 1 == stmt_number)
-				wrapper->stmt_len = 19;
-			else
-				wrapper->stmt_len = 18;
+			wrapper->stmt_len = 26;
 
 			/* do this step */
 			ProcessUtility(wrapper,
@@ -1358,7 +1353,7 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 		 */
 		creating_extension = false;
 
-		sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+		sysdatabase_rel = table_open(sysdatabases_oid, AccessShareLock);
 		scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 
@@ -1372,7 +1367,7 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 			tuple = heap_getnext(scan, ForwardScanDirection);
 		}
 		table_endscan(scan);
-		table_close(sysdatabase_rel, RowExclusiveLock);
+		table_close(sysdatabase_rel, AccessShareLock);
 
 		creating_extension = creating_extension_backup;
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
@@ -1408,7 +1403,7 @@ grant_perms_to_dbreader_dbwriter_ddladmin(const uint16 dbid,
 	char		*dbname = get_db_name(dbid);
 	MigrationMode	baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
 
-	namespace_rel = table_open(namespace_ext_oid, RowExclusiveLock);
+	namespace_rel = table_open(namespace_ext_oid, AccessShareLock);
 	namespace_rel_descr = RelationGetDescr(namespace_rel);
 
 	initStringInfo(&query);
@@ -1503,7 +1498,7 @@ grant_perms_to_dbreader_dbwriter_ddladmin(const uint16 dbid,
 
 	/* Cleanup. */
 	table_endscan(tblscan);
-	table_close(namespace_rel, RowExclusiveLock);
+	table_close(namespace_rel, AccessShareLock);
 	pfree(dbname);
 	pfree(query.data);
 }
@@ -1674,7 +1669,7 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 
 		Assert(list_length(parsetree_list) == 8);
 
-		sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+		sysdatabase_rel = table_open(sysdatabases_oid, AccessShareLock);
 		scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
 
 		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -1704,7 +1699,7 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 	pfree(query.data);
 	AtEOXact_GUC(false, save_nestlevel);
 	table_endscan(scan);
-	table_close(sysdatabase_rel, RowExclusiveLock);
+	table_close(sysdatabase_rel, AccessShareLock);
 
 	PG_RETURN_INT32(0);
 }

@@ -30,6 +30,7 @@ GO
 
 EXEC dbo.babel_5146_prepare_p3;
 GO
+-- terminate-tsql-conn user=babel_5146_user_l1 password=abc
 
 -- psql user=babel_5146_user_l1 password=abc
 -- should throw error
@@ -42,7 +43,7 @@ GO
 DROP VIEW msdb_dbo.syspolicy_configuration;
 GO
 
--- terminate-tsql-conn user=babel_5146_user_l1 password=abc
+-- terminate-psql-conn user=babel_5146_user_l1 password=abc
 
 -- tsql user=babel_5146_owner_l password=abc
 -- should throw error
