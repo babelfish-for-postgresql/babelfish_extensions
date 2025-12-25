@@ -1,6 +1,6 @@
-#Q#DROP TABLE IF EXISTS fs_composite_pk2
+DROP TABLE IF EXISTS fs_composite_pk2
 
-#Q#CREATE TABLE fs_composite_pk2 (col1 INT NOT NULL, col2 INT NOT NULL, data VARCHAR(50), PRIMARY KEY (col1, col2))
-#Q#INSERT INTO fs_composite_pk2 VALUES (1, 1, 'test2')
+CREATE TABLE fs_composite_pk2 (col1 INT NOT NULL, col2 INT NOT NULL, data VARCHAR(50), PRIMARY KEY (col1, col2))
+INSERT INTO fs_composite_pk2 VALUES (1, 1, 'test2')
 fillschema_test#!#SELECT * FROM fs_composite_pk2
-#Q#SELECT * FROM fs_composite_pk2
+SELECT * FROM fs_composite_pk2
