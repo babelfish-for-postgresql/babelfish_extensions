@@ -2181,7 +2181,7 @@ TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 	Assert(typeinfo != NULL);
 
 	/* Prepare the column metadata first */
-	PrepareRowDescription(typeinfo, plannedstmt, targetlist, formats, false, false);
+	PrepareRowDescription(typeinfo, plannedstmt, targetlist, formats, true, true);
 
 	/*
 	 * If fNoMetadata flags is set in RPC header flag, the server doesn't need
@@ -2209,6 +2209,8 @@ TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 	}
 
 	SendColumnMetadataToken(typeinfo->natts, false);
+	SendTabNameToken();
+	SendColInfoToken(typeinfo->natts, false);
 }
 
 bool
