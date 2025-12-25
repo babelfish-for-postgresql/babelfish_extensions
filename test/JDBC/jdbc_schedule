@@ -435,3 +435,6 @@ ignore#!#trim-before-15_12-or-16_8-vu-cleanup
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-prepare
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-verify
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-cleanup
+
+# TODO: BABEL-6276
+ignore#!#babel_output_clause_concurrency_test
