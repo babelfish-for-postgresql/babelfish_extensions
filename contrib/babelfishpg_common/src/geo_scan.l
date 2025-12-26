@@ -21,8 +21,8 @@ static YY_BUFFER_STATE scanbufhandle;
 
 POINT                 { return POINT_TOK; }
 LINESTRING            { return LINESTRING_TOK; }
+POLYGON               { return POLYGON_TOK; }
 CIRCULARSTRING        { yyerror(NULL, "CIRCULARSTRING is not supported"); return CIRCULARSTRING_TOK; }
-POLYGON               { yyerror(NULL, "POLYGON is not supported");  return POLYGON_TOK; }
 MULTIPOINT            { yyerror(NULL, "MULTIPOINT is not supported");  return MPOINT_TOK; }
 MULTILINESTRING       { yyerror(NULL, "MULTILINESTRING is not supported"); return MLINESTRING_TOK; }
 MULTIPOLYGON          { yyerror(NULL, "MULTIPOLYGON is not supported");  return MPOLYGON_TOK; }

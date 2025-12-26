@@ -2398,7 +2398,7 @@ SELECT CAST(DatetimeCol AS CHAR(30)), CAST(DatetimeCol AS VARCHAR(30)), CAST(Dat
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:56           #!#2024-01-15 12:34:56#!#2024-01-15 12:34:56           #!#2024-01-15 12:34:56#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
+Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
 ~~END~~
 
 
@@ -2430,7 +2430,7 @@ SELECT CAST(SmalldatetimeCol AS CHAR(30)), CAST(SmalldatetimeCol AS VARCHAR(30))
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00           #!#2024-01-15 12:34:00#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
+Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM           #!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
 ~~END~~
 
 
@@ -2734,7 +2734,7 @@ SELECT TRY_CAST(DatetimeCol AS VARCHAR(30)), TRY_CAST(DatetimeCol AS NVARCHAR(30
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:56#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
+Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:56#!#2024-01-15 12:34:56
 ~~END~~
 
 
@@ -2766,7 +2766,7 @@ SELECT TRY_CAST(SmalldatetimeCol AS VARCHAR(30)), TRY_CAST(SmalldatetimeCol AS N
 GO
 ~~START~~
 varchar#!#nvarchar#!#text#!#ntext
-2024-01-15 12:34:00#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
+Jan 15 2024 12:34PM#!#Jan 15 2024 12:34PM#!#2024-01-15 12:34:00#!#2024-01-15 12:34:00
 ~~END~~
 
 
@@ -2963,8 +2963,8 @@ FROM cast_convert_test;
 GO
 ~~START~~
 int#!#datetime#!#varchar#!#varchar
-1#!#2024-01-15 14:30:00.0#!#2024-01-15 14:30:00#!#15/01/2024
-2#!#2024-02-20 09:15:00.0#!#2024-02-20 09:15:00#!#20/02/2024
+1#!#2024-01-15 14:30:00.0#!#Jan 15 2024  2:30PM#!#15/01/2024
+2#!#2024-02-20 09:15:00.0#!#Feb 20 2024  9:15AM#!#20/02/2024
 3#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -3652,7 +3652,7 @@ SELECT dbo.implicit_cast_to_varchar(DateTimeCol) FROM ImplicitToStringTest
 GO
 ~~START~~
 varchar
-2024-01-15 14:30:00
+Jan 15 2024  2:30PM
 ~~END~~
 
 SELECT dbo.implicit_cast_to_nchar(DateTimeCol) FROM ImplicitToStringTest
@@ -3665,7 +3665,7 @@ SELECT dbo.implicit_cast_to_nvarchar(DateTimeCol) FROM ImplicitToStringTest
 GO
 ~~START~~
 nvarchar
-2024-01-15 14:30:00
+Jan 15 2024  2:30PM
 ~~END~~
 
 SELECT dbo.implicit_cast_to_text(DateTimeCol) FROM ImplicitToStringTest
@@ -3693,7 +3693,7 @@ SELECT dbo.implicit_cast_to_varchar(SmallDateTimeCol) FROM ImplicitToStringTest
 GO
 ~~START~~
 varchar
-2024-01-15 14:30:00
+Jan 15 2024  2:30PM
 ~~END~~
 
 SELECT dbo.implicit_cast_to_nchar(SmallDateTimeCol) FROM ImplicitToStringTest
@@ -3706,7 +3706,7 @@ SELECT dbo.implicit_cast_to_nvarchar(SmallDateTimeCol) FROM ImplicitToStringTest
 GO
 ~~START~~
 nvarchar
-2024-01-15 14:30:00
+Jan 15 2024  2:30PM
 ~~END~~
 
 SELECT dbo.implicit_cast_to_text(SmallDateTimeCol) FROM ImplicitToStringTest
@@ -4386,15 +4386,9 @@ GO
 SELECT 'Prefix_' + BinaryCol AS BinaryConcat FROM ImplicitToStringTest;
 SELECT N'Prefix_' + BinaryCol AS BinaryConcatN FROM ImplicitToStringTest;
 GO
-~~START~~
-varchar
-Prefix_ABC
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~START~~
-nvarchar
-Prefix_䉁C
-~~END~~
+~~ERROR (Message: cannot coerce string literal to binary datatype)~~
 
 
 -- VARBINARY

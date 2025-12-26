@@ -490,9 +490,12 @@ babel_numeric_smallmoney_oper-before-16_10-or-17_6
 mathematical_func_tests-before-17_7-or-16_11
 babel_assign_nchar
 view_sec_setting_before_17_6-or-16_10
+babel_binary-before-17_5-or-16_9
 ascii_function_before-17_7-or-16_11
 cast_string_to_binary-before-16_8
 cast_binary_to_string-before-16_8
 test_conv_text_to_binary-before-15_5
 test_conv_text_to_string-before-14_21
 temp_table_dialect_check-before-15_12-or-16_8
+comparison_op_index_scan-before-17_8-or-16_12
+BABEL-5788

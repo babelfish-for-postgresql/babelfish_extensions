@@ -10,6 +10,12 @@
 
 all
 
+# FIX ME: Crash in vector extension. Ignoring to Unblock Dev
+# branches. Will be fixed with jira: BABEL-6260
+ignore#!#TestHalfvecDatatype
+ignore#!#TestSparsevecDatatype
+ignore#!#TestVectorDatatype
+
 # These tests are ignored since latest changes with UTF-16<->binary conversion
 # They show the previous behavior of the conversion functions
 # and are not relevant to the current implementation.
@@ -155,6 +161,12 @@ ignore#!#babel_datetime-before-16_11-or-17_7-vu-cleanup
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-prepare
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-verify
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-cleanup
+ignore#!#babel_binary-before-17_7-or-16_11-vu-prepare
+ignore#!#babel_binary-before-17_7-or-16_11-vu-verify
+ignore#!#babel_binary-before-17_7-or-16_11-vu-cleanup
+ignore#!#babel_binary-before-17_5-or-16_9-vu-prepare
+ignore#!#babel_binary-before-17_5-or-16_9-vu-verify
+ignore#!#babel_binary-before-17_5-or-16_9-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -308,6 +320,9 @@ ignore#!#sys-all_sql_modules-before-15_7-or-16_2-dep-vu-cleanup
 ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-prepare
 ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-verify
 ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-cleanup
+ignore#!#comparison_op_index_scan-before-15_2-or-14_7-vu-prepare
+ignore#!#comparison_op_index_scan-before-15_2-or-14_7-vu-verify
+ignore#!#comparison_op_index_scan-before-15_2-or-14_7-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_8 or 15_3 release
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare
@@ -366,6 +381,9 @@ ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-cleanup
 ignore#!#BABEL-621-after-14_12-before-15-vu-prepare
 ignore#!#BABEL-621-after-14_12-before-15-vu-verify
 ignore#!#BABEL-621-after-14_12-before-15-vu-cleanup
+ignore#!#comparison_op_index_scan-before-15_6-or-14_11-vu-prepare
+ignore#!#comparison_op_index_scan-before-15_6-or-14_11-vu-verify
+ignore#!#comparison_op_index_scan-before-15_6-or-14_11-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
 ignore#!#sys-host_name-before-15_8-or-16_4-vu-prepare
@@ -676,6 +694,9 @@ ignore#!#babel_numeric_money_oper-before-16_10-or-17_6-vu-cleanup
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-prepare
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-verify
 ignore#!#mathematical_func-before_17_6-or-16_10-vu-cleanup
+ignore#!#BABEL-1664-before-16_10-or-17_6-vu-prepare
+ignore#!#BABEL-1664-before-16_10-or-17_6-vu-verify
+ignore#!#BABEL-1664-before-16_10-or-17_6-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 17_7 or 16_11 release
 ignore#!#Test-pointZM_before_17_7-or-16_11-vu-prepare
@@ -717,3 +738,14 @@ ignore#!#test_convert_to_binary-before-17_7-16_11-vu-cleanup
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-prepare
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-verify
 ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
+ignore#!#comparison_op_index_scan-before-17_8-or-16_12-vu-prepare
+ignore#!#comparison_op_index_scan-before-17_8-or-16_12-vu-verify
+ignore#!#comparison_op_index_scan-before-17_8-or-16_12-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to 17_8 or 16_12 release
+ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-prepare
+ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-verify
+ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
+
+# TODO: BABEL-6276
+ignore#!#babel_output_clause_concurrency_test

@@ -737,8 +737,8 @@ GO
 ~~START~~
 text
 Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
-  Index Cond: (varbinary_col > '0x01230123'::bbf_varbinary)
+Seq Scan on babel_varbinary_test_table2
+  Filter: ((varbinary_col)::bbf_varbinary > '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
@@ -771,12 +771,9 @@ GO
 ~~START~~
 text
 Query Text: select count(*) from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Finalize Aggregate
-  ->  Gather
-        Workers Planned: 2
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_varbinary_test_table2
-                    Filter: ((varbinary_col)::bbf_varbinary < '0x01230123'::bbf_varbinary)
+Aggregate
+  ->  Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
+        Index Cond: (varbinary_col < '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
@@ -1195,8 +1192,8 @@ ORDER BY
     guid_binary_add;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varbinary#!#varchar
-A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.50#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.5#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.5#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E61000#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E610#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E61#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.5000#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E60#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E60x00000000000000000000
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varbinary#!#binary
+A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.50#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.5#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.5#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E61000#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E610#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E61#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.5000#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E60#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#A4
 ~~END~~
 
 
@@ -1230,8 +1227,8 @@ ORDER BY
     binary_binary_add;
 GO
 ~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#int#!#smallint#!#smallint#!#money#!#bigint#!#varchar#!#varbinary#!#bigint
-100#!#100#!#100#!#1000#!#100#!#10#!#1#!#100.5000#!#0#!#0x00000000000000000000A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#0
+bigint#!#bigint#!#bigint#!#bigint#!#int#!#smallint#!#smallint#!#money#!#bigint#!#binary#!#varbinary#!#binary
+100#!#100#!#100#!#1000#!#100#!#10#!#1#!#100.5000#!#0#!#00#!#<NULL>#!#0000000000000000000000000000000000000000
 ~~END~~
 
 

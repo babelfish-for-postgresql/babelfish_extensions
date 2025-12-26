@@ -49,3 +49,93 @@ int
 456
 ~~END~~
 
+
+SELECT * INTO #temptable5605 FROM generate_series(1,100);
+GO
+EXEC p_nested
+GO
+~~ROW COUNT: 100~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+SELECT COUNT(*) FROM #temptable5605
+GO
+~~START~~
+int
+100
+~~END~~
+
+EXEC p_nested_2
+GO
+~~ROW COUNT: 100~~
+
+~~START~~
+int
+200
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+201
+~~END~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~ROW COUNT: 100~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+bigint
+0
+~~END~~
+
+EXEC p_index_create
+GO
+~~START~~
+text
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
+#t4122
+#temptable5605
+~~END~~
+
+EXEC p_drop
+GO
+SELECT * FROM #temptable5605
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#temptable5605" does not exist)~~
+

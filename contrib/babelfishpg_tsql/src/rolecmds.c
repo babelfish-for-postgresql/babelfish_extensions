@@ -150,7 +150,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 
 	if (IS_BBF_FIXED_SERVER_ROLE(stmt->role))
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
-	else if (strcmp(stmt->role, "bbf_role_admin") == 0)
+	else if (IS_ROLENAME_BABELFISHROLEADMIN(stmt->role))
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("Z");
 	else if (from_windows)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("U");
@@ -711,7 +711,7 @@ Oid
 get_bbf_role_admin_oid(void)
 {
 	if (!OidIsValid(bbf_admin_oid))
-		bbf_admin_oid = get_role_oid("bbf_role_admin", false);
+		bbf_admin_oid = get_role_oid(BABELFISH_ROLEADMIN, false);
 	return bbf_admin_oid;
 }
 
@@ -829,7 +829,7 @@ user_name(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 
 	/* Search and obtain the tuple on the role name */
 	physical_user_name = (NameData *) palloc0(NAMEDATALEN);
@@ -847,7 +847,7 @@ user_name(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(tuple))
 	{
 		systable_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		table_close(bbf_authid_user_ext_rel, AccessShareLock);
 		PG_RETURN_NULL();
 	}
 
@@ -858,7 +858,7 @@ user_name(PG_FUNCTION_ARGS)
 	user = pstrdup(TextDatumGetCString(datum));
 
 	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 
 	PG_RETURN_TEXT_P(cstring_to_text(user));
 }
@@ -1113,7 +1113,7 @@ drop_all_logins(PG_FUNCTION_ARGS)
 		 * Remove SA from authid_login_ext now but do not add it to the list
 		 * because we don't want to remove the corresponding PG role.
 		 */
-		if (role_is_sa(get_role_oid(rolname, false)) || (strcmp(rolname, "bbf_role_admin") == 0)
+		if (role_is_sa(get_role_oid(rolname, false)) || IS_ROLENAME_BABELFISHROLEADMIN(rolname)
 									|| IS_BBF_FIXED_SERVER_ROLE(rolname))
 			CatalogTupleDelete(bbf_authid_login_ext_rel, &tuple->t_self);
 		else
@@ -1390,7 +1390,7 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 			SetUserIdAndSecContext(save_userid, save_sec_context);
 		}
 		PG_END_TRY();
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), BABELFISH_ROLEADMIN, false); /* revoke even membership granted by bbf_role_admin */
 		pfree(db_name);
 	}
 
@@ -1586,7 +1586,7 @@ revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
 
 				char *db_name = TextDatumGetCString(name);
 				grant_revoke_role_to_login(login, get_guest_role_name(db_name), NULL, false);
-				grant_revoke_role_to_login(login, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+				grant_revoke_role_to_login(login, get_guest_role_name(db_name), BABELFISH_ROLEADMIN, false); /* revoke even membership granted by bbf_role_admin */
 				pfree(db_name);
 			}
 		}
@@ -1753,7 +1753,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 		{
 			/* First revoke this user from old login as the user is being mapped to a new login. */
 			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, NULL, false);
-			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, "bbf_role_admin", false);
+			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, BABELFISH_ROLEADMIN, false);
 			/* Now grant guest user to old login as it's mapped user is being removed. */
 			grant_revoke_role_to_login(old_login_name, get_guest_role_name(get_cur_db_name()), NULL, true);
 		}
@@ -1776,7 +1776,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 			SetUserIdAndSecContext(save_userid, save_sec_context);
 		}
 		PG_END_TRY();
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), BABELFISH_ROLEADMIN, false); /* revoke even membership granted by bbf_role_admin */
 	}
 
 	if (new_user_name)
@@ -2287,6 +2287,45 @@ is_active_login(Oid role_oid)
 }
 
 /*
+ * To check if given role is owner of any database.
+ * If login found to be owner of any database then return true else false.
+ */
+bool
+is_database_owner(Oid role_oid)
+{
+	Relation		db_rel;
+	TableScanDesc	scan;
+	HeapTuple		tuple;
+	bool			is_null;
+	char			*role_name;
+	bool			is_owner = false;
+
+	/* get the role name from oid */
+	role_name = GetUserNameFromId(role_oid, false);
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Datum owner_datum = heap_getattr(tuple, Anum_sysdatabases_owner,
+										 db_rel->rd_att, &is_null);
+
+		if (!is_null && strcmp(role_name, DatumGetCString(owner_datum)) == 0)
+		{
+			is_owner = true;
+			break;
+		}
+	}
+
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+
+	return is_owner;
+}
+
+
+/*
  * To check if given login is already a user in one of the databases
  */
 static bool
@@ -2301,7 +2340,7 @@ has_user_in_db(const char *login, char **db_name)
 
 	/* open the table to scane */
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 
 	/* change the target name to NameData for search */
 	login_name = (NameData *) palloc0(NAMEDATALEN);
@@ -2325,11 +2364,11 @@ has_user_in_db(const char *login, char **db_name)
 		*db_name = pstrdup(TextDatumGetCString(name));
 
 		table_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		table_close(bbf_authid_user_ext_rel, AccessShareLock);
 		return true;
 	}
 	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 
 	return false;
 }
@@ -2352,7 +2391,7 @@ get_fully_qualified_domain_name(char *netbios_domain)
 	HeapTuple	tuple;
 	char	   *fq_domain_name;
 
-	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowShareLock);
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), AccessShareLock);
 
 	dsc = RelationGetDescr(bbf_domain_mapping_rel);
 
@@ -2404,7 +2443,7 @@ get_fully_qualified_domain_name(char *netbios_domain)
 	}
 
 	systable_endscan(scan);
-	table_close(bbf_domain_mapping_rel, RowShareLock);
+	table_close(bbf_domain_mapping_rel, AccessShareLock);
 
 	return fq_domain_name;
 }
