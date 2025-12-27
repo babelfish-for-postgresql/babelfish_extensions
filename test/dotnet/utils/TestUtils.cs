@@ -651,9 +651,9 @@ namespace BabelfishDotnetFramework
 		public void FillSchemaTest(DbConnection conn, DbTransaction transaction, string query, 
 			string testName, Logger logger, ref int stCount)
 		{
-			using var file = new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, testName + ".out"), true);
-			file.WriteLine($"#Q#{query}");
-			file.WriteLine();
+			using var myoutputfile = new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, testName + ".out"), true);
+			myoutputfile.WriteLine($"#Q#{query}");
+			myoutputfile.WriteLine();
 			
 			try
 			{
@@ -669,36 +669,36 @@ namespace BabelfishDotnetFramework
 				da.FillSchema(dt, SchemaType.Source);
 				
 				// Write all columns
-				file.WriteLine("Table Columns:");
+				myoutputfile.WriteLine("Table Columns:");
 				foreach (DataColumn column in dt.Columns)
 				{
 					bool isPrimaryKey = dt.PrimaryKey != null && Array.Exists(dt.PrimaryKey, pk => pk == column);
 					
-					file.WriteLine($"Column: {column.ColumnName}");
-					file.WriteLine($"  - Is Primary Key: {isPrimaryKey}");
-					file.WriteLine($"  - Data Type: {column.DataType}");
-					file.WriteLine($"  - Allow Null: {column.AllowDBNull}");
+					myoutputfile.WriteLine($"Column: {column.ColumnName}");
+					myoutputfile.WriteLine($"  - Is Primary Key: {isPrimaryKey}");
+					myoutputfile.WriteLine($"  - Data Type: {column.DataType}");
+					myoutputfile.WriteLine($"  - Allow Null: {column.AllowDBNull}");
 				}
 				
 				// Write primary key columns summary
-				file.WriteLine("Primary Key Columns:");
+				myoutputfile.WriteLine("Primary Key Columns:");
 				if (dt.PrimaryKey != null && dt.PrimaryKey.Length > 0)
 				{
 					foreach (DataColumn pkColumn in dt.PrimaryKey)
 					{
-						file.WriteLine($"- {pkColumn.ColumnName}");
+						myoutputfile.WriteLine($"- {pkColumn.ColumnName}");
 					}
 				}
 				else
 				{
-					file.WriteLine("- None");
+					myoutputfile.WriteLine("- None");
 				}
 				
 				PrintToLogsOrConsole($"FillSchemaTest completed for: {query}", logger, "information");
 			}
 			catch (Exception ex)
 			{
-				file.WriteLine($"#E#{ex.Message}");
+				myoutputfile.WriteLine($"#E#{ex.Message}");
 				PrintToLogsOrConsole($"Error in FillSchemaTest: {ex.Message}", logger, "error");
 				stCount--;
 			}
