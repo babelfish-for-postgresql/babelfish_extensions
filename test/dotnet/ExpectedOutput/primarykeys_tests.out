@@ -1,8 +1,0 @@
-#Q#DROP TABLE IF EXISTS primarytest
-
-#Q#CREATE TABLE primarytest (col1 INT NOT NULL, col2 INT NOT NULL, data VARCHAR(50), PRIMARY KEY (col1, col2))
-#Q#INSERT INTO primarytest VALUES (1, 1, 'test2')
-fillschema_test#!#SELECT * FROM primarytest
-#Q#SELECT * FROM primarytest
-#D#int#!#int#!#varchar
-1#!#1#!#test2
