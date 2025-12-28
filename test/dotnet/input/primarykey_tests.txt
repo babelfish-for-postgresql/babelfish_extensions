@@ -1,6 +1,60 @@
 DROP TABLE IF EXISTS primarytest
-
 CREATE TABLE primarytest (col1 INT NOT NULL, col2 INT NOT NULL, data VARCHAR(50), PRIMARY KEY (col1, col2))
 INSERT INTO primarytest VALUES (1, 1, 'test2')
 fillschema_test#!#SELECT * FROM primarytest
-SELECT * FROM primarytest
+DROP TABLE IF EXISTS primarytest
+
+DROP TABLE IF EXISTS t1
+DROP TABLE IF EXISTS t2
+CREATE TABLE t1 (id INT PRIMARY KEY, name VARCHAR(50))
+CREATE TABLE t2 (id INT PRIMARY KEY, t1_id INT, data VARCHAR(50))
+INSERT INTO t1 VALUES (1, 'test1'), (2, 'test2')
+INSERT INTO t2 VALUES (10, 1, 'data1'), (20, 2, 'data2')
+fillschema_test#!#SET NO_BROWSETABLE OFF; SELECT * FROM t1 JOIN t2 ON t1.id = t2.t1_id
+DROP TABLE IF EXISTS t1
+DROP TABLE IF EXISTS t2
+
+DROP TABLE IF EXISTS pk_none
+CREATE TABLE pk_none (col1 INT NOT NULL, col2 VARCHAR(50) NULL, col3 BIT NOT NULL)
+INSERT INTO pk_none VALUES (1, 'no pk', 1)
+fillschema_test#!#SELECT * FROM pk_none
+DROP TABLE IF EXISTS pk_none
+
+DROP TABLE IF EXISTS pk_middle
+CREATE TABLE pk_middle (col1 VARCHAR(50), col2 VARCHAR(50), id INT PRIMARY KEY, col3 VARCHAR(50), col4 VARCHAR(50))
+INSERT INTO pk_middle VALUES ('a', 'b', 1, 'c', 'd')
+fillschema_test#!#SELECT * FROM pk_middle
+DROP TABLE IF EXISTS pk_middle
+
+DROP TABLE IF EXISTS order_items
+DROP TABLE IF EXISTS orders
+DROP TABLE IF EXISTS customers
+CREATE TABLE customers (customer_id INT PRIMARY KEY, customer_name VARCHAR(100) NOT NULL, city VARCHAR(50))
+CREATE TABLE orders (order_id INT PRIMARY KEY, customer_id INT NOT NULL, order_date DATETIME NOT NULL, status VARCHAR(20))
+CREATE TABLE order_items (item_id INT PRIMARY KEY, order_id INT NOT NULL, product_name VARCHAR(100), quantity INT)
+INSERT INTO customers VALUES (1, 'John Doe', 'NYC'), (2, 'Jane Smith', 'Boston'), (3, 'Bob Wilson', 'Chicago')
+INSERT INTO orders VALUES (100, 1, '2024-01-15', 'Completed'), (101, 1, '2024-01-20', 'Pending')
+INSERT INTO order_items VALUES (1000, 100, 'Laptop', 1), (1001, 100, 'Mouse', 2)
+fillschema_test#!#SELECT * FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id LEFT JOIN order_items oi ON o.order_id = oi.order_id
+DROP TABLE IF EXISTS order_items
+DROP TABLE IF EXISTS orders
+DROP TABLE IF EXISTS customers
+
+DROP TABLE IF EXISTS rule2b_unique_null
+CREATE TABLE rule2b_unique_null (id INT NULL UNIQUE, name VARCHAR(50) NULL)
+INSERT INTO rule2b_unique_null VALUES (1, 'test')
+fillschema_test#!#SELECT * FROM rule2b_unique_null
+DROP TABLE IF EXISTS rule2b_unique_null
+
+DROP TABLE IF EXISTS int_boundary
+CREATE TABLE int_boundary (id INT PRIMARY KEY, data VARCHAR(50))
+INSERT INTO int_boundary VALUES (-2147483648, 'min'), (2147483647, 'max')
+fillschema_test#!#SELECT * FROM int_boundary
+DROP TABLE IF EXISTS int_boundary
+
+DROP TABLE IF EXISTS rule3_pk_multi_unique
+CREATE TABLE rule3_pk_multi_unique (id INT PRIMARY KEY, email VARCHAR(100) NOT NULL UNIQUE, phone VARCHAR(20) NOT NULL UNIQUE, ssn VARCHAR(20) NULL UNIQUE, name VARCHAR(50))
+INSERT INTO rule3_pk_multi_unique VALUES (1, 'test@test.com', '555-1234', [REDACTED:SSN], 'test')
+fillschema_test#!#SELECT * FROM rule3_pk_multi_unique
+DROP TABLE IF EXISTS rule3_pk_multi_unique
+

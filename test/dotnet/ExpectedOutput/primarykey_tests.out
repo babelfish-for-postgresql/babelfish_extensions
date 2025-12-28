@@ -1,0 +1,233 @@
+#Q#DROP TABLE IF EXISTS primarytest
+#Q#CREATE TABLE primarytest (col1 INT NOT NULL, col2 INT NOT NULL, data VARCHAR(50), PRIMARY KEY (col1, col2))
+#Q#INSERT INTO primarytest VALUES (1, 1, 'test2')
+#Q#SELECT * FROM primarytest
+
+Table Columns:
+Column: col1
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: col2
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: data
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Primary Key Columns:
+- col1
+- col2
+#Q#DROP TABLE IF EXISTS primarytest
+#Q#DROP TABLE IF EXISTS t1
+#Q#DROP TABLE IF EXISTS t2
+#Q#CREATE TABLE t1 (id INT PRIMARY KEY, name VARCHAR(50))
+#Q#CREATE TABLE t2 (id INT PRIMARY KEY, t1_id INT, data VARCHAR(50))
+#Q#INSERT INTO t1 VALUES (1, 'test1'), (2, 'test2')
+#Q#INSERT INTO t2 VALUES (10, 1, 'data1'), (20, 2, 'data2')
+#Q#SET NO_BROWSETABLE OFF; SELECT * FROM t1 JOIN t2 ON t1.id = t2.t1_id
+
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: id1
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: t1_id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: data
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Primary Key Columns:
+- id
+- id1
+#Q#DROP TABLE IF EXISTS t1
+#Q#DROP TABLE IF EXISTS t2
+#Q#DROP TABLE IF EXISTS pk_none
+#Q#CREATE TABLE pk_none (col1 INT NOT NULL, col2 VARCHAR(50) NULL, col3 BIT NOT NULL)
+#Q#INSERT INTO pk_none VALUES (1, 'no pk', 1)
+#Q#SELECT * FROM pk_none
+
+Table Columns:
+Column: col1
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: col2
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: col3
+  - Is Primary Key: False
+  - Data Type: System.Boolean
+  - Allow Null: False
+Primary Key Columns:
+- None
+#Q#DROP TABLE IF EXISTS pk_none
+#Q#DROP TABLE IF EXISTS pk_middle
+#Q#CREATE TABLE pk_middle (col1 VARCHAR(50), col2 VARCHAR(50), id INT PRIMARY KEY, col3 VARCHAR(50), col4 VARCHAR(50))
+#Q#INSERT INTO pk_middle VALUES ('a', 'b', 1, 'c', 'd')
+#Q#SELECT * FROM pk_middle
+
+Table Columns:
+Column: col1
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: col2
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: col3
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: col4
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Primary Key Columns:
+- id
+#Q#DROP TABLE IF EXISTS pk_middle
+#Q#DROP TABLE IF EXISTS order_items
+#Q#DROP TABLE IF EXISTS orders
+#Q#DROP TABLE IF EXISTS customers
+#Q#CREATE TABLE customers (customer_id INT PRIMARY KEY, customer_name VARCHAR(100) NOT NULL, city VARCHAR(50))
+#Q#CREATE TABLE orders (order_id INT PRIMARY KEY, customer_id INT NOT NULL, order_date DATETIME NOT NULL, status VARCHAR(20))
+#Q#CREATE TABLE order_items (item_id INT PRIMARY KEY, order_id INT NOT NULL, product_name VARCHAR(100), quantity INT)
+#Q#INSERT INTO customers VALUES (1, 'John Doe', 'NYC'), (2, 'Jane Smith', 'Boston'), (3, 'Bob Wilson', 'Chicago')
+#Q#INSERT INTO orders VALUES (100, 1, '2024-01-15', 'Completed'), (101, 1, '2024-01-20', 'Pending')
+#Q#INSERT INTO order_items VALUES (1000, 100, 'Laptop', 1), (1001, 100, 'Mouse', 2)
+#Q#SELECT * FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id LEFT JOIN order_items oi ON o.order_id = oi.order_id
+
+Table Columns:
+Column: customer_id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: customer_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: city
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: order_id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: customer_id1
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: order_date
+  - Is Primary Key: False
+  - Data Type: System.DateTime
+  - Allow Null: False
+Column: status
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: item_id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: order_id1
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: product_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: quantity
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Primary Key Columns:
+- customer_id
+- order_id
+- item_id
+#Q#DROP TABLE IF EXISTS order_items
+#Q#DROP TABLE IF EXISTS orders
+#Q#DROP TABLE IF EXISTS customers
+#Q#DROP TABLE IF EXISTS rule2b_unique_null
+#Q#CREATE TABLE rule2b_unique_null (id INT NULL UNIQUE, name VARCHAR(50) NULL)
+#Q#INSERT INTO rule2b_unique_null VALUES (1, 'test')
+#Q#SELECT * FROM rule2b_unique_null
+
+Table Columns:
+Column: id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Primary Key Columns:
+- None
+#Q#DROP TABLE IF EXISTS rule2b_unique_null
+#Q#DROP TABLE IF EXISTS int_boundary
+#Q#CREATE TABLE int_boundary (id INT PRIMARY KEY, data VARCHAR(50))
+#Q#INSERT INTO int_boundary VALUES (-2147483648, 'min'), (2147483647, 'max')
+#Q#SELECT * FROM int_boundary
+
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: data
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Primary Key Columns:
+- id
+#Q#DROP TABLE IF EXISTS int_boundary
+#Q#DROP TABLE IF EXISTS rule3_pk_multi_unique
+#Q#CREATE TABLE rule3_pk_multi_unique (id INT PRIMARY KEY, email VARCHAR(100) NOT NULL UNIQUE, phone VARCHAR(20) NOT NULL UNIQUE, ssn VARCHAR(20) NULL UNIQUE, name VARCHAR(50))
+#Q#INSERT INTO rule3_pk_multi_unique VALUES (1, 'test@test.com', '555-1234', [REDACTED:SSN], 'test')
+#E#column "redacted:ssn" does not exist
+#Q#SELECT * FROM rule3_pk_multi_unique
+
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: email
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: phone
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: ssn
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Primary Key Columns:
+- id
+#Q#DROP TABLE IF EXISTS rule3_pk_multi_unique
