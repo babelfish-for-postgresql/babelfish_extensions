@@ -91,13 +91,3 @@ GO
 DROP FUNCTION datetime2fromparts_vu_prepare_f2()
 GO
 
-SELECT datetime2fromparts_vu_prepare_f3()
-GO
-DROP FUNCTION datetime2fromparts_vu_prepare_f3()
-GO
-
-SELECT datetime2fromparts_vu_prepare_f4()
-GO
-DROP FUNCTION datetime2fromparts_vu_prepare_f4()
-GO
-
