@@ -188,6 +188,7 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 											   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char *name);
+static void validate_sys_schema_permissions(List *funcname);
 
 static void bbf_ExecDropStmt(DropStmt *stmt);
 
@@ -4467,6 +4468,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							ereport(ERROR,
 									(errcode(ERRCODE_OBJECT_IN_USE),
 									 errmsg("Could not drop login '%s' as the user is currently logged in.", role_name)));
+														
+						if (is_database_owner(role_oid))
+							ereport(ERROR,
+									(errcode(ERRCODE_OBJECT_IN_USE),
+									 errmsg("Login '%s' owns one or more database(s). Change the owner of the database(s) before dropping the login.", role_name)));
 					}
 
 					/*
@@ -5047,6 +5053,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, create_domain->domainname);
 				return;
 			}
+		case T_CreateFunctionStmt:
+			{
+				CreateFunctionStmt *stmt = (CreateFunctionStmt *) parsetree;
+        		validate_sys_schema_permissions(stmt->funcname);
+				break;
+			}
 		case T_VariableSetStmt:
 			{
 				VariableSetStmt *variable_set = (VariableSetStmt *) parsetree;
@@ -5432,6 +5444,27 @@ call_prev_ProcessUtility(PlannedStmt *pstmt,
 	else
 		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 								queryEnv, dest, qc);
+}
+
+static void
+validate_sys_schema_permissions(List *funcname)
+{
+	char *objname = NULL;
+    Oid schemaOid;
+    Oid sysSchemaOid;
+
+    if (superuser_arg(GetSessionUserId()))
+        return;
+        
+    schemaOid = QualifiedNameGetCreationNamespace(funcname, &objname);
+    sysSchemaOid = get_namespace_oid("sys", true);
+    
+    if (OidIsValid(sysSchemaOid) && schemaOid == sysSchemaOid)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+                errmsg("permission denied to create or modify objects in sys schema")));
+    }
 }
 
 /*

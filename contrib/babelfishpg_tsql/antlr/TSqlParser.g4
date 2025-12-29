@@ -3959,6 +3959,7 @@ geospatial_static_method
     : STGEOMFROMTEXT
     | STPOINTFROMTEXT
     | STLINEFROMTEXT
+    | STPOLYFROMTEXT
     | POINT
     ;
 
@@ -5093,6 +5094,7 @@ keyword
     | STOPPED
     | STOP_ON_ERROR
     | STPOINTFROMTEXT
+    | STPOLYFROMTEXT
     | STRING_AGG
     | STRING_DELIMITER
     | STSRID

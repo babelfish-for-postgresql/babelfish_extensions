@@ -993,6 +993,7 @@ STOPLIST:                                        S T O P L I S T;
 STOPPED:                                         S T O P P E D;
 STOP_ON_ERROR:                                   S T O P  UNDERLINE  O N  UNDERLINE  E R R O R;
 STPOINTFROMTEXT:                                 'STPointFromText';
+STPOLYFROMTEXT:                                  'STPolyFromText';
 STRING_AGG:                                      S T R I N G  UNDERLINE  A G G;
 STRING_DELIMITER:                                S T R I N G  UNDERLINE  D E L I M I T E R;
 STSRID:                                          'STSrid';

@@ -15,3 +15,27 @@ go
 
 drop procedure object_id_inner_proc
 go
+
+drop procedure p_truncate
+go
+
+drop procedure p_nested
+go
+
+drop procedure p_insert
+go
+
+drop procedure p_alter_add_col
+go
+
+drop procedure p_nested_2
+go
+
+drop procedure p_index_create
+go
+
+drop procedure p_drop
+go
+
+drop view enr_view
+go

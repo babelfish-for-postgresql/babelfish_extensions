@@ -26,7 +26,7 @@ select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as varc
 go
 ~~START~~
 varchar
-2020-10-20 09:00:00
+Oct 20 2020  9:00AM
 ~~END~~
 
 -- smalldatetime
@@ -41,7 +41,7 @@ select cast(cast(cast('2020-10-20 09:00:00' as smalldatetime) as sql_variant) as
 go
 ~~START~~
 varchar
-2020-10-20 09:00:00
+Oct 20 2020  9:00AM
 ~~END~~
 
 -- date

@@ -2294,6 +2294,43 @@ search_partition(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
+/* 
+ * Check whitespace type in string
+ * Returns:
+ *   1  - Contains only special whitespace (\t, \n, \v, \f, \r)
+ *   0  - Empty string or contains only spaces
+ *   -1 - Contains other characters (needs numeric conversion)
+ */
+static int
+checkWhitespaceType(const char *str)
+{
+	size_t i, len;
+	bool has_special_ws = false;
+	bool has_other_char = false;
+
+	if (!str || (len = strlen(str)) == 0)
+		return 0;
+
+	for (i = 0; i < len; i++)
+	{
+		char c = str[i];
+		
+		if (c == '\b')
+			return 0;
+		
+		if (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r')
+		{
+			if (has_other_char)
+				return 0;
+			has_special_ws = true;
+		}
+		else if (c != ' ')
+			has_other_char = true;
+	}
+
+	return has_other_char ? -1 : (has_special_ws ? 1 : 0);
+}
+
 /*
  * Structure to cache metadata needed in isnumeric().
  */
@@ -2323,6 +2360,7 @@ isnumeric(PG_FUNCTION_ARGS)
 	Oid		argtypeid;
 	Oid		numeric_typiofunc;
 	Oid		money_typiofunc;
+	int		ws_check;
 	char		*value_str;
 	bool		result = false;
 	Datum		converted;
@@ -2369,9 +2407,18 @@ isnumeric(PG_FUNCTION_ARGS)
 		value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
 	}
 
-	/* Handling empty string. */
-	if ((*common_utility_plugin_ptr->isEmptyOrWhitespace)(value_str))
+	/* Check whitespace type */
+	ws_check = checkWhitespaceType(value_str);
+	
+	if (ws_check == 1)
 	{
+		/* Contains only special whitespace - return 1 */
+		pfree(value_str);
+		PG_RETURN_INT32(1);
+	}
+	else if (ws_check == 0)
+	{
+		/* Empty or only spaces - return 0 */
 		pfree(value_str);
 		PG_RETURN_INT32(0);
 	}
@@ -2793,7 +2840,7 @@ object_name(PG_FUNCTION_ARGS)
 	 * search in list of ENRs registered in the current query environment by
 	 * object_id
 	 */
-	enr = GetENRTempTableWithOid(object_id);
+	enr = GetENRTempTableWithOid(object_id, false);
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
 		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(enr->md.name));
@@ -4336,7 +4383,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 					SysScanDesc scan;
 					HeapTuple	tup;
 
-					depRel = table_open(DependRelationId, RowExclusiveLock);
+					depRel = table_open(DependRelationId, AccessShareLock);
 
 					ScanKeyInit(&key[0],
 								Anum_pg_depend_objid,
@@ -4360,7 +4407,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 					systable_endscan(scan);
 
-					table_close(depRel, RowExclusiveLock);
+					table_close(depRel, AccessShareLock);
 				}
 				ReleaseSysCache(tp);
 			}
@@ -4470,7 +4517,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_UPDATE) &&
 				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_REFERENCES))
 			{
-				attrRel = table_open(AttributeRelationId, RowExclusiveLock);
+				attrRel = table_open(AttributeRelationId, AccessShareLock);
 
 				ScanKeyInit(&key[0],
 							Anum_pg_attribute_attrelid,
@@ -4499,7 +4546,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 				systable_endscan(scan);
 
-				table_close(attrRel, RowExclusiveLock);
+				table_close(attrRel, AccessShareLock);
 			}
 
 		}
@@ -4822,7 +4869,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type != OBJECT_TYPE_TABLE)
 			PG_RETURN_INT32(0);
 
-		indRel = table_open(IndexRelationId, RowExclusiveLock);
+		indRel = table_open(IndexRelationId, AccessShareLock);
 
 		ScanKeyInit(&key,
 				Anum_pg_index_indrelid,
@@ -4835,13 +4882,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (HeapTupleIsValid(tup = systable_getnext(scan)))
 		{
 			systable_endscan(scan);
-			table_close(indRel, RowExclusiveLock);
+			table_close(indRel, AccessShareLock);
 			pfree(property);
 			PG_RETURN_INT32(1);
 		}
 
 		systable_endscan(scan);
-		table_close(indRel, RowExclusiveLock);
+		table_close(indRel, AccessShareLock);
 		pfree(property);
 
 		PG_RETURN_INT32(0);

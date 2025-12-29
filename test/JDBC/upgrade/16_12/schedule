@@ -640,6 +640,9 @@ test_conv_text_to_string
 test_convert_to_binary
 cast_datetime_to_binary
 BABEL-4271
+comparison_op_index_scan-before-17_8-or-16_12
 babel_string_to_money
+BABEL-5788
+BABEL-1664
 sys-fn_varbintohexstr
 babel_binary

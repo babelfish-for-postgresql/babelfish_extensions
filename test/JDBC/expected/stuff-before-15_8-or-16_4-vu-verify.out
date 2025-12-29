@@ -1864,7 +1864,7 @@ SELECT stuff(@inputString, 4, 1, 'abcd')
 GO
 ~~START~~
 varchar
-201abcd-12-21 00:00:00
+Decabcd21 2016 12:00AM
 ~~END~~
 
 DECLARE @date date = '12-21-16';  
@@ -1891,7 +1891,7 @@ SELECT stuff('abcd', 4, 1, @inputString)
 GO
 ~~START~~
 varchar
-abc2016-12-21 00:00:00
+abcDec 21 2016 12:00AM
 ~~END~~
 
 
@@ -1900,7 +1900,7 @@ SELECT stuff(@inputString, 4, 1, 'abcd')
 GO
 ~~START~~
 varchar
-195abcd-12-13 12:43:00
+Decabcd13 1955 12:43PM
 ~~END~~
 
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
@@ -1924,7 +1924,7 @@ SELECT stuff('abcd', 4, 1, @inputString)
 GO
 ~~START~~
 varchar
-abc1955-12-13 12:43:00
+abcDec 13 1955 12:43PM
 ~~END~~
 
 

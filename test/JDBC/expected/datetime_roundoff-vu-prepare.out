@@ -166,24 +166,24 @@ PREPARE PHASE - Current datetime values:
 
 ~~START~~
 varchar#!#datetime#!#varchar#!#varchar
-basic_000#!#2024-01-15 10:30:45.0#!#2024-01-15 10:30:45#!#Already at .000 boundary
-basic_001#!#2024-01-15 10:30:45.0#!#2024-01-15 10:30:45#!#Should round to .000
-basic_002#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#Should round to .003
-basic_003#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#Already at .003 boundary
-basic_004#!#2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#Should round to .003
-basic_005#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007#!#Should round to .007
-basic_006#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007#!#Should round to .007
-basic_007#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007#!#Already at .007 boundary
-basic_008#!#2024-01-15 10:30:45.007#!#2024-01-15 10:30:45.007#!#Should round to .007
-basic_009#!#2024-01-15 10:30:45.01#!#2024-01-15 10:30:45.01#!#Should round to .010
-edge_second_rollover#!#2024-01-15 10:31:00.0#!#2024-01-15 10:31:00#!#Should rollover to next second
-edge_minute_rollover#!#2024-01-15 11:00:00.0#!#2024-01-15 11:00:00#!#Should rollover to next minute
-edge_hour_rollover#!#2024-01-16 00:00:00.0#!#2024-01-16 00:00:00#!#Should rollover to next hour
-edge_day_rollover#!#2024-02-01 00:00:00.0#!#2024-02-01 00:00:00#!#Should rollover to next day
-business_timestamp#!#2024-03-12 09:15:30.123#!#2024-03-12 09:15:30.123#!#Typical business timestamp
-log_entry#!#2024-03-12 14:22:18.457#!#2024-03-12 14:22:18.457#!#Log entry timestamp
-transaction_time#!#2024-03-12 16:45:22.79#!#2024-03-12 16:45:22.79#!#Transaction timestamp
-audit_time#!#2024-03-12 11:33:44.233#!#2024-03-12 11:33:44.233#!#Audit trail timestamp
+basic_000#!#2024-01-15 10:30:45.0#!#Jan 15 2024 10:30AM#!#Already at .000 boundary
+basic_001#!#2024-01-15 10:30:45.0#!#Jan 15 2024 10:30AM#!#Should round to .000
+basic_002#!#2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#Should round to .003
+basic_003#!#2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#Already at .003 boundary
+basic_004#!#2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#Should round to .003
+basic_005#!#2024-01-15 10:30:45.007#!#Jan 15 2024 10:30AM#!#Should round to .007
+basic_006#!#2024-01-15 10:30:45.007#!#Jan 15 2024 10:30AM#!#Should round to .007
+basic_007#!#2024-01-15 10:30:45.007#!#Jan 15 2024 10:30AM#!#Already at .007 boundary
+basic_008#!#2024-01-15 10:30:45.007#!#Jan 15 2024 10:30AM#!#Should round to .007
+basic_009#!#2024-01-15 10:30:45.01#!#Jan 15 2024 10:30AM#!#Should round to .010
+edge_second_rollover#!#2024-01-15 10:31:00.0#!#Jan 15 2024 10:31AM#!#Should rollover to next second
+edge_minute_rollover#!#2024-01-15 11:00:00.0#!#Jan 15 2024 11:00AM#!#Should rollover to next minute
+edge_hour_rollover#!#2024-01-16 00:00:00.0#!#Jan 16 2024 12:00AM#!#Should rollover to next hour
+edge_day_rollover#!#2024-02-01 00:00:00.0#!#Feb  1 2024 12:00AM#!#Should rollover to next day
+business_timestamp#!#2024-03-12 09:15:30.123#!#Mar 12 2024  9:15AM#!#Typical business timestamp
+log_entry#!#2024-03-12 14:22:18.457#!#Mar 12 2024  2:22PM#!#Log entry timestamp
+transaction_time#!#2024-03-12 16:45:22.79#!#Mar 12 2024  4:45PM#!#Transaction timestamp
+audit_time#!#2024-03-12 11:33:44.233#!#Mar 12 2024 11:33AM#!#Audit trail timestamp
 ~~END~~
 
 
@@ -199,10 +199,10 @@ PREPARE PHASE - Comparison test data:
 
 ~~START~~
 int#!#datetime#!#varchar#!#varchar
-1#!#2024-01-15 10:30:45.15#!#2024-01-15 10:30:45.15#!#login_attempt
-2#!#2024-01-15 10:30:45.15#!#2024-01-15 10:30:45.15#!#login_success
-3#!#2024-01-15 10:30:45.15#!#2024-01-15 10:30:45.15#!#session_start
-4#!#2024-01-15 10:30:45.153#!#2024-01-15 10:30:45.153#!#page_load
+1#!#2024-01-15 10:30:45.15#!#Jan 15 2024 10:30AM#!#login_attempt
+2#!#2024-01-15 10:30:45.15#!#Jan 15 2024 10:30AM#!#login_success
+3#!#2024-01-15 10:30:45.15#!#Jan 15 2024 10:30AM#!#session_start
+4#!#2024-01-15 10:30:45.153#!#Jan 15 2024 10:30AM#!#page_load
 ~~END~~
 
 
@@ -218,10 +218,10 @@ PREPARE PHASE - Aggregation test data:
 
 ~~START~~
 datetime#!#varchar#!#numeric#!#varchar
-2024-01-15 10:30:45.0#!#2024-01-15 10:30:45#!#100.00#!#completed
-2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#150.00#!#completed
-2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#200.00#!#completed
-2024-01-15 10:30:45.003#!#2024-01-15 10:30:45.003#!#75.00#!#pending
+2024-01-15 10:30:45.0#!#Jan 15 2024 10:30AM#!#100.00#!#completed
+2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#150.00#!#completed
+2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#200.00#!#completed
+2024-01-15 10:30:45.003#!#Jan 15 2024 10:30AM#!#75.00#!#pending
 ~~END~~
 
 

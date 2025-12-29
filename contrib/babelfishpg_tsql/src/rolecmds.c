@@ -829,7 +829,7 @@ user_name(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 
 	/* Search and obtain the tuple on the role name */
 	physical_user_name = (NameData *) palloc0(NAMEDATALEN);
@@ -847,7 +847,7 @@ user_name(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(tuple))
 	{
 		systable_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		table_close(bbf_authid_user_ext_rel, AccessShareLock);
 		PG_RETURN_NULL();
 	}
 
@@ -858,7 +858,7 @@ user_name(PG_FUNCTION_ARGS)
 	user = pstrdup(TextDatumGetCString(datum));
 
 	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 
 	PG_RETURN_TEXT_P(cstring_to_text(user));
 }
@@ -2287,6 +2287,45 @@ is_active_login(Oid role_oid)
 }
 
 /*
+ * To check if given role is owner of any database.
+ * If login found to be owner of any database then return true else false.
+ */
+bool
+is_database_owner(Oid role_oid)
+{
+	Relation		db_rel;
+	TableScanDesc	scan;
+	HeapTuple		tuple;
+	bool			is_null;
+	char			*role_name;
+	bool			is_owner = false;
+
+	/* get the role name from oid */
+	role_name = GetUserNameFromId(role_oid, false);
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Datum owner_datum = heap_getattr(tuple, Anum_sysdatabases_owner,
+										 db_rel->rd_att, &is_null);
+
+		if (!is_null && strcmp(role_name, DatumGetCString(owner_datum)) == 0)
+		{
+			is_owner = true;
+			break;
+		}
+	}
+
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+
+	return is_owner;
+}
+
+
+/*
  * To check if given login is already a user in one of the databases
  */
 static bool
@@ -2301,7 +2340,7 @@ has_user_in_db(const char *login, char **db_name)
 
 	/* open the table to scane */
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 
 	/* change the target name to NameData for search */
 	login_name = (NameData *) palloc0(NAMEDATALEN);
@@ -2325,11 +2364,11 @@ has_user_in_db(const char *login, char **db_name)
 		*db_name = pstrdup(TextDatumGetCString(name));
 
 		table_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		table_close(bbf_authid_user_ext_rel, AccessShareLock);
 		return true;
 	}
 	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 
 	return false;
 }
@@ -2352,7 +2391,7 @@ get_fully_qualified_domain_name(char *netbios_domain)
 	HeapTuple	tuple;
 	char	   *fq_domain_name;
 
-	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowShareLock);
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), AccessShareLock);
 
 	dsc = RelationGetDescr(bbf_domain_mapping_rel);
 
@@ -2404,7 +2443,7 @@ get_fully_qualified_domain_name(char *netbios_domain)
 	}
 
 	systable_endscan(scan);
-	table_close(bbf_domain_mapping_rel, RowShareLock);
+	table_close(bbf_domain_mapping_rel, AccessShareLock);
 
 	return fq_domain_name;
 }
