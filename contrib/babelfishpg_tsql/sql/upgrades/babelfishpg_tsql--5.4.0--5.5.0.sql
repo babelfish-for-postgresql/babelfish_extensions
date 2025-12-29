@@ -408,10 +408,16 @@ AS
 $BODY$
 DECLARE
 	v_style SMALLINT;
+    v_type regtype;
 BEGIN
 	v_style := floor(p_style)::SMALLINT;
+    v_type := pg_typeof(arg);
 
-	CASE pg_typeof(arg)
+	IF v_type = 'text'::regtype OR v_type = 'sys.ntext'::regtype THEN
+        RAISE USING MESSAGE := 'Explicit conversion from data type text/ntext to varchar is not allowed.';
+    END IF;
+
+    CASE v_type
 	WHEN 'date'::regtype THEN
 		IF v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
@@ -1488,6 +1494,7 @@ DECLARE
 	v_integral_digits SMALLINT;
 	v_decimal_digits SMALLINT;
 	v_result TEXT;
+	v_varchar_length TEXT;
 BEGIN
     IF (scale(p_style) > 0) THEN
 		RAISE invalid_parameter_value;
@@ -1516,6 +1523,15 @@ BEGIN
     ELSIF (v_moneysign::SMALLINT != -1 AND left(ltrim(v_result), 1) COLLATE "C" != '-' COLLATE "C") THEN
         v_result := ltrim(v_result, '-');
     END IF;
+
+	IF (pg_catalog.lower(p_datatype) LIKE '%varchar%(%' OR pg_catalog.lower(p_datatype) LIKE '%char%(%') THEN
+		v_varchar_length := substring(p_datatype FROM '\((\d+|MAX)\)');
+		IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
+			RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a money value to varchar.'),
+						DETAIL := 'The converted money value exceeds the specified varchar length.',
+						HINT := 'Use a larger varchar size or a different conversion style.';
+		END IF;
+	END IF;
 
 	RETURN v_result;
 EXCEPTION
@@ -1546,6 +1562,7 @@ DECLARE
 	v_integral_digits SMALLINT;
 	v_decimal_digits SMALLINT;
 	v_result TEXT;
+	v_varchar_length TEXT;
 BEGIN
     IF (scale(p_style) > 0) THEN
 		RAISE invalid_parameter_value;
@@ -1574,6 +1591,15 @@ BEGIN
     ELSIF (v_smallmoneysign::SMALLINT != -1 AND left(ltrim(v_result), 1) COLLATE "C" = '-' COLLATE "C") THEN
         v_result := ltrim(v_result, '-');
     END IF;
+
+	IF (pg_catalog.lower(p_datatype) LIKE '%varchar%(%' OR pg_catalog.lower(p_datatype) LIKE '%char%(%') THEN
+		v_varchar_length := substring(p_datatype FROM '\((\d+|MAX)\)');
+		IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
+			RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a smallmoney value to smallmoney.'),
+						DETAIL := 'The converted money value exceeds the specified varchar length.',
+						HINT := 'Use a larger varchar size or a different conversion style.';
+		END IF;
+	END IF;
 
 	RETURN v_result;
 EXCEPTION

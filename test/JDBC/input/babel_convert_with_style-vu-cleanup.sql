@@ -101,25 +101,53 @@ GO
 DROP PROCEDURE time_style_test_p1;
 GO
 
--- cleanup for dependent tests
--- Drop procedures
 DROP PROCEDURE convert_money_range;
+GO
+
 DROP PROCEDURE convert_datetime_range;
-DROP PROCEDURE test_all_conversions;
+GO
+
+DROP PROCEDURE test_convert_with_style_all_types;
 GO
 
 -- Drop views
-DROP VIEW financial_conversions;
-DROP VIEW temporal_conversions;
+DROP VIEW money_smallmoney_conversions;
+GO
+
+DROP VIEW datetime_date_time_conversions;
+GO
+
 DROP VIEW string_conversions;
 GO
 
 -- Drop tables
-DROP TABLE financial_data;
-DROP TABLE temporal_data;
+DROP TABLE money_smallmoney_table;
+GO
+
+DROP TABLE datetime_date_time_data;
+GO
+
+DROP TABLE negative_decimal_style_test;
+GO
+
+DROP TABLE edge_style_test;
+GO
+
+DROP TABLE combined_conversion_test;
+GO
+
+DROP TABLE null_overflow_test;
+GO
+
+DROP TABLE char_conversion_test;
 GO
 
 -- Drop user-defined types
 DROP TYPE MoneyRange;
+GO
+
 DROP TYPE DateTimeRange;
+GO
+
+DROP PROCEDURE test_all_conversions;
 GO

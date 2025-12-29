@@ -530,17 +530,133 @@ SELECT 'Time precision tests' as test_case,
     CONVERT(VARCHAR(30), CAST('23:59:59.0000000' AS TIME)) as zero_precision;
 GO
 
--- dependent tests
-
--- Test views
-SELECT * FROM financial_conversions ORDER BY id;
+-- Test negative decimal style parameters
+SELECT 
+    test_value,
+    style_number,
+    TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS try_convert_result,
+    description
+FROM negative_decimal_style_test
+ORDER BY id;
 GO
 
-SELECT * FROM temporal_conversions ORDER BY id;
+SELECT 
+    id,
+    money_val,
+    CONVERT(VARCHAR(30), money_val) AS money_convert_default,
+    TRY_CONVERT(VARCHAR(30), money_val) AS money_try_convert_default,
+    CONVERT(VARCHAR(30), money_val, 0) AS money_convert_style0,
+    TRY_CONVERT(VARCHAR(30), money_val, 0) AS money_try_convert_style0,
+    CONVERT(VARCHAR(30), money_val, 1) AS money_convert_style1,
+    TRY_CONVERT(VARCHAR(30), money_val, 1) AS money_try_convert_style1,
+    smallmoney_val,
+    CONVERT(VARCHAR(30), smallmoney_val) AS smallmoney_convert_default,
+    TRY_CONVERT(VARCHAR(30), smallmoney_val) AS smallmoney_try_convert_default,
+    CONVERT(VARCHAR(30), smallmoney_val, 0) AS smallmoney_convert_style0,
+    TRY_CONVERT(VARCHAR(30), smallmoney_val, 0) AS smallmoney_try_convert_style0,
+    description
+FROM money_smallmoney_table 
+ORDER BY id;
+GO
+
+SELECT 
+    id,
+    date_val,
+    CONVERT(VARCHAR(30), date_val) AS date_convert_default,
+    TRY_CONVERT(VARCHAR(30), date_val) AS date_try_convert_default,
+    CONVERT(VARCHAR(30), date_val, 23) AS date_convert_style23,
+    TRY_CONVERT(VARCHAR(30), date_val, 23) AS date_try_convert_style23,
+    datetime_val,
+    CONVERT(VARCHAR(30), datetime_val) AS datetime_convert_default,
+    TRY_CONVERT(VARCHAR(30), datetime_val) AS datetime_try_convert_default,
+    CONVERT(VARCHAR(30), datetime_val, 20) AS datetime_convert_style20,
+    TRY_CONVERT(VARCHAR(30), datetime_val, 20) AS datetime_try_convert_style20,
+    time_val,
+    CONVERT(VARCHAR(30), time_val) AS time_convert_default,
+    TRY_CONVERT(VARCHAR(30), time_val) AS time_try_convert_default,
+    CONVERT(VARCHAR(30), time_val, 8) AS time_convert_style8,
+    TRY_CONVERT(VARCHAR(30), time_val, 8) AS time_try_convert_style8,
+    description
+FROM datetime_date_time_data 
+ORDER BY id;
+GO
+
+SELECT 
+    id,
+    money_val,
+    CONVERT(CHAR(20), money_val) AS money_to_char,
+    TRY_CONVERT(CHAR(20), money_val) AS money_try_to_char,
+    CONVERT(NCHAR(20), money_val) AS money_to_nchar,
+    TRY_CONVERT(NCHAR(20), money_val) AS money_try_to_nchar,
+    CONVERT(NVARCHAR(20), money_val) AS money_to_nvarchar,
+    TRY_CONVERT(NVARCHAR(20), money_val) AS money_try_to_nvarchar,
+    datetime_val,
+    CONVERT(CHAR(30), datetime_val) AS datetime_to_char,
+    TRY_CONVERT(CHAR(30), datetime_val) AS datetime_try_to_char,
+    CONVERT(NVARCHAR(30), datetime_val, 23) AS datetime_to_nvarchar_style23,
+    TRY_CONVERT(NVARCHAR(30), datetime_val, 23) AS datetime_try_to_nvarchar_style23,
+    description
+FROM char_conversion_test 
+ORDER BY id;
+GO
+
+-- Test edge style values
+SELECT 
+    test_value,
+    style_number,
+    TRY_CONVERT(VARCHAR, test_value, style_number) AS try_convert_result,
+    description
+FROM edge_style_test
+ORDER BY id;
+GO
+
+-- Test combined conversions in same query
+SELECT 
+    id,
+    CONVERT(VARCHAR(20), money_val, 0) AS money_style0,
+    CONVERT(VARCHAR(20), smallmoney_val, 1) AS smallmoney_style1,
+    CONVERT(VARCHAR(30), datetime_val, 20) AS datetime_style20,
+    CONVERT(VARCHAR(30), date_val, 23) AS date_style23,
+    CONVERT(VARCHAR(30), time_val, 8) AS time_style8,
+    description
+FROM combined_conversion_test
+ORDER BY id;
+GO
+
+-- Test NULL style and overflow/underflow
+SELECT 
+    id,
+    TRY_CONVERT(VARCHAR(20), money_val, CAST(style_number AS INT)) AS money_try_convert,
+    TRY_CONVERT(VARCHAR(20), smallmoney_val, CAST(style_number AS INT)) AS smallmoney_try_convert,
+    TRY_CONVERT(VARCHAR(30), datetime_val, CAST(style_number AS INT)) AS datetime_try_convert,
+    TRY_CONVERT(VARCHAR(30), date_val, CAST(style_number AS INT)) AS date_try_convert,
+    TRY_CONVERT(VARCHAR(30), time_val, CAST(style_number AS INT)) AS time_try_convert,
+    description
+FROM null_overflow_test
+ORDER BY id;
+GO
+
+-- Test CONVERT with NULL and overflow styles (should fail)
+SELECT CONVERT(VARCHAR, CAST(1234.56 AS MONEY), NULL) AS null_style_test;
+GO
+
+SELECT CONVERT(VARCHAR, CAST(1234.56 AS MONEY), 999999999) AS overflow_style_test;
+GO
+
+SELECT CONVERT(VARCHAR, CAST(1234.56 AS MONEY), -999999999) AS underflow_style_test;
+GO
+
+
+-- Test views
+SELECT * FROM money_smallmoney_conversions ORDER BY id;
+GO
+
+SELECT * FROM datetime_date_time_conversions ORDER BY id;
 GO
 
 SELECT * FROM string_conversions ;
 GO
+
 -- Test procedures with UDT
 DECLARE @money_ranges MoneyRange;
 INSERT INTO @money_ranges VALUES 
@@ -561,7 +677,7 @@ EXEC convert_datetime_range @datetime_ranges;
 GO
 
 -- Test comprehensive conversion procedure
-EXEC test_all_conversions 
+EXEC test_convert_with_style_all_types 
     @money_val = 1234.56,
     @smallmoney_val = 123.45,
     @date_val = '2023-12-25',
@@ -571,7 +687,7 @@ EXEC test_all_conversions
 GO
 
 -- Test error cases
-EXEC test_all_conversions 
+EXEC test_convert_with_style_all_types 
     @money_val = 1234.56,
     @smallmoney_val = 123.45,
     @date_val = '2023-12-25',
@@ -579,4 +695,56 @@ EXEC test_all_conversions
     @time_val = '12:34:56.789',
     @style = 999;
 GO
+-- Test insufficient result space scenarios
+SELECT CONVERT(VARCHAR(1), CAST($23.12 AS MONEY), 0);
+GO
 
+SELECT CONVERT(CHAR(1), CAST($23345657.12 AS MONEY), 0);
+GO
+
+SELECT CONVERT(CHAR(2), CAST($23345657.12 AS MONEY), 0);
+GO
+
+SELECT CONVERT(VARCHAR(MAX), CAST($23345657.12 AS MONEY), 0);
+GO
+
+-- Test TRY_CONVERT with insufficient space (should return NULL)
+SELECT TRY_CONVERT(VARCHAR(1), CAST($23.12 AS MONEY), 0) AS insufficient_space_try_convert;
+GO
+
+SELECT TRY_CONVERT(CHAR(1), CAST($23345657.12 AS MONEY), 0) AS insufficient_space_char_try_convert;
+GO
+
+-- Test various small lengths with MONEY
+SELECT TRY_CONVERT(VARCHAR(3), CAST($1.23 AS MONEY), 0) AS varchar3_result;
+GO
+
+SELECT TRY_CONVERT(VARCHAR(5), CAST($12.34 AS MONEY), 0) AS varchar5_result;
+GO
+
+-- Test various small lengths with SMALLMONEY
+SELECT TRY_CONVERT(VARCHAR(1), CAST(1.23 AS SMALLMONEY), 0) AS smallmoney_varchar1;
+GO
+
+SELECT TRY_CONVERT(CHAR(3), CAST(12.34 AS SMALLMONEY), 0) AS smallmoney_char3;
+GO
+
+EXEC test_all_conversions 
+    @money_val = 1234.56,
+    @smallmoney_val = 123.45,
+    @date_val = '2023-12-25',
+    @datetime_val = '2023-12-25 12:34:56.789',
+    @time_val = '12:34:56.789',
+    @style = 1;
+GO
+
+EXEC test_all_conversions 
+    @money_val = -5678.90,
+    @smallmoney_val = -234.56,
+    @date_val = '2024-02-29',
+    @datetime_val = '2024-02-29 23:59:59.997',
+    @time_val = '23:59:59.997';
+GO
+
+SELECT * FROM string_conversions;
+GO

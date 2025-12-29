@@ -429,7 +429,7 @@ CREATE TYPE DateTimeRange AS TABLE (
 GO
 
 -- Create base tables for views
-CREATE TABLE financial_data (
+CREATE TABLE money_smallmoney_table (
     id INT PRIMARY KEY,
     money_val MONEY,
     smallmoney_val SMALLMONEY,
@@ -437,13 +437,13 @@ CREATE TABLE financial_data (
 );
 GO
 
-INSERT INTO financial_data (id, money_val, smallmoney_val, description) VALUES
+INSERT INTO money_smallmoney_table (id, money_val, smallmoney_val, description) VALUES
 (1, 1234.56, 123.45, 'Test case 1'),
 (2, -5678.90, -234.56, 'Test case 2'),
 (3, 0.00, 0.00, 'Zero values');
 GO
 
-CREATE TABLE temporal_data (
+CREATE TABLE datetime_date_time_data (
     id INT PRIMARY KEY,
     date_val DATE,
     datetime_val DATETIME,
@@ -452,13 +452,13 @@ CREATE TABLE temporal_data (
 );
 GO
 
-INSERT INTO temporal_data (id, date_val, datetime_val, time_val, description) VALUES
+INSERT INTO datetime_date_time_data (id, date_val, datetime_val, time_val, description) VALUES
 (1, '2023-12-25', '2023-12-25 12:34:56.789', '12:34:56.789', 'Christmas'),
 (2, '2024-02-29', '2024-02-29 23:59:59.997', '23:59:59.997', 'Leap Year');
 GO
 
 -- Create views with conversion dependencies
-CREATE VIEW financial_conversions AS
+CREATE VIEW money_smallmoney_conversions AS
 SELECT 
     id,
     money_val,
@@ -473,10 +473,10 @@ SELECT
     TRY_CONVERT(VARCHAR(30), smallmoney_val) AS smallmoney_try_convert_default,
     CONVERT(VARCHAR(30), smallmoney_val, 0) AS smallmoney_convert_style0,
     TRY_CONVERT(VARCHAR(30), smallmoney_val, 0) AS smallmoney_try_convert_style0
-FROM financial_data;
+FROM money_smallmoney_table;
 GO
 
-CREATE VIEW temporal_conversions AS
+CREATE VIEW datetime_date_time_conversions AS
 SELECT 
     id,
     date_val,
@@ -491,42 +491,215 @@ SELECT
     TRY_CONVERT(VARCHAR(30), datetime_val, 20) AS datetime_try_convert_style20,
     time_val,
     CONVERT(VARCHAR(30), time_val) AS time_convert_default,
-    TRY_CONVERT(VARCHAR(30), time_val) AS time_try_convert_default
-FROM temporal_data;
+    TRY_CONVERT(VARCHAR(30), time_val) AS time_try_convert_default,
+    CONVERT(VARCHAR(30), time_val, 8) AS time_convert_style8,
+    TRY_CONVERT(VARCHAR(30), time_val, 8) AS time_try_convert_style8
+FROM datetime_date_time_data;
 GO
 
--- Create stored procedures with conversion dependencies
+-- Test negative decimal style parameters
+CREATE TABLE negative_decimal_style_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    test_value MONEY,
+    style_number DECIMAL(5,2),
+    description VARCHAR(200)
+);
+GO
+
+INSERT INTO negative_decimal_style_test (test_value, style_number, description) VALUES
+(CAST(1234.56 AS MONEY), -1.5, 'Negative decimal style -1.5'),
+(CAST(1234.56 AS MONEY), -2.8, 'Negative decimal style -2.8'),
+(CAST(1234.56 AS MONEY), 1.8, 'Positive decimal style 1.8'),
+(CAST(1234.56 AS MONEY), 0.5, 'Decimal style 0.5');
+GO
+
+-- Test edge style values below -126 and beyond 126
+CREATE TABLE edge_style_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    test_value MONEY,
+    style_number INT,
+    description VARCHAR(200)
+);
+GO
+
+INSERT INTO edge_style_test (test_value, style_number, description) VALUES
+(CAST(1234.56 AS MONEY), -127, 'Style below -126: -127'),
+(CAST(1234.56 AS MONEY), -200, 'Very negative style: -200'),
+(CAST(1234.56 AS MONEY), -32768, 'Min INT style'),
+(CAST(1234.56 AS MONEY), 127, 'Style above 126: 127'),
+(CAST(1234.56 AS MONEY), 500, 'Very large style: 500'),
+(CAST(1234.56 AS MONEY), 32767, 'Max INT style'),
+(CAST(1234.56 AS MONEY), 2147483647, 'Max BIGINT style');
+GO
+
+-- Test combining money/smallmoney + datetime/date/time conversions in same query
+CREATE TABLE combined_conversion_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    money_val MONEY,
+    smallmoney_val SMALLMONEY,
+    datetime_val DATETIME,
+    date_val DATE,
+    time_val TIME,
+    description VARCHAR(200)
+);
+GO
+
+INSERT INTO combined_conversion_test (money_val, smallmoney_val, datetime_val, date_val, time_val, description) VALUES
+(CAST(1234.56 AS MONEY), CAST(123.45 AS SMALLMONEY), CAST('2023-12-25 14:30:45.123' AS DATETIME), CAST('2023-12-25' AS DATE), CAST('14:30:45.123' AS TIME), 'Combined test 1'),
+(CAST(-5678.90 AS MONEY), CAST(-234.56 AS SMALLMONEY), CAST('2024-02-29 23:59:59.997' AS DATETIME), CAST('2024-02-29' AS DATE), CAST('23:59:59.997' AS TIME), 'Combined test 2'),
+(CAST(0.00 AS MONEY), CAST(0.00 AS SMALLMONEY), CAST('1753-01-01 00:00:00.000' AS DATETIME), CAST('0001-01-01' AS DATE), CAST('00:00:00.000' AS TIME), 'Combined test 3');
+GO
+
+-- Test NULL style and style overflow/underflow with different datatypes
+CREATE TABLE null_overflow_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    money_val MONEY,
+    smallmoney_val SMALLMONEY,
+    datetime_val DATETIME,
+    date_val DATE,
+    time_val TIME,
+    style_number SQL_VARIANT,
+    description VARCHAR(200)
+);
+GO
+
+INSERT INTO null_overflow_test (money_val, smallmoney_val, datetime_val, date_val, time_val, style_number, description) VALUES
+(CAST(1234.56 AS MONEY), CAST(123.45 AS SMALLMONEY), CAST('2023-12-25 14:30:45.123' AS DATETIME), CAST('2023-12-25' AS DATE), CAST('14:30:45.123' AS TIME), NULL, 'NULL style test'),
+(CAST(1234.56 AS MONEY), CAST(123.45 AS SMALLMONEY), CAST('2023-12-25 14:30:45.123' AS DATETIME), CAST('2023-12-25' AS DATE), CAST('14:30:45.123' AS TIME), 999999999, 'Overflow style test'),
+(CAST(1234.56 AS MONEY), CAST(123.45 AS SMALLMONEY), CAST('2023-12-25 14:30:45.123' AS DATETIME), CAST('2023-12-25' AS DATE), CAST('14:30:45.123' AS TIME), -999999999, 'Underflow style test');
+GO
+
+-- Test convert to char/nchar/nvarchar
+CREATE TABLE char_conversion_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    money_val MONEY,
+    datetime_val DATETIME,
+    description VARCHAR(200)
+);
+GO
+
+INSERT INTO char_conversion_test (money_val, datetime_val, description) VALUES
+(CAST(1234.56 AS MONEY), CAST('2023-12-25 14:30:45.123' AS DATETIME), 'Char conversion test 1'),
+(CAST(-5678.90 AS MONEY), CAST('2024-02-29 23:59:59.997' AS DATETIME), 'Char conversion test 2'),
+(CAST(0.00 AS MONEY), CAST('1753-01-01 00:00:00.000' AS DATETIME), 'Char conversion test 3');
+GO
+
+-- Create view for string conversions
+CREATE VIEW string_conversions AS
+SELECT 
+    id,
+    money_val,
+    CONVERT(CHAR(20), money_val) AS money_to_char,
+    CONVERT(NCHAR(20), money_val) AS money_to_nchar,
+    CONVERT(NVARCHAR(20), money_val) AS money_to_nvarchar,
+    CONVERT(CHAR(20), money_val, 0) AS money_to_char_style0,
+    CONVERT(NCHAR(20), money_val, 1) AS money_to_nchar_style1,
+    CONVERT(NVARCHAR(20), money_val, 2) AS money_to_nvarchar_style2,
+    datetime_val,
+    CONVERT(CHAR(30), datetime_val) AS datetime_to_char,
+    CONVERT(NCHAR(30), datetime_val) AS datetime_to_nchar,
+    CONVERT(NVARCHAR(30), datetime_val) AS datetime_to_nvarchar,
+    CONVERT(CHAR(30), datetime_val, 20) AS datetime_to_char_style20,
+    CONVERT(NCHAR(30), datetime_val, 21) AS datetime_to_nchar_style21,
+    CONVERT(NVARCHAR(30), datetime_val, 23) AS datetime_to_nvarchar_style23,
+    'Test String' AS input_string,
+    CONVERT(VARCHAR(30), 'Test String', 0) AS convert_style0,
+    TRY_CONVERT(VARCHAR(30), 'Test String', 0) AS try_convert_style0,
+    CONVERT(VARCHAR(30), 'Invalid Date', 101) AS convert_style101,
+    TRY_CONVERT(VARCHAR(30), 'Invalid Date', 101) AS try_convert_style101
+FROM char_conversion_test;
+GO
+
+-- Create procedures for UDT testing
 CREATE PROCEDURE convert_money_range
-    @ranges MoneyRange READONLY
+    @money_ranges MoneyRange READONLY
 AS
 BEGIN
     SELECT 
         min_value,
-        CONVERT(VARCHAR(30), min_value, style) AS min_convert,
-        TRY_CONVERT(VARCHAR(30), min_value, style) AS min_try_convert,
         max_value,
-        CONVERT(VARCHAR(30), max_value, style) AS max_convert,
-        TRY_CONVERT(VARCHAR(30), max_value, style) AS max_try_convert,
-        style
-    FROM @ranges;
+        style,
+        CONVERT(VARCHAR(30), min_value, style) AS min_converted,
+        CONVERT(VARCHAR(30), max_value, style) AS max_converted,
+        TRY_CONVERT(VARCHAR(30), min_value, style) AS min_try_converted,
+        TRY_CONVERT(VARCHAR(30), max_value, style) AS max_try_converted
+    FROM @money_ranges;
 END;
 GO
 
 CREATE PROCEDURE convert_datetime_range
-    @ranges DateTimeRange READONLY
+    @datetime_ranges DateTimeRange READONLY
 AS
 BEGIN
     SELECT 
         start_date,
-        CONVERT(VARCHAR(30), start_date, style) AS start_convert,
-        TRY_CONVERT(VARCHAR(30), start_date, style) AS start_try_convert,
         end_date,
-        CONVERT(VARCHAR(30), end_date, style) AS end_convert,
-        TRY_CONVERT(VARCHAR(30), end_date, style) AS end_try_convert,
-        style
-    FROM @ranges;
+        style,
+        CONVERT(VARCHAR(30), start_date, style) AS start_converted,
+        CONVERT(VARCHAR(30), end_date, style) AS end_converted,
+        TRY_CONVERT(VARCHAR(30), start_date, style) AS start_try_converted,
+        TRY_CONVERT(VARCHAR(30), end_date, style) AS end_try_converted
+    FROM @datetime_ranges;
 END;
 GO
+
+CREATE PROCEDURE test_convert_with_style_all_types
+    @money_val MONEY,
+    @smallmoney_val SMALLMONEY,
+    @date_val DATE,
+    @datetime_val DATETIME,
+    @time_val TIME,
+    @style INT
+AS
+BEGIN
+    SELECT 
+        'Money conversions' AS test_type,
+        CONVERT(VARCHAR(30), @money_val) AS default_convert,
+        TRY_CONVERT(VARCHAR(30), @money_val) AS default_try_convert,
+        CONVERT(VARCHAR(30), @money_val, @style) AS style_convert,
+        TRY_CONVERT(VARCHAR(30), @money_val, @style) AS style_try_convert;
+    
+    SELECT 
+        'SmallMoney conversions' AS test_type,
+        CONVERT(VARCHAR(30), @smallmoney_val) AS default_convert,
+        TRY_CONVERT(VARCHAR(30), @smallmoney_val) AS default_try_convert,
+        CONVERT(VARCHAR(30), @smallmoney_val, @style) AS style_convert,
+        TRY_CONVERT(VARCHAR(30), @smallmoney_val, @style) AS style_try_convert;
+    
+    SELECT 
+        'DateTime conversions' AS test_type,
+        CONVERT(VARCHAR(30), @datetime_val) AS default_convert,
+        TRY_CONVERT(VARCHAR(30), @datetime_val) AS default_try_convert,
+        CONVERT(VARCHAR(30), @datetime_val, @style) AS style_convert,
+        TRY_CONVERT(VARCHAR(30), @datetime_val, @style) AS style_try_convert;
+    
+    SELECT 
+        'Date conversions' AS test_type,
+        CONVERT(VARCHAR(30), @date_val) AS default_convert,
+        TRY_CONVERT(VARCHAR(30), @date_val) AS default_try_convert,
+        CONVERT(VARCHAR(30), @date_val, @style) AS style_convert,
+        TRY_CONVERT(VARCHAR(30), @date_val, @style) AS style_try_convert;
+    
+    SELECT 
+        'Time conversions' AS test_type,
+        CONVERT(VARCHAR(30), @time_val) AS default_convert,
+        TRY_CONVERT(VARCHAR(30), @time_val) AS default_try_convert,
+        CONVERT(VARCHAR(30), @time_val, @style) AS style_convert,
+        TRY_CONVERT(VARCHAR(30), @time_val, @style) AS style_try_convert;
+
+    SELECT 
+        datetime_val,
+        CONVERT(VARCHAR(30), datetime_val) AS datetime_convert_default,
+        TRY_CONVERT(VARCHAR(30), datetime_val) AS datetime_try_convert_default,
+        CONVERT(VARCHAR(30), datetime_val, 20) AS datetime_convert_style20,
+        TRY_CONVERT(VARCHAR(30), datetime_val, 20) AS datetime_try_convert_style20,
+        time_val,
+        CONVERT(VARCHAR(30), time_val) AS time_convert_default,
+        TRY_CONVERT(VARCHAR(30), time_val) AS time_try_convert_default
+    FROM datetime_date_time_data;
+END;
+GO
+
 
 CREATE PROCEDURE test_all_conversions
     @money_val MONEY,
@@ -548,16 +721,7 @@ BEGIN
            TRY_CONVERT(VARCHAR(30), @date_val, ISNULL(@style, 23)) AS date_try_convert,
            CONVERT(VARCHAR(30), @datetime_val, ISNULL(@style, 20)) AS datetime_convert,
            TRY_CONVERT(VARCHAR(30), @datetime_val, ISNULL(@style, 20)) AS datetime_try_convert,
-           CONVERT(VARCHAR(30), @time_val, ISNULL(@style, 8)) AS time_convert,
            TRY_CONVERT(VARCHAR(30), @time_val, ISNULL(@style, 8)) AS time_try_convert;
 END;
 GO
 
-CREATE VIEW string_conversions AS
-SELECT 
-    'Test String' AS input_string,
-    CONVERT(VARCHAR(30), 'Test String', 0) AS convert_style0,
-    TRY_CONVERT(VARCHAR(30), 'Test String', 0) AS try_convert_style0,
-    CONVERT(VARCHAR(30), 'Invalid Date', 101) AS convert_style101,
-    TRY_CONVERT(VARCHAR(30), 'Invalid Date', 101) AS try_convert_style101;
-GO
