@@ -28,6 +28,24 @@ GO
 exec dateadd_p10
 GO
 
+SELECT * FROM dateadd_v1
+GO
+
+SELECT * FROM dateadd_v2
+GO
+
+SELECT * FROM dateadd_v3
+GO
+
+SELECT * FROM dateadd_v4
+GO
+
+SELECT * FROM dateadd_v5
+GO
+
+SELECT * FROM dateadd_v6
+GO
+
 begin transaction
 go
 
@@ -88,3 +106,41 @@ GO
 if (@@trancount > 0) rollback tran
 GO
 
+SELECT ID, UdtTime, DATEADD (HOUR, 1, UdtTime) AS UDTTIME FROM UdtTable
+GO
+
+SELECT ID, UdtTime, DATEADD (MINUTE, 1, UdtTime) AS UDTTIME FROM UdtTable
+GO
+
+SELECT ID, UdtTime, DATEADD (MILLISECOND, 1, UdtTime) AS UDTTIME FROM UdtTable
+GO
+
+SELECT ID, UdtTime, DATEADD (HOUR, 1, UdtTime) AS UDTTIME FROM UdtTable
+GO
+
+SELECT ID, UdtDate, DATEADD (MONTH, 5, UdtDate) AS UDTDATE FROM UdtTable
+GO
+
+SELECT ID, UdtDatetime, DATEADD (YEAR, 2, UdtDatetime) AS UDTDATETIME FROM UdtTable
+GO
+
+SELECT ID, UdtDatetime2, DATEADD (WEEK, 15, UdtDatetime2) AS UDTDATETIME2 FROM UdtTable
+GO
+
+SELECT ID, UdtTimestamp, DATEADD (MONTH, 45, UdtTimestamp) AS UDTTIMESTAMP FROM UdtTable
+GO
+
+SELECT ID, UdtSmalldatetime, DATEADD (YEAR, 9, UdtSmalldatetime) AS UDTSMALLDATETIME FROM UdtTable
+GO
+
+SELECT ID, UdtDatetimeOffset, DATEADD (DAY, 0, UdtDatetimeOffset) AS UDTDATETIMEOFFSET FROM UdtTable
+GO
+ 
+SELECT ID, UdtDatetimeOffset, DATEADD (MONTH, 15, UdtDatetimeOffset) AS UDTDATETIMEOFFSET FROM UdtTable
+GO
+ 
+SELECT ID, UdtDatetimeOffset, DATEADD (WEEK, 2, UdtDatetimeOffset) AS UDTDATETIMEOFFSET FROM UdtTable
+GO
+ 
+SELECT ID, UdtDatetimeOffset, DATEADD (SECOND, 459, UdtDatetimeOffset) AS UDTDATETIMEOFFSET FROM UdtTable
+GO
