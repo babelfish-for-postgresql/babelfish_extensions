@@ -1,3 +1,4 @@
+-- sla 60000
 -- tsql
 CREATE DATABASE db1
 GO
