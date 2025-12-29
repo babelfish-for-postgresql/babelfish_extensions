@@ -200,24 +200,3 @@ datetime2
 
 DROP FUNCTION datetime2fromparts_vu_prepare_f2()
 GO
-
-SELECT datetime2fromparts_vu_prepare_f3()
-GO
-~~START~~
-datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot construct data type DATETIME2, some of the arguments have values which are not valid.)~~
-
-DROP FUNCTION datetime2fromparts_vu_prepare_f3()
-GO
-
-SELECT datetime2fromparts_vu_prepare_f4()
-GO
-~~START~~
-datetime2
-<NULL>
-~~END~~
-
-DROP FUNCTION datetime2fromparts_vu_prepare_f4()
-GO
