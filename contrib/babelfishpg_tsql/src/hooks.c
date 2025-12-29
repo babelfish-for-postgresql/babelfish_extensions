@@ -7037,11 +7037,6 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 	if (!OidIsValid(expr_type))
 		return -1;
 
-	// if (expr_type == 17044)
-	// {
-	// 	result_typmod = 54;
-	// }
-
 	if (getBaseType(expr_type) == NUMERICOID)
 	{
 		bool        found_typmod;
@@ -8398,16 +8393,18 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 				TargetEntry	*te;
 				Oid				expr_type;
 				int32			rettypmod = -1;
+				char		*aggFuncName;
+				aggFuncName = get_func_name(aggref->aggfnoid);
 
 				/* Handle MIN/MAX for char/nchar types to preserve typmod */
-				if ((aggref->aggtype == 16981 || aggref->aggtype == 17044) && 
-					(aggref->aggfnoid == 17050 || aggref->aggfnoid == 17049 ||  aggref->aggfnoid == 17042 ||  aggref->aggfnoid == 17041 )) // max and min for char and nchar
+				if (((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(aggref->aggtype) || (*common_utility_plugin_ptr->is_tsql_nchar_datatype) (aggref->aggtype)) && 
+					(aggFuncName && strlen(aggFuncName) == 3 && ((strncmp(aggFuncName, "min", 3) == 0) || (strncmp(aggFuncName, "max", 3) == 0))))
 				{
 					te = (TargetEntry *) linitial(aggref->args);
 					expr_type = exprType((Node *) te->expr);
 
 					/* Only process if input type matches aggregate type */
-					if (expr_type == 16981 || expr_type == 17044)
+					if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(expr_type) || (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(expr_type))
 					{
 						rettypmod = exprTypmod((Node *) te->expr);
 
@@ -8421,6 +8418,8 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 												 -1);
 					}
 				}
+				if (aggFuncName)
+					pfree(aggFuncName);
 				break;
 			}
 
