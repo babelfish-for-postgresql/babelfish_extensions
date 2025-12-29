@@ -1782,9 +1782,11 @@ FROM UDDTDateTest ORDER BY ID;
 GO
 ~~START~~
 int#!#date#!#date#!#date#!#int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: control reached end of function without RETURN)~~
+1#!#2023-06-17#!#2023-06-17#!#1776-07-05#!#247
+2#!#2023-06-18#!#2023-06-18#!#1945-08-16#!#78
+3#!#2023-06-19#!#2023-06-19#!#2000-01-02#!#23
+4#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 -- 8. Test constraints
