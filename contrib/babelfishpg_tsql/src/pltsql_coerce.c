@@ -2909,7 +2909,7 @@ tsql_select_common_type_for_special(ParseState *pstate, List *exprs, const char 
 				  				Node **which_expr)
 {
 	int32  len;
-	if (!context)
+	if (sql_dialect != SQL_DIALECT_TSQL || !context)
 		return InvalidOid;
     
 	len = strlen(context);
