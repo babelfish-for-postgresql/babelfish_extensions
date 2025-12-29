@@ -8338,7 +8338,7 @@ tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexp
 					rettypmod = MAX_BINARY_SIZE + VARHDRSZ;
 
 			OpExp = coerce_to_target_type(pstate, OpExp,
-										 exprType(OpExp), // same as  op->opresulttype
+										 exprType(OpExp),
 										 op->opresulttype,
 										 rettypmod,
 										 COERCION_EXPLICIT,
@@ -8390,32 +8390,34 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 		case T_Aggref:
 			{
 				Aggref		*aggref = (Aggref *) expr;
-				TargetEntry	*te;
-				Oid				expr_type;
-				int32			rettypmod = -1;
-				char		*aggFuncName;
-				aggFuncName = get_func_name(aggref->aggfnoid);
+				char		*aggFuncName = get_func_name(aggref->aggfnoid);
 
 				/* Handle MIN/MAX for char/nchar types to preserve typmod */
-				if (((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(aggref->aggtype) || (*common_utility_plugin_ptr->is_tsql_nchar_datatype) (aggref->aggtype)) && 
-					(aggFuncName && strlen(aggFuncName) == 3 && ((strncmp(aggFuncName, "min", 3) == 0) || (strncmp(aggFuncName, "max", 3) == 0))))
+				if (aggFuncName && strlen(aggFuncName) == 3 &&
+					(strncmp(aggFuncName, "min", 3) == 0 || strncmp(aggFuncName, "max", 3) == 0) &&
+					((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(aggref->aggtype) ||
+					 (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(aggref->aggtype)))
 				{
-					te = (TargetEntry *) linitial(aggref->args);
-					expr_type = exprType((Node *) te->expr);
+					TargetEntry	*te = (TargetEntry *) linitial(aggref->args);
+					Oid			expr_type = exprType((Node *) te->expr);
 
 					/* Only process if input type matches aggregate type */
-					if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(expr_type) || (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(expr_type))
+					if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(expr_type) ||
+						(*common_utility_plugin_ptr->is_tsql_nchar_datatype)(expr_type))
 					{
-						rettypmod = exprTypmod((Node *) te->expr);
+						int32	rettypmod = exprTypmod((Node *) te->expr);
 
-						/* Add relabel node with the found typmod */
-						expr = coerce_to_target_type(pstate, expr,
-												 exprType(expr),
-												 aggref->aggtype,
-												 rettypmod,
-												 COERCION_IMPLICIT,
-												 COERCE_IMPLICIT_CAST,
-												 -1);
+						if (rettypmod != -1)
+						{
+							/* Add relabel node with the found typmod */
+							expr = coerce_to_target_type(pstate, expr,
+													 exprType(expr),
+													 aggref->aggtype,
+													 rettypmod,
+													 COERCION_IMPLICIT,
+													 COERCE_IMPLICIT_CAST,
+													 -1);
+						}
 					}
 				}
 				if (aggFuncName)
