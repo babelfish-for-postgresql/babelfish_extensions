@@ -1525,7 +1525,7 @@ BEGIN
     END IF;
 
 	IF (pg_catalog.lower(p_datatype) LIKE '%varchar%(%' OR pg_catalog.lower(p_datatype) LIKE '%char%(%') THEN
-		v_varchar_length := substring(p_datatype FROM '\((\d+|MAX)\)');
+		v_varchar_length := substring(p_datatype FROM '\(([0-9]+|MAX)\)');
 		IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
 			RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a money value to varchar.'),
 						DETAIL := 'The converted money value exceeds the specified varchar length.',
@@ -1593,7 +1593,7 @@ BEGIN
     END IF;
 
 	IF (pg_catalog.lower(p_datatype) LIKE '%varchar%(%' OR pg_catalog.lower(p_datatype) LIKE '%char%(%') THEN
-		v_varchar_length := substring(p_datatype FROM '\((\d+|MAX)\)');
+		v_varchar_length := substring(p_datatype FROM '\(([0-9]+|MAX)\)');
 		IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
 			RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a smallmoney value to smallmoney.'),
 						DETAIL := 'The converted money value exceeds the specified varchar length.',
