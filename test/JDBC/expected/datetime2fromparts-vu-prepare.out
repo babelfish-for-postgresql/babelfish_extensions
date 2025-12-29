@@ -8,6 +8,12 @@ GO
 CREATE VIEW datetime2fromparts_vu_prepare_v3 AS (select DATETIME2FROMPARTS(1980, 11, 25, 22, 09, 58, 671, 4 ));
 GO
 
+CREATE VIEW datetime2fromparts_vu_prepare_v4 AS (select DATETIME2FROMPARTS(1999, 12, 31, 23, 59, 59, 9999999, 7 ));
+GO
+
+CREATE VIEW datetime2fromparts_vu_prepare_v5 AS (select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 44444, 3 ));
+GO
+
 CREATE PROCEDURE datetime2fromparts_vu_prepare_p1 AS (select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 1 ));
 GO
 
@@ -18,6 +24,12 @@ CREATE PROCEDURE datetime2fromparts_vu_prepare_p3 AS (select DATETIME2FROMPARTS(
 GO
 
 CREATE PROCEDURE datetime2fromparts_vu_prepare_p4 AS (select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 4 ));
+GO
+
+CREATE PROCEDURE datetime2fromparts_vu_prepare_p5 AS (select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, NULL ));
+GO
+
+CREATE PROCEDURE datetime2fromparts_vu_prepare_p6 AS (select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 999999, 7 ));
 GO
 
 CREATE FUNCTION datetime2fromparts_vu_prepare_f1()
@@ -31,5 +43,19 @@ CREATE FUNCTION datetime2fromparts_vu_prepare_f2()
 RETURNS DATETIME2 AS
 BEGIN
 RETURN (select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 6 ));
+END
+GO
+
+CREATE FUNCTION datetime2fromparts_vu_prepare_f3()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 9090909, 6 ));
+END
+GO
+
+CREATE FUNCTION datetime2fromparts_vu_prepare_f4()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, NULL, 6 ));
 END
 GO
