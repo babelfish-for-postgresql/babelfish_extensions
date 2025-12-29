@@ -1706,7 +1706,7 @@ GO
 int#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#int#!#datetimeoffset#!#datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: control reached end of function without RETURN)~~
+~~ERROR (Message: Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.)~~
 
 
 -- 8. Test constraints
