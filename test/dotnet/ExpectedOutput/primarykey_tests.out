@@ -20,40 +20,6 @@ Primary Key Columns:
 - col1
 - col2
 #Q#DROP TABLE IF EXISTS primarytest
-#Q#DROP TABLE IF EXISTS t1
-#Q#DROP TABLE IF EXISTS t2
-#Q#CREATE TABLE t1 (id INT PRIMARY KEY, name VARCHAR(50))
-#Q#CREATE TABLE t2 (id INT PRIMARY KEY, t1_id INT, data VARCHAR(50))
-#Q#INSERT INTO t1 VALUES (1, 'test1'), (2, 'test2')
-#Q#INSERT INTO t2 VALUES (10, 1, 'data1'), (20, 2, 'data2')
-#Q#SET NO_BROWSETABLE OFF; SELECT * FROM t1 JOIN t2 ON t1.id = t2.t1_id
-
-Table Columns:
-Column: id
-  - Is Primary Key: True
-  - Data Type: System.Int32
-  - Allow Null: False
-Column: name
-  - Is Primary Key: False
-  - Data Type: System.String
-  - Allow Null: True
-Column: id1
-  - Is Primary Key: True
-  - Data Type: System.Int32
-  - Allow Null: False
-Column: t1_id
-  - Is Primary Key: False
-  - Data Type: System.Int32
-  - Allow Null: True
-Column: data
-  - Is Primary Key: False
-  - Data Type: System.String
-  - Allow Null: True
-Primary Key Columns:
-- id
-- id1
-#Q#DROP TABLE IF EXISTS t1
-#Q#DROP TABLE IF EXISTS t2
 #Q#DROP TABLE IF EXISTS pk_none
 #Q#CREATE TABLE pk_none (col1 INT NOT NULL, col2 VARCHAR(50) NULL, col3 BIT NOT NULL)
 #Q#INSERT INTO pk_none VALUES (1, 'no pk', 1)
