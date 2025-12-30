@@ -21,6 +21,14 @@ GO
 ~~ERROR (Message: Specified scale 8 is invalid.)~~
 
 
+SELECT DATETIME2FROMPARTS ( 2010, 12, 31, 23, 59, 59, 0, 0 ) AS Result;
+GO
+~~START~~
+datetime2
+2010-12-31 23:59:59.0000000
+~~END~~
+
+
 SELECT DATETIME2FROMPARTS ( 2010, 12, 31, 23, 59, 59, 1, 6 ) AS Result;
 GO
 ~~START~~
