@@ -10794,16 +10794,10 @@ AS
 $BODY$
 DECLARE
 	v_style SMALLINT;
-    v_type regtype;
 BEGIN
 	v_style := floor(p_style)::SMALLINT;
-    v_type := pg_typeof(arg);
 
-	IF v_type = 'text'::regtype OR v_type = 'sys.ntext'::regtype THEN
-        RAISE USING MESSAGE := 'Explicit conversion from data type text/ntext to varchar is not allowed.';
-    END IF;
-
-    CASE v_type
+    CASE pg_typeof(arg)
 	WHEN 'date'::regtype THEN
 		IF NOT p_style_specified AND v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
