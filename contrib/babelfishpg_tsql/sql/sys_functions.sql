@@ -731,7 +731,7 @@ CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year TEXT,
                                                                 IN p_seconds TEXT,
                                                                 IN p_fractions TEXT,
                                                                 IN p_precision TEXT)
-RETURNS TIMESTAMP WITHOUT TIME ZONE
+RETURNS sys.DATETIME2
 AS
 $BODY$
 DECLARE

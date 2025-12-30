@@ -44,16 +44,6 @@ GO
 DROP VIEW datetime2fromparts_vu_prepare_v3
 GO
 
-SELECT * FROM datetime2fromparts_vu_prepare_v4
-GO
-DROP VIEW datetime2fromparts_vu_prepare_v4
-GO
-
-SELECT * FROM datetime2fromparts_vu_prepare_v5
-GO
-DROP VIEW datetime2fromparts_vu_prepare_v5
-GO
-
 EXEC datetime2fromparts_vu_prepare_p1
 GO
 DROP PROCEDURE datetime2fromparts_vu_prepare_p1
@@ -72,16 +62,6 @@ GO
 EXEC datetime2fromparts_vu_prepare_p4
 GO
 DROP PROCEDURE datetime2fromparts_vu_prepare_p4
-GO
-
-EXEC datetime2fromparts_vu_prepare_p5
-GO
-DROP PROCEDURE datetime2fromparts_vu_prepare_p5
-GO
-
-EXEC datetime2fromparts_vu_prepare_p6
-GO
-DROP PROCEDURE datetime2fromparts_vu_prepare_p6
 GO
 
 SELECT datetime2fromparts_vu_prepare_f1()

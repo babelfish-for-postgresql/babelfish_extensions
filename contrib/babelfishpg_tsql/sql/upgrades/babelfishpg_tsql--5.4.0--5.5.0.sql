@@ -564,6 +564,10 @@ END;
 $$ 
 LANGUAGE plpgsql IMMUTABLE STRICT;
 
+ALTER FUNCTION sys.datetime2fromparts(NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC) RENAME TO datetime2fromparts_deprecated_in_5_5_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_deprecated_in_5_5_0');
+
 CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year INT,
                                                                 IN p_month INT,
                                                                 IN p_day INT,
@@ -658,45 +662,6 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-
--- Add this NUMERIC wrapper for datetime2fromparts to maintain backward compatibility
-CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year NUMERIC,
-                                                                IN p_month NUMERIC,
-                                                                IN p_day NUMERIC,
-                                                                IN p_hour NUMERIC,
-                                                                IN p_minute NUMERIC,
-                                                                IN p_seconds NUMERIC,
-                                                                IN p_fractions NUMERIC,
-                                                                IN p_precision NUMERIC)
-RETURNS sys.DATETIME2
-AS
-$BODY$
-BEGIN
-    IF p_year IS NULL OR p_month IS NULL OR p_day IS NULL OR 
-       p_hour IS NULL OR p_minute IS NULL OR p_seconds IS NULL OR 
-       p_fractions IS NULL OR p_precision IS NULL THEN
-        IF p_precision IS NULL THEN
-            RAISE invalid_parameter_value USING 
-                MESSAGE := 'Precision argument cannot be null.',
-                DETAIL := 'The precision parameter is mandatory for DATETIME2.',
-                HINT := 'Provide a valid precision value between 0 and 7.';
-        END IF;
-        RETURN NULL;
-    END IF;
-
-    RETURN sys.datetime2fromparts(p_year::INT, p_month::INT, p_day::INT,
-                                                p_hour::INT, p_minute::INT, p_seconds::INT,
-                                                p_fractions::INT, p_precision::INT);
-EXCEPTION
-    WHEN numeric_value_out_of_range THEN
-        RAISE USING MESSAGE := 'Error while trying to cast to INT data type.',
-                    DETAIL := 'Source value is out of INT data type range.',
-                    HINT := 'Correct the source value you are trying to cast to INT data type and try again.';
-END;
-$BODY$
-LANGUAGE plpgsql
-IMMUTABLE;
-
 CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year TEXT,
                                                                 IN p_month TEXT,
                                                                 IN p_day TEXT,
@@ -705,7 +670,7 @@ CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year TEXT,
                                                                 IN p_seconds TEXT,
                                                                 IN p_fractions TEXT,
                                                                 IN p_precision TEXT)
-RETURNS TIMESTAMP WITHOUT TIME ZONE
+RETURNS sys.DATETIME2
 AS
 $BODY$
 DECLARE
