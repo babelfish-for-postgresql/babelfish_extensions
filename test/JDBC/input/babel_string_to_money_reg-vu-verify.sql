@@ -1,6 +1,10 @@
 --Valid cases
 SELECT CAST('\0' AS MONEY);
 GO
+SELECT isnumeric(CHAR(92));
+GO
+SELECT isnumeric(char(44));
+GO
 SELECT CAST(NCHAR(8364) AS money);           -- Euro sign
 GO
 SELECT CAST(CHAR(11) AS MONEY);              --Vertical tab
@@ -27,7 +31,23 @@ SELECT CAST(CHAR(164) AS MONEY);             -- Currency sign
 GO
 SELECT CAST(CHAR(165) AS MONEY);             -- Yen sign
 GO
+SELECT CAST('\' AS money);
+GO
 --Invalid cases
+SELECT CAST('\\1234' AS MONEY);
+GO
+SELECT CAST(',/,1234' AS MONEY);
+GO
+SELECT CAST('1234\0' AS MONEY);
+GO
+SELECT CAST('1234\ ' AS MONEY);
+GO
+SELECT CAST('1234/5,6 ' AS MONEY); 
+GO
+SELECT CAST('1234abc' AS MONEY);
+GO
+SELECT CAST('1234\\' AS MONEY);
+GO
 SELECT CAST(CHAR(72) AS MONEY);
 GO
 SELECT CAST(CHAR(73) AS MONEY);

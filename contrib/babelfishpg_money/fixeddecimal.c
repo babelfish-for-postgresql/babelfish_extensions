@@ -537,28 +537,114 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
        *ptr != '+')
 	{
 		unsigned char c = (unsigned char) *ptr;
-		
-		/* Skip ASCII whitespace */
-		if (isspace(c))
+
+		if (c == ' ')
 		{
 			ptr++;
 			continue;
 		}
-		
-		/* Skip comma (thousand separator) and backslash */
-		if (c == ',' || c == '\\')
+
+		if (c == ',')
 		{
-			ptr++;
-			continue;
+			const char *check;
+			if (isdigit((unsigned char) ptr[1]))
+			{
+				ptr++;
+				continue;
+			}
+
+			check = ptr + 1;
+			while (*check != '\0')
+			{
+				unsigned char cc = (unsigned char) *check;
+				if (cc == ' ')
+				{
+					check++;
+					continue;
+				}
+				if (cc == 0xC2 && (unsigned char) check[1] == 0xA0)
+				{
+					check += 2;
+					continue;
+				}
+				break;
+			}
+
+			if (*check == '\0')
+			{
+				*precision = 0;
+				*scale = 0;
+				return 0;
+			}
+			ereturn(escontext, (Datum) 0,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					errmsg("invalid characters found: cannot cast value \"%s\" to money",
+							str)));
 		}
-		
+		if (c == '\\')
+		{
+			const char *check = ptr + 1;
+
+			if (*check == '0')
+				check++;
+
+			while (*check != '\0')
+			{
+				unsigned char cc = (unsigned char) *check;
+				if (cc == ' ')
+				{
+					check++;
+					continue;
+				}
+				if (cc == 0xC2 && (unsigned char) check[1] == 0xA0)
+				{
+					check += 2;
+					continue;
+				}
+				break;
+			}
+
+			if (*check != '\0')
+			{
+				ereturn(escontext, (Datum) 0,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						errmsg("invalid characters found: cannot cast value \"%s\" to money",
+								str)));
+			}
+			*precision = 0;
+			*scale = 0;
+			return 0;
+		}
 		if (c == 0xC2 && (unsigned char) ptr[1] == 0xA0)
 		{
-			ptr += 2;
-			continue;
+			const char *check = ptr + 2;
+			while (*check != '\0')
+			{
+				unsigned char cc = (unsigned char) *check;
+				if (cc == ' ')
+				{
+					check++;
+					continue;
+				}
+				if (cc == 0xC2 && (unsigned char) check[1] == 0xA0)
+				{
+					check += 2;
+					continue;
+				}
+				break;
+			}
+			
+			if (*check == '\0')
+			{
+				*precision = 0;
+				*scale = 0;
+				return 0;
+			}
+			ereturn(escontext, (Datum) 0,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					errmsg("invalid characters found: cannot cast value \"%s\" to money",
+							str)));
 		}
-		
-		/* Reject alphabets and any other character */
 		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				errmsg("invalid characters found: cannot cast value \"%s\" to money",
@@ -680,7 +766,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
     {
         unsigned char c = (unsigned char) *ptr;
         
-        if (isspace(c) || c == ',' || c == '\\')
+        if (isspace(c) || c == ',')
         {
             ptr++;
             continue;

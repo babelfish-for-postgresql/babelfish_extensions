@@ -6,6 +6,20 @@ money
 0.0000
 ~~END~~
 
+SELECT isnumeric(CHAR(92));
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT isnumeric(char(44));
+GO
+~~START~~
+int
+1
+~~END~~
+
 SELECT CAST(NCHAR(8364) AS money);           -- Euro sign
 GO
 ~~START~~
@@ -97,7 +111,56 @@ money
 0.0000
 ~~END~~
 
+SELECT CAST('\' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
 --Invalid cases
+SELECT CAST('\\1234' AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "\\1234" to money)~~
+
+SELECT CAST(',/,1234' AS MONEY);
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value ",/,1234" to money)~~
+
+SELECT CAST('1234\0' AS MONEY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1234\0" is out of range for type fixeddecimal)~~
+
+SELECT CAST('1234\ ' AS MONEY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1234\ " is out of range for type fixeddecimal)~~
+
+SELECT CAST('1234/5,6 ' AS MONEY); 
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1234/5,6 " is out of range for type fixeddecimal)~~
+
+SELECT CAST('1234abc' AS MONEY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1234abc" is out of range for type fixeddecimal)~~
+
+SELECT CAST('1234\\' AS MONEY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1234\\" is out of range for type fixeddecimal)~~
+
 SELECT CAST(CHAR(72) AS MONEY);
 GO
 ~~ERROR (Code: 293)~~
