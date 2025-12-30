@@ -662,6 +662,10 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+ALTER FUNCTION sys.datetime2fromparts(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) RENAME TO datetime2fromparts_deprecated_in_5_5_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_deprecated_in_5_5_0');
+
 CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year TEXT,
                                                                 IN p_month TEXT,
                                                                 IN p_day TEXT,
