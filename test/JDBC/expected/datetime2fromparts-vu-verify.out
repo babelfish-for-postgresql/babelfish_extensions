@@ -96,7 +96,7 @@ GO
 SELECT * FROM datetime2fromparts_vu_prepare_v3
 GO
 ~~START~~
-datetime2
+datetime
 1980-11-25 22:09:58.067
 ~~END~~
 
