@@ -1819,27 +1819,24 @@ SELECT CONVERT(VARCHAR(1), CAST($23.12 AS MONEY), 0);
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: There is insufficient result space to convert a money value to varchar.)~~
+2
+~~END~~
 
 
 SELECT CONVERT(CHAR(1), CAST($23345657.12 AS MONEY), 0);
 GO
 ~~START~~
 char
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: There is insufficient result space to convert a money value to varchar.)~~
+2
+~~END~~
 
 
 SELECT CONVERT(CHAR(2), CAST($23345657.12 AS MONEY), 0);
 GO
 ~~START~~
 char
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: There is insufficient result space to convert a money value to varchar.)~~
+23
+~~END~~
 
 
 SELECT CONVERT(VARCHAR(MAX), CAST($23345657.12 AS MONEY), 0);
@@ -1855,7 +1852,7 @@ SELECT TRY_CONVERT(VARCHAR(1), CAST($23.12 AS MONEY), 0) AS insufficient_space_t
 GO
 ~~START~~
 varchar
-<NULL>
+2
 ~~END~~
 
 
@@ -1863,7 +1860,7 @@ SELECT TRY_CONVERT(CHAR(1), CAST($23345657.12 AS MONEY), 0) AS insufficient_spac
 GO
 ~~START~~
 char
-<NULL>
+2
 ~~END~~
 
 
@@ -1872,7 +1869,7 @@ SELECT TRY_CONVERT(VARCHAR(3), CAST($1.23 AS MONEY), 0) AS varchar3_result;
 GO
 ~~START~~
 varchar
-<NULL>
+1.2
 ~~END~~
 
 
@@ -1889,7 +1886,7 @@ SELECT TRY_CONVERT(VARCHAR(1), CAST(1.23 AS SMALLMONEY), 0) AS smallmoney_varcha
 GO
 ~~START~~
 varchar
-<NULL>
+1
 ~~END~~
 
 
@@ -1897,7 +1894,7 @@ SELECT TRY_CONVERT(CHAR(3), CAST(12.34 AS SMALLMONEY), 0) AS smallmoney_char3;
 GO
 ~~START~~
 char
-<NULL>
+12.
 ~~END~~
 
 
