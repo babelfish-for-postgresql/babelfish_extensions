@@ -1,0 +1,27 @@
+Test data created successfully
+=== Test Case 1: UPDATE with OUTPUT EPQ ===
+Description: Tests EPQ handling when UPDATE with OUTPUT clause is blocked by concurrent transaction
+UPDATE OUTPUT Results:
+old_param1: InitialValue, new_param1: ModifiedBySession1, old_lock: 100, new_lock: 7
+Test Case 1 completed: UPDATE with OUTPUT EPQ
+=== Test Case 2: DELETE with OUTPUT EPQ ===
+Description: Tests EPQ handling when DELETE with OUTPUT clause processes updated row values
+DELETE OUTPUT Results:
+Param1: UpdatedBeforeDelete, LockProcessID: 100
+Param1: UpdatedBeforeDelete, LockProcessID: 200
+Test Case 2 completed: DELETE with OUTPUT EPQ
+=== Test Case 3: INSERT with OUTPUT during concurrent operations ===
+Description: Tests INSERT with OUTPUT clause execution during concurrent lock contention
+INSERT OUTPUT Results:
+TestID: 4, Param1: ConcurrentInsert, LockProcessID: 400
+Test Case 3 completed: INSERT with OUTPUT during concurrent operations
+=== Test Case 4: Mixed DML with OUTPUT clauses ===
+Description: Tests sequence of INSERT, UPDATE, DELETE with OUTPUT clauses under EPQ conditions
+Mixed DML - INSERT OUTPUT Results:
+TestID: 5, Param1: NewRecord, LockProcessID: 500
+Mixed DML - UPDATE OUTPUT Results:
+deleted - TestID: 1, old_param: ModifiedBySession1, old_lock: 999
+inserted - TestID: 1, new_param: EPQ_Updated, new_lock: 1099
+Mixed DML - DELETE OUTPUT Results:
+Test Case 4 completed: Mixed DML - INSERT, UPDATE, DELETE in sequence
+Test passed
