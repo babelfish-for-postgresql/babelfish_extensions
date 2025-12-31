@@ -1619,52 +1619,24 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				relMetaDataInfo->partName[0] = RelationGetRelationName(rel);
 				physical_schema_name = get_namespace_name(RelationGetNamespace(rel));
 
-				// /*
-				//  * Here, we are assuming that we must have received a valid
-				//  * schema name from the engine. So first try to find the
-				//  * logical schema name corresponding to received physical
-				//  * schema name. If we could not find the logical schema name
-				//  * then we can say that received schema name is shared schema
-				//  * and we do not have to translate it to logical schema name.
-				//  */
-				// if (pltsql_plugin_handler_ptr &&
-				// 	pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name)
-				// 	relMetaDataInfo->partName[1] = (char *) pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name, true);
+				/*
+				 * Here, we are assuming that we must have received a valid
+				 * schema name from the engine. So first try to find the
+				 * logical schema name corresponding to received physical
+				 * schema name. If we could not find the logical schema name
+				 * then we can say that received schema name is shared schema
+				 * and we do not have to translate it to logical schema name.
+				 */
+				if (pltsql_plugin_handler_ptr &&
+					pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name)
+					relMetaDataInfo->partName[1] = (char *) pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name, true);
 
-				// /*
-				//  * If we could not find logical schema name then send physical
-				//  * schema name only assuming its shared schema.
-				//  */
-				// if (relMetaDataInfo->partName[1] == NULL)
-				// 	relMetaDataInfo->partName[1] = strdup(physical_schema_name);
-
-				if (physical_schema_name == NULL || 
-					rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
-				{
-					/* Use empty string for temp table schema */
-					relMetaDataInfo->partName[1] = pstrdup("");
-				}
-				else
-				{
-					/*
-					* Here, we are assuming that we must have received a valid
-					* schema name from the engine. So first try to find the
-					* logical schema name corresponding to received physical
-					* schema name. If we could not find the logical schema name
-					* then we can say that received schema name is shared schema
-					* and we do not have to translate it to logical schema name.
-					*/
-					if (pltsql_plugin_handler_ptr &&
-						pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name)
-						relMetaDataInfo->partName[1] = (char *) pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name, true);
-
-					/*
-					* If we could not find logical schema name then send physical
-					* schema name only assuming its shared schema.
-					*/
-					if (relMetaDataInfo->partName[1] == NULL)
-						relMetaDataInfo->partName[1] = strdup(physical_schema_name);
-				}
+				/*
+				 * If we could not find logical schema name then send physical
+				 * schema name only assuming its shared schema.
+				 */
+				if (relMetaDataInfo->partName[1] == NULL)
+					relMetaDataInfo->partName[1] = strdup(physical_schema_name);
 
 				if (physical_schema_name)
 					pfree(physical_schema_name);
@@ -2237,7 +2209,7 @@ TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 	}
 
 	SendColumnMetadataToken(typeinfo->natts, false);
-	SendTabNameToken();
+	// SendTabNameToken();
 	SendColInfoToken(typeinfo->natts, false);
 }
 
