@@ -422,7 +422,12 @@ public class TestQueryFile {
         BufferedWriter bw = new BufferedWriter(fw);
         curr_exec_time = 0L;
         checkParallelQueryExpected = false;
-        batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
+        if (inputFileName.equals("babel_output_clause_concurrency_test")) {
+            BabelOutputClauseConcurrencyTest.runTest(bw, logger);
+            sla = defaultSLA*1000000L * 3; /* Increase SLA for concurrency test */
+        } else {
+            batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
+        }
         bw.close();
         if(sla == 0){
             sla = defaultSLA*1000000L;

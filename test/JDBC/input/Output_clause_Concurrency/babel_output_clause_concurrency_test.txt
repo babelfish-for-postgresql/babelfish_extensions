@@ -1,0 +1,6 @@
+//Added this to test concurrency in output clause
+
+// Test Case 1: UPDATE with OUTPUT blocked by concurrent transaction, tests EPQ re-evaluation of modified row values
+// Test Case 2: DELETE with OUTPUT processes EPQ-updated row values from concurrent session modifications
+// Test Case 3: INSERT with OUTPUT executes during concurrent lock contention without blocking
+// Test Case 4: Mixed INSERT/UPDATE/DELETE with OUTPUT clauses under concurrent EPQ conditions in single transaction
