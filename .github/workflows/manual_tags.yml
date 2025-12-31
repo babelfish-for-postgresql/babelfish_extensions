@@ -29,15 +29,18 @@ jobs:
           fetch-depth: 0
       - name: Run create-tag script
         env:
+          TAG_ID: ${{ github.event.inputs.tagId }}
           message: ${{ github.event.inputs.message }}
         # Run when commit hash is not provided (then the tag will be created on the latest commit of the current branch)
-        if: ${{github.event.inputs.commit_hash == ''}} 
+        if: ${{ github.event.inputs.commit_hash == '' }}
         run: |
-            bash ./.github/scripts/create-tag.sh -t ${{github.event.inputs.tagId}}
+            bash ./.github/scripts/create-tag.sh -t "$TAG_ID"
       - name: Run create-tag script when commit hash is provided
         env:
+          TAG_ID: ${{ github.event.inputs.tagId }}
+          COMMIT_HASH: ${{ github.event.inputs.commit_hash }}
           message: ${{ github.event.inputs.message }}
         # Run when commit hash is provided, tag will be created on top of the commit hash
-        if: ${{github.event.inputs.commit_hash != ''}} 
+        if: ${{ github.event.inputs.commit_hash != '' }}
         run: |
-            bash ./.github/scripts/create-tag.sh -c ${{github.event.inputs.commit_hash}} -t ${{github.event.inputs.tagId}}
+            bash ./.github/scripts/create-tag.sh -c "$COMMIT_HASH" -t "$TAG_ID"
