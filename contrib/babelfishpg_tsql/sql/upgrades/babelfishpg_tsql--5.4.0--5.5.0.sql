@@ -1488,6 +1488,7 @@ DECLARE
 	v_integral_digits SMALLINT;
 	v_decimal_digits SMALLINT;
 	v_result TEXT;
+    v_varchar_length TEXT;
 BEGIN
     IF (scale(p_style) > 0) THEN
 		RAISE invalid_parameter_value;
@@ -1517,12 +1518,24 @@ BEGIN
         v_result := ltrim(v_result, '-');
     END IF;
 
+    IF (pg_catalog.lower(p_datatype) LIKE '%varchar%(%' OR pg_catalog.lower(p_datatype) LIKE '%char%(%') THEN
+		v_varchar_length := substring(p_datatype COLLATE "C" FROM '\(([0-9]+|MAX)\)');
+		IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
+			RAISE STRING_DATA_LENGTH_MISMATCH; 
+		END IF;
+	END IF;
+
 	RETURN v_result;
 EXCEPTION
 	WHEN invalid_parameter_value THEN
 		RAISE USING MESSAGE := pg_catalog.format('Argument data type numeric is invalid for argument 3 of convert function.'),
 					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
 					HINT := 'Change "style" parameter to the proper value and try again.';
+    
+    WHEN STRING_DATA_LENGTH_MISMATCH THEN
+        RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a money value to varchar.'),
+						DETAIL := 'The converted money value exceeds the specified varchar length.',
+						HINT := 'Use a larger varchar size or a different conversion style.';
 END;
 $BODY$
 LANGUAGE plpgsql
@@ -1546,6 +1559,7 @@ DECLARE
 	v_integral_digits SMALLINT;
 	v_decimal_digits SMALLINT;
 	v_result TEXT;
+    v_varchar_length TEXT;
 BEGIN
     IF (scale(p_style) > 0) THEN
 		RAISE invalid_parameter_value;
@@ -1575,12 +1589,24 @@ BEGIN
         v_result := ltrim(v_result, '-');
     END IF;
 
+    IF (pg_catalog.lower(p_datatype) LIKE '%varchar%(%' OR pg_catalog.lower(p_datatype) LIKE '%char%(%') THEN
+		v_varchar_length := substring(p_datatype COLLATE "C" FROM '\(([0-9]+|MAX)\)');
+		IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
+			RAISE STRING_DATA_LENGTH_MISMATCH; 
+		END IF;
+	END IF;
+
 	RETURN v_result;
 EXCEPTION
 	WHEN invalid_parameter_value THEN
 		RAISE USING MESSAGE := pg_catalog.format('Argument data type numeric is invalid for argument 3 of convert function.'),
 					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
 					HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN STRING_DATA_LENGTH_MISMATCH THEN
+        RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a money value to varchar.'),
+						DETAIL := 'The converted money value exceeds the specified varchar length.',
+						HINT := 'Use a larger varchar size or a different conversion style.';
 END;
 $BODY$
 LANGUAGE plpgsql
