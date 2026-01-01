@@ -178,7 +178,7 @@ SELECT TOP 5
 FROM babel_5688_all_types 
 WHERE col_nchar IS NOT NULL 
 GROUP BY category 
-ORDER BY MIN(col_nchar);
+ORDER BY min_nchar, max_nchar;
 GO
 
 SELECT TOP 3
@@ -236,7 +236,8 @@ FROM (
     FROM babel_5688_all_types
     GROUP BY category
 ) t1
-INNER JOIN babel_5688_table2 t2 ON t1.min_nchar = t2.col1_nchar;
+INNER JOIN babel_5688_table2 t2 ON t1.min_nchar = t2.col1_nchar
+ORDER BY t1.category;
 GO
 
 -- Left Join
