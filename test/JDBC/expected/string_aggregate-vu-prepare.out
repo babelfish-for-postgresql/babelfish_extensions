@@ -5,13 +5,13 @@ CREATE TABLE babel_5688_all_types (
     col_char CHAR(50),
     col_nvarchar NVARCHAR(100),
     col_varchar VARCHAR(100),
-    category VARCHAR(20),
-    amount INT
+    col_category VARCHAR(20),
+    col_amount INT
 );
 GO
 
 -- Test Case 1: Basic values and Case sensitivity
-INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, col_category, col_amount) VALUES 
 ('apple', 'Apple', 'Apple', 'Apple', 'Fruit', 100),
 ('Apple', 'Apple', 'Apple', 'Apple', 'Fruit', 200),
 (' Apple', ' Apple', ' Apple', ' Apple', 'SpaceTest', 30),
@@ -25,7 +25,7 @@ GO
 
 
 -- Test Case 2: NULL values
-INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, col_category, col_amount) VALUES 
 (NULL, NULL, NULL, NULL, 'NullTest', 0)
 GO
 ~~ROW COUNT: 1~~
@@ -33,7 +33,7 @@ GO
 
 
 -- Test Case 4: Special characters
-INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, col_category, col_amount) VALUES 
 ('!Special', '!Special', '!Special', '!Special', 'SpecialChar', 40),
 ('@Symbol', '@Symbol', '@Symbol', '@Symbol', 'SpecialChar', 50),
 ('#Hash', '#Hash', '#Hash', '#Hash', 'SpecialChar', 60),
@@ -43,14 +43,14 @@ GO
 
 
 -- Test Case 5: Numeric strings
-INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, col_category, col_amount) VALUES 
 ('1', '1', '1', '1', 'NumericStr', 1)
 GO
 ~~ROW COUNT: 1~~
 
 
 -- Test Case 7: Unicode characters (for NCHAR, NVARCHAR)
-INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, col_category, col_amount) VALUES 
 (N'日本語', 'Japanese', N'日本語', 'Japanese', 'Unicode', 100),
 (N'中文', '中文', N'中文', '中文', 'Unicode', 200)
 GO
@@ -58,7 +58,7 @@ GO
 
 
 -- Test Case 8: Long strings
-INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, col_category, col_amount) VALUES 
 ('AAAAAAAAAA', 'AAAAAAAAAA', 'AAAAAAAAAAAAAAAAAAAA', 'AAAAAAAAAAAAAAAAAAAA', 'LongStr', 1)
 GO
 ~~ROW COUNT: 1~~
@@ -141,14 +141,14 @@ END;
 GO
 
 -- Function with declare
-CREATE FUNCTION babel_5688_f6(@category VARCHAR(20))
+CREATE FUNCTION babel_5688_f6(@col_category VARCHAR(20))
 RETURNS NCHAR(50)
 AS
 BEGIN
     DECLARE @result NCHAR(50);
     SELECT @result = MIN(col_nchar) 
     FROM babel_5688_all_types 
-    WHERE category = @category;
+    WHERE col_category = @col_category;
     RETURN @result;
 END;
 GO
@@ -171,10 +171,10 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE babel_5688_p2 @category VARCHAR(20)
+CREATE PROCEDURE babel_5688_p2 @col_category VARCHAR(20)
 AS
 BEGIN
-    SELECT MAX(col_nchar) AS max_nchar FROM babel_5688_all_types WHERE category = @category;
+    SELECT MAX(col_nchar) AS max_nchar FROM babel_5688_all_types WHERE col_category = @col_category;
 END;
 GO
 
@@ -213,7 +213,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE babel_5688_p6 @category VARCHAR(20)
+CREATE PROCEDURE babel_5688_p6 @col_category VARCHAR(20)
 AS
 BEGIN
     DECLARE @min_nchar NCHAR(50);
@@ -235,7 +235,7 @@ BEGIN
         @min_varchar = MIN(col_varchar),
         @max_varchar = MAX(col_varchar)
     FROM babel_5688_all_types 
-    WHERE category = @category;
+    WHERE col_category = @col_category;
     
     SELECT 
         @min_nchar AS min_nchar, @max_nchar AS max_nchar,
