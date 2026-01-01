@@ -1,0 +1,247 @@
+-- Create single table with all character types
+CREATE TABLE babel_5688_all_types (
+    id INT IDENTITY(1,1),
+    col_nchar NCHAR(50),
+    col_char CHAR(50),
+    col_nvarchar NVARCHAR(100),
+    col_varchar VARCHAR(100),
+    category VARCHAR(20),
+    amount INT
+);
+GO
+
+-- Test Case 1: Basic values and Case sensitivity
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+('apple', 'Apple', 'Apple', 'Apple', 'Fruit', 100),
+('Apple', 'Apple', 'Apple', 'Apple', 'Fruit', 200),
+(' Apple', ' Apple', ' Apple', ' Apple', 'SpaceTest', 30),
+('APPLE', 'APPLE', 'APPLE', 'APPLE', 'CaseTest', 2),
+(' apple', ' Apple', ' Apple', ' Apple', 'SpaceTest', 30),
+('aPPLE', 'aPPLE', 'aPPLE', 'aPPLE', 'CaseTest', 4),
+('Orange', 'Orange', 'Orange', 'Orange', 'Fruit', 120),
+('Zebra', 'Zebra', 'Zebra', 'Zebra', 'Animal', 500);
+GO
+
+-- Test Case 2: NULL values
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+(NULL, NULL, NULL, NULL, 'NullTest', 0)
+GO
+
+
+-- Test Case 4: Special characters
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+('!Special', '!Special', '!Special', '!Special', 'SpecialChar', 40),
+('@Symbol', '@Symbol', '@Symbol', '@Symbol', 'SpecialChar', 50),
+('#Hash', '#Hash', '#Hash', '#Hash', 'SpecialChar', 60),
+('$Dollar', '$Dollar', '$Dollar', '$Dollar', 'SpecialChar', 70);
+GO
+
+-- Test Case 5: Numeric strings
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+('1', '1', '1', '1', 'NumericStr', 1)
+GO
+
+-- Test Case 7: Unicode characters (for NCHAR, NVARCHAR)
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+(N'日本語', 'Japanese', N'日本語', 'Japanese', 'Unicode', 100),
+(N'中文', '中文', N'中文', '中文', 'Unicode', 200)
+GO
+
+-- Test Case 8: Long strings
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+('AAAAAAAAAA', 'AAAAAAAAAA', 'AAAAAAAAAAAAAAAAAAAA', 'AAAAAAAAAAAAAAAAAAAA', 'LongStr', 1)
+GO
+
+
+-- COALESCE/ISNULL 
+CREATE TABLE babel_5688_table2 (col1_nchar NCHAR(50), col1_char CHAR(20));
+GO
+
+INSERT INTO babel_5688_table2 (col1_nchar, col1_char) VALUES 
+('Apple', NULL), 
+(NULL, 'Banana'), 
+('Cherry', 'Date'),
+(NULL, NULL);
+GO
+
+
+-- All null values
+CREATE TABLE babel_5688_table3 (col1_nchar NCHAR(50), col1_char CHAR(20));
+GO
+
+INSERT INTO babel_5688_table3 (col1_nchar, col1_char) VALUES 
+(NULL, NULL), 
+(NULL, NULL), 
+(NULL, NULL);
+GO
+
+
+-- Empty table
+CREATE TABLE babel_5688_table4 (col1_nchar NCHAR(50), col1_char CHAR(20));
+GO
+
+
+-- Functions 
+CREATE FUNCTION babel_5688_f1()
+RETURNS NCHAR(50)
+AS
+BEGIN
+    RETURN (SELECT MIN(col_nchar) FROM babel_5688_all_types);
+END;
+
+CREATE FUNCTION babel_5688_f2()
+RETURNS NCHAR(50)
+AS
+BEGIN
+    RETURN (SELECT MAX(col_nchar) FROM babel_5688_all_types);
+END;
+
+CREATE FUNCTION babel_5688_f3() 
+RETURNS CHAR(50) 
+AS 
+BEGIN 
+    RETURN (SELECT MIN(col_char) FROM babel_5688_all_types);
+END;
+GO
+
+CREATE FUNCTION babel_5688_f4()
+RETURNS CHAR(50)
+AS
+BEGIN
+    RETURN (SELECT MAX(col_char) FROM babel_5688_all_types);
+END;
+GO
+
+
+-- INLINE TABLE-VALUED FUNCTIONS
+CREATE FUNCTION babel_5688_f5()
+RETURNS TABLE
+AS
+RETURN (
+    SELECT 
+        category,
+        MIN(col_nchar) AS min_nchar,
+        MAX(col_nchar) AS max_nchar,
+        MIN(col_char) AS min_char,
+        MAX(col_char) AS max_char,
+        MIN(col_varchar) AS min_varchar,
+        MAX(col_varchar) AS max_varchar,
+        MIN(col_nvarchar) AS min_nvarchar,
+        MAX(col_nvarchar) AS max_nvarchar,
+    FROM babel_5688_all_types
+    GROUP BY category
+);
+GO
+
+-- FUNCTIONS WITH COALESCE
+CREATE FUNCTION babel_5688_f6(@default NCHAR(50))
+RETURNS NCHAR(50)
+AS
+BEGIN
+    RETURN (SELECT COALESCE(MIN(col1_nchar), @default) FROM babel_5688_all_types);
+END;
+GO
+
+-- Function with declare
+CREATE FUNCTION babel_5688_f7(@category VARCHAR(20))
+RETURNS NCHAR(50)
+AS
+BEGIN
+    DECLARE @result NCHAR(50);
+    SELECT @result = MIN(col_nchar) 
+    FROM babel_5688_all_types 
+    WHERE category = @category;
+    RETURN @result;
+END;
+GO
+
+CREATE FUNCTION babel_5688_8()
+RETURNS NCHAR(50)
+AS
+BEGIN
+    DECLARE @nchar_var nchar(50) = N'abc';
+    RETURN (SELECT MIN(@nchar_var));
+END;
+GO
+
+-- Procedure
+CREATE PROCEDURE babel_5688_p1
+AS
+BEGIN
+    SELECT MIN(col_nchar), MAX(col_nchar), MIN(col_char), MAX(col_char), MIN(col_varchar), MAX(col_varchar), MIN(col_nvarchar), MAX(col_nvarchar)
+    FROM babel_5688_all_types;
+END;
+
+CREATE PROCEDURE babel_5688_p2 @category VARCHAR(20)
+AS
+BEGIN
+    SELECT MAX(col_nchar) AS max_nchar FROM babel_5688_all_types WHERE category = @category;
+END;
+GO
+
+CREATE PROCEDURE babel_5688_p3 @var NCHAR(50)
+AS
+BEGIN
+    SELECT MAX(@var), MIN(@var) AS max_var FROM babel_5688_all_types;
+END;
+GO
+
+CREATE PROCEDURE babel_5688_p4 @default NCHAR(50)
+AS
+BEGIN
+    SELECT COALESCE(MIN(col_nchar), @default) AS min_nchar_coalesce FROM babel_5688_all_types;
+END;
+GO
+
+-- Multiple DECLARE
+CREATE PROCEDURE babel_5688_p5
+AS
+BEGIN
+    DECLARE @nchar_var NCHAR(50) = N'nchar_value';
+    DECLARE @char_var CHAR(50) = 'char_value';
+    DECLARE @nvarchar_var NVARCHAR(100) = N'nvarchar_value';
+    DECLARE @varchar_var VARCHAR(100) = 'varchar_value';
+    
+    SELECT 
+        MIN(@nchar_var) AS min_nchar,
+        MAX(@nchar_var) AS max_nchar,
+        MIN(@char_var) AS min_char,
+        MAX(@char_var) AS max_char,
+        MIN(@nvarchar_var) AS min_nvarchar,
+        MAX(@nvarchar_var) AS max_nvarchar,
+        MIN(@varchar_var) AS min_varchar,
+        MAX(@varchar_var) AS max_varchar;
+END;
+GO
+
+CREATE PROCEDURE babel_5688_p6 @category VARCHAR(20)
+AS
+BEGIN
+    DECLARE @min_nchar NCHAR(50);
+    DECLARE @max_nchar NCHAR(50);
+    DECLARE @min_char CHAR(50);
+    DECLARE @max_char CHAR(50);
+    DECLARE @min_nvarchar NVARCHAR(100);
+    DECLARE @max_nvarchar NVARCHAR(100);
+    DECLARE @min_varchar VARCHAR(100);
+    DECLARE @max_varchar VARCHAR(100);
+    
+    SELECT 
+        @min_nchar = MIN(col_nchar),
+        @max_nchar = MAX(col_nchar),
+        @min_char = MIN(col_char),
+        @max_char = MAX(col_char),
+        @min_nvarchar = MIN(col_nvarchar),
+        @max_nvarchar = MAX(col_nvarchar),
+        @min_varchar = MIN(col_varchar),
+        @max_varchar = MAX(col_varchar)
+    FROM babel_5688_all_types 
+    WHERE category = @category;
+    
+    SELECT 
+        @min_nchar AS min_nchar, @max_nchar AS max_nchar,
+        @min_char AS min_char, @max_char AS max_char,
+        @min_nvarchar AS min_nvarchar, @max_nvarchar AS max_nvarchar,
+        @min_varchar AS min_varchar, @max_varchar AS max_varchar;
+END;
+GO
