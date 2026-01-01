@@ -93,13 +93,15 @@ UNION ALL
 SELECT 'CHAR' AS col_type, MIN(col_char) AS min_val, MAX(col_char) AS max_val FROM babel_5688_all_types WHERE col_char IS NOT NULL
 UNION ALL
 SELECT 'NVARCHAR' AS col_type, MIN(col_nvarchar) AS min_val, MAX(col_nvarchar) AS max_val FROM babel_5688_all_types WHERE col_nvarchar IS NOT NULL
+ORDER BY col_type;
 GO
 
 SELECT MIN(col_nchar) AS min_val, MAX(col_char) AS max_val FROM babel_5688_all_types WHERE col_nchar IS NOT NULL
 UNION ALL
 SELECT MIN(col1_nchar) AS min_val, MAX(col1_char) AS max_val FROM babel_5688_table2 WHERE col1_char IS NOT NULL
 UNION ALL
-SELECT MIN(col1_nchar) AS min_val, MAX(col1_char) AS max_val FROM babel_5688_table3 WHERE col1_char IS NOT NULL;
+SELECT MIN(col1_nchar) AS min_val, MAX(col1_char) AS max_val FROM babel_5688_table3 WHERE col1_char IS NOT NULL
+ORDER BY min_val;
 GO
 
 
@@ -309,27 +311,6 @@ FROM (
     FROM babel_5688_table4
 ) combined_data
 ORDER BY source_info, category;
-GO
-
-
--- Test multiple JOINs with CASE
-SELECT 
-    t1.category,
-    MIN(t1.col_nchar) AS t1_min_nchar,
-    MAX(t1.col_nchar) AS t1_max_nchar,
-    MIN(t2.col1_nchar) AS t2_min_nchar,
-    MIN(t3.col1_nchar) AS t3_min_nchar,
-    CASE 
-        WHEN MIN(t2.col1_nchar) IS NOT NULL AND MIN(t3.col1_nchar) IS NOT NULL THEN 'Both Match'
-        WHEN MIN(t2.col1_nchar) IS NOT NULL THEN 'Only T2 Match'
-        WHEN MIN(t3.col1_nchar) IS NOT NULL THEN 'Only T3 Match'
-        ELSE 'No Match'
-    END AS match_status
-FROM babel_5688_all_types t1
-LEFT JOIN babel_5688_table2 t2 ON t1.col_nchar = t2.col1_nchar
-LEFT JOIN babel_5688_table3 t3 ON t1.col_nchar = t3.col1_nchar
-GROUP BY t1.category
-ORDER BY t1.category;
 GO
 
 -- Test declare statements

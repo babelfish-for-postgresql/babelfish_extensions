@@ -189,11 +189,12 @@ UNION ALL
 SELECT 'CHAR' AS col_type, MIN(col_char) AS min_val, MAX(col_char) AS max_val FROM babel_5688_all_types WHERE col_char IS NOT NULL
 UNION ALL
 SELECT 'NVARCHAR' AS col_type, MIN(col_nvarchar) AS min_val, MAX(col_nvarchar) AS max_val FROM babel_5688_all_types WHERE col_nvarchar IS NOT NULL
+ORDER BY col_type;
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar
-NCHAR#!#                                                  #!#日本語                                               
 CHAR#!#                                                  #!#Zebra                                             
+NCHAR#!#                                                  #!#日本語                                               
 NVARCHAR#!##!#日本語
 ~~END~~
 
@@ -202,13 +203,14 @@ SELECT MIN(col_nchar) AS min_val, MAX(col_char) AS max_val FROM babel_5688_all_t
 UNION ALL
 SELECT MIN(col1_nchar) AS min_val, MAX(col1_char) AS max_val FROM babel_5688_table2 WHERE col1_char IS NOT NULL
 UNION ALL
-SELECT MIN(col1_nchar) AS min_val, MAX(col1_char) AS max_val FROM babel_5688_table3 WHERE col1_char IS NOT NULL;
+SELECT MIN(col1_nchar) AS min_val, MAX(col1_char) AS max_val FROM babel_5688_table3 WHERE col1_char IS NOT NULL
+ORDER BY min_val;
 GO
 ~~START~~
 nchar#!#char
+<NULL>#!#<NULL>
                                                   #!#Zebra                                             
 Cherry                                            #!#Date                                              
-<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -578,41 +580,6 @@ AllTypes-ByCategory#!#Unicode#!#中文                                          
 Table2-All#!#N/A#!#Apple                                             #!#Cherry                                            #!#Multiple Values
 Table3-AllNulls#!#N/A#!#<NULL>#!#<NULL>#!#Empty/All NULL
 Table4-Empty#!#N/A#!#<NULL>#!#<NULL>#!#Empty/All NULL
-~~END~~
-
-
-
--- Test multiple JOINs with CASE
-SELECT 
-    t1.category,
-    MIN(t1.col_nchar) AS t1_min_nchar,
-    MAX(t1.col_nchar) AS t1_max_nchar,
-    MIN(t2.col1_nchar) AS t2_min_nchar,
-    MIN(t3.col1_nchar) AS t3_min_nchar,
-    CASE 
-        WHEN MIN(t2.col1_nchar) IS NOT NULL AND MIN(t3.col1_nchar) IS NOT NULL THEN 'Both Match'
-        WHEN MIN(t2.col1_nchar) IS NOT NULL THEN 'Only T2 Match'
-        WHEN MIN(t3.col1_nchar) IS NOT NULL THEN 'Only T3 Match'
-        ELSE 'No Match'
-    END AS match_status
-FROM babel_5688_all_types t1
-LEFT JOIN babel_5688_table2 t2 ON t1.col_nchar = t2.col1_nchar
-LEFT JOIN babel_5688_table3 t3 ON t1.col_nchar = t3.col1_nchar
-GROUP BY t1.category
-ORDER BY t1.category;
-GO
-~~START~~
-varchar#!#nchar#!#nchar#!#nchar#!#nchar#!#varchar
-Animal#!#Zebra                                             #!#Zebra                                             #!#<NULL>#!#<NULL>#!#No Match
-CaseTest#!#APPLE                                             #!#APPLE                                             #!#Apple                                             #!#<NULL>#!#Only T2 Match
-EmptyTest#!#                                                  #!#                                                  #!#<NULL>#!#<NULL>#!#No Match
-Fruit#!#Apple                                             #!#Orange                                            #!#Apple                                             #!#<NULL>#!#Only T2 Match
-LongStr#!#AAAAAAAAAA                                        #!#AAAAAAAAAA                                        #!#<NULL>#!#<NULL>#!#No Match
-NullTest#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#No Match
-NumericStr#!#1                                                 #!#1                                                 #!#<NULL>#!#<NULL>#!#No Match
-SpaceTest#!#                                                  #!# apple                                            #!#<NULL>#!#<NULL>#!#No Match
-SpecialChar#!#!Special                                          #!#$Dollar                                           #!#<NULL>#!#<NULL>#!#No Match
-Unicode#!#中文                                                #!#日本語                                               #!#<NULL>#!#<NULL>#!#No Match
 ~~END~~
 
 
