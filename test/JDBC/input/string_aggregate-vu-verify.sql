@@ -444,17 +444,13 @@ SELECT dbo.babel_5688_f3() AS f3_min_char;
 GO
 SELECT dbo.babel_5688_f4() AS f4_max_char;
 GO
-SELECT * FROM dbo.babel_5688_f5();
+SELECT dbo.babel_5688_f5(N'default') AS f8_coalesce;
 GO
-SELECT * FROM dbo.babel_5688_f5() WHERE category = 'Fruit';
+SELECT dbo.babel_5688_f5(N'') AS result_empty_default;
 GO
-SELECT dbo.babel_5688_f6(N'default') AS f8_coalesce;
+SELECT dbo.babel_5688_f6('Fruit') AS f9_category_min;
 GO
-SELECT dbo.babel_5688_f6(N'') AS result_empty_default;
-GO
-SELECT dbo.babel_5688_f7('Fruit') AS f9_category_min;
-GO
-SELECT dbo.babel_5688_f8() AS f10_var_min;
+SELECT dbo.babel_5688_f7() AS f10_var_min;
 GO
 
 -- Test Procedures

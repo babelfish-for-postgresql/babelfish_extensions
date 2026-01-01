@@ -21,11 +21,15 @@ INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar
 ('Orange', 'Orange', 'Orange', 'Orange', 'Fruit', 120),
 ('Zebra', 'Zebra', 'Zebra', 'Zebra', 'Animal', 500);
 GO
+~~ROW COUNT: 8~~
+
 
 -- Test Case 2: NULL values
 INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
 (NULL, NULL, NULL, NULL, 'NullTest', 0)
 GO
+~~ROW COUNT: 1~~
+
 
 
 -- Test Case 4: Special characters
@@ -35,22 +39,30 @@ INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar
 ('#Hash', '#Hash', '#Hash', '#Hash', 'SpecialChar', 60),
 ('$Dollar', '$Dollar', '$Dollar', '$Dollar', 'SpecialChar', 70);
 GO
+~~ROW COUNT: 4~~
+
 
 -- Test Case 5: Numeric strings
 INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
 ('1', '1', '1', '1', 'NumericStr', 1)
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 7: Unicode characters (for NCHAR, NVARCHAR)
 INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
 (N'日本語', 'Japanese', N'日本語', 'Japanese', 'Unicode', 100),
 (N'中文', '中文', N'中文', '中文', 'Unicode', 200)
 GO
+~~ROW COUNT: 2~~
+
 
 -- Test Case 8: Long strings
 INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
 ('AAAAAAAAAA', 'AAAAAAAAAA', 'AAAAAAAAAAAAAAAAAAAA', 'AAAAAAAAAAAAAAAAAAAA', 'LongStr', 1)
 GO
+~~ROW COUNT: 1~~
+
 
 
 -- COALESCE/ISNULL 
@@ -63,6 +75,8 @@ INSERT INTO babel_5688_table2 (col1_nchar, col1_char) VALUES
 ('Cherry', 'Date'),
 (NULL, NULL);
 GO
+~~ROW COUNT: 4~~
+
 
 
 -- All null values
@@ -74,6 +88,8 @@ INSERT INTO babel_5688_table3 (col1_nchar, col1_char) VALUES
 (NULL, NULL), 
 (NULL, NULL);
 GO
+~~ROW COUNT: 3~~
+
 
 
 -- Empty table
