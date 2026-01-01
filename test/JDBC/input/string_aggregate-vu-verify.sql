@@ -10,7 +10,7 @@ GO
 
 
 -- Test: Empty strings and spaces
-INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, category, amount) VALUES 
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, col_category, col_amount) VALUES 
 ('', '', '', '', 'EmptyTest', 0),
 ('   ', '   ', '   ', '   ', 'SpaceTest', 0)
 GO
@@ -23,12 +23,12 @@ GO
 
 -- Test with GROUP BY and ORDER BY
 SELECT 
-    category,
+    col_category,
     MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
     MIN(col_char) AS min_char, MAX(col_char) AS max_char
 FROM babel_5688_all_types
-GROUP BY category
-ORDER BY category;
+GROUP BY col_category
+ORDER BY col_category;
 GO
 
 select min(col_char) FROM babel_5688_all_types GROUP BY col_nchar ORDER BY col_nchar
@@ -37,14 +37,14 @@ go
 
 -- Test with having clause 
 SELECT 
-    category,
+    col_category,
     MIN(col_nchar) AS min_nchar,
     MAX(col_nchar) AS max_nchar,
     COUNT(*) AS cnt
 FROM babel_5688_all_types
-GROUP BY category
+GROUP BY col_category
 HAVING MIN(col_nchar) IS NOT NULL AND MAX(col_nchar) IS NOT NULL
-ORDER BY category;
+ORDER BY col_category;
 GO
 
 
@@ -55,7 +55,7 @@ SELECT
     MIN(col_nvarchar) AS min_nvarchar, MAX(col_nvarchar) AS max_nvarchar,
     MIN(col_varchar) AS min_varchar
 FROM babel_5688_all_types
-WHERE category = 'Fruit';
+WHERE col_category = 'Fruit';
 GO
 
 SELECT 
@@ -108,41 +108,41 @@ GO
 -- Test CTEs
 WITH MinMaxCTE AS (
     SELECT 
-        category,
+        col_category,
         MIN(col_nchar) AS min_nchar,
         MAX(col_nchar) AS max_nchar,
         MIN(col_char) AS min_char,
         MAX(col_char) AS max_char
     FROM babel_5688_all_types
-    GROUP BY category
+    GROUP BY col_category
 )
-SELECT * FROM MinMaxCTE WHERE min_nchar IS NOT NULL ORDER BY category;
+SELECT * FROM MinMaxCTE WHERE min_nchar IS NOT NULL ORDER BY col_category;
 GO
 
 WITH CategoryStats AS (
     SELECT 
-        category,
+        col_category,
         MIN(col_nchar) AS min_val,
         MAX(col_nchar) AS max_val,
         COUNT(*) AS cnt
     FROM babel_5688_all_types
     WHERE col_nchar IS NOT NULL
-    GROUP BY category
+    GROUP BY col_category
 )
 SELECT 
-    cs.category, 
+    cs.col_category, 
     cs.min_val, 
     cs.max_val, 
     cs.cnt,
     t.col_nchar AS sample_value
 FROM CategoryStats cs
-JOIN babel_5688_all_types t ON t.category = cs.category AND t.col_nchar = cs.min_val
-ORDER BY cs.category, sample_value;
+JOIN babel_5688_all_types t ON t.col_category = cs.col_category AND t.col_nchar = cs.min_val
+ORDER BY cs.col_category, sample_value;
 GO
 
 -- Test CASE EXPRESSION
 SELECT 
-    category,
+    col_category,
     CASE 
         WHEN MIN(col_nchar) = MAX(col_nchar) THEN 'Same'
         WHEN MIN(col_nchar) IS NULL OR MAX(col_nchar) IS NULL THEN 'Has Nulls'
@@ -154,8 +154,8 @@ SELECT
         ELSE 'Different'
     END AS varchar_status
 FROM babel_5688_all_types
-GROUP BY category
-ORDER BY category;
+GROUP BY col_category
+ORDER BY col_category;
 GO
 
 -- Test expressions inside min/max
@@ -174,22 +174,22 @@ GO
 
 -- Test TOP WITH MIN/MAX
 SELECT TOP 5 
-    category,
+    col_category,
     MIN(col_nchar) AS min_nchar,
     MAX(col_nchar) AS max_nchar 
 FROM babel_5688_all_types 
 WHERE col_nchar IS NOT NULL 
-GROUP BY category 
+GROUP BY col_category 
 ORDER BY min_nchar, max_nchar;
 GO
 
 SELECT TOP 3
-    category,
+    col_category,
     MIN(col_char) AS min_char,
     MAX(col_char) AS max_char
 FROM babel_5688_all_types
 WHERE col_char IS NOT NULL
-GROUP BY category
+GROUP BY col_category
 ORDER BY MAX(col_char) DESC;
 GO
 
@@ -228,41 +228,41 @@ GO
 -- Test JOINs
 -- Inner Join
 SELECT 
-    t1.category,
+    t1.col_category,
     t1.min_nchar AS all_types_min,
     t1.max_nchar AS all_types_max,
     t2.col1_nchar AS table2_nchar,
     t2.col1_char AS table2_char
 FROM (
-    SELECT category, MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar
+    SELECT col_category, MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar
     FROM babel_5688_all_types
-    GROUP BY category
+    GROUP BY col_category
 ) t1
 INNER JOIN babel_5688_table2 t2 ON t1.min_nchar = t2.col1_nchar
-ORDER BY t1.category;
+ORDER BY t1.col_category;
 GO
 
 -- Left Join
 SELECT 
-    t1.category,
+    t1.col_category,
     t1.min_nchar AS all_types_min,
     t1.max_nchar AS all_types_max,
     t2.col1_nchar AS table2_nchar,
     t2.col1_char AS table2_char,
     CASE WHEN t2.col1_nchar IS NULL THEN 'No Match' ELSE 'Matched' END AS match_status
 FROM (
-    SELECT category, MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar
+    SELECT col_category, MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar
     FROM babel_5688_all_types
-    GROUP BY category
+    GROUP BY col_category
 ) t1
 LEFT JOIN babel_5688_table2 t2 ON t1.min_nchar = t2.col1_nchar
-ORDER BY t1.category;
+ORDER BY t1.col_category;
 GO
 
 -- Complex query combining all elements
 SELECT 
     source_info,
-    category,
+    col_category,
     min_val,
     max_val,
     CASE 
@@ -271,21 +271,21 @@ SELECT
         ELSE 'Multiple Values'
     END AS data_status
 FROM (
-    -- From babel_5688_all_types grouped by category
+    -- From babel_5688_all_types grouped by col_category
     SELECT 
         'AllTypes-ByCategory' AS source_info,
-        category,
+        col_category,
         MIN(col_nchar) AS min_val,
         MAX(col_nchar) AS max_val
     FROM babel_5688_all_types
-    GROUP BY category
+    GROUP BY col_category
     
     UNION ALL
     
     -- From babel_5688_table2
     SELECT 
         'Table2-All' AS source_info,
-        'N/A' AS category,
+        'N/A' AS col_category,
         MIN(col1_nchar) AS min_val,
         MAX(col1_nchar) AS max_val
     FROM babel_5688_table2
@@ -295,7 +295,7 @@ FROM (
     -- From babel_5688_table3 (all nulls)
     SELECT 
         'Table3-AllNulls' AS source_info,
-        'N/A' AS category,
+        'N/A' AS col_category,
         MIN(col1_nchar) AS min_val,
         MAX(col1_nchar) AS max_val
     FROM babel_5688_table3
@@ -305,12 +305,12 @@ FROM (
     -- From babel_5688_table4 (empty)
     SELECT 
         'Table4-Empty' AS source_info,
-        'N/A' AS category,
+        'N/A' AS col_category,
         MIN(col1_nchar) AS min_val,
         MAX(col1_nchar) AS max_val
     FROM babel_5688_table4
 ) combined_data
-ORDER BY source_info, category;
+ORDER BY source_info, col_category;
 GO
 
 -- Test declare statements
