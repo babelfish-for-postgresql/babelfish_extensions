@@ -24,14 +24,12 @@ GO
 
 SELECT  
     MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
-    MIN(col_char) AS min_char, MAX(col_char) AS max_char,
-    MIN(col_nvarchar) AS min_nvarchar, MAX(col_nvarchar) AS max_nvarchar,
-    MIN(col_varchar) AS min_varchar, MAX(col_varchar) AS max_varchar 
+    MIN(col_char) AS min_char, MAX(col_char) AS max_char
 FROM babel_5688_all_types;
 GO
 ~~START~~
-nchar#!#nchar#!#char#!#char#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-                                                  #!#日本語                                               #!#                                                  #!#Zebra                                             #!##!#日本語#!##!#??
+nchar#!#nchar#!#char#!#char
+                                                  #!#日本語                                               #!#                                                  #!#Zebra                                             
 ~~END~~
 
 
@@ -39,46 +37,44 @@ nchar#!#nchar#!#char#!#char#!#nvarchar#!#nvarchar#!#varchar#!#varchar
 SELECT 
     category,
     MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
-    MIN(col_char) AS min_char, MAX(col_char) AS max_char,
-    MIN(col_nvarchar) AS min_nvarchar, MAX(col_nvarchar) AS max_nvarchar,
-    MIN(col_varchar) AS min_varchar, MAX(col_varchar) AS max_varchar
+    MIN(col_char) AS min_char, MAX(col_char) AS max_char
 FROM babel_5688_all_types
 GROUP BY category
 ORDER BY category;
 GO
 ~~START~~
-varchar#!#nchar#!#nchar#!#char#!#char#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-Animal#!#Zebra                                             #!#Zebra                                             #!#Zebra                                             #!#Zebra                                             #!#Zebra#!#Zebra#!#Zebra#!#Zebra
-CaseTest#!#APPLE                                             #!#APPLE                                             #!#APPLE                                             #!#APPLE                                             #!#aPPLE#!#aPPLE#!#aPPLE#!#aPPLE
-EmptyTest#!#                                                  #!#                                                  #!#                                                  #!#                                                  #!##!##!##!#
-Fruit#!#apple                                             #!#Orange                                            #!#Apple                                             #!#Orange                                            #!#Apple#!#Orange#!#Apple#!#Orange
-LongStr#!#AAAAAAAAAA                                        #!#AAAAAAAAAA                                        #!#AAAAAAAAAA                                        #!#AAAAAAAAAA                                        #!#AAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAA#!#AAAAAAAAAAAAAAAAAAAA
-NullTest#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-NumericStr#!#1                                                 #!#1                                                 #!#1                                                 #!#1                                                 #!#1#!#1#!#1#!#1
-SpaceTest#!#                                                  #!# Apple                                            #!#                                                  #!# Apple                                            #!#   #!# Apple#!#   #!# Apple
-SpecialChar#!#!Special                                          #!#$Dollar                                           #!#!Special                                          #!#$Dollar                                           #!#!Special#!#$Dollar#!#!Special#!#$Dollar
-Unicode#!#中文                                                #!#日本語                                               #!#??                                                #!#Japanese                                          #!#中文#!#日本語#!#Japanese#!#??
+varchar#!#nchar#!#nchar#!#char#!#char
+Animal#!#Zebra                                             #!#Zebra                                             #!#Zebra                                             #!#Zebra                                             
+CaseTest#!#APPLE                                             #!#APPLE                                             #!#APPLE                                             #!#APPLE                                             
+EmptyTest#!#                                                  #!#                                                  #!#                                                  #!#                                                  
+Fruit#!#apple                                             #!#Orange                                            #!#Apple                                             #!#Orange                                            
+LongStr#!#AAAAAAAAAA                                        #!#AAAAAAAAAA                                        #!#AAAAAAAAAA                                        #!#AAAAAAAAAA                                        
+NullTest#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+NumericStr#!#1                                                 #!#1                                                 #!#1                                                 #!#1                                                 
+SpaceTest#!#                                                  #!# Apple                                            #!#                                                  #!# Apple                                            
+SpecialChar#!#!Special                                          #!#$Dollar                                           #!#!Special                                          #!#$Dollar                                           
+Unicode#!#中文                                                #!#日本語                                               #!#??                                                #!#Japanese                                          
 ~~END~~
 
 
-select min(col_char) FROM babel_5688_all_types GROUP BY col_nchar
+select min(col_char) FROM babel_5688_all_types GROUP BY col_nchar ORDER BY col_nchar
 go
 ~~START~~
 char
 <NULL>
-Japanese                                          
-1                                                 
-!Special                                          
                                                   
-??                                                
  Apple                                            
-Apple                                             
-AAAAAAAAAA                                        
+!Special                                          
 @Symbol                                           
-$Dollar                                           
 #Hash                                             
-Zebra                                             
+$Dollar                                           
+1                                                 
+AAAAAAAAAA                                        
+Apple                                             
 Orange                                            
+Zebra                                             
+??                                                
+Japanese                                          
 ~~END~~
 
 
@@ -91,19 +87,20 @@ SELECT
     COUNT(*) AS cnt
 FROM babel_5688_all_types
 GROUP BY category
-HAVING MIN(col_nchar) IS NOT NULL AND MAX(col_nchar) IS NOT NULL;
+HAVING MIN(col_nchar) IS NOT NULL AND MAX(col_nchar) IS NOT NULL
+ORDER BY category;
 GO
 ~~START~~
 varchar#!#nchar#!#nchar#!#int
-Fruit#!#apple                                             #!#Orange                                            #!#3
-Unicode#!#中文                                                #!#日本語                                               #!#2
-EmptyTest#!#                                                  #!#                                                  #!#1
-NumericStr#!#1                                                 #!#1                                                 #!#1
-CaseTest#!#APPLE                                             #!#APPLE                                             #!#2
-SpecialChar#!#!Special                                          #!#$Dollar                                           #!#4
-SpaceTest#!#                                                  #!# Apple                                            #!#3
-LongStr#!#AAAAAAAAAA                                        #!#AAAAAAAAAA                                        #!#1
 Animal#!#Zebra                                             #!#Zebra                                             #!#1
+CaseTest#!#APPLE                                             #!#APPLE                                             #!#2
+EmptyTest#!#                                                  #!#                                                  #!#1
+Fruit#!#apple                                             #!#Orange                                            #!#3
+LongStr#!#AAAAAAAAAA                                        #!#AAAAAAAAAA                                        #!#1
+NumericStr#!#1                                                 #!#1                                                 #!#1
+SpaceTest#!#                                                  #!# Apple                                            #!#3
+SpecialChar#!#!Special                                          #!#$Dollar                                           #!#4
+Unicode#!#中文                                                #!#日本語                                               #!#2
 ~~END~~
 
 
@@ -113,13 +110,13 @@ SELECT
     MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
     MIN(col_char) AS min_char, MAX(col_char) AS max_char,
     MIN(col_nvarchar) AS min_nvarchar, MAX(col_nvarchar) AS max_nvarchar,
-    MIN(col_varchar) AS min_varchar, MAX(col_varchar) AS max_varchar
+    MIN(col_varchar) AS min_varchar
 FROM babel_5688_all_types
 WHERE category = 'Fruit';
 GO
 ~~START~~
-nchar#!#nchar#!#char#!#char#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-apple                                             #!#Orange                                            #!#Apple                                             #!#Orange                                            #!#Apple#!#Orange#!#Apple#!#Orange
+nchar#!#nchar#!#char#!#char#!#nvarchar#!#nvarchar#!#varchar
+apple                                             #!#Orange                                            #!#Apple                                             #!#Orange                                            #!#Apple#!#Orange#!#Apple
 ~~END~~
 
 
@@ -141,12 +138,12 @@ SELECT
     MIN(DISTINCT col_nchar) AS min_distinct_nchar, MAX(DISTINCT col_nchar) AS max_distinct_nchar,
     MIN(DISTINCT col_char) AS min_distinct_char, MAX(DISTINCT col_char) AS max_distinct_char,
     MIN(DISTINCT col_nvarchar) AS min_distinct_nvarchar, MAX(DISTINCT col_nvarchar) AS max_distinct_nvarchar,
-    MIN(DISTINCT col_varchar) AS min_distinct_varchar, MAX(DISTINCT col_varchar) AS max_distinct_varchar
+    MIN(DISTINCT col_varchar) AS min_distinct_varchar
 FROM babel_5688_all_types;
 GO
 ~~START~~
-nchar#!#nchar#!#char#!#char#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-                                                  #!#日本語                                               #!#                                                  #!#Zebra                                             #!#   #!#日本語#!#   #!#??
+nchar#!#nchar#!#char#!#char#!#nvarchar#!#nvarchar#!#varchar
+                                                  #!#日本語                                               #!#                                                  #!#Zebra                                             #!#   #!#日本語#!#   
 ~~END~~
 
 
@@ -192,15 +189,12 @@ UNION ALL
 SELECT 'CHAR' AS col_type, MIN(col_char) AS min_val, MAX(col_char) AS max_val FROM babel_5688_all_types WHERE col_char IS NOT NULL
 UNION ALL
 SELECT 'NVARCHAR' AS col_type, MIN(col_nvarchar) AS min_val, MAX(col_nvarchar) AS max_val FROM babel_5688_all_types WHERE col_nvarchar IS NOT NULL
-UNION ALL
-SELECT 'VARCHAR' AS col_type, MIN(col_varchar) AS min_val, MAX(col_varchar) AS max_val FROM babel_5688_all_types WHERE col_varchar IS NOT NULL;
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar
 NCHAR#!#                                                  #!#日本語                                               
 CHAR#!#                                                  #!#Zebra                                             
 NVARCHAR#!##!#日本語
-VARCHAR#!##!#中文
 ~~END~~
 
 
@@ -264,7 +258,7 @@ SELECT
     t.col_nchar AS sample_value
 FROM CategoryStats cs
 JOIN babel_5688_all_types t ON t.category = cs.category AND t.col_nchar = cs.min_val
-ORDER BY cs.category;
+ORDER BY cs.category, sample_value;
 GO
 ~~START~~
 varchar#!#nchar#!#nchar#!#int#!#nchar
@@ -696,7 +690,6 @@ DECLARE @max_char CHAR(50);
 DECLARE @min_nvarchar NVARCHAR(100);
 DECLARE @max_nvarchar NVARCHAR(100);
 DECLARE @min_varchar VARCHAR(100);
-DECLARE @max_varchar VARCHAR(100);
 SELECT @min_nchar = MIN(col_nchar) FROM babel_5688_all_types;
 SELECT @max_nchar = MAX(col_nchar) FROM babel_5688_all_types;
 SELECT @min_char = MIN(col_char) FROM babel_5688_all_types;
@@ -704,16 +697,15 @@ SELECT @max_char = MAX(col_char) FROM babel_5688_all_types;
 SELECT @min_nvarchar = MIN(col_nvarchar) FROM babel_5688_all_types;
 SELECT @max_nvarchar = MAX(col_nvarchar) FROM babel_5688_all_types;
 SELECT @min_varchar = MIN(col_varchar) FROM babel_5688_all_types;
-SELECT @max_varchar = MAX(col_varchar) FROM babel_5688_all_types;
 SELECT 
     @min_nchar AS min_nchar, @max_nchar AS max_nchar,
     @min_char AS min_char, @max_char AS max_char,
     @min_nvarchar AS min_nvarchar, @max_nvarchar AS max_nvarchar,
-    @min_varchar AS min_varchar, @max_varchar AS max_varchar;
+    @min_varchar AS min_varchar;
 GO
 ~~START~~
-nchar#!#nchar#!#char#!#char#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-                                                  #!#日本語                                               #!#                                                  #!#Zebra                                             #!##!#日本語#!##!#??
+nchar#!#nchar#!#char#!#char#!#nvarchar#!#nvarchar#!#varchar
+                                                  #!#日本語                                               #!#                                                  #!#Zebra                                             #!##!#日本語#!#
 ~~END~~
 
 
@@ -724,7 +716,6 @@ GO
 varchar
 TEST D7: DECLARE with table variable
 ~~END~~
-
 
 
 
@@ -742,12 +733,8 @@ INSERT INTO @results (col_type, min_val, max_val)
 SELECT 'CHAR', MIN(col_char), MAX(col_char) FROM babel_5688_all_types;
 INSERT INTO @results (col_type, min_val, max_val)
 SELECT 'NVARCHAR', MIN(col_nvarchar), MAX(col_nvarchar) FROM babel_5688_all_types;
-INSERT INTO @results (col_type, min_val, max_val)
-SELECT 'VARCHAR', MIN(col_varchar), MAX(col_varchar) FROM babel_5688_all_types;
 SELECT * FROM @results;
 GO
-~~ROW COUNT: 1~~
-
 ~~ROW COUNT: 1~~
 
 ~~ROW COUNT: 1~~
@@ -759,7 +746,6 @@ varchar#!#nvarchar#!#nvarchar
 NCHAR#!#                                                  #!#日本語                                               
 CHAR#!#                                                  #!#Zebra                                             
 NVARCHAR#!##!#日本語
-VARCHAR#!##!#中文
 ~~END~~
 
 

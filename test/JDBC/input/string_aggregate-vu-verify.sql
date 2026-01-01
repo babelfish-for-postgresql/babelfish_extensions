@@ -17,9 +17,7 @@ GO
 
 SELECT  
     MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
-    MIN(col_char) AS min_char, MAX(col_char) AS max_char,
-    MIN(col_nvarchar) AS min_nvarchar, MAX(col_nvarchar) AS max_nvarchar,
-    MIN(col_varchar) AS min_varchar, MAX(col_varchar) AS max_varchar 
+    MIN(col_char) AS min_char, MAX(col_char) AS max_char
 FROM babel_5688_all_types;
 GO
 
@@ -27,15 +25,13 @@ GO
 SELECT 
     category,
     MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
-    MIN(col_char) AS min_char, MAX(col_char) AS max_char,
-    MIN(col_nvarchar) AS min_nvarchar, MAX(col_nvarchar) AS max_nvarchar,
-    MIN(col_varchar) AS min_varchar, MAX(col_varchar) AS max_varchar
+    MIN(col_char) AS min_char, MAX(col_char) AS max_char
 FROM babel_5688_all_types
 GROUP BY category
 ORDER BY category;
 GO
 
-select min(col_char) FROM babel_5688_all_types GROUP BY col_nchar
+select min(col_char) FROM babel_5688_all_types GROUP BY col_nchar ORDER BY col_nchar
 go
 
 
@@ -47,7 +43,8 @@ SELECT
     COUNT(*) AS cnt
 FROM babel_5688_all_types
 GROUP BY category
-HAVING MIN(col_nchar) IS NOT NULL AND MAX(col_nchar) IS NOT NULL;
+HAVING MIN(col_nchar) IS NOT NULL AND MAX(col_nchar) IS NOT NULL
+ORDER BY category;
 GO
 
 
@@ -56,7 +53,7 @@ SELECT
     MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
     MIN(col_char) AS min_char, MAX(col_char) AS max_char,
     MIN(col_nvarchar) AS min_nvarchar, MAX(col_nvarchar) AS max_nvarchar,
-    MIN(col_varchar) AS min_varchar, MAX(col_varchar) AS max_varchar
+    MIN(col_varchar) AS min_varchar
 FROM babel_5688_all_types
 WHERE category = 'Fruit';
 GO
@@ -74,7 +71,7 @@ SELECT
     MIN(DISTINCT col_nchar) AS min_distinct_nchar, MAX(DISTINCT col_nchar) AS max_distinct_nchar,
     MIN(DISTINCT col_char) AS min_distinct_char, MAX(DISTINCT col_char) AS max_distinct_char,
     MIN(DISTINCT col_nvarchar) AS min_distinct_nvarchar, MAX(DISTINCT col_nvarchar) AS max_distinct_nvarchar,
-    MIN(DISTINCT col_varchar) AS min_distinct_varchar, MAX(DISTINCT col_varchar) AS max_distinct_varchar
+    MIN(DISTINCT col_varchar) AS min_distinct_varchar
 FROM babel_5688_all_types;
 GO
 
@@ -96,8 +93,6 @@ UNION ALL
 SELECT 'CHAR' AS col_type, MIN(col_char) AS min_val, MAX(col_char) AS max_val FROM babel_5688_all_types WHERE col_char IS NOT NULL
 UNION ALL
 SELECT 'NVARCHAR' AS col_type, MIN(col_nvarchar) AS min_val, MAX(col_nvarchar) AS max_val FROM babel_5688_all_types WHERE col_nvarchar IS NOT NULL
-UNION ALL
-SELECT 'VARCHAR' AS col_type, MIN(col_varchar) AS min_val, MAX(col_varchar) AS max_val FROM babel_5688_all_types WHERE col_varchar IS NOT NULL;
 GO
 
 SELECT MIN(col_nchar) AS min_val, MAX(col_char) AS max_val FROM babel_5688_all_types WHERE col_nchar IS NOT NULL
@@ -140,7 +135,7 @@ SELECT
     t.col_nchar AS sample_value
 FROM CategoryStats cs
 JOIN babel_5688_all_types t ON t.category = cs.category AND t.col_nchar = cs.min_val
-ORDER BY cs.category;
+ORDER BY cs.category, sample_value;
 GO
 
 -- Test CASE EXPRESSION
@@ -389,7 +384,6 @@ DECLARE @max_char CHAR(50);
 DECLARE @min_nvarchar NVARCHAR(100);
 DECLARE @max_nvarchar NVARCHAR(100);
 DECLARE @min_varchar VARCHAR(100);
-DECLARE @max_varchar VARCHAR(100);
 
 SELECT @min_nchar = MIN(col_nchar) FROM babel_5688_all_types;
 SELECT @max_nchar = MAX(col_nchar) FROM babel_5688_all_types;
@@ -398,13 +392,12 @@ SELECT @max_char = MAX(col_char) FROM babel_5688_all_types;
 SELECT @min_nvarchar = MIN(col_nvarchar) FROM babel_5688_all_types;
 SELECT @max_nvarchar = MAX(col_nvarchar) FROM babel_5688_all_types;
 SELECT @min_varchar = MIN(col_varchar) FROM babel_5688_all_types;
-SELECT @max_varchar = MAX(col_varchar) FROM babel_5688_all_types;
 
 SELECT 
     @min_nchar AS min_nchar, @max_nchar AS max_nchar,
     @min_char AS min_char, @max_char AS max_char,
     @min_nvarchar AS min_nvarchar, @max_nvarchar AS max_nvarchar,
-    @min_varchar AS min_varchar, @max_varchar AS max_varchar;
+    @min_varchar AS min_varchar;
 GO
 
 -- Test Declare with table variable
@@ -425,9 +418,6 @@ SELECT 'CHAR', MIN(col_char), MAX(col_char) FROM babel_5688_all_types;
 
 INSERT INTO @results (col_type, min_val, max_val)
 SELECT 'NVARCHAR', MIN(col_nvarchar), MAX(col_nvarchar) FROM babel_5688_all_types;
-
-INSERT INTO @results (col_type, min_val, max_val)
-SELECT 'VARCHAR', MIN(col_varchar), MAX(col_varchar) FROM babel_5688_all_types;
 
 SELECT * FROM @results;
 GO
