@@ -2018,9 +2018,9 @@ FROM UDDTDateTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime#!#int
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 535)~~
 
-~~ERROR (Message: control reached end of function without RETURN)~~
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart.)~~
 
 
 -- 8. Test constraints with time components
