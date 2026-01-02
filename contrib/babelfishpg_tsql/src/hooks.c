@@ -7871,6 +7871,43 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 			}
 			break;
 		}
+		case T_Aggref:
+			{
+				Aggref		*aggref = (Aggref *) expr;
+				char		*aggFuncName = get_func_name(aggref->aggfnoid);
+
+				/* Handle MIN/MAX for char/nchar types to preserve typmod */
+				if (aggFuncName && strlen(aggFuncName) == 3 &&
+					(strncmp(aggFuncName, "min", 3) == 0 || strncmp(aggFuncName, "max", 3) == 0) &&
+					((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(aggref->aggtype) ||
+					 (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(aggref->aggtype)))
+				{
+					TargetEntry	*te = (TargetEntry *) linitial(aggref->args);
+					Oid			expr_type = exprType((Node *) te->expr);
+
+					/* Only process if input type matches aggregate type */
+					if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(expr_type) ||
+						(*common_utility_plugin_ptr->is_tsql_nchar_datatype)(expr_type))
+					{
+						int32	rettypmod = exprTypmod((Node *) te->expr);
+
+						if (rettypmod != -1)
+						{
+							/* Add relabel node with the found typmod */
+							expr = coerce_to_target_type(pstate, expr,
+													 exprType(expr),
+													 aggref->aggtype,
+													 rettypmod,
+													 COERCION_IMPLICIT,
+													 COERCE_IMPLICIT_CAST,
+													 -1);
+						}
+					}
+				}
+				if (aggFuncName)
+					pfree(aggFuncName);
+				break;
+			}
 
 		default:
 			break;

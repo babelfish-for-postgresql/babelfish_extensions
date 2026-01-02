@@ -657,3 +657,4 @@ sys-fn_varbintohexstr
 babel_binary
 test_output_clause
 update_with_var
+string_aggregate
