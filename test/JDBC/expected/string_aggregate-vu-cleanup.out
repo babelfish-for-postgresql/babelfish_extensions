@@ -1,0 +1,41 @@
+-- Drop procedures
+DROP PROCEDURE babel_5688_p1;
+GO
+DROP PROCEDURE babel_5688_p2;
+GO
+DROP PROCEDURE babel_5688_p3;
+GO
+DROP PROCEDURE babel_5688_p4;
+GO
+DROP PROCEDURE babel_5688_p5;
+GO
+DROP PROCEDURE babel_5688_p6;
+GO
+
+-- Drop functions
+DROP FUNCTION babel_5688_f1;
+GO
+DROP FUNCTION babel_5688_f2;
+GO
+DROP FUNCTION babel_5688_f3;
+GO
+DROP FUNCTION babel_5688_f4;
+GO
+DROP FUNCTION babel_5688_f5;
+GO
+DROP FUNCTION babel_5688_f6;
+GO
+DROP FUNCTION babel_5688_f7;
+GO
+
+-- Drop tables
+DROP TABLE babel_5688_all_types;
+GO
+DROP TABLE babel_5688_table2;
+GO
+DROP TABLE babel_5688_table3;
+GO
+DROP TABLE babel_5688_table4;
+GO
+DROP TABLE babel_5688_table5;
+GO
