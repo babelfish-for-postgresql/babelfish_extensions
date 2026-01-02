@@ -741,7 +741,6 @@ GO
 -- psql
 -- Test cases if user tries to enable/disable trigger <schema-1>.<trigger-1> on table <schema-2>.<table-1> 
 -- if both schemas have tables with same name and each table have trigger with same trigger name
--- ALTER .. OWNER .. on TSQL objects are blocked.
 ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_babel_3326_u1;
 GO
 ALTER TABLE master_db.babel_3326_Employees OWNER TO master_babel_3326_u1;

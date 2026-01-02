@@ -262,10 +262,11 @@ text
 Query Text: SELECT COUNT(*) as records_in_range
 FROM datetime_index_test
 WHERE created_at BETWEEN '2024-01-15 10:30:45.001' AND '2024-01-15 10:30:45.003'
-Aggregate (actual rows=1 loops=1)
-  ->  Index Only Scan using ix_datetime_index_test_created_66a6b1d45f144f1482b6a7f096be9038 on datetime_index_test (actual rows=4 loops=1)
+Aggregate (actual rows=1.00 loops=1)
+  ->  Index Only Scan using ix_datetime_index_test_created_66a6b1d45f144f1482b6a7f096be9038 on datetime_index_test (actual rows=4.00 loops=1)
         Index Cond: ((created_at >= '2024-01-15 10:30:45'::datetime) AND (created_at <= '2024-01-15 10:30:45.003'::datetime))
         Heap Fetches: 4
+        Index Searches: 1
 ~~END~~
 
 
@@ -291,8 +292,9 @@ Query Text: SELECT
     data
 FROM datetime_index_test
 WHERE created_at = '2024-01-15 10:30:45.002'
-Index Scan using ix_datetime_index_test_created_66a6b1d45f144f1482b6a7f096be9038 on datetime_index_test (actual rows=3 loops=1)
+Index Scan using ix_datetime_index_test_created_66a6b1d45f144f1482b6a7f096be9038 on datetime_index_test (actual rows=3.00 loops=1)
   Index Cond: (created_at = '2024-01-15 10:30:45.003'::datetime)
+  Index Searches: 1
 ~~END~~
 
 
