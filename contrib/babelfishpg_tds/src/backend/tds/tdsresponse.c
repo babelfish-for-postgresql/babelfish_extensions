@@ -2215,7 +2215,6 @@ TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 	}
 
 	SendColumnMetadataToken(typeinfo->natts, false);
-	// SendTabNameToken();
 	SendColInfoToken(typeinfo->natts, false);
 }
 

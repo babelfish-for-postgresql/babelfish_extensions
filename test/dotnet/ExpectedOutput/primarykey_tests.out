@@ -1,6 +1,5 @@
 #Q#DROP TABLE IF EXISTS primarytest
 #Q#CREATE TABLE primarytest (col1 INT NOT NULL, col2 INT NOT NULL, data VARCHAR(50), PRIMARY KEY (col1, col2))
-#Q#INSERT INTO primarytest VALUES (1, 1, 'test2')
 #Q#SELECT * FROM primarytest
 
 Table Columns:
@@ -22,7 +21,6 @@ Primary Key Columns:
 #Q#DROP TABLE IF EXISTS primarytest
 #Q#DROP TABLE IF EXISTS pk_none
 #Q#CREATE TABLE pk_none (col1 INT NOT NULL, col2 VARCHAR(50) NULL, col3 BIT NOT NULL)
-#Q#INSERT INTO pk_none VALUES (1, 'no pk', 1)
 #Q#SELECT * FROM pk_none
 
 Table Columns:
@@ -43,7 +41,6 @@ Primary Key Columns:
 #Q#DROP TABLE IF EXISTS pk_none
 #Q#DROP TABLE IF EXISTS pk_middle
 #Q#CREATE TABLE pk_middle (col1 VARCHAR(50), col2 VARCHAR(50), id INT PRIMARY KEY, col3 VARCHAR(50), col4 VARCHAR(50))
-#Q#INSERT INTO pk_middle VALUES ('a', 'b', 1, 'c', 'd')
 #Q#SELECT * FROM pk_middle
 
 Table Columns:
@@ -76,9 +73,6 @@ Primary Key Columns:
 #Q#CREATE TABLE customers (customer_id INT PRIMARY KEY, customer_name VARCHAR(100) NOT NULL, city VARCHAR(50))
 #Q#CREATE TABLE orders (order_id INT PRIMARY KEY, customer_id INT NOT NULL, order_date DATETIME NOT NULL, status VARCHAR(20))
 #Q#CREATE TABLE order_items (item_id INT PRIMARY KEY, order_id INT NOT NULL, product_name VARCHAR(100), quantity INT)
-#Q#INSERT INTO customers VALUES (1, 'John Doe', 'NYC'), (2, 'Jane Smith', 'Boston'), (3, 'Bob Wilson', 'Chicago')
-#Q#INSERT INTO orders VALUES (100, 1, '2024-01-15', 'Completed'), (101, 1, '2024-01-20', 'Pending')
-#Q#INSERT INTO order_items VALUES (1000, 100, 'Laptop', 1), (1001, 100, 'Mouse', 2)
 #Q#SELECT * FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id LEFT JOIN order_items oi ON o.order_id = oi.order_id
 
 Table Columns:
@@ -135,7 +129,6 @@ Primary Key Columns:
 #Q#DROP TABLE IF EXISTS customers
 #Q#DROP TABLE IF EXISTS rule2b_unique_null
 #Q#CREATE TABLE rule2b_unique_null (id INT NULL UNIQUE, name VARCHAR(50) NULL)
-#Q#INSERT INTO rule2b_unique_null VALUES (1, 'test')
 #Q#SELECT * FROM rule2b_unique_null
 
 Table Columns:
@@ -152,7 +145,6 @@ Primary Key Columns:
 #Q#DROP TABLE IF EXISTS rule2b_unique_null
 #Q#DROP TABLE IF EXISTS int_boundary
 #Q#CREATE TABLE int_boundary (id INT PRIMARY KEY, data VARCHAR(50))
-#Q#INSERT INTO int_boundary VALUES (-2147483648, 'min'), (2147483647, 'max')
 #Q#SELECT * FROM int_boundary
 
 Table Columns:
@@ -197,3 +189,89 @@ Column: name
 Primary Key Columns:
 - id
 #Q#DROP TABLE IF EXISTS rule3_pk_multi_unique
+#Q#DROP TABLE IF EXISTS fk_child_composite
+#Q#DROP TABLE IF EXISTS fk_parent_composite
+#Q#CREATE TABLE fk_parent_composite (col1 INT NOT NULL, col2 INT NOT NULL, name VARCHAR(50), PRIMARY KEY (col1, col2))
+#Q#CREATE TABLE fk_child_composite (id INT PRIMARY KEY, ref_col1 INT NOT NULL, ref_col2 INT NOT NULL, data VARCHAR(50), FOREIGN KEY (ref_col1, ref_col2) REFERENCES fk_parent_composite(col1, col2))
+#Q#SELECT * FROM fk_child_composite
+
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: ref_col1
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: ref_col2
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: data
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Primary Key Columns:
+- id
+#Q#SELECT c.*, p.name FROM fk_child_composite c JOIN fk_parent_composite p ON c.ref_col1 = p.col1 AND c.ref_col2 = p.col2
+
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: ref_col1
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: ref_col2
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: data
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Primary Key Columns:
+- id
+#Q#DROP TABLE IF EXISTS fk_child_composite
+#Q#DROP TABLE IF EXISTS fk_parent_composite
+#Q#DROP TABLE IF EXISTS fk_chain_c
+#Q#DROP TABLE IF EXISTS fk_chain_b
+#Q#DROP TABLE IF EXISTS fk_chain_a
+#Q#CREATE TABLE fk_chain_a (id INT PRIMARY KEY, name VARCHAR(50))
+#Q#CREATE TABLE fk_chain_b (id INT PRIMARY KEY, a_id INT NOT NULL, name VARCHAR(50), FOREIGN KEY (a_id) REFERENCES fk_chain_a(id))
+#Q#CREATE TABLE fk_chain_c (id INT PRIMARY KEY, b_id INT NOT NULL, name VARCHAR(50), FOREIGN KEY (b_id) REFERENCES fk_chain_b(id))
+#Q#SELECT c.*, b.name as b_name, a.name as a_name FROM fk_chain_c c JOIN fk_chain_b b ON c.b_id = b.id JOIN fk_chain_a a ON b.a_id = a.id
+
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: b_id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: b_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: a_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Primary Key Columns:
+- id
+#Q#DROP TABLE IF EXISTS fk_chain_c
+#Q#DROP TABLE IF EXISTS fk_chain_b
+#Q#DROP TABLE IF EXISTS fk_chain_a
