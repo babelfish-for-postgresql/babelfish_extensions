@@ -35,8 +35,8 @@ ERROR_FOUND=false
 # Check for other warning
 OTHER_WARNING_COUNT=$(grep -c "OTHER_WARNING:" "$CURRENT_WARNINGS" || echo 0)
 
-if [[ "$OTHER_WARNING_COUNT" -ge 1 ]]; then
-    echo "Error: $OTHER_WARNING_COUNT unexpected warning type(s) detected."
+if [[ "$OTHER_WARNING_COUNT" -ne 1 ]]; then
+    echo "Error: Expected 1 other warnings, but found $OTHER_WARNING_COUNT"
     grep "OTHER_WARNING:" "$CURRENT_WARNINGS"
     ERROR_FOUND=true
 fi
@@ -58,8 +58,10 @@ if [[ "$ERROR_FOUND" = true ]]; then
     echo "Unexpected warning counts detected. Please investigate."
     echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
     echo "Leak warnings: $LEAK_COUNT"
+    echo "Other warnings: $OTHER_WARNING_COUNT"
     exit 1
 fi
 echo "Warning counts are as expected:"
 echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
 echo "Leak warnings: $LEAK_COUNT"
+echo "Other warnings: $OTHER_WARNING_COUNT"
