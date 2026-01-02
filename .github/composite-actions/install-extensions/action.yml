@@ -39,6 +39,51 @@ runs:
         cd ~
         export PATH=/opt/mssql-tools/bin:$PATH
 
+        # Comprehensive diagnostic information for collation debugging
+        echo "=== ENVIRONMENT DIAGNOSTICS ==="
+        echo "OS Info:"
+        cat /etc/os-release
+        echo "Kernel version:"
+        uname -r
+        echo "Architecture:"
+        uname -m
+        echo "Timezone:"
+        timedatectl 2>/dev/null || date
+        echo "Locale settings:"
+        locale
+        echo "Environment variables:"
+        env | grep -E '(LANG|LC_|TZ)' | sort
+        
+        echo "=== ICU DIAGNOSTICS ==="
+        echo "ICU version details:"
+        icu-config --version || echo "ICU not found"
+        pkg-config --modversion icu-uc || echo "ICU pkg-config not found"
+        echo "ICU library details:"
+        icu-config --ldflags-libsonly 2>/dev/null || echo "ICU ldflags not available"
+        icu-config --cppflags 2>/dev/null || echo "ICU cppflags not available"
+        echo "ICU data directory:"
+        icu-config --icudatadir 2>/dev/null || echo "ICU data dir not available"
+        echo "Installed ICU packages:"
+        dpkg -l | grep libicu || echo "No ICU packages found via dpkg"
+        rpm -qa | grep icu || echo "No ICU packages found via rpm"
+        
+        echo "=== LOCALE AND COLLATION DIAGNOSTICS ==="
+        echo "Available Chinese locales:"
+        locale -a | grep -i zh || echo "No Chinese locales found"
+        echo "Available collations in system:"
+        locale -a | head -10
+        echo "Glibc version:"
+        ldd --version | head -1 || echo "ldd not available"
+        echo "Character encoding support:"
+        iconv --list | grep -i utf || echo "iconv not available"
+        
+        echo "=== COMPILER AND BUILD ENVIRONMENT ==="
+        echo "GCC version:"
+        gcc --version | head -1 || echo "GCC not found"
+        echo "Available development packages:"
+        dpkg -l | grep -E '(dev|devel)' | grep -i icu || echo "No ICU dev packages found"
+        echo "================================"
+
         # add port as suffix in data directory name to make it unique
         if [[ ${{inputs.psql_port}} != 5432 ]];then
           export DATADIR=data_${{inputs.psql_port}}
@@ -64,10 +109,35 @@ runs:
         } > pg_hba.conf
         if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
           sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> postgresql.conf
+          echo "Added collation setting: babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'"
         fi
         ~/${{inputs.install_dir}}/bin/pg_ctl -c -D ~/${{inputs.install_dir}}/$DATADIR/ -l ~/${{inputs.install_dir}}/$DATADIR/logfile start
+        
+        # Check PostgreSQL build and collation settings
+        echo "=== POSTGRESQL BUILD AND COLLATION CHECK ==="
+        echo "PostgreSQL version and build info:"
+        ~/${{inputs.install_dir}}/bin/psql -d postgres -U runner -p ${{inputs.psql_port}} -c "SELECT version();"
+        echo "PostgreSQL compile-time configuration:"
+        ~/${{inputs.install_dir}}/bin/pg_config --configure | tr ' ' '\n' | grep -E '(icu|collat|locale)' || echo "No ICU/collation options found"
+        echo "PostgreSQL ICU support:"
+        ~/${{inputs.install_dir}}/bin/pg_config --configure | grep -i icu || echo "No ICU support detected"
+        echo "Current Babelfish collation setting:"
+        ~/${{inputs.install_dir}}/bin/psql -d postgres -U runner -p ${{inputs.psql_port}} -c "SHOW babelfishpg_tsql.server_collation_name;" || echo "Collation setting not found"
+        echo "Available PostgreSQL collations:"
+        ~/${{inputs.install_dir}}/bin/psql -d postgres -U runner -p ${{inputs.psql_port}} -c "SELECT collname FROM pg_collation WHERE collname LIKE '%chinese%' OR collname LIKE '%prc%' ORDER BY collname;" || echo "No Chinese collations found"
+        echo "Database default collation:"
+        ~/${{inputs.install_dir}}/bin/psql -d postgres -U runner -p ${{inputs.psql_port}} -c "SELECT datcollate, datctype FROM pg_database WHERE datname = current_database();"
+        echo "==========================================="
+        
         cd ~/work/babelfish_extensions/babelfish_extensions/
         sudo ~/${{inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -p ${{inputs.psql_port}} -v user="jdbc_user" -v db="babelfish_db" -v migration_mode=${{inputs.migration_mode}} -v tsql_port=${{inputs.tsql_port}} -v parallel_query_mode=${{inputs.parallel_query_mode}} -f .github/scripts/create_extension.sql
         ~/${{inputs.install_dir}}/bin/pg_ctl -c -D ~/${{inputs.install_dir}}/$DATADIR/ -l ~/${{inputs.install_dir}}/$DATADIR/logfile restart
+        
+        # Final collation verification with test queries
+        echo "=== FINAL COLLATION VERIFICATION ==="
         sqlcmd -S localhost,${{inputs.tsql_port}} -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
+        sqlcmd -S localhost,${{inputs.tsql_port}} -U "jdbc_user" -P 12345678 -Q "SELECT SERVERPROPERTY('Collation') GO" || echo "Could not get collation property"
+        echo "Testing actual collation behavior:"
+        sqlcmd -S localhost,${{inputs.tsql_port}} -U "jdbc_user" -P 12345678 -Q "CREATE TABLE collation_test (val NCHAR(10)); INSERT INTO collation_test VALUES (N'Apple'), (N'Zebra'), (N'日本語'), (N'中文'); SELECT val FROM collation_test ORDER BY val; SELECT MIN(val) as min_val, MAX(val) as max_val FROM collation_test; DROP TABLE collation_test; GO" || echo "Collation test failed"
+        echo "========================================"
       shell: bash

@@ -1,0 +1,56 @@
+-- Collation diagnostic test
+CREATE TABLE collation_test (id INT, test_value NCHAR(50));
+GO
+
+INSERT INTO collation_test VALUES 
+(1, N'Apple'),
+(2, N'Zebra'), 
+(3, N'日本語'),
+(4, N'中文');
+GO
+~~ROW COUNT: 4~~
+
+
+-- Check current collation settings
+SELECT SERVERPROPERTY('Collation') AS ServerCollation;
+GO
+~~START~~
+sql_variant
+chinese_prc_ci_as
+~~END~~
+
+
+-- Test ordering behavior
+SELECT test_value FROM collation_test ORDER BY test_value;
+GO
+~~START~~
+nchar
+Apple                                             
+Zebra                                             
+日本語                                               
+中文                                                
+~~END~~
+
+
+-- Test MIN/MAX behavior
+SELECT MIN(test_value) AS min_val, MAX(test_value) AS max_val FROM collation_test;
+GO
+~~START~~
+nchar#!#nchar
+Apple                                             #!#中文                                                
+~~END~~
+
+
+-- Check individual comparisons
+SELECT 
+    CASE WHEN N'日本語' > N'Zebra' THEN 'Japanese > Zebra' ELSE 'Zebra > Japanese' END AS comparison1,
+    CASE WHEN N'中文' > N'Zebra' THEN 'Chinese > Zebra' ELSE 'Zebra > Chinese' END AS comparison2;
+GO
+~~START~~
+varchar#!#varchar
+Japanese > Zebra#!#Chinese > Zebra
+~~END~~
+
+
+DROP TABLE collation_test;
+GO
