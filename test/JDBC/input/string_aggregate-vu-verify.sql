@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- Test basic
 SELECT  
     MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
@@ -8,18 +7,6 @@ SELECT
 FROM babel_5688_all_types;
 GO
 
-
--- Test: Empty strings and spaces
-INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, col_category, col_amount) VALUES 
-('', '', '', '', 'EmptyTest', 0),
-('   ', '   ', '   ', '   ', 'SpaceTest', 0)
-GO
-
-SELECT  
-    MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
-    MIN(col_char) AS min_char, MAX(col_char) AS max_char
-FROM babel_5688_all_types;
-GO
 
 -- Test with GROUP BY and ORDER BY
 SELECT 
@@ -313,11 +300,30 @@ FROM (
 ORDER BY source_info, col_category;
 GO
 
+-- Test Unicode characters 
+SELECT 
+    MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
+    MIN(col_char) AS min_char, MAX(col_char) AS max_char
+FROM babel_5688_table5;
+GO
+
+-- Test: Empty strings and spaces
+INSERT INTO babel_5688_all_types (col_nchar, col_char, col_nvarchar, col_varchar, col_category, col_amount) VALUES 
+('', '', '', '', 'EmptyTest', 0),
+('   ', '   ', '   ', '   ', 'SpaceTest', 0)
+GO
+
+SELECT  
+    MIN(col_nchar) AS min_nchar, MAX(col_nchar) AS max_nchar,
+    MIN(col_char) AS min_char, MAX(col_char) AS max_char
+FROM babel_5688_all_types;
+GO
+
 -- Test declare statements
-DECLARE @nchar_var nchar(50) = N'abc';
-DECLARE @nchar_var1 nchar(50) = N'日本語';
-DECLARE @nchar_var2 nchar(50) = N'';
-DECLARE @nchar_var3 nchar(50) = NULL;
+DECLARE @nchar_var nchar(20) = N'abc';
+DECLARE @nchar_var1 nchar(20) = N'日本語';
+DECLARE @nchar_var2 nchar(20) = N'';
+DECLARE @nchar_var3 nchar(20) = NULL;
 SELECT 
     min(@nchar_var), max(@nchar_var), 
     min(@nchar_var1), max(@nchar_var1),
@@ -325,10 +331,10 @@ SELECT
     min(@nchar_var3), max(@nchar_var3)
 go
 
-DECLARE @char_var char(50) = 'abc';
-DECLARE @char_var1 char(50) = N'日本語';
-DECLARE @char_var2 char(50) = '';
-DECLARE @char_var3 char(50) = NULL;
+DECLARE @char_var char(20) = 'abc';
+DECLARE @char_var1 char(20) = N'日本語';
+DECLARE @char_var2 char(20) = '';
+DECLARE @char_var3 char(20) = NULL;
 SELECT 
     min(@char_var), max(@char_var), 
     min(@char_var1), max(@char_var1),
@@ -336,10 +342,10 @@ SELECT
     min(@char_var3), max(@char_var3)
 GO
 
-DECLARE @nvarchar_var nvarchar(100) = N'test';
-DECLARE @nvarchar_var1 nvarchar(100) = N'unicode日本語';
-DECLARE @nvarchar_var2 nvarchar(100) = N'';
-DECLARE @nvarchar_var3 nvarchar(100) = NULL;
+DECLARE @nvarchar_var nvarchar(25) = N'test';
+DECLARE @nvarchar_var1 nvarchar(25) = N'unicode日本語';
+DECLARE @nvarchar_var2 nvarchar(25) = N'';
+DECLARE @nvarchar_var3 nvarchar(25) = NULL;
 SELECT 
     min(@nvarchar_var), max(@nvarchar_var), 
     min(@nvarchar_var1), max(@nvarchar_var1),
@@ -347,10 +353,10 @@ SELECT
     min(@nvarchar_var3), max(@nvarchar_var3)
 GO
 
-DECLARE @varchar_var varchar(100) = 'hello';
-DECLARE @varchar_var1 varchar(100) = 'world';
-DECLARE @varchar_var2 varchar(100) = '';
-DECLARE @varchar_var3 varchar(100) = NULL;
+DECLARE @varchar_var varchar(25) = 'hello';
+DECLARE @varchar_var1 varchar(25) = 'world';
+DECLARE @varchar_var2 varchar(25) = '';
+DECLARE @varchar_var3 varchar(25) = NULL;
 SELECT 
     min(@varchar_var), max(@varchar_var), 
     min(@varchar_var1), max(@varchar_var1),
@@ -359,13 +365,13 @@ SELECT
 GO
 
 -- Basic test using babel_5688_all_types columns
-DECLARE @min_nchar NCHAR(50);
-DECLARE @max_nchar NCHAR(50);
-DECLARE @min_char CHAR(50);
-DECLARE @max_char CHAR(50);
-DECLARE @min_nvarchar NVARCHAR(100);
-DECLARE @max_nvarchar NVARCHAR(100);
-DECLARE @min_varchar VARCHAR(100);
+DECLARE @min_nchar NCHAR(20);
+DECLARE @max_nchar NCHAR(20);
+DECLARE @min_char CHAR(20);
+DECLARE @max_char CHAR(20);
+DECLARE @min_nvarchar NVARCHAR(25);
+DECLARE @max_nvarchar NVARCHAR(25);
+DECLARE @min_varchar VARCHAR(25);
 
 SELECT @min_nchar = MIN(col_nchar) FROM babel_5688_all_types;
 SELECT @max_nchar = MAX(col_nchar) FROM babel_5688_all_types;
@@ -388,8 +394,8 @@ GO
 
 DECLARE @results TABLE (
     col_type VARCHAR(20),
-    min_val NVARCHAR(100),
-    max_val NVARCHAR(100)
+    min_val NVARCHAR(25),
+    max_val NVARCHAR(25)
 );
 
 INSERT INTO @results (col_type, min_val, max_val)

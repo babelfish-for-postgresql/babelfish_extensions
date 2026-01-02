@@ -37,3 +37,5 @@ DROP TABLE babel_5688_table3;
 GO
 DROP TABLE babel_5688_table4;
 GO
+DROP TABLE babel_5688_table5;
+GO
