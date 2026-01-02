@@ -2900,7 +2900,14 @@ get_resolved_expr_type(Node *expr)
 	if (expr == NULL)
 		return InvalidOid;
 
-	if (is_tsql_str_const(expr))
+	/*
+	 * expr_type need to be set to sys.varchar only if the expression is string
+	 * constant and the dialect is TSQL, for PG dialect it should be expression
+	 * type. expr_type need to be set to sys.varchar during dump restore as during
+	 * dump string literal in objects created in TSQL dialect gets casted to
+	 * sys.varchar.
+	 */
+	if (sql_dialect == SQL_DIALECT_TSQL && is_tsql_str_const(expr))
 		expr_type = get_sys_varcharoid();
 	else
 		expr_type = exprType(expr);
@@ -3055,7 +3062,7 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 				pispreferred = nispreferred;
 			}
 		}
-		else if (ntype == ptype)
+		else if (sql_dialect == SQL_DIALECT_TSQL && ntype == ptype)
 		{
 			Oid	nexpr_type = get_resolved_expr_type(nexpr);
 			
@@ -3086,12 +3093,12 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 	 */
 	pexpr_type = get_resolved_expr_type(pexpr);
 
-	if (ptype != pexpr_type &&
+	if (sql_dialect == SQL_DIALECT_TSQL && ptype != pexpr_type &&
 		is_tsql_base_datatype(pexpr_type))
 		ptype = pexpr_type;
 
 	/* If all the inputs are NULL constants then resolve as type INT4 */
-	if (ptype == UNKNOWNOID)
+	if (sql_dialect == SQL_DIALECT_TSQL && ptype == UNKNOWNOID)
 	{
 		bool all_nullconst = true;
 		foreach(lc, exprs)
