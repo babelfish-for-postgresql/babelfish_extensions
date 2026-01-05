@@ -4386,15 +4386,9 @@ GO
 SELECT 'Prefix_' + BinaryCol AS BinaryConcat FROM ImplicitToStringTest;
 SELECT N'Prefix_' + BinaryCol AS BinaryConcatN FROM ImplicitToStringTest;
 GO
-~~START~~
-varchar
-Prefix_ABC
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~START~~
-nvarchar
-Prefix_䉁C
-~~END~~
+~~ERROR (Message: cannot coerce string literal to binary datatype)~~
 
 
 -- VARBINARY

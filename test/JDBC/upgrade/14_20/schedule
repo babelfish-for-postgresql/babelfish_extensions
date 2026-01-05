@@ -490,6 +490,7 @@ babel_numeric_money_oper-before-16_10-or-17_6
 babel_numeric_smallmoney_oper-before-16_10-or-17_6
 mathematical_func_tests-before-17_7-or-16_11
 babel_assign_nchar
+babel_binary-before-17_5-or-16_9
 view_sec_setting_before_17_6-or-16_10
 ascii_function_before-17_7-or-16_11
 cast_string_to_binary-before-16_8

@@ -161,6 +161,12 @@ ignore#!#babel_datetime-before-16_11-or-17_7-vu-cleanup
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-prepare
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-verify
 ignore#!#mathematical_func_tests-before-17_7-or-16_11-vu-cleanup
+ignore#!#babel_binary-before-17_7-or-16_11-vu-prepare
+ignore#!#babel_binary-before-17_7-or-16_11-vu-verify
+ignore#!#babel_binary-before-17_7-or-16_11-vu-cleanup
+ignore#!#babel_binary-before-17_5-or-16_9-vu-prepare
+ignore#!#babel_binary-before-17_5-or-16_9-vu-verify
+ignore#!#babel_binary-before-17_5-or-16_9-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
