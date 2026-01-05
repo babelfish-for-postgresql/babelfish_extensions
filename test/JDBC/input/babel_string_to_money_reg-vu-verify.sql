@@ -1,6 +1,12 @@
 --Valid cases
 SELECT CAST('\0' AS MONEY);
 GO
+SELECT CAST('$,,100' AS MONEY);
+GO
+SELECT ISNUMERIC(CHAR(9));
+GO
+SELECT ISNUMERIC(CHAR(13));
+GO
 SELECT isnumeric(CHAR(92));
 GO
 SELECT isnumeric(char(44));
@@ -32,6 +38,8 @@ GO
 SELECT CAST(CHAR(165) AS MONEY);             -- Yen sign
 GO
 SELECT CAST('\' AS money);
+GO
+SELECT CAST('\ .6431,,7431,85,12,97                         ' AS MONEY);
 GO
 --Invalid cases
 SELECT CAST('\\1234' AS MONEY);

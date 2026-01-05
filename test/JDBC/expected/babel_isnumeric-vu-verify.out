@@ -2592,7 +2592,7 @@ select isnumeric(CHAR(160)) -- TSQL: 1
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -2716,7 +2716,7 @@ SELECT ISNUMERIC(NCHAR(160) + '123');  -- non-breaking space + number
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 SELECT ISNUMERIC('123' + NCHAR(160));  -- number + non-breaking space

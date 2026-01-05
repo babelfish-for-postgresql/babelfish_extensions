@@ -22,16 +22,16 @@ CREATE PROCEDURE dbo.sp_test_money_special
 AS
 BEGIN
     DECLARE @c money = CHAR(44), @b money = CHAR(92);
-    
+
     DECLARE @results TABLE (
         id INT,
         name VARCHAR(20),
         val money
     );
-    
+
     INSERT INTO @results (id, name, val) VALUES (1, 'comma', @c);
     INSERT INTO @results (id, name, val) VALUES (2, 'backslash', @b);
-    
+
     SELECT name, val FROM @results ORDER BY id;
 END;
 GO
