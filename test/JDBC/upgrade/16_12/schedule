@@ -646,3 +646,4 @@ BABEL-5788
 BABEL-1664
 sys-fn_varbintohexstr
 babel_binary
+string_aggregate

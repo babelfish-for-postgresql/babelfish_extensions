@@ -1,10 +1,27 @@
 # SET THIS CONNECTION STRING TO GENERATE THE EXPECTED OUTPUT FILE
-URL = localhost
+#URL = localhost
+#tsql_port = 1433
+#psql_port = 5432
+#databaseName = master
+#physicalDatabaseName = babelfish_db
+#user = jdbc_user
+#password = 12345678
+
+#URL = database-1.cfr1fiw2bi6j.us-east-1.rds.amazonaws.com
+#tsql_port = 1433
+#psql_port = 5432
+#databaseName = TestDb
+#physicalDatabaseName = babelfish_db
+#user = admin
+#password = 12345678
+
+
+URL = database-1.cfr1fiw2bi6j.us-east-1.rds.amazonaws.com
 tsql_port = 1433
 psql_port = 5432
-databaseName = master
+databaseName = db1_min
 physicalDatabaseName = babelfish_db
-user = jdbc_user
+user = admin
 password = 12345678
 
 # PATH TO INPUT TEST FILES FOLDER
