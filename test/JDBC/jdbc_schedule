@@ -744,9 +744,9 @@ ignore#!#babel_convert_with_style-before-14_8-or-15_3-vu-cleanup
 ignore#!#babel_convert_with_style-before-15_7-vu-prepare
 ignore#!#babel_convert_with_style-before-15_7-vu-verify
 ignore#!#babel_convert_with_style-before-15_7-vu-cleanup
-ignore#!#babel_convert_with_style-before-14_12-or-15_7-or-16_3-vu-prepare
-ignore#!#babel_convert_with_style-before-14_12-or-15_7-or-16_3-vu-verify
-ignore#!#babel_convert_with_style-before-14_12-or-15_7-or-16_3-vu-cleanup
+ignore#!#babel_convert_with_style-before-14_12-or-16_3-vu-prepare
+ignore#!#babel_convert_with_style-before-14_12-or-16_3-vu-verify
+ignore#!#babel_convert_with_style-before-14_12-or-16_3-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 17_8 or 16_12 release
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-prepare
