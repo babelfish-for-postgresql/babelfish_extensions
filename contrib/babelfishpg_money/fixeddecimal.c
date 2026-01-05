@@ -474,6 +474,45 @@ fixeddecimal2str(int64 val, char *buffer,
 	return ptr;
 }
 
+
+static inline bool
+is_money_space(unsigned char c)
+{
+    return isspace(c) || c == 0xA0;
+}
+
+static inline bool
+is_utf8_nbsp(const unsigned char *ptr)
+{
+    if (ptr[0] != 0xC2)
+        return false;
+    return ptr[1] == 0xA0;
+}
+
+static inline const char *
+skip_money_spaces(const char *ptr)
+{
+    while (*ptr)
+    {
+        unsigned char c = (unsigned char)*ptr;
+        
+        if (is_money_space(c))
+        {
+            ptr++;
+            continue;
+        }
+        
+		if (is_utf8_nbsp((const unsigned char *)ptr))
+        {
+            ptr += 2;
+            continue;
+        }
+        
+        break;
+    }
+    return ptr;
+}
+
 /*
  * scanfixeddecimal --- try to parse a string into a fixeddecimal.
  */
@@ -481,6 +520,7 @@ static int64
 scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *fcinfo)
 {
 	const char *ptr = str;
+	const char *original = str;
 	int64		integralpart = 0;
 	int64		fractionalpart = 0;
 	bool		negative;
@@ -496,8 +536,22 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	 */
 
 	/* skip leading spaces */
-	while (isspace((unsigned char) *ptr))
-		ptr++;
+	ptr = skip_money_spaces(ptr);
+
+	if (ptr > original && *ptr != '\0')
+	{
+		for (const char *check = original; check < ptr; check++)
+		{
+			unsigned char c = (unsigned char)*check;
+			if (c == 0xA0 || (c == 0xC2 && (unsigned char)*(check+1) == 0xA0))
+			{
+				ereturn(escontext, (Datum) 0,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						errmsg("invalid characters found: cannot cast value \"%s\" to money",
+								str)));
+			}
+		}
+	}
 
 	/* handle sign */
 	if (*ptr == '-')
@@ -517,28 +571,33 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 		}
 	}
 
-	/* skip leading spaces */
-	while (isspace((unsigned char) *ptr))
-		ptr++;
+	// /* skip leading spaces */
+	ptr = skip_money_spaces(ptr);
 	
 	currency_symbol_len = is_valid_currency_symbol(ptr);
 	if (currency_symbol_len > 0)
 	{
 		ptr += currency_symbol_len;
 	}
-	/* skip leading spaces */
-	while (isspace((unsigned char) *ptr))
+	else if (*ptr == '\\')
+	{
 		ptr++;
+	}
+	/* skip leading spaces */
+	ptr = skip_money_spaces(ptr);
 	
 	/* 
 	 * Rejects invalid characters when no currency symbol is present.
 	 * Only digits, signs, decimal points, or spaces are allowed.
 	 */
-	if (*ptr != '\0' && 
-		!isdigit((unsigned char) *ptr) && 
+	if (!isdigit((unsigned char) *ptr) && 
 		*ptr != '.' && 
 		*ptr != '-' && 
-		*ptr != '+')
+		*ptr != ',' &&
+		*ptr != '+' &&
+		*ptr != '\0' &&
+		!is_money_space((unsigned char)*ptr) &&
+		!is_utf8_nbsp((const unsigned char *)ptr))
 	{
 		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -563,7 +622,9 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 		ptr++;
 
 		/* skip leading spaces */
-		while (isspace((unsigned char) *ptr))
+		ptr = skip_money_spaces(ptr);
+
+		while (*ptr == ',')
 			ptr++;
 
 		while (isdigit((unsigned char) *ptr))
@@ -580,7 +641,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 			}
 			integralpart = tmp;
 			/* skip thousand separator */
-			if (*ptr == ',')
+			while (*ptr == ',')
 				ptr++;
 		}
 	}
@@ -602,7 +663,9 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 		}
 
 		/* skip leading spaces */
-		while (isspace((unsigned char) *ptr))
+		ptr = skip_money_spaces(ptr);
+		
+		while (*ptr == ',')
 			ptr++;
 
 		while (isdigit((unsigned char) *ptr))
@@ -624,7 +687,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 			}
 			integralpart = tmp;
 			/* skip thousand separator */
-			if (*ptr == ',')
+			while (*ptr == ',')
 				ptr++;
 		}
 	}
@@ -635,12 +698,20 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 
 		ptr++;
 
+		while (*ptr == ',')
+        	ptr++;
+
 		while (isdigit((unsigned char) *ptr) && multiplier > 1)
 		{
 			multiplier /= 10;
 			fractionalpart += (*ptr++ - '0') * multiplier;
 			vscale++;
+			while (*ptr == ',')
+            	ptr++;
 		}
+
+		while (*ptr == ',')
+            ptr++;
 
 		/*
 		 * Eat into any excess precision digits. For first digit, apply "Round
@@ -651,15 +722,43 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 		{
 			fractionalpart++;
 			ptr++, vscale++;
+
+			while (*ptr == ',')
+				ptr++;
 		}
 
 		while (isdigit((unsigned char) *ptr))
+		{
 			ptr++, vscale++;
+
+			while (*ptr == ',')
+        		ptr++;
+		}
+		while (*ptr == ',')
+			ptr++;
 	}
 
 	/* consume any remaining space chars */
-	while (isspace((unsigned char) *ptr))
-		ptr++;
+	while (*ptr)
+	{
+		unsigned char c = (unsigned char)*ptr;
+		
+		/* Standard whitespace, single-byte NBSP (0xA0) */
+		if (isspace(c) || c == 0xA0)
+		{
+			ptr++;
+			continue;
+		}
+		
+		/* UTF-8 NBSP (0xC2 0xA0) - accepted ONLY at trailing position */
+		if (is_utf8_nbsp((const unsigned char *)ptr))
+		{
+			ptr += 2; 
+			continue;
+		}
+		
+		break;
+	}
 
 	if (*ptr != '\0')
 		ereturn(escontext, (Datum) 0,
