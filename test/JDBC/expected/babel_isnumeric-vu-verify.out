@@ -2770,8 +2770,7 @@ SELECT ISNUMERIC(CAST(CHAR(13) AS NUMERIC));  -- carriage return
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "
-")~~
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
 
 SELECT ISNUMERIC(CAST(CHAR(9) + CHAR(10) AS NUMERIC));  -- tab + newline
 GO
@@ -2797,8 +2796,7 @@ GO
 int
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "	
-")~~
+~~ERROR (Message: invalid input syntax for type numeric: "	")~~
 
 SELECT ISNUMERIC(CAST((CHAR(9) + cast('123' as numeric)) AS NUMERIC(18,5)));
 GO
@@ -2829,8 +2827,7 @@ SELECT ISNUMERIC(CAST((CHAR(13) + cast('123' as numeric)) AS NUMERIC(18,5)));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "
-")~~
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
 
 SELECT ISNUMERIC(CAST((CAST('123' as numeric) + CHAR(9)) AS NUMERIC(18,5)));
 GO
@@ -2861,8 +2858,7 @@ SELECT ISNUMERIC(CAST((CAST('123' as numeric) + CHAR(13)) AS NUMERIC(18,5)));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "
-")~~
+~~ERROR (Message: invalid input syntax for type numeric: "")~~
 
 SELECT ISNUMERIC(CAST((123 + CHAR(9)) AS NUMERIC(18,5)));  -- tab
 GO
@@ -2893,8 +2889,7 @@ SELECT ISNUMERIC(CAST((123 + CHAR(13)) AS NUMERIC(18,5)));  -- tab
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type integer: "
-")~~
+~~ERROR (Message: invalid input syntax for type integer: "")~~
 
 SELECT ISNUMERIC(CAST('123  ' as numeric)) -- numeric + tab
 Go
