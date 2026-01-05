@@ -228,3 +228,59 @@ BEGIN
         @min_varchar AS min_varchar, @max_varchar AS max_varchar;
 END;
 GO
+
+
+-- Create tables for COLLATE clause aggregate testing with different data types
+CREATE TABLE babel_5688_table6 (
+    col1 CHAR(10), col2 NCHAR(10)
+);
+GO
+
+-- Insert test data for VARCHAR
+INSERT INTO babel_5688_table6 VALUES ('A', 'A');
+INSERT INTO babel_5688_table6 VALUES ('a', 'a');
+INSERT INTO babel_5688_table6 VALUES ('À', 'À');
+GO
+
+
+-- Index scan 
+-- Create table with both char and nchar columns for index scan testing
+CREATE TABLE babel_5688_table7 (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    col_char CHAR(50),
+    col_nchar NCHAR(50)
+);
+GO
+
+-- Create indexes on both columns to enable index scans
+CREATE INDEX IX_TestDatatypeAggSort_char ON babel_5688_table7(col_char);
+GO
+CREATE INDEX IX_TestDatatypeAggSort_nchar ON babel_5688_table7(col_nchar);
+GO
+
+-- Insert 10,000 rows with varied col_nchar data
+WITH NumberSeries AS (
+    SELECT 1 as n
+    UNION ALL
+    SELECT n + 1
+    FROM NumberSeries
+    WHERE n < 10000
+)
+INSERT INTO babel_5688_table7 (col_char, col_nchar)
+SELECT 
+    CASE 
+        WHEN n % 4 = 0 THEN CHAR(97 + (n % 26)) + CHAR(97 + ((n/26) % 26)) + CHAR(97 + ((n/676) % 26))
+        WHEN n % 4 = 1 THEN CHAR(98 + (n % 25)) + CHAR(98 + ((n/25) % 25)) + CHAR(98 + ((n/625) % 25))
+        WHEN n % 4 = 2 THEN CHAR(99 + (n % 24)) + CHAR(99 + ((n/24) % 24)) + CHAR(99 + ((n/576) % 24))
+        ELSE CHAR(100 + (n % 23)) + CHAR(100 + ((n/23) % 23)) + CHAR(100 + ((n/529) % 23))
+    END,
+    CASE 
+        WHEN n % 4 = 0 THEN CHAR(97 + (n % 26)) + CHAR(97 + ((n/26) % 26)) + CHAR(97 + ((n/676) % 26))
+        WHEN n % 4 = 1 THEN CHAR(98 + (n % 25)) + CHAR(98 + ((n/25) % 25)) + CHAR(98 + ((n/625) % 25))
+        WHEN n % 4 = 2 THEN CHAR(99 + (n % 24)) + CHAR(99 + ((n/24) % 24)) + CHAR(99 + ((n/576) % 24))
+        ELSE CHAR(100 + (n % 23)) + CHAR(100 + ((n/23) % 23)) + CHAR(100 + ((n/529) % 23))
+    END 
+FROM NumberSeries  
+OPTION (MAXRECURSION 10000);
+GO
+
