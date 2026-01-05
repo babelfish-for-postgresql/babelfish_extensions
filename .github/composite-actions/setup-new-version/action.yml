@@ -21,6 +21,10 @@ inputs:
     description: 'Base version for upgrade'
     required: no
     default: 'source.latest'
+  disable_checksums:
+    description: "Disable data checksums during initdb"
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -82,8 +86,11 @@ runs:
       if: always() && steps.build-postgis-extension.outcome == 'success'
       run: |
         cd ~
-        # Check if base version is not source.latest and new version is target.latest
-        if [[ "${{ inputs.base_version }}" != "source.latest" && "${{ inputs.engine_version }}" == "target.latest" ]]; then
+        # Disable checksums when:
+        # 1. Explicitly requested (disable_checksums=true)
+        # 2. target.latest EXCEPT when base_version is source.latest (both should have checksums enabled)
+        if [[ "${{ inputs.disable_checksums }}" == "true" ]] || \
+           [[ "${{ inputs.engine_version }}" == "target.latest" && "${{ inputs.base_version }}" != "source.latest" ]]; then
             ~/${{ inputs.pg_new_dir }}/bin/initdb --no-data-checksums -D ~/${{ inputs.pg_new_dir }}/data
         else
             ~/${{ inputs.pg_new_dir }}/bin/initdb -D ~/${{ inputs.pg_new_dir }}/data
