@@ -34,6 +34,10 @@ inputs:
     description: 'Base version for upgrade'
     required: no
     default: 'source.latest'
+  disable_checksums:
+    description: "Disable data checksums during initdb"
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -49,6 +53,7 @@ runs:
         antlr_version: ${{ inputs.antlr_version }}
         engine_version: ${{ inputs.engine_version }}
         base_version: ${{ inputs.base_version }}
+        disable_checksums: ${{ inputs.disable_checksums }}
 
     - name: Run pg_upgrade
       id: run-pg_upgrade

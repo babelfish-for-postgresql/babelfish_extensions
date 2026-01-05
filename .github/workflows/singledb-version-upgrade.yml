@@ -43,6 +43,7 @@ jobs:
           pg_old_dir: ${{ env.OLD_INSTALL_DIR }}
           pg_new_dir: ${{ env.NEW_INSTALL_DIR }}
           migration_mode: "single-db"
+          disable_checksums: 'true'
 
       
       - name: Upload New Postgres log
