@@ -2114,7 +2114,7 @@ BEGIN
     IF arg_datatype = 'datetimeoffset' THEN
         return sys.dateadd_internal_df(datepart, num, startdate);
     END IF;
-    RAISE EXCEPTION 'Conversion failed when converting date and/or time from %.', pg_typeof(startdate);
+    RAISE EXCEPTION 'Conversion failed when converting date and/or time from %.', arg_datatype;
 END;
 $$
 STRICT
