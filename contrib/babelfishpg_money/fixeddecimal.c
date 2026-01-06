@@ -474,21 +474,7 @@ fixeddecimal2str(int64 val, char *buffer,
 	return ptr;
 }
 
-
-static inline bool
-is_money_space(unsigned char c)
-{
-    return isspace(c) || c == 0xA0;
-}
-
-static inline bool
-is_utf8_nbsp(const unsigned char *ptr)
-{
-    if (ptr[0] != 0xC2)
-        return false;
-    return ptr[1] == 0xA0;
-}
-
+/* Skips whitespace and non-breaking spaces */
 static inline const char *
 skip_money_spaces(const char *ptr)
 {
@@ -496,13 +482,15 @@ skip_money_spaces(const char *ptr)
     {
         unsigned char c = (unsigned char)*ptr;
         
-        if (is_money_space(c))
+        /* Standard whitespace or single-byte NBSP (0xA0) */
+        if (isspace(c) || c == 0xA0)
         {
             ptr++;
             continue;
         }
         
-		if (is_utf8_nbsp((const unsigned char *)ptr))
+        /* UTF-8 NBSP (0xC2 0xA0) */
+        if (c == 0xC2 && (unsigned char)ptr[1] == 0xA0)
         {
             ptr += 2;
             continue;
@@ -535,9 +523,22 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	 * for long long.
 	 */
 
-	/* skip leading spaces */
+	/*
+	 * Supported money/smallmoney string patterns:
+     *
+	 * Pattern 1:  <space>[±]<space>[currency|\]<space>[digits,.]<space>
+	 * Pattern 2:  <space>[currency|\]<space>[±]<space>[digits,.]<space>
+	 * 
+	 * Rules:
+	 *   - Sign (+/-) can appear before OR after currency, not both
+	 *   - Currency: $, €, £, ¥, ₹, or backslash (\)
+	 *   - Digits: digits with commas (,) and at most one decimal point (.)
+	 */
+
+	 /* skip leading spaces */
 	ptr = skip_money_spaces(ptr);
 
+    /* Rejects NBSP at leading position */ 
 	if (ptr > original && *ptr != '\0')
 	{
 		for (const char *check = original; check < ptr; check++)
@@ -595,9 +596,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 		*ptr != '-' && 
 		*ptr != ',' &&
 		*ptr != '+' &&
-		*ptr != '\0' &&
-		!is_money_space((unsigned char)*ptr) &&
-		!is_utf8_nbsp((const unsigned char *)ptr))
+		*ptr != '\0' )
 	{
 		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -738,27 +737,8 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 			ptr++;
 	}
 
-	/* consume any remaining space chars */
-	while (*ptr)
-	{
-		unsigned char c = (unsigned char)*ptr;
-		
-		/* Standard whitespace, single-byte NBSP (0xA0) */
-		if (isspace(c) || c == 0xA0)
-		{
-			ptr++;
-			continue;
-		}
-		
-		/* UTF-8 NBSP (0xC2 0xA0) - accepted ONLY at trailing position */
-		if (is_utf8_nbsp((const unsigned char *)ptr))
-		{
-			ptr += 2; 
-			continue;
-		}
-		
-		break;
-	}
+	/* Skip trailing whitespace */
+	ptr = skip_money_spaces(ptr);
 
 	if (*ptr != '\0')
 		ereturn(escontext, (Datum) 0,
