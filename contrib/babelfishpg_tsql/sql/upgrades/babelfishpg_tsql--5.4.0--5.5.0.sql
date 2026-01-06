@@ -583,7 +583,7 @@ BEGIN
     IF arg_datatype = 'smalldatetime' THEN
         return sys.dateadd_internal_datetime(datepart, num, startdate, 2);
     END IF;
-    IF (arg_datatype = 'datetime' OR arg_datatype = 'timestamp') THEN
+    IF arg_datatype = 'datetime' THEN
         return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
     END IF;
     IF arg_datatype = 'datetime2' THEN
