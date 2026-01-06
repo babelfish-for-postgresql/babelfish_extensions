@@ -862,6 +862,18 @@ text
 off
 ~~END~~
 
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
 
 SELECT set_config('enable_seqscan', 'off', false);
 GO
@@ -890,7 +902,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 10.235 ms
+Babelfish T-SQL Batch Parsing Time: 8.955 ms
 ~~END~~
 
 SELECT MIN(col_char) FROM babel_5688_table7 WHERE col_char <= 'cbd';
@@ -907,7 +919,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.117 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 SELECT MAX(col_nchar) FROM babel_5688_table7 WHERE col_nchar <= 'cbd';
@@ -916,15 +928,13 @@ GO
 text
 Query Text: SELECT MAX(col_nchar) FROM babel_5688_table7 WHERE col_nchar <= 'cbd'
 Aggregate
-  ->  Bitmap Heap Scan on babel_5688_table7
-        Recheck Cond: ((col_nchar)::bpchar <= 'cbd'::bpchar)
-        ->  Bitmap Index Scan on ix_testdatatypeaggsort_ncharbab22b6ccf3ad272c9e2c3aca6debfc63b6
-              Index Cond: ((col_nchar)::bpchar <= 'cbd'::bpchar)
+  ->  Index Only Scan using ix_testdatatypeaggsort_ncharbab22b6ccf3ad272c9e2c3aca6debfc63b6 on babel_5688_table7
+        Index Cond: (col_nchar <= 'cbd'::bpchar)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.293 ms
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
 ~~END~~
 
 SELECT MIN(col_nchar) FROM babel_5688_table7 WHERE col_nchar <= 'cbd';
@@ -933,15 +943,13 @@ GO
 text
 Query Text: SELECT MIN(col_nchar) FROM babel_5688_table7 WHERE col_nchar <= 'cbd'
 Aggregate
-  ->  Bitmap Heap Scan on babel_5688_table7
-        Recheck Cond: ((col_nchar)::bpchar <= 'cbd'::bpchar)
-        ->  Bitmap Index Scan on ix_testdatatypeaggsort_ncharbab22b6ccf3ad272c9e2c3aca6debfc63b6
-              Index Cond: ((col_nchar)::bpchar <= 'cbd'::bpchar)
+  ->  Index Only Scan using ix_testdatatypeaggsort_ncharbab22b6ccf3ad272c9e2c3aca6debfc63b6 on babel_5688_table7
+        Index Cond: (col_nchar <= 'cbd'::bpchar)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.157 ms
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
 ~~END~~
 
 
@@ -961,7 +969,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.119 ms
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
 ~~END~~
 
 SELECT MIN(col_char) FROM babel_5688_table7 WHERE col_nchar <= 'cbd';
@@ -979,7 +987,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
 ~~END~~
 
 SELECT MAX(col_nchar) FROM babel_5688_table7 WHERE col_char <= 'cbd';
@@ -988,15 +996,13 @@ GO
 text
 Query Text: SELECT MAX(col_nchar) FROM babel_5688_table7 WHERE col_char <= 'cbd'
 Aggregate
-  ->  Bitmap Heap Scan on babel_5688_table7
-        Recheck Cond: (col_char <= 'cbd'::bpchar)
-        ->  Bitmap Index Scan on ix_testdatatypeaggsort_charbabe569e60362c5f617aa361d4154dc67a55
-              Index Cond: (col_char <= 'cbd'::bpchar)
+  ->  Index Scan using ix_testdatatypeaggsort_charbabe569e60362c5f617aa361d4154dc67a55 on babel_5688_table7
+        Index Cond: (col_char <= 'cbd'::bpchar)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.157 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 SELECT MIN(col_nchar) FROM babel_5688_table7 WHERE col_char <= 'cbd';
@@ -1005,15 +1011,13 @@ GO
 text
 Query Text: SELECT MIN(col_nchar) FROM babel_5688_table7 WHERE col_char <= 'cbd'
 Aggregate
-  ->  Bitmap Heap Scan on babel_5688_table7
-        Recheck Cond: (col_char <= 'cbd'::bpchar)
-        ->  Bitmap Index Scan on ix_testdatatypeaggsort_charbabe569e60362c5f617aa361d4154dc67a55
-              Index Cond: (col_char <= 'cbd'::bpchar)
+  ->  Index Scan using ix_testdatatypeaggsort_charbabe569e60362c5f617aa361d4154dc67a55 on babel_5688_table7
+        Index Cond: (col_char <= 'cbd'::bpchar)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
 ~~END~~
 
 
@@ -1029,6 +1033,13 @@ on
 
 SELECT set_config('enable_seqscan', 'on', false)
 go
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
 ~~START~~
 text
 on

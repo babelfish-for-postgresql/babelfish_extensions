@@ -470,7 +470,9 @@ SELECT set_config('debug_parallel_query', '0', false);
 GO
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 GO
-
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
 SELECT set_config('enable_seqscan', 'off', false);
 GO
 
@@ -505,6 +507,8 @@ SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
 go
 SELECT set_config('enable_seqscan', 'on', false)
 go
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
 
 
 -- Test cases for MIN/MAX with CAST combinations across data types
