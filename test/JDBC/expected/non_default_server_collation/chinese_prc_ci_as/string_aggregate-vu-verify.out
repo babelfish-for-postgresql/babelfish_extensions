@@ -894,7 +894,7 @@ GO
 text
 Query Text: SELECT MAX(col_char) FROM babel_5688_table7 WHERE col_char <= 'cbd'
 Result
-  InitPlan 1
+  InitPlan 1 (returns $0)
     ->  Limit
           ->  Index Only Scan Backward using ix_testdatatypeaggsort_charbabe569e60362c5f617aa361d4154dc67a55 on babel_5688_table7
                 Index Cond: ((col_char IS NOT NULL) AND (col_char <= 'cbd'::bpchar))
@@ -911,7 +911,7 @@ GO
 text
 Query Text: SELECT MIN(col_char) FROM babel_5688_table7 WHERE col_char <= 'cbd'
 Result
-  InitPlan 1
+  InitPlan 1 (returns $0)
     ->  Limit
           ->  Index Only Scan using ix_testdatatypeaggsort_charbabe569e60362c5f617aa361d4154dc67a55 on babel_5688_table7
                 Index Cond: ((col_char IS NOT NULL) AND (col_char <= 'cbd'::bpchar))
@@ -960,7 +960,7 @@ GO
 text
 Query Text: SELECT MAX(col_char) FROM babel_5688_table7 WHERE col_nchar <= 'cbd'
 Result
-  InitPlan 1
+  InitPlan 1 (returns $0)
     ->  Limit
           ->  Index Scan Backward using ix_testdatatypeaggsort_charbabe569e60362c5f617aa361d4154dc67a55 on babel_5688_table7
                 Index Cond: (col_char IS NOT NULL)
@@ -978,7 +978,7 @@ GO
 text
 Query Text: SELECT MIN(col_char) FROM babel_5688_table7 WHERE col_nchar <= 'cbd'
 Result
-  InitPlan 1
+  InitPlan 1 (returns $0)
     ->  Limit
           ->  Index Scan using ix_testdatatypeaggsort_charbabe569e60362c5f617aa361d4154dc67a55 on babel_5688_table7
                 Index Cond: (col_char IS NOT NULL)
@@ -1082,7 +1082,7 @@ SELECT MIN(CAST(CAST(0x31 AS BINARY(10)) AS NCHAR(10)));
 GO
 ~~START~~
 nchar
-1         
+0x31000000
 ~~END~~
 
 SELECT MIN(CAST(CAST(1 AS NUMERIC(10)) AS NCHAR(10)));
@@ -1170,7 +1170,7 @@ SELECT MIN(CAST(CAST(0x31 AS BINARY(10)) AS CHAR(10)));
 GO
 ~~START~~
 char
-1         
+0x31000000
 ~~END~~
 
 SELECT MIN(CAST(CAST(1 AS NUMERIC(10)) AS CHAR(10)));
@@ -1215,7 +1215,7 @@ SELECT MAX(CAST(CAST(0x31 AS BINARY(10)) AS NCHAR(10)));
 GO
 ~~START~~
 nchar
-1         
+0x31000000
 ~~END~~
 
 SELECT MAX(CAST(CAST(1 AS NUMERIC(10)) AS NCHAR(10)));
@@ -1303,7 +1303,7 @@ SELECT MAX(CAST(CAST(0x31 AS BINARY(10)) AS CHAR(10)));
 GO
 ~~START~~
 char
-1         
+0x31000000
 ~~END~~
 
 SELECT MAX(CAST(CAST(1 AS NUMERIC(10)) AS CHAR(10)));
