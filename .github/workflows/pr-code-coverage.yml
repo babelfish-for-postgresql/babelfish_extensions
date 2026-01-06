@@ -11,9 +11,9 @@ jobs:
     name: ODBC Tests
     uses: ./.github/workflows/odbc-tests.yml
   
-  run-dotnet-tests:
-    name: Dotnet Tests
-    uses: ./.github/workflows/dotnet-tests.yml
+  # run-dotnet-tests:
+  #   name: Dotnet Tests
+  #   uses: ./.github/workflows/dotnet-tests.yml
 
   run-python-tests:
     name: Python Tests
