@@ -2330,6 +2330,10 @@ public:
 					for (auto perm: grant->permissions()->permission())
 					{
 						auto single_perm = perm->single_permission();
+						if (single_perm->CONNECT())
+						{
+							throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("Incorrect syntax near '%s'.", ::getFullText(single_perm->CONNECT()).c_str()),  getLineAndPos(single_perm));
+						}
 						if (single_perm->EXECUTE()
 							|| single_perm->EXEC()
 							|| single_perm->SELECT()
@@ -2367,6 +2371,10 @@ public:
 					for (auto perm: revoke->permissions()->permission())
 					{
 						auto single_perm = perm->single_permission();
+						if (single_perm->CONNECT())
+						{
+							throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("Incorrect syntax near '%s'.", ::getFullText(single_perm->CONNECT()).c_str()),  getLineAndPos(single_perm));
+						}
 						if (single_perm->EXECUTE()
 							|| single_perm->EXEC()
 							|| single_perm->SELECT()
