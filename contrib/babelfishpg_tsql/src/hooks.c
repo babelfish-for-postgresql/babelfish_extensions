@@ -82,6 +82,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/numeric.h"
+#include "utils/queryenvironment.h"
 #include <math.h>
 #include "pgstat.h"
 #include "executor/nodeFunctionscan.h"
