@@ -322,3 +322,226 @@ GO
 -- tsql
 INSERT INTO test_like_index_vu_prepare_t_common VALUES(CONCAT('common', generate_series(1,1000)));
 GO
+
+
+-- VARCHAR
+-- CS_AS
+CREATE TABLE new_test_like_index_vu_prepare_v_csas(
+    new_test_like_index_vu_prepare_v_csas_col varchar(max) collate latin1_general_cs_as
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_v_csas VALUES('csasns');
+GO
+INSERT INTO new_test_like_index_vu_prepare_v_csas VALUES('csases ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_v_csas VALUES(' csasps');
+GO
+
+-- CI_AS
+CREATE TABLE new_test_like_index_vu_prepare_v_cias(
+    new_test_like_index_vu_prepare_v_cias_col varchar(max) collate latin1_general_ci_as
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_v_cias VALUES('ciasns');
+GO
+INSERT INTO new_test_like_index_vu_prepare_v_cias VALUES('ciases ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_v_cias VALUES(' ciasps');
+GO
+
+-- CS_AI
+CREATE TABLE new_test_like_index_vu_prepare_v_csai(
+    new_test_like_index_vu_prepare_v_csai_col varchar(max) collate latin1_general_cs_ai
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_v_csai VALUES('csains');
+GO
+INSERT INTO new_test_like_index_vu_prepare_v_csai VALUES('csaies ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_v_csai VALUES(' csaips');
+GO
+
+-- CI_AI
+CREATE TABLE new_test_like_index_vu_prepare_v_ciai(
+    new_test_like_index_vu_prepare_v_ciai_col varchar(max) collate latin1_general_ci_ai
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_v_ciai VALUES('ciains');
+GO
+INSERT INTO new_test_like_index_vu_prepare_v_ciai VALUES('ciaies ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_v_ciai VALUES(' ciaips');
+GO
+
+
+
+
+-- CHAR
+-- CS_AS
+CREATE TABLE new_test_like_index_vu_prepare_c_csas(
+    new_test_like_index_vu_prepare_c_csas_col char(6) collate latin1_general_cs_as
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_c_csas VALUES('csasns');
+GO
+INSERT INTO new_test_like_index_vu_prepare_c_csas VALUES('csases ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_c_csas VALUES(' csasps');
+GO
+
+-- CI_AS
+CREATE TABLE new_test_like_index_vu_prepare_c_cias(
+    new_test_like_index_vu_prepare_c_cias_col char(6) collate latin1_general_ci_as
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_c_cias VALUES('ciasns');
+GO
+INSERT INTO new_test_like_index_vu_prepare_c_cias VALUES('ciases ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_c_cias VALUES(' ciasps');
+GO
+
+-- CS_AI
+CREATE TABLE new_test_like_index_vu_prepare_c_csai(
+    new_test_like_index_vu_prepare_c_csai_col char(6) collate latin1_general_cs_ai
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_c_csai VALUES('csains');
+GO
+INSERT INTO new_test_like_index_vu_prepare_c_csai VALUES('csaies ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_c_csai VALUES(' csaips');
+GO
+
+-- CI_AI
+CREATE TABLE new_test_like_index_vu_prepare_c_ciai(
+    new_test_like_index_vu_prepare_c_ciai_col char(6) collate latin1_general_ci_ai
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_c_ciai VALUES('ciains');
+GO
+INSERT INTO new_test_like_index_vu_prepare_c_ciai VALUES('ciaies ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_c_ciai VALUES(' ciaips');
+GO
+
+
+
+
+-- TEXT
+-- CS_AS
+CREATE TABLE new_test_like_index_vu_prepare_t_csas(
+    new_test_like_index_vu_prepare_t_csas_col TEXT collate latin1_general_cs_as
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_t_csas VALUES('csasns');
+GO
+INSERT INTO new_test_like_index_vu_prepare_t_csas VALUES('csases ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_t_csas VALUES(' csasps');
+GO
+
+-- CI_AS
+CREATE TABLE new_test_like_index_vu_prepare_t_cias(
+    new_test_like_index_vu_prepare_t_cias_col TEXT collate latin1_general_ci_as
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_t_cias VALUES('ciasns');
+GO
+INSERT INTO new_test_like_index_vu_prepare_t_cias VALUES('ciases ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_t_cias VALUES(' ciasps');
+GO
+
+-- CS_AI
+CREATE TABLE new_test_like_index_vu_prepare_t_csai(
+    new_test_like_index_vu_prepare_t_csai_col TEXT collate latin1_general_cs_ai
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_t_csai VALUES('csains');
+GO
+INSERT INTO new_test_like_index_vu_prepare_t_csai VALUES('csaies ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_t_csai VALUES(' csaips');
+GO
+
+-- CI_AI
+CREATE TABLE new_test_like_index_vu_prepare_t_ciai(
+    new_test_like_index_vu_prepare_t_ciai_col TEXT collate latin1_general_ci_ai
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_t_ciai VALUES('ciains');
+GO
+INSERT INTO new_test_like_index_vu_prepare_t_ciai VALUES('ciaies ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_t_ciai VALUES(' ciaips');
+GO
+
+
+
+
+-- NVARCHAR
+-- CS_AS
+CREATE TABLE new_test_like_index_vu_prepare_nv_csas(
+   new_test_like_index_vu_prepare_nv_csas_col nvarchar(max) collate latin1_general_cs_as
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_nv_csas VALUES('csasns');
+GO
+INSERT INTO new_test_like_index_vu_prepare_nv_csas VALUES('csases ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_nv_csas VALUES(' csasps');
+GO
+
+-- CI_AS
+CREATE TABLE new_test_like_index_vu_prepare_nv_cias(
+    new_test_like_index_vu_prepare_nv_cias_col nvarchar(max) collate latin1_general_ci_as
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_nv_cias VALUES('ciasns');
+GO
+INSERT INTO new_test_like_index_vu_prepare_nv_cias VALUES('ciases ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_nv_cias VALUES(' ciasps');
+GO
+
+-- CS_AI
+CREATE TABLE new_test_like_index_vu_prepare_nv_csai(
+    new_test_like_index_vu_prepare_nv_csai_col nvarchar(max) collate latin1_general_cs_ai
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_nv_csai VALUES('csains');
+GO
+INSERT INTO new_test_like_index_vu_prepare_nv_csai VALUES('csaies ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_nv_csai VALUES(' csaips');
+GO
+
+-- CI_AI
+CREATE TABLE new_test_like_index_vu_prepare_nv_ciai(
+    new_test_like_index_vu_prepare_nv_ciai_col nvarchar(max) collate latin1_general_ci_ai
+);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_nv_ciai VALUES('ciains');
+GO
+INSERT INTO new_test_like_index_vu_prepare_nv_ciai VALUES('ciaies ');
+GO
+INSERT INTO new_test_like_index_vu_prepare_nv_ciai VALUES(' ciaips');
+GO
+

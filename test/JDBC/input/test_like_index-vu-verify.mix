@@ -2512,3 +2512,227 @@ GO
 
 SET BABELFISH_SHOWPLAN_ALL OFF;
 GO
+
+
+SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col LIKE 'csasns';
+GO
+SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col LIKE 'csases ';
+GO
+SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col LIKE ' csasps';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col LIKE 'ciasns';
+GO
+SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col LIKE 'ciases ';
+GO
+SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col LIKE ' ciasps';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col LIKE 'csains';
+GO
+SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col LIKE 'csaies ';
+GO
+SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col LIKE ' csaips';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col LIKE 'ciains';
+GO
+SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col LIKE 'ciaies ';
+GO
+SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col LIKE ' ciaips';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_c_csas_col 
+FROM new_test_like_index_vu_prepare_c_csas 
+WHERE new_test_like_index_vu_prepare_c_csas_col LIKE 'csasns';
+GO
+SELECT new_test_like_index_vu_prepare_c_csas_col 
+FROM new_test_like_index_vu_prepare_c_csas 
+WHERE new_test_like_index_vu_prepare_c_csas_col LIKE 'csases ';
+GO
+SELECT new_test_like_index_vu_prepare_c_csas_col 
+FROM new_test_like_index_vu_prepare_c_csas 
+WHERE new_test_like_index_vu_prepare_c_csas_col LIKE ' csasps';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_c_cias_col 
+FROM new_test_like_index_vu_prepare_c_cias 
+WHERE new_test_like_index_vu_prepare_c_cias_col LIKE 'ciasns';
+GO
+SELECT new_test_like_index_vu_prepare_c_cias_col 
+FROM new_test_like_index_vu_prepare_c_cias 
+WHERE new_test_like_index_vu_prepare_c_cias_col LIKE 'ciases ';
+GO
+SELECT new_test_like_index_vu_prepare_c_cias_col 
+FROM new_test_like_index_vu_prepare_c_cias 
+WHERE new_test_like_index_vu_prepare_c_cias_col LIKE ' ciasps';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_c_csai_col 
+FROM new_test_like_index_vu_prepare_c_csai 
+WHERE new_test_like_index_vu_prepare_c_csai_col LIKE 'csains';
+GO
+SELECT new_test_like_index_vu_prepare_c_csai_col 
+FROM new_test_like_index_vu_prepare_c_csai 
+WHERE new_test_like_index_vu_prepare_c_csai_col LIKE 'csaies ';
+GO
+SELECT new_test_like_index_vu_prepare_c_csai_col 
+FROM new_test_like_index_vu_prepare_c_csai 
+WHERE new_test_like_index_vu_prepare_c_csai_col LIKE ' csaips';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_c_ciai_col 
+FROM new_test_like_index_vu_prepare_c_ciai 
+WHERE new_test_like_index_vu_prepare_c_ciai_col LIKE 'ciains';
+GO
+SELECT new_test_like_index_vu_prepare_c_ciai_col 
+FROM new_test_like_index_vu_prepare_c_ciai 
+WHERE new_test_like_index_vu_prepare_c_ciai_col LIKE 'ciaies ';
+GO
+SELECT new_test_like_index_vu_prepare_c_ciai_col 
+FROM new_test_like_index_vu_prepare_c_ciai 
+WHERE new_test_like_index_vu_prepare_c_ciai_col LIKE ' ciaips';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col LIKE 'csasns';
+GO
+SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col LIKE 'csases ';
+GO
+SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col LIKE ' csasps';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col LIKE 'ciasns';
+GO
+SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col LIKE 'ciases ';
+GO
+SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col LIKE ' ciasps';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col LIKE 'csains';
+GO
+SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col LIKE 'csaies ';
+GO
+SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col LIKE ' csaips';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col LIKE 'ciains';
+GO
+SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col LIKE 'ciaies ';
+GO
+SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col LIKE ' ciaips';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col LIKE 'csasns';
+GO
+SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col LIKE 'csases ';
+GO
+SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col LIKE ' csasps';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col LIKE 'ciasns';
+GO
+SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col LIKE 'ciases ';
+GO
+SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col LIKE ' ciasps';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col LIKE 'csains';
+GO
+SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col LIKE 'csaies ';
+GO
+SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col LIKE ' csaips';
+GO
+
+
+SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col LIKE 'ciains';
+GO
+SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col LIKE 'ciaies ';
+GO
+SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col LIKE ' ciaips';
+GO

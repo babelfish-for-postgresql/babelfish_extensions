@@ -190,3 +190,52 @@ GO
 -- tsql
 DROP TABLE test_like_index_vu_prepare_t_common;
 GO
+
+
+DROP TABLE new_test_like_index_vu_prepare_v_csas
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_v_cias
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_v_csai
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_v_ciai
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_c_csas
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_c_cias
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_c_csai
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_c_ciai
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_t_csas
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_t_cias
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_t_csai
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_t_ciai
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_nv_csas
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_nv_cias
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_nv_csai
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_nv_ciai
+GO
