@@ -16,7 +16,9 @@
 #include "catalog/objectaccess.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef_d.h"
+#include "catalog/pg_attrdef.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_depend.h"	/* Required in handle_bbf_view_binding_on_object_drop to access pg_rewrite dependencies */
@@ -28,6 +30,7 @@
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_sequence.h"
 #include "commands/copy.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
