@@ -31,19 +31,19 @@ off
 ~~END~~
 
 
-select set_config('enable_self_join_elimination', 'off', false);
-go
-~~START~~
-text
-off
-~~END~~
-
-
 select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
 go
 ~~START~~
 text
 on
+~~END~~
+
+
+select set_config('enable_self_join_elimination', 'off', false);
+go
+~~START~~
+text
+off
 ~~END~~
 
 
