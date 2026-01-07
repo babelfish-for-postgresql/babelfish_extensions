@@ -521,7 +521,7 @@ BABEL-4484
 pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
-TestDatatypeAggSort
+TestDatatypeAggSort-before-16_12-or-17_8
 BABEL-2999
 BABEL-4606
 BABEL-4672
@@ -667,4 +667,5 @@ BABEL-4271
 comparison_op_index_scan-before-17_8-or-16_12
 BABEL-5788
 BABEL-1664
+string_aggregate
 babel_convert_with_style

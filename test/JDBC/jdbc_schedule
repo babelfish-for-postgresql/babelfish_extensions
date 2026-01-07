@@ -752,3 +752,6 @@ ignore#!#babel_convert_with_style-before-14_12-or-16_3-vu-cleanup
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-prepare
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-verify
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
+ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-prepare
+ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-verify
+ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-cleanup
