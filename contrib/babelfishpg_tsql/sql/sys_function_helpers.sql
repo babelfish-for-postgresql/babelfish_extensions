@@ -10932,11 +10932,9 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_money_to_string(
-    IN p_datatype TEXT,
-    IN p_moneyval NUMERIC,
-    IN p_style NUMERIC DEFAULT 0
-)
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_money_to_string(IN p_datatype TEXT,
+														IN p_moneyval NUMERIC,
+														IN p_style NUMERIC DEFAULT 0)
 RETURNS TEXT
 AS
 $BODY$
@@ -10951,18 +10949,17 @@ DECLARE
 	v_decimal_digits SMALLINT;
 	v_result TEXT;
     v_varchar_length TEXT;
-    v_default_format VARCHAR COLLATE "C" = '999,999,999,999,990.99';;
+    v_default_format VARCHAR COLLATE "C" = '999,999,999,999,990.99';
 BEGIN
-    -- Validate style parameter
+    v_style := floor(p_style)::SMALLINT;
+    v_digits := length(v_moneyabs::TEXT);
+    v_decimal_digits := scale(v_moneyabs);
+
     IF (scale(p_style) > 0) THEN
         RAISE USING MESSAGE := pg_catalog.format('Argument data type numeric is invalid for argument 3 of convert function.'),
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
     END IF;
-
-    v_style := floor(p_style)::SMALLINT;
-    v_digits := length(v_moneyabs::TEXT);
-    v_decimal_digits := scale(v_moneyabs);
 
     IF (v_decimal_digits > 0) THEN
         v_integral_digits := v_digits - v_decimal_digits - 1;
