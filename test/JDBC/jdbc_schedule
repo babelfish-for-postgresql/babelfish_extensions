@@ -746,6 +746,3 @@ ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-prepare
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-verify
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-cleanup
-
-# TODO: BABEL-6276
-ignore#!#babel_output_clause_concurrency_test
