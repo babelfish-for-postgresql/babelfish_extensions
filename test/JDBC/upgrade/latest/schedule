@@ -674,3 +674,4 @@ BABEL-5788
 BABEL-1664
 sys-fn_varbintohexstr
 babel_string_to_money_reg
+string_aggregate

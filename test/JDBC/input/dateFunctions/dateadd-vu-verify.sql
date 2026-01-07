@@ -127,7 +127,13 @@ GO
 SELECT ID, UdtDatetime2, DATEADD (WEEK, 15, UdtDatetime2) AS UDTDATETIME2 FROM UdtTable
 GO
 
+SELECT ID, UdtTimestamp, DATEADD (DAY, 2, UdtTimestamp) AS UDTTIMESTAMP FROM UdtTable
+GO
+
 SELECT ID, UdtTimestamp, DATEADD (MONTH, 45, UdtTimestamp) AS UDTTIMESTAMP FROM UdtTable
+GO
+
+SELECT ID, UdtTimestamp, DATEADD (SECOND, 464, UdtTimestamp) AS UDTTIMESTAMP FROM UdtTable
 GO
 
 SELECT ID, UdtSmalldatetime, DATEADD (YEAR, 9, UdtSmalldatetime) AS UDTSMALLDATETIME FROM UdtTable
