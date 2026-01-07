@@ -23,7 +23,15 @@ go
 create table babel_3293_t3(a3 int PRIMARY KEY, b3 int)
 go
 
-select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+
+select set_config('enable_self_join_elimination', 'off', false);
 go
 ~~START~~
 text
@@ -144,11 +152,10 @@ go
 text
 Query Text: select/*+ nestloop(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ * from babel_3293_t1 left outer      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 Gather
-  Workers Planned: 1
-  Single Copy: true
+  Workers Planned: 2
   ->  Nested Loop
         Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
-        ->  Bitmap Heap Scan on babel_3293_t1
+        ->  Parallel Bitmap Heap Scan on babel_3293_t1
               Recheck Cond: (b1 = 1)
               ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
                     Index Cond: (b1 = 1)
@@ -171,11 +178,10 @@ go
 text
 Query Text: select/*+ nestloop(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ * from BABEL_3293_t1 LeFt ouTer      join Babel_3293_T2 on BABEL_3293_t1.a1 = BABEL_3293_t2.a2 where b1 = 1 and b2 = 1
 Gather
-  Workers Planned: 1
-  Single Copy: true
+  Workers Planned: 2
   ->  Nested Loop
         Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
-        ->  Bitmap Heap Scan on babel_3293_t1
+        ->  Parallel Bitmap Heap Scan on babel_3293_t1
               Recheck Cond: (b1 = 1)
               ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
                     Index Cond: (b1 = 1)
@@ -254,13 +260,17 @@ go
 text
 Query Text: select/*+ mergejoin(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ * from babel_3293_t1 left outer       join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.a1 = babel_3293_t3.a3
 Gather
-  Workers Planned: 1
-  Single Copy: true
+  Workers Planned: 3
   ->  Nested Loop
+        Disabled: true
         ->  Merge Left Join
               Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
-              ->  Index Scan using babel_3293_t1_pkey on babel_3293_t1
-              ->  Index Scan using babel_3293_t2_pkey on babel_3293_t2
+              ->  Sort
+                    Sort Key: babel_3293_t1.a1
+                    ->  Parallel Seq Scan on babel_3293_t1
+              ->  Sort
+                    Sort Key: babel_3293_t2.a2
+                    ->  Seq Scan on babel_3293_t2
         ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
               Index Cond: (a3 = babel_3293_t1.a1)
 ~~END~~
@@ -280,6 +290,8 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Nested Loop
+        Disabled: true
+        Join Filter: (babel_3293_t1.a1 = babel_3293_t3.a3)
         ->  Merge Join
               Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
               ->  Sort
@@ -295,7 +307,7 @@ Gather
                           ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
                                 Index Cond: (b2 = 1)
         ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
-              Index Cond: (a3 = babel_3293_t1.a1)
+              Index Cond: (a3 = babel_3293_t2.a2)
               Filter: (b3 = 1)
 ~~END~~
 
@@ -344,14 +356,13 @@ go
 ~~START~~
 text
 Query Text: select/*+ nestloop(babel_3293_t1 babel_3293_t2) nestloop(babel_3293_t1 babel_3293_t2 babel_3293_t3) leading(babel_3293_t1 babel_3293_t2 babel_3293_t3)*/ * from babel_3293_t1 left outer      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner      join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Nested Loop
-        Join Filter: (babel_3293_t1.a1 = babel_3293_t3.a3)
+Nested Loop
+  Join Filter: (babel_3293_t1.a1 = babel_3293_t3.a3)
+  ->  Gather
+        Workers Planned: 2
         ->  Nested Loop
               Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
-              ->  Bitmap Heap Scan on babel_3293_t1
+              ->  Parallel Bitmap Heap Scan on babel_3293_t1
                     Recheck Cond: (b1 = 1)
                     ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
                           Index Cond: (b1 = 1)
@@ -360,9 +371,9 @@ Gather
                           Recheck Cond: (b2 = 1)
                           ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
                                 Index Cond: (b2 = 1)
-        ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
-              Index Cond: (a3 = babel_3293_t2.a2)
-              Filter: (b3 = 1)
+  ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
+        Index Cond: (a3 = babel_3293_t2.a2)
+        Filter: (b3 = 1)
 ~~END~~
 
 ~~START~~
@@ -621,11 +632,10 @@ go
 text
 Query Text: select/*+ set(enable_hashjoin off) set(enable_mergejoin off) */ * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1                  
 Gather
-  Workers Planned: 1
-  Single Copy: true
+  Workers Planned: 2
   ->  Nested Loop
         Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
-        ->  Bitmap Heap Scan on babel_3293_t1
+        ->  Parallel Bitmap Heap Scan on babel_3293_t1
               Recheck Cond: (b1 = 1)
               ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
                     Index Cond: (b1 = 1)
@@ -778,19 +788,15 @@ go
 ~~START~~
 text
 Query Text: select/*+ nestloop(babel_3293_t1 babel_3293_t2) mergejoin(babel_3293_t1 babel_3293_t2 babel_3293_t3) set(enable_hashjoin off) leading(babel_3293_t1 babel_3293_t2 babel_3293_t3)*/ * from babel_3293_t1 inner      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner       join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1                              
-Gather
-  Workers Planned: 3
-  ->  Merge Join
-        Merge Cond: (babel_3293_t3.a3 = babel_3293_t1.a1)
-        ->  Sort
-              Sort Key: babel_3293_t3.a3
-              ->  Parallel Seq Scan on babel_3293_t3
-                    Filter: (b3 = 1)
-        ->  Sort
-              Sort Key: babel_3293_t1.a1
+Merge Join
+  Merge Cond: (babel_3293_t1.a1 = babel_3293_t3.a3)
+  ->  Sort
+        Sort Key: babel_3293_t1.a1
+        ->  Gather
+              Workers Planned: 2
               ->  Nested Loop
                     Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
-                    ->  Bitmap Heap Scan on babel_3293_t1
+                    ->  Parallel Bitmap Heap Scan on babel_3293_t1
                           Recheck Cond: (b1 = 1)
                           ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
                                 Index Cond: (b1 = 1)
@@ -799,6 +805,12 @@ Gather
                                 Recheck Cond: (b2 = 1)
                                 ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
                                       Index Cond: (b2 = 1)
+  ->  Sort
+        Sort Key: babel_3293_t3.a3
+        ->  Gather
+              Workers Planned: 3
+              ->  Parallel Seq Scan on babel_3293_t3
+                    Filter: (b3 = 1)
 ~~END~~
 
 ~~START~~
@@ -815,10 +827,9 @@ text
 Query Text: select/*+ indexscan(babel_3293_t1 index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210) indexscan(babel_3293_t2 index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e) nestloop(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ * from babel_3293_t1                                     inner      join babel_3293_t2                                 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 Gather
   Workers Planned: 1
-  Single Copy: true
   ->  Nested Loop
         Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
-        ->  Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1
+        ->  Parallel Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1
               Index Cond: (b1 = 1)
         ->  Materialize
               ->  Index Scan using index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e on babel_3293_t2
@@ -864,10 +875,9 @@ text
 Query Text: select/*+ indexscan(babel_3293_t1 index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210) indexscan(babel_3293_t2 index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e) set(enable_hashjoin off) set(enable_mergejoin off) */ * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1                                                                                                                                      
 Gather
   Workers Planned: 1
-  Single Copy: true
   ->  Nested Loop
         Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
-        ->  Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1
+        ->  Parallel Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1
               Index Cond: (b1 = 1)
         ->  Materialize
               ->  Index Scan using index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e on babel_3293_t2
@@ -1334,6 +1344,14 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
+select set_config('enable_self_join_elimination', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+
 select set_config('babelfishpg_tsql.enable_pg_hint', 'off', false);
 go
 ~~START~~
