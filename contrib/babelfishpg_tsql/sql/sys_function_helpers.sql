@@ -10824,9 +10824,9 @@ BEGIN
 		END IF;
 	WHEN 'sys.money'::regtype THEN
         IF NOT p_style_specified AND v_style = -1 THEN
-            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(19,4), 0, 'money');
+            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(19,4));
         ELSE
-            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(19,4), p_style, 'money');
+            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(19,4), p_style);
         END IF;
 	WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
 		IF lower(typename) LIKE 'nvarchar%' THEN
@@ -10842,9 +10842,9 @@ BEGIN
 		END IF;
     WHEN 'sys.smallmoney'::regtype THEN 
         IF NOT p_style_specified AND v_style = -1 THEN
-            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(10,4), 0, 'smallmoney');
+            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(10,4));
         ELSE
-            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(10,4), p_style, 'smallmoney');
+            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(10,4), p_style);
         END IF;
 	ELSE
 		RETURN CAST(arg AS sys.VARCHAR);
@@ -10935,24 +10935,23 @@ STABLE;
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_money_to_string(
     IN p_datatype TEXT,
     IN p_moneyval NUMERIC,
-    IN p_style NUMERIC DEFAULT 0,
-    IN p_money_type TEXT DEFAULT 'money'
+    IN p_style NUMERIC DEFAULT 0
 )
 RETURNS TEXT
 AS
 $BODY$
 DECLARE
     v_style SMALLINT;
-    v_format VARCHAR COLLATE "C";
-    v_moneyval NUMERIC;
-    v_moneysign SMALLINT;
-    v_moneyabs NUMERIC;
-    v_digits SMALLINT;
-    v_integral_digits SMALLINT;
-    v_decimal_digits SMALLINT;
-    v_result TEXT;
+	v_format VARCHAR COLLATE "C";
+	v_moneyval NUMERIC(19,4) := p_moneyval::NUMERIC(19,4);
+	v_moneysign NUMERIC(19,4) := sign(v_moneyval);
+	v_moneyabs NUMERIC(19,4) := abs(v_moneyval);
+	v_digits SMALLINT;
+	v_integral_digits SMALLINT;
+	v_decimal_digits SMALLINT;
+	v_result TEXT;
     v_varchar_length TEXT;
-    v_default_format VARCHAR COLLATE "C";
+    v_default_format VARCHAR COLLATE "C" = '999,999,999,999,990.99';;
 BEGIN
     -- Validate style parameter
     IF (scale(p_style) > 0) THEN
@@ -10961,17 +10960,6 @@ BEGIN
                     HINT := 'Change "style" parameter to the proper value and try again.';
     END IF;
 
-    -- Set precision based on money type
-    IF pg_catalog.lower(p_money_type) = 'smallmoney' THEN
-        v_moneyval := p_moneyval::NUMERIC(10,4);
-        v_default_format := '999,990.99';
-    ELSE
-        v_moneyval := p_moneyval::NUMERIC(19,4);
-        v_default_format := '999,999,999,999,990.99';
-    END IF;
-
-    v_moneysign := sign(v_moneyval)::SMALLINT;
-    v_moneyabs := abs(v_moneyval);
     v_style := floor(p_style)::SMALLINT;
     v_digits := length(v_moneyabs::TEXT);
     v_decimal_digits := scale(v_moneyabs);
