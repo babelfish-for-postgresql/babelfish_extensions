@@ -2105,7 +2105,7 @@ BEGIN
     IF arg_datatype = 'smalldatetime' THEN
         return sys.dateadd_internal_datetime(datepart, num, startdate, 2);
     END IF;
-    IF (arg_datatype = 'datetime' OR arg_datatype = 'timestamp') THEN
+    IF arg_datatype = 'datetime' THEN
         return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
     END IF;
     IF arg_datatype = 'datetime2' THEN
@@ -2114,7 +2114,7 @@ BEGIN
     IF arg_datatype = 'datetimeoffset' THEN
         return sys.dateadd_internal_df(datepart, num, startdate);
     END IF;
-    RAISE EXCEPTION 'Conversion failed when converting date and/or time from %.', pg_typeof(startdate);
+    RAISE EXCEPTION 'Conversion failed when converting date and/or time from %.', arg_datatype;
 END;
 $$
 STRICT
