@@ -756,6 +756,3 @@ ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
 ignore#!#temp_catalog_inval-vu-prepare
 ignore#!#temp_catalog_inval-vu-verify
 ignore#!#temp_catalog_inval-vu-cleanup
-
-# TODO: BABEL-6276
-ignore#!#babel_output_clause_concurrency_test
