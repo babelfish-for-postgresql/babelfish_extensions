@@ -478,28 +478,21 @@ fixeddecimal2str(int64 val, char *buffer,
 static inline const char *
 skip_money_spaces(const char *ptr)
 {
-    while (*ptr)
+	while (*ptr)
     {
         unsigned char c = (unsigned char)*ptr;
-        
-        /* Standard whitespace or single-byte NBSP (0xA0) */
+
+         /* Standard whitespace or single-byte NBSP (0xA0) */
         if (isspace(c) || c == 0xA0)
-        {
             ptr++;
-            continue;
-        }
-        
-        /* UTF-8 NBSP (0xC2 0xA0) */
-        if (c == 0xC2 && (unsigned char)ptr[1] == 0xA0)
-        {
+		 /* UTF-8 NBSP (0xC2 0xA0) */	
+        else if (c == 0xC2 && (unsigned char)ptr[1] == 0xA0)
             ptr += 2;
-            continue;
-        }
-        
-        break;
+        else
+            break;
     }
     return ptr;
-}
+}	
 
 /*
  * scanfixeddecimal --- try to parse a string into a fixeddecimal.
@@ -572,7 +565,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 		}
 	}
 
-	// /* skip leading spaces */
+	/* skip leading spaces */
 	ptr = skip_money_spaces(ptr);
 	
 	currency_symbol_len = is_valid_currency_symbol(ptr);

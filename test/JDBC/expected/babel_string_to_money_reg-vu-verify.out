@@ -146,7 +146,46 @@ money
 0.6432
 ~~END~~
 
+SELECT CAST(NCHAR(160) + ' ' AS MONEY);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
 --Invalid cases
+SELECT CAST(NCHAR(160) + '123.45' AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value " 123.45" to money)~~
+
+SELECT CAST(NCHAR(160) + NCHAR(160) + '99.99' AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "  99.99" to money)~~
+
+SELECT CAST(NCHAR(160) + '123.45' + NCHAR(160) AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value " 123.45 " to money)~~
+
+SELECT CAST(NCHAR(160) + 'hello' AS MONEY)
+GO
+~~START~~
+money
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value " hello" to money)~~
+
 SELECT CAST('\\1234' AS MONEY);
 GO
 ~~ERROR (Code: 293)~~
