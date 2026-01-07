@@ -10992,9 +10992,9 @@ BEGIN
         v_result := pg_catalog.btrim(to_char(v_moneyval, v_default_format));
     END IF;
 
-    IF (v_moneysign = -1 AND pg_catalog.left(ltrim(v_result), 1) COLLATE "C" != '-' COLLATE "C") THEN
+     IF (v_moneysign = -1 AND NOT starts_with(ltrim(v_result), '-')) THEN
         v_result := '-' || pg_catalog.ltrim(v_result);
-    ELSIF (v_moneysign != -1 AND pg_catalog.left(ltrim(v_result), 1) COLLATE "C" = '-' COLLATE "C") THEN
+    ELSIF (v_moneysign != -1 AND starts_with(ltrim(v_result), '-')) THEN
         v_result := pg_catalog.ltrim(v_result, '-');
     END IF;
 
