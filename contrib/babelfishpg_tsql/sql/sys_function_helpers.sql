@@ -87,7 +87,7 @@ RETURNS TEXT
 AS 'babelfishpg_tsql', 'bbf_get_login_default_db'
 LANGUAGE C STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_date_to_string(IN p_datatype TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
                                                                  IN p_style NUMERIC DEFAULT 20)
 RETURNS TEXT
@@ -264,7 +264,7 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_datetime_to_string(IN p_datatype TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT,
                                                                      IN p_src_datatype TEXT,
                                                                      IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE,
                                                                      IN p_style NUMERIC DEFAULT 0)
@@ -2205,7 +2205,7 @@ LANGUAGE plpgsql
 IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_time_to_string(IN p_datatype TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT,
                                                                  IN p_src_datatype TEXT,
                                                                  IN p_timeval TIME(6) WITHOUT TIME ZONE,
                                                                  IN p_style NUMERIC DEFAULT 25)
@@ -10800,34 +10800,34 @@ BEGIN
     CASE pg_typeof(arg)
 	WHEN 'date'::regtype THEN
 		IF NOT p_style_specified AND v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
+			RETURN sys.babelfish_conv_date_to_string(typename, arg);
 		ELSE
-			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
+			RETURN sys.babelfish_conv_date_to_string(typename, arg, p_style);
 		END IF;
 	WHEN 'time'::regtype THEN
 		IF NOT p_style_specified AND v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
+			RETURN sys.babelfish_conv_time_to_string(typename, 'TIME', arg);
 		ELSE
-			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
+			RETURN sys.babelfish_conv_time_to_string(typename, 'TIME', arg, p_style);
 		END IF;
 	WHEN 'sys.datetime'::regtype THEN
 		IF NOT p_style_specified AND v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
+			RETURN sys.babelfish_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
 		ELSE
-			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+			RETURN sys.babelfish_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
 		END IF;
 	WHEN 'float'::regtype THEN
 		IF NOT p_style_specified AND v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
+			RETURN sys.babelfish_conv_float_to_string(typename, arg);
 		ELSE
-			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
+			RETURN sys.babelfish_conv_float_to_string(typename, arg, p_style);
 		END IF;
 	WHEN 'sys.money'::regtype THEN
-		IF NOT p_style_specified AND v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
-		ELSE
-			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
-		END IF;
+        IF NOT p_style_specified AND v_style = -1 THEN
+            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(19,4), 0, 'money');
+        ELSE
+            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(19,4), p_style, 'money');
+        END IF;
 	WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
 		IF lower(typename) LIKE 'nvarchar%' THEN
 			RETURN (sys.varbinarysysnvarchar(arg, -1, true));
@@ -10842,9 +10842,9 @@ BEGIN
 		END IF;
     WHEN 'sys.smallmoney'::regtype THEN 
         IF NOT p_style_specified AND v_style = -1 THEN
-            RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4));
+            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(10,4), 0, 'smallmoney');
         ELSE
-            RETURN sys.babelfish_try_conv_smallmoney_to_string(typename, arg::numeric(10,4), p_style);
+            RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(10,4), p_style, 'smallmoney');
         END IF;
 	ELSE
 		RETURN CAST(arg AS sys.VARCHAR);
@@ -10932,147 +10932,89 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT,
-														IN p_moneyval NUMERIC,
-														IN p_style NUMERIC DEFAULT 0)
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_money_to_string(
+    IN p_datatype TEXT,
+    IN p_moneyval NUMERIC,
+    IN p_style NUMERIC DEFAULT 0,
+    IN p_money_type TEXT DEFAULT 'money'
+)
 RETURNS TEXT
 AS
 $BODY$
 DECLARE
-	v_style SMALLINT;
-	v_format VARCHAR COLLATE "C";
-	v_moneyval NUMERIC(19,4) := p_moneyval::NUMERIC(19,4);
-	v_moneysign NUMERIC(19,4) := sign(v_moneyval);
-	v_moneyabs NUMERIC(19,4) := abs(v_moneyval);
-	v_digits SMALLINT;
-	v_integral_digits SMALLINT;
-	v_decimal_digits SMALLINT;
-	v_result TEXT;
+    v_style SMALLINT;
+    v_format VARCHAR COLLATE "C";
+    v_moneyval NUMERIC;
+    v_moneysign SMALLINT;
+    v_moneyabs NUMERIC;
+    v_digits SMALLINT;
+    v_integral_digits SMALLINT;
+    v_decimal_digits SMALLINT;
+    v_result TEXT;
     v_varchar_length TEXT;
+    v_default_format VARCHAR COLLATE "C";
 BEGIN
+    -- Validate style parameter
     IF (scale(p_style) > 0) THEN
-		RAISE invalid_parameter_value;
-	END IF;
-	v_style :=floor(p_style);
-	v_digits := length(v_moneyabs::TEXT);
-	v_decimal_digits := scale(v_moneyabs);
-	IF (v_decimal_digits > 0) THEN
-		v_integral_digits := v_digits - v_decimal_digits - 1;
-	ELSE
-		v_integral_digits := v_digits;
-	END IF;
-	IF (v_style = 0) THEN
-		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
-		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
-	ELSIF (v_style = 2 OR v_style = 126) THEN
-		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
-		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
-	ELSE
-     -- Default format for all other style numbers
-		v_result := pg_catalog.btrim(to_char(v_moneyval, '999,999,999,999,990.99'));
-	END IF;
-    -- Check if result has correct sign
-    IF (v_moneysign::SMALLINT = -1 AND left(ltrim(v_result), 1) COLLATE "C" != '-' COLLATE "C") THEN
-        v_result := '-' || ltrim(v_result);
-    ELSIF (v_moneysign::SMALLINT != -1 AND left(ltrim(v_result), 1) COLLATE "C" != '-' COLLATE "C") THEN
-        v_result := ltrim(v_result, '-');
+        RAISE USING MESSAGE := pg_catalog.format('Argument data type numeric is invalid for argument 3 of convert function.'),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+    END IF;
+
+    -- Set precision based on money type
+    IF pg_catalog.lower(p_money_type) = 'smallmoney' THEN
+        v_moneyval := p_moneyval::NUMERIC(10,4);
+        v_default_format := '999,990.99';
+    ELSE
+        v_moneyval := p_moneyval::NUMERIC(19,4);
+        v_default_format := '999,999,999,999,990.99';
+    END IF;
+
+    v_moneysign := sign(v_moneyval)::SMALLINT;
+    v_moneyabs := abs(v_moneyval);
+    v_style := floor(p_style)::SMALLINT;
+    v_digits := length(v_moneyabs::TEXT);
+    v_decimal_digits := scale(v_moneyabs);
+
+    IF (v_decimal_digits > 0) THEN
+        v_integral_digits := v_digits - v_decimal_digits - 1;
+    ELSE
+        v_integral_digits := v_digits;
+    END IF;
+
+    IF (v_style = 0) THEN
+        v_format := (pow(10, v_integral_digits) - 10)::TEXT || 'D99';
+        v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
+    ELSIF (v_style = 2 OR v_style = 126) THEN
+        v_format := (pow(10, v_integral_digits) - 10)::TEXT || 'D9999';
+        v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
+    ELSE
+        v_result := pg_catalog.btrim(to_char(v_moneyval, v_default_format));
+    END IF;
+
+    IF (v_moneysign = -1 AND pg_catalog.left(ltrim(v_result), 1) COLLATE "C" != '-' COLLATE "C") THEN
+        v_result := '-' || pg_catalog.ltrim(v_result);
+    ELSIF (v_moneysign != -1 AND pg_catalog.left(ltrim(v_result), 1) COLLATE "C" = '-' COLLATE "C") THEN
+        v_result := pg_catalog.ltrim(v_result, '-');
     END IF;
 
     IF (pg_catalog.lower(p_datatype) LIKE '%varchar%(%' OR pg_catalog.lower(p_datatype) LIKE '%char%(%') THEN
-		v_varchar_length := substring(p_datatype COLLATE "C" FROM '\(([0-9]+|MAX)\)');
-		IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
-			RAISE STRING_DATA_LENGTH_MISMATCH; 
-		END IF;
-	END IF;
+        v_varchar_length := substring(p_datatype COLLATE "C" FROM '\(([0-9]+|MAX)\)');
+        IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
+            RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a money value to varchar.'),
+                        DETAIL := 'The converted money value exceeds the specified varchar length.',
+                        HINT := 'Use a larger varchar size or a different conversion style.';
+        END IF;
+    END IF;
 
-	RETURN v_result;
-EXCEPTION
-	WHEN invalid_parameter_value THEN
-		RAISE USING MESSAGE := pg_catalog.format('Argument data type numeric is invalid for argument 3 of convert function.'),
-					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-					HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN STRING_DATA_LENGTH_MISMATCH THEN
-        RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a money value to varchar.'),
-						DETAIL := 'The converted money value exceeds the specified varchar length.',
-						HINT := 'Use a larger varchar size or a different conversion style.';
+    RETURN v_result;
 END;
 $BODY$
 LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_smallmoney_to_string(IN p_datatype TEXT,
-														IN p_smallmoneyval NUMERIC,
-														IN p_style NUMERIC DEFAULT 0)
-RETURNS TEXT
-AS
-$BODY$
-DECLARE
-	v_style SMALLINT;
-	v_format VARCHAR COLLATE "C";
-	v_smallmoneyval NUMERIC(10,4) := p_smallmoneyval::NUMERIC(10,4);
-	v_smallmoneysign NUMERIC(10,4) := sign(v_smallmoneyval);
-	v_smallmoneyabs NUMERIC(10,4) := abs(v_smallmoneyval);
-	v_digits SMALLINT;
-	v_integral_digits SMALLINT;
-	v_decimal_digits SMALLINT;
-	v_result TEXT;
-    v_varchar_length TEXT;
-BEGIN
-    IF (scale(p_style) > 0) THEN
-		RAISE invalid_parameter_value;
-	END IF;
-	v_style := CAST(floor(p_style) AS SMALLINT);
-	v_digits := length(v_smallmoneyabs::TEXT);
-	v_decimal_digits := scale(v_smallmoneyabs);
-	IF (v_decimal_digits > 0) THEN
-		v_integral_digits := v_digits - v_decimal_digits - 1;
-	ELSE
-		v_integral_digits := v_digits;
-	END IF;
-	IF (v_style = 0) THEN
-		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
-		v_result := pg_catalog.btrim(to_char(v_smallmoneyval, v_format));
-	ELSIF (v_style = 2 OR v_style = 126) THEN
-		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
-		v_result := pg_catalog.btrim(to_char(v_smallmoneyval, v_format));
-	ELSE
-     -- Default format for all other style numbers (style 1 uses comma formatting)
-		v_result := pg_catalog.btrim(to_char(v_smallmoneyval, '999,990.99'));
-	END IF;
-     -- Check if result has correct sign
-    IF (v_smallmoneysign::SMALLINT = -1 AND left(ltrim(v_result), 1) COLLATE "C" != '-' COLLATE "C") THEN
-        v_result := '-' || ltrim(v_result);
-    ELSIF (v_smallmoneysign::SMALLINT != -1 AND left(ltrim(v_result), 1) COLLATE "C" = '-' COLLATE "C") THEN
-        v_result := ltrim(v_result, '-');
-    END IF;
-
-    IF (pg_catalog.lower(p_datatype) LIKE '%varchar%(%' OR pg_catalog.lower(p_datatype) LIKE '%char%(%') THEN
-		v_varchar_length := substring(p_datatype COLLATE "C" FROM '\(([0-9]+|MAX)\)');
-		IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
-			RAISE STRING_DATA_LENGTH_MISMATCH; 
-		END IF;
-	END IF;
-
-	RETURN v_result;
-EXCEPTION
-	WHEN invalid_parameter_value THEN
-		RAISE USING MESSAGE := pg_catalog.format('Argument data type numeric is invalid for argument 3 of convert function.'),
-					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-					HINT := 'Change "style" parameter to the proper value and try again.';
-    
-    WHEN STRING_DATA_LENGTH_MISMATCH THEN
-        RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a money value to varchar.'),
-						DETAIL := 'The converted money value exceeds the specified varchar length.',
-						HINT := 'Use a larger varchar size or a different conversion style.';                   
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_float_to_string(IN p_datatype TEXT,
 														  IN p_floatval FLOAT,
 														  IN p_style NUMERIC DEFAULT 0)
 RETURNS TEXT
