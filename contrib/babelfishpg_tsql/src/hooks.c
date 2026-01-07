@@ -8426,6 +8426,44 @@ find_object_in_enr(Oid catalog_oid, Oid object_id)
 }
 
 static Node*
+tsql_set_typmod_aggref(ParseState *pstate, Node *AggExp)
+{
+	Aggref		*aggref = (Aggref *) AggExp;
+	char		*aggFuncName = get_func_name(aggref->aggfnoid);
+
+	/* Handle MIN/MAX for char/nchar types to preserve typmod */
+	if (aggref->args && aggFuncName && strlen(aggFuncName) == 3 &&
+		(strncmp(aggFuncName, "min", 3) == 0 || strncmp(aggFuncName, "max", 3) == 0) &&
+		((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(aggref->aggtype) ||
+		 (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(aggref->aggtype)))
+	{
+		TargetEntry	*te = (TargetEntry *) linitial(aggref->args);
+		Oid			expr_type = exprType((Node *) te->expr);
+
+		/* Only process if input type matches aggregate type */
+		if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(expr_type) ||
+			(*common_utility_plugin_ptr->is_tsql_nchar_datatype)(expr_type))
+		{
+			int32	rettypmod = exprTypmod((Node *) te->expr);
+
+			if (rettypmod != -1)
+			{
+				AggExp = coerce_to_target_type(pstate, AggExp,
+											 exprType(AggExp),
+											 aggref->aggtype,
+											 rettypmod,
+											 COERCION_IMPLICIT,
+											 COERCE_IMPLICIT_CAST,
+											 -1);
+			}
+		}
+	}
+	if (aggFuncName)
+		pfree(aggFuncName);
+	return AggExp;
+}
+
+static Node*
 tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexpr)
 {
 		OpExpr				*op = (OpExpr *) OpExp;
@@ -8510,6 +8548,11 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 			}
 			break;
 		}
+		case T_Aggref:
+			{
+				expr = tsql_set_typmod_aggref(pstate, expr);
+				break;
+			}
 
 		default:
 			break;
