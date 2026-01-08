@@ -474,19 +474,19 @@ BEGIN
       RETURN NULL;
    END IF;
 
-   v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+   v_fractions := p_fractions::VARCHAR;
    v_precision := p_precision::SMALLINT;
 
    IF (scale(p_precision) > 0) THEN
       RAISE most_specific_type_mismatch;
-   ELSIF ((p_year::SMALLINT NOT BETWEEN 1 AND 9999) OR
-       (p_month::SMALLINT NOT BETWEEN 1 AND 12) OR
-       (p_day::SMALLINT NOT BETWEEN 1 AND 31) OR
-       (p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
-       (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
-       (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
-       (p_fractions::INT NOT BETWEEN 0 AND 9999999) OR
-       (p_fractions::INT != 0 AND char_length(v_fractions) > v_precision))
+   ELSIF ((p_year NOT BETWEEN 1 AND 9999) OR
+       (p_month NOT BETWEEN 1 AND 12) OR
+       (p_day NOT BETWEEN 1 AND 31) OR
+       (p_hour NOT BETWEEN 0 AND 23) OR
+       (p_minute NOT BETWEEN 0 AND 59) OR
+       (p_seconds NOT BETWEEN 0 AND 59) OR
+       (p_fractions NOT BETWEEN 0 AND 9999999) OR
+       (p_fractions != 0 AND char_length(v_fractions) > v_precision))
    THEN
       RAISE invalid_datetime_format;
    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
@@ -494,14 +494,14 @@ BEGIN
    END IF;
 
    v_calc_seconds := pg_catalog.format('%s.%s',
-                            floor(p_seconds)::SMALLINT,
+                            p_seconds,
                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, v_precision))::NUMERIC;
 
-   v_resdatetime := make_timestamp(floor(p_year)::SMALLINT,
-                         floor(p_month)::SMALLINT,
-                         floor(p_day)::SMALLINT,
-                         floor(p_hour)::SMALLINT,
-                         floor(p_minute)::SMALLINT,
+   v_resdatetime := make_timestamp(p_year,
+                         p_month,
+                         p_day,
+                         p_hour,
+                         p_minute,
                          v_calc_seconds);
 
    v_string := v_resdatetime::pg_catalog.text;
