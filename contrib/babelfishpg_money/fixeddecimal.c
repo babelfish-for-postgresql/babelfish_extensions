@@ -531,7 +531,13 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	 /* skip leading spaces */
 	ptr = skip_money_spaces(ptr);
 
-    /* Rejects NBSP at leading position */ 
+    /* 
+	 * NBSP (non-breaking space) handling at leading positions:
+	 * - Valid: NBSP followed by trailing whitespace (eg: NCHAR(160) + ' ')
+     * - Invalid: NBSP followed by numeric literals (eg: NCHAR(160) + '123.45')
+     * 
+     * NBSP encodings checked: 0xA0 (Latin-1) and 0xC2 0xA0 (UTF-8)
+	 */ 
 	if (ptr > original && *ptr != '\0')
 	{
 		for (const char *check = original; check < ptr; check++)
