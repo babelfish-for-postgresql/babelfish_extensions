@@ -646,3 +646,4 @@ BABEL-5788
 BABEL-1664
 babel_binary
 sys-fn_varbintohexstr
+babel_string_to_money_reg
