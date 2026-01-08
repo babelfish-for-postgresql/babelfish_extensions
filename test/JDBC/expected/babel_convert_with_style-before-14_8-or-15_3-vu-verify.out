@@ -1060,21 +1060,27 @@ time
 
 SELECT CONVERT(DATETIME, 'invalid_datetime', 0) AS invalid_datetime;
 GO
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
 
 SELECT CONVERT(DATE, 'invalid_date', 0) AS invalid_date;
 GO
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting date from character string.)~~
 
 SELECT CONVERT(TIME, 'invalid_time', 0) AS invalid_time;
 GO
+~~START~~
+time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: Conversion failed when converting time from character string.)~~
 
 
 -- Test DATETIME procedures
