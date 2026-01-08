@@ -667,3 +667,4 @@ BABEL-5788
 BABEL-1664
 string_aggregate
 babel_string_to_money_reg
+babel_convert_with_style
