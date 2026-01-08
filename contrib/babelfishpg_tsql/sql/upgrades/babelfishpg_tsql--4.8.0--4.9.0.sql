@@ -897,9 +897,9 @@ AS
 $BODY$
 BEGIN
 	IF try THEN
-	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style, p_style_specified);
+	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
     ELSE
-	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style, p_style_specified);
+	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
     END IF;
 END;
 $BODY$
@@ -1034,18 +1034,6 @@ BEGIN
         ELSE
             RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(19,4), p_style);
         END IF;
-	WHEN 'bytea'::regtype, 'sys.varbinary'::regtype THEN
-		IF lower(typename) LIKE 'nvarchar%' THEN
-			RETURN (sys.varbinarysysnvarchar(arg, -1, true));
-		ELSE
-			RETURN CAST(arg AS sys.VARCHAR);
-		END IF;
-	WHEN 'sys.binary'::regtype THEN
-		IF lower(typename) LIKE 'nvarchar%' THEN
-			RETURN (sys.binarysysnvarchar(arg, -1, true));
-		ELSE
-			RETURN CAST(arg AS sys.VARCHAR);
-		END IF;
     WHEN 'sys.smallmoney'::regtype THEN 
         IF NOT p_style_specified AND v_style = -1 THEN
             RETURN sys.babelfish_conv_money_to_string(typename, arg::numeric(10,4));
