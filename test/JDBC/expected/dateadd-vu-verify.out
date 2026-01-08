@@ -315,16 +315,31 @@ int#!#datetime2#!#datetime2
 ~~END~~
 
 
+SELECT ID, UdtTimestamp, DATEADD (DAY, 2, UdtTimestamp) AS UDTTIMESTAMP FROM UdtTable
+GO
+~~START~~
+int#!#binary#!#binary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from timestamp.)~~
+
+
 SELECT ID, UdtTimestamp, DATEADD (MONTH, 45, UdtTimestamp) AS UDTTIMESTAMP FROM UdtTable
 GO
 ~~START~~
 int#!#binary#!#binary
-1#!#323032342D31322D#!#323030382D30332D
-2#!#323033382D30312D#!#323030382D30332D
-3#!#313930302D30312D#!#323030382D30332D
-4#!#323033382D30312D#!#323030382D30332D
-5#!#3230323431323132#!#323030382D30332D
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from timestamp.)~~
+
+
+SELECT ID, UdtTimestamp, DATEADD (SECOND, 464, UdtTimestamp) AS UDTTIMESTAMP FROM UdtTable
+GO
+~~START~~
+int#!#binary#!#binary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from timestamp.)~~
 
 
 SELECT ID, UdtSmalldatetime, DATEADD (YEAR, 9, UdtSmalldatetime) AS UDTSMALLDATETIME FROM UdtTable
