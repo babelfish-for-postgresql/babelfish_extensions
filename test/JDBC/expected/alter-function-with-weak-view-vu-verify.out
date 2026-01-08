@@ -380,7 +380,7 @@ AS
 BEGIN
     RETURN UPPER(LEFT(@category, 3)) + '-' + 
            FORMAT(@order_id, 'D5') + '-' +  -- Changed format
-           FORMAT(GETDATE(), 'yy')
+           FORMAT(CAST('2026-01-01' AS DATE), 'yy')
 END
 GO
 
