@@ -274,8 +274,6 @@ static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
 static EphemeralNamedRelation find_object_in_enr(Oid catalog_oid, Oid object_id);
-static bool verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config);
-PG_FUNCTION_INFO_V1(persist_temp_oid_buffer_start_internal);
 
 /*********************************************************
  * 			Weak Binding Views Related Declarations
