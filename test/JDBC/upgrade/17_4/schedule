@@ -562,7 +562,7 @@ test_conv_string_to_time
 BABEL-3401
 BABEL-3820
 stuff
-PARTITION
+PARTITION-before-17_7
 BABEL-5071
 string_agg_within
 reverse
