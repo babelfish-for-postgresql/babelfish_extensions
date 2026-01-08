@@ -531,13 +531,7 @@ BEGIN
             v_fseconds := lpad(v_fseconds, 3, '0');
         END IF;
     ELSE
-        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs_v2(to_char(v_datetimeval, 'US'), v_scale);
-
-        -- Following condition will handle overflow of fractsecs
-        IF (v_fseconds::INTEGER < 0) THEN
-            v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
-            v_datetimeval := v_datetimeval + INTERVAL '1 second';
-        END IF;
+        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(v_datetimeval, 'US'), v_scale);
 
         IF (v_scale = 7) THEN
             v_fseconds := pg_catalog.concat(v_fseconds, '0');
@@ -788,13 +782,7 @@ BEGIN
     END IF;
 
     v_hours := PG_CATALOG.ltrim(to_char(p_timeval, 'HH12'), '0');
-    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs_v2(to_char(p_timeval, 'US'), v_scale);
-
-    -- Following condition will handle overflow of fractsecs
-    IF (v_fseconds::INTEGER < 0) THEN
-        v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
-        p_timeval := p_timeval + INTERVAL '1 second';
-    END IF;
+    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(p_timeval, 'US'), v_scale);
 
     IF (v_scale = 7) THEN
         v_fseconds := pg_catalog.concat(v_fseconds, '0');
