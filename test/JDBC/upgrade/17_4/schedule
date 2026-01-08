@@ -512,7 +512,7 @@ BABEL-4484
 pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
-TestDatatypeAggSort
+TestDatatypeAggSort-before-16_12-or-17_8
 BABEL-2999
 BABEL-4606
 BABEL-4672

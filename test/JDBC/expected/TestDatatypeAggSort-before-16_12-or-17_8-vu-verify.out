@@ -1,16 +1,14 @@
 SELECT * FROM TestDatatypeAggSort_vu_prepare_char_view_max
 go
-~~START~~
-char
-xyz       
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
 
 SELECT * FROM TestDatatypeAggSort_vu_prepare_char_view_min
 go
-~~START~~
-char
-abc       
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
 
 
 SELECT * FROM TestDatatypeAggSort_vu_prepare_varchar_view_max
