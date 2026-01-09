@@ -627,10 +627,6 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE parallel safe;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
 CREATE OR REPLACE VIEW sys.sp_datatype_info_view_version_2 AS
 SELECT TYPE_NAME, DATA_TYPE, "PRECISION", LITERAL_PREFIX, LITERAL_SUFFIX,
        CAST(CREATE_PARAMS AS CHAR(20)) AS CREATE_PARAMS,
@@ -1832,6 +1828,10 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE parallel safe;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
