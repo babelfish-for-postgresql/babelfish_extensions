@@ -189,7 +189,7 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_try_conv_date_to_string(IN p_datatype TEXT, IN p_dateval DATE, IN p_style NUMERIC) 
-    RENAME TO babelfish_try_conv_date_to_string_deprecated_in_5_5_0;
+    RENAME TO babelfish_try_conv_date_to_string_deprecated_in_4_9_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -197,7 +197,7 @@ EXCEPTION
         RAISE WARNING '%', exception_message;
 END;
 $$;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_date_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_date_to_string_deprecated_in_4_9_0');
 
 
 DO $$
@@ -205,7 +205,7 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_try_conv_datetime_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE, IN p_style NUMERIC)
-    RENAME TO babelfish_try_conv_datetime_to_string_deprecated_in_5_5_0;
+    RENAME TO babelfish_try_conv_datetime_to_string_deprecated_in_4_9_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -213,14 +213,14 @@ EXCEPTION
         RAISE WARNING '%', exception_message;
 END;
 $$;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_datetime_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_datetime_to_string_deprecated_in_4_9_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_try_conv_time_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_timeval TIME(6) WITHOUT TIME ZONE, IN p_style NUMERIC )
-    RENAME TO babelfish_try_conv_time_to_string_deprecated_in_5_5_0;
+    RENAME TO babelfish_try_conv_time_to_string_deprecated_in_4_9_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -229,7 +229,7 @@ EXCEPTION
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_time_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_time_to_string_deprecated_in_4_9_0');
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
@@ -878,7 +878,7 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg TEXT, IN try BOOL, IN p_style NUMERIC)
-    RENAME TO babelfish_conv_helper_to_varchar_with_text_argument_deprecated_in_5_5_0;
+    RENAME TO babelfish_conv_helper_to_varchar_with_text_argument_deprecated_in_4_9_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -906,14 +906,14 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_with_text_argument_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_with_text_argument_deprecated_in_4_9_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg ANYELEMENT, IN try BOOL, IN p_style NUMERIC)
-    RENAME TO babelfish_conv_helper_to_varchar_deprecated_in_5_5_0;
+    RENAME TO babelfish_conv_helper_to_varchar_deprecated_in_4_9_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -941,14 +941,14 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varchar_deprecated_in_4_9_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC)
-    RENAME TO babelfish_try_conv_to_varchar_deprecated_in_5_5_0;
+    RENAME TO babelfish_try_conv_to_varchar_deprecated_in_4_9_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -974,14 +974,14 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varchar_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varchar_deprecated_in_4_9_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC)
-    RENAME TO babelfish_conv_to_varchar_deprecated_in_5_5_0;
+    RENAME TO babelfish_conv_to_varchar_deprecated_in_4_9_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -1048,14 +1048,14 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_to_varchar_deprecated_in_4_9_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT, IN p_moneyval NUMERIC, IN p_style NUMERIC)
-    RENAME TO babelfish_try_conv_money_to_string_deprecated_in_5_5_0;
+    RENAME TO babelfish_try_conv_money_to_string_deprecated_in_4_9_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -1131,14 +1131,14 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_money_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_money_to_string_deprecated_in_4_9_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT, IN p_moneyval NUMERIC, IN p_style NUMERIC)
-    RENAME TO babelfish_try_conv_float_to_string_deprecated_in_5_5_0;
+    RENAME TO babelfish_try_conv_float_to_string_deprecated_in_4_9_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -1224,7 +1224,7 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_float_to_string_deprecated_in_5_5_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_float_to_string_deprecated_in_4_9_0');
 
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
