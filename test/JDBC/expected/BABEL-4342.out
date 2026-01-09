@@ -1,5 +1,5 @@
 -- psql
-CREATE PROCEDURE sys.babel_4342_proc1() 
+CREATE PROCEDURE master_dbo.babel_4342_proc1()
 LANGUAGE 'pltsql' AS $$
 BEGIN 
 DECLARE @objtype sys.VARCHAR(2)
@@ -8,7 +8,7 @@ END
 $$;
 GO
 
-CREATE OR REPLACE PROCEDURE sys.babel_4342_proc2()
+CREATE OR REPLACE PROCEDURE master_dbo.babel_4342_proc2()
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
@@ -18,7 +18,7 @@ END
 $$;
 GO
 
-CREATE OR REPLACE PROCEDURE sys.babel_4342_proc3()
+CREATE OR REPLACE PROCEDURE master_dbo.babel_4342_proc3()
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
@@ -28,31 +28,31 @@ END
 $$;
 GO
 
-CALL sys.babel_4342_proc1();
+CALL master_dbo.babel_4342_proc1();
 GO
 
-CALL sys.babel_4342_proc2();
+CALL master_dbo.babel_4342_proc2();
 GO
 
-CALL sys.babel_4342_proc3();
+CALL master_dbo.babel_4342_proc3();
 GO
 
 -- tsql
-EXEC sys.babel_4342_proc1;
+EXEC dbo.babel_4342_proc1;
 GO
 
-EXEC sys.babel_4342_proc2;
+EXEC dbo.babel_4342_proc2;
 GO
 
-EXEC sys.babel_4342_proc3;
+EXEC dbo.babel_4342_proc3;
 GO
 
 -- psql 
-DROP PROCEDURE sys.babel_4342_proc1;
+DROP PROCEDURE master_dbo.babel_4342_proc1;
 GO
 
-DROP PROCEDURE sys.babel_4342_proc2;
+DROP PROCEDURE master_dbo.babel_4342_proc2;
 GO
 
-DROP PROCEDURE sys.babel_4342_proc3;
+DROP PROCEDURE master_dbo.babel_4342_proc3;
 GO
