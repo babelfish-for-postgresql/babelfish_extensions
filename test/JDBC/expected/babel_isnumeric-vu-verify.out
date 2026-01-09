@@ -1626,7 +1626,7 @@ SELECT ISNUMERIC(CHAR(44));   -- ,
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(45));   -- -
@@ -1962,7 +1962,7 @@ SELECT ISNUMERIC(CHAR(92));   -- \
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 SELECT ISNUMERIC(CHAR(93));   -- ]
@@ -2592,7 +2592,7 @@ select isnumeric(CHAR(160)) -- TSQL: 1
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -2633,12 +2633,12 @@ select isnumeric(nchar(160))
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -2697,7 +2697,7 @@ SELECT ISNUMERIC('\0') -- tsql 1
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -2709,7 +2709,7 @@ SELECT ISNUMERIC(NCHAR(160));  -- non-breaking space alone
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 SELECT ISNUMERIC(NCHAR(160) + '123');  -- non-breaking space + number
@@ -2723,14 +2723,14 @@ SELECT ISNUMERIC('123' + NCHAR(160));  -- number + non-breaking space
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 SELECT ISNUMERIC(NCHAR(160) + NCHAR(160));  -- multiple non-breaking spaces
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 

@@ -200,9 +200,10 @@ money
 
 SELECT CAST('$,100' AS MONEY); 
 GO
-~~ERROR (Code: 293)~~
-
-~~ERROR (Message: invalid characters found: cannot cast value "$,100" to money)~~
+~~START~~
+money
+100.0000
+~~END~~
 
 
 SELECT CAST('$a123' AS MONEY); 
