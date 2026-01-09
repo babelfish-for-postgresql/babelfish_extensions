@@ -29,8 +29,3 @@ ignore#!#BABEL-SP_TABLE_PRIVILEGES
 ignore#!#ISC-Columns-vu-verify
 ignore#!#four-part-names-vu-verify
 
-# Temporarily disable failing tests
-ignore#!#comparison_op_index_scan-vu-prepare
-ignore#!#comparison_op_index_scan-vu-verify
-ignore#!#comparison_op_index_scan-vu-cleanup
-

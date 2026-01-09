@@ -999,12 +999,13 @@ Query Text: SELECT t1.binary_col FROM BABEL_6098_binary_test t1
 INNER JOIN BABEL_6098_binary_test t2 ON t1.binary_col = t2.binary_col
 WHERE t1.binary_col = CAST(0x01 AS [BINARY](10))
 Gather
-  Workers Planned: 1
+  Workers Planned: 4
   ->  Nested Loop
-        ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
-              Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-        ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t2
-              Index Cond: (binary_col = (t1.binary_col)::bbf_binary)
+        Join Filter: ((t1.binary_col)::bbf_binary = (t2.binary_col)::bbf_binary)
+        ->  Parallel Seq Scan on babel_6098_binary_test t2
+        ->  Materialize
+              ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
 ~~END~~
 
 ~~START~~
@@ -1024,12 +1025,13 @@ Query Text: SELECT t1.binary_col FROM BABEL_6098_binary_test t1
 INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col = t2.varbinary_col
 WHERE t1.binary_col = CAST(0x01 AS [BINARY](10))
 Gather
-  Workers Planned: 1
+  Workers Planned: 4
   ->  Nested Loop
-        ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
-              Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
-              Index Cond: (varbinary_col = (t1.binary_col)::bbf_binary)
+        Join Filter: ((t1.binary_col)::bbf_binary = (t2.varbinary_col)::bbf_varbinary)
+        ->  Parallel Seq Scan on babel_6098_varbinary_test t2
+        ->  Materialize
+              ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
 ~~END~~
 
 ~~START~~
@@ -1049,12 +1051,13 @@ Query Text: SELECT t1.binary_col FROM BABEL_6098_binary_test t1
 INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col < t2.varbinary_col 
 WHERE t1.binary_col = CAST(0x01 AS [BINARY](10))
 Gather
-  Workers Planned: 1
+  Workers Planned: 4
   ->  Nested Loop
-        ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
-              Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-        ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
-              Index Cond: (varbinary_col > (t1.binary_col)::bbf_binary)
+        Join Filter: ((t1.binary_col)::bbf_binary < (t2.varbinary_col)::bbf_varbinary)
+        ->  Parallel Seq Scan on babel_6098_varbinary_test t2
+        ->  Materialize
+              ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
 ~~END~~
 
 ~~START~~
@@ -2635,39 +2638,45 @@ GO
 text
 Query Text: SELECT * FROM BABEL_6098_join_selective_view
 Gather
-  Workers Planned: 3
+  Workers Planned: 4
   ->  Parallel Append
         ->  Nested Loop
+              Join Filter: ((t1.binary_col)::bbf_binary <> (t2.varbinary_col)::bbf_varbinary)
               ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
                     Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
-                    Index Cond: (varbinary_col = (t1.binary_col)::bbf_binary)
+              ->  Materialize
+                    ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
+                          Index Cond: (varbinary_col = '0x02'::bbf_varbinary)
         ->  Nested Loop
-              ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_1
-                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2_1
-                    Index Cond: (varbinary_col > (t1_1.binary_col)::bbf_binary)
+              Join Filter: ((t1_1.binary_col)::bbf_binary = (t2_1.varbinary_col)::bbf_varbinary)
+              ->  Parallel Seq Scan on babel_6098_varbinary_test t2_1
+              ->  Materialize
+                    ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_1
+                          Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
         ->  Nested Loop
-              ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_2
-                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2_2
-                    Index Cond: (varbinary_col >= (t1_2.binary_col)::bbf_binary)
+              Join Filter: ((t1_2.binary_col)::bbf_binary < (t2_2.varbinary_col)::bbf_varbinary)
+              ->  Parallel Seq Scan on babel_6098_varbinary_test t2_2
+              ->  Materialize
+                    ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_2
+                          Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
         ->  Nested Loop
-              ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_3
-                    Index Cond: (binary_col = '0x09000000000000000000'::bbf_binary)
-              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2_3
-                    Index Cond: (varbinary_col < (t1_3.binary_col)::bbf_binary)
+              Join Filter: ((t1_3.binary_col)::bbf_binary <= (t2_3.varbinary_col)::bbf_varbinary)
+              ->  Parallel Seq Scan on babel_6098_varbinary_test t2_3
+              ->  Materialize
+                    ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_3
+                          Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
         ->  Nested Loop
-              ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_4
-                    Index Cond: (binary_col = '0x09000000000000000000'::bbf_binary)
-              ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2_4
-                    Index Cond: (varbinary_col <= (t1_4.binary_col)::bbf_binary)
+              Join Filter: ((t1_4.binary_col)::bbf_binary > (t2_4.varbinary_col)::bbf_varbinary)
+              ->  Parallel Seq Scan on babel_6098_varbinary_test t2_4
+              ->  Materialize
+                    ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_4
+                          Index Cond: (binary_col = '0x09000000000000000000'::bbf_binary)
         ->  Nested Loop
-              Join Filter: ((t1_5.binary_col)::bbf_binary <> (t2_5.varbinary_col)::bbf_varbinary)
-              ->  Parallel Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2_5
-                    Index Cond: (varbinary_col = '0x02'::bbf_varbinary)
-              ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_5
-                    Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
+              Join Filter: ((t1_5.binary_col)::bbf_binary >= (t2_5.varbinary_col)::bbf_varbinary)
+              ->  Parallel Seq Scan on babel_6098_varbinary_test t2_5
+              ->  Materialize
+                    ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1_5
+                          Index Cond: (binary_col = '0x09000000000000000000'::bbf_binary)
 ~~END~~
 
 ~~START~~
@@ -3500,13 +3509,14 @@ Query Text: EXEC BABEL_6098_join_selective_proc @value = 0x01
     WHERE t1.binary_col = "@value"
   ->  Finalize Aggregate
         ->  Gather
-              Workers Planned: 1
+              Workers Planned: 4
               ->  Partial Aggregate
                     ->  Nested Loop
-                          ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
-                                Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-                          ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
-                                Index Cond: (varbinary_col = (t1.binary_col)::bbf_binary)
+                          Join Filter: ((t1.binary_col)::bbf_binary = (t2.varbinary_col)::bbf_varbinary)
+                          ->  Parallel Seq Scan on babel_6098_varbinary_test t2
+                          ->  Materialize
+                                ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                                      Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
   Query Text: SELECT COUNT(*) as ne_join FROM BABEL_6098_binary_test t1
     INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col <> t2.varbinary_col
     WHERE t1.binary_col = "@value" AND t2.varbinary_col = CAST(0x02 AS VARBINARY(10))
@@ -3525,49 +3535,53 @@ Query Text: EXEC BABEL_6098_join_selective_proc @value = 0x01
     WHERE t1.binary_col = "@value"
   ->  Finalize Aggregate
         ->  Gather
-              Workers Planned: 1
+              Workers Planned: 4
               ->  Partial Aggregate
                     ->  Nested Loop
-                          ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
-                                Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-                          ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
-                                Index Cond: (varbinary_col > (t1.binary_col)::bbf_binary)
+                          Join Filter: ((t1.binary_col)::bbf_binary < (t2.varbinary_col)::bbf_varbinary)
+                          ->  Parallel Seq Scan on babel_6098_varbinary_test t2
+                          ->  Materialize
+                                ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                                      Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
   Query Text: SELECT COUNT(*) as lte_join FROM BABEL_6098_binary_test t1
     INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col <= t2.varbinary_col
     WHERE t1.binary_col = "@value"
   ->  Finalize Aggregate
         ->  Gather
-              Workers Planned: 1
+              Workers Planned: 4
               ->  Partial Aggregate
                     ->  Nested Loop
-                          ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
-                                Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-                          ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
-                                Index Cond: (varbinary_col >= (t1.binary_col)::bbf_binary)
+                          Join Filter: ((t1.binary_col)::bbf_binary <= (t2.varbinary_col)::bbf_varbinary)
+                          ->  Parallel Seq Scan on babel_6098_varbinary_test t2
+                          ->  Materialize
+                                ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                                      Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
   Query Text: SELECT COUNT(*) as gt_join FROM BABEL_6098_binary_test t1
     INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col > t2.varbinary_col
     WHERE t1.binary_col = "@value"
   ->  Finalize Aggregate
         ->  Gather
-              Workers Planned: 1
+              Workers Planned: 4
               ->  Partial Aggregate
                     ->  Nested Loop
-                          ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
-                                Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-                          ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
-                                Index Cond: (varbinary_col < (t1.binary_col)::bbf_binary)
+                          Join Filter: ((t1.binary_col)::bbf_binary > (t2.varbinary_col)::bbf_varbinary)
+                          ->  Parallel Seq Scan on babel_6098_varbinary_test t2
+                          ->  Materialize
+                                ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                                      Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
   Query Text: SELECT COUNT(*) as gte_join FROM BABEL_6098_binary_test t1
     INNER JOIN BABEL_6098_varbinary_test t2 ON t1.binary_col >= t2.varbinary_col
     WHERE t1.binary_col = "@value"
   ->  Finalize Aggregate
         ->  Gather
-              Workers Planned: 1
+              Workers Planned: 4
               ->  Partial Aggregate
                     ->  Nested Loop
-                          ->  Parallel Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
-                                Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
-                          ->  Index Only Scan using babel_6098_idx_varbinarybabel_6c13229b13daa47aa14f53cce5dcad925 on babel_6098_varbinary_test t2
-                                Index Cond: (varbinary_col <= (t1.binary_col)::bbf_binary)
+                          Join Filter: ((t1.binary_col)::bbf_binary >= (t2.varbinary_col)::bbf_varbinary)
+                          ->  Parallel Seq Scan on babel_6098_varbinary_test t2
+                          ->  Materialize
+                                ->  Index Only Scan using babel_6098_idx_binarybabel_60982612b34d3ea017566be3aba8d0cd159a on babel_6098_binary_test t1
+                                      Index Cond: (binary_col = '0x01000000000000000000'::bbf_binary)
 ~~END~~
 
 ~~START~~
