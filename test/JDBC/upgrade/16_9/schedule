@@ -562,7 +562,7 @@ babel_726-before-16_10-or-17_6
 BABEL-3401
 BABEL-3820
 stuff
-PARTITION
+PARTITION-before-17_7
 BABEL-5071
 string_agg_within
 reverse
@@ -648,3 +648,4 @@ BABEL-4271
 comparison_op_index_scan-before-17_8-or-16_12
 BABEL-5788
 BABEL-1664-before-16_10-or-17_6
+babel_convert_with_style
