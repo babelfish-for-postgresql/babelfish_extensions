@@ -721,6 +721,52 @@ END;
 $$
 LANGUAGE pltsql;
 
+CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
+DECLARE
+    arg_datatype TEXT;
+    basetype OID;
+BEGIN
+    arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(startdate)::oid);
+    -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(startdate)::oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    -- Since the datatype of the argument is still NULL it means the datatype of the argument is not defined in TSQL and is a PG supported datatype. 
+    -- So we check the pg type for the argument datatype validation.
+    -- We only support TIMESTAMP PG datatype over TDS endpoint, so we added a check for it.
+    
+    IF arg_datatype IS NULL THEN
+        IF pg_typeof(startdate) = 'timestamp'::regtype THEN
+            return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
+        END IF;
+    END IF;
+
+    IF arg_datatype = 'time' THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 0);
+    END IF;
+    IF arg_datatype = 'date' THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 1);
+    END IF;
+    IF arg_datatype = 'smalldatetime' THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 2);
+    END IF;
+    IF arg_datatype = 'datetime' THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
+    END IF;
+    IF arg_datatype = 'datetime2' THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 4);
+    END IF;
+    IF arg_datatype = 'datetimeoffset' THEN
+        return sys.dateadd_internal_df(datepart, num, startdate);
+    END IF;
+    RAISE EXCEPTION 'Conversion failed when converting date and/or time from %.', arg_datatype;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE parallel safe;
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
