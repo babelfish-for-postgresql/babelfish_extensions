@@ -78,7 +78,7 @@ char
 
 -- psql
 -- create a function from PG endpoint and try calling it from T-SQL endpoint
-CREATE FUNCTION sys.func_2998() RETURNS CHAR(20) LANGUAGE SQL RETURN 'abc';
+CREATE FUNCTION master_dbo.func_2998() RETURNS CHAR(20) LANGUAGE SQL RETURN 'abc';
 GO
 
 -- tsql
@@ -108,5 +108,5 @@ abc
 
 
 -- psql
-DROP FUNCTION sys.func_2998()
+DROP FUNCTION master_dbo.func_2998()
 GO
