@@ -654,6 +654,7 @@ BABEL-4271
 BABEL-5788
 BABEL-1664
 sys-fn_varbintohexstr
+babel_string_to_money_reg
 babel_binary
 test_output_clause
 update_with_var
