@@ -474,6 +474,26 @@ fixeddecimal2str(int64 val, char *buffer,
 	return ptr;
 }
 
+/* Skips whitespace and non-breaking spaces */
+static inline const char *
+skip_money_spaces(const char *ptr)
+{
+	while (*ptr)
+    {
+        unsigned char c = (unsigned char)*ptr;
+
+         /* Standard whitespace or single-byte NBSP (0xA0) */
+        if (isspace(c) || c == 0xA0)
+            ptr++;
+		 /* UTF-8 NBSP (0xC2 0xA0) */	
+        else if (c == 0xC2 && (unsigned char)ptr[1] == 0xA0)
+            ptr += 2;
+        else
+            break;
+    }
+    return ptr;
+}	
+
 /*
  * scanfixeddecimal --- try to parse a string into a fixeddecimal.
  */
@@ -481,6 +501,7 @@ static int64
 scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *fcinfo)
 {
 	const char *ptr = str;
+	const char *original = str;
 	int64		integralpart = 0;
 	int64		fractionalpart = 0;
 	bool		negative;
@@ -495,9 +516,42 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	 * for long long.
 	 */
 
-	/* skip leading spaces */
-	while (isspace((unsigned char) *ptr))
-		ptr++;
+	/*
+	 * Supported money/smallmoney string patterns:
+     *
+	 * Pattern 1:  <space>[±]<space>[currency|\]<space>[digits,.]<space>
+	 * Pattern 2:  <space>[currency|\]<space>[±]<space>[digits,.]<space>
+	 * 
+	 * Rules:
+	 *   - Sign (+/-) can appear before OR after currency, not both
+	 *   - Currency: $, €, £, ¥, ₹, or backslash (\)
+	 *   - Digits: digits with commas (,) and at most one decimal point (.)
+	 */
+
+	 /* skip leading spaces */
+	ptr = skip_money_spaces(ptr);
+
+    /* 
+	 * NBSP (non-breaking space) handling at leading positions:
+	 * - Valid: NBSP followed by trailing whitespace (eg: NCHAR(160) + ' ')
+     * - Invalid: NBSP followed by numeric literals (eg: NCHAR(160) + '123.45')
+     * 
+     * NBSP encodings checked: 0xA0 (Latin-1) and 0xC2 0xA0 (UTF-8)
+	 */ 
+	if (ptr > original && *ptr != '\0')
+	{
+		for (const char *check = original; check < ptr; check++)
+		{
+			unsigned char c = (unsigned char)*check;
+			if (c == 0xA0 || (c == 0xC2 && (unsigned char)*(check+1) == 0xA0))
+			{
+				ereturn(escontext, (Datum) 0,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						errmsg("invalid characters found: cannot cast value \"%s\" to money",
+								str)));
+			}
+		}
+	}
 
 	/* handle sign */
 	if (*ptr == '-')
@@ -518,32 +572,35 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 	}
 
 	/* skip leading spaces */
-	while (isspace((unsigned char) *ptr))
-		ptr++;
+	ptr = skip_money_spaces(ptr);
 	
 	currency_symbol_len = is_valid_currency_symbol(ptr);
 	if (currency_symbol_len > 0)
 	{
 		ptr += currency_symbol_len;
 	}
-	/* skip leading spaces */
-	while (isspace((unsigned char) *ptr))
+	else if (*ptr == '\\')
+	{
 		ptr++;
+	}
+	/* skip leading spaces */
+	ptr = skip_money_spaces(ptr);
 	
 	/* 
 	 * Rejects invalid characters when no currency symbol is present.
 	 * Only digits, signs, decimal points, or spaces are allowed.
 	 */
-	if (*ptr != '\0' && 
-		!isdigit((unsigned char) *ptr) && 
+	if (!isdigit((unsigned char) *ptr) && 
 		*ptr != '.' && 
 		*ptr != '-' && 
-		*ptr != '+')
+		*ptr != ',' &&
+		*ptr != '+' &&
+		*ptr != '\0' )
 	{
 		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				errmsg("invalid characters found: cannot cast value \"%s\" to money",
-					str)));							
+						str)));
 	}
 
 	/*
@@ -563,7 +620,9 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 		ptr++;
 
 		/* skip leading spaces */
-		while (isspace((unsigned char) *ptr))
+		ptr = skip_money_spaces(ptr);
+
+		while (*ptr == ',')
 			ptr++;
 
 		while (isdigit((unsigned char) *ptr))
@@ -580,7 +639,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 			}
 			integralpart = tmp;
 			/* skip thousand separator */
-			if (*ptr == ',')
+			while (*ptr == ',')
 				ptr++;
 		}
 	}
@@ -602,7 +661,9 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 		}
 
 		/* skip leading spaces */
-		while (isspace((unsigned char) *ptr))
+		ptr = skip_money_spaces(ptr);
+		
+		while (*ptr == ',')
 			ptr++;
 
 		while (isdigit((unsigned char) *ptr))
@@ -624,7 +685,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 			}
 			integralpart = tmp;
 			/* skip thousand separator */
-			if (*ptr == ',')
+			while (*ptr == ',')
 				ptr++;
 		}
 	}
@@ -635,12 +696,20 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 
 		ptr++;
 
+		while (*ptr == ',')
+        	ptr++;
+
 		while (isdigit((unsigned char) *ptr) && multiplier > 1)
 		{
 			multiplier /= 10;
 			fractionalpart += (*ptr++ - '0') * multiplier;
 			vscale++;
+			while (*ptr == ',')
+            	ptr++;
 		}
+
+		while (*ptr == ',')
+            ptr++;
 
 		/*
 		 * Eat into any excess precision digits. For first digit, apply "Round
@@ -651,15 +720,24 @@ scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *
 		{
 			fractionalpart++;
 			ptr++, vscale++;
+
+			while (*ptr == ',')
+				ptr++;
 		}
 
 		while (isdigit((unsigned char) *ptr))
+		{
 			ptr++, vscale++;
+
+			while (*ptr == ',')
+        		ptr++;
+		}
+		while (*ptr == ',')
+			ptr++;
 	}
 
-	/* consume any remaining space chars */
-	while (isspace((unsigned char) *ptr))
-		ptr++;
+	/* Skip trailing whitespace */
+	ptr = skip_money_spaces(ptr);
 
 	if (*ptr != '\0')
 		ereturn(escontext, (Datum) 0,
