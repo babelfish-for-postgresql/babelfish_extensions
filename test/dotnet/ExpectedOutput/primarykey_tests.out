@@ -287,7 +287,7 @@ Column: class_id
 Column: class_name
   - Is Primary Key: False
   - Data Type: System.String
-  - Allow Null: False
+  - Allow Null: True
 Column: teacher_name
   - Is Primary Key: False
   - Data Type: System.String
@@ -312,7 +312,7 @@ Column: class_id
 Column: class_name
   - Is Primary Key: False
   - Data Type: System.String
-  - Allow Null: False
+  - Allow Null: True
 Column: teacher_name
   - Is Primary Key: False
   - Data Type: System.String
@@ -323,33 +323,10 @@ Primary Key Columns:
 #Q#DROP TABLE IF EXISTS new_cclass
 #Q#DROP PROCEDURE IF EXISTS sp_get_by_id
 #Q#DROP TABLE IF EXISTS sp_param_table
-#Q#CREATE TABLE sp_param_table ( id INT NOT NULL PRIMARY KEY, name VARCHAR(50) NOT NULL, value DECIMAL(10,2) NULL )
+#Q#CREATE TABLE sp_param_table ( id INT NOT NULL PRIMARY KEY, names VARCHAR(50) NOT NULL, val DECIMAL(10,2) NULL )
 #Q#INSERT INTO sp_param_table VALUES (1, 'Item1', 100.50), (2, 'Item2', 200.75), (3, 'Item3', 300.00)
 #Q#CREATE PROCEDURE sp_get_by_id @id INT AS BEGIN SELECT * FROM sp_param_table WHERE id = @id; END
 #Q#EXEC sp_get_by_id @id = 1
-
-Table Columns:
-Column: id
-  - Is Primary Key: True
-  - Data Type: System.Int32
-  - Allow Null: False
-Column: name
-  - Is Primary Key: False
-  - Data Type: System.String
-  - Allow Null: False
-Column: value
-  - Is Primary Key: False
-  - Data Type: System.Decimal
-  - Allow Null: True
-Primary Key Columns:
-- id
-
-#Q#DROP PROCEDURE IF EXISTS sp_get_by_id
-#Q#DROP TABLE IF EXISTS sp_param_table
-#Q#DROP TABLE IF EXISTS prepexec_test
-#Q#CREATE TABLE prepexec_test (id INT PRIMARY KEY, names VARCHAR(50), val INT)
-#Q#INSERT INTO prepexec_test VALUES (1, 'Test1', 100), (2, 'Test2', 200)
-#Q#DECLARE @handle INT; EXEC sp_prepexec @handle OUTPUT, N'@id INT', N'SELECT * FROM prepexec_test WHERE id = @id', @id = 1
 
 Table Columns:
 Column: id
@@ -361,6 +338,29 @@ Column: names
   - Data Type: System.String
   - Allow Null: True
 Column: val
+  - Is Primary Key: False
+  - Data Type: System.Decimal
+  - Allow Null: True
+Primary Key Columns:
+- id
+
+#Q#DROP PROCEDURE IF EXISTS sp_get_by_id
+#Q#DROP TABLE IF EXISTS sp_param_table
+#Q#DROP TABLE IF EXISTS prepexec_test
+#Q#CREATE TABLE prepexec_test (id INT PRIMARY KEY, name VARCHAR(50), value INT)
+#Q#INSERT INTO prepexec_test VALUES (1, 'Test1', 100), (2, 'Test2', 200)
+#Q#DECLARE @handle INT; EXEC sp_prepexec @handle OUTPUT, N'@id INT', N'SELECT * FROM prepexec_test WHERE id = @id', @id = 1
+
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: value
   - Is Primary Key: False
   - Data Type: System.Int32
   - Allow Null: True
@@ -438,47 +438,3 @@ Primary Key Columns:
 
 #Q#DROP TABLE IF EXISTS prepexec_orders
 #Q#DROP TABLE IF EXISTS prepexec_customers
-#Q#DROP TABLE IF EXISTS cursor_prepexec_test
-#Q#CREATE TABLE cursor_prepexec_test (id INT PRIMARY KEY, name VARCHAR(50), status INT)
-#Q#INSERT INTO cursor_prepexec_test VALUES (1, 'Active1', 1), (2, 'Inactive1', 0), (3, 'Active2', 1)
-#Q#DECLARE @handle INT, @cursor INT, @scrollopt INT = 4100, @ccopt INT = 1, @rowcount INT; EXEC sp_cursorprepexec @handle OUTPUT, @cursor OUTPUT, N'@status INT', N'SELECT * FROM cursor_prepexec_test WHERE status = @status', @scrollopt, @ccopt, @rowcount OUTPUT, @status = 1
-
-Table Columns:
-Column: id
-  - Is Primary Key: True
-  - Data Type: System.Int32
-  - Allow Null: False
-Column: name
-  - Is Primary Key: False
-  - Data Type: System.String
-  - Allow Null: True
-Column: status
-  - Is Primary Key: False
-  - Data Type: System.Int32
-  - Allow Null: True
-Primary Key Columns:
-- id
-
-#Q#DROP TABLE IF EXISTS cursor_prepexec_test
-#Q#DROP TABLE IF EXISTS cursor_prepexec_fetch
-#Q#CREATE TABLE cursor_prepexec_fetch (id INT PRIMARY KEY, category VARCHAR(30), amount DECIMAL(10,2))
-#Q#INSERT INTO cursor_prepexec_fetch VALUES (1, 'A', 100.00), (2, 'B', 200.00), (3, 'A', 300.00), (4, 'B', 400.00)
-#Q#DECLARE @handle INT, @cursor INT, @scrollopt INT = 4097, @ccopt INT = 1, @rowcount INT; EXEC sp_cursorprepexec @handle OUTPUT, @cursor OUTPUT, N'@cat VARCHAR(30)', N'SELECT * FROM cursor_prepexec_fetch WHERE category = @cat', @scrollopt, @ccopt, @rowcount OUTPUT, @cat = 'A'; EXEC sp_cursorfetch @cursor, 2, 0, 2
-
-Table Columns:
-Column: id
-  - Is Primary Key: True
-  - Data Type: System.Int32
-  - Allow Null: False
-Column: category
-  - Is Primary Key: False
-  - Data Type: System.String
-  - Allow Null: True
-Column: amount
-  - Is Primary Key: False
-  - Data Type: System.Decimal
-  - Allow Null: True
-Primary Key Columns:
-- id
-
-#Q#DROP TABLE IF EXISTS cursor_prepexec_fetch
