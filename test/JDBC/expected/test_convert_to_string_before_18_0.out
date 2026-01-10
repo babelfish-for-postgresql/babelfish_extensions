@@ -2573,7 +2573,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 101) AS US_Style_101 FROM convert_source_t1;
 GO
@@ -2581,7 +2581,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- ANSI (2 or 102)
 SELECT CONVERT(VARCHAR(50), TimeCol, 2) AS ANSI_Style_2 FROM convert_source_t1;
@@ -2590,7 +2590,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 102) AS ANSI_Style_102 FROM convert_source_t1;
 GO
@@ -2598,7 +2598,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- British/French (3 or 103)
 SELECT CONVERT(VARCHAR(50), TimeCol, 3) AS British_Style_3 FROM convert_source_t1;
@@ -2607,7 +2607,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 103) AS British_Style_103 FROM convert_source_t1;
 GO
@@ -2615,7 +2615,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- German (4 or 104)
 SELECT CONVERT(VARCHAR(50), TimeCol, 4) AS German_Style_4 FROM convert_source_t1;
@@ -2624,7 +2624,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 104) AS German_Style_104 FROM convert_source_t1;
 GO
@@ -2632,7 +2632,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- Italian (5 or 105)
 SELECT CONVERT(VARCHAR(50), TimeCol, 5) AS Italian_Style_5 FROM convert_source_t1;
@@ -2641,7 +2641,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 105) AS Italian_Style_105 FROM convert_source_t1;
 GO
@@ -2649,7 +2649,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- dd mon yyyy (6 or 106)
 SELECT CONVERT(VARCHAR(50), TimeCol, 6) AS Style_6 FROM convert_source_t1;
@@ -2658,7 +2658,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 106) AS Style_106 FROM convert_source_t1;
 GO
@@ -2666,7 +2666,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- mon dd, yyyy (7 or 107)
 SELECT CONVERT(VARCHAR(50), TimeCol, 7) AS Style_7 FROM convert_source_t1;
@@ -2675,7 +2675,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 107) AS Style_107 FROM convert_source_t1;
 GO
@@ -2683,7 +2683,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- HH:mm:ss (8 or 108)
 SELECT CONVERT(VARCHAR(50), TimeCol, 8) AS Time_Style_8 FROM convert_source_t1;
@@ -2722,7 +2722,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 110) AS Style_110 FROM convert_source_t1;
 GO
@@ -2730,7 +2730,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- yy/mm/dd (11 or 111)
 SELECT CONVERT(VARCHAR(50), TimeCol, 11) AS Style_11 FROM convert_source_t1;
@@ -2739,7 +2739,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 111) AS Style_111 FROM convert_source_t1;
 GO
@@ -2747,7 +2747,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- yyyymmdd (12 or 112)
 SELECT CONVERT(VARCHAR(50), TimeCol, 12) AS Style_12 FROM convert_source_t1;
@@ -2756,7 +2756,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 112) AS Style_112 FROM convert_source_t1;
 GO
@@ -2764,7 +2764,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- dd mon yyyy HH:mm:ss:mmm (13 or 113)
 SELECT CONVERT(VARCHAR(50), TimeCol, 13) AS Style_13 FROM convert_source_t1;
@@ -2848,7 +2848,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Error converting data type TIME to character varying.)~~
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 -- ISO8601 (126)
 SELECT CONVERT(VARCHAR(50), TimeCol, 126) AS ISO8601_Style_126 FROM convert_source_t1;

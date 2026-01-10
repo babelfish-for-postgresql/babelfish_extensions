@@ -1,0 +1,1313 @@
+-- TEST: PREPARATION - Create logins and setup
+
+-- tsql
+CREATE LOGIN alter_owner_login WITH PASSWORD = '12345678';
+GO
+CREATE LOGIN new_owner_login WITH PASSWORD = '12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER alter_owner_login;
+GO
+-- terminate-tsql-conn
+
+
+-- TEST: Setup - Create database and objects
+
+-- tsql user=alter_owner_login password=12345678
+SELECT suser_name(), db_name();
+GO
+
+CREATE DATABASE alter_owner_test_db;
+GO
+
+USE alter_owner_test_db;
+GO
+
+CREATE SCHEMA test_schema;
+GO
+
+CREATE USER new_owner_login FOR LOGIN new_owner_login;
+GO
+
+CREATE TABLE test_schema.test_table (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    name VARCHAR(100),
+    value DECIMAL(10,2)
+);
+GO
+
+CREATE TABLE test_schema.test_table_computed (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    quantity INT,
+    unit_price DECIMAL(10,2),
+    discount_percent DECIMAL(5,2),
+    total_price AS (quantity * unit_price),
+    discount_amount AS (quantity * unit_price * discount_percent / 100),
+    net_price AS (quantity * unit_price * (1 - discount_percent / 100))
+);
+GO
+
+CREATE VIEW test_schema.test_view
+AS
+SELECT id, name FROM test_schema.test_table;
+GO
+
+CREATE VIEW test_schema.test_view_schemabinding
+WITH SCHEMABINDING
+AS
+SELECT id, name FROM test_schema.test_table;
+GO
+
+CREATE FUNCTION test_schema.fn_scalar(@input INT)
+RETURNS INT
+AS
+BEGIN
+    RETURN @input * 2;
+END;
+GO
+
+CREATE FUNCTION test_schema.fn_inline_tvf(@id INT)
+RETURNS TABLE
+AS
+RETURN (
+    SELECT id, name FROM test_schema.test_table WHERE id = @id
+);
+GO
+
+CREATE FUNCTION test_schema.fn_multi_tvf(@id INT)
+RETURNS @result TABLE (
+    id INT,
+    name VARCHAR(100)
+)
+AS
+BEGIN
+    INSERT INTO @result
+    SELECT id, name FROM test_schema.test_table WHERE id = @id;
+    RETURN;
+END;
+GO
+
+CREATE PROCEDURE test_schema.sp_test
+AS
+BEGIN
+    SELECT * FROM test_schema.test_table;
+END;
+GO
+
+CREATE PROCEDURE test_schema.sp_test_params
+    @id INT,
+    @name VARCHAR(100) OUTPUT
+AS
+BEGIN
+    SELECT @name = name FROM test_schema.test_table WHERE id = @id;
+END;
+GO
+
+CREATE SEQUENCE test_schema.test_seq
+START WITH 1
+INCREMENT BY 1;
+GO
+
+CREATE SEQUENCE test_schema.test_seq_options
+START WITH 100
+INCREMENT BY 10
+MINVALUE 100
+MAXVALUE 10000
+CYCLE
+CACHE 5;
+GO
+
+CREATE TYPE test_schema.udt_phone FROM VARCHAR(15);
+GO
+
+CREATE TYPE test_schema.udt_money FROM DECIMAL(19,4);
+GO
+
+CREATE TYPE test_schema.udt_code FROM CHAR(10) NOT NULL;
+GO
+
+CREATE TYPE test_schema.udt_table_simple AS TABLE (
+    id INT,
+    name VARCHAR(100)
+);
+GO
+
+CREATE TYPE test_schema.udt_table_complex AS TABLE (
+    id INT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    value DECIMAL(10,2) DEFAULT 0,
+    created_date DATETIME DEFAULT GETDATE()
+);
+GO
+
+CREATE TRIGGER test_schema.trg_test_insert
+ON test_schema.test_table
+AFTER INSERT
+AS
+BEGIN
+    PRINT 'Record inserted';
+END;
+GO
+
+CREATE TRIGGER test_schema.trg_test_update
+ON test_schema.test_table
+AFTER UPDATE
+AS
+BEGIN
+    PRINT 'Record updated';
+END;
+GO
+
+CREATE TABLE dbo.dbo_test_table (
+    id INT PRIMARY KEY,
+    data VARCHAR(100)
+);
+GO
+
+CREATE VIEW dbo.dbo_test_view
+AS
+SELECT id, data FROM dbo.dbo_test_table;
+GO
+
+CREATE FUNCTION dbo.dbo_fn_test(@val INT)
+RETURNS INT
+AS
+BEGIN
+    RETURN @val;
+END;
+GO
+
+CREATE PROCEDURE dbo.dbo_sp_test
+AS
+BEGIN
+    SELECT 1;
+END;
+GO
+
+CREATE SEQUENCE dbo.dbo_test_seq START WITH 1;
+GO
+
+CREATE TYPE dbo.dbo_udt_test FROM VARCHAR(50);
+GO
+
+USE master;
+GO
+-- terminate-tsql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: NEGATIVE - ALTER TABLE OWNER with GUCs = false (should FAIL)
+
+-- psql user=alter_owner_login password=12345678
+SHOW babelfishpg_tsql.dump_restore;
+GO
+
+SHOW babelfishpg_tsql.enable_alter_owner_from_pg;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table_computed OWNER TO new_owner_login;
+GO
+
+ALTER TABLE alter_owner_test_db_dbo.dbo_test_table OWNER TO new_owner_login;
+GO
+
+
+-- TEST: NEGATIVE - ALTER VIEW OWNER with GUCs = false (should FAIL)
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER VIEW alter_owner_test_db_test_schema.test_view OWNER TO new_owner_login;
+GO
+
+ALTER VIEW alter_owner_test_db_test_schema.test_view_schemabinding OWNER TO new_owner_login;
+GO
+
+ALTER VIEW alter_owner_test_db_dbo.dbo_test_view OWNER TO new_owner_login;
+GO
+
+
+-- TEST: NEGATIVE - ALTER FUNCTION OWNER with GUCs = false (should FAIL)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_scalar(INT) OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_inline_tvf(INT) OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_multi_tvf(INT) OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_dbo.dbo_fn_test(INT) OWNER TO new_owner_login;
+GO
+
+-- TEST: NEGATIVE - ALTER PROCEDURE OWNER with GUCs = false (should FAIL)
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER PROCEDURE alter_owner_test_db_test_schema.sp_test() OWNER TO new_owner_login;
+GO
+
+ALTER PROCEDURE alter_owner_test_db_test_schema.sp_test_params(INT) OWNER TO new_owner_login;
+GO
+
+ALTER PROCEDURE alter_owner_test_db_dbo.dbo_sp_test() OWNER TO new_owner_login;
+GO
+
+
+-- TEST: NEGATIVE - ALTER ROUTINE OWNER with GUCs = false (should FAIL)
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER ROUTINE alter_owner_test_db_test_schema.fn_scalar(INT) OWNER TO new_owner_login;
+GO
+
+ALTER ROUTINE alter_owner_test_db_test_schema.sp_test() OWNER TO new_owner_login;
+GO
+
+
+-- TEST: NEGATIVE - ALTER SCHEMA OWNER with GUCs = false (should FAIL)
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER SCHEMA alter_owner_test_db_test_schema OWNER TO new_owner_login;
+GO
+
+ALTER SCHEMA alter_owner_test_db_dbo OWNER TO new_owner_login;
+GO
+
+
+-- TEST: NEGATIVE - ALTER SEQUENCE OWNER with GUCs = false (should FAIL)
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER SEQUENCE alter_owner_test_db_test_schema.test_seq OWNER TO new_owner_login;
+GO
+
+ALTER SEQUENCE alter_owner_test_db_test_schema.test_seq_options OWNER TO new_owner_login;
+GO
+
+ALTER SEQUENCE alter_owner_test_db_dbo.dbo_test_seq OWNER TO new_owner_login;
+GO
+
+
+-- TEST: NEGATIVE - ALTER TYPE (Alias UDT) OWNER with GUCs = false (should FAIL)
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_phone OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_money OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_code OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_dbo.dbo_udt_test OWNER TO new_owner_login;
+GO
+
+
+-- TEST: NEGATIVE - ALTER TYPE (Table UDT) OWNER with GUCs = false (should FAIL)
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_table_simple OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_table_complex OWNER TO new_owner_login;
+GO
+
+
+-- TEST: NEGATIVE - ALTER DATABASE OWNER with GUCs = false (should FAIL)
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER DATABASE alter_owner_test_db OWNER TO new_owner_login;
+GO
+
+
+-- TEST: POSITIVE - ALTER TABLE OWNER with dump_restore = true (should SUCCEED)
+
+SET babelfishpg_tsql.dump_restore = true;
+GO
+
+SHOW babelfishpg_tsql.dump_restore;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+SELECT tableowner FROM pg_tables 
+WHERE schemaname = 'alter_owner_test_db_test_schema' AND tablename = 'test_table';
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table_computed OWNER TO new_owner_login;
+GO
+
+ALTER TABLE alter_owner_test_db_dbo.dbo_test_table OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+
+
+-- TEST: POSITIVE - ALTER VIEW OWNER with dump_restore = true (should SUCCEED)
+
+SET babelfishpg_tsql.dump_restore = true;
+GO
+
+ALTER VIEW alter_owner_test_db_test_schema.test_view OWNER TO new_owner_login;
+GO
+
+ALTER VIEW alter_owner_test_db_test_schema.test_view_schemabinding OWNER TO new_owner_login;
+GO
+
+ALTER VIEW alter_owner_test_db_dbo.dbo_test_view OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+
+
+-- TEST: POSITIVE - ALTER FUNCTION OWNER with dump_restore = true (should SUCCEED)
+
+SET babelfishpg_tsql.dump_restore = true;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_scalar(INT) OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_inline_tvf(INT) OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_multi_tvf(INT) OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_dbo.dbo_fn_test(INT) OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER PROCEDURE OWNER with dump_restore = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = true;
+GO
+
+ALTER PROCEDURE alter_owner_test_db_test_schema.sp_test() OWNER TO new_owner_login;
+GO
+
+ALTER PROCEDURE alter_owner_test_db_test_schema.sp_test_params(INT) OWNER TO new_owner_login;
+GO
+
+ALTER PROCEDURE alter_owner_test_db_dbo.dbo_sp_test() OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER SCHEMA OWNER with dump_restore = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = true;
+GO
+
+ALTER SCHEMA alter_owner_test_db_test_schema OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER SEQUENCE OWNER with dump_restore = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = true;
+GO
+
+ALTER SEQUENCE alter_owner_test_db_test_schema.test_seq OWNER TO new_owner_login;
+GO
+
+ALTER SEQUENCE alter_owner_test_db_test_schema.test_seq_options OWNER TO new_owner_login;
+GO
+
+ALTER SEQUENCE alter_owner_test_db_dbo.dbo_test_seq OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER TYPE OWNER with dump_restore = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = true;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_phone OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_money OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_table_simple OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_table_complex OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_dbo.dbo_udt_test OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER DATABASE OWNER with dump_restore = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = true;
+GO
+
+ALTER DATABASE alter_owner_test_db OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Reset ownership back to original owner
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = true;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO alter_owner_login;
+GO
+ALTER TABLE alter_owner_test_db_test_schema.test_table_computed OWNER TO alter_owner_login;
+GO
+ALTER TABLE alter_owner_test_db_dbo.dbo_test_table OWNER TO alter_owner_login;
+GO
+ALTER VIEW alter_owner_test_db_test_schema.test_view OWNER TO alter_owner_login;
+GO
+ALTER VIEW alter_owner_test_db_test_schema.test_view_schemabinding OWNER TO alter_owner_login;
+GO
+ALTER VIEW alter_owner_test_db_dbo.dbo_test_view OWNER TO alter_owner_login;
+GO
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_scalar(INT) OWNER TO alter_owner_login;
+GO
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_inline_tvf(INT) OWNER TO alter_owner_login;
+GO
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_multi_tvf(INT) OWNER TO alter_owner_login;
+GO
+ALTER FUNCTION alter_owner_test_db_dbo.dbo_fn_test(INT) OWNER TO alter_owner_login;
+GO
+ALTER PROCEDURE alter_owner_test_db_test_schema.sp_test() OWNER TO alter_owner_login;
+GO
+ALTER PROCEDURE alter_owner_test_db_test_schema.sp_test_params(INT) OWNER TO alter_owner_login;
+GO
+ALTER PROCEDURE alter_owner_test_db_dbo.dbo_sp_test() OWNER TO alter_owner_login;
+GO
+ALTER SCHEMA alter_owner_test_db_test_schema OWNER TO alter_owner_login;
+GO
+ALTER SEQUENCE alter_owner_test_db_test_schema.test_seq OWNER TO alter_owner_login;
+GO
+ALTER SEQUENCE alter_owner_test_db_test_schema.test_seq_options OWNER TO alter_owner_login;
+GO
+ALTER SEQUENCE alter_owner_test_db_dbo.dbo_test_seq OWNER TO alter_owner_login;
+GO
+ALTER TYPE alter_owner_test_db_test_schema.udt_phone OWNER TO alter_owner_login;
+GO
+ALTER TYPE alter_owner_test_db_test_schema.udt_money OWNER TO alter_owner_login;
+GO
+ALTER TYPE alter_owner_test_db_test_schema.udt_table_simple OWNER TO alter_owner_login;
+GO
+ALTER TYPE alter_owner_test_db_test_schema.udt_table_complex OWNER TO alter_owner_login;
+GO
+ALTER TYPE alter_owner_test_db_dbo.dbo_udt_test OWNER TO alter_owner_login;
+GO
+ALTER DATABASE alter_owner_test_db OWNER TO alter_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER TABLE OWNER with enable_alter_owner_from_pg = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+SHOW babelfishpg_tsql.enable_alter_owner_from_pg;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table_computed OWNER TO new_owner_login;
+GO
+
+ALTER TABLE alter_owner_test_db_dbo.dbo_test_table OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER VIEW OWNER with enable_alter_owner_from_pg = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER VIEW alter_owner_test_db_test_schema.test_view OWNER TO new_owner_login;
+GO
+
+ALTER VIEW alter_owner_test_db_test_schema.test_view_schemabinding OWNER TO new_owner_login;
+GO
+
+ALTER VIEW alter_owner_test_db_dbo.dbo_test_view OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER FUNCTION OWNER with enable_alter_owner_from_pg = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_scalar(INT) OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_inline_tvf(INT) OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_multi_tvf(INT) OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_dbo.dbo_fn_test(INT) OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER PROCEDURE OWNER with enable_alter_owner_from_pg = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER PROCEDURE alter_owner_test_db_test_schema.sp_test() OWNER TO new_owner_login;
+GO
+
+ALTER PROCEDURE alter_owner_test_db_test_schema.sp_test_params(INT) OWNER TO new_owner_login;
+GO
+
+ALTER PROCEDURE alter_owner_test_db_dbo.dbo_sp_test() OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER SCHEMA OWNER with enable_alter_owner_from_pg = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER SCHEMA alter_owner_test_db_test_schema OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER SEQUENCE OWNER with enable_alter_owner_from_pg = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER SEQUENCE alter_owner_test_db_test_schema.test_seq OWNER TO new_owner_login;
+GO
+
+ALTER SEQUENCE alter_owner_test_db_test_schema.test_seq_options OWNER TO new_owner_login;
+GO
+
+ALTER SEQUENCE alter_owner_test_db_dbo.dbo_test_seq OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER TYPE OWNER with enable_alter_owner_from_pg = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_phone OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_money OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_table_simple OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_table_complex OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_dbo.dbo_udt_test OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: POSITIVE - ALTER DATABASE OWNER with enable_alter_owner_from_pg = true (should SUCCEED)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER DATABASE alter_owner_test_db OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Native PG objects should SUCCEED regardless of GUC settings
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+CREATE SCHEMA pg_native_schema;
+GO
+
+CREATE TABLE pg_native_schema.pg_table (
+    id INT,
+    data TEXT
+);
+GO
+
+CREATE VIEW pg_native_schema.pg_view AS
+SELECT id, data FROM pg_native_schema.pg_table;
+GO
+
+CREATE FUNCTION pg_native_schema.pg_func(input_val INT)
+RETURNS INT AS $$
+SELECT input_val * 2;
+$$ LANGUAGE SQL;
+GO
+
+CREATE PROCEDURE pg_native_schema.pg_proc()
+AS $$
+SELECT 1;
+$$ LANGUAGE SQL;
+GO
+
+CREATE SEQUENCE pg_native_schema.pg_seq;
+GO
+
+CREATE TYPE pg_native_schema.pg_composite AS (
+    field1 INT,
+    field2 TEXT
+);
+GO
+
+CREATE DOMAIN pg_native_schema.pg_domain AS VARCHAR(100);
+GO
+
+ALTER TABLE pg_native_schema.pg_table OWNER TO new_owner_login;
+GO
+
+ALTER VIEW pg_native_schema.pg_view OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION pg_native_schema.pg_func(INT) OWNER TO new_owner_login;
+GO
+
+ALTER PROCEDURE pg_native_schema.pg_proc() OWNER TO new_owner_login;
+GO
+
+ALTER SEQUENCE pg_native_schema.pg_seq OWNER TO new_owner_login;
+GO
+
+ALTER TYPE pg_native_schema.pg_composite OWNER TO new_owner_login;
+GO
+
+ALTER DOMAIN pg_native_schema.pg_domain OWNER TO new_owner_login;
+GO
+
+ALTER SCHEMA pg_native_schema OWNER TO new_owner_login;
+GO
+
+DROP SCHEMA pg_native_schema CASCADE;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: EDGE CASE - Both GUCs set to true
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = true;
+GO
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO alter_owner_login;
+GO
+ALTER DATABASE alter_owner_test_db OWNER TO alter_owner_login;
+GO
+SET babelfishpg_tsql.dump_restore = false;
+GO
+
+SET babelfishpg_tsql.dump_restore = true;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: EDGE CASE - Toggle GUC within transaction
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = true;
+GO
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO alter_owner_login;
+GO
+SET babelfishpg_tsql.dump_restore = false;
+GO
+
+BEGIN;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+COMMIT;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: EDGE CASE - Transaction rollback with ownership change
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = true;
+GO
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO alter_owner_login;
+GO
+
+SELECT tableowner FROM pg_tables 
+WHERE schemaname = 'alter_owner_test_db_test_schema' AND tablename = 'test_table';
+GO
+
+BEGIN;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+SELECT tableowner FROM pg_tables 
+WHERE schemaname = 'alter_owner_test_db_test_schema' AND tablename = 'test_table';
+GO
+
+ROLLBACK;
+GO
+
+SELECT tableowner FROM pg_tables 
+WHERE schemaname = 'alter_owner_test_db_test_schema' AND tablename = 'test_table';
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: EDGE CASE - GUC case sensitivity
+
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = TRUE;
+GO
+SHOW babelfishpg_tsql.dump_restore;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = 'true';
+GO
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO alter_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = 'on';
+GO
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = '1';
+GO
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO alter_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: EDGE CASE - Invalid GUC values (should FAIL)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = 'invalid';
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = 'maybe';
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: EDGE CASE - Session-level vs transaction-level GUC
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO alter_owner_login;
+GO
+
+BEGIN;
+GO
+
+SET LOCAL babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+ROLLBACK;
+GO
+
+SHOW babelfishpg_tsql.enable_alter_owner_from_pg;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.test_table OWNER TO new_owner_login;
+GO
+
+RESET babelfishpg_tsql.enable_alter_owner_from_pg;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: System schema protection (should FAIL)
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER SCHEMA sys OWNER TO new_owner_login;
+GO
+
+ALTER SCHEMA master_dbo OWNER TO new_owner_login;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: System schema with GUC enabled
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER SCHEMA sys OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: TSQL Port - ALTER AUTHORIZATION on Schema (should SUCCEED regardless of GUCs)
+
+-- tsql user=alter_owner_login password=12345678
+USE alter_owner_test_db;
+GO
+
+ALTER AUTHORIZATION ON SCHEMA::test_schema TO new_owner_login;
+GO
+
+SELECT s.name AS schema_name, p.name AS owner_name
+FROM sys.schemas s
+JOIN sys.database_principals p ON s.principal_id = p.principal_id
+WHERE s.name = 'test_schema';
+GO
+
+ALTER AUTHORIZATION ON SCHEMA::test_schema TO dbo;
+GO
+-- terminate-tsql-conn user=alter_owner_login password=12345678
+
+-- TEST: TSQL Port - ALTER AUTHORIZATION on Objects (should SUCCEED regardless of GUCs)
+
+
+-- tsql user=alter_owner_login password=12345678
+USE alter_owner_test_db;
+GO
+
+ALTER AUTHORIZATION ON OBJECT::test_schema.test_table TO new_owner_login;
+GO
+
+SELECT o.name, p.name AS owner_name
+FROM sys.objects o
+JOIN sys.database_principals p ON o.principal_id = p.principal_id
+WHERE o.name = 'test_table';
+GO
+
+ALTER AUTHORIZATION ON OBJECT::test_schema.test_table TO dbo;
+GO
+-- terminate-tsql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: TSQL Port - ALTER AUTHORIZATION on Database (should SUCCEED regardless of GUCs)
+
+
+-- tsql user=alter_owner_login password=12345678
+USE master;
+GO
+
+ALTER AUTHORIZATION ON DATABASE::alter_owner_test_db TO new_owner_login;
+GO
+
+SELECT name, suser_sname(sid) FROM sysdatabases WHERE name = 'alter_owner_test_db';
+GO
+
+ALTER AUTHORIZATION ON DATABASE::alter_owner_test_db TO alter_owner_login;
+GO
+-- terminate-tsql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Additional UDT Tests - Setup
+
+
+-- tsql user=alter_owner_login password=12345678
+USE alter_owner_test_db;
+GO
+
+CREATE TYPE test_schema.udt_varchar_max FROM VARCHAR(MAX);
+GO
+
+CREATE TYPE test_schema.udt_nvarchar FROM NVARCHAR(100);
+GO
+
+CREATE TYPE test_schema.udt_datetime FROM DATETIME;
+GO
+
+CREATE TYPE test_schema.udt_uniqueid FROM UNIQUEIDENTIFIER;
+GO
+
+CREATE TYPE test_schema.udt_binary FROM VARBINARY(100);
+GO
+
+CREATE TYPE test_schema.udt_xml FROM XML;
+GO
+
+USE master;
+GO
+-- terminate-tsql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Additional UDT Tests - Negative (should FAIL with GUCs = false)
+
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_varchar_max OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_nvarchar OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_datetime OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_uniqueid OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_binary OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_xml OWNER TO new_owner_login;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Additional UDT Tests - Positive (should SUCCEED with enable_alter_owner_from_pg = true)
+
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_varchar_max OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_nvarchar OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_datetime OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_uniqueid OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_binary OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_xml OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Long Name Tests - Setup
+
+
+-- tsql user=alter_owner_login password=12345678
+USE alter_owner_test_db;
+GO
+
+CREATE TABLE test_schema.tbl_long_name_012345678901234567890123456789012345678901234 (
+    id INT
+);
+GO
+
+CREATE VIEW test_schema.vw_long_name_0123456789012345678901234567890123456789012345 AS
+SELECT id FROM test_schema.tbl_long_name_012345678901234567890123456789012345678901234;
+GO
+
+CREATE FUNCTION test_schema.fn_long_name_012345678901234567890123456789012345678901234(@x INT)
+RETURNS INT
+AS
+BEGIN
+    RETURN @x;
+END;
+GO
+
+CREATE TYPE test_schema.udt_long_name_01234567890123456789012345678901234567890123 FROM INT;
+GO
+
+USE master;
+GO
+-- terminate-tsql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Long Name Tests - Negative (should FAIL with GUCs = false)
+
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.tbl_long_name_012345678901234567890123456789012345678901234 OWNER TO new_owner_login;
+GO
+
+ALTER VIEW alter_owner_test_db_test_schema.vw_long_name_0123456789012345678901234567890123456789012345 OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_long_name_012345678901234567890123456789012345678901234(INT) OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_long_name_01234567890123456789012345678901234567890123 OWNER TO new_owner_login;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Long Name Tests - Positive (should SUCCEED with dump_restore = true)
+
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = true;
+GO
+
+ALTER TABLE alter_owner_test_db_test_schema.tbl_long_name_012345678901234567890123456789012345678901234 OWNER TO new_owner_login;
+GO
+
+ALTER VIEW alter_owner_test_db_test_schema.vw_long_name_0123456789012345678901234567890123456789012345 OWNER TO new_owner_login;
+GO
+
+ALTER FUNCTION alter_owner_test_db_test_schema.fn_long_name_012345678901234567890123456789012345678901234(INT) OWNER TO new_owner_login;
+GO
+
+ALTER TYPE alter_owner_test_db_test_schema.udt_long_name_01234567890123456789012345678901234567890123 OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.dump_restore = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Special Characters in Names Tests - Setup
+
+
+-- tsql user=alter_owner_login password=12345678
+USE alter_owner_test_db;
+GO
+
+CREATE TABLE test_schema.[test table with spaces] (
+    id INT
+);
+GO
+
+CREATE TABLE test_schema.[test-table-with-dashes] (
+    id INT
+);
+GO
+
+USE master;
+GO
+-- terminate-tsql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Special Characters in Names Tests - Negative (should FAIL with GUCs = false)
+
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.dump_restore = false;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+ALTER TABLE "alter_owner_test_db_test_schema"."test table with spaces" OWNER TO new_owner_login;
+GO
+
+ALTER TABLE "alter_owner_test_db_test_schema"."test-table-with-dashes" OWNER TO new_owner_login;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: Special Characters in Names Tests - Positive (should SUCCEED with enable_alter_owner_from_pg = true)
+
+
+-- psql user=alter_owner_login password=12345678
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+ALTER TABLE "alter_owner_test_db_test_schema"."test table with spaces" OWNER TO new_owner_login;
+GO
+
+ALTER TABLE "alter_owner_test_db_test_schema"."test-table-with-dashes" OWNER TO new_owner_login;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+-- terminate-psql-conn user=alter_owner_login password=12345678
+
+
+-- TEST: CLEANUP
+
+
+-- tsql
+USE master;
+GO
+
+DROP DATABASE IF EXISTS alter_owner_test_db;
+GO
+
+SELECT db_id('alter_owner_test_db');
+GO
+
+DROP LOGIN alter_owner_login;
+GO
+
+DROP LOGIN new_owner_login;
+GO
