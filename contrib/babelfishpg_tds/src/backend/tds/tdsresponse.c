@@ -1628,21 +1628,15 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				 * and we do not have to translate it to logical schema name.
 				 */
 				if (pltsql_plugin_handler_ptr &&
-					pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name &&
-					physical_schema_name != NULL)
+					pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name)
 					relMetaDataInfo->partName[1] = (char *) pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name, true);
 
 				/*
 				 * If we could not find logical schema name then send physical
 				 * schema name only assuming its shared schema.
 				 */
-				if (relMetaDataInfo->partName[1] == NULL )
-				{
-					if (physical_schema_name != NULL)
-						relMetaDataInfo->partName[1] = strdup(physical_schema_name);
-					else
-						relMetaDataInfo->partName[1] = NULL;
-				}
+				if (relMetaDataInfo->partName[1] == NULL)
+					relMetaDataInfo->partName[1] = strdup(physical_schema_name);
 
 				if (physical_schema_name)
 					pfree(physical_schema_name);

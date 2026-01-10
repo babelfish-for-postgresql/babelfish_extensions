@@ -275,7 +275,7 @@ Primary Key Columns:
 #Q#DROP TABLE IF EXISTS fk_chain_c
 #Q#DROP TABLE IF EXISTS fk_chain_b
 #Q#DROP TABLE IF EXISTS fk_chain_a
-#Q#DROP TABLE IF EXISTS dbo.cclass
+#Q#DROP TABLE IF EXISTS dbo.cclass 
 #Q#CREATE TABLE dbo.cclass ( class_id INT NOT NULL PRIMARY KEY, class_name VARCHAR(50) NOT NULL, teacher_name VARCHAR(100) NULL, room_number INT NULL )
 #Q#SET NO_BROWSETABLE OFF; select * from dbo.cclass
 
@@ -298,7 +298,6 @@ Column: room_number
   - Allow Null: True
 Primary Key Columns:
 - class_id
-
 #Q#DROP TABLE IF EXISTS dbo.cclass
 #Q#DROP TABLE IF EXISTS new_cclass
 #Q#CREATE TABLE new_cclass ( class_id INT NOT NULL PRIMARY KEY, class_name VARCHAR(50) NOT NULL, teacher_name VARCHAR(100) NULL )
@@ -319,13 +318,12 @@ Column: teacher_name
   - Allow Null: True
 Primary Key Columns:
 - class_id
-
 #Q#DROP TABLE IF EXISTS new_cclass
 #Q#DROP PROCEDURE IF EXISTS sp_get_by_id
 #Q#DROP TABLE IF EXISTS sp_param_table
-#Q#CREATE TABLE sp_param_table ( id INT NOT NULL PRIMARY KEY, names VARCHAR(50) NOT NULL, val DECIMAL(10,2) NULL )
+#Q#CREATE TABLE sp_param_table (id INT NOT NULL PRIMARY KEY, names VARCHAR(50) NOT NULL, val DECIMAL(10,2) NULL)
 #Q#INSERT INTO sp_param_table VALUES (1, 'Item1', 100.50), (2, 'Item2', 200.75), (3, 'Item3', 300.00)
-#Q#CREATE PROCEDURE sp_get_by_id @id INT AS BEGIN SELECT * FROM sp_param_table WHERE id = @id; END
+#Q#CREATE PROCEDURE sp_get_by_id @id INT AS BEGIN SELECT * FROM sp_param_table WHERE id = @id END
 #Q#EXEC sp_get_by_id @id = 1
 
 Table Columns:
@@ -343,7 +341,6 @@ Column: val
   - Allow Null: True
 Primary Key Columns:
 - id
-
 #Q#DROP PROCEDURE IF EXISTS sp_get_by_id
 #Q#DROP TABLE IF EXISTS sp_param_table
 #Q#DROP TABLE IF EXISTS prepexec_test
@@ -366,7 +363,6 @@ Column: value
   - Allow Null: True
 Primary Key Columns:
 - id
-
 #Q#DROP TABLE IF EXISTS prepexec_test
 #Q#DROP TABLE IF EXISTS prepare_exec_test
 #Q#CREATE TABLE prepare_exec_test (id INT PRIMARY KEY, data VARCHAR(100))
@@ -384,7 +380,6 @@ Column: data
   - Allow Null: True
 Primary Key Columns:
 - id
-
 #Q#DROP TABLE IF EXISTS prepare_exec_test
 #Q#DROP TABLE IF EXISTS fmtonly_test
 #Q#CREATE TABLE fmtonly_test (id INT PRIMARY KEY, name VARCHAR(50), created_date DATETIME)
@@ -406,7 +401,6 @@ Column: created_date
   - Allow Null: True
 Primary Key Columns:
 - id
-
 #Q#DROP TABLE IF EXISTS fmtonly_test
 #Q#DROP TABLE IF EXISTS prepexec_orders
 #Q#DROP TABLE IF EXISTS prepexec_customers
@@ -435,6 +429,5 @@ Column: customer_name
   - Allow Null: True
 Primary Key Columns:
 - order_id
-
 #Q#DROP TABLE IF EXISTS prepexec_orders
 #Q#DROP TABLE IF EXISTS prepexec_customers
