@@ -521,7 +521,7 @@ BABEL-4484
 pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
-TestDatatypeAggSort
+TestDatatypeAggSort-before-16_12-or-17_8
 BABEL-2999
 BABEL-4606
 BABEL-4672
@@ -571,7 +571,7 @@ test_conv_string_to_time
 BABEL-3401
 BABEL-3820
 stuff
-PARTITION
+PARTITION-before-17_7
 BABEL-5071
 string_agg_within
 reverse
@@ -665,3 +665,6 @@ babel_string_to_money
 comparison_op_index_scan-before-17_8-or-16_12
 BABEL-5788
 BABEL-1664
+string_aggregate
+babel_string_to_money_reg
+babel_convert_with_style
