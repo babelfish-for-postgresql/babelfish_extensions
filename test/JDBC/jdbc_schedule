@@ -762,7 +762,7 @@ ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-prepare
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-verify
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
 
-ignore#!#test_convert_to_string_before_18_0
+ignore#!#test_convert_to_string_before-18_0
 
 #crashes
 ignore#!#temp_catalog_inval-vu-prepare

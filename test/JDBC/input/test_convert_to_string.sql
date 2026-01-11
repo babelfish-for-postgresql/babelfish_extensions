@@ -1023,8 +1023,7 @@ GO
 SELECT CONVERT(VARCHAR(50), TimeCol, 101) AS US_Style_101 FROM convert_source_t1;
 GO
 -- ANSI (2 or 102)
-SELECT CONVERT(VARCHAR(50), TimeCol, 2) AS ANSI_Style_2 FROM 
-;
+SELECT CONVERT(VARCHAR(50), TimeCol, 2) AS ANSI_Style_2 FROM convert_source_t1;
 GO
 SELECT CONVERT(VARCHAR(50), TimeCol, 102) AS ANSI_Style_102 FROM convert_source_t1;
 GO
