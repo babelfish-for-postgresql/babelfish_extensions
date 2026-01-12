@@ -130,6 +130,9 @@
 '16.11':
   engine_branch: BABEL_4_8_STABLE__PG_16_11
   extension_branch: BABEL_4_8_STABLE
+'16.12':
+  engine_branch: BABEL_4_9_STABLE__PG_16_12
+  extension_branch: BABEL_4_9_STABLE
 'source.latest':
   engine_branch: latest
   extension_branch: latest
