@@ -6782,7 +6782,7 @@ Query Text: SELECT test_like_index_vu_prepare_t_csas_col
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1'
 Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   Heap Fetches: 1
 ~~END~~
@@ -6826,7 +6826,7 @@ Query Text: SELECT test_like_index_vu_prepare_t_csas_col_no_idx
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1'
 Index Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
@@ -6871,7 +6871,7 @@ FROM test_like_index_vu_prepare_t_csas
 WHERE test_like_index_vu_prepare_t_csas_col2 LIKE 'cs1' 
 AND test_like_index_vu_prepare_t_csas_col3 LIKE 'cs1'
 Index Only Scan using test_like_index_vu_prepare_t_csce712f1af9d7f9e1f899be47087d5a6f on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
   Filter: ((test_like_index_vu_prepare_t_csas_col2 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
   Heap Fetches: 1
 ~~END~~
@@ -6918,7 +6918,7 @@ Query Text: SELECT test_like_index_vu_prepare_t_csas_col
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1' COLLATE latin1_general_cs_as
 Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   Heap Fetches: 1
 ~~END~~
@@ -6962,7 +6962,7 @@ Query Text: SELECT test_like_index_vu_prepare_t_csas_col_no_idx
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1' COLLATE latin1_general_cs_as
 Index Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
@@ -7007,7 +7007,7 @@ FROM test_like_index_vu_prepare_t_csas
 WHERE test_like_index_vu_prepare_t_csas_col2 LIKE 'cs1' 
 AND test_like_index_vu_prepare_t_csas_col3 LIKE 'cs1' COLLATE latin1_general_cs_as
 Index Only Scan using test_like_index_vu_prepare_t_csce712f1af9d7f9e1f899be47087d5a6f on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
   Filter: ((test_like_index_vu_prepare_t_csas_col2 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
   Heap Fetches: 1
 ~~END~~
@@ -7104,7 +7104,7 @@ Query Text: SELECT test_like_index_vu_prepare_t_csas_col
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE 'csas '
 Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'csas '::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'csas '::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Cond: (test_like_index_vu_prepare_t_csas_col = 'csas '::text COLLATE bbf_unicode_cp1_cs_as)
   Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as)
   Heap Fetches: 1
 ~~END~~
@@ -7125,7 +7125,7 @@ Query Text: SELECT test_like_index_vu_prepare_t_csas_col
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE ' csas'
 Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: ((test_like_index_vu_prepare_t_csas_col = ' csas'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = ' csas'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Cond: (test_like_index_vu_prepare_t_csas_col = ' csas'::text COLLATE bbf_unicode_cp1_cs_as)
   Filter: (test_like_index_vu_prepare_t_csas_col ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as)
   Heap Fetches: 1
 ~~END~~
@@ -7150,7 +7150,7 @@ FROM test_like_index_vu_prepare_t_csas t1 JOIN test_like_index_vu_prepare_t_comm
 ON t1.test_like_index_vu_prepare_t_csas_col LIKE 'cs1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas t1
-        Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
         Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Seq Scan on test_like_index_vu_prepare_t_common t2
 ~~END~~
@@ -7223,7 +7223,7 @@ FROM test_like_index_vu_prepare_t_csas t1 JOIN test_like_index_vu_prepare_t_comm
 ON t1.test_like_index_vu_prepare_t_csas_col LIKE 'cs1' COLLATE latin1_general_cs_as
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas t1
-        Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
         Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Seq Scan on test_like_index_vu_prepare_t_common t2
 ~~END~~
@@ -7578,10 +7578,9 @@ text
 Query Text: SELECT test_like_index_vu_prepare_t_cias_col 
 FROM test_like_index_vu_prepare_t_cias 
 WHERE test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_cs_as LIKE 'ci1'
-Index Only Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
-  Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE "default")
+Seq Scan on test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
   Filter: (((test_like_index_vu_prepare_t_cias_col)::text ~~ 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
-  Heap Fetches: 1
+  Rows Removed by Filter: 1002
 ~~END~~
 
 
