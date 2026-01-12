@@ -1,0 +1,11 @@
+EXEC dbo.create_fti_columns @SEARCHABLE_COLUMNS = '1|2|3^1|2^1^1';
+GO
+
+-- fails because of executes "ALTER TABLE TBL_LOCATION_TREE_SPACE_5 ADD FTI AS ('') PERSISTED;" on the 
+-- 5th table, which fails with 'column "fti" has pseudo-type unknown', because computed column = '';
+EXEC dbo.create_fti_columns @SEARCHABLE_COLUMNS = '1|2|3^1|2^1^1|2^0'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "fti" has pseudo-type unknown)~~
+

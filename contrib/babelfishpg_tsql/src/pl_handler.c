@@ -5848,27 +5848,21 @@ pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 {
 	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int			len = strlen(name);
-	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	const int	saved_dialect = sql_dialect;
 
 	PG_TRY();
 	{
 		/* this is BBF help function. use BBF truncation logic */
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		sql_dialect = SQL_DIALECT_TSQL;
 		truncate_identifier(name, len, false);
 	}
 	PG_CATCH();
 	{
-		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		sql_dialect = saved_dialect;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	sql_dialect = saved_dialect;
 
 	PG_RETURN_TEXT_P(cstring_to_text(name));
 }

@@ -465,3 +465,12 @@ EXCEPTION WHEN duplicate_object THEN
   RAISE WARNING '%', exception_message;
 END;
 $$;
+
+ALTER FUNCTION sys.babelfish_concat_wrapper(leftarg text, rightarg text) IMMUTABLE;
+ALTER FUNCTION sys.babelfish_concat_wrapper_outer(leftarg text, rightarg text) IMMUTABLE;
+ALTER FUNCTION sys.babelfish_concat_wrapper(leftarg sys.varchar, rightarg sys.varchar) IMMUTABLE;
+ALTER FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nvarchar, rightarg sys.nvarchar) IMMUTABLE;
+ALTER FUNCTION sys.babelfish_concat_wrapper(leftarg sys.bpchar, rightarg sys.bpchar) IMMUTABLE;
+ALTER FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nchar, rightarg sys.nchar) IMMUTABLE;
+ALTER FUNCTION sys.babelfish_concat_wrapper(leftarg sys.varchar, rightarg sys.nvarchar) IMMUTABLE;
+ALTER FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nvarchar, rightarg sys.varchar) IMMUTABLE;
