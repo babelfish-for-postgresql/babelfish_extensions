@@ -762,7 +762,6 @@ ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-prepare
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-verify
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
 
-
 #crashes
 ignore#!#temp_catalog_inval-vu-prepare
 ignore#!#temp_catalog_inval-vu-verify
