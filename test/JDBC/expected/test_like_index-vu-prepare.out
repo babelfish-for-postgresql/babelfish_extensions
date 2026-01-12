@@ -20,6 +20,21 @@ GO
 ~~ROW COUNT: 1000~~
 
 
+INSERT INTO test_like_index_vu_prepare_v_csas VALUES('csas' , 'csas' , 'csas' , 'csas');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_v_csas VALUES('csas ' , 'csas ' , 'csas ' , 'csas ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_v_csas VALUES(' csas' , ' csas' , ' csas' , ' csas');
+GO
+~~ROW COUNT: 1~~
+
+
 -- CI_AS
 CREATE TABLE test_like_index_vu_prepare_v_cias(
     test_like_index_vu_prepare_v_cias_col varchar(max) collate latin1_general_ci_as,
@@ -38,6 +53,21 @@ GO
 INSERT INTO test_like_index_vu_prepare_v_cias VALUES(CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)));
 GO
 ~~ROW COUNT: 1000~~
+
+
+INSERT INTO test_like_index_vu_prepare_v_cias VALUES('cias' , 'cias' , 'cias' , 'cias');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_v_cias VALUES('cias ' , 'cias ' , 'cias ' , 'cias ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_v_cias VALUES(' cias' , ' cias' , ' cias' , ' cias');
+GO
+~~ROW COUNT: 1~~
 
 
 -- CS_AI
@@ -62,6 +92,21 @@ GO
 ~~ROW COUNT: 1000~~
 
 
+INSERT INTO test_like_index_vu_prepare_v_csai VALUES('csai' , 'csai' , 'csai' , 'csai');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_v_csai VALUES('csai ' , 'csai ' , 'csai ' , 'csai ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_v_csai VALUES(' csai' , ' csai' , ' csai' , ' csai');
+GO
+~~ROW COUNT: 1~~
+
+
 -- CI_AI
 CREATE TABLE test_like_index_vu_prepare_v_ciai(
     test_like_index_vu_prepare_v_ciai_col varchar(max) collate latin1_general_ci_ai,
@@ -82,6 +127,21 @@ GO
 INSERT INTO test_like_index_vu_prepare_v_ciai VALUES(CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)));
 GO
 ~~ROW COUNT: 1000~~
+
+
+INSERT INTO test_like_index_vu_prepare_v_ciai VALUES('ciai' , 'ciai' , 'ciai' , 'ciai');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_v_ciai VALUES('ciai ' , 'ciai ' , 'ciai ' , 'ciai ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_v_ciai VALUES(' ciai' , ' ciai' , ' ciai' , ' ciai');
+GO
+~~ROW COUNT: 1~~
 
 
 -- CHAR
@@ -105,6 +165,30 @@ GO
 ~~ROW COUNT: 1000~~
 
 
+INSERT INTO test_like_index_vu_prepare_c_csas VALUES('csas' , 'csas' , 'csas' , 'csas');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_c_csas VALUES('csas ' , 'csas ' , 'csas ' , 'csas ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_c_csas VALUES(' csas' , ' csas' , ' csas' , ' csas');
+GO
+~~ROW COUNT: 1~~
+
+
+-- new char table without padding
+CREATE TABLE new_test_like_index_vu_prepare_c_csas (new_test_like_index_vu_prepare_c_csas_col1 char(4) collate latin1_general_cs_as);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_c_csas VALUES('csas');
+GO
+~~ROW COUNT: 1~~
+
+
 -- CI_AS
 CREATE TABLE test_like_index_vu_prepare_c_cias(
     test_like_index_vu_prepare_c_cias_col char(8000) collate latin1_general_ci_as,
@@ -123,6 +207,30 @@ GO
 INSERT INTO test_like_index_vu_prepare_c_cias VALUES(CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)));
 GO
 ~~ROW COUNT: 1000~~
+
+
+INSERT INTO test_like_index_vu_prepare_c_cias VALUES('cias' , 'cias' , 'cias' , 'cias');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_c_cias VALUES('cias ' , 'cias ' , 'cias ' , 'cias ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_c_cias VALUES(' cias' , ' cias' , ' cias' , ' cias');
+GO
+~~ROW COUNT: 1~~
+
+
+-- new char table without padding
+CREATE TABLE new_test_like_index_vu_prepare_c_cias (new_test_like_index_vu_prepare_c_cias_col1 char(4) collate latin1_general_ci_as);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_c_cias VALUES('cias');
+GO
+~~ROW COUNT: 1~~
 
 
 -- CS_AI
@@ -147,6 +255,30 @@ GO
 ~~ROW COUNT: 1000~~
 
 
+INSERT INTO test_like_index_vu_prepare_c_csai VALUES('csai' , 'csai' , 'csai' , 'csai');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_c_csai VALUES('csai ' , 'csai ' , 'csai ' , 'csai ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_c_csai VALUES(' csai' , ' csai' , ' csai' , ' csai');
+GO
+~~ROW COUNT: 1~~
+
+
+-- new char table without padding
+CREATE TABLE new_test_like_index_vu_prepare_c_csai (new_test_like_index_vu_prepare_c_csai_col1 char(4) collate latin1_general_cs_ai);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_c_csai VALUES('csai');
+GO
+~~ROW COUNT: 1~~
+
+
 -- CI_AI
 CREATE TABLE test_like_index_vu_prepare_c_ciai(
     test_like_index_vu_prepare_c_ciai_col char(8000) collate latin1_general_ci_ai,
@@ -167,6 +299,30 @@ GO
 INSERT INTO test_like_index_vu_prepare_c_ciai VALUES(CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)));
 GO
 ~~ROW COUNT: 1000~~
+
+
+INSERT INTO test_like_index_vu_prepare_c_ciai VALUES('ciai' , 'ciai' , 'ciai' , 'ciai');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_c_ciai VALUES('ciai ' , 'ciai ' , 'ciai ' , 'ciai ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_c_ciai VALUES(' ciai' , ' ciai' , ' ciai' , ' ciai');
+GO
+~~ROW COUNT: 1~~
+
+
+-- new char table without padding
+CREATE TABLE new_test_like_index_vu_prepare_c_ciai (new_test_like_index_vu_prepare_c_ciai_col1 char(4) collate latin1_general_ci_ai);
+GO
+
+INSERT INTO new_test_like_index_vu_prepare_c_ciai VALUES('ciai');
+GO
+~~ROW COUNT: 1~~
 
 
 -- NVARCHAR
@@ -190,6 +346,21 @@ GO
 ~~ROW COUNT: 1000~~
 
 
+INSERT INTO test_like_index_vu_prepare_nv_csas VALUES('csas' , 'csas' , 'csas' , 'csas');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_nv_csas VALUES('csas ' , 'csas ' , 'csas ' , 'csas ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_nv_csas VALUES(' csas' , ' csas' , ' csas' , ' csas');
+GO
+~~ROW COUNT: 1~~
+
+
 -- CI_AS
 CREATE TABLE test_like_index_vu_prepare_nv_cias(
     test_like_index_vu_prepare_nv_cias_col nvarchar(max) collate latin1_general_ci_as,
@@ -208,6 +379,21 @@ GO
 INSERT INTO test_like_index_vu_prepare_nv_cias VALUES(CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)));
 GO
 ~~ROW COUNT: 1000~~
+
+
+INSERT INTO test_like_index_vu_prepare_nv_cias VALUES('cias' , 'cias' , 'cias' , 'cias');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_nv_cias VALUES('cias ' , 'cias ' , 'cias ' , 'cias ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_nv_cias VALUES(' cias' , ' cias' , ' cias' , ' cias');
+GO
+~~ROW COUNT: 1~~
 
 
 -- CS_AI
@@ -232,6 +418,21 @@ GO
 ~~ROW COUNT: 1000~~
 
 
+INSERT INTO test_like_index_vu_prepare_nv_csai VALUES('csai' , 'csai' , 'csai' , 'csai');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_nv_csai VALUES('csai ' , 'csai ' , 'csai ' , 'csai ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_nv_csai VALUES(' csai' , ' csai' , ' csai' , ' csai');
+GO
+~~ROW COUNT: 1~~
+
+
 -- CI_AI
 CREATE TABLE test_like_index_vu_prepare_nv_ciai(
     test_like_index_vu_prepare_nv_ciai_col nvarchar(max) collate latin1_general_ci_ai,
@@ -252,6 +453,21 @@ GO
 INSERT INTO test_like_index_vu_prepare_nv_ciai VALUES(CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)));
 GO
 ~~ROW COUNT: 1000~~
+
+
+INSERT INTO test_like_index_vu_prepare_nv_ciai VALUES('ciai' , 'ciai' , 'ciai' , 'ciai');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_nv_ciai VALUES('ciai ' , 'ciai ' , 'ciai ' , 'ciai ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_nv_ciai VALUES(' ciai' , ' ciai' , ' ciai' , ' ciai');
+GO
+~~ROW COUNT: 1~~
 
 
 -- TEXT Tables
@@ -275,6 +491,21 @@ GO
 ~~ROW COUNT: 1000~~
 
 
+INSERT INTO test_like_index_vu_prepare_t_csas VALUES('csas' , 'csas' , 'csas' , 'csas');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_t_csas VALUES('csas ' , 'csas ' , 'csas ' , 'csas ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_t_csas VALUES(' csas' , ' csas' , ' csas' , ' csas');
+GO
+~~ROW COUNT: 1~~
+
+
 -- CI_AS
 CREATE TABLE test_like_index_vu_prepare_t_cias(
     test_like_index_vu_prepare_t_cias_col TEXT collate latin1_general_ci_as,
@@ -293,6 +524,21 @@ GO
 INSERT INTO test_like_index_vu_prepare_t_cias VALUES(CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)));
 GO
 ~~ROW COUNT: 1000~~
+
+
+INSERT INTO test_like_index_vu_prepare_t_cias VALUES('cias' , 'cias' , 'cias' , 'cias');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_t_cias VALUES('cias ' , 'cias ' , 'cias ' , 'cias ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_t_cias VALUES(' cias' , ' cias' , ' cias' , ' cias');
+GO
+~~ROW COUNT: 1~~
 
 
 -- CS_AI
@@ -317,6 +563,21 @@ GO
 ~~ROW COUNT: 1000~~
 
 
+INSERT INTO test_like_index_vu_prepare_t_csai VALUES('csai' , 'csai' , 'csai' , 'csai');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_t_csai VALUES('csai ' , 'csai ' , 'csai ' , 'csai ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_t_csai VALUES(' csai' , ' csai' , ' csai' , ' csai');
+GO
+~~ROW COUNT: 1~~
+
+
 -- CI_AI
 CREATE TABLE test_like_index_vu_prepare_t_ciai(
     test_like_index_vu_prepare_t_ciai_col TEXT collate latin1_general_ci_ai,
@@ -339,6 +600,21 @@ GO
 ~~ROW COUNT: 1000~~
 
 
+INSERT INTO test_like_index_vu_prepare_t_ciai VALUES('ciai' , 'ciai' , 'ciai' , 'ciai');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_t_ciai VALUES('ciai ' , 'ciai ' , 'ciai ' , 'ciai ');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO test_like_index_vu_prepare_t_ciai VALUES(' ciai' , ' ciai' , ' ciai' , ' ciai');
+GO
+~~ROW COUNT: 1~~
+
+
 
 -- COMMON TABLE FOR JOIN
 CREATE TABLE test_like_index_vu_prepare_t_common(test_like_index_vu_prepare_t_common_col varchar(max));
@@ -355,331 +631,4 @@ GO
 INSERT INTO test_like_index_vu_prepare_t_common VALUES(CONCAT('common', generate_series(1,1000)));
 GO
 ~~ROW COUNT: 1000~~
-
-
-
--- VARCHAR
--- CS_AS
-CREATE TABLE new_test_like_index_vu_prepare_v_csas(
-    new_test_like_index_vu_prepare_v_csas_col varchar(max) collate latin1_general_cs_as
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_v_csas VALUES('csasns');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_v_csas VALUES('csases ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_v_csas VALUES(' csasps');
-GO
-~~ROW COUNT: 1~~
-
-
--- CI_AS
-CREATE TABLE new_test_like_index_vu_prepare_v_cias(
-    new_test_like_index_vu_prepare_v_cias_col varchar(max) collate latin1_general_ci_as
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_v_cias VALUES('ciasns');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_v_cias VALUES('ciases ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_v_cias VALUES(' ciasps');
-GO
-~~ROW COUNT: 1~~
-
-
--- CS_AI
-CREATE TABLE new_test_like_index_vu_prepare_v_csai(
-    new_test_like_index_vu_prepare_v_csai_col varchar(max) collate latin1_general_cs_ai
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_v_csai VALUES('csains');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_v_csai VALUES('csaies ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_v_csai VALUES(' csaips');
-GO
-~~ROW COUNT: 1~~
-
-
--- CI_AI
-CREATE TABLE new_test_like_index_vu_prepare_v_ciai(
-    new_test_like_index_vu_prepare_v_ciai_col varchar(max) collate latin1_general_ci_ai
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_v_ciai VALUES('ciains');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_v_ciai VALUES('ciaies ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_v_ciai VALUES(' ciaips');
-GO
-~~ROW COUNT: 1~~
-
-
-
-
-
--- CHAR
--- CS_AS
-CREATE TABLE new_test_like_index_vu_prepare_c_csas(
-    new_test_like_index_vu_prepare_c_csas_col char(6) collate latin1_general_cs_as
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_c_csas VALUES('csasns');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_c_csas VALUES('csases ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_c_csas VALUES(' csasps');
-GO
-~~ERROR (Code: 8152)~~
-
-~~ERROR (Message: value too long for type character(6))~~
-
-
--- CI_AS
-CREATE TABLE new_test_like_index_vu_prepare_c_cias(
-    new_test_like_index_vu_prepare_c_cias_col char(6) collate latin1_general_ci_as
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_c_cias VALUES('ciasns');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_c_cias VALUES('ciases ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_c_cias VALUES(' ciasps');
-GO
-~~ERROR (Code: 8152)~~
-
-~~ERROR (Message: value too long for type character(6))~~
-
-
--- CS_AI
-CREATE TABLE new_test_like_index_vu_prepare_c_csai(
-    new_test_like_index_vu_prepare_c_csai_col char(6) collate latin1_general_cs_ai
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_c_csai VALUES('csains');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_c_csai VALUES('csaies ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_c_csai VALUES(' csaips');
-GO
-~~ERROR (Code: 8152)~~
-
-~~ERROR (Message: value too long for type character(6))~~
-
-
--- CI_AI
-CREATE TABLE new_test_like_index_vu_prepare_c_ciai(
-    new_test_like_index_vu_prepare_c_ciai_col char(6) collate latin1_general_ci_ai
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_c_ciai VALUES('ciains');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_c_ciai VALUES('ciaies ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_c_ciai VALUES(' ciaips');
-GO
-~~ERROR (Code: 8152)~~
-
-~~ERROR (Message: value too long for type character(6))~~
-
-
-
-
-
--- TEXT
--- CS_AS
-CREATE TABLE new_test_like_index_vu_prepare_t_csas(
-    new_test_like_index_vu_prepare_t_csas_col TEXT collate latin1_general_cs_as
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_t_csas VALUES('csasns');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_t_csas VALUES('csases ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_t_csas VALUES(' csasps');
-GO
-~~ROW COUNT: 1~~
-
-
--- CI_AS
-CREATE TABLE new_test_like_index_vu_prepare_t_cias(
-    new_test_like_index_vu_prepare_t_cias_col TEXT collate latin1_general_ci_as
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_t_cias VALUES('ciasns');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_t_cias VALUES('ciases ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_t_cias VALUES(' ciasps');
-GO
-~~ROW COUNT: 1~~
-
-
--- CS_AI
-CREATE TABLE new_test_like_index_vu_prepare_t_csai(
-    new_test_like_index_vu_prepare_t_csai_col TEXT collate latin1_general_cs_ai
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_t_csai VALUES('csains');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_t_csai VALUES('csaies ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_t_csai VALUES(' csaips');
-GO
-~~ROW COUNT: 1~~
-
-
--- CI_AI
-CREATE TABLE new_test_like_index_vu_prepare_t_ciai(
-    new_test_like_index_vu_prepare_t_ciai_col TEXT collate latin1_general_ci_ai
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_t_ciai VALUES('ciains');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_t_ciai VALUES('ciaies ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_t_ciai VALUES(' ciaips');
-GO
-~~ROW COUNT: 1~~
-
-
-
-
-
--- NVARCHAR
--- CS_AS
-CREATE TABLE new_test_like_index_vu_prepare_nv_csas(
-   new_test_like_index_vu_prepare_nv_csas_col nvarchar(max) collate latin1_general_cs_as
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_nv_csas VALUES('csasns');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_nv_csas VALUES('csases ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_nv_csas VALUES(' csasps');
-GO
-~~ROW COUNT: 1~~
-
-
--- CI_AS
-CREATE TABLE new_test_like_index_vu_prepare_nv_cias(
-    new_test_like_index_vu_prepare_nv_cias_col nvarchar(max) collate latin1_general_ci_as
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_nv_cias VALUES('ciasns');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_nv_cias VALUES('ciases ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_nv_cias VALUES(' ciasps');
-GO
-~~ROW COUNT: 1~~
-
-
--- CS_AI
-CREATE TABLE new_test_like_index_vu_prepare_nv_csai(
-    new_test_like_index_vu_prepare_nv_csai_col nvarchar(max) collate latin1_general_cs_ai
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_nv_csai VALUES('csains');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_nv_csai VALUES('csaies ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_nv_csai VALUES(' csaips');
-GO
-~~ROW COUNT: 1~~
-
-
--- CI_AI
-CREATE TABLE new_test_like_index_vu_prepare_nv_ciai(
-    new_test_like_index_vu_prepare_nv_ciai_col nvarchar(max) collate latin1_general_ci_ai
-);
-GO
-
-INSERT INTO new_test_like_index_vu_prepare_nv_ciai VALUES('ciains');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_nv_ciai VALUES('ciaies ');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO new_test_like_index_vu_prepare_nv_ciai VALUES(' ciaips');
-GO
-~~ROW COUNT: 1~~
-
 
