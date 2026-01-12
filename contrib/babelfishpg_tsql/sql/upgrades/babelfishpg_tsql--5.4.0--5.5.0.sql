@@ -411,7 +411,7 @@ DECLARE
 BEGIN
 	v_style := floor(p_style)::SMALLINT;
 
-    CASE pg_typeof(arg)
+	CASE pg_typeof(arg)
 	WHEN 'date'::regtype THEN
 		IF v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
