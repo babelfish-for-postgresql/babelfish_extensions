@@ -113,19 +113,19 @@ FROM test_like_index_vu_prepare_v_csas
 WHERE test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_ci_as LIKE 'cs999%';
 GO
 
-SELECT test_like_index_vu_prepare_v_csas_col 
-FROM test_like_index_vu_prepare_v_csas 
-WHERE test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE 'csas';
+SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE 'csas';
 GO
 
-SELECT test_like_index_vu_prepare_v_csas_col 
-FROM test_like_index_vu_prepare_v_csas 
-WHERE test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE 'csas ';
+SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE 'csas ';
 GO
 
-SELECT test_like_index_vu_prepare_v_csas_col 
-FROM test_like_index_vu_prepare_v_csas 
-WHERE test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE ' csas';
+SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE ' csas';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -284,19 +284,19 @@ FROM test_like_index_vu_prepare_v_cias
 WHERE test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_cs_as LIKE 'ci999%';
 GO
 
-SELECT test_like_index_vu_prepare_v_cias_col 
-FROM test_like_index_vu_prepare_v_cias 
-WHERE test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias';
+SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias';
 GO
 
-SELECT test_like_index_vu_prepare_v_cias_col 
-FROM test_like_index_vu_prepare_v_cias 
-WHERE test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias ';
+SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias ';
 GO
 
-SELECT test_like_index_vu_prepare_v_cias_col 
-FROM test_like_index_vu_prepare_v_cias 
-WHERE test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE ' cias';
+SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE ' cias';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -455,19 +455,19 @@ FROM test_like_index_vu_prepare_v_csai
 WHERE test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_ci_ai LIKE 'csai999%';
 GO
 
-SELECT test_like_index_vu_prepare_v_csai_col 
-FROM test_like_index_vu_prepare_v_csai 
-WHERE test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE 'csai';
+SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE 'csai';
 GO
 
-SELECT test_like_index_vu_prepare_v_csai_col 
-FROM test_like_index_vu_prepare_v_csai 
-WHERE test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE 'csai ';
+SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE 'csai ';
 GO
 
-SELECT test_like_index_vu_prepare_v_csai_col 
-FROM test_like_index_vu_prepare_v_csai 
-WHERE test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE ' csai';
+SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE ' csai';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -626,19 +626,19 @@ FROM test_like_index_vu_prepare_v_ciai
 WHERE test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai999%';
 GO
 
-SELECT test_like_index_vu_prepare_v_ciai_col 
-FROM test_like_index_vu_prepare_v_ciai 
-WHERE test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai';
+SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai';
 GO
 
-SELECT test_like_index_vu_prepare_v_ciai_col 
-FROM test_like_index_vu_prepare_v_ciai 
-WHERE test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai ';
+SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai ';
 GO
 
-SELECT test_like_index_vu_prepare_v_ciai_col 
-FROM test_like_index_vu_prepare_v_ciai 
-WHERE test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai';
+SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -798,34 +798,34 @@ FROM test_like_index_vu_prepare_c_csas
 WHERE test_like_index_vu_prepare_c_csas_col COLLATE latin1_general_ci_as LIKE 'cs999%';
 GO
 
-SELECT test_like_index_vu_prepare_c_csas_col 
-FROM test_like_index_vu_prepare_c_csas 
-WHERE test_like_index_vu_prepare_c_csas_col COLLATE latin1_general_cs_as LIKE 'csas';
-GO
-
-SELECT test_like_index_vu_prepare_c_csas_col 
-FROM test_like_index_vu_prepare_c_csas 
-WHERE test_like_index_vu_prepare_c_csas_col COLLATE latin1_general_cs_as LIKE 'csas ';
-GO
-
-SELECT test_like_index_vu_prepare_c_csas_col 
-FROM test_like_index_vu_prepare_c_csas 
-WHERE test_like_index_vu_prepare_c_csas_col COLLATE latin1_general_cs_as LIKE ' csas';
-GO
-
-SELECT new_test_like_index_vu_prepare_c_csas_col1 
+SELECT new_test_like_index_vu_prepare_c_csas_col
 FROM new_test_like_index_vu_prepare_c_csas 
-WHERE new_test_like_index_vu_prepare_c_csas_col1  COLLATE latin1_general_cs_as LIKE 'csas';
+WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE 'csas';
 GO
 
-SELECT new_test_like_index_vu_prepare_c_csas_col1 
+SELECT new_test_like_index_vu_prepare_c_csas_col 
 FROM new_test_like_index_vu_prepare_c_csas 
-WHERE new_test_like_index_vu_prepare_c_csas_col1  COLLATE latin1_general_cs_as LIKE 'csas ';
+WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE 'csas ';
 GO
 
-SELECT new_test_like_index_vu_prepare_c_csas_col1 
+SELECT new_test_like_index_vu_prepare_c_csas_col
 FROM new_test_like_index_vu_prepare_c_csas 
-WHERE new_test_like_index_vu_prepare_c_csas_col1  COLLATE latin1_general_cs_as LIKE ' csas';
+WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE ' csas';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csas_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csas 
+WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE 'csas';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csas_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csas 
+WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE 'csas ';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csas_col
+FROM new_test_like_index_vu_prepare_c_fixed_csas 
+WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE ' csas';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -984,34 +984,34 @@ FROM test_like_index_vu_prepare_c_cias
 WHERE test_like_index_vu_prepare_c_cias_col COLLATE latin1_general_cs_as LIKE 'ci999%';
 GO
 
-SELECT test_like_index_vu_prepare_c_cias_col 
-FROM test_like_index_vu_prepare_c_cias 
-WHERE test_like_index_vu_prepare_c_cias_col COLLATE latin1_general_ci_as LIKE 'cias';
-GO
-
-SELECT test_like_index_vu_prepare_c_cias_col 
-FROM test_like_index_vu_prepare_c_cias 
-WHERE test_like_index_vu_prepare_c_cias_col COLLATE latin1_general_ci_as LIKE 'cias ';
-GO
-
-SELECT test_like_index_vu_prepare_c_cias_col 
-FROM test_like_index_vu_prepare_c_cias 
-WHERE test_like_index_vu_prepare_c_cias_col COLLATE latin1_general_ci_as LIKE ' cias';
-GO
-
-SELECT new_test_like_index_vu_prepare_c_cias_col1 
+SELECT new_test_like_index_vu_prepare_c_cias_col
 FROM new_test_like_index_vu_prepare_c_cias 
-WHERE new_test_like_index_vu_prepare_c_cias_col1  COLLATE latin1_general_ci_as LIKE 'cias';
+WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE 'cias';
 GO
 
-SELECT new_test_like_index_vu_prepare_c_cias_col1 
+SELECT new_test_like_index_vu_prepare_c_cias_col 
 FROM new_test_like_index_vu_prepare_c_cias 
-WHERE new_test_like_index_vu_prepare_c_cias_col1  COLLATE latin1_general_ci_as LIKE 'cias ';
+WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE 'cias ';
 GO
 
-SELECT new_test_like_index_vu_prepare_c_cias_col1 
+SELECT new_test_like_index_vu_prepare_c_cias_col
 FROM new_test_like_index_vu_prepare_c_cias 
-WHERE new_test_like_index_vu_prepare_c_cias_col1  COLLATE latin1_general_ci_as LIKE ' cias';
+WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE ' cias';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_cias_col 
+FROM new_test_like_index_vu_prepare_c_fixed_cias 
+WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE 'cias';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_cias_col 
+FROM new_test_like_index_vu_prepare_c_fixed_cias 
+WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE 'cias ';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_cias_col
+FROM new_test_like_index_vu_prepare_c_fixed_cias 
+WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE ' cias';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -1170,34 +1170,34 @@ FROM test_like_index_vu_prepare_c_csai
 WHERE test_like_index_vu_prepare_c_csai_col COLLATE latin1_general_ci_ai LIKE 'csai999%';
 GO
 
-SELECT test_like_index_vu_prepare_c_csai_col 
-FROM test_like_index_vu_prepare_c_csai 
-WHERE test_like_index_vu_prepare_c_csai_col COLLATE latin1_general_cs_ai LIKE 'csai';
-GO
-
-SELECT test_like_index_vu_prepare_c_csai_col 
-FROM test_like_index_vu_prepare_c_csai 
-WHERE test_like_index_vu_prepare_c_csai_col COLLATE latin1_general_cs_ai LIKE 'csai ';
-GO
-
-SELECT test_like_index_vu_prepare_c_csai_col 
-FROM test_like_index_vu_prepare_c_csai 
-WHERE test_like_index_vu_prepare_c_csai_col COLLATE latin1_general_cs_ai LIKE ' csai';
-GO
-
-SELECT new_test_like_index_vu_prepare_c_csai_col1 
+SELECT new_test_like_index_vu_prepare_c_csai_col
 FROM new_test_like_index_vu_prepare_c_csai 
-WHERE new_test_like_index_vu_prepare_c_csai_col1  COLLATE latin1_general_cs_ai LIKE 'csai';
+WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai';
 GO
 
-SELECT new_test_like_index_vu_prepare_c_csai_col1 
+SELECT new_test_like_index_vu_prepare_c_csai_col 
 FROM new_test_like_index_vu_prepare_c_csai 
-WHERE new_test_like_index_vu_prepare_c_csai_col1  COLLATE latin1_general_cs_ai LIKE 'csai ';
+WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai ';
 GO
 
-SELECT new_test_like_index_vu_prepare_c_csai_col1 
+SELECT new_test_like_index_vu_prepare_c_csai_col
 FROM new_test_like_index_vu_prepare_c_csai 
-WHERE new_test_like_index_vu_prepare_c_csai_col1  COLLATE latin1_general_cs_ai LIKE ' csai';
+WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE ' csai';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csai 
+WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csai 
+WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai ';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csai_col
+FROM new_test_like_index_vu_prepare_c_fixed_csai 
+WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE ' csai';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -1356,34 +1356,34 @@ FROM test_like_index_vu_prepare_c_ciai
 WHERE test_like_index_vu_prepare_c_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai999%';
 GO
 
-SELECT test_like_index_vu_prepare_c_ciai_col 
-FROM test_like_index_vu_prepare_c_ciai 
-WHERE test_like_index_vu_prepare_c_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai';
-GO
-
-SELECT test_like_index_vu_prepare_c_ciai_col 
-FROM test_like_index_vu_prepare_c_ciai 
-WHERE test_like_index_vu_prepare_c_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai ';
-GO
-
-SELECT test_like_index_vu_prepare_c_ciai_col 
-FROM test_like_index_vu_prepare_c_ciai 
-WHERE test_like_index_vu_prepare_c_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai';
-GO
-
-SELECT new_test_like_index_vu_prepare_c_ciai_col1 
+SELECT new_test_like_index_vu_prepare_c_ciai_col
 FROM new_test_like_index_vu_prepare_c_ciai 
-WHERE new_test_like_index_vu_prepare_c_csai_col1  COLLATE latin1_general_ci_ai LIKE 'ciai';
+WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai';
 GO
 
-SELECT new_test_like_index_vu_prepare_c_ciai_col1 
+SELECT new_test_like_index_vu_prepare_c_ciai_col 
 FROM new_test_like_index_vu_prepare_c_ciai 
-WHERE new_test_like_index_vu_prepare_c_ciai_col1  COLLATE latin1_general_ci_ai LIKE 'ciai ';
+WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai ';
 GO
 
-SELECT new_test_like_index_vu_prepare_c_ciai_col1 
+SELECT new_test_like_index_vu_prepare_c_ciai_col
 FROM new_test_like_index_vu_prepare_c_ciai 
-WHERE new_test_like_index_vu_prepare_c_ciai_col1  COLLATE latin1_general_ci_ai LIKE ' ciai';
+WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE ' ciai';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_ciai 
+WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_ciai 
+WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai ';
+GO
+
+SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col
+FROM new_test_like_index_vu_prepare_c_fixed_ciai 
+WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE ' ciai';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -1544,19 +1544,19 @@ FROM test_like_index_vu_prepare_nv_csas
 WHERE test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_ci_as LIKE 'cs999%';
 GO
 
-SELECT test_like_index_vu_prepare_nv_csas_col 
-FROM test_like_index_vu_prepare_nv_csas 
-WHERE test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE 'csas';
+SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE 'csas';
 GO
 
-SELECT test_like_index_vu_prepare_nv_csas_col 
-FROM test_like_index_vu_prepare_nv_csas 
-WHERE test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE 'csas ';
+SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE 'csas ';
 GO
 
-SELECT test_like_index_vu_prepare_nv_csas_col 
-FROM test_like_index_vu_prepare_nv_csas 
-WHERE test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE ' csas';
+SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE ' csas';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -1716,19 +1716,19 @@ FROM test_like_index_vu_prepare_nv_cias
 WHERE test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_cs_as LIKE 'ci999%';
 GO
 
-SELECT test_like_index_vu_prepare_nv_cias_col 
-FROM test_like_index_vu_prepare_nv_cias 
-WHERE test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias';
+SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE 'cias';
 GO
 
-SELECT test_like_index_vu_prepare_nv_cias_col 
-FROM test_like_index_vu_prepare_nv_cias 
-WHERE test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE 'cias ';
+SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE 'cias ';
 GO
 
-SELECT test_like_index_vu_prepare_nv_cias_col 
-FROM test_like_index_vu_prepare_nv_cias 
-WHERE test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE ' cias';
+SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE ' cias';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -1887,19 +1887,19 @@ FROM test_like_index_vu_prepare_nv_csai
 WHERE test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_ci_ai LIKE 'csai999%';
 GO
 
-SELECT test_like_index_vu_prepare_nv_csai_col 
-FROM test_like_index_vu_prepare_nv_csai 
-WHERE test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE 'csai';
+SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE 'csai';
 GO
 
-SELECT test_like_index_vu_prepare_nv_csai_col 
-FROM test_like_index_vu_prepare_nv_csai 
-WHERE test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE 'csai ';
+SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE 'csai ';
 GO
 
-SELECT test_like_index_vu_prepare_nv_csai_col 
-FROM test_like_index_vu_prepare_nv_csai 
-WHERE test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE ' csai';
+SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE ' csai';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -2058,19 +2058,19 @@ FROM test_like_index_vu_prepare_nv_ciai
 WHERE test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai999%';
 GO
 
-SELECT test_like_index_vu_prepare_nv_ciai_col 
-FROM test_like_index_vu_prepare_nv_ciai 
-WHERE test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai';
+SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai';
 GO
 
-SELECT test_like_index_vu_prepare_nv_ciai_col 
-FROM test_like_index_vu_prepare_nv_ciai 
-WHERE test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai ';
+SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai ';
 GO
 
-SELECT test_like_index_vu_prepare_nv_ciai_col 
-FROM test_like_index_vu_prepare_nv_ciai 
-WHERE test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai';
+SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -2230,19 +2230,19 @@ FROM test_like_index_vu_prepare_t_csas
 WHERE test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_ci_as LIKE 'cs999%';
 GO
 
-SELECT test_like_index_vu_prepare_t_csas_col 
-FROM test_like_index_vu_prepare_t_csas 
-WHERE test_like_index_vu_prepare_c_csas_col COLLATE latin1_general_cs_as LIKE 'csas';
+SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE 'csas';
 GO
 
-SELECT test_like_index_vu_prepare_t_csas_col 
-FROM test_like_index_vu_prepare_t_csas 
-WHERE test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE 'csas ';
+SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE 'csas ';
 GO
 
-SELECT test_like_index_vu_prepare_t_csas_col 
-FROM test_like_index_vu_prepare_t_csas 
-WHERE test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE ' csas';
+SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE ' csas';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -2401,19 +2401,19 @@ FROM test_like_index_vu_prepare_t_cias
 WHERE test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_cs_as LIKE 'ci999%';
 GO
 
-SELECT test_like_index_vu_prepare_t_cias_col 
-FROM test_like_index_vu_prepare_t_cias 
-WHERE test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE 'cias';
+SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE 'cias';
 GO
 
-SELECT test_like_index_vu_prepare_t_cias_col 
-FROM test_like_index_vu_prepare_t_cias 
-WHERE test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE 'cias ';
+SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE 'cias ';
 GO
 
-SELECT test_like_index_vu_prepare_t_cias_col 
-FROM test_like_index_vu_prepare_t_cias 
-WHERE test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE ' cias';
+SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE ' cias';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -2572,19 +2572,19 @@ FROM test_like_index_vu_prepare_t_csai
 WHERE test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_ci_ai LIKE 'csai999%';
 GO
 
-SELECT test_like_index_vu_prepare_t_csai_col 
-FROM test_like_index_vu_prepare_t_csai 
-WHERE test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE 'csai';
+SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE 'csai';
 GO
 
-SELECT test_like_index_vu_prepare_t_csai_col 
-FROM test_like_index_vu_prepare_t_csai 
-WHERE test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE 'csai ';
+SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE 'csai ';
 GO
 
-SELECT test_like_index_vu_prepare_t_csai_col 
-FROM test_like_index_vu_prepare_t_csai 
-WHERE test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE ' csai';
+SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE ' csai';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -2743,19 +2743,19 @@ FROM test_like_index_vu_prepare_t_ciai
 WHERE test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai999%';
 GO
 
-SELECT test_like_index_vu_prepare_t_ciai_col 
-FROM test_like_index_vu_prepare_t_ciai 
-WHERE test_like_index_vu_prepare_c_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai';
+SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai';
 GO
 
-SELECT test_like_index_vu_prepare_t_ciai_col 
-FROM test_like_index_vu_prepare_t_ciai 
-WHERE test_like_index_vu_prepare_c_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai ';
+SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai ';
 GO
 
-SELECT test_like_index_vu_prepare_t_ciai_col 
-FROM test_like_index_vu_prepare_t_ciai 
-WHERE test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai';
+SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai';
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;
