@@ -5848,21 +5848,27 @@ pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 {
 	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int			len = strlen(name);
-	const int	saved_dialect = sql_dialect;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
 	PG_TRY();
 	{
 		/* this is BBF help function. use BBF truncation logic */
-		sql_dialect = SQL_DIALECT_TSQL;
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		truncate_identifier(name, len, false);
 	}
 	PG_CATCH();
 	{
-		sql_dialect = saved_dialect;
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	sql_dialect = saved_dialect;
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+					  GUC_CONTEXT_CONFIG,
+					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	PG_RETURN_TEXT_P(cstring_to_text(name));
 }
@@ -6367,7 +6373,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
 	Oid			prev_procid = InvalidOid;
 	int			save_pltsql_trigger_depth = pltsql_trigger_depth;
-	int			saved_dialect = sql_dialect;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	int 		current_spi_stack_depth;
 	bool 		send_error = false;
 	char 		*saved_search_path = MemoryContextStrdup(TopMemoryContext, namespace_search_path);
@@ -6410,7 +6416,9 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		 * validating a PL/tsql program because the validator function is not
 		 * written in PL/tsql, it's written in C.
 		 */
-		sql_dialect = SQL_DIALECT_TSQL;
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		/* Find or compile the function */
 		func = pltsql_compile(fcinfo, false);
@@ -6495,7 +6503,9 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	}
 	PG_FINALLY();
 	{
-		sql_dialect = saved_dialect;
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		pltsql_check_search_path = true;
 
 		/* If func is NULL then we have encountered a parser error. */
