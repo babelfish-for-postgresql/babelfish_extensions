@@ -1269,8 +1269,9 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 130) AS Hijri_Style_130 FROM convert_so
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: numeric + integer)~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 130) AS Hijri_Style_130 FROM convert_source_udt_t1; -- 30 Rabi' al-Thani 1445
 GO
@@ -1285,8 +1286,9 @@ SELECT CONVERT(VARCHAR(50), DatetimeCol, 131) AS HijriTime_Style_131 FROM conver
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: numeric + integer)~~
 
 SELECT CONVERT(VARCHAR(50), DatetimeCol, 131) AS HijriTime_Style_131 FROM convert_source_udt_t1;  -- 30 Rabi' al-Thani 1445 09:01:23:123AM
 GO
@@ -2045,15 +2047,17 @@ SELECT CONVERT(VARCHAR(50), DateCol, 8) AS Time_Style_8 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type DATE to character varying(50).)~~
 
 SELECT CONVERT(VARCHAR(50), DateCol, 108) AS Time_Style_108 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type DATE to character varying(50).)~~
 
 -- mon dd yyyy hh:mi:ss:mmmAM (9 or 109)
 SELECT CONVERT(VARCHAR(50), DateCol, 9) AS Style_9 FROM convert_source_t1;
@@ -2135,15 +2139,17 @@ SELECT CONVERT(VARCHAR(50), DateCol, 14) AS Style_14 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 14 is not a valid style number when converting from DATE to a character string.)~~
 
 SELECT CONVERT(VARCHAR(50), DateCol, 114) AS Style_114 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 114 is not a valid style number when converting from DATE to a character string.)~~
 
 -- yyyy-mm-dd HH:mm:ss (20 or 120)
 SELECT CONVERT(VARCHAR(50), DateCol, 20) AS Style_20 FROM convert_source_t1;
@@ -2219,16 +2225,18 @@ SELECT CONVERT(VARCHAR(50), DateCol, 130) AS Hijri_Style_130 FROM convert_source
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: numeric + integer)~~
 
 -- Hijri with time (131)
 SELECT CONVERT(VARCHAR(50), DateCol, 131) AS HijriTime_Style_131 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: numeric + integer)~~
 
 
 -- Default Style (0 or 100)
@@ -2563,105 +2571,119 @@ SELECT CONVERT(VARCHAR(50), TimeCol, 1) AS US_Style_1 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 101) AS US_Style_101 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- ANSI (2 or 102)
 SELECT CONVERT(VARCHAR(50), TimeCol, 2) AS ANSI_Style_2 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 102) AS ANSI_Style_102 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- British/French (3 or 103)
 SELECT CONVERT(VARCHAR(50), TimeCol, 3) AS British_Style_3 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 103) AS British_Style_103 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- German (4 or 104)
 SELECT CONVERT(VARCHAR(50), TimeCol, 4) AS German_Style_4 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 104) AS German_Style_104 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- Italian (5 or 105)
 SELECT CONVERT(VARCHAR(50), TimeCol, 5) AS Italian_Style_5 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 105) AS Italian_Style_105 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- dd mon yyyy (6 or 106)
 SELECT CONVERT(VARCHAR(50), TimeCol, 6) AS Style_6 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 106) AS Style_106 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- mon dd, yyyy (7 or 107)
 SELECT CONVERT(VARCHAR(50), TimeCol, 7) AS Style_7 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 107) AS Style_107 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- HH:mm:ss (8 or 108)
 SELECT CONVERT(VARCHAR(50), TimeCol, 8) AS Time_Style_8 FROM convert_source_t1;
@@ -2698,45 +2720,51 @@ SELECT CONVERT(VARCHAR(50), TimeCol, 10) AS Style_10 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 110) AS Style_110 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- yy/mm/dd (11 or 111)
 SELECT CONVERT(VARCHAR(50), TimeCol, 11) AS Style_11 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 111) AS Style_111 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- yyyymmdd (12 or 112)
 SELECT CONVERT(VARCHAR(50), TimeCol, 12) AS Style_12 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 SELECT CONVERT(VARCHAR(50), TimeCol, 112) AS Style_112 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- dd mon yyyy HH:mm:ss:mmm (13 or 113)
 SELECT CONVERT(VARCHAR(50), TimeCol, 13) AS Style_13 FROM convert_source_t1;
@@ -2818,8 +2846,9 @@ SELECT CONVERT(VARCHAR(50), TimeCol, 23) AS Style_23 FROM convert_source_t1;
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type TIME to character varying.)~~
 
 -- ISO8601 (126)
 SELECT CONVERT(VARCHAR(50), TimeCol, 126) AS ISO8601_Style_126 FROM convert_source_t1;
@@ -4862,7 +4891,7 @@ FROM convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-123.45                                            #!#123.45#!#123.45                                            #!#123.45
+123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
 ~~END~~
 
 
@@ -4888,7 +4917,7 @@ FROM convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-123.45                                            #!#123.45#!#123.45                                            #!#123.45
+123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
 ~~END~~
 
 
