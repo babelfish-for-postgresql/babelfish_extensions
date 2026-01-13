@@ -617,3 +617,4 @@ babel_string_to_money
 BABEL-5788
 BABEL-1664-before-16_10-or-17_6
 babel_string_to_money_reg
+babel_convert_with_style
