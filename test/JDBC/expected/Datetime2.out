@@ -4875,10 +4875,6 @@ datetime2
 2023-06-16 14:22:59.1234570
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near "@")~~
-
 
 -- 3. Operators:
 -- Equal to (=) with DATETIME2 on left side
