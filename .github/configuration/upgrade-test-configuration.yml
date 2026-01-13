@@ -292,5 +292,17 @@ upgrade-version: [{
       upgrade-type: major
     }
   ]
+},
+{
+  upgrade-path: [
+    {
+      version: '17.8',
+      upgrade-type: null
+    },
+    { 
+      version: target.latest,
+      upgrade-type: major
+    }
+  ]
 }
 ]

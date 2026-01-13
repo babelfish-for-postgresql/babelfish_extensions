@@ -769,3 +769,7 @@ ignore#!#temp_catalog_inval-vu-cleanup
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-prepare
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-verify
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-cleanup
+
+#TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
+ignore#!#tds_faultinjection
+ignore#!#babel_tds_fault_injection
