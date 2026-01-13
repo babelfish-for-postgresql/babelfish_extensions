@@ -7,8 +7,8 @@ jobs:
       env:
       OLD_INSTALL_DIR: psql_source
       NEW_INSTALL_DIR: psql_target
-      ENGINE_BRANCH_FROM: BABEL_2_15_STABLE__PG_14_20
-      EXTENSION_BRANCH_FROM: BABEL_2_15_STABLE
+      ENGINE_BRANCH_FROM: BABEL_2_16_STABLE__PG_14_21
+      EXTENSION_BRANCH_FROM: BABEL_2_16_STABLE
 
     runs-on: ubuntu-22.04
     steps:
