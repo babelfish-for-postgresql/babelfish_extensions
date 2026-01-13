@@ -1,7 +1,7 @@
+-- FIXME: computed column using mutable function error. To be fixed with BABEL-2022
 EXEC dbo.create_fti_columns @SEARCHABLE_COLUMNS = '1|2|3^1|2^1^1';
 GO
 
--- fails because of executes "ALTER TABLE TBL_LOCATION_TREE_SPACE_5 ADD FTI AS ('') PERSISTED;" on the 
--- 5th table, which fails with 'column "fti" has pseudo-type unknown', because computed column = '';
+-- FIXME: computed column using mutable function error. To be fixed with BABEL-2022
 EXEC dbo.create_fti_columns @SEARCHABLE_COLUMNS = '1|2|3^1|2^1^1|2^0'
 GO
