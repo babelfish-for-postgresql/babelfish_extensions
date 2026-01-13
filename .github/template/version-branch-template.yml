@@ -131,6 +131,9 @@
   engine_branch: BABEL_4_8_STABLE__PG_16_11
   extension_branch: BABEL_4_8_STABLE
 '16.12':
+  engine_branch: BABEL_4_9_STABLE__PG_16_12
+  extension_branch: BABEL_4_9_STABLE
+'16.13':
   engine_branch: BABEL_4_X_DEV__PG_16_X
   extension_branch: BABEL_4_X_DEV
 '17.4':
