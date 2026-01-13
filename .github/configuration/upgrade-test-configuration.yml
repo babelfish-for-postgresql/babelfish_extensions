@@ -185,6 +185,18 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
+      version: '15.16',
+      upgrade-type: null
+    },
+    { 
+      version: target.latest,
+      upgrade-type: minor
+    }
+  ]
+},
+{
+  upgrade-path: [
+    {
       version: 14.6,
       upgrade-type: null
     },
