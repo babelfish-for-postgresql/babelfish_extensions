@@ -62,11 +62,11 @@
   engine_branch: BABEL_2_15_STABLE__PG_14_20
   extension_branch: BABEL_2_15_STABLE
 '14.21':
-  engine_branch: BABEL_2_X_DEV__PG_14_X
-  extension_branch: BABEL_2_X_DEV
-'14.22':
   engine_branch: BABEL_2_16_STABLE__PG_14_21
   extension_branch: BABEL_2_16_STABLE
+'14.22':
+  engine_branch: BABEL_2_X_DEV__PG_14_X
+  extension_branch: BABEL_2_X_DEV
 '15.2':
   engine_branch: BABEL_3_1_STABLE__PG_15_2
   extension_branch: BABEL_3_1_STABLE
