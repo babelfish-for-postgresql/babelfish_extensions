@@ -548,7 +548,7 @@ ltrim
 rtrim
 left
 right
-replace
+replace-before-18_1
 BABEL-4863
 babel_test_int4_numeric_oper
 babel_test_int8_numeric_oper
@@ -558,7 +558,7 @@ test_like_for_AI
 BABEL-4869
 babel_4328_datetime
 babel_4328_datetime2
-translate
+translate-before-18_1
 substring
 babel_4328_datetimeoffset
 babel_726
@@ -575,7 +575,7 @@ PARTITION
 BABEL-5071
 string_agg_within
 reverse
-string_agg
+string_agg-before-18_1
 getdate
 concat
 concat_ws
@@ -597,7 +597,7 @@ db_accessadmin
 db_ddladmin
 db_securityadmin
 BABEL-CASE_EXPR
-charindex_replace_patindex
+charindex_replace-before-18_1_patindex
 BABEL-5186
 BABEL-2736
 cast_nvarchar_test
