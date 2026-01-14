@@ -10,11 +10,6 @@
 
 all
 
-# FIX ME: Crash in vector extension. Ignoring to Unblock Dev
-# branches. Will be fixed with jira: BABEL-6260
-ignore#!#TestHalfvecDatatype
-ignore#!#TestSparsevecDatatype
-ignore#!#TestVectorDatatype
 
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
