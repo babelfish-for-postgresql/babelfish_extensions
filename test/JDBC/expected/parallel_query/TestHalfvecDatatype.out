@@ -1710,7 +1710,7 @@ go
 
 ~~ROW COUNT: 1~~
 
-SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id;
+SELECT * FROM document_embeddings ORDER BY id;
 go
 ~~START~~
 int#!#varchar
@@ -1788,10 +1788,10 @@ SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id ORDER BY id;
 go
 ~~START~~
 int#!#varchar
+1#!#[21,-2,0,2.5]
 2#!#[5,10000,-9.75,8]
 3#!#[-0.020004272,23,3.140625,0]
 4#!#[200,80,-65504,-1]
-1#!#[21,-2,0,2.5]
 ~~END~~
 
 
