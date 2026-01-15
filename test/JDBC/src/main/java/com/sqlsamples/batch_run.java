@@ -242,6 +242,14 @@ public class batch_run {
                     String data = result.length >= 3 ? result[2] : "";
 
                     JDBCMetadata.testDatabaseMetadata(bw, logger, con_bbl, method, data);
+                } else if (strLine.startsWith("fillschema_test")) {
+                    bw.write(strLine);
+                    bw.newLine();
+                    
+                    String[] result = strLine.split("#!#");
+                    String query = result.length >= 2 ? result[1] : "";
+                    
+                    JDBCFillSchema.testFillSchema(bw, logger, con_bbl, query);
                 } else if (isCrossDialectFile && (  (tsqlDialect = strLine.toLowerCase().startsWith("-- tsql")) ||
                                                     (psqlDialect = strLine.toLowerCase().startsWith("-- psql")))) {
                     // Cross dialect testing
