@@ -310,7 +310,6 @@ pltsql_bpchar_name(PG_FUNCTION_ARGS)
 			PG_FINALLY();
 			{
 				sql_dialect = saved_dialect;
-				PG_RE_THROW();
 			}
 			PG_END_TRY();
 			

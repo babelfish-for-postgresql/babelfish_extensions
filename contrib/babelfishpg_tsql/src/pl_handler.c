@@ -5856,13 +5856,11 @@ pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 		sql_dialect = SQL_DIALECT_TSQL;
 		truncate_identifier(name, len, false);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		sql_dialect = saved_dialect;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	sql_dialect = saved_dialect;
 
 	PG_RETURN_TEXT_P(cstring_to_text(name));
 }
