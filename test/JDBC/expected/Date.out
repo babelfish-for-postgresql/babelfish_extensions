@@ -4915,6 +4915,10 @@ date
 2023-06-16
 ~~END~~
 
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "@")~~
+
 
 -- 3. Operators:
 -- Equal to (=) with DATE on left side

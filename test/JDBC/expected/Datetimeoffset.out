@@ -4897,6 +4897,10 @@ datetimeoffset
 2023-06-16 14:22:59.0000000 +01:00
 ~~END~~
 
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "@")~~
+
 
 -- 3. Operators:
 -- Equal to (=) with DATETIMEOFFSET on left side

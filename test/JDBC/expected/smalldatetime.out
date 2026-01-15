@@ -6048,6 +6048,10 @@ smalldatetime
 2023-06-16 14:22:00.0
 ~~END~~
 
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "@")~~
+
 
 -- 3. Operators:
 -- Equal to (=) with SMALLDATETIME on left side

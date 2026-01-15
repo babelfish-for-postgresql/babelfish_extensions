@@ -5214,6 +5214,10 @@ time
 14:22:59.0000000
 ~~END~~
 
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "@")~~
+
 
 -- 3. Operators:
 -- Equal to (=) with TIME on left side
