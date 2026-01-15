@@ -1589,7 +1589,7 @@ go
 
 ~~ROW COUNT: 1~~
 
-SELECT * FROM document_embeddings;
+SELECT * FROM document_embeddings ORDER BY id;
 go
 ~~START~~
 int#!#varchar
@@ -1631,9 +1631,9 @@ int
 
 
 -- WHERE clause expressions
-SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5; 
+SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5 ORDER BY id;
 go
 ~~START~~
 int#!#varchar
@@ -1663,7 +1663,7 @@ varchar
 ~~END~~
 
 
-SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id;
+SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id ORDER BY id;
 go
 ~~START~~
 int#!#varchar
@@ -3260,7 +3260,7 @@ go
 
 ~~ROW COUNT: 1~~
 
-SELECT * FROM document_embeddings;
+SELECT * FROM document_embeddings ORDER BY id;
 go
 ~~START~~
 int#!#varchar
@@ -3302,9 +3302,9 @@ int
 
 
 -- WHERE clause expressions
-SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5; 
+SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5 ORDER BY id; 
 go
 ~~START~~
 int#!#varchar
@@ -3334,7 +3334,7 @@ varchar
 ~~END~~
 
 
-SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id;
+SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id ORDER BY id;
 go
 ~~START~~
 int#!#varchar
