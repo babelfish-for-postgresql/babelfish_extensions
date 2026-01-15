@@ -1702,7 +1702,7 @@ int
 -- WHERE clause expressions
 SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5 ORDER BY id;
 SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5 ORDER BY id;
-SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5 ORDER BY id; 
+SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5 ORDER BY id;
 go
 ~~START~~
 int#!#varchar
@@ -3476,10 +3476,10 @@ SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id ORDER BY id;
 go
 ~~START~~
 int#!#varchar
+1#!#[21,-2,0,2.5]
 2#!#[5,10000,-9.75,8]
 3#!#[-0.020004272,23,3.140625,0]
 4#!#[200,80,-65504,-1]
-1#!#[21,-2,0,2.5]
 ~~END~~
 
 
