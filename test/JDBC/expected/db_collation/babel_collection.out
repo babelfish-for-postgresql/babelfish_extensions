@@ -183,16 +183,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'jones'
-Bitmap Heap Scan on testing4  (cost=4.17..11.29 rows=1 width=32)
-  Recheck Cond: (c1 = 'jones'::"varchar")
-  Filter: ((c1)::text ~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as)
-  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.17 rows=3 width=0)
-        Index Cond: (c1 = 'jones'::"varchar")
+Bitmap Heap Scan on testing4  (cost=11.40..34.40 rows=1 width=32)
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) = 'jones'::nvarchar))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.915 ms
+Babelfish T-SQL Batch Parsing Time: 2.895 ms
 ~~END~~
 
 
@@ -201,16 +199,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'Jon%'
-Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-  Recheck Cond: ((c1 >= 'Jon'::"varchar") AND (c1 < 'Jon?'::"varchar"))
-  Filter: ((c1)::text ~~* 'Jon%'::text COLLATE bbf_unicode_cp1_cs_as)
-  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
-        Index Cond: ((c1 >= 'Jon'::"varchar") AND (c1 < 'Jon?'::"varchar"))
+Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) >= 'Jon'::nvarchar) AND (remove_accents_internal((c1)::text) < 'Jon?'::nvarchar))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.100 ms
+Babelfish T-SQL Batch Parsing Time: 0.224 ms
 ~~END~~
 
 
@@ -219,26 +215,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'jone_'
-Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-  Recheck Cond: ((c1 >= 'jone'::"varchar") AND (c1 < 'jone?'::"varchar"))
-  Filter: ((c1)::text ~~* 'jone_'::text COLLATE bbf_unicode_cp1_cs_as)
-  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
-        Index Cond: ((c1 >= 'jone'::"varchar") AND (c1 < 'jone?'::"varchar"))
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
-~~END~~
-
-
-select c1 from testing4 where c1 LIKE '_one_';
-GO
-~~START~~
-text
-Query Text: select c1 from testing4 where c1 LIKE '_one_'
-Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=5 width=32)
-  Filter: ((c1)::text ~~* '_one_'::text COLLATE bbf_unicode_cp1_cs_as)
+Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) >= 'jone'::nvarchar) AND (remove_accents_internal((c1)::text) < 'jone?'::nvarchar))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -248,19 +226,35 @@ Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
-select c1 from testing4 where c1 LIKE '%on%s';
+select c1 from testing4 where c1 LIKE '_one_';
 GO
 ~~START~~
 text
-Query Text: select c1 from testing4 where c1 LIKE '%on%s'
-Bitmap Heap Scan on testing4  (cost=11.41..29.53 rows=26 width=32)
-  Filter: ((c1)::text ~~* '%on%s'::text COLLATE bbf_unicode_cp1_cs_as)
+Query Text: select c1 from testing4 where c1 LIKE '_one_'
+Bitmap Heap Scan on testing4  (cost=11.40..31.15 rows=5 width=32)
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.081 ms
+~~END~~
+
+
+select c1 from testing4 where c1 LIKE '%on%s';
+GO
+~~START~~
+text
+Query Text: select c1 from testing4 where c1 LIKE '%on%s'
+Bitmap Heap Scan on testing4  (cost=11.41..31.16 rows=26 width=32)
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text COLLATE bbf_unicode_cp1_cs_as)
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -270,16 +264,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'ab%'
-Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-  Recheck Cond: ((c1 >= 'ab'::"varchar") AND (c1 < 'ab?'::"varchar"))
-  Filter: ((c1)::text ~~* 'ab%'::text COLLATE bbf_unicode_cp1_cs_as)
-  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
-        Index Cond: ((c1 >= 'ab'::"varchar") AND (c1 < 'ab?'::"varchar"))
+Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'ab%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) >= 'ab'::nvarchar) AND (remove_accents_internal((c1)::text) < 'ab?'::nvarchar))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.102 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äb%';
@@ -287,16 +279,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'äb%'
-Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-  Recheck Cond: ((c1 >= 'äb'::"varchar") AND (c1 < 'äb?'::"varchar"))
-  Filter: ((c1)::text ~~* 'äb%'::text COLLATE bbf_unicode_cp1_cs_as)
-  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
-        Index Cond: ((c1 >= 'äb'::"varchar") AND (c1 < 'äb?'::"varchar"))
+Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'ab%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) >= 'ab'::nvarchar) AND (remove_accents_internal((c1)::text) < 'ab?'::nvarchar))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.124 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äḃĆ_';
@@ -304,16 +294,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'ä??_'
-Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-  Recheck Cond: ((c1 >= 'ä??'::"varchar") AND (c1 < 'ä???'::"varchar"))
-  Filter: ((c1)::text ~~* 'ä??_'::text COLLATE bbf_unicode_cp1_cs_as)
-  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
-        Index Cond: ((c1 >= 'ä??'::"varchar") AND (c1 < 'ä???'::"varchar"))
+Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'abC_'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) >= 'abC'::nvarchar) AND (remove_accents_internal((c1)::text) < 'abC?'::nvarchar))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -323,14 +311,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'jones'
-Bitmap Heap Scan on testing4  (cost=11.56..31.31 rows=647 width=32)
-  Filter: ((c1 <> 'jones'::"varchar") AND ((c1)::text !~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as))
+Bitmap Heap Scan on testing4  (cost=11.56..34.56 rows=647 width=32)
+  Filter: ((remove_accents_internal((c1)::text) <> 'jones'::nvarchar) AND ((remove_accents_internal((c1)::text))::text !~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.575 ms
+Babelfish T-SQL Batch Parsing Time: 0.546 ms
 ~~END~~
 
 
@@ -339,14 +327,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'jone%'
-Bitmap Heap Scan on testing4  (cost=11.56..32.94 rows=648 width=32)
-  Filter: (((c1)::text !~~* 'jone%'::text COLLATE bbf_unicode_cp1_cs_as) OR (c1 < 'jone'::"varchar") OR (c1 >= 'jone?'::"varchar"))
+Bitmap Heap Scan on testing4  (cost=11.56..37.81 rows=648 width=32)
+  Filter: (((remove_accents_internal((c1)::text))::text !~~* 'jone%'::text COLLATE bbf_unicode_cp1_cs_as) OR (remove_accents_internal((c1)::text) < 'jone'::nvarchar) OR (remove_accents_internal((c1)::text) >= 'jone?'::nvarchar))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.208 ms
 ~~END~~
 
 
@@ -355,14 +343,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'ä%'
-Bitmap Heap Scan on testing4  (cost=11.55..32.92 rows=592 width=32)
-  Filter: (((c1)::text !~~* 'ä%'::text COLLATE bbf_unicode_cp1_cs_as) OR (c1 < 'ä'::"varchar") OR (c1 >= 'ä?'::"varchar"))
+Bitmap Heap Scan on testing4  (cost=11.49..37.74 rows=361 width=32)
+  Filter: (((remove_accents_internal((c1)::text))::text !~~* 'a%'::text COLLATE bbf_unicode_cp1_cs_as) OR (remove_accents_internal((c1)::text) < 'a'::nvarchar) OR (remove_accents_internal((c1)::text) >= 'a?'::nvarchar))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.126 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -373,16 +361,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE '\%ones'
-Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-  Recheck Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
-  Filter: ((c1)::text ~~* '\%ones'::text COLLATE bbf_unicode_cp1_cs_as)
-  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
-        Index Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
+Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* '\%ones'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) >= '\'::nvarchar) AND (remove_accents_internal((c1)::text) < '\?'::nvarchar))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -391,16 +377,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE '\_ones'
-Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-  Recheck Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
-  Filter: ((c1)::text ~~* '\_ones'::text COLLATE bbf_unicode_cp1_cs_as)
-  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
-        Index Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
+Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* '\_ones'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) >= '\'::nvarchar) AND (remove_accents_internal((c1)::text) < '\?'::nvarchar))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.079 ms
 ~~END~~
 
 
@@ -439,6 +423,7 @@ GO
 ~~START~~
 varchar
 abcD
+äb?D
 ~~END~~
 
 select c1 from testing4 where c1 NOT LIKE lower('%s') COLLATE sql_latin1_general_cp1_ci_as;
@@ -454,24 +439,20 @@ Select * from testing4 where c1 LIKE (select c1 from testing4 where c1 LIKE 'Abc
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
-abcD#!#AbcD                #!#ABCd
-~~END~~
+~~ERROR (Code: 512)~~
+
+~~ERROR (Message: more than one row returned by a subquery used as an expression)~~
 
 Select * from testing4 where c2 NOT LIKE (select c2 from testing4 where c2 NOT LIKE 'jo%' AND c2 NOT LIKE 'ä%');
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
-JONES#!#JONES               #!#JONES
-JoneS#!#JoneS               #!#JoneS
-jOnes#!#jOnes               #!#jOnes
-äb?D#!#ä?cD                #!#äƀCd
 ~~END~~
 
 Select * from testing4 where c3 LIKE (select c3 from testing4 where c3 NOT LIKE'jo%' AND c3 NOT LIKE 'ä%');
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
-abcD#!#AbcD                #!#ABCd
 ~~END~~
 
 with p1 as (select c1 from testing4 where c1 LIKE '__Ć_'),
@@ -480,7 +461,9 @@ select * from p1 union all select * from p2;
 GO
 ~~START~~
 nvarchar
+abcD
 äbĆD
+ABCd
 äƀCd
 ~~END~~
 
@@ -532,7 +515,7 @@ Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.080 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -573,7 +556,7 @@ Seq Scan on testing5  (cost=10000000000.00..10000000030.40 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.073 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -597,7 +580,7 @@ Result  (cost=0.00..0.00 rows=0 width=0)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.080 ms
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -624,7 +607,7 @@ Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -633,6 +616,8 @@ SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
 GO
 ~~START~~
 varchar
+JONES
+JoneS
 ~~END~~
 
 SET babelfish_showplan_all ON;
@@ -648,7 +633,7 @@ Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.118 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
