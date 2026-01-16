@@ -96,7 +96,7 @@ jobs:
       - name: Build vector Extension
         run: |
           cd ..
-          export VECTOR_VERSION="0.7.2"
+          export VECTOR_VERSION="0.8.1"
           sudo apt-get install wget
           wget https://github.com/pgvector/pgvector/archive/refs/tags/v${VECTOR_VERSION}.tar.gz
           tar -xvzf v${VECTOR_VERSION}.tar.gz
