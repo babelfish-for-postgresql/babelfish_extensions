@@ -237,7 +237,7 @@ pltsql_text_name(PG_FUNCTION_ARGS)
 	text	   *s = PG_GETARG_TEXT_PP(0);
 	Name		result;
 	int			len;
-	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	int 		saved_dialect = sql_dialect;
 
 	len = VARSIZE_ANY_EXHDR(s);
 
@@ -251,22 +251,14 @@ pltsql_text_name(PG_FUNCTION_ARGS)
 			PG_TRY();
 			{
 				/* T-SQL casting. follow T-SQL truncation rule */
-				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-								  GUC_CONTEXT_CONFIG,
-								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+				sql_dialect = SQL_DIALECT_TSQL;
 				n = (*cstr_to_name_hook) (VARDATA_ANY(s), len);
 			}
-			PG_CATCH();
+			PG_FINALLY();
 			{
-				set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-								  GUC_CONTEXT_CONFIG,
-								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-				PG_RE_THROW();
+				sql_dialect = saved_dialect;
 			}
 			PG_END_TRY();
-			set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-							  GUC_CONTEXT_CONFIG,
-							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 			PG_RETURN_NAME(n);
 		}
@@ -289,7 +281,7 @@ pltsql_bpchar_name(PG_FUNCTION_ARGS)
 	char	   *s_data;
 	Name		result;
 	int			len;
-	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	int 		saved_dialect = sql_dialect;
 
 	len = VARSIZE_ANY_EXHDR(s);
 	s_data = VARDATA_ANY(s);
@@ -312,23 +304,15 @@ pltsql_bpchar_name(PG_FUNCTION_ARGS)
 			PG_TRY();
 			{
 				/* T-SQL casting. follow T-SQL truncation rule */
-				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-								  GUC_CONTEXT_CONFIG,
-								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+				sql_dialect = SQL_DIALECT_TSQL;
 				n = (*cstr_to_name_hook) (VARDATA_ANY(s), len);
 			}
-			PG_CATCH();
+			PG_FINALLY();
 			{
-				set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-								  GUC_CONTEXT_CONFIG,
-								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-				PG_RE_THROW();
+				sql_dialect = saved_dialect;
 			}
 			PG_END_TRY();
-			set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-							  GUC_CONTEXT_CONFIG,
-							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
+			
 			PG_RETURN_NAME(n);
 		}
 
