@@ -155,10 +155,10 @@ jobs:
           sudo PGPASSWORD=12345678 ~/${{ env.INSTALL_DIR }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "CREATE EXTENSION pgaudit;"
           sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
 
-      # - name: Run Dotnet Tests
-      #   id: run-dotnet-tests
-      #   if: always() && steps.re-install-extensions.outcome == 'success'
-      #   uses: ./.github/composite-actions/install-and-run-dotnet
+      - name: Run Dotnet Tests
+        id: run-dotnet-tests
+        if: always() && steps.re-install-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-and-run-dotnet
 
       - name: Start secondary server
         id: start-secondary
