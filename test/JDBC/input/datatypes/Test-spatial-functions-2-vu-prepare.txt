@@ -60,3 +60,19 @@ CREATE VIEW TestGeospatialMethods_closed_TextFromGeogTemp AS SELECT  location.ST
 CREATE VIEW TestGeospatialMethods_empty_ValFromGeomTemp AS SELECT location.STIsEmpty() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
 
 CREATE VIEW TestGeospatialMethods_empty_TextFromGeomTemp AS SELECT  location.STIsEmpty() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+
+CREATE TABLE TestGeospatialMethods_LineTableTemp ( ID INT PRIMARY KEY,  LineColumn sys.GEOMETRY );
+
+INSERT INTO TestGeospatialMethods_LineTableTemp (ID, LineColumn) VALUES (1, sys.geometry::STGeomFromText('LINESTRING(0 0, 3 0)', 0));
+INSERT INTO TestGeospatialMethods_LineTableTemp (ID, LineColumn) VALUES (2, sys.geometry::STGeomFromText('LINESTRING(0 0, 4 0)', 0));
+INSERT INTO TestGeospatialMethods_LineTableTemp (ID, LineColumn) VALUES (3, sys.geometry::STGeomFromText('LINESTRING(0 0, 3 4)', 0));
+INSERT INTO TestGeospatialMethods_LineTableTemp (ID, LineColumn) VALUES (4, sys.geometry::STGeomFromText('LINESTRING(0 0, 5 0, 5 5)', 0));
+
+CREATE TABLE TestGeospatialMethods_PolygonTableTemp ( ID INT PRIMARY KEY, PolyColumn sys.GEOMETRY );
+
+INSERT INTO TestGeospatialMethods_PolygonTableTemp (ID, PolyColumn) VALUES (1, sys.geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))', 0));
+INSERT INTO TestGeospatialMethods_PolygonTableTemp (ID, PolyColumn) VALUES (2, sys.geometry::STGeomFromText('POLYGON((0 0, 5 0, 5 5, 0 5, 0 0))', 0));
+INSERT INTO TestGeospatialMethods_PolygonTableTemp (ID, PolyColumn) VALUES (3, sys.geometry::STGeomFromText('POLYGON((0 0, 20 0, 20 20, 0 20, 0 0), (5 5, 15 5, 15 15, 5 15, 5 5))', 0));
+
+
+

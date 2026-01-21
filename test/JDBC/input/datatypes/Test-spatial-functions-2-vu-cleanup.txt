@@ -42,4 +42,8 @@ DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOM_dttemp
 
 DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOG_dttemp 
 
+DROP TABLE IF EXISTS TestGeospatialMethods_LineTableTemp;
+
+DROP TABLE IF EXISTS TestGeospatialMethods_PolygonTableTemp;
+
 DROP DATABASE TestGeospatialMethods_DB 
