@@ -403,7 +403,7 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 	MemoryContextSwitchTo(oldcontext);
 
 	/* Close the indices we've opened before multi insert */
-	ExecCloseIndices(resultRelInfo);
+		ExecCloseIndices(resultRelInfo);
 
 	/*
 	 * ExecCloseIndices does not free neither resulsting arrays, allocated
@@ -423,6 +423,8 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 		}
 		pfree(resultRelInfo->ri_IndexRelationInfo);
 		pfree(resultRelInfo->ri_IndexRelationDescs);
+		resultRelInfo->ri_IndexRelationDescs = NULL;
+		resultRelInfo->ri_IndexRelationInfo = NULL;
 		resultRelInfo->ri_NumIndices = 0;
 	}
 
