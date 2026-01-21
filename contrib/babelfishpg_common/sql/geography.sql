@@ -433,6 +433,41 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+
+--STLength for Geography
+--CALCULATE THE DISTNACE 
+
+CREATE OR REPLACE FUNCTION sys.STLength(geom sys.GEOGRAPHY)
+RETURNS float8
+AS $$
+BEGIN
+    -- NULL → NULL
+    IF geom IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- EMPTY → 0
+    IF sys.STIsEmpty(geom) = 1 THEN
+        RETURN 0;
+    END IF;
+
+    -- INVALID → ERROR (SQL Server behavior)
+    IF sys.STIsValid(geom) = 0 THEN
+        RAISE EXCEPTION 'The geography instance is not valid';
+    END IF;
+
+    -- Geography coordinate fix:
+    -- SQL Server stores (lat, long)
+    -- PostGIS expects (long, lat)
+    RETURN (
+        SELECT sys.STLength_helper(
+            sys.Geography__STFlipCoordinates(geom)
+        )
+    );
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
@@ -632,6 +667,12 @@ CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOGRAPHY)
         RETURNS integer
         AS '$libdir/postgis-3','LWGEOM_dimension'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+		
+CREATE OR REPLACE FUNCTION sys.STLength_helper(geom sys.GEOGRAPHY)
+     RETURNS float8
+     AS '$libdir/postgis-3', 'geography_length'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
 
 CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
         RETURNS sys.BIT

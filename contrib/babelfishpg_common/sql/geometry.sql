@@ -428,6 +428,29 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+-- STLenght 
+CREATE OR REPLACE FUNCTION sys.STLength(geom sys.GEOMETRY)
+    RETURNS float8
+    AS $$
+	DECLARE
+	    geom_type text;
+	BEGIN
+		IF geom IS NULL THEN
+		    RETURN NULL;
+		ELSEIF sys.STIsEmpty(geom)=1 THEN
+		    RETURN 0;
+		END IF;
+			-- Get the geometry type
+		geom_type := sys.ST_GeometryType(geom);
+		-- Polygon types - use ST_Perimeter (sum of all ring lengths)
+		IF geom_type IN ('ST_Polygon', 'ST_MultiPolygon') THEN
+		     RETURN STPerimeter_helper(geom);
+		ELSE 
+		    RETURN sys.STLength_helper(geom);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
@@ -622,6 +645,16 @@ CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOMETRY)
         RETURNS integer
         AS '$libdir/postgis-3','LWGEOM_dimension'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STLength_helper(sys.GEOMETRY)
+        RETURNS float8
+        AS '$libdir/postgis-3','LWGEOM_length2d_linestring'
+		LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STPerimeter_helper(sys.GEOMETRY)
+        RETURNS float8
+        AS '$libdir/postgis-3','LWGEOM_perimeter2d_poly'
+		LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
         RETURNS sys.BIT
