@@ -895,13 +895,35 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 	 */
 	CheckMessageHasEnoughBytesToReadRows(&message, 1);
 	if (request->rowCount < pltsql_plugin_handler_ptr->get_insert_bulk_rows_per_batch()
-		&& request->currentBatchSize < pltsql_plugin_handler_ptr->get_insert_bulk_kilobytes_per_batch() * 1024
-		&& (uint8_t) message->data[bcpOffset] != TDS_TOKEN_DONE)
-		ereport(ERROR,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				 errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
-						"Row %d, unexpected token encountered processing the request. %d",
-						request->rowCount, (uint8_t) message->data[bcpOffset])));
+		&& request->currentBatchSize < pltsql_plugin_handler_ptr->get_insert_bulk_kilobytes_per_batch() * 1024)
+	{
+		if ((uint8_t) message->data[bcpOffset] == TDS_TOKEN_DONE)
+		{
+			/*
+			 * DONE token is 13 bytes total (1 byte token + 2 bytes status + 
+			 * 2 bytes curcmd + 8 bytes rowcount). We've already checked for
+			 * the first byte above. Now ensure the remaining 12 bytes are 
+			 * available in the buffer. This handles the case where the DONE
+			 * token spans across packet boundaries.
+			 * 
+			 * Only fetch more data if we don't have enough bytes AND we're
+			 * not at EOM. If we're at EOM with incomplete DONE token, that's
+			 * acceptable - we just need what's available.
+			 */
+			if (message->len - bcpOffset < 13 && !TdsGetRecvPacketEomStatus())
+			{
+				CheckMessageHasEnoughBytesToReadRows(&message, 12);
+			}
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
+							"Row %d, unexpected token encountered processing the request. %d",
+							request->rowCount, (uint8_t) message->data[bcpOffset])));
+		}
+	}
 
 	pfree(temp);
 	return message;
