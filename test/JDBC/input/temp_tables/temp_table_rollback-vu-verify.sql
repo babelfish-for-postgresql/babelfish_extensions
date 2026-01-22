@@ -797,3 +797,318 @@ GO
 
 DROP TABLE basetab
 GO
+
+
+-- DROPPING INTERMEDIATE INDEXES
+
+-- Setup with PRIMARY KEY (creates implicit index)
+CREATE TABLE #t_intermediate(a int PRIMARY KEY, b int, c int);
+go
+CREATE INDEX #idx1_intermediate ON #t_intermediate(b);
+go
+CREATE INDEX #idx2_intermediate ON #t_intermediate(c);
+go
+
+-- Verify ENR
+SELECT * FROM sys.babelfish_get_enr_list();
+go
+
+-- Drop user-created index
+DROP INDEX #idx1_intermediate ON #t_intermediate;
+go
+
+-- Insert should work
+INSERT INTO #t_intermediate VALUES (1, 2, 3);
+go
+
+-- Verify
+SELECT * FROM #t_intermediate;
+go
+
+-- Cleanup
+DROP TABLE #t_intermediate;
+go
+
+
+
+-- Create temp table
+CREATE TABLE #t1_intermediate(a int, b int, c int);
+go
+
+-- Create 3 indexes (composite in middle)
+CREATE INDEX #idx1_intermediate ON #t1_intermediate(a);
+go
+
+CREATE INDEX #idx2_intermediate ON #t1_intermediate(a, b);    -- Composite index (intermediate)
+go
+
+CREATE INDEX #idx3_intermediate ON #t1_intermediate(c);
+go
+
+-- Verify indexes in ENR
+SELECT * FROM sys.babelfish_get_enr_list();
+go
+
+-- Drop intermediate composite index
+DROP INDEX #idx2_intermediate ON #t1_intermediate;
+go
+
+-- INSERT: Basic insert
+INSERT INTO #t1_intermediate VALUES (1, 2, 3), (4, 5, 6), (7, 8, 9);
+go
+
+-- INSERT: Single row insert
+INSERT INTO #t1_intermediate VALUES (10, 20, 30);
+go
+
+-- INSERT: Insert with column list
+INSERT INTO #t1_intermediate (a, b, c) VALUES (100, 200, 300);
+go
+
+-- INSERT: Insert with partial columns (if defaults exist, otherwise specify all)
+INSERT INTO #t1_intermediate (a, c, b) VALUES (11, 33, 22);
+go
+
+-- SELECT: Verify all data
+SELECT * FROM #t1_intermediate;
+go
+
+-- SELECT: With WHERE clause using indexed column (a)
+SELECT * FROM #t1_intermediate WHERE a = 4;
+go
+
+-- SELECT: With WHERE clause using non-indexed column after drop (b)
+SELECT * FROM #t1_intermediate WHERE b = 20;
+go
+
+-- SELECT: With WHERE clause using indexed column (c)
+SELECT * FROM #t1_intermediate WHERE c = 33;
+go
+
+-- SELECT: With ORDER BY
+SELECT * FROM #t1_intermediate ORDER BY a;
+go
+
+-- SELECT: With aggregate functions
+SELECT COUNT(*) AS total_rows, SUM(a) AS sum_a, AVG(b) AS avg_b, MAX(c) AS max_c FROM #t1_intermediate;
+go
+
+-- UPDATE: Update single row
+UPDATE #t1_intermediate SET b = 999 WHERE a = 1;
+go
+
+-- Verify update
+SELECT * FROM #t1_intermediate WHERE a = 1;
+go
+
+-- UPDATE: Update multiple rows
+UPDATE #t1_intermediate SET c = c + 1000 WHERE a > 5;
+go
+
+-- Verify update
+SELECT * FROM #t1_intermediate WHERE a > 5 ORDER BY a;
+go
+
+-- UPDATE: Update using indexed column in SET
+UPDATE #t1_intermediate SET a = 111 WHERE a = 100;
+go
+
+-- Verify update
+SELECT * FROM #t1_intermediate ORDER BY a;
+go
+
+-- DELETE: Delete single row
+DELETE FROM #t1_intermediate WHERE a = 4;
+go
+
+-- Verify delete
+SELECT * FROM #t1_intermediate ORDER BY a;
+go
+
+-- DELETE: Delete multiple rows
+DELETE FROM #t1_intermediate WHERE c > 1000;
+go
+
+-- Verify delete
+SELECT * FROM #t1_intermediate ORDER BY a;
+go
+
+-- INSERT: Insert after deletes to verify table still works
+INSERT INTO #t1_intermediate VALUES (50, 60, 70), (80, 90, 100);
+go
+
+-- SELECT: Final verification with different queries
+SELECT * FROM #t1_intermediate ORDER BY a;
+go
+
+SELECT a, b FROM #t1_intermediate WHERE c < 100 ORDER BY b DESC;
+go
+
+SELECT COUNT(*) FROM #t1_intermediate;
+go
+
+-- Verify remaining indexes still work (ENR check)
+SELECT * FROM sys.babelfish_get_enr_list();
+go
+
+-- Cleanup
+DROP TABLE #t1_intermediate;
+go
+
+
+--Temp Tables with multiple defaults
+--test-cases
+
+--Create temp table with multiple defaults
+CREATE TABLE #test1_defaults (
+col1 INT DEFAULT 10,
+col2 INT DEFAULT 20,
+col3 INT DEFAULT 30,
+col4 INT DEFAULT 40 );
+go
+
+--Verify defaults work with single column insert
+INSERT INTO #test1_defaults (col1) VALUES (1);
+go
+
+SELECT * FROM #test1_defaults;
+go
+
+--INSERT: Using all defaults (empty column list)
+INSERT INTO #test1_defaults DEFAULT VALUES;
+go
+
+SELECT * FROM #test1_defaults;
+go
+
+--INSERT: Specify only some columns, let others use defaults
+INSERT INTO #test1_defaults (col1, col3) VALUES (100, 300);
+go
+
+INSERT INTO #test1_defaults (col2, col4) VALUES (200, 400);
+go
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+
+--INSERT: Multi-row insert with partial columns
+INSERT INTO #test1_defaults (col1) VALUES (5), (6), (7);
+go
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+
+--Verify ENR before ALTER
+SELECT * FROM sys.babelfish_get_enr_list();
+go
+
+--Modify default for col2 
+ALTER TABLE #test1_defaults ADD DEFAULT NULL FOR col2;
+go
+
+--INSERT: Test new default for col2 (should be NULL now)
+INSERT INTO #test1_defaults (col1) VALUES (2);
+go
+
+SELECT * FROM #test1_defaults WHERE col1 = 2;
+go
+
+--INSERT: Verify other defaults still work after ALTER
+INSERT INTO #test1_defaults (col1, col2) VALUES (3, 3);
+go
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+
+--SELECT: Various queries to verify data integrity
+SELECT * FROM #test1_defaults WHERE col2 IS NULL;
+go
+
+SELECT * FROM #test1_defaults WHERE col2 = 20;
+go
+
+SELECT COUNT(*) AS total_rows FROM #test1_defaults;
+go
+
+SELECT col1, col2, col3, col4 FROM #test1_defaults ORDER BY col1 DESC;
+go
+
+--SELECT: Aggregates
+SELECT 
+    SUM(col1) AS sum_col1, 
+    AVG(col2) AS avg_col2, 
+    MIN(col3) AS min_col3, 
+    MAX(col4) AS max_col4 
+FROM #test1_defaults;
+go
+
+--UPDATE: Update rows and verify table still works
+UPDATE #test1_defaults SET col2 = 999 WHERE col1 = 1;
+go
+
+SELECT * FROM #test1_defaults WHERE col1 = 1;
+go
+
+--UPDATE: Update multiple rows
+UPDATE #test1_defaults SET col3 = col3 + 1000 WHERE col2 IS NOT NULL;
+go
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+
+--UPDATE: Update with NULL
+UPDATE #test1_defaults SET col4 = NULL WHERE col1 = 5;
+go
+
+SELECT * FROM #test1_defaults WHERE col1 = 5;
+go
+
+--DELETE: Delete single row
+DELETE FROM #test1_defaults WHERE col1 = 6;
+go
+
+SELECT COUNT(*) AS rows_after_delete FROM #test1_defaults;
+go
+
+--DELETE: Delete multiple rows
+DELETE FROM #test1_defaults WHERE col2 IS NULL;
+go
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+
+--INSERT: Insert after DELETE to verify table integrity
+INSERT INTO #test1_defaults (col1) VALUES (1000);
+go
+
+INSERT INTO #test1_defaults DEFAULT VALUES;
+go
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+
+--Verify ENR after all operations
+SELECT * FROM sys.babelfish_get_enr_list();
+go
+
+--ALTER: Add another default modification
+ALTER TABLE #test1_defaults ADD DEFAULT 999 FOR col3;
+go
+
+--INSERT: Test the new default
+INSERT INTO #test1_defaults (col1, col2) VALUES (2000, 2000);
+go
+
+SELECT * FROM #test1_defaults WHERE col1 = 2000;
+go
+
+--Final verification
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+
+SELECT COUNT(*) AS final_count FROM #test1_defaults;
+go
+
+--Cleanup
+DROP TABLE #test1_defaults;
+go
