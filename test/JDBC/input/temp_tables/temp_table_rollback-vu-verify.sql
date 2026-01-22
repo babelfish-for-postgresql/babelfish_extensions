@@ -810,7 +810,7 @@ CREATE INDEX #idx2_intermediate ON #t_intermediate(c);
 go
 
 -- Verify ENR
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 go
 
 -- Drop user-created index
@@ -846,7 +846,7 @@ CREATE INDEX #idx3_intermediate ON #t1_intermediate(c);
 go
 
 -- Verify indexes in ENR
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 go
 
 -- Drop intermediate composite index
@@ -948,7 +948,7 @@ SELECT COUNT(*) FROM #t1_intermediate;
 go
 
 -- Verify remaining indexes still work (ENR check)
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 go
 
 -- Cleanup
@@ -999,7 +999,7 @@ SELECT * FROM #test1_defaults ORDER BY col1;
 go
 
 --Verify ENR before ALTER
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 go
 
 --Modify default for col2 
@@ -1088,7 +1088,7 @@ SELECT * FROM #test1_defaults ORDER BY col1;
 go
 
 --Verify ENR after all operations
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 go
 
 --ALTER: Add another default modification
