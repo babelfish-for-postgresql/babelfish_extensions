@@ -2882,15 +2882,42 @@ expr_is_var_max(Node *expr)
 		utilptr->is_tsql_sys_varbinary_datatype(exprType(expr)));
 }
 
+/*
+ * Returns type of expression. If expression is a String literal
+ * return its type as sys.VARCHAR
+ */
+static Oid
+get_resolved_expr_type(Node *expr)
+{
+	Oid expr_type;
+
+	if (expr == NULL)
+		return InvalidOid;
+
+	/*
+	 * expr_type need to be set to sys.varchar only if the expression is string
+	 * constant and the dialect is TSQL, for PG dialect it should be expression
+	 * type. expr_type need to be set to sys.varchar during dump restore as during
+	 * dump string literal in objects created in TSQL dialect gets casted to
+	 * sys.varchar.
+	 */
+	if (sql_dialect == SQL_DIALECT_TSQL && is_tsql_str_const(expr))
+		expr_type = get_sys_varcharoid();
+	else
+		expr_type = exprType(expr);
+
+	return expr_type;
+}
+
 /* 
  * Handles special cases for finding a type when two or more need to be merged
  * Splits handling between cases with setops and values, and for ISNULL
  * 
- * If InvalidOid is returned, pg's select_common_type will attempt to
+ * If InvalidOid is returned, tsql_select_common_type_hook will attempt to
  * find a common type instead.
  */
 static Oid
-tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
+tsql_select_common_type_for_special(ParseState *pstate, List *exprs, const char *context,
 				  				Node **which_expr)
 {
 	int32  len;
@@ -2912,6 +2939,186 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 		return select_common_type_setop(pstate, exprs, which_expr, context);
 
 	return InvalidOid;
+}
+
+/*
+ * tsql_select_common_type_hook()
+ *		Determine the common supertype of a list of input expressions.
+ * 
+ * For expressions such as ISNULL, TSQL_COALESCE, UNION, INTERSECT, 
+ * EXCEPT, VALUES, UNION/INTERSECT/EXCEPT, CASE; we use 
+ * tsql_select_common_type_for_special to determine the common type.
+ *
+ * For all other cases, we use logic same as select_common_type,
+ * with following modifications:
+ * 1. Datatype of string literals is considered as sys.VARCHAR
+ * 2. TSQL precedence order is used for determining common supertype
+ * 3. When all expressions are NULL then common type should be INT
+ */
+static Oid
+tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
+				  				Node **which_expr)
+{
+	Node	   *pexpr;
+	Oid			ptype, pexpr_type;
+	TYPCATEGORY pcategory;
+	bool		pispreferred;
+	ListCell   *lc;
+
+	if (!(sql_dialect == SQL_DIALECT_TSQL || babelfish_dump_restore))
+		return InvalidOid;
+
+	ptype = tsql_select_common_type_for_special(pstate, exprs, context, which_expr);
+	if (OidIsValid(ptype))
+		return ptype;
+
+	Assert(exprs != NIL);
+	pexpr = (Node *) linitial(exprs);
+	lc = list_second_cell(exprs);
+	ptype = get_resolved_expr_type(pexpr);
+
+	/*
+	 * If all input types are valid and exactly the same, just pick that type.
+	 * This is the only way that we will resolve the result as being a domain
+	 * type; otherwise domains are smashed to their base types for comparison.
+	 */
+	if (ptype != UNKNOWNOID)
+	{
+		for_each_cell(lc, exprs, lc)
+		{
+			Node	   *nexpr = (Node *) lfirst(lc);
+			Oid			ntype = get_resolved_expr_type(nexpr);
+
+			if (ntype != ptype)
+				break;
+		}
+		if (lc == NULL)			/* got to the end of the list? */
+		{
+			if (which_expr)
+				*which_expr = pexpr;
+			return ptype;
+		}
+	}
+
+	/*
+	 * Nope, so set up for the full algorithm.  Note that at this point, lc
+	 * points to the first list item with type different from pexpr's; we need
+	 * not re-examine any items the previous loop advanced over.
+	 */
+	ptype = getBaseType(ptype);
+	get_type_category_preferred(ptype, &pcategory, &pispreferred);
+
+	for_each_cell(lc, exprs, lc)
+	{
+		Node	   *nexpr = (Node *) lfirst(lc);
+		Oid			ntype = getBaseType(get_resolved_expr_type(nexpr));
+
+		/* move on to next one if no new information... */
+		if (ntype != UNKNOWNOID && ntype != ptype)
+		{
+			TYPCATEGORY ncategory;
+			bool		nispreferred;
+
+			get_type_category_preferred(ntype, &ncategory, &nispreferred);
+			if (ptype == UNKNOWNOID)
+			{
+				/* so far, only unknowns so take anything... */
+				pexpr = nexpr;
+				ptype = ntype;
+				pcategory = ncategory;
+				pispreferred = nispreferred;
+			}
+			else if (!pispreferred &&
+					 can_coerce_type(1, &ptype, &ntype, COERCION_IMPLICIT) &&
+					 !can_coerce_type(1, &ntype, &ptype, COERCION_IMPLICIT))
+			{
+				/*
+				 * take new type if can coerce to it implicitly but not the
+				 * other way; but if we have a preferred type, stay on it.
+				 */
+				pexpr = nexpr;
+				ptype = ntype;
+				pcategory = ncategory;
+				pispreferred = nispreferred;
+			}
+			else if (!pispreferred &&
+					 can_coerce_type(1, &ptype, &ntype, COERCION_IMPLICIT) &&
+					 can_coerce_type(1, &ntype, &ptype, COERCION_IMPLICIT) &&
+					 tsql_has_higher_precedence(ntype, ptype))
+			{
+				/*
+				 * T-SQL allows implicit casting on both-side.
+				 * common datatype should be decided by datatype precedence rule.
+				 */
+				pexpr = nexpr;
+				ptype = ntype;
+				pcategory = ncategory;
+				pispreferred = nispreferred;
+			}
+		}
+		else if (sql_dialect == SQL_DIALECT_TSQL && ntype == ptype)
+		{
+			Oid	nexpr_type = get_resolved_expr_type(nexpr);
+			
+			pexpr_type = get_resolved_expr_type(pexpr);
+
+			/*
+			 * For the columns which have the same base type, we choose the
+			 * expression with higher precedence type in T-SQL.
+			 * For example, smallmoney UNION money, the base type of
+			 * them are both fixeddecimal. But we shouldn't use smallmoney as
+			 * the result type, it could loss precision.
+			 * Here we don't need to update other variables since they are the
+			 * same.
+			 */
+			if (is_tsql_base_datatype(nexpr_type) &&
+				tsql_has_higher_precedence(nexpr_type,
+												   pexpr_type))
+				pexpr = nexpr;
+		}
+	}
+
+	/*
+	 * If the preferred type is not the result type of corresponding
+	 * expression, it means the result type is a domain type in Postgres. Some
+	 * base data types in T-SQL are implemented as domain types in Babelfish.
+	 * From SQL Server's perspective, we should try to retain those types as
+	 * result types.
+	 */
+	pexpr_type = get_resolved_expr_type(pexpr);
+
+	if (sql_dialect == SQL_DIALECT_TSQL && ptype != pexpr_type &&
+		is_tsql_base_datatype(pexpr_type))
+		ptype = pexpr_type;
+
+	/* If all the inputs are NULL constants then resolve as type INT4 */
+	if (sql_dialect == SQL_DIALECT_TSQL && ptype == UNKNOWNOID)
+	{
+		bool all_nullconst = true;
+		foreach(lc, exprs)
+		{
+			Node* expr = (Node *) lfirst(lc);
+			if (!expr_is_null(expr))
+			{
+				all_nullconst = false;
+				break;
+			}
+		}
+
+		if (all_nullconst)
+			ptype = INT4OID;
+	}
+
+	/* 
+	 * Unlikely, Sanity condition: If we are still not able decide common_type then 
+	 * resolve to TEXT (PostgreSQL Behaviour) 
+	 */
+	if (ptype == UNKNOWNOID)
+		ptype = TEXTOID;
+
+	if (which_expr)
+		*which_expr = pexpr;
+	return ptype;
 }
 
 /*

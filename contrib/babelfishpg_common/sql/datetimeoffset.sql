@@ -329,3 +329,35 @@ CREATE CAST (sys.DATETIME2 AS sys.DATETIMEOFFSET)
 WITH FUNCTION sys.datetime22datetimeoffset(sys.DATETIME2) AS IMPLICIT;
 CREATE CAST (sys.DATETIMEOFFSET AS sys.DATETIME2)
 WITH FUNCTION sys.datetimeoffset2datetime2(sys.DATETIMEOFFSET) AS ASSIGNMENT;
+
+CREATE OR REPLACE FUNCTION sys.varchar2datetimeoffset(sys.VARCHAR)
+RETURNS sys.DATETIMEOFFSET
+AS 'babelfishpg_common', 'varchar_datetimeoffset'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.VARCHAR AS sys.DATETIMEOFFSET)
+WITH FUNCTION sys.varchar2datetimeoffset (sys.VARCHAR) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.varchar2datetimeoffset(pg_catalog.VARCHAR)
+RETURNS sys.DATETIMEOFFSET
+AS 'babelfishpg_common', 'varchar_datetimeoffset'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (pg_catalog.VARCHAR AS sys.DATETIMEOFFSET)
+WITH FUNCTION sys.varchar2datetimeoffset (pg_catalog.VARCHAR) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.char2datetimeoffset(CHAR)
+RETURNS sys.DATETIMEOFFSET
+AS 'babelfishpg_common', 'char_datetimeoffset'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (CHAR AS sys.DATETIMEOFFSET)
+WITH FUNCTION sys.char2datetimeoffset (CHAR) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.bpchar2datetimeoffset(sys.BPCHAR)
+RETURNS sys.DATETIMEOFFSET
+AS 'babelfishpg_common', 'char_datetimeoffset'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.BPCHAR AS sys.DATETIMEOFFSET)
+WITH FUNCTION sys.bpchar2datetimeoffset (sys.BPCHAR) AS IMPLICIT;
