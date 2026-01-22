@@ -900,19 +900,12 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 		if ((uint8_t) message->data[bcpOffset] == TDS_TOKEN_DONE)
 		{
 			/*
-			 * DONE token is 13 bytes total (1 byte token + 2 bytes status + 
-			 * 2 bytes curcmd + 8 bytes rowcount). We've already checked for
-			 * the first byte above. Now ensure the remaining 12 bytes are 
-			 * available in the buffer. This handles the case where the DONE
-			 * token spans across packet boundaries.
-			 * 
-			 * Only fetch more data if we don't have enough bytes AND we're
-			 * not at EOM. If we're at EOM with incomplete DONE token, that's
-			 * acceptable - we just need what's available.
+			 * DONE token found (0xFD). Clients send variable-length DONE (8-13 bytes).
+			 * Fetch next packet ONLY if: incomplete DONE AND NOT at EOM.
 			 */
 			if (message->len - bcpOffset < 13 && !TdsGetRecvPacketEomStatus())
 			{
-				CheckMessageHasEnoughBytesToReadRows(&message, 12);
+				CheckMessageHasEnoughBytesToReadRows(&message, message->len - bcpOffset + 1);
 			}
 		}
 		else
