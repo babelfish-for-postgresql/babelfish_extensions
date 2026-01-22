@@ -1061,38 +1061,36 @@ go
 -------WINDOW FUNCTION---
 SELECT
     ID,
-    LineColumn.STLength() AS Len,
-    LineColumn.STLength()
-        - LAG(LineColumn.STLength()) OVER (ORDER BY ID) AS Diff
-FROM TestGeospatialMethods_LineTableTemp;
+    GeomColumn.STLength() AS Len,
+    GeomColumn.STLength()
+        - LAG(GeomColumn.STLength()) OVER (ORDER BY ID) AS Diff
+FROM TestGeospatialMethods_GeomTableTemp;
 go
 
 --CROSS DATABASE---
-
 SELECT
     ID,
-    LineColumn.STLength()
-FROM TestGeospatialMethods_DB.dbo.TestGeospatialMethods_LineTableTemp;
+    GeomColumn.STLength()
+FROM TestGeospatialMethods_DB.dbo.TestGeospatialMethods_GeomTableTemp;
 go
 
 --USE IN GROUP BY 
 SELECT
-    ROUND(LineColumn.STLength(), 0) AS LengthGroup,
+    ROUND(GeomColumn.STLength(), 0) AS LengthGroup,
     COUNT(*)
-FROM TestGeospatialMethods_LineTableTemp
-GROUP BY ROUND(LineColumn.STLength(), 0)
+FROM TestGeospatialMethods_GeomTableTemp
+GROUP BY ROUND(GeomColumn.STLength(), 0)
 ORDER BY LengthGroup;
 go
 
 --USE IN CASE STATEMENT 
 DECLARE @threshold float = 5;
-
 SELECT ID,
 CASE
-    WHEN LineColumn.STLength() > @threshold THEN 'Long'
+    WHEN GeomColumn.STLength() > @threshold THEN 'Long'
     ELSE 'Short'
 END AS LengthCategory
-FROM TestGeospatialMethods_LineTableTemp
+FROM TestGeospatialMethods_GeomTableTemp
 ORDER BY ID;
 go
 
@@ -1100,15 +1098,16 @@ go
 DECLARE @scale float = 2.0;
 SELECT
     ID,
-    LineColumn.STLength() * @scale AS ScaledLength
-FROM TestGeospatialMethods_LineTableTemp
+    GeomColumn.STLength() * @scale AS ScaledLength
+FROM TestGeospatialMethods_GeomTableTemp
 ORDER BY ID;
 go
 
+-- Polygon perimeter tests (IDs 11-14 are polygons)
 SELECT 
     ID,
-    PolyColumn.STLength() AS Perimeter
-FROM TestGeospatialMethods_PolygonTableTemp
+    GeomColumn.STLength() AS Perimeter
+FROM TestGeospatialMethods_GeomTableTemp
+WHERE ID > 10
 ORDER BY ID;
 go
-

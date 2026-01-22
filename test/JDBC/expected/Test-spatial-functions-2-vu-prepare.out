@@ -90,3 +90,56 @@ CREATE VIEW TestGeospatialMethods_closed_TextFromGeogTemp AS SELECT  location.ST
 CREATE VIEW TestGeospatialMethods_empty_ValFromGeomTemp AS SELECT location.STIsEmpty() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
 
 CREATE VIEW TestGeospatialMethods_empty_TextFromGeomTemp AS SELECT  location.STIsEmpty() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+
+CREATE TABLE TestGeospatialMethods_GeomTableTemp ( ID INT PRIMARY KEY, GeomColumn sys.GEOMETRY );
+
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (1, sys.geometry::STGeomFromText('LINESTRING(0 0, 3 0)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (2, sys.geometry::STGeomFromText('LINESTRING(0 0, 4 0)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (3, sys.geometry::STGeomFromText('LINESTRING(0 0, 3 4)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (4, sys.geometry::STGeomFromText('LINESTRING(0 0, 5 0, 5 5)', 0));
+~~ROW COUNT: 1~~
+
+
+-- Multi-point linestrings
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (5, sys.geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0, 3 1, 4 0)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (6, sys.geometry::STGeomFromText('LINESTRING(0 0, 10 0, 10 10, 0 10, 0 0)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (7, sys.geometry::STGeomFromText('LINESTRING(0 0, 1 0, 2 0, 3 0, 4 0, 5 0)', 0));
+~~ROW COUNT: 1~~
+
+
+-- 3D linestrings with Z coordinate
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (8, sys.geometry::STGeomFromText('LINESTRING(0 0 0, 3 0 4)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (9, sys.geometry::STGeomFromText('LINESTRING(0 0 0, 1 1 1, 2 2 2)', 0));
+~~ROW COUNT: 1~~
+
+
+-- 4D linestrings with Z and M coordinates
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (10, sys.geometry::STGeomFromText('LINESTRING(0 0 0 0, 3 0 4 1)', 0));
+~~ROW COUNT: 1~~
+
+
+-- Polygons (perimeter tests)
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (11, sys.geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (12, sys.geometry::STGeomFromText('POLYGON((0 0, 5 0, 5 5, 0 5, 0 0))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (13, sys.geometry::STGeomFromText('POLYGON((0 0, 20 0, 20 20, 0 20, 0 0), (5 5, 15 5, 15 15, 5 15, 5 5))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (14, sys.geometry::STGeomFromText('POLYGON((0 0, 3 0, 0 4, 0 0))', 0));
+~~ROW COUNT: 1~~
+

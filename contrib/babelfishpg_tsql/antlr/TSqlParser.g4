@@ -3503,7 +3503,7 @@ method_call
     : xml_methods
     | hierarchyid_methods
     | spatial_methods
-    | method=safe_method_id (LR_BRACKET expression_list? RR_BRACKET)?
+    | method=id (LR_BRACKET expression_list? RR_BRACKET)?
     | NULL_P // no bracket
     ;
 
@@ -3519,11 +3519,6 @@ constant_expression
     | LR_BRACKET constant_expression RR_BRACKET
     ;
 
-safe_method_id
-    : ID
-    | DOUBLE_QUOTE_ID
-    | SQUARE_BRACKET_ID
-    ;
 subquery
     : LR_BRACKET select_statement RR_BRACKET
     ;
@@ -3949,7 +3944,6 @@ geospatial_func_no_arg
     | STDIMENSION
     | STLENGTH
     | STISCLOSED
-    | MAKEVALID
     | STISEMPTY
     | STISVALID
     ;
@@ -3959,8 +3953,6 @@ geospatial_func_arg
     | STEQUALS
     | STCONTAINS
     | STDISJOINT 
-    | STREDUCE
-    | REDUCE
     | STINTERSECTS
     ;
 
@@ -4733,7 +4725,6 @@ keyword
     | M
     | M_DOUBLE_QUOTE
     | M_SQBRACKET
-    | MAKEVALID
     | MANUAL
     | MARK
     | MASK
@@ -5088,7 +5079,6 @@ keyword
     | STDEVP
     | STDIMENSION
     | STLENGTH
-    | STREDUCE
     | STDISJOINT 
     | STDISTANCE
     | STEQUALS
