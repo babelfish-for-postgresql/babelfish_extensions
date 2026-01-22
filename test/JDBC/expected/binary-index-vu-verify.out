@@ -1,3 +1,4 @@
+-- tsql
 select set_config('enable_bitmapscan', 'off', false);
 GO
 ~~START~~
@@ -6,6 +7,13 @@ off
 ~~END~~
 
 
+-- psql
+ANALYZE master_dbo.tab_varbinary;
+GO
+ANALYZE master_dbo.tab_binary;
+GO
+
+-- tsql
 exec babel_3939_vu_prepare_p1;
 GO
 ~~START~~
