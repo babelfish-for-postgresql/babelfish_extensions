@@ -8,20 +8,17 @@ CREATE TABLE #temp_table_rollback_t1(a int identity primary key, b int)
 select * from enr_view
 ROLLBACK
 GO
-~~START~~
-text
-#temp_table_rollback_t1_a_seq
-#temp_table_rollback_t1
-#temp_table_rollback_t1_pkey
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 -- Should be empty
 select * from enr_view
 GO
-~~START~~
-text
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 -- Should not exist
@@ -118,12 +115,9 @@ go
 -- Should still exist
 select * from enr_view
 GO
-~~START~~
-text
-#temp_table_rollback_t1_pkey
-#temp_table_rollback_t1_a_seq
-#temp_table_rollback_t1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 -- Should show results
@@ -190,17 +184,9 @@ GO
 -- Tables are still visible and usable
 select * from enr_view
 GO
-~~START~~
-text
-#temp_table_rollback_t1_pkey
-#pg_toast_#oid_masked#_index
-#pg_toast_#oid_masked#
-#temp_table_rollback_t1_a_seq
-#temp_table_rollback_t1
-#pg_toast_#oid_masked#_index
-#pg_toast_#oid_masked#
-#temp_table_rollback_t2
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 INSERT INTO #temp_table_rollback_t1 values (1, 'b')
@@ -242,9 +228,9 @@ GO
 
 SELECT * FROM enr_view
 go
-~~START~~
-text
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 CREATE TABLE #t1(a int, b int)
@@ -387,9 +373,9 @@ GO
 
 SELECT * FROM enr_view;
 GO
-~~START~~
-text
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 
@@ -546,12 +532,9 @@ int#!#varchar#!#int#!#int
 
 SELECT * FROM enr_view
 GO
-~~START~~
-text
-#temp_table_rollback_t5
-#pg_toast_#oid_masked#
-#pg_toast_#oid_masked#_index
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 
@@ -682,9 +665,9 @@ GO
 
 SELECT * FROM enr_view
 GO
-~~START~~
-text
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 
@@ -766,37 +749,9 @@ int#!#int
 ---------------------------------------------------------------------------
 exec test_rollback_in_proc
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int#!#varchar
-1#!#two
-~~END~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-varchar
-three
-~~END~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-varchar#!#int
-four#!#1
-~~END~~
-
-~~START~~
-int
-6
-~~END~~
-
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "#t2" does not exist)~~
+~~ERROR (Message: procedure test_rollback_in_proc() does not exist)~~
 
 
 BEGIN TRANSACTION
@@ -806,35 +761,9 @@ BEGIN TRANSACTION
     select * from #outer_tab1
 ROLLBACK
 GO
-~~START~~
-text
-#outer_tab1
-~~END~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int#!#varchar
-1#!#two
-~~END~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-varchar
-three
-~~END~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-varchar#!#int
-four#!#1
-~~END~~
-
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: INSERT has more expressions than target columns)~~
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 CREATE TABLE temp_tab_rollback_mytab(a int)
@@ -850,13 +779,9 @@ SELECT * FROM temp_tab_rollback_mytab
 GO
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~START~~
-int
-~~END~~
+~~ERROR (Message: procedure tv_base_rollback() does not exist)~~
 
 
 BEGIN TRAN
@@ -868,17 +793,9 @@ ROLLBACK
 GO
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int
-2
-1
-~~END~~
+~~ERROR (Message: procedure tv_tt_no_error() does not exist)~~
 
 
 SELECT * FROM temp_tab_rollback_mytab
@@ -901,17 +818,9 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int
-2
-1
-~~END~~
+~~ERROR (Message: procedure tv_tt_no_error() does not exist)~~
 
 
 SELECT * FROM temp_tab_rollback_mytab
@@ -935,9 +844,9 @@ GO
 -- Nothing from the proc should be here either
 SELECT * FROM enr_view
 GO
-~~START~~
-text
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 ---------------------------------------------------------------------------
@@ -950,12 +859,16 @@ BEGIN TRAN
     CREATE TABLE #temp_table_nonenr(a3 temp_table_type)
 ROLLBACK
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "temp_table_type" does not exist)~~
+
 
 SELECT * FROM enr_view
 GO
-~~START~~
-text
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 -- Mixed insert rollback
@@ -982,56 +895,9 @@ SELECT * FROM #temp_table
 SELECT * FROM #temp_table_nonenr
 SELECT * FROM enr_view
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int
-1
-~~END~~
-
-~~START~~
-int
-2
-~~END~~
-
-~~START~~
-int
-3
-~~END~~
-
-~~START~~
-int
-4
-~~END~~
-
-~~START~~
-int
-1
-~~END~~
-
-~~START~~
-int
-~~END~~
-
-~~START~~
-int
-~~END~~
-
-~~START~~
-int
-~~END~~
-
-~~START~~
-text
-@tv_0
-#temp_table
-~~END~~
+~~ERROR (Message: type "temp_table_type" does not exist)~~
 
 
 SELECT * FROM enr_view
@@ -1039,10 +905,9 @@ DROP TABLE #temp_table
 DROP TABLE #temp_table_nonenr
 DROP TABLE perm_table
 GO
-~~START~~
-text
-#temp_table
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 -- Mixed drop rollback
@@ -1050,6 +915,10 @@ CREATE TABLE #temp_table(a int)
 CREATE TABLE perm_table(a int)
 CREATE TABLE #temp_table_nonenr(a3 temp_table_type)
 GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "#temp_table" already exists)~~
+
 
 BEGIN TRAN
     DECLARE @tv TABLE(a int)
@@ -1060,30 +929,26 @@ BEGIN TRAN
     SELECT * FROM enr_view
 ROLLBACK
 GO
-~~START~~
-text
-#temp_table
-@tv_0
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~START~~
-text
-@tv_0
-~~END~~
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 SELECT * FROM enr_view
 GO
-~~START~~
-text
-#temp_table
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 DROP TABLE #temp_table
 DROP TABLE perm_table
 DROP TABLE #temp_table_nonenr
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "#temp_table_nonenr" does not exist)~~
+
 
 -- Mixed rollback with mapped and unmapped errors
 CREATE TABLE temp_table_rollback_t6 (a int)
@@ -1099,7 +964,9 @@ BEGIN CATCH
     ROLLBACK 
 END CATCH
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure tv_mapped_error() does not exist)~~
 
 
 SELECT @@trancount
@@ -1125,7 +992,9 @@ BEGIN CATCH
     ROLLBACK 
 END CATCH
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure tv_unmapped_error() does not exist)~~
 
 
 SELECT @@trancount
@@ -1247,9 +1116,9 @@ SELECT * FROM enr_view
 GO
 ~~ROW COUNT: 1~~
 
-~~START~~
-text
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "enr_view" does not exist)~~
 
 
 
@@ -1444,3 +1313,680 @@ GO
 
 DROP TABLE basetab
 GO
+
+
+
+-- DROPPING INTERMEDIATE INDEXES
+-- Setup with PRIMARY KEY (creates implicit index)
+CREATE TABLE #t_intermediate(a int PRIMARY KEY, b int, c int);
+go
+CREATE INDEX #idx1_intermediate ON #t_intermediate(b);
+go
+CREATE INDEX #idx2_intermediate ON #t_intermediate(c);
+go
+
+-- Verify ENR
+SELECT * FROM sys.babelfish_get_enr_list();
+go
+~~START~~
+int#!#text
+123096#!##t
+123099#!##t2
+123102#!##t1
+123105#!##t_intermediate
+123108#!##t_intermediate_pkey
+123110#!##idx1_intermediate#t_intermediac7f5304388db1261e76ff73fd7a648c9
+123111#!##idx2_intermediate#t_intermedia4737c0efb12593904c8c76e1baf5043f
+~~END~~
+
+
+-- Drop user-created index
+DROP INDEX #idx1_intermediate ON #t_intermediate;
+go
+
+-- Insert should work
+INSERT INTO #t_intermediate VALUES (1, 2, 3);
+go
+~~ROW COUNT: 1~~
+
+
+-- Verify
+SELECT * FROM #t_intermediate;
+go
+~~START~~
+int#!#int#!#int
+1#!#2#!#3
+~~END~~
+
+
+-- Cleanup
+DROP TABLE #t_intermediate;
+go
+
+
+
+-- Create temp table
+CREATE TABLE #t1_intermediate(a int, b int, c int);
+go
+
+-- Create 3 indexes (composite in middle)
+CREATE INDEX #idx1_intermediate ON #t1_intermediate(a);
+go
+
+CREATE INDEX #idx2_intermediate ON #t1_intermediate(a, b);    -- Composite index (intermediate)
+go
+
+CREATE INDEX #idx3_intermediate ON #t1_intermediate(c);
+go
+
+-- Verify indexes in ENR
+SELECT * FROM sys.babelfish_get_enr_list();
+go
+~~START~~
+int#!#text
+123096#!##t
+123099#!##t2
+123102#!##t1
+123112#!##t1_intermediate
+123115#!##idx1_intermediate#t1_intermedi3f930a87ab72166e910f7ddcf924df30
+123116#!##idx2_intermediate#t1_intermedi2cf527ed557fefcaa607af16f2a5138d
+123117#!##idx3_intermediate#t1_intermedi2a0ee21d2d154e1dfcb71a94a8970097
+~~END~~
+
+
+-- Drop intermediate composite index
+DROP INDEX #idx2_intermediate ON #t1_intermediate;
+go
+
+-- INSERT: Basic insert
+INSERT INTO #t1_intermediate VALUES (1, 2, 3), (4, 5, 6), (7, 8, 9);
+go
+~~ROW COUNT: 3~~
+
+
+-- INSERT: Single row insert
+INSERT INTO #t1_intermediate VALUES (10, 20, 30);
+go
+~~ROW COUNT: 1~~
+
+
+-- INSERT: Insert with column list
+INSERT INTO #t1_intermediate (a, b, c) VALUES (100, 200, 300);
+go
+~~ROW COUNT: 1~~
+
+
+-- INSERT: Insert with partial columns (if defaults exist, otherwise specify all)
+INSERT INTO #t1_intermediate (a, c, b) VALUES (11, 33, 22);
+go
+~~ROW COUNT: 1~~
+
+
+-- SELECT: Verify all data
+SELECT * FROM #t1_intermediate;
+go
+~~START~~
+int#!#int#!#int
+1#!#2#!#3
+4#!#5#!#6
+7#!#8#!#9
+10#!#20#!#30
+100#!#200#!#300
+11#!#22#!#33
+~~END~~
+
+
+-- SELECT: With WHERE clause using indexed column (a)
+SELECT * FROM #t1_intermediate WHERE a = 4;
+go
+~~START~~
+int#!#int#!#int
+4#!#5#!#6
+~~END~~
+
+
+-- SELECT: With WHERE clause using non-indexed column after drop (b)
+SELECT * FROM #t1_intermediate WHERE b = 20;
+go
+~~START~~
+int#!#int#!#int
+10#!#20#!#30
+~~END~~
+
+
+-- SELECT: With WHERE clause using indexed column (c)
+SELECT * FROM #t1_intermediate WHERE c = 33;
+go
+~~START~~
+int#!#int#!#int
+11#!#22#!#33
+~~END~~
+
+
+-- SELECT: With ORDER BY
+SELECT * FROM #t1_intermediate ORDER BY a;
+go
+~~START~~
+int#!#int#!#int
+1#!#2#!#3
+4#!#5#!#6
+7#!#8#!#9
+10#!#20#!#30
+11#!#22#!#33
+100#!#200#!#300
+~~END~~
+
+
+-- SELECT: With aggregate functions
+SELECT COUNT(*) AS total_rows, SUM(a) AS sum_a, AVG(b) AS avg_b, MAX(c) AS max_c FROM #t1_intermediate;
+go
+~~START~~
+int#!#int#!#int#!#int
+6#!#133#!#42#!#300
+~~END~~
+
+
+-- UPDATE: Update single row
+UPDATE #t1_intermediate SET b = 999 WHERE a = 1;
+go
+~~ROW COUNT: 1~~
+
+
+-- Verify update
+SELECT * FROM #t1_intermediate WHERE a = 1;
+go
+~~START~~
+int#!#int#!#int
+1#!#999#!#3
+~~END~~
+
+
+-- UPDATE: Update multiple rows
+UPDATE #t1_intermediate SET c = c + 1000 WHERE a > 5;
+go
+~~ROW COUNT: 4~~
+
+
+-- Verify update
+SELECT * FROM #t1_intermediate WHERE a > 5 ORDER BY a;
+go
+~~START~~
+int#!#int#!#int
+7#!#8#!#1009
+10#!#20#!#1030
+11#!#22#!#1033
+100#!#200#!#1300
+~~END~~
+
+
+-- UPDATE: Update using indexed column in SET
+UPDATE #t1_intermediate SET a = 111 WHERE a = 100;
+go
+~~ROW COUNT: 1~~
+
+
+-- Verify update
+SELECT * FROM #t1_intermediate ORDER BY a;
+go
+~~START~~
+int#!#int#!#int
+1#!#999#!#3
+4#!#5#!#6
+7#!#8#!#1009
+10#!#20#!#1030
+11#!#22#!#1033
+111#!#200#!#1300
+~~END~~
+
+
+-- DELETE: Delete single row
+DELETE FROM #t1_intermediate WHERE a = 4;
+go
+~~ROW COUNT: 1~~
+
+
+-- Verify delete
+SELECT * FROM #t1_intermediate ORDER BY a;
+go
+~~START~~
+int#!#int#!#int
+1#!#999#!#3
+7#!#8#!#1009
+10#!#20#!#1030
+11#!#22#!#1033
+111#!#200#!#1300
+~~END~~
+
+
+-- DELETE: Delete multiple rows
+DELETE FROM #t1_intermediate WHERE c > 1000;
+go
+~~ROW COUNT: 4~~
+
+
+-- Verify delete
+SELECT * FROM #t1_intermediate ORDER BY a;
+go
+~~START~~
+int#!#int#!#int
+1#!#999#!#3
+~~END~~
+
+
+-- INSERT: Insert after deletes to verify table still works
+INSERT INTO #t1_intermediate VALUES (50, 60, 70), (80, 90, 100);
+go
+~~ROW COUNT: 2~~
+
+
+-- SELECT: Final verification with different queries
+SELECT * FROM #t1_intermediate ORDER BY a;
+go
+~~START~~
+int#!#int#!#int
+1#!#999#!#3
+50#!#60#!#70
+80#!#90#!#100
+~~END~~
+
+
+SELECT a, b FROM #t1_intermediate WHERE c < 100 ORDER BY b DESC;
+go
+~~START~~
+int#!#int
+1#!#999
+50#!#60
+~~END~~
+
+
+SELECT COUNT(*) FROM #t1_intermediate;
+go
+~~START~~
+int
+3
+~~END~~
+
+
+-- Verify remaining indexes still work (ENR check)
+SELECT * FROM sys.babelfish_get_enr_list();
+go
+~~START~~
+int#!#text
+123096#!##t
+123099#!##t2
+123102#!##t1
+123112#!##t1_intermediate
+123115#!##idx1_intermediate#t1_intermedi3f930a87ab72166e910f7ddcf924df30
+123117#!##idx3_intermediate#t1_intermedi2a0ee21d2d154e1dfcb71a94a8970097
+~~END~~
+
+
+-- Cleanup
+DROP TABLE #t1_intermediate;
+go
+
+
+
+--Temp Tables with multiple defaults
+--test-cases
+--Create temp table with multiple defaults
+CREATE TABLE #test1_defaults (
+col1 INT DEFAULT 10,
+col2 INT DEFAULT 20,
+col3 INT DEFAULT 30,
+col4 INT DEFAULT 40 );
+go
+
+--Verify defaults work with single column insert
+INSERT INTO #test1_defaults (col1) VALUES (1);
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #test1_defaults;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#20#!#30#!#40
+~~END~~
+
+
+--INSERT: Using all defaults (empty column list)
+INSERT INTO #test1_defaults DEFAULT VALUES;
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #test1_defaults;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#20#!#30#!#40
+10#!#20#!#30#!#40
+~~END~~
+
+
+--INSERT: Specify only some columns, let others use defaults
+INSERT INTO #test1_defaults (col1, col3) VALUES (100, 300);
+go
+~~ROW COUNT: 1~~
+
+
+INSERT INTO #test1_defaults (col2, col4) VALUES (200, 400);
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#20#!#30#!#40
+10#!#20#!#30#!#40
+10#!#200#!#30#!#400
+100#!#20#!#300#!#40
+~~END~~
+
+
+--INSERT: Multi-row insert with partial columns
+INSERT INTO #test1_defaults (col1) VALUES (5), (6), (7);
+go
+~~ROW COUNT: 3~~
+
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#20#!#30#!#40
+5#!#20#!#30#!#40
+6#!#20#!#30#!#40
+7#!#20#!#30#!#40
+10#!#200#!#30#!#400
+10#!#20#!#30#!#40
+100#!#20#!#300#!#40
+~~END~~
+
+
+--Verify ENR before ALTER
+SELECT * FROM sys.babelfish_get_enr_list();
+go
+~~START~~
+int#!#text
+123096#!##t
+123099#!##t2
+123102#!##t1
+123118#!##test1_defaults
+~~END~~
+
+
+--Modify default for col2 
+ALTER TABLE #test1_defaults ADD DEFAULT NULL FOR col2;
+go
+
+--INSERT: Test new default for col2 (should be NULL now)
+INSERT INTO #test1_defaults (col1) VALUES (2);
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #test1_defaults WHERE col1 = 2;
+go
+~~START~~
+int#!#int#!#int#!#int
+2#!#<NULL>#!#30#!#40
+~~END~~
+
+
+--INSERT: Verify other defaults still work after ALTER
+INSERT INTO #test1_defaults (col1, col2) VALUES (3, 3);
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#20#!#30#!#40
+2#!#<NULL>#!#30#!#40
+3#!#3#!#30#!#40
+5#!#20#!#30#!#40
+6#!#20#!#30#!#40
+7#!#20#!#30#!#40
+10#!#200#!#30#!#400
+10#!#20#!#30#!#40
+100#!#20#!#300#!#40
+~~END~~
+
+
+--SELECT: Various queries to verify data integrity
+SELECT * FROM #test1_defaults WHERE col2 IS NULL;
+go
+~~START~~
+int#!#int#!#int#!#int
+2#!#<NULL>#!#30#!#40
+~~END~~
+
+
+SELECT * FROM #test1_defaults WHERE col2 = 20;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#20#!#30#!#40
+10#!#20#!#30#!#40
+100#!#20#!#300#!#40
+5#!#20#!#30#!#40
+6#!#20#!#30#!#40
+7#!#20#!#30#!#40
+~~END~~
+
+
+SELECT COUNT(*) AS total_rows FROM #test1_defaults;
+go
+~~START~~
+int
+9
+~~END~~
+
+
+SELECT col1, col2, col3, col4 FROM #test1_defaults ORDER BY col1 DESC;
+go
+~~START~~
+int#!#int#!#int#!#int
+100#!#20#!#300#!#40
+10#!#20#!#30#!#40
+10#!#200#!#30#!#400
+7#!#20#!#30#!#40
+6#!#20#!#30#!#40
+5#!#20#!#30#!#40
+3#!#3#!#30#!#40
+2#!#<NULL>#!#30#!#40
+1#!#20#!#30#!#40
+~~END~~
+
+
+--SELECT: Aggregates
+SELECT 
+    SUM(col1) AS sum_col1, 
+    AVG(col2) AS avg_col2, 
+    MIN(col3) AS min_col3, 
+    MAX(col4) AS max_col4 
+FROM #test1_defaults;
+go
+~~START~~
+int#!#int#!#int#!#int
+144#!#40#!#30#!#400
+~~END~~
+
+
+--UPDATE: Update rows and verify table still works
+UPDATE #test1_defaults SET col2 = 999 WHERE col1 = 1;
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #test1_defaults WHERE col1 = 1;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#999#!#30#!#40
+~~END~~
+
+
+--UPDATE: Update multiple rows
+UPDATE #test1_defaults SET col3 = col3 + 1000 WHERE col2 IS NOT NULL;
+go
+~~ROW COUNT: 8~~
+
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#999#!#1030#!#40
+2#!#<NULL>#!#30#!#40
+3#!#3#!#1030#!#40
+5#!#20#!#1030#!#40
+6#!#20#!#1030#!#40
+7#!#20#!#1030#!#40
+10#!#200#!#1030#!#400
+10#!#20#!#1030#!#40
+100#!#20#!#1300#!#40
+~~END~~
+
+
+--UPDATE: Update with NULL
+UPDATE #test1_defaults SET col4 = NULL WHERE col1 = 5;
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #test1_defaults WHERE col1 = 5;
+go
+~~START~~
+int#!#int#!#int#!#int
+5#!#20#!#1030#!#<NULL>
+~~END~~
+
+
+--DELETE: Delete single row
+DELETE FROM #test1_defaults WHERE col1 = 6;
+go
+~~ROW COUNT: 1~~
+
+
+SELECT COUNT(*) AS rows_after_delete FROM #test1_defaults;
+go
+~~START~~
+int
+8
+~~END~~
+
+
+--DELETE: Delete multiple rows
+DELETE FROM #test1_defaults WHERE col2 IS NULL;
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#999#!#1030#!#40
+3#!#3#!#1030#!#40
+5#!#20#!#1030#!#<NULL>
+7#!#20#!#1030#!#40
+10#!#20#!#1030#!#40
+10#!#200#!#1030#!#400
+100#!#20#!#1300#!#40
+~~END~~
+
+
+--INSERT: Insert after DELETE to verify table integrity
+INSERT INTO #test1_defaults (col1) VALUES (1000);
+go
+~~ROW COUNT: 1~~
+
+
+INSERT INTO #test1_defaults DEFAULT VALUES;
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#999#!#1030#!#40
+3#!#3#!#1030#!#40
+5#!#20#!#1030#!#<NULL>
+7#!#20#!#1030#!#40
+10#!#<NULL>#!#30#!#40
+10#!#200#!#1030#!#400
+10#!#20#!#1030#!#40
+100#!#20#!#1300#!#40
+1000#!#<NULL>#!#30#!#40
+~~END~~
+
+
+--Verify ENR after all operations
+SELECT * FROM sys.babelfish_get_enr_list();
+go
+~~START~~
+int#!#text
+123096#!##t
+123099#!##t2
+123102#!##t1
+123118#!##test1_defaults
+~~END~~
+
+
+--ALTER: Add another default modification
+ALTER TABLE #test1_defaults ADD DEFAULT 999 FOR col3;
+go
+
+--INSERT: Test the new default
+INSERT INTO #test1_defaults (col1, col2) VALUES (2000, 2000);
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #test1_defaults WHERE col1 = 2000;
+go
+~~START~~
+int#!#int#!#int#!#int
+2000#!#2000#!#999#!#40
+~~END~~
+
+
+--Final verification
+SELECT * FROM #test1_defaults ORDER BY col1;
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#999#!#1030#!#40
+3#!#3#!#1030#!#40
+5#!#20#!#1030#!#<NULL>
+7#!#20#!#1030#!#40
+10#!#20#!#1030#!#40
+10#!#200#!#1030#!#400
+10#!#<NULL>#!#30#!#40
+100#!#20#!#1300#!#40
+1000#!#<NULL>#!#30#!#40
+2000#!#2000#!#999#!#40
+~~END~~
+
+
+SELECT COUNT(*) AS final_count FROM #test1_defaults;
+go
+~~START~~
+int
+10
+~~END~~
+
+
+--Cleanup
+DROP TABLE #test1_defaults;
+go
