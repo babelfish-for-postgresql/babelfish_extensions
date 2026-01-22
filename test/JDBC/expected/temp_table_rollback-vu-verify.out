@@ -8,17 +8,20 @@ CREATE TABLE #temp_table_rollback_t1(a int identity primary key, b int)
 select * from enr_view
 ROLLBACK
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+#temp_table_rollback_t1_a_seq
+#temp_table_rollback_t1
+#temp_table_rollback_t1_pkey
+~~END~~
 
 
 -- Should be empty
 select * from enr_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+~~END~~
 
 
 -- Should not exist
@@ -115,9 +118,12 @@ go
 -- Should still exist
 select * from enr_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+#temp_table_rollback_t1_pkey
+#temp_table_rollback_t1_a_seq
+#temp_table_rollback_t1
+~~END~~
 
 
 -- Should show results
@@ -184,9 +190,17 @@ GO
 -- Tables are still visible and usable
 select * from enr_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+#temp_table_rollback_t1_pkey
+#pg_toast_#oid_masked#_index
+#pg_toast_#oid_masked#
+#temp_table_rollback_t1_a_seq
+#temp_table_rollback_t1
+#pg_toast_#oid_masked#_index
+#pg_toast_#oid_masked#
+#temp_table_rollback_t2
+~~END~~
 
 
 INSERT INTO #temp_table_rollback_t1 values (1, 'b')
@@ -228,9 +242,9 @@ GO
 
 SELECT * FROM enr_view
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+~~END~~
 
 
 CREATE TABLE #t1(a int, b int)
@@ -373,9 +387,9 @@ GO
 
 SELECT * FROM enr_view;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+~~END~~
 
 
 
@@ -532,9 +546,12 @@ int#!#varchar#!#int#!#int
 
 SELECT * FROM enr_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+#temp_table_rollback_t5
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+~~END~~
 
 
 
@@ -665,9 +682,9 @@ GO
 
 SELECT * FROM enr_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+~~END~~
 
 
 
@@ -749,9 +766,37 @@ int#!#int
 ---------------------------------------------------------------------------
 exec test_rollback_in_proc
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#two
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+three
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int
+four#!#1
+~~END~~
+
+~~START~~
+int
+6
+~~END~~
+
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: procedure test_rollback_in_proc() does not exist)~~
+~~ERROR (Message: relation "#t2" does not exist)~~
 
 
 BEGIN TRANSACTION
@@ -761,9 +806,35 @@ BEGIN TRANSACTION
     select * from #outer_tab1
 ROLLBACK
 GO
+~~START~~
+text
+#outer_tab1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#two
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+three
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int
+four#!#1
+~~END~~
+
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~ERROR (Message: INSERT has more expressions than target columns)~~
 
 
 CREATE TABLE temp_tab_rollback_mytab(a int)
@@ -779,9 +850,13 @@ SELECT * FROM temp_tab_rollback_mytab
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: procedure tv_base_rollback() does not exist)~~
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+~~END~~
 
 
 BEGIN TRAN
@@ -793,9 +868,17 @@ ROLLBACK
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: procedure tv_tt_no_error() does not exist)~~
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+1
+~~END~~
 
 
 SELECT * FROM temp_tab_rollback_mytab
@@ -818,9 +901,17 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: procedure tv_tt_no_error() does not exist)~~
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+1
+~~END~~
 
 
 SELECT * FROM temp_tab_rollback_mytab
@@ -844,9 +935,9 @@ GO
 -- Nothing from the proc should be here either
 SELECT * FROM enr_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+~~END~~
 
 
 ---------------------------------------------------------------------------
@@ -859,16 +950,12 @@ BEGIN TRAN
     CREATE TABLE #temp_table_nonenr(a3 temp_table_type)
 ROLLBACK
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: type "temp_table_type" does not exist)~~
-
 
 SELECT * FROM enr_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+~~END~~
 
 
 -- Mixed insert rollback
@@ -895,9 +982,56 @@ SELECT * FROM #temp_table
 SELECT * FROM #temp_table_nonenr
 SELECT * FROM enr_view
 GO
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: type "temp_table_type" does not exist)~~
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+~~START~~
+text
+@tv_0
+#temp_table
+~~END~~
 
 
 SELECT * FROM enr_view
@@ -905,9 +1039,10 @@ DROP TABLE #temp_table
 DROP TABLE #temp_table_nonenr
 DROP TABLE perm_table
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+#temp_table
+~~END~~
 
 
 -- Mixed drop rollback
@@ -915,10 +1050,6 @@ CREATE TABLE #temp_table(a int)
 CREATE TABLE perm_table(a int)
 CREATE TABLE #temp_table_nonenr(a3 temp_table_type)
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "#temp_table" already exists)~~
-
 
 BEGIN TRAN
     DECLARE @tv TABLE(a int)
@@ -929,26 +1060,30 @@ BEGIN TRAN
     SELECT * FROM enr_view
 ROLLBACK
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+text
+#temp_table
+@tv_0
+~~END~~
 
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+@tv_0
+~~END~~
 
 
 SELECT * FROM enr_view
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+#temp_table
+~~END~~
 
 
 DROP TABLE #temp_table
 DROP TABLE perm_table
 DROP TABLE #temp_table_nonenr
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "#temp_table_nonenr" does not exist)~~
-
 
 -- Mixed rollback with mapped and unmapped errors
 CREATE TABLE temp_table_rollback_t6 (a int)
@@ -964,9 +1099,7 @@ BEGIN CATCH
     ROLLBACK 
 END CATCH
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure tv_mapped_error() does not exist)~~
+~~ROW COUNT: 1~~
 
 
 SELECT @@trancount
@@ -992,9 +1125,7 @@ BEGIN CATCH
     ROLLBACK 
 END CATCH
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure tv_unmapped_error() does not exist)~~
+~~ROW COUNT: 1~~
 
 
 SELECT @@trancount
@@ -1116,9 +1247,9 @@ SELECT * FROM enr_view
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "enr_view" does not exist)~~
+~~START~~
+text
+~~END~~
 
 
 
@@ -1326,17 +1457,17 @@ CREATE INDEX #idx2_intermediate ON #t_intermediate(c);
 go
 
 -- Verify ENR
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 go
 ~~START~~
-int#!#text
-123096#!##t
-123099#!##t2
-123102#!##t1
-123105#!##t_intermediate
-123108#!##t_intermediate_pkey
-123110#!##idx1_intermediate#t_intermediac7f5304388db1261e76ff73fd7a648c9
-123111#!##idx2_intermediate#t_intermedia4737c0efb12593904c8c76e1baf5043f
+text
+#idx1_intermediate#t_intermediac7f5304388db1261e76ff73fd7a648c9
+#idx2_intermediate#t_intermedia4737c0efb12593904c8c76e1baf5043f
+#t
+#t1
+#t2
+#t_intermediate
+#t_intermediate_pkey
 ~~END~~
 
 
@@ -1380,17 +1511,17 @@ CREATE INDEX #idx3_intermediate ON #t1_intermediate(c);
 go
 
 -- Verify indexes in ENR
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 go
 ~~START~~
-int#!#text
-123096#!##t
-123099#!##t2
-123102#!##t1
-123112#!##t1_intermediate
-123115#!##idx1_intermediate#t1_intermedi3f930a87ab72166e910f7ddcf924df30
-123116#!##idx2_intermediate#t1_intermedi2cf527ed557fefcaa607af16f2a5138d
-123117#!##idx3_intermediate#t1_intermedi2a0ee21d2d154e1dfcb71a94a8970097
+text
+#idx1_intermediate#t1_intermedi3f930a87ab72166e910f7ddcf924df30
+#idx2_intermediate#t1_intermedi2cf527ed557fefcaa607af16f2a5138d
+#idx3_intermediate#t1_intermedi2a0ee21d2d154e1dfcb71a94a8970097
+#t
+#t1
+#t1_intermediate
+#t2
 ~~END~~
 
 
@@ -1608,16 +1739,16 @@ int
 
 
 -- Verify remaining indexes still work (ENR check)
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 go
 ~~START~~
-int#!#text
-123096#!##t
-123099#!##t2
-123102#!##t1
-123112#!##t1_intermediate
-123115#!##idx1_intermediate#t1_intermedi3f930a87ab72166e910f7ddcf924df30
-123117#!##idx3_intermediate#t1_intermedi2a0ee21d2d154e1dfcb71a94a8970097
+text
+#idx1_intermediate#t1_intermedi3f930a87ab72166e910f7ddcf924df30
+#idx3_intermediate#t1_intermedi2a0ee21d2d154e1dfcb71a94a8970097
+#t
+#t1
+#t1_intermediate
+#t2
 ~~END~~
 
 
@@ -1709,14 +1840,14 @@ int#!#int#!#int#!#int
 
 
 --Verify ENR before ALTER
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 go
 ~~START~~
-int#!#text
-123096#!##t
-123099#!##t2
-123102#!##t1
-123118#!##test1_defaults
+text
+#t
+#t1
+#t2
+#test1_defaults
 ~~END~~
 
 
@@ -1932,14 +2063,14 @@ int#!#int#!#int#!#int
 
 
 --Verify ENR after all operations
-SELECT * FROM sys.babelfish_get_enr_list();
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 go
 ~~START~~
-int#!#text
-123096#!##t
-123099#!##t2
-123102#!##t1
-123118#!##test1_defaults
+text
+#t
+#t1
+#t2
+#test1_defaults
 ~~END~~
 
 
