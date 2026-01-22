@@ -8,7 +8,16 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+test_like_index-vu-prepare
+test_like_index-vu-verify
+test_like_index-vu-cleanup
+test_constraint_like-vu-prepare
+test_constraint_like-vu-verify
+test_constraint_like-vu-cleanup
+test_like_for_AI-vu-prepare
+test_like_for_AI-vu-verify
+test_like_for_AI-vu-cleanup
+babel_collection
 
 # FIX ME: Crash in vector extension. Ignoring to Unblock Dev
 # branches. Will be fixed with jira: BABEL-6260
@@ -637,4 +646,7 @@ ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-prepare
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-verify
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-cleanup
+ignore#!#test_constraint_like_before_17_8-or-16_12-vu-prepare
+ignore#!#test_constraint_like_before_17_8-or-16_12-vu-verify
+ignore#!#test_constraint_like_before_17_8-or-16_12-vu-cleanup
 
