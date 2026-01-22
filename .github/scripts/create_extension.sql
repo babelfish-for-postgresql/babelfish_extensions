@@ -3,6 +3,7 @@ DROP DATABASE IF EXISTS :db;
 CREATE DATABASE :db OWNER :user;
 \c :db
 SET allow_system_table_mods = ON;
+CREATE EXTENSION IF NOT EXISTS "postgis";   
 CREATE EXTENSION IF NOT EXISTS "babelfishpg_tds" CASCADE;
 GRANT ALL ON SCHEMA sys to :user;
 ALTER USER :user CREATEDB;
