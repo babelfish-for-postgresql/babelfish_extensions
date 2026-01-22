@@ -206,7 +206,6 @@ upgrade-version: [{
   upgrade-path: [
     {
       version: 16.10,
-      version: 17.9,
       upgrade-type: null
     },
     { 
