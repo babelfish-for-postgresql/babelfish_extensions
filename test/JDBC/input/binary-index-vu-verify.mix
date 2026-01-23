@@ -1,10 +1,18 @@
 -- parallel_query_expected
+-- tsql
 create index ix_tab_binary_b on tab_varbinary (a)
 GO
 
 select set_config('enable_bitmapscan', 'off', false);
 GO
 
+-- psql
+ANALYZE master_dbo.tab_varbinary;
+GO
+ANALYZE master_dbo.tab_binary;
+GO
+
+-- tsql
 exec babel_3939_vu_prepare_p1;
 GO
 
