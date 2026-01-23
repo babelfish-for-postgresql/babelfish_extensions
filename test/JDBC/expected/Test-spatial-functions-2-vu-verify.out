@@ -2028,7 +2028,7 @@ SELECT @line.STLength() AS Length;
 go
 ~~START~~
 float
-67.0929053812567
+67.09290538054775
 ~~END~~
 
 
