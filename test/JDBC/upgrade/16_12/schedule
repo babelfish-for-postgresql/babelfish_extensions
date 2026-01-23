@@ -616,7 +616,7 @@ sys-login-property
 sys-fn-varbintohexsubstring
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
-test_constraint_like
+test_constraint_like_before_17_8-or-16_12
 unpivot
 forjson-escape
 round_return_type_test
