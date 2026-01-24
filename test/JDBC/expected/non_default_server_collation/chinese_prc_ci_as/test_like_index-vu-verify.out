@@ -106,6 +106,7 @@ WHERE test_like_index_vu_prepare_v_csas_col LIKE 'cs1'
 Index Scan using test_like_index_vu_prepare_v_cs84732f1ac470066fb5b0b1aa0dc83304 on test_like_index_vu_prepare_v_csas (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
   Filter: ((test_like_index_vu_prepare_v_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -252,6 +253,7 @@ WHERE test_like_index_vu_prepare_v_csas_col LIKE 'cs1' COLLATE latin1_general_cs
 Index Scan using test_like_index_vu_prepare_v_cs84732f1ac470066fb5b0b1aa0dc83304 on test_like_index_vu_prepare_v_csas (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
   Filter: ((test_like_index_vu_prepare_v_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -347,7 +349,7 @@ text
 Query Text: SELECT test_like_index_vu_prepare_v_csas_col 
 FROM test_like_index_vu_prepare_v_csas 
 WHERE test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_ci_as LIKE 'cs1'
-Seq Scan on test_like_index_vu_prepare_v_csas (actual rows=1 loops=1)
+Seq Scan on test_like_index_vu_prepare_v_csas (actual rows=1.00 loops=1)
   Filter: (((test_like_index_vu_prepare_v_csas_col)::text ~~* 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 999
 ~~END~~
@@ -389,7 +391,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_csas_col 
 FROM new_test_like_index_vu_prepare_v_csas 
 WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE 'csas'
-Seq Scan on new_test_like_index_vu_prepare_v_csas (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_csas (actual rows=2.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_v_csas_col)::text ~~ 'csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_csas_col = 'csas'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -409,7 +411,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_csas_col 
 FROM new_test_like_index_vu_prepare_v_csas 
 WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE 'csas '
-Seq Scan on new_test_like_index_vu_prepare_v_csas (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_csas (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_v_csas_col)::text ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_csas_col = 'csas '::"varchar" COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -429,7 +431,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_csas_col 
 FROM new_test_like_index_vu_prepare_v_csas 
 WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE ' csas'
-Seq Scan on new_test_like_index_vu_prepare_v_csas (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_csas (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_v_csas_col)::text ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_csas_col = ' csas'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -665,6 +667,7 @@ WHERE test_like_index_vu_prepare_v_cias_col LIKE 'ci1'
 Index Scan using test_like_index_vu_prepare_v_ci2d75c4ad76ed9b58a88ba0a93bab0133 on test_like_index_vu_prepare_v_cias (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar" COLLATE bbf_unicode_cp1_ci_as)
   Filter: ((test_like_index_vu_prepare_v_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -811,6 +814,7 @@ WHERE test_like_index_vu_prepare_v_cias_col LIKE 'ci1' COLLATE latin1_general_ci
 Index Scan using test_like_index_vu_prepare_v_ci2d75c4ad76ed9b58a88ba0a93bab0133 on test_like_index_vu_prepare_v_cias (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar" COLLATE bbf_unicode_cp1_ci_as)
   Filter: ((test_like_index_vu_prepare_v_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -906,7 +910,7 @@ text
 Query Text: SELECT test_like_index_vu_prepare_v_cias_col 
 FROM test_like_index_vu_prepare_v_cias 
 WHERE test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_cs_as LIKE 'ci1'
-Seq Scan on test_like_index_vu_prepare_v_cias (actual rows=1 loops=1)
+Seq Scan on test_like_index_vu_prepare_v_cias (actual rows=1.00 loops=1)
   Filter: (((test_like_index_vu_prepare_v_cias_col)::text ~~ 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 999
 ~~END~~
@@ -948,7 +952,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_cias_col 
 FROM new_test_like_index_vu_prepare_v_cias 
 WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias'
-Seq Scan on new_test_like_index_vu_prepare_v_cias (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_cias (actual rows=2.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_v_cias_col)::text ~~* 'cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_cias_col = 'cias'::"varchar" COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -968,7 +972,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_cias_col 
 FROM new_test_like_index_vu_prepare_v_cias 
 WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias '
-Seq Scan on new_test_like_index_vu_prepare_v_cias (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_cias (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_v_cias_col)::text ~~* 'cias '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_cias_col = 'cias '::"varchar" COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -988,7 +992,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_cias_col 
 FROM new_test_like_index_vu_prepare_v_cias 
 WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE ' cias'
-Seq Scan on new_test_like_index_vu_prepare_v_cias (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_cias (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_v_cias_col)::text ~~* ' cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_cias_col = ' cias'::"varchar" COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -1176,6 +1180,7 @@ WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_v_csai_idx on test_like_index_vu_prepare_v_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
   Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -1222,6 +1227,7 @@ WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_v_csai_idx on test_like_index_vu_prepare_v_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
   Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -1271,6 +1277,7 @@ AND test_like_index_vu_prepare_v_csai_col3 LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_v_csai_idx_composite on test_like_index_vu_prepare_v_csai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_v_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -1317,6 +1324,7 @@ WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai1' COLLATE latin1_general_
 Index Scan using test_like_index_vu_prepare_v_csai_idx on test_like_index_vu_prepare_v_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
   Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -1363,6 +1371,7 @@ WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai1' COLLATE latin1_general_
 Index Scan using test_like_index_vu_prepare_v_csai_idx on test_like_index_vu_prepare_v_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
   Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -1412,6 +1421,7 @@ AND test_like_index_vu_prepare_v_csai_col3 LIKE 'csai1' COLLATE latin1_general_c
 Index Scan using test_like_index_vu_prepare_v_csai_idx_composite on test_like_index_vu_prepare_v_csai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_v_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -1455,7 +1465,7 @@ text
 Query Text: SELECT test_like_index_vu_prepare_v_csai_col 
 FROM test_like_index_vu_prepare_v_csai 
 WHERE test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_ci_ai LIKE 'csai1'
-Seq Scan on test_like_index_vu_prepare_v_csai (actual rows=1 loops=1)
+Seq Scan on test_like_index_vu_prepare_v_csai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~* 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 999
 ~~END~~
@@ -1497,7 +1507,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_csai_col 
 FROM new_test_like_index_vu_prepare_v_csai 
 WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE 'csai'
-Seq Scan on new_test_like_index_vu_prepare_v_csai (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_csai (actual rows=2.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text) = 'csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -1517,7 +1527,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_csai_col 
 FROM new_test_like_index_vu_prepare_v_csai 
 WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE 'csai '
-Seq Scan on new_test_like_index_vu_prepare_v_csai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_csai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text) = 'csai '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -1537,7 +1547,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_csai_col 
 FROM new_test_like_index_vu_prepare_v_csai 
 WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE ' csai'
-Seq Scan on new_test_like_index_vu_prepare_v_csai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_csai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text))::text ~~ ' csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text) = ' csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -1725,6 +1735,7 @@ WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_v_ciai_idx on test_like_index_vu_prepare_v_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
   Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -1770,6 +1781,8 @@ FROM test_like_index_vu_prepare_v_ciai
 WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_v_ciai_idx on test_like_index_vu_prepare_v_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -1818,6 +1831,8 @@ WHERE test_like_index_vu_prepare_v_ciai_col2 LIKE 'ciai1'
 AND test_like_index_vu_prepare_v_ciai_col3 LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_v_ciai_idx_composite on test_like_index_vu_prepare_v_ciai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -1863,6 +1878,8 @@ FROM test_like_index_vu_prepare_v_ciai
 WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_v_ciai_idx on test_like_index_vu_prepare_v_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -1908,6 +1925,8 @@ FROM test_like_index_vu_prepare_v_ciai
 WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_v_ciai_idx on test_like_index_vu_prepare_v_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -1956,6 +1975,8 @@ WHERE test_like_index_vu_prepare_v_ciai_col2 LIKE 'ciai1'
 AND test_like_index_vu_prepare_v_ciai_col3 LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_v_ciai_idx_composite on test_like_index_vu_prepare_v_ciai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -1999,8 +2020,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_v_ciai_col 
 FROM test_like_index_vu_prepare_v_ciai 
 WHERE test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai1'
-Seq Scan on test_like_index_vu_prepare_v_ciai (actual rows=1 loops=1)
-  Filter: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+Seq Scan on test_like_index_vu_prepare_v_ciai (actual rows=1.00 loops=1)
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~ 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -2041,7 +2062,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_ciai_col 
 FROM new_test_like_index_vu_prepare_v_ciai 
 WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai'
-Seq Scan on new_test_like_index_vu_prepare_v_ciai (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_ciai (actual rows=2.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -2061,7 +2082,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_ciai_col 
 FROM new_test_like_index_vu_prepare_v_ciai 
 WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai '
-Seq Scan on new_test_like_index_vu_prepare_v_ciai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_ciai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -2081,7 +2102,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_v_ciai_col 
 FROM new_test_like_index_vu_prepare_v_ciai 
 WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai'
-Seq Scan on new_test_like_index_vu_prepare_v_ciai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_v_ciai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* ' ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text) = ' ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -2315,6 +2336,8 @@ FROM test_like_index_vu_prepare_c_csas
 WHERE test_like_index_vu_prepare_c_csas_col LIKE 'cs1'
 Index Scan using test_like_index_vu_prepare_c_csc57b567326112a54a52b273738c78881 on test_like_index_vu_prepare_c_csas (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as)
+  Filter: ((test_like_index_vu_prepare_c_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -2455,6 +2478,8 @@ FROM test_like_index_vu_prepare_c_csas
 WHERE test_like_index_vu_prepare_c_csas_col LIKE 'cs1' COLLATE latin1_general_cs_as
 Index Scan using test_like_index_vu_prepare_c_csc57b567326112a54a52b273738c78881 on test_like_index_vu_prepare_c_csas (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as)
+  Filter: ((test_like_index_vu_prepare_c_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -2547,8 +2572,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_c_csas_col 
 FROM test_like_index_vu_prepare_c_csas 
 WHERE test_like_index_vu_prepare_c_csas_col COLLATE latin1_general_ci_as LIKE 'cs1'
-Seq Scan on test_like_index_vu_prepare_c_csas (actual rows=1 loops=1)
-  Filter: (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar COLLATE bbf_unicode_cp1_ci_as)
+Seq Scan on test_like_index_vu_prepare_c_csas (actual rows=1.00 loops=1)
+  Filter: (((test_like_index_vu_prepare_c_csas_col)::text ~~* 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -2589,7 +2614,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_csas_col
 FROM new_test_like_index_vu_prepare_c_csas 
 WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE 'csas'
-Seq Scan on new_test_like_index_vu_prepare_c_csas (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_csas (actual rows=2.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_csas_col)::text ~~ 'csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_csas_col = 'csas'::bpchar COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -2610,7 +2635,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_csas_col 
 FROM new_test_like_index_vu_prepare_c_csas 
 WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE 'csas '
-Seq Scan on new_test_like_index_vu_prepare_c_csas (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_csas (actual rows=2.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_csas_col)::text ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_csas_col = 'csas '::bpchar COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -2630,7 +2655,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_csas_col
 FROM new_test_like_index_vu_prepare_c_csas 
 WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE ' csas'
-Seq Scan on new_test_like_index_vu_prepare_c_csas (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_csas (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_csas_col)::text ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_csas_col = ' csas'::bpchar COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -2650,7 +2675,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csas_col 
 FROM new_test_like_index_vu_prepare_c_fixed_csas 
 WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE 'csas'
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_csas (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_csas (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_fixed_csas_col)::text ~~ 'csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_csas_col = 'csas'::bpchar COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
@@ -2668,7 +2693,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csas_col 
 FROM new_test_like_index_vu_prepare_c_fixed_csas 
 WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE 'csas '
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_csas (actual rows=0 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_csas (actual rows=0.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_fixed_csas_col)::text ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_csas_col = 'csas '::bpchar COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -2687,7 +2712,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csas_col
 FROM new_test_like_index_vu_prepare_c_fixed_csas 
 WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE ' csas'
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_csas (actual rows=0 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_csas (actual rows=0.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_fixed_csas_col)::text ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_csas_col = ' csas'::bpchar COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -2916,6 +2941,8 @@ FROM test_like_index_vu_prepare_c_cias
 WHERE test_like_index_vu_prepare_c_cias_col LIKE 'ci1'
 Index Scan using test_like_index_vu_prepare_c_ci217f3585158e2dbe6ae3ecd7b6c05ffa on test_like_index_vu_prepare_c_cias (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar COLLATE bbf_unicode_cp1_ci_as)
+  Filter: ((test_like_index_vu_prepare_c_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -3056,6 +3083,8 @@ FROM test_like_index_vu_prepare_c_cias
 WHERE test_like_index_vu_prepare_c_cias_col LIKE 'ci1' COLLATE latin1_general_ci_as
 Index Scan using test_like_index_vu_prepare_c_ci217f3585158e2dbe6ae3ecd7b6c05ffa on test_like_index_vu_prepare_c_cias (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar COLLATE bbf_unicode_cp1_ci_as)
+  Filter: ((test_like_index_vu_prepare_c_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -3148,8 +3177,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_c_cias_col 
 FROM test_like_index_vu_prepare_c_cias 
 WHERE test_like_index_vu_prepare_c_cias_col COLLATE latin1_general_cs_as LIKE 'ci1'
-Seq Scan on test_like_index_vu_prepare_c_cias (actual rows=1 loops=1)
-  Filter: (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar COLLATE bbf_unicode_cp1_cs_as)
+Seq Scan on test_like_index_vu_prepare_c_cias (actual rows=1.00 loops=1)
+  Filter: (((test_like_index_vu_prepare_c_cias_col)::text ~~ 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -3190,7 +3219,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_cias_col
 FROM new_test_like_index_vu_prepare_c_cias 
 WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE 'cias'
-Seq Scan on new_test_like_index_vu_prepare_c_cias (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_cias (actual rows=2.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_cias_col)::text ~~* 'cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_cias_col = 'cias'::bpchar COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -3211,7 +3240,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_cias_col 
 FROM new_test_like_index_vu_prepare_c_cias 
 WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE 'cias '
-Seq Scan on new_test_like_index_vu_prepare_c_cias (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_cias (actual rows=2.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_cias_col)::text ~~* 'cias '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_cias_col = 'cias '::bpchar COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -3231,7 +3260,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_cias_col
 FROM new_test_like_index_vu_prepare_c_cias 
 WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE ' cias'
-Seq Scan on new_test_like_index_vu_prepare_c_cias (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_cias (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_cias_col)::text ~~* ' cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_cias_col = ' cias'::bpchar COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -3251,7 +3280,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_cias_col 
 FROM new_test_like_index_vu_prepare_c_fixed_cias 
 WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE 'cias'
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_cias (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_cias (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_fixed_cias_col)::text ~~* 'cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_cias_col = 'cias'::bpchar COLLATE bbf_unicode_cp1_ci_as))
 ~~END~~
 
@@ -3269,7 +3298,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_cias_col 
 FROM new_test_like_index_vu_prepare_c_fixed_cias 
 WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE 'cias '
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_cias (actual rows=0 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_cias (actual rows=0.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_fixed_cias_col)::text ~~* 'cias '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_cias_col = 'cias '::bpchar COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -3288,7 +3317,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_cias_col
 FROM new_test_like_index_vu_prepare_c_fixed_cias 
 WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE ' cias'
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_cias (actual rows=0 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_cias (actual rows=0.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_c_fixed_cias_col)::text ~~* ' cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_cias_col = ' cias'::bpchar COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -3471,6 +3500,8 @@ FROM test_like_index_vu_prepare_c_csai
 WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_c_csai_idx on test_like_index_vu_prepare_c_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -3513,6 +3544,8 @@ FROM test_like_index_vu_prepare_c_csai
 WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_c_csai_idx on test_like_index_vu_prepare_c_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -3558,6 +3591,8 @@ WHERE test_like_index_vu_prepare_c_csai_col2 LIKE 'csai1'
 AND test_like_index_vu_prepare_c_csai_col3 LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_c_csai_idx_composite on test_like_index_vu_prepare_c_csai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_c_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -3603,6 +3638,8 @@ FROM test_like_index_vu_prepare_c_csai
 WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai1' COLLATE latin1_general_cs_ai
 Index Scan using test_like_index_vu_prepare_c_csai_idx on test_like_index_vu_prepare_c_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -3645,6 +3682,8 @@ FROM test_like_index_vu_prepare_c_csai
 WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai1' COLLATE latin1_general_cs_ai
 Index Scan using test_like_index_vu_prepare_c_csai_idx on test_like_index_vu_prepare_c_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -3690,6 +3729,8 @@ WHERE test_like_index_vu_prepare_c_csai_col2 LIKE 'csai1'
 AND test_like_index_vu_prepare_c_csai_col3 LIKE 'csai1' COLLATE latin1_general_cs_ai
 Index Scan using test_like_index_vu_prepare_c_csai_idx_composite on test_like_index_vu_prepare_c_csai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_c_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -3733,8 +3774,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_c_csai_col 
 FROM test_like_index_vu_prepare_c_csai 
 WHERE test_like_index_vu_prepare_c_csai_col COLLATE latin1_general_ci_ai LIKE 'csai1'
-Seq Scan on test_like_index_vu_prepare_c_csai (actual rows=1 loops=1)
-  Filter: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+Seq Scan on test_like_index_vu_prepare_c_csai (actual rows=1.00 loops=1)
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~* 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -3775,7 +3816,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_csai_col
 FROM new_test_like_index_vu_prepare_c_csai 
 WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai'
-Seq Scan on new_test_like_index_vu_prepare_c_csai (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_csai (actual rows=2.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text) = 'csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -3796,7 +3837,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_csai_col 
 FROM new_test_like_index_vu_prepare_c_csai 
 WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai '
-Seq Scan on new_test_like_index_vu_prepare_c_csai (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_csai (actual rows=2.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text) = 'csai '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -3816,7 +3857,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_csai_col
 FROM new_test_like_index_vu_prepare_c_csai 
 WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE ' csai'
-Seq Scan on new_test_like_index_vu_prepare_c_csai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_csai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text))::text ~~ ' csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text) = ' csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -3836,7 +3877,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csai_col 
 FROM new_test_like_index_vu_prepare_c_fixed_csai 
 WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai'
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_csai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_csai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text))::text ~~ 'csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text) = 'csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
@@ -3854,7 +3895,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csai_col 
 FROM new_test_like_index_vu_prepare_c_fixed_csai 
 WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai '
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_csai (actual rows=0 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_csai (actual rows=0.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text))::text ~~ 'csai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text) = 'csai '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -3873,7 +3914,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csai_col
 FROM new_test_like_index_vu_prepare_c_fixed_csai 
 WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE ' csai'
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_csai (actual rows=0 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_csai (actual rows=0.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text))::text ~~ ' csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text) = ' csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -4056,6 +4097,8 @@ FROM test_like_index_vu_prepare_c_ciai
 WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_c_ciai_idx on test_like_index_vu_prepare_c_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -4098,6 +4141,8 @@ FROM test_like_index_vu_prepare_c_ciai
 WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_c_ciai_idx on test_like_index_vu_prepare_c_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -4143,6 +4188,8 @@ WHERE test_like_index_vu_prepare_c_ciai_col2 LIKE 'ciai1'
 AND test_like_index_vu_prepare_c_ciai_col3 LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_c_ciai_idx_composite on test_like_index_vu_prepare_c_ciai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -4188,6 +4235,8 @@ FROM test_like_index_vu_prepare_c_ciai
 WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_c_ciai_idx on test_like_index_vu_prepare_c_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -4230,6 +4279,8 @@ FROM test_like_index_vu_prepare_c_ciai
 WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_c_ciai_idx on test_like_index_vu_prepare_c_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -4275,6 +4326,8 @@ WHERE test_like_index_vu_prepare_c_ciai_col2 LIKE 'ciai1'
 AND test_like_index_vu_prepare_c_ciai_col3 LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_c_ciai_idx_composite on test_like_index_vu_prepare_c_ciai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -4318,8 +4371,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_c_ciai_col 
 FROM test_like_index_vu_prepare_c_ciai 
 WHERE test_like_index_vu_prepare_c_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai1'
-Seq Scan on test_like_index_vu_prepare_c_ciai (actual rows=1 loops=1)
-  Filter: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+Seq Scan on test_like_index_vu_prepare_c_ciai (actual rows=1.00 loops=1)
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~ 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -4360,7 +4413,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_ciai_col
 FROM new_test_like_index_vu_prepare_c_ciai 
 WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai'
-Seq Scan on new_test_like_index_vu_prepare_c_ciai (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_ciai (actual rows=2.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -4381,7 +4434,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_ciai_col 
 FROM new_test_like_index_vu_prepare_c_ciai 
 WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai '
-Seq Scan on new_test_like_index_vu_prepare_c_ciai (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_ciai (actual rows=2.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -4401,7 +4454,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_ciai_col
 FROM new_test_like_index_vu_prepare_c_ciai 
 WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE ' ciai'
-Seq Scan on new_test_like_index_vu_prepare_c_ciai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_ciai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* ' ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text) = ' ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -4421,7 +4474,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col 
 FROM new_test_like_index_vu_prepare_c_fixed_ciai 
 WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai'
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_ciai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_ciai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text))::text ~~* 'ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text) = 'ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
@@ -4439,7 +4492,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col 
 FROM new_test_like_index_vu_prepare_c_fixed_ciai 
 WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai '
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_ciai (actual rows=0 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_ciai (actual rows=0.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text))::text ~~* 'ciai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text) = 'ciai '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -4458,7 +4511,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col
 FROM new_test_like_index_vu_prepare_c_fixed_ciai 
 WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE ' ciai'
-Seq Scan on new_test_like_index_vu_prepare_c_fixed_ciai (actual rows=0 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_c_fixed_ciai (actual rows=0.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text))::text ~~* ' ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text) = ' ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -4691,6 +4744,8 @@ FROM test_like_index_vu_prepare_nv_csas
 WHERE test_like_index_vu_prepare_nv_csas_col LIKE 'cs1'
 Index Scan using test_like_index_vu_prepare_nv_ca8b74d26b39141ade7d5b3aae3285f48 on test_like_index_vu_prepare_nv_csas (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as)
+  Filter: ((test_like_index_vu_prepare_nv_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -4836,6 +4891,8 @@ FROM test_like_index_vu_prepare_nv_csas
 WHERE test_like_index_vu_prepare_nv_csas_col LIKE 'cs1' COLLATE latin1_general_cs_as
 Index Scan using test_like_index_vu_prepare_nv_ca8b74d26b39141ade7d5b3aae3285f48 on test_like_index_vu_prepare_nv_csas (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as)
+  Filter: ((test_like_index_vu_prepare_nv_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -4931,8 +4988,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_nv_csas_col 
 FROM test_like_index_vu_prepare_nv_csas 
 WHERE test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_ci_as LIKE 'cs1'
-Seq Scan on test_like_index_vu_prepare_nv_csas (actual rows=1 loops=1)
-  Filter: (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_ci_as)
+Seq Scan on test_like_index_vu_prepare_nv_csas (actual rows=1.00 loops=1)
+  Filter: (((test_like_index_vu_prepare_nv_csas_col)::text ~~* 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -4973,7 +5030,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_csas_col 
 FROM new_test_like_index_vu_prepare_nv_csas 
 WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE 'csas'
-Seq Scan on new_test_like_index_vu_prepare_nv_csas (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_csas (actual rows=2.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_nv_csas_col)::text ~~ 'csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_csas_col = 'csas'::nvarchar COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -4993,7 +5050,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_csas_col 
 FROM new_test_like_index_vu_prepare_nv_csas 
 WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE 'csas '
-Seq Scan on new_test_like_index_vu_prepare_nv_csas (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_csas (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_nv_csas_col)::text ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_csas_col = 'csas '::nvarchar COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -5013,7 +5070,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_csas_col 
 FROM new_test_like_index_vu_prepare_nv_csas 
 WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE ' csas'
-Seq Scan on new_test_like_index_vu_prepare_nv_csas (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_csas (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_nv_csas_col)::text ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_csas_col = ' csas'::nvarchar COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -5249,6 +5306,8 @@ FROM test_like_index_vu_prepare_nv_cias
 WHERE test_like_index_vu_prepare_nv_cias_col LIKE 'ci1'
 Index Scan using test_like_index_vu_prepare_nv_cbf6b47879b13fa596ab94667e81ae9c9 on test_like_index_vu_prepare_nv_cias (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar COLLATE bbf_unicode_cp1_ci_as)
+  Filter: ((test_like_index_vu_prepare_nv_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -5394,6 +5453,8 @@ FROM test_like_index_vu_prepare_nv_cias
 WHERE test_like_index_vu_prepare_nv_cias_col LIKE 'ci1' COLLATE latin1_general_ci_as
 Index Scan using test_like_index_vu_prepare_nv_cbf6b47879b13fa596ab94667e81ae9c9 on test_like_index_vu_prepare_nv_cias (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar COLLATE bbf_unicode_cp1_ci_as)
+  Filter: ((test_like_index_vu_prepare_nv_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -5489,8 +5550,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_nv_cias_col 
 FROM test_like_index_vu_prepare_nv_cias 
 WHERE test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_cs_as LIKE 'ci1'
-Seq Scan on test_like_index_vu_prepare_nv_cias (actual rows=1 loops=1)
-  Filter: (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar COLLATE bbf_unicode_cp1_cs_as)
+Seq Scan on test_like_index_vu_prepare_nv_cias (actual rows=1.00 loops=1)
+  Filter: (((test_like_index_vu_prepare_nv_cias_col)::text ~~ 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -5531,7 +5592,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_cias_col 
 FROM new_test_like_index_vu_prepare_nv_cias 
 WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE 'cias'
-Seq Scan on new_test_like_index_vu_prepare_nv_cias (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_cias (actual rows=2.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_nv_cias_col)::text ~~* 'cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_cias_col = 'cias'::nvarchar COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 1
 ~~END~~
@@ -5551,7 +5612,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_cias_col 
 FROM new_test_like_index_vu_prepare_nv_cias 
 WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE 'cias '
-Seq Scan on new_test_like_index_vu_prepare_nv_cias (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_cias (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_nv_cias_col)::text ~~* 'cias '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_cias_col = 'cias '::nvarchar COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -5571,7 +5632,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_cias_col 
 FROM new_test_like_index_vu_prepare_nv_cias 
 WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE ' cias'
-Seq Scan on new_test_like_index_vu_prepare_nv_cias (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_cias (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_nv_cias_col)::text ~~* ' cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_cias_col = ' cias'::nvarchar COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -5758,6 +5819,8 @@ FROM test_like_index_vu_prepare_nv_csai
 WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_nv_csai_idx on test_like_index_vu_prepare_nv_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -5803,6 +5866,8 @@ FROM test_like_index_vu_prepare_nv_csai
 WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_nv_csai_idx on test_like_index_vu_prepare_nv_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -5851,6 +5916,8 @@ WHERE test_like_index_vu_prepare_nv_csai_col2 LIKE 'csai1'
 AND test_like_index_vu_prepare_nv_csai_col3 LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_nv_csai_idx_composite on test_like_index_vu_prepare_nv_csai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -5896,6 +5963,8 @@ FROM test_like_index_vu_prepare_nv_csai
 WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai1' COLLATE latin1_general_cs_ai
 Index Scan using test_like_index_vu_prepare_nv_csai_idx on test_like_index_vu_prepare_nv_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -5941,6 +6010,8 @@ FROM test_like_index_vu_prepare_nv_csai
 WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai1' COLLATE latin1_general_cs_ai
 Index Scan using test_like_index_vu_prepare_nv_csai_idx on test_like_index_vu_prepare_nv_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -5989,6 +6060,8 @@ WHERE test_like_index_vu_prepare_nv_csai_col2 LIKE 'csai1'
 AND test_like_index_vu_prepare_nv_csai_col3 LIKE 'csai1' COLLATE latin1_general_cs_ai
 Index Scan using test_like_index_vu_prepare_nv_csai_idx_composite on test_like_index_vu_prepare_nv_csai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -6032,8 +6105,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_nv_csai_col 
 FROM test_like_index_vu_prepare_nv_csai 
 WHERE test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_ci_ai LIKE 'csai1'
-Seq Scan on test_like_index_vu_prepare_nv_csai (actual rows=1 loops=1)
-  Filter: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+Seq Scan on test_like_index_vu_prepare_nv_csai (actual rows=1.00 loops=1)
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~* 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -6074,7 +6147,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_csai_col 
 FROM new_test_like_index_vu_prepare_nv_csai 
 WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE 'csai'
-Seq Scan on new_test_like_index_vu_prepare_nv_csai (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_csai (actual rows=2.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text) = 'csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -6094,7 +6167,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_csai_col 
 FROM new_test_like_index_vu_prepare_nv_csai 
 WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE 'csai '
-Seq Scan on new_test_like_index_vu_prepare_nv_csai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_csai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text) = 'csai '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -6114,7 +6187,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_csai_col 
 FROM new_test_like_index_vu_prepare_nv_csai 
 WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE ' csai'
-Seq Scan on new_test_like_index_vu_prepare_nv_csai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_csai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ ' csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text) = ' csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -6301,6 +6374,8 @@ FROM test_like_index_vu_prepare_nv_ciai
 WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_nv_ciai_idx on test_like_index_vu_prepare_nv_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -6346,6 +6421,8 @@ FROM test_like_index_vu_prepare_nv_ciai
 WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_nv_ciai_idx on test_like_index_vu_prepare_nv_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -6394,6 +6471,8 @@ WHERE test_like_index_vu_prepare_nv_ciai_col2 LIKE 'ciai1'
 AND test_like_index_vu_prepare_nv_ciai_col3 LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_nv_ciai_idx_composite on test_like_index_vu_prepare_nv_ciai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -6439,6 +6518,8 @@ FROM test_like_index_vu_prepare_nv_ciai
 WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_nv_ciai_idx on test_like_index_vu_prepare_nv_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -6484,6 +6565,8 @@ FROM test_like_index_vu_prepare_nv_ciai
 WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_nv_ciai_idx on test_like_index_vu_prepare_nv_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -6532,6 +6615,8 @@ WHERE test_like_index_vu_prepare_nv_ciai_col2 LIKE 'ciai1'
 AND test_like_index_vu_prepare_nv_ciai_col3 LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_nv_ciai_idx_composite on test_like_index_vu_prepare_nv_ciai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -6575,8 +6660,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_nv_ciai_col 
 FROM test_like_index_vu_prepare_nv_ciai 
 WHERE test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai1'
-Seq Scan on test_like_index_vu_prepare_nv_ciai (actual rows=1 loops=1)
-  Filter: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+Seq Scan on test_like_index_vu_prepare_nv_ciai (actual rows=1.00 loops=1)
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~ 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -6617,7 +6702,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_ciai_col 
 FROM new_test_like_index_vu_prepare_nv_ciai 
 WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai'
-Seq Scan on new_test_like_index_vu_prepare_nv_ciai (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_ciai (actual rows=2.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -6637,7 +6722,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_ciai_col 
 FROM new_test_like_index_vu_prepare_nv_ciai 
 WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai '
-Seq Scan on new_test_like_index_vu_prepare_nv_ciai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_ciai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -6657,7 +6742,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_nv_ciai_col 
 FROM new_test_like_index_vu_prepare_nv_ciai 
 WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai'
-Seq Scan on new_test_like_index_vu_prepare_nv_ciai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_nv_ciai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* ' ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text) = ' ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -6843,8 +6928,9 @@ text
 Query Text: SELECT test_like_index_vu_prepare_t_csas_col 
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1'
-Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1.00 loops=1)
+  Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   Heap Fetches: 1
   Index Searches: 1
 ~~END~~
@@ -6888,8 +6974,10 @@ text
 Query Text: SELECT test_like_index_vu_prepare_t_csas_col_no_idx 
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1'
-Index Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+Index Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1.00 loops=1)
+  Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -6933,8 +7021,9 @@ Query Text: SELECT test_like_index_vu_prepare_t_csas_col2
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col2 LIKE 'cs1' 
 AND test_like_index_vu_prepare_t_csas_col3 LIKE 'cs1'
-Index Only Scan using test_like_index_vu_prepare_t_csce712f1af9d7f9e1f899be47087d5a6f on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+Index Only Scan using test_like_index_vu_prepare_t_csce712f1af9d7f9e1f899be47087d5a6f on test_like_index_vu_prepare_t_csas (actual rows=1.00 loops=1)
+  Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Filter: ((test_like_index_vu_prepare_t_csas_col2 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
   Heap Fetches: 1
   Index Searches: 1
 ~~END~~
@@ -6981,8 +7070,9 @@ text
 Query Text: SELECT test_like_index_vu_prepare_t_csas_col 
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1' COLLATE latin1_general_cs_as
-Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1.00 loops=1)
+  Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   Heap Fetches: 1
   Index Searches: 1
 ~~END~~
@@ -7026,8 +7116,10 @@ text
 Query Text: SELECT test_like_index_vu_prepare_t_csas_col_no_idx 
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1' COLLATE latin1_general_cs_as
-Index Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+Index Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1.00 loops=1)
+  Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -7071,8 +7163,9 @@ Query Text: SELECT test_like_index_vu_prepare_t_csas_col2
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col2 LIKE 'cs1' 
 AND test_like_index_vu_prepare_t_csas_col3 LIKE 'cs1' COLLATE latin1_general_cs_as
-Index Only Scan using test_like_index_vu_prepare_t_csce712f1af9d7f9e1f899be47087d5a6f on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+Index Only Scan using test_like_index_vu_prepare_t_csce712f1af9d7f9e1f899be47087d5a6f on test_like_index_vu_prepare_t_csas (actual rows=1.00 loops=1)
+  Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Filter: ((test_like_index_vu_prepare_t_csas_col2 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
   Heap Fetches: 1
   Index Searches: 1
 ~~END~~
@@ -7119,8 +7212,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_t_csas_col 
 FROM test_like_index_vu_prepare_t_csas 
 WHERE test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_ci_as LIKE 'cs1'
-Seq Scan on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-  Filter: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_ci_as)
+Seq Scan on test_like_index_vu_prepare_t_csas (actual rows=1.00 loops=1)
+  Filter: ((test_like_index_vu_prepare_t_csas_col ~~* 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -7160,7 +7253,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_csas_col 
 FROM new_test_like_index_vu_prepare_t_csas 
 WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE 'csas'
-Seq Scan on new_test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_csas (actual rows=1.00 loops=1)
   Filter: ((new_test_like_index_vu_prepare_t_csas_col ~~ 'csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_csas_col = 'csas'::text COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -7180,7 +7273,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_csas_col 
 FROM new_test_like_index_vu_prepare_t_csas 
 WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE 'csas '
-Seq Scan on new_test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_csas (actual rows=1.00 loops=1)
   Filter: ((new_test_like_index_vu_prepare_t_csas_col ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_csas_col = 'csas '::text COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -7200,7 +7293,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_csas_col 
 FROM new_test_like_index_vu_prepare_t_csas 
 WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE ' csas'
-Seq Scan on new_test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_csas (actual rows=1.00 loops=1)
   Filter: ((new_test_like_index_vu_prepare_t_csas_col ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_csas_col = ' csas'::text COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -7429,6 +7522,8 @@ FROM test_like_index_vu_prepare_t_cias
 WHERE test_like_index_vu_prepare_t_cias_col LIKE 'ci1'
 Index Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE bbf_unicode_cp1_ci_as)
+  Filter: ((test_like_index_vu_prepare_t_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -7569,6 +7664,8 @@ FROM test_like_index_vu_prepare_t_cias
 WHERE test_like_index_vu_prepare_t_cias_col LIKE 'ci1' COLLATE latin1_general_ci_as
 Index Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias (actual rows=1.00 loops=1)
   Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE bbf_unicode_cp1_ci_as)
+  Filter: ((test_like_index_vu_prepare_t_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -7661,8 +7758,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_t_cias_col 
 FROM test_like_index_vu_prepare_t_cias 
 WHERE test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_cs_as LIKE 'ci1'
-Seq Scan on test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
-  Filter: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
+Seq Scan on test_like_index_vu_prepare_t_cias (actual rows=1.00 loops=1)
+  Filter: (((test_like_index_vu_prepare_t_cias_col)::text ~~ 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -7702,7 +7799,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_cias_col 
 FROM new_test_like_index_vu_prepare_t_cias 
 WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE 'cias'
-Seq Scan on new_test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_cias (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_t_cias_col)::text ~~* 'cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_cias_col = 'cias'::text COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -7722,7 +7819,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_cias_col 
 FROM new_test_like_index_vu_prepare_t_cias 
 WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE 'cias '
-Seq Scan on new_test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_cias (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_t_cias_col)::text ~~* 'cias '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_cias_col = 'cias '::text COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -7742,7 +7839,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_cias_col 
 FROM new_test_like_index_vu_prepare_t_cias 
 WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE ' cias'
-Seq Scan on new_test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_cias (actual rows=1.00 loops=1)
   Filter: (((new_test_like_index_vu_prepare_t_cias_col)::text ~~* ' cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_cias_col = ' cias'::text COLLATE bbf_unicode_cp1_ci_as))
   Rows Removed by Filter: 2
 ~~END~~
@@ -7925,6 +8022,8 @@ FROM test_like_index_vu_prepare_t_csai
 WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_t_csai_idx on test_like_index_vu_prepare_t_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_csai_col) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -7970,6 +8069,8 @@ FROM test_like_index_vu_prepare_t_csai
 WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_t_csai_idx on test_like_index_vu_prepare_t_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_csai_col) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -8018,6 +8119,8 @@ WHERE test_like_index_vu_prepare_t_csai_col2 LIKE 'csai1'
 AND test_like_index_vu_prepare_t_csai_col3 LIKE 'csai1'
 Index Scan using test_like_index_vu_prepare_t_csai_idx_composite on test_like_index_vu_prepare_t_csai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col2) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal(test_like_index_vu_prepare_t_csai_col3) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+  Filter: (((remove_accents_internal(test_like_index_vu_prepare_t_csai_col2))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col3))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -8063,6 +8166,8 @@ FROM test_like_index_vu_prepare_t_csai
 WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai1' COLLATE latin1_general_cs_ai
 Index Scan using test_like_index_vu_prepare_t_csai_idx on test_like_index_vu_prepare_t_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_csai_col) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -8108,6 +8213,8 @@ FROM test_like_index_vu_prepare_t_csai
 WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai1' COLLATE latin1_general_cs_ai
 Index Scan using test_like_index_vu_prepare_t_csai_idx on test_like_index_vu_prepare_t_csai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_csai_col) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+  Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -8156,6 +8263,8 @@ WHERE test_like_index_vu_prepare_t_csai_col2 LIKE 'csai1'
 AND test_like_index_vu_prepare_t_csai_col3 LIKE 'csai1' COLLATE latin1_general_cs_ai
 Index Scan using test_like_index_vu_prepare_t_csai_idx_composite on test_like_index_vu_prepare_t_csai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col2) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal(test_like_index_vu_prepare_t_csai_col3) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+  Filter: (((remove_accents_internal(test_like_index_vu_prepare_t_csai_col2))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col3))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -8199,8 +8308,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_t_csai_col 
 FROM test_like_index_vu_prepare_t_csai 
 WHERE test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_ci_ai LIKE 'csai1'
-Seq Scan on test_like_index_vu_prepare_t_csai (actual rows=1 loops=1)
-  Filter: (remove_accents_internal((test_like_index_vu_prepare_t_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+Seq Scan on test_like_index_vu_prepare_t_csai (actual rows=1.00 loops=1)
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_csai_col)::text))::text ~~* 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -8241,7 +8350,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_csai_col 
 FROM new_test_like_index_vu_prepare_t_csai 
 WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE 'csai'
-Seq Scan on new_test_like_index_vu_prepare_t_csai (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_csai (actual rows=2.00 loops=1)
   Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col) = 'csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -8261,7 +8370,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_csai_col 
 FROM new_test_like_index_vu_prepare_t_csai 
 WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE 'csai '
-Seq Scan on new_test_like_index_vu_prepare_t_csai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_csai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col) = 'csai '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -8281,7 +8390,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_csai_col 
 FROM new_test_like_index_vu_prepare_t_csai 
 WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE ' csai'
-Seq Scan on new_test_like_index_vu_prepare_t_csai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_csai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col))::text ~~ ' csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col) = ' csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -8468,6 +8577,8 @@ FROM test_like_index_vu_prepare_t_ciai
 WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_t_ciai_idx on test_like_index_vu_prepare_t_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -8513,6 +8624,8 @@ FROM test_like_index_vu_prepare_t_ciai
 WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_t_ciai_idx on test_like_index_vu_prepare_t_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -8561,6 +8674,8 @@ WHERE test_like_index_vu_prepare_t_ciai_col2 LIKE 'ciai1'
 AND test_like_index_vu_prepare_t_ciai_col3 LIKE 'ciai1'
 Index Scan using test_like_index_vu_prepare_t_ciai_idx_composite on test_like_index_vu_prepare_t_ciai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col2) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col3) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  Filter: (((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col2))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col3))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -8606,6 +8721,8 @@ FROM test_like_index_vu_prepare_t_ciai
 WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_t_ciai_idx on test_like_index_vu_prepare_t_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -8651,6 +8768,8 @@ FROM test_like_index_vu_prepare_t_ciai
 WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_t_ciai_idx on test_like_index_vu_prepare_t_ciai (actual rows=1.00 loops=1)
   Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+  Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
+  Index Searches: 1
 ~~END~~
 
 
@@ -8699,6 +8818,8 @@ WHERE test_like_index_vu_prepare_t_ciai_col2 LIKE 'ciai1'
 AND test_like_index_vu_prepare_t_ciai_col3 LIKE 'ciai1' COLLATE latin1_general_ci_ai
 Index Scan using test_like_index_vu_prepare_t_ciai_idx_composite on test_like_index_vu_prepare_t_ciai (actual rows=1.00 loops=1)
   Index Cond: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col2) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col3) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  Filter: (((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col2))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col3))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
+  Index Searches: 1
 ~~END~~
 
 
@@ -8742,8 +8863,8 @@ text
 Query Text: SELECT test_like_index_vu_prepare_t_ciai_col 
 FROM test_like_index_vu_prepare_t_ciai 
 WHERE test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai1'
-Seq Scan on test_like_index_vu_prepare_t_ciai (actual rows=1 loops=1)
-  Filter: (remove_accents_internal((test_like_index_vu_prepare_t_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+Seq Scan on test_like_index_vu_prepare_t_ciai (actual rows=1.00 loops=1)
+  Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_ciai_col)::text))::text ~~ 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
   Rows Removed by Filter: 999
 ~~END~~
 
@@ -8784,7 +8905,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_ciai_col 
 FROM new_test_like_index_vu_prepare_t_ciai 
 WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai'
-Seq Scan on new_test_like_index_vu_prepare_t_ciai (actual rows=2 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_ciai (actual rows=2.00 loops=1)
   Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col) = 'ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 1
 ~~END~~
@@ -8804,7 +8925,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_ciai_col 
 FROM new_test_like_index_vu_prepare_t_ciai 
 WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai '
-Seq Scan on new_test_like_index_vu_prepare_t_ciai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_ciai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col) = 'ciai '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 2
 ~~END~~
@@ -8824,7 +8945,7 @@ text
 Query Text: SELECT new_test_like_index_vu_prepare_t_ciai_col 
 FROM new_test_like_index_vu_prepare_t_ciai 
 WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai'
-Seq Scan on new_test_like_index_vu_prepare_t_ciai (actual rows=1 loops=1)
+Seq Scan on new_test_like_index_vu_prepare_t_ciai (actual rows=1.00 loops=1)
   Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col))::text ~~* ' ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col) = ' ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
   Rows Removed by Filter: 2
 ~~END~~

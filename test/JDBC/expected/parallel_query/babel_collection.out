@@ -195,7 +195,7 @@ Gather  (cost=4.17..11.29 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.486 ms
+Babelfish T-SQL Batch Parsing Time: 2.903 ms
 ~~END~~
 
 
@@ -216,7 +216,7 @@ Gather  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.208 ms
+Babelfish T-SQL Batch Parsing Time: 0.222 ms
 ~~END~~
 
 
@@ -237,7 +237,7 @@ Gather  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.200 ms
+Babelfish T-SQL Batch Parsing Time: 0.196 ms
 ~~END~~
 
 
@@ -255,7 +255,7 @@ Gather  (cost=11.40..24.02 rows=5 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.081 ms
+Babelfish T-SQL Batch Parsing Time: 0.079 ms
 ~~END~~
 
 
@@ -273,7 +273,7 @@ Gather  (cost=11.41..24.03 rows=26 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.082 ms
 ~~END~~
 
 
@@ -295,7 +295,7 @@ Gather  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.128 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äb%';
@@ -315,7 +315,7 @@ Gather  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.082 ms
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äḃĆ_';
@@ -335,7 +335,7 @@ Gather  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.081 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
@@ -354,7 +354,7 @@ Gather  (cost=11.56..24.71 rows=647 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.902 ms
+Babelfish T-SQL Batch Parsing Time: 0.711 ms
 ~~END~~
 
 
@@ -372,7 +372,7 @@ Gather  (cost=11.56..25.23 rows=648 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
@@ -390,7 +390,7 @@ Gather  (cost=11.55..25.22 rows=592 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 
@@ -413,7 +413,7 @@ Gather  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.209 ms
+Babelfish T-SQL Batch Parsing Time: 0.203 ms
 ~~END~~
 
 
@@ -569,7 +569,7 @@ Gather  (cost=0.00..17.68 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.102 ms
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -604,16 +604,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * from testing5 where c1 like ''
-Gather  (cost=10000000000.00..10000000030.40 rows=1 width=32)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Seq Scan on testing5  (cost=10000000000.00..10000000030.40 rows=1 width=32)
+Gather  (cost=0.00..16.58 rows=1 width=32)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on testing5  (cost=0.00..16.58 rows=1 width=32)
+        Disabled: true
         Filter: (((c1)::text ~~ ''::text COLLATE bbf_unicode_cp1_cs_as) AND (c1 = ''::"varchar" COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.108 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -640,7 +640,7 @@ Gather  (cost=0.00..0.00 rows=0 width=0)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.103 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -670,7 +670,7 @@ Gather  (cost=0.00..17.68 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.113 ms
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -699,7 +699,7 @@ Gather  (cost=0.00..17.68 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
