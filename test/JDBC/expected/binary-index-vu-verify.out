@@ -1,3 +1,4 @@
+-- tsql
 create index ix_tab_binary_b on tab_varbinary (a)
 GO
 
@@ -9,6 +10,13 @@ off
 ~~END~~
 
 
+-- psql
+ANALYZE master_dbo.tab_varbinary;
+GO
+ANALYZE master_dbo.tab_binary;
+GO
+
+-- tsql
 exec babel_3939_vu_prepare_p1;
 GO
 ~~START~~
@@ -89,7 +97,7 @@ Query Text: EXEC babel_3939_vu_prepare_p1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.051 ms
 ~~END~~
 
 
@@ -120,7 +128,7 @@ Query Text: EXEC babel_3939_vu_prepare_p2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 14.261 ms
+Babelfish T-SQL Batch Parsing Time: 4.706 ms
 ~~END~~
 
 
