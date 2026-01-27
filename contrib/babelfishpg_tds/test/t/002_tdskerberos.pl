@@ -191,6 +191,7 @@ krb_server_keyfile = '$keytab'
 log_connections = on
 shared_preload_libraries = 'babelfishpg_tds'
 lc_messages = 'C'
+log_min_messages = debug2
 });
 $node->start;
 
