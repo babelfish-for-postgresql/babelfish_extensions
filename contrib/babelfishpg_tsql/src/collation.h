@@ -123,6 +123,9 @@ extern Node *pltsql_planner_node_transformer(PlannerInfo *root,
 											 Node *expr,
 											 int kind);
 extern Node *pltsql_predicate_transformer(Node *expr, bool is_constraint);
+extern Node *pltsql_simplify_const_expression(PlannerInfo *root,
+											 Node *expr,
+											 int kind);
 
 void set_db_collation_internal(const char *db_name);
 bool supported_collation_for_db_and_like(int32_t code_page);

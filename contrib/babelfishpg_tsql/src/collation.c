@@ -12,6 +12,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/namespace.h"
 #include "tsearch/ts_locale.h"
+#include "optimizer/optimizer.h"
 #include "parser/parser.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_type.h"
@@ -1259,34 +1260,39 @@ pltsql_planner_node_transformer(PlannerInfo *root,
 								int kind)
 {
 	/*
-	 * check if this is called to reset saved expression kind. Quickly return if so.
-	 */
-	if (kind == -1)
-	{
-		Assert(expr == NULL);
-		saved_expr_kind = -1;
-		return NULL;
-	}
-
-	/*
 	 * Fall out quickly if expression is empty.
 	 */
 	if (expr == NULL)
 		return NULL;
 
-	if (EXPRKIND_TARGET == kind)
-	{
-		saved_expr_kind = EXPRKIND_TARGET;
-		/*
-		 * If expr is NOT a Boolean expression then recurse through its
-		 * expresion tree
-		 */
-		return expression_tree_mutator(
-									   expr,
-									   pgtsql_expression_tree_mutator,
-									   NULL);
-	}
 	return pltsql_predicate_transformer(expr, false);
+}
+
+Node *
+pltsql_simplify_const_expression(PlannerInfo *root,
+								Node *expr,
+								int kind)
+{
+	int		prev_expr_kind = saved_expr_kind;
+
+	if (expr == NULL)
+		return NULL;
+
+	PG_TRY();
+	{
+		if (kind == EXPRKIND_TARGET) {
+			saved_expr_kind = EXPRKIND_TARGET;
+			expr = expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
+		}
+		expr = eval_const_expressions(root, expr);
+	}
+	PG_FINALLY();
+	{
+		saved_expr_kind = prev_expr_kind;
+	}
+	PG_END_TRY();
+
+	return expr;
 }
 
 static void

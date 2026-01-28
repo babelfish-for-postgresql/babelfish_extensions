@@ -319,6 +319,7 @@ static tsql_has_linked_srv_permissions_hook_type prev_tsql_has_linked_srv_permis
 plansource_complete_hook_type prev_plansource_complete_hook = NULL;
 plansource_revalidate_hook_type prev_plansource_revalidate_hook = NULL;
 planner_node_transformer_hook_type prev_planner_node_transformer_hook = NULL;
+planner_simplify_const_expression_type prev_planner_simplify_const_expression_hook = NULL;
 pltsql_nextval_hook_type prev_pltsql_nextval_hook = NULL;
 pltsql_resetcache_hook_type prev_pltsql_resetcache_hook = NULL;
 pltsql_setval_hook_type prev_pltsql_setval_hook = NULL;
@@ -6106,6 +6107,9 @@ _PG_init(void)
 
 	prev_planner_node_transformer_hook = planner_node_transformer_hook;
 	planner_node_transformer_hook = pltsql_planner_node_transformer;
+
+	prev_planner_simplify_const_expression_hook = planner_simplify_const_expression_hook;
+	planner_simplify_const_expression_hook = pltsql_simplify_const_expression;
 
 	prev_pltsql_nextval_hook = pltsql_nextval_hook;
 	pltsql_nextval_hook = pltsql_nextval_identity;
