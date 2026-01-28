@@ -1259,40 +1259,21 @@ pltsql_planner_node_transformer(PlannerInfo *root,
 								Node *expr,
 								int kind)
 {
-	/*
-	 * Fall out quickly if expression is empty.
-	 */
 	if (expr == NULL)
 		return NULL;
 
+	if (EXPRKIND_TARGET == kind)
+	{
+		/*
+		 * If expr is NOT a Boolean expression then recurse through its
+		 * expresion tree
+		 */
+		return expression_tree_mutator(
+									   expr,
+									   pgtsql_expression_tree_mutator,
+									   NULL);
+	}
 	return pltsql_predicate_transformer(expr, false);
-}
-
-Node *
-pltsql_simplify_const_expression(PlannerInfo *root,
-								Node *expr,
-								int kind)
-{
-	int		prev_expr_kind = saved_expr_kind;
-
-	if (expr == NULL)
-		return NULL;
-
-	PG_TRY();
-	{
-		if (kind == EXPRKIND_TARGET) {
-			saved_expr_kind = EXPRKIND_TARGET;
-			expr = expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
-		}
-		expr = eval_const_expressions(root, expr);
-	}
-	PG_FINALLY();
-	{
-		saved_expr_kind = prev_expr_kind;
-	}
-	PG_END_TRY();
-
-	return expr;
 }
 
 static void

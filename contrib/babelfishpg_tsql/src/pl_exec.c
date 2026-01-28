@@ -4596,7 +4596,7 @@ is_start_implicit_txn_utility_command(Node *parsetree)
 }
 
 static bool
-find_rte_walker(Node *node, void *context)
+is_query_using_regular_relation_walker(Node *node, void *context)
 {
     if (node == NULL)
         return false;
@@ -4609,9 +4609,15 @@ find_rte_walker(Node *node, void *context)
     }
     
     if (IsA(node, Query))
-        return query_tree_walker((Query *) node, find_rte_walker, context, QTW_EXAMINE_RTES_AFTER);
+        return query_tree_walker((Query *) node, is_query_using_regular_relation_walker, context, QTW_EXAMINE_RTES_AFTER);
     
-    return expression_tree_walker(node, find_rte_walker, context);
+    return expression_tree_walker(node, is_query_using_regular_relation_walker, context);
+}
+
+static bool
+is_query_using_regular_relation(Node *node)
+{
+	return is_query_using_regular_relation_walker(node, NULL);
 }
 
 static bool
@@ -4643,7 +4649,7 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
 		{
 			Query *q = (Query *) lfirst(lc);
 
-			if (find_rte_walker((Node *) q, NULL))
+			if (is_query_using_regular_relation((Node *) q))
 				return true;
 		}
 		return false;
@@ -4919,8 +4925,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				cmd = q->commandType;
 				break;
 			}
-			if (q->commandType == CMD_UPDATE || q->commandType == CMD_INSERT)
-				updateColumnUpdatedList(q);
+			updateColumnUpdatedList(q);
 		}
 
 		/*
@@ -5281,7 +5286,10 @@ updateColumnUpdatedList(Query *query)
 	UpdatedColumn *updateColumn;
 	int			length;
 	List	   *targetList;
-	
+
+	if (!(query->commandType == CMD_UPDATE || query->commandType == CMD_INSERT))
+		return;
+
 	targetList =
 		query->targetList;
 	if (query->rtable == NULL || targetList == NULL)
