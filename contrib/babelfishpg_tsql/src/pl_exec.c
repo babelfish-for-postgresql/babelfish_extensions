@@ -75,6 +75,15 @@ int			saved_expr_kind = -1;
 /* Global variable to record the retval for insert exec */
 Datum execute_call_insert_exec_retval = (Datum) 0;
 
+/* Global variables to track INSERT-EXEC query rewriting context */
+static bool in_insert_exec_query_rewrite = false;
+static char *insert_exec_target_table = NULL;
+static char *insert_exec_target_schema = NULL;
+static char *insert_exec_column_list = NULL;
+
+/* Global variable to track row count for INSERT-EXEC query rewriting */
+uint64 insert_exec_rewrite_row_count = 0;
+
 typedef struct
 {
 	int			nargs;			/* number of arguments */
@@ -2378,7 +2387,7 @@ exec_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 
 	/* Let the plugin know that we have finished executing this statement */
 	if (*pltsql_plugin_ptr && (*pltsql_plugin_ptr)->stmt_end)
-		((*pltsql_plugin_ptr)->stmt_end) (estate, stmt);
+    ((*pltsql_plugin_ptr)->stmt_end) (estate, stmt);
 
 	estate->err_stmt = save_estmt;
 
@@ -4820,6 +4829,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
 	StringInfoData query;
+	StringInfoData rewritten_query;
+	char *temp_rewritten_query;
+	uint64 insert_processed;
 	char	   *cur_dbname = get_cur_db_name();
 	bool		is_cross_db = stmt->is_cross_db && stmt->db_name && strcmp(cur_dbname, stmt->db_name) != 0;
 	bool		ro_func = (estate->func->fn_prokind == PROKIND_FUNCTION) &&
@@ -4841,8 +4853,144 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	PG_TRY();
 	{
-		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
-		if (stmt->need_to_push_result && estate->insert_exec)
+		/* 
+		 * INSERT EXEC Query Rewriting Approach:
+		 * Instead of using tuple store, rewrite SELECT/OUTPUT statements 
+		 * inside procedures to directly INSERT into target table
+		 */
+		if (stmt->insert_exec && stmt->insert_exec_target_table != NULL)  // Only store if not already stored
+    	{
+        	insert_exec_target_table = pstrdup(stmt->insert_exec_target_table);
+    		insert_exec_target_schema = stmt->insert_exec_target_schema ? 
+                               pstrdup(stmt->insert_exec_target_schema) : NULL;
+    		insert_exec_column_list = stmt->insert_exec_column_list;
+    	}
+
+		/* Set up INSERT EXEC query rewriting context using estate info */
+    	if (estate->insert_exec && 
+    		pltsql_enable_insert_exec_query_rewrite &&
+    		insert_exec_target_table != NULL)  // Use GLOBAL variable
+		{
+    		in_insert_exec_query_rewrite = true;
+    		// Globals are already set above
+    
+    		elog(NOTICE, "DEBUG: Context setup successful - using global table=%s", 
+         		insert_exec_target_table);
+		}
+
+		if (in_insert_exec_query_rewrite && 
+            	estate->func && 
+            	estate->func->fn_prokind == PROKIND_PROCEDURE &&
+            	stmt->sqlstmt && stmt->sqlstmt->query)
+		{
+			char *query = stmt->sqlstmt->query;
+				
+			/* Skip whitespace */
+			while (*query && isspace(*query))
+				query++;
+
+			elog(NOTICE, "DEBUG: Checking if SELECT - trimmed query: %s", query);
+
+			// here the query is insert into test_t1 exec proc_p1 : what you have to do is expan the procedure : 
+				
+			/* Check if this is a SELECT statement that should be rewritten */
+			if (strncasecmp(query, "select", 6) == 0)
+			{
+					
+				elog(LOG, "INSERT-EXEC: Rewriting SELECT query in procedure: %s", query);
+						
+				/* Build the CTE-based rewritten query */
+				initStringInfo(&rewritten_query);
+				
+				/* Build: WITH cte AS (original_query) INSERT INTO table SELECT * FROM cte */
+				if (insert_exec_target_schema && insert_exec_column_list)
+				{
+					appendStringInfo(&rewritten_query,
+						"WITH insert_exec_cte AS (%s) INSERT INTO %s.%s %s SELECT * FROM insert_exec_cte",
+						query,
+						insert_exec_target_schema,
+						insert_exec_target_table,
+						insert_exec_column_list);
+				}
+				else if (insert_exec_target_schema)
+				{
+					appendStringInfo(&rewritten_query,
+						"WITH insert_exec_cte AS (%s) INSERT INTO %s.%s SELECT * FROM insert_exec_cte",
+						query,
+						insert_exec_target_schema,
+						insert_exec_target_table);
+				}
+				else if (insert_exec_column_list)
+				{
+					appendStringInfo(&rewritten_query,
+						"WITH insert_exec_cte AS (%s) INSERT INTO %s %s SELECT * FROM insert_exec_cte",
+						query,
+						insert_exec_target_table,
+						insert_exec_column_list);
+				}
+				else
+				{
+					appendStringInfo(&rewritten_query,
+						"WITH insert_exec_cte AS (%s) INSERT INTO %s SELECT * FROM insert_exec_cte",
+						query,
+						insert_exec_target_table);
+				}
+			}
+					
+			elog(LOG, "INSERT-EXEC: Rewritten query: %s", rewritten_query.data);
+					
+			/* Replace the original query with the rewritten one */
+			// stmt->sqlstmt->query = pstrdup(rewritten_query.data);
+			temp_rewritten_query = pstrdup(rewritten_query.data);
+					
+			/* Clear the plan so it gets re-prepared with the new query */
+			if (expr->plan)
+			{
+				SPI_freeplan(expr->plan);
+				expr->plan = NULL;
+			}
+					
+			pfree(rewritten_query.data);
+
+			if (estate->insert_exec && temp_rewritten_query &&
+    			strncasecmp(temp_rewritten_query, "with insert_exec_cte", 20) == 0)
+			{
+    			elog(NOTICE, "INSERT-EXEC: Executing rewritten INSERT query directly to avoid cursor issue");
+    
+    			/* Execute the rewritten INSERT query directly using SPI_execute */
+    			rc = SPI_execute(temp_rewritten_query, estate->readonly_func, 0);
+    
+    			if (rc != SPI_OK_INSERT)
+    			{
+        			elog(ERROR, "INSERT-EXEC: Failed to execute rewritten INSERT query: %s",
+             		SPI_result_code_string(rc));
+    			}
+
+				/* Store the processed count for later use */
+				insert_processed = SPI_processed;
+				
+				/* Set the processed count */
+				estate->eval_processed = insert_processed;
+
+				elog(NOTICE, "INSERT-EXEC DEBUG: Stored row count in global: %lu", insert_exec_rewrite_row_count);
+
+				/* Store in global variable for outer INSERT-EXEC to pick up */
+				insert_exec_rewrite_row_count = insert_processed;
+
+				pfree(temp_rewritten_query);
+    
+    			/* Set the processed count and return success */
+    			exec_set_found(estate, (SPI_processed != 0));
+    			exec_set_rowcount(SPI_processed);
+
+    			exec_eval_cleanup(estate);
+    
+    			return PLTSQL_RC_OK;
+			}
+		}
+
+		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE - FALLBACK to tuple store */
+		else if (stmt->need_to_push_result && estate->insert_exec)
 		{
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
 
@@ -5032,9 +5180,26 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO))
 				restore_session_properties();
 		}
-		else
+		else{
 			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 												 estate->readonly_func, tcount);
+		}
+
+		/* After procedure execution, check if we need to propagate row count from query rewriting */
+		if (stmt->insert_exec && insert_exec_rewrite_row_count > 0)
+		{
+
+			/* Set the row count on the outer estate so TDS layer can report it */
+			estate->eval_processed = insert_exec_rewrite_row_count;
+			exec_set_found(estate, true);
+			exec_set_rowcount(insert_exec_rewrite_row_count);
+			
+			/* Use the row count from the rewritten INSERT query */
+			elog(NOTICE, "INSERT-EXEC: Propagating row count from procedure: %lu", insert_exec_rewrite_row_count);
+			
+			/* Reset the global variable */
+			insert_exec_rewrite_row_count = 0;
+		}
 
 		/*
 		 * Check for error, and set FOUND if appropriate (for historical
@@ -5140,8 +5305,12 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			/* already set in execute_plan_and_push_result */
 		{
 			/* All variants should save result info for GET DIAGNOSTICS */
-			estate->eval_processed = SPI_processed;
-			exec_set_rowcount(SPI_processed);
+			/* For INSERT-EXEC with query rewriting, we already set the correct row count earlier */
+			if (!stmt->insert_exec || estate->eval_processed == 0)
+			{
+				estate->eval_processed = SPI_processed;
+				exec_set_rowcount(SPI_processed);
+			}
 		}
 
 		/* Process INTO if present */
@@ -7550,6 +7719,12 @@ exec_run_select(PLtsql_execstate *estate,
 	ParamListInfo paramLI;
 	int			rc;
 
+	/* DEBUG: Add logging to understand what's happening */
+	elog(LOG, "INSERT-EXEC DEBUG: exec_run_select called - estate->insert_exec=%s, portalP=%s, expr->query=%s",
+		 estate->insert_exec ? "true" : "false",
+		 portalP ? "NOT NULL" : "NULL",
+		 expr->query ? expr->query : "NULL");
+
 	/*
 	 * On the first call for this expression generate the plan.
 	 *
@@ -7585,13 +7760,17 @@ exec_run_select(PLtsql_execstate *estate,
 	 */
 	if (portalP != NULL)
 	{
+		/* DEBUG: Add this logging */
+    elog(NOTICE, "INSERT-EXEC DEBUG: exec_run_select about to open cursor");
+    elog(NOTICE, "INSERT-EXEC DEBUG: estate->insert_exec=%s", estate->insert_exec ? "true" : "false");
+    elog(NOTICE, "INSERT-EXEC DEBUG: expr->query=%s", expr->query ? expr->query : "NULL");
 		*portalP = SPI_cursor_open_with_paramlist(NULL, expr->plan,
 												  paramLI,
 												  estate->readonly_func);
 		if (*portalP == NULL)
 			elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
 				 expr->query, SPI_result_code_string(SPI_result));
-	
+
 		exec_eval_cleanup(estate);
 		return SPI_OK_CURSOR;
 	}
@@ -10519,6 +10698,15 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 
 		/* Drop the tables linked to table variables */
 		pltsql_clean_table_variables(estate, func);
+
+		/* Clean up INSERT EXEC query rewriting context */
+		if (in_insert_exec_query_rewrite)
+		{
+			in_insert_exec_query_rewrite = false;
+			insert_exec_target_table = NULL;
+			insert_exec_target_schema = NULL;
+			insert_exec_column_list = NULL;
+		}
 	}
 	PG_FINALLY();
 	{

@@ -1180,6 +1180,9 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_set_tran_isolation; /* SET TRANSACTION ISOLATION? */
 	char	   *original_query; /* Only for batch level statement. */
 	bool        is_schemabinding; /* Is schema binding? */
+	char       *insert_exec_target_table;    /* Target table for INSERT-EXEC */
+    char       *insert_exec_target_schema;   /* Target schema for INSERT-EXEC */
+    char       *insert_exec_column_list;     /* Column list for INSERT-EXEC */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1542,6 +1545,9 @@ typedef struct PLtsql_execstate
 	 * EXECUTE, and can behave differently.
 	 */
 	bool		insert_exec;
+	char	   *insert_exec_target_table;		/* target table name */
+	char	   *insert_exec_target_schema;		/* target schema name */
+	bool		insert_exec_has_output_params;	/* does EXEC have OUTPUT params? */
 
 	List	   *explain_infos;
 	instr_time	planning_start;
@@ -1983,6 +1989,10 @@ extern bool pltsql_disable_batch_auto_commit;
 extern bool pltsql_disable_internal_savepoint;
 extern bool pltsql_disable_txn_in_triggers;
 extern bool pltsql_recursive_triggers;
+extern bool pltsql_enable_insert_exec_query_rewrite;
+
+/* Global variable to track row count for INSERT-EXEC query rewriting */
+extern uint64 insert_exec_rewrite_row_count;
 
 extern int	text_size;
 extern int	pltsql_rowcount;

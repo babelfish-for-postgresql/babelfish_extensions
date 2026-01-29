@@ -72,6 +72,7 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 bool		pltsql_enable_alter_owner_from_pg = false;
+bool 		pltsql_enable_insert_exec_query_rewrite = true;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -1139,6 +1140,18 @@ define_custom_variables(void)
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
+	
+	/*
+	* Enable query rewriting for INSERT-EXEC instead of tuple store handling
+	*/
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_insert_exec_query_rewrite",
+							gettext_noop("Enable query rewriting for INSERT-EXEC"),
+							NULL,
+							&pltsql_enable_insert_exec_query_rewrite,
+							true,
+							PGC_USERSET,
+							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							NULL, NULL, NULL);
 
 	/* Dump and Restore */
 	DefineCustomBoolVariable("babelfishpg_tsql.dump_restore",

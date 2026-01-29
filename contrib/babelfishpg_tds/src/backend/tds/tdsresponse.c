@@ -2720,9 +2720,9 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 								 * or if the INSERT itself is an INSERT-EXEC
 								 * and it just returned error.
 								 */
-								row_count_valid = !estate->insert_exec &&
-									!(markErrorFlag &&
-									  ((PLtsql_stmt_execsql *) stmt)->insert_exec);
+								row_count_valid = (!estate->insert_exec || estate->eval_processed > 0) &&
+								!(markErrorFlag &&
+								((PLtsql_stmt_execsql *) stmt)->insert_exec);
 							}
 							else if (plansource->commandTag == CMDTAG_UPDATE)
 							{
@@ -2744,8 +2744,8 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 								command_type = TDS_CMD_SELECT;
 								row_count_valid = !estate->insert_exec;
 							}
-						}
-					}
+											}
+				}
 				}
 
 				/*
@@ -2757,7 +2757,7 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 					estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER &&
 					strcmp(estate->func->fn_signature, "inline_code_block") != 0)
 					skip_done = true;
-			}
+			
 			break;
 		case PLTSQL_STMT_EXEC:
 		case PLTSQL_STMT_EXEC_BATCH:
@@ -2770,6 +2770,7 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 		default:
 			break;
 	}
+}
 
 	/*
 	 * XXX: For SP_CUSTOMTYPE, if we're done executing the top level stored

@@ -1,0 +1,51 @@
+-- Test 1: Single column table with SELECT 1
+DROP TABLE IF EXISTS t1
+GO
+
+DROP PROCEDURE IF EXISTS p1
+GO
+
+CREATE TABLE t1 (a INT)
+GO
+
+CREATE PROC p1 AS SELECT 1
+GO
+
+INSERT INTO t1 EXEC p1
+GO
+
+SELECT * FROM t1
+GO
+
+-- Cleanup
+DROP TABLE t1
+GO
+
+DROP PROCEDURE p1
+GO
+
+-- Test 2: Two column table with SELECT 1 (inserts into first column only)
+DROP TABLE IF EXISTS t2
+GO
+
+DROP PROCEDURE IF EXISTS p2
+GO
+
+CREATE TABLE t2 (a INT, b INT)
+GO
+
+CREATE PROC p2 AS SELECT 1
+GO
+
+INSERT INTO t2 (b) EXEC p2
+GO
+
+SELECT * FROM t2
+GO
+
+-- Cleanup
+DROP TABLE t2
+GO
+
+DROP PROCEDURE p2
+GO

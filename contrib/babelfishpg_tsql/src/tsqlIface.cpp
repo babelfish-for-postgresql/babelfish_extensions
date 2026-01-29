@@ -1972,6 +1972,42 @@ public:
 				if (ctx_name->schema)
 					schema_name = stripQuoteFromId(ctx_name->schema);
 			}
+
+			auto insert_ddl_object = ctx->insert_statement()->ddl_object();
+			if (insert_ddl_object)
+			{
+				std::string target_table = extractTableName(insert_ddl_object, nullptr);
+				std::string target_schema = extractSchemaName(insert_ddl_object, nullptr);
+				if (!target_table.empty())
+					stmt->insert_exec_target_table = pstrdup(downcase_truncate_identifier(target_table.c_str(), target_table.length(), true));
+				
+				/* Set schema - use extracted schema or NULL if not specified */
+				if (!target_schema.empty())
+					stmt->insert_exec_target_schema = pstrdup(downcase_truncate_identifier(target_schema.c_str(), target_schema.length(), true));
+				else
+					stmt->insert_exec_target_schema = NULL;
+			}
+			
+			/* Extract column list if present */
+			auto insert_column_name_list = ctx->insert_statement()->insert_column_name_list();
+			if (insert_column_name_list)
+			{
+				std::string column_list = "(";
+				bool first = true;
+				for (auto column : insert_column_name_list->col)
+				{
+					if (!first)
+						column_list += ", ";
+					column_list += ::getFullText(column);
+					first = false;
+				}
+				column_list += ")";
+				stmt->insert_exec_column_list = pstrdup(column_list.c_str());
+			}
+			else
+			{
+				stmt->insert_exec_column_list = NULL;
+			}
 		}
 
 		// record whether stmt is cross-db
