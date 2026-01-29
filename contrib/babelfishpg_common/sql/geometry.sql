@@ -428,6 +428,27 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--REDUCE 
+CREATE OR REPLACE FUNCTION sys.Reduce(tolerance float8, geom sys.GEOMETRY)
+    RETURNS sys.GEOMETRY
+    AS $$
+    BEGIN
+		IF geom IS NULL THEN
+                RETURN NULL;
+        ELSEIF tolerance IS NULL THEN
+                RAISE EXCEPTION 'tolerance is not allowed to be null';
+        ELSEIF tolerance < 0 THEN 
+                 RAISE EXCEPTION 'tolerance must be greater than or equal to zero';
+        ELSEIF sys.STIsEmpty(geom) = 1 THEN
+                RETURN geom;
+        ELSEIF sys.STIsValid(geom) = 0 THEN
+                RAISE EXCEPTION 'The geometry instance is not valid';
+        ELSE 
+            RETURN sys.STReduce_helper(geom, tolerance);
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE  PARALLEL SAFE;
+	
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
@@ -621,6 +642,11 @@ CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOMETRY, geom2 sys.GEO
 CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOMETRY)
         RETURNS integer
         AS '$libdir/postgis-3','LWGEOM_dimension'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STReduce_helper(geom sys.GEOMETRY, tolerance float8)
+        RETURNS sys.GEOMETRY
+        AS '$libdir/postgis-3', 'LWGEOM_simplify2d'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)

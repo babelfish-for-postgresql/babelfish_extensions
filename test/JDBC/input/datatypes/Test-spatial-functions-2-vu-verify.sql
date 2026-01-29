@@ -952,3 +952,414 @@ go
 
 Select CAST(CAST('POINT EMPTY' as char(100)) AS geography).STAsText();
 go
+
+-- Reduce 
+DECLARE @line1 geometry = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0, 3 1, 4 0)', 0);
+DECLARE @reduced1 geometry = @line1.Reduce(0.5);
+SELECT @reduced1.STIsValid() AS IsValid, @reduced1.STIsEmpty() AS IsEmpty;
+go
+
+DECLARE @poly1 geometry = geometry::STGeomFromText('POLYGON((0 0, 0 1, 0.5 1.1, 1 1, 1 0, 0 0))', 0);
+DECLARE @reduced2 geometry = @poly1.Reduce(0.2);
+SELECT @reduced2.STIsValid() AS IsValid, @reduced2.STIsEmpty() AS IsEmpty;
+GO
+
+DECLARE @point1 geometry = geometry::STGeomFromText('POINT(5 5)', 0);
+DECLARE @reduced3 geometry = @point1.Reduce(1.0);
+SELECT @point1.STEquals(@reduced3) AS ShouldBeEqual;
+go
+
+DECLARE @line2 geometry = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0)', 0);
+DECLARE @reduced4 geometry = @line2.Reduce(0);
+SELECT @line2.STEquals(@reduced4) AS ShouldBeEqual;
+go
+
+DECLARE @line4 geometry = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0, 3 1)', 0);
+DECLARE @reduced6 geometry = @line4.Reduce(10);
+SELECT @reduced6.STIsValid() AS IsValid, @reduced6.STIsEmpty() AS IsEmpty;
+go
+
+DECLARE @gline1 geography = geography::STGeomFromText('LINESTRING(-122 47, -121 47.1, -120 47, -119 47.1)', 4326);
+DECLARE @greduced1 geography = @gline1.Reduce(1000);
+SELECT @greduced1.STIsValid() AS IsValid, @greduced1.STIsEmpty() AS IsEmpty;
+go
+
+DECLARE @gpoly1 geography = geography::STGeomFromText('POLYGON((-122 47, -122 48, -121 48, -121 47, -122 47))', 4326);
+DECLARE @greduced2 geography = @gpoly1.Reduce(5000);
+SELECT @greduced2.STIsValid() AS IsValid, @greduced2.STIsEmpty() AS IsEmpty;
+go
+
+DECLARE @gpoint1 geography = geography::STGeomFromText('POINT(-121 47)', 4326);
+DECLARE @greduced4 geography = @gpoint1.Reduce(1000);
+SELECT @gpoint1.STEquals(@greduced4) AS ShouldBeEqual;
+go
+
+DECLARE @gline2 geography = geography::STGeomFromText('LINESTRING(-122 47, -121 47.1, -120 47)', 4326);
+DECLARE @greduced5 geography = @gline2.Reduce(0);
+SELECT @greduced5.STIsValid() AS IsValid, @greduced5.STIsEmpty() AS IsEmpty;
+
+DECLARE @gline3 geography = geography::STGeomFromText('LINESTRING(-122 47, -121 47.1, -120 47)', 4326);
+DECLARE @greduced6 geography = @gline3.Reduce(100000);
+SELECT @greduced6.STIsValid() AS IsValid, @greduced6.STIsEmpty() AS IsEmpty;
+go
+
+DECLARE @nullgeom geometry = NULL;
+DECLARE @result1 geometry = @nullgeom.Reduce(1.0);
+SELECT @result1 AS ShouldBeNull;
+go
+
+DECLARE @nullgeog geography = NULL;
+DECLARE @result2 geography = @nullgeog.Reduce(1000);
+SELECT @result2 AS ShouldBeNull;
+go
+
+DECLARE @empty1 geometry = geometry::STGeomFromText('LINESTRING EMPTY', 0);
+DECLARE @result5 geometry = @empty1.Reduce(1.0);
+SELECT @result5.STIsEmpty() AS ShouldBeEmpty;
+go
+
+DECLARE @g1 geometry = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0, 3 1)', 0).Reduce(0.5);
+SELECT @g1.STIsValid(), @g1.STIsEmpty();
+go
+
+DECLARE @g2 geometry = geometry::STGeomFromText('LINESTRING(0 0, 0.1 0.1, 0.2 0, 0.3 0.1, 1 0)', 0).Reduce(0.05);
+SELECT @g2.STIsValid(), @g2.STIsEmpty();
+go
+
+DECLARE @g3 geometry = geometry::STGeomFromText('POLYGON((0 0, 0 1, 0.5 1.1, 1 1, 1 0, 0 0))', 0).Reduce(0.2);
+SELECT @g3.STIsValid(), @g3.STIsEmpty();
+go
+
+DECLARE @geo geography = geography::STGeomFromText('POLYGON((-122 47, -122 48, -121 48, -121 47, -122 47))', 4326);
+SELECT @geo.STIsValid() AS BeforeValid;
+go
+
+DECLARE @geo geography = geography::STGeomFromText('POLYGON((-122 47, -122 48, -121 48, -121 47, -122 47))', 4326);
+DECLARE @reduced geography = @geo.Reduce(5000);
+SELECT @reduced.STIsValid() AS AfterValid, @reduced.STIsEmpty() AS AfterEmpty;
+go
+
+DECLARE @line geography = geography::STGeomFromText('LINESTRING(-122 47, -120 47)', 4326);
+DECLARE @reduced geography = @line.Reduce(1000);
+SELECT @reduced.STIsValid(), @reduced.STIsEmpty();
+go
+
+DECLARE @geo3 geography = geography::STGeomFromText('LINESTRING(-122 47, -120 47)', 4326).Reduce(1000);
+DECLARE @endpoint geography = geography::STGeomFromText('POINT(-122 47)', 4326);
+SELECT @geo3.STIntersects(@endpoint);
+go
+
+DECLARE @geo4 geography = geography::STGeomFromText('LINESTRING(-122 47, -121 47.1, -120 47)', 4326).Reduce(10);
+SELECT @geo4.STIsValid(), @geo4.STIsEmpty();
+go
+
+DECLARE @geo5 geography = geography::STGeomFromText('LINESTRING(-122 47, -121 47.1, -120 47)', 4326).Reduce(0);
+SELECT @geo5.STIsValid(), @geo5.STIsEmpty();
+go
+
+DECLARE @poly geography = geography::STGeomFromText('POLYGON((-122 47, -122 47.5, -122 48, -121.5 48, -121 48, -121 47.5, -121 47, -121.5 47, -122 47))', 4326).Reduce(5000);
+SELECT @poly.STIsValid(), @poly.STIsEmpty();
+go
+
+DECLARE @zigzag geometry = geometry::STGeomFromText('LINESTRING(0 0, 0.1 0.1, 0.2 0, 0.3 0.1, 0.4 0, 0.5 0.1, 0.6 0, 0.7 0.1, 0.8 0, 0.9 0.1, 1 0)', 0);
+DECLARE @reducedzigzag geometry = @zigzag.Reduce(0.05);
+SELECT @reducedzigzag.STIsValid() AS IsValid, @reducedzigzag.STIsEmpty() AS IsEmpty;
+go
+
+DECLARE @complexpoly geometry = geometry::STGeomFromText('POLYGON((0 0, 0 0.1, 0 0.2, 0 0.3, 0 0.4, 0 0.5, 0 1, 1 1, 1 0.9, 1 0.8, 1 0.7, 1 0.6, 1 0.5, 1 0, 0 0))', 0);
+DECLARE @reducedcomplexpoly geometry = @complexpoly.Reduce(0.15);
+SELECT @reducedcomplexpoly.STIsValid() AS IsValid, @reducedcomplexpoly.STIsEmpty() AS IsEmpty;
+go
+
+DECLARE @gcomplex geography = geography::STGeomFromText('LINESTRING(-122 47, -121.9 47.01, -121.8 47.02, -121.7 47.01, -121.6 47.02, -121.5 47.01, -121.4 47.02, -121.3 47.01, -121.2 47.02, -121.1 47.01, -121 47)', 4326);
+DECLARE @greducedcomplex geography = @gcomplex.Reduce(1000);
+SELECT @greducedcomplex.STIsValid() AS IsValid, @greducedcomplex.STIsEmpty() AS IsEmpty;
+go
+
+DECLARE @testline geometry = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0, 3 1, 4 0)', 0);
+DECLARE @r1 geometry = @testline.Reduce(0.1);
+DECLARE @r2 geometry = @testline.Reduce(0.5);
+DECLARE @r3 geometry = @testline.Reduce(1.0);
+DECLARE @r4 geometry = @testline.Reduce(2.0);
+SELECT 
+    @r1.STIsValid() AS Valid_0_1,
+    @r2.STIsValid() AS Valid_0_5,
+    @r3.STIsValid() AS Valid_1_0,
+    @r4.STIsValid() AS Valid_2_0;
+go
+
+DECLARE @gtestline geography = geography::STGeomFromText('LINESTRING(-122 47, -121 47.1, -120 47)', 4326);
+DECLARE @gr1 geography = @gtestline.Reduce(100);
+DECLARE @gr2 geography = @gtestline.Reduce(1000);
+DECLARE @gr3 geography = @gtestline.Reduce(10000);
+DECLARE @gr4 geography = @gtestline.Reduce(100000);
+SELECT 
+    @gr1.STIsValid() AS Valid_100m,
+    @gr2.STIsValid() AS Valid_1km,
+    @gr3.STIsValid() AS Valid_10km,
+    @gr4.STIsValid() AS Valid_100km;
+go
+
+SELECT ID, LineColumn.Reduce(Tolerance).STIsValid() AS IsValid
+FROM TestGeospatialMethods_REDUCE_GEOM1temp;
+GO
+
+SELECT ID 
+FROM TestGeospatialMethods_REDUCE_GEOM1temp 
+WHERE LineColumn.Reduce(Tolerance).STIsValid() = 1;
+GO
+
+SELECT ID, LineColumn.Reduce(ToleranceMeters).STIsValid() AS IsValid
+FROM TestGeospatialMethods_REDUCE_GEOG1temp;
+GO
+
+SELECT ID 
+FROM TestGeospatialMethods_REDUCE_GEOG1temp 
+WHERE LineColumn.Reduce(ToleranceMeters).STIsValid() = 1;
+GO
+
+SELECT ID, LineColumn.Reduce(0.5).STIsValid() AS IsValid
+FROM TestGeospatialMethods_REDUCE_GEOMtemp;
+GO
+
+SELECT ID, LineColumn.Reduce(Tolerance).STIsValid() AS IsValid
+FROM TestGeospatialMethods_REDUCE_GEOMtemp;
+GO
+
+SELECT ID 
+FROM TestGeospatialMethods_REDUCE_GEOMtemp 
+WHERE LineColumn.Reduce(0.5).STIsValid() = 1;
+GO
+
+SELECT ID 
+FROM TestGeospatialMethods_REDUCE_GEOMtemp 
+WHERE LineColumn.Reduce(Tolerance).STIsValid() = 1;
+GO
+
+SELECT ID,
+    CASE 
+        WHEN LineColumn.Reduce(Tolerance).STIsValid() = 1 THEN 'Valid'
+        ELSE 'Invalid'
+    END AS Status
+FROM TestGeospatialMethods_REDUCE_GEOMtemp;
+GO
+
+WITH ReducedGeoms AS (
+    SELECT ID, LineColumn.Reduce(Tolerance) AS ReducedGeom
+    FROM TestGeospatialMethods_REDUCE_GEOMtemp
+)
+SELECT ID, ReducedGeom.STIsValid() AS IsValid
+FROM ReducedGeoms;
+GO
+
+SELECT ID, 
+    (SELECT LineColumn.Reduce(0.5).STIsValid()) AS IsValid
+FROM TestGeospatialMethods_REDUCE_GEOMtemp;
+GO
+
+SELECT ID, LineColumn.Reduce(Tolerance).STIsValid() AS IsValid
+FROM TestGeospatialMethods_REDUCE_GEOMtemp
+ORDER BY ID;
+GO
+
+SELECT Category, COUNT(*) AS Count
+FROM TestGeospatialMethods_REDUCE_GEOMtemp
+WHERE LineColumn.Reduce(0.5).STIsValid() = 1
+GROUP BY Category;
+GO
+
+SELECT * FROM TestGeospatialMethods_REDUCE_ValidFromGeomTemp;
+GO
+
+SELECT ID, LineColumn.Reduce(1000).STIsValid() AS IsValid
+FROM TestGeospatialMethods_REDUCE_GEOGtemp;
+GO
+
+SELECT ID, LineColumn.Reduce(ToleranceMeters).STIsValid() AS IsValid
+FROM TestGeospatialMethods_REDUCE_GEOGtemp;
+GO
+
+SELECT ID 
+FROM TestGeospatialMethods_REDUCE_GEOGtemp 
+WHERE LineColumn.Reduce(1000).STIsValid() = 1;
+GO
+
+SELECT ID 
+FROM TestGeospatialMethods_REDUCE_GEOGtemp 
+WHERE LineColumn.Reduce(ToleranceMeters).STIsValid() = 1;
+GO
+
+DECLARE @toleranceMeters FLOAT = 5000;
+SELECT ID 
+FROM TestGeospatialMethods_REDUCE_GEOGtemp 
+WHERE LineColumn.Reduce(@toleranceMeters).STIsValid() = 1;
+GO
+
+SELECT ID,
+    CASE 
+        WHEN LineColumn.Reduce(ToleranceMeters).STIsValid() = 1 THEN 'Valid'
+        ELSE 'Invalid'
+    END AS Status
+FROM TestGeospatialMethods_REDUCE_GEOGtemp;
+GO
+
+WITH ReducedGeogs AS (
+    SELECT ID, LineColumn.Reduce(ToleranceMeters) AS ReducedGeog
+    FROM TestGeospatialMethods_REDUCE_GEOGtemp
+)
+SELECT ID, ReducedGeog.STIsValid() AS IsValid
+FROM ReducedGeogs;
+GO
+
+SELECT ID, 
+    (SELECT LineColumn.Reduce(1000).STIsValid()) AS IsValid
+FROM TestGeospatialMethods_REDUCE_GEOGtemp;
+GO
+
+SELECT ID, LineColumn.Reduce(ToleranceMeters).STIsValid() AS IsValid
+FROM TestGeospatialMethods_REDUCE_GEOGtemp
+ORDER BY ID;
+GO
+
+SELECT Category, COUNT(*) AS Count
+FROM TestGeospatialMethods_REDUCE_GEOGtemp
+WHERE LineColumn.Reduce(ToleranceMeters).STIsValid() = 1
+GROUP BY Category;
+GO
+
+SELECT * FROM TestGeospatialMethods_REDUCE_ValidFromGeogTemp;
+GO
+
+DECLARE @complex geometry = geometry::STGeomFromText('LINESTRING(0 0, 0.01 0.01, 0.02 0, 0.03 0.01, 1 0)', 0);
+DECLARE @lowTol geometry = @complex.Reduce(0.001);
+DECLARE @highTol geometry = @complex.Reduce(0.1);
+SELECT 
+    @complex.STEquals(@lowTol) AS LowTolerancePreserved,
+    @complex.STEquals(@highTol) AS HighTolerancePreserved,
+    @lowTol.STEquals(@highTol) AS BothEqual;
+go
+
+DECLARE @poly geometry = geometry::STGeomFromText('POLYGON((0 0, 0 0.01, 0 0.02, 0 1, 1 1, 1 0, 0 0))', 0);
+DECLARE @reduced geometry = @poly.Reduce(0.05);
+DECLARE @origArea FLOAT = @poly.STArea();
+DECLARE @redArea FLOAT = @reduced.STArea();
+SELECT 
+    @origArea AS OriginalArea,
+    @redArea AS ReducedArea,
+    CASE WHEN @redArea <= @origArea THEN 1 ELSE 0 END AS AreaNotIncreased;
+go
+
+DECLARE @line geometry = geometry::STGeomFromText('LINESTRING(0 0, 1 1)', 0);
+SELECT @line.Reduce(-1).STIsValid() AS NegativeToleranceValid;
+go
+
+DECLARE @nullGeom geometry = NULL;
+SELECT @nullGeom.Reduce(0.5) AS NullGeometryResult;
+go
+
+DECLARE @invalid geometry = geometry::STGeomFromText('POLYGON((0 0, 1 1, 0 0))', 0);
+SELECT @invalid.Reduce(0.5).STIsValid() AS InvalidGeometryReduced;
+go
+
+DECLARE @polyhole geometry = geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0), (2 2, 2 8, 8 8, 8 2, 2 2))', 0);
+SELECT @polyhole.Reduce(1.0).STIsValid() AS PolygonWithHoleValid;
+go
+
+DECLARE @original geometry = geometry::STGeomFromText('LINESTRING(0 0, 0.1 0, 0.2 0, 0.3 0, 1 0)', 0);
+DECLARE @reduced geometry = @original.Reduce(0.15);
+SELECT 
+    @original.STAsText() AS OriginalWKT,
+    @reduced.STAsText() AS ReducedWKT,
+    LEN(@original.STAsText()) AS OriginalLength,
+    LEN(@reduced.STAsText()) AS ReducedLength,
+    CASE WHEN LEN(@reduced.STAsText()) <= LEN(@original.STAsText()) THEN 1 ELSE 0 END AS LikelyReduced;
+go
+
+DECLARE @precise geometry = geometry::STGeomFromText('LINESTRING(0 0, 0.001 0.001, 0.002 0, 1 0)', 0);
+DECLARE @reducedPrecise geometry = @precise.Reduce(0.0005);
+SELECT 
+    @precise.STDistance(@reducedPrecise) AS DistanceDifference,
+    CASE WHEN @precise.STDistance(@reducedPrecise) <= 0.0005 THEN 1 ELSE 0 END AS WithinTolerance;
+go
+
+DECLARE @large geometry = geometry::STGeomFromText('LINESTRING(0 0, 100 100, 200 0, 300 100, 400 0)', 0);
+SELECT @large.Reduce(50).STIsValid() AS LargeGeometryValid;
+go
+
+DECLARE @unicode geometry = geometry::STGeomFromText(N'LINESTRING(0 0, 1 1, 2 0)', 0);
+DECLARE @unicodereduced geometry = @unicode.Reduce(0.5);
+SELECT @unicodereduced.STIsValid() AS IsValid;
+GO
+
+DECLARE @geom1 geometry = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0)', 4326);
+DECLARE @reduced1 geometry = @geom1.Reduce(0.5);
+SELECT @reduced1.STSrid AS SRID, @reduced1.STIsValid() AS IsValid;
+GO
+
+DECLARE @geom2 geometry = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0)', 3857);
+DECLARE @reduced2 geometry = @geom2.Reduce(0.5);
+SELECT @reduced2.STSrid AS SRID, @reduced2.STIsValid() AS IsValid;
+GO
+
+DECLARE @line3d geometry = geometry::STGeomFromText('LINESTRING(0 0 0, 1 1 1, 2 0 2, 3 1 3)', 0);
+DECLARE @reduced3d geometry = @line3d.Reduce(0.5);
+SELECT @reduced3d.STIsValid() AS IsValid, @reduced3d.STAsText() AS WKT;
+GO
+
+DECLARE @lineM geometry = geometry::STGeomFromText('LINESTRING(0 0 NULL 0, 1 1 NULL 1, 2 0 NULL 2)', 0);
+DECLARE @reducedM geometry = @lineM.Reduce(0.5);
+SELECT @reducedM.STIsValid() AS IsValid;
+GO
+
+DECLARE @largeLine geometry = geometry::STGeomFromText('LINESTRING(1000000 1000000, 1000001 1000001, 1000002 1000000)', 0);
+SELECT @largeLine.Reduce(0.5).STIsValid() AS IsValid;
+GO
+
+DECLARE @smallLine geometry = geometry::STGeomFromText('LINESTRING(0.000001 0.000001, 0.000002 0.000002, 0.000003 0.000001)', 0);
+SELECT @smallLine.Reduce(0.0000001).STIsValid() AS IsValid;
+GO
+
+DECLARE @gc geometry = geometry::STGeomFromText('GEOMETRYCOLLECTION(POINT(0 0), LINESTRING(1 1, 2 2))', 0);
+SELECT @gc.Reduce(0.5).STIsValid() AS IsValid;
+GO
+
+DECLARE @ccw geometry = geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))', 0);
+SELECT @ccw.Reduce(0.1).STIsValid() AS IsValid;
+GO
+
+DECLARE @cw geometry = geometry::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 0);
+SELECT @cw.Reduce(0.1).STIsValid() AS IsValid;
+GO
+
+DECLARE @cw geometry = geometry::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 0);
+SELECT @cw.Reduce(0.1).STIsValid() AS IsValid;
+GO
+
+DECLARE @line1 geometry = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0)', 0);
+SELECT @line1.Reduce(1).STIsValid() AS IntTolerance;
+GO
+
+DECLARE @geog4269 geography = geography::STGeomFromText('LINESTRING(-122 47, -121 47.1, -120 47)', 4269);
+SELECT @geog4269.Reduce(1000).STIsValid() AS IsValid;
+GO
+
+DECLARE @crossDateline geography = geography::STGeomFromText('LINESTRING(179 0, -179 0)', 4326);
+SELECT @crossDateline.Reduce(1000).STIsValid() AS IsValid;
+GO
+
+DECLARE @polar geography = geography::STGeomFromText('LINESTRING(0 89, 90 89, 180 89)', 4326);
+SELECT @polar.Reduce(1000).STIsValid() AS IsValid;
+GO
+
+DECLARE @equator geography = geography::STGeomFromText('LINESTRING(0 0, 0.002 0.005, 0 0.01, 0.002 0.015, 0 0.02)', 4326);
+DECLARE @lat60 geography = geography::STGeomFromText('LINESTRING(0 60, 0.002 60.005, 0 60.01, 0.002 60.015, 0 60.02)', 4326);
+
+SELECT '100m tolerance' as Test,'Equator' as Location, LEN(@equator.Reduce(100).STAsBinary()) as Reduced_Len;
+SELECT '100m tolerance' as Test,'60° Lat' as Location, LEN(@lat60.Reduce(100).STAsBinary()) as Reduced_Len;
+SELECT '150m tolerance' as Test, 'Equator' as Location, LEN(@equator.Reduce(150).STAsBinary()) as Reduced_Len;
+SELECT '150m tolerance' as Test, '60° Lat' as Location, LEN(@lat60.Reduce(150).STAsBinary()) as Reduced_Len;
+SELECT '200m tolerance' as Test, 'Equator' as Location, LEN(@equator.Reduce(200).STAsBinary()) as Reduced_Len;
+SELECT '200m tolerance' as Test, '60° Lat' as Location, LEN(@lat60.Reduce(200).STAsBinary()) as Reduced_Len;
+SELECT '250m tolerance' as Test, 'Equator' as Location, LEN(@equator.Reduce(250).STAsBinary()) as Reduced_Len;
+SELECT '250m tolerance' as Test, '60° Lat' as Location, LEN(@lat60.Reduce(250).STAsBinary()) as Reduced_Len;
+go

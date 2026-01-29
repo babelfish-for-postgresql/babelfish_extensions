@@ -90,3 +90,31 @@ CREATE VIEW TestGeospatialMethods_closed_TextFromGeogTemp AS SELECT  location.ST
 CREATE VIEW TestGeospatialMethods_empty_ValFromGeomTemp AS SELECT location.STIsEmpty() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
 
 CREATE VIEW TestGeospatialMethods_empty_TextFromGeomTemp AS SELECT  location.STIsEmpty() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+
+CREATE TABLE TestGeospatialMethods_REDUCE_GEOM1temp ( ID INT PRIMARY KEY, LineColumn geometry, Tolerance FLOAT );
+
+INSERT INTO TestGeospatialMethods_REDUCE_GEOM1temp (ID, LineColumn, Tolerance) VALUES  (1, geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0)', 0), 0.5), (2, geometry::STGeomFromText('LINESTRING(0 0, 0.5 0.5, 1 0)', 0), 0.3), (3, geometry::STGeomFromText('LINESTRING(0 0, 0.1 0.1, 0.2 0, 1 0)', 0), 0.05), (4, geometry::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 0), 0.1);
+~~ROW COUNT: 4~~
+
+
+CREATE TABLE TestGeospatialMethods_REDUCE_GEOG1temp ( ID INT PRIMARY KEY, LineColumn geography, ToleranceMeters FLOAT );
+
+INSERT INTO TestGeospatialMethods_REDUCE_GEOG1temp (ID, LineColumn, ToleranceMeters) VALUES  (1, geography::STGeomFromText('LINESTRING(-122 47, -121 47.1, -120 47)', 4326), 1000), (2, geography::STGeomFromText('LINESTRING(-122 47, -121.5 47.05, -121 47)', 4326), 5000), (3, geography::STGeomFromText('POLYGON((-122 47, -122 48, -121 48, -121 47, -122 47))', 4326), 10000);
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE TestGeospatialMethods_REDUCE_GEOMtemp ( ID INT PRIMARY KEY, LineColumn geometry, Tolerance FLOAT, Category VARCHAR(10) );
+
+INSERT INTO TestGeospatialMethods_REDUCE_GEOMtemp (ID, LineColumn, Tolerance, Category) VALUES (1, geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0, 3 1)', 0), 0.5, 'A'), (2, geometry::STGeomFromText('LINESTRING(0 0, 0.1 0.1, 0.2 0, 1 0)', 0), 0.05, 'B'), (3, geometry::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 0), 0.1, 'A'), (4, geometry::STGeomFromText('LINESTRING(0 0, 2 2, 4 0)', 0), 0.5, 'A');
+~~ROW COUNT: 4~~
+
+
+CREATE VIEW TestGeospatialMethods_REDUCE_ValidFromGeomTemp AS SELECT ID, LineColumn.Reduce(Tolerance).STIsValid() AS IsValid FROM TestGeospatialMethods_REDUCE_GEOMtemp;
+
+CREATE TABLE TestGeospatialMethods_REDUCE_GEOGtemp ( ID INT PRIMARY KEY, LineColumn geography, ToleranceMeters FLOAT, Category VARCHAR(10) );
+
+INSERT INTO TestGeospatialMethods_REDUCE_GEOGtemp (ID, LineColumn, ToleranceMeters, Category) VALUES (1, geography::STGeomFromText('LINESTRING(-122 47, -121 47.1, -120 47)', 4326), 1000, 'C'), (2, geography::STGeomFromText('LINESTRING(-122 47, -121.5 47.05, -121 47)', 4326), 5000, 'C'), (3, geography::STGeomFromText('POLYGON((-122 47, -122 48, -121 48, -121 47, -122 47))', 4326), 10000, 'D');
+~~ROW COUNT: 3~~
+
+
+CREATE VIEW TestGeospatialMethods_REDUCE_ValidFromGeogTemp AS SELECT ID, LineColumn.Reduce(ToleranceMeters).STIsValid() AS IsValid FROM TestGeospatialMethods_REDUCE_GEOGtemp;

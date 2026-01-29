@@ -3950,6 +3950,7 @@ geospatial_func_no_arg
 geospatial_func_arg
     : STDISTANCE
     | STEQUALS
+    | REDUCE
     | STCONTAINS
     | STDISJOINT 
     | STINTERSECTS

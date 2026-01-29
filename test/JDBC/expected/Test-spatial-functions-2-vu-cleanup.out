@@ -42,4 +42,18 @@ DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOM_dttemp
 
 DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOG_dttemp 
 
+DROP VIEW TestGeospatialMethods_REDUCE_ValidFromGeomTemp
+
+
+DROP VIEW TestGeospatialMethods_REDUCE_ValidFromGeogTemp
+
+
+DROP TABLE TestGeospatialMethods_REDUCE_GEOM1temp
+
+DROP TABLE TestGeospatialMethods_REDUCE_GEOG1temp
+
+DROP TABLE TestGeospatialMethods_REDUCE_GEOMtemp
+
+DROP TABLE TestGeospatialMethods_REDUCE_GEOGtemp
+
 DROP DATABASE TestGeospatialMethods_DB 
