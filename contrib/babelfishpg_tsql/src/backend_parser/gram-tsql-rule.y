@@ -4933,7 +4933,8 @@ col_name_keyword:
 			;
 
 unreserved_keyword:
-			  TSQL_ALLOW_SNAPSHOT_ISOLATION
+			  TSQL_ABSENT
+			| TSQL_ALLOW_SNAPSHOT_ISOLATION
 			| TSQL_AUTO
 			| TSQL_BASE64
 			| TSQL_CALLER
@@ -4951,6 +4952,7 @@ unreserved_keyword:
 			| TSQL_DEFAULT_SCHEMA
 			| TSQL_DW
 			| TSQL_DY
+			| TSQL_ELEMENTS
 			| TSQL_EXPLICIT
 			| TSQL_HASHED
 			| TSQL_HH
@@ -5018,6 +5020,7 @@ unreserved_keyword:
 			| TSQL_WK
 			| TSQL_WW
 			| TSQL_XLOCK
+			| TSQL_XSINIL
 			| TSQL_Y
 			| TSQL_YY
 			| TSQL_YYYY
