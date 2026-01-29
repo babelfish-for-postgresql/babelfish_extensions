@@ -198,7 +198,7 @@ static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
 
-extern Node *pltsql_simplify_const_expression(PlannerInfo *root, Node *expr, int kind);
+static Node *pltsql_simplify_const_expression(PlannerInfo *root, Node *expr, int kind);
 
 typedef struct ColumnAclInfo
 {
@@ -322,7 +322,6 @@ static tsql_has_linked_srv_permissions_hook_type prev_tsql_has_linked_srv_permis
 plansource_complete_hook_type prev_plansource_complete_hook = NULL;
 plansource_revalidate_hook_type prev_plansource_revalidate_hook = NULL;
 planner_node_transformer_hook_type prev_planner_node_transformer_hook = NULL;
-eval_const_expressions_in_preprocess_hook_type prev_eval_const_expressions_in_preprocess_hook = NULL;
 pltsql_nextval_hook_type prev_pltsql_nextval_hook = NULL;
 pltsql_resetcache_hook_type prev_pltsql_resetcache_hook = NULL;
 pltsql_setval_hook_type prev_pltsql_setval_hook = NULL;
@@ -6103,7 +6102,6 @@ _PG_init(void)
 	prev_planner_node_transformer_hook = planner_node_transformer_hook;
 	planner_node_transformer_hook = pltsql_planner_node_transformer;
 
-	prev_eval_const_expressions_in_preprocess_hook = eval_const_expressions_in_preprocess_hook;
 	eval_const_expressions_in_preprocess_hook = pltsql_simplify_const_expression;
 
 	prev_pltsql_nextval_hook = pltsql_nextval_hook;
@@ -8197,15 +8195,13 @@ pltsql_simplify_const_expression(PlannerInfo *root,
 {
 	int		prev_expr_kind = saved_expr_kind;
 
-	if (prev_eval_const_expressions_in_preprocess_hook)
-		prev_eval_const_expressions_in_preprocess_hook(root, expr, kind);
-
 	if (expr == NULL)
 		return NULL;
 
 	PG_TRY();
 	{
-		if (kind == EXPRKIND_TARGET) {
+		if (kind == EXPRKIND_TARGET)
+		{
 			saved_expr_kind = EXPRKIND_TARGET;
 		}
 		expr = eval_const_expressions(root, expr);
