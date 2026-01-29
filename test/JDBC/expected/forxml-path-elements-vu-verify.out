@@ -1,0 +1,439 @@
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee');
+GO
+~~START~~
+ntext
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS;
+GO
+~~START~~
+ntext
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 1 FOR XML PATH('Employee'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH('Employee'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 4 FOR XML PATH('Employee'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH('Employee'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Employee><ID>2</ID><Name>Jane</Name></Employee>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 4 FOR XML PATH('Employee'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Employee><ID>4</ID></Employee>
+~~END~~
+
+
+SELECT NULL AS Col1, NULL AS Col2 FOR XML PATH('row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Col1 xsi:nil="true"/><Col2 xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT NULL AS Col1, NULL AS Col2 FOR XML PATH('row'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<row/>
+~~END~~
+
+
+SELECT NULL AS Col1, NULL AS Col2 FOR XML PATH('row'), ELEMENTS;
+GO
+~~START~~
+ntext
+<row/>
+~~END~~
+
+
+SELECT 1 AS ID, NULL AS Name, 'Active' AS Status FOR XML PATH('Record'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Record xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name xsi:nil="true"/><Status>Active</Status></Record>
+~~END~~
+
+
+SELECT 1 AS ID, NULL AS Name, 'Active' AS Status FOR XML PATH('Record'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Record><ID>1</ID><Status>Active</Status></Record>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ROOT('Data'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ROOT('Data'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Data><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee></Data>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ROOT('Data'), ELEMENTS;
+GO
+~~START~~
+ntext
+<Data><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee></Data>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS XSINIL, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS ABSENT, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee></Data>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH(''), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH(''), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<ID>2</ID><Name>Jane</Name>
+~~END~~
+
+
+SELECT IntCol, VarcharCol, BitCol, DecimalCol, DateCol FROM forxml_path_elements_t2 FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol>100</IntCol><VarcharCol>Text1</VarcharCol><BitCol>1</BitCol><DecimalCol>99.99</DecimalCol><DateCol>2024-01-01</DateCol></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol xsi:nil="true"/><VarcharCol xsi:nil="true"/><BitCol xsi:nil="true"/><DecimalCol xsi:nil="true"/><DateCol xsi:nil="true"/></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol>200</IntCol><VarcharCol xsi:nil="true"/><BitCol>0</BitCol><DecimalCol xsi:nil="true"/><DateCol>2024-06-15</DateCol></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol xsi:nil="true"/><VarcharCol>Text2</VarcharCol><BitCol xsi:nil="true"/><DecimalCol>50.00</DecimalCol><DateCol xsi:nil="true"/></Row>
+~~END~~
+
+
+SELECT IntCol, VarcharCol, BitCol, DecimalCol, DateCol FROM forxml_path_elements_t2 FOR XML PATH('Row'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Row><IntCol>100</IntCol><VarcharCol>Text1</VarcharCol><BitCol>1</BitCol><DecimalCol>99.99</DecimalCol><DateCol>2024-01-01</DateCol></Row><Row/><Row><IntCol>200</IntCol><BitCol>0</BitCol><DateCol>2024-06-15</DateCol></Row><Row><VarcharCol>Text2</VarcharCol><DecimalCol>50.00</DecimalCol></Row>
+~~END~~
+
+
+SELECT IntCol, VarcharCol, BitCol, DecimalCol, DateCol FROM forxml_path_elements_t2 WHERE IntCol = 100 FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol>100</IntCol><VarcharCol>Text1</VarcharCol><BitCol>1</BitCol><DecimalCol>99.99</DecimalCol><DateCol>2024-01-01</DateCol></Row>
+~~END~~
+
+
+SELECT IntCol, VarcharCol, BitCol, DecimalCol, DateCol FROM forxml_path_elements_t2 WHERE IntCol IS NULL FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol xsi:nil="true"/><VarcharCol xsi:nil="true"/><BitCol xsi:nil="true"/><DecimalCol xsi:nil="true"/><DateCol xsi:nil="true"/></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol xsi:nil="true"/><VarcharCol>Text2</VarcharCol><BitCol xsi:nil="true"/><DecimalCol>50.00</DecimalCol><DateCol xsi:nil="true"/></Row>
+~~END~~
+
+
+SELECT Col1, Col2, Col3 FROM forxml_path_elements_t3 FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Col1 xsi:nil="true"/><Col2 xsi:nil="true"/><Col3 xsi:nil="true"/></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Col1>1</Col1><Col2 xsi:nil="true"/><Col3 xsi:nil="true"/></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Col1 xsi:nil="true"/><Col2>Val</Col2><Col3 xsi:nil="true"/></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Col1 xsi:nil="true"/><Col2 xsi:nil="true"/><Col3>Val</Col3></Row>
+~~END~~
+
+
+SELECT Col1, Col2, Col3 FROM forxml_path_elements_t3 FOR XML PATH('Row'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Row/><Row><Col1>1</Col1></Row><Row><Col2>Val</Col2></Row><Row><Col3>Val</Col3></Row>
+~~END~~
+
+
+SELECT Col1, Col2, Col3 FROM forxml_path_elements_t3 WHERE Col1 IS NULL AND Col2 IS NULL AND Col3 IS NULL FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Col1 xsi:nil="true"/><Col2 xsi:nil="true"/><Col3 xsi:nil="true"/></Row>
+~~END~~
+
+
+SELECT Col1, Col2, Col3 FROM forxml_path_elements_t3 WHERE Col1 IS NULL AND Col2 IS NULL AND Col3 IS NULL FOR XML PATH('Row'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Row/>
+~~END~~
+
+
+SELECT ID, Name AS [@Name], Value FROM forxml_path_elements_t4 FOR XML PATH('Item'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attribute-centric column '@Name' must not come after a non-attribute-centric sibling in XML hierarchy in FOR XML PATH.)~~
+
+
+SELECT ID, Name AS [@Name], Value FROM forxml_path_elements_t4 FOR XML PATH('Item'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attribute-centric column '@Name' must not come after a non-attribute-centric sibling in XML hierarchy in FOR XML PATH.)~~
+
+
+SELECT SingleCol FROM forxml_path_elements_t5 FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SingleCol>Value</SingleCol></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SingleCol xsi:nil="true"/></Row>
+~~END~~
+
+
+SELECT SingleCol FROM forxml_path_elements_t5 FOR XML PATH('Row'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Row><SingleCol>Value</SingleCol></Row><Row/>
+~~END~~
+
+
+SELECT SingleCol FROM forxml_path_elements_t5 WHERE SingleCol IS NULL FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SingleCol xsi:nil="true"/></Row>
+~~END~~
+
+
+SELECT SingleCol FROM forxml_path_elements_t5 WHERE SingleCol IS NULL FOR XML PATH('Row'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Row/>
+~~END~~
+
+
+SELECT Col1, Col2, Col3, Col4, Col5, Col6, Col7, Col8 FROM forxml_path_elements_t6 FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Col1>1</Col1><Col2>A</Col2><Col3>B</Col3><Col4>2</Col4><Col5>C</Col5><Col6>1</Col6><Col7>D</Col7><Col8>3</Col8></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Col1 xsi:nil="true"/><Col2 xsi:nil="true"/><Col3>B</Col3><Col4 xsi:nil="true"/><Col5>C</Col5><Col6 xsi:nil="true"/><Col7 xsi:nil="true"/><Col8 xsi:nil="true"/></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Col1>1</Col1><Col2 xsi:nil="true"/><Col3 xsi:nil="true"/><Col4>2</Col4><Col5 xsi:nil="true"/><Col6 xsi:nil="true"/><Col7>D</Col7><Col8 xsi:nil="true"/></Row>
+~~END~~
+
+
+SELECT Col1, Col2, Col3, Col4, Col5, Col6, Col7, Col8 FROM forxml_path_elements_t6 FOR XML PATH('Row'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Row><Col1>1</Col1><Col2>A</Col2><Col3>B</Col3><Col4>2</Col4><Col5>C</Col5><Col6>1</Col6><Col7>D</Col7><Col8>3</Col8></Row><Row><Col3>B</Col3><Col5>C</Col5></Row><Row><Col1>1</Col1><Col4>2</Col4><Col7>D</Col7></Row>
+~~END~~
+
+
+SELECT ID, TextCol FROM forxml_path_elements_t7 FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><TextCol>Normal Text</TextCol></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><TextCol xsi:nil="true"/></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><TextCol>Text with special chars</TextCol></Row>
+~~END~~
+
+
+SELECT ID, TextCol FROM forxml_path_elements_t7 FOR XML PATH('Row'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<Row><ID>1</ID><TextCol>Normal Text</TextCol></Row><Row><ID>2</ID></Row><Row><ID>3</ID><TextCol>Text with special chars</TextCol></Row>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 999 FOR XML PATH('Employee'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 999 FOR XML PATH('Employee'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), TYPE, ELEMENTS XSINIL;
+GO
+~~START~~
+xml
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), TYPE, ELEMENTS ABSENT;
+GO
+~~START~~
+xml
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee>
+~~END~~
+
+
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ROOT('Data'), TYPE, ELEMENTS XSINIL;
+GO
+~~START~~
+xml
+<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+~~END~~
+
+
+SELECT * FROM forxml_path_elements_v1;
+GO
+~~START~~
+ntext
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee>
+~~END~~
+
+
+SELECT * FROM forxml_path_elements_v2;
+GO
+~~START~~
+ntext
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee>
+~~END~~
+
+
+SELECT * FROM forxml_path_elements_v3;
+GO
+~~START~~
+ntext
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee>
+~~END~~
+
+
+SELECT * FROM forxml_path_elements_v4;
+GO
+~~START~~
+ntext
+<Employees><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Employees>
+~~END~~
+
+
+SELECT * FROM forxml_path_elements_v5;
+GO
+~~START~~
+ntext
+<Record><ID>1</ID><Name>John</Name><Department>Sales</Department></Record><Record><ID>2</ID><Name>Jane</Name></Record><Record><ID>3</ID><Name>Bob</Name><Department>IT</Department></Record><Record><ID>4</ID></Record><Record><ID>5</ID><Department>HR</Department></Record>
+~~END~~
+
+
+SELECT * FROM forxml_path_elements_v6;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol>100</IntCol><VarcharCol>Text1</VarcharCol><BitCol>1</BitCol><DecimalCol>99.99</DecimalCol><DateCol>2024-01-01</DateCol></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol xsi:nil="true"/><VarcharCol xsi:nil="true"/><BitCol xsi:nil="true"/><DecimalCol xsi:nil="true"/><DateCol xsi:nil="true"/></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol>200</IntCol><VarcharCol xsi:nil="true"/><BitCol>0</BitCol><DecimalCol xsi:nil="true"/><DateCol>2024-06-15</DateCol></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol xsi:nil="true"/><VarcharCol>Text2</VarcharCol><BitCol xsi:nil="true"/><DecimalCol>50.00</DecimalCol><DateCol xsi:nil="true"/></Row>
+~~END~~
+
+
+EXEC forxml_path_elements_p1;
+GO
+~~START~~
+ntext
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee>
+~~END~~
+
+
+EXEC forxml_path_elements_p2;
+GO
+~~START~~
+ntext
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee>
+~~END~~
+
+
+EXEC forxml_path_elements_p3;
+GO
+~~START~~
+ntext
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee>
+~~END~~
+
+
+EXEC forxml_path_elements_p4;
+GO
+~~START~~
+ntext
+<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+~~END~~
+
+
+EXEC forxml_path_elements_p5;
+GO
+~~START~~
+ntext
+<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+~~END~~
+
