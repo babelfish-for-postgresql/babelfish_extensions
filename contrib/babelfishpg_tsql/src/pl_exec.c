@@ -4830,8 +4830,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
 	StringInfoData query;
 	StringInfoData rewritten_query;
-	char *temp_rewritten_query;
-	uint64 insert_processed;
+	char *temp_rewritten_query = NULL;
+	uint64 insert_processed = 0;
 	char	   *cur_dbname = get_cur_db_name();
 	bool		is_cross_db = stmt->is_cross_db && stmt->db_name && strcmp(cur_dbname, stmt->db_name) != 0;
 	bool		ro_func = (estate->func->fn_prokind == PROKIND_FUNCTION) &&
@@ -4863,7 +4863,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
         	insert_exec_target_table = pstrdup(stmt->insert_exec_target_table);
     		insert_exec_target_schema = stmt->insert_exec_target_schema ? 
                                pstrdup(stmt->insert_exec_target_schema) : NULL;
-    		insert_exec_column_list = stmt->insert_exec_column_list;
+    		insert_exec_column_list = stmt->insert_exec_column_list ? 
+                          pstrdup(stmt->insert_exec_column_list) : NULL;
     	}
 
 		/* Set up INSERT EXEC query rewriting context using estate info */
@@ -4935,7 +4936,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 						query,
 						insert_exec_target_table);
 				}
-			}
 					
 			elog(LOG, "INSERT-EXEC: Rewritten query: %s", rewritten_query.data);
 					
@@ -4951,6 +4951,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			}
 					
 			pfree(rewritten_query.data);
+		}
 
 			if (estate->insert_exec && temp_rewritten_query &&
     			strncasecmp(temp_rewritten_query, "with insert_exec_cte", 20) == 0)
@@ -4977,7 +4978,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				/* Store in global variable for outer INSERT-EXEC to pick up */
 				insert_exec_rewrite_row_count = insert_processed;
 
-				pfree(temp_rewritten_query);
+				if (temp_rewritten_query)
+						pfree(temp_rewritten_query);
     
     			/* Set the processed count and return success */
     			exec_set_found(estate, (SPI_processed != 0));
@@ -10703,9 +10705,21 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 		if (in_insert_exec_query_rewrite)
 		{
 			in_insert_exec_query_rewrite = false;
-			insert_exec_target_table = NULL;
-			insert_exec_target_schema = NULL;
-			insert_exec_column_list = NULL;
+			if (insert_exec_target_table)
+			{
+				pfree(insert_exec_target_table);
+				insert_exec_target_table = NULL;
+			}
+			if (insert_exec_target_schema)
+			{
+				pfree(insert_exec_target_schema);
+				insert_exec_target_schema = NULL;
+			}
+			if (insert_exec_column_list)
+			{
+				pfree(insert_exec_column_list);
+				insert_exec_column_list = NULL;
+			}
 		}
 	}
 	PG_FINALLY();
