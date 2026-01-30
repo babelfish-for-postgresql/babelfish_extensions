@@ -1779,7 +1779,7 @@ DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_agg(
     element_name text,
     binary_base64 boolean,
     root_name text
-);
+) CASCADE;
 
 DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_text_agg(
     rec ANYELEMENT,
@@ -1787,7 +1787,7 @@ DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_text_agg(
     element_name text,
     binary_base64 boolean,
     root_name text
-);
+) CASCADE;
 
 -- Drop old function
 DROP FUNCTION IF EXISTS sys.tsql_query_to_xml_sfunc(
@@ -1884,4 +1884,3 @@ CREATE OR REPLACE VIEW information_schema_tsql.tables AS
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
---5..
