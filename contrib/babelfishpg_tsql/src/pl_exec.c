@@ -4870,8 +4870,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			/*
 			 * If the set_fmtonly guc is set, we need to rewrite any
 			 * statements as exec statements that invoke
-			 * sp_describe_first_result_set. For now, only transform SELECT
-			 * statements.
+			 * sp_describe_first_result_set.
 			 */
 			if (pltsql_fmtonly && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && fmtonly_enabled && strcasestr(stmt->sqlstmt->query, "SELECT *"))
 			{
