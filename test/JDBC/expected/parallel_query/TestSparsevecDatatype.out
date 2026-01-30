@@ -1529,7 +1529,7 @@ go
 
 ~~ROW COUNT: 1~~
 
-SELECT * FROM document_embeddings;
+SELECT * FROM document_embeddings ORDER BY id;
 go
 ~~START~~
 int#!#varchar
@@ -1571,9 +1571,9 @@ int
 
 
 -- WHERE clause expressions
-SELECT * FROM document_embeddings WHERE embedding <-> '{1:1,2:2,4:4}/5' < 5;
-SELECT * FROM document_embeddings WHERE embedding <=> '{1:1,2:2,4:4}/5' < 5;
-SELECT * FROM document_embeddings WHERE embedding <#> '{1:1,2:2,4:4}/5' < 5; 
+SELECT * FROM document_embeddings WHERE embedding <-> '{1:1,2:2,4:4}/5' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <=> '{1:1,2:2,4:4}/5' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <#> '{1:1,2:2,4:4}/5' < 5 ORDER BY id; 
 go
 ~~START~~
 int#!#varchar
