@@ -307,13 +307,13 @@ GO
 SELECT * FROM forxml_raw_elements_t1 ORDER BY id FOR XML RAW('Employee'), ELEMENTS, ROOT('Employees');
 GO
 
-SELECT department, COUNT(*) AS cnt FROM forxml_raw_elements_t1 GROUP BY department FOR XML RAW, ELEMENTS;
+SELECT department, COUNT(*) AS cnt FROM forxml_raw_elements_t1 GROUP BY department ORDER BY department FOR XML RAW, ELEMENTS;
 GO
 
-SELECT department, SUM(salary) AS total_salary FROM forxml_raw_elements_t1 GROUP BY department FOR XML RAW, ELEMENTS;
+SELECT department, SUM(salary) AS total_salary FROM forxml_raw_elements_t1 GROUP BY department ORDER BY department FOR XML RAW, ELEMENTS;
 GO
 
-SELECT department, AVG(salary) AS avg_salary FROM forxml_raw_elements_t1 GROUP BY department FOR XML RAW, ELEMENTS;
+SELECT department, AVG(salary) AS avg_salary FROM forxml_raw_elements_t1 GROUP BY department ORDER BY department FOR XML RAW, ELEMENTS;
 GO
 
 SELECT TOP 1 * FROM forxml_raw_elements_t1 FOR XML RAW, ELEMENTS;

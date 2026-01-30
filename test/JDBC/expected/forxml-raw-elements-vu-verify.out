@@ -818,27 +818,27 @@ ntext
 ~~END~~
 
 
-SELECT department, COUNT(*) AS cnt FROM forxml_raw_elements_t1 GROUP BY department FOR XML RAW, ELEMENTS;
+SELECT department, COUNT(*) AS cnt FROM forxml_raw_elements_t1 GROUP BY department ORDER BY department FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><cnt>2</cnt></row><row><department>HR</department><cnt>1</cnt></row><row><department>IT</department><cnt>1</cnt></row><row><department>Finance</department><cnt>1</cnt></row>
+<row><cnt>2</cnt></row><row><department>Finance</department><cnt>1</cnt></row><row><department>HR</department><cnt>1</cnt></row><row><department>IT</department><cnt>1</cnt></row>
 ~~END~~
 
 
-SELECT department, SUM(salary) AS total_salary FROM forxml_raw_elements_t1 GROUP BY department FOR XML RAW, ELEMENTS;
+SELECT department, SUM(salary) AS total_salary FROM forxml_raw_elements_t1 GROUP BY department ORDER BY department FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><total_salary>70000</total_salary></row><row><department>HR</department><total_salary>60000</total_salary></row><row><department>IT</department><total_salary>50000</total_salary></row><row><department>Finance</department></row>
+<row><total_salary>70000</total_salary></row><row><department>Finance</department></row><row><department>HR</department><total_salary>60000</total_salary></row><row><department>IT</department><total_salary>50000</total_salary></row>
 ~~END~~
 
 
-SELECT department, AVG(salary) AS avg_salary FROM forxml_raw_elements_t1 GROUP BY department FOR XML RAW, ELEMENTS;
+SELECT department, AVG(salary) AS avg_salary FROM forxml_raw_elements_t1 GROUP BY department ORDER BY department FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><avg_salary>70000</avg_salary></row><row><department>HR</department><avg_salary>60000</avg_salary></row><row><department>IT</department><avg_salary>50000</avg_salary></row><row><department>Finance</department></row>
+<row><avg_salary>70000</avg_salary></row><row><department>Finance</department></row><row><department>HR</department><avg_salary>60000</avg_salary></row><row><department>IT</department><avg_salary>50000</avg_salary></row>
 ~~END~~
 
 
