@@ -39,8 +39,13 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	int			mode = PG_GETARG_INT32(2);
 	char	   *element_name = PG_ARGISNULL(3) ? "row" : text_to_cstring(PG_GETARG_TEXT_PP(3));
 	bool		binary_base64 = PG_GETARG_BOOL(4);
-	bool elements = PG_GETARG_BOOL(6);
-    bool xsinil = PG_GETARG_BOOL(7);
+	bool 		elements = false;
+	bool 		xsinil = false;
+	if (PG_NARGS() > 6)
+	{
+    			elements = PG_GETARG_BOOL(6);
+    			xsinil = PG_GETARG_BOOL(7);
+	}
 	char	   *root_name;
 
 	MemoryContext agg_context;
@@ -50,7 +55,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		elog(ERROR, "aggregate function called in non-aggregate context");
 	old_context = MemoryContextSwitchTo(agg_context);
 
-	if (PG_ARGISNULL(0))
+	iquf (PG_ARGISNULL(0))
 	{
 		/* first time setup */
 		state = makeStringInfo();

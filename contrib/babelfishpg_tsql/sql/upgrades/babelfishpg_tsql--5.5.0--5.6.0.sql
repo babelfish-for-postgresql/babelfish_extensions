@@ -60,58 +60,6 @@ $$;
 
 -- Please add your SQLs here
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER AGGREGATE sys.tsql_select_for_xml_agg(anyelement, integer, text, boolean, text) 
-    RENAME TO tsql_select_for_xml_agg_deprecated_in_5_6_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    EXECUTE 'ALTER EXTENSION babelfishpg_tsql DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text)';
-    DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text);
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER AGGREGATE sys.tsql_select_for_xml_text_agg(anyelement, integer, text, boolean, text) 
-    RENAME TO tsql_select_for_xml_text_agg_deprecated_in_5_6_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    EXECUTE 'ALTER EXTENSION babelfishpg_tsql DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_text_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text)';
-    DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_text_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text);
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     state INTERNAL,
     rec ANYELEMENT,
