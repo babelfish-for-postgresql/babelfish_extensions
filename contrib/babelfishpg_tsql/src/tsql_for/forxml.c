@@ -56,7 +56,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		elog(ERROR, "aggregate function called in non-aggregate context");
 	old_context = MemoryContextSwitchTo(agg_context);
 
-	iquf (PG_ARGISNULL(0))
+	if (PG_ARGISNULL(0))
 	{
 		/* first time setup */
 		state = makeStringInfo();
