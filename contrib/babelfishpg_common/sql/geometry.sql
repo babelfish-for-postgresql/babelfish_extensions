@@ -428,7 +428,7 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
--- STLenght 
+-- STLength
 CREATE OR REPLACE FUNCTION sys.STLength(geom sys.GEOMETRY)
     RETURNS float8
     AS $$
@@ -438,9 +438,9 @@ CREATE OR REPLACE FUNCTION sys.STLength(geom sys.GEOMETRY)
 		IF sys.STIsEmpty(geom)=1 THEN
 		    RETURN 0;
 		END IF;
-			-- Get the geometry type
+
 		geom_type := sys.ST_GeometryType(geom);
-		-- Polygon types - use ST_Perimeter (sum of all ring lengths)
+		
 		IF geom_type IN ('ST_Polygon', 'ST_MultiPolygon') THEN
 		     RETURN sys.STPerimeter_helper(geom);
 		ELSE 

@@ -132,7 +132,6 @@ jobs:
             cd $timestamp
             mv $timestamp.diff ../replication-output-diff.diff
             mv "$timestamp"_runSummary.log ../replication-run-summary.log
-            fi 
             
       - name: Upload Run Summary 
         if: always() && steps.test-file-rename.outcome == 'success'

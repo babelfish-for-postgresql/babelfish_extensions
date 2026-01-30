@@ -61,27 +61,31 @@ CREATE VIEW TestGeospatialMethods_empty_ValFromGeomTemp AS SELECT location.STIsE
 
 CREATE VIEW TestGeospatialMethods_empty_TextFromGeomTemp AS SELECT  location.STIsEmpty() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
 
-CREATE TABLE TestGeospatialMethods_GeomTableTemp ( ID INT PRIMARY KEY, GeomColumn sys.GEOMETRY );
+CREATE TABLE TestGeospatialMethods_GeomTableTemp ( ID INT PRIMARY KEY, GeomColumn geometry );
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (1, geometry::STGeomFromText('LINESTRING(0 0, 3 0)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (2, geometry::STGeomFromText('LINESTRING(0 0, 3 4)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (3, geometry::STGeomFromText('LINESTRING(0 0, 5 0, 5 5)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (4, geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0, 3 1, 4 0)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (5, geometry::STGeomFromText('LINESTRING(0 0, 10 0, 10 10, 0 10, 0 0)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (6, geometry::STGeomFromText('LINESTRING(0 0, 1 0, 2 0, 3 0, 4 0, 5 0)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (7, geometry::STGeomFromText('LINESTRING(0 0 0, 3 0 4)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (8, geometry::STGeomFromText('LINESTRING(0 0 0, 3 0 4)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (9, geometry::STGeomFromText('LINESTRING(0 0 0, 1 1 1, 2 2 2)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (10, geometry::STGeomFromText('LINESTRING(0 0 0 0, 3 0 4 1)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (11, geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (12, geometry::STGeomFromText('POLYGON((0 0, 5 0, 5 5, 0 5, 0 0))', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (13, geometry::STGeomFromText('POLYGON((0 0, 20 0, 20 20, 0 20, 0 0), (5 5, 15 5, 15 15, 5 15, 5 5))', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (14, geometry::STGeomFromText('POLYGON((0 0, 3 0, 0 4, 0 0))', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (15, geometry::STGeomFromText('LINESTRING(0 0 0, 3 4 5)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (16, geometry::STGeomFromText('LINESTRING(0 0 0 0, 3 4 5 10)', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (17, geometry::STGeomFromText('POLYGON((0 0 1, 4 0 2, 4 4 3, 0 4 4, 0 0 1))', 0));
+INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (18, geometry::STGeomFromText('MULTILINESTRING((0 0 0, 3 0 5), (10 10 0, 10 13 5))', 0));
 
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (1, sys.geometry::STGeomFromText('LINESTRING(0 0, 3 0)', 0));
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (2, sys.geometry::STGeomFromText('LINESTRING(0 0, 4 0)', 0));
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (3, sys.geometry::STGeomFromText('LINESTRING(0 0, 3 4)', 0));
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (4, sys.geometry::STGeomFromText('LINESTRING(0 0, 5 0, 5 5)', 0));
+CREATE TABLE TestGeospatialMethods_GeogTableTemp ( ID INT PRIMARY KEY, GeogColumn geography );
+INSERT INTO TestGeospatialMethods_GeogTableTemp (ID, GeogColumn) VALUES (1, geography::STGeomFromText('LINESTRING(-122.34900 47.65100, -122.34950 47.65150)', 4326));
+INSERT INTO TestGeospatialMethods_GeogTableTemp (ID, GeogColumn) VALUES (2, geography::STGeomFromText('LINESTRING(-122.34900 47.65100, -122.34950 47.65150)', 0));
+INSERT INTO TestGeospatialMethods_GeogTableTemp (ID, GeogColumn) VALUES (3, geography::STGeomFromText('LINESTRING EMPTY', 4326));
 
--- Multi-point linestrings
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (5, sys.geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 0, 3 1, 4 0)', 0));
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (6, sys.geometry::STGeomFromText('LINESTRING(0 0, 10 0, 10 10, 0 10, 0 0)', 0));
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (7, sys.geometry::STGeomFromText('LINESTRING(0 0, 1 0, 2 0, 3 0, 4 0, 5 0)', 0));
+CREATE VIEW TestGeospatialMethods_lengthTemp AS SELECT CAST(ROUND(GeomColumn.STLength(), 2) AS FLOAT) AS Length FROM TestGeospatialMethods_GeomTableTemp ORDER BY ID;
 
--- 3D linestrings with Z coordinate
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (8, sys.geometry::STGeomFromText('LINESTRING(0 0 0, 3 0 4)', 0));
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (9, sys.geometry::STGeomFromText('LINESTRING(0 0 0, 1 1 1, 2 2 2)', 0));
-
--- 4D linestrings with Z and M coordinates
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (10, sys.geometry::STGeomFromText('LINESTRING(0 0 0 0, 3 0 4 1)', 0));
-
--- Polygons (perimeter tests)
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (11, sys.geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))', 0));
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (12, sys.geometry::STGeomFromText('POLYGON((0 0, 5 0, 5 5, 0 5, 0 0))', 0));
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (13, sys.geometry::STGeomFromText('POLYGON((0 0, 20 0, 20 20, 0 20, 0 0), (5 5, 15 5, 15 15, 5 15, 5 5))', 0));
-INSERT INTO TestGeospatialMethods_GeomTableTemp (ID, GeomColumn) VALUES (14, sys.geometry::STGeomFromText('POLYGON((0 0, 3 0, 0 4, 0 0))', 0));
+CREATE VIEW TestGeospatialMethods_lengthGeogTemp AS SELECT CAST(ROUND(GeogColumn.STLength(), 2) AS FLOAT) AS Length FROM TestGeospatialMethods_GeogTableTemp ORDER BY ID;

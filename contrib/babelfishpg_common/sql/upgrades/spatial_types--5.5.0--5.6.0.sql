@@ -11,7 +11,7 @@ CREATE OR REPLACE FUNCTION sys.STLength(geom sys.GEOMETRY)
 		IF sys.STIsEmpty(geom)=1 THEN
 		    RETURN 0;
 		END IF;
-			-- Get the geometry type
+
 		geom_type := sys.ST_GeometryType(geom);
 		-- Polygon types - use ST_Perimeter (sum of all ring lengths)
 		IF geom_type IN ('ST_Polygon', 'ST_MultiPolygon') THEN
@@ -28,39 +28,35 @@ CREATE OR REPLACE FUNCTION sys.STLength_helper(geom sys.GEOMETRY)
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STPerimeter_helper(sys.GEOMETRY)
-        RETURNS float8
-        AS '$libdir/postgis-3','LWGEOM_perimeter2d_poly'
-		LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    RETURNS float8
+    AS '$libdir/postgis-3','LWGEOM_perimeter2d_poly'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STLength(geom sys.GEOGRAPHY)
-RETURNS float8
-AS $$
-DECLARE
-    geom_type text;
-BEGIN
-    -- EMPTY → 0
-    IF sys.STIsEmpty(geom) = 1 THEN
-        RETURN 0;
-    END IF;
+    RETURNS float8
+    AS $$
+    DECLARE
+        geom_type text;
+    BEGIN
+        -- EMPTY → 0
+        IF sys.STIsEmpty(geom) = 1 THEN
+            RETURN 0;
+        END IF;
 
-    -- INVALID → ERROR (SQL Server behavior)
-    IF sys.STIsValid(geom) = 0 THEN
-        RAISE EXCEPTION 'The geography instance is not valid';
-    END IF;
+        IF sys.STIsValid(geom) = 0 THEN
+            RAISE EXCEPTION 'The geography instance is not valid';
+        END IF;
     -- Get the geometry type
-    geom_type := sys.ST_GeometryType(geom);
-    -- Geography coordinate fix:
-    -- SQL Server stores (lat, long)
-    -- PostGIS expects (long, lat)
-
+        geom_type := sys.ST_GeometryType(geom);
+  
      -- Polygon types - use ST_Perimeter (sum of all ring lengths)
-    IF geom_type IN ('ST_Polygon', 'ST_MultiPolygon') THEN
-        RETURN sys.STPerimeter_helper(sys.Geography__STFlipCoordinates(geom));
-    ELSE 
-        RETURN sys.STLength_helper(sys.Geography__STFlipCoordinates(geom));
-    END IF;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+        IF geom_type IN ('ST_Polygon', 'ST_MultiPolygon') THEN
+            RETURN sys.STPerimeter_helper(sys.Geography__STFlipCoordinates(geom));
+        ELSE 
+            RETURN sys.STLength_helper(sys.Geography__STFlipCoordinates(geom));
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STLength_helper(geom sys.GEOGRAPHY)
      RETURNS float8

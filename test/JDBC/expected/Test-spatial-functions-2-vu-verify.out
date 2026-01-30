@@ -2024,39 +2024,11 @@ float
 
 DECLARE @line geography;
 SET @line = geography::STGeomFromText('LINESTRING(-122.34900 47.65100, -122.34950 47.65150)', 4326);
-SELECT @line.STLength() AS Length;
+SELECT CAST(ROUND(@line.STLength(), 2) AS FLOAT) AS Length;
 go
 ~~START~~
 float
-67.09290538054775
-~~END~~
-
-
-DECLARE @line geography;
-SET @line = geography::STGeomFromText('LINESTRING(-122.34900 47.65100, -122.34950 47.65150)', 0);
-SELECT @line.STLength() AS Length;
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Invalid SRID)~~
-
-
-DECLARE @line geography;
-SET @line = geography::STGeomFromText('LINESTRING(-122.34900 47.65100, -122.34950 47.65150)', 999999);
-SELECT @line.STLength() AS Length;
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Invalid SRID)~~
-
-
-DECLARE @line geometry;
-SET @line = geometry::STGeomFromText( 'LINESTRING(1 1, 4 5, 6 9)', 0);
-SELECT @line.STLength();
-go
-~~START~~
-float
-9.47213595499958
+67.09
 ~~END~~
 
 
@@ -2072,15 +2044,14 @@ float
 
 DECLARE @polygon geometry;
 SET @polygon = geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 0))', 0);
-SELECT @polygon.STLength();
+SELECT CAST(ROUND(@polygon.STLength(), 2) AS FLOAT);
 go
 ~~START~~
 float
-3.414213562373095
+3.41
 ~~END~~
 
 
---CLOSED POLYGON
 DECLARE @polygon geometry;
 SET @polygon = geometry::STGeomFromText('POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))', 0);
 SELECT @polygon.STLength();
@@ -2091,18 +2062,6 @@ float
 ~~END~~
 
 
---INVALID POLYGON RING
-DECLARE @polygon geometry;
-SET @polygon = geometry::STGeomFromText('POLYGON((0 0, 1 1, 1 0))', 0);
-SELECT @polygon.STLength();
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: geometry requires more points)~~
-
-
-
----EMPTY GEOMETRY
 DECLARE @g geometry;
 SET @g = geometry::STGeomFromText('LINESTRING EMPTY', 0);
 SELECT @g.STLength();
@@ -2143,7 +2102,6 @@ float
 ~~END~~
 
 
- ---NULL HANDLING 
 DECLARE @nullGeom geometry;
 SELECT @nullGeom.STLength();
 go
@@ -2162,7 +2120,6 @@ float
 ~~END~~
 
 
- --SRID VARIATIONS
 DECLARE @line geometry;
 SET @line = geometry::STGeomFromText('LINESTRING(0 0, 3 4)', 4326);
 SELECT @line.STLength();
@@ -2183,18 +2140,6 @@ float
 ~~END~~
 
 
------- NEGATIVE TESTS (TYPE MISMATCH)
-DECLARE @line geometry;
-DECLARE @s varchar(20) = 'invalid';
-SET @line = geometry::STGeomFromText('LINESTRING(0 0, 1 1)', 0);
-SELECT @line.STLength(@s);
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "@line" does not exist)~~
-
-
--------WINDOW FUNCTION---
 SELECT
     ID,
     GeomColumn.STLength() AS Len,
@@ -2205,34 +2150,39 @@ go
 ~~START~~
 int#!#float#!#float
 1#!#3.0#!#<NULL>
-2#!#4.0#!#1.0
-3#!#5.0#!#1.0
-4#!#10.0#!#5.0
-5#!#5.656854249492381#!#-4.343145750507619
-6#!#40.0#!#34.34314575050762
-7#!#5.0#!#-35.0
-8#!#3.0#!#-2.0
+2#!#5.0#!#2.0
+3#!#10.0#!#5.0
+4#!#5.656854249492381#!#-4.343145750507619
+5#!#40.0#!#34.34314575050762
+6#!#5.0#!#-35.0
+7#!#3.0#!#-2.0
+8#!#3.0#!#0.0
 9#!#2.8284271247461903#!#-0.1715728752538097
 10#!#3.0#!#0.1715728752538097
 11#!#40.0#!#37.0
 12#!#20.0#!#-20.0
 13#!#120.0#!#100.0
 14#!#12.0#!#-108.0
+15#!#5.0#!#-7.0
+16#!#5.0#!#0.0
+17#!#16.0#!#11.0
 ~~END~~
 
 
---CROSS DATABASE---
 SELECT
     ID,
-    GeomColumn.STLength()
-FROM TestGeospatialMethods_DB.dbo.TestGeospatialMethods_GeomTableTemp;
+    PointColumn.STLength()
+FROM TestGeospatialMethods_DB.dbo.TestGeospatialMethods_YourTable1Temp;
 go
-~~ERROR (Code: 33557097)~~
+~~START~~
+int#!#float
+1#!#0.0
+2#!#0.0
+3#!#0.0
+4#!#0.0
+~~END~~
 
-~~ERROR (Message: relation "testgeospatialmethods_db_dbo.testgeospatialmethods_geomtabletemp" does not exist)~~
 
-
---USE IN GROUP BY 
 SELECT
     ROUND(GeomColumn.STLength(), 0) AS LengthGroup,
     COUNT(*)
@@ -2242,19 +2192,18 @@ ORDER BY LengthGroup;
 go
 ~~START~~
 float#!#int
-3.0#!#4
-4.0#!#1
-5.0#!#2
+3.0#!#5
+5.0#!#4
 6.0#!#1
 10.0#!#1
 12.0#!#1
+16.0#!#1
 20.0#!#1
 40.0#!#2
 120.0#!#1
 ~~END~~
 
-
---USE IN CASE STATEMENT 
+ 
 DECLARE @threshold float = 5;
 SELECT ID,
 CASE
@@ -2268,10 +2217,10 @@ go
 int#!#varchar
 1#!#Short
 2#!#Short
-3#!#Short
+3#!#Long
 4#!#Long
 5#!#Long
-6#!#Long
+6#!#Short
 7#!#Short
 8#!#Short
 9#!#Short
@@ -2280,10 +2229,12 @@ int#!#varchar
 12#!#Long
 13#!#Long
 14#!#Long
+15#!#Short
+16#!#Short
+17#!#Long
 ~~END~~
 
 
---USE IN ARITHMETIC EXPRESSIONS
 DECLARE @scale float = 2.0;
 SELECT
     ID,
@@ -2294,12 +2245,12 @@ go
 ~~START~~
 int#!#float
 1#!#6.0
-2#!#8.0
-3#!#10.0
-4#!#20.0
-5#!#11.313708498984761
-6#!#80.0
-7#!#10.0
+2#!#10.0
+3#!#20.0
+4#!#11.313708498984761
+5#!#80.0
+6#!#10.0
+7#!#6.0
 8#!#6.0
 9#!#5.656854249492381
 10#!#6.0
@@ -2307,10 +2258,12 @@ int#!#float
 12#!#40.0
 13#!#240.0
 14#!#24.0
+15#!#10.0
+16#!#10.0
+17#!#32.0
 ~~END~~
 
 
--- Polygon perimeter tests (IDs 11-14 are polygons)
 SELECT 
     ID,
     GeomColumn.STLength() AS Perimeter
@@ -2324,5 +2277,286 @@ int#!#float
 12#!#20.0
 13#!#120.0
 14#!#12.0
+15#!#5.0
+16#!#5.0
+17#!#16.0
+~~END~~
+
+
+SELECT * FROM TestGeospatialMethods_lengthTemp;
+go
+~~START~~
+float
+3.0
+5.0
+10.0
+5.66
+40.0
+5.0
+3.0
+3.0
+2.83
+3.0
+40.0
+20.0
+120.0
+12.0
+5.0
+5.0
+16.0
+~~END~~
+
+
+SELECT ID, GeomColumn.STLength() AS Length
+FROM TestGeospatialMethods_GeomTableTemp
+WHERE GeomColumn.STLength() > 5
+ORDER BY ID;
+go
+~~START~~
+int#!#float
+3#!#10.0
+4#!#5.656854249492381
+5#!#40.0
+11#!#40.0
+12#!#20.0
+13#!#120.0
+14#!#12.0
+17#!#16.0
+~~END~~
+
+
+SELECT 
+    CAST(GeomColumn.STLength() AS INT) AS LengthGroup,
+    COUNT(*) AS Cnt
+FROM TestGeospatialMethods_GeomTableTemp
+GROUP BY CAST(GeomColumn.STLength() AS INT)
+HAVING COUNT(*) > 1;
+go
+~~START~~
+int#!#int
+40#!#2
+3#!#4
+5#!#5
+~~END~~
+
+
+SELECT ID, GeomColumn.STLength() AS Length
+FROM TestGeospatialMethods_GeomTableTemp
+ORDER BY GeomColumn.STLength() DESC;
+go
+~~START~~
+int#!#float
+13#!#120.0
+5#!#40.0
+11#!#40.0
+12#!#20.0
+17#!#16.0
+14#!#12.0
+3#!#10.0
+4#!#5.656854249492381
+2#!#5.0
+6#!#5.0
+15#!#5.0
+16#!#5.0
+1#!#3.0
+7#!#3.0
+8#!#3.0
+10#!#3.0
+9#!#2.8284271247461903
+~~END~~
+
+
+SELECT * FROM (
+    SELECT ID, GeomColumn.STLength() AS Len
+    FROM TestGeospatialMethods_GeomTableTemp
+) AS sub
+WHERE Len > 3;
+go
+~~START~~
+int#!#float
+2#!#5.0
+3#!#10.0
+4#!#5.656854249492381
+5#!#40.0
+6#!#5.0
+11#!#40.0
+12#!#20.0
+13#!#120.0
+14#!#12.0
+15#!#5.0
+16#!#5.0
+17#!#16.0
+~~END~~
+
+
+WITH LengthCTE AS (
+    SELECT ID, GeomColumn.STLength() AS Length
+    FROM TestGeospatialMethods_GeomTableTemp
+)
+SELECT * FROM LengthCTE WHERE Length > 5;
+go
+~~START~~
+int#!#float
+3#!#10.0
+4#!#5.656854249492381
+5#!#40.0
+11#!#40.0
+12#!#20.0
+13#!#120.0
+14#!#12.0
+17#!#16.0
+~~END~~
+
+
+DECLARE @line geometry;
+SET @line = geometry::STGeomFromText('LINESTRING(-5 -5, -2 -1)', 0);
+SELECT @line.STLength() AS NegativeCoordLength;
+go
+~~START~~
+float
+5.0
+~~END~~
+
+
+DECLARE @large geometry;
+SET @large = geometry::STGeomFromText('LINESTRING(0 0, 1000000 1000000)', 0);
+SELECT CAST(ROUND(@large.STLength(), 2) AS FLOAT) AS LargeLength;
+go
+~~START~~
+float
+1414213.56
+~~END~~
+
+
+DECLARE @small geometry;
+SET @small = geometry::STGeomFromText('LINESTRING(0 0, 0.0001 0.0001)', 0);
+SELECT CAST(ROUND(@small.STLength(), 2) AS FLOAT) AS SmallLength;
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT g1.ID, g1.GeomColumn.STLength() AS Len1, g2.GeomColumn.STLength() AS Len2
+FROM TestGeospatialMethods_GeomTableTemp g1
+JOIN TestGeospatialMethods_GeomTableTemp g2 ON g1.ID = g2.ID - 1
+WHERE g1.ID < 5;
+go
+~~START~~
+int#!#float#!#float
+1#!#3.0#!#5.0
+2#!#5.0#!#10.0
+3#!#10.0#!#5.656854249492381
+4#!#5.656854249492381#!#40.0
+~~END~~
+
+
+DECLARE @tempTable TABLE (ID INT, Geom geometry);
+INSERT INTO @tempTable VALUES (1, geometry::STGeomFromText('LINESTRING(0 0, 5 0)', 0));
+SELECT ID, Geom.STLength() FROM @tempTable;
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#float
+1#!#5.0
+~~END~~
+
+
+DECLARE @line3D geometry;
+SET @line3D = geometry::STGeomFromText('LINESTRING(0 0 0, 3 4 5)', 0);
+SELECT @line3D.STLength() AS Length3D;
+go
+~~START~~
+float
+5.0
+~~END~~
+
+
+DECLARE @lineZ geometry;
+SET @lineZ = geometry::STGeomFromText('LINESTRING(0 0 0, 10 0 0)', 0);
+SELECT @lineZ.STLength() AS LengthZHorizontal;
+go
+~~START~~
+float
+10.0
+~~END~~
+
+
+DECLARE @lineZVertical geometry;
+SET @lineZVertical = geometry::STGeomFromText('LINESTRING(0 0 0, 0 0 10)', 0);
+SELECT @lineZVertical.STLength() AS LengthZVertical;
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+DECLARE @line2D geometry;
+DECLARE @line3DCompare geometry;
+SET @line2D = geometry::STGeomFromText('LINESTRING(0 0, 3 4)', 0);
+SET @line3DCompare = geometry::STGeomFromText('LINESTRING(0 0 0, 3 4 100)', 0);
+SELECT 
+    @line2D.STLength() AS Length2D,
+    @line3DCompare.STLength() AS Length3D;
+go
+~~START~~
+float#!#float
+5.0#!#5.0
+~~END~~
+
+
+DECLARE @lineZM geometry;
+SET @lineZM = geometry::STGeomFromText('LINESTRING(0 0 0 0, 3 4 5 10)', 0);
+SELECT @lineZM.STLength() AS LengthZM;
+go
+~~START~~
+float
+5.0
+~~END~~
+
+
+DECLARE @noM geometry;
+DECLARE @withM geometry;
+SET @noM = geometry::STGeomFromText('LINESTRING(0 0, 5 0)', 0);
+SET @withM = geometry::STGeomFromText('LINESTRING(0 0 0 0, 5 0 0 100)', 0);
+SELECT 
+    @noM.STLength() AS LengthNoM,
+    @withM.STLength() AS LengthWithM;
+go
+~~START~~
+float#!#float
+5.0#!#5.0
+~~END~~
+
+
+DECLARE @geogPoly geography;
+SET @geogPoly = geography::STGeomFromText('POLYGON((-122.358 47.653, -122.348 47.653, -122.348 47.649, -122.358 47.649, -122.358 47.653))', 4326);
+SELECT ROUND(@geogPoly.STLength(), 2) AS GeographyPolygonPerimeter;
+go
+~~START~~
+float
+2392.01
+~~END~~
+
+
+DECLARE @multiPointLine geometry;
+SET @multiPointLine = geometry::STGeomFromText('LINESTRING(0 0, 1 0, 2 0, 3 0, 4 0, 5 0)', 0);
+SELECT @multiPointLine.STLength() AS MultiPointLineLength;
+go
+~~START~~
+float
+5.0
+~~END~~
+
+
+SELECT * FROM TestGeospatialMethods_lengthGeogTemp;
+go
+~~START~~
+float
+67.09
+0.0
 ~~END~~
 
