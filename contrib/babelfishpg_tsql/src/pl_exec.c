@@ -4874,9 +4874,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		{
     		in_insert_exec_query_rewrite = true;
     		// Globals are already set above
-    
-    		elog(NOTICE, "DEBUG: Context setup successful - using global table=%s", 
-         		insert_exec_target_table);
 		}
 
 		if (in_insert_exec_query_rewrite && 
@@ -4895,65 +4892,86 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			// here the query is insert into test_t1 exec proc_p1 : what you have to do is expan the procedure : 
 				
 			/* Check if this is a SELECT statement that should be rewritten */
+
 			if (strncasecmp(query, "select", 6) == 0)
 			{
+				/* Check if query contains parameter references or table variables */
+				if (strstr(query, "@") != NULL)
+				{
+					elog(LOG, "INSERT-EXEC: Query contains parameters/variables (@), disabling rewrite for this query");
+					in_insert_exec_query_rewrite = false;  /* Disable rewrite for this specific query */
+				}
+				/* Check for transaction statements */
+				else if (strcasestr(query, "COMMIT") != NULL || 
+						strcasestr(query, "ROLLBACK") != NULL ||
+						strcasestr(query, "BEGIN TRAN") != NULL)
+				{
+					elog(LOG, "INSERT-EXEC: Query contains transaction statements, disabling rewrite");
+					in_insert_exec_query_rewrite = false;  /* Disable rewrite for this specific query */
+				}
+				else{
 					
-				elog(LOG, "INSERT-EXEC: Rewriting SELECT query in procedure: %s", query);
+					elog(LOG, "INSERT-EXEC: Rewriting SELECT query in procedure: %s", query);
+							
+					/* Build the CTE-based rewritten query */
+					initStringInfo(&rewritten_query);
+					
+					/* Build: WITH cte AS (original_query) INSERT INTO table SELECT * FROM cte */
+					if (insert_exec_target_schema && insert_exec_column_list)
+					{
+						appendStringInfo(&rewritten_query,
+							"WITH insert_exec_cte AS (%s) INSERT INTO %s.%s %s SELECT * FROM insert_exec_cte",
+							query,
+							insert_exec_target_schema,
+							insert_exec_target_table,
+							insert_exec_column_list);
+					}
+					else if (insert_exec_target_schema)
+					{
+						appendStringInfo(&rewritten_query,
+							"WITH insert_exec_cte AS (%s) INSERT INTO %s.%s SELECT * FROM insert_exec_cte",
+							query,
+							insert_exec_target_schema,
+							insert_exec_target_table);
+					}
+					else if (insert_exec_column_list)
+					{
+						appendStringInfo(&rewritten_query,
+							"WITH insert_exec_cte AS (%s) INSERT INTO %s %s SELECT * FROM insert_exec_cte",
+							query,
+							insert_exec_target_table,
+							insert_exec_column_list);
+					}
+					else
+					{
+						appendStringInfo(&rewritten_query,
+							"WITH insert_exec_cte AS (%s) INSERT INTO %s SELECT * FROM insert_exec_cte",
+							query,
+							insert_exec_target_table);
+					}
 						
-				/* Build the CTE-based rewritten query */
-				initStringInfo(&rewritten_query);
-				
-				/* Build: WITH cte AS (original_query) INSERT INTO table SELECT * FROM cte */
-				if (insert_exec_target_schema && insert_exec_column_list)
+				elog(LOG, "INSERT-EXEC: Rewritten query: %s", rewritten_query.data);
+						
+				/* Replace the original query with the rewritten one */
+				// stmt->sqlstmt->query = pstrdup(rewritten_query.data);
+				temp_rewritten_query = pstrdup(rewritten_query.data);
+						
+				/* Clear the plan so it gets re-prepared with the new query */
+				if (expr->plan)
 				{
-					appendStringInfo(&rewritten_query,
-						"WITH insert_exec_cte AS (%s) INSERT INTO %s.%s %s SELECT * FROM insert_exec_cte",
-						query,
-						insert_exec_target_schema,
-						insert_exec_target_table,
-						insert_exec_column_list);
+					SPI_freeplan(expr->plan);
+					expr->plan = NULL;
 				}
-				else if (insert_exec_target_schema)
-				{
-					appendStringInfo(&rewritten_query,
-						"WITH insert_exec_cte AS (%s) INSERT INTO %s.%s SELECT * FROM insert_exec_cte",
-						query,
-						insert_exec_target_schema,
-						insert_exec_target_table);
-				}
-				else if (insert_exec_column_list)
-				{
-					appendStringInfo(&rewritten_query,
-						"WITH insert_exec_cte AS (%s) INSERT INTO %s %s SELECT * FROM insert_exec_cte",
-						query,
-						insert_exec_target_table,
-						insert_exec_column_list);
-				}
-				else
-				{
-					appendStringInfo(&rewritten_query,
-						"WITH insert_exec_cte AS (%s) INSERT INTO %s SELECT * FROM insert_exec_cte",
-						query,
-						insert_exec_target_table);
-				}
-					
-			elog(LOG, "INSERT-EXEC: Rewritten query: %s", rewritten_query.data);
-					
-			/* Replace the original query with the rewritten one */
-			// stmt->sqlstmt->query = pstrdup(rewritten_query.data);
-			temp_rewritten_query = pstrdup(rewritten_query.data);
-					
-			/* Clear the plan so it gets re-prepared with the new query */
-			if (expr->plan)
-			{
-				SPI_freeplan(expr->plan);
-				expr->plan = NULL;
+						
+				pfree(rewritten_query.data);
 			}
-					
-			pfree(rewritten_query.data);
+		}
+		else{
+			elog(LOG, "INSERT-EXEC: Not a SELECT statement, disabling rewrite");
+        	in_insert_exec_query_rewrite = false;
 		}
 
-			if (estate->insert_exec && temp_rewritten_query &&
+			if (in_insert_exec_query_rewrite && temp_rewritten_query &&
     			strncasecmp(temp_rewritten_query, "with insert_exec_cte", 20) == 0)
 			{
     			elog(NOTICE, "INSERT-EXEC: Executing rewritten INSERT query directly to avoid cursor issue");
