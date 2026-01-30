@@ -1,5 +1,3 @@
-Unexpected drop found for aggregate sys.tsql_select_for_xml_agg in file babelfishpg_tsql--5.4.0--5.5.0.sql
-Unexpected drop found for aggregate sys.tsql_select_for_xml_text_agg in file babelfishpg_tsql--5.4.0--5.5.0.sql
 Unexpected drop found for cast  in file babelfish_common_helper--4.0.0--4.1.0.sql
 Unexpected drop found for cast  in file babelfish_common_helper--4.0.0--4.1.0.sql
 Unexpected drop found for cast  in file babelfish_common_helper--4.0.0--4.1.0.sql
@@ -66,7 +64,6 @@ Unexpected drop found for function sys.babelfish_update_server_collation_name in
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--5.1.0--5.2.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--5.2.0--5.3.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--5.3.0--5.4.0.sql
-Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--5.4.0--5.5.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--5.5.0--5.6.0.sql
 Unexpected drop found for function sys.babelfishpg_common_get_babel_server_collation_oid in file babelfishpg_common--2.2.0--2.3.0.sql
 Unexpected drop found for function sys.babelfishpg_tsql_get_babel_server_collation_oid in file babelfishpg_tsql--2.2.0--2.3.0.sql
@@ -76,7 +73,6 @@ Unexpected drop found for function sys.babelfishpg_tsql_get_babel_server_collati
 Unexpected drop found for function sys.babelfishpg_tsql_get_babel_server_collation_oid in file babelfishpg_tsql--2.6.0--3.0.0.sql
 Unexpected drop found for function sys.get_bbf_binary_ops_count in file babelfish_common_helper--5.4.0--5.5.0.sql
 Unexpected drop found for function sys.pg_extension_config_remove in file babelfishpg_tsql--3.1.0--3.2.0.sql
-Unexpected drop found for function sys.tsql_query_to_xml_sfunc in file babelfishpg_tsql--5.4.0--5.5.0.sql
 Unexpected drop found for operator sys.+ in file babelfishpg_common--1.1.0--1.2.0.sql
 Unexpected drop found for operator sys./ in file babelfishpg_common--1.1.0--1.2.0.sql
 Unexpected drop found for operator sys./ in file babelfishpg_common--1.1.0--1.2.0.sql
@@ -112,7 +108,6 @@ Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--5.1.0--5.2.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--5.2.0--5.3.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--5.3.0--5.4.0.sql
-Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--5.4.0--5.5.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--5.5.0--5.6.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file spatial_types--5.2.0--5.3.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file spatial_types--5.3.0--5.4.0.sql
