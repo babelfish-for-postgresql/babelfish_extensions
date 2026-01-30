@@ -969,7 +969,7 @@ go
 
 DECLARE @line geography;
 SET @line = geography::STGeomFromText('LINESTRING(-122.34900 47.65100, -122.34950 47.65150)', 4326);
-SELECT CAST(ROUND(@line.STLength(), 2) AS FLOAT) AS Length;
+SELECT CAST(@line.STLength() AS numeric(20, 4)) AS Length;
 go
 
 DECLARE @point geometry;
@@ -979,7 +979,7 @@ go
 
 DECLARE @polygon geometry;
 SET @polygon = geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 0))', 0);
-SELECT CAST(ROUND(@polygon.STLength(), 2) AS FLOAT);
+SELECT CAST(@polygon.STLength() AS numeric(20, 6));
 go
 
 DECLARE @polygon geometry;
@@ -1116,12 +1116,12 @@ go
 
 DECLARE @large geometry;
 SET @large = geometry::STGeomFromText('LINESTRING(0 0, 1000000 1000000)', 0);
-SELECT CAST(ROUND(@large.STLength(), 2) AS FLOAT) AS LargeLength;
+SELECT CAST(@large.STLength() AS numeric(20, 4)) AS LargeLength;
 go
 
 DECLARE @small geometry;
 SET @small = geometry::STGeomFromText('LINESTRING(0 0, 0.0001 0.0001)', 0);
-SELECT CAST(ROUND(@small.STLength(), 2) AS FLOAT) AS SmallLength;
+SELECT CAST(@small.STLength() AS numeric(20, 4)) AS SmallLength;
 go
 
 SELECT g1.ID, g1.GeomColumn.STLength() AS Len1, g2.GeomColumn.STLength() AS Len2
@@ -1175,7 +1175,7 @@ go
 
 DECLARE @geogPoly geography;
 SET @geogPoly = geography::STGeomFromText('POLYGON((-122.358 47.653, -122.348 47.653, -122.348 47.649, -122.358 47.649, -122.358 47.653))', 4326);
-SELECT ROUND(@geogPoly.STLength(), 2) AS GeographyPolygonPerimeter;
+SELECT CAST(@geogPoly.STLength() AS numeric(20, 4)) AS GeographyPolygonPerimeter;
 go
 
 DECLARE @multiPointLine geometry;

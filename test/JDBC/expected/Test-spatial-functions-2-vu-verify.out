@@ -2024,11 +2024,11 @@ float
 
 DECLARE @line geography;
 SET @line = geography::STGeomFromText('LINESTRING(-122.34900 47.65100, -122.34950 47.65150)', 4326);
-SELECT CAST(ROUND(@line.STLength(), 2) AS FLOAT) AS Length;
+SELECT CAST(@line.STLength() AS numeric(20, 4)) AS Length;
 go
 ~~START~~
-float
-67.09
+numeric
+67.0929
 ~~END~~
 
 
@@ -2044,11 +2044,11 @@ float
 
 DECLARE @polygon geometry;
 SET @polygon = geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 0))', 0);
-SELECT CAST(ROUND(@polygon.STLength(), 2) AS FLOAT);
+SELECT CAST(@polygon.STLength() AS numeric(20, 6));
 go
 ~~START~~
-float
-3.41
+numeric
+3.414214
 ~~END~~
 
 
@@ -2420,21 +2420,21 @@ float
 
 DECLARE @large geometry;
 SET @large = geometry::STGeomFromText('LINESTRING(0 0, 1000000 1000000)', 0);
-SELECT CAST(ROUND(@large.STLength(), 2) AS FLOAT) AS LargeLength;
+SELECT CAST(@large.STLength() AS numeric(20, 4)) AS LargeLength;
 go
 ~~START~~
-float
-1414213.56
+numeric
+1414213.5624
 ~~END~~
 
 
 DECLARE @small geometry;
 SET @small = geometry::STGeomFromText('LINESTRING(0 0, 0.0001 0.0001)', 0);
-SELECT CAST(ROUND(@small.STLength(), 2) AS FLOAT) AS SmallLength;
+SELECT CAST(@small.STLength() AS numeric(20, 4)) AS SmallLength;
 go
 ~~START~~
-float
-0.0
+numeric
+0.0001
 ~~END~~
 
 
@@ -2534,11 +2534,11 @@ float#!#float
 
 DECLARE @geogPoly geography;
 SET @geogPoly = geography::STGeomFromText('POLYGON((-122.358 47.653, -122.348 47.653, -122.348 47.649, -122.358 47.649, -122.358 47.653))', 4326);
-SELECT ROUND(@geogPoly.STLength(), 2) AS GeographyPolygonPerimeter;
+SELECT CAST(@geogPoly.STLength() AS numeric(20, 4)) AS GeographyPolygonPerimeter;
 go
 ~~START~~
-float
-2392.01
+numeric
+2392.0137
 ~~END~~
 
 
