@@ -162,6 +162,6 @@ INSERT INTO TestGeospatialMethods_GeogTableTemp (ID, GeogColumn) VALUES (3, geog
 ~~ROW COUNT: 1~~
 
 
-CREATE VIEW TestGeospatialMethods_lengthTemp AS SELECT CAST(ROUND(GeomColumn.STLength(), 2) AS FLOAT) AS Length FROM TestGeospatialMethods_GeomTableTemp ORDER BY ID;
+CREATE VIEW TestGeospatialMethods_lengthTemp AS SELECT CAST(GeomColumn.STLength() AS numeric(20, 6)) AS Length FROM TestGeospatialMethods_GeomTableTemp ORDER BY ID;
 
-CREATE VIEW TestGeospatialMethods_lengthGeogTemp AS SELECT CAST(ROUND(GeogColumn.STLength(), 2) AS FLOAT) AS Length FROM TestGeospatialMethods_GeogTableTemp ORDER BY ID;
+CREATE VIEW TestGeospatialMethods_lengthGeogTemp AS SELECT CAST(GeogColumn.STLength() AS numeric(20, 6)) AS Length FROM TestGeospatialMethods_GeogTableTemp ORDER BY ID;
