@@ -41,15 +41,16 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	bool		binary_base64 = PG_GETARG_BOOL(4);
 	bool 		elements = false;
 	bool 		xsinil = false;
-	if (PG_NARGS() > 6)
-	{
-    			elements = PG_GETARG_BOOL(6);
-    			xsinil = PG_GETARG_BOOL(7);
-	}
 	char	   *root_name;
 
 	MemoryContext agg_context;
 	MemoryContext old_context;
+
+	if (PG_NARGS() > 6)
+        {
+                elements = PG_GETARG_BOOL(6);
+                xsinil = PG_GETARG_BOOL(7);
+        }
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
