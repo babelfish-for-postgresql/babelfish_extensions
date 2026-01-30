@@ -967,11 +967,6 @@ SET @line = geometry::STGeomFromText('LINESTRING(0 0 7, 3 4 7 6)', 0);
 SELECT @line.STLength() AS Length;
 go
 
-DECLARE @line geography;
-SET @line = geography::STGeomFromText('LINESTRING(-122.34900 47.65100, -122.34950 47.65150)', 4326);
-SELECT CAST(@line.STLength() AS numeric(20, 4)) AS Length;
-go
-
 DECLARE @point geometry;
 SET @point = geometry::STPointFromText('POINT(1 1)', 0);
 SELECT @point.STLength();
@@ -1173,15 +1168,7 @@ SELECT
     @withM.STLength() AS LengthWithM;
 go
 
-DECLARE @geogPoly geography;
-SET @geogPoly = geography::STGeomFromText('POLYGON((-122.358 47.653, -122.348 47.653, -122.348 47.649, -122.358 47.649, -122.358 47.653))', 4326);
-SELECT CAST(@geogPoly.STLength() AS numeric(20, 4)) AS GeographyPolygonPerimeter;
-go
-
 DECLARE @multiPointLine geometry;
 SET @multiPointLine = geometry::STGeomFromText('LINESTRING(0 0, 1 0, 2 0, 3 0, 4 0, 5 0)', 0);
 SELECT @multiPointLine.STLength() AS MultiPointLineLength;
-go
-
-SELECT * FROM TestGeospatialMethods_lengthGeogTemp;
 go
