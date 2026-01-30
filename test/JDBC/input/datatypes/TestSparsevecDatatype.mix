@@ -589,7 +589,7 @@ WITH cte AS (
 )
 INSERT INTO document_embeddings(id, embedding) SELECT 4, CAST(CONCAT('{1:',a, ',3:', b, ',4:', c, ',5:', d, '}/5') as sparsevec) FROM cte; 
 go
-SELECT * FROM document_embeddings;
+SELECT * FROM document_embeddings ORDER BY id;
 go
 SELECT TOP 5 * FROM document_embeddings ORDER BY embedding <=> '{1:1,2:2,3:4}/5';
 go
@@ -600,9 +600,9 @@ SELECT count(embedding <#> '{1:1,2:2,3:4}/5') FROM document_embeddings;
 go
 
 -- WHERE clause expressions
-SELECT * FROM document_embeddings WHERE embedding <-> '{1:1,2:2,4:4}/5' < 5;
-SELECT * FROM document_embeddings WHERE embedding <=> '{1:1,2:2,4:4}/5' < 5;
-SELECT * FROM document_embeddings WHERE embedding <#> '{1:1,2:2,4:4}/5' < 5; 
+SELECT * FROM document_embeddings WHERE embedding <-> '{1:1,2:2,4:4}/5' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <=> '{1:1,2:2,4:4}/5' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <#> '{1:1,2:2,4:4}/5' < 5 ORDER BY id; 
 go
 
 SELECT AVG(embedding) FROM document_embeddings;
