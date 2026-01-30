@@ -1,0 +1,1949 @@
+-- Test from tables
+SELECT test_value, style_number, 
+       CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS converted_value,
+       TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS try_converted_value,
+       description
+FROM money_style_conversion_test
+ORDER BY id;
+GO
+~~START~~
+money#!#sql_variant#!#varchar#!#varchar#!#varchar
+1234.1357#!#0#!#1234.14#!#1234.14#!#Basic decimal - style 0
+1234.1357#!#1#!#1,234.14#!#1,234.14#!#Basic decimal - style 1
+1234.1357#!#2#!#1234.1357#!#1234.1357#!#Basic decimal - style 2
+1234.1357#!#126#!#1234.1357#!#1234.1357#!#Basic decimal - style 126
+1234.1357#!#<NULL>#!#<NULL>#!#<NULL>#!#Basic decimal - NULL style
+-1234.1357#!#0#!#-1234.14#!#-1234.14#!#Negative decimal - style 0
+-1234.1357#!#1#!#-1,234.14#!#-1,234.14#!#Negative decimal - style 1
+-1234.1357#!#2#!#-1234.1357#!#-1234.1357#!#Negative decimal - style 2
+922337203685477.5807#!#0#!#922337203685477.58#!#922337203685477.58#!#Maximum MONEY value
+-922337203685477.5808#!#0#!#-922337203685477.58#!#-922337203685477.58#!#Minimum MONEY value
+922337203685477.5807#!#1#!#922,337,203,685,477.58#!#922,337,203,685,477.58#!#Maximum MONEY value with comma format
+-922337203685477.5808#!#1#!#-922,337,203,685,477.58#!#-922,337,203,685,477.58#!#Minimum MONEY value with comma format
+0.0000#!#0#!#0.00#!#0.00#!#Zero value - style 0
+0.0000#!#1#!#0.00#!#0.00#!#Zero value - style 1
+0.0000#!#2#!#0.0000#!#0.0000#!#Zero value - style 2
+1234.1000#!#0#!#1234.10#!#1234.10#!#Two decimal places
+1234.1000#!#0#!#1234.10#!#1234.10#!#One decimal place
+1234.0000#!#0#!#1234.00#!#1234.00#!#Four trailing zeros
+0.1234#!#0#!#0.12#!#0.12#!#Leading zero decimal
+123.4500#!#-1#!#123.45#!#123.45#!#Negative style -1
+123.4500#!#-126#!#123.45#!#123.45#!#Negative style -126
+123.4568#!#0#!#123.46#!#123.46#!#Float-like decimal
+-123.4568#!#0#!#-123.46#!#-123.46#!#Negative float-like decimal
+123456789.1234#!#0#!#123456789.12#!#123456789.12#!#Large number with decimals
+-123456789.1234#!#1#!#-123,456,789.12#!#-123,456,789.12#!#Large negative with comma format
+123.4500#!#0#!#123.45#!#123.45#!#Currency symbol value
+-123.4500#!#1#!#-123.45#!#-123.45#!#Negative currency symbol value
+~~END~~
+
+
+SELECT test_value, style_number,
+       CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS converted_value,
+       TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS try_converted_value,
+       description
+FROM smallmoney_style_conversion_test
+ORDER BY id;
+GO
+~~START~~
+smallmoney#!#sql_variant#!#varchar#!#varchar#!#varchar
+1234.1357#!#0#!#1234.14#!#1234.14#!#Basic decimal - style 0
+1234.1357#!#1#!#1,234.14#!#1,234.14#!#Basic decimal - style 1
+1234.1357#!#2#!#1234.1357#!#1234.1357#!#Basic decimal - style 2
+1234.1357#!#126#!#1234.1357#!#1234.1357#!#Basic decimal - style 126
+1234.1357#!#<NULL>#!#<NULL>#!#<NULL>#!#Basic decimal - NULL style
+-1234.1357#!#0#!#-1234.14#!#-1234.14#!#Negative decimal - style 0
+-1234.1357#!#1#!#-1,234.14#!#-1,234.14#!#Negative decimal - style 1
+-1234.1357#!#2#!#-1234.1357#!#-1234.1357#!#Negative decimal - style 2
+214748.3647#!#0#!#214748.36#!#214748.36#!#Maximum SMALLMONEY value
+-214748.3648#!#0#!#-214748.36#!#-214748.36#!#Minimum SMALLMONEY value
+214748.3647#!#1#!#214,748.36#!#214,748.36#!#Maximum SMALLMONEY with comma format
+-214748.3648#!#1#!#-214,748.36#!#-214,748.36#!#Minimum SMALLMONEY with comma format
+0.0000#!#0#!#0.00#!#0.00#!#Zero value - style 0
+0.0000#!#1#!#0.00#!#0.00#!#Zero value - style 1
+0.0000#!#2#!#0.0000#!#0.0000#!#Zero value - style 2
+1234.1000#!#0#!#1234.10#!#1234.10#!#Two decimal places
+1234.1000#!#0#!#1234.10#!#1234.10#!#One decimal place
+1234.0000#!#0#!#1234.00#!#1234.00#!#Four trailing zeros
+0.1234#!#0#!#0.12#!#0.12#!#Leading zero decimal
+123.4500#!#-1#!#123.45#!#123.45#!#Negative style -1
+123.4500#!#-126#!#123.45#!#123.45#!#Negative style -126
+123.4567#!#0#!#123.46#!#123.46#!#Float-like decimal
+-123.4567#!#0#!#-123.46#!#-123.46#!#Negative float-like decimal
+123.4500#!#0#!#123.45#!#123.45#!#Currency symbol value
+-123.4500#!#1#!#-123.45#!#-123.45#!#Negative currency symbol value
+~~END~~
+
+
+-- Test views
+SELECT * FROM money_style_test_v1;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+SELECT * FROM money_style_test_v2;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+SELECT * FROM money_style_test_v3;
+GO
+~~START~~
+varchar
+1,234.14
+~~END~~
+
+
+SELECT * FROM money_style_test_v4;
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+SELECT * FROM money_style_test_v5;
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+SELECT * FROM smallmoney_style_test_v1;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+SELECT * FROM smallmoney_style_test_v2;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+SELECT * FROM smallmoney_style_test_v3;
+GO
+~~START~~
+varchar
+1,234.14
+~~END~~
+
+
+SELECT * FROM smallmoney_style_test_v4;
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+SELECT * FROM smallmoney_style_test_v5;
+GO
+~~START~~
+varchar
+1234.1357
+~~END~~
+
+
+-- Test procedures
+EXECUTE money_style_test_p1;
+GO
+~~START~~
+varchar
+1234.14
+~~END~~
+
+
+EXECUTE money_style_test_p2;
+GO
+~~START~~
+varchar
+1,234.14
+~~END~~
+
+
+EXECUTE money_style_test_p3;
+GO
+~~START~~
+varchar
+1,234.14
+~~END~~
+
+
+EXECUTE money_style_test_p4;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+EXECUTE money_style_test_p5;
+GO
+~~START~~
+varchar
+23.12
+~~END~~
+
+
+EXECUTE smallmoney_style_test_p1;
+GO
+~~START~~
+varchar
+1,234.14
+~~END~~
+
+
+EXECUTE smallmoney_style_test_p2;
+GO
+~~START~~
+varchar
+-1,234.14
+~~END~~
+
+
+EXECUTE smallmoney_style_test_p3;
+GO
+~~START~~
+varchar
+214,748.36
+~~END~~
+
+
+EXECUTE smallmoney_style_test_p4;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+EXECUTE smallmoney_style_test_p5;
+GO
+~~START~~
+varchar
+0.00
+~~END~~
+
+
+-- Test decimal style (should fail)
+SELECT CONVERT(VARCHAR, CAST(123376736.12345678923456789 AS MONEY), 1.8);
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+SELECT 'style 1' AS test_case, CONVERT(VARCHAR, CAST(123.123 AS MONEY), 1) AS result;
+GO
+~~START~~
+varchar#!#varchar
+style 1#!#123.12
+~~END~~
+
+
+SELECT 'style -1 ' AS test_case, CONVERT(VARCHAR, CAST(123.344 AS MONEY), -1) AS result;
+GO
+~~START~~
+varchar#!#varchar
+style -1 #!#123.34
+~~END~~
+
+
+SELECT 'style 2' AS test_case, CONVERT(VARCHAR, CAST(123.345 AS MONEY), 2) AS result;
+GO
+~~START~~
+varchar#!#varchar
+style 2#!#123.3450
+~~END~~
+
+
+-- Test negative styles
+SELECT 'Negative style -126' AS test_case, CONVERT(VARCHAR, CAST(123 AS MONEY), -126) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Negative style -126#!#123.00
+~~END~~
+
+
+SELECT 'Negative style -126' AS test_case, CONVERT(VARCHAR, CONVERT(MONEY,123), -126) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Negative style -126#!#123.00
+~~END~~
+
+
+SELECT 'Negative style -1' AS test_case, CONVERT(VARCHAR, CAST(123 AS MONEY), -1) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Negative style -1#!#123.00
+~~END~~
+
+
+SELECT 'Negative style -1' AS test_case, CONVERT(VARCHAR, CONVERT(MONEY,123), -1) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Negative style -1#!#123.00
+~~END~~
+
+
+-- Test style 16
+SELECT 'Style 16' AS test_case, CONVERT(VARCHAR, CAST($23.12 AS MONEY), 16) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Style 16#!#23.12
+~~END~~
+
+
+SELECT 'Style 16' AS test_case, CONVERT(VARCHAR, CONVERT(MONEY,23.12), 16) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Style 16#!#23.12
+~~END~~
+
+
+-- Test MONEY conversion with different styles
+DECLARE @val MONEY = 1234.1357;
+SELECT 'Default style' AS test_case, CONVERT(VARCHAR, @val) AS result;
+SELECT 'Style 0' AS test_case, CONVERT(VARCHAR, @val, 0) AS result;
+SELECT 'Style 1' AS test_case, CONVERT(VARCHAR, @val, 1) AS result;
+SELECT 'Style 2' AS test_case, CONVERT(VARCHAR, @val, 2) AS result;
+SELECT 'Style 126' AS test_case, CONVERT(VARCHAR, @val, 126) AS result;
+SELECT 'Style -1' AS test_case, CONVERT(VARCHAR, @val, -1) AS result;
+SELECT 'Style -126' AS test_case, CONVERT(VARCHAR, @val, -126) AS result;
+SELECT 'Style 16' AS test_case, CONVERT(VARCHAR, @val, 16) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Default style#!#1234.14
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style 0#!#1234.14
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style 1#!#1,234.14
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style 2#!#1234.1357
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style 126#!#1234.1357
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style -1#!#1,234.14
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style -126#!#1,234.14
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style 16#!#1,234.14
+~~END~~
+
+
+DECLARE @val MONEY = 1234.1357;
+SELECT 'Style 1.8' AS test_case, CONVERT(VARCHAR, @val, 1.8) AS result;
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+-- Test SMALLMONEY conversion with different styles
+DECLARE @val SMALLMONEY = 1234.1357;
+SELECT 'Default style' AS test_case, CONVERT(VARCHAR, @val) AS result;
+SELECT 'Style 0' AS test_case, CONVERT(VARCHAR, @val, 0) AS result;
+SELECT 'Style 1' AS test_case, CONVERT(VARCHAR, @val, 1) AS result;
+SELECT 'Style 2' AS test_case, CONVERT(VARCHAR, @val, 2) AS result;
+SELECT 'Style 126' AS test_case, CONVERT(VARCHAR, @val, 126) AS result;
+SELECT 'Style -1' AS test_case, CONVERT(VARCHAR, @val, -1) AS result;
+SELECT 'Style -126' AS test_case, CONVERT(VARCHAR, @val, -126) AS result;
+SELECT 'Style 16' AS test_case, CONVERT(VARCHAR, @val, 16) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Default style#!#1234.14
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style 0#!#1234.14
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style 1#!#1,234.14
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style 2#!#1234.1357
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style 126#!#1234.1357
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style -1#!#1,234.14
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style -126#!#1,234.14
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Style 16#!#1,234.14
+~~END~~
+
+
+DECLARE @val SMALLMONEY = 1234.1357;
+SELECT 'Style 1.8' AS test_case, CONVERT(VARCHAR, @val, 1.8) AS result;
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+-- Test edge cases
+-- Max SMALLMONEY tests
+SELECT 'Max SMALLMONEY Style 1' AS test_case, CONVERT(VARCHAR, CAST(214748.3647 AS SMALLMONEY), 1) AS result;
+SELECT 'Max SMALLMONEY Style 2' AS test_case, CONVERT(VARCHAR, CAST(214748.3647 AS SMALLMONEY), 2) AS result;
+SELECT 'Max SMALLMONEY Style 0' AS test_case, CONVERT(VARCHAR, CAST(214748.3647 AS SMALLMONEY), 0) AS result;
+SELECT 'Max SMALLMONEY Default Style' AS test_case, CONVERT(VARCHAR, CAST(214748.3647 AS SMALLMONEY)) AS result;
+SELECT 'Max SMALLMONEY Style 126' AS test_case, CONVERT(VARCHAR, CAST(214748.3647 AS SMALLMONEY), 126) AS result;
+SELECT 'Max SMALLMONEY Style -126' AS test_case, CONVERT(VARCHAR, CAST(214748.3647 AS SMALLMONEY), -126) AS result;
+SELECT 'Max SMALLMONEY Style -1' AS test_case, CONVERT(VARCHAR, CAST(214748.3647 AS SMALLMONEY), -1) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Max SMALLMONEY Style 1#!#214,748.36
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max SMALLMONEY Style 2#!#214748.3647
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max SMALLMONEY Style 0#!#214748.36
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max SMALLMONEY Default Style#!#214748.36
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max SMALLMONEY Style 126#!#214748.3647
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max SMALLMONEY Style -126#!#214,748.36
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max SMALLMONEY Style -1#!#214,748.36
+~~END~~
+
+
+SELECT 'Max SMALLMONEY Invalid Style -1.8' AS test_case, CONVERT(VARCHAR, CAST(214748.3647 AS SMALLMONEY), -1.8) AS result;
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+SELECT 'Max SMALLMONEY Invalid Style 0.23' AS test_case, CONVERT(VARCHAR, CAST(214748.3647 AS SMALLMONEY), 0.23) AS result;
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+-- Min SMALLMONEY tests
+SELECT 'Min SMALLMONEY Style 1' AS test_case, CONVERT(VARCHAR, CAST(-214748.3648 AS SMALLMONEY), 1) AS result;
+SELECT 'Min SMALLMONEY Style 2' AS test_case, CONVERT(VARCHAR, CAST(-214748.3648 AS SMALLMONEY), 2) AS result;
+SELECT 'Min SMALLMONEY Style 0' AS test_case, CONVERT(VARCHAR, CAST(-214748.3648 AS SMALLMONEY), 0) AS result;
+SELECT 'Min SMALLMONEY Default Style' AS test_case, CONVERT(VARCHAR, CAST(-214748.3648 AS SMALLMONEY)) AS result;
+SELECT 'Min SMALLMONEY Style 126' AS test_case, CONVERT(VARCHAR, CAST(-214748.3648 AS SMALLMONEY), 126) AS result;
+SELECT 'Min SMALLMONEY Style -126' AS test_case, CONVERT(VARCHAR, CAST(-214748.3648 AS SMALLMONEY), -126) AS result;
+SELECT 'Min SMALLMONEY Style -1' AS test_case, CONVERT(VARCHAR, CAST(-214748.3648 AS SMALLMONEY), -1) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Min SMALLMONEY Style 1#!#-214,748.36
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min SMALLMONEY Style 2#!#-214748.3648
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min SMALLMONEY Style 0#!#-214748.36
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min SMALLMONEY Default Style#!#-214748.36
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min SMALLMONEY Style 126#!#-214748.3648
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min SMALLMONEY Style -126#!#-214,748.36
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min SMALLMONEY Style -1#!#-214,748.36
+~~END~~
+
+
+SELECT 'Min SMALLMONEY Invalid Style -1.8' AS test_case, CONVERT(VARCHAR, CAST(-214748.3648 AS SMALLMONEY), -1.8) AS result;
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+SELECT 'Min SMALLMONEY Invalid Style 0.23' AS test_case, CONVERT(VARCHAR, CAST(-214748.3648 AS SMALLMONEY), 0.23) AS result;
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+
+-- Max MONEY tests
+SELECT 'Max MONEY Style 1' AS test_case, CONVERT(VARCHAR, CAST(922337203685477.5807 AS MONEY), 1) AS result;
+SELECT 'Max MONEY Style 2' AS test_case, CONVERT(VARCHAR, CAST(922337203685477.5807 AS MONEY), 2) AS result;
+SELECT 'Max MONEY Style 0' AS test_case, CONVERT(VARCHAR, CAST(922337203685477.5807 AS MONEY), 0) AS result;
+SELECT 'Max MONEY Default Style' AS test_case, CONVERT(VARCHAR, CAST(922337203685477.5807 AS MONEY)) AS result;
+SELECT 'Max MONEY Style 126' AS test_case, CONVERT(VARCHAR, CAST(922337203685477.5807 AS MONEY), 126) AS result;
+SELECT 'Max MONEY Style -126' AS test_case, CONVERT(VARCHAR, CAST(922337203685477.5807 AS MONEY), -126) AS result;
+SELECT 'Max MONEY Style -1' AS test_case, CONVERT(VARCHAR, CAST(922337203685477.5807 AS MONEY), -1) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Max MONEY Style 1#!#922,337,203,685,477.58
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max MONEY Style 2#!#922337203685477.5807
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max MONEY Style 0#!#922337203685477.58
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max MONEY Default Style#!#922337203685477.58
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max MONEY Style 126#!#922337203685477.5807
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max MONEY Style -126#!#922,337,203,685,477.58
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Max MONEY Style -1#!#922,337,203,685,477.58
+~~END~~
+
+
+SELECT 'Max MONEY Invalid Style -1.8' AS test_case, CONVERT(VARCHAR, CAST(922337203685477.5807 AS MONEY), -1.8) AS result;
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+SELECT 'Max MONEY Invalid Style 0.23' AS test_case, CONVERT(VARCHAR, CAST(922337203685477.5807 AS MONEY), 0.23) AS result;
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+
+-- Min MONEY tests
+SELECT 'Min MONEY Style 1' AS test_case, CONVERT(VARCHAR, CAST(-922337203685477.5808 AS MONEY), 1) AS result;
+SELECT 'Min MONEY Style 2' AS test_case, CONVERT(VARCHAR, CAST(-922337203685477.5808 AS MONEY), 2) AS result;
+SELECT 'Min MONEY Style 0' AS test_case, CONVERT(VARCHAR, CAST(-922337203685477.5808 AS MONEY), 0) AS result;
+SELECT 'Min MONEY Default Style' AS test_case, CONVERT(VARCHAR, CAST(-922337203685477.5808 AS MONEY)) AS result;
+SELECT 'Min MONEY Style 126' AS test_case, CONVERT(VARCHAR, CAST(-922337203685477.5808 AS MONEY), 126) AS result;
+SELECT 'Min MONEY Style -126' AS test_case, CONVERT(VARCHAR, CAST(-922337203685477.5808 AS MONEY), -126) AS result;
+SELECT 'Min MONEY Style -1' AS test_case, CONVERT(VARCHAR, CAST(-922337203685477.5808 AS MONEY), -1) AS result;
+GO
+~~START~~
+varchar#!#varchar
+Min MONEY Style 1#!#-922,337,203,685,477.58
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min MONEY Style 2#!#-922337203685477.5808
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min MONEY Style 0#!#-922337203685477.58
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min MONEY Default Style#!#-922337203685477.58
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min MONEY Style 126#!#-922337203685477.5808
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min MONEY Style -126#!#-922,337,203,685,477.58
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Min MONEY Style -1#!#-922,337,203,685,477.58
+~~END~~
+
+
+SELECT 'Min MONEY Invalid Style -1.8' AS test_case, CONVERT(VARCHAR, CAST(-922337203685477.5808 AS MONEY), -1.8) AS result;
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+SELECT 'Min MONEY Invalid Style 0.23' AS test_case, CONVERT(VARCHAR, CAST(-922337203685477.5808 AS MONEY), 0.23) AS result;
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+WITH style_series AS (
+    -- Range -130 to -120
+    SELECT -130 AS style_num
+    UNION ALL SELECT -129 UNION ALL SELECT -128 UNION ALL SELECT -127 UNION ALL SELECT -126
+    UNION ALL SELECT -125 UNION ALL SELECT -124 UNION ALL SELECT -123 UNION ALL SELECT -122
+    UNION ALL SELECT -121 UNION ALL SELECT -120
+    
+    -- Range -10 to 10
+    UNION ALL SELECT -10 UNION ALL SELECT -9 UNION ALL SELECT -8 UNION ALL SELECT -7
+    UNION ALL SELECT -6 UNION ALL SELECT -5 UNION ALL SELECT -4 UNION ALL SELECT -3
+    UNION ALL SELECT -2 UNION ALL SELECT -1 UNION ALL SELECT 0 UNION ALL SELECT 1
+    UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
+    UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9
+    UNION ALL SELECT 10
+    
+    -- Range 120 to 130
+    UNION ALL SELECT 120 UNION ALL SELECT 121 UNION ALL SELECT 122 UNION ALL SELECT 123
+    UNION ALL SELECT 124 UNION ALL SELECT 125 UNION ALL SELECT 126 UNION ALL SELECT 127
+    UNION ALL SELECT 128 UNION ALL SELECT 129 UNION ALL SELECT 130
+    
+    -- Max and Min INT
+    UNION ALL SELECT 32767  -- MAX INT
+    UNION ALL SELECT -32767 -- MIN INT
+)
+SELECT 
+    'Style ' + CAST(style_num AS VARCHAR) AS test_case,
+    style_num,
+    CONVERT(VARCHAR, CAST(1234.5678 AS MONEY), style_num) AS result
+FROM style_series
+ORDER BY style_num;
+GO
+~~START~~
+varchar#!#int#!#varchar
+Style -32767#!#-32767#!#1,234.57
+Style -130#!#-130#!#1,234.57
+Style -129#!#-129#!#1,234.57
+Style -128#!#-128#!#1,234.57
+Style -127#!#-127#!#1,234.57
+Style -126#!#-126#!#1,234.57
+Style -125#!#-125#!#1,234.57
+Style -124#!#-124#!#1,234.57
+Style -123#!#-123#!#1,234.57
+Style -122#!#-122#!#1,234.57
+Style -121#!#-121#!#1,234.57
+Style -120#!#-120#!#1,234.57
+Style -10#!#-10#!#1,234.57
+Style -9#!#-9#!#1,234.57
+Style -8#!#-8#!#1,234.57
+Style -7#!#-7#!#1,234.57
+Style -6#!#-6#!#1,234.57
+Style -5#!#-5#!#1,234.57
+Style -4#!#-4#!#1,234.57
+Style -3#!#-3#!#1,234.57
+Style -2#!#-2#!#1,234.57
+Style -1#!#-1#!#1,234.57
+Style 0#!#0#!#1234.57
+Style 1#!#1#!#1,234.57
+Style 2#!#2#!#1234.5678
+Style 3#!#3#!#1,234.57
+Style 4#!#4#!#1,234.57
+Style 5#!#5#!#1,234.57
+Style 6#!#6#!#1,234.57
+Style 7#!#7#!#1,234.57
+Style 8#!#8#!#1,234.57
+Style 9#!#9#!#1,234.57
+Style 10#!#10#!#1,234.57
+Style 120#!#120#!#1,234.57
+Style 121#!#121#!#1,234.57
+Style 122#!#122#!#1,234.57
+Style 123#!#123#!#1,234.57
+Style 124#!#124#!#1,234.57
+Style 125#!#125#!#1,234.57
+Style 126#!#126#!#1234.5678
+Style 127#!#127#!#1,234.57
+Style 128#!#128#!#1,234.57
+Style 129#!#129#!#1,234.57
+Style 130#!#130#!#1,234.57
+Style 32767#!#32767#!#1,234.57
+~~END~~
+
+
+WITH style_series AS (
+    -- Range -130 to -120
+    SELECT -130 AS style_num
+    UNION ALL SELECT -129 UNION ALL SELECT -128 UNION ALL SELECT -127 UNION ALL SELECT -126
+    UNION ALL SELECT -125 UNION ALL SELECT -124 UNION ALL SELECT -123 UNION ALL SELECT -122
+    UNION ALL SELECT -121 UNION ALL SELECT -120
+    
+    -- Range -10 to 10
+    UNION ALL SELECT -10 UNION ALL SELECT -9 UNION ALL SELECT -8 UNION ALL SELECT -7
+    UNION ALL SELECT -6 UNION ALL SELECT -5 UNION ALL SELECT -4 UNION ALL SELECT -3
+    UNION ALL SELECT -2 UNION ALL SELECT -1 UNION ALL SELECT 0 UNION ALL SELECT 1
+    UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
+    UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9
+    UNION ALL SELECT 10
+    
+    -- Range 120 to 130
+    UNION ALL SELECT 120 UNION ALL SELECT 121 UNION ALL SELECT 122 UNION ALL SELECT 123
+    UNION ALL SELECT 124 UNION ALL SELECT 125 UNION ALL SELECT 126 UNION ALL SELECT 127
+    UNION ALL SELECT 128 UNION ALL SELECT 129 UNION ALL SELECT 130
+    
+    -- Max and Min INT
+    UNION ALL SELECT 32767  -- MAX INT
+    UNION ALL SELECT -32767 -- MIN INT
+)
+SELECT 
+    'Style ' + CAST(style_num AS VARCHAR) AS test_case,
+    style_num,
+    CONVERT(VARCHAR, CAST(5678.1234 AS SMALLMONEY), style_num) AS result
+FROM style_series
+ORDER BY style_num;
+GO
+~~START~~
+varchar#!#int#!#varchar
+Style -32767#!#-32767#!#5,678.12
+Style -130#!#-130#!#5,678.12
+Style -129#!#-129#!#5,678.12
+Style -128#!#-128#!#5,678.12
+Style -127#!#-127#!#5,678.12
+Style -126#!#-126#!#5,678.12
+Style -125#!#-125#!#5,678.12
+Style -124#!#-124#!#5,678.12
+Style -123#!#-123#!#5,678.12
+Style -122#!#-122#!#5,678.12
+Style -121#!#-121#!#5,678.12
+Style -120#!#-120#!#5,678.12
+Style -10#!#-10#!#5,678.12
+Style -9#!#-9#!#5,678.12
+Style -8#!#-8#!#5,678.12
+Style -7#!#-7#!#5,678.12
+Style -6#!#-6#!#5,678.12
+Style -5#!#-5#!#5,678.12
+Style -4#!#-4#!#5,678.12
+Style -3#!#-3#!#5,678.12
+Style -2#!#-2#!#5,678.12
+Style -1#!#-1#!#5,678.12
+Style 0#!#0#!#5678.12
+Style 1#!#1#!#5,678.12
+Style 2#!#2#!#5678.1234
+Style 3#!#3#!#5,678.12
+Style 4#!#4#!#5,678.12
+Style 5#!#5#!#5,678.12
+Style 6#!#6#!#5,678.12
+Style 7#!#7#!#5,678.12
+Style 8#!#8#!#5,678.12
+Style 9#!#9#!#5,678.12
+Style 10#!#10#!#5,678.12
+Style 120#!#120#!#5,678.12
+Style 121#!#121#!#5,678.12
+Style 122#!#122#!#5,678.12
+Style 123#!#123#!#5,678.12
+Style 124#!#124#!#5,678.12
+Style 125#!#125#!#5,678.12
+Style 126#!#126#!#5678.1234
+Style 127#!#127#!#5,678.12
+Style 128#!#128#!#5,678.12
+Style 129#!#129#!#5,678.12
+Style 130#!#130#!#5,678.12
+Style 32767#!#32767#!#5,678.12
+~~END~~
+
+
+select convert(varchar, cast(123 as money), NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- Test DATETIME conversions
+SELECT 
+    test_value,
+    style_number,
+    TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS TRY_CONVERT_RESULTS,
+    CASE 
+        WHEN style_number IS NULL THEN 'NULL style'
+        WHEN style_number < 0 OR style_number > 25 THEN 
+            CAST(style_number AS VARCHAR) + ' is not a valid style number when converting from DATETIME to a character string.'
+        ELSE CONVERT(VARCHAR, test_value, CAST(style_number AS INT))
+    END AS CONVERT_RESULTS,
+    description
+FROM datetime_style_conversion_test
+ORDER BY id;
+GO
+~~START~~
+datetime#!#sql_variant#!#varchar#!#varchar#!#varchar
+2023-09-25 14:30:45.123#!#<NULL>#!#<NULL>#!#NULL style#!#Default style (NULL)
+2023-09-25 14:30:45.123#!#0#!#Sep 25 2023  2:30PM#!#Sep 25 2023  2:30PM#!#Style 0 - Default
+2023-09-25 14:30:45.123#!#1#!#09/25/23#!#09/25/23#!#Style 1 - USA mm/dd/yy
+2023-09-25 14:30:45.123#!#2#!#23.09.25#!#23.09.25#!#Style 2 - ANSI yy.mm.dd
+2023-09-25 14:30:45.123#!#3#!#25/09/23#!#25/09/23#!#Style 3 - British dd/mm/yy
+2023-09-25 14:30:45.123#!#4#!#25.09.23#!#25.09.23#!#Style 4 - German dd.mm.yy
+2023-09-25 14:30:45.123#!#5#!#25-09-23#!#25-09-23#!#Style 5 - Italian dd-mm-yy
+2023-09-25 14:30:45.123#!#6#!#25 Sep 23#!#25 Sep 23#!#Style 6 - dd mon yy
+2023-09-25 14:30:45.123#!#7#!#Sep 25, 23#!#Sep 25, 23#!#Style 7 - Mon dd, yy
+2023-09-25 14:30:45.123#!#8#!#14:30:45#!#14:30:45#!#Style 8 - hh:mm:ss
+2023-09-25 14:30:45.123#!#9#!#Sep 25 2023  2:30:45:123PM#!#Sep 25 2023  2:30:45:123PM#!#Style 9 - Jan 1 1900
+2023-09-25 14:30:45.123#!#10#!#09-25-23#!#09-25-23#!#Style 10 - mm-dd-yy
+2023-09-25 14:30:45.123#!#11#!#23/09/25#!#23/09/25#!#Style 11 - yy/mm/dd
+2023-09-25 14:30:45.123#!#12#!#230925#!#230925#!#Style 12 - yymmdd
+2023-09-25 14:30:45.123#!#13#!#25 Sep 2023 14:30:45:123#!#25 Sep 2023 14:30:45:123#!#Style 13 - dd mon yyyy hh:mm:ss:mmm(24h)
+2023-09-25 14:30:45.123#!#14#!#14:30:45:123#!#14:30:45:123#!#Style 14 - hh:mm:ss:mmm(24h)
+2023-09-25 14:30:45.123#!#20#!#2023-09-25 14:30:45#!#2023-09-25 14:30:45#!#Style 20 - yyyy-mm-dd hh:mm:ss(24h)
+2023-09-25 14:30:45.123#!#21#!#2023-09-25 14:30:45.123#!#2023-09-25 14:30:45.123#!#Style 21 - yyyy-mm-dd hh:mm:ss.mmm(24h)
+2023-09-25 14:30:45.123#!#22#!#09/25/23  2:30:45 PM#!#09/25/23  2:30:45 PM#!#Style 22 - mm/dd/yy hh:mm:ss PM
+2023-09-25 14:30:45.123#!#23#!#2023-09-25#!#2023-09-25#!#Style 23 - yyyy-mm-dd
+2023-09-25 14:30:45.123#!#24#!#14:30:45#!#14:30:45#!#Style 24 - hh:mm:ss
+2023-09-25 14:30:45.123#!#25#!#2023-09-25 14:30:45.123#!#2023-09-25 14:30:45.123#!#Style 25 - yyyy-mm-dd hh:mm:ss.mmm
+2023-09-25 14:30:45.123#!#-1#!#<NULL>#!#-1 is not a valid style number when converting from DATETIME to a character string.#!#Style -1
+2023-09-25 14:30:45.123#!#-2#!#<NULL>#!#-2 is not a valid style number when converting from DATETIME to a character string.#!#Style -2
+2023-09-25 14:30:45.123#!#-3#!#<NULL>#!#-3 is not a valid style number when converting from DATETIME to a character string.#!#Style -3
+1753-01-01 00:00:00.0#!#0#!#Jan  1 1753 12:00AM#!#Jan  1 1753 12:00AM#!#Min DATETIME value
+9999-12-31 23:59:59.997#!#0#!#Dec 31 9999 11:59PM#!#Dec 31 9999 11:59PM#!#Max DATETIME value
+2023-09-25 23:59:59.997#!#0#!#Sep 25 2023 11:59PM#!#Sep 25 2023 11:59PM#!#Near midnight
+2023-09-25 00:00:00.0#!#0#!#Sep 25 2023 12:00AM#!#Sep 25 2023 12:00AM#!#Midnight exactly
+2024-02-29 14:30:45.123#!#0#!#Feb 29 2024  2:30PM#!#Feb 29 2024  2:30PM#!#Valid leap year date
+~~END~~
+
+
+-- Test DATE conversions
+SELECT 
+    test_value,
+    style_number,
+    TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS TRY_CONVERT_RESULTS,
+    CASE 
+        WHEN style_number IS NULL THEN 'NULL style'
+        WHEN style_number < 0 OR style_number NOT IN (0,1,2,3,4,5,6,7,10,11,12,23) THEN 
+            CAST(style_number AS VARCHAR) + ' is not a valid style number when converting from DATE to a character string.'
+        ELSE CONVERT(VARCHAR, test_value, CAST(style_number AS INT))
+    END AS CONVERT_RESULTS,
+    description
+FROM date_style_conversion_test
+ORDER BY id;
+GO
+~~START~~
+date#!#sql_variant#!#varchar#!#varchar#!#varchar
+2023-09-25#!#<NULL>#!#<NULL>#!#NULL style#!#Default style (NULL)
+2023-09-25#!#0#!#Sep 25 2023#!#Sep 25 2023#!#Style 0 - Default
+2023-09-25#!#1#!#09/25/23#!#09/25/23#!#Style 1 - USA mm/dd/yy
+2023-09-25#!#2#!#23.09.25#!#23.09.25#!#Style 2 - ANSI yy.mm.dd
+2023-09-25#!#3#!#25/09/23#!#25/09/23#!#Style 3 - British dd/mm/yy
+2023-09-25#!#4#!#25.09.23#!#25.09.23#!#Style 4 - German dd.mm.yy
+2023-09-25#!#5#!#25-09-23#!#25-09-23#!#Style 5 - Italian dd-mm-yy
+2023-09-25#!#6#!#25 Sep 23#!#25 Sep 23#!#Style 6 - dd mon yy
+2023-09-25#!#7#!#Sep 25, 23#!#Sep 25, 23#!#Style 7 - Mon dd, yy
+2023-09-25#!#10#!#09-25-23#!#09-25-23#!#Style 10 - mm-dd-yy
+2023-09-25#!#11#!#23/09/25#!#23/09/25#!#Style 11 - yy/mm/dd
+2023-09-25#!#12#!#230925#!#230925#!#Style 12 - yymmdd
+2023-09-25#!#23#!#2023-09-25#!#2023-09-25#!#Style 23 - yyyy-mm-dd
+2023-09-25#!#-1#!#<NULL>#!#-1 is not a valid style number when converting from DATE to a character string.#!#Style -1
+2023-09-25#!#-2#!#<NULL>#!#-2 is not a valid style number when converting from DATE to a character string.#!#Style -2
+2023-09-25#!#-3#!#<NULL>#!#-3 is not a valid style number when converting from DATE to a character string.#!#Style -3
+0001-01-01#!#0#!#Jan  1 0001#!#Jan  1 0001#!#Min DATE value
+9999-12-31#!#0#!#Dec 31 9999#!#Dec 31 9999#!#Max DATE value
+2024-02-29#!#0#!#Feb 29 2024#!#Feb 29 2024#!#Valid leap year date
+~~END~~
+
+
+-- Test TIME conversions
+SELECT 
+    test_value,
+    style_number,
+    TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS TRY_CONVERT_RESULTS,
+    CASE 
+        WHEN style_number IS NULL THEN 'NULL style'
+        WHEN style_number < 0 OR style_number NOT IN (0,8,14,24,108,114) THEN 
+            CAST(style_number AS VARCHAR) + ' is not a valid style number when converting from TIME to a character string.'
+        ELSE CONVERT(VARCHAR, test_value, CAST(style_number AS INT))
+    END AS CONVERT_RESULTS,
+    description
+FROM time_style_conversion_test
+ORDER BY id;
+GO
+~~START~~
+time#!#sql_variant#!#varchar#!#varchar#!#varchar
+14:30:45.1234570#!#<NULL>#!#<NULL>#!#NULL style#!#Default style (NULL)
+14:30:45.1234510#!#0#!#2:30PM#!#2:30PM#!#Style 0 - Default
+14:30:45.1234510#!#8#!#14:30:45#!#14:30:45#!#Style 8 - hh:mm:ss
+14:30:45.1234510#!#14#!#14:30:45.1234510#!#14:30:45.1234510#!#Style 14 - hh:mm:ss:mmm(24h)
+14:30:45.1234510#!#24#!#14:30:45#!#14:30:45#!#Style 24 - hh:mm:ss
+14:30:45.1234510#!#108#!#14:30:45#!#14:30:45#!#Style 108 - hh:mm:ss
+14:30:45.1234510#!#114#!#14:30:45.1234510#!#14:30:45.1234510#!#Style 114 - hh:mm:ss:mmm(24h)
+14:30:45.1234510#!#-1#!#<NULL>#!#-1 is not a valid style number when converting from TIME to a character string.#!#Style -1
+14:30:45.1234510#!#-2#!#<NULL>#!#-2 is not a valid style number when converting from TIME to a character string.#!#Style -2
+14:30:45.1234510#!#-3#!#<NULL>#!#-3 is not a valid style number when converting from TIME to a character string.#!#Style -3
+~~END~~
+
+
+-- Test invalid style numbers
+SELECT TRY_CONVERT(VARCHAR, CAST('2023-09-25 14:30:45.123' AS DATETIME), 999) AS invalid_style_datetime;
+SELECT TRY_CONVERT(VARCHAR, CAST('2023-09-25' AS DATE), 999) AS invalid_style_date;
+SELECT TRY_CONVERT(VARCHAR, CAST('14:30:45.1234567' AS TIME), 999) AS invalid_style_time;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT CONVERT(VARCHAR, CAST('2023-09-25 14:30:45.123' AS DATETIME), 999) AS invalid_style_datetime;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 999 is not a valid style number when converting from DATETIME to a character string.)~~
+
+SELECT CONVERT(VARCHAR, CAST('2023-09-25' AS DATE), 999) AS invalid_style_date;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 999 is not a valid style number when converting from DATE to a character string.)~~
+
+SELECT CONVERT(VARCHAR, CAST('14:30:45.1234567' AS TIME), 999) AS invalid_style_time;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 999 is not a valid style number when converting from TIME to a character string.)~~
+
+
+-- Test invalid input strings
+SELECT TRY_CONVERT(DATETIME, 'invalid_datetime', 0) AS invalid_datetime;
+SELECT TRY_CONVERT(DATE, 'invalid_date', 0) AS invalid_date;
+SELECT TRY_CONVERT(TIME, 'invalid_time', 0) AS invalid_time;
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+~~START~~
+date
+<NULL>
+~~END~~
+
+~~START~~
+time
+<NULL>
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'invalid_datetime', 0) AS invalid_datetime;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+SELECT CONVERT(DATE, 'invalid_date', 0) AS invalid_date;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+SELECT CONVERT(TIME, 'invalid_time', 0) AS invalid_time;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- Test DATETIME procedures
+EXEC datetime_style_test_p1 '2023-09-25 14:30:45.123', 0;
+GO
+~~START~~
+varchar#!#datetime#!#int#!#int
+Original#!#2023-09-25 14:30:45.123#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+varchar#!#datetime#!#varchar#!#varchar
+Converted#!#2023-09-25 14:30:45.123#!#Sep 25 2023  2:30PM#!#Sep 25 2023  2:30PM
+~~END~~
+
+
+EXEC datetime_style_test_p1 '2023-09-25 14:30:45.123', -1;
+GO
+~~START~~
+varchar#!#datetime#!#int#!#int
+Original#!#2023-09-25 14:30:45.123#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+varchar#!#datetime#!#varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: -1 is not a valid style number when converting from DATETIME to a character string.)~~
+
+
+-- Test DATE procedures
+EXEC date_style_test_p1 '2023-09-25', 0;
+GO
+~~START~~
+varchar#!#date#!#int#!#int
+Original#!#2023-09-25#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+varchar#!#date#!#varchar#!#varchar
+Converted#!#2023-09-25#!#Sep 25 2023#!#Sep 25 2023
+~~END~~
+
+
+EXEC date_style_test_p1 '2023-09-25', -1;
+GO
+~~START~~
+varchar#!#date#!#int#!#int
+Original#!#2023-09-25#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+varchar#!#date#!#varchar#!#varchar
+Converted#!#2023-09-25#!#<NULL>#!#-1 is not a valid style number when converting from DATE to a character string.
+~~END~~
+
+
+-- Test TIME procedures
+EXEC time_style_test_p1 '14:30:45.1234510', 0;
+GO
+~~START~~
+varchar#!#time#!#int#!#int
+Original#!#14:30:45.1234510#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+varchar#!#time#!#varchar#!#varchar
+Converted#!#14:30:45.1234510#!#2:30PM#!#2:30PM
+~~END~~
+
+
+EXEC time_style_test_p1 '14:30:45.1234510', -1;
+GO
+~~START~~
+varchar#!#time#!#int#!#int
+Original#!#14:30:45.1234510#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+varchar#!#time#!#varchar#!#varchar
+Converted#!#14:30:45.1234510#!#<NULL>#!#-1 is not a valid style number when converting from TIME to a character string.
+~~END~~
+
+
+-- Test views
+SELECT * FROM datetime_style_test_v1;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+Sep 25 2023  2:30PM#!#Sep 25 2023  2:30PM#!#09/25/23
+~~END~~
+
+
+SELECT * FROM datetime_style_test_v2;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+2023-09-25 14:30:45#!#2023-09-25 14:30:45.123#!#09/25/23  2:30:45 PM
+~~END~~
+
+
+SELECT * FROM datetime_style_test_v3;
+GO
+~~START~~
+varchar#!#varchar
+Dec 31 9999 11:59PM#!#Jan  1 1753 12:00AM
+~~END~~
+
+
+SELECT * FROM date_style_test_v1;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+2023-09-25#!#Sep 25 2023#!#09/25/23
+~~END~~
+
+
+SELECT * FROM date_style_test_v2;
+GO
+~~START~~
+varchar#!#varchar
+2023-09-25#!#2024-02-29
+~~END~~
+
+
+SELECT * FROM time_style_test_v1;
+GO
+~~START~~
+varchar
+14:30:45
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(10),CAST(1234.1234 AS MONEY),1.8);
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 3 of convert function.)~~
+
+
+SELECT TRY_CONVERT(VARCHAR(10),CAST(1234.1234 AS MONEY),1.8);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- Test NULL values
+SELECT 'NULL Money' as test_case, CONVERT(VARCHAR(30), CAST(NULL AS MONEY)) as result;
+GO
+~~START~~
+varchar#!#varchar
+NULL Money#!#<NULL>
+~~END~~
+
+SELECT 'NULL SmallMoney' as test_case, CONVERT(VARCHAR(30), CAST(NULL AS SMALLMONEY)) as result;
+GO
+~~START~~
+varchar#!#varchar
+NULL SmallMoney#!#<NULL>
+~~END~~
+
+SELECT 'NULL DateTime' as test_case, CONVERT(VARCHAR(30), CAST(NULL AS DATETIME)) as result;
+GO
+~~START~~
+varchar#!#varchar
+NULL DateTime#!#<NULL>
+~~END~~
+
+SELECT 'NULL Date' as test_case, CONVERT(VARCHAR(30), CAST(NULL AS DATE)) as result;
+GO
+~~START~~
+varchar#!#varchar
+NULL Date#!#<NULL>
+~~END~~
+
+SELECT 'NULL Time' as test_case, CONVERT(VARCHAR(30), CAST(NULL AS TIME)) as result;
+GO
+~~START~~
+varchar#!#varchar
+NULL Time#!#<NULL>
+~~END~~
+
+
+-- Test extreme values for MONEY
+SELECT 'Max MONEY' as test_case, CONVERT(VARCHAR(30), CAST(922337203685477.5807 AS MONEY)) as result;
+GO
+~~START~~
+varchar#!#varchar
+Max MONEY#!#922337203685477.58
+~~END~~
+
+SELECT 'Min MONEY' as test_case, CONVERT(VARCHAR(30), CAST(-922337203685477.5808 AS MONEY)) as result;
+GO
+~~START~~
+varchar#!#varchar
+Min MONEY#!#-922337203685477.58
+~~END~~
+
+SELECT 'Max MONEY with style 1' as test_case, CONVERT(VARCHAR(30), CAST(922337203685477.5807 AS MONEY), 1) as result;
+GO
+~~START~~
+varchar#!#varchar
+Max MONEY with style 1#!#922,337,203,685,477.58
+~~END~~
+
+SELECT 'Min MONEY with style 2' as test_case, CONVERT(VARCHAR(30), CAST(-922337203685477.5808 AS MONEY), 2) as result;
+GO
+~~START~~
+varchar#!#varchar
+Min MONEY with style 2#!#-922337203685477.5808
+~~END~~
+
+
+-- Test extreme values for SMALLMONEY
+SELECT 'Max SMALLMONEY' as test_case, CONVERT(VARCHAR(30), CAST(214748.3647 AS SMALLMONEY)) as result;
+GO
+~~START~~
+varchar#!#varchar
+Max SMALLMONEY#!#214748.36
+~~END~~
+
+SELECT 'Min SMALLMONEY' as test_case, CONVERT(VARCHAR(30), CAST(-214748.3648 AS SMALLMONEY)) as result;
+GO
+~~START~~
+varchar#!#varchar
+Min SMALLMONEY#!#-214748.36
+~~END~~
+
+SELECT 'Max SMALLMONEY with style 1' as test_case, CONVERT(VARCHAR(30), CAST(214748.3647 AS SMALLMONEY), 1) as result;
+GO
+~~START~~
+varchar#!#varchar
+Max SMALLMONEY with style 1#!#214,748.36
+~~END~~
+
+SELECT 'Min SMALLMONEY with style 2' as test_case, CONVERT(VARCHAR(30), CAST(-214748.3648 AS SMALLMONEY), 2) as result;
+GO
+~~START~~
+varchar#!#varchar
+Min SMALLMONEY with style 2#!#-214748.3648
+~~END~~
+
+
+-- Test precision and scale
+SELECT 'MONEY precision test' as test_case, 
+    CONVERT(VARCHAR(30), CAST(0.0001 AS MONEY)) as small_decimal,
+    CONVERT(VARCHAR(30), CAST(0.00001 AS MONEY)) as smaller_decimal,
+    CONVERT(VARCHAR(30), CAST(0.000001 AS MONEY)) as smallest_decimal;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+MONEY precision test#!#0.00#!#0.00#!#0.00
+~~END~~
+
+
+SELECT 'SMALLMONEY precision test' as test_case, 
+    CONVERT(VARCHAR(30), CAST(0.0001 AS SMALLMONEY)) as small_decimal,
+    CONVERT(VARCHAR(30), CAST(0.00001 AS SMALLMONEY)) as smaller_decimal,
+    CONVERT(VARCHAR(30), CAST(0.000001 AS SMALLMONEY)) as smallest_decimal;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+SMALLMONEY precision test#!#0.00#!#0.00#!#0.00
+~~END~~
+
+
+-- Test zero values with different formats
+SELECT 'Zero MONEY values' as test_case,
+    CONVERT(VARCHAR(30), CAST(0 AS MONEY)) as zero,
+    CONVERT(VARCHAR(30), CAST(0.0 AS MONEY)) as zero_decimal,
+    CONVERT(VARCHAR(30), CAST(0.00 AS MONEY)) as zero_two_decimal,
+    CONVERT(VARCHAR(30), CAST(0.0000 AS MONEY)) as zero_four_decimal;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Zero MONEY values#!#0.00#!#0.00#!#0.00#!#0.00
+~~END~~
+
+
+SELECT 'Zero SMALLMONEY values' as test_case,
+    CONVERT(VARCHAR(30), CAST(0 AS SMALLMONEY)) as zero,
+    CONVERT(VARCHAR(30), CAST(0.0 AS SMALLMONEY)) as zero_decimal,
+    CONVERT(VARCHAR(30), CAST(0.00 AS SMALLMONEY)) as zero_two_decimal,
+    CONVERT(VARCHAR(30), CAST(0.0000 AS SMALLMONEY)) as zero_four_decimal;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Zero SMALLMONEY values#!#0.00#!#0.00#!#0.00#!#0.00
+~~END~~
+
+
+-- Test datetime extreme values
+SELECT 'DateTime extremes' as test_case,
+    CONVERT(VARCHAR(30), CAST('1753-01-01' AS DATETIME)) as min_datetime,
+    CONVERT(VARCHAR(30), CAST('9999-12-31 23:59:59.997' AS DATETIME)) as max_datetime;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+DateTime extremes#!#Jan  1 1753 12:00AM#!#Dec 31 9999 11:59PM
+~~END~~
+
+
+-- Test date extreme values
+SELECT 'Date extremes' as test_case,
+    CONVERT(VARCHAR(30), CAST('0001-01-01' AS DATE)) as min_date,
+    CONVERT(VARCHAR(30), CAST('9999-12-31' AS DATE)) as max_date;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+Date extremes#!#0001-01-01#!#9999-12-31
+~~END~~
+
+
+-- Test time extreme values
+SELECT 'Time extremes' as test_case,
+    CONVERT(VARCHAR(30), CAST('00:00:00.0000000' AS TIME)) as min_time,
+    CONVERT(VARCHAR(30), CAST('23:59:59.9999999' AS TIME)) as max_time;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+Time extremes#!#00:00:00.0000000#!#24:00:00.0000000
+~~END~~
+
+
+-- Test invalid conversions (these should raise errors)
+BEGIN TRY
+    SELECT CONVERT(VARCHAR(30), CAST('invalid' AS MONEY));
+END TRY
+BEGIN CATCH
+    SELECT 'Invalid MONEY conversion caught' as test_case, ERROR_MESSAGE() as error;
+END CATCH
+GO
+~~START~~
+varchar#!#nvarchar
+Invalid MONEY conversion caught#!#invalid characters found: cannot cast value "invalid" to money
+~~END~~
+
+
+BEGIN TRY
+    SELECT CONVERT(VARCHAR(30), CAST('invalid' AS SMALLMONEY));
+END TRY
+BEGIN CATCH
+    SELECT 'Invalid SMALLMONEY conversion caught' as test_case, ERROR_MESSAGE() as error;
+END CATCH
+GO
+~~START~~
+varchar#!#nvarchar
+Invalid SMALLMONEY conversion caught#!#invalid characters found: cannot cast value "invalid" to money
+~~END~~
+
+
+-- Test boundary values near zero
+SELECT 'Near-zero values' as test_case,
+    CONVERT(VARCHAR(30), CAST(0.0001 AS MONEY)) as small_positive_money,
+    CONVERT(VARCHAR(30), CAST(-0.0001 AS MONEY)) as small_negative_money,
+    CONVERT(VARCHAR(30), CAST(0.0001 AS SMALLMONEY)) as small_positive_smallmoney,
+    CONVERT(VARCHAR(30), CAST(-0.0001 AS SMALLMONEY)) as small_negative_smallmoney;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Near-zero values#!#0.00#!#-0.00#!#0.00#!#-0.00
+~~END~~
+
+
+-- Test rounding behavior
+SELECT 'Rounding tests' as test_case,
+    CONVERT(VARCHAR(30), CAST(123.4545 AS MONEY)) as money_round,
+    CONVERT(VARCHAR(30), CAST(123.4545 AS SMALLMONEY)) as smallmoney_round,
+    CONVERT(VARCHAR(30), CAST(123.4555 AS MONEY)) as money_round_up,
+    CONVERT(VARCHAR(30), CAST(123.4555 AS SMALLMONEY)) as smallmoney_round_up;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Rounding tests#!#123.45#!#123.45#!#123.46#!#123.46
+~~END~~
+
+
+-- Test with different styles for zero and near-zero values
+SELECT 'Style tests with zero/near-zero' as test_case,
+    CONVERT(VARCHAR(30), CAST(0.00 AS MONEY), 0) as style_0,
+    CONVERT(VARCHAR(30), CAST(0.00 AS MONEY), 1) as style_1,
+    CONVERT(VARCHAR(30), CAST(0.00 AS MONEY), 2) as style_2,
+    CONVERT(VARCHAR(30), CAST(0.0001 AS MONEY), 0) as near_zero_style_0,
+    CONVERT(VARCHAR(30), CAST(0.0001 AS MONEY), 1) as near_zero_style_1,
+    CONVERT(VARCHAR(30), CAST(0.0001 AS MONEY), 2) as near_zero_style_2;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Style tests with zero/near-zero#!#0.00#!#0.00#!#0.0000#!#0.00#!#0.00#!#0.0001
+~~END~~
+
+
+-- Test datetime precision
+SELECT 'DateTime precision tests' as test_case,
+    CONVERT(VARCHAR(30), CAST('2023-12-31 23:59:59.997' AS DATETIME)) as max_precision,
+    CONVERT(VARCHAR(30), CAST('2023-12-31 23:59:59.993' AS DATETIME)) as near_max_precision,
+    CONVERT(VARCHAR(30), CAST('2023-12-31 23:59:59.000' AS DATETIME)) as zero_precision;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+DateTime precision tests#!#Dec 31 2023 11:59PM#!#Dec 31 2023 11:59PM#!#Dec 31 2023 11:59PM
+~~END~~
+
+
+-- Test time precision
+SELECT 'Time precision tests' as test_case,
+    CONVERT(VARCHAR(30), CAST('23:59:59.9999999' AS TIME)) as max_precision,
+    CONVERT(VARCHAR(30), CAST('23:59:59.9999990' AS TIME)) as near_max_precision,
+    CONVERT(VARCHAR(30), CAST('23:59:59.0000000' AS TIME)) as zero_precision;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+Time precision tests#!#24:00:00.0000000#!#23:59:59.9999990#!#23:59:59.0000000
+~~END~~
+
+
+-- Test negative decimal style parameters
+SELECT 
+    test_value,
+    style_number,
+    TRY_CONVERT(VARCHAR, test_value, CAST(style_number AS INT)) AS try_convert_result,
+    description
+FROM negative_decimal_style_test
+ORDER BY id;
+GO
+~~START~~
+money#!#numeric#!#varchar#!#varchar
+1234.5600#!#-1.50#!#1,234.56#!#Negative decimal style -1.5
+1234.5600#!#-2.80#!#1,234.56#!#Negative decimal style -2.8
+1234.5600#!#1.80#!#1,234.56#!#Positive decimal style 1.8
+1234.5600#!#0.50#!#1234.56#!#Decimal style 0.5
+~~END~~
+
+
+SELECT 
+    id,
+    money_val,
+    CONVERT(VARCHAR(30), money_val) AS money_convert_default,
+    TRY_CONVERT(VARCHAR(30), money_val) AS money_try_convert_default,
+    CONVERT(VARCHAR(30), money_val, 0) AS money_convert_style0,
+    TRY_CONVERT(VARCHAR(30), money_val, 0) AS money_try_convert_style0,
+    CONVERT(VARCHAR(30), money_val, 1) AS money_convert_style1,
+    TRY_CONVERT(VARCHAR(30), money_val, 1) AS money_try_convert_style1,
+    smallmoney_val,
+    CONVERT(VARCHAR(30), smallmoney_val) AS smallmoney_convert_default,
+    TRY_CONVERT(VARCHAR(30), smallmoney_val) AS smallmoney_try_convert_default,
+    CONVERT(VARCHAR(30), smallmoney_val, 0) AS smallmoney_convert_style0,
+    TRY_CONVERT(VARCHAR(30), smallmoney_val, 0) AS smallmoney_try_convert_style0,
+    description
+FROM money_smallmoney_table 
+ORDER BY id;
+GO
+~~START~~
+int#!#money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallmoney#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#1234.5600#!#1234.56#!#1234.56#!#1234.56#!#1234.56#!#1,234.56#!#1,234.56#!#123.4500#!#123.45#!#123.45#!#123.45#!#123.45#!#Test case 1
+2#!#-5678.9000#!#-5678.90#!#-5678.90#!#-5678.90#!#-5678.90#!#-5,678.90#!#-5,678.90#!#-234.5600#!#-234.56#!#-234.56#!#-234.56#!#-234.56#!#Test case 2
+3#!#0.0000#!#0.00#!#0.00#!#0.00#!#0.00#!#0.00#!#0.00#!#0.0000#!#0.00#!#0.00#!#0.00#!#0.00#!#Zero values
+~~END~~
+
+
+SELECT 
+    id,
+    date_val,
+    CONVERT(VARCHAR(30), date_val) AS date_convert_default,
+    TRY_CONVERT(VARCHAR(30), date_val) AS date_try_convert_default,
+    CONVERT(VARCHAR(30), date_val, 23) AS date_convert_style23,
+    TRY_CONVERT(VARCHAR(30), date_val, 23) AS date_try_convert_style23,
+    datetime_val,
+    CONVERT(VARCHAR(30), datetime_val) AS datetime_convert_default,
+    TRY_CONVERT(VARCHAR(30), datetime_val) AS datetime_try_convert_default,
+    CONVERT(VARCHAR(30), datetime_val, 20) AS datetime_convert_style20,
+    TRY_CONVERT(VARCHAR(30), datetime_val, 20) AS datetime_try_convert_style20,
+    time_val,
+    CONVERT(VARCHAR(30), time_val) AS time_convert_default,
+    TRY_CONVERT(VARCHAR(30), time_val) AS time_try_convert_default,
+    CONVERT(VARCHAR(30), time_val, 8) AS time_convert_style8,
+    TRY_CONVERT(VARCHAR(30), time_val, 8) AS time_try_convert_style8,
+    description
+FROM datetime_date_time_data 
+ORDER BY id;
+GO
+~~START~~
+int#!#date#!#varchar#!#varchar#!#varchar#!#varchar#!#datetime#!#varchar#!#varchar#!#varchar#!#varchar#!#time#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#2023-12-25#!#2023-12-25#!#2023-12-25#!#2023-12-25#!#2023-12-25#!#2023-12-25 12:34:56.79#!#Dec 25 2023 12:34PM#!#Dec 25 2023 12:34PM#!#2023-12-25 12:34:56#!#2023-12-25 12:34:56#!#12:34:56.7890000#!#12:34:56.7890000#!#12:34:56.7890000#!#12:34:56#!#12:34:56#!#Christmas
+2#!#2024-02-29#!#2024-02-29#!#2024-02-29#!#2024-02-29#!#2024-02-29#!#2024-02-29 23:59:59.997#!#Feb 29 2024 11:59PM#!#Feb 29 2024 11:59PM#!#2024-02-29 23:59:59#!#2024-02-29 23:59:59#!#23:59:59.9970000#!#23:59:59.9970000#!#23:59:59.9970000#!#23:59:59#!#23:59:59#!#Leap Year
+~~END~~
+
+
+SELECT 
+    id,
+    money_val,
+    CONVERT(CHAR(20), money_val) AS money_to_char,
+    TRY_CONVERT(CHAR(20), money_val) AS money_try_to_char,
+    CONVERT(NCHAR(20), money_val) AS money_to_nchar,
+    TRY_CONVERT(NCHAR(20), money_val) AS money_try_to_nchar,
+    CONVERT(NVARCHAR(20), money_val) AS money_to_nvarchar,
+    TRY_CONVERT(NVARCHAR(20), money_val) AS money_try_to_nvarchar,
+    datetime_val,
+    CONVERT(CHAR(30), datetime_val) AS datetime_to_char,
+    TRY_CONVERT(CHAR(30), datetime_val) AS datetime_try_to_char,
+    CONVERT(NVARCHAR(30), datetime_val, 23) AS datetime_to_nvarchar_style23,
+    TRY_CONVERT(NVARCHAR(30), datetime_val, 23) AS datetime_try_to_nvarchar_style23,
+    description
+FROM char_conversion_test 
+ORDER BY id;
+GO
+~~START~~
+int#!#money#!#char#!#char#!#nchar#!#nchar#!#nvarchar#!#nvarchar#!#datetime#!#char#!#char#!#nvarchar#!#nvarchar#!#varchar
+1#!#1234.5600#!#1234.56             #!#1234.56             #!#1234.56             #!#1234.56             #!#1234.56#!#1234.56#!#2023-12-25 14:30:45.123#!#Dec 25 2023  2:30PM           #!#Dec 25 2023  2:30PM           #!#2023-12-25#!#2023-12-25#!#Char conversion test 1
+2#!#-5678.9000#!#-5678.90            #!#-5678.90            #!#-5678.90            #!#-5678.90            #!#-5678.90#!#-5678.90#!#2024-02-29 23:59:59.997#!#Feb 29 2024 11:59PM           #!#Feb 29 2024 11:59PM           #!#2024-02-29#!#2024-02-29#!#Char conversion test 2
+3#!#0.0000#!#0.00                #!#0.00                #!#0.00                #!#0.00                #!#0.00#!#0.00#!#1753-01-01 00:00:00.0#!#Jan  1 1753 12:00AM           #!#Jan  1 1753 12:00AM           #!#1753-01-01#!#1753-01-01#!#Char conversion test 3
+~~END~~
+
+
+-- Test edge style values
+SELECT 
+    test_value,
+    style_number,
+    TRY_CONVERT(VARCHAR, test_value, style_number) AS try_convert_result,
+    description
+FROM edge_style_test
+ORDER BY id;
+GO
+~~START~~
+money#!#int#!#varchar#!#varchar
+1234.5600#!#-127#!#1,234.56#!#Style below -126: -127
+1234.5600#!#-200#!#1,234.56#!#Very negative style: -200
+1234.5600#!#-32768#!#1,234.56#!#Min INT style
+1234.5600#!#127#!#1,234.56#!#Style above 126: 127
+1234.5600#!#500#!#1,234.56#!#Very large style: 500
+1234.5600#!#32767#!#1,234.56#!#Max INT style
+1234.5600#!#2147483647#!#<NULL>#!#Max BIGINT style
+~~END~~
+
+
+-- Test combined conversions in same query
+SELECT 
+    id,
+    CONVERT(VARCHAR(20), money_val, 0) AS money_style0,
+    CONVERT(VARCHAR(20), smallmoney_val, 1) AS smallmoney_style1,
+    CONVERT(VARCHAR(30), datetime_val, 20) AS datetime_style20,
+    CONVERT(VARCHAR(30), date_val, 23) AS date_style23,
+    CONVERT(VARCHAR(30), time_val, 8) AS time_style8,
+    description
+FROM combined_conversion_test
+ORDER BY id;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#1234.56#!#123.45#!#2023-12-25 14:30:45#!#2023-12-25#!#14:30:45#!#Combined test 1
+2#!#-5678.90#!#-234.56#!#2024-02-29 23:59:59#!#2024-02-29#!#23:59:59#!#Combined test 2
+3#!#0.00#!#0.00#!#1753-01-01 00:00:00#!#0001-01-01#!#00:00:00#!#Combined test 3
+~~END~~
+
+
+-- Test NULL style and overflow/underflow
+SELECT 
+    id,
+    TRY_CONVERT(VARCHAR(20), money_val, CAST(style_number AS INT)) AS money_try_convert,
+    TRY_CONVERT(VARCHAR(20), smallmoney_val, CAST(style_number AS INT)) AS smallmoney_try_convert,
+    TRY_CONVERT(VARCHAR(30), datetime_val, CAST(style_number AS INT)) AS datetime_try_convert,
+    TRY_CONVERT(VARCHAR(30), date_val, CAST(style_number AS INT)) AS date_try_convert,
+    TRY_CONVERT(VARCHAR(30), time_val, CAST(style_number AS INT)) AS time_try_convert,
+    description
+FROM null_overflow_test
+ORDER BY id;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL style test
+2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Overflow style test
+3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#Underflow style test
+~~END~~
+
+
+-- Test CONVERT with NULL and overflow styles (should fail)
+SELECT CONVERT(VARCHAR, CAST(1234.56 AS MONEY), NULL) AS null_style_test;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT CONVERT(VARCHAR, CAST(1234.56 AS MONEY), 999999999) AS overflow_style_test;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT CONVERT(VARCHAR, CAST(1234.56 AS MONEY), -999999999) AS underflow_style_test;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+
+-- Test views
+SELECT * FROM money_smallmoney_conversions ORDER BY id;
+GO
+~~START~~
+int#!#money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallmoney#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#1234.5600#!#1234.56#!#1234.56#!#1234.56#!#1234.56#!#1,234.56#!#1,234.56#!#123.4500#!#123.45#!#123.45#!#123.45#!#123.45
+2#!#-5678.9000#!#-5678.90#!#-5678.90#!#-5678.90#!#-5678.90#!#-5,678.90#!#-5,678.90#!#-234.5600#!#-234.56#!#-234.56#!#-234.56#!#-234.56
+3#!#0.0000#!#0.00#!#0.00#!#0.00#!#0.00#!#0.00#!#0.00#!#0.0000#!#0.00#!#0.00#!#0.00#!#0.00
+~~END~~
+
+
+SELECT * FROM datetime_date_time_conversions ORDER BY id;
+GO
+~~START~~
+int#!#date#!#varchar#!#varchar#!#varchar#!#varchar#!#datetime#!#varchar#!#varchar#!#varchar#!#varchar#!#time#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#2023-12-25#!#2023-12-25#!#2023-12-25#!#2023-12-25#!#2023-12-25#!#2023-12-25 12:34:56.79#!#Dec 25 2023 12:34PM#!#Dec 25 2023 12:34PM#!#2023-12-25 12:34:56#!#2023-12-25 12:34:56#!#12:34:56.7890000#!#12:34:56.7890000#!#12:34:56.7890000#!#12:34:56#!#12:34:56
+2#!#2024-02-29#!#2024-02-29#!#2024-02-29#!#2024-02-29#!#2024-02-29#!#2024-02-29 23:59:59.997#!#Feb 29 2024 11:59PM#!#Feb 29 2024 11:59PM#!#2024-02-29 23:59:59#!#2024-02-29 23:59:59#!#23:59:59.9970000#!#23:59:59.9970000#!#23:59:59.9970000#!#23:59:59#!#23:59:59
+~~END~~
+
+
+SELECT * FROM string_conversions ;
+GO
+~~START~~
+int#!#money#!#char#!#nchar#!#nvarchar#!#char#!#nchar#!#nvarchar#!#datetime#!#char#!#nchar#!#nvarchar#!#char#!#nchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#1234.5600#!#1234.5600           #!#1234.5600           #!#1234.5600#!#1234.5600           #!#1234.5600           #!#1234.5600#!#2023-12-25 14:30:45.123#!#Dec 25 2023  2:30PM           #!#Dec 25 2023  2:30PM           #!#Dec 25 2023  2:30PM#!#Dec 25 2023  2:30PM           #!#Dec 25 2023  2:30PM           #!#Dec 25 2023  2:30PM#!#Test String#!#Test String#!#Test String#!#Invalid Date#!#Invalid Date
+2#!#-5678.9000#!#-5678.9000          #!#-5678.9000          #!#-5678.9000#!#-5678.9000          #!#-5678.9000          #!#-5678.9000#!#2024-02-29 23:59:59.997#!#Feb 29 2024 11:59PM           #!#Feb 29 2024 11:59PM           #!#Feb 29 2024 11:59PM#!#Feb 29 2024 11:59PM           #!#Feb 29 2024 11:59PM           #!#Feb 29 2024 11:59PM#!#Test String#!#Test String#!#Test String#!#Invalid Date#!#Invalid Date
+3#!#0.0000#!#0.0000              #!#0.0000              #!#0.0000#!#0.0000              #!#0.0000              #!#0.0000#!#1753-01-01 00:00:00.0#!#Jan  1 1753 12:00AM           #!#Jan  1 1753 12:00AM           #!#Jan  1 1753 12:00AM#!#Jan  1 1753 12:00AM           #!#Jan  1 1753 12:00AM           #!#Jan  1 1753 12:00AM#!#Test String#!#Test String#!#Test String#!#Invalid Date#!#Invalid Date
+~~END~~
+
+
+
+-- Test procedures with UDT
+DECLARE @money_ranges MoneyRange;
+INSERT INTO @money_ranges VALUES 
+(0.00, 1000.00, 0),
+(-1000.00, 0.00, 1),
+(1000.00, 2000.00, 2);
+EXEC convert_money_range @money_ranges;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+money#!#money#!#int#!#varchar#!#varchar#!#varchar#!#varchar
+0.0000#!#1000.0000#!#0#!#0.00#!#1000.00#!#0.00#!#1000.00
+-1000.0000#!#0.0000#!#1#!#-1,000.00#!#0.00#!#-1,000.00#!#0.00
+1000.0000#!#2000.0000#!#2#!#1000.0000#!#2000.0000#!#1000.0000#!#2000.0000
+~~END~~
+
+
+
+DECLARE @datetime_ranges DateTimeRange;
+INSERT INTO @datetime_ranges VALUES 
+('2023-01-01', '2023-12-31', 20),
+('2024-01-01', '2024-12-31', 21),
+('2025-01-01', '2025-12-31', 23);
+EXEC convert_datetime_range @datetime_ranges;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+datetime#!#datetime#!#int#!#varchar#!#varchar#!#varchar#!#varchar
+2023-01-01 00:00:00.0#!#2023-12-31 00:00:00.0#!#20#!#2023-01-01 00:00:00#!#2023-12-31 00:00:00#!#2023-01-01 00:00:00#!#2023-12-31 00:00:00
+2024-01-01 00:00:00.0#!#2024-12-31 00:00:00.0#!#21#!#2024-01-01 00:00:00.000#!#2024-12-31 00:00:00.000#!#2024-01-01 00:00:00.000#!#2024-12-31 00:00:00.000
+2025-01-01 00:00:00.0#!#2025-12-31 00:00:00.0#!#23#!#2025-01-01#!#2025-12-31#!#2025-01-01#!#2025-12-31
+~~END~~
+
+
+-- Test comprehensive conversion procedure
+EXEC test_convert_with_style_all_types 
+    @money_val = 1234.56,
+    @smallmoney_val = 123.45,
+    @date_val = '2023-12-25',
+    @datetime_val = '2023-12-25 12:34:56.789',
+    @time_val = '12:34:56.789',
+    @style = 0;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Money conversions#!#1234.56#!#1234.56#!#1234.56#!#1234.56
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+SmallMoney conversions#!#123.45#!#123.45#!#123.45#!#123.45
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+DateTime conversions#!#Dec 25 2023 12:34PM#!#Dec 25 2023 12:34PM#!#Dec 25 2023 12:34PM#!#Dec 25 2023 12:34PM
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Date conversions#!#2023-12-25#!#2023-12-25#!#Dec 25 2023#!#Dec 25 2023
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Time conversions#!#12:34:56.7890000#!#12:34:56.7890000#!#12:34PM#!#12:34PM
+~~END~~
+
+~~START~~
+datetime#!#varchar#!#varchar#!#varchar#!#varchar#!#time#!#varchar#!#varchar
+2023-12-25 12:34:56.79#!#Dec 25 2023 12:34PM#!#Dec 25 2023 12:34PM#!#2023-12-25 12:34:56#!#2023-12-25 12:34:56#!#12:34:56.7890000#!#12:34:56.7890000#!#12:34:56.7890000
+2024-02-29 23:59:59.997#!#Feb 29 2024 11:59PM#!#Feb 29 2024 11:59PM#!#2024-02-29 23:59:59#!#2024-02-29 23:59:59#!#23:59:59.9970000#!#23:59:59.9970000#!#23:59:59.9970000
+~~END~~
+
+
+-- Test error cases
+EXEC test_convert_with_style_all_types 
+    @money_val = 1234.56,
+    @smallmoney_val = 123.45,
+    @date_val = '2023-12-25',
+    @datetime_val = '2023-12-25 12:34:56.789',
+    @time_val = '12:34:56.789',
+    @style = 999;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Money conversions#!#1234.56#!#1234.56#!#1,234.56#!#1,234.56
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+SmallMoney conversions#!#123.45#!#123.45#!#123.45#!#123.45
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 999 is not a valid style number when converting from DATETIME to a character string.)~~
+
+-- Test insufficient result space scenarios
+SELECT CONVERT(VARCHAR(1), CAST($23.12 AS MONEY), 0);
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is insufficient result space to convert a money value to varchar.)~~
+
+
+SELECT CONVERT(CHAR(1), CAST($23345657.12 AS MONEY), 0);
+GO
+~~START~~
+char
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is insufficient result space to convert a money value to varchar.)~~
+
+
+SELECT CONVERT(CHAR(2), CAST($23345657.12 AS MONEY), 0);
+GO
+~~START~~
+char
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is insufficient result space to convert a money value to varchar.)~~
+
+
+SELECT CONVERT(VARCHAR(MAX), CAST($23345657.12 AS MONEY), 0);
+GO
+~~START~~
+varchar
+23345657.12
+~~END~~
+
+
+-- Test TRY_CONVERT with insufficient space (should return NULL)
+SELECT TRY_CONVERT(VARCHAR(1), CAST($23.12 AS MONEY), 0) AS insufficient_space_try_convert;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(1), CAST($23345657.12 AS MONEY), 0) AS insufficient_space_char_try_convert;
+GO
+~~START~~
+char
+<NULL>
+~~END~~
+
+
+-- Test various small lengths with MONEY
+SELECT TRY_CONVERT(VARCHAR(3), CAST($1.23 AS MONEY), 0) AS varchar3_result;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT TRY_CONVERT(VARCHAR(5), CAST($12.34 AS MONEY), 0) AS varchar5_result;
+GO
+~~START~~
+varchar
+12.34
+~~END~~
+
+
+-- Test various small lengths with SMALLMONEY
+SELECT TRY_CONVERT(VARCHAR(1), CAST(1.23 AS SMALLMONEY), 0) AS smallmoney_varchar1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT TRY_CONVERT(CHAR(3), CAST(12.34 AS SMALLMONEY), 0) AS smallmoney_char3;
+GO
+~~START~~
+char
+<NULL>
+~~END~~
+
+
+EXEC test_all_conversions 
+    @money_val = 1234.56,
+    @smallmoney_val = 123.45,
+    @date_val = '2023-12-25',
+    @datetime_val = '2023-12-25 12:34:56.789',
+    @time_val = '12:34:56.789',
+    @style = 1;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Money Conversions#!#1,234.56#!#1,234.56#!#123.45#!#123.45
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Date/Time Conversions#!#12/25/23#!#12/25/23#!#12/25/23#!#12/25/23#!#<NULL>
+~~END~~
+
+
+EXEC test_all_conversions 
+    @money_val = -5678.90,
+    @smallmoney_val = -234.56,
+    @date_val = '2024-02-29',
+    @datetime_val = '2024-02-29 23:59:59.997',
+    @time_val = '23:59:59.997';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Money Conversions#!#-5678.90#!#-5678.90#!#-234.56#!#-234.56
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Date/Time Conversions#!#2024-02-29#!#2024-02-29#!#2024-02-29 23:59:59#!#2024-02-29 23:59:59#!#23:59:59
+~~END~~
+
+
+SELECT * FROM string_conversions;
+GO
+~~START~~
+int#!#money#!#char#!#nchar#!#nvarchar#!#char#!#nchar#!#nvarchar#!#datetime#!#char#!#nchar#!#nvarchar#!#char#!#nchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#1234.5600#!#1234.5600           #!#1234.5600           #!#1234.5600#!#1234.5600           #!#1234.5600           #!#1234.5600#!#2023-12-25 14:30:45.123#!#Dec 25 2023  2:30PM           #!#Dec 25 2023  2:30PM           #!#Dec 25 2023  2:30PM#!#Dec 25 2023  2:30PM           #!#Dec 25 2023  2:30PM           #!#Dec 25 2023  2:30PM#!#Test String#!#Test String#!#Test String#!#Invalid Date#!#Invalid Date
+2#!#-5678.9000#!#-5678.9000          #!#-5678.9000          #!#-5678.9000#!#-5678.9000          #!#-5678.9000          #!#-5678.9000#!#2024-02-29 23:59:59.997#!#Feb 29 2024 11:59PM           #!#Feb 29 2024 11:59PM           #!#Feb 29 2024 11:59PM#!#Feb 29 2024 11:59PM           #!#Feb 29 2024 11:59PM           #!#Feb 29 2024 11:59PM#!#Test String#!#Test String#!#Test String#!#Invalid Date#!#Invalid Date
+3#!#0.0000#!#0.0000              #!#0.0000              #!#0.0000#!#0.0000              #!#0.0000              #!#0.0000#!#1753-01-01 00:00:00.0#!#Jan  1 1753 12:00AM           #!#Jan  1 1753 12:00AM           #!#Jan  1 1753 12:00AM#!#Jan  1 1753 12:00AM           #!#Jan  1 1753 12:00AM           #!#Jan  1 1753 12:00AM#!#Test String#!#Test String#!#Test String#!#Invalid Date#!#Invalid Date
+~~END~~
+

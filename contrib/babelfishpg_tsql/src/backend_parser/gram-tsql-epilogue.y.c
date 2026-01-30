@@ -275,6 +275,9 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 			typename_string = format_type_extended(VARCHAROID, typmod, FORMAT_TYPE_TYPEMOD_GIVEN);
 		}
 		args = lcons(makeStringConst(typename_string, typename->location), args);
+		if (style == NULL )
+			args = lappend(args, makeIntConst(-1, -1));
+		args = lappend(args, makeBoolAConst(style != NULL, -1));
 		helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varchar"), args, COERCE_EXPLICIT_CALL, location);
 
 		/*

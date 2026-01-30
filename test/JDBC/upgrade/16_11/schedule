@@ -611,7 +611,7 @@ BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
 BABEL-5467
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
-test_constraint_like
+test_constraint_like_before_17_8-or-16_12
 round_return_type_test
 alter-view
 test_conv_int_to_varbinary_binary
@@ -643,3 +643,5 @@ cast_datetime_to_binary
 babel_string_to_money
 comparison_op_index_scan-before-17_8-or-16_12
 BABEL-1664
+babel_convert_with_style
+babel_string_to_money_reg

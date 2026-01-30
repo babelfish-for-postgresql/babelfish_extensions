@@ -1,0 +1,530 @@
+#Test case 1: Composite Primary Key (Two columns)
+DROP TABLE IF EXISTS primarytest
+CREATE TABLE primarytest (col1 INT NOT NULL, col2 INT NOT NULL, data VARCHAR(50), PRIMARY KEY (col1, col2))
+fillschema_test#!#SELECT * FROM primarytest
+~~START~~
+Table Columns:
+Column: col1
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: col2
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: data
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- col1
+- col2
+~~END~~
+
+DROP TABLE IF EXISTS primarytest
+
+#Test case 2: No Primary Key
+DROP TABLE IF EXISTS pk_none
+CREATE TABLE pk_none (col1 INT NOT NULL, col2 VARCHAR(50) NULL, col3 BIT NOT NULL)
+fillschema_test#!#SELECT * FROM pk_none
+~~START~~
+Table Columns:
+Column: col1
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: col2
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: col3
+  - Is Primary Key: False
+  - Data Type: System.Boolean
+  - Allow Null: True
+
+Primary Key Columns:
+- None
+~~END~~
+
+DROP TABLE IF EXISTS pk_none
+
+# Test case 3: PK in Middle Position
+DROP TABLE IF EXISTS pk_middle
+CREATE TABLE pk_middle (col1 VARCHAR(50), col2 VARCHAR(50), id INT PRIMARY KEY, col3 VARCHAR(50), col4 VARCHAR(50))
+fillschema_test#!#SELECT * FROM pk_middle
+~~START~~
+Table Columns:
+Column: col1
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: col2
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: col3
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: col4
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- id
+~~END~~
+
+DROP TABLE IF EXISTS pk_middle
+
+#Test case 4: Multi-Table LEFT JOIN (3 tables, no FK constraint)
+DROP TABLE IF EXISTS order_items
+DROP TABLE IF EXISTS orders
+DROP TABLE IF EXISTS customers
+CREATE TABLE customers (customer_id INT PRIMARY KEY, customer_name VARCHAR(100) NOT NULL, city VARCHAR(50))
+CREATE TABLE orders (order_id INT PRIMARY KEY, customer_id INT NOT NULL, order_date DATETIME NOT NULL, status VARCHAR(20))
+CREATE TABLE order_items (item_id INT PRIMARY KEY, order_id INT NOT NULL, product_name VARCHAR(100), quantity INT)
+fillschema_test#!#SELECT * FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id LEFT JOIN order_items oi ON o.order_id = oi.order_id
+~~START~~
+Table Columns:
+Column: customer_id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: customer_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: city
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: order_id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: customer_id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: order_date
+  - Is Primary Key: False
+  - Data Type: System.DateTime
+  - Allow Null: True
+Column: status
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: item_id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: order_id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: product_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: quantity
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+
+Primary Key Columns:
+- customer_id
+~~END~~
+
+DROP TABLE IF EXISTS order_items
+DROP TABLE IF EXISTS orders
+DROP TABLE IF EXISTS customers
+
+#Test case 5: UNIQUE Nullable Column
+DROP TABLE IF EXISTS rule2b_unique_null
+CREATE TABLE rule2b_unique_null (id INT NULL UNIQUE, name VARCHAR(50) NULL)
+fillschema_test#!#SELECT * FROM rule2b_unique_null
+~~START~~
+Table Columns:
+Column: id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- None
+~~END~~
+
+DROP TABLE IF EXISTS rule2b_unique_null
+
+Test case 6: Primary key detection
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]syntax error near 'case' at line 1 and character position 5 (33557097) (SQLExecDirectW))~~
+
+DROP TABLE IF EXISTS int_boundary
+CREATE TABLE int_boundary (id INT PRIMARY KEY, data VARCHAR(50))
+fillschema_test#!#SELECT * FROM int_boundary
+~~START~~
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: data
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- id
+~~END~~
+
+DROP TABLE IF EXISTS int_boundary
+
+#Test case 7: PK with Multiple UNIQUE Constraints
+DROP TABLE IF EXISTS rule3_pk_multi_unique
+CREATE TABLE rule3_pk_multi_unique (id INT PRIMARY KEY, email VARCHAR(100) NOT NULL UNIQUE, phone VARCHAR(20) NOT NULL UNIQUE, ssn VARCHAR(20) NULL UNIQUE, name VARCHAR(50))
+INSERT INTO rule3_pk_multi_unique VALUES (1, 'test@test.com', '555-1234', [REDACTED:SSN], 'test')
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "redacted:ssn" does not exist (33557097) (SQLExecDirectW))~~
+
+fillschema_test#!#SELECT * FROM rule3_pk_multi_unique
+~~START~~
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: email
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: phone
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: ssn
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- id
+~~END~~
+
+DROP TABLE IF EXISTS rule3_pk_multi_unique
+
+#Test case 8: Composite Foreign Key (2 columns)
+DROP TABLE IF EXISTS fk_child_composite
+DROP TABLE IF EXISTS fk_parent_composite
+CREATE TABLE fk_parent_composite (col1 INT NOT NULL, col2 INT NOT NULL, name VARCHAR(50), PRIMARY KEY (col1, col2))
+CREATE TABLE fk_child_composite (id INT PRIMARY KEY, ref_col1 INT NOT NULL, ref_col2 INT NOT NULL, data VARCHAR(50), FOREIGN KEY (ref_col1, ref_col2) REFERENCES fk_parent_composite(col1, col2))
+fillschema_test#!#SELECT * FROM fk_child_composite
+~~START~~
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: ref_col1
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: ref_col2
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: data
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- id
+~~END~~
+
+fillschema_test#!#SELECT c.*, p.name FROM fk_child_composite c JOIN fk_parent_composite p ON c.ref_col1 = p.col1 AND c.ref_col2 = p.col2
+~~START~~
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: ref_col1
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: ref_col2
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: data
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- id
+~~END~~
+
+DROP TABLE IF EXISTS fk_child_composite
+DROP TABLE IF EXISTS fk_parent_composite
+
+#Test case 9: Primary Key detection in 3-level hierarchy with chained foreign keys
+DROP TABLE IF EXISTS fk_chain_c
+DROP TABLE IF EXISTS fk_chain_b
+DROP TABLE IF EXISTS fk_chain_a
+CREATE TABLE fk_chain_a (id INT PRIMARY KEY, name VARCHAR(50))
+CREATE TABLE fk_chain_b (id INT PRIMARY KEY, a_id INT NOT NULL, name VARCHAR(50), FOREIGN KEY (a_id) REFERENCES fk_chain_a(id))
+CREATE TABLE fk_chain_c (id INT PRIMARY KEY, b_id INT NOT NULL, name VARCHAR(50), FOREIGN KEY (b_id) REFERENCES fk_chain_b(id))
+fillschema_test#!#SELECT c.*, b.name as b_name, a.name as a_name FROM fk_chain_c c JOIN fk_chain_b b ON c.b_id = b.id JOIN fk_chain_a a ON b.a_id = a.id
+~~START~~
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: b_id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: b_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: a_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- id
+~~END~~
+
+DROP TABLE IF EXISTS fk_chain_c
+DROP TABLE IF EXISTS fk_chain_b
+DROP TABLE IF EXISTS fk_chain_a
+
+#Test case 10: Testing with NO_BROWSETABLE_OFF
+DROP TABLE IF EXISTS dbo.cclass 
+CREATE TABLE dbo.cclass ( class_id INT NOT NULL PRIMARY KEY, class_name VARCHAR(50) NOT NULL, teacher_name VARCHAR(100) NULL, room_number INT NULL )
+fillschema_test#!#SET NO_BROWSETABLE OFF; select * from dbo.cclass
+~~START~~
+Table Columns:
+Column: class_id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: class_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: teacher_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: room_number
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+
+Primary Key Columns:
+- class_id
+~~END~~
+
+DROP TABLE IF EXISTS dbo.cclass
+
+#Test case 11: Testing with NO_BROWSETABLE_ON
+DROP TABLE IF EXISTS new_cclass
+CREATE TABLE new_cclass ( class_id INT NOT NULL PRIMARY KEY, class_name VARCHAR(50) NOT NULL, teacher_name VARCHAR(100) NULL )
+fillschema_test#!#SET NO_BROWSETABLE ON; select * from new_cclass
+~~START~~
+Table Columns:
+Column: class_id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: class_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: teacher_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- class_id
+~~END~~
+
+DROP TABLE IF EXISTS new_cclass
+
+#Test case 12: Stored Procedures
+DROP PROCEDURE IF EXISTS sp_get_by_id
+DROP TABLE IF EXISTS sp_param_table
+CREATE TABLE sp_param_table (id INT NOT NULL PRIMARY KEY, names VARCHAR(50) NOT NULL, val DECIMAL(10,2) NULL)
+INSERT INTO sp_param_table VALUES (1, 'Item1', 100.50), (2, 'Item2', 200.75), (3, 'Item3', 300.00)
+~~ROW COUNT: 3~~
+
+CREATE PROCEDURE sp_get_by_id @id INT AS BEGIN SELECT * FROM sp_param_table WHERE id = @id END
+fillschema_test#!#EXEC sp_get_by_id @id = 1
+~~START~~
+Table Columns:
+Column: id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: names
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: val
+  - Is Primary Key: False
+  - Data Type: System.Decimal
+  - Allow Null: True
+
+Primary Key Columns:
+- None
+~~END~~
+
+DROP PROCEDURE IF EXISTS sp_get_by_id
+DROP TABLE IF EXISTS sp_param_table
+
+#Test case 13: sp_prepexec
+DROP TABLE IF EXISTS prepexec_test
+CREATE TABLE prepexec_test (id INT PRIMARY KEY, name VARCHAR(50), value INT)
+INSERT INTO prepexec_test VALUES (1, 'Test1', 100), (2, 'Test2', 200)
+~~ROW COUNT: 2~~
+
+fillschema_test#!#DECLARE @handle INT; EXEC sp_prepexec @handle OUTPUT, N'@id INT', N'SELECT * FROM prepexec_test WHERE id = @id', @id = 1
+~~START~~
+Table Columns:
+Column: id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: value
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+
+Primary Key Columns:
+- None
+~~END~~
+
+DROP TABLE IF EXISTS prepexec_test
+
+#Test case 14: sp_prepexec and sp_prepare
+DROP TABLE IF EXISTS prepare_exec_test
+CREATE TABLE prepare_exec_test (id INT PRIMARY KEY, data VARCHAR(100))
+INSERT INTO prepare_exec_test VALUES (1, 'Data1'), (2, 'Data2')
+~~ROW COUNT: 2~~
+
+fillschema_test#!#DECLARE @handle INT; EXEC sp_prepare @handle OUTPUT, N'@id INT', N'SELECT * FROM prepare_exec_test WHERE id = @id'; EXEC sp_execute @handle, 1; EXEC sp_unprepare @handle
+~~START~~
+Table Columns:
+Column: id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: True
+Column: data
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- None
+~~END~~
+
+DROP TABLE IF EXISTS prepare_exec_test
+
+#Test case 15: FMTONLY ON case
+DROP TABLE IF EXISTS fmtonly_test
+CREATE TABLE fmtonly_test (id INT PRIMARY KEY, name VARCHAR(50), created_date DATETIME)
+INSERT INTO fmtonly_test VALUES (1, 'Test', GETDATE())
+~~ROW COUNT: 1~~
+
+fillschema_test#!#SET FMTONLY ON; SELECT * FROM fmtonly_test
+~~START~~
+Table Columns:
+Column: id
+  - Is Primary Key: True
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+Column: created_date
+  - Is Primary Key: False
+  - Data Type: System.DateTime
+  - Allow Null: True
+
+Primary Key Columns:
+- id
+~~END~~
+
+DROP TABLE IF EXISTS fmtonly_test
+
+#Test case 16: prepexec with join tables
+DROP TABLE IF EXISTS prepexec_orders
+DROP TABLE IF EXISTS prepexec_customers
+CREATE TABLE prepexec_customers (customer_id INT PRIMARY KEY, customer_name VARCHAR(100))
+CREATE TABLE prepexec_orders (order_id INT PRIMARY KEY, customer_id INT, order_date DATE, amount DECIMAL(10,2))
+INSERT INTO prepexec_customers VALUES (1, 'Customer A'), (2, 'Customer B')
+~~ROW COUNT: 2~~
+
+INSERT INTO prepexec_orders VALUES (101, 1, '2024-01-01', 500.00), (102, 1, '2024-01-15', 750.00), (103, 2, '2024-02-01', 300.00)
+~~ROW COUNT: 3~~
+
+fillschema_test#!#DECLARE @handle INT; EXEC sp_prepexec @handle OUTPUT, N'@custid INT', N'SELECT o.order_id, o.order_date, o.amount, c.customer_name FROM prepexec_orders o JOIN prepexec_customers c ON o.customer_id = c.customer_id WHERE c.customer_id = @custid', @custid = 1
+~~START~~
+Table Columns:
+Column: order_id
+  - Is Primary Key: False
+  - Data Type: System.Int32
+  - Allow Null: False
+Column: order_date
+  - Is Primary Key: False
+  - Data Type: System.DateTime
+  - Allow Null: True
+Column: amount
+  - Is Primary Key: False
+  - Data Type: System.Decimal
+  - Allow Null: True
+Column: customer_name
+  - Is Primary Key: False
+  - Data Type: System.String
+  - Allow Null: True
+
+Primary Key Columns:
+- None
+~~END~~
+
+DROP TABLE IF EXISTS prepexec_orders
+DROP TABLE IF EXISTS prepexec_customers

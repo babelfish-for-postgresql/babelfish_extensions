@@ -648,5 +648,60 @@ namespace BabelfishDotnetFramework
 				return null;
 			}
 		}
+		public void FillSchemaTest(DbConnection conn, DbTransaction transaction, string query, 
+			string testName, Logger logger, ref int stCount)
+		{
+			using var myoutputfile = new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, testName + ".out"), true);
+			myoutputfile.WriteLine($"#Q#{query}");
+			myoutputfile.WriteLine();
+			
+			try
+			{
+				using var cmd = new SqlCommand(query, (SqlConnection)conn);
+				if (transaction != null)
+				{
+					cmd.Transaction = (SqlTransaction)transaction;
+				}
+				
+				var da = new SqlDataAdapter(cmd);
+				da.MissingSchemaAction = MissingSchemaAction.AddWithKey;
+				var dt = new DataTable();
+				da.FillSchema(dt, SchemaType.Source);
+				
+				// Write all columns
+				myoutputfile.WriteLine("Table Columns:");
+				foreach (DataColumn column in dt.Columns)
+				{
+					bool isPrimaryKey = dt.PrimaryKey != null && Array.Exists(dt.PrimaryKey, pk => pk == column);
+					
+					myoutputfile.WriteLine($"Column: {column.ColumnName}");
+					myoutputfile.WriteLine($"  - Is Primary Key: {isPrimaryKey}");
+					myoutputfile.WriteLine($"  - Data Type: {column.DataType}");
+					myoutputfile.WriteLine($"  - Allow Null: {column.AllowDBNull}");
+				}
+				
+				// Write primary key columns summary
+				myoutputfile.WriteLine("Primary Key Columns:");
+				if (dt.PrimaryKey != null && dt.PrimaryKey.Length > 0)
+				{
+					foreach (DataColumn pkColumn in dt.PrimaryKey)
+					{
+						myoutputfile.WriteLine($"- {pkColumn.ColumnName}");
+					}
+				}
+				else
+				{
+					myoutputfile.WriteLine("- None");
+				}
+				
+				PrintToLogsOrConsole($"FillSchemaTest completed for: {query}", logger, "information");
+			}
+			catch (Exception ex)
+			{
+				myoutputfile.WriteLine($"#E#{ex.Message}");
+				PrintToLogsOrConsole($"Error in FillSchemaTest: {ex.Message}", logger, "error");
+				stCount--;
+			}
+		}
 	}
 }

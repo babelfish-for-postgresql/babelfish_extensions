@@ -718,7 +718,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK ((<newline>CASE<newline>    WHEN (((status)::text COLLATE sys.chinese_prc_cs_as) ~~* ('act%'::text COLLATE sys.chinese_prc_cs_as)) THEN 1<newline>    WHEN ((status)::text ~~* 'inactive'::text) THEN 1<newline>    ELSE 0<newline>END = 1))
+CHECK ((<newline>CASE<newline>    WHEN (((status)::text COLLATE sys.chinese_prc_cs_as) ~~* ('act%'::text COLLATE sys.chinese_prc_cs_as)) THEN 1<newline>    WHEN (((status)::text COLLATE sys.chinese_prc_cs_as) ~~* ('inactive'::text COLLATE sys.chinese_prc_cs_as)) THEN 1<newline>    ELSE 0<newline>END = 1))
 ~~END~~
 
 
