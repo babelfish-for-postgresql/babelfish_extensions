@@ -428,6 +428,21 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--MAKE VALID
+CREATE OR REPLACE FUNCTION sys.MakeValid(geom sys.GEOMETRY)
+RETURNS sys.GEOMETRY
+AS $$
+BEGIN
+    IF sys.STIsEmpty(geom) = 1 THEN
+        RETURN geom;
+    ELSEIF sys.STIsValid(geom) = 1 THEN 
+        RETURN geom;
+    ELSE
+    RETURN sys.STMakeValid_helper(geom);
+    END IF;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
@@ -621,6 +636,11 @@ CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOMETRY, geom2 sys.GEO
 CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOMETRY)
         RETURNS integer
         AS '$libdir/postgis-3','LWGEOM_dimension'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STMakeValid_helper(sys.GEOMETRY)
+        RETURNS sys.GEOMETRY
+        AS '$libdir/postgis-3','ST_MakeValid'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)

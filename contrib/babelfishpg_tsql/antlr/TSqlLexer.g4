@@ -555,6 +555,7 @@ M:                                               [Mm];
 M_DOUBLE_QUOTE:                                  ["] M ["] {pltsql_quoted_identifier == true}?;
 M_SQBRACKET:                                     '[' M ']';
 MANUAL:                                          M A N U A L;
+MAKEVALID:                                       'MakeValid';    
 MARK:                                            M A R K;
 MASK:                                            M A S K;
 MASKED:                                          M A S K E D;

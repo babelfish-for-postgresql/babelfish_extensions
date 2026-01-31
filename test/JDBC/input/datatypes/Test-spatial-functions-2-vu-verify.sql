@@ -952,3 +952,419 @@ go
 
 Select CAST(CAST('POINT EMPTY' as char(100)) AS geography).STAsText();
 go
+
+-- Test 1: NULL geometry
+DECLARE @g geometry;
+SET @g = NULL;
+SELECT @g.MakeValid() AS result;
+GO
+
+-- Test 2: Empty Point
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POINT EMPTY', 0);
+SELECT @g.MakeValid().STAsText() AS result;
+GO
+
+-- Test 3: Empty Polygon
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON EMPTY', 0);
+SELECT @g.MakeValid().STAsText() AS result;
+GO
+
+
+-- Test 5: Valid Point
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POINT(10 20)', 0);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+GO
+
+-- Test 6: Valid Point with SRID
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POINT(10 20)', 4326);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STSrid AS srid;
+GO
+
+-- Test 7: Valid Polygon
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 0);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+GO
+
+-- Test 8: Invalid Polygon (Bowtie) - KEY TEST
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SELECT @g.STIsValid() AS before_valid, @g.MakeValid().STIsValid() AS after_valid;
+GO
+
+-- Test 10: Invalid Polygon (Twisted Ring)
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 5 5, 10 0, 10 10, 5 5, 0 10, 0 0))', 0);
+SELECT @g.STIsValid() AS before_valid, @g.MakeValid().STIsValid() AS after_valid;
+GO
+
+-- Test 11: Valid LineString
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('LINESTRING(0 0, 10 10, 20 20, 30 10)', 0);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+GO
+
+-- Test 13: SRID Preservation
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT @g.STSrid AS original_srid, @g.MakeValid().STSrid AS fixed_srid;
+GO
+
+-- Test 14: Chained - MakeValid then STArea
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SELECT @g.MakeValid().STArea() AS area;
+GO
+
+-- Test 17: Compare Before and After
+DECLARE @g geometry;
+DECLARE @fixed geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SET @fixed = @g.MakeValid();
+SELECT 'BEFORE' AS stage, @g.STIsValid() AS is_valid, @g.STAsText() AS wkt
+UNION ALL
+SELECT 'AFTER' AS stage, @fixed.STIsValid() AS is_valid, @fixed.STAsText() AS wkt;
+GO
+
+-- Test 18: Using Point method
+DECLARE @g geometry;
+SET @g = geometry::Point(10, 20, 0);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+GO
+
+-- Test 19: Whitespace variations
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SELECT @g . MakeValid ( ) . STIsValid ( ) AS is_valid;
+GO
+
+-- Test 20: Double MakeValid (idempotent)
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SELECT @g.MakeValid().MakeValid().STIsValid() AS is_valid;
+GO
+
+-- ============================================
+-- SECTION 2: GEOGRAPHY - Variable Based Tests
+-- ============================================
+
+-- Test 21: NULL geography
+DECLARE @g geography;
+SET @g = NULL;
+SELECT @g.MakeValid() AS result;
+GO
+
+-- Test 22: Empty Point
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POINT EMPTY', 4326);
+SELECT @g.MakeValid().STAsText() AS result;
+GO
+
+-- Test 23: Empty Polygon
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON EMPTY', 4326);
+SELECT @g.MakeValid().STAsText() AS result;
+GO
+
+-- Test 24: Valid Point
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POINT(-122.349 47.651)', 4326);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+GO
+
+-- Test 25: Valid Point using Point method
+DECLARE @g geography;
+SET @g = geography::Point(47.651, -122.349, 4326);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+GO
+
+-- Test 26: Valid Polygon
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 4326);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+GO
+
+-- Test 27: Invalid Polygon (Bowtie) - KEY TEST
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT @g.STIsValid() AS before_valid, @g.MakeValid().STIsValid() AS after_valid;
+GO
+
+-- Test 29: Invalid Geography (Twisted Ring)
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 5 5, 10 0, 10 10, 5 5, 0 10, 0 0))', 4326);
+SELECT @g.STIsValid() AS before_valid, @g.MakeValid().STIsValid() AS after_valid;
+GO
+
+-- Test 31: Valid MultiPolygon
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('MULTIPOLYGON(((0 0, 0 5, 5 5, 5 0, 0 0)), ((10 10, 10 15, 15 15, 15 10, 10 10)))', 4326);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+GO
+
+-- Test 32: Chained - MakeValid then STArea
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT @g.MakeValid().STArea() AS area;
+GO
+
+-- Test 34: Compare Before and After
+DECLARE @g geography;
+DECLARE @fixed geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SET @fixed = @g.MakeValid();
+SELECT 'BEFORE' AS stage, @g.STIsValid() AS is_valid, @g.STAsText() AS wkt
+UNION ALL
+SELECT 'AFTER' AS stage, @fixed.STIsValid() AS is_valid, @fixed.STAsText() AS wkt;
+GO
+
+-- Test 35: Whitespace variations
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT @g . MakeValid ( ) . STIsValid ( ) AS is_valid;
+GO
+
+-- Test 36: Double MakeValid (idempotent)
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT @g.MakeValid().MakeValid().STIsValid() AS is_valid;
+GO
+
+-- ============================================
+-- SECTION 3: TABLE Based Tests - GEOMETRY
+-- ============================================
+
+-- Test 37: MakeValid STAsText from table
+SELECT ID, Description, GeomColumn.MakeValid().STAsText() AS MadeValid FROM TestGeospatialMethods_MakeValidGeomTemp ORDER BY ID;
+GO
+
+-- Test 38: Before and After STIsValid from table
+SELECT ID, Description, GeomColumn.STIsValid() AS BeforeValid, GeomColumn.MakeValid().STIsValid() AS AfterValid FROM TestGeospatialMethods_MakeValidGeomTemp ORDER BY ID;
+GO
+
+-- Test 39: MakeValid STArea from table
+SELECT ID, Description, GeomColumn.MakeValid().STArea() AS Area FROM TestGeospatialMethods_MakeValidGeomTemp ORDER BY ID;
+GO
+
+-- Test 41: MakeValid SRID preservation from table
+SELECT ID, Description, GeomColumn.STSrid AS BeforeSRID, GeomColumn.MakeValid().STSrid AS AfterSRID FROM TestGeospatialMethods_MakeValidGeomTemp ORDER BY ID;
+GO
+
+-- Test 42: MakeValid STIsEmpty from table
+SELECT ID, Description, GeomColumn.MakeValid().STIsEmpty() AS IsEmpty FROM TestGeospatialMethods_MakeValidGeomTemp ORDER BY ID;
+GO
+
+-- Test 43: MakeValid STDimension from table
+SELECT ID, Description, GeomColumn.MakeValid().STDimension() AS Dimension FROM TestGeospatialMethods_MakeValidGeomTemp ORDER BY ID;
+GO
+
+-- ============================================
+-- SECTION 4: TABLE Based Tests - GEOGRAPHY
+-- ============================================
+
+-- Test 45: MakeValid STAsText from table
+SELECT ID, Description, GeogColumn.MakeValid().STAsText() AS MadeValid FROM TestGeospatialMethods_MakeValidGeogTemp ORDER BY ID;
+GO
+
+-- Test 46: Before and After STIsValid from table
+SELECT ID, Description, GeogColumn.STIsValid() AS BeforeValid, GeogColumn.MakeValid().STIsValid() AS AfterValid FROM TestGeospatialMethods_MakeValidGeogTemp ORDER BY ID;
+GO
+
+-- Test 47: MakeValid STArea from table
+SELECT ID, Description, GeogColumn.MakeValid().STArea() AS Area FROM TestGeospatialMethods_MakeValidGeogTemp ORDER BY ID;
+GO
+
+-- Test 49: MakeValid STIsEmpty from table
+SELECT ID, Description, GeogColumn.MakeValid().STIsEmpty() AS IsEmpty FROM TestGeospatialMethods_MakeValidGeogTemp ORDER BY ID;
+GO
+
+-- Test 50: MakeValid STDimension from table
+SELECT ID, Description, GeogColumn.MakeValid().STDimension() AS Dimension FROM TestGeospatialMethods_MakeValidGeogTemp ORDER BY ID;
+GO
+
+-- ============================================
+-- SECTION 5: VIEW Based Tests - GEOMETRY
+-- ============================================
+
+-- Test 52: Select from MakeValid view 1
+SELECT * FROM TestGeospatialMethods_MakeValidGeomView1 ORDER BY ID;
+GO
+
+-- Test 53: Select from MakeValid view 2
+SELECT * FROM TestGeospatialMethods_MakeValidGeomView2 ORDER BY ID;
+GO
+
+-- Test 54: Select from MakeValid view 3
+SELECT * FROM TestGeospatialMethods_MakeValidGeomView3 ORDER BY ID;
+GO
+
+-- Test 56: Select from MakeValid view 5
+SELECT * FROM TestGeospatialMethods_MakeValidGeomView5 ORDER BY ID;
+GO
+
+-- ============================================
+-- SECTION 6: VIEW Based Tests - GEOGRAPHY
+-- ============================================
+
+-- Test 57: Select from MakeValid view 1
+SELECT * FROM TestGeospatialMethods_MakeValidGeogView1 ORDER BY ID;
+GO
+
+-- Test 58: Select from MakeValid view 2
+SELECT * FROM TestGeospatialMethods_MakeValidGeogView2 ORDER BY ID;
+GO
+
+-- Test 59: Select from MakeValid view 3
+SELECT * FROM TestGeospatialMethods_MakeValidGeogView3 ORDER BY ID;
+GO
+
+-- ============================================
+-- SECTION 7: NULL Condition Tests
+-- ============================================
+
+-- Test 60: NULL geometry tests
+DECLARE @nullGeom geometry;
+DECLARE @validGeom geometry = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SELECT 'MakeValid NULL' AS Test, @nullGeom.MakeValid() AS Result;
+SELECT 'MakeValid Valid' AS Test, @validGeom.MakeValid().STIsValid() AS Result;
+GO
+
+-- Test 61: NULL geography tests
+DECLARE @nullGeog geography;
+DECLARE @validGeog geography = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT 'MakeValid NULL' AS Test, @nullGeog.MakeValid() AS Result;
+SELECT 'MakeValid Valid' AS Test, @validGeog.MakeValid().STIsValid() AS Result;
+GO
+
+-- ============================================
+-- SECTION 8: Filter Tests with WHERE clause
+-- ============================================
+
+-- Test 62: Filter invalid geometries only
+SELECT ID, Description, GeomColumn.STIsValid() AS BeforeValid, GeomColumn.MakeValid().STIsValid() AS AfterValid 
+FROM TestGeospatialMethods_MakeValidGeomTemp 
+WHERE GeomColumn.STIsValid() = 0 
+ORDER BY ID;
+GO
+
+-- Test 63: Filter valid geometries only
+SELECT ID, Description, GeomColumn.MakeValid().STAsText() AS MadeValid 
+FROM TestGeospatialMethods_MakeValidGeomTemp 
+WHERE GeomColumn.STIsValid() = 1 
+ORDER BY ID;
+GO
+
+-- Test 64: Filter NULL geometries only
+SELECT ID, Description, GeomColumn.MakeValid() AS MadeValid 
+FROM TestGeospatialMethods_MakeValidGeomTemp 
+WHERE GeomColumn IS NULL 
+ORDER BY ID;
+GO
+
+-- Test 65: Filter invalid geographies only
+SELECT ID, Description, GeogColumn.STIsValid() AS BeforeValid, GeogColumn.MakeValid().STIsValid() AS AfterValid 
+FROM TestGeospatialMethods_MakeValidGeogTemp 
+WHERE GeogColumn.STIsValid() = 0 
+ORDER BY ID;
+GO
+
+-- Test 66: Filter valid geographies only
+SELECT ID, Description, GeogColumn.MakeValid().STAsText() AS MadeValid 
+FROM TestGeospatialMethods_MakeValidGeogTemp 
+WHERE GeogColumn.STIsValid() = 1 
+ORDER BY ID;
+GO
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+-- Duplicate consecutive points
+DECLARE @g geometry = geometry::STGeomFromText('LINESTRING(0 0, 0 0, 10 10, 10 10, 20 20)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Self-intersecting LineString
+DECLARE @g geometry = geometry::STGeomFromText('LINESTRING(0 0, 10 10, 10 0, 0 10)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Polygon with hole outside shell
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0), (20 20, 20 25, 25 25, 25 20, 20 20))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Polygon with overlapping holes
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 20, 20 20, 20 0, 0 0), (2 2, 2 10, 10 10, 10 2, 2 2), (5 5, 5 15, 15 15, 15 5, 5 5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Polygon with inverted hole (wrong orientation)
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 20, 20 20, 20 0, 0 0), (5 5, 15 5, 15 15, 5 15, 5 5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+-- Spike geometry (extremely narrow angle)
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 5 5.0001, 10 10, 0 10, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Zero-area polygon (degenerate)
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 0, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Zero-length linestring
+DECLARE @g geometry = geometry::STGeomFromText('LINESTRING(5 5, 5 5)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('POINT(10 20 30)', 0);
+SELECT @g.MakeValid().STAsText(), @g.MakeValid().HasZ;
+go
+
+-- Point with M value
+DECLARE @g geometry = geometry::STGeomFromText('POINT(10 20 NULL 40)', 0);
+SELECT @g.MakeValid().STAsText(), @g.MakeValid().HasM;
+go
+
+-- LineString with Z values
+DECLARE @g geometry = geometry::STGeomFromText('LINESTRING(0 0 0, 10 10 10, 20 20 20)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Invalid polygon with Z values
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0 0, 10 10 10, 10 0 5, 0 10 5, 0 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('POINT(1000000000 1000000000)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Very small coordinates (precision test)
+DECLARE @g geometry = geometry::STGeomFromText('POINT(0.000000001 0.000000001)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Negative coordinates
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((-10 -10, -10 10, 10 10, 10 -10, -10 -10))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Mixed positive/negative
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((-5 -5, -5 5, 5 5, 5 -5, -5 -5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Single point polygon (all same points)
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((5 5, 5 5, 5 5, 5 5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Collinear points polygon
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 5 0, 10 0, 5 0, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
