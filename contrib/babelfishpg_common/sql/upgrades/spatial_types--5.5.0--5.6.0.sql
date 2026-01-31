@@ -5,7 +5,6 @@ CREATE OR REPLACE FUNCTION sys.Reduce(tolerance float8, geom sys.GEOMETRY)
     RETURNS sys.GEOMETRY
     AS $$
     BEGIN
-        --NULL GEOMETRY ->NULL
         IF geom IS NULL THEN
             RETURN NULL;
         ELSEIF tolerance IS NULL THEN
@@ -27,8 +26,8 @@ CREATE OR REPLACE FUNCTION sys.STReduce_helper(geom sys.GEOMETRY, tolerance floa
     AS '$libdir/postgis-3', 'LWGEOM_simplify2d'
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+
     --GEOGRAPHY 
-    
 CREATE OR REPLACE FUNCTION sys.Reduce(tolerance float8, geom sys.GEOGRAPHY)
     RETURNS sys.GEOGRAPHY
     AS $$ 
@@ -37,9 +36,9 @@ CREATE OR REPLACE FUNCTION sys.Reduce(tolerance float8, geom sys.GEOGRAPHY)
             RETURN NULL;
         ELSEIF tolerance IS NULL THEN
             RAISE EXCEPTION 'tolerance is not allowed to be null';
-		ELSEIF STIsEmpty(geom) = 1 THEN  
+		ELSEIF sys.STIsEmpty(geom) = 1 THEN  
             RETURN geom;
-        ELSEIF STIsValid(geom) = 0 THEN
+        ELSEIF sys.STIsValid(geom) = 0 THEN
             RAISE EXCEPTION 'The geography instance is not valid';
         ELSEIF tolerance < 0 THEN
             RAISE EXCEPTION 'Tolerance cannot be negative';
