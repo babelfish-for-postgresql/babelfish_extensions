@@ -1634,7 +1634,7 @@ go
 
 ~~ROW COUNT: 1~~
 
-SELECT * FROM document_embeddings;
+SELECT * FROM document_embeddings ORDER BY id;
 go
 ~~START~~
 int#!#varchar
@@ -1676,9 +1676,9 @@ int
 
 
 -- WHERE clause expressions
-SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5; 
+SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5 ORDER BY id; 
 go
 ~~START~~
 int#!#varchar
@@ -1708,14 +1708,14 @@ varchar
 ~~END~~
 
 
-SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id;
+SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id ORDER BY id;
 go
 ~~START~~
 int#!#varchar
+1#!#[21,-2,0,2.5]
 2#!#[5,10000,-9.75,8]
 3#!#[-0.02,23,3.14,0]
 4#!#[200,80,-300000,-1]
-1#!#[21,-2,0,2.5]
 ~~END~~
 
 
@@ -3350,7 +3350,7 @@ go
 
 ~~ROW COUNT: 1~~
 
-SELECT * FROM document_embeddings;
+SELECT * FROM document_embeddings ORDER BY id;
 go
 ~~START~~
 int#!#varchar
@@ -3392,9 +3392,9 @@ int
 
 
 -- WHERE clause expressions
-SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5; 
+SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5 ORDER BY id; 
 go
 ~~START~~
 int#!#varchar
@@ -3424,14 +3424,14 @@ varchar
 ~~END~~
 
 
-SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id;
+SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id ORDER BY id;
 go
 ~~START~~
 int#!#varchar
+1#!#[21,-2,0,2.5]
 2#!#[5,10000,-9.75,8]
 3#!#[-0.02,23,3.14,0]
 4#!#[200,80,-300000,-1]
-1#!#[21,-2,0,2.5]
 ~~END~~
 
 
