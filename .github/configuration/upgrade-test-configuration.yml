@@ -262,7 +262,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 15.2,
+      version: '15.10',
       upgrade-type: null
     },
     {
@@ -275,7 +275,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 16.1,
+      version: 16.6,
       upgrade-type: null,
     },
     { 
@@ -284,5 +284,31 @@ upgrade-version: [{
     }
   ],
   babelfishpg_tsql_server_collation_name: chinese_prc_ci_as
+},
+{
+  upgrade-path: [
+    {
+      version: '15.10',
+      upgrade-type: null
+    },
+    {
+      version: target.latest,
+      upgrade-type: major
+    }
+  ],
+  babelfishpg_tsql_server_collation_name: japanese_ci_as
+},
+{
+  upgrade-path: [
+    {
+      version: 16.6,
+      upgrade-type: null,
+    },
+    { 
+      version: target.latest,
+      upgrade-type: minor,
+    }
+  ],
+  babelfishpg_tsql_server_collation_name: japanese_ci_as
 }
 ]
