@@ -433,6 +433,21 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--STNumPoints
+CREATE OR REPLACE FUNCTION sys.STNumPoints(geog sys.GEOGRAPHY)
+	RETURNS integer
+	AS $$
+	BEGIN
+		IF sys.STIsValid(geog) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid. Use MakeValid() to convert to valid geography.';
+		ELSIF sys.STIsEmpty(geog) = 1 THEN
+			RETURN 0;
+		ELSE
+			RETURN sys.STNumPoints_geography_helper(geog);
+		END IF;
+	END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
@@ -632,6 +647,11 @@ CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOGRAPHY)
         RETURNS integer
         AS '$libdir/postgis-3','LWGEOM_dimension'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STNumPoints_geography_helper(sys.GEOGRAPHY)
+    RETURNS integer
+    AS '$libdir/postgis-3', 'LWGEOM_npoints'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
         RETURNS sys.BIT

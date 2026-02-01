@@ -1997,3 +1997,419 @@ nvarchar
 POINT EMPTY
 ~~END~~
 
+
+
+SELECT 
+    ID,
+    geom_type,
+    geom.STNumPoints() AS actual_result,
+    CASE ID
+        WHEN 1 THEN 1     
+        WHEN 2 THEN 1     
+        WHEN 3 THEN 1     
+        WHEN 4 THEN 2      
+        WHEN 5 THEN 3      
+        WHEN 6 THEN 5      
+        WHEN 7 THEN 4      
+        WHEN 8 THEN 5      
+        WHEN 9 THEN 10    
+        WHEN 10 THEN 0    
+        WHEN 11 THEN 0     
+        WHEN 12 THEN 0    
+        WHEN 13 THEN 1     
+        WHEN 14 THEN 0     
+        WHEN 15 THEN 0    
+        WHEN 16 THEN 0     
+    END AS expected_result
+FROM STNumPoints_geom_test
+ORDER BY ID;
+DECLARE @point geometry;
+SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT @point.STNumPoints();
+go
+~~START~~
+int#!#varchar#!#int#!#int
+1#!#Point#!#1#!#1
+2#!#Point with SRID#!#1#!#1
+3#!#Point constructor#!#1#!#1
+4#!#LineString 2pts#!#2#!#2
+5#!#LineString 3pts#!#3#!#3
+6#!#LineString 5pts#!#5#!#5
+7#!#Polygon triangle#!#4#!#4
+8#!#Polygon square#!#5#!#5
+9#!#Polygon with hole#!#10#!#10
+10#!#Empty Point#!#0#!#0
+11#!#Empty LineString#!#0#!#0
+12#!#Empty Polygon#!#0#!#0
+13#!#Point Z#!#1#!#1
+14#!#Empty Point#!#0#!#0
+15#!#Empty LineString#!#0#!#0
+16#!#Empty Polygon#!#0#!#0
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @point geometry;
+SET @point = geometry::Point(22.34900, -47.65100, 4326);
+SELECT @point.STNumPoints ( );
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+SELECT 
+    ID,
+    geog_type,
+    geog.STNumPoints() AS actual_result,
+    CASE ID
+        WHEN 1 THEN 1
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 5
+        WHEN 6 THEN 4
+        WHEN 7 THEN 5
+        WHEN 8 THEN 0
+        WHEN 9 THEN 0
+        WHEN 10 THEN 1     
+        WHEN 11 THEN 0     
+        WHEN 12 THEN 0     
+    END AS expected_result
+FROM STNumPoints_geog_test
+ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int#!#int
+1#!#Point#!#1#!#1
+2#!#Point constructor#!#1#!#1
+3#!#LineString 2pts#!#2#!#2
+4#!#LineString 3pts#!#3#!#3
+5#!#LineString 5pts#!#5#!#5
+6#!#Polygon triangle#!#4#!#4
+7#!#Polygon square#!#5#!#5
+8#!#Empty Point#!#0#!#0
+9#!#Empty LineString#!#0#!#0
+10#!#Point Z#!#1#!#1
+11#!#Empty Point#!#0#!#0
+12#!#Empty LineString#!#0#!#0
+~~END~~
+
+
+DECLARE @point geography;
+SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT @point.STNumPoints();
+go
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @point geography;
+SET @point = geography::Point(47.65100, -122.34900, 4326);
+SELECT @point . STNumPoints ( );
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+DECLARE @nullGeom geometry;
+SELECT @nullGeom.STNumPoints() AS null_geometry_result;
+go 
+DECLARE @g geometry;  
+SET @g = geometry::STGeomFromText('POINT EMPTY', 0);  
+SELECT @g.STNumPoints() AS empty_point_geometry;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'DECLARE' at line 4 and character position 0)~~
+
+
+DECLARE @g geography;  
+SET @g = geography::STGeomFromText('POINT EMPTY', 4326);  
+SELECT @g.STNumPoints() AS empty_point_geography;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT CAST(CAST('POINT EMPTY' AS VARCHAR(100)) AS geography).STNumPoints() AS cast_varchar_result;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT CAST(CAST('POINT EMPTY' AS CHAR(100)) AS geography).STNumPoints() AS cast_char_result;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM STNumPoints_geom_view ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int
+1#!#Point#!#1
+2#!#Point with SRID#!#1
+3#!#Point constructor#!#1
+4#!#LineString 2pts#!#2
+5#!#LineString 3pts#!#3
+6#!#LineString 5pts#!#5
+7#!#Polygon triangle#!#4
+8#!#Polygon square#!#5
+9#!#Polygon with hole#!#10
+10#!#Empty Point#!#0
+11#!#Empty LineString#!#0
+12#!#Empty Polygon#!#0
+13#!#Point Z#!#1
+14#!#Empty Point#!#0
+15#!#Empty LineString#!#0
+16#!#Empty Polygon#!#0
+~~END~~
+
+
+SELECT * FROM STNumPoints_geog_view ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int
+1#!#Point#!#1
+2#!#Point constructor#!#1
+3#!#LineString 2pts#!#2
+4#!#LineString 3pts#!#3
+5#!#LineString 5pts#!#5
+6#!#Polygon triangle#!#4
+7#!#Polygon square#!#5
+8#!#Empty Point#!#0
+9#!#Empty LineString#!#0
+10#!#Point Z#!#1
+11#!#Empty Point#!#0
+12#!#Empty LineString#!#0
+~~END~~
+
+
+SELECT 
+    geom_type,
+    SUM(geom.STNumPoints()) AS total_points,
+    AVG(geom.STNumPoints()) AS avg_points
+FROM STNumPoints_geom_test
+WHERE geom.STNumPoints() > 0
+GROUP BY geom_type
+ORDER BY total_points DESC;
+go
+~~START~~
+varchar#!#int#!#int
+Polygon with hole#!#10#!#10
+LineString 5pts#!#5#!#5
+Polygon square#!#5#!#5
+Polygon triangle#!#4#!#4
+LineString 3pts#!#3#!#3
+LineString 2pts#!#2#!#2
+Point with SRID#!#1#!#1
+Point Z#!#1#!#1
+Point constructor#!#1#!#1
+Point#!#1#!#1
+~~END~~
+
+
+SELECT ID, geom_type, geom.STNumPoints() AS num_points
+FROM STNumPoints_geom_test
+WHERE geom.STNumPoints() >= 5
+ORDER BY geom.STNumPoints() DESC;
+go
+~~START~~
+int#!#varchar#!#int
+9#!#Polygon with hole#!#10
+6#!#LineString 5pts#!#5
+8#!#Polygon square#!#5
+~~END~~
+
+
+DECLARE @point1 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 4326);
+DECLARE @point2 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 0);
+DECLARE @point3 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 999999);
+SELECT 
+    @point1.STNumPoints() AS srid_4326,
+    @point2.STNumPoints() AS srid_0,
+    @point3.STNumPoints() AS srid_999999;
+go
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+
+DECLARE @point1 geography = geography::STPointFromText('POINT(-122.349 47.651)', 4326);
+DECLARE @point2 geography = geography::STPointFromText('POINT(-122.349 47.651)', 4204);
+SELECT 
+    @point1.STNumPoints() AS srid_4326,
+    @point2.STNumPoints() AS srid_4204;
+go
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+DECLARE @line geometry;
+SET @line = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0);
+SELECT @line.STNumPoints();
+go
+~~START~~
+int
+3
+~~END~~
+
+
+DECLARE @poly geometry;
+SET @poly = geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))', 0);
+SELECT @poly.STNumPoints();
+go
+~~START~~
+int
+5
+~~END~~
+
+
+DECLARE @poly geometry;
+SET @poly = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (2 2, 8 2, 8 8, 2 8, 2 2))', 0);
+SELECT @poly.STNumPoints();
+go
+~~START~~
+int
+10
+~~END~~
+
+
+DECLARE @pointZ geometry;
+SET @pointZ = geometry::STGeomFromText('POINT(0 0 5)', 0);
+SELECT @pointZ.STNumPoints();
+go
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @pointZ geography;
+SET @pointZ = geography::STGeomFromText('POINT(-122.34 47.65 100)', 4326);
+SELECT @pointZ.STNumPoints();
+go
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @pointM geometry;
+SET @pointM = geometry::STGeomFromText('POINT(0 0 NULL 5)', 0);
+SELECT @pointM.STNumPoints();
+go
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @lineZ geometry;
+SET @lineZ = geometry::STGeomFromText('LINESTRING(0 0 0, 1 1 1, 2 2 2)', 0);
+SELECT @lineZ.STNumPoints();
+go
+~~START~~
+int
+3
+~~END~~
+
+
+-- UNION test
+SELECT 'geometry' AS source, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test WHERE ID <= 3
+UNION ALL
+SELECT 'geography' AS source, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test WHERE ID <= 3
+ORDER BY source, num_points;
+go
+~~START~~
+varchar#!#int
+geography#!#1
+geography#!#1
+geography#!#2
+geometry#!#1
+geometry#!#1
+geometry#!#1
+~~END~~
+
+
+
+SELECT g1.ID, g1.geom_type, g1.geom.STNumPoints() AS geom_points,
+       g2.ID, g2.geog_type, g2.geog.STNumPoints() AS geog_points
+FROM STNumPoints_geom_test g1
+JOIN STNumPoints_geog_test g2 ON g1.geom.STNumPoints() = g2.geog.STNumPoints()
+WHERE g1.ID <= 5 AND g2.ID <= 5;
+go
+~~START~~
+int#!#varchar#!#int#!#int#!#varchar#!#int
+1#!#Point#!#1#!#1#!#Point#!#1
+1#!#Point#!#1#!#2#!#Point constructor#!#1
+2#!#Point with SRID#!#1#!#1#!#Point#!#1
+2#!#Point with SRID#!#1#!#2#!#Point constructor#!#1
+3#!#Point constructor#!#1#!#1#!#Point#!#1
+3#!#Point constructor#!#1#!#2#!#Point constructor#!#1
+4#!#LineString 2pts#!#2#!#3#!#LineString 2pts#!#2
+5#!#LineString 3pts#!#3#!#4#!#LineString 3pts#!#3
+~~END~~
+
+
+WITH PointCounts AS (
+    SELECT geom_type, geom.STNumPoints() AS point_count
+    FROM STNumPoints_geom_test
+    WHERE geom.STNumPoints() > 0
+)
+SELECT geom_type, point_count, 
+       RANK() OVER (ORDER BY point_count DESC) AS rank
+FROM PointCounts;
+go
+~~START~~
+varchar#!#int#!#bigint
+Polygon with hole#!#10#!#1
+Polygon square#!#5#!#2
+LineString 5pts#!#5#!#2
+Polygon triangle#!#4#!#4
+LineString 3pts#!#3#!#5
+LineString 2pts#!#2#!#6
+Point Z#!#1#!#7
+Point with SRID#!#1#!#7
+Point constructor#!#1#!#7
+Point#!#1#!#7
+~~END~~
+
+
+
+SELECT ID, geom_type, geom.STNumPoints() AS num_points
+FROM STNumPoints_geom_test
+WHERE geom.STNumPoints() > (
+    SELECT AVG(geom.STNumPoints()) 
+    FROM STNumPoints_geom_test 
+    WHERE geom.STNumPoints() > 0
+);
+go
+~~START~~
+int#!#varchar#!#int
+6#!#LineString 5pts#!#5
+7#!#Polygon triangle#!#4
+8#!#Polygon square#!#5
+9#!#Polygon with hole#!#10
+~~END~~
+

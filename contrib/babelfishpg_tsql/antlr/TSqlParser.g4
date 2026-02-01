@@ -3945,6 +3945,7 @@ geospatial_func_no_arg
     | STISCLOSED
     | STISEMPTY
     | STISVALID
+    | STNUMPOINTS
     ;
 
 geospatial_func_arg
@@ -5086,6 +5087,7 @@ keyword
     | STISEMPTY
     | STISVALID
     | STLINEFROMTEXT
+    | STNUMPOINTS
     | STOP
     | STOPAT
     | STOPATMARK
