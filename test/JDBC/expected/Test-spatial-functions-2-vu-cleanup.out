@@ -38,6 +38,14 @@ DROP VIEW TestGeospatialMethods_empty_ValFromGeomTemp
 
 DROP VIEW TestGeospatialMethods_empty_TextFromGeomTemp 
 
+DROP VIEW TestGeospatialMethods_STGeometryType_GEOM_View_Temp 
+
+DROP VIEW TestGeospatialMethods_STGeometryType_GEOG_View_Temp 
+
+DROP TABLE TestGeospatialMethods_STGeometryType_GEOM_Temp 
+
+DROP TABLE TestGeospatialMethods_STGeometryType_GEOG_Temp 
+
 DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOM_dttemp 
 
 DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOG_dttemp 
