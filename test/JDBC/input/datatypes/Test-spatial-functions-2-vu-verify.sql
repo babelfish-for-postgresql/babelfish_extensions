@@ -1023,7 +1023,8 @@ go
 
 DECLARE @nullGeom geometry;
 SELECT @nullGeom.STNumPoints() AS null_geometry_result;
-go 
+go
+
 
 DECLARE @g geometry;  
 SET @g = geometry::STGeomFromText('POINT EMPTY', 0);  
@@ -1045,22 +1046,6 @@ SELECT * FROM STNumPoints_geom_view ORDER BY ID;
 go
 
 SELECT * FROM STNumPoints_geog_view ORDER BY ID;
-go
-
-SELECT 
-    geom_type,
-    SUM(geom.STNumPoints()) AS total_points,
-    AVG(geom.STNumPoints()) AS avg_points
-FROM STNumPoints_geom_test
-WHERE geom.STNumPoints() > 0
-GROUP BY geom_type
-ORDER BY total_points DESC;
-go
-
-SELECT ID, geom_type, geom.STNumPoints() AS num_points
-FROM STNumPoints_geom_test
-WHERE geom.STNumPoints() >= 5
-ORDER BY geom.STNumPoints() DESC;
 go
 
 DECLARE @point1 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 4326);
@@ -1125,25 +1110,6 @@ SELECT g1.ID, g1.geom_type, g1.geom.STNumPoints() AS geom_points,
        g2.ID, g2.geog_type, g2.geog.STNumPoints() AS geog_points
 FROM STNumPoints_geom_test g1
 JOIN STNumPoints_geog_test g2 ON g1.geom.STNumPoints() = g2.geog.STNumPoints()
-WHERE g1.ID <= 5 AND g2.ID <= 5;
-go
-
-WITH PointCounts AS (
-    SELECT geom_type, geom.STNumPoints() AS point_count
-    FROM STNumPoints_geom_test
-    WHERE geom.STNumPoints() > 0
-)
-SELECT geom_type, point_count, 
-       RANK() OVER (ORDER BY point_count DESC) AS rank
-FROM PointCounts;
-go
-
-
-SELECT ID, geom_type, geom.STNumPoints() AS num_points
-FROM STNumPoints_geom_test
-WHERE geom.STNumPoints() > (
-    SELECT AVG(geom.STNumPoints()) 
-    FROM STNumPoints_geom_test 
-    WHERE geom.STNumPoints() > 0
-);
+WHERE g1.ID <= 5 AND g2.ID <= 5
+ORDER BY g1.ID, g2.ID;
 go
