@@ -432,14 +432,14 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+
 --MAKEVALID
 CREATE OR REPLACE FUNCTION sys.MakeValid(geog sys.GEOGRAPHY)
     RETURNS sys.GEOGRAPHY
     AS $$ 
     BEGIN
-        IF geog IS NULL THEN
-            RETURN NULL;
-        ELSEIF sys.STIsEmpty(geog) = 1 THEN  
+        IF sys.STIsEmpty(geog) = 1 THEN  
             RETURN geog;
         ELSEIF sys.STIsValid(geog) = 1 THEN
             RETURN geog;
@@ -447,7 +447,7 @@ CREATE OR REPLACE FUNCTION sys.MakeValid(geog sys.GEOGRAPHY)
             RETURN sys.makevalid_helper(geog);
         END IF;
     END;
-    $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- STDisjoint
 -- Checks if two geometries have no points in common
