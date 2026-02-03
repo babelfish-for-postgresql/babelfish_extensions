@@ -433,7 +433,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR
     RETURNS sys.GEOMETRY
     AS $$
     BEGIN
-	    IF UPPER(geometry_tagged_text::text) = 'NULL' THEN
+	    IF UPPER(geometry_tagged_text::text COLLATE "default") = 'NULL' THEN
             RETURN NULL;
         END IF;
         RETURN sys.geomfromtext_helper(geometry_tagged_text::text, 0);
