@@ -827,6 +827,7 @@ FROM forxml_raw_elements_employees e
 LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
 LEFT JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
 LEFT JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+ORDER BY e.emp_name, p.project_name
 FOR XML RAW, ELEMENTS XSINIL;
 GO
 
@@ -835,6 +836,7 @@ SELECT e.emp_name, d.dept_name, e.salary
 FROM forxml_raw_elements_employees e
 INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
 WHERE e.salary > 50000
+ORDER BY e.emp_name
 FOR XML RAW, ELEMENTS;
 GO
 
@@ -876,6 +878,7 @@ GO
 SELECT DISTINCT d.dept_name, d.location
 FROM forxml_raw_elements_departments d
 INNER JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+ORDER BY d.dept_name
 FOR XML RAW, ELEMENTS;
 GO
 
@@ -883,6 +886,7 @@ GO
 SELECT TOP 5 e.emp_name, p.project_name
 FROM forxml_raw_elements_employees e
 CROSS JOIN forxml_raw_elements_projects p
+ORDER BY e.emp_name, p.project_name
 FOR XML RAW, ELEMENTS;
 GO
 

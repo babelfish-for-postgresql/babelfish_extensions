@@ -1783,11 +1783,12 @@ FROM forxml_raw_elements_employees e
 LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
 LEFT JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
 LEFT JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+ORDER BY e.emp_name, p.project_name
 FOR XML RAW, ELEMENTS XSINIL;
 GO
 ~~START~~
 ntext
-<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><budget>50000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><budget>75000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Jane</emp_name><dept_name>HR</dept_name><project_name>HR System</project_name><budget>30000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><budget>50000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><budget>75000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Alice</emp_name><dept_name>Finance</dept_name><project_name>Budget Analysis</project_name><budget xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Diana</emp_name><dept_name>IT</dept_name><project_name xsi:nil="true"/><budget xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Charlie</emp_name><dept_name xsi:nil="true"/><project_name xsi:nil="true"/><budget xsi:nil="true"/></row>
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Alice</emp_name><dept_name>Finance</dept_name><project_name>Budget Analysis</project_name><budget xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><budget>75000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><budget>50000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Charlie</emp_name><dept_name xsi:nil="true"/><project_name xsi:nil="true"/><budget xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Diana</emp_name><dept_name>IT</dept_name><project_name xsi:nil="true"/><budget xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Jane</emp_name><dept_name>HR</dept_name><project_name>HR System</project_name><budget>30000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><budget>75000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><budget>50000.00</budget></row>
 ~~END~~
 
 
@@ -1796,11 +1797,12 @@ SELECT e.emp_name, d.dept_name, e.salary
 FROM forxml_raw_elements_employees e
 INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
 WHERE e.salary > 50000
+ORDER BY e.emp_name
 FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><emp_name>Jane</emp_name><dept_name>HR</dept_name><salary>60000</salary></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><salary>55000</salary></row><row><emp_name>Alice</emp_name><dept_name>Finance</dept_name><salary>70000</salary></row>
+<row><emp_name>Alice</emp_name><dept_name>Finance</dept_name><salary>70000</salary></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><salary>55000</salary></row><row><emp_name>Jane</emp_name><dept_name>HR</dept_name><salary>60000</salary></row>
 ~~END~~
 
 
@@ -1862,11 +1864,12 @@ ntext
 SELECT DISTINCT d.dept_name, d.location
 FROM forxml_raw_elements_departments d
 INNER JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+ORDER BY d.dept_name
 FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><dept_name>Finance</dept_name><location>Boston</location></row><row><dept_name>IT</dept_name><location>New York</location></row><row><dept_name>HR</dept_name><location>Chicago</location></row>
+<row><dept_name>Finance</dept_name><location>Boston</location></row><row><dept_name>HR</dept_name><location>Chicago</location></row><row><dept_name>IT</dept_name><location>New York</location></row>
 ~~END~~
 
 
@@ -1874,11 +1877,12 @@ ntext
 SELECT TOP 5 e.emp_name, p.project_name
 FROM forxml_raw_elements_employees e
 CROSS JOIN forxml_raw_elements_projects p
+ORDER BY e.emp_name, p.project_name
 FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><emp_name>John</emp_name><project_name>Website Redesign</project_name></row><row><emp_name>John</emp_name><project_name>HR System</project_name></row><row><emp_name>John</emp_name><project_name>Budget Analysis</project_name></row><row><emp_name>John</emp_name><project_name>Mobile App</project_name></row><row><emp_name>Jane</emp_name><project_name>Website Redesign</project_name></row>
+<row><emp_name>Alice</emp_name><project_name>Budget Analysis</project_name></row><row><emp_name>Alice</emp_name><project_name>HR System</project_name></row><row><emp_name>Alice</emp_name><project_name>Mobile App</project_name></row><row><emp_name>Alice</emp_name><project_name>Website Redesign</project_name></row><row><emp_name>Bob</emp_name><project_name>Budget Analysis</project_name></row>
 ~~END~~
 
 
