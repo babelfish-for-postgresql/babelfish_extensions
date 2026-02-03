@@ -21,3 +21,15 @@ GO
 
 DROP PROCEDURE tv_unmapped_error
 GO
+
+DROP FUNCTION func_get_sum_temp
+GO
+
+DROP FUNCTION func_get_count_temp
+GO
+
+DROP FUNCTION func_get_min_max_temp
+GO
+
+DROP PROCEDURE test_temp_table_drop_intermediate_idx
+GO

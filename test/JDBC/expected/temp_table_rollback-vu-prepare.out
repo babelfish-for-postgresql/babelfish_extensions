@@ -94,3 +94,52 @@ BEGIN
     COMMIT TRAN 
 END
 GO
+
+CREATE FUNCTION func_get_sum_temp(@max_a int)
+RETURNS int
+AS
+BEGIN
+    DECLARE @result int;
+    SELECT @result = SUM(c) FROM #t_func_idx WHERE a <= @max_a;
+    RETURN @result;
+END
+GO
+
+-- Function with COUNT aggregation
+CREATE FUNCTION func_get_count_temp(@min_b int)
+RETURNS int
+AS
+BEGIN
+    DECLARE @result int;
+    SELECT @result = COUNT(*) FROM #t_func_idx WHERE b >= @min_b;
+    RETURN @result;
+END
+GO
+
+-- Function with MIN/MAX aggregation
+CREATE FUNCTION func_get_min_max_temp(@col char(1))
+RETURNS int
+AS
+BEGIN
+    DECLARE @result int;
+    IF @col = 'a'
+        SELECT @result = MAX(a) - MIN(a) FROM #t_func_idx;
+    ELSE IF @col = 'b'
+        SELECT @result = MAX(b) - MIN(b) FROM #t_func_idx;
+    ELSE
+        SELECT @result = MAX(c) - MIN(c) FROM #t_func_idx;
+    RETURN @result;
+END
+GO
+
+CREATE PROCEDURE test_temp_table_drop_intermediate_idx AS
+BEGIN
+    CREATE TABLE #t_procedure(a int default 1, b bigint primary key, c int);
+    CREATE INDEX #idx1 ON #t_procedure(a);
+    CREATE INDEX #idx2 ON #t_procedure(a,b);
+    SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
+    DROP INDEX #idx1 ON #t_procedure;
+    INSERT INTO #t_procedure(a, b, c) VALUES (4, 100, 2);
+    SELECT * FROM #t_procedure;
+END
+GO

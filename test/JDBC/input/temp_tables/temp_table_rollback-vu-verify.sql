@@ -1222,17 +1222,16 @@ GO
 SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 GO
 
-CREATE FUNCTION #fn_get_sum(@max_a int)
-RETURNS int
-AS
-BEGIN
-    DECLARE @result int;
-    SELECT @result = SUM(c) FROM #t_func_idx WHERE a <= @max_a;
-    RETURN @result;
-END
+SELECT func_get_sum_temp(3) AS sum_before;
 GO
 
-SELECT #fn_get_sum(3) AS sum_before;
+SELECT func_get_count_temp(10) AS count_before;
+GO
+
+SELECT func_get_min_max_temp('a') AS minmax_a_before;
+GO
+
+SELECT func_get_min_max_temp('c') AS minmax_c_before;
 GO
 
 DROP INDEX #idx_f2 ON #t_func_idx;
@@ -1241,22 +1240,46 @@ GO
 SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 GO
 
-SELECT #fn_get_sum(3) AS sum_after;
+SELECT func_get_sum_temp(3) AS sum_after;
+GO
+
+SELECT func_get_count_temp(10) AS count_after;
+GO
+
+SELECT func_get_min_max_temp('a') AS minmax_a_after;
+GO
+
+SELECT func_get_min_max_temp('c') AS minmax_c_after;
 GO
 
 INSERT INTO #t_func_idx VALUES (4, 40, 400);
 GO
 
-SELECT #fn_get_sum(4) AS sum_final;
+SELECT func_get_sum_temp(4) AS sum_final;
+GO
+
+SELECT func_get_count_temp(20) AS count_final;
+GO
+
+SELECT func_get_min_max_temp('a') AS minmax_a_final;
+GO
+
+SELECT func_get_min_max_temp('c') AS minmax_c_final;
 GO
 
 SELECT * FROM #t_func_idx ORDER BY a;
 GO
 
-DROP FUNCTION #fn_get_sum;
+DROP TABLE #t_func_idx;
 GO
 
-DROP TABLE #t_func_idx;
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
+GO
+
+---------------------------------------------------------------------------
+-- PROCEDURE: Create temp table with indexes and drop intermediate index
+---------------------------------------------------------------------------
+EXEC test_temp_table_drop_intermediate_idx;
 GO
 
 SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;

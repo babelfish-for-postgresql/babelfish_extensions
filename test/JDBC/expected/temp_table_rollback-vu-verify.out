@@ -2446,21 +2446,35 @@ text
 ~~END~~
 
 
-CREATE FUNCTION #fn_get_sum(@max_a int)
-RETURNS int
-AS
-BEGIN
-    DECLARE @result int;
-    SELECT @result = SUM(c) FROM #t_func_idx WHERE a <= @max_a;
-    RETURN @result;
-END
-GO
-
-SELECT #fn_get_sum(3) AS sum_before;
+SELECT func_get_sum_temp(3) AS sum_before;
 GO
 ~~START~~
 int
 600
+~~END~~
+
+
+SELECT func_get_count_temp(10) AS count_before;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT func_get_min_max_temp('a') AS minmax_a_before;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT func_get_min_max_temp('c') AS minmax_c_before;
+GO
+~~START~~
+int
+200
 ~~END~~
 
 
@@ -2480,11 +2494,35 @@ text
 ~~END~~
 
 
-SELECT #fn_get_sum(3) AS sum_after;
+SELECT func_get_sum_temp(3) AS sum_after;
 GO
 ~~START~~
 int
 600
+~~END~~
+
+
+SELECT func_get_count_temp(10) AS count_after;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT func_get_min_max_temp('a') AS minmax_a_after;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT func_get_min_max_temp('c') AS minmax_c_after;
+GO
+~~START~~
+int
+200
 ~~END~~
 
 
@@ -2493,11 +2531,35 @@ GO
 ~~ROW COUNT: 1~~
 
 
-SELECT #fn_get_sum(4) AS sum_final;
+SELECT func_get_sum_temp(4) AS sum_final;
 GO
 ~~START~~
 int
 1000
+~~END~~
+
+
+SELECT func_get_count_temp(20) AS count_final;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT func_get_min_max_temp('a') AS minmax_a_final;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT func_get_min_max_temp('c') AS minmax_c_final;
+GO
+~~START~~
+int
+300
 ~~END~~
 
 
@@ -2512,11 +2574,42 @@ int#!#int#!#int
 ~~END~~
 
 
-DROP FUNCTION #fn_get_sum;
-GO
-
 DROP TABLE #t_func_idx;
 GO
+
+SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
+GO
+~~START~~
+text
+#t
+#t1
+#t2
+~~END~~
+
+
+---------------------------------------------------------------------------
+-- PROCEDURE: Create temp table with indexes and drop intermediate index
+---------------------------------------------------------------------------
+EXEC test_temp_table_drop_intermediate_idx;
+GO
+~~START~~
+text
+#idx1#t_procedure411a39ff59713316af44ae7ea8681f2f
+#idx2#t_procedurea5ba3973e494f7551d8312ae8010d9e0
+#t
+#t1
+#t2
+#t_procedure
+#t_procedure_pkey
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#bigint#!#int
+4#!#100#!#2
+~~END~~
+
 
 SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
 GO
