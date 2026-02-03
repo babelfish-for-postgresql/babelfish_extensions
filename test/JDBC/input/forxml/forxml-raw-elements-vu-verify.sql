@@ -714,3 +714,186 @@ GO
 
 SELECT (SELECT 1 AS id, 'John' AS name FOR XML RAW, ELEMENTS, TYPE).value('(/row/name)[1]', 'VARCHAR(50)') AS emp_name;
 GO
+
+-- ============================================
+-- SECTION 27: JOIN Queries with ELEMENTS
+-- ============================================
+
+-- INNER JOIN - basic
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+
+-- INNER JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name, d.location
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+-- INNER JOIN with custom element name
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW('Employee'), ELEMENTS;
+GO
+
+-- INNER JOIN with ROOT
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW('Employee'), ELEMENTS, ROOT('Employees');
+GO
+
+-- LEFT JOIN - includes NULLs
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+
+-- LEFT JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name, d.location
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+-- RIGHT JOIN
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+RIGHT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+
+-- RIGHT JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+RIGHT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+-- FULL OUTER JOIN
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+FULL OUTER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+
+-- FULL OUTER JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+FULL OUTER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+-- Self JOIN - employee with manager
+SELECT e.emp_id, e.emp_name, m.emp_name AS manager_name
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_employees m ON e.manager_id = m.emp_id
+FOR XML RAW, ELEMENTS;
+GO
+
+-- Self JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, m.emp_name AS manager_name
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_employees m ON e.manager_id = m.emp_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+-- Multiple table JOIN (3 tables)
+SELECT e.emp_name, d.dept_name, p.project_name, ep.role
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
+INNER JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+
+-- Multiple table JOIN with custom element and ROOT
+SELECT e.emp_name, d.dept_name, p.project_name, ep.role
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
+INNER JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW('Assignment'), ELEMENTS, ROOT('Assignments');
+GO
+
+-- Multiple table JOIN with NULLs and ELEMENTS XSINIL
+SELECT e.emp_name, d.dept_name, p.project_name, p.budget
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+LEFT JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
+LEFT JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+-- JOIN with WHERE clause
+SELECT e.emp_name, d.dept_name, e.salary
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+WHERE e.salary > 50000
+FOR XML RAW, ELEMENTS;
+GO
+
+-- JOIN with ORDER BY
+SELECT e.emp_name, d.dept_name, e.salary
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY e.salary DESC
+FOR XML RAW, ELEMENTS;
+GO
+
+-- JOIN with GROUP BY and aggregation
+SELECT d.dept_name, COUNT(e.emp_id) AS emp_count, SUM(e.salary) AS total_salary
+FROM forxml_raw_elements_departments d
+LEFT JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+GROUP BY d.dept_name
+ORDER BY d.dept_name
+FOR XML RAW, ELEMENTS;
+GO
+
+-- JOIN with GROUP BY and ELEMENTS XSINIL
+SELECT d.dept_name, COUNT(e.emp_id) AS emp_count, AVG(e.salary) AS avg_salary
+FROM forxml_raw_elements_departments d
+LEFT JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+GROUP BY d.dept_name
+ORDER BY d.dept_name
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+-- JOIN with TOP
+SELECT TOP 3 e.emp_name, d.dept_name, e.salary
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY e.salary DESC
+FOR XML RAW, ELEMENTS;
+GO
+
+-- JOIN with DISTINCT
+SELECT DISTINCT d.dept_name, d.location
+FROM forxml_raw_elements_departments d
+INNER JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+
+-- Cross JOIN (Cartesian product) - small result
+SELECT TOP 5 e.emp_name, p.project_name
+FROM forxml_raw_elements_employees e
+CROSS JOIN forxml_raw_elements_projects p
+FOR XML RAW, ELEMENTS;
+GO
+
+-- Subquery in JOIN
+SELECT e.emp_name, e.salary, dept_avg.avg_salary
+FROM forxml_raw_elements_employees e
+INNER JOIN (
+    SELECT dept_id, AVG(salary) AS avg_salary
+    FROM forxml_raw_elements_employees
+    WHERE salary IS NOT NULL
+    GROUP BY dept_id
+) dept_avg ON e.dept_id = dept_avg.dept_id
+FOR XML RAW, ELEMENTS;
+GO

@@ -1600,3 +1600,301 @@ varchar
 John
 ~~END~~
 
+
+
+-- ============================================
+-- SECTION 27: JOIN Queries with ELEMENTS
+-- ============================================
+-- INNER JOIN - basic
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row>
+~~END~~
+
+
+-- INNER JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name, d.location
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name><location>New York</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name><location>Chicago</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name><location>New York</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name><location>Boston</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name><location>New York</location></row>
+~~END~~
+
+
+-- INNER JOIN with custom element name
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW('Employee'), ELEMENTS;
+GO
+~~START~~
+ntext
+<Employee><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></Employee><Employee><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></Employee><Employee><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></Employee><Employee><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></Employee><Employee><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></Employee>
+~~END~~
+
+
+-- INNER JOIN with ROOT
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW('Employee'), ELEMENTS, ROOT('Employees');
+GO
+~~START~~
+ntext
+<Employees><Employee><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></Employee><Employee><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></Employee><Employee><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></Employee><Employee><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></Employee><Employee><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></Employee></Employees>
+~~END~~
+
+
+-- LEFT JOIN - includes NULLs
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row><emp_id>5</emp_id><emp_name>Charlie</emp_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row>
+~~END~~
+
+
+-- LEFT JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name, d.location
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name><location>New York</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name><location>Chicago</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name><location>New York</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name><location>Boston</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>5</emp_id><emp_name>Charlie</emp_name><dept_name xsi:nil="true"/><location xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name><location>New York</location></row>
+~~END~~
+
+
+-- RIGHT JOIN
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+RIGHT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row><dept_name>Marketing</dept_name></row>
+~~END~~
+
+
+-- RIGHT JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+RIGHT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id xsi:nil="true"/><emp_name xsi:nil="true"/><dept_name>Marketing</dept_name></row>
+~~END~~
+
+
+-- FULL OUTER JOIN
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+FULL OUTER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row><emp_id>5</emp_id><emp_name>Charlie</emp_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row><dept_name>Marketing</dept_name></row>
+~~END~~
+
+
+-- FULL OUTER JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+FULL OUTER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>5</emp_id><emp_name>Charlie</emp_name><dept_name xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id xsi:nil="true"/><emp_name xsi:nil="true"/><dept_name>Marketing</dept_name></row>
+~~END~~
+
+
+-- Self JOIN - employee with manager
+SELECT e.emp_id, e.emp_name, m.emp_name AS manager_name
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_employees m ON e.manager_id = m.emp_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_id>1</emp_id><emp_name>John</emp_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><manager_name>John</manager_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><manager_name>John</manager_name></row><row><emp_id>4</emp_id><emp_name>Alice</emp_name><manager_name>Jane</manager_name></row><row><emp_id>5</emp_id><emp_name>Charlie</emp_name><manager_name>Jane</manager_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><manager_name>Bob</manager_name></row>
+~~END~~
+
+
+-- Self JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, m.emp_name AS manager_name
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_employees m ON e.manager_id = m.emp_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><manager_name xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><manager_name>John</manager_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><manager_name>John</manager_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><manager_name>Jane</manager_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>5</emp_id><emp_name>Charlie</emp_name><manager_name>Jane</manager_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><manager_name>Bob</manager_name></row>
+~~END~~
+
+
+-- Multiple table JOIN (3 tables)
+SELECT e.emp_name, d.dept_name, p.project_name, ep.role
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
+INNER JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><role>Lead</role></row><row><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><role>Developer</role></row><row><emp_name>Jane</emp_name><dept_name>HR</dept_name><project_name>HR System</project_name><role>Lead</role></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><role>Developer</role></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><role>Tester</role></row><row><emp_name>Alice</emp_name><dept_name>Finance</dept_name><project_name>Budget Analysis</project_name><role>Analyst</role></row>
+~~END~~
+
+
+-- Multiple table JOIN with custom element and ROOT
+SELECT e.emp_name, d.dept_name, p.project_name, ep.role
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
+INNER JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW('Assignment'), ELEMENTS, ROOT('Assignments');
+GO
+~~START~~
+ntext
+<Assignments><Assignment><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><role>Lead</role></Assignment><Assignment><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><role>Developer</role></Assignment><Assignment><emp_name>Jane</emp_name><dept_name>HR</dept_name><project_name>HR System</project_name><role>Lead</role></Assignment><Assignment><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><role>Developer</role></Assignment><Assignment><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><role>Tester</role></Assignment><Assignment><emp_name>Alice</emp_name><dept_name>Finance</dept_name><project_name>Budget Analysis</project_name><role>Analyst</role></Assignment></Assignments>
+~~END~~
+
+
+-- Multiple table JOIN with NULLs and ELEMENTS XSINIL
+SELECT e.emp_name, d.dept_name, p.project_name, p.budget
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+LEFT JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
+LEFT JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><budget>50000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><budget>75000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Jane</emp_name><dept_name>HR</dept_name><project_name>HR System</project_name><budget>30000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><budget>50000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><budget>75000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Alice</emp_name><dept_name>Finance</dept_name><project_name>Budget Analysis</project_name><budget xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Diana</emp_name><dept_name>IT</dept_name><project_name xsi:nil="true"/><budget xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Charlie</emp_name><dept_name xsi:nil="true"/><project_name xsi:nil="true"/><budget xsi:nil="true"/></row>
+~~END~~
+
+
+-- JOIN with WHERE clause
+SELECT e.emp_name, d.dept_name, e.salary
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+WHERE e.salary > 50000
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>Jane</emp_name><dept_name>HR</dept_name><salary>60000</salary></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><salary>55000</salary></row><row><emp_name>Alice</emp_name><dept_name>Finance</dept_name><salary>70000</salary></row>
+~~END~~
+
+
+-- JOIN with ORDER BY
+SELECT e.emp_name, d.dept_name, e.salary
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY e.salary DESC
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>Alice</emp_name><dept_name>Finance</dept_name><salary>70000</salary></row><row><emp_name>Jane</emp_name><dept_name>HR</dept_name><salary>60000</salary></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><salary>55000</salary></row><row><emp_name>John</emp_name><dept_name>IT</dept_name><salary>50000</salary></row><row><emp_name>Diana</emp_name><dept_name>IT</dept_name></row>
+~~END~~
+
+
+-- JOIN with GROUP BY and aggregation
+SELECT d.dept_name, COUNT(e.emp_id) AS emp_count, SUM(e.salary) AS total_salary
+FROM forxml_raw_elements_departments d
+LEFT JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+GROUP BY d.dept_name
+ORDER BY d.dept_name
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><dept_name>Finance</dept_name><emp_count>1</emp_count><total_salary>70000</total_salary></row><row><dept_name>HR</dept_name><emp_count>1</emp_count><total_salary>60000</total_salary></row><row><dept_name>IT</dept_name><emp_count>3</emp_count><total_salary>105000</total_salary></row><row><dept_name>Marketing</dept_name><emp_count>0</emp_count></row>
+~~END~~
+
+
+-- JOIN with GROUP BY and ELEMENTS XSINIL
+SELECT d.dept_name, COUNT(e.emp_id) AS emp_count, AVG(e.salary) AS avg_salary
+FROM forxml_raw_elements_departments d
+LEFT JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+GROUP BY d.dept_name
+ORDER BY d.dept_name
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dept_name>Finance</dept_name><emp_count>1</emp_count><avg_salary>70000</avg_salary></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dept_name>HR</dept_name><emp_count>1</emp_count><avg_salary>60000</avg_salary></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dept_name>IT</dept_name><emp_count>3</emp_count><avg_salary>52500</avg_salary></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dept_name>Marketing</dept_name><emp_count>0</emp_count><avg_salary xsi:nil="true"/></row>
+~~END~~
+
+
+-- JOIN with TOP
+SELECT TOP 3 e.emp_name, d.dept_name, e.salary
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY e.salary DESC
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>Alice</emp_name><dept_name>Finance</dept_name><salary>70000</salary></row><row><emp_name>Jane</emp_name><dept_name>HR</dept_name><salary>60000</salary></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><salary>55000</salary></row>
+~~END~~
+
+
+-- JOIN with DISTINCT
+SELECT DISTINCT d.dept_name, d.location
+FROM forxml_raw_elements_departments d
+INNER JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><dept_name>Finance</dept_name><location>Boston</location></row><row><dept_name>IT</dept_name><location>New York</location></row><row><dept_name>HR</dept_name><location>Chicago</location></row>
+~~END~~
+
+
+-- Cross JOIN (Cartesian product) - small result
+SELECT TOP 5 e.emp_name, p.project_name
+FROM forxml_raw_elements_employees e
+CROSS JOIN forxml_raw_elements_projects p
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>John</emp_name><project_name>Website Redesign</project_name></row><row><emp_name>John</emp_name><project_name>HR System</project_name></row><row><emp_name>John</emp_name><project_name>Budget Analysis</project_name></row><row><emp_name>John</emp_name><project_name>Mobile App</project_name></row><row><emp_name>Jane</emp_name><project_name>Website Redesign</project_name></row>
+~~END~~
+
+
+-- Subquery in JOIN
+SELECT e.emp_name, e.salary, dept_avg.avg_salary
+FROM forxml_raw_elements_employees e
+INNER JOIN (
+    SELECT dept_id, AVG(salary) AS avg_salary
+    FROM forxml_raw_elements_employees
+    WHERE salary IS NOT NULL
+    GROUP BY dept_id
+) dept_avg ON e.dept_id = dept_avg.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>John</emp_name><salary>50000</salary><avg_salary>52500</avg_salary></row><row><emp_name>Jane</emp_name><salary>60000</salary><avg_salary>60000</avg_salary></row><row><emp_name>Bob</emp_name><salary>55000</salary><avg_salary>52500</avg_salary></row><row><emp_name>Alice</emp_name><salary>70000</salary><avg_salary>70000</avg_salary></row><row><emp_name>Diana</emp_name><avg_salary>52500</avg_salary></row>
+~~END~~
+

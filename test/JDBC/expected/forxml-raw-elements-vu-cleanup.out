@@ -57,3 +57,11 @@ DROP TABLE IF EXISTS forxml_raw_elements_long_cols;
 GO
 DROP TABLE IF EXISTS forxml_raw_elements_results;
 GO
+DROP TABLE IF EXISTS forxml_raw_elements_emp_projects;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_projects;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_employees;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_departments;
+GO
