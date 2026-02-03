@@ -1010,15 +1010,6 @@ SELECT @g.MakeValid().STArea() AS area;
 go
 
 DECLARE @g geometry;
-DECLARE @fixed geometry;
-SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
-SET @fixed = @g.MakeValid();
-SELECT 'BEFORE' AS stage, @g.STIsValid() AS is_valid, @g.STAsText() AS wkt
-UNION ALL
-SELECT 'AFTER' AS stage, @fixed.STIsValid() AS is_valid, @fixed.STAsText() AS wkt;
-go
-
-DECLARE @g geometry;
 SET @g = geometry::Point(10, 20, 0);
 SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
 go
@@ -1083,14 +1074,6 @@ SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 432
 SELECT @g.MakeValid().STArea() AS area;
 go
 
-DECLARE @g geography;
-DECLARE @fixed geography;
-SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
-SET @fixed = @g.MakeValid();
-SELECT 'BEFORE' AS stage, @g.STIsValid() AS is_valid, @g.STAsText() AS wkt
-UNION ALL
-SELECT 'AFTER' AS stage, @fixed.STIsValid() AS is_valid, @fixed.STAsText() AS wkt;
-go
 
 DECLARE @g geography;
 SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);

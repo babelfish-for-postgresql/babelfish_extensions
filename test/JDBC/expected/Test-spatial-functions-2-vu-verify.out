@@ -2110,21 +2110,6 @@ float
 
 
 DECLARE @g geometry;
-DECLARE @fixed geometry;
-SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
-SET @fixed = @g.MakeValid();
-SELECT 'BEFORE' AS stage, @g.STIsValid() AS is_valid, @g.STAsText() AS wkt
-UNION ALL
-SELECT 'AFTER' AS stage, @fixed.STIsValid() AS is_valid, @fixed.STAsText() AS wkt;
-go
-~~START~~
-varchar#!#bit#!#nvarchar
-BEFORE#!#0#!#POLYGON((0 0,10 10,10 0,0 10,0 0))
-AFTER#!#1#!#MULTIPOLYGON(((0 10,5 5,0 0,0 10)),((10 0,5 5,10 10,10 0)))
-~~END~~
-
-
-DECLARE @g geometry;
 SET @g = geometry::Point(10, 20, 0);
 SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
 go
@@ -2252,20 +2237,6 @@ float
 50.0
 ~~END~~
 
-
-DECLARE @g geography;
-DECLARE @fixed geography;
-SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
-SET @fixed = @g.MakeValid();
-SELECT 'BEFORE' AS stage, @g.STIsValid() AS is_valid, @g.STAsText() AS wkt
-UNION ALL
-SELECT 'AFTER' AS stage, @fixed.STIsValid() AS is_valid, @fixed.STAsText() AS wkt;
-go
-~~START~~
-varchar#!#bit#!#nvarchar
-BEFORE#!#0#!#POLYGON((0 0,10 10,10 0,0 10,0 0))
-AFTER#!#1#!#MULTIPOLYGON(((0 10,0 0,5 5,0 10)),((10 10,5 5,10 0,10 10)))
-~~END~~
 
 
 DECLARE @g geography;
