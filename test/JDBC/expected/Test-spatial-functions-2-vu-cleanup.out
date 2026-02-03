@@ -4,6 +4,10 @@ DROP TABLE TestGeospatialMethods_YourTable1Temp
 
 DROP TABLE TestGeospatialMethods_YourTable3Temp 
 
+DROP TABLE TestGeospatialParse_GeometryTable 
+
+DROP TABLE TestGeospatialParse_GeographyTable 
+
 USE MASTER 
 
 DROP TABLE TestGeospatialMethods_YourTable2Temp 
@@ -37,6 +41,22 @@ DROP VIEW TestGeospatialMethods_closed_TextFromGeogTemp
 DROP VIEW TestGeospatialMethods_empty_ValFromGeomTemp 
 
 DROP VIEW TestGeospatialMethods_empty_TextFromGeomTemp 
+
+DROP VIEW TestGeospatialParse_ParseGeomView 
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "testgeospatialparse_parsegeomview" does not exist)~~
+
+
+DROP VIEW TestGeospatialParse_ParseGeogView 
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "testgeospatialparse_parsegeogview" does not exist)~~
+
+
+DROP TABLE TestGeospatialParse_GeomTemp 
+
+DROP TABLE TestGeospatialParse_GeogTemp 
 
 DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOM_dttemp 
 

@@ -3961,6 +3961,7 @@ geospatial_static_method
     | STLINEFROMTEXT
     | STPOLYFROMTEXT
     | POINT
+    | PARSE
     ;
 
 hierarchyid_methods
@@ -3969,7 +3970,6 @@ hierarchyid_methods
 
 hierarchyid_static_method
     : GETROOT
-    | PARSE
     ;
 
 datatype_static_method
