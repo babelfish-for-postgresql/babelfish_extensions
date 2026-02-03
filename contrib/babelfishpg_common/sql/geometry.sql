@@ -432,27 +432,15 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
 CREATE OR REPLACE FUNCTION sys.STNumPoints(geom sys.GEOMETRY)
     RETURNS integer
     AS $$
-    DECLARE
-        geom_type text;
     BEGIN
         IF STIsValid(geom) = 0 THEN
             RAISE EXCEPTION 'The geometry instance is not valid';
-        ELSIF STIsEmpty(geom) = 1 THEN
-            RETURN 0;
-        END IF;
-        
-        geom_type := ST_GeometryType(geom);
-        
-        IF geom_type = 'ST_Point' THEN
-            RETURN 1;
-        ELSIF geom_type IN ('ST_LineString', 'ST_Polygon', 'ST_MultiLineString', 'ST_MultiPolygon') THEN
-            RETURN sys.STNumPoints_helper(geom);
         ELSE
-            RETURN NULL;
+            RETURN sys.STNumPoints_helper(geom);
         END IF;
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
+	
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)

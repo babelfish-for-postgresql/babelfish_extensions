@@ -439,9 +439,7 @@ CREATE OR REPLACE FUNCTION sys.STNumPoints(geog sys.GEOGRAPHY)
 	AS $$
 	BEGIN
 		IF sys.STIsValid(geog) = 0 THEN
-			RAISE EXCEPTION 'The geography instance is not valid. Use MakeValid() to convert to valid geography.';
-		ELSIF sys.STIsEmpty(geog) = 1 THEN
-			RETURN 0;
+			RAISE EXCEPTION 'The geography instance is not valid';
 		ELSE
 			RETURN sys.STNumPoints_helper(geog);
 		END IF;
