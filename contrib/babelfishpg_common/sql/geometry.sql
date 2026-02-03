@@ -430,7 +430,7 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
 	
 --STGeomType
 CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
-	RETURNS sys.NVARCHAR
+	RETURNS sys.NVARCHAR(4000)
 	AS $$
 	DECLARE
 		geom_type text;
@@ -445,7 +445,7 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
 			RETURN substr(geom_type, 4);
 		END IF;
 		
-		RETURN geom_type;
+	 	RAISE EXCEPTION 'Unexpected geometry type format: %. Expected ST_* prefix.', geom_type;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 

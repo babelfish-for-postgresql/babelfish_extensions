@@ -5,7 +5,7 @@
 
 --Geometry
 CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
-	RETURNS sys.NVARCHAR
+	RETURNS sys.NVARCHAR(4000)
 	AS $$
 	DECLARE
 		geom_type text;
@@ -16,19 +16,18 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
 		
 		geom_type := sys.ST_GeometryType(geom);
 		
-		-- Strip 'ST_' prefix to match SQL Server naming
 		IF geom_type LIKE 'ST_%' THEN
 			RETURN substr(geom_type, 4);
 		END IF;
-		
-		RETURN geom_type;
+
+		RAISE EXCEPTION 'Unexpected geometry type format: %. Expected ST_* prefix.', geom_type;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 --Geography
 
 CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
-	RETURNS sys.NVARCHAR
+	RETURNS sys.NVARCHAR(4000)
 	AS $$
 	DECLARE
 		geom_type text;
@@ -42,6 +41,6 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
 			RETURN substr(geom_type, 4);
 		END IF;
 		
-		RETURN geom_type;
+	    RAISE EXCEPTION 'Unexpected geometry type format: %. Expected ST_* prefix.', geom_type;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
