@@ -1,20 +1,34 @@
+-- ============================================
+-- SECTION 1: Basic ELEMENTS directive
+-- ============================================
+
+-- Basic ELEMENTS with two columns
 SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS;
 GO
 
+-- Regression: Without ELEMENTS (attribute format)
 SELECT 1 AS a, 2 AS b FOR XML RAW;
 GO
 
+-- ELEMENTS with three columns
 SELECT 1 AS a, 2 AS b, 3 AS c FOR XML RAW, ELEMENTS;
 GO
 
+-- ELEMENTS with single column
 SELECT 1 AS a FOR XML RAW, ELEMENTS;
 GO
 
+-- ELEMENTS with five columns
 SELECT 1 AS a, 2 AS b, 3 AS c, 4 AS d, 5 AS e FOR XML RAW, ELEMENTS;
 GO
 
+-- ELEMENTS with ten columns
 SELECT 1 AS a, 2 AS b, 3 AS c, 4 AS d, 5 AS e, 6 AS f, 7 AS g, 8 AS h, 9 AS i, 10 AS j FOR XML RAW, ELEMENTS;
 GO
+
+-- ============================================
+-- SECTION 2: Custom element names
+-- ============================================
 
 SELECT 1 AS a, 2 AS b FOR XML RAW('item'), ELEMENTS;
 GO
@@ -37,23 +51,37 @@ GO
 SELECT 1 AS a, 2 AS b FOR XML RAW('MixedCase'), ELEMENTS;
 GO
 
+-- ============================================
+-- SECTION 3: NULL handling with ELEMENTS
+-- ============================================
+
+-- NULL in second column
 SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS;
 GO
 
+-- NULL in first column
 SELECT NULL AS a, 2 AS b FOR XML RAW, ELEMENTS;
 GO
 
+-- All NULL columns
 SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS;
 GO
 
+-- NULL in middle column
 SELECT 1 AS a, NULL AS b, 3 AS c FOR XML RAW, ELEMENTS;
 GO
 
+-- Multiple NULLs
 SELECT NULL AS a, 2 AS b, NULL AS c FOR XML RAW, ELEMENTS;
 GO
 
+-- All NULLs with four columns
 SELECT NULL AS a, NULL AS b, NULL AS c, NULL AS d FOR XML RAW, ELEMENTS;
 GO
+
+-- ============================================
+-- SECTION 4: ELEMENTS ABSENT (default behavior)
+-- ============================================
 
 SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS ABSENT;
 GO
@@ -66,6 +94,10 @@ GO
 
 SELECT 1 AS a, NULL AS b, 3 AS c FOR XML RAW, ELEMENTS ABSENT;
 GO
+
+-- ============================================
+-- SECTION 5: ELEMENTS XSINIL
+-- ============================================
 
 SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL;
 GO
@@ -84,6 +116,10 @@ GO
 
 SELECT NULL AS a, NULL AS b, NULL AS c, NULL AS d FOR XML RAW, ELEMENTS XSINIL;
 GO
+
+-- ============================================
+-- SECTION 6: ELEMENTS with ROOT directive
+-- ============================================
 
 SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, ROOT('data');
 GO
@@ -109,6 +145,10 @@ GO
 SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, ROOT('root123');
 GO
 
+-- ============================================
+-- SECTION 7: ELEMENTS with TYPE directive
+-- ============================================
+
 SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, TYPE;
 GO
 
@@ -132,6 +172,10 @@ GO
 
 SELECT 1 AS a, 2 AS b FOR XML RAW('item'), ROOT('items'), ELEMENTS, TYPE;
 GO
+
+-- ============================================
+-- SECTION 8: Table data with ELEMENTS
+-- ============================================
 
 SELECT * FROM forxml_raw_elements_t1 WHERE id = 1 FOR XML RAW, ELEMENTS;
 GO
@@ -178,6 +222,10 @@ GO
 SELECT id, salary FROM forxml_raw_elements_t1 WHERE salary IS NOT NULL FOR XML RAW, ELEMENTS;
 GO
 
+-- ============================================
+-- SECTION 9: Multiple data types
+-- ============================================
+
 SELECT * FROM forxml_raw_elements_t2 WHERE col1 = 1 FOR XML RAW, ELEMENTS;
 GO
 
@@ -194,51 +242,6 @@ SELECT col1, col4 FROM forxml_raw_elements_t2 FOR XML RAW, ELEMENTS;
 GO
 
 SELECT col1, col5 FROM forxml_raw_elements_t2 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_t3 WHERE id = 1 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_t3 WHERE id = 2 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_t3 WHERE id = 3 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_t3 WHERE id = 4 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_t3 WHERE id = 5 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_t3 WHERE id = 6 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_t3 WHERE id = 7 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_t3 WHERE id = 8 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_t3 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_t3 FOR XML RAW('SpecialChars'), ELEMENTS, ROOT('Data');
-GO
-
-SELECT * FROM forxml_raw_elements_unicode FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_unicode FOR XML RAW('Record'), ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_unicode FOR XML RAW, ELEMENTS, ROOT('UnicodeData');
-GO
-
-SELECT * FROM forxml_raw_elements_unicode WHERE id = 1 FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_unicode WHERE id = 5 FOR XML RAW, ELEMENTS;
 GO
 
 SELECT 123 AS num FOR XML RAW, ELEMENTS;
@@ -271,6 +274,119 @@ GO
 SELECT CAST(123 AS SMALLINT) AS smallint_val FOR XML RAW, ELEMENTS;
 GO
 
+-- ============================================
+-- SECTION 10: Special characters in values
+-- ============================================
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 1 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 2 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 3 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 4 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 5 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 6 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 7 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 8 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_t3 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_t3 FOR XML RAW('SpecialChars'), ELEMENTS, ROOT('Data');
+GO
+
+-- Special character values directly
+SELECT 'a & b' AS val FOR XML RAW, ELEMENTS;
+GO
+
+SELECT 'a < b' AS val FOR XML RAW, ELEMENTS;
+GO
+
+SELECT 'a > b' AS val FOR XML RAW, ELEMENTS;
+GO
+
+-- ============================================
+-- SECTION 11: Unicode/Multibyte characters in values
+-- ============================================
+
+SELECT * FROM forxml_raw_elements_unicode FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_unicode FOR XML RAW('Record'), ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_unicode FOR XML RAW, ELEMENTS, ROOT('UnicodeData');
+GO
+
+SELECT * FROM forxml_raw_elements_unicode WHERE id = 1 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_unicode WHERE id = 5 FOR XML RAW, ELEMENTS;
+GO
+
+SELECT '日本語' AS name, '中文' AS value FOR XML RAW, ELEMENTS;
+GO
+
+SELECT N'Ελληνικά' AS greek, N'Русский' AS russian FOR XML RAW, ELEMENTS;
+GO
+
+SELECT N'مرحبا' AS arabic, N'שלום' AS hebrew FOR XML RAW, ELEMENTS;
+GO
+
+-- ============================================
+-- SECTION 12: Multibyte characters in element names
+-- ============================================
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('データ'), ELEMENTS;
+GO
+
+SELECT 1 AS a FOR XML RAW, ELEMENTS, ROOT('ルート');
+GO
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('中文元素'), ELEMENTS;
+GO
+
+SELECT 1 AS a FOR XML RAW('요소'), ELEMENTS, ROOT('루트');
+GO
+
+-- Multibyte column names
+SELECT * FROM forxml_raw_elements_multibyte_cols FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_multibyte_cols FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+-- ============================================
+-- SECTION 13: Long column names (>64 characters)
+-- ============================================
+
+SELECT * FROM forxml_raw_elements_long_cols FOR XML RAW, ELEMENTS;
+GO
+
+SELECT * FROM forxml_raw_elements_long_cols FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+SELECT * FROM forxml_raw_elements_long_cols FOR XML RAW('LongColTest'), ELEMENTS, ROOT('Data');
+GO
+
+-- ============================================
+-- SECTION 14: Edge cases
+-- ============================================
+
+-- Empty result set
 SELECT 1 AS a WHERE 1 = 0 FOR XML RAW, ELEMENTS;
 GO
 
@@ -283,17 +399,51 @@ GO
 SELECT 1 AS a WHERE 1 = 0 FOR XML RAW, ELEMENTS, ROOT('data');
 GO
 
+-- Empty string values
 SELECT '' AS empty_string FOR XML RAW, ELEMENTS;
 GO
 
 SELECT '   ' AS spaces_only FOR XML RAW, ELEMENTS;
 GO
 
+-- Explicit NULL cast
 SELECT CAST(NULL AS VARCHAR(10)) AS null_val FOR XML RAW, ELEMENTS;
 GO
 
 SELECT CAST(NULL AS VARCHAR(10)) AS null_val FOR XML RAW, ELEMENTS XSINIL;
 GO
+
+-- ============================================
+-- SECTION 15: Boundary cases for element names
+-- ============================================
+
+-- Empty element name
+SELECT 1 AS a, 2 AS b FOR XML RAW(''), ELEMENTS;
+GO
+
+-- Element name with spaces
+SELECT 1 AS a FOR XML RAW('element name'), ELEMENTS;
+GO
+
+-- Element name starting with number
+SELECT 1 AS a FOR XML RAW('123element'), ELEMENTS;
+GO
+
+-- Element name with special characters
+SELECT 1 AS a FOR XML RAW('element-name'), ELEMENTS;
+GO
+
+-- Element name with underscore
+SELECT 1 AS a FOR XML RAW('element_name'), ELEMENTS;
+GO
+
+-- NULL element name
+SELECT 1 AS a FOR XML RAW(NULL), ELEMENTS;
+GO
+
+-- ============================================
+-- SECTION 16: ORDER BY, GROUP BY, TOP clauses
+-- ============================================
 
 SELECT * FROM forxml_raw_elements_t1 ORDER BY id FOR XML RAW, ELEMENTS;
 GO
@@ -325,6 +475,10 @@ GO
 SELECT TOP 3 * FROM forxml_raw_elements_t1 ORDER BY salary DESC FOR XML RAW, ELEMENTS;
 GO
 
+-- ============================================
+-- SECTION 17: WHERE clause variations
+-- ============================================
+
 SELECT * FROM forxml_raw_elements_t1 WHERE salary > 50000 FOR XML RAW, ELEMENTS;
 GO
 
@@ -342,6 +496,10 @@ GO
 
 SELECT * FROM forxml_raw_elements_t1 WHERE department IN ('IT', 'HR') FOR XML RAW, ELEMENTS;
 GO
+
+-- ============================================
+-- SECTION 18: UNION queries
+-- ============================================
 
 SELECT 1 AS a, 2 AS b
 UNION ALL
@@ -369,6 +527,10 @@ SELECT NULL AS a, 2 AS b
 FOR XML RAW, ELEMENTS XSINIL;
 GO
 
+-- ============================================
+-- SECTION 19: Subqueries
+-- ============================================
+
 SELECT id, (SELECT name FROM forxml_raw_elements_t1 t2 WHERE t2.id = t1.id FOR XML RAW, ELEMENTS, TYPE) AS subquery_result
 FROM forxml_raw_elements_t1 t1
 WHERE id <= 2;
@@ -378,6 +540,10 @@ SELECT id, (SELECT name, salary FROM forxml_raw_elements_t1 t2 WHERE t2.id = t1.
 FROM forxml_raw_elements_t1 t1
 WHERE id = 1;
 GO
+
+-- ============================================
+-- SECTION 20: Stored Procedures
+-- ============================================
 
 EXEC forxml_raw_elements_proc1;
 GO
@@ -405,6 +571,10 @@ GO
 
 EXEC forxml_raw_elements_proc6 @dept = 'HR';
 GO
+
+-- ============================================
+-- SECTION 21: INSERT..EXEC with procedures
+-- ============================================
 
 INSERT INTO forxml_raw_elements_results (xml_data)
 EXEC forxml_raw_elements_proc_insert;
@@ -435,6 +605,10 @@ GO
 
 TRUNCATE TABLE forxml_raw_elements_results;
 GO
+
+-- ============================================
+-- SECTION 22: SELECT INTO variable
+-- ============================================
 
 DECLARE @xml_var VARCHAR(MAX);
 SELECT @xml_var = (SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS);
@@ -486,6 +660,10 @@ SELECT @xml_var = (SELECT * FROM forxml_raw_elements_t1 FOR XML RAW('Employee'),
 SELECT @xml_var AS result;
 GO
 
+-- ============================================
+-- SECTION 23: Regular Views with FOR XML
+-- ============================================
+
 SELECT * FROM forxml_raw_elements_view1 FOR XML RAW, ELEMENTS;
 GO
 
@@ -493,4 +671,53 @@ SELECT * FROM forxml_raw_elements_view1 FOR XML RAW('Employee'), ELEMENTS, ROOT(
 GO
 
 SELECT * FROM forxml_raw_elements_view2 FOR XML RAW, ELEMENTS;
+GO
+
+-- ============================================
+-- SECTION 24: Dependent Views (using FOR XML RAW, ELEMENTS)
+-- ============================================
+
+SELECT * FROM forxml_raw_elements_dep_view1;
+GO
+
+SELECT * FROM forxml_raw_elements_dep_view2;
+GO
+
+SELECT * FROM forxml_raw_elements_dep_view3;
+GO
+
+SELECT * FROM forxml_raw_elements_dep_view4;
+GO
+
+-- ============================================
+-- SECTION 25: Dependent Functions (using FOR XML RAW, ELEMENTS)
+-- ============================================
+
+SELECT dbo.forxml_raw_elements_func1() AS result;
+GO
+
+SELECT dbo.forxml_raw_elements_func2() AS result;
+GO
+
+SELECT dbo.forxml_raw_elements_func3() AS result;
+GO
+
+SELECT dbo.forxml_raw_elements_func4(1) AS result;
+GO
+
+SELECT dbo.forxml_raw_elements_func4(3) AS result;
+GO
+
+-- ============================================
+-- SECTION 26: XML methods on FOR XML result
+-- ============================================
+
+-- Using .value() method to extract data
+SELECT (SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, TYPE).value('(/row/a)[1]', 'INT') AS extracted_value;
+GO
+
+SELECT (SELECT 'hello' AS name FOR XML RAW, ELEMENTS, TYPE).value('(/row/name)[1]', 'VARCHAR(50)') AS extracted_name;
+GO
+
+SELECT (SELECT 1 AS id, 'John' AS name FOR XML RAW, ELEMENTS, TYPE).value('(/row/name)[1]', 'VARCHAR(50)') AS emp_name;
 GO

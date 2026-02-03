@@ -1,3 +1,7 @@
+-- ============================================
+-- SECTION: Base Tables
+-- ============================================
+
 CREATE TABLE forxml_raw_elements_t1 (id INT, name VARCHAR(50), salary INT, department VARCHAR(50));
 INSERT INTO forxml_raw_elements_t1 VALUES (1, 'John', 50000, 'IT');
 INSERT INTO forxml_raw_elements_t1 VALUES (2, 'Jane', 60000, 'HR');
@@ -11,6 +15,10 @@ INSERT INTO forxml_raw_elements_t2 VALUES (1, 'test', 123.45, '2024-01-15', 1);
 INSERT INTO forxml_raw_elements_t2 VALUES (2, NULL, NULL, NULL, NULL);
 GO
 
+-- ============================================
+-- SECTION: Special Characters Table
+-- ============================================
+
 CREATE TABLE forxml_raw_elements_t3 (id INT, value VARCHAR(100));
 INSERT INTO forxml_raw_elements_t3 VALUES (1, 'a & b');
 INSERT INTO forxml_raw_elements_t3 VALUES (2, 'a < b');
@@ -22,6 +30,10 @@ INSERT INTO forxml_raw_elements_t3 VALUES (7, '   spaces   ');
 INSERT INTO forxml_raw_elements_t3 VALUES (8, '');
 GO
 
+-- ============================================
+-- SECTION: Unicode/Multibyte Characters Table
+-- ============================================
+
 CREATE TABLE forxml_raw_elements_unicode (id INT, name NVARCHAR(50));
 INSERT INTO forxml_raw_elements_unicode VALUES (1, N'日本語');
 INSERT INTO forxml_raw_elements_unicode VALUES (2, N'中文');
@@ -30,9 +42,44 @@ INSERT INTO forxml_raw_elements_unicode VALUES (4, N'العربية');
 INSERT INTO forxml_raw_elements_unicode VALUES (5, N'émoji 😀');
 GO
 
+-- ============================================
+-- SECTION: Long Column Names Table (>64 characters)
+-- ============================================
+
+CREATE TABLE forxml_raw_elements_long_cols (
+    id INT,
+    this_is_a_very_long_column_name_that_exceeds_sixty_four_characters_in_length VARCHAR(50),
+    another_extremely_long_column_name_for_testing_xml_element_generation_limits VARCHAR(50)
+);
+INSERT INTO forxml_raw_elements_long_cols VALUES (1, 'value1', 'value2');
+INSERT INTO forxml_raw_elements_long_cols VALUES (2, NULL, 'value3');
+GO
+
+-- ============================================
+-- SECTION: Multibyte Column Names Table
+-- ============================================
+
+CREATE TABLE forxml_raw_elements_multibyte_cols (
+    id INT,
+    名前 NVARCHAR(50),
+    データ NVARCHAR(50)
+);
+INSERT INTO forxml_raw_elements_multibyte_cols VALUES (1, N'テスト', N'値');
+INSERT INTO forxml_raw_elements_multibyte_cols VALUES (2, N'サンプル', NULL);
+GO
+
+-- ============================================
+-- SECTION: Results Table for INSERT..EXEC
+-- ============================================
+
 CREATE TABLE forxml_raw_elements_results (xml_data VARCHAR(MAX));
 GO
 
+-- ============================================
+-- SECTION: Stored Procedures
+-- ============================================
+
+-- Basic procedure with ELEMENTS
 CREATE PROCEDURE forxml_raw_elements_proc1
 AS
 BEGIN
@@ -40,6 +87,7 @@ BEGIN
 END;
 GO
 
+-- Procedure with ELEMENTS XSINIL
 CREATE PROCEDURE forxml_raw_elements_proc2
 AS
 BEGIN
@@ -47,6 +95,7 @@ BEGIN
 END;
 GO
 
+-- Procedure with custom element name and ROOT
 CREATE PROCEDURE forxml_raw_elements_proc3
 AS
 BEGIN
@@ -54,6 +103,7 @@ BEGIN
 END;
 GO
 
+-- Procedure with parameter - ELEMENTS
 CREATE PROCEDURE forxml_raw_elements_proc4 @empid INT
 AS
 BEGIN
@@ -61,6 +111,7 @@ BEGIN
 END;
 GO
 
+-- Procedure with parameter - ELEMENTS XSINIL
 CREATE PROCEDURE forxml_raw_elements_proc5 @empid INT
 AS
 BEGIN
@@ -68,6 +119,7 @@ BEGIN
 END;
 GO
 
+-- Procedure with parameter - custom element and ROOT
 CREATE PROCEDURE forxml_raw_elements_proc6 @dept VARCHAR(50)
 AS
 BEGIN
@@ -75,6 +127,7 @@ BEGIN
 END;
 GO
 
+-- Procedures for INSERT..EXEC tests
 CREATE PROCEDURE forxml_raw_elements_proc_insert
 AS
 BEGIN
@@ -96,10 +149,87 @@ BEGIN
 END;
 GO
 
+-- ============================================
+-- SECTION: Dependent Views (using FOR XML RAW, ELEMENTS)
+-- These views test that dependent objects work correctly
+-- ============================================
+
+-- View using FOR XML RAW, ELEMENTS
+CREATE VIEW forxml_raw_elements_dep_view1 AS
+SELECT * FROM forxml_raw_elements_t1 WHERE salary IS NOT NULL FOR XML RAW, ELEMENTS;
+GO
+
+-- View using FOR XML RAW, ELEMENTS XSINIL
+CREATE VIEW forxml_raw_elements_dep_view2 AS
+SELECT * FROM forxml_raw_elements_t1 FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+-- View using FOR XML RAW with custom element and ELEMENTS
+CREATE VIEW forxml_raw_elements_dep_view3 AS
+SELECT * FROM forxml_raw_elements_t1 FOR XML RAW('Employee'), ELEMENTS, ROOT('Employees');
+GO
+
+-- View using FOR XML RAW, ELEMENTS with specific columns
+CREATE VIEW forxml_raw_elements_dep_view4 AS
+SELECT id, name FROM forxml_raw_elements_t1 WHERE id <= 3 FOR XML RAW, ELEMENTS;
+GO
+
+-- ============================================
+-- SECTION: Regular Views (not using FOR XML)
+-- ============================================
+
 CREATE VIEW forxml_raw_elements_view1 AS
 SELECT * FROM forxml_raw_elements_t1 WHERE salary IS NOT NULL;
 GO
 
 CREATE VIEW forxml_raw_elements_view2 (col1, col2) AS
 SELECT id, name FROM forxml_raw_elements_t1;
+GO
+
+-- ============================================
+-- SECTION: Dependent Functions (using FOR XML RAW, ELEMENTS)
+-- ============================================
+
+-- Function returning XML with ELEMENTS
+CREATE FUNCTION forxml_raw_elements_func1()
+RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @result NVARCHAR(MAX);
+    SELECT @result = (SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS);
+    RETURN @result;
+END;
+GO
+
+-- Function returning XML with ELEMENTS XSINIL
+CREATE FUNCTION forxml_raw_elements_func2()
+RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @result NVARCHAR(MAX);
+    SELECT @result = (SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL);
+    RETURN @result;
+END;
+GO
+
+-- Function returning XML with TYPE
+CREATE FUNCTION forxml_raw_elements_func3()
+RETURNS XML
+AS
+BEGIN
+    DECLARE @result XML;
+    SELECT @result = (SELECT * FROM forxml_raw_elements_t1 WHERE id = 1 FOR XML RAW, ELEMENTS, TYPE);
+    RETURN @result;
+END;
+GO
+
+-- Function with parameter
+CREATE FUNCTION forxml_raw_elements_func4(@empid INT)
+RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @result NVARCHAR(MAX);
+    SELECT @result = (SELECT * FROM forxml_raw_elements_t1 WHERE id = @empid FOR XML RAW('Employee'), ELEMENTS);
+    RETURN @result;
+END;
 GO

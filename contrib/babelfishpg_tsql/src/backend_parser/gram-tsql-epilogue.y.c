@@ -1867,8 +1867,8 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause)
 	bool		binary_base64 = false;
 	bool		return_xml_type = false;
 	char	   *root_name = NULL;
-	bool            elements = false;
-	bool            xsinil = false;
+	bool     	elements = false;
+	bool      	xsinil = false;
 
 	/* Resolve the XML common directive list if provided */
 	if (forclause->commonDirectives != NIL)
@@ -1919,10 +1919,10 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause)
 	else
 		func_name = list_make2(makeString("sys"), makeString("tsql_select_for_xml_text_agg"));
 	func_args = list_make5(makeColumnRef(construct_unique_index_name("rows", "tsql_for"), NIL, -1, NULL),
-                       makeIntConst(forclause->mode, -1),
-                       forclause->elementName ? makeStringConst(forclause->elementName, -1) : makeStringConst("row", -1),
-                       makeBoolAConst(binary_base64, -1),
-                       root_name ? makeStringConst(root_name, -1) : makeStringConst("", -1));
+						   makeIntConst(forclause->mode, -1),
+						   forclause->elementName ? makeStringConst(forclause->elementName, -1) : makeStringConst("row", -1),
+						   makeBoolAConst(binary_base64, -1),
+						   root_name ? makeStringConst(root_name, -1) : makeStringConst("", -1));
 	func_args = lappend(func_args, makeBoolAConst(elements, -1));
 	func_args = lappend(func_args, makeBoolAConst(xsinil, -1));
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);

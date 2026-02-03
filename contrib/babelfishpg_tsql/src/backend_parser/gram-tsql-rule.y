@@ -3360,9 +3360,9 @@ tsql_xml_common_directive:
 			| TYPE_P									{ $$ = makeIntConst(TSQL_XML_DIRECTIVE_TYPE, -1); }
 			| TSQL_ROOT									{ $$ = makeStringConst("root", -1); }
 			| TSQL_ROOT '(' Sconst ')'					{ $$ = makeStringConst($3, -1); }
-			| TSQL_ELEMENTS                 { $$ = makeIntConst(TSQL_XML_DIRECTIVE_ELEMENTS, -1); }
-            | TSQL_ELEMENTS TSQL_XSINIL     { $$ = makeIntConst(TSQL_XML_DIRECTIVE_ELEMENTS_XSINIL, -1); }
-            | TSQL_ELEMENTS TSQL_ABSENT     { $$ = makeIntConst(TSQL_XML_DIRECTIVE_ELEMENTS_ABSENT, -1); }
+			| TSQL_ELEMENTS                 			{ $$ = makeIntConst(TSQL_XML_DIRECTIVE_ELEMENTS, -1); }
+            | TSQL_ELEMENTS TSQL_XSINIL     			{ $$ = makeIntConst(TSQL_XML_DIRECTIVE_ELEMENTS_XSINIL, -1); }
+            | TSQL_ELEMENTS TSQL_ABSENT     			{ $$ = makeIntConst(TSQL_XML_DIRECTIVE_ELEMENTS_ABSENT, -1); }
 		;
 
 
