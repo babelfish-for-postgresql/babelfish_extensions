@@ -60,6 +60,49 @@ $$;
 
 -- Please add your SQLs here
 
+-- Deprecate old function (6 args)
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.tsql_query_to_xml_sfunc(internal, anyelement, integer, text, boolean, text)
+    RENAME TO tsql_query_to_xml_sfunc_deprecated_in_5_6_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+-- Deprecate old aggregate (6 args) - tsql_select_for_xml_agg
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER AGGREGATE sys.tsql_select_for_xml_agg(anyelement, integer, text, boolean, text)
+    RENAME TO tsql_select_for_xml_agg_deprecated_in_5_6_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+-- Deprecate old aggregate (6 args) - tsql_select_for_xml_text_agg
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER AGGREGATE sys.tsql_select_for_xml_text_agg(anyelement, integer, text, boolean, text)
+    RENAME TO tsql_select_for_xml_text_agg_deprecated_in_5_6_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+-- Create new function with ELEMENTS parameters (8 args)
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     state INTERNAL,
     rec ANYELEMENT,
@@ -73,6 +116,7 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
 LANGUAGE C STABLE;
 
+-- Create new aggregate with ELEMENTS parameters (8 args)
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     rec ANYELEMENT,
     mode int,
@@ -87,6 +131,7 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     FINALFUNC = tsql_query_to_xml_ffunc
 );
 
+-- Create new aggregate with ELEMENTS parameters (8 args)
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     rec ANYELEMENT,
     mode int,

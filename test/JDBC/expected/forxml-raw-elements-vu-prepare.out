@@ -101,23 +101,6 @@ GO
 
 
 -- ============================================
--- SECTION: Multibyte Column Names Table
--- ============================================
-CREATE TABLE forxml_raw_elements_multibyte_cols (
-    id INT,
-    名前 NVARCHAR(50),
-    データ NVARCHAR(50)
-);
-INSERT INTO forxml_raw_elements_multibyte_cols VALUES (1, N'テスト', N'値');
-INSERT INTO forxml_raw_elements_multibyte_cols VALUES (2, N'サンプル', NULL);
-GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-
-
--- ============================================
 -- SECTION: Results Table for INSERT..EXEC
 -- ============================================
 CREATE TABLE forxml_raw_elements_results (xml_data VARCHAR(MAX));

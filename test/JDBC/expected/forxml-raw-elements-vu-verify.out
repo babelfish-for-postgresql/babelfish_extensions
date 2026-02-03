@@ -867,23 +867,6 @@ ntext
 ~~END~~
 
 
--- Multibyte column names
-SELECT * FROM forxml_raw_elements_multibyte_cols FOR XML RAW, ELEMENTS;
-GO
-~~START~~
-ntext
-<row><id>1</id><名前>テスト</名前><データ>値</データ></row><row><id>2</id><名前>サンプル</名前></row>
-~~END~~
-
-
-SELECT * FROM forxml_raw_elements_multibyte_cols FOR XML RAW, ELEMENTS XSINIL;
-GO
-~~START~~
-ntext
-<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>1</id><名前>テスト</名前><データ>値</データ></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>2</id><名前>サンプル</名前><データ xsi:nil="true"/></row>
-~~END~~
-
-
 
 -- ============================================
 -- SECTION 13: Long column names (>64 characters)

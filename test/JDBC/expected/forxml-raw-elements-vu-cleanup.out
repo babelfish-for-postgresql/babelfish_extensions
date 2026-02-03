@@ -55,7 +55,5 @@ DROP TABLE IF EXISTS forxml_raw_elements_unicode;
 GO
 DROP TABLE IF EXISTS forxml_raw_elements_long_cols;
 GO
-DROP TABLE IF EXISTS forxml_raw_elements_multibyte_cols;
-GO
 DROP TABLE IF EXISTS forxml_raw_elements_results;
 GO

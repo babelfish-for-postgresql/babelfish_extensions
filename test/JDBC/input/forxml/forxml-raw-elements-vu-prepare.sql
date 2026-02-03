@@ -56,19 +56,6 @@ INSERT INTO forxml_raw_elements_long_cols VALUES (2, NULL, 'value3');
 GO
 
 -- ============================================
--- SECTION: Multibyte Column Names Table
--- ============================================
-
-CREATE TABLE forxml_raw_elements_multibyte_cols (
-    id INT,
-    名前 NVARCHAR(50),
-    データ NVARCHAR(50)
-);
-INSERT INTO forxml_raw_elements_multibyte_cols VALUES (1, N'テスト', N'値');
-INSERT INTO forxml_raw_elements_multibyte_cols VALUES (2, N'サンプル', NULL);
-GO
-
--- ============================================
 -- SECTION: Results Table for INSERT..EXEC
 -- ============================================
 

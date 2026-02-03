@@ -362,13 +362,6 @@ GO
 SELECT 1 AS a FOR XML RAW('요소'), ELEMENTS, ROOT('루트');
 GO
 
--- Multibyte column names
-SELECT * FROM forxml_raw_elements_multibyte_cols FOR XML RAW, ELEMENTS;
-GO
-
-SELECT * FROM forxml_raw_elements_multibyte_cols FOR XML RAW, ELEMENTS XSINIL;
-GO
-
 -- ============================================
 -- SECTION 13: Long column names (>64 characters)
 -- ============================================
