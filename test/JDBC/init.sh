@@ -31,6 +31,7 @@ ALTER USER jdbc_user CREATEDB;
 \c babelfish_db
 ALTER SYSTEM SET babelfishpg_tsql.database_name = 'babelfish_db';
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+ALTER SYSTEM SET plan_cache_mode = 'force_generic_plan';
 SELECT pg_reload_conf();
 \c babelfish_db
 show babelfishpg_tsql.database_name;
