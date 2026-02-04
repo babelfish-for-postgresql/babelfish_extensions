@@ -1214,3 +1214,48 @@ SET @node = hierarchyid::Parse('/1/3/2/');
 SELECT @node AS NodeValue;
 go
 
+WITH ParseCTE AS (
+    SELECT 1 AS ID, geometry::Parse('POINT(1 2)').STAsText() AS GeomText
+    UNION ALL
+    SELECT 2, geometry::Parse('LINESTRING(0 0, 1 1)').STAsText()
+    UNION ALL
+    SELECT 3, geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))').STAsText()
+)
+SELECT ID, GeomText FROM ParseCTE ORDER BY ID;
+go
+
+WITH GeogCTE AS (
+    SELECT 1 AS ID, geography::Parse('POINT(-122.349 47.651)').STAsText() AS GeogText
+    UNION ALL
+    SELECT 2, geography::Parse('LINESTRING(-122.36 47.65, -122.34 47.66)').STAsText()
+)
+SELECT ID, GeogText FROM GeogCTE ORDER BY ID;
+go
+
+SELECT *, ROW_NUMBER() OVER (ORDER BY Dimension) AS RowNum FROM (
+    SELECT 1 AS ID, geometry::Parse('POINT(1 2)').STDimension() AS Dimension
+    UNION ALL
+    SELECT 2, geometry::Parse('LINESTRING(0 0, 1 1)').STDimension()
+    UNION ALL
+    SELECT 3, geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))').STDimension()
+) AS Results;
+go
+
+SELECT sys.geometry::Parse('POINT(1 2)').STAsText() AS Result;
+go
+
+SELECT geometry::Parse('INVALID(1 2)');
+go
+
+SELECT Dimension, COUNT(*) AS Count FROM (
+    SELECT geometry::Parse('POINT(1 2)').STDimension() AS Dimension
+    UNION ALL
+    SELECT geometry::Parse('POINT(3 4)').STDimension()
+    UNION ALL
+    SELECT geometry::Parse('LINESTRING(0 0, 1 1)').STDimension()
+    UNION ALL
+    SELECT geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))').STDimension()
+) AS Results
+GROUP BY Dimension
+ORDER BY Dimension;
+go
