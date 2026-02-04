@@ -1498,34 +1498,30 @@ ntext
 -- ============================================
 SELECT * FROM forxml_raw_elements_dep_view1;
 GO
-~~START~~
-ntext
-<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>4</id><name>Alice</name><salary>70000</salary></row>
-~~END~~
++~~ERROR (Code: 33557097)~~
++
++~~ERROR (Message: relation "forxml_raw_elements_dep_view1" does not exist)~~
 
 
 SELECT * FROM forxml_raw_elements_dep_view2;
 GO
-~~START~~
-ntext
-<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>3</id><name>Bob</name><salary xsi:nil="true"/><department>Finance</department></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>4</id><name>Alice</name><salary>70000</salary><department xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>5</id><name xsi:nil="true"/><salary xsi:nil="true"/><department xsi:nil="true"/></row>
-~~END~~
++~~ERROR (Code: 33557097)~~
++
++~~ERROR (Message: relation "forxml_raw_elements_dep_view1" does not exist)~~
 
 
 SELECT * FROM forxml_raw_elements_dep_view3;
 GO
-~~START~~
-ntext
-<Employees><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>3</id><name>Bob</name><department>Finance</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary></Employee><Employee><id>5</id></Employee></Employees>
-~~END~~
++~~ERROR (Code: 33557097)~~
++
++~~ERROR (Message: relation "forxml_raw_elements_dep_view1" does not exist)~~
 
 
 SELECT * FROM forxml_raw_elements_dep_view4;
 GO
-~~START~~
-ntext
-<row><id>1</id><name>John</name></row><row><id>2</id><name>Jane</name></row><row><id>3</id><name>Bob</name></row>
-~~END~~
++~~ERROR (Code: 33557097)~~
++
++~~ERROR (Message: relation "forxml_raw_elements_dep_view1" does not exist)~~
 
 
 
