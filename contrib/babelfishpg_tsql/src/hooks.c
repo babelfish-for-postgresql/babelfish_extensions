@@ -73,6 +73,7 @@
 #include "storage/sinvaladt.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
@@ -227,6 +228,17 @@ static void handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid o
 /*****************************************
  * 			Executor Hooks
  *****************************************/
+
+/* Context for param replacement in quals */
+typedef struct ParamReplaceContext
+{
+	bool		in_qual;		/* Are we currently in a qual? */
+	QueryDesc  *queryDesc;		/* Original QueryDesc */
+} ParamReplaceContext;
+
+static Node *replace_params_mutator(Node *node, ParamReplaceContext *context);
+static void replace_params_in_plan_tree(Plan *plan, ParamReplaceContext *context);
+
 static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
@@ -1204,6 +1216,7 @@ static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
 	int			ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
+	ParamReplaceContext context;
 
 	if (pltsql_explain_analyze)
 	{
@@ -1284,6 +1297,18 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		}
 	}
 
+	
+	context.in_qual = false;
+	context.queryDesc = queryDesc;
+
+	/* Copy the plannedstmt so that changing it won't affect the cached plan */
+	queryDesc->plannedstmt = copyObject(queryDesc->plannedstmt);
+
+	if (queryDesc->plannedstmt && queryDesc->plannedstmt->planTree)
+	{
+		replace_params_in_plan_tree(queryDesc->plannedstmt->planTree, &context);
+	}
+
 	if (prev_ExecutorStart)
 		prev_ExecutorStart(queryDesc, ef);
 	else
@@ -1301,6 +1326,158 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
 		queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
 		MemoryContextSwitchTo(oldcxt);
+	}
+}
+
+/*
+ * Expression tree mutator that replaces Param nodes with Const nodes when in a qual.
+ */
+static Node *
+replace_params_mutator(Node *node, ParamReplaceContext *context)
+{
+	if (node == NULL)
+		return NULL;
+
+	/* Handle Param nodes when we're in a qual */
+	if (IsA(node, Param) && context->in_qual)
+	{
+		Param		   *param = (Param *) node;
+		ParamListInfo	paramLI = context->queryDesc->params;
+
+		/* Only handle external params */
+		if (param->paramkind == PARAM_EXTERN &&
+			paramLI != NULL &&
+			param->paramid > 0 &&
+			param->paramid <= paramLI->numParams)
+		{
+			ParamExternData	   *prm;
+			ParamExternData 	prmdata;
+
+			/* Fetch the parameter value */
+			if (paramLI->paramFetch != NULL)
+				prm = paramLI->paramFetch(paramLI, param->paramid,
+										  false, &prmdata);
+			else
+				prm = &paramLI->params[param->paramid - 1];
+
+			/* If we have a valid value, replace with Const */
+			if (OidIsValid(prm->ptype) && prm->ptype == param->paramtype)
+			{
+				int16		typLen;
+				bool		typByVal;
+				Datum		pval;
+				Const	   *con;
+
+				get_typlenbyval(param->paramtype, &typLen, &typByVal);
+				
+				if (prm->isnull || typByVal)
+					pval = prm->value;
+				else
+					pval = datumCopy(prm->value, typByVal, typLen);
+
+				con = makeConst(param->paramtype,
+								param->paramtypmod,
+								param->paramcollid,
+								(int) typLen,
+								pval,
+								prm->isnull,
+								typByVal);
+				con->location = param->location;
+
+				return (Node *) con;
+			}
+		}
+	}
+
+	/* Handle SubPlan - unset qual flag when entering subquery */
+	if (IsA(node, SubPlan))
+	{
+		SubPlan	   *newsubplan;
+		bool		save_in_qual = context->in_qual;
+		
+		context->in_qual = false;
+		
+		newsubplan = (SubPlan *) expression_tree_mutator(node, replace_params_mutator, context);
+		
+		context->in_qual = save_in_qual;
+		
+		return (Node *) newsubplan;
+	}
+
+	return expression_tree_mutator(node, replace_params_mutator, context);
+}
+
+/*
+ * Recursively walk the plan tree and replace params in quals.
+ */
+static void
+replace_params_in_plan_tree(Plan *plan, ParamReplaceContext *context)
+{
+	bool		save_in_qual;
+
+	if (plan == NULL)
+		return;
+
+	save_in_qual = context->in_qual;
+
+	if (plan->qual != NIL)
+	{
+		context->in_qual = true;
+		plan->qual = (List *) replace_params_mutator((Node *) plan->qual, context);
+		context->in_qual = save_in_qual;
+	}
+
+	if (plan->lefttree)
+		replace_params_in_plan_tree(plan->lefttree, context);
+	if (plan->righttree)
+		replace_params_in_plan_tree(plan->righttree, context);
+
+	if (IsA(plan, Append))
+	{
+		Append	   *append = (Append *) plan;
+		ListCell   *lc;
+
+		foreach(lc, append->appendplans)
+		{
+			replace_params_in_plan_tree((Plan *) lfirst(lc), context);
+		}
+	}
+	else if (IsA(plan, MergeAppend))
+	{
+		MergeAppend *mappend = (MergeAppend *) plan;
+		ListCell   *lc;
+
+		foreach(lc, mappend->mergeplans)
+		{
+			replace_params_in_plan_tree((Plan *) lfirst(lc), context);
+		}
+	}
+	else if (IsA(plan, BitmapAnd))
+	{
+		BitmapAnd  *bitmapand = (BitmapAnd *) plan;
+		ListCell   *lc;
+
+		foreach(lc, bitmapand->bitmapplans)
+		{
+			replace_params_in_plan_tree((Plan *) lfirst(lc), context);
+		}
+	}
+	else if (IsA(plan, BitmapOr))
+	{
+		BitmapOr   *bitmapor = (BitmapOr *) plan;
+		ListCell   *lc;
+
+		foreach(lc, bitmapor->bitmapplans)
+		{
+			replace_params_in_plan_tree((Plan *) lfirst(lc), context);
+		}
+	}
+	else if (IsA(plan, SubqueryScan))
+	{
+		SubqueryScan *subscan = (SubqueryScan *) plan;
+
+		if (subscan->subplan)
+			replace_params_in_plan_tree(subscan->subplan, context);
 	}
 }
 
