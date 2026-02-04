@@ -1498,30 +1498,30 @@ ntext
 -- ============================================
 SELECT * FROM forxml_raw_elements_dep_view1;
 GO
-+~~ERROR (Code: 33557097)~~
-+
-+~~ERROR (Message: relation "forxml_raw_elements_dep_view1" does not exist)~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "forxml_raw_elements_dep_view1" does not exist)~~
 
 
 SELECT * FROM forxml_raw_elements_dep_view2;
 GO
-+~~ERROR (Code: 33557097)~~
-+
-+~~ERROR (Message: relation "forxml_raw_elements_dep_view1" does not exist)~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "forxml_raw_elements_dep_view2" does not exist)~~
 
 
 SELECT * FROM forxml_raw_elements_dep_view3;
 GO
-+~~ERROR (Code: 33557097)~~
-+
-+~~ERROR (Message: relation "forxml_raw_elements_dep_view1" does not exist)~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "forxml_raw_elements_dep_view3" does not exist)~~
 
 
 SELECT * FROM forxml_raw_elements_dep_view4;
 GO
-+~~ERROR (Code: 33557097)~~
-+
-+~~ERROR (Message: relation "forxml_raw_elements_dep_view1" does not exist)~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "forxml_raw_elements_dep_view4" does not exist)~~
 
 
 
