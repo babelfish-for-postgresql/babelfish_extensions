@@ -194,7 +194,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
     Oid             tupType;
     int32           tupTypmod;
     TupleDesc       tupdesc;
-    HeapTupleData 	tmptup;
+    HeapTupleData   tmptup;
     HeapTuple       tuple;
 
     td = DatumGetHeapTupleHeader(record);
@@ -209,36 +209,41 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
     tmptup.t_data = td;
     tuple = &tmptup;
 
+    /* Output opening tag */
     if (elements)
     {
         /* ELEMENTS mode: <row><col>value</col></row> */
         if (xsinil)
-        {
-			appendStringInfo(state, "<%s xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">", element_name);
-        }
+            appendStringInfo(state, "<%s xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">", element_name);
         else
-        {
             appendStringInfo(state, "<%s>", element_name);
-	    }
+    }
+    else
+    {
+        /* ATTRIBUTES mode: <row col="value"/> */
+        appendStringInfo(state, "<%s", element_name);
+    }
 
-        /* process the tuple into child elements */
-        for (int i = 0; i < tupdesc->natts; i++)
+    for (int i = 0; i < tupdesc->natts; i++)
+    {
+        char       *colname;
+        Datum       colval;
+        bool        isnull;
+        Oid         datatype_oid;
+        Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
+        if (att->attisdropped)
+            continue;
+
+        colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
+        colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
+        datatype_oid = att->atttypid;
+
+        update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, binary_base64, i);
+
+        if (elements)
         {
-            char       *colname;
-            Datum      	colval;
-            bool       	isnull;
-            Oid        	datatype_oid;
-            Form_pg_attribute att = TupleDescAttr(tupdesc, i);
-
-            if (att->attisdropped)
-                continue;
-
-            colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
-            colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
-            datatype_oid = att->atttypid;
-
-            update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, binary_base64, i);
-
+            /* ELEMENTS mode output */
             if (!isnull)
             {
                 /* Normal element: <col>value</col> */
@@ -254,32 +259,9 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
             }
             /* else: ABSENT - skip NULL columns (do nothing) */
         }
-
-        appendStringInfo(state, "</%s>", element_name);
-    }
-    else
-    {
-        /* ATTRIBUTES mode (original behavior): <row col="value"/> */
-        appendStringInfo(state, "<%s", element_name);
-
-        /* process the tuple into attributes */
-        for (int i = 0; i < tupdesc->natts; i++)
+        else
         {
-            char       *colname;
-            Datum      	colval;
-            bool       	isnull;
-            Oid        	datatype_oid;
-            Form_pg_attribute att = TupleDescAttr(tupdesc, i);
-
-            if (att->attisdropped)
-                continue;
-
-            colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
-            colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
-            datatype_oid = att->atttypid;
-
-            update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, binary_base64, i);
-
+            /* ATTRIBUTES mode output */
             if (!isnull)
             {
                 appendStringInfo(state, " %s=\"%s\"",
@@ -287,8 +269,14 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
                                  map_sql_value_to_xml_value(colval, datatype_oid, true));
             }
         }
-        appendStringInfoString(state, "/>");
     }
+
+    /* Output closing tag */
+    if (elements)
+        appendStringInfo(state, "</%s>", element_name);
+    else
+        appendStringInfoString(state, "/>");
+
     ReleaseTupleDesc(tupdesc);
 }
 
