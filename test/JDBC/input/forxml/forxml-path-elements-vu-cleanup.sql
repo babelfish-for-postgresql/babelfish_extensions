@@ -1,53 +1,77 @@
-DROP PROCEDURE forxml_path_elements_p1;
+-- Drop functions
+DROP FUNCTION IF EXISTS forxml_path_elements_func1;
+GO
+DROP FUNCTION IF EXISTS forxml_path_elements_func2;
+GO
+DROP FUNCTION IF EXISTS forxml_path_elements_func3;
+GO
+DROP FUNCTION IF EXISTS forxml_path_elements_func4;
 GO
 
-DROP PROCEDURE forxml_path_elements_p2;
+-- Drop dependent views
+DROP VIEW IF EXISTS forxml_path_elements_dep_view1;
+GO
+DROP VIEW IF EXISTS forxml_path_elements_dep_view2;
+GO
+DROP VIEW IF EXISTS forxml_path_elements_dep_view3;
+GO
+DROP VIEW IF EXISTS forxml_path_elements_dep_view4;
+GO
+DROP VIEW IF EXISTS forxml_path_elements_dep_view5;
 GO
 
-DROP PROCEDURE forxml_path_elements_p3;
+-- Drop regular view
+DROP VIEW IF EXISTS forxml_path_elements_regular_view;
 GO
 
-DROP PROCEDURE forxml_path_elements_p4;
+-- Drop procedures
+DROP PROCEDURE IF EXISTS forxml_path_elements_p1;
+GO
+DROP PROCEDURE IF EXISTS forxml_path_elements_p2;
+GO
+DROP PROCEDURE IF EXISTS forxml_path_elements_p3;
+GO
+DROP PROCEDURE IF EXISTS forxml_path_elements_p4;
+GO
+DROP PROCEDURE IF EXISTS forxml_path_elements_p5;
+GO
+DROP PROCEDURE IF EXISTS forxml_path_elements_p6;
+GO
+DROP PROCEDURE IF EXISTS forxml_path_elements_p7;
+GO
+DROP PROCEDURE IF EXISTS forxml_path_elements_p_insert;
+GO
+DROP PROCEDURE IF EXISTS forxml_path_elements_p_insert_xsinil;
 GO
 
-DROP PROCEDURE forxml_path_elements_p5;
+-- Drop tables
+DROP TABLE IF EXISTS forxml_path_elements_t1;
 GO
-
-DROP VIEW forxml_path_elements_v1;
+DROP TABLE IF EXISTS forxml_path_elements_t2;
 GO
-
-DROP VIEW forxml_path_elements_v2;
+DROP TABLE IF EXISTS forxml_path_elements_t3;
 GO
-
-DROP VIEW forxml_path_elements_v3;
+DROP TABLE IF EXISTS forxml_path_elements_t4;
 GO
-
-DROP VIEW forxml_path_elements_v4;
+DROP TABLE IF EXISTS forxml_path_elements_t5;
 GO
-
-DROP VIEW forxml_path_elements_v5;
+DROP TABLE IF EXISTS forxml_path_elements_t6;
 GO
-
-DROP VIEW forxml_path_elements_v6;
+DROP TABLE IF EXISTS forxml_path_elements_t7;
 GO
-
-DROP TABLE forxml_path_elements_t1;
+DROP TABLE IF EXISTS forxml_path_elements_special;
 GO
-
-DROP TABLE forxml_path_elements_t2;
+DROP TABLE IF EXISTS forxml_path_elements_unicode;
 GO
-
-DROP TABLE forxml_path_elements_t3;
+DROP TABLE IF EXISTS forxml_path_elements_long_cols;
 GO
-
-DROP TABLE forxml_path_elements_t4;
+DROP TABLE IF EXISTS forxml_path_elements_orders;
 GO
-
-DROP TABLE forxml_path_elements_t5;
+DROP TABLE IF EXISTS forxml_path_elements_customers;
 GO
-
-DROP TABLE forxml_path_elements_t6;
+DROP TABLE IF EXISTS forxml_path_elements_products;
 GO
-
-DROP TABLE forxml_path_elements_t7;
+DROP TABLE IF EXISTS forxml_path_elements_order_items;
+GO
+DROP TABLE IF EXISTS forxml_path_elements_results;
 GO
