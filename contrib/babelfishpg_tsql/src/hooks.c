@@ -133,6 +133,13 @@ typedef enum PltsqlInitPrivsOptions
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
 
+/* Context for param replacement in quals */
+typedef struct ParamReplaceContext
+{
+	bool		in_qual;		/* Are we currently in a qual? */
+	QueryDesc  *queryDesc;		/* Original QueryDesc */
+} ParamReplaceContext;
+
 
 /*****************************************
  * 			General Hooks
@@ -229,13 +236,8 @@ static void handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid o
  * 			Executor Hooks
  *****************************************/
 
-/* Context for param replacement in quals */
-typedef struct ParamReplaceContext
-{
-	bool		in_qual;		/* Are we currently in a qual? */
-	QueryDesc  *queryDesc;		/* Original QueryDesc */
-} ParamReplaceContext;
-
+static bool find_param_quals_in_plan_tree_walker(Node *node, ParamReplaceContext *context);
+static bool find_param_quals_in_plan_tree(Plan *plan, ParamReplaceContext *context);
 static Node *replace_params_mutator(Node *node, ParamReplaceContext *context);
 static void replace_params_in_plan_tree(Plan *plan, ParamReplaceContext *context);
 
@@ -1212,121 +1214,118 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }
 
-static void
-pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
+static bool
+find_param_quals_in_plan_tree_walker(Node *node, ParamReplaceContext *context)
 {
-	int			ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
-	ParamReplaceContext context;
-
-	if (pltsql_explain_analyze)
+	if (node == NULL)
+		return false;
+	
+	if (context->in_qual && IsA(node, Param))
 	{
-		PLtsql_execstate *estate = get_current_tsql_estate();
+		Param		   *param = (Param *) node;
+		ParamListInfo	paramLI = context->queryDesc->params;
 
-		Assert(estate != NULL);
-		INSTR_TIME_SET_CURRENT(estate->execution_start);
-	}
-
-	if (is_explain_analyze_mode())
-	{
-		if (pltsql_explain_timing)
-			queryDesc->instrument_options |= INSTRUMENT_TIMER;
-		else
-			queryDesc->instrument_options |= INSTRUMENT_ROWS;
-		if (pltsql_explain_buffers)
-			queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
-		if (pltsql_explain_wal)
-			queryDesc->instrument_options |= INSTRUMENT_WAL;
-	}
-
-	/*
-	 * In TDS client, the RTE permissions might need to be checked against login mapped to given checkAsUser,
-	 * if it is valid, otherwise permissions are checked against session user (current login).
-	 * For SECURITY_RESTRICTED_OPERATION handling see comments in pltsql_ExecFuncProc_AclCheck
-	 */
-	if (IS_TDS_CLIENT() && queryDesc->plannedstmt != NULL && !InSecurityRestrictedOperation())
-	{
-		ListCell	*lc;
-
-		foreach(lc, queryDesc->plannedstmt->permInfos)
+		if (paramLI != NULL &&
+			param->paramid > 0 &&
+			param->paramid <= paramLI->numParams)
 		{
-			RTEPermissionInfo	*perminfo = lfirst_node(RTEPermissionInfo, lc);
-			Oid             	relOid = perminfo->relid;
-
-			if (OidIsValid(relOid))
-			{
-				Oid schema_id = get_rel_namespace(relOid);
-
-				if (OidIsValid(schema_id))
-				{
-					char *nspname = get_namespace_name(schema_id);
-
-					/*
-					 * Check if relation's schema is valid and is not a shared schema. If yes,
-					 * then replace checkAsUser to its mapped login if present otherwise replace
-					 * with session user (current login).
-					 * We do not blindly want to check the permissions against session user (current login)
-					 * since permissions of RTEs inside a view are checked against that view's owner
-					 * which can very well be a user of some different database. So if we blindly check
-					 * permission against session user instead of view's owner then it would break view's
-					 * ownership behavior. Instead, we will replace checkAsUser with it's corresponding mapped
-					 * login if present and only in cases where checkAsUser is not set, we will replace it
-					 * with session user (login). We are using login to allow cross database queries since login
-					 * can access all its objects across the databases.
-					 */
-					if (nspname != NULL && !is_shared_schema(nspname))
-					{
-						Oid relOwner = get_rel_owner(relOid);
-
-						if (OidIsValid(perminfo->checkAsUser) && !isTempNamespace(schema_id))
-						{
-							Oid loginId = get_login_for_user(perminfo->checkAsUser, nspname);
-							if (OidIsValid(loginId))
-								perminfo->checkAsUser = loginId;
-						}
-						else
-							perminfo->checkAsUser = GetSessionUserId();
-						if (pltsql_enable_ownership_chaining && is_valid_func_ownership_chain(perminfo, relOwner))
-						{
-							perminfo->checkAsUser = relOwner;
-						}
-					}
-					if (nspname)
-						pfree(nspname);
-				}
-			}
+			return true;
 		}
 	}
-
 	
-	context.in_qual = false;
-	context.queryDesc = queryDesc;
-
-	/* Copy the plannedstmt so that changing it won't affect the cached plan */
-	queryDesc->plannedstmt = copyObject(queryDesc->plannedstmt);
-
-	if (queryDesc->plannedstmt && queryDesc->plannedstmt->planTree)
+	if (IsA(node, SubPlan))
 	{
-		replace_params_in_plan_tree(queryDesc->plannedstmt->planTree, &context);
+		bool		save_in_qual = context->in_qual;
+		
+		context->in_qual = false;
+		
+		if (expression_tree_walker(node, find_param_quals_in_plan_tree_walker, context))
+			return true;
+		
+		context->in_qual = save_in_qual;
 	}
 
-	if (prev_ExecutorStart)
-		prev_ExecutorStart(queryDesc, ef);
-	else
-		standard_ExecutorStart(queryDesc, ef);
+	return expression_tree_walker(node, find_param_quals_in_plan_tree_walker, context);
+}
 
-	if (is_explain_analyze_mode() && !queryDesc->totaltime)
+static bool
+find_param_quals_in_plan_tree(Plan *plan, ParamReplaceContext *context)
+{
+	if (plan == NULL)
+		return false;
+	
+
+	if (plan->qual != NIL)
 	{
-		/*
-		 * Set up to track total elapsed time in ExecutorRun. Make sure the
-		 * space is allocated in the per-query context so it will go away at
-		 * ExecutorEnd.
-		 */
-		MemoryContext oldcxt;
+		bool	save_in_qual = context->in_qual;
 
-		oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
-		queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
-		MemoryContextSwitchTo(oldcxt);
+		context->in_qual = true;
+		if (find_param_quals_in_plan_tree_walker((Node *) plan->qual, context))
+			return true;
+		context->in_qual = save_in_qual;
 	}
+
+	if (plan->lefttree)
+		if (find_param_quals_in_plan_tree(plan->lefttree, context))
+			return true;
+	if (plan->righttree)
+		if (find_param_quals_in_plan_tree(plan->righttree, context))
+			return true;
+
+	if (IsA(plan, Append))
+	{
+		Append	   *append = (Append *) plan;
+		ListCell   *lc;
+
+		foreach(lc, append->appendplans)
+		{
+			if (find_param_quals_in_plan_tree((Plan *) lfirst(lc), context))
+				return true;
+		}
+	}
+	else if (IsA(plan, MergeAppend))
+	{
+		MergeAppend *mappend = (MergeAppend *) plan;
+		ListCell   *lc;
+
+		foreach(lc, mappend->mergeplans)
+		{
+			if (find_param_quals_in_plan_tree((Plan *) lfirst(lc), context))
+				return true;
+		}
+	}
+	else if (IsA(plan, BitmapAnd))
+	{
+		BitmapAnd  *bitmapand = (BitmapAnd *) plan;
+		ListCell   *lc;
+
+		foreach(lc, bitmapand->bitmapplans)
+		{
+			if (find_param_quals_in_plan_tree((Plan *) lfirst(lc), context))
+				return true;
+		}
+	}
+	else if (IsA(plan, BitmapOr))
+	{
+		BitmapOr   *bitmapor = (BitmapOr *) plan;
+		ListCell   *lc;
+
+		foreach(lc, bitmapor->bitmapplans)
+		{
+			if (find_param_quals_in_plan_tree((Plan *) lfirst(lc), context))
+				return true;
+		}
+	}
+	else if (IsA(plan, SubqueryScan))
+	{
+		SubqueryScan *subscan = (SubqueryScan *) plan;
+
+		if (subscan->subplan)
+			if (find_param_quals_in_plan_tree(subscan->subplan, context))
+				return true;
+	}
+
+	return false;
 }
 
 /*
@@ -1413,15 +1412,13 @@ replace_params_mutator(Node *node, ParamReplaceContext *context)
 static void
 replace_params_in_plan_tree(Plan *plan, ParamReplaceContext *context)
 {
-	bool		save_in_qual;
-
 	if (plan == NULL)
 		return;
 
-	save_in_qual = context->in_qual;
-
 	if (plan->qual != NIL)
 	{
+		bool	save_in_qual = context->in_qual;
+		
 		context->in_qual = true;
 		plan->qual = (List *) replace_params_mutator((Node *) plan->qual, context);
 		context->in_qual = save_in_qual;
@@ -1478,6 +1475,131 @@ replace_params_in_plan_tree(Plan *plan, ParamReplaceContext *context)
 
 		if (subscan->subplan)
 			replace_params_in_plan_tree(subscan->subplan, context);
+	}
+}
+
+static void
+pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
+{
+	int			ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
+	ParamReplaceContext context;
+
+	if (pltsql_explain_analyze)
+	{
+		PLtsql_execstate *estate = get_current_tsql_estate();
+
+		Assert(estate != NULL);
+		INSTR_TIME_SET_CURRENT(estate->execution_start);
+	}
+
+	if (is_explain_analyze_mode())
+	{
+		if (pltsql_explain_timing)
+			queryDesc->instrument_options |= INSTRUMENT_TIMER;
+		else
+			queryDesc->instrument_options |= INSTRUMENT_ROWS;
+		if (pltsql_explain_buffers)
+			queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
+		if (pltsql_explain_wal)
+			queryDesc->instrument_options |= INSTRUMENT_WAL;
+	}
+
+	/*
+	 * In TDS client, the RTE permissions might need to be checked against login mapped to given checkAsUser,
+	 * if it is valid, otherwise permissions are checked against session user (current login).
+	 * For SECURITY_RESTRICTED_OPERATION handling see comments in pltsql_ExecFuncProc_AclCheck
+	 */
+	if (IS_TDS_CLIENT() && queryDesc->plannedstmt != NULL && !InSecurityRestrictedOperation())
+	{
+		ListCell	*lc;
+
+		foreach(lc, queryDesc->plannedstmt->permInfos)
+		{
+			RTEPermissionInfo	*perminfo = lfirst_node(RTEPermissionInfo, lc);
+			Oid             	relOid = perminfo->relid;
+
+			if (OidIsValid(relOid))
+			{
+				Oid schema_id = get_rel_namespace(relOid);
+
+				if (OidIsValid(schema_id))
+				{
+					char *nspname = get_namespace_name(schema_id);
+
+					/*
+					 * Check if relation's schema is valid and is not a shared schema. If yes,
+					 * then replace checkAsUser to its mapped login if present otherwise replace
+					 * with session user (current login).
+					 * We do not blindly want to check the permissions against session user (current login)
+					 * since permissions of RTEs inside a view are checked against that view's owner
+					 * which can very well be a user of some different database. So if we blindly check
+					 * permission against session user instead of view's owner then it would break view's
+					 * ownership behavior. Instead, we will replace checkAsUser with it's corresponding mapped
+					 * login if present and only in cases where checkAsUser is not set, we will replace it
+					 * with session user (login). We are using login to allow cross database queries since login
+					 * can access all its objects across the databases.
+					 */
+					if (nspname != NULL && !is_shared_schema(nspname))
+					{
+						Oid relOwner = get_rel_owner(relOid);
+
+						if (OidIsValid(perminfo->checkAsUser) && !isTempNamespace(schema_id))
+						{
+							Oid loginId = get_login_for_user(perminfo->checkAsUser, nspname);
+							if (OidIsValid(loginId))
+								perminfo->checkAsUser = loginId;
+						}
+						else
+							perminfo->checkAsUser = GetSessionUserId();
+						if (pltsql_enable_ownership_chaining && is_valid_func_ownership_chain(perminfo, relOwner))
+						{
+							perminfo->checkAsUser = relOwner;
+						}
+					}
+					if (nspname)
+						pfree(nspname);
+				}
+			}
+		}
+	}
+
+	context.in_qual = false;
+	context.queryDesc = queryDesc;
+
+	if (queryDesc->plannedstmt && queryDesc->plannedstmt->planTree)
+	{
+		/* 
+		 * Walk through the plan tree to check if we need to replace params,
+		 * only make a copy if we need to.
+		 */
+		if (find_param_quals_in_plan_tree(queryDesc->plannedstmt->planTree,
+										  &context))
+		{
+			/* Copy the plannedstmt so that changing it won't affect the cached plan */
+			queryDesc->plannedstmt = copyObject(queryDesc->plannedstmt);
+			
+			context.in_qual = false;
+			replace_params_in_plan_tree(queryDesc->plannedstmt->planTree, &context);
+		}
+	}
+
+	if (prev_ExecutorStart)
+		prev_ExecutorStart(queryDesc, ef);
+	else
+		standard_ExecutorStart(queryDesc, ef);
+
+	if (is_explain_analyze_mode() && !queryDesc->totaltime)
+	{
+		/*
+		 * Set up to track total elapsed time in ExecutorRun. Make sure the
+		 * space is allocated in the per-query context so it will go away at
+		 * ExecutorEnd.
+		 */
+		MemoryContext oldcxt;
+
+		oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
+		queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
+		MemoryContextSwitchTo(oldcxt);
 	}
 }
 
