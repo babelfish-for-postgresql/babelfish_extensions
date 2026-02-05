@@ -4884,34 +4884,38 @@ GO
 -- GEOMETRY -> NUMERIC
 SELECT CAST(GEOMETRY::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0).STNumPoints() AS NUMERIC(10,0));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+3
+~~END~~
 
 
 -- GEOMETRY -> DECIMAL
 SELECT CAST(GEOMETRY::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0).STNumPoints() AS DECIMAL(10,0));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+3
+~~END~~
 
 
 -- GEOGRAPHY -> NUMERIC/DECIMAL (using STNumPoints() method)
 -- GEOGRAPHY -> NUMERIC
 SELECT CAST(GEOGRAPHY::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66)', 4326).STNumPoints() AS NUMERIC(10,0));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+2
+~~END~~
 
 
 -- GEOGRAPHY -> DECIMAL
 SELECT CAST(GEOGRAPHY::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66)', 4326).STNumPoints() AS DECIMAL(10,0));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+2
+~~END~~
 
 
 -- ROWVERSION/TIMESTAMP -> NUMERIC/DECIMAL
@@ -5807,33 +5811,37 @@ GO
 -- GEOMETRY -> NUMERIC using CONVERT
 SELECT CONVERT(NUMERIC(10,0), GEOMETRY::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0).STNumPoints());
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+3
+~~END~~
 
 
 -- GEOMETRY -> DECIMAL using CONVERT
 SELECT CONVERT(DECIMAL(10,0), GEOMETRY::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0).STNumPoints());
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+3
+~~END~~
 
 
 -- GEOGRAPHY -> NUMERIC using CONVERT
 SELECT CONVERT(NUMERIC(10,0), GEOGRAPHY::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66)', 4326).STNumPoints());
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+2
+~~END~~
 
 
 -- GEOGRAPHY -> DECIMAL using CONVERT
 SELECT CONVERT(DECIMAL(10,0), GEOGRAPHY::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66)', 4326).STNumPoints());
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+2
+~~END~~
 
 
 -- ROWVERSION/TIMESTAMP -> NUMERIC/DECIMAL using CONVERT
@@ -9761,12 +9769,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = 123.45
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: (num_col = 123.45)
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = 123.45)
 ~~END~~
 
 
@@ -9783,12 +9787,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = 500
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: (num_col = 500)
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = 500)
 ~~END~~
 
 
@@ -9805,12 +9805,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = CAST(999.99 AS DECIMAL(18,2))
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: (num_col = 999.99)
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = 999.99)
 ~~END~~
 
 
@@ -9827,13 +9823,9 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = CAST(123.45 AS FLOAT)
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Seq Scan on numeric_index_test (actual rows=1 loops=1)
-        Filter: ((num_col)::double precision = '123.45'::double precision)
-        Rows Removed by Filter: 2
+Seq Scan on numeric_index_test (actual rows=1 loops=1)
+  Filter: ((num_col)::double precision = '123.45'::double precision)
+  Rows Removed by Filter: 2
 ~~END~~
 
 
@@ -9868,12 +9860,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col BETWEEN 100 AND CAST(200 AS INT)
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: ((num_col >= 100) AND (num_col <= 200))
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: ((num_col >= 100) AND (num_col <= 200))
 ~~END~~
 
 
@@ -9889,12 +9877,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col BETWEEN 400.00 AND CAST(600.00 AS DECIMAL(18,2))
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: ((num_col >= 400.00) AND (num_col <= 600.00))
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: ((num_col >= 400.00) AND (num_col <= 600.00))
 ~~END~~
 
 
@@ -9915,14 +9899,11 @@ text
 Query Text: SELECT a.*, b.* 
 FROM numeric_index_test a
 JOIN numeric_index_test b ON a.num_col = b.decimal_col
-Gather (actual rows=3 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  ->  Merge Join (actual rows=2 loops=2)
-        Merge Cond: (a.num_col = (b.decimal_col)::numeric)
-        ->  Parallel Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test a (actual rows=2 loops=2)
-        ->  Materialize (actual rows=3 loops=1)
-              ->  Index Scan using idx_decimalnumeric_index_test5d8e61a04a9662670ec1a2266602e173 on numeric_index_test b (actual rows=3 loops=1)
+Merge Join (actual rows=3 loops=1)
+  Merge Cond: (a.num_col = (b.decimal_col)::numeric)
+  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test a (actual rows=3 loops=1)
+  ->  Materialize (actual rows=3 loops=1)
+        ->  Index Scan using idx_decimalnumeric_index_test5d8e61a04a9662670ec1a2266602e173 on numeric_index_test b (actual rows=3 loops=1)
 ~~END~~
 
 
@@ -9945,12 +9926,8 @@ Query Text: SELECT * FROM numeric_index_test
 WHERE num_col = int_col 
    OR num_col = CAST(float_col AS NUMERIC(18,2))
    OR num_col = CAST(money_col AS NUMERIC(18,2))
-Gather (actual rows=3 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Seq Scan on numeric_index_test (actual rows=3 loops=1)
-        Filter: ((num_col = int_col) OR (num_col = (float_col)::numeric(18,2)) OR (num_col = (money_col)::numeric(18,2)))
+Seq Scan on numeric_index_test (actual rows=3 loops=1)
+  Filter: ((num_col = int_col) OR (num_col = (float_col)::numeric(18,2)) OR (num_col = (money_col)::numeric(18,2)))
 ~~END~~
 
 
@@ -9969,12 +9946,8 @@ text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = CAST(500 AS INT)
   AND category = 'CAT-2'
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: ((num_col = 500) AND (category = 'CAT-2'::"varchar"))
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: ((num_col = 500) AND (category = 'CAT-2'::"varchar"))
 ~~END~~
 
 
@@ -9991,13 +9964,9 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = int_col + 0.45
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Seq Scan on numeric_index_test (actual rows=1 loops=1)
-        Filter: (num_col = ((int_col)::numeric + 0.45))
-        Rows Removed by Filter: 2
+Seq Scan on numeric_index_test (actual rows=1 loops=1)
+  Filter: (num_col = ((int_col)::numeric + 0.45))
+  Rows Removed by Filter: 2
 ~~END~~
 
 
@@ -10016,12 +9985,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE CAST(num_col AS DECIMAL(18,2)) = decimal_col
-Gather (actual rows=3 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Seq Scan on numeric_index_test (actual rows=3 loops=1)
-        Filter: ((num_col)::numeric = (decimal_col)::numeric)
+Seq Scan on numeric_index_test (actual rows=3 loops=1)
+  Filter: ((num_col)::numeric = (decimal_col)::numeric)
 ~~END~~
 
 
@@ -10038,12 +10003,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col IN (123, 123.45, 123.45678)
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: (num_col = ANY ('{123,123.45,123.45678}'::numeric[]))
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = ANY ('{123,123.45,123.45678}'::numeric[]))
 ~~END~~
 
 
@@ -10060,12 +10021,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_precise_col = CAST(123.4567890123 AS NUMERIC(38,10))
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using idx_numeric_precisenumeric_indee9fe26d0621de94770ec0d8401129c48 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: (num_precise_col = 123.4567890123::numeric(38,10))
+Index Scan using idx_numeric_precisenumeric_indee9fe26d0621de94770ec0d8401129c48 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_precise_col = 123.4567890123::numeric(38,10))
 ~~END~~
 
 
@@ -10084,13 +10041,9 @@ text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = 123.45
   AND decimal_col = 123.45
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: (num_col = 123.45)
-        Filter: ((decimal_col)::numeric = 123.45)
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = 123.45)
+  Filter: ((decimal_col)::numeric = 123.45)
 ~~END~~
 
 
@@ -10111,15 +10064,11 @@ text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col > 100
 ORDER BY decimal_col
-Gather Merge (actual rows=3 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  ->  Sort (actual rows=2 loops=2)
-        Sort Key: decimal_col NULLS FIRST
-        Sort Method: quicksort  Memory: 25kB
-        Worker 0:  Sort Method: quicksort  Memory: 25kB
-        ->  Parallel Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=2 loops=2)
-              Index Cond: (num_col > 100)
+Sort (actual rows=3 loops=1)
+  Sort Key: decimal_col NULLS FIRST
+  Sort Method: quicksort  Memory: 25kB
+  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=3 loops=1)
+        Index Cond: (num_col > 100)
 ~~END~~
 
 
@@ -10143,13 +10092,10 @@ Query Text: SELECT CAST(num_col AS DECIMAL(18,2)) as num_group,
 FROM numeric_index_test 
 GROUP BY CAST(num_col AS DECIMAL(18,2))
 HashAggregate (actual rows=3 loops=1)
-  Group Key: ((num_col)::"decimal"(18,2))
+  Group Key: (num_col)::"decimal"(18,2)
   Batches: 1  Memory Usage: 40kB
-  ->  Gather (actual rows=3 loops=1)
-        Workers Planned: 1
-        Workers Launched: 1
-        ->  Parallel Index Only Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=2 loops=2)
-              Heap Fetches: 3
+  ->  Index Only Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=3 loops=1)
+        Heap Fetches: 3
 ~~END~~
 
 
@@ -10168,13 +10114,9 @@ text
 Query Text: SELECT num_col, category 
 FROM numeric_index_test 
 WHERE num_col = 500.00
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Only Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: (num_col = 500.00)
-        Heap Fetches: 1
+Index Only Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = 500.00)
+  Heap Fetches: 1
 ~~END~~
 
 
@@ -10207,12 +10149,8 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col IS NULL
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-        Index Cond: (num_col IS NULL)
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col IS NULL)
 ~~END~~
 
 
@@ -10228,13 +10166,9 @@ int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#va
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col * 2 = decimal_col
-Gather (actual rows=0 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Seq Scan on numeric_index_test (actual rows=0 loops=1)
-        Filter: ((num_col * '2'::numeric(1,0)) = (decimal_col)::numeric)
-        Rows Removed by Filter: 4
+Seq Scan on numeric_index_test (actual rows=0 loops=1)
+  Filter: ((num_col * '2'::numeric(1,0)) = (decimal_col)::numeric)
+  Rows Removed by Filter: 4
 ~~END~~
 
 
