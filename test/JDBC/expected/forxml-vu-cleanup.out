@@ -34,3 +34,13 @@ drop procedure forxml_vu_p_nullval3
 go
 drop procedure forxml_vu_p_nullval4
 go
+DROP TABLE IF EXISTS forxml_raw_elements_results;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_t1;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc_insert;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc_insert2;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc_insert3;
+GO

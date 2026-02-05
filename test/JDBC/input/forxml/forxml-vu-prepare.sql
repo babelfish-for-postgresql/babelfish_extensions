@@ -202,3 +202,38 @@ go
 create procedure forxml_vu_p_nullval4 as
 select cast(null as datetimeoffset) for xml path;
 go
+
+-- Table for INSERT..EXEC tests
+CREATE TABLE forxml_raw_elements_results (xml_data VARCHAR(MAX));
+GO
+
+-- Source table for FOR XML queries
+CREATE TABLE forxml_raw_elements_t1 (id INT, name VARCHAR(50), salary INT, department VARCHAR(50));
+INSERT INTO forxml_raw_elements_t1 VALUES (1, 'John', 50000, 'IT');
+INSERT INTO forxml_raw_elements_t1 VALUES (2, 'Jane', 60000, 'HR');
+INSERT INTO forxml_raw_elements_t1 VALUES (3, 'Bob', NULL, 'Finance');
+INSERT INTO forxml_raw_elements_t1 VALUES (4, 'Alice', 70000, NULL);
+INSERT INTO forxml_raw_elements_t1 VALUES (5, NULL, NULL, NULL);
+GO
+
+-- Procedures for INSERT..EXEC tests
+CREATE PROCEDURE forxml_raw_elements_proc_insert
+AS
+BEGIN
+    SELECT 1 AS a, 2 AS b FOR XML RAW;
+END;
+GO
+
+CREATE PROCEDURE forxml_raw_elements_proc_insert2
+AS
+BEGIN
+    SELECT 1 AS a, NULL AS b FOR XML RAW;
+END;
+GO
+
+CREATE PROCEDURE forxml_raw_elements_proc_insert3
+AS
+BEGIN
+    SELECT * FROM forxml_raw_elements_t1 FOR XML RAW, ROOT('data');
+END;
+GO

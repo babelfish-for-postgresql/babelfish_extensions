@@ -125,3 +125,55 @@ ntext
 <row/>
 ~~END~~
 
+
+--Queries for Procedures for INSERT..EXEC tests
+INSERT INTO forxml_raw_elements_results (xml_data)
+EXEC forxml_raw_elements_proc_insert;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM forxml_raw_elements_results;
+GO
+~~START~~
+varchar
+<row a="1" b="2"/>
+~~END~~
+
+
+TRUNCATE TABLE forxml_raw_elements_results;
+GO
+
+INSERT INTO forxml_raw_elements_results (xml_data)
+EXEC forxml_raw_elements_proc_insert2;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM forxml_raw_elements_results;
+GO
+~~START~~
+varchar
+<row a="1"/>
+~~END~~
+
+
+TRUNCATE TABLE forxml_raw_elements_results;
+GO
+
+INSERT INTO forxml_raw_elements_results (xml_data)
+EXEC forxml_raw_elements_proc_insert3;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM forxml_raw_elements_results;
+GO
+~~START~~
+varchar
+<data><row id="1" name="John" salary="50000" department="IT"/><row id="2" name="Jane" salary="60000" department="HR"/><row id="3" name="Bob" department="Finance"/><row id="4" name="Alice" salary="70000"/><row id="5"/></data>
+~~END~~
+
+
+TRUNCATE TABLE forxml_raw_elements_results;
+GO

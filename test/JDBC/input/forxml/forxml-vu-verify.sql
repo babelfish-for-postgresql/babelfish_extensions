@@ -45,3 +45,34 @@ go
 
 exec forxml_vu_p_nullval4
 go
+
+--Queries for Procedures for INSERT..EXEC tests
+INSERT INTO forxml_raw_elements_results (xml_data)
+EXEC forxml_raw_elements_proc_insert;
+GO
+
+SELECT * FROM forxml_raw_elements_results;
+GO
+
+TRUNCATE TABLE forxml_raw_elements_results;
+GO
+
+INSERT INTO forxml_raw_elements_results (xml_data)
+EXEC forxml_raw_elements_proc_insert2;
+GO
+
+SELECT * FROM forxml_raw_elements_results;
+GO
+
+TRUNCATE TABLE forxml_raw_elements_results;
+GO
+
+INSERT INTO forxml_raw_elements_results (xml_data)
+EXEC forxml_raw_elements_proc_insert3;
+GO
+
+SELECT * FROM forxml_raw_elements_results;
+GO
+
+TRUNCATE TABLE forxml_raw_elements_results;
+GO
