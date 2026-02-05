@@ -2514,13 +2514,11 @@ UNION
 SELECT geometry::Parse('POINT(3 4)').STAsText()
 UNION
 SELECT geometry::Parse('NULL').STAsText();
+ORDER BY geom DESC;
 go
-~~START~~
-nvarchar
-<NULL>
-POINT(3 4)
-POINT(1 2)
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'ORDER' at line 6 and character position 0)~~
 
 
 
