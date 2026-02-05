@@ -1672,9 +1672,11 @@ FROM UDDTDateTime2Test ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime2#!#datetime2#!#datetime2#!#int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: control reached end of function without RETURN)~~
+1#!#2023-06-16 10:00:00.0000000#!#2023-06-16 10:00:00.000000#!#2023-06-16 09:30:00#!#0
+2#!#2023-06-16 13:30:45.0000000#!#2023-06-16 13:30:45.123457#!#2023-06-16 13:00:00#!#0
+3#!#2023-06-16 18:45:30.0000000#!#2023-06-16 18:45:30.000000#!#2023-06-16 18:15:00#!#0
+4#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 -- 8. Test constraints
@@ -1793,9 +1795,17 @@ FROM UDDTDateTime2Test ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime2#!#datetime2#!#datetime2#!#datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: control reached end of function without RETURN)~~
+1#!#2023-06-16 09:00:00.000000#!#2023-06-16 09:00:00.500000#!#2023-06-16 09:00:30.000000#!#2023-06-16 08:45:00.000000
+2#!#2023-06-16 12:30:45.123457#!#2023-06-16 12:30:45.623457#!#2023-06-16 12:31:15.123457#!#2023-06-16 12:15:45.123457
+3#!#2023-06-16 17:45:30.000000#!#2023-06-16 17:45:30.500000#!#2023-06-16 17:46:00.000000#!#2023-06-16 17:30:30.000000
+4#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#2023-06-16 10:00:00.000000#!#2023-06-16 10:00:00.500000#!#2023-06-16 10:00:30.000000#!#2023-06-16 09:45:00.000000
+6#!#2023-06-16 18:00:00.000000#!#2023-06-16 18:00:00.500000#!#2023-06-16 18:00:30.000000#!#2023-06-16 17:45:00.000000
+7#!#2023-06-16 13:00:00.000000#!#2023-06-16 13:00:00.500000#!#2023-06-16 13:00:30.000000#!#2023-06-16 12:45:00.000000
+8#!#2023-06-16 13:00:00.000000#!#2023-06-16 13:00:00.500000#!#2023-06-16 13:00:30.000000#!#2023-06-16 12:45:00.000000
+9#!#2023-06-16 14:30:45.123457#!#2023-06-16 14:30:45.623457#!#2023-06-16 14:31:15.123457#!#2023-06-16 14:15:45.123457
+10#!#2023-06-16 14:30:46.000000#!#2023-06-16 14:30:46.500000#!#2023-06-16 14:31:16.000000#!#2023-06-16 14:15:46.000000
+~~END~~
 
 
 -- 15. Test boundary conditions
@@ -8092,35 +8102,27 @@ GO
 
 SELECT CAST('2023-06-16 12:34:56.1234567' AS DATETIME2) - CAST('1' AS CHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567' AS DATETIME2) - CAST('1' AS VARCHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567' AS DATETIME2) - CAST('1' AS NCHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567' AS DATETIME2) - CAST('1' AS NVARCHAR(10));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('2023-06-16 12:34:56.1234567' AS DATETIME2) - CAST('2023-06-16' AS DATE);
 GO
@@ -8296,35 +8298,27 @@ GO
 
 SELECT CAST('1' AS CHAR(10)) - CAST('2023-06-16 12:34:56.1234567' AS DATETIME2);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('1' AS VARCHAR(10)) - CAST('2023-06-16 12:34:56.1234567' AS DATETIME2);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('1' AS NCHAR(10)) - CAST('2023-06-16 12:34:56.1234567' AS DATETIME2);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1         ")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1         ")~~
 
 SELECT CAST('1' AS NVARCHAR(10)) - CAST('2023-06-16 12:34:56.1234567' AS DATETIME2);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "1")~~
 
 SELECT CAST('2023-06-16' AS DATE) - CAST('2023-06-16 12:34:56.1234567' AS DATETIME2);
 GO
@@ -9992,7 +9986,7 @@ END CATCH
 GO
 ~~START~~
 int#!#int#!#int#!#nvarchar#!#int#!#nvarchar
-517#!#16#!#1#!#<NULL>#!#16#!#Adding a value to a 'datetime2' column caused an overflow.
+517#!#16#!#1#!#<NULL>#!#36#!#Adding a value to a 'datetime2' column caused an overflow.
 ~~END~~
 
 

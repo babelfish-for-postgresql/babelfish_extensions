@@ -1390,6 +1390,34 @@ go
 drop schema abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz
 go
 
+grant connect on schema::dbo to babel_4344_u1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near 'connect'.)~~
+
+
+revoke connect on schema::dbo from babel_4344_u1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near 'connect'.)~~
+
+
+grant connect on object::babel_4344_t1 to babel_4344_u1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid privilege type CONNECT for relation)~~
+
+
+revoke connect on object::babel_4344_t1 from babel_4344_u1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid privilege type CONNECT for relation)~~
+
+
 use babel_4344_d1;
 go
 revoke select on schema::babel_4344_s1 from public, αιώνια, ログイン;
