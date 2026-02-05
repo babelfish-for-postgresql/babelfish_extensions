@@ -335,25 +335,31 @@ CREATE PROCEDURE forxml_path_elements_p1 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS;
 GO
 
+
 CREATE PROCEDURE forxml_path_elements_p2 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS ABSENT;
 GO
+
 
 CREATE PROCEDURE forxml_path_elements_p3 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS XSINIL;
 GO
 
+
 CREATE PROCEDURE forxml_path_elements_p4 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ROOT('Data'), ELEMENTS XSINIL;
 GO
+
 
 CREATE PROCEDURE forxml_path_elements_p5 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS XSINIL, ROOT('Data');
 GO
 
+
 CREATE PROCEDURE forxml_path_elements_p7 @DeptFilter VARCHAR(50) AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE Department = @DeptFilter OR Department IS NULL FOR XML PATH('Employee'), ELEMENTS XSINIL;
 GO
+
 
 CREATE PROCEDURE forxml_path_elements_p6 @empid INT AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = @empid FOR XML PATH('Employee'), ELEMENTS XSINIL;
@@ -375,30 +381,6 @@ GO
 CREATE VIEW forxml_path_elements_dep_view1 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS;
 GO
-
-CREATE VIEW forxml_path_elements_dep_view2 AS
-SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS ABSENT;
-GO
-
-CREATE VIEW forxml_path_elements_dep_view3 AS
-SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS XSINIL;
-GO
-
-CREATE VIEW forxml_path_elements_dep_view4 AS
-SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ROOT('Employees'), ELEMENTS XSINIL;
-GO
-
-CREATE VIEW forxml_path_elements_dep_view5 AS
-SELECT IntCol, VarcharCol, BitCol, DecimalCol, DateCol FROM forxml_path_elements_t2 FOR XML PATH('Row'), ELEMENTS XSINIL;
-GO
-
-
--- ============================================
--- SECTION: Dependent Views (using FOR XML PATH, ELEMENTS)
--- ============================================
-CREATE VIEW forxml_path_elements_dep_view1 AS
-SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS;
-GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error at or near "ELEMENTS")~~
@@ -434,3 +416,48 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error at or near "ELEMENTS")~~
+
+
+
+-- ============================================
+-- SECTION: Dependent Functions (using FOR XML PATH, ELEMENTS)
+-- ============================================
+CREATE FUNCTION forxml_path_elements_func1()
+RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @result NVARCHAR(MAX);
+    SELECT @result = (SELECT ID, Name FROM forxml_path_elements_t1 WHERE ID = 1 FOR XML PATH('Employee'), ELEMENTS);
+    RETURN @result;
+END;
+GO
+
+CREATE FUNCTION forxml_path_elements_func2()
+RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @result NVARCHAR(MAX);
+    SELECT @result = (SELECT ID, Name FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH('Employee'), ELEMENTS XSINIL);
+    RETURN @result;
+END;
+GO
+
+CREATE FUNCTION forxml_path_elements_func3()
+RETURNS XML
+AS
+BEGIN
+    DECLARE @result XML;
+    SELECT @result = (SELECT * FROM forxml_path_elements_t1 WHERE ID <= 2 FOR XML PATH('Employee'), ELEMENTS, TYPE);
+    RETURN @result;
+END;
+GO
+
+CREATE FUNCTION forxml_path_elements_func4(@empid INT)
+RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @result NVARCHAR(MAX);
+    SELECT @result = (SELECT * FROM forxml_path_elements_t1 WHERE ID = @empid FOR XML PATH('Employee'), ELEMENTS XSINIL);
+    RETURN @result;
+END;
+GO
