@@ -1,0 +1,62 @@
+# This file tests support for these functions: STDimension, STDisjoint, STIntersects, STIsClosed, STIsEmpty, STIsValid
+
+CREATE DATABASE TestGeospatialMethods_DB;
+
+USE TestGeospatialMethods_DB;
+
+CREATE TABLE TestGeospatialMethods_YourTable1Temp ( ID INT PRIMARY KEY, PointColumn geometry ); 
+INSERT INTO TestGeospatialMethods_YourTable1Temp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0)), (4, geometry::STPointFromText('POINT EMPTY', 4123));
+
+CREATE TABLE TestGeospatialMethods_YourTable3Temp ( ID INT PRIMARY KEY, PointColumn geography ); 
+INSERT INTO TestGeospatialMethods_YourTable3Temp (ID, PointColumn) VALUES (1, geography::Point(3.0, 4.0, 4326)), (2, geography::Point(5.0, 6.0, 4121)), (3, geography::Point(3.0, 4.0, 4122)), (4, geography::STPointFromText('POINT EMPTY', 4123));
+
+USE MASTER
+
+CREATE TABLE TestGeospatialMethods_YourTableTemp ( ID INT PRIMARY KEY, PointColumn geometry ); 
+INSERT INTO TestGeospatialMethods_YourTableTemp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0));
+
+CREATE TABLE TestGeospatialMethods_YourTable2Temp ( ID INT PRIMARY KEY, PointColumn1 geometry, PointColumn2 geometry ); 
+INSERT INTO TestGeospatialMethods_YourTable2Temp (ID, PointColumn1, PointColumn2) VALUES (1, geometry::Point(3.0, 4.0, 4326), geometry::Point(3.0, 4.0, 4326));
+
+CREATE TABLE TestGeospatialMethods_TableATemp (ID INT PRIMARY KEY, PointA geometry); 
+INSERT INTO TestGeospatialMethods_TableATemp (ID, PointA) VALUES (1, geometry::Point(1.0, 2.0, 4326)); 
+
+CREATE TABLE TestGeospatialMethods_TableBTemp (ID INT PRIMARY KEY, PointB geometry);
+INSERT INTO TestGeospatialMethods_TableBTemp (ID, PointB) VALUES (1, geometry::Point(3.0, 4.0, 4326));
+
+CREATE TABLE TestGeospatialMethods_SPATIALPOINTGEOG_dttemp (location geography);
+INSERT INTO TestGeospatialMethods_SPATIALPOINTGEOG_dttemp (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) );
+INSERT INTO TestGeospatialMethods_SPATIALPOINTGEOG_dttemp (location) VALUES ( geography::STGeomFromText('Point(1.0 2.0)', 4326) );
+INSERT INTO TestGeospatialMethods_SPATIALPOINTGEOG_dttemp (location) VALUES ( geography::STGeomFromText('Point(1.0 2.0)', 4326) );
+INSERT INTO TestGeospatialMethods_SPATIALPOINTGEOG_dttemp (location) VALUES ( geography::STPointFromText('Point(1.0 2.0)', 4326) );
+
+CREATE TABLE TestGeospatialMethods_SPATIALPOINTGEOM_dttemp (location geometry);
+INSERT INTO TestGeospatialMethods_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) );
+INSERT INTO TestGeospatialMethods_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::STGeomFromText('Point(1.0 2.0)', 4326) );
+INSERT INTO TestGeospatialMethods_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) );
+INSERT INTO TestGeospatialMethods_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::STPointFromText('Point(1.0 2.0)', 4326) );
+INSERT INTO TestGeospatialMethods_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::Point(47.65100, -22.34900, 4326) );
+
+CREATE VIEW TestGeospatialMethods_point_intersect1Temp AS SELECT p1.location.STIntersects(p2.location) AS intersection FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp p1 CROSS JOIN TestGeospatialMethods_SPATIALPOINTGEOM_dttemp p2;
+
+CREATE VIEW TestGeospatialMethods_disjointTemp AS SELECT p1.location.STDisjoint(p2.location) AS isIN FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp p1 CROSS JOIN TestGeospatialMethods_SPATIALPOINTGEOM_dttemp p2 ORDER BY p1.location.STX;
+
+CREATE VIEW TestGeospatialMethods_ValFromGeomTemp AS SELECT location.STDimension() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+
+CREATE VIEW TestGeospatialMethods_TextFromGeogTemp AS SELECT  location.STDimension() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+
+CREATE VIEW TestGeospatialMethods_point_intersectTemp AS SELECT p1.location.STIntersects(p2.location) AS Intersection FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp p1 CROSS JOIN TestGeospatialMethods_SPATIALPOINTGEOG_dttemp p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW TestGeospatialMethods_point_disjointTemp AS SELECT p1.location.STDisjoint(p2.location) AS disjoint FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp p1 CROSS JOIN TestGeospatialMethods_SPATIALPOINTGEOG_dttemp p2 ORDER BY  p1.location.Lat;
+
+CREATE VIEW TestGeospatialMethods_valid_ValFromGeomTemp AS SELECT location.STIsValid() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+
+CREATE VIEW TestGeospatialMethods_valid_TextFromGeogTemp AS SELECT  location.STIsValid() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+
+CREATE VIEW TestGeospatialMethods_closed_ValFromGeomTemp AS SELECT location.STIsClosed() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+
+CREATE VIEW TestGeospatialMethods_closed_TextFromGeogTemp AS SELECT  location.STIsClosed() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+
+CREATE VIEW TestGeospatialMethods_empty_ValFromGeomTemp AS SELECT location.STIsEmpty() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+
+CREATE VIEW TestGeospatialMethods_empty_TextFromGeomTemp AS SELECT  location.STIsEmpty() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
