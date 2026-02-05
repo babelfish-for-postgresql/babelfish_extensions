@@ -9,7 +9,6 @@ ALTER USER :user CREATEDB;
 ALTER SYSTEM SET babelfishpg_tsql.database_name = :db;
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = :'migration_mode';
 ALTER SYSTEM SET babelfishpg_tds.port = :tsql_port;
-ALTER SYSTEM SET plan_cache_mode = 'force_generic_plan';
 ALTER SYSTEM SET track_functions = 'pl';
 
 \if :parallel_query_mode
