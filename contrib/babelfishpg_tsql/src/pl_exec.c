@@ -4496,9 +4496,16 @@ commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 		ForgetPortalSnapshots();
 	}
 
+	/*
+	 * Use MessageContext as it's guaranteed to survive transaction operations.
+	 */
+	MemoryContextSwitchTo(MessageContext);
+	
 	CommitTransactionCommand();
 	StartTransactionCommand();
-	MemoryContextSwitchTo(oldcontext);
+
+	if (oldcontext != NULL)
+		MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * A null econtext stack indicates commit/rollback/rollback to savepoint.
