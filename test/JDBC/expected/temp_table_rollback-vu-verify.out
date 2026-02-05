@@ -1444,3 +1444,373 @@ GO
 
 DROP TABLE basetab
 GO
+
+
+---------------------------------------------------------------------------
+-- Cross-QueryEnv ENR Tests - Procedure Drop Table Fix (BABEL-6268)
+---------------------------------------------------------------------------
+-- Test 1: Basic procedure drop table scenario
+CREATE TABLE #test(a int) 
+GO
+
+EXEC p_drop
+GO
+
+CREATE TABLE #test_basic(a int)         -- should not crash
+GO
+
+DROP TABLE #test_basic
+GO
+
+-- Test 2: Multiple procedure calls with same temp table name
+CREATE TABLE #temp_proc_test(id int, name varchar(50)) 
+INSERT INTO #temp_proc_test VALUES (1, 'test1') 
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC p_drop_multi
+GO
+
+CREATE TABLE #temp_proc_test2(id int, data varchar(100)) 
+INSERT INTO #temp_proc_test2 VALUES (2, 'test2') 
+SELECT * FROM #temp_proc_test2 
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+2#!#test2
+~~END~~
+
+
+DROP TABLE #temp_proc_test2
+GO
+
+-- Test 3: Nested procedure calls
+CREATE TABLE #nested_test(val int)
+INSERT INTO #nested_test VALUES (100)
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC p_outer
+GO
+
+CREATE TABLE #nested_test2(val int, descr varchar(20)) 
+INSERT INTO #nested_test2 VALUES (200, 'after fix') 
+SELECT * FROM #nested_test2 
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+200#!#after fix
+~~END~~
+
+
+DROP TABLE #nested_test2
+GO
+
+-- Test 4: Procedure with transaction and temp table drop
+CREATE TABLE #trans_test(a int, b varchar(10)) 
+INSERT INTO #trans_test VALUES (1, 'before') 
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC p_trans_drop
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE #trans_test2(c int) 
+INSERT INTO #trans_test2 VALUES (999)  
+SELECT * FROM #trans_test2  
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+999
+~~END~~
+
+
+DROP TABLE #trans_test2
+GO
+
+-- Test 5: Execute CREATE and INSERT operations
+EXEC p_create_insert
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#first
+2#!#second
+~~END~~
+
+
+-- Test 6: Execute UPDATE and DELETE operations
+CREATE TABLE #update_delete_test(id int, status varchar(20), value int)
+INSERT INTO #update_delete_test VALUES (1, 'active', 100)
+INSERT INTO #update_delete_test VALUES (2, 'inactive', 200)
+INSERT INTO #update_delete_test VALUES (3, 'pending', 300)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+EXEC p_update_delete
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #update_delete_test
+GO
+~~START~~
+int#!#varchar#!#int
+2#!#inactive#!#200
+1#!#processed#!#100
+4#!#new#!#150
+~~END~~
+
+
+DROP TABLE #update_delete_test
+GO
+
+-- Test 7: Execute nested procedures with mixed operations
+CREATE TABLE #nested_ops_test(id int, data varchar(50))
+INSERT INTO #nested_ops_test VALUES (1, 'initial')
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC p_nested_outer
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #nested_ops_test
+GO
+~~START~~
+int#!#varchar
+1#!#updated by inner
+3#!#from outer
+~~END~~
+
+
+DROP TABLE #nested_ops_test
+GO
+
+-- Test 8: Execute transaction rollback and operations
+CREATE TABLE #rollback_ops_test(id int, amount decimal(10,2))
+INSERT INTO #rollback_ops_test VALUES (1, 100.00)
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC p_rollback_ops
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+Inside transaction:
+~~END~~
+
+~~START~~
+int#!#numeric
+2#!#400.00
+3#!#300.00
+~~END~~
+
+~~START~~
+varchar
+After rollback:
+~~END~~
+
+
+SELECT * FROM #rollback_ops_test
+GO
+~~START~~
+int#!#numeric
+1#!#100.00
+2#!#200.00
+~~END~~
+
+
+DROP TABLE #rollback_ops_test
+GO
+
+-- Test 9: Execute multiple temp tables with cross-operations
+EXEC p_multi_temp_ops
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+Temp1:
+~~END~~
+
+~~START~~
+int#!#varchar
+2#!#second
+1#!#updated first
+~~END~~
+
+~~START~~
+varchar
+Temp2:
+~~END~~
+
+~~START~~
+int#!#int#!#varchar
+10#!#1#!#ref to first
+~~END~~
+
+
+-- Test 10: Execute error handling and operations
+CREATE TABLE #error_ops_test(id int primary key, data varchar(20))
+INSERT INTO #error_ops_test VALUES (1, 'original')
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC p_error_ops
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+Error caught: duplicate key value violates unique constraint "#error_ops_test_pkey"
+~~END~~
+
+
+SELECT * FROM #error_ops_test
+GO
+~~START~~
+int#!#varchar
+2#!#valid insert
+1#!#updated
+3#!#error handled
+~~END~~
+
+
+DROP TABLE #error_ops_test
+GO
+
+-- Test 11: Execute TRUNCATE operation
+CREATE TABLE #truncate_test(id int identity(1,1), data varchar(20))
+INSERT INTO #truncate_test VALUES ('first')
+INSERT INTO #truncate_test VALUES ('second')
+INSERT INTO #truncate_test VALUES ('third')
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+EXEC p_truncate_ops
+GO
+~~START~~
+varchar
+Before truncate:
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#first
+2#!#second
+3#!#third
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+After truncate:
+~~END~~
+
+
+SELECT * FROM #truncate_test
+GO
+~~START~~
+int#!#varchar
+1#!#after truncate
+~~END~~
+
+
+DROP TABLE #truncate_test
+GO
+
+-- Test 12: Execute conditional operations
+CREATE TABLE #conditional_test(id int, status varchar(10), value int)
+INSERT INTO #conditional_test VALUES (1, 'active', 50)
+INSERT INTO #conditional_test VALUES (2, 'inactive', 150)
+INSERT INTO #conditional_test VALUES (3, 'pending', 75)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+EXEC p_conditional_ops
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #conditional_test
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#active#!#50
+3#!#pending#!#75
+2#!#high_value#!#150
+4#!#new_high#!#200
+~~END~~
+
+
+DROP TABLE #conditional_test
+GO

@@ -94,3 +94,143 @@ BEGIN
     COMMIT TRAN 
 END
 GO
+
+-- Cross Query Env Tests (BABEL-6268)
+CREATE PROC p_drop AS DROP TABLE #test
+GO
+
+CREATE PROC p_drop_multi AS 
+BEGIN 
+    DROP TABLE #temp_proc_test 
+END 
+GO
+
+CREATE PROC p_inner AS DROP TABLE #nested_test
+GO
+
+CREATE PROC p_outer AS EXEC p_inner
+GO
+
+CREATE PROC p_trans_drop AS 
+BEGIN 
+    BEGIN TRAN 
+        INSERT INTO #trans_test VALUES (2, 'during') 
+        DROP TABLE #trans_test 
+    COMMIT 
+END 
+GO
+
+CREATE PROC p_create_insert AS
+BEGIN
+    CREATE TABLE #proc_create(id int, name varchar(30))
+    INSERT INTO #proc_create VALUES (1, 'first')
+    INSERT INTO #proc_create VALUES (2, 'second')
+    SELECT * FROM #proc_create
+    DROP TABLE #proc_create
+END
+GO
+
+CREATE PROC p_update_delete AS
+BEGIN
+    UPDATE #update_delete_test SET status = 'processed' WHERE id = 1
+    DELETE FROM #update_delete_test WHERE value > 250
+    INSERT INTO #update_delete_test VALUES (4, 'new', 150)
+END
+GO
+
+CREATE PROC p_nested_inner AS
+BEGIN
+    INSERT INTO #nested_ops_test VALUES (2, 'from inner')
+    UPDATE #nested_ops_test SET data = 'updated by inner' WHERE id = 1
+END
+GO
+
+CREATE PROC p_nested_outer AS
+BEGIN
+    EXEC p_nested_inner
+    DELETE FROM #nested_ops_test WHERE id = 2
+    INSERT INTO #nested_ops_test VALUES (3, 'from outer')
+END
+GO
+
+CREATE PROC p_rollback_ops AS
+BEGIN
+    INSERT INTO #rollback_ops_test VALUES (2, 200.00)
+    BEGIN TRAN
+        UPDATE #rollback_ops_test SET amount = amount * 2
+        INSERT INTO #rollback_ops_test VALUES (3, 300.00)
+        DELETE FROM #rollback_ops_test WHERE id = 1
+        SELECT 'Inside transaction:' as label
+        SELECT * FROM #rollback_ops_test
+    ROLLBACK
+    SELECT 'After rollback:' as label
+END
+GO
+
+CREATE PROC p_multi_temp_ops AS
+BEGIN
+    CREATE TABLE #temp1(id int, name varchar(20))
+    CREATE TABLE #temp2(id int, ref_id int, value varchar(30))
+    
+    INSERT INTO #temp1 VALUES (1, 'first')
+    INSERT INTO #temp1 VALUES (2, 'second')
+    
+    INSERT INTO #temp2 VALUES (10, 1, 'ref to first')
+    INSERT INTO #temp2 VALUES (20, 2, 'ref to second')
+    
+    UPDATE #temp1 SET name = 'updated first' WHERE id = 1
+    DELETE FROM #temp2 WHERE ref_id = 2
+    
+    SELECT 'Temp1:' as label
+    SELECT * FROM #temp1
+    SELECT 'Temp2:' as label
+    SELECT * FROM #temp2
+    
+    DROP TABLE #temp1
+    DROP TABLE #temp2
+END
+GO
+
+CREATE PROC p_error_ops AS
+BEGIN
+    INSERT INTO #error_ops_test VALUES (2, 'valid insert')
+    UPDATE #error_ops_test SET data = 'updated' WHERE id = 1
+    
+    BEGIN TRY
+        INSERT INTO #error_ops_test VALUES (1, 'duplicate key') -- Should fail
+    END TRY
+    BEGIN CATCH
+        INSERT INTO #error_ops_test VALUES (3, 'error handled')
+        SELECT 'Error caught: ' + ERROR_MESSAGE() as error_info
+    END CATCH
+END
+GO
+
+CREATE PROC p_truncate_ops AS
+BEGIN
+    SELECT 'Before truncate:' as label
+    SELECT * FROM #truncate_test
+    
+    TRUNCATE TABLE #truncate_test
+    
+    INSERT INTO #truncate_test VALUES ('after truncate')
+    SELECT 'After truncate:' as label
+END
+GO
+
+CREATE PROC p_conditional_ops AS
+BEGIN
+    DECLARE @count int
+    SELECT @count = COUNT(*) FROM #conditional_test WHERE value > 100
+    
+    IF @count > 0
+    BEGIN
+        UPDATE #conditional_test SET status = 'high_value' WHERE value > 100
+        INSERT INTO #conditional_test VALUES (4, 'new_high', 200)
+    END
+    ELSE
+    BEGIN
+        DELETE FROM #conditional_test WHERE value < 60
+    END
+END
+GO
