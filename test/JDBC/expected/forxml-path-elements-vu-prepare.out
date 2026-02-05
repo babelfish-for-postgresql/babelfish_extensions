@@ -329,15 +329,6 @@ GO
 
 
 -- ============================================
--- SECTION: Results Table for INSERT..EXEC
--- ============================================
-CREATE TABLE forxml_path_elements_results (
-    xml_data VARCHAR(MAX)
-);
-GO
-
-
--- ============================================
 -- SECTION: Stored Procedures (using FOR XML PATH, ELEMENTS)
 -- ============================================
 CREATE PROCEDURE forxml_path_elements_p1 AS
@@ -366,14 +357,6 @@ GO
 
 CREATE PROCEDURE forxml_path_elements_p6 @empid INT AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = @empid FOR XML PATH('Employee'), ELEMENTS XSINIL;
-GO
-
-CREATE PROCEDURE forxml_path_elements_p_insert AS
-SELECT ID, Name FROM forxml_path_elements_t1 WHERE ID <= 2 FOR XML PATH('Employee'), ELEMENTS;
-GO
-
-CREATE PROCEDURE forxml_path_elements_p_insert_xsinil AS
-SELECT ID, Name FROM forxml_path_elements_t1 WHERE ID <= 2 FOR XML PATH('Employee'), ELEMENTS XSINIL;
 GO
 
 
