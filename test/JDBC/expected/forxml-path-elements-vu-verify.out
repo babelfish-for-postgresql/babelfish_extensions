@@ -1014,37 +1014,42 @@ ntext
 -- ============================================
 SELECT * FROM forxml_path_elements_dep_view1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "forxml_path_elements_dep_view1" does not exist)~~
+~~START~~
+ntext
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee>
+~~END~~
 
 
 SELECT * FROM forxml_path_elements_dep_view2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "forxml_path_elements_dep_view2" does not exist)~~
+~~START~~
+ntext
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID></Employee><Employee><ID>5</ID><Department>HR</Department></Employee>
+~~END~~
 
 
 SELECT * FROM forxml_path_elements_dep_view3;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "forxml_path_elements_dep_view3" does not exist)~~
+~~START~~
+ntext
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee>
+~~END~~
 
 
 SELECT * FROM forxml_path_elements_dep_view4;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "forxml_path_elements_dep_view4" does not exist)~~
+~~START~~
+ntext
+<Employees><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Employees>
+~~END~~
 
 
 SELECT * FROM forxml_path_elements_dep_view5;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "forxml_path_elements_dep_view5" does not exist)~~
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol>100</IntCol><VarcharCol>Text1</VarcharCol><BitCol>1</BitCol><DecimalCol>99.99</DecimalCol><DateCol>2024-01-01</DateCol></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol xsi:nil="true"/><VarcharCol xsi:nil="true"/><BitCol xsi:nil="true"/><DecimalCol xsi:nil="true"/><DateCol xsi:nil="true"/></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol>200</IntCol><VarcharCol xsi:nil="true"/><BitCol>0</BitCol><DecimalCol xsi:nil="true"/><DateCol>2024-06-15</DateCol></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><IntCol xsi:nil="true"/><VarcharCol>Text2</VarcharCol><BitCol xsi:nil="true"/><DecimalCol>50.00</DecimalCol><DateCol xsi:nil="true"/></Row>
+~~END~~
 
 
 
