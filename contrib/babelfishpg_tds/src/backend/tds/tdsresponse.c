@@ -2405,7 +2405,7 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				TdsRelationMetaDataInfo relMetaDataInfo;
 				char	   *physical_schema_name;
 
-				relMetaDataInfo = (TdsRelationMetaDataInfo) palloc(sizeof(TdsRelationMetaDataInfoData));
+				relMetaDataInfo = (TdsRelationMetaDataInfo) palloc0(sizeof(TdsRelationMetaDataInfoData));
 				tableNum++;
 
 				relMetaDataInfo->relOid = col->relOid;
