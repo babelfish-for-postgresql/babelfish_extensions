@@ -187,6 +187,8 @@ static	PLtsql_stmt	*make_update_stmt(int firsttoken, int location,
 										 PLword *firstword, PLtsql_expr *with_clauses);
 static PLtsql_stmt * make_create_stmt(int firsttoken, int location,
 									  PLword *firstword);
+static PLtsql_stmt * make_create_database_stmt(int firsttoken, int location,
+									  PLword *firstword);
 static bool must_be_only_stmt(execsql_ctx *ctx);
 static void parse_and_build_select_expr(execsql_ctx *ctx, PLtsql_expr *with_clauses, PLtsql_row **target_row, bool *has_destination);
 static PLtsql_expr *parse_select_stmt_for_decl_cursor(void);
@@ -4970,6 +4972,8 @@ must_be_only_stmt(execsql_ctx *ctx)
 				return true;
 			if (word_matches(T_WORD, "VIEW"))
 				return true;
+			if (word_matches(T_WORD, "DATABASE"))
+				return true;
 
 			return false;
 		}
@@ -5015,6 +5019,19 @@ make_create_stmt(int firsttoken, int location, PLword *firstword)
 	else
 		pltsql_push_back_token(ctx.tok);
 
+	/* Read the next token to check what kind of CREATE statement this is */
+	ctx.tok = yylex();
+
+	/* Check if this is CREATE DATABASE and handle it specially */
+	if (ctx.tok == T_WORD && word_matches(ctx.tok, "DATABASE"))
+	{
+		pltsql_push_back_token(ctx.tok);
+		return make_create_database_stmt(firsttoken, location, firstword);
+	}
+
+	/* Put the token back for normal processing */
+	pltsql_push_back_token(ctx.tok);
+
 	/*
 	 * According to:
 	 *    https://tinyurl.com/first-stmt-in-batch
@@ -5027,6 +5044,7 @@ make_create_stmt(int firsttoken, int location, PLword *firstword)
 	 *  CREATE SCHEMA
 	 *  CREATE TRIGGER
 	 *  CREATE VIEW
+	 *  CREATE DATABASE
 	 */
 	if (must_be_only_stmt(&ctx))
 	{
@@ -5061,6 +5079,135 @@ make_create_stmt(int firsttoken, int location, PLword *firstword)
 		pltsql_IdentifierLookup = ctx.save_IdentifierLookup;
 		return make_execsql_stmt(T_WORD, location, firstword, NULL);
 	}
+}
+
+/*
+ * make_create_database_stmt()
+ *
+ * Handle CREATE DATABASE statements with proper parsing to prevent SQL injection.
+ * This function parses the CREATE DATABASE command using bison to ensure only
+ * one statement is parsed and uses the parsed database name.
+ */
+static PLtsql_stmt *
+make_create_database_stmt(int firsttoken, int location, PLword *firstword)
+{
+	PLtsql_stmt_execsql *execsql;
+	PLtsql_expr *expr;
+	StringInfoData query;
+	char *db_name = NULL;
+	int tok;
+	List *raw_parsetree_list;
+	ListCell *parsetree_item;
+	Node *parsetree;
+	CreatedbStmt *create_db_stmt;
+	MemoryContext oldCxt;
+	sql_error_callback_arg cbarg;
+	ErrorContextCallback syntax_errcontext;
+
+	YYDPRINTF((stderr, "*** make_create_database_stmt()\n"));
+
+	Assert(word_matches(firsttoken, "CREATE"));
+
+	/* Read the DATABASE keyword */
+	tok = yylex();
+	if (!word_matches(tok, "DATABASE"))
+		yyerror("expected DATABASE");
+
+	/* Read the database name */
+	tok = yylex();
+	if (tok == T_WORD)
+	{
+		db_name = pstrdup(yylval.word.ident);
+	}
+	else if (tok == SCONST)
+	{
+		db_name = pstrdup(yylval.str);
+	}
+	else
+	{
+		yyerror("expected database name");
+	}
+
+	/* Check for end of statement */
+	tok = yylex();
+	if (tok != ';' && tok != 0)
+	{
+		pltsql_push_back_token(tok);
+	}
+
+	/* Build the CREATE DATABASE statement with the parsed name */
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE DATABASE %s", quote_identifier(db_name));
+
+	/* Validate the statement by parsing it */
+	cbarg.location = location;
+	cbarg.leaderlen = 0;
+
+	syntax_errcontext.callback = pltsql_sql_error_callback;
+	syntax_errcontext.arg = &cbarg;
+	syntax_errcontext.previous = error_context_stack;
+	error_context_stack = &syntax_errcontext;
+
+	oldCxt = MemoryContextSwitchTo(pltsql_compile_tmp_cxt);
+
+	/* Parse the statement to validate it */
+	raw_parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	/* Ensure we have exactly one statement */
+	if (list_length(raw_parsetree_list) != 1)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("CREATE DATABASE must be a single statement"),
+				 parser_errposition(location)));
+	}
+
+	/* Verify it's a CREATE DATABASE statement */
+	parsetree_item = list_head(raw_parsetree_list);
+	parsetree = ((RawStmt *) lfirst(parsetree_item))->stmt;
+
+	if (!IsA(parsetree, CreatedbStmt))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("expected CREATE DATABASE statement"),
+				 parser_errposition(location)));
+	}
+
+	create_db_stmt = (CreatedbStmt *) parsetree;
+
+	/* Use the parsed database name from the AST */
+	pfree(query.data);
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE DATABASE %s", quote_identifier(create_db_stmt->dbname));
+
+	MemoryContextSwitchTo(oldCxt);
+	error_context_stack = syntax_errcontext.previous;
+
+	/* Create the expression */
+	expr = palloc0(sizeof(PLtsql_expr));
+	expr->query = pstrdup(query.data);
+	expr->plan = NULL;
+	expr->paramnos = NULL;
+	expr->rwparam = -1;
+	expr->ns = pltsql_ns_top();
+
+	/* Create the execsql statement */
+	execsql = palloc(sizeof(PLtsql_stmt_execsql));
+	execsql->cmd_type = PLTSQL_STMT_EXECSQL;
+	execsql->lineno = pltsql_location_to_lineno(location);
+	execsql->sqlstmt = expr;
+	execsql->into = false;
+	execsql->strict = false;
+	execsql->target = NULL;
+	execsql->mod_stmt_tablevar = false;
+	execsql->need_to_push_result = false;
+	execsql->is_tsql_select_assign_stmt = false;
+
+	pfree(query.data);
+	pfree(db_name);
+
+	return (PLtsql_stmt *) execsql;
 }
 
 /* used by make_select_stmt() and make_update_stmt() to process common statement components.
