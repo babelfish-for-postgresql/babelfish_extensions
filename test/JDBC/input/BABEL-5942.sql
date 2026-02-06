@@ -1,4 +1,4 @@
-EXEC sp_set_session_context 'plan_cache_mode', 'force_generic_plan';
+SELECT set_config('plan_cache_mode', 'force_generic_plan', false);
 go
 
 -- test_dynamic_local_vars
