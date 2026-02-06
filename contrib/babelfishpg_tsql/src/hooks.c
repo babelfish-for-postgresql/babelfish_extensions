@@ -1534,6 +1534,7 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 
 	if (queryDesc->plannedstmt
 		&& queryDesc->plannedstmt->planTree
+		&& queryDesc->params
 		&& queryDesc->params->numParams > 0)
 	{
 		ParamReplaceContext context;
