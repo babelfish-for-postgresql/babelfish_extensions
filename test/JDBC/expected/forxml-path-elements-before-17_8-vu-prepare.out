@@ -335,31 +335,25 @@ CREATE PROCEDURE forxml_path_elements_p1 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS;
 GO
 
-
 CREATE PROCEDURE forxml_path_elements_p2 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS ABSENT;
 GO
-
 
 CREATE PROCEDURE forxml_path_elements_p3 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS XSINIL;
 GO
 
-
 CREATE PROCEDURE forxml_path_elements_p4 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ROOT('Data'), ELEMENTS XSINIL;
 GO
-
 
 CREATE PROCEDURE forxml_path_elements_p5 AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS XSINIL, ROOT('Data');
 GO
 
-
 CREATE PROCEDURE forxml_path_elements_p7 @DeptFilter VARCHAR(50) AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE Department = @DeptFilter OR Department IS NULL FOR XML PATH('Employee'), ELEMENTS XSINIL;
 GO
-
 
 CREATE PROCEDURE forxml_path_elements_p6 @empid INT AS
 SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = @empid FOR XML PATH('Employee'), ELEMENTS XSINIL;
