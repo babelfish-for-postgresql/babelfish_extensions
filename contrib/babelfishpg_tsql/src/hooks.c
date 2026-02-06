@@ -94,6 +94,7 @@
 #include "pltsql_permissions.h"
 #include "pl_explain.h"
 #include "catalog.h"
+#include "babelfish_version.h"
 #include "dbcmds.h"
 #include "rolecmds.h"
 #include "session.h"
@@ -4325,6 +4326,53 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		new_record_nulls[Anum_bbf_function_ext_definition - 1] = true;
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
+	/*
+	 * Store serialized ANTLR parse result for cross-session caching.
+	 * Look up the compiled function and serialize its parse tree.
+	 */
+	{
+		PLtsql_func_hashkey hashkey;
+		PLtsql_function *function = NULL;
+
+		/* Check if procedure parse caching is enabled via GUC */
+		if (!pltsql_enable_routine_parse_cache)
+		{
+			/* GUC disabled - skip cache storage, set columns to NULL */
+			elog(DEBUG1, "Parse result caching skipped for function %u: GUC disabled",
+				 address.objectId);
+			pltsql_fill_cache_columns(NULL, (Datum) 0,
+									  new_record, new_record_nulls, new_record_replaces);
+		}
+		else
+		{
+			/*
+			 * Build hashkey to look up the function in pltsql_HashTable.
+			 * Use inputCollation=0 to match CREATE PROC context (collation not
+			 * evaluated during CREATE). (Event/)Triggers not supported for T-SQL procedures.
+			 */
+			MemSet(&hashkey, 0, sizeof(PLtsql_func_hashkey));
+			hashkey.funcOid = address.objectId;
+			hashkey.isTrigger = false;
+			hashkey.isEventTrigger = false;
+			hashkey.trigOid = 0;
+			hashkey.inputCollation = 0;
+
+			if (form_proctup->pronargs > 0)
+			{
+				/* Copy argument types from proc tuple */
+				memcpy(hashkey.argtypes, form_proctup->proargtypes.values,
+					   form_proctup->pronargs * sizeof(Oid));
+			}
+
+			/* Look up the compiled function in the hash table */
+			function = pltsql_HashTableLookup(&hashkey);
+
+			pltsql_fill_cache_columns(function,
+									  new_record[Anum_bbf_function_ext_modify_date - 1],
+									  new_record, new_record_nulls, new_record_replaces);
+		}
+	}
+
 	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
 
 	if (HeapTupleIsValid(oldtup))
@@ -4360,6 +4408,399 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	ReleaseSysCache(proctup);
 	heap_freetuple(tuple);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
+}
+
+/*
+ * pltsql_fill_cache_columns
+ *      Serialize a compiled function's ANTLR parse tree and datums into catalog record arrays (sys.babelfish_function_ext).
+ *
+ * This is a reusable helper called from both CREATE/ALTER (via pltsql_store_func_default_positions)
+ * and EXEC-time cache repopulation (via pltsql_update_func_cache_entry) for routines. It fills the 4 ANTLR
+ * cache columns: antlr_parse_tree_text, antlr_parse_tree_datums, antlr_parse_tree_modify_date,
+ * and antlr_parse_tree_bbf_version.
+ *
+ * Does no catalog I/O — only serializes nodes and populates the caller's Datum/nulls/replaces arrays.
+ * Uses PG_TRY/PG_CATCH around nodeToString to handle serialization failures gracefully.
+ * If either serialization fails, all 4 cache columns are NULLed to avoid partial entries.
+ *
+ * Pass function=NULL to explicitly clear all cache columns (e.g., when GUC is disabled).
+ *
+ * Parameters:
+ *   function          - Compiled PLtsql_function (NULL to clear cache columns)
+ *   modify_date       - Datum for antlr_parse_tree_modify_date (ignored if function is NULL)
+ *   new_record        - Caller's Datum array (BBF_FUNCTION_EXT_NUM_COLS)
+ *   new_record_nulls  - Caller's nulls array
+ *   new_record_replaces - Caller's replaces array
+ */
+void
+pltsql_fill_cache_columns(PLtsql_function *function, Datum modify_date,
+						  Datum *new_record, bool *new_record_nulls,
+						  bool *new_record_replaces)
+{
+	char	   *tree_str = NULL;
+	char	   *datums_str = NULL;
+	bool		success = false;
+
+	if (function == NULL || function->action == NULL)
+		goto null_out;
+
+	/* Serialize parse tree */
+	PG_TRY();
+	{
+		tree_str = nodeToString(function->action);
+	}
+	PG_CATCH();
+	{
+		FlushErrorState();
+		tree_str = NULL;
+		elog(LOG, "pltsql_fill_cache_columns: nodeToString failed for parse tree");
+	}
+	PG_END_TRY();
+
+	if (tree_str == NULL)
+		goto null_out;
+
+	/* Serialize datums */
+	{
+		List	   *datum_list = NIL;
+		int			i;
+
+		for (i = 0; i < function->ndatums; i++)
+		{
+			if (function->datums[i] != NULL)
+				datum_list = lappend(datum_list, function->datums[i]);
+		}
+
+		if (datum_list != NIL)
+		{
+			PG_TRY();
+			{
+				datums_str = nodeToString(datum_list);
+			}
+			PG_CATCH();
+			{
+				FlushErrorState();
+				datums_str = NULL;
+				elog(LOG, "pltsql_fill_cache_columns: nodeToString failed for datums");
+			}
+			PG_END_TRY();
+
+			list_free(datum_list);
+
+			/* If datums serialization failed, NULL out everything */
+			if (datums_str == NULL)
+			{
+				pfree(tree_str);
+				goto null_out;
+			}
+		}
+	}
+
+	/* Both serializations succeeded — fill the columns */
+	new_record[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = CStringGetTextDatum(tree_str);
+	new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = false;
+	new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
+	pfree(tree_str);
+
+	if (datums_str != NULL)
+	{
+		new_record[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = CStringGetTextDatum(datums_str);
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = false;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+		pfree(datums_str);
+	}
+	else
+	{
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+	}
+
+	new_record[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = modify_date;
+	new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
+
+	new_record[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = CStringGetTextDatum(BABELFISH_VERSION_STR);
+	new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = false;
+	new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+
+	success = true;
+
+null_out:
+	if (!success)
+	{
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+	}
+}
+
+/*
+ * pltsql_update_func_cache_entry
+ *      Re-populate the ANTLR cache in babelfish_function_ext at execution time.
+ *
+ * Called from do_compile after a cache miss triggers ANTLR re-parsing (e.g., after
+ * MVU version mismatch, rename invalidation, or first exec with empty cache).
+ * Since pltsql_store_func_default_positions only runs during CREATE/ALTER, this
+ * function ensures the catalog is updated with the fresh parse result at EXEC time.
+ *
+ * Looks up the existing babelfish_function_ext tuple, reads its modify_date,
+ * and calls pltsql_fill_cache_columns to serialize and write the cache columns.
+ * Skips silently if GUC is disabled, during dump/restore, or if no catalog entry exists.
+ *
+ * Parameters:
+ *   proctup  - HeapTuple from pg_proc
+ *   function - Compiled PLtsql_function
+ */
+void
+pltsql_update_func_cache_entry(HeapTuple proctup, PLtsql_function *function)
+{
+	Relation	rel;
+	TupleDesc	dsc;
+	HeapTuple	oldtup;
+	HeapTuple	newtup;
+	Datum		new_record[BBF_FUNCTION_EXT_NUM_COLS];
+	bool		new_record_nulls[BBF_FUNCTION_EXT_NUM_COLS];
+	bool		new_record_replaces[BBF_FUNCTION_EXT_NUM_COLS];
+	Datum		modify_date;
+	bool		snapshot_pushed = false;
+
+	if (babelfish_dump_restore)
+		return;
+
+	if (!pltsql_enable_routine_parse_cache)
+		return;
+
+	if (!OidIsValid(get_bbf_function_ext_idx_oid()))
+		return;
+
+	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
+	if (!HeapTupleIsValid(oldtup))
+		return;
+
+	/*
+	 * CatalogTupleUpdate requires an active snapshot. During after-trigger
+	 * execution the snapshot may already have been popped, so push one if
+	 * needed. This mirrors the pattern at pltsql_store_func_default_positions.
+	 */
+	if (!ActiveSnapshotSet())
+	{
+		PushActiveSnapshot(GetTransactionSnapshot());
+		snapshot_pushed = true;
+	}
+
+	rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
+	dsc = RelationGetDescr(rel);
+
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
+
+	/* 
+	 * Use current timestamp for antlr_parse_tree_modify_date 
+	 * (when the cache was rewritten for antlr_parse_tree columns) 
+	 */
+	/* [TODO]: Would it be more accurate to include Timezone as well GetSQLCurrentTimestamp)? */
+	modify_date = TimestampGetDatum(GetSQLLocalTimestamp(3));
+
+	pltsql_fill_cache_columns(function, modify_date,
+							  new_record, new_record_nulls, new_record_replaces);
+
+	newtup = heap_modify_tuple(oldtup, dsc,
+							   new_record, new_record_nulls, new_record_replaces);
+	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
+
+	heap_freetuple(oldtup);
+	heap_freetuple(newtup);
+	table_close(rel, RowExclusiveLock);
+
+	if (snapshot_pushed)
+		PopActiveSnapshot();
+}
+
+/*
+ * pltsql_restore_func_parse_result
+ *      Attempt to restore a cached ANTLR parse tree from babelfish_function_ext.
+ *
+ * Called from do_compile before ANTLR parsing. If a valid cache entry exists,
+ * returns the deserialized parse tree and datums, allowing the caller to skip
+ * expensive ANTLR parsing entirely for first time execution of routines in new sessions.
+ *
+ * Validation checks (all must pass for a cache hit):
+ *   1. GUC babelfishpg_tsql.enable_routine_parse_cache is enabled
+ *   2. bbf_version matches current BABELFISH_VERSION_STR (detects MVU)
+ *   3. antlr_parse_tree_modify_date >= modify_date (detects guc-disabled ALTER after caching)
+ *   4. antlr_parse_tree_text is not NULL and deserializes successfully
+ *
+ * Parameters:
+ *   proctup - HeapTuple from pg_proc for the function
+ *
+ * Returns:
+ *   PLtsql_cached_parse_result * - parse_tree + datums on cache hit
+ *   NULL - on cache miss, any validation failure, deserialization error, or GUC disabled
+ */
+PLtsql_cached_parse_result *
+pltsql_restore_func_parse_result(HeapTuple proctup)
+{
+	HeapTuple	bbffunctuple;
+	Datum		attr;
+	bool		isnull;
+	char	   *str;
+	PLtsql_cached_parse_result *result = NULL;
+
+	/* Disallow during restore */
+	if (babelfish_dump_restore)
+		return NULL;
+
+	/* Check if procedure parse caching is enabled via GUC */
+	if (!pltsql_enable_routine_parse_cache)
+	{
+		elog(DEBUG1, "Parse result cache retrieval skipped: GUC babelfishpg_tsql.enable_routine_parse_cache is disabled");
+		return NULL;
+	}
+
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
+	if (!HeapTupleIsValid(bbffunctuple))
+		return NULL;
+
+	/*
+	 * Check 1: bbf_version must match current BABELFISH_VERSION_STR.
+	 * A NULL or mismatched version means the cache was produced by a different
+	 * Babelfish release (e.g., pre-MVU) and the serialization format may differ.
+	 */
+	attr = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,
+							Anum_bbf_function_ext_antlr_parse_tree_bbf_version, &isnull);
+	if (isnull)
+	{
+		elog(DEBUG1, "pltsql_restore_func_parse_result: no bbf_version, skipping cache");
+		heap_freetuple(bbffunctuple);
+		return NULL;
+	}
+	str = TextDatumGetCString(attr);
+	if (strcmp(str, BABELFISH_VERSION_STR) != 0)
+	{
+		elog(DEBUG1, "pltsql_restore_func_parse_result: version mismatch (stored=%s, current=%s)",
+			 str, BABELFISH_VERSION_STR);
+		pfree(str);
+		heap_freetuple(bbffunctuple);
+		return NULL;
+	}
+	pfree(str);
+
+	/* Validate antlr_parse_tree_modify_date is the same as or later than the modify_date representing function entry */
+	{
+		Datum		parse_tree_modify_datum;
+		Timestamp	modify_ts;
+		Timestamp	cache_modify_ts;
+
+		attr = SysCacheGetAttrNotNull(PROCNAMENSPSIGNATURE, bbffunctuple,
+									  Anum_bbf_function_ext_modify_date);
+		parse_tree_modify_datum = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,
+												  Anum_bbf_function_ext_antlr_parse_tree_modify_date, &isnull);
+
+		if (isnull)
+		{
+			elog(DEBUG1, "pltsql_restore_func_parse_result: missing antlr_parse_tree_modify_date, skipping cache");
+			heap_freetuple(bbffunctuple);
+			return NULL;
+		}
+
+		modify_ts = DatumGetTimestamp(attr);
+		cache_modify_ts = DatumGetTimestamp(parse_tree_modify_datum);
+
+		if (modify_ts > cache_modify_ts)
+		{
+			elog(DEBUG1, "pltsql_restore_func_parse_result: modify_date newer than cache, skipping");
+			heap_freetuple(bbffunctuple);
+			return NULL;
+		}
+	}
+
+	/* Deserialize parse tree from antlr_parse_tree_text */
+	attr = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,
+							Anum_bbf_function_ext_antlr_parse_tree_text, &isnull);
+	if (isnull)
+	{
+		/* No cached parse tree found */
+		heap_freetuple(bbffunctuple);
+		return NULL;
+	}
+
+	str = TextDatumGetCString(attr);
+
+	{
+		PLtsql_stmt_block *block = NULL;
+
+		PG_TRY();
+		{
+			block = (PLtsql_stmt_block *) stringToNode(str);
+		}
+		PG_CATCH();
+		{
+			FlushErrorState();
+			block = NULL;
+			elog(LOG, "pltsql_restore_func_parse_result: stringToNode failed for parse tree");
+		}
+		PG_END_TRY();
+
+		if (block == NULL)
+		{
+			pfree(str);
+			heap_freetuple(bbffunctuple);
+			return NULL;
+		}
+
+		result = (PLtsql_cached_parse_result *) palloc(sizeof(PLtsql_cached_parse_result));
+		result->parse_tree = block;
+		result->ndatums = 0;
+		result->datums = NULL;
+	}
+	pfree(str);
+
+	/* Deserialize datums from antlr_parse_tree_datums */
+	attr = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,
+							Anum_bbf_function_ext_antlr_parse_tree_datums, &isnull);
+	if (!isnull)
+	{
+		char   *datums_text = TextDatumGetCString(attr);
+		List   *datum_list = NIL;
+
+		PG_TRY();
+		{
+			datum_list = (List *) stringToNode(datums_text);
+		}
+		PG_CATCH();
+		{
+			FlushErrorState();
+			datum_list = NIL;
+			elog(LOG, "pltsql_restore_func_parse_result: stringToNode failed for datums");
+		}
+		PG_END_TRY();
+
+		if (datum_list != NIL)
+		{
+			int			ndatums = list_length(datum_list);
+			ListCell   *lc;
+			int			i = 0;
+
+			result->ndatums = ndatums;
+			result->datums = (PLtsql_datum **) palloc(sizeof(PLtsql_datum *) * ndatums);
+			foreach(lc, datum_list)
+			{
+				result->datums[i++] = (PLtsql_datum *) lfirst(lc);
+			}
+		}
+		pfree(datums_text);
+	}
+
+	elog(DEBUG1, "pltsql_restore_func_parse_result: deserialization succeeded (cmd_type=%d, lineno=%d, ndatums=%d)",
+		 result->parse_tree->cmd_type, result->parse_tree->lineno, result->ndatums);
+
+	heap_freetuple(bbffunctuple);
+	return result;
 }
 
 /*

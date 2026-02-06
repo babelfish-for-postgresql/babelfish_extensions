@@ -3655,6 +3655,18 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 		new_record_repl_func_ext[Anum_bbf_function_ext_orig_name - 1] = true;
 	}
 
+	/* Invalidate cached parse tree — procedure name is embedded in the parse tree namespace stack */
+	/* Alternatively, if guc enabled, explore if worth looking up session cache PLtsql_HashTable for
+	 * updated parse tree result and serialize and re-populate babelfish_function_ext's antlr_parse_tree column */
+	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
+	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
+	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
+	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
+	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+
 	new_tuple = heap_modify_tuple(usertuple,
 								  bbf_func_ext_dsc,
 								  new_record_func_ext,

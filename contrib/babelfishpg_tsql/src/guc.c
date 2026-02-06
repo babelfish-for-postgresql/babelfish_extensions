@@ -72,6 +72,7 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 bool		pltsql_enable_alter_owner_from_pg = false;
+bool		pltsql_enable_routine_parse_cache = false;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -1131,6 +1132,18 @@ define_custom_variables(void)
 							 gettext_noop("Enables blocked ALTER .. OWNER .. statements on TSQL objects from PG endpoint"),
 							 NULL,
 							 &pltsql_enable_alter_owner_from_pg,
+							 false,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Enable/disable procedure ANTLR parse result caching for cross-session (sys.babelfish_function_ext->antlr_parse_tree) performance optimization.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_routine_parse_cache",
+							 gettext_noop("Enables caching of ANTLR parse results for stored procedures across sessions"),
+							 NULL,
+							 &pltsql_enable_routine_parse_cache,
 							 false,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,

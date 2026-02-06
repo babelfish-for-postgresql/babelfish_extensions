@@ -3,6 +3,11 @@
  * pltsql.h		- Definitions for the PL/tsql
  *			  procedural language
  *
+ * IMPORTANT: Any struct changes here (adding/removing fields, reordering)
+ * must also be reflected in pltsql_serializable_1.h in
+ * postgresql_modified_for_babelfish/src/include/pltsql/ to keep the
+ * ANTLR parse tree serialization in sync.
+ *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -290,6 +295,7 @@ typedef enum PLtsql_schema_mapping
  */
 typedef struct PLtsql_type
 {
+	NodeTag		type;
 	char	   *typname;		/* (simple) name of the type */
 	Oid			typoid;			/* OID of the data type */
 	PLtsql_type_type ttype;		/* PLTSQL_TTYPE_ code */
@@ -320,6 +326,7 @@ typedef struct PLtsql_type
  */
 typedef struct PLtsql_expr
 {
+	NodeTag		type;
 	char	   *query;
 	SPIPlanPtr	plan;
 	Bitmapset  *paramnos;		/* all dnos referenced by this query */
@@ -361,6 +368,7 @@ typedef struct PLtsql_expr
  */
 typedef struct PLtsql_datum
 {
+	NodeTag		type;
 	PLtsql_datum_type dtype;
 	int			dno;
 } PLtsql_datum;
@@ -373,6 +381,7 @@ typedef struct PLtsql_datum
  */
 typedef struct PLtsql_variable
 {
+	NodeTag		type;
 	PLtsql_datum_type dtype;
 	int			dno;
 	char	   *refname;
@@ -395,6 +404,7 @@ typedef struct PLtsql_variable
  */
 typedef struct PLtsql_var
 {
+	NodeTag		type;
 	PLtsql_datum_type dtype;
 	int			dno;
 	char	   *refname;
@@ -452,6 +462,7 @@ typedef struct PLtsql_var
  */
 typedef struct PLtsql_row
 {
+	NodeTag		type;
 	PLtsql_datum_type dtype;
 	int			dno;
 	char	   *refname;
@@ -478,6 +489,7 @@ typedef struct PLtsql_row
  */
 typedef struct PLtsql_rec
 {
+	NodeTag		type;
 	PLtsql_datum_type dtype;
 	int			dno;
 	char	   *refname;
@@ -509,6 +521,7 @@ typedef struct PLtsql_rec
  */
 typedef struct PLtsql_tbl
 {
+	NodeTag		type;
 	PLtsql_datum_type dtype;
 	int			dno;
 	char	   *refname;
@@ -536,6 +549,7 @@ typedef struct PLtsql_tbl
  */
 typedef struct PLtsql_recfield
 {
+	NodeTag		type;
 	PLtsql_datum_type dtype;
 	int			dno;
 	/* end of PLtsql_datum fields */
@@ -553,6 +567,7 @@ typedef struct PLtsql_recfield
  */
 typedef struct PLtsql_arrayelem
 {
+	NodeTag		type;
 	PLtsql_datum_type dtype;
 	int			dno;
 	/* end of PLtsql_datum fields */
@@ -577,6 +592,7 @@ typedef struct PLtsql_arrayelem
  */
 typedef struct PLtsql_nsitem
 {
+	NodeTag		type;
 	PLtsql_nsitem_type itemtype;
 
 	/*
@@ -600,6 +616,7 @@ typedef enum PLtsql_impl_txn_type
  */
 typedef struct PLtsql_stmt
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 } PLtsql_stmt;
@@ -609,6 +626,7 @@ typedef struct PLtsql_stmt
  */
 typedef struct PLtsql_condition
 {
+	NodeTag		type;
 	int			sqlerrstate;	/* SQLSTATE code */
 	char	   *condname;		/* condition name (for debugging) */
 	struct PLtsql_condition *next;
@@ -619,6 +637,7 @@ typedef struct PLtsql_condition
  */
 typedef struct PLtsql_exception_block
 {
+	NodeTag		type;
 	int			sqlstate_varno;
 	int			sqlerrm_varno;
 	List	   *exc_list;		/* List of WHEN clauses */
@@ -629,6 +648,7 @@ typedef struct PLtsql_exception_block
  */
 typedef struct PLtsql_exception
 {
+	NodeTag		type;
 	int			lineno;
 	PLtsql_condition *conditions;
 	List	   *action;			/* List of statements */
@@ -639,6 +659,7 @@ typedef struct PLtsql_exception
  */
 typedef struct PLtsql_stmt_block
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -653,6 +674,7 @@ typedef struct PLtsql_stmt_block
  */
 typedef struct PLtsql_stmt_assign
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	int			varno;
@@ -664,6 +686,7 @@ typedef struct PLtsql_stmt_assign
  */
 typedef struct PLtsql_stmt_perform
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *expr;
@@ -674,6 +697,7 @@ typedef struct PLtsql_stmt_perform
  */
 typedef struct PLtsql_stmt_call
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *expr;
@@ -686,6 +710,7 @@ typedef struct PLtsql_stmt_call
  */
 typedef struct PLtsql_stmt_commit
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 } PLtsql_stmt_commit;
@@ -695,6 +720,7 @@ typedef struct PLtsql_stmt_commit
  */
 typedef struct PLtsql_stmt_rollback
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 } PLtsql_stmt_rollback;
@@ -704,6 +730,7 @@ typedef struct PLtsql_stmt_rollback
  */
 typedef struct PLtsql_stmt_set
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *expr;
@@ -714,6 +741,7 @@ typedef struct PLtsql_stmt_set
  */
 typedef struct PLtsql_diag_item
 {
+	NodeTag		type;
 	PLtsql_getdiag_kind kind;	/* id for diagnostic value desired */
 	int			target;			/* where to assign it */
 } PLtsql_diag_item;
@@ -723,6 +751,7 @@ typedef struct PLtsql_diag_item
  */
 typedef struct PLtsql_stmt_getdiag
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	bool		is_stacked;		/* STACKED or CURRENT diagnostics area? */
@@ -734,6 +763,7 @@ typedef struct PLtsql_stmt_getdiag
  */
 typedef struct PLtsql_stmt_if
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *cond;			/* boolean expression for THEN */
@@ -747,6 +777,7 @@ typedef struct PLtsql_stmt_if
  */
 typedef struct PLtsql_if_elsif
 {
+	NodeTag		type;
 	int			lineno;
 	PLtsql_expr *cond;			/* boolean expression for this case */
 	List	   *stmts;			/* List of statements */
@@ -757,6 +788,7 @@ typedef struct PLtsql_if_elsif
  */
 typedef struct PLtsql_stmt_case
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *t_expr;		/* test expression, or NULL if none */
@@ -771,6 +803,7 @@ typedef struct PLtsql_stmt_case
  */
 typedef struct PLtsql_case_when
 {
+	NodeTag		type;
 	int			lineno;
 	PLtsql_expr *expr;			/* boolean expression for this case */
 	List	   *stmts;			/* List of statements */
@@ -781,6 +814,7 @@ typedef struct PLtsql_case_when
  */
 typedef struct PLtsql_stmt_loop
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -792,6 +826,7 @@ typedef struct PLtsql_stmt_loop
  */
 typedef struct PLtsql_stmt_while
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -804,6 +839,7 @@ typedef struct PLtsql_stmt_while
  */
 typedef struct PLtsql_stmt_fori
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -822,6 +858,7 @@ typedef struct PLtsql_stmt_fori
  */
 typedef struct PLtsql_stmt_forq
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -834,6 +871,7 @@ typedef struct PLtsql_stmt_forq
  */
 typedef struct PLtsql_stmt_fors
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -848,6 +886,7 @@ typedef struct PLtsql_stmt_fors
  */
 typedef struct PLtsql_stmt_forc
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -863,6 +902,7 @@ typedef struct PLtsql_stmt_forc
  */
 typedef struct PLtsql_stmt_dynfors
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -878,6 +918,7 @@ typedef struct PLtsql_stmt_dynfors
  */
 typedef struct PLtsql_stmt_foreach_a
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -892,6 +933,7 @@ typedef struct PLtsql_stmt_foreach_a
  */
 typedef struct PLtsql_stmt_open
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	int			curvar;
@@ -907,6 +949,7 @@ typedef struct PLtsql_stmt_open
  */
 typedef struct PLtsql_stmt_fetch
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_variable *target;	/* target (record or row) */
@@ -923,6 +966,7 @@ typedef struct PLtsql_stmt_fetch
  */
 typedef struct PLtsql_stmt_close
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	int			curvar;
@@ -933,6 +977,7 @@ typedef struct PLtsql_stmt_close
  */
 typedef struct PLtsql_stmt_exit
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	bool		is_exit;		/* Is this an exit or a continue? */
@@ -945,6 +990,7 @@ typedef struct PLtsql_stmt_exit
  */
 typedef struct PLtsql_stmt_insert_bulk
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *table_name;
@@ -966,6 +1012,7 @@ typedef union PLtsql_dbcc_stmt_data
 {
 	struct dbcc_checkident
 	{
+		// TODO: NodeTag		type;
 		char	*db_name;
 		char	*schema_name;
 		char	*table_name;
@@ -981,6 +1028,7 @@ typedef union PLtsql_dbcc_stmt_data
  */
 typedef struct PLtsql_stmt_dbcc
 {
+	NodeTag		type;
 	PLtsql_stmt_type	cmd_type;
 	int	lineno;
 	PLtsql_dbcc_stmt_type	dbcc_stmt_type;
@@ -992,6 +1040,7 @@ typedef struct PLtsql_stmt_dbcc
  */
 typedef struct PLtsql_stmt_return
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *expr;
@@ -1003,6 +1052,7 @@ typedef struct PLtsql_stmt_return
  */
 typedef struct PLtsql_stmt_return_next
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *expr;
@@ -1014,6 +1064,7 @@ typedef struct PLtsql_stmt_return_next
  */
 typedef struct PLtsql_stmt_return_query
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *query;			/* if static query */
@@ -1026,6 +1077,7 @@ typedef struct PLtsql_stmt_return_query
  */
 typedef struct PLtsql_stmt_raise
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	int			elog_level;
@@ -1040,6 +1092,7 @@ typedef struct PLtsql_stmt_raise
  */
 typedef struct PLtsql_raise_option
 {
+	NodeTag		type;
 	PLtsql_raise_option_type opt_type;
 	PLtsql_expr *expr;
 } PLtsql_raise_option;
@@ -1049,6 +1102,7 @@ typedef struct PLtsql_raise_option
  */
 typedef struct PLtsql_stmt_grantdb
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	bool		is_grant;
@@ -1060,6 +1114,7 @@ typedef struct PLtsql_stmt_grantdb
  */
 typedef struct PLtsql_stmt_change_dbowner
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *db_name;
@@ -1068,6 +1123,7 @@ typedef struct PLtsql_stmt_change_dbowner
 
 typedef struct PLtsql_stmt_alter_db
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *old_db_name;
@@ -1079,6 +1135,7 @@ typedef struct PLtsql_stmt_alter_db
  */
 typedef struct PLtsql_stmt_fulltextindex
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char        *table_name;   /* table name */
@@ -1094,6 +1151,7 @@ typedef struct PLtsql_stmt_fulltextindex
  */
 typedef struct PLtsql_stmt_grantschema
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	bool		is_grant;
@@ -1109,6 +1167,7 @@ typedef struct PLtsql_stmt_grantschema
  */
 typedef struct PLtsql_stmt_partition_function
 {
+	NodeTag		type;
 	PLtsql_stmt_type	cmd_type;
 	int			lineno;
 	char			*function_name;
@@ -1124,6 +1183,7 @@ typedef struct PLtsql_stmt_partition_function
  */
 typedef struct PLtsql_stmt_partition_scheme
 {
+	NodeTag		type;
 	PLtsql_stmt_type	cmd_type;
 	int			lineno;
 	char			*scheme_name;
@@ -1137,6 +1197,7 @@ typedef struct PLtsql_stmt_partition_scheme
  */
 typedef struct PLtsql_stmt_assert
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *cond;
@@ -1145,6 +1206,7 @@ typedef struct PLtsql_stmt_assert
 
 typedef struct PLtsql_txn_data
 {
+	NodeTag		type;
 	TransactionStmtKind stmt_kind;	/* Commit or rollback */
 	char	   *txn_name;		/* Transaction name */
 	PLtsql_expr *txn_name_expr; /* Transaction name variable */
@@ -1155,6 +1217,7 @@ typedef struct PLtsql_txn_data
  */
 typedef struct PLtsql_stmt_execsql
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *sqlstmt;
@@ -1189,6 +1252,7 @@ typedef struct PLtsql_stmt_execsql
  */
 typedef struct PLtsql_stmt_set_explain_mode
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *query;
@@ -1202,6 +1266,7 @@ typedef struct PLtsql_stmt_set_explain_mode
  */
 typedef struct PLtsql_stmt_dynexecute
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *query;			/* string expression */
@@ -1268,6 +1333,7 @@ typedef enum PLtsql_trigtype
 
 typedef struct InlineCodeBlockArgs
 {
+	NodeTag		type;
 	int			numargs;
 	Oid		   *argtypes;
 	int32	   *argtypmods;
@@ -1286,6 +1352,7 @@ typedef struct InlineCodeBlockArgs
  */
 typedef struct PLtsql_function
 {
+	NodeTag		type;
 	char	   *fn_signature;
 	Oid			fn_oid;
 	TransactionId fn_xmin;
@@ -1337,6 +1404,9 @@ typedef struct PLtsql_function
 
 	/* function body parsetree */
 	PLtsql_stmt_block *action;
+
+	/* Track if this function was loaded from ANTLR parse result cache */
+	bool		from_cache;
 
 	/* these fields change when the function is used */
 	struct PLtsql_execstate *cur_estate;
@@ -2087,6 +2157,7 @@ extern PLtsql_condition *pltsql_parse_err_condition(char *condname);
 extern void pltsql_adddatum(PLtsql_datum *newdatum);
 extern int	pltsql_add_initdatums(int **varnos);
 extern void pltsql_HashTableInit(void);
+extern PLtsql_function *pltsql_HashTableLookup(PLtsql_func_hashkey *func_key);
 extern void reset_cache(void);
 
 /*

@@ -231,6 +231,12 @@ $$
     end;
 $$;
 
+-- BABELFISH_FUNCTION_EXT
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_text TEXT DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_datums TEXT DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_modify_date SYS.DATETIME DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_bbf_version TEXT DEFAULT NULL;
+
 -- Please add your SQLs here
 
 -- Deprecate and drop old aggregates first (they depend on the function)

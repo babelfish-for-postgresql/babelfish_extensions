@@ -102,6 +102,7 @@ pltsql_ns_additem(PLtsql_nsitem_type itemtype, int itemno, const char *name)
 	Assert(ns_top != NULL || itemtype == PLTSQL_NSTYPE_LABEL);
 
 	nse = palloc0(offsetof(PLtsql_nsitem, name) + strlen(name) + 1);
+	NodeSetTag(nse, T_PLtsql_nsitem);
 	nse->itemtype = itemtype;
 	nse->itemno = itemno;
 	nse->prev = ns_top;

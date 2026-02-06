@@ -1,0 +1,69 @@
+-- BABEL-6037 POC Test - Cleanup
+-- Drops all test procedures created during testing
+
+PRINT 'Starting cleanup of BABEL-6037 POC test procedures...';
+GO
+
+-- Drop Test 1: Simple procedure without arguments
+DROP PROCEDURE IF EXISTS dbo.small_proc;
+PRINT 'Dropped: dbo.small_proc';
+GO
+
+-- Drop Test 2: Simple procedure with arguments
+DROP PROCEDURE IF EXISTS dbo.small_proc_param;
+PRINT 'Dropped: dbo.small_proc_param';
+GO
+
+-- Drop Test 3: Procedure with unsupported node type
+DROP PROCEDURE IF EXISTS dbo.proc_param_supported;
+PRINT 'Dropped: dbo.proc_with_unsupported';
+GO
+
+-- Drop Test 4: Procedure with unsupported node type
+DROP PROCEDURE IF EXISTS dbo.proc_param_unsupported;
+PRINT 'Dropped: dbo.proc_with_unsupported';
+GO
+
+-- Drop Test 5: Complex procedure
+DROP PROCEDURE IF EXISTS dbo.complex_proc;
+PRINT 'Dropped: dbo.complex_proc';
+GO
+
+-- Drop Test 6: Same-session procedure (if it still exists)
+DROP PROCEDURE IF EXISTS dbo.samesession_proc;
+PRINT 'Dropped: dbo.samesession_proc';
+GO
+
+-- Drop Test 7: Old-session procedure (if it still exists)
+DROP PROCEDURE IF EXISTS dbo.oldsession_proc;
+PRINT 'Dropped: dbo.newsession_proc';
+GO
+
+-- Drop Test 8: renamed_cache_proc procedure (if it still exists)
+DROP PROCEDURE IF EXISTS dbo.renamed_cache_proc;
+GO
+
+-- Drop Test 9: alter_guc_proc procedure (if it still exists)
+DROP PROCEDURE IF EXISTS dbo.alter_guc_proc;
+GO
+
+-- Drop Test 10: dep_table_proc procedure (if it still exists)
+DROP PROCEDURE IF EXISTS dbo.dep_table_proc;
+GO
+DROP TABLE IF EXISTS dbo.dep_test_table;
+GO
+
+-- Drop Test 11: Procedure with single OUT parameter
+DROP PROCEDURE IF EXISTS dbo.babel_6037_out_single;
+GO
+
+-- Drop Test 12: Procedure with multiple OUT parameters
+DROP PROCEDURE IF EXISTS dbo.babel_6037_out_multi;
+GO
+
+-- Drop Test 13: MSTVF
+DROP FUNCTION IF EXISTS dbo.babel_6037_mstvf;
+GO
+
+PRINT 'Cleanup completed successfully';
+GO

@@ -2517,7 +2517,7 @@ exec_stmt_call(PLtsql_execstate *estate, PLtsql_stmt_call *stmt)
 			 */
 			oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-			row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+			row = makeNode(PLtsql_row);
 			row->dtype = PLTSQL_DTYPE_ROW;
 			row->refname = "(unnamed row)";
 			row->lineno = -1;
@@ -3474,7 +3474,7 @@ exec_stmt_return(PLtsql_execstate *estate, PLtsql_stmt_return *stmt)
 	{
 		PLtsql_stmt_return_query *return_table;
 
-		return_table = (PLtsql_stmt_return_query *) palloc0(sizeof(PLtsql_stmt_return_query));
+		return_table = (PLtsql_stmt_return_query *) makeNode(PLtsql_stmt_return_query);
 		return_table->cmd_type = PLTSQL_STMT_RETURN_TABLE;
 		return_table->query = NULL;
 		return_table->dynquery = NULL;
@@ -4717,7 +4717,7 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_s
      */
     oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-    row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+    row = makeNode(PLtsql_row);
     row->dtype = PLTSQL_DTYPE_ROW;
     row->refname = "(unnamed row)";
     row->lineno = -1;
@@ -5376,7 +5376,7 @@ exec_fmtonly(PLtsql_execstate *estate,
 	PLtsql_var *return_code;
 	Query	   *query;
 
-	estmt = (PLtsql_stmt_exec *) palloc0(sizeof(*estmt));
+	estmt = (PLtsql_stmt_exec *) makeNode(PLtsql_stmt_exec);
 	estmt->cmd_type = PLTSQL_STMT_EXEC;
 	estmt->lineno = stmt->lineno;
 	estmt->is_call = true;
@@ -5387,7 +5387,7 @@ exec_fmtonly(PLtsql_execstate *estate,
 	appendStringInfo(&ss, "EXEC sp_describe_first_result_set N'");
 	appendStringInfoString(&ss, expr->query);
 	appendStringInfo(&ss, "', null, 0;");
-	estmt->expr = (PLtsql_expr *) palloc0(sizeof(estmt->expr));
+	estmt->expr = makeNode(PLtsql_expr);
 	estmt->expr->query = strdup(ss.data);
 	estmt->expr->plan = NULL;
 	estmt->expr->paramnos = NULL;
@@ -5436,7 +5436,7 @@ exec_fmtonly(PLtsql_execstate *estate,
 	 */
 	oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-	row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+	row = makeNode(PLtsql_row);
 	row->dtype = PLTSQL_DTYPE_ROW;
 	row->refname = "(unnamed row)";
 	row->lineno = -1;

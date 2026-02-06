@@ -553,7 +553,7 @@ pl_function		: comp_options proc_sect
 					{
 						if ($2 == NIL)
                         {
-                            PLtsql_stmt_block *block = palloc0(sizeof(PLtsql_stmt_block));
+                            PLtsql_stmt_block *block = makeNode(PLtsql_stmt_block);
 
                             block->cmd_type	  = PLTSQL_STMT_BLOCK;
                             block->lineno	  = 0;
@@ -577,7 +577,7 @@ pl_function		: comp_options proc_sect
                                 pltsql_parse_result = (PLtsql_stmt_block *) first;
                             else 
                             {
-                                PLtsql_stmt_block *block = palloc0(sizeof(PLtsql_stmt_block));
+                                PLtsql_stmt_block *block = makeNode(PLtsql_stmt_block);
 
                                 block->cmd_type	  = PLTSQL_STMT_BLOCK;
                                 block->lineno	  = pltsql_location_to_lineno(@2);
@@ -628,7 +628,7 @@ pl_block		: opt_block_label K_BEGIN proc_sect exception_sect K_END
 						int				  tok1;
 						int				  tok2;
 
-						new = palloc0(sizeof(PLtsql_stmt_block));
+						new = makeNode(PLtsql_stmt_block);
 
 						new->cmd_type	= PLTSQL_STMT_BLOCK;
 						new->lineno		= pltsql_location_to_lineno(@3);
@@ -662,7 +662,7 @@ try_catch_block : opt_block_label try_block catch_block
                     { 
 						PLtsql_stmt_try_catch *new;
 
-						new = palloc0(sizeof(PLtsql_stmt_try_catch));
+						new = makeNode(PLtsql_stmt_try_catch);
 
 						TSQLInstrumentation(INSTR_TSQL_TRY_CATCH_BLOCK);
 
@@ -686,7 +686,7 @@ try_block : K_BEGIN K_TRY opt_semi proc_sect K_END_TRY
                         else
                         {
                             PLtsql_stmt_block *new;
-                            new = palloc0(sizeof(PLtsql_stmt_block));
+                            new = makeNode(PLtsql_stmt_block);
 
                             new->cmd_type	= PLTSQL_STMT_BLOCK;
                             new->lineno		= pltsql_location_to_lineno(@1);
@@ -709,7 +709,7 @@ catch_block: K_BEGIN K_CATCH opt_semi proc_sect K_END_CATCH opt_semi
                         else
                         {
                             PLtsql_stmt_block *new;
-                            new = palloc0(sizeof(PLtsql_stmt_block));
+                            new = makeNode(PLtsql_stmt_block);
 
                             new->cmd_type	= PLTSQL_STMT_BLOCK;
                             new->lineno		= pltsql_location_to_lineno(@1);
@@ -724,7 +724,7 @@ catch_block: K_BEGIN K_CATCH opt_semi proc_sect K_END_CATCH opt_semi
 
 stmt_goto : K_GOTO T_WORD opt_semi
           {
-              PLtsql_stmt_goto * stmt_goto = palloc0(sizeof(PLtsql_stmt_goto));
+              PLtsql_stmt_goto * stmt_goto = makeNode(PLtsql_stmt_goto);
 			  TSQLInstrumentation(INSTR_TSQL_GOTO_STMT);
               stmt_goto->cmd_type = PLTSQL_STMT_GOTO;
               stmt_goto->lineno = pltsql_location_to_lineno(@1);
@@ -737,7 +737,7 @@ stmt_goto : K_GOTO T_WORD opt_semi
 
 stmt_label : TSQL_LABEL
             {
-                PLtsql_stmt_label *label = palloc0(sizeof(PLtsql_stmt_label));
+                PLtsql_stmt_label *label = makeNode(PLtsql_stmt_label);
                 label->cmd_type = PLTSQL_STMT_LABEL;
                 label->lineno = pltsql_location_to_lineno(@1);
                 label->label = pnstrdup($1, strlen($1) - 1 );  // exclude last :
@@ -752,7 +752,7 @@ stmt_raiserror	: K_RAISERROR '('
 						int term;
 						PLtsql_expr	*expr;
 
-						new = palloc(sizeof(PLtsql_stmt_raiserror));
+						new = makeNode(PLtsql_stmt_raiserror);
 
 						new->cmd_type	= PLTSQL_STMT_RAISERROR;
 						new->lineno		= pltsql_location_to_lineno(@1);
@@ -837,7 +837,7 @@ stmt_throw		: K_THROW
 						int term;
 						PLtsql_expr *expr;
 
-						new = palloc(sizeof(PLtsql_stmt_throw));
+						new = makeNode(PLtsql_stmt_throw);
 
 						new->cmd_type	= PLTSQL_STMT_THROW;
 						new->lineno		= pltsql_location_to_lineno(@1);
@@ -872,7 +872,7 @@ stmt_throw		: K_THROW
 
 stmt_use_db : K_USE T_WORD opt_semi
 			{
-				PLtsql_stmt_usedb *use_db = palloc0(sizeof(PLtsql_stmt_usedb));
+				PLtsql_stmt_usedb *use_db = makeNode(PLtsql_stmt_usedb);
 				use_db->cmd_type = PLTSQL_STMT_USEDB;
 				use_db->lineno = pltsql_location_to_lineno(@1);
 				use_db->db_name = pstrdup($2.ident);
@@ -941,7 +941,7 @@ decl_statement	: decl_varname opt_as decl_const decl_datatype decl_collate decl_
 
 						if ($7 != NULL)
 						{
-							PLtsql_stmt_assign *init = palloc0(sizeof(*init));
+							PLtsql_stmt_assign *init = makeNode(PLtsql_stmt_assign);
 
 							init->cmd_type = PLTSQL_STMT_ASSIGN;
 							init->lineno = pltsql_location_to_lineno(@7);
@@ -953,7 +953,7 @@ decl_statement	: decl_varname opt_as decl_const decl_datatype decl_collate decl_
 						{
 							if (var->dtype == PLTSQL_DTYPE_TBL)
 							{
-								PLtsql_stmt_decl_table *decl = palloc0(sizeof(*decl));
+								PLtsql_stmt_decl_table *decl = makeNode(PLtsql_stmt_decl_table);
 								decl->cmd_type = PLTSQL_STMT_DECL_TABLE;
 								decl->lineno = pltsql_location_to_lineno(@1);
 								decl->dno = var->dno;
@@ -1028,7 +1028,7 @@ decl_statement	: decl_varname opt_as decl_const decl_datatype decl_collate decl_
 																		 NULL),
 												   true);
 
-						curname_def = palloc0(sizeof(PLtsql_expr));
+						curname_def = makeNode(PLtsql_expr);
 #if 0
 						curname_def->dtype = PLTSQL_DTYPE_EXPR;
 #endif
@@ -1066,7 +1066,7 @@ decl_statement	: decl_varname opt_as decl_const decl_datatype decl_collate decl_
 						if (query != NULL)
 							new->isconst = true;
 
-						new_stmt = palloc0(sizeof(PLtsql_stmt_decl_cursor));
+						new_stmt = makeNode(PLtsql_stmt_decl_cursor);
 						new_stmt->cmd_type = PLTSQL_STMT_DECL_CURSOR;
 						new_stmt->lineno = pltsql_location_to_lineno(@1);
 						new_stmt->curvar = new->dno;
@@ -1122,7 +1122,7 @@ decl_statement	: decl_varname opt_as decl_const decl_datatype decl_collate decl_
 							yyerror("syntax error, expected \"FOR\"");
 						}
 
-						new = palloc0(sizeof(PLtsql_stmt_decl_cursor));
+						new = makeNode(PLtsql_stmt_decl_cursor);
 						new->cmd_type = PLTSQL_STMT_DECL_CURSOR;
 						new->lineno = pltsql_location_to_lineno(@1);
 						new->curvar = $1.datum->dno;
@@ -1164,7 +1164,7 @@ decl_cursor_args :
 						int i;
 						ListCell *l;
 
-						new = palloc0(sizeof(PLtsql_row));
+						new = makeNode(PLtsql_row);
 						new->dtype = PLTSQL_DTYPE_ROW;
 						new->lineno = pltsql_location_to_lineno(@1);
 						new->rowtupdesc = NULL;
@@ -1345,7 +1345,7 @@ stmt_declare	: K_DECLARE decl_list
 						 * At execution time, we execute each of these assignment
 						 * statements, in order.
 						 */
-						PLtsql_stmt_init *new = palloc0(sizeof *new);
+						PLtsql_stmt_init *new = makeNode(PLtsql_stmt_init);
 
 						new->cmd_type = PLTSQL_STMT_INIT;
 						new->lineno	  = pltsql_location_to_lineno(@1);
@@ -1469,7 +1469,7 @@ stmt_perform	: K_PERFORM expr_until_semi_or_bos
 					{
 						PLtsql_stmt_perform *new;
 
-						new = palloc0(sizeof(PLtsql_stmt_perform));
+						new = makeNode(PLtsql_stmt_perform);
 						new->cmd_type = PLTSQL_STMT_PERFORM;
 						new->lineno   = pltsql_location_to_lineno(@1);
 						new->expr  = $2;
@@ -1490,7 +1490,7 @@ stmt_exec		: exec_keyword
 						{
 							PLtsql_stmt_exec_batch *new_batch;
 
-							new_batch = palloc0(sizeof(PLtsql_stmt_exec_batch));
+							new_batch = makeNode(PLtsql_stmt_exec_batch);
 							new_batch->cmd_type = PLTSQL_STMT_EXEC_BATCH;
 							new_batch->lineno = pltsql_location_to_lineno(@1);
 							new_batch->expr = read_sql_expression(')', ")");
@@ -1540,7 +1540,7 @@ stmt_exec		: exec_keyword
 							{
 								PLtsql_stmt_exec *new;
 
-								new = palloc0(sizeof(PLtsql_stmt_exec));
+								new = makeNode(PLtsql_stmt_exec);
 								new->cmd_type = PLTSQL_STMT_EXEC;
 								new->lineno = pltsql_location_to_lineno(@1);
 								new->expr = read_sql_stmt_bos("EXEC ");
@@ -1629,7 +1629,7 @@ stmt_assign		: K_SET assign_var '='
 							/* Start to build anonymous constant cursor. similar with DECLARE CURSOR */
 
 							/* Generate cursor name based on pointer of PLtsql_stmt_assign since it is unique until procedure is dropped */
-							new = palloc0(sizeof(PLtsql_stmt_assign));
+							new = makeNode(PLtsql_stmt_assign);
 
 							snprintf(varname, NAMEDATALEN, "%s##sys_gen##%p", ((PLtsql_var *) $2)->refname, (void *) new);
 							new_curvar = (PLtsql_var *)
@@ -1637,7 +1637,7 @@ stmt_assign		: K_SET assign_var '='
 								                      pltsql_build_datatype(REFCURSOROID, -1, InvalidOid, NULL),
 								                      true);
 
-							curname_def = palloc0(sizeof(PLtsql_expr));
+							curname_def = makeNode(PLtsql_expr);
 #if 0
 							curname_def->dtype = PLTSQL_DTYPE_EXPR;
 #endif
@@ -1668,7 +1668,7 @@ stmt_assign		: K_SET assign_var '='
 
 							/* Start of assignment part */
 
-							new_curvar_expr = palloc0(sizeof(PLtsql_expr));
+							new_curvar_expr = makeNode(PLtsql_expr);
 							snprintf(buf, 1024, "SELECT \"%s\"", varname);
 							new_curvar_expr->query = pstrdup(buf);
 							new_curvar_expr->ns = pltsql_ns_top();
@@ -1684,7 +1684,7 @@ stmt_assign		: K_SET assign_var '='
 						{
 							pltsql_push_back_token(tok);
 
-							new = palloc0(sizeof(PLtsql_stmt_assign));
+							new = makeNode(PLtsql_stmt_assign);
 							new->cmd_type = PLTSQL_STMT_ASSIGN;
 							new->lineno   = pltsql_location_to_lineno(@2);
 							new->varno    = $2->dno;
@@ -1746,7 +1746,7 @@ stmt_assign		: K_SET assign_var '='
 								}
 							}
 							
-							new = palloc0(sizeof(PLtsql_stmt_assign));
+							new = makeNode(PLtsql_stmt_assign);
 							new->cmd_type = PLTSQL_STMT_ASSIGN;
 							new->lineno   = pltsql_location_to_lineno(@2);
 							new->varno = $2->dno;
@@ -1794,8 +1794,8 @@ stmt_assign		: K_SET assign_var '='
 						 * execute time (just like an INSERT or DELETE or
 						 * other SQL command)
 						 */
-						PLtsql_stmt_execsql *stmt = palloc(sizeof(*stmt));
-						PLtsql_expr			*expr = palloc(sizeof(*expr));
+						PLtsql_stmt_execsql *stmt = makeNode(PLtsql_stmt_execsql);
+						PLtsql_expr			*expr = makeNode(PLtsql_expr);
 						StringInfoData       cmd;
 
 						initStringInfo(&cmd);
@@ -1827,7 +1827,7 @@ stmt_getdiag	: K_GET getdiag_area_opt K_DIAGNOSTICS getdiag_list opt_semi
 						PLtsql_stmt_getdiag	 *new;
 						ListCell		*lc;
 
-						new = palloc0(sizeof(PLtsql_stmt_getdiag));
+						new = makeNode(PLtsql_stmt_getdiag);
 						new->cmd_type = PLTSQL_STMT_GETDIAG;
 						new->lineno   = pltsql_location_to_lineno(@1);
 						new->is_stacked = $2;
@@ -1903,7 +1903,7 @@ getdiag_list_item : getdiag_target assign_operator getdiag_item
 					{
 						PLtsql_diag_item *new;
 
-						new = palloc(sizeof(PLtsql_diag_item));
+						new = makeNode(PLtsql_diag_item);
 						new->target = $1;
 						new->kind = $3;
 
@@ -1972,7 +1972,7 @@ assign_var		: T_DATUM
 					{
 						PLtsql_arrayelem *new;
 
-						new				   = palloc0(sizeof(PLtsql_arrayelem));
+						new				   = makeNode(PLtsql_arrayelem);
 						new->dtype		   = PLTSQL_DTYPE_ARRAYELEM;
 						new->subscript	   = $3;
 						new->arrayparentno = $1->dno;
@@ -1989,7 +1989,7 @@ stmt_if			: K_IF expr_until_bos proc_stmt %prec LOWER_THAN_ELSE
 				{
 						PLtsql_stmt_if *new;
 
-						new = palloc0(sizeof(PLtsql_stmt_if));
+						new = makeNode(PLtsql_stmt_if);
 						new->cmd_type = PLTSQL_STMT_IF;
 						new->lineno	  = pltsql_location_to_lineno(@1);
 						new->cond	  = $2;
@@ -2001,7 +2001,7 @@ stmt_if			: K_IF expr_until_bos proc_stmt %prec LOWER_THAN_ELSE
 				{
 						PLtsql_stmt_if *new;
 
-						new = palloc0(sizeof(PLtsql_stmt_if));
+						new = makeNode(PLtsql_stmt_if);
 						new->cmd_type = PLTSQL_STMT_IF;
 						new->lineno	  = pltsql_location_to_lineno(@1);
 						new->cond	  = $2;
@@ -2016,7 +2016,7 @@ stmt_loop		: opt_block_label K_LOOP loop_body
 					{
 						PLtsql_stmt_loop *new;
 
-						new = palloc0(sizeof(PLtsql_stmt_loop));
+						new = makeNode(PLtsql_stmt_loop);
 						new->cmd_type = PLTSQL_STMT_LOOP;
 						new->lineno   = pltsql_location_to_lineno(@2);
 						new->label	  = $1;
@@ -2033,7 +2033,7 @@ stmt_while		: opt_block_label K_WHILE expr_until_bos K_LOOP loop_body
 					{
 						PLtsql_stmt_while *new;
 
-						new = palloc0(sizeof(PLtsql_stmt_while));
+						new = makeNode(PLtsql_stmt_while);
 						new->cmd_type = PLTSQL_STMT_WHILE;
 						new->lineno   = pltsql_location_to_lineno(@2);
 						new->label	  = $1;
@@ -2049,7 +2049,7 @@ stmt_while		: opt_block_label K_WHILE expr_until_bos K_LOOP loop_body
 					{
 						PLtsql_stmt_while *new;
 
-						new = palloc0(sizeof(PLtsql_stmt_while));
+						new = makeNode(PLtsql_stmt_while);
 						new->cmd_type = PLTSQL_STMT_WHILE;
 						new->lineno   = pltsql_location_to_lineno(@2);
 						new->label	  = $1;
@@ -2114,7 +2114,7 @@ for_control		: for_variable K_IN
 														"LOOP or USING",
 														&term);
 
-							new = palloc0(sizeof(PLtsql_stmt_dynfors));
+							new = makeNode(PLtsql_stmt_dynfors);
 							new->cmd_type = PLTSQL_STMT_DYNFORS;
 
 							if ($1.row)
@@ -2160,7 +2160,7 @@ for_control		: for_variable K_IN
 							PLtsql_stmt_forc *new;
 							PLtsql_var		 *cursor = (PLtsql_var *) yylval.wdatum.datum;
 
-							new = (PLtsql_stmt_forc *) palloc0(sizeof(PLtsql_stmt_forc));
+							new = (PLtsql_stmt_forc *) makeNode(PLtsql_stmt_forc);
 							new->cmd_type = PLTSQL_STMT_FORC;
 							new->curvar = cursor->dno;
 
@@ -2275,7 +2275,7 @@ for_control		: for_variable K_IN
 																				 NULL),
 														   true);
 
-								new = palloc0(sizeof(PLtsql_stmt_fori));
+								new = makeNode(PLtsql_stmt_fori);
 								new->cmd_type = PLTSQL_STMT_FORI;
 								new->var	  = fvar;
 								new->reverse  = reverse;
@@ -2309,7 +2309,7 @@ for_control		: for_variable K_IN
 
 								check_sql_expr(expr1->query, expr1loc, 0);
 
-								new = palloc0(sizeof(PLtsql_stmt_fors));
+								new = makeNode(PLtsql_stmt_fors);
 								new->cmd_type = PLTSQL_STMT_FORS;
 								if ($1.row)
 								{
@@ -2407,7 +2407,7 @@ stmt_foreach_a	: opt_block_label K_FOREACH for_variable foreach_slice K_IN K_ARR
 					{
 						PLtsql_stmt_foreach_a *new;
 
-						new = palloc0(sizeof(PLtsql_stmt_foreach_a));
+						new = makeNode(PLtsql_stmt_foreach_a);
 						new->cmd_type = PLTSQL_STMT_FOREACH_A;
 						new->lineno = pltsql_location_to_lineno(@2);
 						new->label = $1;
@@ -2454,7 +2454,7 @@ stmt_exit		: exit_type opt_semi
 					{
 						PLtsql_stmt_exit *new;
 
-						new = palloc0(sizeof(PLtsql_stmt_exit));
+						new = makeNode(PLtsql_stmt_exit);
 						new->cmd_type = PLTSQL_STMT_EXIT;
 						new->is_exit  = $1;
 						new->lineno	  = pltsql_location_to_lineno(@1);
@@ -2539,7 +2539,7 @@ stmt_raise		: K_RAISE
 						PLtsql_stmt_raise		*new;
 						int	tok;
 
-						new = palloc(sizeof(PLtsql_stmt_raise));
+						new = makeNode(PLtsql_stmt_raise);
 
 						new->cmd_type	= PLTSQL_STMT_RAISE;
 						new->lineno		= pltsql_location_to_lineno(@1);
@@ -2677,7 +2677,7 @@ stmt_print	    : K_PRINT expr_until_semi_or_bos
                     {
 						PLtsql_stmt_print *new;
 
-						new = palloc(sizeof(*new));
+						new = makeNode(PLtsql_stmt_print);
 
 						new->cmd_type	= PLTSQL_STMT_PRINT;
 						new->lineno		= pltsql_location_to_lineno(@1);
@@ -2779,7 +2779,7 @@ stmt_open		: K_OPEN opt_global_or_local cursor_variable opt_semi
 								 parser_errposition(@1)));
 						}
 
-						new = palloc0(sizeof(PLtsql_stmt_open));
+						new = makeNode(PLtsql_stmt_open);
 						new->cmd_type = PLTSQL_STMT_OPEN;
 						new->lineno = pltsql_location_to_lineno(@1);
 						new->curvar = $3->dno;
@@ -2851,7 +2851,7 @@ stmt_close		: K_CLOSE opt_global_or_local cursor_variable opt_semi
 								 parser_errposition(@1)));
 						}
 
-						new = palloc(sizeof(PLtsql_stmt_close));
+						new = makeNode(PLtsql_stmt_close);
 						new->cmd_type = PLTSQL_STMT_CLOSE;
 						new->lineno = pltsql_location_to_lineno(@1);
 						new->curvar = $3->dno;
@@ -2879,7 +2879,7 @@ stmt_deallocate : K_DEALLOCATE opt_global_or_local cursor_variable opt_semi
 								 parser_errposition(@1)));
 						}
 
-						new = palloc0(sizeof(PLtsql_stmt_deallocate));
+						new = makeNode(PLtsql_stmt_deallocate);
 						new->cmd_type = PLTSQL_STMT_DEALLOCATE;
 						new->lineno = pltsql_location_to_lineno(@1);
 						new->curvar = $3->dno;
@@ -2928,7 +2928,7 @@ exception_sect	:
 						 * current block.
 						 */
 						int			lineno = pltsql_location_to_lineno(@1);
-						PLtsql_exception_block *new = palloc(sizeof(PLtsql_exception_block));
+						PLtsql_exception_block *new = makeNode(PLtsql_exception_block);
 						PLtsql_variable *var;
 
 						var = pltsql_build_variable("sqlstate", lineno,
@@ -2974,7 +2974,7 @@ proc_exception	: K_WHEN proc_conditions K_THEN proc_sect
 					{
 						PLtsql_exception *new;
 
-						new = palloc0(sizeof(PLtsql_exception));
+						new = makeNode(PLtsql_exception);
 						new->lineno = pltsql_location_to_lineno(@1);
 						new->conditions = $2;
 						new->action = $4;
@@ -3019,7 +3019,7 @@ proc_condition	: any_identifier
 								if (strspn(sqlstatestr, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") != 5)
 									yyerror("invalid SQLSTATE code");
 
-								new = palloc(sizeof(PLtsql_condition));
+								new = makeNode(PLtsql_condition);
 								new->sqlerrstate =
 									MAKE_SQLSTATE(sqlstatestr[0],
 												  sqlstatestr[1],
@@ -3554,7 +3554,7 @@ read_sql_bos(int until,
 			ds.data[--ds.len] = '\0';
 	}
 
-	expr = palloc0(sizeof(PLtsql_expr));
+	expr = makeNode(PLtsql_expr);
 #if 0
 	expr->dtype			= PLTSQL_DTYPE_EXPR;
 #endif
@@ -4407,7 +4407,7 @@ make_execsql_stmt(int firsttoken, int location, PLword *firstword, PLtsql_expr *
 		appendStringInfoString(&query, quote_tsql_identifiers(&ctx.ds, ctx.tsql_idents));
 
 
-	ctx.expr = palloc0(sizeof(PLtsql_expr));
+	ctx.expr = makeNode(PLtsql_expr);
 #if 0
 	ctx.expr->dtype	= PLTSQL_DTYPE_EXPR;
 #endif
@@ -4428,7 +4428,7 @@ make_execsql_stmt(int firsttoken, int location, PLword *firstword, PLtsql_expr *
 	check_sql_expr(ctx.expr->query, ctx.location, (ctx.have_temptbl ?
 	                                       strlen(TEMPOBJ_QUALIFIER) : 0));
 
-	execsql			  = palloc(sizeof(PLtsql_stmt_execsql));
+	execsql			  = makeNode(PLtsql_stmt_execsql);
 	execsql->cmd_type = PLTSQL_STMT_EXECSQL;
 	execsql->lineno   = pltsql_location_to_lineno(location);
 	execsql->sqlstmt  = ctx.expr;
@@ -4588,7 +4588,7 @@ read_query_targets2()
 				if (tok->token == '=' && caselevel == 0 && parenlevel == 0)
 				{
 					query_target *target2 = palloc(sizeof(*target2));
-					PLtsql_expr *target2_expr = palloc0(sizeof(*target2_expr));
+					PLtsql_expr *target2_expr = makeNode(PLtsql_expr);
 					target2->dno		= -1;
 					target2->operator	= -1;
 					target2_expr->plan = NULL;
@@ -4641,7 +4641,7 @@ read_query_targets()
 static PLtsql_expr *
 make_target_expr(List *fields, int location)
 {
-	PLtsql_expr *result = palloc0(sizeof(*result));
+	PLtsql_expr *result = makeNode(PLtsql_expr);
 	const char *separator = "";
 	StringInfoData src;
 	ListCell *it;
@@ -4670,7 +4670,7 @@ make_target_expr(List *fields, int location)
 static PLtsql_row *
 make_target_row(List *fields, int location)
 {
-	PLtsql_row *result = palloc0(sizeof(*result));
+	PLtsql_row *result = makeNode(PLtsql_row);
 	ListCell *it;
 	int i;
 
@@ -5035,7 +5035,7 @@ make_create_stmt(int firsttoken, int location, PLword *firstword)
 
 		pltsql_append_source_text(&ctx.ds, ctx.location, yylloc);
 
-		ctx.expr = palloc0(sizeof(PLtsql_expr));
+		ctx.expr = makeNode(PLtsql_expr);
 		ctx.expr->query	   = pstrdup(quote_tsql_identifiers(&ctx.ds, ctx.tsql_idents));
 		ctx.expr->plan	   = NULL;
 		ctx.expr->paramnos = NULL;
@@ -5043,7 +5043,7 @@ make_create_stmt(int firsttoken, int location, PLword *firstword)
 		ctx.expr->ns	   = pltsql_ns_top();
 		pfree(ctx.ds.data);
 	
-		execsql			  = palloc(sizeof(PLtsql_stmt_execsql));
+		execsql			  = makeNode(PLtsql_stmt_execsql);
 		execsql->cmd_type = PLTSQL_STMT_EXECSQL;
 		execsql->lineno   = pltsql_location_to_lineno(location);
 		execsql->sqlstmt  = ctx.expr;
@@ -5236,7 +5236,7 @@ make_select_stmt(int firsttoken, int location, PLword *firstword, PLtsql_expr *w
 		 * need to create execsql stmt instead of select set stmt for it.
 		 */
 		if (ctx.select_into_table_name != NULL) {
-			PLtsql_stmt_execsql *result = palloc(sizeof(*result));
+			PLtsql_stmt_execsql *result = makeNode(PLtsql_stmt_execsql);
 			result->cmd_type = PLTSQL_STMT_EXECSQL;
 			result->lineno   = pltsql_location_to_lineno(location);
 			result->sqlstmt  = ctx.expr;
@@ -5250,7 +5250,7 @@ make_select_stmt(int firsttoken, int location, PLword *firstword, PLtsql_expr *w
 		}
 		else
 		{
-			PLtsql_stmt_query_set *result = palloc(sizeof(*result));
+			PLtsql_stmt_query_set *result = makeNode(PLtsql_stmt_query_set);
 
 			result->cmd_type = PLTSQL_STMT_QUERY_SET;
 			result->lineno   = pltsql_location_to_lineno(location);
@@ -5274,7 +5274,7 @@ make_select_stmt(int firsttoken, int location, PLword *firstword, PLtsql_expr *w
 		 *  2) T-SQL does not require the caller to declare the record format 
 		 */
 
-		PLtsql_stmt_push_result *result = palloc(sizeof(*result));
+		PLtsql_stmt_push_result *result = makeNode(PLtsql_stmt_push_result);
 
 		result->cmd_type = PLTSQL_STMT_PUSH_RESULT;
 		result->lineno	 = pltsql_location_to_lineno(location);
@@ -5369,7 +5369,7 @@ parse_and_build_select_expr(execsql_ctx *ctx, PLtsql_expr *with_clauses, PLtsql_
 
 	YYDPRINTF((stderr, "*** final query\n    %s\n", query.data));
 
-	ctx->expr = palloc0(sizeof(PLtsql_expr));
+	ctx->expr = makeNode(PLtsql_expr);
 #if 0
 	ctx->expr->dtype	= PLTSQL_DTYPE_EXPR;
 #endif
@@ -5457,7 +5457,7 @@ make_update_stmt(int firsttoken, int location, PLword *firstword, PLtsql_expr *w
 
 	YYDPRINTF((stderr, "*** final query\n    %s\n", query.data));
 
-	ctx.expr = palloc0(sizeof(PLtsql_expr));
+	ctx.expr = makeNode(PLtsql_expr);
 #if 0
 	ctx.expr->dtype	= PLTSQL_DTYPE_EXPR;
 #endif
@@ -5483,7 +5483,7 @@ make_update_stmt(int firsttoken, int location, PLword *firstword, PLtsql_expr *w
 		/*
 		 * UPDATE with variables will use query_set
 		 */
-		PLtsql_stmt_query_set *result = palloc(sizeof(*result));
+		PLtsql_stmt_query_set *result = makeNode(PLtsql_stmt_query_set);
 
 		result->cmd_type = PLTSQL_STMT_QUERY_SET;
 		result->lineno   = pltsql_location_to_lineno(location);
@@ -5497,7 +5497,7 @@ make_update_stmt(int firsttoken, int location, PLword *firstword, PLtsql_expr *w
 		/*
 		 * UPDATE with no variables
 		 */
-		PLtsql_stmt_execsql *result = palloc(sizeof(*result));
+		PLtsql_stmt_execsql *result = makeNode(PLtsql_stmt_execsql);
 
 		result->cmd_type = PLTSQL_STMT_EXECSQL;
 		result->lineno	 = pltsql_location_to_lineno(location);
@@ -5527,7 +5527,7 @@ read_fetch_direction(void)
 	 * We create the PLtsql_stmt_fetch struct here, but only fill in
 	 * the fields arising from the optional direction clause
 	 */
-	fetch = (PLtsql_stmt_fetch *) palloc0(sizeof(PLtsql_stmt_fetch));
+	fetch = (PLtsql_stmt_fetch *) makeNode(PLtsql_stmt_fetch);
 	fetch->cmd_type = PLTSQL_STMT_FETCH;
 	/* set direction defaults: */
 	fetch->direction = FETCH_FORWARD;
@@ -5679,7 +5679,7 @@ make_return_stmt(int location)
 	int tok = 0;
 	PLtsql_stmt_return *new;
 
-	new = palloc0(sizeof(PLtsql_stmt_return));
+	new = makeNode(PLtsql_stmt_return);
 	new->cmd_type = PLTSQL_STMT_RETURN;
 	new->lineno   = pltsql_location_to_lineno(location);
 	new->expr	  = NULL;
@@ -5814,7 +5814,7 @@ make_return_next_stmt(int location)
 				 errmsg("cannot use RETURN NEXT in a non-SETOF function"),
 				 parser_errposition(location)));
 
-	new = palloc0(sizeof(PLtsql_stmt_return_next));
+	new = makeNode(PLtsql_stmt_return_next);
 	new->cmd_type	= PLTSQL_STMT_RETURN_NEXT;
 	new->lineno		= pltsql_location_to_lineno(location);
 	new->expr		= NULL;
@@ -5875,7 +5875,7 @@ make_return_query_stmt(int location, PLtsql_expr *with_clauses)
 				 errmsg("cannot use RETURN QUERY in a non-SETOF function"),
 				 parser_errposition(location)));
 
-	new = palloc0(sizeof(PLtsql_stmt_return_query));
+	new = makeNode(PLtsql_stmt_return_query);
 	new->cmd_type = PLTSQL_STMT_RETURN_QUERY;
 	new->lineno = pltsql_location_to_lineno(location);
 
@@ -6173,7 +6173,7 @@ read_into_scalar_list(char *initial_name,
 	 */
 	pltsql_push_back_token(tok);
 
-	row = palloc(sizeof(PLtsql_row));
+	row = makeNode(PLtsql_row);
 	row->dtype = PLTSQL_DTYPE_ROW;
 	row->refname = pstrdup("*internal*");
 	row->lineno = pltsql_location_to_lineno(initial_location);
@@ -6208,7 +6208,7 @@ make_scalar_list1(char *initial_name,
 
 	check_assignable(initial_datum, location);
 
-	row = palloc(sizeof(PLtsql_row));
+	row = makeNode(PLtsql_row);
 	row->dtype = PLTSQL_DTYPE_ROW;
 	row->refname = pstrdup("*internal*");
 	row->lineno = lineno;
@@ -7457,7 +7457,7 @@ read_cursor_args(PLtsql_var *cursor, int until, const char *expected)
 	}
 	appendStringInfoChar(&ds, ';');
 
-	expr = palloc0(sizeof(PLtsql_expr));
+	expr = makeNode(PLtsql_expr);
 #if 0
 	expr->dtype			= PLTSQL_DTYPE_EXPR;
 #endif
@@ -7609,7 +7609,7 @@ read_raise_options(void)
 		if ((tok = yylex()) == 0)
 			yyerror("unexpected end of function definition");
 
-		opt = (PLtsql_raise_option *) palloc(sizeof(PLtsql_raise_option));
+		opt = (PLtsql_raise_option *) makeNode(PLtsql_raise_option);
 
 		if (tok_is_keyword(tok, &yylval,
 						   K_ERRCODE, "errcode"))
@@ -7656,7 +7656,7 @@ parse_sp_proc_param(int *endtoken, bool *flag)
 	int		tok;
 	int		term;
 
-	p = palloc0(sizeof(tsql_exec_param));
+	p = makeNode(tsql_exec_param);
 
 	/* Initialize the param with the default setting */
 	p->name = NULL;
@@ -7800,7 +7800,7 @@ parse_sp_proc(int tok, int lineno, int return_dno)
 	PLtsql_stmt_exec_sp *new_sp;
 	StringInfoData buffer;
 
-	new_sp = palloc0(sizeof(PLtsql_stmt_exec_sp));
+	new_sp = makeNode(PLtsql_stmt_exec_sp);
 	new_sp->cmd_type = PLTSQL_STMT_EXEC_SP;
 	new_sp->lineno = lineno;
 	new_sp->return_code_dno = return_dno;

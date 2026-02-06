@@ -6,6 +6,7 @@
 #include "tcop/cmdtag.h"
 #include "utils/pg_locale.h"
 #include "utils/xml.h"
+#include "pltsql.h"
 
 extern IsExtendedCatalogHookType PrevIsExtendedCatalogHook;
 extern IsToastRelationHookType PrevIsToastRelationHook;
@@ -25,6 +26,23 @@ extern void pltsql_store_func_default_positions(ObjectAddress address,
                                                 const char *queryString,
                                                 int origname_location,
                                                 bool with_recompile);
+
+/*
+ * Structure to hold cached parse result retrieved from catalog.
+ * Contains both the parse tree and datums array.
+ */
+typedef struct PLtsql_cached_parse_result
+{
+	PLtsql_stmt_block *parse_tree;  /* Deserialized ANTLR parse tree */
+	int ndatums;                     /* Number of datums */
+	PLtsql_datum **datums;          /* Array of datums (variables, etc.) */
+} PLtsql_cached_parse_result;
+
+extern PLtsql_cached_parse_result *pltsql_restore_func_parse_result(HeapTuple proctup);
+extern void pltsql_fill_cache_columns(PLtsql_function *function, Datum modify_date,
+									  Datum *new_record, bool *new_record_nulls,
+									  bool *new_record_replaces);
+extern void pltsql_update_func_cache_entry(HeapTuple proctup, PLtsql_function *function);
 extern void alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, 
                                                     List *parameters,
                                                     int objtypeInt);

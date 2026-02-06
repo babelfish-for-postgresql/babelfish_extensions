@@ -1,0 +1,604 @@
+
+
+-- BABEL-6037 POC Test - Verify
+-- Tests procedure execution with parse tree caching
+--
+-- Cache layers (see BABEL-6037 design):
+--   CREATE/ALTER: compiles the procedure, serializes parse tree to babelfish_func_ext (persistent cache)
+--   1st exec in session: pltsql hash table miss -> deserializes from babelfish_func_ext, populates hash table
+--   2nd exec in session: pltsql hash table hit
+-- SET BABELFISH_STATISTICS PROFILE ON;
+-- GO
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+PRINT '=== Test 1: Simple procedure without arguments ===';
+GO
+-- First call (deserializes ANTLR parse tree cached at CREATE time)
+PRINT 'exec 1: small_proc';
+GO
+EXEC dbo.small_proc;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Second call (uses in-memory hash table cache)
+PRINT 'exec 2: small_proc';
+GO
+EXEC dbo.small_proc;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+PRINT '=== Test 2: Simple procedure with arguments ===';
+GO
+PRINT 'exec 1: small_proc_param';
+GO
+EXEC dbo.small_proc_param @param1 = 10, @param2 = 'Hello';
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#10#!#Hello
+~~END~~
+
+PRINT 'exec 2: small_proc_param';
+GO
+EXEC dbo.small_proc_param @param1 = 20, @param2 = 'World';
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#20#!#World
+~~END~~
+
+
+PRINT '=== Test 3: Procedure with supported node types (WHILE, GOTO, TRY-CATCH) ===';
+GO
+PRINT 'exec 1: proc_param_supported';
+GO
+EXEC dbo.proc_param_supported @input_val = 10;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Starting test procedure  Server SQLState: S0001)~~~~WARNING (Message: Skipped or continued  Server SQLState: S0001)~~
+
+~~START~~
+varchar#!#int#!#int
+Success: 10#!#1#!#6
+~~END~~
+
+PRINT 'exec 2: proc_param_supported';
+GO
+EXEC dbo.proc_param_supported @input_val = 20;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Starting test procedure  Server SQLState: S0001)~~~~WARNING (Message: Skipped or continued  Server SQLState: S0001)~~
+
+~~START~~
+varchar#!#int#!#int
+Success: 5#!#2#!#6
+~~END~~
+
+
+PRINT '=== Test 4: Procedure with unsupported node type ===';
+GO
+-- Serialization skipped at CREATE time; each new session falls back to full ANTLR recompile
+PRINT 'exec 1: proc_param_unsupported';
+GO
+EXEC dbo.proc_param_unsupported @max = 3;
+GO
+~~START~~
+int
+3
+~~END~~
+
+-- Second call (uses in-memory hash table cache)
+PRINT 'exec 2: proc_param_unsupported';
+GO
+EXEC dbo.proc_param_unsupported @max = 5;
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+PRINT '=== Test 5: Complex procedure ===';
+GO
+PRINT 'exec 1: complex_proc';
+GO
+EXEC dbo.complex_proc @input = 100, @flag = 1;
+GO
+~~START~~
+int#!#varchar
+200#!#Flag is true
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+200#!#Flag is true
+~~END~~
+
+~~START~~
+nvarchar#!#int
+input_val#!#100
+doubled_val#!#200
+~~END~~
+
+PRINT 'exec 2: complex_proc';
+GO
+EXEC dbo.complex_proc @input = 200, @flag = 0;
+GO
+~~START~~
+int#!#varchar
+400#!#Flag is false
+~~END~~
+
+~~START~~
+nvarchar#!#int
+input_val#!#200
+doubled_val#!#400
+~~END~~
+
+
+PRINT '=== Test 6: Same session - CREATE, EXEC, ALTER, DROP (samesession_proc) ===';
+GO
+-- CREATE compiles and serializes parse tree to babelfish_func_ext; also populates pltsql hash table
+-- Uses VARCHAR arg to trigger Day-1 bug (inputCollId mismatch on hash lookup during first EXEC after CREATE)
+PRINT 'create: samesession_proc';
+GO
+CREATE PROCEDURE dbo.samesession_proc
+    @test VARCHAR(50)
+AS
+BEGIN
+    DECLARE @num INT;
+    SET @num = CAST(@test AS INT);
+    SELECT @num * 3 AS tripled;
+END;
+GO
+
+-- pltsql hash table miss due to lookup-hashkey mismatch (inputCollId field) (Day-1 bug for parameterized procedures with text types)
+-- Should deserialize from babelfish_func_ext
+PRINT 'exec 1: samesession_proc';
+GO
+EXEC dbo.samesession_proc @test = '7';
+GO
+~~START~~
+int
+21
+~~END~~
+
+-- pltsql hash table hit
+PRINT 'exec 2: samesession_proc';
+GO
+EXEC dbo.samesession_proc @test = '14';
+GO
+~~START~~
+int
+42
+~~END~~
+
+
+-- Test persistent cache invalidation with ALTER PROCEDURE
+-- ALTER recompiles and re-serializes to babelfish_func_ext
+PRINT 'alter: samesession_proc';
+GO
+ALTER PROCEDURE dbo.samesession_proc
+    @test VARCHAR(50)
+AS
+BEGIN
+    DECLARE @num INT;
+    SET @num = CAST(@test AS INT);
+    SELECT @num * 3 AS tripled, @num + 100 AS offset_val;
+    PRINT 'samesession_proc altered';
+END;
+GO
+
+-- pltsql hash table miss after ALTER, should deserialize from updated cache
+PRINT 'exec 1 after alter: samesession_proc';
+GO
+EXEC dbo.samesession_proc @test = '7';
+GO
+~~START~~
+int#!#int
+21#!#107
+~~END~~
+
+PRINT 'exec 2 after alter: samesession_proc';
+GO
+EXEC dbo.samesession_proc @test = '21';
+GO
+~~START~~
+int#!#int
+63#!#121
+~~END~~
+
+
+
+-- TODO: Test persistent cache invalidation with RENAME PROCEDURE
+-- RENAME invalidates cache entries which should be updated
+-- Test persistent cache invalidation with DROP PROCEDURE
+-- DROP invalidates cache and should remove cache entries
+PRINT 'drop: samesession_proc';
+GO
+DROP PROCEDURE dbo.samesession_proc;
+GO
+
+PRINT 'exec after drop: samesession_proc (should fail)';
+GO
+EXEC dbo.samesession_proc @test = '7';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure dbo.samesession_proc(@test => unknown) does not exist)~~
+
+
+PRINT '=== Test 7: Old session procedure - EXEC, ALTER, DROP (oldsession_proc) ===';
+GO
+-- oldsession_proc was created in prepare (different session); parse tree already in babelfish_func_ext
+-- pltsql hash table miss -> deserializes from babelfish_func_ext
+PRINT 'exec 1: oldsession_proc';
+GO
+EXEC dbo.oldsession_proc @value = '42';
+GO
+~~START~~
+int
+42
+~~END~~
+
+-- pltsql hash table hit
+PRINT 'exec 2: oldsession_proc';
+GO
+EXEC dbo.oldsession_proc @value = '99';
+GO
+~~START~~
+int
+99
+~~END~~
+
+
+-- Test persistent cache invalidation with ALTER PROCEDURE
+-- ALTER recompiles and re-serializes to babelfish_func_ext
+PRINT 'alter: oldsession_proc';
+GO
+ALTER PROCEDURE dbo.oldsession_proc
+    @value VARCHAR(50)
+AS
+BEGIN
+    DECLARE @num INT;
+    SET @num = CAST(@value AS INT);
+    SELECT @num * 2 AS doubled_value;
+    PRINT 'oldsession_proc altered';
+END;
+GO
+
+-- pltsql hash table miss after ALTER, should deserialize from updated cache
+PRINT 'exec 1 after alter: oldsession_proc';
+GO
+EXEC dbo.oldsession_proc @value = '50';
+GO
+~~START~~
+int
+100
+~~END~~
+
+-- pltsql hash table hit
+PRINT 'exec 2 after alter: oldsession_proc';
+GO
+EXEC dbo.oldsession_proc @value = '75';
+GO
+~~START~~
+int
+150
+~~END~~
+
+
+PRINT 'drop: oldsession_proc';
+GO
+DROP PROCEDURE dbo.oldsession_proc;
+GO
+
+PRINT 'exec after drop: oldsession_proc (should fail)';
+GO
+EXEC dbo.oldsession_proc @value = '100';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure dbo.oldsession_proc(@value => unknown) does not exist)~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+PRINT '=== Test 8: Rename procedure with GUC off, then EXEC with GUC on ===';
+GO
+-- rename_cache_proc was created with GUC off (no cache populated)
+-- Rename it, then turn GUC on and execute — should ANTLR parse and cache with new name
+PRINT 'rename: rename_cache_proc -> renamed_cache_proc';
+GO
+EXEC sp_rename 'dbo.rename_cache_proc', 'renamed_cache_proc', 'object';
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- First exec after rename with GUC on: cache is NULL (rename NULLed it),
+-- ANTLR parses, pltsql_update_func_cache_entry writes fresh cache
+PRINT 'exec 1: renamed_cache_proc (after rename, GUC on)';
+GO
+EXEC dbo.renamed_cache_proc @val = 5;
+GO
+~~START~~
+int
+50
+~~END~~
+
+
+-- Second exec: should use cached result
+PRINT 'exec 2: renamed_cache_proc';
+GO
+EXEC dbo.renamed_cache_proc @val = 7;
+GO
+~~START~~
+int
+70
+~~END~~
+
+
+
+PRINT '=== Test 9: ALTER with GUC off, then EXEC with GUC on ===';
+GO
+-- alter_guc_proc was created with GUC off (cache is NULL)
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+-- ALTER with GUC off: cache columns stay NULL
+PRINT 'alter: alter_guc_proc (GUC off)';
+GO
+ALTER PROCEDURE dbo.alter_guc_proc
+    @val INT
+AS
+BEGIN
+    SELECT @val + 100 AS big_increment;
+END;
+GO
+
+-- Turn GUC on and execute: cache miss (NULL), ANTLR parses, cache gets populated
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+PRINT 'exec 1: alter_guc_proc (GUC on after ALTER with GUC off)';
+GO
+EXEC dbo.alter_guc_proc @val = 5;
+GO
+~~START~~
+int
+105
+~~END~~
+
+
+-- Second exec: should use cached result
+PRINT 'exec 2: alter_guc_proc';
+GO
+EXEC dbo.alter_guc_proc @val = 10;
+GO
+~~START~~
+int
+110
+~~END~~
+
+
+
+PRINT '=== Test 10: Altered dependency - drop/recreate table used by cached proc ===';
+GO
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- First exec: ANTLR parses (cache was NULL from GUC-off CREATE), populates cache
+PRINT 'exec 1: dep_table_proc (original table)';
+GO
+EXEC dbo.dep_table_proc;
+GO
+~~START~~
+int#!#varchar
+1#!#Alice
+2#!#Bob
+~~END~~
+
+
+-- Drop the dependency table and execute (expect failure)
+PRINT 'drop dependency dep_test_table';
+GO
+DROP TABLE dbo.dep_test_table;
+GO
+
+-- Exec with GUC on: cached parse tree is no longer valid,
+-- but should fail during execution when table not found
+PRINT 'exec 2-a: dep_table_proc (after table drop, GUC on)';
+GO
+EXEC dbo.dep_table_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.dep_test_table" does not exist)~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+-- Exec with GUC on: cached parse tree is still valid,
+-- but should fail during execution when table not found
+PRINT 'exec 2-b: dep_table_proc (after table drop, GUC off)';
+GO
+EXEC dbo.dep_table_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.dep_test_table" does not exist)~~
+
+
+-- recreate the dependency table with different schema
+PRINT 'recreate dep_test_table with new column';
+GO
+CREATE TABLE dbo.dep_test_table (id INT, name VARCHAR(50), extra INT);
+GO
+INSERT INTO dbo.dep_test_table VALUES (10, 'Charlie', 999);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+-- Exec with GUC on: cached parse tree is still valid (SELECT * is resolved at execution),
+-- but the result should reflect the new table schema
+PRINT 'exec 3-a: dep_table_proc (after table recreate, GUC on)';
+GO
+EXEC dbo.dep_table_proc;
+GO
+~~START~~
+int#!#varchar#!#int
+10#!#Charlie#!#999
+~~END~~
+
+
+-- Now test with GUC off
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+PRINT 'exec 3-b: dep_table_proc (after table recreate, GUC off)';
+GO
+EXEC dbo.dep_table_proc;
+GO
+~~START~~
+int#!#varchar#!#int
+10#!#Charlie#!#999
+~~END~~
+
+
+
+PRINT '=== Test 11: Procedure with single OUT parameter ===';
+GO
+PRINT 'exec 1: babel_6037_out_single';
+GO
+DECLARE @out INT;
+EXEC dbo.babel_6037_out_single @in_val = 5, @out_val = @out OUT;
+SELECT @out AS out_val;
+GO
+~~START~~
+int
+50
+~~END~~
+
+PRINT 'exec 2: babel_6037_out_single';
+GO
+DECLARE @out INT;
+EXEC dbo.babel_6037_out_single @in_val = 100, @out_val = @out OUT;
+SELECT @out AS out_val;
+GO
+~~START~~
+int
+1000
+~~END~~
+
+
+PRINT '=== Test 12: Procedure with multiple OUT parameters ===';
+GO
+PRINT 'exec 1: babel_6037_out_multi';
+GO
+DECLARE @oval INT, @omsg VARCHAR(100);
+EXEC dbo.babel_6037_out_multi @in_val = 7, @out_val = @oval OUT, @out_msg = @omsg OUT;
+SELECT @oval AS out_val, @omsg AS out_msg;
+GO
+~~START~~
+int#!#varchar
+14#!#Result: 14
+~~END~~
+
+PRINT 'exec 2: babel_6037_out_multi';
+GO
+DECLARE @oval INT, @omsg VARCHAR(100);
+EXEC dbo.babel_6037_out_multi @in_val = 25, @out_val = @oval OUT, @out_msg = @omsg OUT;
+SELECT @oval AS out_val, @omsg AS out_msg;
+GO
+~~START~~
+int#!#varchar
+50#!#Result: 50
+~~END~~
+
+
+PRINT '=== Test 13: MSTVF ===';
+GO
+PRINT 'exec 1: babel_6037_mstvf';
+GO
+SELECT * FROM dbo.babel_6037_mstvf(10);
+GO
+~~START~~
+int#!#varchar
+10#!#row1
+11#!#row2
+~~END~~
+
+PRINT 'exec 2: babel_6037_mstvf';
+GO
+SELECT * FROM dbo.babel_6037_mstvf(20);
+GO
+~~START~~
+int#!#varchar
+20#!#row1
+21#!#row2
+~~END~~
+
+
+PRINT '=== All verification tests completed ===';
+GO

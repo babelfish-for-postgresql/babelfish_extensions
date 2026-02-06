@@ -3,10 +3,18 @@
 #include "pg_config_manual.h"
 
 /*
+ * IMPORTANT: Any struct changes here (adding/removing fields, reordering)
+ * must also be reflected in pltsql_serializable_2.h in
+ * postgresql_modified_for_babelfish/src/include/pltsql/ to keep the
+ * ANTLR parse tree serialization in sync.
+ */
+
+/*
  * PRINT statement
  */
 typedef struct
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -18,6 +26,7 @@ typedef struct
  */
 typedef struct
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -29,6 +38,7 @@ typedef struct
  */
 typedef struct
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -40,6 +50,7 @@ typedef struct
  */
 typedef struct PLtsql_stmt_try_catch
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -55,15 +66,17 @@ typedef struct PLtsql_stmt_try_catch
  */
 typedef struct PLtsql_stmt_query_set
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
-	unsigned int stmtid;
+	uint32		stmtid;
 	PLtsql_expr *sqlstmt;
 	PLtsql_variable *target;	/* INTO target (record or row) */
 } PLtsql_stmt_query_set;
 
 typedef struct PLtsql_stmt_push_result
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -75,6 +88,7 @@ typedef struct PLtsql_stmt_push_result
  */
 typedef struct PLtsql_stmt_exec
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *expr;
@@ -96,6 +110,7 @@ typedef struct PLtsql_stmt_exec
 
 typedef struct
 {
+	NodeTag		type;
 	const char *name;
 	PLtsql_expr *expr;
 	char		mode;
@@ -126,6 +141,7 @@ typedef enum PLtsql_exec_sp_type_code
 
 typedef struct PLtsql_stmt_exec_sp
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 
@@ -152,6 +168,7 @@ typedef struct PLtsql_stmt_exec_sp
  */
 typedef struct PLtsql_stmt_decl_table
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	int			dno;			/* dno of the table variable */
@@ -162,6 +179,7 @@ typedef struct PLtsql_stmt_decl_table
 
 typedef struct PLtsql_stmt_exec_batch
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *expr;
@@ -169,6 +187,7 @@ typedef struct PLtsql_stmt_exec_batch
 
 typedef struct PLtsql_stmt_raiserror
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	List	   *params;
@@ -180,6 +199,7 @@ typedef struct PLtsql_stmt_raiserror
 
 typedef struct PLtsql_stmt_throw
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	List	   *params;
@@ -219,6 +239,7 @@ typedef struct PLtsql_stmt_throw
  */
 typedef struct PLtsql_stmt_deallocate
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	int			curvar;
@@ -229,6 +250,7 @@ typedef struct PLtsql_stmt_deallocate
  */
 typedef struct PLtsql_stmt_decl_cursor
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	int			curvar;
@@ -243,6 +265,7 @@ extern bool is_cursor_datatype(Oid oid);
  */
 typedef struct PLtsql_stmt_goto
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -257,6 +280,7 @@ typedef struct PLtsql_stmt_goto
 #define INTERNAL_LABEL_FORMAT "LABEL-0x%lX"
 typedef struct PLtsql_stmt_label
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
@@ -267,6 +291,7 @@ typedef struct PLtsql_stmt_label
  */
 typedef struct PLtsql_stmt_usedb
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *db_name;
@@ -277,6 +302,7 @@ typedef struct PLtsql_stmt_usedb
  */
 typedef struct PLtsql_stmt_save_ctx
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	int32_t		target_pc;
@@ -288,6 +314,7 @@ typedef struct PLtsql_stmt_save_ctx
  */
 typedef struct PLtsql_stmt_restore_ctx_full
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 } PLtsql_stmt_restore_ctx_full;
@@ -297,6 +324,7 @@ typedef struct PLtsql_stmt_restore_ctx_full
  */
 typedef struct PLtsql_stmt_restore_ctx_partial
 {
+	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 } PLtsql_stmt_restore_ctx_partial;
