@@ -901,3 +901,11 @@ INNER JOIN (
 ) dept_avg ON e.dept_id = dept_avg.dept_id
 FOR XML RAW, ELEMENTS;
 GO
+
+-- ============================================
+-- SECTION 28: StringInfo 1GB Limit Tests
+-- ============================================
+
+-- Test: FOR XML RAW, ELEMENTS should fail when output exceeds 1GB StringInfo limit
+SELECT * FROM xml_limit_test FOR XML RAW, ELEMENTS;
+GO

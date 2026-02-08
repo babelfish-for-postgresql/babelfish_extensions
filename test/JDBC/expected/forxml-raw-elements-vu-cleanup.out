@@ -65,3 +65,5 @@ DROP TABLE IF EXISTS forxml_raw_elements_employees;
 GO
 DROP TABLE IF EXISTS forxml_raw_elements_departments;
 GO
+DROP TABLE xml_limit_test;
+GO
