@@ -133,21 +133,6 @@ typedef enum PltsqlInitPrivsOptions
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
 
-typedef struct WalkSubplanContext
-{
-	bool (*plan_walker) ();
-	void *plan_context;
-	List *allplans;
-} WalkSubplanContext;
-
-/* Context for param replacement in quals */
-typedef struct ParamReplaceContext
-{
-	bool		in_qual;		/* Are we currently in a qual? */
-	QueryDesc  *queryDesc;		/* Original QueryDesc */
-} ParamReplaceContext;
-
-
 /*****************************************
  * 			General Hooks
  *****************************************/
@@ -242,14 +227,6 @@ static void handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid o
 /*****************************************
  * 			Executor Hooks
  *****************************************/
-
-static bool expr_walk_subplan(Node *node, void *context);
-static bool plan_walk_members(List *plans, bool (*walker) (), void *context);
-static bool plan_walk_subplans(List *plans, List *allplans, bool (*walker) (), void *context);
-bool plan_tree_walker(Plan *plan, List *allplans, bool (*walker) (), void *context);
-static Node *replace_params_mutator(Node *node, ParamReplaceContext *context);
-static bool replace_params_in_plan_tree(Plan *plan, ParamReplaceContext *context);
-
 static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
@@ -1223,6 +1200,21 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }
 
+typedef struct WalkSubplanContext
+{
+	bool (*plan_walker) ();
+	void *plan_context;
+	List *allplans;
+} WalkSubplanContext;
+
+/* Context for param replacement in quals */
+typedef struct ParamReplaceContext
+{
+	bool		in_qual;		/* Are we currently in a qual? */
+	QueryDesc  *queryDesc;		/* Original QueryDesc */
+} ParamReplaceContext;
+
+
 /*
  * Expression tree mutator that replaces Param nodes with Const nodes when in a qual.
  */
@@ -1346,7 +1338,7 @@ plan_walk_subplans(List *plans, List *allplans,
 	return false;
 }
 
-bool
+static bool
 plan_tree_walker(Plan *plan, List *allplans, bool (*walker) (), void *context)
 {
 	struct WalkSubplanContext sc = { walker, context, allplans };
