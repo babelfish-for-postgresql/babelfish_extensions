@@ -1227,52 +1227,17 @@ replace_params_mutator(Node *node, ParamReplaceContext *context)
 	/* Handle Param nodes when we're in a qual */
 	if (IsA(node, Param) && context->in_qual)
 	{
-		Param		   *param = (Param *) node;
 		ParamListInfo	paramLI = context->queryDesc->params;
+		PlannerInfo		root;
+		Node		   *ret;
 
-		/* Only handle external params */
-		if (param->paramkind == PARAM_EXTERN &&
-			paramLI != NULL &&
-			param->paramid > 0 &&
-			param->paramid <= paramLI->numParams)
-		{
-			ParamExternData	   *prm;
-			ParamExternData 	prmdata;
+		root.glob = palloc(sizeof (PlannerGlobal));
+		root.glob->boundParams = paramLI;
 
-			/* Fetch the parameter value */
-			if (paramLI->paramFetch != NULL)
-				prm = paramLI->paramFetch(paramLI, param->paramid,
-										  false, &prmdata);
-			else
-				prm = &paramLI->params[param->paramid - 1];
+		ret = eval_const_expressions(&root, node);
 
-			/* If we have a valid value, replace with Const */
-			if (OidIsValid(prm->ptype) && prm->ptype == param->paramtype)
-			{
-				int16		typLen;
-				bool		typByVal;
-				Datum		pval;
-				Const	   *con;
-
-				get_typlenbyval(param->paramtype, &typLen, &typByVal);
-				
-				if (prm->isnull || typByVal)
-					pval = prm->value;
-				else
-					pval = datumCopy(prm->value, typByVal, typLen);
-
-				con = makeConst(param->paramtype,
-								param->paramtypmod,
-								param->paramcollid,
-								(int) typLen,
-								pval,
-								prm->isnull,
-								typByVal);
-				con->location = param->location;
-
-				return (Node *) con;
-			}
-		}
+		pfree(root.glob);
+		return ret;
 	}
 
 	/* Handle SubPlan - unset qual flag when entering subquery */
