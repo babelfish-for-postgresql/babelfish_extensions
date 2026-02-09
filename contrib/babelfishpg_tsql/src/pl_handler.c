@@ -3200,6 +3200,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_login = &is_login;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_generic_typmod = &probin_read_ret_typmod;
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
+		(*pltsql_protocol_plugin_ptr)->switch_database_context = &switch_database_context;
 	}
 
 	*pltsql_config_ptr = &myConfig;

@@ -1561,6 +1561,8 @@ typedef struct PLtsql_protocol_plugin
 
 	bool *pltsql_is_fmtonly_stmt;
 
+	void* (*switch_database_context) (const char *dbname);
+
 } PLtsql_protocol_plugin;
 
 /*

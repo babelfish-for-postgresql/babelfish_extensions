@@ -117,6 +117,32 @@ set_session_properties(const char *db_name)
 }
 
 /*
+ * switch_database_context - Switching database context during login
+ *
+ * This function performs all necessary steps to securely switch database context:
+ * 1. Validates user has access to the database
+ * 2. Acquires session-level lock on the target database
+ * 3. Sets the database, user, and search path
+ *
+ */
+void
+switch_database_context(const char *dbname)
+{
+	int16		new_db_id;
+	
+	/* Acquire session-level lock on the new database */
+	if (!TryLockLogicalDatabaseForSession(new_db_id, ShareLock))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Cannot use database \"%s\", failed to obtain lock. "
+						   "\"%s\" is probably undergoing DDL statements in another session.",
+						   dbname, dbname)));
+	
+	/* Set database context, user, and search path */
+	set_session_properties(db_name);
+}
+
+/*
  * Wrapper function to reset the session properties and cached batch
  * incase of a reset connection.
  */

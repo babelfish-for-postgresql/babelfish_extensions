@@ -9,5 +9,6 @@ extern void bbf_set_current_user(const char *user_name);
 extern void set_session_properties(const char *db_name);
 extern void restore_session_properties(void);
 extern void reset_session_properties(void);
+extern void switch_database_context(const char *dbname);
 
 #endif
