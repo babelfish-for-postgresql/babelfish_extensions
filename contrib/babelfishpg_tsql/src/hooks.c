@@ -133,6 +133,7 @@ typedef enum PltsqlInitPrivsOptions
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
 
+
 /*****************************************
  * 			General Hooks
  *****************************************/

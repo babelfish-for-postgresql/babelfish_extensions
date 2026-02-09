@@ -1281,6 +1281,9 @@ GO
 drop table local_var_tst
 GO
 
+-- end of test_dynamic_local_vars
+
+
 -- Setup test table
 create table t1 (a int, b int, c varchar(50));
 go
@@ -1404,11 +1407,16 @@ go
 EXEC reset_t1
 GO
 
--- BABEL-1181
+-- top(NULL) from BABEL-1181
 -- Local variable in TOP clause
 declare @a int;
 set @a = 2;
 select top (@a) * from t1 order by a;
+go
+
+declare @a int;
+set @a = 2;
+select top (NULL) * from t1 order by a;
 go
 
 -- TOP with NULL local variable (should error)
@@ -1704,9 +1712,606 @@ set @fetch_val = 2;
 select a, @offset_val = NULL from t1 order by a offset @offset_val rows fetch next @fetch_val rows only;
 go
 
--- Cleanup
-DROP PROCEDURE reset_t1;
+-- Additional procedure and planned statement versions
+
+-- Ref: delete with local variable
+CREATE PROCEDURE proc_delete_param @del_val int
+AS
+BEGIN
+    create table t_temp (a int);
+    insert into t_temp values (1), (2), (3), (4);
+    delete from t_temp where a = @del_val;
+    select * from t_temp order by a;
+    drop table t_temp;
+END
 GO
+
+EXEC proc_delete_param @del_val = 2;
+GO
+
+DROP PROCEDURE proc_delete_param;
+GO
+
+EXEC sp_executesql N'create table t_temp (a int); insert into t_temp values (1), (2), (3), (4); delete from t_temp where a = @del_val; select * from t_temp order by a; drop table t_temp', N'@del_val int', @del_val = 2;
+GO
+
+-- Ref: update with both local variables
+CREATE PROCEDURE proc_update_both @update_val int, @filter int
+AS
+BEGIN
+    update t1 set b = @update_val where a = @filter;
+    select * from t1 where a = @filter;
+END
+GO
+
+EXEC proc_update_both @update_val = 100, @filter = 1;
+GO
+
+DROP PROCEDURE proc_update_both;
+GO
+
+EXEC sp_executesql N'update t1 set b = @update_val where a = @filter; select * from t1 where a = @filter', N'@update_val int, @filter int', @update_val = 100, @filter = 1;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+-- Ref: update with same variable in both places
+CREATE PROCEDURE proc_update_same @filter int
+AS
+BEGIN
+    update t1 set b = @filter where a = @filter;
+    select * from t1 where a = @filter;
+END
+GO
+
+EXEC proc_update_same @filter = 1;
+GO
+
+DROP PROCEDURE proc_update_same;
+GO
+
+EXEC sp_executesql N'update t1 set b = @filter where a = @filter; select * from t1 where a = @filter', N'@filter int', @filter = 1;
+GO
+
+EXEC reset_t1
+GO
+
+-- Ref: TOP with local variable
+CREATE PROCEDURE proc_top_param @a int
+AS
+BEGIN
+    select top (@a) * from t1 order by a;
+END
+GO
+
+EXEC proc_top_param @a = 2;
+GO
+
+DROP PROCEDURE proc_top_param;
+GO
+
+EXEC sp_executesql N'select top (@a) * from t1 order by a', N'@a int', @a = 2;
+GO
+
+-- Ref: TOP with NULL local variable
+CREATE PROCEDURE proc_top_null @top_null int
+AS
+BEGIN
+    select top (@top_null) * from t1;
+END
+GO
+
+EXEC proc_top_null @top_null = NULL;
+GO
+
+DROP PROCEDURE proc_top_null;
+GO
+
+EXEC sp_executesql N'select top (@top_null) * from t1', N'@top_null int', @top_null = NULL;
+GO
+
+-- Ref: TOP with local variable from subquery
+CREATE PROCEDURE proc_top_subquery
+AS
+BEGIN
+    select top (select NULL) * from t1 order by a;
+END
+GO
+
+EXEC proc_top_subquery;
+GO
+
+DROP PROCEDURE proc_top_subquery;
+GO
+
+EXEC sp_executesql N'select top (select NULL) * from t1 order by a';
+GO
+
+-- Ref: local variable assignment in targetlist
+CREATE PROCEDURE proc_assign_targetlist @i int, @result int OUTPUT
+AS
+BEGIN
+    select @result = b from t1 where a = @i;
+END
+GO
+
+declare @out int;
+EXEC proc_assign_targetlist @i = 2, @result = @out OUTPUT;
+select @out;
+GO
+
+DROP PROCEDURE proc_assign_targetlist;
+GO
+
+declare @result int;
+EXEC sp_executesql N'select @result = b from t1 where a = @i', N'@i int, @result int OUTPUT', @i = 2, @result = @result OUTPUT;
+select @result;
+GO
+
+-- Ref: local variable assignment with parameter in target and WHERE
+CREATE PROCEDURE proc_assign_both @i int, @result int OUTPUT
+AS
+BEGIN
+    select @result = b + @i from t1 where a = @i;
+END
+GO
+
+declare @out int;
+EXEC proc_assign_both @i = 2, @result = @out OUTPUT;
+select @out;
+GO
+
+DROP PROCEDURE proc_assign_both;
+GO
+
+declare @result int;
+EXEC sp_executesql N'select @result = b + @i from t1 where a = @i', N'@i int, @result int OUTPUT', @i = 2, @result = @result OUTPUT;
+select @result;
+GO
+
+-- Ref: multiple local variable assignments
+CREATE PROCEDURE proc_assign_multiple @param int, @var1 int OUTPUT, @var2 int OUTPUT
+AS
+BEGIN
+    select @var1 = a, @var2 = b from t1 where a = @param;
+END
+GO
+
+declare @out1 int, @out2 int;
+EXEC proc_assign_multiple @param = 2, @var1 = @out1 OUTPUT, @var2 = @out2 OUTPUT;
+select @out1, @out2;
+GO
+
+DROP PROCEDURE proc_assign_multiple;
+GO
+
+declare @var1 int, @var2 int;
+EXEC sp_executesql N'select @var1 = a, @var2 = b from t1 where a = @param', N'@param int, @var1 int OUTPUT, @var2 int OUTPUT', @param = 2, @var1 = @var1 OUTPUT, @var2 = @var2 OUTPUT;
+select @var1, @var2;
+GO
+
+-- Ref: local variable assignment over multiple rows
+CREATE PROCEDURE proc_assign_aggregate @threshold int, @result int OUTPUT
+AS
+BEGIN
+    select @result = sum(b) from t1 where a > @threshold;
+END
+GO
+
+declare @out int;
+EXEC proc_assign_aggregate @threshold = 2, @result = @out OUTPUT;
+select @out;
+GO
+
+DROP PROCEDURE proc_assign_aggregate;
+GO
+
+declare @result int;
+EXEC sp_executesql N'select @result = sum(b) from t1 where a > @threshold', N'@threshold int, @result int OUTPUT', @threshold = 2, @result = @result OUTPUT;
+select @result;
+GO
+
+-- Ref: local variable in GROUP BY HAVING
+CREATE PROCEDURE proc_having_param @having_val int
+AS
+BEGIN
+    select a, sum(b) as total from t1 group by a having sum(b) > @having_val order by a;
+END
+GO
+
+EXEC proc_having_param @having_val = 15;
+GO
+
+DROP PROCEDURE proc_having_param;
+GO
+
+EXEC sp_executesql N'select a, sum(b) as total from t1 group by a having sum(b) > @having_val order by a', N'@having_val int', @having_val = 15;
+GO
+
+-- Ref: CASE expression with local variable
+CREATE PROCEDURE proc_case_param @threshold int
+AS
+BEGIN
+    select a, case when a > @threshold then 'high' else 'low' end as category from t1;
+END
+GO
+
+EXEC proc_case_param @threshold = 2;
+GO
+
+DROP PROCEDURE proc_case_param;
+GO
+
+EXEC sp_executesql N'select a, case when a > @threshold then ''high'' else ''low'' end as category from t1', N'@threshold int', @threshold = 2;
+GO
+
+-- Ref: local variable assignment in CASE
+CREATE PROCEDURE proc_case_assign @threshold int, @at int, @result varchar(10) OUTPUT
+AS
+BEGIN
+    select @result = case when a > @threshold then 'high' else 'low' end from t1 where a = @at;
+END
+GO
+
+declare @out varchar(10);
+EXEC proc_case_assign @threshold = 2, @at = 3, @result = @out OUTPUT;
+select @out;
+GO
+
+DROP PROCEDURE proc_case_assign;
+GO
+
+declare @result varchar(10);
+EXEC sp_executesql N'select @result = case when a > @threshold then ''high'' else ''low'' end from t1 where a = @at', N'@threshold int, @at int, @result varchar(10) OUTPUT', @threshold = 2, @at = 3, @result = @result OUTPUT;
+select @result;
+GO
+
+-- Ref: local variable with string operations
+CREATE PROCEDURE proc_string_like @search varchar(10)
+AS
+BEGIN
+    select * from t1 where c like '%' + @search + '%';
+END
+GO
+
+EXEC proc_string_like @search = 'sec';
+GO
+
+DROP PROCEDURE proc_string_like;
+GO
+
+EXEC sp_executesql N'select * from t1 where c like ''%'' + @search + ''%''', N'@search varchar(10)', @search = 'sec';
+GO
+
+-- Ref: string concatenation with assignment
+CREATE PROCEDURE proc_string_concat @prefix varchar(10), @result varchar(100) OUTPUT
+AS
+BEGIN
+    select @result = @prefix + c from t1 order by a;
+END
+GO
+
+declare @out varchar(100);
+EXEC proc_string_concat @prefix = 'Value: ', @result = @out OUTPUT;
+select @out;
+GO
+
+DROP PROCEDURE proc_string_concat;
+GO
+
+declare @result varchar(100);
+EXEC sp_executesql N'select @result = @prefix + c from t1 order by a', N'@prefix varchar(10), @result varchar(100) OUTPUT', @prefix = 'Value: ', @result = @result OUTPUT;
+select @result;
+GO
+
+-- Ref: subquery with local variable
+CREATE PROCEDURE proc_subquery_param @multiplier int
+AS
+BEGIN
+    select a, (select @multiplier * b) as doubled_b from t1 where a < 3;
+END
+GO
+
+EXEC proc_subquery_param @multiplier = 2;
+GO
+
+DROP PROCEDURE proc_subquery_param;
+GO
+
+EXEC sp_executesql N'select a, (select @multiplier * b) as doubled_b from t1 where a < 3', N'@multiplier int', @multiplier = 2;
+GO
+
+-- Ref: nested subquery with local variable
+CREATE PROCEDURE proc_nested_subquery @val int
+AS
+BEGIN
+    select a, (select b + (select @val)) as nested_calc from t1 where a < 3;
+END
+GO
+
+EXEC proc_nested_subquery @val = 10;
+GO
+
+DROP PROCEDURE proc_nested_subquery;
+GO
+
+EXEC sp_executesql N'select a, (select b + (select @val)) as nested_calc from t1 where a < 3', N'@val int', @val = 10;
+GO
+
+-- Ref: subquery in WHERE with local variable
+CREATE PROCEDURE proc_where_subquery @val int
+AS
+BEGIN
+    select * from t1 where b > (select max(b) from t1 where a < @val);
+END
+GO
+
+EXEC proc_where_subquery @val = 2;
+GO
+
+DROP PROCEDURE proc_where_subquery;
+GO
+
+EXEC sp_executesql N'select * from t1 where b > (select max(b) from t1 where a < @val)', N'@val int', @val = 2;
+GO
+
+-- Ref: correlated subquery with local variable
+CREATE PROCEDURE proc_correlated_subquery @offset int
+AS
+BEGIN
+    select a, (select count(*) from t1 t_inner where t_inner.b > t_outer.b + @offset) as count_greater from t1 t_outer;
+END
+GO
+
+EXEC proc_correlated_subquery @offset = 10;
+GO
+
+DROP PROCEDURE proc_correlated_subquery;
+GO
+
+EXEC sp_executesql N'select a, (select count(*) from t1 t_inner where t_inner.b > t_outer.b + @offset) as count_greater from t1 t_outer', N'@offset int', @offset = 10;
+GO
+
+-- Ref: NULL parameter
+CREATE PROCEDURE proc_null_param @null_param int
+AS
+BEGIN
+    select * from t1 where a = @null_param;
+END
+GO
+
+EXEC proc_null_param @null_param = NULL;
+GO
+
+DROP PROCEDURE proc_null_param;
+GO
+
+EXEC sp_executesql N'select * from t1 where a = @null_param', N'@null_param int', @null_param = NULL;
+GO
+
+-- Ref: CTE with local variable
+CREATE PROCEDURE proc_cte_param @cte_filter int
+AS
+BEGIN
+    with cte as (select * from t1 where a > @cte_filter)
+    select * from cte;
+END
+GO
+
+EXEC proc_cte_param @cte_filter = 2;
+GO
+
+DROP PROCEDURE proc_cte_param;
+GO
+
+EXEC sp_executesql N'with cte as (select * from t1 where a > @cte_filter) select * from cte', N'@cte_filter int', @cte_filter = 2;
+GO
+
+-- Ref: multiple CTEs with local variables
+CREATE PROCEDURE proc_multiple_cte @filter1 int, @filter2 int
+AS
+BEGIN
+    with cte1 as (select * from t1 where a > @filter1),
+         cte2 as (select * from cte1 where a <= @filter2)
+    select * from cte2;
+END
+GO
+
+EXEC proc_multiple_cte @filter1 = 1, @filter2 = 3;
+GO
+
+DROP PROCEDURE proc_multiple_cte;
+GO
+
+EXEC sp_executesql N'with cte1 as (select * from t1 where a > @filter1), cte2 as (select * from cte1 where a <= @filter2) select * from cte2', N'@filter1 int, @filter2 int', @filter1 = 1, @filter2 = 3;
+GO
+
+-- Ref: window function with local variable
+CREATE PROCEDURE proc_window_param @partition_val int
+AS
+BEGIN
+    select a, b, row_number() over (order by case when a > @partition_val then a else b end) as rn from t1;
+END
+GO
+
+EXEC proc_window_param @partition_val = 2;
+GO
+
+DROP PROCEDURE proc_window_param;
+GO
+
+EXEC sp_executesql N'select a, b, row_number() over (order by case when a > @partition_val then a else b end) as rn from t1', N'@partition_val int', @partition_val = 2;
+GO
+
+-- Ref: UPDATE with local variable assignment
+CREATE PROCEDURE proc_update_assign @filter int, @captured int OUTPUT
+AS
+BEGIN
+    update t1 set b = b + 5, @captured = b where a = @filter;
+END
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+declare @out int;
+EXEC proc_update_assign @filter = 2, @captured = @out OUTPUT;
+select @out;
+GO
+
+DROP PROCEDURE proc_update_assign;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+declare @captured int;
+EXEC sp_executesql N'update t1 set b = b + 5, @captured = b where a = @filter', N'@filter int, @captured int OUTPUT', @filter = 2, @captured = @captured OUTPUT;
+select @captured;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+-- Ref: UPDATE with multiple assignments
+CREATE PROCEDURE proc_update_multi_assign @filter int, @increment int, @captured1 int OUTPUT, @captured2 int OUTPUT
+AS
+BEGIN
+    update t1 set b = b + @increment, @captured1 = a, @captured2 = @captured1 + b where a = @filter;
+END
+GO
+
+declare @out1 int, @out2 int;
+EXEC proc_update_multi_assign @filter = 2, @increment = 5, @captured1 = @out1 OUTPUT, @captured2 = @out2 OUTPUT;
+select @out1, @out2;
+GO
+
+DROP PROCEDURE proc_update_multi_assign;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+declare @captured1 int, @captured2 int;
+EXEC sp_executesql N'update t1 set b = b + @increment, @captured1 = a, @captured2 = @captured1 + b where a = @filter', N'@filter int, @increment int, @captured1 int OUTPUT, @captured2 int OUTPUT', @filter = 2, @increment = 5, @captured1 = @captured1 OUTPUT, @captured2 = @captured2 OUTPUT;
+select @captured1, @captured2;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+-- Ref: UPDATE with subquery
+CREATE PROCEDURE proc_update_subquery @multiplier int
+AS
+BEGIN
+    update t1 set b = (select @multiplier * 10) where a = 1;
+    select * from t1 where a = 1;
+END
+GO
+
+EXEC proc_update_subquery @multiplier = 2;
+GO
+
+DROP PROCEDURE proc_update_subquery;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+EXEC sp_executesql N'update t1 set b = (select @multiplier * 10) where a = 1; select * from t1 where a = 1', N'@multiplier int', @multiplier = 2;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+-- Ref: DELETE with subquery
+CREATE PROCEDURE proc_delete_subquery @threshold int
+AS
+BEGIN
+    create table t_temp (a int);
+    insert into t_temp values (1), (2), (3), (4);
+    delete from t_temp where a in (select a from t_temp where a <= @threshold);
+    select * from t_temp order by a;
+    drop table t_temp;
+END
+GO
+
+EXEC proc_delete_subquery @threshold = 2;
+GO
+
+DROP PROCEDURE proc_delete_subquery;
+GO
+
+EXEC sp_executesql N'create table t_temp (a int); insert into t_temp values (1), (2), (3), (4); delete from t_temp where a in (select a from t_temp where a <= @threshold); select * from t_temp order by a; drop table t_temp', N'@threshold int', @threshold = 2;
+GO
+
+-- Ref: INSERT with local variables
+CREATE PROCEDURE proc_insert_params @val1 int, @val2 int
+AS
+BEGIN
+    create table t_temp (a int, b int);
+    insert into t_temp values (@val1, @val2);
+    select * from t_temp;
+    drop table t_temp;
+END
+GO
+
+EXEC proc_insert_params @val1 = 5, @val2 = 50;
+GO
+
+DROP PROCEDURE proc_insert_params;
+GO
+
+EXEC sp_executesql N'create table t_temp (a int, b int); insert into t_temp values (@val1, @val2); select * from t_temp; drop table t_temp', N'@val1 int, @val2 int', @val1 = 5, @val2 = 50;
+GO
+
+-- Ref: OFFSET FETCH with local variables
+CREATE PROCEDURE proc_offset_fetch @offset_val int, @fetch_val int
+AS
+BEGIN
+    select * from t1 order by a offset @offset_val rows fetch next @fetch_val rows only;
+END
+GO
+
+EXEC proc_offset_fetch @offset_val = 1, @fetch_val = 2;
+GO
+
+DROP PROCEDURE proc_offset_fetch;
+GO
+
+EXEC sp_executesql N'select * from t1 order by a offset @offset_val rows fetch next @fetch_val rows only', N'@offset_val int, @fetch_val int', @offset_val = 1, @fetch_val = 2;
+GO
+
+-- Ref: OFFSET FETCH with NULL fetch
+CREATE PROCEDURE proc_offset_null_fetch @offset_val int, @fetch_val int
+AS
+BEGIN
+    select * from t1 order by a offset @offset_val rows fetch next @fetch_val rows only;
+END
+GO
+
+EXEC proc_offset_null_fetch @offset_val = 1, @fetch_val = NULL;
+GO
+
+DROP PROCEDURE proc_offset_null_fetch;
+GO
+
+EXEC sp_executesql N'select * from t1 order by a offset @offset_val rows fetch next @fetch_val rows only', N'@offset_val int, @fetch_val int', @offset_val = 1, @fetch_val = NULL;
+GO
+
+-- cleanup
+
+drop procedure reset_t1;
+go
 
 drop table t1;
 go
