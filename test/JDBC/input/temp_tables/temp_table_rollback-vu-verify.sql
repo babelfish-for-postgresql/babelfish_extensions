@@ -1420,3 +1420,294 @@ go
 
 DROP TABLE #test1_defaults;
 go
+
+---------------------------------------------------------------------------
+-- ALTER TABLE ADD COLUMN with INDEX operations in transaction (cache lookup fix)
+---------------------------------------------------------------------------
+CREATE TABLE #t_alter_idx(id int, name varchar(100))
+GO
+
+INSERT INTO #t_alter_idx (id, name) VALUES (1, 'test1')
+GO
+
+-- ALTER TABLE ADD COLUMN + multiple CREATE INDEX + SELECT in transaction
+BEGIN TRANSACTION
+    ALTER TABLE #t_alter_idx ADD col_def int DEFAULT 4
+    UPDATE #t_alter_idx SET name = 'updated' WHERE id IS NOT NULL
+    SELECT * FROM #t_alter_idx
+    CREATE INDEX idx_alter1 ON #t_alter_idx (id)
+    CREATE INDEX idx_alter2 ON #t_alter_idx (id)
+COMMIT TRANSACTION
+GO
+
+SELECT * FROM #t_alter_idx
+GO
+
+SELECT * FROM enr_view ORDER BY relname
+GO
+
+-- TRUNCATE after index creation should work
+TRUNCATE TABLE #t_alter_idx
+GO
+
+SELECT * FROM #t_alter_idx
+GO
+
+DROP TABLE #t_alter_idx
+GO
+
+SELECT * FROM enr_view ORDER BY relname
+GO
+
+---------------------------------------------------------------------------
+-- ALTER TABLE ADD COLUMN + INDEX + TRUNCATE with ROLLBACK
+---------------------------------------------------------------------------
+CREATE TABLE #t_alter_idx_rollback(id int, name varchar(100))
+GO
+
+INSERT INTO #t_alter_idx_rollback (id, name) VALUES (1, 'original')
+GO
+
+BEGIN TRANSACTION
+    ALTER TABLE #t_alter_idx_rollback ADD new_col int DEFAULT 10
+    CREATE INDEX idx_rb1 ON #t_alter_idx_rollback (id)
+    CREATE INDEX idx_rb2 ON #t_alter_idx_rollback (name)
+    UPDATE #t_alter_idx_rollback SET name = 'modified'
+    SELECT * FROM #t_alter_idx_rollback
+ROLLBACK
+GO
+
+-- Should have original data, no new column, no indexes
+SELECT * FROM #t_alter_idx_rollback
+GO
+
+SELECT * FROM enr_view ORDER BY relname
+GO
+
+-- Operations should work after rollback
+INSERT INTO #t_alter_idx_rollback VALUES (2, 'second')
+GO
+
+SELECT * FROM #t_alter_idx_rollback ORDER BY id
+GO
+
+DROP TABLE #t_alter_idx_rollback
+GO
+
+---------------------------------------------------------------------------
+-- Multiple ALTER TABLE + INDEX operations in single transaction
+---------------------------------------------------------------------------
+CREATE TABLE #t_multi_alter(a int, b int)
+GO
+
+INSERT INTO #t_multi_alter VALUES (1, 10), (2, 20)
+GO
+
+BEGIN TRANSACTION
+    ALTER TABLE #t_multi_alter ADD c int DEFAULT 100
+    ALTER TABLE #t_multi_alter ADD d varchar(50) DEFAULT 'default'
+    CREATE INDEX idx_ma1 ON #t_multi_alter (a)
+    CREATE INDEX idx_ma2 ON #t_multi_alter (b)
+    CREATE INDEX idx_ma3 ON #t_multi_alter (c)
+    INSERT INTO #t_multi_alter VALUES (3, 30, 300, 'inserted')
+    SELECT * FROM #t_multi_alter ORDER BY a
+COMMIT
+GO
+
+SELECT * FROM #t_multi_alter ORDER BY a
+GO
+
+SELECT * FROM enr_view ORDER BY relname
+GO
+
+-- TRUNCATE should work with all the indexes
+TRUNCATE TABLE #t_multi_alter
+GO
+
+SELECT * FROM #t_multi_alter
+GO
+
+-- Insert after truncate should work
+INSERT INTO #t_multi_alter VALUES (5, 50, 500, 'after_truncate')
+GO
+
+SELECT * FROM #t_multi_alter
+GO
+
+DROP TABLE #t_multi_alter
+GO
+
+---------------------------------------------------------------------------
+-- ALTER TABLE + INDEX + DML operations with implicit rollback
+---------------------------------------------------------------------------
+SET XACT_ABORT ON
+GO
+
+CREATE TABLE #t_xact_abort(id int PRIMARY KEY, val varchar(50))
+GO
+
+INSERT INTO #t_xact_abort VALUES (1, 'one')
+GO
+
+-- This should cause implicit rollback due to duplicate key
+BEGIN TRANSACTION
+    ALTER TABLE #t_xact_abort ADD extra_col int DEFAULT 5
+    CREATE INDEX idx_xa1 ON #t_xact_abort (val)
+    INSERT INTO #t_xact_abort (id, val, extra_col) VALUES (2, 'two', 10)
+    INSERT INTO #t_xact_abort (id, val, extra_col) VALUES (1, 'duplicate', 20) -- Should fail - duplicate key
+COMMIT
+GO
+
+-- Table should be in original state (only the first row with default extra_col)
+SELECT * FROM #t_xact_abort
+GO
+
+SELECT * FROM enr_view ORDER BY relname
+GO
+
+SET XACT_ABORT OFF
+GO
+
+DROP TABLE #t_xact_abort
+GO
+
+---------------------------------------------------------------------------
+-- ALTER TABLE ADD COLUMN + INDEX + TRUNCATE in nested transactions
+---------------------------------------------------------------------------
+CREATE TABLE #t_nested_alter(x int, y int)
+GO
+
+INSERT INTO #t_nested_alter VALUES (1, 100)
+GO
+
+BEGIN TRAN
+    ALTER TABLE #t_nested_alter ADD z int DEFAULT 999
+    CREATE INDEX idx_nested1 ON #t_nested_alter (x)
+    
+    SAVE TRANSACTION sp1
+    
+    CREATE INDEX idx_nested2 ON #t_nested_alter (y)
+    INSERT INTO #t_nested_alter VALUES (2, 200, 2000)
+    SELECT * FROM #t_nested_alter ORDER BY x
+    
+    ROLLBACK TRANSACTION sp1
+    
+    SELECT * FROM #t_nested_alter ORDER BY x
+    INSERT INTO #t_nested_alter VALUES (3, 300, 3000)
+COMMIT
+GO
+
+SELECT * FROM #t_nested_alter ORDER BY x
+GO
+
+SELECT * FROM enr_view ORDER BY relname
+GO
+
+TRUNCATE TABLE #t_nested_alter
+GO
+
+SELECT * FROM #t_nested_alter
+GO
+
+DROP TABLE #t_nested_alter
+GO
+
+---------------------------------------------------------------------------
+-- Repeated ALTER + INDEX + TRUNCATE cycles
+---------------------------------------------------------------------------
+CREATE TABLE #t_cycle(id int)
+GO
+
+-- Cycle 1
+BEGIN TRANSACTION
+    ALTER TABLE #t_cycle ADD col1 int DEFAULT 1
+    CREATE INDEX idx_cyc1 ON #t_cycle (id)
+    INSERT INTO #t_cycle VALUES (1, 10)
+COMMIT
+GO
+
+SELECT * FROM #t_cycle
+GO
+
+TRUNCATE TABLE #t_cycle
+GO
+
+-- Cycle 2
+BEGIN TRANSACTION
+    ALTER TABLE #t_cycle ADD col2 int DEFAULT 2
+    CREATE INDEX idx_cyc2 ON #t_cycle (col1)
+    INSERT INTO #t_cycle VALUES (2, 20, 200)
+COMMIT
+GO
+
+SELECT * FROM #t_cycle
+GO
+
+TRUNCATE TABLE #t_cycle
+GO
+
+-- Cycle 3
+BEGIN TRANSACTION
+    ALTER TABLE #t_cycle ADD col3 int DEFAULT 3
+    CREATE INDEX idx_cyc3 ON #t_cycle (col2)
+    INSERT INTO #t_cycle VALUES (3, 30, 300, 3000)
+COMMIT
+GO
+
+SELECT * FROM #t_cycle
+GO
+
+SELECT * FROM enr_view ORDER BY relname
+GO
+
+DROP TABLE #t_cycle
+GO
+
+SELECT * FROM enr_view ORDER BY relname
+GO
+
+---------------------------------------------------------------------------
+-- ALTER TABLE with collation + INDEX + TRUNCATE
+---------------------------------------------------------------------------
+CREATE TABLE #t_collation(id int, name varchar(100) COLLATE Latin1_General_CI_AS)
+GO
+
+INSERT INTO #t_collation VALUES (1, 'TestName')
+GO
+
+BEGIN TRANSACTION
+    ALTER TABLE #t_collation ADD extra int DEFAULT 42
+    UPDATE #t_collation SET name = 'UpdatedName' WHERE id IS NOT NULL
+    SELECT * FROM #t_collation
+    CREATE INDEX idx_coll1 ON #t_collation (id)
+    CREATE INDEX idx_coll2 ON #t_collation (name)
+COMMIT TRANSACTION
+GO
+
+SELECT * FROM #t_collation
+GO
+
+TRUNCATE TABLE #t_collation
+GO
+
+INSERT INTO #t_collation VALUES (2, 'AfterTruncate', 100)
+GO
+
+SELECT * FROM #t_collation
+GO
+
+DROP TABLE #t_collation
+GO
+
+SELECT * FROM enr_view ORDER BY relname
+GO
+
+
+---------------------------------------------------------------------------
+-- PROCEDURE: Test ALTER TABLE + INDEX + TRUNCATE (cache lookup fix)
+---------------------------------------------------------------------------
+EXEC test_alter_index_truncate_cache_fix
+GO
+
+SELECT * FROM enr_view ORDER BY relname
+GO

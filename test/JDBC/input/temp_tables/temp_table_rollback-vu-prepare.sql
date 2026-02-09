@@ -143,3 +143,31 @@ BEGIN
     SELECT * FROM #t_procedure;
 END
 GO
+
+-- Procedure to test ALTER TABLE + INDEX + TRUNCATE (cache lookup fix)
+CREATE PROCEDURE test_alter_index_truncate_cache_fix
+AS
+BEGIN
+    SET XACT_ABORT ON
+
+    CREATE TABLE #t0_qdomqw (id int, name varchar(100) COLLATE polish_cs_as)
+
+    INSERT INTO #t0_qdomqw (id, name) VALUES (1282566819, 'geskxo')
+
+    BEGIN TRANSACTION
+        ALTER TABLE #t0_qdomqw ADD col_def_estp int DEFAULT 4
+        UPDATE #t0_qdomqw SET name = 'slukgofiuazhigik' WHERE id IS NOT NULL
+        SELECT * FROM #t0_qdomqw
+        CREATE INDEX idx_eefi ON #t0_qdomqw (id)
+        CREATE INDEX idx_eipj ON #t0_qdomqw (id)
+    COMMIT TRANSACTION
+
+    TRUNCATE TABLE #t0_qdomqw
+
+    SELECT * FROM #t0_qdomqw
+
+    DROP TABLE #t0_qdomqw
+
+    SET XACT_ABORT OFF
+END
+GO

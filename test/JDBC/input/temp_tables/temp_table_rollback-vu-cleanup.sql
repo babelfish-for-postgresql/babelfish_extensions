@@ -33,3 +33,6 @@ GO
 
 DROP PROCEDURE test_temp_table_drop_intermediate_idx
 GO
+
+DROP PROCEDURE test_alter_index_truncate_cache_fix
+GO
