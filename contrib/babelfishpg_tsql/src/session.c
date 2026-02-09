@@ -139,7 +139,7 @@ switch_database_context(const char *dbname)
 						   dbname, dbname)));
 	
 	/* Set database context, user, and search path */
-	set_session_properties(db_name);
+	set_session_properties(dbname);
 }
 
 /*
