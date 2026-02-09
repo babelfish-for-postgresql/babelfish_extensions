@@ -3513,6 +3513,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_kilobytes_per_batch = &get_insert_bulk_kilobytes_per_batch;
 		(*pltsql_protocol_plugin_ptr)->tsql_varchar_input = &tsql_varchar_input;
 		(*pltsql_protocol_plugin_ptr)->tsql_char_input = &tsql_bpchar_input;
+		(*pltsql_protocol_plugin_ptr)->switch_database_context = &switch_database_context;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);

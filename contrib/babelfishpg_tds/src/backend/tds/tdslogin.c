@@ -1932,7 +1932,6 @@ TdsSendLoginAck(Port *port)
 	uint8		temp8;
 	uint32_t	collationInfo;
 	char collationBytesNew[5];
-	char *useDbCommand = NULL;
 	char	*user = NULL;
 	MemoryContext  oldContext;
 	uint32_t tdsVersion = pg_hton32(loginInfo->tdsVersion);
@@ -2060,8 +2059,6 @@ TdsSendLoginAck(Port *port)
 							(errcode(ERRCODE_UNDEFINED_DATABASE),
 							 errmsg("database \"%s\" does not exist", request->database)));
 
-			/* Any delimitated/quoted db name identifier requested in login must be already handled before this point. */
-			useDbCommand = psprintf("USE [%s]", request->database);
 			dbname = pstrdup(request->database);
 		}
 		else
@@ -2077,7 +2074,6 @@ TdsSendLoginAck(Port *port)
 						(errcode(ERRCODE_UNDEFINED_DATABASE),
 						 errmsg("could not find default database for user \"%s\"", port->user_name)));
 
-			useDbCommand = psprintf("USE [%s]", temp);
 			dbname = pstrdup(temp);
 			CommitTransactionCommand();
 			MemoryContextSwitchTo(oldContext);
@@ -2093,18 +2089,16 @@ TdsSendLoginAck(Port *port)
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("Cannot open database \"%s\" requested by the login. The login failed", dbname)));
 		CommitTransactionCommand();
-		if (dbname)
-			pfree(dbname);
 
 		/*
 		 * Request has a database name provided, so we execute
 		 * a "USE [<db_name>]" through pgtsql inline handler
 		 */
 		StartTransactionCommand();
-		ExecuteSQLBatch(useDbCommand);
+		pltsql_plugin_handler_ptr->switch_database_context(dbname);
 		CommitTransactionCommand();
-		if (useDbCommand)
-			pfree(useDbCommand);
+		if (dbname)
+			pfree(dbname);
 
 		/*
 		 * Set the GUC for language, it will take care of
