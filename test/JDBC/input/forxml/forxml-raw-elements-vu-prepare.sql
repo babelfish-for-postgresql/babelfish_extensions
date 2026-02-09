@@ -275,17 +275,3 @@ INSERT INTO forxml_raw_elements_emp_projects VALUES (3, 1, 'Developer');
 INSERT INTO forxml_raw_elements_emp_projects VALUES (3, 4, 'Tester');
 INSERT INTO forxml_raw_elements_emp_projects VALUES (4, 3, 'Analyst');
 GO
-
--- ============================================
--- SECTION : StringInfo 1GB Limit Tests
--- ============================================
-
--- Setup for StringInfo 1GB limit test
-CREATE TABLE xml_limit_test (c1 VARCHAR(MAX));
-GO
-INSERT INTO xml_limit_test SELECT REPLICATE(CAST('X' AS VARCHAR(MAX)), 400000000);
-GO
-INSERT INTO xml_limit_test SELECT REPLICATE(CAST('X' AS VARCHAR(MAX)), 400000000);
-GO
-INSERT INTO xml_limit_test SELECT REPLICATE(CAST('X' AS VARCHAR(MAX)), 400000000);
-GO
