@@ -14,40 +14,6 @@ INSERT INTO TestGeospatialMethods_YourTable3Temp (ID, PointColumn) VALUES (1, ge
 ~~ROW COUNT: 4~~
 
 
-CREATE TABLE TestGeospatialParse_GeometryTable ( ID INT PRIMARY KEY, GeomColumn geometry ); 
-INSERT INTO TestGeospatialParse_GeometryTable (ID, GeomColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeometryTable (ID, GeomColumn) VALUES (2, geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeometryTable (ID, GeomColumn) VALUES (3, geometry::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeometryTable (ID, GeomColumn) VALUES (4, geometry::STPointFromText('POINT(1.0 2.0)', 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeometryTable (ID, GeomColumn) VALUES (5, geometry::STGeomFromText('LINESTRING(0 0, 5 5)', 0));
-~~ROW COUNT: 1~~
-
-
-CREATE TABLE TestGeospatialParse_GeographyTable ( ID INT PRIMARY KEY, GeogColumn geography ); 
-INSERT INTO TestGeospatialParse_GeographyTable (ID, GeogColumn) VALUES (1, geography::Point(3.0, 4.0, 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeographyTable (ID, GeogColumn) VALUES (2, geography::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeographyTable (ID, GeogColumn) VALUES (3, geography::STGeomFromText('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))', 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeographyTable (ID, GeogColumn) VALUES (4, geography::STPointFromText('POINT(1.0 2.0)', 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeographyTable (ID, GeogColumn) VALUES (5, geography::STGeomFromText('LINESTRING(0 0, 5 5)', 4326));
-~~ROW COUNT: 1~~
-
-
 USE MASTER
 
 CREATE TABLE TestGeospatialMethods_YourTableTemp ( ID INT PRIMARY KEY, PointColumn geometry ); 
@@ -101,34 +67,6 @@ INSERT INTO TestGeospatialMethods_SPATIALPOINTGEOM_dttemp (location) VALUES ( ge
 ~~ROW COUNT: 1~~
 
 
-CREATE TABLE TestGeospatialParse_GeomTemp ( ID INT PRIMARY KEY, GeomColumn geometry ); 
-INSERT INTO TestGeospatialParse_GeomTemp (ID, GeomColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeomTemp (ID, GeomColumn) VALUES (2, geometry::STGeomFromText('LINESTRING(0 0, 1 1)', 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeomTemp (ID, GeomColumn) VALUES (3, geometry::STGeomFromText('POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))', 0));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeomTemp (ID, GeomColumn) VALUES (4, geometry::Point(47.65100, -22.34900, 4326));
-~~ROW COUNT: 1~~
-
-
-CREATE TABLE TestGeospatialParse_GeogTemp ( ID INT PRIMARY KEY, GeogColumn geography ); 
-INSERT INTO TestGeospatialParse_GeogTemp (ID, GeogColumn) VALUES (1, geography::Point(3.0, 4.0, 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeogTemp (ID, GeogColumn) VALUES (2, geography::STGeomFromText('LINESTRING(0 0, 1 1)', 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeogTemp (ID, GeogColumn) VALUES (3, geography::STGeomFromText('POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))', 4326));
-~~ROW COUNT: 1~~
-
-INSERT INTO TestGeospatialParse_GeogTemp (ID, GeogColumn) VALUES (4, geography::Point(47.65100, -22.34900, 4326));
-~~ROW COUNT: 1~~
-
-
 CREATE VIEW TestGeospatialMethods_point_intersect1Temp AS SELECT p1.location.STIntersects(p2.location) AS intersection FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp p1 CROSS JOIN TestGeospatialMethods_SPATIALPOINTGEOM_dttemp p2;
 
 CREATE VIEW TestGeospatialMethods_disjointTemp AS SELECT p1.location.STDisjoint(p2.location) AS isIN FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp p1 CROSS JOIN TestGeospatialMethods_SPATIALPOINTGEOM_dttemp p2 ORDER BY p1.location.STX;
@@ -152,15 +90,3 @@ CREATE VIEW TestGeospatialMethods_closed_TextFromGeogTemp AS SELECT  location.ST
 CREATE VIEW TestGeospatialMethods_empty_ValFromGeomTemp AS SELECT location.STIsEmpty() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
 
 CREATE VIEW TestGeospatialMethods_empty_TextFromGeomTemp AS SELECT  location.STIsEmpty() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
-
-CREATE VIEW TestGeospatialParse_ParseGeomView AS SELECT location.STAsText() AS ParsedGeom FROM TestGeospatialParse_GeomTemp ORDER BY location.STX;
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "location" does not exist)~~
-
-
-CREATE VIEW TestGeospatialParse_ParseGeogView AS SELECT location.STAsText() AS ParsedGeog FROM TestGeospatialParse_GeogTemp ORDER BY location.Lat;
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "location" does not exist)~~
-

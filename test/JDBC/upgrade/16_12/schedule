@@ -437,7 +437,7 @@ TestSmallInt
 TestSmallMoney
 TestSpatialPoint
 Test-spatial-functions
-Test-spatial-functions-2-before-17_9-or-16_13
+Test-spatial-functions-2
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
