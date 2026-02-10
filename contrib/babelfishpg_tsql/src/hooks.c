@@ -73,7 +73,6 @@
 #include "storage/sinvaladt.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
-#include "utils/datum.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
