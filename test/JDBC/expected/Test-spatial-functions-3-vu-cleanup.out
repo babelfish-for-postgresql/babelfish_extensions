@@ -1,0 +1,19 @@
+USE TestSpatialFunc3_DB 
+
+USE MASTER 
+
+DROP VIEW IF EXISTS TestSpatialFunc3_MakeValidGeomView1;
+DROP VIEW IF EXISTS TestSpatialFunc3_MakeValidGeomView2;
+DROP VIEW IF EXISTS TestSpatialFunc3_MakeValidGeomView3;
+DROP VIEW IF EXISTS TestSpatialFunc3_MakeValidGeomView4;
+DROP VIEW IF EXISTS TestSpatialFunc3_MakeValidGeomView5;
+
+-- Drop Views - GEOGRAPHY
+DROP VIEW IF EXISTS TestSpatialFunc3_MakeValidGeogView1;
+DROP VIEW IF EXISTS TestSpatialFunc3_MakeValidGeogView2;
+DROP VIEW IF EXISTS TestSpatialFunc3_MakeValidGeogView3;
+
+DROP TABLE IF EXISTS TestSpatialFunc3_MakeValidGeomTemp;
+DROP TABLE IF EXISTS TestSpatialFunc3_MakeValidGeogTemp;
+
+DROP DATABASE TestSpatialFunc3_DB 

@@ -42,20 +42,5 @@ DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOM_dttemp
 
 DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOG_dttemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_MakeValidGeomView1;
-DROP VIEW IF EXISTS TestGeospatialMethods_MakeValidGeomView2;
-DROP VIEW IF EXISTS TestGeospatialMethods_MakeValidGeomView3;
-DROP VIEW IF EXISTS TestGeospatialMethods_MakeValidGeomView4;
-DROP VIEW IF EXISTS TestGeospatialMethods_MakeValidGeomView5;
-
--- Drop Views - GEOGRAPHY
-DROP VIEW IF EXISTS TestGeospatialMethods_MakeValidGeogView1;
-DROP VIEW IF EXISTS TestGeospatialMethods_MakeValidGeogView2;
-DROP VIEW IF EXISTS TestGeospatialMethods_MakeValidGeogView3;
-
-DROP TABLE IF EXISTS TestGeospatialMethods_MakeValidGeomTemp;
-DROP TABLE IF EXISTS TestGeospatialMethods_MakeValidGeogTemp;
-
-
 DROP DATABASE TestGeospatialMethods_DB 
 

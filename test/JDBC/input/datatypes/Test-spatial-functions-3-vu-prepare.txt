@@ -1,0 +1,52 @@
+CREATE DATABASE TestSpatialFunc3_DB;
+
+USE TestSpatialFunc3_DB;
+
+USE MASTER
+
+CREATE TABLE TestSpatialFunc3_MakeValidGeomTemp ( ID INT PRIMARY KEY, GeomColumn geometry,Description VARCHAR(100) );
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (1, geometry::STGeomFromText('POINT(10 20)', 0), 'Valid Point');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (2, geometry::STGeomFromText('POINT(30 40)', 4326), 'Valid Point with SRID');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (3, geometry::STGeomFromText('LINESTRING(0 0, 10 10, 20 20)', 0), 'Valid LineString');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (4, geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 0), 'Valid Polygon');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (5, geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0), 'Invalid Bowtie Polygon');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (6, geometry::STGeomFromText('POLYGON((0 0, 5 5, 10 0, 10 10, 5 5, 0 10, 0 0))', 0), 'Invalid Twisted Polygon');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (7, geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326), 'Invalid Bowtie with SRID');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (8, geometry::STGeomFromText('LINESTRING(5 5, 15 15, 25 25)', 0), 'Valid LineString 2');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (9, geometry::STGeomFromText('POLYGON((0 0, 0 20, 20 20, 20 0, 0 0), (5 5, 5 15, 15 15, 15 5, 5 5))', 0), 'Valid Polygon with Hole');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (10, geometry::STGeomFromText('POINT EMPTY', 0), 'Empty Point');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (11, geometry::STGeomFromText('POLYGON EMPTY', 0), 'Empty Polygon');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (12, geometry::STGeomFromText('LINESTRING EMPTY', 0), 'Empty LineString');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (13, NULL, 'NULL Geometry');
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (14, geometry::Point(10, 20, 0), 'Point using Point method');
+
+CREATE TABLE TestSpatialFunc3_MakeValidGeogTemp ( ID INT PRIMARY KEY, GeogColumn geography, Description VARCHAR(100) );
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (1, geography::STGeomFromText('POINT(-122.349 47.651)', 4326), 'Valid Point');
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (2, geography::Point(47.651, -122.349, 4326), 'Valid Point using Point method');
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (3, geography::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66, -122.36 47.67)', 4326), 'Valid LineString');
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (4, geography::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 4326), 'Valid Polygon');
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (5, geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326), 'Invalid Bowtie Polygon');
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (6, geography::STGeomFromText('POLYGON((0 0, 5 5, 10 0, 10 10, 5 5, 0 10, 0 0))', 4326), 'Invalid Twisted Polygon');
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (7, geography::STGeomFromText('LINESTRING(-122.37 47.68, -122.38 47.69)', 4326), 'Valid LineString 2');
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (8, geography::STGeomFromText('POINT EMPTY', 4326), 'Empty Point');
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (9, geography::STGeomFromText('POLYGON EMPTY', 4326), 'Empty Polygon');
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (10, geography::STGeomFromText('LINESTRING EMPTY', 4326), 'Empty LineString');
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (11, NULL, 'NULL Geography');
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeomView1 AS SELECT ID, Description, GeomColumn.MakeValid().STAsText() AS MadeValid, GeomColumn.MakeValid().STIsValid() AS IsValid FROM TestSpatialFunc3_MakeValidGeomTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeomView2 AS SELECT ID, Description, GeomColumn.STIsValid() AS BeforeValid, GeomColumn.MakeValid().STIsValid() AS AfterValid FROM TestSpatialFunc3_MakeValidGeomTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeomView3 AS SELECT ID, Description, GeomColumn.MakeValid().STArea() AS Area FROM TestSpatialFunc3_MakeValidGeomTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeomView4 AS SELECT ID, Description,  GeomColumn.MakeValid() AS type FROM TestSpatialFunc3_MakeValidGeomTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeomView5 AS SELECT ID, Description, GeomColumn.STSrid AS BeforeSRID, GeomColumn.MakeValid().STSrid AS AfterSRID FROM TestSpatialFunc3_MakeValidGeomTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeogView1 AS SELECT ID, Description, GeogColumn.MakeValid().STAsText() AS MadeValid, GeogColumn.MakeValid().STIsValid() AS IsValid FROM TestSpatialFunc3_MakeValidGeogTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeogView2 AS SELECT ID, Description, GeogColumn.STIsValid() AS BeforeValid, GeogColumn.MakeValid().STIsValid() AS AfterValid FROM TestSpatialFunc3_MakeValidGeogTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeogView3 AS SELECT ID, Description, GeogColumn.MakeValid().STArea() AS Area FROM TestSpatialFunc3_MakeValidGeogTemp;
