@@ -60,7 +60,63 @@ $$;
 
 -- Please add your SQLs here
 
--- Deprecate old function (6 args)
+-- Step 1: Deprecate and drop old aggregates FIRST (they depend on the function)
+
+-- Deprecate and drop old aggregate (6 args) - tsql_select_for_xml_agg
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER AGGREGATE sys.tsql_select_for_xml_agg(anyelement, integer, text, boolean, text)
+    RENAME TO tsql_select_for_xml_agg_deprecated_in_5_6_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    EXECUTE 'ALTER EXTENSION babelfishpg_tsql DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text)';
+    DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text);
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+-- Deprecate and drop old aggregate (6 args) - tsql_select_for_xml_text_agg
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER AGGREGATE sys.tsql_select_for_xml_text_agg(anyelement, integer, text, boolean, text)
+    RENAME TO tsql_select_for_xml_text_agg_deprecated_in_5_6_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    EXECUTE 'ALTER EXTENSION babelfishpg_tsql DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_text_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text)';
+    DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_text_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text);
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+-- Step 2: Now deprecate and drop old function (6 args) - after aggregates are gone
 DO $$
 DECLARE
     exception_message text;
@@ -74,36 +130,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc_deprecated_in_5_6_0');
-
--- Deprecate old aggregate (6 args) - tsql_select_for_xml_agg
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER AGGREGATE sys.tsql_select_for_xml_agg(anyelement, integer, text, boolean, text)
-    RENAME TO tsql_select_for_xml_agg_deprecated_in_5_6_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg_deprecated_in_5_6_0');
-
--- Deprecate old aggregate (6 args) - tsql_select_for_xml_text_agg
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER AGGREGATE sys.tsql_select_for_xml_text_agg(anyelement, integer, text, boolean, text)
-    RENAME TO tsql_select_for_xml_text_agg_deprecated_in_5_6_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg_deprecated_in_5_6_0');
 
 -- Create new function with ELEMENTS parameters (8 args)
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
