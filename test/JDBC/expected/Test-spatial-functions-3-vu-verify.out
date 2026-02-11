@@ -277,6 +277,13 @@ int#!#varchar#!#nvarchar
 12#!#Empty LineString#!#LINESTRING EMPTY
 13#!#NULL Geometry#!#<NULL>
 14#!#Point using Point method#!#POINT(10 20)
+15#!#Invalid LineString - duplicate points#!#POINT(0 0)
+16#!#Invalid LineString - all same points#!#POINT(1 1)
+17#!#Invalid LineString - closed back on itself#!#LINESTRING(0 0,5 5,0 0)
+18#!#Invalid Figure-8 Polygon#!#MULTIPOLYGON(((0 0,5 5,10 0,0 0)),((10 10,5 5,0 10,10 10)))
+19#!#Invalid Polygon - all same points#!#POINT(0 0)
+20#!#Invalid Polygon - nested holes#!#MULTIPOLYGON(((10 10,10 0,0 0,0 10,10 10),(8 8,2 8,2 2,8 2,8 8)),((6 6,6 4,4 4,4 6,6 6)))
+21#!#Invalid Polygon - hole touches shell#!#GEOMETRYCOLLECTION(POLYGON((0 5,0 10,10 10,10 0,5 0,0 0,0 5)),LINESTRING(5 0,5 5,0 5))
 ~~END~~
 
 
@@ -298,6 +305,13 @@ int#!#varchar#!#bit#!#bit
 12#!#Empty LineString#!#1#!#1
 13#!#NULL Geometry#!#<NULL>#!#<NULL>
 14#!#Point using Point method#!#1#!#1
+15#!#Invalid LineString - duplicate points#!#0#!#1
+16#!#Invalid LineString - all same points#!#0#!#1
+17#!#Invalid LineString - closed back on itself#!#1#!#1
+18#!#Invalid Figure-8 Polygon#!#0#!#1
+19#!#Invalid Polygon - all same points#!#0#!#1
+20#!#Invalid Polygon - nested holes#!#0#!#1
+21#!#Invalid Polygon - hole touches shell#!#0#!#1
 ~~END~~
 
 
@@ -319,6 +333,13 @@ int#!#varchar#!#float
 12#!#Empty LineString#!#0.0
 13#!#NULL Geometry#!#<NULL>
 14#!#Point using Point method#!#0.0
+15#!#Invalid LineString - duplicate points#!#0.0
+16#!#Invalid LineString - all same points#!#0.0
+17#!#Invalid LineString - closed back on itself#!#0.0
+18#!#Invalid Figure-8 Polygon#!#50.0
+19#!#Invalid Polygon - all same points#!#0.0
+20#!#Invalid Polygon - nested holes#!#68.0
+21#!#Invalid Polygon - hole touches shell#!#100.0
 ~~END~~
 
 
@@ -340,6 +361,13 @@ int#!#varchar#!#int#!#int
 12#!#Empty LineString#!#0#!#0
 13#!#NULL Geometry#!#<NULL>#!#<NULL>
 14#!#Point using Point method#!#0#!#0
+15#!#Invalid LineString - duplicate points#!#0#!#0
+16#!#Invalid LineString - all same points#!#0#!#0
+17#!#Invalid LineString - closed back on itself#!#0#!#0
+18#!#Invalid Figure-8 Polygon#!#0#!#0
+19#!#Invalid Polygon - all same points#!#0#!#0
+20#!#Invalid Polygon - nested holes#!#0#!#0
+21#!#Invalid Polygon - hole touches shell#!#0#!#0
 ~~END~~
 
 
@@ -361,6 +389,13 @@ int#!#varchar#!#bit
 12#!#Empty LineString#!#1
 13#!#NULL Geometry#!#<NULL>
 14#!#Point using Point method#!#0
+15#!#Invalid LineString - duplicate points#!#0
+16#!#Invalid LineString - all same points#!#0
+17#!#Invalid LineString - closed back on itself#!#0
+18#!#Invalid Figure-8 Polygon#!#0
+19#!#Invalid Polygon - all same points#!#0
+20#!#Invalid Polygon - nested holes#!#0
+21#!#Invalid Polygon - hole touches shell#!#0
 ~~END~~
 
 
@@ -382,6 +417,13 @@ int#!#varchar#!#int
 12#!#Empty LineString#!#-1
 13#!#NULL Geometry#!#<NULL>
 14#!#Point using Point method#!#0
+15#!#Invalid LineString - duplicate points#!#0
+16#!#Invalid LineString - all same points#!#0
+17#!#Invalid LineString - closed back on itself#!#1
+18#!#Invalid Figure-8 Polygon#!#2
+19#!#Invalid Polygon - all same points#!#0
+20#!#Invalid Polygon - nested holes#!#2
+21#!#Invalid Polygon - hole touches shell#!#2
 ~~END~~
 
 
@@ -400,6 +442,12 @@ int#!#varchar#!#nvarchar
 9#!#Empty Polygon#!#POLYGON EMPTY
 10#!#Empty LineString#!#LINESTRING EMPTY
 11#!#NULL Geography#!#<NULL>
+12#!#Invalid LineString - duplicate points#!#POINT(0 0)
+13#!#Invalid LineString - all same points#!#POINT(1 1)
+14#!#Invalid LineString - closed back on itself#!#LINESTRING(0 0,5 5,0 0)
+15#!#Invalid Figure-8 Polygon#!#MULTIPOLYGON(((5 5,0 0,10 0,5 5)),((0 10,5 5,10 10,0 10)))
+16#!#Invalid Polygon - all same points#!#POINT(0 0)
+17#!#Invalid Polygon - hole touches shell#!#GEOMETRYCOLLECTION(POLYGON((10 0,10 10,0 10,0 5,0 0,5 0,10 0)),LINESTRING(5 0,5 5,0 5))
 ~~END~~
 
 
@@ -418,6 +466,12 @@ int#!#varchar#!#bit#!#bit
 9#!#Empty Polygon#!#1#!#1
 10#!#Empty LineString#!#1#!#1
 11#!#NULL Geography#!#<NULL>#!#<NULL>
+12#!#Invalid LineString - duplicate points#!#0#!#1
+13#!#Invalid LineString - all same points#!#0#!#1
+14#!#Invalid LineString - closed back on itself#!#1#!#1
+15#!#Invalid Figure-8 Polygon#!#0#!#1
+16#!#Invalid Polygon - all same points#!#0#!#1
+17#!#Invalid Polygon - hole touches shell#!#0#!#1
 ~~END~~
 
 
@@ -436,6 +490,12 @@ int#!#varchar#!#float
 9#!#Empty Polygon#!#0.0
 10#!#Empty LineString#!#0.0
 11#!#NULL Geography#!#<NULL>
+12#!#Invalid LineString - duplicate points#!#0.0
+13#!#Invalid LineString - all same points#!#0.0
+14#!#Invalid LineString - closed back on itself#!#0.0
+15#!#Invalid Figure-8 Polygon#!#50.0
+16#!#Invalid Polygon - all same points#!#0.0
+17#!#Invalid Polygon - hole touches shell#!#100.0
 ~~END~~
 
 
@@ -454,6 +514,12 @@ int#!#varchar#!#bit
 9#!#Empty Polygon#!#1
 10#!#Empty LineString#!#1
 11#!#NULL Geography#!#<NULL>
+12#!#Invalid LineString - duplicate points#!#0
+13#!#Invalid LineString - all same points#!#0
+14#!#Invalid LineString - closed back on itself#!#0
+15#!#Invalid Figure-8 Polygon#!#0
+16#!#Invalid Polygon - all same points#!#0
+17#!#Invalid Polygon - hole touches shell#!#0
 ~~END~~
 
 
@@ -472,6 +538,12 @@ int#!#varchar#!#int
 9#!#Empty Polygon#!#-1
 10#!#Empty LineString#!#-1
 11#!#NULL Geography#!#<NULL>
+12#!#Invalid LineString - duplicate points#!#0
+13#!#Invalid LineString - all same points#!#0
+14#!#Invalid LineString - closed back on itself#!#1
+15#!#Invalid Figure-8 Polygon#!#2
+16#!#Invalid Polygon - all same points#!#0
+17#!#Invalid Polygon - hole touches shell#!#2
 ~~END~~
 
 
@@ -493,6 +565,13 @@ int#!#varchar#!#nvarchar#!#bit
 12#!#Empty LineString#!#LINESTRING EMPTY#!#1
 13#!#NULL Geometry#!#<NULL>#!#<NULL>
 14#!#Point using Point method#!#POINT(10 20)#!#1
+15#!#Invalid LineString - duplicate points#!#POINT(0 0)#!#1
+16#!#Invalid LineString - all same points#!#POINT(1 1)#!#1
+17#!#Invalid LineString - closed back on itself#!#LINESTRING(0 0,5 5,0 0)#!#1
+18#!#Invalid Figure-8 Polygon#!#MULTIPOLYGON(((0 0,5 5,10 0,0 0)),((10 10,5 5,0 10,10 10)))#!#1
+19#!#Invalid Polygon - all same points#!#POINT(0 0)#!#1
+20#!#Invalid Polygon - nested holes#!#MULTIPOLYGON(((10 10,10 0,0 0,0 10,10 10),(8 8,2 8,2 2,8 2,8 8)),((6 6,6 4,4 4,4 6,6 6)))#!#1
+21#!#Invalid Polygon - hole touches shell#!#GEOMETRYCOLLECTION(POLYGON((0 5,0 10,10 10,10 0,5 0,0 0,0 5)),LINESTRING(5 0,5 5,0 5))#!#1
 ~~END~~
 
 
@@ -514,6 +593,13 @@ int#!#varchar#!#bit#!#bit
 12#!#Empty LineString#!#1#!#1
 13#!#NULL Geometry#!#<NULL>#!#<NULL>
 14#!#Point using Point method#!#1#!#1
+15#!#Invalid LineString - duplicate points#!#0#!#1
+16#!#Invalid LineString - all same points#!#0#!#1
+17#!#Invalid LineString - closed back on itself#!#1#!#1
+18#!#Invalid Figure-8 Polygon#!#0#!#1
+19#!#Invalid Polygon - all same points#!#0#!#1
+20#!#Invalid Polygon - nested holes#!#0#!#1
+21#!#Invalid Polygon - hole touches shell#!#0#!#1
 ~~END~~
 
 
@@ -535,6 +621,13 @@ int#!#varchar#!#float
 12#!#Empty LineString#!#0.0
 13#!#NULL Geometry#!#<NULL>
 14#!#Point using Point method#!#0.0
+15#!#Invalid LineString - duplicate points#!#0.0
+16#!#Invalid LineString - all same points#!#0.0
+17#!#Invalid LineString - closed back on itself#!#0.0
+18#!#Invalid Figure-8 Polygon#!#50.0
+19#!#Invalid Polygon - all same points#!#0.0
+20#!#Invalid Polygon - nested holes#!#68.0
+21#!#Invalid Polygon - hole touches shell#!#100.0
 ~~END~~
 
 
@@ -556,6 +649,13 @@ int#!#varchar#!#int#!#int
 12#!#Empty LineString#!#0#!#0
 13#!#NULL Geometry#!#<NULL>#!#<NULL>
 14#!#Point using Point method#!#0#!#0
+15#!#Invalid LineString - duplicate points#!#0#!#0
+16#!#Invalid LineString - all same points#!#0#!#0
+17#!#Invalid LineString - closed back on itself#!#0#!#0
+18#!#Invalid Figure-8 Polygon#!#0#!#0
+19#!#Invalid Polygon - all same points#!#0#!#0
+20#!#Invalid Polygon - nested holes#!#0#!#0
+21#!#Invalid Polygon - hole touches shell#!#0#!#0
 ~~END~~
 
 
@@ -574,6 +674,12 @@ int#!#varchar#!#nvarchar#!#bit
 9#!#Empty Polygon#!#POLYGON EMPTY#!#1
 10#!#Empty LineString#!#LINESTRING EMPTY#!#1
 11#!#NULL Geography#!#<NULL>#!#<NULL>
+12#!#Invalid LineString - duplicate points#!#POINT(0 0)#!#1
+13#!#Invalid LineString - all same points#!#POINT(1 1)#!#1
+14#!#Invalid LineString - closed back on itself#!#LINESTRING(0 0,5 5,0 0)#!#1
+15#!#Invalid Figure-8 Polygon#!#MULTIPOLYGON(((5 5,0 0,10 0,5 5)),((0 10,5 5,10 10,0 10)))#!#1
+16#!#Invalid Polygon - all same points#!#POINT(0 0)#!#1
+17#!#Invalid Polygon - hole touches shell#!#GEOMETRYCOLLECTION(POLYGON((10 0,10 10,0 10,0 5,0 0,5 0,10 0)),LINESTRING(5 0,5 5,0 5))#!#1
 ~~END~~
 
 
@@ -592,6 +698,12 @@ int#!#varchar#!#bit#!#bit
 9#!#Empty Polygon#!#1#!#1
 10#!#Empty LineString#!#1#!#1
 11#!#NULL Geography#!#<NULL>#!#<NULL>
+12#!#Invalid LineString - duplicate points#!#0#!#1
+13#!#Invalid LineString - all same points#!#0#!#1
+14#!#Invalid LineString - closed back on itself#!#1#!#1
+15#!#Invalid Figure-8 Polygon#!#0#!#1
+16#!#Invalid Polygon - all same points#!#0#!#1
+17#!#Invalid Polygon - hole touches shell#!#0#!#1
 ~~END~~
 
 
@@ -610,6 +722,12 @@ int#!#varchar#!#float
 9#!#Empty Polygon#!#0.0
 10#!#Empty LineString#!#0.0
 11#!#NULL Geography#!#<NULL>
+12#!#Invalid LineString - duplicate points#!#0.0
+13#!#Invalid LineString - all same points#!#0.0
+14#!#Invalid LineString - closed back on itself#!#0.0
+15#!#Invalid Figure-8 Polygon#!#50.0
+16#!#Invalid Polygon - all same points#!#0.0
+17#!#Invalid Polygon - hole touches shell#!#100.0
 ~~END~~
 
 
@@ -655,6 +773,12 @@ int#!#varchar#!#bit#!#bit
 5#!#Invalid Bowtie Polygon#!#0#!#1
 6#!#Invalid Twisted Polygon#!#0#!#1
 7#!#Invalid Bowtie with SRID#!#0#!#1
+15#!#Invalid LineString - duplicate points#!#0#!#1
+16#!#Invalid LineString - all same points#!#0#!#1
+18#!#Invalid Figure-8 Polygon#!#0#!#1
+19#!#Invalid Polygon - all same points#!#0#!#1
+20#!#Invalid Polygon - nested holes#!#0#!#1
+21#!#Invalid Polygon - hole touches shell#!#0#!#1
 ~~END~~
 
 
@@ -675,6 +799,7 @@ int#!#varchar#!#nvarchar
 11#!#Empty Polygon#!#POLYGON EMPTY
 12#!#Empty LineString#!#LINESTRING EMPTY
 14#!#Point using Point method#!#POINT(10 20)
+17#!#Invalid LineString - closed back on itself#!#LINESTRING(0 0,5 5,0 0)
 ~~END~~
 
 
@@ -698,6 +823,11 @@ go
 int#!#varchar#!#bit#!#bit
 5#!#Invalid Bowtie Polygon#!#0#!#1
 6#!#Invalid Twisted Polygon#!#0#!#1
+12#!#Invalid LineString - duplicate points#!#0#!#1
+13#!#Invalid LineString - all same points#!#0#!#1
+15#!#Invalid Figure-8 Polygon#!#0#!#1
+16#!#Invalid Polygon - all same points#!#0#!#1
+17#!#Invalid Polygon - hole touches shell#!#0#!#1
 ~~END~~
 
 
@@ -716,6 +846,7 @@ int#!#varchar#!#nvarchar
 8#!#Empty Point#!#POINT EMPTY
 9#!#Empty Polygon#!#POLYGON EMPTY
 10#!#Empty LineString#!#LINESTRING EMPTY
+14#!#Invalid LineString - closed back on itself#!#LINESTRING(0 0,5 5,0 0)
 ~~END~~
 
 
@@ -890,5 +1021,76 @@ go
 ~~START~~
 nvarchar
 MULTILINESTRING((0 0,5 0),(5 0,10 0))
+~~END~~
+
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))', 0); 
+SELECT @g.MakeValid().STAsText();
+go
+~~START~~
+nvarchar
+POLYGON((0 0,10 0,10 10,0 10,0 0))
+~~END~~
+
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 5 10, 10 0, 10 10, 5 10, 0 10, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+~~START~~
+nvarchar
+MULTIPOLYGON(((0 10,5 10,0 0,0 10)),((10 0,5 10,10 10,10 0)))
+~~END~~
+
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0.0000001, 10 0, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+~~START~~
+nvarchar
+POLYGON((0 0,0 10,10 10,10 0.0000001,10 0,0 0))
+~~END~~
+
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 5 -5, 5 15, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+~~START~~
+nvarchar
+MULTIPOLYGON(((1.666666666666667 5,2.5 2.5,0 0,1.666666666666667 5)),((0 10,2.5 7.5,1.666666666666667 5,0 10)),((5 15,5 5,2.5 7.5,5 15)),((5 -5,2.5 2.5,5 5,5 -5)),((10 10,10 0,5 5,10 10)))
+~~END~~
+
+
+DECLARE @g geography = geography::STGeomFromText('LINESTRING(170 0, -170 0)', 4326);
+SELECT @g.MakeValid().STAsText();
+go
+~~START~~
+nvarchar
+LINESTRING(170 0,-170 0)
+~~END~~
+
+
+DECLARE @g geography = geography::Point(89.999, 0, 4326);
+SELECT @g.MakeValid().STAsText();
+go
+~~START~~
+nvarchar
+POINT(0 89.999)
+~~END~~
+
+
+SELECT geometry::STGeomFromText('POLYGON((0 0,10 10,10 0,0 10,0 0))', 0).MakeValid().STAsText();
+go
+~~START~~
+nvarchar
+MULTIPOLYGON(((0 10,5 5,0 0,0 10)),((10 0,5 5,10 10,10 0)))
+~~END~~
+
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 20, 20 20, 20 0, 0 0), (5 5, 15 5, 15 15, 5 15, 5 5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+~~START~~
+nvarchar
+POLYGON((0 0,0 20,20 20,20 0,0 0),(5 5,15 5,15 15,5 15,5 5))
 ~~END~~
 

@@ -59,4 +59,4 @@ CREATE VIEW TestGeospatialMethods_closed_TextFromGeogTemp AS SELECT  location.ST
 
 CREATE VIEW TestGeospatialMethods_empty_ValFromGeomTemp AS SELECT location.STIsEmpty() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
 
-CREATE VIEW TestGeospatialMethods_empty_TextFromGeomTemp AS SELECT  location.STIsEmpty() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+CREATE VIEW TestGeospatialMethods_empty_TextFromGeomTemp AS SELECT  location.STIsEmpty() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat; 

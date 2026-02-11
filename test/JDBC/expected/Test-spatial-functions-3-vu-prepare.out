@@ -48,6 +48,27 @@ INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VAL
 INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (14, geometry::Point(10, 20, 0), 'Point using Point method');
 ~~ROW COUNT: 1~~
 
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (15, geometry::STGeomFromText('LINESTRING(0 0, 0 0)', 0), 'Invalid LineString - duplicate points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (16, geometry::STGeomFromText('LINESTRING(1 1, 1 1, 1 1)', 0), 'Invalid LineString - all same points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (17, geometry::STGeomFromText('LINESTRING(0 0, 5 5, 0 0)', 0), 'Invalid LineString - closed back on itself');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (18, geometry::STGeomFromText('POLYGON((0 0, 10 0, 5 5, 10 10, 0 10, 5 5, 0 0))', 0), 'Invalid Figure-8 Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (19, geometry::STGeomFromText('POLYGON((0 0, 0 0, 0 0, 0 0))', 0), 'Invalid Polygon - all same points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (20, geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (2 2, 8 2, 8 8, 2 8, 2 2), (4 4, 6 4, 6 6, 4 6, 4 4))', 0), 'Invalid Polygon - nested holes');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (21, geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (0 0, 5 0, 5 5, 0 5, 0 0))', 0), 'Invalid Polygon - hole touches shell');
+~~ROW COUNT: 1~~
+
 
 CREATE TABLE TestSpatialFunc3_MakeValidGeogTemp ( ID INT PRIMARY KEY, GeogColumn geography, Description VARCHAR(100) );
 
@@ -82,6 +103,24 @@ INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VAL
 ~~ROW COUNT: 1~~
 
 INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (11, NULL, 'NULL Geography');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (12, geography::STGeomFromText('LINESTRING(0 0, 0 0)', 4326), 'Invalid LineString - duplicate points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (13, geography::STGeomFromText('LINESTRING(1 1, 1 1, 1 1)', 4326), 'Invalid LineString - all same points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (14, geography::STGeomFromText('LINESTRING(0 0, 5 5, 0 0)', 4326), 'Invalid LineString - closed back on itself');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (15, geography::STGeomFromText('POLYGON((0 0, 10 0, 5 5, 10 10, 0 10, 5 5, 0 0))', 4326), 'Invalid Figure-8 Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (16, geography::STGeomFromText('POLYGON((0 0, 0 0, 0 0, 0 0))', 4326), 'Invalid Polygon - all same points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (17, geography::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (0 0, 5 0, 5 5, 0 5, 0 0))', 4326), 'Invalid Polygon - hole touches shell');
 ~~ROW COUNT: 1~~
 
 

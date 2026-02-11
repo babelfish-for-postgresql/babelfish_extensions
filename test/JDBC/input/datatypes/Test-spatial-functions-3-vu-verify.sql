@@ -305,3 +305,34 @@ go
 DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 5 0, 10 0, 5 0, 0 0))', 0);
 SELECT @g.MakeValid().STAsText();
 go
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))', 0); 
+SELECT @g.MakeValid().STAsText();
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 5 10, 10 0, 10 10, 5 10, 0 10, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0.0000001, 10 0, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 5 -5, 5 15, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+DECLARE @g geography = geography::STGeomFromText('LINESTRING(170 0, -170 0)', 4326);
+SELECT @g.MakeValid().STAsText();
+go
+
+DECLARE @g geography = geography::Point(89.999, 0, 4326);
+SELECT @g.MakeValid().STAsText();
+go
+
+SELECT geometry::STGeomFromText('POLYGON((0 0,10 10,10 0,0 10,0 0))', 0).MakeValid().STAsText();
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 20, 20 20, 20 0, 0 0), (5 5, 15 5, 15 15, 5 15, 5 5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
