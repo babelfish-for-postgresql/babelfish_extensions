@@ -228,7 +228,7 @@ switch_database_context(const char *dbname)
 						   dbname, dbname)));
 	
 	/* Set database context, user, and search path */
-	set_cur_user_db_and_path(dbname, false);
+	set_cur_user_db_and_path(dbname, false, false);
 }
 
 static void
