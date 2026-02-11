@@ -15,6 +15,7 @@ extern void set_cur_user_db_and_path(const char *db_name, bool check_db_id, bool
 extern void restore_session_properties(void);
 extern void reset_session_properties(void);
 extern void set_cur_db_name_for_parallel_worker(const char* logical_db_name);
+extern void switch_database_context(const char *dbname);
 
 /* Hooks for parallel workers for babelfish fixed state */
 extern void babelfixedparallelstate_insert(ParallelContext *pcxt, bool estimate);
