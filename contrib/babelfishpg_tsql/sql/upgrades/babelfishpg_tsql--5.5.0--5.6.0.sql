@@ -73,6 +73,7 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc_deprecated_in_5_6_0');
 
 -- Deprecate old aggregate (6 args) - tsql_select_for_xml_agg
 DO $$
@@ -87,6 +88,7 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg_deprecated_in_5_6_0');
 
 -- Deprecate old aggregate (6 args) - tsql_select_for_xml_text_agg
 DO $$
@@ -101,6 +103,7 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg_deprecated_in_5_6_0');
 
 -- Create new function with ELEMENTS parameters (8 args)
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
