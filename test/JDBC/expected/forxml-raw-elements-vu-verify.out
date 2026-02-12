@@ -1681,11 +1681,12 @@ ntext
 SELECT e.emp_id, e.emp_name, d.dept_name
 FROM forxml_raw_elements_employees e
 RIGHT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY d.dept_name, e.emp_id
 FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row><dept_name>Marketing</dept_name></row>
+<row><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row><dept_name>Marketing</dept_name></row>
 ~~END~~
 
 
@@ -1693,11 +1694,12 @@ ntext
 SELECT e.emp_id, e.emp_name, d.dept_name
 FROM forxml_raw_elements_employees e
 RIGHT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY d.dept_name, e.emp_id
 FOR XML RAW, ELEMENTS XSINIL;
 GO
 ~~START~~
 ntext
-<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id xsi:nil="true"/><emp_name xsi:nil="true"/><dept_name>Marketing</dept_name></row>
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id xsi:nil="true"/><emp_name xsi:nil="true"/><dept_name>Marketing</dept_name></row>
 ~~END~~
 
 
@@ -1895,10 +1897,11 @@ INNER JOIN (
     WHERE salary IS NOT NULL
     GROUP BY dept_id
 ) dept_avg ON e.dept_id = dept_avg.dept_id
+ORDER BY e.emp_name
 FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><emp_name>John</emp_name><salary>50000</salary><avg_salary>52500</avg_salary></row><row><emp_name>Jane</emp_name><salary>60000</salary><avg_salary>60000</avg_salary></row><row><emp_name>Bob</emp_name><salary>55000</salary><avg_salary>52500</avg_salary></row><row><emp_name>Alice</emp_name><salary>70000</salary><avg_salary>70000</avg_salary></row><row><emp_name>Diana</emp_name><avg_salary>52500</avg_salary></row>
+<row><emp_name>Alice</emp_name><salary>70000</salary><avg_salary>70000</avg_salary></row><row><emp_name>Bob</emp_name><salary>55000</salary><avg_salary>52500</avg_salary></row><row><emp_name>Diana</emp_name><avg_salary>52500</avg_salary></row><row><emp_name>Jane</emp_name><salary>60000</salary><avg_salary>60000</avg_salary></row><row><emp_name>John</emp_name><salary>50000</salary><avg_salary>52500</avg_salary></row>
 ~~END~~
 

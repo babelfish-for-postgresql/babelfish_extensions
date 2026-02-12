@@ -765,6 +765,7 @@ GO
 SELECT e.emp_id, e.emp_name, d.dept_name
 FROM forxml_raw_elements_employees e
 RIGHT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY d.dept_name, e.emp_id
 FOR XML RAW, ELEMENTS;
 GO
 
@@ -772,6 +773,7 @@ GO
 SELECT e.emp_id, e.emp_name, d.dept_name
 FROM forxml_raw_elements_employees e
 RIGHT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY d.dept_name, e.emp_id
 FOR XML RAW, ELEMENTS XSINIL;
 GO
 
@@ -899,5 +901,6 @@ INNER JOIN (
     WHERE salary IS NOT NULL
     GROUP BY dept_id
 ) dept_avg ON e.dept_id = dept_avg.dept_id
+ORDER BY e.emp_name
 FOR XML RAW, ELEMENTS;
 GO
