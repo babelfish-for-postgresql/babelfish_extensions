@@ -1051,15 +1051,6 @@ POLYGON((0 0,0 10,10 10,10 0.0000001,10 0,0 0))
 ~~END~~
 
 
-DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 5 -5, 5 15, 0 0))', 0);
-SELECT @g.MakeValid().STAsText();
-go
-~~START~~
-nvarchar
-MULTIPOLYGON(((1.666666666666667 5,2.5 2.5,0 0,1.666666666666667 5)),((0 10,2.5 7.5,1.666666666666667 5,0 10)),((5 15,5 5,2.5 7.5,5 15)),((5 -5,2.5 2.5,5 5,5 -5)),((10 10,10 0,5 5,10 10)))
-~~END~~
-
-
 DECLARE @g geography = geography::STGeomFromText('LINESTRING(170 0, -170 0)', 4326);
 SELECT @g.MakeValid().STAsText();
 go

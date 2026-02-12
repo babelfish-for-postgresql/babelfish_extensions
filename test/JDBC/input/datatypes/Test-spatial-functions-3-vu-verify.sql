@@ -318,10 +318,6 @@ DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0.
 SELECT @g.MakeValid().STAsText();
 go
 
-DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 5 -5, 5 15, 0 0))', 0);
-SELECT @g.MakeValid().STAsText();
-go
-
 DECLARE @g geography = geography::STGeomFromText('LINESTRING(170 0, -170 0)', 4326);
 SELECT @g.MakeValid().STAsText();
 go

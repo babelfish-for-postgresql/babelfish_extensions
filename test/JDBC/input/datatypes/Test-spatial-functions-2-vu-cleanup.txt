@@ -42,4 +42,4 @@ DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOM_dttemp
 
 DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOG_dttemp 
 
-DROP DATABASE TestGeospatialMethods_DB  
+DROP DATABASE TestGeospatialMethods_DB 
