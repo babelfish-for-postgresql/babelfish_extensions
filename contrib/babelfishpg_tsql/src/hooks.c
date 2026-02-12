@@ -1207,57 +1207,6 @@ typedef struct WalkSubplanContext
 	List *allplans;
 } WalkSubplanContext;
 
-/* Context for param replacement in quals */
-typedef struct ParamReplaceContext
-{
-	bool		in_qual;		/* Are we currently in a qual? */
-	QueryDesc  *queryDesc;		/* Original QueryDesc */
-} ParamReplaceContext;
-
-
-/*
- * Expression tree mutator that replaces Param nodes with Const nodes when in a qual.
- */
-static Node *
-replace_params_mutator(Node *node, ParamReplaceContext *context)
-{
-	if (node == NULL)
-		return NULL;
-
-	/* Handle Param nodes when we're in a qual */
-	if (IsA(node, Param) && context->in_qual)
-	{
-		ParamListInfo	paramLI = context->queryDesc->params;
-		PlannerInfo		root;
-		Node		   *ret;
-
-		root.glob = palloc(sizeof (PlannerGlobal));
-		root.glob->boundParams = paramLI;
-
-		ret = eval_const_expressions(&root, node);
-
-		pfree(root.glob);
-		return ret;
-	}
-
-	/* Handle SubPlan - unset qual flag when entering subquery */
-	if (IsA(node, SubPlan))
-	{
-		SubPlan	   *newsubplan;
-		bool		save_in_qual = context->in_qual;
-		
-		context->in_qual = false;
-		
-		newsubplan = (SubPlan *) expression_tree_mutator(node, replace_params_mutator, context);
-		
-		context->in_qual = save_in_qual;
-		
-		return (Node *) newsubplan;
-	}
-
-	return expression_tree_mutator(node, replace_params_mutator, context);
-}
-
 static bool expr_walk_subplan(Node *node, void *context)
 {
 	struct WalkSubplanContext* sc = (struct WalkSubplanContext*)context;
@@ -1381,6 +1330,56 @@ plan_tree_walker(Plan *plan, List *allplans, bool (*walker) (), void *context)
 		return true;
 
 	return false;
+}
+
+/* Context for param replacement in quals */
+typedef struct ParamReplaceContext
+{
+	bool		in_qual;		/* Are we currently in a qual? */
+	QueryDesc  *queryDesc;		/* Original QueryDesc */
+} ParamReplaceContext;
+
+/*
+ * Expression tree mutator that replaces Param nodes with Const nodes when in a qual.
+ */
+static Node *
+replace_params_mutator(Node *node, ParamReplaceContext *context)
+{
+	if (node == NULL)
+		return NULL;
+
+	/* Handle Param nodes when we're in a qual */
+	if (IsA(node, Param) && context->in_qual)
+	{
+		ParamListInfo	paramLI = context->queryDesc->params;
+		PlannerInfo		root;
+		Node		   *ret;
+
+		root.glob = palloc(sizeof (PlannerGlobal));
+		root.glob->boundParams = paramLI;
+
+		ret = eval_const_expressions(&root, node);
+
+		pfree(root.glob);
+		return ret;
+	}
+
+	/* Handle SubPlan - unset qual flag when entering subquery */
+	if (IsA(node, SubPlan))
+	{
+		SubPlan	   *newsubplan;
+		bool		save_in_qual = context->in_qual;
+		
+		context->in_qual = false;
+		
+		newsubplan = (SubPlan *) expression_tree_mutator(node, replace_params_mutator, context);
+		
+		context->in_qual = save_in_qual;
+		
+		return (Node *) newsubplan;
+	}
+
+	return expression_tree_mutator(node, replace_params_mutator, context);
 }
 
 /*
