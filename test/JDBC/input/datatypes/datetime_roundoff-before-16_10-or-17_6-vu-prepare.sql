@@ -167,10 +167,10 @@ INSERT INTO datetime_test (date_time1, date_time2)  VALUES ('2014-03-12 12:00:34
 GO
 
 
-select * from datetime_test where date_time1 = '2014-03-12 12:00:34.467'
+select date_time1, date_time2 from datetime_test where date_time1 = '2014-03-12 12:00:34.467'
 GO
 
-select * from datetime_test where date_time1 = '2014-03-12 12:00:34.466'
+select date_time1, date_time2 from datetime_test where date_time1 = '2014-03-12 12:00:34.466'
 GO
 
 select cast('2014-03-12 12:00:34.462' as datetime)
