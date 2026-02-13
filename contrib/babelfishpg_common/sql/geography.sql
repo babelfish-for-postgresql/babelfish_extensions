@@ -441,6 +441,11 @@ CREATE OR REPLACE FUNCTION sys.Geography__Parse(geography_tagged_text sys.NVARCH
 	    IF UPPER(geography_tagged_text COLLATE "default") = 'NULL' THEN
             RETURN NULL;
         END IF;
+		 -- Reject Z/ZM dimension qualifier
+        IF geography_tagged_text COLLATE "default" ~* '\s+ZM?\s*\(' THEN
+            RAISE EXCEPTION 'parse error - invalid geometry';
+        END IF;
+
         RETURN sys.geogfromtext_helper(geography_tagged_text::text, 4326);
     END;
     $$ LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;

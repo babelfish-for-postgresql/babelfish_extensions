@@ -305,3 +305,78 @@ SELECT Dimension, COUNT(*) AS Count FROM (
 GROUP BY Dimension
 ORDER BY Dimension;
 go
+
+SELECT geometry::Parse('POINT(1 2 3 4)');
+go
+
+SELECT geometry::Parse('LINESTRING(0 0, 1 1)');
+go
+
+SELECT geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))');
+go
+
+SELECT geometry::Parse('POINT(999999999 999999999)');
+go
+
+SELECT geometry::Parse('POINT Z(1 2 3)');
+go
+
+SELECT geometry::Parse('POINT M(1 2 4)');
+go
+
+SELECT geometry::Parse('POLYGON M((0 0 0, 0 10 0, 10 10 0, 10 0 0, 0 0 0))');
+go
+
+SELECT geography::Parse('POINT(1 2 3 4)');
+go
+
+SELECT geometry::Parse('LINESTRING Z(0 0 0, 1 1 1, 2 2 2)');
+go
+
+SELECT geography::Parse('LINESTRING Z(0 0 0, 1 1 1)');
+go
+
+SELECT geography::Parse('POINT Z(1 2 3)');
+go
+
+SELECT geography::Parse('LINESTRING Z(0 0 0, 1 1 1)');
+go
+
+SELECT geography::Parse('POLYGON Z((0 0 0, 0 1 0, 1 1 0, 1 0 0, 0 0 0))');
+go
+
+SELECT geography::Parse('point z(1 2 3)');
+go
+
+SELECT geography::Parse('POINT ZM(1 2 3 4)');
+go
+
+SELECT geography::Parse('LINESTRING ZM(0 0 0 0, 1 1 1 1)');
+go
+
+SELECT geography::Parse('point zm(1 2 3 4)');
+go
+
+SELECT geography::Parse('POINT(1 2 3 4)');
+go
+
+SELECT geography::Parse('LINESTRING(0 0, 1 1)');
+go
+
+SELECT geography::Parse('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))');
+go
+
+SELECT geography::Parse('POINT M(1 2 4)');
+go
+
+SELECT geography::Parse('LINESTRING M(0 0 0, 1 1 1)');
+go
+
+SELECT geography::Parse('POLYGON M((0 0 0, 0 1 0, 1 1 0, 1 0 0, 0 0 0))');
+go
+
+SELECT geography::Parse('point m(1 2 4)');
+go
+
+SELECT geography::Parse('POINT(-122.349 47.651)');
+go

@@ -104,6 +104,7 @@ SELECT ID FROM TestGeospatialParse_GeomTemp3 WHERE geometry::Parse(@searchText).
 go
 ~~START~~
 int
+1
 ~~END~~
 
 
@@ -124,6 +125,10 @@ ORDER BY g1.ID, g2.ID;
 go
 ~~START~~
 int#!#int
+1#!#1
+1#!#2
+1#!#3
+1#!#4
 ~~END~~
 
 
@@ -135,8 +140,8 @@ FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
 go
 ~~START~~
 int#!#varchar
-1#!#Far
-2#!#Far
+1#!#Near
+2#!#Near
 3#!#Near
 4#!#Far
 ~~END~~
@@ -152,7 +157,9 @@ SELECT * FROM ParseCTE WHERE Distance < 10.0 ORDER BY Distance;
 go
 ~~START~~
 int#!#float
+1#!#0.0
 3#!#2.23606797749979
+2#!#3.605551275463989
 ~~END~~
 
 
@@ -173,11 +180,17 @@ FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeographyTable3 ORDER BY ID;
 go
 ~~START~~
 int#!#float
-1#!#156759.14242784862
+1#!#0.0
 2#!#247520.76060020996
 3#!#399384.36945885984
 4#!#313588.39721259556
 5#!#77836.58790621723
+6#!#247520.76060020996
+8#!#247520.76060020996
+9#!#313588.39721259556
+11#!#313588.39721259556
+12#!#399384.36945885984
+14#!#399384.36945885984
 ~~END~~
 
 
@@ -632,5 +645,189 @@ int#!#int
 0#!#2
 1#!#1
 2#!#1
+~~END~~
+
+
+SELECT geometry::Parse('POINT(1 2 3 4)');
+go
+~~START~~
+geometry
+00000000010F000000000000F03F000000000000004000000000000008400000000000001040
+~~END~~
+
+
+SELECT geometry::Parse('LINESTRING(0 0, 1 1)');
+go
+~~START~~
+geometry
+00000000011400000000000000000000000000000000000000000000F03F000000000000F03F
+~~END~~
+
+
+SELECT geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))');
+go
+~~START~~
+geometry
+00000000010005000000000000000000000000000000000000000000000000000000000000000000244000000000000024400000000000002440000000000000244000000000000000000000000000000000000000000000000001000000020000000001000000FFFFFFFF0000000003
+~~END~~
+
+
+SELECT geometry::Parse('POINT(999999999 999999999)');
+go
+~~START~~
+geometry
+00000000010C000080FF64CDCD41000080FF64CDCD41
+~~END~~
+
+
+SELECT geometry::Parse('POINT Z(1 2 3)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geometry::Parse('POINT M(1 2 4)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geometry::Parse('POLYGON M((0 0 0, 0 10 0, 10 10 0, 10 0 0, 0 0 0))');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('POINT(1 2 3 4)');
+go
+~~START~~
+geography
+E6100000010F0000000000000040000000000000F03F00000000000008400000000000001040
+~~END~~
+
+
+SELECT geometry::Parse('LINESTRING Z(0 0 0, 1 1 1, 2 2 2)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('LINESTRING Z(0 0 0, 1 1 1)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('POINT Z(1 2 3)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('LINESTRING Z(0 0 0, 1 1 1)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('POLYGON Z((0 0 0, 0 1 0, 1 1 0, 1 0 0, 0 0 0))');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('point z(1 2 3)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('POINT ZM(1 2 3 4)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('LINESTRING ZM(0 0 0 0, 1 1 1 1)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('point zm(1 2 3 4)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('POINT(1 2 3 4)');
+go
+~~START~~
+geography
+E6100000010F0000000000000040000000000000F03F00000000000008400000000000001040
+~~END~~
+
+
+SELECT geography::Parse('LINESTRING(0 0, 1 1)');
+go
+~~START~~
+geography
+E6100000011400000000000000000000000000000000000000000000F03F000000000000F03F
+~~END~~
+
+
+SELECT geography::Parse('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))');
+go
+~~START~~
+geography
+E610000001000500000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000001000000020000000001000000FFFFFFFF0000000003
+~~END~~
+
+
+SELECT geography::Parse('POINT M(1 2 4)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('LINESTRING M(0 0 0, 1 1 1)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('POLYGON M((0 0 0, 0 1 0, 1 1 0, 1 0 0, 0 0 0))');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('point m(1 2 4)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('POINT(-122.349 47.651)');
+go
+~~START~~
+geography
+E6100000010C17D9CEF753D347407593180456965EC0
 ~~END~~
 
