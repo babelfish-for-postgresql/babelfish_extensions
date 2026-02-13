@@ -286,16 +286,16 @@ WHERE CAST(dt_value AS VARCHAR(30)) LIKE '%.007';
 GO
 
 -- BASIC UPGRADE TESTING
-select * from datetime_test where date_time1 = '2014-03-12 12:00:34.467'
+select date_time1, date_time2 from datetime_test where date_time1 = '2014-03-12 12:00:34.467'
 GO
 
-select * from datetime_test where date_time1 = '2014-03-12 12:00:34.466'
+select date_time1, date_time2 from datetime_test where date_time1 = '2014-03-12 12:00:34.466'
 GO
 
-select * from datetime_test where date_time1 <= '2014-03-12 12:00:34.467'
+select date_time1, date_time2 from datetime_test where date_time1 <= '2014-03-12 12:00:34.467'
 GO
 
-select * from datetime_test where date_time1 <= '2014-03-12 12:00:34.466'
+select date_time1, date_time2 from datetime_test where date_time1 <= '2014-03-12 12:00:34.466'
 GO
 
 select cast('2014-03-12 12:00:34.462' as datetime)
@@ -313,10 +313,10 @@ INSERT INTO datetime_test (date_time1, date_time2)  VALUES ('2014-03-12 12:00:34
 INSERT INTO datetime_test (date_time1, date_time2)  VALUES ('2014-03-12 12:00:34.467', '2010-03-04 12:55:41.150');
 GO
 
-select * from datetime_test where date_time1 <= '2014-03-12 12:00:34.467'
+select date_time1, date_time2 from datetime_test where date_time1 <= '2014-03-12 12:00:34.467'
 GO
 
-select * from datetime_test where date_time1 <= '2014-03-12 12:00:34.466'
+select date_time1, date_time2 from datetime_test where date_time1 <= '2014-03-12 12:00:34.466'
 GO
 
 SELECT * INTO datetime_test_new FROM datetime_test;
@@ -325,23 +325,23 @@ GO
 UPDATE datetime_test SET date_time1 = date_time1, date_time2 = date_time2;
 GO
 
-SELECT * FROM datetime_test;
+select date_time1, date_time2 FROM datetime_test;
 GO
 
-SELECT * FROM datetime_test_new;
+select date_time1, date_time2 FROM datetime_test_new;
 GO
 
-select * from datetime_test_new where date_time1 = '2014-03-12 12:00:34.467'
+select date_time1, date_time2 from datetime_test_new where date_time1 = '2014-03-12 12:00:34.467'
 GO
 
-select * from datetime_test_new where date_time1 = '2014-03-12 12:00:34.466'
+select date_time1, date_time2 from datetime_test_new where date_time1 = '2014-03-12 12:00:34.466'
 GO
 
 -- psql
-SELECT * FROM master_dbo.datetime_test_new;
+SELECT date_time1, date_time2 FROM master_dbo.datetime_test_new;
 GO
 
-SELECT * FROM master_dbo.datetime_test;
+SELECT date_time1, date_time2 FROM master_dbo.datetime_test;
 GO
 
 -- tsql
@@ -349,7 +349,7 @@ UPDATE datetime_test SET date_time1 = cast(date_time1 as datetime), date_time2 =
 GO
 
 -- psql
-SELECT * FROM master_dbo.datetime_test;
+SELECT date_time1, date_time2 FROM master_dbo.datetime_test;
 GO
 
 -- tsql
@@ -358,7 +358,7 @@ UPDATE datetime_test SET date_time1 = cast(cast(date_time1 as varchar) as dateti
 GO
 
 -- psql
-SELECT * FROM master_dbo.datetime_test;
+SELECT date_time1, date_time2 FROM master_dbo.datetime_test;
 GO
 
 -- tsql
