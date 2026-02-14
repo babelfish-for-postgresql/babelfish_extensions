@@ -29,7 +29,7 @@ EXEC p_nested_2
 GO
 EXEC p_index_create
 GO
--- FIXME: BABEL-6097
+-- FIXME: BABEL-6268
 -- EXEC p_drop
 -- GO
 -- SELECT * FROM #temptable5605
