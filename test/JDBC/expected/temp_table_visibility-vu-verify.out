@@ -765,5 +765,5 @@ CREATE TABLE #temp_table_with_default_udf (
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot create dependency on a non-ENR object)~~
+~~ERROR (Message: temporary objects cannot reference permanent non-system objects)~~
 
