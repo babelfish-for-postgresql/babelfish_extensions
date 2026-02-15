@@ -68,7 +68,9 @@ static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltex
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static int	exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_function *stmt);
 static int	exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_scheme *stmt);
+#if 0  /* DISABLED: Tuple store approach for INSERT ... EXECUTE */
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
+#endif
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
@@ -741,9 +743,16 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 
 	Assert(stmt->query != NULL);
 
+	/*
+	 * DISABLED: Tuple store approach for INSERT ... EXECUTE
+	 * We now use query rewriting approach exclusively in exec_stmt_execsql.
+	 * This code path should not be reached for INSERT EXEC with query rewriting.
+	 */
+#if 0
 	/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
 	if (estate->insert_exec)
 		return exec_stmt_insert_execute_select(estate, stmt->query);
+#endif
 
 	exec_run_select(estate, stmt->query, &portal);
 
@@ -866,9 +875,11 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		int32		rettypmod;	/* used for scalar function */
 		bool		is_scalar_func;
 
+#if 0  /* DISABLED: Tuple store approach for INSERT ... EXECUTE */
 		/* for EXEC as part of inline code under INSERT ... EXECUTE */
 		Tuplestorestate *tss;
 		DestReceiver *dest;
+#endif
 
 		if (IS_TDS_CONN())
 		{
@@ -1154,6 +1165,14 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			stmt->target = (PLtsql_variable *) row;
 		}
 
+		/*
+		 * DISABLED: Tuple store approach for INSERT ... EXECUTE
+		 * We now use query rewriting approach exclusively.
+		 * With query rewriting, SELECT statements inside procedures are
+		 * rewritten to INSERT statements, so we don't need to accumulate
+		 * result rows here.
+		 */
+#if 0
 		if (estate->insert_exec)
 		{
 			/*
@@ -1184,6 +1203,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			callstmt->retdesc = (void *) estate->rsi->expectedDesc;
 			callstmt->dest = (void *) dest;
 		}
+#endif
 
 		paramLI = setup_param_list(estate, expr);
 
@@ -1245,6 +1265,14 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			}
 		}
 
+		/*
+		 * DISABLED: Tuple store approach for INSERT ... EXECUTE
+		 * We now use query rewriting approach exclusively.
+		 * With query rewriting, SELECT statements inside procedures are
+		 * rewritten to INSERT statements directly, so we don't need to
+		 * accumulate result rows here.
+		 */
+#if 0
 		if (estate->insert_exec)
 		{
 			/*
@@ -1271,6 +1299,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			dest->rShutdown(dest);
 			dest->rDestroy(dest);
 		}
+#endif
 	}
 	PG_FINALLY();
 	{
@@ -3220,6 +3249,12 @@ bool called_from_tsql_insert_exec()
 }
 
 /*
+ * DISABLED: Tuple store approach for INSERT ... EXECUTE
+ * We now use query rewriting approach exclusively.
+ * This function is kept for reference but is no longer called.
+ */
+#if 0
+/*
  * For naked SELECT stmt in INSERT ... EXECUTE, instead of pushing the result to
  * the client, we accumulate the result in estate->tuple_store (similar to
  * exec_stmt_return_query). Finally the EXECUTE stmt will return the result to
@@ -3286,6 +3321,7 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 
 	return PLTSQL_RC_OK;
 }
+#endif
 
 int
 exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)

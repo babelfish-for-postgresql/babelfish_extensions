@@ -1972,6 +1972,64 @@ public:
 				if (ctx_name->schema)
 					schema_name = stripQuoteFromId(ctx_name->schema);
 			}
+
+				/* Extract target table name for INSERT-EXEC query rewriting */
+			auto ddl_object = ctx->insert_statement()->ddl_object();
+			if (ddl_object)
+			{
+				std::string target_table;
+				if (ddl_object->local_id())
+				{
+					/* Temp table like #temp - use as-is */
+					target_table = ::getFullText(ddl_object->local_id());
+				}
+				else if (ddl_object->full_object_name())
+				{
+					/* Regular table - build fully qualified name for cross-db support */
+					std::string tbl_name, tbl_schema, tbl_db;
+					if (ddl_object->full_object_name()->object_name)
+						tbl_name = stripQuoteFromId(ddl_object->full_object_name()->object_name);
+					if (ddl_object->full_object_name()->schema)
+						tbl_schema = stripQuoteFromId(ddl_object->full_object_name()->schema);
+					if (ddl_object->full_object_name()->database)
+						tbl_db = stripQuoteFromId(ddl_object->full_object_name()->database);
+					
+					/* Always build fully qualified name for cross-db INSERT-EXEC support */
+					/* If database not specified, use current database */
+					if (tbl_db.empty())
+						tbl_db = get_cur_db_name();
+					/* If schema not specified, use dbo as default */
+					if (tbl_schema.empty())
+						tbl_schema = "dbo";
+					
+					target_table = tbl_db + "." + tbl_schema + "." + tbl_name;
+				}
+				
+				if (!target_table.empty())
+					stmt->insert_exec_target = pstrdup(target_table.c_str());
+			}
+
+			/* Extract column list for INSERT-EXEC query rewriting */
+			auto column_list_ctx = ctx->insert_statement()->insert_column_name_list();
+			if (column_list_ctx)
+			{
+				std::string column_list;
+				bool first = true;
+				for (auto col : column_list_ctx->col)
+				{
+					if (!first)
+						column_list += ", ";
+					first = false;
+					/* Get the last id (actual column name) from insert_column_id 
+					 * insert_column_id can be like a.b.c.d where d is the column name
+					 */
+					auto ids = col->id();
+					if (!ids.empty())
+						column_list += stripQuoteFromId(ids.back());
+				}
+				if (!column_list.empty())
+					stmt->insert_exec_columns = pstrdup(column_list.c_str());
+			}
 		}
 
 		// record whether stmt is cross-db
@@ -4952,6 +5010,8 @@ makeExecSql(ParserRuleContext *ctx)
 	stmt->need_to_push_result = false;
 	stmt->is_tsql_select_assign_stmt = false;
 	stmt->insert_exec = false;
+	stmt->insert_exec_target = NULL;
+	stmt->insert_exec_columns = NULL;
 
 	return (PLtsql_stmt *) stmt;
 }
@@ -6016,6 +6076,8 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			stmt->need_to_push_result = false;
 			stmt->is_tsql_select_assign_stmt = false;
 			stmt->insert_exec = false;
+			stmt->insert_exec_target = NULL;
+			stmt->insert_exec_columns = NULL;
 
 			attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 			return (PLtsql_stmt *) stmt;
@@ -6070,6 +6132,8 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 				stmt->need_to_push_result = false;
 				stmt->is_tsql_select_assign_stmt = false;
 				stmt->insert_exec = false;
+				stmt->insert_exec_target = NULL;
+				stmt->insert_exec_columns = NULL;
 
 				attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 				return (PLtsql_stmt *) stmt;

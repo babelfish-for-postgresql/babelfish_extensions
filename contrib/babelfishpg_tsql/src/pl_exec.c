@@ -75,6 +75,27 @@ int			saved_expr_kind = -1;
 /* Global variable to record the retval for insert exec */
 Datum execute_call_insert_exec_retval = (Datum) 0;
 
+/*
+ * INSERT EXEC Query Rewriting Context
+ * 
+ * This structure tracks the context when we're inside an INSERT EXEC statement.
+ * When active, SELECT statements inside procedures are rewritten to INSERT statements.
+ */
+typedef struct InsertExecRewriteContext
+{
+	bool		active;			/* Are we in INSERT EXEC context? */
+	char	   *target_table;	/* Fully qualified target table name */
+	char	   *column_list;	/* Column list for INSERT (NULL = all columns) */
+	int			nest_level;		/* Nesting level for nested procedures */
+} InsertExecRewriteContext;
+
+/* Global INSERT EXEC rewrite context */
+static InsertExecRewriteContext *insert_exec_rewrite_ctx = NULL;
+
+/* Forward declarations for query rewriting */
+static bool should_rewrite_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
+static int exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
+
 typedef struct
 {
 	int			nargs;			/* number of arguments */
@@ -741,45 +762,54 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 			/* Obtain output parameters for Insert Execute */
 			if (estate.insert_exec)
 			{
-				/* Switch to function's memory context */
-				oldcontext = MemoryContextSwitchTo(estate.func->fn_cxt);
-
-				if (OidIsValid(estate.rettype))
+				/* 
+				 * Switch to function's memory context.
+				 * Skip if fn_cxt is NULL (can happen if function memory was freed).
+				 */
+				if (estate.func == NULL || estate.func->fn_cxt == NULL)
 				{
-					/* Get return type properties */
-					get_typlenbyval(estate.rettype, &typLen, &typByVal);
-
-					if (typByVal)
-					{
-						execute_call_insert_exec_retval = estate.retval;
-					}
-					else
-					{
-						/* Pass-by-reference, need to copy the data */
-						execute_call_insert_exec_retval = datumCopy(estate.retval,
-																	typByVal,
-																	typLen);
-					}
+					execute_call_insert_exec_retval = (Datum) 0;
 				}
 				else
 				{
-					/* For cases where rettype is not properly set, handle gracefully */
-					typLen = -1;    /* Variable length */
-					typByVal = false; /* Pass by reference */
-					
-					/* Only proceed if we have a valid return value */
-					if (estate.retval != (Datum) 0)
+					oldcontext = MemoryContextSwitchTo(estate.func->fn_cxt);
+
+					if (OidIsValid(estate.rettype))
 					{
-						execute_call_insert_exec_retval = estate.retval;
+						/* Get return type properties */
+						get_typlenbyval(estate.rettype, &typLen, &typByVal);
+
+						if (typByVal)
+						{
+							execute_call_insert_exec_retval = estate.retval;
+						}
+						else
+						{
+							/* Pass-by-reference, need to copy the data */
+							execute_call_insert_exec_retval = datumCopy(estate.retval,
+																		typByVal,
+																		typLen);
+						}
 					}
 					else
 					{
-						/* Skip the exec_move_row_from_datum call entirely */
-						execute_call_insert_exec_retval = (Datum) 0;
+						/* For cases where rettype is not properly set, handle gracefully */
+						typLen = -1;    /* Variable length */
+						typByVal = false; /* Pass by reference */
+						
+						/* Only proceed if we have a valid return value */
+						if (estate.retval != (Datum) 0)
+						{
+							execute_call_insert_exec_retval = estate.retval;
+						}
+						else
+						{
+							/* Skip the exec_move_row_from_datum call entirely */
+							execute_call_insert_exec_retval = (Datum) 0;
+						}
 					}
+					MemoryContextSwitchTo(oldcontext);
 				}
-				MemoryContextSwitchTo(oldcontext);
-
 			}
 
 			estate.retval = (Datum) 0;
@@ -4846,7 +4876,34 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	PG_TRY();
 	{
-		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
+		/*
+		 * INSERT EXEC Query Rewriting:
+		 * If we're in INSERT EXEC context (via query rewriting approach),
+		 * rewrite the SELECT to an INSERT statement.
+		 */
+		if (should_rewrite_for_insert_exec(estate, stmt))
+		{
+			int ret = exec_rewritten_insert_exec(estate, stmt);
+
+			if (is_cross_db)
+			{
+				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+					set_cur_user_db_and_path(cur_dbname, true);
+			}
+			return ret;
+		}
+
+		/*
+		 * DISABLED: Tuple store approach for INSERT ... EXECUTE
+		 * We now use query rewriting approach exclusively.
+		 * The tuple store approach (exec_stmt_insert_execute_select) is disabled.
+		 * 
+		 * If query rewriting didn't handle the statement above, we let it
+		 * fall through to normal execution which will send results to client
+		 * (this is expected behavior for non-SELECT statements in procedures).
+		 */
+#if 0
+		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE (tuple store approach) */
 		if (stmt->need_to_push_result && estate->insert_exec)
 		{
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
@@ -4858,6 +4915,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			}
 			return ret;
 		}
+#endif
 
 		if (expr->plan && expr->plan->oneshot)
 		{
@@ -4903,12 +4961,25 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				}
 				cur = cur->next;
 			}
+			
+			/* Set the INSERT EXEC rewrite context for query rewriting approach */
+			if (stmt->insert_exec_target != NULL)
+			{
+				pltsql_set_insert_exec_rewrite_context(stmt->insert_exec_target, 
+													   stmt->insert_exec_columns);
+			}
 		}
 
 		/* Setup output target for procedure parameters */
 		if (stmt->insert_exec && stmt->target == NULL)
 		{
 			setup_procedure_output_target_for_insert_exec(estate, stmt);
+		}
+
+		/* Reset the global return value before INSERT-EXEC execution */
+		if (stmt->insert_exec)
+		{
+			execute_call_insert_exec_retval = (Datum) 0;
 		}
 
 		/*
@@ -5088,7 +5159,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/* Update the output parameter */
 		if (stmt->insert_exec && stmt->target && execute_call_insert_exec_retval != (Datum) 0)
 		{
-			exec_move_row_from_datum(estate, stmt->target, execute_call_insert_exec_retval);
+			/*
+			 * Only call exec_move_row_from_datum if the target has fields.
+			 * When a procedure has no OUT parameters, nfields will be 0,
+			 * and execute_call_insert_exec_retval may contain an invalid
+			 * datum (e.g., from a RETURN statement) that would cause a crash.
+			 */
+			PLtsql_row *row = (PLtsql_row *) stmt->target;
+			if (row->nfields > 0)
+			{
+				exec_move_row_from_datum(estate, stmt->target, execute_call_insert_exec_retval);
+			}
 		}
 
 		if (enable_txn_in_triggers)
@@ -5259,6 +5340,12 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	{
 		original_query_string = NULL;
 		is_schemabinding_view = true;
+
+		/* Clear INSERT EXEC rewrite context on any exit */
+		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+		{
+			pltsql_clear_insert_exec_rewrite_context();
+		}
 
 		if (is_cross_db)
 		{
@@ -10564,4 +10651,345 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_DATUM(data);
+}
+
+/*
+ * ============================================================================
+ * INSERT EXEC Query Rewriting Implementation
+ * ============================================================================
+ * 
+ * This section implements the query rewriting approach for INSERT EXEC.
+ * Instead of streaming tuples via DestReceiver, we rewrite SELECT statements
+ * inside procedures to INSERT statements when called from INSERT EXEC context.
+ * 
+ * Example transformation:
+ *   Original: SELECT col1, col2 FROM source
+ *   Rewritten: WITH __insert_exec_cte AS (SELECT col1, col2 FROM source)
+ *              INSERT INTO target_table SELECT * FROM __insert_exec_cte
+ */
+
+/*
+ * Initialize the INSERT EXEC rewrite context
+ */
+void
+pltsql_init_insert_exec_rewrite_context(void)
+{
+	if (insert_exec_rewrite_ctx == NULL)
+	{
+		insert_exec_rewrite_ctx = (InsertExecRewriteContext *)
+			MemoryContextAllocZero(TopMemoryContext, sizeof(InsertExecRewriteContext));
+	}
+	insert_exec_rewrite_ctx->active = false;
+	insert_exec_rewrite_ctx->target_table = NULL;
+	insert_exec_rewrite_ctx->column_list = NULL;
+	insert_exec_rewrite_ctx->nest_level = 0;
+}
+
+/*
+ * Set the INSERT EXEC rewrite context
+ * Called when we enter an INSERT EXEC statement
+ */
+void
+pltsql_set_insert_exec_rewrite_context(const char *target_table, const char *column_list)
+{
+	if (insert_exec_rewrite_ctx == NULL)
+		pltsql_init_insert_exec_rewrite_context();
+	
+	insert_exec_rewrite_ctx->active = true;
+	if (target_table)
+		insert_exec_rewrite_ctx->target_table = MemoryContextStrdup(TopMemoryContext, target_table);
+	if (column_list)
+		insert_exec_rewrite_ctx->column_list = MemoryContextStrdup(TopMemoryContext, column_list);
+	insert_exec_rewrite_ctx->nest_level++;
+	
+	elog(DEBUG1, "INSERT-EXEC-REWRITE: Set context active, target=%s, columns=%s, nest_level=%d",
+		 target_table ? target_table : "(null)",
+		 column_list ? column_list : "(all)",
+		 insert_exec_rewrite_ctx->nest_level);
+}
+
+/*
+ * Clear the INSERT EXEC rewrite context
+ * Called when we exit an INSERT EXEC statement
+ */
+void
+pltsql_clear_insert_exec_rewrite_context(void)
+{
+	if (insert_exec_rewrite_ctx == NULL)
+		return;
+	
+	insert_exec_rewrite_ctx->nest_level--;
+	
+	if (insert_exec_rewrite_ctx->nest_level <= 0)
+	{
+		insert_exec_rewrite_ctx->active = false;
+		if (insert_exec_rewrite_ctx->target_table)
+		{
+			pfree(insert_exec_rewrite_ctx->target_table);
+			insert_exec_rewrite_ctx->target_table = NULL;
+		}
+		if (insert_exec_rewrite_ctx->column_list)
+		{
+			pfree(insert_exec_rewrite_ctx->column_list);
+			insert_exec_rewrite_ctx->column_list = NULL;
+		}
+		insert_exec_rewrite_ctx->nest_level = 0;
+	}
+	
+	elog(DEBUG1, "INSERT-EXEC-REWRITE: Cleared context, nest_level=%d",
+		 insert_exec_rewrite_ctx->nest_level);
+}
+
+/*
+ * Check if INSERT EXEC rewrite context is active
+ */
+bool
+pltsql_insert_exec_rewrite_active(void)
+{
+	return insert_exec_rewrite_ctx != NULL && insert_exec_rewrite_ctx->active;
+}
+
+/*
+ * Get the target table name for INSERT EXEC rewrite
+ */
+const char *
+pltsql_get_insert_exec_target_table(void)
+{
+	if (insert_exec_rewrite_ctx == NULL || !insert_exec_rewrite_ctx->active)
+		return NULL;
+	return insert_exec_rewrite_ctx->target_table;
+}
+
+/*
+ * Get the column list for INSERT EXEC rewrite
+ */
+const char *
+pltsql_get_insert_exec_column_list(void)
+{
+	if (insert_exec_rewrite_ctx == NULL || !insert_exec_rewrite_ctx->active)
+		return NULL;
+	return insert_exec_rewrite_ctx->column_list;
+}
+
+/*
+ * Check if a query is a simple SELECT that can be rewritten
+ * Returns true for SELECT statements that are not:
+ * - SELECT INTO (creates a new table)
+ * - Already an INSERT/UPDATE/DELETE
+ */
+static bool
+is_simple_select_query(const char *query)
+{
+	const char *p;
+	const char *into_pos;
+	
+	if (query == NULL)
+		return false;
+	
+	/* Skip leading whitespace */
+	p = query;
+	while (*p && isspace((unsigned char) *p))
+		p++;
+	
+	/* Check if it starts with SELECT (case-insensitive) */
+	if (pg_strncasecmp(p, "SELECT", 6) != 0)
+		return false;
+	
+	/* Make sure SELECT is followed by whitespace or end */
+	if (p[6] != '\0' && !isspace((unsigned char) p[6]))
+		return false;
+	
+	/*
+	 * Check it's not SELECT INTO (which creates a new table)
+	 * We need to distinguish between:
+	 * - SELECT ... INTO @var (T-SQL variable assignment) - OK to rewrite
+	 * - SELECT ... INTO table (creates new table) - NOT OK to rewrite
+	 * 
+	 * For now, we'll be conservative and reject any SELECT with INTO
+	 * that's not followed by @ (variable)
+	 */
+	into_pos = strcasestr(query, " INTO ");
+	if (into_pos != NULL)
+	{
+		/* Skip whitespace after INTO */
+		const char *after_into = into_pos + 6;
+		while (*after_into && isspace((unsigned char) *after_into))
+			after_into++;
+		
+		/* If it's a variable (@), it's OK */
+		if (*after_into != '@')
+			return false;
+	}
+	
+	return true;
+}
+
+/*
+ * Check if we should rewrite this query for INSERT EXEC
+ * 
+ * Conditions:
+ * 1. INSERT EXEC rewrite context is active
+ * 2. Current context is a procedure (not function)
+ * 3. Statement needs to push result (it's a SELECT returning data)
+ * 4. Query is a simple SELECT
+ */
+static bool
+should_rewrite_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
+{
+	/* Check if rewrite context is active */
+	if (!pltsql_insert_exec_rewrite_active())
+		return false;
+	
+	/* Check if we have a target table */
+	if (pltsql_get_insert_exec_target_table() == NULL)
+		return false;
+	
+	/*
+	 * Block user-defined functions but allow procedures and inline code blocks (EXEC('...'))
+	 * 
+	 * Inline code blocks are compiled with fn_prokind = PROKIND_FUNCTION but have
+	 * fn_signature = "inline_code_block". We need to allow these.
+	 * 
+	 * Only block actual user-defined functions (fn_prokind = PROKIND_FUNCTION and
+	 * fn_signature != "inline_code_block")
+	 */
+	if (estate->func != NULL && 
+		estate->func->fn_prokind == PROKIND_FUNCTION &&
+		strcmp(estate->func->fn_signature, "inline_code_block") != 0)
+		return false;  /* Don't rewrite SELECTs in user-defined functions */
+	
+	/* Check if statement needs to push result (SELECT returning data) */
+	if (!stmt->need_to_push_result)
+		return false;
+	
+	/* Check if it's a simple SELECT query */
+	if (stmt->sqlstmt == NULL || stmt->sqlstmt->query == NULL)
+		return false;
+	
+	if (!is_simple_select_query(stmt->sqlstmt->query))
+		return false;
+	
+	elog(DEBUG1, "INSERT-EXEC-REWRITE: Will rewrite query: %s", stmt->sqlstmt->query);
+	
+	return true;
+}
+
+/*
+ * Execute a rewritten INSERT EXEC query
+ * 
+ * Transforms: SELECT col1, col2 FROM source
+ * Into: WITH __insert_exec_cte AS (SELECT col1, col2 FROM source)
+ *       INSERT INTO target_table (columns) SELECT * FROM __insert_exec_cte
+ * 
+ * This function modifies the statement's query, re-prepares it, and executes
+ * it with proper parameter context so that procedure parameters and local
+ * variables are accessible in the rewritten query.
+ */
+static int
+exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
+{
+	StringInfoData rewritten_query;
+	const char *original_query;
+	const char *target_table;
+	const char *column_list;
+	PLtsql_expr *expr = stmt->sqlstmt;
+	ParamListInfo paramLI;
+	int rc;
+	uint64 processed;
+	char *saved_query;
+	SPIPlanPtr saved_plan;
+	
+	original_query = stmt->sqlstmt->query;
+	target_table = pltsql_get_insert_exec_target_table();
+	column_list = pltsql_get_insert_exec_column_list();
+	
+	if (target_table == NULL)
+	{
+		elog(ERROR, "INSERT-EXEC-REWRITE: No target table set");
+		return PLTSQL_RC_OK;
+	}
+	
+	/* Build the rewritten query */
+	initStringInfo(&rewritten_query);
+	if (column_list != NULL)
+	{
+		/* With explicit column list */
+		appendStringInfo(&rewritten_query,
+			"WITH __insert_exec_cte AS (%s) "
+			"INSERT INTO %s (%s) SELECT * FROM __insert_exec_cte",
+			original_query,
+			target_table,
+			column_list);
+	}
+	else
+	{
+		/* Without column list - insert all columns */
+		appendStringInfo(&rewritten_query,
+			"WITH __insert_exec_cte AS (%s) "
+			"INSERT INTO %s SELECT * FROM __insert_exec_cte",
+			original_query,
+			target_table);
+	}
+	
+	elog(DEBUG1, "INSERT-EXEC-REWRITE: Executing rewritten query: %s", rewritten_query.data);
+	
+	/*
+	 * Save the original query and plan so we can restore them after execution.
+	 * This is important because the same statement might be executed multiple
+	 * times (e.g., in a loop) and we need to rewrite it each time.
+	 */
+	saved_query = expr->query;
+	saved_plan = expr->plan;
+	
+	/*
+	 * Replace the query with the rewritten version and clear the plan
+	 * so it gets re-prepared with the new query.
+	 */
+	expr->query = rewritten_query.data;
+	expr->plan = NULL;
+	
+	PG_TRY();
+	{
+		/* Prepare the rewritten statement */
+		prepare_stmt_execsql(estate, estate->func, stmt, false);
+		
+		/* Set up parameter list to pass procedure parameters and local variables */
+		paramLI = setup_param_list(estate, expr);
+		
+		/* Execute the rewritten query with parameters */
+		rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
+											 estate->readonly_func, 0);
+		
+		if (rc < 0)
+		{
+			elog(ERROR, "INSERT-EXEC-REWRITE: SPI_execute_plan_with_paramlist failed: %s",
+				 SPI_result_code_string(rc));
+		}
+		
+		processed = SPI_processed;
+		
+		/* Update rowcount and found status */
+		exec_set_rowcount(processed);
+		exec_set_found(estate, processed > 0);
+		
+		elog(DEBUG1, "INSERT-EXEC-REWRITE: Inserted %lu rows", (unsigned long) processed);
+		
+		/* Free the plan we just created (it's a one-shot plan) */
+		if (expr->plan)
+		{
+			SPI_freeplan(expr->plan);
+		}
+	}
+	PG_FINALLY();
+	{
+		/* Restore the original query and plan */
+		expr->query = saved_query;
+		expr->plan = saved_plan;
+		
+		/* Free the rewritten query string */
+		pfree(rewritten_query.data);
+	}
+	PG_END_TRY();
+	
+	return PLTSQL_RC_OK;
 }
