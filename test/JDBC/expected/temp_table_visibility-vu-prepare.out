@@ -91,6 +91,8 @@ BEGIN
 	SELECT SUM(newcol) FROM #temptable5605						-- returns 0 as sum
 END;
 GO
+CREATE PROC p_drop AS DROP TABLE #temptable5605;
+GO
 CREATE PROC p_index_create
 AS 
 BEGIN
