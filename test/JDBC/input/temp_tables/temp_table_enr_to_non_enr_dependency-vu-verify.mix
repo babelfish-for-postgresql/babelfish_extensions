@@ -1,8 +1,8 @@
 -- tsql
-CREATE TABLE #temp_table(a INT CHECK(p_test(a) > 100));
+CREATE TABLE #temp_table(a INT CHECK(fn_multiply_by_100(a) > 100));
 GO
 
-DROP FUNCTION p_test;
+DROP FUNCTION fn_multiply_by_100;
 GO
 
 DROP TABLE #temp_table;

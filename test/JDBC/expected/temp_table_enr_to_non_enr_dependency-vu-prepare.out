@@ -14,10 +14,10 @@ GO
 
 -- terminate-tsql-conn
 -- tsql
-IF COALESCE(OBJECT_ID('p_test'),0) = 0
+IF COALESCE(OBJECT_ID('fn_multiply_by_100'),0) = 0
 BEGIN
 	DECLARE @sql NVARCHAR(MAX);
-	SET @sql = N'CREATE FUNCTION p_test(@a INT) RETURNS INT AS
+	SET @sql = N'CREATE FUNCTION fn_multiply_by_100(@a INT) RETURNS INT AS
 	BEGIN
 		RETURN @a * 100;
 	END;';
