@@ -1,0 +1,12 @@
+-- tsql
+CREATE TABLE #temp_table(a INT CHECK(p_test(a) > 100));
+GO
+
+DROP FUNCTION p_test;
+GO
+
+DROP TABLE #temp_table;
+GO
+
+-- FIXME: BABEL-5664 - on-disk pg_depend entries are not cleared even after dropping the table
+-- leading to error while dropping the function

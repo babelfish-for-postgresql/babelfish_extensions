@@ -1266,6 +1266,20 @@ define_custom_variables(void)
 							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
+
+	/* 
+	 * GUC to allow ENR to non-ENR dependency creation in pg_depend. In such cases, the entry goes into
+	 * the on-disk catalog instead of the in-memory ENR catalog. We should not be allowing this pattern,
+	 * and hence we will create a GUC which will by default disallow this pattern.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.allow_enr_to_non_enr_dependency",
+							 gettext_noop("Allows ENR <-> non-ENR dependency in pg_depend."),
+							 NULL,
+							 &pltsql_allow_enr_to_non_enr_dependency,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
 }
 
 int			escape_hatch_storage_options = EH_IGNORE;

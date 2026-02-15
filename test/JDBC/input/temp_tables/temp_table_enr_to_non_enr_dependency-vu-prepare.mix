@@ -1,0 +1,21 @@
+-- Test: Creating constraint with non-ENR function with allow_enr_to_non_enr_dependency GUC enabled
+-- psql
+
+SHOW babelfishpg_tsql.allow_enr_to_non_enr_dependency;
+GO
+
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.allow_enr_to_non_enr_dependency = true;
+GO
+
+-- terminate-tsql-conn
+-- tsql
+IF COALESCE(OBJECT_ID('p_test'),0) = 0
+BEGIN
+	DECLARE @sql NVARCHAR(MAX);
+	SET @sql = N'CREATE FUNCTION p_test(@a INT) RETURNS INT AS
+	BEGIN
+		RETURN @a * 100;
+	END;';
+	EXEC sp_executesql @sql;
+END;
+GO

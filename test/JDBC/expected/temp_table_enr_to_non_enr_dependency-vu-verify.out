@@ -1,0 +1,14 @@
+-- tsql
+CREATE TABLE #temp_table(a INT CHECK(p_test(a) > 100));
+GO
+
+DROP FUNCTION p_test;
+GO
+~~ERROR (Code: 3729)~~
+
+~~ERROR (Message: cannot drop function p_test(integer) because other objects depend on it)~~
+
+
+DROP TABLE #temp_table;
+GO
+

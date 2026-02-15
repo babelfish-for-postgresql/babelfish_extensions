@@ -1,0 +1,5 @@
+-- psql
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.allow_enr_to_non_enr_dependency = false;
+GO
+
+-- terminate-tsql-conn
