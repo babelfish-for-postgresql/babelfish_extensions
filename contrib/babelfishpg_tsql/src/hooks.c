@@ -8330,12 +8330,9 @@ find_all_view_references(Node *node, List **view_oids)
 static EphemeralNamedRelation
 find_object_in_enr(Oid catalog_oid, Oid object_id, QueryEnvironment *qe)
 {
-	QueryEnvironment 		*queryEnv = currentQueryEnv;
+	QueryEnvironment 		*queryEnv = (qe ? qe : currentQueryEnv);
 	ListCell         		*curlc;
 	EphemeralNamedRelation	enr;
-
-	if (qe)
-		queryEnv = qe;
 
 	while (queryEnv)
 	{
@@ -8432,9 +8429,12 @@ find_object_in_enr(Oid catalog_oid, Oid object_id, QueryEnvironment *qe)
 			default:
 				break;
 		}
-		queryEnv = queryEnv->parentEnv;
+		/*
+		 * skip iterating through parent queryEnvs if a queryEnv is passed explicitly 
+		 */
 		if (qe)
 			break;
+		queryEnv = queryEnv->parentEnv;
 	}
 	return NULL;
 }
@@ -8471,6 +8471,11 @@ is_sys_object(Oid catalogid, Oid objid)
 	return false;
 }
 
+/*
+ * Checks if the depender object is an ENR and the referenced object is a system object which
+ * helps to determine if we want to record a dependency between the objects in the pg_depend catalog. 
+ * Since system objects cannot be altered, it is safe to skip creating this dependency.
+ */		
 static bool
 is_enr_to_sys_object_dependency(const ObjectAddress *depender, const ObjectAddress *referenced)
 {
