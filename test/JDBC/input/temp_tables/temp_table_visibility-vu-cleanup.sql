@@ -34,8 +34,11 @@ go
 drop procedure p_index_create
 go
 
-drop procedure p_drop
-go
-
 drop view enr_view
 go
+
+drop function custom_adder;
+GO
+
+drop procedure p_def_cons;
+GO

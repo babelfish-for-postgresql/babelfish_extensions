@@ -12,6 +12,8 @@
 #include "access/xact.h"
 #include "access/relation.h"
 #include "access/reloptions.h"
+#include "catalog/catalog.h"
+#include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_aggregate.h"
@@ -297,7 +299,8 @@ static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNu
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
-static EphemeralNamedRelation find_object_in_enr(Oid catalog_oid, Oid object_id);
+static EphemeralNamedRelation find_object_in_enr(Oid catalog_oid, Oid object_id, QueryEnvironment *qe);
+static bool is_enr_to_sys_object_dependency(const ObjectAddress *depender, const ObjectAddress *referenced);
 static bool verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config);
 PG_FUNCTION_INFO_V1(persist_temp_oid_buffer_start_internal);
 
@@ -342,6 +345,7 @@ static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
 static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_msg_hook = NULL;
 static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_hook = NULL;
 static find_object_in_enr_hook_type prev_find_object_in_enr_hook = NULL;
+static is_enr_to_sys_object_dependency_hook_type prev_is_enr_to_sys_object_dependency_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static adjust_numeric_result_hook_type prev_adjust_numeric_result_hook = NULL;
@@ -494,6 +498,9 @@ InstallExtendedHooks(void)
 
 	prev_find_object_in_enr_hook = find_object_in_enr_hook;
 	find_object_in_enr_hook = find_object_in_enr;
+
+	prev_is_enr_to_sys_object_dependency_hook = is_enr_to_sys_object_dependency_hook;
+	is_enr_to_sys_object_dependency_hook = is_enr_to_sys_object_dependency;
 
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
@@ -698,6 +705,7 @@ UninstallExtendedHooks(void)
 	GetNewTempObjectId_hook = prev_GetNewTempObjectId_hook;
 	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
 	find_object_in_enr_hook = prev_find_object_in_enr_hook;
+	is_enr_to_sys_object_dependency_hook = prev_is_enr_to_sys_object_dependency_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	adjust_numeric_result_hook = prev_adjust_numeric_result_hook;
@@ -8316,14 +8324,18 @@ find_all_view_references(Node *node, List **view_oids)
  * For find_object_in_enr_hook
  *
  * Returns the ENR in which the given object (denoted by its catalog oid and object id)
- * exists. Based on the catalog we are searching the object in, the search criteria changes.
+ * exists. If a queryEnv is given, only check ENRs within that queryEnv.
+ * Based on the catalog we are searching the object in, the search criteria changes.
  */
 static EphemeralNamedRelation
-find_object_in_enr(Oid catalog_oid, Oid object_id)
+find_object_in_enr(Oid catalog_oid, Oid object_id, QueryEnvironment *qe)
 {
 	QueryEnvironment 		*queryEnv = currentQueryEnv;
 	ListCell         		*curlc;
 	EphemeralNamedRelation	enr;
+
+	if (qe)
+		queryEnv = qe;
 
 	while (queryEnv)
 	{
@@ -8421,8 +8433,49 @@ find_object_in_enr(Oid catalog_oid, Oid object_id)
 				break;
 		}
 		queryEnv = queryEnv->parentEnv;
+		if (qe)
+			break;
 	}
 	return NULL;
+}
+
+/*
+ * Checks if the given objid from the given catalog is a system object or not.
+ *
+ * Pinned objects i.e. objects Postgres requires and babelfish extension declared objects i.e.
+ * objects created by the babelfish extension are regarded as system objects.
+ */
+static bool
+is_sys_object(Oid catalogid, Oid objid)
+{
+	/*
+	 * If the object is owned by an extension, only babelfish extension created
+	 * objects will be regarded as system objects.
+	 */
+	Oid 	owningext = getExtensionOfObject(catalogid, objid);
+	char	*bbf_prefix_ext_name = "babelfishpg";
+	if (owningext != InvalidOid)
+	{
+		if (strncmp(get_extension_name(owningext), bbf_prefix_ext_name, strlen(bbf_prefix_ext_name)) == 0)
+			return true;
+		else
+			return false;
+	}
+
+	/*
+	 * If this is not an object owned by an extension and it cannot be a postgres
+	 * pinned object because we skip creating dependency on pinned object way ahead
+	 * of this. Hence, this is simply not a system object.
+	 */
+	Assert(!IsPinnedObject(catalogid, objid));
+	return false;
+}
+
+static bool
+is_enr_to_sys_object_dependency(const ObjectAddress *depender, const ObjectAddress *referenced)
+{
+	return find_object_in_enr(depender->classId, depender->objectId, NULL) && 
+			is_sys_object(referenced->classId, referenced->objectId);
 }
 
 static Node*
