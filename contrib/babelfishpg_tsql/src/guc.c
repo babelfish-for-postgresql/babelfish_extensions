@@ -11,6 +11,7 @@
 #include "pl_explain.h"
 #include "miscadmin.h"
 #include "access/parallel.h"
+#include "utils/queryenvironment.h"
 
 #define PLTSQL_SESSION_ISOLATION_LEVEL "default_transaction_isolation"
 #define PLTSQL_TRANSACTION_ISOLATION_LEVEL "transaction_isolation"
