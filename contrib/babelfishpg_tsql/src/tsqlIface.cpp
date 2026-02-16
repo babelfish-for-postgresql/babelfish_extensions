@@ -1911,6 +1911,105 @@ public:
         {
             graft(makeInsertBulkStatement(ctx), peekContainer());
         }
+		/*
+		 * Check for INSERT EXEC with dynamic SQL: INSERT INTO t EXEC (@variable)
+		 * In this case, we create a PLtsql_stmt_exec_batch instead of PLtsql_stmt_execsql
+		 * because the variable needs to be evaluated at runtime, not quoted as an identifier.
+		 */
+		else if (ctx->insert_statement() &&
+				 ctx->insert_statement()->insert_statement_value() &&
+				 ctx->insert_statement()->insert_statement_value()->execute_statement())
+		{
+			TSqlParser::Execute_statementContext *ctxES = ctx->insert_statement()->insert_statement_value()->execute_statement();
+			TSqlParser::Execute_bodyContext *body = ctxES->execute_body();
+			
+			if (body && body->LR_BRACKET())
+			{
+				/* This is INSERT EXEC with dynamic SQL - create PLtsql_stmt_exec_batch */
+				PLtsql_stmt_exec_batch *batch_stmt = (PLtsql_stmt_exec_batch *) palloc0(sizeof(*batch_stmt));
+				batch_stmt->cmd_type = PLTSQL_STMT_EXEC_BATCH;
+				batch_stmt->lineno = getLineNo(ctx);
+				batch_stmt->insert_exec = true;
+
+				/* Build the expression from execute_var_string */
+				std::vector<TSqlParser::Execute_var_stringContext *> exec_strings = body->execute_var_string();
+				std::stringstream ss;
+				if (!exec_strings.empty())
+				{
+					ss << ::getFullText(exec_strings[0]);
+					for (size_t i = 1; i < exec_strings.size(); i++)
+					{
+						ss << " + " << ::getFullText(exec_strings[i]);
+					}
+				}
+				std::string expr_query = ss.str();
+				batch_stmt->expr = makeTsqlExpr(expr_query, true);
+
+				/* Extract target table name for INSERT-EXEC query rewriting */
+				auto ddl_object = ctx->insert_statement()->ddl_object();
+				if (ddl_object)
+				{
+					std::string target_table;
+					if (ddl_object->local_id())
+					{
+						/* Temp table like #temp - use as-is */
+						target_table = ::getFullText(ddl_object->local_id());
+					}
+					else if (ddl_object->full_object_name())
+					{
+						/* Regular table - build fully qualified name for cross-db support */
+						std::string tbl_name, tbl_schema, tbl_db;
+						if (ddl_object->full_object_name()->object_name)
+							tbl_name = stripQuoteFromId(ddl_object->full_object_name()->object_name);
+						if (ddl_object->full_object_name()->schema)
+							tbl_schema = stripQuoteFromId(ddl_object->full_object_name()->schema);
+						if (ddl_object->full_object_name()->database)
+							tbl_db = stripQuoteFromId(ddl_object->full_object_name()->database);
+						
+						/* Always build fully qualified name for cross-db INSERT-EXEC support */
+						if (tbl_db.empty())
+							tbl_db = get_cur_db_name();
+						if (tbl_schema.empty())
+							tbl_schema = "dbo";
+						
+						target_table = tbl_db + "." + tbl_schema + "." + tbl_name;
+					}
+					
+					if (!target_table.empty())
+						batch_stmt->insert_exec_target = pstrdup(target_table.c_str());
+				}
+
+				/* Extract column list for INSERT-EXEC query rewriting */
+				auto column_list_ctx = ctx->insert_statement()->insert_column_name_list();
+				if (column_list_ctx)
+				{
+					std::string column_list;
+					bool first = true;
+					for (auto col : column_list_ctx->col)
+					{
+						if (!first)
+							column_list += ", ";
+						first = false;
+						auto ids = col->id();
+						if (!ids.empty())
+							column_list += stripQuoteFromId(ids.back());
+					}
+					if (!column_list.empty())
+						batch_stmt->insert_exec_columns = pstrdup(column_list.c_str());
+				}
+
+				graft((PLtsql_stmt *) batch_stmt, peekContainer());
+				
+				/* Mark that we've handled this as INSERT EXEC dynamic SQL */
+				/* The exitDml_statement will skip processing for this case */
+				return;
+			}
+			else
+			{
+				/* Regular INSERT EXEC with procedure name - use normal handling */
+				graft(makeSQL(ctx), peekContainer());
+			}
+		}
         else
         {
             graft(makeSQL(ctx), peekContainer());
@@ -1931,6 +2030,26 @@ public:
             clear_rewritten_query_fragment();
             return;
         }
+
+		/*
+		 * Check for INSERT EXEC with dynamic SQL - this was handled in enterDml_statement
+		 * and created a PLtsql_stmt_exec_batch, so we skip the normal processing here.
+		 */
+		if (ctx->insert_statement() &&
+			ctx->insert_statement()->insert_statement_value() &&
+			ctx->insert_statement()->insert_statement_value()->execute_statement())
+		{
+			TSqlParser::Execute_statementContext *ctxES = ctx->insert_statement()->insert_statement_value()->execute_statement();
+			TSqlParser::Execute_bodyContext *body = ctxES->execute_body();
+			
+			if (body && body->LR_BRACKET())
+			{
+				/* INSERT EXEC with dynamic SQL was handled in enterDml_statement */
+				clear_rewritten_query_fragment();
+				return;
+			}
+		}
+
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
 		Assert(stmt->sqlstmt = statementMutator->expr);

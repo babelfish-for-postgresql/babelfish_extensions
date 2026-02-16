@@ -165,6 +165,10 @@ typedef struct PLtsql_stmt_exec_batch
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *expr;
+	/* INSERT EXEC context for INSERT INTO ... EXEC (@variable) */
+	bool		insert_exec;		/* Is this INSERT EXEC with dynamic SQL? */
+	char	   *insert_exec_target;	/* Target table for INSERT-EXEC */
+	char	   *insert_exec_columns;	/* Column list for INSERT-EXEC */
 } PLtsql_stmt_exec_batch;
 
 typedef struct PLtsql_stmt_raiserror

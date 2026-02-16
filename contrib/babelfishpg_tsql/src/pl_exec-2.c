@@ -1519,6 +1519,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	volatile int scope_level = 0;
 	char	   *old_db_name = get_cur_db_name();
 	char	   *cur_db_name = NULL;
+	bool		insert_exec_context_set = false;
 
 	LOCAL_FCINFO(fcinfo, 1);
 
@@ -1540,6 +1541,22 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
 
+		/*
+		 * If this is INSERT EXEC with dynamic SQL (INSERT INTO t EXEC (@var)),
+		 * set up the INSERT EXEC rewrite context before executing the dynamic SQL.
+		 * This allows SELECT statements in the dynamic SQL to be rewritten as INSERTs.
+		 */
+		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+		{
+			elog(DEBUG1, "INSERT EXEC dynamic SQL: Setting rewrite context for target=%s, columns=%s",
+				 stmt->insert_exec_target,
+				 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
+			
+			pltsql_set_insert_exec_rewrite_context(stmt->insert_exec_target,
+												   stmt->insert_exec_columns);
+			insert_exec_context_set = true;
+		}
+
 		codeblock = makeNode(InlineCodeBlock);
 
 		codeblock->source_text = querystr;
@@ -1560,6 +1577,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	}
 	PG_FINALLY();
 	{
+		/* Clear INSERT EXEC context if we set it */
+		if (insert_exec_context_set)
+		{
+			pltsql_clear_insert_exec_rewrite_context();
+		}
+
 		/* Restore past settings */
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
