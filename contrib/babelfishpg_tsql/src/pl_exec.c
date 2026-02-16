@@ -5085,6 +5085,83 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO))
 				restore_session_properties();
 		}
+		else if (stmt->insert_exec)
+		{
+			/*
+			 * INSERT EXEC with Savepoint for Transaction Atomicity
+			 * 
+			 * Wrap the procedure execution in a savepoint to ensure atomic
+			 * behavior. If the procedure fails at any point (constraint violation,
+			 * error in procedure, etc.), all inserted rows are rolled back.
+			 * 
+			 * This matches SQL Server's behavior where INSERT EXEC is atomic -
+			 * either all rows are inserted or none are.
+			 */
+			MemoryContext oldcontext_sp = CurrentMemoryContext;
+			ResourceOwner oldowner_sp = CurrentResourceOwner;
+			ExprContext *old_eval_econtext = estate->eval_econtext;
+			
+			elog(DEBUG1, "INSERT EXEC: Starting savepoint for atomic execution");
+			
+			BeginInternalSubTransaction("insert_exec");
+			MemoryContextSwitchTo(oldcontext_sp);
+			
+			PG_TRY(2);
+			{
+				/* Execute the procedure - SELECTs will be rewritten to INSERTs */
+				rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
+													 estate->readonly_func, tcount);
+				
+				/* Success - release the savepoint */
+				ReleaseCurrentSubTransaction();
+				MemoryContextSwitchTo(oldcontext_sp);
+				CurrentResourceOwner = oldowner_sp;
+				
+				/* Restore eval_econtext (inner one was cleaned up during subxact exit) */
+				estate->eval_econtext = old_eval_econtext;
+				
+				elog(DEBUG1, "INSERT EXEC: Savepoint released successfully");
+			}
+			PG_CATCH(2);
+			{
+				ErrorData *edata;
+				int			sqlerrcode;
+				char	   *message;
+				
+				elog(DEBUG1, "INSERT EXEC: Error caught, rolling back savepoint");
+				
+				/* Save error info BEFORE rollback, in the outer memory context */
+				MemoryContextSwitchTo(oldcontext_sp);
+				edata = CopyErrorData();
+				sqlerrcode = edata->sqlerrcode;
+				message = pstrdup(edata->message);
+				FlushErrorState();
+				
+				/* Rollback the savepoint - this undoes all INSERTs */
+				RollbackAndReleaseCurrentSubTransaction();
+				MemoryContextSwitchTo(oldcontext_sp);
+				CurrentResourceOwner = oldowner_sp;
+				
+				/* Restore eval_econtext */
+				estate->eval_econtext = old_eval_econtext;
+				
+				/*
+				 * Clean up after subtransaction abort. The tuple table made in
+				 * the subxact was thrown away by SPI during subxact abort.
+				 */
+				estate->eval_tuptable = NULL;
+				exec_eval_cleanup(estate);
+				
+				/* Free the copied error data */
+				FreeErrorData(edata);
+				
+				/* Re-raise the error with the saved information */
+				ereport(ERROR,
+						(errcode(sqlerrcode),
+						 errmsg("%s", message)));
+			}
+			PG_END_TRY(2);
+		}
 		else
 			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 												 estate->readonly_func, tcount);
