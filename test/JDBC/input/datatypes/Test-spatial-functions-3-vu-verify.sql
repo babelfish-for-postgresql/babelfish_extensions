@@ -21,7 +21,7 @@ go
 WITH PointCTE AS (
     SELECT ID, geom_type, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test_db
 )
-SELECT * FROM PointCTE WHERE num_points > 0 ORDER BY num_points DESC;
+SELECT * FROM PointCTE WHERE num_points > 0 ORDER BY num_points DESC, geom_type;
 go
 
 -- CTE with Window Functions
@@ -39,7 +39,7 @@ go
 SELECT geom_type, COUNT(*) AS cnt, SUM(geom.STNumPoints()) AS total_pts
 FROM STNumPoints_geom_test_db
 GROUP BY geom_type
-ORDER BY total_pts DESC;
+ORDER BY total_pts DESC, geom_type;
 go
 
 -- ORDER BY test
@@ -305,7 +305,7 @@ go
 SELECT geom_type, COUNT(*) AS cnt, SUM(geom.STNumPoints()) AS total_pts
 FROM STNumPoints_geom_test
 GROUP BY geom_type
-ORDER BY total_pts DESC;
+ORDER BY total_pts DESC, geom_type;
 go
 
 -- ORDER BY test
