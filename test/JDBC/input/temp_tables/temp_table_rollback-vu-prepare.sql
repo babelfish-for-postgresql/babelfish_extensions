@@ -95,6 +95,83 @@ BEGIN
 END
 GO
 
+CREATE FUNCTION func_get_sum_temp(@max_a int)
+RETURNS int
+AS
+BEGIN
+    DECLARE @result int;
+    SELECT @result = SUM(c) FROM #t_func_idx WHERE a <= @max_a;
+    RETURN @result;
+END
+GO
+
+-- Function with COUNT aggregation
+CREATE FUNCTION func_get_count_temp(@min_b int)
+RETURNS int
+AS
+BEGIN
+    DECLARE @result int;
+    SELECT @result = COUNT(*) FROM #t_func_idx WHERE b >= @min_b;
+    RETURN @result;
+END
+GO
+
+-- Function with MIN/MAX aggregation
+CREATE FUNCTION func_get_min_max_temp(@col char(1))
+RETURNS int
+AS
+BEGIN
+    DECLARE @result int;
+    IF @col = 'a'
+        SELECT @result = MAX(a) - MIN(a) FROM #t_func_idx;
+    ELSE IF @col = 'b'
+        SELECT @result = MAX(b) - MIN(b) FROM #t_func_idx;
+    ELSE
+        SELECT @result = MAX(c) - MIN(c) FROM #t_func_idx;
+    RETURN @result;
+END
+GO
+
+CREATE PROCEDURE test_temp_table_drop_intermediate_idx AS
+BEGIN
+    CREATE TABLE #t_procedure(a int default 1, b bigint primary key, c int);
+    CREATE INDEX #idx1 ON #t_procedure(a);
+    CREATE INDEX #idx2 ON #t_procedure(a,b);
+    SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
+    DROP INDEX #idx1 ON #t_procedure;
+    INSERT INTO #t_procedure(a, b, c) VALUES (4, 100, 2);
+    SELECT * FROM #t_procedure;
+END
+GO
+
+-- Procedure to test ALTER TABLE + INDEX + TRUNCATE (cache lookup fix)
+CREATE PROCEDURE test_alter_index_truncate_cache_fix
+AS
+BEGIN
+    SET XACT_ABORT ON
+
+    CREATE TABLE #t0_qdomqw (id int, name varchar(100) COLLATE polish_cs_as)
+
+    INSERT INTO #t0_qdomqw (id, name) VALUES (1282566819, 'geskxo')
+
+    BEGIN TRANSACTION
+        ALTER TABLE #t0_qdomqw ADD col_def_estp int DEFAULT 4
+        UPDATE #t0_qdomqw SET name = 'slukgofiuazhigik' WHERE id IS NOT NULL
+        SELECT * FROM #t0_qdomqw
+        CREATE INDEX idx_eefi ON #t0_qdomqw (id)
+        CREATE INDEX idx_eipj ON #t0_qdomqw (id)
+    COMMIT TRANSACTION
+
+    TRUNCATE TABLE #t0_qdomqw
+
+    SELECT * FROM #t0_qdomqw
+
+    DROP TABLE #t0_qdomqw
+
+    SET XACT_ABORT OFF
+END
+GO
+
 -- Cross Query Env Tests (BABEL-6268)
 CREATE PROC p_drop AS DROP TABLE #test
 GO
@@ -326,82 +403,5 @@ BEGIN
     
     -- Try to return more data (but table is already dropped)
     SELECT 200 as id, 'after drop' as data
-END
-GO
-
-CREATE FUNCTION func_get_sum_temp(@max_a int)
-RETURNS int
-AS
-BEGIN
-    DECLARE @result int;
-    SELECT @result = SUM(c) FROM #t_func_idx WHERE a <= @max_a;
-    RETURN @result;
-END
-GO
-
--- Function with COUNT aggregation
-CREATE FUNCTION func_get_count_temp(@min_b int)
-RETURNS int
-AS
-BEGIN
-    DECLARE @result int;
-    SELECT @result = COUNT(*) FROM #t_func_idx WHERE b >= @min_b;
-    RETURN @result;
-END
-GO
-
--- Function with MIN/MAX aggregation
-CREATE FUNCTION func_get_min_max_temp(@col char(1))
-RETURNS int
-AS
-BEGIN
-    DECLARE @result int;
-    IF @col = 'a'
-        SELECT @result = MAX(a) - MIN(a) FROM #t_func_idx;
-    ELSE IF @col = 'b'
-        SELECT @result = MAX(b) - MIN(b) FROM #t_func_idx;
-    ELSE
-        SELECT @result = MAX(c) - MIN(c) FROM #t_func_idx;
-    RETURN @result;
-END
-GO
-
-CREATE PROCEDURE test_temp_table_drop_intermediate_idx AS
-BEGIN
-    CREATE TABLE #t_procedure(a int default 1, b bigint primary key, c int);
-    CREATE INDEX #idx1 ON #t_procedure(a);
-    CREATE INDEX #idx2 ON #t_procedure(a,b);
-    SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
-    DROP INDEX #idx1 ON #t_procedure;
-    INSERT INTO #t_procedure(a, b, c) VALUES (4, 100, 2);
-    SELECT * FROM #t_procedure;
-END
-GO
-
--- Procedure to test ALTER TABLE + INDEX + TRUNCATE (cache lookup fix)
-CREATE PROCEDURE test_alter_index_truncate_cache_fix
-AS
-BEGIN
-    SET XACT_ABORT ON
-
-    CREATE TABLE #t0_qdomqw (id int, name varchar(100) COLLATE polish_cs_as)
-
-    INSERT INTO #t0_qdomqw (id, name) VALUES (1282566819, 'geskxo')
-
-    BEGIN TRANSACTION
-        ALTER TABLE #t0_qdomqw ADD col_def_estp int DEFAULT 4
-        UPDATE #t0_qdomqw SET name = 'slukgofiuazhigik' WHERE id IS NOT NULL
-        SELECT * FROM #t0_qdomqw
-        CREATE INDEX idx_eefi ON #t0_qdomqw (id)
-        CREATE INDEX idx_eipj ON #t0_qdomqw (id)
-    COMMIT TRANSACTION
-
-    TRUNCATE TABLE #t0_qdomqw
-
-    SELECT * FROM #t0_qdomqw
-
-    DROP TABLE #t0_qdomqw
-
-    SET XACT_ABORT OFF
 END
 GO

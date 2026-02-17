@@ -37,6 +37,7 @@ GO
 DROP PROCEDURE test_alter_index_truncate_cache_fix
 GO
 
+
 DROP PROC p_drop
 GO
 
