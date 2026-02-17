@@ -11,7 +11,6 @@
 #include "pl_explain.h"
 #include "miscadmin.h"
 #include "access/parallel.h"
-#include "utils/queryenvironment.h"
 
 #define PLTSQL_SESSION_ISOLATION_LEVEL "default_transaction_isolation"
 #define PLTSQL_TRANSACTION_ISOLATION_LEVEL "transaction_isolation"
@@ -1266,20 +1265,6 @@ define_custom_variables(void)
 							 true,
 							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL | GUC_SUPERUSER_ONLY,
-							 NULL, NULL, NULL);
-
-	/* 
-	 * GUC to allow ENR to non-ENR dependency creation in pg_depend. In such cases, the entry goes into
-	 * the on-disk catalog instead of the in-memory ENR catalog. We should not be allowing this pattern,
-	 * and hence we will create a GUC which will by default disallow this pattern.
-	 */
-	DefineCustomBoolVariable("babelfishpg_tsql.allow_enr_to_non_enr_dependency",
-							 gettext_noop("Allows ENR <-> non-ENR dependency in pg_depend."),
-							 NULL,
-							 &pltsql_allow_enr_to_non_enr_dependency,
-							 false,
-							 PGC_SUSET,
-							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 }
 
