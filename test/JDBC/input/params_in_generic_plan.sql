@@ -2308,6 +2308,216 @@ GO
 EXEC sp_executesql N'select * from t1 order by a offset @offset_val rows fetch next @fetch_val rows only', N'@offset_val int, @fetch_val int', @offset_val = 1, @fetch_val = NULL;
 GO
 
+EXEC reset_t1
+GO
+
+-- Ref: targetlist param
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@a int', N'select a, b, @a as param_value from t1 where a < 3', @a = 5;
+GO
+
+-- Ref: qual param
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@a int', N'select * from t1 where a = @a', @a = 2;
+GO
+
+-- Ref: update filter
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@filter int', N'update t1 set b = 5942 where a = @filter; select * from t1 where a = @filter', @filter = 1;
+GO
+
+EXEC reset_t1;
+GO
+
+-- Ref: delete with local variable
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@del_val int', N'create table t_temp (a int); insert into t_temp values (1), (2), (3), (4); delete from t_temp where a = @del_val; select * from t_temp order by a; drop table t_temp', @del_val = 2;
+GO
+
+-- Ref: update with both local variables
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@update_val int, @filter int', N'update t1 set b = @update_val where a = @filter; select * from t1 where a = @filter', @update_val = 100, @filter = 1;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+-- Ref: update with same variable in both places
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@filter int', N'update t1 set b = @filter where a = @filter; select * from t1 where a = @filter', @filter = 1;
+GO
+
+EXEC reset_t1
+GO
+
+-- Ref: TOP with local variable
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@a int', N'select top (@a) * from t1 order by a', @a = 2;
+GO
+
+-- Ref: TOP with NULL local variable
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@top_null int', N'select top (@top_null) * from t1', @top_null = NULL;
+GO
+
+-- Ref: TOP with local variable from subquery
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'', N'select top (select NULL) * from t1 order by a';
+GO
+
+-- Ref: local variable assignment in targetlist
+declare @result int;
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@i int, @result int OUTPUT', N'select @result = b from t1 where a = @i', @i = 2, @result = @result OUTPUT;
+select @result;
+GO
+
+-- Ref: local variable assignment with parameter in target and WHERE
+declare @result int;
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@i int, @result int OUTPUT', N'select @result = b + @i from t1 where a = @i', @i = 2, @result = @result OUTPUT;
+select @result;
+GO
+
+-- Ref: multiple local variable assignments
+declare @var1 int, @var2 int;
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@param int, @var1 int OUTPUT, @var2 int OUTPUT', N'select @var1 = a, @var2 = b from t1 where a = @param', @param = 2, @var1 = @var1 OUTPUT, @var2 = @var2 OUTPUT;
+select @var1, @var2;
+GO
+
+-- Ref: local variable assignment over multiple rows
+declare @result int;
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@threshold int, @result int OUTPUT', N'select @result = sum(b) from t1 where a > @threshold', @threshold = 2, @result = @result OUTPUT;
+select @result;
+GO
+
+-- Ref: local variable in GROUP BY HAVING
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@having_val int', N'select a, sum(b) as total from t1 group by a having sum(b) > @having_val order by a', @having_val = 15;
+GO
+
+-- Ref: CASE expression with local variable
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@threshold int', N'select a, case when a > @threshold then ''high'' else ''low'' end as category from t1', @threshold = 2;
+GO
+
+-- Ref: local variable assignment in CASE
+declare @result varchar(10);
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@threshold int, @at int, @result varchar(10) OUTPUT', N'select @result = case when a > @threshold then ''high'' else ''low'' end from t1 where a = @at', @threshold = 2, @at = 3, @result = @result OUTPUT;
+select @result;
+GO
+
+-- Ref: local variable with string operations
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@search varchar(10)', N'select * from t1 where c like ''%'' + @search + ''%''', @search = 'sec';
+GO
+
+-- Ref: string concatenation with assignment
+declare @result varchar(100);
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@prefix varchar(10), @result varchar(100) OUTPUT', N'select @result = @prefix + c from t1 order by a', @prefix = 'Value: ', @result = @result OUTPUT;
+select @result;
+GO
+
+-- Ref: subquery with local variable
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@multiplier int', N'select a, (select @multiplier * b) as doubled_b from t1 where a < 3', @multiplier = 2;
+GO
+
+-- Ref: nested subquery with local variable
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@val int', N'select a, (select b + (select @val)) as nested_calc from t1 where a < 3', @val = 10;
+GO
+
+-- Ref: subquery in WHERE with local variable
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@val int', N'select * from t1 where b > (select max(b) from t1 where a < @val)', @val = 2;
+GO
+
+-- Ref: correlated subquery with local variable
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@offset int', N'select a, (select count(*) from t1 t_inner where t_inner.b > t_outer.b + @offset) as count_greater from t1 t_outer', @offset = 10;
+GO
+
+-- Ref: NULL parameter
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@null_param int', N'select * from t1 where a = @null_param', @null_param = NULL;
+GO
+
+-- Ref: CTE with local variable
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@cte_filter int', N'with cte as (select * from t1 where a > @cte_filter) select * from cte', @cte_filter = 2;
+GO
+
+-- Ref: multiple CTEs with local variables
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@filter1 int, @filter2 int', N'with cte1 as (select * from t1 where a > @filter1), cte2 as (select * from cte1 where a <= @filter2) select * from cte2', @filter1 = 1, @filter2 = 3;
+GO
+
+-- Ref: window function with local variable
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@partition_val int', N'select a, b, row_number() over (order by case when a > @partition_val then a else b end) as rn from t1', @partition_val = 2;
+GO
+
+-- Ref: UPDATE with local variable assignment
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+declare @captured int;
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@filter int, @captured int OUTPUT', N'update t1 set b = b + 5, @captured = b where a = @filter', @filter = 2, @captured = @captured OUTPUT;
+select @captured;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+-- Ref: UPDATE with multiple assignments
+declare @captured1 int, @captured2 int;
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@filter int, @increment int, @captured1 int OUTPUT, @captured2 int OUTPUT', N'update t1 set b = b + @increment, @captured1 = a, @captured2 = @captured1 + b where a = @filter', @filter = 2, @increment = 5, @captured1 = @captured1 OUTPUT, @captured2 = @captured2 OUTPUT;
+select @captured1, @captured2;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+-- Ref: UPDATE with subquery
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@multiplier int', N'update t1 set b = (select @multiplier * 10) where a = 1; select * from t1 where a = 1', @multiplier = 2;
+GO
+
+TRUNCATE TABLE t1;
+insert into t1 values (1, 10, 'first'), (2, 20, 'second'), (3, 30, 'third'), (4, 40, 'fourth');
+GO
+
+-- Ref: DELETE with subquery
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@threshold int', N'create table t_temp (a int); insert into t_temp values (1), (2), (3), (4); delete from t_temp where a in (select a from t_temp where a <= @threshold); select * from t_temp order by a; drop table t_temp', @threshold = 2;
+GO
+
+-- Ref: INSERT with local variables
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@val1 int, @val2 int', N'create table t_temp (a int, b int); insert into t_temp values (@val1, @val2); select * from t_temp; drop table t_temp', @val1 = 5, @val2 = 50;
+GO
+
+-- Ref: OFFSET FETCH with local variables
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@offset_val int, @fetch_val int', N'select * from t1 order by a offset @offset_val rows fetch next @fetch_val rows only', @offset_val = 1, @fetch_val = 2;
+GO
+
+-- Ref: OFFSET FETCH with NULL fetch
+declare @handle as int;
+EXEC sp_prepexec @handle OUTPUT, N'@offset_val int, @fetch_val int', N'select * from t1 order by a offset @offset_val rows fetch next @fetch_val rows only', @offset_val = 1, @fetch_val = NULL;
+GO
+
 -- cleanup
 
 drop procedure reset_t1;

@@ -1,0 +1,355 @@
+CREATE TABLE t1 (a int, b int, c varchar(50));
+INSERT INTO t1 VALUES (1, 10, 'first');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (2, 20, 'second');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (3, 30, 'third');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+~~ROW COUNT: 1~~
+
+SELECT set_config('plan_cache_mode', 'force_generic_plan', false);
+~~START~~
+text
+force_generic_plan
+~~END~~
+
+
+-- select with parameter in targetlist and WHERE
+prepst#!#select a, b, ? as param_value from t1 where a < 3#!#int|-|a|-|5
+~~START~~
+int#!#int#!#int
+1#!#10#!#5
+2#!#20#!#5
+~~END~~
+
+
+-- select with parameter in WHERE
+prepst#!#select * from t1 where a = ?#!#int|-|a|-|2
+~~START~~
+int#!#int#!#varchar
+2#!#20#!#second
+~~END~~
+
+
+-- update with parameter in WHERE and select
+prepst#!#update t1 set b = 5942 where a = ?; select * from t1 where a = ?#!#int|-|filter|-|1#!#int|-|filter|-|1
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int#!#varchar
+1#!#5942#!#first
+~~END~~
+
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (2, 20, 'second');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (3, 30, 'third');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+~~ROW COUNT: 1~~
+
+
+-- create temp table, delete with parameter, select, drop
+prepst#!#create table t_temp4 (a int); insert into t_temp4 values (1), (2), (3), (4); delete from t_temp4 where a = ?; select * from t_temp4 order by a; drop table t_temp4#!#int|-|delval|-|2
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+3
+4
+~~END~~
+
+
+-- update with two parameters (three param uses total)
+prepst#!#update t1 set b = ? where a = ?; select * from t1 where a = ?#!#int|-|updateval|-|100#!#int|-|filter|-|1#!#int|-|filter|-|1
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int#!#varchar
+1#!#100#!#first
+~~END~~
+
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (2, 20, 'second');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (3, 30, 'third');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+~~ROW COUNT: 1~~
+
+
+-- update with same parameter in SET and WHERE (three uses)
+prepst#!#update t1 set b = ? where a = ?; select * from t1 where a = ?#!#int|-|filter|-|1#!#int|-|filter|-|1#!#int|-|filter|-|1
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int#!#varchar
+1#!#1#!#first
+~~END~~
+
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (2, 20, 'second');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (3, 30, 'third');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+~~ROW COUNT: 1~~
+
+
+-- TOP with parameter
+prepst#!#select top (?) * from t1 order by a#!#int|-|a|-|2
+~~START~~
+int#!#int#!#varchar
+1#!#10#!#first
+2#!#20#!#second
+~~END~~
+
+
+-- TOP with NULL parameter
+prepst#!#select top (?) * from t1#!#int|-|topnull|-|<NULL>
+~~START~~
+int#!#int#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: A TOP or FETCH clause contains an invalid value.)~~
+
+
+-- TOP with subquery returning NULL
+prepst#!#select top (select NULL) * from t1 order by a
+~~START~~
+int#!#int#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: A TOP or FETCH clause contains an invalid value.)~~
+
+
+-- variable assignment in targetlist with OUTPUT parameter
+prepst#!#select ? = b from t1 where a = ?#!#int|-|i|-|2#!#int|-|result|-|<NULL>
+
+-- variable assignment with parameter in expression and WHERE (i used twice)
+prepst#!#select ? = b + ? from t1 where a = ?#!#int|-|i|-|2#!#int|-|i|-|2#!#int|-|result|-|<NULL>
+
+-- multiple variable assignments with OUTPUT parameters
+prepst#!#select ? = a, ? = b from t1 where a = ?#!#int|-|param|-|2#!#int|-|var1|-|<NULL>#!#int|-|var2|-|<NULL>
+
+-- aggregate with variable assignment
+prepst#!#select ? = sum(b) from t1 where a > ?#!#int|-|threshold|-|2#!#int|-|result|-|<NULL>
+
+-- GROUP BY HAVING with parameter
+prepst#!#select a, sum(b) as total from t1 group by a having sum(b) > ? order by a#!#int|-|havingval|-|15
+~~START~~
+int#!#int
+2#!#20
+3#!#30
+4#!#40
+~~END~~
+
+
+-- CASE expression with parameter
+prepst#!#select a, case when a > ? then 'high' else 'low' end as category from t1#!#int|-|threshold|-|2
+~~START~~
+int#!#varchar
+1#!#low
+2#!#low
+3#!#high
+4#!#high
+~~END~~
+
+
+-- CASE with variable assignment and OUTPUT
+prepst#!#select ? = case when a > ? then 'high' else 'low' end from t1 where a = ?#!#int|-|threshold|-|2#!#int|-|at|-|3#!#varchar(10)|-|result|-|<NULL>
+
+-- subquery with parameter
+prepst#!#select a, (select ? * b) as doubled_b from t1 where a < 3#!#int|-|multiplier|-|2
+~~START~~
+int#!#int
+1#!#20
+2#!#40
+~~END~~
+
+
+-- nested subquery with parameter
+prepst#!#select a, (select b + (select ?)) as nested_calc from t1 where a < 3#!#int|-|val|-|10
+~~START~~
+int#!#int
+1#!#20
+2#!#30
+~~END~~
+
+
+-- subquery in WHERE with parameter
+prepst#!#select * from t1 where b > (select max(b) from t1 where a < ?)#!#int|-|val|-|2
+~~START~~
+int#!#int#!#varchar
+2#!#20#!#second
+3#!#30#!#third
+4#!#40#!#fourth
+~~END~~
+
+
+-- correlated subquery with parameter
+prepst#!#select a, (select count(*) from t1 t_inner where t_inner.b > t_outer.b + ?) as count_greater from t1 t_outer#!#int|-|offset|-|10
+~~START~~
+int#!#int
+1#!#2
+2#!#1
+3#!#0
+4#!#0
+~~END~~
+
+
+-- NULL parameter
+prepst#!#select * from t1 where a = ?#!#int|-|nullparam|-|<NULL>
+~~START~~
+int#!#int#!#varchar
+~~END~~
+
+
+-- CTE with parameter
+prepst#!#with cte as (select * from t1 where a > ?) select * from cte#!#int|-|ctefilter|-|2
+~~START~~
+int#!#int#!#varchar
+3#!#30#!#third
+4#!#40#!#fourth
+~~END~~
+
+
+-- multiple CTEs with parameters
+prepst#!#with cte1 as (select * from t1 where a > ?), cte2 as (select * from cte1 where a <= ?) select * from cte2#!#int|-|filter1|-|1#!#int|-|filter2|-|3
+~~START~~
+int#!#int#!#varchar
+2#!#20#!#second
+3#!#30#!#third
+~~END~~
+
+
+-- window function with parameter
+prepst#!#select a, b, row_number() over (order by case when a > ? then a else b end) as rn from t1#!#int|-|partitionval|-|2
+~~START~~
+int#!#int#!#bigint
+3#!#30#!#1
+4#!#40#!#2
+1#!#10#!#3
+2#!#20#!#4
+~~END~~
+
+
+-- UPDATE with variable assignment
+prepst#!#update t1 set b = b + 5, ? = b where a = ?#!#int|-|filter|-|2#!#int|-|captured|-|<NULL>
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (2, 20, 'second');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (3, 30, 'third');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+~~ROW COUNT: 1~~
+
+
+-- UPDATE with multiple variable assignments (filter, increment, captured1 used twice, captured2)
+prepst#!#update t1 set b = b + ?, ? = a, ? = ? + b where a = ?#!#int|-|filter|-|2#!#int|-|increment|-|5#!#int|-|captured1|-|<NULL>#!#int|-|captured1|-|<NULL>#!#int|-|captured2|-|<NULL>
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (2, 20, 'second');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (3, 30, 'third');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+~~ROW COUNT: 1~~
+
+
+-- UPDATE with subquery
+prepst#!#update t1 set b = (select ? * 10) where a = 1; select * from t1 where a = 1#!#int|-|multiplier|-|2
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int#!#varchar
+1#!#20#!#first
+~~END~~
+
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (2, 20, 'second');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (3, 30, 'third');
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+~~ROW COUNT: 1~~
+
+
+-- DELETE with subquery
+prepst#!#create table t_temp5 (a int); insert into t_temp5 values (1), (2), (3), (4); delete from t_temp5 where a in (select a from t_temp5 where a <= ?); select * from t_temp5 order by a; drop table t_temp5#!#int|-|threshold|-|2
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+3
+4
+~~END~~
+
+
+-- INSERT with parameters
+prepst#!#create table t_temp6 (a int, b int); insert into t_temp6 values (?, ?); select * from t_temp6; drop table t_temp6#!#int|-|val1|-|5#!#int|-|val2|-|50
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+5#!#50
+~~END~~
+
+
+-- OFFSET FETCH with parameters
+prepst#!#select * from t1 order by a offset ? rows fetch next ? rows only#!#int|-|offsetval|-|1#!#int|-|fetchval|-|2
+~~START~~
+int#!#int#!#varchar
+2#!#20#!#second
+3#!#30#!#third
+~~END~~
+
+
+-- OFFSET FETCH with NULL fetch
+prepst#!#select * from t1 order by a offset ? rows fetch next ? rows only#!#int|-|offsetval|-|1#!#int|-|fetchval|-|<NULL>
+~~START~~
+int#!#int#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: A TOP or FETCH clause contains an invalid value.)~~
+
+
+DROP TABLE t1;
