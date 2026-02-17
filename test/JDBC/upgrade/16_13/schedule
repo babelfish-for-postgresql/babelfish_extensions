@@ -648,3 +648,4 @@ sys-fn_varbintohexstr
 babel_binary
 babel_convert_with_style
 babel_string_to_money_reg
+sys-fn-varbintohexsubstring
