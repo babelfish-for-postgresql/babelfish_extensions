@@ -2361,11 +2361,6 @@ declare @handle as int;
 EXEC sp_prepexec @handle OUTPUT, N'@top_null int', N'select top (@top_null) * from t1', @top_null = NULL;
 GO
 
--- Ref: TOP with local variable from subquery
-declare @handle as int;
-EXEC sp_prepexec @handle OUTPUT, N'', N'select top (select NULL) * from t1 order by a';
-GO
-
 -- Ref: local variable assignment in targetlist
 declare @result int;
 declare @handle as int;

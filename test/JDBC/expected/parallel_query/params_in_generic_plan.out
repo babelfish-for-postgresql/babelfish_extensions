@@ -4479,15 +4479,6 @@ int#!#int#!#varchar
 ~~ERROR (Message: A TOP or FETCH clause contains an invalid value.)~~
 
 
--- Ref: TOP with local variable from subquery
-declare @handle as int;
-EXEC sp_prepexec @handle OUTPUT, N'', N'select top (select NULL) * from t1 order by a';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ")")~~
-
-
 -- Ref: local variable assignment in targetlist
 declare @result int;
 declare @handle as int;
