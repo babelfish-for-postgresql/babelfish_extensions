@@ -433,15 +433,11 @@ CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR
     RETURNS sys.GEOMETRY
     AS $$
     BEGIN
-	    IF UPPER(geometry_tagged_text COLLATE "default") = 'NULL' THEN
+	    IF UPPER(geometry_tagged_text COLLATE DATABASE_DEFAULT) = 'NULL' THEN
             RETURN NULL;
         END IF;
 
-		IF geometry_tagged_text COLLATE "default" ~* '\s+ZM?\s*\(' THEN
-            RAISE EXCEPTION 'parse error - invalid geometry';
-        END IF;
-		
-        RETURN sys.geomfromtext_helper(geometry_tagged_text::text, 0);
+        RETURN sys.geomfromtext_helper(geometry_tagged_text, 0);
     END;
     $$ LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
