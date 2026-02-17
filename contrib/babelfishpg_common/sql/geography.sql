@@ -445,7 +445,7 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
         END IF;
 		geom_type := sys.ST_GeometryType(geog);
 		
-		IF geom_type LIKE 'ST_%' THEN
+		IF geom_type LIKE 'ST\_%' ESCAPE '\' THEN
 			RETURN substr(geom_type, 4);
 		END IF;
 	    RAISE EXCEPTION 'Unexpected geometry type format: %. Expected ST_* prefix.', geom_type;

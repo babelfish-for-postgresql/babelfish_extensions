@@ -441,7 +441,7 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
 		
 		geom_type := sys.ST_GeometryType(geom);
 		
-		IF geom_type LIKE 'ST_%' THEN
+		IF geom_type LIKE 'ST\_%' ESCAPE '\' THEN
 			RETURN substr(geom_type, 4);
 		END IF;
 		
