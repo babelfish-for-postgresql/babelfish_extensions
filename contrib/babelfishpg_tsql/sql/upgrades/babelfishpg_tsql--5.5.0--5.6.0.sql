@@ -180,6 +180,20 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
  * final behaviour.
  */
 
+ DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.fn_varbintohexsubstring(set_prefix INT, expression sys.varbinary(128), start_offset INT, length_to_return INT) RENAME TO fn_varbintohexsubstring_deprecated_in_5_6_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'fn_varbintohexsubstring_deprecated_in_5_6_0');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

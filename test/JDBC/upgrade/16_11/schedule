@@ -646,3 +646,4 @@ BABEL-1664
 babel_convert_with_style
 babel_string_to_money_reg
 forxml-raw-elements-before-17_8
+sys-fn-varbintohexsubstring
