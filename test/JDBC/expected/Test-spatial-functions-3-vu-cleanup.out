@@ -1,13 +1,17 @@
-USE TestSTNumPoints_DB 
+USE TestSTNumPoints_DB;
 
-USE MASTER 
+DROP VIEW STNumPoints_geog_view_db;
+DROP VIEW STNumPoints_geom_view_db;
 
-DROP VIEW  STNumPoints_geom_view;
+DROP TABLE STNumPoints_geog_test_db;
+DROP TABLE STNumPoints_geom_test_db;
 
-DROP VIEW  STNumPoints_geog_view;
+USE MASTER;
 
+DROP VIEW STNumPoints_geog_view;
+DROP VIEW STNumPoints_geom_view;
+
+DROP TABLE STNumPoints_geog_test;
 DROP TABLE STNumPoints_geom_test;
 
-DROP TABLE  STNumPoints_geog_test;
-
-DROP DATABASE TestSTNumPoints_DB 
+DROP DATABASE TestSTNumPoints_DB;
