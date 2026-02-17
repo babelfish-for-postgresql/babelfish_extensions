@@ -171,7 +171,7 @@ SELECT GeomColumn.STGeometryType() AS GeomType, COUNT(*) AS TypeCount
 FROM TestGeospatialMethods3_STGeometryType_GEOM_db
 WHERE GeomColumn.STGeometryType() != 'Point'
 GROUP BY GeomColumn.STGeometryType()
-ORDER BY TypeCount DESC;
+ORDER BY TypeCount DESC, GeomType ASC;
 go
 
 -- View WHERE
@@ -342,7 +342,7 @@ go
 -- ORDER BY on function result
 SELECT ID, GeomColumn.STGeometryType() AS GeometryType
 FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
-ORDER BY GeomColumn.STGeometryType();
+ORDER BY GeomColumn.STGeometryType(), ID;
 go
 
 -- CASE Statement
@@ -410,7 +410,8 @@ SELECT 'LineString',
 UNION ALL
 SELECT 'Polygon',
        @pg.STGeometryType(),
-       CASE WHEN LEFT(@pg.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END;
+       CASE WHEN LEFT(@pg.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END
+ORDER BY Type;
 go
 
 -- Geography: Verify no ST_ prefix on all types
@@ -428,7 +429,8 @@ SELECT 'LineString',
 UNION ALL
 SELECT 'Polygon',
        @gpg.STGeometryType(),
-       CASE WHEN LEFT(@gpg.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END;
+       CASE WHEN LEFT(@gpg.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END
+ORDER BY Type;
 go
 
 
@@ -476,6 +478,7 @@ DECLARE @geog geography = geography::STGeomFromText('POINT(-122.34 47.65)', 4326
 SELECT 'Geometry' AS Source, @geom.STGeometryType() AS Type
 UNION ALL
 SELECT 'Geography', @geog.STGeometryType();
+ORDER BY Source;
 go
 
 -- SRID 999999

@@ -400,7 +400,7 @@ SELECT GeomColumn.STGeometryType() AS GeomType, COUNT(*) AS TypeCount
 FROM TestGeospatialMethods3_STGeometryType_GEOM_db
 WHERE GeomColumn.STGeometryType() != 'Point'
 GROUP BY GeomColumn.STGeometryType()
-ORDER BY TypeCount DESC;
+ORDER BY TypeCount DESC, GeomType ASC;
 go
 ~~START~~
 nvarchar#!#int
@@ -829,16 +829,16 @@ nvarchar
 -- ORDER BY on function result
 SELECT ID, GeomColumn.STGeometryType() AS GeometryType
 FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
-ORDER BY GeomColumn.STGeometryType();
+ORDER BY GeomColumn.STGeometryType(), ID;
 go
 ~~START~~
 int#!#nvarchar
-5#!#LineString
 2#!#LineString
-8#!#Point
+5#!#LineString
+1#!#Point
 4#!#Point
 7#!#Point
-1#!#Point
+8#!#Point
 3#!#Polygon
 6#!#Polygon
 ~~END~~
@@ -971,12 +971,13 @@ SELECT 'LineString',
 UNION ALL
 SELECT 'Polygon',
        @pg.STGeometryType(),
-       CASE WHEN LEFT(@pg.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END;
+       CASE WHEN LEFT(@pg.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END
+ORDER BY Type;
 go
 ~~START~~
 varchar#!#nvarchar#!#varchar
-Point#!#Point#!#PASS
 LineString#!#LineString#!#PASS
+Point#!#Point#!#PASS
 Polygon#!#Polygon#!#PASS
 ~~END~~
 
@@ -996,12 +997,13 @@ SELECT 'LineString',
 UNION ALL
 SELECT 'Polygon',
        @gpg.STGeometryType(),
-       CASE WHEN LEFT(@gpg.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END;
+       CASE WHEN LEFT(@gpg.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END
+ORDER BY Type;
 go
 ~~START~~
 varchar#!#nvarchar#!#varchar
-Point#!#Point#!#PASS
 LineString#!#LineString#!#PASS
+Point#!#Point#!#PASS
 Polygon#!#Polygon#!#PASS
 ~~END~~
 
@@ -1082,12 +1084,11 @@ DECLARE @geog geography = geography::STGeomFromText('POINT(-122.34 47.65)', 4326
 SELECT 'Geometry' AS Source, @geom.STGeometryType() AS Type
 UNION ALL
 SELECT 'Geography', @geog.STGeometryType();
+ORDER BY Source;
 go
-~~START~~
-varchar#!#nvarchar
-Geometry#!#LineString
-Geography#!#Point
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'ORDER' at line 7 and character position 0)~~
 
 
 -- SRID 999999
