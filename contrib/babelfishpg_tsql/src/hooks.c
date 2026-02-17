@@ -8456,7 +8456,8 @@ is_sys_object(Oid catalogid, Oid objid)
 	char	*bbf_prefix_ext_name = "babelfishpg";
 	if (owningext != InvalidOid)
 	{
-		if (strncmp(get_extension_name(owningext), bbf_prefix_ext_name, strlen(bbf_prefix_ext_name)) == 0)
+		char *ext_name = get_extension_name(owningext);
+		if (strncmp(ext_name, bbf_prefix_ext_name, strlen(bbf_prefix_ext_name)) == 0)
 			return true;
 		else
 			return false;
