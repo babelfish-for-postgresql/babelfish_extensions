@@ -1915,6 +1915,8 @@ public:
 		 * Check for INSERT EXEC with dynamic SQL: INSERT INTO t EXEC (@variable)
 		 * In this case, we create a PLtsql_stmt_exec_batch instead of PLtsql_stmt_execsql
 		 * because the variable needs to be evaluated at runtime, not quoted as an identifier.
+		 *
+		 * Also handle INSERT EXEC sp_executesql which is a special system procedure.
 		 */
 		else if (ctx->insert_statement() &&
 				 ctx->insert_statement()->insert_statement_value() &&
@@ -1923,7 +1925,26 @@ public:
 			TSqlParser::Execute_statementContext *ctxES = ctx->insert_statement()->insert_statement_value()->execute_statement();
 			TSqlParser::Execute_bodyContext *body = ctxES->execute_body();
 			
-			if (body && body->LR_BRACKET())
+			/*
+			 * Check if this is INSERT EXEC sp_executesql
+			 * sp_executesql is a special system procedure that needs to be handled
+			 * differently - we create a PLtsql_stmt_exec_batch with the SQL string
+			 * as the expression.
+			 */
+			bool is_sp_executesql = false;
+			if (body && body->func_proc_name_server_database_schema())
+			{
+				auto proc_name_ctx = body->func_proc_name_server_database_schema();
+				std::string proc_name;
+				if (proc_name_ctx->procedure)
+					proc_name = stripQuoteFromId(proc_name_ctx->procedure);
+				
+				/* Case-insensitive comparison for sp_executesql */
+				std::transform(proc_name.begin(), proc_name.end(), proc_name.begin(), ::tolower);
+				is_sp_executesql = (proc_name == "sp_executesql");
+			}
+			
+			if (body && (body->LR_BRACKET() || is_sp_executesql))
 			{
 				/* This is INSERT EXEC with dynamic SQL - create PLtsql_stmt_exec_batch */
 				PLtsql_stmt_exec_batch *batch_stmt = (PLtsql_stmt_exec_batch *) palloc0(sizeof(*batch_stmt));
@@ -1931,18 +1952,48 @@ public:
 				batch_stmt->lineno = getLineNo(ctx);
 				batch_stmt->insert_exec = true;
 
-				/* Build the expression from execute_var_string */
-				std::vector<TSqlParser::Execute_var_stringContext *> exec_strings = body->execute_var_string();
-				std::stringstream ss;
-				if (!exec_strings.empty())
+				std::string expr_query;
+				
+				if (is_sp_executesql)
 				{
-					ss << ::getFullText(exec_strings[0]);
-					for (size_t i = 1; i < exec_strings.size(); i++)
+					/*
+					 * For sp_executesql, extract the first argument (SQL string)
+					 * sp_executesql @stmt [, @params, @param1 = val1, ...]
+					 */
+					auto exec_args = body->execute_statement_arg();
+					if (exec_args)
 					{
-						ss << " + " << ::getFullText(exec_strings[i]);
+						/* Get the first (unnamed) argument - the SQL statement */
+						auto unnamed_arg = exec_args->execute_statement_arg_unnamed();
+						if (unnamed_arg && unnamed_arg->value)
+						{
+							expr_query = ::getFullText(unnamed_arg->value);
+						}
+					}
+					
+					if (expr_query.empty())
+					{
+						throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, 
+							"sp_executesql requires at least one argument", 
+							getLineAndPos(body));
 					}
 				}
-				std::string expr_query = ss.str();
+				else
+				{
+					/* Build the expression from execute_var_string for EXEC (@var) case */
+					std::vector<TSqlParser::Execute_var_stringContext *> exec_strings = body->execute_var_string();
+					std::stringstream ss;
+					if (!exec_strings.empty())
+					{
+						ss << ::getFullText(exec_strings[0]);
+						for (size_t i = 1; i < exec_strings.size(); i++)
+						{
+							ss << " + " << ::getFullText(exec_strings[i]);
+						}
+					}
+					expr_query = ss.str();
+				}
+				
 				batch_stmt->expr = makeTsqlExpr(expr_query, true);
 
 				/* Extract target table name for INSERT-EXEC query rewriting */
@@ -2032,8 +2083,9 @@ public:
         }
 
 		/*
-		 * Check for INSERT EXEC with dynamic SQL - this was handled in enterDml_statement
-		 * and created a PLtsql_stmt_exec_batch, so we skip the normal processing here.
+		 * Check for INSERT EXEC with dynamic SQL or sp_executesql - this was handled 
+		 * in enterDml_statement and created a PLtsql_stmt_exec_batch, so we skip the 
+		 * normal processing here.
 		 */
 		if (ctx->insert_statement() &&
 			ctx->insert_statement()->insert_statement_value() &&
@@ -2042,9 +2094,22 @@ public:
 			TSqlParser::Execute_statementContext *ctxES = ctx->insert_statement()->insert_statement_value()->execute_statement();
 			TSqlParser::Execute_bodyContext *body = ctxES->execute_body();
 			
-			if (body && body->LR_BRACKET())
+			/* Check if this is sp_executesql */
+			bool is_sp_executesql = false;
+			if (body && body->func_proc_name_server_database_schema())
 			{
-				/* INSERT EXEC with dynamic SQL was handled in enterDml_statement */
+				auto proc_name_ctx = body->func_proc_name_server_database_schema();
+				std::string proc_name;
+				if (proc_name_ctx->procedure)
+					proc_name = stripQuoteFromId(proc_name_ctx->procedure);
+				
+				std::transform(proc_name.begin(), proc_name.end(), proc_name.begin(), ::tolower);
+				is_sp_executesql = (proc_name == "sp_executesql");
+			}
+			
+			if (body && (body->LR_BRACKET() || is_sp_executesql))
+			{
+				/* INSERT EXEC with dynamic SQL or sp_executesql was handled in enterDml_statement */
 				clear_rewritten_query_fragment();
 				return;
 			}
