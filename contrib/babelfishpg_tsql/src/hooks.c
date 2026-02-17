@@ -1355,7 +1355,7 @@ replace_params_mutator(Node *node, ParamReplaceContext *context)
 		PlannerInfo		root;
 		Node		   *ret;
 
-		root.glob = palloc(sizeof (PlannerGlobal));
+		root.glob = makeNode(PlannerGlobal);
 		root.glob->boundParams = paramLI;
 
 		ret = eval_const_expressions(&root, node);
