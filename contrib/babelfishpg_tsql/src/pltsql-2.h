@@ -91,7 +91,12 @@ typedef struct PLtsql_stmt_exec
 	char	   *proc_name;
 	char	   *schema_name;
 		
-	bool		exec_with_recompile; /* forced recompile through EXECUTE */	
+	bool		exec_with_recompile; /* forced recompile through EXECUTE */
+	
+	/* INSERT EXEC support: INSERT INTO t EXEC @RC = P */
+	bool		insert_exec;
+	char	   *insert_exec_target;		/* target table name */
+	char	   *insert_exec_columns;	/* column list (NULL = all columns) */
 } PLtsql_stmt_exec;
 
 typedef struct

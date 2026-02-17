@@ -1944,6 +1944,78 @@ public:
 				is_sp_executesql = (proc_name == "sp_executesql");
 			}
 			
+			/*
+			 * Check if this is INSERT EXEC with return status: INSERT INTO t EXEC @RC = P
+			 * When return_status is present, the normal makeSQL() path fails because
+			 * PostgreSQL parser doesn't understand "@RC =" syntax. We need to create
+			 * a PLtsql_stmt_exec with insert_exec = true.
+			 */
+			if (body && body->return_status)
+			{
+				/* Create PLtsql_stmt_exec for INSERT EXEC @RC = P */
+				PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) makeExecuteProcedure(ctxES, "execute_statement");
+				exec_stmt->insert_exec = true;
+				
+				/* Extract target table name for INSERT-EXEC query rewriting */
+				auto ddl_object = ctx->insert_statement()->ddl_object();
+				if (ddl_object)
+				{
+					std::string target_table;
+					if (ddl_object->local_id())
+					{
+						/* Temp table like #temp - use as-is */
+						target_table = ::getFullText(ddl_object->local_id());
+					}
+					else if (ddl_object->full_object_name())
+					{
+						/* Regular table - build fully qualified name for cross-db support */
+						std::string tbl_name, tbl_schema, tbl_db;
+						if (ddl_object->full_object_name()->object_name)
+							tbl_name = stripQuoteFromId(ddl_object->full_object_name()->object_name);
+						if (ddl_object->full_object_name()->schema)
+							tbl_schema = stripQuoteFromId(ddl_object->full_object_name()->schema);
+						if (ddl_object->full_object_name()->database)
+							tbl_db = stripQuoteFromId(ddl_object->full_object_name()->database);
+						
+						/* Always build fully qualified name for cross-db INSERT-EXEC support */
+						if (tbl_db.empty())
+							tbl_db = get_cur_db_name();
+						if (tbl_schema.empty())
+							tbl_schema = "dbo";
+						
+						target_table = tbl_db + "." + tbl_schema + "." + tbl_name;
+					}
+					
+					if (!target_table.empty())
+						exec_stmt->insert_exec_target = pstrdup(target_table.c_str());
+				}
+
+				/* Extract column list for INSERT-EXEC query rewriting */
+				auto column_list_ctx = ctx->insert_statement()->insert_column_name_list();
+				if (column_list_ctx)
+				{
+					std::string column_list;
+					bool first = true;
+					for (auto col : column_list_ctx->col)
+					{
+						if (!first)
+							column_list += ", ";
+						first = false;
+						auto ids = col->id();
+						if (!ids.empty())
+							column_list += stripQuoteFromId(ids.back());
+					}
+					if (!column_list.empty())
+						exec_stmt->insert_exec_columns = pstrdup(column_list.c_str());
+				}
+
+				graft((PLtsql_stmt *) exec_stmt, peekContainer());
+				
+				/* Mark that we've handled this as INSERT EXEC with return status */
+				/* The exitDml_statement will skip processing for this case */
+				return;
+			}
+			
 			if (body && (body->LR_BRACKET() || is_sp_executesql))
 			{
 				/* This is INSERT EXEC with dynamic SQL - create PLtsql_stmt_exec_batch */
@@ -2086,6 +2158,9 @@ public:
 		 * Check for INSERT EXEC with dynamic SQL or sp_executesql - this was handled 
 		 * in enterDml_statement and created a PLtsql_stmt_exec_batch, so we skip the 
 		 * normal processing here.
+		 *
+		 * Also check for INSERT EXEC with return status (@RC = P) - this was handled
+		 * in enterDml_statement and created a PLtsql_stmt_exec, so we skip here too.
 		 */
 		if (ctx->insert_statement() &&
 			ctx->insert_statement()->insert_statement_value() &&
@@ -2107,9 +2182,9 @@ public:
 				is_sp_executesql = (proc_name == "sp_executesql");
 			}
 			
-			if (body && (body->LR_BRACKET() || is_sp_executesql))
+			if (body && (body->LR_BRACKET() || is_sp_executesql || body->return_status))
 			{
-				/* INSERT EXEC with dynamic SQL or sp_executesql was handled in enterDml_statement */
+				/* INSERT EXEC with dynamic SQL, sp_executesql, or return status was handled in enterDml_statement */
 				clear_rewritten_query_fragment();
 				return;
 			}

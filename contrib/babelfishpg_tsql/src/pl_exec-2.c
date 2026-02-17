@@ -850,7 +850,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	char 	*save_db_name = get_cur_db_name();
 
 	/* whether procedure was created WITH RECOMPILE */
-	bool created_with_recompile = false;		
+	bool created_with_recompile = false;
+	
+	/* Track if we set INSERT EXEC context for cleanup */
+	bool insert_exec_context_set = false;
 
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection
@@ -1215,6 +1218,22 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		options.read_only = estate->readonly_func;
 		options.allow_nonatomic = true;
 
+		/*
+		 * If this is INSERT EXEC with return status (INSERT INTO t EXEC @RC = P),
+		 * set up the INSERT EXEC rewrite context before executing the procedure.
+		 * This allows SELECT statements in the procedure to be rewritten as INSERTs.
+		 */
+		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+		{
+			elog(DEBUG1, "INSERT EXEC with return status: Setting rewrite context for target=%s, columns=%s",
+				 stmt->insert_exec_target,
+				 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
+			
+			pltsql_set_insert_exec_rewrite_context(stmt->insert_exec_target,
+												   stmt->insert_exec_columns);
+			insert_exec_context_set = true;
+		}
+
 		rc = SPI_execute_plan_extended(expr->plan, &options);
 
 		after_lxid = MyProc->vxid.lxid;
@@ -1303,6 +1322,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	}
 	PG_FINALLY();
 	{
+		/* Clear INSERT EXEC context if we set it */
+		if (insert_exec_context_set)
+		{
+			pltsql_clear_insert_exec_rewrite_context();
+		}
+
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
 			set_cur_user_db_and_path(save_db_name, false);
 
