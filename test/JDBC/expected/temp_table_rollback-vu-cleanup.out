@@ -63,3 +63,30 @@ GO
 
 DROP PROC p_conditional_ops
 GO
+
+DROP PROC p_insert_exec_basic
+GO
+
+DROP PROC p_insert_exec_nested_inner
+GO
+
+DROP PROC p_insert_exec_nested_outer
+GO
+
+DROP PROC p_insert_exec_temp_ops
+GO
+
+DROP PROC p_insert_exec_transaction
+GO
+
+DROP PROC p_insert_exec_multi_results
+GO
+
+DROP PROC p_insert_exec_error_handling
+GO
+
+DROP PROC p_insert_exec_table_var
+GO
+
+DROP PROC p_insert_exec_drop_table
+GO

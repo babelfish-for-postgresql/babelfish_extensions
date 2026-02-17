@@ -234,3 +234,97 @@ BEGIN
     END
 END
 GO
+
+-- INSERT INTO EXEC procedures
+CREATE PROC p_insert_exec_basic AS 
+BEGIN 
+    SELECT 1 as id, 'first' as name 
+    UNION ALL 
+    SELECT 2, 'second' 
+END
+GO
+
+CREATE PROC p_insert_exec_nested_inner AS
+BEGIN
+    SELECT 10 as id, 'inner data' as data
+END
+GO
+
+CREATE PROC p_insert_exec_nested_outer AS
+BEGIN
+    CREATE TABLE #temp_inner(id int, data varchar(50))
+    INSERT INTO #temp_inner EXEC p_insert_exec_nested_inner
+    INSERT INTO #temp_inner VALUES (20, 'outer data')
+    SELECT * FROM #temp_inner
+    DROP TABLE #temp_inner
+END
+GO
+
+CREATE PROC p_insert_exec_temp_ops AS
+BEGIN
+    CREATE TABLE #temp_ops(id int, status varchar(20), value int)
+    INSERT INTO #temp_ops VALUES (1, 'active', 100)
+    INSERT INTO #temp_ops VALUES (2, 'pending', 200)
+    UPDATE #temp_ops SET status = 'processed' WHERE id = 1
+    SELECT * FROM #temp_ops
+    DROP TABLE #temp_ops
+END
+GO
+
+CREATE PROC p_insert_exec_transaction AS
+BEGIN
+    CREATE TABLE #temp_trans(id int, amount decimal(10,2))
+    INSERT INTO #temp_trans VALUES (1, 100.00)
+    BEGIN TRAN
+        INSERT INTO #temp_trans VALUES (2, 200.00)
+        UPDATE #temp_trans SET amount = amount * 2
+    ROLLBACK
+    SELECT * FROM #temp_trans
+    DROP TABLE #temp_trans
+END
+GO
+
+CREATE PROC p_insert_exec_multi_results AS
+BEGIN
+    SELECT 1 as id, 'first result' as info
+    SELECT 2 as id, 'second result' as info
+    SELECT 3 as id, 'third result' as info
+END
+GO
+
+CREATE PROC p_insert_exec_error_handling AS
+BEGIN
+    CREATE TABLE #temp_error(id int primary key, data varchar(20))
+    INSERT INTO #temp_error VALUES (1, 'original')
+    BEGIN TRY
+        INSERT INTO #temp_error VALUES (1, 'duplicate')
+    END TRY
+    BEGIN CATCH
+        INSERT INTO #temp_error VALUES (2, 'error handled')
+    END CATCH
+    SELECT * FROM #temp_error
+    DROP TABLE #temp_error
+END
+GO
+
+CREATE PROC p_insert_exec_table_var AS
+BEGIN
+    DECLARE @tv TABLE (id int, tv_data varchar(30))
+    INSERT INTO @tv VALUES (1, 'from table var')
+    INSERT INTO @tv VALUES (2, 'tv data')
+    SELECT * FROM @tv
+END
+GO
+
+CREATE PROC p_insert_exec_drop_table AS
+BEGIN
+    -- Return some data first
+    SELECT 100 as id, 'before drop' as data
+    
+    -- Drop the target table
+    DROP TABLE #insert_exec_drop_target
+    
+    -- Try to return more data (but table is already dropped)
+    SELECT 200 as id, 'after drop' as data
+END
+GO
