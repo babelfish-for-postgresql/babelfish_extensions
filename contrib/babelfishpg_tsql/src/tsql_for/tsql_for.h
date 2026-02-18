@@ -44,6 +44,10 @@ typedef enum
 	TSQL_JSON_DIRECTIVE_WITHOUT_ARRAY_WRAPPER
 }			TSQLJSONDirective;
 
+/* XML namespace constants */
+#define XML_XMLNS_XSI "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+#define XML_XSI_NIL "xsi:nil=\"true\""
+
 extern void tsql_for_datetime_format(StringInfo format_output, const char *outputstr);
 extern void tsql_for_datetimeoffset_format(StringInfo format_output, const char *outputstr);
 

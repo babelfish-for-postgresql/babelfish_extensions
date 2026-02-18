@@ -1890,15 +1890,18 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause)
 					binary_base64 = true;
 				else if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_TYPE)
 					return_xml_type = true;
-				else if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS)
-                    elements = true;
-                else if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS_XSINIL)
-                {
-            	    elements = true;
-                    xsinil = true;
-                }
-                else if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS_ABSENT)
-                    elements = true;
+				else if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS ||
+						 myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS_XSINIL ||
+						 myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS_ABSENT)
+				{
+					if (elements)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("Incorrect syntax near 'XML'.")));
+					elements = true;
+					if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS_XSINIL)
+						xsinil = true;
+				}
 			}
 			else if (IsA(&myConst->val, String))
 			{

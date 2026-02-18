@@ -214,7 +214,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
     {
         /* ELEMENTS mode: <row><col>value</col></row> */
         if (xsinil)
-            appendStringInfo(state, "<%s xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">", element_name);
+            appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
         else
             appendStringInfo(state, "<%s>", element_name);
     }
@@ -255,7 +255,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
             else if (xsinil)
             {
                 /* XSINIL: <col xsi:nil="true"/> */
-                appendStringInfo(state, "<%s xsi:nil=\"true\"/>", colname);
+                appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
             }
             /* else: ABSENT - skip NULL columns (do nothing) */
         }

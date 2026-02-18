@@ -3,15 +3,23 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar, arg_types varchar DEFAULT '') AS
 $$
 DECLARE
     error_msg text;
     query1 text;
     query2 text;
+    full_object_name text;
 BEGIN
-    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
-    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+    -- Construct full object name with argument types if provided (for aggregates)
+    IF arg_types <> '' THEN
+        full_object_name := pg_catalog.format('%s.%s(%s)', schema_name, object_name, arg_types);
+    ELSE
+        full_object_name := pg_catalog.format('%s.%s', schema_name, object_name);
+    END IF;
+
+    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s', object_type, full_object_name);
+    query2 := pg_catalog.format('drop %s %s', object_type, full_object_name);
     execute query1;
     execute query2;
 EXCEPTION
@@ -60,7 +68,7 @@ $$;
 
 -- Please add your SQLs here
 
--- Step 1: Deprecate and drop old aggregates FIRST (they depend on the function)
+-- Deprecate and drop old aggregates first (they depend on the function)
 
 -- Deprecate and drop old aggregate (6 args) - tsql_select_for_xml_agg
 DO $$
@@ -76,19 +84,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    EXECUTE 'ALTER EXTENSION babelfishpg_tsql DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text)';
-    DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text);
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg_deprecated_in_5_6_0', 'anyelement, integer, text, boolean, text');
 -- Deprecate and drop old aggregate (6 args) - tsql_select_for_xml_text_agg
 DO $$
 DECLARE
@@ -103,20 +99,8 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    EXECUTE 'ALTER EXTENSION babelfishpg_tsql DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_text_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text)';
-    DROP AGGREGATE IF EXISTS sys.tsql_select_for_xml_text_agg_deprecated_in_5_6_0(anyelement, integer, text, boolean, text);
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
--- Step 2: Now deprecate and drop old function (6 args) - after aggregates are gone
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg_deprecated_in_5_6_0', 'anyelement, integer, text, boolean, text');
+-- Step 2: Deprecate and drop old function (6 args) - after aggregates are gone
 DO $$
 DECLARE
     exception_message text;
@@ -182,7 +166,7 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
