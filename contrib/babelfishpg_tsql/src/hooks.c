@@ -8457,7 +8457,7 @@ is_sys_object(Oid catalogid, Oid objid)
 	if (owningext != InvalidOid)
 	{
 		char *ext_name = get_extension_name(owningext);
-		if (strncmp(ext_name, bbf_prefix_ext_name, strlen(bbf_prefix_ext_name)) == 0)
+		if (ext_name != NULL && strncmp(ext_name, bbf_prefix_ext_name, strlen(bbf_prefix_ext_name)) == 0)
 			return true;
 		else
 			return false;
