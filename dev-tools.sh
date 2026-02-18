@@ -155,7 +155,7 @@ build_bbf() {
 init_db() {
     cd $1/postgres
     rm -rf data
-    bin/initdb -D data/
+    bin/initdb -D data/ --locale=C --encoding=UTF8
     PID=$(ps -ef | grep postgres/bin/postgres | grep -v grep | awk '{print $2}')
     if [ $PID ]
     then
