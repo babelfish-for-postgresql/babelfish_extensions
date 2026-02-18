@@ -164,7 +164,7 @@ jobs:
           export installdir16=$HOME/${{env.INSTALL_DIR_16}}
 
           cd contrib/babelfishpg_tds
-          make installcheck PROVE_TESTS="t/001_tdspasswd.pl t/003_bbfextnotloaded.pl t/004_bbfdumprestore.pl"
+          make installcheck PROVE_TESTS="t/001_tdspasswd.pl t/002_tdskerberos.pl t/003_bbfextnotloaded.pl t/004_bbfdumprestore.pl"
 
       - name: Upload Logs
         if: always() && steps.tap.outcome == 'failure'

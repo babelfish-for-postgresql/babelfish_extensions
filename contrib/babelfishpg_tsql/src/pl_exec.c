@@ -324,7 +324,7 @@ static int	exec_stmt_assert(PLtsql_execstate *estate,
 							 PLtsql_stmt_assert *stmt);
 static int	exec_stmt_execsql(PLtsql_execstate *estate,
 							  PLtsql_stmt_execsql *stmt);
-static void updateColumnUpdatedList(PLtsql_expr *expr, int i);
+static void updateColumnUpdatedList(Query *query);
 static int	exec_stmt_dynexecute(PLtsql_execstate *estate,
 								 PLtsql_stmt_dynexecute *stmt);
 static int	exec_stmt_dynfors(PLtsql_execstate *estate,
@@ -4596,6 +4596,31 @@ is_start_implicit_txn_utility_command(Node *parsetree)
 }
 
 static bool
+is_query_using_regular_relation_walker(Node *node, void *context)
+{
+    if (node == NULL)
+        return false;
+    
+    if (IsA(node, RangeTblEntry))
+    {
+        RangeTblEntry *rte = (RangeTblEntry *) node;
+		if (rte->rtekind == RTE_RELATION && rte->relkind == 'r')
+			return true;
+    }
+    
+    if (IsA(node, Query))
+        return query_tree_walker((Query *) node, is_query_using_regular_relation_walker, context, QTW_EXAMINE_RTES_AFTER);
+    
+    return expression_tree_walker(node, is_query_using_regular_relation_walker, context);
+}
+
+static bool
+is_query_using_regular_relation(Node *node)
+{
+	return is_query_using_regular_relation_walker(node, NULL);
+}
+
+static bool
 is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
 {
 	PLtsql_expr *expr = stmt->sqlstmt;
@@ -4620,32 +4645,14 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
 	{
 		ListCell   *lc;
 
-		if (cachedPlanSource->gplan)
+		foreach(lc, cachedPlanSource->query_list)
 		{
-			foreach(lc, cachedPlanSource->gplan->stmt_list)
-			{
-				PlannedStmt *ps = (PlannedStmt *) lfirst(lc);
+			Query *q = (Query *) lfirst(lc);
 
-				if (ps->commandType == CMD_SELECT)
-				{
-					ListCell   *rt;
-
-					foreach(rt, ps->rtable)
-					{
-						RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
-
-						/*
-						 * If range table entry is of kind ordinary relation
-						 * and relation kind is a simple table, we require an
-						 * implicit transaction.
-						 */
-						if (rte->rtekind == RTE_RELATION && rte->relkind == 'r')
-							return true;
-					}
-				}
-			}
-			return false;
+			if (is_query_using_regular_relation((Node *) q))
+				return true;
 		}
+		return false;
 	}
 	return true;
 }
@@ -4807,9 +4814,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	PLtsql_expr *expr = stmt->sqlstmt;
 	Portal		portal = NULL;
 	ListCell   *lc;
-	CachedPlan *cp;
 	bool		is_returning = false;
-	bool		is_select = true;
 
 	/*
 	 * Temporarily disable FMTONLY as it is causing issues with Import-Export.
@@ -4865,10 +4870,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			/*
 			 * If the set_fmtonly guc is set, we need to rewrite any
 			 * statements as exec statements that invoke
-			 * sp_describe_first_result_set. For now, only transform SELECT
-			 * statements.
+			 * sp_describe_first_result_set.
 			 */
-			if (pltsql_fmtonly && is_select && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && fmtonly_enabled && strcasestr(stmt->sqlstmt->query, "SELECT *"))
+			if (pltsql_fmtonly && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && fmtonly_enabled && strcasestr(stmt->sqlstmt->query, "SELECT *"))
 			{
 				initStringInfo(&query);
 				appendStringInfo(&query, "SELECT TOP 0");
@@ -4910,40 +4914,18 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/*
 		 * Check whether the statement is an INSERT/DELETE with RETURNING
 		 */
-		cp = SPI_plan_get_cached_plan(expr->plan);
-		if (cp)
+		foreach(lc, ((CachedPlanSource *) linitial(SPI_plan_get_plan_sources(expr->plan)))->query_list)
 		{
-			int			i;
+			Query *q = (Query *) lfirst(lc);
 
-			i = 0;
-			foreach(lc, cp->stmt_list)
+			if (q->returningList != NIL)
 			{
-				PlannedStmt *ps = (PlannedStmt *) lfirst(lc);
-
-				if (ps->hasReturning)
-				{
-					is_returning = true;
-					if (ps->commandType == CMD_INSERT)
-						cmd = CMD_INSERT;
-					else if (ps->commandType == CMD_DELETE)
-						cmd = CMD_DELETE;
-					else if (ps->commandType == CMD_UPDATE)
-						cmd = CMD_UPDATE;
-					break;
-				}
-				if (ps->commandType != CMD_SELECT)
-				{
-					is_select = false;
-				}
-				if (ps->commandType == CMD_UPDATE || ps->commandType == CMD_INSERT)
-				{
-					updateColumnUpdatedList(expr, i);
-				}
-				++i;
+				is_returning = true;
+				cmd = q->commandType;
+				break;
 			}
-			ReleaseCachedPlan(cp, CurrentResourceOwner);
+			updateColumnUpdatedList(q);
 		}
-
 
 		/*
 		 * If we have INTO, then we only need one row back ... but if we have
@@ -5292,7 +5274,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 }
 
 static void
-updateColumnUpdatedList(PLtsql_expr *expr, int i)
+updateColumnUpdatedList(Query *query)
 {
 	ListCell   *lcj;
 	List	   *curr_columns_list;
@@ -5302,18 +5284,19 @@ updateColumnUpdatedList(PLtsql_expr *expr, int i)
 	MemoryContext oldContext;
 	UpdatedColumn *updateColumn;
 	int			length;
-	Query	   *query;
 	List	   *targetList;
 
-	query = (Query *) list_nth(
-							   ((CachedPlanSource *) list_nth(expr->plan->plancache_list, 0))->query_list
-							   ,i);
+	if (!(query->commandType == CMD_UPDATE || query->commandType == CMD_INSERT))
+		return;
+
 	targetList =
 		query->targetList;
 	if (query->rtable == NULL || targetList == NULL)
 		return;
 	rel = RelationIdGetRelation(((RangeTblEntry *) list_nth(query->rtable, query->resultRelation - 1))->relid);
-	if (!rel || rel->rd_islocaltemp || !rel->rd_isvalid)
+	if (!rel)
+		return;
+	if (rel->rd_islocaltemp || !rel->rd_isvalid)
 	{
 		RelationClose(rel);
 		return;
