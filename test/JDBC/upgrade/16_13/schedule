@@ -648,5 +648,5 @@ sys-fn_varbintohexstr
 babel_binary
 babel_convert_with_style
 babel_string_to_money_reg
-forxml-raw-elements-before-17_8
+forxml-raw-elements-before-17_9-or-18_3
 sys-fn-varbintohexsubstring

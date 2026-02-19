@@ -51,11 +51,16 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
  	* Old 6-argument version (deprecated_in_5_6_0): state, rec, mode, element_name, binary_base64, root_name
  	* New 8-argument version (5.6.0+): adds elements, xsinil parameters
  	*/
+	if (PG_NARGS() > 8)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg("too many arguments")));
+	
 	if (PG_NARGS() > 6)
-        {
-                elements = PG_GETARG_BOOL(6);
-                xsinil = PG_GETARG_BOOL(7);
-        }
+	{
+		elements = PG_GETARG_BOOL(6);
+		xsinil = PG_GETARG_BOOL(7);
+	}
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -190,94 +195,94 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 static void
 tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil)
 {
-    HeapTupleHeader td;
-    Oid             tupType;
-    int32           tupTypmod;
-    TupleDesc       tupdesc;
-    HeapTupleData   tmptup;
-    HeapTuple       tuple;
+	HeapTupleHeader td;
+	Oid             tupType;
+	int32           tupTypmod;
+	TupleDesc       tupdesc;
+	HeapTupleData   tmptup;
+	HeapTuple       tuple;
 
-    td = DatumGetHeapTupleHeader(record);
+	td = DatumGetHeapTupleHeader(record);
 
-    /* Extract rowtype info and find a tupdesc */
-    tupType = HeapTupleHeaderGetTypeId(td);
-    tupTypmod = HeapTupleHeaderGetTypMod(td);
-    tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	/* Extract rowtype info and find a tupdesc */
+	tupType = HeapTupleHeaderGetTypeId(td);
+	tupTypmod = HeapTupleHeaderGetTypMod(td);
+	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 
-    /* Build a temporary HeapTuple control structure */
-    tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-    tmptup.t_data = td;
-    tuple = &tmptup;
+	/* Build a temporary HeapTuple control structure */
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+	tmptup.t_data = td;
+	tuple = &tmptup;
 
-    /* Output opening tag */
-    if (elements)
-    {
-        /* ELEMENTS mode: <row><col>value</col></row> */
-        if (xsinil)
-            appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
-        else
-            appendStringInfo(state, "<%s>", element_name);
-    }
-    else
-    {
-        /* ATTRIBUTES mode: <row col="value"/> */
-        appendStringInfo(state, "<%s", element_name);
-    }
+	/* Output opening tag */
+	if (elements)
+	{
+		/* ELEMENTS mode: <row><col>value</col></row> */
+		if (xsinil)
+			appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
+		else
+			appendStringInfo(state, "<%s>", element_name);
+	}
+	else
+	{
+		/* ATTRIBUTES mode: <row col="value"/> */
+		appendStringInfo(state, "<%s", element_name);
+	}
 
-    for (int i = 0; i < tupdesc->natts; i++)
-    {
-        char       *colname;
-        Datum       colval;
-        bool        isnull;
-        Oid         datatype_oid;
-        Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+	for (int i = 0; i < tupdesc->natts; i++)
+	{
+		char       *colname;
+		Datum       colval;
+		bool        isnull;
+		Oid         datatype_oid;
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
-        if (att->attisdropped)
-            continue;
+		if (att->attisdropped)
+			continue;
 
-        colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
-        colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
-        datatype_oid = att->atttypid;
+		colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
+		colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
+		datatype_oid = att->atttypid;
 
-        update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, binary_base64, i);
+		update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, binary_base64, i);
 
-        if (elements)
-        {
-            /* ELEMENTS mode output */
-            if (!isnull)
-            {
-                /* Normal element: <col>value</col> */
-                appendStringInfo(state, "<%s>%s</%s>",
-                                 colname,
-                                 map_sql_value_to_xml_value(colval, datatype_oid, true),
-                                 colname);
-            }
-            else if (xsinil)
-            {
-                /* XSINIL: <col xsi:nil="true"/> */
-                appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
-            }
-            /* else: ABSENT - skip NULL columns (do nothing) */
-        }
-        else
-        {
-            /* ATTRIBUTES mode output */
-            if (!isnull)
-            {
-                appendStringInfo(state, " %s=\"%s\"",
-                                 colname,
-                                 map_sql_value_to_xml_value(colval, datatype_oid, true));
-            }
-        }
-    }
+		if (elements)
+		{
+			/* ELEMENTS mode output */
+			if (!isnull)
+			{
+				/* Normal element: <col>value</col> */
+				appendStringInfo(state, "<%s>%s</%s>",
+								 colname,
+								 map_sql_value_to_xml_value(colval, datatype_oid, true),
+								 colname);
+			}
+			else if (xsinil)
+			{
+				/* XSINIL: <col xsi:nil="true"/> */
+				appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
+			}
+			/* else: ABSENT - skip NULL columns (do nothing) */
+		}
+		else
+		{
+			/* ATTRIBUTES mode output */
+			if (!isnull)
+			{
+				appendStringInfo(state, " %s=\"%s\"",
+								 colname,
+								 map_sql_value_to_xml_value(colval, datatype_oid, true));
+			}
+		}
+	}
 
-    /* Output closing tag */
-    if (elements)
-        appendStringInfo(state, "</%s>", element_name);
-    else
-        appendStringInfoString(state, "/>");
+	/* Output closing tag */
+	if (elements)
+		appendStringInfo(state, "</%s>", element_name);
+	else
+		appendStringInfoString(state, "/>");
 
-    ReleaseTupleDesc(tupdesc);
+	ReleaseTupleDesc(tupdesc);
 }
 
 /*

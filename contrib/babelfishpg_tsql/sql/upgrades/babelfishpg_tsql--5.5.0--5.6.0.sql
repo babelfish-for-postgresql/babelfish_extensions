@@ -100,7 +100,7 @@ END;
 $$;
 
 CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg_deprecated_in_5_6_0', 'anyelement, integer, text, boolean, text');
--- Step 2: Deprecate and drop old function (6 args) - after aggregates are gone
+-- Deprecate and drop old function (6 args) - after aggregates are gone
 DO $$
 DECLARE
     exception_message text;
