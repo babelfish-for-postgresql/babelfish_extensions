@@ -62,6 +62,8 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		xsinil = PG_GETARG_BOOL(7);
 	}
 
+	(void)elements;
+
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 	old_context = MemoryContextSwitchTo(agg_context);
