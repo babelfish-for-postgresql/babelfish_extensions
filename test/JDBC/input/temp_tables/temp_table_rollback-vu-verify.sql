@@ -1711,3 +1711,274 @@ GO
 
 SELECT * FROM enr_view ORDER BY relname
 GO
+
+---------------------------------------------------------------------------
+-- Cross-QueryEnv ENR Tests - Procedure Drop Table Fix (BABEL-6268)
+---------------------------------------------------------------------------
+
+-- Test 1: Basic procedure drop table scenario
+CREATE TABLE #test(a int) 
+GO
+
+EXEC p_drop
+GO
+
+CREATE TABLE #test(a int)         -- should not crash
+GO
+
+DROP TABLE #test
+GO
+
+-- Test 2: Multiple procedure calls with same temp table name
+CREATE TABLE #temp_proc_test(id int, name varchar(50)) 
+INSERT INTO #temp_proc_test VALUES (1, 'test1') 
+GO
+
+EXEC p_drop_multi
+GO
+
+CREATE TABLE #temp_proc_test(id int, data varchar(100)) 
+INSERT INTO #temp_proc_test VALUES (2, 'test2') 
+SELECT * FROM #temp_proc_test 
+GO
+
+DROP TABLE #temp_proc_test
+GO
+
+-- Test 3: Nested procedure calls
+CREATE TABLE #nested_test(val int)
+INSERT INTO #nested_test VALUES (100)
+GO
+
+EXEC p_outer
+GO
+
+CREATE TABLE #nested_test(val int, descr varchar(20)) 
+INSERT INTO #nested_test VALUES (200, 'after fix') 
+SELECT * FROM #nested_test 
+GO
+
+DROP TABLE #nested_test
+GO
+
+-- Test 4: Procedure with transaction and temp table drop
+CREATE TABLE #trans_test(a int, b varchar(10)) 
+INSERT INTO #trans_test VALUES (1, 'before') 
+GO
+
+EXEC p_trans_drop
+GO
+
+CREATE TABLE #trans_test(c int) 
+INSERT INTO #trans_test VALUES (999)  
+SELECT * FROM #trans_test  
+GO
+
+DROP TABLE #trans_test
+GO
+
+-- Test 5: Execute CREATE and INSERT operations
+EXEC p_create_insert
+GO
+
+-- Test 6: Execute UPDATE and DELETE operations
+CREATE TABLE #update_delete_test(id int, status varchar(20), value int)
+INSERT INTO #update_delete_test VALUES (1, 'active', 100)
+INSERT INTO #update_delete_test VALUES (2, 'inactive', 200)
+INSERT INTO #update_delete_test VALUES (3, 'pending', 300)
+GO
+
+EXEC p_update_delete
+GO
+
+SELECT * FROM #update_delete_test
+GO
+
+DROP TABLE #update_delete_test
+GO
+
+-- Test 7: Execute nested procedures with mixed operations
+CREATE TABLE #nested_ops_test(id int, data varchar(50))
+INSERT INTO #nested_ops_test VALUES (1, 'initial')
+GO
+
+EXEC p_nested_outer
+GO
+
+SELECT * FROM #nested_ops_test
+GO
+
+DROP TABLE #nested_ops_test
+GO
+
+-- Test 8: Execute transaction rollback and operations
+CREATE TABLE #rollback_ops_test(id int, amount decimal(10,2))
+INSERT INTO #rollback_ops_test VALUES (1, 100.00)
+GO
+
+EXEC p_rollback_ops
+GO
+
+SELECT * FROM #rollback_ops_test
+GO
+
+DROP TABLE #rollback_ops_test
+GO
+
+-- Test 9: Execute multiple temp tables with cross-operations
+EXEC p_multi_temp_ops
+GO
+
+-- Test 10: Execute error handling and operations
+CREATE TABLE #error_ops_test(id int primary key, data varchar(20))
+INSERT INTO #error_ops_test VALUES (1, 'original')
+GO
+
+EXEC p_error_ops
+GO
+
+SELECT * FROM #error_ops_test
+GO
+
+DROP TABLE #error_ops_test
+GO
+
+-- Test 11: Execute TRUNCATE operation
+CREATE TABLE #truncate_test(id int identity(1,1), data varchar(20))
+INSERT INTO #truncate_test VALUES ('first')
+INSERT INTO #truncate_test VALUES ('second')
+INSERT INTO #truncate_test VALUES ('third')
+GO
+
+EXEC p_truncate_ops
+GO
+
+SELECT * FROM #truncate_test
+GO
+
+DROP TABLE #truncate_test
+GO
+
+-- Test 12: Execute conditional operations
+CREATE TABLE #conditional_test(id int, status varchar(10), value int)
+INSERT INTO #conditional_test VALUES (1, 'active', 50)
+INSERT INTO #conditional_test VALUES (2, 'inactive', 150)
+INSERT INTO #conditional_test VALUES (3, 'pending', 75)
+GO
+
+EXEC p_conditional_ops
+GO
+
+SELECT * FROM #conditional_test
+GO
+
+DROP TABLE #conditional_test
+GO
+
+-- INSERT INTO EXEC Tests
+-- Test 13: Basic INSERT INTO EXEC with temp table
+CREATE TABLE #insert_exec_target(id int, name varchar(30))
+GO
+
+INSERT INTO #insert_exec_target EXEC p_insert_exec_basic
+GO
+
+SELECT * FROM #insert_exec_target
+GO
+
+DROP TABLE #insert_exec_target
+GO
+
+-- Test 14: INSERT INTO EXEC with nested procedure calls
+CREATE TABLE #insert_exec_nested(id int, data varchar(50))
+GO
+
+INSERT INTO #insert_exec_nested EXEC p_insert_exec_nested_outer
+GO
+
+SELECT * FROM #insert_exec_nested
+GO
+
+DROP TABLE #insert_exec_nested
+GO
+
+-- Test 15: INSERT INTO EXEC with temp table operations inside procedure
+CREATE TABLE #insert_exec_ops(id int, status varchar(20), value int)
+GO
+
+INSERT INTO #insert_exec_ops EXEC p_insert_exec_temp_ops
+GO
+
+SELECT * FROM #insert_exec_ops
+GO
+
+DROP TABLE #insert_exec_ops
+GO
+
+-- Test 16: INSERT INTO EXEC with transaction and rollback
+CREATE TABLE #insert_exec_trans(id int, amount decimal(10,2))
+GO
+
+INSERT INTO #insert_exec_trans EXEC p_insert_exec_transaction
+GO
+
+SELECT * FROM #insert_exec_trans
+GO
+
+DROP TABLE #insert_exec_trans
+GO
+
+-- Test 17: INSERT INTO EXEC with multiple result sets (only first is inserted)
+CREATE TABLE #insert_exec_multi(id int, info varchar(30))
+GO
+
+INSERT INTO #insert_exec_multi EXEC p_insert_exec_multi_results
+GO
+
+SELECT * FROM #insert_exec_multi
+GO
+
+DROP TABLE #insert_exec_multi
+GO
+
+-- Test 18: INSERT INTO EXEC with error handling
+CREATE TABLE #insert_exec_error(id int, data varchar(20))
+GO
+
+INSERT INTO #insert_exec_error EXEC p_insert_exec_error_handling
+GO
+
+SELECT * FROM #insert_exec_error
+GO
+
+DROP TABLE #insert_exec_error
+GO
+
+-- Test 19: INSERT INTO EXEC with table variable in procedure
+CREATE TABLE #insert_exec_tv(id int, tv_data varchar(30))
+GO
+
+INSERT INTO #insert_exec_tv EXEC p_insert_exec_table_var
+GO
+
+SELECT * FROM #insert_exec_tv
+GO
+
+DROP TABLE #insert_exec_tv
+GO
+
+-- Test 20: INSERT INTO EXEC where procedure attempts to drop the target table
+CREATE TABLE #insert_exec_drop_target(id int, data varchar(30))
+INSERT INTO #insert_exec_drop_target VALUES (1, 'initial data')
+GO
+
+-- Should fail
+INSERT INTO #insert_exec_drop_target EXEC p_insert_exec_drop_table
+GO
+
+-- Table should still exist with original data since DROP failed
+SELECT * FROM #insert_exec_drop_target
+GO
+
+DROP TABLE #insert_exec_drop_target
+GO
