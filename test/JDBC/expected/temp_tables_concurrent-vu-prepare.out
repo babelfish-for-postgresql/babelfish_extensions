@@ -7,3 +7,10 @@ GO
 --tsql user=u2 password=123
 CREATE TABLE non_temp_table_2(a int)
 GO
+
+-- tsql
+CREATE LOGIN templogin1 WITH PASSWORD='123'
+GO
+
+CREATE LOGIN templogin2 WITH PASSWORD='123'
+GO
