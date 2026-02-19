@@ -247,3 +247,188 @@ CREATE FUNCTION tv_nested_func1 (@t tv_nested_type readonly) RETURNS @a TABLE (y
 GO
 CREATE FUNCTION tv_nested_func2 (@t tv_nested_type readonly) RETURNS @a TABLE (x INT) AS BEGIN; INSERT INTO @a SELECT y FROM tv_nested_func1(@t); RETURN; END;
 GO
+
+-- Cross Query Env Tests (BABEL-6268)
+CREATE PROC p_tv_basic AS
+BEGIN
+    DECLARE @tv TABLE (id int, name varchar(30))
+    INSERT INTO @tv VALUES (1, 'first')
+    INSERT INTO @tv VALUES (2, 'second')
+    UPDATE @tv SET name = 'updated' WHERE id = 1
+    SELECT * FROM @tv
+END
+GO
+
+CREATE PROC p_tv_delete AS
+BEGIN
+    DECLARE @tv TABLE (id int, status varchar(20), value int)
+    INSERT INTO @tv VALUES (1, 'active', 100)
+    INSERT INTO @tv VALUES (2, 'inactive', 200)
+    INSERT INTO @tv VALUES (3, 'pending', 300)
+    
+    DELETE FROM @tv WHERE value > 250
+    UPDATE @tv SET status = 'processed' WHERE id = 1
+    INSERT INTO @tv VALUES (4, 'new', 150)
+    
+    SELECT * FROM @tv
+END
+GO
+
+CREATE PROC p_tv_nested_inner AS
+BEGIN
+    DECLARE @inner_tv TABLE (id int, data varchar(50))
+    INSERT INTO @inner_tv VALUES (1, 'from inner proc')
+    INSERT INTO @inner_tv VALUES (2, 'inner data')
+    SELECT 'Inner procedure:' as label
+    SELECT * FROM @inner_tv
+END
+GO
+
+CREATE PROC p_tv_nested_outer AS
+BEGIN
+    DECLARE @outer_tv TABLE (id int, info varchar(50))
+    INSERT INTO @outer_tv VALUES (10, 'from outer proc')
+    
+    EXEC p_tv_nested_inner
+    
+    UPDATE @outer_tv SET info = 'updated in outer' WHERE id = 10
+    INSERT INTO @outer_tv VALUES (20, 'outer data')
+    
+    SELECT 'Outer procedure:' as label
+    SELECT * FROM @outer_tv
+END
+GO
+
+CREATE PROC p_tv_transaction AS
+BEGIN
+    DECLARE @tv TABLE (id int, amount decimal(10,2))
+    INSERT INTO @tv VALUES (1, 100.00)
+    INSERT INTO @tv VALUES (2, 200.00)
+    
+    BEGIN TRAN
+        UPDATE @tv SET amount = amount * 2
+        INSERT INTO @tv VALUES (3, 300.00)
+        DELETE FROM @tv WHERE id = 1
+        SELECT 'Inside transaction:' as label
+        SELECT * FROM @tv
+    ROLLBACK
+    
+    -- Table variables are not affected by rollback
+    SELECT 'After rollback (TV unaffected):' as label
+    SELECT * FROM @tv
+END
+GO
+
+CREATE PROC p_tv_multiple AS
+BEGIN
+    DECLARE @tv1 TABLE (id int, name varchar(20))
+    DECLARE @tv2 TABLE (id int, ref_id int, value varchar(30))
+    
+    INSERT INTO @tv1 VALUES (1, 'first')
+    INSERT INTO @tv1 VALUES (2, 'second')
+    
+    INSERT INTO @tv2 VALUES (10, 1, 'ref to first')
+    INSERT INTO @tv2 VALUES (20, 2, 'ref to second')
+    
+    UPDATE @tv1 SET name = 'updated first' WHERE id = 1
+    DELETE FROM @tv2 WHERE ref_id = 2
+    
+    SELECT 'Table Variable 1:' as label
+    SELECT * FROM @tv1
+    SELECT 'Table Variable 2:' as label
+    SELECT * FROM @tv2
+END
+GO
+
+CREATE PROC p_tv_error_handling AS
+BEGIN
+    DECLARE @tv TABLE (id int primary key, data varchar(20))
+    INSERT INTO @tv VALUES (1, 'original')
+    INSERT INTO @tv VALUES (2, 'valid insert')
+    
+    UPDATE @tv SET data = 'updated' WHERE id = 1
+    
+    BEGIN TRY
+        INSERT INTO @tv VALUES (1, 'duplicate key') -- Should fail
+    END TRY
+    BEGIN CATCH
+        INSERT INTO @tv VALUES (3, 'error handled')
+        SELECT 'Error caught: ' + ERROR_MESSAGE() as error_info
+    END CATCH
+    
+    SELECT * FROM @tv
+END
+GO
+
+CREATE PROC p_tv_conditional AS
+BEGIN
+    DECLARE @tv TABLE (id int, status varchar(10), value int)
+    INSERT INTO @tv VALUES (1, 'active', 50)
+    INSERT INTO @tv VALUES (2, 'inactive', 150)
+    INSERT INTO @tv VALUES (3, 'pending', 75)
+    
+    DECLARE @count int
+    SELECT @count = COUNT(*) FROM @tv WHERE value > 100
+    
+    IF @count > 0
+    BEGIN
+        UPDATE @tv SET status = 'high_value' WHERE value > 100
+        INSERT INTO @tv VALUES (4, 'new_high', 200)
+    END
+    ELSE
+    BEGIN
+        DELETE FROM @tv WHERE value < 60
+    END
+    
+    SELECT * FROM @tv
+END
+GO
+
+CREATE PROC p_tv_mixed_with_temp AS
+BEGIN
+    DECLARE @tv TABLE (id int, tv_data varchar(20))
+    CREATE TABLE #temp_mixed (id int, temp_data varchar(20))
+    
+    INSERT INTO @tv VALUES (1, 'table variable')
+    INSERT INTO #temp_mixed VALUES (1, 'temp table')
+    
+    UPDATE @tv SET tv_data = 'updated TV' WHERE id = 1
+    UPDATE #temp_mixed SET temp_data = 'updated temp' WHERE id = 1
+    
+    INSERT INTO @tv VALUES (2, 'TV second')
+    INSERT INTO #temp_mixed VALUES (2, 'temp second')
+    
+    SELECT 'Table Variable:' as label
+    SELECT * FROM @tv
+    SELECT 'Temp Table:' as label
+    SELECT * FROM #temp_mixed
+    
+    DROP TABLE #temp_mixed
+END
+GO
+
+CREATE PROC p_tv_scope_inner (@param int) AS
+BEGIN
+    DECLARE @inner_tv TABLE (id int, scope_info varchar(30))
+    INSERT INTO @inner_tv VALUES (@param, 'inner scope')
+    INSERT INTO @inner_tv VALUES (@param + 1, 'inner scope 2')
+    SELECT 'Inner scope TV:' as label
+    SELECT * FROM @inner_tv
+END
+GO
+
+CREATE PROC p_tv_scope_outer AS
+BEGIN
+    DECLARE @outer_tv TABLE (id int, scope_info varchar(30))
+    INSERT INTO @outer_tv VALUES (100, 'outer scope')
+    
+    SELECT 'Outer scope TV before inner call:' as label
+    SELECT * FROM @outer_tv
+    
+    EXEC p_tv_scope_inner 200
+    
+    INSERT INTO @outer_tv VALUES (101, 'after inner call')
+    SELECT 'Outer scope TV after inner call:' as label
+    SELECT * FROM @outer_tv
+END
+GO
