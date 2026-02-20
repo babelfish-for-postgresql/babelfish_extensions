@@ -668,4 +668,5 @@ comparison_op_index_scan-before-17_8-or-16_12
 BABEL-5788
 BABEL-1664
 string_aggregate
+like_op_index_scan
 babel_convert_with_style

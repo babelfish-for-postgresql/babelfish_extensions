@@ -12,12 +12,15 @@
 #include "catalog/pg_collation.h"
 #include "catalog/namespace.h"
 #include "tsearch/ts_locale.h"
+#include "optimizer/clauses.h"
+#include "optimizer/optimizer.h"
 #include "parser/parser.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_type.h"
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
+#include "rewrite/rewriteManip.h"
 #ifdef USE_ICU
 #include <unicode/utrans.h>
 #include "utils/removeaccent.map"
@@ -320,6 +323,50 @@ create_collate_expr(Node *arg, Oid collid)
 }
 
 /*
+ * Convert like_escape(pattern, escape) to TSQL bracket escapes.
+ * e.g., '100!%done' with escape '!' to '100[%]done'
+ */
+static Node *
+resolve_like_escape_to_bracket(FuncExpr *fe)
+{
+	Node	   *pattern = eval_const_expressions(NULL, linitial(fe->args));
+	Node	   *escape = eval_const_expressions(NULL, lsecond(fe->args));
+	char	   *patt, *esc;
+	StringInfoData buf;
+
+	if (!IsA(pattern, Const) || !IsA(escape, Const) ||
+		((Const *) pattern)->constisnull ||
+		((Const *) escape)->constisnull)
+		return NULL;
+
+	patt = TextDatumGetCString(((Const *) pattern)->constvalue);
+	esc = TextDatumGetCString(((Const *) escape)->constvalue);
+
+	initStringInfo(&buf);
+	for (int i = 0; patt[i]; i++)
+	{
+		if (patt[i] == esc[0] && patt[i + 1] &&
+			(strchr("%_[]", patt[i + 1]) || patt[i + 1] == esc[0]))
+		{
+			appendStringInfoChar(&buf, '[');
+			appendStringInfoChar(&buf, patt[++i]);
+			appendStringInfoChar(&buf, ']');
+		}
+		else
+			appendStringInfoChar(&buf, patt[i]);
+	}
+
+	pfree(patt);
+	pfree(esc);
+
+	return (Node *) makeConst(((Const *) pattern)->consttype,
+							  ((Const *) pattern)->consttypmod,
+							  ((Const *) pattern)->constcollid,
+							  -1, CStringGetTextDatum(buf.data),
+							  false, false);
+}
+
+/*
  * If the node is OpExpr and the colaltion is ci_as/ci_ai , then
  * transform the LIKE OpExpr to ILIKE OpExpr. For ci_ai, use remove_accents_internal*
  * function to remove the accents and optimize.
@@ -327,8 +374,9 @@ create_collate_expr(Node *arg, Oid collid)
  * function to remove the accents and optimize.
  * If the node is OpExpr and the collation is cs_as, then simply use optimization:
  *
- * Case 1: if the pattern is a constant stirng
- *		 col LIKE PATTERN -> col = PATTERN
+ * Case 1: if the pattern is a constant string
+ *		 col LIKE PATTERN -> col = PATTERN AND col LIKE PATTERN
+ *       col NOT LIKE PATTERN -> col <> PATTERN OR col NOT LIKE PATTERN
  * Case 2: if the pattern have a constant prefix
  *		 col LIKE PATTERN ->
  *		 col LIKE PATTERN BETWEEN prefix AND prefix||E'\uFFFF'
@@ -401,21 +449,44 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		linitial(op->args) = leftop = (Node*)((CollateExpr*) leftop)->arg;
 	}
 
-	/* 
-	 * This is needed to process CI_AI for Const nodes
-	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
-	 * we obtain a Relabel node which won't help us to perform optimization
-	 * for constant prefix. Hence, we process that here
+	/*
+	 * Try to simplify rightop to a Const for prefix extraction.
+	 *
+	 * like_escape() needs special handling, it produces backslash escapes
+	 * which like_fixed_prefix() does not recognize in TSQL mode, leading 
+	 * to incorrect prefix extraction. We bypass it and convert directly to 
+	 * TSQL bracket escapes.
+	 *
+	 * For all other expressions, we first try eval_const_expressions() which
+	 * folds immutable subexpressions, then evaluate_expr() as a fallback for
+	 * stable functions.
 	 */
-	if (IsA(rightop, RelabelType))
+
+	if (IsA(rightop, FuncExpr) &&
+		strcmp(get_func_name(((FuncExpr *) rightop)->funcid),
+			   "like_escape") == 0)
 	{
-		RelabelType		*relabel = (RelabelType *) rightop;
-		if (IsA(relabel->arg, Const))
+		Node *result = resolve_like_escape_to_bracket((FuncExpr *) rightop);
+		if (result)
+			rightop = result;
+	}
+	else
+	{
+		rightop = eval_const_expressions(NULL, rightop);
+
+		if (!IsA(rightop, Const) && !IsA(rightop, Param) &&
+			!checkExprHasSubLink(rightop) &&
+			!contain_var_clause(rightop) &&
+			!contain_volatile_functions(rightop) &&
+			bms_is_empty(pull_paramids((Expr *) rightop)))
 		{
-			lsecond(op->args) = relabel->arg;
-			rightop = (Node *) lsecond(op->args);
+			rightop = (Node *) evaluate_expr((Expr *) rightop,
+											exprType(rightop),
+											exprTypmod(rightop),
+											exprCollation(rightop));
 		}
 	}
+		lsecond(op->args) = rightop;
 
 	/* 
 	 * no constant prefix found in pattern, or pattern is not constant 
@@ -506,7 +577,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 									InvalidOid,
 									coll_info_of_inputcollid.oid,
 									oprfuncid(optup)));
-		ret = make_and_qual(ret, node);
+		ret = like_entry.is_not_match ? make_or_qual(ret, node) : make_and_qual(ret, node);
 		ReleaseSysCache(optup);
 	}
 	else

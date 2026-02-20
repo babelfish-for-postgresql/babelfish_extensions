@@ -648,4 +648,5 @@ babel_binary
 sys-fn_varbintohexstr
 babel_string_to_money_reg
 babel_convert_with_style
+like_op_index_scan
 sys-fn-varbintohexsubstring
