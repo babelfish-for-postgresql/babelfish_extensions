@@ -1221,15 +1221,22 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		/*
 		 * If this is INSERT EXEC with return status (INSERT INTO t EXEC @RC = P),
 		 * set up the INSERT EXEC rewrite context before executing the procedure.
-		 * This allows SELECT statements in the procedure to be rewritten as INSERTs.
+		 * Create temp table buffer and point rewrite context at it.
+		 * 
+		 * IMPORTANT: Skip this for scalar functions. Scalar functions return
+		 * a single value (not a result set), so INSERT EXEC with a scalar
+		 * function should return 0 rows affected (SQL Server behavior).
 		 */
-		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+		if (stmt->insert_exec && stmt->insert_exec_target != NULL && !is_scalar_func)
 		{
-			elog(DEBUG1, "INSERT EXEC with return status: Setting rewrite context for target=%s, columns=%s",
+			elog(DEBUG1, "INSERT EXEC with return status: Setting up temp table for target=%s, columns=%s",
 				 stmt->insert_exec_target,
 				 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
 			
-			pltsql_set_insert_exec_rewrite_context(stmt->insert_exec_target,
+			exec_create_insert_exec_temp_table(estate,
+											   stmt->insert_exec_target,
+											   stmt->insert_exec_columns);
+			pltsql_set_insert_exec_rewrite_context(estate->insert_exec_temp_table,
 												   stmt->insert_exec_columns);
 			insert_exec_context_set = true;
 		}
@@ -1294,12 +1301,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 #if 0
 		if (estate->insert_exec)
 		{
-			/*
-			 * For EXEC under INSERT ... EXECUTE, get the rows sent back by
-			 * the CallStmt, and store them into estate->tuple_store so that
-			 * at the end of function execution they will be sent to the right
-			 * place.
-			 */
 			TupleTableSlot *slot = MakeSingleTupleTableSlot(estate->rsi->expectedDesc,
 															&TTSOpsMinimalTuple);
 
@@ -1319,6 +1320,17 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			dest->rDestroy(dest);
 		}
 #endif
+
+		/*
+		 * INSERT EXEC: Flush buffered rows from temp table to target table.
+		 * This happens only on the success path.
+		 */
+		if (insert_exec_context_set && estate->insert_exec_temp_table != NULL)
+		{
+			/* Free the SPI tuple table from procedure execution before flush */
+			SPI_freetuptable(SPI_tuptable);
+			exec_flush_insert_exec_temp_table(estate);
+		}
 	}
 	PG_FINALLY();
 	{
@@ -1326,6 +1338,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		if (insert_exec_context_set)
 		{
 			pltsql_clear_insert_exec_rewrite_context();
+		}
+
+		/* Drop temp table on any exit (flush already happened on success path) */
+		if (insert_exec_context_set && estate->insert_exec_temp_table != NULL)
+		{
+			exec_drop_insert_exec_temp_table(estate);
 		}
 
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
@@ -1568,16 +1586,20 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 		/*
 		 * If this is INSERT EXEC with dynamic SQL (INSERT INTO t EXEC (@var)),
-		 * set up the INSERT EXEC rewrite context before executing the dynamic SQL.
-		 * This allows SELECT statements in the dynamic SQL to be rewritten as INSERTs.
+		 * create a temp table buffer and set the rewrite context to point to it.
+		 * SELECTs in the dynamic SQL will be rewritten to INSERT INTO temp_table.
+		 * After execution, we flush temp_table → target_table.
 		 */
 		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
 		{
-			elog(DEBUG1, "INSERT EXEC dynamic SQL: Setting rewrite context for target=%s, columns=%s",
+			elog(DEBUG1, "INSERT EXEC dynamic SQL: Setting up temp table for target=%s, columns=%s",
 				 stmt->insert_exec_target,
 				 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
 			
-			pltsql_set_insert_exec_rewrite_context(stmt->insert_exec_target,
+			exec_create_insert_exec_temp_table(estate,
+											   stmt->insert_exec_target,
+											   stmt->insert_exec_columns);
+			pltsql_set_insert_exec_rewrite_context(estate->insert_exec_temp_table,
 												   stmt->insert_exec_columns);
 			insert_exec_context_set = true;
 		}
@@ -1599,6 +1621,17 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
+
+		/*
+		 * INSERT EXEC: Flush buffered rows from temp table to target table.
+		 * This happens only on the success path.
+		 */
+		if (insert_exec_context_set && estate->insert_exec_temp_table != NULL)
+		{
+			/* Free the SPI tuple table from inline handler execution before flush */
+			SPI_freetuptable(SPI_tuptable);
+			exec_flush_insert_exec_temp_table(estate);
+		}
 	}
 	PG_FINALLY();
 	{
@@ -1606,6 +1639,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		if (insert_exec_context_set)
 		{
 			pltsql_clear_insert_exec_rewrite_context();
+		}
+
+		/* Drop temp table on any exit (flush already happened on success path) */
+		if (insert_exec_context_set && estate->insert_exec_temp_table != NULL)
+		{
+			exec_drop_insert_exec_temp_table(estate);
 		}
 
 		/* Restore past settings */

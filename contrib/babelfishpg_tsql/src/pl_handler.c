@@ -1176,8 +1176,22 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				ColumnRef  *n;
 				ResTarget  *rt;
 				List	   *returningList;
+				bool		is_insert_exec = false;
 
-				if (!has_ident)
+				/*
+				 * Check if this is an INSERT EXEC statement.
+				 * For INSERT EXEC, the query->utilityStmt is set to CallStmt or DoStmt.
+				 * In this case, we skip the has_ident check because the values
+				 * will come from the procedure, not from explicit VALUES.
+				 */
+				if (query->utilityStmt != NULL)
+				{
+					NodeTag tag = nodeTag(query->utilityStmt);
+					if (tag == T_CallStmt || tag == T_DoStmt)
+						is_insert_exec = true;
+				}
+
+				if (!has_ident && !is_insert_exec)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
 							 errmsg("Explicit value must be specified for identity column in table '%s' when IDENTITY_INSERT is set to ON", rel_name)));
@@ -6070,6 +6084,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geography = common_utility_plugin_ptr->bytea_from_geography;
 		(*pltsql_protocol_plugin_ptr)->sql_geometry_from_bytea = common_utility_plugin_ptr->geometry_from_bytea;
 		(*pltsql_protocol_plugin_ptr)->sql_geography_from_bytea = common_utility_plugin_ptr->geography_from_bytea;
+		(*pltsql_protocol_plugin_ptr)->is_insert_exec_rewrite_active = pltsql_insert_exec_rewrite_active;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
@@ -6754,6 +6769,15 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		}
 		ReleaseTupleDesc(rsinfo.expectedDesc);
 		ExecDropSingleTupleTableSlot(slot);
+	}
+	else if (codeblock->relation && codeblock->attrnos && rsinfo.expectedDesc)
+	{
+		/*
+		 * Query rewriting approach: the tuple store was never populated,
+		 * but we still need to free the expectedDesc TupleDesc that was
+		 * created during ReturnSetInfo setup.
+		 */
+		FreeTupleDesc(rsinfo.expectedDesc);
 	}
 
 	/* Function should now have no remaining use-counts ... */

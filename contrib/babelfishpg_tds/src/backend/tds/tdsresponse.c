@@ -153,6 +153,9 @@ SendPendingDone(bool more)
 	{
 		uint32_t	tdsVersion = GetClientTDSVersion();
 
+		TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: SendPendingDone: more=%d, token=0x%02x, status=0x%04x, cmd=0x%04x, rowcnt=%lu",
+			 more, TdsPendingDoneToken, TdsPendingDoneStatus, TdsPendingDoneCurCmd, TdsPendingDoneRowCnt);
+
 		TdsHavePendingDone = false;
 
 		/* In NOCOUNT=ON mode we need to suppress the DONE_COUNT */
@@ -2038,6 +2041,8 @@ void
 TdsSendInfo(int number, int state, int class,
 			char *message, int lineNo)
 {
+	TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: TdsSendInfo called: number=%d, state=%d, class=%d, message=%s",
+		 number, state, class, message);
 	TdsSendInfoOrError(TDS_TOKEN_INFO, number, state, class,
 					   message,
 					   "BABELFISH", /* TODO: where to get this? */
@@ -2049,6 +2054,9 @@ void
 TdsSendError(int number, int state, int class,
 			 char *message, int lineNo)
 {
+	TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: TdsSendError called: number=%d, state=%d, class=%d, message=%s",
+		 number, state, class, message);
+
 	/*
 	 * If not already in RESPONSE mode, switch the TDS protocol to RESPONSE
 	 * mode.
@@ -2602,6 +2610,7 @@ TdsSendDone(int token, int status, int curcmd, uint64_t nprocessed)
 int
 TdsFlush(void)
 {
+	TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: TdsFlush called, TdsHavePendingDone=%d", TdsHavePendingDone);
 	SendPendingDone(false);
 
 	/* reset flags */
@@ -2627,6 +2636,8 @@ TDSStatementBeginCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 		return;
 
 	TDS_DEBUG(TDS_DEBUG3, "begin %d", tds_estate->current_stack);
+	TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: StatementBegin: cmd_type=%d, current_stack=%d->%d",
+		 stmt ? stmt->cmd_type : -1, tds_estate->current_stack, tds_estate->current_stack + 1);
 	tds_estate->current_stack++;
 
 	/* shouldn't have any un-handled error while begining the next statement */
@@ -2636,11 +2647,28 @@ TDSStatementBeginCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 		return;
 
 	/*
-	 * TODO: It's possible that for some statements, we've to send a done toke
-	 * when we start the command and another done token when we end the
-	 * command. TRY..CATCH is one such example.  We can use this function to
-	 * send the done token at the beginning of the command.
+	 * When a batch starts with TRY/CATCH (SAVE_CTX is the first statement),
+	 * we need to send a "priming" DONE token. Without this, if the first
+	 * statement inside TRY fails, the TDS client receives the INSERT's DONE
+	 * token as the first token in the response, which causes "Invalid cursor
+	 * state" errors on subsequent batches.
+	 *
+	 * The priming DONE token ensures the TDS client is in the correct state
+	 * to handle subsequent tokens properly. This mimics what happens when
+	 * there's a PRINT or other statement before the BEGIN TRY.
 	 */
+	if (stmt->cmd_type == PLTSQL_STMT_SAVE_CTX && tds_estate->current_stack == 1)
+	{
+		TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: SAVE_CTX at batch start - sending priming DONE token");
+		/*
+		 * Send a priming DONE token with no flags (0).
+		 * TDS_DONE_MORE will be added by SendPendingDone when the next token
+		 * is sent. This mimics what a PRINT statement would send.
+		 * We use TDS_CMD_UNKNOWN (0x02) as the command type since this is just
+		 * a placeholder token to prime the client's state machine.
+		 */
+		TdsSendDone(TDS_TOKEN_DONE, 0, TDS_CMD_UNKNOWN, 0);
+	}
 }
 
 static void
@@ -2659,6 +2687,8 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 	TDS_DEBUG(TDS_DEBUG3, "end %d", tds_estate->current_stack);
 	toplevel = (tds_estate->current_stack == 0);
 
+	TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: StatementEnd_Internal: cmd_type=%d, current_stack=%d, toplevel=%d, error=%d",
+		 stmt ? stmt->cmd_type : -1, tds_estate->current_stack, toplevel, error);
 
 	/*
 	 * If we're ending a statement, that means we've already handled the
@@ -2676,6 +2706,30 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 	if (stmt == NULL)
 		return;
 
+	/*
+	 * INSERT EXEC query rewriting: suppress ALL done tokens for statements
+	 * inside the called procedure. This includes not just EXECSQL (the
+	 * rewritten SELECTs→INSERTs) but also BLOCK, RETURN, GOTO, and any
+	 * other statement types that the procedure contains.
+	 *
+	 * Without this, the procedure's BLOCK statement sends a DONEINPROC
+	 * token that the TDS client doesn't expect, causing "Invalid cursor
+	 * state" errors on subsequent batches.
+	 *
+	 * We only suppress non-toplevel tokens. The outer INSERT EXEC statement
+	 * itself (at toplevel) needs its done token. By the time the outer
+	 * statement's stmt_end fires, the rewrite context has already been
+	 * cleared in PG_FINALLY, so this check naturally excludes it.
+	 */
+	if (!toplevel &&
+		pltsql_plugin_handler_ptr->is_insert_exec_rewrite_active &&
+		pltsql_plugin_handler_ptr->is_insert_exec_rewrite_active())
+	{
+		TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: SKIP_DONE (insert_exec_rewrite) cmd_type=%d, stack=%d",
+			 stmt->cmd_type, tds_estate->current_stack);
+		return;
+	}
+
 	/* TODO: handle all the cases */
 	switch (stmt->cmd_type)
 	{
@@ -2686,6 +2740,10 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 			/* Used in multi-statement table valued functions */
 		case PLTSQL_STMT_DECL_TABLE:
 		case PLTSQL_STMT_RETURN_TABLE:
+		case PLTSQL_STMT_TRY_CATCH:
+		case PLTSQL_STMT_SAVE_CTX:
+		case PLTSQL_STMT_RESTORE_CTX_FULL:
+		case PLTSQL_STMT_RESTORE_CTX_PARTIAL:
 			{
 				/* Done token is not expected for these commands */
 				skip_done = true;
@@ -2722,23 +2780,21 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 
 								/*
 								 * row_count should be invalid if the INSERT
-								 * is inside the procedure of an INSERT-EXEC,
-								 * or if the INSERT itself is an INSERT-EXEC
-								 * and it just returned error.
+								 * itself is an INSERT-EXEC and it just
+								 * returned error.
 								 */
-								row_count_valid = !estate->insert_exec &&
-									!(markErrorFlag &&
+								row_count_valid = !(markErrorFlag &&
 									  ((PLtsql_stmt_execsql *) stmt)->insert_exec);
 							}
 							else if (plansource->commandTag == CMDTAG_UPDATE)
 							{
 								command_type = TDS_CMD_UPDATE;
-								row_count_valid = !estate->insert_exec;
+								row_count_valid = true;
 							}
 							else if (plansource->commandTag == CMDTAG_DELETE)
 							{
 								command_type = TDS_CMD_DELETE;
-								row_count_valid = !estate->insert_exec;
+								row_count_valid = true;
 							}
 
 							/*
@@ -2748,7 +2804,7 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 							else if (plansource->commandTag == CMDTAG_SELECT)
 							{
 								command_type = TDS_CMD_SELECT;
-								row_count_valid = !estate->insert_exec;
+								row_count_valid = true;
 							}
 						}
 					}
@@ -2837,7 +2893,11 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 	 * return from here.
 	 */
 	if (skip_done)
+	{
+		TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: SKIP_DONE cmd_type=%d, stack=%d",
+			 stmt ? stmt->cmd_type : -1, tds_estate->current_stack);
 		return;
+	}
 
 	/*
 	 * If count is valid for this command, set the count and the corresponding
@@ -2861,6 +2921,8 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 	else
 		flags |= TDS_DONE_MORE;
 
+	TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: SEND_DONE cmd_type=%d, token_type=%d, flags=0x%x, command_type=%d, nprocessed=%lu, toplevel=%d, is_proc=%d",
+		 stmt ? stmt->cmd_type : -1, token_type, flags, command_type, (unsigned long)nprocessed, toplevel, is_proc);
 	TdsSendDone(token_type, flags, command_type, nprocessed);
 }
 
@@ -2878,6 +2940,9 @@ TDSStatementExceptionCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool 
 {
 	if (tds_estate == NULL)
 		return;
+
+	TDS_DEBUG(TDS_DEBUG1, "TDS_DEBUG_TOKEN: StatementException: cmd_type=%d, current_stack=%d, terminate_batch=%d",
+		 stmt ? stmt->cmd_type : -1, tds_estate->current_stack, terminate_batch);
 
 	TDS_DEBUG(TDS_DEBUG3, "exception %d", tds_estate->current_stack);
 

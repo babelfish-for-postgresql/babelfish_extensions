@@ -1009,6 +1009,9 @@ coerce_function_result_tuple(PLtsql_execstate *estate, TupleDesc tupdesc)
 	/* We assume exec_stmt_return verified that result is composite */
 	Assert(type_is_rowtype(estate->rettype));
 
+	elog(NOTICE, "INSERT-EXEC-DEBUG: coerce_function_result_tuple called, rettype=%u, insert_exec=%d",
+		 estate->rettype, estate->insert_exec);
+
 	/* We can special-case expanded records for speed */
 	if (VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(estate->retval)))
 	{
@@ -4427,6 +4430,12 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 						   strcmp(func->fn_signature, "inline_code_block") == 0)
 		&& rsi;
 	
+	/* Initialize INSERT EXEC temp table buffering fields */
+	estate->insert_exec_temp_table = NULL;
+	estate->insert_exec_target_table = NULL;
+	estate->insert_exec_column_list = NULL;
+	estate->insert_exec_identity_insert = false;
+
 	estate->explain_infos = NIL;
 
 	/*
@@ -4876,6 +4885,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	PG_TRY();
 	{
+		if (stmt->insert_exec)
+		{
+			elog(DEBUG1, "INSERT-EXEC: Entered exec_stmt_execsql PG_TRY. query='%.100s', insert_exec=%d",
+						expr->query, stmt->insert_exec);
+		}
 		/*
 		 * INSERT EXEC Query Rewriting:
 		 * If we're in INSERT EXEC context (via query rewriting approach),
@@ -4925,6 +4939,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 		if (expr->plan == NULL)
 		{
+			if (stmt->insert_exec)
+			{
+				elog(DEBUG1, "INSERT-EXEC: About to prepare plan. query='%s'",
+					 expr->query);
+			}
 			/*
 			 * If the set_fmtonly guc is set, we need to rewrite any
 			 * statements as exec statements that invoke
@@ -4938,6 +4957,12 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				stmt->sqlstmt->query = pstrdup(query.data);
 			}
 			prepare_stmt_execsql(estate, estate->func, stmt, true);
+			if (stmt->insert_exec)
+			{
+				elog(DEBUG1, "INSERT-EXEC: Plan prepared. query='%s', insert_exec_target='%s'",
+					 expr->query,
+					 stmt->insert_exec_target ? stmt->insert_exec_target : "(null)");
+			}
 		}
 
 		/*
@@ -4962,10 +4987,22 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				cur = cur->next;
 			}
 			
-			/* Set the INSERT EXEC rewrite context for query rewriting approach */
+			/*
+			 * Create temp table buffer and set rewrite context to point to it.
+			 * SELECTs inside the procedure will be rewritten to INSERT INTO temp_table.
+			 * After procedure completes, we flush temp_table → target_table.
+			 */
 			if (stmt->insert_exec_target != NULL)
 			{
-				pltsql_set_insert_exec_rewrite_context(stmt->insert_exec_target, 
+				elog(DEBUG1, "INSERT-EXEC: About to create temp table. target='%s', columns='%s'",
+					 stmt->insert_exec_target,
+					 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
+				exec_create_insert_exec_temp_table(estate,
+												   stmt->insert_exec_target,
+												   stmt->insert_exec_columns);
+				elog(DEBUG1, "INSERT-EXEC: Temp table created: '%s'. Setting rewrite context.",
+					 estate->insert_exec_temp_table);
+				pltsql_set_insert_exec_rewrite_context(estate->insert_exec_temp_table, 
 													   stmt->insert_exec_columns);
 			}
 		}
@@ -5041,7 +5078,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * tsql_select_assign_stmt (select @a=1). with ANTLR=off, it is
 		 * handled in PLtsql_stmt_query_set.
 		 */
-		if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt || ro_func)
+		if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt || ro_func || stmt->insert_exec)
 			enable_txn_in_triggers = false;
 
 		if (enable_txn_in_triggers)
@@ -5088,79 +5125,22 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		else if (stmt->insert_exec)
 		{
 			/*
-			 * INSERT EXEC with Savepoint for Transaction Atomicity
-			 * 
-			 * Wrap the procedure execution in a savepoint to ensure atomic
-			 * behavior. If the procedure fails at any point (constraint violation,
-			 * error in procedure, etc.), all inserted rows are rolled back.
-			 * 
-			 * This matches SQL Server's behavior where INSERT EXEC is atomic -
-			 * either all rows are inserted or none are.
+			 * INSERT EXEC: Execute the procedure call.
+			 *
+			 * SELECTs inside the procedure are rewritten to INSERT INTO temp_table
+			 * by the query rewriting mechanism. After the procedure completes
+			 * successfully, we flush temp_table → target_table.
+			 *
+			 * Atomicity is provided by the temp table approach itself:
+			 * - If the procedure errors, the flush never happens → target unchanged
+			 * - If the flush fails (e.g., constraint violation), the error propagates
+			 *   and the temp table is dropped in PG_FINALLY → target unchanged
+			 *
+			 * No savepoint is needed because the temp table acts as a staging area.
 			 */
-			MemoryContext oldcontext_sp = CurrentMemoryContext;
-			ResourceOwner oldowner_sp = CurrentResourceOwner;
-			ExprContext *old_eval_econtext = estate->eval_econtext;
-			
-			elog(DEBUG1, "INSERT EXEC: Starting savepoint for atomic execution");
-			
-			BeginInternalSubTransaction("insert_exec");
-			MemoryContextSwitchTo(oldcontext_sp);
-			
-			PG_TRY(2);
-			{
-				/* Execute the procedure - SELECTs will be rewritten to INSERTs */
-				rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
-													 estate->readonly_func, tcount);
-				
-				/* Success - release the savepoint */
-				ReleaseCurrentSubTransaction();
-				MemoryContextSwitchTo(oldcontext_sp);
-				CurrentResourceOwner = oldowner_sp;
-				
-				/* Restore eval_econtext (inner one was cleaned up during subxact exit) */
-				estate->eval_econtext = old_eval_econtext;
-				
-				elog(DEBUG1, "INSERT EXEC: Savepoint released successfully");
-			}
-			PG_CATCH(2);
-			{
-				ErrorData *edata;
-				int			sqlerrcode;
-				char	   *message;
-				
-				elog(DEBUG1, "INSERT EXEC: Error caught, rolling back savepoint");
-				
-				/* Save error info BEFORE rollback, in the outer memory context */
-				MemoryContextSwitchTo(oldcontext_sp);
-				edata = CopyErrorData();
-				sqlerrcode = edata->sqlerrcode;
-				message = pstrdup(edata->message);
-				FlushErrorState();
-				
-				/* Rollback the savepoint - this undoes all INSERTs */
-				RollbackAndReleaseCurrentSubTransaction();
-				MemoryContextSwitchTo(oldcontext_sp);
-				CurrentResourceOwner = oldowner_sp;
-				
-				/* Restore eval_econtext */
-				estate->eval_econtext = old_eval_econtext;
-				
-				/*
-				 * Clean up after subtransaction abort. The tuple table made in
-				 * the subxact was thrown away by SPI during subxact abort.
-				 */
-				estate->eval_tuptable = NULL;
-				exec_eval_cleanup(estate);
-				
-				/* Free the copied error data */
-				FreeErrorData(edata);
-				
-				/* Re-raise the error with the saved information */
-				ereport(ERROR,
-						(errcode(sqlerrcode),
-						 errmsg("%s", message)));
-			}
-			PG_END_TRY(2);
+			elog(DEBUG1, "INSERT EXEC: Executing procedure (temp table buffering)");
+			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
+												 estate->readonly_func, tcount);
 		}
 		else
 			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
@@ -5236,13 +5216,14 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/* Update the output parameter */
 		if (stmt->insert_exec && stmt->target && execute_call_insert_exec_retval != (Datum) 0)
 		{
+			PLtsql_row *row;
 			/*
 			 * Only call exec_move_row_from_datum if the target has fields.
 			 * When a procedure has no OUT parameters, nfields will be 0,
 			 * and execute_call_insert_exec_retval may contain an invalid
 			 * datum (e.g., from a RETURN statement) that would cause a crash.
 			 */
-			PLtsql_row *row = (PLtsql_row *) stmt->target;
+			row = (PLtsql_row *) stmt->target;
 			if (row->nfields > 0)
 			{
 				exec_move_row_from_datum(estate, stmt->target, execute_call_insert_exec_retval);
@@ -5412,11 +5393,33 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO))
 				restore_session_properties();
 		}
+
+		/*
+		 * INSERT EXEC: Flush buffered rows from temp table to target table.
+		 * This happens only on the success path — if the procedure completed
+		 * without a transaction-terminating error.
+		 *
+		 * The flush updates estate->eval_processed and exec_set_rowcount
+		 * so the TDS done token reports the correct inserted row count
+		 * (instead of 0 from the CALL's SPI_processed).
+		 */
+		if (stmt->insert_exec && estate->insert_exec_temp_table != NULL)
+		{
+			/* Free the SPI tuple table from procedure execution before flush */
+			SPI_freetuptable(SPI_tuptable);
+			exec_flush_insert_exec_temp_table(estate);
+		}
 	}
 	PG_FINALLY();
 	{
 		original_query_string = NULL;
 		is_schemabinding_view = true;
+
+		/* Drop temp table on any exit (flush already happened on success path) */
+		if (stmt->insert_exec && estate->insert_exec_temp_table != NULL)
+		{
+			exec_drop_insert_exec_temp_table(estate);
+		}
 
 		/* Clear INSERT EXEC rewrite context on any exit */
 		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
@@ -9197,6 +9200,7 @@ deconstruct_composite_datum(Datum value, HeapTupleData *tmptup)
 	/* Extract rowtype info and find a tupdesc */
 	tupType = HeapTupleHeaderGetTypeId(td);
 	tupTypmod = HeapTupleHeaderGetTypMod(td);
+	
 	return lookup_rowtype_tupdesc(tupType, tupTypmod);
 }
 
@@ -10849,6 +10853,735 @@ pltsql_get_insert_exec_column_list(void)
 }
 
 /*
+ * exec_create_insert_exec_temp_table
+ *
+ * Create a temporary table for INSERT EXEC buffering.
+ * The temp table has the same structure as the target table, but WITHOUT
+ * IDENTITY columns (which would cause column count mismatches).
+ * All SELECT statements in the procedure will be rewritten to INSERT into
+ * this temp table. After the procedure completes, we bulk INSERT from
+ * the temp table to the real target table.
+ *
+ * Using a temp table instead of a tuple store gives us automatic
+ * transaction semantics — TRY/CATCH rollback, savepoint rollback,
+ * and transaction abort all work correctly because the temp table
+ * is a real PostgreSQL transactional relation.
+ *
+ * IDENTITY column handling:
+ * When the target table has an IDENTITY column, we exclude it from the
+ * temp table. The procedure's SELECT statements return N columns, and
+ * the temp table should have exactly N columns. The IDENTITY column
+ * will be auto-generated when we flush to the target table.
+ *
+ * IDENTITY_INSERT handling:
+ * When IDENTITY_INSERT is ON for the target table, we INCLUDE the IDENTITY
+ * column in the temp table. The procedure's SELECT statements are expected
+ * to return explicit values for the IDENTITY column. When flushing, we use
+ * OVERRIDING SYSTEM VALUE to allow explicit IDENTITY values.
+ */
+void
+exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
+								   const char *target_table,
+								   const char *column_list)
+{
+	StringInfoData create_query;
+	char *temp_table_name;
+	char *pg_table_ref;
+	int rc;
+	bool identity_insert_on = false;
+
+	/* Generate unique temp table name using a monotonic counter */
+	{
+		static uint64 insert_exec_counter = 0;
+		temp_table_name = psprintf("__insert_exec_buf_%lu", (unsigned long) ++insert_exec_counter);
+	}
+
+	/* Save target info in estate — use TopMemoryContext so these survive error handling */
+	estate->insert_exec_target_table = MemoryContextStrdup(TopMemoryContext,
+														   target_table);
+	if (column_list)
+		estate->insert_exec_column_list = MemoryContextStrdup(TopMemoryContext,
+															  column_list);
+
+	/*
+	 * Convert T-SQL table reference to PG physical schema name for the
+	 * CREATE TEMP TABLE ... AS SELECT query.
+	 *
+	 * We must use PG physical names here because CREATE TABLE AS SELECT
+	 * is a DDL statement (CreateTableAsStmt), and the multidb rewriting
+	 * in rewrite_object_refs only rewrites the target relation for CTAS,
+	 * not the source query's RangeVars. So we need to pre-convert.
+	 *
+	 * For the flush INSERT (DML), we use T-SQL names and let the parser's
+	 * multidb rewriting handle it — see exec_flush_insert_exec_temp_table.
+	 */
+	if (target_table[0] == '#')
+	{
+		pg_table_ref = pstrdup(target_table);
+	}
+	else
+	{
+		char *db_part = NULL;
+		char *schema_part = NULL;
+		char *table_part = NULL;
+		const char *first_dot = strchr(target_table, '.');
+		
+		if (first_dot != NULL)
+		{
+			const char *second_dot = strchr(first_dot + 1, '.');
+			if (second_dot != NULL)
+			{
+				db_part = pnstrdup(target_table, first_dot - target_table);
+				schema_part = pnstrdup(first_dot + 1, second_dot - first_dot - 1);
+				table_part = pstrdup(second_dot + 1);
+			}
+			else
+			{
+				schema_part = pnstrdup(target_table, first_dot - target_table);
+				table_part = pstrdup(first_dot + 1);
+			}
+		}
+		else
+		{
+			table_part = pstrdup(target_table);
+		}
+
+		if (schema_part != NULL)
+		{
+			char *cur_db = db_part ? db_part : get_cur_db_name();
+			char *physical_schema = get_physical_schema_name(cur_db, schema_part);
+			pg_table_ref = psprintf("%s.%s", physical_schema, table_part);
+		}
+		else
+		{
+			char *cur_db = get_cur_db_name();
+			char *physical_schema = get_physical_schema_name(cur_db, "dbo");
+			pg_table_ref = psprintf("%s.%s", physical_schema, table_part);
+		}
+
+		if (db_part) pfree(db_part);
+		if (schema_part) pfree(schema_part);
+		pfree(table_part);
+	}
+
+	/*
+	 * Check if IDENTITY_INSERT is ON for the target table.
+	 * If so, we need to include the IDENTITY column in the temp table.
+	 */
+	if (tsql_identity_insert.valid)
+	{
+		/*
+		 * Parse pg_table_ref to get schema and table name, then look up the OID.
+		 * pg_table_ref is in format "schema.table" (already converted to PG names).
+		 */
+		char *schema_name = NULL;
+		char *table_name = NULL;
+		const char *dot = strchr(pg_table_ref, '.');
+		
+		elog(LOG, "INSERT-EXEC-TEMP-TABLE: Checking IDENTITY_INSERT. pg_table_ref='%s', tsql_identity_insert.rel_oid=%u",
+			 pg_table_ref, tsql_identity_insert.rel_oid);
+		
+		if (dot != NULL)
+		{
+			schema_name = pnstrdup(pg_table_ref, dot - pg_table_ref);
+			table_name = pstrdup(dot + 1);
+		}
+		else
+		{
+			table_name = pstrdup(pg_table_ref);
+		}
+		
+		if (schema_name != NULL)
+		{
+			Oid schema_oid = get_namespace_oid(schema_name, true);
+			elog(LOG, "INSERT-EXEC-TEMP-TABLE: schema_name='%s', table_name='%s', schema_oid=%u",
+				 schema_name, table_name, schema_oid);
+			if (OidIsValid(schema_oid))
+			{
+				Oid target_rel_oid = get_relname_relid(table_name, schema_oid);
+				elog(LOG, "INSERT-EXEC-TEMP-TABLE: target_rel_oid=%u, tsql_identity_insert.rel_oid=%u",
+					 target_rel_oid, tsql_identity_insert.rel_oid);
+				if (OidIsValid(target_rel_oid) && target_rel_oid == tsql_identity_insert.rel_oid)
+				{
+					identity_insert_on = true;
+					estate->insert_exec_identity_insert = true;
+					elog(LOG, "INSERT-EXEC-TEMP-TABLE: IDENTITY_INSERT is ON for target table");
+				}
+			}
+			pfree(schema_name);
+		}
+		pfree(table_name);
+	}
+	else
+	{
+		elog(LOG, "INSERT-EXEC-TEMP-TABLE: tsql_identity_insert.valid is FALSE");
+	}
+
+	elog(LOG, "INSERT-EXEC-TEMP-TABLE: identity_insert_on=%d, column_list=%s",
+		 identity_insert_on, column_list ? column_list : "(null)");
+
+	/*
+	 * Create temp table with same structure as target table.
+	 * 
+	 * IMPORTANT: We need to exclude IDENTITY columns from the temp table,
+	 * UNLESS IDENTITY_INSERT is ON for the target table.
+	 * When the target table has an IDENTITY column, the procedure's SELECT
+	 * statements return N columns (without IDENTITY), but if we copy the
+	 * entire table structure, the temp table would have N+1 columns.
+	 * 
+	 * We use a query that explicitly selects non-IDENTITY columns by
+	 * querying the system catalog to build the column list.
+	 * 
+	 * If a column_list is provided, we use that directly (user specified
+	 * which columns to insert into).
+	 *
+	 * If IDENTITY_INSERT is ON, we include ALL columns (including IDENTITY).
+	 */
+	initStringInfo(&create_query);
+	if (column_list != NULL && identity_insert_on)
+	{
+		/*
+		 * User specified column list AND IDENTITY_INSERT is ON.
+		 * We need to use a subquery with type casts to:
+		 * 1. Include all columns specified in the column list
+		 * 2. Break the link to the source column so Babelfish doesn't copy IDENTITY
+		 * 
+		 * Query pg_attribute to get the types for each column,
+		 * then build a SELECT with explicit type casts inside a subquery.
+		 */
+		StringInfoData col_query;
+		int col_rc;
+		
+		initStringInfo(&col_query);
+		appendStringInfo(&col_query,
+			"SELECT string_agg("
+			"  quote_ident(attname) || '::' || format_type(atttypid, atttypmod) || ' AS ' || quote_ident(attname), "
+			"  ', ' ORDER BY attnum"
+			") "
+			"FROM pg_attribute "
+			"WHERE attrelid = '%s'::regclass "
+			"AND attnum > 0 "
+			"AND NOT attisdropped",
+			pg_table_ref);
+		
+		col_rc = SPI_execute(col_query.data, true, 1);
+		
+		if (col_rc == SPI_OK_SELECT && SPI_processed == 1)
+		{
+			bool isnull;
+			Datum col_list_datum = SPI_getbinval(SPI_tuptable->vals[0], 
+												  SPI_tuptable->tupdesc, 1, &isnull);
+			
+			if (!isnull)
+			{
+				char *all_cols_with_cast = TextDatumGetCString(col_list_datum);
+				
+				/* Use subquery to break the link to source column */
+				appendStringInfo(&create_query,
+					"CREATE TEMP TABLE %s AS SELECT * FROM (SELECT %s FROM %s WHERE FALSE) AS __subq",
+					temp_table_name,
+					all_cols_with_cast,
+					pg_table_ref);
+				
+				elog(LOG, "INSERT-EXEC-TEMP-TABLE: Using subquery with type casts (IDENTITY_INSERT ON): %s",
+					 all_cols_with_cast);
+				
+				pfree(all_cols_with_cast);
+			}
+			else
+			{
+				/* Fallback - use column list with subquery */
+				appendStringInfo(&create_query,
+					"CREATE TEMP TABLE %s AS SELECT * FROM (SELECT %s FROM %s WHERE FALSE) AS __subq",
+					temp_table_name,
+					column_list,
+					pg_table_ref);
+			}
+		}
+		else
+		{
+			/* Query failed - fall back to column list with subquery */
+			appendStringInfo(&create_query,
+				"CREATE TEMP TABLE %s AS SELECT * FROM (SELECT %s FROM %s WHERE FALSE) AS __subq",
+				temp_table_name,
+				column_list,
+				pg_table_ref);
+		}
+		
+		SPI_freetuptable(SPI_tuptable);
+		pfree(col_query.data);
+	}
+	else if (column_list != NULL)
+	{
+		/*
+		 * User specified column list - use it directly.
+		 * This handles cases like: INSERT INTO t (col1, col2) EXEC proc
+		 * 
+		 * NOTE: We use a subquery to break the link between the source column
+		 * and the target column. This prevents Babelfish's pltsql_post_parse_analyze
+		 * hook from copying the IDENTITY property to the temp table.
+		 */
+		appendStringInfo(&create_query,
+			"CREATE TEMP TABLE %s AS SELECT * FROM (SELECT %s FROM %s WHERE FALSE) AS __subq",
+			temp_table_name,
+			column_list,
+			pg_table_ref);
+	}
+	else if (identity_insert_on)
+	{
+		/*
+		 * IDENTITY_INSERT is ON - include ALL columns including IDENTITY.
+		 * The procedure is expected to return explicit values for the IDENTITY column.
+		 * 
+		 * IMPORTANT: We use a subquery with type casts to:
+		 * 1. Include all columns (including the IDENTITY column)
+		 * 2. Break the link to the source column so Babelfish doesn't copy IDENTITY
+		 * 
+		 * The subquery approach is necessary because Babelfish's pltsql_post_parse_analyze
+		 * hook looks at TargetEntry->resorigtbl and resorigcol to determine if the
+		 * source column has IDENTITY, and if so, adds IDENTITY to the target column.
+		 * Using a subquery breaks this link.
+		 */
+		StringInfoData col_query;
+		int col_rc;
+		
+		initStringInfo(&col_query);
+		appendStringInfo(&col_query,
+			"SELECT string_agg("
+			"  quote_ident(attname) || '::' || format_type(atttypid, atttypmod) || ' AS ' || quote_ident(attname), "
+			"  ', ' ORDER BY attnum"
+			") "
+			"FROM pg_attribute "
+			"WHERE attrelid = '%s'::regclass "
+			"AND attnum > 0 "
+			"AND NOT attisdropped",
+			pg_table_ref);
+		
+		col_rc = SPI_execute(col_query.data, true, 1);
+		
+		if (col_rc == SPI_OK_SELECT && SPI_processed == 1)
+		{
+			bool isnull;
+			Datum col_list_datum = SPI_getbinval(SPI_tuptable->vals[0], 
+												  SPI_tuptable->tupdesc, 1, &isnull);
+			
+			if (!isnull)
+			{
+				char *all_cols_with_cast = TextDatumGetCString(col_list_datum);
+				
+				/* Use subquery to break the link to source column */
+				appendStringInfo(&create_query,
+					"CREATE TEMP TABLE %s AS SELECT * FROM (SELECT %s FROM %s WHERE FALSE) AS __subq",
+					temp_table_name,
+					all_cols_with_cast,
+					pg_table_ref);
+				
+				pfree(all_cols_with_cast);
+			}
+			else
+			{
+				/* Fallback - use SELECT * with subquery */
+				appendStringInfo(&create_query,
+					"CREATE TEMP TABLE %s AS SELECT * FROM (SELECT * FROM %s WHERE FALSE) AS __subq",
+					temp_table_name,
+					pg_table_ref);
+			}
+		}
+		else
+		{
+			/* Query failed - fall back to SELECT * */
+			appendStringInfo(&create_query,
+				"CREATE TEMP TABLE %s AS SELECT * FROM %s WHERE FALSE",
+				temp_table_name,
+				pg_table_ref);
+		}
+		
+		SPI_freetuptable(SPI_tuptable);
+		pfree(col_query.data);
+		
+		elog(LOG, "INSERT-EXEC-TEMP-TABLE: Including all columns with subquery (IDENTITY_INSERT ON)");
+	}
+	else
+	{
+		/*
+		 * No column list specified - we need to exclude IDENTITY columns.
+		 * Build a column list that excludes columns with IDENTITY property.
+		 * 
+		 * We query pg_attribute to get non-IDENTITY columns. In Babelfish,
+		 * IDENTITY columns have attidentity set to 'a' (ALWAYS) or 'd' (BY DEFAULT).
+		 * We exclude these columns from the temp table.
+		 * 
+		 * We use a subquery to break the link to source columns, preventing
+		 * Babelfish from copying any column properties.
+		 */
+		StringInfoData col_query;
+		int col_rc;
+		
+		initStringInfo(&col_query);
+		appendStringInfo(&col_query,
+			"SELECT string_agg(quote_ident(attname), ', ' ORDER BY attnum) "
+			"FROM pg_attribute "
+			"WHERE attrelid = '%s'::regclass "
+			"AND attnum > 0 "
+			"AND NOT attisdropped "
+			"AND attidentity = ''",  /* Exclude IDENTITY columns */
+			pg_table_ref);
+		
+		col_rc = SPI_execute(col_query.data, true, 1);
+		
+		if (col_rc == SPI_OK_SELECT && SPI_processed == 1)
+		{
+			bool isnull;
+			Datum col_list_datum = SPI_getbinval(SPI_tuptable->vals[0], 
+												  SPI_tuptable->tupdesc, 1, &isnull);
+			
+			if (!isnull)
+			{
+				char *non_identity_cols = TextDatumGetCString(col_list_datum);
+				
+				/* Use subquery to break the link to source columns */
+				appendStringInfo(&create_query,
+					"CREATE TEMP TABLE %s AS SELECT * FROM (SELECT %s FROM %s WHERE FALSE) AS __subq",
+					temp_table_name,
+					non_identity_cols,
+					pg_table_ref);
+				
+				/* Save the non-identity column list for the flush INSERT */
+				estate->insert_exec_column_list = MemoryContextStrdup(TopMemoryContext,
+																	  non_identity_cols);
+				
+				pfree(non_identity_cols);
+			}
+			else
+			{
+				/* No non-IDENTITY columns found - use SELECT * with subquery */
+				appendStringInfo(&create_query,
+					"CREATE TEMP TABLE %s AS SELECT * FROM (SELECT * FROM %s WHERE FALSE) AS __subq",
+					temp_table_name,
+					pg_table_ref);
+			}
+		}
+		else
+		{
+			/* Query failed or no results - fall back to SELECT * */
+			appendStringInfo(&create_query,
+				"CREATE TEMP TABLE %s AS SELECT * FROM %s WHERE FALSE",
+				temp_table_name,
+				pg_table_ref);
+		}
+		
+		SPI_freetuptable(SPI_tuptable);
+		pfree(col_query.data);
+	}
+
+	elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: target='%s', pg_ref='%s', temp='%s'",
+		 target_table, pg_table_ref, temp_table_name);
+	elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: CREATE query: %s", create_query.data);
+
+	rc = SPI_execute(create_query.data, false, 0);
+	
+	/* Free the SPI tuple table from CREATE TABLE AS SELECT */
+	SPI_freetuptable(SPI_tuptable);
+
+	elog(LOG, "INSERT-EXEC-TEMP-TABLE: SPI_execute returned %d (%s)",
+		 rc, SPI_result_code_string(rc));
+
+	/* CREATE TABLE AS SELECT returns SPI_OK_SELINTO, not SPI_OK_UTILITY */
+	if (rc != SPI_OK_SELINTO && rc != SPI_OK_UTILITY)
+	{
+		pfree(create_query.data);
+		pfree(pg_table_ref);
+		elog(ERROR, "INSERT-EXEC-TEMP-TABLE: Failed to create temp table: %s",
+			 SPI_result_code_string(rc));
+	}
+
+	/* Debug: Check if temp table has IDENTITY columns */
+	{
+		StringInfoData check_query;
+		int check_rc;
+		
+		initStringInfo(&check_query);
+		appendStringInfo(&check_query,
+			"SELECT attname, attidentity FROM pg_attribute "
+			"WHERE attrelid = '%s'::regclass AND attnum > 0 AND NOT attisdropped",
+			temp_table_name);
+		
+		check_rc = SPI_execute(check_query.data, true, 10);
+		if (check_rc == SPI_OK_SELECT)
+		{
+			int i;
+			for (i = 0; i < SPI_processed; i++)
+			{
+				bool isnull1, isnull2;
+				Datum name_datum = SPI_getbinval(SPI_tuptable->vals[i], 
+												  SPI_tuptable->tupdesc, 1, &isnull1);
+				Datum ident_datum = SPI_getbinval(SPI_tuptable->vals[i], 
+												   SPI_tuptable->tupdesc, 2, &isnull2);
+				char *name = isnull1 ? "(null)" : TextDatumGetCString(name_datum);
+				char ident = isnull2 ? ' ' : DatumGetChar(ident_datum);
+				elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: Column '%s' attidentity='%c'", name, ident);
+			}
+		}
+		SPI_freetuptable(SPI_tuptable);
+		pfree(check_query.data);
+	}
+
+	estate->insert_exec_temp_table = MemoryContextStrdup(TopMemoryContext,
+														 temp_table_name);
+
+	elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: Created '%s' for target '%s'",
+		 temp_table_name, target_table);
+
+	pfree(create_query.data);
+	pfree(temp_table_name);
+	pfree(pg_table_ref);
+}
+
+/*
+ * exec_flush_insert_exec_temp_table
+ *
+ * Bulk INSERT from the temp buffer table into the real target table.
+ * Called after the procedure completes successfully.
+ *
+ * The flush INSERT is wrapped in a subtransaction so that if it fails
+ * (e.g., unique constraint violation), the subtransaction rollback properly
+ * cleans up executor state (AfterTrigger depth, etc.). Without this,
+ * a failed INSERT leaves AfterTriggerBeginQuery's depth increment orphaned,
+ * causing a TRAP assertion on the next transaction commit.
+ *
+ * On failure, the error is re-raised so T-SQL TRY/CATCH can handle it.
+ */
+void
+exec_flush_insert_exec_temp_table(PLtsql_execstate *estate)
+{
+	StringInfoData flush_query;
+	char *tsql_target_ref;
+	int rc;
+	MemoryContext oldcontext;
+	ResourceOwner oldowner;
+
+	if (estate->insert_exec_temp_table == NULL ||
+		estate->insert_exec_target_table == NULL)
+		return;
+
+	/*
+	 * Build a T-SQL-level table reference for the flush INSERT.
+	 *
+	 * IMPORTANT: We must NOT convert to PG physical schema names here.
+	 * SPI_execute goes through the PG parser which triggers the
+	 * pltsql_pre_parse_analyze hook -> rewrite_object_refs, which does
+	 * the multidb schema name rewriting automatically.
+	 */
+	{
+		const char *target = estate->insert_exec_target_table;
+
+		if (target[0] == '#')
+		{
+			tsql_target_ref = pstrdup(target);
+		}
+		else
+		{
+			const char *first_dot = strchr(target, '.');
+
+			if (first_dot != NULL)
+			{
+				const char *second_dot = strchr(first_dot + 1, '.');
+				if (second_dot != NULL)
+				{
+					/* db.schema.table -> strip db part, use schema.table */
+					tsql_target_ref = pstrdup(first_dot + 1);
+				}
+				else
+				{
+					/* schema.table -> use as-is */
+					tsql_target_ref = pstrdup(target);
+				}
+			}
+			else
+			{
+				/* Just table name -> qualify with dbo */
+				tsql_target_ref = psprintf("dbo.%s", target);
+			}
+		}
+	}
+
+	initStringInfo(&flush_query);
+	if (estate->insert_exec_identity_insert)
+	{
+		/*
+		 * IDENTITY_INSERT is ON for the target table.
+		 * The T-SQL parser will automatically add OVERRIDING SYSTEM VALUE
+		 * when it sees an INSERT into a table with IDENTITY_INSERT ON.
+		 * We just need to include the column list so the IDENTITY column
+		 * is included in the INSERT.
+		 */
+		if (estate->insert_exec_column_list != NULL)
+		{
+			appendStringInfo(&flush_query,
+				"INSERT INTO %s (%s) SELECT * FROM %s",
+				tsql_target_ref,
+				estate->insert_exec_column_list,
+				estate->insert_exec_temp_table);
+		}
+		else
+		{
+			/* No column list - this shouldn't happen with IDENTITY_INSERT ON */
+			appendStringInfo(&flush_query,
+				"INSERT INTO %s SELECT * FROM %s",
+				tsql_target_ref,
+				estate->insert_exec_temp_table);
+		}
+		elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: IDENTITY_INSERT ON, using column list");
+	}
+	else if (estate->insert_exec_column_list != NULL)
+	{
+		appendStringInfo(&flush_query,
+			"INSERT INTO %s (%s) SELECT * FROM %s",
+			tsql_target_ref,
+			estate->insert_exec_column_list,
+			estate->insert_exec_temp_table);
+	}
+	else
+	{
+		appendStringInfo(&flush_query,
+			"INSERT INTO %s SELECT * FROM %s",
+			tsql_target_ref,
+			estate->insert_exec_temp_table);
+	}
+
+	elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: Flushing: %s", flush_query.data);
+
+	/*
+	 * Wrap in subtransaction to protect AfterTrigger state.
+	 * The INSERT triggers AfterTriggerBeginQuery which increments query_depth.
+	 * If the INSERT fails, the longjmp skips AfterTriggerEndQuery, leaving
+	 * query_depth orphaned. The subtransaction rollback cleans this up.
+	 */
+	oldcontext = CurrentMemoryContext;
+	oldowner = CurrentResourceOwner;
+
+	BeginInternalSubTransaction("insert_exec_flush");
+	MemoryContextSwitchTo(oldcontext);
+
+	PG_TRY();
+	{
+		rc = SPI_execute(flush_query.data, false, 0);
+		/* 
+		 * Accept both SPI_OK_INSERT and SPI_OK_INSERT_RETURNING.
+		 * When IDENTITY_INSERT is ON, the T-SQL parser adds a RETURNING clause
+		 * to track the identity values, which causes SPI_OK_INSERT_RETURNING.
+		 */
+		if (rc != SPI_OK_INSERT && rc != SPI_OK_INSERT_RETURNING)
+		{
+			elog(ERROR, "INSERT-EXEC-TEMP-TABLE: Bulk insert failed: %s",
+				 SPI_result_code_string(rc));
+		}
+
+		elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: Flushed %lu rows",
+			 (unsigned long) SPI_processed);
+
+		/* Capture results before releasing subtransaction */
+		estate->eval_processed = SPI_processed;
+		exec_set_rowcount(SPI_processed);
+		exec_set_found(estate, SPI_processed > 0);
+
+		/* Free the SPI tuple table (contains TupleDesc that must be released) */
+		SPI_freetuptable(SPI_tuptable);
+
+		/* Success - release the subtransaction */
+		ReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+	}
+	PG_CATCH();
+	{
+		ErrorData *edata;
+
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		/* Rollback subtransaction - this cleans up AfterTrigger depth */
+		RollbackAndReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		/*
+		 * Drop the temp table NOW, while the parent transaction is still valid.
+		 * After ReThrowError, the transaction will be marked aborted and DDL
+		 * won't be possible. The drop function handles its own error catching.
+		 */
+		exec_drop_insert_exec_temp_table(estate);
+
+		pfree(flush_query.data);
+		pfree(tsql_target_ref);
+
+		/* Re-raise so T-SQL TRY/CATCH can handle it */
+		ReThrowError(edata);
+	}
+	PG_END_TRY();
+
+	pfree(flush_query.data);
+	pfree(tsql_target_ref);
+}
+
+/*
+ * exec_drop_insert_exec_temp_table
+ *
+ * Drop the temp buffer table and clean up estate fields.
+ * Called on both success (after flush) and error paths.
+ */
+void
+exec_drop_insert_exec_temp_table(PLtsql_execstate *estate)
+{
+	char *temp_table_name;
+	char *target_table_name;
+	char *column_list;
+
+	if (estate->insert_exec_temp_table == NULL)
+		return;
+
+	/*
+	 * Grab all pointers and NULL out estate fields immediately.
+	 * These were allocated in TopMemoryContext so they're safe to access.
+	 */
+	temp_table_name = estate->insert_exec_temp_table;
+	target_table_name = estate->insert_exec_target_table;
+	column_list = estate->insert_exec_column_list;
+	estate->insert_exec_temp_table = NULL;
+	estate->insert_exec_target_table = NULL;
+	estate->insert_exec_column_list = NULL;
+	estate->insert_exec_identity_insert = false;
+
+	/* Ignore errors during cleanup — temp table may already be gone */
+	PG_TRY();
+	{
+		char *drop_query = psprintf("DROP TABLE IF EXISTS %s", temp_table_name);
+
+		elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: Dropping: %s", drop_query);
+
+		SPI_execute(drop_query, false, 0);
+		
+		/* Free the SPI tuple table to prevent TupleDesc leak */
+		SPI_freetuptable(SPI_tuptable);
+		
+		pfree(drop_query);
+	}
+	PG_CATCH();
+	{
+		FlushErrorState();
+	}
+	PG_END_TRY();
+
+	/* Free the TopMemoryContext allocations */
+	pfree(temp_table_name);
+	if (target_table_name)
+		pfree(target_table_name);
+	if (column_list)
+		pfree(column_list);
+}
+
+/*
  * Check if a query is a simple SELECT that can be rewritten
  * Returns true for SELECT statements that are not:
  * - SELECT INTO (creates a new table)
@@ -11008,7 +11741,7 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 			target_table);
 	}
 	
-	elog(DEBUG1, "INSERT-EXEC-REWRITE: Executing rewritten query: %s", rewritten_query.data);
+	elog(LOG, "INSERT-EXEC-REWRITE: Executing rewritten query: %s", rewritten_query.data);
 	
 	/*
 	 * Save the original query and plan so we can restore them after execution.
@@ -11024,6 +11757,24 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 	 */
 	expr->query = rewritten_query.data;
 	expr->plan = NULL;
+	
+	/*
+	 * Transaction handling for INSERT EXEC query rewriting:
+	 *
+	 * We do NOT use per-statement savepoints here. The reason is that SQL Server's
+	 * TRY/CATCH behavior requires that when an error occurs in a TRY block, ALL
+	 * rows from the TRY block should be discarded (not just the failing statement).
+	 *
+	 * With the temp table approach:
+	 * - If we're inside a TRY/CATCH block, the TRY subtransaction (created by
+	 *   exec_stmt_try_catch) will roll back ALL inserts into the temp table when
+	 *   an error occurs. This is the correct SQL Server behavior.
+	 * - If we're outside a TRY/CATCH block, errors will propagate and the temp
+	 *   table will be dropped in the PG_FINALLY block of exec_stmt_execsql.
+	 *
+	 * Using per-statement savepoints would break TRY/CATCH semantics because
+	 * successful INSERTs would be committed even when a later statement fails.
+	 */
 	
 	PG_TRY();
 	{
@@ -11051,22 +11802,43 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 		
 		elog(DEBUG1, "INSERT-EXEC-REWRITE: Inserted %lu rows", (unsigned long) processed);
 		
+		/* Free the SPI tuple table (contains TupleDesc that must be released) */
+		SPI_freetuptable(SPI_tuptable);
+		
 		/* Free the plan we just created (it's a one-shot plan) */
 		if (expr->plan)
 		{
 			SPI_freeplan(expr->plan);
+			expr->plan = NULL;
 		}
 	}
-	PG_FINALLY();
+	PG_CATCH();
 	{
+		/* Free the plan we created before handling the error */
+		if (expr->plan)
+		{
+			SPI_freeplan(expr->plan);
+			expr->plan = NULL;
+		}
+		
 		/* Restore the original query and plan */
 		expr->query = saved_query;
 		expr->plan = saved_plan;
 		
 		/* Free the rewritten query string */
 		pfree(rewritten_query.data);
+		
+		/* Let the error propagate - TRY/CATCH or outer handler will deal with it */
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
+	
+	/* Restore the original query and plan */
+	expr->query = saved_query;
+	expr->plan = saved_plan;
+	
+	/* Free the rewritten query string */
+	pfree(rewritten_query.data);
 	
 	return PLTSQL_RC_OK;
 }

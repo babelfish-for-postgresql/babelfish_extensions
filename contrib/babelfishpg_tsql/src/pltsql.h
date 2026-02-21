@@ -1545,6 +1545,12 @@ typedef struct PLtsql_execstate
 	 */
 	bool		insert_exec;
 
+	/* INSERT EXEC temp table buffering fields */
+	char	   *insert_exec_temp_table;		/* Temp table name for buffering */
+	char	   *insert_exec_target_table;	/* Final target table name */
+	char	   *insert_exec_column_list;	/* Column list for final INSERT (NULL = all) */
+	bool		insert_exec_identity_insert;	/* IDENTITY_INSERT is ON for target */
+
 	List	   *explain_infos;
 	instr_time	planning_start;
 	instr_time	planning_end;
@@ -1824,6 +1830,9 @@ typedef struct PLtsql_protocol_plugin
 	Datum       (*sql_geometry_from_bytea) (PG_FUNCTION_ARGS);
 	
 	Datum       (*sql_geography_from_bytea) (PG_FUNCTION_ARGS);
+
+	/* INSERT EXEC query rewriting support */
+	bool		(*is_insert_exec_rewrite_active) (void);
 
 	/* Session level GUCs */
 	bool		quoted_identifier;
@@ -2399,6 +2408,13 @@ extern void pltsql_clear_insert_exec_rewrite_context(void);
 extern bool pltsql_insert_exec_rewrite_active(void);
 extern const char *pltsql_get_insert_exec_target_table(void);
 extern const char *pltsql_get_insert_exec_column_list(void);
+
+/* INSERT EXEC temp table buffer functions (pl_exec.c) */
+extern void exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
+											   const char *target_table,
+											   const char *column_list);
+extern void exec_flush_insert_exec_temp_table(PLtsql_execstate *estate);
+extern void exec_drop_insert_exec_temp_table(PLtsql_execstate *estate);
 
 #define NUM_DB_OBJECTS 11
 
