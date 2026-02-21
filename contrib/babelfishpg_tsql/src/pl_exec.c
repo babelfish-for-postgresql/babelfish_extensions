@@ -10750,6 +10750,54 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
  */
 
 /*
+ * strip_tsql_brackets - Strip T-SQL square brackets from an identifier
+ * and return the unquoted name. If the identifier doesn't have brackets,
+ * returns a copy of the input.
+ */
+static char *
+strip_tsql_brackets(const char *ident)
+{
+	size_t len;
+	
+	if (ident == NULL)
+		return NULL;
+	
+	len = strlen(ident);
+	
+	/* Check for [name] format */
+	if (len >= 2 && ident[0] == '[' && ident[len - 1] == ']')
+		return pnstrdup(ident + 1, len - 2);
+	
+	/* Check for "name" format */
+	if (len >= 2 && ident[0] == '"' && ident[len - 1] == '"')
+		return pnstrdup(ident + 1, len - 2);
+	
+	return pstrdup(ident);
+}
+
+/*
+ * strip_pg_quotes - Strip PostgreSQL double quotes from an identifier
+ * and return the unquoted name. If the identifier doesn't have quotes,
+ * returns a copy of the input.
+ */
+static char *
+strip_pg_quotes(const char *ident)
+{
+	size_t len;
+	
+	if (ident == NULL)
+		return NULL;
+	
+	len = strlen(ident);
+	
+	/* Check for "name" format */
+	if (len >= 2 && ident[0] == '"' && ident[len - 1] == '"')
+		return pnstrdup(ident + 1, len - 2);
+	
+	return pstrdup(ident);
+}
+
+/*
  * Initialize the INSERT EXEC rewrite context
  */
 void
@@ -10924,6 +10972,9 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 		char *db_part = NULL;
 		char *schema_part = NULL;
 		char *table_part = NULL;
+		char *unquoted_db = NULL;
+		char *unquoted_schema = NULL;
+		char *unquoted_table = NULL;
 		const char *first_dot = strchr(target_table, '.');
 		
 		if (first_dot != NULL)
@@ -10946,22 +10997,31 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 			table_part = pstrdup(target_table);
 		}
 
-		if (schema_part != NULL)
+		/* Strip T-SQL brackets from identifiers */
+		unquoted_db = db_part ? strip_tsql_brackets(db_part) : NULL;
+		unquoted_schema = schema_part ? strip_tsql_brackets(schema_part) : NULL;
+		unquoted_table = strip_tsql_brackets(table_part);
+
+		if (unquoted_schema != NULL)
 		{
-			char *cur_db = db_part ? db_part : get_cur_db_name();
-			char *physical_schema = get_physical_schema_name(cur_db, schema_part);
-			pg_table_ref = psprintf("%s.%s", physical_schema, table_part);
+			char *cur_db = unquoted_db ? unquoted_db : get_cur_db_name();
+			char *physical_schema = get_physical_schema_name(cur_db, unquoted_schema);
+			/* Use quote_identifier to properly quote the table name for PostgreSQL */
+			pg_table_ref = psprintf("%s.%s", physical_schema, quote_identifier(unquoted_table));
 		}
 		else
 		{
 			char *cur_db = get_cur_db_name();
 			char *physical_schema = get_physical_schema_name(cur_db, "dbo");
-			pg_table_ref = psprintf("%s.%s", physical_schema, table_part);
+			pg_table_ref = psprintf("%s.%s", physical_schema, quote_identifier(unquoted_table));
 		}
 
 		if (db_part) pfree(db_part);
 		if (schema_part) pfree(schema_part);
 		pfree(table_part);
+		if (unquoted_db) pfree(unquoted_db);
+		if (unquoted_schema) pfree(unquoted_schema);
+		pfree(unquoted_table);
 	}
 
 	/*
@@ -10984,11 +11044,12 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 		if (dot != NULL)
 		{
 			schema_name = pnstrdup(pg_table_ref, dot - pg_table_ref);
-			table_name = pstrdup(dot + 1);
+			/* Strip double quotes from table name - quote_identifier may have added them */
+			table_name = strip_pg_quotes(dot + 1);
 		}
 		else
 		{
-			table_name = pstrdup(pg_table_ref);
+			table_name = strip_pg_quotes(pg_table_ref);
 		}
 		
 		if (schema_name != NULL)

@@ -387,6 +387,51 @@ stripQuoteFromId(std::string s)
 	return s;
 }
 
+/*
+ * quoteIdentifierIfNeeded - Quote an identifier with square brackets if it
+ * contains special characters (spaces, etc.) that require quoting.
+ * Returns the identifier as-is if no quoting is needed.
+ */
+static std::string
+quoteIdentifierIfNeeded(const std::string& ident)
+{
+	if (ident.empty())
+		return ident;
+	
+	/* Check if identifier needs quoting */
+	bool needs_quoting = false;
+	
+	/* Must start with letter, underscore, or @ */
+	char first = ident[0];
+	if (!((first >= 'a' && first <= 'z') || 
+		  (first >= 'A' && first <= 'Z') || 
+		  first == '_' || first == '@'))
+	{
+		needs_quoting = true;
+	}
+	
+	/* Check all characters */
+	if (!needs_quoting)
+	{
+		for (char ch : ident)
+		{
+			if (!((ch >= 'a' && ch <= 'z') ||
+				  (ch >= 'A' && ch <= 'Z') ||
+				  (ch >= '0' && ch <= '9') ||
+				  ch == '_' || ch == '@' || ch == '#' || ch == '$'))
+			{
+				needs_quoting = true;
+				break;
+			}
+		}
+	}
+	
+	if (needs_quoting)
+		return "[" + ident + "]";
+	else
+		return ident;
+}
+
 static int
 get_curr_compile_body_lineno_adjustment()
 {
@@ -1983,7 +2028,10 @@ public:
 						if (tbl_schema.empty())
 							tbl_schema = "dbo";
 						
-						target_table = tbl_db + "." + tbl_schema + "." + tbl_name;
+						/* Quote identifiers that need quoting (e.g., contain spaces) */
+						target_table = quoteIdentifierIfNeeded(tbl_db) + "." + 
+									   quoteIdentifierIfNeeded(tbl_schema) + "." + 
+									   quoteIdentifierIfNeeded(tbl_name);
 					}
 					
 					if (!target_table.empty())
@@ -2003,7 +2051,7 @@ public:
 						first = false;
 						auto ids = col->id();
 						if (!ids.empty())
-							column_list += stripQuoteFromId(ids.back());
+							column_list += quoteIdentifierIfNeeded(stripQuoteFromId(ids.back()));
 					}
 					if (!column_list.empty())
 						exec_stmt->insert_exec_columns = pstrdup(column_list.c_str());
@@ -2095,7 +2143,10 @@ public:
 						if (tbl_schema.empty())
 							tbl_schema = "dbo";
 						
-						target_table = tbl_db + "." + tbl_schema + "." + tbl_name;
+						/* Quote identifiers that need quoting (e.g., contain spaces) */
+						target_table = quoteIdentifierIfNeeded(tbl_db) + "." + 
+									   quoteIdentifierIfNeeded(tbl_schema) + "." + 
+									   quoteIdentifierIfNeeded(tbl_name);
 					}
 					
 					if (!target_table.empty())
@@ -2115,7 +2166,7 @@ public:
 						first = false;
 						auto ids = col->id();
 						if (!ids.empty())
-							column_list += stripQuoteFromId(ids.back());
+							column_list += quoteIdentifierIfNeeded(stripQuoteFromId(ids.back()));
 					}
 					if (!column_list.empty())
 						batch_stmt->insert_exec_columns = pstrdup(column_list.c_str());
@@ -2261,7 +2312,10 @@ public:
 					if (tbl_schema.empty())
 						tbl_schema = "dbo";
 					
-					target_table = tbl_db + "." + tbl_schema + "." + tbl_name;
+					/* Quote identifiers that need quoting (e.g., contain spaces) */
+					target_table = quoteIdentifierIfNeeded(tbl_db) + "." + 
+								   quoteIdentifierIfNeeded(tbl_schema) + "." + 
+								   quoteIdentifierIfNeeded(tbl_name);
 				}
 				
 				if (!target_table.empty())
@@ -2284,7 +2338,7 @@ public:
 					 */
 					auto ids = col->id();
 					if (!ids.empty())
-						column_list += stripQuoteFromId(ids.back());
+						column_list += quoteIdentifierIfNeeded(stripQuoteFromId(ids.back()));
 				}
 				if (!column_list.empty())
 					stmt->insert_exec_columns = pstrdup(column_list.c_str());
