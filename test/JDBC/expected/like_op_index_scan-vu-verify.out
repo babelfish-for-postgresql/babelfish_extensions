@@ -2416,9 +2416,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'100!%done' ESCAPE '!'
 Aggregate
-  ->  Index Only Scan using babel_5966_idx_varcharbabel_596fa518ac67184a4f5a9664a3dec952600 on babel_5966_testlikeindex
-        Index Cond: ((varcharcol >= '100'::"varchar") AND (varcharcol < '100?'::"varchar"))
-        Filter: ((varcharcol)::text ~~* '100[%]done'::text COLLATE bbf_unicode_cp1_cs_as)
+  ->  Seq Scan on babel_5966_testlikeindex
+        Filter: ((varcharcol)::text ~~* '100?%done'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -2433,9 +2432,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'under!_score' ESCAPE '!'
 Aggregate
-  ->  Index Only Scan using babel_5966_idx_varcharbabel_596fa518ac67184a4f5a9664a3dec952600 on babel_5966_testlikeindex
-        Index Cond: ((varcharcol >= 'under'::"varchar") AND (varcharcol < 'under?'::"varchar"))
-        Filter: ((varcharcol)::text ~~* 'under[_]score'::text COLLATE bbf_unicode_cp1_cs_as)
+  ->  Seq Scan on babel_5966_testlikeindex
+        Filter: ((varcharcol)::text ~~* 'under?_score'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -2451,7 +2449,7 @@ text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'!%something' ESCAPE '!'
 Aggregate
   ->  Seq Scan on babel_5966_testlikeindex
-        Filter: ((varcharcol)::text ~~* '[%]something'::text COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((varcharcol)::text ~~* '?%something'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -2466,9 +2464,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'abc!%%' ESCAPE '!'
 Aggregate
-  ->  Index Only Scan using babel_5966_idx_varcharbabel_596fa518ac67184a4f5a9664a3dec952600 on babel_5966_testlikeindex
-        Index Cond: ((varcharcol >= 'abc'::"varchar") AND (varcharcol < 'abc?'::"varchar"))
-        Filter: ((varcharcol)::text ~~* 'abc[%]%'::text COLLATE bbf_unicode_cp1_cs_as)
+  ->  Seq Scan on babel_5966_testlikeindex
+        Filter: ((varcharcol)::text ~~* 'abc?%%'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -2551,9 +2548,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE NVarcharCol LIKE N'100!%done' ESCAPE '!'
 Aggregate
-  ->  Index Only Scan using babel_5966_idx_nvarcharbabel_5935276048c6875760facd36b9ce89fcd7 on babel_5966_testlikeindex
-        Index Cond: ((nvarcharcol >= '100'::nvarchar) AND (nvarcharcol < '100?'::nvarchar))
-        Filter: ((nvarcharcol)::text ~~* '100[%]done'::text COLLATE bbf_unicode_cp1_cs_as)
+  ->  Seq Scan on babel_5966_testlikeindex
+        Filter: ((nvarcharcol)::text ~~* '100?%done'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -2568,9 +2564,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE NVarcharCol LIKE N'under!_score' ESCAPE '!'
 Aggregate
-  ->  Index Only Scan using babel_5966_idx_nvarcharbabel_5935276048c6875760facd36b9ce89fcd7 on babel_5966_testlikeindex
-        Index Cond: ((nvarcharcol >= 'under'::nvarchar) AND (nvarcharcol < 'under?'::nvarchar))
-        Filter: ((nvarcharcol)::text ~~* 'under[_]score'::text COLLATE bbf_unicode_cp1_cs_as)
+  ->  Seq Scan on babel_5966_testlikeindex
+        Filter: ((nvarcharcol)::text ~~* 'under?_score'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -2653,9 +2648,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE CharCol LIKE N'100!%done' ESCAPE '!'
 Aggregate
-  ->  Index Only Scan using babel_5966_idx_charbabel_5966_tdc919411ae325e560abe091b761b2989 on babel_5966_testlikeindex
-        Index Cond: ((charcol >= '100'::bpchar) AND (charcol < '100?'::bpchar))
-        Filter: ((charcol)::text ~~* '100[%]done'::text COLLATE bbf_unicode_cp1_cs_as)
+  ->  Seq Scan on babel_5966_testlikeindex
+        Filter: ((charcol)::text ~~* '100?%done'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -2670,9 +2664,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE CharCol LIKE N'under!_score' ESCAPE '!'
 Aggregate
-  ->  Index Only Scan using babel_5966_idx_charbabel_5966_tdc919411ae325e560abe091b761b2989 on babel_5966_testlikeindex
-        Index Cond: ((charcol >= 'under'::bpchar) AND (charcol < 'under?'::bpchar))
-        Filter: ((charcol)::text ~~* 'under[_]score'::text COLLATE bbf_unicode_cp1_cs_as)
+  ->  Seq Scan on babel_5966_testlikeindex
+        Filter: ((charcol)::text ~~* 'under?_score'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -7387,9 +7380,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_vw_like_escape_pct
 Aggregate
-  ->  Index Only Scan using babel_5966_idx_varcharbabel_596fa518ac67184a4f5a9664a3dec952600 on babel_5966_testlikeindex
-        Index Cond: ((varcharcol >= '100'::"varchar") AND (varcharcol < '100?'::"varchar"))
-        Filter: ((varcharcol)::text ~~* '100[%]done'::text COLLATE bbf_unicode_cp1_cs_as)
+  ->  Seq Scan on babel_5966_testlikeindex
+        Filter: ((varcharcol)::text ~~* '100?%done'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -7404,9 +7396,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_vw_like_escape_underscore
 Aggregate
-  ->  Index Only Scan using babel_5966_idx_varcharbabel_596fa518ac67184a4f5a9664a3dec952600 on babel_5966_testlikeindex
-        Index Cond: ((varcharcol >= 'under'::"varchar") AND (varcharcol < 'under?'::"varchar"))
-        Filter: ((varcharcol)::text ~~* 'under[_]score'::text COLLATE bbf_unicode_cp1_cs_as)
+  ->  Seq Scan on babel_5966_testlikeindex
+        Filter: ((varcharcol)::text ~~* 'under?_score'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~

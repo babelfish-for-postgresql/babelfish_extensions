@@ -323,50 +323,6 @@ create_collate_expr(Node *arg, Oid collid)
 }
 
 /*
- * Convert like_escape(pattern, escape) to TSQL bracket escapes.
- * e.g., '100!%done' with escape '!' to '100[%]done'
- */
-static Node *
-resolve_like_escape_to_bracket(FuncExpr *fe)
-{
-	Node	   *pattern = eval_const_expressions(NULL, linitial(fe->args));
-	Node	   *escape = eval_const_expressions(NULL, lsecond(fe->args));
-	char	   *patt, *esc;
-	StringInfoData buf;
-
-	if (!IsA(pattern, Const) || !IsA(escape, Const) ||
-		((Const *) pattern)->constisnull ||
-		((Const *) escape)->constisnull)
-		return NULL;
-
-	patt = TextDatumGetCString(((Const *) pattern)->constvalue);
-	esc = TextDatumGetCString(((Const *) escape)->constvalue);
-
-	initStringInfo(&buf);
-	for (int i = 0; patt[i]; i++)
-	{
-		if (patt[i] == esc[0] && patt[i + 1] &&
-			(strchr("%_[]", patt[i + 1]) || patt[i + 1] == esc[0]))
-		{
-			appendStringInfoChar(&buf, '[');
-			appendStringInfoChar(&buf, patt[++i]);
-			appendStringInfoChar(&buf, ']');
-		}
-		else
-			appendStringInfoChar(&buf, patt[i]);
-	}
-
-	pfree(patt);
-	pfree(esc);
-
-	return (Node *) makeConst(((Const *) pattern)->consttype,
-							  ((Const *) pattern)->consttypmod,
-							  ((Const *) pattern)->constcollid,
-							  -1, CStringGetTextDatum(buf.data),
-							  false, false);
-}
-
-/*
  * If the node is OpExpr and the colaltion is ci_as/ci_ai , then
  * transform the LIKE OpExpr to ILIKE OpExpr. For ci_ai, use remove_accents_internal*
  * function to remove the accents and optimize.
@@ -451,26 +407,13 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 
 	/*
 	 * Try to simplify rightop to a Const for prefix extraction.
-	 *
-	 * like_escape() needs special handling, it produces backslash escapes
-	 * which like_fixed_prefix() does not recognize in TSQL mode, leading 
-	 * to incorrect prefix extraction. We bypass it and convert directly to 
-	 * TSQL bracket escapes.
-	 *
-	 * For all other expressions, we first try eval_const_expressions() which
-	 * folds immutable subexpressions, then evaluate_expr() as a fallback for
-	 * stable functions.
+	 * eval_const_expressions folds immutable subexpressions, evaluate_expr
+	 * handles stable functions as a fallback.
 	 */
 
-	if (IsA(rightop, FuncExpr) &&
-		strcmp(get_func_name(((FuncExpr *) rightop)->funcid),
-			   "like_escape") == 0)
-	{
-		Node *result = resolve_like_escape_to_bracket((FuncExpr *) rightop);
-		if (result)
-			rightop = result;
-	}
-	else
+	if (!(IsA(rightop, FuncExpr) &&
+		  strcmp(get_func_name(((FuncExpr *) rightop)->funcid),
+				 "like_escape") == 0))
 	{
 		rightop = eval_const_expressions(NULL, rightop);
 
