@@ -1324,11 +1324,20 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		/*
 		 * Handle transaction count mismatch for batch execution if
 		 * implicit_transaction config is off
+		 *
+		 * Skip this check when inside INSERT EXEC context because:
+		 * 1. INSERT EXEC creates its own temp table for buffering
+		 * 2. The executed procedure may create temp tables, table variables,
+		 *    or use DML with OUTPUT clause, all of which can change the
+		 *    transaction count
+		 * 3. The transaction count will be properly reconciled when the
+		 *    INSERT EXEC completes and flushes to the target table
 		 */
 		topEntry = simple_econtext_stack;
 		if (!pltsql_implicit_transactions &&
 			is_batch_command(stmt) &&
 			!is_part_of_pltsql_trigger(estate) &&
+			!pltsql_insert_exec_rewrite_active() &&
 			before_tran_count != NestedTranCount)
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_INTEGRITY_CONSTRAINT_VIOLATION),

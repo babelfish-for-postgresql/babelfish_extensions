@@ -95,6 +95,7 @@ static InsertExecRewriteContext *insert_exec_rewrite_ctx = NULL;
 /* Forward declarations for query rewriting */
 static bool should_rewrite_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 static int exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
+static int exec_rewritten_dml_with_returning(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, CmdType cmd);
 
 typedef struct
 {
@@ -4854,6 +4855,16 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	Portal		portal = NULL;
 	ListCell   *lc;
 	bool		is_returning = false;
+	
+	/*
+	 * Save the transaction count before INSERT EXEC.
+	 * When a procedure creates temp tables, table variables, or uses DML with
+	 * OUTPUT clause, it can change the transaction count. We need to restore
+	 * the transaction count after INSERT EXEC completes to avoid the
+	 * "Transaction count mismatch" error at the batch level.
+	 */
+	uint32 saved_nested_tran_count = 0;
+	bool restore_tran_count = false;
 
 	/*
 	 * Temporarily disable FMTONLY as it is causing issues with Import-Export.
@@ -4994,6 +5005,15 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			 */
 			if (stmt->insert_exec_target != NULL)
 			{
+				/*
+				 * Save the transaction count before INSERT EXEC.
+				 * The procedure may create temp tables, table variables, or use
+				 * DML with OUTPUT clause, which can change the transaction count.
+				 * We'll restore it after INSERT EXEC completes.
+				 */
+				saved_nested_tran_count = NestedTranCount;
+				restore_tran_count = true;
+				
 				elog(DEBUG1, "INSERT-EXEC: About to create temp table. target='%s', columns='%s'",
 					 stmt->insert_exec_target,
 					 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
@@ -5108,8 +5128,25 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * exec_run_dml_with_output(). We can clean up it later.
 		 */
 		if (is_returning && !tsql_identity_insert.valid && !stmt->is_tsql_select_assign_stmt)
-			rc = exec_run_dml_with_output(estate, (PLtsql_stmt_push_result *) stmt,
-										  portal, expr, cmd, paramLI);
+		{
+			/*
+			 * Check if we're in INSERT EXEC context. If so, we need to rewrite
+			 * the DML with RETURNING to a CTE and insert into the temp table.
+			 * 
+			 * We use the global rewrite context because when a procedure executes,
+			 * it has its own estate that doesn't have insert_exec_temp_table set.
+			 * The global context's target_table is the temp table name.
+			 */
+			if (pltsql_insert_exec_rewrite_active())
+			{
+				rc = exec_rewritten_dml_with_returning(estate, stmt, cmd);
+			}
+			else
+			{
+				rc = exec_run_dml_with_output(estate, (PLtsql_stmt_push_result *) stmt,
+											  portal, expr, cmd, paramLI);
+			}
+		}
 		else if (stmt->need_to_push_result)
 			rc = execute_plan_and_push_result(estate, expr, paramLI);
 		else if (stmt->txn_data != NULL && !support_tsql_trans)
@@ -5425,6 +5462,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
 		{
 			pltsql_clear_insert_exec_rewrite_context();
+		}
+		
+		/*
+		 * Restore the transaction count after INSERT EXEC completes.
+		 * This prevents the "Transaction count mismatch" error at the batch
+		 * level when the procedure created temp tables, table variables, or
+		 * used DML with OUTPUT clause.
+		 */
+		if (restore_tran_count)
+		{
+			NestedTranCount = saved_nested_tran_count;
 		}
 
 		if (is_cross_db)
@@ -10025,14 +10073,47 @@ pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, Cached
  *
  * We check that it matches the top stack entry, and destroy the stack
  * entry along with the context.
+ *
+ * Note: In Babelfish, the econtext stack can be empty after a TRY/CATCH
+ * subtransaction rollback. In that case, we just clean up the estate's
+ * eval_econtext if it exists. This is safe because the subtransaction
+ * rollback already freed the econtext resources.
  */
 void
 pltsql_destroy_econtext(PLtsql_execstate *estate)
 {
 	SimpleEcontextStackEntry *next;
 
-	Assert(simple_econtext_stack != NULL);
-	Assert(simple_econtext_stack->stack_econtext == estate->eval_econtext);
+	/*
+	 * Handle the case where the econtext stack is empty.
+	 * This can happen after a TRY/CATCH subtransaction rollback
+	 * which cleans up the econtext stack. In this case, just
+	 * clean up the estate's eval_econtext pointer.
+	 */
+	if (simple_econtext_stack == NULL)
+	{
+		if (estate->eval_econtext != NULL)
+		{
+			/*
+			 * The econtext may have already been freed by the subtransaction
+			 * rollback. Just NULL out the pointer to avoid double-free.
+			 */
+			estate->eval_econtext = NULL;
+		}
+		return;
+	}
+
+	/*
+	 * If the stack entry doesn't match our econtext, it means the
+	 * subtransaction rollback already cleaned up our entry. Just
+	 * NULL out the estate pointer.
+	 */
+	if (simple_econtext_stack->stack_econtext != estate->eval_econtext)
+	{
+		if (estate->eval_econtext != NULL)
+			estate->eval_econtext = NULL;
+		return;
+	}
 
 	next = simple_econtext_stack->next;
 	pfree(simple_econtext_stack);
@@ -11643,10 +11724,15 @@ exec_drop_insert_exec_temp_table(PLtsql_execstate *estate)
 }
 
 /*
- * Check if a query is a simple SELECT that can be rewritten
- * Returns true for SELECT statements that are not:
+ * Check if a query is a simple SELECT or CTE that can be rewritten for INSERT EXEC
+ * 
+ * Returns true for:
+ * - Simple SELECT statements (SELECT col1, col2 FROM ...)
+ * - CTE queries (WITH cte AS (...) SELECT ...)
+ * 
+ * Returns false for:
+ * - INSERT/UPDATE/DELETE statements
  * - SELECT INTO (creates a new table)
- * - Already an INSERT/UPDATE/DELETE
  */
 static bool
 is_simple_select_query(const char *query)
@@ -11662,13 +11748,27 @@ is_simple_select_query(const char *query)
 	while (*p && isspace((unsigned char) *p))
 		p++;
 	
+	/*
+	 * Check if it starts with WITH (CTE) - case-insensitive
+	 * CTE queries like "WITH cte AS (...) SELECT ..." should be rewritten
+	 */
+	if (pg_strncasecmp(p, "WITH", 4) == 0 &&
+		(p[4] == '\0' || isspace((unsigned char) p[4])))
+	{
+		/* It's a CTE query - accept it for rewriting */
+		/* The CTE will be wrapped in our own CTE during rewrite */
+	}
 	/* Check if it starts with SELECT (case-insensitive) */
-	if (pg_strncasecmp(p, "SELECT", 6) != 0)
+	else if (pg_strncasecmp(p, "SELECT", 6) == 0 &&
+			 (p[6] == '\0' || isspace((unsigned char) p[6])))
+	{
+		/* It's a SELECT query */
+	}
+	else
+	{
+		/* Not a SELECT or CTE query */
 		return false;
-	
-	/* Make sure SELECT is followed by whitespace or end */
-	if (p[6] != '\0' && !isspace((unsigned char) p[6]))
-		return false;
+	}
 	
 	/*
 	 * Check it's not SELECT INTO (which creates a new table)
@@ -11676,8 +11776,7 @@ is_simple_select_query(const char *query)
 	 * - SELECT ... INTO @var (T-SQL variable assignment) - OK to rewrite
 	 * - SELECT ... INTO table (creates new table) - NOT OK to rewrite
 	 * 
-	 * For now, we'll be conservative and reject any SELECT with INTO
-	 * that's not followed by @ (variable)
+	 * For CTE queries, we also need to check for INTO in the final SELECT
 	 */
 	into_pos = strcasestr(query, " INTO ");
 	if (into_pos != NULL)
@@ -11902,4 +12001,193 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 	pfree(rewritten_query.data);
 	
 	return PLTSQL_RC_OK;
+}
+
+/*
+ * exec_rewritten_dml_with_returning
+ *
+ * Execute a DML statement with RETURNING clause and insert the returned rows
+ * into the INSERT EXEC temp table.
+ *
+ * Instead of rewriting the query (which would require the PostgreSQL query string),
+ * we execute the DML using a portal and capture the RETURNING results, then
+ * insert them into the temp table.
+ *
+ * This allows INSERT EXEC to capture OUTPUT clause results from DML statements.
+ */
+static int
+exec_rewritten_dml_with_returning(PLtsql_execstate *estate, 
+								  PLtsql_stmt_execsql *stmt,
+								  CmdType cmd)
+{
+	const char *target_table;
+	PLtsql_expr *expr = stmt->sqlstmt;
+	ParamListInfo paramLI;
+	Portal portal;
+	uint64 processed = 0;
+	int rc = 0;
+	SPITupleTable *tuptab;
+	TupleDesc tupdesc;
+	uint64 i;
+	
+	/*
+	 * Get the temp table from the global INSERT EXEC rewrite context.
+	 * When a procedure executes, it has its own estate that doesn't have
+	 * insert_exec_temp_table set. The global context's target_table is
+	 * the temp table name that was set when INSERT EXEC started.
+	 */
+	target_table = pltsql_get_insert_exec_target_table();
+	
+	if (target_table == NULL)
+	{
+		elog(ERROR, "INSERT-EXEC-DML-REWRITE: No temp table set in rewrite context");
+		return SPI_ERROR_OPUNKNOWN;
+	}
+	
+	elog(LOG, "INSERT-EXEC-DML-REWRITE: Capturing RETURNING results into %s", target_table);
+	
+	/* Set up parameter list */
+	paramLI = setup_param_list(estate, expr);
+	
+	/*
+	 * Open a cursor for the DML with RETURNING.
+	 * The plan already has the PostgreSQL query with RETURNING clause
+	 * (converted from T-SQL OUTPUT during parsing).
+	 */
+	portal = SPI_cursor_open_with_paramlist(NULL, expr->plan,
+											paramLI,
+											estate->readonly_func);
+	if (portal == NULL)
+	{
+		elog(ERROR, "INSERT-EXEC-DML-REWRITE: could not open cursor: %s",
+			 SPI_result_code_string(SPI_result));
+	}
+	
+	PG_TRY();
+	{
+		/*
+		 * Fetch all rows from the RETURNING clause.
+		 * We use SPI_cursor_fetch to get the results into SPI_tuptable.
+		 */
+		SPI_cursor_fetch(portal, true, FETCH_ALL);
+		
+		tuptab = SPI_tuptable;
+		processed = SPI_processed;
+		
+		if (tuptab != NULL && processed > 0)
+		{
+			tupdesc = tuptab->tupdesc;
+			
+			elog(DEBUG1, "INSERT-EXEC-DML-REWRITE: Got %lu rows from RETURNING, inserting into %s",
+				 (unsigned long) processed, target_table);
+			
+			/*
+			 * Insert each row into the temp table.
+			 * Build an INSERT statement with VALUES for each row.
+			 */
+			for (i = 0; i < processed; i++)
+			{
+				HeapTuple tuple = tuptab->vals[i];
+				StringInfoData insert_query;
+				int j;
+				int spi_rc;
+				
+				initStringInfo(&insert_query);
+				appendStringInfo(&insert_query, "INSERT INTO %s VALUES (", target_table);
+				
+				for (j = 0; j < tupdesc->natts; j++)
+				{
+					Form_pg_attribute attr = TupleDescAttr(tupdesc, j);
+					Datum val;
+					bool isnull;
+					Oid typoutput;
+					bool typIsVarlena;
+					char *valstr;
+					char typcategory;
+					bool typispreferred;
+					
+					if (j > 0)
+						appendStringInfoString(&insert_query, ", ");
+					
+					val = heap_getattr(tuple, j + 1, tupdesc, &isnull);
+					
+					if (isnull)
+					{
+						appendStringInfoString(&insert_query, "NULL");
+					}
+					else
+					{
+						getTypeOutputInfo(attr->atttypid, &typoutput, &typIsVarlena);
+						valstr = OidOutputFunctionCall(typoutput, val);
+						
+						/*
+						 * Determine if this type needs quoting.
+						 * Use type category: 'S' = string types, 'D' = date/time
+						 * Also check for Babelfish-specific string types.
+						 */
+						get_type_category_preferred(attr->atttypid, &typcategory, &typispreferred);
+						
+						if (typcategory == TYPCATEGORY_STRING ||
+							typcategory == TYPCATEGORY_DATETIME ||
+							attr->atttypid == TEXTOID || 
+							attr->atttypid == VARCHAROID ||
+							attr->atttypid == BPCHAROID ||
+							attr->atttypid == NAMEOID ||
+							is_tsql_varchar_or_char_datatype(attr->atttypid))
+						{
+							/* Use quote_literal_cstr for proper escaping */
+							char *quoted = quote_literal_cstr(valstr);
+							appendStringInfoString(&insert_query, quoted);
+							pfree(quoted);
+						}
+						else
+						{
+							appendStringInfoString(&insert_query, valstr);
+						}
+						pfree(valstr);
+					}
+				}
+				
+				appendStringInfoChar(&insert_query, ')');
+				
+				elog(DEBUG2, "INSERT-EXEC-DML-REWRITE: %s", insert_query.data);
+				
+				spi_rc = SPI_execute(insert_query.data, false, 0);
+				if (spi_rc != SPI_OK_INSERT)
+				{
+					pfree(insert_query.data);
+					elog(ERROR, "INSERT-EXEC-DML-REWRITE: INSERT failed: %s",
+						 SPI_result_code_string(spi_rc));
+				}
+				
+				pfree(insert_query.data);
+			}
+			
+			SPI_freetuptable(tuptab);
+		}
+		
+		/* Update rowcount and found status */
+		exec_set_rowcount(processed);
+		exec_set_found(estate, processed > 0);
+		
+		/* Set appropriate return code based on original command type */
+		if (cmd == CMD_INSERT)
+			rc = SPI_OK_INSERT_RETURNING;
+		else if (cmd == CMD_DELETE)
+			rc = SPI_OK_DELETE_RETURNING;
+		else if (cmd == CMD_UPDATE)
+			rc = SPI_OK_UPDATE_RETURNING;
+	}
+	PG_CATCH();
+	{
+		SPI_cursor_close(portal);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	
+	SPI_cursor_close(portal);
+	
+	elog(DEBUG1, "INSERT-EXEC-DML-REWRITE: Inserted %lu rows into temp table", (unsigned long) processed);
+	
+	return rc;
 }

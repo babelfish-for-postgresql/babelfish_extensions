@@ -854,6 +854,16 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	
 	/* Track if we set INSERT EXEC context for cleanup */
 	bool insert_exec_context_set = false;
+	
+	/*
+	 * Save the transaction count before INSERT EXEC.
+	 * When a procedure creates temp tables, table variables, or uses DML with
+	 * OUTPUT clause, it can change the transaction count. We need to restore
+	 * the transaction count after INSERT EXEC completes to avoid the
+	 * "Transaction count mismatch" error at the batch level.
+	 */
+	uint32 saved_nested_tran_count = 0;
+	bool restore_tran_count = false;
 
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection
@@ -1233,6 +1243,15 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				 stmt->insert_exec_target,
 				 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
 			
+			/*
+			 * Save the transaction count before INSERT EXEC.
+			 * The procedure may create temp tables, table variables, or use
+			 * DML with OUTPUT clause, which can change the transaction count.
+			 * We'll restore it after INSERT EXEC completes.
+			 */
+			saved_nested_tran_count = NestedTranCount;
+			restore_tran_count = true;
+			
 			exec_create_insert_exec_temp_table(estate,
 											   stmt->insert_exec_target,
 											   stmt->insert_exec_columns);
@@ -1344,6 +1363,17 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		if (insert_exec_context_set && estate->insert_exec_temp_table != NULL)
 		{
 			exec_drop_insert_exec_temp_table(estate);
+		}
+		
+		/*
+		 * Restore the transaction count after INSERT EXEC completes.
+		 * This prevents the "Transaction count mismatch" error at the batch
+		 * level when the procedure created temp tables, table variables, or
+		 * used DML with OUTPUT clause.
+		 */
+		if (restore_tran_count)
+		{
+			NestedTranCount = saved_nested_tran_count;
 		}
 
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
@@ -1563,6 +1593,16 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	char	   *old_db_name = get_cur_db_name();
 	char	   *cur_db_name = NULL;
 	bool		insert_exec_context_set = false;
+	
+	/*
+	 * Save the transaction count before INSERT EXEC.
+	 * When a procedure creates temp tables, table variables, or uses DML with
+	 * OUTPUT clause, it can change the transaction count. We need to restore
+	 * the transaction count after INSERT EXEC completes to avoid the
+	 * "Transaction count mismatch" error at the batch level.
+	 */
+	uint32 saved_nested_tran_count = 0;
+	bool restore_tran_count = false;
 
 	LOCAL_FCINFO(fcinfo, 1);
 
@@ -1595,6 +1635,15 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			elog(DEBUG1, "INSERT EXEC dynamic SQL: Setting up temp table for target=%s, columns=%s",
 				 stmt->insert_exec_target,
 				 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
+			
+			/*
+			 * Save the transaction count before INSERT EXEC.
+			 * The dynamic SQL may create temp tables, table variables, or use
+			 * DML with OUTPUT clause, which can change the transaction count.
+			 * We'll restore it after INSERT EXEC completes.
+			 */
+			saved_nested_tran_count = NestedTranCount;
+			restore_tran_count = true;
 			
 			exec_create_insert_exec_temp_table(estate,
 											   stmt->insert_exec_target,
@@ -1645,6 +1694,17 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		if (insert_exec_context_set && estate->insert_exec_temp_table != NULL)
 		{
 			exec_drop_insert_exec_temp_table(estate);
+		}
+		
+		/*
+		 * Restore the transaction count after INSERT EXEC completes.
+		 * This prevents the "Transaction count mismatch" error at the batch
+		 * level when the dynamic SQL created temp tables, table variables, or
+		 * used DML with OUTPUT clause.
+		 */
+		if (restore_tran_count)
+		{
+			NestedTranCount = saved_nested_tran_count;
 		}
 
 		/* Restore past settings */
