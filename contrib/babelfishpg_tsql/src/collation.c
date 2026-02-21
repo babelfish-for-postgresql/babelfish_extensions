@@ -537,7 +537,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	{
 		RelabelType	*relabel = (RelabelType *) leftop;
 		leftop = copyObject((Node*) relabel->arg);
-		prefix->consttype = rtypeId = ltypeId = exprType(leftop);
+		ltypeId = exprType(leftop);
 	}
 
 	/* 
@@ -550,6 +550,9 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	 * We also set InvalidOid for highest_sort_key during creation for the same reason,
 	 * later we enclose it withing CollateExpr
 	 */
+
+	 /* Reconcile types — LIKE coerces to TEXT but we need original column type */
+	prefix->consttype = rtypeId = ltypeId;
 	prefix->constcollid = ((Const *) rightop)->constcollid = InvalidOid;
 	
 	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
