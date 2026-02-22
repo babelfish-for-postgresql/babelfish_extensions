@@ -355,6 +355,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
 	CollateExpr *prefix_collate;
+	Node	   *check_node; 
 
 	tsql_get_database_or_server_collation_oid_internal(true);
 
@@ -409,11 +410,22 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	 * Try to simplify rightop to a Const for prefix extraction.
 	 * eval_const_expressions folds immutable subexpressions, evaluate_expr
 	 * handles stable functions as a fallback.
+	 *
+	 * Peek through RelabelType wrappers to check for like_escape (ESCAPE
+	 * clause) and remove_accents_internal (AI mode). Evaluating these at
+	 * plan time loses escape and bracket pattern semantics.
+	 * For AI mode, the RelabelType unwrap below handles simple patterns.
 	 */
 
-	if (!(IsA(rightop, FuncExpr) &&
-		  strcmp(get_func_name(((FuncExpr *) rightop)->funcid),
-				 "like_escape") == 0))
+	check_node = rightop;
+	while (IsA(check_node, RelabelType))
+		check_node = (Node *) ((RelabelType *) check_node)->arg;
+
+	if (!(IsA(check_node, FuncExpr) &&
+		  (strcmp(get_func_name(((FuncExpr *) check_node)->funcid),
+				 "like_escape") == 0 ||
+		   strcmp(get_func_name(((FuncExpr *) check_node)->funcid),
+				 "remove_accents_internal") == 0)))
 	{
 		rightop = eval_const_expressions(NULL, rightop);
 
@@ -428,8 +440,25 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 											exprTypmod(rightop),
 											exprCollation(rightop));
 		}
-	}
 		lsecond(op->args) = rightop;
+	}
+
+	/*
+	 * This is needed to process CI_AI for Const nodes.
+	 * Because after we call coerce_to_target_type for type conversion in
+	 * transform_likenode_for_AI, we obtain a Relabel node which won't help
+	 * us to perform optimization for constant prefix. Hence, we process
+	 * that here.
+	 */
+	if (IsA(rightop, RelabelType))
+	{
+		RelabelType	*relabel = (RelabelType *) rightop;
+		if (IsA(relabel->arg, Const))
+		{
+			lsecond(op->args) = relabel->arg;
+			rightop = (Node *) lsecond(op->args);
+		}
+	}
 
 	/* 
 	 * no constant prefix found in pattern, or pattern is not constant 
