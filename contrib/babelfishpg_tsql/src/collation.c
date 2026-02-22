@@ -392,8 +392,12 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		op->opfuncid = like_entry.ilike_opfuncid;
 	}
 	
-	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-
+	if (coll_info_of_inputcollid.collateflags == 0x000f || /* CI_AI */
+		coll_info_of_inputcollid.collateflags == 0x000d || /* CI_AS */
+		coll_info_of_inputcollid.collateflags == 0x000e)   /* CS_AI */
+	{
+		op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+	}
 
 	/* Remove CollateExpr as the op->inputcollid has already been set */
 	if (IsA(rightop, CollateExpr))
