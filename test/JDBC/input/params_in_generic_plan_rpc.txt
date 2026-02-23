@@ -1,0 +1,131 @@
+CREATE TABLE t1 (a int, b int, c varchar(50));
+INSERT INTO t1 VALUES (1, 10, 'first');
+INSERT INTO t1 VALUES (2, 20, 'second');
+INSERT INTO t1 VALUES (3, 30, 'third');
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+SELECT set_config('plan_cache_mode', 'force_generic_plan', false);
+
+-- select with parameter in targetlist and WHERE
+prepst#!#select a, b, @a as param_value from t1 where a < 3#!#int|-|a|-|5
+
+-- select with parameter in WHERE
+prepst#!#select * from t1 where a = @a#!#int|-|a|-|2
+
+-- update with parameter in WHERE and select
+prepst#!#update t1 set b = 5942 where a = @filter; select * from t1 where a = @filter#!#int|-|filter|-|1#!#int|-|filter|-|1
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+INSERT INTO t1 VALUES (2, 20, 'second');
+INSERT INTO t1 VALUES (3, 30, 'third');
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+
+-- create temp table, delete with parameter, select, drop
+prepst#!#create table t_temp4 (a int); insert into t_temp4 values (1), (2), (3), (4); delete from t_temp4 where a = @delval; select * from t_temp4 order by a; drop table t_temp4#!#int|-|delval|-|2
+
+-- update with two parameters (three param uses total)
+prepst#!#update t1 set b = @updateval where a = @filter; select * from t1 where a = @filter#!#int|-|updateval|-|100#!#int|-|filter|-|1#!#int|-|filter|-|1
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+INSERT INTO t1 VALUES (2, 20, 'second');
+INSERT INTO t1 VALUES (3, 30, 'third');
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+
+-- update with same parameter in SET and WHERE (three uses)
+prepst#!#update t1 set b = @filter where a = @filter; select * from t1 where a = @filter#!#int|-|filter|-|1#!#int|-|filter|-|1#!#int|-|filter|-|1
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+INSERT INTO t1 VALUES (2, 20, 'second');
+INSERT INTO t1 VALUES (3, 30, 'third');
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+
+-- TOP with parameter
+prepst#!#select top (@a) * from t1 order by a#!#int|-|a|-|2
+
+-- TOP with NULL parameter
+prepst#!#select top (@topnull) * from t1#!#int|-|topnull|-|<NULL>
+
+-- TOP with subquery returning NULL
+prepst#!#select top (select NULL) * from t1 order by a
+
+-- variable assignment in targetlist with OUTPUT parameter
+prepst#!#select @result = b from t1 where a = @i#!#int|-|i|-|2#!#int|-|result|-|<NULL>
+
+-- variable assignment with parameter in expression and WHERE (i used twice)
+prepst#!#select @result = b + @i from t1 where a = @i#!#int|-|i|-|2#!#int|-|i|-|2#!#int|-|result|-|<NULL>
+
+-- multiple variable assignments with OUTPUT parameters
+prepst#!#select @var1 = a, @var2 = b from t1 where a = @param#!#int|-|param|-|2#!#int|-|var1|-|<NULL>#!#int|-|var2|-|<NULL>
+
+-- aggregate with variable assignment
+prepst#!#select @result = sum(b) from t1 where a > @threshold#!#int|-|threshold|-|2#!#int|-|result|-|<NULL>
+
+-- GROUP BY HAVING with parameter
+prepst#!#select a, sum(b) as total from t1 group by a having sum(b) > @havingval order by a#!#int|-|havingval|-|15
+
+-- CASE expression with parameter
+prepst#!#select a, case when a > @threshold then 'high' else 'low' end as category from t1#!#int|-|threshold|-|2
+
+-- CASE with variable assignment and OUTPUT
+prepst#!#select @result = case when a > @threshold then 'high' else 'low' end from t1 where a = @at#!#int|-|threshold|-|2#!#int|-|at|-|3#!#varchar(10)|-|result|-|<NULL>
+
+-- subquery with parameter
+prepst#!#select a, (select @multiplier * b) as doubled_b from t1 where a < 3#!#int|-|multiplier|-|2
+
+-- nested subquery with parameter
+prepst#!#select a, (select b + (select @val)) as nested_calc from t1 where a < 3#!#int|-|val|-|10
+
+-- subquery in WHERE with parameter
+prepst#!#select * from t1 where b > (select max(b) from t1 where a < @val)#!#int|-|val|-|2
+
+-- correlated subquery with parameter
+prepst#!#select a, (select count(*) from t1 t_inner where t_inner.b > t_outer.b + @offset) as count_greater from t1 t_outer#!#int|-|offset|-|10
+
+-- NULL parameter
+prepst#!#select * from t1 where a = @nullparam#!#int|-|nullparam|-|<NULL>
+
+-- CTE with parameter
+prepst#!#with cte as (select * from t1 where a > @ctefilter) select * from cte#!#int|-|ctefilter|-|2
+
+-- multiple CTEs with parameters
+prepst#!#with cte1 as (select * from t1 where a > @filter1), cte2 as (select * from cte1 where a <= @filter2) select * from cte2#!#int|-|filter1|-|1#!#int|-|filter2|-|3
+
+-- window function with parameter
+prepst#!#select a, b, row_number() over (order by case when a > @partitionval then a else b end) as rn from t1#!#int|-|partitionval|-|2
+
+-- UPDATE with variable assignment
+prepst#!#update t1 set b = b + 5, @captured = b where a = @filter#!#int|-|filter|-|2#!#int|-|captured|-|<NULL>
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+INSERT INTO t1 VALUES (2, 20, 'second');
+INSERT INTO t1 VALUES (3, 30, 'third');
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+
+-- UPDATE with multiple variable assignments (filter, increment, captured1 used twice, captured2)
+prepst#!#update t1 set b = b + @increment, @captured1 = a, @captured2 = @captured1 + b where a = @filter#!#int|-|filter|-|2#!#int|-|increment|-|5#!#int|-|captured1|-|<NULL>#!#int|-|captured1|-|<NULL>#!#int|-|captured2|-|<NULL>
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+INSERT INTO t1 VALUES (2, 20, 'second');
+INSERT INTO t1 VALUES (3, 30, 'third');
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+
+-- UPDATE with subquery
+prepst#!#update t1 set b = (select @multiplier * 10) where a = 1; select * from t1 where a = 1#!#int|-|multiplier|-|2
+TRUNCATE TABLE t1;
+INSERT INTO t1 VALUES (1, 10, 'first');
+INSERT INTO t1 VALUES (2, 20, 'second');
+INSERT INTO t1 VALUES (3, 30, 'third');
+INSERT INTO t1 VALUES (4, 40, 'fourth');
+
+-- DELETE with subquery
+prepst#!#create table t_temp5 (a int); insert into t_temp5 values (1), (2), (3), (4); delete from t_temp5 where a in (select a from t_temp5 where a <= @threshold); select * from t_temp5 order by a; drop table t_temp5#!#int|-|threshold|-|2
+
+-- INSERT with parameters
+prepst#!#create table t_temp6 (a int, b int); insert into t_temp6 values (@val1, @val2); select * from t_temp6; drop table t_temp6#!#int|-|val1|-|5#!#int|-|val2|-|50
+
+-- OFFSET FETCH with parameters
+prepst#!#select * from t1 order by a offset @offsetval rows fetch next @fetchval rows only#!#int|-|offsetval|-|1#!#int|-|fetchval|-|2
+
+-- OFFSET FETCH with NULL fetch
+prepst#!#select * from t1 order by a offset @offsetval rows fetch next @fetchval rows only#!#int|-|offsetval|-|1#!#int|-|fetchval|-|<NULL>
+
+DROP TABLE t1;
