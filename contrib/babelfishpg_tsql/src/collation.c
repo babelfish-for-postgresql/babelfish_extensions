@@ -1142,6 +1142,27 @@ transform_likenode(Node *node, bool is_constraint)
 				op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 				/* Reload coll_info after modifying op->inputcollid */
 				coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
+				
+				/*
+				 * Fix operator if it doesn't match the collation.
+				 * During upgrade/restore, CS collations may have ILIKE from old code.
+				 */
+				if (coll_info_of_inputcollid.collateflags == 0x000c || coll_info_of_inputcollid.collateflags == 0x000e) /* CS */
+				{
+					if (op->opno != like_entry.like_oid)
+					{
+						op->opno = like_entry.like_oid;
+						op->opfuncid = get_opcode(like_entry.like_oid);
+					}
+				}
+				else if (coll_info_of_inputcollid.collateflags == 0x000d || coll_info_of_inputcollid.collateflags == 0x000f) /* CI */
+				{
+					if (op->opno != like_entry.ilike_oid)
+					{
+						op->opno = like_entry.ilike_oid;
+						op->opfuncid = get_opcode(like_entry.ilike_oid);
+					}
+				}
 			}
 			else
 			{
