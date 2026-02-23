@@ -5,7 +5,9 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     mode int,
     element_name text,
     binary_base64 boolean,
-    root_name text
+    root_name text,
+    elements boolean,
+    xsinil boolean
 ) RETURNS INTERNAL
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
 LANGUAGE C STABLE;
@@ -29,7 +31,9 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     mode int,
     element_name text,
     binary_base64 boolean,
-    root_name text)
+    root_name text,
+    elements boolean,
+    xsinil boolean)
 (
     STYPE = INTERNAL,
     SFUNC = tsql_query_to_xml_sfunc,
@@ -41,7 +45,9 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     mode int,
     element_name text,
     binary_base64 boolean,
-    root_name text)
+    root_name text,
+    elements boolean,
+    xsinil boolean)
 (
     STYPE = INTERNAL,
     SFUNC = tsql_query_to_xml_sfunc,
