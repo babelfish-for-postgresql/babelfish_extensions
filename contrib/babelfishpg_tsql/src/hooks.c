@@ -1208,6 +1208,210 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }
 
+typedef struct WalkSubplanContext
+{
+	bool (*plan_walker) ();
+	void *plan_context;
+	List *allplans;
+} WalkSubplanContext;
+
+static bool expr_walk_subplan(Node *node, void *context)
+{
+	struct WalkSubplanContext* sc = (struct WalkSubplanContext*)context;
+	if (node && IsA(node, SubPlan) &&
+		sc->plan_walker(list_nth(sc->allplans,
+			((SubPlan *) node)->plan_id - 1), sc->plan_context))
+	{
+		return true;
+	}
+	return expression_tree_walker(node, expr_walk_subplan, context);
+}
+
+static bool
+plan_walk_members(List *plans, bool (*walker) (), void *context)
+{
+	ListCell   *l;
+	foreach(l, plans)
+	{
+		if (walker((Plan *) lfirst(l), context))
+			return true;
+	}
+
+	return false;
+}
+
+static bool
+plan_walk_subplans(List *plans, List *allplans,
+						bool (*walker) (),
+						void *context)
+{
+	ListCell   *lc;
+
+	foreach(lc, plans)
+	{
+		SubPlan *sp = (SubPlan *) lfirst(lc);
+
+		Assert(IsA(sp, SubPlan));
+		if (walker(list_nth(allplans, sp->plan_id - 1),
+					context))
+			return true;
+	}
+
+	return false;
+}
+
+static bool
+plan_tree_walker(Plan *plan, List *allplans, bool (*walker) (), void *context)
+{
+	struct WalkSubplanContext sc = { walker, context, allplans };
+
+	/* lefttree and righttree are intentionally visited first here so that
+	 * join inners can be determined from a single flat plans array in the
+	 * outline. The inners will always be in the 2nd array element.
+	 */
+
+	/* lefttree */
+	if (plan->lefttree)
+	{
+		if (walker(plan->lefttree, context))
+			return true;
+	}
+
+	/* righttree */
+	if (plan->righttree)
+	{
+		if (walker(plan->righttree, context))
+			return true;
+	}
+
+	/* initPlan-s */
+	if (plan_walk_subplans(plan->initPlan, allplans, walker, context))
+		return true;
+
+	/* special child plans */
+	switch (nodeTag(plan))
+	{
+		case T_Append:
+			if (plan_walk_members(((Append *) plan)->appendplans,
+						walker, context))
+				return true;
+			break;
+		case T_MergeAppend:
+			if (plan_walk_members(((MergeAppend *) plan)->mergeplans,
+						walker, context))
+				return true;
+			break;
+		case T_BitmapAnd:
+			if (plan_walk_members(((BitmapAnd *) plan)->bitmapplans,
+						walker, context))
+				return true;
+			break;
+		case T_BitmapOr:
+			if (plan_walk_members(((BitmapOr *) plan)->bitmapplans,
+						walker, context))
+				return true;
+			break;
+		case T_SubqueryScan:
+			if (walker(((SubqueryScan *) plan)->subplan, context))
+				return true;
+			break;
+		case T_CustomScan:
+			if (plan_walk_members(((CustomScan *) plan)->custom_plans,
+						walker, context))
+				return true;
+			break;
+		case T_HashJoin:
+			if(expression_tree_walker((Node*)(((HashJoin*)plan)->hashclauses), expr_walk_subplan, &sc))
+				return true;
+			break;
+		case T_Result:
+			if(expression_tree_walker((Node*)(((Result*)plan)->resconstantqual), expr_walk_subplan, &sc))
+				return true;
+			break;
+		default:
+			break;
+	}
+
+	if(expression_tree_walker((Node*)(plan->qual), expr_walk_subplan, &sc))
+		return true;
+	if(expression_tree_walker((Node*)(plan->targetlist), expr_walk_subplan, &sc))
+		return true;
+
+	return false;
+}
+
+/* Context for param replacement in quals */
+typedef struct ParamReplaceContext
+{
+	bool		in_qual;		/* Are we currently in a qual? */
+	QueryDesc  *queryDesc;		/* Original QueryDesc */
+} ParamReplaceContext;
+
+/*
+ * Expression tree mutator that replaces Param nodes with Const nodes when in a qual.
+ */
+static Node *
+replace_params_mutator(Node *node, ParamReplaceContext *context)
+{
+	if (node == NULL)
+		return NULL;
+
+	/* Handle Param nodes when we're in a qual */
+	if (IsA(node, Param) && context->in_qual)
+	{
+		ParamListInfo	paramLI = context->queryDesc->params;
+		PlannerInfo		root;
+		Node		   *ret;
+
+		root.glob = makeNode(PlannerGlobal);
+		root.glob->boundParams = paramLI;
+
+		ret = eval_const_expressions(&root, node);
+
+		pfree(root.glob);
+		return ret;
+	}
+
+	/* Handle SubPlan - unset qual flag when entering subquery */
+	if (IsA(node, SubPlan))
+	{
+		SubPlan	   *newsubplan;
+		bool		save_in_qual = context->in_qual;
+		
+		context->in_qual = false;
+		
+		newsubplan = (SubPlan *) expression_tree_mutator(node, replace_params_mutator, context);
+		
+		context->in_qual = save_in_qual;
+		
+		return (Node *) newsubplan;
+	}
+
+	return expression_tree_mutator(node, replace_params_mutator, context);
+}
+
+/*
+ * Recursively walk the plan tree and replace params in quals.
+ */
+static bool
+replace_params_in_plan_tree(Plan *plan, ParamReplaceContext *context)
+{
+	if (plan == NULL)
+		return false;
+
+	if (plan->qual != NIL)
+	{
+		bool	save_in_qual = context->in_qual;
+		
+		context->in_qual = true;
+		plan->qual = (List *) replace_params_mutator((Node *) plan->qual, context);
+		context->in_qual = save_in_qual;
+	}
+
+	return plan_tree_walker(plan, context->queryDesc->plannedstmt->subplans,
+							replace_params_in_plan_tree, context);
+}
+
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
@@ -1290,6 +1494,22 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 				}
 			}
 		}
+	}
+
+	if (queryDesc->plannedstmt
+		&& queryDesc->plannedstmt->planTree
+		&& queryDesc->params
+		&& queryDesc->params->numParams > 0)
+	{
+		ParamReplaceContext context;
+
+		/* Copy the plannedstmt so that changing it won't affect the cached plan */
+		queryDesc->plannedstmt = copyObject(queryDesc->plannedstmt);
+		
+		context.in_qual = false;
+		context.queryDesc = queryDesc;
+
+		replace_params_in_plan_tree(queryDesc->plannedstmt->planTree, &context);
 	}
 
 	if (prev_ExecutorStart)
