@@ -311,8 +311,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'jones'
-Bitmap Heap Scan on testing4  (cost=11.56..34.56 rows=647 width=32)
-  Filter: ((remove_accents_internal((c1)::text) <> 'jones'::nvarchar) AND ((remove_accents_internal((c1)::text))::text !~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as))
+Bitmap Heap Scan on testing4  (cost=11.56..34.56 rows=650 width=32)
+  Filter: ((remove_accents_internal((c1)::text) <> 'jones'::nvarchar) OR ((remove_accents_internal((c1)::text))::text !~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 

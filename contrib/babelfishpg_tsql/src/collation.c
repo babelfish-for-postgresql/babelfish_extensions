@@ -1134,6 +1134,8 @@ transform_likenode(Node *node, bool is_constraint)
 					return node;
 				}
 				op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+				/* Reload coll_info after modifying op->inputcollid */
+				coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
 			}
 			else
 			{
