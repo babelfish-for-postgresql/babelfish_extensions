@@ -438,7 +438,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__Parse(geography_tagged_text sys.NVARCH
     RETURNS sys.GEOGRAPHY
     AS $$
     BEGIN
-        IF UPPER(geography_tagged_text COLLATE DATABASE_DEFAULT) = 'NULL' THEN
+        IF UPPER(geography_tagged_text COLLATE sys.DATABASE_DEFAULT) = 'NULL' THEN
             RETURN NULL;
         END IF;
 

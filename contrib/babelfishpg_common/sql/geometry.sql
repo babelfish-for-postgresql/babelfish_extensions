@@ -433,7 +433,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR
     RETURNS sys.GEOMETRY
     AS $$
     BEGIN
-	    IF UPPER(geometry_tagged_text COLLATE DATABASE_DEFAULT) = 'NULL' THEN
+	    IF UPPER(geometry_tagged_text COLLATE sys.DATABASE_DEFAULT) = 'NULL' THEN
             RETURN NULL;
         END IF;
 
