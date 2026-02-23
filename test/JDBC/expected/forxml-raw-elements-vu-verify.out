@@ -1,0 +1,1907 @@
+
+-- ============================================
+-- SECTION 1: Basic ELEMENTS directive
+-- ============================================
+-- Basic ELEMENTS with two columns
+SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><a>1</a><b>2</b></row>
+~~END~~
+
+
+-- Regression: Without ELEMENTS (attribute format)
+SELECT 1 AS a, 2 AS b FOR XML RAW;
+GO
+~~START~~
+ntext
+<row a="1" b="2"/>
+~~END~~
+
+
+-- ELEMENTS with three columns
+SELECT 1 AS a, 2 AS b, 3 AS c FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><a>1</a><b>2</b><c>3</c></row>
+~~END~~
+
+
+-- ELEMENTS with single column
+SELECT 1 AS a FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><a>1</a></row>
+~~END~~
+
+
+-- ELEMENTS with five columns
+SELECT 1 AS a, 2 AS b, 3 AS c, 4 AS d, 5 AS e FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><a>1</a><b>2</b><c>3</c><d>4</d><e>5</e></row>
+~~END~~
+
+
+-- ELEMENTS with ten columns
+SELECT 1 AS a, 2 AS b, 3 AS c, 4 AS d, 5 AS e, 6 AS f, 7 AS g, 8 AS h, 9 AS i, 10 AS j FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><a>1</a><b>2</b><c>3</c><d>4</d><e>5</e><f>6</f><g>7</g><h>8</h><i>9</i><j>10</j></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 2: Custom element names
+-- ============================================
+SELECT 1 AS a, 2 AS b FOR XML RAW('item'), ELEMENTS;
+GO
+~~START~~
+ntext
+<item><a>1</a><b>2</b></item>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('Employee'), ELEMENTS;
+GO
+~~START~~
+ntext
+<Employee><a>1</a><b>2</b></Employee>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('my_element'), ELEMENTS;
+GO
+~~START~~
+ntext
+<my_element><a>1</a><b>2</b></my_element>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('x'), ELEMENTS;
+GO
+~~START~~
+ntext
+<x><a>1</a><b>2</b></x>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('element123'), ELEMENTS;
+GO
+~~START~~
+ntext
+<element123><a>1</a><b>2</b></element123>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('UPPERCASE'), ELEMENTS;
+GO
+~~START~~
+ntext
+<UPPERCASE><a>1</a><b>2</b></UPPERCASE>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('MixedCase'), ELEMENTS;
+GO
+~~START~~
+ntext
+<MixedCase><a>1</a><b>2</b></MixedCase>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 3: NULL handling with ELEMENTS
+-- ============================================
+-- NULL in second column
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><a>1</a></row>
+~~END~~
+
+
+-- NULL in first column
+SELECT NULL AS a, 2 AS b FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><b>2</b></row>
+~~END~~
+
+
+-- All NULL columns
+SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row></row>
+~~END~~
+
+
+-- NULL in middle column
+SELECT 1 AS a, NULL AS b, 3 AS c FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><a>1</a><c>3</c></row>
+~~END~~
+
+
+-- Multiple NULLs
+SELECT NULL AS a, 2 AS b, NULL AS c FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><b>2</b></row>
+~~END~~
+
+
+-- All NULLs with four columns
+SELECT NULL AS a, NULL AS b, NULL AS c, NULL AS d FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 4: ELEMENTS ABSENT (default behavior)
+-- ============================================
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<row><a>1</a></row>
+~~END~~
+
+
+SELECT NULL AS a, 2 AS b FOR XML RAW, ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<row><b>2</b></row>
+~~END~~
+
+
+SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<row></row>
+~~END~~
+
+
+SELECT 1 AS a, NULL AS b, 3 AS c FOR XML RAW, ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<row><a>1</a><c>3</c></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 5: ELEMENTS XSINIL
+-- ============================================
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT NULL AS a, 2 AS b FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a xsi:nil="true"/><b>2</b></row>
+~~END~~
+
+
+SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a xsi:nil="true"/><b xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT 1 AS a, NULL AS b, 3 AS c FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/><c>3</c></row>
+~~END~~
+
+
+SELECT NULL AS a, 2 AS b, NULL AS c FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a xsi:nil="true"/><b>2</b><c xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT NULL AS a, NULL AS b, NULL AS c, NULL AS d FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a xsi:nil="true"/><b xsi:nil="true"/><c xsi:nil="true"/><d xsi:nil="true"/></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 6: ELEMENTS with ROOT directive
+-- ============================================
+SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, ROOT('data');
+GO
+~~START~~
+ntext
+<data><row><a>1</a><b>2</b></row></data>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW, ROOT('data'), ELEMENTS;
+GO
+~~START~~
+ntext
+<data><row><a>1</a><b>2</b></row></data>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('item'), ELEMENTS, ROOT('items');
+GO
+~~START~~
+ntext
+<items><item><a>1</a><b>2</b></item></items>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('item'), ROOT('items'), ELEMENTS;
+GO
+~~START~~
+ntext
+<items><item><a>1</a><b>2</b></item></items>
+~~END~~
+
+
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data');
+GO
+~~START~~
+ntext
+<data><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row></data>
+~~END~~
+
+
+SELECT 1 AS a, NULL AS b FOR XML RAW, ROOT('data'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<data><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row></data>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, ROOT('MyRoot');
+GO
+~~START~~
+ntext
+<MyRoot><row><a>1</a><b>2</b></row></MyRoot>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, ROOT('root123');
+GO
+~~START~~
+ntext
+<root123><row><a>1</a><b>2</b></row></root123>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 7: ELEMENTS with TYPE directive
+-- ============================================
+SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, TYPE;
+GO
+~~START~~
+xml
+<row><a>1</a><b>2</b></row>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW, TYPE, ELEMENTS;
+GO
+~~START~~
+xml
+<row><a>1</a><b>2</b></row>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('item'), ELEMENTS, TYPE;
+GO
+~~START~~
+xml
+<item><a>1</a><b>2</b></item>
+~~END~~
+
+
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, TYPE;
+GO
+~~START~~
+xml
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, ROOT('data'), TYPE;
+GO
+~~START~~
+xml
+<data><row><a>1</a><b>2</b></row></data>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW, TYPE, ROOT('data'), ELEMENTS;
+GO
+~~START~~
+xml
+<data><row><a>1</a><b>2</b></row></data>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW, ROOT('data'), TYPE, ELEMENTS;
+GO
+~~START~~
+xml
+<data><row><a>1</a><b>2</b></row></data>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('item'), ROOT('items'), ELEMENTS, TYPE;
+GO
+~~START~~
+xml
+<items><item><a>1</a><b>2</b></item></items>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 8: Table data with ELEMENTS
+-- ============================================
+SELECT * FROM forxml_raw_elements_t1 WHERE id = 1 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE id <= 2 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>3</id><name>Bob</name><department>Finance</department></row><row><id>4</id><name>Alice</name><salary>70000</salary></row><row><id>5</id></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE id = 3 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>3</id><name>Bob</name><department>Finance</department></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE id = 3 FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>3</id><name>Bob</name><salary xsi:nil="true"/><department>Finance</department></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE id = 4 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>4</id><name>Alice</name><salary>70000</salary></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE id = 4 FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>4</id><name>Alice</name><salary>70000</salary><department xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE id = 5 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>5</id></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE id = 5 FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>5</id><name xsi:nil="true"/><salary xsi:nil="true"/><department xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 FOR XML RAW('Employee'), ELEMENTS;
+GO
+~~START~~
+ntext
+<Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>3</id><name>Bob</name><department>Finance</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary></Employee><Employee><id>5</id></Employee>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 FOR XML RAW('Employee'), ELEMENTS, ROOT('Employees');
+GO
+~~START~~
+ntext
+<Employees><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>3</id><name>Bob</name><department>Finance</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary></Employee><Employee><id>5</id></Employee></Employees>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 FOR XML RAW('Employee'), ELEMENTS XSINIL, ROOT('Employees');
+GO
+~~START~~
+ntext
+<Employees><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>3</id><name>Bob</name><salary xsi:nil="true"/><department>Finance</department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>4</id><name>Alice</name><salary>70000</salary><department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>5</id><name xsi:nil="true"/><salary xsi:nil="true"/><department xsi:nil="true"/></Employee></Employees>
+~~END~~
+
+
+SELECT id, name FROM forxml_raw_elements_t1 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name></row><row><id>2</id><name>Jane</name></row><row><id>3</id><name>Bob</name></row><row><id>4</id><name>Alice</name></row><row><id>5</id></row>
+~~END~~
+
+
+SELECT name, salary FROM forxml_raw_elements_t1 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><name>John</name><salary>50000</salary></row><row><name>Jane</name><salary>60000</salary></row><row><name>Bob</name></row><row><name>Alice</name><salary>70000</salary></row><row></row>
+~~END~~
+
+
+SELECT id, salary FROM forxml_raw_elements_t1 WHERE salary IS NOT NULL FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><salary>50000</salary></row><row><id>2</id><salary>60000</salary></row><row><id>4</id><salary>70000</salary></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 9: Multiple data types
+-- ============================================
+SELECT * FROM forxml_raw_elements_t2 WHERE col1 = 1 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><col1>1</col1><col2>test</col2><col3>123.45</col3><col4>2024-01-15</col4><col5>1</col5></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t2 WHERE col1 = 2 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><col1>2</col1></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t2 WHERE col1 = 2 FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><col1>2</col1><col2 xsi:nil="true"/><col3 xsi:nil="true"/><col4 xsi:nil="true"/><col5 xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT col1, col3 FROM forxml_raw_elements_t2 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><col1>1</col1><col3>123.45</col3></row><row><col1>2</col1></row>
+~~END~~
+
+
+SELECT col1, col4 FROM forxml_raw_elements_t2 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><col1>1</col1><col4>2024-01-15</col4></row><row><col1>2</col1></row>
+~~END~~
+
+
+SELECT col1, col5 FROM forxml_raw_elements_t2 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><col1>1</col1><col5>1</col5></row><row><col1>2</col1></row>
+~~END~~
+
+
+SELECT 123 AS num FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><num>123</num></row>
+~~END~~
+
+
+SELECT 123.456 AS decimal_num FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><decimal_num>123.456</decimal_num></row>
+~~END~~
+
+
+SELECT 'hello' AS str FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><str>hello</str></row>
+~~END~~
+
+
+SELECT CAST('2024-01-15' AS DATE) AS date_val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><date_val>2024-01-15</date_val></row>
+~~END~~
+
+
+SELECT CAST('2024-01-15 10:30:00' AS DATETIME) AS datetime_val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><datetime_val>2024-01-15T10:30:00</datetime_val></row>
+~~END~~
+
+
+SELECT CAST(1 AS BIT) AS bit_val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><bit_val>1</bit_val></row>
+~~END~~
+
+
+SELECT CAST(0 AS BIT) AS bit_val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><bit_val>0</bit_val></row>
+~~END~~
+
+
+SELECT CAST(12345.67 AS MONEY) AS money_val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><money_val>12345.6700</money_val></row>
+~~END~~
+
+
+SELECT CAST(123 AS BIGINT) AS bigint_val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><bigint_val>123</bigint_val></row>
+~~END~~
+
+
+SELECT CAST(123 AS SMALLINT) AS smallint_val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><smallint_val>123</smallint_val></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 10: Special characters in values
+-- ============================================
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 1 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><value>a &amp; b</value></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 2 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>2</id><value>a &lt; b</value></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 3 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>3</id><value>a &gt; b</value></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 4 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>4</id><value>say "hello"</value></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 5 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>5</id><value>it's working</value></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 6 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>6</id><value>&lt;tag&gt;value&lt;/tag&gt;</value></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 7 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>7</id><value>   spaces   </value></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t3 WHERE id = 8 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>8</id><value></value></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t3 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><value>a &amp; b</value></row><row><id>2</id><value>a &lt; b</value></row><row><id>3</id><value>a &gt; b</value></row><row><id>4</id><value>say "hello"</value></row><row><id>5</id><value>it's working</value></row><row><id>6</id><value>&lt;tag&gt;value&lt;/tag&gt;</value></row><row><id>7</id><value>   spaces   </value></row><row><id>8</id><value></value></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t3 FOR XML RAW('SpecialChars'), ELEMENTS, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data><SpecialChars><id>1</id><value>a &amp; b</value></SpecialChars><SpecialChars><id>2</id><value>a &lt; b</value></SpecialChars><SpecialChars><id>3</id><value>a &gt; b</value></SpecialChars><SpecialChars><id>4</id><value>say "hello"</value></SpecialChars><SpecialChars><id>5</id><value>it's working</value></SpecialChars><SpecialChars><id>6</id><value>&lt;tag&gt;value&lt;/tag&gt;</value></SpecialChars><SpecialChars><id>7</id><value>   spaces   </value></SpecialChars><SpecialChars><id>8</id><value></value></SpecialChars></Data>
+~~END~~
+
+
+-- Special character values directly
+SELECT 'a & b' AS val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><val>a &amp; b</val></row>
+~~END~~
+
+
+SELECT 'a < b' AS val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><val>a &lt; b</val></row>
+~~END~~
+
+
+SELECT 'a > b' AS val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><val>a &gt; b</val></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 11: Unicode/Multibyte characters in values
+-- ============================================
+SELECT * FROM forxml_raw_elements_unicode FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>日本語</name></row><row><id>2</id><name>中文</name></row><row><id>3</id><name>한국어</name></row><row><id>4</id><name>العربية</name></row><row><id>5</id><name>émoji 😀</name></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_unicode FOR XML RAW('Record'), ELEMENTS;
+GO
+~~START~~
+ntext
+<Record><id>1</id><name>日本語</name></Record><Record><id>2</id><name>中文</name></Record><Record><id>3</id><name>한국어</name></Record><Record><id>4</id><name>العربية</name></Record><Record><id>5</id><name>émoji 😀</name></Record>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_unicode FOR XML RAW, ELEMENTS, ROOT('UnicodeData');
+GO
+~~START~~
+ntext
+<UnicodeData><row><id>1</id><name>日本語</name></row><row><id>2</id><name>中文</name></row><row><id>3</id><name>한국어</name></row><row><id>4</id><name>العربية</name></row><row><id>5</id><name>émoji 😀</name></row></UnicodeData>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_unicode WHERE id = 1 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>日本語</name></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_unicode WHERE id = 5 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>5</id><name>émoji 😀</name></row>
+~~END~~
+
+
+SELECT '日本語' AS name, '中文' AS value FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><name>日本語</name><value>中文</value></row>
+~~END~~
+
+
+SELECT N'Ελληνικά' AS greek, N'Русский' AS russian FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><greek>Ελληνικά</greek><russian>Русский</russian></row>
+~~END~~
+
+
+SELECT N'مرحبا' AS arabic, N'שלום' AS hebrew FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><arabic>مرحبا</arabic><hebrew>שלום</hebrew></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 12: Multibyte characters in element names
+-- ============================================
+SELECT 1 AS a, 2 AS b FOR XML RAW('データ'), ELEMENTS;
+GO
+~~START~~
+ntext
+<データ><a>1</a><b>2</b></データ>
+~~END~~
+
+
+SELECT 1 AS a FOR XML RAW, ELEMENTS, ROOT('ルート');
+GO
+~~START~~
+ntext
+<ルート><row><a>1</a></row></ルート>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b FOR XML RAW('中文元素'), ELEMENTS;
+GO
+~~START~~
+ntext
+<中文元素><a>1</a><b>2</b></中文元素>
+~~END~~
+
+
+SELECT 1 AS a FOR XML RAW('요소'), ELEMENTS, ROOT('루트');
+GO
+~~START~~
+ntext
+<루트><요소><a>1</a></요소></루트>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 13: Long column names (>64 characters)
+-- ============================================
+SELECT * FROM forxml_raw_elements_long_cols FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact>value1</this_is_a_very_long_column_name_that_exceeds_sixty_four_charact><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value2</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></row><row><id>2</id><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value3</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_long_cols FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>1</id><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact>value1</this_is_a_very_long_column_name_that_exceeds_sixty_four_charact><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value2</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>2</id><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact xsi:nil="true"/><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value3</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_long_cols FOR XML RAW('LongColTest'), ELEMENTS, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data><LongColTest><id>1</id><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact>value1</this_is_a_very_long_column_name_that_exceeds_sixty_four_charact><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value2</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></LongColTest><LongColTest><id>2</id><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value3</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></LongColTest></Data>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 14: Edge cases
+-- ============================================
+-- Empty result set
+SELECT 1 AS a WHERE 1 = 0 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE id = 999 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+~~END~~
+
+
+SELECT 1 AS a WHERE 1 = 0 FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+~~END~~
+
+
+SELECT 1 AS a WHERE 1 = 0 FOR XML RAW, ELEMENTS, ROOT('data');
+GO
+~~START~~
+ntext
+~~END~~
+
+
+-- Empty string values
+SELECT '' AS empty_string FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><empty_string></empty_string></row>
+~~END~~
+
+
+SELECT '   ' AS spaces_only FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><spaces_only>   </spaces_only></row>
+~~END~~
+
+
+-- Explicit NULL cast
+SELECT CAST(NULL AS VARCHAR(10)) AS null_val FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row></row>
+~~END~~
+
+
+SELECT CAST(NULL AS VARCHAR(10)) AS null_val FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><null_val xsi:nil="true"/></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 15: Boundary cases for element names
+-- ============================================
+-- Empty element name
+SELECT 1 AS a, 2 AS b FOR XML RAW(''), ELEMENTS;
+GO
+~~START~~
+ntext
+<><a>1</a><b>2</b></>
+~~END~~
+
+
+-- Element name with spaces
+SELECT 1 AS a FOR XML RAW('element name'), ELEMENTS;
+GO
+~~START~~
+ntext
+<element name><a>1</a></element name>
+~~END~~
+
+
+-- Element name starting with number
+SELECT 1 AS a FOR XML RAW('123element'), ELEMENTS;
+GO
+~~START~~
+ntext
+<123element><a>1</a></123element>
+~~END~~
+
+
+-- Element name with special characters
+SELECT 1 AS a FOR XML RAW('element-name'), ELEMENTS;
+GO
+~~START~~
+ntext
+<element-name><a>1</a></element-name>
+~~END~~
+
+
+-- Element name with underscore
+SELECT 1 AS a FOR XML RAW('element_name'), ELEMENTS;
+GO
+~~START~~
+ntext
+<element_name><a>1</a></element_name>
+~~END~~
+
+
+-- NULL element name
+SELECT 1 AS a FOR XML RAW(NULL), ELEMENTS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'NULL' at line 2 and character position 26)~~
+
+
+
+-- ============================================
+-- SECTION 16: ORDER BY, GROUP BY, TOP clauses
+-- ============================================
+SELECT * FROM forxml_raw_elements_t1 ORDER BY id FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>3</id><name>Bob</name><department>Finance</department></row><row><id>4</id><name>Alice</name><salary>70000</salary></row><row><id>5</id></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 ORDER BY name FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>5</id></row><row><id>4</id><name>Alice</name><salary>70000</salary></row><row><id>3</id><name>Bob</name><department>Finance</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 ORDER BY salary DESC FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>4</id><name>Alice</name><salary>70000</salary></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>3</id><name>Bob</name><department>Finance</department></row><row><id>5</id></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 ORDER BY id FOR XML RAW('Employee'), ELEMENTS, ROOT('Employees');
+GO
+~~START~~
+ntext
+<Employees><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>3</id><name>Bob</name><department>Finance</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary></Employee><Employee><id>5</id></Employee></Employees>
+~~END~~
+
+
+SELECT department, COUNT(*) AS cnt FROM forxml_raw_elements_t1 GROUP BY department ORDER BY department FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><cnt>2</cnt></row><row><department>Finance</department><cnt>1</cnt></row><row><department>HR</department><cnt>1</cnt></row><row><department>IT</department><cnt>1</cnt></row>
+~~END~~
+
+
+SELECT department, SUM(salary) AS total_salary FROM forxml_raw_elements_t1 GROUP BY department ORDER BY department FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><total_salary>70000</total_salary></row><row><department>Finance</department></row><row><department>HR</department><total_salary>60000</total_salary></row><row><department>IT</department><total_salary>50000</total_salary></row>
+~~END~~
+
+
+SELECT department, AVG(salary) AS avg_salary FROM forxml_raw_elements_t1 GROUP BY department ORDER BY department FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><avg_salary>70000</avg_salary></row><row><department>Finance</department></row><row><department>HR</department><avg_salary>60000</avg_salary></row><row><department>IT</department><avg_salary>50000</avg_salary></row>
+~~END~~
+
+
+SELECT TOP 1 * FROM forxml_raw_elements_t1 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row>
+~~END~~
+
+
+SELECT TOP 2 * FROM forxml_raw_elements_t1 ORDER BY id FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row>
+~~END~~
+
+
+SELECT TOP 3 * FROM forxml_raw_elements_t1 ORDER BY salary DESC FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>4</id><name>Alice</name><salary>70000</salary></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 17: WHERE clause variations
+-- ============================================
+SELECT * FROM forxml_raw_elements_t1 WHERE salary > 50000 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>4</id><name>Alice</name><salary>70000</salary></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE salary IS NULL FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>3</id><name>Bob</name><department>Finance</department></row><row><id>5</id></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE salary IS NULL FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>3</id><name>Bob</name><salary xsi:nil="true"/><department>Finance</department></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>5</id><name xsi:nil="true"/><salary xsi:nil="true"/><department xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE salary IS NOT NULL FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>4</id><name>Alice</name><salary>70000</salary></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE name LIKE 'J%' FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_t1 WHERE department IN ('IT', 'HR') FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 18: UNION queries
+-- ============================================
+SELECT 1 AS a, 2 AS b
+UNION ALL
+SELECT 3 AS a, 4 AS b
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><a>1</a><b>2</b></row><row><a>3</a><b>4</b></row>
+~~END~~
+
+
+SELECT 1 AS a, 2 AS b
+UNION ALL
+SELECT 3 AS a, 4 AS b
+UNION ALL
+SELECT 5 AS a, 6 AS b
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><a>1</a><b>2</b></row><row><a>3</a><b>4</b></row><row><a>5</a><b>6</b></row>
+~~END~~
+
+
+SELECT 1 AS a, NULL AS b
+UNION ALL
+SELECT NULL AS a, 2 AS b
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><a>1</a></row><row><b>2</b></row>
+~~END~~
+
+
+SELECT 1 AS a, NULL AS b
+UNION ALL
+SELECT NULL AS a, 2 AS b
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a xsi:nil="true"/><b>2</b></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 19: Subqueries
+-- ============================================
+SELECT id, (SELECT name FROM forxml_raw_elements_t1 t2 WHERE t2.id = t1.id FOR XML RAW, ELEMENTS, TYPE) AS subquery_result
+FROM forxml_raw_elements_t1 t1
+WHERE id <= 2;
+GO
+~~START~~
+int#!#xml
+1#!#<row><name>John</name></row>
+2#!#<row><name>Jane</name></row>
+~~END~~
+
+
+SELECT id, (SELECT name, salary FROM forxml_raw_elements_t1 t2 WHERE t2.id = t1.id FOR XML RAW, ELEMENTS, TYPE) AS emp_data
+FROM forxml_raw_elements_t1 t1
+WHERE id = 1;
+GO
+~~START~~
+int#!#xml
+1#!#<row><name>John</name><salary>50000</salary></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 20: Stored Procedures
+-- ============================================
+EXEC forxml_raw_elements_proc1;
+GO
+~~START~~
+ntext
+<row><a>1</a><b>2</b></row>
+~~END~~
+
+
+EXEC forxml_raw_elements_proc2;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
+
+EXEC forxml_raw_elements_proc3;
+GO
+~~START~~
+ntext
+<Employees><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>3</id><name>Bob</name><department>Finance</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary></Employee><Employee><id>5</id></Employee></Employees>
+~~END~~
+
+
+EXEC forxml_raw_elements_proc4 @empid = 1;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row>
+~~END~~
+
+
+EXEC forxml_raw_elements_proc4 @empid = 3;
+GO
+~~START~~
+ntext
+<row><id>3</id><name>Bob</name><department>Finance</department></row>
+~~END~~
+
+
+EXEC forxml_raw_elements_proc4 @empid = 999;
+GO
+~~START~~
+ntext
+~~END~~
+
+
+EXEC forxml_raw_elements_proc5 @empid = 3;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>3</id><name>Bob</name><salary xsi:nil="true"/><department>Finance</department></row>
+~~END~~
+
+
+EXEC forxml_raw_elements_proc6 @dept = 'IT';
+GO
+~~START~~
+ntext
+<Department><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee></Department>
+~~END~~
+
+
+EXEC forxml_raw_elements_proc6 @dept = 'HR';
+GO
+~~START~~
+ntext
+<Department><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee></Department>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 21: INSERT..EXEC with procedures
+-- ============================================
+INSERT INTO forxml_raw_elements_results (xml_data)
+EXEC forxml_raw_elements_proc_insert;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM forxml_raw_elements_results;
+GO
+~~START~~
+varchar
+<row><a>1</a><b>2</b></row>
+~~END~~
+
+
+TRUNCATE TABLE forxml_raw_elements_results;
+GO
+
+INSERT INTO forxml_raw_elements_results (xml_data)
+EXEC forxml_raw_elements_proc_insert2;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM forxml_raw_elements_results;
+GO
+~~START~~
+varchar
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
+
+TRUNCATE TABLE forxml_raw_elements_results;
+GO
+
+INSERT INTO forxml_raw_elements_results (xml_data)
+EXEC forxml_raw_elements_proc_insert3;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM forxml_raw_elements_results;
+GO
+~~START~~
+varchar
+<data><row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>3</id><name>Bob</name><department>Finance</department></row><row><id>4</id><name>Alice</name><salary>70000</salary></row><row><id>5</id></row></data>
+~~END~~
+
+
+TRUNCATE TABLE forxml_raw_elements_results;
+GO
+
+
+-- ============================================
+-- SECTION 22: SELECT INTO variable
+-- ============================================
+DECLARE @xml_var VARCHAR(MAX);
+SELECT @xml_var = (SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS);
+SELECT @xml_var AS result;
+GO
+~~START~~
+varchar
+<row><a>1</a><b>2</b></row>
+~~END~~
+
+
+DECLARE @xml_var VARCHAR(MAX);
+SELECT @xml_var = (SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS);
+SELECT @xml_var AS result;
+GO
+~~START~~
+varchar
+<row><a>1</a></row>
+~~END~~
+
+
+DECLARE @xml_var VARCHAR(MAX);
+SELECT @xml_var = (SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL);
+SELECT @xml_var AS result;
+GO
+~~START~~
+varchar
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
+
+DECLARE @xml_var VARCHAR(MAX);
+SELECT @xml_var = (SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, ROOT('data'));
+SELECT @xml_var AS result;
+GO
+~~START~~
+varchar
+<data><row><a>1</a><b>2</b></row></data>
+~~END~~
+
+
+DECLARE @xml_var VARCHAR(MAX);
+SELECT @xml_var = (SELECT * FROM forxml_raw_elements_t1 WHERE id = 1 FOR XML RAW, ELEMENTS);
+SELECT @xml_var AS result;
+GO
+~~START~~
+varchar
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row>
+~~END~~
+
+
+DECLARE @xml_var VARCHAR(MAX);
+SELECT @xml_var = (SELECT * FROM forxml_raw_elements_t1 FOR XML RAW('Employee'), ELEMENTS, ROOT('Employees'));
+SELECT @xml_var AS result;
+GO
+~~START~~
+varchar
+<Employees><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>3</id><name>Bob</name><department>Finance</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary></Employee><Employee><id>5</id></Employee></Employees>
+~~END~~
+
+
+DECLARE @xml_var XML;
+SELECT @xml_var = (SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, TYPE);
+SELECT @xml_var AS result;
+GO
+~~START~~
+xml
+<row><a>1</a><b>2</b></row>
+~~END~~
+
+
+DECLARE @xml_var XML;
+SELECT @xml_var = (SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, TYPE);
+SELECT @xml_var AS result;
+GO
+~~START~~
+xml
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
+
+DECLARE @xml_var XML;
+SELECT @xml_var = (SELECT * FROM forxml_raw_elements_t1 FOR XML RAW, ELEMENTS, TYPE);
+SELECT @xml_var AS result;
+GO
+~~START~~
+xml
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>3</id><name>Bob</name><department>Finance</department></row><row><id>4</id><name>Alice</name><salary>70000</salary></row><row><id>5</id></row>
+~~END~~
+
+
+DECLARE @xml_var XML;
+SELECT @xml_var = (SELECT * FROM forxml_raw_elements_t1 FOR XML RAW('Employee'), ELEMENTS, ROOT('Employees'), TYPE);
+SELECT @xml_var AS result;
+GO
+~~START~~
+xml
+<Employees><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>3</id><name>Bob</name><department>Finance</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary></Employee><Employee><id>5</id></Employee></Employees>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 23: Regular Views with FOR XML
+-- ============================================
+SELECT * FROM forxml_raw_elements_view1 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>4</id><name>Alice</name><salary>70000</salary></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_view1 FOR XML RAW('Employee'), ELEMENTS, ROOT('Employees');
+GO
+~~START~~
+ntext
+<Employees><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary></Employee></Employees>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_view2 FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><col1>1</col1><col2>John</col2></row><row><col1>2</col1><col2>Jane</col2></row><row><col1>3</col1><col2>Bob</col2></row><row><col1>4</col1><col2>Alice</col2></row><row><col1>5</col1></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 24: Dependent Views (using FOR XML RAW, ELEMENTS)
+-- ============================================
+SELECT * FROM forxml_raw_elements_dep_view1;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row><id>4</id><name>Alice</name><salary>70000</salary></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_dep_view2;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>3</id><name>Bob</name><salary xsi:nil="true"/><department>Finance</department></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>4</id><name>Alice</name><salary>70000</salary><department xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>5</id><name xsi:nil="true"/><salary xsi:nil="true"/><department xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_dep_view3;
+GO
+~~START~~
+ntext
+<Employees><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>3</id><name>Bob</name><department>Finance</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary></Employee><Employee><id>5</id></Employee></Employees>
+~~END~~
+
+
+SELECT * FROM forxml_raw_elements_dep_view4;
+GO
+~~START~~
+ntext
+<row><id>1</id><name>John</name></row><row><id>2</id><name>Jane</name></row><row><id>3</id><name>Bob</name></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 25: Dependent Functions (using FOR XML RAW, ELEMENTS)
+-- ============================================
+SELECT dbo.forxml_raw_elements_func1() AS result;
+GO
+~~START~~
+nvarchar
+<row><a>1</a><b>2</b></row>
+~~END~~
+
+
+SELECT dbo.forxml_raw_elements_func2() AS result;
+GO
+~~START~~
+nvarchar
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
+
+SELECT dbo.forxml_raw_elements_func3() AS result;
+GO
+~~START~~
+xml
+<row><id>1</id><name>John</name><salary>50000</salary><department>IT</department></row>
+~~END~~
+
+
+SELECT dbo.forxml_raw_elements_func4(1) AS result;
+GO
+~~START~~
+nvarchar
+<Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee>
+~~END~~
+
+
+SELECT dbo.forxml_raw_elements_func4(3) AS result;
+GO
+~~START~~
+nvarchar
+<Employee><id>3</id><name>Bob</name><department>Finance</department></Employee>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 26: XML methods on FOR XML result
+-- ============================================
+-- Using .value() method to extract data
+SELECT (SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, TYPE).value('(/row/a)[1]', 'INT') AS extracted_value;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT (SELECT 'hello' AS name FOR XML RAW, ELEMENTS, TYPE).value('(/row/name)[1]', 'VARCHAR(50)') AS extracted_name;
+GO
+~~START~~
+varchar
+hello
+~~END~~
+
+
+SELECT (SELECT 1 AS id, 'John' AS name FOR XML RAW, ELEMENTS, TYPE).value('(/row/name)[1]', 'VARCHAR(50)') AS emp_name;
+GO
+~~START~~
+varchar
+John
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 27: JOIN Queries with ELEMENTS
+-- ============================================
+-- INNER JOIN - basic
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row>
+~~END~~
+
+
+-- INNER JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name, d.location
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name><location>New York</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name><location>Chicago</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name><location>New York</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name><location>Boston</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name><location>New York</location></row>
+~~END~~
+
+
+-- INNER JOIN with custom element name
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW('Employee'), ELEMENTS;
+GO
+~~START~~
+ntext
+<Employee><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></Employee><Employee><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></Employee><Employee><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></Employee><Employee><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></Employee><Employee><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></Employee>
+~~END~~
+
+
+-- INNER JOIN with ROOT
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW('Employee'), ELEMENTS, ROOT('Employees');
+GO
+~~START~~
+ntext
+<Employees><Employee><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></Employee><Employee><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></Employee><Employee><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></Employee><Employee><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></Employee><Employee><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></Employee></Employees>
+~~END~~
+
+
+-- LEFT JOIN - includes NULLs
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row><emp_id>5</emp_id><emp_name>Charlie</emp_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row>
+~~END~~
+
+
+-- LEFT JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name, d.location
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name><location>New York</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name><location>Chicago</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name><location>New York</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name><location>Boston</location></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>5</emp_id><emp_name>Charlie</emp_name><dept_name xsi:nil="true"/><location xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name><location>New York</location></row>
+~~END~~
+
+
+-- RIGHT JOIN
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+RIGHT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY d.dept_name, e.emp_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row><dept_name>Marketing</dept_name></row>
+~~END~~
+
+
+-- RIGHT JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+RIGHT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY d.dept_name, e.emp_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id xsi:nil="true"/><emp_name xsi:nil="true"/><dept_name>Marketing</dept_name></row>
+~~END~~
+
+
+-- FULL OUTER JOIN
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+FULL OUTER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row><emp_id>5</emp_id><emp_name>Charlie</emp_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row><dept_name>Marketing</dept_name></row>
+~~END~~
+
+
+-- FULL OUTER JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM forxml_raw_elements_employees e
+FULL OUTER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><dept_name>HR</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><dept_name>Finance</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>5</emp_id><emp_name>Charlie</emp_name><dept_name xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><dept_name>IT</dept_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id xsi:nil="true"/><emp_name xsi:nil="true"/><dept_name>Marketing</dept_name></row>
+~~END~~
+
+
+-- Self JOIN - employee with manager
+SELECT e.emp_id, e.emp_name, m.emp_name AS manager_name
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_employees m ON e.manager_id = m.emp_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_id>1</emp_id><emp_name>John</emp_name></row><row><emp_id>2</emp_id><emp_name>Jane</emp_name><manager_name>John</manager_name></row><row><emp_id>3</emp_id><emp_name>Bob</emp_name><manager_name>John</manager_name></row><row><emp_id>4</emp_id><emp_name>Alice</emp_name><manager_name>Jane</manager_name></row><row><emp_id>5</emp_id><emp_name>Charlie</emp_name><manager_name>Jane</manager_name></row><row><emp_id>6</emp_id><emp_name>Diana</emp_name><manager_name>Bob</manager_name></row>
+~~END~~
+
+
+-- Self JOIN with ELEMENTS XSINIL
+SELECT e.emp_id, e.emp_name, m.emp_name AS manager_name
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_employees m ON e.manager_id = m.emp_id
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>1</emp_id><emp_name>John</emp_name><manager_name xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>2</emp_id><emp_name>Jane</emp_name><manager_name>John</manager_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>3</emp_id><emp_name>Bob</emp_name><manager_name>John</manager_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>4</emp_id><emp_name>Alice</emp_name><manager_name>Jane</manager_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>5</emp_id><emp_name>Charlie</emp_name><manager_name>Jane</manager_name></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_id>6</emp_id><emp_name>Diana</emp_name><manager_name>Bob</manager_name></row>
+~~END~~
+
+
+-- Multiple table JOIN (3 tables)
+SELECT e.emp_name, d.dept_name, p.project_name, ep.role
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
+INNER JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><role>Lead</role></row><row><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><role>Developer</role></row><row><emp_name>Jane</emp_name><dept_name>HR</dept_name><project_name>HR System</project_name><role>Lead</role></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><role>Developer</role></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><role>Tester</role></row><row><emp_name>Alice</emp_name><dept_name>Finance</dept_name><project_name>Budget Analysis</project_name><role>Analyst</role></row>
+~~END~~
+
+
+-- Multiple table JOIN with custom element and ROOT
+SELECT e.emp_name, d.dept_name, p.project_name, ep.role
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
+INNER JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+FOR XML RAW('Assignment'), ELEMENTS, ROOT('Assignments');
+GO
+~~START~~
+ntext
+<Assignments><Assignment><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><role>Lead</role></Assignment><Assignment><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><role>Developer</role></Assignment><Assignment><emp_name>Jane</emp_name><dept_name>HR</dept_name><project_name>HR System</project_name><role>Lead</role></Assignment><Assignment><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><role>Developer</role></Assignment><Assignment><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><role>Tester</role></Assignment><Assignment><emp_name>Alice</emp_name><dept_name>Finance</dept_name><project_name>Budget Analysis</project_name><role>Analyst</role></Assignment></Assignments>
+~~END~~
+
+
+-- Multiple table JOIN with NULLs and ELEMENTS XSINIL
+SELECT e.emp_name, d.dept_name, p.project_name, p.budget
+FROM forxml_raw_elements_employees e
+LEFT JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+LEFT JOIN forxml_raw_elements_emp_projects ep ON e.emp_id = ep.emp_id
+LEFT JOIN forxml_raw_elements_projects p ON ep.project_id = p.project_id
+ORDER BY e.emp_name, p.project_name
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Alice</emp_name><dept_name>Finance</dept_name><project_name>Budget Analysis</project_name><budget xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><budget>75000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Bob</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><budget>50000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Charlie</emp_name><dept_name xsi:nil="true"/><project_name xsi:nil="true"/><budget xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Diana</emp_name><dept_name>IT</dept_name><project_name xsi:nil="true"/><budget xsi:nil="true"/></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>Jane</emp_name><dept_name>HR</dept_name><project_name>HR System</project_name><budget>30000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Mobile App</project_name><budget>75000.00</budget></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><emp_name>John</emp_name><dept_name>IT</dept_name><project_name>Website Redesign</project_name><budget>50000.00</budget></row>
+~~END~~
+
+
+-- JOIN with WHERE clause
+SELECT e.emp_name, d.dept_name, e.salary
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+WHERE e.salary > 50000
+ORDER BY e.emp_name
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>Alice</emp_name><dept_name>Finance</dept_name><salary>70000</salary></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><salary>55000</salary></row><row><emp_name>Jane</emp_name><dept_name>HR</dept_name><salary>60000</salary></row>
+~~END~~
+
+
+-- JOIN with ORDER BY
+SELECT e.emp_name, d.dept_name, e.salary
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY e.salary DESC
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>Alice</emp_name><dept_name>Finance</dept_name><salary>70000</salary></row><row><emp_name>Jane</emp_name><dept_name>HR</dept_name><salary>60000</salary></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><salary>55000</salary></row><row><emp_name>John</emp_name><dept_name>IT</dept_name><salary>50000</salary></row><row><emp_name>Diana</emp_name><dept_name>IT</dept_name></row>
+~~END~~
+
+
+-- JOIN with GROUP BY and aggregation
+SELECT d.dept_name, COUNT(e.emp_id) AS emp_count, SUM(e.salary) AS total_salary
+FROM forxml_raw_elements_departments d
+LEFT JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+GROUP BY d.dept_name
+ORDER BY d.dept_name
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><dept_name>Finance</dept_name><emp_count>1</emp_count><total_salary>70000</total_salary></row><row><dept_name>HR</dept_name><emp_count>1</emp_count><total_salary>60000</total_salary></row><row><dept_name>IT</dept_name><emp_count>3</emp_count><total_salary>105000</total_salary></row><row><dept_name>Marketing</dept_name><emp_count>0</emp_count></row>
+~~END~~
+
+
+-- JOIN with GROUP BY and ELEMENTS XSINIL
+SELECT d.dept_name, COUNT(e.emp_id) AS emp_count, AVG(e.salary) AS avg_salary
+FROM forxml_raw_elements_departments d
+LEFT JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+GROUP BY d.dept_name
+ORDER BY d.dept_name
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dept_name>Finance</dept_name><emp_count>1</emp_count><avg_salary>70000</avg_salary></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dept_name>HR</dept_name><emp_count>1</emp_count><avg_salary>60000</avg_salary></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dept_name>IT</dept_name><emp_count>3</emp_count><avg_salary>52500</avg_salary></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dept_name>Marketing</dept_name><emp_count>0</emp_count><avg_salary xsi:nil="true"/></row>
+~~END~~
+
+
+-- JOIN with TOP
+SELECT TOP 3 e.emp_name, d.dept_name, e.salary
+FROM forxml_raw_elements_employees e
+INNER JOIN forxml_raw_elements_departments d ON e.dept_id = d.dept_id
+ORDER BY e.salary DESC
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>Alice</emp_name><dept_name>Finance</dept_name><salary>70000</salary></row><row><emp_name>Jane</emp_name><dept_name>HR</dept_name><salary>60000</salary></row><row><emp_name>Bob</emp_name><dept_name>IT</dept_name><salary>55000</salary></row>
+~~END~~
+
+
+-- JOIN with DISTINCT
+SELECT DISTINCT d.dept_name, d.location
+FROM forxml_raw_elements_departments d
+INNER JOIN forxml_raw_elements_employees e ON d.dept_id = e.dept_id
+ORDER BY d.dept_name
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><dept_name>Finance</dept_name><location>Boston</location></row><row><dept_name>HR</dept_name><location>Chicago</location></row><row><dept_name>IT</dept_name><location>New York</location></row>
+~~END~~
+
+
+-- Cross JOIN (Cartesian product) - small result
+SELECT TOP 5 e.emp_name, p.project_name
+FROM forxml_raw_elements_employees e
+CROSS JOIN forxml_raw_elements_projects p
+ORDER BY e.emp_name, p.project_name
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>Alice</emp_name><project_name>Budget Analysis</project_name></row><row><emp_name>Alice</emp_name><project_name>HR System</project_name></row><row><emp_name>Alice</emp_name><project_name>Mobile App</project_name></row><row><emp_name>Alice</emp_name><project_name>Website Redesign</project_name></row><row><emp_name>Bob</emp_name><project_name>Budget Analysis</project_name></row>
+~~END~~
+
+
+-- Subquery in JOIN
+SELECT e.emp_name, e.salary, dept_avg.avg_salary
+FROM forxml_raw_elements_employees e
+INNER JOIN (
+    SELECT dept_id, AVG(salary) AS avg_salary
+    FROM forxml_raw_elements_employees
+    WHERE salary IS NOT NULL
+    GROUP BY dept_id
+) dept_avg ON e.dept_id = dept_avg.dept_id
+ORDER BY e.emp_name
+FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><emp_name>Alice</emp_name><salary>70000</salary><avg_salary>70000</avg_salary></row><row><emp_name>Bob</emp_name><salary>55000</salary><avg_salary>52500</avg_salary></row><row><emp_name>Diana</emp_name><avg_salary>52500</avg_salary></row><row><emp_name>Jane</emp_name><salary>60000</salary><avg_salary>60000</avg_salary></row><row><emp_name>John</emp_name><salary>50000</salary><avg_salary>52500</avg_salary></row>
+~~END~~
+
