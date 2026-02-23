@@ -389,7 +389,13 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000d) /* CI */
 	{
 		op->opno = like_entry.ilike_oid;
-		op->opfuncid = like_entry.ilike_opfuncid;
+		op->opfuncid = get_opcode(like_entry.ilike_oid);
+	}
+	/* Change the opno and oprfuncid to LIKE if CS collation */
+	else if (coll_info_of_inputcollid.collateflags == 0x000c || coll_info_of_inputcollid.collateflags == 0x000e) /* CS */
+	{
+		op->opno = like_entry.like_oid;
+		op->opfuncid = get_opcode(like_entry.like_oid);
 	}
 	
 	if (coll_info_of_inputcollid.collateflags == 0x000f || /* CI_AI */
