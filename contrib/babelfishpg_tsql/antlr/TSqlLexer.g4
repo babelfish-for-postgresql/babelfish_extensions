@@ -980,6 +980,7 @@ STDISJOINT:                                      'STDisjoint';
 STDISTANCE:                                      'STDistance';
 STEQUALS:                                        'STEquals';
 STGEOMFROMTEXT:                                  'STGeomFromText';
+STGEOMETRYTYPE:                                  'STGeometryType';
 STINTERSECTS:                                    'STIntersects';
 STISCLOSED:                                      'STIsClosed';
 STISEMPTY:                                       'STIsEmpty';

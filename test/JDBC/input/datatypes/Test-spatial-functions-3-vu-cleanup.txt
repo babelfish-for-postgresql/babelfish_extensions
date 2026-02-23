@@ -1,0 +1,17 @@
+USE TestGeospatialMethods3_DB;
+
+DROP VIEW TestGeospatialMethods3_STGeometryType_GEOM_View_db;
+DROP VIEW TestGeospatialMethods3_STGeometryType_GEOG_View_db;
+
+DROP TABLE TestGeospatialMethods3_STGeometryType_GEOM_db;
+DROP TABLE TestGeospatialMethods3_STGeometryType_GEOG_db;
+
+USE MASTER;
+
+DROP VIEW TestGeospatialMethods3_STGeometryType_GEOM_View_Temp;
+DROP VIEW TestGeospatialMethods3_STGeometryType_GEOG_View_Temp;
+
+DROP TABLE TestGeospatialMethods3_STGeometryType_GEOM_Temp;
+DROP TABLE TestGeospatialMethods3_STGeometryType_GEOG_Temp;
+
+DROP DATABASE TestGeospatialMethods3_DB;
