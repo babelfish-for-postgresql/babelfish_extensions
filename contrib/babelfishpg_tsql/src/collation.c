@@ -1143,12 +1143,6 @@ transform_likenode(Node *node, bool is_constraint)
 				op->inputcollid = DEFAULT_COLLATION_OID;
 			}
 
-			/*
-			 * If this has a like node, then it is CS collation
-			 * So we can return from here directly
-			 */
-			if ((*collation_callbacks_ptr->has_like_node) (node))
-				return node;
 		}
 
 		if (OidIsValid(like_entry.like_oid) && OidIsValid(coll_info_of_inputcollid.oid))
