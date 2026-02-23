@@ -62,8 +62,6 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		xsinil = PG_GETARG_BOOL(7);
 	}
 
-	(void)elements;
-
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 	old_context = MemoryContextSwitchTo(agg_context);
@@ -430,7 +428,11 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 		}
 		else if (xsinil)
 		{
-			/* XSINIL: Output NULL columns with xsi:nil="true" */
+			/*
+     		* XSINIL: Output NULL columns with xsi:nil="true".
+     		* Skip attribute-centric columns (prefixed with '@') as
+     		* xsi:nil is only valid on XML elements, not on attributes.
+     		*/
 			if (NameStr(att->attname)[0] != '@')
 			{
 				allnull = false;
