@@ -52,7 +52,17 @@ BEGIN
 END;
 $$;
 
-ALTER FUNCTION sys.datetime2fromparts(NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC) RENAME TO datetime2fromparts_deprecated_in_5_6_0;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.datetime2fromparts(NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC) RENAME TO datetime2fromparts_deprecated_in_5_6_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_deprecated_in_5_6_0');
 
@@ -150,7 +160,17 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-ALTER FUNCTION sys.datetime2fromparts(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) RENAME TO datetime2fromparts_text_deprecated_in_5_6_0;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.datetime2fromparts(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) RENAME TO datetime2fromparts_text_deprecated_in_5_6_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_text_deprecated_in_5_6_0');
 
