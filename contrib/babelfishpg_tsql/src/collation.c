@@ -389,15 +389,11 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000d) /* CI */
 	{
 		op->opno = like_entry.ilike_oid;
-		op->opfuncid = get_opcode(like_entry.ilike_oid);
+		op->opfuncid = like_entry.ilike_opfuncid;
 	}
-	/* Change the opno and oprfuncid to LIKE if CS collation */
-	else if (coll_info_of_inputcollid.collateflags == 0x000c || coll_info_of_inputcollid.collateflags == 0x000e) /* CS */
-	{
-		op->opno = like_entry.like_oid;
-		op->opfuncid = get_opcode(like_entry.like_oid);
-	}
-	
+
+	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+
 	if (coll_info_of_inputcollid.collateflags == 0x000f || /* CI_AI */
 		coll_info_of_inputcollid.collateflags == 0x000d || /* CI_AS */
 		coll_info_of_inputcollid.collateflags == 0x000e)   /* CS_AI */
@@ -536,7 +532,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	 /* Reconcile types — LIKE coerces to TEXT but we need original column type */
 	prefix->consttype = rtypeId = ltypeId;
 	prefix->constcollid = ((Const *) rightop)->constcollid = InvalidOid;
-	
 	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
 
 	Assert(ltypeId == rtypeId);
@@ -1140,29 +1135,6 @@ transform_likenode(Node *node, bool is_constraint)
 					return node;
 				}
 				op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-				/* Reload coll_info after modifying op->inputcollid */
-				coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
-				
-				/*
-				 * Fix operator if it doesn't match the collation.
-				 * During upgrade/restore, CS collations may have ILIKE from old code.
-				 */
-				if (coll_info_of_inputcollid.collateflags == 0x000c || coll_info_of_inputcollid.collateflags == 0x000e) /* CS */
-				{
-					if (op->opno != like_entry.like_oid)
-					{
-						op->opno = like_entry.like_oid;
-						op->opfuncid = get_opcode(like_entry.like_oid);
-					}
-				}
-				else if (coll_info_of_inputcollid.collateflags == 0x000d || coll_info_of_inputcollid.collateflags == 0x000f) /* CI */
-				{
-					if (op->opno != like_entry.ilike_oid)
-					{
-						op->opno = like_entry.ilike_oid;
-						op->opfuncid = get_opcode(like_entry.ilike_oid);
-					}
-				}
 			}
 			else
 			{
@@ -1170,6 +1142,12 @@ transform_likenode(Node *node, bool is_constraint)
 				op->inputcollid = DEFAULT_COLLATION_OID;
 			}
 
+			/*
+			 * If this has a like node, then it is CS collation
+			 * So we can return from here directly
+			 */
+			if ((*collation_callbacks_ptr->has_like_node) (node))
+				return node;
 		}
 
 		if (OidIsValid(like_entry.like_oid) && OidIsValid(coll_info_of_inputcollid.oid))
