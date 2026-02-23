@@ -1,0 +1,1101 @@
+
+USE TestGeospatialMethods3_DB;
+go
+
+--  View - Geometry
+SELECT * FROM TestGeospatialMethods3_STGeometryType_GEOM_View_db ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+2#!#LineString
+3#!#Polygon
+4#!#Point
+5#!#LineString
+6#!#Polygon
+7#!#Point
+8#!#Point
+~~END~~
+
+
+--  View - Geography
+SELECT * FROM TestGeospatialMethods3_STGeometryType_GEOG_View_db ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+2#!#LineString
+3#!#Polygon
+4#!#Point
+5#!#LineString
+6#!#Polygon
+7#!#Point
+8#!#Point
+~~END~~
+
+
+-- WHERE - Geometry
+SELECT ID, GeomColumn.STGeometryType() AS GeomType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+WHERE GeomColumn.STGeometryType() = 'Point'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+~~END~~
+
+
+--  WHERE - Geography
+SELECT ID, GeogColumn.STGeometryType() AS GeogType
+FROM TestGeospatialMethods3_STGeometryType_GEOG_db
+WHERE GeogColumn.STGeometryType() = 'Point'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+~~END~~
+
+
+--  ORDER BY - Geometry
+SELECT ID, GeomColumn.STGeometryType() AS GeomType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+ORDER BY GeomColumn.STGeometryType() ASC, ID ASC;
+go
+~~START~~
+int#!#nvarchar
+2#!#LineString
+5#!#LineString
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+3#!#Polygon
+6#!#Polygon
+~~END~~
+
+
+--  ORDER BY - Geography
+SELECT ID, GeogColumn.STGeometryType() AS GeogType
+FROM TestGeospatialMethods3_STGeometryType_GEOG_db
+ORDER BY GeogColumn.STGeometryType() DESC;
+go
+~~START~~
+int#!#nvarchar
+3#!#Polygon
+6#!#Polygon
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+5#!#LineString
+2#!#LineString
+~~END~~
+
+
+--  GROUP BY - Geometry
+SELECT GeomColumn.STGeometryType() AS GeomType, COUNT(*) AS TypeCount
+FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+GROUP BY GeomColumn.STGeometryType()
+ORDER BY GeomType;
+go
+~~START~~
+nvarchar#!#int
+LineString#!#2
+Point#!#4
+Polygon#!#2
+~~END~~
+
+
+--  GROUP BY - Geography
+SELECT GeogColumn.STGeometryType() AS GeogType, COUNT(*) AS TypeCount
+FROM TestGeospatialMethods3_STGeometryType_GEOG_db
+GROUP BY GeogColumn.STGeometryType()
+ORDER BY GeogType;
+go
+~~START~~
+nvarchar#!#int
+LineString#!#2
+Point#!#4
+Polygon#!#2
+~~END~~
+
+
+--  HAVING - Geometry
+SELECT GeomColumn.STGeometryType() AS GeomType, COUNT(*) AS TypeCount
+FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+GROUP BY GeomColumn.STGeometryType()
+HAVING COUNT(*) > 1
+ORDER BY GeomType;
+go
+~~START~~
+nvarchar#!#int
+LineString#!#2
+Point#!#4
+Polygon#!#2
+~~END~~
+
+
+--  JOIN on ID
+SELECT g.ID, g.GeomColumn.STGeometryType() AS GeomType,
+       geo.GeogColumn.STGeometryType() AS GeogType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_db g
+JOIN TestGeospatialMethods3_STGeometryType_GEOG_db geo ON g.ID = geo.ID
+ORDER BY g.ID;
+go
+~~START~~
+int#!#nvarchar#!#nvarchar
+1#!#Point#!#Point
+2#!#LineString#!#LineString
+3#!#Polygon#!#Polygon
+4#!#Point#!#Point
+5#!#LineString#!#LineString
+6#!#Polygon#!#Polygon
+7#!#Point#!#Point
+8#!#Point#!#Point
+~~END~~
+
+
+--  JOIN on STGeometryType match
+SELECT g.ID AS GeomID, geo.ID AS GeogID,
+       g.GeomColumn.STGeometryType() AS MatchedType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_db g
+JOIN TestGeospatialMethods3_STGeometryType_GEOG_db geo
+  ON g.GeomColumn.STGeometryType() = geo.GeogColumn.STGeometryType()
+ORDER BY g.ID, geo.ID;
+go
+~~START~~
+int#!#int#!#nvarchar
+1#!#1#!#Point
+1#!#4#!#Point
+1#!#7#!#Point
+1#!#8#!#Point
+2#!#2#!#LineString
+2#!#5#!#LineString
+3#!#3#!#Polygon
+3#!#6#!#Polygon
+4#!#1#!#Point
+4#!#4#!#Point
+4#!#7#!#Point
+4#!#8#!#Point
+5#!#2#!#LineString
+5#!#5#!#LineString
+6#!#3#!#Polygon
+6#!#6#!#Polygon
+7#!#1#!#Point
+7#!#4#!#Point
+7#!#7#!#Point
+7#!#8#!#Point
+8#!#1#!#Point
+8#!#4#!#Point
+8#!#7#!#Point
+8#!#8#!#Point
+~~END~~
+
+
+--  JOIN views
+SELECT gv.ID, gv.GeomType, ggv.GeogType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_View_db gv
+JOIN TestGeospatialMethods3_STGeometryType_GEOG_View_db ggv ON gv.ID = ggv.ID
+ORDER BY gv.ID;
+go
+~~START~~
+int#!#nvarchar#!#nvarchar
+1#!#Point#!#Point
+2#!#LineString#!#LineString
+3#!#Polygon#!#Polygon
+4#!#Point#!#Point
+5#!#LineString#!#LineString
+6#!#Polygon#!#Polygon
+7#!#Point#!#Point
+8#!#Point#!#Point
+~~END~~
+
+
+--  CTE - Geometry
+WITH GeomCTE AS (
+    SELECT ID, GeomColumn.STGeometryType() AS GeomType
+    FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+)
+SELECT * FROM GeomCTE WHERE GeomType = 'Point' ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+~~END~~
+
+
+--  CTE - Geography
+WITH GeogCTE AS (
+    SELECT ID, GeogColumn.STGeometryType() AS GeogType
+    FROM TestGeospatialMethods3_STGeometryType_GEOG_db
+)
+SELECT * FROM GeogCTE WHERE GeogType = 'Polygon' ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+3#!#Polygon
+6#!#Polygon
+~~END~~
+
+
+--  CTE Combined
+WITH GeomCTE AS (
+    SELECT ID, GeomColumn.STGeometryType() AS GeomType
+    FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+),
+GeogCTE AS (
+    SELECT ID, GeogColumn.STGeometryType() AS GeogType
+    FROM TestGeospatialMethods3_STGeometryType_GEOG_db
+)
+SELECT g.ID, g.GeomType, gg.GeogType
+FROM GeomCTE g
+JOIN GeogCTE gg ON g.ID = gg.ID
+ORDER BY g.ID;
+go
+~~START~~
+int#!#nvarchar#!#nvarchar
+1#!#Point#!#Point
+2#!#LineString#!#LineString
+3#!#Polygon#!#Polygon
+4#!#Point#!#Point
+5#!#LineString#!#LineString
+6#!#Polygon#!#Polygon
+7#!#Point#!#Point
+8#!#Point#!#Point
+~~END~~
+
+
+--  Window ROW_NUMBER - Geometry
+SELECT ID, GeomColumn.STGeometryType() AS GeomType,
+       ROW_NUMBER() OVER (ORDER BY GeomColumn.STGeometryType()) AS RowNum
+FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+ORDER BY RowNum;
+go
+~~START~~
+int#!#nvarchar#!#bigint
+5#!#LineString#!#1
+2#!#LineString#!#2
+8#!#Point#!#3
+4#!#Point#!#4
+7#!#Point#!#5
+1#!#Point#!#6
+3#!#Polygon#!#7
+6#!#Polygon#!#8
+~~END~~
+
+
+--  Window COUNT PARTITION - Geometry
+SELECT ID, GeomColumn.STGeometryType() AS GeomType,
+       COUNT(*) OVER (PARTITION BY GeomColumn.STGeometryType()) AS TypeCount
+FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar#!#int
+1#!#Point#!#4
+2#!#LineString#!#2
+3#!#Polygon#!#2
+4#!#Point#!#4
+5#!#LineString#!#2
+6#!#Polygon#!#2
+7#!#Point#!#4
+8#!#Point#!#4
+~~END~~
+
+
+--  Window LAG/LEAD - Geography
+SELECT ID, GeogColumn.STGeometryType() AS GeogType,
+       LAG(GeogColumn.STGeometryType()) OVER (ORDER BY ID) AS PrevType,
+       LEAD(GeogColumn.STGeometryType()) OVER (ORDER BY ID) AS NextType
+FROM TestGeospatialMethods3_STGeometryType_GEOG_db
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar#!#nvarchar#!#nvarchar
+1#!#Point#!#<NULL>#!#LineString
+2#!#LineString#!#Point#!#Polygon
+3#!#Polygon#!#LineString#!#Point
+4#!#Point#!#Polygon#!#LineString
+5#!#LineString#!#Point#!#Polygon
+6#!#Polygon#!#LineString#!#Point
+7#!#Point#!#Polygon#!#Point
+8#!#Point#!#Point#!#<NULL>
+~~END~~
+
+
+--  Subquery - Geometry
+SELECT * FROM (
+    SELECT ID, GeomColumn.STGeometryType() AS GeomType
+    FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+) AS Sub
+WHERE GeomType = 'Polygon'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+3#!#Polygon
+6#!#Polygon
+~~END~~
+
+
+-- 20. CASE - Geometry
+SELECT ID,
+    CASE GeomColumn.STGeometryType()
+        WHEN 'Point' THEN 'Zero Dimensional'
+        WHEN 'LineString' THEN 'One Dimensional'
+        WHEN 'Polygon' THEN 'Two Dimensional'
+        ELSE 'Unknown'
+    END AS DimensionType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+ORDER BY ID;
+go
+~~START~~
+int#!#varchar
+1#!#Zero Dimensional
+2#!#One Dimensional
+3#!#Two Dimensional
+4#!#Zero Dimensional
+5#!#One Dimensional
+6#!#Two Dimensional
+7#!#Zero Dimensional
+8#!#Zero Dimensional
+~~END~~
+
+
+--  CTE + Window Combined - Geometry
+WITH RankedGeom AS (
+    SELECT ID, GeomColumn.STGeometryType() AS GeomType,
+           ROW_NUMBER() OVER (ORDER BY GeomColumn.STGeometryType(), ID) AS RowNum,
+           COUNT(*) OVER (PARTITION BY GeomColumn.STGeometryType()) AS TypeCount
+    FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+)
+SELECT * FROM RankedGeom ORDER BY RowNum;
+go
+~~START~~
+int#!#nvarchar#!#bigint#!#int
+2#!#LineString#!#1#!#2
+5#!#LineString#!#2#!#2
+1#!#Point#!#3#!#4
+4#!#Point#!#4#!#4
+7#!#Point#!#5#!#4
+8#!#Point#!#6#!#4
+3#!#Polygon#!#7#!#2
+6#!#Polygon#!#8#!#2
+~~END~~
+
+
+--  WHERE + GROUP BY + ORDER BY Combined
+SELECT GeomColumn.STGeometryType() AS GeomType, COUNT(*) AS TypeCount
+FROM TestGeospatialMethods3_STGeometryType_GEOM_db
+WHERE GeomColumn.STGeometryType() != 'Point'
+GROUP BY GeomColumn.STGeometryType()
+ORDER BY TypeCount DESC, GeomType ASC;
+go
+~~START~~
+nvarchar#!#int
+LineString#!#2
+Polygon#!#2
+~~END~~
+
+
+-- View WHERE
+SELECT * FROM TestGeospatialMethods3_STGeometryType_GEOM_View_db
+WHERE GeomType = 'Point'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+~~END~~
+
+
+SELECT * FROM TestGeospatialMethods3_STGeometryType_GEOG_View_db
+WHERE GeogType = 'Polygon'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+3#!#Polygon
+6#!#Polygon
+~~END~~
+
+
+-- View ORDER BY
+SELECT * FROM TestGeospatialMethods3_STGeometryType_GEOM_View_db
+ORDER BY GeomType ASC, ID ASC;
+go
+~~START~~
+int#!#nvarchar
+2#!#LineString
+5#!#LineString
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+3#!#Polygon
+6#!#Polygon
+~~END~~
+
+
+-- View GROUP BY
+SELECT GeomType, COUNT(*) AS TypeCount
+FROM TestGeospatialMethods3_STGeometryType_GEOM_View_db
+GROUP BY GeomType
+ORDER BY GeomType;
+go
+~~START~~
+nvarchar#!#int
+LineString#!#2
+Point#!#4
+Polygon#!#2
+~~END~~
+
+
+SELECT GeogType, COUNT(*) AS TypeCount
+FROM TestGeospatialMethods3_STGeometryType_GEOG_View_db
+GROUP BY GeogType
+ORDER BY GeogType;
+go
+~~START~~
+nvarchar#!#int
+LineString#!#2
+Point#!#4
+Polygon#!#2
+~~END~~
+
+
+-- View Subquery
+SELECT * FROM (
+    SELECT ID, GeomType FROM TestGeospatialMethods3_STGeometryType_GEOM_View_db
+) AS Sub
+WHERE GeomType = 'Polygon'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+3#!#Polygon
+6#!#Polygon
+~~END~~
+
+
+
+
+-- MASTER DATABASE TESTS
+USE MASTER;
+go
+
+-- Inline Geometry Tests
+SELECT geometry::STGeomFromText('POINT(1 2)', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+SELECT geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+LineString
+~~END~~
+
+
+SELECT geometry::STGeomFromText('POLYGON((0 0, 4 0, 4 4, 0 4, 0 0))', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Polygon
+~~END~~
+
+
+SELECT geometry::STPointFromText('POINT EMPTY', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+SELECT geometry::Point(3.0, 4.0, 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+-- Inline Geography Tests
+SELECT geography::STGeomFromText('POINT(-122.34 47.65)', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+SELECT geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66, -122.32 47.65)', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+LineString
+~~END~~
+
+
+SELECT geography::STGeomFromText('POLYGON((-122.35 47.64, -122.33 47.64, -122.33 47.66, -122.35 47.66, -122.35 47.64))', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Polygon
+~~END~~
+
+
+SELECT geography::STPointFromText('POINT EMPTY', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+SELECT geography::Point(47.65, -122.34, 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+-- Table SELECT / WHERE / GROUP BY - Geometry
+SELECT ID, GeomColumn.STGeometryType() AS GeometryType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+2#!#LineString
+3#!#Polygon
+4#!#Point
+5#!#LineString
+6#!#Polygon
+7#!#Point
+8#!#Point
+~~END~~
+
+
+SELECT ID, GeomColumn.STGeometryType() AS GeometryType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
+WHERE GeomColumn.STGeometryType() = 'Point'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+~~END~~
+
+
+SELECT GeomColumn.STGeometryType() AS GeometryType, COUNT(*) AS TypeCount
+FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
+GROUP BY GeomColumn.STGeometryType()
+ORDER BY GeometryType;
+go
+~~START~~
+nvarchar#!#int
+LineString#!#2
+Point#!#4
+Polygon#!#2
+~~END~~
+
+
+-- Table SELECT / WHERE / GROUP BY - Geography
+SELECT ID, GeogColumn.STGeometryType() AS GeographyType
+FROM TestGeospatialMethods3_STGeometryType_GEOG_Temp
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+2#!#LineString
+3#!#Polygon
+4#!#Point
+5#!#LineString
+6#!#Polygon
+7#!#Point
+8#!#Point
+~~END~~
+
+
+SELECT ID, GeogColumn.STGeometryType() AS GeographyType
+FROM TestGeospatialMethods3_STGeometryType_GEOG_Temp
+WHERE GeogColumn.STGeometryType() = 'Point'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+~~END~~
+
+
+SELECT GeogColumn.STGeometryType() AS GeographyType, COUNT(*) AS TypeCount
+FROM TestGeospatialMethods3_STGeometryType_GEOG_Temp
+GROUP BY GeogColumn.STGeometryType()
+ORDER BY GeographyType;
+go
+~~START~~
+nvarchar#!#int
+LineString#!#2
+Point#!#4
+Polygon#!#2
+~~END~~
+
+
+-- View Tests
+SELECT * FROM TestGeospatialMethods3_STGeometryType_GEOM_View_Temp ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+2#!#LineString
+3#!#Polygon
+4#!#Point
+5#!#LineString
+6#!#Polygon
+7#!#Point
+8#!#Point
+~~END~~
+
+
+SELECT * FROM TestGeospatialMethods3_STGeometryType_GEOG_View_Temp ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+2#!#LineString
+3#!#Polygon
+4#!#Point
+5#!#LineString
+6#!#Polygon
+7#!#Point
+8#!#Point
+~~END~~
+
+
+-- Variable Tests
+DECLARE @geom geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))', 4326);
+SELECT @geom.STGeometryType();
+go
+~~START~~
+nvarchar
+Polygon
+~~END~~
+
+
+DECLARE @geog geography = geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66)', 4326);
+SELECT @geog.STGeometryType();
+go
+~~START~~
+nvarchar
+LineString
+~~END~~
+
+
+-- Combined with STDimension
+SELECT GeomColumn.STGeometryType() AS GeomType, GeomColumn.STDimension() AS Dimension
+FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
+ORDER BY ID;
+go
+~~START~~
+nvarchar#!#int
+Point#!#0
+LineString#!#1
+Polygon#!#2
+Point#!#0
+LineString#!#1
+Polygon#!#2
+Point#!#0
+Point#!#-1
+~~END~~
+
+
+SELECT GeogColumn.STGeometryType() AS GeogType, GeogColumn.STDimension() AS Dimension
+FROM TestGeospatialMethods3_STGeometryType_GEOG_Temp
+ORDER BY ID;
+go
+~~START~~
+nvarchar#!#int
+Point#!#0
+LineString#!#1
+Polygon#!#2
+Point#!#0
+LineString#!#1
+Polygon#!#2
+Point#!#0
+Point#!#-1
+~~END~~
+
+
+-- Combined with STIsEmpty
+SELECT GeomColumn.STGeometryType() AS GeomType, GeomColumn.STIsEmpty() AS IsEmpty
+FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
+ORDER BY ID;
+go
+~~START~~
+nvarchar#!#bit
+Point#!#0
+LineString#!#0
+Polygon#!#0
+Point#!#0
+LineString#!#0
+Polygon#!#0
+Point#!#0
+Point#!#1
+~~END~~
+
+
+SELECT GeogColumn.STGeometryType() AS GeogType, GeogColumn.STIsEmpty() AS IsEmpty
+FROM TestGeospatialMethods3_STGeometryType_GEOG_Temp
+ORDER BY ID;
+go
+~~START~~
+nvarchar#!#bit
+Point#!#0
+LineString#!#0
+Polygon#!#0
+Point#!#0
+LineString#!#0
+Polygon#!#0
+Point#!#0
+Point#!#1
+~~END~~
+
+
+-- Different SRIDs
+SELECT geometry::STGeomFromText('POINT(1 2)', 0).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+SELECT geography::STGeomFromText('POINT(-122.34 47.65)', 4269).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+-- NULL Tests
+DECLARE @nullGeom geometry = NULL;
+SELECT @nullGeom.STGeometryType();
+go
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+DECLARE @nullGeog geography = NULL;
+SELECT @nullGeog.STGeometryType();
+go
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+-- ORDER BY on function result
+SELECT ID, GeomColumn.STGeometryType() AS GeometryType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
+ORDER BY GeomColumn.STGeometryType(), ID;
+go
+~~START~~
+int#!#nvarchar
+2#!#LineString
+5#!#LineString
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+3#!#Polygon
+6#!#Polygon
+~~END~~
+
+
+-- CASE Statement
+SELECT ID,
+    CASE GeomColumn.STGeometryType()
+        WHEN 'Point' THEN 'Zero Dimensional'
+        WHEN 'LineString' THEN 'One Dimensional'
+        WHEN 'Polygon' THEN 'Two Dimensional'
+        ELSE 'Unknown'
+    END AS DimensionType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
+ORDER BY ID;
+go
+~~START~~
+int#!#varchar
+1#!#Zero Dimensional
+2#!#One Dimensional
+3#!#Two Dimensional
+4#!#Zero Dimensional
+5#!#One Dimensional
+6#!#Two Dimensional
+7#!#Zero Dimensional
+8#!#Zero Dimensional
+~~END~~
+
+
+-- Subquery
+SELECT * FROM (
+    SELECT ID, GeomColumn.STGeometryType() AS GeomType
+    FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
+) AS SubQuery
+WHERE GeomType = 'Point'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+~~END~~
+
+
+-- JOIN Geometry to Geography
+SELECT g.ID AS GeomID, geo.ID AS GeogID,
+       g.GeomColumn.STGeometryType() AS GeomType,
+       geo.GeogColumn.STGeometryType() AS GeogType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp g
+JOIN TestGeospatialMethods3_STGeometryType_GEOG_Temp geo ON g.ID = geo.ID
+ORDER BY g.ID;
+go
+~~START~~
+int#!#int#!#nvarchar#!#nvarchar
+1#!#1#!#Point#!#Point
+2#!#2#!#LineString#!#LineString
+3#!#3#!#Polygon#!#Polygon
+4#!#4#!#Point#!#Point
+5#!#5#!#LineString#!#LineString
+6#!#6#!#Polygon#!#Polygon
+7#!#7#!#Point#!#Point
+8#!#8#!#Point#!#Point
+~~END~~
+
+
+-- Edge Cases: Z, ZM, extreme coordinates
+SELECT geometry::STGeomFromText('LINESTRING ZM(0 0 0 0, 1 1 1 1, 2 2 2 2)', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+LineString
+~~END~~
+
+
+SELECT geography::STGeomFromText('POLYGON((-122.35 47.64 0, -122.33 47.64 0, -122.33 47.66 0, -122.35 47.66 0, -122.35 47.64 0))', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Polygon
+~~END~~
+
+
+SELECT geography::STGeomFromText('POINT ZM(-122.34 47.65 100 200)', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+SELECT geometry::STGeomFromText('POINT(0.0000001 0.0000001)', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+SELECT geometry::STGeomFromText('POINT(999999999 999999999)', 0).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+SELECT geometry::STGeomFromText('POINT(-100 -200)', 4326).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+
+
+
+
+-- First 3 chars should NOT be 'ST_'
+DECLARE @pt geometry = geometry::STGeomFromText('POINT(1 2)', 4326);
+DECLARE @ln geometry = geometry::STGeomFromText('LINESTRING(0 0, 1 1)', 4326);
+DECLARE @pg geometry = geometry::STGeomFromText('POLYGON((0 0, 4 0, 4 4, 0 4, 0 0))', 4326);
+SELECT 'Point' AS Type,
+       @pt.STGeometryType() AS ReturnedValue,
+       CASE WHEN LEFT(@pt.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END AS PrefixCheck
+UNION ALL
+SELECT 'LineString',
+       @ln.STGeometryType(),
+       CASE WHEN LEFT(@ln.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END
+UNION ALL
+SELECT 'Polygon',
+       @pg.STGeometryType(),
+       CASE WHEN LEFT(@pg.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END
+ORDER BY Type;
+go
+~~START~~
+varchar#!#nvarchar#!#varchar
+LineString#!#LineString#!#PASS
+Point#!#Point#!#PASS
+Polygon#!#Polygon#!#PASS
+~~END~~
+
+
+
+-- Geography: Verify no ST_ prefix on all types
+DECLARE @gpt geography = geography::STGeomFromText('POINT(-122.34 47.65)', 4326);
+DECLARE @gln geography = geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66)', 4326);
+DECLARE @gpg geography = geography::STGeomFromText('POLYGON((-122.35 47.64, -122.33 47.64, -122.33 47.66, -122.35 47.66, -122.35 47.64))', 4326);
+SELECT 'Point' AS Type,
+       @gpt.STGeometryType() AS ReturnedValue,
+       CASE WHEN LEFT(@gpt.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END AS PrefixCheck
+UNION ALL
+SELECT 'LineString',
+       @gln.STGeometryType(),
+       CASE WHEN LEFT(@gln.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END
+UNION ALL
+SELECT 'Polygon',
+       @gpg.STGeometryType(),
+       CASE WHEN LEFT(@gpg.STGeometryType(), 3) = 'ST_' THEN 'FAIL' ELSE 'PASS' END
+ORDER BY Type;
+go
+~~START~~
+varchar#!#nvarchar#!#varchar
+LineString#!#LineString#!#PASS
+Point#!#Point#!#PASS
+Polygon#!#Polygon#!#PASS
+~~END~~
+
+
+
+-- Verify no row in table has ST_ prefix in result
+SELECT ID, GeomColumn.STGeometryType() AS GeomType
+FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp
+WHERE GeomColumn.STGeometryType() LIKE 'ST[_]%'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+~~END~~
+
+
+
+SELECT ID, GeogColumn.STGeometryType() AS GeogType
+FROM TestGeospatialMethods3_STGeometryType_GEOG_Temp
+WHERE GeogColumn.STGeometryType() LIKE 'ST[_]%'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+~~END~~
+
+
+
+-- NEGATIVE CHECK: Verify ST_ prefix is NOT returned
+SELECT 'BUG: ST_ prefix not stripped' AS Result
+WHERE geometry::STGeomFromText('POINT(1 2)', 4326).STGeometryType() LIKE 'ST[_]%';
+go
+~~START~~
+varchar
+~~END~~
+
+
+SELECT 'BUG: ST_ prefix not stripped' AS Result
+WHERE geography::STGeomFromText('POINT(-122.34 47.65)', 4326).STGeometryType() LIKE 'ST[_]%';
+go
+~~START~~
+varchar
+~~END~~
+
+
+
+-- View WHERE
+SELECT * FROM TestGeospatialMethods3_STGeometryType_GEOM_View_Temp
+WHERE GeomType = 'Point'
+ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#Point
+4#!#Point
+7#!#Point
+8#!#Point
+~~END~~
+
+
+-- View GROUP BY
+SELECT GeomType, COUNT(*) AS TypeCount
+FROM TestGeospatialMethods3_STGeometryType_GEOM_View_Temp
+GROUP BY GeomType
+ORDER BY GeomType;
+go
+~~START~~
+nvarchar#!#int
+LineString#!#2
+Point#!#4
+Polygon#!#2
+~~END~~
+
+
+-- UNION ALL geometry + geography
+DECLARE @geom geometry = geometry::STGeomFromText('LINESTRING(0 0, 10 10)', 4326);
+DECLARE @geog geography = geography::STGeomFromText('POINT(-122.34 47.65)', 4326);
+SELECT 'Geometry' AS Source, @geom.STGeometryType() AS Type
+UNION ALL
+SELECT 'Geography', @geog.STGeometryType();
+ORDER BY Source;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'ORDER' at line 7 and character position 0)~~
+
+
+-- SRID 999999
+SELECT geometry::STGeomFromText('POINT(1 2)', 999999).STGeometryType();
+go
+~~START~~
+nvarchar
+Point
+~~END~~
+

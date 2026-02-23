@@ -3942,6 +3942,7 @@ geospatial_func_no_arg
     | STASBINARY
     | STAREA
     | STDIMENSION
+    | STGEOMETRYTYPE   
     | STISCLOSED
     | STISEMPTY
     | STISVALID
@@ -5080,6 +5081,7 @@ keyword
     | STDISJOINT 
     | STDISTANCE
     | STEQUALS
+    | STGEOMETRYTYPE 
     | STGEOMFROMTEXT
     | STINTERSECTS
     | STISCLOSED

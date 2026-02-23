@@ -49,8 +49,8 @@ if [[ "$SNAPSHOT_ACTIVE_COUNT" -ne 44 ]]; then
     ERROR_FOUND=true
 fi
 
-if [[ "$LEAK_COUNT" -ne 370 ]]; then
-    echo "Error: Expected 370 leak warnings, but found $LEAK_COUNT"
+if [[ "$LEAK_COUNT" -ne 416 ]]; then
+    echo "Error: Expected 416 leak warnings, but found $LEAK_COUNT"
     ERROR_FOUND=true
 fi
 

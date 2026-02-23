@@ -25,7 +25,10 @@ typedef enum
 typedef enum
 {
 	TSQL_XML_DIRECTIVE_BINARY_BASE64,
-	TSQL_XML_DIRECTIVE_TYPE
+	TSQL_XML_DIRECTIVE_TYPE,
+	TSQL_XML_DIRECTIVE_ELEMENTS,
+    TSQL_XML_DIRECTIVE_ELEMENTS_XSINIL,
+    TSQL_XML_DIRECTIVE_ELEMENTS_ABSENT
 }			TSQLXMLDirective;
 
 /* Enum declarations to support FOR JSON clause */
@@ -40,6 +43,10 @@ typedef enum
 	TSQL_JSON_DIRECTIVE_INCLUDE_NULL_VALUES,
 	TSQL_JSON_DIRECTIVE_WITHOUT_ARRAY_WRAPPER
 }			TSQLJSONDirective;
+
+/* XML namespace constants */
+#define XML_XMLNS_XSI "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+#define XML_XSI_NIL "xsi:nil=\"true\""
 
 extern void tsql_for_datetime_format(StringInfo format_output, const char *outputstr);
 extern void tsql_for_datetimeoffset_format(StringInfo format_output, const char *outputstr);
