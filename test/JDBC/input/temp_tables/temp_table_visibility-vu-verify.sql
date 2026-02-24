@@ -357,11 +357,7 @@ GO
 EXEC p_def_cons;
 GO
 
--- Test SP_EXECUTESQL index creation/drop on temp tables
-EXEC p_sp_executesql_index;
-GO
-
--- Test 4: Trying to create a default with UDF which should throw an error
+-- Trying to create a default with UDF which should throw an error
 CREATE TABLE #temp_table_with_computed_udf (
 	id INT PRIMARY KEY,
 	credit BIGINT,
@@ -378,4 +374,79 @@ GO
 CREATE TABLE #temp_table_with_default_udf (
 	num INT CHECK(custom_adder(num,10) > 100)
 )
+GO
+
+-- SP_EXECUTESQL index creation/drop on temp tables
+EXEC p_sp_executesql_index;
+GO
+
+-- SP_EXECUTESQL ALTER TABLE ADD column that creates toast table
+EXEC p_sp_executesql_toast;
+GO
+
+-- Inline index creation via SP_EXECUTESQL
+CREATE TABLE #temp_index1 (a INT, b VARCHAR(50));
+GO
+INSERT INTO #temp_index1 VALUES (1, 'one'), (2, 'two'), (3, 'three');
+GO
+
+DECLARE @sql1 NVARCHAR(MAX) = 'CREATE INDEX index1 ON #temp_index1(a)';
+EXEC SP_EXECUTESQL @sql1;
+GO
+
+SELECT * FROM #temp_index1 WHERE a = 2;
+GO
+
+DROP INDEX index1 ON #temp_index1;
+GO
+
+SELECT * FROM #temp_index1 ORDER BY a;
+GO
+
+DROP TABLE #temp_index1;
+GO
+
+-- Inline ALTER TABLE ADD column (text type triggers toast) via SP_EXECUTESQL
+CREATE TABLE #temp_heap1 (a INT);
+GO
+INSERT INTO #temp_heap1 VALUES (1);
+GO
+
+DECLARE @sql2 NVARCHAR(MAX) = 'ALTER TABLE #temp_heap1 ADD col1 TEXT';
+EXEC SP_EXECUTESQL @sql2;
+GO
+
+UPDATE #temp_heap1 SET col1 = REPLICATE('x', 5000) WHERE a = 1;
+GO
+
+SELECT a, LEN(col1) as col1_len FROM #temp_heap1;
+GO
+
+DROP TABLE #temp_heap1;
+GO
+
+-- Index on column added via SP_EXECUTESQL
+CREATE TABLE #temp_index2 (a INT);
+GO
+INSERT INTO #temp_index2 VALUES (1), (2), (3);
+GO
+
+DECLARE @sql4 NVARCHAR(MAX) = 'ALTER TABLE #temp_index2 ADD b INT DEFAULT 0';
+EXEC SP_EXECUTESQL @sql4;
+GO
+
+UPDATE #temp_index2 SET b = a * 10;
+GO
+
+DECLARE @sql5 NVARCHAR(MAX) = 'CREATE INDEX index2 ON #temp_index2(b)';
+EXEC SP_EXECUTESQL @sql5;
+GO
+
+SELECT * FROM #temp_index2 WHERE b > 10 ORDER BY b;
+GO
+
+DROP INDEX index2 ON #temp_index2;
+GO
+
+DROP TABLE #temp_index2;
 GO

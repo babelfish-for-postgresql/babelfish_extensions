@@ -48,3 +48,6 @@ GO
 
 drop procedure p_sp_executesql_index;
 GO
+
+drop procedure p_sp_executesql_toast;
+GO
