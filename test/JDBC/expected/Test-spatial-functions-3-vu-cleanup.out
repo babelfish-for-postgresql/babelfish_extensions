@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 USE TestGeospatialParse_DB 
 
 DROP TABLE TestGeospatialParse_GeometryTable3 
@@ -16,7 +15,7 @@ DROP TABLE TestGeospatialParse_GeomTemp3
 DROP TABLE TestGeospatialParse_GeogTemp3 
 
 DROP DATABASE TestGeospatialParse_DB 
-=======
+
 USE TestGeospatialMethods3_DB;
 
 DROP VIEW TestGeospatialMethods3_STGeometryType_GEOM_View_db;
@@ -34,4 +33,4 @@ DROP TABLE TestGeospatialMethods3_STGeometryType_GEOM_Temp;
 DROP TABLE TestGeospatialMethods3_STGeometryType_GEOG_Temp;
 
 DROP DATABASE TestGeospatialMethods3_DB;
->>>>>>> upstream/BABEL_5_X_DEV
+

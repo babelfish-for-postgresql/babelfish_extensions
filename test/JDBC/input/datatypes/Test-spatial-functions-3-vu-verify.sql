@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 --Parse functions test 
 
 -- geometry::Parse with POINT
@@ -269,12 +268,14 @@ SELECT GeomColumn.STGeometryType() AS GeomType,
 FROM TestGeospatialParse_GeomTemp3
 GROUP BY GeomColumn.STGeometryType()
 ORDER BY GeomType;
+go
 
 -- Window function with Parse
 SELECT ID, 
        geometry::Parse('POINT(0 0)').STDistance(GeomColumn) AS Distance,
        ROW_NUMBER() OVER (ORDER BY geometry::Parse('POINT(0 0)').STDistance(GeomColumn)) AS RowNum
 FROM TestGeospatialParse_GeomTemp3;
+go
 
 -- CAST result to VARCHAR
 SELECT CAST(geometry::Parse('POINT(1 2)').STAsText() AS VARCHAR(100)) AS Result;
@@ -425,7 +426,8 @@ go
 
 SELECT geography::Parse('POINT(-122.349 47.651)');
 go
-=======
+
+--STGeometryType()
 
 USE TestGeospatialMethods3_DB;
 go
@@ -912,4 +914,3 @@ go
 -- SRID 999999
 SELECT geometry::STGeomFromText('POINT(1 2)', 999999).STGeometryType();
 go
->>>>>>> upstream/BABEL_5_X_DEV

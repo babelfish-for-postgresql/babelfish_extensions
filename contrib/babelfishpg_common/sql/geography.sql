@@ -433,7 +433,6 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-<<<<<<< HEAD
 --Parse
 CREATE OR REPLACE FUNCTION sys.Geography__Parse(geography_tagged_text sys.NVARCHAR)
     RETURNS sys.GEOGRAPHY
@@ -446,7 +445,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__Parse(geography_tagged_text sys.NVARCH
         RETURN sys.geogfromtext_helper(geography_tagged_text, 4326);
     END;
     $$ LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
-=======
+
 --STGeomType 
 CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
 	RETURNS sys.NVARCHAR(4000)
@@ -465,7 +464,6 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
 	    RAISE EXCEPTION 'Unexpected geometry type format: %. Expected ST_* prefix.', geom_type;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
->>>>>>> upstream/BABEL_5_X_DEV
 
 -- STDisjoint
 -- Checks if two geometries have no points in common
