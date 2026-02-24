@@ -30,7 +30,7 @@
 #include "session.h"
 #include "parser/scansup.h"
 #include "parser/parse_oper.h"
-#include "src/include/lib/qunique.h"
+#include "lib/qunique.h"
 #include "utils/varlena.h"
 
 /* helper function to get current T-SQL estate */
@@ -639,13 +639,10 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 	}
 	PG_CATCH();
 	{
-/* 		ErrorData  *edata; */
-
 		estate->err_text = gettext_noop("during exception cleanup");
 
 		/* Save error info in our stmt_mcontext */
 		MemoryContextSwitchTo(stmt_mcontext);
-/* 		edata = CopyErrorData(); */
 		FlushErrorState();
 
 		/* Abort the inner transaction */

@@ -1412,6 +1412,21 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
 	int			ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
 
+	/*
+	 * Skip AFTER triggers for INSERT EXEC rewritten queries when requested.
+	 * This prevents AfterTriggerBeginQuery/AfterTriggerEndQuery calls which
+	 * can cause crashes when errors occur during INSERT EXEC and are caught
+	 * by TRY-CATCH blocks. The crash happens because:
+	 * 1. ExecutorStart calls AfterTriggerBeginQuery (increments query_depth)
+	 * 2. Error during ExecutorRun skips ExecutorFinish (no AfterTriggerEndQuery)
+	 * 3. Error handling tries to clean up, causing query_depth mismatch
+	 * By skipping triggers, we avoid this state tracking entirely.
+	 */
+	if (pltsql_insert_exec_skip_triggers())
+	{
+		ef |= EXEC_FLAG_SKIP_TRIGGERS;
+	}
+
 	if (pltsql_explain_analyze)
 	{
 		PLtsql_execstate *estate = get_current_tsql_estate();

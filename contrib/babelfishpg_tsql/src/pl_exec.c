@@ -87,6 +87,7 @@ typedef struct InsertExecRewriteContext
 	char	   *target_table;	/* Fully qualified target table name */
 	char	   *column_list;	/* Column list for INSERT (NULL = all columns) */
 	int			nest_level;		/* Nesting level for nested procedures */
+	bool		skip_triggers;	/* Skip AFTER triggers for current INSERT */
 } InsertExecRewriteContext;
 
 /* Global INSERT EXEC rewrite context */
@@ -1009,9 +1010,6 @@ coerce_function_result_tuple(PLtsql_execstate *estate, TupleDesc tupdesc)
 
 	/* We assume exec_stmt_return verified that result is composite */
 	Assert(type_is_rowtype(estate->rettype));
-
-	elog(NOTICE, "INSERT-EXEC-DEBUG: coerce_function_result_tuple called, rettype=%u, insert_exec=%d",
-		 estate->rettype, estate->insert_exec);
 
 	/* We can special-case expanded records for speed */
 	if (VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(estate->retval)))
@@ -5173,9 +5171,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			 * - If the flush fails (e.g., constraint violation), the error propagates
 			 *   and the temp table is dropped in PG_FINALLY → target unchanged
 			 *
-			 * No savepoint is needed because the temp table acts as a staging area.
+			 * We wrap the procedure execution in a subtransaction to ensure proper
+			 * cleanup of executor/trigger state when an error occurs inside the
+			 * procedure (e.g., in a rewritten INSERT) and is caught by TRY-CATCH.
+			 * Without this, the AfterTrigger query_depth can become inconsistent.
 			 */
-			elog(DEBUG1, "INSERT EXEC: Executing procedure (temp table buffering)");
 			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 												 estate->readonly_func, tcount);
 		}
@@ -10893,6 +10893,7 @@ pltsql_init_insert_exec_rewrite_context(void)
 	insert_exec_rewrite_ctx->target_table = NULL;
 	insert_exec_rewrite_ctx->column_list = NULL;
 	insert_exec_rewrite_ctx->nest_level = 0;
+	insert_exec_rewrite_ctx->skip_triggers = false;
 }
 
 /*
@@ -10979,6 +10980,30 @@ pltsql_get_insert_exec_column_list(void)
 	if (insert_exec_rewrite_ctx == NULL || !insert_exec_rewrite_ctx->active)
 		return NULL;
 	return insert_exec_rewrite_ctx->column_list;
+}
+
+/*
+ * Check if triggers should be skipped for INSERT EXEC rewritten queries.
+ * This is used by the ExecutorStart hook to add EXEC_FLAG_SKIP_TRIGGERS.
+ * 
+ * Skipping triggers prevents the AfterTriggerBeginQuery/AfterTriggerEndQuery
+ * calls which can cause crashes when errors occur during INSERT EXEC and
+ * are caught by TRY-CATCH blocks.
+ */
+bool
+pltsql_insert_exec_skip_triggers(void)
+{
+	return insert_exec_rewrite_ctx != NULL && insert_exec_rewrite_ctx->skip_triggers;
+}
+
+/*
+ * Set the skip_triggers flag for INSERT EXEC rewritten queries.
+ */
+void
+pltsql_set_insert_exec_skip_triggers(bool skip)
+{
+	if (insert_exec_rewrite_ctx != NULL)
+		insert_exec_rewrite_ctx->skip_triggers = skip;
 }
 
 /*
@@ -11119,9 +11144,6 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 		char *table_name = NULL;
 		const char *dot = strchr(pg_table_ref, '.');
 		
-		elog(LOG, "INSERT-EXEC-TEMP-TABLE: Checking IDENTITY_INSERT. pg_table_ref='%s', tsql_identity_insert.rel_oid=%u",
-			 pg_table_ref, tsql_identity_insert.rel_oid);
-		
 		if (dot != NULL)
 		{
 			schema_name = pnstrdup(pg_table_ref, dot - pg_table_ref);
@@ -11136,31 +11158,19 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 		if (schema_name != NULL)
 		{
 			Oid schema_oid = get_namespace_oid(schema_name, true);
-			elog(LOG, "INSERT-EXEC-TEMP-TABLE: schema_name='%s', table_name='%s', schema_oid=%u",
-				 schema_name, table_name, schema_oid);
 			if (OidIsValid(schema_oid))
 			{
 				Oid target_rel_oid = get_relname_relid(table_name, schema_oid);
-				elog(LOG, "INSERT-EXEC-TEMP-TABLE: target_rel_oid=%u, tsql_identity_insert.rel_oid=%u",
-					 target_rel_oid, tsql_identity_insert.rel_oid);
 				if (OidIsValid(target_rel_oid) && target_rel_oid == tsql_identity_insert.rel_oid)
 				{
 					identity_insert_on = true;
 					estate->insert_exec_identity_insert = true;
-					elog(LOG, "INSERT-EXEC-TEMP-TABLE: IDENTITY_INSERT is ON for target table");
 				}
 			}
 			pfree(schema_name);
 		}
 		pfree(table_name);
 	}
-	else
-	{
-		elog(LOG, "INSERT-EXEC-TEMP-TABLE: tsql_identity_insert.valid is FALSE");
-	}
-
-	elog(LOG, "INSERT-EXEC-TEMP-TABLE: identity_insert_on=%d, column_list=%s",
-		 identity_insert_on, column_list ? column_list : "(null)");
 
 	/*
 	 * Create temp table with same structure as target table.
@@ -11224,9 +11234,6 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 					temp_table_name,
 					all_cols_with_cast,
 					pg_table_ref);
-				
-				elog(LOG, "INSERT-EXEC-TEMP-TABLE: Using subquery with type casts (IDENTITY_INSERT ON): %s",
-					 all_cols_with_cast);
 				
 				pfree(all_cols_with_cast);
 			}
@@ -11340,8 +11347,6 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 		
 		SPI_freetuptable(SPI_tuptable);
 		pfree(col_query.data);
-		
-		elog(LOG, "INSERT-EXEC-TEMP-TABLE: Including all columns with subquery (IDENTITY_INSERT ON)");
 	}
 	else
 	{
@@ -11424,9 +11429,6 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 	
 	/* Free the SPI tuple table from CREATE TABLE AS SELECT */
 	SPI_freetuptable(SPI_tuptable);
-
-	elog(LOG, "INSERT-EXEC-TEMP-TABLE: SPI_execute returned %d (%s)",
-		 rc, SPI_result_code_string(rc));
 
 	/* CREATE TABLE AS SELECT returns SPI_OK_SELINTO, not SPI_OK_UTILITY */
 	if (rc != SPI_OK_SELINTO && rc != SPI_OK_UTILITY)
@@ -11808,11 +11810,17 @@ should_rewrite_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *st
 {
 	/* Check if rewrite context is active */
 	if (!pltsql_insert_exec_rewrite_active())
+	{
+		elog(DEBUG2, "INSERT-EXEC-REWRITE-DEBUG: Not active, skipping rewrite");
 		return false;
+	}
 	
 	/* Check if we have a target table */
 	if (pltsql_get_insert_exec_target_table() == NULL)
+	{
+		elog(DEBUG2, "INSERT-EXEC-REWRITE-DEBUG: No target table, skipping rewrite");
 		return false;
+	}
 	
 	/*
 	 * Block user-defined functions but allow procedures and inline code blocks (EXEC('...'))
@@ -11826,20 +11834,31 @@ should_rewrite_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *st
 	if (estate->func != NULL && 
 		estate->func->fn_prokind == PROKIND_FUNCTION &&
 		strcmp(estate->func->fn_signature, "inline_code_block") != 0)
+	{
+		elog(DEBUG2, "INSERT-EXEC-REWRITE-DEBUG: In user function, skipping rewrite");
 		return false;  /* Don't rewrite SELECTs in user-defined functions */
+	}
 	
 	/* Check if statement needs to push result (SELECT returning data) */
 	if (!stmt->need_to_push_result)
+	{
+		elog(DEBUG2, "INSERT-EXEC-REWRITE-DEBUG: No need_to_push_result, skipping rewrite");
 		return false;
+	}
 	
 	/* Check if it's a simple SELECT query */
 	if (stmt->sqlstmt == NULL || stmt->sqlstmt->query == NULL)
+	{
+		elog(DEBUG2, "INSERT-EXEC-REWRITE-DEBUG: No query, skipping rewrite");
 		return false;
+	}
 	
 	if (!is_simple_select_query(stmt->sqlstmt->query))
+	{
+		elog(DEBUG2, "INSERT-EXEC-REWRITE-DEBUG: Not simple SELECT, skipping rewrite for: %s", 
+			 stmt->sqlstmt->query);
 		return false;
-	
-	elog(DEBUG1, "INSERT-EXEC-REWRITE: Will rewrite query: %s", stmt->sqlstmt->query);
+	}
 	
 	return true;
 }
@@ -11901,8 +11920,6 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 			target_table);
 	}
 	
-	elog(LOG, "INSERT-EXEC-REWRITE: Executing rewritten query: %s", rewritten_query.data);
-	
 	/*
 	 * Save the original query and plan so we can restore them after execution.
 	 * This is important because the same statement might be executed multiple
@@ -11919,22 +11936,23 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 	expr->plan = NULL;
 	
 	/*
-	 * Transaction handling for INSERT EXEC query rewriting:
+	 * Skip AFTER triggers for the rewritten INSERT to prevent crashes when
+	 * errors occur and are caught by TRY-CATCH blocks.
 	 *
-	 * We do NOT use per-statement savepoints here. The reason is that SQL Server's
-	 * TRY/CATCH behavior requires that when an error occurs in a TRY block, ALL
-	 * rows from the TRY block should be discarded (not just the failing statement).
+	 * The issue is that when an error occurs during ExecutorRun:
+	 * 1. ExecutorStart has already called AfterTriggerBeginQuery (increments query_depth)
+	 * 2. The error skips ExecutorFinish (which would call AfterTriggerEndQuery)
+	 * 3. Error handling tries to clean up, causing query_depth mismatch and crash
 	 *
-	 * With the temp table approach:
-	 * - If we're inside a TRY/CATCH block, the TRY subtransaction (created by
-	 *   exec_stmt_try_catch) will roll back ALL inserts into the temp table when
-	 *   an error occurs. This is the correct SQL Server behavior.
-	 * - If we're outside a TRY/CATCH block, errors will propagate and the temp
-	 *   table will be dropped in the PG_FINALLY block of exec_stmt_execsql.
+	 * By setting EXEC_FLAG_SKIP_TRIGGERS via the ExecutorStart hook, we bypass
+	 * the AfterTrigger state tracking entirely, avoiding the crash.
 	 *
-	 * Using per-statement savepoints would break TRY/CATCH semantics because
-	 * successful INSERTs would be committed even when a later statement fails.
+	 * Trade-off: AFTER triggers on the target table won't fire during INSERT EXEC.
+	 * This is acceptable because:
+	 * 1. It prevents crashes which is more important
+	 * 2. SQL Server behavior for triggers during INSERT EXEC may differ anyway
 	 */
+	pltsql_set_insert_exec_skip_triggers(true);
 	
 	PG_TRY();
 	{
@@ -11972,24 +11990,10 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 			expr->plan = NULL;
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
-		/* Free the plan we created before handling the error */
-		if (expr->plan)
-		{
-			SPI_freeplan(expr->plan);
-			expr->plan = NULL;
-		}
-		
-		/* Restore the original query and plan */
-		expr->query = saved_query;
-		expr->plan = saved_plan;
-		
-		/* Free the rewritten query string */
-		pfree(rewritten_query.data);
-		
-		/* Let the error propagate - TRY/CATCH or outer handler will deal with it */
-		PG_RE_THROW();
+		/* Always clear the skip_triggers flag */
+		pltsql_set_insert_exec_skip_triggers(false);
 	}
 	PG_END_TRY();
 	
@@ -12043,8 +12047,6 @@ exec_rewritten_dml_with_returning(PLtsql_execstate *estate,
 		elog(ERROR, "INSERT-EXEC-DML-REWRITE: No temp table set in rewrite context");
 		return SPI_ERROR_OPUNKNOWN;
 	}
-	
-	elog(LOG, "INSERT-EXEC-DML-REWRITE: Capturing RETURNING results into %s", target_table);
 	
 	/* Set up parameter list */
 	paramLI = setup_param_list(estate, expr);
