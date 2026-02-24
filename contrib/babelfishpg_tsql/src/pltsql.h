@@ -2408,6 +2408,8 @@ extern void pltsql_clear_insert_exec_rewrite_context(void);
 extern bool pltsql_insert_exec_rewrite_active(void);
 extern const char *pltsql_get_insert_exec_target_table(void);
 extern const char *pltsql_get_insert_exec_column_list(void);
+extern bool pltsql_insert_exec_skip_triggers(void);
+extern void pltsql_set_insert_exec_skip_triggers(bool skip);
 
 /* INSERT EXEC temp table buffer functions (pl_exec.c) */
 extern void exec_create_insert_exec_temp_table(PLtsql_execstate *estate,

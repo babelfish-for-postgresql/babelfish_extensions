@@ -1227,8 +1227,15 @@ handle_error(PLtsql_execstate *estate,
 		HOLD_INTERRUPTS();
 		elog(DEBUG1, "TSQL TXN Stop execution error mapping failed : %d current batch status : %d read only function : %d", last_error_mapping_failed, *terminate_batch, ro_func);
 		RESUME_INTERRUPTS();
-		FreeErrorData(edata);
-		PG_RE_THROW();
+		/*
+		 * Use ReThrowError instead of FreeErrorData + PG_RE_THROW.
+		 * PG_RE_THROW expects the error to be on the error stack, but
+		 * FlushErrorState may have already been called (e.g., during
+		 * TRY-CATCH handling), which sets errordata_stack_depth = -1.
+		 * ReThrowError properly pushes the error back onto the stack
+		 * before re-throwing.
+		 */
+		ReThrowError(edata);
 	}
 
 	/* Report error but let execution continue */
@@ -1290,8 +1297,17 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * level. For statements inside an RO functions we do not start
 		 * savepoints and let the caller be responsible for handling the
 		 * error.
+		 *
+		 * Skip internal savepoints during INSERT EXEC execution because:
+		 * 1. The subtransaction's AfterTriggerBeginSubXact saves query_depth
+		 * 2. If an error occurs and is caught by TRY-CATCH, the subtransaction
+		 *    rollback restores query_depth to the saved value
+		 * 3. But the saved value may be from BEFORE the outer INSERT's
+		 *    ExecutorStart called AfterTriggerBeginQuery
+		 * 4. This causes query_depth mismatch and crash in AfterTriggerEndQuery
+		 * The INSERT EXEC temp table provides transaction semantics anyway.
 		 */
-		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive() && !is_set_tran_isolation(stmt))
+		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive() && !is_set_tran_isolation(stmt) && !pltsql_insert_exec_rewrite_active())
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
 			BeginInternalSubTransaction(NULL);
@@ -1375,7 +1391,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			}
 			else if (!IsTransactionBlockActive())
 			{
-				if (is_part_of_pltsql_trycatch_block(estate))
+				if (is_part_of_pltsql_trycatch_block(estate) && !pltsql_insert_exec_rewrite_active())
 				{
 					HOLD_INTERRUPTS();
 					elog(DEBUG1, "TSQL TXN PG semantics : Rollback current transaction");
@@ -1439,16 +1455,32 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		{
 			/*
 			 * In case of no transaction, rollback the whole transaction to
-			 * match auto commit behavior
+			 * match auto commit behavior.
+			 *
+			 * However, skip this during INSERT EXEC because:
+			 * 1. The outer INSERT has already called AfterTriggerBeginQuery
+			 * 2. AbortCurrentTransaction calls AfterTriggerEndXact which resets query_depth to -1
+			 * 3. When the procedure returns, ExecutorFinish tries to call AfterTriggerEndQuery
+			 * 4. But query_depth is -1, causing an assertion failure
+			 *
+			 * During INSERT EXEC, the error will be caught by TRY-CATCH and the
+			 * transaction state will be handled properly when INSERT EXEC completes.
 			 */
-			HOLD_INTERRUPTS();
-			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
-			/* Hold portals to make sure that cursors work */
-			HoldPinnedPortals();
-			AbortCurrentTransaction();
-			StartTransactionCommand();
-			MemoryContextSwitchTo(cur_ctxt);
-			RESUME_INTERRUPTS();
+			if (!pltsql_insert_exec_rewrite_active())
+			{
+				HOLD_INTERRUPTS();
+				elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
+				/* Hold portals to make sure that cursors work */
+				HoldPinnedPortals();
+				AbortCurrentTransaction();
+				StartTransactionCommand();
+				MemoryContextSwitchTo(cur_ctxt);
+				RESUME_INTERRUPTS();
+			}
+			else
+			{
+				elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback during INSERT EXEC");
+			}
 		}
 		else if (estate->tsql_trigger_flags & TSQL_TRAN_STARTED)
 		{
