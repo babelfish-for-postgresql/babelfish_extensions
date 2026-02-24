@@ -45,3 +45,6 @@ GO
 
 drop procedure p_def_cons;
 GO
+
+drop procedure p_sp_executesql_index;
+GO

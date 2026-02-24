@@ -357,6 +357,10 @@ GO
 EXEC p_def_cons;
 GO
 
+-- Test SP_EXECUTESQL index creation/drop on temp tables
+EXEC p_sp_executesql_index;
+GO
+
 -- Test 4: Trying to create a default with UDF which should throw an error
 CREATE TABLE #temp_table_with_computed_udf (
 	id INT PRIMARY KEY,

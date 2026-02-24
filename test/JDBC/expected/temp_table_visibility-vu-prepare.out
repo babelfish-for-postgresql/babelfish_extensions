@@ -118,3 +118,27 @@ BEGIN
 	SELECT * FROM @tv_def_con;
 END;
 GO
+
+-- Test SP_EXECUTESQL index creation on temp tables (fix for index ENR registration)
+CREATE PROCEDURE p_sp_executesql_index
+AS
+BEGIN
+    CREATE TABLE #sp_exec_temp (a INT, b VARCHAR(50));
+    INSERT INTO #sp_exec_temp VALUES (1, 'one'), (2, 'two'), (3, 'three');
+    
+    -- Create index via SP_EXECUTESQL (this was failing before the fix)
+    DECLARE @SQL NVARCHAR(MAX) = 'CREATE INDEX idx_sp_exec ON #sp_exec_temp(a)';
+    EXEC SP_EXECUTESQL @SQL;
+    
+    -- Use the index
+    SELECT * FROM #sp_exec_temp WHERE a = 2;
+    
+    -- Drop the index (this was failing before the fix - dependency lookup issue)
+    DROP INDEX idx_sp_exec ON #sp_exec_temp;
+    
+    -- Verify table still works after index drop
+    SELECT * FROM #sp_exec_temp ORDER BY a;
+    
+    DROP TABLE #sp_exec_temp;
+END;
+GO
