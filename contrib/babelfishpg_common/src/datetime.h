@@ -99,6 +99,15 @@ static const char *const time_regexes[] = {
 
 #define NUM_TIME_REGEXES lengthof(time_regexes)
 
+/*
+ * Token field definitions for time parsing and decoding.
+ *
+ * Note: Values 0 to 37 are already used in datetime.h.
+ * This token (DTK_NANO) is specific to T-SQL and is defined here. Since DTK_NANO can
+ * be assigned any value, 100 is OK.
+ */
+#define DTK_NANO 100
+
 extern bool check_regex_for_text_month(char *str, DateTimeContext context);
 extern char* clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context);
 extern void  TsqlEncodeDateTime(struct pg_tm *tm, char *str);

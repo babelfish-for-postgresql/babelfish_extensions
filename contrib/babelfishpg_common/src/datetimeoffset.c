@@ -73,8 +73,6 @@ PG_FUNCTION_INFO_V1(varchar_datetimeoffset);
 PG_FUNCTION_INFO_V1(get_datetimeoffset_tzoffset_internal);
 PG_FUNCTION_INFO_V1(dateadd_datetimeoffset);
 
-#define DTK_NANO 32
-
 /* datetimeoffset_in_str()
  * Convert a string to internal form.
  * Most parts of this functions is same as timestamptz_in(),

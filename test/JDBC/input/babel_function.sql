@@ -497,6 +497,13 @@ select datediff(microsecond, CAST('2036-02-28 01:23:45.234'AS sys.datetime), CAS
 GO
 select datediff(nanosecond, CAST('2036-02-28 01:23:45.234'AS sys.datetime), CAST('2036-02-28 01:23:45.123'AS sys.datetime));
 GO
+SELECT datediff(weekday, '2002-12-31 23:59:59.999', '2006-01-01 00:00:00.000');
+GO
+SELECT datediff(dw, '2003-12-31 23:59:59.999', '2006-01-01 00:00:00.000');
+GO
+SELECT datediff(w, '2004-12-31 23:59:59.999', '2006-01-01 00:00:00.000');
+GO
+
 -- test different types of date/time arguments
 select datediff(minute, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset), CAST('2016-12-31 23:30:05.523456+8'AS datetimeoffset));
 GO

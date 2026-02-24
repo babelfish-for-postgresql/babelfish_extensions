@@ -341,6 +341,30 @@ bigint
 ~~END~~
 
 
+SELECT DATEDIFF_BIG(weekday, '2002-12-31 23:59:59.999', '2006-01-01 00:00:00.000');
+GO
+~~START~~
+bigint
+1097
+~~END~~
+
+
+SELECT DATEDIFF_BIG(dw, '2003-12-31 23:59:59.999', '2006-01-01 00:00:00.000');
+GO
+~~START~~
+bigint
+732
+~~END~~
+
+
+SELECT DATEDIFF_BIG(w, '2004-12-31 23:59:59.999', '2006-01-01 00:00:00.000');
+GO
+~~START~~
+bigint
+366
+~~END~~
+
+
 -- No boundary crossed
 SELECT DATEDIFF_BIG(week, CAST('2023-01-01' AS DATE), CAST('2023-01-07' AS DATE)) AS NoBoundaryCrossed;
 GO

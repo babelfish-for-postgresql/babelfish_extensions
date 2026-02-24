@@ -69,8 +69,6 @@ int			roundFractionalSeconds(int v_fractseconds);
 
 int			DaycountInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-#define DTK_NANO 32
-
 static bool
 match_regex(char *str, char *regex_exp)
 {
@@ -1785,9 +1783,9 @@ timestamp_diff(PG_FUNCTION_ARGS)
 		type = UNITS;
 		val = DTK_NANO;
 	}
-	if(strlen(lowunits) == 7 && strncmp(lowunits, "weekday", 7) == 0) {
+	if(strlen(lowunits) == 3 && strncmp(lowunits, "dow", 3) == 0) {
 		type = UNITS;
-		val = DTK_DAY;
+		val = DTK_DOW;
 	}
 
 	if(type == UNITS) {
@@ -1836,6 +1834,7 @@ timestamp_diff(PG_FUNCTION_ARGS)
 					}
 					break;
 				case DTK_DAY:
+				case DTK_DOW:
 				case DTK_DOY:
 					diff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
 					break;
@@ -1980,9 +1979,9 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 		type = UNITS;
 		val = DTK_NANO;
 	}
-	if(strlen(lowunits) == 7 && strncmp(lowunits, "weekday", 7) == 0) {
+	if(strlen(lowunits) == 3 && strncmp(lowunits, "dow", 3) == 0) {
 		type = UNITS;
-		val = DTK_DAY;
+		val = DTK_DOW;
 	}
 
 	if(type == UNITS) {
@@ -2032,6 +2031,7 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 					}
 					break;
 				case DTK_DAY:
+				case DTK_DOW:
 				case DTK_DOY:
 					diff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
 					break;

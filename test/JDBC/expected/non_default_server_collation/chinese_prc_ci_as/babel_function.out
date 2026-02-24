@@ -1433,6 +1433,28 @@ int
 -110000000
 ~~END~~
 
+SELECT datediff(weekday, '2002-12-31 23:59:59.999', '2006-01-01 00:00:00.000');
+GO
+~~START~~
+int
+1097
+~~END~~
+
+SELECT datediff(dw, '2003-12-31 23:59:59.999', '2006-01-01 00:00:00.000');
+GO
+~~START~~
+int
+732
+~~END~~
+
+SELECT datediff(w, '2004-12-31 23:59:59.999', '2006-01-01 00:00:00.000');
+GO
+~~START~~
+int
+366
+~~END~~
+
+
 -- test different types of date/time arguments
 select datediff(minute, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset), CAST('2016-12-31 23:30:05.523456+8'AS datetimeoffset));
 GO
