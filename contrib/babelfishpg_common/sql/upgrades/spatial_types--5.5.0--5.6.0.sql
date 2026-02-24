@@ -1,7 +1,6 @@
 -------------------------------------------------------
 ---- Include changes related to spatial types here ----
 -------------------------------------------------------
-<<<<<<< HEAD
 --parse
 --Geometry 
 CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR)
@@ -28,9 +27,8 @@ CREATE OR REPLACE FUNCTION sys.Geography__Parse(geography_tagged_text sys.NVARCH
         RETURN sys.geogfromtext_helper(geography_tagged_text, 4326);
     END;
     $$ LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
-=======
---STGeomType
 
+--STGeomType
 --Geometry
 CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
 	RETURNS sys.NVARCHAR(4000)
@@ -72,4 +70,3 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
 	    RAISE EXCEPTION 'Unexpected geometry type format: %. Expected ST_* prefix.', geom_type;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
->>>>>>> upstream/BABEL_5_X_DEV
