@@ -126,9 +126,9 @@ EXEC p_index_create
 GO
 ~~START~~
 text
-idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 #t4122
 #temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 ~~END~~
 
 
@@ -164,6 +164,7 @@ GO
 text
 #t4122
 #temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 #sys_comprehensive
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
@@ -345,6 +346,7 @@ GO
 text
 #t4122
 #temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 #advanced_columns
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
@@ -530,6 +532,7 @@ GO
 text
 #t4122
 #temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 #indexed_dml
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
@@ -734,6 +737,24 @@ GO
 int#!#int#!#char
 1#!#1#!#T
 2#!#2#!#F
+~~END~~
+
+
+-- Test SP_EXECUTESQL index creation/drop on temp tables
+EXEC p_sp_executesql_index;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#varchar
+2#!#two
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+3#!#three
 ~~END~~
 
 
