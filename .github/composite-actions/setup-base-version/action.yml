@@ -81,7 +81,7 @@ runs:
         wget https://github.com/pgvector/pgvector/archive/refs/tags/v${VECTOR_VERSION}.tar.gz 
         tar -xvzf v${VECTOR_VERSION}.tar.gz
         cd pgvector-${VECTOR_VERSION}/
-        make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
+        make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config OPTFLAGS=""
         sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
       shell: bash
 
@@ -206,6 +206,11 @@ runs:
         # contraint column ordering which is expected to fail after fix for BABEL-4888
         if [[ "${{ inputs.dump_restore }}" == 'true' && "${{ inputs.extension_branch }}" != 'latest' ]];then
           sed -i "/BABEL-404\>/d" upgrade/$base_dir/schedule
+        fi
+
+        # Skip 1GB StringInfo limit test for dump/restore - causes out of memory
+        if [[ "${{ inputs.dump_restore }}" == 'true' ]];then
+          sed -i "/forxml-raw-elements-1gb-limit\>/d" upgrade/$base_dir/schedule
         fi
 
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do

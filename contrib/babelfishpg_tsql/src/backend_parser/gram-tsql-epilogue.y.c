@@ -1867,6 +1867,8 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause)
 	bool		binary_base64 = false;
 	bool		return_xml_type = false;
 	char	   *root_name = NULL;
+	bool     	elements = false;
+	bool      	xsinil = false;
 
 	/* Resolve the XML common directive list if provided */
 	if (forclause->commonDirectives != NIL)
@@ -1888,6 +1890,18 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause)
 					binary_base64 = true;
 				else if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_TYPE)
 					return_xml_type = true;
+				else if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS ||
+						 myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS_XSINIL ||
+						 myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS_ABSENT)
+				{
+					if (elements)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("Incorrect syntax near 'XML'.")));
+					elements = true;
+					if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_ELEMENTS_XSINIL)
+						xsinil = true;
+				}
 			}
 			else if (IsA(&myConst->val, String))
 			{
@@ -1912,6 +1926,8 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause)
 						   forclause->elementName ? makeStringConst(forclause->elementName, -1) : makeStringConst("row", -1),
 						   makeBoolAConst(binary_base64, -1),
 						   root_name ? makeStringConst(root_name, -1) : makeStringConst("", -1));
+	func_args = lappend(func_args, makeBoolAConst(elements, -1));
+	func_args = lappend(func_args, makeBoolAConst(xsinil, -1));
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
 	/*

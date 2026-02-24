@@ -1,0 +1,67 @@
+-- Drop functions
+DROP FUNCTION IF EXISTS forxml_raw_elements_func1;
+GO
+DROP FUNCTION IF EXISTS forxml_raw_elements_func2;
+GO
+DROP FUNCTION IF EXISTS forxml_raw_elements_func3;
+GO
+DROP FUNCTION IF EXISTS forxml_raw_elements_func4;
+GO
+
+-- Drop dependent views
+DROP VIEW IF EXISTS forxml_raw_elements_dep_view1;
+GO
+DROP VIEW IF EXISTS forxml_raw_elements_dep_view2;
+GO
+DROP VIEW IF EXISTS forxml_raw_elements_dep_view3;
+GO
+DROP VIEW IF EXISTS forxml_raw_elements_dep_view4;
+GO
+
+-- Drop regular views
+DROP VIEW IF EXISTS forxml_raw_elements_view1;
+GO
+DROP VIEW IF EXISTS forxml_raw_elements_view2;
+GO
+
+-- Drop procedures
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc1;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc2;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc3;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc4;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc5;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc6;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc_insert;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc_insert2;
+GO
+DROP PROCEDURE IF EXISTS forxml_raw_elements_proc_insert3;
+GO
+
+-- Drop tables
+DROP TABLE IF EXISTS forxml_raw_elements_t1;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_t2;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_t3;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_unicode;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_long_cols;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_results;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_emp_projects;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_projects;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_employees;
+GO
+DROP TABLE IF EXISTS forxml_raw_elements_departments;
+GO

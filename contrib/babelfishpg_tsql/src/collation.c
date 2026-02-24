@@ -485,6 +485,10 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 
 	Assert(ltypeId == rtypeId);
 
+	/* Always create a CollateExpr on top to match with op->inputcollid */
+	linitial(op->args) = (Node*) create_collate_expr(linitial(op->args), op->inputcollid);
+	lsecond(op->args) = (Node*) create_collate_expr(lsecond(op->args), op->inputcollid);
+
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
 	 */
@@ -502,7 +506,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 									InvalidOid,
 									coll_info_of_inputcollid.oid,
 									oprfuncid(optup)));
-		
+		ret = make_and_qual(ret, node);
 		ReleaseSysCache(optup);
 	}
 	else
@@ -512,10 +516,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 					*concat_expr;
 		Node	   *constant_suffix;
 		Const	   *highest_sort_key;
-
-		/* Always create a CollateExpr on top to match with op->inputcollid */
-		linitial(op->args) = (Node*) create_collate_expr(linitial(op->args), op->inputcollid);
-		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 
 		/* construct leftop >= pattern */
 		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, rtypeId,
@@ -1258,25 +1258,11 @@ pltsql_planner_node_transformer(PlannerInfo *root,
 								Node *expr,
 								int kind)
 {
-	/*
-	 * check if this is called to reset saved expression kind. Quickly return if so.
-	 */
-	if (kind == -1)
-	{
-		Assert(expr == NULL);
-		saved_expr_kind = -1;
-		return NULL;
-	}
-
-	/*
-	 * Fall out quickly if expression is empty.
-	 */
 	if (expr == NULL)
 		return NULL;
 
 	if (EXPRKIND_TARGET == kind)
 	{
-		saved_expr_kind = EXPRKIND_TARGET;
 		/*
 		 * If expr is NOT a Boolean expression then recurse through its
 		 * expresion tree
