@@ -5,5 +5,5 @@ GO
 ntext
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: out of memory)~~
+~~ERROR (Message: string buffer exceeds maximum allowed length (1073741823 bytes))~~
 
