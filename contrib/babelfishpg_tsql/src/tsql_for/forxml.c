@@ -364,9 +364,9 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 		if (has_att_centric)
 		{
 			if (xsinil)
-				appendStringInfo(state, "<%s " XML_XMLNS_XSI " ", element_name);
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI, element_name);
 			else
-				appendStringInfo(state, "<%s ", element_name);
+				appendStringInfo(state, "<%s", element_name);
 		}
 		else
 		{
@@ -400,7 +400,10 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 			allnull = false;
 			if(NameStr(att->attname)[0] == '@')
 			{
-				appendStringInfo(state, "%s=\"%s\" ",
+				/* Add space before attribute (except for the very first content) */
+				if (state->len > 0 && state->data[state->len - 1] != ' ')
+					appendStringInfoChar(state, ' ');
+				appendStringInfo(state, "%s=\"%s\"",
 								 NameStr(att->attname)+1,
 								 map_sql_value_to_xml_value(colval, datatype_oid, true));
 			}
@@ -419,10 +422,17 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				}
 				else
 				{
-					appendStringInfo(state, "<%s>%s</%s>",
-									 colname,
-									 map_sql_value_to_xml_value(colval, datatype_oid, true),
-									 colname);
+					/* When PATH('') is used with XSINIL, add xmlns to each element */
+					if (element_name[0] == '\0' && xsinil)
+						appendStringInfo(state, "<%s " XML_XMLNS_XSI ">%s</%s>",
+										 colname,
+										 map_sql_value_to_xml_value(colval, datatype_oid, true),
+										 colname);
+					else
+						appendStringInfo(state, "<%s>%s</%s>",
+										 colname,
+										 map_sql_value_to_xml_value(colval, datatype_oid, true),
+										 colname);
 				}
 			}
 		}
@@ -445,7 +455,11 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 
 				if (strncmp(NameStr(att->attname), "?column?", 8) != 0)
 				{
-					appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
+					/* When PATH('') is used with XSINIL, add xmlns to each element */
+					if (element_name[0] == '\0')
+						appendStringInfo(state, "<%s " XML_XMLNS_XSI " " XML_XSI_NIL "/>", colname);
+					else
+						appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
 				}
 			}
 		}

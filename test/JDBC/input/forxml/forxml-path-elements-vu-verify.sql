@@ -162,6 +162,57 @@ GO
 SELECT ID AS [@ID], Name AS [@Name], Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS XSINIL;
 GO
 
+-- INNER JOIN with attribute-centric columns
+SELECT c.CustomerName AS [@CustomerName], o.OrderID AS [@OrderID], o.TotalAmount
+FROM forxml_path_elements_customers c
+INNER JOIN forxml_path_elements_orders o ON c.CustomerID = o.CustomerID
+ORDER BY o.OrderID
+FOR XML PATH('Order'), ELEMENTS XSINIL;
+GO
+
+-- LEFT JOIN with attribute-centric columns
+SELECT c.CustomerName AS [@Name], o.TotalAmount AS [@Amount], o.OrderID
+FROM forxml_path_elements_customers c
+LEFT JOIN forxml_path_elements_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID, o.OrderID
+FOR XML PATH('CustomerOrder'), ELEMENTS XSINIL;
+GO
+
+-- Multiple JOINs with mixed attribute and element columns
+SELECT c.CustomerName AS [@Customer], o.OrderID AS [@OrderID], oi.Quantity AS [@Qty], p.ProductName
+FROM forxml_path_elements_customers c
+INNER JOIN forxml_path_elements_orders o ON c.CustomerID = o.CustomerID
+INNER JOIN forxml_path_elements_order_items oi ON o.OrderID = oi.OrderID
+INNER JOIN forxml_path_elements_products p ON oi.ProductID = p.ProductID
+ORDER BY o.OrderID, p.ProductID
+FOR XML PATH('OrderDetail'), ELEMENTS XSINIL;
+GO
+
+-- LEFT JOIN with attribute-centric columns and ROOT
+SELECT c.CustomerName AS [@Name], c.City AS [@City], o.OrderDate, o.TotalAmount
+FROM forxml_path_elements_customers c
+LEFT JOIN forxml_path_elements_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID, o.OrderID
+FOR XML PATH('CustomerOrder'), ELEMENTS XSINIL, ROOT('Data');
+GO
+
+-- RIGHT JOIN with attribute-centric columns
+SELECT c.CustomerName AS [@CustomerName], o.OrderDate AS [@Date], o.OrderID
+FROM forxml_path_elements_customers c
+RIGHT JOIN forxml_path_elements_orders o ON c.CustomerID = o.CustomerID
+ORDER BY o.OrderID
+FOR XML PATH('Order'), ELEMENTS XSINIL;
+GO
+
+-- CROSS JOIN with attribute-centric columns
+SELECT a.ID AS [@ID1], b.ID AS [@ID2], a.Name AS Name1, b.Name AS Name2
+FROM forxml_path_elements_t1 a
+CROSS JOIN forxml_path_elements_t1 b
+WHERE a.ID < b.ID AND a.ID <= 2
+ORDER BY a.ID, b.ID
+FOR XML PATH('Pair'), ELEMENTS XSINIL;
+GO
+
 -- ============================================
 -- SECTION 10: Single column table
 -- ============================================

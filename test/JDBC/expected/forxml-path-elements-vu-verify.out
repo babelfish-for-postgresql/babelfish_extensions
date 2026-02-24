@@ -230,7 +230,7 @@ SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PA
 GO
 ~~START~~
 ntext
-<ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/>
+<ID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">2</ID><Name xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Jane</Name><Department xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
 ~~END~~
 
 
@@ -351,7 +351,88 @@ SELECT ID AS [@ID], Name AS [@Name], Department FROM forxml_path_elements_t1 FOR
 GO
 ~~START~~
 ntext
-<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="1" Name="John" ><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="2" Name="Jane" ><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="3" Name="Bob" ><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="4" ><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="5" ><Department>HR</Department></Employee>
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="1" Name="John"><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="2" Name="Jane"><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="3" Name="Bob"><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="4"><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="5"><Department>HR</Department></Employee>
+~~END~~
+
+
+-- INNER JOIN with attribute-centric columns
+SELECT c.CustomerName AS [@CustomerName], o.OrderID AS [@OrderID], o.TotalAmount
+FROM forxml_path_elements_customers c
+INNER JOIN forxml_path_elements_orders o ON c.CustomerID = o.CustomerID
+ORDER BY o.OrderID
+FOR XML PATH('Order'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Acme Corp" OrderID="1"><TotalAmount>100.00</TotalAmount></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Acme Corp" OrderID="2"><TotalAmount>250.00</TotalAmount></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Tech Inc" OrderID="3"><TotalAmount xsi:nil="true"/></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrderID="4"><TotalAmount>175.50</TotalAmount></Order>
+~~END~~
+
+
+-- LEFT JOIN with attribute-centric columns
+SELECT c.CustomerName AS [@Name], o.TotalAmount AS [@Amount], o.OrderID
+FROM forxml_path_elements_customers c
+LEFT JOIN forxml_path_elements_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID, o.OrderID
+FOR XML PATH('CustomerOrder'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Acme Corp" Amount="100.00"><OrderID>1</OrderID></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Acme Corp" Amount="250.00"><OrderID>2</OrderID></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Tech Inc"><OrderID>3</OrderID></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Amount="175.50"><OrderID>4</OrderID></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Global Ltd"><OrderID xsi:nil="true"/></CustomerOrder>
+~~END~~
+
+
+-- Multiple JOINs with mixed attribute and element columns
+SELECT c.CustomerName AS [@Customer], o.OrderID AS [@OrderID], oi.Quantity AS [@Qty], p.ProductName
+FROM forxml_path_elements_customers c
+INNER JOIN forxml_path_elements_orders o ON c.CustomerID = o.CustomerID
+INNER JOIN forxml_path_elements_order_items oi ON o.OrderID = oi.OrderID
+INNER JOIN forxml_path_elements_products p ON oi.ProductID = p.ProductID
+ORDER BY o.OrderID, p.ProductID
+FOR XML PATH('OrderDetail'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<OrderDetail xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Customer="Acme Corp" OrderID="1" Qty="2"><ProductName>Widget</ProductName></OrderDetail><OrderDetail xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Customer="Acme Corp" OrderID="1"><ProductName>Gadget</ProductName></OrderDetail><OrderDetail xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Customer="Acme Corp" OrderID="2" Qty="5"><ProductName>Widget</ProductName></OrderDetail><OrderDetail xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Customer="Tech Inc" OrderID="3" Qty="1"><ProductName xsi:nil="true"/></OrderDetail>
+~~END~~
+
+
+-- LEFT JOIN with attribute-centric columns and ROOT
+SELECT c.CustomerName AS [@Name], c.City AS [@City], o.OrderDate, o.TotalAmount
+FROM forxml_path_elements_customers c
+LEFT JOIN forxml_path_elements_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID, o.OrderID
+FOR XML PATH('CustomerOrder'), ELEMENTS XSINIL, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Acme Corp" City="New York"><OrderDate>2024-01-15</OrderDate><TotalAmount>100.00</TotalAmount></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Acme Corp" City="New York"><OrderDate>2024-02-20</OrderDate><TotalAmount>250.00</TotalAmount></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Tech Inc"><OrderDate>2024-03-10</OrderDate><TotalAmount xsi:nil="true"/></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" City="Boston"><OrderDate xsi:nil="true"/><TotalAmount>175.50</TotalAmount></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Global Ltd" City="Chicago"><OrderDate xsi:nil="true"/><TotalAmount xsi:nil="true"/></CustomerOrder></Data>
+~~END~~
+
+
+-- RIGHT JOIN with attribute-centric columns
+SELECT c.CustomerName AS [@CustomerName], o.OrderDate AS [@Date], o.OrderID
+FROM forxml_path_elements_customers c
+RIGHT JOIN forxml_path_elements_orders o ON c.CustomerID = o.CustomerID
+ORDER BY o.OrderID
+FOR XML PATH('Order'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Acme Corp" Date="2024-01-15"><OrderID>1</OrderID></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Acme Corp" Date="2024-02-20"><OrderID>2</OrderID></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Tech Inc" Date="2024-03-10"><OrderID>3</OrderID></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ><OrderID>4</OrderID></Order>
+~~END~~
+
+
+-- CROSS JOIN with attribute-centric columns
+SELECT a.ID AS [@ID1], b.ID AS [@ID2], a.Name AS Name1, b.Name AS Name2
+FROM forxml_path_elements_t1 a
+CROSS JOIN forxml_path_elements_t1 b
+WHERE a.ID < b.ID AND a.ID <= 2
+ORDER BY a.ID, b.ID
+FOR XML PATH('Pair'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Pair xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID1="1" ID2="2"><Name1>John</Name1><Name2>Jane</Name2></Pair><Pair xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID1="1" ID2="3"><Name1>John</Name1><Name2>Bob</Name2></Pair><Pair xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID1="1" ID2="4"><Name1>John</Name1><Name2 xsi:nil="true"/></Pair><Pair xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID1="1" ID2="5"><Name1>John</Name1><Name2 xsi:nil="true"/></Pair><Pair xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID1="2" ID2="3"><Name1>Jane</Name1><Name2>Bob</Name2></Pair><Pair xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID1="2" ID2="4"><Name1>Jane</Name1><Name2 xsi:nil="true"/></Pair><Pair xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID1="2" ID2="5"><Name1>Jane</Name1><Name2 xsi:nil="true"/></Pair>
 ~~END~~
 
 
