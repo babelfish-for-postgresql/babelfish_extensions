@@ -514,8 +514,11 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	{
 		RelabelType	*relabel = (RelabelType *) leftop;
 		leftop = copyObject((Node*) relabel->arg);
-		prefix->consttype = rtypeId = ltypeId = exprType(leftop);
+		ltypeId = exprType(leftop);
 	}
+
+	/* Reconcile types — LIKE coerces to TEXT but we need original column type */
+	prefix->consttype = rtypeId = ltypeId;
 
 	/* 
 	 * We need to do this because the dump considers rightop as Const with COLLATE being added
@@ -1098,8 +1101,6 @@ transform_likenode(Node *node, bool is_constraint)
 		OpExpr	   *op = (OpExpr *) node;
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
-		Node	   *left_arg = linitial(op->args);
-		Node	   *right_arg = lsecond(op->args);
 
 		get_remove_accents_internal_oid();
 
@@ -1110,30 +1111,35 @@ transform_likenode(Node *node, bool is_constraint)
 		 * Skip if an explicit COLLATE clause is present.
 		 */
 
-		if (!IsA(left_arg, CollateExpr) && !IsA(right_arg, CollateExpr))
+		if (OidIsValid(like_entry.like_oid) && list_length(op->args) >= 2)
 		{
-			Node *unwrapped = left_arg;
-			while (IsA(unwrapped, RelabelType))
-				unwrapped = (Node *) ((RelabelType *) unwrapped)->arg;
-
-			if (IsA(unwrapped, Var))
+					Node *left_arg = linitial(op->args);
+					Node *right_arg = lsecond(op->args);
+			if (!IsA(left_arg, CollateExpr) && !IsA(right_arg, CollateExpr))
 			{
-				Oid var_collation = ((Var *) unwrapped)->varcollid;
+				Node *unwrapped = left_arg;
+				while (IsA(unwrapped, RelabelType))
+					unwrapped = (Node *) ((RelabelType *) unwrapped)->arg;
 
-				if (OidIsValid(var_collation) &&
-					var_collation != op->inputcollid)
+				if (IsA(unwrapped, Var))
 				{
-					coll_info_t var_coll_info =
-						tsql_lookup_collation_table_internal(var_collation);
+					Oid var_collation = ((Var *) unwrapped)->varcollid;
 
-					if (OidIsValid(var_coll_info.oid))
+					if (OidIsValid(var_collation) &&
+						var_collation != op->inputcollid)
 					{
-						op->inputcollid = var_collation;
-						coll_info_of_inputcollid = var_coll_info;
+						coll_info_t var_coll_info =
+							tsql_lookup_collation_table_internal(var_collation);
+
+						if (OidIsValid(var_coll_info.oid))
+						{
+							op->inputcollid = var_collation;
+							coll_info_of_inputcollid = var_coll_info;
+						}
 					}
 				}
 			}
-		}
+	    }
 
 		/*
 		 * We do not allow CREATE TABLE statements with CHECK constraint where
