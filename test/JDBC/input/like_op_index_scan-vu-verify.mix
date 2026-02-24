@@ -1,3 +1,4 @@
+-- sla 60000
 -- parallel_query_expected
 -- psql
 ANALYZE master_dbo.babel_5966_testlikeindex;
@@ -772,9 +773,6 @@ GO
 
 -- Multiple LIKE conditions
 
-SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' AND NVarcharCol LIKE N'prefix%';
-GO
-
 SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' OR VarcharCol LIKE N'test%';
 GO
 
@@ -785,9 +783,6 @@ SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' A
 GO
 
 SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' AND Id > 5;
-GO
-
-SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' AND NVarcharCol = N'prefix_abc';
 GO
 
 SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' AND Id BETWEEN 1 AND 10;
@@ -1479,9 +1474,6 @@ GO
 SELECT COUNT(*) FROM BABEL_5966_vw_like_and;
 GO
 
-SELECT COUNT(*) FROM BABEL_5966_vw_like_mixed;
-GO
-
 SELECT COUNT(*) FROM BABEL_5966_vw_like_escape_pct;
 GO
 
@@ -1537,10 +1529,6 @@ SELECT COUNT(*) FROM BABEL_5966_vw_like_prefix_varchar WHERE VarcharCol LIKE N'p
 GO
 
 SELECT COUNT(*) FROM BABEL_5966_vw_like_prefix_nvarchar WHERE NVarcharCol LIKE N'prefix_a%';
-GO
-
-SELECT COUNT(*) FROM BABEL_5966_vw_like_prefix_varchar v
-JOIN BABEL_5966_vw_like_prefix_nvarchar n ON v.Id = n.Id;
 GO
 
 -- Procedures

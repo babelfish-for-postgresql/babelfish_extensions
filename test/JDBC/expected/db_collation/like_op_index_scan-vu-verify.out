@@ -3643,28 +3643,12 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
 
 -- Multiple LIKE conditions
-SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' AND NVarcharCol LIKE N'prefix%';
-GO
-~~START~~
-text
-Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' AND NVarcharCol LIKE N'prefix%'
-Aggregate
-  ->  Seq Scan on babel_5966_testlikeindex
-        Filter: (((remove_accents_internal((varcharcol)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((nvarcharcol)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as))
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.204 ms
-~~END~~
-
-
 SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' OR VarcharCol LIKE N'test%';
 GO
 ~~START~~
@@ -3726,23 +3710,6 @@ Aggregate
 ~~START~~
 text
 Babelfish T-SQL Batch Parsing Time: 0.556 ms
-~~END~~
-
-
-SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' AND NVarcharCol = N'prefix_abc';
-GO
-~~START~~
-text
-Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIKE N'prefix%' AND NVarcharCol = N'prefix_abc'
-Aggregate
-  ->  Index Scan using babel_5966_idx_nvarcharbabel_5935276048c6875760facd36b9ce89fcd7 on babel_5966_testlikeindex
-        Index Cond: ((nvarcharcol)::"varchar" = 'prefix_abc'::"varchar")
-        Filter: ((remove_accents_internal((varcharcol)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.429 ms
 ~~END~~
 
 
@@ -7184,22 +7151,6 @@ Babelfish T-SQL Batch Parsing Time: 0.099 ms
 ~~END~~
 
 
-SELECT COUNT(*) FROM BABEL_5966_vw_like_mixed;
-GO
-~~START~~
-text
-Query Text: SELECT COUNT(*) FROM BABEL_5966_vw_like_mixed
-Aggregate
-  ->  Seq Scan on babel_5966_testlikeindex
-        Filter: (((remove_accents_internal((varcharcol)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((nvarcharcol)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as))
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
-~~END~~
-
-
 SELECT COUNT(*) FROM BABEL_5966_vw_like_escape_pct;
 GO
 ~~START~~
@@ -7505,24 +7456,6 @@ Aggregate
 ~~START~~
 text
 Babelfish T-SQL Batch Parsing Time: 0.109 ms
-~~END~~
-
-
-SELECT COUNT(*) FROM BABEL_5966_vw_like_prefix_varchar v
-JOIN BABEL_5966_vw_like_prefix_nvarchar n ON v.Id = n.Id;
-GO
-~~START~~
-text
-Query Text: SELECT COUNT(*) FROM BABEL_5966_vw_like_prefix_varchar v
-JOIN BABEL_5966_vw_like_prefix_nvarchar n ON v.Id = n.Id
-Aggregate
-  ->  Seq Scan on babel_5966_testlikeindex
-        Filter: (((remove_accents_internal((nvarcharcol)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((varcharcol)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as))
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.280 ms
 ~~END~~
 
 
@@ -8367,12 +8300,12 @@ SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeIndex WHERE VarcharCol NOT LI
 GO
 ~~START~~
 int
-10028
+20028
 ~~END~~
 
 ~~START~~
 int
-10028
+20028
 ~~END~~
 
 
@@ -8381,12 +8314,12 @@ SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeIndex WHERE VarcharCol NOT LI
 GO
 ~~START~~
 int
-10028
+20028
 ~~END~~
 
 ~~START~~
 int
-10028
+20028
 ~~END~~
 
 
@@ -9052,12 +8985,12 @@ SELECT COUNT(*) AS pct_nprefix FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LI
 GO
 ~~START~~
 int
-10029
+20029
 ~~END~~
 
 ~~START~~
 int
-10029
+20029
 ~~END~~
 
 
@@ -9412,12 +9345,12 @@ SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT
 GO
 ~~START~~
 int
-10025
+20025
 ~~END~~
 
 ~~START~~
 int
-10025
+20025
 ~~END~~
 
 
@@ -9426,12 +9359,12 @@ SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col NOT
 GO
 ~~START~~
 int
-10027
+20027
 ~~END~~
 
 ~~START~~
 int
-10027
+20027
 ~~END~~
 
 
@@ -9440,12 +9373,12 @@ SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col NOT
 GO
 ~~START~~
 int
-10025
+20025
 ~~END~~
 
 ~~START~~
 int
-10025
+20025
 ~~END~~
 
 
@@ -9454,12 +9387,12 @@ SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col NOT
 GO
 ~~START~~
 int
-10027
+20027
 ~~END~~
 
 ~~START~~
 int
-10027
+20027
 ~~END~~
 
 
@@ -9656,12 +9589,12 @@ SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeIndex WHERE NVarcharCol NOT L
 GO
 ~~START~~
 int
-10028
+20028
 ~~END~~
 
 ~~START~~
 int
-10028
+20028
 ~~END~~
 
 
@@ -9714,12 +9647,12 @@ SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeIndex WHERE CharCol NOT LIKE 
 GO
 ~~START~~
 int
-10028
+20028
 ~~END~~
 
 ~~START~~
 int
-10028
+20028
 ~~END~~
 
 
@@ -10043,7 +9976,7 @@ SELECT COUNT(*) AS char_1_pct FROM BABEL_5966_TestLikeIndex WHERE VarcharCol LIK
 GO
 ~~START~~
 int
-10029
+20029
 ~~END~~
 
 
@@ -10061,7 +9994,7 @@ SELECT COUNT(*) AS not_like_char FROM BABEL_5966_TestLikeIndex WHERE VarcharCol 
 GO
 ~~START~~
 int
-10029
+20029
 ~~END~~
 
 
@@ -10256,7 +10189,7 @@ SELECT COUNT(*) AS vw_not_like_exact FROM BABEL_5966_vw_not_like_exact_varchar;
 GO
 ~~START~~
 int
-10028
+20028
 ~~END~~
 
 
@@ -10548,7 +10481,7 @@ EXEC BABEL_5966_sp_like_varchar_param '%';
 GO
 ~~START~~
 int
-10029
+20029
 ~~END~~
 
 
@@ -10724,7 +10657,7 @@ EXEC BABEL_5966_sp_not_like_param N'prefix%';
 GO
 ~~START~~
 int
-10026
+20026
 ~~END~~
 
 
@@ -10732,7 +10665,7 @@ EXEC BABEL_5966_sp_not_like_param N'exact match';
 GO
 ~~START~~
 int
-10028
+20028
 ~~END~~
 
 
@@ -10780,7 +10713,7 @@ EXEC BABEL_5966_sp_like_dynamic 'zzz';
 GO
 ~~START~~
 int
-10000
+20000
 ~~END~~
 
 

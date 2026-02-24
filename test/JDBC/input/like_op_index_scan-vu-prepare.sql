@@ -49,7 +49,7 @@ SELECT
     'zzz_filler_' + CAST(n AS VARCHAR(10)),
     N'zzz_filler_' + CAST(n AS NVARCHAR(10)),
     'zzz_filler_' + CAST(n AS VARCHAR(10))
-FROM generate_series(1, 10000) AS n;
+FROM generate_series(1, 20000) AS n;
 GO
 
 CREATE TABLE BABEL_5966_TestLikeCollation_CI_AS (
@@ -96,7 +96,7 @@ GO
 
 INSERT INTO BABEL_5966_TestLikeCollation_CI_AS (Col)
 SELECT 'zzz_filler_' + CAST(n AS VARCHAR(10))
-FROM generate_series(1, 10000) AS n;
+FROM generate_series(1, 20000) AS n;
 GO
 
 INSERT INTO BABEL_5966_TestLikeCollation_CS_AS (Col)
@@ -151,7 +151,7 @@ GO
 
 INSERT INTO BABEL_5966_TestLikeNVarCollation_CI_AS (Col)
 SELECT N'zzz_filler_' + CAST(n AS NVARCHAR(10))
-FROM generate_series(1, 10000) AS n;
+FROM generate_series(1, 20000) AS n;
 GO
 
 INSERT INTO BABEL_5966_TestLikeNVarCollation_CS_AS (Col) SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS;
@@ -203,7 +203,7 @@ GO
 
 INSERT INTO BABEL_5966_TestLikeCharCollation_CI_AS (Col)
 SELECT 'zzz_filler_' + CAST(n AS VARCHAR(10))
-FROM generate_series(1, 10000) AS n;
+FROM generate_series(1, 20000) AS n;
 GO
 
 INSERT INTO BABEL_5966_TestLikeCharCollation_CS_AS (Col) SELECT Col FROM BABEL_5966_TestLikeCharCollation_CI_AS;

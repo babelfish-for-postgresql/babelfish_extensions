@@ -450,15 +450,14 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	}
 
 	/*
-	 * This is needed to process CI_AI for Const nodes.
-	 * Because after we call coerce_to_target_type for type conversion in
-	 * transform_likenode_for_AI, we obtain a Relabel node which won't help
-	 * us to perform optimization for constant prefix. Hence, we process
-	 * that here.
+	 * This is needed to process CI_AI for Const nodes
+	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
+	 * we obtain a Relabel node which won't help us to perform optimization
+	 * for constant prefix. Hence, we process that here
 	 */
 	if (IsA(rightop, RelabelType))
 	{
-		RelabelType	*relabel = (RelabelType *) rightop;
+		RelabelType		*relabel = (RelabelType *) rightop;
 		if (IsA(relabel->arg, Const))
 		{
 			lsecond(op->args) = relabel->arg;
@@ -515,7 +514,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	{
 		RelabelType	*relabel = (RelabelType *) leftop;
 		leftop = copyObject((Node*) relabel->arg);
-		ltypeId = exprType(leftop);
+		prefix->consttype = rtypeId = ltypeId = exprType(leftop);
 	}
 
 	/* 
@@ -529,8 +528,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	 * later we enclose it withing CollateExpr
 	 */
 
-	 /* Reconcile types — LIKE coerces to TEXT but we need original column type */
-	prefix->consttype = rtypeId = ltypeId;
 	prefix->constcollid = ((Const *) rightop)->constcollid = InvalidOid;
 	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
 
@@ -1101,8 +1098,42 @@ transform_likenode(Node *node, bool is_constraint)
 		OpExpr	   *op = (OpExpr *) node;
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
+		Node	   *left_arg = linitial(op->args);
+		Node	   *right_arg = lsecond(op->args);
 
 		get_remove_accents_internal_oid();
+
+		/*
+		 * View definitions (after dump/restore) lose original column collation 
+		 * due to ::text casts, causing wrong LIKE/ILIKE operator selection. 
+		 * Unwrap coercions on leftop to find the original Var collation.
+		 * Skip if an explicit COLLATE clause is present.
+		 */
+
+		if (!IsA(left_arg, CollateExpr) && !IsA(right_arg, CollateExpr))
+		{
+			Node *unwrapped = left_arg;
+			while (IsA(unwrapped, RelabelType))
+				unwrapped = (Node *) ((RelabelType *) unwrapped)->arg;
+
+			if (IsA(unwrapped, Var))
+			{
+				Oid var_collation = ((Var *) unwrapped)->varcollid;
+
+				if (OidIsValid(var_collation) &&
+					var_collation != op->inputcollid)
+				{
+					coll_info_t var_coll_info =
+						tsql_lookup_collation_table_internal(var_collation);
+
+					if (OidIsValid(var_coll_info.oid))
+					{
+						op->inputcollid = var_collation;
+						coll_info_of_inputcollid = var_coll_info;
+					}
+				}
+			}
+		}
 
 		/*
 		 * We do not allow CREATE TABLE statements with CHECK constraint where
