@@ -3393,6 +3393,9 @@ tsql_xml_common_directive:
 			| TYPE_P									{ $$ = makeIntConst(TSQL_XML_DIRECTIVE_TYPE, -1); }
 			| TSQL_ROOT									{ $$ = makeStringConst("root", -1); }
 			| TSQL_ROOT '(' Sconst ')'					{ $$ = makeStringConst($3, -1); }
+			| TSQL_ELEMENTS                 			{ $$ = makeIntConst(TSQL_XML_DIRECTIVE_ELEMENTS, -1); }
+            | TSQL_ELEMENTS TSQL_XSINIL     			{ $$ = makeIntConst(TSQL_XML_DIRECTIVE_ELEMENTS_XSINIL, -1); }
+            | TSQL_ELEMENTS TSQL_ABSENT     			{ $$ = makeIntConst(TSQL_XML_DIRECTIVE_ELEMENTS_ABSENT, -1); }
 		;
 
 
@@ -4970,7 +4973,8 @@ col_name_keyword:
 			;
 
 unreserved_keyword:
-			  TSQL_ALLOW_SNAPSHOT_ISOLATION
+			  TSQL_ABSENT
+			| TSQL_ALLOW_SNAPSHOT_ISOLATION
 			| TSQL_AUTO
 			| TSQL_BASE64
 			| TSQL_CALLER
@@ -4988,6 +4992,7 @@ unreserved_keyword:
 			| TSQL_DEFAULT_SCHEMA
 			| TSQL_DW
 			| TSQL_DY
+			| TSQL_ELEMENTS
 			| TSQL_EXPLICIT
 			| TSQL_HASHED
 			| TSQL_HH
@@ -5055,6 +5060,7 @@ unreserved_keyword:
 			| TSQL_WK
 			| TSQL_WW
 			| TSQL_XLOCK
+			| TSQL_XSINIL
 			| TSQL_Y
 			| TSQL_YY
 			| TSQL_YYYY
