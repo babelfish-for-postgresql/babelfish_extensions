@@ -411,6 +411,9 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 			{
 				if (has_att_centric && first)
 				{
+					/* Remove trailing space if no attributes were added */
+					if (state->len > 0 && state->data[state->len - 1] == ' ')
+						state->len--;
 					appendStringInfoChar(state, '>');
 					first = false;
 				}
@@ -449,6 +452,9 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 
 				if (has_att_centric && first)
 				{
+					/* Remove trailing space if no attributes were added */
+					if (state->len > 0 && state->data[state->len - 1] == ' ')
+						state->len--;
 					appendStringInfoChar(state, '>');
 					first = false;
 				}
@@ -478,7 +484,12 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	else if (element_name[0] != '\0')
 	{
 		if (has_att_centric && first)
+		{
+			/* Remove trailing space if no attributes were added */
+			if (state->len > 0 && state->data[state->len - 1] == ' ')
+				state->len--;
 			appendStringInfoString(state, "/>");
+		}
 		else
 			appendStringInfo(state, "</%s>", element_name);
 	}

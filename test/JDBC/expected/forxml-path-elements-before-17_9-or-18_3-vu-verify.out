@@ -230,7 +230,7 @@ SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PA
 GO
 ~~START~~
 ntext
-<ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/>
+<ID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">2</ID><Name xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Jane</Name><Department xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
 ~~END~~
 
 
@@ -351,7 +351,7 @@ SELECT ID AS [@ID], Name AS [@Name], Department FROM forxml_path_elements_t1 FOR
 GO
 ~~START~~
 ntext
-<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="1" Name="John" ><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="2" Name="Jane" ><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="3" Name="Bob" ><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="4" ><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="5" ><Department>HR</Department></Employee>
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="1" Name="John"><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="2" Name="Jane"><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="3" Name="Bob"><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="4"><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="5"><Department>HR</Department></Employee>
 ~~END~~
 
 

@@ -418,7 +418,7 @@ FOR XML PATH('Order'), ELEMENTS XSINIL;
 GO
 ~~START~~
 ntext
-<Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Acme Corp" Date="2024-01-15"><OrderID>1</OrderID></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Acme Corp" Date="2024-02-20"><OrderID>2</OrderID></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Tech Inc" Date="2024-03-10"><OrderID>3</OrderID></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ><OrderID>4</OrderID></Order>
+<Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Acme Corp" Date="2024-01-15"><OrderID>1</OrderID></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Acme Corp" Date="2024-02-20"><OrderID>2</OrderID></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" CustomerName="Tech Inc" Date="2024-03-10"><OrderID>3</OrderID></Order><Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><OrderID>4</OrderID></Order>
 ~~END~~
 
 
