@@ -298,7 +298,6 @@ static Oid  pltsql_GetNewTempObjectId(void);
 static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
-static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
 static EphemeralNamedRelation find_object_in_enr(Oid catalog_oid, Oid object_id, QueryEnvironment *qe);
 static bool is_enr_to_sys_object_dependency(const ObjectAddress *depender, const ObjectAddress *referenced);
 static bool verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config);
@@ -343,7 +342,6 @@ static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static GetNewTempObjectId_hook_type prev_GetNewTempObjectId_hook = NULL;
 static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
 static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_msg_hook = NULL;
-static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_hook = NULL;
 static find_object_in_enr_hook_type prev_find_object_in_enr_hook = NULL;
 static is_enr_to_sys_object_dependency_hook_type prev_is_enr_to_sys_object_dependency_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
@@ -492,9 +490,6 @@ InstallExtendedHooks(void)
 
 	prev_pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg_hook;
 	pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg;
-
-	prev_pltsql_get_tsql_enr_from_oid_hook = pltsql_get_tsql_enr_from_oid_hook;
-	pltsql_get_tsql_enr_from_oid_hook = pltsql_get_tsql_enr_from_oid;
 
 	prev_find_object_in_enr_hook = find_object_in_enr_hook;
 	find_object_in_enr_hook = find_object_in_enr;
@@ -5584,12 +5579,6 @@ static bool
 pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg)
 {
 	return SIMessageIsForTempTable(msg);
-}
-
-static EphemeralNamedRelation
-pltsql_get_tsql_enr_from_oid(const Oid oid)
-{
-	return temp_oid_buffer_size > 0 ? GetENRTempTableWithOid(oid, true) : NULL;
 }
 
 /*
