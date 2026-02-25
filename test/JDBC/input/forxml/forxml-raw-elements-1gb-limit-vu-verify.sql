@@ -1,0 +1,3 @@
+-- Test: FOR XML RAW, ELEMENTS should fail when output exceeds 1GB StringInfo limit
+SELECT * FROM xml_limit_test FOR XML RAW, ELEMENTS;
+GO
