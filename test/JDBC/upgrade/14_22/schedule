@@ -500,4 +500,4 @@ BABEL-4271
 comparison_op_index_scan-before-17_8-or-16_12
 BABEL-5788
 babel_convert_with_style
-like_op_index_scan
+like_op_index_scan-before-15_2

@@ -506,4 +506,4 @@ test_conv_text_to_string-before-14_21
 comparison_op_index_scan-before-15_6-or-14_11
 BABEL-5788
 babel_convert_with_style-before-14_12-or-16_3
-like_op_index_scan
+like_op_index_scan-before-15_2

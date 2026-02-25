@@ -278,6 +278,9 @@ ignore#!#datetime2fromparts-vu-prepare
 ignore#!#datetime2fromparts-vu-verify
 ignore#!#datetime2fromparts-vu-cleanup
 ignore#!#babel_smalldatetime_before_15-5
+ignore#!#like_op_index_scan-before-15_2-vu-prepare
+ignore#!#like_op_index_scan-before-15_2-vu-verify
+ignore#!#like_op_index_scan-before-15_2-vu-cleanup
 
 # These tests are meant for only upgrade
 ignore#!#openquery_upgrd-vu-prepare
