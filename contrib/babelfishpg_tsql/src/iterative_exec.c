@@ -189,6 +189,11 @@ exec_stmt_throw(PLtsql_execstate *estate, PLtsql_stmt_throw *stmt)
 							estate->cur_error->severity,
 							estate->cur_error->state,
 							true /* rethrow */ );
+		/*
+		 * Use ReThrowError here because the error was previously caught
+		 * and the error stack was flushed. ReThrowError will re-populate
+		 * the error stack with the copied error data and then throw it.
+		 */
 		ReThrowError(estate->cur_error->error);
 	}
 	else
@@ -1651,6 +1656,12 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					if (ignore_catch_block_for_unmapped_error(estate) || terminate_batch)
 					{
 						elog(DEBUG1, "TSQL TXN Ignore catch block error mapping failed : %d", last_error_mapping_failed);
+						/*
+						 * Use ReThrowError here because restore_ctx_partial1 has already
+						 * called FlushErrorState(), so the error stack is empty.
+						 * ReThrowError will re-populate the error stack with the copied
+						 * error data and then throw it.
+						 */
 						ReThrowError(estate->cur_error->error);
 					}
 

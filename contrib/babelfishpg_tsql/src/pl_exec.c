@@ -5446,16 +5446,44 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			SPI_freetuptable(SPI_tuptable);
 			exec_flush_insert_exec_temp_table(estate);
 		}
+
+		/*
+		 * Drop temp table on SUCCESS path only.
+		 * On error paths, the table might still be in use by active queries,
+		 * and trying to drop it would fail. The temp table will be cleaned
+		 * up when the session ends.
+		 */
+		if (stmt->insert_exec && estate->insert_exec_temp_table != NULL)
+		{
+			exec_drop_insert_exec_temp_table(estate);
+		}
 	}
 	PG_FINALLY();
 	{
 		original_query_string = NULL;
 		is_schemabinding_view = true;
 
-		/* Drop temp table on any exit (flush already happened on success path) */
+		/*
+		 * On error paths, just clean up the estate fields without trying
+		 * to drop the temp table. The table might still be in use by
+		 * active queries, and trying to drop it would fail with an error
+		 * that would mask the original error.
+		 * 
+		 * The temp table will be cleaned up when the session ends.
+		 */
 		if (stmt->insert_exec && estate->insert_exec_temp_table != NULL)
 		{
-			exec_drop_insert_exec_temp_table(estate);
+			/* Free the TopMemoryContext allocations */
+			if (estate->insert_exec_temp_table)
+				pfree(estate->insert_exec_temp_table);
+			if (estate->insert_exec_target_table)
+				pfree(estate->insert_exec_target_table);
+			if (estate->insert_exec_column_list)
+				pfree(estate->insert_exec_column_list);
+			estate->insert_exec_temp_table = NULL;
+			estate->insert_exec_target_table = NULL;
+			estate->insert_exec_column_list = NULL;
+			estate->insert_exec_identity_insert = false;
 		}
 
 		/* Clear INSERT EXEC rewrite context on any exit */
@@ -11639,29 +11667,49 @@ exec_flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	}
 	PG_CATCH();
 	{
-		ErrorData *edata;
-
-		MemoryContextSwitchTo(oldcontext);
-		edata = CopyErrorData();
-		FlushErrorState();
-
 		/* Rollback subtransaction - this cleans up AfterTrigger depth */
+		MemoryContextSwitchTo(oldcontext);
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 
 		/*
-		 * Drop the temp table NOW, while the parent transaction is still valid.
-		 * After ReThrowError, the transaction will be marked aborted and DDL
-		 * won't be possible. The drop function handles its own error catching.
+		 * DO NOT try to drop the temp table here!
+		 * The table may still be in use by active queries, and attempting
+		 * to drop it would fail with "table is being used by active queries".
+		 * 
+		 * Instead, just clear the estate fields so we don't try to drop again.
+		 * The temp table will be cleaned up:
+		 * 1. By the PG_FINALLY block in exec_stmt_exec (if transaction is still valid)
+		 * 2. By PostgreSQL when the session ends (if transaction is aborted)
+		 * 
+		 * We also need to free the TopMemoryContext allocations to prevent leaks.
 		 */
-		exec_drop_insert_exec_temp_table(estate);
+		if (estate->insert_exec_temp_table != NULL)
+		{
+			pfree(estate->insert_exec_temp_table);
+			estate->insert_exec_temp_table = NULL;
+		}
+		if (estate->insert_exec_target_table != NULL)
+		{
+			pfree(estate->insert_exec_target_table);
+			estate->insert_exec_target_table = NULL;
+		}
+		if (estate->insert_exec_column_list != NULL)
+		{
+			pfree(estate->insert_exec_column_list);
+			estate->insert_exec_column_list = NULL;
+		}
+		estate->insert_exec_identity_insert = false;
 
 		pfree(flush_query.data);
 		pfree(tsql_target_ref);
 
-		/* Re-raise so T-SQL TRY/CATCH can handle it */
-		ReThrowError(edata);
+		/*
+		 * Re-raise the original error so T-SQL TRY/CATCH can handle it.
+		 * The error is still on the stack after RollbackAndReleaseCurrentSubTransaction.
+		 */
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
@@ -11673,7 +11721,13 @@ exec_flush_insert_exec_temp_table(PLtsql_execstate *estate)
  * exec_drop_insert_exec_temp_table
  *
  * Drop the temp buffer table and clean up estate fields.
- * Called on both success (after flush) and error paths.
+ * 
+ * This function should only be called on the SUCCESS path (after flush).
+ * On error paths, just call exec_cleanup_insert_exec_state() to clean up
+ * the estate fields without trying to drop the table.
+ * 
+ * The temp table is a session-local temp table, so PostgreSQL will
+ * automatically clean it up when the session ends.
  */
 void
 exec_drop_insert_exec_temp_table(PLtsql_execstate *estate)
@@ -11681,6 +11735,8 @@ exec_drop_insert_exec_temp_table(PLtsql_execstate *estate)
 	char *temp_table_name;
 	char *target_table_name;
 	char *column_list;
+	MemoryContext oldcontext;
+	ResourceOwner oldowner;
 
 	if (estate->insert_exec_temp_table == NULL)
 		return;
@@ -11697,7 +11753,17 @@ exec_drop_insert_exec_temp_table(PLtsql_execstate *estate)
 	estate->insert_exec_column_list = NULL;
 	estate->insert_exec_identity_insert = false;
 
-	/* Ignore errors during cleanup — temp table may already be gone */
+	/*
+	 * Try to drop the temp table using a subtransaction.
+	 * This ensures that if the DROP fails, the failure is isolated
+	 * and doesn't affect the main transaction.
+	 */
+	oldcontext = CurrentMemoryContext;
+	oldowner = CurrentResourceOwner;
+
+	BeginInternalSubTransaction("insert_exec_drop");
+	MemoryContextSwitchTo(oldcontext);
+
 	PG_TRY();
 	{
 		char *drop_query = psprintf("DROP TABLE IF EXISTS %s", temp_table_name);
@@ -11710,10 +11776,34 @@ exec_drop_insert_exec_temp_table(PLtsql_execstate *estate)
 		SPI_freetuptable(SPI_tuptable);
 		
 		pfree(drop_query);
+
+		/* Success - release the subtransaction */
+		ReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
 	}
 	PG_CATCH();
 	{
-		FlushErrorState();
+		/*
+		 * DROP failed - rollback the subtransaction.
+		 * The temp table will be cleaned up when the session ends.
+		 * 
+		 * CRITICAL: Do NOT call FlushErrorState() here!
+		 * If we're being called from a PG_FINALLY block during error
+		 * handling, there's already an error on the stack that needs
+		 * to be preserved. Calling FlushErrorState() would clear it,
+		 * causing "errstart was not called" errors downstream.
+		 * 
+		 * The subtransaction rollback isolates the DROP failure.
+		 * We just swallow the DROP error silently and let the original
+		 * error (if any) continue to propagate.
+		 */
+		MemoryContextSwitchTo(oldcontext);
+		RollbackAndReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: Drop failed, table will be cleaned up by session end");
 	}
 	PG_END_TRY();
 
@@ -11999,13 +12089,13 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 	{
 		/* Always clear the skip_triggers flag */
 		pltsql_set_insert_exec_skip_triggers(false);
+		
+		/* Restore the original query, plan, and mod_stmt flag */
+		expr->query = saved_query;
+		expr->plan = saved_plan;
+		stmt->mod_stmt = saved_mod_stmt;
 	}
 	PG_END_TRY();
-	
-	/* Restore the original query, plan, and mod_stmt flag */
-	expr->query = saved_query;
-	expr->plan = saved_plan;
-	stmt->mod_stmt = saved_mod_stmt;
 	
 	/* Free the rewritten query string */
 	pfree(rewritten_query.data);

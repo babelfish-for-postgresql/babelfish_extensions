@@ -1347,6 +1347,17 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			SPI_freetuptable(SPI_tuptable);
 			exec_flush_insert_exec_temp_table(estate);
 		}
+
+		/*
+		 * Drop temp table on SUCCESS path only.
+		 * On error paths, the table might still be in use by active queries,
+		 * and trying to drop it would fail. The temp table will be cleaned
+		 * up when the session ends.
+		 */
+		if (insert_exec_context_set && estate->insert_exec_temp_table != NULL)
+		{
+			exec_drop_insert_exec_temp_table(estate);
+		}
 	}
 	PG_FINALLY();
 	{
@@ -1356,10 +1367,27 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			pltsql_clear_insert_exec_rewrite_context();
 		}
 
-		/* Drop temp table on any exit (flush already happened on success path) */
+		/*
+		 * On error paths, just clean up the estate fields without trying
+		 * to drop the temp table. The table might still be in use by
+		 * active queries, and trying to drop it would fail with an error
+		 * that would mask the original error.
+		 * 
+		 * The temp table will be cleaned up when the session ends.
+		 */
 		if (insert_exec_context_set && estate->insert_exec_temp_table != NULL)
 		{
-			exec_drop_insert_exec_temp_table(estate);
+			/* Free the TopMemoryContext allocations */
+			if (estate->insert_exec_temp_table)
+				pfree(estate->insert_exec_temp_table);
+			if (estate->insert_exec_target_table)
+				pfree(estate->insert_exec_target_table);
+			if (estate->insert_exec_column_list)
+				pfree(estate->insert_exec_column_list);
+			estate->insert_exec_temp_table = NULL;
+			estate->insert_exec_target_table = NULL;
+			estate->insert_exec_column_list = NULL;
+			estate->insert_exec_identity_insert = false;
 		}
 		
 		/*
