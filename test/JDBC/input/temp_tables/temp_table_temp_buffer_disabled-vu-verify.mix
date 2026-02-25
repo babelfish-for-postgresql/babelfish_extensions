@@ -1,0 +1,26 @@
+-- tsql
+CREATE TABLE #temp_table1(col1 int , col2 DATE DEFAULT GETDATE());
+GO
+
+INSERT INTO #temp_table1(col1) SELECT col1 FROM perm_table;
+GO
+
+ALTER TABLE #temp_table1 ALTER COLUMN col1 BIGINT;
+ALTER TABLE #temp_table1 ADD col3 INT IDENTITY;
+ALTER TABLE #temp_table1 ADD col4 TEXT;
+ALTER TABLE #temp_table1 ADD CONSTRAINT col1_def DEFAULT 0 FOR col1;
+GO
+
+INSERT INTO #temp_table1(col4) VALUES ('test1'), ('test2'), ('test3');
+GO
+
+SELECT col1, col3, col4 FROM #temp_table1;
+GO
+
+SELECT * INTO #temp_table2 FROM #temp_table1;
+GO
+
+SELECT col1, col3, col4 FROM #temp_table2;
+GO
+
+-- terminate-tsql-conn
