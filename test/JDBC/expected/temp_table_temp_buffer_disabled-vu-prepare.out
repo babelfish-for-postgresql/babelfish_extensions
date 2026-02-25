@@ -1,0 +1,12 @@
+-- psql
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.temp_oid_buffer_size = 0;
+GO
+
+-- tsql
+CREATE TABLE perm_table(col1 int , name varchar(20), col2 DATE DEFAULT GETDATE());
+GO
+
+INSERT INTO perm_table(col1, name) VALUES (10, 'user1') , (20, 'user2'), (30, 'user3');
+GO
+~~ROW COUNT: 3~~
+

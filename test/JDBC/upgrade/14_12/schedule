@@ -507,3 +507,4 @@ comparison_op_index_scan-before-17_8-or-16_12
 BABEL-5788
 like_op_index_scan-before-15_2
 babel_convert_with_style
+forxml-raw-elements-before-17_9-or-18_3

@@ -649,4 +649,5 @@ BABEL-5788
 BABEL-1664
 babel_convert_with_style
 like_op_index_scan
+forxml-raw-elements-before-17_9-or-18_3
 sys-fn-varbintohexsubstring

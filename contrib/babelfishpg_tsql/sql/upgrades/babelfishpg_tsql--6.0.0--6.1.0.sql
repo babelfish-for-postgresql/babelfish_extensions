@@ -3,15 +3,23 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar, arg_types varchar DEFAULT '') AS
 $$
 DECLARE
     error_msg text;
     query1 text;
     query2 text;
+    full_object_name text;
 BEGIN
-    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
-    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+    -- Construct full object name with argument types if provided (for aggregates)
+    IF arg_types <> '' THEN
+        full_object_name := pg_catalog.format('%s.%s(%s)', schema_name, object_name, arg_types);
+    ELSE
+        full_object_name := pg_catalog.format('%s.%s', schema_name, object_name);
+    END IF;
+
+    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s', object_type, full_object_name);
+    query2 := pg_catalog.format('drop %s %s', object_type, full_object_name);
     execute query1;
     execute query2;
 EXCEPTION
@@ -65,6 +73,103 @@ $$
     end;
 $$;
 
+-- Please add your SQLs here
+
+-- Deprecate and drop old aggregates first (they depend on the function)
+
+-- Deprecate and drop old aggregate (6 args) - tsql_select_for_xml_agg
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER AGGREGATE sys.tsql_select_for_xml_agg(anyelement, integer, text, boolean, text)
+    RENAME TO tsql_select_for_xml_agg_deprecated_in_6_1_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg_deprecated_in_5_6_0', 'anyelement, integer, text, boolean, text');
+-- Deprecate and drop old aggregate (6 args) - tsql_select_for_xml_text_agg
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER AGGREGATE sys.tsql_select_for_xml_text_agg(anyelement, integer, text, boolean, text)
+    RENAME TO tsql_select_for_xml_text_agg_deprecated_in_6_1_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg_deprecated_in_5_6_0', 'anyelement, integer, text, boolean, text');
+-- Deprecate and drop old function (6 args) - after aggregates are gone
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.tsql_query_to_xml_sfunc(internal, anyelement, integer, text, boolean, text)
+    RENAME TO tsql_query_to_xml_sfunc_deprecated_in_6_1_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc_deprecated_in_5_6_0');
+
+-- Create new function with ELEMENTS parameters (8 args)
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
+LANGUAGE C STABLE;
+
+-- Create new aggregate with ELEMENTS parameters (8 args)
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_ffunc
+);
+
+-- Create new aggregate with ELEMENTS parameters (8 args)
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_text_ffunc
+);
+/*
+ * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
+ * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
+ * final behaviour.
+ */
 
  DO $$
 DECLARE
@@ -82,7 +187,7 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'fn_varbintohexsubs
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

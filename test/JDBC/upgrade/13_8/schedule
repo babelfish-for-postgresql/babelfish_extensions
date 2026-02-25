@@ -381,3 +381,4 @@ babel_assign_nchar
 ascii_function_before-17_7-or-16_11
 comparison_op_index_scan-before-15_2-or-14_7
 BABEL-5788
+forxml-raw-elements-before-17_9-or-18_3
