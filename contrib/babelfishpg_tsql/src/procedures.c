@@ -36,6 +36,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/formatting.h"
 #include "pltsql_instr.h"
 #include "pltsql.h"
@@ -55,6 +56,7 @@
 #include "catalog.h"
 #include "catalog/toasting.h"
 #include "extendedproperty.h"
+#include "collation.h"
 #include "multidb.h"
 #include "session.h"
 #include "rolecmds.h"
@@ -63,6 +65,8 @@ PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
 PG_FUNCTION_INFO_V1(sp_babelfish_configure);
 PG_FUNCTION_INFO_V1(sp_describe_first_result_set_internal);
+PG_FUNCTION_INFO_V1(sp_tablecollations_100_enr);
+PG_FUNCTION_INFO_V1(create_sp_tablecollations_100_in_tempdb_dbo_internal);
 PG_FUNCTION_INFO_V1(sp_describe_undeclared_parameters_internal);
 PG_FUNCTION_INFO_V1(xp_qv_internal);
 PG_FUNCTION_INFO_V1(create_xp_qv_in_master_dbo_internal);
@@ -5109,4 +5113,242 @@ tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
 	}
 	
 	PG_RETURN_TEXT_P(cstring_to_text(xpath_expr));
+}
+
+/*
+ * sp_tablecollations_100_enr - Get column collation info for ENR temp tables
+ * 
+ * Returns 3 columns: colid, name, collation_name
+ * The binary(5) tds_collation conversion is done in the T-SQL procedure wrapper
+ */
+Datum
+sp_tablecollations_100_enr(PG_FUNCTION_ARGS)
+{
+    char *table_name_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+    char *table_name;
+    char *temp_name_ptr;
+    ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+    Tuplestorestate *tupstore;
+    MemoryContext per_query_ctx;
+    MemoryContext oldcontext;
+    TupleDesc tupdesc;
+    Relation rel = NULL;
+    TupleDesc temp_tupdesc = NULL;
+    Oid relid = InvalidOid;
+    Oid varchar_oid;
+    Oid nvarchar_oid;
+    int natts = 0;
+    int i;
+    
+    /* Get the sys type OIDs for the return columns */
+    varchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varchar");
+    if (!OidIsValid(varchar_oid))
+        varchar_oid = VARCHAROID;
+    
+    nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nvarchar");
+    if (!OidIsValid(nvarchar_oid))
+        nvarchar_oid = VARCHAROID;
+    
+    /* Setup return set info - 3 columns: colid, name, collation_name */
+    per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+    oldcontext = MemoryContextSwitchTo(per_query_ctx);
+    
+    tupdesc = CreateTemplateTupleDesc(3);
+    TupleDescInitEntry(tupdesc, 1, "colid", INT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, 2, "name", varchar_oid, -1, 0);
+    TupleDescInitEntry(tupdesc, 3, "collation_name", nvarchar_oid, 128, 0);
+    
+    tupstore = tuplestore_begin_heap(true, false, work_mem);
+    rsinfo->returnMode = SFRM_Materialize;
+    rsinfo->setResult = tupstore;
+    rsinfo->setDesc = BlessTupleDesc(tupdesc);
+    
+    MemoryContextSwitchTo(oldcontext);
+    
+    if (!table_name_input)
+    {
+        return (Datum) 0;
+    }
+    
+    /* Handle formats like ".[#TempTable]" or "#TempTable" to find the # */
+    temp_name_ptr = strchr(table_name_input, '#');
+    if (!temp_name_ptr)
+    {
+        return (Datum) 0;
+    }
+    
+    /* 
+     * Lowercase the table name and strip trailing "]" 
+     */
+    table_name = pstrdup(temp_name_ptr);
+    for (i = 0; table_name[i]; i++)
+    {
+        if (table_name[i] == ']')
+        {
+            table_name[i] = '\0';
+            break;
+        }
+        table_name[i] = tolower((unsigned char) table_name[i]);
+    }
+    
+    /* Look up temp table in ENR */
+    if (currentQueryEnv != NULL)
+    {
+        EphemeralNamedRelation enr = get_ENR(currentQueryEnv, table_name, true);
+        if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
+        {
+            relid = enr->md.reliddesc;
+        }
+    }
+    
+    /* Fallback: search pg_class catalog via pg_temp schema for non-ENR temp tables */
+    if (!OidIsValid(relid))
+    {
+        Oid temp_ns = LookupNamespaceNoError("pg_temp");
+        if (OidIsValid(temp_ns))
+            relid = get_relname_relid(table_name, temp_ns);
+    }
+    
+    if (!OidIsValid(relid))
+    {
+        return (Datum) 0;
+    }
+    
+    /* Open the relation */
+    PG_TRY();
+    {
+        rel = table_open(relid, AccessShareLock);
+        if (rel != NULL)
+        {
+            temp_tupdesc = RelationGetDescr(rel);
+            natts = temp_tupdesc->natts;
+        }
+    }
+    PG_CATCH();
+    {
+        PG_RE_THROW();
+    }
+    PG_END_TRY();
+    
+    if (rel == NULL || temp_tupdesc == NULL)
+    {
+        return (Datum) 0;
+    }
+    
+    /* Extract column info from temp table */
+    for (i = 0; i < natts; i++)
+    {
+        Form_pg_attribute att = TupleDescAttr(temp_tupdesc, i);
+        Datum values[3];
+        bool nulls[3] = {false, false, false};
+        
+        if (att->attisdropped)
+            continue;
+        
+        oldcontext = MemoryContextSwitchTo(per_query_ctx);
+        
+        values[0] = Int32GetDatum(att->attnum);
+        values[1] = CStringGetTextDatum(NameStr(att->attname));
+        
+        /* Return collation name for character columns, NULL for others */
+        if (att->attcollation != InvalidOid)
+        {
+            char *collation_name = get_collation_name(att->attcollation);
+            
+            if (collation_name != NULL)
+            {
+                values[2] = CStringGetTextDatum(collation_name);
+            }
+            else
+            {
+                nulls[2] = true;
+            }
+        }
+        else
+        {
+            /* Non-character columns get NULL for collation_name */
+            nulls[2] = true;
+        }
+        
+        tuplestore_putvalues(tupstore, rsinfo->setDesc, values, nulls);
+        
+        MemoryContextSwitchTo(oldcontext);
+    }
+    
+    table_close(rel, AccessShareLock);
+    PG_RETURN_NULL();
+}
+
+/*
+ * create_sp_tablecollations_100_in_tempdb_dbo_internal
+ * 
+ * Creates the tempdb.dbo.sp_tablecollations_100 procedure that BCP uses
+ * to get column collation metadata for temp tables.
+ */
+
+Datum
+create_sp_tablecollations_100_in_tempdb_dbo_internal(PG_FUNCTION_ARGS)
+{
+    char       *query = NULL;
+    int         rc = -1;
+    const char *old_dialect;
+
+    /*
+     * Create the T-SQL procedure in tempdb_dbo schema.
+     * This procedure calls sys.sp_tablecollations_100_enr (C function) and
+     * converts the collation_name to binary(5) tds_collation using CollationProperty.
+     * Note: Using pure T-SQL syntax (no LANGUAGE keyword, no $$ delimiters)
+     */
+    char       *tempq = "CREATE PROCEDURE %s.sp_tablecollations_100 "
+        "@tablename sys.nvarchar(4000) "
+        "AS "
+        "BEGIN "
+        "SELECT "
+            "t.colid, "
+            "t.name, "
+            "CAST(CollationProperty(t.collation_name, 'tdscollation') AS sys.binary(5)) AS tds_collation, "
+            "t.collation_name AS collation "
+        "FROM sys.sp_tablecollations_100_enr(@tablename) t "
+        "END";
+
+    char       *dbo_scm = get_dbo_schema_name("tempdb");
+
+    query = psprintf(tempq, dbo_scm);
+
+    pfree(dbo_scm);
+
+    /* Save current dialect and switch to tsql for parsing T-SQL syntax */
+    old_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+    PG_TRY();
+    {
+        set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+                          GUC_CONTEXT_CONFIG,
+                          PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+        if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+            elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+
+        if ((rc = SPI_execute(query, false, 1)) < 0)
+            elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+        if ((rc = SPI_finish()) != SPI_OK_FINISH)
+            elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+    }
+    PG_CATCH();
+    {
+        SPI_finish();
+        set_config_option("babelfishpg_tsql.sql_dialect", old_dialect,
+                          GUC_CONTEXT_CONFIG,
+                          PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+        PG_RE_THROW();
+    }
+    PG_END_TRY();
+
+    /* Restore original dialect */
+    set_config_option("babelfishpg_tsql.sql_dialect", old_dialect,
+                      GUC_CONTEXT_CONFIG,
+                      PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+    PG_RETURN_INT32(0);
 }

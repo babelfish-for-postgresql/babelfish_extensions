@@ -802,6 +802,12 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         c.is_sparse = 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.sp_tablecollations_100_enr(IN table_name sys.varchar(4000))
+RETURNS TABLE(colid INT, name sys.varchar, collation_name sys.nvarchar(128))
+AS 'babelfishpg_tsql', 'sp_tablecollations_100_enr'
+LANGUAGE C STABLE PARALLEL UNSAFE;
+GRANT EXECUTE ON FUNCTION sys.sp_tablecollations_100_enr(IN sys.varchar(4000)) TO PUBLIC;
+
 -- We are limited by what postgres procedures can return here, but IEW may not
 -- need it for initial compatibility
 CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100

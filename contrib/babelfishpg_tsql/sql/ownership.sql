@@ -185,6 +185,17 @@ BEGIN
   -- this is idempotent; if there is already a persisted value
   -- for temp_oid_buffer_start, it will not do anything
   CALL sys.persist_temp_oid_buffer_start();
+  -- Create sp_tablecollations_100 in tempdb for BCP temp table support
+  -- This procedure enables SqlBulkCopy to work with temp tables by providing
+  -- column collation metadata that BCP needs to encode string data correctly.
+  CREATE OR REPLACE PROCEDURE sys.create_sp_tablecollations_100_in_tempdb_dbo()
+  LANGUAGE C
+  AS 'babelfishpg_tsql', 'create_sp_tablecollations_100_in_tempdb_dbo_internal';
+
+  CALL sys.create_sp_tablecollations_100_in_tempdb_dbo();
+  ALTER PROCEDURE tempdb_dbo.sp_tablecollations_100 OWNER TO sysadmin;
+  GRANT EXECUTE ON PROCEDURE tempdb_dbo.sp_tablecollations_100 TO PUBLIC;
+  DROP PROCEDURE sys.create_sp_tablecollations_100_in_tempdb_dbo;
 END
 $$;
 
