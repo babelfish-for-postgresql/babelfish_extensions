@@ -1227,15 +1227,8 @@ handle_error(PLtsql_execstate *estate,
 		HOLD_INTERRUPTS();
 		elog(DEBUG1, "TSQL TXN Stop execution error mapping failed : %d current batch status : %d read only function : %d", last_error_mapping_failed, *terminate_batch, ro_func);
 		RESUME_INTERRUPTS();
-		/*
-		 * Use ReThrowError instead of FreeErrorData + PG_RE_THROW.
-		 * PG_RE_THROW expects the error to be on the error stack, but
-		 * FlushErrorState may have already been called (e.g., during
-		 * TRY-CATCH handling), which sets errordata_stack_depth = -1.
-		 * ReThrowError properly pushes the error back onto the stack
-		 * before re-throwing.
-		 */
-		ReThrowError(edata);
+		FreeErrorData(edata);
+		PG_RE_THROW();
 	}
 
 	/* Report error but let execution continue */
