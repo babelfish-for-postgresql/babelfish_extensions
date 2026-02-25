@@ -169,7 +169,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 17.8,
+      version: 17.9,
       upgrade-type: null
     },
     { 
