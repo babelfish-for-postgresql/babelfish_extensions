@@ -11887,6 +11887,8 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 	uint64 processed;
 	char *saved_query;
 	SPIPlanPtr saved_plan;
+	bool saved_mod_stmt;
+	bool saved_mod_stmt_set;
 	
 	original_query = stmt->sqlstmt->query;
 	target_table = pltsql_get_insert_exec_target_table();
@@ -11921,12 +11923,17 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 	}
 	
 	/*
-	 * Save the original query and plan so we can restore them after execution.
-	 * This is important because the same statement might be executed multiple
-	 * times (e.g., in a loop) and we need to rewrite it each time.
+	 * Save the original query, plan, and mod_stmt flags so we can restore them
+	 * after execution. This is important because:
+	 * 1. The same statement might be executed multiple times (e.g., in a loop)
+	 * 2. prepare_stmt_execsql sets mod_stmt=true for the rewritten INSERT
+	 * 3. If we don't restore mod_stmt, subsequent executions will fail the
+	 *    Assert(!stmt->mod_stmt) when SPI returns SPI_OK_SELECT
 	 */
 	saved_query = expr->query;
 	saved_plan = expr->plan;
+	saved_mod_stmt = stmt->mod_stmt;
+	saved_mod_stmt_set = stmt->mod_stmt_set;
 	
 	/*
 	 * Replace the query with the rewritten version and clear the plan
@@ -11997,9 +12004,11 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 	}
 	PG_END_TRY();
 	
-	/* Restore the original query and plan */
+	/* Restore the original query, plan, and mod_stmt flags */
 	expr->query = saved_query;
 	expr->plan = saved_plan;
+	stmt->mod_stmt = saved_mod_stmt;
+	stmt->mod_stmt_set = saved_mod_stmt_set;
 	
 	/* Free the rewritten query string */
 	pfree(rewritten_query.data);
