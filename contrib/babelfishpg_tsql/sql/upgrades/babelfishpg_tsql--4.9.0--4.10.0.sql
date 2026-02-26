@@ -38,8 +38,6 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
- 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_float_to_string_deprecated_in_4_9_0');
 
 DO $$
 DECLARE
