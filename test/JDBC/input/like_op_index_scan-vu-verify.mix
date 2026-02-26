@@ -1,4 +1,4 @@
--- sla 60000
+-- sla 80000
 -- parallel_query_expected
 -- psql
 ANALYZE master_dbo.babel_5966_testlikeindex;

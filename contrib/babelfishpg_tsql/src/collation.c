@@ -523,8 +523,8 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	 * We also set InvalidOid for highest_sort_key during creation for the same reason,
 	 * later we enclose it withing CollateExpr
 	 */
-
 	prefix->constcollid = ((Const *) rightop)->constcollid = InvalidOid;
+	
 	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
 
 	Assert(ltypeId == rtypeId);
