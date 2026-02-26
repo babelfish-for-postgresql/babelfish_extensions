@@ -11,9 +11,9 @@ jobs:
     name: ODBC Tests
     uses: ./.github/workflows/odbc-tests.yml
   
-  # run-dotnet-tests:
-  #   name: Dotnet Tests
-  #   uses: ./.github/workflows/dotnet-tests.yml
+  run-dotnet-tests:
+    name: Dotnet Tests
+    uses: ./.github/workflows/dotnet-tests.yml
 
   run-python-tests:
     name: Python Tests
@@ -43,11 +43,11 @@ jobs:
         name:  coverage-babelfish-extensions-jdbc
         path: contrib/
     
-    # - uses: actions/download-artifact@v4
-    #   id: download-dotnet-coverage
-    #   with:
-    #     name: coverage-babelfish-extensions-dotnet
-    #     path: contrib/
+    - uses: actions/download-artifact@v4
+      id: download-dotnet-coverage
+      with:
+        name: coverage-babelfish-extensions-dotnet
+        path: contrib/
     
     - uses: actions/download-artifact@v4
       id: download-odbc-coverage
