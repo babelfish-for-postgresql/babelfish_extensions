@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   extension-tests:
     env:
-      ENGINE_VER_FROM: BABEL_6_0_STABLE__PG_18_2
+      ENGINE_VER_FROM: BABEL_6_0_STABLE__PG_18_3
       EXTENSION_VER_FROM: BABEL_6_0_STABLE
       INSTALL_DIR: psql
 
@@ -24,7 +24,7 @@ jobs:
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           engine_branch: ${{env.ENGINE_VER_FROM}}
-          engine_version: 18.2
+          engine_version: 18.3
 
       - name: Compile ANTLR
         id: compile-antlr

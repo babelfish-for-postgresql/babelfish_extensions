@@ -423,6 +423,8 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 		}
 		pfree(resultRelInfo->ri_IndexRelationInfo);
 		pfree(resultRelInfo->ri_IndexRelationDescs);
+		resultRelInfo->ri_IndexRelationDescs = NULL;
+		resultRelInfo->ri_IndexRelationInfo = NULL;
 		resultRelInfo->ri_NumIndices = 0;
 	}
 
