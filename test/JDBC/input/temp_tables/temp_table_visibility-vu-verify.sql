@@ -357,7 +357,7 @@ GO
 EXEC p_def_cons;
 GO
 
--- Trying to create a default with UDF which should throw an error
+-- Test 4: Trying to create a default with UDF which should throw an error
 CREATE TABLE #temp_table_with_computed_udf (
 	id INT PRIMARY KEY,
 	credit BIGINT,
