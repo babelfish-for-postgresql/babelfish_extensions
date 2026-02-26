@@ -63,7 +63,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.datetime2fromparts(NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC) RENAME TO datetime2fromparts_deprecated_in_5_6_0;
+    ALTER FUNCTION sys.datetime2fromparts(NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC) RENAME TO datetime2fromparts_deprecated_in_6_1_0;
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -71,7 +71,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_deprecated_in_5_6_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_deprecated_in_6_1_0');
 
 CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year INT,
                                                                 IN p_month INT,
@@ -171,7 +171,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.datetime2fromparts(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) RENAME TO datetime2fromparts_text_deprecated_in_5_6_0;
+    ALTER FUNCTION sys.datetime2fromparts(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) RENAME TO datetime2fromparts_text_deprecated_in_6_1_0;
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -179,7 +179,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_text_deprecated_in_5_6_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_text_deprecated_in_6_1_0');
 
 CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year TEXT,
                                                                 IN p_month TEXT,
