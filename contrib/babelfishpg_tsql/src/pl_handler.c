@@ -6137,6 +6137,7 @@ _PG_init(void)
 	check_lang_as_clause_hook = pltsql_function_as_checker;
 	write_stored_proc_probin_hook = pltsql_function_probin_writer;
 	make_fn_arguments_from_stored_proc_probin_hook = pltsql_function_probin_reader;
+	is_insert_exec_rewrite_active_hook = pltsql_insert_exec_rewrite_active;
 	truncate_identifier_hook = pltsql_truncate_identifier;
 	cstr_to_name_hook = pltsql_cstr_to_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;

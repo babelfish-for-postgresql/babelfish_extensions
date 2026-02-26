@@ -88,6 +88,7 @@ typedef struct InsertExecRewriteContext
 	char	   *column_list;	/* Column list for INSERT (NULL = all columns) */
 	int			nest_level;		/* Nesting level for nested procedures */
 	bool		skip_triggers;	/* Skip AFTER triggers for current INSERT */
+	int			start_nested_tran_count;	/* NestedTranCount when INSERT EXEC started */
 } InsertExecRewriteContext;
 
 /* Global INSERT EXEC rewrite context */
@@ -764,56 +765,85 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 			/* Obtain output parameters for Insert Execute */
 			if (estate.insert_exec)
 			{
+				elog(LOG, "INSERT-EXEC-OUTPUT: insert_exec=true, rettype=%u, retval=%p, retisnull=%d",
+					 estate.rettype, (void *)estate.retval, estate.retisnull);
+				
 				/* 
-				 * Switch to function's memory context.
-				 * Skip if fn_cxt is NULL (can happen if function memory was freed).
+				 * Switch to TopTransactionContext for the datum copy.
+				 * We MUST use TopTransactionContext (not estate.func->fn_cxt) because:
+				 * - estate.func->fn_cxt belongs to the called procedure
+				 * - When the procedure returns, fn_cxt gets freed
+				 * - The caller (exec_stmt_execsql) needs to access this datum AFTER the procedure returns
+				 * - TopTransactionContext survives across function calls within the same transaction
 				 */
-				if (estate.func == NULL || estate.func->fn_cxt == NULL)
-				{
-					execute_call_insert_exec_retval = (Datum) 0;
-				}
-				else
-				{
-					oldcontext = MemoryContextSwitchTo(estate.func->fn_cxt);
+				oldcontext = MemoryContextSwitchTo(TopTransactionContext);
 
-					if (OidIsValid(estate.rettype))
+				if (OidIsValid(estate.rettype))
+				{
+					/* Get return type properties */
+					get_typlenbyval(estate.rettype, &typLen, &typByVal);
+					elog(LOG, "INSERT-EXEC-OUTPUT: rettype=%u is valid, typLen=%d, typByVal=%d",
+						 estate.rettype, typLen, typByVal);
+
+					if (typByVal)
 					{
-						/* Get return type properties */
-						get_typlenbyval(estate.rettype, &typLen, &typByVal);
-
-						if (typByVal)
-						{
-							execute_call_insert_exec_retval = estate.retval;
-						}
-						else
-						{
-							/* Pass-by-reference, need to copy the data */
-							execute_call_insert_exec_retval = datumCopy(estate.retval,
-																		typByVal,
-																		typLen);
-						}
+						execute_call_insert_exec_retval = estate.retval;
+						elog(LOG, "INSERT-EXEC-OUTPUT: typByVal=true, copied retval directly");
 					}
 					else
 					{
-						/* For cases where rettype is not properly set, handle gracefully */
-						typLen = -1;    /* Variable length */
-						typByVal = false; /* Pass by reference */
+						/* Pass-by-reference, need to copy the data */
+						execute_call_insert_exec_retval = datumCopy(estate.retval,
+																	typByVal,
+																	typLen);
+						elog(LOG, "INSERT-EXEC-OUTPUT: typByVal=false, called datumCopy to TopTransactionContext, result=%p",
+							 (void *)execute_call_insert_exec_retval);
 						
-						/* Only proceed if we have a valid return value */
-						if (estate.retval != (Datum) 0)
+						/* Debug: check the HeapTupleHeader */
+						if (typLen == -1 && execute_call_insert_exec_retval != (Datum) 0)
 						{
-							execute_call_insert_exec_retval = estate.retval;
-						}
-						else
-						{
-							/* Skip the exec_move_row_from_datum call entirely */
-							execute_call_insert_exec_retval = (Datum) 0;
+							HeapTupleHeader td = (HeapTupleHeader) DatumGetPointer(execute_call_insert_exec_retval);
+							Oid tupType = HeapTupleHeaderGetTypeId(td);
+							int32 tupTypmod = HeapTupleHeaderGetTypMod(td);
+							elog(LOG, "INSERT-EXEC-OUTPUT: HeapTupleHeader tupType=%u, tupTypmod=%d",
+								 tupType, tupTypmod);
 						}
 					}
-					MemoryContextSwitchTo(oldcontext);
 				}
+				else
+				{
+					elog(LOG, "INSERT-EXEC-OUTPUT: rettype=%u is NOT valid", estate.rettype);
+					/* For cases where rettype is not properly set, handle gracefully */
+					typLen = -1;    /* Variable length */
+					typByVal = false; /* Pass by reference */
+					
+					/* Only proceed if we have a valid return value */
+					if (estate.retval != (Datum) 0)
+					{
+						/* Copy to TopTransactionContext */
+						execute_call_insert_exec_retval = datumCopy(estate.retval, typByVal, typLen);
+						elog(LOG, "INSERT-EXEC-OUTPUT: copied retval with datumCopy to TopTransactionContext");
+					}
+					else
+					{
+						/* Skip the exec_move_row_from_datum call entirely */
+						execute_call_insert_exec_retval = (Datum) 0;
+						elog(LOG, "INSERT-EXEC-OUTPUT: retval is 0, skipping");
+					}
+				}
+				MemoryContextSwitchTo(oldcontext);
 			}
 
+			/*
+			 * For INSERT EXEC, we need to:
+			 * 1. Return NULL as the procedure's return value (so nothing extra is inserted)
+			 * 2. The OUTPUT parameters are already captured in execute_call_insert_exec_retval
+			 * 3. The SELECT results are captured via query rewriting into a temp table
+			 * 
+			 * Setting fcinfo->isnull = true tells the caller that the procedure
+			 * returned NULL, which prevents the OUTPUT parameter values from being
+			 * inserted into the target table.
+			 */
 			estate.retval = (Datum) 0;
 			fcinfo->isnull = true;
 		}
@@ -4518,14 +4548,15 @@ commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 	SimpleEcontextStackEntry *topEntry = simple_econtext_stack;
 	MemoryContext oldcontext = CurrentMemoryContext;
 
-	elog(DEBUG4, "TSQL TXN Auto commit transaction");
+	elog(LOG, "commit_stmt: txnStarted=%d, IsTransactionBlockActive=%d, insert_exec_rewrite_active=%d",
+		 txnStarted, IsTransactionBlockActive(), pltsql_insert_exec_rewrite_active());
 
 	/* Hold portals to make sure that cursors work */
 	HoldPinnedPortals();
 
 	if (txnStarted)
 	{
-		elog(DEBUG4, "TSQL TXN Commit internal transaction");
+		elog(LOG, "commit_stmt: Calling PLTsqlCommitTransaction");
 		PLTsqlCommitTransaction(NULL, false);
 	}
 
@@ -4534,6 +4565,7 @@ commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 		ForgetPortalSnapshots();
 	}
 
+	elog(LOG, "commit_stmt: Calling CommitTransactionCommand and StartTransactionCommand");
 	CommitTransactionCommand();
 	StartTransactionCommand();
 	MemoryContextSwitchTo(oldcontext);
@@ -4853,16 +4885,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	Portal		portal = NULL;
 	ListCell   *lc;
 	bool		is_returning = false;
-	
-	/*
-	 * Save the transaction count before INSERT EXEC.
-	 * When a procedure creates temp tables, table variables, or uses DML with
-	 * OUTPUT clause, it can change the transaction count. We need to restore
-	 * the transaction count after INSERT EXEC completes to avoid the
-	 * "Transaction count mismatch" error at the batch level.
-	 */
-	uint32 saved_nested_tran_count = 0;
-	bool restore_tran_count = false;
 
 	/*
 	 * Temporarily disable FMTONLY as it is causing issues with Import-Export.
@@ -5003,15 +5025,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			 */
 			if (stmt->insert_exec_target != NULL)
 			{
-				/*
-				 * Save the transaction count before INSERT EXEC.
-				 * The procedure may create temp tables, table variables, or use
-				 * DML with OUTPUT clause, which can change the transaction count.
-				 * We'll restore it after INSERT EXEC completes.
-				 */
-				saved_nested_tran_count = NestedTranCount;
-				restore_tran_count = true;
-				
 				elog(DEBUG1, "INSERT-EXEC: About to create temp table. target='%s', columns='%s'",
 					 stmt->insert_exec_target,
 					 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
@@ -5105,7 +5118,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			BeginCompositeTriggers(CurrentMemoryContext);
 			/* TSQL commands must run inside an explicit transaction */
 			if (!pltsql_disable_batch_auto_commit && support_tsql_trans &&
-				stmt->txn_data == NULL && !IsTransactionBlockActive())
+				stmt->txn_data == NULL && !IsTransactionBlockActive() && NestedTranCount == 0 &&
+				!pltsql_insert_exec_rewrite_active())
 			{
 				MemoryContext oldCxt = CurrentMemoryContext;
 
@@ -5261,8 +5275,16 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			 * datum (e.g., from a RETURN statement) that would cause a crash.
 			 */
 			row = (PLtsql_row *) stmt->target;
+			elog(LOG, "INSERT-EXEC-OUTPUT-CALLER: About to call exec_move_row_from_datum, nfields=%d, retval=%p",
+				 row->nfields, (void *)execute_call_insert_exec_retval);
 			if (row->nfields > 0)
 			{
+				/* Debug: check the HeapTupleHeader before calling exec_move_row_from_datum */
+				HeapTupleHeader td = (HeapTupleHeader) DatumGetPointer(execute_call_insert_exec_retval);
+				Oid tupType = HeapTupleHeaderGetTypeId(td);
+				int32 tupTypmod = HeapTupleHeaderGetTypMod(td);
+				elog(LOG, "INSERT-EXEC-OUTPUT-CALLER: HeapTupleHeader tupType=%u, tupTypmod=%d",
+					 tupType, tupTypmod);
 				exec_move_row_from_datum(estate, stmt->target, execute_call_insert_exec_retval);
 			}
 		}
@@ -5457,9 +5479,43 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		{
 			exec_drop_insert_exec_temp_table(estate);
 		}
+
+		/*
+		 * INSERT EXEC: Commit the transaction after successful completion.
+		 * This is needed because we skip the normal commit_stmt call above
+		 * (due to !estate->insert_exec condition) to avoid committing in the
+		 * middle of INSERT EXEC processing. Now that the flush and cleanup
+		 * are done, we need to commit to ensure the inserted rows are visible
+		 * to subsequent statements.
+		 * 
+		 * However, when using the query rewriting approach, we don't need to
+		 * call commit_stmt because we didn't start any implicit transactions
+		 * (we added !pltsql_insert_exec_rewrite_active() to the condition at
+		 * line 5091). The transaction state is already correct.
+		 */
+		elog(LOG, "INSERT EXEC cleanup: insert_exec=%d, insert_exec_rewrite_active=%d, TSQL_TRAN_STARTED=%d",
+			 stmt->insert_exec, pltsql_insert_exec_rewrite_active(),
+			 (estate->tsql_trigger_flags & TSQL_TRAN_STARTED) ? 1 : 0);
+		if (stmt->insert_exec &&
+			!pltsql_disable_batch_auto_commit &&
+			support_tsql_trans &&
+			(enable_txn_in_triggers || estate->trigdata == NULL) &&
+			!ro_func &&
+			!pltsql_insert_exec_rewrite_active())
+		{
+			elog(LOG, "INSERT EXEC cleanup: Calling commit_stmt");
+			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
+		}
+		else if (stmt->insert_exec)
+		{
+			elog(LOG, "INSERT EXEC cleanup: Skipping commit_stmt (query rewriting active)");
+		}
 	}
 	PG_FINALLY();
 	{
+		elog(LOG, "PG_FINALLY: insert_exec=%d, insert_exec_rewrite_active=%d",
+			 stmt->insert_exec, pltsql_insert_exec_rewrite_active());
+		
 		original_query_string = NULL;
 		is_schemabinding_view = true;
 
@@ -5489,18 +5545,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/* Clear INSERT EXEC rewrite context on any exit */
 		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
 		{
+			elog(LOG, "PG_FINALLY: Clearing INSERT EXEC rewrite context");
 			pltsql_clear_insert_exec_rewrite_context();
-		}
-		
-		/*
-		 * Restore the transaction count after INSERT EXEC completes.
-		 * This prevents the "Transaction count mismatch" error at the batch
-		 * level when the procedure created temp tables, table variables, or
-		 * used DML with OUTPUT clause.
-		 */
-		if (restore_tran_count)
-		{
-			NestedTranCount = saved_nested_tran_count;
 		}
 
 		if (is_cross_db)
@@ -6670,10 +6716,74 @@ exec_stmt_close(PLtsql_execstate *estate, PLtsql_stmt_close *stmt)
  * exec_stmt_commit
  *
  * Commit the transaction.
+ * 
+ * Note: This function is called for COMMIT statements inside PL/tsql procedures.
+ * It uses SPI_commit() to commit the PostgreSQL transaction, but we also need
+ * to manage NestedTranCount to maintain T-SQL transaction semantics.
  */
 static int
 exec_stmt_commit(PLtsql_execstate *estate, PLtsql_stmt_commit *stmt)
 {
+	/*
+	 * Block COMMIT that would terminate the outer transaction during INSERT EXEC.
+	 * 
+	 * We check both:
+	 * 1. estate->insert_exec - the traditional tuple store approach
+	 * 2. pltsql_insert_exec_rewrite_active() - the new query rewriting approach
+	 * 
+	 * SQL Server error 3916: Cannot use the COMMIT statement within an INSERT-EXEC 
+	 * statement unless BEGIN TRANSACTION is used first.
+	 * 
+	 * The check compares current NestedTranCount with the value at INSERT EXEC start.
+	 * If they're equal, it means no explicit BEGIN TRAN was issued inside the procedure,
+	 * so COMMIT should fail. If NestedTranCount > start value, there was an explicit
+	 * BEGIN TRAN, so COMMIT is allowed.
+	 */
+	bool rewrite_active = pltsql_insert_exec_rewrite_active();
+	int start_tran_count = pltsql_get_insert_exec_start_nested_tran_count();
+
+	/*
+	 * For rewrite approach: check if NestedTranCount is at or below the start value.
+	 * For traditional approach: check if NestedTranCount == 0.
+	 */
+	if (rewrite_active && start_tran_count >= 0 && NestedTranCount <= start_tran_count)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+				 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+	}
+	else if (estate->insert_exec && NestedTranCount == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+				 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+	}
+
+	/*
+	 * During INSERT EXEC, BEGIN TRANSACTION inside the procedure doesn't actually
+	 * start a PostgreSQL transaction block (it just increments NestedTranCount).
+	 * So COMMIT should also just decrement NestedTranCount without calling SPI_commit().
+	 * 
+	 * We detect this case by checking if we're in INSERT EXEC context and
+	 * NestedTranCount is above the start value (meaning there was a BEGIN TRAN
+	 * inside the procedure that we're now committing).
+	 */
+	if (rewrite_active && start_tran_count >= 0 && NestedTranCount > start_tran_count)
+	{
+		/* Just decrement NestedTranCount, don't call SPI_commit() */
+		NestedTranCount--;
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
+		return PLTSQL_RC_OK;
+	}
+
+	/*
+	 * Decrement NestedTranCount to maintain T-SQL transaction semantics.
+	 * In T-SQL, each COMMIT decrements the transaction count.
+	 */
+	if (NestedTranCount > 0)
+		NestedTranCount--;
+
 	SPI_commit();
 	SPI_start_transaction();
 
@@ -6691,6 +6801,17 @@ exec_stmt_commit(PLtsql_execstate *estate, PLtsql_stmt_commit *stmt)
 static int
 exec_stmt_rollback(PLtsql_execstate *estate, PLtsql_stmt_rollback *stmt)
 {
+	/*
+	 * Block ROLLBACK during INSERT EXEC.
+	 * Check both the traditional and query rewriting approaches.
+	 */
+	if (estate->insert_exec || pltsql_insert_exec_rewrite_active())
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+				 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+	}
+
 	SPI_rollback();
 	SPI_start_transaction();
 
@@ -10922,6 +11043,7 @@ pltsql_init_insert_exec_rewrite_context(void)
 	insert_exec_rewrite_ctx->column_list = NULL;
 	insert_exec_rewrite_ctx->nest_level = 0;
 	insert_exec_rewrite_ctx->skip_triggers = false;
+	insert_exec_rewrite_ctx->start_nested_tran_count = 0;
 }
 
 /*
@@ -10941,10 +11063,50 @@ pltsql_set_insert_exec_rewrite_context(const char *target_table, const char *col
 		insert_exec_rewrite_ctx->column_list = MemoryContextStrdup(TopMemoryContext, column_list);
 	insert_exec_rewrite_ctx->nest_level++;
 	
-	elog(DEBUG1, "INSERT-EXEC-REWRITE: Set context active, target=%s, columns=%s, nest_level=%d",
+	/*
+	 * Save the current NestedTranCount. This is used to check if COMMIT
+	 * is allowed during INSERT EXEC. SQL Server error 3916 says:
+	 * "Cannot use the COMMIT statement within an INSERT-EXEC statement
+	 * unless BEGIN TRANSACTION is used first."
+	 * 
+	 * This means COMMIT is only allowed if there was an explicit BEGIN TRAN
+	 * inside the procedure (i.e., NestedTranCount increased after INSERT EXEC started).
+	 * 
+	 * Note: We save the current NestedTranCount here, but it may be updated
+	 * later by pltsql_update_insert_exec_start_tran_count() when an implicit
+	 * transaction is started inside the procedure.
+	 */
+	insert_exec_rewrite_ctx->start_nested_tran_count = NestedTranCount;
+	
+	elog(DEBUG1, "INSERT-EXEC-REWRITE: Set context active, target=%s, columns=%s, nest_level=%d, start_nested_tran_count=%d",
 		 target_table ? target_table : "(null)",
 		 column_list ? column_list : "(all)",
-		 insert_exec_rewrite_ctx->nest_level);
+		 insert_exec_rewrite_ctx->nest_level,
+		 insert_exec_rewrite_ctx->start_nested_tran_count);
+}
+
+/*
+ * Update the start_nested_tran_count in the INSERT EXEC context.
+ * This is called when an implicit transaction is started inside a procedure
+ * during INSERT EXEC. We need to update the start count so that the COMMIT
+ * check correctly identifies that no explicit BEGIN TRAN was issued.
+ */
+void
+pltsql_update_insert_exec_start_tran_count(void)
+{
+	if (insert_exec_rewrite_ctx == NULL || !insert_exec_rewrite_ctx->active)
+		return;
+	
+	/*
+	 * Only update if the current NestedTranCount is greater than the saved
+	 * start count. This ensures we capture the implicit transaction.
+	 */
+	if (NestedTranCount > insert_exec_rewrite_ctx->start_nested_tran_count)
+	{
+		elog(DEBUG1, "INSERT-EXEC-REWRITE: Updating start_nested_tran_count from %d to %d",
+			 insert_exec_rewrite_ctx->start_nested_tran_count, NestedTranCount);
+		insert_exec_rewrite_ctx->start_nested_tran_count = NestedTranCount;
+	}
 }
 
 /*
@@ -11008,6 +11170,19 @@ pltsql_get_insert_exec_column_list(void)
 	if (insert_exec_rewrite_ctx == NULL || !insert_exec_rewrite_ctx->active)
 		return NULL;
 	return insert_exec_rewrite_ctx->column_list;
+}
+
+/*
+ * Get the NestedTranCount at the start of INSERT EXEC.
+ * This is used to check if COMMIT is allowed during INSERT EXEC.
+ * Returns -1 if not in INSERT EXEC context.
+ */
+int
+pltsql_get_insert_exec_start_nested_tran_count(void)
+{
+	if (insert_exec_rewrite_ctx == NULL || !insert_exec_rewrite_ctx->active)
+		return -1;
+	return insert_exec_rewrite_ctx->start_nested_tran_count;
 }
 
 /*
@@ -11754,6 +11929,19 @@ exec_drop_insert_exec_temp_table(PLtsql_execstate *estate)
 	estate->insert_exec_identity_insert = false;
 
 	/*
+	 * Check if we're in a valid transaction state before attempting to drop.
+	 * If the procedure executed a COMMIT that terminated the transaction,
+	 * or if the transaction is aborted, we cannot create a subtransaction.
+	 * In these cases, just skip the DROP - PostgreSQL will clean up the
+	 * temp table when the session ends.
+	 */
+	if (!IsTransactionState() || IsAbortedTransactionBlockState())
+	{
+		elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: Skipping drop, transaction not in valid state");
+		goto cleanup;
+	}
+
+	/*
 	 * Try to drop the temp table using a subtransaction.
 	 * This ensures that if the DROP fails, the failure is isolated
 	 * and doesn't affect the main transaction.
@@ -11807,6 +11995,7 @@ exec_drop_insert_exec_temp_table(PLtsql_execstate *estate)
 	}
 	PG_END_TRY();
 
+cleanup:
 	/* Free the TopMemoryContext allocations */
 	pfree(temp_table_name);
 	if (target_table_name)
