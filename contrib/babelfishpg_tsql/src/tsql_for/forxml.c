@@ -400,10 +400,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 			allnull = false;
 			if(NameStr(att->attname)[0] == '@')
 			{
-				/* Add space before attribute (except for the very first content) */
-				if (state->len > 0 && state->data[state->len - 1] != ' ')
-					appendStringInfoChar(state, ' ');
-				appendStringInfo(state, "%s=\"%s\"",
+				appendStringInfo(state, " %s=\"%s\"",
 								 NameStr(att->attname)+1,
 								 map_sql_value_to_xml_value(colval, datatype_oid, true));
 			}
