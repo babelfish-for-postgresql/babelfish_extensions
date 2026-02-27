@@ -2835,15 +2835,15 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 					errmsg("The 'rpc out' option is not available. The catalog needs to be upgraded.")));
 			}
 
-			/* Validate rpc out value: must be "true" or "false" (case-insensitive) */
+			/* Validate rpc out value: "true"/"false" or "yes"/"no" (case-insensitive, matching SQL Server) */
 			if (strlen(optvalue) == 0)
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_ERROR),
 					errmsg("Invalid option value for rpc out")));
 
-			if (strcmp(optvalue, "true") == 0)
+			if (pg_strcasecmp(optvalue, "true") == 0 || pg_strcasecmp(optvalue, "yes") == 0)
 				rpc_out_enabled = true;
-			else if (strcmp(optvalue, "false") == 0)
+			else if (pg_strcasecmp(optvalue, "false") == 0 || pg_strcasecmp(optvalue, "no") == 0)
 				rpc_out_enabled = false;
 			else
 				ereport(ERROR,

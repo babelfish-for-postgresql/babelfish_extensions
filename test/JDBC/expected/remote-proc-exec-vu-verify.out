@@ -622,7 +622,7 @@ EXEC bbf_rpe_server.invalid_db.dbo.sp_NoParams;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote database not found: database "invalid_db" does not exist)~~
+~~ERROR (Message: Remote server error: database "invalid_db" does not exist)~~
 
 
 -- Test 53: Invalid schema name
@@ -764,7 +764,7 @@ SELECT @ret AS return_code;
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -776,7 +776,7 @@ SELECT @ret2 AS return_code;
 GO
 ~~START~~
 int
-0
+-1
 ~~END~~
 
 

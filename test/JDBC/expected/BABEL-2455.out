@@ -320,7 +320,7 @@ select yourserver.master.dbo.f1(1);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: improper qualified name (too many dotted names): ourserver.master.dbo.f1)~~
+~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
 
 
 -- cleanup

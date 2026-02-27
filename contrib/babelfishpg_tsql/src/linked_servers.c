@@ -78,7 +78,7 @@ format_tds_error_for_user(int error_code, int severity, const char *error_msg)
 			break;
 			
 		case 911:  /* Database not found */
-			appendStringInfo(&buf, "Remote database not found: %s", clean_msg);
+			appendStringInfo(&buf, "Remote server error: %s", clean_msg);
 			break;
 			
 		case 2812: /* Procedure not found */
@@ -786,9 +786,9 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	int	connect_timeout = 0;
 
 	/* LOG: Function entry with context - proves this function was called */
-	elog(LOG, "DEBUG_LINKED_SERVER: linked_server_establish_connection() called for server: %s (context: %s)", 
+	LINKED_SERVER_DEBUG("Establishing connection to server: %s (%s)", 
 	     servername ? servername : "NULL",
-	     isTesting ? "connection testing" : "remote procedure/query execution");
+	     isTesting ? "testing" : "execution");
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -807,7 +807,6 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 ));
 
 		/* LOG: Foreign server retrieved successfully */
-		elog(LOG, "DEBUG_LINKED_SERVER: Retrieved foreign server configuration for: %s", servername);
 
 		mapping = GetUserMapping(GetUserId(), server->serverid);
 
@@ -818,7 +817,6 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 ));
 
 		/* LOG: User mapping retrieved successfully */
-		elog(LOG, "DEBUG_LINKED_SERVER: Retrieved user mapping for server: %s", servername);
 
 		if (LINKED_SERVER_INIT() == FAIL)
 			ereport(ERROR,
@@ -827,7 +825,6 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 ));
 
 		/* LOG: TDS library initialization successful */
-		elog(LOG, "DEBUG_LINKED_SERVER: TDS client library initialized successfully");
 
 		LINKED_SERVER_ERR_HANDLE(linked_server_err_handler);
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
@@ -909,7 +906,6 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
 		
 		/* LOG: Initiating TDS connection */
-		elog(LOG, "DEBUG_LINKED_SERVER: Initiating TDS connection to remote server");
 
 		*lsproc = LINKED_SERVER_OPEN(login, data_src);
 		if (!(*lsproc))
@@ -930,7 +926,6 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connected to remote server");
 		
 		/* LOG: Connection ready */
-		elog(LOG, "DEBUG_LINKED_SERVER: Connection ready for query execution");
 	}
 	PG_CATCH();
 	{
@@ -938,7 +933,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		LINKED_SERVER_DEBUG("LINKED SERVER: Failed to establish connection to remote server due to error");
 		
 		/* LOG: Connection failed */
-		elog(LOG, "DEBUG_LINKED_SERVER: Failed to establish connection to server: %s", 
+		LINKED_SERVER_DEBUG("Failed to establish connection to server: %s", 
 		     servername ? servername : "NULL");
 		
 		RESUME_INTERRUPTS();
@@ -1000,7 +995,7 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Executing query against remote server");
 
 		/* LOG: Metadata query execution starting */
-		elog(LOG, "DEBUG_LINKED_SERVER: Executing metadata query (sp_describe_first_result_set) on remote server");
+		LINKED_SERVER_DEBUG("Executing metadata query on remote server");
 
 		/* Execute the query on remote server */
 		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
@@ -1010,7 +1005,6 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 					 ));
 
 		/* LOG: Metadata query execution successful */
-		elog(LOG, "DEBUG_LINKED_SERVER: Metadata query executed successfully");
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Begin fetching results from remote server");
 
@@ -1174,7 +1168,7 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 					*tupdesc = BlessTupleDesc(*tupdesc);
 					
 					/* LOG: Metadata retrieval complete */
-					elog(LOG, "DEBUG_LINKED_SERVER: Metadata retrieval complete - %d columns described", numrows);
+					LINKED_SERVER_DEBUG("Metadata retrieval complete - %d columns", numrows);
 				}
 				else
 				{
@@ -1253,7 +1247,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Executing query against remote server");
 
 		/* LOG: Query execution starting */
-		elog(LOG, "DEBUG_LINKED_SERVER: Executing query on remote server");
+		LINKED_SERVER_DEBUG("Executing query on remote server");
 
 		/* Execute the query on remote server */
 		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
@@ -1274,7 +1268,6 @@ openquery_imp(PG_FUNCTION_ARGS)
 		}
 
 		/* LOG: Query execution successful */
-		elog(LOG, "DEBUG_LINKED_SERVER: Query executed successfully on remote server");
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Begin fetching results from remote server");
 
@@ -1388,14 +1381,13 @@ openquery_imp(PG_FUNCTION_ARGS)
 				LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Finished fetching results. Fetched %d rows", rowcount);
 
 				/* LOG: Result set summary */
-				elog(LOG, "DEBUG_LINKED_SERVER: Result set retrieved - %d columns, %d rows", colcount, rowcount);
+				LINKED_SERVER_DEBUG("Result set retrieved - %d columns, %d rows", colcount, rowcount);
 
 				tuplestore_donestoring(tupstore);
 			}
 		}
 		
 		/* LOG: Query completed with results */
-		elog(LOG, "DEBUG_LINKED_SERVER: Query completed successfully");
 	}
 	PG_FINALLY();
 	{
@@ -1415,12 +1407,17 @@ openquery_imp(PG_FUNCTION_ARGS)
 }
 
 /*
- * Map PostgreSQL/Babelfish type OID to TDS type for RPC parameter binding
+ * Map PostgreSQL/Babelfish type OID to TDS type for RPC parameter binding.
+ *
+ * Babelfish type OIDs are resolved at runtime via lookup_tsql_datatype_oid(),
+ * so they cannot be used in switch/case labels (C requires constant expressions).
+ * We check all Babelfish types in a single if-chain first, then fall through
+ * to a switch on standard PostgreSQL OIDs (compile-time constants).
  */
 int
 get_tds_type_from_pg_oid(Oid pgtype)
 {
-	/* First check for Babelfish-specific types */
+	/* Check for Babelfish-specific types (runtime OIDs, cannot use switch) */
 	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
 	{
 		Oid varchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varchar");
@@ -1430,79 +1427,77 @@ get_tds_type_from_pg_oid(Oid pgtype)
 		Oid int_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("int");
 		Oid bigint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bigint");
 		Oid tinyint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("tinyint");
+		Oid float_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("float");
+		Oid real_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("real");
+		Oid bit_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bit");
 		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
 		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
 		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
 		Oid date_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("date");
-		Oid float_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("float");
-		Oid real_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("real");
+		Oid datetimeoffset_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
+		Oid time_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("time");
+		Oid numeric_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("numeric");
+		Oid decimal_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("decimal");
+		Oid money_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
+		Oid smallmoney_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
 		Oid varbinary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varbinary");
 		Oid binary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary");
 		Oid uniqueidentifier_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("uniqueidentifier");
-		Oid bit_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bit");
-		
+
+		/* String types */
 		if (pgtype == varchar_oid)
 			return LS_TYPE_VARCHAR;
-		else if (pgtype == nvarchar_oid)
-			return LS_TYPE_NVARCHAR;  /* Unicode type - use UTF-16 LE encoding (type 231) */
-		else if (pgtype == char_oid)
+		if (pgtype == nvarchar_oid)
+			return LS_TYPE_NVARCHAR;
+		if (pgtype == char_oid)
 			return LS_TYPE_CHAR;
-		else if (pgtype == nchar_oid)
-			return LS_TYPE_NCHAR;    /* Unicode type - use UTF-16 LE encoding (type 239) */
-		else if (pgtype == int_oid)
+		if (pgtype == nchar_oid)
+			return LS_TYPE_NCHAR;
+
+		/* Integer types */
+		if (pgtype == int_oid)
 			return LS_TYPE_INT4;
-		else if (pgtype == bigint_oid)
+		if (pgtype == bigint_oid)
 			return LS_TYPE_INT8;
-		else if (pgtype == tinyint_oid)
+		if (pgtype == tinyint_oid)
 			return LS_TYPE_INT1;
-		else if (pgtype == datetime_oid || pgtype == smalldatetime_oid || pgtype == datetime2_oid || pgtype == date_oid)
-			return LS_TYPE_VARCHAR;  /* Send as ISO string, server will parse */
-		else if (pgtype == float_oid)
+
+		/* Floating point types */
+		if (pgtype == float_oid)
 			return LS_TYPE_FLOAT;
-		else if (pgtype == real_oid)
+		if (pgtype == real_oid)
 			return LS_TYPE_REAL;
-		else if (pgtype == varbinary_oid)
-			return LS_TYPE_VARBINARY;
-		else if (pgtype == binary_oid)
-			return LS_TYPE_BINARY;
-		else if (pgtype == uniqueidentifier_oid)
-			return LS_TYPE_VARCHAR;  /* Send as string (GUID format), server will parse */
-		else if (pgtype == bit_oid)
+
+		/* Boolean type */
+		if (pgtype == bit_oid)
 			return LS_TYPE_BIT;
-	}
-	
-	/* Check for Babelfish DECIMAL/NUMERIC types */
-	/* Send as VARCHAR since proper DBNUMERIC binary format is complex */
-	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
-	{
-		Oid numeric_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("numeric");
-		Oid decimal_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("decimal");
+
+		/* Binary types */
+		if (pgtype == varbinary_oid)
+			return LS_TYPE_VARBINARY;
+		if (pgtype == binary_oid)
+			return LS_TYPE_BINARY;
+
+		/* DateTime types - send as ISO string, server will parse */
+		if (pgtype == datetime_oid || pgtype == smalldatetime_oid ||
+			pgtype == datetime2_oid || pgtype == date_oid ||
+			pgtype == datetimeoffset_oid || pgtype == time_oid)
+			return LS_TYPE_VARCHAR;
+
+		/* Numeric/Decimal - send as string, server will convert */
 		if (pgtype == numeric_oid || pgtype == decimal_oid)
-			return LS_TYPE_VARCHAR;  /* Send as string, server will convert */
-	}
-	
-	/* Check for Babelfish MONEY/SMALLMONEY types */
-	/* Send as VARCHAR since proper DBNUMERIC binary format is complex */
-	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
-	{
-		Oid money_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
-		Oid smallmoney_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
+			return LS_TYPE_VARCHAR;
+
+		/* Money types - send as string, server will convert */
 		if (pgtype == money_oid || pgtype == smallmoney_oid)
-			return LS_TYPE_VARCHAR;  /* Send as string, server will convert */
+			return LS_TYPE_VARCHAR;
+
+		/* Uniqueidentifier - send as string (GUID format) */
+		if (pgtype == uniqueidentifier_oid)
+			return LS_TYPE_VARCHAR;
 	}
-	
-	/* Check for Babelfish DateTime types - send as string for simplicity */
-	/* Note: datetime, datetime2, smalldatetime already handled above in first block */
-	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
-	{
-		Oid datetimeoffset_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
-		Oid time_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("time");
-		
-		if (pgtype == datetimeoffset_oid || pgtype == time_oid)
-			return LS_TYPE_VARCHAR;  /* Send as ISO string, server will parse */
-	}
-	
-	/* Then check standard PostgreSQL types */
+
+	/* Standard PostgreSQL types (compile-time OIDs, switch is appropriate) */
 	switch (pgtype)
 	{
 		case INT2OID:
@@ -1516,7 +1511,7 @@ get_tds_type_from_pg_oid(Oid pgtype)
 		case FLOAT8OID:
 			return LS_TYPE_FLOAT;
 		case NUMERICOID:
-			return LS_TYPE_VARCHAR;  /* Send as string, server will convert */
+			return LS_TYPE_VARCHAR;
 		case BOOLOID:
 			return LS_TYPE_BIT;
 		case TEXTOID:
@@ -1525,10 +1520,10 @@ get_tds_type_from_pg_oid(Oid pgtype)
 			return LS_TYPE_VARCHAR;
 		case BPCHAROID:
 			return LS_TYPE_CHAR;
-	case DATEOID:
-		return LS_TYPE_VARCHAR;  /* Send as ISO string, server will parse */
-	case TIMEOID:
-		return LS_TYPE_VARCHAR;  /* Send as ISO string, server will parse */
+		case DATEOID:
+			return LS_TYPE_VARCHAR;
+		case TIMEOID:
+			return LS_TYPE_VARCHAR;
 		case TIMESTAMPOID:
 			return LS_TYPE_DATETIME;
 		case BYTEAOID:
@@ -1538,13 +1533,57 @@ get_tds_type_from_pg_oid(Oid pgtype)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("PostgreSQL type OID %u is not supported for remote procedure parameters", pgtype)));
 	}
-	
+
 	return 0;  /* Should not reach here */
 }
 
 /*
- * Convert a Datum value to raw bytes suitable for TDS RPC parameter binding
- * Returns palloc'd buffer containing the data
+ * Helper: Convert a text/varchar Datum to raw TDS bytes (no null terminator).
+ * Used for all string-like types (varchar, nvarchar, char, nchar, text, etc.)
+ *
+ * Note: Do NOT include null terminator in output — it causes UTF-16
+ * conversion errors in FreeTDS when passed via dbrpcparam.
+ */
+static void
+datum_text_to_tds_bytes(Datum value, void **data_out, DBINT *len_out)
+{
+	char *str = TextDatumGetCString(value);
+
+	*len_out = strlen(str);
+	*data_out = palloc(*len_out);
+	memcpy(*data_out, str, *len_out);
+	pfree(str);
+}
+
+/*
+ * Helper: Convert any Datum to TDS bytes via its type output function.
+ * The value is serialized to its text representation and sent as a string;
+ * the remote server will parse and convert to the appropriate type.
+ *
+ * Used for types that are complex to send in native TDS binary format
+ * (numeric, decimal, money, smallmoney, datetime variants, etc.)
+ */
+static void
+datum_output_to_tds_bytes(Datum value, Oid valtype, void **data_out, DBINT *len_out)
+{
+	Oid		typoutput;
+	bool	typIsVarlena;
+	char   *str;
+
+	getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
+	str = OidOutputFunctionCall(typoutput, value);
+	*len_out = strlen(str);
+	*data_out = palloc(*len_out);
+	memcpy(*data_out, str, *len_out);
+	pfree(str);
+}
+
+/*
+ * Convert a Datum value to raw bytes suitable for TDS RPC parameter binding.
+ * Returns palloc'd buffer containing the data.
+ *
+ * Babelfish type OIDs are resolved at runtime, so they are checked in a
+ * single if-chain first. Standard PostgreSQL types use a switch statement.
  */
 void
 convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnull,
@@ -1556,8 +1595,8 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		*len_out = 0;
 		return;
 	}
-	
-	/* Check for Babelfish-specific types first */
+
+	/* Check for Babelfish-specific types (runtime OIDs, single consolidated block) */
 	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
 	{
 		Oid varchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varchar");
@@ -1566,38 +1605,32 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		Oid nchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nchar");
 		Oid float_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("float");
 		Oid real_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("real");
-		Oid varbinary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varbinary");
-		Oid binary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary");
 		Oid bit_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bit");
 		Oid tinyint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("tinyint");
-		
+		Oid varbinary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varbinary");
+		Oid binary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary");
+		Oid numeric_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("numeric");
+		Oid decimal_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("decimal");
+		Oid money_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
+		Oid smallmoney_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
+		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
+		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
+		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
+		Oid date_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("date");
+		Oid datetimeoffset_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
+		Oid time_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("time");
+
 		/*
-		 * NVARCHAR and NCHAR - Send as UTF-8
-		 * FreeTDS has encoding issues with UTF-16 data passed via dbrpcparam.
-		 * When we pass pre-converted UTF-16, FreeTDS tries to re-encode it.
-		 * The server will handle UTF-8 to Unicode conversion internally.
+		 * String types (varchar, nvarchar, char, nchar) - send as UTF-8.
+		 * FreeTDS handles encoding conversion internally for nvarchar/nchar.
 		 */
-		if (valtype == nvarchar_oid || valtype == nchar_oid)
+		if (valtype == nvarchar_oid || valtype == nchar_oid ||
+			valtype == varchar_oid || valtype == char_oid)
 		{
-			char *str = TextDatumGetCString(value);
-			*len_out = strlen(str);
-			*data_out = palloc(*len_out);
-			memcpy(*data_out, str, *len_out);
-			pfree(str);
+			datum_text_to_tds_bytes(value, data_out, len_out);
 			return;
 		}
-		
-		/* VARCHAR and CHAR - Keep as UTF-8 */
-		if (valtype == varchar_oid || valtype == char_oid)
-		{
-			char *str = TextDatumGetCString(value);
-			*len_out = strlen(str);
-			*data_out = palloc(*len_out);
-			memcpy(*data_out, str, *len_out);
-			pfree(str);
-			return;
-		}
-		
+
 		/* Babelfish FLOAT (8 bytes) */
 		if (valtype == float_oid)
 		{
@@ -1606,7 +1639,7 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 			*((LS_DBFLT8 *)*data_out) = DatumGetFloat8(value);
 			return;
 		}
-		
+
 		/* Babelfish REAL (4 bytes) */
 		if (valtype == real_oid)
 		{
@@ -1615,7 +1648,7 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 			*((LS_DBREAL *)*data_out) = DatumGetFloat4(value);
 			return;
 		}
-		
+
 		/* Babelfish BIT */
 		if (valtype == bit_oid)
 		{
@@ -1624,102 +1657,45 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 			*((LS_DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
 			return;
 		}
-		
+
 		/* Babelfish TINYINT (unsigned 0-255, stored internally as int2) */
 		if (valtype == tinyint_oid)
 		{
-			*len_out = sizeof(unsigned char);  /* 1 byte for TINYINT */
+			*len_out = sizeof(unsigned char);
 			*data_out = palloc(*len_out);
-			/* Babelfish TINYINT is stored as int16 internally, extract unsigned byte */
 			*((unsigned char *)*data_out) = (unsigned char) DatumGetInt16(value);
 			return;
 		}
-		
+
 		/* Babelfish VARBINARY/BINARY */
 		if (valtype == varbinary_oid || valtype == binary_oid)
 		{
 			bytea *bytes = DatumGetByteaPP(value);
+
 			*len_out = VARSIZE_ANY_EXHDR(bytes);
 			*data_out = palloc(*len_out);
 			memcpy(*data_out, VARDATA_ANY(bytes), *len_out);
 			return;
 		}
-	}
-	
-	/* Check for Babelfish numeric/decimal types */
-	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
-	{
-		Oid numeric_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("numeric");
-		Oid decimal_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("decimal");
-		if (valtype == numeric_oid || valtype == decimal_oid)
+
+		/*
+		 * Types sent as string representation — the remote server parses
+		 * and converts to the appropriate native type:
+		 *   numeric, decimal, money, smallmoney,
+		 *   datetime, datetime2, smalldatetime, date, datetimeoffset, time
+		 */
+		if (valtype == numeric_oid || valtype == decimal_oid ||
+			valtype == money_oid || valtype == smallmoney_oid ||
+			valtype == datetime_oid || valtype == datetime2_oid ||
+			valtype == smalldatetime_oid || valtype == date_oid ||
+			valtype == datetimeoffset_oid || valtype == time_oid)
 		{
-			/* Convert Babelfish NUMERIC/DECIMAL to string for sending */
-			/* Server will parse and convert to the appropriate type */
-			Oid typoutput;
-			bool typIsVarlena;
-			char *str;
-			
-			getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
-			str = OidOutputFunctionCall(typoutput, value);
-			*len_out = strlen(str);
-			*data_out = palloc(*len_out);
-			memcpy(*data_out, str, *len_out);
-			pfree(str);
+			datum_output_to_tds_bytes(value, valtype, data_out, len_out);
 			return;
 		}
 	}
-	
-	/* Check for Babelfish MONEY/SMALLMONEY types */
-	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
-	{
-		Oid money_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
-		Oid smallmoney_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
-		if (valtype == money_oid || valtype == smallmoney_oid)
-		{
-			/* Convert Babelfish MONEY/SMALLMONEY to string for sending */
-			Oid typoutput;
-			bool typIsVarlena;
-			char *str;
-			
-			getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
-			str = OidOutputFunctionCall(typoutput, value);
-			*len_out = strlen(str);
-			*data_out = palloc(*len_out);
-			memcpy(*data_out, str, *len_out);
-			pfree(str);
-			return;
-		}
-	}
-	
-	/* Check for Babelfish DateTime types - send as string */
-	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
-	{
-		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
-		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
-		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
-		Oid date_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("date");
-		Oid datetimeoffset_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
-		Oid time_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("time");
-		
-		if (valtype == datetime_oid || valtype == datetime2_oid || 
-		    valtype == smalldatetime_oid || valtype == date_oid ||
-		    valtype == datetimeoffset_oid || valtype == time_oid)
-		{
-			/* Convert DateTime types to ISO string format */
-			Oid typoutput;
-			bool typIsVarlena;
-			char *str;
-			
-			getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
-			str = OidOutputFunctionCall(typoutput, value);
-			*len_out = strlen(str);
-			*data_out = palloc(*len_out);
-			memcpy(*data_out, str, *len_out);
-			pfree(str);
-			return;
-		}
-	}
-	
+
+	/* Standard PostgreSQL types (compile-time OIDs, switch is appropriate) */
 	switch (valtype)
 	{
 		case BOOLOID:
@@ -1729,7 +1705,7 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 				*((LS_DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
 			}
 			break;
-			
+
 		case INT2OID:
 			{
 				*len_out = sizeof(LS_DBSMALLINT);
@@ -1737,7 +1713,7 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 				*((LS_DBSMALLINT *)*data_out) = DatumGetInt16(value);
 			}
 			break;
-			
+
 		case INT4OID:
 			{
 				*len_out = sizeof(LS_DBINT);
@@ -1745,7 +1721,7 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 				*((LS_DBINT *)*data_out) = DatumGetInt32(value);
 			}
 			break;
-			
+
 		case INT8OID:
 			{
 				*len_out = sizeof(int64);
@@ -1753,7 +1729,7 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 				*((int64 *)*data_out) = DatumGetInt64(value);
 			}
 			break;
-			
+
 		case FLOAT4OID:
 			{
 				*len_out = sizeof(LS_DBREAL);
@@ -1761,7 +1737,7 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 				*((LS_DBREAL *)*data_out) = DatumGetFloat4(value);
 			}
 			break;
-			
+
 		case FLOAT8OID:
 			{
 				*len_out = sizeof(LS_DBFLT8);
@@ -1769,42 +1745,25 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 				*((LS_DBFLT8 *)*data_out) = DatumGetFloat8(value);
 			}
 			break;
-			
-	case TEXTOID:
-	case VARCHAROID:
-	case BPCHAROID:
-		{
-			char *str = TextDatumGetCString(value);
-			*len_out = strlen(str);  /* Do NOT include null terminator - causes UTF-16 conversion error */
-			*data_out = palloc(*len_out);
-			memcpy(*data_out, str, *len_out);
-			pfree(str);
-		}
-		break;
-			
+
+		case TEXTOID:
+		case VARCHAROID:
+		case BPCHAROID:
+			datum_text_to_tds_bytes(value, data_out, len_out);
+			break;
+
 		case BYTEAOID:
 			{
 				bytea *bytes = DatumGetByteaPP(value);
+
 				*len_out = VARSIZE_ANY_EXHDR(bytes);
 				*data_out = palloc(*len_out);
 				memcpy(*data_out, VARDATA_ANY(bytes), *len_out);
 			}
 			break;
-			
+
 		default:
-			/* For other types, convert to string representation */
-			{
-				Oid typoutput;
-				bool typIsVarlena;
-				char *str;
-				
-				getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
-				str = OidOutputFunctionCall(typoutput, value);
-				*len_out = strlen(str);  /* Do NOT include null terminator - causes UTF-16 conversion error */
-				*data_out = palloc(*len_out);
-				memcpy(*data_out, str, *len_out);
-				pfree(str);
-			}
+			datum_output_to_tds_bytes(value, valtype, data_out, len_out);
 			break;
 	}
 }
@@ -2034,6 +1993,9 @@ validate_remote_procedure_recursive(const char *server_name,
 	List *nested_calls = NIL;
 	ListCell *cell;
 	NestedProcedureInfo *current;  /* C90: declare at top of function */
+
+	/* Initialize query.data to NULL so PG_FINALLY can safely check it */
+	query.data = NULL;
 	
 	/* Check recursion depth limit (matches pl_exec.c MAX_EXEC_DEPTH_LIMIT) */
 	if (depth > 32)
@@ -2058,7 +2020,7 @@ validate_remote_procedure_recursive(const char *server_name,
 	/* Skip if already validated (avoid redundant connections) */
 	if (is_already_validated(*validated_procs_ptr, server_name, database_name, schema_name, procedure_name))
 	{
-		elog(LOG, "SELECT-only validation: Skipping %s.%s.%s.%s - already validated",
+		LINKED_SERVER_DEBUG("SELECT-only validation: Skipping %s.%s.%s.%s - already validated",
 		     server_name, database_name, schema_name, procedure_name);
 		return;
 	}
@@ -2094,7 +2056,7 @@ validate_remote_procedure_recursive(const char *server_name,
 			"WHERE o.name = N'%s' AND SCHEMA_NAME(o.schema_id) = N'%s' AND o.type IN ('P', 'PC')",
 			database_name, database_name, procedure_name, schema_name);
 		
-		elog(LOG, "SELECT-only validation: Fetching definition for procedure %s.%s.%s.%s (depth=%d)",
+		LINKED_SERVER_DEBUG("SELECT-only validation: Fetching definition for %s.%s.%s.%s (depth=%d)",
 			 server_name, database_name, schema_name, procedure_name, depth);
 		
 		/* Execute query */
@@ -2149,17 +2111,16 @@ validate_remote_procedure_recursive(const char *server_name,
 		/* Close validation connection */
 		if (validation_lsproc)
 		{
-			elog(LOG, "SELECT-only validation: Closing validation connection");
 			LINKED_SERVER_CANCEL(validation_lsproc);
 			LINKED_SERVER_CLOSE(validation_lsproc);
 		}
 	}
 	PG_END_TRY();
-	
+
 	if (definition == NULL)
 	{
-		if (query.data)
-			pfree(query.data);
+		pfree(query.data);
+		query.data = NULL;
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("Could not fetch definition for remote procedure %s.%s.%s.%s",
@@ -2167,8 +2128,6 @@ validate_remote_procedure_recursive(const char *server_name,
 				 errhint("Ensure the procedure exists and you have permission to view its definition")));
 	}
 	
-	elog(LOG, "SELECT-only validation: Analyzing procedure definition for %s (length: %zu bytes, depth=%d)",
-		 procedure_name, strlen(definition), depth);
 	
 	/* Validate this procedure with ANTLR (SELECT-only check) */
 	PG_TRY();
@@ -2180,8 +2139,6 @@ validate_remote_procedure_recursive(const char *server_name,
 			schema_name,
 			procedure_name);
 		
-		elog(LOG, "SELECT-only validation: Procedure %s passed ANTLR validation at depth %d", 
-		     procedure_name, depth);
 	}
 	PG_CATCH();
 	{
@@ -2197,7 +2154,7 @@ validate_remote_procedure_recursive(const char *server_name,
 	/* Extract nested procedure calls using C string parser */
 	nested_calls = extract_nested_procedure_calls(definition);
 	
-	elog(LOG, "SELECT-only validation: Found %d nested procedure calls in %s",
+	LINKED_SERVER_DEBUG("SELECT-only validation: Found %d nested procedure calls in %s",
 	     list_length(nested_calls), procedure_name);
 	
 	/* Recursively validate each nested procedure */
@@ -2211,7 +2168,7 @@ validate_remote_procedure_recursive(const char *server_name,
 		const char *nested_db = nested->database_name ? nested->database_name : database_name;
 		const char *nested_schema = nested->schema_name ? nested->schema_name : schema_name;
 		
-		elog(LOG, "SELECT-only validation: Recursively validating nested procedure %s.%s.%s.%s (depth=%d)",
+		LINKED_SERVER_DEBUG("SELECT-only validation: Validating nested %s.%s.%s.%s (depth=%d)",
 		     nested_server, nested_db, nested_schema, nested->procedure_name, depth + 1);
 		
 		/*
@@ -2236,10 +2193,13 @@ validate_remote_procedure_recursive(const char *server_name,
 		list_free(child_visited);
 	}
 	
-	/* Clean up */
-	pfree(definition);
-	pfree(query.data);
-	list_free_deep(nested_calls);
+	/* Clean up - free definition and query.data on all paths */
+	if (definition)
+		pfree(definition);
+	if (query.data)
+		pfree(query.data);
+	if (nested_calls)
+		list_free_deep(nested_calls);
 }
 
 /*
@@ -2261,7 +2221,7 @@ validate_procedure_select_only(const char *server_name,
 	List *visited_procs = NIL;   /* Per-branch list for circular detection */
 	List *validated_procs = NIL; /* Global list to skip redundant validation */
 	
-	elog(LOG, "SELECT-only validation: Starting recursive validation for %s.%s.%s.%s",
+	LINKED_SERVER_DEBUG("SELECT-only validation: Starting for %s.%s.%s.%s",
 		 server_name, database_name, schema_name, procedure_name);
 	
 	/* Start recursive validation at depth 0 with empty lists */
@@ -2278,8 +2238,6 @@ validate_procedure_select_only(const char *server_name,
 	list_free_deep(visited_procs);
 	list_free_deep(validated_procs);
 	
-	elog(LOG, "SELECT-only validation: Completed recursive validation for %s.%s.%s.%s",
-		 server_name, database_name, schema_name, procedure_name);
 }
 
 #endif

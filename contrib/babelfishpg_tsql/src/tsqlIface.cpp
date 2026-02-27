@@ -1141,6 +1141,23 @@ public:
 		{
 			auto fpnsds = ctx->func_proc_name_server_database_schema();
 
+			/* Reject 4-part function calls (server.database.schema.function) - these are not supported */
+			if (fpnsds->server)
+			{
+				/* Check if this is an XML method call - give a specific error message */
+				std::string proc_name = stripQuoteFromId(fpnsds->procedure);
+				bool is_xml_method = (pg_strcasecmp(proc_name.c_str(), "exist") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "value") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "query") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "nodes") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "modify") == 0);
+
+				if (is_xml_method)
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "XML method calls with schema-qualified column references (schema.table.column.method) are not currently supported in Babelfish", getLineAndPos(ctx));
+				else
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+			}
+
 			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
 			{
 				auto id = fpnsds->id().back();
@@ -9647,10 +9664,11 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	if (ctx->spatial_proc_name_server_database_schema())
 	{
 		/*
-		 * Check if this is an XML method call (db.table.xmlcolumn.exist, .value, .query, .nodes, .modify)
-		 * XML methods are 4-part names but NOT remote procedure calls, so don't throw error for them.
+		 * 4-part names in function call context: distinguish between XML method calls
+		 * (schema.table.xmlcolumn.method) and remote procedure calls (server.db.schema.func).
+		 * Both are unsupported in function-call context but deserve different error messages.
 		 */
-		if (ctx->spatial_proc_name_server_database_schema()->schema) 
+		if (ctx->spatial_proc_name_server_database_schema()->schema)
 		{
 			std::string method_name;
 			if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg())
@@ -9659,15 +9677,17 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 				method_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg());
 			else if (ctx->spatial_proc_name_server_database_schema()->column)
 				method_name = stripQuoteFromId(ctx->spatial_proc_name_server_database_schema()->column);
-			
-			/* Check if this is an XML method - if not, it's a remote procedure call */
+
+			/* Check if this is an XML method - give a specific error message */
 			bool is_xml_method = (pg_strcasecmp(method_name.c_str(), "exist") == 0) ||
 			                     (pg_strcasecmp(method_name.c_str(), "value") == 0) ||
 			                     (pg_strcasecmp(method_name.c_str(), "query") == 0) ||
 			                     (pg_strcasecmp(method_name.c_str(), "nodes") == 0) ||
 			                     (pg_strcasecmp(method_name.c_str(), "modify") == 0);
-			
-			if (!is_xml_method)
+
+			if (is_xml_method)
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "XML method calls with schema-qualified column references (schema.table.column.method) are not currently supported in Babelfish", getLineAndPos(ctx));
+			else
 				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
 		}
 

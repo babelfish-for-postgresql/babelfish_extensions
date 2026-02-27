@@ -884,7 +884,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	Portal portal = NULL;
 	DestReceiver *receiver = NULL;
 	QueryCompletion qc;
-	uint64 processed = 0;
 	ListCell *lc;
 	List *param_data_buffers = NIL;  /* Track parameter buffers for deferred cleanup */
 	
@@ -913,7 +912,7 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 							 stmt->schema_name ? stmt->schema_name : "dbo",
 							 stmt->proc_name);
 	
-	elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Executing procedure: %s", full_proc_name);
+	LINKED_SERVER_DEBUG("Executing remote procedure: %s", full_proc_name);
 	
 	PG_TRY();
 	{
@@ -921,7 +920,7 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * PHASE 1: Validate procedure contains only SELECT statements
 		 * This will establish a temporary connection, fetch the definition, validate it, and close
 		 */
-		elog(LOG, "SELECT-only validation: Validating procedure %s", full_proc_name);
+		LINKED_SERVER_DEBUG("SELECT-only validation: Validating procedure %s", full_proc_name);
 		
 		/* Temporarily establish connection just for validation */
 		linked_server_establish_connection(stmt->server_name, &validation_lsproc, false);
@@ -935,14 +934,12 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		/* Validation connection has been closed internally - mark as cleaned up */
 		validation_lsproc = NULL;
 		
-		elog(LOG, "SELECT-only validation: Procedure %s passed validation", full_proc_name);
 		
 		/*
 		 * PHASE 2: Open fresh TDS connection for RPC execution
 		 * Clean connection with no SQL query history
 		 */
 		Assert(lsproc == NULL);  /* Sanity check - RPC connection must be clean */
-		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Opening fresh connection for RPC");
 		linked_server_establish_connection(stmt->server_name, &lsproc, false);
 
 		/* Initialize RPC call on clean connection */
@@ -951,7 +948,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Failed to initialize RPC call for procedure %s", full_proc_name)));
 		
-		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - RPC call initialized, binding parameters");
 		
 		/* Bind each parameter */
 		foreach(lc, stmt->params)
@@ -974,8 +970,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			tds_type = get_tds_type_from_pg_oid(valtype);
 			
 			/* DEBUG: Log before conversion */
-			elog(LOG, "DEBUG_RPC_PARAM: Converting parameter: name=%s, pg_type_oid=%u, tds_type=%d",
-			     p->name ? p->name : "(positional)", valtype, tds_type);
 			
 			/* Convert Datum to raw bytes */
 			convert_datum_to_tds_bytes(val, valtype, valtypmod, isnull, 
@@ -1003,22 +997,9 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			}
 			
 			/* DEBUG: Log parameter details before dbrpcparam call */
-			elog(LOG, "DEBUG_RPC_PARAM: Binding parameter: name=%s, tds_type=%d, maxlen=%d, len=%d, isnull=%d",
+			LINKED_SERVER_DEBUG_FINER("RPC param: name=%s, tds_type=%d, maxlen=%d, len=%d, isnull=%d",
 				 p->name ? p->name : "(positional)", tds_type, maxlen, param_len, isnull);
 			
-			/* Log first bytes if data present */
-			if (param_data && param_len > 0)
-			{
-				int bytes_to_show = (param_len < 20) ? param_len : 20;
-				StringInfoData hex_dump;
-				initStringInfo(&hex_dump);
-				for (int i = 0; i < bytes_to_show; i++)
-				{
-					appendStringInfo(&hex_dump, "%02x ", ((unsigned char*)param_data)[i]);
-				}
-				elog(LOG, "DEBUG_RPC_PARAM: Parameter data first %d bytes (hex): %s", bytes_to_show, hex_dump.data);
-				pfree(hex_dump.data);
-			}
 			
 			/* Bind the parameter */
 			if (LINKED_SERVER_RPC_PARAM(lsproc,
@@ -1046,7 +1027,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				param_data_buffers = lappend(param_data_buffers, param_data);
 		}
 		
-		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - All parameters bound, sending RPC call");
 		
 		/* Send the RPC call */
 		if (LINKED_SERVER_RPC_SEND(lsproc) != SUCCEED)
@@ -1054,7 +1034,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Failed to send RPC call for procedure %s", full_proc_name)));
 		
-		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - RPC call sent, data transmitted to server");
 		
 		/*
 		 * NOW it's safe to free parameter data buffers - dbrpcsend() has transmitted the data.
@@ -1071,7 +1050,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			}
 			list_free(param_data_buffers);
 			param_data_buffers = NIL;
-			elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Parameter buffers freed after RPC send");
 		}
 		
 		/* Execute the RPC */
@@ -1080,7 +1058,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Failed to execute remote procedure %s", full_proc_name)));
 		
-		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Remote procedure executed successfully");
 		
 		/* Get first result set (procedures may return multiple result sets) */
 		if ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
@@ -1098,7 +1075,7 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				void *val[MAX_COLS_SELECT];
 				
 				/* Procedure returned a result set */
-				elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Result set with %d columns", colcount);
+				LINKED_SERVER_DEBUG("Remote RPC result set with %d columns", colcount);
 				
 				/* Build TupleDesc from column metadata */
 				tupdesc = CreateTemplateTupleDesc(colcount);
@@ -1149,7 +1126,7 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					pfree(nulls);
 				}
 				
-				elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Fetched %d rows", rowcount);
+				LINKED_SERVER_DEBUG("Remote RPC fetched %d rows", rowcount);
 				
 				/* Finalize tuplestore */
 				tuplestore_donestoring(tupstore);
@@ -1173,16 +1150,14 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				receiver = CreateDestReceiver(DestRemote);
 				SetRemoteDestReceiverParams(receiver, portal);
 				
-				if (PortalRun(portal,
-							  FETCH_ALL,
-							  true,
-							  true,
-							  receiver,
-							  receiver,
-							  &qc))
-					processed = portal->portalPos;
+				PortalRun(portal,
+						  FETCH_ALL,
+						  true,
+						  true,
+						  receiver,
+						  receiver,
+						  &qc);
 				
-				elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Sent %d rows to client", (int)processed);
 				
 				receiver->rDestroy(receiver);
 				
@@ -1213,7 +1188,7 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				ListCell *lc_out;
 				int param_idx;
 				
-				elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Retrieving %d OUTPUT parameter values", num_rets);
+				LINKED_SERVER_DEBUG("Retrieving %d OUTPUT parameter values", num_rets);
 				
 				/*
 				 * Iterate through the stmt->params list to find OUTPUT parameters
@@ -1251,7 +1226,7 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 								int ret_len = LINKED_SERVER_RET_LEN(lsproc, ret_idx);
 								int ret_type = LINKED_SERVER_RET_TYPE(lsproc, ret_idx);
 								
-								elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - OUTPUT param %s: type=%d, len=%d, data=%s",
+								LINKED_SERVER_DEBUG_FINER("OUTPUT param %s: type=%d, len=%d, data=%s",
 									 p->name ? p->name : "(positional)",
 									 ret_type, ret_len,
 									 ret_data ? "present" : "NULL");
@@ -1300,7 +1275,15 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		exec_set_rowcount(rowcount);
 		exec_set_found(estate, rowcount != 0);
 		
-		elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Remote procedure execution completed successfully");
+		/*
+		 * PHASE 4: Capture the remote procedure's return status.
+		 * In TDS protocol, dbretstatus() returns the RETURN value from the
+		 * remote stored procedure (the value in "RETURN <n>").
+		 * Store it in pltsql_proc_return_code so the caller can read it.
+		 */
+		pltsql_proc_return_code = LINKED_SERVER_RET_STATUS(lsproc);
+
+		LINKED_SERVER_DEBUG("Remote procedure completed, return status=%d", pltsql_proc_return_code);
 	}
 	PG_FINALLY();
 	{
@@ -1308,7 +1291,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		if (param_data_buffers != NIL)
 		{
 			ListCell *buf_cell;
-			elog(LOG, "DEBUG_LINKED_SERVER: (CLEANUP) - Freeing parameter buffers in error path");
 			foreach(buf_cell, param_data_buffers)
 			{
 				void *buf = lfirst(buf_cell);
@@ -1322,7 +1304,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		/* Clean up validation connection if error occurred during validation */
 		if (validation_lsproc)
 		{
-			elog(LOG, "DEBUG_LINKED_SERVER: (CLEANUP) - Closing validation connection");
 			LINKED_SERVER_CANCEL(validation_lsproc);
 			LINKED_SERVER_CLOSE(validation_lsproc);
 			validation_lsproc = NULL;
@@ -1331,7 +1312,6 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		/* Clean up RPC connection if error occurred during RPC */
 		if (lsproc)
 		{
-			elog(LOG, "DEBUG_LINKED_SERVER: (RPC) - Closing connection");
 			LINKED_SERVER_CANCEL(lsproc);
 			LINKED_SERVER_CLOSE(lsproc);
 			lsproc = NULL;
@@ -1367,11 +1347,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	 * Check if this is a remote procedure call via linked server.
 	 * If server_name is set, this is a 4-part name like: server.db.schema.proc
 	 */
-	elog(LOG, "DEBUG_REMOTE_EXEC: Checking server_name - value: %s, db_name: %s, schema_name: %s, proc_name: %s",
-		 stmt->server_name ? stmt->server_name : "NULL",
-		 stmt->db_name ? stmt->db_name : "NULL",
-		 stmt->schema_name ? stmt->schema_name : "NULL",
-		 stmt->proc_name ? stmt->proc_name : "NULL");
 	
 	if (stmt->server_name != NULL)
 	{
@@ -1396,7 +1371,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					 errhint("Execute: EXEC sp_serveroption '%s', 'rpc out', 'true'", 
 							 stmt->server_name)));
 		
-		elog(LOG, "DEBUG_REMOTE_EXEC: RPC out is enabled, proceeding with remote execution for server: %s", stmt->server_name);
 		
 		/* Execute remote procedure using secure TDS RPC parameter binding */
 #ifdef ENABLE_TDS_LIB
@@ -1409,8 +1383,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			if (stmt->return_code_dno >= 0)
 			{
 				PLtsql_var *return_code = (PLtsql_var *) estate->datums[stmt->return_code_dno];
-				/* Set return code to 0 (success) for now */
-				exec_assign_value(estate, (PLtsql_datum *) return_code, Int32GetDatum(0), false, INT4OID, 0);
+				/* Use the actual return status from the remote procedure (set by execute_remote_procedure_rpc) */
+				exec_assign_value(estate, (PLtsql_datum *) return_code, Int32GetDatum(pltsql_proc_return_code), false, INT4OID, 0);
 			}
 			
 			return remote_rc;
@@ -1424,7 +1398,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 #endif
 	}
 	
-	elog(LOG, "DEBUG_REMOTE_EXEC: Taking LOCAL execution path (server_name is NULL)");
 
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection

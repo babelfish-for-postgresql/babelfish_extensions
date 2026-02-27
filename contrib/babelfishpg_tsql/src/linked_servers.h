@@ -119,6 +119,7 @@ typedef DBPROCESS * LinkedServerProcess;
 #define LINKED_SERVER_RET_DATA(process, retnum)		dbretdata(process, retnum)
 #define LINKED_SERVER_RET_LEN(process, retnum)		dbretlen(process, retnum)
 #define LINKED_SERVER_RET_TYPE(process, retnum)		dbrettype(process, retnum)
+#define LINKED_SERVER_RET_STATUS(process)			dbretstatus(process)
 
 #define LS_NTBSTRINGBING	NTBSTRINGBIND
 #define	LS_INTBIND		INTBIND
@@ -202,11 +203,62 @@ typedef int *LinkedServerProcess;
 #define LINKED_SERVER_SET_QUERY_TIMEOUT(timeout) 	((void)0)
 #define LINKED_SERVER_SET_CONNECT_TIMEOUT(timeout)	((void)0)
 
+/* RPC (Remote Procedure Call) stubs - no-op when TDS library is not available */
+#define LINKED_SERVER_RPC_INIT(process, procname)	((void)0)
+#define LINKED_SERVER_RPC_PARAM(process, name, status, type, maxlen, datalen, value) \
+										((void)0)
+#define LINKED_SERVER_RPC_SEND(process)			((void)0)
+#define LINKED_SERVER_RPC_EXEC(process)			((void)0)
+
+/* RPC OUTPUT parameter retrieval stubs */
+#define LINKED_SERVER_NUM_RETS(process)			(0)
+#define LINKED_SERVER_RET_NAME(process, retnum)		(NULL)
+#define LINKED_SERVER_RET_DATA(process, retnum)		(NULL)
+#define LINKED_SERVER_RET_LEN(process, retnum)		(0)
+#define LINKED_SERVER_RET_TYPE(process, retnum)		(0)
+#define LINKED_SERVER_RET_STATUS(process)		(0)
+
 #define LS_NTBSTRINGBING	0
 #define	LS_INTBIND		0
 
 #define LS_BYTE			unsigned char
 #define LS_TYPEINFO		int
+
+/* TDS Type Abstraction Layer stubs */
+#define LS_TYPE_VARCHAR      0
+#define LS_TYPE_NVARCHAR     0
+#define LS_TYPE_CHAR         0
+#define LS_TYPE_NCHAR        0
+#define LS_TYPE_TEXT         0
+#define LS_TYPE_NTEXT        0
+#define LS_TYPE_INT1         0
+#define LS_TYPE_INT2         0
+#define LS_TYPE_INT4         0
+#define LS_TYPE_INT8         0
+#define LS_TYPE_FLOAT        0
+#define LS_TYPE_REAL         0
+#define LS_TYPE_BIT          0
+#define LS_TYPE_DATETIME     0
+#define LS_TYPE_DATETIME4    0
+#define LS_TYPE_DATETIME2    0
+#define LS_TYPE_DATE         0
+#define LS_TYPE_TIME         0
+#define LS_TYPE_NUMERIC      0
+#define LS_TYPE_DECIMAL      0
+#define LS_TYPE_VARBINARY    0
+#define LS_TYPE_BINARY       0
+#define LS_TYPE_UNIQUE       0
+#define LS_TYPE_DATETIMEOFFSET 0
+
+/* FreeTDS data type stubs */
+#define LS_DBFLT8            double
+#define LS_DBREAL            float
+#define LS_DBINT             int
+#define LS_DBSMALLINT        short
+#define LS_DBBOOL            unsigned char
+#define LS_DBDATETIME        int
+
+typedef int LINKED_SERVER_RETCODE;
 
 #endif
 
