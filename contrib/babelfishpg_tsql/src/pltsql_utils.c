@@ -120,16 +120,42 @@ PLTsqlProcessTransaction(Node *parsetree,
 	{
 		case TRANS_STMT_BEGIN:
 			{
-				PLTsqlStartTransaction(txnName);
+				PLTsqlStartTransaction(txnName, true);  /* explicit BEGIN TRAN */
 			}
 			break;
 
 		case TRANS_STMT_COMMIT:
 			{
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->insert_exec &&
-					NestedTranCount <= 1)
+				/*
+				 * Block COMMIT that would terminate the outer transaction during INSERT EXEC.
+				 * 
+				 * We check both:
+				 * 1. estate->insert_exec - the traditional tuple store approach
+				 * 2. pltsql_insert_exec_rewrite_active() - the new query rewriting approach
+				 * 
+				 * SQL Server error 3916: Cannot use the COMMIT statement within an INSERT-EXEC 
+				 * statement unless BEGIN TRANSACTION is used first.
+				 * 
+				 * The check compares current NestedTranCount with the value at INSERT EXEC start.
+				 * If they're equal, it means no explicit BEGIN TRAN was issued inside the procedure,
+				 * so COMMIT should fail. If NestedTranCount > start value, there was an explicit
+				 * BEGIN TRAN, so COMMIT is allowed.
+				 */
+				bool estate_insert_exec = exec_state_call_stack &&
+									   exec_state_call_stack->estate &&
+									   exec_state_call_stack->estate->insert_exec;
+				bool rewrite_active = pltsql_insert_exec_rewrite_active();
+				int start_tran_count = pltsql_get_insert_exec_start_nested_tran_count();
+				
+				/*
+				 * For rewrite approach: check if NestedTranCount is at or below the start value.
+				 * For traditional approach: check if NestedTranCount == 0.
+				 */
+				if (rewrite_active && start_tran_count >= 0 && NestedTranCount <= start_tran_count)
+					ereport(ERROR,
+							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+				else if (estate_insert_exec && NestedTranCount == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
@@ -140,9 +166,16 @@ PLTsqlProcessTransaction(Node *parsetree,
 
 		case TRANS_STMT_ROLLBACK:
 			{
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->insert_exec)
+				/*
+				 * Block ROLLBACK during INSERT EXEC.
+				 * Check both the traditional and query rewriting approaches.
+				 */
+				bool in_insert_exec = (exec_state_call_stack &&
+									   exec_state_call_stack->estate &&
+									   exec_state_call_stack->estate->insert_exec) ||
+									  pltsql_insert_exec_rewrite_active();
+				
+				if (in_insert_exec)
 					ereport(ERROR,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
@@ -784,11 +817,35 @@ pltsql_read_procedure_info(StringInfo inout_str,
 }
 
 void
-PLTsqlStartTransaction(char *txnName)
+PLTsqlStartTransaction(char *txnName, bool is_explicit)
 {
-	elog(DEBUG2, "TSQL TXN Start transaction %d", NestedTranCount);
 	if (!IsTransactionBlockActive())
 	{
+		/*
+		 * When in INSERT EXEC context, we're already inside a transaction
+		 * (the INSERT EXEC's transaction), but IsTransactionBlockActive()
+		 * returns false because we're in SPI context. In this case, we should
+		 * NOT call BeginTransactionBlock() because:
+		 * 1. We're already in a transaction
+		 * 2. BeginTransactionBlock() would put the transaction in TBLOCK_BEGIN
+		 *    state, but CommitTransactionCommand() won't be called to transition
+		 *    it to TBLOCK_INPROGRESS, causing "unexpected state BEGIN" error
+		 *    when COMMIT is later executed.
+		 * 
+		 * Instead, we just increment NestedTranCount to track the nested
+		 * transaction level.
+		 */
+		if (pltsql_insert_exec_rewrite_active())
+		{
+			/* Just increment NestedTranCount, don't start a new transaction block */
+			++NestedTranCount;
+			
+			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
+				(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
+			
+			return;
+		}
+		
 		Assert(NestedTranCount == 0);
 		BeginTransactionBlock();
 
@@ -803,12 +860,48 @@ PLTsqlStartTransaction(char *txnName)
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
 		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
+
+	/*
+	 * If we're in INSERT EXEC context and this is an implicit transaction
+	 * (not an explicit BEGIN TRAN), update the start_nested_tran_count so that
+	 * the COMMIT check correctly identifies that no explicit BEGIN TRAN was issued.
+	 * 
+	 * This is needed because the INSERT EXEC context saves start_nested_tran_count
+	 * before the procedure starts executing, but implicit transactions are
+	 * started inside the procedure by INSERT/UPDATE/DELETE statements.
+	 */
+	if (!is_explicit && pltsql_insert_exec_rewrite_active())
+	{
+		pltsql_update_insert_exec_start_tran_count();
+	}
 }
 
 void
 PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 {
-	elog(DEBUG2, "TSQL TXN Commit transaction %d", NestedTranCount);
+	/*
+	 * During INSERT EXEC, BEGIN TRANSACTION inside the procedure doesn't actually
+	 * start a PostgreSQL transaction block (it just increments NestedTranCount).
+	 * So COMMIT should also just decrement NestedTranCount without calling
+	 * RequireTransactionBlock or EndTransactionBlock.
+	 * 
+	 * We detect this case by checking if we're in INSERT EXEC context and
+	 * NestedTranCount is above the start value (meaning there was a BEGIN TRAN
+	 * inside the procedure that we're now committing).
+	 */
+	if (pltsql_insert_exec_rewrite_active())
+	{
+		int start_tran_count = pltsql_get_insert_exec_start_nested_tran_count();
+		if (start_tran_count >= 0 && NestedTranCount > start_tran_count)
+		{
+			/* Just decrement NestedTranCount, don't call EndTransactionBlock() */
+			--NestedTranCount;
+			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
+				(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
+			return;
+		}
+	}
+	
 	if (NestedTranCount <= 1)
 	{
 		RequireTransactionBlock(true, "COMMIT");
@@ -859,16 +952,41 @@ PLTsqlRollbackTransaction(char *txnName, QueryCompletion *qc, bool chain)
 void
 pltsql_start_txn(void)
 {
-	PLTsqlStartTransaction(NULL);
-	CommitTransactionCommand();
+	/*
+	 * During INSERT EXEC, we're already in a transaction context.
+	 * PLTsqlStartTransaction will just increment NestedTranCount without
+	 * calling BeginTransactionBlock(). In this case, we should also skip
+	 * CommitTransactionCommand() to avoid messing up the transaction state.
+	 */
+	bool in_insert_exec = pltsql_insert_exec_rewrite_active();
+	
+	PLTsqlStartTransaction(NULL, false);  /* implicit transaction */
+	
+	if (!in_insert_exec)
+	{
+		CommitTransactionCommand();
+	}
 }
 
 void
 pltsql_commit_txn(void)
 {
+	/*
+	 * During INSERT EXEC, we're already in a transaction context.
+	 * PLTsqlCommitTransaction will just decrement NestedTranCount without
+	 * calling EndTransactionBlock(). In this case, we should also skip
+	 * CommitTransactionCommand() and StartTransactionCommand() to avoid
+	 * messing up the transaction state.
+	 */
+	bool in_insert_exec = pltsql_insert_exec_rewrite_active();
+	
 	PLTsqlCommitTransaction(NULL, false);
-	CommitTransactionCommand();
-	StartTransactionCommand();
+	
+	if (!in_insert_exec)
+	{
+		CommitTransactionCommand();
+		StartTransactionCommand();
+	}
 }
 
 void

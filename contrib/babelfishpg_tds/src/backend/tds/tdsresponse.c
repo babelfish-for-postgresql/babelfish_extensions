@@ -2827,6 +2827,30 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 			{
 				is_proc = true;
 				command_type = TDS_CMD_EXECUTE;
+				
+				/*
+				 * For INSERT EXEC with dynamic SQL (INSERT INTO t EXEC(@var)),
+				 * we need to send the row count. The insert_exec field is set
+				 * when this is an INSERT EXEC statement.
+				 */
+				if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+				{
+					PLtsql_stmt_exec_batch *batch_stmt = (PLtsql_stmt_exec_batch *) stmt;
+					if (batch_stmt->insert_exec)
+					{
+						command_type = TDS_CMD_INSERT;
+						row_count_valid = true;
+					}
+				}
+				else if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+				{
+					PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) stmt;
+					if (exec_stmt->insert_exec)
+					{
+						command_type = TDS_CMD_INSERT;
+						row_count_valid = true;
+					}
+				}
 			}
 			break;
 		default:

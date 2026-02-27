@@ -802,7 +802,41 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 		}
 		case T_TransactionStmt:
 		{
-			if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
+			TransactionStmt *txn_stmt = (TransactionStmt *) parsetree;
+			bool is_active = IsTransactionBlockActive();
+			bool rewrite_active = pltsql_insert_exec_rewrite_active();
+			bool estate_insert_exec = exec_state_call_stack &&
+									  exec_state_call_stack->estate &&
+									  exec_state_call_stack->estate->insert_exec;
+			bool in_insert_exec = estate_insert_exec || rewrite_active;
+			
+			/*
+			 * Block COMMIT/ROLLBACK that would terminate the outer transaction during INSERT EXEC.
+			 * This check must happen BEFORE we decide whether to call PLTsqlProcessTransaction
+			 * or fall through to standard PostgreSQL handling, because when NestedTranCount == 0
+			 * and IsTransactionBlockActive() is true, we would fall through to standard handling
+			 * which would terminate the outer INSERT EXEC transaction.
+			 * 
+			 * SQL Server error 3916: Cannot use the COMMIT statement within an INSERT-EXEC 
+			 * statement unless BEGIN TRANSACTION is used first.
+			 * 
+			 * This means if NestedTranCount == 0 (no BEGIN TRAN), COMMIT should fail.
+			 */
+			if (in_insert_exec && txn_stmt->kind == TRANS_STMT_COMMIT && NestedTranCount == 0)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+						 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+			}
+			
+			if (in_insert_exec && txn_stmt->kind == TRANS_STMT_ROLLBACK)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+						 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+			}
+			
+			if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !is_active))
 			{
 				PLTsqlProcessTransaction(parsetree, params, qc);
 				return true;

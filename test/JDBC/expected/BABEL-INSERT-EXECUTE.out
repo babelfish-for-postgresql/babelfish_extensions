@@ -67,7 +67,7 @@ insert into t3 execute sp_multi_selects;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: structure of query does not match function result type)~~
+~~ERROR (Message: Number of given values does not match target table definition)~~
 
 select * from t3;
 GO
@@ -456,7 +456,7 @@ insert into t2 execute sp_select_mismatch_with_dml
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: structure of query does not match function result type)~~
+~~ERROR (Message: INSERT has more expressions than target columns)~~
 
 select * from t1;
 GO
@@ -513,7 +513,7 @@ insert into t2 execute sp_select_mismatch_after_subtran;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: structure of query does not match function result type)~~
+~~ERROR (Message: INSERT has more expressions than target columns)~~
 
 select * from t1;
 GO

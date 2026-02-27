@@ -2920,6 +2920,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					Node                *tbltypStmt = NULL;
 					ListCell            *parameter;
 					HeapTuple 			proctup;
+					bool				xactStarted = IsTransactionOrTransactionBlock();
 
 					cfs = makeNode(CreateFunctionStmt);
 					cfs->returnType = NULL;
@@ -2941,7 +2942,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
 					PG_TRY();
 					{
-						StartTransactionCommand();
+						if (!xactStarted)
+							StartTransactionCommand();
 						if (isCompleteQuery)
 							EventTriggerDDLCommandStart(parsetree);
 
@@ -3135,7 +3137,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							*/
 							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, stmt->objtype);
 						}
-						CommitTransactionCommand();
+						if (!xactStarted)
+							CommitTransactionCommand();
 					}
 					PG_FINALLY();
 					{
@@ -3220,6 +3223,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					List *oldColumnAcls = NIL;
 					bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
 					bool needCleanup;
+					bool xactStarted = IsTransactionOrTransactionBlock();
 			
 					if (!IS_TDS_CLIENT())
 					{
@@ -3232,7 +3236,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			
 					PG_TRY();
 					{
-						StartTransactionCommand();
+						if (!xactStarted)
+							StartTransactionCommand();
 						pltsql_current_query_is_view_definition = true;
 						
 						/* Without this, DDL event triggers won't fire for ALTER VIEW operations
@@ -3315,7 +3320,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if(oldViewAcl != NULL)
 								pfree(oldViewAcl);
 						}
-						CommitTransactionCommand();
+						if (!xactStarted)
+							CommitTransactionCommand();
 					}
 					PG_FINALLY();
 					{

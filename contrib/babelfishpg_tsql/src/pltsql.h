@@ -2230,7 +2230,7 @@ void PLTsqlProcessTransaction(Node *parsetree,
 						            ParamListInfo params,
 						 			QueryCompletion *qc);
 
-extern void PLTsqlStartTransaction(char *txnName);
+extern void PLTsqlStartTransaction(char *txnName, bool is_explicit);
 extern void PLTsqlCommitTransaction(QueryCompletion *qc, bool chain);
 extern void PLTsqlRollbackTransaction(char *txnName, QueryCompletion *qc, bool chain);
 extern void pltsql_start_txn(void);
@@ -2408,6 +2408,8 @@ extern void pltsql_clear_insert_exec_rewrite_context(void);
 extern bool pltsql_insert_exec_rewrite_active(void);
 extern const char *pltsql_get_insert_exec_target_table(void);
 extern const char *pltsql_get_insert_exec_column_list(void);
+extern int pltsql_get_insert_exec_start_nested_tran_count(void);
+extern void pltsql_update_insert_exec_start_tran_count(void);
 extern bool pltsql_insert_exec_skip_triggers(void);
 extern void pltsql_set_insert_exec_skip_triggers(bool skip);
 
