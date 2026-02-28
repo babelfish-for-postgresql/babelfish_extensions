@@ -965,7 +965,7 @@ INSERT INTO insert_exec_trycatch1 EXEC insert_exec_ptrycatch1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Number of given values does not match target table definition)~~
+~~ERROR (Message: INSERT has more target columns than expressions)~~
 
 
 SELECT COUNT(*) AS row_count FROM insert_exec_trycatch1;
