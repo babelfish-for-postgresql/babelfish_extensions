@@ -4885,6 +4885,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	Portal		portal = NULL;
 	ListCell   *lc;
 	bool		is_returning = false;
+	int			saved_nested_tran_count = -1;  /* -1 means not saved */
 
 	/*
 	 * Temporarily disable FMTONLY as it is causing issues with Import-Export.
@@ -5028,13 +5029,36 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				elog(DEBUG1, "INSERT-EXEC: About to create temp table. target='%s', columns='%s'",
 					 stmt->insert_exec_target,
 					 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
+				
+				/*
+				 * SQL Server behavior for @@trancount during INSERT-EXEC:
+				 * - If @@trancount == 0 (no outer transaction), INSERT-EXEC creates an
+				 *   implicit transaction and sets @@trancount = 1. We restore it to 0
+				 *   after INSERT-EXEC completes.
+				 * - If @@trancount > 0 (outer transaction exists), INSERT-EXEC does NOT
+				 *   create an implicit transaction. @@trancount stays the same. If COMMIT
+				 *   is called inside the procedure, it decrements @@trancount and we do
+				 *   NOT restore it (the COMMIT actually commits one level of the outer
+				 *   transaction).
+				 */
+				saved_nested_tran_count = NestedTranCount;
+				
+				/* Only create implicit transaction if no outer transaction */
+				if (NestedTranCount == 0)
+				{
+					NestedTranCount = 1;
+					if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
+						(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
+				}
+				
 				exec_create_insert_exec_temp_table(estate,
 												   stmt->insert_exec_target,
 												   stmt->insert_exec_columns);
 				elog(DEBUG1, "INSERT-EXEC: Temp table created: '%s'. Setting rewrite context.",
 					 estate->insert_exec_temp_table);
 				pltsql_set_insert_exec_rewrite_context(estate->insert_exec_temp_table, 
-													   stmt->insert_exec_columns);
+													   stmt->insert_exec_columns,
+													   saved_nested_tran_count);
 			}
 		}
 
@@ -5518,6 +5542,19 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		
 		original_query_string = NULL;
 		is_schemabinding_view = true;
+
+		/*
+		 * Restore NestedTranCount only if we created an implicit transaction
+		 * (i.e., saved_nested_tran_count was 0). If there was an outer transaction,
+		 * we don't restore because any COMMIT inside the procedure actually
+		 * committed one level of the outer transaction.
+		 */
+		if (saved_nested_tran_count == 0)
+		{
+			NestedTranCount = 0;
+			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
+				(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
+		}
 
 		/*
 		 * On error paths, just clean up the estate fields without trying
@@ -6734,41 +6771,42 @@ exec_stmt_commit(PLtsql_execstate *estate, PLtsql_stmt_commit *stmt)
 	 * SQL Server error 3916: Cannot use the COMMIT statement within an INSERT-EXEC 
 	 * statement unless BEGIN TRANSACTION is used first.
 	 * 
-	 * The check compares current NestedTranCount with the value at INSERT EXEC start.
-	 * If they're equal, it means no explicit BEGIN TRAN was issued inside the procedure,
-	 * so COMMIT should fail. If NestedTranCount > start value, there was an explicit
-	 * BEGIN TRAN, so COMMIT is allowed.
+	 * SQL Server behavior:
+	 * - COMMIT is blocked if NestedTranCount <= 1 (would end the entire transaction)
+	 * - COMMIT is allowed if NestedTranCount >= 2 (just decrements nested count)
+	 * 
+	 * This is because with NestedTranCount >= 2, there are nested transactions and
+	 * COMMIT just decrements the count. With NestedTranCount <= 1, COMMIT would
+	 * end the entire transaction which is not allowed during INSERT-EXEC.
 	 */
 	bool rewrite_active = pltsql_insert_exec_rewrite_active();
-	int start_tran_count = pltsql_get_insert_exec_start_nested_tran_count();
+	bool in_insert_exec = estate->insert_exec || rewrite_active;
 
 	/*
-	 * For rewrite approach: check if NestedTranCount is at or below the start value.
-	 * For traditional approach: check if NestedTranCount == 0.
+	 * Block COMMIT if NestedTranCount <= 1 during INSERT-EXEC.
 	 */
-	if (rewrite_active && start_tran_count >= 0 && NestedTranCount <= start_tran_count)
+	if (in_insert_exec && NestedTranCount <= 1)
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-				 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
-	}
-	else if (estate->insert_exec && NestedTranCount == 0)
-	{
+		AbortCurTransaction = true;
 		ereport(ERROR,
 				(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 				 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
 	}
 
 	/*
-	 * During INSERT EXEC, BEGIN TRANSACTION inside the procedure doesn't actually
-	 * start a PostgreSQL transaction block (it just increments NestedTranCount).
-	 * So COMMIT should also just decrement NestedTranCount without calling SPI_commit().
+	 * During INSERT EXEC, we need to handle COMMIT carefully.
 	 * 
-	 * We detect this case by checking if we're in INSERT EXEC context and
-	 * NestedTranCount is above the start value (meaning there was a BEGIN TRAN
-	 * inside the procedure that we're now committing).
+	 * SQL Server behavior:
+	 * - If there are nested transactions (NestedTranCount > 0), COMMIT is allowed
+	 *   and just decrements the transaction count. SQL Server gives a warning about
+	 *   mismatched BEGIN/COMMIT statements, but the INSERT-EXEC succeeds.
+	 * - If there are no nested transactions (NestedTranCount == 0), COMMIT fails
+	 *   with error 3916.
+	 * 
+	 * For the rewrite approach, we just decrement NestedTranCount without calling
+	 * SPI_commit() because we're inside an implicit transaction for INSERT-EXEC.
 	 */
-	if (rewrite_active && start_tran_count >= 0 && NestedTranCount > start_tran_count)
+	if (rewrite_active && NestedTranCount > 0)
 	{
 		/* Just decrement NestedTranCount, don't call SPI_commit() */
 		NestedTranCount--;
@@ -11049,9 +11087,13 @@ pltsql_init_insert_exec_rewrite_context(void)
 /*
  * Set the INSERT EXEC rewrite context
  * Called when we enter an INSERT EXEC statement
+ * 
+ * original_tran_count: The NestedTranCount BEFORE we increment it for the
+ *                      implicit INSERT-EXEC transaction. This is used to
+ *                      determine if COMMIT should be allowed inside INSERT-EXEC.
  */
 void
-pltsql_set_insert_exec_rewrite_context(const char *target_table, const char *column_list)
+pltsql_set_insert_exec_rewrite_context(const char *target_table, const char *column_list, int original_tran_count)
 {
 	if (insert_exec_rewrite_ctx == NULL)
 		pltsql_init_insert_exec_rewrite_context();
@@ -11064,19 +11106,17 @@ pltsql_set_insert_exec_rewrite_context(const char *target_table, const char *col
 	insert_exec_rewrite_ctx->nest_level++;
 	
 	/*
-	 * Save the current NestedTranCount. This is used to check if COMMIT
-	 * is allowed during INSERT EXEC. SQL Server error 3916 says:
-	 * "Cannot use the COMMIT statement within an INSERT-EXEC statement
-	 * unless BEGIN TRANSACTION is used first."
+	 * Save the ORIGINAL NestedTranCount (before we incremented it for the
+	 * implicit INSERT-EXEC transaction). This is used to check if COMMIT
+	 * is allowed during INSERT EXEC.
 	 * 
-	 * This means COMMIT is only allowed if there was an explicit BEGIN TRAN
-	 * inside the procedure (i.e., NestedTranCount increased after INSERT EXEC started).
-	 * 
-	 * Note: We save the current NestedTranCount here, but it may be updated
-	 * later by pltsql_update_insert_exec_start_tran_count() when an implicit
-	 * transaction is started inside the procedure.
+	 * SQL Server behavior:
+	 * - If original_tran_count == 0 (no explicit BEGIN TRAN before INSERT-EXEC),
+	 *   COMMIT inside INSERT-EXEC fails with error 3916.
+	 * - If original_tran_count > 0 (there was explicit BEGIN TRAN before INSERT-EXEC),
+	 *   COMMIT inside INSERT-EXEC is allowed (with warning about mismatch).
 	 */
-	insert_exec_rewrite_ctx->start_nested_tran_count = NestedTranCount;
+	insert_exec_rewrite_ctx->start_nested_tran_count = original_tran_count;
 	
 	elog(DEBUG1, "INSERT-EXEC-REWRITE: Set context active, target=%s, columns=%s, nest_level=%d, start_nested_tran_count=%d",
 		 target_table ? target_table : "(null)",
@@ -11310,6 +11350,18 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 		unquoted_db = db_part ? strip_tsql_brackets(db_part) : NULL;
 		unquoted_schema = schema_part ? strip_tsql_brackets(schema_part) : NULL;
 		unquoted_table = strip_tsql_brackets(table_part);
+
+		/*
+		 * In Babelfish, T-SQL identifiers are case-insensitive and stored in
+		 * lowercase in PostgreSQL. We need to lowercase the table name to match
+		 * how it's stored in the catalog.
+		 */
+		if (pltsql_case_insensitive_identifiers)
+		{
+			char *lowercased_table = downcase_identifier(unquoted_table, strlen(unquoted_table), false, false);
+			pfree(unquoted_table);
+			unquoted_table = lowercased_table;
+		}
 
 		if (unquoted_schema != NULL)
 		{
@@ -12238,53 +12290,102 @@ exec_rewritten_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 	 */
 	pltsql_set_insert_exec_skip_triggers(true);
 	
-	PG_TRY();
+	/*
+	 * Execute the rewritten INSERT in a subtransaction.
+	 * This is critical for releasing relation references after the INSERT completes.
+	 * 
+	 * The problem: When we rewrite SELECT * FROM #temp to INSERT INTO buf SELECT * FROM #temp,
+	 * the INSERT opens a relation reference to #temp. This reference is held by the
+	 * SPI connection's resource owner until the procedure completes. If the procedure
+	 * later tries to DROP TABLE #temp, PostgreSQL fails with "cannot DROP ... because
+	 * it is being used by active queries".
+	 * 
+	 * The solution: Execute the INSERT in a subtransaction. When the subtransaction
+	 * commits, its resource owner is cleaned up, releasing the relation reference.
+	 * This allows subsequent DROP TABLE statements to succeed.
+	 */
 	{
-		/* Prepare the rewritten statement */
-		prepare_stmt_execsql(estate, estate->func, stmt, false);
+		MemoryContext oldcontext = CurrentMemoryContext;
+		ResourceOwner oldowner = CurrentResourceOwner;
+		volatile bool subtxn_started = false;
+		volatile bool subtxn_success = false;
 		
-		/* Set up parameter list to pass procedure parameters and local variables */
-		paramLI = setup_param_list(estate, expr);
-		
-		/* Execute the rewritten query with parameters */
-		rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
-											 estate->readonly_func, 0);
-		
-		if (rc < 0)
+		PG_TRY();
 		{
-			elog(ERROR, "INSERT-EXEC-REWRITE: SPI_execute_plan_with_paramlist failed: %s",
-				 SPI_result_code_string(rc));
+			BeginInternalSubTransaction("insert_exec_rewrite");
+			subtxn_started = true;
+			MemoryContextSwitchTo(oldcontext);
+			
+			/* Prepare the rewritten statement */
+			prepare_stmt_execsql(estate, estate->func, stmt, false);
+			
+			/* Set up parameter list to pass procedure parameters and local variables */
+			paramLI = setup_param_list(estate, expr);
+			
+			/* Execute the rewritten query with parameters */
+			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
+												 estate->readonly_func, 0);
+			
+			if (rc < 0)
+			{
+				elog(ERROR, "INSERT-EXEC-REWRITE: SPI_execute_plan_with_paramlist failed: %s",
+					 SPI_result_code_string(rc));
+			}
+			
+			processed = SPI_processed;
+			
+			/* Update rowcount and found status */
+			exec_set_rowcount(processed);
+			exec_set_found(estate, processed > 0);
+			
+			elog(DEBUG1, "INSERT-EXEC-REWRITE: Inserted %lu rows", (unsigned long) processed);
+			
+			/* Free the SPI tuple table (contains TupleDesc that must be released) */
+			SPI_freetuptable(SPI_tuptable);
+			
+			/* Free the plan we just created (it's a one-shot plan) */
+			if (expr->plan)
+			{
+				SPI_freeplan(expr->plan);
+				expr->plan = NULL;
+			}
+			
+			/* Commit the subtransaction - this releases relation references */
+			ReleaseCurrentSubTransaction();
+			subtxn_success = true;
+			MemoryContextSwitchTo(oldcontext);
+			CurrentResourceOwner = oldowner;
 		}
-		
-		processed = SPI_processed;
-		
-		/* Update rowcount and found status */
-		exec_set_rowcount(processed);
-		exec_set_found(estate, processed > 0);
-		
-		elog(DEBUG1, "INSERT-EXEC-REWRITE: Inserted %lu rows", (unsigned long) processed);
-		
-		/* Free the SPI tuple table (contains TupleDesc that must be released) */
-		SPI_freetuptable(SPI_tuptable);
-		
-		/* Free the plan we just created (it's a one-shot plan) */
-		if (expr->plan)
+		PG_CATCH();
 		{
-			SPI_freeplan(expr->plan);
-			expr->plan = NULL;
+			/* Roll back the subtransaction on error */
+			if (subtxn_started && !subtxn_success)
+			{
+				RollbackAndReleaseCurrentSubTransaction();
+			}
+			MemoryContextSwitchTo(oldcontext);
+			CurrentResourceOwner = oldowner;
+			
+			/* Always clear the skip_triggers flag */
+			pltsql_set_insert_exec_skip_triggers(false);
+			
+			/* Restore the original query, plan, and mod_stmt flag */
+			expr->query = saved_query;
+			expr->plan = saved_plan;
+			stmt->mod_stmt = saved_mod_stmt;
+			
+			PG_RE_THROW();
 		}
+		PG_END_TRY();
 	}
-	PG_FINALLY();
-	{
-		/* Always clear the skip_triggers flag */
-		pltsql_set_insert_exec_skip_triggers(false);
-		
-		/* Restore the original query, plan, and mod_stmt flag */
-		expr->query = saved_query;
-		expr->plan = saved_plan;
-		stmt->mod_stmt = saved_mod_stmt;
-	}
-	PG_END_TRY();
+	
+	/* Always clear the skip_triggers flag */
+	pltsql_set_insert_exec_skip_triggers(false);
+	
+	/* Restore the original query, plan, and mod_stmt flag */
+	expr->query = saved_query;
+	expr->plan = saved_plan;
+	stmt->mod_stmt = saved_mod_stmt;
 	
 	/* Free the rewritten query string */
 	pfree(rewritten_query.data);

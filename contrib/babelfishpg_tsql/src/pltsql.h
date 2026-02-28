@@ -2403,7 +2403,7 @@ extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags
  * INSERT EXEC Query Rewriting functions (pl_exec.c)
  */
 extern void pltsql_init_insert_exec_rewrite_context(void);
-extern void pltsql_set_insert_exec_rewrite_context(const char *target_table, const char *column_list);
+extern void pltsql_set_insert_exec_rewrite_context(const char *target_table, const char *column_list, int original_tran_count);
 extern void pltsql_clear_insert_exec_rewrite_context(void);
 extern bool pltsql_insert_exec_rewrite_active(void);
 extern const char *pltsql_get_insert_exec_target_table(void);

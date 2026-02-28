@@ -3005,14 +3005,14 @@ SELECT * FROM enr_view ORDER BY relname
 GO
 ~~START~~
 text
+idx_alter1#t_alter_idxef1284eda20f7217c292b0b1f74479d7
+idx_alter2#t_alter_idx817c13ab631b36df3820eff2777e31cf
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
 #t
 #t1
 #t2
 #t_alter_idx
-idx_alter1#t_alter_idxef1284eda20f7217c292b0b1f74479d7
-idx_alter2#t_alter_idx817c13ab631b36df3820eff2777e31cf
 ~~END~~
 
 
@@ -3152,15 +3152,15 @@ SELECT * FROM enr_view ORDER BY relname
 GO
 ~~START~~
 text
+idx_ma1#t_multi_alterc20f6dce64e4acc115c92bc1ec2f4ca7
+idx_ma2#t_multi_alter85222b3f0a11abb9273a384d9d6c51d4
+idx_ma3#t_multi_alter9bdc2dda2f46d1d53c60b1872aae1a7e
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
 #t
 #t1
 #t2
 #t_multi_alter
-idx_ma1#t_multi_alterc20f6dce64e4acc115c92bc1ec2f4ca7
-idx_ma2#t_multi_alter85222b3f0a11abb9273a384d9d6c51d4
-idx_ma3#t_multi_alter9bdc2dda2f46d1d53c60b1872aae1a7e
 ~~END~~
 
 
@@ -3306,11 +3306,11 @@ SELECT * FROM enr_view ORDER BY relname
 GO
 ~~START~~
 text
+idx_nested1#t_nested_alter873dd07a348b565a0d59a1a57fcec8f3
 #t
 #t1
 #t2
 #t_nested_alter
-idx_nested1#t_nested_alter873dd07a348b565a0d59a1a57fcec8f3
 ~~END~~
 
 
@@ -3397,13 +3397,13 @@ SELECT * FROM enr_view ORDER BY relname
 GO
 ~~START~~
 text
+idx_cyc1#t_cycle290b8ccea1c823954eaee37ad6b681e9
+idx_cyc2#t_cycledab3f944fb2bfdf7309126c68154d3f8
+idx_cyc3#t_cycle4d802eedc445503c089ae400e7140408
 #t
 #t1
 #t2
 #t_cycle
-idx_cyc1#t_cycle290b8ccea1c823954eaee37ad6b681e9
-idx_cyc2#t_cycledab3f944fb2bfdf7309126c68154d3f8
-idx_cyc3#t_cycle4d802eedc445503c089ae400e7140408
 ~~END~~
 
 

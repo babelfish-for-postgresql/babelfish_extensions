@@ -136,29 +136,30 @@ PLTsqlProcessTransaction(Node *parsetree,
 				 * SQL Server error 3916: Cannot use the COMMIT statement within an INSERT-EXEC 
 				 * statement unless BEGIN TRANSACTION is used first.
 				 * 
-				 * The check compares current NestedTranCount with the value at INSERT EXEC start.
-				 * If they're equal, it means no explicit BEGIN TRAN was issued inside the procedure,
-				 * so COMMIT should fail. If NestedTranCount > start value, there was an explicit
-				 * BEGIN TRAN, so COMMIT is allowed.
+				 * SQL Server behavior:
+				 * - COMMIT is blocked if NestedTranCount <= 1 (would end the entire transaction)
+				 * - COMMIT is allowed if NestedTranCount >= 2 (just decrements nested count)
+				 * 
+				 * This is because with NestedTranCount >= 2, there are nested transactions and
+				 * COMMIT just decrements the count. With NestedTranCount <= 1, COMMIT would
+				 * end the entire transaction which is not allowed during INSERT-EXEC.
 				 */
 				bool estate_insert_exec = exec_state_call_stack &&
 									   exec_state_call_stack->estate &&
 									   exec_state_call_stack->estate->insert_exec;
 				bool rewrite_active = pltsql_insert_exec_rewrite_active();
-				int start_tran_count = pltsql_get_insert_exec_start_nested_tran_count();
+				bool in_insert_exec = estate_insert_exec || rewrite_active;
 				
 				/*
-				 * For rewrite approach: check if NestedTranCount is at or below the start value.
-				 * For traditional approach: check if NestedTranCount == 0.
+				 * Block COMMIT if NestedTranCount <= 1 during INSERT-EXEC.
 				 */
-				if (rewrite_active && start_tran_count >= 0 && NestedTranCount <= start_tran_count)
+				if (in_insert_exec && NestedTranCount <= 1)
+				{
+					AbortCurTransaction = true;
 					ereport(ERROR,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
-				else if (estate_insert_exec && NestedTranCount == 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+				}
 
 				PLTsqlCommitTransaction(qc, stmt->chain);
 			}

@@ -820,13 +820,27 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 			 * SQL Server error 3916: Cannot use the COMMIT statement within an INSERT-EXEC 
 			 * statement unless BEGIN TRANSACTION is used first.
 			 * 
-			 * This means if NestedTranCount == 0 (no BEGIN TRAN), COMMIT should fail.
+			 * SQL Server behavior:
+			 * - COMMIT is blocked if NestedTranCount <= 1 (would end the entire transaction)
+			 * - COMMIT is allowed if NestedTranCount >= 2 (just decrements nested count)
+			 * 
+			 * This is because with NestedTranCount >= 2, there are nested transactions and
+			 * COMMIT just decrements the count. With NestedTranCount <= 1, COMMIT would
+			 * end the entire transaction which is not allowed during INSERT-EXEC.
 			 */
-			if (in_insert_exec && txn_stmt->kind == TRANS_STMT_COMMIT && NestedTranCount == 0)
+			if (in_insert_exec && txn_stmt->kind == TRANS_STMT_COMMIT)
 			{
-				ereport(ERROR,
-						(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-						 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+				if (NestedTranCount <= 1)
+				{
+					/*
+					 * Set AbortCurTransaction to true so the transaction will be
+					 * aborted and NestedTranCount will be reset to 0.
+					 */
+					AbortCurTransaction = true;
+					ereport(ERROR,
+							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+				}
 			}
 			
 			if (in_insert_exec && txn_stmt->kind == TRANS_STMT_ROLLBACK)

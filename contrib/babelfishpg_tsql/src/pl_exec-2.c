@@ -1244,16 +1244,37 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			 * Save the transaction count before INSERT EXEC.
 			 * The procedure may create temp tables, table variables, or use
 			 * DML with OUTPUT clause, which can change the transaction count.
-			 * We'll restore it after INSERT EXEC completes.
 			 */
 			saved_nested_tran_count = NestedTranCount;
-			restore_tran_count = true;
+			
+			/*
+			 * SQL Server behavior for @@trancount during INSERT-EXEC:
+			 * - If @@trancount == 0 (no outer transaction), INSERT-EXEC creates an
+			 *   implicit transaction and sets @@trancount = 1. We restore it to 0
+			 *   after INSERT-EXEC completes.
+			 * - If @@trancount > 0 (outer transaction exists), INSERT-EXEC does NOT
+			 *   create an implicit transaction. @@trancount stays the same. If COMMIT
+			 *   is called inside the procedure, it decrements @@trancount and we do
+			 *   NOT restore it.
+			 */
+			if (NestedTranCount == 0)
+			{
+				NestedTranCount = 1;
+				if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
+					(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
+				restore_tran_count = true;  /* Only restore if we created implicit transaction */
+			}
+			else
+			{
+				restore_tran_count = false;  /* Don't restore if outer transaction exists */
+			}
 			
 			exec_create_insert_exec_temp_table(estate,
 											   stmt->insert_exec_target,
 											   stmt->insert_exec_columns);
 			pltsql_set_insert_exec_rewrite_context(estate->insert_exec_temp_table,
-												   stmt->insert_exec_columns);
+												   stmt->insert_exec_columns,
+												   saved_nested_tran_count);
 			insert_exec_context_set = true;
 		}
 
@@ -1665,16 +1686,37 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			 * Save the transaction count before INSERT EXEC.
 			 * The dynamic SQL may create temp tables, table variables, or use
 			 * DML with OUTPUT clause, which can change the transaction count.
-			 * We'll restore it after INSERT EXEC completes.
 			 */
 			saved_nested_tran_count = NestedTranCount;
-			restore_tran_count = true;
+			
+			/*
+			 * SQL Server behavior for @@trancount during INSERT-EXEC:
+			 * - If @@trancount == 0 (no outer transaction), INSERT-EXEC creates an
+			 *   implicit transaction and sets @@trancount = 1. We restore it to 0
+			 *   after INSERT-EXEC completes.
+			 * - If @@trancount > 0 (outer transaction exists), INSERT-EXEC does NOT
+			 *   create an implicit transaction. @@trancount stays the same. If COMMIT
+			 *   is called inside the procedure, it decrements @@trancount and we do
+			 *   NOT restore it.
+			 */
+			if (NestedTranCount == 0)
+			{
+				NestedTranCount = 1;
+				if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
+					(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
+				restore_tran_count = true;  /* Only restore if we created implicit transaction */
+			}
+			else
+			{
+				restore_tran_count = false;  /* Don't restore if outer transaction exists */
+			}
 			
 			exec_create_insert_exec_temp_table(estate,
 											   stmt->insert_exec_target,
 											   stmt->insert_exec_columns);
 			pltsql_set_insert_exec_rewrite_context(estate->insert_exec_temp_table,
-												   stmt->insert_exec_columns);
+												   stmt->insert_exec_columns,
+												   saved_nested_tran_count);
 			insert_exec_context_set = true;
 		}
 
@@ -1706,6 +1748,17 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			SPI_freetuptable(SPI_tuptable);
 			exec_flush_insert_exec_temp_table(estate);
 		}
+
+		/*
+		 * Drop temp table on SUCCESS path only.
+		 * On error paths, the table might still be in use by active queries,
+		 * and trying to drop it would fail. The temp table will be cleaned
+		 * up when the session ends.
+		 */
+		if (insert_exec_context_set && estate->insert_exec_temp_table != NULL)
+		{
+			exec_drop_insert_exec_temp_table(estate);
+		}
 	}
 	PG_FINALLY();
 	{
@@ -1715,10 +1768,27 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			pltsql_clear_insert_exec_rewrite_context();
 		}
 
-		/* Drop temp table on any exit (flush already happened on success path) */
+		/*
+		 * On error paths, just clean up the estate fields without trying
+		 * to drop the temp table. The table might still be in use by
+		 * active queries, and trying to drop it would fail with an error
+		 * that would mask the original error.
+		 * 
+		 * The temp table will be cleaned up when the session ends.
+		 */
 		if (insert_exec_context_set && estate->insert_exec_temp_table != NULL)
 		{
-			exec_drop_insert_exec_temp_table(estate);
+			/* Free the TopMemoryContext allocations */
+			if (estate->insert_exec_temp_table)
+				pfree(estate->insert_exec_temp_table);
+			if (estate->insert_exec_target_table)
+				pfree(estate->insert_exec_target_table);
+			if (estate->insert_exec_column_list)
+				pfree(estate->insert_exec_column_list);
+			estate->insert_exec_temp_table = NULL;
+			estate->insert_exec_target_table = NULL;
+			estate->insert_exec_column_list = NULL;
+			estate->insert_exec_identity_insert = false;
 		}
 		
 		/*
