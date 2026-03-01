@@ -449,6 +449,19 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--Parse
+CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR)
+    RETURNS sys.GEOMETRY
+    AS $$
+    BEGIN
+	    IF UPPER(geometry_tagged_text COLLATE sys.DATABASE_DEFAULT) = 'NULL' THEN
+            RETURN NULL;
+        END IF;
+
+        RETURN sys.geomfromtext_helper(geometry_tagged_text, 0);
+    END;
+    $$ LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
