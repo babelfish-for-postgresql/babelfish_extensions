@@ -433,6 +433,19 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--Parse
+CREATE OR REPLACE FUNCTION sys.Geography__Parse(geography_tagged_text sys.NVARCHAR)
+    RETURNS sys.GEOGRAPHY
+    AS $$
+    BEGIN
+        IF UPPER(geography_tagged_text COLLATE sys.DATABASE_DEFAULT) = 'NULL' THEN
+            RETURN NULL;
+        END IF;
+
+        RETURN sys.geogfromtext_helper(geography_tagged_text, 4326);
+    END;
+    $$ LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
 --STGeomType 
 CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
 	RETURNS sys.NVARCHAR(4000)
