@@ -1278,6 +1278,15 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 	PG_TRY();
 	{
 		/*
+		 * Variables for internal savepoint decision.
+		 * Declared at block start for C90 compliance.
+		 */
+		bool in_trycatch;
+		bool insert_exec_active;
+		bool need_savepoint_for_insert_exec_trycatch;
+		bool txn_active_or_insert_exec_trycatch;
+
+		/*
 		 * If no transaction is running, start implicit transaction for
 		 * qualified commands when implicit_transactions config option is on
 		 */
@@ -1321,8 +1330,8 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * 3. This causes "cannot DROP ... because it is being used" errors
 		 *    when the procedure later tries to DROP the temp table
 		 */
-		bool in_trycatch = is_part_of_pltsql_trycatch_block(estate);
-		bool insert_exec_active = pltsql_insert_exec_rewrite_active();
+		in_trycatch = is_part_of_pltsql_trycatch_block(estate);
+		insert_exec_active = pltsql_insert_exec_rewrite_active();
 		/*
 		 * We need internal savepoints in two cases:
 		 * 1. Normal case: transaction block is active and we're not in INSERT EXEC
@@ -1333,10 +1342,9 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 *    the index refcount is not decremented and DROP TABLE fails with
 		 *    "cannot DROP ... because it is being used by active queries"
 		 */
-		bool need_savepoint_for_insert_exec_trycatch = insert_exec_active && in_trycatch;
-		bool txn_active_or_insert_exec_trycatch = IsTransactionBlockActive() || need_savepoint_for_insert_exec_trycatch;
-		elog(LOG, "Internal savepoint decision: ro_func=%d, disable_sp=%d, is_batch=%d, txn_active=%d, is_set_iso=%d, insert_exec_active=%d, in_trycatch=%d, need_sp_for_ie_tc=%d",
-			 ro_func, pltsql_disable_internal_savepoint, is_batch_command(stmt), IsTransactionBlockActive(), is_set_tran_isolation(stmt), insert_exec_active, in_trycatch, need_savepoint_for_insert_exec_trycatch);
+		need_savepoint_for_insert_exec_trycatch = insert_exec_active && in_trycatch;
+		txn_active_or_insert_exec_trycatch = IsTransactionBlockActive() || need_savepoint_for_insert_exec_trycatch;
+
 		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && txn_active_or_insert_exec_trycatch && !is_set_tran_isolation(stmt) && 
 			(!insert_exec_active || in_trycatch))
 		{
