@@ -949,24 +949,31 @@ bool
 is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate)
 {
 	PLExecStateCallStack *cur;
+	int level = 0;
 
 	Assert(estate == exec_state_call_stack->estate);
 	cur = exec_state_call_stack;
 	while (cur != NULL)
 	{
+		size_t stack_size = vec_size(cur->estate->err_ctx_stack);
 		/* There is at-least one try block active for sure */
-		if (vec_size(cur->estate->err_ctx_stack) > 1)
+		if (stack_size > 1)
+		{
 			return true;
+		}
 		/* Either try or catch block is active */
-		if (vec_size(cur->estate->err_ctx_stack) == 1)
+		if (stack_size == 1)
 		{
 			PLtsql_errctx *err_ctx = *(PLtsql_errctx **) vec_at(cur->estate->err_ctx_stack, 0);
 
 			/* Make sure that we are not inside the catch block */
 			if (!err_ctx->partial_restored)
+			{
 				return true;
+			}
 		}
 		cur = cur->next;
+		level++;
 	}
 	return false;
 }
@@ -1304,8 +1311,34 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 *    ExecutorStart called AfterTriggerBeginQuery
 		 * 4. This causes query_depth mismatch and crash in AfterTriggerEndQuery
 		 * The INSERT EXEC temp table provides transaction semantics anyway.
+		 *
+		 * EXCEPTION: We DO need internal savepoints during INSERT EXEC when
+		 * inside a TRY-CATCH block. This is because:
+		 * 1. When an error occurs (e.g., PK violation), the executor opens
+		 *    index references that need to be released
+		 * 2. Without a subtransaction, these references are not released
+		 *    when the error is caught by TRY-CATCH
+		 * 3. This causes "cannot DROP ... because it is being used" errors
+		 *    when the procedure later tries to DROP the temp table
 		 */
-		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive() && !is_set_tran_isolation(stmt) && !pltsql_insert_exec_rewrite_active())
+		bool in_trycatch = is_part_of_pltsql_trycatch_block(estate);
+		bool insert_exec_active = pltsql_insert_exec_rewrite_active();
+		/*
+		 * We need internal savepoints in two cases:
+		 * 1. Normal case: transaction block is active and we're not in INSERT EXEC
+		 *    (or we're in INSERT EXEC but inside a TRY-CATCH block)
+		 * 2. Special case for INSERT EXEC with TRY-CATCH: even without an explicit
+		 *    transaction block, we need a subtransaction to properly release
+		 *    index references when an error is caught by TRY-CATCH. Without this,
+		 *    the index refcount is not decremented and DROP TABLE fails with
+		 *    "cannot DROP ... because it is being used by active queries"
+		 */
+		bool need_savepoint_for_insert_exec_trycatch = insert_exec_active && in_trycatch;
+		bool txn_active_or_insert_exec_trycatch = IsTransactionBlockActive() || need_savepoint_for_insert_exec_trycatch;
+		elog(LOG, "Internal savepoint decision: ro_func=%d, disable_sp=%d, is_batch=%d, txn_active=%d, is_set_iso=%d, insert_exec_active=%d, in_trycatch=%d, need_sp_for_ie_tc=%d",
+			 ro_func, pltsql_disable_internal_savepoint, is_batch_command(stmt), IsTransactionBlockActive(), is_set_tran_isolation(stmt), insert_exec_active, in_trycatch, need_savepoint_for_insert_exec_trycatch);
+		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && txn_active_or_insert_exec_trycatch && !is_set_tran_isolation(stmt) && 
+			(!insert_exec_active || in_trycatch))
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
 			BeginInternalSubTransaction(NULL);
