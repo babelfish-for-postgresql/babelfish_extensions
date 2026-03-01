@@ -27,6 +27,10 @@ int
 
 EXEC p6030_8_3c;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t6030_22)~~
+
 
 -- CASE 8.4: Function referring table (success: function->table chain)
 SELECT * FROM f6030_8_4();
