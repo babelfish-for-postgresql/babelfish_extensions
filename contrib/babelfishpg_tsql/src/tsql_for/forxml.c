@@ -26,7 +26,7 @@
 
 static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
 static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil);
-static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64);
+static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil);
 static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
@@ -102,7 +102,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 					 errmsg("AUTO mode is not supported")));
 			break;
 		case TSQL_FORXML_PATH:	/* FOR XML PATH */
-			tsql_row_to_xml_path(state, record, element_name, binary_base64);
+			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil);
 			break;
 		case TSQL_FORXML_EXPLICIT:
 
@@ -328,7 +328,7 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
  * Map an SQL row to an XML element in PATH mode.
  */
 static void
-tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64)
+tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil)
 {
 	HeapTupleHeader td;
 	Oid			tupType;
@@ -362,10 +362,19 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	{
 		/* if "''" is the input path, ignore it per TSQL behavior */
 		if (has_att_centric)
-			appendStringInfo(state, "<%s ", element_name);
+		{
+			if (xsinil)
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI, element_name);
+			else
+				appendStringInfo(state, "<%s", element_name);
+		}
 		else
-			appendStringInfo(state, "<%s>", element_name);
-
+		{
+			if (xsinil)
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
+			else
+				appendStringInfo(state, "<%s>", element_name);
+		}
 	}
 
 	/* process the tuple into tags */
@@ -391,7 +400,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 			allnull = false;
 			if(NameStr(att->attname)[0] == '@')
 			{
-				appendStringInfo(state, "%s=\"%s\" ",
+				appendStringInfo(state, " %s=\"%s\"",
 								 NameStr(att->attname)+1,
 								 map_sql_value_to_xml_value(colval, datatype_oid, true));
 			}
@@ -410,10 +419,44 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				}
 				else
 				{
-					appendStringInfo(state, "<%s>%s</%s>",
-									 colname,
-									 map_sql_value_to_xml_value(colval, datatype_oid, true),
-									 colname);
+					/* When PATH('') is used with XSINIL, add xmlns to each element */
+					if (element_name[0] == '\0' && xsinil)
+						appendStringInfo(state, "<%s " XML_XMLNS_XSI ">%s</%s>",
+										 colname,
+										 map_sql_value_to_xml_value(colval, datatype_oid, true),
+										 colname);
+					else
+						appendStringInfo(state, "<%s>%s</%s>",
+										 colname,
+										 map_sql_value_to_xml_value(colval, datatype_oid, true),
+										 colname);
+				}
+			}
+		}
+		else if (xsinil)
+		{
+			/*
+     		* XSINIL: Output NULL columns with xsi:nil="true".
+     		* Skip attribute-centric columns (prefixed with '@') as
+     		* xsi:nil is only valid on XML elements, not on attributes.
+     		*/
+			if (NameStr(att->attname)[0] != '@')
+			{
+				allnull = false;
+
+				if (has_att_centric && first)
+				{
+					appendStringInfoChar(state, '>');
+					first = false;
+				}
+
+				if (strncmp(NameStr(att->attname), "?column?", 8) != 0)
+				{
+					/* When PATH('') is used with XSINIL, add xmlns to each element */
+					if (element_name[0] == '\0')
+						appendStringInfo(state, "<%s " XML_XMLNS_XSI " " XML_XSI_NIL "/>", colname);
+					else
+						appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
 				}
 			}
 		}
@@ -432,7 +475,9 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	else if (element_name[0] != '\0')
 	{
 		if (has_att_centric && first)
+		{
 			appendStringInfoString(state, "/>");
+		}
 		else
 			appendStringInfo(state, "</%s>", element_name);
 	}
