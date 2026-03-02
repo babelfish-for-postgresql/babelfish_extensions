@@ -25,6 +25,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_attribute.h"
 #include "catalog/pg_depend.h"
 #include "commands/dbcommands.h"
 #include "commands/extension.h"
@@ -135,6 +136,7 @@ PG_FUNCTION_INFO_V1(servername);
 PG_FUNCTION_INFO_V1(servicename);
 PG_FUNCTION_INFO_V1(xact_state);
 PG_FUNCTION_INFO_V1(get_enr_list);
+PG_FUNCTION_INFO_V1(get_enr_attributes);
 PG_FUNCTION_INFO_V1(tsql_random);
 PG_FUNCTION_INFO_V1(timezone_mapping);
 PG_FUNCTION_INFO_V1(pltsql_timezone_mapping_pg_to_windows);
@@ -6094,3 +6096,139 @@ done:
 #endif							/* USE_LIBXML */
 }
 
+/*
+ * get_enr_attributes - Get pg_attribute rows for temp tables (ENR and non-ENR)
+ *
+ * This is a generic function that returns all pg_attribute columns for a temp table.
+ * It works for both ENR temp tables (reads from ENR cache) and non-ENR temp tables
+ * (reads from actual pg_attribute catalog).
+ *
+ * This function is designed to be extensible - similar functions can be created
+ * for other catalogs (pg_index, pg_constraint, etc.) following the same pattern.
+ */
+Datum
+get_enr_attributes(PG_FUNCTION_ARGS)
+{
+	char	   *table_name_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	EphemeralNamedRelation enr = NULL;
+	char	   *table_name;
+	char	   *temp_name_ptr;
+	Relation	pg_attribute_rel;
+	Oid			relid = InvalidOid;
+	bool		is_enr = false;
+	int			i;
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	if (!table_name_input)
+		PG_RETURN_NULL();
+
+	/* Handle formats like ".[#TempTable]" or "#TempTable" to find the # */
+	temp_name_ptr = strchr(table_name_input, '#');
+	if (!temp_name_ptr)
+		PG_RETURN_NULL();
+
+	/* Lowercase the table name and strip trailing "]" */
+	table_name = pstrdup(temp_name_ptr);
+	for (i = 0; table_name[i]; i++)
+	{
+		if (table_name[i] == ']')
+		{
+			table_name[i] = '\0';
+			break;
+		}
+		table_name[i] = tolower((unsigned char) table_name[i]);
+	}
+
+	/* Try ENR first */
+	if (currentQueryEnv != NULL)
+	{
+		enr = get_ENR(currentQueryEnv, table_name, true);
+		if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
+		{
+			relid = enr->md.reliddesc;
+			is_enr = true;
+		}
+	}
+
+	/* Fallback: search pg_temp schema for non-ENR temp tables */
+	if (!is_enr)
+	{
+		Oid temp_ns = LookupNamespaceNoError("pg_temp");
+		if (OidIsValid(temp_ns))
+			relid = get_relname_relid(table_name, temp_ns);
+	}
+
+	if (!OidIsValid(relid))
+		PG_RETURN_NULL();
+
+	/* Setup return - use pg_attribute's tuple descriptor */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	pg_attribute_rel = table_open(AttributeRelationId, AccessShareLock);
+	tupdesc = CreateTupleDescCopy(RelationGetDescr(pg_attribute_rel));
+
+	tupstore = tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
+									 false, work_mem);
+
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = BlessTupleDesc(tupdesc);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	if (is_enr)
+	{
+		/* ENR path: return tuples directly from ENR cache */
+		ListCell   *lc;
+
+		foreach(lc, enr->md.cattups[ENR_CATTUP_ATTRIBUTE])
+		{
+			HeapTuple	tup = (HeapTuple) lfirst(lc);
+
+			tuplestore_puttuple(tupstore, tup);
+		}
+	}
+	else
+	{
+		/* Non-ENR path: scan pg_attribute catalog */
+		ScanKeyData skey[1];
+		SysScanDesc scan;
+		HeapTuple	tup;
+
+		ScanKeyInit(&skey[0],
+					Anum_pg_attribute_attrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(relid));
+
+		scan = systable_beginscan(pg_attribute_rel, AttributeRelidNumIndexId,
+								  true, NULL, 1, skey);
+
+		while (HeapTupleIsValid(tup = systable_getnext(scan)))
+		{
+			tuplestore_puttuple(tupstore, tup);
+		}
+
+		systable_endscan(scan);
+	}
+
+	table_close(pg_attribute_rel, AccessShareLock);
+
+	tuplestore_donestoring(tupstore);
+
+	PG_RETURN_NULL();
+}

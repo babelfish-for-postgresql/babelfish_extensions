@@ -65,7 +65,6 @@ PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
 PG_FUNCTION_INFO_V1(sp_babelfish_configure);
 PG_FUNCTION_INFO_V1(sp_describe_first_result_set_internal);
-PG_FUNCTION_INFO_V1(sp_tablecollations_100_enr);
 PG_FUNCTION_INFO_V1(create_sp_tablecollations_100_in_tempdb_dbo_internal);
 PG_FUNCTION_INFO_V1(sp_describe_undeclared_parameters_internal);
 PG_FUNCTION_INFO_V1(xp_qv_internal);
@@ -5116,170 +5115,6 @@ tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
 }
 
 /*
- * sp_tablecollations_100_enr - Get column collation info for ENR temp tables
- * 
- * Returns 3 columns: colid, name, collation_name
- * The binary(5) tds_collation conversion is done in the T-SQL procedure wrapper
- */
-Datum
-sp_tablecollations_100_enr(PG_FUNCTION_ARGS)
-{
-    char *table_name_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
-    char *table_name;
-    char *temp_name_ptr;
-    ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-    Tuplestorestate *tupstore;
-    MemoryContext per_query_ctx;
-    MemoryContext oldcontext;
-    TupleDesc tupdesc;
-    Relation rel = NULL;
-    TupleDesc temp_tupdesc = NULL;
-    Oid relid = InvalidOid;
-    Oid varchar_oid;
-    Oid nvarchar_oid;
-    int natts = 0;
-    int i;
-    
-    /* Get the sys type OIDs for the return columns */
-    varchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varchar");
-    if (!OidIsValid(varchar_oid))
-        varchar_oid = VARCHAROID;
-    
-    nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nvarchar");
-    if (!OidIsValid(nvarchar_oid))
-        nvarchar_oid = VARCHAROID;
-    
-    /* Setup return set info - 3 columns: colid, name, collation_name */
-    per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-    oldcontext = MemoryContextSwitchTo(per_query_ctx);
-    
-    tupdesc = CreateTemplateTupleDesc(3);
-    TupleDescInitEntry(tupdesc, 1, "colid", INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, 2, "name", varchar_oid, -1, 0);
-    TupleDescInitEntry(tupdesc, 3, "collation_name", nvarchar_oid, 128, 0);
-    
-    tupstore = tuplestore_begin_heap(true, false, work_mem);
-    rsinfo->returnMode = SFRM_Materialize;
-    rsinfo->setResult = tupstore;
-    rsinfo->setDesc = BlessTupleDesc(tupdesc);
-    
-    MemoryContextSwitchTo(oldcontext);
-    
-    if (!table_name_input)
-    {
-        return (Datum) 0;
-    }
-    
-    /* Handle formats like ".[#TempTable]" or "#TempTable" to find the # */
-    temp_name_ptr = strchr(table_name_input, '#');
-    if (!temp_name_ptr)
-    {
-        return (Datum) 0;
-    }
-    
-    /* 
-     * Lowercase the table name and strip trailing "]" 
-     */
-    table_name = pstrdup(temp_name_ptr);
-    for (i = 0; table_name[i]; i++)
-    {
-        if (table_name[i] == ']')
-        {
-            table_name[i] = '\0';
-            break;
-        }
-        table_name[i] = tolower((unsigned char) table_name[i]);
-    }
-    
-    /* Look up temp table in ENR */
-    if (currentQueryEnv != NULL)
-    {
-        EphemeralNamedRelation enr = get_ENR(currentQueryEnv, table_name, true);
-        if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
-        {
-            relid = enr->md.reliddesc;
-        }
-    }
-    
-    /* Fallback: search pg_class catalog via pg_temp schema for non-ENR temp tables */
-    if (!OidIsValid(relid))
-    {
-        Oid temp_ns = LookupNamespaceNoError("pg_temp");
-        if (OidIsValid(temp_ns))
-            relid = get_relname_relid(table_name, temp_ns);
-    }
-    
-    if (!OidIsValid(relid))
-    {
-        return (Datum) 0;
-    }
-    
-    /* Open the relation */
-    PG_TRY();
-    {
-        rel = table_open(relid, AccessShareLock);
-        if (rel != NULL)
-        {
-            temp_tupdesc = RelationGetDescr(rel);
-            natts = temp_tupdesc->natts;
-        }
-    }
-    PG_CATCH();
-    {
-        PG_RE_THROW();
-    }
-    PG_END_TRY();
-    
-    if (rel == NULL || temp_tupdesc == NULL)
-    {
-        return (Datum) 0;
-    }
-    
-    /* Extract column info from temp table */
-    for (i = 0; i < natts; i++)
-    {
-        Form_pg_attribute att = TupleDescAttr(temp_tupdesc, i);
-        Datum values[3];
-        bool nulls[3] = {false, false, false};
-        
-        if (att->attisdropped)
-            continue;
-        
-        oldcontext = MemoryContextSwitchTo(per_query_ctx);
-        
-        values[0] = Int32GetDatum(att->attnum);
-        values[1] = CStringGetTextDatum(NameStr(att->attname));
-        
-        /* Return collation name for character columns, NULL for others */
-        if (att->attcollation != InvalidOid)
-        {
-            char *collation_name = get_collation_name(att->attcollation);
-            
-            if (collation_name != NULL)
-            {
-                values[2] = CStringGetTextDatum(collation_name);
-            }
-            else
-            {
-                nulls[2] = true;
-            }
-        }
-        else
-        {
-            /* Non-character columns get NULL for collation_name */
-            nulls[2] = true;
-        }
-        
-        tuplestore_putvalues(tupstore, rsinfo->setDesc, values, nulls);
-        
-        MemoryContextSwitchTo(oldcontext);
-    }
-    
-    table_close(rel, AccessShareLock);
-    PG_RETURN_NULL();
-}
-
-/*
  * create_sp_tablecollations_100_in_tempdb_dbo_internal
  * 
  * Creates the tempdb.dbo.sp_tablecollations_100 procedure that BCP uses
@@ -5295,9 +5130,9 @@ create_sp_tablecollations_100_in_tempdb_dbo_internal(PG_FUNCTION_ARGS)
 
     /*
      * Create the T-SQL procedure in tempdb_dbo schema.
-     * This procedure calls sys.sp_tablecollations_100_enr (C function) and
+     * This procedure calls sys.sp_tablecollations_100_enr (SQL wrapper function)
+     * which uses the generic sys.babelfish_get_enr_attributes function, and
      * converts the collation_name to binary(5) tds_collation using CollationProperty.
-     * Note: Using pure T-SQL syntax (no LANGUAGE keyword, no $$ delimiters)
      */
     char       *tempq = "CREATE PROCEDURE %s.sp_tablecollations_100 "
         "@tablename sys.nvarchar(4000) "

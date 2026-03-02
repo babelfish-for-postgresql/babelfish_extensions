@@ -802,10 +802,28 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         c.is_sparse = 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
+-- Generic function to get pg_attribute rows for temp tables (ENR and non-ENR)
+-- This is extensible - similar functions can be added for other catalogs
+CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_attributes(IN table_name sys.varchar(4000))
+RETURNS SETOF pg_catalog.pg_attribute
+AS 'babelfishpg_tsql', 'get_enr_attributes'
+LANGUAGE C STABLE PARALLEL UNSAFE;
+GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_attributes(IN sys.varchar(4000)) TO PUBLIC;
+
+-- Wrapper function for sp_tablecollations_100 that uses the generic function
 CREATE OR REPLACE FUNCTION sys.sp_tablecollations_100_enr(IN table_name sys.varchar(4000))
 RETURNS TABLE(colid INT, name sys.varchar, collation_name sys.nvarchar(128))
-AS 'babelfishpg_tsql', 'sp_tablecollations_100_enr'
-LANGUAGE C STABLE PARALLEL UNSAFE;
+AS $$
+    SELECT 
+        CAST(a.attnum AS INT) AS colid,
+        CAST(a.attname AS sys.varchar) AS name,
+        CAST(c.collname AS sys.nvarchar(128)) AS collation_name
+    FROM sys.babelfish_get_enr_attributes(table_name) a
+    LEFT JOIN pg_catalog.pg_collation c ON a.attcollation = c.oid
+    WHERE a.attnum > 0 AND NOT a.attisdropped
+    ORDER BY a.attnum;
+$$
+LANGUAGE SQL STABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.sp_tablecollations_100_enr(IN sys.varchar(4000)) TO PUBLIC;
 
 -- We are limited by what postgres procedures can return here, but IEW may not
